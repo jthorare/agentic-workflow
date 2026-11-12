@@ -138,7 +138,7 @@ until then the mockups can use the proposed sentences in section 4 (marked as mo
 
 | Kind | Pattern | Example |
 |---|---|---|
-| AI agent step | "An AI does X so that Y. Without it, Z." | "An AI writes a failing test for each point of 'done'. Without it, nothing proves the code later actually fixes the problem." |
+| AI agent step | "An AI does X so that Y. Without it, Z." | "An AI writes a failing test for each point of 'done'. Without it, nothing proves the code later fixes the problem." |
 | Automatic step | "Checks X automatically. If it's skipped, Z slips through." | "Checks every claim has a source. If skipped, a made-up detail could reach the design." |
 | You (desk) | "You decide X because only you know Y. Skipped, the workflow guesses." | "You pick the size. If skipped, the AI's guess sets how the work is split." |
 | Only you (approval) | "Nothing moves on until you approve X. This is your last chance to change Y before it's locked in." | "Once you approve, the scope is locked in; later stages can't add things you didn't see." |

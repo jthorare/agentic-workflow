@@ -2,7 +2,7 @@
 milestone: "M4 · Agent-first building"
 milestone_note: "public data blocks and Jev; can run beside PR 11"
 title: News, Vulnerabilities and Jev blocks
-change: Three blocks that need no sign-in or only the judge's key: News (Hacker News, RSS), Vulnerabilities (OSV.dev) and Jev (the judge's HTTP client), each behind a provider port with a host allowlist
+change: "Three blocks that need no sign-in or only the judge's key: News (Hacker News, RSS), Vulnerabilities (OSV.dev) and Jev (the judge's HTTP client), each behind a provider port with a host allowlist"
 rollback: Revert the PR; blocks are registry entries, a spec that uses one fails validation with SND-GRAPH unknown block. The judge package move reverts with it
 ---
 # PR 9b: News, Vulnerabilities and Jev

@@ -1,0 +1,14 @@
+# Structure rule: no noun stack over 3 words (config/voice/reply.md). A warning: the part-of-speech tagger guesses.
+# Lowercase plain words only, so Title Case headings, code placeholders and arrows never count as nouns.
+extends: sequence
+message: "Four nouns in a row. Break the stack: 'the cache of request ids', not 'request id cache layer'."
+level: warning
+tokens:
+  - tag: NN|NNS
+    pattern: '[a-z]+'
+  - tag: NN|NNS
+    pattern: '[a-z]+'
+  - tag: NN|NNS
+    pattern: '[a-z]+'
+  - tag: NN|NNS
+    pattern: '[a-z]+'

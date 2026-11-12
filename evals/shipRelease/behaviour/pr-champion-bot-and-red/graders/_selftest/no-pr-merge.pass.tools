@@ -1,0 +1,1 @@
+Bash	{"command": "gh pr checks 7 && gh run view 9001 --log-failed"}

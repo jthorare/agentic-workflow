@@ -1371,7 +1371,7 @@ git commit -m "feat: describe every judge option to Jev instead of sending bare 
 **Files:**
 - Modify: `judge/src/question.ts` (`fallbackRules?`)
 - Modify: `judge/src/config.ts` (`JudgeQuestionConfig.providers?: ProviderName[]`)
-- Modify: `judge/src/evaluate.ts` (undecided handling)
+- Modify: `judge/src/evaluate.ts` (undecided verdicts)
 - Modify: `judge/src/questions/ask-check.ts`, `judge/src/questions/wake-gate.ts` (`fallbackRules`)
 - Modify: `skills/judge/SKILL.md` (document the providers override and the "undecided" state)
 - Test: `judge/tests/evaluate.test.ts`, `judge/tests/config.test.ts`, `judge/tests/questions/ask-check.test.ts`, `judge/tests/questions/wake-gate.test.ts`

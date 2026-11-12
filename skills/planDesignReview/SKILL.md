@@ -39,10 +39,10 @@ Reads a plan directory's design-relevant docs (auto-discovers latest if no arg) 
 2. Read `plan.md`, `design-brief.md`, `product.md`, `.impeccable.md` (if present), `design-tokens.json` (if present). Record presence/absence of each in the `## Inputs available` table — **an absent input makes its dependent dimension `N/A — missing <input>`, never a number.**
 3. Review across five dimensions, each rated on the anchored 1–5 scale in `_shared/severity.md` (5 = no findings above LOW … 1 = CRITICAL or unaddressed):
    - **Information architecture** — top-level structure, grouping, naming, prioritization
-   - **Interaction states** — loading / error / empty / success — verified via the surface×state table below, not free-form prose
+   - **Interaction states** (loading / error / empty / success), verified via the surface×state table below, not free-form prose
    - **User flow completeness** — entry points, success paths, failure paths, edge cases
-   - **Accessibility** — keyboard nav, screen reader semantics, color contrast, focus management — verified via the a11y sub-table
-   - **Brand/voice consistency** — alignment with `.impeccable.md` brand personality; voice/tone of user-facing copy (requires `.impeccable.md` — else N/A)
+   - **Accessibility**: keyboard nav, screen reader semantics, color contrast, focus management, verified via the a11y sub-table
+   - **Brand/voice consistency**: alignment with `.impeccable.md` brand personality; voice/tone of user-facing copy (requires `.impeccable.md`, else N/A)
 4. For each scored dimension, write 2–4 bullet evidence lines (quote plan lines + cite line numbers) + a 1–3 bullet "Recommended changes" list.
 5. Derive the verdict — rule-based per `_shared/severity.md`: any dimension ≤2 or any CRITICAL finding ⇒ BLOCKED; any dimension = 3 or any HIGH finding ⇒ NEEDS_WORK; otherwise PASS. N/A dimensions don't score but are listed.
 6. Write to the resolved output path. Ensure the parent dir exists with `mkdir -p`. Structure:

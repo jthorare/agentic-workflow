@@ -122,6 +122,35 @@ public sealed class GetQueuePagingTests
     }
 
     [Fact]
+    public async Task A_not_modified_answer_reads_no_item_rows()
+    {
+        await Seed();
+        await SeedClosed(200);
+        var first = await Query(new GetQueueRequest());
+        Assert.NotNull(first.Tag);
+        var calls = new List<ReadCall>();
+
+        var second = await Query(new CountingViewReader(_q.Views.Views, calls), new GetQueueRequest(IfNoneMatch: first.Tag));
+
+        Assert.True(second.NotModified);
+        Assert.Equal(0, calls.Where(static c => c.View == ViewNames.Items).Sum(static c => c.Rows));   // #2852: today every open row is read to build the tag
+    }
+
+    [Fact]
+    public async Task Closing_an_item_moves_the_tag()
+    {
+        await Seed();
+        var first = await Query(new GetQueueRequest());
+        Assert.NotNull(first.Tag);
+
+        await Move(1, ItemState.Done);
+        var second = await Query(new GetQueueRequest(IfNoneMatch: first.Tag));
+
+        Assert.False(second.NotModified);
+        Assert.NotEqual(first.Tag, second.Tag, StringComparer.Ordinal);
+    }
+
+    [Fact]
     public async Task An_event_that_writes_no_item_row_leaves_the_tag_alone()
     {
         await Seed();
@@ -302,6 +331,8 @@ public sealed class GetQueuePagingTests
 
         public async ValueTask<Result<IReadOnlyList<TRow>>> Where<TRow>(string view, ViewColumn column, string value, CancellationToken cancellationToken)
             where TRow : class => Count(view, "Where", await inner.Where<TRow>(view, column, value, cancellationToken));
+
+        public ValueTask<Result<string>> Mark(string view, CancellationToken cancellationToken) => inner.Mark(view, cancellationToken);
 
         public ValueTask<Result<ProjectorState?>> State(CancellationToken cancellationToken) => inner.State(cancellationToken);
 

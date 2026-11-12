@@ -110,6 +110,30 @@ public abstract class ViewStoreContract
         Expect.True((await reader.State(Token)).Value is { Rebuilding: false, Cursor: 0 });
     }
 
+    /// <summary>A view's mark moves when a row is written or the view is emptied, and holds when an event writes nothing to it (#2852).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Mark_moves_on_a_write_and_on_a_reset_and_holds_without_one()
+    {
+        var (store, reader) = Create();
+        _ = await store.Open(ViewSchema.Version, Token);
+        var empty = (await reader.Mark(ViewNames.Services, Token)).Value;
+
+        _ = await store.Apply([Event(1, Put, "alpha")], Projections(), Clock.GetUtcNow(), Token);
+        var one = (await reader.Mark(ViewNames.Services, Token)).Value;
+        _ = await store.Apply([Event(2, "other", "x")], Projections(), Clock.GetUtcNow(), Token);
+        var untouched = (await reader.Mark(ViewNames.Services, Token)).Value;
+        _ = await store.Apply([Event(3, Put, "beta")], Projections(), Clock.GetUtcNow(), Token);
+        var two = (await reader.Mark(ViewNames.Services, Token)).Value;
+        _ = await store.Reset(ViewNames.All, ViewSchema.Version, Clock.GetUtcNow(), 3, Token);
+        var cleared = (await reader.Mark(ViewNames.Services, Token)).Value;
+
+        Expect.True(!string.Equals(empty, one, StringComparison.Ordinal));
+        Expect.Equal(one, untouched);
+        Expect.True(!string.Equals(one, two, StringComparison.Ordinal));
+        Expect.True(!string.Equals(two, cleared, StringComparison.Ordinal));
+    }
+
     /// <summary>A row reads back equal to what the projection wrote, nested records, enums and times included.</summary>
     /// <returns>The test.</returns>
     [Fact]
