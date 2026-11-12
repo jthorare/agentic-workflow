@@ -323,6 +323,7 @@ def steps_panels():
     dn = snav('Setup','3/8').replace('status-pill">Connected','status-pill off">Not running')
     P.append(panel('Serve down: steps that need Sindri wait', '§4.4', sbody('Setup','3 of 8 steps done', down, dn)))
     alld = cur+acc+rep+prof+ag+mcp+mapd+sd('Run hello-sindri','hello-sindri ran once and succeeded')
+    alld += '<div class="dpanel" style="margin-top:var(--sp3);background:transparent;border:0">Not imported: agent session history and other tools\' settings.</div>'
     P.append(panel('All done: the Setup tab leaves the nav, Settings holds the list', '§4.4', sbody('Settings','Setup · 8 of 8 steps done', alld, snav('Settings'))))
     return P
 
