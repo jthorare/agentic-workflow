@@ -26,21 +26,36 @@ internal static class TodoScenarios
     /// <param name="slug">The route; the note check's and the import's hosts also map a library vault holding the sample note, and the import's names it in todo.obsidian.</param>
     /// <param name="ct">Cancellation.</param>
     /// <returns>The started host.</returns>
-    public static Task<GoldenHost> Start(string slug, CancellationToken ct) =>
-        GoldenHost.Start(temporary: true, ct, slug switch
-        {
-            "todos-note-check" => NoteVaultProfile(),
-            "todos-note" => NoteVaultProfile() + "todo:\n  obsidian:\n    vault: notes\n    note: Todo.md\n",
-            "todos-note-import" => NoteVaultProfile() + "todo:\n  obsidian:\n    vault: notes\n    note: Todo.md\n",
-            "todos-note-set" or "todos-note-stop" => ItemScenarios.ProfileYaml + "context:\n  sources:\n    library:\n      vaults:\n        - { name: notes, path: /work/notes }\n",
-            _ => ItemScenarios.ProfileYaml,
-        });
-
-    // a vault folder at a fixed place under the temp folder with the note the golden counts (3 open, one with a pasted link, 1 done); the answer carries no path
-    private static string NoteVaultProfile()
+    public static async Task<GoldenHost> Start(string slug, CancellationToken ct)
     {
-        var vault = Path.Combine(Path.GetTempPath(), "aw-golden-todo-vault");
-        _ = Directory.CreateDirectory(vault);
+        // why: one vault folder per host (#2868); a shared one let a second host's import find the first host's ids in the note
+        var vault = slug is "todos-note-check" or "todos-note" or "todos-note-import" ? new Ledger.TempHome() : null;
+        try
+        {
+            var host = await GoldenHost.Start(temporary: true, ct, slug switch
+            {
+                "todos-note-check" => NoteVaultProfile(vault!.Path),
+                "todos-note" or "todos-note-import" => NoteVaultProfile(vault!.Path) + "todo:\n  obsidian:\n    vault: notes\n    note: Todo.md\n",
+                "todos-note-set" or "todos-note-stop" => ItemScenarios.ProfileYaml + "context:\n  sources:\n    library:\n      vaults:\n        - { name: notes, path: /work/notes }\n",
+                _ => ItemScenarios.ProfileYaml,
+            });
+            if (vault is not null)
+            {
+                host.Own(vault);
+            }
+
+            return host;
+        }
+        catch
+        {
+            vault?.Dispose();
+            throw;
+        }
+    }
+
+    // the host's own vault folder with the note the golden counts (3 open, one with a pasted link, 1 done); the answer carries no path
+    internal static string NoteVaultProfile(string vault)
+    {
         File.WriteAllText(Path.Combine(vault, "Todo.md"), "# Todo\n- [ ] reply to Sam\n- [ ] rotate the staging key\n- [ ] read [the docs](https://example.com)\n- [x] pay rent\n\nnotes\n");
         return ItemScenarios.ProfileYaml + $"context:\n  sources:\n    library:\n      vaults:\n        - {{ name: notes, path: {vault} }}\n";
     }
