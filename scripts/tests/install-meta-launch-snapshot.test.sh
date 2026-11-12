@@ -28,7 +28,7 @@ printf '#!/usr/bin/env bash\nexit 0\n' > "$AW_STATE_DIR/bin/aw-meta"; chmod +x "
 # data), and what the hook install copies.
 mkdir -p "$WORK/tree/scripts" "$WORK/tree/schemas" "$WORK/tree/config/hooks/adapters" "$WORK/tree/config/lib" "$WORK/tree/config/launcher"
 cp "$DIR/install-meta.sh" "$DIR/meta-launch.sh" "$DIR/meta-lane.sh" "$DIR/launcher-lib.sh" "$DIR/meta-team-lib.sh" "$DIR/meta-version-lib.sh" \
-  "$DIR/meta-start-lock.sh" "$DIR/meta-build-paths.txt" "$WORK/tree/scripts/"
+  "$DIR/meta-oom-lib.sh" "$DIR/meta-start-lock.sh" "$DIR/meta-build-paths.txt" "$WORK/tree/scripts/"
 cp "$TOP/schemas/launcher.schema.json" "$WORK/tree/schemas/"
 cp "$TOP/config/launcher/"*.json "$WORK/tree/config/launcher/"
 cp "$TOP/config/hooks/adapters/"* "$WORK/tree/config/hooks/adapters/" 2> /dev/null

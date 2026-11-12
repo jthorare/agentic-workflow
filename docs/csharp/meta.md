@@ -277,6 +277,8 @@ copy of the system `sleep` is killed there). It was run on macOS for this sectio
 two lanes whose agent reports its session id, started one at a time); it has not run on a real Warp window here, and `aw-meta-launch` on
 macOS opens Warp with `open warp://launch/<team>%20team`. `scripts/tests/meta-version.test.sh` covers the staleness check on both.
 
+**OOM policy (#2931).** With systemd's default `DefaultOOMPolicy=stop`, one OOM kill inside a lane's tmux scope stops the whole scope, agent included. On Linux, when `systemctl --user show -p DefaultOOMPolicy --value` says `stop`, `scripts/install-meta.sh` writes `${XDG_CONFIG_HOME:-~/.config}/systemd/user.conf.d/10-oom-continue.conf` (`[Manager]` `DefaultOOMPolicy=continue`), leaves an identical file and every other drop-in alone, and prints the `systemctl --user daemon-reload` step without running it (the reload blocks `systemctl --user` for a minute or two). `scripts/meta-launch.sh` prints one stderr warning when the policy is known and not `continue`; `AW_META_NO_OOM_CHECK=1` skips both. Covered by `scripts/tests/oom-policy.test.sh`.
+
 **Version and staleness.** `aw-meta version` is how a stale install shows. `scripts/install-meta.sh` stamps the publish with the tree's
 `git rev-parse HEAD` (`<HEAD>-dirty` when a file under a build path has uncommitted or untracked changes) and a UTC time and prints `aw-meta commit <commit>, built ..., <os> <rid>` when it finishes (`... predates 'aw-meta
 version'` for an older binary). `scripts/meta-launch.sh` runs `aw-meta version --json` at each launch and prints one stderr line, never
