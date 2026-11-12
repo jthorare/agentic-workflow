@@ -11,4 +11,10 @@ internal interface IRowKeyTarget
     /// <summary>Scrolls the row at <paramref name="index"/> into view, clear of any sticky header the list draws over its top edge.</summary>
     /// <param name="index">The index in the list's items.</param>
     public void RevealRow(int index);
+
+    /// <summary>Folds or unfolds the group of the entry at <paramref name="index"/> (a header or one of its rows). Left folds, Right unfolds.</summary>
+    /// <param name="index">The index in the list's items.</param>
+    /// <param name="collapse">True to fold, false to unfold.</param>
+    /// <returns>True when the entry belongs to a group that can fold, so the key is used.</returns>
+    public bool TryFold(int index, bool collapse);
 }

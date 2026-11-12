@@ -129,9 +129,9 @@ internal static partial class RowKeys
                 FocusRow(list, target);
             }
         }
-        else if (list is IRowKeyTarget && e.Key is Key.Space or Key.Enter or Key.Escape)
+        else if (list is IRowKeyTarget target)
         {
-            OnListKey(list, current, e);
+            OnTargetKey(list, target, current, e);
         }
     }
 

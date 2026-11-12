@@ -267,11 +267,27 @@ public sealed class RowAccessTests
         public string? Summary => null;
 
         public System.Collections.IEnumerable Items { get; } = rows;
+
+        public bool IsCollapsed { get; set; }
+
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged
+        {
+            add { }
+            remove { }
+        }
     }
 
     private sealed record SubRow() : IRowItem
     {
         public string Id => "r-sub";
+
+        public string Key => "test:pr:sub";
+
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged
+        {
+            add { }
+            remove { }
+        }
 
         public string Title => "With a sub line";
 

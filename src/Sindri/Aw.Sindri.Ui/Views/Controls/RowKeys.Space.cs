@@ -12,6 +12,22 @@ internal static partial class RowKeys
 {
     // Esc and Space with no cursor row (an empty list, or focus on the list itself or a footer): the page still hears them, with no item, so the peek can close after its last row is gone.
     // j, k and the arrows from the list itself land on the first or last row. A button keeps its own keys.
+    // Keys only a RowList (an IRowKeyTarget) answers: Left folds the cursor's group, Right unfolds it; Space, Enter and Esc go to the page.
+    private static void OnTargetKey(ItemsControl list, IRowKeyTarget target, int current, KeyEventArgs e)
+    {
+        if (e.Key is Key.Left or Key.Right)
+        {
+            if ((e.Source as Visual)?.FindAncestorOfType<Button>(includeSelf: true) is null)
+            {
+                e.Handled = target.TryFold(current, collapse: e.Key == Key.Left);
+            }
+        }
+        else if (e.Key is Key.Space or Key.Enter or Key.Escape)
+        {
+            OnListKey(list, current, e);
+        }
+    }
+
     private static void OffRowKey(ItemsControl list, KeyEventArgs e)
     {
         if (list is not IRowKeyTarget || (e.Source as Visual)?.FindAncestorOfType<Button>(includeSelf: true) is not null)
