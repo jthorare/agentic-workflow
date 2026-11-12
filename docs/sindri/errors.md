@@ -205,3 +205,4 @@ Words from the first-run spec (`docs/superpowers/specs/2026-11-12-sindri-first-r
 | `SND-GRAPH-123` | An `http` node's request got no acceptable answer: status outside `expect`, a redirect loop, an answer over 1 MB, or a network failure |
 | `SND-GRAPH-124` | A `workflow_result` node found no result: the run is not that workflow's, is not finished, or the workflow has no succeeded run |
 | `SND-GRAPH-130` | No question waits at that node |
+| `SND-GRAPH-131` | The setup service ran a workflow other than the hello-sindri one it made, or ran it a second time |

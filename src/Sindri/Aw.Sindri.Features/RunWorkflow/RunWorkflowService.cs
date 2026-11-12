@@ -22,6 +22,8 @@ namespace Aw.Sindri.Features.RunWorkflow;
 internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter, IGraphLaunchRuns launches, ICallerContextAccessor callers) : IService<RunWorkflowRequest, RunWorkflowResponse>
 {
     private const string TriggerKind = "manual";
+    private const string SetupActor = "service:setup";
+    private static readonly WorkflowSlug HelloSindri = WorkflowSlug.From("hello-sindri");
 
     public async ValueTask<Result<RunWorkflowResponse>> Handle(RunWorkflowRequest request, CancellationToken cancellationToken)
     {
@@ -54,6 +56,11 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
             return SindriErrors.GraphNotActive.With($"'{request.Slug.Value}' has no active revision; activate one first");
         }
 
+        if (await SetupRefusal(record, cancellationToken).ConfigureAwait(false) is { } refused)
+        {
+            return refused;
+        }
+
         var revision = await workflows.GetRevision(record.Id, active, cancellationToken).ConfigureAwait(false);
         if (revision.IsError)
         {
@@ -62,6 +69,42 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
 
         var trigger = new JsonObject { ["kind"] = TriggerKind, ["payload"] = payload.Value, ["by"] = request.By }.ToJsonString();
         return await Start(new Trigger(record, revision.Value, trigger), cancellationToken).ConfigureAwait(false);
+    }
+
+    // The 'setup' grant on RunWorkflow is narrow (first-run spec decision 19): 'service:setup' may run only the hello-sindri workflow it made itself, and once. Every other caller is unchanged.
+    private async ValueTask<Error?> SetupRefusal(WorkflowRecord record, CancellationToken cancellationToken)
+    {
+        if (callers.Current is not { Class: CallerClass.Service, Actor: SetupActor })
+        {
+            return null;
+        }
+
+        if (record.Slug != HelloSindri || !string.Equals(record.CreatedBy, SetupActor, StringComparison.Ordinal))
+        {
+            return SindriErrors.GraphSetupRunRefused.With($"'{record.Slug.Value}' is not the hello-sindri workflow the setup service made");
+        }
+
+        var recent = await runs.Recent(record.Id, offset: 0, limit: 200, cancellationToken).ConfigureAwait(false);
+        if (recent.IsError)
+        {
+            return recent.Error;
+        }
+
+        return recent.Value.Any(static r => StartedBySetup(r.Trigger))
+            ? SindriErrors.GraphSetupRunRefused.With("the setup service already ran hello-sindri once (fix: sindri wf run hello-sindri)")
+            : null;
+    }
+
+    private static bool StartedBySetup(string trigger)
+    {
+        try
+        {
+            return string.Equals(JsonNode.Parse(trigger)?["by"]?.GetValue<string>(), SetupActor, StringComparison.Ordinal);
+        }
+        catch (Exception e) when (e is JsonException or InvalidOperationException or FormatException)   // boundary: a stored trigger that is not the shape we write
+        {
+            return false;
+        }
     }
 
     private async ValueTask<Error?> LoopRefusal(WorkflowSlug slug, CancellationToken cancellationToken)
