@@ -336,7 +336,7 @@ public sealed class CliProjectVerbsTests : IDisposable
 
         Assert.Equal(2, code);
         Assert.Contains("SND-PROJECT-004 target: 'someday'", _error.ToString(), StringComparison.Ordinal);
-        Assert.Contains("tomorrow, mon..sun, MM-dd or yyyy-MM-dd", _error.ToString(), StringComparison.Ordinal);
+        Assert.Contains(Aw.Kernel.Dates.DueWords.Resolve("someday", new DateOnly(2026, 11, 12)).Error.Message, _error.ToString(), StringComparison.Ordinal);
         Assert.Empty(api.Calls);
     }
 
