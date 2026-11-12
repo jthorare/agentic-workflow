@@ -116,7 +116,7 @@ internal sealed class FakeAgentNodeRuntime : IAgentNodeRuntime
     }
 
     public ValueTask<NodeSessionAsk?> Asking(LaunchId launch, CancellationToken cancellationToken) =>
-        ValueTask.FromResult<NodeSessionAsk?>(Interlocked.Increment(ref _asked) <= Asks ? new NodeSessionAsk("Bash", new DateTimeOffset(2026, 11, 12, 10, 0, 0, TimeSpan.Zero)) : null);
+        ValueTask.FromResult(Interlocked.Increment(ref _asked) <= Asks ? new NodeSessionAsk("Bash", new DateTimeOffset(2026, 11, 12, 10, 0, 0, TimeSpan.Zero)) : null);
 
     public Task Hold(AgentNodeHeld held, CancellationToken cancellationToken)
     {

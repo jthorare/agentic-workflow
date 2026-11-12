@@ -7,7 +7,7 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="RunId">The run's id.</param>
 /// <param name="NodeId">The node.</param>
 /// <param name="ItemIndex">The loop item, 0 outside a loop.</param>
-/// <param name="State">One of <see cref="Aw.Sindri.Core.Graph.NodeAgentStates"/>.</param>
+/// <param name="State">One of <see cref="Graph.NodeAgentStates"/>.</param>
 /// <param name="WaitingOn">What the node waits on, for example 'launch slot (3 ahead)'; null when it waits on nothing.</param>
 /// <param name="LastTool">The last tool the session used; null when unknown.</param>
 /// <param name="LastToolAt">When it used it.</param>
