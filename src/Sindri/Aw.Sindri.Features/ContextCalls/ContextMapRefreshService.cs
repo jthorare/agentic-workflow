@@ -43,9 +43,6 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
 
     internal static JobKind PublishKind { get; } = JobKind.From("PublishContextMap");
 
-    // The code index's build job (its slice owns the kind; AW1003 keeps slices off each other's types).
-    private static JobKind IndexBuildKind { get; } = JobKind.From("BuildCodeIndex");
-
     internal static ServiceName ServiceId { get; } = ServiceName.From("context-map-refresh");
 
     /// <summary>What the service does, as GET /sindri/services says it.</summary>
@@ -101,25 +98,6 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
             Ruleset = RunningRuleset ?? (RulesFromScope ? RulesOf(scope) : null),
             IndexWait = indexed.Value,
         };
-    }
-
-    // #3126: with no map yet (no current version, no held draft), the first build waits until a code index of a mapped repo has succeeded; a map built before its index is built again anyway (#1704).
-    // The jobs view is read only then. Returns true while the first map waits.
-    private async ValueTask<Result<bool>> FirstMapWaits(IReadOnlyList<RepoHead> heads, MapPublishState state, CancellationToken cancellationToken)
-    {
-        if (state.Current is not null || state.Hold is not null)
-        {
-            return false;
-        }
-
-        var builds = await jobs.List(JobState.Succeeded, IndexBuildKind, cancellationToken).ConfigureAwait(false);
-        if (builds.IsError)
-        {
-            return builds.Error;
-        }
-
-        var mapped = heads.Select(static h => h.Repo.Value).ToHashSet(StringComparer.Ordinal);
-        return !builds.Value.Any(j => j.State == JobState.Succeeded && j.Repo is { } repo && mapped.Contains(repo.Value));
     }
 
     private async ValueTask<Result<ScheduledResult>> RunTick(ContextScope scope, Tick tick, CancellationToken cancellationToken)
@@ -281,9 +259,6 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
     // The code alone sends the owner to a lookup; the job's own line says what went wrong.
     private static string? Why(JobRow job) =>
         string.IsNullOrWhiteSpace(job.Summary) ? job.Code : job.Code is null ? job.Summary : job.Code + ": " + job.Summary;
-
-    private static string? Left(string[] elsewhere) =>
-        elsewhere.Length == 0 ? null : "not on trunk, left out: " + string.Join(", ", elsewhere);
 
     private async ValueTask<Result<ScheduledResult>> Start(string[] elsewhere, CancellationToken cancellationToken)
     {
