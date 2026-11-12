@@ -136,7 +136,7 @@ A test run is a run row with `mode = test`. It follows the real graph walk (`Gra
 
 | Entry | What it does | Phase |
 |---|---|---|
-| Start from a template | a gallery of A "Review every PR", B "Plan a labelled issue" and C "Watch main, open an issue on red" in v1 (the other jobs of #2960 come after the soak, not in v1). Each card shows trigger, step count, "needs: GitHub connection" and the last time it ran on this box ("never" when it has not). Choosing one opens the workflow with the sheet of its first unfilled required field open and focused (most often the repo), and the checklist names what is left. When nothing is left, Ctrl+Enter saves and the primary becomes Test run. From Start to a passing test: pick the template, pick the repo, Ctrl+Enter, `T`, Enter (5 actions). | P1 |
+| Start from a template | a gallery of A "Review every PR", B "Plan a labelled issue" and C "Watch main, open an issue on red" in v1 (the other jobs of #2960 come after the soak, not in v1). Each card shows trigger, step count, "needs: GitHub connection" and the last time it ran on this box ("never" when it has not). Choosing one opens the workflow with the sheet of its first unfilled required field open and focused (most often the repo), and the checklist names what is left: one line per unfilled required field, then Test run and Activate, headed "N things left" (the header counts findings only). When nothing is left, Ctrl+Enter saves and the primary becomes Test run. From Start to a passing test: pick the template, pick the repo, Ctrl+Enter, `T`, Enter (5 actions). | P1 |
 | Blank | a workflow with an empty trigger slot, on "Add a trigger" | P1 |
 | Describe it | hidden until P6 (no dimmed entry before then). One sentence in, a drafted graph out as a diff against blank; Sindri validates and test-runs it before showing "done". A secret never goes in this box. | P6 |
 
@@ -165,11 +165,11 @@ The editor is the existing canvas plus a right-hand sheet. At 1440x900:
 - **Add step** opens a picker of the catalog's groups (Triggers, Data, AI, Logic, Outputs). Choosing a kind opens the sheet for a step that does not exist yet. Save sends one `add_node` with the config and, when a step is selected, a `connect` after it, as one op list (the code already builds one: `Editor.AddNodeAfter`).
 - **The sheet** shows the kind's required fields first, each with its caption and presets. A field refuses an empty value in place ("Pick a repo"), before anything is sent.
 - **Connections.** A connection field lists the connected services with their scope and state ("github:me, read, ok" / "expired"). When none fits it shows "Connect GitHub"; that goes to Connections and returns here with the form kept (#3072 comment, #3001, ledger 14).
-- **Change trigger.** The trigger step has "Change trigger" instead of a second Add. It sends one `replace_node` (decision 5).
+- **Change trigger.** The trigger step has "Change trigger" instead of a second Add. It sends one `replace_node` (decision 5). The button sits in the trigger sheet's head and opens a menu of trigger kinds; after a pick, a band in the sheet names each reference the new trigger lacks and says Save keeps the step with a warning. The empty trigger slot opens the same list in a search box, grouped GitHub, Time and Other.
 - **An unfilled or invalid step** carries a ⚠ and its finding line on the canvas, never a silent skip (Retool's rule).
 - **Only the step you are building asks for anything.** Nothing on the canvas is saved empty.
 - **Motion and density** (X1 frames): a dot change 120 ms, the running arc turns in 900 ms, the sheet opens in 160 ms with a 16 px slide and closes in 120 ms; text never animates. Step card 64 compact / 72 comfortable, panel tab bar 32 / 36, field control 28 / 32, on the shared `home.density` key.
-- **Colour.** Text on these pages is ink-subtle, never ink-3, and connectors are ink-subtle, never `--wire`: ink-3 text is 4.49 on the canvas and 3.40 on a selected row, `--wire` is 2.27. The app-token fix is #3138.
+- **Colour.** Text on these pages is ink-subtle, never ink-3, and connectors are `--wire` at its #3138 value, `#686870` (3.61 on the canvas; the old `#4a4a52` is 2.27). ink-3 text is 4.49 on the canvas and 3.40 on a selected row. Until #3138 lands, the page's own connector brush uses `#686870`.
 
 ### 4.3 The trigger step
 
@@ -225,7 +225,7 @@ Title, then the state chip (decision 12), then the test fact in one shape everyw
 | Findings | ⚠ on the steps; header "2 things to fix" ("1 thing to fix"); the primary button "Fix 2 things" jumps to the first; Activate off |
 | Untested | chip "Not tested" on the row and the header; Test run is the primary button; Activate works and opens the confirm "Not tested yet. Activate anyway?" (Enter / Esc) with the second button of §5.3 |
 | Testing | the canvas shows a dot per step as it runs (§7); the button says "Testing..." and Esc cancels |
-| Test failed | the failed step is selected, its sheet shows the sentence and the one fix button (§7.3), which is the only primary on the screen; a fix that is a field ("Choose an agent") moves focus to that field instead of repeating it |
+| Test failed | the failed step is selected, its sheet shows the sentence and the one fix button (§7.3), which is the only primary on the screen; a fix that is a field ("Choose an agent") moves focus to that field instead of repeating it, and no primary shows then: the header buttons stay secondary and Save step is dimmed until the field has a value. "Retry with model" (`SND-GRAPH-103`) lives on the run page only |
 | Tested | "Passed 2m ago"; Activate is the primary button |
 | Active | chip "Active, next weekday 7:00"; Pause; Run now |
 | Conflict | a stale-base edit (`SND-GRAPH-007`) shows "Changed elsewhere. Reload" and keeps the owner's open sheet text; Reload is the only primary and Save step is off until it runs |
@@ -275,7 +275,7 @@ By default `prompt` and `run_agent` return their pinned output, else the schema'
 - **With model** runs `prompt` steps for real (read-only, no side effects). Use it to catch #3079: the model answered text, not JSON.
 - **With agents** runs `run_agent` nodes in the Sindri sandbox with no push and no write (engine's `--with-agents`). A test launch forces `GithubCredentialResolver` to `None` (the token, its mount and the github host group follow from it; `SandboxShims.WriteGithub` then writes no shim), so the agent holds no GitHub token; W6's with-agents case asserts that on the built sandbox plan, not on fakes. It spends the owner's agent usage, so a session may not use it (§8).
 
-The Test button has a small menu: Test (fenced), Test with model, Test with model and agents. A step with a pin shows a pin glyph; "Pin this output" is in the run page (§7). A live GET in a test (the read-only case above) is the only network read a fenced test makes.
+The Test button has a small menu: Test (fenced), Test with model, Test with model and agents. `T` opens a centred dialog, not a sheet: one radio row per recent real event (newest picked), the example payload last, the would-match line, an "Edit the payload" fold, and a split button (Test run, Enter, with this menu on its arrow). Its footer says "Nothing is sent. The model and agents do not run.", and each menu row carries a short note ("nothing runs for real", "uses your agent time"). A step with a pin shows a pin glyph; "Pin this output" is in the run page (§7). A live GET in a test (the read-only case above) is the only network read a fenced test makes.
 
 ### 5.3 What passing means
 
@@ -315,7 +315,7 @@ The block checks the exit code and the text before it parses. Exit code non-zero
 
 The run page is the canvas with a status dot per step, and a bottom panel for the selected step. At 1440x900 the body between the 40 px top bar and the 28 px footer is 832: header 48, canvas 568, panel 216.
 
-- **Header.** `<workflow> › run 3` (mono id left of the title), the run's state chip from the event (decision 4: "Running", "Succeeded", "Failed at {step}", "Waiting on you", "Cancelled"), mode (Live / Test / With model), trigger summary, "Started 4m ago · took 14s".
+- **Header.** `<workflow> › run 3` (mono id left of the title), the run's state chip from the event (decision 4: "Running", "Succeeded", "Failed at {step}", "Waiting on you", "Cancelled"), mode (Live / Fenced / With model / With model and agents, the Test menu's names), trigger summary, "Started 4m ago · took 14s".
 - **Dots.** Queued, running (arc), succeeded, failed (x), skipped (grey), parked (pause), would-have (its own glyph; the dashed ring is the draft's, so X1 adds a would-have glyph to the grammar). Queued is a ring in ink-subtle. A cancelled run has no glyph and an ink-subtle title (the grammar's ended rule); succeeded and failed keep their check and x. Colour is never the only signal.
 - **Panel.** Tabs: Input, Output, Raw answer (only when a model step kept text), Would have (test runs only, so it stays reachable at 1000 wide), Error, Time. A failed run reads "Failed at {step title}", never the step kind. Input and Output are the stored values (`NodeRunView.Input`, `.Output`, cut at 64 KB with a "truncated" badge). Large payloads fold. For a test run the panel also shows "would have" rows.
 - **Pin.** "Pin this output" is a button (no bare key: a pin is a write) on a succeeded step, and it saves it as a `workflow_pin` row (§3.1) for later test runs of this revision.
@@ -541,6 +541,6 @@ Design frames, round 1 (31 frames, `pr-assets/workflows-3109` at ee56d6ef35, #31
 2. One fix button on `SND-GRAPH-103`, "Retry with model"; the panel opens on Raw answer (§6.1).
 3. Both Activate confirms get the second button; it runs the missing test, never agents (§5.3, decision 8).
 4. Would-have gets its own glyph; X1 adds it to the grammar (§7.1).
-5. ink-3 and `--wire` fail contrast; this page uses ink-subtle, and #3138 tracks the token (§4.2).
+5. ink-3 and `--wire` fail contrast; text uses ink-subtle, connectors use #3138's new `--wire` `#686870` (§4.2).
 Guesses taken into the spec: template names, "Fix 2 things", the runs page and its `[` `]` toggle, run chip words, cancelled has no glyph, motion and density numbers. Changed: Describe it is hidden until P6, and Pin is a button, not bare `P`.
 UX check of the round 1 frames (7 MUST, 15 NIT). Rules taken into the spec: a template opens on its first unfilled field's sheet (5 actions from Start to a passing test, §4.1); one test-fact shape in the header, and the "what did not run" sentence moves to the result strip (§4.7, §5.3); one primary per screen, with the header dropping to secondary beside a fix button or Reload (§4.7, §4.8); engine down wins over findings and offers "Start Sindri" (§4.8); Save step is off while Reload stands (§4.8); the confirm's second button shows only when a test it may run is left (§5.3); Enter and Ctrl+Enter both confirm (§4.6); a Would have tab and "Failed at {step title}" on the run page (§7.1); "notification", not "ping", in user-facing text. The rest are drawing fixes for round 2.
