@@ -162,6 +162,45 @@ public sealed class RunWorkflowServiceTests
         Assert.Empty(_starter.Requests);
     }
 
+    [Fact]
+    public async Task Run_with_a_stale_expect_revision_is_refused_with_007()
+    {
+        await Create(concurrency: null, activate: true);
+        _ = (await _workflows.Save(_id, 1, SecondSpec(), "owner", Token)).Value;
+        _ = (await _workflows.Activate(_id, 2, Token)).Value;
+
+        var result = await _service.Handle(new RunWorkflowRequest(_slug, Payload: null, "owner", ExpectRevision: 1), Token);
+
+        Assert.Equal(SindriErrors.GraphStaleRevision.Code, result.Error.Code);
+        Assert.Empty(_starter.Requests);
+    }
+
+    [Fact]
+    public async Task Run_with_the_active_expect_revision_starts_that_revision()
+    {
+        await Create(concurrency: null, activate: true);
+
+        var result = await _service.Handle(new RunWorkflowRequest(_slug, Payload: null, "owner", ExpectRevision: 1), Token);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, Assert.Single(_starter.Requests).Revision);
+    }
+
+    [Fact]
+    public async Task Run_without_expect_revision_runs_the_active_revision()
+    {
+        await Create(concurrency: null, activate: true);
+        _ = (await _workflows.Save(_id, 1, SecondSpec(), "owner", Token)).Value;   // revision 2 is saved, revision 1 stays active
+
+        var result = await _service.Handle(new RunWorkflowRequest(_slug, Payload: null, "owner"), Token);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, Assert.Single(_starter.Requests).Revision);
+    }
+
+    private static GraphSpec SecondSpec() => new(Version: 1, Name: "Morning check, edited", Description: null, Concurrency: null, Resources: null,
+        Nodes: [new GraphNode(NodeId.From("start"), "manual", Title: null, [])], Edges: []);
+
     private async Task Create(string? concurrency, bool activate)
     {
         var spec = new GraphSpec(Version: 1, Name: "Morning check", Description: null, Concurrency: concurrency, Resources: null,

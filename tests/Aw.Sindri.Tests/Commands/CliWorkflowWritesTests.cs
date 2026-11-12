@@ -91,7 +91,7 @@ public sealed class CliWorkflowWritesTests : IDisposable
     {
         var activate = new Api(HttpStatusCode.OK, Body(new ActivateWorkflowResponse(_slug, 2, "abc")));
         var pause = new Api(HttpStatusCode.OK, Body(new PauseWorkflowResponse(_slug, 2)));
-        var delete = new Api(HttpStatusCode.OK, Body(new DeleteWorkflowResponse(_slug, DateTimeOffset.UnixEpoch)));
+        var delete = new Api(HttpStatusCode.OK, Body(new DeleteWorkflowResponse(_slug, DateTimeOffset.UnixEpoch, RunsKept: 0, BytesFreed: 0, ResourcesStayed: [])));
 
         _ = await Verbs(_up, activate).Activate(["drift-check", "--revision", "2"], Token);
         _ = await Verbs(_up, pause).Pause(["drift-check"], Token);

@@ -3,13 +3,17 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Resources;
 
 namespace Aw.Sindri.Features.DeleteWorkflow;
 
 /// <summary>Archives a workflow (the store never deletes revisions or runs). An unknown slug is SND-GRAPH-008; an archived workflow is SND-GRAPH-011, since there is nothing left to archive.</summary>
 /// <param name="workflows">The workflows.</param>
+/// <param name="runs">The runs; a run in flight blocks the delete.</param>
+/// <param name="files">The resources on disk, purged after the archive.</param>
 /// <param name="log">Writes the lifecycle event.</param>
-internal sealed class DeleteWorkflowService(IWorkflowStore workflows, WorkflowChangeLog log) : IService<DeleteWorkflowRequest, DeleteWorkflowResponse>
+internal sealed class DeleteWorkflowService(IWorkflowStore workflows, IWorkflowRunStore runs, IResourceFiles files, WorkflowChangeLog log) : IService<DeleteWorkflowRequest, DeleteWorkflowResponse>
 {
     public async ValueTask<Result<DeleteWorkflowResponse>> Handle(DeleteWorkflowRequest request, CancellationToken cancellationToken)
     {
@@ -43,6 +47,7 @@ internal sealed class DeleteWorkflowService(IWorkflowStore workflows, WorkflowCh
         }
 
         var recorded = await log.Record(EventTypes.WorkflowArchived, new WorkflowChangedPayload(record.Id, record.Slug, archived.Value.LatestRevision, SpecHash: null, request.By), cancellationToken).ConfigureAwait(false);
-        return recorded.IsError || archived.Value.ArchivedAt is not { } at ? (recorded.IsError ? recorded.Error : SindriErrors.GraphNotFound.With("the workflow was not archived")) : new DeleteWorkflowResponse(record.Slug, at);
+        _ = (runs, files);   // red stub (#3311): the refusals, the purge and the counts come in the next commit
+        return recorded.IsError || archived.Value.ArchivedAt is not { } at ? (recorded.IsError ? recorded.Error : SindriErrors.GraphNotFound.With("the workflow was not archived")) : new DeleteWorkflowResponse(record.Slug, at, RunsKept: 0, BytesFreed: 0, ResourcesStayed: []);
     }
 }
