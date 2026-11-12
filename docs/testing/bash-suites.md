@@ -116,7 +116,7 @@ bash scripts/tests/meta-version.test.sh     # the installed aw-meta's version an
 bash scripts/tests/install-meta.test.sh
 bash scripts/tests/oom-policy.test.sh   # install-meta.sh writes the DefaultOOMPolicy=continue drop-in only when the user manager says stop (idempotent, dry run, other drop-ins untouched, never runs daemon-reload), aw-meta-launch warns once when it isn't continue; no line without systemctl or on macOS (#2931)
 bash scripts/tests/meta-gate-reserve.test.sh   # scripts/meta-gate-reserve.sh (the meta gate's heavy-slot reserve, linked to $AW_STATE_DIR/bin-r1b/meta-gate-reserve by install-cs.sh) on a temp state dir: depth tiers, the heavy-slots-cap clamp, --show, --clear, usage exit 2, the file holds just the number
-bash scripts/tests/heavy.test.sh              # scripts/heavy.sh (the heavy-job wrapper, linked to $AW_STATE_DIR/bin-r1b/heavy by install-cs.sh) on a temp state dir and a stub dotnet: usage, exit codes (75, 124, 130), lock files and owner line, heavy-slots-cap, the meta reserve, the memory guard, nested runs, --light/--expensive classification (~25 s)
+bash scripts/tests/heavy.test.sh              # scripts/heavy.sh (the heavy-job wrapper, linked to $AW_STATE_DIR/bin-r1b/heavy by install-cs.sh) on a temp state dir and a stub dotnet: usage, exit codes (75, 124, 130), lock files and owner line, heavy-slots-cap, the meta reserve, the memory guard, nested runs, --light/--expensive classification, UseSharedCompilation=false unless the caller sets it (#3178) (~25 s)
 bash scripts/tests/meta-teams.test.sh
 bash config/hooks/tests/codex-adapter.test.sh
 bash config/hooks/tests/cursor-adapter.test.sh

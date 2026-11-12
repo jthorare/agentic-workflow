@@ -91,7 +91,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
         .AddSingleton<AgentRecovering>().AddSingleton<SkillStepWatching>().AddSingleton<AgentStepSelection>().AddSingleton<IStepOutputs, DiskStepOutputs>()
         .AddSingleton<UsageFlush>(static provider => (launch, ct) => FlushScoped(provider, launch, ct))
         .AddSingleton<AgentTargetResolver>().AddSingleton<AgentLaunchRecorder>().AddSingleton(AgentRuntimeOptions.Default)
-        .AddSingleton<AgentLaunchEnded>().AddSingleton<AgentLaunchStart>().AddSingleton<AgentNodeReading>().AddSingleton<AgentNodeLaunching>().AddSingleton<AgentSessionWatch>().AddSingleton<AgentNodeRecovering>().AddSingleton<AgentNodeClosing>()   // PR 7: a 'run_agent' node's runtime
+        .AddSingleton<AgentLaunchEnded>().AddSingleton<AgentLaunchStart>().AddSingleton<AgentNodeReading>().AddSingleton<AgentNodeLaunching>().AddSingleton<AgentSessionWatch>().AddSingleton<AgentNodeRecovering>().AddSingleton<AgentNodeClosing>().AddSingleton<AgentNodeAsking>()   // PR 7: a 'run_agent' node's runtime
         .AddSingleton<IAgentNodeRuntime, AgentNodeRuntime>().AddSingleton<AgentNodeActivities>()
         .AddSingleton<WorkerActivities>();
     }
