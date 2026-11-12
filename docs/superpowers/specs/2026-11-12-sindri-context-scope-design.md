@@ -176,11 +176,18 @@ and measured it (comment 6818215657). The reference frame, drawn on the real `To
 - **The question box** is the full width of the page and has focus when the page opens. Its placeholder is whole at 1000 px.
 - **The scope header**: the scope's name and id, its counts (files, tests, decisions, conflicts), and Hand to agent. Saved scopes are a
   menu on the name, newest first.
-- **The ranked rail** (left, 280 px) is the scope as a list: groups that fold, one file per row with its score and why. This is aider's
+- **The ranked rail** (left, 280 px) is the scope as a list: groups that fold, one file per row. A row's columns, left to right: the role
+  glyph (`T` touch, `R` read, `✓` test, in ink, never colour alone), the file name, the why, the score. Inside a group, touch rows come
+  first. Score is the rank normalised to 0-1 for this scope; a solid dot means an edge put the file there, a hollow dot means only the
+  lexical or semantic leg did. There is no other badge colour: the frame's green "Confirmed link" becomes the word, in ink. This is aider's
   repo map (ledger problem 2 of `docs/sindri/prior-art/context-map.md`): rank by graph, then one line of reason.
-- **The bands** (centre and right) draw the same files as cards in three columns: Entry points -> Core -> Data and effects. Groups fold
+- **The bands** (centre and right) draw the same files as cards in three columns: Entry points -> Core -> Data and effects. A file's band
+  comes from its strongest node kind: route, job, middleware or CLI command -> Entry points; service, layer, domain type -> Core; table,
+  schema, event, migration -> Data and effects; tests fold into one Tests card there. Anything else goes to Core. The bands draw at most
+  6 cards each; more fold into "+ N more", which opens the rail at that group. Groups fold
   to one card ("Billing plans · 4 files"). Every edge carries its verb ("calls RateLimiter.check", "reads IQuotaStore.get").
-- **The in-place open** (taken from direction 1): the selected rail row grows in place to show *Touches*, *Why here* and its actions.
+- **The in-place open** (taken from direction 1): the selected rail row grows in place to show *Touches*, *Why here*, the decisions that
+  cite the file (with a conflict marked as one, "D-37 conflicts with D-41") and its actions.
   It replaces direction 3's bottom strip, which pulled the eye away from the row you are on.
 - **The Suggested tray** (taken from direction 2): "Suggested, not in scope yet", up to 4 files with Add. A scope grows without a new
   question.
@@ -197,7 +204,8 @@ and measured it (comment 6818215657). The reference frame, drawn on the real `To
 4. **The selected row's second line stays at or above 4.5:1 on the selected fill** (it is 4.64:1 today), held by a check in the Frames
    suite, not by eye.
 5. **Rail rows are 32 px and one line** (the #2978 grammar), not 38 px and two. The why moves into a fixed column after the name, with
-   the full text on Space. The same 14 files plus 6 headers then fit in about 430 px instead of 560 px.
+   the full text on Space. The frame's 10 open rows, 7 headers and one in-place open then fit the rail's 640 px at 1440x900, with no
+   scroll (10 x 32 + 7 x 23 = 481 px, plus the open row).
 
 **One cursor, owned by the rail.** The 14 files show twice: in the rail and as band cards. There is one selection. The rail owns it:
 `j`/`k` move it, and a click on a band card moves the rail cursor to that file's row (folded groups open). The band card of the selected
@@ -207,7 +215,8 @@ highlighted while the rail shows another row, so Enter opens a file the person d
 ### 6.2 Peek (Space) and full (Enter)
 
 - **Peek**, a side pane at 40% width: the file's outline (top-level symbols), the lines that matched with two lines of context, its edges
-  in and out grouped by kind (each one a link that adds that file to the scope as read), and the why.
+  in and out grouped by kind (each one a link that adds that file to the scope as read), the decisions and docs that cite it, and the why.
+  It overlays the bands from the right; the selected band card stays in view (the bands scroll it left if it would be covered).
 - **Full**, Enter: the file in a read-only code view at the matched line, with the same edges in a gutter. "Open in editor" is one key (`o`)
   and runs the configured editor command.
 
@@ -228,43 +237,113 @@ saved scopes plus the question box.
 
 | State | What shows |
 |---|---|
-| first index building | the question box disabled with "Indexing agentic-workflow: 41% · about 3 min left"; the treemap fills in as files land; no Build map button while a build runs |
+| first index building, lexical not ready | the question box disabled with "Indexing agentic-workflow: 41% · about 3 min left"; the treemap fills in as files land; no Build map button while a build runs |
+| lexical ready, edges building | questions work; the header says "Answers get better as indexing finishes · 41%"; rows have hollow dots until edges land |
 | index ready, no map | questions work (lexical + structural need no map); groups fall back to packages; a quiet line offers "Name areas" (the map) |
 | a question with no hits | "Nothing in agentic-workflow matches 'refund reason'" plus up to 3 near words that do match, as plain words, never raw keys (#2809) |
-| answer slower than 1 s | the lexical rows show first with "ranking…" in the header; the order settles once, no reshuffle after that |
+| answer slower than 1 s | the lexical rows show first with "ranking…" in the header; the order settles once, no reshuffle after that; the cursor stays on the same file, not the same row index |
 | index behind the checkout | a line in the header: "answered at 7f01aca, 3 commits behind" with Refresh |
 | a failed read | "Couldn't read the code index" plus Retry and the log path; never an empty list that looks like "no matches" |
 
-### 6.6 Keyboard
+### 6.6 Keyboard and focus
 
-`/` focuses the question. `j`/`k` or arrows move rows, `h`/`l` fold groups, Space peeks, Enter opens, Esc goes back keeping the
-selection. `.` opens the row's menu: pin, drop and set touch / read live there (the #2978 key rule). `m` more like this, `c` what calls
-this, `n` neighbourhood, `s` save (asks for a name, default the question). Ctrl+K has every action by name. Every action has a menu item for mouse use.
+The keys follow the shared grammar on #2978: `j`/`k` move, `/` filters, Space peeks, Enter opens, Esc goes back, `c` creates, `.` opens
+the row's actions, Ctrl+K has every action by name.
+
+| Key | Where | Does |
+|---|---|---|
+| (typing) | question box | edits the question; Enter asks and moves focus to the first rail row |
+| Down, Esc | question box | moves focus to the rail without asking |
+| `c` | rail | create: a new question, with focus in an empty question box |
+| `e` | rail | edit the current question (focus in the box, text kept) |
+| `/` | rail | filter the scope's rows by name |
+| `j` / `k`, arrows | rail | move the cursor; `h` / `l` fold and open groups |
+| Space / Enter / Esc | rail | peek / open full / back, keeping the selection |
+| `.` | rail | the row's actions: pin, drop, set touch / read |
+| `m` | rail | more like this |
+| `w` | rail | what calls this ("who uses it") |
+| `n` | rail | the neighbourhood (§6.3) |
+| `s` | rail | keep and rename the scope |
+
+Letters act only while focus is in the rail; in the question box they type. Every action has a menu item for mouse use and the same
+action id in Ctrl+K and in `context_scope edit` (§8). The frame's key bar still shows the old `p` / `x` / Space = expand group: the
+redraw takes the table above.
+
+Screen readers: the rail is a tree (group -> rows); a row reads "touch, ExportHandler.cs, calls RateLimiter.check, score 0.96". The bands
+and the treemap repeat the rail and are hidden from the accessibility tree. "ranking…" and "answered at …" are a polite live region.
 
 ### 6.7 Visual bar
 
-One accent (the selected file and its edges, lit treemap cells). Counts and second lines meet 4.5:1 (§6.1 fixes 3 and 4). Ink for structure. No band or concept colours (#2813). Labels never cut (#2809). Type
+One accent (the selected file and its edges, lit treemap cells). Every text meets 4.5:1 on its own fill and every meaningful line or mark
+3:1, held by a contrast check in the Frames suite (§6.1 fixes 3 and 4). Ink for structure. No band or concept colours (#2813). Labels never cut (#2809). Type
 scale and spacing from the tokens. Inspora is the reference (#2959 point 6).
 
 ## 7. The benchmark (context lane, already planned on #2959)
 
-`tests/fixtures/scoping/<repo>/questions.yaml`: a question, its answer-key files with their role, a why per file. Fixtures: Effect-TS/effect
-pinned at a sha, and this repo. 5 questions each to start, 10 later. A runner prints precision and recall at 25, p50 / p95 latency, and the
-follow-ups needed. This spec adds one thing: the runner also counts **touch** recall separately, because a scope that finds every read file
-and misses the one to edit has failed.
+`tests/fixtures/scoping/<repo>/questions.yaml`, checked against `schemas/scoping/questions.schema.json` by `scripts/check-scoping-fixtures.mjs`
+and its bash test, like the other fixture checkers. One entry:
+
+```yaml
+- id: heavy-slot-lock
+  question: where is the heavy job slot lock taken and released
+  split: held-out          # tune | held-out: ranking changes are tuned on `tune` only
+  commit: 7f01aca3b8       # answer files are pinned to this commit; a rename is a new entry
+  answers:
+    - { path: scripts/heavy.sh, role: touch, why: takes and frees the slot (acquire, release trap) }
+    - { path: config/lib/locks.sh, role: touch, why: acquire_any_lock, the shared slot taker }
+    - { path: scripts/tests/heavy.test.sh, role: test, why: covers the wrapper's exit codes and locks }
+```
+
+Fixtures: Effect-TS/effect and this repo, each pinned in `context/scoping.lock` and fetched by `scripts/scoping-fixture.sh fetch effect|aw`
+(Effect needs about 3 GB of disk for the clone and its index). The 10M copy is built from vendored open-source monorepos listed in the same
+lock, and is only for budgets. 10 questions per fixture to start, half `tune` and half `held-out`; #3047's question is one of them.
+The runner (`sindri context bench --fixture <repo> [--json]`, exit 0 floor met, 1 below it, 2 error) prints precision and recall at 25,
+**touch** recall on its own, p50 / p95 latency, and the follow-ups needed (a follow-up is any extra question or edit before the touch files
+are all in the scope). It writes its numbers to `$AW_STATE_DIR/scoping-bench/<repo>/<date>.json`.
+
+**Floor for decision 8:** touch recall at 25 >= 0.6 on the held-out half of both fixtures. The target stays at 0.8 (§4.3).
+
+A scope whose edits changed its touch set is offered as a new benchmark question in `sindri doctor`; the owner accepts it into the
+answer key by hand, so the benchmark grows from real use.
 
 ## 8. Agents
 
-- `context_query` returns a scope (it is saved, with `who = session:<id>`). An agent that wants the old text answer passes `shape: text`.
-- `context_scope get|edit|list` (MCP and `sindri context scope …`): read one, apply pin / drop / role edits, list saved ones.
-- The app shows an agent's scopes in the saved list with the session's name; a Work item or a todo can link a scope ("Scope this" from a
-  row, #2961 point 5).
-- A scope handed to an agent session is a short block: the question, then the touch / read / test files with their why, cut to a token budget.
+`context_query` is unchanged. Scopes have their own verbs, each as MCP `context_scope` (with an `op`) and as `sindri context scope <op>`:
+
+| Op | Arguments | Does | Exit |
+|---|---|---|---|
+| `ask` | `<question> [--repo R] [--json]` | answers and saves a scope, `who` = the caller | 0 ok, 1 attention (index not ready, not running), 2 invalid |
+| `show` | `<id or name> [--json]` | one scope | 0, 1 not found, 2 invalid |
+| `list` | `[--repo R] [--mine] [--json]` | saved scopes, newest first | 0, 1 not running |
+| `edit` | `<id> --op pin|drop|touch|read|more|callers --path P --version N [--json]` | one edit; the ops are the §6.6 action ids | 0, 1 version conflict or stale row, 2 invalid |
+| `handoff` | `<id> [--max-tokens N] [--format md|json]` | the block for an agent | 0, 1 not found |
+| `rename`, `delete` | `<id> [--name T] --version N` | keep with a name; delete | 0, 1, 2 |
+
+- Ids print as `scp_` plus the ulid; `show` also takes a unique name in the repo. `--json` carries keys, text carries labels (#2809).
+- A session reads and edits scopes of the repos its `X-Sindri-Repo` header names, and no other repo's. It may edit the scopes it made;
+  editing the owner's scope saves a copy under the session, so the owner's scope never changes behind their back.
+- `handoff` returns the question, then the touch / read / test files with their why, cut to `--max-tokens` (default 6000, counted with the
+  same tokenizer as `context_query`'s budget). Repo text in it (matched lines, why lines, the question) is fenced as untrusted, like every
+  other Sindri MCP result.
+- The app's Hand to agent opens a small menu (new session, or one of the repo's running sessions), shows "about 6k tokens, 14 files",
+  and leaves a row "Handed to <session>" with a link. A Work item's "Scope this" (#2961 point 5) asks its title and links the scope.
 
 ## 9. Errors
 
-New codes in the SND-CONTEXT range, numbers fixed at build time: scope not found; scope for a repo not in the profile; index not ready
-(with the build's progress); edit on a stale row. Each has a sentence for the app and a `fix:` for the CLI.
+Reserved now: SND-CONTEXT-261 to 279 (250-260 are taken).
+
+| Code | Meaning | CLI exit |
+|---|---|---|
+| 261 | scope not found | 1 |
+| 262 | scope for a repo the session's header doesn't name, or not in the profile | 2 |
+| 263 | index not ready (the build's progress is in the error) | 1 |
+| 264 | edit names an old version (the current one is in the error) | 1 |
+| 265 | edit on a stale row (the file changed since the answer) | 1 |
+| 266 | unknown edit op | 2 |
+| 267 | `--max-tokens` too small for the question and one file | 2 |
+| 268 | the scope's commit is no longer in the clone | 1 |
+
+Each has a sentence for the app and a `fix:` for the CLI. An empty or over-long question reuses SND-CONTEXT-006.
 
 ## 10. Goals and non-goals
 
@@ -314,10 +393,13 @@ issue, `Part of #2959`:
 | P3 | the scope: events, view, `context_query` returns it, `context_scope` MCP + CLI | api (+ context for the query) | now, against a stub ranker | the §3 fields |
 | P4 | ranking + touch/read/test split | context | after P1 | P0, P1 |
 | D1 | design: the contact sheet is done (direction 3 picked, #2959). Left: the redraw with qa's 5 fixes (§6.1), then peek, neighbourhood and the §6.5 states | design | now | #2978 row tokens |
+| S0 | the wire shape as a JSON schema + API golden, the ledger migration, `context_scope` tools in aot-smoke's tools/list | api | first PR of P3 | §3, §8, §9 |
 | U1 | the page: question box, ranked rail with in-place open, bands, Suggested tray, one cursor, peek, keys, states (§6.1, §6.2, §6.5, §6.6) on a fake scope; the Frames contrast check of fix 4 | ui | after D1's redraw | the P3 wire shape |
 | U2 | neighbourhood + treemap (§6.3, §6.4) | ui | after U1 | P1 edges for real data |
 | F1 | perf: the §4.3 budgets on the 10M copy, one issue per broken budget | perf | after P2 + U1 | — |
 | Q1 | ux + qa walk the 5 questions, person and agent | ux, qa | after P4 + U2 | — |
+
+The page flips to default only on the §7 floor (decision 8). Each phase updates its docs: `docs/csharp/sindri-context.md`, `docs/sindri/context.md` and the CLAUDE.md Commands entries for new verbs.
 
 P0, P1, P2, P3 and D1 start the same day, so five lanes are busy from day one. U1 builds on a fake scope from the P3 wire shape, so it
 never waits on ranking.
