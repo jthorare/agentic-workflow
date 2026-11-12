@@ -633,13 +633,14 @@ From a read of `origin/main` 7c81646696 and the issues (no build, no app run):
 | A3 | the `ops` route: message, answer, recycle, stop; authorization on target | api | after A1 | A1, E2 for workflow sessions |
 | A4 | `GET .../activity` (the peek body) | api | after A1 | A1 |
 | A5 | `failed` on `fleet.changed` (#3026), then spend for all sessions (#3025) | api | `failed` after A0; spend last | A0 |
+| A6 | the fleet hook as a setup step: a `fleet hook` row in `sindri setup` and a setup job that runs `scripts/install-fleet.sh` per installed provider, behind the page's **Turn on live updates** (§7) | api | after A2 | A2 |
 | E1 | node states, waiting on, last tool, links as ledger events | engine | after #2985 (their plan) | #2985 |
 | E2 | the steer verbs: cancel, answer, message, resume | engine | after E1 | E1 |
 | U0 | the filter box with `p: r: s: n: o:` and column sort on today's list (#3024) | ui | now (needs no new control) | none |
 | U1 | the page on `RowList`: groups, glyphs, columns, the New band, held order (D3), `RowKeys`, density | ui | on A0's fixture, with a stub `RowList` until design's P0 lands | A0, P0 |
 | U2 | box strip, peek, states, head count | ui | after U1 | U1, A4, T3 |
 | U3 | steer UI: composer, stop confirm, recycle picker, Jump, outcome states (#3022, #3023) | ui | after U1; fake route first | U1, A3 |
-| U4 | subscribe to `session.changed`; the poll becomes the fallback | ui | after U1 | U1, A2 |
+| U4 | subscribe to `session.changed`; the poll becomes the fallback; the **Turn on live updates** button (A6) | ui | after U1 | U1, A2 |
 | U5 | tray and alert wiring to Home's count (#3026) | ui | after U1 | U1, A5 |
 | U6 | delete the old views in §11 | ui | after U4, one week of the new page default | U4 |
 | F0 | perf baseline on today's 5 s poll at 50 and 200 sessions | perf | now | none |
