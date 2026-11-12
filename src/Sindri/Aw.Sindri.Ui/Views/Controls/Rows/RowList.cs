@@ -4,7 +4,7 @@ using System.Collections.Specialized;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Media;
+using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Rows;
 
@@ -16,7 +16,7 @@ namespace Aw.Sindri.Ui.Views.Controls.Rows;
 /// handler of its own: it listens for <see cref="RowKeys"/>' routed events and raises <see cref="PeekRequested"/>, <see cref="OpenRequested"/> and <see cref="BackRequested"/>.
 /// </summary>
 [SuppressMessage("Design", "MA0182", Justification = "Pages adopt it in their own PRs (#2978).")]
-internal sealed class RowList : ItemsControl
+internal sealed partial class RowList : ItemsControl, IRowKeyTarget
 {
     /// <summary>The groups, each an <see cref="IRowGroup"/>. Hides the base property: the base one holds the flat entries.</summary>
     public static new readonly StyledProperty<IEnumerable?> ItemsSourceProperty = AvaloniaProperty.Register<RowList, IEnumerable?>(nameof(ItemsSource));
@@ -54,6 +54,10 @@ internal sealed class RowList : ItemsControl
     public RowList()
     {
         RowKeys.SetEnabled(this, value: true);
+        AddHandler(RowKeys.PeekRequestedEvent, (_, e) => RaisePeek(new RowRequestEventArgs { Item = ItemAt(e.Index), Hold = e.Hold, Released = e.Released }));
+        AddHandler(RowKeys.OpenRequestedEvent, (_, e) => RaiseOpen(new RowRequestEventArgs { Item = ItemAt(e.Index) }));
+        AddHandler(RowKeys.BackRequestedEvent, (_, e) => RaiseBack(new RowRequestEventArgs { Item = ItemAt(e.Index) }));
+        AddHandler(GotFocusEvent, (_, e) => OnRowFocused(e.Source));
     }
 
     /// <summary>The groups, each an <see cref="IRowGroup"/>.</summary>
@@ -91,12 +95,6 @@ internal sealed class RowList : ItemsControl
         set => SetValue(IsPeekOpenProperty, value);
     }
 
-    /// <summary>The group whose header the sticky header shows now; null while the list is at its top.</summary>
-    internal object? StickyGroup => _sticky is { IsVisible: true } sticky ? sticky.Group : null;
-
-    /// <summary>How far the sticky header is pushed up by the next group's header.</summary>
-    internal double StickyPush => _sticky?.RenderTransform is TranslateTransform t ? t.Y : 0;
-
     /// <summary>How many row containers are in use now (group headers and recycled containers not counted).</summary>
     internal int RealizedRowCount => ItemsPanelRoot?.Children.OfType<Row>().Count(r => r.IsVisible && r.DataContext is not null) ?? 0;
 
@@ -115,6 +113,20 @@ internal sealed class RowList : ItemsControl
     /// <summary>Scrolls the list to a vertical offset; the sticky header follows.</summary>
     /// <param name="offset">The vertical offset in px.</param>
     internal void ScrollTo(double offset) => _scroll?.Offset = new Vector(0, Math.Max(0, offset));
+
+    /// <inheritdoc />
+    public bool IsRowIndex(int index) => ItemAt(index) is not null and not GroupEntry;
+
+    private object? ItemAt(int index) => index >= 0 && index < ItemCount ? Items[index] : null;
+
+    // While the peek is open, the cursor moving to another row moves the peek with it (j/k, arrows, a click).
+    private void OnRowFocused(object? source)
+    {
+        if (IsPeekOpen && (source as Visual)?.FindAncestorOfType<Row>(includeSelf: true)?.DataContext is { } item && !ReferenceEquals(item, SelectedItem))
+        {
+            RaisePeek(new RowRequestEventArgs { Item = item, Follow = true });
+        }
+    }
 
     internal void RaisePeek(RowRequestEventArgs e) => PeekRequested?.Invoke(this, e);
 
@@ -243,42 +255,6 @@ internal sealed class RowList : ItemsControl
     private void OnSourceChanged(object? sender, NotifyCollectionChangedEventArgs e) => Rebuild();
 
     private void OnScrollChanged(object? sender, ScrollChangedEventArgs e) => UpdateSticky();
-
-    // The header that sticks is the last one whose group has reached the top; the next group's header pushes it out as it arrives.
-    private void UpdateSticky()
-    {
-        if (_sticky is null || _scroll is null)
-        {
-            return;
-        }
-
-        var offset = _scroll.Offset.Y;
-        if (_groups.Count == 0 || offset <= 0.5)
-        {
-            _sticky.IsVisible = false;
-            return;
-        }
-
-        var active = 0;
-        for (var i = 0; i < _groupTops.Count; i++)
-        {
-            if (_groupTops[i] <= offset + 0.5)
-            {
-                active = i;
-            }
-        }
-
-        var next = active + 1 < _groupTops.Count ? _groupTops[active + 1] : double.PositiveInfinity;
-        if (!ReferenceEquals(_sticky.Group, _groups[active]))
-        {
-            _sticky.Fill(_groups[active]);
-        }
-
-        _sticky.RenderTransform = new TranslateTransform(0, StickyHeader.PushOut(next, offset, HeightOf("Row.GroupHeader", 28)));
-        _sticky.IsVisible = true;
-    }
-
-    private double HeightOf(string key, double fallback) => this.TryFindResource(key, ActualThemeVariant, out var v) && v is double d ? d : fallback;
 
     // The entry for a group header in the flat run.
     private sealed record GroupEntry(IRowGroup Group);
