@@ -361,10 +361,16 @@
                        AutomationProperties.Name="{Binding Counts}" />
             <ccontrols:CommandControl x:Name="StopControl" DataContext="{Binding Stop}"
                                       IsVisible="{Binding $self.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            <!-- Two columns when two of the widest commands fit (600 px each and the grid's 12 px gap), one below that; the order reads row by row (#3356). -->
             <ItemsControl x:Name="CopyOnlyActions" ItemsSource="{Binding CopyOnly}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <ccontrols:CardGrid MinColumnWidth="600" Spacing="12" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="controls:ControlViewModel">
-                  <StackPanel Spacing="{StaticResource Space.XXS}" Margin="0,0,0,8">
+                  <StackPanel Spacing="{StaticResource Space.XXS}">
                     <TextBlock Classes="caption subtle" Text="{Binding Label}" AutomationProperties.Name="{Binding Label}" />
                     <ccontrols:CommandControl />
                   </StackPanel>
