@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
@@ -133,5 +134,23 @@ public sealed class ReviewFramesTests : FrameHost
         await Until(window, () => shell.IsLibrarySheet && !shell.Reviews.Library.IsLoading && Visible(window, "ReviewsLibrarySummary"), "the library sheet never showed");
 
         Frame(window, "reviews-library-sheet-1440", Prefix);
+    });
+
+    [Fact]
+    public Task With_a_sheet_open_the_Reviews_table_drops_its_right_hand_columns_and_nothing_overlaps() => OnUi(async () =>
+    {
+        Server.LibraryAnswer = RouteAnswer.Api("library", "with-errors");
+        var (window, shell) = await OnList("some", 1440);
+        Named<Button>(window, "ReviewsLibrary").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await Until(window, () => shell.IsLibrarySheet && !shell.Reviews.Library.IsLoading && Visible(window, "ReviewsLibrarySummary"), "the library sheet never showed");
+
+        var row = Named<Border>(window, "ReviewRowFrame");
+        var grid = row.GetVisualDescendants().OfType<Grid>().First(g => g.ColumnDefinitions.Count == 6);
+        var kept = grid.Children.Where(c => c.IsVisible).Select(c => Grid.GetColumn(c)).Distinct().ToList();
+        var fixedWidth = kept.Where(i => i > 0).Sum(i => grid.ColumnDefinitions[i].Width.Value);
+
+        Assert.True(160 + fixedWidth <= grid.Bounds.Width, "the fixed columns leave the title under 160 px");
+        Assert.DoesNotContain(grid.Children, c => !c.IsVisible && grid.ColumnDefinitions[Grid.GetColumn(c)].Width.Value > 0);
+        Assert.All(kept.Where(i => i > 0), i => Assert.True(grid.ColumnDefinitions[i].Width.Value > 0));
     });
 }

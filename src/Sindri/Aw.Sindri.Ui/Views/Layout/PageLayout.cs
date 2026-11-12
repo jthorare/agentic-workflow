@@ -72,6 +72,14 @@ internal static class PageLayout
         return widths;
     }
 
+    /// <summary>
+    /// The Reviews table's six column widths (PR, author, age, CI, required checks, doc) for a table width; a 0 is a dropped column. Doc goes first, then
+    /// Required, then CI, so a narrow page (a sheet open beside it) keeps the first three facts and the PR title keeps 160 px.
+    /// </summary>
+    /// <param name="width">The table's width; 0 or less means not measured yet (every column).</param>
+    /// <returns>The widths, title column first (0 for the star).</returns>
+    internal static double[] ReviewWidths(double width) => width < 0 ? [] : [0, 140, 70, 120, 160, 140];
+
     /// <summary>The class a page region of this width has.</summary>
     /// <param name="width">The page region's width.</param>
     /// <returns>The tier.</returns>

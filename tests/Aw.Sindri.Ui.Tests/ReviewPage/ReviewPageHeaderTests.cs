@@ -67,6 +67,17 @@ public sealed class ReviewPageHeaderTests
     }
 
     [Fact]
+    public async Task A_missing_doc_gets_a_neutral_mark_not_the_pass_mark()
+    {
+        _f.Serve("empty-panels");
+
+        var page = await _f.Opened(Token);
+
+        var doc = page.Strip.Single(s => string.Equals(s.Panel, "docMap", StringComparison.Ordinal));
+        Assert.Equal(StateGlyph.None, doc.Glyph);
+    }
+
+    [Fact]
     public async Task When_checks_cant_be_decided_the_strip_says_so_and_has_no_other_part()
     {
         _f.Serve("panel-errors");

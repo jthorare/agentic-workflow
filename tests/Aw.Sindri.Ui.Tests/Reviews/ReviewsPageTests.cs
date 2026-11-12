@@ -63,7 +63,17 @@ public sealed class ReviewsPageTests
         var yours = page.Groups[1].Sections;
         Assert.Equal(("you", "running", StateGlyph.Stale, "1 open", null), (yours[0].Rows[0].Author, yours[0].Rows[0].Ci, yours[0].Rows[0].CiGlyph, yours[0].Rows[0].Required, yours[0].Rows[0].WaitingChip));
         var draft = yours[1].Rows[0];
-        Assert.Equal((true, "no CI", string.Empty, "no doc named"), (draft.IsDraft, draft.Ci, draft.Required, draft.Doc));
+        Assert.Equal((true, "no CI", "none open", "no doc named"), (draft.IsDraft, draft.Ci, draft.Required, draft.Doc));
+    }
+
+    [Fact]
+    public async Task A_row_whose_project_names_no_checks_reads_none_open_like_a_row_with_zero_open()
+    {
+        var page = await _f.Shown(Token);
+
+        var rows = page.Groups.SelectMany(g => g.Sections).SelectMany(s => s.Rows).ToList();
+        Assert.DoesNotContain(rows, r => r.Required.Length == 0);
+        Assert.Contains(rows, r => r.AutomationName.Contains("required checks none open", StringComparison.Ordinal));
     }
 
     [Fact]
