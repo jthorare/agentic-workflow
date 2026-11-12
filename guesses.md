@@ -3,7 +3,7 @@
 Round 1 guess numbers no longer apply. Items below are invented in these frames and need a real answer in the spec or the build.
 
 ## Placeholders
-1. Link ids written into the file: `[[#3112]]` (issue and PR), `[[thread:eng/1731]]`, `[[run:8841]]`, `[[scope:export/upload]]`, `[[code:ctx_9c41e2|Uploader.cs:88]]`. The context lane picks the real ones.
+1. Links written into the file (round 4): `[[Note]]`, `[[owner/repo#N]]` (always with the repo) and plain URLs. Thread, run, scope and code links are v1.1 and no longer drawn.
 2. Error codes are now the spec's (PR #3205): SND-NOTE-003 (capture write), SND-NOTE-005 (today save), SND-NOTE-012 (history read), SND-NOTE-015 (make an issue failed).
 
 ## Behaviour
@@ -33,3 +33,8 @@ Round 1 guess numbers no longer apply. Items below are invented in these frames 
 20. Not live: glyph and chip edge dimmed (dashed edge), text at full ink, tooltip "as of 14:02". Right-pane rows dim their glyphs.
 21. The list peek shows #3112 as a chip. The one-line preview in each list row stays plain text.
 22. Chip legend has 11 states, including Todo and run failed / passed.
+
+## Round 4
+23. The capture window always opens on Note. The Issue kind creates on Ctrl+Enter; bare Enter never makes an issue. The capture window is one line, so no Shift+Enter.
+24. Conflict: a clean buffer reloads silently (no frame); a dirty buffer merges on its own; only a line changed on both sides shows two versions, with no default button.
+25. Deferred to v1.1 and left as drawn: make-all, Note about this, image paste, agent proposals, day chords, Moved since yesterday.
