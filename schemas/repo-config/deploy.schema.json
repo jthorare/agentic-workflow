@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentic-workflow.local/schemas/repo-config/deploy.schema.json",
+  "title": "<repo>/.agentic-workflow/deploy.json",
+  "description": "How /landAndDeploy deploys and checks a release. Read by skills/landAndDeploy. The skill runs command and smokeTests as shell, so the file stays untracked.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "command": { "type": "string", "minLength": 1, "description": "Shell command that deploys. Streamed to stdout." },
+    "healthUrl": { "type": "string", "minLength": 1, "description": "URL polled after deploy; expects 200 OK." },
+    "smokeTests": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Shell commands; each must exit 0." },
+    "timeout": { "type": "integer", "minimum": 1, "description": "Seconds, for both the deploy command and health polling (default 600)." },
+    "journey": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "When present, the deployed app is driven after the smoke tests through /verify-app.",
+      "required": ["baseUrl"],
+      "properties": {
+        "baseUrl": { "type": "string", "minLength": 1 },
+        "args": { "type": "string", "description": "Extra /verify-app arguments, e.g. --lenses functional,error-state." }
+      }
+    }
+  }
+}

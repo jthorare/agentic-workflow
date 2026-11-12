@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentic-workflow.local/schemas/repo-config/evidence.schema.json",
+  "title": "<repo>/.agentic-workflow/evidence.json",
+  "description": "Targets for ui-evidence: CLI programs, databases, the desktop app. Mirrors Aw.Evidence.Core.Data.TargetsFile; TargetsReader enforces the finer rules.",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "envName": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "command": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "description": "A program and its leading arguments; a relative program is the repo's." },
+    "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+    "repoFile": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(^|/)\\.{1,2}(/|$))(?!.*/$)" }
+  },
+  "properties": {
+    "schema": { "enum": ["evidence.targets/1", "evidence.repo/1"] },
+    "cli": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "buildOutputs": { "type": "array", "items": { "type": "string", "minLength": 1, "pattern": "^[^/]" }, "description": "Directories relative to the repo whose executables a script may run." },
+        "allow": { "type": "array", "items": { "type": "string", "pattern": "^/" }, "description": "Absolute paths of programs a script may run." },
+        "passEnv": { "type": "array", "items": { "$ref": "#/$defs/envName" }, "description": "Variables every CLI call may inherit." }
+      }
+    },
+    "databases": {
+      "type": "object",
+      "minProperties": 0,
+      "propertyNames": { "minLength": 1 },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["engine", "host", "port", "database", "user", "passwordEnv", "disposable", "identity"],
+        "properties": {
+          "engine": { "const": "postgres" },
+          "host": { "type": "string", "minLength": 1, "pattern": "^[^/\\s]+$", "description": "A TCP host, never a Unix socket directory." },
+          "port": { "$ref": "#/$defs/port" },
+          "database": { "type": "string", "minLength": 1 },
+          "user": { "type": "string", "minLength": 1, "description": "A non-superuser role that can write nothing." },
+          "passwordEnv": { "$ref": "#/$defs/envName" },
+          "disposable": { "type": "boolean", "description": "db-run refuses an entry that is not throwaway." },
+          "identity": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["serverAddress", "database"],
+            "properties": {
+              "serverAddress": { "type": "string", "minLength": 1 },
+              "database": { "type": "string", "minLength": 1 },
+              "serverPort": { "$ref": "#/$defs/port" }
+            }
+          }
+        }
+      }
+    },
+    "desktop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest", "homeEnv", "fixture", "app"],
+      "properties": {
+        "manifest": { "$ref": "#/$defs/repoFile", "description": "Screens manifest (ui-evidence.desktop-screens/1), relative to the repo." },
+        "homeEnv": { "$ref": "#/$defs/envName", "description": "Variable that carries the scratch directory." },
+        "fixture": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["command", "up"],
+          "properties": {
+            "command": { "$ref": "#/$defs/command" },
+            "up": { "type": "array", "minItems": 1, "items": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } } },
+            "down": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+          }
+        },
+        "app": { "type": "object", "additionalProperties": false, "required": ["command"], "properties": { "command": { "$ref": "#/$defs/command" } } },
+        "driver": { "type": "object", "additionalProperties": false, "required": ["command"], "properties": { "command": { "$ref": "#/$defs/command" } } },
+        "sizes": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^[0-9]+x[0-9]+$" }, "description": "Window sizes 'WxH' (default 1440x900, 900x900)." },
+        "threshold": { "type": "number", "minimum": 0, "maximum": 100, "description": "Differing pixels allowed, in percent (default 10)." },
+        "timeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 3600, "description": "Per command (default 300)." },
+        "env": { "type": "object", "propertyNames": { "$ref": "#/$defs/envName" }, "additionalProperties": { "type": "string" }, "description": "Literal values, never secrets." }
+      }
+    }
+  }
+}

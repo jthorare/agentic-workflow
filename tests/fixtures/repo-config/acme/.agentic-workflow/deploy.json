@@ -1,0 +1,7 @@
+{
+  "command": "npm run deploy:prod",
+  "healthUrl": "https://acme.example.test/health",
+  "smokeTests": ["curl -fsS https://acme.example.test/api/ping"],
+  "timeout": 600,
+  "journey": { "baseUrl": "https://acme.example.test", "args": "--lenses functional,error-state" }
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentic-workflow.local/schemas/repo-config/canary.schema.json",
+  "title": "<repo>/.agentic-workflow/canary.json",
+  "description": "What /canary watches after a deploy. Read by skills/canary and skills/landAndDeploy (pre-deploy baseline).",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "duration": { "type": "integer", "minimum": 1, "description": "Monitoring window in seconds (default 900)." },
+    "errorRateUrl": { "type": "string", "minLength": 1, "description": "Endpoint returning the current error rate (numeric JSON or plain number)." },
+    "latencyUrl": { "type": "string", "minLength": 1, "description": "Endpoint returning {p50,p95,p99} in ms." },
+    "logSource": { "type": "string", "description": "Shell command that prints the last 60 s of log lines. May be empty." },
+    "logAnomalyPatterns": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Substrings or regexes that mark a critical log anomaly." },
+    "customProbes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "command"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "command": { "type": "string", "minLength": 1 },
+          "critical": { "type": "boolean", "description": "A critical failure makes the verdict UNHEALTHY." }
+        }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Multipliers against the pre-deploy baseline.",
+      "properties": {
+        "errorRateDegradedMultiplier": { "type": "number", "exclusiveMinimum": 0 },
+        "errorRateUnhealthyMultiplier": { "type": "number", "exclusiveMinimum": 0 },
+        "latencyDegradedMultiplier": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "evidence.repo/1",
+  "cli": { "buildOutputs": ["out/bin"], "allow": ["/usr/local/bin/acme-tool"], "passEnv": ["LANG", "ACME_REGION"] },
+  "databases": {
+    "acme-pg": {
+      "engine": "postgres",
+      "host": "127.0.0.1",
+      "port": 55432,
+      "database": "acme",
+      "user": "evidence_ro",
+      "passwordEnv": "ACME_PG_SECRET",
+      "disposable": true,
+      "identity": { "serverAddress": "172.17.0.2", "serverPort": 5432, "database": "acme" }
+    }
+  },
+  "desktop": {
+    "manifest": "docs/screens.json",
+    "homeEnv": "ACME_HOME",
+    "fixture": { "command": ["tools/fixture.sh"], "up": [["up"], ["items", "--large"]], "down": ["down"] },
+    "app": { "command": ["out/bin/acme-app"] },
+    "driver": { "command": ["tools/aw-ui-driver"] },
+    "sizes": ["1440x900", "900x900"],
+    "threshold": 10,
+    "timeoutSeconds": 300,
+    "env": { "ACME_MODE": "demo" }
+  }
+}

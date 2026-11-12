@@ -1,0 +1,9 @@
+{
+  "duration": 600,
+  "errorRateUrl": "https://acme.example.test/metrics/error-rate",
+  "latencyUrl": "https://acme.example.test/metrics/latency",
+  "logSource": "kubectl logs deploy/acme-api --since=60s",
+  "logAnomalyPatterns": ["FATAL", "panic:"],
+  "customProbes": [{ "name": "checkout-flow", "command": "npm run smoke:checkout", "critical": true }],
+  "thresholds": { "errorRateDegradedMultiplier": 2, "errorRateUnhealthyMultiplier": 5, "latencyDegradedMultiplier": 2 }
+}

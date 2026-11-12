@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentic-workflow.local/schemas/repo-config/worktrees.schema.json",
+  "title": "<repo>/.agentic-workflow/worktrees.json",
+  "description": "Where skills put git worktrees. Read by skills/_shared/worktree-path.sh and aw-meta (IWorktreeFiles).",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "root": { "type": "string", "minLength": 1, "description": "Directory that holds the worktrees. A leading ~ is $HOME; a relative path is relative to the main checkout. Must not be inside the checkout." }
+  }
+}

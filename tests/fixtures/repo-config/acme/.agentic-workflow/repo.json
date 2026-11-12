@@ -1,0 +1,10 @@
+{
+  "variants": { "axis": "plan", "values": [{ "name": "free", "baseline": true }, { "name": "team" }, { "name": "enterprise" }] },
+  "dataRepair": { "mechanism": "a migration in db/migrations", "never": ["a raw SQL file run by hand"], "validator": "npm run db:validate" },
+  "environments": ["local", "preview", "staging", "prod"],
+  "tickets": { "tracker": "linear", "followUpTeam": "ACME", "followUpState": "Backlog" },
+  "reviewBots": ["acme-review-bot[bot]"],
+  "prePush": ["npm run typecheck", "npx prettier --check <changed>", "npx eslint <changed>"],
+  "skipReviewLoop": ["revert"],
+  "siblingSurfaces": "src/routes.json"
+}
