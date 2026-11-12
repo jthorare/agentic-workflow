@@ -16,6 +16,7 @@ internal static class GitHubEventMapper
             {
                 "opened" => EventKind.GitHubPrOpened,
                 "review_requested" => EventKind.GitHubPrReviewRequested,
+                "merged" => EventKind.GitHubPrMerged,   // the feed's shape since late 2026 (#3008)
                 "closed" when PollJson.Member(PollJson.Member(payload, "pull_request") ?? default, "merged") is { ValueKind: JsonValueKind.True } => EventKind.GitHubPrMerged,
                 _ => null,
             },
@@ -53,6 +54,10 @@ internal static class GitHubEventMapper
             PollJson.Put(fields, "number", PollJson.Text(PollJson.Member(subject, "number")));
             PollJson.Put(fields, "title", PollJson.Text(PollJson.Member(subject, "title")));
             PollJson.Put(fields, "url", PollJson.Text(PollJson.Member(subject, "html_url")));
+            if (!fields.ContainsKey("url") && fields.TryGetValue("repo", out var repo) && fields.TryGetValue("number", out var number) && kind.Key.StartsWith("github.pr.", StringComparison.Ordinal))
+            {
+                fields["url"] = $"https://github.com/{repo}/pull/{number}";   // the trimmed feed has only the API url
+            }
             PollJson.Put(fields, "author", PollJson.Text(PollJson.Path(subject, "user", "login")));
             PollJson.Put(fields, "reviewer", PollJson.Text(PollJson.Path(payload, "requested_reviewer", "login")));
             PollJson.Put(fields, "label", PollJson.Text(PollJson.Path(payload, "label", "name")));
