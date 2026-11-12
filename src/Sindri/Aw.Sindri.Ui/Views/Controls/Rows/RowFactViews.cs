@@ -64,7 +64,7 @@ internal static class RowFactViews
                 FillPerson((Grid)content, fact.Text);
                 break;
             case RowFactKind.Ref:
-                ((TextBlock)content).Text = RefText.ShortenMiddle(fact.Text, Math.Max(4, (int)(width / MonoCharWidth)));
+                ((TextBlock)content).Text = RefFit.Fit(content, fact.Text, width, MonoCharWidth);
                 break;
             case RowFactKind.Text or RowFactKind.Diffstat or RowFactKind.Count:
             default:

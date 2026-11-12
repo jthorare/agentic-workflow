@@ -96,4 +96,28 @@ internal sealed partial class RowList
 
         return at;
     }
+
+    // The peek closed: focus was on its close button or its pane, which is gone now, so it goes back to the row that was peeked.
+    private void ReturnFocusToSelected()
+    {
+        if (RowRun.KeyOf(SelectedItem) is { } key && _attached)
+        {
+            Dispatcher.UIThread.Post(() => FocusPeekedRow(key), DispatcherPriority.Loaded);
+        }
+    }
+
+    private void FocusPeekedRow(string key)
+    {
+        var focused = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Visual;
+        if (focused is { IsEffectivelyVisible: true } && focused.FindAncestorOfType<PeekPane>(includeSelf: true) is null)
+        {
+            return;   // focus is somewhere live that isn't the pane: leave it
+        }
+
+        var index = _run.Entries.ToList().FindIndex(e => e is IRowItem row && string.Equals(row.Key, key, StringComparison.Ordinal));
+        if (index >= 0)
+        {
+            RowKeys.FocusRow(this, index);
+        }
+    }
 }

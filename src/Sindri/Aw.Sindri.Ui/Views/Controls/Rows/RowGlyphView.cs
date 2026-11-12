@@ -27,7 +27,8 @@ internal sealed class RowGlyphView : Control
     private static readonly ConditionalWeakTable<IBrush, Pens> _pens = [];
     private Palette? _palette;
 
-    private const double Radius = 5.5;
+    private const double Radius = 6.25;   // ring centre line; with the 1.5 stroke the glyph is 14 outside to outside (grammar .g)
+    private const double Outer = Radius + (Stroke / 2);   // a filled glyph (done, merged) is the full 14
     private const double Stroke = 1.5;
     private static readonly Point _centre = new(8, 8);
 
@@ -35,7 +36,7 @@ internal sealed class RowGlyphView : Control
     {
         [RowGlyph.Todo] = (g, p) => Ring(g, p.Subtle),
         [RowGlyph.Doing] = (g, p) => { Ring(g, p.Primary); Pie(g, p.Primary, sweepDegrees: 180); },
-        [RowGlyph.Done] = (g, p) => { Disc(g, p.Ok, Radius); Check(g); },
+        [RowGlyph.Done] = (g, p) => { Disc(g, p.Ok, Outer); Check(g); },
         [RowGlyph.Draft] = (g, p) => Dashed(g, p.Subtle, dash: 2),
         [RowGlyph.InReview] = (g, p) => { Ring(g, p.Primary); Pie(g, p.Primary, sweepDegrees: 270); },
         [RowGlyph.NeedsYou] = (g, p) => Diamond(g, p.Attention),
@@ -46,7 +47,7 @@ internal sealed class RowGlyphView : Control
         [RowGlyph.Mention] = (g, p) => Disc(g, p.Primary, radius: 3),
         [RowGlyph.PrOpen] = (g, p) => { Ring(g, p.Ok); Disc(g, p.Ok, radius: 2); },
         [RowGlyph.PrDraft] = (g, p) => { Ring(g, p.Subtle); Disc(g, p.Subtle, radius: 2); },
-        [RowGlyph.Merged] = (g, p) => Disc(g, p.Violet, Radius),
+        [RowGlyph.Merged] = (g, p) => Disc(g, p.Violet, Outer),
         [RowGlyph.CiRunning] = (g, p) => Dashed(g, p.Attention, dash: 1),
         [RowGlyph.Linked] = (g, p) => { Ring(g, p.Subtle); Disc(g, p.Subtle, radius: 1.5); },
     };
@@ -92,7 +93,7 @@ internal sealed class RowGlyphView : Control
     private Palette NewPalette()
     {
         _ = Interlocked.Increment(ref _allocations);
-        return new Palette(Find("Brush.InkSubtle"), Find("Brush.Primary"), Find("Brush.Success"), Find("Brush.Attention"), Find("Brush.Error"), Find("Brush.Violet"));
+        return new Palette(Find("Brush.InkSubtle"), Find("Brush.PrimaryHover"), Find("Brush.Success"), Find("Brush.Attention"), Find("Brush.Error"), Find("Brush.Violet"));
     }
 
     private IBrush Find(string key) => this.TryFindResource(key, ActualThemeVariant, out var v) && v is IBrush b ? b : Brushes.Gray;

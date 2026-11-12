@@ -29,8 +29,10 @@
             <TextBlock Name="PART_Age" Grid.Column="3" Classes="row-age" Width="{DynamicResource Row.Col.Age}" Margin="12,0,0,0" />
             <TextBlock Name="PART_Wait" Grid.Column="4" Classes="row-wait" Width="{DynamicResource Row.Col.Wait}" Margin="12,0,0,0" />
           </Grid>
-          <StackPanel Name="PART_Actions" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,24,0" IsVisible="False" />
-          <Border Name="PART_Ring" IsHitTestVisible="False" IsVisible="False" BorderThickness="2" BorderBrush="{DynamicResource Brush.PrimaryHover}" />
+          <Border Name="PART_ActionsBox" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,24,0" Padding="8,0,0,0" Background="{DynamicResource Brush.Surface2}" IsVisible="False">
+            <StackPanel Name="PART_Actions" Orientation="Horizontal" />
+          </Border>
+          <Border Name="PART_Ring" IsHitTestVisible="False" IsVisible="False" BorderThickness="2" CornerRadius="4" BorderBrush="{DynamicResource Brush.PrimaryHover}" />
           <Border Name="PART_SelBar" Width="2" HorizontalAlignment="Left" IsVisible="False" IsHitTestVisible="False" Background="{DynamicResource Brush.Primary}" />
         </Panel>
       </ControlTemplate>
@@ -52,7 +54,7 @@
     <Setter Property="IsVisible" Value="True" />
   </Style>
   <!-- Row buttons take the right end (over age and waits on) on hover and under the cursor. -->
-  <Style Selector="rows|Row:pointerover /template/ StackPanel#PART_Actions, rows|Row.cursor /template/ StackPanel#PART_Actions">
+  <Style Selector="rows|Row:pointerover /template/ Border#PART_ActionsBox, rows|Row.cursor /template/ Border#PART_ActionsBox">
     <Setter Property="IsVisible" Value="True" />
   </Style>
   <Style Selector="rows|Row /template/ TextBlock.row-id">
@@ -94,9 +96,9 @@
       <ControlTemplate>
         <Panel ClipToBounds="True">
           <ScrollViewer Name="PART_ScrollViewer" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-            <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" />
+            <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" Margin="0,8" />
           </ScrollViewer>
-          <rows:RowGroupHeader Name="PART_Sticky" VerticalAlignment="Top" IsVisible="False" AutomationProperties.AccessibilityView="Raw" Background="{DynamicResource Brush.Canvas}" />
+          <rows:RowGroupHeader Name="PART_Sticky" Focusable="False" VerticalAlignment="Top" IsVisible="False" AutomationProperties.AccessibilityView="Raw" Background="{DynamicResource Brush.Canvas}" />
         </Panel>
       </ControlTemplate>
     </Setter>
@@ -113,30 +115,36 @@
       <ControlTemplate>
         <Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1,0,0,0">
           <DockPanel>
-            <Grid DockPanel.Dock="Top" Height="{StaticResource Peek.Header}" Margin="24,0,12,0" ColumnDefinitions="Auto,Auto,*,Auto,Auto">
-              <TextBlock Name="PART_Title" Text="{TemplateBinding Title}" Classes="peek-title" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" VerticalAlignment="Center" />
-              <TextBlock Name="PART_Id" Grid.Column="1" Text="{TemplateBinding ItemId}" Classes="peek-id" Margin="8,0,0,0" VerticalAlignment="Center" />
-              <Button Name="PART_OpenFull" Grid.Column="3" Content="⤢" Command="{TemplateBinding OpenFullCommand}" Classes="peek-icon" ToolTip.Tip="Open full" AutomationProperties.Name="Open full" />
-              <Button Name="PART_Close" Grid.Column="4" Content="×" Command="{TemplateBinding CloseCommand}" Classes="peek-icon" ToolTip.Tip="Close" AutomationProperties.Name="Close" />
-            </Grid>
-            <ContentPresenter Name="PART_Actions" DockPanel.Dock="Bottom" Content="{TemplateBinding Actions}" Margin="24,12,24,16" />
-            <ItemsControl Name="PART_Fields" DockPanel.Dock="Top" ItemsSource="{TemplateBinding Fields}" Margin="24,0">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                  <UniformGrid Columns="2" />
-                </ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:PeekField">
-                  <Grid Height="{StaticResource Peek.FieldRow}" ColumnDefinitions="80,*">
-                    <TextBlock Text="{Binding Label}" Classes="peek-label" VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="1" Text="{Binding Value}" Classes="peek-value" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                  </Grid>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <Border Name="PART_Head" DockPanel.Dock="Top" MinHeight="{StaticResource Peek.Header}" Padding="16,12" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,0,0,1">
+              <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+                <TextBlock Name="PART_Title" Text="{TemplateBinding Title}" Classes="peek-title" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" VerticalAlignment="Center" />
+                <TextBlock Name="PART_Id" Grid.Column="1" Text="{TemplateBinding ItemId}" Classes="peek-id" Margin="8,0,0,0" VerticalAlignment="Center" />
+                <Button Name="PART_OpenFull" Grid.Column="3" Content="⤢" Command="{TemplateBinding OpenFullCommand}" Classes="peek-icon" ToolTip.Tip="Open full" AutomationProperties.Name="Open full" />
+                <Button Name="PART_Close" Grid.Column="4" Content="×" Command="{TemplateBinding CloseCommand}" Classes="peek-icon" ToolTip.Tip="Close" AutomationProperties.Name="Close" />
+              </Grid>
+            </Border>
+            <Border Name="PART_PeekActionsBox" DockPanel.Dock="Bottom" Padding="16,12" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0">
+              <ContentPresenter Name="PART_Actions" Content="{TemplateBinding Actions}" />
+            </Border>
+            <Border Name="PART_FieldsBox" DockPanel.Dock="Top" Padding="16,8" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,0,0,1">
+              <ItemsControl Name="PART_Fields" ItemsSource="{TemplateBinding Fields}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <UniformGrid Columns="2" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:PeekField">
+                    <Grid Height="{StaticResource Peek.FieldRow}" ColumnDefinitions="96,*">
+                      <TextBlock Text="{Binding Label}" Classes="peek-label" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="1" Text="{Binding Value}" Classes="peek-value" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Border>
             <ScrollViewer VerticalScrollBarVisibility="Auto">
-              <ContentPresenter Name="PART_Body" Content="{TemplateBinding Body}" Margin="24,12" />
+              <ContentPresenter Name="PART_Body" Content="{TemplateBinding Body}" Margin="16,12" />
             </ScrollViewer>
           </DockPanel>
         </Border>
@@ -145,7 +153,7 @@
   </Style>
   <Style Selector="rows|PeekPane /template/ TextBlock.peek-title">
     <Setter Property="FontSize" Value="{DynamicResource Type.SectionTitle.Size}" />
-    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="FontWeight" Value="{DynamicResource Type.SectionTitle.Weight}" />
   </Style>
   <Style Selector="rows|PeekPane /template/ TextBlock.peek-id">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Mono}" />

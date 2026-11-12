@@ -59,13 +59,17 @@ internal sealed partial class RowList
         }
     }
 
+    // The list pads its top and bottom, and every group after the first starts GroupGap below the one before (grammar .list, .group).
+    internal const double ListPadding = 8;
+    internal const double GroupGap = 8;
+
     // Tops come from counts, not stored pixels: a header is one height and a row another, and the row height follows the density now (an ancestor's class comfortable).
     private (int Active, double NextTop) ActiveGroup(double offset, double headerHeight)
     {
         var rowHeight = RowHeight;
         var states = _run.States;
         var active = 0;
-        var top = 0d;
+        var top = ListPadding;
         for (var i = 0; i < states.Count; i++)
         {
             if (top > offset + 0.5)
@@ -74,7 +78,7 @@ internal sealed partial class RowList
             }
 
             active = i;
-            top += headerHeight + (states[i].Visible * rowHeight);
+            top += headerHeight + (states[i].Visible * rowHeight) + GroupGap;
         }
 
         return (active, double.PositiveInfinity);

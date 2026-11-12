@@ -51,7 +51,14 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
         _ = ItemsSourceProperty.Changed.AddClassHandler<RowList>((list, _) => list.Rebuild());
         _ = ColumnsProperty.Changed.AddClassHandler<RowList>((list, _) => list.ForEachRow(list.Prepare));
         _ = PeekColumnsProperty.Changed.AddClassHandler<RowList>((list, _) => list.ForEachRow(list.Prepare));
-        _ = IsPeekOpenProperty.Changed.AddClassHandler<RowList>((list, _) => list.ForEachRow(list.Prepare));
+        _ = IsPeekOpenProperty.Changed.AddClassHandler<RowList>((list, _) =>
+        {
+            list.ForEachRow(list.Prepare);
+            if (!list.IsPeekOpen)
+            {
+                list.ReturnFocusToSelected();
+            }
+        });
         _ = SelectedItemProperty.Changed.AddClassHandler<RowList>((list, _) => list.ForEachRow(list.Prepare));
     }
 
@@ -203,6 +210,7 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
         ContainersPrepared++;
         if (container is RowGroupHeader header && item is GroupEntry entry)
         {
+            header.Margin = index == 0 ? default : new Thickness(0, GroupGap, 0, 0);
             header.Fill(entry.Group);
         }
         else if (container is Row row)
@@ -250,48 +258,6 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
     private bool IsSelected(object? item) => SelectedItem is { } selected && item is not null && (ReferenceEquals(item, selected) || (RowRun.KeyOf(item) is { } key && string.Equals(key, RowRun.KeyOf(selected), StringComparison.Ordinal)));
 
     private bool IsComfortable() => this.GetSelfAndLogicalAncestors().OfType<StyledElement>().Any(a => a.Classes.Contains("comfortable"));
-
-    // Syncs the run with the groups. Groups and rows that are still there keep their entries, so their containers and focus stay.
-    private void Rebuild()
-    {
-        var cursor = BeginCursor(fallback: -1, lookupIndex: true);
-        _outer?.CollectionChanged -= OnGroupsChanged;
-        _outer = ItemsSource as INotifyCollectionChanged;
-        if (_attached)
-        {
-            _outer?.CollectionChanged += OnGroupsChanged;
-        }
-
-        if (_run.Rebuild(ItemsSource, subscribe: _attached))
-        {
-            ((ItemsControl)this).ItemsSource = _run.Entries;
-        }
-
-        EndEdit(cursor);
-    }
-
-    private void OnGroupsChanged(object? sender, NotifyCollectionChangedEventArgs e) => Rebuild();
-
-    // One group's rows changed: the run applies the same change to its entries. Focus stays on its row; if that row left, it goes to the row now at its place.
-    private void OnItemsChanged(GroupState state, NotifyCollectionChangedEventArgs e)
-    {
-        var cursor = BeginCursor(fallback: -1, lookupIndex: false);
-        var removedAt = _run.Apply(state, e);
-        if (removedAt >= 0)
-        {
-            PendingFallback = removedAt;
-        }
-
-        EndEdit(cursor);
-    }
-
-    // A group folded or unfolded: its rows leave or return; the header stays.
-    private void OnCollapsed(GroupState state)
-    {
-        var cursor = BeginCursor(fallback: _run.HeaderIndex(state), lookupIndex: false);
-        _run.SyncGroup(state);
-        EndEdit(cursor);
-    }
 
     private void OnScrollChanged(object? sender, ScrollChangedEventArgs e) => UpdateSticky();
 }

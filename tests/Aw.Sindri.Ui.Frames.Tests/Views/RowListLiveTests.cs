@@ -385,7 +385,33 @@ public sealed class RowListLiveTests
         var ring = row.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Ring");
         Assert.True(ring.IsVisible);
         Assert.Equal(new Thickness(2), ring.BorderThickness);
+        Assert.Equal(new CornerRadius(4), ring.CornerRadius);
         Assert.Equal(resting, row.Bounds.Height, 0.01);
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task When_the_peek_closes_focus_goes_back_to_the_row_that_was_peeked() => await OnUi(() =>
+    {
+        var group = Group("Needs you", 5);
+        var list = new RowList { ItemsSource = new[] { group }, Columns = RowGallery.Columns, IsPeekOpen = true, SelectedItem = group.Rows[3] };
+        var peek = new PeekPane();
+        var page = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        Grid.SetColumn(peek, 1);
+        page.Children.Add(list);
+        page.Children.Add(peek);
+        var window = new Window { Content = page, Width = 1280, Height = 600 };
+        window.Show();
+        Settle(window);
+        var button = peek.GetVisualDescendants().OfType<Button>().First(b => b.Name == "PART_Close");
+        Assert.True(button.Focus(NavigationMethod.Pointer));
+
+        peek.IsVisible = false;   // the page hides the pane and closes the peek
+        list.IsPeekOpen = false;
+        Settle(window);
+
+        Assert.Equal("k3", FocusedKey(window));
         window.Close();
         return true;
     });
