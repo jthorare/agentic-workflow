@@ -37,3 +37,6 @@
 | search-messages, search-everything | 7 | Messages scope with "from Slack" tags; Everything in groups |
 | peek-user, peek-file, peek-app-message, peek-huddle | 10 | User peek; file thumbnail, chip and failed file; app message with blocks and an unknown block; huddle row with "Open in Slack" |
 | empty-later, empty-drafts, emoji-no-match | 13 | Later and Drafts empty, emoji picker with no match |
+
+## Release 1 fixes (ideas FIX, 16 MUSTs, spec 28d94d4dbb)
+Frames redrawn: needs, needs-1200, needs-1000, needs-rail-collapsed, header-behind, header-offline, header-expired, header-scope, unread, conversation, conversation-focus, conversation-dm, snooze-picker, snoozed-rows, firstrun-1, firstrun-1-fail, firstrun-2, firstrun-2-blocked, firstrun-3, firstrun-3-wrong-token, firstrun-3-scope, firstrun-3-offline, firstrun-sync, firstrun-listening, empty-needs, empty-unread, loading, toast, footer-modes, states-hover-pressed. `snooze-picker-followup` moves to the Release 2 set and is not redrawn. Release 2 frames are untouched.

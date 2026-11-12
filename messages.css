@@ -216,3 +216,19 @@
 .blkmsg{border-left:3px solid var(--hair-strong);padding:2px 0 2px 10px;margin:4px 0;font-size:13px;line-height:20px}.blkmsg .ctx{font-size:11px;color:var(--ink-subtle)}
 .blkmsg hr{border:0;border-top:1px solid var(--hair);margin:6px 0}
 .hrow{display:flex;gap:10px;align-items:center;height:36px;padding:0 10px;margin:4px 0;border:1px solid var(--hair);border-radius:var(--r2);background:var(--s1);font-size:13px;color:var(--ink-muted)}.hrow .sp{flex:1}
+/* UX pass: the age is never covered; compact cursor-row buttons below 1440; hover time has its own gutter */
+.g.c0{visibility:hidden;width:10px;height:10px;margin:2px}
+.mrow.hasact .actions{right:calc(var(--sp4) + 44px + var(--sp3))}
+.mrow.narrow.hasact .actions{right:calc(var(--sp3) + 44px + var(--sp3))}
+.mrow.hasact .ti{margin-right:176px}
+.mrow.hasact .ti .lc{display:none}.mrow.hasact .rs{visibility:hidden}
+.mrow.narrow.hasact .ti{margin-right:0}
+.mrow.narrow.hasact .ti .lc{display:none}
+.mrow.n2.hasact .ti{margin-right:92px}
+.mrow .actions.compact{gap:4px;padding-left:0}
+.mrow .actions.compact .btn{padding:0;width:24px;justify-content:center}
+.mrow .actions.compact .lbl{display:none}
+.cl{grid-template-columns:34px minmax(0,1fr)}
+.cl .tm.h{width:34px;text-align:left}
+.mf{font:400 11px/16px var(--mono);white-space:pre;overflow:hidden;background:var(--canvas);border:1px solid var(--hair-strong);border-radius:var(--r2);padding:8px 10px;color:var(--ink-muted)}
+.mrow.cmp.hasact .ti{margin-right:0}
