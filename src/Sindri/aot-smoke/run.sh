@@ -163,6 +163,10 @@ export AW_SINDRI_SKILLS_DIR="$work/no-skills"   # a folder that does not exist: 
 mkdir -p "$AW_SINDRI_HOME/profile"
 : >"$AW_SINDRI_HOME/.prover-scratch"   # the smoke runs as the prover in a home it created (setup-once spec §4 item 6): the marker lets it confirm, as sindri-prove.sh does
 mkdir -p "$work/repo"   # the repo 'smoke' the mcp() helper names in X-Sindri-Repo (sindri_request files against the profile's repo)
+# A real checkout with one commit on main: context-map-refresh reads each profile repo's head every tick, and a plain folder fails it
+# with SND-CONTEXT-048 (degraded health, #3256). With a head and no code index, the first map waits and the tick stays quiet.
+git -C "$work/repo" init -q -b main
+git -C "$work/repo" -c core.hooksPath=/dev/null -c user.name=smoke -c user.email=smoke@localhost -c commit.gpgsign=false commit -q --allow-empty -m smoke
 printf 'schemaVersion: 1\nuser: smoke\nrepos:\n  - { name: smoke, path: %s }\nservices:\n  heartbeat: { every: 5s }\n' "$work/repo" >"$AW_SINDRI_HOME/profile/profile.yaml"
 
 run() { # the human, no terminal
