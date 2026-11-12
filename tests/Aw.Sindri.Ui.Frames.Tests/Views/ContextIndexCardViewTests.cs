@@ -39,7 +39,7 @@ public sealed class ContextIndexCardViewTests : FrameHost
         shell.GoTo(PageId.System);
         Settle(window);
 
-        var cards = Named<WrapPanel>(window, "SystemCards").Children;
+        var cards = Named<Panel>(window, "SystemCards").Children;
         Assert.Equal(cards.IndexOf(Named<Border>(window, "CodeIndexPanel")) + 1, cards.IndexOf(Named<Border>(window, "ContextIndexPanel")));
     });
 }

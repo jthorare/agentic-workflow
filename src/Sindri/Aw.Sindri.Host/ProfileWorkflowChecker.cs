@@ -20,9 +20,19 @@ internal sealed class ProfileWorkflowChecker(IApprovedProfile profile, IGraphBlo
         var context = new GraphValidationContext(blocks.Types, world, (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem, ParseCondition)
         {
             BoxCap = await BoxCap(cancellationToken).ConfigureAwait(false),
+            AgentTarget = await AgentTarget(cancellationToken).ConfigureAwait(false),
             CodeCheck = codeCheck is null ? null : body => codeCheck.Check(body, cancellationToken),
         };
         return new GraphValidator(context);
+    }
+
+    /// <summary>Whether the profile sets 'workflow.agent.target' (#2986): Unavailable when no profile can be read.</summary>
+    private async ValueTask<GraphLookup> AgentTarget(CancellationToken cancellationToken)
+    {
+        var latest = await profile.Latest(cancellationToken).ConfigureAwait(false);
+        return latest.IsSuccess && latest.Value is { } loaded
+            ? loaded.Profile.Workflow?.Agent?.Target is null ? GraphLookup.Unknown : GraphLookup.Known
+            : GraphLookup.Unavailable;
     }
 
     /// <summary>The cap from the profile's 'sandbox.limits.memory' (#2531); null when the profile sets none, or sets 'auto' (the box's RAM decides that at launch). The profile has no wall limit, so the wall is unbounded here.</summary>
