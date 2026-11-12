@@ -18,8 +18,8 @@ internal static partial class Labels
     /// <summary>The Retry button of a failed or stale read (<see cref="Controls.FailedRead"/>).</summary>
     internal const string Retry = "Retry";
 
-    /// <summary>Home's Running and Queued panels when the first queue read failed.</summary>
-    internal const string QueueReadFailed = "The queue can't be read just now.";
+    /// <summary>Home's Running and Queued panels and the Queue page when the first queue read failed (same words as <see cref="PageReadFailed"/>).</summary>
+    internal const string QueueReadFailed = "Queue can't be read right now.";
 
     /// <summary>The disclosure at the end of a failed-read line that opens the code.</summary>
     internal const string FailedReadDetails = "Details ▸";
@@ -27,5 +27,5 @@ internal static partial class Labels
     /// <summary>The words of a page whose read failed: "Queue can't be read right now." (first-run spec §4.6).</summary>
     /// <param name="page">The page's name.</param>
     /// <returns>The sentence.</returns>
-    internal static string PageReadFailed(string page) => throw new NotSupportedException();   // red stub (#3325)
+    internal static string PageReadFailed(string page) => page + " can't be read right now.";
 }
