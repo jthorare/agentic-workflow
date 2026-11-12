@@ -1,0 +1,82 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ag="using:Aw.Sindri.Ui.ViewModels.Agents"
+             xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
+             x:Class="Aw.Sindri.Ui.Views.Agents.TerminalView"
+             x:DataType="ag:TerminalViewViewModel" Focusable="True">
+  <!-- The terminal view (agents spec §15.3, DG2 frames): header 32, list 360 (56 under 1100 wide) beside the live pane, footer 28. The focused side has the accent border; card states put the ring on a button. -->
+  <UserControl.Resources>
+    <DataTemplate x:Key="CardButtonTemplate" x:DataType="ag:TerminalCardButtonItem">
+      <Button Classes="card-button" Classes.focused="{Binding IsFocused}" Content="{Binding Label}" Click="OnCardButton" Margin="0,0,8,0" />
+    </DataTemplate>
+  </UserControl.Resources>
+  <UserControl.Styles>
+    <Style Selector="Border.frame">
+      <Setter Property="BorderBrush" Value="{StaticResource Brush.HairlineStrong}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="6" />
+    </Style>
+    <Style Selector="Border.frame.accent">
+      <Setter Property="BorderBrush" Value="{StaticResource Brush.PrimaryHover}" />
+    </Style>
+    <Style Selector="Button.card-button">
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="Button.card-button.focused">
+      <Setter Property="BorderBrush" Value="{StaticResource Brush.PrimaryHover}" />
+      <Setter Property="BorderThickness" Value="2" />
+    </Style>
+  </UserControl.Styles>
+  <Grid RowDefinitions="32,*,28">
+    <Border Grid.Row="0" BorderBrush="{StaticResource Brush.Hairline}" BorderThickness="0,0,0,1" Padding="16,0">
+      <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
+        <TextBlock Classes="caption subtle" Text="Agents ›" Margin="0,0,12,0" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="1" x:Name="HeaderName" FontSize="16" FontWeight="SemiBold" Text="{Binding HeaderName}" VerticalAlignment="Center" />
+        <Button Grid.Column="3" x:Name="TranscriptButton" Content="Transcript" Click="OnTranscript" Margin="0,0,12,0" />
+        <TextBlock Grid.Column="4" x:Name="StateWord" Classes="caption" Text="{Binding StateWord}" Margin="0,0,8,0" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="5" x:Name="HostText" Classes="caption subtle mono" Text="{Binding HostText}" Margin="0,0,12,0" VerticalAlignment="Center" />
+        <StackPanel Grid.Column="6" Orientation="Horizontal" Spacing="8">
+          <Button x:Name="CloseButton" Content="Close" Click="OnClose" />
+          <Button x:Name="StopButton" Content="Stop…" IsVisible="{Binding ShowStop}" Click="OnStop" />
+        </StackPanel>
+      </Grid>
+    </Border>
+    <Grid Grid.Row="1" x:Name="Body">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition x:Name="ListColumn" Width="360" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <Border x:Name="ListFrame" Classes="frame" Classes.accent="{Binding IsListAccented}" Margin="2,2,0,2" Padding="0,8">
+        <ContentControl x:Name="ListHost" />
+      </Border>
+      <Border Grid.Column="1" x:Name="PaneFrame" Classes="frame" Classes.accent="{Binding IsPaneAccented}" Margin="12,8,12,12" Background="{StaticResource Brush.Canvas}" ClipToBounds="True">
+        <Grid>
+          <ctl:TerminalPaneControl x:Name="Pane" Margin="12" HasPaneFocus="{Binding IsPaneAccented}" Dimmed="{Binding IsDimmed}" />
+          <Border x:Name="Card" IsVisible="{Binding HasCard}" Width="420" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="16"
+                  Background="{StaticResource Brush.Surface3}" BorderBrush="{StaticResource Brush.HairlineStrong}" BorderThickness="1" CornerRadius="8">
+            <StackPanel Spacing="8">
+              <TextBlock x:Name="CardTitle" FontSize="15" FontWeight="SemiBold" Text="{Binding CardTitle}" />
+              <TextBlock x:Name="CardBody" TextWrapping="Wrap" Text="{Binding CardBody}" />
+              <TextBlock x:Name="CardTail" Classes="caption mono" TextWrapping="Wrap" Text="{Binding CardTail}" />
+              <ItemsControl x:Name="CardButtons" ItemsSource="{Binding CardButtonItems}" ItemTemplate="{StaticResource CardButtonTemplate}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+          <Border x:Name="Banner" IsVisible="{Binding HasBanner}" VerticalAlignment="Bottom" Padding="16,12"
+                  Background="{StaticResource Brush.Surface3}" BorderBrush="{StaticResource Brush.HairlineStrong}" BorderThickness="0,1,0,0">
+            <StackPanel Spacing="8">
+              <TextBlock x:Name="BannerText" Text="{Binding EndedText}" />
+              <ItemsControl x:Name="BannerButtons" ItemsSource="{Binding CardButtonItems}" ItemTemplate="{StaticResource CardButtonTemplate}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Border>
+    </Grid>
+    <Border Grid.Row="2" BorderBrush="{StaticResource Brush.Hairline}" BorderThickness="0,1,0,0" Padding="16,0">
+      <TextBlock x:Name="Footer" Classes="caption subtle" Text="{Binding FooterText}" VerticalAlignment="Center" />
+    </Border>
+  </Grid>
+</UserControl>

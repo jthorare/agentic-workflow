@@ -15,7 +15,7 @@ internal sealed partial class TerminalViewViewModel : ObservableObject
         nameof(IsDimmed), nameof(Rows), nameof(CachedScreenCount), nameof(FlashCount), nameof(RetryIn), nameof(ShowRetryNow),
         nameof(ShowTakeItBack), nameof(HintText), nameof(EndedText), nameof(CanRemoveWorktree), nameof(CanDiscardSession),
         nameof(CanCopyResume), nameof(CanJump), nameof(CardReason), nameof(CardTail), nameof(IsCardAccented), nameof(CardButtons),
-        nameof(FocusedButton), nameof(ShowStop),
+        nameof(FocusedButton), nameof(ShowStop), nameof(CardButtonItems), nameof(HasCard), nameof(HasBanner), nameof(CardTitle), nameof(CardBody),
     ];
 
     private int _otherClients;
@@ -88,8 +88,8 @@ internal sealed partial class TerminalViewViewModel : ObservableObject
 
     private bool CanTakeFocus => State is TerminalState.Attached or TerminalState.Starting;
 
-    /// <summary>False in Can't reach Sindri and in a Can't attach card: there is no process Sindri can stop from here. Take it back keeps Stop (#3400).</summary>
-    public bool ShowStop => State is not (TerminalState.CantReachSindri or TerminalState.CantAttach);
+    /// <summary>False in Can't reach Sindri, Gone and a Can't attach card: there is no process Sindri can stop from here. Take it back keeps Stop (#3400).</summary>
+    public bool ShowStop => State is not (TerminalState.CantReachSindri or TerminalState.CantAttach or TerminalState.Gone);
 
     private void Refresh()
     {

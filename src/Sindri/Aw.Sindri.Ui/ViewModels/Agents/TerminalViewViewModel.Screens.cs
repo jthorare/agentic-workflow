@@ -49,6 +49,21 @@ internal sealed partial class TerminalViewViewModel
         _ => [],
     };
 
+    /// <summary>The card as the view draws it, buttons with their focus ring.</summary>
+    public IReadOnlyList<TerminalCardButtonItem> CardButtonItems => [.. CardButtons.Select((b, i) => new TerminalCardButtonItem(b, ButtonLabel(b), Side == TerminalSide.Card && i == FocusedButton))];
+
+    /// <summary>True when a card sits over the pane (Can't reach, open in another window, Can't attach, Gone).</summary>
+    public bool HasCard => State is TerminalState.CantReachSindri or TerminalState.TakenOver or TerminalState.CantAttach or TerminalState.Gone;
+
+    /// <summary>True when the ended banner sits under the frozen screen.</summary>
+    public bool HasBanner => State == TerminalState.Ended;
+
+    /// <summary>The card's heading: the state word.</summary>
+    public string CardTitle => HasCard ? StateWord : string.Empty;
+
+    /// <summary>The card's sentence under the heading.</summary>
+    public string CardBody => State == TerminalState.CantReachSindri ? Labels.TerminalEscCloses + "." : CardReason;
+
     /// <summary>The index in <see cref="CardButtons"/> that has focus while <see cref="TerminalSide.Card"/> does.</summary>
     public int FocusedButton { get; private set; }
 
