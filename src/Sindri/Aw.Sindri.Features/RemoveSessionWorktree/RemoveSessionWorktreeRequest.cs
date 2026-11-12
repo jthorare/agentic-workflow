@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Commands;
 
 namespace Aw.Sindri.Features.RemoveSessionWorktree;
@@ -7,4 +8,4 @@ namespace Aw.Sindri.Features.RemoveSessionWorktree;
 /// A tree with changes, or one a start did not make, is SND-AGENT-018.
 /// </summary>
 /// <param name="ActId">The key the start used.</param>
-public sealed record RemoveSessionWorktreeRequest(string ActId) : ICommand<RemovedWorktree>;
+public sealed record RemoveSessionWorktreeRequest(ActId ActId) : ICommand<RemovedWorktree>;

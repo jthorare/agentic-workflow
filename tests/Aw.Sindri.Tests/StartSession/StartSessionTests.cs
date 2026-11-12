@@ -12,7 +12,7 @@ namespace Aw.Sindri.Tests.StartSession;
 /// </summary>
 public sealed class StartSessionTests : IDisposable
 {
-    private const string ActId = "k3j9x0a1";
+    private const string Act = "k3j9x0a1";
     private static readonly RepoName _repo = RepoName.From("demo");
     private static readonly AgentId _claude = AgentId.From("claude-code");
     private static readonly AgentId _codex = AgentId.From("codex");
@@ -23,7 +23,7 @@ public sealed class StartSessionTests : IDisposable
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static StartSessionRequest Request(string? prompt = "fix the flaky test", bool worktree = true, string actId = ActId, AgentId? agent = null) => new(_repo, agent ?? _claude, prompt, worktree, actId);
+    private static StartSessionRequest Request(string? prompt = "fix the flaky test", bool worktree = true, string actId = Act, AgentId? agent = null) => new(_repo, agent ?? _claude, prompt, worktree, ActId.From(actId));
 
     [Fact, Trait("Lane", "unit")]
     public async Task Start_answers_starting_with_the_tmux_session_named_after_the_actId()
@@ -31,8 +31,8 @@ public sealed class StartSessionTests : IDisposable
         var started = await _r.Service().Handle(Request(), Token);
 
         Assert.True(started.IsSuccess, started.IsError ? started.Error.ToString() : null);
-        Assert.Equal(("sindri-" + ActId, ActId, "starting"), (started.Value.Id, started.Value.ActId, started.Value.State));
-        Assert.Equal(("sindri-launch", "sindri-" + ActId), (started.Value.Host.Socket, started.Value.Host.Session));
+        Assert.Equal(("sindri-" + Act, Act, "starting"), (started.Value.Id.Value, started.Value.ActId.Value, started.Value.State));
+        Assert.Equal(("sindri-launch", "sindri-" + Act), (started.Value.Host.Socket, started.Value.Host.Session));
         Assert.Matches("^%[0-9]+$", started.Value.Host.Pane);
     }
 
@@ -42,7 +42,7 @@ public sealed class StartSessionTests : IDisposable
         _ = await _r.Service().Handle(Request(), Token);
 
         var session = Assert.Single(_r.Host.Started);
-        Assert.Equal("sindri-" + ActId, session.Name);
+        Assert.Equal("sindri-" + Act, session.Name);
         Assert.NotNull(session.Size);
         Assert.True(session.RemainOnExit);
         Assert.True(session.CleanEnvironment);
@@ -116,7 +116,7 @@ public sealed class StartSessionTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Start_with_a_repo_not_in_the_profile_is_SND_AGENT_012()
     {
-        var refused = await _r.Service().Handle(new StartSessionRequest(RepoName.From("nope"), _claude, "hi", Worktree: false, ActId), Token);
+        var refused = await _r.Service().Handle(new StartSessionRequest(RepoName.From("nope"), _claude, "hi", Worktree: false, ActId.From(Act)), Token);
 
         Assert.True(refused.IsError);
         Assert.Equal(SindriErrors.AgentRepoUnusable.Code, refused.Error.Code);
@@ -239,7 +239,6 @@ public sealed class StartSessionTests : IDisposable
     [InlineData("has space1")]
     [InlineData("under_score1")]
     [InlineData("abcdefghijklmnopqrstuvwxyz0123456")]
-    [InlineData("")]
     public async Task Start_with_an_actId_outside_the_shape_is_a_plain_400_with_no_agent_code(string actId)
     {
         var refused = await _r.Service().Handle(Request(actId: actId), Token);
@@ -285,7 +284,7 @@ public sealed class StartSessionTests : IDisposable
 
         var recorded = Assert.Single(_r.Base.Store.Events, e => string.Equals(e.Envelope.Type, EventTypes.AgentOp, StringComparison.Ordinal));
         var payload = _r.Base.Events.Payload<AgentOpRecorded>(recorded).Value;
-        Assert.Equal(("agent.op:" + ActId, "sindri-" + ActId, "start", started.Value.Host.Pane), (recorded.IdempotencyKey, payload.RowId, payload.Op, payload.Outcome));
+        Assert.Equal(("agent.op:" + Act, "sindri-" + Act, "start", started.Value.Host.Pane), (recorded.IdempotencyKey, payload.RowId, payload.Op, payload.Outcome));
         Assert.Equal("/wt/demo/" + Assert.Single(_r.Worktrees.Names), payload.Worktree);
     }
 

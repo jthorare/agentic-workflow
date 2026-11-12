@@ -13,4 +13,4 @@ namespace Aw.Sindri.Features.StartSession;
 /// <param name="Prompt">The first message; null starts the agent with none. At most 8,000 characters (SND-AGENT-017).</param>
 /// <param name="Worktree">True runs the agent in a new worktree of the repo; false runs it in the repo folder.</param>
 /// <param name="ActId">The caller's key, 8 to 32 characters of a-z and 0-9; anything else is a 400 with no SND-AGENT code.</param>
-public sealed record StartSessionRequest(RepoName Repo, AgentId Agent, string? Prompt, bool Worktree, string ActId) : ICommand<StartedSession>;
+public sealed record StartSessionRequest(RepoName Repo, AgentId Agent, string? Prompt, bool Worktree, ActId ActId) : ICommand<StartedSession>;

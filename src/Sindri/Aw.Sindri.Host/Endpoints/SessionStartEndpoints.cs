@@ -1,4 +1,5 @@
 using Aw.Kernel.Services;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Features.RemoveSessionWorktree;
 using Aw.Sindri.Features.StartSession;
 
@@ -15,7 +16,9 @@ internal static class SessionStartEndpoints
         _ = group.MapPost("/sessions", static async (StartSessionRequest request, IService<StartSessionRequest, StartedSession> service, CancellationToken ct)
             => (await service.Handle(request, ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapDelete("/sessions/{actId}/worktree", static async (string actId, IService<RemoveSessionWorktreeRequest, RemovedWorktree> service, CancellationToken ct)
-            => (await service.Handle(new RemoveSessionWorktreeRequest(actId), ct).ConfigureAwait(false)).ToHttpResult());
+            => ActId.TryFrom(actId, out var act)
+                ? (await service.Handle(new RemoveSessionWorktreeRequest(act), ct).ConfigureAwait(false)).ToHttpResult()
+                : HttpResults.Problem(Core.SindriErrors.InvalidInput.With("an act id is 1 to 64 characters")));
         return group;
     }
 }

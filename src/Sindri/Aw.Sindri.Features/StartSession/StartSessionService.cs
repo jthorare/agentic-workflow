@@ -7,6 +7,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
@@ -55,7 +56,7 @@ internal sealed partial class StartSessionService(
             return SindriErrors.AuthRefused.With("starting an agent is for the person: use the app or 'sindri agents start' in a terminal");
         }
 
-        if (request.ActId is not { } actId || !ActIdShape.IsMatch(actId))
+        if (!request.ActId.IsInitialized() || request.ActId.Value is not { } actId || !ActIdShape.IsMatch(actId))
         {
             return SindriErrors.InvalidInput.With("actId is 8 to 32 characters of a-z and 0-9");
         }
@@ -218,7 +219,7 @@ internal sealed partial class StartSessionService(
     }
 
     private StartedSession Answer(string actId, string pane) =>
-        new("sindri-" + actId, actId, "starting", new StartedHost(panes.Socket, "sindri-" + actId, pane));
+        new(SessionId.From("sindri-" + actId), ActId.From(actId), "starting", new StartedHost(panes.Socket, "sindri-" + actId, pane));
 
     private static string InstallCommand() => OperatingSystem.IsMacOS() ? "brew install tmux" : "sudo apt install tmux";
 

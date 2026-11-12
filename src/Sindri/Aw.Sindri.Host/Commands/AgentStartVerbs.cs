@@ -43,13 +43,13 @@ internal sealed class AgentStartVerbs(ControlPlaneClient client, Output output)
 
     internal async Task<int> RemoveWorktree(string[] args, bool json, CancellationToken ct)
     {
-        if (args is not [{ Length: > 0 } actId])
+        if (args is not [{ Length: > 0 } actText] || !ActId.TryFrom(actText, out var actId))
         {
             _ = await output.Error(SindriErrors.InvalidInput.With("the one argument is the act id of the start (" + RemoveUsage + ")")).ConfigureAwait(false);
             return 2;
         }
 
-        var answer = await client.Delete<RemovedWorktree>($"/sindri/sessions/{Uri.EscapeDataString(actId)}/worktree", ct).ConfigureAwait(false);
+        var answer = await client.Delete<RemovedWorktree>($"/sindri/sessions/{Uri.EscapeDataString(actId.Value)}/worktree", ct).ConfigureAwait(false);
         if (answer.IsError)
         {
             return await Refused(answer.Error).ConfigureAwait(false);
@@ -113,6 +113,11 @@ internal sealed class AgentStartVerbs(ControlPlaneClient client, Output output)
             return SindriErrors.InvalidInput.With($"'{agent}' is not an agent id");
         }
 
-        return new StartSessionRequest(repoName, agentId, prompt, worktree, actId ?? Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(6)));
+        if (!ActId.TryFrom(actId ?? Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(6)), out var act))
+        {
+            return SindriErrors.InvalidInput.With($"'{actId}' is not an act id");
+        }
+
+        return new StartSessionRequest(repoName, agentId, prompt, worktree, act);
     }
 }

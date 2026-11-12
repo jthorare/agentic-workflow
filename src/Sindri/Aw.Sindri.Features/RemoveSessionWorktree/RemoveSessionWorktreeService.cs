@@ -24,7 +24,7 @@ internal sealed class RemoveSessionWorktreeService(StartedSessions book, IOneOff
             return SindriErrors.AuthRefused.With("removing a worktree is for the person: use the app or 'sindri agents worktree remove' in a terminal");
         }
 
-        var stored = await book.Find(request.ActId, cancellationToken).ConfigureAwait(false);
+        var stored = await book.Find(request.ActId.Value, cancellationToken).ConfigureAwait(false);
         if (stored?.Worktree is not { } path)
         {
             return SindriErrors.AgentWorktreeKept.With(stored is null

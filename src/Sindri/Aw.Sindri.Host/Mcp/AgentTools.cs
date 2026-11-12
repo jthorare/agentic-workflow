@@ -77,8 +77,13 @@ internal static class AgentTools
             return McpResults.Failure(services, Core.SindriErrors.InvalidInput.With("repo is a repo name and agent an agent id, for example claude-code"));
         }
 
+        if (!ActId.TryFrom(actId.Value, out var act))
+        {
+            return McpResults.Failure(services, Core.SindriErrors.InvalidInput.With("actId is 8 to 32 characters of a-z and 0-9"));
+        }
+
         var answer = await services.GetRequiredService<IService<StartSessionRequest, StartedSession>>()
-            .Handle(new StartSessionRequest(repoName, agentId, prompt.Value, worktree.Value ?? false, actId.Value), ct).ConfigureAwait(false);
+            .Handle(new StartSessionRequest(repoName, agentId, prompt.Value, worktree.Value ?? false, act), ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static a => $"started {a.Id} (pane {a.Host.Pane})");
     }
 
@@ -91,7 +96,7 @@ internal static class AgentTools
             return McpResults.Failure(services, error);
         }
 
-        var answer = await services.GetRequiredService<IService<RemoveSessionWorktreeRequest, RemovedWorktree>>().Handle(new RemoveSessionWorktreeRequest(actId.Value), ct).ConfigureAwait(false);
+        var answer = await services.GetRequiredService<IService<RemoveSessionWorktreeRequest, RemovedWorktree>>().Handle(new RemoveSessionWorktreeRequest(ActId.From(actId.Value)), ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static a => $"removed {a.Path}");
     }
 }

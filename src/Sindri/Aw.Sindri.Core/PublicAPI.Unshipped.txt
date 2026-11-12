@@ -23356,3 +23356,20 @@ Aw.Sindri.Core.Worktrees.IOneOffWorktrees.StatusSummary(string! path, System.Thr
 const Aw.Sindri.Core.Events.EventTypes.AgentOp = "agent.op" -> string!
 Aw.Sindri.Core.Launch.HostSession.CleanEnvironment.get -> bool
 Aw.Sindri.Core.Launch.HostSession.CleanEnvironment.init -> void
+Aw.Sindri.Core.Ids.ActId
+Aw.Sindri.Core.Ids.ActId.Equals(Aw.Sindri.Core.Ids.ActId other) -> bool
+Aw.Sindri.Core.Ids.ActId.Equals(Aw.Sindri.Core.Ids.ActId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Ids.ActId>! comparer) -> bool
+Aw.Sindri.Core.Ids.ActId.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Ids.ActId.IsInitialized() -> bool
+Aw.Sindri.Core.Ids.ActId.ActId() -> void
+Aw.Sindri.Core.Ids.ActId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Ids.ActId.Value.get -> string!
+override Aw.Sindri.Core.Ids.ActId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Ids.ActId.GetHashCode() -> int
+override Aw.Sindri.Core.Ids.ActId.ToString() -> string!
+static Aw.Sindri.Core.Ids.ActId.From(string! value) -> Aw.Sindri.Core.Ids.ActId
+static Aw.Sindri.Core.Ids.ActId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Ids.ActId
+static Aw.Sindri.Core.Ids.ActId.TryFrom(string? value, out Aw.Sindri.Core.Ids.ActId vo) -> bool
+static Aw.Sindri.Core.Ids.ActId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.ActId result) -> bool
+static Aw.Sindri.Core.Ids.ActId.operator !=(Aw.Sindri.Core.Ids.ActId left, Aw.Sindri.Core.Ids.ActId right) -> bool
+static Aw.Sindri.Core.Ids.ActId.operator ==(Aw.Sindri.Core.Ids.ActId left, Aw.Sindri.Core.Ids.ActId right) -> bool

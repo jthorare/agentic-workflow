@@ -13,7 +13,7 @@ namespace Aw.Sindri.Tests.RemoveSessionWorktree;
 /// </summary>
 public sealed class RemoveSessionWorktreeTests : IDisposable
 {
-    private const string ActId = "k3j9x0a1";
+    private const string Act = "k3j9x0a1";
 
     private readonly StartRig _r = new();
 
@@ -22,17 +22,17 @@ public sealed class RemoveSessionWorktreeTests : IDisposable
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private async Task<StartedSession> Started(bool worktree = true) =>
-        (await _r.Service().Handle(new StartSessionRequest(RepoName.From("demo"), AgentId.From("claude-code"), "hi", worktree, ActId), Token)).Value;
+        (await _r.Service().Handle(new StartSessionRequest(RepoName.From("demo"), AgentId.From("claude-code"), "hi", worktree, ActId.From(Act)), Token)).Value;
 
     [Fact, Trait("Lane", "unit")]
     public async Task Remove_takes_a_clean_worktree_of_a_started_session_and_answers_its_path()
     {
         _ = await Started();
 
-        var removed = await _r.RemoveService().Handle(new RemoveSessionWorktreeRequest(ActId), Token);
+        var removed = await _r.RemoveService().Handle(new RemoveSessionWorktreeRequest(ActId.From(Act)), Token);
 
         Assert.True(removed.IsSuccess, removed.IsError ? removed.Error.ToString() : null);
-        Assert.Equal(ActId, removed.Value.ActId);
+        Assert.Equal(Act, removed.Value.ActId.Value);
         Assert.Equal(_r.Worktrees.Removed, [removed.Value.Path]);
         Assert.Empty(_r.Worktrees.Live);
     }
@@ -43,7 +43,7 @@ public sealed class RemoveSessionWorktreeTests : IDisposable
         _ = await Started();
         _r.Worktrees.Status = " M src/Checkout.cs";
 
-        var kept = await _r.RemoveService().Handle(new RemoveSessionWorktreeRequest(ActId), Token);
+        var kept = await _r.RemoveService().Handle(new RemoveSessionWorktreeRequest(ActId.From(Act)), Token);
 
         Assert.True(kept.IsError);
         Assert.Equal(SindriErrors.AgentWorktreeKept.Code, kept.Error.Code);
@@ -54,7 +54,7 @@ public sealed class RemoveSessionWorktreeTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Remove_of_an_actId_no_start_recorded_is_SND_AGENT_018_and_removes_nothing()
     {
-        var kept = await _r.RemoveService().Handle(new RemoveSessionWorktreeRequest("never0000"), Token);
+        var kept = await _r.RemoveService().Handle(new RemoveSessionWorktreeRequest(ActId.From("never0000")), Token);
 
         Assert.True(kept.IsError);
         Assert.Equal(SindriErrors.AgentWorktreeKept.Code, kept.Error.Code);
@@ -66,7 +66,7 @@ public sealed class RemoveSessionWorktreeTests : IDisposable
     {
         _ = await Started(worktree: false);
 
-        var kept = await _r.RemoveService().Handle(new RemoveSessionWorktreeRequest(ActId), Token);
+        var kept = await _r.RemoveService().Handle(new RemoveSessionWorktreeRequest(ActId.From(Act)), Token);
 
         Assert.True(kept.IsError);
         Assert.Equal(SindriErrors.AgentWorktreeKept.Code, kept.Error.Code);
@@ -79,7 +79,7 @@ public sealed class RemoveSessionWorktreeTests : IDisposable
         _ = await Started();
         var afterRestart = new StartedSessions(_r.Base.Store, _r.Base.Events);   // a new process: nothing in memory
 
-        var removed = await new RemoveSessionWorktreeService(afterRestart, _r.Worktrees, _r.Base.Callers).Handle(new RemoveSessionWorktreeRequest(ActId), Token);
+        var removed = await new RemoveSessionWorktreeService(afterRestart, _r.Worktrees, _r.Base.Callers).Handle(new RemoveSessionWorktreeRequest(ActId.From(Act)), Token);
 
         Assert.True(removed.IsSuccess, removed.IsError ? removed.Error.ToString() : null);
         Assert.Single(_r.Worktrees.Removed);
@@ -91,7 +91,7 @@ public sealed class RemoveSessionWorktreeTests : IDisposable
         _ = await Started();
         using var session = _r.AsSession();
 
-        var refused = await _r.RemoveService().Handle(new RemoveSessionWorktreeRequest(ActId), Token);
+        var refused = await _r.RemoveService().Handle(new RemoveSessionWorktreeRequest(ActId.From(Act)), Token);
 
         Assert.True(refused.IsError);
         Assert.Equal(SindriErrors.AuthRefused.Code, refused.Error.Code);
