@@ -69,6 +69,7 @@ it, and is not the main worktree, the shared checkout or locked. It never forces
 kept worktree with every reason.
 
 - `aw-meta worktree-list`: every worktree with its verdict and reasons (read-only; `--no-fetch` skips the git fetch).
+- `aw-meta events [--after N] [--kind K] [--lane L] [--max N]`: the event log after a cursor, oldest first (read-only; `--json` gives `next` to pass back as `--after`).
 - `aw-meta worktree-sweep [--dry-run] [--pr N]`: remove the removable ones. `--dry-run` first when unsure.
 - `aw-meta worktree-sweep --path <dir> --done`: you are finished with a detached leftover tree (kept otherwise as "detached, not a gate tree"). It goes when its HEAD is in origin/main or on a pushed branch, it is clean and idle, and a sweep ran since it last changed; otherwise the output says why it stayed. Never forced.
 - A lane that finds its worktree kept for a reason it can clear (stop the process, commit and push) can ask you for a sweep.
@@ -174,6 +175,10 @@ A Claude usage limit stops every lane and your own subagents at once ("You've hi
 
 Merges, owner decisions, lane maps and kills are logged by the CLI. For anything else worth keeping:
 `aw-meta log-append --kind incident|note --text "…"`.
+
+## CI gate mode
+
+When `gate.mode` is `ci` in the team config, step 2 changes: `aw-meta gate-run N` runs nothing on this box. It reads the pull request's required checks, review decision and merge state from GitHub and records the answer against the head sha. It passes only when every required check is green, the review is `APPROVED` and the merge state is `CLEAN`; a pending check is a fail (`pending`), so run it again once CI finishes. **Skip every `meta-gate-reserve` step**: no gate tree is built and no heavy slot is taken. Skip step 3 (there are no local test reds to rerun; a red required check goes back to the lane). Then `aw-meta merge-check N` and `aw-meta merge-run N` as before: `merge-check` needs a passing CI record at the head the pull request has now, so a push after `gate-run` means run it again. If `gate-run` refuses with `AW-META-024` (`no required checks on <base>`), the base has no branch protection: ask the owner, never merge on it. `queue-gate` (the train) is a local gate and does not apply.
 
 ## Gating several ready pull requests as a train
 

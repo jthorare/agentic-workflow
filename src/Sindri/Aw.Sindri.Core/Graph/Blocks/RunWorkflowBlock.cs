@@ -38,10 +38,10 @@ public sealed class RunWorkflowBlock(IGraphCallPort calls) : IGraphBlock
 
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([
-        new("workflow", BlockFieldType.Text),
-        new("payload", BlockFieldType.Map, Required: false),
-        new("wait", BlockFieldType.Boolean, Required: false),
-        new("waitSeconds", BlockFieldType.Number, Required: false),
+        new("workflow", BlockFieldType.Text, Caption: "Workflow to run"),
+        new("payload", BlockFieldType.Map, Required: false, Caption: "Data to send"),
+        new("wait", BlockFieldType.Boolean, Required: false, Caption: "Wait for it to finish"),
+        new("waitSeconds", BlockFieldType.Number, Required: false, Caption: "Wait (seconds)"),
     ]);
 
     /// <inheritdoc />

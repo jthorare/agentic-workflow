@@ -17780,6 +17780,8 @@ Aw.Sindri.Core.Graph.Validation.GraphValidation.Mode.init -> void
 Aw.Sindri.Core.Graph.Validation.GraphValidation.Passed.get -> bool
 Aw.Sindri.Core.Graph.Validation.GraphValidationContext
 Aw.Sindri.Core.Graph.Validation.GraphValidationContext.<Clone>$() -> Aw.Sindri.Core.Graph.Validation.GraphValidationContext!
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.AgentTarget.get -> Aw.Sindri.Core.Graph.Validation.GraphLookup
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.AgentTarget.init -> void
 Aw.Sindri.Core.Graph.Validation.GraphValidationContext.Blocks.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Graph.Blocks.IGraphBlockType!>!
 Aw.Sindri.Core.Graph.Validation.GraphValidationContext.Blocks.init -> void
 Aw.Sindri.Core.Graph.Validation.GraphValidationContext.Condition.get -> System.Func<string!, Aw.Sindri.Core.Graph.Validation.ConditionParse!>!
