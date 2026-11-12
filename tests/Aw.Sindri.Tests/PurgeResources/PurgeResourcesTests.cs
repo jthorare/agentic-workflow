@@ -107,7 +107,7 @@ public sealed class PurgeResourcesTests : IDisposable
             _ = _runs.Insert(run, Token).AsTask().Result.Value;
             File.WriteAllText(marker, "the run's first output");
         });
-        var service = new PurgeResourcesService(racing, _workflows, _runs);
+        var service = new PurgeResourcesService(racing, _workflows, _runs, Events());
 
         var answer = await service.Handle(new PurgeResourcesRequest("workflow:triage"), Token);
 
@@ -137,7 +137,13 @@ public sealed class PurgeResourcesTests : IDisposable
         }
     }
 
-    private PurgeResourcesService Build() => new(new ResourceFiles(Root), _workflows, _runs);
+    private PurgeResourcesService Build() => new(new ResourceFiles(Root), _workflows, _runs, Events());
+
+    private ResourceEvents Events()
+    {
+        var slice = new SliceHarness();
+        return new ResourceEvents(slice.Held, slice.Store, slice.Events, _clock);
+    }
 
     private async Task CreateWorkflow() =>
         _ = (await _workflows.Create(_id, _slug, new GraphSpec(Version: 1, "Triage", Description: null, Concurrency: null, Resources: null, Nodes: [new GraphNode(NodeId.From("start"), "manual", Title: null, [])], Edges: []), "owner", Token)).Value;

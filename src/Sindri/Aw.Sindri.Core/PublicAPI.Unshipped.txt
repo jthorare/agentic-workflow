@@ -23195,3 +23195,29 @@ static Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.operator ==(Aw.Sindri.Core
 Aw.Sindri.Core.NeedsYou.NeedsYouDecisions
 static Aw.Sindri.Core.NeedsYou.NeedsYouDecisions.From(Aw.Sindri.Core.Views.HumanDecisionRow! row) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouDecision!>!
 static Aw.Sindri.Core.NeedsYou.NeedsYouDecisions.Question(Aw.Sindri.Core.Views.HumanDecisionRow! row) -> string!
+Aw.Sindri.Core.Events.ResourcePurged
+Aw.Sindri.Core.Events.ResourcePurged.<Clone>$() -> Aw.Sindri.Core.Events.ResourcePurged!
+Aw.Sindri.Core.Events.ResourcePurged.Owner.get -> string!
+Aw.Sindri.Core.Events.ResourcePurged.Owner.init -> void
+Aw.Sindri.Core.Events.ResourcePurged.Databases.get -> int
+Aw.Sindri.Core.Events.ResourcePurged.Databases.init -> void
+Aw.Sindri.Core.Events.ResourcePurged.Disks.get -> int
+Aw.Sindri.Core.Events.ResourcePurged.Disks.init -> void
+Aw.Sindri.Core.Events.ResourcePurged.StrayFiles.get -> int
+Aw.Sindri.Core.Events.ResourcePurged.StrayFiles.init -> void
+Aw.Sindri.Core.Events.ResourcePurged.BytesFreed.get -> long?
+Aw.Sindri.Core.Events.ResourcePurged.BytesFreed.init -> void
+Aw.Sindri.Core.Events.ResourcePurged.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Events.ResourcePurged.At.init -> void
+Aw.Sindri.Core.Events.ResourcePurged.ResourcePurged(string! Owner, int Databases, int Disks, int StrayFiles, long? BytesFreed, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.ResourcePurged.Deconstruct(out string! Owner, out int Databases, out int Disks, out int StrayFiles, out long? BytesFreed, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.ResourcePurged.Equals(Aw.Sindri.Core.Events.ResourcePurged? other) -> bool
+override Aw.Sindri.Core.Events.ResourcePurged.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ResourcePurged.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ResourcePurged.ToString() -> string!
+static Aw.Sindri.Core.Events.ResourcePurged.operator !=(Aw.Sindri.Core.Events.ResourcePurged? left, Aw.Sindri.Core.Events.ResourcePurged? right) -> bool
+static Aw.Sindri.Core.Events.ResourcePurged.operator ==(Aw.Sindri.Core.Events.ResourcePurged? left, Aw.Sindri.Core.Events.ResourcePurged? right) -> bool
+const Aw.Sindri.Core.Events.EventTypes.ResourcePurged = "resource.purged" -> string!
+Aw.Sindri.Core.Resources.ResourceEvents
+Aw.Sindri.Core.Resources.ResourceEvents.Purged(Aw.Sindri.Core.Events.ResourcePurged! payload, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Sindri.Core.Resources.ResourceEvents.ResourceEvents(Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, System.TimeProvider! clock) -> void

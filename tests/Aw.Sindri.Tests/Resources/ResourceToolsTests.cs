@@ -115,10 +115,11 @@ public sealed class ResourceToolsTests : IDisposable
     private ServiceProvider Services()
     {
         var files = new ResourceFiles(Root);
+        var slice = new SliceHarness();
         return new ServiceCollection()
             .AddSingleton(AwJson.CreateOptions(SindriJsonContext.Default))
             .AddSingleton<IService<ListResourcesRequest, ListResourcesResponse>>(new ListResourcesService(files))
-            .AddSingleton<IService<PurgeResourcesRequest, PurgeResourcesResponse>>(new PurgeResourcesService(files, _workflows, _runs))
+            .AddSingleton<IService<PurgeResourcesRequest, PurgeResourcesResponse>>(new PurgeResourcesService(files, _workflows, _runs, new ResourceEvents(slice.Held, slice.Store, slice.Events, _clock)))
             .BuildServiceProvider();
     }
 

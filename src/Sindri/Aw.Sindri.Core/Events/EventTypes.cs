@@ -275,6 +275,9 @@ public static partial class EventTypes
     /// <summary>Facts were deleted from a memory (#2460). The envelope's actor is who forgot them. Not public.</summary>
     public const string MemoryFactsForgotten = "memory.facts.forgotten";
 
+    /// <summary>An owner's resources were purged (#2941). The envelope's actor is who purged them. Counts and bytes only. Not public.</summary>
+    public const string ResourcePurged = "resource.purged";
+
     /// <summary>A poll of a connection for one event kind returned events (#2258, PR 11). Counts only. Not public.</summary>
     public const string ConnectionPolled = "connection.polled";
 

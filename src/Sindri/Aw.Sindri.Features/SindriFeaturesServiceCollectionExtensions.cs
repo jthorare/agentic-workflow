@@ -120,6 +120,7 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IValidator<AnswerQuestionRequest>, AcceptAllValidator<AnswerQuestionRequest>>().AddCommand<AnswerQuestionRequest, AnswerQuestionResponse, AnswerQuestionService>()   // 'sindri answer' (#2258, PR 9)
             .AddScoped<IValidator<ListResourcesRequest>, AcceptAllValidator<ListResourcesRequest>>().AddQuery<ListResourcesRequest, ListResourcesResponse, ListResourcesService>()   // agent-first PR 14: the owner is parsed in the service (SND-RES-006)
             .AddScoped<IValidator<PurgeResourcesRequest>, AcceptAllValidator<PurgeResourcesRequest>>().AddCommand<PurgeResourcesRequest, PurgeResourcesResponse, PurgeResourcesService>()
+            .AddScoped<Aw.Sindri.Core.Resources.ResourceEvents>()
             .AddScoped<IService<RecordHeartbeatRequest, RecordHeartbeatResponse>, RecordHeartbeatService>()
             .AddScoped<IService<RetireInstancesOnStartRequest, RetireInstancesOnStartResponse>, RetireInstancesOnStartService>()
             .AddRecordServiceRun()

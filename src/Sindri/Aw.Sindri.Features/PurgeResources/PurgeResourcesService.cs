@@ -14,7 +14,9 @@ namespace Aw.Sindri.Features.PurgeResources;
 /// <param name="files">The resources on disk.</param>
 /// <param name="workflows">The workflows.</param>
 /// <param name="runs">The runs.</param>
-internal sealed class PurgeResourcesService(IResourceFiles files, IWorkflowStore workflows, IWorkflowRunStore runs) : IService<PurgeResourcesRequest, PurgeResourcesResponse>
+/// <param name="events">Records 'resource.purged' (#2941).</param>
+#pragma warning disable CS9113 // why: red-check stub (#2941); the fix calls it
+internal sealed class PurgeResourcesService(IResourceFiles files, IWorkflowStore workflows, IWorkflowRunStore runs, ResourceEvents events) : IService<PurgeResourcesRequest, PurgeResourcesResponse>
 {
     public async ValueTask<Result<PurgeResourcesResponse>> Handle(PurgeResourcesRequest request, CancellationToken cancellationToken)
     {
