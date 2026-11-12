@@ -29,13 +29,14 @@ internal sealed partial class ShellViewModel
             }
         };
         Workflows.SetViewsStalled(Health.Banner.IsStalled, Health.Banner.Rebuild);
+        Health.OnTick(Workflows.Age);
         var seen = 0L;
         Health.Follow((url, token) =>
         {
             var heard = Health.WorkflowEvents;
             var moved = heard != seen;
             seen = heard;
-            return IsWorkflows && (Workflows.IsReading || moved) ? Workflows.Show(url, token) : Task.CompletedTask;   // shown before connect: its first read; shown and a run moved: read again
+            return IsWorkflows && (Workflows.IsReading || moved || Workflows.HasLive) ? Workflows.Show(url, token) : Task.CompletedTask;   // shown before connect: its first read; shown and a run moved: read again
         });
         PropertyChanged += (_, e) =>
         {

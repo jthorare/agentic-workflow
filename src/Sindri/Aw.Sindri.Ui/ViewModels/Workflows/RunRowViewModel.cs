@@ -6,21 +6,40 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// <summary>One run on a workflow's runs list: status as a glyph and a word, trigger, revision, when, and why it failed.</summary>
 internal sealed class RunRowViewModel : ObservableObject
 {
+    private readonly WorkflowRunRowView _row;
+    private readonly TimeProvider _clock;
+    private readonly string _word;
+
     internal RunRowViewModel(WorkflowRunRowView row, TimeProvider clock)
     {
+        (_row, _clock) = (row, clock);
         Id = row.Id;
         var (glyph, word) = Labels.WfChip(row.Status);
         ChipText = glyph + " " + word;
         Tone = RunStatus.Tone(row.Status);
         TriggerText = Labels.WfTriggerWord(row.Trigger);
         RevisionText = Labels.WfRunRevision(row.Revision);
-        var live = RunStatus.IsLive(row.Status);
-        WhenText = live
-            ? Labels.JobWhen(running: true, clock.GetUtcNow() - row.StartedAt)
-            : Labels.JobWhen(running: false, clock.GetUtcNow() - (row.EndedAt ?? row.StartedAt));
+        _word = word.ToLowerInvariant();
+        WhenText = When();
         ErrorText = row.Error ?? string.Empty;
-        Name = Labels.WfRunRowName(Id, word.ToLowerInvariant(), TriggerText.ToLowerInvariant(), WhenText, ErrorText);
+        Name = RowName();
     }
+
+    /// <summary>Words "Started 2m ago" or "Ended 5m ago" again from the clock now (the shell's one-second beat calls it).</summary>
+    internal void Age()
+    {
+        WhenText = When();
+        Name = RowName();
+    }
+
+    /// <summary>True while the run has not ended.</summary>
+    internal bool IsLive => RunStatus.IsLive(_row.Status);
+
+    private string When() => IsLive
+        ? Labels.JobWhen(running: true, _clock.GetUtcNow() - _row.StartedAt)
+        : Labels.JobWhen(running: false, _clock.GetUtcNow() - (_row.EndedAt ?? _row.StartedAt));
+
+    private string RowName() => Labels.WfRunRowName(Id, _word, TriggerText.ToLowerInvariant(), WhenText, ErrorText);
 
     /// <summary>The run's id.</summary>
     public string Id { get; }
@@ -47,7 +66,7 @@ internal sealed class RunRowViewModel : ObservableObject
     public string RevisionText { get; }
 
     /// <summary>"Started 2m ago" while it is live, "Ended 5m ago" after.</summary>
-    public string WhenText { get; }
+    public string WhenText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>Why it failed, as served; empty otherwise.</summary>
     public string ErrorText { get; }
@@ -56,5 +75,5 @@ internal sealed class RunRowViewModel : ObservableObject
     public bool HasError => ErrorText.Length > 0;
 
     /// <summary>The row's accessible name.</summary>
-    public string Name { get; }
+    public string Name { get; private set => Set(ref field, value); } = string.Empty;
 }

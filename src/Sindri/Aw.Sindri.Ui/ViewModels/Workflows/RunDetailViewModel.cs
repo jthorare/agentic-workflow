@@ -8,6 +8,8 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : ObservableObject
 {
     private int _reads;
+    private bool _live;
+    private DateTimeOffset _since;
     private Uri? _url;
 
     /// <summary>The run's id.</summary>
@@ -138,6 +140,22 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         Show(run.Value);
     }
 
+    /// <summary>Words "Started 2m ago" or "Ended 5m ago" again from the clock now (the shell's one-second beat calls it); nothing before the first read.</summary>
+    internal void Age()
+    {
+        if (Id.Length > 0 && WhenText.Length > 0)
+        {
+            WhenText = When();
+        }
+    }
+
+    /// <summary>True while the open run has not ended.</summary>
+    internal bool IsLive => RunStatus.IsLive(Status);
+
+    private string When() => Labels.JobWhen(running: _live, clock.GetUtcNow() - _since);
+
+    private static DateTimeOffset SinceOf(WorkflowRunView run) => RunStatus.IsLive(run.Status) ? run.StartedAt : run.EndedAt ?? run.StartedAt;
+
     private void Show(WorkflowRunView run)
     {
         var (glyph, word) = Labels.WfChip(run.Status);
@@ -146,10 +164,8 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         (Status, Tone) = (run.Status, RunStatus.Tone(run.Status));
         TriggerText = Labels.WfStartedBy(KindOf(run.Trigger));
         RevisionText = Labels.WfRunRevision(run.Revision);
-        var live = RunStatus.IsLive(run.Status);
-        WhenText = live
-            ? Labels.JobWhen(running: true, clock.GetUtcNow() - run.StartedAt)
-            : Labels.JobWhen(running: false, clock.GetUtcNow() - (run.EndedAt ?? run.StartedAt));
+        (_live, _since) = (RunStatus.IsLive(run.Status), SinceOf(run));
+        WhenText = When();
         ErrorText = run.Error ?? string.Empty;
         OutputsText = WorkflowJson.Pretty(run.Outputs);
         Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode))];

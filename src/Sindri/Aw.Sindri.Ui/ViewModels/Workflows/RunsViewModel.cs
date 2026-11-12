@@ -149,6 +149,18 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     /// <param name="text">The note; empty clears it.</param>
     internal void Note(string text) => NoticeText = text;
 
+    /// <summary>Words every row's "N ago" again from the clock now (the shell's one-second beat calls it).</summary>
+    internal void Age()
+    {
+        foreach (var row in Rows)
+        {
+            row.Age();
+        }
+    }
+
+    /// <summary>True while a listed run has not ended.</summary>
+    internal bool HasLive => Rows.Any(r => r.IsLive);
+
     private void Show(WorkflowRunList list)
     {
         (IsFailed, FailedText, CanRun) = (false, string.Empty, true);

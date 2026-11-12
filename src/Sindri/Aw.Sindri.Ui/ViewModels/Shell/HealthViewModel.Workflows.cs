@@ -17,4 +17,18 @@ internal sealed partial class HealthViewModel
             _ = Interlocked.Increment(ref _workflowEvents);
         }
     }
+
+    /// <summary>Adds a view's re-wording of its own "N ago" to the one-second ticker that words "updated Ns ago".</summary>
+    /// <param name="age">Called on every beat, on the UI thread.</param>
+    internal void OnTick(Action age) => _ticks.Add(age);
+
+    private readonly List<Action> _ticks = [];
+
+    private void RunTicks()
+    {
+        foreach (var tick in _ticks)
+        {
+            tick();
+        }
+    }
 }

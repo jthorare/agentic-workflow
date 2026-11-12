@@ -264,6 +264,8 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     // The ticker: "updated Ns ago", and after StaleAfter without an event, a status or an answered ping the word stale.
     internal void Age()
     {
+        RunTicks();
+
         lock (_gate)
         {
             if (State is not (ShellState.Normal or ShellState.Stale))

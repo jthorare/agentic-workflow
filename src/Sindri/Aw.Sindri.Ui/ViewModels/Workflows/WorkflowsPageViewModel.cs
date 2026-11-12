@@ -108,6 +108,16 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>True on one run's detail.</summary>
     public bool IsRun => _level == Level.Run;
 
+    /// <summary>Words the shown runs' "N ago" again from the clock now (the shell's one-second beat calls it).</summary>
+    internal void Age()
+    {
+        Runs.Age();
+        Run.Age();
+    }
+
+    /// <summary>True while the page shows a run that has not ended: the shell reads it again on every beat of the follow, since the views may still be behind the end event.</summary>
+    internal bool HasLive => (_level == Level.Runs && Runs.HasLive) || (_level == Level.Run && Run.IsLive);
+
     /// <summary>The open workflow's runs.</summary>
     public RunsViewModel Runs { get; }
 
