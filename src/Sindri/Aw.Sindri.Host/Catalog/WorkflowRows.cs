@@ -10,7 +10,7 @@ using Aw.Sindri.Features.ValidateWorkflow;
 
 namespace Aw.Sindri.Host.Catalog;
 
-/// <summary>The workflow write commands (issue 2258, PR 8b): create, edit by ops, replace, validate, activate, pause and archive. Desk class, and an agent session may run every one (Part 1: every verb for agents); the run and cancel rows are <see cref="WorkflowRunRows"/>.</summary>
+/// <summary>The workflow write commands (issue 2258, PR 8b): create, edit by ops, replace, validate, activate, pause and archive. Desk class, and an agent session may run every one but activate and pause (workflows page spec §8: those two are the owner's, SND-AUTH-002); the run and cancel rows are <see cref="WorkflowRunRows"/>.</summary>
 internal static class WorkflowRows
 {
     internal static IReadOnlyList<CommandRow> All { get; } =
@@ -19,15 +19,15 @@ internal static class WorkflowRows
         Row("ApplyWorkflowOps", typeof(ApplyWorkflowOpsRequest), new RowRoute("POST", "/sindri/workflows/{slug}/ops"), "sindri wf edit <slug> --base <revision> [--ops <json>] [--ops-file <file>]", destructive: false),
         Row("ReplaceWorkflow", typeof(ReplaceWorkflowRequest), new RowRoute("PUT", "/sindri/workflows/{slug}"), "sindri wf edit <slug> --base <revision> --file <specFile>", destructive: false),
         Row("ValidateWorkflow", typeof(ValidateWorkflowRequest), new RowRoute("POST", "/sindri/workflows/validate"), "sindri wf validate --slug <slug> [--revision <n>]", destructive: false),
-        Row("ActivateWorkflow", typeof(ActivateWorkflowRequest), new RowRoute("POST", "/sindri/workflows/{slug}/activate"), "sindri wf activate <slug> [--revision <n>]", destructive: false),
-        Row("PauseWorkflow", typeof(PauseWorkflowRequest), new RowRoute("POST", "/sindri/workflows/{slug}/pause"), "sindri wf pause <slug>", destructive: false),
+        Row("ActivateWorkflow", typeof(ActivateWorkflowRequest), new RowRoute("POST", "/sindri/workflows/{slug}/activate"), "sindri wf activate <slug> [--revision <n>]", destructive: false, sessionOk: false),
+        Row("PauseWorkflow", typeof(PauseWorkflowRequest), new RowRoute("POST", "/sindri/workflows/{slug}/pause"), "sindri wf pause <slug>", destructive: false, sessionOk: false),
         Row("DeleteWorkflow", typeof(DeleteWorkflowRequest), new RowRoute("DELETE", "/sindri/workflows/{slug}"), "sindri wf delete <slug>", destructive: true),
     ];
 
     private readonly record struct RowRoute(string Method, string Route);
 
-    private static CommandRow Row(string action, Type request, RowRoute http, string cli, bool destructive) =>
+    private static CommandRow Row(string action, Type request, RowRoute http, string cli, bool destructive, bool sessionOk = true) =>
         new(ActionId.From(action), request, Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: destructive, ReadsViews: false, Shortcut: null,
-            http.Method, http.Route, ShellRows.Form(cli), "ready", SessionOk: true);
+            http.Method, http.Route, ShellRows.Form(cli), "ready", SessionOk: sessionOk);
 }

@@ -16,7 +16,11 @@ internal sealed class PauseWorkflowService(IWorkflowStore workflows, WorkflowCha
     public async ValueTask<Result<PauseWorkflowResponse>> Handle(PauseWorkflowRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        _ = callers.Current;   // red stub: the owner check lands next
+        if (callers.Current?.Class is not (CallerClass.Human or CallerClass.Service))
+        {
+            return SindriErrors.AuthRefused.With("Turning a workflow off is the owner's to do; a session can't (fix: ask the owner to press Pause)");
+        }
+
         var listed = await workflows.List(includeArchived: true, cancellationToken).ConfigureAwait(false);
         if (listed.IsError)
         {

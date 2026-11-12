@@ -24,7 +24,11 @@ internal sealed class ActivateWorkflowService(IWorkflowStore workflows, IWorkflo
     public async ValueTask<Result<ActivateWorkflowResponse>> Handle(ActivateWorkflowRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        _ = callers.Current;   // red stub: the owner check lands next
+        if (callers.Current?.Class is not (CallerClass.Human or CallerClass.Service))
+        {
+            return SindriErrors.AuthRefused.With("Turning a workflow on is the owner's to do; a session can't (fix: ask the owner to press Activate)");
+        }
+
         var found = await FindActive(request.Slug, cancellationToken).ConfigureAwait(false);
         if (found.IsError)
         {
