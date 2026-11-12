@@ -45,6 +45,7 @@ public sealed class WorkflowsEditorSheetTests
 
         Assert.Equal((true, true), (page.IsSettingsOpen, page.CanEdit));
         Assert.Equal(["prompt", "strict"], page.Editor.Fields.Select(f => f.Name), StringComparer.Ordinal);
+        Assert.Equal("EditorFieldCheck.strict", page.Editor.Fields[1].CheckAutomationId);   // #3111: a driver targets one field's checkbox by this id
         Assert.Equal("Look for drift", page.Editor.Fields[0].Text);
         Assert.Equal("Check the repos \u00b7 Run an agent", page.EditorHeading);   // the step's title and its kind, never the node id or the revision
         page.CloseEditor();
