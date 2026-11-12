@@ -230,18 +230,18 @@ write('home-update-reminder', home.replace('</body>', sr('row read as “Post th
 # ================= 5. #3170 the one-line create window from the tray hotkey =================
 def desk(inner, srtext=''):
     return (f'<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><title>Create an issue</title><link rel="stylesheet" href="{G}"><link rel="stylesheet" href="projects.css"></head>'
-            f'<body><div class="desk"></div><div class="deskbar"><span class="tray">Sindri</span><span>New issue <kbd>Ctrl+Alt+I</kbd></span><span class="sp"></span><span>Thu 12 Nov 09:14</span></div>{inner}' + (f'<div class="sr" style="position:absolute;bottom:20px;left:0;right:0;text-align:center;font:400 11px/16px var(--font);color:var(--ink-subtle)"><b style="font-weight:500;color:var(--ink-muted)">Screen reader:</b> {srtext}</div>' if srtext else '') + '</body></html>\n')
+            f'<body><div class="desk"></div><div class="deskbar"><span class="tray">Sindri</span><span>New issue or note <kbd>Ctrl+Alt+I</kbd></span><span class="sp"></span><span>Thu 12 Nov 09:14</span></div>{inner}' + (f'<div class="sr" style="position:absolute;bottom:20px;left:0;right:0;text-align:center;font:400 11px/16px var(--font);color:var(--ink-subtle)"><b style="font-weight:500;color:var(--ink-muted)">Screen reader:</b> {srtext}</div>' if srtext else '') + '</body></html>\n')
 KIND = '<span class="kind"><a class="on">Issue</a><a>Note</a></span>'
-CW = ('<div class="cwin"><div class="in">' + KIND + '<span class="g todo"></span><span class="t">Retry timeout on export upload is 5 s, make it configurable<span class="caret" style="display:inline-block;vertical-align:-4px;margin-left:2px"></span></span></div>'
+CW = ('<div class="cwin"><div class="wt">New issue</div><div class="in">' + KIND + '<span class="g todo"></span><span class="t">Retry timeout on export upload is 5 s, make it configurable<span class="caret" style="display:inline-block;vertical-align:-4px;margin-left:2px"></span></span></div>'
       '<div class="pre"><span class="pc"><span>Project</span>Exports v2 ▾</span><span class="pc"><span>Assignee</span>you</span><span class="sp"></span><span class="pc"><span>in</span>Linear · EXP</span><span class="btn primary" style="margin-left:4px">Create issue in Linear</span></div>'
-      '<div class="ft"><span><kbd>Ctrl+Enter</kbd>create</span><span><kbd>Esc</kbd>drop</span><span><kbd>Tab</kbd>change project</span><span><kbd>Ctrl+Tab</kbd>Issue / Note</span></div></div>')
+      '<div class="ft"><span><kbd>Ctrl+Enter</kbd>create</span><span><kbd>Esc</kbd>close</span><span><kbd>Tab</kbd>change project</span><span><kbd>Ctrl+Tab</kbd>Issue / Note</span></div></div>')
 CWNS = CW.replace(KIND, '').replace('<span><kbd>Ctrl+Tab</kbd>Issue / Note</span>', '')
 NOTE1 = '<div class="cnote" style="position:absolute;left:50%;top:372px;transform:translateX(-50%);font-size:12px;color:var(--ink-subtle);width:600px">The window always opens on Note. Ctrl+Tab switches to Issue. Ctrl+Enter creates; Enter never does.</div>'
 NOTE0 = NOTE1.replace('The window always opens on Note. Ctrl+Tab switches to Issue. Ctrl+Enter creates; Enter never does.', 'No notes folder is set in Settings, so the switch is hidden and the window reads issue-only.')
 write('create-window', desk(CW + NOTE1, '“New issue, dialog. Kind switch, Issue selected, 1 of 2. Issue title, edit text. Project Exports v2. Assignee you.” Control Tab switches kind; Control Enter creates, Escape closes.'))
 write('create-window-no-switch', desk(CWNS + NOTE0, '“New issue, dialog. Issue title, edit text. Project Exports v2. Assignee you.” There is no kind switch until a notes folder is set.'))
 write('create-window-empty', desk(CW.replace('Retry timeout on export upload is 5 s, make it configurable<span class="caret" style="display:inline-block;vertical-align:-4px;margin-left:2px"></span>', '<span class="t ph" style="color:var(--ink-subtle)">Issue title</span>'), '“New issue, dialog. Issue title, edit text, empty.”'))
-CWERR = CW.replace('<div class="pre">', '<div class="state-line err" style="margin:0;border-radius:0;height:auto;padding:8px 16px;align-items:start"><span class="g fail" style="margin-top:3px"></span><span class="what" style="white-space:normal;overflow:visible">Couldn’t create the issue. The line stays as you wrote it. Check your connection, then try again.<br><span class="det" style="font:400 11px/16px var(--mono);margin:0">Details ▸ SND-NOTE-015</span></span><span class="btns">' + btn('Try again', True) + '</span></div><div class="pre">')
+CWERR = CW.replace('class="btn primary" style="margin-left:4px">Create issue in Linear','class="btn" style="margin-left:4px">Create issue in Linear').replace('<div class="pre">', '<div class="state-line err" style="margin:0;border-radius:0;height:auto;padding:8px 16px;align-items:start"><span class="g fail" style="margin-top:3px"></span><span class="what" style="white-space:normal;overflow:visible">Couldn’t create the issue. The line stays as you wrote it. Check your connection, then try again.<br><span class="det" style="font:400 11px/16px var(--mono);margin:0">Details ▸ SND-NOTE-015</span></span><span class="btns">' + btn('Try again', True) + '</span></div><div class="pre">')
 write('create-window-error', desk(CWERR, '“Couldn’t create the issue. The line stays as you wrote it. Check your connection, then try again. Try again button.” Details: SND-NOTE-015. The window stays open and focus stays in the title.'))
 write('create-window-done', desk('<div class="notif"><div class="h">Sindri</div><div>Created <span class="id">EXP-437</span> in Exports v2</div><div style="color:var(--ink-subtle);font-size:12px">Retry timeout on export upload is 5 s, make it configurable</div><div class="acts">' + btn('Open in Linear') + btn('Copy link') + '</div></div>', '“Notification: Created EXP-437 in Exports v2. Actions: Open in Linear, Copy link.”'))
 
@@ -253,8 +253,8 @@ def setrow(label, sub, right, first=False):
     d = '' if first else '<div class="sdiv"></div>'
     return f'{d}<div class="srw"><div class="stx"><div class="sl">{label}</div><div class="sc">{sub}</div></div><div class="sctl">{right}</div></div>'
 SHORT = ('<div class="ssec"><div class="shd">Shortcuts</div><div class="scard">'
-  + setrow('New issue from anywhere', 'Opens the one-line create window, even with the main window closed.', '<kbd>Ctrl+Alt+I</kbd>' + btn('Change'), True)
-  + '<div class="serr"><span class="g fail"></span><span>The OS refused this hotkey. The tray item “New issue or note” still works.</span><span class="sp"></span>' + btn('Pick another key', True) + '</div>'
+  + setrow('Capture hotkey', 'Opens the capture window for an issue or a note, from anywhere, even with the main window closed.', '<kbd>Ctrl+Alt+I</kbd>' + btn('Change'), True)
+  + '<div class="serr"><span class="g fail"></span><span>The OS refused this hotkey. The tray item “New issue or note” still works. <span class="mono" style="font-size:11px;color:var(--ink-subtle)">Details ▸ SND-NOTE-017</span></span><span class="sp"></span>' + btn('Pick another key', True) + '</div>'
   + '</div></div>')
 THISAPP = ('<div class="ssec"><div class="shd">This app</div><div class="scard">'
   + setrow('Reduce motion', 'Turns off the slides and fades.', '<span class="tgl"><i></i></span>', True)
@@ -272,8 +272,8 @@ cont = (f'''<!doctype html>
 </div></body></html>
 ''')
 TRAY = ('<div class="menu" style="right:14px;top:34px;left:auto;width:200px;padding:4px 0">'
-        '<div class="ment on"><span class="lab">New issue</span></div><div class="ment"><span class="lab">Open Sindri</span></div></div>')
-write('settings-hotkey-refused', cont.replace('</body>', TRAY + sr('the Shortcuts heading is a level 2 heading; the row reads “New issue from anywhere, shortcut Control Alt I”, then the error line, then “Pick another key, button”.') + '</body>'))
+        '<div class="ment on"><span class="lab">New issue or note</span></div><div class="ment"><span class="lab">Open Sindri</span></div></div>')
+write('settings-hotkey-refused', cont.replace('</body>', TRAY + sr('the Shortcuts heading is a level 2 heading; the row reads “Capture hotkey, shortcut Control Alt I”, then the error line, then “Pick another key, button”.') + '</body>'))
 
 # ================= round 3d: projects-list and projects-peek redrawn on section 14's final rules =================
 mini = ns['mini']
