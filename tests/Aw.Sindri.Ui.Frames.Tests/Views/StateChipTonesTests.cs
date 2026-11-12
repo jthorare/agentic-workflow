@@ -7,6 +7,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Views.Controls;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
@@ -19,7 +20,7 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 [Collection(HeadlessWindows.Name)]
 public sealed class StateChipTonesTests
 {
-    public static TheoryData<string> Tones => new() { "ok", "running", "waiting", "attention", "error", "neutral", "draft" };
+    public static TheoryData<string> Tones => ["ok", "running", "waiting", "attention", "error", "neutral", "draft"];
 
     private static Task<T> OnUi<T>(Func<T> body) =>
         HeadlessUnitTestSession.GetOrStartForAssembly(typeof(StateChipTonesTests).Assembly).Dispatch(body, TestContext.Current.CancellationToken);
@@ -91,8 +92,8 @@ public sealed class StateChipTonesTests
         var (window, chip) = Show("ok", "Active");
         var served = new StateChipView { Chip = new Aw.Sindri.Ui.Api.StateChip("PARKED", Aw.Sindri.Ui.Api.ChipTone.Attn) };
 
-        Assert.Single(chip.GetVisualDescendants().OfType<TextBlock>());
-        Assert.Contains("attn", served.Classes);
+        _ = Assert.Single(chip.GetVisualDescendants().OfType<TextBlock>());
+        Assert.Contains("attn", served.Classes, StringComparer.Ordinal);
         window.Close();
         return true;
     });
@@ -102,7 +103,7 @@ public sealed class StateChipTonesTests
     private static Color Over(Color top, Color under)
     {
         var a = top.A / 255d;
-        byte Mix(byte t, byte u) => (byte)Math.Round((t * a) + (u * (1 - a)));
+        byte Mix(byte t, byte u) => (byte)Math.Round((t * a) + (u * (1 - a)), MidpointRounding.AwayFromZero);
         return Color.FromRgb(Mix(top.R, under.R), Mix(top.G, under.G), Mix(top.B, under.B));
     }
 
