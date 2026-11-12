@@ -4,6 +4,7 @@ namespace Aw.Sindri.Features.GetNeedsYou;
 internal sealed class TurnOnMcpSighting
 {
     private readonly Lock _sync = new();
+    private DateTimeOffset? _first;
 
     /// <summary>The time the row was first seen.</summary>
     /// <param name="now">The time now.</param>
@@ -12,7 +13,7 @@ internal sealed class TurnOnMcpSighting
     {
         lock (_sync)
         {
-            return now;
+            return _first ??= now;
         }
     }
 
@@ -21,6 +22,7 @@ internal sealed class TurnOnMcpSighting
     {
         lock (_sync)
         {
+            _first = null;
         }
     }
 }
