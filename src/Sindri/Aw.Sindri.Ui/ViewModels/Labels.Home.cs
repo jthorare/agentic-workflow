@@ -14,4 +14,10 @@ internal static partial class Labels
 
     /// <summary>"Nothing running. Start a workflow to see it here."</summary>
     internal const string HomeNothingRunning = "Nothing running. Start a workflow to see it here.";
+
+    /// <summary>The Retry button of a failed or stale read (<see cref="Controls.FailedRead"/>).</summary>
+    internal const string Retry = "Retry";
+
+    /// <summary>Home's Running and Queued panels when the first queue read failed.</summary>
+    internal const string QueueReadFailed = "Couldn't read the queue just now.";
 }

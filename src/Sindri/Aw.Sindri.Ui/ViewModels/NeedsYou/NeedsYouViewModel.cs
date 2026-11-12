@@ -94,6 +94,9 @@ internal sealed partial class NeedsYouViewModel : ObservableObject
     /// <summary>The empty line Home shows: the served sentence, or the app's own words when none was served; empty unless the list is read and empty.</summary>
     internal string EmptyLine => !_loaded || !IsEmpty ? "" : _feed.Sentence.Length > 0 ? FirstSentence(_feed.Sentence) : Labels.HomeNothingNeedsYou;
 
+    /// <summary>True while the views are stalled (the rows are the last read), so the banner offers Retry.</summary>
+    internal bool IsStalled { get; private set; }
+
     /// <summary>True while a stalled or rebuilding banner shows.</summary>
     internal bool HasBanner => _feed.Stalled || _feed.Rebuilding;
 
