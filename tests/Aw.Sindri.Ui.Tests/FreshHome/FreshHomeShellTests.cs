@@ -1,6 +1,7 @@
 using System.Net;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
+using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Shell;
@@ -20,7 +21,7 @@ public sealed class FreshHomeShellTests
 
     private async Task<ShellViewModel> FreshHome()
     {
-        _server.Current = A.Status(profile: new ProfileView(Live: null, Problem: "No profile found", Source: null));
+        _server.Current = A.Status(profile: new ProfileView(Live: null, Problem: "No profile found", Source: null, ProblemKind: "missing"));
         _server.TodoNoteAnswer = new RouteAnswer(HttpStatusCode.OK, TodoNoteSetupSample.NoteIn("can't read", lastError: "no vault"));
         _server.ReviewsAnswer = RouteAnswer.Problem(HttpStatusCode.InternalServerError, "SND-X-500", "down");
         _server.LinearIssuesAnswer = RouteAnswer.Problem(HttpStatusCode.InternalServerError, "SND-X-500", "down");
@@ -56,5 +57,15 @@ public sealed class FreshHomeShellTests
         await ShellWait.Until(shell, () => !shell.Elsewhere.IsLoading, Token);
 
         Assert.Equal(("Connect GitHub · Connect Linear", false), (shell.Elsewhere.Text, shell.Elsewhere.Parts.Any(p => p.CanRetry)));
+    }, Token);
+
+    [Fact]
+    public Task The_no_profile_line_on_the_health_page_opens_setup() => UiThread.Run(async () =>
+    {
+        var shell = await FreshHome();
+
+        shell.Health.RequestSetup();
+
+        Assert.Equal(PageId.Settings, shell.CurrentPage);
     }, Token);
 }

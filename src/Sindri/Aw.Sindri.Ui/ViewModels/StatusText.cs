@@ -17,12 +17,10 @@ internal static class StatusText
     // "unreadable" when the live file doesn't load, else "live": an edit applies on save, so there is no approval state to word.
     internal static string ProfileState(ProfileView p) => IsMissing(p) ? Labels.ProfileNotSetUp : p.Problem is not null ? "unreadable" : "live";
 
-    /// <summary>True when there is no profile yet (a brand-new home), which is not a fault. Sindri's problemKind says it; until a Sindri serves that, no live hash and no file with a problem reads as missing.</summary>
+    /// <summary>True when there is no profile yet (a brand-new home), which is not a fault. Only Sindri's problemKind "missing" says it: without it a problem reads as unreadable, so a broken profile file never hides behind a Setup link.</summary>
     /// <param name="p">The status's profile part.</param>
     /// <returns>True when the profile is missing.</returns>
-    internal static bool IsMissing(ProfileView p) => p.ProblemKind is { } kind
-        ? string.Equals(kind, "missing", StringComparison.Ordinal)
-        : p.Live is null && p.Source is null && p.Problem is not null;
+    internal static bool IsMissing(ProfileView p) => string.Equals(p.ProblemKind, "missing", StringComparison.Ordinal);
 
     internal static string ProfileDetail(ProfileView p) => p switch
     {
