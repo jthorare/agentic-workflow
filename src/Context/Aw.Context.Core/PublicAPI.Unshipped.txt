@@ -12480,3 +12480,4 @@ static Aw.Context.Core.Results.AnchorChoice.operator !=(Aw.Context.Core.Results.
 static Aw.Context.Core.Results.AnchorChoice.operator ==(Aw.Context.Core.Results.AnchorChoice? left, Aw.Context.Core.Results.AnchorChoice? right) -> bool
 Aw.Context.Core.Results.ContextResult.Suggestions.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.AnchorChoice!>?
 Aw.Context.Core.Results.ContextResult.Suggestions.init -> void
+static Aw.Context.Core.Graph.AnchorMatch.Choices(System.Collections.Generic.IEnumerable<Aw.Context.Core.Graph.GraphNode!>! nodes) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.AnchorChoice!>!
