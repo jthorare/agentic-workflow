@@ -140,7 +140,7 @@ internal static class EndpointTable
         _ = commands.MapPromoteContextMap().MapCheckContextMapStructure().MapPurgeIndexSource();
         _ = commands.MapProposeContextMap();
         _ = commands.MapReviewContextMap();
-        _ = commands.MapStopProcess();
+        _ = commands.MapStopProcess().MapRestartServe();
         _ = commands.MapAddRepo();
         _ = commands.MapRegisterMcp();
         _ = commands.MapOnboardRepo();

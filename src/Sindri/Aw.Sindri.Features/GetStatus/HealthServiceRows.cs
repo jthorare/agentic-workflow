@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Health;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Profile;
@@ -22,9 +23,18 @@ internal sealed class HealthServiceRows(IViewReader views, IEnumerable<BuiltInSe
     /// <returns>The context.</returns>
     public HealthContext Context(IReadOnlyList<HealthProblem>? codeIndexProblems) => new(codeIndexProblems, clock?.GetUtcNow());
 
+    /// <summary>The running and the installed build stamps (#3052); both null outside an install.</summary>
+    /// <returns>The stamps and whether they differ.</returns>
+    public BuildStatus Build()
+    {
+        var running = builds?.Running();
+        var installed = builds?.Installed();
+        return new BuildStatus(running, installed, StaleBuild.Is(running, installed));
+    }
+
     /// <summary>The report with the stale build problem (#1032) when the running build is not the one 'bin/cs/current' names.</summary>
     /// <param name="report">The report so far.</param>
-    /// <returns>The report; the same one outside an install.</returns>
+    /// <returns>The report.</returns>
     public HealthReport WithStaleBuild(HealthReport report) => builds is null ? report : HealthSummary.WithStaleBuild(report, builds.Running(), builds.Installed());
 
     /// <summary>How many agent runs ended their turn without reporting and are still not ended (issue #1000).</summary>

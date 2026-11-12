@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Features.RestartServe;
 using Aw.Sindri.Tests.ListSessions;
@@ -15,7 +16,7 @@ public sealed class OpenRunsTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_launched_session_with_an_instance_is_an_open_run_and_a_session_without_one_is_not()
     {
-        await _r.Launches.Item(Core.Ids.RepoName.From("api"));
+        await _r.Launches.Item(RepoName.From("api"));
         await _r.Launches.Start(instance: InstanceAddress.From("T-3/item/1"), state: "build", attempt: 1);
         _ = _r.Publish(SessionsRig.Three);
 
@@ -28,7 +29,7 @@ public sealed class OpenRunsTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_launch_without_an_instance_is_not_an_open_run()
     {
-        await _r.Launches.Item(Core.Ids.RepoName.From("api"));
+        await _r.Launches.Item(RepoName.From("api"));
         await _r.Launches.Start();
         _ = _r.Publish(SessionsRig.Three);
 

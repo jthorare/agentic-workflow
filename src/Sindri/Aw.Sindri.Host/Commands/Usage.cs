@@ -11,6 +11,7 @@ internal static class Usage
         "       sindri status [--json]        the running control plane's status (exit 1 when it isn't running)",
         "       sindri status --follow [--json]   the status again each time it changes, until Ctrl-C (exit 0), or 1 when Sindri isn't running or stops",
         "       sindri stop                   stop it and release the host lease",
+        "       sindri restart                restart onto the installed build when it differs from the running one; open agent runs keep running and are listed; exit 0 scheduled, 1 refused or not running",
         "       sindri profile validate [--json]",
         "       sindri profile init [--json]   write the default profile when none exists (no repos yet: add one with 'repo add'); refuses when one exists (exit 2); runs without the control plane",
         "       sindri profile set <key> <value> [--json]   set one scalar key of the live profile in place (dotted key, such as context.models.labeling.pick): comments and order stay, the edited file is checked before it is written, and the edit is live at once; refused without the per-start human token or for an agent session (SND-AUTH-002); runs without the control plane",

@@ -72,6 +72,7 @@ using Aw.Sindri.Features.RebuildViews;
 using Aw.Sindri.Features.RecordHeartbeat;
 using Aw.Sindri.Features.RegisterMcp;
 using Aw.Sindri.Features.ReplaceWorkflow;
+using Aw.Sindri.Features.RestartServe;
 using Aw.Sindri.Features.ResumeJob;
 using Aw.Sindri.Features.ResumeService;
 using Aw.Sindri.Features.RetireInstancesOnStart;
@@ -202,7 +203,8 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<RebuildViewsRequest>, AcceptAllValidator<RebuildViewsRequest>>().AddCommand<RebuildViewsRequest, CommandAccepted, RebuildViewsService>();
         _ = services.AddScoped<IValidator<ImportContextMapRequest>, AcceptAllValidator<ImportContextMapRequest>>().AddCommand<ImportContextMapRequest, ImportContextMapResponse, ImportContextMapService>();
         _ = services.AddScoped<Core.Profile.ModelKeyChecks>();
-        _ = services.AddScoped<IValidator<StopProcessRequest>, AcceptAllValidator<StopProcessRequest>>().AddStopCommand<StopProcessRequest, StopProcessResponse, StopProcessService>();   // never behind the gate: a stop cancels its holder
+        _ = services.AddScoped<IValidator<StopProcessRequest>, AcceptAllValidator<StopProcessRequest>>().AddStopCommand<StopProcessRequest, StopProcessResponse, StopProcessService>();
+        _ = services.AddScoped<IValidator<RestartServeRequest>, AcceptAllValidator<RestartServeRequest>>().AddStopCommand<RestartServeRequest, RestartServeResponse, RestartServeService>().AddScoped<IOpenRuns, OpenRuns>();   // #3052: the same stop path, behind a human-only check   // never behind the gate: a stop cancels its holder
         return services;
     }
 

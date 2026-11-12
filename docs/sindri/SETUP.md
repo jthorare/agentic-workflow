@@ -163,6 +163,7 @@ A repo's name must be letters, digits, `.`, `_` or `-`.
 | `sindri status` | Agent OK | The running control plane's summary; never starts it |
 | `sindri doctor` | Agent OK | One line per check, each `ok`, `warn` or `fail` with a fix; works while the control plane is down |
 | `sindri stop` | Human-only | Stops it: Temporal, then releases the lease |
+| `sindri restart` | Human-only | Restarts serve onto the installed build; open agent runs keep running |
 
 `status` when all is well:
 

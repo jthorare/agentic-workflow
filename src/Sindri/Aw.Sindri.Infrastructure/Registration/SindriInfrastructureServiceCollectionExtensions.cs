@@ -175,6 +175,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IEndpointFile, FileEndpoint>()
             .AddSingleton<IControlPlaneProbe, HttpControlPlaneProbe>()
             .AddSingleton<IControlPlaneLauncher, ServeLauncher>()
+            .AddSingleton<IServeRelauncher>(static sp => new ServeRelauncher(sp.GetRequiredService<SindriSettings>(), AppContext.BaseDirectory))   // #3052: restart onto bin/cs/current
             .AddSingleton<IHumanTokenStore, FileHumanToken>()
             .AddSingleton(static sp => new ProverLabel(sp.GetRequiredService<SindriSettings>().ProverLabelAllowed))
             .AddDoctorChecks(environment)

@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Health;
 using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Features.InitProfile;
 using Aw.Sindri.Features.RebuildViews;
+using Aw.Sindri.Features.RestartServe;
 using Aw.Sindri.Features.RunDoctor;
 using Aw.Sindri.Features.SetProfileKey;
 using Aw.Sindri.Features.StopProcess;
@@ -52,6 +53,20 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
         return stopped.IsError
             ? await output.Error(stopped.Error).ConfigureAwait(false)
             : await output.Text(string.Create(CultureInfo.InvariantCulture, $"stopped (pid {stopped.Value.Value.Pid}, epoch {stopped.Value.Value.Epoch} released)\n"), 0).ConfigureAwait(false);
+    }
+
+    /// <summary>'sindri restart' (#3052): stops serve and lets the relauncher start the installed build; prints the runs it leaves open.</summary>
+    internal async Task<int> Restart(CancellationToken ct)
+    {
+        var restarted = await client.Post<RestartServeRequest, RestartServeResponse>("/sindri/restart", body: null, ct).ConfigureAwait(false);
+        if (restarted.IsError)
+        {
+            return await output.Error(restarted.Error).ConfigureAwait(false);
+        }
+
+        var r = restarted.Value.Value;
+        var kept = r.KeptRuns.Count == 0 ? "no open agent runs" : string.Join("; ", r.KeptRuns.Select(static k => $"{k.Ref} on {k.Instance}"));
+        return await output.Text(string.Create(CultureInfo.InvariantCulture, $"restarting (pid {r.Pid}): {r.FromBuild} -> {r.ToBuild}; keeping {kept}\n"), 0).ConfigureAwait(false);
     }
 
     /// <summary>'sindri views rebuild': starts the control plane if this CLI may (API spec §7), then posts RebuildViews and prints the sequence it recorded.</summary>
