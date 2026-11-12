@@ -77,8 +77,8 @@ Done-checks. Each is a test or a measured run in the real app (`aw-ui-driver`). 
 4. **A run's state comes from the engine's terminal event, and "N ago" ticks.** The page reads `workflow.run.started`, `workflow.run.finished` and `workflow.run.cancelled` from the event stream and repaints the row and header within 1 s. One shared clock (1 s under a minute, 30 s after) drives every "N ago" (fixes #3080).
 5. **Replace the trigger is one op.** A new graph op `replace_node` swaps a node for another of the same slot, **keeps the node id and its outgoing edges**, and is checked as one edit. The trigger slot offers "Change trigger" (fixes #3075). *Why:* `GraphOps.Apply` already applies an op list atomically (`Core/Graph/Ops/GraphOps.cs`), so remove, add and connect in one list is atomic today; what that list loses is the node id, so every `{{trigger.*}}` reference downstream breaks. `replace_node` keeps the id; a reference to an output field the new trigger lacks becomes a `GRAPH-REF-*` finding, not a silent break. Draft-mode validation blocks `GRAPH-REF-*`, so `replace_node` marks the reference findings its swap causes as wiring gaps for that one edit (the edit saves, the step shows the warning), and a red test swaps A's trigger while step 2 reads `{{trigger.pr.title}}`. A non-trigger node is refused with `SND-GRAPH-112` (110 and 111 are taken on main; 112 to 119 are free there at 6b647dbb58, P0 confirms).
 6. **One word for the If step everywhere: "If".** The catalog `Title` (`ConditionBlock.cs:16`) is the only name shown. The canvas subtitle, the sheet ("Settings of Flagged?", the step's own title) and the run row use it. Type ids and node ids show only in the JSON view. Same rule for "Send notification". *Why:* the menu already says "If", and "condition" and "gate" are a type id and a node id (fixes #3074).
-7. **Four steps, in this order: trigger, action, test, activate** ("turn it on" in prose; the button, chip, confirm and CLI all say Activate). The page's primary button follows the step the workflow is at: "Add a trigger", "Add an action", "Test run", "Activate". One decision per screen region, as Zapier does (Take on ledger 1).
-8. **Activate needs every validate finding gone; a passing test run is advised, not required.** An untested revision shows "Not tested" on the workflow row and the header, and Activate opens one confirm: "Not tested yet. Activate anyway?" (Enter / Esc). *Why:* a cron or a PR trigger may have no sample to test with, and a hard gate with no override strands those; the bar is building trivially easy. Activate sends the revision number the owner saw, and the server refuses (`SND-GRAPH-007`) if a newer one exists. A session never presses Activate or Pause (§8). Settled (lead, 2026-11-12), open question 1.
+7. **Four steps, in this order: trigger, action, test, activate** ("turn it on" in prose; the button, chip, confirm and CLI all say Activate). The page's primary button follows the step the workflow is at: "Add a trigger", "Add an action", "Fix 2 things" (singular "Fix 1 thing") while findings stand, "Test run", "Activate". One decision per screen region, as Zapier does (Take on ledger 1).
+8. **Activate needs every validate finding gone; a passing test run is advised, not required.** An untested revision shows "Not tested" on the workflow row and the header, and Activate opens one confirm: "Not tested yet. Activate anyway?" (Enter / Esc), with a second button that runs the missing test and returns to the confirm (§5.3). *Why:* a cron or a PR trigger may have no sample to test with, and a hard gate with no override strands those; the bar is building trivially easy. Activate sends the revision number the owner saw, and the server refuses (`SND-GRAPH-007`) if a newer one exists. A session never presses Activate or Pause (§8). Settled (lead, 2026-11-12), open question 1.
 9. **The test run is fenced by block, not by promise.** The block catalog says which blocks write; a test version of each write port records the call and returns a made-up result (§5). Model and agent steps are stubbed by default and opt in per run (§5.2).
 10. **Raw JSON is for the Advanced fold.** Fields show captions (#2925), presets, and the `/` picker. A Prompt step's output is a small form of named fields, not JSON Schema typed by hand (#2968).
 11. **The trigger step lists real events.** The last 10 events of its kind that Sindri saw on this box; pick one, edit it, pin it; a line says "would match" or "would not match: repo is not x" (#3032).
@@ -136,9 +136,9 @@ A test run is a run row with `mode = test`. It follows the real graph walk (`Gra
 
 | Entry | What it does | Phase |
 |---|---|---|
-| Start from a template | a gallery of A, B and C in v1 (the other jobs of #2960 come after the soak, not in v1). Each card shows trigger, step count, "needs: GitHub connection" and the last time it ran on this box. Choosing one opens the workflow on its Test step with the checklist. | P1 |
+| Start from a template | a gallery of A "Review every PR", B "Plan a labelled issue" and C "Watch main, open an issue on red" in v1 (the other jobs of #2960 come after the soak, not in v1). Each card shows trigger, step count, "needs: GitHub connection" and the last time it ran on this box ("never" when it has not). Choosing one opens the workflow with the sheet of its first unfilled required field open and focused (most often the repo), and the checklist names what is left. When nothing is left, Ctrl+Enter saves and the primary becomes Test run. From Start to a passing test: pick the template, pick the repo, Ctrl+Enter, `T`, Enter (5 actions). | P1 |
 | Blank | a workflow with an empty trigger slot, on "Add a trigger" | P1 |
-| Describe it | one sentence in, a drafted graph out as a diff against blank; Sindri validates and test-runs it before showing "done". A secret never goes in this box. | P6 |
+| Describe it | hidden until P6 (no dimmed entry before then). One sentence in, a drafted graph out as a diff against blank; Sindri validates and test-runs it before showing "done". A secret never goes in this box. | P6 |
 
 The gallery reads `GET /sindri/workflows/templates` (new; today the list is hard-coded in `Labels.WorkflowsEmpty.cs:64` and its comment says there is no route).
 
@@ -168,6 +168,8 @@ The editor is the existing canvas plus a right-hand sheet. At 1440x900:
 - **Change trigger.** The trigger step has "Change trigger" instead of a second Add. It sends one `replace_node` (decision 5).
 - **An unfilled or invalid step** carries a ⚠ and its finding line on the canvas, never a silent skip (Retool's rule).
 - **Only the step you are building asks for anything.** Nothing on the canvas is saved empty.
+- **Motion and density** (X1 frames): a dot change 120 ms, the running arc turns in 900 ms, the sheet opens in 160 ms with a 16 px slide and closes in 120 ms; text never animates. Step card 64 compact / 72 comfortable, panel tab bar 32 / 36, field control 28 / 32, on the shared `home.density` key.
+- **Colour.** Text on these pages is ink-subtle, never ink-3, and connectors are ink-subtle, never `--wire`: ink-3 text is 4.49 on the canvas and 3.40 on a selected row, `--wire` is 2.27. The app-token fix is #3138.
 
 ### 4.3 The trigger step
 
@@ -203,7 +205,7 @@ Activate, Pause, Delete and Remove are buttons or the `.` panel, not bare keys. 
 
 1. Opening a sheet puts focus on its first empty required field; Esc or Save returns focus to the step that opened it.
 2. A test that ends moves focus to the first failed step, or, when it passed, to the result strip ("Passed. 3 things would have happened. Review what it would send"), whose link opens the "would have" rows; Activate stays one Tab away; the result is announced once through the live region ("Test passed, 4 steps" / "Test failed at Review").
-3. The "Activate anyway" confirm traps focus; focus starts on the default button (Enter = Activate anyway), Esc closes it and the workflow stays Off.
+3. The "Activate anyway" confirm traps focus; focus starts on the default button (Enter and Ctrl+Enter = Activate anyway, the footer shows both), Esc closes it and the workflow stays Off.
 4. While "Testing..." runs, step sheets open read-only (the test belongs to that revision) and Esc cancels the test.
 5. Test run with findings present is refused in place: the first finding is selected, nothing is sent.
 6. Esc closes the topmost layer only, in this order: the Activate confirm, a picker, a sheet, then the running test; `/` opens the field picker only at the start of an empty field or after `{{`, so typing a URL or `owner/repo` never opens it; bare `N` is Add step when the canvas has focus (the shell's New todo yields there); Ctrl+Shift+A has a Cmd+Shift+A pair on macOS and the page binds it itself.
@@ -211,7 +213,7 @@ Activate, Pause, Delete and Remove are buttons or the `.` panel, not bare keys. 
 
 ### 4.7 The header
 
-Title, then the state chip (decision 12), then the test fact ("Tested rev 4, passed 2m ago" / "Not tested" / "Rev 5 changed since the test"), then Test run and Activate. The header subtitle describes this workflow, not the list's count (#2970).
+Title, then the state chip (decision 12), then the test fact in one shape everywhere: "Tested rev 4, passed 2m ago (fenced)" / "(with model)" / "Not tested" / "Rev 5 changed since the test". The slot is hidden until the workflow has a trigger and an action. Then a "Runs" link, Test run and Activate. One primary button per screen: while a sheet shows a fix button, or Reload, the header buttons drop to secondary, and while any sheet is open they are dimmed. The footer lists only the keys that work in the current state. The header subtitle describes this workflow, not the list's count (#2970).
 
 ### 4.8 States
 
@@ -220,14 +222,14 @@ Title, then the state chip (decision 12), then the test fact ("Tested rev 4, pas
 | Loading | the list paints from the local store in under 100 ms; no spinner |
 | Empty (no workflows) | the three entries of §4.1 |
 | Empty trigger | the canvas holds one dashed "Add a trigger" slot; the primary button says the same |
-| Findings | ⚠ on the steps; header "2 things to fix"; Activate off |
-| Untested | chip "Not tested" on the row and the header; Test run is the primary button; Activate works and opens the confirm "Not tested yet. Activate anyway?" (Enter / Esc) |
+| Findings | ⚠ on the steps; header "2 things to fix" ("1 thing to fix"); the primary button "Fix 2 things" jumps to the first; Activate off |
+| Untested | chip "Not tested" on the row and the header; Test run is the primary button; Activate works and opens the confirm "Not tested yet. Activate anyway?" (Enter / Esc) with the second button of §5.3 |
 | Testing | the canvas shows a dot per step as it runs (§7); the button says "Testing..." and Esc cancels |
-| Test failed | the failed step is selected, its sheet shows the sentence and the one fix button (§7.3) |
+| Test failed | the failed step is selected, its sheet shows the sentence and the one fix button (§7.3), which is the only primary on the screen; a fix that is a field ("Choose an agent") moves focus to that field instead of repeating it |
 | Tested | "Passed 2m ago"; Activate is the primary button |
 | Active | chip "Active, next weekday 7:00"; Pause; Run now |
-| Conflict | a stale-base edit (`SND-GRAPH-007`) shows "Changed elsewhere. Reload" and keeps the owner's open sheet text |
-| Engine down | the page says serve is not running and keeps the last read; writes are off |
+| Conflict | a stale-base edit (`SND-GRAPH-007`) shows "Changed elsewhere. Reload" and keeps the owner's open sheet text; Reload is the only primary and Save step is off until it runs |
+| Engine down | the page says serve is not running and keeps the last read; writes are off. It wins over every other state: the primary is "Start Sindri", findings stay on their steps but "Fix N things" is not offered |
 | Test cancelled / stream lost mid-test / Activate in flight / Activate refused (`SND-GRAPH-007`) / save in flight | "Test cancelled" keeps the sheet text; "Not live. Last read 14:02" with the test marked unknown; the Activate button shows a spinner and is off; "Changed elsewhere. Reload"; the sheet's Save shows a spinner and keeps the text |
 | Add step, Change trigger or rename while Testing | refused in place: "A test is running. Esc cancels it" |
 | Active, never ran | chip "Active, waiting for the first PR" with "Run now with a recent PR" (a live run, the owner's click); after the first live run the header shows "First live run passed 2m ago. Open it" or its failure sentence |
@@ -254,7 +256,7 @@ How: the engine picks the block registry by `run.mode` (read from the run row in
 | `IGraphHttpPort` GET | runs for real (read-only, and the host must be on the profile's allowed hosts, as a live run) | the real response |
 | `IConnectionToolPort` / `call_tool` | runs for real only for a tool marked `ReadOnly`; every other tool is recorded (unknown = write). `ConnectionTool` and `ToolkitTool` gain a `ReadOnly` field (P0 contract row): from the MCP `readOnlyHint` annotation, and for REST presets from the action's HTTP method (GET = read) | "would have: comment on acme/api#12" |
 | `IRunningToolkits` (`call_tool` with no connection) | same rule, by the toolkit tool's `ReadOnly` mark | "would have: call tool X" |
-| `ICodeRunPort` (`code`) | runs for real: `CodeRunSandbox` has no network, a read-only repo and a private `/tmp`, so a Code step feeding an If step is really compiled and run | the real output |
+| `ICodeRunPort` (`code`) | runs for real: `CodeRunSandbox` has no network, a read-only repo and a private `/tmp`, so a Code step feeding an If step is compiled and run for real | the real output |
 | `IGraphResultPort` (`workflow_result`) | read-only: runs for real, and skips test rows when it looks for the newest succeeded run | the real result |
 | `IGraphModelPort` (`prompt`) | pinned output or example; real only with "With model" (§5.2) | "model not run" |
 | `IGraphCallPort` (`run_workflow`) | `Start` runs the callee as a test (§3.2); `MaxDepth` and `Wait` read for real | the callee's test run |
@@ -277,7 +279,7 @@ The Test button has a small menu: Test (fenced), Test with model, Test with mode
 
 ### 5.3 What passing means
 
-A test passes when validate passes and the walk ends `succeeded`. A step the test could not check says so in its row ("model not run: output taken from the example"). The tested fact on the header names the mode: "Passed (fenced)" or "Passed (with model)". The header says what did not run: "Passed. Model, agents and pings not run." / "Passed with model. Agents and pings not run." A fenced pass is not a claim that the review loop or the ping worked, so **Activate shows its one-line confirm after a fenced pass too**: "The model, the agent and the ping did not run. Activate anyway?" (Enter / Esc), with a second button "Test with model first" that runs the model test and returns to the confirm. After a test that ran the model, the confirm names only what is left. Activate is never refused.
+A test passes when validate passes and the walk ends `succeeded`. A step the test could not check says so in its row ("model not run: output taken from the example"). The tested fact on the header names the mode: "Passed (fenced)" or "Passed (with model)". The result strip under the header says what did not run: "Passed. Model, agents and notifications not run." / "Passed with model. Agents and notifications not run." A fenced pass is not a claim that the review loop or the notification worked, so **Activate shows its one-line confirm after a fenced pass too**: "The model, the agent and the notification did not run. Activate anyway?" (Enter / Esc), with a second button that runs the missing test and returns to the confirm: "Test with model first" when the graph has a Prompt step the last test did not run with the model, "Test run first" when the revision is untested and has none; when neither applies there is no second button. The untested confirm has the same button. It never runs agents: that spends the owner's agent usage and stays a pick in the Test menu. After a test that ran the model, the confirm names only what is left. Activate is never refused.
 
 ## 6. Errors, in words
 
@@ -292,7 +294,7 @@ Each failure code maps to `{code, sentence template, fixAction}`. The mapping li
 | `GRAPH-NAME-002` (today a warning) | "Couldn't check the connection yet." | Retry / `wf validate` |
 | `GRAPH-TRIGGER-001` | "A workflow has one trigger." | Change trigger / `wf edit` with `replace_node` |
 | `SND-GRAPH-112` (new, §2 decision 5) | "Only the trigger can be replaced." | none |
-| `SND-GRAPH-103` | "The model answered with text, not the JSON this step asks for: "Usage limit reached ..." (first 200 characters)." | Open the raw answer; Retry with model / `wf test --with-model` |
+| `SND-GRAPH-103` | "The model answered with text, not the JSON this step asks for: "Usage limit reached ..." (first 200 characters)." | Retry with model / `wf test --with-model`; the panel opens on its Raw answer tab, so the text needs no second button |
 | `SND-LAUNCH-003` | "The agent for step {step} isn't available: its CLI is not installed or the target is not in the catalog." | Choose an agent / set `workflow.agent.target` |
 | `SND-LAUNCH-013` | "The agent entry can't express {step}'s model or policy." | Open the step |
 | `SND-GRAPH-105` | "This workflow is not on." | Activate / `wf activate S` |
@@ -311,16 +313,16 @@ The block checks the exit code and the text before it parses. Exit code non-zero
 
 ### 7.1 Layout
 
-The run page is the canvas with a status dot per step, and a bottom panel for the selected step. At 1440x900: header 48, canvas 520, panel 216.
+The run page is the canvas with a status dot per step, and a bottom panel for the selected step. At 1440x900 the body between the 40 px top bar and the 28 px footer is 832: header 48, canvas 568, panel 216.
 
-- **Header.** `<workflow> › run 3` (mono id left of the title), the run's state chip from the event (decision 4), mode (Live / Test / With model), trigger summary, "Started 4m ago · took 14s".
-- **Dots.** Queued, running (arc), succeeded, failed (x), skipped (grey), parked (pause), would-have (dashed ring). Colour is never the only signal.
-- **Panel.** Tabs: Input, Output, Raw answer (only when a model step kept text), Error, Time. Input and Output are the stored values (`NodeRunView.Input`, `.Output`, cut at 64 KB with a "truncated" badge). Large payloads fold. For a test run the panel also shows "would have" rows.
-- **Pin.** "Pin this output" on a succeeded step saves it as a `workflow_pin` row (§3.1) for later test runs of this revision.
+- **Header.** `<workflow> › run 3` (mono id left of the title), the run's state chip from the event (decision 4: "Running", "Succeeded", "Failed at {step}", "Waiting on you", "Cancelled"), mode (Live / Test / With model), trigger summary, "Started 4m ago · took 14s".
+- **Dots.** Queued, running (arc), succeeded, failed (x), skipped (grey), parked (pause), would-have (its own glyph; the dashed ring is the draft's, so X1 adds a would-have glyph to the grammar). Queued is a ring in ink-subtle. A cancelled run has no glyph and an ink-subtle title (the grammar's ended rule); succeeded and failed keep their check and x. Colour is never the only signal.
+- **Panel.** Tabs: Input, Output, Raw answer (only when a model step kept text), Would have (test runs only, so it stays reachable at 1000 wide), Error, Time. A failed run reads "Failed at {step title}", never the step kind. Input and Output are the stored values (`NodeRunView.Input`, `.Output`, cut at 64 KB with a "truncated" badge). Large payloads fold. For a test run the panel also shows "would have" rows.
+- **Pin.** "Pin this output" is a button (no bare key: a pin is a write) on a succeeded step, and it saves it as a `workflow_pin` row (§3.1) for later test runs of this revision.
 
 ### 7.2 State and age
 
-The run list and header read `workflow.run.*` events. They update in place; no page reload. A run row is "Running" only while the engine has not closed it. "N ago" uses the shared clock. If the event stream is down the header says "Not live. Last read 14:02" and the list reads again every 15 s.
+The runs list is its own page under the workflow ("Workflows › PR review › Runs"), Live by default; a Tests toggle in its header (`[` and `]` switch it) shows the test runs, grouped as "Tests, newest 50 kept" (§3.2). The run list and header read `workflow.run.*` events. They update in place; no page reload. A run row is "Running" only while the engine has not closed it. "N ago" uses the shared clock. If the event stream is down the header says "Not live. Last read 14:02" and the list reads again every 15 s.
 
 ### 7.3 A failed run
 
@@ -533,3 +535,12 @@ Round 3 (/autoplan, 2026-11-12; files in `plans/workflows-page-r3/`; spec read a
 - Round 3 (security 3, 4, 5, 6): applied (ReadOnly default, ifLatest at write, refusal in the test service, scrub).
 - Round 3 (security 7, test cap): applied; newest 50 test rows per workflow.
 - Round 3 (security LOW: service locators, pin source run): not applied; the constructor-parameter test covers the real injection path, and the pin store checks the run belongs to the workflow in P4a.
+
+Design frames, round 1 (31 frames, `pr-assets/workflows-3109` at ee56d6ef35, #3109 comment 6821899615). Lead's answers to the five calls:
+1. Run page canvas 568, not 520: the 784 left the 40 px top bar and 28 px footer out (§7.1).
+2. One fix button on `SND-GRAPH-103`, "Retry with model"; the panel opens on Raw answer (§6.1).
+3. Both Activate confirms get the second button; it runs the missing test, never agents (§5.3, decision 8).
+4. Would-have gets its own glyph; X1 adds it to the grammar (§7.1).
+5. ink-3 and `--wire` fail contrast; this page uses ink-subtle, and #3138 tracks the token (§4.2).
+Guesses taken into the spec: template names, "Fix 2 things", the runs page and its `[` `]` toggle, run chip words, cancelled has no glyph, motion and density numbers. Changed: Describe it is hidden until P6, and Pin is a button, not bare `P`.
+UX check of the round 1 frames (7 MUST, 15 NIT). Rules taken into the spec: a template opens on its first unfilled field's sheet (5 actions from Start to a passing test, §4.1); one test-fact shape in the header, and the "what did not run" sentence moves to the result strip (§4.7, §5.3); one primary per screen, with the header dropping to secondary beside a fix button or Reload (§4.7, §4.8); engine down wins over findings and offers "Start Sindri" (§4.8); Save step is off while Reload stands (§4.8); the confirm's second button shows only when a test it may run is left (§5.3); Enter and Ctrl+Enter both confirm (§4.6); a Would have tab and "Failed at {step title}" on the run page (§7.1); "notification", not "ping", in user-facing text. The rest are drawing fixes for round 2.
