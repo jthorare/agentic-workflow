@@ -6,8 +6,9 @@
 #   path      Markdown files, or directories whose *.md files git tracks or doesn't ignore. Default: the tracked Markdown
 #             in docs/ planning/ skills/ bootstrap/ config/voice/, AGENTS.md and README.md.
 #   --base R  only hits on lines added or changed since this branch left R (`git diff $(git merge-base R HEAD)`,
-#             the working tree included), in the Markdown files changed since then. CI runs this on every PR,
-#             so new slop can't land.
+#             the working tree included), in the Markdown files changed since then. A renamed file counts
+#             only the lines it changed; front matter Vale can't parse fails any changed file. CI runs this on
+#             every PR, so new slop can't land.
 #   --strict  warnings fail too (the 80% rules: sentence and paragraph length, passive voice, noun stacks).
 #   --counts  print hits per directory ("<dir> <errors> errors, <warnings> warnings") instead of each hit.
 # Output: '<file>:<line>:<col>: <error|warning> <Rule>: <message>' sorted by file and line; a file whose front
@@ -103,18 +104,26 @@ if [ -s "$files_list.err" ]; then
   fi
 fi
 
-# --base: keep hits on added lines only (the + side of `git diff -U0`); a new or untracked file keeps every line.
+# --base: keep hits on added lines only (the + side of `git diff -U0`); a new or untracked file keeps every line, a
+# renamed one is diffed against its old path, and an Aw.FrontMatter hit stays for any changed file (Vale read none
+# of that file, so no added line can carry its hits).
+added_lines() {   # <file>: '<file>\t<line>' for each line on the + side of the `git diff -U0` on stdin
+  awk -v f="$1" '/^@@/ { split($3, a, ","); s = substr(a[1], 2) + 0; n = (a[2] == "" ? 1 : a[2] + 0)
+                         for (i = s; i < s + n; i++) print f "\t" i }'
+}
 if [ -n "$base" ]; then
+  git diff -M --name-status --diff-filter=R "$base" | awk -F'\t' '{ print $3 "\t" $2 }' >"$files_list.renames"
   while IFS= read -r f; do
-    if git cat-file -e "$base:$f" 2>/dev/null; then
-      git diff -U0 --no-color "$base" -- "$f" | awk -v f="$f" '
-        /^@@/ { split($3, a, ","); s = substr(a[1], 2) + 0; n = (a[2] == "" ? 1 : a[2] + 0)
-                for (i = s; i < s + n; i++) print f "\t" i }'
+    old="$(awk -F'\t' -v f="$f" '$1 == f { print $2; exit }' "$files_list.renames")"
+    if [ -n "$old" ]; then
+      git diff -U0 --no-color -M "$base" -- "$old" "$f" | added_lines "$f"
+    elif git cat-file -e "$base:$f" 2>/dev/null; then
+      git diff -U0 --no-color "$base" -- "$f" | added_lines "$f"
     else
       awk -v f="$f" '{ print f "\t" NR } END { if (NR == 0) print f "\t1" }' "$f"
     fi
   done <"$files_list" >"$files_list.lines"
-  awk -F'\t' 'NR == FNR { keep[$1 "\t" $2] = 1; next } ($1 "\t" $2) in keep' \
+  awk -F'\t' 'NR == FNR { keep[$1 "\t" $2] = 1; next } $5 == "Aw.FrontMatter" || ($1 "\t" $2) in keep' \
     "$files_list.lines" "$files_list.hits" >"$files_list.kept"
   mv "$files_list.kept" "$files_list.hits"
 fi

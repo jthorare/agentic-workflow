@@ -69,7 +69,8 @@ fi
 echo "check-prose rule families"
 
 run "$FIX/clean.md"
-expect "the clean fixture passes with no hits" 0 '1 files, 0 errors, 0 warnings'
+expect "the clean fixture passes with no hits (a file handle, managed code, elevated privileges, an unlock prompt)" 0 \
+  '1 files, 0 errors, 0 warnings'
 
 run "$FIX/vague-verbs.md"
 expect "vague verbs are errors" 1 \
@@ -130,6 +131,19 @@ expect "--base reports hits on added lines and in new files" 1 \
 lacks "--base drops a hit on an unchanged line" '^docs/old.md:3:'
 lacks "--base skips an unchanged file" '^docs/kept.md'
 lacks "--base keeps to the default scope" '^notes.md'
+
+printf -- '---\nname: bad\nhint: [a] [--b <c,...>]\n---\n\n# Bad\n\nThe old body.\n' >"$S/docs/bad-fm.md"
+printf '# Moved\n\nThe moved service handles the retry.\n' >"$S/docs/moved-old.md"
+git -C "$S" add -A; git -C "$S" -c user.name=t -c user.email=t@example.invalid commit -q -m more
+B2="$(git -C "$S" rev-parse HEAD)"
+printf '\nThe new body perhaps hedges.\n' >>"$S/docs/bad-fm.md"
+git -C "$S" mv docs/moved-old.md docs/moved-new.md
+printf '\nThe moved line perhaps hedges.\n' >>"$S/docs/moved-new.md"
+set +e; OUT="$(cd "$S" && bash scripts/check-prose.sh --base "$B2" 2>&1)"; RC=$?; set -e
+expect "--base keeps a front-matter error when the PR edits only the body" 1 '^docs/bad-fm.md:1:1: error Aw.FrontMatter'
+expect "--base counts a renamed file's changed lines" 1 "^docs/moved-new.md:5:[0-9]+: error Aw.Hedging: 'perhaps'"
+lacks "--base drops a renamed file's old hits" '^docs/moved-new.md:3:'
+git -C "$S" checkout -q -- docs/bad-fm.md; git -C "$S" rm -q --cached docs/bad-fm.md; rm -f "$S/docs/bad-fm.md"
 
 git -C "$S" -c user.name=t -c user.email=t@example.invalid commit -q -am more
 git -C "$S" checkout -q -- . 2>/dev/null || true
