@@ -25,7 +25,11 @@ internal sealed class SelectableTile : Button
 
     static SelectableTile()
     {
-        _ = IsSelectedProperty.Changed.AddClassHandler<SelectableTile>((tile, e) => tile.PseudoClasses.Set(":selected", e.NewValue is true));
+        _ = IsSelectedProperty.Changed.AddClassHandler<SelectableTile>((tile, e) =>
+        {
+            tile.PseudoClasses.Set(":selected", e.NewValue is true);
+            (ControlAutomationPeer.FromElement(tile) as SelectableTileAutomationPeer)?.RaiseSelectedChanged(e.NewValue is true);
+        });
     }
 
     /// <inheritdoc />
