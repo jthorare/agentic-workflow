@@ -498,7 +498,7 @@ public sealed class QueueFramesTests : IDisposable
         Frame(window, "item-body");
     });
 
-    // L7 (corr-7): a failed first read shows the code and detail on the page; a later failed read marks what is shown stale.
+    // L7 (corr-7, #3064): a failed first read shows the shared failed line with Retry on the page; a later failed read marks what is shown stale.
     [Fact]
     public Task A_failed_first_queue_read_shows_its_problem_and_a_later_failure_marks_the_panels_stale() => OnUi(async () =>
     {
@@ -506,7 +506,10 @@ public sealed class QueueFramesTests : IDisposable
         var (window, shell) = await Connected(s => !s.Queue.IsLoading);
         shell.GoTo(PageId.Work);
         Settle(window);
-        Assert.Equal((true, "SND-API-011"), (Visible(window, "QueueProblem"), Named<TextBlock>(window, "QueueProblemCode").Text));
+        var line = Named<Control>(window, "QueueReadFailure");
+        Assert.Equal((true, Labels.QueueReadFailed, true), (line.IsEffectivelyVisible, Named<TextBlock>(line, "FailedReadWords").Text, Visible(line, "FailedReadPrimary")));
+        Assert.Equal("Retry", Named<Button>(line, "FailedReadPrimary").Content);
+        Assert.False(Visible(window, "QueueNothing"));
         Assert.False(Visible(window, "QueueSkeleton"));
 
         _server.QueueView = RouteAnswer.SpecShaped("queue", "fixture");
