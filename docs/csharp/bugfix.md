@@ -67,7 +67,7 @@ sections, and refuses with AW-BUGFIX-024 unless both hold:
   With `existing guard` or `deferred` an empty table passes; with anything else the table needs at least one row.
 
 No state field carries the sweep: the file is read when the report runs, and its full path goes into the report step's
-history entry (`evidence`). `advance report --unresolved` takes no sweep. The shape is in `skills/_shared/prevent-the-class.md`
+history `command` (`advance report c1 --sweep <path>`), and the history `evidence` stays the candidate's run record. `advance report --unresolved` takes no sweep. The shape is in `skills/_shared/prevent-the-class.md`
 ("Where else we checked").
 
 ## The rules

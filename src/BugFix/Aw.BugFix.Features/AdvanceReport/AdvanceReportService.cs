@@ -43,7 +43,7 @@ internal sealed class AdvanceReportService(IStateStore store, IFiles files, Time
 
         store.Save(
             request.StateDirectory,
-            (state with { Status = BugFixStatus.Resolved, ResolvedBy = id }).Step(Phase.Report, $"advance report {id.Value}", clock.GetUtcNow(), request.SweepFile));
+            (state with { Status = BugFixStatus.Resolved, ResolvedBy = id }).Step(Phase.Report, $"advance report {id.Value} --sweep {request.SweepFile}", clock.GetUtcNow(), candidate.Value.Run?.Evidence));
         return new AdvanceReportResponse(Phase.Report, BugFixStatus.Resolved, id);
     }
 }

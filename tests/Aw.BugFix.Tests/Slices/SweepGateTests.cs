@@ -54,7 +54,7 @@ public sealed class SweepGateTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_table_with_a_status_on_every_row_resolves_and_the_history_names_the_file()
+    public async Task A_table_with_a_status_on_every_row_resolves_and_the_history_keeps_both_the_sweep_file_and_the_run_evidence()
     {
         var c1 = await Resolvable();
         _w.Repos.Write(SweepFile, Sweep(
@@ -64,7 +64,9 @@ public sealed class SweepGateTests : IDisposable
         var result = World.Ok(await Report(c1));
 
         Assert.Equal((Phase.Report, BugFixStatus.Resolved), (result.Phase, result.Status));
-        Assert.Equal(SweepFile, _w.Now.History[^1].Evidence);
+        var step = _w.Now.History[^1];
+        Assert.Contains(SweepFile, step.Command, StringComparison.Ordinal);   // the sweep file is in the step's command ...
+        Assert.NotNull(step.Evidence);                                         // ... and the candidate's run evidence stays in Evidence
     }
 
     [Theory, Trait("Lane", "unit")]
