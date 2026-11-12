@@ -86,8 +86,24 @@ public sealed class InboxSync(ITranscriptReader transcripts, IMessageStore messa
             return added.Error;
         }
 
+        await WriteOpened(found.Where(m => added.Value.Contains(m.Id)), cancellationToken).ConfigureAwait(false);
         var queued = await QueueQuestions(found.Where(m => added.Value.Contains(m.Id)), cancellationToken).ConfigureAwait(false);
         return queued.IsError ? queued.Error : added;
+    }
+
+    // A new message that asks something owes a reply (the evaluator skips notices the same way); the sender's name is the lane that waits.
+    private async ValueTask WriteOpened(IEnumerable<InboxMessage> fresh, CancellationToken cancellationToken)
+    {
+        if (Events is null)
+        {
+            return;
+        }
+
+        foreach (var message in fresh.Where(m => !NoticeRule.IsNotice(m.Body)))
+        {
+            var who = message.FromName.Length > 0 ? message.FromName : message.From;
+            await Events.Emit(MetaEvents.ObligationOpened(message.At, message.Id.Value, who, who), cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private async ValueTask<Result<Unit>> QueueQuestions(IEnumerable<InboxMessage> fresh, CancellationToken cancellationToken)

@@ -13,9 +13,12 @@ namespace Aw.Meta.Features.Watch;
 /// <param name="values">Keeps what LANE DOWN reported, for a re-armed watch.</param>
 /// <param name="missing">Finds the lanes with no live session; null leaves LANE DOWN / LANE UP out.</param>
 /// <param name="events">Receives lane.down and lane.up; null to write none.</param>
-internal sealed class LaneReport(UsageMonitor usage, IKeyValueStore values, MissingLanes? missing = null, MetaEventSink? events = null)
+/// <param name="clock">Dates the events; the system clock when null.</param>
+internal sealed class LaneReport(UsageMonitor usage, IKeyValueStore values, MissingLanes? missing = null, MetaEventSink? events = null, TimeProvider? clock = null)
 {
     internal MetaEventSink? Events { get; } = events;
+
+    internal TimeProvider Clock { get; } = clock ?? TimeProvider.System;
 
     internal UsageMonitor Usage { get; } = usage;
 
@@ -32,6 +35,10 @@ internal sealed class LaneReport(UsageMonitor usage, IKeyValueStore values, Miss
             team,
             async () => await missing.Find(team, cancellationToken).ConfigureAwait(false) is { IsSuccess: true } found ? found.Value : null,
             async state => _ = await values.Set(KvKeys.WatchLanes, state.Format(), cancellationToken).ConfigureAwait(false),
-            LaneWatch.Parse(kept.IsSuccess ? kept.Value : null));
+            LaneWatch.Parse(kept.IsSuccess ? kept.Value : null))
+        {
+            Events = events,
+            Clock = clock,
+        };
     }
 }

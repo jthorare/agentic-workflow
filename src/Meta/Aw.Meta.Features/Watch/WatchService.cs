@@ -116,6 +116,7 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
         {
             AllPrs = allPrs,
             EventSink = lanes.Events,
+            Clock = clock,
             Sessions = await lanes.Sessions(team, cancellationToken).ConfigureAwait(false),
             Status = await StatusBatch(cancellationToken).ConfigureAwait(false),
             // Advisory: a board write that fails is printed as a WATCH ERROR line; the watch keeps polling and the next move fixes the board.

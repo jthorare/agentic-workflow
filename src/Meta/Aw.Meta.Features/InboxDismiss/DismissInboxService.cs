@@ -20,6 +20,27 @@ internal sealed class DismissInboxService(IMessageStore messages, MetaEventSink?
     {
         ArgumentNullException.ThrowIfNull(request);
         var resolved = await messages.Resolve(request.Id, new MessageResolution(MessageResolutionKind.Dismissed, request.Reason.Trim()), cancellationToken).ConfigureAwait(false);
-        return resolved.IsError ? resolved.Error : new DismissInboxResponse(request.Id);
+        if (resolved.IsError)
+        {
+            return resolved.Error;
+        }
+
+        await WriteClosed(request, cancellationToken).ConfigureAwait(false);
+        return new DismissInboxResponse(request.Id);
+    }
+
+    private async ValueTask WriteClosed(DismissInboxRequest request, CancellationToken cancellationToken)
+    {
+        if (Events is null)
+        {
+            return;
+        }
+
+        var all = await messages.Messages(cancellationToken).ConfigureAwait(false);
+        if (all.IsSuccess && all.Value.FirstOrDefault(m => m.Id == request.Id) is { } message)
+        {
+            var who = message.FromName.Length > 0 ? message.FromName : message.From;
+            await Events.Emit(MetaEvents.ObligationClosed(Clock.GetUtcNow(), message.Id.Value, who, who), cancellationToken).ConfigureAwait(false);
+        }
     }
 }

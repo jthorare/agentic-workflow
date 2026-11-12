@@ -43,6 +43,9 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     /// <summary>Receives context.high and context.ok; null writes none.</summary>
     internal Core.Events.MetaEventSink? EventSink { get; init; }
 
+    /// <summary>Dates the events.</summary>
+    internal TimeProvider Clock { get; init; } = TimeProvider.System;
+
     /// <summary>The lanes' live sessions for LANE DOWN / LANE UP (#2856); null leaves them out.</summary>
     internal LaneSessions? Sessions { get; init; }
 
@@ -220,8 +223,33 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
 
         if (!high.SetEquals(_high))
         {
+            await WriteContextEvents(contexts, _high, high).ConfigureAwait(false);
             _high = high;
             await context.Keep(high).ConfigureAwait(false);
+        }
+    }
+
+    private DateTimeOffset Now() => Clock.GetUtcNow();
+
+    // One context.high per lane that crossed the mark in this poll, one context.ok per lane that dropped back; a standing state writes nothing.
+    private async ValueTask WriteContextEvents(IReadOnlyList<LaneContext> contexts, IReadOnlySet<string> before, IReadOnlySet<string> after)
+    {
+        if (EventSink is null)
+        {
+            return;
+        }
+
+        foreach (var lane in contexts)
+        {
+            var tokens = lane.Tokens ?? 0;
+            if (after.Contains(lane.Lane) && !before.Contains(lane.Lane))
+            {
+                await EventSink.Emit(Core.Events.MetaEvents.ContextHigh(Now(), lane.Lane, tokens), CancellationToken.None).ConfigureAwait(false);
+            }
+            else if (before.Contains(lane.Lane) && !after.Contains(lane.Lane))
+            {
+                await EventSink.Emit(Core.Events.MetaEvents.ContextOk(Now(), lane.Lane, tokens), CancellationToken.None).ConfigureAwait(false);
+            }
         }
     }
 

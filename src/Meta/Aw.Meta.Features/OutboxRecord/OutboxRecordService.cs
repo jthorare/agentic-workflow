@@ -44,7 +44,38 @@ internal sealed class OutboxRecordService(MetaSession session, IMessageStore mes
         }
 
         var after = await reader.Open(config.MetaLane, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
-        return after.IsError ? after.Error : new OutboxRecordResponse(Recorded: true, Closed(before.Value, after.Value)) { Warning = warning };
+        if (after.IsError)
+        {
+            return after.Error;
+        }
+
+        var closed = Closed(before.Value, after.Value);
+        await WriteClosed(closed, cancellationToken).ConfigureAwait(false);
+        return new OutboxRecordResponse(Recorded: true, closed) { Warning = warning };
+    }
+
+    // One obligation.closed per reply the send closed (the relay of an owner answer has no sender to name).
+    private async ValueTask WriteClosed(List<Obligation> closed, CancellationToken cancellationToken)
+    {
+        if (Events is null || closed.All(static o => o.Kind != ObligationKind.Reply))
+        {
+            return;
+        }
+
+        var all = await messages.Messages(cancellationToken).ConfigureAwait(false);
+        if (all.IsError)
+        {
+            return;
+        }
+
+        foreach (var obligation in closed.Where(static o => o.Kind == ObligationKind.Reply))
+        {
+            if (all.Value.FirstOrDefault(m => string.Equals(m.Id.Value, obligation.Key, StringComparison.Ordinal)) is { } message)
+            {
+                var who = message.FromName.Length > 0 ? message.FromName : message.From;
+                await Events.Emit(MetaEvents.ObligationClosed(clock.GetUtcNow(), obligation.Key, who, who), cancellationToken).ConfigureAwait(false);
+            }
+        }
     }
 
     private static List<Obligation> Closed(IReadOnlyList<Obligation> before, IReadOnlyList<Obligation> after) =>

@@ -29,6 +29,7 @@ public sealed class UsageWatcher(PaneSubmitter pane, IRunningLog log, IKeyValueS
         var before = UsageMemory.Parse(stored.IsSuccess ? stored.Value : null);
         var step = UsageWatch.Step(before, readings, clock.GetUtcNow(), team.Usage);
         var lines = new List<string>(step.Lines);
+        await WriteEvents(step.Edges, cancellationToken).ConfigureAwait(false);
         foreach (var note in step.Notes)
         {
             await Note(note, cancellationToken).ConfigureAwait(false);
@@ -55,6 +56,21 @@ public sealed class UsageWatcher(PaneSubmitter pane, IRunningLog log, IKeyValueS
         }
 
         return lines;
+    }
+
+    // Provider is "claude": the readers look at Claude Code panes and transcripts only.
+    private async ValueTask WriteEvents(IReadOnlyList<UsageEdge> edges, CancellationToken cancellationToken)
+    {
+        if (Events is null)
+        {
+            return;
+        }
+
+        var now = clock.GetUtcNow();
+        foreach (var edge in edges)
+        {
+            await Events.Emit(edge.Limited ? MetaEvents.UsageLimited(now, edge.Subject, "claude", edge.Until) : MetaEvents.UsageOk(now, edge.Subject, "claude", edge.Until), cancellationToken).ConfigureAwait(false);
+        }
     }
 
     // Advisory: a log that can't be written does not stop the watch.
