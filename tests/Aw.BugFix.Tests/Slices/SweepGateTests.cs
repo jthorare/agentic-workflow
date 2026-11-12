@@ -85,6 +85,53 @@ public sealed class SweepGateTests : IDisposable
         Assert.Contains("Orders screen", error.Message, StringComparison.Ordinal);
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("")]
+    [InlineData("TBD")]
+    [InlineData("maybe later")]
+    public async Task A_missing_or_unreadable_prevention_decision_is_refused_even_with_rows(string decision)
+    {
+        var c1 = await Resolvable();
+        _w.Repos.Write(SweepFile, Sweep(rows: "| Orders screen | web | fixed |\n", decision: decision));
+
+        var error = World.Refused(await Report(c1), BugFixErrors.SweepRefused);
+
+        Assert.Contains("Prevention decision", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_table_without_a_separator_row_is_refused()
+    {
+        var c1 = await Resolvable();
+        _w.Repos.Write(SweepFile, "## Where else we checked\n\n| Surface | Variant | Status |\n| Orders screen | web | fixed |\n\n## Prevention decision\n\nexisting guard: the typed loader\n");
+
+        var error = World.Refused(await Report(c1), BugFixErrors.SweepRefused);
+
+        Assert.Contains("separator", error.Message, StringComparison.Ordinal);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("not affected (reads the loader (typed))")]
+    [InlineData("not affected (a (b) and (c))")]
+    public async Task A_not_affected_reason_may_hold_balanced_parentheses(string status)
+    {
+        var c1 = await Resolvable();
+        _w.Repos.Write(SweepFile, Sweep(rows: $"| Orders screen | web | {status} |\n", decision: "new mechanism: analyzer"));
+
+        var result = World.Ok(await Report(c1));
+
+        Assert.Equal(BugFixStatus.Resolved, result.Status);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_not_affected_reason_with_unbalanced_parentheses_is_refused()
+    {
+        var c1 = await Resolvable();
+        _w.Repos.Write(SweepFile, Sweep(rows: "| Orders screen | web | not affected (reads (the loader) |\n", decision: "existing guard: the typed loader"));
+
+        _ = World.Refused(await Report(c1), BugFixErrors.SweepRefused);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task An_unresolved_report_needs_no_sweep()
     {

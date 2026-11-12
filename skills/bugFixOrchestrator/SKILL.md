@@ -268,7 +268,7 @@ already are. The candidate's branch stays checked out in its worktree, so detach
    <which>" or "deferred: <link>". A candidate with none of these goes back to Phase 4 with that reason. Also write
    `$STATE/sweep.md` now: the "Where else we checked" table (every row `fixed`, `not affected (why)` or `follow-up <link>`)
    and a `## Prevention decision` section whose first words are `existing guard`, `new mechanism` or `deferred`. Phase 6
-   hands this file to the helper, which refuses a resolved report with an empty table unless the decision is
+   hands this file to the helper, which refuses a decision that starts with anything else, and a resolved report with an empty table unless the decision is
    `existing guard` or `deferred`. This never changes the frozen check and never replaces the judge's decision.
 6. `git -C "$REPO" checkout bugfix/<ticket-slug>` before the next candidate or phase.
 
