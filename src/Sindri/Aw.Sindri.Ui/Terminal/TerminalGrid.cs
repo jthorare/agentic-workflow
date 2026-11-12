@@ -72,5 +72,37 @@ internal sealed class TerminalGrid
     /// <param name="width">New columns.</param>
     /// <param name="height">New live rows.</param>
     /// <returns>The resized grid.</returns>
-    internal TerminalGrid Resize(int width, int height) => throw new NotSupportedException("U7b: not written yet.");
+    internal TerminalGrid Resize(int width, int height)
+    {
+        var rows = Math.Min(Rows, height + History);
+        var keptHistory = Math.Max(0, Math.Min(History, rows - height));
+        var total = keptHistory + height;
+        var cells = new TerminalCell[total * width];
+        for (var r = 0; r < total; r++)
+        {
+            // Rows keep their bottom edge: new row total-1 is old row Rows-1.
+            var old = Rows - total + r;
+            for (var c = 0; c < width; c++)
+            {
+                var inside = old >= 0 && c < Width;
+                cells[(r * width) + c] = inside ? Cell(old, c) : TerminalCell.Blank;
+            }
+
+            if (old >= 0 && width < Width && width > 0 && cells[(r * width) + width - 1].Columns == 2)
+            {
+                cells[(r * width) + width - 1] = TerminalCell.Blank;
+            }
+        }
+
+        var shift = Height - height;
+        return new TerminalGrid(width, height, keptHistory, cells)
+        {
+            CursorX = Math.Min(CursorX, width - 1),
+            CursorY = Math.Clamp(CursorY - shift, 0, height - 1),
+            AlternateScreen = AlternateScreen,
+            InMode = InMode,
+            Dead = Dead,
+            DeadStatus = DeadStatus,
+        };
+    }
 }
