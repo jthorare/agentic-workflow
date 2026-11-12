@@ -79,10 +79,23 @@ public static class FailureSentences
             else if (string.Equals(name, "message", StringComparison.Ordinal))
             {
                 value = Shown(value);
-                // why: the template puts a period after {message}; a message that ends in one would show two
-                if (close + 1 < template.Length && template[close + 1] == '.' && value.EndsWith('.'))
+                // why: the template puts a period after {message}; a message that ends in a stop of its own would show two ("..", "?.")
+                if (close + 1 < template.Length && template[close + 1] == '.' && value.Length > 0)
                 {
-                    value = value[..^1];
+                    if (value[^1] == '.')
+                    {
+                        value = value[..^1];
+                    }
+                    else if (value[^1] is '?' or '!')
+                    {
+                        close++;
+                    }
+                }
+
+                // why: an exception with no message would read "Check stopped: ."; drop the lead-in so it reads "Check stopped."
+                if (value.Length == 0)
+                {
+                    DropLeadIn(text);
                 }
             }
 
@@ -91,6 +104,20 @@ public static class FailureSentences
         }
 
         return text.ToString();
+    }
+
+    // why: the text before an empty {message} is its lead-in (": " or a line break); without the message it would dangle
+    private static void DropLeadIn(StringBuilder text)
+    {
+        while (text.Length > 0 && text[^1] is ' ' or '\n')
+        {
+            text.Length--;
+        }
+
+        if (text.Length > 0 && text[^1] == ':')
+        {
+            text.Length--;
+        }
     }
 
     // why: the model's text sits on one line and shows its first 200 characters, the same cut the block's own message makes

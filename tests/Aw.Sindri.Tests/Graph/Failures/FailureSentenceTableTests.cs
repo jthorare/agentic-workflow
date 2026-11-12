@@ -265,6 +265,27 @@ public sealed class FailureSentenceTableTests
     public void A_message_that_ends_in_a_period_does_not_double_it()
         => Assert.Equal("Check stopped: Boom.", FailureSentences.Say("SND-CODE-004", With(("step", "Check"), ("message", "Boom."))));
 
+    [Fact]
+    public void A_message_that_ends_in_a_question_mark_keeps_it_and_adds_no_period()
+        => Assert.Equal("Check stopped: Is it null?", FailureSentences.Say("SND-CODE-004", With(("step", "Check"), ("message", "Is it null?"))));
+
+    [Theory]
+    [InlineData("SND-CODE-001", "Check doesn't compile.")]
+    [InlineData("SND-CODE-004", "Check stopped.")]
+    [InlineData("SND-CODE-005", "Sindri can't run code steps: the code runner couldn't start.")]
+    public void An_empty_message_drops_its_lead_in(string code, string expected)
+        => Assert.Equal(expected, FailureSentences.Say(code, With(("step", "Check"), ("message", "  "))));
+
+    [Fact]
+    public void SND_CODE_005_cuts_its_message_to_one_line_of_200_characters_too()
+    {
+        var said = FailureSentences.Say("SND-CODE-005", With(("message", new string('x', 150) + "\n" + new string('y', 150))));
+
+        var reason = said.Split('\n')[1];
+        Assert.Equal(201, reason.Length);
+        Assert.EndsWith("…", reason, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("SND-CODE-001")]
     [InlineData("SND-CODE-002")]
