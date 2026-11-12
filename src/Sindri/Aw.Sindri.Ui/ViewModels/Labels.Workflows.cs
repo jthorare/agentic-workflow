@@ -235,6 +235,9 @@ internal static partial class Labels
     /// <summary>The button on a workflow that is off: turns its newest revision on.</summary>
     internal const string WfActivate = "Activate";
 
+    /// <summary>The button beside "This workflow is off, so it has no runs."</summary>
+    internal const string WfTurnOn = "Turn on";
+
     /// <summary>The same button while its call is on the way.</summary>
     internal const string WfActivateBusy = "Activating…";
 

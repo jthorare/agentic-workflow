@@ -67,10 +67,13 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     public bool IsReading { get; private set => Set(ref field, value); }
 
     /// <summary>True when there are no runs to list.</summary>
-    public bool IsEmpty { get; private set => Set(ref field, value); }
+    public bool IsEmpty { get; private set { Set(ref field, value); OnChanged(nameof(IsOff)); } }
+
+    /// <summary>True when the empty state is "This workflow is off": the page offers Turn on beside it (#3066).</summary>
+    public bool IsOff => IsEmpty && string.Equals(EmptyText, Labels.WfRunsOff, StringComparison.Ordinal);
 
     /// <summary>"No runs yet." or "This workflow is off, so it has no runs."; empty otherwise.</summary>
-    public string EmptyText { get; private set => Set(ref field, value); } = string.Empty;
+    public string EmptyText { get; private set { Set(ref field, value); OnChanged(nameof(IsOff)); } } = string.Empty;
 
     /// <summary>True when the read failed.</summary>
     public bool IsFailed { get; private set => Set(ref field, value); }

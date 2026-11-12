@@ -162,6 +162,7 @@
           <Border x:Name="RunsEmptyName" Margin="16,8" IsVisible="{Binding Runs.IsEmpty}" AutomationProperties.Name="{Binding Runs.EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <TextBlock Classes="caption quiet" Text="{Binding Runs.EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
+          <Button x:Name="RunsTurnOn" Margin="16,0,16,8" HorizontalAlignment="Left" Classes="accent" IsVisible="{Binding Runs.IsOff}" IsEnabled="{Binding CanActivate}" Click="OnActivate" Content="{Binding TurnOnText}" AutomationProperties.Name="{Binding TurnOnText}" />
           <ItemsControl x:Name="RunRows" ItemsSource="{Binding Runs.Rows}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="wf:RunRowViewModel">

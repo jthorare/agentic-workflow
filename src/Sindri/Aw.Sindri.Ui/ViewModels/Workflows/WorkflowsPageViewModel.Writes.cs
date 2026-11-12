@@ -133,6 +133,9 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>True when there is a note under the Activate or Pause button.</summary>
     public bool HasStateNotice => StateNoticeText.Length > 0;
 
+    /// <summary>The Turn on button beside the runs-off line.</summary>
+    public string TurnOnText { get; } = Labels.WfTurnOn;
+
     /// <summary>The Activate button's words: "Activate", or "Activating…" while its call is on the way.</summary>
     public string ActivateText => IsChangingState ? Labels.WfActivateBusy : Labels.WfActivate;
 
