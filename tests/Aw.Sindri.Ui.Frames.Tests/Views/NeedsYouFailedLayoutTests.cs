@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -20,12 +21,14 @@ public sealed class NeedsYouFailedLayoutTests : FrameHost
 {
     private const string FailedText = "Couldn't load what needs you";
 
-    [Fact]
-    public Task The_failed_line_uses_the_shared_failed_read_layout() => OnUi(async () =>
+    [Theory]
+    [InlineData(1280)]
+    [InlineData(1000)]
+    public Task The_failed_line_uses_the_shared_failed_read_layout(double width) => OnUi(async () =>
     {
         Server.NeedsYouView = RouteAnswer.Problem(HttpStatusCode.InternalServerError, "SND-TEST-500", "boom");
 
-        var (window, shell) = await Connected(width: 1280, height: 900);
+        var (window, shell) = await Connected(width: width, height: 900);
         shell.GoTo(PageId.Home);
         Settle(window);
 
@@ -45,6 +48,7 @@ public sealed class NeedsYouFailedLayoutTests : FrameHost
         Assert.Equal("NeedsYouRetry", retry.Name);
         Assert.DoesNotContain("copy", retry.Classes, StringComparer.Ordinal);
         Assert.Equal(HorizontalAlignment.Left, retry.HorizontalAlignment);
+        FrameFile.Save(window, string.Create(CultureInfo.InvariantCulture, $"h2921-needs-you-failed-{width}"));
         window.Close();
     });
 }
