@@ -73,6 +73,12 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-109: a session that a run of this workflow launched tried to start the workflow again (a loop); the message names the run.</summary>
     public static readonly ErrorDefinition GraphRunLoop = new("SND-GRAPH-109", ErrorKind.Conflict, "A run of this workflow can't start the workflow again");
 
+    /// <summary>SND-GRAPH-114: the workflow is active, so it can't be deleted; pause it first.</summary>
+    public static readonly ErrorDefinition GraphActive = new("SND-GRAPH-114", ErrorKind.Conflict, "This workflow is active; pause it first, then delete it");
+
+    /// <summary>SND-GRAPH-115: a run of the workflow (live or test) is queued, running or waiting, so it can't be deleted.</summary>
+    public static readonly ErrorDefinition GraphRunInFlight = new("SND-GRAPH-115", ErrorKind.Conflict, "A run of this workflow is still going; delete it after the run ends or cancel the run");
+
     /// <summary>SND-GRAPH-012: an edit op can't apply (an unknown node, an id already used, an edge that is missing or doubled); nothing was changed.</summary>
     public static readonly ErrorDefinition GraphOpInvalid = new("SND-GRAPH-012", ErrorKind.Invalid, "A graph edit could not be applied");
 

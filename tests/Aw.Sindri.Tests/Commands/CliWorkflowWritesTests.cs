@@ -91,7 +91,7 @@ public sealed class CliWorkflowWritesTests : IDisposable
     {
         var activate = new Api(HttpStatusCode.OK, Body(new ActivateWorkflowResponse(_slug, 2, "abc")));
         var pause = new Api(HttpStatusCode.OK, Body(new PauseWorkflowResponse(_slug, 2)));
-        var delete = new Api(HttpStatusCode.OK, Body(new DeleteWorkflowResponse(_slug, DateTimeOffset.UnixEpoch)));
+        var delete = new Api(HttpStatusCode.OK, Body(new DeleteWorkflowResponse(_slug, DateTimeOffset.UnixEpoch, RunsKept: 0, BytesFreed: 0, ResourcesStayed: [])));
 
         _ = await Verbs(_up, activate).Activate(["drift-check", "--revision", "2"], Token);
         _ = await Verbs(_up, pause).Pause(["drift-check"], Token);
@@ -101,7 +101,7 @@ public sealed class CliWorkflowWritesTests : IDisposable
         Assert.Contains("\"revision\":2", activate.Sent, StringComparison.Ordinal);
         Assert.Equal(("POST", "/sindri/workflows/drift-check/pause"), (pause.Method, pause.Path));
         Assert.Equal(("DELETE", "/sindri/workflows/drift-check"), (delete.Method, delete.Path));
-        Assert.Equal("drift-check is on at revision 2\ndrift-check is off\ndrift-check is archived\n", _out.ToString().ReplaceLineEndings("\n"));
+        Assert.Equal("drift-check is on at revision 2\ndrift-check is off\nDeleted drift-check. 0 runs kept, 0.0 MiB freed\n", _out.ToString().ReplaceLineEndings("\n"));
     }
 
     [Fact, Trait("Lane", "unit")]

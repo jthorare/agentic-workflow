@@ -23220,3 +23220,5 @@ Aw.Sindri.Core.Reviews.ReviewRequiredState
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.Counted = "counted" -> string!
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.NoneNamed = "noneNamed" -> string!
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.NotRead = "notRead" -> string!
+static readonly Aw.Sindri.Core.SindriErrors.GraphActive -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphRunInFlight -> Aw.Kernel.ErrorDefinition!

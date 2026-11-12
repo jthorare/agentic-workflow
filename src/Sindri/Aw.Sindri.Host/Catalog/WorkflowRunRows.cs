@@ -14,7 +14,7 @@ internal static class WorkflowRunRows
     [
         new(ActionId.From("RunWorkflow"), typeof(RunWorkflowRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
-            "POST", "/sindri/workflows/{slug}/runs", ShellRows.Form("sindri wf run <slug> [--payload <json>]"), "ready", SessionOk: true),
+            "POST", "/sindri/workflows/{slug}/runs", ShellRows.Form("sindri wf run <slug> [--payload <json>] [--revision <n>]"), "ready", SessionOk: true),
         new(ActionId.From("CancelWorkflowRun"), typeof(CancelWorkflowRunRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/workflow-runs/{run}/cancel", ShellRows.Form("sindri wf cancel <run>"), "ready", SessionOk: true),

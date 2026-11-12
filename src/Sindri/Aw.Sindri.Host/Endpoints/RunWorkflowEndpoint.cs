@@ -20,7 +20,7 @@ internal static class RunWorkflowEndpoint
             }
 
             var by = callers.Current?.Actor ?? "owner";
-            return (await service.Handle(new RunWorkflowRequest(parsed, body?.Payload, by), ct).ConfigureAwait(false)).ToHttpResult();
+            return (await service.Handle(new RunWorkflowRequest(parsed, body?.Payload, by, body?.Revision), ct).ConfigureAwait(false)).ToHttpResult();
         });
         return group;
     }
