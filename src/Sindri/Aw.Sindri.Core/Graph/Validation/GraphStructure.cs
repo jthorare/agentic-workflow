@@ -123,6 +123,7 @@ internal sealed class GraphStructure
             changed = false;
             foreach (var id in ids.Where(i => !exact.Contains(i) && needs[i] is not null))
             {
+                // why: the Where above keeps only ids whose needs are not null
                 var mine = needs[id]!;
                 if (_incoming[id].Exists(e => exact.Contains(e.From) && needs[e.From] is { } before && before.IsSubsetOf(mine) && mine.Contains(Fired(e.From, e.Output))))
                 {
