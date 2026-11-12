@@ -31,10 +31,10 @@ The job: **from nothing to a proven, running workflow in 4 steps: pick a trigger
 |---|---|---|---|---|
 | Start from zero | 1 | Zapier one-decision-per-screen, Retool unconnected warning | trigger, action, test, on; an unfilled step is a visible warning, never a silent skip | §4.1, §4.2 |
 | Start from words | 2 | n8n Assistant, Windmill compare view | Describe it makes a skeleton, shown as a diff, validated and test-run before "done" (Take 3) | §4.1, phase P6 |
-| Start from a template | 3 | n8n, Actions starters | a template is a full spec plus a first-run checklist; the gallery holds the 10 jobs of #2960 | §4.1 |
+| Start from a template | 3 | n8n, Actions starters | a template is a full spec plus a first-run checklist; the gallery holds A, B and C in v1; the other jobs of #2960 follow after the soak | §4.1 |
 | Pick a trigger, try it on a real event | 4 | Pipedream, Zapier, Inngest | last 10 real events of the kind, pick, edit, would-match line (Take 4, #3032) | §4.3, §6 |
 | Fill a field from earlier output | 5 | n8n drag, Windmill suggest | `/` opens a picker of upstream outputs with real values (Take 7, #3033) | §4.4 |
-| Check before on | 6 | actionlint | a stable id per finding, shown on the step; Activate off while a finding blocks (Take 1) | §4.5 |
+| Check before on | 6 | actionlint | a stable id per finding, shown on the step; Activate off while a finding blocks; untested only confirms (Take 1) | §4.5 |
 | Dry run, effects fenced | 7 | none solid (ledger) | ours: effect steps record "would do" with the exact payload (Take 2) | §5 |
 | See each step's input and output | 8 | Inngest, Dify | the canvas with a dot per step; click a step for Input, Output, Error, Raw answer | §7 |
 | Re-run from a step | 9 | Inngest plus Dify | later: "Re-run from here" with an editable input | phase P7 |
@@ -76,7 +76,7 @@ Done-checks. Each is a test or a measured run in the real app (`aw-ui-driver`). 
 5. **Replace the trigger is one op.** A new graph op `replace_node` swaps a node for another of the same slot, keeps its outgoing edges, and is checked as one edit. The trigger slot offers "Change trigger" (fixes #3075). *Why:* three client-side steps with a broken graph between them is the bug.
 6. **One word for the If step everywhere: "If".** The catalog `Title` (`ConditionBlock.cs:16`) is the only name shown. The canvas subtitle, the sheet ("Settings of Flagged?", the step's own title) and the run row use it. Type ids and node ids show only in the JSON view. Same rule for "Send notification". *Why:* the menu already says "If", and "condition" and "gate" are a type id and a node id (fixes #3074).
 7. **Four steps, in this order: trigger, action, test, turn it on.** The page's primary button follows the step the workflow is at: "Add a trigger", "Add an action", "Test run", "Activate". One decision per screen region, as Zapier does (Take on ledger 1).
-8. **Activate needs a passing test run of the current revision, and every validate finding gone.** Until the UI button ships, Activate only warns "Not tested yet"; from phase P4 it is refused. This is the contract meta accepted on #2969. See open question 1.
+8. **Activate needs every validate finding gone; a passing test run is advised, not required.** An untested revision shows "Not tested" on the workflow row and the header, and Activate opens one confirm: "Not tested yet. Activate anyway?" (Enter / Esc). *Why:* a cron or a PR trigger may have no sample to test with, and a hard gate with no override strands those; the bar is building trivially easy. Settled (lead, 2026-11-12), open question 1.
 9. **The test run is fenced by block, not by promise.** The block catalog says which blocks write; a test version of each write port records the call and returns a made-up result (§5). Model and agent steps are stubbed by default and opt in per run (§5.2).
 10. **Raw JSON is for the Advanced fold.** Fields show captions (#2925), presets, and the `/` picker. A Prompt step's output is a small form of named fields, not JSON Schema typed by hand (#2968).
 11. **The trigger step lists real events.** The last 10 events of its kind that Sindri saw on this box; pick one, edit it, pin it; a line says "would match" or "would not match: repo is not x" (#3032).
@@ -128,7 +128,7 @@ A test run is a run row with `mode = test`. It follows the real graph walk (`Gra
 
 | Entry | What it does | Phase |
 |---|---|---|
-| Start from a template | a gallery of the 10 jobs of #2960 (A, B and C are three of them). Each card shows trigger, step count, "needs: GitHub connection" and the last time it ran on this box. Choosing one opens the workflow on its Test step with the checklist. | P1 |
+| Start from a template | a gallery of A, B and C in v1 (the other jobs of #2960 come after the soak, not in v1). Each card shows trigger, step count, "needs: GitHub connection" and the last time it ran on this box. Choosing one opens the workflow on its Test step with the checklist. | P1 |
 | Blank | a workflow with an empty trigger slot, on "Add a trigger" | P1 |
 | Describe it | one sentence in, a drafted graph out as a diff against blank; Sindri validates and test-runs it before showing "done". A secret never goes in this box. | P6 |
 
@@ -203,7 +203,7 @@ Title, then the state chip (decision 12), then the test fact ("Tested rev 4, pas
 | Empty (no workflows) | the three entries of §4.1 |
 | Empty trigger | the canvas holds one dashed "Add a trigger" slot; the primary button says the same |
 | Findings | ⚠ on the steps; header "2 things to fix"; Activate off |
-| Untested | chip "Not tested"; Test run is the primary button |
+| Untested | chip "Not tested" on the row and the header; Test run is the primary button; Activate works and opens the confirm "Not tested yet. Activate anyway?" (Enter / Esc) |
 | Testing | the canvas shows a dot per step as it runs (§7); the button says "Testing..." and Esc cancels |
 | Test failed | the failed step is selected, its sheet shows the sentence and the one fix button (§7.3) |
 | Tested | "Passed 2m ago"; Activate is the primary button |
@@ -306,7 +306,7 @@ Text from a run's output, a PR title or a model answer is fenced as untrusted in
 | E4 | Prompt block: check exit code and text before parse; keep `raw` (cut at 64 KB) on the node run; `NodeRunView` gains `Raw` | engine, api | #3079 |
 | E5 | Every `Title` is the only display name; `NodeSummaryView` carries `kindTitle`; sheet titles come from the step title | engine, ui | #3074; the node id never goes to a label |
 | E6 | `GET /sindri/workflows/trigger-events?kind=&connection=` (last N with a one-line summary, the example, the would-match check); MCP and CLI | api | #3032; the forge poll keeps the last 20 real events per connection (#2988's engine comment) |
-| E7 | `GET /sindri/workflows/templates` (the 10, each with trigger, step count, needs, last run) | engine | replaces the hard-coded list |
+| E7 | `GET /sindri/workflows/templates` (A, B and C in v1, each with trigger, step count, needs, last run) | engine | replaces the hard-coded list |
 | E8 | Event kinds `github.pr.opened`, `.updated`, `.ready_for_review`, `.review_requested`, `.review_submitted`, `.comment`, `.checks`, `.conflict`, each with a payload schema and a sample; an issue-labelled kind for B | api, engine | #2988; §12 gap 1 |
 | E9 | Failure-to-sentence catalog (§6.1) in Core | engine | one test per row |
 | E10 | The holes that make "valid" not mean "will run": #2985, #2986, #2987, #3001, #2999 (sweep for stuck `running`), #3003, #3005 | engine | W7 depends on them |
@@ -325,7 +325,7 @@ Non-goals (this spec):
 
 - A visual redesign of the canvas. Design owns the frames and tokens (#2978).
 - Revision list, side-by-side diff and named revisions (ledger 11). Revisions exist; undo (Ctrl+Z) is the only part here.
-- A public template gallery. The 10 are ours.
+- A public template gallery. The templates are ours; v1 ships A, B and C only.
 - Webhooks. The box is loopback only; events come from the forge poll (#2988).
 - A cloud or shared workflow store.
 - Re-running a live run's side effects. Re-run from here skips what already ran.
@@ -345,7 +345,7 @@ Non-goals (this spec):
 
 1. **B needs an event #2988 does not list.** The list is all pull request kinds. "Issue labelled" has no kind. Recommend `github.issue.labeled` with `label` in its payload, polled from the issues feed (§open question 3).
 2. **The test run and the "will run" promise can drift.** If validate and the test use different checks, a pass can still fail live. The test calls validate first; W7 is the property test.
-3. **A stubbed model hides #3079-type bugs.** Default test mode does not call the model. "With model" exists for that, and Activate accepts either, so a passing fenced test can still meet a model that answers text. The header names the mode (§5.3); open question 2 asks whether Activate should insist on "with model" when the workflow has a Prompt step.
+3. **A stubbed model hides #3079-type bugs.** Default test mode does not call the model. "With model" exists for that, and Activate accepts either (settled: "With model" is not required for a Prompt step), so a passing fenced test can still meet a model that answers text. The header names the mode (§5.3).
 4. **A draft has no "unsaved" state.** Every sheet Save is a revision. A long edit makes many revisions. Acceptable now; a "save as one revision" grouping is a later idea.
 5. **The ledger measured by reading docs.** Its step counts for A are inferred (its "Weakest claims"). W1 is measured in our app, not copied from them.
 6. **GRAPH-NAME-002 is still a warning** (connection not checked, #3001). Until it is fixed a wrong connection name passes the test as "could not check". The test row says so.
@@ -356,7 +356,7 @@ Non-goals (this spec):
 Proof is the app run on seeded data with `aw-ui-driver`, not tests alone.
 
 1. **Walk A, B and C from a fresh home** (`scripts/context-first-run.sh`, forge fixture `scripts/forge-fixture.sh`). Capture before and after shots of each of the 4 steps. Count the steps and the seconds. This is W1 to W3.
-2. **Template matrix** in CI: each of the 10 templates, fake model returning the example, then plain text (W4).
+2. **Template matrix** in CI: each of the templates (A, B, C in v1), fake model returning the example, then plain text (W4).
 3. **Add step matrix**: 10 kinds, cancel / invalid / valid (W5).
 4. **Fence test**: A, B and C against the fakes; assert no write (W6).
 5. **Event state**: start a run, stop the stream, resume; the row corrects within 1 s of the event or the next read (W8).
@@ -373,14 +373,14 @@ Phases are the PRs. Every lane has work from day one; the red and stubs of each 
 | Phase | What | Lane | Depends on |
 |---|---|---|---|
 | P0 | Contract PR: the new routes' request and response records, the `replace_node` op, `NodeRunView.Raw`, the findings shape, golden and `PublicAPI` entries, all as stubs | api | none |
-| P1 | Build: the sheet-first Add step (#3072), Change trigger (#3075), `GraphCanvas` elements (#3073), names (#3074), start screen with the 10 templates | ui | P0 stubs |
-| P1e | `replace_node`, the Title rule, the templates route, the block checks for the 10 templates | engine | P0 |
+| P1 | Build: the sheet-first Add step (#3072), Change trigger (#3075), `GraphCanvas` elements (#3073), names (#3074), start screen with templates A, B and C | ui | P0 stubs |
+| P1e | `replace_node`, the Title rule, the templates route, the block checks for templates A, B and C | engine | P0 |
 | P2 | Live state: event subscription and shared clock (#3080); chip and header (#2970) | ui | P0 |
 | P3 | Engine truth: #2985, #2986, #2987, #3001, #2999, #3003, #3005 | engine | none (start now) |
 | P3e | Prompt block exit-code check, `raw`, sentence table (#3079, §6) | engine | none |
 | P4a | Test mode, write-port recorders, `workflow.tested`, pins | engine | P3 (#2985 first) |
 | P4b | `POST .../test`, `workflow_test`, `wf test`, trigger-events route, `wf events` | api | P4a |
-| P4c | Test run UI: the button and menu, the run view with "would have" rows, the Activate gate (warn, then refuse) | ui | P4b stubs |
+| P4c | Test run UI: the button and menu, the run view with "would have" rows, the Activate confirm for an untested revision ("Not tested yet. Activate anyway?") | ui | P4b stubs |
 | P5 | GitHub kinds and samples (#2988, #3008), issue-labelled kind; the connection field with "Connect GitHub" | api, engine | P0 |
 | P5ui | Trigger step events picker (#3032), field picker (#3033), Prompt output as a form (#2968), flip `workflows.editor` default | ui | P4b, P5 |
 | P6 | Describe it; delete the old editor path | ui, engine | P5ui, one week of green W1 to W3 |
@@ -398,15 +398,15 @@ Gate notes: P1 to P5ui add catalog rows, action ids and API goldens, so each gat
 
 ## Open questions
 
-Each has a recommended answer; the lead decides.
+All seven are settled by the lead.
 
-1. **Refuse Activate until a passing test, or warn only?** Recommend refuse from P4c (meta's contract on #2969), with no override: the owner's bar is "guaranteed to work", and the test costs one click.
-2. **Should Activate insist on "With model" when the workflow has a Prompt step?** Recommend no. A fenced pass plus the first-run header ("First live run: watch it") is enough, and "With model" is one menu click for the owner who wants it. Revisit if W7 misses.
-3. **Which issue event for B?** Recommend `github.issue.labeled` with `{repo, number, label, author}`, polled like pull requests, plus `github.issue.opened`. Engine and api own the shape.
-4. **Where do the 10 templates come from?** Recommend the 10 jobs listed in #2960, each a spec file in the repo under `src/Sindri/...` with its first-run checklist, loaded by E7. A, B and C ship first.
-5. **Does Describe it use the owner's agent or a fixed one?** Recommend the profile's `workflow.agent.target` (#2986), and refuse with the fix line when it is unset.
-6. **Does the test count toward Activate when the revision changed after it?** Recommend no: any new revision is "Not tested", because validate changed too.
-7. **Pins on a revision or on the workflow?** Recommend per revision (engine's note on #2969); a later "carry pins to the new revision" prompt if it hurts.
+1. **Refuse Activate until a passing test?** Settled (lead, 2026-11-12): no. An untested revision shows "Not tested" on the row and header, and Activate opens one confirm, "Not tested yet. Activate anyway?" (Enter / Esc). A cron or PR trigger may have no sample to test with, and a hard gate with no override strands those.
+2. **Should Activate insist on "With model" for a Prompt step?** Settled (lead, 2026-11-12): no. The first-run header ("First live run: watch it") is enough.
+3. **Which issue event for B?** Settled (lead, 2026-11-12): `github.issue.labeled` with `{repo, number, label, author}`, a new event kind #2988 must add, polled like pull requests, plus `github.issue.opened`.
+4. **Where do the templates come from?** Settled (lead, 2026-11-12): A, B and C ship first as spec files in the repo under `src/Sindri/...` with a first-run checklist, loaded by E7. The other jobs of #2960 come after the soak, not in v1.
+5. **Does Describe it use the owner's agent?** Settled (lead, 2026-11-12): it uses the profile's `workflow.agent.target` (#2986) and refuses with the fix line when unset.
+6. **Does a test count after the revision changed?** Settled (lead, 2026-11-12): no. Any new revision is "Not tested".
+7. **Pins on a revision or on the workflow?** Settled (lead, 2026-11-12): per revision. A later "carry pins to the new revision" prompt if it hurts.
 
 ### Review notes
 
