@@ -4,6 +4,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Features.GetWorkflow;
 using Aw.Sindri.Features.GetWorkflowRun;
+using Aw.Sindri.Features.ListTriggerEvents;
 using Aw.Sindri.Features.ListWorkflowBlocks;
 using Aw.Sindri.Features.ListWorkflowRuns;
 using Aw.Sindri.Features.ListWorkflows;
@@ -13,7 +14,7 @@ namespace Aw.Sindri.Host.Endpoints;
 
 /// <summary>
 /// The workflow reads (#2258, PR 8a), the routes behind 'sindri wf list|show|runs|run-show' and the workflow_list, workflow_get, workflow_runs and workflow_run_get tools:
-/// GET /sindri/workflows, /sindri/workflows/{slug}, /sindri/workflows/{slug}/runs and /sindri/workflow-runs/{run}. A slug or run id of the wrong shape is invalid input, not a 404.
+/// GET /sindri/workflows, /sindri/workflows/{slug}, /sindri/workflows/{slug}/runs and /sindri/workflow-runs/{run}; and GET /sindri/workflows/trigger-events, the trigger step's recent events (#3201). A slug or run id of the wrong shape is invalid input, not a 404.
 /// </summary>
 internal static class WorkflowReadEndpoints
 {
@@ -21,7 +22,9 @@ internal static class WorkflowReadEndpoints
     {
         _ = group.MapGet("/workflows", static async (bool? includeArchived, IService<ListWorkflowsRequest, ListWorkflowsResponse> service, CancellationToken ct)
             => (await service.Handle(new ListWorkflowsRequest { IncludeArchived = includeArchived == true }, ct).ConfigureAwait(false)).ToHttpResult());
-        // why: the literal routes below win over '/workflows/{slug}', so 'blocks' and 'docs' can't be slugs
+        // why: the literal routes below win over '/workflows/{slug}', so 'blocks', 'docs' and 'trigger-events' can't be slugs
+        _ = group.MapGet("/workflows/trigger-events", static async (HttpRequest http, IService<ListTriggerEventsRequest, ListTriggerEventsResponse> service, CancellationToken ct)
+            => (await service.Handle(TriggerEvents(http.Query), ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapGet("/workflows/blocks", static async (IService<ListWorkflowBlocksRequest, ListWorkflowBlocksResponse> service, CancellationToken ct)
             => (await service.Handle(new ListWorkflowBlocksRequest(), ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapGet("/workflows/docs", static async (string? question, string? page, IService<SearchWorkflowDocsRequest, SearchWorkflowDocsResponse> service, CancellationToken ct)
@@ -43,6 +46,12 @@ internal static class WorkflowReadEndpoints
         });
         return group;
     }
+
+    // why: four optional query values; a bad limit is the service's to refuse, so it binds as text here
+    private static ListTriggerEventsRequest TriggerEvents(IQueryCollection query) =>
+        new(Text(query, "kind"), Text(query, "connection"), Text(query, "filter"), int.TryParse(Text(query, "limit"), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var limit) ? limit : null);
+
+    private static string? Text(IQueryCollection query, string name) => query.TryGetValue(name, out var values) && values.Count > 0 ? values[0] : null;
 
     /// <summary>Binds a workflow slug from a route value.</summary>
     /// <param name="slug">The route value.</param>

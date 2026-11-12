@@ -107,6 +107,7 @@ using Aw.Sindri.Features.ListReviews;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.ListSessions;
 using Aw.Sindri.Features.ListWorkflowBlocks;
+using Aw.Sindri.Features.ListTriggerEvents;
 using Aw.Sindri.Features.ListWorkflowRuns;
 using Aw.Sindri.Features.ListWorkflows;
 using Aw.Sindri.Features.OnboardRepo;
@@ -220,6 +221,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ListWorkflowBlocksResponse)), JsonSerializable(typeof(SearchWorkflowDocsResponse))]   // #2258 PR 8b: workflow_blocks and workflow_docs
 [JsonSerializable(typeof(CreateWorkflowBody)), JsonSerializable(typeof(ApplyWorkflowOpsBody)), JsonSerializable(typeof(ReplaceWorkflowBody)), JsonSerializable(typeof(ValidateWorkflowBody)), JsonSerializable(typeof(ActivateWorkflowBody))]   // #2258 PR 8b: the workflow write bodies
 [JsonSerializable(typeof(CreateWorkflowResponse)), JsonSerializable(typeof(ApplyWorkflowOpsResponse)), JsonSerializable(typeof(ReplaceWorkflowResponse)), JsonSerializable(typeof(ValidateWorkflowResponse)), JsonSerializable(typeof(ActivateWorkflowResponse)), JsonSerializable(typeof(PauseWorkflowResponse)), JsonSerializable(typeof(DeleteWorkflowResponse))]
+[JsonSerializable(typeof(ListTriggerEventsResponse))]   // #3201: GET /sindri/workflows/trigger-events
 [JsonSerializable(typeof(ListWorkflowsResponse)), JsonSerializable(typeof(GetWorkflowResponse)), JsonSerializable(typeof(ListWorkflowRunsResponse)), JsonSerializable(typeof(GetWorkflowRunResponse))]   // #2258 PR 8a: the workflow reads; GraphSpec and the node positions come with GetWorkflowResponse
 [JsonSerializable(typeof(WorkflowNotifyPayload)), JsonSerializable(typeof(RunWorkflowBody)), JsonSerializable(typeof(RunWorkflowResponse)), JsonSerializable(typeof(CancelWorkflowRunResponse)), JsonSerializable(typeof(AgentNodeBody)), JsonSerializable(typeof(AgentNodeControlled))]
 [JsonSerializable(typeof(WorkflowChangedPublic)), JsonSerializable(typeof(WorkflowRunPublic)), JsonSerializable(typeof(WorkflowNodePublic))]   // issue 2823: the public forms of the workflow lifecycle, run and node events

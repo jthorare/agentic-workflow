@@ -65,4 +65,20 @@ internal static class GitHubEventMapper
 
         return new PolledEvent("github:" + id, kind, at.Value, fields);
     }
+
+    /// <summary>A github.pr.checks event: the checks on an open pull request's head finished red or green (#3201). Not in the events feed; the pull request state poll builds it.</summary>
+    /// <param name="pull">The pull request as GET /repos/{r}/pulls lists it.</param>
+    /// <param name="repo">'owner/name'.</param>
+    /// <param name="conclusion">'red' or 'green'.</param>
+    /// <param name="failing">The names of the failing checks (empty when green).</param>
+    /// <param name="at">When the last check finished.</param>
+    /// <returns>The event, keyed by pull request, head and conclusion.</returns>
+    internal static PolledEvent Checks(JsonElement pull, string repo, string conclusion, IReadOnlyList<string> failing, DateTimeOffset at) => throw new NotSupportedException("red: #3201");
+
+    /// <summary>A github.pr.conflict event: an open pull request's mergeable state turned dirty (#3201). Not in the events feed; the pull request state poll builds it.</summary>
+    /// <param name="pull">The pull request detail (GET /repos/{r}/pulls/{n}).</param>
+    /// <param name="repo">'owner/name'.</param>
+    /// <param name="at">When the pull request last changed.</param>
+    /// <returns>The event, keyed by pull request and head.</returns>
+    internal static PolledEvent Conflict(JsonElement pull, string repo, DateTimeOffset at) => throw new NotSupportedException("red: #3201");
 }
