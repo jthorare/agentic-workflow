@@ -52,6 +52,8 @@ public sealed class StateBorderContrastTests
         var keys = borders.Select(b => b.Key).ToHashSet(StringComparer.Ordinal);
         Assert.Contains("Brush.Clickable.PressedBorder", keys);
         Assert.Contains("Brush.PrimaryHover", keys);
+        Assert.Contains(borders, b => b.Where.EndsWith(": Button.segment.selected", StringComparison.Ordinal));
+        Assert.DoesNotContain(borders, b => b.Where.Contains("Button.command-control.primary:pressed", StringComparison.Ordinal) && string.Equals(b.Key, "Brush.PrimaryPressed", StringComparison.Ordinal));
         Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures.Distinct(StringComparer.Ordinal)));
     }
 
@@ -73,9 +75,17 @@ public sealed class StateBorderContrastTests
                     continue;
                 }
 
-                foreach (var setter in style.Elements().Where(e => string.Equals(e.Name.LocalName, "Setter", StringComparison.Ordinal)
-                    && (e.Attribute("Property")?.Value.EndsWith("BorderBrush", StringComparison.Ordinal) ?? false)))
+                var setters = style.Elements().Where(e => string.Equals(e.Name.LocalName, "Setter", StringComparison.Ordinal)).ToList();
+                var background = setters.FirstOrDefault(e => string.Equals(e.Attribute("Property")?.Value, "Background", StringComparison.Ordinal))?.Attribute("Value")?.Value;
+                foreach (var setter in setters.Where(e => e.Attribute("Property")?.Value.EndsWith("BorderBrush", StringComparison.Ordinal) ?? false))
                 {
+                    // A border painted the same brush as its own fill is not a separate indicator: the pressed primary button
+                    // (Button.command-control.primary:pressed, Border and Background both Brush.PrimaryPressed) is the case.
+                    if (string.Equals(setter.Attribute("Value")?.Value, background, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
                     var match = _brush.Match(setter.Attribute("Value")?.Value ?? string.Empty);
                     if (match.Success)
                     {

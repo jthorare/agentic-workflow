@@ -112,7 +112,7 @@
   </Style>
   <Style Selector="Button.segment.selected">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.PressedBorder}" />
   </Style>
   <!-- An open decision on the item sheet: an amber callout. -->
   <Style Selector="Border.callout">
