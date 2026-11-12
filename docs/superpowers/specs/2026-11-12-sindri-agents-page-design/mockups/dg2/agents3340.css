@@ -86,3 +86,15 @@
 .lrow .title .id{min-width:56px}
 .lrow{grid-template-columns:16px minmax(0,1fr) auto}.lrow .why{max-width:120px;text-align:right;justify-self:end}.lrow .why .chip{max-width:120px}.narrow .lrow{grid-template-columns:16px}
 .phead .state.end i{background:var(--ink-3)}
+/* round 5 */
+.lst,.lst.focus,.narrow .lst.focus{margin:2px 0 2px 2px}
+.ov{align-items:flex-start;padding-top:320px}
+.lrow .why{max-width:150px}.lrow .why .chip{max-width:150px}
+.fl .cnt.err{color:var(--err)}
+.btn.kfocus{box-shadow:0 0 0 2px var(--primary-hi)}
+.endbar .refuse{font-size:12px;line-height:18px;color:var(--err)}
+.endbar .refuse .gs{font:400 12px/18px var(--mono);color:var(--ink-muted);margin-top:var(--sp1)}
+.endbar .refuse .mono{font:400 12px/18px var(--mono)}
+.fl .note{font-size:12px;margin-top:var(--sp1);display:flex;gap:var(--sp2)}
+.fl .note .lnk{color:var(--primary-hi)}
+.ferr.cp .em{flex:1}

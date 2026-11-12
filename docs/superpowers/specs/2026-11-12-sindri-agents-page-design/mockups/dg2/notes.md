@@ -1,7 +1,7 @@
 # DG2 picks where the spec (#3334 section 15) is open
 
 ## Copy TBD (invented, needs an owner word)
-- 013 text: "Codex is not signed in. Sign in with `codex login`" (spec: "the sign-in command"; no wording). Copy TBD.
+- 013 text decided in review: "Codex isn't signed in. Run `codex login` in a terminal, then Start again."
 - 017 text: "The prompt is 8,214 characters. The limit is 8,000." (spec: "with the character count"). Copy TBD.
 - 014 git line in the worktree-failed frame is a sample git error, not real output.
 - "Onboard it" (link under a repo that is not onboarded): spec says "a link to onboard it", no text.
