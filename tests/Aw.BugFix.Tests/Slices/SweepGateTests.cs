@@ -4,6 +4,7 @@ using Aw.BugFix.Core.Model;
 using Aw.BugFix.Features.AdvanceReport;
 using Aw.BugFix.Features.JudgeCandidate;
 using Aw.BugFix.Features.Resume;
+using Aw.Kernel;
 
 namespace Aw.BugFix.Tests.Slices;
 
@@ -113,6 +114,6 @@ public sealed class SweepGateTests : IDisposable
         return c1;
     }
 
-    private Task<Aw.Kernel.Result<AdvanceReportResponse>> Report(CandidateId candidate, string? sweepFile = SweepFile) =>
+    private Task<Result<AdvanceReportResponse>> Report(CandidateId candidate, string? sweepFile = SweepFile) =>
         _w.Run<AdvanceReportRequest, AdvanceReportResponse>(new AdvanceReportRequest(World.State, candidate, Unresolved: false, sweepFile));
 }
