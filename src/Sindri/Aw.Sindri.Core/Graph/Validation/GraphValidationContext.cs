@@ -14,6 +14,12 @@ public sealed record GraphValidationContext(
     Func<string, string?, string?> CronProblem,
     Func<string, ConditionParse> Condition)
 {
+    /// <summary>
+    /// Gets whether the profile sets 'workflow.agent.target', the agent a 'run_agent' node with no 'agent' runs on (#2986): Known when it does, Unknown when a profile was read and it doesn't,
+    /// Unavailable when no profile could be read (a warning). Known by default, so a context that doesn't fill it checks nothing.
+    /// </summary>
+    public GraphLookup AgentTarget { get; init; } = GraphLookup.Known;
+
     /// <summary>Gets the box's cap on a sandbox's memory and wall clock, or null to skip the check (PR 14).</summary>
     public ResourceBoxCap? BoxCap { get; init; }
 
