@@ -66,13 +66,15 @@ Done-checks. Each is a test or a measured run in the real app (aw-ui-driver), an
 2. **Rank by "blocks N".** N counts the open objects that cannot move until this row is done (§4.1). Ties go to a reason weight, then age, then id. The rule is readable and the weights are profile keys (ledger 2, take 6). The score is ours; the ledger found no prior art for it.
 3. **Order holds still.** Rows move only at a settle point (§4.3). New rows wait in a marked "New" band at the top. This is the Agents walk's expected behaviour 3 (#3082), applied to all of Home.
 4. **Sessions and lanes are rows.** A lane at its recycle mark, a session asking a question and a PR ready in the merge queue are Needs you rows with the same grammar as a review request (ledger 12; #3082).
-5. **Acting follows the grammar's write rule.** Meta's rule on #2978: a bare letter never commits a write, and may differ per surface only when it opens something cancellable. So reply (`r`), snooze (`h`) and hand to agent (`g`) open a composer or a picker; send, approve, merge and assign go through the `Ctrl+Enter` menu or the `.` panel. This replaces ledger 3's bare `a`. One carve-out is open for the owner (§5.4, Q1): `e` Done writes only Sindri's own state and has a 5 s Undo.
+5. **Acting follows the grammar's write rule.** Meta's rule on #2978: a bare letter never commits a write, and may differ per surface only when it opens something cancellable. So reply (`r`), snooze (`h`) and hand to agent (`g`) open a composer or a picker; send, approve, merge and assign go through the `Ctrl+Enter` menu or the `.` panel. This replaces ledger 3's bare `a`. The owner's boundary (§7.4): a bare key never writes to a source and never starts work; it may change Sindri's own view state when Undo shows for 5 s (`e` Done, `h` snooze).
 6. **One Done, one snooze, one mute, for every row kind** (ledger 4, 5, 10). They are Sindri-local state; they never write to Slack, Linear or GitHub. Source writes (reply, approve, merge, state change) are separate actions with write-through (§5.2).
 7. **Priority-only notifications.** A toast and the tray count come from a short kind list, once per row (§6.3). Moving and the brief never notify.
 8. **The brief is facts first.** Plain-fact lines come from the ledger with no model. A model writes the summary line and the order, and a failed or limited model costs only that (§6.1).
-9. **Density is 32 px (compact, default) and 40 px (comfortable).** These are design's grammar numbers on #2978. The ledger's 28 / 36 are replaced. `Tokens.axaml:229-233` carries 28 / 32 / 36 / 40 today; design's token PR (P0) sets the names.
-10. **Home reads one local store.** The first page of `GET /sindri/home` and a cached copy of it paint first; nothing on the first-paint path calls a source.
-11. **Agents get the same verbs.** Every action on the page has a CLI verb and an MCP tool; a session reads Home but never presses owner buttons (§9).
+9. **Density is 32 px (compact, default) and 40 px (comfortable).** These are design's grammar numbers on #2978, drawn and measured at 1440x900 (22 rows). The ledger's 28 / 36 came before that drawing and are replaced. `Tokens.axaml:229-233` carries 28 / 32 / 36 / 40 today; design's token PR (P0) sets the names.
+10. **Splits use `[` and `]`, and Tab stays focus traversal.** A list that traps Tab strands keyboard users. The ledger's Tab binding is a Superhuman snippet and is in "Not solid".
+11. **Done keeps 7 days.** #3031 sets 7. The ledger's 90 days copies GitHub's retention, and a 7-day list is enough to undo a mistake without growing a second inbox.
+12. **Home reads one local store.** The first page of `GET /sindri/home` and a cached copy of it paint first; nothing on the first-paint path calls a source.
+13. **Agents get the same verbs.** Every action on the page has a CLI verb and an MCP tool; a session reads Home but never presses owner buttons (§9).
 
 ## 3. The model
 
@@ -111,9 +113,9 @@ A row is in Needs you while its trigger holds, and leaves when the trigger stops
 | `run-failed` | Sindri | a workflow run the owner started, or one whose workflow notifies the owner, ended `failed` and has not been seen | partly: service failures are rows; run failures are not |
 | `system` | Sindri | setup step open, profile drifted, connection token stale, graph note posted (`Setup`, `Profile`, `Connection`, `WorkflowNotify`, `Failure`) | yes |
 | `agent-asking` | session collector | `GET /sindri/sessions` row with `state: asking` (`SessionAskingView` gives reason, tool, since) | yes |
-| `agent-limited` | aw-meta, Sindri | a lane that `aw-meta status` shows usage-limited, or a Sindri agent run paused on a model limit | no |
+| `agent-limited` | aw-meta, Sindri | a subject in `aw-meta usage --json` with `state: Limited` (its `Stop` has the kind and `ResetsAt`), or a Sindri agent run paused on a model limit | no |
 | `lane-recycle` | aw-meta | `aw-meta lanes-context` gives a lane the verdict `recycle`: context at or over `context.recycleAt` (the meta lane included) | no |
-| `pr-ready-merge` | forge, aw-meta | an open, non-draft PR of the owner with required checks passing and nothing blocking its merge, **or** a PR in the aw-meta merge queue (a lane sent `ready #N <sha>`, not merged, ended or dropped). One row per PR even when both hold. | queue: no; Reviews list has "Yours": partly |
+| `pr-ready-merge` | forge, aw-meta | an open, non-draft PR of the owner with required checks passing and nothing blocking its merge, **or** a PR in `aw-meta status --json` `mergeQueue` (a lane sent `ready #N <sha>`; the entry leaves when the PR merges, closes or is dropped). One row per PR even when both hold. | queue: no; Reviews list has "Yours": partly |
 | `review-requested` | forge | `ReviewWaitingKind.Requested`: a review was requested from the owner and none is submitted | yes (Reviews list "Waiting on you") |
 | `review-new-commits` | forge | `ReviewWaitingKind.NewCommits`: the owner reviewed and the PR has newer commits | yes |
 | `mention` | Linear, forge, Messages | a comment names the owner and the owner wrote nothing after it in that thread | Linear: `LinearSinceItem` kind `mentioned`; GitHub and Slack: no |
@@ -123,7 +125,7 @@ A row is in Needs you while its trigger holds, and leaves when the trigger stops
 
 Reason words on the why chip: "asking", "limited", "at 210k", "ready", "review requested", "new commits", "mention", "DM", "failed", "assigned", "due", "setup".
 
-Not on Home: "idle with work owed" and "slot wait over 30 min" from #3082's Agents ranking. They are guesses about what is owed, and Home shows no guesses. They stay on the Agents page (Q3).
+Not on Home: "idle with work owed" and "slot wait over 30 min" from #3082's Agents ranking. Home shows only facts that have a source and never guesses what is owed, and both of these are guesses. They stay on the Agents page.
 
 Not on Home: the Queue's `queued` group. Its `running` and `withYou` groups go to Moving (§6.2).
 
@@ -133,12 +135,19 @@ Not on Home: the Queue's `queued` group. Its `running` and `withYou` groups go t
 |---|---|---|
 | decisions, questions, system | `GET /sindri/needs-you` (projection `NeedsYouProjection`) | none; the projection becomes one row producer |
 | sessions | `GET /sindri/sessions` (`ListSessionsEndpoint`) | none for asking; context size is not on `SessionRowView` today |
-| lanes and merge queue | `aw-meta lanes-context` and `aw-meta status`, read-only, on a service tick | a `home-lanes` service in the Sindri host; the exact JSON fields are unchecked (Q5) |
+| lanes and merge queue | `aw-meta lanes-context` and `aw-meta status`, read-only, on a service tick | a `home-lanes` service in the Sindri host, with the fields below |
 | reviews, PR checks | `GET /sindri/reviews` (`ListReviewsResponse`, `ReviewWaitingKind`), `Core/Forge` (`PullChecks`, `PullMerge`) | the ready-to-merge trigger |
 | Linear | `GET /sindri/linear/since` (`LinearSinceResponse`) | the "today" cut; mention-awaiting-reply |
-| runs | `GET /sindri/workflows/{slug}/runs` | the failed-and-unseen trigger |
+| runs | `IWorkflowRunStore` in process (the route `GET /sindri/workflows/{slug}/runs` lists one workflow's runs of every status, newest first, 50 per page, `More` for older, so it can't answer "failed anywhere, unseen") | the failed-and-unseen trigger reads the store across workflows; no new public route |
 | todos | `GET /sindri/todos` | none |
 | Slack, DMs | Messages store (#2979) | waits on that epic; the row kinds are defined here so it only has to raise them |
+
+Fields the lanes collector reads, checked by running the commands on 2026-11-12 (box with 11 lanes):
+
+- `aw-meta status --json`: `mergeQueue[]` is `{pr, from, gate, github}` (`from` is the lane's tmux session name, for example `sindri-v3-ui`; `github` is null unless the PR sits in GitHub's merge queue, then `queued <position>`). `context[]` is `{lane, session, transcript, tokens, lastActivity, threshold, verdict}`; `verdict` is `Ok` on this box and `Recycle` per the docs (the recycle value was not on screen at the check). `lanes.entries[]` is `{lane, sessionName, session, source}`. The status has no usage key.
+- `aw-meta lanes-context --json`: `{recycleAt, lanes[], attention}`, the same lane objects.
+- `aw-meta usage --json`: `subjects[]` is `{subject, state, agent, signalNote}`; `state` is `Ok`, `Limited` or `Unknown`. A limited subject also has a stop with a kind (`session`, `weekly`, `other`) and a reset time; its exact JSON key was not on screen because no lane was limited at the check.
+- `aw-meta merge-check <pr>` prints `PASS` / `FAIL` lines per check; the row's Merge runs `merge-run`, which runs the same checks first.
 
 ## 4. Ranking
 
@@ -216,12 +225,14 @@ Keys follow §7.4. `Ctrl+Enter` opens the row's submit menu with the primary act
 | `agent-limited` | Open session | Resume (when the pause is Sindri's) | Sindri, aw-meta |
 | `lane-recycle` | Ask for a digest (sends the standard line with `aw-meta lane-send`) | Jump to terminal | aw-meta |
 | `review-requested`, `review-new-commits` | Open review (Enter, full) | Approve, Comment, Request changes in the `Ctrl+Enter` menu | GitHub, through `Core/Forge` (`PullReview`) |
-| `pr-ready-merge` | Merge (merge method from the repo's setting; in a meta team, `aw-meta merge-run`, which runs `merge-check` first) | Open, Hand to agent | GitHub, aw-meta |
+| `pr-ready-merge` | Merge (in a meta team through `aw-meta merge-run`, which runs the same `merge-check` meta runs; otherwise the repo's merge method through the forge) | Open, Hand to agent | GitHub, aw-meta |
 | `mention`, `dm` | Reply (composer in the peek) | Hand to agent (an agent writes a draft into the composer; the owner sends) | the source of the thread |
 | `run-failed` | Retry the run | Open run, Hand to agent | Sindri (`workflow_run`) |
 | `issue-assigned` | Start (state to Started) | Change state or priority, Hand to agent, Comment | Linear (`ChangeLinearIssue`, `CommentLinearIssue`) |
 | `todo-due` | Check off | Change due date | Sindri (todo) |
 | `system` | the row's existing primary action | Open | Sindri |
+
+While meta is already merging a PR (its `mergeQueue` entry has `github: queued <position>`, or a `merge.queued` record), the row's waits-on says "meta is merging (queue position 2)" and Merge is not offered, so there is no second merge. The act also reads the PR state first (§5.2 step 3) and, when the PR is already merged, lands as a no-op and clears the row.
 
 On every kind: Snooze `h`, Done `e`, Hand to agent `g` (except where noted), Mute (in `.`), Open `Enter`.
 
@@ -266,7 +277,7 @@ Rules:
 - Done never writes to a source. A merged PR's row clears itself; a replied thread's row clears when the reply lands.
 - The **Done list**, reached from the footer, holds the last 7 days of done rows (`home.done.keepDays`, whole days 1 to 90, default 7). #3031 sets 7; the ledger's 90 days is GitHub's number.
 - **Mark all seen** stays as the bulk form of "seen" (the row stops looking unread and the tray count drops); it does not hide rows and has the existing Undo.
-- Open (Q1): meta's rule is that a bare letter never commits a write. Done writes only Sindri's own state and has an Undo, so this spec keeps `e` bare. If the owner reads the rule strictly, Done moves to `.` then `e`; the action id `home.done` and every other part of this spec are unchanged.
+- `e` stays a bare key by the owner's decision (§7.4 states the boundary). Done writes only Sindri's own state and shows Undo for 5 s.
 
 ### 5.5 Definition of done: the empty Home
 
@@ -384,14 +395,14 @@ Every error row has a button that fixes it.
 
 ### 7.4 Keyboard and focus
 
-The grammar keys are the same on every list (#2978): `j/k` and arrows move, `Home`/`End`, `/` filters, `Space` peeks, `Enter` opens, `Esc` goes back one layer, `.` opens the row's action panel (each action shows its key), `?` shows the keys of this surface, `Ctrl+K` is the palette. Home adds these, after the divider in the footer:
+The grammar keys are the same on every list (#2978): `j/k` and arrows move, `Home`/`End`, `/` filters, `Space` peeks, `Enter` opens, `Esc` goes back one layer, `.` opens the row's action panel (each action shows its key), `?` shows the keys of this surface, `Ctrl+K` is the palette. **A bare key never writes to a source (Slack, GitHub, Linear, notes) and never starts work; a bare key may change Sindri's own view state when Undo shows for 5 s (`e` Done, `h` snooze).** (The owner wrote this boundary with `s` for snooze; the spec uses `h` because #3030 and Linear's flow use `h`, and `s` already means state on Projects and suggest on Reviews.) Every bare key below obeys it: `h`, `g` and `r` only open a picker or a composer, and the write or the start happens on the picker's Send or on `Ctrl+Enter`; `e` is the Undo case; `R`, `[`, `]`, `1` to `5`, `m` and `b` change the view only. Home adds these, after the divider in the footer:
 
 | Key | Does | Writes? |
 |---|---|---|
 | `h` | opens the snooze picker (§5.3) | no, until a choice is made; then Sindri-local |
 | `g` | opens the hand-to-agent picker | no, until Send |
 | `r` | opens the reply composer in the peek (kinds with a thread) | no, until `Ctrl+Enter` sends |
-| `e` | Done, with Undo (Q1) | Sindri-local |
+| `e` | Done, with Undo | Sindri-local |
 | `Ctrl+Enter` | opens the submit menu with the primary preselected; `Enter` commits | the source, on commit |
 | `R` | re-rank now (a settle point) | no |
 | `[` / `]`, `1` to `5` | previous / next split; jump to a split | no |
@@ -491,7 +502,7 @@ Non-goals for this spec:
 - Quiet hours, per-kind notification settings, email or push.
 - Editing the ranking rule beyond the integer weights.
 - Writing to Slack. It waits on Messages (#2979); Home only defines the row kinds `dm` and `mention`.
-- A second inbox for agents. The Agents page keeps its own idle and slot-wait ranking (Q3).
+- A second inbox for agents. The Agents page keeps its own idle and slot-wait ranking.
 
 ## 12. What happens to today's views
 
@@ -504,7 +515,7 @@ Non-goals for this spec:
 | `ViewModels/NeedsYou/SeenTracker*.cs`, `NeedsYouSeenViewModel.cs` | kept: "seen" is local presentation state and Mark all seen stays |
 | `Views/NeedsYou/DecisionSheet.axaml`, `NeedsYouSheet.axaml` | kept as the Full view of a decision or question row |
 | `Core/NeedsYou/*` and `GET /sindri/needs-you` | kept: `sindri needs-you` and the MCP tool keep working; the projection is one row producer. `NeedsYouOrder.cs` stays for rows of one kind; cross-kind order moves to `HomeRank` |
-| `Views/Todo/TodoPanel.axaml`, `ViewModels/Shell/ShellViewModel.Todo.cs`, `ShellWindow.TodoKeys.cs` | kept in ship 1 as a collapsed "Todo, 4 open" line under the list that opens the panel as its Full view; due todos become `todo-due` rows (Q2) |
+| `Views/Todo/TodoPanel.axaml`, `ViewModels/Shell/ShellViewModel.Todo.cs`, `ShellWindow.TodoKeys.cs` | kept in ship 1 as a collapsed "Todo, 4 open" line under the list that opens the panel as its Full view; only due todos become `todo-due` rows |
 | Running / With you / Queued column (`GET /sindri/queue`) | `running` and `withYou` become Moving lines; `queued` stays on the Queue page |
 | the health strip | one health chip in the page header |
 | the setup line (`Setup.IsHomeLineShown`) | unchanged, above the list |
@@ -522,7 +533,7 @@ From a read of `origin/main` a4d03ace1c and the issues (no build, no app run for
 | The PR-waiting count shows twice | 2 places | #2827 | §7.1 one count per tab |
 | Needs you stays on its skeleton when its read fails | n/a | #2921 | §7.3 "a failed read" |
 | Linear "since you last looked" is a wall of links with no titles | n/a | #2536 | §6.1 |
-| `RowKeys` is a private method in `ShellWindow.axaml.cs:143` on main; the shared `Views/Controls/RowKeys.cs` is in open PR #2952 only | 1 file not on main | #2951, #2952 | §15 P0 needs it |
+| #2952 adds `RowKeys.cs`; until it merges, the keys live at `ShellWindow.axaml.cs:143` (a private method) | 1 file not on main | #2951, #2952 | §15 P0 reuses it |
 | `Tokens.axaml:229-233` names `Row.Height.Compact` 28 and `Default` 32; the grammar says compact is 32 and comfortable 40 | 28 vs 32 | #2978 | §2 decision 9, P0 |
 | No `RowList`, `Row` or `PeekPane` exists, and no open PR builds them (search of open PRs, 2026-11-12) | 0 PRs | #2978 | §15 P0 |
 | No snooze, no per-row done, no revive rule, no peek on Home | n/a | #3030, #3031 | §5.3, §5.4, §7.2 |
@@ -541,12 +552,12 @@ From a read of `origin/main` a4d03ace1c and the issues (no build, no app run for
 
 | Phase | What | Lane | Starts | Needs |
 |---|---|---|---|---|
-| P0 | the shared controls: row tokens (32 / 40, density), `RowList`, `Row`, `PeekPane` on `RowKeys`, with Frames tests. Design builds them: no PR exists (2026-11-12) | design | now | #2952 (`RowKeys`) merged; until then P0 uses the private method's behaviour |
+| P0 | the shared controls: row tokens (32 / 40, density), `RowList`, `Row`, `PeekPane`, with Frames tests. Design builds them: no PR exists (2026-11-12). Design reuses `RowKeys` from #2952 and gives `RowList` no key handler of its own | design | now | #2952 merged; until then design codes against the keys at `ShellWindow.axaml.cs:143` |
 | D1 | the Home frame redrawn with this spec's states: New band, failed, snoozed, empty, brief states; the lane and merge-queue glyphs; the §7.1 width numbers checked | design | now | none |
 | S0 | the wire shape: JSON schema and API golden for `/sindri/home` (scenario row, Ui `GoldenContract` slug), `tests/fixtures/home/rows.json` (the §4.2 example as rows), the ledger migration (and `ledger schema N/N` in `src/Sindri/aot-smoke/expected.txt`), the `home.*` events (`EventCatalogTests`), `PublicAPI` files, `home_*` in aot-smoke's tools/list, the profile keys and their rows in `docs/csharp/sindri-profile.md` | api | now | the §3.1 fields |
 | A1 | `HomeRank` (pure, golden on §4.2, D8), the edge table, `GET /sindri/home` over the existing sources: needs-you rows, sessions asking, reviews waiting, Linear assigned and mentioned, todos due | api | now, against S0's fixture | S0 |
 | A2 | act, snooze, done, undo, mute routes; write-through adapters for forge, Linear, decisions, sessions; early return and revive rules | api | after A1's first read | A1 |
-| E1 | the `home-lanes` collector (`lane-recycle`, `agent-limited`, queue `pr-ready-merge`), then the failed-run trigger | engine | now (reads aw-meta; needs no other phase) | Q5 answered by running the commands |
+| E1 | the `home-lanes` collector (`lane-recycle`, `agent-limited`, queue `pr-ready-merge`), then the failed-run trigger | engine | now (reads aw-meta; needs no other phase) | the §3.3 fields |
 | E2 | the `HomeBrief` job: facts, writer, link check, limit states | engine | after A1's cursor event | A1 |
 | U1 | the page on `RowList`: tabs, groups, the New band and held order (D6), peek, keys, states, density setting, all on S0's fixture | ui | now, on the fixture | P0 (stub `RowList` until it lands), S0 |
 | U2 | act in place: composers, pickers (snooze, hand to agent), the `Ctrl+Enter` menu, Retry and Discard, Done list | ui | after U1 and A2's routes (fake first) | U1, A2 |
@@ -562,8 +573,4 @@ Each phase updates its docs: `docs/sindri/README.md` (or a new `docs/sindri/home
 
 ## Open questions
 
-1. **Q1.** Does `e` Done stay a bare key (this spec's pick), or move behind `.`? Meta's rule on #2978 says a bare letter never commits a write; Done writes only Sindri's own state and has a 5 s Undo.
-2. **Q2.** Where does the Todo panel live? This spec keeps it as a collapsed line under the list (pick). The alternative is to make every open todo a row, which would fill Home with things that do not need the owner.
-3. **Q3.** Do "idle with work owed" and "slot wait over 30 min" stay on the Agents page only? This spec says yes, because Home shows no guesses.
-4. **Q4.** Should Home offer Merge on a PR in a meta team's merge queue, when the meta lane normally merges it? This spec offers it through `aw-meta merge-run` (which runs `merge-check`), so the owner can merge without the lane.
-5. **Q5.** The JSON of `aw-meta status` and `aw-meta lanes-context` was not read for this spec. E1 starts by running both and fixing §3.3 to match.
+None. The owner settled the four earlier questions on 2026-11-12 and the lanes-collector fields are in §3.3. Two things stay unchecked until a lane is limited or at the mark: the JSON key of a limited subject's stop in `aw-meta usage --json`, and the `Recycle` verdict's exact casing in `context[]`. E1 reads both from a real case first.
