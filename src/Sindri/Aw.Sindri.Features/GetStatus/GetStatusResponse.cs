@@ -29,4 +29,7 @@ public sealed record GetStatusResponse(
 
     /// <summary>What the session collector sees (collector spec CA-8): additive, for the tray tooltip and the Agents tab count.</summary>
     public SessionStatus? Sessions { get; init; }
+
+    /// <summary>The jobs running now (issue #2945), empty when none run; never null on the wire.</summary>
+    public IReadOnlyList<RunningJobStatus> Jobs { get; init; } = [];
 }

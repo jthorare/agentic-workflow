@@ -5559,3 +5559,27 @@ override Aw.Sindri.Features.GetQueue.QueueGroupCounts.GetHashCode() -> int
 override Aw.Sindri.Features.GetQueue.QueueGroupCounts.ToString() -> string!
 static Aw.Sindri.Features.GetQueue.QueueGroupCounts.operator !=(Aw.Sindri.Features.GetQueue.QueueGroupCounts? left, Aw.Sindri.Features.GetQueue.QueueGroupCounts? right) -> bool
 static Aw.Sindri.Features.GetQueue.QueueGroupCounts.operator ==(Aw.Sindri.Features.GetQueue.QueueGroupCounts? left, Aw.Sindri.Features.GetQueue.QueueGroupCounts? right) -> bool
+Aw.Sindri.Features.GetStatus.GetStatusResponse.Jobs.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.GetStatus.RunningJobStatus!>!
+Aw.Sindri.Features.GetStatus.GetStatusResponse.Jobs.init -> void
+Aw.Sindri.Features.GetStatus.RunningJobStatus
+Aw.Sindri.Features.GetStatus.RunningJobStatus.<Clone>$() -> Aw.Sindri.Features.GetStatus.RunningJobStatus!
+Aw.Sindri.Features.GetStatus.RunningJobStatus.Deconstruct(out Aw.Sindri.Core.Ids.JobId Id, out Aw.Sindri.Core.Ids.JobKind Kind, out Aw.Sindri.Core.Ids.RepoName? Repo, out string? Service, out string? Progress, out System.DateTimeOffset StartedAt) -> void
+Aw.Sindri.Features.GetStatus.RunningJobStatus.Equals(Aw.Sindri.Features.GetStatus.RunningJobStatus? other) -> bool
+Aw.Sindri.Features.GetStatus.RunningJobStatus.Id.get -> Aw.Sindri.Core.Ids.JobId
+Aw.Sindri.Features.GetStatus.RunningJobStatus.Id.init -> void
+Aw.Sindri.Features.GetStatus.RunningJobStatus.Kind.get -> Aw.Sindri.Core.Ids.JobKind
+Aw.Sindri.Features.GetStatus.RunningJobStatus.Kind.init -> void
+Aw.Sindri.Features.GetStatus.RunningJobStatus.Progress.get -> string?
+Aw.Sindri.Features.GetStatus.RunningJobStatus.Progress.init -> void
+Aw.Sindri.Features.GetStatus.RunningJobStatus.Repo.get -> Aw.Sindri.Core.Ids.RepoName?
+Aw.Sindri.Features.GetStatus.RunningJobStatus.Repo.init -> void
+Aw.Sindri.Features.GetStatus.RunningJobStatus.RunningJobStatus(Aw.Sindri.Core.Ids.JobId Id, Aw.Sindri.Core.Ids.JobKind Kind, Aw.Sindri.Core.Ids.RepoName? Repo, string? Service, string? Progress, System.DateTimeOffset StartedAt) -> void
+Aw.Sindri.Features.GetStatus.RunningJobStatus.Service.get -> string?
+Aw.Sindri.Features.GetStatus.RunningJobStatus.Service.init -> void
+Aw.Sindri.Features.GetStatus.RunningJobStatus.StartedAt.get -> System.DateTimeOffset
+Aw.Sindri.Features.GetStatus.RunningJobStatus.StartedAt.init -> void
+override Aw.Sindri.Features.GetStatus.RunningJobStatus.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetStatus.RunningJobStatus.GetHashCode() -> int
+override Aw.Sindri.Features.GetStatus.RunningJobStatus.ToString() -> string!
+static Aw.Sindri.Features.GetStatus.RunningJobStatus.operator !=(Aw.Sindri.Features.GetStatus.RunningJobStatus? left, Aw.Sindri.Features.GetStatus.RunningJobStatus? right) -> bool
+static Aw.Sindri.Features.GetStatus.RunningJobStatus.operator ==(Aw.Sindri.Features.GetStatus.RunningJobStatus? left, Aw.Sindri.Features.GetStatus.RunningJobStatus? right) -> bool
