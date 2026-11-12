@@ -127,11 +127,11 @@
               <Grid Classes="skrow" ColumnDefinitions="70,*,40"><Border Classes="skeleton" Width="60" /><Border Grid.Column="1" Classes="skeleton" Width="220" /><Border Grid.Column="2" Classes="skeleton" Width="32" /></Grid>
               <Grid Classes="skrow" ColumnDefinitions="70,*,40"><Border Classes="skeleton" Width="60" /><Border Grid.Column="1" Classes="skeleton" Width="260" /><Border Grid.Column="2" Classes="skeleton" Width="32" /></Grid>
             </StackPanel>
-            <StackPanel x:Name="NeedsYouFailed" Orientation="Horizontal" Margin="16,8" Spacing="8" IsVisible="{Binding NeedsYou.HasReadError}">
-              <TextBlock Classes="caption" Text="{Binding NeedsYou.ReadError}" VerticalAlignment="Center" AutomationProperties.Name="{Binding NeedsYou.ReadError}" />
-              <Button x:Name="NeedsYouRetry" Classes="copy" Click="OnRetryNeedsYou" AutomationProperties.Name="{Binding Text.NeedsYouRetry}">
-                <TextBlock Classes="caption" Text="{Binding Text.NeedsYouRetry}" />
-              </Button>
+            <StackPanel x:Name="NeedsYouFailed" Margin="16,8" Spacing="8" IsVisible="{Binding NeedsYou.HasReadError}">
+              <Border x:Name="NeedsYouFailedName" AutomationProperties.Name="{Binding NeedsYou.ReadError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                <TextBlock Classes="caption quiet" Text="{Binding NeedsYou.ReadError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+              </Border>
+              <Button x:Name="NeedsYouRetry" Content="{Binding Text.NeedsYouRetry}" Click="OnRetryNeedsYou" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text.NeedsYouRetry}" />
             </StackPanel>
             <TextBlock x:Name="NeedsYouEmpty" Classes="caption quiet" Text="{Binding NeedsYou.EmptyLine}" Margin="24,8"
                        IsVisible="{Binding NeedsYou.EmptyLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding NeedsYou.EmptyLine}" />
