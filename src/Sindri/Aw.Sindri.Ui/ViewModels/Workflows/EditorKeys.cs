@@ -1,5 +1,3 @@
-#pragma warning disable MA0182 // wired into the page and its views in the next round (needs the P0 stubs)
-
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
 /// <summary>The keyboard map of the workflow editor (spec 4.6): a bare letter never commits a write and fires only with canvas focus, never inside a field.</summary>

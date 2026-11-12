@@ -36,7 +36,12 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         Editor = new OpsEditor(api);
         GraphEdit = new GraphEditViewModel(Editor, Runs, () => _url);   // made with the page, not on first read: the canvas's Delete key raises on the graph, and the edit bar must already be listening
         WatchEditor();
+        WatchFindings();
+        GraphEdit.StepSheetOpened += (_, _) => (IsEditing, GraphEdit.SheetOpen) = (true, true);   // the form of a new step opens in the sheet
     }
+
+    /// <summary>Gets or sets where the page reads the workflow.editor profile value from. The profile does not carry the key yet, so it reads null (the default, sheet); swap this one seam when it does.</summary>
+    internal Func<string?> EditorSetting { get; set; } = static () => null;
 
     /// <summary>The API the page reads.</summary>
     internal ISindriApi Api { get; }
@@ -121,6 +126,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     internal async Task Show(Uri url, CancellationToken cancellationToken)
     {
         _url = url;
+        GraphEdit.Layout = WorkflowEditorKey.Read(EditorSetting());
         await ReadList(url, cancellationToken).ConfigureAwait(true);
         if (_level == Level.Runs)
         {

@@ -100,17 +100,6 @@ internal sealed partial class GraphEditViewModel : ObservableObject
         SetMode(Editor.Groups.Count > 0 ? Mode.Add : Mode.None);
     }
 
-    /// <summary>Gets or sets the layout the workflow.editor key picked: the sheet layout opens a form for a new step; the steps layout adds it at once.</summary>
-    internal WorkflowEditorLayout Layout { get; set; }
-
-#pragma warning disable CA1822, MA0041, IDE0060 // red commit: stubs, replaced by the green commit
-    /// <summary>Picks a block in the picker: opens its form (sheet layout) or adds the step at once (steps layout).</summary>
-    /// <param name="block">The block.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>A task that completes when the form is open or the answer is shown.</returns>
-    internal Task PickBlock(WorkflowBlock block, CancellationToken cancellationToken) => Task.CompletedTask;
-#pragma warning restore CA1822, MA0041, IDE0060
-
     /// <summary>Adds a step of a block, connected after the selected node when one is selected; as one set of ops.</summary>
     /// <param name="block">The block.</param>
     /// <param name="cancellationToken">Cancels the call.</param>

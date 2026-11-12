@@ -27,7 +27,7 @@ internal sealed partial class GraphEditBar : UserControl
     {
         if (DataContext is GraphEditViewModel edit && sender is Control { DataContext: WorkflowBlock block })
         {
-            await edit.AddStep(block, CancellationToken.None).ConfigureAwait(true);
+            await edit.PickBlock(block, CancellationToken.None).ConfigureAwait(true);
         }
     }
 

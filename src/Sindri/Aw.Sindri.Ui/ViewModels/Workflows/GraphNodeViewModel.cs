@@ -22,7 +22,7 @@ internal sealed class GraphNodeViewModel : ObservableObject
             "skipped" or "cancelled" => GraphTone.Muted,
             _ => GraphTone.None,
         };
-        Name = Labels.WfGraphNodeName(title, type, word.ToLowerInvariant());
+        StatusLower = word.ToLowerInvariant();
     }
 
     /// <summary>The node's id.</summary>
@@ -52,14 +52,25 @@ internal sealed class GraphNodeViewModel : ObservableObject
     /// <summary>The kind's one name, as the Add step menu says it ("If" for "condition").</summary>
     public string Kind => StepKinds.Name(Type);
 
-    /// <summary>The accessible name with the step's place: "Check, Prompt step, 2 of 4".</summary>
+    /// <summary>The accessible name: "title, kind step, n of m", then the status word when a run is shown ("Check, Prompt step, 2 of 4, failed").</summary>
+    public string Name => Labels.WfGraphNodeName(Title, Kind, Position, Count, StatusLower);
+
+    /// <summary>The accessible name with a given place and no status word: "Check, Prompt step, 2 of 4".</summary>
     /// <param name="position">The 1-based place in reading order.</param>
     /// <param name="count">How many steps the graph has.</param>
     /// <returns>The name.</returns>
-    public string PositionName(int position, int count) => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{Title}, {Kind} step, {position} of {count}");
+    public string PositionName(int position, int count) => Labels.WfGraphNodeName(Title, Kind, position, count, word: string.Empty);
 
-    /// <summary>The accessible name: title, type and status word.</summary>
-    public string Name { get; }
+    /// <summary>Sets the step's place in the graph's reading order, for its accessible name.</summary>
+    /// <param name="position">The 1-based place.</param>
+    /// <param name="count">How many steps the graph draws.</param>
+    internal void Place(int position, int count) => (Position, Count) = (position, count);
+
+    private string StatusLower { get; }
+
+    private int Position { get; set; } = 1;
+
+    private int Count { get; set; } = 1;
 
     /// <summary>Gets a value indicating whether this is the selected node.</summary>
     public bool IsSelected { get; internal set => Set(ref field, value); }

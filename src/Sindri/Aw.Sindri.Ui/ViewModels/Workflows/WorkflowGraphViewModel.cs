@@ -46,6 +46,10 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         Unplaced = unplaced;
         Edges = BuildEdges(workflow.Spec, nodes);
         Order = [.. nodes.OrderBy(n => n.X).ThenBy(n => n.Y).ThenBy(n => n.Id, StringComparer.Ordinal)];
+        for (var i = 0; i < Order.Count; i++)
+        {
+            Order[i].Place(i + 1, Order.Count);   // a screen reader hears each step's place in reading order
+        }
     }
 
     private readonly Dictionary<string, NodeSummaryView> _summaries;

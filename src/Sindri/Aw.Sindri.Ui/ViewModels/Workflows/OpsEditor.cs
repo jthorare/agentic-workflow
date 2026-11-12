@@ -11,7 +11,7 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// The workflow editor's logic (#2258 PR 17 part 2b), no view yet: it reads a workflow and the block list, builds the form of the selected node from its block's config fields, and
 /// sends each edit as ops with the revision it read as the base. Each edit is sent once and never retried; a workflow that changed elsewhere is not overwritten but asks for a reload.
 /// </summary>
-internal sealed class OpsEditor(ISindriApi api) : ObservableObject
+internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
 {
     private const string StaleBase = "SND-GRAPH-007";
 
@@ -36,11 +36,6 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
 
     /// <summary>The selected step as the sheet names it ("Every weekday at 7:00 \u00b7 trigger"), never its id; empty when none is selected.</summary>
     public string NodeHeading { get; private set => Set(ref field, value); } = string.Empty;
-
-#pragma warning disable CA1822, MA0041, IDE0060 // red commit: stubs, replaced by the green commit
-    /// <summary>True while the form is that of a step not added yet.</summary>
-    public bool IsNewStep => false;
-#pragma warning restore CA1822, MA0041, IDE0060
 
     /// <summary>True while an edit is on the way; a second edit does nothing.</summary>
     public bool IsSending { get; private set => Set(ref field, value); }
@@ -76,6 +71,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
             // another workflow: nothing of the old one stays to be saved to this one, even when this read fails
             Fields.Clear();
             (Nodes, BaseRevision, _selected, NodeHeading) = ([], 0, null, string.Empty);
+            (PendingBlock, IsNewStep) = (null, false);
         }
 
         (_url, Slug) = (url, slug);
@@ -98,7 +94,10 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
 
         (BaseRevision, Nodes, Groups) = (workflow.Value.LatestRevision, ReadNodes(workflow.Value.Spec), blocks.Value.Groups);
         (NeedsReload, ReloadPromptText, FailureText) = (false, string.Empty, string.Empty);
-        Select(_selected ?? string.Empty);   // the form stays on its node, with what the new revision holds
+        if (!IsNewStep)
+        {
+            Select(_selected ?? string.Empty);   // the form stays on its node, with what the new revision holds; a step being made keeps the text typed
+        }
     }
 
     /// <summary>Reads the workflow again (the Reload command): the held edit is dropped, never retried.</summary>
@@ -110,6 +109,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     /// <param name="nodeId">The node.</param>
     internal void Select(string nodeId)
     {
+        (PendingBlock, IsNewStep) = (null, false);
         _selected = nodeId.Length == 0 ? null : nodeId;
         Fields.Clear();
         var node = Nodes.FirstOrDefault(n => string.Equals(n.Id, nodeId, StringComparison.Ordinal));
@@ -148,7 +148,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         field.ErrorText = problem;
         if (problem.Length == 0)
         {
-            await Send(new JsonArray((JsonNode)new JsonObject { ["op"] = "set_config", ["node"] = node, ["path"] = name, ["value"] = value }), cancellationToken).ConfigureAwait(true);
+            _ = await Send(new JsonArray((JsonNode)new JsonObject { ["op"] = "set_config", ["node"] = node, ["path"] = name, ["value"] = value }), cancellationToken).ConfigureAwait(true);
         }
     }
 
@@ -239,25 +239,27 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         Send(new JsonArray((JsonNode)new JsonObject { ["op"] = "remove_node", ["node"] = id }), cancellationToken);
 
     // One call, on the revision read, never retried. A saved edit reads the workflow again; a stale base asks for a reload and holds further edits.
-    private async Task Send(JsonArray ops, CancellationToken cancellationToken)
+    private async Task<bool> Send(JsonArray ops, CancellationToken cancellationToken, Action? applied = null)
     {
         if (IsSending || NeedsReload || _url is not { } url || Slug.Length == 0)
         {
-            return;
+            return false;
         }
 
         FailureText = string.Empty;
         IsSending = true;
         try
         {
-            var applied = await api.ApplyWorkflowOps(url, Slug, BaseRevision, ops.ToJsonString(), cancellationToken).ConfigureAwait(true);
-            if (applied.IsError)
+            var answer = await api.ApplyWorkflowOps(url, Slug, BaseRevision, ops.ToJsonString(), cancellationToken).ConfigureAwait(true);
+            if (answer.IsError)
             {
-                Refused(applied.Error);
-                return;
+                Refused(answer.Error);
+                return false;
             }
 
+            applied?.Invoke();
             await Load(url, Slug, afterSave: true, cancellationToken).ConfigureAwait(true);
+            return true;
         }
         finally
         {

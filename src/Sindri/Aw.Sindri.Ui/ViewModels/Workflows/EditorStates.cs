@@ -1,5 +1,3 @@
-#pragma warning disable MA0182 // wired into the page and its views in the next round (needs the P0 stubs)
-
 using System.Globalization;
 
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
@@ -15,6 +13,12 @@ internal static class EditorStates
 
     /// <summary>The chip of a revision with no test.</summary>
     internal const string NotTested = "Not tested";
+
+    /// <summary>The chip of a revision whose newest test run passed.</summary>
+    internal const string TestedChip = "Tested";
+
+    /// <summary>The chip of a workflow that is on.</summary>
+    internal const string ActiveChip = "Active";
 
     /// <summary>The Activate confirm's question for an untested revision.</summary>
     internal const string ActivateUntested = "Not tested yet. Activate anyway?";

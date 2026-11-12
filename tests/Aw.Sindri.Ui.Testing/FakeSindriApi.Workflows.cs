@@ -255,14 +255,14 @@ internal sealed partial class FakeSindriApi
         return Answer<WorkflowPaused>(api, WorkflowRoutes.Pause(slug), PauseWorkflowAnswer);
     }
 
-    // The routes of the Workflows page's second round (#3192). Until the engine builds them they answer SND-GRAPH-113, which the page shows as "not built yet", never as an error.
+    // The routes of the Workflows page's second round (#3192). Until the engine builds them they answer SND-GRAPH-119, which the page shows as "not built yet", never as an error.
     private readonly List<(string Slug, int? Revision)> _validated = [];
     private readonly List<(string Slug, TestWorkflowBody Body)> _tested = [];
     private readonly List<(string Slug, PinWorkflowBody Body)> _pinnedOutputs = [];
     private int _templatesCalls;
 
     /// <summary>The answer of a route the engine has not built yet.</summary>
-    public static RouteAnswer NotBuilt { get; } = RouteAnswer.Problem(System.Net.HttpStatusCode.NotImplemented, "SND-GRAPH-113", "This is not built yet.");
+    public static RouteAnswer NotBuilt { get; } = RouteAnswer.Problem(System.Net.HttpStatusCode.NotImplemented, Aw.Sindri.Ui.ViewModels.Workflows.WorkflowsPageViewModel.GraphNotBuilt, "This is not built yet.");
 
     /// <summary>POST /sindri/workflows/validate's answer.</summary>
     public RouteAnswer ValidateWorkflowAnswer { get; set; } = NotBuilt;

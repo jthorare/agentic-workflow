@@ -34,11 +34,16 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     /// <summary>The workflow as last read, or null: run detail draws its graph when the run walked this revision.</summary>
     internal WorkflowView? Shown { get; private set => Set(ref field, value); }
 
-#pragma warning disable CA1822, MA0041, IDE0060 // red commit: stubs, replaced by the green commit
     /// <summary>The workflow's state chip: "Active", "Tested" or "Not tested"; empty until the workflow is read.</summary>
-    public string StateChipText => string.Empty;
-#pragma warning restore CA1822, MA0041, IDE0060
+    public string StateChipText => Shown switch
+    {
+        null => string.Empty,
+        { ActiveRevision: not null } => EditorStates.ActiveChip,
+        _ => IsTested ? EditorStates.TestedChip : EditorStates.NotTested,
+    };
 
+    /// <summary>True when a test run of the newest revision passed.</summary>
+    internal bool IsTested => Shown is { } workflow && Rows.Any(r => r.IsPassedTest && r.Revision == workflow.LatestRevision);
     /// <summary>The runs, newest first.</summary>
     public ObservableCollection<RunRowViewModel> Rows { get; } = [];
 
@@ -126,6 +131,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         IsReading = false;
         DetailText = detail.IsSuccess ? Detail(detail.Value) : string.Empty;
         (Shown, Graph) = detail.IsSuccess ? (detail.Value, WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(detail.Value))) : (Shown, Graph);
+        OnChanged(nameof(StateChipText));
         if (runs.IsSuccess)
         {
             CanRun = true;
@@ -166,6 +172,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         var running = list.Runs.Count(r => string.Equals(r.Status, "running", StringComparison.Ordinal));
         Head = list.Runs.Count == 0 ? Labels.WfRunsHeadNone : Labels.WfRunsHead(running, list.Runs.Count);
         (IsEmpty, EmptyText) = list.Runs.Count == 0 ? (true, Labels.WfRunsNone) : (false, string.Empty);
+        OnChanged(nameof(StateChipText));
     }
 
     private static string Detail(WorkflowView workflow)

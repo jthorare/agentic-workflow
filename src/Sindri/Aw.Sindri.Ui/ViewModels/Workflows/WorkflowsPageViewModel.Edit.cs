@@ -41,10 +41,13 @@ internal sealed partial class WorkflowsPageViewModel
     public bool HasNoFields => Editor.Fields.Count == 0;
 
     /// <summary>"Save", or "Saving..." while an edit is on the way.</summary>
-    public string SaveText => Editor.IsSending ? Labels.WfEditSaving : Labels.WfEditSave;
+    public string SaveText => Editor.IsSending ? Labels.WfEditSaving : Editor.IsNewStep ? Labels.WfEditSaveStep : Labels.WfEditSave;
+
+    /// <summary>"Close", or "Cancel" while the sheet holds a step that is not added yet.</summary>
+    public string CloseText => Editor.IsNewStep ? Labels.WfEditCancelStep : Labels.WfEditClose;
 
     /// <summary>True when Save does something: the form has fields read for the workflow the page shows (and it is not archived), no edit is on the way and no reload is due.</summary>
-    public bool CanSave => Editor.Fields.Count > 0 && !Editor.IsSending && !Editor.NeedsReload && CanEdit && Editor.BaseRevision > 0 && string.Equals(Editor.Slug, Runs.Slug, StringComparison.Ordinal);
+    public bool CanSave => (Editor.Fields.Count > 0 || Editor.IsNewStep) && !Editor.IsSending && !Editor.NeedsReload && CanEdit && Editor.BaseRevision > 0 && string.Equals(Editor.Slug, Runs.Slug, StringComparison.Ordinal);
 
     /// <summary>Opens the sheet on the selected graph node's fields.</summary>
     /// <param name="cancellationToken">Cancels the reads.</param>
@@ -78,6 +81,17 @@ internal sealed partial class WorkflowsPageViewModel
             return;
         }
 
+        if (Editor.IsNewStep)
+        {
+            // One add_node, only when valid: a refusal or a stale base keeps the sheet and its text open.
+            if (await GraphEdit.SaveStep(cancellationToken).ConfigureAwait(true) && !Editor.IsNewStep)
+            {
+                CloseEditor();
+            }
+
+            return;
+        }
+
         var changed = Editor.Fields.Where(f => f.IsChanged).Select(f => (f.Name, f.Text)).ToList();
         var slug = Runs.Slug;
         await Editor.EditFields(changed, cancellationToken).ConfigureAwait(true);
@@ -103,7 +117,11 @@ internal sealed partial class WorkflowsPageViewModel
     }
 
     /// <summary>Closes the sheet.</summary>
-    internal void CloseEditor() => (IsEditing, GraphEdit.SheetOpen) = (false, false);
+    internal void CloseEditor()
+    {
+        Editor.CancelNew();   // a step that was never saved was never added
+        (IsEditing, GraphEdit.SheetOpen) = (false, false);
+    }
 
     private void WatchEditor()
     {
@@ -140,6 +158,12 @@ internal sealed partial class WorkflowsPageViewModel
         if (string.Equals(e.PropertyName, nameof(OpsEditor.BaseRevision), StringComparison.Ordinal))
         {
             OnChanged(nameof(CanSave));
+        }
+        else if (string.Equals(e.PropertyName, nameof(OpsEditor.IsNewStep), StringComparison.Ordinal))
+        {
+            OnChanged(nameof(CanSave));
+            OnChanged(nameof(SaveText));
+            OnChanged(nameof(CloseText));
         }
         else if (string.Equals(e.PropertyName, nameof(OpsEditor.NodeHeading), StringComparison.Ordinal))
         {

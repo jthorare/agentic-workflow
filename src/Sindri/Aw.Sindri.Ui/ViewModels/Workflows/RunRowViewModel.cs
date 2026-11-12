@@ -9,6 +9,9 @@ internal sealed class RunRowViewModel : ObservableObject
     internal RunRowViewModel(WorkflowRunRowView row, TimeProvider clock)
     {
         Id = row.Id;
+        Revision = row.Revision;
+        IsTest = string.Equals(row.Mode, "test", StringComparison.Ordinal);
+        IsPassedTest = IsTest && string.Equals(row.Status, "succeeded", StringComparison.Ordinal);
         var (glyph, word) = Labels.WfChip(row.Status);
         ChipText = glyph + " " + word;
         Tone = RunStatus.Tone(row.Status);
@@ -55,20 +58,17 @@ internal sealed class RunRowViewModel : ObservableObject
     /// <summary>True when the run has an error.</summary>
     public bool HasError => ErrorText.Length > 0;
 
-#pragma warning disable CA1822, MA0041, IDE0060 // red commit: stubs, replaced by the green commit
     /// <summary>"Test" on a test run; empty on a live one.</summary>
-    public string ModeText => string.Empty;
+    public string ModeText => IsTest ? Labels.WfTestRunChip : string.Empty;
 
     /// <summary>True for a test run.</summary>
-    public bool IsTest => false;
+    public bool IsTest { get; }
 
     /// <summary>True when this is a test run that passed.</summary>
-    internal bool IsPassedTest => false;
+    internal bool IsPassedTest { get; }
 
     /// <summary>The revision the run walked.</summary>
-    internal int Revision => 0;
-#pragma warning restore CA1822, MA0041, IDE0060
-
+    internal int Revision { get; }
     /// <summary>The row's accessible name.</summary>
     public string Name { get; }
 }

@@ -106,6 +106,23 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
+    private async void OnRetryTemplates(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            await page.RetryTemplates(CancellationToken.None).ConfigureAwait(true);
+        }
+    }
+
+    private void OnPickStart(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page && sender is Control { DataContext: StartEntry entry })
+        {
+            page.ChooseStart(entry);
+            FocusLater(WorkflowsNewName);
+        }
+    }
+
     private async void OnRetry(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)

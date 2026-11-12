@@ -147,6 +147,7 @@ internal sealed partial class WorkflowsPageViewModel
         Forget();
         IsCreating = true;
         HeldRead = ReadHeld();
+        TemplatesRead = _url is { } url ? ReadTemplates(url, CancellationToken.None) : Task.CompletedTask;
     }
 
     /// <summary>The read of every short id Sindri holds (the page's list shows live workflows only), started when the form opens.</summary>

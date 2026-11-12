@@ -9,6 +9,12 @@ internal static partial class Labels
     /// <summary>The editor sheet's Save button.</summary>
     internal const string WfEditSave = "Save";
 
+    /// <summary>The editor sheet's Save button for a step that is not added yet.</summary>
+    internal const string WfEditSaveStep = "Save step";
+
+    /// <summary>The editor sheet's Close button for a step that is not added yet: nothing is added.</summary>
+    internal const string WfEditCancelStep = "Cancel";
+
     /// <summary>The editor sheet's Save button while the edit is on the way.</summary>
     internal const string WfEditSaving = "Saving\u2026";
 
@@ -31,6 +37,9 @@ internal static partial class Labels
     /// <param name="kind">"trigger", or the block's title.</param>
     /// <returns>The words.</returns>
     internal static string WfEditorStep(string title, string kind) => title + " \u00b7 " + kind;
+
+    /// <summary>The chip on a test run's row.</summary>
+    internal const string WfTestRunChip = "Test";
 
     /// <summary>The Advanced toggle under a field whose presets hide its raw text.</summary>
     internal const string WfFieldAdvanced = "Advanced";
