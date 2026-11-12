@@ -338,30 +338,30 @@ Design's frame on #2978 (comment 6817965291) is the reference; every number is `
 ┌ top bar 40 ───────────────────────────────────────────────────────────────────────────────┐
 │ Home   [All 9] [Reviews 3] [Messages 0] [Work 4] [Agents 2]      / filter                 │ page header 48
 ├ New 1 ────────────────────────────────────────────────────────────────────────────────────┤ group header 28
-│ ◇ session qa  qa is asking: run rm -rf build/      asking     session       new           │ row 32
+│ ◇ qa is asking to run rm -rf build/                asking     session qa    new           │ row 32
 ├ Needs you 8 ──────────────────────────────────────────────────────────────────────────────┤
-│ ◇ lane meta  meta: at 205k, recycle from a digest   blocks 3   lane         15m           │
-│ ◇ #3120  Review requested: System grid              blocks 2   repo design  1h40          │
-│ ◇ #3099  PR #3099 is ready to merge                 blocks 2   repo qa      68m           │
-│ ◇ lane ideas  ideas: at 210k, recycle from a digest blocks 2   lane         20m           │
+│ ◇ meta: at 205k, recycle from a digest              blocks 3   lane meta    15m           │
+│ ◎ #3120  Review requested: System grid              blocks 2   repo/ui      1h40          │
+│ ◎ #3099  Ready to merge: spacing scale              blocks 2   repo/ui      68m           │
+│ ◇ ideas: at 210k, recycle from a digest             blocks 2   lane ideas   20m           │
 │ ...                                                                                       │
-├ Moving 6 ▸ ───────────────────────────────────────────────────────────────────────────────┤
+├ ▸ Moving: 4 agents, 2 CI runs ───────────────────────────────────────────────────────────┤
 ├ Since you last looked 6 ──────────────────────────────────────────────────────────────────┤
 │ PR #3078 merged; CI red on main since 09:10.                                              │
 │ (2 fact lines)                                                                            │
 │ b 3 more lines                                                                            │
 │ ○ Todo, 4 open                                               Enter opens the panel        │ 28
-├ j/k move · Space peek · Enter open · h · t · e · R                         Done list      ┤ footer 28
+├ j/k move · Space peek · Enter open · h snooze · t hand to agent · e done · R re-rank  Done list ┤ footer 28
 └───────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 - **Frame:** top bar 40, page header 48, body 784, footer 28. Group headers 28, sentence case, 12/500, the row count only in ink-3 (never "blocks N"; blocks N stays per row). Side inset 24.
-- **Row (32 px compact, 40 comfortable):** `[glyph 16] [mono id] [title, flex, min 200] [why chip 104] [object 104] [from 136] [age 44, right-aligned] [waits on 112]`, 12 px gap. The why chip carries "blocks 3" or the reason word. The mono id sits left of the title, as the #2978 Row rule says (`#3120`, `r-0412`, `ENG-412`, `lane meta`). The object fact column says the kind and place only: lane, repo or dm. The from fact is a person or session name. Title is the only 13 px ink text; unread weighs 500, read is ink-muted. The waits-on column shows only where its value varies within a group (Moving). Needs you rows show no waits-on `you`, because the group header says it. The id adds to the fixed part; the title keeps its 200 minimum.
+- **Row (32 px compact, 40 comfortable):** `[glyph 16] [mono id] [title, flex, min 200] [why chip 104] [object 104] [from 136] [age 44, right-aligned] [waits on 112]`, 12 px gap. The why chip carries "blocks 3" or the reason word. The mono id sits left of the title, as the #2978 Row rule says (`#3120`, `r-0412`, `ENG-412`). A lane, session or DM row has no id: its title starts in the id column, and the object column names it (`lane meta`, `session qa`, `dm sam.ortiz`). The object fact column says the kind and place only: lane, repo or dm. The from fact is a person or session name. Title is the only 13 px ink text; unread weighs 500, read is ink-muted. The waits-on column shows only where its value varies within a group (Moving). Needs you rows show no waits-on `you`, because the group header says it. The id adds to the fixed part; the title keeps its 200 minimum.
 - **Width check:** the fixed part is 636 px, so the title gets `list width - 636`: 364 px at 1000, 804 at 1440 with the peek closed. Under 840 px of list width the third fact drops; under 688 the second drops. The title minimum of 200 never shrinks (design's rule on #2978: facts end in an ellipsis, never a mid-word clip).
 - **Rows per screen (D3):** body 784 minus 8 padding minus 3 group headers (84) minus the brief's 3 lines (96) leaves 596 px, which is 18 rows at 32 px and 14 at 40. The Todo line (a 28 px non-group line with an empty-circle glyph, "Todo, N open" and "Enter opens the panel" at the right, §12) takes one compact row, so D3 asks for 17 and 14.
 - **Splits** are the saved filters: All; Reviews (`review-requested`, `review-new-commits`, `pr-ready-merge`); Messages (`mention`, `dm`); Work (`issue-assigned`, `todo-due`, `run-failed`, `decision`, `question`); Agents (`agent-asking`, `agent-limited`, `lane-recycle`, plus Moving's agent lines). Each tab shows its open count, computed from row kinds: open rows of its kinds, the New band included (the frame's All 9 is New 1 plus Needs you 8; All = New + Needs you). A split filters New, Needs you and Moving to its kind. The brief ("Since you last looked") and the Todo line show on All only. A tab with no rows says why: Messages reads "Messages arrive with #2979" until that epic ships. There is no "Other" tab: a row that is not a Needs you kind is not on Home (Linear's Priority / Other split is covered by Needs you versus the source pages).
 - **Header right:** the `/` filter box. There is no health chip: the shell's top-bar pill is the one status mark, and a stale or failed source shows as its §7.3 state line.
-- **Footer:** the grammar keys, then Home's. At 1440 the page keys are `h · t · e · R`, with "Done list" at the right. At 1000 they shrink to `h snooze · t hand · e done · ? all keys`.
+- **Footer:** the grammar keys, then Home's. At 1440 the page keys carry their words (`h snooze · t hand to agent · e done · R re-rank`), with "Done list" at the right. At 1000 they shrink to `h snooze · t hand · e done · ? all keys`.
 - **Text scale 1.3** scales text and row heights only (row 40, group header 36). Column widths, insets and the 440 px peek stay in px, so long facts ellipsize. A truncated title shows a plain tooltip with the full title.
 - **Glyphs** come from design's set (diamond for needs you, x for failed, arc for an agent running, ring with dot for a PR, bubble for a message, dot for a mention); lane-recycle rows use the needs-you diamond and ready-to-merge rows the PR-open ring, so no new glyph is drawn. The grammar adds Down and Stale glyph aliases (`.g.fail`, `.g.parked`) for §7.3.
 
@@ -658,7 +658,7 @@ The lead decided design's 22 frame guesses. Where the spec and the #2978 grammar
 6. Snooze: digits 1 to 4 pick presets while the field is empty and unfocused; 5 or a click focuses the field, then digits type (§5.3).
 7. The hand-to-agent picker has a filter field, no chips, `Enter` picks; an asking session is disabled with "asking you".
 8. While a menu or picker is open the footer swaps to "↑/↓ move · Enter pick · Esc cancel" (§7.4).
-9. The footer shrinks at 1000 px to `h snooze · t hand · e done · ? all keys`; at 1440 it is `h · t · e · R` plus "Done list".
+9. The footer shrinks at 1000 px to `h snooze · t hand · e done · ? all keys`; at 1440 it is `h snooze · t hand to agent · e done · R re-rank` plus "Done list".
 10. The Done list opens from the footer text, the `?` sheet and `home.done-list`; no bare key.
 11. A split filters New, Needs you and Moving to its kind; the brief and the Todo line show on All only.
 12. Lane-recycle rows use the needs-you diamond, ready-to-merge rows the PR-open ring.
@@ -671,3 +671,14 @@ The lead decided design's 22 frame guesses. Where the spec and the #2978 grammar
 19. Tab counts are computed from row kinds; All = New + Needs you.
 20. In a PR peek, `Ctrl+Enter` opens the submit menu with Merge preselected; `Enter` is Open.
 21. Guesses 21 and 22 need no spec change: the grammar adds Down and Stale glyph aliases (`.g.fail`, `.g.parked`).
+
+### Reshoot review (design, comment 6820192936)
+
+The lead checked the reshoot (assets 743f55d31a) against "Frames review". It matches. The spec now follows four details the frames got right:
+
+1. A lane, session or DM row has no mono id. Its title starts in the id column, and the object column names it (§7.1).
+2. Folded, the Moving header names its kinds ("Moving: 4 agents, 2 CI runs"), as the fold rule already said. The §7.1 frame said "Moving 6" and is fixed.
+3. At 1440 the footer keys carry their words. The short form is for 1000 px only.
+4. PR rows use the PR-open ring in the frame, as decision 12 says.
+
+Design's three calls stand: shortened refs, CI Moving titles without the PR number, and no right-hand text on a folded Needs you header. One copy fix for the UI build: the stale empty state says "cannot", not "can not".
