@@ -29,6 +29,20 @@ public abstract class SessionHostContract
         Expect.Equal(new HostRef(host.Kind, "snd-one"), started.Value);
     }
 
+    /// <summary>A session with a window size and remain-on-exit starts like any other and answers the same reference.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_session_with_a_size_and_remain_on_exit_starts()
+    {
+        var host = Create();
+        var sized = Session("sindri-sized001") with { Size = new HostSize(120, 40), RemainOnExit = true, CleanEnvironment = true };
+
+        var started = await host.Start(sized, TimeSpan.FromSeconds(4), CancellationToken.None);
+
+        Expect.True(started.IsSuccess);
+        Expect.Equal(new HostRef(host.Kind, "sindri-sized001"), started.Value);
+    }
+
     /// <summary>A name that is live is not started twice.</summary>
     /// <returns>The test.</returns>
     [Fact]
