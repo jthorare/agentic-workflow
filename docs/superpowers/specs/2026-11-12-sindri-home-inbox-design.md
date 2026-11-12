@@ -145,8 +145,8 @@ Not on Home: the Queue's `queued` group. Its `running` and `withYou` groups go t
 
 Fields the lanes collector reads, checked by running the commands on 2026-11-12 (box with 11 lanes):
 
-- `aw-meta status --json`: `mergeQueue[]` is `{pr, from, gate, github}` (`from` is the lane's tmux session name, for example `sindri-v3-ui`; `github` is null unless the PR sits in GitHub's merge queue, then `queued <position>`). `context[]` is `{lane, session, transcript, tokens, lastActivity, threshold, verdict}`; `verdict` is `Ok` on this box and `Recycle` per the docs (the recycle value was not on screen at the check). `lanes.entries[]` is `{lane, sessionName, session, source}`. The status has no usage key.
-- `aw-meta lanes-context --json`: `{recycleAt, lanes[], attention}`, the same lane objects.
+- `aw-meta status --json`: `mergeQueue[]` is `{pr, from, gate, github}` (`from` is the lane's tmux session name, for example `sindri-v3-ui`; `github` is null unless the PR sits in GitHub's merge queue, then `queued <position>`). `context[]` is `{lane, session, transcript, tokens, lastActivity, threshold, verdict}`; `verdict` is PascalCase (`"verdict":"Ok"`), so the recycle verdict is `Recycle`. `lanes.entries[]` is `{lane, sessionName, session, source}`. The status has no usage key.
+- `aw-meta lanes-context --json`: `{recycleAt, lanes[], attention}`, the same lane objects. On the owner's box `"recycleAt":200000` comes from the team config; the code default is 300000.
 - `aw-meta usage --json`: `subjects[]` is `{subject, state, agent, signalNote}`; `state` is `Ok`, `Limited` or `Unknown`. A limited subject also has a stop with a kind (`session`, `weekly`, `other`) and a reset time; its exact JSON key was not on screen because no lane was limited at the check.
 - `aw-meta merge-check <pr>` prints `PASS` / `FAIL` lines per check; the row's Merge runs `merge-run`, which runs the same checks first.
 
@@ -179,7 +179,7 @@ Reason weights, the default of the profile keys `home.rank.weights.<reason>` (in
 Worked example. All numbers are made up for this spec. It is the order at 09:10.
 
 Objects and edges:
-- meta (205k) and ideas (210k) are at the recycle mark. The merge queue holds #3099 (since 08:02) and #3101 (since 08:40). #3101 waits on #3099 (`merge-order`) and closes issue #3040.
+- meta (205k) and ideas (210k) are past the recycle mark (200000 on the owner's box, from the team config; the code default is 300000). The merge queue holds #3099 (since 08:02) and #3101 (since 08:40). #3101 waits on #3099 (`merge-order`) and closes issue #3040.
 - ideas authored PR #3078 and holds issue #3014 (this assumes the lane work source E1 must find).
 - A review of PR #3120 is requested of the owner (since 07:30). #3120 closes issue #3055. PR #3125 is stacked on it.
 - Sam's DM waits (since 09:02) and is linked to no object.
@@ -226,7 +226,7 @@ Keys follow §7.4. `Ctrl+Enter` opens the row's submit menu with the primary act
 | `decision`, `question` | Answer with the shown option | Decline, Copy command, Open | Sindri (`POST /sindri/decisions/{id}`) |
 | `agent-asking` | Reply (text to the session, #3022) | Jump to terminal `o` (#3023), Hand to agent n/a | the session |
 | `agent-limited` | Open session | Resume (when the pause is Sindri's) | Sindri, aw-meta |
-| `lane-recycle` | Copy digest request (copies the standard line and jumps to the lane's terminal, `o`) | Open session | nothing: `aw-meta lane-send` refuses the meta lane and every Claude Code lane (AW-META-017, "use SendMessage"), so Home sends no digest request; the row clears when the lane's verdict is no longer `recycle` |
+| `lane-recycle` | Copy digest request (copies the standard line and jumps to the lane's terminal, `o`) | Open session | nothing: `aw-meta lane-send` refuses the meta lane and every Claude Code lane (AW-META-017, "use SendMessage"), so Home sends no digest request; the row clears when the lane's verdict is no longer `Recycle` |
 | `review-requested`, `review-new-commits` | Open review (Enter, full) | Approve, Comment, Request changes in the `Ctrl+Enter` menu | GitHub, through `Core/Forge` (`PullReview`) |
 | `pr-ready-merge` | Merge (in a meta team through `aw-meta merge-run`, which runs the same `merge-check` meta runs; otherwise the repo's merge method through the forge; `merge-run` takes no sha, so the adapter compares the PR head with the row's `headSha` just before the call and refuses with 016 on a mismatch, then reads the PR state after, since exit 0 covers both merged and queued) | Open, Hand to agent | GitHub, aw-meta |
 | `mention`, `dm` | Reply (composer in the peek) | Hand to agent (an agent writes a draft into the composer; the owner sends) | the source of the thread |
@@ -239,7 +239,7 @@ While meta is already merging a PR (its `mergeQueue` entry has `github: queued <
 
 On every kind: Snooze `h`, Done `e`, Hand to agent `t` (except where noted), Mute (in `.`), Open `Enter`.
 
-Hand to agent opens a small picker, as the Context page's Hand to agent does: a new session on a provider, or one of the repo's running sessions. It shows what goes along ("PR #3120, 2 linked issues, the thread, about 4k tokens") and leaves a "Handed to <session>" line with a link. The row stays in Needs you until its trigger stops holding. The brief to the agent holds the row's links and its peek text, fenced as untrusted.
+Hand to agent opens a small picker, as the Context page's Hand to agent does: a new session on a provider, or one of the repo's running sessions. The picker has a filter field, so it shows no letter or digit chips and `Enter` picks; a session that is asking the owner shows disabled with "asking you". It shows what goes along ("PR #3120, 2 linked issues, the thread, about 4k tokens") and leaves a "Handed to <session>" line with a link. The row stays in Needs you until its trigger stops holding. The brief to the agent holds the row's links and its peek text, fenced as untrusted.
 
 ### 5.2 Write-through
 
@@ -256,13 +256,13 @@ A second action on a row that is still sending is refused with "wait for the fir
 
 ### 5.3 Snooze
 
-`h` opens a picker (cancellable; when it closes, focus returns to the row). Choices, with the keys `1` to `5` while it is open:
+`h` opens a picker (cancellable; when it closes, focus returns to the row). Choices: the keys `1` to `4` pick a preset while the date field is empty and unfocused. `5` or a click focuses the "Pick a date or time" field, and from then on digits type into it (so `14:00` types). The footer keys while it is open are in §7.4.
 
 1. Later today: 17:00 local, or 3 hours from now when it is after 14:00.
 2. Tomorrow 9:00.
 3. Monday 9:00: the next Monday after today.
 4. Next week: the same weekday next week, 9:00.
-5. A typed date or time: `fri 14:00`, `nov 20`, `in 2h`.
+5. Pick a date or time (the field): `fri 14:00`, `nov 20`, `in 2h`.
 
 Rules:
 - The row leaves Home and shows `back Mon 9:00` under the "Snoozed (n)" filter (off by default, a toggle in the header).
@@ -278,14 +278,14 @@ Rules:
 
 - A done row **returns on its own** only when new activity is addressed to the owner on that object: a mention, a review request, a reply in the owner's thread, CI red on the owner's PR, the session asking again. Other activity changes nothing. The row says "back: new reply". A source clear (the lane recycled, the session ended, the PR merged) ends the episode and forgets the Done, so the next recycle mark or ask is a new row.
 - Done never writes to a source. A merged PR's row clears itself; a replied thread's row clears when the reply lands.
-- The **Done list**, reached from the footer, holds the last 7 days of done rows (`home.done.keepDays`, whole days 1 to 90, default 7). #3031 sets 7; the ledger's 90 days is GitHub's number.
+- The **Done list**, reached from the clickable footer text "Done list", from the `?` sheet and from the palette id `home.done-list` (it has no bare key), holds the last 7 days of done rows (`home.done.keepDays`, whole days 1 to 90, default 7). #3031 sets 7; the ledger's 90 days is GitHub's number.
 - **Mark all seen** stays as the bulk form of "seen" (the row stops looking unread and the tray count drops); it does not hide rows and has the existing Undo.
 - `e` stays a bare key by the owner's decision (§7.4 states the boundary). Done writes only Sindri's own state and shows Undo for 5 s.
 - **Undo has a key:** `Ctrl+Z` on Home undoes the last Sindri-local change for 5 s, and the same step stays on the Done list after that. A polite live region announces "Marked done. Undo with Ctrl+Z." and the same for a failed or still-sending write (§5.2).
 
 ### 5.5 Definition of done: the empty Home
 
-Home is empty when Needs you holds no row in state `open` **and** every source was read in the last 5 minutes with no `degraded[]` entry about a source. Snoozed, done and muted rows do not count; a row whose write failed does count. When Needs you is empty but a source is stale or disconnected, the body says "Nothing waiting in what I could read" with the stale line and **Refresh**, never "You're done."
+Home is empty when Needs you holds no row in state `open` **and** no stale line is showing, so every source was read in the last 5 minutes with no `degraded[]` entry about a source. Snoozed, done and muted rows do not count; a row whose write failed does count. When Needs you is empty but a source is stale or disconnected, the body says "Nothing waiting in what I could read" with the stale line and **Refresh**, never "You're done."
 
 An empty Home shows, in the body: "You're done." (20 px, ink), one line under it ("3 snoozed, the next back Mon 9:00" when there are snoozed rows), and the brief if it has lines. Moving is not drawn (ledger 4: only the brief remains). The tray count is 0.
 
@@ -299,7 +299,7 @@ Two writers:
 1. **Facts, by Sindri, no model.** A job reads the ledger from the cursor and writes one line per change that matters: a PR merged, CI went red or green on a PR of the owner's, a run ended, a lane recycled, an issue changed state. A line is a sentence plus at most 2 links (deep links to a row or an object). Example: "PR #3078 merged; CI red on main since 09:10." Painted at first paint, under 100 ms (D12).
 2. **Summary, by a model.** A Sindri job (kind `HomeBrief`) runs when Home opens with events since the cursor and the last brief is older than 15 min, or when the owner presses `.` then `u`. It reads only typed facts (kind, title, state change, ids) after `Aw.Redaction`, never message bodies. It writes the order of the lines and one summary line at the top. Every link in its output must resolve to a row or object id from its input; a line with a link that does not resolve falls back to its plain-fact form.
 
-The cap is 10 lines. When there are more than 10 facts, the first 9 by (blocks, recency) show, then "and 14 more: see Moving, Work". The minimum is 0 lines; with 0 the section is the one word "Nothing changed." Each line is an ordinary row: it can be peeked, done and snoozed.
+The default view is a summary line plus 2 fact lines, then "b N more lines" (`b` shows the rest, §7.4). The cap is 10 lines. When there are more than 10 facts, the first 9 by (blocks, recency) show, then "and 14 more: see Moving, Work". The minimum is 0 lines; with 0 the section is the one word "Nothing changed." Each line is an ordinary row: it can be peeked, done and snoozed.
 
 Who sees what when the model is limited or off:
 
@@ -336,29 +336,34 @@ Design's frame on #2978 (comment 6817965291) is the reference; every number is `
 
 ```
 ┌ top bar 40 ───────────────────────────────────────────────────────────────────────────────┐
-│ Home   [All 9] [Reviews 3] [Messages 0] [Work 4] [Agents 2]      / filter      Health ok  │ page header 48
-├ New (1) ──────────────────────────────────────────────────────────────────────────────────┤ group header 28
-│ ◇ qa is asking: run rm -rf build/     asking     session  qa          new   you            │ row 32
+│ Home   [All 9] [Reviews 3] [Messages 0] [Work 4] [Agents 2]      / filter                 │ page header 48
+├ New 1 ────────────────────────────────────────────────────────────────────────────────────┤ group header 28
+│ ◇ session qa  qa is asking: run rm -rf build/      asking     session       new           │ row 32
 ├ Needs you 8 ──────────────────────────────────────────────────────────────────────────────┤
-│ ◇ meta: at 205k, recycle from a digest   blocks 3   lane  meta        15m   you           │
-│ ◇ Review requested: System grid           blocks 2   PR #3120 design  1h40  you           │
-│ ◇ PR #3099 is ready to merge              blocks 2   PR #3099 qa      68m   you           │
-│ ◇ ideas: at 210k, recycle from a digest   blocks 2   lane  ideas      20m   you           │
+│ ◇ lane meta  meta: at 205k, recycle from a digest   blocks 3   lane         15m           │
+│ ◇ #3120  Review requested: System grid              blocks 2   repo design  1h40          │
+│ ◇ #3099  PR #3099 is ready to merge                 blocks 2   repo qa      68m           │
+│ ◇ lane ideas  ideas: at 210k, recycle from a digest blocks 2   lane         20m           │
 │ ...                                                                                       │
-├ Moving: 4 agents, 2 CI runs ▸ ────────────────────────────────────────────────────────────┤
+├ Moving 6 ▸ ───────────────────────────────────────────────────────────────────────────────┤
 ├ Since you last looked 6 ──────────────────────────────────────────────────────────────────┤
 │ PR #3078 merged; CI red on main since 09:10.                                              │
-├ j/k move · Space peek · Enter open · h snooze · t hand to agent · e done · . actions · ? ──┤ footer 28
+│ (2 fact lines)                                                                            │
+│ b 3 more lines                                                                            │
+│ ○ Todo, 4 open                                               Enter opens the panel        │ 28
+├ j/k move · Space peek · Enter open · h · t · e · R                         Done list      ┤ footer 28
 └───────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Frame:** top bar 40, page header 48, body 784, footer 28. Group headers 28, sentence case, 12/500, count in ink-3. Side inset 24.
-- **Row (32 px compact, 40 comfortable):** `[glyph 16] [title, flex, min 200] [why chip 104] [object 104] [from 136] [age 44, right-aligned] [waits on 112]`, 12 px gap. The why chip carries "blocks 3" or the reason word. The object fact is the mono ref (`PR #3120`, `ENG-412`, `lane meta`). The from fact is a person or session name. Title is the only 13 px ink text; unread weighs 500, read is ink-muted. Waits on `you` is bold ink, the one loud fact.
+- **Frame:** top bar 40, page header 48, body 784, footer 28. Group headers 28, sentence case, 12/500, the row count only in ink-3 (never "blocks N"; blocks N stays per row). Side inset 24.
+- **Row (32 px compact, 40 comfortable):** `[glyph 16] [mono id] [title, flex, min 200] [why chip 104] [object 104] [from 136] [age 44, right-aligned] [waits on 112]`, 12 px gap. The why chip carries "blocks 3" or the reason word. The mono id sits left of the title, as the #2978 Row rule says (`#3120`, `r-0412`, `ENG-412`, `lane meta`). The object fact column says the kind and place only: lane, repo or dm. The from fact is a person or session name. Title is the only 13 px ink text; unread weighs 500, read is ink-muted. The waits-on column shows only where its value varies within a group (Moving). Needs you rows show no waits-on `you`, because the group header says it. The id adds to the fixed part; the title keeps its 200 minimum.
 - **Width check:** the fixed part is 636 px, so the title gets `list width - 636`: 364 px at 1000, 804 at 1440 with the peek closed. Under 840 px of list width the third fact drops; under 688 the second drops. The title minimum of 200 never shrinks (design's rule on #2978: facts end in an ellipsis, never a mid-word clip).
-- **Rows per screen (D3):** body 784 minus 8 padding minus 3 group headers (84) minus the brief's 3 lines (96) leaves 596 px, which is 18 rows at 32 px and 14 at 40. The collapsed Todo line (28 px, §12) takes one compact row, so D3 asks for 17 and 14.
-- **Splits** are the saved filters: All; Reviews (`review-requested`, `review-new-commits`, `pr-ready-merge`); Messages (`mention`, `dm`); Work (`issue-assigned`, `todo-due`, `run-failed`, `decision`, `question`); Agents (`agent-asking`, `agent-limited`, `lane-recycle`, plus Moving's agent lines). Each tab shows its open count: open Needs you rows of its kinds, the New band included (the frame's All 9 is New 1 plus Needs you 8). A tab with no rows says why: Messages reads "Messages arrive with #2979" until that epic ships. There is no "Other" tab: a row that is not a Needs you kind is not on Home (Linear's Priority / Other split is covered by Needs you versus the source pages).
-- **Header right:** `/` filter box and one health chip that replaces today's health strip and opens the Health page.
-- **Glyphs** come from design's set (diamond for needs you, x for failed, arc for an agent running, ring with dot for a PR, bubble for a message, dot for a mention); lane and merge-queue glyphs are new and drawn in D1 (§15).
+- **Rows per screen (D3):** body 784 minus 8 padding minus 3 group headers (84) minus the brief's 3 lines (96) leaves 596 px, which is 18 rows at 32 px and 14 at 40. The Todo line (a 28 px non-group line with an empty-circle glyph, "Todo, N open" and "Enter opens the panel" at the right, §12) takes one compact row, so D3 asks for 17 and 14.
+- **Splits** are the saved filters: All; Reviews (`review-requested`, `review-new-commits`, `pr-ready-merge`); Messages (`mention`, `dm`); Work (`issue-assigned`, `todo-due`, `run-failed`, `decision`, `question`); Agents (`agent-asking`, `agent-limited`, `lane-recycle`, plus Moving's agent lines). Each tab shows its open count, computed from row kinds: open rows of its kinds, the New band included (the frame's All 9 is New 1 plus Needs you 8; All = New + Needs you). A split filters New, Needs you and Moving to its kind. The brief ("Since you last looked") and the Todo line show on All only. A tab with no rows says why: Messages reads "Messages arrive with #2979" until that epic ships. There is no "Other" tab: a row that is not a Needs you kind is not on Home (Linear's Priority / Other split is covered by Needs you versus the source pages).
+- **Header right:** the `/` filter box. There is no health chip: the shell's top-bar pill is the one status mark, and a stale or failed source shows as its §7.3 state line.
+- **Footer:** the grammar keys, then Home's. At 1440 the page keys are `h · t · e · R`, with "Done list" at the right. At 1000 they shrink to `h snooze · t hand · e done · ? all keys`.
+- **Text scale 1.3** scales text and row heights only (row 40, group header 36). Column widths, insets and the 440 px peek stay in px, so long facts ellipsize. A truncated title shows a plain tooltip with the full title.
+- **Glyphs** come from design's set (diamond for needs you, x for failed, arc for an agent running, ring with dot for a PR, bubble for a message, dot for a mention); lane-recycle rows use the needs-you diamond and ready-to-merge rows the PR-open ring, so no new glyph is drawn. The grammar adds Down and Stale glyph aliases (`.g.fail`, `.g.parked`) for §7.3.
 
 ### 7.2 Peek (Space) and full (Enter)
 
@@ -373,6 +378,8 @@ Peek is a 440 px pane on the right (the list narrows to 1000 at 1440). `j/k` mov
 | `decision`, `question` | the question and its options |
 | `issue-assigned` | Linear fields and linked PRs |
 
+On a PR row, `Ctrl+Enter` in the peek opens the submit menu with Merge preselected (Merge via `aw-meta merge-run`, Approve, Comment…, Request changes…); `Enter` is Open.
+
 **Full** (`Enter`) goes to the working surface: the review for a PR, the Agents sheet for a session, `DecisionSheet` for a decision, the Linear issue, the run page. `Esc` returns to Home with the cursor on the same row.
 
 ### 7.3 States
@@ -384,15 +391,15 @@ Every error row has a button that fixes it.
 | first open, no store yet | the page header and footer paint at once; the body shows 6 skeleton rows for at most 400 ms, then the rows or the empty state |
 | loading from a slow serve | the cached first page paints first (D2); a quiet header line "Updating…" is a polite live region; no spinner over rows |
 | serve not running | the cached rows paint and a header line says "Sindri isn't running · showing 09:02" with **Start Sindri**; actions are disabled with the same reason |
-| a source is stale (not read in 5 min) | the header names it ("GitHub last read 12 min ago") with **Refresh**; rows from it carry a muted age |
+| a source is stale (not read in 5 min) | one 32 px state line (ui's `FailedReadLine` shape, #3056): glyph, one sentence ("GitHub last read 12 min ago"), an outlined primary **Refresh** and an optional `Details ▸`; rows from the source get a muted title and age |
 | a source is not connected | no rows from it; one `system` row "Connect GitHub to see reviews" with **Connect** |
-| a failed read of Home | "Couldn't read Home" with **Retry** and the log path; never the empty "You're done." (fixes #2921's skeleton) |
+| a failed read of Home | the same state-line shape: "Couldn't read Home" with **Retry** and the log path; never the empty "You're done." (fixes #2921's skeleton) |
 | a row action failed | the row shows "failed: <reason>" with **Retry** and **Discard** (§5.2) |
 | connection stale on an action | the row's Retry becomes **Connect** |
 | write still sending | "still sending" in waits-on after 2 s |
 | a row's version changed under an edit (003) | the edit is not applied; the row shows "Changed while you were editing" and **Reload** (keeps the cursor on the row) |
 | New band has rows | the "New (n)" header; the page title shows "Home (n new)" in the window title for screen readers |
-| a snoozed row wakes early | the row shows "back early: new reply" until first seen |
+| a snoozed row wakes | the age cell says "back"; the sub-line gives the reason ("back early: new reply" or "snoozed until 9:00") until first seen |
 | Needs you empty | §5.5 |
 | a split tab with no rows, the Done list empty, Moving with 0 lines, the hand-to-agent picker with no session | one plain line each ("Nothing in Reviews", "Nothing done in the last 7 days", "Nothing in flight", "No session to hand to" with **Start one**) |
 | the peek body can't load | the fields from the local store and "Couldn't load the thread" with **Retry** |
@@ -421,9 +428,9 @@ Fold rules (the table row above gives the keys):
 - Only Moving remembers its fold per user. Needs you, the brief and the New band open unfolded every time, and the cursor starts on row 1. The New band is never folded when it holds a row. A new or returning row, a toast click, `Esc` back from Full, a `/` match and a split jump all unfold the group of their target row first.
 - Folded rows still count in the tab numbers. "You're done." (§5.5) reads the data, not the fold.
 - Fold arrows are caret keys while a text field has focus, the same guard as the letters. On Home's split strip, Left and Right switch splits when focus is on the strip, as on Health and Queue, and fold when focus is in the list. A pending G-chord takes its second key before Home's list sees it, so `G` then `H` goes Home and never opens a snooze picker; the top bar keeps its "G ..." hint for the 1 s wait (U3 tests both).
-- On Home, `G` `D` and `G` `T` (which set `HomeFilter.Decisions` and open the Todo panel on main) retire with the old views: `G D` selects the Work split and `G T` opens the collapsed Todo line's panel (§12).
-- Fold and unfold have palette ids `home.fold` and `home.unfold`, the `?` sheet lists the arrows, and the footer shows "Left fold · Right open" only while the cursor is on a header. A screen reader reads a header as "Needs you, 8 rows, expanded" or "collapsed, 8 hidden".
-| `b` | show the brief's lines beyond the default 3 | no |
+- On Home, `G` `D` and `G` `T` (which set `HomeFilter.Decisions` and open the Todo panel on main) retire with the old views: `G D` selects the Work split (the Done list has no chord) and `G T` opens the collapsed Todo line's panel (§12).
+- Fold and unfold have palette ids `home.fold` and `home.unfold`, the `?` sheet lists the arrows, and the footer shows "Left fold · Right open" only while the cursor is on a header. While a menu or picker is open, the page footer swaps to its keys: "↑/↓ move · Enter pick · Esc cancel"; menus carry no key strip of their own. A screen reader reads a header as "Needs you, 8 rows, expanded" or "collapsed, 8 hidden".
+| `b` | show the brief's lines beyond the default summary line plus 2 fact lines ("b N more lines") | no |
 
 Tab keeps its normal job: it moves focus between the filter box, the list, the peek and the footer. Splits do not use Tab because Tab has to stay a focus key (the ledger's Tab binding is a Superhuman snippet and is in "Not solid"). Key clashes were checked against the Context page (`c e / j k g n s`, and `m w r` inside its `.` menu), Projects (`s` state, `a` assign, `h` hide, `e` notes, `o` open, `c`), Reviews (`n p` files, `c`, `s` suggest, `v`, `r` reply) and Agents (`o` jump, `x` stop). `t` and `R` clash with none. Two letters differ by surface, as meta's rule allows because each opens something cancellable or is Sindri-local with Undo: `h` (snooze here, hide on Projects) and `e` (Done here, edit on Context and Projects). Letters work only while focus is in the list or the peek and not in a text field, as `RowKeys` will guard once #2952 merges (`Views/Controls/RowKeys.cs`; on main today the keys sit in `ShellWindow.axaml.cs:143`).
 
@@ -536,7 +543,7 @@ Non-goals for this spec:
 | `Core/NeedsYou/*` and `GET /sindri/needs-you` | kept: `sindri needs-you` and the MCP tool keep working; the projection is one row producer. `NeedsYouOrder.cs` stays for rows of one kind; cross-kind order moves to `HomeRank` |
 | `Views/Todo/TodoPanel.axaml`, `ViewModels/Shell/ShellViewModel.Todo.cs`, `ShellWindow.TodoKeys.cs` | kept in ship 1 as a collapsed "Todo, 4 open" line under the list that opens the panel as its Full view; only due todos become `todo-due` rows |
 | Running / With you / Queued column (`GET /sindri/queue`) | `running` and `withYou` become Moving lines; `queued` stays on the Queue page |
-| the health strip | one health chip in the page header |
+| the health strip | none: the shell's top-bar pill is the one status mark; a stale source shows as its state line (§7.3) |
 | the setup line (`SetupViewModel.IsHomeLineShown`) | unchanged, above the list |
 | `ViewModels/Labels.Home*.cs`, `Labels.NeedsYou*.cs` | strings rewritten for the new rows |
 | `Views/Palette/CommandPalette.axaml` | gains the `home.*` ids of §7.4 |
@@ -592,7 +599,7 @@ Each phase updates its docs: `docs/sindri/README.md` (or a new `docs/sindri/home
 
 ## Open questions
 
-None. The owner settled the four earlier questions on 2026-11-12 and the lanes-collector fields are in §3.3. Two things stay unchecked until a lane is limited or at the mark: the JSON key of a limited subject's stop in `aw-meta usage --json`, and the `Recycle` verdict's exact casing in `context[]`. E1 reads both from a real case first.
+None. The owner settled the four earlier questions on 2026-11-12 and the lanes-collector fields are in §3.3. One thing stays unchecked until a lane is limited: the JSON key of a limited subject's stop in `aw-meta usage --json`. E1 reads it from a real case first. The verdict casing is checked (`Recycle`, PascalCase).
 
 ### Review round 1 (autoplan, 5 lenses)
 
@@ -638,3 +645,29 @@ Verdicts: product PASS (SHIP), architecture NEEDS_WORK, design NEEDS_WORK, devex
 - Design D8 (cursor row leaves, next row in another group): the cursor stays in its group while that group has rows; a U3 test.
 - Security R3-N1 (head-sha check and `merge-run` are two steps): accepted; a push in between merges the new head, as a manual merge would.
 - Nits (stale header sha and "3 rounds" line, token line range 230-233, header contrast states, `doctor` last-error through `Aw.Redaction`, footer chord hint wording, "bare `g`" in the Context page's key list): written down, not applied.
+
+### Frames review (design, comment 6820038112)
+
+The lead decided design's 22 frame guesses. Where the spec and the #2978 grammar disagreed, the grammar won. One line each:
+
+1. The mono id moves left of the title; the object column says lane, repo or dm (§7.1 frame and text).
+2. Needs you rows show no waits-on "you"; the column shows only where it varies (Moving).
+3. Group headers show the row count only, never "blocks N".
+4. The brief is a summary line plus 2 fact lines, then "b N more lines" (§6.1).
+5. The Todo line is a 28 px non-group line with an empty-circle glyph, no chevron; Left and Right do nothing on it.
+6. Snooze: digits 1 to 4 pick presets while the field is empty and unfocused; 5 or a click focuses the field, then digits type (§5.3).
+7. The hand-to-agent picker has a filter field, no chips, `Enter` picks; an asking session is disabled with "asking you".
+8. While a menu or picker is open the footer swaps to "↑/↓ move · Enter pick · Esc cancel" (§7.4).
+9. The footer shrinks at 1000 px to `h snooze · t hand · e done · ? all keys`; at 1440 it is `h · t · e · R` plus "Done list".
+10. The Done list opens from the footer text, the `?` sheet and `home.done-list`; no bare key.
+11. A split filters New, Needs you and Moving to its kind; the brief and the Todo line show on All only.
+12. Lane-recycle rows use the needs-you diamond, ready-to-merge rows the PR-open ring.
+13. No "Health ok" chip in the page header; the shell pill is the one status mark.
+14. A stale or error line is one 32 px `FailedReadLine`-shaped state line; stale rows get a muted title and age.
+15. "You're done." means no stale line is showing.
+16. Text scale 1.3 scales text and row heights only; column widths, insets and the peek stay in px.
+17. A truncated title shows a plain tooltip with the full title.
+18. A row back from snooze says "back" in the age cell; the reason goes in the sub-line.
+19. Tab counts are computed from row kinds; All = New + Needs you.
+20. In a PR peek, `Ctrl+Enter` opens the submit menu with Merge preselected; `Enter` is Open.
+21. 22. No spec change; the grammar adds Down and Stale glyph aliases (`.g.fail`, `.g.parked`).
