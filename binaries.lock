@@ -1,4 +1,4 @@
-# binaries.lock — external executables the C# build runs but doesn't build, pinned by version and sha256
+# binaries.lock — external executables the C# build and the repo checks run but don't build, pinned by version and sha256
 # (engine spec rev 8 §0 "Operations" and Phases "The Temporal dev server in tests").
 #
 # Format: one row per (name, platform), whitespace-separated, six fields:
@@ -36,3 +36,11 @@ temporal-test-server  1.39.0  darwin-arm64  9a9395257fb8d585a4eb06b14d26f5d59a51
 temporal-test-server  1.39.0  darwin-x64    276472e67f73357db8117fec4c13bafd192f80cb427ce7a63cadbbf8be5f03de  https://github.com/temporalio/sdk-java/releases/download/v1.39.0/temporal-test-server_1.39.0_macOS_amd64.tar.gz  temporal-test-server_1.39.0_macOS_amd64/temporal-test-server
 temporal-test-server  1.39.0  linux-x64     ecd629dceccfbf49d422894bf72fb691a6062b558e72bd2722450dadf7d0c749  https://github.com/temporalio/sdk-java/releases/download/v1.39.0/temporal-test-server_1.39.0_linux_amd64.tar.gz   temporal-test-server_1.39.0_linux_amd64/temporal-test-server
 temporal-test-server  1.39.0  linux-arm64   0c09117c4f7474e8893aa798538fdd0534d78c0168d472da55f86f5c05d123e2  https://github.com/temporalio/sdk-java/releases/download/v1.39.0/temporal-test-server_1.39.0_linux_arm64.tar.gz   temporal-test-server_1.39.0_linux_arm64/temporal-test-server
+
+# vale: the prose linter scripts/check-prose.sh runs with our own style (.vale.ini, .vale/styles/Aw; issue 2919).
+# v3.25.1 published 2026-10-22, MIT. Checksums: the asset digests of github.com/errata-ai/vale/releases/tag/v3.25.1,
+# equal to that release's vale_3.25.1_checksums.txt.
+vale  3.25.1  darwin-arm64  fbcaa68d9b9e229b9c8dc918f209e93572ce943039700b7e04a423ff12f684cd  https://github.com/errata-ai/vale/releases/download/v3.25.1/vale_3.25.1_macOS_arm64.tar.gz   vale
+vale  3.25.1  darwin-x64    e27097e84a812d45546de8d6a4ffa75538cab39c96f79b153b601240f8cefaf9  https://github.com/errata-ai/vale/releases/download/v3.25.1/vale_3.25.1_macOS_64-bit.tar.gz  vale
+vale  3.25.1  linux-x64     4bf5c5176b682b1da0830f471584d3494f1c2e27ee3029e1ad6f6661d4962182  https://github.com/errata-ai/vale/releases/download/v3.25.1/vale_3.25.1_Linux_64-bit.tar.gz  vale
+vale  3.25.1  linux-arm64   2a69755b68118c612c455fc0c5ea1b9438519aa1c852e3fb303b3ad97141bbb0  https://github.com/errata-ai/vale/releases/download/v3.25.1/vale_3.25.1_Linux_arm64.tar.gz   vale
