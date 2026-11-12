@@ -7,7 +7,7 @@ using static Aw.Sindri.Tests.Callers.CallerRequests;
 namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
-/// The goldens of 'GET /setup' (the setup list): the route's body for each way the six steps can stand. The sources are the set facts of <see cref="InMemorySetupFacts"/>, because the real
+/// The goldens of 'GET /setup' (the setup list): the route's body for each way the eight steps can stand. The sources are the set facts of <see cref="InMemorySetupFacts"/>, because the real
 /// ones read this machine (Docker, a Claude Code config); the real adapters are tested apart (SetupFactsTests, the served-route test of this group).
 /// </summary>
 internal static class SetupScenarios
