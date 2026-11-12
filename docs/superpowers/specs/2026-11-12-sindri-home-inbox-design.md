@@ -66,7 +66,7 @@ Done-checks. Each is a test or a measured run in the real app (aw-ui-driver), an
 2. **Rank by "blocks N".** N counts the open objects that cannot move until this row is done (§4.1). Ties go to a reason weight, then age, then id. The rule is readable and the weights are profile keys (ledger 2, take 6). The score is ours; the ledger found no prior art for it.
 3. **Order holds still.** Rows move only at a settle point (§4.3). New rows wait in a marked "New" band at the top. This is the Agents walk's expected behaviour 3 (#3082), applied to all of Home.
 4. **Sessions and lanes are rows.** A lane at its recycle mark, a session asking a question and a PR ready in the merge queue are Needs you rows with the same grammar as a review request (ledger 12; #3082).
-5. **Acting follows the grammar's write rule.** Meta's rule on #2978: a bare letter never commits a write, and may differ per surface only when it opens something cancellable. So reply (`r`), snooze (`h`) and hand to agent (`g`) open a composer or a picker; send, approve, merge and assign go through the `Ctrl+Enter` menu or the `.` panel. This replaces ledger 3's bare `a`. The owner's boundary (§7.4): a bare key never writes to a source and never starts work; it may change Sindri's own view state when Undo shows for 5 s (`e` Done, `h` snooze).
+5. **Acting follows the grammar's write rule.** Meta's rule on #2978: a bare letter never commits a write, and may differ per surface only when it opens something cancellable. So reply (`r`), snooze (`h`) and hand to agent (`t`) open a composer or a picker; send, approve, merge and assign go through the `Ctrl+Enter` menu or the `.` panel. This replaces ledger 3's bare `a`. The owner's boundary (§7.4): a bare key never writes to a source and never starts work; it may change Sindri's own view state when Undo shows for 5 s (`e` Done, `h` snooze).
 6. **One Done, one snooze, one mute, for every row kind** (ledger 4, 5, 10). They are Sindri-local state; they never write to Slack, Linear or GitHub. Source writes (reply, approve, merge, state change) are separate actions with write-through (§5.2).
 7. **Priority-only notifications.** A toast and the tray count come from a short kind list, once per row (§6.3). Moving and the brief never notify.
 8. **The brief is facts first.** Plain-fact lines come from the ledger with no model. A model writes the summary line and the order, and a failed or limited model costs only that (§6.1).
@@ -194,7 +194,7 @@ Objects and edges:
 
 Order: meta (3 blocks), then review #3120 before ideas (both 2; weight 5 beats 4), then #3099 before #3101 (both 1 and weight 5; 08:02 is older), then the DM (0). Row 1 names a session, which is D1.
 
-At 09:12 the qa session asks to run `rm -rf build/` (blocks 1, weight 6, its issue #3102). It lands in the New band, not in the list (§4.3). The owner types the digest request on row 1 at 09:14 (`g`, hand to agent). That is a settle point: meta's row is gone once meta recycles, qa's row joins the order at blocks 1, weight 6, which is above #3099, and the list reads review #3120, ideas, qa, #3099, #3101, DM. Between 09:10 and 09:14 no row changed index.
+At 09:12 the qa session asks to run `rm -rf build/` (blocks 1, weight 6, its issue #3102). It lands in the New band, not in the list (§4.3). The owner types the digest request on row 1 at 09:14 (`t`, hand to agent). That is a settle point: meta's row is gone once meta recycles, qa's row joins the order at blocks 1, weight 6, which is above #3099, and the list reads review #3120, ideas, qa, #3099, #3101, DM. Between 09:10 and 09:14 no row changed index.
 
 ### 4.3 Stable order and the New band
 
@@ -234,7 +234,7 @@ Keys follow §7.4. `Ctrl+Enter` opens the row's submit menu with the primary act
 
 While meta is already merging a PR (its `mergeQueue` entry has `github: queued <position>`, or a `merge.queued` record), the row's waits-on says "meta is merging (queue position 2)" and Merge is not offered, so there is no second merge. The act also reads the PR state first (§5.2 step 3) and, when the PR is already merged, lands as a no-op and clears the row.
 
-On every kind: Snooze `h`, Done `e`, Hand to agent `g` (except where noted), Mute (in `.`), Open `Enter`.
+On every kind: Snooze `h`, Done `e`, Hand to agent `t` (except where noted), Mute (in `.`), Open `Enter`.
 
 Hand to agent opens a small picker, as the Context page's Hand to agent does: a new session on a provider, or one of the repo's running sessions. It shows what goes along ("PR #3120, 2 linked issues, the thread, about 4k tokens") and leaves a "Handed to <session>" line with a link. The row stays in Needs you until its trigger stops holding. The brief to the agent holds the row's links and its peek text, fenced as untrusted.
 
@@ -312,7 +312,7 @@ Who sees what when the model is limited or off:
 
 One line per activity the owner started or owns that is in flight and needs nothing from them: an agent session working in one of their lanes or launches (`state: running`), a workflow run in progress, CI running on the owner's PR (`ReviewCi`), a Queue item in the `running` or `withYou` group. A line reads "design: building RowList (12 min)" or "CI on #3120: 4 of 7 checks done".
 
-Moving is **collapsed** by default: a 28 px header "Moving: 4 agents, 2 CI runs" with a chevron. Expanded it shows up to 8 lines, oldest start first, then "Show all N in Agents". The expanded state is remembered per user. A line has no actions, only peek and open. When its state changes to something that needs the owner (CI red, a session asking), the object leaves Moving and a row enters Needs you through the New band.
+Moving is **collapsed** by default (`g` on its header folds or unfolds it): a 28 px header "Moving: 4 agents, 2 CI runs" with a chevron. Expanded it shows up to 8 lines, oldest start first, then "Show all N in Agents". The expanded state is remembered per user. A line has no actions, only peek and open. When its state changes to something that needs the owner (CI red, a session asking), the object leaves Moving and a row enters Needs you through the New band.
 
 ### 6.3 Notifications
 
@@ -343,7 +343,7 @@ Design's frame on #2978 (comment 6817965291) is the reference; every number is `
 ├ Moving: 4 agents, 2 CI runs ▸ ────────────────────────────────────────────────────────────┤
 ├ Since you last looked 6 ──────────────────────────────────────────────────────────────────┤
 │ PR #3078 merged; CI red on main since 09:10.                                              │
-├ j/k move · Space peek · Enter open · h snooze · g hand to agent · e done · . actions · ? ──┤ footer 28
+├ j/k move · Space peek · Enter open · h snooze · t hand to agent · e done · . actions · ? ──┤ footer 28
 └───────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -395,21 +395,21 @@ Every error row has a button that fixes it.
 
 ### 7.4 Keyboard and focus
 
-The grammar keys are the same on every list (#2978): `j/k` and arrows move, `Home`/`End`, `/` filters, `Space` peeks, `Enter` opens, `Esc` goes back one layer, `.` opens the row's action panel (each action shows its key), `?` shows the keys of this surface, `Ctrl+K` is the palette. **A bare key never writes to a source (Slack, GitHub, Linear, notes) and never starts work; a bare key may change Sindri's own view state when Undo shows for 5 s (`e` Done, `h` snooze).** (The owner wrote this boundary with `s` for snooze; the spec uses `h` because #3030 and Linear's flow use `h`, and `s` already means state on Projects and suggest on Reviews.) Every bare key below obeys it: `h`, `g` and `r` only open a picker or a composer, and the write or the start happens on the picker's Send or on `Ctrl+Enter`; `e` is the Undo case; `R`, `[`, `]`, `1` to `5`, `m` and `b` change the view only. Home adds these, after the divider in the footer:
+The grammar keys are the same on every list (#2978): `j/k` and arrows move, `Home`/`End`, `/` filters, `Space` peeks, `Enter` opens, `Esc` goes back one layer, `.` opens the row's action panel (each action shows its key), `?` shows the keys of this surface, `Ctrl+K` is the palette. **A bare key never writes to a source (Slack, GitHub, Linear, notes) and never starts work; a bare key may change Sindri's own view state when Undo shows for 5 s (`e` Done, `h` snooze).** (The owner wrote this boundary with `s` for snooze; the spec uses `h` because #3030 and Linear's flow use `h`, and `s` already means state on Projects and suggest on Reviews.) Every bare key below obeys it: `h`, `t` and `r` only open a picker or a composer, and the write or the start happens on the picker's Send or on `Ctrl+Enter`; `e` is the Undo case; `R`, `g`, `[`, `]`, `1` to `5` and `b` change the view only. Home adds these, after the divider in the footer:
 
 | Key | Does | Writes? |
 |---|---|---|
 | `h` | opens the snooze picker (§5.3) | no, until a choice is made; then Sindri-local |
-| `g` | opens the hand-to-agent picker | no, until Send |
+| `t` | opens the hand-to-agent picker ("tell an agent") | no, until Send |
 | `r` | opens the reply composer in the peek (kinds with a thread) | no, until `Ctrl+Enter` sends |
 | `e` | Done, with Undo | Sindri-local |
 | `Ctrl+Enter` | opens the submit menu with the primary preselected; `Enter` commits | the source, on commit |
 | `R` | re-rank now (a settle point) | no |
 | `[` / `]`, `1` to `5` | previous / next split; jump to a split | no |
-| `m` | expand or collapse Moving | no |
-| `b` | expand the brief to all its lines | no |
+| `g` | fold or unfold the focused group (Needs you, Moving, the brief), as on the Context page (scope spec §6.6) | no |
+| `b` | show the brief's lines beyond the default 3 | no |
 
-Tab keeps its normal job: it moves focus between the filter box, the list, the peek and the footer. Splits do not use Tab because Tab has to stay a focus key (the ledger's Tab binding is a Superhuman snippet and is in "Not solid"). Letters work only while focus is in the list or the peek and not in a text field, as `RowKeys` already guards (`Views/Controls/RowKeys.cs`, #2952).
+Tab keeps its normal job: it moves focus between the filter box, the list, the peek and the footer. Splits do not use Tab because Tab has to stay a focus key (the ledger's Tab binding is a Superhuman snippet and is in "Not solid"). Key clashes were checked against the Context page (`c e / j k g n s`, and `m w r` inside its `.` menu), Projects (`s` state, `a` assign, `h` hide, `e` notes, `o` open, `c`), Reviews (`n p` files, `c`, `s` suggest, `v`, `r` reply) and Agents (`o` jump, `x` stop). `t` and `R` clash with none. Two letters differ by surface, as meta's rule allows because each opens something cancellable or is Sindri-local with Undo: `h` (snooze here, hide on Projects) and `e` (Done here, edit on Context and Projects). Letters work only while focus is in the list or the peek and not in a text field, as `RowKeys` already guards (`Views/Controls/RowKeys.cs`, #2952).
 
 Every action also has a menu item and a palette entry under the same id: `home.open`, `home.peek`, `home.reply`, `home.send`, `home.approve`, `home.comment`, `home.request-changes`, `home.merge`, `home.start`, `home.retry-run`, `home.answer`, `home.digest`, `home.snooze`, `home.unsnooze`, `home.done`, `home.undo`, `home.mute`, `home.hand`, `home.retry`, `home.discard`, `home.rank`, `home.brief`, `home.density`. A button with no palette entry is a bug (ledger 11).
 
