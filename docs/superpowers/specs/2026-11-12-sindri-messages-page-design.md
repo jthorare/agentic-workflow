@@ -1,13 +1,13 @@
 # Sindri's Messages page: clear the chat inbox without opening Slack
 
 Status: autoplan rounds 1, 2 and 3 folded (ideas lane, 2026-11-12). Serves #2979 (Messages, a Slack replacement with full parity) under #2978 (one app that replaces the others). It builds the Messages rows of the prior-art ledger (`docs/sindri/prior-art/messages.md`, #2989) and the child issues #3020 (snooze and follow up) and #3021 (links as live rows). It sits beside the Home spec (`docs/superpowers/specs/2026-11-12-sindri-home-inbox-design.md`) and reuses its row / peek / full grammar, keys, snooze store and write-through pipeline.
-Reviews: 3 /autoplan rounds done; next: frames, then meta's UX pass (no owner read).
+Reviews: 3 /autoplan rounds done; frames drawn; meta's UX pass (#3188) folded in decision 22 (no owner read). Next: design redraws the frames the UX pass names.
 
 "Ledger N" means problem N in the prior-art file. "Take N" means item N of its closing list "What we take". "Parity row N" means row N of §3 below.
 
 A guess is marked **(guess)** and names the P0 probe line that proves it. P0 is the owner-run probe of what a Slack user token can do (§5.5). No guess below has been run against Slack.
 
-**Source tags.** A rule or number with no tag is `agent default`: the ideas lane picked it and the owner has not answered. `owner decision (#2979)` marks what the owner's words on that issue fix: Slack stays the system of record; the four smart lists; huddles dropped; one app for everything; full parity as the ledger target; agents never auto-send without a rule the owner wrote. `agent default (api, #2979)` (or engine, meta) marks a lane plan on that issue. `agent default (lead, 2026-11-12)` marks the calls the lead made after autoplan rounds 1, 2 and 3 (the Decisions list says which; calls 12 to 20 are the round 2 ones, 21 to 26 the round 3 ones). `agent default (question N)` marks a recommended pick the body already uses and §16 still asks. Row heights and the peek width are `agent default (Home spec)`.
+**Source tags.** A rule or number with no tag is `agent default`: the ideas lane picked it and the owner has not answered. `owner decision (#2979)` marks what the owner's words on that issue fix: Slack stays the system of record; the four smart lists; huddles dropped; one app for everything; full parity as the ledger target; agents never auto-send without a rule the owner wrote. `agent default (api, #2979)` (or engine, meta) marks a lane plan on that issue. `agent default (lead, 2026-11-12)` marks the calls the lead made after autoplan rounds 1, 2 and 3 (the Decisions list says which; calls 12 to 20 are the round 2 ones, 21 to 26 the round 3 ones; decision 22 is meta's UX pass). `agent default (question N)` marks a recommended pick the body already uses and §16 still asks. Row heights and the peek width are `agent default (Home spec)`.
 
 ## 0. Why
 
@@ -48,9 +48,17 @@ Two facts shape everything (both from the ledger's header, read from Slack's doc
 
 Nobody has a thread row that is also the PR's row and the issue's row, a snooze that waits on CI, or an agent draft that waits for approval in the same inbox. Those three are ours and have no prior art to lean on.
 
-**Release 1 is a read-only slice** *(agent default (lead, 2026-11-12))*. It has one workspace; DMs, mentions and starred channels; Needs reply and Unread; the dense conversation; the thread in the peek; link rows; local Done and plain snooze; polling only. It sends nothing, reacts to nothing and writes nothing to Slack. To answer, the owner presses "Open in Slack" (a permalink; `r` does the same, so the key keeps its meaning when Release 2 adds the composer). It has no Socket Mode, no gist and no brief. *Why:* the question that decides everything is whether reading in Sindri beats reading in Slack. The read side answers it for a fraction of the write stack.
+**Release 1 is a slice that writes nothing to Slack** *(agent default (lead, 2026-11-12); widened by decision 22)*. It has one workspace; DMs, mentions and starred channels; Needs reply and Unread; the dense conversation; the thread in the peek; link rows; local Done, plain snooze and a local Mark all read; hand to agent (`t`); make issue (`m`); polling only. It sends nothing, reacts to nothing and writes nothing to Slack. To answer, the owner presses "Open in Slack" (a permalink; `r` does the same, so the key keeps its meaning when Release 2 adds the composer). It has no Socket Mode, no gist and no brief. *Why:* the question that decides everything is whether reading in Sindri beats reading in Slack. The read side answers it for a fraction of the write stack.
 
-**Release 2 is writes:** send, reply, react, drafts, follow up if no reply, and the opt-in read-mark sync. It starts only after P0 passes and the owner has used Release 1 for a week and says it replaces Slack for reading (gate G, §14). **Release 3 is demand-pulled:** a row of §3 gets built when a Slack open in the dogfood issues names it.
+**What Release 1 does, plainly.** The owner named six jobs: read, reply, done, snooze, hand to agent, make issue. Release 1 does five in the app. Read works in Needs reply, Unread, the conversation and the peek. Done is `e`, snooze is `h`, hand to agent is `t` and make issue is `m`. Reply opens the thread in Slack (`r`), because a reply is a Slack write. Three parts stay out of Release 1:
+
+1. The agent draft (`messages_draft`, the Drafts list, "Ask an agent to draft"). It needs the drafts store and the composer. Release 2.
+2. The box "Reply in the thread with the issue link" on the make-issue sheet. It posts to Slack. Release 2.
+3. Attach (`a`) and Save as a note. Release 3.
+
+*Why `t` and `m` moved in:* neither writes to Slack, both reuse a piece that exists (Home's hand-to-agent picker, Linear's create-issue write), and without them Release 1 proves two of the six jobs. They add two phases, M1o and M1p (§14).
+
+**Release 2 is writes:** send, reply, react, drafts, agent drafts, the reply-with-link box on make issue, follow up if no reply, and the opt-in read-mark sync. It starts only after P0 passes and the owner has used Release 1 for a week and says it replaces Slack for reading (gate G, §14). **Release 3 is demand-pulled:** a row of §3 gets built when a Slack open in the dogfood issues names it.
 
 **Kill rule.** The owner decides each stop. Ideas writes the decision here the same day.
 
@@ -115,7 +123,17 @@ A W-row is one done line. Each is a test or a measured run in the real app (aw-u
 18. **Messages raises Home rows; Home ranks them.** Messages owns the list; Home owns the one inbox. A `dm` or `mention` row exists in both with one id (§9.2). *Why:* Home §3.2 already defines `dm` and `mention`.
 19. **Message text is untrusted everywhere.** Pages show plain text. Agents get it fenced (§11).
 20. **Message text lives in `messages.db` and its file cache, and nowhere else.** Workflow triggers, `workflow_run.trigger`, node run input and output, and Temporal history hold ids only (§9.7). Retention and `purge` cover every store that keeps text (§11 table). *(agent default (lead, 2026-11-12))*
-21. **Slack-only function lives in Release 2 and 3.** Release 1 is read-only (§1). *(agent default (lead, 2026-11-12))*
+21. **Slack-only function lives in Release 2 and 3.** Release 1 writes nothing to Slack (§1). *(agent default (lead, 2026-11-12))*
+22. **Meta's UX pass on the frames (#3188, 2026-11-12) is folded.** *(agent default (lead, 2026-11-12))* Twelve MUSTs and fourteen nits; the calls:
+    1. Hand to agent (`t`) and make issue (`m`) move to Release 1, because neither writes to Slack. The agent draft and the reply-with-link box stay in Release 2 (§1, §9.5, §9.7).
+    2. First run has no dead end: "Open my Slack apps" on steps 2 and 3, one plain line and one button for each failure (SND-MSG-002, 003, 024, 028, 030, Slack 5xx, a 429 on the first sync), and a first sync that shows "N threads found" and a next action (§6.8).
+    3. `e` in Unread moves the local read pointer, with Undo. "Mark all read" is local and ships in Release 1. Neither writes to Slack or to Home (§6.2, §6.5).
+    4. The peek shows the thread with its replies, or "Replies not loaded". Done, snooze, wrong class, read, hand-off and make issue each have a fixed result line (§6.1, §6.6).
+    5. The footer shows `x` and `n`. The cursor starts on row 1 and returns to the last opened row (§6.2, §6.5).
+    6. UI copy never names a release. Frames carry no Release badge; the release lives in the file name (§6.1 Look).
+    7. Release 1 search is local only, with an empty and a limited state (§9.8).
+    8. Hover and pressed are two looks, and the conversation states have fixed copy (§6.1, §6.6).
+    9. Thirteen nits are text-only and taken; one is not (Review notes).
 
 **Lead calls after autoplan round 1 (2026-11-12, lead).** These eleven are decided (1 to 7 from round 1, 8 to 11 from the lead's pass on the round 1 reviews). Each sits in the body under the decision or section named.
 
@@ -207,7 +225,7 @@ Statuses and limits here are `agent default` unless a row names #2979. This tabl
 | 47 | Channel details: members, topic, description, files list | partial, planned M4 | `conversations.info`, `.members`; read-only; topic and description set are dropped (row 33) |
 | 48 | User groups (`@team` mentions) | partial, planned M4 | `usergroups.list`; render and pick; `usergroups:read` |
 | 49 | Typing indicators | dropped: needs Socket Mode user events, shows nothing a reply does not | low value |
-| 50 | Mark all read; jump to first unread; jump to date | planned M1 (jump to first unread, `n`), M4 (mark all read, jump to date) | local pointer moves (row 18) |
+| 50 | Mark all read; jump to first unread; jump to date | planned M1 (jump to first unread `n`; local Mark all read; `e` in Unread), M2 (opt-in sync to Slack), M4 (jump to date) | local pointer moves (row 18); Mark all read is a footer chip and the palette entry `messages.mark-all-read`, not a key |
 | 51 | Emoji skin tone; custom-emoji search | planned M4 | `emoji.list` cache (row 13) |
 | 52 | Copy message text | planned M1 | local clipboard; no Slack call |
 | 53 | Slack DND silences Sindri's toasts | planned M4 | reads `dnd.info`; Sindri obeys it (row 24 sets it) |
@@ -272,7 +290,7 @@ Release 1 uses the two poll rows. The Socket Mode row is Release 3 (decision 4).
 | Poll, search | `search.messages` for `to:me` and `has:...` as a change detector for DMs and mentions: 1 call per 20 s uses 3 of Tier 2's 20 calls a minute | `search:read` | **(guess)** fallback when history is at 1 per minute; P0 line 4 |
 | Poll, cold set | the rest, rarely | Tier 3 | only on Tier 3 |
 | Poll, thread replies | for threads I am in with activity in the last 3 days (set capped at 25 threads, newest owner activity first, round-robin): `conversations.replies` of the root with `oldest=<last seen reply ts>` so the answer is small, at most 20% of the bucket per method (10 calls a minute on Tier 3, so 5 per 30 s cycle and a full rotation of 25 threads in up to 3 minutes). A 429 mid-rotation skips and keeps the position. Backfill and open-thread reads draw from the same 20%, open-thread reads first. The 3 days, 20% and 25 are `agent default (lead, 2026-11-12)`. `conversations.history` returns top-level messages only, so without this a reply in an older channel thread is invisible. The status line and gate G (b) state the bound: "replies in older threads: up to 3 minutes" | Tier 3 | on a 1-per-minute workspace it runs only for the thread the owner opens, and the thread shows `partial` (parity row 5, W10) **(guess; P0 line 3)** |
-| Cold-start fill | once, after the first connect: `search.messages` for `to:me` and `from:me` over the last 30 days (`messages.retain.days`) at no more than 5 of the 20 Tier 2 calls a minute, so the first-sync line can state how many rows it found, so the first day has a sample for gate G (a) and Needs reply is not empty | `search:read` | **(guess; P0 line 4)**. The hits are stored as `partial` messages (§9.8) |
+| Cold-start fill | once, after the first connect: `search.messages` for `to:me` and `from:me` over the last 30 days (`messages.retain.days`) at no more than 5 of the 20 Tier 2 calls a minute, so the first-sync line shows "N threads found" while it runs and when it ends, even when N is 0 (§6.8), and the first day has a sample for gate G (a) | `search:read` | **(guess; P0 line 4)**. The hits are stored as `partial` messages (§9.8) |
 
 Order of preference in Release 1: hot-set polling, then search polling. Sindri picks the best path P0 proved, writes the choice to `messages.sync` (`auto`, `poll`; Release 3 adds `socket`), and shows it in the status line and in `sindri doctor` (SND-MSG-020 is an `Ok` row with detail text when Socket Mode is not available). The poll cursor per (connection, kind) is the ledger's `poll_cursor` table; the per-conversation newest `ts` and gap list are columns on `conversations` (§8.1). A disconnect makes one history read per hot conversation to fill the gap. On a 1-per-minute workspace that read is queued by hotness and the rest show a gap marker (W10).
 
@@ -333,41 +351,45 @@ Three columns on the #2978 grammar: a left rail, the list or conversation, and t
 │   # ferry-ops            │                                                  │      │ you · ada      32px │ │
 │   Sam                    │                                                  │      └─────────────────────┘ │
 │   Kim, Lee               │                                                  │ ┌ Open in Slack (r) ────────┐ │
-│ Ctrl+K all channels      │                                                  │ │ Reply there; Release 2   │ │ 
-│                          │                                                  │ │ adds the composer here   │ │ 
+│ Ctrl+K all channels      │                                                  │ │ Opens the thread in     │ │ 
+│                          │                                                  │ │ Slack.                   │ │ 
 │                          │                                                  │ └───────────────────────────┘ │
 ├──────────────────────────┴──────────────────────────────────────────────────┴───────────────────────────────┤
-│ List keys: j/k move · Space peek · Enter open · r open in Slack · e done · h snooze · ? keys               │ footer 28
+│ j/k · Space peek · Enter open · r Slack · e done · h snooze · t agent · m issue · x wrong · n next · ? keys│ footer 28
 └────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-The footer shows only keys that work in this release: in Release 1 `r` reads "open in Slack" and `m make issue` is absent. The rail is collapsible from its header button and the palette id `messages.rail` (not `[`, which is Home's previous split). Below 1,100 px the rail collapses to 48 px first; below 900 px the peek replaces the conversation. The top bar shows the Needs reply count. The OS notification and the tray count are Home's, not Messages' (§9.9). The rail shows every list's count, and a DM can count in both Needs reply and Unread.
+The footer shows only keys that work in this release: in Release 1 `r` reads "open in Slack", `a` and `l` are absent, and `t agent`, `m issue`, `x wrong class` and `n next` are on it (the footer per mode is in §6.5; the mock above shortens the labels to fit). The rail is collapsible from its header button and the palette id `messages.rail` (not `[`, which is Home's previous split). Below 1,100 px the rail collapses to 48 px first; below 900 px the peek replaces the conversation. A collapsed rail item shows its first two letters (or a glyph for a list) and a count dot, so two channels never share an icon. The top bar shows the Needs reply count. The OS notification and the tray count are Home's, not Messages' (§9.9). The rail shows every list's count, and a DM can count in both Needs reply and Unread.
 
-**Width budget.** At 1,000 px with the rail at 48 and the peek at 440, the list gets 512 px. A Needs reply row keeps its fixed part (glyph, who, age, the place) at 200 px, the title takes the rest, and the facts drop in this order when the title would be under 120 px: linked-object chips, then the reason chip, then the place. Text scale 1.3 scales text and row heights only. Conversation lines grow with text scale, and 20 px is the minimum.
+**Width budget.** At 1,000 px with the rail at 48 and the peek at 440, the list gets 512 px. A Needs reply row keeps its fixed part (glyph, who, age, the place) at 200 px, the title takes the rest, and the facts drop in this order when the title would be under 120 px: linked-object chips, then the reason chip, then the place. On the cursor row the buttons drop their labels (icon only) before the title shrinks under 120 px. Text scale 1.3 scales text and row heights only. Conversation lines grow with text scale, and 20 px is the minimum.
 
-**Needs reply row.** Glyph (class: direct question a filled square, review ask a diamond, FYI a circle), who, the place (`DM` or `#channel`), the one-line title (Release 1: the first 80 characters of the newest message not mine; the model gist is Release 3, §9.1), age, and on the cursor row two or three buttons (Reply, Snooze, Done). Facts are fixed columns, never colour alone.
+**Needs reply row.** Glyph (class: direct question a filled square, review ask a diamond, FYI a circle), who, the place (`DM` or `#channel`), the one-line title (Release 1: the first 80 characters of the newest message not mine; the model gist is Release 3, §9.1), age, and on the cursor row three buttons (Reply, Snooze, Done) and a More button that lists Hand to agent (`t`) and Make issue (`m`) with their keys. In Release 1 Reply opens the thread in Slack; its tooltip says "Opens the thread in Slack." Facts are fixed columns, never colour alone. The reason chip shows only when it adds what the place column does not say ("mention", "review ask", "keyword"); a DM row has no "DM" chip.
 
 **Conversation.** Open with `Enter` from a list or `Ctrl+K`. It fills the middle column. See §6.3.
 
-**Peek.** `Space` on a list row shows the thread, or on a conversation line shows that message's thread, or the linked object (a PR's summary, an issue's fields) when the cursor is on a link row. In Release 2 the composer is in the peek so a reply never leaves the list. In Release 1 the peek shows "Open in Slack" in its place (the mock above is the Release 1 frame; the composer is in frame 3), and so does Home's peek of a `dm` or `mention` row (Home's `r` Reply composer must be hidden for those kinds until M2c; that is an open edit to the Home spec, §9.2). The Home peek of a Messages row gets only Home's keys.
+**Peek.** `Space` on a list row shows the thread, or on a conversation line shows that message's thread, or the linked object (a PR's summary, an issue's fields) when the cursor is on a link row. The header reads "Thread · #harbor" with a "Copy link" button; it shows no internal id. Under it the peek lists the root and every reply the store holds, each with name and time ("Kim 08:20", "Ada 08:41"). Three states of the replies: loaded (the list); never read, which says "Replies not loaded. Load replies (1 per minute)" with a button that shows a countdown ("next in 41 s") while it waits and is off when offline ("Offline"); and none ("No replies yet."). In Release 1 the peek's one button is "Open in Slack (r)", under the line "Opens the thread in Slack." UI copy never names a release; in Release 2 the composer takes that place. Home's peek of a `dm` or `mention` row shows the same button (Home's `r` Reply composer must be hidden for those kinds until M2c; that is an open edit to the Home spec, §9.2). The Home peek of a Messages row gets only Home's keys.
 
-**Look.** The design lane draws it in M1j from `Theme/Tokens.axaml` and `Typography.axaml`; the roles are fixed here. Name, time, body and code each take a type role from `Typography.axaml`. An avatar is a 20 px disc with initials and a colour hashed from the user id; no remote image loads. Unread is a bold name plus a dot. A mention is an accent bar on the left and the word "you". The three classes are three shapes (a filled square for 3, a diamond for 2, a circle for 1) and the peek names the class in words. Row, chip and button hover and pressed states follow Home's. Motion is 120 ms, and none under reduced motion. Frames 11 and 12 show hover and pressed.
+**Look.** The design lane draws it in M1j from `Theme/Tokens.axaml` and `Typography.axaml`; the roles are fixed here. Name, time, body and code each take a type role from `Typography.axaml`. An avatar is a 20 px disc with initials and a colour hashed from the user id; no remote image loads. Unread is a bold name plus a dot. A mention is an accent bar on the left and the word "you". The three classes are three shapes (a filled square for 3, a diamond for 2, a circle for 1) and the peek names the class in words. Row, chip and button have three different looks: rest, hover and pressed. Hover lifts the fill one token step above rest. Pressed drops the fill one step below rest and moves the content down 1 px. A frame shows all three side by side for a row, a chip and a button. The cursor ring stays inside the list gutter (20 px in) and never runs to the window edge. A code such as SND-MSG-028 stays on one line (no wrap) or sits under "Details". A search row has no radio circle; the cursor row is a plain highlight. A number in a frame, such as "38 ms", is a placeholder: timings are asserted only in `perf` (W13). At 1,000 px the footer never clips mid-word: chips drop in the order of §6.5 and `? keys` stays. **UI copy never names a release.** No frame carries a Release badge; the release stays in the frame's file name. Motion is 120 ms, and none under reduced motion. Frame 12 shows hover and pressed.
 
 ### 6.2 The four lists
 
 | List | Holds | Order | Leaves when |
 |---|---|---|---|
 | Needs reply | threads that meet the one definition in §7.1. Release 1 shows class 3 and 2 only (call 21) | class, then blocks, then oldest | the §7.1 exclusions: I reply, press Done, snooze, or the thread links an issue with an owner and nothing new asks me. A read mark never removes a thread |
-| Unread | conversations with messages after my local read pointer, not muted. In Release 1 it is also where a class 1 thread shows | most recent first | the pointer passes them (lines scroll into view, or `End`) |
+| Unread | conversations with messages after my local read pointer, not muted. In Release 1 it is also where a class 1 thread shows | most recent first | the pointer passes them: lines scroll into view, `End`, `e` on the row, or Mark all read |
 | Later | threads and messages I flagged (Release 2; the rail entry is hidden while no flag exists, so it hides again when the last flag goes; an open Later list shows its empty state until the owner leaves it) | newest flag first | I remove the flag |
 | Drafts | my unsent drafts, owner-written and agent-written (Release 2) | oldest first | I send or delete |
 
 Counts on the rail are computed from the store. Done and snoozed rows are not counted. Unread and Needs reply overlap: a DM I have not read is in both.
 
+**Where the cursor starts.** On open of a list the cursor is on the first row (the New row when one exists), and an open peek shows that row. On return from a conversation (`Esc`) the cursor is on the last row opened. An empty list has no cursor and shows its empty state. Test: `Cursor_starts_on_row_one_and_returns_to_the_last_opened`.
+
+**Clearing Unread.** A conversation leaves Unread by three local acts: read it, press `e` on its row (the pointer goes to its newest line), or press "Mark all read" in the footer (every listed pointer goes to its newest line). None writes to Slack. None writes a `home.row.done` event, because Home never raised these rows. With 14 unread conversations the owner reaches 0 in one press, not 14 opens. Test: `E_in_unread_moves_the_pointer_and_writes_no_home_event`.
+
 ### 6.3 The dense conversation
 
 - **One line per short message**, grouped by author: the name and time show on the first line of a run; later lines show only the time, on hover. A run breaks after 5 minutes of silence or a different author. Line height 20 px; rows are virtualized.
-- **Threads collapsed inline**: "Ada, Sam and 2 more · 6 replies · last 09:02" as one 28 px line under the root. `Enter` opens the thread in the peek (`t` is hand to agent only).
+- **Threads collapsed inline**: "Ada, Sam and 2 more · 6 replies · last 09:02" as one 28 px line directly under its own root, with the same count the peek shows. `Enter` opens the thread in the peek (`t` is hand to agent only).
 - **Code and diffs**: fenced code renders mono with a copy key; a block that starts `diff --git` or has +/- lines gets add and remove colours. Inline code is mono.
 - **Link rows**: §9.3.
 - **Reactions** are chips under the line with counts and the names on hover. The owner's own chip has a filled border.
@@ -402,14 +424,15 @@ Keys follow the #2978 grammar. `?` shows the live set. The rule is decision 11: 
 | `Space` | peek | no |
 | `Enter` | open the conversation / thread full | no |
 | `r` | Release 1: opens the thread's permalink in Slack (a reply by hand; gate G counts opens to read, not these). Release 2: opens the composer in the peek | no (sending does) |
-| `e` | Done (leaves Needs reply); Undo `Ctrl+Z` for 5 s | no |
-| `h` | snooze picker (§9.4); `f` inside it toggles "unless replied" (Release 2; Release 1 uses Home's picker as it is) | no |
-| `m` | make issue from the thread (§9.5, Release 3) | no (Linear) |
+| `e` | In Needs reply: Done (leaves Needs reply); Undo `Ctrl+Z` for 5 s. In Unread: mark read, which moves the local pointer to the newest line of that conversation; Undo `Ctrl+Z` for 5 s; no Slack write and no `home.row.done` event | no |
+| `h` | snooze picker (§9.4), opened beside the cursor row; `f` inside it toggles "unless replied" (Release 2; Release 1 uses Home's picker as it is). Offered on Needs reply rows only: an Unread row has no Home row to snooze | no |
+| `m` | make issue from the thread (§9.5, Release 1) | no (Linear) |
 | `a` | attach the thread to an issue (Release 3) | no |
-| `t` | hand to agent (Home §5.1 picker); the only meaning of `t` | no |
+| `t` | hand to agent (Home §5.1 picker); the only meaning of `t`. Release 1: the session reads the thread and writes no draft (§9.7 item 8) | no |
 | `u` | mark unread: moves the local pointer only; `Ctrl+Z` undoes it for 5 s. It never writes to Slack, with or without the opt-in | no |
 | `l` | flag for Later (Release 2); follow and star are in the `.` panel; `Ctrl+Z` undoes it for 5 s | no |
 | `n` | next unread / needs-reply row | no |
+| (no key) | Mark all read: a footer chip in Unread and the palette entry `messages.mark-all-read`. It moves every listed conversation's pointer to its newest line (muted ones are skipped); one 5 s Undo restores them all; local | no |
 | `x` | wrong class: logs this row's class as a miss (the `messages.class.missed` event, ids only), shows "Marked wrong" on the row; `Ctrl+Z` undoes it for 5 s (dogfood, Release 1; gate G (a) reads it) | no |
 | `Esc` | back one layer (below) | no |
 | `/` | filter this list. Search and jump is `Ctrl+K` (header, rail and palette all say `Ctrl+K`) | no |
@@ -435,7 +458,16 @@ Starred channels and "all channels" are reached with `Tab` into the rail (one ta
 
 `→` does nothing on a message line, as on a Home row. `Tab` stays focus traversal. `g` is not a key. Every key has a palette entry with its key shown (Superhuman's rule). The footer shows a chip, "List keys", "Message keys" or "Composer", and a screen reader announces a change of mode ("Message keys: reading #harbor"). Pickers, menus, sheets and the brief show their own footer keys and no mode chip. A bare letter fires only when no text field has focus. The search scope switch has no key: the scope chip is a button, and the palette has `messages.search-scope`. `B` (Release 3) runs the catch-up brief (§9.6).
 
-**Read marks are local.** A line is read after it has been on screen for 1 s with the window focused and an input in the last 2 minutes (for a screen reader, the line under the cursor, not the viewport). The pointer moves to the newest line seen; no key moves it except `u`, `End` and the palette entries. The pointer is the later of the local pointer and Slack's `last_read_ts`, so reading on the phone clears Unread here, except in a conversation where the owner pressed `u`: there the pointer stays until the owner reads past it. Nothing here writes to Slack by a bare key. With `messages.syncReadToSlack` on, the owner's own opt-in, a forward move from viewing is sent as `conversations.mark` while online, one mark per changed conversation, and the page header says so ("Read marks sync to Slack"). `u` and `End` never sync. Offline nothing is queued: the header says "Read marks not synced: offline", and on reconnect the pointer is compared with Slack's `last_read_ts` and one mark per changed conversation is sent. That is a fresh compare, not a queue: no act row is stored.
+**Footer per mode (Release 1).** It shows only keys that work. At 1,000 px chips drop from the right in this order: `t`, `m`, `u`, `Esc`. `x`, `n` and `? keys` stay, because gate G reads `x` and `n` is the walk through the list.
+
+| Mode chip | Footer, left to right |
+|---|---|
+| List keys (Needs reply) | j/k move · Space peek · Enter open · r open in Slack · e done · h snooze · t hand to agent · m make issue · x wrong class · n next · ? keys |
+| List keys (Unread) | j/k move · Space peek · Enter open · r open in Slack · e mark read · t hand to agent · m make issue · n next · Mark all read · ? keys |
+| Message keys | j/k move · Enter thread · r open in Slack · e done · h snooze · t hand to agent · m make issue · u mark unread · n next · Esc back · ? keys |
+
+
+**Read marks are local.** A line is read after it has been on screen for 1 s with the window focused and an input in the last 2 minutes (for a screen reader, the line under the cursor, not the viewport). The pointer moves to the newest line seen; no key moves it except `u`, `End`, `e` in Unread and the palette entries (Mark all read among them). The pointer is the later of the local pointer and Slack's `last_read_ts`, so reading on the phone clears Unread here, except in a conversation where the owner pressed `u`: there the pointer stays until the owner reads past it. Nothing here writes to Slack by a bare key. With `messages.syncReadToSlack` on, the owner's own opt-in, a forward move from viewing is sent as `conversations.mark` while online, one mark per changed conversation, and the page header says so ("Read marks sync to Slack"). `u` and `End` never sync. Offline nothing is queued: the header says "Read marks not synced: offline", and on reconnect the pointer is compared with Slack's `last_read_ts` and one mark per changed conversation is sent. That is a fresh compare, not a queue: no act row is stored.
 
 **`Esc` has one job: close or back out one layer.** The order is: picker or menu, then the composer (unsaved text stays as a draft and the composer blurs), then the peek, then the conversation, then the list. When Messages was opened from a Home row (`Enter` on a `dm` or `mention` row), the last `Esc` returns to Home with the cursor on that row. `Esc` never marks anything read. Test: `Esc_out_of_conversation_does_not_mark_unseen_lines_read`.
 
@@ -445,16 +477,29 @@ Every surface also shows the one status line of §5.3. Banners name the cause an
 
 | Surface | Loading | Empty | Stale or behind | Disconnected or revoked | Rate limited | Failed write |
 |---|---|---|---|---|---|---|
-| Needs reply | 6 skeleton rows from the cache | "You're caught up." with the next snooze time | rows stay; header says "Behind: 12 min" | "Slack token expired. Reconnect" (SND-MSG-002) | header "Behind" + reason | row keeps its place; "failed: reason" + Retry |
+| Needs reply | 6 skeleton rows from the cache | "You're caught up." with the next snooze time and, when Unread holds rows, an "Open Unread (14)" button | rows stay; header says "Behind: 12 min" | "Slack token expired. Reconnect" (SND-MSG-002) | header "Behind" + reason | row keeps its place; "failed: reason" + Retry |
 | Unread | skeleton | "Nothing unread." | gap markers in conversations | as above | as above | n/a |
 | Conversation | cached lines paint; new ones stream in | three states. (a) Slack returned zero: "No messages yet. Say hi." (b) the store is empty and history is not read: a gap marker, "History not loaded. Load older (1 per minute)", never "Say hi". (c) Slack Connect with `messages.connect.store: off`: lines are fetched live and held in memory; offline or limited it says "Text from other organisations is not kept here. Open in Slack." | gap marker | read-only with a banner | gap marker with Load older | the line stays, greyed, red "failed: reason", Retry and Discard |
-| Peek thread | root first, replies stream | n/a | "replies loaded 09:12" | as above | as above | as above |
-| Composer | n/a | placeholder with the target | n/a | Send off, "Reconnect to send"; the box stays editable; offline: "Offline: your text is kept as a draft. Send when you're back." (SND-MSG-028) | "waiting, 12 s" (up to 2 minutes, then failed with Retry) | draft kept, error above it. On success the line turns normal and a 5 s confirmation line offers "Sent." with a **Follow up if no reply** button |
-| Search | local results paint first, "Searching Slack..." | "Nothing in the store. Search Slack?" | "Slack search unavailable: limit" | "Local results only" | "Local results only, Slack limit" | n/a |
+| Peek thread | root first, replies stream | "No replies yet." (Slack returned none) | "replies loaded 09:12"; never read: "Replies not loaded. Load replies (1 per minute)" | as above | "Replies not loaded. Load replies (next in 41 s)" | as above |
+| Composer | n/a | placeholder with the target | n/a | Send off, "Reconnect to send"; the box stays editable; offline: "Offline: your text is kept as a draft. Send when you're back." (SND-MSG-028) | "waiting, 12 s" (up to 2 minutes, then failed with Retry) | the draft is kept and the failure shows once, as the red line on the thread (no second banner above the box). On success the line turns normal and a 5 s confirmation line offers "Sent." with a **Follow up if no reply** button |
+| Search, local only (Release 1) | local results paint first | "Nothing in the store yet. Open a conversation to load it." | "Local results only: Sindri has not read older messages." | "Local results only" | n/a | n/a |
+| Search with the Slack second pass (Release 3) | local results paint first, "Searching Slack..." | "Nothing in the store. Search Slack?" | "Slack search unavailable: limit" | "Local results only" | "Local results only, Slack limit" | n/a |
 | Catch-up brief | plain facts paint, sentence streams | "Nothing changed." | "Written from the store as of 09:12" | n/a | n/a | "Model off: facts only" |
 | Scope missing | the feature is disabled, not hidden | n/a | n/a | n/a | n/a | "Needs scope `files:write`. Reconnect" (SND-MSG-003) |
 
 **Offline and success, for the first table's surfaces.** Offline: every list and conversation stays readable from the store with the header "Offline: last read 09:41"; every write is refused at once with SND-MSG-028. Success: Done leaves the row in place with a 5 s Undo; a landed send turns the line normal and shows the 5 s "Sent." confirmation line with its Follow up button; a search shows its source tags. Load older is a button with its own row: the countdown "next in 41 s", disabled while a call runs and while offline ("Offline"). Offline, Retry on a failed line, react, pin, delete and share are disabled with the reason "Offline", not clickable and then refused with SND-MSG-028; Retry comes back as soon as the header says Live. The emoji picker offline shows "built-in names; picking is off until you're back". First run offline: step 3 stores nothing and says "Offline: connect when you're back"; the token field keeps its text for the session (frame 8 has the variant).
+
+**Result lines.** Each lasts 5 s, pauses while hovered or focused, and takes `Ctrl+Z` for Undo where it names one. The line replaces the row's content in place, so nothing around it moves; at 5 s the list closes the gap and the cursor lands on the next row.
+
+| Action | The line | The row afterward |
+|---|---|---|
+| Done (`e`, Needs reply) | "Done. Undo" | gone at 5 s; the cursor is on the next row |
+| Mark read (`e`, Unread) | "Marked read. Undo" | gone at 5 s |
+| Mark all read | "14 conversations marked read. Undo" | the list then shows "Nothing unread." |
+| Snooze (`h`) | "Snoozed until Mon 9:00. Undo" | gone at 5 s; under Snoozed as "back Mon 9:00" |
+| Wrong class (`x`) | "Marked wrong. Undo", and a "Marked wrong" chip stays on the row | the row stays in place |
+| Hand to agent (`t`) | "Handed to Claude Code. Open session" (the provider the owner picked) | the row stays; no Undo, because a session started |
+| Make issue (`m`) | "Created ENG-412. Open issue"; when the issue has an owner, also "Moved out of Needs reply" | the row shows the key chip; no Undo |
 
 **More surfaces.** Copy is fixed here; the cells that say "as above" follow the table above. Offline means no network.
 
@@ -466,8 +511,9 @@ Every surface also shows the one status line of §5.3. Banners name the cause an
 | Link row | the row paints from the store with no spinner | n/a | `none`: plain text, never an error chip | local, fine | n/a |
 | Files and thumbnails (Release 3) | grey box 96 px high | n/a | "Could not load file" chip with the name and Retry; for SND-MSG-010 (too large) no Retry, only "Open in Slack" | cached thumbnails stay | n/a |
 | Emoji picker | recent and cached emoji paint first | "No match" | "Emoji list unavailable: showing built-in names" | built-in names and the cache | a failed react removes the chip's own border and shows one line, "couldn't react: reason", with Retry |
-| Snooze picker | n/a | n/a | SND-MSG-013 and 014 show in the picker | local, fine | "back Mon 9:00" on the row |
-| Make-issue sheet and attach picker (Release 3) | team and project lists paint from the cache | picker: "No issue matches" | SND-MSG-017 and 018 show in the sheet | disabled with the reason | Create shows the full body first; the row then shows the issue key |
+| Snooze picker | opens beside the cursor row | n/a | SND-MSG-013 and 014 show in the picker | local, fine | "back Mon 9:00" on the row |
+| Hand to agent (Home's picker, Release 1) | the dialog paints at once | n/a | "No agent provider is set up." with a Settings button | local, fine | the result line above |
+| Make-issue sheet (Release 1) and attach picker (Release 3) | team and project lists paint from the cache | picker: "No issue matches" | SND-MSG-017 and 018 show in the sheet | disabled with the reason | Create shows the full body first; the result line above; the row then shows the issue key |
 | Read mark (opt-in sync) | n/a | n/a | silent in the list | the header says "Read marks not synced: offline"; nothing is queued | n/a |
 | Toast and tray (Home's) | n/a | n/a | n/a | n/a | sender and place only: "Sam, DM" (the preview text arrives with Release 2, §9.9) |
 | First run | §6.8 | §6.8 | §6.8 | §6.8 | §6.8 |
@@ -490,13 +536,28 @@ Every surface also shows the one status line of §5.3. Banners name the cause an
 
 ### 6.8 First run
 
-The page cannot exist without a token, so an empty page is the connect card. It has three steps; each has a Done check and its own failure line.
+The page cannot exist without a token, so an empty page is the connect card. It has three steps; each has a Done check and its own failure line. Sindri cannot know the app's id before the owner creates the app, so every button that needs the app's page opens Slack's app list (`https://api.slack.com/apps`) and the owner picks the app. That button reads "Open my Slack apps".
 
-1. **Create the app.** "Open Slack's create-app page" opens the prefilled manifest link **(guess; P0 line 8)**, with the manifest text beside it. Failure: the link does not work, so the card shows the manifest and the steps by hand.
-2. **Install it.** "Install to workspace." Failure: the workspace blocks the app (SND-MSG-019). The card then shows copyable request text for the admin, and says no Messages page can exist until the admin approves.
-3. **Paste the token.** The field is write-only and never echoed; Sindri clears the clipboard after the paste, if it can. The card detects the token kind (SND-MSG-030) and checks the scopes (SND-MSG-003).
+1. **Create the app.** The primary button "Open Slack's create-app page" opens the prefilled manifest link **(guess; P0 line 8)**. The manifest text sits beside it with a "Copy manifest" button. Failure: the link does not work. The card then shows the manifest and the steps by hand; its primary button is "Open my Slack apps" and "Copy manifest" is second.
+2. **Install it.** The line: "In your app's page, choose Install to Workspace." Buttons: "Open my Slack apps" (primary) and "I installed it". Failure: the workspace blocks the app (SND-MSG-019). The card shows copyable request text for the admin, says no Messages page can exist until the admin approves, and its button is "Copy request text".
+3. **Paste the token.** The line: "In your app's page, open OAuth & Permissions and copy the User OAuth Token. It starts with xoxp-." Buttons: "Open my Slack apps" and "Connect". The field is write-only and never echoed; Sindri clears the clipboard after the paste, if it can. The card detects the token kind (SND-MSG-030) and checks the scopes (SND-MSG-003).
 
-After connect, the first sync shows what loads: "40 conversations, 0 messages so far". An empty store on a poll path says "Listening. New messages appear here. Open a conversation to load its history (1 per minute)". The `messages` step in `sindri setup` is `Skipped` until the owner presses Connect Slack (or the profile names `messages`), then `NeedsYou`, then done when the `messages:token` doctor row is ok. An owner who never connects Slack keeps the doctor `setup` row clean.
+**Step 3 failures.** Each has one plain line and one button, so the owner never lands on a card with no way forward.
+
+| Cause | Code | The line | The button |
+|---|---|---|---|
+| A bot, app or cookie token | 030 | "That is a bot token (xoxb-). Messages needs the User OAuth Token (xoxp-), under User Token." The line names the prefix that was pasted | Paste another token |
+| A mistyped or revoked token | 002 | "Slack does not accept this token. It may be mistyped or revoked. Copy it again from OAuth & Permissions." | Paste another token |
+| A token from another workspace (seen on reconnect; the first connect fixes the workspace) | 024 | "This token is for another workspace. This connection is for ferry-labs. Paste the right one." | Paste another token |
+| A missing scope | 003 | "The token is missing the scope im:history. Add it in your Slack app, reinstall the app, then check again." | Open my Slack apps (primary), Check again (second) |
+| Slack answers 5xx | none | "Slack is not answering. Your token is fine. Sindri tries again in 30 s." | Try now |
+| Slack answers 429 during the first sync | none | "Slack asked Sindri to wait. Reading continues in 41 s. Nothing is lost." | Pick a conversation to load |
+| No network | 028 | "Offline: connect when you're back." The field keeps its text | Try again |
+| The admin blocks the app | 019 | the request text above | Copy request text |
+
+A 5xx and a 429 carry no SND-MSG code: the header shows the rate-limit words of §5.3.
+
+After connect, the first sync shows progress: "Reading the last 30 days: 12 threads found" with a progress bar, then "Found 14 threads in the last 30 days." (the cold-start fill, §5.2). It states the count even when it is 0: "Found 0 threads in the last 30 days. New messages appear here." Under it sits the line "40 conversations". An empty store on a poll path then shows "Listening. New messages appear here." with one primary button, "Pick a conversation to load", which opens the `Ctrl+K` jump list; the picked conversation loads at 1 request per minute where Slack limits history. The `messages` step in `sindri setup` is `Skipped` until the owner presses Connect Slack (or the profile names `messages`), then `NeedsYou`, then done when the `messages:token` doctor row is ok. An owner who never connects Slack keeps the doctor `setup` row clean.
 
 ## 7. Triage: what waits on me, and in what order
 
@@ -602,6 +663,7 @@ All under `/sindri/messages`, named by M1f (§14). A session read returns ids, k
 | `GET /threads/{conversation}/{ts}` | the root, replies, linked rows, `thread_state` |
 | `GET /search?q=&scope=local\|slack\|everything` | §9.8 |
 | `POST /send` | `{conversation, threadTs?, text, actId, draftId?}`. A POST whose `actId` already has an outbox row is the retry: it takes no `text` (the row holds it) and runs the lookup first (§8.3 step 5). Offline it is refused (SND-MSG-028) |
+| `POST /lists/unread/read`, `POST /lists/unread/unread` | Mark all read and its Undo (Release 1, local): `{conversations: [{id, ts}]}` moves the local pointers in one transaction. Sends nothing to Slack and writes no Home event |
 | `POST /messages/{conversation}/{ts}/edit`, `/delete`, `/react`, `/unreact` | own-message writes and reactions |
 | `POST /conversations/{id}/read`, `/unread` | `{ts}`: moves the local pointer (Release 1). With `messages.syncReadToSlack` on, or from the `.` panel's "Mark read in Slack", it also sends `conversations.mark` while online (Release 2); offline it sends nothing and queues nothing |
 | `PUT /drafts/{id}`, `DELETE /drafts/{id}` | local drafts, with `version` |
@@ -695,14 +757,14 @@ The store and the timer are Home's: the ledger events `home.row.snoozed`, `.woke
 
 ### 9.5 Make an issue, attach a thread
 
-Release 3.
+`m` (make issue) is Release 1: it writes to Linear and to Home's `home_links`, never to Slack. `a` (attach) and Save as a note are Release 3. The reply-in-thread box is a Slack write, so it is Release 2; the Release 1 sheet does not show it.
 
 - `m` opens a sheet: title (the gist or the first 80 characters, editable), team, project (the project whose PR the thread links, else the last used), assignee (me), body, label. **The body is the Slack permalink plus text the owner types.** Sindri never copies Slack text into the body. The sheet shows the full body before Create. The owner may paste a quote; that is the owner's edit. Make issue is the owner's act only: no agent and no workflow runs it. Create calls the existing Linear create-issue write (the New issue sheet's route), then writes an `about` edge to Home's `home_links` and the event `messages.thread.linked`.
 - `a` opens a picker over issues and PRs (the palette's search) and records the same edge without creating anything.
 - **Both ways.** The thread row shows the issue key. The issue's peek and the PR's peek show the thread (Projects and Reviews read `home_links`). A thread with an `about` edge counts in `blocks`.
 - **Leaves Needs reply.** A thread with an `about` edge whose issue has an owner leaves Needs reply (exclusion 4, §7.1), unless a newer message is class 3 (Missive's assign-moves-it-out rule, ledger 10).
 - **A link in the text is only `mentions`.** A `mentions` edge shows "Mentioned in 2 threads" on the PR and never ranks, so a stranger's link cannot lift a row.
-- **No Slack write by default.** "Reply in the thread with the issue link" is a checkbox, off. Question 4.
+- **No Slack write by default.** "Reply in the thread with the issue link" is a checkbox, off (Release 2; Release 1 writes nothing to Slack, so the sheet hides it). Question 4.
 - **Save a decision as a note** (`messages.save-note`, with the quote, the author, the time and the permalink) waits on the Notes page (#2981) and shows disabled with that reason until it ships.
 
 ### 9.6 Catch-up brief
@@ -719,7 +781,7 @@ The job is `MessagesBrief`, one of the Home-brief family: facts first, a model f
 
 ### 9.7 Agents on your side
 
-Items 1 to 7 (workflow triggers, nodes and test runs) are Release 3, from the engine plan on #2979 (accepted by meta). Item 8 (a session the owner hands a thread to, through §6.4's "Ask an agent to draft" or Home's "Hand to agent") and the agent draft it writes are Release 2: the owner presses the button and the owner sends, so no workflow is needed. All of it waits on the Slack sync (M1e). The rules below are `agent default (lead, 2026-11-12)`.
+Items 1 to 7 (workflow triggers, nodes and test runs) are Release 3, from the engine plan on #2979 (accepted by meta). Item 8 splits. The hand-off (the owner presses `t` or Home's "Hand to agent"; the session reads the thread through the per-thread `show` grant) is Release 1: it writes nothing to Slack and needs no composer. The agent draft (§6.4's "Ask an agent to draft", `messages_draft`, the Drafts list) stays Release 2, because it needs the drafts store and the composer; there the owner presses the button and the owner sends, so no workflow is needed. All of it waits on the Slack sync (M1e). The rules below are `agent default (lead, 2026-11-12)`.
 
 1. **Triggers.** New `connection_event` kinds fed by the sync service from the store: `messages.mention`, `messages.dm`, `messages.thread.reply`, `messages.keyword` (new names: `slack.mention` already exists for `slack:work` with a `text` field, and the same key must not mean "ids only" on `slack:messages`). They replace the one-channel poll for these uses. **This needs an engine change (call 23, M3d0).** On main `PollGroupSource` dispatches a `connection_event` trigger only through `PollCatalog` and an `IEventPoller` whose preset equals the connection's; `slack:messages` has `Preset = null`, so no poller matches and a trigger on it would save and never fire. M3d0 adds a store-fed event source (not an `IEventPoller`) that the sync service calls, keyed per connection, that starts runs through the same occurrence and dedupe path with `deliveryId` = the message `ts`, and a catalog check per connection kind, so `messages.dm` on `slack:work` and `slack.message` on `slack:messages` are refused at save. Tests: `Trigger_on_messages_connection_fires_once_per_ts`, `Messages_kind_on_a_work_connection_is_refused`. **The payload is ids only:** `{conversation, ts, thread_ts, permalink, kind, external}`. `external` is true for a Slack Connect or other-org author. A trigger ignores the owner's own messages and any message a Sindri workflow posted (matched by `actId`), so two workflows cannot loop. An external trigger fires a node only if the node opts in. The catalog check (#2987) covers a typo.
 2. **No message text in any run store.** `workflow_run.trigger`, `workflow_node_run.input` and `.output` (ledger.db), and the `GraphWorkflow` history in temporal.db hold ids, never text. On main a node run's input and output are stored as text up to 64 KB (`NodeRunLimits`), and the generic `prompt` node stores its filled-in prompt (`GraphBlockActivities.cs:62-87`), so the generic `prompt` node is never used over Slack text. The rule is built on ids: a Messages trigger and Messages nodes emit ids only, and a Messages node that needs text (`messages_classify`, `draft_message`) fetches it from `messages.db` in process at run time and never writes it to the run, node or Temporal records. Its stored input is ids and its stored output is ids, plus a hash and a length at most. The run-store rule needs no engine change (lead calls 9 and 13, §2); the trigger source does (item 1, call 23). A failed Messages node stores an error of a code plus a fixed title only, as `TestConnectionService` does, because a Slack or model error can repeat message text or the token. Tests: `Run_record_holds_no_message_text`, `Failed_messages_node_stores_code_and_title_only` (W18). So `wf run-show` and MCP `workflow_run_get`, which a session may read, return no text.
@@ -728,17 +790,17 @@ Items 1 to 7 (workflow triggers, nodes and test runs) are Release 3, from the en
 5. **`draft_message`.** Writes a draft (origin `agent:<run>`, a separate row), listed in Drafts and as a Needs you row on Home, with approve, edit and drop. The node waits for the owner, like `ask_owner`. Outputs: `sent`, `edited` or `dropped`, and the hash and length of the final text.
 6. **`send_message`.** Sends without asking, from **owner-written templates only**: text the owner typed in the workflow, plus typed slots filled from the store (ids, numbers, links, a display name). Model output is not a slot. At activation, a `send_message` whose text has an upstream path through a `prompt` node over Slack text is refused (SND-MSG-016). Activation is also refused unless the revision was saved by a human (`saved by human:*`). Every send is recorded on the run and as `messages.send.workflow`. Limits: the node names its conversations and sends to no other; at most `messages.send.dailyCap` (20) sends a day per workflow and `messages.send.dailyCapWorkspace` (40) per workspace (both `agent default (lead, 2026-11-12)`); text with `@channel`, `@here` or `@everyone` is refused (SND-MSG-016). A typed slot (such as a display name) is colleague-controlled text. Every slot value has `&`, `<` and `>` escaped before it enters the template (Slack's own escaping). The broadcast check then runs on the **rendered** text and refuses the words `@channel`, `@here` and `@everyone`, Slack's special forms `<!channel>`, `<!here>`, `<!everyone>` and `<!subteam^…>`, and any `<@…>` or `<#…>` the template did not name (call 24). The composer's risk chip uses the same detector. Bidi and control characters are stripped as in §11. Tests: `Display_name_with_bang_channel_is_refused`, `Slot_values_are_escaped`. The counter is the count of outbox rows by `origin` workflow id with `created_at` since local midnight in the profile's time zone (a zone change moves the next midnight; today's count is not reset), read and inserted in one `messages.db` transaction (no new table, two new outbox columns, §8.1), so it survives a restart and concurrent runs; the `messages.send.workflow` ledger event is written after it (the ledger is another SQLite file, so it is not part of the transaction). `send_message` ships after `draft_message` has run for two weeks (the phase split M3d1 / M3d2 in §14 carries this; M3d2 needs a date field "`draft_message` in use since").
 7. **Test runs** (#2969) record "would have drafted" and "would have sent". No test run posts.
-8. **Sessions.** A launched agent session may write a draft (`messages_draft`) and nothing else (SND-AUTH-002 blocks every other Messages write). It reads no message text unless the owner hands it a thread with "Hand to agent" (Home §5.1 picker); that act opens the per-thread `show` grant of §8.4 for that thread only. The dialog names the provider and what goes along ("thread of 6 messages, 2 linked rows, about 3k tokens") and says the session is a normal session that can run shell and `gh`. The thread goes as a file the session reads through a fenced `messages_show` result, never pasted into the system prompt. The hand-off is the owner's explicit act, so it is the one way DM or Slack Connect text reaches a model.
+8. **Sessions.** From Release 2 a launched agent session may write a draft (`messages_draft`) and nothing else (SND-AUTH-002 blocks every other Messages write); in Release 1 it writes nothing in Messages. It reads no message text unless the owner hands it a thread with "Hand to agent" (Home §5.1 picker); that act opens the per-thread `show` grant of §8.4 for that thread only. The dialog names the provider and what goes along ("thread of 6 messages, 2 linked rows, about 3k tokens") and says the session is a normal session that can run shell and `gh`. The thread goes as a file the session reads through a fenced `messages_show` result, never pasted into the system prompt. The hand-off is the owner's explicit act, so it is the one way DM or Slack Connect text reaches a model.
 
 An agent draft is untrusted output. Decision 14 and §6.4 give the one rule: it is never sent without the owner's send action, and the submit menu guards `@channel`, `@here`, links and attachments.
 
 ### 9.8 Search across everything
 
-`Ctrl+K` then a query. `/` stays the list filter (§6.5). Two scopes.
+`Ctrl+K` then a query. `/` stays the list filter (§6.5). Two scopes. **Release 1 ships the Messages scope, local only:** no "Search Slack too" row, no "from Slack" tag and no Everything scope, and the scope chip stays hidden until a second scope exists. Its empty state reads "Nothing in the store yet. Open a conversation to load it." Its limited state reads "Local results only: Sindri has not read older messages." (§6.6).
 
 | Scope | Source | Speed |
 |---|---|---|
-| Messages | local FTS5 first; `Enter` on "Search Slack too" adds `search.messages` results tagged "from Slack" | local under 100 ms; Slack Tier 2, at most 3 calls a minute **(guess; P0 line 4)** |
+| Messages | local FTS5 first (Release 1); `Enter` on "Search Slack too" adds `search.messages` results tagged "from Slack" (Release 3) | local under 100 ms; Slack Tier 2, at most 3 calls a minute **(guess; P0 line 4)** |
 | Everything | Messages, issues, PRs, notes and code scope, in groups of 5 | each group as fast as its own store |
 
 Operators are Slack's words so nothing is relearned: `in:`, `from:`, `to:`, `with:`, `has:link`, `has:file`, `has:reaction`, `before:`, `after:`, `on:`, `during:`, `is:saved`, `is:thread`, quotes, `-` to exclude, `*` wildcard from 3 characters. Zulip's add `is:unread` and `near:<ts>`. `is:done` replaces Zulip's `is:resolved` (Slack has no resolved state). Cross-source adds `pr:`, `issue:`, `note:`, `code:`. A bad operator is SND-MSG-012 with its position. Everything shows groups, not one fused score: a fused rank would hide why a note outranks a message.
@@ -875,12 +937,14 @@ The whole table, its sizes, lanes and release marks are `agent default`. Size is
 | M1e | Sync (service `messages-sync`): `PollLive` only, the hot set, the search detector, the thread-reply check (20% of the bucket), the cold-start fill, gap markers, status words, `messages.synced` at its rate | api | M1c, M1d | `Gap_without_marker_fails` (W10); `Message_appears_within_30s_on_the_poll_path` (W16); `Reply_in_an_old_thread_is_seen`; `Cold_start_fill_gives_a_sample` | L, 3 | 1 |
 | M1f | Read routes, lists, conversation, thread, users, local search, `status`, `doctor`; the read verbs; the session filter | api | M1c (it reads the store; M1e only adds the status words) | `ApiGoldens_messages_lists`; `Session_read_returns_no_text` (W17) | M, 2 | 1 |
 | M1g | `POST /sindri/links/resolve` | api (second builder) | M1s (stub row store) | `Resolve_github_pr_url_to_row_key` | M, 1 | 1 |
-| M1h | Done and plain snooze through Home's ledger events (`home.row.done`, `.snoozed`, `.woke`, `.revived`; decision 13), appended directly until Home's A2 routes land, with the same event shapes so nothing is replayed | api | M1c; M1i (the Home row must exist); Home S0 (event catalog rows, migration number) | `Done_leaves_needs_reply_and_returns_on_a_new_dm` (W9) | S, 1 | 1 |
+| M1h | Done and plain snooze through Home's ledger events (`home.row.done`, `.snoozed`, `.woke`, `.revived`; decision 13), appended directly until Home's A2 routes land, with the same event shapes so nothing is replayed; the local read-pointer routes (`/read`, `/unread`, `/lists/unread/read`) for `e` in Unread, `u` and Mark all read | api | M1c; M1i (the Home row must exist); Home S0 (event catalog rows, migration number) | `Done_leaves_needs_reply_and_returns_on_a_new_dm` (W9); `E_in_unread_moves_the_pointer_and_writes_no_home_event` | S, 1 | 1 |
 | M1i | Home collector `messages`: `dm` and `mention` rows for class 3 and 2 only (sender and place titles) and the tray count; the `thread-about` edges in `home_links` can follow X2; Home must hide Reply for these kinds until M2c (an open edit to the Home spec, §9.2) | api | M1f; Home S0 routes | `Collector_raises_dm_row_once_per_episode`; `Home_row_title_holds_no_text`; `Class_1_thread_raises_no_home_row` | M, 1 | 1 (blocks X2) |
+| M1o | Make issue (`m`): the sheet, the Create call to Linear's create-issue write, the `about` edge in `home_links` and `messages.thread.linked`, the Done-leaves rule (§7.1 exclusion 4), the result line. No reply-in-thread box (Release 2) | api, ui | M1i, M1f, M1j; Linear create (#2961) | `Make_issue_body_holds_no_slack_text_unless_typed`; `Make_issue_with_an_owned_issue_moves_the_thread_out_of_needs_reply` | M, 2 | 1 |
+| M1p | Hand to agent (`t`) for Messages rows: Home's picker opened from a Messages row (an Unread row too), the dialog of §9.7 item 8, the per-thread `show` grant (§8.4), the fenced `messages_show` result, the result line. No `messages_draft` (Release 2) | api, ui | M1f, M1j; Home's picker (Home §5.1) | `Show_grant_covers_only_the_handed_thread`; `Show_without_thread_is_refused_under_a_grant`; `Hand_off_writes_nothing_to_slack` | M, 2 | 1 |
 | E1 | The poller draws from the one budget (same app id only); `post_message` and the poller refuse `slack:messages` (`Preset = null`) | engine | M1d | `Two_readers_draw_from_one_bucket`; `Post_message_refuses_the_messages_connection`; `Poller_refuses_the_messages_connection`; `Generic_connection_add_refuses_the_messages_name` | S, 1 | 1 |
 | E0 | The run-store residency harness: a fixture trigger through `workflow_run`, `workflow_node_run` and Temporal history, scanned for text bytes; includes a `prompt` node over a Messages trigger field (W18). Only M3d needs it, so it waits for Release 3 | engine | none | `Run_record_holds_no_message_text` | S, 1 | 3 |
 | M1j | Frames (§15) | design | Home's tokens | the numbers in §6 | M, 1 | 1 |
-| M1k | Rail, Needs reply and Unread on `RowList`, `Row`, `PeekPane`; counts; `Ctrl+K`, `n`, `x` | ui | M1j; the M1s stubs | `Needs_reply_paints_200_rows_with_one_store_read` (W1) | M, 2 | 1 |
+| M1k | Rail, Needs reply and Unread on `RowList`, `Row`, `PeekPane`; counts; `Ctrl+K` with local search and its empty and limited states; `n`, `x`; the footer per mode; the result lines | ui | M1j; the M1s stubs | `Needs_reply_paints_200_rows_with_one_store_read` (W1); `Cursor_starts_on_row_one_and_returns_to_the_last_opened` | M, 2 | 1 |
 | M1l | Conversation: dense lines, virtualized, gap markers, collapsed threads, reaction chips, code and diff | ui | M1j, M1b, M1f | `Short_messages_group_by_author_in_one_line_each` (W4, W5) | L, 3 | 1 |
 | M1m | Peek: thread, inline link rows, the linked object, "Open in Slack" | ui | M1l, M1g | `Link_row_paints_with_no_network_call` (W8) | M, 2 | 1 |
 | M1n | First run: the connect card and its states (§6.8) | ui | M1d, M1j | `First_run_shows_admin_blocked_request_text` | M, 1 | 1 |
@@ -888,12 +952,12 @@ The whole table, its sizes, lanes and release marks are `agent default`. Size is
 | M3f | perf: W1, W5 and W7 timings on the seeded fake; runs after gate G, because the gate reads the owner's numbers, not these | perf | M1a (a seed generator is day-one work) | `Scroll_p95_under_16ms_at_10000_lines` | M, 1 | 1 |
 | Q1 | qa (after gate G; it feeds none of the gate numbers): hostile fixtures (injection, bidi), a 429 storm, a revoked token, a gap, the residency scan (W15, W18) | qa | M1a; fixture files are day-one work | `Hostile_fixture_set_stays_plain_text`; `Text_residency_scan_finds_no_body` | M, 2 | 1 |
 | X1 | ux: the baseline: a week of Slack-open counts (opens to read) and the timing of 10 fixed jobs in Slack, now, before X2 | ux | none | the timing sheet | M, 1 | 1 |
-| X2 | The Release 1 dogfood week, split. Days 1 and 2: the owner reads real Slack beside Sindri; the owner marks each wrong class with `x` and files each gap as an issue that names a parity row and quotes nothing (feeds gate G (a), (b)). Days 3 to 7: Slack stays closed except Open in Slack; ux tallies the opens to read (feeds (c)). The owner sees Home's tray count | ux, owner | M1k, M1l, M1m, M1i, M1h | the dogfood sheet | M, 1 | 1 |
+| X2 | The Release 1 dogfood week, split. Days 1 and 2: the owner reads real Slack beside Sindri; the owner marks each wrong class with `x` and files each gap as an issue that names a parity row and quotes nothing (feeds gate G (a), (b)). Days 3 to 7: Slack stays closed except Open in Slack; ux tallies the opens to read (feeds (c)). The owner sees Home's tray count | ux, owner | M1k, M1l, M1m, M1i, M1h, M1o, M1p | the dogfood sheet | M, 1 | 1 |
 | G | **Gate G.** The owner decides. Continue to Release 2 only if: (a) Needs reply precision is 80% or more on 30 rows the owner marks over the week (rows seen, not at once; `x` is wrong, a seen row without `x` is right; cold-start `partial` rows are counted apart and do not count toward the 30), plus a recall check: the owner names 10 threads they answered in Slack that week, and at least 9 were in Needs reply or Unread before the answer, (b) a new DM shows within 30 s and a reply in an older thread within the bound of §5.2, and (c) the owner's Slack **opens to read** for "what needs me" in days 3 to 7 are at most half of the X1 baseline (an open from a Sindri permalink is a reply, not a read, and is not counted); ux tallies them in the dogfood issue. Otherwise kill rule 3 (§1). The 30 rows, 10 threads and 9 of 10 are `agent default (lead, 2026-11-12)`, and 9 of 10 went to the owner with the §16 batch (*owner can flip*); a real Needs reply list holds 5 to 15 rows at a time | owner | X2 | the three numbers | none | 1 to 2 |
 | M2t | TLA+ model of the outbox, `specs/tla/MessageOutbox/` (`MessageOutbox.tla`, `.cfg`, a `gaps/` witness). It covers send, the echo arriving before the response, a crash, a retry, and a 429 hold that expires. Bounds: 1 conversation, 2 sends, 1 crash. Checks: at most one Slack message per `actId`; no line shown twice; an `unknown` row is never re-sent unproven; an expired 429 hold never sends later. Runs with `scripts/tlc-check.sh` | api (formal-verify) | none: it needs only §8.3, so it starts on day one | the witness config fails on the invariant its line 1 names | M, 1 | 2 (gates M2a) |
 | M2a | `MessageOutbox` and `ISlackSender` (the one write port; `BannedSymbols.txt` and the architecture rule of W12), `send`, reply, react, the read-mark routes with the opt-in sync (online only), SND-MSG-004 to 009, 028, 032 | api | M1d, M1e, M2t, gate G | `Failed_send_keeps_the_line_and_retry_lands_once` (W3); `Echo_before_response_does_not_duplicate_the_line`; `Restart_with_unknown_row_never_resends_unproven` | L, 3 | 2 |
 | M2b | Drafts routes and autosave | api | M1c, gate G | `Draft_saves_after_3_characters` | S, 1 | 2 |
-| M2c | Composer: `Ctrl+Enter` send, the guards, agent drafts, optimistic line, retry, formatting, `@ # :`, `[[` | ui | M2a, M2b, M1b | `Ctrl_enter_sends_and_enter_adds_a_line`; `Agent_draft_plus_enter_sends_nothing`; `Broadcast_opens_the_submit_menu` | L, 3 | 2 |
+| M2c | Composer: `Ctrl+Enter` send, the guards, agent drafts, optimistic line, retry, formatting, `@ # :`, `[[`; the make-issue box "Reply in the thread with the issue link" | ui | M2a, M2b, M1b | `Ctrl_enter_sends_and_enter_adds_a_line`; `Agent_draft_plus_enter_sends_nothing`; `Broadcast_opens_the_submit_menu` | L, 3 | 2 |
 | M2d | The react picker (`o`), the Later and Drafts rail lists | ui | M2a, M1l | `React_pick_commits_one_write` | M, 1 | 2 |
 | M2e | The "follow up if no reply" checkbox on Home's snooze picker, the "back at" line, the post-send toast (#3020) | ui | M1h (Home's store, #3030), M1k | `Follow_up_toggle_stores_my_last_ts` | M, 1 | 2 |
 | M2f | The write verbs, `messages_draft`, the MCP tools, `send --retry` | api | M2a, M1f | `Every_route_has_a_verb_or_an_owner_only_row`; `Cli_send_again_without_retry_of_is_refused_while_the_first_is_unknown` | M, 1 | 2 |
@@ -902,7 +966,7 @@ The whole table, its sizes, lanes and release marks are `agent default`. Size is
 | X3 | ux: the day without Slack (W14), after M2e | ux | M2e | the scripted-day sheet | M, 1 | 2 |
 | T3 | tools lane, Release 3: one tools slice per Release 3 phase pulled (jobs, services, MCP tools, doctor rows that change `expected.txt`); a phase that adds them sends its lines to tools before ready | tools | the pulling phase | the aot-smoke diff | S, 1 each | 3 |
 | M3a | `MessageGist` job, cache, plain fallback, the allow list | engine | M1c | `Gist_default_sends_nothing_to_a_model` | M, 1 | 3 |
-| M3b | Make issue, attach, the sheets, Done-leaves rule | api, ui | M1i; Linear create (#2961) | `Make_issue_body_holds_no_slack_text_unless_typed` | M, 2 | 3 |
+| M3b | Attach (`a`) and its picker; the sheet's attach tab | api, ui | M1o | `Attach_records_an_about_edge_and_creates_nothing` | M, 1 | 3 |
 | M3c | `MessagesBrief` job and UI | engine, ui | M1f, M3a | `Brief_line_citing_a_missing_ts_is_dropped` (W11) | M, 2 | 3 |
 | M3d0 | **Engine: the store-fed event source** (call 23): a source the sync service calls, keyed per connection (not an `IEventPoller`), starting runs through the occurrence and dedupe path with `deliveryId` = the message `ts`; the catalog check per connection kind; the kinds `messages.mention`, `.dm`, `.thread.reply`, `.keyword` | engine | M1e | `Trigger_on_messages_connection_fires_once_per_ts`; `Messages_kind_on_a_work_connection_is_refused` | M, 2 | 3 |
 | M3d1 | Engine triggers from the store (ids only, on the M3d0 source), the `messages_classify` node, `draft_message`, the `slack-question-draft` template | engine | M3d0, M1e, M2b, E0; #2960's test run | `Messages_classify_stores_ids_only` (W18); `Prompt_node_over_a_trigger_field_stores_no_body` | M, 2 | 3 |
@@ -918,8 +982,8 @@ The whole table, its sizes, lanes and release marks are `agent default`. Size is
 2. M0a -> M0c. The owner's run, kill rules 1 and 2, and the day-0 gate decide whether M1e is ready and X2 starts. M1i and M1h also block X2 (call 25). M1a, M1b, M1c, M1d, M1g and M2t need no probe.
 3. M1a + M1c -> M1d -> M1e -> M1f -> M1i. M1d builds against the documented scope table and the fake, and does not wait for M0c; M0c can only add or remove a scope.
 4. M1b + M1j + M1f -> M1k, M1l -> M1m. M1k starts on the M1s stubs the day it merges, with a golden of the list.
-5. M1d -> E1, M1n. M1c -> M1h.
-6. M1k + M1l + M1m -> X2 -> gate G. M2t has been finished since early in Release 1.
+5. M1d -> E1, M1n. M1c -> M1h. M1i + M1f + M1j -> M1o. M1f + M1j -> M1p.
+6. M1k + M1l + M1m + M1o + M1p -> X2 -> gate G. M2t has been finished since early in Release 1.
 7. Gate G -> M2a -> M2c, M2d; M1c -> M2b -> M2c; M1h + M1k -> M2e; M1f + M2a -> M2f -> T2; M2a -> Q2; M2e -> X3.
 8. Release 3 rows run in parallel, one lane each, only when an X2 or X3 issue names the row (disjoint files).
 
@@ -936,8 +1000,8 @@ The whole table, its sizes, lanes and release marks are `agent default`. Size is
 1. Needs reply with the peek open at 1,440 px: 25 rows, the three class glyphs, a reason chip, buttons on the cursor row, the New band.
 2. The dense conversation: a busy channel, a DM, a thread in the peek with an inline link row, a code block, a diff block, reaction chips, the New divider, a gap marker.
 3. The composer (Release 2): empty, typing with a `[[` picker open, an agent draft with its label, run link and risk chips, the submit menu with "Notify 412 people", a failed send with the "Slack may have delivered this" lines, the offline composer with text being typed and the draft kept, a 429 wait with its countdown.
-4. (Release 2) The snooze picker with the "follow up if no reply" checkbox, and the "back Mon 9:00" row line. Also the agent hand-off dialog (§9.7 item 8).
-5. (Release 3) The make-issue sheet and the attach picker.
+4. The snooze picker beside the cursor row and the "back Mon 9:00" row line (Release 1); its "follow up if no reply" checkbox is Release 2. The agent hand-off dialog (§9.7 item 8, Release 1).
+5. The make-issue sheet (Release 1) and the attach picker (Release 3).
 6. (Release 3) The catch-up brief with source chips, and its model-off state.
 7. (Release 3) Search: Messages scope with "from Slack" tags; the Everything scope in groups.
 8. First run (§6.8): the connect card in three steps (create the app, install it, paste the token), each with its failure line, the admin-blocked state with the copyable request text, then the first sync ("40 conversations, 0 messages so far") and "Listening".
@@ -946,6 +1010,14 @@ The whole table, its sizes, lanes and release marks are `agent default`. Size is
 11. Dark frames of 1 and 2; the focus ring on a row, a message line and the composer.
 12. Widths 1,440, 1,200 and 1,000 px; the rail collapsed; hover and pressed states for a row, a chip and a button.
 13. The state rows of §6.6: Later and Drafts empty, a link row with `none`, an offline header, the footer mode chip ("List keys" and "Message keys"), the emoji picker with no match, a toast showing sender and place only.
+14. The result lines of §6.6: Done, mark read, Mark all read, snooze, wrong class, hand to agent, make issue.
+15. The peek with the root and three replies; the peek with "Replies not loaded"; the conversation with the collapsed thread line under its own root.
+16. Release 1 search: local rows only, the empty state and the limited state.
+17. Conversation states: "No messages yet. Say hi.", "History not loaded", Slack Connect "not kept here", Load older running and offline.
+18. The footer per mode (§6.5), at 1,440 and 1,000 px.
+19. Unread after `e` and after Mark all read; the caught-up Needs reply with "Open Unread (14)".
+20. A strip of rest, hover and pressed for a row, a chip and a button.
+No frame carries a Release badge; the release stays in the file name.
 
 ## 16. Questions for the owner
 
@@ -1006,4 +1078,13 @@ Settled after round 1 (lead calls 8 to 11): the store is Home's `home_rows`; nod
 - Retention is per thread with a 180-day cap and reads the ledger; the outbox has `origin` and `created_at` (call 26).
 - Smaller fixes: an editable offline composer, reply-check rotation and a stated latency, a probe for the connection test, error text without message text, the `show` grant for a DM, offline states for Retry, react, pin, delete, first run and Load older, the Release 1 mock, stale `/` and `l` text, one meaning of "toast", the Home Reply line as an open edit, `agent default` tags on the new numbers, M3f and Q1 after the gate, and the NITs.
 
-3 /autoplan rounds done; next: frames, then meta's UX pass.
+**Meta's UX pass (ideas, 2026-11-12).** Meta opened 40 of the 55 frames and sent 12 MUSTs, 14 nits and 5 picks. Folded, recorded as decision 22:
+
+- MUST 1 to 3, 11: first-run dead ends, step 3 failures, day-one progress, conversation states (§6.6, §6.8).
+- MUST 4: `t` and `m` in Release 1; the agent draft and the reply-with-link box stay in Release 2 (§1, §9.5, §9.7, M1o, M1p).
+- MUST 5 to 7, 9: `e` in Unread, Mark all read, result lines, `x` and `n` in the footer, the cursor rule (§6.2, §6.5, §6.6).
+- MUST 6, 8, 10, 12: the peek's replies, no release names in UI copy, Release 1 search, hover and pressed (§6.1, §9.8).
+- Nits taken (text only): 1, 2, 4 to 14. Meta's picks were taken as written.
+- Nit 3 not taken: the cursor-row button, the peek button and the footer chip name one action in three places on purpose, as Home's row / peek / footer grammar does; merging them is a design change, not a text fix.
+
+3 /autoplan rounds done; frames drawn; meta's UX pass folded; next: design redraws the frames in `messages-ux-redraw.md`.
