@@ -75,7 +75,9 @@ public sealed class InMemoryDecisionLog : IDecisionLog
 
     /// <inheritdoc />
     public ValueTask<Result<IReadOnlyList<FailureRecord>>> LatestFailuresSince(DateTimeOffset since, int count, CancellationToken cancellationToken) =>
-        Unavailable ? Done<IReadOnlyList<FailureRecord>>(_unavailable) : Done(Results.Success<IReadOnlyList<FailureRecord>>([]));   // red stub (#3232)
+        Unavailable
+            ? Done<IReadOnlyList<FailureRecord>>(_unavailable)
+            : Done(Results.Success<IReadOnlyList<FailureRecord>>([.. _failures.Where(f => f.Ts >= since).OrderByDescending(static f => f.Ts).Take(count)]));
 
     /// <inheritdoc />
     public ValueTask<Result<int>> CountFailuresSince(DateTimeOffset since, CancellationToken cancellationToken) =>

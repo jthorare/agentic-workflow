@@ -28,8 +28,9 @@ public sealed partial class QuestionEvaluator
             case StepVerdict.Errored:
             case StepVerdict.OutOfEnum:
             case StepVerdict.NoReasons:
+                var limited = result is ProviderErrored { UsageLimit: true };
                 await Fail(question.Name, at.Name, FailureCode(verdict, result), cancellationToken).ConfigureAwait(false);
-                run.Skip(at.Name, SkipReason.Failed);
+                run.Skip(at.Name, SkipReason.Failed, limited ? EvaluationReasons.UsageLimit : null);
                 return true;
             case StepVerdict.Decided:
             case StepVerdict.BelowThreshold:
@@ -62,6 +63,12 @@ public sealed partial class QuestionEvaluator
             return EvaluationReasons.NoReasons;
         }
 
-        return result is ProviderDecided ? EvaluationReasons.OutOfEnum : result.ReasonCode;
+        return result switch
+        {
+            ProviderDecided => EvaluationReasons.OutOfEnum,
+            // The CLI said it hit the usage limit: name that, not its exit code, so a stored failure tells the two apart.
+            ProviderErrored { UsageLimit: true } => EvaluationReasons.UsageLimit,
+            _ => result.ReasonCode,
+        };
     }
 }

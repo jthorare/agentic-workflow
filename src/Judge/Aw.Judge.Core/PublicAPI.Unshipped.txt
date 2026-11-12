@@ -333,6 +333,7 @@ const Aw.Judge.Core.Evaluation.EvaluationReasons.FallbackAfterUndecided = "fallb
 const Aw.Judge.Core.Evaluation.EvaluationReasons.InvalidInput = "invalid-input" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.NoProvider = "none" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.NoProviderDecided = "no-provider-decided" -> string!
+const Aw.Judge.Core.Evaluation.EvaluationReasons.UsageLimit = "usage-limit" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.NoReasons = "no-reasons" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.OutOfEnum = "out-of-enum" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.PreRule = "pre-rule" -> string!

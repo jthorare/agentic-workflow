@@ -36,6 +36,9 @@ internal static class DecisionSql
 
     internal const string CountFailuresSince = "SELECT COUNT(*) FROM failures WHERE ts >= $since";
 
+    internal const string LatestFailuresSince =
+        "SELECT ts, question, provider, reason_code FROM failures WHERE ts >= $since ORDER BY ts DESC, rowid DESC LIMIT $count";
+
     // "Model attempts" leave out rows that never reached a provider: Core's EvaluationReasons.BeforeChain (a disabled
     // question, invalid input, a pre-rule settlement, a rule timeout), bound as $before0..n. A fallback after an unsure
     // model did reach one, so it counts.
@@ -76,6 +79,9 @@ internal static class DecisionSql
 
     internal static SqlStatement Approve(DecisionId id, DateTimeOffset at) =>
         new(MarkApproved, c => c.Bind("$id", id.Value).Bind("$at", at), "decision " + id.Value);
+
+    internal static SqlStatement LatestFailures(DateTimeOffset since, int count) =>
+        new(LatestFailuresSince, c => c.Bind("$since", since).Bind("$count", count));
 
     internal static SqlStatement At(string sql, string name, DateTimeOffset at) => new(sql, c => c.Bind(name, at));
 

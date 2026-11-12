@@ -109,7 +109,7 @@ stderr; the hooks discard stderr except where the hook contract says. At the def
 
 | Command | Input | Output (exit 0) | Errors |
 |---|---|---|---|
-| `health` | — | `HealthOutput`: `{"status": "ok"\|"degraded"\|"down", "failures24h": n}`: ok with no failure row in 24 h, down when the last five model attempts all failed (rows written before the chain, a disabled question, invalid input, a pre-rule settlement or a rule timeout, never reached a model and don't count; the list is `EvaluationReasons.BeforeChain`, which the SQLite query binds), degraded otherwise | store error → 1 |
+| `health` | — | `HealthOutput`: `{"status": "ok"\|"degraded"\|"down", "failures24h": n}` plus `"lastFailure": {"provider", "reasonCode", "at"}`, the newest failure of the last 24 h, only when there is one (so `ok` with none prints exactly the two frozen fields): ok with no failure row in 24 h, down when the last five model attempts all failed (rows written before the chain, a disabled question, invalid input, a pre-rule settlement or a rule timeout, never reached a model and don't count; the list is `EvaluationReasons.BeforeChain`, which the SQLite query binds), degraded otherwise | store error → 1 |
 | `brief save` | stdin `BriefInput`: `toolUseId`, `sessionId`, `promptId`, `dispatchName` (string or null), `subagentType`, `goal`, `acceptanceCriteria`, `proofCommand`, all required, strings may be empty, other keys ignored; the three texts are stored redacted, then capped at 8,000 characters | nothing | `invalid input: …` → 1; `brief already saved: <toolUseId>` → 1 |
 | `brief get <toolUseId>` | — | `BriefOutput`: `toolUseId`, `agentId`, `sessionId`, `promptId`, `dispatchName`, `subagentType`, `goal`, `acceptanceCriteria`, `proofCommand`, `savedAt` | `no brief for tool_use_id: <id>` → 1 |
 | `brief map-by-name <name>` | — | the oldest unmapped brief's tool use id with that dispatch name, or nothing | store error → 1 |
@@ -389,7 +389,7 @@ The judge's own output doesn't show any of this; it rides on the provider result
 harness per call (`docs/superpowers/specs/2026-10-29-context-model-routing-design.md`, 5.1, 7.3 and the Environment note in 4).
 
 - **`ProviderErrored.UsageLimit`** (with `LimitPattern`, the id of the pattern that fired) is true when the harness was at its
-  usage limit. **`ReasonCode` is unchanged** (`exit-N`, `cli-reported-error`), so recorded decisions and the hook contract are the same. No CLI text and no reset time is kept.
+  usage limit. **`ReasonCode` is unchanged** (`exit-N`, `cli-reported-error`), so recorded decisions and the hook contract are the same. The evaluator reads the flag (#3232): such a provider's `failures` row gets reason `usage-limit` instead of `exit-N`, and its skip is `{"provider":…,"reason":"failed","code":"usage-limit"}`; a plain error keeps its code and no skip code. Nothing reads `failures.reason_code` except `health`, so no hook changes. No CLI text and no reset time is kept.
 - **Where it matches.** Only on channels the CLI marks as an error, never on text a model wrote: claude, an envelope with `is_error: true` (the text in `result`);
   codex, an `error` or `turn.failed` event (when the event has `codex_error_info`, it must be `usage_limit_exceeded`, whatever the message says; without it the message is matched);
   every harness, standard error of a non-zero exit, and for claude and codex also an error envelope or error event on standard output of a non-zero exit. A successful answer, a timeout, a crash with other text and bad JSON are never limits.
@@ -582,7 +582,7 @@ Sending images to Jev can be turned off without turning Jev off: `providers.jevI
 
 **`JevMaySettle`.** Jev only classifies, so `Refused` keeps it out of every question that asks for `reasons` (resolution-check's chain is unchanged). visual-critique sets `JevMaySettle`, and its `ReasonedOutputs` are `looks-off` and `sloppy`: Jev settles a page that looks right in one call; a `looks-off` / `sloppy` from Jev has no reasons, so it is stored as a skip with code `no-reasons` (not a failure row, so health doesn't count Jev as failing) and the next provider says what is wrong.
 
-**The skip code.** `SkippedProvider.Code` (omitted when null) holds `images-off`, `image-out-of-limits`, `image-too-large` or `no-reasons`. `judge why` prints them as a `notes` array of `jev skipped: <words>; asked <provider>` lines (only when there is one).
+**The skip code.** `SkippedProvider.Code` (omitted when null) holds `images-off`, `image-out-of-limits`, `image-too-large`, `no-reasons` or `usage-limit` (a `failed` skip of a provider whose CLI reported its usage limit). `judge why` prints them as a `notes` array of `jev skipped: <words>; asked <provider>` lines (only when there is one).
 
 **`judge check images`.** Whether Jev should judge screenshots, answered by running it: no Jev key stops it (`no Jev key: judge check images needs one`, exit 1); one live visual-critique call through the chain with images forced on; then every embedded labeled case asked of Jev and of claude-cli. The cases are `tests/fixtures/judge/images/<name>.<looks-right|looks-off>.png` embedded in the binary (`README.md` there); none: `no image cases embedded`, exit 1. Output, with the bar held and sending off (exit 0):
 
