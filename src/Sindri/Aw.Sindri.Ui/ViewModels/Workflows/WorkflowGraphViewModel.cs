@@ -60,7 +60,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
 
     private readonly Dictionary<string, NodeSummaryView> _summaries;
 
-    /// <summary>The selected step's title and what it does ("Every weekday at 7:00: ..."), from the lines the API serves; empty when no step is selected or the API sent none for it.</summary>
+    /// <summary>The selected step's title and what it does ("Every weekday at 7:00 · ..."), from the lines the API serves; empty when no step is selected or the API sent none for it.</summary>
     public string StepLine => SelectedId is { } id && _summaries.TryGetValue(id, out var line) && Nodes.FirstOrDefault(n => string.Equals(n.Id, id, StringComparison.Ordinal)) is { } node
         ? Labels.WfStepLine(node.Title, line.Summary, line.SummaryProblem)
         : string.Empty;
