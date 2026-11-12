@@ -93,7 +93,7 @@ public sealed class GateHardeningTests : IDisposable
         await PassAndJudge(c3, "/wt/h2", JudgeDecision.Resolved);
 
         Assert.Equal(BugFixStatus.Active, _w.Now.Status);
-        Assert.Equal("advance report --candidate c3", World.Ok(await Resume()).Next);
+        Assert.Equal("advance report --candidate c3 --sweep <sweep.md>", World.Ok(await Resume()).Next);
     }
 
     [Fact, Trait("Lane", "unit")]

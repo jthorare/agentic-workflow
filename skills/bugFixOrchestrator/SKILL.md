@@ -72,6 +72,8 @@ box-wide heavy-job lock (at most two heavy jobs on the box, `AW_HEAVY_SLOTS`).
 (`AW_BUGFIX_CHECK_TIMEOUT_SECONDS`); it is stopped with SIGTERM first (its EXIT trap runs), then killed after a 30 s grace
 (`AW_BUGFIX_CHECK_GRACE_SECONDS`), and nothing it started is left running. Report the printed reason and follow it.
 
+**Per-repo config (optional).** Several steps below read `<repo>/.agentic-workflow/repo.json` through `bash "$SHARED_DIR/repo-config.sh" get repo <key> --json` (keys: `variants`, `siblingSurfaces`, `dataRepair`, `environments`, `tickets`). Every such step reads the same way: run the reader; when it is missing, or it exits 3 (no file) or 4 (no key), skip the step and keep the behaviour this skill had without it. Exit 5 (schema-invalid): skip that step and say so in `resolution.md`; never stop the fix because of it. Exit 2 (usage): fix the call.
+
 **Dispatch briefs:** the brief-scope gate reads each subagent prompt. Every dispatch below must
 contain explicit `Goal:`, `Acceptance criteria:` and `Proof command:` lines.
 
@@ -105,6 +107,14 @@ contain explicit `Goal:`, `Acceptance criteria:` and `Proof command:` lines.
    Affected scope, Prevention decision, Mitigation, Proof). If the diagnosed handoff lacks it, send `/rootCause` back
    once for it (its Phase 3.6); do not go on to Phase 3 without it. This changes nothing about the helper's
    checks: it is your own gate.
+
+5. **Classification gate (stop and close).** Read the handoff's `## Classification` section (written by `/rootCause`). Two lines matter:
+   - Baseline: `matches baseline` | `differs (intended)` | `differs (bug)`.
+   - Origin: `regression (introduced by <PR>)` | `as designed` | `long-standing bug`.
+
+   When Baseline is `matches baseline` or `differs (intended)`, or Origin is `as designed`, **stop before Phase 3**: no branch, no regression test, no implementer. Draft the reply for the ticket (what the screen does, which variant, why that is the intended behaviour, with the handoff's evidence) and **Ask the user** whether to post it and close the ticket (`mcp: linear/save_comment`; closing follows `tickets` in repo.json when set). Then `bugfix-state advance report --state "$STATE" --unresolved`, and report the status as `unresolved` with the summary "closed as designed" or "waiting for the owner's answer". A handoff with no Classification section: carry on as before and say so in `resolution.md`. `differs (bug)` with any Origin continues to Phase 3.
+6. **Explain it in product words.** Before Phase 3, tell the person (and later put in the report) the bug and the planned fix as: which screen, which variant, who sees what, before -> after. One short paragraph, no file names. When the mechanism has more than two steps, add a diagram (tldraw per the user's global rules; Mermaid when it isn't running).
+7. **Start the sweep.** The handoff's Affected scope and Sweep sections are the starting list; Phase 4 and 5 finish it (see `$SHARED_DIR/prevent-the-class.md`, "Sweep for the other instances").
 
 **Race or ordering bug.** Concurrency means two or more actors that can interleave: locks, leases, retries with idempotency, queues and workers, multi-step writes across actors, failover or leader election, ordering between processes. If rootCause's handoff came from a `formal-verify` counterexample whose steps reproduce the report, accept that trace as root-cause proof and keep its `report.md` path with the handoff evidence. It adds to Phase 3, never replaces it: the failing check below is still required before any fix, and the before/after run of that check stays the proof of resolution. Put the `report.md` path (and the `--rerun` result after the fix) in `resolution.md`. Otherwise `resolution.md` says in one line: "Formal check: skipped (not a race, ordering or state-machine bug)".
 
@@ -197,6 +207,9 @@ Every implementer is a **Spawn a subagent** of type `lean-coder`. Its brief cont
   run), reported in the commit message or its final reply. The frozen check is never edited for it; a mechanism that
   needs test, fixture or config changes goes through `--allow-test-changes --reason` as below, and one that cannot
   fit the task's scope is named as a follow-up, not skipped silently;
+- the sweep: every surface and variant listed in the handoff's Sweep section that is not yet `fixed`, with the instruction to fix those that share the cause within the allowed scope and to report each row's status (`fixed`, `not affected (why)` or `follow-up <link>`) in its final reply. A sibling that shares the cause and is left alone needs a follow-up row, never silence;
+- the Affected scope: the files the confirmed cause and the sweep allow it to touch (the cause-site files, their direct callers and the sibling surfaces from the sweep). Anything else is out of scope and the implementer says so in its reply instead of editing it;
+- when the bug damaged stored data, the **data repair** rules below;
 - the ticket brief (verbatim) and expected behaviour, and the handoff path;
 - on a retry: the previous candidate's diff and the exact failure reasons (failed steps/assertions,
   and the judge's `reasons`);
@@ -211,11 +224,22 @@ the check (or its directory), tests, fixtures, snapshots or test-runner config, 
 with `--allow-test-changes --reason "<why>"`; the reason is recorded. If it would weaken the check,
 send the implementer back to fix the code instead.
 
+### Data repair
+
+When the handoff says the bug damaged stored records (its Sweep has a data row with a count above zero, or the Root Cause says rows were written wrong), the repair is part of the fix, not a separate favour. Run `bash "$SHARED_DIR/repo-config.sh" get repo dataRepair --json`:
+
+- `mechanism` is the form the repair takes (for example a migration in the repo's own stack). Use it, in the same stack and with the same runner as the code.
+- `never` lists forms that are refused (for example a raw SQL file or a console UPDATE). A candidate that carries one goes back to Phase 4 with that reason: "the repo forbids <form>; write it as <mechanism>".
+- Every repair carries a **dry-run count** (how many rows it would change, from the read-only query of the sweep), and runs `validator` after it when `validator` is set. Run the repair and its `validator` against a local or dev database, never a shared one. The count and the validator's output go in `resolution.md`.
+
+No `dataRepair` (no file, or no key): the repair is a migration in the repo's own migration system when it has one; say in `resolution.md` that no policy was configured, and still give the dry-run count.
+
 ## Phase 5 — Evaluate
 
 Evaluate candidates **one at a time in the main checkout**, where dependencies and the running app
 already are. The candidate's branch stays checked out in its worktree, so detach at its commit:
 
+0. **Scope-drift stop.** Before evaluating, compare the candidate's changed files (`git -C "$REPO" diff --name-only <baseline-commit> <candidate commit>`) with the Affected scope you gave the implementer (cause-site files, their direct callers, the sweep's sibling surfaces, the repair file when data repair applies; the tests and lock files the helper already allows). A file outside it: stop, do not run the check, and tell the person in plain words which file, which module it belongs to and why the fix seems to need it. **Ask the user** whether the scope grows or the implementer redoes it. If they widen it, add the file to the Affected scope in `resolution.md` and go on.
 1. `git -C "$REPO" checkout --detach <candidate commit>`
 2. Re-run the **same** check:
    - UI: restart the app from `$REPO` with the project's run recipe (`/run` or its dev command), run
@@ -239,10 +263,13 @@ already are. The candidate's branch stays checked out in its worktree, so detach
      3 tries; `judge health` for the cause), then `advance report --unresolved`. Same for `run-ui`.
    - A `judge` call that died (no answer recorded) → `resume` says to ask once more; if asked twice
      with no answer and `judge why` shows no process still running, `start-attempt --abandon-judge`.
-5. **Prevention check** (yours, separate from the judge, which still judges only the reported problem): the candidate
+5. **Sweep and prevention check** (yours, separate from the judge, which still judges only the reported problem): the candidate
    either ran the mechanism's own proof from the handoff block, or its Prevention decision is "existing guard
-   <which>" or "deferred: <link>". A candidate with none of these goes back to Phase 4 with that reason. This never
-   changes the frozen check and never replaces the judge's decision.
+   <which>" or "deferred: <link>". A candidate with none of these goes back to Phase 4 with that reason. Also write
+   `$STATE/sweep.md` now: the "Where else we checked" table (every row `fixed`, `not affected (why)` or `follow-up <link>`)
+   and a `## Prevention decision` section whose first words are `existing guard`, `new mechanism` or `deferred`. Phase 6
+   hands this file to the helper, which refuses a decision that starts with anything else, and a resolved report with an empty table unless the decision is
+   `existing guard` or `deferred`. This never changes the frozen check and never replaces the judge's decision.
 6. `git -C "$REPO" checkout bugfix/<ticket-slug>` before the next candidate or phase.
 
 Outcome:
@@ -259,9 +286,9 @@ Outcome:
 
 ## Phase 6 — Report
 
-1. `bugfix-state advance report --state "$STATE" --candidate <id>` (resolved) or `--unresolved`.
+1. `bugfix-state advance report --state "$STATE" --candidate <id> --sweep "$STATE/sweep.md"` (resolved) or `--unresolved`. A refusal with AW-BUGFIX-024 means the sweep file is missing, empty or has a row without a valid status: finish the sweep (Phase 5 step 5) and run it again.
 2. Write `$STATE/resolution.md`: ticket (id, title, link), root cause, the fix branch and commits,
-   before/after evidence paths, the judge decision id and reasons, attempts and modes used, and the three resolution lines from `$SHARED_DIR/prevent-the-class.md` (Original bug, Class prevention, Deferred). For an
+   before/after evidence paths, the judge decision id and reasons, attempts and modes used, and the "Where else we checked" table copied from `$STATE/sweep.md`, the bug and the fix in product words (Phase 2 step 6), the data repair's dry-run count and validator output when it applies, and the three resolution lines from `$SHARED_DIR/prevent-the-class.md` (Original bug, Class prevention, Deferred). For an
    unresolved outcome, list every candidate with why it failed.
 3. **Ask the user** before posting anything: offer to post `resolution.md` to the Linear issue with
    `mcp: linear/save_comment`. Screenshots and traces follow `ui-evidence`'s publish rules (approved
@@ -271,7 +298,8 @@ Outcome:
    not use it. Then `git -C "$REPO" checkout bugfix/<ticket-slug>`. In a meta lane (`AW_META_TEAM` and
    `AW_META_LANE` set) don't remove it: ship from that worktree, where the branch is checked out; the tree
    goes away through meta's merge and close triggers or a sweep meta runs.
-5. Do not open a PR. Leave the winning branch ready and suggest `/shipRelease`, which opens it and runs the PR champion loop (`$SHARED_DIR/pr-champion.md`). Outside Sindri this skill opens no PR, so it has no loop of its own to run. `--no-champion` is accepted and passed on to `/shipRelease`.
+5. **Ship (default).** A resolved fix ships unless the person said not to (an explicit "do not open a PR" or "stop at the branch" wins over everything here). The chain is `/shipRelease` for the winning branch (outside a meta lane; in one, from the worktree that holds the branch). It opens the PR and runs the PR champion loop (`$SHARED_DIR/pr-champion.md`); `--no-champion` passes on to it. Merging stays the person's call.
+6. **After the merge and deploy** (when the person comes back with "deployed", or `/landAndDeploy` finished): re-check the reported URL or entity with the same check or a fresh look and say what you saw. Then, with the person's OK (**Ask the user**), close the tracker issue and file each follow-up row of the sweep to `tickets.followUpTeam` in state `tickets.followUpState` (`bash "$SHARED_DIR/repo-config.sh" get repo tickets --json`; no config: file them where the ticket lives and say where).
 
 Report to the user:
 
@@ -286,8 +314,18 @@ Judge: {decision} ({decision id})
 Original bug: {the frozen check's before and after, and the judge's verdict}
 Class prevention: {what was built and its proof | existing guard <which> | none built}
 Deferred: {follow-ups with links | none}
+In product words: {screen, variant, who sees what, before -> after}
+Where else we checked:
+| Surface | Variant | Status |
+|---|---|---|
+| ... | ... | fixed / not affected (why) / follow-up <link> |
+Data repair: {dry-run count, validator result | not needed}
+Environments: {one row per name in repo.json `environments`: reproduced? fixed? | not configured}
+Shipped: {PR link, stopped before merge | not shipped: why}
 Report: {STATE}/resolution.md
 ```
+
+The Environments rows come from `bash "$SHARED_DIR/repo-config.sh" get repo environments --json` (an ordered list of names). For each name write `reproduced: yes|no|not checked` and `fixed: yes|no|not checked`, so it is clear which environment is broken. No config: leave the line as `not configured`.
 
 ## Under Sindri (`AW_RESULT_SKILL=bugFixOrchestrator`)
 
@@ -298,7 +336,9 @@ Only when the Result block's gate printed `AW_RESULT_SKILL=bugFixOrchestrator`; 
 - **Push.** After Phase 6, with `status` `resolved`: `git push origin <winning branch>:refs/heads/$AW_SINDRI_BRANCH`, open it as a **draft** PR (`gh pr create --draft`, body from `resolution.md`), and put its URL in `pr`. Any other status: push and open nothing, leave `pr` out. A Sindri Step never runs the PR champion loop: Sindri's workflow owns the review, address and ready Steps on this PR. Then `git checkout --detach` so the next Step (addressReview) can check the branch out in its own worktree.
 - **No Linear offer.** Skip Phase 6 step 3 and say in `summary` that nothing was posted to Linear.
 - **Questions become `waiting`.** The three asks (no clear expected behaviour in Phase 1, the check passed so the bug is not reproduced in Phase 3, the check script is broken after one repair) go in `waiting` as the output contract describes, in place of AskUserQuestion. The dirty-tree preflight in Phase 3 is not an ask here: the Step's tree is clean, and if it is not, stop as `unresolved` and say why in `summary`.
-- **No `/shipRelease` suggestion**: the push and PR above are that step.
+- **No ship chain**: the push and PR above are the ship step; skip Phase 6 step 5's chain and step 6.
+- **Stop-and-close** (Phase 2 step 5): the question to the person goes in `waiting`; with nothing to post, end with `status` `unresolved` and say "closed as designed" in `summary`.
+- **Scope-drift stop** (Phase 5 step 0): the question goes in `waiting`.
 
 ## Git mode
 
@@ -309,7 +349,7 @@ Only when the Result block's gate printed `AW_RESULT_SKILL=bugFixOrchestrator`; 
 
 ## Next steps
 
-- `/shipRelease` — open the PR for the resolved fix branch
+- `/shipRelease` — runs by default after a resolved fix (Phase 6 step 5); use it directly when the person stopped at the branch
 - `/review` — review the fix before shipping
 - `/rootCause` — if unresolved, re-investigate with what the failed attempts ruled out
 
