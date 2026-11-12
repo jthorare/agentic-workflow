@@ -94,7 +94,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
 
     // why: the block's own text (an http body, a model answer) can hold a secret; it is scrubbed BEFORE Fit cuts it, so a secret the cut would split is gone first (#3225, #3196)
     private GraphBlockOutcome FailedBlock(JsonObject input, Kernel.Error error, JsonObject? output, string? raw) =>
-        new(NodeRunStatus.Failed, Fit(input.ToJsonString()), Fit(Clean(output?.ToJsonString())), [], NodeRunLimits.Cap(Clean($"{error.Code}: {error.Message}"), out _), Fit(Clean(raw)));
+        new(NodeRunStatus.Failed, Fit(input.ToJsonString()), Fit(CleanJson(output?.ToJsonString())), [], NodeRunLimits.Cap(Clean($"{error.Code}: {error.Message}"), out _), Fit(Clean(raw)));
 
     private GraphBlockOutcome SucceededBlock(JsonObject input, BlockResult result)
     {
@@ -104,8 +104,22 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             output[name] = value?.DeepClone();
         }
 
-        return new GraphBlockOutcome(NodeRunStatus.Succeeded, Fit(input.ToJsonString()), Fit(Clean(output.ToJsonString())), result.Taken, Error: null);
+        return new GraphBlockOutcome(NodeRunStatus.Succeeded, Fit(input.ToJsonString()), Fit(CleanJson(output.ToJsonString())), result.Taken, Error: null);
     }
+
+    // why: a stored output is parsed as JSON downstream, so a blocked one becomes a JSON string, never the bare marker (#3376)
+    private string? CleanJson(string? text)
+    {
+        if (text is null)
+        {
+            return null;
+        }
+
+        var scrubbed = (redactor ?? Redactor.Default).Scrub(text);
+        return scrubbed.IsBlocked ? JsonValue.Create(BlockedMarker)!.ToJsonString() : scrubbed.Text;
+    }
+
+    private const string BlockedMarker = "[blocked by the redactor]";
 
     private string? Clean(string? text)
     {
@@ -115,7 +129,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         }
 
         var scrubbed = (redactor ?? Redactor.Default).Scrub(text);
-        return scrubbed.IsBlocked ? "[blocked by the redactor]" : scrubbed.Text;
+        return scrubbed.IsBlocked ? BlockedMarker : scrubbed.Text;
     }
 
     private sealed record Prepared(GraphNode Node, IGraphBlock Block, GraphNodeScope Scope, JsonObject Config);
