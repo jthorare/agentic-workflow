@@ -1,0 +1,135 @@
+<!doctype html>
+<!--
+Direction: Map-led, 3 bands, keyboard walk (variant 3)
+1+4: the map shows only the scope's neighbourhood (14 files, 3 bands, concepts as collapsible groups, 2 collapsed); the whole repo is a small treemap minimap, so nothing is drawn that cannot be labelled and zoom is group expand/collapse.
+2+3: one accent (Primary) marks the single focused file and its edges; everything else is grey, and the ranked scope with one why line per file is the biggest thing on screen.
+5+6: the selected file opens a detail strip (why, evidence, symbols, linked records); the left rail is the same scope, grouped, counted, filterable and synced with the map.
+-->
+<html lang="en"><head><meta charset="utf-8"><title>Sindri Context map, variant 3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{--Canvas:#08090a;--Surface1:#141517;--Surface2:#1c1d20;--Surface3:#222326;--Surface4:#26272a;--Hairline:rgba(255,255,255,.06);--HairlineStrong:#34343a;--HairlineTertiary:#3e3e44;--Ink:#f7f8f8;--InkMuted:#d0d6e0;--InkSubtle:#8a8f98;--InkTertiary:#74787f;--Primary:#5e6ad2;--PrimaryHover:#828fff;--PrimarySoft:#202442;--Success:#2eb75b;--SuccessSoft:#0d2115;--Attention:#f2994a;--AttentionSoft:#291d13;--Violet:#a78bfa;--Wire:#4a4a52;--WireHi:#8a8f98}
+*{box-sizing:border-box}
+body{margin:0;width:1440px;height:900px;overflow:hidden;background:#08090a;position:relative;font:400 13px/20px Inter,system-ui,sans-serif;color:var(--InkMuted)}
+.mono,.nm,.r2,code{font-family:"JetBrains Mono",ui-monospace,monospace}
+.abs{position:absolute}
+.top{position:absolute;left:0;top:0;width:1440px;height:40px;border-bottom:1px solid var(--Hairline);display:flex;align-items:center;padding:0 16px;gap:4px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--Ink);margin-right:16px}
+.logo i{width:8px;height:8px;background:var(--Violet);transform:rotate(45deg);border-radius:1px}
+.pill{padding:2px 10px;border-radius:999px;color:var(--InkSubtle);font-size:13px}
+.pill.on{background:var(--Surface3);color:var(--Ink)}
+.pill b{font-weight:500;color:var(--InkSubtle);margin-left:4px}
+.sp{flex:1}
+.search{width:200px;height:26px;border:1px solid var(--HairlineStrong);border-radius:6px;background:var(--Surface1);display:flex;align-items:center;justify-content:space-between;padding:0 8px;color:var(--InkTertiary);font-size:12px;margin-right:8px}
+kbd{font:500 11px/16px "JetBrains Mono",monospace;background:var(--Surface3);border:1px solid var(--HairlineStrong);border-radius:4px;padding:0 5px;color:var(--InkMuted)}
+.status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--InkSubtle);border:1px solid var(--HairlineStrong);border-radius:999px;padding:1px 10px}
+.status i{width:6px;height:6px;border-radius:50%;background:var(--Success)}
+h1{position:absolute;left:24px;top:48px;margin:0;font:600 24px/32px Inter,system-ui;color:var(--Ink)}
+.budget{position:absolute;right:24px;top:56px;font-size:12px;line-height:18px;color:var(--InkTertiary)}
+.q{position:absolute;left:24px;top:90px;width:1392px;height:44px;border:1px solid var(--HairlineStrong);border-radius:8px;background:var(--Surface1);display:flex;align-items:center;padding:0 12px;gap:12px;color:var(--Ink);font-size:15px}
+.q span.t{flex:1}
+.q .caret{display:inline-block;width:1px;height:18px;background:var(--Primary);vertical-align:middle;margin-left:1px}
+.srow{position:absolute;left:24px;top:144px;width:1392px;height:32px;display:flex;align-items:center;gap:12px}
+.srow h2{margin:0;font:600 15px/22px Inter;color:var(--Ink)}
+.chip{font:400 12px/18px "JetBrains Mono",monospace;color:var(--InkMuted);background:var(--Surface2);border:1px solid var(--HairlineStrong);border-radius:4px;padding:0 6px}
+.cap{font-size:12px;line-height:18px;color:var(--InkSubtle)}
+.btn{height:28px;padding:0 12px;border-radius:6px;border:1px solid var(--HairlineStrong);background:var(--Surface2);color:var(--Ink);font:500 13px/26px Inter;}
+.btn.p{background:var(--Primary);border-color:var(--Primary)}
+.rail{position:absolute;left:24px;top:188px;width:280px;height:652px;border:1px solid var(--Hairline);border-radius:12px;background:var(--Surface1);overflow:hidden}
+.rail .hd{display:flex;justify-content:space-between;align-items:baseline;padding:10px 12px 0}
+.rail .hd b{font:600 13px/20px Inter;color:var(--Ink)}
+.filter{margin:8px 12px 6px;height:28px;border:1px solid var(--HairlineStrong);border-radius:6px;background:var(--Canvas);display:flex;align-items:center;justify-content:space-between;padding:0 8px;font-size:12px;color:var(--InkTertiary)}
+.rg{display:flex;align-items:center;gap:6px;height:22px;padding:0 12px;margin-top:4px}
+.rg b{font:500 12px/18px Inter;color:var(--InkMuted)} .rg span{font-size:11px;color:var(--InkTertiary);margin-left:auto}
+.rrow{height:38px;margin:0 6px;padding:2px 6px;border:1px solid transparent;border-radius:6px}
+.rrow:hover{background:var(--Surface2);border-color:var(--HairlineStrong)}
+.rrow .a{display:flex;align-items:center;gap:6px;height:18px}
+.rrow .nm{font-size:12px;line-height:18px;color:var(--Ink);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rrow .b{font-size:11px;line-height:16px;color:var(--InkSubtle);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rrow.sel{background:var(--PrimarySoft);border-color:var(--Primary)}
+.sc{font:400 11px/16px "JetBrains Mono",monospace;color:var(--InkSubtle)}
+u{display:inline-block;width:8px;height:8px;border-radius:50%;text-decoration:none;flex:none}
+u.c{background:var(--InkMuted)} u.s{border:1.3px dashed var(--InkMuted)}
+.map{position:absolute;left:320px;top:188px;width:1096px;height:516px}
+.band{position:absolute;height:36px;border-bottom:1px solid var(--HairlineStrong)}
+.band b{font:600 13px/20px Inter;color:var(--Ink);margin-right:8px}.band span{font-size:12px;color:var(--InkSubtle)}
+.grp{position:absolute;height:22px;display:flex;align-items:center;gap:6px}
+.grp b{font:500 12px/18px Inter;color:var(--InkMuted)}.grp span{font-size:11px;color:var(--InkTertiary)}
+.grp.coll{height:40px;border:1px dashed var(--HairlineTertiary);border-radius:8px;padding:0 10px;background:transparent}
+.grp.coll em{margin-left:auto;font:400 11px/16px "JetBrains Mono",monospace;color:var(--InkSubtle);font-style:normal}
+.card{position:absolute;width:280px;height:46px;border:1px solid var(--HairlineStrong);border-radius:8px;background:var(--Surface1);padding:4px 10px}
+.card:hover{background:var(--Surface2)}
+.card .r1{display:flex;align-items:center;gap:6px;height:18px}
+.card .nm{font-size:12px;line-height:18px;color:var(--Ink);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .r2{font-size:11px;line-height:16px;color:var(--InkSubtle);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card.sel{background:var(--PrimarySoft);border:1px solid var(--Primary);outline:2px solid var(--Primary);outline-offset:2px}
+.node{position:absolute;height:34px;border:1px solid var(--HairlineTertiary);border-radius:17px;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--Canvas)}
+.node i{font:normal 400 11px/16px Inter;color:var(--InkTertiary);border-right:1px solid var(--HairlineStrong);padding-right:8px}
+.node b{font:400 12px/18px "JetBrains Mono",monospace;color:var(--InkMuted)}
+svg.edges{position:absolute;left:0;top:0;pointer-events:none}
+.ev{font:400 11px Inter;fill:#8a8f98}.eo{font:500 11px "JetBrains Mono",monospace;fill:#f7f8f8}
+.detail{position:absolute;left:320px;top:712px;width:866px;height:128px;border:1px solid var(--HairlineStrong);border-radius:12px;background:var(--Surface1);display:flex}
+.detail>div{padding:12px 16px}
+.detail .c1{width:262px;border-right:1px solid var(--Hairline)}
+.detail .c2{width:330px;border-right:1px solid var(--Hairline)}
+.detail .eb{font-size:11px;line-height:16px;color:var(--InkTertiary)}
+.detail h3{margin:0;font:600 15px/22px Inter;color:var(--Ink)}
+.detail p{margin:2px 0 0;font-size:12px;line-height:18px;color:var(--InkMuted)}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;line-height:16px;border-radius:999px;padding:0 8px;background:var(--SuccessSoft);color:var(--Success)}
+.tag.a{background:var(--AttentionSoft);color:var(--Attention)}
+.tag.n{background:var(--Surface3);color:var(--InkMuted)}
+.mm{position:absolute;left:1200px;top:712px;width:216px;height:128px;border:1px solid var(--HairlineStrong);border-radius:12px;background:var(--Surface1);padding:8px}
+.mm .cap{display:flex;justify-content:space-between;font-size:11px;line-height:16px;margin-bottom:4px;color:var(--InkSubtle)}
+.mm svg{display:block;margin:0 auto}
+.hints{position:absolute;left:24px;top:850px;width:1392px;height:26px;display:flex;align-items:center;gap:20px;font-size:12px;color:var(--InkSubtle)}
+.hints span{display:flex;align-items:center;gap:6px}
+.sym{font:400 12px/18px "JetBrains Mono",monospace;color:var(--InkMuted)}
+</style></head><body>
+<nav class="top"><div class="logo"><i></i>Sindri</div>
+<span class="pill">Home</span><span class="pill">Projects</span><span class="pill">Workflows</span><span class="pill">Work<b>4</b></span><span class="pill on">Context</span><span class="pill">Agents</span><span class="pill">System</span><span class="pill">Reviews<b>2</b></span><span class="pill">Connections</span>
+<span class="sp"></span><div class="search"><span>Search</span><kbd>Ctrl+K</kbd></div><div class="status"><i></i>Running · updated 0s ago</div></nav>
+<h1>Context</h1><div class="budget">48,112 files · answered in 2.1 s</div>
+<div class="q"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" fill="none" stroke="#8a8f98" stroke-width="1.5"/><path d="m10.5 10.5 3.5 3.5" stroke="#8a8f98" stroke-width="1.5" stroke-linecap="round"/></svg><span class="t">Add per-workspace rate limits to the export API<i class="caret"></i></span><span class="cap">Ask again</span><kbd>Enter</kbd></div>
+<div class="srow"><h2>Rate limits on exports</h2><span class="chip">scope_7f3k2</span><span class="cap">Saved · 14 files, 5 tests, 2 decisions (1 conflicts), 1 open ticket · starting feature Export API</span><span class="sp" style="flex:1"></span><button class="btn">Copy scope id</button><button class="btn p">Hand to agent</button></div>
+<aside class="rail"><div class="hd"><b>Scope, ranked</b><span class="cap">14 files · 5 tests</span></div><div class="filter"><span>Type to filter the scope</span><kbd>/</kbd></div><div class="rg"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 3 5 7 8.5 3" fill="none" stroke="#8a8f98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Export API</b><span>3</span></div><div class="rrow"><div class="a"><span class="nm">ExportHandler.cs</span><u class="c"></u><span class="sc">0.96</span></div><div class="b">defines ExportHandler.handle</div></div><div class="rrow"><div class="a"><span class="nm">ExportRoutes.cs</span><u class="c"></u><span class="sc">0.93</span></div><div class="b">route POST /exports</div></div><div class="rrow"><div class="a"><span class="nm">ExportJobRunner.cs</span><u class="c"></u><span class="sc">0.84</span></div><div class="b">runs job export.run</div></div><div class="rg"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 3 5 7 8.5 3" fill="none" stroke="#8a8f98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Rate limiting</b><span>2</span></div><div class="rrow sel"><div class="a"><span class="nm">RateLimiter.cs</span><u class="c"></u><span class="sc">0.94</span></div><div class="b">ExportHandler calls RateLimiter.check</div></div><div class="rrow"><div class="a"><span class="nm">WorkspaceQuotaPolicy.cs</span><u class="c"></u><span class="sc">0.92</span></div><div class="b">resolves the limit per workspace id</div></div><div class="rg"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 3 5 7 8.5 3" fill="none" stroke="#8a8f98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Request pipeline</b><span>1</span></div><div class="rrow"><div class="a"><span class="nm">RateLimitMiddleware.cs</span><u class="c"></u><span class="sc">0.90</span></div><div class="b">provides RateLimiter layer</div></div><div class="rg"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 3 5 7 8.5 3" fill="none" stroke="#8a8f98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Quota storage</b><span>2</span></div><div class="rrow"><div class="a"><span class="nm">QuotaStore.cs</span><u class="c"></u><span class="sc">0.89</span></div><div class="b">reads table workspace_quotas</div></div><div class="rrow"><div class="a"><span class="nm">0042_workspace_quotas.sql</span><u class="s"></u><span class="sc">0.71</span></div><div class="b">creates table workspace_quotas</div></div><div class="rg"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 3 5 7 8.5 3" fill="none" stroke="#8a8f98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Export request</b><span>2</span></div><div class="rrow"><div class="a"><span class="nm">ExportRequest.cs</span><u class="c"></u><span class="sc">0.78</span></div><div class="b">binds the POST /exports body</div></div><div class="rrow"><div class="a"><span class="nm">ExportOptions.cs</span><u class="s"></u><span class="sc">0.62</span></div><div class="b">export limits config, AI guess</div></div><div class="rg coll"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M3 1.5 7 5 3 8.5" fill="none" stroke="#8a8f98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Billing plans</b><span>4 files</span></div><div class="rg coll"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M3 1.5 7 5 3 8.5" fill="none" stroke="#8a8f98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Tests</b><span>5 files</span></div></aside>
+<svg class="edges" width="1440" height="900" viewBox="0 0 1440 900"><path d="M600 335 C664 335 664 463 728 463" fill="none" stroke="#4a4a52" stroke-width="1"/>
+<path d="M1008 363 C1072 363 1072 409 1136 409" fill="none" stroke="#4a4a52" stroke-width="1"/>
+<path d="M600 335 C664 335 664 311 728 311" fill="none" stroke="#5e6ad2" stroke-width="1.75"/><circle cx="600" cy="335" r="3" fill="#5e6ad2"/><circle cx="728" cy="311" r="3" fill="#5e6ad2"/>
+<g><rect x="606.0" y="307.0" width="116" height="32" rx="6" fill="#08090a" stroke="#5e6ad2" stroke-opacity=".7"/><text x="664.0" y="320.0" text-anchor="middle" class="ev">calls</text><text x="664.0" y="334.0" text-anchor="middle" class="eo">RateLimiter.check</text></g>
+<path d="M600 487 C664 487 664 311 728 311" fill="none" stroke="#5e6ad2" stroke-width="1.75"/><circle cx="600" cy="487" r="3" fill="#5e6ad2"/><circle cx="728" cy="311" r="3" fill="#5e6ad2"/>
+<g><rect x="606.0" y="383.0" width="116" height="32" rx="6" fill="#08090a" stroke="#5e6ad2" stroke-opacity=".7"/><text x="664.0" y="396.0" text-anchor="middle" class="ev">provides</text><text x="664.0" y="410.0" text-anchor="middle" class="eo">RateLimiter layer</text></g>
+<path d="M1008 311 C1072 311 1072 311 1136 311" fill="none" stroke="#5e6ad2" stroke-width="1.75"/><circle cx="1008" cy="311" r="3" fill="#5e6ad2"/><circle cx="1136" cy="311" r="3" fill="#5e6ad2"/>
+<g><rect x="1014.0" y="295.0" width="116" height="32" rx="6" fill="#08090a" stroke="#5e6ad2" stroke-opacity=".7"/><text x="1072.0" y="308.0" text-anchor="middle" class="ev">reads</text><text x="1072.0" y="322.0" text-anchor="middle" class="eo">IQuotaStore.get</text></g>
+<path d="M1008 311 C1072 311 1072 485 1136 485" fill="none" stroke="#5e6ad2" stroke-width="1.75"/><circle cx="1008" cy="311" r="3" fill="#5e6ad2"/><circle cx="1136" cy="485" r="3" fill="#5e6ad2"/>
+<g><rect x="1025.7" y="412.7" width="116" height="32" rx="6" fill="#08090a" stroke="#5e6ad2" stroke-opacity=".7"/><text x="1083.7" y="425.7" text-anchor="middle" class="ev">publishes</text><text x="1083.7" y="439.7" text-anchor="middle" class="eo">quota.exceeded</text></g></svg>
+<div class="grp" style="left:320px;top:232px;width:280px"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 3 5 7 8.5 3" fill="none" stroke="#8a8f98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Export API</b><span>3 files</span></div>
+<div class="grp" style="left:320px;top:436px;width:280px"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 3 5 7 8.5 3" fill="none" stroke="#8a8f98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Request pipeline</b><span>1 file</span></div>
+<div class="grp" style="left:728px;top:260px;width:280px"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 3 5 7 8.5 3" fill="none" stroke="#8a8f98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Rate limiting</b><span>2 files</span></div>
+<div class="grp" style="left:728px;top:412px;width:280px"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 3 5 7 8.5 3" fill="none" stroke="#8a8f98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Export request</b><span>2 files</span></div>
+<div class="grp coll" style="left:728px;top:570px;width:280px"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M3 1.5 7 5 3 8.5" fill="none" stroke="#8a8f98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Billing plans</b><span>4 files</span><em>PlanLimits.cs +3</em></div>
+<div class="grp" style="left:1136px;top:260px;width:280px"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 3 5 7 8.5 3" fill="none" stroke="#8a8f98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Quota storage</b><span>2 files</span></div>
+<div class="grp" style="left:1136px;top:440px;width:280px"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 3 5 7 8.5 3" fill="none" stroke="#8a8f98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Effects</b><span>1 file</span></div>
+<div class="grp coll" style="left:1136px;top:570px;width:280px"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M3 1.5 7 5 3 8.5" fill="none" stroke="#8a8f98" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Tests</b><span>5 files</span><em>ExportHandlerTests.cs +4</em></div>
+<div class="node" style="left:1136px;top:392px;width:280px"><i>table</i><b>workspace_quotas</b></div>
+<div class="node" style="left:1136px;top:468px;width:280px"><i>event</i><b>quota.exceeded</b></div>
+<div class="band" style="left:320px;top:196px;width:280px"><b>Entry points</b><span>routes, jobs, middleware</span></div>
+<div class="band" style="left:728px;top:196px;width:280px"><b>Core</b><span>services and domain logic</span></div>
+<div class="band" style="left:1136px;top:196px;width:280px"><b>Data and effects</b><span>tables, events, tests</span></div>
+<div class="card" style="left:320px;top:260px"><div class="r1"><span class="nm">ExportRoutes.cs</span><u class="c"></u><span class="sc">0.93</span></div><div class="r2">services/export/src/routes</div></div>
+<div class="card" style="left:320px;top:312px"><div class="r1"><span class="nm">ExportHandler.cs</span><u class="c"></u><span class="sc">0.96</span></div><div class="r2">services/export/src/handlers</div></div>
+<div class="card" style="left:320px;top:364px"><div class="r1"><span class="nm">ExportJobRunner.cs</span><u class="c"></u><span class="sc">0.84</span></div><div class="r2">services/export/src/jobs</div></div>
+<div class="card" style="left:320px;top:464px"><div class="r1"><span class="nm">RateLimitMiddleware.cs</span><u class="c"></u><span class="sc">0.90</span></div><div class="r2">platform/ratelimit/src/middleware</div></div>
+<div class="card sel" style="left:728px;top:288px"><div class="r1"><span class="nm">RateLimiter.cs</span><u class="c"></u><span class="sc">0.94</span></div><div class="r2">platform/ratelimit/src</div></div>
+<div class="card" style="left:728px;top:340px"><div class="r1"><span class="nm">WorkspaceQuotaPolicy.cs</span><u class="c"></u><span class="sc">0.92</span></div><div class="r2">platform/ratelimit/src/policy</div></div>
+<div class="card" style="left:728px;top:440px"><div class="r1"><span class="nm">ExportRequest.cs</span><u class="c"></u><span class="sc">0.78</span></div><div class="r2">services/export/src/models</div></div>
+<div class="card" style="left:728px;top:492px"><div class="r1"><span class="nm">ExportOptions.cs</span><u class="s"></u><span class="sc">0.62</span></div><div class="r2">services/export/src/config</div></div>
+<div class="card" style="left:1136px;top:288px"><div class="r1"><span class="nm">QuotaStore.cs</span><u class="c"></u><span class="sc">0.89</span></div><div class="r2">platform/ratelimit/src/store</div></div>
+<div class="card" style="left:1136px;top:340px"><div class="r1"><span class="nm">0042_workspace_quotas.sql</span><u class="s"></u><span class="sc">0.71</span></div><div class="r2">platform/ratelimit/migrations</div></div>
+<section class="detail">
+<div class="c1"><div class="eb">Selected · Rate limiting</div><h3>RateLimiter.cs</h3><div class="sym" style="font-size:11px">platform/ratelimit/src/RateLimiter.cs</div><div style="margin-top:6px;display:flex;gap:6px"><span class="tag">Confirmed link</span><span class="tag n">score 0.94</span></div></div>
+<div class="c2"><div class="eb">Why it is in the scope</div><p>ExportHandler calls RateLimiter.check on every export. The limit key is the user id today, so per-workspace limits start here.</p><div class="sym" style="font-size:11px;color:var(--InkSubtle);margin-top:4px">ExportHandler.cs:48 calls RateLimiter.check</div></div>
+<div class="c2" style="width:274px;border:0"><div class="eb">Symbols and linked records</div><div class="sym">check(key, cost) · IQuotaStore</div><div style="margin-top:4px;display:flex;flex-direction:column;gap:2px"><span class="cap">D-41 Cap exports per workspace, supports</span><span class="cap" style="color:var(--Attention)">D-37 Per-user limits, conflicts with D-41</span></div></div>
+</section>
+<aside class="mm"><div class="cap"><span>Whole repo</span><span>3 of 31 areas lit</span></div><svg width="200" height="76" viewBox="0 0 200 76"><rect x="0.0" y="0.0" width="26.2" height="19.5" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="26.2" y="0.0" width="23.6" height="19.5" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="0.0" y="19.5" width="16.7" height="17.7" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="0.0" y="37.2" width="16.7" height="23.6" fill="#5e6ad2" stroke="#141517" stroke-width="1.5"/><rect x="16.7" y="19.5" width="33.1" height="14.3" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="16.7" y="33.8" width="19.6" height="27.0" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="36.3" y="33.8" width="13.5" height="27.0" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="0.0" y="60.8" width="49.7" height="15.2" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="49.7" y="0.0" width="39.0" height="13.8" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="49.7" y="13.8" width="39.0" height="9.7" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="49.7" y="23.5" width="15.0" height="37.3" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="64.7" y="23.5" width="24.0" height="20.7" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="64.7" y="44.2" width="24.0" height="16.6" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="49.7" y="60.8" width="39.0" height="15.2" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="88.7" y="0.0" width="22.2" height="76.0" fill="#5e6ad2" stroke="#141517" stroke-width="1.5"/><rect x="110.9" y="0.0" width="16.3" height="25.5" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="127.2" y="0.0" width="16.3" height="25.5" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="110.9" y="25.5" width="20.9" height="17.1" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="110.9" y="42.6" width="20.9" height="14.5" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="131.9" y="25.5" width="11.7" height="31.6" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="110.9" y="57.1" width="32.6" height="18.9" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="143.5" y="0.0" width="43.1" height="10.3" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="143.5" y="10.3" width="10.3" height="40.0" fill="#5e6ad2" stroke="#141517" stroke-width="1.5"/><rect x="153.9" y="10.3" width="18.6" height="25.5" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="172.5" y="10.3" width="14.1" height="25.5" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="153.9" y="35.8" width="32.7" height="14.5" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="186.6" y="0.0" width="13.4" height="50.3" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="143.5" y="50.3" width="12.5" height="25.7" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="156.0" y="50.3" width="14.5" height="25.7" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="170.5" y="50.3" width="14.3" height="25.7" fill="#222326" stroke="#141517" stroke-width="1.5"/><rect x="184.8" y="50.3" width="15.2" height="25.7" fill="#222326" stroke="#141517" stroke-width="1.5"/></svg></aside>
+<div class="hints"><span><kbd>type</kbd>filter</span><span><kbd>&larr;</kbd><kbd>&rarr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd>walk edges</span><span><kbd>Enter</kbd>open file</span><span><kbd>p</kbd>pin</span><span><kbd>x</kbd>drop</span><span><kbd>m</kbd>more like this</span><span><kbd>c</kbd>what calls this</span><span><kbd>Space</kbd>expand group</span></div>
+</body></html>
