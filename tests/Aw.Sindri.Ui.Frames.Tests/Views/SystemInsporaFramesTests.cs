@@ -63,7 +63,7 @@ public sealed class SystemInsporaFramesTests : FrameHost
         Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"system-inspora-{width:0}-{(typical ? "typical" : "empty")}-index"), prefix: "");
     });
 
-    // #2905: the cards fill the row. At 1280 two fixed 440 px cards ended at 904 of 1232 and left a ~330 px strip. Now every full row ends
+    // #2905: the cards fill the row. At 1280 two fixed 440 px cards ended at 892 of 1232 and left a 340 px strip. Now every full row ends
     // within 24 px of the content edge, as many columns as fit at 420 px or more (the 356 px backlog bar + the 24 px insets need 404).
     [Theory]
     [InlineData(1000, 2)]

@@ -43,7 +43,7 @@ public sealed class CodeIndexCardViewTests : FrameHost
         Settle(window);
 
         // Both say whether the data is current (System spec), so the code index sits right after Views.
-        var cards = Named<WrapPanel>(window, "SystemCards").Children;
+        var cards = Named<Panel>(window, "SystemCards").Children;
         Assert.Equal(cards.IndexOf(Named<Border>(window, "ViewsCard")) + 1, cards.IndexOf(Named<Border>(window, "CodeIndexPanel")));
     });
 
