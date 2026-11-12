@@ -349,7 +349,7 @@
           </Border>
         </Border>
 
-        <Border Classes="panel">
+        <Border Classes="panel" ccontrols:CardGrid.FullRow="True">
           <!-- The catalog (§4.8): the actions the app has no form for (copy blocks). Every control comes from the control renderer; nothing here runs a command. -->
         <Border x:Name="ActionsSection" Classes="section last" DataContext="{Binding Catalog}" x:DataType="controls:CatalogViewModel">
           <StackPanel Spacing="{StaticResource Space.XS}">

@@ -44,4 +44,30 @@ internal sealed partial class GraphAgentLoop
     };
 
     private static GraphBlockOutcome Failed(string? input, string error) => new(NodeRunStatus.Failed, input, Output: null, [], error);
+
+    // The ask activity reads the state file this often and hands back after the cap with nothing new (#3151). Each call is one activity in the run's history, so the cap keeps a long node to a few calls.
+    private static readonly TimeSpan _defaultAskEvery = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan _defaultAskCap = TimeSpan.FromMinutes(10);
+
+    // After a round of the wait: records an ask that finished, then tells the idle sweep about a takeover or a handback. A handback moves the deadline by the time the node was held.
+    private static async Task Settle(AgentWait wait, bool held, TimeSpan remaining, Session session)
+    {
+        if (session.Poll is { Done: true } finished)
+        {
+            await finished.Complete().ConfigureAwait(true);
+        }
+
+        if (wait.TakenOver == held)
+        {
+            return;
+        }
+
+        await Hold(wait, wait.TakenOver).ConfigureAwait(true);   // the idle sweep is told, and the next round runs the clock or stops it
+        if (held)
+        {
+            await session.Events.MoveDeadline(new DateTimeOffset(Workflow.UtcNow) + remaining).ConfigureAwait(true);   // why: the clock stood still while a person held the node, so the deadline moves by that time
+        }
+    }
+
+    private sealed record Session(AgentNodeRef Reference, AgentLaunched Launched, NodeAgentRecorder Events, AgentAskPoll? Poll);
 }
