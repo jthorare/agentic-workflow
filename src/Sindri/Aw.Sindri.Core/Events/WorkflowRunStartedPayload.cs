@@ -8,4 +8,5 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Revision">The revision the run walks.</param>
 /// <param name="Trigger">What started it, as JSON.</param>
 /// <param name="By">Who started it, as the envelope's actor reads.</param>
-public sealed record WorkflowRunStartedPayload(WorkflowRunId RunId, WorkflowId WorkflowId, int Revision, string Trigger, string By);
+/// <param name="Mode">'live' or 'test' (<see cref="Aw.Sindri.Core.Graph.Runs.WorkflowRunMode"/>). Events written before the field existed read as null, which means live.</param>
+public sealed record WorkflowRunStartedPayload(WorkflowRunId RunId, WorkflowId WorkflowId, int Revision, string Trigger, string By, string Mode);
