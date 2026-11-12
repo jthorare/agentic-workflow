@@ -139,7 +139,8 @@ Numbered on from round 2. Each is `agent default (lead, 2026-11-12)`. Calls 19 a
 
 ### Lead calls after the round 5 frame check (2026-11-12, lead)
 
-29. **Round 5 frame-check lead calls.** (1) The no-folder capture window is titled "New issue" (§4.1, §5). (2) `SND-NOTE-014` and `015` lose the v1.1 tag, since the v1 Issue kind uses them (§6.1). (3) `SND-NOTE-004` takes the conflict frame's words. (4) §4.13 lists the capture window's Enter, Ctrl+Enter, Tab and Ctrl+Tab; where no decision gives a behaviour, the row says "Open gap". (5) The "Saved without Sindri" toast's second line is design's guess 29, "Sindri isn't running. The line is in the file. Chips and the index catch up when it starts." (6) The Projects spec's §14 gap row 3 follows decision 5 (Ctrl+Enter creates, Enter does not) and names this spec as the window's owner. (7) One shared "Capture hotkey" row under Settings › Shortcuts (§4.12), noted in the Projects spec too. (8) The status line and §5 point at round 5, `471eeb0380`. The list groups stay as §4.3 says (Pinned / Today / This week / Older).
+29. **Round 5 frame-check lead calls.** (1) The no-folder capture window is titled "New issue" (§4.1, §5). (2) `SND-NOTE-014` and `015` lose the v1.1 tag, since the v1 Issue kind uses them (§6.1). (3) `SND-NOTE-004` takes the conflict frame's words. (4) §4.13 lists the capture window's Enter, Ctrl+Enter, Tab and Ctrl+Tab; decision 30 fills the gaps. (5) The "Saved without Sindri" toast's second line is design's guess 29, "Sindri isn't running. The line is in the file. Chips and the index catch up when it starts." (6) The Projects spec's §14 gap row 3 follows decision 5 (Ctrl+Enter creates, Enter does not) and names this spec as the window's owner. (7) One shared "Capture hotkey" row under Settings › Shortcuts (§4.12), noted in the Projects spec too. (8) The status line and §5 point at round 5, `471eeb0380`. The list groups stay as §4.3 says (Pinned / Today / This week / Older).
+30. **Capture keys and the offline toast (lead, round 5).** Ctrl+Enter always commits the capture window: it creates the issue in the Issue kind and appends the line in the Note kind. Tab in the Note kind is plain focus order. Ctrl+Tab keeps the typed text; with no folder it does nothing. The "Saved without Sindri" toast keeps one button, "Open note". It has no "Start Sindri" button: the line is already saved, and the top bar's Sindri control starts it.
 
 ## 3. The model
 
@@ -402,9 +403,9 @@ Grammar keys are Home's: `j/k`, arrows, `Home`/`End`, `/`, `Space`, `Enter`, `Es
 | `Ctrl+Alt+I` | global | the capture window | no |
 | `Enter` | capture window, Note kind | append the line under `## Captured` and close; on an empty line, save nothing and say "Nothing to save" (§4.1) | the daily note |
 | `Enter` | capture window, Issue kind | move focus to the "Create issue in Linear" button; never writes (decision 5) | no |
-| `Ctrl+Enter` | capture window, Issue kind (also the no-folder window) | create the issue in Linear (decision 5). Open gap: it does nothing in the Note kind, since no decision gives it a job there | Linear |
-| `Tab` | capture window, Issue kind | change the project (§4.1 footer). Open gap: no decision says what Tab does in the Note kind | no |
-| `Ctrl+Tab` | capture window | flip Issue / Note (decision 5). Open gap: no decision says whether the typed text carries across; with no folder the switch is hidden and the key has no target | no |
+| `Ctrl+Enter` | capture window, Issue kind (also the no-folder window) | create the issue in Linear (decision 5). In the Note kind it does what Enter does: append the line and close, so Ctrl+Enter always commits the window (decision 30) | Linear, or the daily note |
+| `Tab` | capture window, Issue kind | change the project (§4.1 footer). In the Note kind there is no project field, so Tab is plain focus order: the text, the kind switch, the Save button (decision 30) | no |
+| `Ctrl+Tab` | capture window | flip Issue / Note (decision 5). The typed text carries across, since the window has one text field. With no folder the switch is hidden and Ctrl+Tab does nothing (decision 30) | no |
 | `Ctrl+Alt+Z` | the capture toast, 8 s (agent default; needs E16 go) | Undo the capture | the note |
 
 v1.1 adds `Ctrl+Shift+I` (Make issue; opens the bar, and Enter on the button writes), `g d` (open today, anywhere except a text field), `g p` / `g n` (list: previous / next existing day), `Alt+PageUp` / `Alt+PageDown` (editor: previous / next existing day) and, in History, `a` / `d` (accept / decline a proposal).
