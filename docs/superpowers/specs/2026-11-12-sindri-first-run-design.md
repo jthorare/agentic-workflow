@@ -301,7 +301,7 @@ Each step's own states that are not on the example:
 | `first-workflow` | succeeded | "hello-sindri ran: made 'Hello from Sindri' in agentic-workflow." | Open item; Run again (secondary) |
 | `map` | one repo's build failed fast | "The map of ledgerly-app/exports failed: the disk is full (No space left on device). agentic-workflow is done." The step is Failed when any repo failed; the sub-line names each failed repo | Retry (the primary only when `map` is the first step not done with a button) |
 | `map` | stopped | "The map build stopped at 4,720 of 15,223 files 10 minutes ago." | Retry |
-| `sources` | an account expired | "Your Linear sign-in expired." | Reconnect Linear |
+| `sources` | an account expired | "Your Linear sign-in expired." An expired optional account (Linear, Slack) keeps the step done and counted; an expired GitHub makes it not done | Reconnect Linear (secondary while the step stays done; the primary for GitHub) |
 | `sources` | first read failed | "The last read of jthorare/agentic-workflow failed 2m ago." | Retry (the primary only when `sources` is the first step not done) |
 
 The page's own states:
