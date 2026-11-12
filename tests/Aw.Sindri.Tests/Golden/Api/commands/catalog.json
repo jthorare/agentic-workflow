@@ -1765,7 +1765,7 @@
       "terminal": false,
       "method": "POST",
       "route": "/sindri/workflows/{slug}/runs",
-      "cli": "sindri wf run <slug> [--payload <json>]",
+      "cli": "sindri wf run <slug> [--payload <json>] [--revision <n>]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
