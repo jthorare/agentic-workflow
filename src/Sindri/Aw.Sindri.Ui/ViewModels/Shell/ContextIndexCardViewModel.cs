@@ -55,7 +55,7 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
         OnChanged(nameof(HasBacklog));
         Lines = sources.Count == 0 ? [] : [.. sources.Select(Line).Concat(ConceptLines(concepts, Backlog is not null)).Concat(StoreLines(store)).Select(t => new ContextIndexLine(t))];
         var fine = sources.All(static s => !NeedsLook(s)) && concepts?.Code is null && (store is null || Is(store.State, "ok"));
-        Word = sources.Count == 0 ? string.Empty : fine ? Labels.CodeIndexOk : Labels.CodeIndexNeedsLook;
+        Word = sources.Count == 0 ? string.Empty : WordOf(fine, sources);
         Show(sources.Count == 0 ? Labels.ContextIndexNone : string.Empty);
     }
 
@@ -72,9 +72,15 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
     {
         null => !source.Usable && !string.IsNullOrEmpty(source.LastCode),
         "failed" or "backoff" => true,
-        "idle" => source.Records == 0 && source.LastCommit is null,
+        "idle" => source.Records == 0 && source.LastCommit is null && source.Complete,
         _ => false,
     };
+
+    private static string WordOf(bool fine, IReadOnlyList<IndexSourceView> sources) =>
+        !fine ? Labels.CodeIndexNeedsLook : sources.Any(FirstReadPending) ? Labels.ContextIndexWaiting : Labels.CodeIndexOk;
+
+    // A source that is idle with nothing committed and a first read not yet complete has not run a pass; one that completed it and found nothing needs a look.
+    private static bool FirstReadPending(IndexSourceView source) => Is(source.Pull, "idle") && source.Records == 0 && source.LastCommit is null && !source.Complete;
 
     // A failed read carries zero counts, so its code is checked first; queued groups and records in no concept are normal work, not a look,
     // and so is the last pass's code (SND-CONTEXT-030 while there is no map yet): it is shown, not flagged.

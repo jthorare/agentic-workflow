@@ -21,7 +21,7 @@ public sealed class ContextIndexCardTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task Linear_at_zero_while_github_pulls_reads_nothing_committed_and_needs_a_look()
+    public async Task Linear_at_zero_while_github_pulls_reads_nothing_committed_and_waits_for_its_first_read()
     {
         var commit = _clock.GetUtcNow().AddMinutes(-3);
         _server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK,
@@ -31,7 +31,7 @@ public sealed class ContextIndexCardTests
         await card.Refresh(_api, Token);
 
         Assert.Equal(["github: pulling · 200 records · last commit 3 min ago", "linear: idle · 0 records · nothing committed yet"], card.Lines.Select(l => l.Text), StringComparer.Ordinal);
-        Assert.Equal("needs a look", card.Word, StringComparer.Ordinal);
+        Assert.Equal("waiting for the first read", card.Word, StringComparer.Ordinal);
     }
 
     [Fact]
@@ -204,8 +204,8 @@ public sealed class ContextIndexCardTests
         return card;
     }
 
-    private static string Source(string name, string pull, int? records = null, string? lastCommit = null, string? lastCode = null, string? lastError = null, string? lastErrorText = null, string? nextTry = null) =>
-        $$"""{"source":"{{name}}","phase":"live","usable":true,"complete":false,"lastSync":null,"lastCode":{{Json(lastCode)}},"pull":"{{pull}}","records":{{(records is { } r ? r.ToString(CultureInfo.InvariantCulture) : "null")}},"lastCommit":{{Json(lastCommit)}},"lastError":{{Json(lastError)}},"lastErrorText":{{Json(lastErrorText)}},"nextTry":{{Json(nextTry)}}}""";
+    private static string Source(string name, string pull, int? records = null, string? lastCommit = null, string? lastCode = null, string? lastError = null, string? lastErrorText = null, string? nextTry = null, bool complete = false) =>
+        $$"""{"source":"{{name}}","phase":"live","usable":true,"complete":{{(complete ? "true" : "false")}},"lastSync":null,"lastCode":{{Json(lastCode)}},"pull":"{{pull}}","records":{{(records is { } r ? r.ToString(CultureInfo.InvariantCulture) : "null")}},"lastCommit":{{Json(lastCommit)}},"lastError":{{Json(lastError)}},"lastErrorText":{{Json(lastErrorText)}},"nextTry":{{Json(nextTry)}}}""";
 
     private static string Json(string? value) => value is null ? "null" : "\"" + value + "\"";
 
@@ -343,7 +343,7 @@ public sealed class ContextIndexCardTests
     {
         var harness = new SystemTestHarness();
         await harness.Show(A.Status() with { Health = new HealthView("healthy", []) });
-        harness.Server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, $$"""{"sources":[{{Source("linear", "idle", 0)}}]}""");
+        harness.Server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, $$"""{"sources":[{{Source("linear", "idle", 0, complete: true)}}]}""");
 
         await harness.Vm.ContextIndex.Refresh(A.Record().Url, Token);
 

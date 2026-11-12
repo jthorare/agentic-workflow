@@ -27,7 +27,7 @@ internal static partial class Labels
     internal const string CodeIndexNeedsLook = "needs a look";
 
     /// <summary>The card's state word while a first build runs and nothing else needs a look.</summary>
-    internal const string CodeIndexBuilding = "needs a look";
+    internal const string CodeIndexBuilding = "building";
 
     /// <summary>What an index state reads as when the line has no commit to name (§7.3).</summary>
     /// <param name="state">The served state.</param>

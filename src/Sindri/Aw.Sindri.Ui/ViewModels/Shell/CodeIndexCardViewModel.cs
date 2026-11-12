@@ -52,7 +52,7 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
         var health = (read.Value.Health ?? []).ToDictionary(h => h.Repo, StringComparer.Ordinal);
         var views = repos.Select(r => (Repo: r, Health: health.GetValueOrDefault(r.Repo))).ToList();
         Lines = [.. views.Select(v => new CodeIndexLine(Line(v.Repo, v.Health)))];
-        Word = repos.Count == 0 ? string.Empty : views.TrueForAll(v => Fine(v.Repo, v.Health)) ? Labels.CodeIndexOk : Labels.CodeIndexNeedsLook;
+        Word = repos.Count == 0 ? string.Empty : WordOf(views);
         Show(repos.Count == 0 ? Labels.CodeIndexNone : string.Empty);
     }
 
@@ -61,6 +61,20 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
         Message = message;
         OnChanged(nameof(HasMessage));
     }
+
+    // A repo on its first build is normal work: it reads "building" unless another repo needs a look.
+    private static string WordOf(List<(CodeIndexRepoView Repo, CodeIndexHealthView? Health)> views)
+    {
+        var rest = views.Where(static v => !Is(StateOf(v.Repo, v.Health), "building")).ToList();
+        if (!rest.TrueForAll(static v => Fine(v.Repo, v.Health)))
+        {
+            return Labels.CodeIndexNeedsLook;
+        }
+
+        return rest.Count < views.Count ? Labels.CodeIndexBuilding : Labels.CodeIndexOk;
+    }
+
+    private static bool Is(string state, string word) => string.Equals(state, word, StringComparison.Ordinal);
 
     private static bool One(string state, params string[] words) => words.Contains(state, StringComparer.Ordinal);
 

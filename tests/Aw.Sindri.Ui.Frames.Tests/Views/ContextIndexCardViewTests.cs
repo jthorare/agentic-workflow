@@ -27,7 +27,7 @@ public sealed class ContextIndexCardViewTests : FrameHost
         Assert.Equal(2, lines.Count);
         Assert.Equal(shell.Health.ContextIndex.Lines[1].Name, AutomationProperties.GetName(lines[1]));
         Assert.StartsWith("Context index: linear: idle", AutomationProperties.GetName(lines[1]), StringComparison.Ordinal);
-        Assert.Equal(("Context index", "needs a look"), (AutomationProperties.GetName(Named<TextBlock>(window, "ContextIndexEyebrow")), AutomationProperties.GetName(Named<TextBlock>(window, "ContextIndexWord"))));
+        Assert.Equal(("Context index", "waiting for the first read"), (AutomationProperties.GetName(Named<TextBlock>(window, "ContextIndexEyebrow")), AutomationProperties.GetName(Named<TextBlock>(window, "ContextIndexWord"))));
         Assert.False(Named<TextBlock>(window, "ContextIndexMessage").IsVisible);
     });
 

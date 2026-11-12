@@ -78,7 +78,7 @@ public sealed class CodeIndexCardTests
         var card = await Read(Repo("repo", state, commit: null, 0));
 
         Assert.Equal(expected, Assert.Single(card.Lines).Text);
-        Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
+        Assert.Equal(state == "building" ? Labels.CodeIndexBuilding : Labels.CodeIndexNeedsLook, card.Word);
     }
 
     [Fact]
@@ -135,7 +135,7 @@ public sealed class CodeIndexCardTests
         var card = await ReadWithHealth([Repo("repo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("repo", state)]);
 
         Assert.Equal(expected, Assert.Single(card.Lines).Text);
-        Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
+        Assert.Equal(state == "building" ? Labels.CodeIndexBuilding : Labels.CodeIndexNeedsLook, card.Word);
     }
 
     [Theory]
