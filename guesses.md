@@ -48,3 +48,13 @@ Round 1 guess numbers no longer apply. Items below are invented in these frames 
 32. Links in raw text carry the repo: `[[acme/api#3109]]`. The `[[` popup shows `repo#id` in the id column.
 33. Not live: hollow glyph and dashed edge, both #70757c (3:1 or more), text at full ink.
 34. The capture window's primary button "Create issue in Linear" sits in the second row, after the "in Linear · EXP" chip. The no-folder frame's caption is a reviewer caption, drawn italic under the window.
+
+## Round 6 (ideas round 5 verdict, round 3 ask, spec c7b11da917)
+35. Capture window: a small title line on the window ("New note", "New issue"); the desktop strip reads the tray item "New issue or note". The no-folder window is titled "New issue". Footers read "Esc close". Note kind: Enter saves, Ctrl+Enter does the same; Issue kind: Ctrl+Enter creates, Enter only moves focus to the button.
+36. "Captured" toast: Undo shows Ctrl+Alt+Z (agent default). Undo-off line is the SND-NOTE-009 sentence. "Saved without Sindri" has one button, Open note, and the sub-line of guess 29.
+37. today-ghost and today-ghost-down: the day's file does not exist; the template is drawn as a ghost and nothing is written. Down: read-only with the SND-NOTE-001 sentence. today-new is the state after the 09:12 capture made the file: no linked objects, no backlinks.
+38. Header line "Chips are live: updated 4 s ago" is on the today frames; the down frame says "Not live: Sindri isn't running. States as of 14:02." Codes sit under "Details ▸" in every banner.
+39. History on the eng note shows edit, tick, link and create rows only (captures belong to the daily file). history and history-stale carry a "v1.1 reference" tag.
+40. List groups are Pinned (1), Today (3), This week (5), Older (205).
+41. One shared "Capture hotkey" row under Settings > Shortcuts, same label and caption in Notes and Projects; Notes Settings only points to it. settings-no-folder says the window makes issues only. settings-folder-error draws SND-NOTE-025.
+42. The legend frame has a reviewer caption with the order rule and shows open and draft pulls with red CI as "CI red".
