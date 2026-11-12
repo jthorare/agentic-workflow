@@ -126,7 +126,7 @@ internal sealed class FleetStateFiles(string root, IReadOnlyList<AgentId> provid
     private static FleetStateFile? Map(FleetStateDocument d, AgentId provider)
     {
         if (d.Schema != 1 || d.Provider != provider.Value || !SessionId.TryFrom(d.SessionId, out var session) || State(d.State) is not { } state
-            || string.Equals(d.State, "asking", StringComparison.Ordinal) != (d.Reason is not null) || (d.Tool is not null && !string.Equals(d.Reason, "approval", StringComparison.Ordinal))
+            || string.Equals(d.State, "asking", StringComparison.Ordinal) != (d.Reason is not null) || !ToolFits(d)
             || (d.AgentPid is null) != (d.AgentStartTicks is null))
         {
             return null;
@@ -136,12 +136,20 @@ internal sealed class FleetStateFiles(string root, IReadOnlyList<AgentId> provid
         {
             Reason = d.Reason is null ? null : Reason(d.Reason),
             Tool = d.Tool,
+            ToolAt = d.ToolAt,
             Cwd = d.Cwd,
             Transcript = d.Transcript,
             AgentPid = d.AgentPid,
             AgentStartTicks = d.AgentStartTicks,
         };
     }
+
+    // A tool rides an approval ask (no toolAt) or a running session (with toolAt); toolAt never stands alone.
+    private static bool ToolFits(FleetStateDocument d) => d.Tool is null
+        ? d.ToolAt is null
+        : string.Equals(d.State, "asking", StringComparison.Ordinal)
+            ? string.Equals(d.Reason, "approval", StringComparison.Ordinal) && d.ToolAt is null
+            : string.Equals(d.State, "running", StringComparison.Ordinal) && d.ToolAt is not null;
 
     private static HookState? State(string text) => text switch
     {

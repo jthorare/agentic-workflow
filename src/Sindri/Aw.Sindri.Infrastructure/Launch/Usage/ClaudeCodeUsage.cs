@@ -15,6 +15,7 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
     private const string Marker = "\"usage\"";
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly Dictionary<string, FileState> _files = new(StringComparer.Ordinal);
+    private readonly SeenWindow _seen = new();
 
     /// <summary>What was read of one transcript: the byte just past its last complete line, and each message by id with its timestamp.</summary>
     private sealed class FileState
@@ -42,7 +43,7 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var files = TranscriptFiles.Jsonl([root, .. alsoUnder], from);
+            var files = TranscriptFiles.Jsonl([root, .. alsoUnder], _seen.Widen(from, to));
             foreach (var gone in _files.Keys.Except(files, StringComparer.Ordinal).ToList())
             {
                 _ = _files.Remove(gone);
