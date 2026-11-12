@@ -14,6 +14,7 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// </summary>
 internal static class TodoScenarios
 {
+    private static readonly string[] _vaultSlugs = ["todos-note-check", "todos-note", "todos-note-import"];
     private static readonly string[] _markSlugs = ["todos-done", "todos-reopen", "todos-remove", "todos-restore"];
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
@@ -29,7 +30,7 @@ internal static class TodoScenarios
     public static async Task<GoldenHost> Start(string slug, CancellationToken ct)
     {
         // why: one vault folder per host (#2868); a shared one let a second host's import find the first host's ids in the note
-        var vault = slug is "todos-note-check" or "todos-note" or "todos-note-import" ? new Ledger.TempHome() : null;
+        var vault = _vaultSlugs.Contains(slug, StringComparer.Ordinal) ? new Ledger.TempHome() : null;
         try
         {
             var host = await GoldenHost.Start(temporary: true, ct, slug switch
