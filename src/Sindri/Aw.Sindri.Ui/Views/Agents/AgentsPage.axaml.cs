@@ -9,7 +9,7 @@ using Aw.Sindri.Ui.ViewModels.Agents;
 namespace Aw.Sindri.Ui.Views.Agents;
 
 #pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
-/// <summary>The Agents page: a title click opens the sheet, focus arriving selects the row, the filters narrow the list, and a key or a re-read can ask for focus.</summary>
+/// <summary>The Agents page: a title click opens the sheet, focus arriving selects the row, the filter box narrows the list, and a key or a re-read can ask for focus.</summary>
 internal sealed partial class AgentsPage : UserControl
 {
     public AgentsPage()
@@ -33,13 +33,7 @@ internal sealed partial class AgentsPage : UserControl
         }
     }
 
-    private void OnClearFilters(object? sender, RoutedEventArgs e)
-    {
-        ProviderFilter.SelectedIndex = 0;
-        StateFilter.SelectedIndex = 0;
-        RepoFilter.SelectedIndex = 0;
-        Page?.ClearFilters();
-    }
+    private void OnClearFilters(object? sender, RoutedEventArgs e) => Page?.ClearFilters();
 
 
     private AgentsPageViewModel? Page => DataContext as AgentsPageViewModel;
@@ -93,8 +87,10 @@ internal sealed partial class AgentsPage : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         Page?.FocusRequested -= OnFocusRequested;
+        Page?.FilterFocusRequested -= OnFilterFocusRequested;
         base.OnDataContextChanged(e);
         Page?.FocusRequested += OnFocusRequested;
+        Page?.FilterFocusRequested += OnFilterFocusRequested;
     }
 
     private void OnFocusRequested(object? sender, AgentFocusEventArgs request) =>
@@ -153,10 +149,29 @@ internal sealed partial class AgentsPage : UserControl
 
     private void OnEndedToggle(object? sender, RoutedEventArgs e) => Page?.ToggleEnded();
 
-    private void OnProviderChosen(object? sender, SelectionChangedEventArgs e) => Page?.FilterProvider((sender as ComboBox)?.SelectedItem as string);
+    // Esc in the box clears it and gives the focus back to the list.
+    private void OnFilterKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e is { Key: Key.Escape, KeyModifiers: KeyModifiers.None } && Page?.EscapeFilter() == true)
+        {
+            e.Handled = true;
+        }
+    }
 
-    private void OnStateChosen(object? sender, SelectionChangedEventArgs e) => Page?.FilterState((sender as ComboBox)?.SelectedItem as string);
+    // A header click sorts by its column; the same header again reverses the sort.
+    private void OnSort(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string tag } && Enum.TryParse<AgentSortColumn>(tag, out var column))
+        {
+            Page?.SortBy(column);
+        }
+    }
 
-    private void OnRepoChosen(object? sender, SelectionChangedEventArgs e) => Page?.FilterRepo((sender as ComboBox)?.SelectedItem as string);
+    private void OnFilterFocusRequested(object? sender, EventArgs e) =>
+        Dispatcher.UIThread.Post(() =>
+        {
+            _ = AgentsFilter.Focus(NavigationMethod.Tab);
+            AgentsFilter.SelectAll();
+        }, DispatcherPriority.Loaded);
 }
 #pragma warning restore MA0182

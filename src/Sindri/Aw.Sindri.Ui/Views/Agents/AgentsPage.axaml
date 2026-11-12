@@ -16,14 +16,9 @@
           <TextBlock x:Name="AgentsHead" Classes="caption subtle" Text="{Binding Head}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
       </StackPanel>
-      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" IsVisible="{Binding ShowsFilters}">
-        <ComboBox x:Name="ProviderFilter" ItemsSource="{Binding ProviderChoices}" SelectedIndex="0" IsEnabled="{Binding FiltersEnabled}" SelectionChanged="OnProviderChosen"
-                  MinWidth="150" AutomationProperties.Name="{Binding ProviderFilterName}" />
-        <ComboBox x:Name="StateFilter" ItemsSource="{Binding StateChoices}" SelectedIndex="0" IsEnabled="{Binding FiltersEnabled}" SelectionChanged="OnStateChosen"
-                  MinWidth="130" AutomationProperties.Name="{Binding StateFilterName}" />
-        <ComboBox x:Name="RepoFilter" ItemsSource="{Binding RepoChoices}" SelectedIndex="0" IsEnabled="{Binding FiltersEnabled}" SelectionChanged="OnRepoChosen"
-                  MinWidth="130" AutomationProperties.Name="{Binding RepoFilterName}" />
-      </StackPanel>
+      <TextBox x:Name="AgentsFilter" Grid.Column="2" Width="320" VerticalAlignment="Center" IsVisible="{Binding ShowsFilters}" IsEnabled="{Binding FiltersEnabled}"
+               Text="{Binding FilterText, Mode=TwoWay}" PlaceholderText="Filter: words, p: r: s: n: o:   ( / )" KeyDown="OnFilterKeyDown"
+               AutomationProperties.Name="Filter agents. Words, or p: provider, r: repo, s: state, n: name, o: owner" />
     </Grid>
 
     <StackPanel x:Name="AgentsStale" Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsStale}">
@@ -78,12 +73,12 @@
               <ColumnDefinition Width="Auto" SharedSizeGroup="AgDoing" />
               <ColumnDefinition Width="Auto" MinWidth="56" SharedSizeGroup="AgFor" />
             </Grid.ColumnDefinitions>
-            <TextBlock Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Status}" />
-            <TextBlock Grid.Column="1" Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Agent}" />
-            <TextBlock Grid.Column="2" Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Repo}" IsVisible="{Binding ShowsRepo}" />
-            <TextBlock Grid.Column="3" Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Where}" IsVisible="{Binding ShowsWhere}" />
-            <TextBlock Grid.Column="4" Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Doing}" IsVisible="{Binding ShowsDoing}" />
-            <TextBlock Grid.Column="5" Classes="caption subtle" Text="{Binding Columns.For}" HorizontalAlignment="Right" />
+            <Button Classes="group-toggle" Margin="0,0,8,0" Padding="0" Tag="Status" Click="OnSort" AutomationProperties.Name="Sort by status"><TextBlock Classes="caption subtle" Text="{Binding StatusCaption}" AutomationProperties.AccessibilityView="Raw" /></Button>
+            <Button Grid.Column="1" Classes="group-toggle" Margin="0,0,8,0" Padding="0" Tag="Agent" Click="OnSort" AutomationProperties.Name="Sort by agent"><TextBlock Classes="caption subtle" Text="{Binding AgentCaption}" AutomationProperties.AccessibilityView="Raw" /></Button>
+            <Button Grid.Column="2" Classes="group-toggle" Margin="0,0,8,0" Padding="0" Tag="Repo" Click="OnSort" IsVisible="{Binding ShowsRepo}" AutomationProperties.Name="Sort by repo"><TextBlock Classes="caption subtle" Text="{Binding RepoCaption}" AutomationProperties.AccessibilityView="Raw" /></Button>
+            <Button Grid.Column="3" Classes="group-toggle" Margin="0,0,8,0" Padding="0" Tag="Where" Click="OnSort" IsVisible="{Binding ShowsWhere}" AutomationProperties.Name="Sort by where"><TextBlock Classes="caption subtle" Text="{Binding WhereCaption}" AutomationProperties.AccessibilityView="Raw" /></Button>
+            <Button Grid.Column="4" Classes="group-toggle" Margin="0,0,8,0" Padding="0" Tag="Doing" Click="OnSort" IsVisible="{Binding ShowsDoing}" AutomationProperties.Name="Sort by doing"><TextBlock Classes="caption subtle" Text="{Binding DoingCaption}" AutomationProperties.AccessibilityView="Raw" /></Button>
+            <Button Grid.Column="5" Classes="group-toggle" Padding="0" Tag="For" Click="OnSort" HorizontalAlignment="Right" AutomationProperties.Name="Sort by for"><TextBlock Classes="caption subtle" Text="{Binding ForCaption}" AutomationProperties.AccessibilityView="Raw" /></Button>
           </Grid>
         </Border>
         <ItemsControl x:Name="AgentGroups" ItemsSource="{Binding Groups}">

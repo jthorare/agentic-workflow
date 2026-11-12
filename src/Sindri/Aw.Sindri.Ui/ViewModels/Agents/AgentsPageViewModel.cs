@@ -182,7 +182,6 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         OnChanged(nameof(HeadName));
         ObserveCounts(list.Counts.Live, list.Counts.Asking);
         Patch.To(ProblemLines, [.. list.Problems.Select(p => p.Text)]);
-        ReplaceChoices(list);
         Apply(before, list);
     }
 
@@ -231,7 +230,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
     private void Apply(IReadOnlyList<string> before, SessionList list)
     {
         var shownSessions = list.Sessions.Where(Matches).ToList();
-        var kept = shownSessions.Select(Row).ToList();
+        var kept = Sorted([.. shownSessions.Select(Row)]);
         Head = IsFiltered
             ? Labels.AgentsFilteredHead(shownSessions.Count, list.Counts.Live, shownSessions.Count(s => string.Equals(s.State, "asking", StringComparison.Ordinal)))
             : Labels.AgentsHead(list.Counts.Live, list.Counts.Asking);

@@ -33,10 +33,49 @@ internal sealed class AgentFilterQuery
     /// <summary>Reads the text of the filter box.</summary>
     /// <param name="text">The box's text; null or blank for none.</param>
     /// <returns>The query.</returns>
-    internal static AgentFilterQuery Parse(string? text) => throw new NotSupportedException();
+    internal static AgentFilterQuery Parse(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return Empty;
+        }
+
+        List<string> words = [], providers = [], repos = [], states = [], names = [], owners = [];
+        foreach (var part in text.ToLowerInvariant().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
+        {
+            var list = part.Length > 1 && part[1] == ':' ? part[0] switch
+            {
+                'p' => providers,
+                'r' => repos,
+                's' => states,
+                'n' => names,
+                'o' => owners,
+                _ => null,
+            } : null;
+            if (list is null)
+            {
+                words.Add(part);
+            }
+            else if (part.Length > 2)
+            {
+                var value = part[2..];
+                list.Add(ReferenceEquals(list, states) && string.Equals(value, "blocked", StringComparison.Ordinal) ? "asking" : value);
+            }
+        }
+
+        return new AgentFilterQuery { Words = words, Providers = providers, Repos = repos, States = states, Names = names, Owners = owners };
+    }
 
     /// <summary>True when the row passes every word and every token.</summary>
     /// <param name="row">The row's searchable text.</param>
     /// <returns>True when the row stays in the list.</returns>
-    internal bool Matches(AgentFilterTarget row) => throw new NotSupportedException();
+    internal bool Matches(AgentFilterTarget row) =>
+        Words.All(w => Has(row.Name, w) || Has(row.Repo, w) || Has(row.Doing, w))
+        && Providers.All(v => Has(row.Provider, v))
+        && Repos.All(v => Has(row.Repo, v))
+        && States.All(v => Has(row.State, v))
+        && Names.All(v => Has(row.Name, v))
+        && Owners.All(v => Has(row.Owner, v));
+
+    private static bool Has(string haystack, string needle) => haystack.Contains(needle, StringComparison.OrdinalIgnoreCase);
 }
