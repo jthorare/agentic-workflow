@@ -59,7 +59,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         CommandOutcome = new CommandOutcomeRegion(control => Health.Banner.HasRebuild && ReferenceEquals(Health.Banner.Rebuild, control));
         Create = new CreateItemViewModel(Health.Catalog, () => Health.ApiUrl(), api);
         QuickAdd = new QuickAddViewModel(api, () => Health.ApiUrl(), clock);
-        Palette = new CommandPaletteViewModel(Health.Catalog, GoTo, RememberRun, CommandOutcome, () => Create.Open(), openTodo: OpenTodo, newTodo: () => OpenQuickAdd());
+        Palette = new CommandPaletteViewModel(Health.Catalog, GoTo, RememberRun, CommandOutcome, () => Create.Open(), openTodo: OpenTodo, newTodo: () => OpenQuickAdd()) { OpenSetting = OpenSettingFilter };
         Shortcuts = new ShortcutsViewModel(Health.Catalog);
         Queue = new QueueViewModel(api, Health.Catalog, clock);
         Queue.PageShown(RowScopeOf(CurrentPage));

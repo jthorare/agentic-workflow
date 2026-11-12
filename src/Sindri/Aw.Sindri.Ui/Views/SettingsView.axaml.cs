@@ -32,6 +32,7 @@ internal sealed partial class SettingsView : UserControl
         if (Content is StackPanel page)
         {
             ReplaceChecklist(page);
+            PlaceThisApp(page);
         }
     }
 
@@ -57,6 +58,34 @@ internal sealed partial class SettingsView : UserControl
         if (_checklist is not null && _settings is not null && string.Equals(e.PropertyName, nameof(SettingsViewModel.ShowsSetup), StringComparison.Ordinal))
         {
             _checklist.IsVisible = _settings.ShowsSetup;
+        }
+
+        if (Content is StackPanel page && string.Equals(e.PropertyName, nameof(SettingsViewModel.ThisAppFirst), StringComparison.Ordinal))
+        {
+            PlaceThisApp(page);
+        }
+    }
+
+    private void OnResetMotion(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => _settings?.ResetReduceMotion();
+
+    private void OnResetTextSize(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => _settings?.ResetTextScale();
+
+    // "This app" sits above the checklist once setup is finished (or when the page has none), and below the other sections before that.
+    private void PlaceThisApp(StackPanel page)
+    {
+        Control[] parts = [ThisAppName, ThisAppCard];
+        foreach (var part in parts)
+        {
+            _ = page.Children.Remove(part);
+        }
+
+        if (_settings?.ThisAppFirst == true)
+        {
+            page.Children.InsertRange(3, parts);   // after the title, the filter box and its no-match line, before the checklist
+        }
+        else
+        {
+            page.Children.AddRange(parts);
         }
     }
 

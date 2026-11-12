@@ -31,6 +31,16 @@ internal sealed partial class SettingsViewModel
     /// <summary>Turns the in-app Reduce motion switch off.</summary>
     internal void ResetReduceMotion() => ReduceMotion = false;
 
+    // The checklist finishing moves "This app" above it (#3362).
+    private void WatchSetup() =>
+        Setup?.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(Setup.IsFinished), StringComparison.Ordinal))
+            {
+                OnChanged(nameof(ThisAppFirst));
+            }
+        };
+
     private void NotifyChangedMarks()
     {
         OnChanged(nameof(TextScaleChanged));

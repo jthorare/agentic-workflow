@@ -111,8 +111,14 @@
         <!-- Reduce motion: the switch, and a note while the OS already reduces motion (§11.4). -->
         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.MD}">
           <StackPanel VerticalAlignment="Center" Spacing="{StaticResource Space.XXS}">
-            <TextBlock x:Name="ReduceMotionText" Classes="body-strong" Text="{Binding ReduceMotionLabel}"
-                       AutomationProperties.Name="{Binding ReduceMotionLabel}" />
+            <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+              <TextBlock x:Name="ReduceMotionText" Classes="body-strong" Text="{Binding ReduceMotionLabel}"
+                         AutomationProperties.Name="{Binding ReduceMotionLabel}" />
+              <TextBlock x:Name="ReduceMotionChanged" Classes="caption subtle" VerticalAlignment="Center" Text="{Binding ChangedMark}" IsVisible="{Binding ReduceMotionChanged}"
+                         AutomationProperties.AccessibilityView="Raw" />
+              <Button x:Name="ReduceMotionReset" Classes="link" Content="{Binding ResetLabel}" Click="OnResetMotion" IsVisible="{Binding ReduceMotionChanged}"
+                      AutomationProperties.Name="{Binding ResetLabel}" />
+            </StackPanel>
             <TextBlock x:Name="SystemMotionText" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}"
                        Text="{Binding SystemReducesMotionNote}" IsVisible="{Binding SystemReducesMotion}"
                        AutomationProperties.Name="{Binding SystemReducesMotionNote}" />
@@ -127,8 +133,14 @@
         <!-- Text size: the type ramp's scale, 90–130% (§14.2). -->
         <StackPanel Spacing="{StaticResource Space.XS}">
           <Grid ColumnDefinitions="*,Auto">
-            <TextBlock x:Name="TextSizeText" Classes="body-strong" Text="{Binding TextSizeLabel}"
-                       AutomationProperties.Name="{Binding TextSizeLabel}" />
+            <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+              <TextBlock x:Name="TextSizeText" Classes="body-strong" Text="{Binding TextSizeLabel}"
+                         AutomationProperties.Name="{Binding TextSizeLabel}" />
+              <TextBlock x:Name="TextSizeChanged" Classes="caption subtle" VerticalAlignment="Center" Text="{Binding ChangedMark}" IsVisible="{Binding TextScaleChanged}"
+                         AutomationProperties.AccessibilityView="Raw" />
+              <Button x:Name="TextSizeReset" Classes="link" Content="{Binding ResetLabel}" Click="OnResetTextSize" IsVisible="{Binding TextScaleChanged}"
+                      AutomationProperties.Name="{Binding ResetLabel}" />
+            </StackPanel>
             <TextBlock x:Name="TextScaleValueText" Grid.Column="1" Classes="body" Foreground="{DynamicResource Brush.InkMuted}"
                        Text="{Binding TextScaleText}" AutomationProperties.Name="{Binding TextScaleText}" />
           </Grid>
