@@ -81,7 +81,7 @@ public sealed class WatchEventsTests
 
         await Watch(TimeSpan.FromMinutes(10));
 
-        Assert.Equal(["context.high", "context.ok"], (await Written()).Select(e => e.Kind));
+        Assert.Equal(["context.high", "context.ok"], (await Written()).Select(e => e.Kind), StringComparer.Ordinal);
         Assert.Equal("""{"lane":"api","tokens_k":9,"recycle":false}""", (await Written())[1].Fields);
     }
 
@@ -130,6 +130,6 @@ public sealed class WatchEventsTests
 
         await Watch(TimeSpan.FromMinutes(10));
 
-        Assert.Empty((await Written()).Where(e => e.Kind.StartsWith("lane.", StringComparison.Ordinal)));
+        Assert.DoesNotContain(await Written(), e => e.Kind.StartsWith("lane.", StringComparison.Ordinal));
     }
 }

@@ -107,7 +107,7 @@ public sealed class MergeRunTests
 
         _ = await Service().Handle(new MergeRunRequest(190), CancellationToken.None);
 
-        Assert.Equal([("merge.recorded", (string?)null, """{"pr":190,"sha":"newmainsha1234","lane":""}""")], await Written());
+        Assert.Equal([("merge.recorded", null, """{"pr":190,"sha":"newmainsha1234","lane":""}""")], await Written());
     }
 
     [Fact, Trait("Lane", "unit")]

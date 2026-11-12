@@ -47,7 +47,7 @@ public sealed class UsageEventsTests
         _w.World.Clock.Advance(TimeSpan.FromMinutes(40));
         await Tick();
 
-        Assert.Equal(["usage.limited", "usage.ok"], (await Written()).Select(e => e.Kind));
+        Assert.Equal(["usage.limited", "usage.ok"], (await Written()).Select(e => e.Kind), StringComparer.Ordinal);
         Assert.Equal("""{"lane":"api","provider":"claude","until":"2026-10-15T05:30:00Z"}""", (await Written())[1].Fields);
     }
 
