@@ -721,11 +721,21 @@ This section changes three earlier rules. Decision 6 now says that no *op* types
 
 - Only the human, in the live pane, with the per-start human token. The `ops` route (§5) still never types into a pane, and neither does an agent or an MCP tool. The terminal routes refuse every session caller (SND-AUTH-002), including a session Sindri started (decision 29 of the first-run spec: a launched session is a session caller).
 - This covers lane sessions too. Lanes live on the owner's default tmux socket (`HostRules.SocketKind`), so the pane attaches there. Typing into a lane mid-turn is his call, the same as in his own terminal. Decision 7 therefore gets a third way out: he can type a message into a Claude lane's pane himself. Open question 2's mail path still matters for the composer and for agents.
-- Sindri runs only these tmux commands on a socket it did not create: `attach` (or `attach -r`), `capture-pane`, `send-keys`, `display-message` and `list-clients`. It never runs `kill-*`, `new-session` or `resize-window` there. Every call drops `TMUX` from its environment (`TmuxSessionHost.cs:249`). The rule stops the 2026-10-15 failure, where an inherited `TMUX` killed a team.
+- Sindri runs only these tmux commands on a socket it did not create (the foreign list):
+  - `capture-pane -e -p -t %N`, with `-S` and `-E` for scrollback. Scrollback never uses `copy-mode`, because copy-mode swallows the keys of a lane mid-turn.
+  - `send-keys -t %N`, with `-l` for literal text.
+  - `load-buffer -b sindri-paste -` then `paste-buffer -p -d -b sindri-paste -t %N`. This is the one thing Sindri writes on a foreign server: a buffer named `sindri-paste`, and `-d` deletes it after the paste.
+  - `display-message -p -t %N` with a format, `list-clients -t <session>` and `list-panes -t <session> -F`.
+  - `attach -f ignore-size -t <session>`, and `attach -r -f ignore-size -t <session>` for read-only. Plain `attach` resizes the lane's window to the smallest client, so a foreign socket never gets one. `-f ignore-size` needs tmux 3.2 or newer (this box has 3.4). On an older tmux a foreign socket uses way C only (§15.7).
+  - It never runs `copy-mode`, `select-window`, `kill-*`, `new-session` or `resize-window` there.
+- Every call targets the pane id `%N`, which `TmuxFacts` already carries (`HostRules.cs:99-102`). A session name alone can mean another window than the agent's. `attach` is used only when the session has exactly one window. Otherwise the pane uses way C.
+- A sized `attach` (no `ignore-size`) runs only on `sindri-launch`, the socket Sindri created. `kill-session` runs only there too, and only for **Stop** on a one-off session. The allowlist unit test (A8) checks each verb and flag above, and fails any foreign `attach` that lacks `-f ignore-size`.
+- Every call drops `TMUX` from its environment (`TmuxSessionHost.cs:249`). The rule stops the 2026-10-15 failure, where an inherited `TMUX` killed a team.
+- Typed bytes can be secrets, such as a token pasted into a login. The terminal route never logs, ledgers or traces frames or keys, and `Aw.Redaction` is not asked to scrub them. The screen cache of §15.3 lives in memory only and is dropped when Sindri quits.
 
 ### 15.3 The terminal view
 
-At 1440x900 the list column is 360 px: glyph, id and title, and the why chip at 120 px. The other columns are hidden. The pane takes the remaining 1048 px with 12 px of inset. At 13 px mono with a 7.8 px cell that is about 132 columns by 44 rows, wide enough for Claude Code's UI. The peek (`Space`) is closed while the pane is open, because both use the right side.
+At 1440x900 the list column is 360 px (below 1100 px of window width it collapses to a 56 px column of glyphs, so the pane keeps about 100 columns at 1000 px): glyph, id and title, and the why chip at 120 px. The other columns are hidden. The pane takes the remaining 1048 px with 12 px of inset. At 13 px mono with a 7.8 px cell that is about 132 columns by 44 rows, wide enough for Claude Code's UI. The peek (`Space`) is closed while the pane is open, because both use the right side.
 
 ```
 ┌ top bar 40 ───────────────────────────────────────────────────────────────────────────────┐
@@ -738,32 +748,42 @@ At 1440x900 the list column is 360 px: glyph, id and title, and the why chip at 
 │ ◔ GH-2959 context: map…   │                                                               │
 │ ...                       │                                                               │
 ├───────────────────────────┴───────────────────────────────────────────────────────────────┤
-│ F6 list ⇄ terminal · Shift+PgUp scroll back · Esc (in list) close · n new agent · x stop  │ footer 28
+│ F6 or Ctrl+Shift+L list ⇄ terminal · Shift+PgUp scroll back · Esc (in list) close · n new  │ footer 28
 └───────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Focus.** Opening the view puts focus in the pane. A click in the pane, or `Enter` on the row the pane already shows, moves focus back into it. From then on every key goes to tmux, `Esc` included: Claude Code uses `Esc` to interrupt a turn, so the page must not take it. `F6` moves focus back to the list without detaching, and `Shift+F6` goes the other way. That is T3 Code's area key (`docs/user/keyboard-focus.md`), and neither Claude Code nor Codex binds it (the spike checks this, §15.8 S1). Page and shell keys, the `G` chord included, are off while the pane has focus, as in T3 (`!terminalFocus`). `Ctrl+K` goes to the pane as well, because shells use it to cut a line, so the palette opens from the list only.
+- **Focus.** Opening the view puts focus in the pane. A click in the pane, or `Enter` on the row the pane already shows, moves focus back into it. From then on every key goes to tmux, `Esc` included: Claude Code uses `Esc` to interrupt a turn, so the page must not take it. `F6` moves focus back to the list without detaching, and `Shift+F6` goes the other way. That is T3 Code's area key (`docs/user/keyboard-focus.md`). On a Mac laptop `F6` is a media key without `Fn`, so a second chord does the same: `Ctrl+Shift+L` (on macOS, `Cmd+Shift+L`, which a terminal never receives). S1 checks on macOS that both chords reach Sindri and that neither Claude Code nor Codex binds them (§15.8). A click on the list always takes focus. When the connection drops, focus goes back to the list at once, so no frozen pane holds the keyboard. Page and shell keys, the `G` chord included, are off while the pane has focus, as in T3 (`!terminalFocus`). `Ctrl+K` goes to the pane as well, because shells use it to cut a line, so the palette opens from the list only.
 - **Leaving.** `Esc` with focus in the list closes the view. The session keeps running, nothing asks, and the full list comes back with the cursor on the same row. **Hide** in the pane header does the same. **Stop…** is the existing `x` confirm (decision 9).
-- **Switching.** `j/k` in the list changes the pane to the new row's session. The pane keeps the screen and scrollback of the last 8 sessions it showed, so a switch back paints at once and then catches up. T3 Code and Paradev both reattach with scrollback.
-- **Header.** The session name, a **Transcript** button (the §6.3 sheet), then one state word: **Attached**, **Read-only** (`attach -r`, when the owner picked Peek only from `.`), or **Can't attach** (§15.5). Then the socket kind (`sindri`, `default`, `team`) and the other clients from `ISessionHost.AttachedClients`: "1 other client" when he also has it open in Warp.
+- **Switching.** `j/k` in the list changes the pane to the new row's session, and focus stays in the list, so a stray key cannot land in the wrong lane. The header shows the target's name in 16 px type. The pane keeps the screen of the last 8 sessions it showed, so a switch back paints at once. That cached frame is dimmed until the first live frame replaces it. T3 Code and Paradev both reattach with scrollback.
+- **Header.** The session name, a **Transcript** button (the §6.3 sheet), then one state word:
+  - **Connecting**: the WebSocket is opening.
+  - **Reconnecting**: the WebSocket dropped and tmux is fine; the screen is dimmed and focus is in the list.
+  - **Starting**: a one-off session's agent is coming up (at most 4 s, §15.4).
+  - **Attached**.
+  - **Read-only** (`attach -r`, when the owner picked Peek only from `.`).
+  - **Can't attach** (§15.5).
+  - **Gone**: the tmux server or session is gone (SND-AGENT-016). The pane shows "tmux session gone" and offers **Copy resume command**.
+  - **Ended**: the agent exited and tmux is still there (below). Then the socket kind (`sindri`, `default`, `team`) and the other clients from `ISessionHost.AttachedClients`: "1 other client" when he also has it open in Warp.
 - **Scrollback.** `Shift+PageUp` and `Shift+PageDown` read back without leaving the pane, as in T3. The depth is tmux's own `history-limit` for that pane. The pane does not keep a second copy.
-- **A row whose session ends** while the pane shows it: the pane freezes on the last screen, dims it, and shows "Ended 14:02 · Copy resume command". It never shows a dead cursor.
+- **A row whose session ends** while the pane shows it: the pane freezes on the last screen, dims it, and shows "Ended 14:02 · Copy resume command". For a one-off session started with a worktree, the banner also shows the worktree path. It never shows a dead cursor.
 
 ### 15.4 The New agent form
 
-`n` opens it as a 440 px sheet on the right, from anywhere in the list (with the pane closed or open). It is a bare key that writes nothing until `Ctrl+Enter`, the same as `r` (§6.6).
+`n` opens it as a 440 px sheet on the right, from the list (with the pane closed or open). With focus in the pane `n` is a letter for the agent, so he leaves the pane first (`F6`); the palette is off in the pane too (§15.3). It is a bare key that writes nothing until `Ctrl+Enter`, the same as `r` (§6.6).
 
 | Field | Default | Choices |
 |---|---|---|
 | Repo | the last one used from this form, else the first profile repo | the profile's repos, by name, with a dot on one that is not onboarded |
 | Agent | the last one used | Claude Code, Codex (Cursor has no CLI that tmux can run in the same way; out of v1) |
 | Prompt | empty | free text, 8,000 characters; empty starts the agent at its own prompt |
-| New worktree | off | on: a worktree and branch named from the prompt's first words, through `skills/_shared/worktree-path.sh` |
+| New worktree | off | on: a worktree and branch through `skills/_shared/worktree-path.sh`, named `oneoff-<yyMMdd-HHmm>-<slug>`: the slug is the prompt's first 3 words in `a-z0-9-` (24 characters at most), or the agent name (`claude-code`, `codex`) for an empty prompt. A name that exists gets `-2`, `-3`. The pattern is `^oneoff-\d{6}-\d{4}-[a-z0-9-]{1,24}(-\d+)?$` |
 
 - Every field has a default, so `n` then `Ctrl+Enter` is the whole common case (agent-deck's rule, T3 Code's "carry the last choices").
-- `Ctrl+Enter` starts it, closes the form and opens the terminal view on it with focus in the pane. `Ctrl+Shift+Enter` starts it in the background and leaves the form open with the prompt cleared, for the next one. That is T3's `mod+Enter` (`docs/user/thread-sidebar.md`, "Start in the background").
-- The session runs on `tmux -L sindri-launch` through `ISessionHost.Start` (4 s deadline), under the owner's own login and agent home: he is the one typing, the same as when he opens a terminal and runs `claude`. It is not sandboxed in v1 (open question 9). The prompt is passed as an argument to the agent, never typed with `send-keys`.
-- The new row shows in Working within 300 ms of `Ctrl+Enter`. Its object cell says `one-off`, and its title is the prompt's first 8 words (or "claude in sindri" when the prompt is empty) until the agent's own title replaces it.
+- A repo that is not onboarded is allowed. The dot is information only, because he types into the session himself (open question 10).
+- `Ctrl+Enter` sends the start and **the form stays open** until `POST /sindri/sessions` returns 2xx. On 2xx the form closes and the terminal view opens on the new session with focus in the pane. On an error the form stays open with the prompt kept, and the error shows in the form: 012 under Repo, 013 under Agent with the sign-in command, 017 under Prompt with the character count, and 014 at the foot of the form with **Retry**. `Ctrl+Shift+Enter` sends the same start, and on 2xx it leaves the form open with the prompt cleared, for the next one. That is T3's `mod+Enter` (`docs/user/thread-sidebar.md`, "Start in the background").
+- The session runs on `tmux -L sindri-launch` through `ISessionHost.Start` (4 s deadline), under the owner's own login and agent home: he is the one typing, the same as when he opens a terminal and runs `claude`. It is not sandboxed in v1 (open question 9). The prompt is one element of the agent's argument array, with no shell in between, so quotes, newlines and a leading `-` arrive as typed (A7 has a test for a prompt that starts with `-`). It is never typed with `send-keys`.
+- The row appears on the 2xx, within 300 ms of `Ctrl+Enter` (D16), in a **Starting** state. A fresh agent at an empty prompt is not Working, so the row shows the glyph of a session with no state yet and the chip "Starting", and the rules of §3 skip it. Starting lasts until the fleet hook writes the session's first state, and at most 4 s after the session exists. If the start overruns, the row is removed and the error is 014. Its object cell says `one-off`, and its title is the prompt's first 8 words (or "claude in sindri" when the prompt is empty) until the agent's own title replaces it.
+- A one-off worktree is never removed by hand. `aw-meta worktree-sweep` removes it after the session ends, like every other worktree.
 - The fan-out to several agents at once (T3's `Shift`-click on models) is out of v1.
 
 ### 15.5 A session the pane can't attach
@@ -781,17 +801,17 @@ A session in a Warp tab, an IDE terminal or a plain terminal window has no tmux 
 | Key | Where | Does | Writes? |
 |---|---|---|---|
 | `n` | list | opens the New agent form | no, until `Ctrl+Enter` |
-| `F6` / `Shift+F6` | terminal view | moves focus between the list and the pane | no |
+| `F6` / `Shift+F6`, `Ctrl+Shift+L` (macOS: `Cmd+Shift+L`) | terminal view | moves focus between the list and the pane | no |
 | `Ctrl+Shift+Enter` | New agent form | starts it in the background and keeps the form open | yes |
 
-`Enter` keeps its grammar meaning, open in full: for a tmux session, full is now the live pane. `t` stays unbound, because Home's `t` is Hand to agent. `n` is Reviews' next file, and a different page, the same way `h` and `e` differ by page (Home §7.4). The palette ids are `agents.terminal` (open the pane), `agents.transcript`, `agents.new`, `agents.new-background`, `agents.focus-pane` and `agents.focus-list`.
+`Enter` keeps its grammar meaning, open in full: for a tmux session, full is now the live pane. `t` stays unbound, because Home's `t` is Hand to agent. `n` is Reviews' next file, and a different page, the same way `h` and `e` differ by page (Home §7.4). The palette ids are `agents.terminal` (open the pane), `agents.transcript`, `agents.new`, `agents.new-background`, `agents.focus-pane` and `agents.focus-list` (also bound to the second chord).
 
 ### 15.7 The pane control: one seam, two ways behind it
 
-`sindri-ui` is NativeAOT, so the control is picked by a spike, not by this spec (#3335; same rule as the Notes editor, #3248). The page talks to one interface, `ITerminalPane` (in `Aw.Sindri.Ui`), so either way can sit behind it with no page change.
+`sindri-ui` is NativeAOT, so the control is picked by a spike, not by this spec (#3335; same rule as the Notes editor, #3248). Serve owns the source of the stream: the tmux calls, the pty, the token check and the allowlist of §15.2. The window owns the drawing. The seam between them is the terminal WebSocket (§15.8), which carries frames or bytes out, and keys, paste and size in. In code it is one pair: `ITerminalPaneSource` on the Serve side (it produces the stream) and `ITerminalPane` in `Aw.Sindri.Ui` (it draws a stream it is given). A control never starts a process or a pty of its own, so the token and the allowlist cannot be bypassed. Either way can sit behind the pair with no page change.
 
-- **Way C: screen copy plus keys.** Serve polls `tmux capture-pane -e -p` on the pane and sends keys with `send-keys`. ui measured about 6 ms per call (#3335). No new package. It is v1 **only if** it draws Claude Code's full-screen UI right at the budget below.
-- **Way A: a real terminal.** A terminal control (Devolutions.Terminal.Control, RoyalTerminal.Avalonia with its C# or `libghostty-vt` engine, ledger section A) draws the bytes of a `tmux attach` running on a pty. This is T3 Code's model: the server owns the pty, the window attaches to it (`docs/internals/terminal-runtime.md`). If way C misses the budget, way A is v1 and waits on the AOT publish result of #3335.
+- **Way C: screen copy plus keys.** Serve polls `tmux capture-pane -e -p -t %N` on the pane and sends keys with `send-keys`. ui measured about 6 ms per call (#3335). It needs no new package, but U7 writes a cell-grid renderer: `capture-pane -e` returns text with colour codes per row and no cursor, so the renderer parses those codes into cells. Each frame also carries `display-message -p -t %N '#{cursor_x} #{cursor_y} #{pane_width} #{pane_height} #{pane_in_mode} #{alternate_on}'`, which gives the cursor and tells whether Claude Code is on the alternate screen. D17 counts that renderer. Way C is v1 **only if** it draws Claude Code's full-screen UI right at the budget below.
+- **Way A: a real terminal.** A terminal control (Devolutions.Terminal.Control, RoyalTerminal.Avalonia with its C# or `libghostty-vt` engine, ledger section A) draws the bytes of a `tmux attach` running on a pty. This is T3 Code's model: the server owns the pty, the window attaches to it (`docs/internals/terminal-runtime.md`). The control must draw bytes it is handed, not only bytes from a pty it forks itself. S1 tests that as pass or fail for each candidate. If way C misses the budget, way A is v1 and waits on the AOT publish result of #3335.
 
 What way C can't do, in the owner's words (each one goes away with way A):
 
@@ -799,10 +819,10 @@ What way C can't do, in the owner's words (each one goes away with way A):
 |---|---|
 | Refresh | the screen repaints up to 30 times a second, not on every byte; a fast build log can skip frames |
 | Mouse | clicks and the scroll wheel inside Claude Code do nothing; the wheel scrolls Sindri's copy of the history instead |
-| Scrollback | `Shift+PageUp` reads tmux's history, one screen per press, with a short pause on each |
+| Scrollback | `Shift+PageUp` reads tmux's history with `capture-pane -S -E`, one screen per press, with a short pause on each; the pane never enters `copy-mode` |
 | Select and copy | he can select and copy from the screen, but not past the screen's edge in one drag |
-| Paste and Ctrl keys | paste works as one bracketed paste (`paste-buffer -p`); `Ctrl` and `Alt` combinations reach the agent through `send-keys`; a few rare keys (`Ctrl+Shift` chords) don't |
-| Size | when another client (a Warp tab) shares the window, the pane draws at that window's size and scrolls sideways if it is wider; Sindri never resizes a window it did not start |
+| Paste and Ctrl keys | paste works as one bracketed paste (`load-buffer -b sindri-paste -` then `paste-buffer -p -d`); `Ctrl` and `Alt` combinations reach the agent through `send-keys`; a few rare keys (`Ctrl+Shift` chords) don't |
+| Size | when another client (a Warp tab) shares the window, the pane draws at that window's size and scrolls sideways if it is wider; Sindri never resizes a window it did not start; way A attaches there with `-f ignore-size` |
 
 **Budget** (perf measures it in the real app, §15.8 F2; agent defaults until perf's first numbers):
 
@@ -819,12 +839,12 @@ Routes (under `/sindri`, human token only; a session caller gets SND-AUTH-002; a
 
 | Route | Does |
 |---|---|
-| `POST /sindri/sessions` | `{repo, agent, prompt?, worktree, actId}` starts a one-off session; returns the row id and the host ref. A replayed `actId` returns the first result |
-| `GET /sindri/sessions/{provider}/{id}/terminal` | a WebSocket: screen frames or pty bytes out, keys and paste in, size in. One per open pane. Closing it detaches and never stops the session |
+| `POST /sindri/sessions` | `{repo, agent, prompt?, worktree, actId}` starts a one-off session; returns `{id, actId, state, host: {socket, session, pane}}` with `state` `starting`. The start has no row to key on yet, so `actId` is the only key of the `agent.op` event (§5), kept 10 minutes, and its result is stored in that event. A replayed `actId` returns the first result |
+| `GET /sindri/sessions/{provider}/{id}/terminal` | a WebSocket: screen frames or pty bytes out, keys and paste in, size in. The human token goes in the first message, never in the URL, because loopback logs record URLs. One per open pane, and it targets one pane id `%N`. Closing it detaches and never stops the session. It writes no frame or key to a log or the ledger (§15.2) |
 
-CLI and MCP (§8.1): `sindri agents start --repo R --agent claude-code|codex [--prompt T] [--worktree] [--json]` for the human. It prints the row id and the attach command, and exits 0 when started, 1 when refused, 2 on a usage error. The MCP tool `agents_start` is listed and refused for every session caller in v1, like `agents_steer`. Typing into a pane has no CLI or MCP form on purpose: `tmux attach` already is that form.
+CLI and MCP (§8.1): `sindri agents start --repo R --agent claude-code|codex [--prompt T] [--worktree] [--act-id ID] [--json]` for the human. Without `--act-id` it makes one. `--json` prints `{"id", "actId", "state", "host": {"socket", "session", "pane"}}`, and the plain output adds the attach command. It exits 0 when started, 1 when refused, 2 on a usage error. The MCP tool `agents_start` is listed and refused for every session caller in v1, like `agents_steer`. Typing into a pane has no CLI or MCP form on purpose: `tmux attach` already is that form.
 
-Errors (from the reserved range, §9):
+Errors (from the reserved range, §9; 012 to 017 are free on origin/main, checked 2026-11-12):
 
 | Code | Meaning | HTTP | CLI exit |
 |---|---|---|---|
@@ -839,12 +859,12 @@ Phases, added to §14:
 
 | Phase | What | Lane | Starts | Needs | Proves |
 |---|---|---|---|---|---|
-| S1 | the pane spike (#3335): way C on Claude Code's UI at the D14 to D17 budget; way A's AOT publish (Devolutions, then RoyalTerminal with its C# engine and with Ghostty); `F6` reaches neither agent | ui, tools | now (phase 1 done) | none | picks way A or C for v1 |
-| DG2 | frames: the terminal view (attached, read-only, can't attach, ended), the New agent form (default, a repo not onboarded, agent not signed in, starting, refused), 1440 and 1000 wide | design | now | DG1 | D8 for the narrow list |
-| A7 | `POST /sindri/sessions`, `sindri agents start`, the `agents_start` tool, SND-AGENT-012 to 014 and 017, the profile's last-used repo and agent | api | after A0 | A0 | D16 (server half) |
-| A8 | the terminal WebSocket on way C first (`capture-pane`, `send-keys`, `paste-buffer -p`), behind `ITerminalPaneSource` so way A swaps in; SND-AGENT-015, 016; the §15.2 command allowlist as a unit test | api | after A0 | A0, S1's pick for way A | D14, D15 (server half) |
-| U7 | the terminal view on `ITerminalPane`: the 360 px list, focus and `F6`, the header, switch with screen cache, the ended freeze, the can't-attach card | ui | after U1, on a fake source | U1, A8 | D14, D15, D17 |
-| U8 | the New agent form and `Ctrl+Shift+Enter` | ui | after U1, on a fake route | U1, A7 | D16 |
+| S1 | the pane spike (#3335): way C on Claude Code's UI at the D14 to D17 budget, with its cell-grid renderer; way A's AOT publish (Devolutions, then RoyalTerminal with its C# engine and with Ghostty); a control binds to a supplied stream (pass or fail); `F6` and the second chord reach Sindri on macOS and neither agent binds them; `attach -f ignore-size` on a foreign socket does not resize the window (tmux 3.2 or newer) | ui, tools | now (phase 1 done) | none | picks way A or C for v1 |
+| DG2 | frames: the terminal view (connecting, reconnecting, starting, attached, read-only, can't attach, gone, ended), the New agent form (default, a repo not onboarded, agent not signed in, starting, each error in the form), 1440 wide, and 1000 wide with the list as a glyph column | design | now | DG1 | D8 for the narrow list |
+| A7 | `POST /sindri/sessions`, `sindri agents start`, the `agents_start` tool, SND-AGENT-012 to 014 and 017, the profile's last-used repo and agent, `--act-id` and the JSON fields, the Starting state, `PublicAPI`, `Usage`, `aot-smoke/expected.txt`, an ApiGoldens scenario and EventCatalog rows | api | after A0 | A0 | D16 (server half) |
+| A8 | the terminal WebSocket on way C first (`capture-pane`, `send-keys`, `paste-buffer -p`), behind `ITerminalPaneSource` so way A swaps in; SND-AGENT-015, 016; the §15.2 command allowlist as a unit test; the fake source's contract test in `Aw.Sindri.Testing`, so the real source cannot drift from it; `PublicAPI` and ApiGoldens rows | api | after A0 | A0, S1's pick for way A | D14, D15 (server half) |
+| U7 | the terminal view on `ITerminalPane`: the 360 px list and its glyph column, focus with `F6` and the second chord, the header states, switch with a dimmed screen cache, the ended freeze, the can't-attach card, the cell-grid renderer for way C | ui | after U1, on a fake source | U1, A8 | D14, D15, D17 |
+| U8 | the New agent form, its in-form errors and `Ctrl+Shift+Enter` | ui | after U1, on a fake route | U1, A7 | D16 |
 | F2 | perf: D14 to D16 in the real app, Claude Code and Codex, with 1 and 8 cached panes | perf | after U7 | U7, A8 | D14 to D16 |
 | X3 | ux walk, timed: open the page, `n`, start Claude in sindri with a prompt, read its answer, `F6`, open a lane's pane, type one line, `Esc`, stop the one-off | ux | after U8 | U7, U8 | the owner's three jobs in one walk |
 
@@ -872,6 +892,7 @@ Each has my recommended answer. None blocks the phases that start now.
 7. **May a one-off session start with no repo?** T3 Code runs such a thread in its own folder under `~/.t3/scratch` and can turn it into a project later. The owner said "in a repo he picks". Recommend repo-only for v1 (§15.4): every session then has a repo for the list's repo cell and for Jump. Owner question.
 8. **Way A or way C for v1?** #3335 decides on the D14 to D17 budget (§15.7). Recommend way C if it passes D17, because it adds no package. Not an owner question.
 9. **Sandbox a one-off session?** Recommend no for v1. The owner types into it, in his own agent home, as if he opened a terminal. A Sindri sandbox for one-offs comes back when a one-off can be started by something other than the owner. Owner question only if he wants it sandboxed.
+10. **May a one-off start in a repo that is not onboarded?** Recommend yes (§15.4). He types into the session himself, so the missing onboarding hook changes nothing for him. The dot in the repo list only says it is not onboarded. Owner question.
 
 ### Review notes
 
