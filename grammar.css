@@ -192,3 +192,61 @@ kbd { font:500 11px/16px var(--mono); color:var(--ink-subtle); background:var(--
 /* every peek action is a .btn with its key as a kbd inside; no plain-text actions, no keys in parentheses */
 .btn kbd { margin-left:0; }
 .peek-actions .spacer { flex:1; }
+
+/* ---------- Empty and error states (#3019) ----------
+   Two shapes. Every state has exactly ONE primary button, labelled with the verb of the fix.
+   1. .empty       page empty state: replaces a list body. Left-aligned at the row inset, never a centred card.
+                   24 px glyph in its status colour · title 15/22 ink · one sentence 13/20 ink-muted saying what the click does
+                   · ONE primary button with its key as a kbd · optional ONE ghost button · optional Details disclosure.
+   2. .state-line  inline state line: one 32 px row inside a list, a group, or under the top bar. Glyph, sentence, and the fix
+                   button at the right end where row actions sit. "Can't be read" (Retry), "a newer Sindri is installed" (Restart Sindri),
+                   "connection expired" (Reconnect Linear), "stalled" (Rebuild).
+   A failed read never shows the empty text ("Nothing running."): failed and empty are different states.
+   The old-serve case ("The X list can't be read from this Sindri") is ONE shared line with Restart Sindri on every page.
+   Raw codes and CLI lines live only behind Details (mono 12). */
+.empty { padding:var(--sp6) var(--inset); max-width:600px; }
+.empty .eg { width:24px; height:24px; display:grid; place-items:center; margin-bottom:var(--sp3); }
+.empty .eg .g { transform:scale(1.7143); }                      /* the 14 px state glyph drawn at 24 px */
+.empty h2 { font:600 15px/22px var(--font); color:var(--ink); margin:0; }
+.empty p { font:400 13px/20px var(--font); color:var(--ink-muted); margin:var(--sp1) 0 var(--sp4); }
+.empty .acts { display:flex; gap:var(--sp2); align-items:center; }
+.btn.busy { opacity:.6; }                                        /* the click is being worked on: same button, label ends in … */
+.details { margin-top:var(--sp4); font:400 12px/18px var(--font); color:var(--ink-3); }
+.details summary { list-style:none; cursor:default; }
+.details summary::-webkit-details-marker { display:none; }
+.details summary::before { content:'\25B8  '; }
+.details[open] summary::before { content:'\25BE  '; }
+.details code { display:block; margin-top:var(--sp2); font:400 12px/18px var(--mono); color:var(--ink-subtle); }
+
+.state-line { height:var(--row-h); display:grid; grid-template-columns:var(--col-glyph) minmax(0,1fr) auto; column-gap:var(--sp3); align-items:center;
+  padding:0 var(--inset); background:var(--s1); border-bottom:1px solid var(--hair); color:var(--ink-muted); white-space:nowrap; }
+.state-line.att { background:var(--att-soft); }
+.state-line.err { background:var(--err-soft); }
+.state-line .what { overflow:hidden; text-overflow:ellipsis; }
+.state-line .what .sub { color:var(--ink-3); font-size:12px; margin-left:var(--sp2); }
+.state-line .btns { display:flex; gap:var(--sp1); align-items:center; }
+.state-line .det { color:var(--ink-3); font-size:12px; margin-right:var(--sp2); }   /* "Details ▸" before the fix button; only on a failed read */
+
+/* Setup pieces (#3019) */
+.status-pill.off::before { background:var(--ink-3); }             /* not running / not connected */
+.g.box { border:1.5px solid var(--hair-3); border-radius:3px; }   /* checkbox, in the glyph column; x selects, so lists with ticks say so in the header */
+.g.box.on { background:var(--primary); border-color:var(--primary); }
+.g.box.on::after { content:''; position:absolute; left:3.5px; top:0.5px; width:3px; height:7px; border:solid #fff; border-width:0 1.5px 1.5px 0; transform:rotate(45deg); }
+/* a row with a fix button that is always visible (a setup step): last column holds the button, right-aligned */
+.row.fix { grid-template-columns:var(--col-glyph) minmax(200px,1fr) var(--facts, var(--col-fact-wide)) var(--col-act, 168px); }
+.row.fix .fixbtn { justify-self:end; display:flex; gap:var(--sp1); }
+.row.skel .title .t { display:block; width:200px; height:8px; border-radius:2px; background:var(--s2); }  /* a repo the scan has not reached yet */
+.field { height:28px; border:1px solid var(--hair-strong); border-radius:var(--r2); display:flex; align-items:center; padding:0 8px; gap:8px;
+  font:400 12px/18px var(--mono); color:var(--ink-3); background:var(--canvas); }
+.field.focus { border-color:var(--primary-hi); }
+/* bottom action bar of a first-run screen: count at the left, ghost then primary at the right */
+.actionbar { display:flex; align-items:center; gap:var(--sp2); padding:var(--sp3) var(--inset); border-top:1px solid var(--hair); color:var(--ink-subtle); font-size:12px; }
+.actionbar .spacer { flex:1; }
+.body.col { display:flex; flex-direction:column; }
+.body.col .list { flex:1; }
+/* a guided step list (paste a token): numbered, s1 block under its row, at the title's indent */
+.guide { margin:var(--sp1) var(--inset) var(--sp3) calc(var(--inset) + var(--col-glyph) + var(--sp3)); background:var(--s1); border:1px solid var(--hair); border-radius:var(--r3); padding:var(--sp2) var(--sp4); }
+.guide .step { display:grid; grid-template-columns:20px 1fr auto; column-gap:var(--sp3); align-items:center; min-height:var(--row-h-comfy); }
+.guide .step .no { width:20px; height:20px; border-radius:50%; background:var(--s4); color:var(--ink-muted); font:600 11px/20px var(--font); text-align:center; }
+.guide .step.now .no { background:var(--primary); color:#fff; }
+.guide .step .say { color:var(--ink-muted); }

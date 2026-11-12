@@ -27,7 +27,7 @@ So the body is 784 px tall: with 8 px padding and 2 group headers (28 each), tha
   and 3.4:1 on the selected fill; ink-subtle is 6.13:1 and 4.64:1 (AA for 12 px). ink-3 stays for captions on canvas only.
 - **Refs** (repo, branch, path, run name) take the 136 column and shorten in the MIDDLE (`acme…/exports`, `run/…/plans`): the end is
   what tells two rows apart. Names and sentences shorten at the end.
-- **Progress** is a 56x4 bar plus a count (`6/9`, `4/7`, `41%`), no words. A step name goes in the peek.
+- **Progress** is a 56x4 bar plus a count (`6/9`, `4/7`, `41%`), no words. A bar + count takes the 136 column, and the count is at most 5 characters (`6/9`, `41%`): a big count shows as a percent, with the full count in the sub-line (`reading 1,204 of 3,880 files`). A step name goes in the peek.
 - **A column with one value in a whole group says nothing.** The group header says it once ("Needs you · all waiting on you"), and the
   column shows the next most useful fact. In Needs you that is the ask, as a verb: `reply`, `review`, `unblock`, `decide`, `retry`.
 - **Ids by kind:** `#4182` = PR, `BIL-301` = issue (KEY-N), `r-0412` = run, `j-318` = job, `dep-77` = deploy. `#` means a PR only.
@@ -72,3 +72,32 @@ Three sections, ranked by what unblocks the most, each row actionable in place:
 2. **Moving** — what agents and CI are doing for you, one line each, collapsed.
 3. **Since you last looked** — a ranked brief, 5-10 short lines written by an agent, each with its links.
 If Home is empty, you're done.
+
+## Empty and error states (#3019)
+Every state a page can be in has a screen, and every screen has exactly ONE primary button that fixes it. Two shapes; the shape is
+`.empty` and `.state-line` in `grammar.css` ("Empty and error states (#3019)").
+
+1. **Page empty state** (`.empty`, replaces a list body). Left-aligned in the body at the 24 px row inset, never centred in a card.
+   24 px glyph in its status colour, title 15/22 ink, one sentence 13/20 ink-muted that says what happens on click, ONE primary
+   button with its key as a kbd (`Start Sindri [Enter]`), optionally ONE ghost button. Never a CLI line and never a raw code: both
+   go behind a small `Details` disclosure (`.details`, mono 12).
+2. **Inline state line** (`.state-line`, one 32 px row). Inside a list, a group, or under the top bar: glyph, one sentence, and the
+   fix button at the right end where row actions sit. Tint: attention (stale, stalled, expired) or error (can't be read); a
+   progress line (scanning) is plain s1. Used for "can't be read" (Retry), "a newer Sindri is installed" (Restart Sindri),
+   "connection expired" (Reconnect Linear) and "stalled" (Rebuild).
+
+Rules:
+- **One primary, the verb of the fix:** `Restart Sindri`, `Retry`, `Reconnect Linear`, `Build the map`, `Start Sindri`, `Run hello-sindri`.
+  Not "OK", not "Fix", not "Try again". A second button is ghost and is never the fix.
+- **Failed is not empty.** A failed read never shows the empty text ("Nothing running."). Failed = error tint + Retry; empty = the
+  `.empty` shape, with the button that gets the first thing in.
+- **The old-serve case is one shared line**, not a fix per page: "The Queue list can't be read from this Sindri. It is older than the
+  app." with `Restart Sindri`, the same line and button on every page that reads a list (qa found it on 8 pages).
+- **Retry** sits on every read failure; the code is behind `Details ▸` at the end of the line, never in the sentence.
+- **Copy:** sentence case, plain words, no exclamation marks, no "Oops". Product words; a CLI command appears only in Details.
+- **Accounts:** a not-yet-connected account is a `todo` open ring (not urgent, so no needs-you diamond). Once connected the row gets the `linked` glyph and "connected as jthorare", with no button.
+- **First-run screens** (`setup-repos`, `setup-connect`) use the row grammar with a checkbox (`.g.box`) or a state glyph in the glyph
+  column, a `.state-line` for progress, and a `.actionbar` at the bottom: ghost left of the primary, count at the far left.
+- **Setup steps** are a RowList with always-visible fix buttons: `.row.fix` (glyph, title + why as sub-line, fact, button column).
+
+Drawings: `design/first-run-3019/` (`not-running`, `setup-repos`, `setup-connect`, `setup-steps`, `states`).
