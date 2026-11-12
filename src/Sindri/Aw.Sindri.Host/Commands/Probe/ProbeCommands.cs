@@ -20,7 +20,7 @@ internal sealed class ProbeCommands(IProcessAncestry ancestry, IHarnessVersions 
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>The checks.</returns>
     internal async ValueTask<IReadOnlyList<DoctorCheck>> DoctorChecks(CancellationToken cancellationToken) =>
-        await HarnessDoctor.Checks(PinnedProbe.All, await Live(harness: null, cancellationToken).ConfigureAwait(false), versions, cancellationToken).ConfigureAwait(false);
+        await HarnessDoctor.Checks(PinnedProbe.All, await Live(harness: null, cancellationToken).ConfigureAwait(false), versions, dev: false, cancellationToken).ConfigureAwait(false);
 
     private ValueTask<HarnessProbeReport> Live(string? harness, CancellationToken cancellationToken) =>
         HarnessProbe.Take(

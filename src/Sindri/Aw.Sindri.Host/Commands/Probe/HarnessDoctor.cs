@@ -15,10 +15,11 @@ internal static class HarnessDoctor
     /// <param name="pinned">The pinned probe.</param>
     /// <param name="live">A probe of this process.</param>
     /// <param name="versions">Reads installed versions.</param>
+    /// <param name="dev">Whether this is the toolkit developers' run ('sindri doctor --dev').</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>The checks.</returns>
     internal static async ValueTask<IReadOnlyList<DoctorCheck>> Checks(
-        IReadOnlyList<PinnedHarness> pinned, HarnessProbeReport live, IHarnessVersions versions, CancellationToken cancellationToken)
+        IReadOnlyList<PinnedHarness> pinned, HarnessProbeReport live, IHarnessVersions versions, bool dev, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(pinned);
         ArgumentNullException.ThrowIfNull(live);
