@@ -55,12 +55,11 @@ public static partial class ProfileDiff
 
     /// <summary>The 'setup:' keys and the 'context:' section, whose every leaf has a path (they feed the hash as well).</summary>
     private static IEnumerable<(string Key, string Value)> SetupAndContext(SindriProfile p) =>
-        Present(
-            ("setup.mcp", p.Setup?.Mcp),
-            ("setup.skipAccounts", p.Setup?.SkipAccounts?.ToString()),
-            ("setup.skipFirstWorkflow", p.Setup?.SkipFirstWorkflow?.ToString()),
-            ("setup.oauth.github", p.Setup?.Oauth?.Github),
-            ("setup.oauth.linear", p.Setup?.Oauth?.Linear)).Concat(p.Context is { } context ? Leaves("context", context) : []);
+        SetupKeys(p.Setup).Concat(p.Context is { } context ? Leaves("context", context) : []);
+
+    private static IEnumerable<(string Key, string Value)> SetupKeys(SetupSettings? setup) =>
+        Present(("setup.mcp", setup?.Mcp), ("setup.skipAccounts", setup?.SkipAccounts?.ToString()), ("setup.skipFirstWorkflow", setup?.SkipFirstWorkflow?.ToString()))
+            .Concat(Present(("setup.oauth.github", setup?.Oauth?.Github), ("setup.oauth.linear", setup?.Oauth?.Linear)));
 
     private static IEnumerable<(string Key, string Value)> Leaves(string path, JsonElement element) => element.ValueKind switch
     {
