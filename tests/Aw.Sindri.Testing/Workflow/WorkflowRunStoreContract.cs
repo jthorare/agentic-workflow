@@ -158,6 +158,22 @@ public abstract class WorkflowRunStoreContract
         Expect.Sequence([Run(2).Id, Run(4).Id], running.Select(static r => r.Id));
     }
 
+    /// <summary>Each workflow with a queued run is listed once, and a workflow with none is not.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task QueuedWorkflows_lists_a_workflow_with_queued_runs_once_and_none_without()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(1, WorkflowRunStatus.Succeeded), Token)).Value;
+        Expect.Equal(0, (await store.QueuedWorkflows(Token)).Value.Count);
+        _ = (await store.Insert(Run(2, WorkflowRunStatus.Queued), Token)).Value;
+        _ = (await store.Insert(Run(3, WorkflowRunStatus.Queued), Token)).Value;
+
+        var queued = (await store.QueuedWorkflows(Token)).Value;
+
+        Expect.Sequence([_workflow], queued);
+    }
+
     /// <summary>A final status sets the end time from the clock and keeps the outputs and the error given.</summary>
     /// <returns>The test.</returns>
     [Fact]

@@ -168,9 +168,10 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         }
 
         var next = await queue.StartNextQueued(ended.WorkflowId, cancel).ConfigureAwait(false);
-        if (next.IsError)
+        if (next.IsError && GraphRunStarter.Unreachable(next.Error))
         {
-            throw new ApplicationFailureException(next.Error.Message, errorType: next.Error.Code);   // why: retried without end while Temporal is unreachable, so a queued run is not left waiting; the starter put the promoted run back to queued, and the retry's status write and events are no-ops (the end is already recorded)
+            // why: any other error would repeat for ever and keep this run open (issue 2999), so only a Temporal that is not there yet is retried
+            throw new ApplicationFailureException(next.Error.Message, errorType: next.Error.Code);   // why: retried while Temporal is unreachable, so a queued run is not left waiting; the starter put the promoted run back to queued, and the retry's status write and events are no-ops (the end is already recorded)
         }
     }
 

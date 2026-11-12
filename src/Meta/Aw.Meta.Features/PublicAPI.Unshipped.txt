@@ -1255,7 +1255,7 @@ Aw.Meta.Features.ReadEvents.EventLine.<Clone>$() -> Aw.Meta.Features.ReadEvents.
 static Aw.Meta.Features.ReadEvents.EventLine.operator !=(Aw.Meta.Features.ReadEvents.EventLine? left, Aw.Meta.Features.ReadEvents.EventLine? right) -> bool
 Aw.Meta.Features.ReadEvents.ReadEventsRequest.Lane.get -> string?
 Aw.Meta.Features.ReadEvents.ReadEventsResponse.Next.get -> long
-Aw.Meta.Features.ReadEvents.ReadEventsResponse.ReadEventsResponse(System.Collections.Generic.IReadOnlyList<Aw.Meta.Features.ReadEvents.EventLine!>! Events, long Next) -> void
+Aw.Meta.Features.ReadEvents.ReadEventsResponse.ReadEventsResponse(System.Collections.Generic.IReadOnlyList<Aw.Meta.Features.ReadEvents.EventLine!>! Events, long Next, long Oldest, long Latest, bool Gap) -> void
 Aw.Meta.Features.ReadEvents.EventLine
 Aw.Meta.Features.ReadEvents.EventLine.Kind.init -> void
 Aw.Meta.Features.ReadEvents.EventLine.Id.init -> void
@@ -1282,6 +1282,12 @@ Aw.Meta.Features.ReadEvents.EventLine.EventLine(long Id, System.DateTimeOffset A
 static Aw.Meta.Features.ReadEvents.ReadEventsRequest.operator ==(Aw.Meta.Features.ReadEvents.ReadEventsRequest? left, Aw.Meta.Features.ReadEvents.ReadEventsRequest? right) -> bool
 override Aw.Meta.Features.ReadEvents.ReadEventsResponse.GetHashCode() -> int
 Aw.Meta.Features.ReadEvents.ReadEventsResponse.Events.init -> void
-Aw.Meta.Features.ReadEvents.ReadEventsResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Meta.Features.ReadEvents.EventLine!>! Events, out long Next) -> void
+Aw.Meta.Features.ReadEvents.ReadEventsResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Meta.Features.ReadEvents.EventLine!>! Events, out long Next, out long Oldest, out long Latest, out bool Gap) -> void
 Aw.Meta.Features.ReadEvents.ReadEventsRequest.Max.init -> void
 override Aw.Meta.Features.ReadEvents.EventLine.Equals(object? obj) -> bool
+Aw.Meta.Features.ReadEvents.ReadEventsResponse.Oldest.get -> long
+Aw.Meta.Features.ReadEvents.ReadEventsResponse.Oldest.init -> void
+Aw.Meta.Features.ReadEvents.ReadEventsResponse.Latest.get -> long
+Aw.Meta.Features.ReadEvents.ReadEventsResponse.Latest.init -> void
+Aw.Meta.Features.ReadEvents.ReadEventsResponse.Gap.get -> bool
+Aw.Meta.Features.ReadEvents.ReadEventsResponse.Gap.init -> void

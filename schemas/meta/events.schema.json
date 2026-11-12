@@ -7,7 +7,10 @@
   "additionalProperties": false,
   "required": [
     "events",
-    "next"
+    "next",
+    "oldest",
+    "latest",
+    "gap"
   ],
   "properties": {
     "events": {
@@ -20,6 +23,20 @@
       "type": "integer",
       "minimum": 0,
       "description": "The id of the last event returned, or the --after value when there are none. Pass it back as --after."
+    },
+    "oldest": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The lowest event id still in the log, or latest + 1 when the log is empty."
+    },
+    "latest": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The highest event id ever assigned (it survives a prune that empties the log); 0 when no event was ever appended. A reader that re-snapshots after a gap puts its cursor here."
+    },
+    "gap": {
+      "type": "boolean",
+      "description": "True when --after + 1 is below oldest: the retention dropped events between the cursor and oldest. Re-snapshot from `aw-meta status --json`, then follow the cursor from latest."
     }
   },
   "$defs": {
