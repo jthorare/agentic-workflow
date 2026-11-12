@@ -116,6 +116,21 @@ public sealed class ProjectsGridKeysTests : FrameHost
     });
 
     [Fact]
+    public Task Tab_after_the_Finished_fold_lands_on_the_Hidden_fold_and_on_no_Edit_notes_button() => OnUi(async () =>
+    {
+        var (window, _) = await OnProjects();
+        Assert.True(Named<Button>(window, "ProjectsAdd").Focus(NavigationMethod.Tab));
+        Press(window, PhysicalKey.Tab);   // the card frame
+        Press(window, PhysicalKey.Tab);   // Finished
+
+        Press(window, PhysicalKey.Tab);
+
+        var focused = window.FocusManager?.GetFocusedElement() as Visual;
+        Assert.Equal("ProjectsHidden", focused?.GetSelfAndVisualAncestors().OfType<Expander>().FirstOrDefault()?.Name);
+        Assert.NotEqual("ProjectNotesEdit", (focused as Control)?.Name);
+    });
+
+    [Fact]
     public Task Right_and_Left_move_by_card_in_reading_order_across_rows_and_groups() => OnUi(async () =>
     {
         var (window, _) = await OnProjects();
