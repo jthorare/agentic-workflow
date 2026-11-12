@@ -24,8 +24,9 @@ internal sealed partial class SpendWarmHost(IAgentCatalog catalog, ILaunchSpend 
 
     public override void Dispose()
     {
-        _stop.Dispose();
+        // base first: it cancels the stopping token, whose registration cancels _stop, so _stop must still be alive then
         base.Dispose();
+        _stop.Dispose();
         GC.SuppressFinalize(this);
     }
 
