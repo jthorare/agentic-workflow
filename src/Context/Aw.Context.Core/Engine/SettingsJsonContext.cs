@@ -8,5 +8,5 @@ namespace Aw.Context.Core.Engine;
 [JsonSerializable(typeof(CodeSection))]
 [JsonSerializable(typeof(HistorySection))]
 [JsonSerializable(typeof(List<string>))]
-[JsonSerializable(typeof(List<Results.AnchorChoice>))]
+[JsonSerializable(typeof(List<AnchorChoice>))]
 internal sealed partial class SettingsJsonContext : JsonSerializerContext;

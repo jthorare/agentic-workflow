@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Aw.Context.Core.Results;
+namespace Aw.Context.Core.Engine;
 
 /// <summary>One node offered to a caller in place of a name that matched nothing or several (#2809): the key to ask by, and the label and kind a person reads.</summary>
 /// <param name="Key">The node's key, the anchor a pick reads.</param>
