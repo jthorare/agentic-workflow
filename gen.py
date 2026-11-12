@@ -119,12 +119,14 @@ def panel(label, tag, body, w=1440):
 # ---- top bars: reduced before the first Add, full after it (decision 33)
 def bar_reduced(pill='Sindri running', off=False):
     return f'<div class="topbar"><div class="wordmark">Sindri</div><div class="spacer"></div><div class="status-pill{" off" if off else ""}">{pill}</div></div>'
-def bar_full(tab='Setup', n='6/8', pill='Connected', off=False, search=True):
+def bar_full(tab='Setup', n='6/8', pill='Sindri running', off=False, search=True):
     items = ['Home<span class=n>9</span>','Reviews<span class=n>4</span>','Items<span class=n>31</span>','Workflows','Agents<span class=n>3</span>','Projects','Docs']
     out = ''.join(f'<a href="#">{i}</a>' for i in items)
     if tab == 'Setup': out += f'<a class=on href="#">Setup<span class=n>{n}</span></a>'
     elif tab == 'Settings': out += '<a class=on href="#">Settings</a>'
-    elif tab == 'Home': out = out.replace('<a href="#">Home','<a class=on href="#">Home',1) + f'<a href="#">Setup<span class=n>{n}</span></a>'
+    elif tab is not None:
+        out = out.replace(f'<a href="#">{tab}', f'<a class=on href="#">{tab}', 1) + f'<a href="#">Setup<span class=n>{n}</span></a>'
+    else: out += f'<a href="#">Setup<span class=n>{n}</span></a>'
     cmd = '<div class="cmdk">Search or run a command<kbd>Ctrl+K</kbd></div>' if search else ''
     return f'<div class="topbar"><div class="wordmark">Sindri</div><nav class="nav">{out}</nav><div class="spacer"></div>{cmd}<div class="status-pill{" off" if off else ""}">{pill}</div></div>'
 
@@ -183,7 +185,7 @@ def q1_panels():
     P.append(panel('Question 1, no gh login found (800 wide)', 'first screen · §4.2', q1(nogh()+r_lin()+r_sl()), 800))
     # pick b: with a gh login question 1 never shows; this is the screen Change opens
     P.append(panel('After Change on question 2 (a gh-login box only)', 'decision 13',
-        q1(r_gh(btn('Sign in to GitHub','primary','Enter','focus'), sub="gh login found: ada · uses the gh login's scopes")+r_lin()+r_sl()), 720))
+        q1(r_gh(btn('Use the gh login (ada)','primary','Enter','focus'), sub="gh login found: ada · uses the gh login's scopes")+r_lin()+r_sl()), 720))
     P.append(panel('GitHub: device code shown', 'device flow',
         q1(r_gh(btn('Waiting for GitHub…','','','busy'), sub='Waiting for GitHub', glyph='agent')
            + guide(step(1,'Enter <span class="code">ABCD-1234</span> at <b>github.com/login/device</b>.', btn('Copy code and open GitHub','primary','Enter','focus'), now=True),
@@ -420,8 +422,8 @@ def accounts_panels():
     P.append(panel('Back on the Setup page: the accounts row is done', 'decision 28', body))
     return P
 
-def navbar(pill='Connected'):
-    return bar_full('Home', pill=pill, off=pill != 'Connected')
+def navbar(pill='Sindri running'):
+    return bar_full('Home', pill=pill, off=pill != 'Sindri running')
 HOME = ('<div class="header" style="height:40px"><h1>Home</h1><span class=count>9</span></div><div class="list" style="--facts:176px;padding:0">'
         '<div class="row unread"><span class="g pr"></span><div class="title"><span class="id">#4182</span><span class="t">Paginate workspace audit export</span></div><div class="fact mono">ledgerly…/exports</div><div class="age">38m</div><div class="wait">review</div></div>'
         '<div class="row unread"><span class="g fail"></span><div class="title"><span class="id">r-0412</span><span class="t">Nightly usage rollup failed</span></div><div class="fact mono">wf/usage-rollup</div><div class="age">2h</div><div class="wait">retry</div></div></div>')
@@ -453,6 +455,26 @@ def stale_panels():
 
 
 # ---------------------------------------------------------------- states (patched from the base sheet)
+
+def fullify(s):
+    def tab_of(lab):
+        for key, tab in [('Home', 'Home'), ('Stale', 'Home'), ('Shell', 'Home'), ('Projects', 'Projects'), ('Connection', 'Projects'), ('Queue', 'Items'), ('Reviews', 'Reviews'),
+                         ('Agents', 'Agents'), ('Workflows', 'Workflows'), ('Repo with no map', 'Docs'), ('Map building', 'Docs'), ('Setup', 'Setup')]:
+            if lab.startswith(key):
+                return tab
+        return None
+    def conv(m):
+        head = m.group(0)
+        lab = m.group(1)
+        if lab.startswith('Home: no profile') or lab.startswith('Home: after Skip'):
+            return head
+        head = re.sub(r'<div class="topbar"[^>]*>.*?<div class="status-pill[^"]*">[^<]*</div></div>', '', head, count=1, flags=re.S)
+        pill, off = ('Not responding', True) if lab.startswith('Shell') else ('Sindri running', False)
+        bar = bar_full(tab_of(lab), '7/8', pill, off).replace('class="topbar"', 'class="topbar" style="height:40px"')
+        head = head.replace('<section class="panel">', '<section class="panel" style="grid-column:1/-1;width:1440px">', 1)
+        return head.replace('<div class="pbody">', '<div class="pbody">' + bar, 1)
+    return re.sub(r'<section class="panel"><div class="plabel"><b>(.*?)</b>.*?</section>\n?', conv, s, flags=re.S)
+
 def patch_states():
     p = os.path.join(OUT, 'states.html')
     s = open(p).read()
@@ -469,6 +491,7 @@ def patch_states():
     full7 = bar_full('Home', '7/8').replace('class="topbar"', 'class="topbar" style="height:40px"')
     hn = lambda inner, bar=None: (bar or full) + '<div class="header" style="height:40px"><h1>Home</h1></div>' + inner
     emp = lambda g, h, pp, acts: f'<div class="empty" style="padding-top:var(--sp4)"><div class="eg"><span class="g {g}"></span></div><h2>{h}</h2><p>{pp}</p><div class="acts">{acts}</div></div>'
+    s = fullify(s)
     wide = lambda lab, tag, inner: f'<section class="panel" style="grid-column:1/-1;width:1440px"><div class="plabel"><b>{lab}</b><span>{tag}</span></div><div class="pbody">{inner}</div></section>\n'
     new = ''
     new += wide('Home: hello-sindri being made', '#3019 · decision 19', hn(emp('agent','Getting a first workflow ready…','Sindri is making hello-sindri in agentic-workflow and runs it by itself. This takes a few seconds.','')))

@@ -1,1 +1,1 @@
-Top bars: only the hello-sindri and map panels use the full top bar; the older states panels keep the compact bar.
+Top bars: before the first Add (Not running, the two questions, and the two Home states with no repo yet) the bar is reduced to the wordmark and the status pill; every panel after the first Add draws the full bar (nav with counts, Ctrl+K search, Setup n/8), and the pill says "Sindri running".
