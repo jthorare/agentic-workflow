@@ -467,19 +467,25 @@ public sealed class TodoPanelHomeTests : IDisposable
         }
     });
 
+    private static readonly string[] _syncBefore = ["TodoCount", "TodoSyncQuiet"];
+
     [Fact]
-    public Task With_no_sync_text_the_error_sits_one_gap_after_the_count() => OnUi(async () =>
+    public Task With_no_live_sync_text_the_error_sits_one_gap_after_the_last_visible_sync_element() => OnUi(async () =>
     {
         Serve(Eight());
         var (window, shell) = await Connected();
         await FailRead(window, shell, "The views are behind.");
 
-        Assert.True(string.IsNullOrEmpty(shell.Todo.SyncLive), "no sync text");
-        var count = Named<TextBlock>(window, "TodoCount");
+        Assert.True(string.IsNullOrEmpty(shell.Todo.SyncLive), "no live sync text");
+        var live = Named<TextBlock>(window, "TodoSyncLive");
+        Assert.Equal(0, live.Bounds.Width);   // why: the empty live line takes no width and no margin
         var error = Named<TextBlock>(window, "TodoError");
-        var countRight = count.TranslatePoint(new Point(count.Bounds.Width, 0), window)!.Value.X;
+        var lastRight = _syncBefore
+            .Select(name => Named<TextBlock>(window, name))
+            .Where(t => t.IsEffectivelyVisible && t.Bounds.Width > 0)
+            .Max(t => t.TranslatePoint(new Point(t.Bounds.Width, 0), window)!.Value.X);
         var errorLeft = error.TranslatePoint(default, window)!.Value.X;
-        Assert.Equal(12, errorLeft - countRight, 0.5);
+        Assert.Equal(12, errorLeft - lastRight, 0.5);
     });
 
     [Fact]

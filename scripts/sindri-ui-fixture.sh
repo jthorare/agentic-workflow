@@ -425,7 +425,7 @@ todos_read() {
     read-error)
       have="$(sql_on "$db" "SELECT COUNT(*) FROM sqlite_master WHERE name = 'view_todo'")"
       [ "$have" = 0 ] || sql_on "$db" "ALTER TABLE view_todo RENAME TO $TODO_SQL_BAK" >/dev/null || die "todos: can't break the todo read"
-      printf 'todos read-error: GET /sindri/todos now fails; restart nothing, press Refresh or wait for the next poll. Undo: todos read-ok\n' ;;
+      printf 'todos read-error: GET /sindri/todos now fails; the app re-reads on the next ledger event, so add one (items) to see it. Undo: todos read-ok\n' ;;
     read-ok)
       have="$(sql_on "$db" "SELECT COUNT(*) FROM sqlite_master WHERE name = '$TODO_SQL_BAK'")"
       [ "$have" = 0 ] || sql_on "$db" "ALTER TABLE $TODO_SQL_BAK RENAME TO view_todo" >/dev/null || die "todos: can't restore the todo read"
