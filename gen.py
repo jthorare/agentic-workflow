@@ -97,7 +97,7 @@ rules = ('<div class="rules">'
   + rrule('Off track', 'the target date has passed with open work')
   + rrule('', 'main CI has been red 2 days or more')
   + rrule('At risk', 'a linked PR’s CI has been red 2 days or more', 'matched: 2 of 4 PRs red', True)
-  + rrule('', 'a review has waited 3 days or more')
+  + rrule('', 'a review request or a changes-requested review has waited 3 days or more')
   + rrule('', 'under half done with 14 days or less to the target')
   + rrule('On track', 'it has links and no rule above matches', '')
   + rrule('No links', 'no PR or repo is linked; the row offers Link a repo', '') + '</div>')
@@ -107,7 +107,6 @@ PEEK1 = ('<aside class="peek"><div class="peek-head"><h2>Exports v2</h2><span cl
   + burnup() + '<div class="legend"><span><i style="background:#828fff"></i>done 6</span><span><i style="background:#8a8f98"></i>total 9</span></div>'
   + sec('PRs merged per week') + throughput()
   + sec('How health is worked out', 'first match wins; fixed') + rules
-  + '<div class="sect"><span class="chev">▸</span>Work <span class="n">3 open of 9</span><span class="chev" style="margin-left:14px">▸</span>Latest update <span class="n">4d</span></div>'
   + '</div><div class="peek-actions"><button class="btn primary">Open <kbd>Enter</kbd></button><button class="btn">Draft update… <kbd>Ctrl+Enter</kbd></button><button class="btn ghost">Copy id</button></div></aside>')
 write('peek-burnup', head('Projects - peek, burn-up', 'Projects') + '<div class="body peeking"><div class="list">\n' + plist('sel') + '</div>\n' + PEEK1 + '</div>\n' + keys(PK) + END.replace('</body>', sr('row read as “Exports v2, project, at risk, 2 of 4 PRs red more than 2 days, Linear says on track, 6 of 9 done, lead Dani, target Nov 28, 3 days”. Each chart has a table behind it.') + '</body>'))
 
@@ -229,10 +228,15 @@ write('home-update-reminder', home.replace('</body>', sr('row read as “Post th
 def desk(inner, srtext=''):
     return (f'<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><title>Create an issue</title><link rel="stylesheet" href="{G}"><link rel="stylesheet" href="projects.css"></head>'
             f'<body><div class="desk"></div><div class="deskbar"><span class="tray">Sindri</span><span>Create issue <kbd>Ctrl+Alt+I</kbd></span><span class="sp"></span><span>Thu 12 Nov 09:14</span></div>{inner}' + (f'<div class="sr" style="position:absolute;bottom:20px;left:0;right:0;text-align:center;font:400 11px/16px var(--font);color:var(--ink-subtle)"><b style="font-weight:500;color:var(--ink-muted)">Screen reader:</b> {srtext}</div>' if srtext else '') + '</body></html>\n')
-CW = ('<div class="cwin"><div class="in"><span class="g todo"></span><span class="t">Retry timeout on export upload is 5 s, make it configurable<span class="caret" style="display:inline-block;vertical-align:-4px;margin-left:2px"></span></span></div>'
+KIND = '<span class="kind"><a class="on">Issue</a><a>Note</a></span>'
+CW = ('<div class="cwin"><div class="in">' + KIND + '<span class="g todo"></span><span class="t">Retry timeout on export upload is 5 s, make it configurable<span class="caret" style="display:inline-block;vertical-align:-4px;margin-left:2px"></span></span></div>'
       '<div class="pre"><span class="pc"><span>Project</span>Exports v2 ▾</span><span class="pc"><span>Assignee</span>you</span><span class="sp"></span><span class="pc"><span>in</span>Linear · EXP</span></div>'
-      '<div class="ft"><span><kbd>Enter</kbd>create in Linear</span><span><kbd>Esc</kbd>close</span><span><kbd>Tab</kbd>change project</span></div></div>')
-write('create-window', desk(CW, '“New issue, dialog. Issue title, edit text. Project Exports v2. Assignee you.” Enter creates, Escape closes.'))
+      '<div class="ft"><span><kbd>Enter</kbd>create in Linear</span><span><kbd>Esc</kbd>close</span><span><kbd>Tab</kbd>change project</span><span><kbd>Ctrl+Tab</kbd>Issue / Note</span></div></div>')
+CWNS = CW.replace(KIND, '').replace('<span><kbd>Ctrl+Tab</kbd>Issue / Note</span>', '')
+NOTE1 = '<div class="cnote" style="position:absolute;left:50%;top:372px;transform:translateX(-50%);font-size:12px;color:var(--ink-subtle);width:600px">Ctrl+Tab switches the kind. The window opens on the last kind used.</div>'
+NOTE0 = NOTE1.replace('Ctrl+Tab switches the kind. The window opens on the last kind used.', 'No notes folder is set in Settings, so the switch is hidden and the window reads issue-only.')
+write('create-window', desk(CW + NOTE1, '“New issue, dialog. Kind switch, Issue selected, 1 of 2. Issue title, edit text. Project Exports v2. Assignee you.” Control Tab switches kind; Enter creates, Escape closes.'))
+write('create-window-no-switch', desk(CWNS + NOTE0, '“New issue, dialog. Issue title, edit text. Project Exports v2. Assignee you.” There is no kind switch until a notes folder is set.'))
 write('create-window-empty', desk(CW.replace('Retry timeout on export upload is 5 s, make it configurable<span class="caret" style="display:inline-block;vertical-align:-4px;margin-left:2px"></span>', '<span class="t ph" style="color:var(--ink-subtle)">Issue title</span>'), '“New issue, dialog. Issue title, edit text, empty.”'))
 CWERR = CW.replace('<div class="pre">', '<div class="state-line err" style="margin:0;border-radius:0"><span class="g fail"></span><span class="what">Linear can’t be reached. Your text is kept.</span><span class="btns">' + btn('Retry', True) + '</span></div><div class="pre">')
 write('create-window-error', desk(CWERR, '“Linear can’t be reached. Your text is kept. Retry button.” The window stays open and focus stays in the title.'))
@@ -248,7 +252,6 @@ def setrow(label, sub, right, first=False):
 SHORT = ('<div class="ssec"><div class="shd">Shortcuts</div><div class="scard">'
   + setrow('New issue from anywhere', 'Opens the one-line create window, even with the main window closed.', '<kbd>Ctrl+Alt+I</kbd>' + btn('Change'), True)
   + '<div class="serr"><span class="g fail"></span><span>The OS refused this hotkey (taken, or no global-shortcuts portal on Wayland). Use the tray menu’s New issue.</span><span class="sp"></span>' + btn('Choose another shortcut', True) + '</div>'
-  + setrow('Open Sindri', 'Brings the main window to the front.', '<kbd>Ctrl+Alt+S</kbd>' + btn('Change'))
   + '</div></div>')
 THISAPP = ('<div class="ssec"><div class="shd">This app</div><div class="scard">'
   + setrow('Reduce motion', 'Turns off the slides and fades.', '<span class="tgl"><i></i></span>', True)
@@ -268,3 +271,29 @@ cont = (f'''<!doctype html>
 TRAY = ('<div class="menu" style="right:14px;top:34px;left:auto;width:200px;padding:4px 0">'
         '<div class="ment on"><span class="lab">New issue</span></div><div class="ment"><span class="lab">Open Sindri</span></div></div>')
 write('settings-hotkey-refused', cont.replace('</body>', TRAY + sr('the Shortcuts heading is a level 2 heading; the row reads “New issue from anywhere, shortcut Control Alt I”, then the error line, then “Choose another shortcut, button”.') + '</body>'))
+
+# ================= round 3d: projects-list and projects-peek redrawn on section 14's final rules =================
+mini = ns['mini']
+def writeraw(name, html): (D / f'{name}.html').write_text(html)
+def colhead():
+    return (f'<div class="row colhead" {FACTS}><span></span><span class="title"></span><span class="fact"></span><span class="fact">Health (derived)</span>'
+            '<span class="fact">Lead’s call</span><span class="fact drop-peek">Lead</span><span class="fact drop-peek">Target</span><span class="age">Updated</span><span class="wait">Waiting on</span></div>\n')
+HOVER = (f'<div style="{TIP};left:690px;top:324px;width:200px">Health derived from PRs, CI and reviews</div>'
+         f'<div style="{TIP};left:906px;top:324px;width:230px">Lead’s call: the health the project lead set in Linear</div>')
+writeraw('projects-list', head('Projects - list', 'Projects') + '<div class="body"><div class="list nopad">\n' + colhead() + plist('cursor') + '</div></div>\n' + keys(PK)
+         + END.replace('</body>', HOVER + sr('column headers read “Health, derived”, “Lead’s call”, “Lead”, “Target”, “Updated”, “Waiting on”; a row reads “Exports v2, project, at risk, Linear says on track, 6 of 9 done, lead Dani, target Nov 28, 3 days, waits on CI”.') + '</body>'))
+PEEKL = ('<aside class="peek"><div class="peek-head"><h2>Exports v2</h2><span class="icon">⤢</span><span class="icon">×</span></div>' + FIELDS
+  + '<div class="peek-body" style="padding-top:0"><div class="sect" style="margin-top:6px">Work <span class="n">3 open of 9</span></div>'
+  + mini('pr', '#2931', 'Stream large CSV exports in chunks', '<span class="chip err">failing</span>')
+  + mini('pr', '#2887', 'Export size limit message names the plan', '<span class="chip err">failing</span>')
+  + mini('pr', '#2905', 'Retry failed export uploads with backoff', '<span class="chip ok">passing</span>')
+  + '<div class="sect"><span class="chev">▾</span>Done <span class="n">6</span></div>'
+  + mini('merged', '#2920', 'Export history page: filter by requester', 'merged 1d', 'done')
+  + mini('merged', '#2912', 'Export job progress in the toolbar', 'merged 3d', 'done')
+  + '<div class="mini done"><span></span><span></span><span class="t">4 more</span><span></span></div>'
+  + '<div class="sect" style="margin-top:10px">Latest update</div>'
+  + '<div class="msgline"><span class="av">D</span><div><div class="upd-head"><span class="who">Dani Okoye<span class="when">4d</span></span><span class="chip ok">on track</span></div>'
+  + '<div class="txt">Chunked upload landed. Retry work is the last big piece.</div></div></div></div>'
+  + '<div class="peek-actions"><button class="btn primary">Open <kbd>Enter</kbd></button><button class="btn">Draft update… <kbd>Ctrl+Enter</kbd></button><button class="btn ghost">Copy id</button></div></aside>')
+writeraw('projects-peek', head('Projects - peek', 'Projects') + '<div class="body peeking"><div class="list nopad">\n' + colhead() + plist('sel') + '</div>\n' + PEEKL + '</div>\n' + keys(PK)
+         + END.replace('</body>', sr('the peek reads “Exports v2, project. Derived: at risk, 2 of 4 PRs red more than 2 days. Linear says: on track.” Work and Done are lists with PR state.') + '</body>'))

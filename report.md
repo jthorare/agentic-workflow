@@ -18,3 +18,18 @@ All 1440x900 PNGs in this folder (`pr-<name>.png`), on `../grammar-2978/grammar.
 | pr-create-window-error | #3170 | "Linear can't be reached. Your text is kept." with Retry; window stays open | settled 15 |
 | pr-create-window-done | #3170 | Notification "Created EXP-437" with Open in Linear and Copy link | settled 16 |
 | pr-settings-hotkey-refused | #3170 | Settings drawn in the real SettingsView layout: a Shortcuts section (heading over a card) with Ctrl+Alt+I, ideas' exact refused-hotkey line and one primary (Choose another shortcut), beside the real This app section; the tray menu shows New issue | 13 |
+
+## Round 3d
+
+| File | Issue | What changed |
+|---|---|---|
+| projects-list, projects-peek | #3168, qa on #2961 | Redrawn on section 14's final rules (replace the round 2 files): groups Off track, At risk, On track, No links; no "blocked" chip and no "waits on you"; mismatches spelled "At risk · Linear says on track"; reason lines with counts; the peek action is "Draft update…". A 28 px column-header row: Health (derived), Lead's call, Lead, Target, Updated, Waiting on. projects-list shows hover labels on the two health cells. Sub-lines render from grammar.css (`.row .title .sub`, ink-subtle). The cursor and selected outline sit inside the 24 px content inset |
+| pr-peek-burnup | #3168 | The review rule reads "a review request or a changes-requested review has waited 3 days or more"; the peek no longer carries a collapsed Work / Latest update line (7 rule rows need the room) |
+| pr-settings-hotkey-refused | #3170 | The Ctrl+Alt+S "Open Sindri" row is gone: one global hotkey, Ctrl+Alt+I. (The tray menu still lists Open Sindri as a menu item) |
+| pr-create-window, pr-create-window-empty, pr-create-window-error | #3170 | Issue / Note switch at the left of the one-line window, set to Issue; Ctrl+Tab switches kind; the window opens on the last kind used. Footer shows Ctrl+Tab |
+| pr-create-window-no-switch | #3170 | New: the switch is hidden when no notes folder is set in Settings; the window reads issue-only |
+| every list and triage frame | qa | Progress track, cursor and picked-row fills follow the points below |
+
+Progress track colour: `#5e6268`, which is `--ink-3` (#74787f) at 80% over the canvas (#08090a). Measured 3.25:1 on canvas (WCAG), up from 1.2:1 for `--s4`. The old `--hair-3` is 1.88:1. The checkbox border (`.g.box`) used `--hair-3` too, so it takes the same `#5e6268`; both are grammar candidates.
+
+For design-notes-r2: the window to copy is `pr-create-window` (with the switch) and `pr-create-window-no-switch` (without). Its error line is `pr-create-window-error`.

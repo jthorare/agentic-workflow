@@ -35,3 +35,9 @@ Create window and Settings
 
 Screen reader lines
 14. Every frame carries one "Screen reader:" line saying what a row (or the window, menu or notification) reads as. The wording is mine; none of the frames before this round had aria names.
+
+Round 3d
+15. The column-header row is drawn above the first group header on every row column the list has (progress has no label). In the peek the Lead and Target headers drop with their columns.
+16. The two hover labels on `projects-list` are shown on the cursor row (Exports v2): "Health derived from PRs, CI and reviews" and "Lead's call: the health the project lead set in Linear". The wording is mine.
+17. The Issue / Note switch is a two-item segmented control in the window's title row; "Ctrl+Tab Issue / Note" is in the footer. A note under the window says what it does; those notes are annotations, not part of the window.
+18. Fixture counts on projects-peek (Work 3 open of 9, Done 6, latest update text) are carried over from round 2.
