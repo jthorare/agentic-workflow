@@ -35,6 +35,8 @@ public sealed class WriteAttributionTests
         ["POST /sindri/todos/note/stop"] = "edits the live profile file through TodoNoteProfileEdit (StopTodoNoteService.cs:9): writes no ledger event",
         ["POST /sindri/linear/connection/teams"] = "reads the key's Linear teams (ListLinearTeamsService): stores nothing and writes no event",
         ["POST /sindri/workflow/challenges/app"] = "refuses every text (IssueAppChallengeService.cs:17, no ports) and its endpoint appends nothing: writes no event",
+        ["POST /sindri/workflows/{slug}/activate"] = "a session is refused (#3199): the owner's, so no launched session appends its event",
+        ["POST /sindri/workflows/{slug}/pause"] = "a session is refused (#3199): the owner's, so no launched session appends its event",
         ["POST /sindri/workflows/validate"] = "checks a stored spec and returns its findings (ValidateWorkflowService): stores nothing and writes no event",
     };
 

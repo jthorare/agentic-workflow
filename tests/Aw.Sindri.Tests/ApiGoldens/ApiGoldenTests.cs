@@ -127,7 +127,8 @@ public sealed class ApiGoldenTests
     // why: the profile and settings writes stay the owner's until the settings PR (#2374) removes that refusal, and the Linear hub's connection
     // writes are a connection setting outside PR 2's list (LinearConnectionRules); both are named in PR 2's body as follow-ups
     private static bool IsStillOwnerOnly(string slug) =>
-        slug.StartsWith("profile", StringComparison.Ordinal) || slug.StartsWith("linear-connect", StringComparison.Ordinal) || slug.StartsWith("linear-disconnect", StringComparison.Ordinal);
+        slug.StartsWith("profile", StringComparison.Ordinal) || slug.StartsWith("linear-connect", StringComparison.Ordinal) || slug.StartsWith("linear-disconnect", StringComparison.Ordinal)
+        || string.Equals(slug, "workflows-slug-activate", StringComparison.Ordinal) || string.Equals(slug, "workflows-slug-pause", StringComparison.Ordinal);   // a session is refused (#3199)
 
     private static string HumanGolden((string Slug, string Scenario) row) =>
         File.ReadAllText(Golden.SourcePath(typeof(ApiGoldenTests).Assembly, ApiGolden.PathOf(row.Slug, row.Scenario)));
