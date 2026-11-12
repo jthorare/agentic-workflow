@@ -26,7 +26,7 @@ body{height:auto;overflow:visible}
 .btn.focus{outline:2px solid var(--primary-hi);outline-offset:2px}
 .btn.primary.focus{outline-color:#fff}
 .field.focus{box-shadow:0 0 0 2px var(--primary-soft)}
-.lnk{color:var(--primary-hi);text-decoration:underline;text-underline-offset:2px}
+.lnk{cursor:pointer;color:var(--primary-hi);text-decoration:underline;text-underline-offset:2px}
 .code{font:600 15px/22px var(--mono);letter-spacing:.08em;color:var(--ink);background:var(--s3);border:1px solid var(--hair-strong);border-radius:var(--r2);padding:0 8px}
 .err-t{color:var(--err)}
 .guide .step .say b{color:var(--ink);font-weight:500}
@@ -132,7 +132,7 @@ def q1_panels():
         + row('todo','Linear','issues and projects','needs a key, 3 steps', btn('Paste a Linear token','','','pressed'),'cursor')
         + guide(step(1, 'Open Linear, Settings, API, Personal API keys.', btn('Open in browser'), now=True),
                 step(2, 'Create a key named <b>Sindri</b>.'),
-                step(3, 'Paste the key here.', field('Paste the key', True, 260) + btn('Save token')))
+                step(3, 'Paste the key here.', field('Paste the key', True, 260) + btn('Save key')))
         + SLACK(), CONT())))
     P.append(panel('Slack: token paste open (never the primary)', '§4.2', f1(
         row('linked','GitHub', GH_SUB, 'connected as ada', '')
@@ -169,13 +169,13 @@ def accounts_panels():
     GH_OK = row('linked','GitHub', GH_SUB, 'connected as ada', '')
     LIN_OK = row('linked','Linear','issues and projects','connected as ada','')
     P.append(panel('Way in 1: from a Needs you row "Your Linear sign-in expired"', 'decision 28',
-        '<div class="ctx"><b>Came from</b> Home › Needs you › Your Linear sign-in expired · <span class="lnk">Reconnect Linear</span></div>'
+        '<div class="ctx"><b>Came from</b> Home › Needs you › Your Linear sign-in expired · <a class="lnk" href="#">Reconnect Linear</a></div>'
         + accounts_page(GH_OK + row('parked','Linear','Your Linear sign-in expired.','expired 3h ago', btn('Reconnect Linear','primary','Enter','focus'),'cursor') + SLACK(),
                         btn('Done','','Esc'), 'Done goes back to Home.')))
     P.append(panel('Way in 1, after Linear connects: Done is the primary and focused', 'decision 28',
         accounts_page(GH_OK + LIN_OK + SLACK(), btn('Done','primary','Esc','focus'), 'Done goes back to Home.')))
     P.append(panel('Way in 2: from the Setup page (Accounts button)', 'decision 28',
-        '<div class="ctx"><b>Came from</b> Setup › Connect your accounts › <span class="lnk">Accounts</span></div>'
+        '<div class="ctx"><b>Came from</b> Setup › Connect your accounts › <a class="lnk" href="#">Accounts</a></div>'
         + accounts_page(GH_OK + row('todo','Linear','issues and projects','opens your browser', btn('Sign in to Linear','primary','Enter','focus'),'cursor') + SLACK(),
                         btn('Done','','Esc'), 'Done goes back to Setup.')))
     P.append(panel('Done pressed', 'decision 28',
@@ -223,9 +223,9 @@ HOME = ('<div class="header" style="height:40px"><h1>Home</h1><span class=count>
 def sline(glyph, what, btns, cls='att', det=True, open_=False):
     d = ('<span class="det">Details ' + ('▾' if open_ else '▸') + '</span>') if det else ''
     return f'<div class="state-line {cls}"><span class="g {glyph}"></span><span class="what">{what}</span><span class="btns">{d}{btns}</span></div>'
-L1 = '<span class="lnk">Nightly gate</span> (run 14, an agent step)'
-L2 = '<span class="lnk">Review loop on #3120</span> (run 3, waiting on your approval)'
-L3 = '<span class="lnk">Code index of agentic-workflow</span> (a job)'
+L1 = '<a class="lnk" href="#">Nightly gate</a> (run 14, an agent step)'
+L2 = '<a class="lnk" href="#">Review loop on #3120</a> (run 3, waiting on your approval)'
+L3 = '<a class="lnk" href="#">Code index of agentic-workflow</a> (a job)'
 STALE = 'A newer Sindri is installed (7c81646, built today 10:31).'
 
 def stale_panels():
@@ -236,11 +236,11 @@ def stale_panels():
         + '<div class="dpanel">running 80f69df, built yesterday 22:10 · installed 7c81646, built today 10:31<code>sindri stop &amp;&amp; sindri</code></div>'+HOME))
     P.append(panel('Runs open', '§4.5 · decision 11', navbar()+sline('parked', f'Sindri restarts when 3 finish: {L1}, {L2}, {L3}.', btn('Restart when they finish','primary'), det=False)+HOME))
     P.append(panel('Waiting for runs', '§4.5', navbar()+sline('agent', f'Restarts when 3 finish. Keep this window open. {L1}, {L2}, {L3}.', btn('Cancel'), cls='', det=False)+HOME))
-    P.append(panel('A new run started during the wait', '§4.5', navbar()+sline('agent', f'A new run started: <span class="lnk">Weekday check</span> (run 7). Sindri restarts when it finishes too.', btn('Cancel'), cls='', det=False)+HOME))
+    P.append(panel('A new run started during the wait', '§4.5', navbar()+sline('agent', f'A new run started: <a class="lnk" href="#">Weekday check</a> (run 7). Sindri restarts when it finishes too.', btn('Cancel'), cls='', det=False)+HOME))
     P.append(panel('Cancelled: back to Stale', '§4.5', navbar()+sline('parked', STALE, rs)+HOME))
     P.append(panel("Still stopping (the old serve's pid is alive after 30 s)", '§4.5',
         navbar('Stopping')+sline('parked','Sindri is still stopping.', btn('Start Sindri','primary','Enter'), open_=True)
-        + '<div class="dpanel">The old Sindri (pid 48213) has not exited. Start Sindri starts nothing while that pid lives.<code>log: ~/.agentic-workflow/sindri-app/serve.log</code></div>'+HOME))
+        + '<div class="dpanel">The old Sindri (pid 48213) has not exited. Start Sindri starts nothing while that pid lives.<code>log: ~/.agentic-workflow/sindri-app/logs/serve.log</code></div>'+HOME))
     P.append(panel('Restarting: pages keep their last read, writes are off', '§4.5', navbar('Restarting')+sline('agent','Restarting Sindri…', '', cls='', det=False)+HOME))
     P.append(panel('Restarted: the line goes, one toast', '§4.5', navbar()+HOME+'<div style="height:64px"></div><div class="toast"><span class="g done"></span>Sindri restarted on 7c81646.</div>'))
     P.append(panel("Didn't come back in 30 s", '§4.5 · SND-SETUP-012', navbar('Not running')+sline('fail', "Sindri stopped but didn't start again: port 7410 is already in use.", btn('Start Sindri','primary','Enter'), cls='err')+HOME))
@@ -263,7 +263,7 @@ def rframe(status, group, rows, foot, btns, sub='Question 2 of 2 · this is the 
     return (BAR_FIRST + f'<div class="header"><h1>Where are your repos?</h1><span class="count">{sub}</span></div>'
             + f'<div class="list" style="--facts:248px 120px 72px">{status}{group}{rows}</div>'
             + f'<div class="actionbar"><span>{foot}</span><span class="spacer"></span>{btns}</div>' + KEYS_R)
-GRP = lambda n, r='repos Sindri already sees pull requests for are ticked': f'<div class="group" style="margin-top:var(--sp2)"><span class="chev">▾</span>Git repos found <span class="n">{n}</span><span class="right">{r}</span></div>'
+GRP = lambda n, r='repos you worked on in GitHub in the last 30 days are ticked': f'<div class="group" style="margin-top:var(--sp2)"><span class="chev">▾</span>Git repos found <span class="n">{n}</span><span class="right">{r}</span></div>'
 SL = lambda g, what, sub='', b='', cls='': f'<div class="state-line {cls}"><span class="g {g}"></span><span class="what">{what}<span class="sub">{sub}</span></span><span class="btns">{b}</span></div>'
 ADD2 = btn('Add 2 repos','primary','Ctrl+Enter')
 LOOK = lambda c='ghost': btn('Look in another folder…', c)
@@ -315,7 +315,7 @@ def steps_panels():
     P.append(panel('Agent: no agent installed', '§4.4', sbody('Setup','5 of 8 steps done', cur+acc+rep+prof+noag+mcp+maprun2+hello2, snav('Setup','5/8'))))
     run = row('agent','Run hello-sindri','hello-sindri is running: step 2 of 4.','','','unread cursor')
     P.append(panel('First workflow: running', '§4.4', sbody('Setup','7 of 8 steps done', cur+acc+rep+prof+ag+mcp+mapd+run, snav('Setup','7/8'))))
-    fail = row('fail','Run hello-sindri','hello-sindri failed at Count the files: the step ran out of time after 60 s.','<span class="err-t">failed 1m ago</span>', btn('Open the run','primary','Enter'),'unread cursor')
+    fail = row('fail','Run hello-sindri','hello-sindri failed at Make a greeting: the step ran out of time after 60 s.','<span class="err-t">failed 1m ago</span>', btn('Open the run','primary','Enter'),'unread cursor')
     P.append(panel('First workflow: the run failed', '§4.4', sbody('Setup','7 of 8 steps done', cur+acc+rep+prof+ag+mcp+mapd+fail, snav('Setup','7/8'))))
     wait = lambda t,sub: row('todo', t, 'Waits for Sindri to run', '', '', 'read')
     down = (row('fail',"Sindri isn't running",'Nothing answered on 127.0.0.1:7410.','<span class="err-t">not running</span>', btn('Start Sindri','primary','Enter'),'unread cursor')
@@ -326,10 +326,32 @@ def steps_panels():
     P.append(panel('All done: the Setup tab leaves the nav, Settings holds the list', '§4.4', sbody('Settings','Setup · 8 of 8 steps done', alld, snav('Settings'))))
     return P
 
+def nr_half(pill, glyph, h2, p, acts, det, cap, off=True):
+    nav='<nav class="nav"><a class=on href="#">Home</a><a href="#">Reviews</a><a href="#">Items</a><a href="#">Workflows</a><a href="#">Agents</a><a href="#">Projects</a><a href="#">Docs</a></nav>'
+    return (f'<div class="half"><div class="topbar"><div class="wordmark">Sindri</div>{nav}<div class="spacer"></div><div class="status-pill off">{pill}</div></div>'
+            f'<div class="header"><h1>Home</h1></div><div class="body"><div class="list"><div class="empty"><div class="eg"><span class="g {glyph}"></span></div><h2>{h2}</h2><p>{p}</p>'
+            f'<div class="acts">{acts}</div><details class="details" open><summary>Details</summary><code>{det}</code></details></div></div></div>'
+            f'<div class="keys"><span class="cap" style="margin-left:0">{cap}</span></div></div>')
+def not_running_page():
+    css = """.frames{display:grid;grid-template-columns:720px 720px;width:1440px}
+.half{height:420px;display:grid;grid-template-rows:var(--bar-h) var(--header-h) 1fr var(--keys-h);border-bottom:1px solid var(--hair-strong)}
+.half:nth-child(odd){border-right:1px solid var(--hair-strong)}
+.half .nav a{color:var(--ink-3)} .half .nav a.on{color:var(--ink-subtle)}
+.half .list{overflow:hidden}"""
+    H = [
+     nr_half('Not running','parked',"Sindri isn't running","Start it and Home loads your reviews, runs and messages. This takes about 10 seconds.", btn('Start Sindri','primary','Enter','focus'),'Nothing answered on 127.0.0.1:7410. To start it yourself, run: sindri','1 · Not running'),
+     nr_half('Starting','agent','Starting Sindri…','Sindri is starting on this machine. Home loads by itself when it answers.', btn('Starting…','primary','','busy'),'Waiting for 127.0.0.1:7410 · 4.2 s','2 · Starting'),
+     nr_half('Not running','fail',"Sindri didn't start","Sindri didn't start: port 7410 is already in use.", btn('Retry','primary','Enter','focus'),'log: ~/.agentic-workflow/sindri-app/logs/serve.log<br>To start it yourself, run: sindri serve',"3 · Didn't start in 30 s"),
+     nr_half('Starting','agent','Sindri is already starting on this machine.','Home loads by itself when it answers. This page keeps checking.','','Waiting for 127.0.0.1:7410 · 11.8 s','4 · A second serve was refused'),
+    ]
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Sindri · Not running</title><link rel="stylesheet" href="../grammar-2978/grammar.css">
+<style>{SHEET_CSS}{css}</style></head><body><div class="frames">{''.join(H)}</div></body></html>
+"""
+
 def patch_states():
     p = os.path.join(OUT, 'states.html')
     s = open(p).read()
-    s = s.replace('(build 1112 → 1118)', '(7c81646, built today 10:31)')
+    s = s.replace('(build 1112 → 1118)', '(7c81646, built today 10:31)').replace('1,204 / 3,880 files','4,720 / 15,223 files')
     s = re.sub(r'<section class="panel"><div class="plabel"><b>No profile</b>.*?</section>',
         '<section class="panel"><div class="plabel"><b>Home: no profile</b><span>#3054 · #3113</span></div><div class="pbody"><div class="topbar" style="height:40px"><div class="wordmark">Sindri</div><div class="spacer"></div><div class="status-pill off">Not set up</div></div><div class="header" style="height:40px"><h1>Home</h1></div>'
         '<div class="state-line att"><span class="g you"></span><span class="what">Finish setting up Sindri: connect your accounts.</span><span class="btns"><span class="btn primary">Connect your accounts <kbd>Enter</kbd></span></span></div></div></section>', s, flags=re.S)
@@ -343,7 +365,7 @@ def patch_states():
     new += hs('Home: hello-sindri being made', '#3019 · decision 19', emp('agent','Getting a first workflow ready…','Sindri is making hello-sindri in agentic-workflow. This takes a few seconds.',''))
     new += hs('Home: hello-sindri not run (no own rows yet)', '#3019 · decision 19', emp('todo','Run a first workflow','hello-sindri needs no account and runs in a few seconds.','<span class="btn primary">Run hello-sindri <kbd>Enter</kbd></span>'))
     new += hs('Home: hello-sindri running', '#3019', emp('agent','hello-sindri is running: step 2 of 4.','It makes an item in agentic-workflow when it finishes.',''))
-    new += hs('Home: hello-sindri failed', '#3019', emp('fail','hello-sindri failed at Count the files: the step ran out of time after 60 s.','Open the run to see its steps.','<span class="btn primary">Open the run <kbd>Enter</kbd></span>'))
+    new += hs('Home: hello-sindri failed', '#3019', emp('fail','hello-sindri failed at Make a greeting: the step ran out of time after 60 s.','Open the run to see its steps.','<span class="btn primary">Open the run <kbd>Enter</kbd></span>'))
     new += hs('Home: own rows present, hello-sindri as a secondary line', '#3019 · decision 22',
         '<div class="list" style="--facts:176px;padding:0">'
         '<div class="row unread cursor"><span class="g pr"></span><div class="title"><span class="id">#4182</span><span class="t">Paginate workspace audit export</span></div><div class="fact mono">ledgerly…/exports</div><div class="age">38m</div><div class="wait">review</div></div>'
@@ -375,4 +397,5 @@ if __name__ == '__main__':
         'One 32 px line under the top bar. A build is written as its commit and its built time.', stale_panels()))
     write('setup-steps.html', page('Sindri · Setup', 'The Setup page', 'One RowList of the eight steps, in the order of sindri setup. The first row not done holds the one primary.', steps_panels()))
     write('setup-repos.html', page('Sindri · Question 2: where are your repos', 'Question 2 of 2: where are your repos', 'Every state of the repos question at the fixture numbers. Scan from ~, depth 3. One primary per state.', repos_panels()))
+    write('not-running.html', not_running_page())
     patch_states()

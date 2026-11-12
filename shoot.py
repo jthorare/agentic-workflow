@@ -10,6 +10,6 @@ for name in sys.argv[1:]:
     m = re.search(r'<title>H(\d+)W(\d+)', out)
     h, w = int(m.group(1)), int(m.group(2))
     os.remove(tmp)
-    h = max(h, 900) if name in ('setup-steps','setup-repos','not-running') else h
+    h = max(h, 900) if name in () else h
     subprocess.run(['google-chrome','--headless=new','--no-sandbox','--disable-gpu','--hide-scrollbars','--virtual-time-budget=4000',f'--window-size=1440,{h}',f'--screenshot={os.path.join(d,name+".png")}','file://'+f],capture_output=True)
     print(name, h, w)

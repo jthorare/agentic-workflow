@@ -1,42 +1,42 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><title>Sindri · Not running</title><link rel="stylesheet" href="../grammar-2978/grammar.css">
 <style>
-.frames{display:flex;width:1440px;height:900px}
-.half{width:720px;height:900px;display:grid;grid-template-rows:var(--bar-h) var(--header-h) 1fr var(--keys-h)}
-.half + .half{border-left:1px solid var(--hair-strong)}
+body{height:auto;overflow:visible}
+.sheet-head{padding:16px var(--inset) 12px;border-bottom:1px solid var(--hair)}
+.sheet-head h1{font:600 15px/22px var(--font);margin:0}
+.sheet-head p{margin:2px 0 0;color:var(--ink-3);font-size:11px;line-height:16px}
+.panel{width:1440px;border-bottom:1px solid var(--hair-strong);display:flex;flex-direction:column;overflow:hidden}
+.plabel{height:28px;display:flex;align-items:center;gap:var(--sp3);padding:0 var(--inset);background:var(--s1);border-bottom:1px solid var(--hair);font-size:12px;color:var(--ink-muted)}
+.plabel b{font-weight:600;color:var(--ink)} .plabel span{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.pbody{position:relative;overflow:hidden}
+.list{padding:var(--sp2) 0}
+.pbody .topbar{height:40px}
+.pbody .keys{height:28px}
+.pbody .header{height:48px}
+/* button states: hover lifts the fill, pressed sinks it (darker + inset + 1px down), focus is a 2px ring with a gap */
+.btn.hover{background:var(--s4);border-color:var(--hair-3);color:var(--ink)}
+.btn.primary.hover{background:var(--primary-hi);border-color:var(--primary-hi);color:#fff}
+.btn.pressed{background:var(--s1);border-color:var(--hair-strong);color:var(--ink-subtle);box-shadow:inset 0 2px 3px rgba(0,0,0,.55);transform:translateY(1px)}
+.btn.primary.pressed{background:#454fb0;border-color:#454fb0;color:#dfe2ff;box-shadow:inset 0 2px 3px rgba(0,0,0,.55)}
+.btn.focus{outline:2px solid var(--primary-hi);outline-offset:2px}
+.btn.primary.focus{outline-color:#fff}
+.field.focus{box-shadow:0 0 0 2px var(--primary-soft)}
+.lnk{cursor:pointer;color:var(--primary-hi);text-decoration:underline;text-underline-offset:2px}
+.code{font:600 15px/22px var(--mono);letter-spacing:.08em;color:var(--ink);background:var(--s3);border:1px solid var(--hair-strong);border-radius:var(--r2);padding:0 8px}
+.err-t{color:var(--err)}
+.guide .step .say b{color:var(--ink);font-weight:500}
+.guide .btns2,.actionbar .btns2{display:flex;gap:8px;align-items:center}
+.guide{margin-right:var(--inset)}
+.det-open{margin:0 var(--inset) var(--sp3) calc(var(--inset) + var(--col-glyph) + var(--sp3));font:400 12px/18px var(--font);color:var(--ink-3)}
+.det-open code{display:block;margin-top:4px;font:400 12px/18px var(--mono);color:var(--ink-subtle)}
+.pbody .row.fix{--col-act:300px}
+.toast{position:absolute;right:24px;bottom:16px;background:var(--s3);border:1px solid var(--hair-strong);border-radius:var(--r3);padding:8px 14px;color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.45);display:flex;gap:8px;align-items:center}
+.ctx{margin:0;padding:6px var(--inset);font-size:12px;color:var(--ink-3);background:var(--canvas);border-bottom:1px solid var(--hair)}
+.ctx b{color:var(--ink-subtle);font-weight:500}
+.dpanel{padding:8px 24px;background:var(--s1);border-bottom:1px solid var(--hair);font:400 12px/18px var(--font);color:var(--ink-3)}
+.dpanel code{display:block;margin-top:4px;font:400 12px/18px var(--mono);color:var(--ink-subtle)}
+.state-line .what .lnk{margin:0}
+.frames{display:grid;grid-template-columns:720px 720px;width:1440px}
+.half{height:420px;display:grid;grid-template-rows:var(--bar-h) var(--header-h) 1fr var(--keys-h);border-bottom:1px solid var(--hair-strong)}
+.half:nth-child(odd){border-right:1px solid var(--hair-strong)}
 .half .nav a{color:var(--ink-3)} .half .nav a.on{color:var(--ink-subtle)}
-.cap{margin-left:auto;font-size:11px;color:var(--ink-3)}
-.keys .cap{margin-left:auto}
-</style></head><body>
-<div class="frames">
-
-<div class="half">
-<div class="topbar"><div class="wordmark">Sindri</div><nav class="nav"><a class=on href="#">Home</a><a href="#">Reviews</a><a href="#">Items</a><a href="#">Workflows</a><a href="#">Agents</a><a href="#">Projects</a><a href="#">Docs</a></nav><div class="spacer"></div><div class="status-pill off">Not running</div></div>
-<div class="header"><h1>Home</h1></div>
-<div class="body"><div class="list">
-<div class="empty">
-<div class="eg"><span class="g parked"></span></div>
-<h2>Sindri isn't running</h2>
-<p>Start it and Home loads your reviews, runs and messages. Sindri starts on this machine; this takes about 2 seconds.</p>
-<div class="acts"><span class="btn primary">Start Sindri <kbd>Enter</kbd></span></div>
-<details class="details"><summary>Details</summary><code>Nothing answered on 127.0.0.1:7410. To start it yourself, run: sindri</code></details>
-</div>
-</div></div>
-<div class="keys"><span><kbd>Enter</kbd>start</span><span class="cap">1 · the app just opened</span></div>
-</div>
-
-<div class="half">
-<div class="topbar"><div class="wordmark">Sindri</div><nav class="nav"><a class=on href="#">Home</a><a href="#">Reviews</a><a href="#">Items</a><a href="#">Workflows</a><a href="#">Agents</a><a href="#">Projects</a><a href="#">Docs</a></nav><div class="spacer"></div><div class="status-pill off">Starting</div></div>
-<div class="header"><h1>Home</h1></div>
-<div class="body"><div class="list">
-<div class="empty">
-<div class="eg"><span class="g agent"></span></div>
-<h2>Starting Sindri…</h2>
-<p>Sindri is starting on this machine. Home loads by itself when it answers.</p>
-<div class="acts"><span class="btn primary busy">Starting…</span></div>
-<details class="details"><summary>Details</summary><code>Waiting for 127.0.0.1:7410 · 1.2 s</code></details>
-</div>
-</div></div>
-<div class="keys"><span class="cap">2 · about 2 seconds after the click</span></div>
-</div>
-
-</div></body></html>
+.half .list{overflow:hidden}</style></head><body><div class="frames"><div class="half"><div class="topbar"><div class="wordmark">Sindri</div><nav class="nav"><a class=on href="#">Home</a><a href="#">Reviews</a><a href="#">Items</a><a href="#">Workflows</a><a href="#">Agents</a><a href="#">Projects</a><a href="#">Docs</a></nav><div class="spacer"></div><div class="status-pill off">Not running</div></div><div class="header"><h1>Home</h1></div><div class="body"><div class="list"><div class="empty"><div class="eg"><span class="g parked"></span></div><h2>Sindri isn't running</h2><p>Start it and Home loads your reviews, runs and messages. This takes about 10 seconds.</p><div class="acts"><span class="btn primary focus">Start Sindri <kbd>Enter</kbd></span></div><details class="details" open><summary>Details</summary><code>Nothing answered on 127.0.0.1:7410. To start it yourself, run: sindri</code></details></div></div></div><div class="keys"><span class="cap" style="margin-left:0">1 · Not running</span></div></div><div class="half"><div class="topbar"><div class="wordmark">Sindri</div><nav class="nav"><a class=on href="#">Home</a><a href="#">Reviews</a><a href="#">Items</a><a href="#">Workflows</a><a href="#">Agents</a><a href="#">Projects</a><a href="#">Docs</a></nav><div class="spacer"></div><div class="status-pill off">Starting</div></div><div class="header"><h1>Home</h1></div><div class="body"><div class="list"><div class="empty"><div class="eg"><span class="g agent"></span></div><h2>Starting Sindri…</h2><p>Sindri is starting on this machine. Home loads by itself when it answers.</p><div class="acts"><span class="btn primary busy">Starting…</span></div><details class="details" open><summary>Details</summary><code>Waiting for 127.0.0.1:7410 · 4.2 s</code></details></div></div></div><div class="keys"><span class="cap" style="margin-left:0">2 · Starting</span></div></div><div class="half"><div class="topbar"><div class="wordmark">Sindri</div><nav class="nav"><a class=on href="#">Home</a><a href="#">Reviews</a><a href="#">Items</a><a href="#">Workflows</a><a href="#">Agents</a><a href="#">Projects</a><a href="#">Docs</a></nav><div class="spacer"></div><div class="status-pill off">Not running</div></div><div class="header"><h1>Home</h1></div><div class="body"><div class="list"><div class="empty"><div class="eg"><span class="g fail"></span></div><h2>Sindri didn't start</h2><p>Sindri didn't start: port 7410 is already in use.</p><div class="acts"><span class="btn primary focus">Retry <kbd>Enter</kbd></span></div><details class="details" open><summary>Details</summary><code>log: ~/.agentic-workflow/sindri-app/logs/serve.log<br>To start it yourself, run: sindri serve</code></details></div></div></div><div class="keys"><span class="cap" style="margin-left:0">3 · Didn't start in 30 s</span></div></div><div class="half"><div class="topbar"><div class="wordmark">Sindri</div><nav class="nav"><a class=on href="#">Home</a><a href="#">Reviews</a><a href="#">Items</a><a href="#">Workflows</a><a href="#">Agents</a><a href="#">Projects</a><a href="#">Docs</a></nav><div class="spacer"></div><div class="status-pill off">Starting</div></div><div class="header"><h1>Home</h1></div><div class="body"><div class="list"><div class="empty"><div class="eg"><span class="g agent"></span></div><h2>Sindri is already starting on this machine.</h2><p>Home loads by itself when it answers. This page keeps checking.</p><div class="acts"></div><details class="details" open><summary>Details</summary><code>Waiting for 127.0.0.1:7410 · 11.8 s</code></details></div></div></div><div class="keys"><span class="cap" style="margin-left:0">4 · A second serve was refused</span></div></div></div></body></html>
