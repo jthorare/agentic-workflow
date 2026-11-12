@@ -10,6 +10,7 @@ namespace Aw.Sindri.Ui.Views;
 /// <summary>The Settings page: binds to the settings view model and holds no logic beyond bringing the setup checklist into view when it is asked for.</summary>
 internal sealed partial class SettingsView : UserControl
 {
+    private SettingsViewModel? _settings;
     private SetupViewModel? _setup;
     private SetupChecklist? _checklist;
 
@@ -23,7 +24,10 @@ internal sealed partial class SettingsView : UserControl
     {
         base.OnDataContextChanged(e);
         _setup?.RevealRequested -= OnRevealRequested;
-        _setup = (DataContext as SettingsViewModel)?.Setup;
+        _settings?.PropertyChanged -= OnSettingsChanged;
+        _settings = DataContext as SettingsViewModel;
+        _settings?.PropertyChanged += OnSettingsChanged;
+        _setup = _settings?.Setup;
         _setup?.RevealRequested += OnRevealRequested;
         if (Content is StackPanel page)
         {
@@ -36,8 +40,28 @@ internal sealed partial class SettingsView : UserControl
             if (_setup is not null)
             {
                 _checklist = new SetupChecklist { Name = "SetupChecklist", DataContext = _setup };   // a host without setup draws no checklist, and none of its controls
-                page.Children.Insert(1, _checklist);
+                page.Children.Insert(3, _checklist);   // after the title, the filter box and its no-match line
+                _checklist.IsVisible = (DataContext as SettingsViewModel)?.ShowsSetup ?? true;
             }
+        }
+    }
+
+    // The checklist is drawn in code, so its visibility follows the filter here.
+    private void OnSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (_checklist is not null && _settings is not null && string.Equals(e.PropertyName, nameof(SettingsViewModel.ShowsSetup), StringComparison.Ordinal))
+        {
+            _checklist.IsVisible = _settings.ShowsSetup;
+        }
+    }
+
+    // Esc in the filter box clears it.
+    private void OnFilterKey(object? sender, Avalonia.Input.KeyEventArgs e)
+    {
+        if (e.Key == Avalonia.Input.Key.Escape && _settings is { Filter.Length: > 0 })
+        {
+            _settings.Filter = string.Empty;
+            e.Handled = true;
         }
     }
 
