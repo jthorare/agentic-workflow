@@ -7,7 +7,8 @@
 # and .k, the owner line, released on exit, a dead owner reclaimed, an ownerless dir never); the cap file heavy-slots-cap;
 # the memory guard (AW_HEAVY_MIN_FREE_MB and _STEP_MB, Linux /proc/meminfo only); the meta reserve heavy-meta-reserve (capped at slots-1, #2060) and
 # AW_HEAVY_PRIORITY=meta; the lock timeout (75, on a copy of the script with TIMEOUT=0: the real one is a constant 5400 s);
-# the session dying (124); INT and TERM (130); a nested run under AW_HEAVY_LOCK_HELD=1 taking no lock; --light, --expensive
+# the session dying (124); INT and TERM (130); the job launched through `systemd-run --user --scope -p OOMPolicy=continue` when
+# that works, and the old direct launch when it doesn't (#2931, stub systemd-run); a nested run under AW_HEAVY_LOCK_HELD=1 taking no lock; --light, --expensive
 # and the auto classification; the --timeout added to `dotnet test`.
 # Run: bash scripts/tests/heavy.test.sh
 set -uo pipefail
@@ -43,6 +44,22 @@ cat > "$STUB/dotnet" <<'EOF'
 echo "dotnet mode=${AW_HEAVY_MODE:-none} args=$*"
 EOF
 chmod +x "$STUB/dotnet"
+# Stub systemd-run (#2931): logs one line per call to $WORK/systemd-run.log. HEAVY_STUB_SCOPE=ok behaves like a working
+# `--scope` (the command runs in place, same pid); anything else (the default) fails like a box with no user bus, so every
+# row that does not ask for a scope takes the fallback path and the suite never creates a real scope on a systemd box.
+cat > "$STUB/systemd-run" <<'EOF'
+#!/usr/bin/env bash
+echo "systemd-run $*" >> "$WORK/systemd-run.log"
+if [ "${HEAVY_STUB_SCOPE:-}" = ok ]; then
+  while [ "$#" -gt 0 ] && [ "$1" != "--" ]; do shift; done
+  shift
+  exec "$@"
+fi
+echo "Failed to connect to user scope bus via local transport" >&2
+exit 1
+EOF
+chmod +x "$STUB/systemd-run"
+export WORK
 # Copies of the wrapper with the 5400 s lock timeout cut (TIMEOUT is a constant there, no variable sets it): FAST gives up on the
 # first pass (0 s), ONE after one counted second.
 mkdir -p "$WORK/scripts"; ln -s "$DIR/../config" "$WORK/config"   # the copies find config/lib/heavy-config.sh beside their own folder, as the wrapper does
@@ -342,5 +359,48 @@ for sig in INT TERM; do
   check "$sig: locks released" "$(find "$LOCKS" -name '*.lock*' -type d | wc -l | tr -d ' ')" "0"
   rm -f "$WORK/job.pid"
 done
+
+# --- the job runs in its own systemd scope (#2931) ---
+# An OOM kill inside the pane's cgroup scope makes systemd stop the whole pane (the agent session). With a working
+# systemd-run the job goes through `systemd-run --user --scope -p OOMPolicy=continue`; without one, the direct launch stays.
+SCOPE_LOG="$WORK/systemd-run.log"
+reset; : > "$SCOPE_LOG"
+out="$(HEAVY_STUB_SCOPE=ok H --light dotnet build x)"; rc=$?
+slog="$(cat "$SCOPE_LOG")"
+has "scope: the job goes through systemd-run --user --scope" "$slog" "--user --scope"
+has "scope: OOMPolicy=continue is set" "$slog" "-p OOMPolicy=continue"
+check "scope: a call ends with the job after --" "$(printf '%s\n' "$slog" | grep -c -- '-- dotnet build x$')" "1"
+has "scope: the job's output still appears" "$out" "dotnet mode=light args=build x"
+check "scope: exit 0" "$rc" "0"
+
+reset; : > "$SCOPE_LOG"
+cat > "$STUB/exit3" <<'EOF'
+#!/usr/bin/env bash
+echo "exit3 ran"; exit 3
+EOF
+chmod +x "$STUB/exit3"
+HEAVY_STUB_SCOPE=ok H --light exit3 > /dev/null 2>&1; rc=$?
+check "scope: the job's exit code (3) passes through" "$rc" "3"
+check "scope: ...and it ran through systemd-run" "$(grep -c -- '-- exit3$' "$SCOPE_LOG")" "1"
+
+reset; : > "$SCOPE_LOG"
+rm -f "$WORK/scope-job.pid"
+cat > "$WORK/scope-job.sh" <<'EOF'
+echo $$ > "$1"; exec sleep 30
+EOF
+t0=$SECONDS
+out="$(HEAVY_STUB_SCOPE=ok AW_HEAVY_SESSION_PID="$DEAD" H --light bash "$WORK/scope-job.sh" "$WORK/scope-job.pid" 2>&1)"; rc=$?
+jp="$(cat "$WORK/scope-job.pid" 2> /dev/null)"
+check "scope: a dead session still gets the job killed, exit 124" "$rc" "124"
+check "scope: ...the job is gone" "$(gone "${jp:-0}" && echo gone || echo alive)" "gone"
+check "scope: ...within seconds" "$([ $((SECONDS - t0)) -lt 15 ] && echo fast || echo slow)" "fast"
+check "scope: ...and it ran through systemd-run" "$(grep -c -- '-- bash .*scope-job.sh' "$SCOPE_LOG")" "1"
+
+reset; : > "$SCOPE_LOG"
+out="$(H --light dotnet build x)"; rc=$?
+has "no scope (systemd-run fails): the job still runs" "$out" "dotnet mode=light args=build x"
+check "no scope: exit 0" "$rc" "0"
+check "no scope: no systemd-run call ends with the job" "$(grep -c -- '-- dotnet build x$' "$SCOPE_LOG")" "0"
+reset
 
 [ "$fail" = 0 ] && echo "all heavy tests passed" || { echo "heavy tests FAILED"; exit 1; }
