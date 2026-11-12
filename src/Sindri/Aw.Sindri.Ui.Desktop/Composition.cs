@@ -39,7 +39,11 @@ internal static class Composition
     /// <summary>The starter of the 'sindri' beside the app (first-run spec decisions 2 and 2a).</summary>
     /// <param name="home">Sindri's state folder.</param>
     /// <returns>The starter.</returns>
-    internal static SindriStarter SindriStarter(string home) => new(new DetachedProcessStarter(), File.Exists, AppContext.BaseDirectory, home);
+    internal static SindriStarter SindriStarter(string home) => new(new DetachedProcessStarter(), File.Exists, AppContext.BaseDirectory, home, InstalledBinary());
+
+    private static string InstalledBinary() => Path.Combine(
+        Environment.GetEnvironmentVariable("AW_STATE_DIR") is { Length: > 0 } root ? root : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".agentic-workflow"),
+        "bin", "cs", "current", "sindri");
 
     /// <summary>This OS's dock badge: macOS NSDockTile, the Windows taskbar overlay on the main window; elsewhere none (Linux has no common one).</summary>
     /// <returns>The badge.</returns>

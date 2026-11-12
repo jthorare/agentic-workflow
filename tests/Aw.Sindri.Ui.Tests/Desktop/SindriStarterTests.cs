@@ -36,6 +36,18 @@ public sealed class SindriStarterTests
         Assert.Equal((StartOutcome.NotInstalled, 0), (result.Value, process.Launches.Count));
     }
 
+    [Fact]
+    public void The_installed_sindri_wins_over_the_one_beside_the_app()
+    {
+        var installed = Path.Combine(Path.GetTempPath(), "state", "bin", "cs", "current", "sindri");
+        var process = new FakeProcessStarter();
+        var starter = new SindriStarter(process, _ => true, _app, _home, installed);
+
+        _ = starter.Start();
+
+        Assert.Equal(installed, Assert.Single(process.Launches).Executable);
+    }
+
     private sealed class FakeProcessStarter : IProcessStarter
     {
         public List<ProcessLaunch> Launches { get; } = [];
