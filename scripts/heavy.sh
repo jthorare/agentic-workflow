@@ -210,10 +210,23 @@ fi
 # caller's pane scope (tmux-spawn-*.scope). With the default OOMPolicy=stop, one OOM kill of a job process then stops that whole
 # scope and takes the agent session with it. `systemd-run --user --scope -p OOMPolicy=continue` puts the job in its own unit, so
 # an OOM kill ends that job only. --scope execs in place (no fork), so $! below is still the job's pid and its group id.
+# The job also binds to the caller's pane scope (BindsTo+After): without it the job outlives its pane (OOM kill of the agent,
+# tmux kill-session), and the lock's dead-holder reclaim frees its slot while it still eats memory, so a 4th job could start.
+# BindsTo is one-way, so an OOM kill inside the job leaves the pane alone. Only scopes of the user manager are bound: a login
+# session-N.scope belongs to the system manager, and `systemd-run --user` fails on it.
 # Fallback, today's path: no systemd-run (macOS), no user bus, or the probe below fails.
 scope=()
-if command -v systemd-run >/dev/null 2>&1 && systemd-run --user --scope --quiet --collect -p OOMPolicy=continue -- true >/dev/null 2>&1; then
-  scope=(systemd-run --user --scope --quiet --collect -p OOMPolicy=continue --)
+if command -v systemd-run >/dev/null 2>&1; then
+  unit="$(awk -F: '$1=="0" && $2=="" {print $3; exit}' "${AW_HEAVY_TEST_CGROUP:-/proc/self/cgroup}" 2>/dev/null)"
+  bind=()
+  case "$unit" in
+    */user@[0-9]*.service/*.scope) unit="${unit##*/}"; bind=(-p "BindsTo=$unit" -p "After=$unit") ;;
+  esac
+  cand=(systemd-run --user --scope --quiet --collect -p OOMPolicy=continue "${bind[@]+"${bind[@]}"}" --)
+  # A wedged user bus under memory pressure would hang every heavy call while it holds a slot, so the probe gets a timeout.
+  probe=()
+  if command -v timeout >/dev/null 2>&1; then probe=(timeout 10); fi
+  if "${probe[@]+"${probe[@]}"}" "${cand[@]}" true >/dev/null 2>&1; then scope=("${cand[@]}"); fi
 fi
 # This relies on job control being off (non-interactive bash): the background child is not a group leader, so setsid
 # execs in place, $! is the job's pid and its group id. Under job control setsid would fork and $! would exit at once.

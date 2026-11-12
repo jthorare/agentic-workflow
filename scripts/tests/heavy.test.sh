@@ -39,6 +39,8 @@ STATE="$WORK/state"; LOCKS="$STATE/locks"
 export AW_STATE_DIR="$STATE" AW_HEAVY_SESSION_PID="$$"
 STUB="$WORK/stub"; mkdir -p "$STUB"
 export AW_HEAVY_TEST_PATH="$STUB"
+# The caller's cgroup for the scope bind (#2931): a non-scope line by default, so a suite run inside a real tmux scope binds nothing.
+echo '0::/test.slice' > "$WORK/cgroup"; export AW_HEAVY_TEST_CGROUP="$WORK/cgroup"
 cat > "$STUB/dotnet" <<'EOF'
 #!/usr/bin/env bash
 echo "dotnet mode=${AW_HEAVY_MODE:-none} args=$*"
@@ -372,6 +374,19 @@ has "scope: OOMPolicy=continue is set" "$slog" "-p OOMPolicy=continue"
 check "scope: a call ends with the job after --" "$(printf '%s\n' "$slog" | grep -c -- '-- dotnet build x$')" "1"
 has "scope: the job's output still appears" "$out" "dotnet mode=light args=build x"
 check "scope: exit 0" "$rc" "0"
+check "scope: no bind on a non-scope cgroup" "$(grep -c 'BindsTo' "$SCOPE_LOG")" "0"
+
+# Bind to the caller's pane scope, only when it belongs to the user manager.
+for row in "bind: a user-manager scope|0::/user.slice/user-1000.slice/user@1000.service/app.slice/tmux-spawn-abc.scope|1" \
+           "bind: a login session scope|0::/user.slice/user-1000.slice/session-3.scope|0" \
+           "bind: a user-manager service|0::/user.slice/user-1000.slice/user@1000.service/app.slice/app.service|0"; do
+  IFS='|' read -r name line want <<< "$row"
+  reset; : > "$SCOPE_LOG"; echo "$line" > "$WORK/cgroup.row"
+  HEAVY_STUB_SCOPE=ok AW_HEAVY_TEST_CGROUP="$WORK/cgroup.row" H --light dotnet build x > /dev/null 2>&1
+  job="$(grep -- '-- dotnet build x$' "$SCOPE_LOG")"
+  check "$name: BindsTo on the job line" "$(printf '%s\n' "$job" | grep -c -- '-p BindsTo=tmux-spawn-abc.scope')" "$want"
+  check "$name: After on the job line" "$(printf '%s\n' "$job" | grep -c -- '-p After=tmux-spawn-abc.scope')" "$want"
+done
 
 reset; : > "$SCOPE_LOG"
 cat > "$STUB/exit3" <<'EOF'
