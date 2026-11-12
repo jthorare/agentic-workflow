@@ -98,7 +98,7 @@ bash "$CHECK" --release "$TMP/shipped.md" >/dev/null 2>&1 && ok "--release passe
 
 bash "$CHECK" >/dev/null 2>&1; rc=$?
 [ "$rc" = 2 ] && ok "no file exits 2" || bad "no file rc=$rc"
-bash "$CHECK" "$TMP/missing.md" >/dev/null 2>&1; rc=$?
+bash "$CHECK" "$TMP/absent.md" >/dev/null 2>&1; rc=$?
 [ "$rc" = 2 ] && ok "a missing file exits 2" || bad "missing file rc=$rc"
 bash "$CHECK" --bogus "$TMP/good.md" >/dev/null 2>&1; rc=$?
 [ "$rc" = 2 ] && ok "an unknown flag exits 2" || bad "unknown flag rc=$rc"
