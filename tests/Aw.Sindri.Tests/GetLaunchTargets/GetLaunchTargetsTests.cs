@@ -1,3 +1,4 @@
+using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
@@ -86,5 +87,59 @@ public sealed class GetLaunchTargetsTests
         var view = (await Service().Handle(A.GetLaunchTargetsRequest().Build(), Token)).Value;
 
         Expect.Equal(LaunchBudgetState.NoUsageReader, view.Targets[0].Budget.State);
+    }
+
+    private sealed class GatedSpend(params AgentId[] targets) : ILaunchSpend
+    {
+        private readonly Lock _lock = new();
+        private readonly Dictionary<AgentId, TaskCompletionSource<bool>> _gates = targets.ToDictionary(static t => t, static _ => new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously));
+        private readonly HashSet<AgentId> _called = [];
+
+
+        public TaskCompletionSource<bool> AllCalled { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public void Release()
+        {
+            foreach (var gate in _gates.Values)
+            {
+                _ = gate.TrySetResult(true);
+            }
+        }
+
+        public async ValueTask<Result<AgentSpend?>> Today(AgentId target, CancellationToken cancellationToken)
+        {
+            lock (_lock)
+            {
+                _ = _called.Add(target);
+                if (_called.Count == _gates.Count)
+                {
+                    _ = AllCalled.TrySetResult(true);
+                }
+            }
+
+            _ = await _gates[target].Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+            return Results.Success<AgentSpend?>(new AgentSpend(1m, Tokens: 0, SpendBasis.PriceTable));
+        }
+    }
+
+    [Fact]
+    public async Task Spend_reads_of_several_targets_run_together()
+    {
+        var cursor = AgentId.From("cursor");
+        var gated = new GatedSpend(_claude, _codex, cursor);
+        await Probed(Target(_claude), Target(_codex), Target(cursor));
+        var reader = new LaunchTargetsReader(_v.Slice.Store, _v.Slice.Events, _v.Slice.Profiles, gated, _v.Progress);
+
+        var read = reader.Read(Token).AsTask();
+        try
+        {
+            // red today: the foreach asks the second target only after the first returns, so this never completes
+            _ = await gated.AllCalled.Task.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);
+        }
+        finally
+        {
+            gated.Release();
+            _ = await read.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);
+        }
     }
 }
