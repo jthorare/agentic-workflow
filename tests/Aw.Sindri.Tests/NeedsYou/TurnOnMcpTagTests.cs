@@ -46,7 +46,10 @@ public sealed class TurnOnMcpTagTests
         var t0 = _slice.Clock.GetUtcNow();
         Assert.Equal(t0, (await notices.Mcp(Token))!.Since);
 
-        _slice.Clock.Advance(TimeSpan.FromMinutes(1));
+        _slice.Clock.Advance(TimeSpan.FromSeconds(30));
+        Assert.Equal(t0, (await notices.Mcp(Token))!.Since);   // still standing: the first sighting holds
+
+        _slice.Clock.Advance(TimeSpan.FromSeconds(30));
         _switch.Off = true;
         Assert.Null(await notices.Mcp(Token));
 
