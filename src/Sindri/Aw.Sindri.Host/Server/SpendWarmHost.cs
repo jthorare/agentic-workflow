@@ -12,15 +12,33 @@ internal sealed partial class SpendWarmHost(IAgentCatalog catalog, ILaunchSpend 
     private static readonly TimeSpan _first = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan _every = TimeSpan.FromSeconds(30);
 
+    private readonly CancellationTokenSource _stop = new();
+    private Task? _firstWait;
+
+    /// <summary>Creates the first wait on the clock before returning, so a clock moved right after start still fires it.</summary>
+    public override Task StartAsync(CancellationToken cancellationToken)
+    {
+        _firstWait = Task.Delay(_first, clock, _stop.Token);
+        return base.StartAsync(cancellationToken);
+    }
+
+    public override void Dispose()
+    {
+        _stop.Dispose();
+        base.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var wait = _first;
+        await using var registration = stoppingToken.Register(_stop.Cancel).ConfigureAwait(false);
+        var first = true;
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                await Task.Delay(wait, clock, stoppingToken).ConfigureAwait(false);
-                wait = _every;
+                await (first && _firstWait is { } pending ? pending : Task.Delay(_every, clock, stoppingToken)).ConfigureAwait(false);
+                first = false;
                 var reads = catalog.All.Where(static e => e.Usage is { Length: > 0 } name && !string.Equals(name, "none", StringComparison.Ordinal)).Select(e => Warm(e.Id, stoppingToken));
                 await Task.WhenAll(reads).ConfigureAwait(false);
             }
