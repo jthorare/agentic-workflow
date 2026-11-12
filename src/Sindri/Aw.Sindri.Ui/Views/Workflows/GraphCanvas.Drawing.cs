@@ -94,7 +94,7 @@ internal sealed partial class GraphCanvas
         context.DrawRectangle(Brush("Brush.Surface2"), new Pen(Brush("Brush.Hairline"), 1), rect, Radius, Radius);
         var width = rect.Width - 24;
         context.DrawText(Text(node.Title, 13, Brush("Brush.Ink"), width, semiBold: true), new Point(rect.X + 12, rect.Y + 8));
-        context.DrawText(Text(node.Type, 11, Brush("Brush.InkMuted"), width, semiBold: false), new Point(rect.X + 12, rect.Y + 27));
+        context.DrawText(Text(node.Kind, 11, Brush("Brush.InkMuted"), width, semiBold: false), new Point(rect.X + 12, rect.Y + 27));
         if (node.StatusWord.Length > 0)
         {
             context.DrawText(Text(node.Glyph + " " + node.StatusWord, 11, Brush(ToneKey(node.Tone)), width, semiBold: false), new Point(rect.X + 12, rect.Y + 44));

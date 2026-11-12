@@ -49,16 +49,14 @@ internal sealed class GraphNodeViewModel : ObservableObject
     /// <summary>How the status is coloured.</summary>
     public GraphTone Tone { get; }
 
-#pragma warning disable MA0041, CA1822 // stubs until the next commit
     /// <summary>The kind's one name, as the Add step menu says it ("If" for "condition").</summary>
-    public string Kind => throw new NotSupportedException();
+    public string Kind => StepKinds.Name(Type);
 
     /// <summary>The accessible name with the step's place: "Check, Prompt step, 2 of 4".</summary>
     /// <param name="position">The 1-based place in reading order.</param>
     /// <param name="count">How many steps the graph has.</param>
     /// <returns>The name.</returns>
-    public string PositionName(int position, int count) => throw new NotSupportedException();
-#pragma warning restore MA0041, CA1822
+    public string PositionName(int position, int count) => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{Title}, {Kind} step, {position} of {count}");
 
     /// <summary>The accessible name: title, type and status word.</summary>
     public string Name { get; }
