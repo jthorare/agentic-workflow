@@ -58,7 +58,7 @@ Assign the most appropriate **implementation** agent to each group. These are ag
 | `devops-engineer` | CI/CD, Docker, infrastructure code |
 | `cloud-architect` | IaC, serverless config, cloud resources |
 | `database-administrator` | Migrations, query optimization, schema |
-| `security-engineer` | Auth fixes, input sanitization, secrets exposure |
+| `security-engineer` | Auth fixes, input sanitization, secret storage, rotation and leaks |
 | `performance-engineer` | Algorithmic fixes, caching, query optimization |
 
 ## Output format
