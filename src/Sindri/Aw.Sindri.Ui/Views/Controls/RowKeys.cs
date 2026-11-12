@@ -9,7 +9,9 @@ namespace Aw.Sindri.Ui.Views.Controls;
 
 /// <summary>
 /// Row-to-row keys for a list of focusable rows in an items control (#2922): Up and Down move to the previous and next row, Home and End to the first and last,
-/// building the row first when the list is virtualized. The keys are always handled, so focus never leaves the list on them. A key with a modifier is left alone.
+/// building the row first when the list is virtualized. The keys are always handled, so focus never leaves the list on them. A key with a modifier is left alone,
+/// and so is a key typed into a text box in a row. The list takes the keys on the tunnel: by the bubble, Avalonia's directional navigation inside the panel
+/// has already moved focus and recycled the row the key came from.
 /// </summary>
 internal static class RowKeys
 {
@@ -22,7 +24,7 @@ internal static class RowKeys
         {
             if (e.NewValue is true)
             {
-                list.AddHandler(InputElement.KeyDownEvent, OnKeyDown, RoutingStrategies.Bubble);
+                list.AddHandler(InputElement.KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
             }
             else
             {
@@ -75,7 +77,7 @@ internal static class RowKeys
 
     private static void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (sender is not ItemsControl list || e.KeyModifiers != KeyModifiers.None || e.Key is not (Key.Up or Key.Down or Key.Home or Key.End))
+        if (sender is not ItemsControl list || !IsRowKey(e))
         {
             return;
         }
@@ -98,6 +100,10 @@ internal static class RowKeys
             FocusRow(list, target);
         }
     }
+
+    private static bool IsRowKey(KeyEventArgs e) =>
+        e.KeyModifiers == KeyModifiers.None && e.Key is Key.Up or Key.Down or Key.Home or Key.End
+        && (e.Source as Visual)?.FindAncestorOfType<TextBox>(includeSelf: true) is null;
 
     private static int CurrentIndex(ItemsControl list, Visual? source)
     {
