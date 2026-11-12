@@ -30,8 +30,16 @@ internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAc
             return approved.IsError ? approved.Error : SindriErrors.ProfileMissing.With("no profile yet, so no repo is mapped (fix: sindri repo add <path>)");
         }
 
-        _ = checkouts;   // red (#3371): not read yet
-        return For(loaded.Profile, Caller(callers.Current));
+        var scope = For(loaded.Profile, Caller(callers.Current));
+        return checkouts is null ? scope : WithoutPlainFolders(scope, checkouts);
+    }
+
+    // #3371: a profile repo whose path is not a git checkout fails every git read (SND-CONTEXT-048). 'sindri repo add' refuses one, so only a hand-written
+    // profile names one: every read leaves it out and names it, so one plain folder never fails the map of the others.
+    private static ContextScope WithoutPlainFolders(ContextScope scope, IRepoCheckouts checkouts)
+    {
+        var plain = scope.Repos.Where(r => !checkouts.IsCheckout(r.Path)).ToList();
+        return plain.Count == 0 ? scope : scope with { Repos = [.. scope.Repos.Except(plain)], LeftOut = [.. plain.Select(static r => r.Name)] };
     }
 
     /// <summary>
