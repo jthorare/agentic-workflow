@@ -174,7 +174,7 @@ internal static partial class CommandTable
         {
             ["doctor", "--probe"] or ["doctor", "--probe", "--json"] => await output.Json(await harnesses.Probe(harness: null, ct).ConfigureAwait(false), 0).ConfigureAwait(false),
             ["doctor", "--probe", "--harness", var name, .. var rest] when Json(rest) is not null => await output.Json(await harnesses.Probe(name, ct).ConfigureAwait(false), 0).ConfigureAwait(false),
-            ["doctor", .. var rest] when WithoutDev(rest) is { } plain && Json(plain.Rest) is { } json =>
+            ["doctor", .. var rest] when WithoutDev(rest) is var plain && Json(plain.Args) is { } json =>
                 await verbs.Doctor(json, ct, token => harnesses.DoctorChecks(plain.Dev, token)).ConfigureAwait(false),
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
@@ -240,7 +240,7 @@ internal static partial class CommandTable
     };
 
     /// <summary>'sindri doctor' arguments without '--dev', and whether it was there.</summary>
-    private static (bool Dev, string[] Rest)? WithoutDev(string[] rest) =>
+    private static (bool Dev, string[] Args) WithoutDev(string[] rest) =>
         rest.Contains("--dev", StringComparer.Ordinal) ? (true, [.. rest.Where(a => !string.Equals(a, "--dev", StringComparison.Ordinal))]) : (false, rest);
 
     private static bool? Json(string[] rest) => rest switch
