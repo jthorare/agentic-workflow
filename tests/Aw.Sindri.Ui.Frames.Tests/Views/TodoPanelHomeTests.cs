@@ -13,6 +13,7 @@ using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Theme;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Shell;
@@ -379,6 +380,87 @@ public sealed class TodoPanelHomeTests : IDisposable
 
         Assert.Equal([shell.Todo.Error], Texts(Panel(window), "TodoError"));
         Assert.Equal(5, Rows(window).Count);
+    });
+
+    // #2908: the read error draws once, in the header after the sync line; it never takes a body slot or the foot.
+    private async Task FailRead(Window window, ShellViewModel shell, string detail)
+    {
+        _server.TodosAnswer = RouteAnswer.Problem(HttpStatusCode.ServiceUnavailable, "SND-API-011", detail);
+        await shell.Todo.Refresh(new Uri("http://127.0.0.1:7410/"), Token);
+        Settle(window);
+        Assert.False(string.IsNullOrEmpty(shell.Todo.Error));
+    }
+
+    [Fact]
+    public Task A_read_error_collapsed_draws_in_the_header_and_leaves_the_five_slots_alone() => OnUi(async () =>
+    {
+        Serve(Eight());
+        var (window, shell) = await Connected();
+        var body = Named<Grid>(window, "TodoCollapsed");
+        var elsewhere = Named<Control>(window, "TodoElsewhere");
+        var before = (body.Bounds.Height, GapBelowBody(body, elsewhere));
+
+        await FailRead(window, shell, "The views are behind.");
+
+        var error = Named<TextBlock>(window, "TodoError");
+        var sync = Named<TextBlock>(window, "TodoSyncLive");
+        var head = Named<Control>(window, "TodoTitle").Parent!.Parent!;   // the header grid's border
+        Assert.True(error.IsEffectivelyVisible);
+        Assert.True(error.TranslatePoint(default, head)!.Value.X >= sync.TranslatePoint(default, head)!.Value.X, "the error follows the sync line");
+        Assert.True(error.TranslatePoint(new Point(0, error.Bounds.Height), Panel(window))!.Value.Y <= body.TranslatePoint(default, Panel(window))!.Value.Y, "the error is above the body");
+        Assert.Equal(before.Height, body.Bounds.Height);
+        Assert.Equal(Named<Control>(window, "TodoCollapsed").Bounds.Height, ((double)window.FindResource("Row.Height.Default")!) * 5);
+        Assert.Equal(before.Item2, GapBelowBody(body, elsewhere));
+        Assert.Equal(5, Rows(window).Count);
+    });
+
+    // The distance from the bottom of the five slots to the top of the From elsewhere row: 0 when it sits right under them.
+    private static double GapBelowBody(Control body, Control elsewhere) =>
+        elsewhere.TranslatePoint(default, body)!.Value.Y - body.Bounds.Height;
+
+    [Fact]
+    public Task A_read_error_expanded_shows_one_error_line() => OnUi(async () =>
+    {
+        Serve(Eight());
+        var (window, shell) = await Connected();
+        Press(window, Named<Button>(window, "TodoShowAll"));
+
+        await FailRead(window, shell, "The views are behind.");
+
+        var errors = Panel(window).GetVisualDescendants().OfType<TextBlock>()
+            .Where(t => t.IsEffectivelyVisible && t.Text == shell.Todo.Error)
+            .ToList();
+        Assert.Single(errors);
+    });
+
+    [Theory]
+    [InlineData(1.0)]
+    [InlineData(1.3)]
+    public Task A_long_read_error_trims_before_the_New_todo_button(double scale) => OnUi(async () =>
+    {
+        Serve(Eight());
+        var (window, shell) = await Connected();
+        window.Width = 1000;
+        TextScale.Apply(Application.Current!.Resources, scale);   // why: the headless session starts the app
+        try
+        {
+            Settle(window);
+            var hint = Named<Control>(window, "TodoNewHint");
+            var hintWidth = hint.Bounds.Width;
+
+            await FailRead(window, shell, string.Concat(Enumerable.Repeat("The views are behind. ", 10)));
+
+            var error = Named<TextBlock>(window, "TodoError");
+            var right = error.TranslatePoint(new Point(error.Bounds.Width, 0), window)!.Value.X;
+            var hintLeft = hint.TranslatePoint(default, window)!.Value.X;
+            Assert.True(error.IsEffectivelyVisible);
+            Assert.True(right <= hintLeft, string.Create(CultureInfo.InvariantCulture, $"the error ends at {right}, New todo starts at {hintLeft}"));
+            Assert.Equal(hintWidth, hint.Bounds.Width);
+        }
+        finally
+        {
+            TextScale.Apply(Application.Current!.Resources, 1.0);
+        }
     });
 
     [Fact]
