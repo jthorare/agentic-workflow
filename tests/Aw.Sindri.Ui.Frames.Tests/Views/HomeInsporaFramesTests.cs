@@ -9,6 +9,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
+using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Controls;
 using Aw.Sindri.Ui.Views.Shell;
 
@@ -32,6 +33,28 @@ public sealed class HomeInsporaFramesTests : FrameHost
         }
 
         var (window, shell) = await Connected(width: width, height: 900);
+        CheckHome(window, shell, string.Create(CultureInfo.InvariantCulture, $"home-inspora-{width:0}-{(typical ? "typical" : "empty")}"));
+        if (typical)
+        {
+            UnseenRowKeepsItsCue(window);
+        }
+    });
+
+    // The state Home shows when its reads fail (the needs-you list and the queue answer 500): the same rules hold, and a display number shows only if the list still does.
+    [Theory]
+    [InlineData(1280)]
+    [InlineData(1000)]
+    public Task Home_keeps_the_same_rules_when_its_reads_fail(double width) => OnUi(async () =>
+    {
+        Server.NeedsYouView = RouteAnswer.Problem(HttpStatusCode.InternalServerError, "SND-TEST-500", "boom");
+        Server.QueueView = RouteAnswer.Problem(HttpStatusCode.InternalServerError, "SND-TEST-500", "boom");
+
+        var (window, shell) = await Connected(width: width, height: 900);
+        CheckHome(window, shell, string.Create(CultureInfo.InvariantCulture, $"home-inspora-{width:0}-error"));
+    });
+
+    private static void CheckHome(ShellWindow window, ShellViewModel shell, string frame)
+    {
         shell.GoTo(PageId.Home);
         Settle(window);
         var home = window.GetVisualDescendants().OfType<HomePage>().Single(h => h.IsEffectivelyVisible);
@@ -42,9 +65,18 @@ public sealed class HomeInsporaFramesTests : FrameHost
         OnePrimaryButton(window, home);
         SixPixelChips(home);
         ElsewhereLineStartsUnderTheTodoTitle(home);
+        Frame(window, frame, prefix: "");
+    }
 
-        Frame(window, string.Create(CultureInfo.InvariantCulture, $"home-inspora-{width:0}-{(typical ? "typical" : "empty")}"), prefix: "");
-    });
+    // The unseen pulse is the one "not seen" cue and keeps a status colour: its fill is not a seen row's (Surface2). Skipped when no row pulses (reduced motion draws an outline).
+    private static void UnseenRowKeepsItsCue(Window window)
+    {
+        var pulsing = window.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => b.Name == "RowFrame" && b.IsEffectivelyVisible && b.Classes.Contains("pulsing"));
+        if (pulsing?.Background is ISolidColorBrush fill)
+        {
+            Assert.NotEqual(((ISolidColorBrush)Resource(window, "Brush.Surface2")).Color, fill.Color);
+        }
+    }
 
     // The need-you count is the only display text; at zero there is none (the empty sentence says so).
     private static void OneDisplayNumber(HomePage home, string number)
