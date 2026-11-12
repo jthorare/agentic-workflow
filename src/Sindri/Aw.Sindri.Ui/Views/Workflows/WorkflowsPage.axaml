@@ -24,7 +24,7 @@
         <TextBlock x:Name="WorkflowsHead" Grid.Column="3" Margin="12,0,0,0" Classes="caption subtle" Text="{Binding Head}" IsVisible="{Binding ShowsListHead}" VerticalAlignment="Center" />
         <TextBlock x:Name="WorkflowsState" Grid.Column="3" Margin="12,0,0,0" Classes="caption subtle" Text="{Binding DetailStateText}" IsVisible="{Binding ShowsDetailState}" VerticalAlignment="Center" />
       </Grid>
-      <Button x:Name="WorkflowsNewHeader" Grid.Column="1" Content="{Binding NewWorkflowText}" Click="OnNewWorkflow" IsVisible="{Binding ShowsHeaderNew}" IsEnabled="{Binding CanOpenCreate}"
+      <Button x:Name="WorkflowsNewHeader" Grid.Column="1" Content="{Binding NewWorkflowText}" Click="OnNewWorkflow" Margin="12,0,0,0" IsVisible="{Binding ShowsHeaderNew}" IsEnabled="{Binding CanOpenCreate}"
               ToolTip.Tip="{Binding NewWorkflowTip}" VerticalAlignment="Top" AutomationProperties.Name="{Binding NewWorkflowText}" />
     </Grid>
 
