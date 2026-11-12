@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Automation.Peers;
 using Avalonia.Automation.Provider;
@@ -47,7 +48,7 @@ public sealed class CommandControlWidthTests
         (part.TranslatePoint(new Point(part.Bounds.Width, 0), root) ?? throw new InvalidOperationException(part.Name + " is not under the control")).X;
 
     private static ControlViewModel CopyOnly(string cli) =>
-        new(Row("WriteMemory", cli), null, new FakeClipboard(), new FakeTimeProvider(A.Noon));
+        new(Row("WriteMemory", cli), send: null, new FakeClipboard(), new FakeTimeProvider(A.Noon));
 
     [Fact]
     public async Task A_long_cli_wraps_and_keeps_Copy_inside_a_narrow_host()
@@ -61,9 +62,9 @@ public sealed class CommandControlWidthTests
             return result;
         });
 
-        Assert.True(copyWidth > 0, $"Copy has width {copyWidth}");
-        Assert.True(copyRight <= controlWidth, $"Copy ends at {copyRight}, past the control's {controlWidth}");
-        Assert.True(cliRight <= controlWidth, $"the CLI text ends at {cliRight}, past the control's {controlWidth}");
+        Assert.True(copyWidth > 0, string.Create(CultureInfo.InvariantCulture, $"Copy has width {copyWidth}"));
+        Assert.True(copyRight <= controlWidth, string.Create(CultureInfo.InvariantCulture, $"Copy ends at {copyRight}, past the control's {controlWidth}"));
+        Assert.True(cliRight <= controlWidth, string.Create(CultureInfo.InvariantCulture, $"the CLI text ends at {cliRight}, past the control's {controlWidth}"));
     }
 
     [Fact]
@@ -78,7 +79,7 @@ public sealed class CommandControlWidthTests
             return left;
         });
 
-        Assert.True(copyLeft < 400, $"Copy starts at {copyLeft}");
+        Assert.True(copyLeft < 400, string.Create(CultureInfo.InvariantCulture, $"Copy starts at {copyLeft}"));
     }
 
     [Fact]
@@ -101,6 +102,6 @@ public sealed class CommandControlWidthTests
         });
 
         Assert.NotEmpty(outcome);
-        Assert.True(outcomeRight <= controlWidth, $"the outcome ends at {outcomeRight}, past the control's {controlWidth}");
+        Assert.True(outcomeRight <= controlWidth, string.Create(CultureInfo.InvariantCulture, $"the outcome ends at {outcomeRight}, past the control's {controlWidth}"));
     }
 }
