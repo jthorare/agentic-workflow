@@ -62,4 +62,56 @@ bash "$GUARD" --bogus -- true >/dev/null 2>&1;          check "an unknown option
 bash "$GUARD" --timeout abc -- true >/dev/null 2>&1;    check "a non-numeric timeout exits 2" "$?" "2"
 bash "$GUARD" --timeout >/dev/null 2>&1;                check "a missing value exits 2" "$?" "2"
 
+# --- (d) the check runs in its own systemd scope (#2982) ---
+# An OOM kill inside the pane's cgroup scope makes systemd stop the whole pane (the agent session). With a working
+# systemd-run the check goes through `systemd-run --user --scope -p OOMPolicy=continue`; without one, setsid stays.
+# The stub systemd-run logs each call; GUARD_STUB_SCOPE=ok runs the command in place like --scope, anything else fails
+# like a box with no user bus, so the suite never makes a real scope.
+STUB="$WORK/stub"; mkdir -p "$STUB"
+cat > "$STUB/systemd-run" <<'EOS'
+#!/usr/bin/env bash
+echo "systemd-run $*" >> "$WORK/systemd-run.log"
+if [ "${GUARD_STUB_SCOPE:-}" = ok ]; then
+  while [ "$#" -gt 0 ] && [ "$1" != "--" ]; do shift; done
+  shift
+  exec "$@"
+fi
+echo "Failed to connect to user scope bus via local transport" >&2
+exit 1
+EOS
+chmod +x "$STUB/systemd-run"
+export WORK
+SLOG="$WORK/systemd-run.log"
+echo "0::/user.slice/user-1000.slice/user@1000.service/app.slice/app.service" > "$WORK/cgroup.plain"
+# The runner of this suite may itself sit in a pane scope, so every row names its cgroup line (default: not a scope).
+scoped() { PATH="$STUB:$PATH" GUARD_STUB_SCOPE=ok AW_GUARD_TEST_CGROUP="${CG:-$WORK/cgroup.plain}" bash "$GUARD" "$@"; }
+
+: > "$SLOG"
+scoped --timeout 30 --grace 3 -- bash -c "$daemonize; exit 7"
+check "scope: the exit code passes through" "$?" "7"
+check "scope: the check went through systemd-run --user --scope" "$(grep -c -- '--user --scope .*-p OOMPolicy=continue .*-- bash -c' "$SLOG")" "1"
+check "scope: nothing tagged is left after a normal exit" "$(with_token | wc -l | tr -d ' ')" "0"
+check "scope: no bind on a non-scope cgroup" "$(grep -c 'BindsTo' "$SLOG")" "0"
+
+: > "$SLOG"
+scoped --timeout 2 --grace 3 -- bash -c "trap 'exit 143' TERM; $daemonize; sleep 120" 2>/dev/null
+check "scope: a timeout exits 124" "$?" "124"
+check "scope: nothing tagged is left after a timeout" "$(with_token | wc -l | tr -d ' ')" "0"
+
+for row in "bind: a user-manager scope|0::/user.slice/user-1000.slice/user@1000.service/app.slice/tmux-spawn-abc.scope|1" \
+           "bind: a login session scope|0::/user.slice/user-1000.slice/session-3.scope|0" \
+           "bind: a user-manager service|0::/user.slice/user-1000.slice/user@1000.service/app.slice/app.service|0"; do
+  IFS='|' read -r name line want <<< "$row"
+  : > "$SLOG"; echo "$line" > "$WORK/cgroup.row"
+  CG="$WORK/cgroup.row" scoped -- bash -c 'exit 0'
+  job="$(grep -- "-- bash -c exit 0$" "$SLOG")"
+  check "$name: BindsTo on the check line" "$(printf '%s\n' "$job" | grep -c -- '-p BindsTo=tmux-spawn-abc.scope')" "$want"
+  check "$name: After on the check line" "$(printf '%s\n' "$job" | grep -c -- '-p After=tmux-spawn-abc.scope')" "$want"
+done
+
+: > "$SLOG"
+PATH="$STUB:$PATH" AW_GUARD_TEST_CGROUP="$WORK/cgroup.plain" bash "$GUARD" -- bash -c 'exit 5'
+check "fallback: a failing systemd-run keeps setsid and the exit code" "$?" "5"
+check "fallback: only the probe called systemd-run" "$(grep -c -- '-- bash -c' "$SLOG")" "0"
+
 exit "$fail"
