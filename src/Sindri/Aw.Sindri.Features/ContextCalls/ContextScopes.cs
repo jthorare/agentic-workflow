@@ -3,6 +3,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Setup;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
@@ -15,7 +16,8 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// </summary>
 /// <param name="approvals">The profile.</param>
 /// <param name="callers">The current caller.</param>
-internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAccessor callers)
+/// <param name="checkouts">Which profile repos are git checkouts (#3371); null reads every repo as one.</param>
+internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAccessor callers, IRepoCheckouts? checkouts = null)
 {
     /// <summary>The scope of the call running now.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
@@ -28,6 +30,7 @@ internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAc
             return approved.IsError ? approved.Error : SindriErrors.ProfileMissing.With("no profile yet, so no repo is mapped (fix: sindri repo add <path>)");
         }
 
+        _ = checkouts;   // red (#3371): not read yet
         return For(loaded.Profile, Caller(callers.Current));
     }
 

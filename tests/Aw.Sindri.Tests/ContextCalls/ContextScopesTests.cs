@@ -4,6 +4,8 @@ using Aw.Context.Testing.Engine;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Features.ValidateProfile;
 
@@ -59,5 +61,41 @@ public sealed class ContextScopesTests
 
         Assert.Equal("SND-CONTEXT-001", validated.Error.Code);
         Assert.StartsWith("context.deadline:", validated.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_profile_repo_that_is_not_a_git_checkout_is_left_out_of_the_scope_and_named()
+    {
+        WithRepos(("aw", "/r/aw"), ("notes", "/r/notes"), ("docs", "/r/docs"));
+        var scopes = new ContextScopes(_h.Profiles, _h.Callers, new Checkouts("/r/aw", "/r/docs"));
+
+        var scope = (await scopes.Current(TestContext.Current.CancellationToken)).Value;
+
+        Assert.Equal(["aw", "docs"], scope.Repos.Select(r => r.Name.Value), StringComparer.Ordinal);
+        Assert.Equal(["notes"], scope.LeftOut.Select(r => r.Value), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Every_repo_a_checkout_leaves_nothing_out()
+    {
+        WithRepos(("aw", "/r/aw"), ("docs", "/r/docs"));
+        var scopes = new ContextScopes(_h.Profiles, _h.Callers, new Checkouts("/r/aw", "/r/docs"));
+
+        var scope = (await scopes.Current(TestContext.Current.CancellationToken)).Value;
+
+        Assert.Equal(["aw", "docs"], scope.Repos.Select(r => r.Name.Value), StringComparer.Ordinal);
+        Assert.Empty(scope.LeftOut);
+    }
+
+    private void WithRepos(params (string Name, string Path)[] repos)
+    {
+        var live = SliceHarness.Profile("5s");
+        _h.Profiles.Live = live with { Profile = live.Profile with { Repos = [.. repos.Select(r => new RepoEntry(r.Name, r.Path))] } };
+    }
+
+    // The checkout port with a fixed answer: the paths given are checkouts, every other path is a plain folder.
+    private sealed class Checkouts(params string[] paths) : IRepoCheckouts
+    {
+        public bool IsCheckout(string path) => paths.Contains(path, StringComparer.Ordinal);
     }
 }

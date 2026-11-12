@@ -10579,6 +10579,8 @@ static Aw.Context.Core.Map.PageOverlay.Apply(Aw.Context.Core.Graph.GraphSnapshot
 static Aw.Context.Core.Map.PageOverlay.Without(Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Graph.GraphSnapshot!
 Aw.Context.Core.Engine.ContextScope.OmitPages.get -> bool
 Aw.Context.Core.Engine.ContextScope.OmitPages.init -> void
+Aw.Context.Core.Engine.ContextScope.LeftOut.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepoName>!
+Aw.Context.Core.Engine.ContextScope.LeftOut.init -> void
 Aw.Context.Core.Concepts.ConceptRow.Pages.get -> int?
 Aw.Context.Core.Concepts.ConceptRow.Pages.init -> void
 Aw.Context.Core.Facade.IContextConcepts.CheckPages(Aw.Context.Core.Engine.ContextScope? scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Map.MapHealth!>!>
