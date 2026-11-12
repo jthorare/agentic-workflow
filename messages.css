@@ -341,4 +341,6 @@
 .cl.cur::after{content:'';position:absolute;left:12px;right:12px;top:-2px;bottom:-2px;border:2px solid var(--primary-hi);border-radius:var(--r1);pointer-events:none}
 .peek .cl.cur::after{display:none}
 
-.header .stat.att{padding-right:12px;max-width:640px}
+.header .stat.att{padding-right:12px;max-width:340px}
+.header .stat .stt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.header .stat::before{flex:none}

@@ -32,16 +32,16 @@ document.querySelectorAll('.foot .sr,.foot .keys,.fm .keys').forEach(function(e)
 '''
 STATES = {
  'live': ('', 'Live (polling every 30 s) · joi', ''),
- 'behind': ('att', 'Behind: 12 min · limited to 15 messages a minute · joi', ''),
+ 'behind': ('att', 'Behind: 12 min · history is limited to 15 messages per minute · joi', ''),
  'offline': ('off', 'Offline: last read 09:10', ''),
  'expired': ('err', 'Slack token expired', ''),
  'scope': ('att', 'Needs scope search:read', ''),
- 'wait': ('att', 'Slack asked Sindri to wait · 15 messages a minute · joi', ''),
+ 'wait': ('att', 'Slack asked Sindri to wait · history is limited to 15 messages per minute · joi', ''),
 }
 def hdr(state='live', title='Messages', count='23 need reply', hint=True):
     c, t, b = STATES[state]
     h = '<span class="hint">Ctrl+K search or jump</span>' if hint else ''
-    return f'<div class="header"><h1>{title}</h1><span class="count">{count}</span>{h}<span class="stat {c}">{t}{b}</span></div>'
+    return f'<div class="header"><h1>{title}</h1><span class="count">{count}</span>{h}<span class="stat {c}"><span class="stt">{t}</span>{b}</span></div>'
 
 # ---------------- rail
 def rail(on='Needs reply', slim=False, starred=True, counts=(23, 14), later=None, drafts=None, focus=None, harbor=3):
