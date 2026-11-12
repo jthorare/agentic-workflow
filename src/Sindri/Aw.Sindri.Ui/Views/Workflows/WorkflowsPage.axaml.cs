@@ -83,6 +83,7 @@ internal sealed partial class WorkflowsPage : UserControl
         if (DataContext is WorkflowsPageViewModel page)
         {
             page.Edit();
+            FocusLater(WorkflowEditDone);   // Edit hides itself in edit mode: focus moves to its neighbour, Done, not the breadcrumb
         }
     }
 
