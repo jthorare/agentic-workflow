@@ -134,7 +134,7 @@ public sealed class RowListFramesTests
     {
         var groups = RowGallery.Three();
         var (window, list, _, _) = Show(groups);
-        const double SecondGroupTop = 28 + (14 * 32);
+        const double SecondGroupTop = 8 + 28 + (14 * 32) + 8;   // list padding, a header, 14 rows, the 8 px group gap
 
         Assert.Null(list.StickyGroup);
         list.ScrollTo(100);

@@ -434,7 +434,7 @@ public sealed class RowListLiveTests
         var (window, list) = Show(new[] { first, second }, height: 300);
         window.Classes.Set("comfortable", value: true);   // the grammar puts it on .app, never on the list
         Settle(window);
-        const double SecondTop = 28 + (14 * 40);
+        const double SecondTop = 8 + 28 + (14 * 40) + 8;
 
         list.ScrollTo(SecondTop - 60);   // 48 px before the second header; a list that assumed 32 px rows would already think it is there
         Settle(window);
