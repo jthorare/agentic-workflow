@@ -34,6 +34,7 @@ public sealed class HomeInsporaFramesTests : FrameHost
             Server.QueueView = new RouteAnswer(HttpStatusCode.OK, GoldenFiles.SpecShaped("queue", "empty"));
         }
 
+        Motion.Set(reduce: false);   // why: an unseen row pulses only with motion on; reduced motion draws an outline instead
         var (window, shell) = await Connected(width: width, height: 900);
         CheckHome(window, shell, string.Create(CultureInfo.InvariantCulture, $"home-inspora-{width:0}-{(typical ? "typical" : "empty")}"));
         if (typical)
@@ -90,14 +91,13 @@ public sealed class HomeInsporaFramesTests : FrameHost
         Frame(window, frame, prefix: "");
     }
 
-    // The unseen pulse is the one "not seen" cue and keeps a status colour: its fill is not a seen row's (Surface2). Skipped when no row pulses (reduced motion draws an outline).
+    // The unseen pulse is the one "not seen" cue and keeps a status colour: a row pulses (motion is on, so it is not the reduced-motion outline) and its fill is not a seen row's (Surface2).
     private static void UnseenRowKeepsItsCue(Window window)
     {
         var pulsing = window.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => b.Name == "RowFrame" && b.IsEffectivelyVisible && b.Classes.Contains("pulsing"));
-        if (pulsing?.Background is ISolidColorBrush fill)
-        {
-            Assert.NotEqual(((ISolidColorBrush)Resource(window, "Brush.Surface2")).Color, fill.Color);
-        }
+        Assert.NotNull(pulsing);
+        var fill = Assert.IsType<ISolidColorBrush>(pulsing.Background, exactMatch: false);
+        Assert.NotEqual(((ISolidColorBrush)Resource(window, "Brush.Surface2")).Color, fill.Color);
     }
 
     // The need-you count is the only display text; at zero there is none (the empty sentence says so).
