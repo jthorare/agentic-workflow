@@ -104,6 +104,8 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
             return asked.Error;
         }
 
+        // why: set before the parse, so a JSON answer the schema check then refuses also shows on the failed step; the engine reads it only when the block returns an error
+        context.LeaveFailureOutput(new JsonObject { ["answer"] = asked.Value });
         var read = Parse(asked.Value);
         if (read.IsSuccess)
         {
@@ -117,14 +119,14 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
             return again.Error;
         }
 
+        // why: the run page shows the failed step's output, so the raw answer stays there for the owner to read; the engine cuts it to the stored-output cap
+        context.LeaveFailureOutput(new JsonObject { ["answer"] = again.Value });
         read = Parse(again.Value);
         if (read.IsSuccess)
         {
             return read;
         }
 
-        // why: the run page shows the failed step's output, so the raw answer stays there for the owner to read; the engine cuts it to the stored-output cap
-        context.LeaveFailureOutput(new JsonObject { ["answer"] = again.Value });
         var shown = again.Value.Trim();
         return SindriErrors.GraphPromptAnswer.With($"The model answered with text, not the JSON this step asks for: \"{(shown.Length > 200 ? shown[..200] : shown)}\"");
     }
