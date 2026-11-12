@@ -316,7 +316,7 @@ Who sees what when the model is limited or off:
 
 One line per activity the owner started or owns that is in flight and needs nothing from them: an agent session working in one of their lanes or launches (`state: running`), a workflow run in progress, CI running on the owner's PR (`ReviewCi`), a Queue item in the `running` or `withYou` group. A line reads "design: building RowList (12 min)" or "CI on #3120: 4 of 7 checks done".
 
-Moving is **collapsed** by default (`g` on its header folds or unfolds it): a 28 px header "Moving: 4 agents, 2 CI runs" with a chevron. Expanded it shows up to 8 lines, oldest start first, then "Show all N in Agents". The expanded state is remembered per user. A line has no actions, only peek and open. When its state changes to something that needs the owner (CI red, a session asking), the object leaves Moving and a row enters Needs you through the New band.
+Every group header (New, Needs you, Moving, Since you last looked) has a chevron (right folded, down open) and is a click target: a click anywhere on the header bar toggles the fold, and the chevron's hit area is at least 28 x 28 px. A folded header keeps its count ("Needs you 8"). Moving is **collapsed** by default (Left on its header folds it and Right unfolds it, §7.4): a 28 px header "Moving: 4 agents, 2 CI runs" with a chevron. Expanded it shows up to 8 lines, oldest start first, then "Show all N in Agents". The expanded state is remembered per user. A line has no actions, only peek and open. When its state changes to something that needs the owner (CI red, a session asking), the object leaves Moving and a row enters Needs you through the New band.
 
 ### 6.3 Notifications
 
@@ -402,7 +402,7 @@ Every error row has a button that fixes it.
 
 ### 7.4 Keyboard and focus
 
-The grammar keys are the same on every list (#2978): `j/k` and arrows move, `Home`/`End`, `/` filters, `Space` peeks, `Enter` opens, `Esc` goes back one layer, `.` opens the row's action panel (each action shows its key), `?` shows the keys of this surface, `Ctrl+K` is the palette. **A bare key never writes to a source (Slack, GitHub, Linear, notes) and never starts work; a bare key may change Sindri's own view state when Undo shows for 5 s (`e` Done, `h` snooze).** (The owner wrote this boundary with `s` for snooze; the spec uses `h` because #3030 and Linear's flow use `h`, and `s` already means state on Projects and suggest on Reviews.) Every bare key below obeys it: `h`, `t` and `r` only open a picker or a composer, and the write or the start happens on the picker's Send or on `Ctrl+Enter`; `e` is the Undo case; `R`, `g`, `[`, `]`, `1` to `5` and `b` change the view only. Home adds these, after the divider in the footer:
+The grammar keys are the same on every list (#2978): `j/k` and arrows move, `Home`/`End`, `/` filters, `Space` peeks, `Enter` opens, `Esc` goes back one layer, `.` opens the row's action panel (each action shows its key), `?` shows the keys of this surface, `Ctrl+K` is the palette. **A bare key never writes to a source (Slack, GitHub, Linear, notes) and never starts work; a bare key may change Sindri's own view state when Undo shows for 5 s (`e` Done, `h` snooze).** (The owner wrote this boundary with `s` for snooze; the spec uses `h` because #3030 and Linear's flow use `h`, and `s` already means state on Projects and suggest on Reviews.) Every bare key below obeys it: `h`, `t` and `r` only open a picker or a composer, and the write or the start happens on the picker's Send or on `Ctrl+Enter`; `e` is the Undo case; `R`, `[`, `]`, `1` to `5`, `b` and the fold arrows change the view only. Home adds these, after the divider in the footer:
 
 | Key | Does | Writes? |
 |---|---|---|
@@ -413,7 +413,16 @@ The grammar keys are the same on every list (#2978): `j/k` and arrows move, `Hom
 | `Ctrl+Enter` | opens the submit menu with the primary preselected; `Enter` commits | the source, on commit |
 | `R` | re-rank now (a settle point) | no |
 | `[` / `]`, `1` to `5` | previous / next split; jump to a split | no |
-| `g` | fold or unfold the focused group (Needs you, Moving, the brief), as on the Context page (scope spec §6.6). The shell's G-chord (`G` then `H`, `N`, `D`, `P`, `Q`, `C`, `A`, `.`, `S` or `T` within 1 s; `ShellViewModel.Keys.cs` calls `PressKey` first) also starts on `g`: on Home, `g` folds when the cursor is on a group header and starts the chord from a row, and `ShellViewModel.Press` asks the page before `PressKey`. | no |
+| Left / Right | the tree convention, on every group (Needs you, Moving, the brief). On a group header, Left folds the group and Right unfolds it. On a row, Left moves the cursor to its group header (so Left Left folds the group the cursor is in) and Right does nothing. Bare `g` is not a Home key: the shell's G-chord (`G` then a page key (`H`, `N`, `D`, `P`, `Q`, `C`, `A`, `.`, `S`, `T` and the others `SecondKey` maps) within 1 s; `ShellViewModel.Chords.cs`, `PressKey`) owns it on every page, from a header as from a row. | no |
+
+Fold rules (the table row above gives the keys):
+
+- A group header is a `j/k` stop, so Left Left lands the cursor there. Enter and Space on a header toggle its fold and open no peek; Right on an already-open header moves to the first row, Left on a folded header does nothing, and Left or Right on the Todo line does nothing (it is not a group).
+- Only Moving remembers its fold per user. Needs you, the brief and the New band open unfolded every time, and the cursor starts on row 1. The New band is never folded when it holds a row. A new or returning row, a toast click, `Esc` back from Full, a `/` match and a split jump all unfold the group of their target row first.
+- Folded rows still count in the tab numbers. "You're done." (§5.5) reads the data, not the fold.
+- Fold arrows are caret keys while a text field has focus, the same guard as the letters. On Home's split strip, Left and Right switch splits when focus is on the strip, as on Health and Queue, and fold when focus is in the list. A pending G-chord takes its second key before Home's list sees it, so `G` then `H` goes Home and never opens a snooze picker; the top bar keeps its "G ..." hint for the 1 s wait (U3 tests both).
+- On Home, `G` `D` and `G` `T` (which set `HomeFilter.Decisions` and open the Todo panel on main) retire with the old views: `G D` selects the Work split and `G T` opens the collapsed Todo line's panel (§12).
+- Fold and unfold have palette ids `home.fold` and `home.unfold`, the `?` sheet lists the arrows, and the footer shows "Left fold · Right open" only while the cursor is on a header. A screen reader reads a header as "Needs you, 8 rows, expanded" or "collapsed, 8 hidden".
 | `b` | show the brief's lines beyond the default 3 | no |
 
 Tab keeps its normal job: it moves focus between the filter box, the list, the peek and the footer. Splits do not use Tab because Tab has to stay a focus key (the ledger's Tab binding is a Superhuman snippet and is in "Not solid"). Key clashes were checked against the Context page (`c e / j k g n s`, and `m w r` inside its `.` menu), Projects (`s` state, `a` assign, `h` hide, `e` notes, `o` open, `c`), Reviews (`n p` files, `c`, `s` suggest, `v`, `r` reply) and Agents (`o` jump, `x` stop). `t` and `R` clash with none. Two letters differ by surface, as meta's rule allows because each opens something cancellable or is Sindri-local with Undo: `h` (snooze here, hide on Projects) and `e` (Done here, edit on Context and Projects). Letters work only while focus is in the list or the peek and not in a text field, as `RowKeys` will guard once #2952 merges (`Views/Controls/RowKeys.cs`; on main today the keys sit in `ShellWindow.axaml.cs:143`).
@@ -428,7 +437,7 @@ One accent. Status colour only on status marks (the glyph, the failed reason). E
 
 ## 8. API and engine requirements
 
-Routes, all under `/sindri/home`, named by S0 (§15):
+Routes, all under `/sindri/home`, named by S0 (§15). The three `GET /sindri/home*` routes apply the §9 session filter too: a session sees only its repos' rows and gets no body for repo-less rows (`dm`, `mention`); a test reads a `dm` row as a session:
 
 | Route | Does |
 |---|---|
@@ -452,7 +461,7 @@ Requirements by area:
 - **Profile keys (api).** `home.density` (`compact` | `comfortable`, default `compact`), `home.rank.weights.<reason>` (integers 0 to 9), `home.done.keepDays` (1 to 90, default 7), `home.brief` (`auto` | `facts` | `off`, default `auto`), `home.notify` (`priority` | `off`, default `priority`). `home.page` (`rows` | `panels`, default `panels` until U3, §2 decision 14). An unknown or out-of-range value is SND-HOME-001 with the key path. They take rows in `docs/csharp/sindri-profile.md`, and `sindri profile set` accepts them.
 - **Routes and text safety (api).** `GET /sindri/ledger` and `GET /sindri/events` leave `home.*` events out for a session, since those events carry row titles, facts and brief lines (today only `todo.*` text is fenced there, `ReadLedgerEndpoint.cs`); the owner gets them all. Every `/sindri/home` POST needs the per-start human token, like profile writes (SND-AUTH-002 for a session), and rejects a browser `Origin`. Collectors and adapters call `aw-meta` and other CLIs with an argument list, never a shell string; lane names come from `aw-meta` output and PR numbers are integers. A reply sent to a session's terminal drops control characters except newline and goes as one literal paste with no trailing Enter. `args` pass through `Aw.Redaction` before `home.act.sent`, and the event keeps a body hash only. The UI cache file is mode 0600 in a 0700 folder and holds the first page only. Row ids are percent-encoded in paths; S0's golden has one example.
 - **Observability (engine).** `sindri doctor` gets a row per collector and for the brief job (last read, last error); the same change updates `src/Sindri/aot-smoke/expected.txt`.
-- **Events and migration (api).** The §3.1 events join the event catalog; the view takes the next free ledger migration number at final merge (no gaps, AW-DATA-005).
+- **Events and migration (api).** The §3.1 events join the event catalog; `home_rows` and `home_links` are view tables, so they take the next free number in `Infrastructure/Views/Migrations/` (latest `0016_items_state.sql` on main; the projector rebuilds them from the ledger) and move no `ledger schema` line. Only the runs "seen" flag (§3.3, beside `workflow_seen`) is a ledger migration: next free in `Infrastructure/Ledger/Migrations/` (latest `0019`), no gaps (AW-DATA-005), and it bumps `ledger schema N/N` in `aot-smoke/expected.txt`. Both numbers are taken at final merge. Why a new table and not `view_needs_you` (`key`, `row_json`, `seq`): Home rows come from six sources with their own id, version, state (open, snoozed, done, muted) and rank fields, which `sindri needs-you` rows (§12) do not have; `home_links` is many-to-many. (agent default; names keep the `home_` prefix as the `home.*` events do.)
 
 ## 9. Agents
 
@@ -492,7 +501,7 @@ Reserved now: SND-HOME-001 to 029 (no `SND-HOME-` code exists on main).
 | 009 | Undo came after its 5 s | 409 | 1 |
 | 010 | the source is not connected; the fix names the connect step | 409 | 1 |
 | 011 | `--version` missing on a write | 400 | 2 |
-| 012 | hand-to-agent target is gone or not one of this repo's sessions | 404 | 1 |
+| 012 | hand-to-agent target is gone or not one of this repo's sessions (for a repo-less `dm` or `mention`, the picker lists the owner's sessions and the "what goes along" line names the target's repo) | 404 | 1 |
 | 013 | a reply or draft is empty or over 8,000 characters | 400 | 1 |
 | 014 | an `actId` was replayed with a different body | 409 | 1 |
 | 015 | the brief job failed; carries the cause | 500 | 1 |
@@ -564,7 +573,7 @@ From a read of `origin/main` a4d03ace1c and the issues (no build, no app run for
 |---|---|---|---|---|
 | P0 | the shared controls: row tokens (32 / 40, density), `RowList`, `Row`, `PeekPane`, with Frames tests. Design builds them: no PR exists (2026-11-12). Design reuses `RowKeys` from #2952 and gives `RowList` no key handler of its own | design | now | #2952 merged; until then design codes against the keys at `ShellWindow.axaml.cs:143` |
 | D1 | the Home frame redrawn with this spec's states: New band, failed, snoozed, empty, brief states; the lane and merge-queue glyphs; the §7.1 width numbers checked | design | now | none |
-| S0 | reserves its migration number at start; adds a `home` mode to `scripts/sindri-ui-fixture.sh` that serves the fixture to the page; the wire shape: JSON schema and API golden for `/sindri/home` (scenario row, Ui `GoldenContract` slug), `tests/fixtures/home/rows.json` (the §4.2 example as rows), the ledger migration (and `ledger schema N/N` in `src/Sindri/aot-smoke/expected.txt`), the `home.*` events (`EventCatalogTests`), `PublicAPI` files, `home_*` in aot-smoke's tools/list, the profile keys and their rows in `docs/csharp/sindri-profile.md` | api | now | the §3.1 fields |
+| S0 | reserves its migration number at start; adds a `home` mode to `scripts/sindri-ui-fixture.sh` that serves the fixture to the page; the wire shape: JSON schema and API golden for `/sindri/home` (scenario row, Ui `GoldenContract` slug), `tests/fixtures/home/rows.json` (the §4.2 example as rows), the views migration for `home_rows` and `home_links`, and the ledger migration for the runs "seen" flag (with `ledger schema N/N` in `src/Sindri/aot-smoke/expected.txt`), the `home.*` events (`EventCatalogTests`), `PublicAPI` files, `home_*` in aot-smoke's tools/list, the profile keys and their rows in `docs/csharp/sindri-profile.md` | api | now | the §3.1 fields |
 | A1 | first a throwaway script that prints blocks N for each row of the #3082 box state (if under half the rows get N above 0, simplify the rule before building); then `HomeRank` (pure, golden on §4.2, D8), the edge table, `docs/sindri/home.md` (how ranking works; `--explain` points to it), `GET /sindri/home` over the existing sources: needs-you rows, sessions asking, reviews waiting, Linear assigned and mentioned, todos due | api | now, against S0's fixture | S0 |
 | A2 | act, snooze, done, undo, mute routes; write-through adapters for forge, Linear, decisions, sessions; early return and revive rules | api | after A1's first read | A1 |
 | E1 | the `home-lanes` collector (`lane-recycle`, `agent-limited`, queue `pr-ready-merge`), then the failed-run trigger | engine | now (reads aw-meta; needs no other phase) | the §3.3 fields |
@@ -620,3 +629,12 @@ Verdicts: product PASS (SHIP), architecture NEEDS_WORK, design NEEDS_WORK, devex
 - Security R2-M1 to M3 (draft scope and label, repo-less definition, peek markdown and bidi): S0 and U2 write them down; a draft shows "Draft from <session>".
 - Nits (stale shas, line range, frame counts, snooze edge presets, tray total): written down, not applied.
 
+### Review round 3 (autoplan, 5 lenses)
+
+Verdicts: product PASS (SHIP), architecture NEEDS_WORK, design NEEDS_WORK, devex PASS, security PASS. Nothing CRITICAL. Code facts checked at `origin/main`. Lead decision: `g` is no longer a Home key, because the shell's G-chord owns bare `g` on every page and a key that folds on a header but starts the chord on a row blocks g-chords from a header; fold is Left and Right (tree convention). Applied: fold chevrons on every header and header click (design MUST), screen-reader state and palette ids, the fold edge rules (§7.4), the views versus ledger migration trail and the table reasons, the session filter on the three GET routes, the repo-less hand-to-agent target, `G D` and `G T`, and chord-before-list. Left, one line each:
+
+- Arch F3 (tag about 40 numbers `owner decision` or `agent default`): the numbers carry their source in the prose where the owner set them; a full tag pass would add about 30 lines for no behavior change, so U1 tags the profile-key defaults in `docs/csharp/sindri-profile.md` as it writes them.
+- Arch F3, five items to move to open questions (CI-red revive, notify list, rank weights, brief cap of 9, the one-week U4 gate): all five are agent defaults tunable by profile key or first-week tuning (round 2 answers); none blocks the build.
+- Design D8 (cursor row leaves, next row in another group): the cursor stays in its group while that group has rows; a U3 test.
+- Security R3-N1 (head-sha check and `merge-run` are two steps): accepted; a push in between merges the new head, as a manual merge would.
+- Nits (stale header sha and "3 rounds" line, token line range 230-233, header contrast states, `doctor` last-error through `Aw.Redaction`, footer chord hint wording, "bare `g`" in the Context page's key list): written down, not applied.
