@@ -232,3 +232,10 @@
 .cl .tm.h{width:34px;text-align:left}
 .mf{font:400 11px/16px var(--mono);white-space:pre;overflow:hidden;background:var(--canvas);border:1px solid var(--hair-strong);border-radius:var(--r2);padding:8px 10px;color:var(--ink-muted)}
 .mrow.cmp.hasact .ti{margin-right:0}
+
+/* round 2 fixes */
+.mrow.cursor.cm{box-shadow:none}
+.mrow.cursor.cm .who{color:var(--ink)}
+.rel{font:500 11px/16px var(--font);color:var(--att);border:1px solid var(--att);border-radius:var(--r1);padding:0 6px;margin-left:8px}
+.dlg .scopebtn{font:500 12px/18px var(--font);color:var(--primary-hi);background:var(--primary-soft);border-radius:var(--r1);padding:1px 8px;border:1px solid var(--primary-hi)}
+.comp .ln1 .btn{height:22px}

@@ -37,3 +37,14 @@
 31. First-run step 1 shows the manifest text beside the link button; its failure frame has no code (no code covers a link that does not open).
 32. The token field line before Connect says "User token (xoxp-). Sindri checks the 11 read scopes when you press Connect"; the scope check needs a call, so it comes after.
 33. Not redrawn this round (nits): the orange glyph colour, the "3 new" chip with one line, the follow-up box on Mira (R2 frame), the Home 9 tab rule. The R2 frames were left alone and still show the older fixture until they are regenerated.
+
+## Round 3 (R2 check at f78255aed2, spec 742763f484)
+34. Release labels: composer-*, composer-hand-off, snooze-picker-followup, peek-user, peek-huddle, empty-later, empty-drafts and emoji-no-match are Release 2. make-issue-sheet, attach-picker, brief, brief-model-off, search-messages, search-everything, peek-file and peek-app-message carry a "Release 3" tag in the header.
+35. In Release 2 the cursor-row buttons are Reply, Snooze, Done and `r` reads "reply". The R2 rail shows Drafts with one count (0 before a draft exists, 1 after the agent draft, the failed send and the offline draft). Later shows only once a flag exists, and in the Later-empty frame (open after the last flag is gone).
+36. One #harbor thread: root Ada 07:30 and three replies (Kim 08:20, Ada 08:41, Kim 08:55); You 09:14 where a reply was sent. Needs reply uses the same sorted fixture; the list scrolls so the cursor row (Ada) is visible.
+37. composer-sent: Ada's row stays in place, dimmed, "replied 09:14"; counts 22 / 21. The confirmation line is "Sent." and a "Follow up if no reply" button; Esc leaves the composer, then `h`.
+38. Footer mode chips are List keys, Message keys and Composer only. Pickers, menus, sheets, the brief and search show their keys with no chip.
+39. Search: the scope chip is a button ("Messages", "Everything") with the palette entry messages.search-scope. Tab does nothing to it. Group counts equal their rows.
+40. File too large (SND-MSG-010) has no Retry, only "Open in Slack". The app message's Retry is off with its reason, and Open run is a link button.
+41. composer-hand-off is a new frame (spec 9.7 item 8): provider, what goes along (4 messages, 1 linked row, about 1k tokens), a note field, the "normal session that can run shell and gh" line, and a primary "Send thread to claude-code". Counts of tokens are placeholders.
+42. List cursor is a mark, not a ring, while the composer has focus (one focus ring per frame).

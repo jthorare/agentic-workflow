@@ -1,6 +1,6 @@
 # Messages frames, Releases 1 and 2 (Part of #3188)
 
-54 PNGs (31 for Release 1, 23 for Release 2), `messages-<name>.png`, 1440x900 unless the name ends in -1200 or -1000 (that wide x 900). Spec: `docs/superpowers/specs/2026-11-12-sindri-messages-page-design.md` at f8ee690dc0. Frame list is section 15, state rows are section 6.6. Built on `../grammar-2978/grammar.css` plus `messages.css`. Regenerate with `python3 gen.py && ./shoot.sh`. Every frame has a "Screen reader" line in the footer. Outlines #70757c, codes under Details, footers list only working keys. The app is dark only, so `messages-needs` and `messages-conversation` are the dark frames of 1 and 2. Release 1: the peek shows "Open in Slack" and has no composer. Toasts and notifications show sender and place only ("Sam, DM"). Each PNG was looked at after the last shoot.
+55 PNGs, `messages-<name>.png`, 1440x900 unless the name ends in -1200 or -1000 (that wide x 900). Spec: `docs/superpowers/specs/2026-11-12-sindri-messages-page-design.md` at f8ee690dc0. Frame list is section 15, state rows are section 6.6. Built on `../grammar-2978/grammar.css` plus `messages.css`. Regenerate with `python3 gen.py && ./shoot.sh`. Every frame has a "Screen reader" line in the footer. Outlines #70757c, codes under Details, footers list only working keys. The app is dark only, so `messages-needs` and `messages-conversation` are the dark frames of 1 and 2. Release 1: the peek shows "Open in Slack" and has no composer. Toasts and notifications show sender and place only ("Sam, DM"). Each PNG was looked at after the last shoot.
 
 | Frame | Spec item | What it shows |
 |---|---|---|
@@ -40,3 +40,5 @@
 
 ## Release 1 fixes (ideas FIX, 16 MUSTs, spec 28d94d4dbb)
 Frames redrawn: needs, needs-1200, needs-1000, needs-rail-collapsed, header-behind, header-offline, header-expired, header-scope, unread, conversation, conversation-focus, conversation-dm, snooze-picker, snoozed-rows, firstrun-1, firstrun-1-fail, firstrun-2, firstrun-2-blocked, firstrun-3, firstrun-3-wrong-token, firstrun-3-scope, firstrun-3-offline, firstrun-sync, firstrun-listening, empty-needs, empty-unread, loading, toast, footer-modes, states-hover-pressed. `snooze-picker-followup` moves to the Release 2 set and is not redrawn. Release 2 frames are untouched.
+
+Round 3 fixes: R1 MUSTs by the earlier UX pass (09f8e96689), R2 MUSTs and the hand-off frame (this push). See guesses 34 to 42. New frame: composer-hand-off.
