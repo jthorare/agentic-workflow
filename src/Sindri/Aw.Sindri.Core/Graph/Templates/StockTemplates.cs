@@ -17,7 +17,7 @@ public static class StockTemplates
             "B",
             "Plan a labelled issue",
             "github.issue.labeled",
-            """{"version":1,"name":"Plan a labelled issue","nodes":[ {"id":"issue","type":"connection_event","title":"An issue is labelled","config":{"connection":"github:default","event":"github.issue.labeled"}}, {"id":"plan","type":"prompt","title":"Write the plan","config":{"prompt":"Write a short plan for the issue {{trigger.title}} ({{trigger.url}}).","output":{"type":"object","required":["plan"],"properties":{"plan":{"type":"string"}}}}}, {"id":"comment","type":"call_tool","title":"Comment on the issue","config":{"connection":"github:default","tool":"add_issue_comment","arguments":{"repo":"{{trigger.repo}}","issue":"{{trigger.number}}","body":"{{plan.plan}}"}}} ],"edges":[ {"from":"issue","to":"plan"}, {"from":"plan","to":"comment"} ]}"""),
+            """{"version":1,"name":"Plan a labelled issue","nodes":[ {"id":"issue","type":"connection_event","title":"An issue is labelled","config":{"connection":"github:default","event":"github.issue.labeled"}}, {"id":"plan","type":"prompt","title":"Write the plan","config":{"prompt":"Write a short plan for the issue {{trigger.title}} ({{trigger.url}}).","output":{"type":"object","required":["plan"],"properties":{"plan":{"type":"string"}}}}}, {"id":"comment","type":"call_tool","title":"Comment on the issue","config":{"connection":"github:default","tool":"add_comment","arguments":{"repo":"{{trigger.repo}}","issue":"{{trigger.number}}","body":"{{plan.plan}}"}}} ],"edges":[ {"from":"issue","to":"plan"}, {"from":"plan","to":"comment"} ]}"""),
         (
             "C",
             "Watch main, open an issue on red",
