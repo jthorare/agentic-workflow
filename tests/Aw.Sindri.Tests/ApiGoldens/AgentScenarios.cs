@@ -14,7 +14,7 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// </summary>
 internal static class AgentScenarios
 {
-    /// <summary>The (slug, scenario) pairs of this class.</summary>
+    /// <summary>The (slug, scenario) pairs of this class. The slug 'agents-rows' has no route behind it until A1 serves the list; A1 swaps it for the real route's slug.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("agents-rows", "needs-you"), ("agents-rows", "every-reason")];
 
     private static readonly DateTimeOffset _t0 = new(2026, 11, 12, 9, 10, 0, TimeSpan.Zero);
