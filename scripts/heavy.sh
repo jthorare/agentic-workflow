@@ -209,6 +209,9 @@ export AW_HEAVY_LOCK_HELD=1 AW_HEAVY_MODE="$mode"
 # Keep one job from taking the whole box: fewer cores per .NET process (MSBuild -m, test parallelism), no MSBuild
 # worker reuse (nodes exit with the build instead of staying resident between builds).
 export DOTNET_PROCESSOR_COUNT="${AW_HEAVY_CPUS:-4}" MSBUILDDISABLENODEREUSE=1 DOTNET_CLI_USE_MSBUILD_SERVER=0
+# why: one shared Roslyn server (VBCSCompiler) grew to 10 GB in one build and caused MEMORY LOW events (#3178). MSBuild reads
+# the variable as a property, so every wrapped job, light or expensive, compiles in process. A caller's own value wins.
+export UseSharedCompilation="${UseSharedCompilation:-false}"
 # Hang limit (owner, 2026-10-22, after an orphaned test run held a slot for 2.5 h). AW_HEAVY_RUN_MAX is minutes:
 # 45 for `dotnet test`, 120 otherwise, 0 = no limit. The clock starts here, after the slots are held. The job runs in
 # its own process group, so test hosts started under `dotnet test` go with it: TERM to the group, KILL 30 s later,

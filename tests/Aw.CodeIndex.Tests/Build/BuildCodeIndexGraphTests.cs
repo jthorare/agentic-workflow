@@ -67,6 +67,23 @@ public sealed class BuildCodeIndexGraphTests
         Assert.Equal(LayerState.Ok, report.Layers.Single(l => l.Layer == LayerName.Structure).State);
     }
 
+    // A fresh repo on day one (#3256): no file a parser covers, so graphify has nothing to read and would exit 1 "graph is empty". That is no failure.
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_repo_with_no_code_file_leaves_the_graph_layer_ok_with_nothing_to_index_and_never_runs_the_tool()
+    {
+        using var git = A.GitRepo().Build();
+        var tool = new FakeGraphRunner { RunError = CodeIndexErrors.GraphUnavailable.With("failed: graph is empty") };
+        using var index = new RealIndex(graph: tool);
+        var repo = git.AsRepo("fresh");
+
+        var report = await Build(index, repo, git.Head);
+
+        var layer = report.Layers.Single(l => l.Layer == LayerName.Graph);
+        Assert.Equal(BuildOutcome.Published, report.Outcome);
+        Assert.Equal((LayerState.Ok, null, "nothing to index yet"), (layer.State, layer.Code, layer.Detail));
+        Assert.Equal(0, tool.Runs);
+    }
+
     [Fact, Trait("Lane", "integration")]
     public async Task A_failure_that_is_no_layer_code_reads_as_the_graph_code_failed()
     {

@@ -56,7 +56,7 @@ public interface IContextSource
 
         while (records.Count < references.Count)
         {
-            records.Add(ContextErrors.MissedDeadline(Describe().Id));   // one per record not read, so the pipeline counts them as unread
+            records.Add(ContextErrors.MissedDeadline(Describe().Id.Value));   // one per record not read, so the pipeline counts them as unread
         }
 
         return records;

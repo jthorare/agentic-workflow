@@ -37,6 +37,7 @@ public static class EventCatalog
         new(EventTypes.WorkflowRunCancelled, Public: true, typeof(WorkflowRunPublic), "workflow.run.cancelled:<run id>"),
         new(EventTypes.WorkflowNodeStarted, Public: true, typeof(WorkflowNodePublic), "workflow.node.started:<run id>:<node id>:<item index>"),
         new(EventTypes.WorkflowNodeFinished, Public: true, typeof(WorkflowNodePublic), "workflow.node.finished:<run id>:<node id>:<item index>"),
+        new(EventTypes.WorkflowNodeAgentChanged, Public: true, typeof(WorkflowNodePublic), "workflow.node.agent.changed:<run id>:<node id>:<item index>:<sequence>"),
         new(EventTypes.WorkflowNodeFailed, Public: true, typeof(WorkflowNodePublic), "workflow.node.failed:<run id>:<node id>:<item index>"),
         new(EventTypes.WorkflowNodeTakenOver, Public: false, PublicPayload: null, "workflow.node.taken-over:<run id>:<node id>:<item index>:<command id>") { Invalidates = [ApiViews.Timeline] },
         new(EventTypes.WorkflowNodeHandedBack, Public: false, PublicPayload: null, "workflow.node.handed-back:<run id>:<node id>:<item index>:<command id>") { Invalidates = [ApiViews.Timeline] },

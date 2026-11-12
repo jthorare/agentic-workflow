@@ -96,4 +96,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-GRAPH-124: a 'workflow_result' node found no result: the run is not that workflow's, is not finished, or the workflow has no succeeded run.</summary>
     public static readonly ErrorDefinition GraphResultUnavailable = new("SND-GRAPH-124", ErrorKind.Invalid, "No finished run to read a result from");
+
+    /// <summary>SND-GRAPH-131: a node reads a field of a node that failed and continued (onFailure 'continue'); the reader fails instead of reading nothing.</summary>
+    public static readonly ErrorDefinition GraphReferenceToContinuedFailure = new("SND-GRAPH-131", ErrorKind.Invalid, "A reference reads a node that failed and continued");
 }

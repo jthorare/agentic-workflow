@@ -30,7 +30,7 @@ ok    library           the first read of aw hasn't finished yet (sindri library
 ok    launcher:adoption no opens in the last 30 days
 ok    todo              note: not set (no todo.obsidian key)
 ok    connections:catchup no capped or gapped read
-warn  setup             not finished: sources (todo), agent (todo), mcp (todo), map (todo), first-workflow (todo) (fix: sindri setup)
+warn  setup             not finished: sources (todo), mcp (todo), map (todo), first-workflow (todo) (fix: sindri setup)
 warn  pre-commit:smoke  no pre-commit hook, so staged secrets are not scanned (fix: sindri scrub --install-pre-commit --repo WORK/repo)
 warn  setup:ui-evidence ui-evidence not found (ROOT/artifacts/aot-sindri-smoke/bin/ui-evidence) (fix: run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri))
 ok    resources         no resources provisioned
@@ -153,8 +153,8 @@ true
 ## GET /sindri/events/catalog | jq (public types, their invalidates)
 {"commandHandled":false,"itemCreated":["queue","items","item","timeline"]}
 ## QUERY /sindri/context/subgraph with a JSON body on the published host (the HTTP QUERY method; POST is not a route)
-{"title":"SND-CONTEXT-030","status":404}
-"http=404"
+{"title":null,"status":null}
+"http=200"
 post http=405
 ## sindri services --json | jq (name, every, paused, job)
 [{"name":"code-index-embed","every":"1m","paused":false,"job":null},{"name":"code-index-main-move","every":"1m","paused":false,"job":null},{"name":"connection-refresh","every":"5m","paused":false,"job":null},{"name":"context-concept-scan","every":"1m","paused":false,"job":null},{"name":"context-map-refresh","every":"1m","paused":false,"job":null},{"name":"context-sync-gaps","every":"1m","paused":false,"job":null},{"name":"context-upkeep","every":"15m","paused":false,"job":null},{"name":"heartbeat","every":"5s","paused":false,"job":null},{"name":"index-decisions","every":"15m","paused":false,"job":null},{"name":"index-embed","every":"1m","paused":false,"job":null},{"name":"index-sync","every":"5m","paused":false,"job":null},{"name":"memory-expire","every":"1h","paused":false,"job":null},{"name":"setup","every":"1m","paused":false,"job":null},{"name":"todo-note","every":"24h","paused":false,"job":null},{"name":"toolkit-calls-expire","every":"1h","paused":false,"job":null},{"name":"workflow-poll","every":"30s","paused":false,"job":null},{"name":"workflow-schedule","every":"1m","paused":false,"job":null}]
@@ -175,6 +175,8 @@ result: {"idle":false,"summary":null}
 ## sindri jobs --state succeeded
 JOB-ID  succeeded  RunService  heartbeat  TIME  1 line  ok: worked
 JOB-ID  succeeded  RunService  heartbeat  TIME  1 line  ok: worked
+JOB-ID  succeeded  RefreshContextMap  refresh  TIME  4 lines  map v1: 0 kept, 0 removed
+JOB-ID  succeeded  BuildCodeIndex  index:smoke  TIME  2 lines  smoke @ 7039bb4: 0 files, 0 symbols
 ## sindri services pause heartbeat (human, terminal)
 heartbeat paused (sequence SEQ)
 ## sindri services pause heartbeat (session)
@@ -232,15 +234,15 @@ ok    profile           hash HASH6
 fail  api               unreachable: no control plane is recorded (fix: sindri)
 fail  temporal          not running: no dev server on this home's temporal.db (fix: sindri)
 ok    build             not running from an installed build
-warn  context:map       no map yet (fix: sindri context map import <file>)
+ok    context:map       map v1 current (smoke, whole map: 0 nodes, 0 edges); commits behind HEAD: unknown until a build records its commit
 ok    context:pages     no pages named
-ok    context:roles     no map yet
+ok    context:roles     no role globs configured, no role-like file outside one
 ok    context:retention no expired exports; retained map versions are within the newest 100 and the 90-day eval window
-ok    context:store     no store yet
-ok    context:publish   no map yet, so nothing to publish
+ok    context:store     context.db SIZE, its log SIZE
+ok    context:publish   Map v1 is current; the code index matches (7039bb4). (last publish: IndexReady)
 ok    context:linear    not configured (the profile names no context.sources.linear.token)
-warn  code-index:smoke  first build queued
-ok    code-index:graphify no index built yet
+ok    code-index:smoke  7039bb4, AGE, structure ok · clones ok · deps unavailable · graph ok · embeddings ok
+ok    code-index:graphify graph ok
 ok    code-index:lock   context/code-index.lock parses and matches the pins this build carries
 ok    context:sources   no context: section in the profile, so no context sources
 ok    context:sync      no context sources, so nothing syncs
@@ -256,8 +258,8 @@ ok    library           the first read of aw hasn't finished yet (sindri library
 ok    launcher:adoption no opens in the last 30 days
 ok    todo              note: not set (no todo.obsidian key)
 ok    connections:catchup no capped or gapped read
-warn  setup             not finished: sources (todo), agent (todo), mcp (todo), map (todo), first-workflow (todo) (fix: sindri setup)
-warn  pre-commit:smoke  no pre-commit hook, so staged secrets are not scanned (fix: sindri scrub --install-pre-commit --repo WORK/repo)
+warn  setup             not finished: sources (todo), mcp (todo), map (todo), first-workflow (todo) (fix: sindri setup)
+ok    pre-commit:smoke  the secret-scan pre-commit hook is installed
 ok    setup:token       WORK/home/auth/human.token can be read by you alone
 warn  setup:ui-evidence ui-evidence not found (ROOT/artifacts/aot-sindri-smoke/bin/ui-evidence) (fix: run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri))
 ok    resources         no resources provisioned
