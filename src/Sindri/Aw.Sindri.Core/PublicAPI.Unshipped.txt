@@ -23305,3 +23305,24 @@ const Aw.Sindri.Core.Setup.SetupActions.ConnectAccount = "ConnectAccount" -> str
 static Aw.Sindri.Core.Setup.SetupActions.CliFor(string? action) -> string?
 Aw.Sindri.Core.Setup.SetupTimeouts
 static Aw.Sindri.Core.Setup.SetupTimeouts.MapStoppedAfter.get -> System.TimeSpan
+Aw.Sindri.Core.Events.SetupFirstWorkflowCreated
+Aw.Sindri.Core.Events.SetupFirstWorkflowCreated.<Clone>$() -> Aw.Sindri.Core.Events.SetupFirstWorkflowCreated!
+Aw.Sindri.Core.Events.SetupFirstWorkflowCreated.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
+Aw.Sindri.Core.Events.SetupFirstWorkflowCreated.CommandId.init -> void
+Aw.Sindri.Core.Events.SetupFirstWorkflowCreated.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, out Aw.Sindri.Core.Ids.RepoName Repo) -> void
+Aw.Sindri.Core.Events.SetupFirstWorkflowCreated.Equals(Aw.Sindri.Core.Events.SetupFirstWorkflowCreated? other) -> bool
+Aw.Sindri.Core.Events.SetupFirstWorkflowCreated.Repo.get -> Aw.Sindri.Core.Ids.RepoName
+Aw.Sindri.Core.Events.SetupFirstWorkflowCreated.Repo.init -> void
+Aw.Sindri.Core.Events.SetupFirstWorkflowCreated.SetupFirstWorkflowCreated(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, Aw.Sindri.Core.Ids.RepoName Repo) -> void
+Aw.Sindri.Core.Events.SetupFirstWorkflowCreated.Slug.get -> Aw.Sindri.Core.Graph.Ids.WorkflowSlug
+Aw.Sindri.Core.Events.SetupFirstWorkflowCreated.Slug.init -> void
+const Aw.Sindri.Core.Events.EventTypes.SetupFirstWorkflowCreated = "setup.first_workflow.created" -> string!
+override Aw.Sindri.Core.Events.SetupFirstWorkflowCreated.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.SetupFirstWorkflowCreated.GetHashCode() -> int
+override Aw.Sindri.Core.Events.SetupFirstWorkflowCreated.ToString() -> string!
+static Aw.Sindri.Core.Events.SetupFirstWorkflowCreated.operator !=(Aw.Sindri.Core.Events.SetupFirstWorkflowCreated? left, Aw.Sindri.Core.Events.SetupFirstWorkflowCreated? right) -> bool
+static Aw.Sindri.Core.Events.SetupFirstWorkflowCreated.operator ==(Aw.Sindri.Core.Events.SetupFirstWorkflowCreated? left, Aw.Sindri.Core.Events.SetupFirstWorkflowCreated? right) -> bool
+Aw.Sindri.Core.Setup.ISetupWorkflowCreator
+Aw.Sindri.Core.Setup.ISetupWorkflowCreator.Create(Aw.Sindri.Core.Graph.Ids.WorkflowSlug slug, string! spec, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Setup.ISetupWorkflowActivator
+Aw.Sindri.Core.Setup.ISetupWorkflowActivator.Activate(Aw.Sindri.Core.Graph.Ids.WorkflowSlug slug, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>

@@ -442,6 +442,13 @@
       ]
     },
     {
+      "type": "setup.first_workflow.created",
+      "keyShape": "setup.first_workflow.created",
+      "invalidates": [
+        "setup"
+      ]
+    },
+    {
       "type": "setup.step.changed",
       "keyShape": "setup.step.changed:<id>:<state>:<n>",
       "invalidates": [

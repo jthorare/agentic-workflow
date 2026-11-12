@@ -1,5 +1,7 @@
 using Aw.Kernel;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
 
@@ -11,7 +13,9 @@ namespace Aw.Sindri.Features.SetupSources;
 /// </summary>
 /// <param name="live">The live profile file.</param>
 /// <param name="git">The repos' git facts, kept 30 seconds, so reading the list runs no git per request.</param>
-internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git)
+/// <param name="workflows">The workflows, to find hello-sindri; null in a host that has none.</param>
+/// <param name="runs">The workflow runs, to find hello-sindri's succeeded one; null in a host that has none.</param>
+internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git, IWorkflowStore? workflows = null, IWorkflowRunStore? runs = null)
 {
     internal async ValueTask<Result<RepoFact>> Repos(CancellationToken cancellationToken)
     {
@@ -74,6 +78,7 @@ internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git)
             return loaded.Error.Code != SindriErrors.ProfileMissing.Code ? loaded.Error : new FirstWorkflowFact(Succeeded: false, Dismissed: false);
         }
 
+        _ = (workflows, runs);   // red: the read of the succeeded run comes with the fix
         return new FirstWorkflowFact(Succeeded: false, Dismissed: loaded.Value.Profile.Setup?.SkipFirstWorkflow == true);
     }
 }

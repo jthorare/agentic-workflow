@@ -2,6 +2,7 @@ using Aw.Context.Core.Graph;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Results;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Doctor;
@@ -160,11 +161,11 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IValidator<GetWorkflowRequest>, AcceptAllValidator<GetWorkflowRequest>>().AddQuery<GetWorkflowRequest, GetWorkflowResponse, GetWorkflowService>()
             .AddScoped<IValidator<ListWorkflowRunsRequest>, AcceptAllValidator<ListWorkflowRunsRequest>>().AddQuery<ListWorkflowRunsRequest, ListWorkflowRunsResponse, ListWorkflowRunsService>()
             .AddScoped<IValidator<GetWorkflowRunRequest>, AcceptAllValidator<GetWorkflowRunRequest>>().AddQuery<GetWorkflowRunRequest, GetWorkflowRunResponse, GetWorkflowRunService>()   // PR 8b below: the workflow writes
-            .AddScoped<IValidator<CreateWorkflowRequest>, AcceptAllValidator<CreateWorkflowRequest>>().AddCommand<CreateWorkflowRequest, CreateWorkflowResponse, CreateWorkflowService>()
+            .AddScoped<IValidator<CreateWorkflowRequest>, AcceptAllValidator<CreateWorkflowRequest>>().AddCommand<CreateWorkflowRequest, CreateWorkflowResponse, CreateWorkflowService>().AddScoped<ISetupWorkflowCreator, SetupWorkflowCreator>()
             .AddScoped<IValidator<ApplyWorkflowOpsRequest>, AcceptAllValidator<ApplyWorkflowOpsRequest>>().AddCommand<ApplyWorkflowOpsRequest, ApplyWorkflowOpsResponse, ApplyWorkflowOpsService>()
             .AddScoped<IValidator<ReplaceWorkflowRequest>, AcceptAllValidator<ReplaceWorkflowRequest>>().AddCommand<ReplaceWorkflowRequest, ReplaceWorkflowResponse, ReplaceWorkflowService>()
             .AddScoped<IValidator<ValidateWorkflowRequest>, AcceptAllValidator<ValidateWorkflowRequest>>().AddCommand<ValidateWorkflowRequest, ValidateWorkflowResponse, ValidateWorkflowService>()
-            .AddScoped<IValidator<ActivateWorkflowRequest>, AcceptAllValidator<ActivateWorkflowRequest>>().AddCommand<ActivateWorkflowRequest, ActivateWorkflowResponse, ActivateWorkflowService>()
+            .AddScoped<IValidator<ActivateWorkflowRequest>, AcceptAllValidator<ActivateWorkflowRequest>>().AddCommand<ActivateWorkflowRequest, ActivateWorkflowResponse, ActivateWorkflowService>().AddScoped<ISetupWorkflowActivator, SetupWorkflowActivator>()
             .AddScoped<IValidator<PauseWorkflowRequest>, AcceptAllValidator<PauseWorkflowRequest>>().AddCommand<PauseWorkflowRequest, PauseWorkflowResponse, PauseWorkflowService>()
             .AddScoped<IValidator<DeleteWorkflowRequest>, AcceptAllValidator<DeleteWorkflowRequest>>().AddCommand<DeleteWorkflowRequest, DeleteWorkflowResponse, DeleteWorkflowService>()
             .AddScoped<IValidator<ListWorkflowBlocksRequest>, AcceptAllValidator<ListWorkflowBlocksRequest>>().AddQuery<ListWorkflowBlocksRequest, ListWorkflowBlocksResponse, ListWorkflowBlocksService>()   // 'wf blocks' and 'wf docs'

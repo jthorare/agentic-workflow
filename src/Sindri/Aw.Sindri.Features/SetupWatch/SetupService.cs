@@ -15,7 +15,8 @@ namespace Aw.Sindri.Features.SetupWatch;
 /// <param name="mcp">The automatic MCP registration (SO-A4); absent in a host that has none.</param>
 /// <param name="steps">Records 'setup.step.changed' when a step's state moves (SO-A6); absent in a host that has none.</param>
 /// <param name="onboarding">Onboarding after approval (SO-A3c): each repo the approved profile names gets 'repo.onboarded' once per approval; absent in a host that has none.</param>
-internal sealed class SetupService(IProfileSource live, RepoAddedBackfill backfill, McpAutoRegister? mcp = null, SetupStepWatch? steps = null, IRepoOnboardingTick? onboarding = null) : IScheduledService
+/// <param name="firstRun">The agent target and hello-sindri once the profile names a repo (first-run spec E1, E2); absent in a host that has none.</param>
+internal sealed class SetupService(IProfileSource live, RepoAddedBackfill backfill, McpAutoRegister? mcp = null, SetupStepWatch? steps = null, IRepoOnboardingTick? onboarding = null, FirstRunSetup? firstRun = null) : IScheduledService
 {
     /// <summary>The service's name in the schedule ('setup'); its actor is 'service:setup'.</summary>
     internal static ServiceName ServiceId { get; } = ServiceName.From("setup");
@@ -41,6 +42,11 @@ internal sealed class SetupService(IProfileSource live, RepoAddedBackfill backfi
         if (onboarding is not null)
         {
             await onboarding.Ensure(cancellationToken).ConfigureAwait(false);
+        }
+
+        if (firstRun is not null)
+        {
+            await firstRun.Run(cancellationToken).ConfigureAwait(false);
         }
 
         if (mcp is not null)
