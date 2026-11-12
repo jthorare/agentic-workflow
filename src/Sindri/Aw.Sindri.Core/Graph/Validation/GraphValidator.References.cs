@@ -109,7 +109,7 @@ public sealed partial class GraphValidator
         }
     }
 
-    // why: 'upstream' only says a path exists; a value is there only when the node runs on every path (it dominates the reader) and, for a loop body node, the reader is in the same body
+    // why: 'upstream' only says a path exists; a value is there only when the node has run every time the reader runs (GraphStructure.RunsWhenever) and, for a loop body node, the reader is in the same body
     private static (string Message, string Fix)? Unreachable(NodeScope scope, string root, string reference)
     {
         var id = scope.Node.Id.Value;
@@ -120,7 +120,7 @@ public sealed partial class GraphValidator
             return ($"'{reference}' reads node '{root}', which runs inside the for_each '{each}', so it has no single value in '{id}'", $"read '{gather}' instead");
         }
 
-        return scope.Structure.Dominators(id).Contains(root)
+        return scope.Structure.RunsWhenever(id, root)
             ? null
             : ($"'{reference}' reads node '{root}', which does not run on every path to '{id}' (a path to '{id}' skips it)", "read it inside the branch it runs on, or join the branches first");
     }

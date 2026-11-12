@@ -6,7 +6,10 @@ internal sealed class GraphStructure
     private readonly Dictionary<string, List<string>> _next = new(StringComparer.Ordinal);
     private readonly Dictionary<string, List<string>> _previous = new(StringComparer.Ordinal);
     private readonly Dictionary<string, GraphNode> _nodes = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, List<(string From, string Output)>> _incoming = new(StringComparer.Ordinal);
     private Dictionary<string, HashSet<string>>? _dominators;
+    private Dictionary<string, HashSet<string>?>? _needs;
+    private HashSet<string>? _exact;
 
     public GraphStructure(GraphSpec spec)
     {
@@ -15,6 +18,7 @@ internal sealed class GraphStructure
         {
             _next[id] = [];
             _previous[id] = [];
+            _incoming[id] = [];
         }
 
         foreach (var node in spec.Nodes)
@@ -28,6 +32,7 @@ internal sealed class GraphStructure
             {
                 following.Add(edge.To.Value);
                 preceding.Add(edge.From.Value);
+                _incoming[edge.To.Value].Add((edge.From.Value, edge.Output ?? "out"));
             }
         }
     }
@@ -45,6 +50,90 @@ internal sealed class GraphStructure
 
     /// <summary>The nodes with a path to <paramref name="id"/>, not counting <paramref name="id"/> itself unless it is on a cycle.</summary>
     public HashSet<string> Upstream(string id) => Walk(_previous[id], _previous);
+
+    /// <summary>
+    /// True when <paramref name="root"/> has run every time <paramref name="reader"/> runs (a node waits until every node feeding it is decided,
+    /// and runs when some edge into it fired): <paramref name="root"/> lies on every path to <paramref name="reader"/>, or the edges that make
+    /// <paramref name="root"/> run are among the edges that must fire for <paramref name="reader"/> to run. A reader no start reaches is never refused.
+    /// </summary>
+    public bool RunsWhenever(string reader, string root)
+    {
+        if (Dominators(reader).Contains(root))
+        {
+            return true;
+        }
+
+        _needs ??= ComputeNeeds();
+        _exact ??= ComputeExact(_needs);
+        return _needs.GetValueOrDefault(reader) is not { } readerNeeds
+            || (_exact.Contains(root) && _needs.GetValueOrDefault(root) is { } rootNeeds && rootNeeds.IsSubsetOf(readerNeeds));
+    }
+
+    private static string Fired(string from, string output) => from + "\u0000" + output;
+
+    // why: needs(n) = the edges that fired in every run where n runs: the intersection, over the edges into n, of needs(source) plus that edge; null = no start reaches n yet
+    private Dictionary<string, HashSet<string>?> ComputeNeeds()
+    {
+        var ids = Order.Distinct(StringComparer.Ordinal).ToList();
+        var needs = ids.ToDictionary(static i => i, i => _incoming[i].Count == 0 ? new HashSet<string>(StringComparer.Ordinal) : null, StringComparer.Ordinal);
+        var changed = true;
+        while (changed)
+        {
+            changed = false;
+            foreach (var id in ids.Where(i => _incoming[i].Count > 0))
+            {
+                HashSet<string>? next = null;
+                foreach (var (from, output) in _incoming[id])
+                {
+                    if (needs[from] is not { } before)
+                    {
+                        continue;
+                    }
+
+                    var path = new HashSet<string>(before, StringComparer.Ordinal) { Fired(from, output) };
+                    if (next is null)
+                    {
+                        next = path;
+                    }
+                    else
+                    {
+                        next.IntersectWith(path);
+                    }
+                }
+
+                if (next is not null && (needs[id] is not { } current || next.Count != current.Count))
+                {
+                    needs[id] = next;
+                    changed = true;
+                }
+            }
+        }
+
+        return needs;
+    }
+
+    // why: n is exact when its needs are enough to make it run: some edge into it leaves an exact node and needs nothing past needs(n), so once needs(n) fired that edge fired too
+    private HashSet<string> ComputeExact(Dictionary<string, HashSet<string>?> needs)
+    {
+        var ids = Order.Distinct(StringComparer.Ordinal).ToList();
+        var exact = new HashSet<string>(ids.Where(i => _incoming[i].Count == 0), StringComparer.Ordinal);
+        var changed = true;
+        while (changed)
+        {
+            changed = false;
+            foreach (var id in ids.Where(i => !exact.Contains(i) && needs[i] is not null))
+            {
+                var mine = needs[id]!;
+                if (_incoming[id].Exists(e => exact.Contains(e.From) && needs[e.From] is { } before && before.IsSubsetOf(mine) && mine.Contains(Fired(e.From, e.Output))))
+                {
+                    _ = exact.Add(id);
+                    changed = true;
+                }
+            }
+        }
+
+        return exact;
+    }
 
     /// <summary>
     /// The nodes that lie on every path from a start node (one with no incoming edge) to <paramref name="id"/>, <paramref name="id"/> included:
