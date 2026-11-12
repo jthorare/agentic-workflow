@@ -95,3 +95,9 @@
 .w1000 .keys{gap:10px}
 .s13 .cmdk{width:300px;white-space:nowrap;font-size:14px}
 .s13 .wordmark{font-size:14px}
+
+/* the action strip replaces the person, age and waits-on cells completely on the cursor/hover row (hidden, never clipped) */
+.row:has(> .actions):is(.cursor,.hv,:hover) > :nth-child(5),
+.row:has(> .actions):is(.cursor,.hv,:hover) > :nth-child(6),
+.row:has(> .actions):is(.cursor,.hv,:hover) > :nth-child(7){visibility:hidden}
+.row .actions{right:var(--inset)}
