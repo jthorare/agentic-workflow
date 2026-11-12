@@ -45,6 +45,13 @@ public interface IDecisionLog
     /// <returns>The count.</returns>
     public ValueTask<Result<int>> CountFailuresSince(DateTimeOffset since, CancellationToken cancellationToken);
 
+    /// <summary>The newest failures at or after a time, newest first.</summary>
+    /// <param name="since">The start of the window, inclusive.</param>
+    /// <param name="count">How many at most.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The failures, newest first; empty when there is none.</returns>
+    public ValueTask<Result<IReadOnlyList<FailureRecord>>> LatestFailuresSince(DateTimeOffset since, int count, CancellationToken cancellationToken);
+
     /// <summary>The outcomes of the latest model attempts (decided or failed, never escalated, never a row written before the chain: EvaluationReasons.BeforeChain), newest first.</summary>
     /// <param name="count">How many at most.</param>
     /// <param name="cancellationToken">Cancels the read.</param>

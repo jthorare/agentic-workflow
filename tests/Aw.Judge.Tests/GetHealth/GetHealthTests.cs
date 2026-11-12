@@ -57,6 +57,30 @@ public sealed class GetHealthTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Health_names_the_newest_failure_of_the_last_day()
+    {
+        await Failure(TimeSpan.FromHours(30), "claude-cli", "exit-1");
+        await Failure(TimeSpan.FromHours(5), "jev", "timeout");
+        await Failure(TimeSpan.FromHours(2), "claude-cli", "usage-limit");
+
+        var response = await Health();
+
+        Assert.Equal(new FailureRecord(_clock.GetUtcNow() - TimeSpan.FromHours(2), "wake-gate", "claude-cli", "usage-limit"), response.LastFailure);
+        Assert.Equal(2, response.Failures24h);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Health_without_failures_has_no_last_failure()
+    {
+        await Failure(TimeSpan.FromHours(30), "claude-cli", "exit-1");
+
+        var response = await Health();
+
+        Assert.Null(response.LastFailure);
+        Assert.Equal(0, response.Failures24h);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task GetHealth_returns_the_store_error_when_the_store_cant_be_used()
     {
         var service = new GetHealthService(new InMemoryDecisionLog { Unavailable = true }, _clock);
@@ -73,8 +97,8 @@ public sealed class GetHealthTests
         return result.Value;
     }
 
-    private async Task Failure(TimeSpan ago) =>
-        Assert.True((await _decisions.RecordFailure(new FailureRecord(_clock.GetUtcNow() - ago, "wake-gate", "claude-cli", "timeout"), CancellationToken.None)).IsSuccess);
+    private async Task Failure(TimeSpan ago, string provider = "claude-cli", string reason = "timeout") =>
+        Assert.True((await _decisions.RecordFailure(new FailureRecord(_clock.GetUtcNow() - ago, "wake-gate", provider, reason), CancellationToken.None)).IsSuccess);
 
     // Oldest first: the last one is the newest attempt.
     private async Task Attempts(params DecisionOutcome[] outcomes)

@@ -86,6 +86,10 @@ internal sealed class SqliteDecisionLog(JudgeDatabase database, JsonSerializerOp
         }
     }
 
+    // Red stub (#3232): the SQL read comes with the fix.
+    public ValueTask<Result<IReadOnlyList<FailureRecord>>> LatestFailuresSince(DateTimeOffset since, int count, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success<IReadOnlyList<FailureRecord>>([]));
+
     public async ValueTask<Result<IReadOnlyList<DecisionOutcome>>> LastAttemptOutcomes(int count, CancellationToken cancellationToken)
     {
         var begun = await database.BeginRead(cancellationToken).ConfigureAwait(false);
