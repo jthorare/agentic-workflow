@@ -1,4 +1,3 @@
-using System.Text;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
@@ -10,13 +9,10 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Ledger;
 
-/// <summary>P3e (#3196, spec §6.2): raw is stored on the node run by both stores, scrubbed by Aw.Redaction and cut at the 64 KB cap.</summary>
+/// <summary>P3e (#3196, spec §6.2): raw is stored on the node run by both stores, as given (the activity scrubs and cuts it first).</summary>
 [Lane(TestLane.Integration)]
 public sealed class NodeRunRawStoreTests : IDisposable
 {
-    // a GitHub token shape (prefix + 36 alphanumerics), built in two parts so no secret scanner flags the source
-    private static readonly string _token = string.Concat("gh", "p_", new string('b', 36));
-
     private readonly TempHome _home = new();
     private readonly List<LedgerDatabase> _databases = [];
 
@@ -39,31 +35,6 @@ public sealed class NodeRunRawStoreTests : IDisposable
 
             var stored = (await store.NodeRuns(run.Id, TestContext.Current.CancellationToken)).Value.Single();
             Assert.Equal("Usage limit reached.", stored.Raw);
-        });
-    }
-
-    [Fact]
-    public async Task A_token_in_raw_is_scrubbed_before_it_is_stored()
-    {
-        await ForEachStore(async (store, run) =>
-        {
-            _ = (await store.RecordNodeRun(Failed(run, $"key {_token} end"), TestContext.Current.CancellationToken)).Value;
-
-            var stored = (await store.NodeRuns(run.Id, TestContext.Current.CancellationToken)).Value.Single();
-            Assert.NotNull(stored.Raw);
-            Assert.DoesNotContain(_token, stored.Raw, StringComparison.Ordinal);
-        });
-    }
-
-    [Fact]
-    public async Task Raw_over_the_cap_is_cut_at_64_KB()
-    {
-        await ForEachStore(async (store, run) =>
-        {
-            _ = (await store.RecordNodeRun(Failed(run, new string('x', NodeRunLimits.PayloadBytes + 10)), TestContext.Current.CancellationToken)).Value;
-
-            var stored = (await store.NodeRuns(run.Id, TestContext.Current.CancellationToken)).Value.Single();
-            Assert.Equal(NodeRunLimits.PayloadBytes, Encoding.UTF8.GetByteCount(stored.Raw!));
         });
     }
 
