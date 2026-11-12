@@ -5,4 +5,5 @@ namespace Aw.Sindri.Ui.ViewModels.Rows;
 /// <param name="Text">The cell's text (the name, the ref, the count).</param>
 /// <param name="Done">For <see cref="RowFactKind.Progress"/>, the part done.</param>
 /// <param name="Total">For <see cref="RowFactKind.Progress"/>, the whole.</param>
-internal sealed record RowFact(RowFactKind Kind, string Text, int Done = 0, int Total = 0);
+/// <param name="Tone">For <see cref="RowFactKind.Chip"/>, the colour. Set by the adapter; never guessed from <paramref name="Text"/>.</param>
+internal sealed record RowFact(RowFactKind Kind, string Text, int Done = 0, int Total = 0, RowTone Tone = RowTone.Neutral);

@@ -60,7 +60,7 @@ public sealed class RowListFramesTests
     public async Task Rows_are_32_px_apart_and_40_when_comfortable(bool comfortable, double pitch) => await OnUi(() =>
     {
         var (window, list, _, _) = Show(RowGallery.Three());
-        list.Classes.Set("comfortable", comfortable);
+        window.Classes.Set("comfortable", comfortable);   // on the root, the way the grammar puts it on .app
         Settle(window);
 
         var tops = Rows(list).Select(r => Top(r, list)).ToList();
