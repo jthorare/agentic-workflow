@@ -1,11 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Theme;
-using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
@@ -25,7 +25,6 @@ public sealed class WorkflowHeaderLayoutTests : FrameHost
         shell.GoTo(PageId.Workflows);
         await Until(window, () => shell.Workflows.Rows.Count > 0, "the Workflows page never read the list");
         var resources = Application.Current!.Resources;
-        var crumb = Named<Button>(window, "WorkflowsBack");
         TextScale.Apply(resources, 1.3);
         try
         {
@@ -39,7 +38,10 @@ public sealed class WorkflowHeaderLayoutTests : FrameHost
             Assert.Equal(LongSlug, ToolTip.GetTip(title));
             Assert.True(title.TextLayout.TextLines.Any(l => l.HasCollapsed), "the long title was not shortened");
             Assert.True(title.TranslatePoint(new Point(title.Bounds.Width, 0), window)!.Value.X <= window.Bounds.Width, "the title runs past the window");
-            Assert.True(back.Bounds.Width >= back.DesiredSize.Width - 0.5 && back.Bounds.Width >= back.Content!.ToString()!.Length * 4, "the crumb shrank");
+            var shown = back.Bounds.Width;
+            back.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            Assert.True(shown >= back.DesiredSize.Width - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the crumb shrank from {back.DesiredSize.Width} to {shown}"));
+            Settle(window);
             Assert.False(Visible(window, "WorkflowsHead"), "the list's counts show on a workflow's page");
             Assert.True(Visible(window, "WorkflowsState"), "the workflow's own state does not show");
             Assert.Equal(shell.Workflows.DetailStateText, Named<TextBlock>(window, "WorkflowsState").Text);

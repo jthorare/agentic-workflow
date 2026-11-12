@@ -86,10 +86,12 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     public bool ShowsListHead => HasHead;
 
     /// <summary>True when the open workflow's own state shows beside its title.</summary>
+#pragma warning disable CA1822, MA0041 // stub until the fix
     public bool ShowsDetailState => false;
 
     /// <summary>The open workflow's state.</summary>
     public string DetailStateText => string.Empty;
+#pragma warning restore CA1822, MA0041
 
 #pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
     /// <summary>The empty state's create action: "New workflow".</summary>
