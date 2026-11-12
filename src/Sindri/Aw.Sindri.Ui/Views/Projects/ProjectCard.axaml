@@ -77,7 +77,7 @@
                     CornerRadius="{StaticResource Radius.XS}" Padding="8,6" IsVisible="{Binding ShowsNotes}">
               <TextBlock Classes="caption muted" Text="{Binding NotesText}" TextWrapping="Wrap" />
             </Border>
-            <Button x:Name="ProjectNotesEdit" Classes="link" Content="{Binding EditText}" Click="OnEdit" IsVisible="{Binding IsReading}" HorizontalAlignment="Left" />
+            <Button x:Name="ProjectNotesEdit" Classes="link" Content="{Binding EditText}" AutomationProperties.Name="{Binding EditName}" Click="OnEdit" IsVisible="{Binding IsReading}" HorizontalAlignment="Left" />
             <StackPanel x:Name="ProjectNotesEditor" Spacing="6" IsVisible="{Binding IsEditing}">
               <Border x:Name="ProjectNotesNewer" IsVisible="{Binding HasNewerNotes}" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.HairlineTertiary}"
                     BorderThickness="2,0,0,0" CornerRadius="{StaticResource Radius.XS}" Padding="8,6"
@@ -91,12 +91,12 @@
               <TextBlock x:Name="ProjectNotesCounter" Classes="caption subtle" Classes.error="{Binding OverLimit}" Text="{Binding Counter}" HorizontalAlignment="Right" />
               <StackPanel x:Name="ProjectNotesConflict" Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsConflict}">
                 <TextBlock Classes="caption error" Text="{Binding ConflictText}" VerticalAlignment="Center" />
-                <Button x:Name="ProjectNotesReload" Content="{Binding ReloadText}" Click="OnReload" />
+                <Button x:Name="ProjectNotesReload" Content="{Binding ReloadText}" AutomationProperties.Name="{Binding ReloadName}" Click="OnReload" />
               </StackPanel>
               <TextBlock x:Name="ProjectNotesError" Classes="caption error" Text="{Binding SaveError}" TextWrapping="Wrap" IsVisible="{Binding HasSaveError}" />
               <StackPanel Orientation="Horizontal" Spacing="8">
-                <Button x:Name="ProjectNotesSave" Classes="accent" Content="{Binding SaveText}" IsEnabled="{Binding CanSave}" Click="OnSave" />
-                <Button x:Name="ProjectNotesCancel" Classes="link" VerticalAlignment="Center" Content="{Binding CancelText}" Click="OnCancel" />
+                <Button x:Name="ProjectNotesSave" Classes="accent" Content="{Binding SaveText}" AutomationProperties.Name="{Binding SaveName}" IsEnabled="{Binding CanSave}" Click="OnSave" />
+                <Button x:Name="ProjectNotesCancel" Classes="link" VerticalAlignment="Center" Content="{Binding CancelText}" AutomationProperties.Name="{Binding CancelName}" Click="OnCancel" />
               </StackPanel>
             </StackPanel>
           </StackPanel>
