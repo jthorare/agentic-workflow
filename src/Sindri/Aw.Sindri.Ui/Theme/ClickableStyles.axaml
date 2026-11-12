@@ -28,16 +28,23 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.PressedBorder}" />
     <Setter Property="RenderTransform" Value="scale(0.98)" />
   </Style>
-  <!-- An attention Needs You row (pulsing, steady, outlined) lifts within its own amber, so the urgency survives the pointer (#2611); an outlined
-       row keeps its attention border. Declared after the grey hover and press above so they win, and before the focus and selection borders below. -->
-  <Style Selector="Border.clickable.needs-you-row.pulsing:pointerover, Border.clickable.needs-you-row.steady:pointerover, Border.clickable.needs-you-row.outlined:pointerover">
+  <!-- A steady or outlined Needs You row rests like any clickable row (#2780: one accent, so no amber tint); under the pointer it takes the hover fill under the pointer and the pressed fill on a press,
+       and an outlined row keeps its neutral border. Declared after the grey hover and press above so they win, and before the focus and selection borders below. -->
+  <Style Selector="Border.clickable.needs-you-row.steady:pointerover, Border.clickable.needs-you-row.outlined:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Hover}" />
+  </Style>
+  <Style Selector="Border.clickable.needs-you-row.steady:pressed, Border.clickable.needs-you-row.outlined:pressed">
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
+  </Style>
+  <!-- The unseen pulse keeps its amber under the pointer and a press (#2611, #2749). -->
+  <Style Selector="Border.clickable.needs-you-row.pulsing:pointerover">
     <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft.Hover}" />
   </Style>
-  <Style Selector="Border.clickable.needs-you-row.pulsing:pressed, Border.clickable.needs-you-row.steady:pressed, Border.clickable.needs-you-row.outlined:pressed">
+  <Style Selector="Border.clickable.needs-you-row.pulsing:pressed">
     <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft.Pressed}" />
   </Style>
   <Style Selector="Border.clickable.needs-you-row.outlined:pointerover, Border.clickable.needs-you-row.outlined:pressed">
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.InkSubtle}" />
   </Style>
   <!-- Focus and a selected row keep their own border; the lift is the background only there. -->
   <Style Selector="Border.clickable:focus-visible:pointerover, Border.clickable:focus-visible:pressed">

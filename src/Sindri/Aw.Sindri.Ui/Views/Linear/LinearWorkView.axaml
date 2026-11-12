@@ -27,18 +27,18 @@
     <Border x:Name="LinearStrip" Classes="panel" IsVisible="{Binding ShowsStrip}" AutomationProperties.Name="{Binding StripName}"
             AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
       <StackPanel>
-        <Grid ColumnDefinitions="*,Auto" Margin="16,12" IsVisible="{Binding HasNew}">
+        <Grid ColumnDefinitions="*,Auto" Margin="24,12" IsVisible="{Binding HasNew}">
           <TextBlock x:Name="LinearStripHeading" Classes="body-strong" Text="{Binding StripName}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
           <Button x:Name="LinearStripMarkAllSeen" Grid.Column="1" Content="{Binding MarkAllSeenText}" Click="OnMarkAllSeen" AutomationProperties.Name="{Binding MarkAllSeenText}" />
         </Grid>
 
-        <StackPanel x:Name="LinearSinceNothing" IsVisible="{Binding ShowsNothingNew}" Margin="16,12" Spacing="4">
+        <StackPanel x:Name="LinearSinceNothing" IsVisible="{Binding ShowsNothingNew}" Margin="24,12" Spacing="4">
           <TextBlock Classes="body-strong" Text="{Binding NothingNewText}" AutomationProperties.Name="{Binding NothingNewText}" />
           <TextBlock Classes="caption subtle" Text="{Binding NothingNewWhen}" IsVisible="{Binding NothingNewWhen, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                      AutomationProperties.Name="{Binding NothingNewWhen}" />
         </StackPanel>
 
-        <StackPanel x:Name="LinearStripProblem" IsVisible="{Binding StripReason, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Margin="16,12" Spacing="8">
+        <StackPanel x:Name="LinearStripProblem" IsVisible="{Binding StripReason, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Margin="24,12" Spacing="8">
           <StackPanel Orientation="Horizontal" Spacing="8">
             <icons:StateIcon Glyph="Down" Classes="error" VerticalAlignment="Top" />
             <TextBlock x:Name="LinearStripReason" Classes="body" Text="{Binding StripReason}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StripReason}" />
@@ -55,7 +55,7 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="lvm:LinearSinceGroupViewModel">
               <StackPanel>
-                <Border x:Name="LinearSinceGroupHeader" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0" Padding="16,4" MinHeight="{StaticResource Row.Height.Default}">
+                <Border x:Name="LinearSinceGroupHeader" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0" Padding="24,4" MinHeight="{StaticResource Row.Height.Default}">
                   <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                       <TextBlock Classes="body-strong" Text="{Binding Heading}" />
@@ -154,7 +154,7 @@
           <Grid Classes="skrow" ColumnDefinitions="*,60"><Border Classes="skeleton" Width="420" /><Border Grid.Column="1" Classes="skeleton" Width="40" /></Grid>
         </StackPanel>
 
-        <StackPanel x:Name="LinearNoMatch" IsVisible="{Binding ShowsNoMatch}" Spacing="8" Margin="16,12">
+        <StackPanel x:Name="LinearNoMatch" IsVisible="{Binding ShowsNoMatch}" Spacing="8" Margin="24,12">
           <TextBlock Classes="body-strong" Text="{Binding NoMatchText}" AutomationProperties.Name="{Binding NoMatchText}" />
           <Button x:Name="LinearNoMatchClear" Content="{Binding ClearFiltersText}" HorizontalAlignment="Left" Click="OnClearFilters" AutomationProperties.Name="{Binding ClearFiltersText}" />
         </StackPanel>
@@ -163,13 +163,13 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="lvm:LinearGroupViewModel">
               <StackPanel IsVisible="{Binding IsVisible}">
-                <Border BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0" Padding="16,6" Margin="0,12,0,0">
+                <Border BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0" Padding="24,6" Margin="0,12,0,0">
                   <StackPanel Orientation="Horizontal" Spacing="8">
                     <TextBlock Classes="body-strong" Text="{Binding Heading}" />
                     <TextBlock Classes="caption subtle" Text="{Binding Count}" />
                   </StackPanel>
                 </Border>
-                <TextBlock Classes="caption quiet" Margin="16,0,16,8" Text="{Binding Empty}" IsVisible="{Binding Empty, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                <TextBlock Classes="caption quiet" Margin="24,0,24,8" Text="{Binding Empty}" IsVisible="{Binding Empty, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                            AutomationProperties.Name="{Binding Empty}" />
                 <ItemsControl ItemsSource="{Binding Rows}">
                   <ItemsControl.ItemTemplate>
