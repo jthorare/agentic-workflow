@@ -131,7 +131,8 @@ aw-meta events [--after N] [--kind K] [--lane L] [--max N] [--json]
 - `--kind K`, `--lane L`: only that kind, only that lane.
 - `--max N`: at most N events, oldest first (default 500).
 - Text output is one line per event: `<id> <at> <kind> <lane|-> <fields json>`. Nothing is printed when there are no events.
-- `--json` prints `{"events":[{"id","at","kind","lane","fields"}],"next":<n>}` (schema: `schemas/meta/events.schema.json`). `next` is the id of the last event returned, or the `--after` value when there are none, so a reader stores `next` and passes it back as `--after`. Ids only rise and are never reused.
+- `--json` prints `{"events":[{"id","at","kind","lane","fields"}],"next":<n>,"oldest":<n>,"latest":<n>,"gap":<bool>}` (schema: `schemas/meta/events.schema.json`). `next` is the id of the last event returned, or the `--after` value when there are none, so a reader stores `next` and passes it back as `--after`. Ids only rise and are never reused.
+- `oldest`, `latest` and `gap` are on every response, an empty one too. `latest` is the highest id ever assigned (0 when none), kept even after the 7-day retention empties the log. `oldest` is the lowest id still kept, or `latest + 1` when the log is empty. `gap` is true when `--after + 1` is below `oldest`: the retention dropped events the reader never saw. The reader then re-reads `aw-meta status --json` and sets its cursor to `latest`. A new reader does the same from the start: `status` first, then `--after <latest>`. Its first call at `--after 0` shows a gap as soon as anything was pruned, and that gap is not an error. Text output prints one warning line first on a gap: `events before #<oldest> were dropped (7-day retention): re-read status`.
 - Exit 0 ok, 2 usage: `--after` or `--max` not a whole number, `--max` below 1 (`AW-META-001`), or a `--kind` that is not dotted lower-case (`AW-META-027`). The command never writes.
 
 An event has an id, a time, a `kind`, an optional `lane` (null for a team-wide or box-wide event) and `fields`, one JSON object.
@@ -202,6 +203,8 @@ the other:
   `status` and apply the new depth, or `meta-gate-reserve --clear` when the queue is empty.
 - The reservation assumes every gate runs through `aw-meta gate-run`. A gate run by hand carries no priority and would wait behind
   the reservation it is meant to share; nothing running is ever pre-empted.
+
+**Wait files.** `heavy` writes one file, `$AW_STATE_DIR/locks/heavy-wait/<pid>` (the wrapper's own pid), for each job that has to wait for a slot. The file is one JSON line with `pid`, `session`, `lock` (`session` or `box-wide`), `since` (UTC, when the first wait began), `argv` (raw) and `cwd`. `heavy` removes the file when the job takes its slot, on the lock timeout and when a signal ends it. A job that gets its slots at once writes none. SIGKILL leaves a file behind, so `aw-meta heavy --json` (#3142), the reader, skips a dead pid and redacts `argv`.
 
 **Builders per lane.** `health` (and `status`, one line) advises how many builder subagents each lane should run now, from
 `builders.maxPerLane` (none by default: nothing caps it but the host): it is reduced while free disk is under `resources.diskFloorGb + lanes x builders x builders.worktreeGb`
@@ -413,6 +416,7 @@ working untouched. `team-migrate` moves it into `teams/<its team name>/` on requ
 | `usage` | `{resumeMarginSeconds?, probeMinutes?, autoResume?}`, defaults 120, 15 and true (`resumeMarginSeconds` 0 or more, `probeMinutes` 1 or more; anything else is AW-META-003 at load): how long after a limit's stated reset the window counts as back, how often an unknown-reset limit (and a resume that did not take) is tried again, and whether the watch types the resume line into an idle lane (see "Usage limits") |
 | `defects` | `{repo?, dailyCap?}`, defaults `jthorare/agentic-workflow` and 3: the GitHub repository `report-defect` files toolkit defects in, and the most new issues it files per UTC day (see `report-defect`) |
 | `routing` | `{models?, equivalents?, lanes?, defaultModel?, switchWhenLimited?, minRemainingPct?}`: which model each provider offers and when a lane should move (see "Usage across providers"). Absent or without `equivalents`: the meta never suggests a switch |
+| `plugins` | `{off?, keep?}`: Claude Code plugins a lane does not load. `off` lists plugin ids (`<plugin>@<marketplace>`, as in `enabledPlugins` of `~/.claude/settings.json`); `keep` maps a lane name to the ids that lane keeps on. `meta-lane.sh` starts each Claude Code lane with `--settings {"enabledPlugins":{<id>:false,...}}` for `off` minus that lane's `keep`, right after the binary, so other plugins stay on. It applies to the meta lane too, on the next lane start or restart. Other agents ignore it. Absent, empty or all kept: no flag. A malformed value (`off` not an array of strings, `keep` not an object of string arrays, an id that is empty or starts with `-`) stops the lane: `meta-lane: team.json plugins: <what is wrong>; the agent was not started`, exit 1 (#2675) |
 | `knownFlakes` | Test names (or Class.Method, or a class) a red is checked against before it counts as real; matched as whole dot-separated segments, never as a substring |
 
 ## Files
