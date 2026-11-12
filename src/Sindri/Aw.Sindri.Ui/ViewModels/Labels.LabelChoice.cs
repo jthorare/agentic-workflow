@@ -16,5 +16,5 @@ internal static partial class Labels
     internal const string LabelChoiceOn = "Label choice: on";
 
     /// <summary>The sentence under the line: what Jev reads, where to change it, whose retention applies.</summary>
-    internal const string LabelChoiceSentence = "Jev reads each feature's file paths and the model's candidate names to pick the name shown. Change it in the profile; it takes effect when you save. Retention is the provider's.";
+    internal const string LabelChoiceSentence = "A model reads each feature's file paths and the candidate names to pick the name shown. Change it in the profile; it takes effect when you save. Retention is the provider's.";
 }

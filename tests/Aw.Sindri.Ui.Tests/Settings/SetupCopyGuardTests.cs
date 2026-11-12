@@ -11,25 +11,19 @@ public sealed class SetupCopyGuardTests
     private static readonly string[] _names =
     [
         "SetupRepoBody", "SetupRepoNote", "SetupSubline", "SetupHomeLine", "ReadingSetup",
-        "LabelChoiceSentence", "SurfaceChoiceSentence", "ModelChoiceOff",
+        "LabelChoiceSentence", "SurfaceChoiceSentence", "ModelChoiceSentence", "ModelChoiceOff",
     ];
 
     [Theory]
     [InlineData("--with-sindri")]
     [InlineData("approve")]
+    [InlineData("Jev")]
     public void Setup_labels_do_not_name_a_removed_step(string phrase)
     {
         foreach (var (name, text) in Texts())
         {
             Assert.False(text.Contains(phrase, StringComparison.OrdinalIgnoreCase), $"{name} says \"{phrase}\": {text}");
         }
-    }
-
-    [Fact]
-    public void Model_choice_off_line_does_not_name_Jev()
-    {
-        var text = (string)typeof(Labels).GetField("ModelChoiceOff", BindingFlags.NonPublic | BindingFlags.Static)!.GetRawConstantValue()!;
-        Assert.DoesNotContain("Jev", text, StringComparison.Ordinal);
     }
 
     private static IEnumerable<(string Name, string Text)> Texts()

@@ -37,6 +37,6 @@ public sealed class LabelChoiceViewModelTests
         var line = Line("on");
 
         Assert.Equal("Label choice", line.Title);
-        Assert.Equal("Jev reads each feature's file paths and the model's candidate names to pick the name shown. Change it in the profile; it takes effect when you save. Retention is the provider's.", line.Sentence);
+        Assert.Equal("A model reads each feature's file paths and the candidate names to pick the name shown. Change it in the profile; it takes effect when you save. Retention is the provider's.", line.Sentence);
     }
 }

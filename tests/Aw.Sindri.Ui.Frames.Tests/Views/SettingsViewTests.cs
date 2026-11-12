@@ -95,7 +95,7 @@ public sealed class SettingsViewTests
         Settle(window);
 
         Assert.Equal("Model choice: on", Find<TextBlock>(window, "ModelChoiceLine").Text);
-        Assert.StartsWith("Jev reads each step's brief", Find<TextBlock>(window, "ModelChoiceSentence").Text, StringComparison.Ordinal);
+        Assert.StartsWith("A model reads each step's brief", Find<TextBlock>(window, "ModelChoiceSentence").Text, StringComparison.Ordinal);
         var copy = Find<Button>(window, "ModelChoiceCopy");
         Assert.Equal("Copy: Model choice", AutomationProperties.GetName(copy));
         Assert.True(copy.IsEffectivelyVisible);
