@@ -37,6 +37,7 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
     /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<ModelTokens>> Between(DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken)
     {
+        await Task.Yield();   // the directory walk below never runs on the caller's thread
         // incremental (#2777): per file the bytes already read and the messages found, so a later call parses only what was appended
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try

@@ -50,9 +50,10 @@ internal sealed class UsageSpend(IAgentCatalog catalog, IReadOnlyDictionary<stri
         return Results.Success<AgentSpend?>(await Flight(target, reader, (start, end, day)).WaitAsync(cancellationToken).ConfigureAwait(false));
     }
 
-    /// <summary>The read in flight for <paramref name="target"/>'s day, started when there is none; every caller of one day shares it.</summary>
+    /// <summary>The read in flight for <paramref name="target"/>'s day, started when there is none; every caller of one day shares it. The read has begun (the reader was called) when this returns.</summary>
     private Task<AgentSpend> Flight(AgentId target, IUsageReader reader, (DateTimeOffset Start, DateTimeOffset End, DateOnly Day) window)
     {
+        TaskCompletionSource<AgentSpend> source;
         lock (_gate)
         {
             if (_flights.TryGetValue(target, out var flight) && flight.Day == window.Day)
@@ -60,26 +61,32 @@ internal sealed class UsageSpend(IAgentCatalog catalog, IReadOnlyDictionary<stri
                 return flight.Task;
             }
 
-            var task = Task.Run(() => Run(target, reader, window), CancellationToken.None);
-            _flights[target] = (window.Day, task);
-            return task;
+            source = new TaskCompletionSource<AgentSpend>(TaskCreationOptions.RunContinuationsAsynchronously);
+            _flights[target] = (window.Day, source.Task);
         }
+
+        _ = Fill(source, target, reader, window);
+        return source.Task;
     }
 
-    private async Task<AgentSpend> Run(AgentId target, IUsageReader reader, (DateTimeOffset Start, DateTimeOffset End, DateOnly Day) window)
+    private async Task Fill(TaskCompletionSource<AgentSpend> source, AgentId target, IUsageReader reader, (DateTimeOffset Start, DateTimeOffset End, DateOnly Day) window)
     {
         try
         {
             var used = Budgets.Spend(await reader.Between(window.Start, window.End, CancellationToken.None).ConfigureAwait(false));
             var spend = reader.Verified ? used : new AgentSpend(0m, used.Tokens, SpendBasis.TokensOnly);
             _read[target] = (clock.GetUtcNow(), window.Day, spend);
-            return spend;
+            _ = source.TrySetResult(spend);
+        }
+        catch (Exception e)
+        {
+            _ = source.TrySetException(e);
         }
         finally
         {
             lock (_gate)
             {
-                if (_flights.TryGetValue(target, out var flight) && flight.Day == window.Day)
+                if (_flights.TryGetValue(target, out var flight) && ReferenceEquals(flight.Task, source.Task))
                 {
                     _ = _flights.Remove(target);
                 }
