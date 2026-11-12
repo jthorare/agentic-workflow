@@ -112,6 +112,8 @@ internal sealed partial class WholeMapView : UserControl
 
     private void OnNodePanelClose(object? sender, RoutedEventArgs e) => _ = _map?.Panel.Close();
 
+    private void OnNodePanelRetry(object? sender, RoutedEventArgs e) => _ = _map?.Panel.Retry();
+
     private void OnNodePanelOpenSource(object? sender, RoutedEventArgs e) => _ = _map?.Panel.OpenSource();
 
     private void OnNodePanelEdge(object? sender, RoutedEventArgs e)

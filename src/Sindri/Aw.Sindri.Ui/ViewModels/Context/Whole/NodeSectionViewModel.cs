@@ -29,6 +29,9 @@ internal sealed class NodeSectionViewModel
     /// <summary>Gets the line while the section's read runs.</summary>
     public string LoadingText { get; } = Labels.ContextNodePanelLoading;
 
+    /// <summary>Gets the words of the section's Try again button.</summary>
+    public string RetryText { get; } = Labels.ContextNodePanelRetry;
+
     /// <summary>Gets a value indicating whether the section failed.</summary>
     public bool IsFailed => FailedText.Length > 0;
 

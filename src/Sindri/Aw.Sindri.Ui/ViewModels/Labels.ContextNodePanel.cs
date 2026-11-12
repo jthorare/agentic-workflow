@@ -15,6 +15,9 @@ internal static partial class Labels
     /// <summary>The line when the read failed.</summary>
     internal const string ContextNodePanelFailed = "Couldn't read this item";
 
+    /// <summary>The button beside a failed read, a failed section or a refused link (#3060): it sends the same read or launch again.</summary>
+    internal const string ContextNodePanelRetry = "Try again";
+
     /// <summary>The heading over the links.</summary>
     internal const string ContextNodePanelLinks = "Linked to";
 

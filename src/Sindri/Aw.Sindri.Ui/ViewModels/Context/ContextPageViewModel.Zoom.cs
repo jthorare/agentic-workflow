@@ -155,6 +155,9 @@ internal sealed partial class ContextPageViewModel
     internal void ClearSearch()
     {
         AnchorText = string.Empty;   // an empty box ends the search itself
+        Problem = string.Empty;   // and a "none of those items are on the map" line has nothing left to say
+        OnChanged(nameof(Problem));
+        OnChanged(nameof(HasProblem));
         _ = BackToWholeMap();
     }
 

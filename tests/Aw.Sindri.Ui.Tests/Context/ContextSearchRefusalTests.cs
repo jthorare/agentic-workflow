@@ -55,6 +55,20 @@ public sealed class ContextSearchRefusalTests
     }
 
     [Fact]
+    public async Task Clear_empties_the_miss_line_and_the_box()
+    {
+        var api = new FakeSindriApi { LensesAnswer = Unknown };
+        var page = Page(api);
+        page.AnchorText = "Tab groups";
+        await page.Submit(Token);
+        Assert.True(page.HasProblem);
+
+        page.ClearSearch();
+
+        Assert.Equal((false, string.Empty, string.Empty), (page.HasProblem, page.Problem, page.AnchorText));
+    }
+
+    [Fact]
     public async Task A_failed_search_keeps_the_map_that_was_on_the_page()
     {
         var api = new FakeSindriApi { LensesAnswer = Unknown };

@@ -89,6 +89,14 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     /// <summary>Gets the failure line.</summary>
     public string FailedText { get; } = Labels.ContextNodePanelFailed;
 
+    /// <summary>Gets the words of the Try again buttons.</summary>
+    public string RetryText { get; } = Labels.ContextNodePanelRetry;
+
+    /// <summary>Reads the open node again: the whole panel, its sections too. Does nothing while no node is open.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>When the read is done.</returns>
+    internal Task Retry(CancellationToken cancellationToken = default) => Key is { } key ? Open(key, cancellationToken) : Task.CompletedTask;
+
     /// <summary>Gets the heading over the links.</summary>
     public string LinksText { get; } = Labels.ContextNodePanelLinks;
 
