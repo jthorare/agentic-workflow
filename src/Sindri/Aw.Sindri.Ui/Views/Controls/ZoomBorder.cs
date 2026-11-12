@@ -32,6 +32,9 @@ internal sealed partial class ZoomBorder : Border
     /// <summary>The largest scale.</summary>
     internal static readonly StyledProperty<double> MaxZoomProperty = AvaloniaProperty.Register<ZoomBorder, double>(nameof(MaxZoom), ZoomRange.Default.Max);
 
+    /// <summary>Whether the stage takes keyboard focus (a Tab stop that draws a 2 px ring); false for the context map, whose nodes are the stops.</summary>
+    internal static readonly StyledProperty<bool> IsKeyboardFocusableProperty = AvaloniaProperty.Register<ZoomBorder, bool>(nameof(IsKeyboardFocusable));
+
     private const double WheelStep = 40;
     private const double ZoomStep = 1.2;
     private const double ClickSlop = 3;
@@ -104,6 +107,13 @@ internal sealed partial class ZoomBorder : Border
     {
         get => GetValue(MaxZoomProperty);
         set => SetValue(MaxZoomProperty, value);
+    }
+
+    /// <summary>Gets or sets a value indicating whether the stage takes keyboard focus (default false).</summary>
+    internal bool IsKeyboardFocusable
+    {
+        get => GetValue(IsKeyboardFocusableProperty);
+        set => SetValue(IsKeyboardFocusableProperty, value);
     }
 
     /// <summary>Gets a value indicating whether a zoom transition is running.</summary>
