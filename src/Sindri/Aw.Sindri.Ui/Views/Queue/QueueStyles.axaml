@@ -23,13 +23,10 @@
   <Style Selector="Border.item-row">
     <Setter Property="FocusAdorner" Value="{x:Null}" />
   </Style>
+  <!-- #3245: the ring is an inset 2 px shadow, so it draws inside the row's own bounds and no state changes BorderThickness or Padding.
+       Rows sit 0 px apart: a thicker border grew the row ~3 px and moved every row below it. One class for every item-row view. -->
   <Style Selector="Border.item-row:focus-visible">
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
-    <Setter Property="BorderThickness" Value="2" />
-    <Setter Property="Padding" Value="22,0,22,0" />
-  </Style>
-  <Style Selector="Border.item-row.selected:focus-visible">
-    <Setter Property="Padding" Value="22,0,22,0" />
+    <Setter Property="BoxShadow" Value="inset 0 0 0 2 #828fff" />
   </Style>
   <Style Selector="Border.item-row Button">
     <Setter Property="FocusAdorner" Value="{x:Null}" />
