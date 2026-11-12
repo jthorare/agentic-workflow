@@ -63,4 +63,22 @@ public sealed class SweepIncludeNoPrPathTests
         var kept = Assert.Single(swept.Kept, r => string.Equals(r.Path, Loose, StringComparison.Ordinal));
         Assert.Contains(kept.Reasons, r => r.Contains("changed since the last full sweep", StringComparison.Ordinal));
     }
+
+    /// <summary>#3350: only a full sweep records the baseline, so a --path sweep on a fresh state dir kept the tree with "no previous sweep" on every run.</summary>
+    [Fact, Trait("Lane", "unit")]
+    public async Task Path_sweep_removes_the_tree_on_its_second_run_without_a_full_sweep()
+    {
+        Script();
+        _world.WorktreeFiles.Touch(Loose, A.At(10));
+        await _world.Ready();
+        var service = new SweepWorktreesService(_world.Config, _world.Sweeper);
+        var request = new SweepWorktreesRequest(DryRun: false, Pr: null, IncludeNoPr: true, Path: Loose);
+
+        var first = await service.Handle(request, CancellationToken.None);
+        Assert.True(first.IsSuccess);
+        var second = await service.Handle(request, CancellationToken.None);
+
+        Assert.True(second.IsSuccess);
+        Assert.Contains(second.Value.Removed, r => string.Equals(r.Path, Loose, StringComparison.Ordinal));
+    }
 }
