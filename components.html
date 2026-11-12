@@ -1,0 +1,83 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Sindri list grammar · components</title><link rel="stylesheet" href="grammar.css">
+<style>
+body{height:1800px;overflow:visible}
+.sec{padding:0 var(--inset)} .sec h3{font:600 15px/22px var(--font);margin:0 0 4px}
+.cap{font-size:11px;line-height:16px;color:var(--ink-3);padding:4px var(--inset)}
+.blk{margin-top:20px}
+.gl{display:grid;grid-template-columns:repeat(7,1fr);gap:8px 12px;padding:8px var(--inset)}
+.gcell{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-muted);height:28px}
+.gcell code{font:400 11px/16px var(--mono);color:var(--ink-3);margin-left:auto}
+.caprow{display:grid;grid-template-columns:var(--col-glyph) minmax(200px,1fr) var(--facts) var(--col-age) var(--col-wait);column-gap:var(--sp3);padding:0 var(--inset);font-size:11px;line-height:16px;color:var(--ink-3);white-space:nowrap}
+.row.hv{background:var(--s2)} .row.hv .actions{display:flex}
+.cols{display:flex;gap:24px;padding:0 0 0 0}
+.cols .l{width:928px} .cols .r{width:440px}
+.box{border:1px solid var(--hair);border-radius:var(--r3);margin:0 var(--inset);overflow:hidden}
+.mono-files>div{display:flex;justify-content:space-between;align-items:center;height:28px}
+.keys{border-top:0}
+.peek{height:560px;border:1px solid var(--hair);border-radius:var(--r3)}
+.peek-fields dd .av+.av{margin-left:-4px}
+.hdr-demo{display:flex;align-items:center;height:48px;gap:12px}
+</style></head><body>
+<div class="sec" style="padding-top:16px"><h3>Sindri list grammar · components</h3><div class="cap" style="padding:0">Reference sheet for #2978. All sizes and colours come from grammar.css. Captions are 11 px ink-3.</div></div>
+
+<div class="blk"><div class="sec"><h3>State glyphs</h3></div><div class="cap">Glyph · 14 px drawn in a 16 px column · colour means status only</div><div class="gl"><div class="gcell"><span class="g todo"></span><span>todo</span><code>.g.todo</code></div><div class="gcell"><span class="g doing"></span><span>doing</span><code>.g.doing</code></div><div class="gcell"><span class="g done"></span><span>done</span><code>.g.done</code></div><div class="gcell"><span class="g draft"></span><span>draft</span><code>.g.draft</code></div><div class="gcell"><span class="g you"></span><span>needs you</span><code>.g.you</code></div><div class="gcell"><span class="g fail"></span><span>failed</span><code>.g.fail</code></div><div class="gcell"><span class="g parked"></span><span>parked</span><code>.g.parked</code></div><div class="gcell"><span class="g agent"></span><span>agent running</span><code>.g.agent</code></div><div class="gcell"><span class="g msg"></span><span>message</span><code>.g.msg</code></div><div class="gcell"><span class="g mention"></span><span>mention</span><code>.g.mention</code></div><div class="gcell"><span class="g pr"></span><span>PR open</span><code>.g.pr</code></div><div class="gcell"><span class="g pr draftpr"></span><span>PR draft</span><code>.g.pr.draftpr</code></div><div class="gcell"><span class="g merged"></span><span>merged</span><code>.g.merged</code></div><div class="gcell"><span class="g ci-run"></span><span>CI running</span><code>.g.ci-run</code></div></div></div>
+
+<div class="blk"><div class="sec"><h3>Row states</h3></div>
+<div class="cap">Row · 32 px compact · glyph 16 / title flex (min 200) / facts 104-136 / age 44 / waits 112 · 12 px column gap · 24 px side inset</div><div class="caprow" style="--facts:104px 136px 104px"><div>glyph 16</div><div>title · flex, min 200</div><div>fact 104</div><div>fact 136</div><div>fact 104</div><div style="text-align:right">age 44</div><div>waits on 112</div></div>
+<div class="cap">Rest · transparent    Hover · s2 + 2-3 row actions replace the right end    Cursor · 1 px inset primary-hi ring    Selected · primary-soft + 2 px primary bar    Unread · title 500    Read · title ink-muted</div><div class="row  unread"><span class="g msg"></span><div class="title"><span class="t">Export row limit question from Priya</span><span class="sub">Rest</span></div><div class="fact "><span class="av">S</span>Slack</div><div class="fact mono">dm:priya.nair</div><div class="fact "><span class="chip att">unanswered</span></div><div class="age">12m</div><div class="wait you">you</div></div>
+<div class="row hv unread"><span class="g msg"></span><div class="title"><span class="t">Export row limit question from Priya</span><span class="sub">Hover</span></div><div class="fact "><span class="av">S</span>Slack</div><div class="fact mono">dm:priya.nair</div><div class="fact "><span class="chip att">unanswered</span></div><div class="age">12m</div><div class="wait you">you</div><div class="actions"><span class="btn">Reply</span><span class="btn">Snooze</span></div></div>
+<div class="row cursor unread"><span class="g msg"></span><div class="title"><span class="t">Export row limit question from Priya</span><span class="sub">Cursor</span></div><div class="fact "><span class="av">S</span>Slack</div><div class="fact mono">dm:priya.nair</div><div class="fact "><span class="chip att">unanswered</span></div><div class="age">12m</div><div class="wait you">you</div><div class="actions"><span class="btn">Reply</span><span class="btn">Snooze</span></div></div>
+<div class="row sel unread"><span class="g msg"></span><div class="title"><span class="t">Export row limit question from Priya</span><span class="sub">Selected</span></div><div class="fact "><span class="av">S</span>Slack</div><div class="fact mono">dm:priya.nair</div><div class="fact "><span class="chip att">unanswered</span></div><div class="age">12m</div><div class="wait you">you</div></div>
+<div class="row  unread"><span class="g msg"></span><div class="title"><span class="t">Export row limit question from Priya</span><span class="sub">Unread</span></div><div class="fact "><span class="av">S</span>Slack</div><div class="fact mono">dm:priya.nair</div><div class="fact "><span class="chip att">unanswered</span></div><div class="age">12m</div><div class="wait you">you</div></div>
+<div class="row  read"><span class="g msg"></span><div class="title"><span class="t">Export row limit question from Priya</span><span class="sub">Read</span></div><div class="fact "><span class="av">S</span>Slack</div><div class="fact mono">dm:priya.nair</div><div class="fact "><span class="chip att">unanswered</span></div><div class="age">12m</div><div class="wait you">you</div></div>
+
+</div>
+<div class="blk comfortable"><div class="cap">Row · 40 px comfortable · .comfortable on .app · same columns, same states</div><div class="row  unread"><span class="g msg"></span><div class="title"><span class="t">Export row limit question from Priya</span><span class="sub">Rest</span></div><div class="fact "><span class="av">S</span>Slack</div><div class="fact mono">dm:priya.nair</div><div class="fact "><span class="chip att">unanswered</span></div><div class="age">12m</div><div class="wait you">you</div></div>
+<div class="row hv unread"><span class="g msg"></span><div class="title"><span class="t">Export row limit question from Priya</span><span class="sub">Hover</span></div><div class="fact "><span class="av">S</span>Slack</div><div class="fact mono">dm:priya.nair</div><div class="fact "><span class="chip att">unanswered</span></div><div class="age">12m</div><div class="wait you">you</div><div class="actions"><span class="btn">Reply</span><span class="btn">Snooze</span></div></div>
+<div class="row cursor unread"><span class="g msg"></span><div class="title"><span class="t">Export row limit question from Priya</span><span class="sub">Cursor</span></div><div class="fact "><span class="av">S</span>Slack</div><div class="fact mono">dm:priya.nair</div><div class="fact "><span class="chip att">unanswered</span></div><div class="age">12m</div><div class="wait you">you</div><div class="actions"><span class="btn">Reply</span><span class="btn">Snooze</span></div></div>
+<div class="row sel unread"><span class="g msg"></span><div class="title"><span class="t">Export row limit question from Priya</span><span class="sub">Selected</span></div><div class="fact "><span class="av">S</span>Slack</div><div class="fact mono">dm:priya.nair</div><div class="fact "><span class="chip att">unanswered</span></div><div class="age">12m</div><div class="wait you">you</div></div>
+<div class="row  unread"><span class="g msg"></span><div class="title"><span class="t">Export row limit question from Priya</span><span class="sub">Unread</span></div><div class="fact "><span class="av">S</span>Slack</div><div class="fact mono">dm:priya.nair</div><div class="fact "><span class="chip att">unanswered</span></div><div class="age">12m</div><div class="wait you">you</div></div>
+<div class="row  read"><span class="g msg"></span><div class="title"><span class="t">Export row limit question from Priya</span><span class="sub">Read</span></div><div class="fact "><span class="av">S</span>Slack</div><div class="fact mono">dm:priya.nair</div><div class="fact "><span class="chip att">unanswered</span></div><div class="age">12m</div><div class="wait you">you</div></div>
+</div>
+
+<div class="blk"><div class="sec"><h3>Fact kinds</h3></div><div class="cap">Facts · 12/18 ink-subtle · one per column, same columns down the whole list · status colour only on status facts</div><div class="caprow" style="--facts:104px 104px 104px 136px 136px 104px"><div></div><div></div><div>chip 104</div><div>bar 56x4 + label 104</div><div>diffstat mono 104</div><div>mono path 136</div><div>person 16 + name 136</div><div>count 104</div><div style="text-align:right">age 44</div><div>waits on 112 (person)</div></div><div class="row read"><span class="g pr"></span><div class="title"><span class="id">#4170</span><span class="t">Fact kinds in one row</span></div><div class="fact "><span class="chip err">CI red</span></div><div class="fact "><span class="bar ok"><i style="width:60%"></i></span>3 of 5</div><div class="fact "><span class='diffstat'><span class='a'>+120</span> <span class='d'>−8</span></span></div><div class="fact mono">src/Billing/Proration.cs</div><div class="fact "><span class="av">MR</span>Marco R.</div><div class="fact ">7 comments</div><div class="age">2h</div><div class="wait"><span class="av">PN</span>Priya</div></div>
+</div>
+
+<div class="blk cols">
+<div class="l">
+<div class="sec"><h3>Group header</h3></div>
+<div class="cap">Group header · 28 px · 12/500 ink-subtle · count ink-3 · chevron when collapsible · optional right summary · sentence case</div>
+<div class="group" style="margin-top:0"><span class="chev">▾</span>Needs you <span class="n">9</span><span class="right">ranked by what unblocks the most</span></div>
+<div class="cap">Expanded · chevron down</div>
+<div class="group" style="margin-top:0"><span class="chev">▸</span>Moving <span class="n">6</span><span class="right">3 agents · 2 CI runs · 1 in merge queue</span></div>
+<div class="cap">Collapsed · chevron right, rows hidden, summary stays</div>
+<div class="blk sec"><h3>Key footer</h3></div>
+<div class="cap">Key hint footer · 28 px · 11/16 ink-3 · kbd 11 mono · same keys on every list · page keys after a divider (here: r reply)</div>
+<div class="box"><div class="keys" style="height:var(--keys-h)"><span><kbd>j/k</kbd>move</span><span><kbd>Space</kbd>peek</span><span><kbd>Enter</kbd>open</span><span><kbd>Esc</kbd>back</span><span><kbd>/</kbd>filter</span><span><kbd>c</kbd>create</span><span><kbd>.</kbd>actions</span><span><kbd>x</kbd>select</span><span><kbd>Ctrl+K</kbd>palette</span><span style="color:var(--hair-3)">│</span><span><kbd>r</kbd>reply</span></div></div>
+<div class="cap">Never a bare letter that commits a write: approve, merge, pin, drop go through . (actions) or Ctrl+Enter</div>
+<div class="blk sec"><h3>Header and frame numbers</h3></div>
+<div class="cap">Frame · top bar 40 / page header 48 (title 15/22, count, tabs, filter) / body / keys 28 · body is 784 px at 1440x900</div>
+<div class="box"><div class="header" style="height:var(--header-h)"><h1>Reviews</h1><span class="count">4</span><div class="tabs"><a class="on" href="#">Open<span class="n">4</span></a><a href="#">Merged</a></div><div class="filter">Filter<kbd style="margin-left:auto">/</kbd></div></div></div>
+<div class="cap">Page header · 48 px</div>
+</div>
+<div class="r">
+<div class="sec" style="padding:0"><h3>Peek pane</h3></div>
+<div class="cap">Peek · 440 px · s1 · left hairline · header 48 / fields 28 px rows (96 label / value) / body / actions</div>
+<aside class="peek">
+<div class="peek-head"><h2>Invoice PDF shows the wrong VAT for DE workspaces</h2><span class="fact mono dim">BIL-318</span><span class="btn ghost">⤢</span><span class="btn ghost">✕</span></div>
+<dl class="peek-fields">
+<dt>Team</dt><dd>Billing</dd><dt>Assignee</dt><dd><span class="av">JT</span>you</dd><dt>Priority</dt><dd><span class="chip att">Urgent</span></dd>
+<dt>Cycle</dt><dd>2026.11 · week 2</dd><dt>Project</dt><dd>EU invoicing</dd><dt>Estimate</dt><dd>3 points</dd>
+</dl>
+<div class="peek-body"><div class="eyebrow">Description</div>
+<p>Invoices for workspaces with a German billing address print 19 % VAT on the plan line but 0 % on the seat add-ons.</p>
+<p>Three customers noticed this month. Finance wants a corrected PDF for each before the 15th.</p>
+<div class="eyebrow">Activity</div>
+<div class="msgline"><span class="av">LO</span><div><div class="who">Lena Okafor<span class="when">3h</span></div><div class="txt">Reproduced on staging with workspace ws_de_0091.</div></div></div>
+<div class="msgline"><span class="av">MR</span><div><div class="who">Marco Reyes<span class="when">1h</span></div><div class="txt">The tax code lookup skips add-on line items.</div></div></div>
+</div>
+<div class="peek-actions"><span class="btn primary">Start <kbd>.</kbd></span><span class="btn">Comment</span><span class="btn ghost">Hand to agent</span></div>
+</aside>
+<div class="cap">Actions · 2-3 at the bottom · the main one is primary · Esc closes · j/k moves the peek with the cursor</div>
+</div></div>
+</body></html>
