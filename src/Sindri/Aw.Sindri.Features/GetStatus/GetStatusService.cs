@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Health;
@@ -61,7 +62,10 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
 
     private static ProfileStatus Profile(LoadedProfile? approved, Result<LoadedProfile> loaded, string labelPick, string surfacePick) =>
         new(loaded.IsSuccess ? loaded.Value.Hash : null, loaded.IsError ? loaded.Error.Message : null, loaded.IsSuccess ? loaded.Value.Source : null,
-            ModelPick(approved), labelPick, surfacePick);
+            ModelPick(approved), labelPick, surfacePick, ProblemKind(loaded));
+
+    private static string? ProblemKind(Result<LoadedProfile> loaded) =>
+        loaded.IsSuccess ? null : loaded.Error.Code == SindriErrors.ProfileMissing.Code ? "missing" : "invalid";
 
     private async ValueTask<IReadOnlyList<ServiceStatus>> Services(LoadedProfile? approved, CancellationToken cancellationToken)
     {

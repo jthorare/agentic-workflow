@@ -133,7 +133,7 @@ internal sealed class YamlProfileIndexWriter(SindriSettings settings, JsonSerial
         {
             return File.Exists(path)
                 ? File.ReadAllText(path)
-                : SindriErrors.ProfileMissing.With($"{path} doesn't exist (fix: run 'sindri profile init', then and 'sindri repo add <path>')");
+                : SindriErrors.ProfileMissing.With($"{path} doesn't exist (fix: run 'sindri profile init', then 'sindri repo add <path>')");
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
