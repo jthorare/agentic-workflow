@@ -80,6 +80,10 @@ internal sealed class GitProcess : IGit
             : Failed(run, "log");
     }
 
+    // #3122: the real implementation is the next commit.
+    public Result<CommitDiff> BranchChange(string directory, string baseline) =>
+        throw new NotSupportedException("#3122: next commit");
+
     public Result<string> FileAt(string directory, string commit, string path)
     {
         var run = Run(directory, "show", $"{commit}:{path}");
