@@ -71,10 +71,78 @@ internal sealed partial class RepoDocsSource(IReadOnlyList<ContextRepo> repos, C
             return blob.Error;
         }
 
-        // The whole document is cleaned before the span is cut (line-preserving), the same way it was indexed, so a
-        // secret or comment that crosses the span's edge can't come back half-scrubbed. The engine cleans the slice
-        // again at its own boundary, which changes nothing.
-        var clean = scrubbers.Ingest.Clean(blob.Value.Replace("\r\n", "\n", StringComparison.Ordinal), singleLine: false);
+        var clean = CleanDoc(blob.Value);
+        return Cut(reference, at, clean);
+    }
+
+    /// <summary>Many chunks in one go (#3085): one 'git cat-file --batch' per repo for the distinct blobs, each blob cleaned once, then each ref's span cut as <see cref="Fetch"/> cuts it.</summary>
+    public async ValueTask<Result<IReadOnlyList<Result<SourceRecord>>>> FetchMany(IReadOnlyList<SourceRef> references, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(references);
+        var parsed = references.Select(r => (Ref: r, At: Parse(r.Id))).ToList();
+        var blobs = await ReadBlobs([.. parsed], cancellationToken).ConfigureAwait(false);
+        if (blobs.IsError)
+        {
+            return blobs.Error;
+        }
+
+        var cleaned = new Dictionary<(string Repo, string Blob), ScrubbedField>();
+        var records = new List<Result<SourceRecord>>(parsed.Count);
+        foreach (var (reference, at) in parsed)
+        {
+            if (at is not { } where)
+            {
+                records.Add(ContextErrors.UnknownAnchor.With("not a record of this source"));
+                continue;
+            }
+
+            var key = (where.Repo.Path, reference.Version.Value);
+            if (blobs.Value.GetValueOrDefault(key) is not { } text)
+            {
+                records.Add(ContextErrors.UnknownAnchor.With("the repo has no such blob"));   // what Fetch gives for a missing blob
+                continue;
+            }
+
+            if (!cleaned.TryGetValue(key, out var clean))
+            {
+                cleaned[key] = clean = CleanDoc(text);
+            }
+
+            records.Add(Cut(reference, where, clean));
+        }
+
+        return records;
+    }
+
+    // One 'cat-file --batch' per repo for the distinct blob ids the refs cite; null text = the repo has no such blob.
+    private async ValueTask<Result<Dictionary<(string Repo, string Blob), string?>>> ReadBlobs(List<(SourceRef Ref, (ContextRepo Repo, string Path, int Start, int End)? At)> parsed, CancellationToken cancellationToken)
+    {
+        var blobs = new Dictionary<(string Repo, string Blob), string?>();
+        foreach (var group in parsed.Where(p => p.At is not null).GroupBy(p => p.At.GetValueOrDefault().Repo.Path, StringComparer.Ordinal))
+        {
+            var ids = group.Select(p => p.Ref.Version.Value).Distinct(StringComparer.Ordinal).ToList();
+            var read = await git.Blobs(group.Key, ids, cancellationToken).ConfigureAwait(false);
+            if (read.IsError)
+            {
+                return read.Error;
+            }
+
+            foreach (var (id, text) in read.Value)
+            {
+                blobs[(group.Key, id)] = text;
+            }
+        }
+
+        return blobs;
+    }
+
+    // The whole document is cleaned before the span is cut (line-preserving), the same way it was indexed, so a
+    // secret or comment that crosses the span's edge can't come back half-scrubbed. The engine cleans the slice
+    // again at its own boundary, which changes nothing.
+    private ScrubbedField CleanDoc(string blob) => scrubbers.Ingest.Clean(blob.Replace("\r\n", "\n", StringComparison.Ordinal), singleLine: false);
+
+    private static SourceRecord Cut(SourceRef reference, (ContextRepo Repo, string Path, int Start, int End) at, ScrubbedField clean)
+    {
         var lines = clean.Text.Split('\n');
         var start = Math.Clamp(at.Start, 1, lines.Length);
         var text = clean.Blocked ? clean.Text : string.Join('\n', lines[(start - 1)..Math.Clamp(at.End, start, lines.Length)]);
