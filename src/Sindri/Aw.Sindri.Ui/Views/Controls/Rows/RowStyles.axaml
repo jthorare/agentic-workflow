@@ -1,4 +1,85 @@
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <!-- Row, RowList and PeekPane looks (#2978): filled in by the control commit. -->
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:rows="using:Aw.Sindri.Ui.Views.Controls.Rows">
+  <!-- Row (#2978, grammar v2): [glyph 16][id + title, flex, min 200][facts][age 44][waits on 112], 12 px gaps, 24 px inset. Rest is transparent,
+       hover Surface2, the keyboard cursor a 1 px PrimaryHover ring inset, the selected row PrimarySoft with a 2 px Primary bar. No borders between rows. -->
+  <Style Selector="rows|Row">
+    <Setter Property="Height" Value="{DynamicResource Row.Height.Default}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <Border Name="PART_Fill" Background="{TemplateBinding Background}" />
+          <Grid Margin="{DynamicResource Row.Inset.Thickness}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" MinWidth="{StaticResource Row.Col.TitleMin}" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <rows:RowGlyphView Name="PART_Glyph" VerticalAlignment="Center" />
+            <rows:TitleLine Grid.Column="1" Margin="12,0,0,0" ClipToBounds="True">
+              <TextBlock Name="PART_Id" Classes="row-id" />
+              <TextBlock Name="PART_Title" Classes="row-title" />
+              <TextBlock Name="PART_Sub" Classes="row-sub" IsVisible="False" />
+            </rows:TitleLine>
+            <StackPanel Name="PART_Facts" Grid.Column="2" Orientation="Horizontal" />
+            <TextBlock Name="PART_Age" Grid.Column="3" Classes="row-age" Width="{DynamicResource Row.Col.Age}" Margin="12,0,0,0" />
+            <TextBlock Name="PART_Wait" Grid.Column="4" Classes="row-wait" Width="{DynamicResource Row.Col.Wait}" Margin="12,0,0,0" />
+          </Grid>
+          <StackPanel Name="PART_Actions" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,24,0" IsVisible="False" />
+          <Border Name="PART_Ring" IsHitTestVisible="False" IsVisible="False" BorderThickness="1" BorderBrush="{DynamicResource Brush.PrimaryHover}" />
+          <Border Name="PART_SelBar" Width="2" HorizontalAlignment="Left" IsVisible="False" IsHitTestVisible="False" Background="{DynamicResource Brush.Primary}" />
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector=".comfortable rows|Row">
+    <Setter Property="Height" Value="{DynamicResource Row.Height.Comfortable}" />
+  </Style>
+  <Style Selector="rows|Row:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+  </Style>
+  <Style Selector="rows|Row.sel">
+    <Setter Property="Background" Value="{DynamicResource Brush.PrimarySoft}" />
+  </Style>
+  <Style Selector="rows|Row.sel /template/ Border#PART_SelBar">
+    <Setter Property="IsVisible" Value="True" />
+  </Style>
+  <Style Selector="rows|Row.cursor /template/ Border#PART_Ring">
+    <Setter Property="IsVisible" Value="True" />
+  </Style>
+  <!-- Row buttons take the right end (over age and waits on) on hover and under the cursor. -->
+  <Style Selector="rows|Row:pointerover /template/ StackPanel#PART_Actions, rows|Row.cursor /template/ StackPanel#PART_Actions">
+    <Setter Property="IsVisible" Value="True" />
+  </Style>
+  <Style Selector="rows|Row /template/ TextBlock.row-id">
+    <Setter Property="FontFamily" Value="{DynamicResource Font.Mono}" />
+    <Setter Property="FontSize" Value="{DynamicResource Type.Mono.Size}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="rows|Row /template/ TextBlock.row-title">
+    <Setter Property="FontSize" Value="{DynamicResource Type.Body.Size}" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    <Setter Property="TextWrapping" Value="NoWrap" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="rows|Row /template/ TextBlock.row-sub">
+    <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkTertiary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="rows|Row /template/ TextBlock.row-age">
+    <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+    <Setter Property="TextAlignment" Value="Right" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="rows|Row /template/ TextBlock.row-wait">
+    <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
 </Styles>
