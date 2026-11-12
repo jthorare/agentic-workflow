@@ -11,10 +11,15 @@ internal sealed class CompiledRules
     private readonly (string Id, Regex Regex)[] _rules;
     private readonly Regex _placeholder;
 
-    public CompiledRules(IReadOnlyList<RedactionRule> rules, IReadOnlyList<string> ruleIds, TimeSpan matchTimeout)
+    /// <param name="rules">The rules, in priority order.</param>
+    /// <param name="ruleIds">Every rule id, for the placeholder skip.</param>
+    /// <param name="matchTimeout">The match timeout for each rule.</param>
+    /// <param name="engine">How the rules run: <see cref="RegexOptions.None"/> interpreted, or <see cref="RegexOptions.Compiled"/>;
+    /// it never changes what a rule matches.</param>
+    public CompiledRules(IReadOnlyList<RedactionRule> rules, IReadOnlyList<string> ruleIds, TimeSpan matchTimeout, RegexOptions engine = RegexOptions.None)
     {
         MatchTimeout = matchTimeout;
-        _rules = [.. rules.Select(r => (r.Id, new Regex(r.Pattern, r.Options | Always, matchTimeout)))];
+        _rules = [.. rules.Select(r => (r.Id, new Regex(r.Pattern, r.Options | Always | engine, matchTimeout)))];
 
         // Only a placeholder naming one of these rules is skipped, so a crafted "[REDACTED:<secret>]" is still scanned.
         var ids = string.Join('|', ruleIds.Append("blocked").Append("secret-field").Select(Regex.Escape));

@@ -17,14 +17,18 @@ public sealed class Redactor : IRedactor
     private readonly CompiledRules?[] _tiers = new CompiledRules?[TierCount];
     private readonly Regex _secretName;
     private readonly TimeProvider? _clock;
+    private readonly RegexOptions _engine;
 
     /// <summary>A redactor over <paramref name="rules"/> (tests inject a slow rule to prove the timeout blocks). With a
-    /// <paramref name="clock"/>, a whole scrub also gets a deadline (<see cref="ScanBudgetFactor"/>).</summary>
-    internal Redactor(IReadOnlyList<RedactionRule> rules, TimeSpan matchTimeout, TimeProvider? clock = null)
+    /// <paramref name="clock"/>, a whole scrub also gets a deadline (<see cref="ScanBudgetFactor"/>). With
+    /// <paramref name="compiled"/>, every rule is built with <see cref="RegexOptions.Compiled"/>: the same matches and
+    /// timeouts, so <see cref="RulesDigest"/> is the same too.</summary>
+    internal Redactor(IReadOnlyList<RedactionRule> rules, TimeSpan matchTimeout, TimeProvider? clock = null, bool compiled = false)
     {
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(matchTimeout, TimeSpan.Zero);
         _rules = rules;
         _clock = clock;
+        _engine = compiled ? RegexOptions.Compiled : RegexOptions.None;
         _matchTimeout = Cap(matchTimeout.TotalMilliseconds);
         RuleIds = [.. rules.Select(r => r.Id).Distinct(StringComparer.Ordinal)];
         RulesDigest = Digest(rules);
@@ -42,6 +46,16 @@ public sealed class Redactor : IRedactor
 
     /// <summary>A redactor over the built-in rules with <see cref="DefaultMatchTimeout"/>.</summary>
     public static Redactor Default { get; } = new(BuiltinRules.All, DefaultMatchTimeout);
+
+    // why: built on first use, so a tool that never asks for it (the NativeAOT hooks) never compiles a regex
+    private static readonly Lazy<Redactor> _compiledBuiltins = new(() => new(BuiltinRules.All, DefaultMatchTimeout, compiled: true));
+
+    /// <summary>
+    /// <see cref="Default"/>'s rules and timeout with every rule compiled to IL (<see cref="RegexOptions.Compiled"/>), for a
+    /// long-running JIT host that scrubs many texts (Sindri's projector, #2900). Each rule pays its compile on first use.
+    /// NativeAOT ignores the option and runs the rules interpreted, so a short-lived or AOT tool keeps <see cref="Default"/>.
+    /// </summary>
+    public static Redactor Compiled => _compiledBuiltins.Value;
 
     /// <summary>The rule ids, in priority order (an earlier rule names an overlapping hit).</summary>
     public IReadOnlyList<string> RuleIds { get; }
@@ -163,7 +177,7 @@ public sealed class Redactor : IRedactor
     private CompiledRules RulesFor(int length)
     {
         var tier = TierFor(length);
-        return _tiers[tier] ??= new CompiledRules(_rules, RuleIds, MatchTimeoutFor(_matchTimeout, length));
+        return _tiers[tier] ??= new CompiledRules(_rules, RuleIds, MatchTimeoutFor(_matchTimeout, length), _engine);
     }
 
     /// <summary>The per-pattern match timeout for a text of <paramref name="length"/> characters: <paramref name="baseTimeout"/>

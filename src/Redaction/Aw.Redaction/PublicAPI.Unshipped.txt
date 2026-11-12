@@ -96,3 +96,4 @@ static Aw.Redaction.ExtraPatternError.operator !=(Aw.Redaction.ExtraPatternError
 static Aw.Redaction.ExtraPatternError.operator ==(Aw.Redaction.ExtraPatternError? left, Aw.Redaction.ExtraPatternError? right) -> bool
 static Aw.Redaction.Redactor.Create(System.Collections.Generic.IReadOnlyList<Aw.Redaction.ExtraPattern!>! extraPatterns, System.TimeSpan matchTimeout, System.TimeProvider! clock) -> Aw.Redaction.RedactorResult!
 Aw.Redaction.Redactor.RulesDigest.get -> string!
+static Aw.Redaction.Redactor.Compiled.get -> Aw.Redaction.Redactor!
