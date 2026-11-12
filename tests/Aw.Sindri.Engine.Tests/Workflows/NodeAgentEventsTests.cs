@@ -77,14 +77,34 @@ public sealed class NodeAgentEventsTests
     [Fact]
     public async Task A_node_that_runs_past_its_timeout_ends_timed_out()
     {
-        var runtime = new FakeAgentNodeRuntime { Timeout = TimeSpan.FromSeconds(3) };
+        var runtime = new FakeAgentNodeRuntime { Timeout = TimeSpan.FromSeconds(3), AskEvery = TimeSpan.FromSeconds(1) };
         await using var rig = await GraphRig.StartAsync(runtime);
         var run = await AgentNodeRig.Start(rig);
+        await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
+        var clock = System.Diagnostics.Stopwatch.StartNew();
 
         _ = await rig.Final(run);
+        var ranFor = clock.Elapsed;
         var events = await EventsUntil(rig, static e => e.Any(x => Text(x, "state").StartsWith("ended-", StringComparison.Ordinal)));
 
         Assert.Equal(NodeAgentStates.EndedTimedOut, Text(events[^1], "state"));
+        Assert.True(ranFor >= TimeSpan.FromSeconds(2.9), "the node ended after " + ranFor.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " s, before its 3 s timeout");
+    }
+
+    // why: the wait counted the slice it had just waited out twice, so a 6 s timeout ended at about 5 s
+    [Fact]
+    public async Task A_report_just_before_the_timeout_still_succeeds()
+    {
+        var runtime = new FakeAgentNodeRuntime { Timeout = TimeSpan.FromSeconds(6), AskEvery = TimeSpan.FromSeconds(1) };
+        await using var rig = await GraphRig.StartAsync(runtime);
+        var run = await AgentNodeRig.Start(rig);
+        await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
+
+        await Task.Delay(TimeSpan.FromSeconds(5.5), Token);
+        _ = await rig.Control.Report(run, new AgentNodeReport(AgentNodeRig.Agent, ItemIndex: 0, "{}", Human: false), Token);
+        var final = await rig.Final(run);
+
+        Assert.Equal(WorkflowRunStatus.Succeeded, final.Status);
     }
 
     [Fact]
