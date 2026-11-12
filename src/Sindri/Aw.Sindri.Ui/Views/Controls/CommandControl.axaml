@@ -7,21 +7,21 @@
   <!-- One catalog row as a control (UI spec §7, U3) with its §4.1 lifecycle. A row the app can send: a button; a row it has no form
        for: the copy block (terminal glyph, the CLI, Copy). -->
   <StackPanel Spacing="{StaticResource Space.XXS}">
-    <Grid x:Name="ButtonRow" ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource Space.XS}" IsVisible="{Binding !IsCopyOnly}">
+    <WrapPanel x:Name="ButtonRow" Orientation="Horizontal" IsVisible="{Binding !IsCopyOnly}">
       <Button x:Name="RunButton" Classes="command-control" IsEnabled="{Binding IsSendable}" Click="OnRun"
               AutomationProperties.Name="{Binding Name}">
-        <StackPanel Orientation="Horizontal" Spacing="8">
+        <Grid ColumnDefinitions="Auto,*">
           <icons:StateIcon x:Name="RunSpinner" Icon="Spinner" IsVisible="{Binding IsSending}" Spins="{Binding IsSending}"
-                           VerticalAlignment="Center" />
-          <TextBlock x:Name="RunLabel" Classes="button" Text="{Binding Label}" VerticalAlignment="Center" />
-        </StackPanel>
+                           VerticalAlignment="Center" Margin="0,0,8,0" />
+          <TextBlock x:Name="RunLabel" Grid.Column="1" Classes="button" Text="{Binding Label}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+        </Grid>
       </Button>
-      <Grid x:Name="AcceptedLine" Grid.Column="1" ColumnDefinitions="Auto,*" ColumnSpacing="8" IsVisible="{Binding IsAccepted}" VerticalAlignment="Center"
+      <Grid x:Name="AcceptedLine" Margin="8,0,0,0" ColumnDefinitions="Auto,*" ColumnSpacing="8" IsVisible="{Binding IsAccepted}" VerticalAlignment="Center"
             AutomationProperties.Name="{Binding Outcome}">
         <icons:StateIcon Glyph="Ok" VerticalAlignment="Center" />
         <TextBlock x:Name="OutcomeText" Grid.Column="1" Classes="caption" Text="{Binding Outcome}" TextWrapping="Wrap" VerticalAlignment="Center" />
       </Grid>
-    </Grid>
+    </WrapPanel>
 
     <!-- A destructive control asks first (§8, E-8): its question, Confirm (sends once) and Keep (Esc; nothing sent). -->
     <StackPanel x:Name="ConfirmRow" Spacing="{StaticResource Space.XXS}" IsVisible="{Binding IsConfirming}">
@@ -39,7 +39,7 @@
 
     <!-- The copy block. It never offers to run the command. -->
     <StackPanel x:Name="CopyBlock" Spacing="{StaticResource Space.XXS}" IsVisible="{Binding IsCopyOnly}">
-      <Border Classes="command" HorizontalAlignment="Stretch">
+      <Border Classes="command" HorizontalAlignment="Left">
         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource Space.XS}">
           <TextBlock x:Name="TerminalGlyph" Classes="mono subtle" Text="&gt;_" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
           <TextBlock x:Name="CliText" Grid.Column="1" Classes="mono" Text="{Binding Cli}" TextWrapping="Wrap" VerticalAlignment="Center"
