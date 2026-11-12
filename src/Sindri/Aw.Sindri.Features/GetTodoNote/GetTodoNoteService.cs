@@ -33,7 +33,7 @@ internal sealed class GetTodoNoteService(IProjectorStatus status, ICallerContext
         var located = await locator.Locate(cancellationToken).ConfigureAwait(false);
         var asOf = status.Current.AsOf;
         var current = note.Status;
-        if (located.IsError && string.Equals(located.Error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal))
+        if (located.IsError && string.Equals(located.Error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal) && profileFile?.Exists() != true)
         {
             return new GetTodoNoteResponse(asOf, TodoNoteWords.Of(TodoNoteState.NotSetUp), Vault: null, Note: null, current.LastCheckAt, LastSyncAt: null, LastError: null, [], Hold: null, [], []);   // no profile yet (#3113): not a failed read
         }

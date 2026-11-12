@@ -62,11 +62,11 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
 
     private static ProfileStatus Profile(LoadedProfile? approved, Result<LoadedProfile> loaded, string labelPick, string surfacePick) =>
         new(loaded.IsSuccess ? loaded.Value.Hash : null, loaded.IsError ? loaded.Error.Message : null, loaded.IsSuccess ? loaded.Value.Source : null,
-            ModelPick(approved), labelPick, surfacePick, ProblemKind(loaded));
+            ModelPick(approved), labelPick, surfacePick, ProblemKind(loaded, profiles.FileExists));
 
-    // 'missing' when there is no profile file yet, 'invalid' for any other reason it won't load, null when it loads (#3113): the app reads the word, not the message.
-    private static string? ProblemKind(Result<LoadedProfile> loaded) =>
-        loaded.IsSuccess ? null : string.Equals(loaded.Error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal) ? "missing" : "invalid";
+    // 'missing' when there is no profile file yet, 'invalid' for any other reason it won't load (a file the source can't read answers SND-PROFILE-001 too, so the file must be absent), null when it loads (#3113): the app reads the word, not the message.
+    private static string? ProblemKind(Result<LoadedProfile> loaded, bool fileExists) =>
+        loaded.IsSuccess ? null : string.Equals(loaded.Error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal) && !fileExists ? "missing" : "invalid";
 
     private async ValueTask<IReadOnlyList<ServiceStatus>> Services(LoadedProfile? approved, CancellationToken cancellationToken)
     {
