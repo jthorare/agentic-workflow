@@ -241,6 +241,8 @@
   <SolidColorBrush x:Key="Brush.Chart.Tick" Color="{StaticResource Color.Success}" />
   <SolidColorBrush x:Key="Brush.Chart.TickDim" Color="{StaticResource Color.Surface3}" />
   <BoxShadows x:Key="Shadow.Float">0 8 24 0 #66000000</BoxShadows>
+  <!-- #3245: the stacked-row focus ring, an inset 2 px ring in Color.PrimaryHover (#828fff); keep both in step. -->
+  <BoxShadows x:Key="Shadow.FocusRing">inset 0 0 0 2 #828fff</BoxShadows>
   <!-- §14.3 Sizes (px). Row and control minimums are scaled with the text by the views that use them. -->
   <x:Double x:Key="Size.PanelHeader">36</x:Double>
   <x:Double x:Key="Size.TopBar">48</x:Double>

@@ -23,6 +23,9 @@ public sealed class StackedRowFocusRingTests
         { 0, 1.3 }, { 1, 1.3 }, { 2, 1.3 },
     };
 
+    private static Color TokenColor(string key) =>
+        Application.Current is { } app && app.TryFindResource(key, app.ActualThemeVariant, out var value) && value is ISolidColorBrush brush ? brush.Color : throw new InvalidOperationException($"{key} is not a brush token");
+
     private sealed record Snapshot(double Height, Thickness Border, Thickness Padding, int Shadows);
 
     private static Snapshot Take(Border row) =>
@@ -32,7 +35,7 @@ public sealed class StackedRowFocusRingTests
     [MemberData(nameof(Cases))]
     public async Task Focusing_a_stacked_row_changes_no_layout_and_draws_the_ring_inside_its_bounds(int index, double scale)
     {
-        var (before, after, ring, bounds) = await OnUi(() =>
+        var (before, after, ring, tokenColour) = await OnUi(() =>
         {
             var resources = Application.Current!.Resources;
             TextScale.Apply(resources, scale);
@@ -58,9 +61,8 @@ public sealed class StackedRowFocusRingTests
                 window.UpdateLayout();
                 var focused = Take(target);
                 var shadow = target.BoxShadow.Count == 1 ? target.BoxShadow[0] : default;
-                var below = rows.Select(r => r.Bounds.Top).ToArray();
                 window.Close();
-                return (unfocused, focused, (shadow, target.IsFocused, target.Classes.Contains(":focus-visible")), below);
+                return (unfocused, focused, shadow, TokenColor("Brush.PrimaryHover"));
             }
             finally
             {
@@ -72,10 +74,9 @@ public sealed class StackedRowFocusRingTests
         Assert.Equal(before.Border, after.Border);
         Assert.Equal(before.Padding, after.Padding);
         Assert.Equal(1, after.Shadows);
-        Assert.True(ring.shadow.IsInset);
-        Assert.Equal(2, ring.shadow.Spread);
-        Assert.Equal(0, ring.shadow.Blur);
-        Assert.Equal(Color.Parse("#828fff"), ring.shadow.Color);
-        Assert.Equal(3, bounds.Length);
+        Assert.True(ring.IsInset);
+        Assert.Equal(2, ring.Spread);
+        Assert.Equal(0, ring.Blur);
+        Assert.Equal(tokenColour, ring.Color);
     }
 }

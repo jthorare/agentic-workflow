@@ -26,7 +26,7 @@
   <!-- #3245: the ring is an inset 2 px shadow, so it draws inside the row's own bounds and no state changes BorderThickness or Padding.
        Rows sit 0 px apart: a thicker border grew the row ~3 px and moved every row below it. One class for every item-row view. -->
   <Style Selector="Border.item-row:focus-visible">
-    <Setter Property="BoxShadow" Value="inset 0 0 0 2 #828fff" />
+    <Setter Property="BoxShadow" Value="{DynamicResource Shadow.FocusRing}" />
   </Style>
   <Style Selector="Border.item-row Button">
     <Setter Property="FocusAdorner" Value="{x:Null}" />
