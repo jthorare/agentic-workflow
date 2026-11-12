@@ -63,6 +63,12 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
+        if (!AnchorShaped(words) && Whole.AreasMatching(AnchorText) is { Count: > 0 } cards)
+        {
+            ShowCards(cards);
+            return;
+        }
+
         if (await Resolve(api, words, generation, cancellationToken).ConfigureAwait(true) is not var (anchors, fromQuestion, suggested))
         {
             return;
@@ -75,6 +81,16 @@ internal sealed partial class ContextPageViewModel
         }
 
         await Draw(api, result, fromQuestion, suggested, cancellationToken).ConfigureAwait(true);
+    }
+
+    // why: on the overview the cards are what is on the page, so a word in a card's title filters to that card before any question is asked (#3084)
+    private void ShowCards(IReadOnlyList<string> cards)
+    {
+        (Choices, Problem) = ([], string.Empty);
+        Whole.ApplySearch([], cards, zoomed: false);
+        Head = Whole.Head;
+        ChangedWhole();
+        Refresh();
     }
 
     // The answer onto the page: the map, or the refusal with its suggestions (the read's own, else the question's).

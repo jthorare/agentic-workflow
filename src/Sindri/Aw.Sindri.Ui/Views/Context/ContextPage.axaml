@@ -131,7 +131,14 @@
           <ItemsControl ItemsSource="{Binding Choices}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="x:String">
-                <Button Content="{Binding}" Click="OnPick" AutomationProperties.Name="{Binding}" />
+                <!-- why: a string Content is drawn by AccessText, which eats the first "_" of a key like aw_sindri_host (#3084); the template draws it as plain text -->
+                <Button Content="{Binding}" Click="OnPick" AutomationProperties.Name="{Binding}">
+                  <Button.ContentTemplate>
+                    <DataTemplate x:DataType="x:String">
+                      <TextBlock Text="{Binding}" />
+                    </DataTemplate>
+                  </Button.ContentTemplate>
+                </Button>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
