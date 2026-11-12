@@ -5,6 +5,10 @@ namespace Aw.Sindri.Infrastructure.Views;
 /// <summary>views.db's SQL. A view's table comes from this fixed map (<see cref="ViewNames"/>), never from input.</summary>
 internal static class ViewSql
 {
+    /// <summary>The migration runner's own table (the same runner as the ledger's).</summary>
+    internal const string VersionTable = "schema_version";
+    /// <summary>1 when at least $count migrations are recorded: the file is fully migrated for this build.</summary>
+    internal const string AllApplied = "SELECT (SELECT COUNT(*) FROM schema_version) >= $count";
     /// <summary>Whether a table exists: views.db is created before its migration commits, so a reader can open it with no tables yet.</summary>
     internal const string TableExists = "SELECT EXISTS (SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = $name)";
 
