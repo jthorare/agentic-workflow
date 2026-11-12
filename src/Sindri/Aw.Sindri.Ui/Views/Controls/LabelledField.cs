@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using Avalonia.Data;
 
 namespace Aw.Sindri.Ui.Views.Controls;
 
@@ -30,7 +29,7 @@ internal sealed class LabelledField : ContentControl
     /// <summary>Initializes a new instance of the <see cref="LabelledField"/> class.</summary>
     public LabelledField()
     {
-        Template = new FuncControlTemplate<LabelledField>((field, scope) =>
+        Template = new FuncControlTemplate<LabelledField>((field, _) =>
         {
             var caption = new TextBlock { Name = "PART_Caption" };
             caption.Classes.Add("caption");
@@ -40,7 +39,6 @@ internal sealed class LabelledField : ContentControl
             _ = input.Bind(ContentPresenter.ContentProperty, field.GetBindingObservable(ContentProperty));
             var line = new FieldError { Name = "PART_Error", Margin = new Thickness(0, 4, 0, 0) };
             _ = line.Bind(FieldError.TextProperty, field.GetBindingObservable(ErrorTextProperty));
-            _ = scope;
             return new StackPanel { Children = { caption, input, line } };
         });
     }
