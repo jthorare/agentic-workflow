@@ -63,6 +63,39 @@ public sealed class SystemInsporaFramesTests : FrameHost
         Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"system-inspora-{width:0}-{(typical ? "typical" : "empty")}-index"), prefix: "");
     });
 
+    // #2905: the cards fill the row. At 1280 two fixed 440 px cards ended at 904 of 1232 and left a ~330 px strip. Now every full row ends
+    // within 24 px of the content edge, as many columns as fit at 420 px or more (the 356 px backlog bar + the 24 px insets need 404).
+    [Theory]
+    [InlineData(1000, 2)]
+    [InlineData(1280, 2)]
+    [InlineData(1440, 3)]
+    public Task The_cards_fill_each_row_to_the_content_edge(double width, int columns) => OnUi(async () =>
+    {
+        Server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, Typical);
+
+        var (window, shell) = await Connected(width: width);
+        shell.GoTo(PageId.System);
+        Settle(window);
+
+        var overview = Named<StackPanel>(window, "OverviewPanel");
+        var cards = Named<Panel>(window, "SystemCards").Children.Where(c => c.IsVisible).ToList();
+        var culture = System.Globalization.CultureInfo.InvariantCulture;
+        Assert.True(cards.Count > columns, string.Create(culture, $"{cards.Count} cards, too few to fill a row of {columns}"));
+        var rows = cards.Select(c => (Card: c, At: c.TranslatePoint(default, overview)!.Value))
+            .GroupBy(c => Math.Round(c.At.Y, MidpointRounding.AwayFromZero)).Select(r => r.ToList()).ToList();
+        Assert.Equal(columns, rows[0].Count);
+        var edge = overview.Bounds.Width;
+        foreach (var row in rows.Where(r => r.Count == columns))
+        {
+            var (card, at) = row.MaxBy(c => c.At.X);
+            var right = at.X + card.Bounds.Width;
+            Assert.True(Math.Abs(edge - right) <= 24, string.Create(culture, $"a row of {columns} ends at {right}, the content edge is {edge}"));
+        }
+
+        Assert.All(cards, c => Assert.True(c.Bounds.Width >= 404, string.Create(culture, $"{c.Name} is {c.Bounds.Width} wide, under the 404 the backlog bar needs")));
+        Frame(window, string.Create(culture, $"system-grid-{width:0}"), prefix: "gh2905-");
+    });
+
     // The ticks and their caption end inside the card's 24 px inset (side by side, the caption ran past the card and was clipped).
     private static void BacklogEndsInsideTheCard(Window window, Control indexPanel)
     {
