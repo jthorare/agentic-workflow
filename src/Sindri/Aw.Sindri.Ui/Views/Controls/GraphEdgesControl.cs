@@ -93,6 +93,26 @@ internal sealed class GraphEdgesControl : Control, ICustomHitTest
         return null;
     }
 
+    /// <summary>The pill behind an edge's label, in this control's coordinates.</summary>
+    /// <param name="key">The edge's key.</param>
+    /// <returns>The pill, or null when the edge has no label or does not exist.</returns>
+    internal Rect? LabelPill(string key) => Edges.Any(e => string.Equals(e.Key, key, StringComparison.Ordinal)) ? null : null;
+
+    /// <summary>The three corners of an edge's arrow head, the tip first (#3234).</summary>
+    /// <param name="key">The edge's key.</param>
+    /// <returns>The corners, or null when the edge has no arrow or does not exist.</returns>
+    internal Point[]? ArrowHead(string key) => Edges.Any(e => string.Equals(e.Key, key, StringComparison.Ordinal)) ? null : null;
+
+    /// <summary>The stroke width an edge draws at: 2 px, or double when lit.</summary>
+    /// <param name="key">The edge's key.</param>
+    /// <returns>The width in px.</returns>
+    internal double StrokeWidth(string key) => Highlighted.Contains(key) || string.Equals(key, Hovered, StringComparison.Ordinal) ? 2 * Stroke : Stroke;
+
+    /// <summary>The opacity an edge draws at: 0.42 when dimmed, otherwise 1.</summary>
+    /// <param name="key">The edge's key.</param>
+    /// <returns>The opacity.</returns>
+    internal double StrokeOpacity(string key) => Dimmed.Contains(key) ? DimmedOpacity : 1;
+
     /// <inheritdoc/>
     public bool HitTest(Point point) => EdgeAt(point) is not null;
 
