@@ -55,6 +55,7 @@ exit 2
   services  heartbeat every 5s
   views     cursor N of M
   health    healthy
+  jobs      none running
   api       127.0.0.1:PORT
   lease     held by pid PID, epoch 1
   ready     running
@@ -70,6 +71,7 @@ removed: edits apply on save (nothing to approve; `sindri profile set`, `repo ad
   services  heartbeat every 5s
   views     cursor N of M
   health    healthy
+  jobs      none running
   api       127.0.0.1:PORT
   lease     held by pid PID, epoch 1
   ready     running
@@ -92,6 +94,7 @@ views rebuild requested (sequence SEQ)
   services  heartbeat every 5s
   views     cursor N of M
   health    healthy
+  jobs      none running
   api       127.0.0.1:PORT
   lease     held by pid PID, epoch 1
   ready     running
