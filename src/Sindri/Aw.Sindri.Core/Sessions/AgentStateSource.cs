@@ -18,7 +18,7 @@ public enum AgentStateSource
     [JsonStringEnumMemberName("transcript")]
     Transcript,
 
-    /// <summary>An <c>aw-meta</c> read: lane context, usage, merge queue, obligations, health or heavy slots.</summary>
+    /// <summary>An <c lang="text">aw-meta</c> read: lane context, usage, merge queue, obligations, health or heavy slots.</summary>
     [JsonStringEnumMemberName("aw-meta")]
     AwMeta,
 

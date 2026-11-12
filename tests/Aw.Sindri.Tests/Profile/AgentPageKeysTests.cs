@@ -3,7 +3,7 @@ using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Tests.Profile;
 
-/// <summary>The Agents page's profile keys (Agents page spec §8, phase A0): <c>agents.idleOwedMinutes</c>, <c>agents.slotWaitMinutes</c> and <c>agents.page</c>.</summary>
+/// <summary>The Agents page's profile keys (Agents page spec §8, phase A0): <c lang="text">agents.idleOwedMinutes</c>, <c lang="text">agents.slotWaitMinutes</c> and <c lang="text">agents.page</c>.</summary>
 public sealed class AgentPageKeysTests : IDisposable
 {
     private const string Base = "schemaVersion: 1\nuser: thor\n";

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Aw.Kernel.Json;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Tests.Agents;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,8 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
-/// The Agents list's wire shape (Agents page spec §3.1, §8, phase A0): the rows as a client reads them, with <c>reasons[]</c>. No route serves this yet (the session-rows PR, A1, joins the fields to
-/// <c>GET /sindri/sessions</c>), so the body is the rows serialized through the host's own JSON options, which pins the field names, order and enum words the route will keep.
+/// The Agents list's wire shape (Agents page spec §3.1, §8, phase A0): the rows as a client reads them, with <c lang="text">reasons[]</c>. No route serves this yet (the session-rows PR, A1, joins the fields to
+/// <c lang="text">GET /sindri/sessions</c>), so the body is the rows serialized through the host's own JSON options, which pins the field names, order and enum words the route will keep.
 /// 'needs-you' is the spec's §4.3 walk (tests/fixtures/agents/needs-you.json); 'every-reason' holds one row for each reason, each state and a builder.
 /// </summary>
 internal static class AgentScenarios
@@ -71,7 +72,7 @@ internal static class AgentScenarios
             inputs.Lane, "agentic-workflow", inputs.AtRecycleMark ? "docs/agents-page-spec" : null, inputs.QueuedPrs.Count > 0 ? string.Create(CultureInfo.InvariantCulture, $"PR #{inputs.QueuedPrs[0].Number}") : null,
             inputs.ContextTokens, inputs.AtRecycleMark, inputs.HeavyWait is { } wait ? string.Create(CultureInfo.InvariantCulture, $"{wait.Held} of {wait.Cap}") : null);
         return new AgentRow(
-            id, Version: 1, state, inputs.StateSource, _t0, inputs.Estimated, title ?? inputs.Name, facts, reasons, parent, inputs.Asking?.Since ?? inputs.StateSince,
+            AgentRowId.From(id), Version: 1, state, inputs.StateSource, _t0, inputs.Estimated, title ?? inputs.Name, facts, reasons, parent, inputs.Asking?.Since ?? inputs.StateSince,
             live ? _t0.AddSeconds(-20) : null, Blocks: null, Actions(inputs, reasons), [.. inputs.QueuedPrs.Select(static p => string.Create(CultureInfo.InvariantCulture, $"pr:{p.Number}"))]);
     }
 
@@ -84,6 +85,6 @@ internal static class AgentScenarios
             AgentReasonKind.IdleOwed when inputs.QueuedPrs.Count > 0 => ["jump", "open-in-home"],
             AgentReasonKind.UsageLimit or AgentReasonKind.SlotWait => ["open-peek"],
             AgentReasonKind.PrReady => ["open-in-home", "jump"],
-            _ => ["jump"],
+            AgentReasonKind.PermissionPrompt or AgentReasonKind.OwnerQuestion or AgentReasonKind.Login or AgentReasonKind.IdleOwed => ["jump"],
         };
 }

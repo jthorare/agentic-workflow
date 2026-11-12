@@ -11,7 +11,7 @@ public sealed class AgentErrorsTests
     {
         var codes = SindriErrors.All.Where(static e => e.Code.StartsWith("SND-AGENT-", StringComparison.Ordinal)).Select(static e => e.Code).Order(StringComparer.Ordinal).ToList();
 
-        Assert.Equal(Enumerable.Range(1, 11).Select(static n => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"SND-AGENT-{n:000}")), codes);
+        Assert.Equal(Enumerable.Range(1, 11).Select(static n => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"SND-AGENT-{n:000}")), codes, StringComparer.Ordinal);
     }
 
     [Theory, Trait("Lane", "unit")]
@@ -27,9 +27,7 @@ public sealed class AgentErrorsTests
     [InlineData("SND-AGENT-010", ErrorKind.Invalid)]
     [InlineData("SND-AGENT-011", ErrorKind.Timeout)]
     public void Each_code_has_the_kind_that_gives_its_http_status(string code, ErrorKind kind)
-    {
-        Assert.Equal(kind, SindriErrors.All.Single(e => e.Code == code).Kind);
-    }
+        => Assert.Equal(kind, SindriErrors.All.Single(e => e.Code == code).Kind);
 
     [Fact, Trait("Lane", "unit")]
     public void The_recoverable_codes_carry_a_fix_line()

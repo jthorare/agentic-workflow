@@ -33,7 +33,8 @@ public static class AgentReasons
             AskingReason.Approval => new AgentReason(
                 1, AgentReasonKind.PermissionPrompt, "asking", asking.Tool is { Length: > 0 } tool ? $"{i.Name}: asking to run {tool}" : $"{i.Name}: asking for approval", asking.Since, i.StateSource),
             AskingReason.Input => new AgentReason(1, AgentReasonKind.OwnerQuestion, "question", $"{i.Name}: asking you a question", asking.Since, i.StateSource),
-            _ => new AgentReason(1, AgentReasonKind.Login, "login", $"{i.Name}: needs a login", asking.Since, i.StateSource),
+            AskingReason.Auth => new AgentReason(1, AgentReasonKind.Login, "login", $"{i.Name}: needs a login", asking.Since, i.StateSource),
+            _ => null,
         };
     }
 

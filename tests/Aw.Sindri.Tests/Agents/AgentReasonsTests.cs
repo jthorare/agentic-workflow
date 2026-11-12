@@ -14,9 +14,7 @@ public sealed class AgentReasonsTests
 
     [Fact, Trait("Lane", "unit")]
     public void A_row_with_nothing_owed_has_no_reason()
-    {
-        Assert.Empty(AgentReasons.Evaluate(Lane("api", idleMinutes: 31) with { State = SessionState.Idle, ContextTokens = 61_000 }));
-    }
+        => Assert.Empty(AgentReasons.Evaluate(Lane("api", idleMinutes: 31) with { State = SessionState.Idle, ContextTokens = 61_000 }));
 
     [Fact, Trait("Lane", "unit")]
     public void A_permission_prompt_is_class_1_and_names_the_tool()
@@ -141,9 +139,7 @@ public sealed class AgentReasonsTests
 
     [Fact, Trait("Lane", "unit")]
     public void Obligations_count_for_the_meta_lane_only()
-    {
-        Assert.Empty(AgentReasons.Evaluate(Lane("qa", idleMinutes: 30) with { State = SessionState.Idle, OpenObligations = 3 }));
-    }
+        => Assert.Empty(AgentReasons.Evaluate(Lane("qa", idleMinutes: 30) with { State = SessionState.Idle, OpenObligations = 3 }));
 
     [Fact, Trait("Lane", "unit")]
     public void A_lane_idle_nine_minutes_does_not_qualify_yet_and_the_threshold_comes_from_the_inputs()
@@ -213,7 +209,7 @@ public sealed class AgentReasonsTests
 
         var reasons = AgentReasons.Evaluate(Lane("ideas") with { QueuedPrs = [newer, older] });
 
-        Assert.Equal(["ideas: PR #3078 ready in the merge queue", "ideas: PR #3079 ready in the merge queue"], reasons.Select(static r => r.Text));
+        Assert.Equal(["ideas: PR #3078 ready in the merge queue", "ideas: PR #3079 ready in the merge queue"], reasons.Select(static r => r.Text), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

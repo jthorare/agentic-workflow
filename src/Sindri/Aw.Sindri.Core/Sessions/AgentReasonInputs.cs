@@ -39,7 +39,7 @@ public sealed record AgentReasonInputs(DateTimeOffset Now, string Name, DateTime
     /// <summary>The lane's context in tokens, when known.</summary>
     public int? ContextTokens { get; init; }
 
-    /// <summary>True when <c>aw-meta lanes-context</c> says Recycle for the lane (its context is at or over <c>context.recycleAt</c>).</summary>
+    /// <summary>True when <c lang="text">aw-meta lanes-context</c> says Recycle for the lane (its context is at or over <c lang="text">context.recycleAt</c>).</summary>
     public bool AtRecycleMark { get; init; }
 
     /// <summary>When the lane crossed the recycle mark, from the source. Null: the time of the read.</summary>
@@ -48,7 +48,7 @@ public sealed record AgentReasonInputs(DateTimeOffset Now, string Name, DateTime
     /// <summary>True when the meta lane has an open RecycleSelf obligation.</summary>
     public bool RecycleSelfOpen { get; init; }
 
-    /// <summary>True when <c>aw-meta usage</c> lists the lane as Limited.</summary>
+    /// <summary>True when <c lang="text">aw-meta usage</c> lists the lane as Limited.</summary>
     public bool UsageLimited { get; init; }
 
     /// <summary>When the limit resets; null when the text gave no time.</summary>
@@ -63,15 +63,15 @@ public sealed record AgentReasonInputs(DateTimeOffset Now, string Name, DateTime
     /// <summary>How many open Reply or RelayOwner obligations the meta lane has.</summary>
     public int OpenObligations { get; init; }
 
-    /// <summary>How many minutes mail has waited undelivered to a lane that is not Claude, from <c>aw-meta health</c>; null when health reports none.</summary>
+    /// <summary>How many minutes mail has waited undelivered to a lane that is not Claude, from <c lang="text">aw-meta health</c>; null when health reports none.</summary>
     public int? MailUndeliveredMinutes { get; init; }
 
     /// <summary>The wait for a heavy slot, when this row is the waiter.</summary>
     public AgentHeavyWait? HeavyWait { get; init; }
 
-    /// <summary>The minutes a lane idles before owed work lists it (<c>agents.idleOwedMinutes</c>, default 10; the profile's default is <c>AgentSettings.DefaultIdleOwedMinutes</c>).</summary>
+    /// <summary>The minutes a lane idles before owed work lists it (<c lang="text">agents.idleOwedMinutes</c>, default 10; the profile's default is <c lang="text">AgentSettings.DefaultIdleOwedMinutes</c>).</summary>
     public int IdleOwedMinutes { get; init; } = 10;
 
-    /// <summary>The minutes a heavy waiter waits before it is listed (<c>agents.slotWaitMinutes</c>).</summary>
+    /// <summary>The minutes a heavy waiter waits before it is listed (<c lang="text">agents.slotWaitMinutes</c>).</summary>
     public int SlotWaitMinutes { get; init; } = 30;
 }

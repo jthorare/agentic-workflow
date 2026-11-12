@@ -1,6 +1,6 @@
 namespace Aw.Sindri.Core.Sessions;
 
-/// <summary>The merge gate's result for a PR in the ready queue, as <c>aw-meta status --json</c> <c>mergeQueue[]</c> reports it (Agents page spec §3.2).</summary>
+/// <summary>The merge gate's result for a PR in the ready queue, as <c lang="text">aw-meta status --json</c> <c lang="text">mergeQueue[]</c> reports it (Agents page spec §3.2).</summary>
 public enum AgentGate
 {
     /// <summary>The gate has not run.</summary>

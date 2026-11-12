@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Sessions;
 
 namespace Aw.Sindri.Tests.Agents;
@@ -33,14 +34,14 @@ internal static class AgentWalk
     public static DateTimeOffset Time(JsonNode node) => DateTimeOffset.Parse(node.GetValue<string>(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
 
     /// <summary>The lane objects, in the fixture's order.</summary>
-    public static IReadOnlyList<JsonObject> Lanes => [.. Doc["lanes"]!.AsArray().Select(static l => (JsonObject)l!)];
+    public static IReadOnlyList<JsonObject> Lanes => [.. Doc["lanes"]!.AsArray().Cast<JsonObject>()];
 
-    /// <summary>The reasons the fixture lists for a lane in an <c>expect</c> block, as lines of "class kind since text"; empty when it lists none.</summary>
+    /// <summary>The reasons the fixture lists for a lane in an <c lang="text">expect</c> block, as lines of "class kind since text"; empty when it lists none.</summary>
     public static IReadOnlyList<string> Expected(string block, string lane) =>
         Doc["expect"]![block]![lane] is JsonArray reasons ? [.. reasons.Select(static r => Line(r!))] : [];
 
     private static string Line(JsonNode reason) =>
-        string.Create(CultureInfo.InvariantCulture, $"{reason["class"]} {reason["kind"]} {reason["since"]} {reason["text"]}");
+        $"{reason["class"]} {reason["kind"]} {reason["since"]} {reason["text"]}";
 
     /// <summary>One reason as a line of "class kind since text", the form <see cref="Expected"/> uses.</summary>
     public static string Line(AgentReason reason) =>
@@ -56,27 +57,39 @@ internal static class AgentWalk
         AgentReasonKind.RecycleMark => "recycle-mark",
         AgentReasonKind.IdleOwed => "idle-owed",
         AgentReasonKind.SlotWait => "slot-wait",
-        _ => "pr-ready",
+        AgentReasonKind.PrReady => "pr-ready",
     };
 
     /// <summary>The inputs for a lane at <paramref name="now"/>; when <paramref name="asked"/> is true the fixture's event (qa asks for approval) has happened.</summary>
     public static AgentReasonInputs Inputs(JsonObject lane, DateTimeOffset now, bool asked)
     {
+        var inputs = WithQueueAndThresholds(Basics(lane, now), lane);
+        return asked && Doc["events"]![0]!["lane"]!.GetValue<string>() == inputs.Name ? WithEvent(inputs) : inputs;
+    }
+
+    private static AgentReasonInputs Basics(JsonObject lane, DateTimeOffset now)
+    {
         var name = lane["lane"]!.GetValue<string>();
-        var settings = Doc["settings"]!;
-        var inputs = new AgentReasonInputs(now, name, Time(lane["stateSince"]!))
+        return new AgentReasonInputs(now, name, Time(lane["stateSince"]!))
         {
             Lane = name,
             IsMetaLane = lane["isMeta"]?.GetValue<bool>() ?? false,
             State = lane["state"]!.GetValue<string>() == "idle" ? SessionState.Idle : SessionState.Running,
             ContextTokens = lane["contextTokens"]?.GetValue<int>(),
+        };
+    }
+
+    private static AgentReasonInputs WithQueueAndThresholds(AgentReasonInputs inputs, JsonObject lane)
+    {
+        var settings = Doc["settings"]!;
+        return inputs with
+        {
             AtRecycleMark = lane["atRecycleMark"]?.GetValue<bool>() ?? false,
             RecycleSince = lane["recycleSince"] is { } since ? Time(since) : null,
             QueuedPrs = lane["queuedPrs"] is JsonArray prs ? [.. prs.Select(static p => Queued(p!))] : [],
             IdleOwedMinutes = settings["idleOwedMinutes"]!.GetValue<int>(),
             SlotWaitMinutes = settings["slotWaitMinutes"]!.GetValue<int>(),
         };
-        return asked && Doc["events"]![0]!["lane"]!.GetValue<string>() == name ? WithEvent(inputs) : inputs;
     }
 
     private static AgentQueuedPr Queued(JsonNode pr) =>
@@ -93,7 +106,7 @@ internal static class AgentWalk
     {
         var rows = Lanes.Select(l => Row(l, now, asked)).ToList();
         var needs = rows.Where(static r => r.Reasons.Count > 0 && r.Reasons[0].Class is not (2 or 6))
-            .OrderBy(static r => r.Reasons[0].Class).ThenBy(static r => r.Reasons[0].Since).ThenBy(static r => r.Id, StringComparer.Ordinal).ToList();
+            .OrderBy(static r => r.Reasons[0].Class).ThenBy(static r => r.Reasons[0].Since).ThenBy(static r => r.Id.Value, StringComparer.Ordinal).ToList();
         var working = rows.Where(r => !needs.Contains(r) && r.State == AgentState.Working).OrderBy(static r => r.Facts.Lane, StringComparer.Ordinal);
         var idle = rows.Where(r => !needs.Contains(r) && r.State == AgentState.Idle).OrderBy(static r => r.Facts.Lane, StringComparer.Ordinal);
         return new AgentRowList([.. needs, .. working, .. idle], []);
@@ -107,11 +120,11 @@ internal static class AgentWalk
         {
             SessionState.Asking => AgentState.WaitingOnYou,
             SessionState.Idle => AgentState.Idle,
-            _ => AgentState.Working,
+            SessionState.Unknown or SessionState.Running => AgentState.Working,
         };
         var facts = new AgentFacts(inputs.Lane, Doc["repo"]!.GetValue<string>(), lane["branch"]?.GetValue<string>(), lane["workRef"]?.GetValue<string>(), inputs.ContextTokens, inputs.AtRecycleMark, HeavySlot: null);
         return new AgentRow(
-            "session:claude-code/" + lane["session"]!.GetValue<string>(), Version: 1, state, AgentStateSource.Hook, now, Estimated: false, inputs.Name, facts, reasons, Parent: null,
+            AgentRowId.From("session:claude-code/" + lane["session"]!.GetValue<string>()), Version: 1, state, AgentStateSource.Hook, now, Estimated: false, inputs.Name, facts, reasons, Parent: null,
             inputs.Asking?.Since ?? inputs.StateSince, Time(lane["lastActivity"]!), Blocks: null, [.. lane["actions"]!.AsArray().Select(static a => a!.GetValue<string>())], [.. lane["links"]!.AsArray().Select(static a => a!.GetValue<string>())]);
     }
 }

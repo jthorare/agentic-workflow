@@ -19,7 +19,7 @@ public static partial class SindriErrors
     /// <summary>SND-AGENT-005: recycle refused because the digest is missing, unreadable, not absolute, over 4,096 characters, starts with '-', or is older than the lane's session or 2 hours (Agents page spec §9).</summary>
     public static readonly ErrorDefinition AgentRecycleRefused = new("SND-AGENT-005", ErrorKind.Invalid, "Recycle refused: the digest is not usable (fix: write a fresh digest and pass its absolute path)");
 
-    /// <summary>SND-AGENT-006: <c>aw-meta</c> is unavailable: no team, no binary, or exit 2 (Agents page spec §9).</summary>
+    /// <summary>SND-AGENT-006: <c lang="text">aw-meta</c> is unavailable: no team, no binary, or exit 2 (Agents page spec §9).</summary>
     public static readonly ErrorDefinition AgentMetaUnavailable = new("SND-AGENT-006", ErrorKind.Unavailable, "aw-meta is unavailable (fix: install it with ./setup.sh --with-meta and check the team with aw-meta team-init)");
 
     /// <summary>SND-AGENT-007: the message is empty or over 8,000 characters (Agents page spec §9).</summary>

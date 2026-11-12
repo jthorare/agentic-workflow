@@ -96,43 +96,6 @@ public static partial class ProfileDiff
 
     }
 
-    private static IEnumerable<(string Key, string Value)> AgentKeys(AgentSettings? agents)
-    {
-        var culture = System.Globalization.CultureInfo.InvariantCulture;
-        if (agents?.SoftLimit is { } soft)
-        {
-            yield return ("agents.softLimit", soft.ToString(culture));
-        }
-
-        if (agents?.IdleOwedMinutes is { } idleOwed)
-        {
-            yield return ("agents.idleOwedMinutes", idleOwed.ToString(culture));
-        }
-
-        if (agents?.SlotWaitMinutes is { } slotWait)
-        {
-            yield return ("agents.slotWaitMinutes", slotWait.ToString(culture));
-        }
-
-        if (agents?.Page is { } page)
-        {
-            yield return ("agents.page", page);
-        }
-
-        foreach (var (id, limits) in agents?.Targets ?? new Dictionary<string, AgentLimits>(StringComparer.Ordinal))
-        {
-            if (limits.DailyBudget is { } budget)
-            {
-                yield return ($"agents.{id}.dailyBudget", budget.ToString(culture));
-            }
-
-            if (limits.StepArgvHash is { } hashes)
-            {
-                yield return ($"agents.{id}.stepArgvHash", string.Join(", ", hashes));
-            }
-        }
-    }
-
     private static IEnumerable<(string Key, string Value)> Repos(IReadOnlyList<RepoEntry>? repos)
     {
         foreach (var repo in repos ?? [])

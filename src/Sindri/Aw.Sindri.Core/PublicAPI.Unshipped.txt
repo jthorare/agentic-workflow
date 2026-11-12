@@ -23357,9 +23357,9 @@ static Aw.Sindri.Core.Sessions.AgentRowList.operator !=(Aw.Sindri.Core.Sessions.
 static Aw.Sindri.Core.Sessions.AgentRowList.operator ==(Aw.Sindri.Core.Sessions.AgentRowList? left, Aw.Sindri.Core.Sessions.AgentRowList? right) -> bool
 Aw.Sindri.Core.Sessions.AgentRow
 Aw.Sindri.Core.Sessions.AgentRow.<Clone>$() -> Aw.Sindri.Core.Sessions.AgentRow!
-Aw.Sindri.Core.Sessions.AgentRow.Deconstruct(out string! Id, out long Version, out Aw.Sindri.Core.Sessions.AgentState State, out Aw.Sindri.Core.Sessions.AgentStateSource StateSource, out System.DateTimeOffset StateReadAt, out bool Estimated, out string! Title, out Aw.Sindri.Core.Sessions.AgentFacts! Facts, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.AgentReason!>! Reasons, out string? Parent, out System.DateTimeOffset Since, out System.DateTimeOffset? LastActivity, out int? Blocks, out System.Collections.Generic.IReadOnlyList<string!>! Actions, out System.Collections.Generic.IReadOnlyList<string!>! Links) -> void
+Aw.Sindri.Core.Sessions.AgentRow.Deconstruct(out Aw.Sindri.Core.Ids.AgentRowId Id, out long Version, out Aw.Sindri.Core.Sessions.AgentState State, out Aw.Sindri.Core.Sessions.AgentStateSource StateSource, out System.DateTimeOffset StateReadAt, out bool Estimated, out string! Title, out Aw.Sindri.Core.Sessions.AgentFacts! Facts, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.AgentReason!>! Reasons, out string? Parent, out System.DateTimeOffset Since, out System.DateTimeOffset? LastActivity, out int? Blocks, out System.Collections.Generic.IReadOnlyList<string!>! Actions, out System.Collections.Generic.IReadOnlyList<string!>! Links) -> void
 Aw.Sindri.Core.Sessions.AgentRow.Equals(Aw.Sindri.Core.Sessions.AgentRow? other) -> bool
-Aw.Sindri.Core.Sessions.AgentRow.Id.get -> string!
+Aw.Sindri.Core.Sessions.AgentRow.Id.get -> Aw.Sindri.Core.Ids.AgentRowId
 Aw.Sindri.Core.Sessions.AgentRow.Id.init -> void
 Aw.Sindri.Core.Sessions.AgentRow.Version.get -> long
 Aw.Sindri.Core.Sessions.AgentRow.Version.init -> void
@@ -23389,7 +23389,7 @@ Aw.Sindri.Core.Sessions.AgentRow.Actions.get -> System.Collections.Generic.IRead
 Aw.Sindri.Core.Sessions.AgentRow.Actions.init -> void
 Aw.Sindri.Core.Sessions.AgentRow.Links.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Sessions.AgentRow.Links.init -> void
-Aw.Sindri.Core.Sessions.AgentRow.AgentRow(string! Id, long Version, Aw.Sindri.Core.Sessions.AgentState State, Aw.Sindri.Core.Sessions.AgentStateSource StateSource, System.DateTimeOffset StateReadAt, bool Estimated, string! Title, Aw.Sindri.Core.Sessions.AgentFacts! Facts, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.AgentReason!>! Reasons, string? Parent, System.DateTimeOffset Since, System.DateTimeOffset? LastActivity, int? Blocks, System.Collections.Generic.IReadOnlyList<string!>! Actions, System.Collections.Generic.IReadOnlyList<string!>! Links) -> void
+Aw.Sindri.Core.Sessions.AgentRow.AgentRow(Aw.Sindri.Core.Ids.AgentRowId Id, long Version, Aw.Sindri.Core.Sessions.AgentState State, Aw.Sindri.Core.Sessions.AgentStateSource StateSource, System.DateTimeOffset StateReadAt, bool Estimated, string! Title, Aw.Sindri.Core.Sessions.AgentFacts! Facts, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.AgentReason!>! Reasons, string? Parent, System.DateTimeOffset Since, System.DateTimeOffset? LastActivity, int? Blocks, System.Collections.Generic.IReadOnlyList<string!>! Actions, System.Collections.Generic.IReadOnlyList<string!>! Links) -> void
 override Aw.Sindri.Core.Sessions.AgentRow.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Sessions.AgentRow.GetHashCode() -> int
 override Aw.Sindri.Core.Sessions.AgentRow.ToString() -> string!
@@ -23483,3 +23483,20 @@ const Aw.Sindri.Core.Profile.AgentSettings.MinMinutes = 1 -> int
 const Aw.Sindri.Core.Profile.AgentSettings.MaxMinutes = 1440 -> int
 const Aw.Sindri.Core.Profile.AgentSettings.PageRows = "rows" -> string!
 const Aw.Sindri.Core.Profile.AgentSettings.PageLegacy = "legacy" -> string!
+Aw.Sindri.Core.Ids.AgentRowId
+Aw.Sindri.Core.Ids.AgentRowId.Equals(Aw.Sindri.Core.Ids.AgentRowId other) -> bool
+Aw.Sindri.Core.Ids.AgentRowId.Equals(Aw.Sindri.Core.Ids.AgentRowId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Ids.AgentRowId>! comparer) -> bool
+Aw.Sindri.Core.Ids.AgentRowId.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Ids.AgentRowId.IsInitialized() -> bool
+Aw.Sindri.Core.Ids.AgentRowId.AgentRowId() -> void
+Aw.Sindri.Core.Ids.AgentRowId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Ids.AgentRowId.Value.get -> string!
+override Aw.Sindri.Core.Ids.AgentRowId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Ids.AgentRowId.GetHashCode() -> int
+override Aw.Sindri.Core.Ids.AgentRowId.ToString() -> string!
+static Aw.Sindri.Core.Ids.AgentRowId.From(string! value) -> Aw.Sindri.Core.Ids.AgentRowId
+static Aw.Sindri.Core.Ids.AgentRowId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Ids.AgentRowId
+static Aw.Sindri.Core.Ids.AgentRowId.TryFrom(string? value, out Aw.Sindri.Core.Ids.AgentRowId vo) -> bool
+static Aw.Sindri.Core.Ids.AgentRowId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.AgentRowId result) -> bool
+static Aw.Sindri.Core.Ids.AgentRowId.operator !=(Aw.Sindri.Core.Ids.AgentRowId left, Aw.Sindri.Core.Ids.AgentRowId right) -> bool
+static Aw.Sindri.Core.Ids.AgentRowId.operator ==(Aw.Sindri.Core.Ids.AgentRowId left, Aw.Sindri.Core.Ids.AgentRowId right) -> bool

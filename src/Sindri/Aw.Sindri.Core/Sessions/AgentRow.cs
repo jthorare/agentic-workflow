@@ -1,3 +1,5 @@
+using Aw.Sindri.Core.Ids;
+
 namespace Aw.Sindri.Core.Sessions;
 
 /// <summary>
@@ -20,5 +22,5 @@ namespace Aw.Sindri.Core.Sessions;
 /// <param name="Actions">The op ids that apply (spec §5); the first is the primary.</param>
 /// <param name="Links">What the row links to: 'home:&lt;row id&gt;', 'pr:&lt;number&gt;', 'issue:&lt;number&gt;', 'run:&lt;id&gt;', 'node:&lt;run&gt;/&lt;node&gt;' or 'launch:&lt;id&gt;'.</param>
 public sealed record AgentRow(
-    string Id, long Version, AgentState State, AgentStateSource StateSource, DateTimeOffset StateReadAt, bool Estimated, string Title, AgentFacts Facts,
+    AgentRowId Id, long Version, AgentState State, AgentStateSource StateSource, DateTimeOffset StateReadAt, bool Estimated, string Title, AgentFacts Facts,
     IReadOnlyList<AgentReason> Reasons, string? Parent, DateTimeOffset Since, DateTimeOffset? LastActivity, int? Blocks, IReadOnlyList<string> Actions, IReadOnlyList<string> Links);
