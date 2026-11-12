@@ -10,9 +10,3 @@ internal sealed record HealthOutput(
     string Status,
     int Failures24h,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] HealthFailureOutput? LastFailure = null);
-
-/// <summary>The newest failure in 'judge health': who failed, why and when.</summary>
-/// <param name="Provider">The provider that failed.</param>
-/// <param name="ReasonCode">Why, e.g. 'usage-limit' or 'exit-1'.</param>
-/// <param name="At">When it failed.</param>
-internal sealed record HealthFailureOutput(string Provider, string ReasonCode, DateTimeOffset At);
