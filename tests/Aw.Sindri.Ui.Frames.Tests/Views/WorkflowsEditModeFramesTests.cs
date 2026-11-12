@@ -1,3 +1,5 @@
+using System.Globalization;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
@@ -75,5 +77,22 @@ public sealed class WorkflowsEditModeFramesTests : FrameHost
 
         await Until(window, () => Visible(window, "WorkflowEditDone"), "Enter on Edit never turned edit mode on");
         await Until(window, () => Named<Button>(window, "WorkflowEditDone").IsFocused, "focus never reached Done after Enter on Edit (it dropped to the breadcrumb)");
+    });
+
+    [Theory]
+    [InlineData(1280)]
+    [InlineData(1000)]
+    public Task The_list_count_keeps_12_px_from_New_workflow(int width) => OnUi(async () =>
+    {
+        var (window, shell) = await Connected(width: width, height: 1000);
+        shell.GoTo(PageId.Workflows);
+        await Until(window, () => shell.Workflows.Rows.Count > 0, "the Workflows page never read the list");
+        window.UpdateLayout();
+        var head = Named<TextBlock>(window, "WorkflowsHead");
+        var button = Named<Button>(window, "WorkflowsNewHeader");
+        var headRight = head.TranslatePoint(new Point(head.Bounds.Width, 0), window)!.Value.X;
+        var buttonLeft = button.TranslatePoint(new Point(0, 0), window)!.Value.X;
+        var gap = buttonLeft - headRight;
+        Assert.True(gap >= 12, $"the gap is {gap.ToString(CultureInfo.InvariantCulture)} px, under 12");
     });
 }
