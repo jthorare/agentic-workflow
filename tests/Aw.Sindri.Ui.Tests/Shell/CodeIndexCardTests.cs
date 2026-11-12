@@ -39,13 +39,6 @@ public sealed class CodeIndexCardTests
         return card;
     }
 
-    private static string Expected(string state) => state switch
-    {
-        "building" => Labels.CodeIndexBuilding,
-        "missing" => Labels.CodeIndexQueued,
-        _ => Labels.CodeIndexNeedsLook,
-    };
-
     [Fact]
     public async Task A_healthy_index_reads_repo_commit_age_and_each_layer()
     {
@@ -85,7 +78,7 @@ public sealed class CodeIndexCardTests
         var card = await Read(Repo("repo", state, commit: null, 0));
 
         Assert.Equal(expected, Assert.Single(card.Lines).Text);
-        Assert.Equal(Expected(state), card.Word);
+        Assert.Equal(state == "building" ? Labels.CodeIndexBuilding : Labels.CodeIndexNeedsLook, card.Word);
     }
 
     [Fact]
@@ -142,7 +135,7 @@ public sealed class CodeIndexCardTests
         var card = await ReadWithHealth([Repo("repo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("repo", state)]);
 
         Assert.Equal(expected, Assert.Single(card.Lines).Text);
-        Assert.Equal(Expected(state), card.Word);
+        Assert.Equal(state == "building" ? Labels.CodeIndexBuilding : Labels.CodeIndexNeedsLook, card.Word);
     }
 
     [Theory]

@@ -29,9 +29,6 @@ internal static partial class Labels
     /// <summary>The card's state word while a first build runs and nothing else needs a look.</summary>
     internal const string CodeIndexBuilding = "building";
 
-    /// <summary>The card's state word while a first build is queued and nothing else needs a look.</summary>
-    internal const string CodeIndexQueued = "first build queued";
-
     /// <summary>What an index state reads as when the line has no commit to name (§7.3).</summary>
     /// <param name="state">The served state.</param>
     /// <returns>The words; a state this app doesn't know is shown as served.</returns>

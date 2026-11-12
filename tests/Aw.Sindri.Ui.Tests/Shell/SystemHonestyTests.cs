@@ -10,7 +10,7 @@ namespace Aw.Sindri.Ui.Tests.Shell;
 [Lane(TestLane.Unit)]
 public sealed class SystemHonestyTests
 {
-    private const string DamagedIndex = """{"repos":[{"repo":"repo","state":"damaged","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[]}""";
+    private const string MissingIndex = """{"repos":[{"repo":"repo","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[]}""";
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -22,7 +22,7 @@ public sealed class SystemHonestyTests
         Assert.Equal(Labels.AllRunning, system.Vm.Sentence);
         Assert.False(system.Vm.ToneWarn);
 
-        system.Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, DamagedIndex);
+        system.Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, MissingIndex);
         await system.Vm.CodeIndex.Refresh(A.Record().Url, Token);
 
         Assert.Equal("Something needs a look: code index.", system.Vm.Sentence);
