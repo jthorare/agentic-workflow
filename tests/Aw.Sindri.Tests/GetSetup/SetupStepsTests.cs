@@ -98,7 +98,7 @@ public sealed class SetupStepsTests
     {
         var step = SetupSteps.Sources(new SourcesFact(0));
 
-        Assert.Equal((SetupStepId.Sources, "Connect your sources", SetupState.Todo, "No source is connected yet.", SetupActions.ConnectIndexSource), (step.Id, step.Title, step.State, step.Why, step.Action));
+        Assert.Equal((SetupStepId.Sources, "Connect your accounts", SetupState.Todo, "No source is connected yet.", SetupActions.ConnectAccount), (step.Id, step.Title, step.State, step.Why, step.Action));
         Assert.Empty(step.Items);
         Assert.Null(step.Error);
     }
@@ -111,7 +111,7 @@ public sealed class SetupStepsTests
     {
         var step = SetupSteps.Sources(InMemorySetupFacts.NamedSources((source, false)));
 
-        Assert.Equal((SetupState.Todo, SetupActions.ConnectIndexSource, why), (step.State, step.Action, step.Why));
+        Assert.Equal((SetupState.Todo, SetupActions.ConnectAccount, why), (step.State, step.Action, step.Why));
         Assert.Equal([(source, SetupState.Todo, "needs token")], step.Items.Select(static i => (i.Repo, i.State, i.Detail)));
     }
 
@@ -122,7 +122,7 @@ public sealed class SetupStepsTests
         var one = SetupSteps.Sources(InMemorySetupFacts.NamedSources(("github", true), ("slack", false)));
 
         Assert.Equal(("GitHub and Slack need a token.", SetupState.Todo), (both.Why, both.State));
-        Assert.Equal(("Slack needs a token.", SetupState.Todo, SetupActions.ConnectIndexSource), (one.Why, one.State, one.Action));
+        Assert.Equal(("Slack needs a token.", SetupState.Todo, SetupActions.ConnectAccount), (one.Why, one.State, one.Action));
         Assert.Equal([("github", SetupState.Done, "connected"), ("slack", SetupState.Todo, "needs token")], one.Items.Select(static i => (i.Repo, i.State, i.Detail)));
     }
 

@@ -64,8 +64,8 @@ public sealed class GetSetupTests
         Assert.Equal(
             [SetupState.Done, SetupState.Todo, SetupState.NeedsYou, SetupState.Todo, SetupState.Todo, SetupState.Todo, SetupState.Todo, SetupState.Todo],
             steps.Select(static s => s.State));   // serve is current; the accounts step has nothing connected; the repo is the owner's; the rest wait
-        Assert.Equal([null, SetupActions.ConnectIndexSource, SetupActions.AddRepo, null, null, null, null, null], steps.Select(static s => s.Action), StringComparer.Ordinal);
-        Assert.Equal([null, "sindri index connect <source>", "sindri repo add <path>", null, null, null, null, null], steps.Select(static s => s.Cli), StringComparer.Ordinal);   // the command an agent runs for the action
+        Assert.Equal([null, SetupActions.ConnectAccount, SetupActions.AddRepo, null, null, null, null, null], steps.Select(static s => s.Action), StringComparer.Ordinal);
+        Assert.Equal([null, null, "sindri repo add <path>", null, null, null, null, null], steps.Select(static s => s.Cli), StringComparer.Ordinal);   // the command an agent runs for the action
     }
 
     [Fact, Trait("Lane", "unit")]

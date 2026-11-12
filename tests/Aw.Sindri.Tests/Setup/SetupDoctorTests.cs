@@ -33,7 +33,7 @@ public sealed class SetupDoctorTests
 
         Assert.Equal(CheckState.Warn, check.State);
         Assert.Contains("sources (todo)", check.Detail, StringComparison.Ordinal);
-        Assert.Equal("sindri index connect <source>", check.Fix);
+        Assert.Equal("sindri setup", check.Fix);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -43,7 +43,7 @@ public sealed class SetupDoctorTests
 
         Assert.Equal(CheckState.Warn, check.State);
         Assert.Contains("repo (needs-you)", check.Detail, StringComparison.Ordinal);
-        Assert.Equal("sindri index connect <source>", check.Fix);   // the accounts step is step 2 now, so it is the first open one on a fresh box
+        Assert.Equal("sindri setup", check.Fix);   // the accounts step is step 2 now, so it is the first open one on a fresh box
     }
 
     [Fact, Trait("Lane", "unit")]

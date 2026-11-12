@@ -29,13 +29,13 @@ internal static class SetupRows
         new(ActionId.From("SkipSetupStep"), typeof(SkipSetupStepRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/setup/skip", ShellRows.Form("sindri setup skip <step> [--undo]"), "ready"),
-        // the owner's: the service checks the per-start human token, as `profile set` does (first-run spec decision 11)
+        // the owner's: the service checks the per-start human token, as `profile set` does (first-run spec decision 11). Pending until first-run phase 2 builds the restart: the service is a stub, so the app draws no button (FR2 is the first-run spec's phase, not a catalog phase)
         new(ActionId.From("RestartProcess"), typeof(RestartProcessRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: true, ReadsViews: false, Shortcut: null,
-            "POST", "/sindri/restart", ShellRows.Form("sindri restart [--wait]"), "ready"),
-        // the owner's: signs in or takes a pasted token for github, linear or slack (first-run spec decisions 13 to 17)
+            "POST", "/sindri/restart", ShellRows.Form("sindri restart [--wait]"), "pending:FR2"),
+        // the owner's: signs in or takes a pasted token for github, linear or slack (first-run spec decisions 13 to 17). Pending until first-run phase 5 builds the accounts (FR5)
         new(ActionId.From("ConnectAccount"), typeof(ConnectAccountRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
-            "POST", "/sindri/setup/accounts/{provider}", ShellRows.Form("sindri setup connect <provider>"), "ready"),
+            "POST", "/sindri/setup/accounts/{provider}", ShellRows.Form("sindri setup connect <provider>"), "pending:FR5"),
     ];
 }

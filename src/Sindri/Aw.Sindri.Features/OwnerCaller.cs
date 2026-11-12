@@ -5,8 +5,9 @@ using Aw.Sindri.Core.Commands;
 namespace Aw.Sindri.Features;
 
 /// <summary>
-/// The check for a command that is the owner's (first-run spec decisions 11 and 13): the caller must have shown the per-start human token, which makes it the <see cref="CallerClass.Human"/> class, as
-/// `sindri profile set` requires (Host/Commands/Verbs.cs SetProfileKey). A session Sindri launched never has it, and neither does an agent started without it. The guard is against honest mistakes, not a hostile agent.
+/// The check for a command that is the owner's (first-run spec decisions 11, 13 and 29): the caller must have shown the per-start human token, which makes it the <see cref="CallerClass.Human"/> class, as
+/// `sindri profile set` requires (Host/Commands/Verbs.cs SetProfileKey). Only a session Sindri launched is refused for sure: it carries a launch secret, so the host makes it a session whatever token it sends
+/// (Host/CallerContextMiddleware.cs AsLaunched). An agent the owner started in their own terminal can read the token, so it counts as the owner. The guard is against honest mistakes, not a hostile agent.
 /// </summary>
 internal static class OwnerCaller
 {

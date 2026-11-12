@@ -70,4 +70,15 @@ public sealed class OwnerOnlyRoutesTests
         Assert.IsType<NotSupportedException>(restart);   // past the check, the stub is unbuilt
         Assert.IsType<NotSupportedException>(connect);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_caller_with_the_token_and_no_launch_marker_is_human_and_one_with_a_launch_marker_is_a_session()
+    {
+        var owner = Aw.Sindri.Host.CallerHeaderParsing.Parse("human", terminal: null, client: null, repo: null, launch: null);
+        var launched = Aw.Sindri.Host.CallerHeaderParsing.Parse("human", terminal: null, client: null, repo: null, launch: "LCH-00000000000000000000000000000001");
+
+        Assert.Equal((Core.Commands.CallerClass.Human, null), (owner.Value.Class, owner.Value.Launch));   // an agent the owner started, with the token: not refused
+        Assert.Equal(Core.Commands.CallerClass.Session, launched.Value.Class);
+        Assert.NotNull(launched.Value.Launch);
+    }
 }

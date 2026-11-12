@@ -120,8 +120,8 @@ public static class SetupSteps
         }
 
         return fact.Items.Lines.Count == 0
-            ? new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Todo, "No source is connected yet.", "Connect GitHub, Slack or Linear so Sindri can read your issues and chat.", Error: null, SetupActions.ConnectIndexSource, Progress: null)
-            : new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Todo, string.Join(" and ", missing) + (missing.Count == 1 ? " needs" : " need") + " a token.", Detail: null, Error: null, SetupActions.ConnectIndexSource, Progress: null) { Items = fact.Items.Lines };
+            ? new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Todo, "No source is connected yet.", "Connect GitHub, Slack or Linear so Sindri can read your issues and chat.", Error: null, SetupActions.ConnectAccount, Progress: null)
+            : new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Todo, string.Join(" and ", missing) + (missing.Count == 1 ? " needs" : " need") + " a token.", Detail: null, Error: null, SetupActions.ConnectAccount, Progress: null) { Items = fact.Items.Lines };
     }
 
     /// <summary>The serve step (step 1): done when the running Sindri is the installed build; otherwise the owner's, with a restart.</summary>
