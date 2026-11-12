@@ -7,9 +7,9 @@ Reviews: 3 /autoplan rounds plus the screenshot review, before ready (no owner r
 
 The owner's words on #2978: "think about how much or little information density with good design we have in sindri and how we can make that easier or offload it to the home app." Home is where that density goes.
 
-What Home does on main today (read from `origin/main` a4d03ace1c, issues linked; the app was not driven for this spec):
+What Home does on main today (read from `origin/main` a0658aacd4, issues linked; the app was not driven for this spec):
 
-- It is panel cards. `Views/Shell/HomePage.axaml` stacks a setup line, a Todo panel, a Needs you list (left column, `3*`), a Running / With you / Queued column (right, `2*`) and a health strip. `ViewModels/HomeFold.cs` caps the Needs you list at 5 rows and the strip at 3, so 8 rows sit above the fold. Design's frame on #2978 shows 22 rows.
+- It is panel cards. `Views/Shell/HomePage.axaml` stacks a setup line, a Todo panel, a Needs you list (left column, `3*`), a Running / With you / Queued column (right, `2*`) and a health strip. `ViewModels/HomeFold.cs` caps the Needs you list at 5 rows and gives the strip a share of 3, so 8 rows sit above the fold. Design's frame on #2978 shows 22 rows.
 - Needs you holds only what Sindri itself raised: decisions, parked runs, service failures, profile drift, setup steps, connection errors, workflow notes and questions (`Core/NeedsYou/NeedsYouKind.cs`). It holds no review request, no assigned issue, no mention, no PR ready to merge and no lane.
 - Its order is urgency, then age, then id (`Core/NeedsYou/NeedsYouOrder.cs`). Nothing counts what a row blocks.
 - The Agents page said "0 asking you" while two lanes sat at their recycle mark and two PRs were ready in the merge queue (walk on #3018, gap #3082). Only `aw-meta status` said so. Home would have said the same, because no Home source reads lanes.
@@ -47,7 +47,7 @@ Done-checks. Each is a test or a measured run in the real app (aw-ui-driver), an
 |---|---|---|
 | D1 | **The ux walk.** On the #3082 box state (11 lanes; meta at 205k and ideas at 210k, both at the recycle mark; 2 PRs ready in the merge queue), row 1 of Home names the session that needs the owner. | 1 step: open Home. Today it takes 5 (Agents tab, read 11 rows, open qa, Details, give up for the terminal, comment on #3018). |
 | D2 | First paint under 100 ms from the local store. | Window open to first row painted, 5,000 rows in the store, serve not yet answering, p95 over 20 runs. |
-| D3 | Rows per screen at compact. | 1440x900, peek closed, brief at its default 3 lines: at least 18 Needs you rows visible. At comfortable: at least 14. With peek open: the same rows, 3 facts each. |
+| D3 | Rows per screen at compact. | 1440x900, peek closed, brief at its default 3 lines, the setup line hidden, the collapsed Todo line shown (§12), the New band empty: at least 17 Needs you rows visible. At comfortable: at least 14. With peek open: the same rows, 3 facts each. |
 | D4 | Key to visible change under 50 ms; source write lands within 2 s. | Keydown to repaint of the optimistic row. Act request received to the source confirming, p95 over 50 writes per source on the fake adapters. |
 | D5 | A failed write is visible and retryable. | For each action kind: the fake source refuses, the row shows the reason and Retry within 1 frame, and Retry lands the write once. |
 | D6 | Stable order. | A property test over 10,000 random event streams: between two settle points (§4.3) no row changes index except by removal, and every new row appears only in the New band. |
@@ -55,7 +55,7 @@ Done-checks. Each is a test or a measured run in the real app (aw-ui-driver), an
 | D8 | Re-rank cost. | 10,000 rows scored in under 16 ms (ledger 2). |
 | D9 | Snooze. | Wake within 1 s of the due time with the app in the tray; early return within 5 s of a reply addressed to the owner; Undo within 5 s. |
 | D10 | Notifications. | Over 50 injected events: exactly one toast per notifying row per episode, zero for non-notifying kinds, tray count equals notifying rows not yet seen. |
-| D11 | Done means done. | A seeded store with no Needs you rows shows "You're done." and the brief; one new addressed event brings exactly one row back. |
+| D11 | Done means done. | A seeded store with no Needs you rows and every source fresh shows "You're done." and the brief; with one source stale it shows "Nothing waiting in what I could read" and the stale line (§5.5); one new addressed event brings exactly one row back. |
 | D12 | Brief. | At most 10 lines; every link resolves to a row or object that exists; plain-fact lines paint under 100 ms; with the writer off or model-limited the section says why (§6.1). |
 | D13 | Agent parity. | A test enumerates the `home.*` action ids; each has a CLI verb and an MCP tool, and each tool's result fences repo text. |
 | D14 | **Day without the other apps.** ux runs a scripted day with GitHub notifications, Linear's inbox and the lane terminal closed. Each time the owner opens one to find out what is waiting is an issue, `Part of #2978`. Slack joins when Messages (#2979) ships. | Count of such opens: 0 for the shipped sources. |
@@ -75,6 +75,7 @@ Done-checks. Each is a test or a measured run in the real app (aw-ui-driver), an
 11. **Done keeps 7 days.** #3031 sets 7. The ledger's 90 days copies GitHub's retention, and a 7-day list is enough to undo a mistake without growing a second inbox.
 12. **Home reads one local store.** The first page of `GET /sindri/home` and a cached copy of it paint first; nothing on the first-paint path calls a source.
 13. **Agents get the same verbs.** Every action on the page has a CLI verb and an MCP tool; a session reads Home but never presses owner buttons (§9).
+14. **The old page stays until U4.** The profile key `home.page` (`rows` | `panels`) picks the page. U1 to U3 ship with `panels` as the default and `rows` for the owner to try. U3 flips the default to `rows`. U4 deletes the panel views and the key after one week with no miss of D1, D4 or D11; any miss flips the default back.
 
 ## 3. The model
 
@@ -100,7 +101,7 @@ A Home row is one object that needs, or may soon need, the owner. Core type `Hom
 
 The row text comes from the sources and is untrusted: scrubbed by `Aw.Redaction` before it enters the ledger and fenced in agent results.
 
-Home rows are a view. Ledger events (`home.row.raised`, `.changed`, `.cleared`, `.seen`, `.snoozed`, `.woke`, `.done`, `.revived`, `.muted`; `home.act.sent`, `.landed`, `.failed`; `home.brief.written`; `home.cursor.moved`) fill a `home_rows` table in `views.db`. `sindri views rebuild` replays them. A collector per source raises and clears rows; none writes a row directly.
+Home rows are a view. Ledger events (`home.row.raised`, `.changed` (on a change of blocks, why chip or state only; age is worked out at read), `.cleared`, `.seen`, `.snoozed`, `.woke`, `.done`, `.revived`, `.muted`; `home.act.sent`, `.landed`, `.failed`; `home.brief.written`; `home.cursor.moved`) fill a `home_rows` table in `views.db`. `sindri views rebuild` replays them. A collector per source raises and clears rows; none writes a row directly.
 
 ### 3.2 Needs you: the sources and their exact triggers
 
@@ -111,7 +112,7 @@ A row is in Needs you while its trigger holds, and leaves when the trigger stops
 | `decision` | Sindri | a pending decision (`NeedsYouKind.Decision`) | yes |
 | `question` | Sindri | a graph `ask_owner` node asked and is unanswered (`NeedsYouKind.Question`) | yes |
 | `run-failed` | Sindri | a workflow run the owner started, or one whose workflow notifies the owner, ended `failed` and has not been seen | partly: service failures are rows; run failures are not |
-| `system` | Sindri | setup step open, profile drifted, connection token stale, graph note posted (`Setup`, `Profile`, `Connection`, `WorkflowNotify`, `Failure`) | yes |
+| `system` | Sindri | setup step open, profile drifted, connection token stale, graph note posted, a run parked or a recipe needing the owner (`Setup`, `Profile`, `Connection`, `WorkflowNotify`, `Failure`, `Park`, `Recipe`) | yes |
 | `agent-asking` | session collector | `GET /sindri/sessions` row with `state: asking` (`SessionAskingView` gives reason, tool, since) | yes |
 | `agent-limited` | aw-meta, Sindri | a subject in `aw-meta usage --json` with `state: Limited` (its `Stop` has the kind and `ResetsAt`), or a Sindri agent run paused on a model limit | no |
 | `lane-recycle` | aw-meta | `aw-meta lanes-context` gives a lane the verdict `recycle`: context at or over `context.recycleAt` (the meta lane included) | no |
@@ -138,7 +139,7 @@ Not on Home: the Queue's `queued` group. Its `running` and `withYou` groups go t
 | lanes and merge queue | `aw-meta lanes-context` and `aw-meta status`, read-only, on a service tick | a `home-lanes` service in the Sindri host, with the fields below |
 | reviews, PR checks | `GET /sindri/reviews` (`ListReviewsResponse`, `ReviewWaitingKind`), `Core/Forge` (`PullChecks`, `PullMerge`) | the ready-to-merge trigger |
 | Linear | `GET /sindri/linear/since` (`LinearSinceResponse`) | the "today" cut; mention-awaiting-reply |
-| runs | `IWorkflowRunStore` in process (the route `GET /sindri/workflows/{slug}/runs` lists one workflow's runs of every status, newest first, 50 per page, `More` for older, so it can't answer "failed anywhere, unseen") | the failed-and-unseen trigger reads the store across workflows; no new public route |
+| runs | `IWorkflowRunStore` in process (the route `GET /sindri/workflows/{slug}/runs` lists one workflow's runs of every status, newest first, 50 per page, `More` for older, so it can't answer "failed anywhere, unseen") | the failed-and-unseen trigger needs a new `IWorkflowRunStore` query across workflows by status and a "seen" flag on a run (E1 adds both; today the store has `Recent(workflow)`, `Running()` and `InFlight(workflow)` only); no new public route |
 | todos | `GET /sindri/todos` | none |
 | Slack, DMs | Messages store (#2979) | waits on that epic; the row kinds are defined here so it only has to raise them |
 
@@ -157,8 +158,8 @@ A row is about one **object** O (a session, PR, issue, run, thread, lane). N is 
 
 1. A dependent is an open object that cannot move until the owner acts on O. Merged, closed, cancelled and done objects do not count. A snoozed object does count.
 2. The edges, the closed list that make one object wait on another:
-   - `item-of`: the objects a lane owns wait on its session. A session S has as dependents the open issues assigned to its lane and the open PRs it authored. The meta lane also has every PR in the merge queue, because it merges them.
-   - `closes`: an issue waits on a PR whose body says `Fixes` or `Closes` for it. "Part of" is not an edge.
+   - `item-of`: the objects a lane owns wait on its session. A session S has as dependents the PRs in `aw-meta status` `mergeQueue` whose `from` is its lane (the source: the entry's `from` field). The meta lane also has every PR in the merge queue, because it merges them. Other lane work (open issues and authored PRs) has no named source yet: E1 finds one on a real box (§3.3). Until then those lanes get blocks 0 from `item-of`, and the §4.2 numbers for ideas assume that source exists.
+   - `closes`: an issue waits on a PR whose body says `Fixes` or `Closes` for it. "Part of" is not an edge. Only PRs by the owner, the owner's lanes or the profile's trusted authors count (a stranger's PR body can't lift its own row). Same for `stacked`. `blocksList` names the edge's source.
    - `stacked`: a PR whose base branch is another PR's head waits on that PR.
    - `merge-order`: a queue entry waits on the entry the team's merge order puts before it.
    - `child-run`: a workflow run waits on a failed or parked child run, and the item the run serves waits on the run.
@@ -179,7 +180,7 @@ Worked example. All numbers are made up for this spec. It is the order at 09:10.
 
 Objects and edges:
 - meta (205k) and ideas (210k) are at the recycle mark. The merge queue holds #3099 (since 08:02) and #3101 (since 08:40). #3101 waits on #3099 (`merge-order`) and closes issue #3040.
-- ideas authored PR #3078 and holds issue #3011.
+- ideas authored PR #3078 and holds issue #3014 (this assumes the lane work source E1 must find).
 - A review of PR #3120 is requested of the owner (since 07:30). #3120 closes issue #3055. PR #3125 is stacked on it.
 - Sam's DM waits (since 09:02) and is linked to no object.
 
@@ -187,14 +188,14 @@ Objects and edges:
 |---|---|---|---|---|
 | meta at 205k | #3099, #3101 (`item-of`), then #3040 (`closes`, hop 2) | 3 | 4 | 08:55 |
 | review #3120 | #3055 (`closes`), #3125 (`stacked`) | 2 | 5 | 07:30 |
-| ideas at 210k | #3078, #3011 (`item-of`) | 2 | 4 | 08:50 |
-| ready #3099 | #3101 (`merge-order`) | 1 | 5 | 08:02 |
+| ideas at 210k | #3078, #3014 (`item-of`) | 2 | 4 | 08:50 |
+| ready #3099 | #3101 (`merge-order`), then #3040 (`closes`, hop 2) | 2 | 5 | 08:02 |
 | ready #3101 | #3040 (`closes`) | 1 | 5 | 08:40 |
 | DM from Sam | none | 0 | 4 | 09:02 |
 
-Order: meta (3 blocks), then review #3120 before ideas (both 2; weight 5 beats 4), then #3099 before #3101 (both 1 and weight 5; 08:02 is older), then the DM (0). Row 1 names a session, which is D1.
+Order: meta (3 blocks). Then three rows with 2 blocks: review #3120 (weight 5, 07:30), ready #3099 (weight 5, 08:02) and ideas (weight 4). Then ready #3101 (1), then the DM (0). Row 1 names a session, which is D1.
 
-At 09:12 the qa session asks to run `rm -rf build/` (blocks 1, weight 6, its issue #3102). It lands in the New band, not in the list (§4.3). The owner types the digest request on row 1 at 09:14 (`t`, hand to agent). That is a settle point: meta's row is gone once meta recycles, qa's row joins the order at blocks 1, weight 6, which is above #3099, and the list reads review #3120, ideas, qa, #3099, #3101, DM. Between 09:10 and 09:14 no row changed index.
+At 09:12 the qa session asks to run `rm -rf build/` (blocks 1 through its issue #3102, weight 6). It lands in the New band, not in the list (§4.3). The owner sends the digest request on row 1 at 09:14 (the lane row's primary action, "Ask for a digest"). That is a settle point: meta's row is gone once meta recycles, qa's row joins the order at blocks 1, weight 6, which is below ideas (2 blocks) and above #3101 (weight 5), and the list reads review #3120, #3099, ideas, qa, #3101, DM. Between 09:10 and 09:14 no row changed index.
 
 ### 4.3 Stable order and the New band
 
@@ -216,7 +217,7 @@ The bad case this stops: a lane's row jumps to the top as the owner presses Ente
 
 ### 5.1 Actions per row kind
 
-Keys follow §7.4. `Ctrl+Enter` opens the row's submit menu with the primary action preselected; `Enter` there commits it. The row's hover buttons (2 to 3, replacing the right end of the row, per design's grammar) commit on click.
+Keys follow §7.4. `Ctrl+Enter` opens the row's submit menu with the primary action preselected; `Enter` there commits it. The row's buttons (2 to 3, replacing the right end of the row, per design's grammar) show on hover and on the cursor row, and commit on click.
 
 | Kind | Primary (first in the menu) | Also | Writes to |
 |---|---|---|---|
@@ -243,7 +244,7 @@ Hand to agent opens a small picker, as the Context page's Hand to agent does: a 
 Every action that writes to a source of record (a reply, an approval, a merge, a state change) follows one pipeline. This is contract item 2 on #2978.
 
 1. **Key to paint, under 50 ms.** The row changes in place (reply: the composer closes and the message shows as "sending"; merge: the glyph becomes the merged disc, waits-on says "merging"). The app has written nothing yet.
-2. **Request.** `POST /sindri/home/rows/{id}/act` with `{action, version, actId, args}`. `actId` is a client ulid (`act_<ulid>`).
+2. **Request.** `POST /sindri/home/rows/{id}/act` with `{action, version, actId, args}`. `actId` is a client ulid (`act_<ulid>`). A PR row stores the `headSha` the owner saw, and Merge and Approve send it in `args`: the adapter passes it to the forge (merge `sha`, review `commit_id`) and to `aw-meta merge-run`. When the PR head moved, nothing is written, the row refreshes and the code is 016. `args` per action is in S0's JSON schema (§8): `reply` takes `{body}`, `snooze` `{until}` or `{preset}`, `hand` `{target, provider?}`, `merge` `{headSha, method?}`, `approve` and `request-changes` `{headSha, body?}`.
 3. **Source write.** The server calls the source adapter and records `home.act.sent`. The adapter checks first whether the write already landed (a merge reads the PR state; a reply looks for the owner's last comment with the same body hash), so a replay is safe. It records `home.act.landed` when the source confirms.
 4. **Within 2 s** the row shows the source's answer (D4). After 2 s without one, the row says "still sending" in the waits-on column and stays as it is. It does not roll back.
 5. **Failure** (the source refuses, or 15 s pass): the row returns to its old state and shows "failed: <reason>" in the waits-on column in the attention colour, with **Retry** (`.` then `r`, or the button) and **Discard**. Retry sends the same `actId`. Discard drops the pending change. The reason comes from the adapter ("GitHub refused: required check `build` is red", "Linear: token expired, reconnect") and a Connect button replaces Retry when the connection is stale.
@@ -253,7 +254,7 @@ A second action on a row that is still sending is refused with "wait for the fir
 
 ### 5.3 Snooze
 
-`h` opens a picker (cancellable). Choices, with the keys `1` to `5` while it is open:
+`h` opens a picker (cancellable; when it closes, focus returns to the row). Choices, with the keys `1` to `5` while it is open:
 
 1. Later today: 17:00 local, or 3 hours from now when it is after 14:00.
 2. Tomorrow 9:00.
@@ -278,10 +279,11 @@ Rules:
 - The **Done list**, reached from the footer, holds the last 7 days of done rows (`home.done.keepDays`, whole days 1 to 90, default 7). #3031 sets 7; the ledger's 90 days is GitHub's number.
 - **Mark all seen** stays as the bulk form of "seen" (the row stops looking unread and the tray count drops); it does not hide rows and has the existing Undo.
 - `e` stays a bare key by the owner's decision (§7.4 states the boundary). Done writes only Sindri's own state and shows Undo for 5 s.
+- **Undo has a key:** `Ctrl+Z` on Home undoes the last Sindri-local change for 5 s, and the same step stays on the Done list after that. A polite live region announces "Marked done. Undo with Ctrl+Z." and the same for a failed or still-sending write (§5.2).
 
 ### 5.5 Definition of done: the empty Home
 
-Home is empty when Needs you holds no row in state `open`. Snoozed, done and muted rows do not count; a row whose write failed does count.
+Home is empty when Needs you holds no row in state `open` **and** every source was read in the last 5 minutes with no `degraded[]` entry about a source. Snoozed, done and muted rows do not count; a row whose write failed does count. When Needs you is empty but a source is stale or disconnected, the body says "Nothing waiting in what I could read" with the stale line and **Refresh**, never "You're done."
 
 An empty Home shows, in the body: "You're done." (20 px, ink), one line under it ("3 snoozed, the next back Mon 9:00" when there are snoozed rows), and the brief if it has lines. Moving is not drawn (ledger 4: only the brief remains). The tray count is 0.
 
@@ -293,7 +295,7 @@ The cursor is a ledger event number, `home.cursor.moved`. It moves to the ledger
 
 Two writers:
 1. **Facts, by Sindri, no model.** A job reads the ledger from the cursor and writes one line per change that matters: a PR merged, CI went red or green on a PR of the owner's, a run ended, a lane recycled, an issue changed state. A line is a sentence plus at most 2 links (deep links to a row or an object). Example: "PR #3078 merged; CI red on main since 09:10." Painted at first paint, under 100 ms (D12).
-2. **Summary, by a model.** A Sindri job (kind `HomeBrief`) runs when Home opens with events since the cursor and the last brief is older than 15 min, or when the owner presses `.` then `b`. It reads only typed facts (kind, title, state change, ids) after `Aw.Redaction`, never message bodies. It writes the order of the lines and one summary line at the top. Every link in its output must resolve to a row or object id from its input; a line with a link that does not resolve falls back to its plain-fact form.
+2. **Summary, by a model.** A Sindri job (kind `HomeBrief`) runs when Home opens with events since the cursor and the last brief is older than 15 min, or when the owner presses `.` then `u`. It reads only typed facts (kind, title, state change, ids) after `Aw.Redaction`, never message bodies. It writes the order of the lines and one summary line at the top. Every link in its output must resolve to a row or object id from its input; a line with a link that does not resolve falls back to its plain-fact form.
 
 The cap is 10 lines. When there are more than 10 facts, the first 9 by (blocks, recency) show, then "and 14 more: see Moving, Work". The minimum is 0 lines; with 0 the section is the one word "Nothing changed." Each line is an ordinary row: it can be peeked, done and snoozed.
 
@@ -335,9 +337,10 @@ Design's frame on #2978 (comment 6817965291) is the reference; every number is `
 │ Home   [All 9] [Reviews 3] [Messages 0] [Work 4] [Agents 2]      / filter      Health ok  │ page header 48
 ├ New (1) ──────────────────────────────────────────────────────────────────────────────────┤ group header 28
 │ ◇ qa is asking: run rm -rf build/     asking     session  qa          new   you            │ row 32
-├ Needs you 6 ──────────────────────────────────────────────────────────────────────────────┤
-│ ◇ meta: at 205k, recycle from a digest   blocks 3   lane  meta        2h    you           │
+├ Needs you 8 ──────────────────────────────────────────────────────────────────────────────┤
+│ ◇ meta: at 205k, recycle from a digest   blocks 3   lane  meta        15m   you           │
 │ ◇ Review requested: System grid           blocks 2   PR #3120 design  1h40  you           │
+│ ◇ PR #3099 is ready to merge              blocks 2   PR #3099 qa      68m   you           │
 │ ◇ ideas: at 210k, recycle from a digest   blocks 2   lane  ideas      20m   you           │
 │ ...                                                                                       │
 ├ Moving: 4 agents, 2 CI runs ▸ ────────────────────────────────────────────────────────────┤
@@ -350,8 +353,8 @@ Design's frame on #2978 (comment 6817965291) is the reference; every number is `
 - **Frame:** top bar 40, page header 48, body 784, footer 28. Group headers 28, sentence case, 12/500, count in ink-3. Side inset 24.
 - **Row (32 px compact, 40 comfortable):** `[glyph 16] [title, flex, min 200] [why chip 104] [object 104] [from 136] [age 44, right-aligned] [waits on 112]`, 12 px gap. The why chip carries "blocks 3" or the reason word. The object fact is the mono ref (`PR #3120`, `ENG-412`, `lane meta`). The from fact is a person or session name. Title is the only 13 px ink text; unread weighs 500, read is ink-muted. Waits on `you` is bold ink, the one loud fact.
 - **Width check:** the fixed part is 636 px, so the title gets `list width - 636`: 364 px at 1000, 804 at 1440 with the peek closed. Under 840 px of list width the third fact drops; under 688 the second drops. The title minimum of 200 never shrinks (design's rule on #2978: facts end in an ellipsis, never a mid-word clip).
-- **Rows per screen (D3):** body 784 minus 8 padding minus 3 group headers (84) minus the brief's 3 lines (96) leaves 596 px, which is 18 rows at 32 px and 14 at 40.
-- **Splits** are the saved filters: All; Reviews (`review-requested`, `review-new-commits`, `pr-ready-merge`); Messages (`mention`, `dm`); Work (`issue-assigned`, `todo-due`, `run-failed`, `decision`, `question`); Agents (`agent-asking`, `agent-limited`, `lane-recycle`, plus Moving's agent lines). Each tab shows its open count. There is no "Other" tab: a row that is not a Needs you kind is not on Home (Linear's Priority / Other split is covered by Needs you versus the source pages).
+- **Rows per screen (D3):** body 784 minus 8 padding minus 3 group headers (84) minus the brief's 3 lines (96) leaves 596 px, which is 18 rows at 32 px and 14 at 40. The collapsed Todo line (28 px, §12) takes one compact row, so D3 asks for 17 and 14.
+- **Splits** are the saved filters: All; Reviews (`review-requested`, `review-new-commits`, `pr-ready-merge`); Messages (`mention`, `dm`); Work (`issue-assigned`, `todo-due`, `run-failed`, `decision`, `question`); Agents (`agent-asking`, `agent-limited`, `lane-recycle`, plus Moving's agent lines). Each tab shows its open count: open Needs you rows of its kinds, the New band included (the frame's All 9 is New 1 plus Needs you 8). A tab with no rows says why: Messages reads "Messages arrive with #2979" until that epic ships. There is no "Other" tab: a row that is not a Needs you kind is not on Home (Linear's Priority / Other split is covered by Needs you versus the source pages).
 - **Header right:** `/` filter box and one health chip that replaces today's health strip and opens the Health page.
 - **Glyphs** come from design's set (diamond for needs you, x for failed, arc for an agent running, ring with dot for a PR, bubble for a message, dot for a mention); lane and merge-queue glyphs are new and drawn in D1 (§15).
 
@@ -389,6 +392,8 @@ Every error row has a button that fixes it.
 | New band has rows | the "New (n)" header; the page title shows "Home (n new)" in the window title for screen readers |
 | a snoozed row wakes early | the row shows "back early: new reply" until first seen |
 | Needs you empty | §5.5 |
+| a split tab with no rows, the Done list empty, Moving with 0 lines, the hand-to-agent picker with no session | one plain line each ("Nothing in Reviews", "Nothing done in the last 7 days", "Nothing in flight", "No session to hand to" with **Start one**) |
+| the peek body can't load | the fields from the local store and "Couldn't load the thread" with **Retry** |
 | brief states | §6.1 table |
 | writer paused or off | §6.1 |
 | model for the brief is limited | **Resume**, §6.1 |
@@ -409,7 +414,7 @@ The grammar keys are the same on every list (#2978): `j/k` and arrows move, `Hom
 | `g` | fold or unfold the focused group (Needs you, Moving, the brief), as on the Context page (scope spec §6.6) | no |
 | `b` | show the brief's lines beyond the default 3 | no |
 
-Tab keeps its normal job: it moves focus between the filter box, the list, the peek and the footer. Splits do not use Tab because Tab has to stay a focus key (the ledger's Tab binding is a Superhuman snippet and is in "Not solid"). Key clashes were checked against the Context page (`c e / j k g n s`, and `m w r` inside its `.` menu), Projects (`s` state, `a` assign, `h` hide, `e` notes, `o` open, `c`), Reviews (`n p` files, `c`, `s` suggest, `v`, `r` reply) and Agents (`o` jump, `x` stop). `t` and `R` clash with none. Two letters differ by surface, as meta's rule allows because each opens something cancellable or is Sindri-local with Undo: `h` (snooze here, hide on Projects) and `e` (Done here, edit on Context and Projects). Letters work only while focus is in the list or the peek and not in a text field, as `RowKeys` already guards (`Views/Controls/RowKeys.cs`, #2952).
+Tab keeps its normal job: it moves focus between the filter box, the list, the peek and the footer. Splits do not use Tab because Tab has to stay a focus key (the ledger's Tab binding is a Superhuman snippet and is in "Not solid"). Key clashes were checked against the Context page (`c e / j k g n s`, and `m w r` inside its `.` menu), Projects (`s` state, `a` assign, `h` hide, `e` notes, `o` open, `c`), Reviews (`n p` files, `c`, `s` suggest, `v`, `r` reply) and Agents (`o` jump, `x` stop). `t` and `R` clash with none. Two letters differ by surface, as meta's rule allows because each opens something cancellable or is Sindri-local with Undo: `h` (snooze here, hide on Projects) and `e` (Done here, edit on Context and Projects). Letters work only while focus is in the list or the peek and not in a text field, as `RowKeys` will guard once #2952 merges (`Views/Controls/RowKeys.cs`; on main today the keys sit in `ShellWindow.axaml.cs:143`).
 
 Every action also has a menu item and a palette entry under the same id: `home.open`, `home.peek`, `home.reply`, `home.send`, `home.approve`, `home.comment`, `home.request-changes`, `home.merge`, `home.start`, `home.retry-run`, `home.answer`, `home.digest`, `home.snooze`, `home.unsnooze`, `home.done`, `home.undo`, `home.mute`, `home.hand`, `home.retry`, `home.discard`, `home.rank`, `home.brief`, `home.density`. A button with no palette entry is a bug (ledger 11).
 
@@ -442,7 +447,9 @@ Requirements by area:
 - **Snooze, done, mute stores (api).** Ledger events, projected; `home.row.woke` and `.revived` come from the collectors when addressed activity arrives. One store serves Messages (#3020).
 - **First paint (ui, api).** `GET /sindri/home` returns 60 rows and the counts in one read. The app writes the last answer to its cache file in `$AW_SINDRI_HOME/ui/` and paints from it before the read returns (D2).
 - **Brief (engine).** The `HomeBrief` job: facts, writer, link check, limit states (§6.1). It reports its token spend like other jobs.
-- **Profile keys (api).** `home.density` (`compact` | `comfortable`, default `compact`), `home.rank.weights.<reason>` (integers 0 to 9), `home.done.keepDays` (1 to 90, default 7), `home.brief` (`auto` | `facts` | `off`, default `auto`), `home.notify` (`priority` | `off`, default `priority`). An unknown or out-of-range value is SND-HOME-001 with the key path. They take rows in `docs/csharp/sindri-profile.md`, and `sindri profile set` accepts them.
+- **Profile keys (api).** `home.density` (`compact` | `comfortable`, default `compact`), `home.rank.weights.<reason>` (integers 0 to 9), `home.done.keepDays` (1 to 90, default 7), `home.brief` (`auto` | `facts` | `off`, default `auto`), `home.notify` (`priority` | `off`, default `priority`). `home.page` (`rows` | `panels`, default `panels` until U3, §2 decision 14). An unknown or out-of-range value is SND-HOME-001 with the key path. They take rows in `docs/csharp/sindri-profile.md`, and `sindri profile set` accepts them.
+- **Routes and text safety (api).** Every `/sindri/home` POST needs the per-start human token, like profile writes (SND-AUTH-002 for a session), and rejects a browser `Origin`. Collectors and adapters call `aw-meta` and other CLIs with an argument list, never a shell string; lane names come from `aw-meta` output and PR numbers are integers. A reply sent to a session's terminal drops control characters except newline and goes as one literal paste with no trailing Enter. `args` pass through `Aw.Redaction` before `home.act.sent`, and the event keeps a body hash only. The UI cache file is mode 0600 in a 0700 folder and holds the first page only. Row ids are percent-encoded in paths; S0's golden has one example.
+- **Observability (engine).** `sindri doctor` gets a row per collector and for the brief job (last read, last error); the same change updates `src/Sindri/aot-smoke/expected.txt`.
 - **Events and migration (api).** The §3.1 events join the event catalog; the view takes the next free ledger migration number at final merge (no gaps, AW-DATA-005).
 
 ## 9. Agents
@@ -461,7 +468,7 @@ Everything the page does, an agent can do through one verb. `sindri home <verb>`
 | `done-list` | `[--json]` | the Done list | none |
 
 Rules, as for the other Sindri tools:
-- A session reads the rows of the repos its `X-Sindri-Repo` header names, plus the repo-less rows. Repo and source text in every result is fenced as untrusted, over MCP and in `--json`.
+- A session reads the rows of the repos its `X-Sindri-Repo` header names. For repo-less rows (`dm`, `mention`, `agent-limited`, `system`) it gets the id, kind and counts, and the body and peek only go to the owner. Repo and source text in every result is fenced as untrusted, over MCP and in `--json`.
 - A session never presses the owner's buttons. `act`, `snooze`, `done`, `undo` and `mute` from a session are refused with SND-AUTH-002, the way profile writes are. A session may `draft`: the owner reads the draft and sends it.
 - Ids print as `<source>:<kind>:<source id>`; `--json` carries keys, text carries words.
 - Exit codes follow the context family: `0` ok, `1` attention (a refusal in the last column, Sindri not running), `2` a tool or usage error.
@@ -487,6 +494,7 @@ Reserved now: SND-HOME-001 to 029 (no `SND-HOME-` code exists on main).
 | 013 | a reply or draft is empty or over 8,000 characters | 400 | 1 |
 | 014 | an `actId` was replayed with a different body | 409 | 1 |
 | 015 | the brief job failed; carries the cause | 500 | 1 |
+| 016 | the PR head moved since the row was read; carries the new `headSha` | 409 | 1 |
 
 Each has a sentence for the app and a `fix:` for the CLI, written in S0. The profile keys' errors reuse the context family's shape.
 
@@ -518,7 +526,7 @@ Non-goals for this spec:
 | `Views/Todo/TodoPanel.axaml`, `ViewModels/Shell/ShellViewModel.Todo.cs`, `ShellWindow.TodoKeys.cs` | kept in ship 1 as a collapsed "Todo, 4 open" line under the list that opens the panel as its Full view; only due todos become `todo-due` rows |
 | Running / With you / Queued column (`GET /sindri/queue`) | `running` and `withYou` become Moving lines; `queued` stays on the Queue page |
 | the health strip | one health chip in the page header |
-| the setup line (`Setup.IsHomeLineShown`) | unchanged, above the list |
+| the setup line (`SetupViewModel.IsHomeLineShown`) | unchanged, above the list |
 | `ViewModels/Labels.Home*.cs`, `Labels.NeedsYou*.cs` | strings rewritten for the new rows |
 | `Views/Palette/CommandPalette.axaml` | gains the `home.*` ids of §7.4 |
 
@@ -554,8 +562,8 @@ From a read of `origin/main` a4d03ace1c and the issues (no build, no app run for
 |---|---|---|---|---|
 | P0 | the shared controls: row tokens (32 / 40, density), `RowList`, `Row`, `PeekPane`, with Frames tests. Design builds them: no PR exists (2026-11-12). Design reuses `RowKeys` from #2952 and gives `RowList` no key handler of its own | design | now | #2952 merged; until then design codes against the keys at `ShellWindow.axaml.cs:143` |
 | D1 | the Home frame redrawn with this spec's states: New band, failed, snoozed, empty, brief states; the lane and merge-queue glyphs; the §7.1 width numbers checked | design | now | none |
-| S0 | the wire shape: JSON schema and API golden for `/sindri/home` (scenario row, Ui `GoldenContract` slug), `tests/fixtures/home/rows.json` (the §4.2 example as rows), the ledger migration (and `ledger schema N/N` in `src/Sindri/aot-smoke/expected.txt`), the `home.*` events (`EventCatalogTests`), `PublicAPI` files, `home_*` in aot-smoke's tools/list, the profile keys and their rows in `docs/csharp/sindri-profile.md` | api | now | the §3.1 fields |
-| A1 | `HomeRank` (pure, golden on §4.2, D8), the edge table, `GET /sindri/home` over the existing sources: needs-you rows, sessions asking, reviews waiting, Linear assigned and mentioned, todos due | api | now, against S0's fixture | S0 |
+| S0 | reserves its migration number at start; adds a `home` mode to `scripts/sindri-ui-fixture.sh` that serves the fixture to the page; the wire shape: JSON schema and API golden for `/sindri/home` (scenario row, Ui `GoldenContract` slug), `tests/fixtures/home/rows.json` (the §4.2 example as rows), the ledger migration (and `ledger schema N/N` in `src/Sindri/aot-smoke/expected.txt`), the `home.*` events (`EventCatalogTests`), `PublicAPI` files, `home_*` in aot-smoke's tools/list, the profile keys and their rows in `docs/csharp/sindri-profile.md` | api | now | the §3.1 fields |
+| A1 | first a throwaway script that prints blocks N for each row of the #3082 box state (if under half the rows get N above 0, simplify the rule before building); then `HomeRank` (pure, golden on §4.2, D8), the edge table, `docs/sindri/home.md` (how ranking works; `--explain` points to it), `GET /sindri/home` over the existing sources: needs-you rows, sessions asking, reviews waiting, Linear assigned and mentioned, todos due | api | now, against S0's fixture | S0 |
 | A2 | act, snooze, done, undo, mute routes; write-through adapters for forge, Linear, decisions, sessions; early return and revive rules | api | after A1's first read | A1 |
 | E1 | the `home-lanes` collector (`lane-recycle`, `agent-limited`, queue `pr-ready-merge`), then the failed-run trigger | engine | now (reads aw-meta; needs no other phase) | the §3.3 fields |
 | E2 | the `HomeBrief` job: facts, writer, link check, limit states | engine | after A1's cursor event | A1 |
@@ -574,3 +582,20 @@ Each phase updates its docs: `docs/sindri/README.md` (or a new `docs/sindri/home
 ## Open questions
 
 None. The owner settled the four earlier questions on 2026-11-12 and the lanes-collector fields are in §3.3. Two things stay unchecked until a lane is limited or at the mark: the JSON key of a limited subject's stop in `aw-meta usage --json`, and the `Recycle` verdict's exact casing in `context[]`. E1 reads both from a real case first.
+
+### Review round 1 (autoplan, 5 lenses)
+
+Verdicts: product NEEDS_WORK, architecture NEEDS_WORK, design NEEDS_WORK, devex NEEDS_WORK, security NEEDS_WORK. Nothing CRITICAL. Applied: the §4.2 order fix (#3099 blocks 2), the lane `item-of` source, the false "You're done." on a stale source, the PR head sha on Merge and Approve (016), the rollout key `home.page`, `Park` and `Recipe` rows, the run-store query, `act` argument shapes, D3 and the frame numbers, and the code facts. Left, one line each:
+
+- Product C1 (ship in two cuts): the phases already run in parallel and the owner asked for the whole page; a cut line stays a lane-lead call at U2.
+- Product C3 (baseline of opens of other apps): X1 records the baseline in its first week, before U3 flips the default.
+- Product C4 (a silent lane row): the top row of a day-start is seen on open, and the lane's toast would fire on every recycle mark; kept silent on purpose.
+- Product C5 (defer the model brief): E2 ships facts first and the writer second; the table in §6.1 already covers the facts-only case.
+- Arch F5 (`t` in the example): fixed in the example; the lane row's primary is "Ask for a digest".
+- Arch, `aw-meta` key names: unchanged, E1 reads them from a real case first.
+- Arch, `Tokens.axaml:229-233`: kept; line 229 is the comment above the four tokens.
+- Design F9 (hover buttons on the cursor row), F10 (`b` twice): hover buttons show on hover and on the cursor row; the `.` panel key for the brief is `u`, not `b`.
+- Devex, the new `Aw.Sindri.Core.Home` namespace: the gate list per phase is the lane lead's, from the team memory rules.
+- Devex, migration number: kept "next free at final merge"; S0 reserves a number at start and renumbers on conflict.
+- Security L3 (mute): mute stops the toast and the early return only; the row stays in Needs you.
+
