@@ -9,7 +9,7 @@ namespace Aw.Sindri.Infrastructure.Launch.Usage;
 /// <summary>
 /// An agent's spend today (screens spec E-28): what the usage reader the catalog entry names counts for the local calendar day, priced by the table. An agent
 /// whose entry names no reader has none (null: a budget on it is refused as 'no usage reader'). A reader nobody has checked against the real CLI counts tokens only.
-/// The day is read at most once every few seconds, so a screen that polls does not walk the transcripts each time.
+/// The first read of a day is awaited; after it a caller always gets the last read at once, and a read older than a few seconds starts one refresh in the background (#2777).
 /// </summary>
 /// <param name="catalog">The catalog, which names each entry's reader.</param>
 /// <param name="readers">The readers by name.</param>
@@ -18,6 +18,8 @@ internal sealed class UsageSpend(IAgentCatalog catalog, IReadOnlyDictionary<stri
 {
     private static readonly TimeSpan _fresh = TimeSpan.FromSeconds(15);
     private readonly ConcurrentDictionary<AgentId, (DateTimeOffset At, DateOnly Day, AgentSpend Spend)> _read = new();
+    private readonly Lock _gate = new();
+    private readonly Dictionary<AgentId, (DateOnly Day, Task<AgentSpend> Task)> _flights = [];
 
     /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<ModelTokens>?> OfSession(AgentId target, SessionId session, CancellationToken cancellationToken) =>
@@ -33,15 +35,56 @@ internal sealed class UsageSpend(IAgentCatalog catalog, IReadOnlyDictionary<stri
 
         var now = clock.GetUtcNow();
         var (start, end, day) = LocalDay(now, clock.LocalTimeZone);
-        if (_read.TryGetValue(target, out var cached) && cached.Day == day && now - cached.At < _fresh)
+        if (_read.TryGetValue(target, out var cached) && cached.Day == day)
         {
+            if (now - cached.At >= _fresh)
+            {
+                // stale: answer from the last read and refresh once in the background (#2777); a failed refresh keeps the value and the next stale call retries
+                _ = Flight(target, reader, (start, end, day)).ContinueWith(static t => _ = t.Exception, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+            }
+
             return Results.Success<AgentSpend?>(cached.Spend);
         }
 
-        var used = Budgets.Spend(await reader.Between(start, end, cancellationToken).ConfigureAwait(false));
-        var spend = reader.Verified ? used : new AgentSpend(0m, used.Tokens, SpendBasis.TokensOnly);
-        _read[target] = (now, day, spend);
-        return Results.Success<AgentSpend?>(spend);
+        // nothing read yet for this local day: wait for the one shared read (the caller's token stops its wait, not the read)
+        return Results.Success<AgentSpend?>(await Flight(target, reader, (start, end, day)).WaitAsync(cancellationToken).ConfigureAwait(false));
+    }
+
+    /// <summary>The read in flight for <paramref name="target"/>'s day, started when there is none; every caller of one day shares it.</summary>
+    private Task<AgentSpend> Flight(AgentId target, IUsageReader reader, (DateTimeOffset Start, DateTimeOffset End, DateOnly Day) window)
+    {
+        lock (_gate)
+        {
+            if (_flights.TryGetValue(target, out var flight) && flight.Day == window.Day)
+            {
+                return flight.Task;
+            }
+
+            var task = Task.Run(() => Run(target, reader, window), CancellationToken.None);
+            _flights[target] = (window.Day, task);
+            return task;
+        }
+    }
+
+    private async Task<AgentSpend> Run(AgentId target, IUsageReader reader, (DateTimeOffset Start, DateTimeOffset End, DateOnly Day) window)
+    {
+        try
+        {
+            var used = Budgets.Spend(await reader.Between(window.Start, window.End, CancellationToken.None).ConfigureAwait(false));
+            var spend = reader.Verified ? used : new AgentSpend(0m, used.Tokens, SpendBasis.TokensOnly);
+            _read[target] = (clock.GetUtcNow(), window.Day, spend);
+            return spend;
+        }
+        finally
+        {
+            lock (_gate)
+            {
+                if (_flights.TryGetValue(target, out var flight) && flight.Day == window.Day)
+                {
+                    _ = _flights.Remove(target);
+                }
+            }
+        }
     }
 
     /// <summary>The local calendar day that holds <paramref name="now"/>, as the instants it starts and ends.</summary>
