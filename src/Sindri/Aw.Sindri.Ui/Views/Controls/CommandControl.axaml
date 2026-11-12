@@ -28,7 +28,7 @@
       <TextBlock x:Name="ConfirmText" Classes="caption" Text="{Binding ConfirmQuestion}" TextWrapping="Wrap"
                  AutomationProperties.AccessibilityView="Raw" />
       <StackPanel Orientation="Horizontal" Spacing="8">
-        <Button x:Name="ConfirmButton" Classes="command-control destructive" Click="OnConfirm" AutomationProperties.Name="{Binding ConfirmName}">
+        <Button x:Name="ConfirmButton" Classes="command-control destructive primary" Click="OnConfirm" AutomationProperties.Name="{Binding ConfirmName}">
           <TextBlock Classes="button" Text="{Binding ConfirmLabel}" />
         </Button>
         <Button x:Name="KeepButton" Classes="copy" Click="OnKeep" VerticalAlignment="Center" AutomationProperties.Name="{Binding KeepName}">
