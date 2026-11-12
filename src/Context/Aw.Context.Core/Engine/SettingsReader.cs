@@ -43,7 +43,7 @@ public static partial class SettingsReader
 
         if (UnknownKey(element) is { } unknown)
         {
-            return Invalid("context." + unknown, "is not a context setting this build knows (repos, docs, cascadeDepth, cascadeComponentFanOut, deadline, minHits, labeling, scrub, sessions, sources, eval, code, extract, publish, ranker, history, conceptScan, conceptSynthesis, checks, index, models)");
+            return Invalid("context." + unknown, "is not a context setting this build knows (repos, docs, cascadeDepth, cascadeComponentFanOut, deadline, minHits, labeling, scrub, sessions, sources, eval, code, extract, publish, ranker, history, conceptScan, conceptSynthesis, checks, index, models, queryBound)");
         }
 
         if (CodeUnknownKey(element) is { } codeKey)
@@ -237,7 +237,7 @@ public static partial class SettingsReader
     }
 
     private static ContextSettings WithFanOut(ContextSettings settings, ContextSection section) =>
-        settings with { ConceptSynthesis = ConceptSynthesisRules.Read(section.ConceptSynthesis), DocDirectoryNames = DocNamesRules.Names(section.Docs), CascadeComponentFanOut = section.CascadeComponentFanOut ?? settings.CascadeComponentFanOut, Graphify = GraphifyRules.Limits(section.Extract?.Graphify) };
+        settings with { QueryBound = section.QueryBound is { } bound && Duration(bound) is { } parsedBound ? parsedBound : settings.QueryBound, ConceptSynthesis = ConceptSynthesisRules.Read(section.ConceptSynthesis), DocDirectoryNames = DocNamesRules.Names(section.Docs), CascadeComponentFanOut = section.CascadeComponentFanOut ?? settings.CascadeComponentFanOut, Graphify = GraphifyRules.Limits(section.Extract?.Graphify) };
 
     private static Error? CascadeProblem(ContextSection section) => section switch
     {
@@ -256,7 +256,7 @@ public static partial class SettingsReader
 
     private static string? UnknownKey(JsonElement element)
     {
-        string[] known = ["repos", "docs", "cascadeDepth", "cascadeComponentFanOut", "deadline", "maxBudget", "minHits", "labeling", "scrub", "sessions", "sources", "eval", "code", "extract", "publish", "ranker", "history", "conceptScan", "conceptSynthesis", "checks", "index", "models"];
+        string[] known = ["repos", "docs", "cascadeDepth", "cascadeComponentFanOut", "deadline", "maxBudget", "minHits", "labeling", "scrub", "sessions", "sources", "eval", "code", "extract", "publish", "ranker", "history", "conceptScan", "conceptSynthesis", "checks", "index", "models", "queryBound"];
         return element.EnumerateObject().Select(p => p.Name).FirstOrDefault(n => !known.Contains(n, StringComparer.Ordinal)) is { } name ? Printable(name) : null;
     }
 

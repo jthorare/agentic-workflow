@@ -27,4 +27,5 @@ internal sealed record ContextSection(
     ConceptSynthesisSection? ConceptSynthesis = null,
     ChecksSection? Checks = null,
     IndexSection? Index = null,
-    JsonElement? Models = null);   // read by ModelsSettings: its keys are a tree of optional entries checked by hand
+    JsonElement? Models = null,
+    string? QueryBound = null);   // read by ModelsSettings: its keys are a tree of optional entries checked by hand

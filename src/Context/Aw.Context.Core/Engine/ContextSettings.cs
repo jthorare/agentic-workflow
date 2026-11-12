@@ -34,6 +34,9 @@ public sealed partial record ContextSettings
     /// <summary>The per-query deadline.</summary>
     public TimeSpan Deadline { get; init; } = TimeSpan.FromSeconds(10);
 
+    /// <summary>'context.queryBound': the whole query's bound, map read included; a query that passes it answers a typed timeout instead of waiting on the request token.</summary>
+    public TimeSpan QueryBound { get; init; } = TimeSpan.FromSeconds(120);
+
     /// <summary>The code lens's lexical search deadline: one git grep per implementing file and data thing, run in turn, so it gets longer than a query.</summary>
     public TimeSpan CodeDeadline { get; init; } = TimeSpan.FromSeconds(180);
 

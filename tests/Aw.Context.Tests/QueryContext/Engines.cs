@@ -74,7 +74,7 @@ internal static class Engines
 {
     internal static readonly ContextRepo[] Repos = [new(ContextRepoName.From("split-panes"), "/repos/split-panes"), new(ContextRepoName.From("other"), "/repos/other")];
 
-    internal static IContextEngine Over(FixedSourceCatalog catalog, FakeDocIndex? index = null, FakeTimeProvider? time = null, FakeIntentStore? intentStore = null, FakeLexicalLeg? lexical = null, IRecordStore? records = null, FakeQueryEmbedder? embedder = null, FakeIndexSync? indexSync = null)
+    internal static IContextEngine Over(FixedSourceCatalog catalog, FakeDocIndex? index = null, FakeTimeProvider? time = null, FakeIntentStore? intentStore = null, FakeLexicalLeg? lexical = null, IRecordStore? records = null, FakeQueryEmbedder? embedder = null, FakeIndexSync? indexSync = null, ICodeIndexBuildState? codeIndex = null)
     {
         var clock = time ?? new FakeTimeProvider(new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero));
         var scrubbers = new FakeScrubberFactory();
@@ -84,7 +84,7 @@ internal static class Engines
         var recordStore = records ?? new FakeRecordStore();
         var graphs = new MapReader(store, intents);
         var repos = new FakeRepoReader(Repos[0], "0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", new Dictionary<string, string>(StringComparer.Ordinal));
-        return new ContextEngine(new QueryContextService(scrubbers, new SequentialIdGenerator(), clock, new LiveInputs(graphs, catalog, repos, new NoMapRebuild()), intents, new FakeModelPort(),
+        return new ContextEngine(new QueryContextService(scrubbers, new SequentialIdGenerator(), clock, new LiveInputs(graphs, catalog, repos, new NoMapRebuild(), codeIndex ?? new NoCodeIndexBuild()), intents, new FakeModelPort(),
                 new RecordSearch(lexical ?? new FakeLexicalLeg(), recordStore, embedder ?? new FakeQueryEmbedder(), new FakeVectorMatrixCache(recordStore), new FakeVectorScan())),
             new ContextSources(new SourcesStatusService(docs, catalog, scrubbers, intents, recordStore, clock), new RefreshDocsService(docs, scrubbers), new SyncSourcesService(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), scrubbers, graphs, intents, new FakeModelPort(), clock), new EmbedRecordsService(new FakeRecordStore(), new FakeChunkEmbedder()),
                 (IIndexSync?)indexSync ?? new IndexSync(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), new FakeRecordStore(), scrubbers)), scrubbers, Map(clock, store, scrubbers, new ConceptReader(graphs, scrubbers)),

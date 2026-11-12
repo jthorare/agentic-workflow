@@ -12,4 +12,5 @@ namespace Aw.Context.Features.QueryContext;
 /// <param name="Ranker">The ranker stages a backtest arm forces, or null for the profile's (the live query).</param>
 /// <param name="Concept">The pin the query is scoped to, or null; the request's own field takes over from it (so the phases that read the pin are tested through it first).</param>
 /// <param name="Rebuild">Where the map's rebuild stands, for the stale-map note; null when the view asks for none (a backtest arm).</param>
-internal sealed record PipelineInputs(IMapProvider Map, ISourceCatalog Catalog, DateTimeOffset? AsOf = null, DiffAnswer? Diff = null, RankerMode? Ranker = null, string? Concept = null, IMapRebuildState? Rebuild = null);
+/// <param name="CodeIndex">Where the code index build stands, for the symbol shape's miss; null when the view asks for none.</param>
+internal sealed record PipelineInputs(IMapProvider Map, ISourceCatalog Catalog, DateTimeOffset? AsOf = null, DiffAnswer? Diff = null, RankerMode? Ranker = null, string? Concept = null, IMapRebuildState? Rebuild = null, ICodeIndexBuildState? CodeIndex = null);

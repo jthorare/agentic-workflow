@@ -12462,3 +12462,15 @@ Aw.Context.Core.Engine.ModelKind.WorkflowPrompt = 7 -> Aw.Context.Core.Engine.Mo
 Aw.Context.Core.Models.ModelPurpose.WorkflowPrompt = 9 -> Aw.Context.Core.Models.ModelPurpose
 Aw.Context.Core.Linear.ILinearReadCredential
 Aw.Context.Core.Linear.ILinearReadCredential.TokenFor(string? profilePointer) -> string?
+Aw.Context.Core.Map.CodeIndexBuildStatus
+Aw.Context.Core.Map.CodeIndexBuildStatus.Building.get -> bool
+Aw.Context.Core.Map.CodeIndexBuildStatus.CodeIndexBuildStatus(bool building, string? progress = null) -> void
+Aw.Context.Core.Map.CodeIndexBuildStatus.Progress.get -> string?
+static Aw.Context.Core.Map.CodeIndexBuildStatus.Idle.get -> Aw.Context.Core.Map.CodeIndexBuildStatus!
+Aw.Context.Core.Map.ICodeIndexBuildState
+Aw.Context.Core.Map.ICodeIndexBuildState.Read(Aw.Context.Core.Engine.ContextRepoName repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Map.CodeIndexBuildStatus!>
+Aw.Context.Core.Engine.ContextSettings.QueryBound.get -> System.TimeSpan
+Aw.Context.Core.Engine.ContextSettings.QueryBound.init -> void
+static readonly Aw.Context.Core.ContextErrors.SymbolNotAPath -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.CodeIndexRebuilding -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.QueryTimedOut -> Aw.Kernel.ErrorDefinition!

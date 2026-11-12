@@ -9,9 +9,10 @@ namespace Aw.Context.Features.QueryContext;
 /// <param name="Catalog">The source catalog.</param>
 /// <param name="Repos">The repo reader.</param>
 /// <param name="Rebuild">Where the map's rebuild stands.</param>
-internal sealed record LiveInputs(MapReader Graphs, ISourceCatalog Catalog, IRepoReader Repos, IMapRebuildState Rebuild)
+/// <param name="CodeIndex">Where the code index build stands.</param>
+internal sealed record LiveInputs(MapReader Graphs, ISourceCatalog Catalog, IRepoReader Repos, IMapRebuildState Rebuild, ICodeIndexBuildState CodeIndex)
 {
     /// <summary>The inputs of one live query.</summary>
     /// <returns>The pipeline's inputs.</returns>
-    internal PipelineInputs ToInputs() => new(new LiveMap(Graphs), Catalog, Diff: new DiffAnswer(Graphs, Repos), Rebuild: Rebuild);
+    internal PipelineInputs ToInputs() => new(new LiveMap(Graphs), Catalog, Diff: new DiffAnswer(Graphs, Repos), Rebuild: Rebuild, CodeIndex: CodeIndex);
 }
