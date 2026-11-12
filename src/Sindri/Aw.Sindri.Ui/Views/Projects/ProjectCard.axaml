@@ -77,7 +77,7 @@
                     CornerRadius="{StaticResource Radius.XS}" Padding="8,6" IsVisible="{Binding ShowsNotes}">
               <TextBlock Classes="caption muted" Text="{Binding NotesText}" TextWrapping="Wrap" />
             </Border>
-            <Button x:Name="ProjectNotesEdit" Classes="link" Content="{Binding EditText}" AutomationProperties.Name="{Binding EditName}" Click="OnEdit" IsVisible="{Binding IsReading}" HorizontalAlignment="Left" />
+            <Button x:Name="ProjectNotesEdit" Classes="link" Content="{Binding EditText}" AutomationProperties.Name="{Binding EditName}" Click="OnEdit" IsTabStop="False" IsVisible="{Binding IsReading}" HorizontalAlignment="Left" />
             <StackPanel x:Name="ProjectNotesEditor" Spacing="6" IsVisible="{Binding IsEditing}">
               <Border x:Name="ProjectNotesNewer" IsVisible="{Binding HasNewerNotes}" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.HairlineTertiary}"
                     BorderThickness="2,0,0,0" CornerRadius="{StaticResource Radius.XS}" Padding="8,6"

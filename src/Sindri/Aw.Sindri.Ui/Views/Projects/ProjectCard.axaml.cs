@@ -40,6 +40,12 @@ internal sealed partial class ProjectCard : UserControl
             e.Handled = true;
             RaiseEvent(new RoutedEventArgs(OpenEvent, this));
         }
+        else if (e is { Key: Key.E, KeyModifiers: KeyModifiers.None } && ReferenceEquals(e.Source, ProjectCardFrame) && ProjectNotesEdit.IsEffectivelyVisible)
+        {
+            // Edit notes is not a tab stop (the grid is one stop, spec 3.3): E on the focused card opens the editor instead.
+            e.Handled = true;
+            OnEdit(this, e);
+        }
     }
 
     private static void StopCardKeys(object? sender, KeyEventArgs e)
