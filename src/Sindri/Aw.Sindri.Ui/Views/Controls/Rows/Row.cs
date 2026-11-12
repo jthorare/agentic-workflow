@@ -34,6 +34,7 @@ internal sealed class Row : TemplatedControl
     private double[] _widths = [];
     private object? _builtFor;
     private Avalonia.Styling.ThemeVariant? _variant;
+    private double _captionSize;
 
     static Row()
     {
@@ -70,6 +71,14 @@ internal sealed class Row : TemplatedControl
             _variant = ActualThemeVariant;
             _ink = _inkMuted = null;
             Refresh();
+        };
+        ResourcesChanged += (_, _) =>
+        {
+            if (TopLevel.GetTopLevel(this) is not null && this.TryFindResource("Type.Caption.Size", ActualThemeVariant, out var size) && size is double points && !points.Equals(_captionSize))
+            {
+                _captionSize = points;   // the text scale moved: refs are cut again for the new size
+                Refresh();
+            }
         };
     }
 

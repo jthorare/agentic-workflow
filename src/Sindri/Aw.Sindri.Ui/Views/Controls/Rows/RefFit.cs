@@ -18,13 +18,14 @@ internal static class RefFit
     {
         ArgumentNullException.ThrowIfNull(block);
         ArgumentNullException.ThrowIfNull(text);
-        var key = (text, width);
+        var font = FontOf(block);
+        var key = (text, width, font?.Size ?? 0, font?.Family.Name);   // the caption size moves with the text scale: a cut made at 100% is wrong at 130%
         if (_cache.TryGetValue(key, out var cached))
         {
             return cached;
         }
 
-        var fitted = Compute(block, text, width, fallbackCharWidth);
+        var fitted = Compute(font, text, width, fallbackCharWidth);
         if (_cache.Count > 4096)
         {
             _cache.Clear();
@@ -34,11 +35,11 @@ internal static class RefFit
         return fitted;
     }
 
-    private static readonly Dictionary<(string Text, double Width), string> _cache = [];
+    private static readonly Dictionary<(string Text, double Width, double Size, string? Family), string> _cache = [];
 
-    private static string Compute(Control block, string text, double width, double fallbackCharWidth)
+    private static string Compute((FontFamily Family, double Size)? font, string text, double width, double fallbackCharWidth)
     {
-        if (Measure(block, text) is not { } full)
+        if (Measure(font, text) is not { } full)
         {
             return RefText.ShortenMiddle(text, Math.Max(4, (int)(width / fallbackCharWidth)));
         }
@@ -53,7 +54,7 @@ internal static class RefFit
         while (low < high)
         {
             var mid = (low + high + 1) / 2;
-            if (Measure(block, RefText.ShortenMiddle(text, mid)) <= width)
+            if (Measure(font, RefText.ShortenMiddle(text, mid)) <= width)
             {
                 low = mid;
             }
@@ -66,14 +67,12 @@ internal static class RefFit
         return RefText.ShortenMiddle(text, low);
     }
 
-    private static double? Measure(Control block, string text)
-    {
-        if (!block.TryFindResource("Font.Mono", block.ActualThemeVariant, out var family) || family is not FontFamily mono
-            || !block.TryFindResource("Type.Caption.Size", block.ActualThemeVariant, out var size) || size is not double points)
-        {
-            return null;
-        }
+    private static (FontFamily Family, double Size)? FontOf(Control block) =>
+        block.TryFindResource("Font.Mono", block.ActualThemeVariant, out var family) && family is FontFamily mono
+        && block.TryFindResource("Type.Caption.Size", block.ActualThemeVariant, out var size) && size is double points
+            ? (mono, points)
+            : null;
 
-        return new FormattedText(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, new Typeface(mono), points, Brushes.Black).Width;
-    }
+    private static double? Measure((FontFamily Family, double Size)? font, string text) =>
+        font is { } f ? new FormattedText(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, new Typeface(f.Family), f.Size, Brushes.Black).Width : null;
 }

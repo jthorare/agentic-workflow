@@ -11,6 +11,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Tests.Views;
+using Aw.Sindri.Ui.Theme;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Rows;
 using Aw.Sindri.Ui.Views.Controls.Rows;
@@ -412,6 +413,39 @@ public sealed class RowListLiveTests
         Settle(window);
 
         Assert.Equal("k3", FocusedKey(window));
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task A_long_ref_is_cut_again_to_fit_its_column_when_the_text_scale_goes_from_100_to_130_percent_live() => await OnUi(() =>
+    {
+        var resources = Application.Current!.Resources;
+        var group = new LiveGroup("Needs you", [LiveRow.At(0)]);
+        group.Rows[0].Facts = new Dictionary<string, RowFact>(StringComparer.Ordinal) { ["ref"] = new(RowFactKind.Ref, RowGallery.LongRef) };
+        var (window, list) = Show(new[] { group });
+        double Fitted()
+        {
+            var cell = list.GetVisualDescendants().OfType<Border>().First(b => b.Name == "Fact_ref");
+            var text = cell.GetVisualDescendants().OfType<TextBlock>().First();
+            text.Measure(Size.Infinity);
+            return text.DesiredSize.Width;
+        }
+
+        var at100 = Fitted();
+        try
+        {
+            TextScale.Apply(resources, 1.3);
+            Settle(window);
+            var cell = list.GetVisualDescendants().OfType<Border>().First(b => b.Name == "Fact_ref");
+
+            Assert.True(Fitted() <= cell.Width + 0.5, string.Create(CultureInfo.InvariantCulture, $"ref is {Fitted():0.0} px wide in a {cell.Width:0.0} px column at 130% (it was {at100:0.0} at 100%)"));
+        }
+        finally
+        {
+            TextScale.Apply(resources, 1.0);
+        }
+
         window.Close();
         return true;
     });
