@@ -20,7 +20,7 @@ public sealed class WorkflowTemplatesRouteTests
 
         Assert.Equal(System.Net.HttpStatusCode.OK, answer.Status);
         var rows = JsonDocument.Parse(answer.Body).RootElement.GetProperty("templates").EnumerateArray().ToList();
-        Assert.Equal(["A", "B", "C"], rows.Select(static r => r.GetProperty("id").GetString()));
+        Assert.Equal(["A", "B", "C"], rows.Select(static r => r.GetProperty("id").GetString()), StringComparer.Ordinal);
         Assert.All(rows, r =>
         {
             Assert.False(string.IsNullOrWhiteSpace(r.GetProperty("title").GetString()));

@@ -36,6 +36,8 @@ public sealed partial class GraphValidator(GraphValidationContext context)
         return new GraphValidation(mode, found);
     }
 
+    internal bool IsTriggerType(string type) => context.Blocks.TryGetValue(type, out var block) && block.IsTrigger;
+
     private static void Duplicates(GraphSpec spec, List<GraphFinding> found)
     {
         foreach (var node in spec.Nodes.Where(static n => _scopeRoots.Contains(n.Id.Value)))

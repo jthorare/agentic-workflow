@@ -57,8 +57,8 @@ public sealed class NodeKindTitleTests
         Assert.All(summaries, s =>
         {
             Assert.False(string.IsNullOrWhiteSpace(s.KindTitle), $"node '{s.Node}' has no kind title");
-            Assert.DoesNotContain(s.KindTitle!, catalog.Keys);
-            Assert.NotEqual(s.Node, s.KindTitle);
+            Assert.DoesNotContain(s.KindTitle!, catalog.Keys, StringComparer.Ordinal);
+            Assert.NotEqual(s.Node, s.KindTitle, StringComparer.Ordinal);
         });
     }
 }

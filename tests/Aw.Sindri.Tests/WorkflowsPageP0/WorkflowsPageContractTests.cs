@@ -69,15 +69,14 @@ public sealed class WorkflowsPageContractTests
     }
 
     [Fact]
-    public void Replace_node_is_refused_until_the_engine_builds_it()
+    public void Replace_node_on_a_node_that_is_not_the_trigger_is_refused_with_SND_GRAPH_112()
     {
         var spec = Spec([Trigger("daily"), Search("a")], [Edge("daily", "a")]);
 
-        var result = GraphOps.Apply(spec, 1, 1, [new ReplaceNodeOp(NodeId.From("daily"), "manual")], Validator());
+        var result = GraphOps.Apply(spec, 1, 1, [new ReplaceNodeOp(NodeId.From("a"), "schedule")], Validator());
 
         Assert.True(result.IsError);
-        Assert.Equal("SND-GRAPH-119", result.Error.Code);
-        Assert.Contains("op 1", result.Error.Message, StringComparison.Ordinal);
+        Assert.Equal("SND-GRAPH-112", result.Error.Code);
     }
 
     [Fact]
@@ -126,14 +125,6 @@ public sealed class WorkflowsPageContractTests
     public async Task The_trigger_events_route_stub_refuses_with_not_built()
     {
         var result = await new ListTriggerEventsService().Handle(new ListTriggerEventsRequest("github.pr.opened", Connection: null), Token);
-
-        Assert.Equal("SND-GRAPH-119", result.Error.Code);
-    }
-
-    [Fact]
-    public async Task The_templates_route_stub_refuses_with_not_built()
-    {
-        var result = await new ListWorkflowTemplatesService().Handle(new ListWorkflowTemplatesRequest(), Token);
 
         Assert.Equal("SND-GRAPH-119", result.Error.Code);
     }
