@@ -1,7 +1,7 @@
 ---
 name: bugFixOrchestrator
 description: Drive a bug ticket (Linear ID/URL or pasted text) to a proven resolution — investigate with /rootCause, have implementer subagents fix it, and call it resolved only when the same check that failed before the fix passes after it AND judge resolution-check agrees the reported problem is solved.
-argument-hint: "<linear-issue-id-or-url | pasted ticket text>"
+argument-hint: "<linear-issue-id-or-url | pasted ticket text> [--no-champion]"
 allowed-tools: Bash(git *), Bash(bugfix-state:*), Bash(ui-evidence:*), Bash(bash *), Bash(source *), Bash(locked *), Bash(command *), Bash(SHARED_DIR=*), Bash(TK=*), Bash(REPO=*), Bash(STATE=*), Bash(echo *), Bash(mkdir *), Bash(cat *), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__claude_ai_Linear__get_issue, mcp__claude_ai_Linear__save_comment
 ---
 
@@ -271,7 +271,7 @@ Outcome:
    not use it. Then `git -C "$REPO" checkout bugfix/<ticket-slug>`. In a meta lane (`AW_META_TEAM` and
    `AW_META_LANE` set) don't remove it: ship from that worktree, where the branch is checked out; the tree
    goes away through meta's merge and close triggers or a sweep meta runs.
-5. Do not open a PR. Leave the winning branch ready and suggest `/shipRelease`.
+5. Do not open a PR. Leave the winning branch ready and suggest `/shipRelease`, which opens it and runs the PR champion loop (`$SHARED_DIR/pr-champion.md`). Outside Sindri this skill opens no PR, so it has no loop of its own to run. `--no-champion` is accepted and passed on to `/shipRelease`.
 
 Report to the user:
 
@@ -295,7 +295,7 @@ Only when the Result block's gate printed `AW_RESULT_SKILL=bugFixOrchestrator`; 
 
 - **Prefix.** `PREFIX="${AW_SINDRI_BRANCH%/work}"`. Name the working branch `$PREFIX/fix`, each candidate `$PREFIX/a<attempt>` (mode B: `$PREFIX/a<attempt>-h<hypothesis#>`). Never `bugfix/<ticket-slug>`.
 - **One implementer at a time, in this worktree.** No `git worktree add`: create each candidate with `git checkout -b $PREFIX/a<attempt> <baseline-commit>` and run the implementers one after the other (mode B's two implementers run in sequence, each from the baseline commit). Skip the worktree removals; the Step's worktree goes with the run.
-- **Push.** After Phase 6, with `status` `resolved`: `git push origin <winning branch>:refs/heads/$AW_SINDRI_BRANCH`, open it as a **draft** PR (`gh pr create --draft`, body from `resolution.md`), and put its URL in `pr`. Any other status: push and open nothing, leave `pr` out. Then `git checkout --detach` so the next Step (addressReview) can check the branch out in its own worktree.
+- **Push.** After Phase 6, with `status` `resolved`: `git push origin <winning branch>:refs/heads/$AW_SINDRI_BRANCH`, open it as a **draft** PR (`gh pr create --draft`, body from `resolution.md`), and put its URL in `pr`. Any other status: push and open nothing, leave `pr` out. Then, unless `--no-champion` was passed, follow `$SHARED_DIR/pr-champion.md` on that draft PR (review loop, ready, watch, merge-ready report); a workflow whose next Step is addressReview passes `--no-champion`. Then `git checkout --detach` so the next Step (addressReview) can check the branch out in its own worktree.
 - **No Linear offer.** Skip Phase 6 step 3 and say in `summary` that nothing was posted to Linear.
 - **Questions become `waiting`.** The three asks (no clear expected behaviour in Phase 1, the check passed so the bug is not reproduced in Phase 3, the check script is broken after one repair) go in `waiting` as the output contract describes, in place of AskUserQuestion. The dirty-tree preflight in Phase 3 is not an ask here: the Step's tree is clean, and if it is not, stop as `unresolved` and say why in `summary`.
 - **No `/shipRelease` suggestion**: the push and PR above are that step.
