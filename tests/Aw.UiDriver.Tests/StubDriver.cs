@@ -15,18 +15,24 @@ internal sealed class StubDriver : IAsyncDisposable
     private readonly CancellationTokenSource _stop = new();
     private readonly Task _loop;
 
-    internal StubDriver()
+    // why: afterPortChosen is the test seam for #3415, called with each chosen port after the probe frees it and before the listener binds it, so a test can take that port on purpose.
+    internal StubDriver(Action<int>? afterPortChosen = null)
     {
         using var probe = new TcpListener(IPAddress.Loopback, 0);
         probe.Start();
         var port = ((IPEndPoint)probe.LocalEndpoint).Port;
         probe.Stop();
+        afterPortChosen?.Invoke(port);
+        Port = port;
         _listener.Prefixes.Add(string.Create(CultureInfo.InvariantCulture, $"http://127.0.0.1:{port}/"));
         _listener.Start();
         File.WriteAllText(Path.Combine(_directory.FullName, "driver.json"), string.Create(CultureInfo.InvariantCulture, $$"""{"schema":"aw-ui-driver/1","url":"http://127.0.0.1:{{port}}","pid":1}"""));
         File.WriteAllText(Path.Combine(_directory.FullName, "driver.token"), Secret);
         _loop = Task.Run(ServeAsync, _stop.Token);
     }
+
+    /// <summary>The port the listener serves on.</summary>
+    internal int Port { get; }
 
     /// <summary>The driver directory.</summary>
     internal string Folder => _directory.FullName;
