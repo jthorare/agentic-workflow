@@ -1,4 +1,4 @@
-# Messages Release 1 frames: guesses (Part of #3188)
+# Messages frames: guesses (Part of #3188)
 
 1. Class glyph colours: the square (class 3) is orange, the diamond (class 2) is the accent colour, the circle (class 1) is a grey ring. The spec fixes the shapes only.
 2. Needs reply shows the New band as its own group above the ranked rows ("New 1": Lee's "got a sec?"), as Home does.
@@ -13,3 +13,14 @@
 11. At 1,000 px the linked-object chips drop first; the reason chip stays because the title keeps over 120 px. At 1,000 the place column narrows to 56 px.
 12. Hover and pressed: hover is surface s2/s4, pressed is one step darker with a 1 px nudge. State is never colour alone (a row also has the cursor ring).
 13. Reaction glyphs are plain characters (check, heart) so the frames render without an emoji font.
+
+## Release 2 push
+14. The composer sits at the bottom of the peek, under the thread. Its toolbar (bold, italic, strike, code, quote, list) and the "Ask an agent to draft" button are drawn small; the spec lists the formats, not the toolbar.
+15. The agent draft label reads "Agent draft by claude-code · run 8860 · not sent". Risk chips: "broadcast: @channel", "link", "no attachment".
+16. The submit menu is a Home-style menu anchored above the Send button; its helper text is invented.
+17. Make-issue sheet fields follow 9.5: title, team, project, assignee, label, body. Team "Platform (PLT)" and the body text are placeholders. "Reply in the thread with the issue link" is a checkbox, off.
+18. The brief shows channel names, facts lines and written lines with message-time source chips. "12 messages missing" is the honesty line for a channel with a gap.
+19. Search: "Search Slack too" results sit under the store results with a "from Slack" tag. The Everything scope has four groups (Messages, PRs and issues, Notes, Code), counts in each header.
+20. User peek fields (title, local time, status, in common) and the app message blocks (section, context, divider, actions) are placeholders. The unknown block text is a guess.
+21. The huddle row says the user token cannot join; that sentence is invented.
+22. Later and Drafts empty frames show the full rail (Later and Drafts present), which Release 1 hides.

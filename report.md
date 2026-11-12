@@ -1,6 +1,6 @@
-# Messages frames, Release 1 (Part of #3188)
+# Messages frames, Releases 1 and 2 (Part of #3188)
 
-31 PNGs, `messages-<name>.png`, 1440x900 unless the name ends in -1200 or -1000 (that wide x 900). Spec: `docs/superpowers/specs/2026-11-12-sindri-messages-page-design.md` at f8ee690dc0. Frame list is section 15, state rows are section 6.6. Built on `../grammar-2978/grammar.css` plus `messages.css`. Regenerate with `python3 gen.py && ./shoot.sh`. Every frame has a "Screen reader" line in the footer. Outlines #70757c, codes under Details, footers list only working keys. The app is dark only, so `messages-needs` and `messages-conversation` are the dark frames of 1 and 2. Release 1: the peek shows "Open in Slack" and has no composer. Toasts and notifications show sender and place only ("Sam, DM"). Each PNG was looked at after the last shoot.
+54 PNGs (31 for Release 1, 23 for Release 2), `messages-<name>.png`, 1440x900 unless the name ends in -1200 or -1000 (that wide x 900). Spec: `docs/superpowers/specs/2026-11-12-sindri-messages-page-design.md` at f8ee690dc0. Frame list is section 15, state rows are section 6.6. Built on `../grammar-2978/grammar.css` plus `messages.css`. Regenerate with `python3 gen.py && ./shoot.sh`. Every frame has a "Screen reader" line in the footer. Outlines #70757c, codes under Details, footers list only working keys. The app is dark only, so `messages-needs` and `messages-conversation` are the dark frames of 1 and 2. Release 1: the peek shows "Open in Slack" and has no composer. Toasts and notifications show sender and place only ("Sam, DM"). Each PNG was looked at after the last shoot.
 
 | Frame | Spec item | What it shows |
 |---|---|---|
@@ -24,4 +24,16 @@
 | toast | 13 | Home's toast and OS notification: "Sam, DM", no text |
 | footer-modes | 13 | The "List keys" and "Message keys" chip |
 
-Not in this push (Release 2): items 3, 5, 6, 7, 10, the Later and Drafts empty states, the emoji picker with no match, and the composer focus ring.
+
+## Release 2 push
+
+| Frame | Spec item | What it shows |
+|---|---|---|
+| composer-empty, composer-typing-picker, composer-agent-draft, composer-submit-menu, composer-sent | 3 | Composer in the peek: empty with the target named; double-bracket picker (PR and issue insert the URL, note and scope say "local only: not a link"); agent draft with label, run link and risk chips; the "Notify 412 people" menu; the 5 s "Follow up if no reply?" line |
+| composer-failed, composer-send-unknown, composer-offline, composer-429 | 3 | Failed send (Retry, Discard, SND-MSG-004), "Slack may have delivered this" (SND-MSG-032), offline with the draft kept (SND-MSG-028), 429 wait with the 12 s countdown (SND-MSG-005) |
+| composer-focus-ring | 11 | Focus ring on the composer |
+| make-issue-sheet, attach-picker | 5 | Make-issue sheet with the full body shown before Create; attach picker |
+| brief, brief-model-off | 6 | Catch-up brief with source chips; model-off facts-only state |
+| search-messages, search-everything | 7 | Messages scope with "from Slack" tags; Everything in groups |
+| peek-user, peek-file, peek-app-message, peek-huddle | 10 | User peek; file thumbnail, chip and failed file; app message with blocks and an unknown block; huddle row with "Open in Slack" |
+| empty-later, empty-drafts, emoji-no-match | 13 | Later and Drafts empty, emoji picker with no match |
