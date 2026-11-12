@@ -36,7 +36,7 @@ internal sealed partial class WorkflowsPage : UserControl
         if (WorkflowsBack.IsVisible)
         {
             AlignCrumb(WorkflowsBack, WorkflowsBack.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault());
-            AlignCrumb(WorkflowsCrumbSlash, WorkflowsCrumbSlash);
+            AlignCrumb(WorkflowsCrumbSep, WorkflowsCrumbSep);
         }
     }
 
