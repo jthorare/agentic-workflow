@@ -881,7 +881,7 @@ Errors (from the reserved range, §9; 012 to 018 are free on origin/main, checke
 | 013 | the agent is not installed or not signed in; carries the sign-in command | 400 | 1 |
 | 014 | the worktree could not be made (60 s deadline; carries git's line), or tmux is not installed (carries the install command), or tmux could not start the session or did not return in 4 s; raised only inside the POST; the half-made session and worktree were removed | 503 | 1 |
 | 015 | the session has no tmux pane to attach (Warp, IDE, terminal); carries the host kind | 409 | 1 |
-| 016 | the tmux server or session is gone | 410 | 1 |
+| 016 | the tmux server or session is gone | 404 | 1 |
 | 017 | the prompt is over 8,000 characters | 400 | 1 |
 | 018 | the one-off worktree was not removed: it has changes, or it is not a worktree this start made; carries the `git status` summary | 409 | 1 |
 
