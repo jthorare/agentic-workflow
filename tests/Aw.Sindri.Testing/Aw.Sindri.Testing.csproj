@@ -26,5 +26,7 @@
   <ItemGroup>
     <!-- The two fixture skill folders (skill flows F-1): review and officeHours (two blocks), loaded through SkillFixtures.Folder. -->
     <None Include="Fixtures/skills/**" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The recorded Claude Code terminal session (agents spec §15.8), played by FakeTerminalPaneSource.FromFixture. -->
+    <None Include="../fixtures/terminal-ws/claude-session.jsonl" Link="Fixtures/terminal-ws/claude-session.jsonl" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

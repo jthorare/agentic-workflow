@@ -23291,3 +23291,32 @@ static readonly Aw.Sindri.Core.SindriErrors.AgentNotReady -> Aw.Kernel.ErrorDefi
 static readonly Aw.Sindri.Core.SindriErrors.AgentStartFailed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.AgentPromptTooLong -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.AgentWorktreeKept -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentNoPane -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentPaneGone -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Launch.TerminalHost
+Aw.Sindri.Core.Launch.TerminalHost.Pane.get -> string!
+Aw.Sindri.Core.Launch.TerminalHost.Session.get -> string!
+Aw.Sindri.Core.Launch.TerminalHost.Socket.get -> string!
+Aw.Sindri.Core.Launch.TerminalHost.TerminalHost(string! Socket, string! Session, string! Pane) -> void
+Aw.Sindri.Core.Launch.TerminalFrame
+Aw.Sindri.Core.Launch.TerminalFrame.Alt.get -> bool
+Aw.Sindri.Core.Launch.TerminalFrame.CursorX.get -> int
+Aw.Sindri.Core.Launch.TerminalFrame.CursorY.get -> int
+Aw.Sindri.Core.Launch.TerminalFrame.Dead.get -> bool
+Aw.Sindri.Core.Launch.TerminalFrame.Height.get -> int
+Aw.Sindri.Core.Launch.TerminalFrame.InMode.get -> bool
+Aw.Sindri.Core.Launch.TerminalFrame.Rows.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Launch.TerminalFrame.Seq.get -> long
+Aw.Sindri.Core.Launch.TerminalFrame.TerminalFrame(long Seq, System.Collections.Generic.IReadOnlyList<string!>! Rows, int CursorX, int CursorY, int Width, int Height, bool Alt, bool InMode, bool Dead) -> void
+Aw.Sindri.Core.Launch.TerminalFrame.Width.get -> int
+Aw.Sindri.Core.Launch.ITerminalPaneSource
+Aw.Sindri.Core.Launch.ITerminalPaneSource.Open(string! provider, string! id, Aw.Sindri.Core.Launch.HostSize? size, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Launch.ITerminalPaneStream!>!>
+Aw.Sindri.Core.Launch.ITerminalPaneStream
+Aw.Sindri.Core.Launch.ITerminalPaneStream.Frames(System.Threading.CancellationToken cancellationToken) -> System.Collections.Generic.IAsyncEnumerable<Aw.Sindri.Core.Launch.TerminalFrame!>!
+Aw.Sindri.Core.Launch.ITerminalPaneStream.Host.get -> Aw.Sindri.Core.Launch.TerminalHost!
+Aw.Sindri.Core.Launch.ITerminalPaneStream.Paste(string! text, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Launch.ITerminalPaneStream.Resize(Aw.Sindri.Core.Launch.HostSize! size, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Launch.ITerminalPaneStream.SendKey(string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Launch.ITerminalPaneStream.SendText(string! text, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Launch.TerminalKeys
+static Aw.Sindri.Core.Launch.TerminalKeys.Check(string! key) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
