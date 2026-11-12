@@ -23220,3 +23220,8 @@ Aw.Sindri.Core.Reviews.ReviewRequiredState
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.Counted = "counted" -> string!
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.NoneNamed = "noneNamed" -> string!
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.NotRead = "notRead" -> string!
+Aw.Sindri.Core.Control.IServeRelauncher
+Aw.Sindri.Core.Control.IServeRelauncher.Schedule() -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Sindri.Core.Events.StopReason.Restart = 4 -> Aw.Sindri.Core.Events.StopReason
+static readonly Aw.Sindri.Core.SindriErrors.BuildNothingNewer -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.BuildRelaunchFailed -> Aw.Kernel.ErrorDefinition!

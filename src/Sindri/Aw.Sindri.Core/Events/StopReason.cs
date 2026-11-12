@@ -21,4 +21,7 @@ public enum StopReason
     /// <summary>The host failed to start listening for another reason (a hosted service refused to start), so it stopped right after taking the lease.</summary>
     [JsonStringEnumMemberName("listen-failed")]
     ListenFailed,
+    /// <summary>A client asked for a restart onto the installed build ('sindri restart', the app's Restart): serve stops and a relauncher starts the installed build's serve.</summary>
+    [JsonStringEnumMemberName("restart")]
+    Restart,
 }

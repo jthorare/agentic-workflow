@@ -29,4 +29,7 @@ public sealed record GetStatusResponse(
 
     /// <summary>What the session collector sees (collector spec CA-8): additive, for the tray tooltip and the Agents tab count.</summary>
     public SessionStatus? Sessions { get; init; }
+
+    /// <summary>The running and the installed build (#3052): the app offers Restart when <see cref="BuildStatus.Stale"/>.</summary>
+    public BuildStatus? Build { get; init; }
 }

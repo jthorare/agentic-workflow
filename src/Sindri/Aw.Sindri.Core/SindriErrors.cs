@@ -68,6 +68,12 @@ public static partial class SindriErrors
     /// <summary>SND-CLI-002: the process didn't come up after starting it.</summary>
     public static readonly ErrorDefinition StartFailed = new("SND-CLI-002", ErrorKind.Unavailable, "Sindri didn't start");
 
+    /// <summary>SND-BUILD-002: restart was asked, but the running build is the installed one, or either build is unknown (a dev run).</summary>
+    public static readonly ErrorDefinition BuildNothingNewer = new("SND-BUILD-002", ErrorKind.Conflict, "No newer build is installed, so there is nothing to restart onto");
+
+    /// <summary>SND-BUILD-003: restart was asked and the relauncher could not be scheduled; nothing was stopped.</summary>
+    public static readonly ErrorDefinition BuildRelaunchFailed = new("SND-BUILD-003", ErrorKind.Unavailable, "The restart could not be scheduled, so serve was not stopped");
+
     /// <summary>SND-CLI-003: bad input: a malformed CLI argument or setting (a profile hash, AW_SINDRI_PORT), or an API request body or value the control plane refused (a 400).</summary>
     public static readonly ErrorDefinition InvalidInput = new("SND-CLI-003", ErrorKind.Invalid, "Invalid command input");
 
@@ -268,7 +274,7 @@ public static partial class SindriErrors
     [
         LeaseHeld, LeaseLost, LeaseStale, ProfileMissing, ProfileInvalid, ModelKeyInvalid, ProfileHashMismatch,
         LedgerSchema, LedgerUnavailable, NotRunning, ApiTimeout, PortInUse, ApiNoCode, ApiInternal,
-        CallerUnknown, OriginRefused, CommandBusy, AuthTokenRequired, AuthRefused, UnknownVerb, StartFailed,
+        CallerUnknown, OriginRefused, CommandBusy, AuthTokenRequired, AuthRefused, UnknownVerb, StartFailed, BuildNothingNewer, BuildRelaunchFailed,
         InvalidInput, ServiceFailed, ViewsRebuilding, ViewsBehind, StreamsFull, ViewsStalled, ItemNotFound, ItemConflict, RequestInvalid, RequestsRateLimited, DecisionNotFound, DecisionInvalid, JobNotFound, JobConflict, JobInterrupted, JobsRateLimited, JobNotWaiting, JobStalled, ServiceNotFound, SecretNotStored, SecretPointerInvalid, SecretUnresolved, SecretFileUnsafe, IndexTokenUnresolved, IndexRepoUnreadable, IndexNotInProfile, IndexOnyxLeftover, IndexOnyxInProfile,
         LaunchNotFound, LaunchViewerFailed, LaunchNoViewer, LaunchAgentMissing, LaunchRepoMissing, LaunchNoSession, LaunchInterrupted, LaunchInProgress, LaunchTimedOut, LaunchBudgetReached,
         LauncherInvalid, LaunchNotApproved, LaunchFormUnsupported, LaunchPrePushForeign, LaunchPushRefused, LaunchTrustUnavailable, LaunchFactFileTracked, LaunchT3Unavailable, LaunchT3NoProject, LaunchT3NoProvider,

@@ -5566,3 +5566,66 @@ Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.NotModified.get -> bool
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.NotModified.init -> void
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.Tag.get -> string?
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.Tag.init -> void
+Aw.Sindri.Features.GetStatus.BuildStatus
+Aw.Sindri.Features.GetStatus.BuildStatus.<Clone>$() -> Aw.Sindri.Features.GetStatus.BuildStatus!
+Aw.Sindri.Features.GetStatus.BuildStatus.Deconstruct(out string? Running, out string? Installed, out bool Stale) -> void
+Aw.Sindri.Features.GetStatus.BuildStatus.Equals(Aw.Sindri.Features.GetStatus.BuildStatus? other) -> bool
+Aw.Sindri.Features.GetStatus.BuildStatus.Running.get -> string?
+Aw.Sindri.Features.GetStatus.BuildStatus.Running.init -> void
+Aw.Sindri.Features.GetStatus.BuildStatus.Installed.get -> string?
+Aw.Sindri.Features.GetStatus.BuildStatus.Installed.init -> void
+Aw.Sindri.Features.GetStatus.BuildStatus.Stale.get -> bool
+Aw.Sindri.Features.GetStatus.BuildStatus.Stale.init -> void
+Aw.Sindri.Features.GetStatus.BuildStatus.BuildStatus(string? Running, string? Installed, bool Stale) -> void
+override Aw.Sindri.Features.GetStatus.BuildStatus.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetStatus.BuildStatus.GetHashCode() -> int
+override Aw.Sindri.Features.GetStatus.BuildStatus.ToString() -> string!
+static Aw.Sindri.Features.GetStatus.BuildStatus.operator !=(Aw.Sindri.Features.GetStatus.BuildStatus? left, Aw.Sindri.Features.GetStatus.BuildStatus? right) -> bool
+static Aw.Sindri.Features.GetStatus.BuildStatus.operator ==(Aw.Sindri.Features.GetStatus.BuildStatus? left, Aw.Sindri.Features.GetStatus.BuildStatus? right) -> bool
+Aw.Sindri.Features.RestartServe.RestartServeRequest
+Aw.Sindri.Features.RestartServe.RestartServeRequest.<Clone>$() -> Aw.Sindri.Features.RestartServe.RestartServeRequest!
+Aw.Sindri.Features.RestartServe.RestartServeRequest.Equals(Aw.Sindri.Features.RestartServe.RestartServeRequest? other) -> bool
+Aw.Sindri.Features.RestartServe.RestartServeRequest.RestartServeRequest() -> void
+override Aw.Sindri.Features.RestartServe.RestartServeRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.RestartServe.RestartServeRequest.GetHashCode() -> int
+override Aw.Sindri.Features.RestartServe.RestartServeRequest.ToString() -> string!
+static Aw.Sindri.Features.RestartServe.RestartServeRequest.operator !=(Aw.Sindri.Features.RestartServe.RestartServeRequest? left, Aw.Sindri.Features.RestartServe.RestartServeRequest? right) -> bool
+static Aw.Sindri.Features.RestartServe.RestartServeRequest.operator ==(Aw.Sindri.Features.RestartServe.RestartServeRequest? left, Aw.Sindri.Features.RestartServe.RestartServeRequest? right) -> bool
+Aw.Sindri.Features.RestartServe.KeptRun
+Aw.Sindri.Features.RestartServe.KeptRun.<Clone>$() -> Aw.Sindri.Features.RestartServe.KeptRun!
+Aw.Sindri.Features.RestartServe.KeptRun.Deconstruct(out string! Ref, out string! Instance, out string? LaunchState) -> void
+Aw.Sindri.Features.RestartServe.KeptRun.Equals(Aw.Sindri.Features.RestartServe.KeptRun? other) -> bool
+Aw.Sindri.Features.RestartServe.KeptRun.Ref.get -> string!
+Aw.Sindri.Features.RestartServe.KeptRun.Ref.init -> void
+Aw.Sindri.Features.RestartServe.KeptRun.Instance.get -> string!
+Aw.Sindri.Features.RestartServe.KeptRun.Instance.init -> void
+Aw.Sindri.Features.RestartServe.KeptRun.LaunchState.get -> string?
+Aw.Sindri.Features.RestartServe.KeptRun.LaunchState.init -> void
+Aw.Sindri.Features.RestartServe.KeptRun.KeptRun(string! Ref, string! Instance, string? LaunchState) -> void
+override Aw.Sindri.Features.RestartServe.KeptRun.Equals(object? obj) -> bool
+override Aw.Sindri.Features.RestartServe.KeptRun.GetHashCode() -> int
+override Aw.Sindri.Features.RestartServe.KeptRun.ToString() -> string!
+static Aw.Sindri.Features.RestartServe.KeptRun.operator !=(Aw.Sindri.Features.RestartServe.KeptRun? left, Aw.Sindri.Features.RestartServe.KeptRun? right) -> bool
+static Aw.Sindri.Features.RestartServe.KeptRun.operator ==(Aw.Sindri.Features.RestartServe.KeptRun? left, Aw.Sindri.Features.RestartServe.KeptRun? right) -> bool
+Aw.Sindri.Features.RestartServe.RestartServeResponse
+Aw.Sindri.Features.RestartServe.RestartServeResponse.<Clone>$() -> Aw.Sindri.Features.RestartServe.RestartServeResponse!
+Aw.Sindri.Features.RestartServe.RestartServeResponse.Deconstruct(out int Pid, out string! FromBuild, out string! ToBuild, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.RestartServe.KeptRun!>! KeptRuns, out string! Relaunch) -> void
+Aw.Sindri.Features.RestartServe.RestartServeResponse.Equals(Aw.Sindri.Features.RestartServe.RestartServeResponse? other) -> bool
+Aw.Sindri.Features.RestartServe.RestartServeResponse.Pid.get -> int
+Aw.Sindri.Features.RestartServe.RestartServeResponse.Pid.init -> void
+Aw.Sindri.Features.RestartServe.RestartServeResponse.FromBuild.get -> string!
+Aw.Sindri.Features.RestartServe.RestartServeResponse.FromBuild.init -> void
+Aw.Sindri.Features.RestartServe.RestartServeResponse.ToBuild.get -> string!
+Aw.Sindri.Features.RestartServe.RestartServeResponse.ToBuild.init -> void
+Aw.Sindri.Features.RestartServe.RestartServeResponse.KeptRuns.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.RestartServe.KeptRun!>!
+Aw.Sindri.Features.RestartServe.RestartServeResponse.KeptRuns.init -> void
+Aw.Sindri.Features.RestartServe.RestartServeResponse.Relaunch.get -> string!
+Aw.Sindri.Features.RestartServe.RestartServeResponse.Relaunch.init -> void
+Aw.Sindri.Features.RestartServe.RestartServeResponse.RestartServeResponse(int Pid, string! FromBuild, string! ToBuild, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.RestartServe.KeptRun!>! KeptRuns, string! Relaunch) -> void
+override Aw.Sindri.Features.RestartServe.RestartServeResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.RestartServe.RestartServeResponse.GetHashCode() -> int
+override Aw.Sindri.Features.RestartServe.RestartServeResponse.ToString() -> string!
+static Aw.Sindri.Features.RestartServe.RestartServeResponse.operator !=(Aw.Sindri.Features.RestartServe.RestartServeResponse? left, Aw.Sindri.Features.RestartServe.RestartServeResponse? right) -> bool
+static Aw.Sindri.Features.RestartServe.RestartServeResponse.operator ==(Aw.Sindri.Features.RestartServe.RestartServeResponse? left, Aw.Sindri.Features.RestartServe.RestartServeResponse? right) -> bool
+Aw.Sindri.Features.GetStatus.GetStatusResponse.Build.get -> Aw.Sindri.Features.GetStatus.BuildStatus?
+Aw.Sindri.Features.GetStatus.GetStatusResponse.Build.init -> void
