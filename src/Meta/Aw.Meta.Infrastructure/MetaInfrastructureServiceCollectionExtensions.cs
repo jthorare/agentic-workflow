@@ -71,7 +71,8 @@ public static class MetaInfrastructureServiceCollectionExtensions
         .AddScoped<IGateStore, SqliteGateStore>()
         .AddScoped<IKeyValueStore, SqliteKeyValueStore>()
         .AddScoped<IBoardStore, SqliteBoardStore>()
-        .AddScoped<ILaneMail, SqliteLaneMail>();
+        .AddScoped<ILaneMail, SqliteLaneMail>()
+        .AddScoped<IMetaEventStore, SqliteMetaEventStore>();
 
     // Codex's own files, read-only: its session rollouts and its model list.
     private static IServiceCollection AddCodexFiles(this IServiceCollection services, string home) =>
