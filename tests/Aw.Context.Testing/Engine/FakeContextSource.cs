@@ -36,6 +36,9 @@ public sealed class FakeContextSource(SourceDescriptor descriptor, IReadOnlyList
     /// <summary>True: Versions fails (the stale check can't run).</summary>
     public bool VersionsFail { get; set; }
 
+    /// <summary>Runs at the start of every Fetch: a test advances its clock here to give each fetch a cost (a git read per record, #3085).</summary>
+    public Action? OnFetch { get; set; }
+
     /// <summary>The searches it answered.</summary>
     public IList<SourceQuery> Searches { get; } = [];
 
@@ -92,6 +95,7 @@ public sealed class FakeContextSource(SourceDescriptor descriptor, IReadOnlyList
     public async ValueTask<Result<SourceRecord>> Fetch(SourceRef reference, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(reference);
+        OnFetch?.Invoke();
         if (FetchHangs)
         {
             await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
