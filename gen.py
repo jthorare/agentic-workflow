@@ -124,14 +124,14 @@ def mrow(r, mode='full', cursor=False, sel=False, hv=False, unread=False, cls=''
     cmp_ = ' compact' if (mode != 'full' or compact) else ''
     acts = (act_html or acts_html(kind, cmp_, more_open)) if actions else ''
     return f'<div class="{k}"><span class="g c{c}"></span><span class="who">{who}</span><span class="pl">{pl}</span><span class="ti"><span class="t">{ti}</span>{chips_h}</span><span class="rs">{rs}</span><span class="age">{age}</span>{acts}</div>'
-def needs_list(mode='full', n=22, cur=None, newband=True, sel=None, rows=None, total=22, ncount=1, compact=False, cm=False, dim=(), res=None, wrong=(), more_open=False, act_for=None):
+def needs_list(mode='full', n=22, cur=None, newband=True, sel=None, rows=None, total=22, ncount=1, compact=False, cm=False, dim=(), res=None, wrong=(), more_open=False, act_for=None, new_cur=False):
     cur = ADA if cur is None else cur
     sel = ADA if sel is None else sel
     rows = ROWS if rows is None else rows
     res = res or {}
     o = ''
     if newband:
-        o += f'<div class="mgroup new">New<span class="n">{ncount}</span></div><div class="newband">' + mrow(NEW_ROW, mode) + '</div>'
+        o += f'<div class="mgroup new">New<span class="n">{ncount}</span></div><div class="newband">' + mrow(NEW_ROW, mode, cursor=new_cur, sel=new_cur, actions=new_cur, compact=compact) + '</div>'
     o += f'<div class="mgroup">Needs reply<span class="n">{total}</span></div>'
     for i, r in enumerate(rows[:n]):
         o += mrow(r, mode, cursor=(i == cur), sel=(i == sel), actions=(i == cur and not cm and i not in res), compact=compact, cls=('cm ' if (cm and i == cur) else '') + ('dimr ' if i in dim else '') + ('wr' if (act_for and i == cur) else ''), res=res.get(i), wrong=(i in wrong), more_open=(more_open and i == cur), act_html=(act_for if i == cur else None))
@@ -184,17 +184,19 @@ def needs_page(name, state='live', w=1440, rail_mode='full', mode='full', cur=No
     body = f'<div class="{cls}">{rail(slim=slim, counts=counts)}<div style="min-width:0;display:flex;flex-direction:column;overflow:hidden">{banner}{needs_list(mode, n, cur, newband, sel, compact=(w < 1440), **(nl or {}))}</div>{(peek_html or peek_thread()) if peek else ""}</div>'
     sr = sr or ('Needs reply, list, 23 rows. Cursor row: ' + rowsr(ROWS[ADA]) + '. Waits on you.')
     write(name, shell(title, hdr(state, count=count), body, kb or keys('List keys', LIST_KEYS), sr, extra, w=w, off=(state == 'offline'), pill=('Sindri running' if state == 'offline' else 'Connected'), ncount=ncount))
-needs_page('needs', sr='Needs reply, 23 rows, New 1. Cursor row: ' + rowsr(ROWS[ADA]) + '. Peek: root and 3 replies. Reply, Snooze, Done, More.')
+LEE_PEEK = peek_generic('Lee · DM', (3, 'Direct question'), 'you', '', tline('Lee', '09:12', 'got a sec?'), 'Direct message, 1 message today')
+ROW1 = dict(cur=-1, sel=-1, peek_html=LEE_PEEK, nl=dict(new_cur=True))
+needs_page('needs', sr='Needs reply, 23 rows, New 1. Cursor row: ' + rowsr(NEW_ROW) + '. Peek: the direct message. Reply, Snooze, Done, More.', **ROW1)
 
 # ---------------- widths, rail collapsed, header states (same page, other state)
-needs_page('needs-1200', w=1200, title='Messages - Needs reply at 1200', n=21,
+needs_page('needs-1200', **ROW1, w=1200, title='Messages - Needs reply at 1200', n=21,
            kb=keys('List keys', LIST_KEYS),
            sr='1,200 px: rail 220, list 540, peek 440. The cursor row drops its chips and reason; its buttons shrink to key chips and never cover the age.')
-needs_page('needs-1000', w=1000, rail_mode='slim', mode='n2', title='Messages - Needs reply at 1000', n=21,
+needs_page('needs-1000', **ROW1, w=1000, rail_mode='slim', mode='n2', title='Messages - Needs reply at 1000', n=21,
            kb=keys('List keys', drop(LIST_KEYS, 't', 'm')),
            sr='1,000 px: rail 48, list 512, peek 440. Chips drop first, buttons shrink to key chips, the title keeps over 120 px. Footer drops t and m; x, n, ? keys stay.')
-needs_page('needs-rail-collapsed', rail_mode='slim', title='Messages - rail collapsed',
-           sr='The rail is collapsed to 48 px from its header button or the palette entry messages.rail. Items keep their names for a screen reader. Cursor row: ' + rowsr(ROWS[ADA]) + '.')
+needs_page('needs-rail-collapsed', **ROW1, rail_mode='slim', title='Messages - rail collapsed',
+           sr='The rail is collapsed to 48 px from its header button or the palette entry messages.rail. Items keep their names for a screen reader. Cursor row: ' + rowsr(NEW_ROW) + '.')
 for st, sr in [('behind', 'Header: Behind 12 minutes, history is limited to 15 messages per minute. Rows stay. Conversations show a gap marker.'),
                ('offline', 'Header: Offline, last read 09:10. Every list stays readable from the store. Writes are refused, nothing is queued.')]:
     needs_page('header-' + st, state=st, sr=sr, title='Messages - header ' + st)
