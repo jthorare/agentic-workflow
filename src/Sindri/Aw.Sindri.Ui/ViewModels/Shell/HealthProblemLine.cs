@@ -9,7 +9,9 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 internal sealed record HealthProblemLine(string Code, string Text, StateGlyph Glyph)
 {
     /// <summary>The Details button's label: the code sits behind it, not in the sentence (#3057).</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     public string DetailsText => Labels.FailedReadDetails;
+#pragma warning restore CA1822, MA0041
 
     /// <summary>The line for a served problem under the given health word.</summary>
     /// <param name="problem">The served problem.</param>
