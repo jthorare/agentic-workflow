@@ -33,6 +33,8 @@ public sealed class SpendWarmHostTests
             }
         }
 
+        public TaskCompletionSource<bool> EachTwice { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
         public TaskCompletionSource<bool> Two { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public ValueTask<Result<AgentSpend?>> Today(AgentId target, CancellationToken cancellationToken)
@@ -40,6 +42,11 @@ public sealed class SpendWarmHostTests
             lock (_gate)
             {
                 _asked.Add(target);
+                if (_asked.Where(static a => a == _claude).Skip(1).Any() && _asked.Where(static a => a == _codex).Skip(1).Any())
+                {
+                    _ = EachTwice.TrySetResult(true);
+                }
+
                 if (_asked.Count >= 2)
                 {
                     _ = Two.TrySetResult(true);
@@ -67,6 +74,31 @@ public sealed class SpendWarmHostTests
         await host.StopAsync(token);
 
         Assert.Equivalent(new[] { _claude, _codex }, spend.Asked.Distinct().ToArray(), strict: false);
+        Assert.DoesNotContain(_plain, spend.Asked);
+    }
+
+    [Fact]
+    public async Task The_spend_warm_host_reads_again_every_30_seconds()
+    {
+        var spend = new RecordingSpend();
+        var clock = new FakeTimeProvider(KnownInstants.Epoch);
+        var catalog = new FixedAgentCatalog(Entry(_claude, "claude-code"), Entry(_codex, "codex"), Entry(_plain, "none"));
+        using var host = new SpendWarmHost(catalog, spend, clock, NullLogger<SpendWarmHost>.Instance);
+        var token = TestContext.Current.CancellationToken;
+
+        await host.StartAsync(token);
+        clock.Advance(TimeSpan.FromSeconds(5));
+        _ = await spend.Two.Task.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, token);
+
+        // the loop creates its 30 s wait after the first reads finish, so advance in steps until the second pass has run
+        for (var i = 0; i < 500 && !spend.EachTwice.Task.IsCompleted; i++)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(10), TimeProvider.System, token);
+            clock.Advance(TimeSpan.FromSeconds(30));
+        }
+
+        _ = await spend.EachTwice.Task.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, token);
+        await host.StopAsync(token);
         Assert.DoesNotContain(_plain, spend.Asked);
     }
 }
