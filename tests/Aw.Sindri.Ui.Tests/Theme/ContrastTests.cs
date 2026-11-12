@@ -101,6 +101,25 @@ public sealed partial class ContrastTests
         { "InkSubtle", "Surface3", 4.8, TextAa },   // not started
     };
 
+    // Control outlines are UI parts: 3:1 (WCAG 1.4.11, #3190). The rows name the brush the control draws (Brush.<name>), so the fix may
+    // repoint it at any colour; the ratio is the one #5f6369 or lighter has (the outline measures 3.25:1 on the canvas; #5e6268 gives
+    // 2.98 on Surface1, so the fix needs a step lighter for the panel).
+    public static TheoryData<string, string, double, double> OutlinePairs => new()
+    {
+        { "Clickable.PressedBorder", "Canvas", 3.25, NonText },
+        { "Clickable.PressedBorder", "Surface1", 3.0, NonText },
+    };
+
+    [Theory]
+    [MemberData(nameof(OutlinePairs))]
+    public void Each_control_outline_has_the_recorded_ratio_and_meets_the_non_text_minimum(string brush, string background, double recorded, double minimum)
+    {
+        var ratio = Wcag.Contrast(BrushColor(brush), _tokens.Color(background));
+
+        Assert.True(Math.Abs(ratio - recorded) <= 0.1, string.Create(CultureInfo.InvariantCulture, $"Brush.{brush} on {background} is {ratio:F2}, #3190 records {recorded}"));
+        Assert.True(ratio >= minimum, string.Create(CultureInfo.InvariantCulture, $"Brush.{brush} on {background} is {ratio:F2}, below {minimum}"));
+    }
+
     [Theory]
     [MemberData(nameof(Pairs))]
     [MemberData(nameof(StatusPairs))]
@@ -167,6 +186,15 @@ public sealed partial class ContrastTests
             select string.Create(CultureInfo.InvariantCulture, $"{Path.GetFileName(file)}:{line.n}: {line.text.Trim()}")).ToList();
 
         Assert.True(found.Count == 0, "hex colours outside Theme/ (use a Brush.* token):\n" + string.Join('\n', found));
+    }
+
+    // The #rrggbb a Brush.<name> resource paints: its Color is a {StaticResource Color.X} reference or a literal.
+    private static string BrushColor(string name)
+    {
+        var value = _tokens.Resources["Brush." + name].Attribute("Color")?.Value.Trim() ?? string.Empty;
+        const string Reference = "{StaticResource Color.";
+
+        return value.StartsWith(Reference, StringComparison.Ordinal) ? _tokens.Color(value[Reference.Length..^1]) : value.ToLowerInvariant();
     }
 
     private static bool Disabled(XElement element, XAttribute attribute) =>
