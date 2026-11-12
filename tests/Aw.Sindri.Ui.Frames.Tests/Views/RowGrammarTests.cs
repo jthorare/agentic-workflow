@@ -106,7 +106,7 @@ public sealed class RowGrammarTests
         var label = parts.OfType<TextBlock>().First(t => t.Classes.Contains("peek-label"));
         Assert.Equal(96, ((Grid)label.Parent!).ColumnDefinitions[0].Width.Value, 0.01);
         Assert.Equal(2, rules.Count(t => t == new Thickness(0, 0, 0, 1)));   // under the head and under the fields
-        Assert.Single(rules, t => t == new Thickness(0, 1, 0, 0));   // above the actions
+        _ = Assert.Single(rules, t => t == new Thickness(0, 1, 0, 0));   // above the actions
         host.Close();
         return true;
     });
