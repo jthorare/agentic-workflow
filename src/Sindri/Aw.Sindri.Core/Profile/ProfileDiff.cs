@@ -104,6 +104,21 @@ public static partial class ProfileDiff
             yield return ("agents.softLimit", soft.ToString(culture));
         }
 
+        if (agents?.IdleOwedMinutes is { } idleOwed)
+        {
+            yield return ("agents.idleOwedMinutes", idleOwed.ToString(culture));
+        }
+
+        if (agents?.SlotWaitMinutes is { } slotWait)
+        {
+            yield return ("agents.slotWaitMinutes", slotWait.ToString(culture));
+        }
+
+        if (agents?.Page is { } page)
+        {
+            yield return ("agents.page", page);
+        }
+
         foreach (var (id, limits) in agents?.Targets ?? new Dictionary<string, AgentLimits>(StringComparer.Ordinal))
         {
             if (limits.DailyBudget is { } budget)

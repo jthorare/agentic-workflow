@@ -106,6 +106,11 @@ public static class ProfileRules
     /// <summary>The 'agents:' keys: ids match the id pattern (never the catalog), 'softLimit' is a fraction, a budget is positive, a hash is a short word.</summary>
     private static Error? AgentKeys(AgentSettings? agents)
     {
+        if (AgentPageKeys(agents) is { } pageProblem)
+        {
+            return pageProblem;
+        }
+
         if (agents?.SoftLimit is <= 0m or > 1m)
         {
             return Invalid("agents.softLimit", "must be above 0 and at most 1 (a fraction of the daily budget)");
@@ -121,6 +126,19 @@ public static class ProfileRules
 
         return null;
     }
+
+    /// <summary>The Agents page's keys (Agents page spec §8): the two minute counts are whole numbers from 1 to 1440 and 'page' is 'rows' or 'legacy'; a bad one is SND-AGENT-010 with the key path.</summary>
+    private static Error? AgentPageKeys(AgentSettings? agents) =>
+        MinutesProblem(AgentSettings.IdleOwedMinutesKey, agents?.IdleOwedMinutes) ?? MinutesProblem(AgentSettings.SlotWaitMinutesKey, agents?.SlotWaitMinutes)
+        ?? (agents?.Page is { } page && page is not (AgentSettings.PageRows or AgentSettings.PageLegacy)
+            ? SindriErrors.AgentSettingInvalid.With($"agents.{AgentSettings.PageKey}: '{page}' is not rows or legacy (fix: set it to rows or legacy)")
+            : null);
+
+    private static Error? MinutesProblem(string key, int? minutes) =>
+        minutes is < AgentSettings.MinMinutes or > AgentSettings.MaxMinutes
+            ? SindriErrors.AgentSettingInvalid.With(string.Create(CultureInfo.InvariantCulture,
+                $"agents.{key}: {minutes} is not between {AgentSettings.MinMinutes} and {AgentSettings.MaxMinutes} (fix: set a whole number of minutes in that range)"))
+            : null;
 
     internal static string? GlobProblem(string glob) => ProfileGlobRules.GlobProblem(glob);
 
