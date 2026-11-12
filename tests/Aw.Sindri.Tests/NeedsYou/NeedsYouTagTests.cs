@@ -44,7 +44,7 @@ public sealed class NeedsYouTagTests
     {
         var row = A.NeedsYouRow().Build() with { Timeout = new StatusTimeout(TimeoutKind.Parks, InSeconds: 300, On: "review") };
 
-        Assert.Equal(Tag(row), Tag(row with { Timeout = row.Timeout! with { InSeconds = 299 } }));
-        Assert.NotEqual(Tag(row), Tag(row with { Timeout = row.Timeout! with { On = "approval" } }), StringComparer.Ordinal);
+        Assert.Equal(Tag(row), Tag(row with { Timeout = row.Timeout with { InSeconds = 299 } }));
+        Assert.NotEqual(Tag(row), Tag(row with { Timeout = row.Timeout with { On = "approval" } }), StringComparer.Ordinal);
     }
 }
