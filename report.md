@@ -1,6 +1,6 @@
 # Reviews frames, R8 (Part of #3177)
 
-47 PNGs, `reviews-<name>.png`, 1440x900 unless the name says another width (1200, 1000, 1280 are that wide x 900). Spec: `docs/superpowers/specs/2026-11-12-sindri-reviews-page-design.md` at 3063055689; line numbers below are that file's. Built on `../grammar-2978/grammar.css` plus `reviews.css`. Regenerate with `python3 gen.py && ./shoot.sh`. Every frame has a "Screen reader" line in the footer. Text is ink-subtle (never ink-3), wires are #686870, one primary button per frame (a modal frame demotes the header's primary). The app is dark only (Tokens.axaml line 6), so `reviews-queue` and `reviews-a-1440` are the dark frames of the queue and the surface (guess 1). Each PNG was looked at after the last shoot.
+48 PNGs, `reviews-<name>.png`, 1440x900 unless the name says another width (1200, 1000, 1280 are that wide x 900). Spec: `docs/superpowers/specs/2026-11-12-sindri-reviews-page-design.md` at 3063055689; line numbers below are that file's. Built on `../grammar-2978/grammar.css` plus `reviews.css`. Regenerate with `python3 gen.py && ./shoot.sh`. Every frame has a "Screen reader" line in the footer. Text is ink-subtle (never ink-3), wires are #686870, one primary button per frame (a modal frame demotes the header's primary). The app is dark only (Tokens.axaml line 6), so `reviews-queue` and `reviews-a-1440` are the dark frames of the queue and the surface (guess 1). Each PNG was looked at after the last shoot.
 
 | Frame | Spec line | What it shows |
 |---|---|---|
@@ -35,7 +35,8 @@
 | submit-head-moved | 350 (5.4 last bullet), 395 | HeadMoved inline in the sheet, Reload, SND-REVIEW-011 |
 | head-moved-banner | 284 | Banner on the surface with Reload and the kept/outdated/reset counts |
 | merge-picker / merge-merging / merge-conflict | 352 | Picker with the repo default preselected; "Merging..." with buttons off; conflict reason (SND-REVIEW-018), picker stays open |
-| palette | 54, 401-402 | Ctrl+K in a review: files, hunks, actions |
+| palette | 54, 401-402 | Ctrl+K in a review: matching files and hunks |
+| palette-no-match | 398 | "No match for ..." and Clear |
 | reviewer-picker | 352, 398 | Search field focused, names toggle, own Request button |
 | reviewer-states | 398 | Loading, no match, couldn't load, Requesting... |
 | focus-order | 352, 410 | Numbered stops for merge picker, reviewer picker, the surface (F6) |
@@ -44,3 +45,6 @@
 | states-hover-pressed | 667 | Rest, hover, pressed, focus, disabled for every control |
 | motion | 667, 417 | 120 ms toast, fold, sheet; scroll to anchor; spinner |
 | reduced-motion | 417, 667 | The same with reduced motion: nothing animates |
+
+
+Round 2 (ideas FIX on bc98aa05b7) changed every Layout A frame (Files mode, real folders, the thread inline under HoldService.cs:41), all error codes (Details), the queue footers, the merge picker (primary Merge, merging dimmed, conflict wording), the sheets (no bare c, no suggestion row, focus rings), the reviewer picker footer, the palette and a new palette no-match frame. The pressed and hover sheet is round 1b's, unchanged.
