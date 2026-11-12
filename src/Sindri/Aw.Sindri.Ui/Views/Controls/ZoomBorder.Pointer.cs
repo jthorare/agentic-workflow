@@ -49,6 +49,7 @@ internal sealed partial class ZoomBorder
 
         Settle();
         _drag = (e.GetPosition(this), View, false);
+        PseudoClasses.Set(":panning", true);
         e.Pointer.Capture(this);
         e.Handled = true;
     }
@@ -65,6 +66,7 @@ internal sealed partial class ZoomBorder
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
             _drag = null;   // the button went up where this control could not see it
+            PseudoClasses.Set(":panning", false);
             return;
         }
 
@@ -80,6 +82,7 @@ internal sealed partial class ZoomBorder
         if (_drag is { } drag)
         {
             _drag = null;
+            PseudoClasses.Set(":panning", false);
             e.Pointer.Capture(control: null);
             if (!drag.Moved)
             {
@@ -94,6 +97,7 @@ internal sealed partial class ZoomBorder
     {
         base.OnPointerCaptureLost(e);
         _drag = null;   // a window that lost focus, a popup or a cancelled touch took the pointer
+        PseudoClasses.Set(":panning", false);
     }
 
     /// <inheritdoc/>

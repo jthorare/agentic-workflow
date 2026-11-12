@@ -49,6 +49,7 @@ internal sealed partial class ZoomBorder : Border
         _ = WorldBoundsProperty.Changed.AddClassHandler<ZoomBorder>((z, _) => z.Keep());
         _ = MinZoomProperty.Changed.AddClassHandler<ZoomBorder>((z, _) => z.Keep());
         _ = MaxZoomProperty.Changed.AddClassHandler<ZoomBorder>((z, _) => z.Keep());
+        _ = IsKeyboardFocusableProperty.Changed.AddClassHandler<ZoomBorder>((z, e) => z.Focusable = e.NewValue is true);
     }
 
     /// <summary>Initializes a new instance of the <see cref="ZoomBorder"/> class.</summary>
