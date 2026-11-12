@@ -29,6 +29,9 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>True when the open workflow can be edited: a workflow is open on its runs and it is not archived.</summary>
     public bool CanEdit => IsRuns && Runs.Shown is { ArchivedAt: null };
 
+    /// <summary>True when the Edit button shows.</summary>
+    public bool ShowsEdit => CanEdit;
+
     /// <summary>The Edit button's words.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     public string EditText => Labels.WfEdit;

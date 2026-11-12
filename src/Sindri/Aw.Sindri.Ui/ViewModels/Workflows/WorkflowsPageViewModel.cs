@@ -82,6 +82,15 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>True when the head has a count to show (at least one workflow).</summary>
     public bool HasHead { get; private set => Set(ref field, value); }
 
+    /// <summary>True when the list's counts show beside the title.</summary>
+    public bool ShowsListHead => HasHead;
+
+    /// <summary>True when the open workflow's own state shows beside its title.</summary>
+    public bool ShowsDetailState => false;
+
+    /// <summary>The open workflow's state.</summary>
+    public string DetailStateText => string.Empty;
+
 #pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
     /// <summary>The empty state's create action: "New workflow".</summary>
     public string NewWorkflowText => Labels.WfNew;

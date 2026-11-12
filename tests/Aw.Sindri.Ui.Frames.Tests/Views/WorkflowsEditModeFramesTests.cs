@@ -37,6 +37,7 @@ public sealed class WorkflowsEditModeFramesTests : FrameHost
         Assert.True(Named<Button>(window, "EditAdd").IsEnabled, "Add step is off in edit mode");
         Assert.False(Visible(window, "EditorSheet"), "Edit opened the step settings");
         Assert.True(Visible(window, "WorkflowEditDone"));
+        Assert.False(Visible(window, "WorkflowEdit"), "Edit shows beside Done while edit mode is on (#2807)");
 
         // Step settings: the sheet opens for the selected step and the bar is locked with its note
         Assert.True(shell.Workflows.Runs.Graph!.SelectNode("agent"));
@@ -51,5 +52,6 @@ public sealed class WorkflowsEditModeFramesTests : FrameHost
         await Until(window, () => !Visible(window, "EditorSheet") && Named<Button>(window, "EditAdd").IsEnabled, "Close never returned to edit mode");
         Click(Named<Button>(window, "WorkflowEditDone"));
         await Until(window, () => !Visible(window, "RunsEdit"), "Done never hid the edit bar");
+        Assert.True(Visible(window, "WorkflowEdit"), "Edit never came back after Done (#2807)");
     });
 }
