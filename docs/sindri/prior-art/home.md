@@ -12,10 +12,10 @@ Source gaps, so nobody trusts a hole: Superhuman's help-center pages returned 40
 ## 1. See what needs me from 5 sources in one list
 
 **Best today**
-- Universal Inbox (open source, Apache-2.0, Rust, Postgres): one inbox for GitHub, Linear, Google Mail and Slack notifications plus Todoist tasks. Rows show source, type, title, indicators, timestamp. Sync is polling "every few minutes", except Slack, which uses webhooks. https://github.com/universal-inbox/universal-inbox , docs https://universal-inbox-doc.pages.dev/how/collecting_notifications . Screen: https://universal-inbox-doc.pages.dev/quick_start/images/inbox-screen.png (not fetched).
-- Superhuman split inbox (vendor docs): named splits at the top; Tab and Shift+Tab move between splits; the engineering-team page recommends GitHub, Linear, Jira and Slack splits from a "Split Inbox Library" and no more than seven splits (snippet). https://blog.superhuman.com/how-engineering-teams-can-organize-their-inbox/ , https://help.superhuman.com/article/504-setting-up-splits
-- Gitify (MIT, Electron): one tray list over GitHub, Gitea/Forgejo, Bitbucket Cloud, GitLab. https://github.com/gitify-app/gitify
-- Huly (open source): one inbox with filter tabs All / Issues / Messages across its own issues and chat. https://docs.huly.io/communication/inbox/
+- Universal Inbox (open source, Apache-2.0, Rust, Postgres): one inbox for GitHub, Linear, Google Mail and Slack notifications plus Todoist tasks. Rows show source, type, title, indicators, timestamp. Sync is polling "every few minutes", except Slack, which uses webhooks. https://github.com/universal-inbox/universal-inbox , docs https://universal-inbox-doc.pages.dev/how/collecting_notifications . Screen: https://universal-inbox-doc.pages.dev/quick_start/images/inbox-screen.png (not fetched). source: docs
+- Superhuman split inbox (vendor docs): named splits at the top; Tab and Shift+Tab move between splits; the engineering-team page recommends GitHub, Linear, Jira and Slack splits from a "Split Inbox Library" and no more than seven splits (snippet). https://blog.superhuman.com/how-engineering-teams-can-organize-their-inbox/ , https://help.superhuman.com/article/504-setting-up-splits source: docs
+- Gitify (MIT, Electron): one tray list over GitHub, Gitea/Forgejo, Bitbucket Cloud, GitLab. https://github.com/gitify-app/gitify source: docs
+- Huly (open source): one inbox with filter tabs All / Issues / Messages across its own issues and chat. https://docs.huly.io/communication/inbox/ source: docs
 
 **What we take**
 - Splits as tabs on one list, not separate pages: `Tab` / `Shift+Tab` cycle them. Our default splits: All, Reviews, Messages, Work, Agents. Each split is a saved filter (source + reason).
@@ -38,10 +38,10 @@ Source gaps, so nobody trusts a hole: Superhuman's help-center pages returned 40
 ## 2. Rank by what unblocks the most
 
 **Best today**
-- GitHub notifications `reason` field: every notification carries why you got it (assign, review-requested, mention, etc.). Default filters are assigned, participating, review requested, mentions. https://docs.github.com/en/subscriptions-and-notifications/how-tos/viewing-and-triaging-notifications/managing-notifications-from-your-inbox
-- Linear Priority tab (2026-09-03): a tab "separates what needs your attention from what can wait"; Linear picks the default contents (example: "a review blocking a release"), you change it by notification source or a filter. https://linear.app/changelog/2026-09-03-priority-inbox , https://linear.app/docs/inbox.md . Linear does not publish the rule it uses; unconfirmed.
-- GitHub mobile "Focused" inbox filter (Oct 2024): important notifications first. https://github.blog/changelog/2024-10-14-whats-new-in-mobile-october-update/ (snippet)
-- Linear "Show unread first" display option. https://linear.app/docs/inbox.md
+- GitHub notifications `reason` field: every notification carries why you got it (assign, review-requested, mention, etc.). Default filters are assigned, participating, review requested, mentions. https://docs.github.com/en/subscriptions-and-notifications/how-tos/viewing-and-triaging-notifications/managing-notifications-from-your-inbox source: docs
+- Linear Priority tab (2026-09-03): a tab "separates what needs your attention from what can wait"; Linear picks the default contents (example: "a review blocking a release"), you change it by notification source or a filter. https://linear.app/changelog/2026-09-03-priority-inbox , https://linear.app/docs/inbox.md . Linear does not publish the rule it uses; unconfirmed. source: docs
+- GitHub mobile "Focused" inbox filter (Oct 2024): important notifications first. https://github.blog/changelog/2024-10-14-whats-new-in-mobile-october-update/ (snippet) source: docs
+- Linear "Show unread first" display option. https://linear.app/docs/inbox.md source: docs
 
 **What we take**
 - Two tabs: Priority and Other (Linear), with Priority filled by a rule the user can read and edit, not a black box.
@@ -64,10 +64,10 @@ Source gaps, so nobody trusts a hole: Superhuman's help-center pages returned 40
 ## 3. Act in place: reply, approve, merge, snooze, hand to an agent
 
 **Best today**
-- Raycast Action Panel: `Cmd+K` on the selected item opens its actions; `Enter` runs the first (primary) action; `Cmd+Enter` secondary; `Opt+Enter` tertiary; each action shows its shortcut on the right; typing filters actions by fuzzy match. https://manual.raycast.com/action-panel.md , https://manual.raycast.com/keyboard-shortcuts.md
-- Universal Inbox: per-row single-key actions `d` delete, `u` unsubscribe, `s` snooze, `p` create task, `l` link to task, `Enter` open in source. https://universal-inbox-doc.pages.dev/misc/keyboard_shortcuts.html
-- Octobox (AGPL-3.0, so do not read or copy code): `y`/`e` archive, `m` mute, `d` mark read on GitHub too, `s` star, `x` select. https://github.com/octobox/octobox
-- GitHub mobile: swipe a row to mark done or save. https://github.blog/news-insights/product-news/github-for-mobile-is-now-available (snippet)
+- Raycast Action Panel: `Cmd+K` on the selected item opens its actions; `Enter` runs the first (primary) action; `Cmd+Enter` secondary; `Opt+Enter` tertiary; each action shows its shortcut on the right; typing filters actions by fuzzy match. https://manual.raycast.com/action-panel.md , https://manual.raycast.com/keyboard-shortcuts.md source: docs
+- Universal Inbox: per-row single-key actions `d` delete, `u` unsubscribe, `s` snooze, `p` create task, `l` link to task, `Enter` open in source. https://universal-inbox-doc.pages.dev/misc/keyboard_shortcuts.html source: docs
+- Octobox (AGPL-3.0, so do not read or copy code): `y`/`e` archive, `m` mute, `d` mark read on GitHub too, `s` star, `x` select. https://github.com/octobox/octobox source: docs
+- GitHub mobile: swipe a row to mark done or save. https://github.blog/news-insights/product-news/github-for-mobile-is-now-available (snippet) source: docs
 
 **What we take**
 - One primary action per row kind, bound to `Enter`'s sibling: a row's primary action is the one thing most likely right (PR review requested -> Approve is NOT primary; Open review is; CI-green own PR -> Merge is).
@@ -90,10 +90,10 @@ Source gaps, so nobody trusts a hole: Superhuman's help-center pages returned 40
 ## 4. Zero-inbox flow: what "done" means
 
 **Best today**
-- GitHub: Done "marks a notification as completed and removes it from your inbox", kept 3 months (`is:done`); Save keeps it indefinitely (`is:saved`). Unsubscribe is a third, separate action. https://docs.github.com/en/subscriptions-and-notifications/how-tos/viewing-and-triaging-notifications/managing-notifications-from-your-inbox . Key `E` = done (docs summary, unverified wording).
-- Octobox archive: a done item comes back on the next sync if there is new activity. https://github.com/octobox/octobox
-- Linear: no done/archive state; "We don't support archiving notifications at this time." You delete (`Backspace`), toggle read (`U`), or snooze (`H`); cap 2,000 open notifications. https://linear.app/docs/inbox.md
-- Superhuman: `E` marks Done and "inbox zero" is the goal (snippet; help page 403). https://help.superhuman.com/article/582-achieving-inbox-zero
+- GitHub: Done "marks a notification as completed and removes it from your inbox", kept 3 months (`is:done`); Save keeps it indefinitely (`is:saved`). Unsubscribe is a third, separate action. https://docs.github.com/en/subscriptions-and-notifications/how-tos/viewing-and-triaging-notifications/managing-notifications-from-your-inbox . Key `E` = done (docs summary, unverified wording). source: docs
+- Octobox archive: a done item comes back on the next sync if there is new activity. https://github.com/octobox/octobox source: docs
+- Linear: no done/archive state; "We don't support archiving notifications at this time." You delete (`Backspace`), toggle read (`U`), or snooze (`H`); cap 2,000 open notifications. https://linear.app/docs/inbox.md source: docs
+- Superhuman: `E` marks Done and "inbox zero" is the goal (snippet; help page 403). https://help.superhuman.com/article/582-achieving-inbox-zero source: docs
 
 **What we take**
 - One verb, `Done` (`e`), the same on every row kind. Done = gone from Home, kept and findable (`is:done`, 90 days like GitHub).
@@ -117,10 +117,10 @@ Source gaps, so nobody trusts a hole: Superhuman's help-center pages returned 40
 ## 5. Snooze / remind me
 
 **Best today**
-- Linear: `H` snoozes a notification (and sets a reminder on an issue); type a date: "Til month/date", "Next quarter", "For X weeks"; the notification returns at the time or earlier on new activity; "Show snoozed" display toggle. Presets mentioned: an hour, tomorrow, next cycle. https://linear.app/docs/inbox.md , https://linear.app/changelog/2021-06-17-inbox-snooze-and-easier-issue-merge
-- Superhuman Remind Me: `H` (or Cmd+K -> Remind Me), type a day/time; `G` then `H` lists reminders; snippet only, help page 403. https://help.superhuman.com/hc/en-us/articles/43822934607251-Remind-Me
-- Universal Inbox: `s` snooze. Duration is unclear: README says "until the next day", docs say "a few hours"; I could not find the exact rule. https://universal-inbox-doc.pages.dev/how/actions/github
-- Things: a to-do with a future start date "hibernates in Upcoming" and moves to Today on its date; Someday hides until you pull it back. https://culturedcode.com/things/support/articles/2803579/
+- Linear: `H` snoozes a notification (and sets a reminder on an issue); type a date: "Til month/date", "Next quarter", "For X weeks"; the notification returns at the time or earlier on new activity; "Show snoozed" display toggle. Presets mentioned: an hour, tomorrow, next cycle. https://linear.app/docs/inbox.md , https://linear.app/changelog/2021-06-17-inbox-snooze-and-easier-issue-merge source: docs
+- Superhuman Remind Me: `H` (or Cmd+K -> Remind Me), type a day/time; `G` then `H` lists reminders; snippet only, help page 403. https://help.superhuman.com/hc/en-us/articles/43822934607251-Remind-Me source: docs
+- Universal Inbox: `s` snooze. Duration is unclear: README says "until the next day", docs say "a few hours"; I could not find the exact rule. https://universal-inbox-doc.pages.dev/how/actions/github source: docs
+- Things: a to-do with a future start date "hibernates in Upcoming" and moves to Today on its date; Someday hides until you pull it back. https://culturedcode.com/things/support/articles/2803579/ source: docs
 
 **What we take**
 - `h` opens a one-line date box with typed natural language (Linear/Superhuman) and 4 presets: 1 hour, tomorrow 9:00, next Monday 9:00, someday.
@@ -144,10 +144,10 @@ Source gaps, so nobody trusts a hole: Superhuman's help-center pages returned 40
 ## 6. Peek the detail without leaving the list
 
 **Best today**
-- Linear peek: `Space` toggles a preview, holding `Space` shows it only while held; `J`/`K` moves while it is open. Works on issue views, the Inbox and project lists. Shows description, assignee, status, priority, cycle, labels, estimate, dates. https://linear.app/docs/peek.md
-- Raycast List with detail: `isShowingDetail` puts a markdown detail pane on the right of the list. https://developers.raycast.com/api-reference/user-interface/list
-- gh-dash (MIT): list of PRs/issues sections with a preview pane; "vim-style keyboard hotkeys". Preview-pane keys unconfirmed (docs page 404). https://github.com/dlvhdr/gh-dash
-- Linear Cmd+K "quick look": right arrow adds a preview beside the command menu (snippet, unconfirmed on primary doc).
+- Linear peek: `Space` toggles a preview, holding `Space` shows it only while held; `J`/`K` moves while it is open. Works on issue views, the Inbox and project lists. Shows description, assignee, status, priority, cycle, labels, estimate, dates. https://linear.app/docs/peek.md source: docs
+- Raycast List with detail: `isShowingDetail` puts a markdown detail pane on the right of the list. https://developers.raycast.com/api-reference/user-interface/list source: docs
+- gh-dash (MIT): list of PRs/issues sections with a preview pane; "vim-style keyboard hotkeys". Preview-pane keys unconfirmed (docs page 404). https://github.com/dlvhdr/gh-dash source: docs
+- Linear Cmd+K "quick look": right arrow adds a preview beside the command menu (snippet, unconfirmed on primary doc). source: docs
 
 **What we take**
 - `Space` toggles the side pane (Linear), hold-to-peek too. The pane takes 40% of width, the list narrows to a fixed set of columns.
@@ -170,10 +170,10 @@ Source gaps, so nobody trusts a hole: Superhuman's help-center pages returned 40
 ## 7. One key map across every list
 
 **Best today**
-- Linear: `G` then `I` inbox, `G` then `T` triage, `J`/`K` or arrows move, `U` read, `H` snooze, `Backspace` delete, `Cmd/Ctrl+F` list search. https://linear.app/docs/inbox.md
-- Octobox: Gmail-style `j`/`k`, `r`/`.` refresh, `a` select all, `?` help. https://github.com/octobox/octobox
-- Superhuman: `Cmd+K` shows the key next to each action, so users learn keys while using the palette (snippet, vendor). https://help.superhuman.com/article/478-superhuman-command (404 to my fetcher)
-- Universal Inbox: `?` shows shortcuts, `Esc` closes, `Arrow` keys move. https://universal-inbox-doc.pages.dev/misc/keyboard_shortcuts.html
+- Linear: `G` then `I` inbox, `G` then `T` triage, `J`/`K` or arrows move, `U` read, `H` snooze, `Backspace` delete, `Cmd/Ctrl+F` list search. https://linear.app/docs/inbox.md source: docs
+- Octobox: Gmail-style `j`/`k`, `r`/`.` refresh, `a` select all, `?` help. https://github.com/octobox/octobox source: docs
+- Superhuman: `Cmd+K` shows the key next to each action, so users learn keys while using the palette (snippet, vendor). https://help.superhuman.com/article/478-superhuman-command (404 to my fetcher) source: docs
+- Universal Inbox: `?` shows shortcuts, `Esc` closes, `Arrow` keys move. https://universal-inbox-doc.pages.dev/misc/keyboard_shortcuts.html source: docs
 
 **What we take**
 - Map from #2978: `j/k` move, `/` filter, `Space` peek, `Enter` open, `Esc` back, `c` create, `.` actions, `Ctrl+K` palette, `?` shows the map. Add `g`+letter go-to (Linear) and `e` done, `h` snooze.
@@ -196,10 +196,10 @@ Source gaps, so nobody trusts a hole: Superhuman's help-center pages returned 40
 ## 8. Density: rows per screen, comfortable vs compact
 
 **Best today**
-- Linear: list rows are dense; no density setting is documented for the inbox (display options are Show snoozed, Unread first, grouping). https://linear.app/docs/inbox.md . Image: https://webassets.linear.app/images/ornj730p/production/2decf1f92f20b31e8a917d8e8c8c7e819ea1d8c3-1324x897.png
-- Gmail: three densities, Default / Comfortable / Compact, in Settings (third-party summaries; Google's own page didn't load; which is default is disputed). Compact "stays dense no matter what size your window is" (2011 Gmail blog). https://gmail.googleblog.com/2011/11/changing-information-density-in-gmails.html
-- Superhuman: single dense list, one line per thread (vendor screenshots; no row-height number confirmed).
-- aerc / Mutt: one line per message, keyboard only; aerc binds `j`/`k` for next/previous message (aerc tutorial man page). Archive/delete keys unconfirmed. https://man.archlinux.org/man/aerc-binds.5.en
+- Linear: list rows are dense; no density setting is documented for the inbox (display options are Show snoozed, Unread first, grouping). https://linear.app/docs/inbox.md . Image: https://webassets.linear.app/images/ornj730p/production/2decf1f92f20b31e8a917d8e8c8c7e819ea1d8c3-1324x897.png source: docs
+- Gmail: three densities, Default / Comfortable / Compact, in Settings (third-party summaries; Google's own page didn't load; which is default is disputed). Compact "stays dense no matter what size your window is" (2011 Gmail blog). https://gmail.googleblog.com/2011/11/changing-information-density-in-gmails.html source: docs
+- Superhuman: single dense list, one line per thread (vendor screenshots; no row-height number confirmed). source: docs
+- aerc / Mutt: one line per message, keyboard only; aerc binds `j`/`k` for next/previous message (aerc tutorial man page). Archive/delete keys unconfirmed. https://man.archlinux.org/man/aerc-binds.5.en source: docs
 
 **What we take**
 - Row 32 px default, 28 px compact (our tokens already carry 28/32/36/40: `Theme/Tokens.axaml:229-233`). Two user steps only: comfortable 36, compact 28 (#2978 says compact default).
@@ -223,10 +223,10 @@ Source gaps, so nobody trusts a hole: Superhuman's help-center pages returned 40
 ## 9. "Since you last looked" brief
 
 **Best today**
-- Slack recaps: a daily AI digest for channels you choose, opened from the sidebar "Recap" item; read messages are excluded on refresh; Business+ and Enterprise+ (vendor). Unread pill gets a "Summarize" button (vendor). https://slack.com/help/articles/25076892548883
-- Linear Pulse / since-you-last-looked: not confirmed from primary source. (Sindri already has its own Linear one: #2536.)
-- Things Today: a daily list of what starts today plus calendar events at the top; "review it quickly at the start of the day". https://culturedcode.com/things/support/articles/4001304/
-- Superhuman Inbox Reboot: name seen in help center; page 403, content unconfirmed.
+- Slack recaps: a daily AI digest for channels you choose, opened from the sidebar "Recap" item; read messages are excluded on refresh; Business+ and Enterprise+ (vendor). Unread pill gets a "Summarize" button (vendor). https://slack.com/help/articles/25076892548883 source: docs
+- Linear Pulse / since-you-last-looked: not confirmed from primary source. (Sindri already has its own Linear one: #2536.) source: docs
+- Things Today: a daily list of what starts today plus calendar events at the top; "review it quickly at the start of the day". https://culturedcode.com/things/support/articles/4001304/ source: docs
+- Superhuman Inbox Reboot: name seen in help center; page 403, content unconfirmed. source: docs
 
 **What we take**
 - A 5-10 line brief at the top of Home, written by an agent, each line one fact + one link ("PR #412 merged; CI red on main since 09:10"), covering only changes since the last Home close time.
@@ -249,10 +249,10 @@ Source gaps, so nobody trusts a hole: Superhuman's help-center pages returned 40
 ## 10. Notifications that don't spam
 
 **Best today**
-- Linear: you can't choose which notifications enter the Inbox; delivery to other channels is set in notification settings. Priority tab separates urgent from rest. https://linear.app/docs/inbox.md , https://linear.app/changelog/2026-09-03-priority-inbox
-- GitHub: Unsubscribe removes the item and re-subscribes you only on @mention, team @mention or review request; 15 custom filters. https://docs.github.com/en/subscriptions-and-notifications/how-tos/viewing-and-triaging-notifications/managing-notifications-from-your-inbox , https://docs.github.com/en/enterprise-cloud@latest/subscriptions-and-notifications/reference/inbox-filters
-- Universal Inbox: unsubscribe silences; re-subscribed if directly pinged; Slack only notifies on a chosen emoji reaction or @mention. https://universal-inbox-doc.pages.dev/how/actions/github
-- Huly: choose which update kinds notify and how (inbox, email, push). https://docs.huly.io/communication/notifications/
+- Linear: you can't choose which notifications enter the Inbox; delivery to other channels is set in notification settings. Priority tab separates urgent from rest. https://linear.app/docs/inbox.md , https://linear.app/changelog/2026-09-03-priority-inbox source: docs
+- GitHub: Unsubscribe removes the item and re-subscribes you only on @mention, team @mention or review request; 15 custom filters. https://docs.github.com/en/subscriptions-and-notifications/how-tos/viewing-and-triaging-notifications/managing-notifications-from-your-inbox , https://docs.github.com/en/enterprise-cloud@latest/subscriptions-and-notifications/reference/inbox-filters source: docs
+- Universal Inbox: unsubscribe silences; re-subscribed if directly pinged; Slack only notifies on a chosen emoji reaction or @mention. https://universal-inbox-doc.pages.dev/how/actions/github source: docs
+- Huly: choose which update kinds notify and how (inbox, email, push). https://docs.huly.io/communication/notifications/ source: docs
 
 **What we take**
 - Home only gets rows that need the owner (reason in: mentioned, assigned, review requested, blocked agent, failed run). Everything else is one key away in its source page.
@@ -276,10 +276,10 @@ Source gaps, so nobody trusts a hole: Superhuman's help-center pages returned 40
 ## 11. Command palette for every action
 
 **Best today**
-- Raycast: one root search for apps, commands and extensions; `Cmd+K` on any item for its actions; fuzzy; shortcuts shown. https://manual.raycast.com/action-panel.md
-- Linear: `Cmd/Ctrl+K` command menu with actions for the current view or selection (2019 changelog: contextual). https://linear.app/changelog/2019-10-07-contextual-command-menu . Per-action key display unconfirmed.
-- Superhuman: `Cmd+K` finds any action and shows its letter (snippet, vendor).
-- Zed: actions via palette; threads sidebar opened with `cmd-alt-j` (docs). https://zed.dev/docs/ai/parallel-agents
+- Raycast: one root search for apps, commands and extensions; `Cmd+K` on any item for its actions; fuzzy; shortcuts shown. https://manual.raycast.com/action-panel.md source: docs
+- Linear: `Cmd/Ctrl+K` command menu with actions for the current view or selection (2019 changelog: contextual). https://linear.app/changelog/2019-10-07-contextual-command-menu . Per-action key display unconfirmed. source: docs
+- Superhuman: `Cmd+K` finds any action and shows its letter (snippet, vendor). source: docs
+- Zed: actions via palette; threads sidebar opened with `cmd-alt-j` (docs). https://zed.dev/docs/ai/parallel-agents source: docs
 
 **What we take**
 - Palette lists: go-to targets, actions for the selected row (top), global actions, and objects (search by title/id). Keys shown right.
@@ -302,11 +302,11 @@ Source gaps, so nobody trusts a hole: Superhuman's help-center pages returned 40
 ## 12. Many tools in one shell without losing each one's depth
 
 **Best today**
-- Raycast: one shell, extensions render in the same list/detail grammar. https://developers.raycast.com/api-reference/user-interface/list
-- Zed: editor, terminal, agent threads in one window; Threads Sidebar groups threads by project; Terminal Threads show CLI agents (Claude, Codex, Amp) as sidebar entries. https://zed.dev/docs/ai/parallel-agents , https://zed.dev/blog/terminal-threads
-- Huly (open source): issues, chat, docs in one app with one inbox. https://docs.huly.io/communication/inbox/
-- Height: tried this (tasks + chat); shut down 2025-09-24 (sources agree on the date; secondary). Lesson is in the verdict, not a feature to copy. https://alternativeto.net/news/2025/3/height-project-management-tool-to-shut-down-by-september-2025
-- Arc: not looked up; unconfirmed.
+- Raycast: one shell, extensions render in the same list/detail grammar. https://developers.raycast.com/api-reference/user-interface/list source: docs
+- Zed: editor, terminal, agent threads in one window; Threads Sidebar groups threads by project; Terminal Threads show CLI agents (Claude, Codex, Amp) as sidebar entries. https://zed.dev/docs/ai/parallel-agents , https://zed.dev/blog/terminal-threads source: docs
+- Huly (open source): issues, chat, docs in one app with one inbox. https://docs.huly.io/communication/inbox/ source: docs
+- Height: tried this (tasks + chat); shut down 2025-09-24 (sources agree on the date; secondary). Lesson is in the verdict, not a feature to copy. https://alternativeto.net/news/2025/3/height-project-management-tool-to-shut-down-by-september-2025 source: docs
+- Arc: not looked up; unconfirmed. source: docs
 
 **What we take**
 - Home is for deciding; sources are for working (#2978). Every source page uses the same row/peek/full grammar so a switch costs nothing.
@@ -328,9 +328,9 @@ Source gaps, so nobody trusts a hole: Superhuman's help-center pages returned 40
 ## 13. Home with a small view later (mobile)
 
 **Best today**
-- GitHub mobile: swipe to done/save, Focused filter, review PR diffs with approve/request changes. https://github.blog/news-insights/product-news/github-for-mobile-is-now-available , https://github.blog/changelog/2024-10-14-whats-new-in-mobile-october-update/ (snippets)
-- Superhuman mobile: Split Inbox Settings from the command menu (snippet).
-- Universal Inbox: web app, responsive (unconfirmed).
+- GitHub mobile: swipe to done/save, Focused filter, review PR diffs with approve/request changes. https://github.blog/news-insights/product-news/github-for-mobile-is-now-available , https://github.blog/changelog/2024-10-14-whats-new-in-mobile-october-update/ (snippets) source: docs
+- Superhuman mobile: Split Inbox Settings from the command menu (snippet). source: docs
+- Universal Inbox: web app, responsive (unconfirmed). source: docs
 
 **What we take**
 - Mobile = Priority list only, row + peek + 3 quick actions (done, snooze, primary), swipe left done, swipe right snooze (GitHub). Nothing else.
@@ -373,3 +373,13 @@ Source gaps, so nobody trusts a hole: Superhuman's help-center pages returned 40
 - Todoist overdue/Today: search snippets only (https://www.todoist.com/help/articles/plan-your-day-with-the-today-view-UVUXaiSs); not used above.
 - Arc, Notion inbox, Slack's Today view: not researched.
 - No screenshots captured; only Linear's image URLs listed in problems 8.
+
+## What we take
+
+1. One Home list with tabs (All, Reviews, Messages, Work, Agents) cycled by Tab, a source glyph on every row, and linked CI / thread facts on the PR row (#2978).
+2. Space opens a side pane to peek at the row, Enter goes to full, Esc returns to the same row (#2978).
+3. Snooze with `h`: typed date plus four presets, and the row returns early on new activity addressed to you (#3030).
+4. One Done verb (`e`) on every row kind; a done row comes back only on new activity addressed to you (#3031).
+5. One key map on every list through the shared `RowKeys` component (#2951).
+6. Priority tab ranked by how many other items a row blocks, with the rule readable and editable (#2978).
+7. A 5-10 line brief at the top of Home of what changed since you last looked, built from ledger events (#2536).

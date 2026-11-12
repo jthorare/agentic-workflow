@@ -13,10 +13,10 @@ Caveat: no screenshots were captured (research only, no browser). Links go to th
 ## 1. Build a first workflow from zero
 
 **Best today**
-- n8n: [Use templates](https://docs.n8n.io/build/ways-of-building-workflows/use-templates) + [n8n Assistant](https://docs.n8n.io/build/ways-of-building-workflows/ai-assistant). Start from a template or the chat agent; the result is a normal workflow you open and edit.
-- Zapier: [Copilot](https://help.zapier.com/hc/en-us/articles/23503999825421). Pick trigger app and event, connect, test, add action. One step per screen, linear.
-- Windmill: [flows quickstart](https://www.windmill.dev/docs/getting_started/flows_quickstart). Trigger, then step from Hub or code, then "Test this step".
-- Retool Workflows: [blocks](https://docs.retool.com/workflows/guides/blocks/). Blocks added from the toolbar are NOT connected by default and show a warning until wired.
+- n8n: [Use templates](https://docs.n8n.io/build/ways-of-building-workflows/use-templates) + [n8n Assistant](https://docs.n8n.io/build/ways-of-building-workflows/ai-assistant). Start from a template or the chat agent; the result is a normal workflow you open and edit. source: docs
+- Zapier: [Copilot](https://help.zapier.com/hc/en-us/articles/23503999825421). Pick trigger app and event, connect, test, add action. One step per screen, linear. source: docs
+- Windmill: [flows quickstart](https://www.windmill.dev/docs/getting_started/flows_quickstart). Trigger, then step from Hub or code, then "Test this step". source: docs
+- Retool Workflows: [blocks](https://docs.retool.com/workflows/guides/blocks/). Blocks added from the toolbar are NOT connected by default and show a warning until wired. source: docs
 
 **What we take**: Zapier's one-decision-per-screen order (trigger, test it, action, test it, on). Retool's rule that an unconnected block is a visible warning, not a silent skip. Start screen offers three entries on one page: "Describe it", "Start from template", "Blank".
 **Where one app wins**: the trigger list is Sindri's own objects (PR opened on a repo in the profile, item moved, agent run finished). Zapier needs an account connect for each.
@@ -27,10 +27,10 @@ Caveat: no screenshots were captured (research only, no browser). Links go to th
 ## 2. Build from words (describe it, review a diff)
 
 **Best today**
-- n8n AI Workflow Builder: [docs](https://docs.n8n.io/build/ways-of-building-workflows/ai-workflow-builder). Natural-language prompt, live build phases, then you review credentials and parameters. Each create/modify message is one credit (vendor). Third-party reviews say it leaves placeholders for credentials (unconfirmed by n8n).
-- n8n Assistant: [docs](https://docs.n8n.io/build/ways-of-building-workflows/ai-assistant). Chat agent that creates, edits, tests and troubleshoots; credentials chosen through a card in the chat, never pasted.
-- Zapier Copilot: [help](https://help.zapier.com/hc/en-us/articles/23503999825421). Outline or step-by-step; Zapier's own best practices say start in "Ask as you build" mode (vendor).
-- Windmill AI: [docs](https://www.windmill.dev/docs/core_concepts/ai_generation). AI chat can edit items, then opens the Compare & Deploy page with exactly those items preselected.
+- n8n AI Workflow Builder: [docs](https://docs.n8n.io/build/ways-of-building-workflows/ai-workflow-builder). Natural-language prompt, live build phases, then you review credentials and parameters. Each create/modify message is one credit (vendor). Third-party reviews say it leaves placeholders for credentials (unconfirmed by n8n). source: docs
+- n8n Assistant: [docs](https://docs.n8n.io/build/ways-of-building-workflows/ai-assistant). Chat agent that creates, edits, tests and troubleshoots; credentials chosen through a card in the chat, never pasted. source: docs
+- Zapier Copilot: [help](https://help.zapier.com/hc/en-us/articles/23503999825421). Outline or step-by-step; Zapier's own best practices say start in "Ask as you build" mode (vendor). source: docs
+- Windmill AI: [docs](https://www.windmill.dev/docs/core_concepts/ai_generation). AI chat can edit items, then opens the Compare & Deploy page with exactly those items preselected. source: docs
 
 **What we take**: Windmill's "AI edits land in a compare view before deploy". n8n's "agent also tests and fixes". Credential via a card, not text. Pattern in all four: the AI makes a skeleton you still finish, so ours must run validate and a dry run itself before showing "done".
 **Where one app wins**: the drafting agent sees real repos, real connections, real past runs in the ledger, so it can refuse a node whose repo is not in the profile at draft time.
@@ -41,10 +41,10 @@ Caveat: no screenshots were captured (research only, no browser). Links go to th
 ## 3. Templates for the common jobs
 
 **Best today**
-- n8n: [templates](https://docs.n8n.io/build/ways-of-building-workflows/use-templates). Community library, import into canvas.
-- Zapier: [Zap templates](https://zapier.com/templates) (page not fetched; unconfirmed detail). Per-app pairs.
-- Windmill: [Hub](https://hub.windmill.dev). Shared scripts and flows (page not fetched; unconfirmed detail).
-- GitHub Actions: [starter workflows](https://github.com/actions/starter-workflows). YAML files by language; MIT per repo.
+- n8n: [templates](https://docs.n8n.io/build/ways-of-building-workflows/use-templates). Community library, import into canvas. source: docs
+- Zapier: [Zap templates](https://zapier.com/templates) (page not fetched; unconfirmed detail). Per-app pairs. source: docs
+- Windmill: [Hub](https://hub.windmill.dev). Shared scripts and flows (page not fetched; unconfirmed detail). source: docs
+- GitHub Actions: [starter workflows](https://github.com/actions/starter-workflows). YAML files by language; MIT per repo. source: docs
 
 **What we take**: a template is a full spec plus the first-run checklist (which connection, which repo to pick). The 10 jobs in #2960 are the gallery; each card shows trigger, step count and the last time it ran in this profile.
 **Where one app wins**: "used by 3 of your repos, last ran 2h ago" on each card. No public gallery knows that.
@@ -55,10 +55,10 @@ Caveat: no screenshots were captured (research only, no browser). Links go to th
 ## 4. Pick a trigger and test it with a real event
 
 **Best today**
-- Zapier: [use a previous Zap run as a test record](https://help.zapier.com/hc/en-us/articles/42896259263373-Use-a-previous-Zap-run-as-a-test-record). Trigger "Test" tab pulls a sample record; some apps return only generic samples, then you pick a past run. You can rename the record and edit values.
-- Pipedream: [triggers](https://pipedream.com/docs/workflows/building-workflows/triggers/). "Select event" dropdown lists previously received events; "Send Test Event" fires the workflow with the chosen one. Header `x-pd-notrigger: 1` sends a test event without running production. NOTE: Pipedream's docs banner says Workflows are shutting down 2027-03-31 (vendor notice).
-- Inngest: [dev server](https://www.inngest.com/docs/dev-server). "Test Event" sends a JSON event by name; Runs page shows steps. Dev server is open source.
-- Windmill: [test flows](https://www.windmill.dev/docs/flows/test_flows). "Fill arguments from a request" and an input library of saved inputs.
+- Zapier: [use a previous Zap run as a test record](https://help.zapier.com/hc/en-us/articles/42896259263373-Use-a-previous-Zap-run-as-a-test-record). Trigger "Test" tab pulls a sample record; some apps return only generic samples, then you pick a past run. You can rename the record and edit values. source: docs
+- Pipedream: [triggers](https://pipedream.com/docs/workflows/building-workflows/triggers/). "Select event" dropdown lists previously received events; "Send Test Event" fires the workflow with the chosen one. Header `x-pd-notrigger: 1` sends a test event without running production. NOTE: Pipedream's docs banner says Workflows are shutting down 2027-03-31 (vendor notice). source: docs
+- Inngest: [dev server](https://www.inngest.com/docs/dev-server). "Test Event" sends a JSON event by name; Runs page shows steps. Dev server is open source. source: docs
+- Windmill: [test flows](https://www.windmill.dev/docs/flows/test_flows). "Fill arguments from a request" and an input library of saved inputs. source: docs
 
 **What we take**: the trigger step has a list of the last N real events from this box (a real PR, a real red CI run), pick one with Enter, edit JSON before use, pin it. Inngest's rule: event name decides the match, so we show "would match / would not match" for the picked event.
 **Where one app wins**: the list comes from the ledger and the forge cache, so "PR #2911 opened 4 min ago on repo X" is there with zero setup and no account connect.
@@ -69,10 +69,10 @@ Caveat: no screenshots were captured (research only, no browser). Links go to th
 ## 5. Map fields from real output (no expressions by hand)
 
 **Best today**
-- n8n: [reference data](https://docs.n8n.io/data/data-mapping/). Drag a field from the Input panel into a parameter; it writes the expression. Also the expression cliff: Latenode forum posts call expressions the stall point (third party).
-- Windmill: [test flows](https://www.windmill.dev/docs/flows/test_flows). Outputs of tested steps are suggested as inputs of the next step.
-- Dify: [variable inspector](https://docs.dify.ai/en/guides/workflow/debug-and-preview/variable-inspect). Panel at the bottom lists every node output after it ran; click a variable to see it all.
-- Zapier: field picker shows sample values from the test record next to each field name (unconfirmed page; seen in the editor description in help articles).
+- n8n: [reference data](https://docs.n8n.io/data/data-mapping/). Drag a field from the Input panel into a parameter; it writes the expression. Also the expression cliff: Latenode forum posts call expressions the stall point (third party). source: docs
+- Windmill: [test flows](https://www.windmill.dev/docs/flows/test_flows). Outputs of tested steps are suggested as inputs of the next step. source: docs
+- Dify: [variable inspector](https://docs.dify.ai/en/guides/workflow/debug-and-preview/variable-inspect). Panel at the bottom lists every node output after it ran; click a variable to see it all. source: docs
+- Zapier: field picker shows sample values from the test record next to each field name (unconfirmed page; seen in the editor description in help articles). source: docs
 
 **What we take**: in a field, type `/` or click "insert" to open a picker of upstream outputs with the real value beside each name (from the pinned/last run). Human captions (#2925). Raw `{{node.out}}` stays under Advanced.
 **Where one app wins**: output fields carry types from the block catalog, so GRAPH-REF-004 type mismatches show as you pick, not at activate.
@@ -83,10 +83,10 @@ Caveat: no screenshots were captured (research only, no browser). Links go to th
 ## 6. Validate before activate ("activate means it runs")
 
 **Best today**
-- actionlint: [README](https://github.com/rhysd/actionlint). Checks workflow syntax, `${{ }}` expression types, action inputs/outputs, reusable workflow inputs, shellcheck/pyflakes on `run:`, script injection. MIT. Static only; cannot know a secret is missing or a repo is gone.
-- Retool: [blocks](https://docs.retool.com/workflows/guides/blocks/). Unconnected blocks show a warning.
-- Windmill: [draft and deploy](https://www.windmill.dev/docs/core_concepts/draft_and_deploy). Drafts autosave and can be tested before deploy; no stated deploy-time refusal list (unconfirmed).
-- n8n / Zapier: rely on you having tested each step (digest finding; I found no refusal list in docs).
+- actionlint: [README](https://github.com/rhysd/actionlint). Checks workflow syntax, `${{ }}` expression types, action inputs/outputs, reusable workflow inputs, shellcheck/pyflakes on `run:`, script injection. MIT. Static only; cannot know a secret is missing or a repo is gone. source: docs
+- Retool: [blocks](https://docs.retool.com/workflows/guides/blocks/). Unconnected blocks show a warning. source: docs
+- Windmill: [draft and deploy](https://www.windmill.dev/docs/core_concepts/draft_and_deploy). Drafts autosave and can be tested before deploy; no stated deploy-time refusal list (unconfirmed). source: docs
+- n8n / Zapier: rely on you having tested each step (digest finding; I found no refusal list in docs). source: docs
 
 **What we take**: actionlint's catalog style (a stable id per check, one line of cause, one of fix, example input). Findings anchor on the node (problem chip on the step). Activate disabled while any blocking finding exists, with the list in the button's tooltip. Add the part nobody does: run-time-knowable holes (missing connection scope, unreachable repo, no trigger permission, code compile).
 **Where one app wins**: validate can read the profile, repo list, connection grants and block catalog, so it checks what actionlint cannot.
@@ -97,10 +97,10 @@ Caveat: no screenshots were captured (research only, no browser). Links go to th
 ## 7. Dry run with side effects fenced
 
 **Best today**
-- Windmill: [test flows](https://www.windmill.dev/docs/flows/test_flows). "Test flow", "Test up to step", "Test this step", "Test an iteration". Runs for real (side effects not fenced; stated nowhere that they are).
-- n8n: [pin and mock data](https://docs.n8n.io/data/data-pinning/). Pinned data replaces the external fetch so triggers and reads are not repeated; manual executions are not counted in quota. Writes still happen on a manual run.
-- act: [nektos/act](https://github.com/nektos/act). Runs GitHub Actions locally in Docker. MIT. Gaps per the prior digest (no service containers, matrix, artifacts, `GITHUB_TOKEN`) were not re-verified here.
-- wrkflw `--dry-run`: unconfirmed (digest cites a third-party page; not fetched).
+- Windmill: [test flows](https://www.windmill.dev/docs/flows/test_flows). "Test flow", "Test up to step", "Test this step", "Test an iteration". Runs for real (side effects not fenced; stated nowhere that they are). source: docs
+- n8n: [pin and mock data](https://docs.n8n.io/data/data-pinning/). Pinned data replaces the external fetch so triggers and reads are not repeated; manual executions are not counted in quota. Writes still happen on a manual run. source: docs
+- act: [nektos/act](https://github.com/nektos/act). Runs GitHub Actions locally in Docker. MIT. Gaps per the prior digest (no service containers, matrix, artifacts, `GITHUB_TOKEN`) were not re-verified here. source: docs
+- wrkflw `--dry-run`: unconfirmed (digest cites a third-party page; not fetched). source: docs
 
 **What we take**: nobody fences side effects well, so this is ours. Test run = recorded or picked trigger event, every effect block (notify, http POST, create_item, run_agent writes) replaced by a "would do" record that shows the exact payload. Read blocks run for real. Show each node's input and output.
 **Where one app wins**: Sindri knows which blocks write (block catalog), so the fence is by block, not by user promise.
@@ -111,10 +111,10 @@ Caveat: no screenshots were captured (research only, no browser). Links go to th
 ## 8. See each step's input and output in a run
 
 **Best today**
-- Inngest: [inspect runs](https://www.inngest.com/docs/platform/monitor/inspecting-function-runs). Run page: trigger, event payload, step timeline; expand a failed step to see each retry's error and timing. CEL search over `event.*` and `output.*`.
-- Pipedream: [inspector](https://pipedream.com/docs/workflows/building-workflows/inspect/). Event list left of the workflow; click an event for data and logs per step.
-- Windmill: test-flow drawer shows the DAG with results and logs per step ([docs](https://www.windmill.dev/docs/flows/test_flows)).
-- Dify: ["Last run" on any node](https://docs.dify.ai/en/guides/workflow/debug-and-preview/step-run) shows input, output, timing, error.
+- Inngest: [inspect runs](https://www.inngest.com/docs/platform/monitor/inspecting-function-runs). Run page: trigger, event payload, step timeline; expand a failed step to see each retry's error and timing. CEL search over `event.*` and `output.*`. source: docs
+- Pipedream: [inspector](https://pipedream.com/docs/workflows/building-workflows/inspect/). Event list left of the workflow; click an event for data and logs per step. source: docs
+- Windmill: test-flow drawer shows the DAG with results and logs per step ([docs](https://www.windmill.dev/docs/flows/test_flows)). source: docs
+- Dify: ["Last run" on any node](https://docs.dify.ai/en/guides/workflow/debug-and-preview/step-run) shows input, output, timing, error. source: docs
 
 **What we take**: run view = the canvas with a status dot per node; click a node, bottom panel shows Input / Output / Error / Time. Inngest's CEL-style search becomes a filter on output fields. Collapse large payloads at the store's 64 KB cut with a "truncated" badge.
 **Where one app wins**: a node that ran an agent links to the live agent session, its worktree and the PR it opened.
@@ -125,11 +125,11 @@ Caveat: no screenshots were captured (research only, no browser). Links go to th
 ## 9. Re-run from a step with edited input
 
 **Best today**
-- Windmill: [restart from step](https://www.windmill.dev/docs/flows/test_flows). Select a top-level node in the preview page, click "Re-start from X"; for-loop and branch-all can restart at an iteration. On deployed flows only Cloud/Enterprise.
-- Inngest: [rerun a run](https://www.inngest.com/docs/platform-and-operations/rerun-a-run). "Rerun from step" restores saved outputs of earlier steps and re-runs from the chosen step; some steps let you replace JSON input. Cron-triggered runs cannot be rerun.
-- Dify: [variable inspector](https://docs.dify.ai/en/guides/workflow/debug-and-preview/variable-inspect). Edit a cached variable, run just the downstream node; the original "Last run" record is untouched.
-- Make: [run replay](https://help.make.com/scenario-run-replay). Replays the whole scenario with the old trigger data, current scenario version, costs credits; replays all modules, even ones that succeeded.
-- n8n: [debug executions](https://docs.n8n.io/workflows/executions/debug/). "Debug in editor" copies a failed execution's data and pins it on the first node.
+- Windmill: [restart from step](https://www.windmill.dev/docs/flows/test_flows). Select a top-level node in the preview page, click "Re-start from X"; for-loop and branch-all can restart at an iteration. On deployed flows only Cloud/Enterprise. source: docs
+- Inngest: [rerun a run](https://www.inngest.com/docs/platform-and-operations/rerun-a-run). "Rerun from step" restores saved outputs of earlier steps and re-runs from the chosen step; some steps let you replace JSON input. Cron-triggered runs cannot be rerun. source: docs
+- Dify: [variable inspector](https://docs.dify.ai/en/guides/workflow/debug-and-preview/variable-inspect). Edit a cached variable, run just the downstream node; the original "Last run" record is untouched. source: docs
+- Make: [run replay](https://help.make.com/scenario-run-replay). Replays the whole scenario with the old trigger data, current scenario version, costs credits; replays all modules, even ones that succeeded. source: docs
+- n8n: [debug executions](https://docs.n8n.io/workflows/executions/debug/). "Debug in editor" copies a failed execution's data and pins it on the first node. source: docs
 
 **What we take**: Inngest's model (saved outputs of earlier nodes restored, the chosen node and later ones re-run) with Dify's edit-a-variable-first gesture. Button "Re-run from here" on the node; an Input editor opens prefilled; the new run is linked to the old one.
 **Where one app wins**: since agent nodes made branches and PRs, Sindri can show "this node already opened PR #2911; re-run reuses it" (see problem 12).
@@ -140,10 +140,10 @@ Caveat: no screenshots were captured (research only, no browser). Links go to th
 ## 10. Understand why a run failed, in plain words, and fix in one action
 
 **Best today**
-- Inngest: [inspect](https://www.inngest.com/docs/platform/monitor/inspecting-function-runs). "The run's error tells you what failed. The timeline tells you where."; structured error name/message; still no suggested fix.
-- Temporal UI: [web UI](https://docs.temporal.io/web-ui). Event history per execution; actions on the page: cancel, signal, update, reset and terminate, and "Start Workflow Like This One".
-- Make: [error handling](https://help.make.com/scenario-run-replay) (nav lists error handlers, exponential backoff, throw). Per-route handlers you build yourself.
-- n8n: Botpress (a competitor) says n8n debugging means clicking through raw JSON node by node (vendor claim, via prior digest).
+- Inngest: [inspect](https://www.inngest.com/docs/platform/monitor/inspecting-function-runs). "The run's error tells you what failed. The timeline tells you where."; structured error name/message; still no suggested fix. source: docs
+- Temporal UI: [web UI](https://docs.temporal.io/web-ui). Event history per execution; actions on the page: cancel, signal, update, reset and terminate, and "Start Workflow Like This One". source: docs
+- Make: [error handling](https://help.make.com/scenario-run-replay) (nav lists error handlers, exponential backoff, throw). Per-route handlers you build yourself. source: docs
+- n8n: Botpress (a competitor) says n8n debugging means clicking through raw JSON node by node (vendor claim, via prior digest). source: docs
 
 **What we take**: failed-run header sentence: "Step 'Check' failed: repo acme/api is not in your profile." Below it one primary button chosen from the cause (Reconnect, Add repo, Edit field, Retry from this node). Raw code stays behind "Details". Map each SND-GRAPH / node failure code to a sentence plus an action in one table, test per row.
 **Where one app wins**: the fix button can run the fix (add the repo to the profile, regrant the connection) because the profile lives in the same app.
@@ -154,10 +154,10 @@ Caveat: no screenshots were captured (research only, no browser). Links go to th
 ## 11. Versions, undo and diff
 
 **Best today**
-- n8n: [workflow history](https://docs.n8n.io/workflows/history/). New version on every save, restore, and git pull; Restore / Clone to new / Open in new tab to compare / Download / Name version. Full history is Enterprise; 24 h for everyone else (vendor tiering).
-- Windmill: [draft and deploy](https://www.windmill.dev/docs/core_concepts/draft_and_deploy). Drafts autosave per user; AI edits open Compare & Deploy.
-- Temporal: workflow versioning/pinning by build id ([CLI reset options](https://docs.temporal.io/cli/workflow#reset)), runs stay on their version.
-- Git-based self-built flows (Actions YAML): the diff is `git diff`. Plain, reviewed.
+- n8n: [workflow history](https://docs.n8n.io/workflows/history/). New version on every save, restore, and git pull; Restore / Clone to new / Open in new tab to compare / Download / Name version. Full history is Enterprise; 24 h for everyone else (vendor tiering). source: docs
+- Windmill: [draft and deploy](https://www.windmill.dev/docs/core_concepts/draft_and_deploy). Drafts autosave per user; AI edits open Compare & Deploy. source: docs
+- Temporal: workflow versioning/pinning by build id ([CLI reset options](https://docs.temporal.io/cli/workflow#reset)), runs stay on their version. source: docs
+- Git-based self-built flows (Actions YAML): the diff is `git diff`. Plain, reviewed. source: docs
 
 **What we take**: every save is an immutable revision (we have it); add a revision list with a side-by-side node diff (added / removed / changed fields) and "Restore as new revision". Name a revision. In-editor Ctrl+Z / Ctrl+Shift+Z for the draft.
 **Where one app wins**: the revision list says who changed it (`owner` or `session:<id>`) and which runs used each revision.
@@ -168,10 +168,10 @@ Caveat: no screenshots were captured (research only, no browser). Links go to th
 ## 12. Idempotent side effects on replay
 
 **Best today**
-- Inngest: [idempotency](https://www.inngest.com/docs/durable-execution/guides-and-advanced/idempotency). Event id dedups starts for 24 h; function-level idempotency expression keyed on event data; rerun doc says check completed side effects first.
-- Pipedream: replay re-runs against the newest version; the prior digest cites a user thread of duplicate Airtable records after a replay (third-party thread, not re-fetched).
-- Make: replay passes data through all modules, even ones that already succeeded ([docs](https://help.make.com/scenario-run-replay)).
-- Temporal: reset keeps history up to the chosen event ([CLI](https://docs.temporal.io/cli/workflow#reset)); activities should be idempotent (community threads in prior digest, not re-fetched).
+- Inngest: [idempotency](https://www.inngest.com/docs/durable-execution/guides-and-advanced/idempotency). Event id dedups starts for 24 h; function-level idempotency expression keyed on event data; rerun doc says check completed side effects first. source: docs
+- Pipedream: replay re-runs against the newest version; the prior digest cites a user thread of duplicate Airtable records after a replay (third-party thread, not re-fetched). source: docs
+- Make: replay passes data through all modules, even ones that already succeeded ([docs](https://help.make.com/scenario-run-replay)). source: docs
+- Temporal: reset keeps history up to the chosen event ([CLI](https://docs.temporal.io/cli/workflow#reset)); activities should be idempotent (community threads in prior digest, not re-fetched). source: docs
 
 **What we take**: effect nodes get a deterministic key `run + node + item` (Sindri already builds launch ids from `agent-launch:<run>:<node>:<index>`, `sindri-graph.md:79`). On re-run, an effect node shows "done before: comment #5521" and skips by default, with "do again" as an explicit toggle.
 **Where one app wins**: the key plus the real object (the comment, the PR, the branch) is in one ledger, so "skipped, already posted" can link to it.
@@ -182,10 +182,10 @@ Caveat: no screenshots were captured (research only, no browser). Links go to th
 ## 13. Keyboard and canvas editing
 
 **Best today**
-- n8n: [shortcuts](https://docs.n8n.io/keyboard-shortcuts/). `N` opens nodes panel, `Enter` inserts, arrows select neighbour nodes, `F2` rename, `D` deactivate, `P` pin data, Ctrl+G group, `1` zoom to fit, `Shift+S` sticky note.
-- Retool: [blocks](https://docs.retool.com/workflows/guides/blocks/). Right-click canvas for Add block; drag to connect; Run-with-previous-blocks on a block.
-- Windmill: [editor components](https://www.windmill.dev/docs/flows/editor_components). Flow editor with a graph plus side panel (details not re-read).
-- Node-RED / Langflow: unconfirmed here.
+- n8n: [shortcuts](https://docs.n8n.io/keyboard-shortcuts/). `N` opens nodes panel, `Enter` inserts, arrows select neighbour nodes, `F2` rename, `D` deactivate, `P` pin data, Ctrl+G group, `1` zoom to fit, `Shift+S` sticky note. source: docs
+- Retool: [blocks](https://docs.retool.com/workflows/guides/blocks/). Right-click canvas for Add block; drag to connect; Run-with-previous-blocks on a block. source: docs
+- Windmill: [editor components](https://www.windmill.dev/docs/flows/editor_components). Flow editor with a graph plus side panel (details not re-read). source: docs
+- Node-RED / Langflow: unconfirmed here. source: docs
 
 **What we take**: n8n's set, as is: arrow keys walk the graph, `N` or Ctrl+K add a step, `F2` rename, `D` disable a step, `P` pin, `1` fit, Enter opens. Plus the Ctrl+K command palette from the grammar (#2978) and undo.
 **Where one app wins**: palette lists workflow actions beside the rest of the app (open the PR this node made).
@@ -196,10 +196,10 @@ Caveat: no screenshots were captured (research only, no browser). Links go to th
 ## 14. Secrets and connections
 
 **Best today**
-- Windmill: [variables and secrets](https://www.windmill.dev/docs/core_concepts/variables_and_secrets). All variables encrypted with a workspace key; secret ones not readable in UI.
-- n8n: [credentials](https://docs.n8n.io/credentials/). One credential object per service; assistant chooses via a card, never in chat.
-- Zapier: connection picked per step, with reconnect on expiry (help articles; page not fetched).
-- Pipedream: connected accounts (not re-read).
+- Windmill: [variables and secrets](https://www.windmill.dev/docs/core_concepts/variables_and_secrets). All variables encrypted with a workspace key; secret ones not readable in UI. source: docs
+- n8n: [credentials](https://docs.n8n.io/credentials/). One credential object per service; assistant chooses via a card, never in chat. source: docs
+- Zapier: connection picked per step, with reconnect on expiry (help articles; page not fetched). source: docs
+- Pipedream: connected accounts (not re-read). source: docs
 
 **What we take**: a node's connection slot shows name, scope and state ("github:me, repo read, ok / expired"), one click to reconnect; a missing one is a validate finding with a Connect button. Never paste a secret into the describe-it box.
 **Where one app wins**: one connection list for workflows, reviews and messages.
@@ -210,9 +210,9 @@ Caveat: no screenshots were captured (research only, no browser). Links go to th
 ## 15. Know if it is on, and when it runs next
 
 **Best today**
-- n8n: [executions](https://docs.n8n.io/workflows/executions/). Manual vs production executions; only production counts toward quota; publish puts it on.
-- Zapier: a toggle in the editor and list (help articles; not re-read).
-- Temporal / Inngest: run list with status and filters.
+- n8n: [executions](https://docs.n8n.io/workflows/executions/). Manual vs production executions; only production counts toward quota; publish puts it on. source: docs
+- Zapier: a toggle in the editor and list (help articles; not re-read). source: docs
+- Temporal / Inngest: run list with status and filters. source: docs
 
 **What we take**: state chip beside the title ("Active, next weekday 7:00" / "Off"), the same glyph as the list row. Run list shows manual vs scheduled.
 **Where one app wins**: Home inbox (#2978) shows a workflow parked on the owner as a row.
@@ -250,3 +250,13 @@ Windmill core is AGPLv3 (its README): read docs and behaviour only, copy no code
 - Zapier template gallery, Windmill Hub, Node-RED, Langflow editing keys: not read.
 - Temporal reset pitfalls and Pipedream duplicate-record thread come from the prior digest, not re-fetched.
 - Self-built agent-workflow tools (Sim, Heym, Disp8ch, Rowboat, EpicStaff) surfaced by search; none checked for features beyond a search summary.
+
+## What we take
+
+1. Validate before Activate: findings sit on the step, and Activate stays off while a blocking finding exists (#2969).
+2. Test run with side effects fenced: every effect step shows a "would do" record with its exact payload instead of acting (#2969).
+3. "Describe it" entry: words make a skeleton, which shows as a diff, is validated and dry-run before you accept it (#2960).
+4. Trigger step lists the last real events from this box; pick one, edit it, pin it, and see "would match / would not match" (#3032).
+5. Failed-run header says the cause in a sentence and offers one button chosen from the cause (Reconnect, Add repo, Retry from this node) (#2960).
+6. State chip beside the title ("Active, next weekday 7:00" / "Off"), the same glyph as the list row (#2970).
+7. Field picker: type `/` in a field to choose an upstream output with its real value beside the name (#3033).
