@@ -233,7 +233,7 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
 
             if (!met)
             {
-                if (!await AskPoll.Next(session.Poll, wait, slice, remaining).ConfigureAwait(true))
+                if (!await AskPoll.Next(session.Poll, wait, remaining).ConfigureAwait(true))
                 {
                     return TimedOut(timeout);
                 }

@@ -59,10 +59,10 @@ internal sealed partial class GraphAgentLoop
 
         public static TimeSpan Slice(AskPoll? poll, TimeSpan remaining) => poll is not null && poll.Every < remaining ? poll.Every : remaining;
 
-        // False when the slice was all that was left (the node timed out); otherwise reads the ask and the wait goes on.
-        public static async Task<bool> Next(AskPoll? poll, AgentWait wait, TimeSpan slice, TimeSpan remaining)
+        // False when no time is left (the node timed out); otherwise reads the ask and the wait goes on. 'remaining' already has the slice just waited taken off.
+        public static async Task<bool> Next(AskPoll? poll, AgentWait wait, TimeSpan remaining)
         {
-            if (poll is null || slice >= remaining)
+            if (poll is null || remaining <= TimeSpan.Zero)
             {
                 return false;
             }
