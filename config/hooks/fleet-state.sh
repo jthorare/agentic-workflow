@@ -4,11 +4,14 @@
 #   $AW_FLEET_DIR/<provider>/<sessionId>.json   (default $AW_STATE_DIR/fleet), contract schemas/fleet-state.schema.json
 # Reads the hook payload on stdin. Advisory: no allow or deny, prints nothing on stdout (a UserPromptSubmit hook's stdout would reach
 # the model), and always exits 0. A payload it can't read, an id that fails the pattern or an unwritable directory is a silent exit 0.
-# Stores no free text: never tool_input, the notification message, the prompt or a response.
+# Stores no free text: never tool_input, the notification message, the prompt or a response. The tool NAME is stored (tool, toolAt):
+# on an approval ask, and on PreToolUse and PostToolUse as the session's last tool.
 # Writes nothing when AW_FLEET_DISABLE=1 (a session the human wants unseen) or AW_JUDGE_CHILD is set (the toolkit's own claude -p).
 # Provider: AW_HOOK_PROVIDER (set by the Codex and Cursor adapters; unset or claude is Claude Code) -> the catalog's AgentId.
-# Bounded: no network and no CLI calls (macOS: a ps per ancestor step, to find the agent's pid and start time); one jq run, one mktemp, one mv (a PostToolUse or Notification may also fork a grep). PostToolUse (every tool call) exits before jq unless the
-# file says asking.
+# Bounded: no network and no CLI calls (macOS: a ps per ancestor step, to find the agent's pid and start time); one jq run, one mktemp, one mv.
+# PreToolUse and PostToolUse run on every tool call, so while the file says running they fork nothing but the final mv: bash rewrites the
+# tool, toolAt, event and at fields in the one-line JSON this hook wrote (no jq, no mktemp; macOS's bash 3.2 may fork one date for the stamp).
+# jq runs for them only on a change of state: PostToolUse over an asking file, or PreToolUse with no file yet.
 exec 2>/dev/null
 export LC_ALL=C
 [ "${AW_FLEET_DISABLE:-}" = "1" ] && exit 0
@@ -27,6 +30,7 @@ if [ -z "$FLEET" ]; then
   FLEET="$STATE_ROOT/fleet"
 fi
 umask 077
+export TZ=UTC
 
 IFS= read -r -d '' INPUT || true
 [ -n "$INPUT" ] || exit 0
@@ -43,18 +47,47 @@ EVENT="${BASH_REMATCH[1]}"
 PDIR="$FLEET/$PROVIDER"
 FILE="$PDIR/$SID.json"
 
+now_stamp() { # -> TS, the UTC millisecond stamp the file uses (bash 4.2+ printf; bash 3.2 forks one date)
+  local secs ms
+  if [ -n "${EPOCHREALTIME:-}" ]; then secs="${EPOCHREALTIME%.*}"; ms="${EPOCHREALTIME#*.}"; ms="${ms:0:3}"
+  else secs="$(date +%s)"; ms=000; fi
+  printf -v TS '%(%Y-%m-%dT%H:%M:%S)T.%sZ' "$secs" "$ms" 2>/dev/null && return 0
+  TS="$(date -u -d "@$secs" +%Y-%m-%dT%H:%M:%S 2>/dev/null || date -u -r "$secs" +%Y-%m-%dT%H:%M:%S).${ms}Z"
+}
+
 REASON=""
 case "$EVENT" in
   SessionStart|Stop|Interrupt) STATE=idle ;;   # Interrupt is Codex's (CO-1b); Claude Code has no such event
   UserPromptSubmit) STATE=running ;;
   SessionEnd) STATE=ended ;;
   PermissionRequest) STATE=asking; REASON=approval ;;
-  PostToolUse)
-    # Running again after an approval: only when the file says asking, else nothing to change.
-    # (The grep matches the compact JSON this hook itself writes with jq -c; a pretty-printed hand edit would never clear.)
-    [ -f "$FILE" ] || exit 0
-    grep -q '"state":"asking"' "$FILE" || exit 0
-    STATE=running ;;
+  PreToolUse|PostToolUse)
+    # The tool name only (never tool_input): the first "tool_name" key, which Claude writes before tool_input.
+    RE_TOOL='"tool_name"[[:space:]]*:[[:space:]]*"([^"]*)"'
+    RE_TOOLNAME='^[A-Za-z0-9_.:-]{1,64}$'
+    TOOL=""
+    if [[ $INPUT =~ $RE_TOOL ]]; then TOOL="${BASH_REMATCH[1]}"; fi
+    [[ $TOOL =~ $RE_TOOLNAME ]] || TOOL=""
+    # (The matches below read the compact JSON this hook itself writes with jq -c; a pretty-printed hand edit never matches.)
+    CUR=""
+    if [ -f "$FILE" ]; then IFS= read -r -d '' CUR < "$FILE" || true; CUR="${CUR%$'\n'}"; fi
+    if [[ $CUR == *'"state":"running"'* ]]; then
+      # Running and staying so: swap the tool, toolAt, event and at fields in place, no jq.
+      [ -n "$TOOL" ] || exit 0
+      RE_RUN='^(.*"event":")[A-Za-z]+(","state":"running")(,"tool":"[^"]*","toolAt":"[^"]*")?(,"at":")[^"]*(".*)$'
+      [[ $CUR =~ $RE_RUN ]] || exit 0
+      now_stamp
+      NEW="${BASH_REMATCH[1]}${EVENT}${BASH_REMATCH[2]},\"tool\":\"$TOOL\",\"toolAt\":\"$TS\"${BASH_REMATCH[4]}${TS}${BASH_REMATCH[5]}"
+      TMP="$PDIR/.tmp.$$"
+      if printf '%s\n' "$NEW" > "$TMP" && mv -f "$TMP" "$FILE"; then :; else rm -f "$TMP"; fi
+      exit 0
+    elif [ "$EVENT" = PostToolUse ] && [[ $CUR == *'"state":"asking"'* ]]; then
+      STATE=running   # running again after an approval
+    elif [ "$EVENT" = PreToolUse ] && [ ! -f "$FILE" ]; then
+      STATE=running   # the hook was installed mid-turn
+    else
+      exit 0          # idle, ended, asking (a parallel call must not undo the ask) or unreadable: nothing to change
+    fi ;;
   Notification)
     RE_TYPE='"notification_type"[[:space:]]*:[[:space:]]*"([a-z_]+)"'
     [[ $INPUT =~ $RE_TYPE ]] || exit 0
@@ -150,6 +183,8 @@ JSON="$(jq -c --arg sid "$SID" --arg provider "$PROVIDER" --arg event "$EVENT" -
   select(.session_id == $sid and .hook_event_name == $event and (.cwd | type == "string" and length > 0))
   | (($now * 1000) | floor) as $ms
   | (.tool_name // "") as $tool
+  | ((($ms / 1000) | floor | strftime("%Y-%m-%dT%H:%M:%S")) + "." + (($ms % 1000) | tostring | ("000" + .) | .[-3:]) + "Z") as $at
+  | ($tool | type == "string" and test("^[A-Za-z0-9_.:-]{1,64}$")) as $okTool
   | {
       schema: 1,
       provider: $provider,
@@ -158,9 +193,11 @@ JSON="$(jq -c --arg sid "$SID" --arg provider "$PROVIDER" --arg event "$EVENT" -
       state: $state
     }
     + (if $reason != "" then {reason: $reason} else {} end)
-    + (if $event == "PermissionRequest" and ($tool | type == "string" and test("^[A-Za-z0-9_.:-]{1,64}$")) then {tool: $tool} else {} end)
+    + (if $event == "PermissionRequest" and $okTool then {tool: $tool}
+       elif ($event == "PreToolUse" or $event == "PostToolUse") and $okTool then {tool: $tool, toolAt: $at}
+       else {} end)
     + {
-      at: ((($ms / 1000) | floor | strftime("%Y-%m-%dT%H:%M:%S")) + "." + (($ms % 1000) | tostring | ("000" + .) | .[-3:]) + "Z"),
+      at: $at,
       cwd: .cwd,
       transcript: ((.transcript_path // null) | if type == "string" and length > 0 then . else null end),
       agentPid: $pid,

@@ -43,9 +43,16 @@ internal static class EventsCommand
         return false;
     }
 
-    private static string Text(ReadEventsResponse response) => string.Join(
-        Environment.NewLine,
-        response.Events.Select(static e => string.Create(
+    private static string Text(ReadEventsResponse response)
+    {
+        var lines = response.Events.Select(static e => string.Create(
             CultureInfo.InvariantCulture,
-            $"{e.Id} {e.At.UtcDateTime:yyyy-MM-dd'T'HH:mm:ss'Z'} {e.Kind} {e.Lane ?? "-"} {e.Fields.GetRawText()}")));
+            $"{e.Id} {e.At.UtcDateTime:yyyy-MM-dd'T'HH:mm:ss'Z'} {e.Kind} {e.Lane ?? "-"} {e.Fields.GetRawText()}"));
+        if (response.Gap)
+        {
+            lines = lines.Prepend(string.Create(CultureInfo.InvariantCulture, $"events before #{response.Oldest} were dropped (7-day retention): re-read status"));
+        }
+
+        return string.Join(Environment.NewLine, lines);
+    }
 }

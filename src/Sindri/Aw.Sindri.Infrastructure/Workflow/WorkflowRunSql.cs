@@ -12,6 +12,7 @@ internal static class WorkflowRunSql
 
     internal const string Recent = SelectRun + " WHERE workflow_id = $workflow ORDER BY started_at DESC, CAST(substr(id, instr(id, ':') + 1) AS INTEGER) DESC LIMIT $limit OFFSET $offset";
     internal const string Running = SelectRun + " WHERE status = 'running' ORDER BY started_at, id";
+    internal const string QueuedWorkflows = "SELECT DISTINCT workflow_id FROM workflow_run WHERE status = 'queued' ORDER BY workflow_id";
 
     internal const string LatestOfKind = SelectRun + " WHERE workflow_id = $workflow AND json_extract(trigger, '$.kind') = $kind ORDER BY CAST(substr(id, instr(id, ':') + 1) AS INTEGER) DESC LIMIT 1";
 
