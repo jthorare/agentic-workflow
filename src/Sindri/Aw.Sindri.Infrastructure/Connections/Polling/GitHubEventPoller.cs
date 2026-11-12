@@ -46,23 +46,19 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
             return SindriErrors.ConnectionProviderChanged.With($"{connection.Name} has no 'repo' setting like owner/name");
         }
 
-        if (GitHubEventMapper.FromPullState(kind))
-        {
-            return await _states.Poll(connection, parts, kind, cursor, cancellationToken).ConfigureAwait(false);
-        }
-
-        var first = $"https://{Host}/repos/{Uri.EscapeDataString(parts[0])}/{Uri.EscapeDataString(parts[1])}/events?per_page=100";
-        return await ReadPages(connection, parts, kind, cursor, first, cancellationToken).ConfigureAwait(false);
+        return GitHubEventMapper.FromPullState(kind)
+            ? await _states.Poll(connection, parts, kind, cursor, cancellationToken).ConfigureAwait(false)
+            : await ReadPages(new PollTarget(connection, parts[0], parts[1]), kind, cursor, cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask<Result<PollResult>> ReadPages(Connection connection, string[] parts, EventKind kind, string? cursor, string first, CancellationToken cancellationToken)
+    private async ValueTask<Result<PollResult>> ReadPages(PollTarget target, EventKind kind, string? cursor, CancellationToken cancellationToken)
     {
         var after = PollJson.Time(cursor);
         var feed = new GitHubFeed(kind, after is { } at ? at - Overlap : null);
-        var next = first;
+        var next = target.Url("events?per_page=100");
         for (var page = 1; ; page++)
         {
-            var answer = await _client.Send(connection, new HttpRequestMessage(HttpMethod.Get, next), cursorSent: false, cancellationToken).ConfigureAwait(false);
+            var answer = await _client.Send(target.Connection, new HttpRequestMessage(HttpMethod.Get, next), cursorSent: false, cancellationToken).ConfigureAwait(false);
             if (answer.IsError || answer.Value.Body is not { } body)
             {
                 return answer.IsError ? answer.Error : new PollResult([], cursor, RateLimited: true, answer.Value.RetryAfter, Reason: answer.Value.Reason);
@@ -76,40 +72,40 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
 
             if (feed.ReachedFloor || answer.Value.NextUrl is not { } more)
             {
-                return await Finish(connection, parts, feed, cursor, after, gap: false, cancellationToken).ConfigureAwait(false);
+                return await Finish(target, feed, cursor, gap: false, cancellationToken).ConfigureAwait(false);
             }
 
             if (page >= pageCap)
             {
-                return await Finish(connection, parts, feed, cursor, after, gap: true, cancellationToken).ConfigureAwait(false);
+                return await Finish(target, feed, cursor, gap: true, cancellationToken).ConfigureAwait(false);
             }
 
             next = more;
         }
     }
 
-    private async ValueTask<Result<PollResult>> Finish(Connection connection, string[] parts, GitHubFeed feed, string? cursor, DateTimeOffset? after, bool gap, CancellationToken cancellationToken)
+    private async ValueTask<Result<PollResult>> Finish(PollTarget target, GitHubFeed feed, string? cursor, bool gap, CancellationToken cancellationToken)
     {
         var newest = feed.Newest.Later(cursor);
-        var events = after is null ? [] : feed.Events.DistinctBy(static e => e.DeliveryKey, StringComparer.Ordinal).OrderBy(static e => e.OccurredAt).ThenBy(static e => e.DeliveryKey, StringComparer.Ordinal).ToList();
+        var events = PollJson.Time(cursor) is null ? [] : feed.Events.DistinctBy(static e => e.DeliveryKey, StringComparer.Ordinal).OrderBy(static e => e.OccurredAt).ThenBy(static e => e.DeliveryKey, StringComparer.Ordinal).ToList();
         for (var i = 0; i < events.Count && i < MaxEnriched; i++)
         {
-            events[i] = await Enrich(connection, parts, events[i], cancellationToken).ConfigureAwait(false);
+            events[i] = await Enrich(target, events[i], cancellationToken).ConfigureAwait(false);
         }
 
         return new PollResult(events, newest.Text ?? PollCursorText.Now(clock.GetUtcNow()), RateLimited: false, RetryAfter: null, gap);
     }
 
     // The trimmed pull request in the feed holds no title, author or draft flag: one GET /pulls/{n} fills them. A failed or odd answer leaves the event as the feed had it.
-    private async ValueTask<PolledEvent> Enrich(Connection connection, string[] parts, PolledEvent polled, CancellationToken cancellationToken)
+    private async ValueTask<PolledEvent> Enrich(PollTarget target, PolledEvent polled, CancellationToken cancellationToken)
     {
         if (!GitHubEventMapper.NeedsDetail(polled) || !polled.Fields.TryGetValue("number", out var number) || number.Length == 0)
         {
             return polled;
         }
 
-        var url = $"https://{Host}/repos/{Uri.EscapeDataString(parts[0])}/{Uri.EscapeDataString(parts[1])}/pulls/{Uri.EscapeDataString(number)}";
-        var answer = await _client.Send(connection, new HttpRequestMessage(HttpMethod.Get, url), cursorSent: false, cancellationToken).ConfigureAwait(false);
+        var url = target.Url($"pulls/{Uri.EscapeDataString(number)}");
+        var answer = await _client.Send(target.Connection, new HttpRequestMessage(HttpMethod.Get, url), cursorSent: false, cancellationToken).ConfigureAwait(false);
         if (answer.IsError || answer.Value.Body is not { } body)
         {
             return polled;
@@ -124,5 +120,11 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
         {
             return polled;
         }
+    }
+
+    // The connection and its 'owner/name' repo, passed together through one poll.
+    private readonly record struct PollTarget(Connection Connection, string Owner, string Name)
+    {
+        public string Url(string rest) => $"https://{Host}/repos/{Uri.EscapeDataString(Owner)}/{Uri.EscapeDataString(Name)}/{rest}";
     }
 }
