@@ -19,7 +19,6 @@ internal sealed class HostProbe(IProcessTable processes, IHostResources resource
             return snapshot.IsError ? snapshot.Error : host.IsError ? host.Error : locks.Error;
         }
 
-        _ = oom;
-        return new HostReading(snapshot.Value, host.Value, locks.Value);
+        return new HostReading(snapshot.Value, host.Value, locks.Value, await oom.Warning(cancellationToken).ConfigureAwait(false));
     }
 }

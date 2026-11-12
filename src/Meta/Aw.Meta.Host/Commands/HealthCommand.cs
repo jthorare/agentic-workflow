@@ -33,6 +33,7 @@ internal static class HealthCommand
                 .. health.Consumer is { } consumer ? [$"consumer: {consumer}"] : Array.Empty<string>(),
                 .. HeavyLocks(health),
                 .. Adaptation(health),
+                .. health.OomPolicy is { } oom ? [$"oom policy: {oom}"] : Array.Empty<string>(),
                 health.Attention ? "HEALTH ATTENTION" : "HEALTH OK",
             ]);
 

@@ -1,3 +1,4 @@
+using Aw.Meta.Core.Commands;
 using Aw.Meta.Core.Ports;
 
 namespace Aw.Meta.Features.Health;
@@ -11,10 +12,18 @@ internal sealed class OomPolicyCheck(ICommandRunner runner)
 {
     /// <summary>The warning line when the policy is known and is not "continue".</summary>
     /// <returns>The line, or <see langword="null"/> when the policy is "continue" or can't be read (no systemctl, a failed or timed-out call: macOS too).</returns>
-    internal ValueTask<string?> Warning(CancellationToken cancellationToken)
+    internal async ValueTask<string?> Warning(CancellationToken cancellationToken)
     {
-        _ = runner;
-        _ = cancellationToken;
-        throw new NotSupportedException();
+        // A wedged user bus must not hang health, so the call has its own timeout.
+        var run = await runner.Run(new CommandRequest(["systemctl", "--user", "show", "-p", "DefaultOOMPolicy", "--value"], TimeSpan.FromSeconds(10)), cancellationToken).ConfigureAwait(false);
+        if (run.IsError || run.Value.TimedOut || run.Value.ExitCode != 0)
+        {
+            return null;
+        }
+
+        var policy = run.Value.Stdout.Split('\n', 2)[0].Trim();
+        return policy.Length == 0 || policy == "continue"
+            ? null
+            : $"systemd's DefaultOOMPolicy is {policy}: one OOM kill in a pane stops the whole pane, agent included. Fix: scripts/install-meta.sh writes ~/.config/systemd/user.conf.d/10-oom-continue.conf, then systemctl --user daemon-reload";
     }
 }
