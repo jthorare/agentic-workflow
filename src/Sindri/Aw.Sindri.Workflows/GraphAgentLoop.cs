@@ -43,24 +43,28 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
         var reference = new AgentNodeRef(_run, node.Id, itemIndex);
         var address = NodeRunAddress.Of(_run, node.Id, itemIndex);
         var launch = address.Launch().Value;
+        var events = new NodeAgentRecorder(_run, node.Id, itemIndex, Workflow.Patched("node-agent-events-1"));
+        events.Launched(address.Launch(), address.WorkBranch);
         try
         {
             AgentNodeLaunched started;
             try
             {
-                started = await Launch(reference).ConfigureAwait(true);
+                started = await Launch(reference, events).ConfigureAwait(true);
             }
             catch (ActivityFailureException e) when (!TemporalException.IsCanceledException(e))
             {
+                await events.Record(NodeAgentStates.EndedFailed).ConfigureAwait(true);
                 return Failed(input: null, e.InnerException?.Message ?? e.Message);   // why: the last attempt's error, as a node whose block threw ends (RunBlock); the node's on_failure then applies as for any failed node (#2578)
             }
 
             if (started.Launched.Failure is { } failure)
             {
+                await events.Record(NodeAgentStates.EndedFailed).ConfigureAwait(true);
                 return Failed(started.Input, failure.Text);
             }
 
-            return await Supervise(new AgentWait(node.Id, itemIndex, launch), started, address, reference).ConfigureAwait(true);
+            return await Supervise(new AgentWait(node.Id, itemIndex, launch), started, address, reference, events).ConfigureAwait(true);
         }
         catch (Exception e) when (TemporalException.IsCanceledException(e))
         {
@@ -143,9 +147,11 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
         }
     }
 
-    private async Task<GraphBlockOutcome> Supervise(AgentWait wait, AgentNodeLaunched started, NodeRunAddress address, AgentNodeRef reference)
+    private async Task<GraphBlockOutcome> Supervise(AgentWait wait, AgentNodeLaunched started, NodeRunAddress address, AgentNodeRef reference, NodeAgentRecorder events)
     {
         await Announce(wait).ConfigureAwait(true);
+        events.DeadlineAt(new DateTimeOffset(Workflow.UtcNow) + started.Timeout);
+        await events.Record(NodeAgentStates.Working).ConfigureAwait(true);
         var launched = started.Launched;
         using var stop = new CancellationTokenSource();
         var watch = Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.WatchAsync(wait.Launch), WatchOptions(stop.Token));
@@ -171,6 +177,7 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
         }
 
         var closed = await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.CloseAsync(new AgentCloseRun(wait.Launch, launched.Worktree, launched.StartHead, Measure: true)), _agentRead).ConfigureAwait(true);
+        await events.Record(NodeAgentRecorder.EndState(ending.Failure)).ConfigureAwait(true);
         if (ending.Failure is { } reason)
         {
             return Failed(started.Input, reason);

@@ -77,6 +77,20 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         }
     }
 
+    /// <summary>Mirrors one change of a 'run_agent' node's session into the ledger (#3151). Keyed by the node run and the change's place in its series, so a retry or a replay writes it once.</summary>
+    /// <param name="record">The event and its place.</param>
+    /// <returns>Completes when the event is written.</returns>
+    [Activity("GraphRecordNodeAgent")]
+    public async Task RecordNodeAgentAsync(GraphNodeAgent record)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+        var cancel = ActivityExecutionContext.Current.CancellationToken;
+        var p = record.Payload;
+        var item = GraphFailures.Value(await runs.Get(p.RunId, cancel).ConfigureAwait(false)).ItemId?.Value;
+        var key = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{EventTypes.WorkflowNodeAgentChanged}:{p.RunId.Value}:{p.NodeId.Value}:{p.ItemIndex}:{record.Sequence}");
+        await mirror.Append(EventTypes.WorkflowNodeAgentChanged, p with { WaitingOn = mirror.Clean(p.WaitingOn) }, key, item, cancel).ConfigureAwait(false);
+    }
+
     /// <summary>
     /// Writes the 'collect' node's own row once a loop is done: 'items' (each item's value in item order; an item whose branch skipped the collect adds nothing) and 'count'.
     /// The values are read here and written here, so they never pass through the workflow's history.
