@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
@@ -24,6 +25,7 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
     internal static readonly TimeSpan Overlap = TimeSpan.FromHours(6);
 
     private const string Host = "api.github.com";
+    private const int MaxEnriched = 20;   // GET /pulls/{n} calls per poll
 
     private readonly PollerClient _client = new(http, secrets, Host, clock);
 
@@ -44,10 +46,10 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
         }
 
         var first = $"https://{Host}/repos/{Uri.EscapeDataString(parts[0])}/{Uri.EscapeDataString(parts[1])}/events?per_page=100";
-        return await ReadPages(connection, kind, cursor, first, cancellationToken).ConfigureAwait(false);
+        return await ReadPages(connection, parts, kind, cursor, first, cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask<Result<PollResult>> ReadPages(Connection connection, EventKind kind, string? cursor, string first, CancellationToken cancellationToken)
+    private async ValueTask<Result<PollResult>> ReadPages(Connection connection, string[] parts, EventKind kind, string? cursor, string first, CancellationToken cancellationToken)
     {
         var after = PollJson.Time(cursor);
         var feed = new GitHubFeed(kind, after is { } at ? at - Overlap : null);
@@ -68,22 +70,62 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
 
             if (feed.ReachedFloor || answer.Value.NextUrl is not { } more)
             {
-                return Finish(feed, cursor, after, gap: false);
+                return await Finish(connection, parts, feed, cursor, after, gap: false, cancellationToken).ConfigureAwait(false);
             }
 
             if (page >= pageCap)
             {
-                return Finish(feed, cursor, after, gap: true);
+                return await Finish(connection, parts, feed, cursor, after, gap: true, cancellationToken).ConfigureAwait(false);
             }
 
             next = more;
         }
     }
 
-    private Result<PollResult> Finish(GitHubFeed feed, string? cursor, DateTimeOffset? after, bool gap)
+    private async ValueTask<Result<PollResult>> Finish(Connection connection, string[] parts, GitHubFeed feed, string? cursor, DateTimeOffset? after, bool gap, CancellationToken cancellationToken)
     {
         var newest = feed.Newest.Later(cursor);
         var events = after is null ? [] : feed.Events.DistinctBy(static e => e.DeliveryKey, StringComparer.Ordinal).OrderBy(static e => e.OccurredAt).ThenBy(static e => e.DeliveryKey, StringComparer.Ordinal).ToList();
+        for (var i = 0; i < events.Count && i < MaxEnriched; i++)
+        {
+            events[i] = await Enrich(connection, parts, events[i], cancellationToken).ConfigureAwait(false);
+        }
+
         return new PollResult(events, newest.Text ?? PollCursorText.Now(clock.GetUtcNow()), RateLimited: false, RetryAfter: null, gap);
+    }
+
+    // The trimmed pull request in the feed holds no title or author: one GET /pulls/{n} fills them. A failed or odd answer leaves the event as the feed had it.
+    private async ValueTask<PolledEvent> Enrich(Connection connection, string[] parts, PolledEvent polled, CancellationToken cancellationToken)
+    {
+        if (!polled.Kind.Key.StartsWith("github.pr.", StringComparison.Ordinal) || polled.Fields.ContainsKey("title") || !polled.Fields.TryGetValue("number", out var number))
+        {
+            return polled;
+        }
+
+        var url = $"https://{Host}/repos/{Uri.EscapeDataString(parts[0])}/{Uri.EscapeDataString(parts[1])}/pulls/{Uri.EscapeDataString(number)}";
+        var answer = await _client.Send(connection, new HttpRequestMessage(HttpMethod.Get, url), cursorSent: false, cancellationToken).ConfigureAwait(false);
+        if (answer.IsError || answer.Value.Body is not { } body)
+        {
+            return polled;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return polled;
+            }
+
+            var fields = new Dictionary<string, string>(polled.Fields, StringComparer.Ordinal);
+            PollJson.Put(fields, "title", PollJson.Text(PollJson.Member(document.RootElement, "title")));
+            PollJson.Put(fields, "author", PollJson.Text(PollJson.Path(document.RootElement, "user", "login")));
+            PollJson.Put(fields, "url", PollJson.Text(PollJson.Member(document.RootElement, "html_url")));
+            return polled with { Fields = fields };
+        }
+        catch (JsonException)
+        {
+            return polled;
+        }
     }
 }
