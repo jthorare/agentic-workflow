@@ -23263,3 +23263,31 @@ Aw.Sindri.Core.Reviews.ReviewRequiredState
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.Counted = "counted" -> string!
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.NoneNamed = "noneNamed" -> string!
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.NotRead = "notRead" -> string!
+Aw.Sindri.Core.Launch.HostSize
+Aw.Sindri.Core.Launch.HostSize.<Clone>$() -> Aw.Sindri.Core.Launch.HostSize!
+Aw.Sindri.Core.Launch.HostSize.HostSize(int Cols, int Rows) -> void
+Aw.Sindri.Core.Launch.HostSize.Deconstruct(out int Cols, out int Rows) -> void
+Aw.Sindri.Core.Launch.HostSize.Equals(Aw.Sindri.Core.Launch.HostSize? other) -> bool
+Aw.Sindri.Core.Launch.HostSize.Cols.get -> int
+Aw.Sindri.Core.Launch.HostSize.Cols.init -> void
+Aw.Sindri.Core.Launch.HostSize.Rows.get -> int
+Aw.Sindri.Core.Launch.HostSize.Rows.init -> void
+override Aw.Sindri.Core.Launch.HostSize.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Launch.HostSize.GetHashCode() -> int
+override Aw.Sindri.Core.Launch.HostSize.ToString() -> string!
+static Aw.Sindri.Core.Launch.HostSize.operator !=(Aw.Sindri.Core.Launch.HostSize? left, Aw.Sindri.Core.Launch.HostSize? right) -> bool
+static Aw.Sindri.Core.Launch.HostSize.operator ==(Aw.Sindri.Core.Launch.HostSize? left, Aw.Sindri.Core.Launch.HostSize? right) -> bool
+Aw.Sindri.Core.Launch.HostSession.Size.get -> Aw.Sindri.Core.Launch.HostSize?
+Aw.Sindri.Core.Launch.HostSession.Size.init -> void
+Aw.Sindri.Core.Launch.HostSession.RemainOnExit.get -> bool
+Aw.Sindri.Core.Launch.HostSession.RemainOnExit.init -> void
+Aw.Sindri.Core.Launch.TmuxList
+Aw.Sindri.Core.Launch.TmuxList.Foreign = 0 -> Aw.Sindri.Core.Launch.TmuxList
+Aw.Sindri.Core.Launch.TmuxList.Launch = 1 -> Aw.Sindri.Core.Launch.TmuxList
+Aw.Sindri.Core.Launch.TmuxAllowlist
+static Aw.Sindri.Core.Launch.TmuxAllowlist.Check(Aw.Sindri.Core.Launch.TmuxList list, System.Collections.Generic.IReadOnlyList<string!>! args) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+static readonly Aw.Sindri.Core.SindriErrors.AgentRepoUnusable -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentNotReady -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentStartFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentPromptTooLong -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentWorktreeKept -> Aw.Kernel.ErrorDefinition!
