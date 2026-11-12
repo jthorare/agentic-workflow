@@ -18,7 +18,8 @@ namespace Aw.Meta.Features.MergeRun;
 /// <param name="repo">The git and gh calls.</param>
 /// <param name="gates">Finds the merge of a pull request that was merged already.</param>
 /// <param name="recorder">Records the merge, or the hand-over to GitHub's merge queue.</param>
-internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands repo, IGateStore gates, MergeRecorder recorder)
+/// <param name="events">Writes merge.recorded once a merge is recorded; null writes none.</param>
+internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands repo, IGateStore gates, MergeRecorder recorder, MergeEventWriter? events = null)
     : IService<MergeRunRequest, MergeRunResponse>
 {
     public async ValueTask<Result<MergeRunResponse>> Handle(MergeRunRequest request, CancellationToken cancellationToken)
@@ -39,7 +40,7 @@ internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands rep
         if (!assessed.Value.Ready)
         {
             return await Unrecorded(pull, request.Pr, cancellationToken).ConfigureAwait(false)
-                ? await recorder.Record(request, assessed.Value, pull, await repo.MergeCommit(repoDirectory, request.Pr).ConfigureAwait(false), cancellationToken).ConfigureAwait(false)
+                ? await Recorded(await recorder.Record(request, assessed.Value, pull, await repo.MergeCommit(repoDirectory, request.Pr).ConfigureAwait(false), cancellationToken).ConfigureAwait(false), assessed.Value, cancellationToken).ConfigureAwait(false)
                 : Refused(request, assessed.Value);
         }
 
@@ -70,7 +71,18 @@ internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands rep
 
         return view.Value.Enabled
             ? await recorder.Enqueue(request.Pr, assessed, pull, cancellationToken).ConfigureAwait(false)
-            : await recorder.Record(request, assessed, pull, await MainSha(repoDirectory, request.Pr).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+            : await Recorded(await recorder.Record(request, assessed, pull, await MainSha(repoDirectory, request.Pr).ConfigureAwait(false), cancellationToken).ConfigureAwait(false), assessed, cancellationToken).ConfigureAwait(false);
+    }
+
+    // A recorded merge is an event; a failed write of it never changes the answer.
+    private async ValueTask<Result<MergeRunResponse>> Recorded(Result<MergeRunResponse> result, MergeAssessment assessed, CancellationToken cancellationToken)
+    {
+        if (events is not null && result is { IsSuccess: true, Value.Merged: true })
+        {
+            await events.Write(result.Value, assessed.Team, cancellationToken).ConfigureAwait(false);
+        }
+
+        return result;
     }
 
     private async ValueTask<bool> Unrecorded(PrDetails pull, int pr, CancellationToken cancellationToken) =>

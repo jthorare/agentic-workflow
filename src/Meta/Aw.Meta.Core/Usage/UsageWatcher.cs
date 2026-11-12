@@ -1,5 +1,6 @@
 using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Coordination;
+using Aw.Meta.Core.Events;
 using Aw.Meta.Core.Logs;
 using Aw.Meta.Core.Ports;
 
@@ -10,8 +11,11 @@ namespace Aw.Meta.Core.Usage;
 /// <param name="log">The running log.</param>
 /// <param name="values">Keeps what was announced.</param>
 /// <param name="clock">The current time.</param>
-public sealed class UsageWatcher(PaneSubmitter pane, IRunningLog log, IKeyValueStore values, TimeProvider clock)
+/// <param name="events">Receives usage.limited and usage.ok; null to write none.</param>
+public sealed class UsageWatcher(PaneSubmitter pane, IRunningLog log, IKeyValueStore values, TimeProvider clock, MetaEventSink? events = null)
 {
+    internal MetaEventSink? Events { get; } = events;
+
     /// <summary>Takes one look's readings.</summary>
     /// <param name="team">The team.</param>
     /// <param name="readings">Each subject's standing.</param>

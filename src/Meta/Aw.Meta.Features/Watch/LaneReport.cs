@@ -1,6 +1,7 @@
 using Aw.Meta.Core;
 using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Coordination;
+using Aw.Meta.Core.Events;
 using Aw.Meta.Core.Poll;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Core.Watch;
@@ -11,8 +12,11 @@ namespace Aw.Meta.Features.Watch;
 /// <param name="usage">Looks for lanes and the meta stopped at a usage limit, and resumes the idle ones.</param>
 /// <param name="values">Keeps what LANE DOWN reported, for a re-armed watch.</param>
 /// <param name="missing">Finds the lanes with no live session; null leaves LANE DOWN / LANE UP out.</param>
-internal sealed class LaneReport(UsageMonitor usage, IKeyValueStore values, MissingLanes? missing = null)
+/// <param name="events">Receives lane.down and lane.up; null to write none.</param>
+internal sealed class LaneReport(UsageMonitor usage, IKeyValueStore values, MissingLanes? missing = null, MetaEventSink? events = null)
 {
+    internal MetaEventSink? Events { get; } = events;
+
     internal UsageMonitor Usage { get; } = usage;
 
     // Advisory: lanes whose sessions can't be read are left out of the poll; if the state can't be kept, a re-armed watch reports a standing LANE DOWN again.

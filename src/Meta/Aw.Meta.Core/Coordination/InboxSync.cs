@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Meta.Core.Events;
 using Aw.Meta.Core.Ids;
 using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Owner;
@@ -15,15 +16,18 @@ namespace Aw.Meta.Core.Coordination;
 /// <param name="owner">Queues owner questions.</param>
 /// <param name="clock">Dates a record that carries no timestamp.</param>
 /// <param name="meta">Finds the meta's live transcript; null when the caller never syncs the meta's own transcript.</param>
-public sealed class InboxSync(ITranscriptReader transcripts, IMessageStore messages, IOwnerStore owner, TimeProvider clock, MetaTranscriptResolver? meta)
+/// <param name="events">Receives obligation.opened for each new message that is owed a reply; null to write none.</param>
+public sealed class InboxSync(ITranscriptReader transcripts, IMessageStore messages, IOwnerStore owner, TimeProvider clock, MetaTranscriptResolver? meta, MetaEventSink? events = null)
 {
+    internal MetaEventSink? Events { get; } = events;
+
     /// <summary>Creates a sync that can't find the meta's own transcript.</summary>
     /// <param name="transcripts">Reads the transcript.</param>
     /// <param name="messages">Stores the messages and the offset.</param>
     /// <param name="owner">Queues owner questions.</param>
     /// <param name="clock">Dates a record that carries no timestamp.</param>
     public InboxSync(ITranscriptReader transcripts, IMessageStore messages, IOwnerStore owner, TimeProvider clock)
-        : this(transcripts, messages, owner, clock, meta: null)
+        : this(transcripts, messages, owner, clock, meta: null, events: null)
     {
     }
 

@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Meta.Core.Coordination;
+using Aw.Meta.Core.Events;
 using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Obligations;
 using Aw.Meta.Core.Ports;
@@ -15,8 +16,11 @@ namespace Aw.Meta.Features.OutboxRecord;
 /// <param name="messages">Stores the send.</param>
 /// <param name="reader">Evaluates the open set before and after.</param>
 /// <param name="clock">Dates the send.</param>
-internal sealed class OutboxRecordService(MetaSession session, IMessageStore messages, ObligationReader reader, TimeProvider clock) : IService<OutboxRecordRequest, OutboxRecordResponse>
+/// <param name="events">Receives obligation.closed for each reply the send closes; null to write none.</param>
+internal sealed class OutboxRecordService(MetaSession session, IMessageStore messages, ObligationReader reader, TimeProvider clock, MetaEventSink? events = null) : IService<OutboxRecordRequest, OutboxRecordResponse>
 {
+    internal MetaEventSink? Events { get; } = events;
+
     public async ValueTask<Result<OutboxRecordResponse>> Handle(OutboxRecordRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);

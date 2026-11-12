@@ -1,4 +1,5 @@
 using Aw.Meta.Core.Coordination;
+using Aw.Meta.Core.Events;
 using Aw.Meta.Core.Poll;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Core.Routing;
@@ -16,7 +17,8 @@ public static class MetaCoreServiceCollectionExtensions
     /// <returns>The same collection.</returns>
     public static IServiceCollection AddMetaCore(this IServiceCollection services) => services
         .AddScoped<MetaTranscriptResolver>()
-        .AddScoped(sp => new InboxSync(sp.GetRequiredService<ITranscriptReader>(), sp.GetRequiredService<IMessageStore>(), sp.GetRequiredService<IOwnerStore>(), sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<MetaTranscriptResolver>()))
+        .AddScoped(sp => new InboxSync(sp.GetRequiredService<ITranscriptReader>(), sp.GetRequiredService<IMessageStore>(), sp.GetRequiredService<IOwnerStore>(), sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<MetaTranscriptResolver>(), sp.GetRequiredService<MetaEventSink>()))
+        .AddScoped<MetaEventSink>()
         .AddScoped<InboxCounts>()
         .AddScoped<LaneRefresher>()
         .AddScoped<ObligationReader>()

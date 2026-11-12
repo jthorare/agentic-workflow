@@ -40,6 +40,9 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     /// </summary>
     internal Func<bool, ValueTask<string?>> KeepFailing { get; init; } = static _ => ValueTask.FromResult<string?>(null);
 
+    /// <summary>Receives context.high and context.ok; null writes none.</summary>
+    internal Core.Events.MetaEventSink? EventSink { get; init; }
+
     /// <summary>The lanes' live sessions for LANE DOWN / LANE UP (#2856); null leaves them out.</summary>
     internal LaneSessions? Sessions { get; init; }
 

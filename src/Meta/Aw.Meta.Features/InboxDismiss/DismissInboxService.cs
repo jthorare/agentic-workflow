@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
+using Aw.Meta.Core.Events;
 using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;
 
@@ -7,8 +8,14 @@ namespace Aw.Meta.Features.InboxDismiss;
 
 /// <summary>Closes a message's reply obligation without a reply, keeping the reason.</summary>
 /// <param name="messages">Stores the resolution.</param>
-internal sealed class DismissInboxService(IMessageStore messages) : IService<DismissInboxRequest, DismissInboxResponse>
+/// <param name="events">Receives obligation.closed; null to write none.</param>
+/// <param name="clock">Dates the event.</param>
+internal sealed class DismissInboxService(IMessageStore messages, MetaEventSink? events = null, TimeProvider? clock = null) : IService<DismissInboxRequest, DismissInboxResponse>
 {
+    internal MetaEventSink? Events { get; } = events;
+
+    internal TimeProvider Clock { get; } = clock ?? TimeProvider.System;
+
     public async ValueTask<Result<DismissInboxResponse>> Handle(DismissInboxRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
