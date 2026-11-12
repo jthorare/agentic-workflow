@@ -211,6 +211,7 @@ internal sealed partial class SettingsViewModel : ObservableObject, IDisposable
     // A change the user made: shown at once and kept.
     private void Changed()
     {
+        NotifyChangedMarks();
         if (_loading)
         {
             return;

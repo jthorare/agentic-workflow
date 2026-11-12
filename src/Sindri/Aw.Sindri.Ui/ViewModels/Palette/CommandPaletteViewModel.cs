@@ -47,6 +47,9 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
     /// <summary>Opens the Create item form, or null.</summary>
     internal Action? CreateItem { get; }
 
+    /// <summary>Shows Settings filtered to the words it is given (a Settings entry runs it); null leaves the Settings section out (#3362).</summary>
+    internal Action<string>? OpenSetting { get; init; }
+
     /// <summary>Opens the quick-add box, or null.</summary>
     internal Action? NewTodo { get; }
 
