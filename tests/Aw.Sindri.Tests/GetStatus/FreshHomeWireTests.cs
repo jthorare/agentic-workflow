@@ -41,6 +41,7 @@ public sealed class FreshHomeWireTests
         var h = new TodoHarness();
         h.NoteLocator.Fails = SindriErrors.ProfileMissing.With("No profile found");
         await h.Lease();
+        using var cli = h.Cli();
 
         var note = (await h.Note().Handle(new GetTodoNoteRequest(), Token)).Value;
 

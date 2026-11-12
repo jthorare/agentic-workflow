@@ -17,6 +17,7 @@ public sealed class TodoNoteNotSetUpTests
     private async Task<GetTodoNoteResponse> Read()
     {
         await _h.Lease();
+        using var cli = _h.Cli();
         var note = await _h.Note().Handle(new GetTodoNoteRequest(), Token);
         Assert.True(note.IsSuccess, note.IsError ? note.Error.ToString() : null);
         return note.Value;
