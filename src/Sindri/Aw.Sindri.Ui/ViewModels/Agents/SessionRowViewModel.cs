@@ -196,6 +196,15 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
         }
     }
 
+    /// <summary>The text of a served row that the Agents filter box looks at.</summary>
+    /// <param name="row">The row as served.</param>
+    /// <returns>The row's name, provider, repo, state, what it does and who owns it.</returns>
+    internal static AgentFilterTarget TargetOf(SessionRowView row)
+    {
+        var step = row.Launch is { Instance.Length: > 0 } launch ? Labels.SessionStep(launch.State, launch.Attempt) : string.Empty;
+        return new AgentFilterTarget(TitleOf(row), row.ProviderLabel + " " + row.Provider, row.Repo ?? string.Empty, row.State + " " + SessionChips.For(row.State).Word, AskingOf(row) + " " + step, LaneOf(row));
+    }
+
     private static string AskingOf(SessionRowView row) => row.Asking is { } asking ? Labels.AskingDetail(asking.Reason, asking.Tool) : string.Empty;
 
     private static string EstimatedOf(SessionRowView row) => row.Estimated && string.Equals(row.StateSource, "transcript", StringComparison.Ordinal) ? "estimated" : string.Empty;

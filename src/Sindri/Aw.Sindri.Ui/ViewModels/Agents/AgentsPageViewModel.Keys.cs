@@ -58,10 +58,17 @@ internal sealed partial class AgentsPageViewModel
         "J" => Move(1),
         "K" => Move(-1),
         "E" => HasEnded && Toggled(),
+        "/" => FocusedFilter(),
         "Enter" or "O" => PressOnLive(key, SelectedLive),
         "Y" => Copied(),
         _ => false,
     };
+
+    private bool FocusedFilter()
+    {
+        FocusFilter();
+        return true;
+    }
 
     private bool Toggled()
     {
