@@ -109,7 +109,7 @@
               <TextBlock x:Name="NeedsYouNumber" Classes="display" Text="{Binding Attention.NeedsYouNumber}" VerticalAlignment="Bottom" AutomationProperties.AccessibilityView="Raw" />
               <TextBlock x:Name="NeedsYouSummary" Classes="caption subtle" Text="{Binding Attention.NeedsYouWord}" VerticalAlignment="Bottom" Margin="0,0,0,6" AutomationProperties.AccessibilityView="Raw" />
             </StackPanel>
-            <TextBlock x:Name="NeedsYouBanner" Classes="caption" Text="{Binding NeedsYou.Banner}" IsVisible="{Binding NeedsYou.HasBanner}" Margin="24,8"
+            <TextBlock x:Name="NeedsYouBanner" Classes="caption" Text="{Binding NeedsYou.Banner}" IsVisible="{Binding NeedsYou.ShowsPlainBanner}" Margin="24,8"
                        TextWrapping="Wrap" AutomationProperties.Name="{Binding NeedsYou.Banner}" />
             <!-- #3056: while the views are stalled the banner's words get a Retry (the shell's banner may be scrolled away). A FailedRead on the line's DataContext shows it. -->
             <Panel x:Name="NeedsYouStalledHost" IsVisible="{Binding NeedsYou.IsStalled}">
