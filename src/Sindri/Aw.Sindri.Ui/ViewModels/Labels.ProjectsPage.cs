@@ -1,5 +1,4 @@
 using System.Globalization;
-using Aw.Kernel;
 
 namespace Aw.Sindri.Ui.ViewModels;
 
