@@ -37,8 +37,8 @@ internal sealed class LaneReport(UsageMonitor usage, IKeyValueStore values, Miss
             async state => _ = await values.Set(KvKeys.WatchLanes, state.Format(), cancellationToken).ConfigureAwait(false),
             LaneWatch.Parse(kept.IsSuccess ? kept.Value : null))
         {
-            Events = events,
-            Clock = clock,
+            Events = Events,
+            Clock = Clock,
         };
     }
 }

@@ -108,9 +108,7 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
             resources,
             // Advisory: if this can't be kept, a re-armed watch announces a standing LOW again.
             async resources => _ = await values.Set(KvKeys.WatchResources, resources.ToString(), cancellationToken).ConfigureAwait(false),
-            new ContextReported(
-                ContextWatch.Parse(high.IsSuccess ? high.Value : null),
-                async lanes => _ = await values.Set(KvKeys.WatchContext, ContextWatch.Format(lanes), cancellationToken).ConfigureAwait(false)),
+            Reported(high, cancellationToken),
             // Advisory: a pane or transcript that can't be read leaves usage out of the poll.
             async () => await lanes.Usage.Check(team, cancellationToken).ConfigureAwait(false))
         {
@@ -134,6 +132,12 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
             SeedMain = async sha => (await board.SeedMain(sha, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false)).Map(static _ => Unit.Value),
         };
     }
+
+    // The lanes an earlier watch reported CONTEXT HIGH for, and how to keep them.
+    private ContextReported Reported(Result<string?> high, CancellationToken cancellationToken) =>
+        new(
+            ContextWatch.Parse(high.IsSuccess ? high.Value : null),
+            async lanes => _ = await values.Set(KvKeys.WatchContext, ContextWatch.Format(lanes), cancellationToken).ConfigureAwait(false));
 
     private async ValueTask<Result<Unit>> Beat(TimeSpan interval, CancellationToken cancellationToken)
     {

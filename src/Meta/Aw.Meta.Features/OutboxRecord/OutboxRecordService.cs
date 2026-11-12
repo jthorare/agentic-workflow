@@ -57,7 +57,7 @@ internal sealed class OutboxRecordService(MetaSession session, IMessageStore mes
     // One obligation.closed per reply the send closed (the relay of an owner answer has no sender to name).
     private async ValueTask WriteClosed(List<Obligation> closed, CancellationToken cancellationToken)
     {
-        if (Events is null || closed.All(static o => o.Kind != ObligationKind.Reply))
+        if (Events is null || closed.TrueForAll(static o => o.Kind != ObligationKind.Reply))
         {
             return;
         }
