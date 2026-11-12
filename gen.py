@@ -217,7 +217,7 @@ def q1_panels():
     P.append(panel('Linear: waiting on the workspace admin', '§4.2 · decision 16',
         q1(gh_ok+r_lin(btn('Check again'), sub='Waiting on your workspace admin to approve Sindri.', glyph='parked', cls='cursor')+r_sl(), cont()), 720))
     P.append(panel('Linear: sign-in failed', '§4.2',
-        q1(gh_ok+r_lin(btn('Retry','primary','Enter','focus'), sub='<span class="err-t">Linear refused the sign-in: access_denied.</span>', glyph='fail', cls='cursor')+r_sl(), cont()), 720))
+        q1(gh_ok+r_lin(btn('Retry'), sub='<span class="err-t">Linear refused the sign-in: access_denied.</span>', glyph='fail')+r_sl(), cont('focus')), 720))
     P.append(panel('GitHub: the token could not be stored', 'SND-REVIEW-025 rule',
         q1(r_gh(btn('Retry','primary','Enter','focus'), sub="<span class=\"err-t\">Couldn't store the token: the keychain is locked. Nothing was saved.</span>", glyph='fail')+r_lin()+r_sl()), 720))
     P.append(panel('Slack: token refused, field cleared and focused', '§4.2',
@@ -261,7 +261,7 @@ def repos_panels():
     P.append(panel('Scanning (800 wide)', '§4.3', q2(scan, six()+SKELS, cfoot(FOOT2, LOOK(), ADD2)), 800))
     P.append(panel('Done, repos found', '§4.3', q2(SL('done','6 repos under ~, 3 levels deep'), six(), cfoot(FOOT2, LOOK(), ADD2)), 720))
     P.append(panel('Done, none found: Look in another folder is the primary, Skip for now beside it', '§4.3 · decision 31',
-        q2(SL('todo','No git repos under ~, 3 levels deep.'), '', cfoot('0 of 0 ticked', SKIPNOW, LOOK('primary')), lede='Sindri looks under your home folder, 3 levels deep.'), 720))
+        q2(SL('todo','No git repos under ~, 3 levels deep.'), '', cfoot('0 of 0 ticked', SKIPNOW, btn('Look in another folder…','primary','','focus')), lede='Sindri looks under your home folder, 3 levels deep.'), 720))
     P.append(panel('Scan failed: Retry is the primary, Skip for now beside it', '§4.3 · SND-SETUP-008',
         q2(SL('fail',"Couldn't read ~: permission denied.",'',btn('Retry','primary','Enter','focus'),'err'), '', cfoot('0 of 0 ticked', SKIPNOW, LOOK())), 720))
     P.append(panel('Adding: rows read-only, no primary', '§4.3',
@@ -322,34 +322,34 @@ def ring(r): return r.replace('class="row fix ','class="row fix cursor ',1)
 def steps_panels():
     P = []
     P.append(panel('Map phase 1: indexing files; hello-sindri ran by itself, Open item holds the primary and the ring', '§4.4 · decision 18',
-        sbody('Setup','6 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+MAP1+HELLO_OK())))
+        sbody('Setup','7 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+MAP1+HELLO_OK(), bar_full('Setup','7/8'))))
     P.append(panel('Map phase 2: building the map', '§4.4 · decision 18',
-        sbody('Setup','6 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+MAP2+HELLO_OK())))
+        sbody('Setup','7 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+MAP2+HELLO_OK(), bar_full('Setup','7/8'))))
     P.append(panel('hello-sindri running by itself: no button, no primary on the page, the ring on the first row not done', '§4.4 · decision 19',
-        sbody('Setup','5 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+ring(MAP2)+HELLO_RUN)))
+        sbody('Setup','6 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+ring(MAP2)+HELLO_RUN)))
     P.append(panel('hello-sindri failed: Open the run is the primary, Run again beside it', '§4.4',
-        sbody('Setup','7 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+MAPD+HELLO_FAIL)))
+        sbody('Setup','7 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+MAPD+HELLO_FAIL, bar_full('Setup','7/8'))))
     noag = row('you','Agent for workflows','No coding agent found. Install Claude Code, Codex or Cursor, then check again.','', btn('Check again','primary','Enter','focus'),'unread cursor')
     hello_todo = row('todo','Run hello-sindri','a first workflow that needs no account and no network','', btn('Run hello-sindri')+btn('Dismiss','ghost'),'unread')
-    P.append(panel('Agent: none installed; Dismiss stays on the hello-sindri row', '§4.4',
-        sbody('Setup','5 of 8 steps done', CUR+ACC+REP+PROF+noag+MCP+MAP2+hello_todo, bar_full('Setup','5/8'))))
+    P.append(panel('Agent: none installed; hello-sindri already ran, so its row shows the result and Run again', '§4.4',
+        sbody('Setup','6 of 8 steps done', CUR+ACC+REP+PROF+noag+MCP+MAP2+HELLO_OK(False), bar_full('Setup','6/8'))))
     mapfail = row('fail','Build the map','The map of ledgerly-app/exports failed: the disk is full (No space left on device). agentic-workflow is done.','<span class="err-t">Failed</span>', btn('Retry','primary','Enter','focus'),'unread cursor')
     P.append(panel('Map failed for one repo: the step is Failed, the other repo is done', '§4.4 · must 4',
-        sbody('Setup','6 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+mapfail+HELLO_OK(False))))
+        sbody('Setup','7 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+mapfail+HELLO_OK(False), bar_full('Setup','7/8'))))
     mapstop = row('fail','Build the map','The map build stopped at 4,720 of 15,223 files 10 minutes ago.','<span class="err-t">Stopped</span>', btn('Retry','primary','Enter','focus'),'unread cursor')
     P.append(panel('Map build stopped with no progress', '§4.4 · must 4',
-        sbody('Setup','6 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+mapstop+HELLO_OK(False))))
+        sbody('Setup','7 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+mapstop+HELLO_OK(False), bar_full('Setup','7/8'))))
     stale = row('parked','Sindri is current','A newer Sindri is installed (7c81646, built today 10:31).','<span class="err-t">stale</span>', btn('Restart Sindri','primary','Ctrl+Shift+R','focus'),'unread cursor')
     P.append(panel('The serve row is stale', '§4.4 · §4.5',
-        sbody('Setup','5 of 8 steps done', stale+ACC+REP+PROF+AG+MCP+MAP2+HELLO_OK(False), bar_full('Setup','5/8'))))
+        sbody('Setup','6 of 8 steps done', stale+ACC+REP+PROF+AG+MCP+MAP2+HELLO_OK(False), bar_full('Setup','6/8'))))
     exp = row('parked','Connect your accounts','Your Linear sign-in expired.','<span class="err-t">expired</span>', btn('Reconnect Linear','primary','Enter','focus'),'unread cursor')
     P.append(panel('sources: an account expired', '§4.4',
-        sbody('Setup','5 of 8 steps done', CUR+exp+REP+PROF+AG+MCP+MAP2+HELLO_OK(False), bar_full('Setup','5/8'))))
+        sbody('Setup','6 of 8 steps done', CUR+exp+REP+PROF+AG+MCP+MAP2+HELLO_OK(False), bar_full('Setup','6/8'))))
     rd = row('fail','Connect your accounts','The last read of jthorare/agentic-workflow failed 2m ago.','<span class="err-t">failed 2m ago</span>', btn('Retry','primary','Enter','focus'),'unread cursor')
     P.append(panel('sources: the first read failed (the primary because it is the first step not done)', '§4.4',
-        sbody('Setup','5 of 8 steps done', CUR+rd+REP+PROF+AG+MCP+MAP2+HELLO_OK(False), bar_full('Setup','5/8'))))
+        sbody('Setup','6 of 8 steps done', CUR+rd+REP+PROF+AG+MCP+MAP2+HELLO_OK(False), bar_full('Setup','6/8'))))
     P.append(panel('Loading: the last read from the local home paints at once, one line says it is updating', '§4.4 · F9',
-        sbody('Setup','6 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+MAP2+HELLO_OK(False), extra=SL('agent','Updating…'))))
+        sbody('Setup','7 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+MAP2+HELLO_OK(False), bar_full('Setup','7/8'), extra=SL('agent','Updating…'))))
     P.append(panel("Steps read failed: Setup can't be read", '§4.4',
         bar_full('Setup','6/8') + '<div class="header"><h1>Setup</h1></div>' + SL('fail',"Setup can't be read right now.",'',btn('Retry','primary','Enter','focus'),'err')
         + keys(('Enter','press the primary'))))
@@ -406,8 +406,8 @@ def accounts_panels():
         accounts_page(GH_OK + LIN_OK + SLACK(), btn('Done','primary','Esc','focus'), 'Done goes back to Home.')))
     P.append(panel('Way in 2: from the Setup page (Accounts button)', 'decision 28',
         '<div class="ctx"><b>Came from</b> Setup › Connect your accounts › <a class="lnk" href="#">Accounts</a></div>'
-        + accounts_page(GH_OK + row('todo','Linear','issues and projects','opens your browser', btn('Sign in to Linear','primary','Enter','focus'),'cursor') + SLACK(),
-                        btn('Done','','Esc'), 'Done goes back to Setup.')))
+        + accounts_page(GH_OK + row('todo','Linear','issues and projects','opens your browser', btn('Sign in to Linear'),'') + SLACK(),
+                        btn('Done','primary','Esc','focus'), 'Done goes back to Setup.')))
     P.append(panel('Done pressed', 'decision 28',
         accounts_page(GH_OK + LIN_OK + SLACK(), btn('Done','primary','Esc','pressed'), 'Done goes back to Setup.')))
     nav = bar_full('Setup','6/8')
@@ -466,7 +466,8 @@ def patch_states():
         sec('Home: after Skip for now on question 2 (no repo yet)', '#3054 · decision 31', red() + '<div class="header" style="height:40px"><h1>Home</h1></div>'
             '<div class="state-line att"><span class="g you"></span><span class="what">Finish setting up Sindri: add your repos.</span><span class="btns"><span class="btn primary">Find my repos <kbd>Enter</kbd></span></span></div>'), s, flags=re.S)
     full = bar_full('Home').replace('class="topbar"', 'class="topbar" style="height:40px"')
-    hn = lambda inner: full + '<div class="header" style="height:40px"><h1>Home</h1></div>' + inner
+    full7 = bar_full('Home', '7/8').replace('class="topbar"', 'class="topbar" style="height:40px"')
+    hn = lambda inner, bar=None: (bar or full) + '<div class="header" style="height:40px"><h1>Home</h1></div>' + inner
     emp = lambda g, h, pp, acts: f'<div class="empty" style="padding-top:var(--sp4)"><div class="eg"><span class="g {g}"></span></div><h2>{h}</h2><p>{pp}</p><div class="acts">{acts}</div></div>'
     wide = lambda lab, tag, inner: f'<section class="panel" style="grid-column:1/-1;width:1440px"><div class="plabel"><b>{lab}</b><span>{tag}</span></div><div class="pbody">{inner}</div></section>\n'
     new = ''
@@ -484,6 +485,9 @@ def patch_states():
         '<div class="row unread cursor"><span class="g pr"></span><div class="title"><span class="id">#4182</span><span class="t">Paginate workspace audit export</span></div><div class="fact mono">ledgerly…/exports</div><div class="age">38m</div><div class="wait">review</div></div>'
         '<div class="row unread"><span class="g fail"></span><div class="title"><span class="id">r-0412</span><span class="t">Nightly usage rollup failed</span></div><div class="fact mono">wf/usage-rollup</div><div class="age">2h</div><div class="wait">retry</div></div>'
         '<div class="row fix read" style="--col-act:236px"><span class="g done"></span><div class="title"><span class="t">hello-sindri ran</span></div><div class="fact mono">wf/hello-sindri</div><div class="fixbtn"><span class="btn ghost">Run again</span><span class="btn ghost">Dismiss</span></div></div></div>'))
+    for lab in ['Home: hello-sindri succeeded, the map is still building', 'Home: a map build failed', 'Home: own rows present, hello-sindri as a secondary line']:
+        i = new.index(lab)
+        new = new[:i] + new[i:].replace('Setup<span class=n>6/8', 'Setup<span class=n>7/8', 1)
     s = s.replace('</div></body></html>', new + '</div></body></html>')
     s = s.replace('--facts:104px', '--facts:176px')
     # the base sheet's own panels that carry a top bar get the full bar with counts after the first Add: the stale panel
