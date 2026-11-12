@@ -428,3 +428,22 @@ The ledger is `docs/sindri/prior-art/projects.md`. Issues that already exist (#2
 | 3 | A global hotkey from the tray opens the one-line create window with the main window closed | §5, Raycast and Linear | A desktop app can capture an issue in under 10 seconds from anywhere. The web tools cannot | #3170 |
 | 4 | The `.` menu on a row offers open PR, re-run CI, Scope this and Ask an agent to fix | §6 and §10, take 6 | The footer shows `. actions` and no frame draws the menu. #2997 covers delegation only | #3171 |
 | 5 | "Draft update" fills a project update from derived health and merged PRs; the reminder lands as a Home row | §9, Linear reminders | The peek has "Post update…" with an empty box. #3006 posts an update and does not draft or remind | #3172 |
+
+### Health rules (#3168)
+
+Sindri works out a project's health from its linked PRs, CI and reviews. It uses Linear's own words, so the derived value and the hand-set one compare 1:1. The first rule that matches wins. The row shows that rule's reason, with counts.
+
+| Health | Rule (any one) | Reason shown |
+|---|---|---|
+| Off track | The target date has passed with open work | "Off track: target was Nov 14, 3 open" |
+| | A linked repo's main branch CI has been red for 2 days or more | "Off track: main red 2d (web)" |
+| At risk | A linked PR's CI has been red for 2 days or more | "At risk: 3 of 9 PRs red > 2 days" |
+| | A review request or a changes-requested review has waited 3 days or more | "At risk: 2 reviews waiting > 3 days" |
+| | Under half the work is done with 14 days or less to the target | "At risk: 4 of 9 done, 10 days left" |
+| On track | The project has links and no rule above matches | "On track" |
+| No links | No PR or repo is linked | None. The row offers "Link a repo" |
+
+- The thresholds are fixed: 2 days, 3 days, half, 14 days. The peek lists them under "How health is worked out" and marks the rule that matched. There are no settings and no scripting (ledger §8).
+- The groups on the list are Off track, At risk, On track and No links. The frames' "Blocked" becomes Off track. "Waits on the lead" is dropped, because nothing in the data says what a lead owes.
+- The hand-set Linear value shows beside the derived one. When they differ, the row spells out both, for example "At risk · Linear says on track". A glyph or colour alone never carries the difference.
+- Sindri recomputes health from the local store on each event. No report job runs.
