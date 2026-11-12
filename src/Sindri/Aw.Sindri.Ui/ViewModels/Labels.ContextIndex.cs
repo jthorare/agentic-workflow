@@ -23,6 +23,9 @@ internal static partial class Labels
     /// <summary>The Context index, named in the headline when its card needs a look.</summary>
     internal const string ContextIndexLookName = "context index";
 
+    /// <summary>The card's state word while a source has not finished its first read and nothing else needs a look.</summary>
+    internal const string ContextIndexWaiting = "needs a look";
+
     /// <summary>A source that hasn't started and has no phase to show.</summary>
     internal const string ContextSourceNotStarted = "not started";
 
