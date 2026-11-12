@@ -3,6 +3,7 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Blocks;
 
 namespace Aw.Sindri.Features.GetWorkflow;
 
@@ -11,7 +12,8 @@ namespace Aw.Sindri.Features.GetWorkflow;
 /// <see cref="WorkflowPositions"/>. An unknown slug is SND-GRAPH-008.
 /// </summary>
 /// <param name="workflows">The workflows and their revisions.</param>
-internal sealed class GetWorkflowService(IWorkflowStore workflows) : IService<GetWorkflowRequest, GetWorkflowResponse>
+/// <param name="catalog">The block types; each node's summary line comes from its type.</param>
+internal sealed class GetWorkflowService(IWorkflowStore workflows, IGraphBlockCatalog catalog) : IService<GetWorkflowRequest, GetWorkflowResponse>
 {
     public async ValueTask<Result<GetWorkflowResponse>> Handle(GetWorkflowRequest request, CancellationToken cancellationToken)
     {
@@ -43,6 +45,12 @@ internal sealed class GetWorkflowService(IWorkflowStore workflows) : IService<Ge
         // why: GraphJson.Write always writes a JSON object, so Parse never answers null
         var spec = JsonNode.Parse(GraphJson.Write(shown.Value.Spec))!;
         return new GetWorkflowResponse(record.Id, record.Slug, record.Name, shown.Value.Revision, record.ActiveRevision, record.LatestRevision, record.ArchivedAt, record.CreatedBy,
-            newest.Value.CreatedBy, newest.Value.CreatedAt, shown.Value.SpecHash, spec, WorkflowPositions.Of(shown.Value.Spec));
+            newest.Value.CreatedBy, newest.Value.CreatedAt, shown.Value.SpecHash, spec, WorkflowPositions.Of(shown.Value.Spec), [.. shown.Value.Spec.Nodes.Select(Summary)]);
+    }
+
+    private NodeSummary Summary(GraphNode node)
+    {
+        var line = catalog.Types.TryGetValue(node.Type, out var block) ? block.Summarize(node.Config) : new BlockSummary(node.Type);
+        return new NodeSummary(node.Id.Value, line.Text, line.Problem);
     }
 }

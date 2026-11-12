@@ -87,6 +87,9 @@ public sealed class MetaLaneRecycleTests
     {
         await Ready();
         _world.Transcripts.Write(MetaWorld.Transcript, string.Empty);
+        // The meta is over the mark (410k): its detached waiter is recorded, so the stop owes no recycle (#2498) and is not blocked.
+        _ = await _world.LaneFiles.RecordWaiter("meta", (4242, A.At(40)), CancellationToken.None);
+        _world.Liveness.Run(4242, A.At(39));
 
         var response = await MetaStops();
 

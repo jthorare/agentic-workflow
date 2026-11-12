@@ -124,7 +124,7 @@ public sealed class NeedsYouHomeTests : IDisposable
         var rows = Rows(window);
         Assert.Equal(3, rows.Count);
         Assert.True(panel.Bounds.Height < before);
-        Assert.True(panel.Bounds.Height >= rows.Max(r => r.TranslatePoint(new Point(0, r.Bounds.Height), panel)!.Value.Y) + 1);   // why: the card's 1 px border lies below the last row
+        Assert.True(panel.Bounds.Height >= rows.Max(r => r.TranslatePoint(new Point(0, r.Bounds.Height), panel)!.Value.Y));   // why: cards have no border since #2842, so the card ends at or below its last row
     });
 
     [Fact]

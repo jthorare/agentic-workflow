@@ -27,6 +27,12 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
     /// <summary>The state in a word at the heading's right: "ok" or "needs a look"; empty with no lines.</summary>
     public string Word { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The embedding backlog as a bar: records with a vector against all of them; null unless both counts are known and there is at least one record.</summary>
+    public ContextBacklog? Backlog { get; private set => Set(ref field, value); }
+
+    /// <summary>True when the bar shows.</summary>
+    public bool HasBacklog => Backlog is not null;
+
     /// <summary>Reads the status and shows it.</summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
@@ -37,13 +43,17 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
         if (read.IsError)
         {
             Lines = [];
+            Backlog = null;
+            OnChanged(nameof(HasBacklog));
             Word = string.Empty;
             Show(Labels.ContextIndexUnreadable);
             return;
         }
 
         var (sources, concepts, store) = (read.Value.Sources, read.Value.Concepts, read.Value.Store);
-        Lines = sources.Count == 0 ? [] : [.. sources.Select(Line).Concat(ConceptLines(concepts)).Concat(StoreLines(store)).Select(t => new ContextIndexLine(t))];
+        Backlog = BacklogOf(concepts);
+        OnChanged(nameof(HasBacklog));
+        Lines = sources.Count == 0 ? [] : [.. sources.Select(Line).Concat(ConceptLines(concepts, Backlog is not null)).Concat(StoreLines(store)).Select(t => new ContextIndexLine(t))];
         var fine = sources.All(static s => !NeedsLook(s)) && concepts?.Code is null && (store is null || Is(store.State, "ok"));
         Word = sources.Count == 0 ? string.Empty : fine ? Labels.CodeIndexOk : Labels.CodeIndexNeedsLook;
         Show(sources.Count == 0 ? Labels.ContextIndexNone : string.Empty);
@@ -68,7 +78,7 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
 
     // A failed read carries zero counts, so its code is checked first; queued groups and records in no concept are normal work, not a look,
     // and so is the last pass's code (SND-CONTEXT-030 while there is no map yet): it is shown, not flagged.
-    private IEnumerable<string> ConceptLines(IndexConceptsView? concepts)
+    private IEnumerable<string> ConceptLines(IndexConceptsView? concepts, bool barShows)
     {
         if (concepts is null)
         {
@@ -91,7 +101,7 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
         yield return concepts.LastRun is null && string.IsNullOrEmpty(concepts.LastCode)
             ? count
             : count + " · " + Labels.ConceptsLastRun(clock.GetUtcNow() - concepts.LastRun, concepts.LastCode);
-        if (concepts.Pending is { } pending)
+        if (!barShows && concepts.Pending is { } pending)
         {
             yield return Labels.ConceptsNotEmbedded(pending);
         }
@@ -102,6 +112,11 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
             yield return Labels.ConceptsUncovered(Math.Max(0, embedded - concepts.Covered), concepts.Coverage);
         }
     }
+
+    private static ContextBacklog? BacklogOf(IndexConceptsView? concepts) =>
+        concepts is { Code: null, Enabled: true, Embedded: { } embedded, Pending: { } pending } && embedded + pending > 0
+            ? new ContextBacklog(embedded, embedded + pending, Labels.RecordsEmbedded(embedded, embedded + pending))
+            : null;
 
     private static IEnumerable<string> StoreLines(IndexStoreView? store)
     {

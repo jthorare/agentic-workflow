@@ -49,7 +49,7 @@ public sealed class StatusChipTests
         _ = Assert.NotNull(expected.Item2);
         _ = Assert.NotNull(expected.Item3);
         Assert.Equal(expected, drawn);
-        Assert.Equal(new CornerRadius(4), radius);
+        Assert.Equal(new CornerRadius(6), radius);   // Radius.SM (inspora note): a chip reads as a soft tag, not a hard box
         Assert.Equal(20, height);
         Assert.Equal(new Thickness(1), thickness);
     }

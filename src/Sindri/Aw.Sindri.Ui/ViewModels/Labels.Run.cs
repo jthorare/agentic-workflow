@@ -1,45 +1,11 @@
 namespace Aw.Sindri.Ui.ViewModels;
 
-/// <summary>The app's own copy (<see cref="Labels"/>, continued): an agent running a Step, and Attach to it.</summary>
+/// <summary>The app's own copy (<see cref="Labels"/>, continued): an agent running a Step.</summary>
 internal static partial class Labels
 {
 
-    /// <summary>Why Attach is not ready while its send is in flight.</summary>
-    internal const string AttachSending = "Sending…";
-
     /// <summary>The launch was asked for and has not started.</summary>
     internal const string LaunchRequested = "The agent session is starting.";
-
-    /// <summary>The launch started, with no viewer to report.</summary>
-    internal const string LaunchRunning = "The agent session is running.";
-
-    /// <summary>The print viewer opens nothing; the attach command is shown to copy.</summary>
-    internal const string AttachRunThis = "No viewer is set up. Run this to watch the agent:";
-
-    /// <summary>A launch that started with a viewer that opened.</summary>
-    /// <param name="viewer">The viewer's label.</param>
-    /// <returns>The sentence.</returns>
-    internal static string LaunchOpenedIn(string viewer) => $"The agent session is running, opened in {viewer}.";
-
-    /// <summary>A launch that started with a viewer that did not confirm.</summary>
-    /// <param name="viewer">The viewer's label.</param>
-    /// <returns>The sentence.</returns>
-    internal static string LaunchUnconfirmed(string viewer) => $"The agent session is running. {viewer} did not confirm that it opened.";
-
-    /// <summary>A launch that started whose viewer failed.</summary>
-    /// <param name="code">The viewer's failure code.</param>
-    /// <param name="detail">The viewer's sentence.</param>
-    /// <returns>The sentence.</returns>
-    internal static string LaunchViewerFailed(string code, string detail) =>
-        detail.Length == 0 ? $"The agent session is running. The viewer failed ({code})." : $"The agent session is running. The viewer failed ({code}): {detail}";
-
-    /// <summary>A launch that started whose viewer was skipped.</summary>
-    /// <param name="reason">The reason as served.</param>
-    /// <returns>The sentence.</returns>
-    internal static string LaunchViewerSkipped(string reason) => $"The agent session is running. No terminal was opened: {reason}";
-
-    /// <summary>A takeover was accepted and nothing says whether a terminal opened.</summary>
-    internal const string TakeoverNoViewer = "You have the run. The server didn't say whether a terminal opened.";
 
     /// <summary>A launch that failed.</summary>
     /// <param name="code">The failure code.</param>
@@ -47,21 +13,6 @@ internal static partial class Labels
     /// <returns>The sentence.</returns>
     internal static string LaunchFailed(string code, string detail) =>
         detail.Length == 0 ? $"The agent session failed to start ({code})." : $"The agent session failed to start ({code}): {detail}";
-
-    /// <summary>The words for a refusal of an Attach, by its code; null for a code the app has no words for.</summary>
-    /// <param name="code">The SND code.</param>
-    /// <returns>The sentence, or null.</returns>
-    internal static string? AttachRefusal(string code) => code switch
-    {
-        "SND-LAUNCH-006" => "The agent isn't running, so there's nothing to watch.",
-        "SND-LAUNCH-008" => "The agent session is still starting. Try again in a moment.",
-        "SND-LAUNCH-001" => "The viewer failed to open.",
-        "SND-LAUNCH-009" => "The viewer timed out.",
-        "SND-LAUNCH-002" => "No viewer is set up.",
-        "SND-ITEM-409" => "The item has changed or is closed. Reload it and try again.",
-        "SND-AUTH-002" => "Sindri's own steps can't watch the agent.",
-        _ => null,
-    };
 
     /// <summary>A failed agent Step.</summary>
     /// <param name="reason">The served reason (launch, lost, exit, limit).</param>
