@@ -89,6 +89,24 @@ public sealed class CodeIndexDoctorTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_repo_off_its_default_branch_with_no_main_or_origin_main_says_so_not_first_build_queued_gh3181()
+    {
+        var row = RepoRow(new RepoStatus(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null), new IndexRepoHead(_repo, _new, OnDefaultBranch: false, DefaultTip: null));
+
+        Assert.Equal(CheckState.Warn, row.State);
+        Assert.DoesNotContain("first build queued", row.Detail, StringComparison.Ordinal);
+        Assert.Contains("no main or origin/main", row.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_repo_off_its_default_branch_with_a_default_tip_and_no_index_is_still_a_queued_first_build_gh3181()
+    {
+        var row = RepoRow(new RepoStatus(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null), new IndexRepoHead(_repo, _new, OnDefaultBranch: false, DefaultTip: _old));
+
+        Assert.Equal((CheckState.Warn, "first build queued"), (row.State, row.Detail));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void An_unavailable_graph_is_a_warning_with_the_codes_fix_and_never_a_failure()
     {
         var rows = CodeIndexDoctor.Rows([Built(Ok(LayerName.Structure), new LayerStatus(LayerName.Graph, LayerState.Unavailable, "SND-CODEIDX-007", "no sandbox"))], [], [], _now);

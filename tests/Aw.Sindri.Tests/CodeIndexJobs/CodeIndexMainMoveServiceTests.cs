@@ -101,6 +101,38 @@ public sealed class CodeIndexMainMoveServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_repo_off_its_default_branch_with_no_index_starts_its_first_build_at_the_default_tips_commit_gh3181()
+    {
+        _ = _rig.Heads.With(CodeIndexJobsRig.Demo, CodeIndexJobsRig.New, onDefaultBranch: false, defaultTip: CodeIndexJobsRig.Old);
+
+        _ = await Run();
+
+        Assert.Equal([new BuildCodeIndexRequest("demo", CodeIndexJobsRig.Old.Value)], _start.Requests);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_repo_off_its_default_branch_that_has_an_index_starts_nothing_until_main_moves_gh3181()
+    {
+        _ = _rig.Index.WithIndex(CodeIndexJobsRig.Demo, CodeIndexJobsRig.Old);
+        _ = _rig.Heads.With(CodeIndexJobsRig.Demo, CodeIndexJobsRig.New, onDefaultBranch: false, defaultTip: CodeIndexJobsRig.New);
+
+        var result = await Run();
+
+        Assert.Empty(_start.Requests);
+        Assert.Contains("demo", result.Value.Summary, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_repo_off_its_default_branch_with_no_default_branch_commit_starts_nothing_gh3181()
+    {
+        _ = _rig.Heads.With(CodeIndexJobsRig.Demo, CodeIndexJobsRig.New, onDefaultBranch: false, defaultTip: null);
+
+        _ = await Run();
+
+        Assert.Empty(_start.Requests);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Each_repo_is_decided_on_its_own()
     {
         _ = _rig.Index.WithIndex(CodeIndexJobsRig.Demo, CodeIndexJobsRig.New).WithIndex(CodeIndexJobsRig.Other, CodeIndexJobsRig.Old);
