@@ -6,6 +6,7 @@ using Aw.Judge.Core.Providers;
 using Aw.Kernel;
 using Aw.Kernel.Ids;
 using Aw.Sindri.Core.Jobs;
+using Aw.Sindri.Core.Launch;
 
 namespace Aw.Sindri.Host.Models;
 
@@ -34,7 +35,8 @@ internal sealed class RoutedModelPort : IModelPort, IModelPromptBudget
     /// <param name="log">Where the call's event is written.</param>
     /// <param name="ids">Names each call's event.</param>
     /// <param name="clock">Dates and times the tries.</param>
-    public RoutedModelPort(Func<IProviderCatalog> catalog, IApprovedModels models, IJobContextAccessor jobs, IModelCallLog log, IIdGenerator ids, TimeProvider clock)
+    /// <param name="codexModels">Codex's model list ('codex debug models'): a built-in codex name it lacks runs codex's own default (issue 3389); null never reads it.</param>
+    public RoutedModelPort(Func<IProviderCatalog> catalog, IApprovedModels models, IJobContextAccessor jobs, IModelCallLog log, IIdGenerator ids, TimeProvider clock, IModelCatalog? codexModels = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(models);
@@ -43,6 +45,7 @@ internal sealed class RoutedModelPort : IModelPort, IModelPromptBudget
         ArgumentNullException.ThrowIfNull(ids);
         ArgumentNullException.ThrowIfNull(clock);
         _catalog = catalog;
+        _ = codexModels;   // red stub (issue 3389)
         _models = models;
         _jobs = jobs;
         _recorder = new ModelCallRecorder(log, ids, clock);
