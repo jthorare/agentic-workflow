@@ -126,12 +126,12 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
             }
 
             (IsStale, IsLoading) = (_view is not null, false);
-            StaleRead = IsStale ? new FailedRead(Labels.RowsStaleNote, Retry) : null;
+            StaleRead = IsStale ? new FailedRead(Labels.RowsStaleNote, Retry) { IsAttention = true } : null;
             return;
         }
 
         (IsStale, ProblemCode, ProblemDetail) = (answer.Value.AsOf.Stalled, string.Empty, string.Empty);   // stalled views: the rows are the last the projector made
-        (ReadFailure, StaleRead) = (null, IsStale ? new FailedRead(Labels.RowsStaleNote, Retry) : null);
+        (ReadFailure, StaleRead) = (null, IsStale ? new FailedRead(Labels.RowsStaleNote, Retry) { IsAttention = true } : null);
         Rest();
         Apply(Hold(answer.Value));
         IsLoading = false;   // after the rows are there: a waiter on the end of loading finds them

@@ -28,7 +28,7 @@ public sealed class HomeFailedReadFramesTests : FrameHost
         Assert.DoesNotContain("SND-", words.Text, StringComparison.Ordinal);
 
         Server.QueueView = RouteAnswer.SpecShaped("queue", "extra-p4-waiting");
-        Named<Button>(Named<Control>(window, "RunningFailed"), "FailedReadRetry").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Named<Button>(Named<Control>(window, "RunningFailed"), "FailedReadPrimary").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         await Until(window, () => !shell.Queue.HasProblem);
 
         Assert.False(Visible(window, "RunningFailed"));

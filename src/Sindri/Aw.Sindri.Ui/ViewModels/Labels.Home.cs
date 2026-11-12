@@ -19,5 +19,8 @@ internal static partial class Labels
     internal const string Retry = "Retry";
 
     /// <summary>Home's Running and Queued panels when the first queue read failed.</summary>
-    internal const string QueueReadFailed = "Couldn't read the queue just now.";
+    internal const string QueueReadFailed = "The queue can't be read just now.";
+
+    /// <summary>The disclosure at the end of a failed-read line that opens the code.</summary>
+    internal const string FailedReadDetails = "Details ▸";
 }

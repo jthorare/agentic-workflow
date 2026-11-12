@@ -35,8 +35,10 @@ public sealed class HomeFailedReadTests
         await queue.Refresh(_api, Token);
 
         var failure = Assert.IsType<FailedRead>(queue.ReadFailure);
-        Assert.Equal((Labels.QueueReadFailed, "SND-API-011", "Retry", false), (failure.Words, failure.Code, failure.RetryText, failure.HasFix));
+        Assert.Equal((Labels.QueueReadFailed, "SND-API-011", "Retry", false), (failure.Words, failure.Code, failure.PrimaryLabel, failure.HasGhost));
         Assert.DoesNotContain("SND-", failure.Words, StringComparison.Ordinal);
+        Assert.DoesNotContain("Try again", failure.PrimaryLabel, StringComparison.Ordinal);
+        Assert.False(failure.IsAttention);
         Assert.Equal((string.Empty, string.Empty), (queue.RunningEmpty, queue.QueuedEmpty));
     }
 
@@ -49,7 +51,7 @@ public sealed class HomeFailedReadTests
         var failure = Assert.IsType<FailedRead>(queue.ReadFailure);
 
         _server.QueueView = RouteAnswer.SpecShaped("queue", "extra-p4-waiting");
-        await failure.Retry(Token);
+        await failure.Primary(Token);
 
         Assert.Equal((null, false, 5), (queue.ReadFailure, queue.HasProblem, queue.Total));
     }
@@ -65,10 +67,10 @@ public sealed class HomeFailedReadTests
         _server.QueueView = RouteAnswer.Problem(HttpStatusCode.ServiceUnavailable, "SND-API-011", "behind");
         await queue.Refresh(_api, Token);
         var stale = Assert.IsType<FailedRead>(queue.StaleRead);
-        Assert.Equal((Labels.RowsStaleNote, "Retry"), (stale.Words, stale.RetryText));
+        Assert.Equal((Labels.RowsStaleNote, "Retry", true), (stale.Words, stale.PrimaryLabel, stale.IsAttention));
 
         _server.QueueView = RouteAnswer.SpecShaped("queue", "extra-p4-waiting");
-        await stale.Retry(Token);
+        await stale.Primary(Token);
         Assert.Equal((false, null), (queue.IsStale, queue.StaleRead));
     }
 

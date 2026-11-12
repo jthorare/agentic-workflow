@@ -6,7 +6,7 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 internal sealed partial class ShellViewModel
 {
     /// <summary>The "showing the last rows read" line with Retry, for the banner on Home's Needs you panel while the views are stalled.</summary>
-    public FailedRead StalledRead => field ??= new FailedRead(Labels.RowsStaleNote, RetryViews);
+    public FailedRead StalledRead => field ??= new FailedRead(Labels.RowsStaleNote, RetryViews) { IsAttention = true };
 
     // Re-reads every followed view, as the follower does after an event; nothing to read while not connected.
     private Task RetryViews(CancellationToken cancellationToken) => Health.ApiUrl() is { } url ? Health.RefreshViews(url, cancellationToken) : Task.CompletedTask;
