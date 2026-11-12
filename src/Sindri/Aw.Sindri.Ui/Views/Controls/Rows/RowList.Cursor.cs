@@ -30,6 +30,7 @@ internal sealed partial class RowList
     private void EndEdit(string? cursor)
     {
         UpdateSticky();
+        AnnounceRowCount();
         if (cursor is null)
         {
             return;

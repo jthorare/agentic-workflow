@@ -14,10 +14,18 @@ internal sealed class RowListAutomationPeer(RowList owner) : ItemsControlAutomat
     protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.List;
 
     /// <inheritdoc />
-    protected override string? GetNameCore()
+    protected override string? GetNameCore() => NameFor(owner.RowCount);
+
+    /// <summary>Tells the screen reader the list's name changed because its row count did.</summary>
+    /// <param name="oldRows">The count before.</param>
+    /// <param name="newRows">The count now.</param>
+    internal void RowCountChanged(int oldRows, int newRows) =>
+        RaisePropertyChangedEvent(AutomationElementIdentifiers.NameProperty, NameFor(oldRows), NameFor(newRows));
+
+    private string NameFor(int rows)
     {
         var page = AutomationProperties.GetName(owner);
-        var rows = RowSpeech.Rows(owner.RowCount);
-        return string.IsNullOrEmpty(page) ? rows : page + ", " + rows;
+        var count = RowSpeech.Rows(rows);
+        return string.IsNullOrEmpty(page) ? count : page + ", " + count;
     }
 }
