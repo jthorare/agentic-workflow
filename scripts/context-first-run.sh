@@ -359,6 +359,8 @@ refresh_map() {
     st="$(printf '%s' "$OUT" | jq -r '.state // empty' 2>/dev/null)"
     case "$st" in
       running) ;;
+      # waiting: parked on a signal, not ended (a map refresh parks on a model limit, #2112); keep following it
+      waiting) note "$job is waiting (parked, e.g. on a model limit); to resume it: $(shown) jobs resume $job" ;;
       succeeded) note "$job succeeded"; return 0 ;;
       *) broke "step 6 (map): the map service's $job ended '${st:-unknown}'; run: $(shown) jobs show $job" ;;
     esac

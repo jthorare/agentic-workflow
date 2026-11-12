@@ -228,6 +228,9 @@ else
   step6 held published
   expect "SND-JOB-409: the service's job is followed until it succeeds, then the map publishes (exit 0)" 0 "already building the map (JOB-0123abcd)" "waiting for JOB-0123abcd" "JOB-0123abcd succeeded" "map published (v1, published)"
   if logged 'jobs show JOB-0123abcd --json'; then ok "the named job is read with jobs show"; else fail "the named job is read with jobs show"; fi
+  printf 'waiting\nsucceeded\n' > "$F/jobstate"
+  step6 published
+  expect "SND-JOB-409 and the job is waiting (parked on a model limit): it is followed, not failed (exit 0)" 0 "JOB-0123abcd is waiting" "jobs resume JOB-0123abcd" "JOB-0123abcd succeeded"
   printf 'running\nfailed\n' > "$F/jobstate"
   step6 published
   expect "SND-JOB-409 and the service's job fails: step 6 fails and names the job" 1 "step 6 (map)" "JOB-0123abcd ended 'failed'" "jobs show JOB-0123abcd"
