@@ -46,7 +46,7 @@ internal sealed class SetupVerbs(ControlPlaneClient client, Output output)
     private static int ExitCode(IReadOnlyList<SetupStep> steps)
     {
         var open = steps.Where(static s => s.State is not (SetupState.Done or SetupState.Skipped)).ToList();
-        return open.Count == 0 ? 0 : open.All(static s => s.State == SetupState.NeedsYou && s.Cli is null) ? 3 : 1;
+        return open.Count == 0 ? 0 : open.TrueForAll(static s => s.State == SetupState.NeedsYou && s.Cli is null) ? 3 : 1;
     }
 
     // 'skip accounts|first-workflow [--undo] [--json]': the word names the step; --undo clears the skip.
@@ -60,7 +60,7 @@ internal sealed class SetupVerbs(ControlPlaneClient client, Output output)
             ["first-workflow"] => SetupStepId.FirstWorkflow,
             _ => null,
         };
-        if (step is not { } id || flags.Any(static f => f is not ("--undo" or "--json")))
+        if (step is not { } id || flags.Exists(static f => f is not ("--undo" or "--json")))
         {
             return await output.Error(SindriErrors.InvalidInput.With($"'setup skip {string.Join(' ', args)}' isn't this command ({Usage})")).ConfigureAwait(false);
         }

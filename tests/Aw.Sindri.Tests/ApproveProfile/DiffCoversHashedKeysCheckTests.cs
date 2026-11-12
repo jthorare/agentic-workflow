@@ -71,10 +71,12 @@ public sealed class DiffCoversHashedKeysCheckTests
             ("context", _approved with { Context = context.RootElement.Clone() }),
         };
 
-        foreach (var (key, live) in changed)
-        {
-            Assert.True(Hash(live) != Hash(_approved), $"{key}: the premise is that the hash changes");
-            Assert.True(ProfileDiff.Between(_approved, live).Count > 0, $"{key} changes the hash and the diff says nothing");
-        }
+        Array.ForEach(changed, c => AssertDiffSees(c.Key, c.Live));
+    }
+
+    private static void AssertDiffSees(string key, SindriProfile live)
+    {
+        Assert.True(Hash(live) != Hash(_approved), $"{key}: the premise is that the hash changes");
+        Assert.True(ProfileDiff.Between(_approved, live).Count > 0, $"{key} changes the hash and the diff says nothing");
     }
 }
