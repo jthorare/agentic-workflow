@@ -11,8 +11,8 @@ using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
 using Aw.Sindri.Ui.ViewModels.Shell;
-using Aw.Sindri.Ui.Views.NeedsYou;
 using Aw.Sindri.Ui.Views.Controls;
+using Aw.Sindri.Ui.Views.NeedsYou;
 using Aw.Sindri.Ui.Views.Shell;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
