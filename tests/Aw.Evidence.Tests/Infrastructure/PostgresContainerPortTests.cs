@@ -17,10 +17,12 @@ public sealed class PostgresContainerPortTests
     public async Task The_container_starts_when_another_process_takes_the_chosen_port_first()
     {
         TcpListener? thief = null;
+        var heldPort = 0;
         var container = new PostgresContainer
         {
             AfterPortChosen = port =>
             {
+                heldPort = port;
                 thief = new TcpListener(IPAddress.Loopback, port);
                 thief.Start();
                 return ValueTask.CompletedTask;
@@ -31,6 +33,8 @@ public sealed class PostgresContainerPortTests
         {
             await container.InitializeAsync();
 
+            Assert.True(container.Port > 0);
+            Assert.NotEqual(heldPort, container.Port);
             Assert.Equal(1, Convert.ToInt32(await container.ScalarAsync("SELECT 1"), CultureInfo.InvariantCulture));
         }
         finally
