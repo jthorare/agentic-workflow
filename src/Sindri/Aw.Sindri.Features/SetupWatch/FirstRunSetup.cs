@@ -1,3 +1,8 @@
+using Aw.Sindri.Core;
+using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Templates;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
@@ -16,12 +21,76 @@ namespace Aw.Sindri.Features.SetupWatch;
 /// <param name="made">The ledger event that says hello-sindri was made once.</param>
 internal sealed class FirstRunSetup(IProfileSource live, ILaunchSetup launch, IProfileKeyWriter keys, ISetupWorkflowCreator create, ISetupWorkflowActivator activate, FirstWorkflowEvents made)
 {
+    private const string TargetKey = "workflow.agent.target";
+    private static readonly WorkflowSlug _hello = WorkflowSlug.From("hello-sindri");
+
     /// <summary>Does the steps that are due; each one is skipped when it is done already, and a step that can't run now is tried again on the next tick.</summary>
     /// <param name="cancellationToken">Cancels the run.</param>
     /// <returns>A task that ends when the due steps were tried.</returns>
-    internal ValueTask Run(CancellationToken cancellationToken)
+    internal async ValueTask Run(CancellationToken cancellationToken)
     {
-        _ = (live, launch, keys, create, activate, made, cancellationToken);
-        return ValueTask.CompletedTask;
+        var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
+        if (loaded.IsError || loaded.Value.Profile.Repos is not { Count: > 0 } repos)
+        {
+            return;
+        }
+
+        await SetAgentTarget(loaded.Value.Profile, cancellationToken).ConfigureAwait(false);
+        if (loaded.Value.Profile.Setup?.SkipFirstWorkflow != true && RepoName.TryFrom(repos[0].Name, out var first))
+        {
+            await MakeHello(first, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    // A line, not a question: the first agent whose binary the login shell finds becomes the target, unless the profile names one.
+    private async ValueTask SetAgentTarget(SindriProfile profile, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(profile.Workflow?.Agent?.Target?.Value))
+        {
+            return;
+        }
+
+        var shown = await launch.Show(only: null, cancellationToken).ConfigureAwait(false);
+        if (shown.IsError || shown.Value.Entries.FirstOrDefault(static e => e.ResolvedBin is not null) is not { } agent)
+        {
+            return;
+        }
+
+        var plan = keys.PlanText(TargetKey, agent.Id.Value);
+        if (plan.IsSuccess)
+        {
+            _ = keys.Save(plan.Value);   // a failed write is tried again on the next tick
+        }
+    }
+
+    // Create, activate, then record: a crash between two of them is picked up on the next tick (a taken slug is the create that already happened).
+    private async ValueTask MakeHello(RepoName repo, CancellationToken cancellationToken)
+    {
+        if (await made.WasMade(cancellationToken).ConfigureAwait(false) is not false)
+        {
+            return;   // made before, or the ledger can't say
+        }
+
+        var template = GraphTemplates.Find("hello-sindri");
+        var item = template?.Spec.Nodes.FirstOrDefault(static n => string.Equals(n.Type, "create_item", StringComparison.Ordinal));
+        if (template is null || item is null)
+        {
+            return;
+        }
+
+        item.Config["repo"] = repo.Value;
+        var created = await create.Create(_hello, GraphJson.Write(template.Spec), cancellationToken).ConfigureAwait(false);
+        if (created.IsError && !string.Equals(created.Error.Code, SindriErrors.GraphSlugTaken.Code, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var activated = await activate.Activate(_hello, cancellationToken).ConfigureAwait(false);
+        if (activated.IsError && !string.Equals(activated.Error.Code, SindriErrors.GraphArchived.Code, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _ = await made.Made(_hello, repo, cancellationToken).ConfigureAwait(false);
     }
 }

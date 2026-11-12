@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
@@ -17,6 +18,9 @@ namespace Aw.Sindri.Features.SetupSources;
 /// <param name="runs">The workflow runs, to find hello-sindri's succeeded one; null in a host that has none.</param>
 internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git, IWorkflowStore? workflows = null, IWorkflowRunStore? runs = null)
 {
+    private const int RunsLooked = 50;
+    private static readonly WorkflowSlug _hello = WorkflowSlug.From("hello-sindri");
+
     internal async ValueTask<Result<RepoFact>> Repos(CancellationToken cancellationToken)
     {
         var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
@@ -69,7 +73,7 @@ internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git, 
         return new AgentFact(loaded.Value.Profile.Workflow?.Agent?.Target?.Value);
     }
 
-    // The hello-sindri step (step 8): the dismissal is in the profile ('setup.skipFirstWorkflow'); a succeeded run is the engine lane's read, so it is false until that lands.
+    // The hello-sindri step (step 8): the dismissal is in the profile ('setup.skipFirstWorkflow'); a succeeded run of hello-sindri comes from the workflow runs.
     internal async ValueTask<Result<FirstWorkflowFact>> FirstWorkflow(CancellationToken cancellationToken)
     {
         var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
@@ -78,7 +82,24 @@ internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git, 
             return loaded.Error.Code != SindriErrors.ProfileMissing.Code ? loaded.Error : new FirstWorkflowFact(Succeeded: false, Dismissed: false);
         }
 
-        _ = (workflows, runs);   // red: the read of the succeeded run comes with the fix
-        return new FirstWorkflowFact(Succeeded: false, Dismissed: loaded.Value.Profile.Setup?.SkipFirstWorkflow == true);
+        return new FirstWorkflowFact(await HelloSucceeded(cancellationToken).ConfigureAwait(false), Dismissed: loaded.Value.Profile.Setup?.SkipFirstWorkflow == true);
+    }
+
+    // Derived, nothing stored: hello-sindri has a succeeded run. A read that fails counts as "not yet", so the step shows todo and the next read tries again.
+    private async ValueTask<bool> HelloSucceeded(CancellationToken cancellationToken)
+    {
+        if (workflows is null || runs is null)
+        {
+            return false;
+        }
+
+        var listed = await workflows.List(includeArchived: false, cancellationToken).ConfigureAwait(false);
+        if (listed.IsError || listed.Value.FirstOrDefault(static w => w.Slug == _hello) is not { } hello)
+        {
+            return false;
+        }
+
+        var recent = await runs.Recent(hello.Id, offset: 0, limit: RunsLooked, cancellationToken).ConfigureAwait(false);
+        return recent.IsSuccess && recent.Value.Any(static r => r.Status == WorkflowRunStatus.Succeeded);
     }
 }
