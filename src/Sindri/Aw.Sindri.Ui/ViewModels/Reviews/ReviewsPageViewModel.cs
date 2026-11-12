@@ -114,6 +114,9 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
     /// <summary>The last read's failure line; empty when the last read worked.</summary>
     public string Error { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The refused read's code and endpoint, for a tooltip beside <see cref="Error"/>; empty when the last read answered.</summary>
+    public string ErrorDetail { get; private set => Set(ref field, value); } = string.Empty;
+
     /// <summary>The login prompt's failure under the field (the server's detail); empty when there is none.</summary>
     public string LoginError { get; private set => Set(ref field, value); } = string.Empty;
 
