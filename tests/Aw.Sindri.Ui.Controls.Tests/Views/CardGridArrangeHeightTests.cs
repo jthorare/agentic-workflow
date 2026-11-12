@@ -39,6 +39,34 @@ public sealed class CardGridArrangeHeightTests
         Assert.True(gridHeight >= cardBottom, string.Create(CultureInfo.InvariantCulture, $"the grid reported {gridHeight} but its card ends at {cardBottom}"));
     }
 
+    [Fact]
+    public async Task A_window_that_grows_after_a_narrow_arrange_gets_the_wide_layout_back()
+    {
+        var (narrowHeight, narrowBottom, wideHeight, wideBottom, wideCardWidth) = await OnUi(() =>
+        {
+            var card = new WrappingCard();
+            var grid = new CardGrid { MinColumnWidth = 420, Spacing = 12, Children = { card } };
+            var host = new ResizableHost { Child = grid };
+            var window = new Window { Content = host, Width = 1200, Height = 600 };
+            window.Show();
+            window.UpdateLayout();
+            Dispatcher.UIThread.RunJobs();
+            var narrow = (grid.DesiredSize.Height, card.Bounds.Bottom);
+
+            host.Resize(measureWidth: 1000, arrangeWidth: 1000);
+            window.UpdateLayout();
+            Dispatcher.UIThread.RunJobs();
+            var result = (narrow.Height, narrow.Bottom, grid.DesiredSize.Height, card.Bounds.Bottom, card.Bounds.Width);
+            window.Close();
+            return result;
+        });
+
+        Assert.True(narrowHeight >= narrowBottom, "the narrow arrange settles with the grid as tall as its card");
+        Assert.Equal(100, wideBottom);   // wide again: the card is back to its short height, so the narrow width did not stay
+        Assert.True(wideHeight >= wideBottom);
+        Assert.True(wideCardWidth > 440, "the card is wider than the narrow column again");
+    }
+
     // A card whose height depends on its width the way wrapped text does: 100 tall at 440 px or wider, 200 tall below that.
     private sealed class WrappingCard : Control
     {
@@ -57,6 +85,32 @@ public sealed class CardGridArrangeHeightTests
         protected override Size ArrangeOverride(Size finalSize)
         {
             Child?.Arrange(new Rect(0, 0, 430, Child.DesiredSize.Height));
+            return finalSize;
+        }
+    }
+
+    // Like the narrow host, with widths the test can change: the window growing.
+    private sealed class ResizableHost : Decorator
+    {
+        private double _measureWidth = 900;
+        private double _arrangeWidth = 430;
+
+        public void Resize(double measureWidth, double arrangeWidth)
+        {
+            _measureWidth = measureWidth;
+            _arrangeWidth = arrangeWidth;
+            InvalidateMeasure();
+        }
+
+        protected override Size MeasureOverride(Size availableSize)
+        {
+            Child?.Measure(new Size(_measureWidth, double.PositiveInfinity));
+            return Child?.DesiredSize ?? default;
+        }
+
+        protected override Size ArrangeOverride(Size finalSize)
+        {
+            Child?.Arrange(new Rect(0, 0, _arrangeWidth, Child.DesiredSize.Height));
             return finalSize;
         }
     }
