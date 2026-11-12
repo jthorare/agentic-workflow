@@ -78,7 +78,8 @@ public sealed class WorkflowHeaderLayoutTests : FrameHost
             var stateRight = state.TranslatePoint(new Point(state.Bounds.Width, 0), window)!.Value.X;
             var regionRight = region.TranslatePoint(new Point(region.Bounds.Width, 0), window)!.Value.X;
             Assert.True(stateRight <= regionRight + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the state ends at {stateRight}, past the header's right edge {regionRight}"));
-            Assert.True(state.Bounds.Width >= state.DesiredSize.Width - 0.5, "the state is clipped");
+            // DesiredSize includes the state's 12 px left margin and Bounds does not.
+            Assert.True(state.Bounds.Width >= state.DesiredSize.Width - state.Margin.Left - state.Margin.Right - 0.5, "the state is clipped");
         }
         finally
         {
