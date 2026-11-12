@@ -126,7 +126,7 @@ public sealed class CliItemVerbsTests : IDisposable
         _ = await Verbs(api, Human).Run(["items"], Token);
         _ = await Verbs(api, Human).Run(["queue"], Token);
 
-        Assert.Equal("7,7", string.Join(',', api.Calls.Where(static c => c.Path is "/sindri/items" or "/sindri/queue").Select(static c => c.Headers.GetValueOrDefault(SindriHeaders.After))));
+        Assert.Equal("7,7", string.Join(',', api.Calls.Where(static c => string.Equals(c.Path, "/sindri/items", StringComparison.Ordinal) || string.Equals(c.Path, "/sindri/queue", StringComparison.Ordinal)).Select(static c => c.Headers.GetValueOrDefault(SindriHeaders.After))));
     }
 
     [Fact, Trait("Lane", "unit")]
