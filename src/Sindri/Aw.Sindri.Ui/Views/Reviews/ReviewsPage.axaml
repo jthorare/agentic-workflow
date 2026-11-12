@@ -83,7 +83,7 @@
             </StackPanel>
             <Border Classes="panel">
               <StackPanel>
-                <Grid ColumnDefinitions="*,140,70,120,160,140" Margin="16,8">
+                <Grid Classes="reviews-table" ColumnDefinitions="*,140,70,120,160,140" Margin="16,8">
                   <TextBlock Classes="caption subtle" Text="{Binding $parent[UserControl].((rvm:ReviewsPageViewModel)DataContext).Columns[0]}" AutomationProperties.AccessibilityView="Raw" />
                   <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding $parent[UserControl].((rvm:ReviewsPageViewModel)DataContext).Columns[1]}" AutomationProperties.AccessibilityView="Raw" />
                   <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding $parent[UserControl].((rvm:ReviewsPageViewModel)DataContext).Columns[2]}" AutomationProperties.AccessibilityView="Raw" />
@@ -104,7 +104,7 @@
                             <DataTemplate x:DataType="rvm:ReviewRowViewModel">
                               <Border x:Name="ReviewRowFrame" Classes="review-row clickable" Focusable="True" BorderThickness="1" Padding="16,8"
                                       AutomationProperties.Name="{Binding AutomationName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-                                <Grid ColumnDefinitions="*,140,70,120,160,140" AutomationProperties.AccessibilityView="Raw">
+                                <Grid Classes="reviews-table" ColumnDefinitions="*,140,70,120,160,140" AutomationProperties.AccessibilityView="Raw">
                                   <StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
                                       <TextBlock Classes="body-strong" Text="{Binding Title}" TextTrimming="CharacterEllipsis" />

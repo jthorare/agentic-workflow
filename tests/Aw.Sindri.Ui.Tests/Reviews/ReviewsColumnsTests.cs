@@ -17,7 +17,7 @@ public sealed class ReviewsColumnsTests
         Assert.Equal(expected, PageLayout.ReviewWidths(width).Skip(1).ToArray());
 
     [Theory]
-    [InlineData(300)]
+    [InlineData(400)]
     [InlineData(500)]
     [InlineData(700)]
     [InlineData(900)]

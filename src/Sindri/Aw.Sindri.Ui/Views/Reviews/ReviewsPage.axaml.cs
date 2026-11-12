@@ -13,7 +13,12 @@ internal sealed partial class ReviewsPage : UserControl
     {
         InitializeComponent();
         AddHandler(KeyDownEvent, OnKeyDown);
+        this.FindControl<ItemsControl>("ReviewsGroups")!.SizeChanged += (_, e) => Views.Layout.PageLayout.SetReviewsWidth(this, e.NewSize.Width - PanelBorder - RowPadding);   // why: the groups fill the page, so a sheet beside it narrows them
     }
+
+    // The room the columns have: the group's width less the panel's 1 px border a side and the rows' 16 px padding a side.
+    private const double PanelBorder = 2;
+    private const double RowPadding = 32;
 
     private ReviewsPageViewModel? Page => DataContext as ReviewsPageViewModel;
 

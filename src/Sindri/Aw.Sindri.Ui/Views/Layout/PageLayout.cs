@@ -78,7 +78,61 @@ internal static class PageLayout
     /// </summary>
     /// <param name="width">The table's width; 0 or less means not measured yet (every column).</param>
     /// <returns>The widths, title column first (0 for the star).</returns>
-    internal static double[] ReviewWidths(double width) => width < 0 ? [] : [0, 140, 70, 120, 160, 140];
+    internal static double[] ReviewWidths(double width)
+    {
+        double[] widths = [0, 140, 70, 120, 160, 140];
+        if (width <= 0)
+        {
+            return widths;
+        }
+
+        foreach (var drop in new[] { 5, 4, 3 })
+        {
+            if (160 + widths.Sum() > width)
+            {
+                widths[drop] = 0;
+            }
+        }
+
+        return widths;
+    }
+
+    /// <summary>The Reviews table's width, set by the Reviews page; its grids (classed "reviews-table": the header and every row) lay their columns out from it.</summary>
+    internal static readonly AttachedProperty<double> ReviewsWidthProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, double>("ReviewsWidth", 0, inherits: true);
+
+    /// <summary>Sets the Reviews table's width on a control (and so on everything under it).</summary>
+    /// <param name="control">The control.</param>
+    /// <param name="width">The room the columns have.</param>
+    internal static void SetReviewsWidth(Control control, double width) => control.SetValue(ReviewsWidthProperty, width);
+
+    static PageLayout()
+    {
+        _ = ReviewsWidthProperty.Changed.AddClassHandler<Grid>((grid, e) =>
+        {
+            if (grid.Classes.Contains("reviews-table") && e.NewValue is double width)
+            {
+                ApplyReviews(grid, width);
+            }
+        });
+    }
+
+    /// <summary>Sets a Reviews grid's columns for a table width; a dropped column's cells are hidden.</summary>
+    /// <param name="table">The grid with the six Reviews columns.</param>
+    /// <param name="width">The table's width.</param>
+    internal static void ApplyReviews(Grid table, double width)
+    {
+        var widths = ReviewWidths(width);
+        for (var i = 1; i < table.ColumnDefinitions.Count; i++)
+        {
+            table.ColumnDefinitions[i].Width = new GridLength(widths[i]);
+        }
+
+        foreach (var cell in table.Children.Where(c => Grid.GetColumn(c) is >= 1 and <= 5))
+        {
+            cell.IsVisible = widths[Grid.GetColumn(cell)] > 0;
+        }
+    }
 
     /// <summary>The class a page region of this width has.</summary>
     /// <param name="width">The page region's width.</param>

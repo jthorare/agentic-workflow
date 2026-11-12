@@ -39,6 +39,7 @@ internal sealed partial class ReviewPageViewModel
     {
         null => StateGlyph.Ok,
         { State: "error" } => StateGlyph.Down,
+        { Id: "docMap", State: "empty" } => StateGlyph.None,   // no doc named is not a pass
         { Id: "requiredChecks", Data.Checks: { } checks } => checks.Any(c => string.Equals(c.Status, "fail", StringComparison.Ordinal)) ? StateGlyph.Down : checks.Any(c => !string.Equals(c.Status, "pass", StringComparison.Ordinal)) ? StateGlyph.Warning : StateGlyph.Ok,
         { Id: "risk", Data.Hits.Count: > 0 } => StateGlyph.Warning,
         { Id: "ci", Data.Runs: { } runs } => runs.Any(r => RunGlyph(r) == StateGlyph.Down) ? StateGlyph.Down : runs.Any(r => RunGlyph(r) == StateGlyph.Stale) ? StateGlyph.Stale : StateGlyph.Ok,

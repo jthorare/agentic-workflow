@@ -30,7 +30,7 @@ internal sealed class ReviewRowViewModel : ObservableObject
     /// <summary>The CI state's glyph, never color alone (§6.4).</summary>
     public StateGlyph CiGlyph { get; private set => Set(ref field, value); }
 
-    /// <summary>"2 open", "none open"; empty when the project decides none.</summary>
+    /// <summary>"2 open", "none open"; a project that names no checks reads "none open" too.</summary>
     public string Required { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>"claims a doc" or "no doc named".</summary>
@@ -86,12 +86,12 @@ internal sealed class ReviewRowViewModel : ObservableObject
             "running" => (Labels.ReviewsCiRunning, StateGlyph.Stale),
             _ => (Labels.ReviewsCiNone, StateGlyph.None),
         };
-        Required = row.RequiredText ?? string.Empty;
+        Required = row.RequiredText ?? Labels.ReviewsRequiredNone;
         Doc = row.ClaimsDoc ? Labels.ReviewsClaimsDoc : Labels.ReviewsNoDoc;
         WaitingChip = row.WaitingText;
         IsDraft = row.Draft;
         AutomationName = string.Join(
             ", ",
-            new[] { Title, Ref, WaitingChip, $"by {Author}", Age, $"CI {Ci}", Required.Length > 0 ? $"required checks {Required}" : null, Doc }.Where(p => p is not null));
+            new[] { Title, Ref, WaitingChip, $"by {Author}", Age, $"CI {Ci}", $"required checks {Required}", Doc }.Where(p => p is not null));
     }
 }
