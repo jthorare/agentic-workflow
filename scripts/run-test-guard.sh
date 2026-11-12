@@ -81,7 +81,9 @@ pgid=$!
 trap 'sweep; exit 143' TERM INT HUP
 
 ( trap 'kill "$s" 2>/dev/null; exit 0' TERM; sleep "$timeout_s" & s=$!; wait "$s"
-  kill -0 "$pgid" 2>/dev/null && { echo "run-test-guard: timed out after ${timeout_s}s; stopping the check" >&2; kill -TERM -- "-$pgid" 2>/dev/null; } ) &
+  kill -0 "$pgid" 2>/dev/null && { echo "run-test-guard: timed out after ${timeout_s}s; stopping the check" >&2; kill -TERM -- "-$pgid" 2>/dev/null
+    # Test seam: the watchdog lingers this many seconds after its TERM, the way a loaded box delays its exit (#3219).
+    [ -n "${AW_GUARD_TEST_WATCHDOG_HOLD:-}" ] && sleep "$AW_GUARD_TEST_WATCHDOG_HOLD"; } ) &
 watchdog=$!
 
 wait "$pgid"; rc=$?
