@@ -109,7 +109,7 @@ Then capture **all three** viewports inline (no subagent), holding the lock thro
 2. `mcp: playwright/browser_resize` → the viewport's width × height
 3. `mcp: playwright/browser_take_screenshot` → save to `$AW_DIR/design/mockup-web-<screen-name>-<viewport>.png` — producing exactly the three `mockup-web-<screen-name>-{mobile,tablet,desktop}.png` baselines.
 
-Finally — success or failure — close the browser (`mcp: playwright/browser_close`) and release the lock in a single invocation:
+Finally, on success or failure, close the browser (`mcp: playwright/browser_close`) and release the lock in a single invocation:
 
 ```bash
 SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"

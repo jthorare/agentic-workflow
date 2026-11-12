@@ -120,7 +120,7 @@ with the `sindri_` prefix of Sindri's other tools.
     `timeoutSeconds`. It answers `ended` if it finishes within both.
   - A `sync` call still waiting after 30 s answers `running` with `waiting: heavy-lock`, and the session polls.
   - Any block still running at `timeoutSeconds` after its slot was granted ends `failed`, reason `timeout`.
-  - So `mode: sync` means "normally answered in the call": an agent must still handle `running`.
+  - So `mode: sync` means "normally answered in the call": an agent must still cope with `running`.
 - **One call id, one call, per scope.** The session may pass its own `callId`. With none, the server makes one.
   The store key is (scope, `callId`), so two runs, or a run and a plain session, never see each other's calls.
   - Sending the same `callId` with the same `name`, `arguments`, `ref` and `itemId` again runs nothing. It returns
@@ -294,7 +294,7 @@ C6). The engine side is §B.5.
   wait, and the wrapper holds that many slots back, as it does for the meta's reserve; the meta's wrapper change,
   owner-approved at BM-1). Owner calls hold at most the box's slot cap minus one, so a gate or a merge train always gets a slot. The timing rule (§A.1) is unchanged: a
   sync call still waits at most 30 s before answering `running`.
-- **Sensitivity** (owner, 2026-10-18, C10 option (b)): an owner's call is handled as an agent's call is, and marked as
+- **Sensitivity** (owner, 2026-10-18, C10 option (b)): an owner's call is treated as an agent's call is, and marked as
   the owner's (`caller: owner` on its events and in the app). Its result is scrubbed as every result is and kept
   30 days.
 - **`sindri_execute_tool_call`** takes an optional `itemId` and `ref`:
@@ -619,7 +619,7 @@ The owner then widened that (2026-10-18, C6): "my sessions can use every block. 
 high priority and sensitivity." And (C11): "sindri can know if the session is owned by a sindri workflow. otherwise
 it's me". So a session Sindri launched for a workflow is a Step session, which §A.2 defines by its valid
 `X-Sindri-Run`. **Every other session is the owner's**, team lanes included, and gets the same treatment. Its calls are
-handled exactly like a Step's calls (C10: the same visibility, the same reads), only marked as the owner's.
+treated exactly like a Step's calls (C10: the same visibility, the same reads), only marked as the owner's.
 
 - **Which blocks.**
   - A plain session gets **every Callable block**, `Network` and `Budget` ones included. There is no default subset.
@@ -709,7 +709,7 @@ Every choice was put to the owner in plain words; these are the answers. C3, C6 
 8. **What the owner's calls count for:** logged and kept 30 days, never proof for an item or a Step.
 9. **What a Step's call tests:** the Step's working folder as it is (Sindri's own folder for that phase of the item),
    locked during the call, with the exact code it saw recorded.
-10. **Sensitivity:** (b). The owner's calls are handled as agent calls are, marked `caller: owner`.
+10. **Sensitivity:** (b). The owner's calls are treated as agent calls are, marked `caller: owner`.
 11. **Who is the owner:** "sindri can know if the session is owned by a sindri workflow. otherwise it's me". Only a
    session with `X-Sindri-Run` is a workflow's; every other session is the owner's, team lanes included.
 

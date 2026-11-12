@@ -11,6 +11,7 @@
 #   A job is expensive when it builds or tests the whole solution, publishes or smoke-tests a NativeAOT/framework
 #   binary, or opens a browser (Playwright, ui-evidence, Aw.Evidence); `heavy --expensive <cmd>` forces it,
 #   `heavy --light <cmd>` forces the per-session slot only.
+#   The job runs in its own systemd user scope (OOMPolicy=continue) when systemd-run works, so an OOM kill ends the job only.
 set -u
 # The cap and reserve readers live next to locks.sh; this script may run through a link (~/.agentic-workflow/bin-r1b/heavy).
 # In a build folder it sits beside this script; in the repo it is ../config/lib.
@@ -205,10 +206,32 @@ if [ -n "$is_dotnet_test" ] && [ "$run_max" -gt 0 ]; then
     *) if [ "$run_max" -gt 5 ]; then set -- "$@" --timeout "$((run_max - 5))m"; else set -- "$@" --timeout "${run_max}m"; fi ;;
   esac
 fi
+# Own systemd scope (#2931, #2856): setsid changes the session and process group but not the cgroup, so the job would stay in the
+# caller's pane scope (tmux-spawn-*.scope). With the default OOMPolicy=stop, one OOM kill of a job process then stops that whole
+# scope and takes the agent session with it. `systemd-run --user --scope -p OOMPolicy=continue` puts the job in its own unit, so
+# an OOM kill ends that job only. --scope execs in place (no fork), so $! below is still the job's pid and its group id.
+# The job also binds to the caller's pane scope (BindsTo+After): without it the job outlives its pane (OOM kill of the agent,
+# tmux kill-session), and the lock's dead-holder reclaim frees its slot while it still eats memory, so a 4th job could start.
+# BindsTo is one-way, so an OOM kill inside the job leaves the pane alone. Only scopes of the user manager are bound: a login
+# session-N.scope belongs to the system manager, and `systemd-run --user` fails on it.
+# Fallback, today's path: no systemd-run (macOS), no user bus, or the probe below fails.
+scope=()
+if command -v systemd-run >/dev/null 2>&1; then
+  unit="$(awk -F: '$1=="0" && $2=="" {print $3; exit}' "${AW_HEAVY_TEST_CGROUP:-/proc/self/cgroup}" 2>/dev/null)"
+  bind=()
+  case "$unit" in
+    */user@[0-9]*.service/*.scope) unit="${unit##*/}"; bind=(-p "BindsTo=$unit" -p "After=$unit") ;;
+  esac
+  cand=(systemd-run --user --scope --quiet --collect -p OOMPolicy=continue "${bind[@]+"${bind[@]}"}" --)
+  # A wedged user bus under memory pressure would hang every heavy call while it holds a slot, so the probe gets a timeout.
+  probe=()
+  if command -v timeout >/dev/null 2>&1; then probe=(timeout 10); fi
+  if "${probe[@]+"${probe[@]}"}" "${cand[@]}" true >/dev/null 2>&1; then scope=("${cand[@]}"); fi
+fi
 # This relies on job control being off (non-interactive bash): the background child is not a group leader, so setsid
 # execs in place, $! is the job's pid and its group id. Under job control setsid would fork and $! would exit at once.
 # macOS has no setsid: perl does the same. Its `--` stops perl from reading a command word that starts with - as a perl switch.
-if command -v setsid >/dev/null 2>&1; then setsid "$@" & else perl -e 'setpgrp(0, 0); exec @ARGV or exit 127' -- "$@" & fi
+if command -v setsid >/dev/null 2>&1; then setsid "${scope[@]+"${scope[@]}"}" "$@" & else perl -e 'setpgrp(0, 0); exec @ARGV or exit 127' -- "${scope[@]+"${scope[@]}"}" "$@" & fi
 job=$!
 reason="$(mktemp "${TMPDIR:-/tmp}/heavy-reason.XXXXXX")"
 (

@@ -12,7 +12,7 @@ reviews this doc with #258 and #262; nothing is built until all three are approv
 
 This doc specs the last stations of the spec-to-proven-PR line. When `workflow.ship` opens a phase's PR with its
 evidence pack in the body (LN §7.5), **`workflow.pr-babysitter`** takes the PR and keeps it moving: it fixes red CI
-within a bound, handles each review comment by its type, re-proves the phase when the head's source changes, runs
+within a bound, answers each review comment by its type, re-proves the phase when the head's source changes, runs
 **docs sync** once, and stops at the line's third and last owner stop, **ready-to-merge**. The owner merges with one
 click, or sends the phase back with notes. **`workflow.docs-sync`** takes one PR and opens a docs PR stacked on that
 PR's head branch. Both also run on their own, from a PR link (§4.2).
@@ -72,8 +72,8 @@ their LN-* ids.
 
 - **Forge ref:** a canonical PR reference `{ forge, host, owner, repo, number }`, parsed from a link by the adapter.
 - **Pass:** one sweep of the comment queue, or one walk of the held comments, ending in at most one push.
-- **Handled comment:** one whose latest mark (§5.4) isn't superseded by an edit. **Held comment:** one whose latest
-  mark is `held`: handled for the queue, waiting for the owner at `ready`.
+- **Settled comment:** one whose latest mark (§5.4) isn't superseded by an edit. **Held comment:** one whose latest
+  mark is `held`: settled for the queue, waiting for the owner at `ready`.
 - **Trusted author:** owner, member or collaborator association, or the PR's author when that isn't Sindri's own
   forge account. **Allowlisted bot:** a login in `workflow.pr.bots` (Q2). Any other bot is untrusted.
 - **Workspace:** `fact:workspace`: the phase's worktree (LN-WF2), passed by `workflow.phase`; for a hand start, intake
@@ -612,7 +612,7 @@ and U12. Rows already filed are cited, never re-filed:
 | API16 | **`sindri pr babysit <url> [--item <id>]` and `sindri docs sync <url>`**: write §4.2's fact files and start the recipe, the item picked or created from the link; the caller class of `workflow start`; catalog rows and goldens | — (growth, after PB-P1) |
 | API17 | **`sindri docs check --facts <dir> [--json]`**, class `local` (LN-API4's form): `step.docs.check`'s rules (doc paths only, links resolve, the markdown parses); exit 0 pass, 1 findings, 2 usage | PB-B |
 | API18 | **Desk-class catalog rows** for `ApplyCommand:comments`, `:resync-docs` and `:check` (as LN-API7), so the held walk, resync and check are buttons, not typed challenges; goldens; the gate runs `Aw.Sindri.Ui.Tests` | PB-E |
-| API19 | **Babysitter stats** (API §3.8) under `workflow.pr-babysitter`: comments by type and outcome (handled without the owner vs held), CI-fix success rate, rechecks and their verdicts, time from PR open to `ready` and to merge, owner actions at stop 3, docs PRs merged vs left, tokens per PR. PB-P2 reads them to tune caps, Q5, Q9 and Q12 | PB-P2 |
+| API19 | **Babysitter stats** (API §3.8) under `workflow.pr-babysitter`: comments by type and outcome (settled without the owner vs held), CI-fix success rate, rechecks and their verdicts, time from PR open to `ready` and to merge, owner actions at stop 3, docs PRs merged vs left, tokens per PR. PB-P2 reads them to tune caps, Q5, Q9 and Q12 | PB-P2 |
 | U12 | **The babysitter's views, beyond LN-UI3.** Comment text in UI design U9's fenced, source-labelled plain-text block (links shown, not active; images not loaded). The held walk: oldest first, focus on the first held row, `Enter` opens `owner-comment`, lean and reason as words; the typed reply's `confirm` shows the text after Redaction. ReadyView states: docs `skippedByOwner`; "docs synced against `<sha>`" with resync offered; proven sha ≠ head (`staleProof`); `reviewRequired`; "merging…" and "phase merged, docs PR merging" with its checks; "no hand-off: started by hand". The `owner` desk names the merge refusal from `pr.mergeResult`. A `ready` escalated at 30 days renders as the same `ready-to-merge` row marked "waiting 30 d", not a second row with Accept and Reject. The Start form hides empty-allowed inputs | PB-P1 |
 
 ### 12.3 Asks to #262 (for its next pass)
@@ -1429,7 +1429,7 @@ evals: [evals/workflow.prove-recheck/held.jsonl, evals/workflow.prove-recheck/no
 | Docs PR found by branch name, pushed without a lease (security M5) | Author and marker; push with a lease (§7.2) |
 | The link's host unchecked (security M6) | Intake step 0 and `Parse` refuse unknown hosts before any request (§4.2, §10.2) |
 | Pre-push hook and agent-writable git config (security M7) | `Push`'s hardened invocation (§10.2) |
-| The trailer decided "handled"; test loosening unchecked (devex M4) | Marks from `fact:fix`; the trailer is a cross-check; `BLD-TEST-001` in `gate.pr.diff-scope` (§5.2, §10.1) |
+| The trailer decided "settled"; test loosening unchecked (devex M4) | Marks from `fact:fix`; the trailer is a cross-check; `BLD-TEST-001` in `gate.pr.diff-scope` (§5.2, §10.1) |
 | No forge credential key or lifetime; env var not in `.env.example` (devex M7) | `workflow.forge.*`, per-call credential command, `AW_FORGE_TOKEN` (§10.2, W27) |
 | `Aw.Forge`'s shape and `compose` edge unnamed (devex M8) | §10.2 |
 | `pr-watch` error behaviour (devex M10) | §6.2 errors; PB-W proof |

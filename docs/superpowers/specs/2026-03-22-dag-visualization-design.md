@@ -341,7 +341,7 @@ interface SessionJob {
 **Processing rules:**
 - **Active session** (file watcher triggered during bridge uptime): Enqueued with `pass: "both"` — gets summary + detail passes at the rate limit. The user is actively working, so full fidelity is proactively built.
 - **Cold session** (startup scan, previously unseen): Enqueued with `pass: "summary"` — fast summary only. Detail created lazily when the user expands a turn in the UI.
-- **Rate limit:** Processes at most 1 session every 5 seconds. During startup scan with many unprocessed files, this prevents I/O saturation while the bridge handles its primary workload.
+- **Rate limit:** Processes at most 1 session every 5 seconds. During startup scan with many unprocessed files, this prevents I/O saturation while the bridge runs its primary workload.
 
 #### Two-Level Ingestion
 
@@ -464,7 +464,7 @@ conversation (purple)
 └── ...
 ```
 
-Unexpanded turns show as leaf message nodes. Expanded turns show their tool use and subagent children. The UI handles this by checking `metadata.expanded` — unexpanded turns get an "expand" button that calls `POST /memory/node/:id/expand`.
+Unexpanded turns show as leaf message nodes. Expanded turns show their tool use and subagent children. The UI resolves this by checking `metadata.expanded` — unexpanded turns get an "expand" button that calls `POST /memory/node/:id/expand`.
 
 ### Traversal Logging
 
@@ -625,8 +625,8 @@ components/
 - **Hook tests:** `use-graph-layout` produces valid positioned output from raw nodes/edges; `use-path-replay` state machine transitions correctly
 - **Integration tests:** Graph canvas renders with mock data; search highlighting applies correct styles; context assembly gold rings appear on correct nodes
 - **Backend tests:** `traversal_logs` CRUD operations; traversal logging records correct path during BFS; context assembly logging records scores and token allocation; sender column populated correctly by all ingestion paths; `ingestGenericChat` produces correct node/edge structure; sender filter in search and traverse APIs returns correct subsets
-- **Ingestion tests:** `parseGenericChat()` handles valid input, missing fields, empty arrays, and malformed JSON; `ingest_conversation` MCP tool routes correctly to parsers; idempotency check prevents duplicate ingestion; secret filter applied to all ingested content
-- **Claude Code ingestion tests:** `ingestClaudeCodeSummary()` groups JSONL lines into correct turns; filters out `progress`/`system`/`file-history-snapshot` noise; creates correct node kinds and edges; idempotent on re-ingestion; `expandClaudeCodeTurn()` creates tool_use artifacts and subagent tasks; marks turn as expanded; handles missing source file gracefully
+- **Ingestion tests:** `parseGenericChat()` accepts valid input, missing fields, empty arrays, and malformed JSON; `ingest_conversation` MCP tool routes correctly to parsers; idempotency check prevents duplicate ingestion; secret filter applied to all ingested content
+- **Claude Code ingestion tests:** `ingestClaudeCodeSummary()` groups JSONL lines into correct turns; filters out `progress`/`system`/`file-history-snapshot` noise; creates correct node kinds and edges; idempotent on re-ingestion; `expandClaudeCodeTurn()` creates tool_use artifacts and subagent tasks; marks turn as expanded; tolerates a missing source file
 - **File watcher tests:** Detects new `.jsonl` files; debounces rapid modifications; derives repo from `cwd` in JSONL; skips already-ingested sessions; rate limiter respects interval; startup scan processes unprocessed files as summary-only
 - **Lazy expansion tests:** `POST /memory/node/:id/expand` returns correct nodes/edges; no-op when already expanded; error when source file deleted; expand endpoint wired correctly in routes
 - **Coverage:** 100% threshold per project merge gate
