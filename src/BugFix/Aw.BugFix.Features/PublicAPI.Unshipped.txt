@@ -19,11 +19,13 @@ Aw.BugFix.Features.AdvanceInvestigate.AdvanceInvestigateResponse.Phase.get -> Aw
 Aw.BugFix.Features.AdvanceInvestigate.AdvanceInvestigateResponse.Phase.init -> void
 Aw.BugFix.Features.AdvanceReport.AdvanceReportRequest
 Aw.BugFix.Features.AdvanceReport.AdvanceReportRequest.<Clone>$() -> Aw.BugFix.Features.AdvanceReport.AdvanceReportRequest!
-Aw.BugFix.Features.AdvanceReport.AdvanceReportRequest.AdvanceReportRequest(string! StateDirectory, Aw.BugFix.Core.Ids.CandidateId? Candidate, bool Unresolved) -> void
+Aw.BugFix.Features.AdvanceReport.AdvanceReportRequest.AdvanceReportRequest(string! StateDirectory, Aw.BugFix.Core.Ids.CandidateId? Candidate, bool Unresolved, string? SweepFile = null) -> void
 Aw.BugFix.Features.AdvanceReport.AdvanceReportRequest.Candidate.get -> Aw.BugFix.Core.Ids.CandidateId?
 Aw.BugFix.Features.AdvanceReport.AdvanceReportRequest.Candidate.init -> void
-Aw.BugFix.Features.AdvanceReport.AdvanceReportRequest.Deconstruct(out string! StateDirectory, out Aw.BugFix.Core.Ids.CandidateId? Candidate, out bool Unresolved) -> void
+Aw.BugFix.Features.AdvanceReport.AdvanceReportRequest.Deconstruct(out string! StateDirectory, out Aw.BugFix.Core.Ids.CandidateId? Candidate, out bool Unresolved, out string? SweepFile) -> void
 Aw.BugFix.Features.AdvanceReport.AdvanceReportRequest.Equals(Aw.BugFix.Features.AdvanceReport.AdvanceReportRequest? other) -> bool
+Aw.BugFix.Features.AdvanceReport.AdvanceReportRequest.SweepFile.get -> string?
+Aw.BugFix.Features.AdvanceReport.AdvanceReportRequest.SweepFile.init -> void
 Aw.BugFix.Features.AdvanceReport.AdvanceReportRequest.StateDirectory.get -> string!
 Aw.BugFix.Features.AdvanceReport.AdvanceReportRequest.StateDirectory.init -> void
 Aw.BugFix.Features.AdvanceReport.AdvanceReportRequest.Unresolved.get -> bool

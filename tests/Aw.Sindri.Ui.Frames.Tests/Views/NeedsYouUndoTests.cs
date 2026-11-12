@@ -110,21 +110,22 @@ public sealed class NeedsYouUndoTests : IDisposable
         Assert.All(shell.NeedsYou.Rows, r => Assert.True(r.IsPulsing));
     });
 
+    // #2780: the count (the display number and "need you") moved out of the header row, so the marked-seen text has the header to itself.
     [Fact]
-    public Task The_summary_line_stops_before_the_marked_seen_text_instead_of_drawing_under_it() => OnUi(async () =>
+    public Task The_count_line_sits_under_the_header_so_the_marked_seen_text_never_draws_over_it() => OnUi(async () =>
     {
         var (window, _) = await WithFeed(() => Parks(3));
-        window.Width = 1100;   // the narrowest width with two columns: the summary's cell is at its smallest
+        window.Width = 1100;   // the narrowest width with two columns
         Settle(window);
         Named<Button>(window, "MarkAllSeen").RaiseEvent(_click);
         Settle(window);
 
-        var summary = Named<TextBlock>(window, "NeedsYouSummary");
+        var count = Named<Control>(window, "NeedsYouCountLine");
         var seen = Named<TextBlock>(window, "NeedsYouUndoText");
-        var summaryRight = summary.TranslatePoint(new Point(summary.Bounds.Width, 0), window)!.Value.X;   // why: both are in the shown window's tree
-        var seenLeft = seen.TranslatePoint(new Point(0, 0), window)!.Value.X;   // why: both are in the shown window's tree
+        var countTop = count.TranslatePoint(new Point(0, 0), window)!.Value.Y;   // why: both are in the shown window's tree
+        var seenBottom = seen.TranslatePoint(new Point(0, seen.Bounds.Height), window)!.Value.Y;   // why: both are in the shown window's tree
 
-        Assert.True(summaryRight <= seenLeft, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the summary ends at x={summaryRight} but the marked-seen text starts at x={seenLeft}"));
+        Assert.True(countTop >= seenBottom, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the count line starts at y={countTop} but the marked-seen text ends at y={seenBottom}"));
     });
 
     [Fact]

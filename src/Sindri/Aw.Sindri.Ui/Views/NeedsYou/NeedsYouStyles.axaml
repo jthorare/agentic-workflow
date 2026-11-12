@@ -15,9 +15,10 @@
       </Animation>
     </Style.Animations>
   </Style>
-  <!-- A failure keeps a steady attention tint, a calm row a subtle one (R8-13); the same tokens as the pulse, no motion. -->
+  <!-- The unseen pulse above keeps its amber (#2780, #2749): it is the one "you have not seen this" status cue, so it stays a status colour under the one-accent rule.
+       A failure and an outlined row rest like any clickable row (Brush.Clickable.Rest, the card shows through), a calm row on Surface2 (R8-13), no motion. -->
   <Style Selector="Border.needs-you-row.steady:not(:pointerover):not(:pressed)">
-    <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Rest}" />
   </Style>
   <Style Selector="Border.needs-you-row.subtle:not(:pointerover):not(:pressed)">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
@@ -36,11 +37,11 @@
   <!-- The outline's shape (border and padding) holds under the pointer and a press, so the row never changes height; only its colours step aside. -->
   <Style Selector="Border.needs-you-row.outlined">
     <Setter Property="BorderThickness" Value="2" />
-    <Setter Property="Padding" Value="14,7,14,6" />
+    <Setter Property="Padding" Value="22,7,22,6" />
   </Style>
   <Style Selector="Border.needs-you-row.outlined:not(:pointerover):not(:pressed)">
-    <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Rest}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.InkSubtle}" />
   </Style>
   <!-- Avalonia picks between matching styles by the order they are declared, and this file is included after the queue's: the focus
        ring and the selection bar are restated after the outline so they win over it. A selected row keeps the selection's shape, a thicker
@@ -48,12 +49,12 @@
   <Style Selector="Border.needs-you-row.outlined.selected">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
     <Setter Property="BorderThickness" Value="4,2,2,2" />
-    <Setter Property="Padding" Value="12,7,14,6" />
+    <Setter Property="Padding" Value="20,7,22,6" />
   </Style>
   <Style Selector="Border.needs-you-row.outlined:focus-visible">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
     <Setter Property="BorderThickness" Value="2" />
-    <Setter Property="Padding" Value="14,7,14,6" />
+    <Setter Property="Padding" Value="22,7,22,6" />
   </Style>
   <Style Selector="Border.needs-you-row.stale:not(:pointerover):not(:pressed)">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
