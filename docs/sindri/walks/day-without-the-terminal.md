@@ -61,7 +61,7 @@ Each drill has a pass line. A drill that needs a source or an op that isn't buil
 | B5 | A lane dies | End a lane session with `sessions end <pid>`. | "design: no live session", chip `no session` (class 3). The primary copies `scripts/meta-launch.sh --lanes design`. After `sessions back <pid>` the row leaves Needs you. |
 | B6 | A prompt comes and goes | `sessions ask <pid>`, then answer it (`sessions back <pid>`), five times in a row. | One tray alert per episode, and the tray count equals Home's count (D11). No row above or below moves (D3). |
 | B7 | Serve goes down | `sindri stop` with the page open. | The page keeps the last rows and says how old they are. It never shows a bare "Unknown" (D9). It comes back with no restart of the app. |
-| B8 | Live updates off | Run with the fleet hook not installed. | The page says live updates are off and offers **Turn on live updates** (A6). Rows still update on the 5 s poll. |
+| B8 | Live updates off | Run with the fleet hook not installed, on the scratch home only. Check the banner and the button. Don't press it against the owner's provider config: `install-fleet.sh --uninstall` there takes the real lanes' 1 s push away for the day. | The page says live updates are off and offers **Turn on live updates** (A6). Rows still update on the 5 s poll. |
 | B9 | A steer that fails | Make the fake `aw-meta` time out on a recycle. | The row shows "failed: <reason>" with Retry and Discard within 2 s. Retry sends the same `actId`. |
 
 ## What "done" looks like
