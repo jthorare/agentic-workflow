@@ -82,7 +82,9 @@ EOS
 chmod +x "$STUB/systemd-run"
 export WORK
 SLOG="$WORK/systemd-run.log"
-scoped() { PATH="$STUB:$PATH" GUARD_STUB_SCOPE=ok bash "$GUARD" "$@"; }
+echo "0::/user.slice/user-1000.slice/user@1000.service/app.slice/app.service" > "$WORK/cgroup.plain"
+# The runner of this suite may itself sit in a pane scope, so every row names its cgroup line (default: not a scope).
+scoped() { PATH="$STUB:$PATH" GUARD_STUB_SCOPE=ok AW_GUARD_TEST_CGROUP="${CG:-$WORK/cgroup.plain}" bash "$GUARD" "$@"; }
 
 : > "$SLOG"
 scoped --timeout 30 --grace 3 -- bash -c "$daemonize; exit 7"
@@ -101,14 +103,14 @@ for row in "bind: a user-manager scope|0::/user.slice/user-1000.slice/user@1000.
            "bind: a user-manager service|0::/user.slice/user-1000.slice/user@1000.service/app.slice/app.service|0"; do
   IFS='|' read -r name line want <<< "$row"
   : > "$SLOG"; echo "$line" > "$WORK/cgroup.row"
-  AW_GUARD_TEST_CGROUP="$WORK/cgroup.row" scoped -- true
-  job="$(grep -- '-- true$' "$SLOG")"
+  CG="$WORK/cgroup.row" scoped -- bash -c 'exit 0'
+  job="$(grep -- "-- bash -c exit 0$" "$SLOG")"
   check "$name: BindsTo on the check line" "$(printf '%s\n' "$job" | grep -c -- '-p BindsTo=tmux-spawn-abc.scope')" "$want"
   check "$name: After on the check line" "$(printf '%s\n' "$job" | grep -c -- '-p After=tmux-spawn-abc.scope')" "$want"
 done
 
 : > "$SLOG"
-PATH="$STUB:$PATH" bash "$GUARD" -- bash -c 'exit 5'
+PATH="$STUB:$PATH" AW_GUARD_TEST_CGROUP="$WORK/cgroup.plain" bash "$GUARD" -- bash -c 'exit 5'
 check "fallback: a failing systemd-run keeps setsid and the exit code" "$?" "5"
 check "fallback: only the probe called systemd-run" "$(grep -c -- '-- bash -c' "$SLOG")" "0"
 
