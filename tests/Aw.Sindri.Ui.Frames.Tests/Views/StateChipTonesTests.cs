@@ -93,7 +93,7 @@ public sealed class StateChipTonesTests
         var served = new StateChipView { Chip = new Aw.Sindri.Ui.Api.StateChip("PARKED", Aw.Sindri.Ui.Api.ChipTone.Attn) };
 
         _ = Assert.Single(chip.GetVisualDescendants().OfType<TextBlock>());
-        Assert.Contains("attn", served.Classes, StringComparer.Ordinal);
+        Assert.Contains(served.Classes, c => string.Equals(c, "attn", StringComparison.Ordinal));
         window.Close();
         return true;
     });
