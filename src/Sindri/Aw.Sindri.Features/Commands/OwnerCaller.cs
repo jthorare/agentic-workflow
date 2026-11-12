@@ -2,7 +2,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 
-namespace Aw.Sindri.Features;
+namespace Aw.Sindri.Features.Commands;
 
 /// <summary>
 /// The check for a command that is the owner's (first-run spec decisions 11, 13 and 29): the caller must have shown the per-start human token, which makes it the <see cref="CallerClass.Human"/> class, as
