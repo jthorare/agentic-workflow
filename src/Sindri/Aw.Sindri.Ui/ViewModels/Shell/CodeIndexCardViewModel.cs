@@ -62,16 +62,18 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
         OnChanged(nameof(HasMessage));
     }
 
-    // A repo on its first build is normal work: it reads "building" unless another repo needs a look.
+    // A repo on its first build, running or queued, is normal work: building wins over queued, and a look elsewhere wins over both.
     private static string WordOf(List<(CodeIndexRepoView Repo, CodeIndexHealthView? Health)> views)
     {
-        var rest = views.Where(static v => !Is(StateOf(v.Repo, v.Health), "building")).ToList();
+        var states = views.Select(static v => StateOf(v.Repo, v.Health)).ToList();
+        var rest = views.Where(static v => !One(StateOf(v.Repo, v.Health), "building", "missing")).ToList();
         if (!rest.TrueForAll(static v => Fine(v.Repo, v.Health)))
         {
             return Labels.CodeIndexNeedsLook;
         }
 
-        return rest.Count < views.Count ? Labels.CodeIndexBuilding : Labels.CodeIndexOk;
+        return states.Exists(static s => Is(s, "building")) ? Labels.CodeIndexBuilding
+            : rest.Count < views.Count ? Labels.CodeIndexQueued : Labels.CodeIndexOk;
     }
 
     private static bool Is(string state, string word) => string.Equals(state, word, StringComparison.Ordinal);

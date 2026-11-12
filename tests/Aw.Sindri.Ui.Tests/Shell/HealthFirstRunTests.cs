@@ -15,6 +15,9 @@ public sealed class HealthFirstRunTests
     private const string Building = """{"repos":[{"repo":"repo","state":"building","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[]}""";
     private const string BuildingBehindMain = """{"repos":[{"repo":"a","state":"building","commit":null,"builtAt":null,"layers":[],"counts":null},{"repo":"b","state":"stale","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[]}""";
 
+    private const string Queued = """{"repos":[{"repo":"repo","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[]}""";
+    private const string QueuedAndBuilding = """{"repos":[{"repo":"a","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null},{"repo":"b","state":"building","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[]}""";
+
     private static readonly Uri _api = new("http://127.0.0.1:7410/");
 
     private readonly FakeSindriApi _server = new();
@@ -99,5 +102,40 @@ public sealed class HealthFirstRunTests
 
         Assert.Equal("Something needs a look: context index.", system.Vm.Sentence);
         Assert.True(system.Vm.ToneWarn);
+    }
+
+    [Fact]
+    public async Task A_repo_with_its_first_build_queued_reads_first_build_queued()
+    {
+        _server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, Queued);
+        var card = new CodeIndexCardViewModel(_server, _clock);
+
+        await card.Refresh(_api, Token);
+
+        Assert.Equal("first build queued", card.Word, StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task Building_wins_over_queued()
+    {
+        _server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, QueuedAndBuilding);
+        var card = new CodeIndexCardViewModel(_server, _clock);
+
+        await card.Refresh(_api, Token);
+
+        Assert.Equal("building", card.Word, StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_queued_first_build_leaves_the_headline_healthy()
+    {
+        var system = new SystemTestHarness();
+        await system.Show(A.Status() with { Health = new HealthView("healthy", []) });
+        system.Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, Queued);
+
+        await system.Vm.CodeIndex.Refresh(_api, Token);
+
+        Assert.Equal(Labels.AllRunning, system.Vm.Sentence);
+        Assert.False(system.Vm.ToneWarn);
     }
 }
