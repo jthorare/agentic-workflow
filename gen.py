@@ -391,7 +391,7 @@ def not_running_page():
 
 SLACK = lambda b='Paste a Slack token', cls='': row('todo','Slack','messages and mentions · optional','needs a token, 3 steps', btn(b, cls))
 def accounts_page(rows, foot_btn, last, tab='Setup'):
-    return (bar_full(tab, '6/8')
+    return (bar_full(tab, '7/8')
             + '<div class="header"><h1>Accounts</h1><span class="count">Connect or reconnect the accounts Sindri reads</span></div>'
             + f'<div class="list" style="--facts:200px"><div class="group"><span class="chev">▾</span>Accounts <span class="n">3</span></div>{rows}</div>'
             + f'<div class="actionbar"><span>{last}</span><span class="spacer"></span>{foot_btn}</div>' + keys(('j/k','move'),('Enter','press'),('Ctrl+Enter','primary'),('Esc','Done')))
@@ -411,8 +411,8 @@ def accounts_panels():
                         btn('Done','primary','Esc','focus'), 'Done goes back to Setup.')))
     P.append(panel('Done pressed', 'decision 28',
         accounts_page(GH_OK + LIN_OK + SLACK(), btn('Done','primary','Esc','pressed'), 'Done goes back to Setup.')))
-    nav = bar_full('Setup','6/8')
-    body = (nav + '<div class="header"><h1>Setup</h1><span class="count">6 of 8 steps done</span></div>'
+    nav = bar_full('Setup','7/8')
+    body = (nav + '<div class="header"><h1>Setup</h1><span class="count">7 of 8 steps done</span></div>'
         + '<div class="list" style="--facts:136px;--col-act:200px"><div class="group"><span class="chev">▾</span>Steps <span class="n">8</span></div>'
         + row('done','Connect your accounts','GitHub is connected as ada · Linear is connected as ada · Slack is optional and not connected','', btn('Accounts'), 'read cursor')
         + row('done','Add your repos','jthorare/agentic-workflow and ledgerly-app/exports','2 repos','', 'read')
@@ -469,7 +469,7 @@ def fullify(s):
             return head
         head = re.sub(r'<div class="topbar"[^>]*>.*?<div class="status-pill[^"]*">[^<]*</div></div>', '', head, count=1, flags=re.S)
         pill, off = ('Not responding', True) if lab.startswith('Shell') else ('Sindri running', False)
-        bar = bar_full(tab_of(lab), '6/8', pill, off).replace('class="topbar"', 'class="topbar" style="height:40px"')
+        bar = bar_full(tab_of(lab), '7/8', pill, off).replace('class="topbar"', 'class="topbar" style="height:40px"')
         head = head.replace('<section class="panel">', '<section class="panel" style="grid-column:1/-1;width:1440px">', 1)
         return head.replace('<div class="pbody">', '<div class="pbody">' + bar, 1)
     return re.sub(r'<section class="panel"><div class="plabel"><b>(.*?)</b>.*?</section>\n?', conv, s, flags=re.S)

@@ -77,7 +77,7 @@ Spec at origin/main 13744d9 or later. Checked by reading each frame's HTML text 
 | Map failure line | setup-steps "Map failed for one repo" (full sentence); states Home map-failed (short form with Details, as §4.6) | matches |
 | Still stopping: pid 48213, serve.log path | not-running panel 5, stale-line Still stopping | matches |
 | Didn't come back: port 7410 | stale-line Didn't come back; not-running "Didn't start" | matches |
-| Setup page: 6 of 8, "Setup 6/8" | setup-steps (stale, expired, first-read-failed, no-agent, running-by-itself panels), setup-accounts, setup-repos-page, stale-line, states panels that do not show hello-sindri's result | **Changed:** setup-accounts and the older states panels said 7/8; they say 6/8 now. Panels that show hello-sindri's result keep 7 of 8 (map phases, map failed or stopped, Loading, expired account, Home succeeded, map-failed and own-rows) |
+| Setup page: 6 of 8, "Setup 6/8" | setup-steps panels before hello-sindri's result (stale, first-read-failed, no-agent, running-by-itself), Home being made and running, stale-line | 6/8 before hello-sindri runs, 7/8 after (ideas, #3315): setup-accounts, the older states panels, and every panel that shows hello-sindri's result read 7 of 8 and Setup 7/8, because the map is the one step left |
 | Services: 16 | **Added:** states "Home: health strip with the services count (#3127)" reads "Sindri running · 16 services · profile saved" | now shown |
 | Today's times | not-running Starting says "about 10 seconds" (serve up 9.9 s); the other times appear in no frame | the 3 s, 81 s and 18 min figures are not drawn |
 
