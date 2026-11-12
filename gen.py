@@ -239,28 +239,32 @@ write('create-window-error', desk(CWERR, '“Linear can’t be reached. Your tex
 write('create-window-done', desk('<div class="notif"><div class="h">Sindri</div><div>Created <span class="id">EXP-437</span> in Exports v2</div><div style="color:var(--ink-subtle);font-size:12px">Retry timeout on export upload is 5 s, make it configurable</div><div class="acts">' + btn('Open in Linear') + btn('Copy link') + '</div></div>', '“Notification: Created EXP-437 in Exports v2. Actions: Open in Linear, Copy link.”'))
 
 # ================= #3170 Settings: the shortcut the system refused =================
-def srow(title, sub, key, btnhtml='', cls='read', g='linked'):
-    return (f'<div class="row fix {cls}"><span class="g {g}"></span><span class="title"><span class="t">{title}</span><span class="sub">{sub}</span></span>'
-            f'<span class="fact"><kbd>{key}</kbd></span><span class="fixbtn">{btnhtml}</span></div>\n')
-sl = grp('Shortcuts', 3)
-sl += srow('New issue from anywhere', 'Opens the one-line create window, even with the main window closed', 'Ctrl+Alt+I', btn('Change'), 'unread cursor', 'fail')
-sl += ('<div class="state-line err" style="margin:0 0 8px"><span class="g fail"></span><span class="what">The OS refused this hotkey (taken, or no global-shortcuts portal on Wayland). Use the tray menu’s New issue.</span>'
-       '<span class="btns"><span class="det">Details ▸</span>' + btn('Choose another shortcut', True) + '</span></div>\n')
-sl += srow('Open Sindri', 'Brings the main window to the front', 'Ctrl+Alt+S', btn('Change'))
-sl += srow('Command palette', 'Inside the app only', 'Ctrl+K', '<span class="fact" style="color:var(--ink-subtle)">fixed</span>')
-sl += grp('Tray', 2) + srow('Show Sindri in the tray', 'Needed for the shortcut above', 'on', btn('Turn off'), 'read', 'on') + srow('Start with the computer', '', 'off', btn('Turn on'), 'read', 'off')
+# Layout copied from the real SettingsView (src/Sindri/Aw.Sindri.Ui/Views/SettingsView.axaml): a page title, then sections stacked
+# 24 px apart. A section is a detail-title heading over a Surface1 card (hairline border, radius 12, padding 16) whose rows are
+# a body-strong label with a caption under it on the left and the control on the right, hairline between rows.
+def setrow(label, sub, right, first=False):
+    d = '' if first else '<div class="sdiv"></div>'
+    return f'{d}<div class="srw"><div class="stx"><div class="sl">{label}</div><div class="sc">{sub}</div></div><div class="sctl">{right}</div></div>'
+SHORT = ('<div class="ssec"><div class="shd">Shortcuts</div><div class="scard">'
+  + setrow('New issue from anywhere', 'Opens the one-line create window, even with the main window closed.', '<kbd>Ctrl+Alt+I</kbd>' + btn('Change'), True)
+  + '<div class="serr"><span class="g fail"></span><span>The OS refused this hotkey (taken, or no global-shortcuts portal on Wayland). Use the tray menu’s New issue.</span><span class="sp"></span>' + btn('Choose another shortcut', True) + '</div>'
+  + setrow('Open Sindri', 'Brings the main window to the front.', '<kbd>Ctrl+Alt+S</kbd>' + btn('Change'))
+  + '</div></div>')
+THISAPP = ('<div class="ssec"><div class="shd">This app</div><div class="scard">'
+  + setrow('Reduce motion', 'Turns off the slides and fades.', '<span class="tgl"><i></i></span>', True)
+  + '<div class="sdiv"></div><div class="srw" style="display:block"><div style="display:flex;justify-content:space-between"><div class="sl">Text size</div><div class="sm">100%</div></div>'
+    '<div class="trk"><i></i><b></b></div><div class="ticks"><span>90%</span><span>100%</span><span>130%</span></div></div></div></div>')
 cont = (f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Settings - shortcut refused</title>
 <link rel="stylesheet" href="{G}"><link rel="stylesheet" href="projects.css"></head>
-<body><div class="app">
+<body><div class="app" style="grid-template-rows:var(--bar-h) 1fr var(--keys-h)">
 <div class="topbar"><span class="wordmark">Sindri</span><nav class="nav"><a>Home<span class="n">9</span></a><a>Reviews<span class="n">4</span></a><a>Items<span class="n">31</span></a><a>Workflows</a><a>Agents<span class="n">3</span></a><a>Projects</a><a>Context</a></nav>
 <span class="spacer"></span><div class="cmdk">Search or run a command<kbd>Ctrl+K</kbd></div><span class="status-pill">Connected</span></div>
-<div class="header"><h1>Settings</h1><span class="count">Shortcuts and tray</span></div>
-<div class="body"><div class="list">
-{sl}</div></div>
-<div class="keys"><span><kbd>j/k</kbd>move</span><span><kbd>Enter</kbd>change</span><span><kbd>Esc</kbd>back</span><span><kbd>Ctrl+K</kbd>palette</span></div>
+<div class="settings"><div class="spt">Settings</div>
+{SHORT}{THISAPP}</div>
+<div class="keys"><span><kbd>Tab</kbd>next</span><span><kbd>Enter</kbd>change</span><span><kbd>Esc</kbd>back</span><span><kbd>Ctrl+K</kbd>palette</span></div>
 </div></body></html>
 ''')
 TRAY = ('<div class="menu" style="right:14px;top:34px;left:auto;width:200px;padding:4px 0">'
         '<div class="ment on"><span class="lab">New issue</span></div><div class="ment"><span class="lab">Open Sindri</span></div></div>')
-write('settings-hotkey-refused', cont.replace('</body>', TRAY + sr('row read as “New issue from anywhere, shortcut Control Alt I, refused by the system, button Change”. The error line is read right after the row.') + '</body>'))
+write('settings-hotkey-refused', cont.replace('</body>', TRAY + sr('the Shortcuts heading is a level 2 heading; the row reads “New issue from anywhere, shortcut Control Alt I”, then the error line, then “Choose another shortcut, button”.') + '</body>'))

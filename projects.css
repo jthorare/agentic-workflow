@@ -83,3 +83,24 @@
 .rules>div{padding:3px 0 !important}
 .draft .ta ul{margin:0 0 6px;padding-left:18px}.draft .ta li{margin:0}
 .btn.dis{opacity:.45}
+
+/* Settings page, copied from SettingsView.axaml: title, then sections 24 px apart; heading over a Surface1 card */
+.settings{padding:var(--sp5) var(--inset) 0;overflow:hidden}
+.spt{font:600 22px/28px var(--font);letter-spacing:-.24px;color:var(--ink);margin-bottom:var(--sp5)}
+.ssec{margin-bottom:var(--sp5)}
+.shd{font:600 15px/22px var(--font);color:var(--ink);margin-bottom:var(--sp1)}
+.scard{background:var(--s1);border:1px solid var(--hair);border-radius:12px;padding:var(--sp4)}
+.srw{display:flex;align-items:center;justify-content:space-between;gap:var(--sp4)}
+.sl{font:500 13px/20px var(--font);color:var(--ink)}
+.sc{font:400 12px/18px var(--font);color:var(--ink-subtle)}
+.sm{font:400 13px/20px var(--font);color:var(--ink-muted)}
+.sctl{display:flex;align-items:center;gap:var(--sp3)}
+.sdiv{height:1px;background:var(--hair);margin:var(--sp3) 0}
+.serr{display:flex;align-items:center;gap:var(--sp3);margin:var(--sp3) 0 0;padding:8px 12px;background:var(--err-soft);border-radius:var(--r2);font-size:13px;color:var(--ink-muted)}
+.serr .sp{flex:1}
+.tgl{width:40px;height:20px;border-radius:10px;background:var(--s4);position:relative;display:inline-block}
+.tgl i{position:absolute;left:3px;top:3px;width:14px;height:14px;border-radius:50%;background:var(--ink-subtle)}
+.trk{height:4px;border-radius:2px;background:var(--s4);margin:10px 0 6px;position:relative}
+.trk i{position:absolute;left:0;top:0;bottom:0;width:25%;background:var(--primary-hi);border-radius:2px}
+.trk b{position:absolute;left:25%;top:-5px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--ink)}
+.ticks{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-subtle)}

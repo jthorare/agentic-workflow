@@ -17,4 +17,4 @@ All 1440x900 PNGs in this folder (`pr-<name>.png`), on `../grammar-2978/grammar.
 | pr-create-window-empty | #3170 | Same, before typing | 12 |
 | pr-create-window-error | #3170 | "Linear can't be reached. Your text is kept." with Retry; window stays open | settled 15 |
 | pr-create-window-done | #3170 | Notification "Created EXP-437" with Open in Linear and Copy link | settled 16 |
-| pr-settings-hotkey-refused | #3170 | Settings, Shortcuts: Ctrl+Alt+I with ideas' exact refused-hotkey line, one primary (Choose another shortcut), tray menu with New issue | 13 |
+| pr-settings-hotkey-refused | #3170 | Settings drawn in the real SettingsView layout: a Shortcuts section (heading over a card) with Ctrl+Alt+I, ideas' exact refused-hotkey line and one primary (Choose another shortcut), beside the real This app section; the tray menu shows New issue | 13 |

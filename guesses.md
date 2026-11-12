@@ -31,7 +31,7 @@ Draft update and Home
 
 Create window and Settings
 12. Frameless dialog over a plain desktop with a tray strip. Project and Assignee are preset; "in Linear · EXP". Title field only.
-13. Settings copy for a refused hotkey is ideas' exact text: "The OS refused this hotkey (taken, or no global-shortcuts portal on Wayland). Use the tray menu's New issue." One primary, "Choose another shortcut". The tray strip shows New issue. The Settings page layout (groups, rows) is my guess; the spec has no Settings frame.
+13. Settings copy for a refused hotkey is ideas' exact text: "The OS refused this hotkey (taken, or no global-shortcuts portal on Wayland). Use the tray menu's New issue." One primary, "Choose another shortcut". The tray strip shows New issue. The layout is not a guess any more: it follows the real SettingsView (a page title, sections 24 px apart, each a heading over a Surface1 card with label, caption and control rows, hairline between rows). "Shortcuts" is drawn as one more section beside the real "This app" section. I could not read the shell's page margin or maximum width, so the cards stretch the full 1392 px content width.
 
 Screen reader lines
 14. Every frame carries one "Screen reader:" line saying what a row (or the window, menu or notification) reads as. The wording is mine; none of the frames before this round had aria names.
