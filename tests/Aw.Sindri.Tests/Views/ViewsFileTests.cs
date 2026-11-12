@@ -1,4 +1,5 @@
 using Aw.Kernel.Data;
+using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Infrastructure.Views;
 using Aw.Sindri.Tests.Ledger;
@@ -45,6 +46,24 @@ public sealed class ViewsFileTests : IDisposable
         Assert.Null(state.Value);
         Assert.Empty(rows.Value);
         Assert.Null(row.Value);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task Read_on_a_half_migrated_views_db_is_empty()
+    {
+        using var views = new SqliteViews(Path.Combine(_home.Path, "home"));
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(views.Path)!);
+        var runner = new MigrationRunner(new SqliteConnectionFactory(new SqliteOptions(views.Path)), new FakeTimeProvider(), backupBeforeUpgrade: false);
+        var halfway = await runner.Migrate(ViewsDatabase.Migrations, Token, targetVersion: 14);   // #2881: view_launches exists (migration 5), its 'reason' column (migration 15) does not
+
+        var idle = await views.Reader.Where<LaunchRow>(ViewNames.Launches, ViewColumn.Reason, "idle", Token);
+        var state = await views.Reader.State(Token);
+
+        Assert.True(halfway.IsSuccess, halfway.IsError ? halfway.Error.Message : null);
+        Assert.True(idle.IsSuccess, idle.IsError ? idle.Error.Message : null);
+        Assert.Empty(idle.Value);
+        Assert.True(state.IsSuccess, state.IsError ? state.Error.Message : null);
+        Assert.Null(state.Value);
     }
 
     [Fact, Trait("Lane", "integration")]
