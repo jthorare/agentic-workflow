@@ -24,7 +24,7 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
     private const string TriggerKind = "manual";
     private const int Page = 200;
     private const string SetupActor = "service:setup";
-    private static readonly WorkflowSlug HelloSindri = WorkflowSlug.From("hello-sindri");
+    private static readonly WorkflowSlug _helloSindri = WorkflowSlug.From("hello-sindri");
 
     public async ValueTask<Result<RunWorkflowResponse>> Handle(RunWorkflowRequest request, CancellationToken cancellationToken)
     {
@@ -40,18 +40,13 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
             return loop;
         }
 
-        var listed = await workflows.List(includeArchived: false, cancellationToken).ConfigureAwait(false);
-        if (listed.IsError)
+        var found = await Find(request.Slug, cancellationToken).ConfigureAwait(false);
+        if (found.IsError)
         {
-            return listed.Error;
+            return found.Error;
         }
 
-        var record = listed.Value.FirstOrDefault(r => r.Slug == request.Slug);
-        if (record is null)
-        {
-            return SindriErrors.GraphNotFound.With($"no workflow '{request.Slug.Value}'; list the workflows to see what exists");
-        }
-
+        var record = found.Value;
         if (record.ActiveRevision is not { } active)
         {
             return SindriErrors.GraphNotActive.With($"'{request.Slug.Value}' has no active revision; activate one first");
@@ -72,6 +67,19 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
         return await Start(new Trigger(record, revision.Value, trigger), cancellationToken).ConfigureAwait(false);
     }
 
+    private async ValueTask<Result<WorkflowRecord>> Find(WorkflowSlug slug, CancellationToken cancellationToken)
+    {
+        var listed = await workflows.List(includeArchived: false, cancellationToken).ConfigureAwait(false);
+        if (listed.IsError)
+        {
+            return listed.Error;
+        }
+
+        return listed.Value.FirstOrDefault(r => r.Slug == slug) is { } record
+            ? record
+            : SindriErrors.GraphNotFound.With($"no workflow '{slug.Value}'; list the workflows to see what exists");
+    }
+
     // The 'setup' grant on RunWorkflow is narrow (first-run spec decision 19): 'service:setup' may run only the hello-sindri workflow it made itself, and once. Every other caller is unchanged.
     private async ValueTask<Error?> SetupRefusal(WorkflowRecord record, CancellationToken cancellationToken)
     {
@@ -80,7 +88,7 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
             return null;
         }
 
-        if (record.Slug != HelloSindri || !string.Equals(record.CreatedBy, SetupActor, StringComparison.Ordinal))
+        if (record.Slug != _helloSindri || !string.Equals(record.CreatedBy, SetupActor, StringComparison.Ordinal))
         {
             return SindriErrors.GraphSetupRunRefused.With($"'{record.Slug.Value}' is not the hello-sindri workflow the setup service made");
         }
