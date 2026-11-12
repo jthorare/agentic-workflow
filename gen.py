@@ -185,11 +185,10 @@ sheet = ('<div class="sheet">' + panel('Triage, empty','<div>'+e1+'</div>','#296
          + panel('Projects, no projects','<div>'+e2+'</div>','#2961') + '</div>')
 write('projects-states.html', '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Projects, states</title>\n<link rel="stylesheet" href="'+G+'"><link rel="stylesheet" href="projects.css"></head><body>'+sheet+'</body></html>\n')
 
-# self-assign confirm from Triage (key a): one popup under the cursor row, cancellable, Enter commits
+# self-assign confirm from Triage (key i): one popup under the cursor row, cancellable, Enter commits
 conf = ('<div class="menu" style="left:44px;top:CONFTOPpx;width:320px"><div class="mhead">Assign EXP-431 to you?</div>\n'
         '<div class="parse">It leaves Triage and shows in My work.</div>\n'
         '<div class="ment on"><span class="g doing"></span><span class="lab">Assign to me</span><kbd>Enter</kbd></div>\n'
-        '<div class="ment"><span class="g fail"></span><span class="lab">Cancel</span><kbd>Esc</kbd></div>\n'
-        '<div class="mfoot"><span><kbd>Enter</kbd>assign</span><span><kbd>Esc</kbd>cancel</span></div></div>\n')
+        '<div class="ment"><span style="width:16px;flex:none"></span><span class="lab">Cancel</span><kbd>Esc</kbd></div></div>\n')
 write('projects-assign-confirm.html', head('Projects - assign confirm','Triage') +
   '<div class="body"><div class="list">\n' + tr + '</div></div>\n' + keys([('i','assign to me…'),('h','snooze…')]) + END.replace('</body>', conf.replace('CONFTOPpx', '222px') + '</body>'))
