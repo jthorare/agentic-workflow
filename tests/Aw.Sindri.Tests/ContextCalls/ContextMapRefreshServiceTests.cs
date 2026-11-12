@@ -624,6 +624,6 @@ public sealed class ContextMapRefreshServiceTests
     // The checkout port with a fixed answer: the paths given are checkouts, every other path is a plain folder (#3371).
     private sealed class Checkouts(params string[] paths) : IRepoCheckouts
     {
-        public bool IsCheckout(string path) => paths.Contains(path, StringComparer.Ordinal);
+        public RepoCheckout Of(string path) => paths.Contains(path, StringComparer.Ordinal) ? RepoCheckout.Checkout : RepoCheckout.PlainFolder;
     }
 }

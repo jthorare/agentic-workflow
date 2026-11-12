@@ -34,11 +34,12 @@ internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAc
         return checkouts is null ? scope : WithoutPlainFolders(scope, checkouts);
     }
 
-    // #3371: a profile repo whose path is not a git checkout fails every git read (SND-CONTEXT-048). 'sindri repo add' refuses one, so only a hand-written
-    // profile names one: every read leaves it out and names it, so one plain folder never fails the map of the others.
+    // #3371: a profile repo whose path is a plain folder fails every git read (SND-CONTEXT-048). 'sindri repo add' refuses one, so only a hand-written
+    // profile names one: every read leaves it out and names it, so one plain folder never fails the map of the others. A missing folder stays in, so
+    // an unmounted or deleted repo keeps failing loudly and no map publishes without it.
     private static ContextScope WithoutPlainFolders(ContextScope scope, IRepoCheckouts checkouts)
     {
-        var plain = scope.Repos.Where(r => !checkouts.IsCheckout(r.Path)).ToList();
+        var plain = scope.Repos.Where(r => checkouts.Of(r.Path) == RepoCheckout.PlainFolder).ToList();
         return plain.Count == 0 ? scope : scope with { Repos = [.. scope.Repos.Except(plain)], LeftOut = [.. plain.Select(static r => r.Name)] };
     }
 

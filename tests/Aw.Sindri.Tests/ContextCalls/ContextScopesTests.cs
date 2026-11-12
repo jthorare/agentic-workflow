@@ -87,15 +87,28 @@ public sealed class ContextScopesTests
         Assert.Empty(scope.LeftOut);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_missing_repo_folder_stays_in_the_scope_so_its_reads_still_fail_loudly()
+    {
+        WithRepos(("aw", "/r/aw"), ("work", "/gone/work"));
+        var scopes = new ContextScopes(_h.Profiles, _h.Callers, new Checkouts("/r/aw"));
+
+        var scope = (await scopes.Current(TestContext.Current.CancellationToken)).Value;
+
+        Assert.Equal(["aw", "work"], scope.Repos.Select(r => r.Name.Value), StringComparer.Ordinal);
+        Assert.Empty(scope.LeftOut);
+    }
+
     private void WithRepos(params (string Name, string Path)[] repos)
     {
         var live = SliceHarness.Profile("5s");
         _h.Profiles.Live = live with { Profile = live.Profile with { Repos = [.. repos.Select(r => new RepoEntry(r.Name, r.Path))] } };
     }
 
-    // The checkout port with a fixed answer: the paths given are checkouts, every other path is a plain folder.
+    // The checkout port with a fixed answer: the paths given are checkouts, a path under /gone/ is missing, every other path is a plain folder.
     private sealed class Checkouts(params string[] paths) : IRepoCheckouts
     {
-        public bool IsCheckout(string path) => paths.Contains(path, StringComparer.Ordinal);
+        public RepoCheckout Of(string path) =>
+            paths.Contains(path, StringComparer.Ordinal) ? RepoCheckout.Checkout : path.StartsWith("/gone/", StringComparison.Ordinal) ? RepoCheckout.Missing : RepoCheckout.PlainFolder;
     }
 }

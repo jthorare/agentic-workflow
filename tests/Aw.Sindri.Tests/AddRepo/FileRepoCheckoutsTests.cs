@@ -1,10 +1,11 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Infrastructure.Setup;
 using Aw.Sindri.Tests.Ledger;
 
 namespace Aw.Sindri.Tests.AddRepo;
 
-/// <summary>The checkout check the context reads ask before any git read (#3371): '.git' as a folder or a file is a checkout, a plain folder is not, even inside a checkout.</summary>
+/// <summary>The checkout check the context reads ask before any git read (#3371): '.git' as a folder or a file is a checkout, a plain folder is not, even inside a checkout, and a missing folder is told apart from both.</summary>
 [Lane(TestLane.Integration)]
 public sealed class FileRepoCheckoutsTests : IDisposable
 {
@@ -21,7 +22,7 @@ public sealed class FileRepoCheckoutsTests : IDisposable
         var clone = Folder("clone");
         _ = Directory.CreateDirectory(Path.Combine(clone, ".git"));
 
-        Assert.True(_checkouts.IsCheckout(clone));
+        Assert.Equal(RepoCheckout.Checkout, _checkouts.Of(clone));
     }
 
     [Fact]
@@ -30,11 +31,11 @@ public sealed class FileRepoCheckoutsTests : IDisposable
         var worktree = Folder("worktree");
         File.WriteAllText(Path.Combine(worktree, ".git"), "gitdir: /elsewhere/.git/worktrees/worktree\n");
 
-        Assert.True(_checkouts.IsCheckout(worktree));
+        Assert.Equal(RepoCheckout.Checkout, _checkouts.Of(worktree));
     }
 
     [Fact]
-    public void A_plain_folder_is_not_a_checkout() => Assert.False(_checkouts.IsCheckout(Folder("notes")));
+    public void A_plain_folder_is_not_a_checkout() => Assert.Equal(RepoCheckout.PlainFolder, _checkouts.Of(Folder("notes")));
 
     [Fact]
     public void A_plain_folder_inside_a_checkout_is_not_a_checkout_of_its_own()
@@ -42,9 +43,9 @@ public sealed class FileRepoCheckoutsTests : IDisposable
         var clone = Folder("clone");
         _ = Directory.CreateDirectory(Path.Combine(clone, ".git"));
 
-        Assert.False(_checkouts.IsCheckout(Folder(Path.Combine("clone", "notes"))));
+        Assert.Equal(RepoCheckout.PlainFolder, _checkouts.Of(Folder(Path.Combine("clone", "notes"))));
     }
 
     [Fact]
-    public void A_missing_folder_is_not_a_checkout() => Assert.False(_checkouts.IsCheckout(Path.Combine(_home.Path, "gone")));
+    public void A_missing_folder_is_missing_not_a_plain_folder() => Assert.Equal(RepoCheckout.Missing, _checkouts.Of(Path.Combine(_home.Path, "gone")));
 }
