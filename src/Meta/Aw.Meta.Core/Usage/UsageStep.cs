@@ -10,9 +10,3 @@ internal sealed record UsageStep(IReadOnlyList<string> Lines, UsageMemory Memory
     /// <summary>The edges this look crossed: a subject that became limited, or whose window came back the first time.</summary>
     internal IReadOnlyList<UsageEdge> Edges { get; init; } = [];
 }
-
-/// <summary>One usage edge.</summary>
-/// <param name="Limited">True for a new stop, false for the window coming back.</param>
-/// <param name="Subject">The lane, or "meta".</param>
-/// <param name="Until">When the stop says it resets; null when it gave no time.</param>
-internal sealed record UsageEdge(bool Limited, string Subject, DateTimeOffset? Until);
