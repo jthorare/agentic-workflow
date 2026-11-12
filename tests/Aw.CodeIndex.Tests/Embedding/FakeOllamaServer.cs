@@ -27,6 +27,12 @@ internal sealed class FakeOllamaServer : HttpMessageHandler
     /// <summary>When set, /api/embed answers this body instead of vectors.</summary>
     public string? EmbedBody { get; set; }
 
+    /// <summary>When set, /api/embed answers 400 "the input length exceeds the context length" for any input longer than this, unless the request sets truncate (as Ollama does).</summary>
+    public int? MaxInputCharacters { get; set; }
+
+    /// <summary>When set, /api/embed answers 400 for any request with an input holding this text, whatever its length or truncate.</summary>
+    public string? RejectInputContaining { get; set; }
+
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var body = request.Content is null ? string.Empty : await request.Content.ReadAsStringAsync(cancellationToken);
@@ -53,6 +59,17 @@ internal sealed class FakeOllamaServer : HttpMessageHandler
 
     private static HttpResponseMessage Json(string text) => new(HttpStatusCode.OK) { Content = new StringContent(text, Encoding.UTF8, "application/json") };
 
+    private HttpResponseMessage? Rejected(JsonElement root)
+    {
+        var inputs = root.GetProperty("input").EnumerateArray().Select(i => i.GetString()!).ToList();
+        var truncates = root.TryGetProperty("truncate", out var flag) && flag.ValueKind == JsonValueKind.True;
+        var tooLong = MaxInputCharacters is { } max && !truncates && inputs.Exists(i => i.Length > max);
+        var poisoned = RejectInputContaining is { } marker && inputs.Exists(i => i.Contains(marker, StringComparison.Ordinal));
+        return tooLong || poisoned
+            ? new HttpResponseMessage(HttpStatusCode.BadRequest) { Content = new StringContent("""{"error":"the input length exceeds the context length"}""") }
+            : null;
+    }
+
     private HttpResponseMessage Embed(string body)
     {
         using var document = JsonDocument.Parse(body);
@@ -60,6 +77,11 @@ internal sealed class FakeOllamaServer : HttpMessageHandler
         if (!Models.ContainsKey(model))
         {
             return new HttpResponseMessage(HttpStatusCode.NotFound) { Content = new StringContent("""{"error":"model not found"}""") };
+        }
+
+        if (Rejected(document.RootElement) is { } rejected)
+        {
+            return rejected;
         }
 
         if (EmbedBody is { } scripted)

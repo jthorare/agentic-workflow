@@ -80,6 +80,9 @@ internal sealed class OllamaEmbedder : IEmbedder, IDisposable
         return answer.IsError ? answer.Error : Vectors(answer.Value, texts.Count);
     }
 
+    /// <summary>How many inputs the server refused even alone, so <see cref="Embed"/> left an empty vector in their place (#3128).</summary>
+    public int SkippedInputs => _pin is null ? 0 : throw new NotSupportedException();
+
     public void Dispose() => _http.Dispose();
 
     private static Uri Endpoint(EmbeddingsSettings settings, string path) => new(new Uri(settings.Url), path);

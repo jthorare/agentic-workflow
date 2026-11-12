@@ -1398,6 +1398,7 @@ static Aw.CodeIndex.Core.Values.SymbolRef.TryParse(string? s, System.IFormatProv
 static Aw.CodeIndex.Core.Values.SymbolRef.operator !=(Aw.CodeIndex.Core.Values.SymbolRef left, Aw.CodeIndex.Core.Values.SymbolRef right) -> bool
 static Aw.CodeIndex.Core.Values.SymbolRef.operator ==(Aw.CodeIndex.Core.Values.SymbolRef left, Aw.CodeIndex.Core.Values.SymbolRef right) -> bool
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.BuildFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.CodeIndex.Core.CodeIndexErrors.EmbeddingInputRejected -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.EmbeddingServerFailed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.EmbeddingTargetRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.GraphUnavailable -> Aw.Kernel.ErrorDefinition!

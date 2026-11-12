@@ -108,6 +108,18 @@ public sealed class CodeIndexDoctorTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_refused_chunk_on_the_embeddings_layer_names_the_real_cause_not_start_ollama_issue_3128()
+    {
+        var rejected = new LayerStatus(LayerName.Embeddings, LayerState.Unavailable, CodeIndex.Core.CodeIndexErrors.EmbeddingInputRejected.Code, "a chunk was refused");
+        var rows = CodeIndexDoctor.Rows([Built(Ok(LayerName.Structure), rejected)], [], [], _now);
+
+        var fix = rows.Single(static c => c.Name == "code-index:ollama").Fix;
+
+        Assert.Contains("too long", fix, StringComparison.Ordinal);
+        Assert.DoesNotContain("start Ollama", fix, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void No_repos_is_one_ok_row() =>
         Assert.Equal([("code-index", CheckState.Ok)], CodeIndexDoctor.Rows([], [], [], _now).Select(static c => (c.Name, c.State)));
 
