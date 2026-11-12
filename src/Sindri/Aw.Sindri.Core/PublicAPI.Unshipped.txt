@@ -23223,6 +23223,8 @@ static Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.operator ==(Aw.Sindri.Core
 Aw.Sindri.Core.NeedsYou.NeedsYouDecisions
 static Aw.Sindri.Core.NeedsYou.NeedsYouDecisions.From(Aw.Sindri.Core.Views.HumanDecisionRow! row) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouDecision!>!
 static Aw.Sindri.Core.NeedsYou.NeedsYouDecisions.Question(Aw.Sindri.Core.Views.HumanDecisionRow! row) -> string!
+Aw.Sindri.Core.Graph.GraphContinueRule
+static Aw.Sindri.Core.Graph.GraphContinueRule.LeavesNowhere(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Graph.GraphNode! node) -> bool
 Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload
 Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
 Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.RunId.init -> void
