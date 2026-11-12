@@ -128,6 +128,7 @@ internal sealed class DeleteWorkflowService(IWorkflowStore workflows, IWorkflowR
     {
         ResourceOwnerKind.Workflow => string.Equals(owner.Key, slug, StringComparison.Ordinal),
         ResourceOwnerKind.Node => owner.Key.StartsWith(slug + "/", StringComparison.Ordinal),
+        ResourceOwnerKind.Toolkit => false,
         _ => false,
     };
 
