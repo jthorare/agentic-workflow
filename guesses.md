@@ -4,7 +4,7 @@ Round 1 guess numbers no longer apply. Items below are invented in these frames 
 
 ## Placeholders
 1. Link ids written into the file: `[[#3112]]` (issue and PR), `[[thread:eng/1731]]`, `[[run:8841]]`, `[[scope:export/upload]]`, `[[code:ctx_9c41e2|Uploader.cs:88]]`. The context lane picks the real ones.
-2. Error codes: `NOTES-WRITE-001 · EACCES` (capture, today page), `NOTES-HISTORY-001 · ENOENT` (history), `LINEAR-CREATE-502` (make an issue).
+2. Error codes are now the spec's (PR #3205): SND-NOTE-003 (capture write), SND-NOTE-005 (today save), SND-NOTE-012 (history read), SND-NOTE-015 (make an issue failed).
 
 ## Behaviour
 3. Capture: the Issue / Note switch shows only when a notes folder is set (lead call). The "No notes folder yet" error frame is reachable only if the folder was removed while the window was open.
