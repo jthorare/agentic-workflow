@@ -50,10 +50,10 @@ internal static partial class Labels
     internal static string ContextItemUnscoped(string item, string? repo) =>
         $"No scope yet for {item}; showing " + (repo is null ? "the whole map" : $"{repo}'s map");
 
-    /// <summary>The note when the item has a frozen scope: its starting points are in the box.</summary>
+    /// <summary>The note when Sindri does not know the item.</summary>
     /// <param name="item">The item's id.</param>
     /// <returns>The note.</returns>
-    internal static string ContextItemScoped(string item) => $"Context of {item}, from its frozen scope";
+    internal static string ContextItemUnknown(string item) => $"{item} isn't known to Sindri";
 
     /// <summary>The note when the item's context could not be read.</summary>
     /// <param name="item">The item's id.</param>

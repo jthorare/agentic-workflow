@@ -348,7 +348,6 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
         {
             [var id] => Answer(Counted(await server.Item(uri, id, sequence, cancellationToken), server.ItemAnswer(id))),
             [var id, "timeline"] => Answer(Counted(await server.Timeline(uri, id, After(uri), sequence, cancellationToken), server.TimelineAnswer(id, After(uri)))),
-            [var id, "scope"] => Answer(Counted(await server.ItemScope(uri, id, cancellationToken), server.ItemScopeAnswer(id))),
             [var id, "close"] when request.Method == HttpMethod.Post =>
                 Answer(Counted(await server.CloseItem(uri, id, await Body<CloseItemRequest>(request, cancellationToken), cancellationToken), server.Close)),
             _ => Text(HttpStatusCode.NotFound, "{}", "application/json"),

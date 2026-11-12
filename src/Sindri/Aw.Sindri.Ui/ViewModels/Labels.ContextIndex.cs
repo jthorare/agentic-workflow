@@ -121,6 +121,13 @@ internal static partial class Labels
     /// <returns>"Not embedded yet: 12 records".</returns>
     internal static string ConceptsNotEmbedded(int pending) => "Not embedded yet: " + ContextRecords(pending);
 
+    /// <summary>The backlog bar's sentence.</summary>
+    /// <param name="embedded">Records with a vector.</param>
+    /// <param name="total">Embedded plus pending.</param>
+    /// <returns>"30 of 60 records embedded".</returns>
+    internal static string RecordsEmbedded(int embedded, int total) =>
+        string.Create(CultureInfo.InvariantCulture, $"{embedded} of {total} records embedded");
+
     /// <summary>Groups waiting for the model to name them.</summary>
     /// <param name="queued">The count.</param>
     /// <returns>"Waiting for a name: 3 groups".</returns>

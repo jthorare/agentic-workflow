@@ -107,7 +107,7 @@ public sealed class GraphAgentTakeoverTests
         var run = await AgentNodeRig.Start(rig);
         await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
-        var final = await rig.Cancel(run);
+        var final = await rig.Cancel(run, whenParked: false);
 
         Assert.Equal(WorkflowRunStatus.Cancelled, final.Status);
         Assert.Equal(NodeRunStatus.Cancelled, (await AgentNodeRig.Row(rig, run)).Status);
@@ -123,7 +123,7 @@ public sealed class GraphAgentTakeoverTests
         var run = await AgentNodeRig.Start(rig);
         await runtime.Launching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
-        var cancelling = rig.Cancel(run);   // why: Cancel waits for the final row, which needs the launch to return, so the gate opens while it waits; the cancel is confirmed requested in the history before the gate opens, so it really arrives during the launch
+        var cancelling = rig.Cancel(run, whenParked: false);   // why: Cancel waits for the final row, which needs the launch to return, so the gate opens while it waits; the cancel is confirmed requested in the history before the gate opens, so it really arrives during the launch
         await rig.CancelRequested(run);
 
         _ = gate.TrySetResult();
@@ -142,7 +142,7 @@ public sealed class GraphAgentTakeoverTests
         var run = await AgentNodeRig.Start(rig);
         await runtime.Launching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
-        var final = await rig.Cancel(run);
+        var final = await rig.Cancel(run, whenParked: false);
 
         Assert.Equal(WorkflowRunStatus.Cancelled, final.Status);
     }

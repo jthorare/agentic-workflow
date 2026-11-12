@@ -70,6 +70,8 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.XS}" />
+    <!-- Border + padding = 7,3 to the text. Border.phrase-chip.selected (Views/Todo/TodoPanel.axaml) pairs its 2 px border with
+         5,1 to keep that sum; change both together (#2761). -->
     <Setter Property="Padding" Value="6,2" />
   </Style>
   <Style Selector="Button.copy">

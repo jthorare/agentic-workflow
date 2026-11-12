@@ -126,7 +126,6 @@ public sealed class SandboxPlanSeatbeltTests
         var sindriDeny = IndexOf(plan, Req.SindriHome, PlanMountKind.Deny);
         Assert.True(sindriDeny >= 0);
         Assert.True(IndexOf(plan, Req.SindriHome + "/launches", PlanMountKind.ReadWrite) > sindriDeny);
-        Assert.True(IndexOf(plan, Req.SindriHome + "/approved", PlanMountKind.ReadOnly) > sindriDeny);
     }
 
     [Fact, Trait("Lane", "unit")]

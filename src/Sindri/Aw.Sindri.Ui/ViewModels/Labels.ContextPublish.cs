@@ -4,7 +4,7 @@ namespace Aw.Sindri.Ui.ViewModels;
 internal static partial class Labels
 {
     /// <summary>The Health page's context map card.</summary>
-    internal const string ContextMapCard = "CONTEXT MAP";
+    internal const string ContextMapCard = "Context map";
 
     /// <summary>The map is ready and waits for the code index.</summary>
     internal const string MapHeld = "Held for the code index";

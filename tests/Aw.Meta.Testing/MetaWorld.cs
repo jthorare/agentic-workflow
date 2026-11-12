@@ -170,7 +170,10 @@ public sealed class MetaWorld
     public MetaSession Session => new(Messages, Config, Sessions);
 
     /// <summary>The stop-check sweep.</summary>
-    public MetaSweep Sweep => new(Sync, Refresher, Reader);
+    public MetaSweep Sweep => new(Sync, Refresher, Reader, Context, LaneFiles, Liveness);
+
+    /// <summary>The process table the sweep asks whether a recorded recycle waiter still runs.</summary>
+    public InMemoryProcessLiveness Liveness { get; } = new();
 
     /// <summary>The loop guard.</summary>
     public StopGuard Guard => new(Values, Log);

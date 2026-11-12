@@ -660,7 +660,7 @@ chmod +x "$WORK/codex-idle"
 jq -n --arg c "$WORK/codex-idle" '{schema:1, agents:{codex:{override:true, bin:$c}}, meta:{lanesAgent:"codex", lanes:{meta:"codex"}}}' > "$WORK/idle.json"
 rm -f "$ids/idle" "$ids/idle.settled" "$ids/idle.ambiguous"
 OUT="$(AW_META_CONFIG="$WORK/team2.json" AW_LAUNCHER_CONFIG="$WORK/idle.json" AW_META_ID_WAIT=1 bash "$DIR/meta-launch.sh" --no-open --lanes idle,amb 2>&1)"; RC=$?
-check "an id that never arrives: the timeout message, exit 0, the next lane started" "$RC:$(grep -c 'lane idle has not reported its session id after 1s' <<< "$OUT"):$(grep -cE 'tmux t1-amb: (started|restarted \(its pane had died\))' <<< "$OUT")" "0:1:1"   # killstubs above left amb's dead pane (remain-on-exit, #2856)
+check "an id that never arrives: the timeout message, exit 0, the next lane started" "$RC:$(grep -c 'lane idle has not reported its session id after 1s' <<< "$OUT"):$(grep -cF 'tmux t1-amb: restarted (its pane had died)' <<< "$OUT")" "0:1:1"   # killstubs above left amb's dead pane (remain-on-exit, #2856), so amb is restarted, never started fresh
 check "an id that never arrives: nothing recorded" "$(test -s "$ids/idle" && echo id || echo none)" "none"
 tmux kill-server 2> /dev/null; killstubs
 

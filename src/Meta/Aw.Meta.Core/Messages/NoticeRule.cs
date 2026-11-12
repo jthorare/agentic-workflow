@@ -66,6 +66,18 @@ public static partial class NoticeRule
         return HasTag(tagged, StatusTag) && !IsProtected(FirstLine(text), text);
     }
 
+    /// <summary>The warning a sender gets for a STATUS: message that holds a question mark (#2654).</summary>
+    public const string StatusAskText = "aw-meta: warning: this STATUS: message holds a \"?\", but nobody answers a status line. If you need an answer, send it again as ACTION:.";
+
+    /// <summary>The warning for a STATUS:-tagged message that holds a "?": the receiver never answers a status line, so the question is lost.</summary>
+    /// <param name="body">The message text the sender sent.</param>
+    /// <returns><see cref="StatusAskText"/> when <see cref="IsStatusTagged"/> and the text has a "?"; otherwise null.</returns>
+    public static string? StatusAskWarning(string body)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        return IsStatusTagged(body) && body.Contains('?', StringComparison.Ordinal) ? StatusAskText : null;
+    }
+
     /// <summary>Drops a leading STATUS: or ACTION: tag (any case) and the spaces after it.</summary>
     /// <param name="text">The text, already trimmed.</param>
     /// <returns>The text after the tag; the same instance when it has none.</returns>

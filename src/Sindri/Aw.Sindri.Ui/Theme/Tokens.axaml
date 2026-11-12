@@ -8,22 +8,22 @@
 
   <!-- §14.1 Colour: Color.<Key> and a Brush.<Key> over it. -->
   <!-- canvas: the window background -->
-  <Color x:Key="Color.Canvas">#010102</Color>
+  <Color x:Key="Color.Canvas">#08090a</Color>
   <SolidColorBrush x:Key="Brush.Canvas" Color="{StaticResource Color.Canvas}" />
   <!-- surface-1: panels, the detail sheet, inputs -->
-  <Color x:Key="Color.Surface1">#0f1011</Color>
+  <Color x:Key="Color.Surface1">#141517</Color>
   <SolidColorBrush x:Key="Brush.Surface1" Color="{StaticResource Color.Surface1}" />
   <!-- surface-2: hovered and selected rows, code blocks, status badges -->
-  <Color x:Key="Color.Surface2">#141516</Color>
+  <Color x:Key="Color.Surface2">#1c1d20</Color>
   <SolidColorBrush x:Key="Brush.Surface2" Color="{StaticResource Color.Surface2}" />
   <!-- surface-3: menus, the palette, tooltips -->
-  <Color x:Key="Color.Surface3">#18191a</Color>
+  <Color x:Key="Color.Surface3">#222326</Color>
   <SolidColorBrush x:Key="Brush.Surface3" Color="{StaticResource Color.Surface3}" />
   <!-- surface-4: dialogs -->
-  <Color x:Key="Color.Surface4">#191a1b</Color>
+  <Color x:Key="Color.Surface4">#26272a</Color>
   <SolidColorBrush x:Key="Brush.Surface4" Color="{StaticResource Color.Surface4}" />
   <!-- hairline: dividers and panel borders (decoration only, 1.3:1) -->
-  <Color x:Key="Color.Hairline">#23252a</Color>
+  <Color x:Key="Color.Hairline">#0fffffff</Color>
   <SolidColorBrush x:Key="Brush.Hairline" Color="{StaticResource Color.Hairline}" />
   <!-- hairline-strong: input borders, the copy block -->
   <Color x:Key="Color.HairlineStrong">#34343a</Color>
@@ -41,7 +41,7 @@
   <Color x:Key="Color.InkSubtle">#8a8f98</Color>
   <SolidColorBrush x:Key="Brush.InkSubtle" Color="{StaticResource Color.InkSubtle}" />
   <!-- ink-tertiary: disabled text only, never information (3.6:1) -->
-  <Color x:Key="Color.InkTertiary">#62666d</Color>
+  <Color x:Key="Color.InkTertiary">#74787f</Color>
   <SolidColorBrush x:Key="Brush.InkTertiary" Color="{StaticResource Color.InkTertiary}" />
   <!-- primary: the primary button, the brand mark, the selected nav indicator. Never text (4.44:1) -->
   <Color x:Key="Color.Primary">#5e6ad2</Color>
@@ -71,7 +71,7 @@
   <Color x:Key="Color.OnPrimary">#ffffff</Color>
   <SolidColorBrush x:Key="Brush.OnPrimary" Color="{StaticResource Color.OnPrimary}" />
   <!-- semantic-success: ok glyphs, always with the word -->
-  <Color x:Key="Color.Success">#27a644</Color>
+  <Color x:Key="Color.Success">#2eb75b</Color>
   <SolidColorBrush x:Key="Brush.Success" Color="{StaticResource Color.Success}" />
   <!-- semantic-overlay: the dialog scrim (Brush.Overlay is 60 %) -->
   <Color x:Key="Color.Overlay">#000000</Color>
@@ -83,25 +83,25 @@
   <Color x:Key="Color.Error">#eb5757</Color>
   <SolidColorBrush x:Key="Brush.Error" Color="{StaticResource Color.Error}" />
   <!-- derived: Attention at 14 % over Canvas, the needs-you chip background -->
-  <Color x:Key="Color.AttentionSoft">#23160c</Color>
+  <Color x:Key="Color.AttentionSoft">#291d13</Color>
   <SolidColorBrush x:Key="Brush.AttentionSoft" Color="{StaticResource Color.AttentionSoft}" />
   <!-- derived: AttentionSoft lifted one and two steps (about +9 and +15 per channel, hue kept). An attention row lifts within its own
        colour under the pointer and a press; the grey clickable hover would drop the urgency (#2611). -->
-  <Color x:Key="Color.AttentionSoft.Hover">#2c1f15</Color>
+  <Color x:Key="Color.AttentionSoft.Hover">#32261c</Color>
   <SolidColorBrush x:Key="Brush.AttentionSoft.Hover" Color="{StaticResource Color.AttentionSoft.Hover}" />
-  <Color x:Key="Color.AttentionSoft.Pressed">#32251b</Color>
+  <Color x:Key="Color.AttentionSoft.Pressed">#382c22</Color>
   <SolidColorBrush x:Key="Brush.AttentionSoft.Pressed" Color="{StaticResource Color.AttentionSoft.Pressed}" />
   <!-- derived: Attention at 35 % over Surface2, opaque: the hold button's fill -->
-  <Color x:Key="Color.AttentionFill">#624328</Color>
+  <Color x:Key="Color.AttentionFill">#67482f</Color>
   <SolidColorBrush x:Key="Brush.AttentionFill" Color="{StaticResource Color.AttentionFill}" />
   <!-- derived: Error at 14 % over Canvas, the fail chip background -->
-  <Color x:Key="Color.ErrorSoft">#220d0e</Color>
+  <Color x:Key="Color.ErrorSoft">#281415</Color>
   <SolidColorBrush x:Key="Brush.ErrorSoft" Color="{StaticResource Color.ErrorSoft}" />
   <!-- derived: Success at 14 % over Canvas, the ok chip background -->
-  <Color x:Key="Color.SuccessSoft">#06180b</Color>
+  <Color x:Key="Color.SuccessSoft">#0d2115</Color>
   <SolidColorBrush x:Key="Brush.SuccessSoft" Color="{StaticResource Color.SuccessSoft}" />
   <!-- derived (S1b): the selected nav background, the running pill -->
-  <Color x:Key="Color.PrimarySoft">#1d2036</Color>
+  <Color x:Key="Color.PrimarySoft">#202442</Color>
   <SolidColorBrush x:Key="Brush.PrimarySoft" Color="{StaticResource Color.PrimarySoft}" />
   <!-- status chip (#2545), one set per Sindri state: Fg is the state colour, Bg that colour at 14 %, Border at 30 %. Running is the
        blue Area1 over a Primary tint; Waiting is an amber outline with no fill, so it never reads as Running or as Attention (filled amber).
@@ -142,10 +142,10 @@
   <SolidColorBrush x:Key="Brush.RingAnchor" Color="{StaticResource Color.RingAnchor}" />
 
   <!-- workflow run status (F3 workflows spec §2): "you took over" is the one status with no colour of its own; violet glyph
-       and word on its soft pair (Violet at about 8 % over Canvas), never colour alone -->
+       and word on its soft pair (Violet at about 13 % over Canvas), never colour alone -->
   <Color x:Key="Color.Violet">#a78bfa</Color>
   <SolidColorBrush x:Key="Brush.Violet" Color="{StaticResource Color.Violet}" />
-  <Color x:Key="Color.VioletSoft">#170f2a</Color>
+  <Color x:Key="Color.VioletSoft">#1d1a29</Color>
   <SolidColorBrush x:Key="Brush.VioletSoft" Color="{StaticResource Color.VioletSoft}" />
 
   <!-- context whole map (whole-map spec §3.2): the bounded palette the areas are told apart by, each also by a pattern, never colour alone -->
@@ -165,11 +165,14 @@
   <!-- §14.2 Type ramp at text scale 1.0: size and line height (px) and weight per step; values in docs/csharp/sindri-ui-design.md. TextScale.Apply writes scaled copies over
        these (0.9–1.3) and records the scale in Type.Scale; the Typography.axaml styles read them as DynamicResource. -->
   <x:Double x:Key="Type.Scale">1</x:Double>
+  <x:Double x:Key="Type.Display.Size">40</x:Double>
+  <x:Double x:Key="Type.Display.LineHeight">44</x:Double>
+  <FontWeight x:Key="Type.Display.Weight">SemiBold</FontWeight>
   <x:Double x:Key="Type.PageTitle.Size">24</x:Double>
   <x:Double x:Key="Type.PageTitle.LineHeight">32</x:Double>
   <FontWeight x:Key="Type.PageTitle.Weight">SemiBold</FontWeight>
   <x:Double x:Key="Type.SectionTitle.Size">15</x:Double>
-  <x:Double x:Key="Type.SectionTitle.LineHeight">24</x:Double>
+  <x:Double x:Key="Type.SectionTitle.LineHeight">22</x:Double>
   <FontWeight x:Key="Type.SectionTitle.Weight">SemiBold</FontWeight>
   <x:Double x:Key="Type.DetailTitle.Size">20</x:Double>
   <x:Double x:Key="Type.DetailTitle.LineHeight">28</x:Double>
@@ -181,16 +184,16 @@
   <x:Double x:Key="Type.BodyStrong.LineHeight">20</x:Double>
   <FontWeight x:Key="Type.BodyStrong.Weight">Medium</FontWeight>
   <x:Double x:Key="Type.Caption.Size">12</x:Double>
-  <x:Double x:Key="Type.Caption.LineHeight">16</x:Double>
+  <x:Double x:Key="Type.Caption.LineHeight">18</x:Double>
   <FontWeight x:Key="Type.Caption.Weight">Normal</FontWeight>
   <x:Double x:Key="Type.Eyebrow.Size">11</x:Double>
   <x:Double x:Key="Type.Eyebrow.LineHeight">16</x:Double>
-  <FontWeight x:Key="Type.Eyebrow.Weight">Medium</FontWeight>
+  <FontWeight x:Key="Type.Eyebrow.Weight">Normal</FontWeight>
   <x:Double x:Key="Type.Button.Size">13</x:Double>
   <x:Double x:Key="Type.Button.LineHeight">15.6</x:Double>
   <FontWeight x:Key="Type.Button.Weight">Medium</FontWeight>
   <x:Double x:Key="Type.Mono.Size">12</x:Double>
-  <x:Double x:Key="Type.Mono.LineHeight">16</x:Double>
+  <x:Double x:Key="Type.Mono.LineHeight">18</x:Double>
   <FontWeight x:Key="Type.Mono.Weight">Normal</FontWeight>
   <x:Double x:Key="Type.Kbd.Size">11</x:Double>
   <x:Double x:Key="Type.Kbd.LineHeight">16</x:Double>
@@ -226,7 +229,18 @@
   <!-- List row heights (px): Compact is Linear's changelog and nav rows, Default its docs nav row, Comfortable a roomier row. -->
   <x:Double x:Key="Row.Height.Compact">28</x:Double>
   <x:Double x:Key="Row.Height.Default">32</x:Double>
+  <x:Double x:Key="Row.Height.Data">36</x:Double>
   <x:Double x:Key="Row.Height.Comfortable">40</x:Double>
+  <!-- Inspora pass: a chart sits on a Surface2 inset inside its card; only a floating layer (menu, palette, dialog) casts a shadow. -->
+  <SolidColorBrush x:Key="Brush.Chart.Inset" Color="{StaticResource Color.Surface2}" />
+  <!-- The tick bar (a backlog as one tick per record, or per ceil(total / Max) records): lit ticks Success, the rest Surface3. -->
+  <x:Double x:Key="Size.Tick.W">5</x:Double>
+  <x:Double x:Key="Size.Tick.H">20</x:Double>
+  <x:Double x:Key="Size.Tick.Gap">4</x:Double>
+  <x:Int32 x:Key="Size.Tick.Max">40</x:Int32>
+  <SolidColorBrush x:Key="Brush.Chart.Tick" Color="{StaticResource Color.Success}" />
+  <SolidColorBrush x:Key="Brush.Chart.TickDim" Color="{StaticResource Color.Surface3}" />
+  <BoxShadows x:Key="Shadow.Float">0 8 24 0 #66000000</BoxShadows>
   <!-- §14.3 Sizes (px). Row and control minimums are scaled with the text by the views that use them. -->
   <x:Double x:Key="Size.PanelHeader">36</x:Double>
   <x:Double x:Key="Size.TopBar">48</x:Double>
