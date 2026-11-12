@@ -4,7 +4,6 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
@@ -95,19 +94,5 @@ public sealed class WorkflowsEditModeFramesTests : FrameHost
         var buttonLeft = button.TranslatePoint(new Point(0, 0), window)!.Value.X;
         var gap = buttonLeft - headRight;
         Assert.True(gap >= 12, $"the gap is {gap.ToString(CultureInfo.InvariantCulture)} px, under 12");
-    });
-
-    [Fact]
-    public Task A_workflow_row_keeps_its_height_when_focused() => OnUi(async () =>
-    {
-        var (window, shell) = await Connected(width: 1280, height: 1000);
-        shell.GoTo(PageId.Workflows);
-        await Until(window, () => shell.Workflows.Rows.Count > 0, "the Workflows page never read the list");
-        window.UpdateLayout();
-        var row = Named<ItemsControl>(window, "WorkflowRows").GetVisualDescendants().OfType<Border>().First(b => b.Classes.Contains("item-row"));
-        var resting = row.Bounds.Height;
-        Assert.True(row.Focus(NavigationMethod.Tab));
-        window.UpdateLayout();
-        Assert.Equal(resting, row.Bounds.Height);
     });
 }

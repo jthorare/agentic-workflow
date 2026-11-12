@@ -11,20 +11,6 @@
   <UserControl.Styles>
     <Style Selector="TextBlock.invalid"><Setter Property="Foreground" Value="{DynamicResource Brush.Error}" /></Style>
     <Style Selector="TextBox.invalid /template/ Border#PART_BorderElement"><Setter Property="BorderBrush" Value="{DynamicResource Brush.Error}" /></Style>
-    <!-- The list row draws the stock ring outside its edge (Theme/FluentOverrides.axaml) and keeps its border and padding when focused, so its height never changes
-         (QueueStyles' item-row grows a 2 px border inside the row instead). -->
-    <Style Selector="Border.item-row.wf-row">
-      <Setter Property="FocusAdorner">
-        <FocusAdornerTemplate>
-          <Border BorderBrush="{DynamicResource Brush.PrimaryHover}" BorderThickness="2" Margin="-4" CornerRadius="{DynamicResource ControlCornerRadius}" AdornerLayer.IsClipEnabled="False" />
-        </FocusAdornerTemplate>
-      </Setter>
-    </Style>
-    <Style Selector="Border.item-row.wf-row:focus-visible">
-      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
-      <Setter Property="BorderThickness" Value="0,1,0,0" />
-      <Setter Property="Padding" Value="24,0" />
-    </Style>
   </UserControl.Styles>
   <StackPanel x:Name="WorkflowsRoot" Spacing="{StaticResource Size.PanelGap}">
     <Grid ColumnDefinitions="*,Auto">
@@ -111,7 +97,7 @@
           <ItemsControl x:Name="WorkflowRows" ItemsSource="{Binding Rows}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="wf:WorkflowRowViewModel">
-                <Border Classes="item-row wf-row clickable" Focusable="True" KeyDown="OnWorkflowRowKey" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                <Border Classes="item-row clickable" Focusable="True" KeyDown="OnWorkflowRowKey" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
                   <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" MinHeight="{StaticResource Row.Height.Default}" Margin="0,8" VerticalAlignment="Center">
                     <!-- The row is the one focus stop and draws the ring; the title is a click target only, so it draws none of its own (Enter or Space on the row opens it).
                          Margin="-2,0": the shared row-title style pulls the button up 2 px for a ring this one never draws (QueueStyles.axaml:40-42), which put the title under 8 px from the row's top; keep the sideways -2 so the text lines up. -->
