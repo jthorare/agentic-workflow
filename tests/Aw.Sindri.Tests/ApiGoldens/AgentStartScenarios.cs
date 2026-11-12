@@ -13,7 +13,7 @@ internal static class AgentStartScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("sessions-start", "bad-act-id"), ("sessions-start", "prompt-too-long"), ("sessions-start", "session-refused"), ("sessions-worktree", "unrecorded"),
+        ("sessions-start", "bad-act-id"), ("sessions-start", "empty-act-id"), ("sessions-start", "prompt-too-long"), ("sessions-start", "session-refused"), ("sessions-worktree", "unrecorded"),
     ];
 
     /// <summary>Whether this class owns the scenario.</summary>
@@ -35,6 +35,8 @@ internal static class AgentStartScenarios
         {
             case ("sessions-start", "bad-act-id"):
                 return await Ask(host, Post(Start, Json("short", "hi"), owner));
+            case ("sessions-start", "empty-act-id"):   // the id type refuses it while the body is read: a 400 from ApiProblems, not a 500
+                return await Ask(host, Post(Start, Json("", "hi"), owner));
             case ("sessions-start", "prompt-too-long"):
                 return await Ask(host, Post(Start, Json("k3j9x0a1", new string('x', 8001)), owner));
             case ("sessions-start", "session-refused"):
