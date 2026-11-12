@@ -27,10 +27,10 @@ public static class KvKeys
     /// <summary>When the last real worktree sweep started (ISO 8601, round-trip); a worktree changed after it is kept ("changed since the last full sweep (this time)"). Absent until a sweep has run.</summary>
     public const string WorktreesSweepStart = "worktrees.sweep-start";
 
-    /// <summary>The prefix of the per-tree sweep marker a <c>--path</c> sweep records for the one worktree it looked at; <see cref="WorktreesPathSweepStart"/> builds the full key.</summary>
+    /// <summary>The prefix of the per-tree sweep marker a <c lang="text">--path</c> sweep records for the one worktree it looked at; <see cref="WorktreesPathSweepStart"/> builds the full key.</summary>
     public const string WorktreesSweepStartPrefix = "worktrees.sweep-start.";
 
-    /// <summary>The key holding when a <c>--path</c> sweep of one worktree last started (ISO 8601, round-trip).</summary>
+    /// <summary>The key holding when a <c lang="text">--path</c> sweep of one worktree last started (ISO 8601, round-trip).</summary>
     /// <param name="path">The worktree path the sweep was given; it is normalized like the scope match, so a trailing slash does not change the key.</param>
     /// <returns>The key.</returns>
     public static string WorktreesPathSweepStart(string path) => WorktreesSweepStartPrefix + Worktrees.WorktreeRoots.Normalize(path);
