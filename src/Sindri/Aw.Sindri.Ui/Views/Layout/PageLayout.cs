@@ -77,9 +77,11 @@ internal static class PageLayout
     /// Required, then CI, so a narrow page (a sheet open beside it) keeps the first three facts and the PR title keeps 160 px.
     /// </summary>
     /// <param name="width">The table's width; 0 or less means not measured yet (every column).</param>
+    /// <param name="peek">True while a sheet is open beside the list: the grammar keeps the first 3 facts (Author, CI, Required) and age, so Doc goes.</param>
     /// <returns>The widths, title column first (0 for the star).</returns>
-    internal static double[] ReviewWidths(double width)
+    internal static double[] ReviewWidths(double width, bool peek = false)
     {
+        _ = peek;   // red: the peek rule is not built yet
         double[] widths = [0, 140, 70, 120, 160, 140];
         if (width <= 0)
         {

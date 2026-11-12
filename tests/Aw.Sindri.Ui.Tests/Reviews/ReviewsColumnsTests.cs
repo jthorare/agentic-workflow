@@ -17,6 +17,12 @@ public sealed class ReviewsColumnsTests
         Assert.Equal(expected, PageLayout.ReviewWidths(width).Skip(1).ToArray());
 
     [Theory]
+    [InlineData(966)]
+    [InlineData(1200)]
+    public void With_a_sheet_open_only_the_first_three_facts_and_the_age_stay_however_wide_the_page(double width) =>
+        Assert.Equal([140.0, 70, 120, 160, 0], [.. PageLayout.ReviewWidths(width, peek: true).Skip(1)]);
+
+    [Theory]
     [InlineData(400)]
     [InlineData(500)]
     [InlineData(700)]

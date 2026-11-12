@@ -1,5 +1,7 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api.Reviews;
 using Aw.Sindri.Ui.ViewModels;
+using Aw.Sindri.Ui.ViewModels.Reviews;
 using static Aw.Sindri.Ui.Tests.Reviews.ReviewsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Reviews;
@@ -67,13 +69,18 @@ public sealed class ReviewsPageTests
     }
 
     [Fact]
-    public async Task A_row_whose_project_names_no_checks_reads_none_open_like_a_row_with_zero_open()
+    public void A_waiting_row_the_server_sent_with_no_required_checks_reads_none_open_like_a_row_with_zero_open()
     {
-        var page = await _f.Shown(Token);
+        var now = new DateTimeOffset(2026, 11, 12, 9, 0, 0, TimeSpan.Zero);
+        ReviewRowView Row(int? open, string? text) =>
+            new("acme/api", 2071, "Sign legacy webhook deliveries", "lee-park", Draft: false, now.AddDays(-1), now, "requested", "review requested", NewCommits: null, "none", open, text, ClaimsDoc: false, "/reviews/acme/api/2071");
 
-        var rows = page.Groups.SelectMany(g => g.Sections).SelectMany(s => s.Rows).ToList();
-        Assert.DoesNotContain(rows, r => r.Required.Length == 0);
-        Assert.Contains(rows, r => r.AutomationName.Contains("required checks none open", StringComparison.Ordinal));
+        var unknown = new ReviewRowViewModel(Row(open: null, text: null), "joi-example", now);
+        var zero = new ReviewRowViewModel(Row(open: 0, text: "none open"), "joi-example", now);
+
+        Assert.Equal(zero.Required, unknown.Required);
+        Assert.Equal("none open", unknown.Required);
+        Assert.Contains("required checks none open", unknown.AutomationName, StringComparison.Ordinal);
     }
 
     [Fact]

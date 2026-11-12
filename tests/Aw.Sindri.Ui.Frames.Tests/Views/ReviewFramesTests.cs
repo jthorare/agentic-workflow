@@ -149,6 +149,8 @@ public sealed class ReviewFramesTests : FrameHost
         var kept = grid.Children.Where(c => c.IsVisible).Select(c => Grid.GetColumn(c)).Distinct().ToList();
         var fixedWidth = kept.Where(i => i > 0).Sum(i => grid.ColumnDefinitions[i].Width.Value);
 
+        var dropped = grid.Children.Where(c => !c.IsVisible).Select(c => Grid.GetColumn(c)).Distinct().ToList();
+        Assert.Contains(5, dropped);   // the 4th fact (Doc) is dropped with the sheet open: the test would pass without this if nothing dropped
         Assert.True(160 + fixedWidth <= grid.Bounds.Width, "the fixed columns leave the title under 160 px");
         Assert.DoesNotContain(grid.Children, c => !c.IsVisible && grid.ColumnDefinitions[Grid.GetColumn(c)].Width.Value > 0);
         Assert.All(kept.Where(i => i > 0), i => Assert.True(grid.ColumnDefinitions[i].Width.Value > 0));
