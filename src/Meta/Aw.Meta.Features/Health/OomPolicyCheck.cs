@@ -1,3 +1,4 @@
+using Aw.Meta.Core;
 using Aw.Meta.Core.Commands;
 using Aw.Meta.Core.Ports;
 
@@ -8,12 +9,14 @@ namespace Aw.Meta.Features.Health;
 /// stops the whole scope, agent included; "continue" kills only the process the kernel picked.
 /// </summary>
 /// <param name="runner">Runs systemctl --user show.</param>
-internal sealed class OomPolicyCheck(ICommandRunner runner)
+/// <param name="paths">Names the user config folder the installer writes the drop-in under.</param>
+internal sealed class OomPolicyCheck(ICommandRunner runner, MetaPaths paths)
 {
     /// <summary>The warning line when the policy is known and is not "continue".</summary>
     /// <returns>The line, or <see langword="null"/> when the policy is "continue" or can't be read (no systemctl, a failed or timed-out call: macOS too).</returns>
     internal async ValueTask<string?> Warning(CancellationToken cancellationToken)
     {
+        _ = paths.UserConfig;   // stub: the next commit prints it
         // A wedged user bus must not hang health, so the call has its own timeout.
         var run = await runner.Run(new CommandRequest(["systemctl", "--user", "show", "-p", "DefaultOOMPolicy", "--value"], TimeSpan.FromSeconds(10)), cancellationToken).ConfigureAwait(false);
         if (run.IsError || run.Value.TimedOut || run.Value.ExitCode != 0)

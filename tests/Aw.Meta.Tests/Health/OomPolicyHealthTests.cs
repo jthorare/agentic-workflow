@@ -9,7 +9,7 @@ public sealed class OomPolicyHealthTests
 {
     private readonly MetaWorld _world = new();
 
-    private Task<string?> Warning() => new OomPolicyCheck(_world.Runner).Warning(CancellationToken.None).AsTask();
+    private Task<string?> Warning() => new OomPolicyCheck(_world.Runner, _world.Paths).Warning(CancellationToken.None).AsTask();
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_stop_policy_gives_the_warning_line()
@@ -20,8 +20,21 @@ public sealed class OomPolicyHealthTests
 
         Assert.NotNull(line);
         Assert.Contains("DefaultOOMPolicy is stop", line, StringComparison.Ordinal);
-        Assert.Contains("scripts/install-meta.sh", line, StringComparison.Ordinal);
+        Assert.Contains("install-meta.sh", line, StringComparison.Ordinal);
         Assert.Equal("systemctl --user show -p DefaultOOMPolicy --value", Assert.Single(_world.Runner.Lines));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_stop_policy_names_the_drop_in_under_the_user_config_folder()
+    {
+        _ = _world.Runner.When("DefaultOOMPolicy", "stop\n");
+        var check = new OomPolicyCheck(_world.Runner, _world.Paths with { UserConfig = "/x/cfg" });
+
+        var line = await check.Warning(CancellationToken.None);
+
+        Assert.NotNull(line);
+        Assert.Contains("/x/cfg/systemd/user.conf.d/10-oom-continue.conf", line, StringComparison.Ordinal);
+        Assert.Contains("re-run install-meta.sh from the toolkit checkout", line, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -56,7 +69,7 @@ public sealed class OomPolicyHealthTests
     {
         _ = _world.Runner.When("DefaultOOMPolicy", "stop\n");
         var service = new HealthService(
-            new HostProbe(_world.Processes, _world.Resources, new OomPolicyCheck(_world.Runner)),
+            new HostProbe(_world.Processes, _world.Resources, new OomPolicyCheck(_world.Runner, _world.Paths)),
             new LaneCheck(_world.Config, new Core.Coordination.MissingLanes(_world.Sessions, _world.Messages, _world.Lanes), _world.LaneHealth, _world.Context),
             new OrphanKiller(_world.Processes, _world.Log, _world.Clock),
             _world.Values,
