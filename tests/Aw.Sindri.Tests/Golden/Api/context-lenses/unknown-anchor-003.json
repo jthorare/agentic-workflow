@@ -10,5 +10,32 @@
     "decision:ef895edc359f6f847ce34baeacb3670a81a824b521e4cd14371b5dc8894ea1c2",
     "feature:tabs.tab-groups"
   ],
+  "choices": [
+    {
+      "key": "action:tab-groups.group-selected",
+      "label": "Group the selected tabs",
+      "kind": "action"
+    },
+    {
+      "key": "action:tab-manager.restore-layout",
+      "label": "Restore a tab's pane layout",
+      "kind": "action"
+    },
+    {
+      "key": "decision:d036352234b17baf9a7b2e7cffef599bdc9c8209e92c389d2bcbb919c74c162b",
+      "label": "A tab group collapses to one tab in the strip.",
+      "kind": "decision"
+    },
+    {
+      "key": "decision:ef895edc359f6f847ce34baeacb3670a81a824b521e4cd14371b5dc8894ea1c2",
+      "label": "A tab group stays expanded; collapsing is a per-user setting.",
+      "kind": "decision"
+    },
+    {
+      "key": "feature:tabs.tab-groups",
+      "label": "Tab groups",
+      "kind": "feature"
+    }
+  ],
   "traceId": "<trace>"
 }
