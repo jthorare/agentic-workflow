@@ -593,22 +593,22 @@ Sort key, in this order: class high first, then `blocks` (Home §4.1, counted ov
 
 Messages and Home rank differently on purpose. Home ranks by what a row unblocks across every source. Messages ranks by "who is waiting on a person's answer". A DM from Sam can sit under a review ask on Home and above it here.
 
-**Worked example.** All names and numbers are made up. It is the list at 09:10.
+**Worked example.** All names and numbers are made up. It is the list at 09:10, and it is the top of `messages-needs.png`.
 
+- Kim, in Ada's `#harbor` thread, 08:55: "@joi can you check the group booking path uses 90 s too?" Ada's root (07:30) is "@joi review #3120 when you can", and the thread has 3 replies (Kim 08:20, Ada 08:41, Kim 08:55). The newest message is Kim's, names me and holds a `?`, so the thread is class 3. It links PR #3120, which closes issue #3055 and has PR #3125 stacked on it: blocks 2.
 - Sam, DM, 09:02: "can you ship the fare table today?" Class 3 (a `?` in a DM). Blocks 0.
-- Ada, `#harbor`, 07:30: "@joi review #3120 when you can". The thread links PR #3120, which waits on me. #3120 closes issue #3055 and PR #3125 is stacked on it. Class 2, blocks 2.
+- Ada, `#harbor`, 01:10: "also #3125 is stacked on 3120, can you look at both". It names no one and is not a DM, so it is not class 3. It links PR #3125, which waits on me: class 2, blocks 0.
 - Pat, DM, 06:00: "thanks!" The newest message is Pat's, no `?`. Class 1, blocks 0.
-- Kim, `#harbor`, 08:20, in a thread I started: "ok, 90 s holds then". Class 1, blocks 0.
 - Lee, `#general`, 08:55: "@here lunch Friday?" Not mine (`@here`). It shows in Unread only.
 
 | Row | Class | Blocks | Newest |
 |---|---|---|---|
+| Kim, Ada's `#harbor` thread | 3 | 2 | 08:55 |
 | Sam, DM | 3 | 0 | 09:02 |
-| Ada, `#harbor` | 2 | 2 | 07:30 |
+| Ada, `#harbor` | 2 | 0 | 01:10 |
 | Pat, DM | 1 | 0 | 06:00 |
-| Kim, `#harbor` thread | 1 | 0 | 08:20 |
 
-In Release 1 only Sam and Ada are in Needs reply; Pat and Kim (class 1) show in Unread (call 21). The golden test ranks all four rows, and `Release_1_needs_reply_holds_class_3_and_2_only` checks the list. Full order: Sam, Ada, then Pat before Kim (same class and blocks, Pat is older). At 09:12 Lee's DM "got a sec?" arrives. It lands in the New band, not in the list. The owner replies to Sam at 09:14: Sam's row leaves in place and no other row moves. Until the next settle point the row stays, dimmed, with "replied 09:14" in place of its reason chip. At 09:16 the owner presses `R` (Home's re-rank key, listed in §6.5) and the New band takes its ranked place (class 3, blocks 0, 09:12: first). This is the golden test `MessageRank_orders_the_example`.
+In Release 1, Kim's thread, Sam and Ada are in Needs reply; Pat (class 1) shows in Unread (call 21). The golden test ranks all four rows, and `Release_1_needs_reply_holds_class_3_and_2_only` checks the list. Full order: Kim before Sam (same class, Kim's thread blocks 2), then Ada, then Pat. At 09:12 Lee's DM "got a sec?" arrives. It lands in the New band, not in the list. The owner replies to Sam at 09:14: Sam's row leaves in place and no other row moves. Until the next settle point the row stays, dimmed, with "replied 09:14" in place of its reason chip. At 09:16 the owner presses `R` (Home's re-rank key, listed in §6.5) and the New band takes its ranked place: class 3, blocks 0, 09:12, so second, under Kim's thread. This is the golden test `MessageRank_orders_the_example`.
 
 **Done and return.** Done (`e`) leaves Needs reply and writes nothing to Slack. A done thread returns on its own when a new message is addressed to me: a mention, a DM, a reply in a thread I wrote in. The row says "back: new reply" (Home §5.4). A reaction to my message does not return it.
 
