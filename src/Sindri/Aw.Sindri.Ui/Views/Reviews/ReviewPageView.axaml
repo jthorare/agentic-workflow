@@ -29,7 +29,7 @@
                    IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Note}" />
       </StackPanel></StackPanel>
       <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
-        <Button x:Name="ReviewTryAgain" Click="OnTryAgain" Content="{Binding TryAgainText}" />
+        <Button x:Name="ReviewTryAgain" Click="OnTryAgain" IsVisible="{Binding OffersTryAgain}" Content="{Binding TryAgainText}" />
         <Button x:Name="ReviewOpenFromState" Click="OnOpenGitHub" Content="{Binding OpenOnGitHubText}" />
       </StackPanel>
     </StackPanel>

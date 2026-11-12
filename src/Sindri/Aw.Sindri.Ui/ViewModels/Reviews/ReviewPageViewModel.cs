@@ -36,6 +36,7 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
             OnChanged(nameof(ShowsPage));
             OnChanged(nameof(ShowsState));
             OnChanged(nameof(IsLoginPrompt));
+            OnChanged(nameof(OffersTryAgain));
         }
     } = ReviewPageState.Loading;
 
@@ -44,6 +45,9 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
 
     /// <summary>True when a whole-page refusal shows instead.</summary>
     public bool ShowsState => !ShowsPage;
+
+    /// <summary>True when reading again can change the answer: not for a PR that does not exist or a repo Sindri does not sync (#3065; those offer Back and Open on GitHub only).</summary>
+    public bool OffersTryAgain => State is not (ReviewPageState.NotFound or ReviewPageState.NotSynced);
 
     /// <summary>True when the whole page is the login prompt.</summary>
     public bool IsLoginPrompt => State == ReviewPageState.LoginPrompt;
