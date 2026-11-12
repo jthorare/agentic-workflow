@@ -48,3 +48,11 @@
 
 
 Round 2 (ideas FIX on bc98aa05b7) changed every Layout A frame (Files mode, real folders, the thread inline under HoldService.cs:41), all error codes (Details), the queue footers, the merge picker (primary Merge, merging dimmed, conflict wording), the sheets (no bare c, no suggestion row, focus rings), the reviewer picker footer, the palette and a new palette no-match frame. The pressed and hover sheet is round 1b's, unchanged.
+
+## UX pass fold-in (meta's 8 MUSTs, spec 8a6d74c200)
+New or changed frames, by MUST (see the comment on #3177 for images):
+- MUST 1: queue-first-run, first-run-connecting, first-run-refused, first-run-org-approval, first-run-store-failed, watch-repos, watch-repos-ticked, watch-repos-none, queue-serve-down-nocache, start-sindri-starting, start-sindri-failed.
+- MUST 2: queue-loading, queue-empty-some, queue-empty-all, queue-empty-stale, queue-dot-menu, queue-dot-menu-running, queue-ctrl-enter-menu, diff-loading, diff-error, diff-partial, offline-surface, offline-surface-uncached, thread-sending, thread-send-failed, thread-expired, since-loading, since-empty, since-error, callers-states, draft-save-failed, submit-failed-010/012/013/014, submit-checking, submit-not-posted, merge-checking, merge-not-merged, read-only, read-only-sheet.
+- MUST 3: submit-flagged, submit-flagged-two, submit-empty. MUST 4: toast-posted. MUST 5: queue footers, queue-done-toast, queue-snooze-picker, queue-snoozed-toggle, queue-back.
+- MUST 6: every #3120 surface frame (counts.md has the spot list). MUST 7: queue-peek-ready, toast-merged, reviewer-picker, submit-offline. MUST 8: queue, a-1440, walk-1440 and the other opening frames.
+- Picks: a-300files, ready-line, thread-focused-footer, Resolve chip on every thread. New mid-walk frames: a-1440-walk, walk-1200-thread.
