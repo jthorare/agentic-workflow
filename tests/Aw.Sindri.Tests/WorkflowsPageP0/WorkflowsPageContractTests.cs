@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Blocks;
@@ -24,14 +25,15 @@ namespace Aw.Sindri.Tests.WorkflowsPageP0;
 [Lane(TestLane.Unit)]
 public sealed class WorkflowsPageContractTests
 {
+    private static readonly JsonSerializerOptions _json = AwJson.CreateOptions(SindriJsonContext.Default);
     private static readonly WorkflowRunId _run = WorkflowRunId.From("nightly@3:12");
 
     [Fact]
     public void The_run_payloads_carry_a_mode()
     {
-        var finished = JsonSerializer.Serialize(new WorkflowRunFinishedPayload(_run, "succeeded", Error: null, "engine", WorkflowRunMode.Test), SindriJsonContext.Default.WorkflowRunFinishedPayload);
-        var started = JsonSerializer.Serialize(new WorkflowRunStartedPayload(_run, WorkflowId.From("WF-00000000000000000000000000000001"), 3, "{}", "owner", WorkflowRunMode.Live), SindriJsonContext.Default.WorkflowRunStartedPayload);
-        var cancelled = JsonSerializer.Serialize(new WorkflowRunCancelledPayload(_run, Reason: null, "owner", WorkflowRunMode.Test), SindriJsonContext.Default.WorkflowRunCancelledPayload);
+        var finished = JsonSerializer.Serialize(new WorkflowRunFinishedPayload(_run, "succeeded", Error: null, "engine", WorkflowRunMode.Test), _json);
+        var started = JsonSerializer.Serialize(new WorkflowRunStartedPayload(_run, WorkflowId.From("WF-00000000000000000000000000000001"), 3, "{}", "owner", WorkflowRunMode.Live), _json);
+        var cancelled = JsonSerializer.Serialize(new WorkflowRunCancelledPayload(_run, Reason: null, "owner", WorkflowRunMode.Test), _json);
 
         Assert.Contains("\"mode\":\"test\"", finished, StringComparison.Ordinal);
         Assert.Contains("\"mode\":\"live\"", started, StringComparison.Ordinal);
@@ -41,8 +43,8 @@ public sealed class WorkflowsPageContractTests
     [Fact]
     public void The_public_run_form_has_status_and_mode_and_an_old_event_reads_as_live()
     {
-        var finished = JsonSerializer.Deserialize("{\"runId\":\"nightly@3:12\",\"status\":\"failed\",\"error\":\"x\",\"by\":\"engine\",\"mode\":\"test\"}", SindriJsonContext.Default.WorkflowRunPublic)!;
-        var old = JsonSerializer.Deserialize("{\"runId\":\"nightly@3:12\",\"reason\":\"stopped\",\"by\":\"owner\"}", SindriJsonContext.Default.WorkflowRunPublic)!;
+        var finished = JsonSerializer.Deserialize<WorkflowRunPublic>("{\"runId\":\"nightly@3:12\",\"status\":\"failed\",\"error\":\"x\",\"by\":\"engine\",\"mode\":\"test\"}", _json)!;
+        var old = JsonSerializer.Deserialize<WorkflowRunPublic>("{\"runId\":\"nightly@3:12\",\"reason\":\"stopped\",\"by\":\"owner\"}", _json)!;
 
         Assert.Equal(("failed", WorkflowRunMode.Test), (finished.Status, finished.Mode));
         Assert.Null(old.Status);
@@ -132,8 +134,8 @@ public sealed class WorkflowsPageContractTests
     [Fact]
     public void The_new_response_shapes_serialise_in_camel_case()
     {
-        var events = JsonSerializer.Serialize(new ListTriggerEventsResponse("github.pr.opened", [new TriggerEventView("e1", DateTimeOffset.UnixEpoch, "PR #1 opened", JsonNode.Parse("{}"), WouldMatch: true)], Example: null), SindriJsonContext.Default.ListTriggerEventsResponse);
-        var templates = JsonSerializer.Serialize(new ListWorkflowTemplatesResponse([new WorkflowTemplateView("A", "Review new PRs", "github.pr.opened", 3, ["connection:github"], LastRunAt: null)]), SindriJsonContext.Default.ListWorkflowTemplatesResponse);
+        var events = JsonSerializer.Serialize(new ListTriggerEventsResponse("github.pr.opened", [new TriggerEventView("e1", DateTimeOffset.UnixEpoch, "PR #1 opened", JsonNode.Parse("{}"), WouldMatch: true)], Example: null), _json);
+        var templates = JsonSerializer.Serialize(new ListWorkflowTemplatesResponse([new WorkflowTemplateView("A", "Review new PRs", "github.pr.opened", 3, ["connection:github"], LastRunAt: null)]), _json);
 
         Assert.Contains("\"wouldMatch\":true", events, StringComparison.Ordinal);
         Assert.Contains("\"lastRunAt\":null", templates, StringComparison.Ordinal);

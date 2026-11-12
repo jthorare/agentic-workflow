@@ -47,7 +47,7 @@ public sealed class WorkflowEventsStreamTests
         var page = (await StreamEventsServices.Over(h).Handle(new StreamEventsRequest(After: 0), TestContext.Current.CancellationToken)).Value;
 
         Assert.Equal(6, page.Events.Count);
-        Assert.All(page.Events.Take(3), e => Assert.Equal(["runId"], Names(e.Payload)));
+        Assert.All(page.Events.Take(3), e => Assert.Equal(["mode", "runId", "status"], Names(e.Payload)));   // why: the public run form carries the state and mode (Workflows page P0); status is null on started and cancelled
         Assert.All(page.Events.Skip(3), e => Assert.Equal(["itemIndex", "nodeId", "runId"], Names(e.Payload)));
         Assert.All(page.Events, e => Assert.Equal(_run.Value, e.Payload.GetProperty("runId").GetString()));
     }

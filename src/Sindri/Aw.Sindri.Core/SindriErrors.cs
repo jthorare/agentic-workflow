@@ -286,7 +286,7 @@ public static partial class SindriErrors
         InboxContractViolation, InboxClaimLost, InboxOfferGone, InboxSubmitFailed, InboxUnavailable, InboxHostNotAllowed,
         MemoryNotFound, MemoryNameTaken, MemoryFactInvalid, MemoryEmbedUnavailable, MemoryMatchLevelInvalid, MemoryNameInvalid, MemoryExpiryPast,
         ResourceDiskOverSize, ResourceNameClash, ResourcePurgeRefused, ResourcePathEscapes, ResourceSandboxOverCap, ResourceInvalid, ResourceDiskUnmeasured, ResourcePurgeFailed,
-        GraphCallDepth, GraphSelfStart, GraphHttpRefused, GraphHttpFailed, GraphOnlyTriggerReplaceable,
+        GraphCallDepth, GraphSelfStart, GraphHttpRefused, GraphHttpFailed, GraphOnlyTriggerReplaceable, GraphNotBuilt,
         CodeCompileFailed, CodeTimeout, CodeMemory, CodeFailed, CodeRunnerUnavailable,
         ToolkitNotBuilt, ToolkitTestsFailed, ToolkitManifestInvalid, ToolkitProcessDied, ToolkitPaused, ToolkitCallTimedOut, ToolkitToolUnknown, ToolkitSandboxUnavailable, ToolkitNotFound, ToolkitNameInvalid, ToolkitToolFailed, ToolkitExists, ToolkitCreateFailed,
         .. EveryTodo(),
