@@ -251,7 +251,7 @@ Rows are the stored PR records the page reads today, with sections added. Layout
 
 **Layout.** The build is Layout A: the diff in the middle with the folder-grouped file list above it, and the 420 px panel column on the right, holding the seven 2026-11-04 panels, then Threads, Findings and the draft counter. Threads also show inline under their line. The mockup below is the three-pane walk, proposed (question 1) and built only on the owner's yes, as a re-layout PR after R10a1. Both share the header, line cursor, keys, states and submit sheet. R8 draws both.
 
-The three-pane walk opens on an **Overview** step; Layout A shows the same panels in its column. On a re-review the Since scope (§5.3) is already applied, and the header says "Changes since your review of a1b2c3d (3 commits)". The walk then moves file by file in change order.
+The three-pane walk opens on an **Overview** step; Layout A shows the same panels in its column. On a re-review the Since scope (§5.3) is already applied, and the header says "Changes since your review of 9f8e7d6 (3 commits)". The walk then moves file by file in change order.
 
 ```
 ┌ header: Harbor ferry: seat holds #3120 · ada → main · head a1b2c3d · 14 files +310 -42 · 5/14 viewed ──────┐
