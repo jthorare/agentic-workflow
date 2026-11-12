@@ -40,6 +40,7 @@ internal sealed partial class ShellWindow : Window
     public ShellWindow()
     {
         InitializeComponent();
+        Controls.RowKeys.IsSheetOpen = () => Shell is { IsSheetOpen: true };   // Esc in a RowList belongs to an open sheet (#2978)
         AddHandler(GotFocusEvent, OnGotFocus, handledEventsToo: true);
         AddHandler(OpenerNote.NotedEvent, NoteInvoker);
         PagePanel.SizeChanged += (_, e) => PageLayout.SetTier(PagePanel, PageLayout.For(e.NewSize.Width));
