@@ -14,7 +14,7 @@ internal sealed partial class NewAgentFormViewModel : ObservableObject
     private static readonly string[] _derived =
     [
         nameof(IsStarting), nameof(CanStart), nameof(StartText), nameof(StatusText), nameof(RepoNote), nameof(RepoError), nameof(AgentError),
-        nameof(SignInCommand), nameof(PromptError), nameof(FootError), nameof(CanRetry), nameof(FootLine),
+        nameof(SignInCommand), nameof(PromptError), nameof(PromptCount), nameof(HasSignInCommand), nameof(HasRepoNote), nameof(HasRepoError), nameof(HasAgentError), nameof(HasPromptError), nameof(HasFootError), nameof(HasFootLine), nameof(FootError), nameof(CanRetry), nameof(FootLine),
     ];
 
     private readonly Func<Uri?> _url;
@@ -108,6 +108,30 @@ internal sealed partial class NewAgentFormViewModel : ObservableObject
     /// <summary>"not onboarded" when the chosen repo is not; else empty.</summary>
     public string RepoNote => Repo is { Onboarded: false } ? Labels.NewAgentNotOnboarded : string.Empty;
 
+    /// <summary>The prompt's counter: "37 / 8,000".</summary>
+    public string PromptCount => Labels.NewAgentCount(Prompt.Length);
+
+    /// <summary>True when the Agent error has a sign-in command to copy.</summary>
+    public bool HasSignInCommand => SignInCommand.Length > 0;
+
+    /// <summary>True when the chosen repo is not onboarded.</summary>
+    public bool HasRepoNote => RepoNote.Length > 0;
+
+    /// <summary>True when an error shows under Repo.</summary>
+    public bool HasRepoError => RepoError.Length > 0;
+
+    /// <summary>True when an error shows under Agent.</summary>
+    public bool HasAgentError => AgentError.Length > 0;
+
+    /// <summary>True when an error shows under Prompt.</summary>
+    public bool HasPromptError => PromptError.Length > 0;
+
+    /// <summary>True when an error shows at the foot.</summary>
+    public bool HasFootError => FootError.Length > 0;
+
+    /// <summary>True when the background-start line shows.</summary>
+    public bool HasFootLine => FootLine.Length > 0;
+
     /// <summary>The error under Repo.</summary>
     public string RepoError { get; private set; } = string.Empty;
 
@@ -129,16 +153,6 @@ internal sealed partial class NewAgentFormViewModel : ObservableObject
     /// <summary>The line after a background start: "Started claude in sindri."; empty for none.</summary>
     public string FootLine { get; private set; } = string.Empty;
 
-#pragma warning disable CA1822, MA0041 // why: the view binds these as instance properties
-    /// <summary>The Show it link's words.</summary>
-    public string ShowItText => Labels.NewAgentShowIt;
-
-    /// <summary>The Copy command button's words.</summary>
-    public string CopyCommandText => Labels.NewAgentCopyCommand;
-
-    /// <summary>The Retry button's words.</summary>
-    public string RetryText => Labels.NewAgentRetry;
-#pragma warning restore CA1822, MA0041
 
     /// <summary>The idempotency key the next start sends; kept until a 2xx.</summary>
     internal string ActId { get; private set; }
