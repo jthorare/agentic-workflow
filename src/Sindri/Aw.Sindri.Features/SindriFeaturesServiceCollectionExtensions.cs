@@ -94,6 +94,7 @@ using Aw.Sindri.Features.ValidateWorkflow;
 using Aw.Sindri.Features.WorkflowSchedule;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Features;
 
@@ -263,7 +264,7 @@ public static class SindriFeaturesServiceCollectionExtensions
         .AddScoped<ContextEngineChecks>()
         .AddScoped<RunDoctorService>()
         .AddScoped<IService<RunDoctorRequest, RunDoctorResponse>>(static sp =>
-            new WithMoreChecks(sp.GetRequiredService<RunDoctorService>(), sp.GetServices<IDoctorChecks>()))
+            new WithMoreChecks(sp.GetRequiredService<RunDoctorService>(), sp.GetServices<IDoctorChecks>(), sp.GetRequiredService<ILoggerFactory>().CreateLogger("Aw.Sindri.Doctor")))
         .AddScoped<IDoctorChecks, ContextDoctorChecks>().AddIndexDoctor()   // AddIndexDoctor: owned index (#1394), context:index-*
         .AddScoped<IDoctorChecks, LauncherDoctorChecks>().AddScoped<IDoctorChecks, AgentTargetDoctor>()   // #1428: `agent:target`
         .AddScoped<IDoctorChecks, SyncTodoNote.TodoNoteDoctorChecks>()                    // the Obsidian note's sync (spec §6): the `todo` row
