@@ -52,4 +52,37 @@ public sealed class WorkflowHeaderLayoutTests : FrameHost
             TextScale.Apply(resources, 1.0);
         }
     });
+
+    [Theory]
+    [InlineData(1.0)]
+    [InlineData(1.3)]
+    public Task A_long_title_trims_and_the_state_stays_inside_the_header(double scale) => OnUi(async () =>
+    {
+        Server.WorkflowAnswers[LongSlug] = RouteAnswer.Api("workflows-slug", "found");
+        Server.WorkflowRunsAnswers[LongSlug] = RouteAnswer.Api("workflows-slug-runs", "list-three");
+        var (window, shell) = await Connected(width: 1000, height: 900);
+        shell.GoTo(PageId.Workflows);
+        await Until(window, () => shell.Workflows.Rows.Count > 0, "the Workflows page never read the list");
+        var resources = Application.Current!.Resources;
+        TextScale.Apply(resources, scale);
+        try
+        {
+            await shell.Workflows.OpenWorkflow(LongSlug, TestContext.Current.CancellationToken);
+            await Until(window, () => Visible(window, "WorkflowsBack") && Visible(window, "WorkflowsState"), "the workflow's page never showed");
+            Settle(window);
+
+            var title = Named<TextBlock>(window, "WorkflowsTitle");
+            var state = Named<TextBlock>(window, "WorkflowsState");
+            var region = Named<Grid>(window, "WorkflowsHeadRegion");
+            Assert.True(title.TextLayout.TextLines.Any(l => l.HasCollapsed), "the long title was not shortened");
+            var stateRight = state.TranslatePoint(new Point(state.Bounds.Width, 0), window)!.Value.X;
+            var regionRight = region.TranslatePoint(new Point(region.Bounds.Width, 0), window)!.Value.X;
+            Assert.True(stateRight <= regionRight + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the state ends at {stateRight}, past the header's right edge {regionRight}"));
+            Assert.True(state.Bounds.Width >= state.DesiredSize.Width - 0.5, "the state is clipped");
+        }
+        finally
+        {
+            TextScale.Apply(resources, 1.0);
+        }
+    });
 }
