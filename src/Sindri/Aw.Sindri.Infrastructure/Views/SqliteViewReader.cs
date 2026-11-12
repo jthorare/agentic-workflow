@@ -11,6 +11,9 @@ namespace Aw.Sindri.Infrastructure.Views;
 /// </summary>
 internal sealed class SqliteViewReader(ViewsDatabase database, JsonSerializerOptions options) : IViewReader
 {
+    /// <summary>The mark of a view with no rows, the one <see cref="ViewTable.SelectMark"/> gives an empty table.</summary>
+    private const string EmptyMark = "0:0";
+
     public async ValueTask<Result<TRow?>> Get<TRow>(string view, string key, CancellationToken cancellationToken)
         where TRow : class =>
         database.Exists
@@ -34,6 +37,11 @@ internal sealed class SqliteViewReader(ViewsDatabase database, JsonSerializerOpt
         database.Exists
             ? await Read(view, Results.Success<IReadOnlyList<TRow>>([]), rows => rows.Where<TRow>(view, column, value, cancellationToken), cancellationToken).ConfigureAwait(false)
             : Results.Success<IReadOnlyList<TRow>>([]);
+
+    public async ValueTask<Result<string>> Mark(string view, CancellationToken cancellationToken) =>
+        database.Exists
+            ? await Read(view, Results.Success(EmptyMark), rows => rows.Mark(view, cancellationToken), cancellationToken).ConfigureAwait(false)
+            : Results.Success(EmptyMark);
 
     public async ValueTask<Result<ProjectorState?>> State(CancellationToken cancellationToken)
     {
