@@ -388,9 +388,16 @@ rm -f "$WORK/scope-job.pid"
 cat > "$WORK/scope-job.sh" <<'EOF'
 echo $$ > "$1"; exec sleep 30
 EOF
+# A stand-in session that dies once the job has started: with a session dead from the start, the watchdog can kill the job
+# under load before it writes its pid file, and `gone 0` then reads as alive.
+sleep 600 & sp=$!; bgpids+=("$sp")
 t0=$SECONDS
-out="$(HEAVY_STUB_SCOPE=ok AW_HEAVY_SESSION_PID="$DEAD" H --light bash "$WORK/scope-job.sh" "$WORK/scope-job.pid" 2>&1)"; rc=$?
+HEAVY_STUB_SCOPE=ok AW_HEAVY_SESSION_PID="$sp" bash "$HEAVY" --light bash "$WORK/scope-job.sh" "$WORK/scope-job.pid" > "$WORK/scope.out" 2>&1 &
+hp=$!; bgpids+=("$hp")
+wait_file "$WORK/scope-job.pid" || echo "  (job did not start)"
 jp="$(cat "$WORK/scope-job.pid" 2> /dev/null)"
+kill "$sp"; wait "$sp" 2> /dev/null
+wait "$hp"; rc=$?
 check "scope: a dead session still gets the job killed, exit 124" "$rc" "124"
 check "scope: ...the job is gone" "$(gone "${jp:-0}" && echo gone || echo alive)" "gone"
 check "scope: ...within seconds" "$([ $((SECONDS - t0)) -lt 15 ] && echo fast || echo slow)" "fast"
