@@ -34,6 +34,8 @@ internal sealed class SindriStarterPort(SindriStarter starter) : ISindriStarter
         };
     }
 
+    public void Release() => starter.Release();
+
     /// <summary>The last 'SND-' line appended since the start (the whole log when it was cut shorter than it was), or null.</summary>
     /// <returns>The line, or null.</returns>
     public string? LastError()

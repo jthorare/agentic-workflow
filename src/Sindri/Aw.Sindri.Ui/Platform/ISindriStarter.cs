@@ -9,6 +9,9 @@ public interface ISindriStarter
     /// <returns>What happened, or why the program didn't start.</returns>
     public Result<SindriStartOutcome> Start();
 
+    /// <summary>Ends the start in flight (serve answered, the wait ran out, or the start failed): the next <see cref="Start"/> launches again. A second call while a start is in flight returns AlreadyStarted.</summary>
+    public void Release();
+
     /// <summary>The last error line serve wrote to its log since the start, or null when it wrote none.</summary>
     /// <returns>The line, or null.</returns>
     public string? LastError();

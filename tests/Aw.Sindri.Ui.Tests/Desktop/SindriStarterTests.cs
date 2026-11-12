@@ -48,6 +48,20 @@ public sealed class SindriStarterTests
         Assert.Equal(installed, Assert.Single(process.Launches).Executable);
     }
 
+    [Fact]
+    public void After_a_start_ends_the_next_Start_launches_again()
+    {
+        var process = new FakeProcessStarter();
+        var starter = new SindriStarter(process, _ => true, _app, _home);
+
+        _ = starter.Start();
+        var inFlight = starter.Start();
+        starter.Release();
+        var again = starter.Start();
+
+        Assert.Equal((StartOutcome.AlreadyStarted, StartOutcome.Started, 2), (inFlight.Value, again.Value, process.Launches.Count));
+    }
+
     private sealed class FakeProcessStarter : IProcessStarter
     {
         public List<ProcessLaunch> Launches { get; } = [];

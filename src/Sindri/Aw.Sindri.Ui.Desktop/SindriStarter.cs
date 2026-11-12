@@ -20,6 +20,9 @@ internal sealed class SindriStarter(IProcessStarter starter, Func<string, bool> 
 
     private bool _started;
 
+    /// <summary>Ends the start in flight (serve answered, the wait ran out, or the start failed), so the next <see cref="Start"/> launches again.</summary>
+    public void Release() => _started = false;
+
     /// <summary>Starts 'sindri --headless' from beside the app, unless this run already did.</summary>
     /// <returns>What happened, or why the program didn't start.</returns>
     public Result<StartOutcome> Start()

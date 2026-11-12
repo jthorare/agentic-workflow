@@ -173,3 +173,4 @@ Aw.Sindri.Ui.Platform.SindriStartOutcome
 Aw.Sindri.Ui.Platform.SindriStartOutcome.AlreadyStarted = 1 -> Aw.Sindri.Ui.Platform.SindriStartOutcome
 Aw.Sindri.Ui.Platform.SindriStartOutcome.NotInstalled = 2 -> Aw.Sindri.Ui.Platform.SindriStartOutcome
 Aw.Sindri.Ui.Platform.SindriStartOutcome.Started = 0 -> Aw.Sindri.Ui.Platform.SindriStartOutcome
+Aw.Sindri.Ui.Platform.ISindriStarter.Release() -> void

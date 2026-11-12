@@ -73,6 +73,7 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
         var result = starter.Start();
         if (result.IsError)
         {
+            starter.Release();
             Show(StartStage.DidntStart, Labels.DidntStart(result.Error.Message), Labels.StartDetails(starter.LogPath), Labels.Retry);
             return;
         }
@@ -91,6 +92,7 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
     public void Reset()
     {
         _attempt++;
+        starter?.Release();
         if (Stage != StartStage.Idle)
         {
             Show(StartStage.Idle, CanStart ? Labels.StartSentence : string.Empty, string.Empty, CanStart ? Labels.StartSindri : string.Empty);
@@ -114,6 +116,7 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
             return;
         }
 
+        starter.Release();
         var error = starter.LastError();
         if (error is not null && error.Contains(AlreadyRunningCode, StringComparison.Ordinal))
         {

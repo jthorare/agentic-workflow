@@ -75,6 +75,19 @@ public sealed class SindriStartViewModelTests : IDisposable
     }
 
     [Fact]
+    public void Serve_reached_releases_the_start_so_a_later_Start_launches_again()
+    {
+        var starter = new FakeStarter();
+        var model = new SindriStartViewModel(starter, new FakeTimeProvider());
+        model.Begin();
+        model.Reset();
+
+        model.Start();
+
+        Assert.Equal((2, 1), (starter.Starts, starter.Releases));
+    }
+
+    [Fact]
     public void Retry_starts_again_and_the_first_wait_no_longer_fires()
     {
         var clock = new FakeTimeProvider();
@@ -118,6 +131,10 @@ public sealed class SindriStartViewModelTests : IDisposable
         public string? Failure { get; init; }
 
         public SindriStartOutcome Outcome { get; init; } = SindriStartOutcome.Started;
+
+        public int Releases { get; private set; }
+
+        public void Release() => Releases++;
 
         public string LogPath => "/logs/serve.log";
 
