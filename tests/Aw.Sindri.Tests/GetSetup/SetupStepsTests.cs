@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Setup;
+using Aw.Sindri.Host.Catalog;
 using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.GetSetup;
@@ -234,7 +235,7 @@ public sealed class SetupStepsTests
     [InlineData(SetupActions.RefreshContextMap)]
     public void The_command_for_a_step_action_is_the_catalog_rows_own_form(string action)
     {
-        var row = Assert.Single(new Aw.Sindri.Host.Catalog.CommandCatalog().Rows, r => r.Action.Value == action);
+        var row = Assert.Single(new CommandCatalog().Rows, r => r.Action.Value == action);
 
         Assert.Equal(row.Cli.Text, SetupActions.CliFor(action));   // one text, so the step's Cli and the catalog never drift
     }
