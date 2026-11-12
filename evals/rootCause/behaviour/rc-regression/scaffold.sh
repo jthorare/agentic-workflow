@@ -2,7 +2,7 @@
 # Workspace for rc-regression: the cart app with three commits. PR #17 ("tidy discount constants") introduced the bug.
 set -eu
 . "$(dirname "${BASH_SOURCE[0]}")/../../../_lib/fixture-lib.sh"
-mkdir -p app/pricing tests
+mkdir -p app/pricing tests .aw-eval
 : > app/__init__.py
 : > app/pricing/__init__.py
 : > tests/__init__.py
@@ -71,3 +71,9 @@ P
   git add -A
   git commit -q -m "docs: describe the cart in the readme (#18)"
 )
+# The stub gh answers `gh pr view 17` from .aw-eval/gh.json (no remote: nothing to push to, and the PR number comes from the subject).
+cat > .aw-eval/gh.json <<'P'
+[
+ {"match": ["pr", "view", "17"], "stdout": "title:\trefactor: tidy discount constants and add describe_discount\nstate:\tMERGED\nnumber:\t17\n--\nAdds describe_discount for the receipt line. Intended: no change to who gets the bulk discount; 10 or more of one item still earns 10% off.\n", "exit": 0}
+]
+P
