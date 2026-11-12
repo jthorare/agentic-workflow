@@ -606,7 +606,7 @@ Reserved now: SND-AGENT-001 to 029. No `SND-AGENT-` code exists on main (`git gr
 | 005 | recycle refused: no digest, the path is unreadable, not absolute, over 4,096 characters, starts with `-`, or is older than the lane's session or than 2 h (AW-META-021) | 400 | 1 |
 | 006 | `aw-meta` is unavailable (no team, no binary, exit 2) | 503 | 1 |
 | 007 | message empty or over 8,000 characters | 400 | 1 |
-| 008 | the activity could not be read (transcript missing or locked) | 502 | 1 |
+| 008 | the activity could not be read (transcript missing or locked) | 503 | 1 |
 | 009 | an earlier op on this row is still sending, or an `actId` was replayed with a different body | 409 | 1 |
 | 011 | a recycle job ended without a new session inside its wait (AW-META-022) | n/a (job outcome) | 1 |
 | 010 | an `agents.*` profile key is unknown or out of range; carries the key path | n/a | 2 |
@@ -879,7 +879,7 @@ Errors (from the reserved range, §9; 012 to 018 are free on origin/main, checke
 |---|---|---|---|
 | 012 | the repo is not in the profile, or its folder is gone (carries the folder path) | 400 | 1 |
 | 013 | the agent is not installed or not signed in; carries the sign-in command | 400 | 1 |
-| 014 | the worktree could not be made (60 s deadline; carries git's line), or tmux is not installed (carries the install command), or tmux could not start the session or did not return in 4 s; raised only inside the POST; the half-made session and worktree were removed | 502 | 1 |
+| 014 | the worktree could not be made (60 s deadline; carries git's line), or tmux is not installed (carries the install command), or tmux could not start the session or did not return in 4 s; raised only inside the POST; the half-made session and worktree were removed | 503 | 1 |
 | 015 | the session has no tmux pane to attach (Warp, IDE, terminal); carries the host kind | 409 | 1 |
 | 016 | the tmux server or session is gone | 410 | 1 |
 | 017 | the prompt is over 8,000 characters | 400 | 1 |
