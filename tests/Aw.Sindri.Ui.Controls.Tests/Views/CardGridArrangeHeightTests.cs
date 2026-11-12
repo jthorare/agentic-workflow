@@ -55,7 +55,7 @@ public sealed class CardGridArrangeHeightTests
 
         protected override Size ArrangeOverride(Size finalSize)
         {
-            _ = Child?.Arrange(new Rect(0, 0, 430, Child.DesiredSize.Height));
+            Child?.Arrange(new Rect(0, 0, 430, Child.DesiredSize.Height));
             return finalSize;
         }
     }
