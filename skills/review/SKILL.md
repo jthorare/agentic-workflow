@@ -1,7 +1,7 @@
 ---
 name: review
 description: "Use when someone wants a pull request looked over before it merges: \"review my PR\", check this diff for bugs, security holes, weak tests or unhandled edge cases. Runs specialist reviewers in parallel and saves the findings locally without posting. Not for fixing saved comments (addressReview) or publishing them (postReview)."
-argument-hint: [pr-number-or-url] [--lens <persona,...>]
+argument-hint: "[pr-number-or-url] [--lens <persona,...>]"
 allowed-tools: Bash(gh *), Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Agent, Read, Write, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
 
@@ -92,7 +92,7 @@ Each reviewer returns a **JSON object** as its final output (not GitHub comments
 
 After collecting all reviewer JSON outputs:
 1. Check for any reviewer output with `investigation_needed: true`
-2. If found: rank candidates deterministically — severity first (`blocking` before `issue`), then longer error trace, then lowest issue `id` (lexicographic) — and take up to **3**
+2. If found: rank candidates deterministically — severity first (`blocking` before `issue`), then longer error trace, then lowest issue `id` (lexicographic); take up to **3**
 3. **Ask the user:**
    > "Found {N} blocking bug(s) with error traces. Run rootCause on the top {min(N,3)}? (yes/no)"
 4. If yes: **Dispatch in parallel** up to 3 rootCause runs — one **Invoke skill `rootCause`** (args: `"<investigation_error value>"`) per candidate, launched together
@@ -144,7 +144,7 @@ Combine all reviewer outputs into `$AW_DIR/reviews/{number}.json`:
 }
 ```
 
-Save this file (write it in full). `lenses` lists the agent names actually spawned in Step 5. On re-review (file already exists): set `review_run` to prior value + 1 and `previous_run_finding_count` to the prior run's total issue count before overwriting.
+Save this file (write it in full). `lenses` lists the agent names spawned in Step 5. On re-review (file already exists): set `review_run` to prior value + 1 and `previous_run_finding_count` to the prior run's total issue count before overwriting.
 
 ## Step 7: Report to User
 

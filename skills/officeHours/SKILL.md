@@ -7,7 +7,7 @@ allowed-tools: Bash(git *), Bash(mkdir *), Bash(date *), Bash(SHARED_DIR=*), Age
 
 # Office Hours — Spec-Driven Brainstorming
 
-Runs a structured brainstorming session and produces four domain-owned outputs — one per team — so every participant leaves with a clear assignment rather than a monolithic doc no one owns.
+Runs a structured brainstorming session and produces four domain-owned outputs (one per team) so every participant leaves with a clear assignment rather than a monolithic doc no one owns.
 
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
@@ -38,7 +38,7 @@ Read project context to ground the brainstorming session:
 **External reference docs:** Scan each planning doc for an `## External References` section — the bootstrap skill appends these when `--product-docs` sources were provided. Collect all referenced sources across all docs, deduplicate by URL/path, and surface them before the first question:
 
 > **External reference docs available:**
-> - [{Type}] [{title}]({url-or-path}) — {note} *(from {doc}.md)* — mark inaccessible ones ⚠️
+> - [{Type}] [{title}]({url-or-path}) — {note} *(from {doc}.md)*; mark inaccessible ones ⚠️
 >
 > Should I consult any of these during our session? (yes / no / specify which)
 
@@ -108,7 +108,7 @@ Present the menu:
 
 Wait for the user's response. Parse their selection (numbers, "all", or "drop N" syntax).
 
-## Step 5: EARS Deep Dive
+## Step 5: EARS Requirements in Detail
 
 For each selected EARS type, run a focused sub-question. Present draft requirements based on the conversation so far and ask the user to refine them. **After each sub-question, wait for the user's response before moving on.**
 
@@ -130,7 +130,7 @@ Then ask: **"Are these the right triggers? Are there events I'm missing, or even
 
 Present 2-3 draft state-driven requirements based on conditions identified in Q2.
 
-Then ask: **"Are these the right states to handle? Any states where the system should behave differently that we haven't covered?"**
+Then ask: **"Are these the right states to cover? Any states where the system should behave differently that we haven't covered?"**
 
 ### 5d: Optional Requirements (if selected)
 
@@ -146,7 +146,7 @@ Then ask: **"Are these the right failure scenarios? What's the worst thing that 
 
 ### 5f: Approach (always runs)
 
-Based on the codebase, tech stack, existing infrastructure, and the requirements gathered so far, present 2-3 concrete approach options that leverage existing strengths.
+Based on the codebase, tech stack, existing infrastructure, and the requirements gathered so far, present 2-3 concrete approach options that use existing strengths.
 
 Then ask: **"Which of these resonates? Is there something I'm missing about your position?"**
 

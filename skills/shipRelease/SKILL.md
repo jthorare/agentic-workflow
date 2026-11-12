@@ -172,7 +172,7 @@ If Step 7 was skipped (because `--no-deploy` was passed) and `--skip-docs` was *
 /syncDocs
 ```
 
-If Step 7 ran, do **not** invoke `/syncDocs` here — the `canary → syncDocs` chain handles it.
+If Step 7 ran, do **not** invoke `/syncDocs` here — the `canary → syncDocs` chain runs it.
 
 If `--skip-docs` was passed, skip this step.
 

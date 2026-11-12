@@ -63,7 +63,7 @@ Assign `PORT` explicitly at the top of **every** bash block (shell state does no
       ```
    Report the version (e.g., "5.1.0"); "unknown" if all three fail.
 
-5. Summarize with a 4-line block — one line per check (dashboard, MCP surface, KB, version) — each prefixed `✓ ` or `✗ `. If any check failed, add a fix suggestion line at the bottom (re-run setup.sh, check env, etc.).
+5. Summarize with a 4-line block (one line per check: dashboard, MCP surface, KB, version), each prefixed `✓ ` or `✗ `. If any check failed, add a fix suggestion line at the bottom (re-run setup.sh, check env, etc.).
 
 ## Outputs
 
