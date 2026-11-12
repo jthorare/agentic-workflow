@@ -1,4 +1,5 @@
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Shell;
 
 namespace Aw.Sindri.Ui.Views.Shell;
@@ -36,7 +37,7 @@ internal sealed partial class ShellWindow
             return true;
         }
 
-        if (EscapeSheetOrInbox(shell))
+        if (EscapeSheetOrInbox(shell) || EscapeWorkflowsLevel(shell))
         {
             return true;
         }
@@ -88,4 +89,8 @@ internal sealed partial class ShellWindow
 
         return false;
     }
+
+    // Esc on a workflow's runs or a run goes back one level, as its Back button does (#2956); the page says no while an inner layer is open.
+    private bool EscapeWorkflowsLevel(ShellViewModel shell) =>
+        shell.IsWorkflows && !shell.IsSheetOpen && this.GetVisualDescendants().OfType<Workflows.WorkflowsPage>().FirstOrDefault(static p => p.IsEffectivelyVisible)?.EscapeLevel() == true;
 }

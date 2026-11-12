@@ -106,6 +106,18 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
+    // A run row is a focus stop too: Enter on it (not on its title button) opens the run, as clicking the title does; Space is kept for peek (#2956, #2978).
+    private async void OnRunRowKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Source == sender && e.Key is Key.Enter && DataContext is WorkflowsPageViewModel page && sender is Control { DataContext: RunRowViewModel row })
+        {
+            e.Handled = true;
+            var open = page.OpenRun(row.Id, CancellationToken.None);
+            FocusLater(WorkflowsBack);
+            await open.ConfigureAwait(true);
+        }
+    }
+
     private async void OnRetry(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)
@@ -180,7 +192,21 @@ internal sealed partial class WorkflowsPage : UserControl
 #pragma warning restore MA0155
 
     // Back lands on the level it returns to: the first row's focus stop (the workflow row itself, or a run row's button), else the first thing on that level that takes focus (Try again, Run now), never the Back button it just hid.
-    private void OnBack(object? sender, RoutedEventArgs e)
+    private void OnBack(object? sender, RoutedEventArgs e) => GoBack();
+
+    /// <summary>Esc on a runs or run level with no inner layer open: does what Back does. False when there is nothing to leave (#2956).</summary>
+    internal bool EscapeLevel()
+    {
+        if (DataContext is not WorkflowsPageViewModel { CanStepBack: true })
+        {
+            return false;
+        }
+
+        GoBack();
+        return true;
+    }
+
+    private void GoBack()
     {
         if (DataContext is not WorkflowsPageViewModel page)
         {

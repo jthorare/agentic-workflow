@@ -185,6 +185,9 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     }
 
     /// <summary>Goes up one level: a run to its workflow's runs, runs to the list.</summary>
+    /// <summary>True on a runs or run level with no inner layer open (the editor sheet, the create form, a graph edit picker or confirm): those keep their own Esc.</summary>
+    internal bool CanStepBack => !IsList && !IsEditing && !IsCreating && !GraphEdit.IsAdding && !GraphEdit.IsConnecting && !GraphEdit.IsConfirmingRemove;
+
     internal void Back() => SetLevel(_level == Level.Run ? Level.Runs : Level.List);
 
     private void SetLevel(Level level)
