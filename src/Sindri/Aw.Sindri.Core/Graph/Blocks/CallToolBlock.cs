@@ -27,9 +27,9 @@ public sealed class CallToolBlock(IRunningToolkits toolkits, IConnectionToolPort
 
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([
-        new("tool", BlockFieldType.Text),
-        new("connection", BlockFieldType.Text, Required: false),
-        new("arguments", BlockFieldType.Map, Required: false),
+        new("tool", BlockFieldType.Text, Caption: "Tool"),
+        new("connection", BlockFieldType.Text, Required: false, Caption: "Connection"),
+        new("arguments", BlockFieldType.Map, Required: false, Caption: "Tool input"),
     ]);
 
     /// <inheritdoc />

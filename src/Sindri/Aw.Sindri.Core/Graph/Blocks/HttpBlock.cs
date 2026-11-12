@@ -34,11 +34,11 @@ public sealed class HttpBlock(IGraphHttpPort http) : IGraphBlock
 
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([
-        new("url", BlockFieldType.Text),
-        new("method", BlockFieldType.Text, Required: false),
-        new("headers", BlockFieldType.Map, Required: false),
-        new("body", BlockFieldType.Map, Required: false),
-        new("expect", BlockFieldType.Text, Required: false),
+        new("url", BlockFieldType.Text, Caption: "Web address"),
+        new("method", BlockFieldType.Text, Required: false, Caption: "Request type"),
+        new("headers", BlockFieldType.Map, Required: false, Caption: "Headers"),
+        new("body", BlockFieldType.Map, Required: false, Caption: "Request body"),
+        new("expect", BlockFieldType.Text, Required: false, Caption: "Accepted answer codes"),
     ]);
 
     /// <inheritdoc />

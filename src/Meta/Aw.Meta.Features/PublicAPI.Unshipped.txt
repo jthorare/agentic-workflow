@@ -78,6 +78,8 @@ Aw.Meta.Features.Health.HealthResponse.Builders.get -> Aw.Meta.Core.Health.Build
 Aw.Meta.Features.Health.HealthResponse.Builders.init -> void
 Aw.Meta.Features.Health.HealthResponse.Consumer.get -> string?
 Aw.Meta.Features.Health.HealthResponse.Consumer.init -> void
+Aw.Meta.Features.Health.HealthResponse.OomPolicy.get -> string?
+Aw.Meta.Features.Health.HealthResponse.OomPolicy.init -> void
 Aw.Meta.Features.Health.HealthResponse.Duplicates.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Health.DuplicateServer!>!
 Aw.Meta.Features.Health.HealthResponse.Duplicates.init -> void
 Aw.Meta.Features.Health.HealthResponse.Equals(Aw.Meta.Features.Health.HealthResponse? other) -> bool
