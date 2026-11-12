@@ -30,7 +30,7 @@ What main does today:
 - **The app never starts serve.** No `Process.Start` is in `Aw.Sindri.Ui` or `Aw.Sindri.Ui.Desktop` (#3055, ui's comment). The "Not running" card says "Start it from a terminal:" (`Labels.Setup.cs:62`).
 - **A stale serve is a sentence, not a button.** `StaleBuild.Is` (`Core/Doctor/StaleBuild.cs:13`) compares two stamps and its fix text is `sindri stop && sindri`. The only route is `POST /sindri/stop` (`Host/Catalog/ShellRows.cs:15`).
 - **Stamps are hashes, not numbers.** A stamp is 16 hex characters (`scripts/install-cs.sh:126`). Each build folder holds `build-info` with `commit=` and `built=` (`scripts/install-cs.sh:384`). So "newer" is a compare of the two `built=` times, and the drawings' build numbers have no source: every frame shows the commit and the `built=` time instead ("7c81646, built today 10:31").
-- **A Desk row does not refuse a session.** `Authorization.cs` (`Core/Commands/Authorization.cs:25`) lets `Terminal`, `App`, `Session` and `Launched` run a Desk row such as `StopProcess`. The owner-only verbs check the per-start human token instead (`CallerHeaders.cs:30`, `CallerContextMiddleware.cs:81`), as `profile set` does.
+- **A Desk row does not refuse a session, and an agent the owner started is the owner.** `Authorization.cs` (`Core/Commands/Authorization.cs:25`) lets `Terminal`, `App`, `Session` and `Launched` run a Desk row such as `StopProcess`. The owner-only verbs (`profile set`) check the per-start human token instead (`CallerHeaders.cs:36-50`): a CLI that can read it is a human caller "whatever the terminal or the agent around it", and only a session Sindri launched never gets it (`AW_SINDRI_LAUNCH`). So the line on main between owner and agent is launched or not, by design (agent-first PR 2).
 - **No account step.** GitHub, Linear and Slack connect from the Connections page with a pasted key or a client id the owner registers (`config/connections/presets/github.json`, `linear.json`). Slack refuses a loopback redirect (`slack.json`, `loopbackAllowed: false`).
 
 The job: **open the app on a fresh box, answer at most 2 questions (which accounts, which repos), and land on Home with a real row. Every state on the way has one button. An agent can do the same setup through `sindri setup`, except the owner's own verbs.**
@@ -59,7 +59,7 @@ Done-checks. Each is a test or a timed run in the real app (`aw-ui-driver`) on a
 | # | Check | Measured as |
 |---|---|---|
 | F1 | **Time to Home.** Fresh home to Home showing the hello-sindri run row and the item it made in the first repo. | Seconds per step and in total, printed by the timed run (§8) and recorded in CI. Target under 180 s. Today: never, because no step leads there. |
-| F1b | **Time to own data.** Same walk with the gh login; Home shows a row from the owner's pull requests. | The app walk's `first-run own-data N s` line. Target: under 60 s after F1. |
+| F1b | **Time to own data.** Same walk with the gh login; Home shows a row from the owner's pull requests. | The app walk's `first-run own-data N s` line. Target: under 60 s after F1, a guess to confirm on the first walk. The row comes from the Reviews queue feed, which reads `context.sources.github` for the added repos; it needs no map. |
 | F1c | **Accounts leg.** Seconds from question 1 open to its last account connected (gh login path). | The app walk's `first-run accounts N s` line. Target under 60 s, the same as the Workflows spec's "Connect GitHub under 1 minute". |
 | F2 | **Two questions.** The walk asks for accounts, then repos, and nothing else. | `aw-ui-driver` counts screens that take input before Home: at most 2. Skip on accounts counts as an answer. |
 | F3 | **One button per state.** Every state in §4 has exactly one primary button and no CLI line or raw code outside Details. | One frames test per state row; qa's sweep of #3054 to #3066 closes each issue. |
@@ -67,7 +67,7 @@ Done-checks. Each is a test or a timed run in the real app (`aw-ui-driver`) on a
 | F5 | **Setup without serve.** With serve down, `sindri setup` prints the steps it can read locally and exits 1 with "Sindri is not running" as the first step. | A CLI test on a scratch home with no `control.json`. |
 | F6 | **A stale serve fixes itself on one click.** | Install a second build, click Restart Sindri: serve runs the installed stamp within 15 s; open runs are named and kept. |
 | F7 | **Doctor never throws on an older home.** | A home whose `views.db` and `ledger.db` an older build wrote: doctor prints every row, one fail row per store that is behind, exit 1, no unhandled exception (#2954). |
-| F8 | **An agent can set up.** An agent session runs `sindri setup --apply --repo <path>` and reaches every step but the accounts step and a restart; `sindri setup` then exits 3 ("only the owner can finish"). | A CLI test with session headers; `sindri restart` and `sindri setup connect` exit 2 with `SND-AUTH-002`. |
+| F8 | **An agent can set up.** An agent session runs `sindri setup --apply --repo <path>` and reaches every step but the browser and paste sign-ins; `sindri setup` then exits 3 ("only the person at the keyboard can finish"). | A CLI test as an owner-started session (it may restart and use the gh login) and as a launched session (`sindri restart`, `sindri setup connect` and `sindri setup scan` exit 2 with `SND-AUTH-002`). |
 | F9 | **First paint.** The first window paints from the local home in under 100 ms, before serve answers. | Window open to first frame, measured by perf. |
 | F10 | **Scan speed.** The first 10 repos show in under 2 s. | Timed on this box's home and on a scratch home with 200 folders. |
 
@@ -81,14 +81,14 @@ Done-checks. Each is a test or a timed run in the real app (`aw-ui-driver`) on a
 6. **One step list, from Core.** `SetupStep` stays the model. The app renders the steps the route sends and adds none of its own, so `Labels.Setup*` step copy is dropped where the route sends the text (ui plan item 1). `sindri setup` renders the same list.
 7. **Eight steps, in this order:** `serve`, `sources`, `repo`, `profile`, `agent`, `mcp`, `map`, `first-workflow` (§3.1). The drawings' 11 rows fold into these. "Repos found" and "Repos added" are one `repo` step. "Profile saved" and "Profile checked" are one `profile` step. The failed first read of pull requests and docs is an item of `sources`. *agent default (lead, 2026-11-12)*.
 8. **`sindri setup` works without serve.** When serve is down, the CLI computes `serve`, `repo`, `profile` and `agent` in process from the same `SetupSteps` rules and reports the other four as "Waits for Sindri to run". `--json` keeps its shape. *meta, #3019* (answer 3).
-9. **`sindri setup` has an exit for "only the owner can finish".** Exit 0: every step is done or skipped. Exit 1: a step is to do, running or failed, or serve is down. Exit 3 (new): every step that is not done waits on an owner-only verb (an account sign-in, a restart). An agent stops on 3 and tells the owner; it does not loop. A step that waits on the owner has `State = needs-you` and `Cli = null`. *agent default (lead, 2026-11-12)*; round 1 devex 4.
-10. **`sindri setup --apply` does what needs no human.** It starts serve when it is down, adds each repo named by `--repo` through the `AddRepo` job, and waits for those jobs to end (seconds), not for onboarding or the code index. A repo already in the profile counts as `already`, not as an error. The setup service then sets the agent target, creates and activates hello-sindri, and registers MCP in each repo on its own (`service:setup`, setup-once SO-22). `--apply` never signs in and never restarts. With no `--repo`, it adds the pre-ticked (`known`) repos and prints each one it added; with none known it refuses with `SND-SETUP-010`. *meta, #3019* (answer 3) for `--apply`; *meta (§15 pick 3, 2026-11-12)* for the no-`--repo` default; the rest *agent default (lead, 2026-11-12)*.
-11. **Restart is the owner's, the app holds the wait, and serve keeps no restart state.** `POST /sindri/restart` reads the open runs first (the rule of `scripts/lib/sindri-open-runs.sh`). With none open, it stops serve through the `/sindri/stop` path and answers 202; the caller (app or CLI) then starts the installed build. With runs open, it refuses with `SND-SETUP-009` and names them. A restart with runs open only waits: no button stops them. Each run in the line is a link to its run page, where Stop already is, so a stuck run is not a dead end (*meta, §15 pick 2, 2026-11-12*). "Restart when they finish" is the app's: it fixes the set of runs open at the click, reads `GET /sindri/runs/open` every 5 s while that state shows, and sends a plain restart once that set has ended. A run that starts during the wait is not waited for. Close the app during the wait, and the wait ends and serve keeps running the old build. The CLI does the same with `sindri restart --wait [--timeout 30m]`. The route checks the per-start human token, so a session gets `SND-AUTH-002`. *meta, #3019* (answer 1: serve only stops itself); the rest *agent default (lead, 2026-11-12)*; round 1 arch F3, devex 1, security 1.
+9. **`sindri setup` has an exit for "only the person at the keyboard can finish".** Exit 0: every step is done or skipped. Exit 1: a step is to do, running or failed, or serve is down; an agent re-reads after the step's job or the setup service's pass ends. Exit 3 (new): every step that is not done waits on the person: a browser sign-in, a device code, a pasted token, or a verb this caller is refused. An agent stops on 3 and tells the owner; it does not loop. Such a step has `State = needs-you` and `Cli = null`. *agent default (lead, 2026-11-12)*; round 1 devex 4, round 2 devex 1.
+10. **`sindri setup --apply` does what needs no human.** It starts serve when it is down, adds each repo named by `--repo` through the `AddRepo` job, and waits for those jobs to end (seconds), not for onboarding or the code index. A repo already in the profile counts as `already`, not as an error. The setup service then sets the agent target, creates and activates hello-sindri, and registers MCP in each repo on its own (`service:setup`, setup-once SO-22). `--apply` runs that pass at once (`sindri services run setup`, which exists) and waits for it, up to `--timeout` (default 120 s), so the next `sindri setup` is current and never waits for the 60 s tick. `--apply` never signs in and never restarts. With no `--repo`, it adds the pre-ticked (`known`) repos and prints each one it added; with none known it refuses with `SND-SETUP-010`. *meta, #3019* (answer 3) for `--apply`; *meta (§15 pick 3, 2026-11-12)* for the no-`--repo` default; the rest *agent default (lead, 2026-11-12)*.
+11. **Restart is the owner's, the app holds the wait, and serve keeps no restart state.** `POST /sindri/restart` reads the open runs first (the rule of `scripts/lib/sindri-open-runs.sh`). With none open, it stops serve through the `/sindri/stop` path and answers 202. The caller (app or CLI) waits until the old serve's pid from `control.json` has exited and its port stops answering, up to 15 s, then starts the installed build, so the new serve never meets the old one's single-serve guard. With runs open, it refuses with `SND-SETUP-009` and names them. A restart with runs open only waits: no button stops them. Each run in the line is a link to its run page, where Stop already is, so a stuck run is not a dead end (*meta, §15 pick 2, 2026-11-12*). "Restart when they finish" is the app's: it fixes the set of runs open at the click, reads `GET /sindri/runs/open` every 5 s while that state shows, and sends a plain restart once that set has ended. A run that starts during the wait is never stopped either: the final restart refuses again with `SND-SETUP-009`, and the line names the new run and waits for it (§4.5). Close the app during the wait, and the wait ends and serve keeps running the old build. The CLI does the same with `sindri restart --wait [--timeout 30m]`. The route checks the per-start human token (`CallerHeaders`, as `profile set`), so a session Sindri launched gets `SND-AUTH-002`; an agent the owner started may restart, because on main it is the owner's caller. *meta, #3019* (answer 1: serve only stops itself); the rest *agent default (lead, 2026-11-12)*; round 1 arch F3, devex 1, security 1.
 12. **"Newer" comes from `build-info`.** The serve step compares the `built=` times of the running and the installed build. Installed later: "A newer Sindri is installed (7c81646, built today 10:31)". Installed earlier: "A different Sindri is installed". Commits show as 7 characters; stamps never show outside Details. A process with no stamp (dotnet run, a test) has no serve finding, as `StaleBuild.Is` says today. *agent default (lead, 2026-11-12)*.
 13. **GitHub uses the gh login first.** When `gh auth status` passes, the GitHub row's one button is "Use the gh login (ada)". It sets `review.credential` to `command:gh auth token`, so no token is copied or stored; `command:` credentials run as argv with no shell (`ForgeCredentialSpec`). The row's sub-line says "uses the gh login's scopes". With no gh login, the button is "Sign in to GitHub": the device flow of Sindri's own OAuth app, so the box holds no client secret. A work org that blocks the app gets the fallback row "Paste a token" (a fine-grained token, the Reviews spec's §5.7 path). *meta, #3019* (answer 6), *meta (§15 pick 1, 2026-11-12)*.
 14. **One GitHub account feeds every reader.** The accounts step writes the GitHub credential once and points each reader at it: `review.credential`, the `github` index source and the `github` connection. Only an owner caller (human token) writes these keys. *agent default (lead, 2026-11-12)*; §11 gap 2 says what P0 must confirm.
 15. **Linear signs in through the browser; Slack is a guided paste.** Linear uses OAuth with PKCE, the existing `state` check and loopback sign-in (`POST /sindri/connections/{name}/signin`), and the client id of Sindri's own OAuth app. A work org that blocks the app gets the same "Paste a token" fallback row (a Linear personal API key). Slack is a guided token paste: three numbered lines and a Paste field, until the #2979 probe says which token Messages needs. Slack is never required: Continue skips it in one click, and the `sources` step is Done without it (*meta, §15 pick 4, 2026-11-12*). *meta, #3019* (answer 6).
-15a. **Sindri owns one OAuth app per provider; the owner registers each once.** The client id ships in the build as the default of a profile key, `setup.oauth.github` and `setup.oauth.linear` on the existing `setup` section, so the owner can swap in an app of their own. Neither key holds a secret. *meta (§15 pick 1, 2026-11-12)*; the key names are *agent default (lead, 2026-11-12)*. The one-time owner step, per provider:
+15a. **Sindri owns one OAuth app per provider; the owner registers each once.** The client id ships in the build as the default of a profile key, `setup.oauth.github` and `setup.oauth.linear` on the existing `setup` section, so the owner can swap in an app of their own. Neither key holds a secret. This sign-in is what makes the repo pre-tick work on a fresh box: with accounts first (decision 4), a one-click GitHub sign-in lets question 2 read the repos the owner worked on, even on a box with no gh login. *meta (§15 pick 1, 2026-11-12)*; the key names are *agent default (lead, 2026-11-12)*. The one-time owner step, per provider:
 
 | Provider | Where | App name | Callback | Flow | Scopes |
 |---|---|---|---|---|---|
@@ -98,26 +98,25 @@ Done-checks. Each is a test or a timed run in the real app (`aw-ui-driver`) on a
 The owner pastes each client id into the build's defaults once (P5 names the file); until then the profile key holds it.
 
 16. **An account an admin must approve has its own state.** A Slack app from a manifest in a company workspace, and a GitHub or Linear org that gates OAuth apps, can need an admin. The row then says "Waiting on your workspace admin to approve Sindri." with Check again, and question 1 still finishes with Continue. *agent default (lead, 2026-11-12)*; round 1 product C4.
-17. **Pasted tokens never leave the secret store.** The Slack token goes from the field to `ISecretWriter` (`Infrastructure/Secrets/KeychainSecretWriter.cs`) in one request and is dropped from memory after the answer. It never reaches the ledger, a job row, telemetry, a log or a command line. The CLI reads it from stdin or `--token-env NAME`, as `index connect` does. *agent default (lead, 2026-11-12)*; round 1 security 2.
+17. **No secret leaves the secret store or memory.** One rule for every secret in the flow: a pasted GitHub, Linear or Slack token, a device code, a PKCE verifier, and every access or refresh token. Each is write-only: it goes straight to `ISecretWriter` (`Infrastructure/Secrets/KeychainSecretWriter.cs`) or stays in memory for one sign-in, and is dropped after the answer. None reaches the ledger, the command audit, a job row, error text, `--json`, telemetry, a log or a command line. The CLI reads a token from stdin or `--token-env NAME`, as `index connect` does. One test per paste path (GitHub, Linear, Slack) checks the ledger, the job rows and the log after a save. *agent default (lead, 2026-11-12)*; round 1 security 2, round 2 security 1.
 18. **The map step follows the first code index.** It is Running from the moment `BuildCodeIndex` starts, with that job's progress ("Indexing files: 7,000 of 15,223"), then Running with the map's progress (#3112). It never says "Sindri builds it on its own" while nothing is building.
 19. **hello-sindri exists after the first repo, and Home offers it.** The setup service creates the `hello-sindri` workflow from its template and activates it when the profile first names a repo, as it sets the agent target. It needs no map, no account, no model and no network (engine plan on #3019), so Home's first-run state offers **Run hello-sindri** (Enter) as its one primary until the first run succeeds. The owner can dismiss the step (§3.1). This answers design's open call 4. *agent default (lead, 2026-11-12)*; round 1 arch F4, design 1.
 20. **Failed is not empty.** A failed read never shows the empty state. It shows the inline state line with Retry and keeps the last list under it (design's grammar piece on `pr-assets/grammar-2978`, c73f521779).
 21. **One shared line for an older serve.** "The X list can't be read from this Sindri. It is older than the app." with Restart Sindri, on every page (qa's pattern across 8 pages).
-22. **One primary per screen, picked by order.** Where several rows could hold a primary (the Setup page, question 1 with two unconnected accounts), the first row in order that is not done holds it; every other button on screen is secondary. *agent default (lead, 2026-11-12)*; round 1 design 3 and 4.
+22. **One primary per screen, picked by order.** Where several rows could hold a primary (the Setup page, question 1), the first row in order that is not done and has a button holds it; every other button on screen is secondary. A running row with no button is passed over. *agent default (lead, 2026-11-12)*; round 1 design 3 and 4, round 2 design 2.
 23. **Bare letters never write.** Ticking a repo is local (`x`, `a`); Add is `Ctrl+Enter`; a sign-in is a button press. No step asks for a typed confirmation.
 24. **Setup is a nav tab until every step is done or skipped.** "Setup 5/8" sits in the nav; when all 8 are done or skipped it moves into Settings. *design call* 2.
 25. **The first-run agent path is the CLI.** The `sindri` MCP server is registered only after the profile names a repo, so a session on a fresh box has no MCP tools yet. The only new MCP tool is `setup_get`, for sessions after setup. *agent default (lead, 2026-11-12)*; round 1 devex 6.
 26. **Proof only on scratch homes.** Nobody touches the owner's home or the owner's serve (#3019, "Rule").
+27. **One profile writer gate.** First run writes the profile from several places within seconds: the account route, `AddRepo`, the skip route and the setup service. Every in-process write goes through one shared gate (one `SemaphoreSlim` in a `ProfileWriteGate` singleton, replacing each writer's own `lock`). Each writer also keeps main's re-read check (`SND-PROFILE-002` when the file "changed twice while writing") and retries once, which covers `profile set` from the CLI process. An older serve reads the new `setup` keys as an unreadable profile (`SetupSettings` disallows unknown members); that is a stale serve, and the app's stale line with Restart Sindri is its fix. *agent default (lead, 2026-11-12)*; round 2 arch M5.
+28. **Question 1 outside first run is the Accounts page.** Opened from the Setup page, a Reconnect or a Needs you row, the same screen shows as "Accounts" with no "Question 1 of 2" and a footer button **Done** that goes back to where it came from. Question 2 shows only while the profile names no repo. *agent default (lead, 2026-11-12)*; round 2 design 3.
 
 ### 2.1 Every number, with its source
 
 | Number or rule | Where | Source |
 |---|---|---|
 | at most 2 questions | decision 3, F2 | meta, #3019 (the direction says 3; meta's plan cut it to 2) |
-| under 180 s to Home | F1, §8 | ledger 7 and #3051 ("under 3 min") |
 | under 60 s for own data and for accounts | F1b, F1c | agent default (lead, 2026-11-12), matching the Workflows spec's "Connect GitHub under 1 minute" |
-| first paint under 100 ms | F9 | ledger 1 ("Desktop gain") |
-| first 10 repos under 2 s | F10 | #3049 and ledger 2 |
 | scan root `~`, depth 3, skip dot folders and `node_modules` | §3.3 | meta, #3019 (answer 2) |
 | also skip `bin`, `obj`, `target`; fold worktrees | §3.3 | api plan on #3019, 08:14Z |
 | `known` = PR, review request or push in 30 days | decision 4 | agent default (lead, 2026-11-12) |
@@ -125,11 +124,21 @@ The owner pastes each client id into the build's defaults once (P5 names the fil
 | "about 10 seconds" on the Not running page | §4.1 | ux walk, 9.9 s |
 | open-runs poll every 5 s while waiting | decision 11 | agent default (lead, 2026-11-12) |
 | `restart --wait` default timeout 30 min | decision 11 | agent default (lead, 2026-11-12) |
-| map "stopped" after 10 min without a new progress line | §4.4 | guess; P0 measures it (§11 gap 6) |
+| map "stopped" after 10 min without a new progress line | §4.4 | agent default (lead, 2026-11-12), a guess; P0 measures it and sets the number (§11 gap 6) |
 | progress chip at most 5 characters | §4.4 | design call (grammar piece) |
 | commit shown as 7 characters | decision 12 | agent default (lead, 2026-11-12), git's short form |
 | key chords (`x`, `a`, `Ctrl+Enter`, `Ctrl+Shift+R`) | §4.7 | agent default (lead, 2026-11-12); `x`, `a` and `Ctrl+Enter` are on design's frame |
 | scan cap 500 repos per run | §3.3 | agent default (lead, 2026-11-12) |
+| under 180 s, under 100 ms, first 10 repos under 2 s | F1, F9, F10 | meta (#3051 sets 3 min; #3049 sets 2 s); 100 ms agent default (lead, 2026-11-12) taken from ledger 1 |
+| 24 px inset, 32 px state line, one primary per state | §4 | design call (grammar piece on `pr-assets/grammar-2978`) |
+| scan root capped to the home folder, no symlinks, origin without userinfo, launched callers refused | §3.3 | agent default (lead, 2026-11-12); round 1 security 3 and 4 |
+| timed run exit 4 for slow | §8 | agent default (lead, 2026-11-12); round 1 devex |
+| `--apply` waits up to 120 s for the setup pass | decision 10 | agent default (lead, 2026-11-12); round 2 devex 3 |
+| old serve exit wait up to 15 s | decision 11 | agent default (lead, 2026-11-12); round 2 arch M3 |
+| one step list from Core (decision 6) | §2 | ui plan on #3019, 08:03Z, item 1 |
+| map step follows the code index (decision 18) | §2 | #3112, filed by ux from the walk |
+| failed is not empty, one shared older-serve line (decisions 20, 21) | §2 | design call and qa's sweep on #3019, 08:16Z |
+| bare letters never write (decision 23) | §2 | meta's key rule on #2978 |
 
 ## 3. The model
 
@@ -149,7 +158,7 @@ The owner pastes each client id into the build's defaults once (P5 names the fil
 Rules:
 
 - **Order is fixed.** The list is sorted by this table, whatever state each step is in.
-- **Skip and dismiss live in the profile.** A new key `setup.skip` (a list of step ids) on the existing `setup` section (`Core/Profile/SetupSettings.cs`) holds them. Skip on question 1 adds `sources`; Dismiss on the hello-sindri row adds `first-workflow`. A skipped step counts as done. It turns back into Todo when an account connects (`sources`) and never on its own otherwise. No new table: the profile already holds the `setup` section and is the owner's own file. *agent default (lead, 2026-11-12)*; round 1 arch F5, product C6.
+- **Skip and dismiss live in the profile, as scalars.** Two keys on the existing `setup` section (`Core/Profile/SetupSettings.cs`): `setup.skipAccounts` and `setup.skipFirstWorkflow`, each `true` or absent. They are scalars so `IProfileKeyWriter` and `profile set` can write them (both refuse a list). The writer is a new route `POST /sindri/setup/skip` with `{step, skipped}`, catalog row `SkipSetupStep` (Desk; any caller, since a skip is undone in one click), and `sindri setup skip accounts|first-workflow [--undo]`. Skip on question 1 sets `skipAccounts`; Dismiss on the hello-sindri row sets `skipFirstWorkflow`. A skipped step counts as done. `skipAccounts` is cleared when GitHub connects. No new table: the profile already holds the `setup` section and is the owner's own file. *agent default (lead, 2026-11-12)*; round 1 arch F5, product C6, round 2 arch M4, devex 2.
 - **`first-workflow` done is derived.** It reads the workflow runs view: a `succeeded` live run of `hello-sindri`. Nothing new is stored.
 - **`sources` keeps its id.** The app reads `sources` today, so the step is retitled, not renamed. Its `Items` become one line per account: GitHub, Linear, Slack, each `not connected`, `connected as X`, `waiting on admin`, `reading`, `read failed` or `expired`.
 - **A new field, `Cli`.** Each step carries the exact command an agent runs for its action, from the catalog row's form, or null. It is null for an owner-only action. The app shows it only under Details.
@@ -208,17 +217,19 @@ Frame `setup-connect`. Header "Connect your accounts · Question 1 of 2", sub-li
 | Row | Sub-line | Button | What the click does |
 |---|---|---|---|
 | GitHub, gh login found | "pull requests, reviews and CI · gh login found: ada · uses the gh login's scopes" | Use the gh login (ada) | sets the credential to `command:gh auth token`; the row turns `connected as ada` |
-| GitHub, no gh login | "pull requests, reviews and CI" | Sign in to GitHub | device flow: shows the 8-character code with Copy and opens github.com/login/device |
-| GitHub or Linear, org blocks the app | "Your org blocks Sindri's app. Paste a token instead." | Paste a token | a masked field and Save token; the token goes to the secret store (decision 17) |
+| GitHub, no gh login | "pull requests, reviews and CI" | Sign in to GitHub | device flow: shows the 8-character code; the one primary is **Copy code and open GitHub**, which copies it and opens the verification URL from the preset |
+| GitHub or Linear, org blocks the app, or the build has no app id (`SND-SETUP-013`, `-014`) | "Your org blocks Sindri's app. Paste a token instead." | Paste a GitHub token / Paste a Linear token | three numbered lines, then a masked field and Save token (decision 17). GitHub: 1 "Open GitHub's new fine-grained token page" (Open in browser), 2 "Pick your repos and give it the permissions the Reviews spec §8 lists", 3 "Paste the token here". Linear: 1 "Open Linear, Settings, API, Personal API keys" (Open in browser), 2 "Create a key named Sindri", 3 "Paste the key here" |
 | Linear | "issues and projects · opens your browser" | Sign in to Linear | loopback OAuth with PKCE through `POST /sindri/connections/{name}/signin`; creates the connection when it is missing |
-| Slack | "messages and mentions · needs a token, 3 steps · optional" | Paste a token (never the primary) | opens three numbered lines: 1 "Open Slack's app page and create the app from Sindri's manifest" (Open in browser), 2 "Install the app to your workspace", 3 "Copy the user token Slack shows you, then paste it here" with a masked field and Save token |
+| Slack | "messages and mentions · needs a token, 3 steps · optional" | Paste a Slack token (never the primary) | opens three numbered lines: 1 "Open Slack's app page and create the app from Sindri's manifest" (Open in browser), 2 "Install the app to your workspace", 3 "Copy the user token Slack shows you, then paste it here" with a masked field and Save token |
 
-The footer holds one of two buttons. Before any account connects: **Skip** (secondary, no key) with "You can connect these later from Connections." After any account connects: **Continue** (Enter), the primary once no row is left in a todo state; until then the next row's button is primary and Continue is secondary. Continue or Skip opens question 2.
+The footer holds one of two buttons. Before GitHub connects: **Skip** (secondary, no key) with "You can connect these later from Connections." Once GitHub is connected: **Continue** (Enter) is the primary, and the Linear and Slack buttons turn secondary, because neither is required (decision 15). Continue or Skip opens question 2, or Home when the profile already names a repo.
 
 | State | What shows |
 |---|---|
 | Not connected | a todo ring, the button |
-| Device code shown (GitHub) | "Enter ABCD-1234 at github.com/login/device" with Copy and Open again; "Waiting for GitHub…" |
+| Device code shown (GitHub) | "Enter ABCD-1234 at github.com/login/device"; "Waiting for GitHub…" with Cancel. Polling follows GitHub's `interval` and `slow_down`, and stops at `expires_in` or Cancel |
+| Device code expired | "The code expired before GitHub saw it." | Get a new code (the primary) |
+| Token refused (GitHub or Linear paste) | the field is cleared and focused; "GitHub refused this token: <reason>. Paste a new one." |
 | Signing in | "Waiting for your browser…" with Cancel; the other rows still work |
 | Connected | `linked` glyph, "connected as X", no button |
 | Waiting on admin | "Waiting on your workspace admin to approve Sindri." with Check again (decision 16) |
@@ -297,6 +308,8 @@ Frame `states`, panel "Stale serve under the top bar". One 32 px line under the 
 | Stale | as above | Restart Sindri |
 | Runs open | "Sindri restarts when 2 runs finish: Nightly gate (run 14), Review loop on #3120 (run 3)." Each run name links to its run page, where Stop is | Restart when they finish |
 | Waiting for runs | "Restarts when 2 runs finish. Keep this window open." with the two run links and Cancel | none |
+| A new run started during the wait | "A new run started: Weekday check (run 7). Sindri restarts when it finishes too." with its link; the wait goes on with the new set | none |
+| Cancelled | back to Stale | Restart Sindri |
 | Restarting | "Restarting Sindri…"; pages keep their last read and writes are off | none |
 | Restarted | the line goes; one toast "Sindri restarted on 7c81646." | none |
 | Didn't come back in 30 s | "Sindri stopped but didn't start again: <first line of serve.log's last error>." Details: the log path | Start Sindri |
@@ -313,7 +326,12 @@ These follow design's `states` frame, one panel each. Each row has exactly one p
 | Shell (#3055) | not responding | "Sindri is not responding." | Refresh |
 | Shell (#3055) | unreadable | the shared line | Restart Sindri |
 | Home (#3056, #3113) | no profile | the setup line "Finish setting up Sindri: connect your accounts" | Connect your accounts |
-| Home | repo added, hello-sindri not run | "Run a first workflow: hello-sindri needs no account and runs in a few seconds." | Run hello-sindri |
+| Home | a profile with no repo (question 1 done, question 2 not) | the setup line "Finish setting up Sindri: add your repos" | Find my repos |
+| Home | hello-sindri being made (the seconds after the first Add) | "Getting a first workflow ready…" | none |
+| Home | repo added, hello-sindri not run, no own rows yet | "Run a first workflow: hello-sindri needs no account and runs in a few seconds." | Run hello-sindri |
+| Home | hello-sindri running | "hello-sindri is running: step 2 of 4." | none |
+| Home | hello-sindri failed | "hello-sindri failed at <step title>: <sentence>." | Open the run |
+| Home | own rows present (PRs, issues) | Home's normal rows hold the primary; hello-sindri shows as a secondary line until run or dismissed | Home's own |
 | Home (#3056) | queue read failed | "What needs you can't be read right now." with the last list kept | Retry |
 | Home (#3056) | truly empty | "Nothing needs you and nothing is running" | Open Workflows |
 | Home (#3113) | health strip, no profile | "Profile: not set up", no red mark; the pill does not say Healthy beside it | none: the setup line above holds the primary |
@@ -372,10 +390,11 @@ Every frame and example uses these. A frame with other numbers is wrong.
 | read the steps | `sindri setup [--json]` (works with serve down; exit 0, 1, 2, or 3 when only the owner can finish) | `setup_get` (new, after setup) | yes |
 | scan for repos | `sindri setup scan [--root DIR] [--depth N] [--json]` (new; needs serve) | none (decision 25) | an owner-started session yes; a launched one no |
 | add repos | `sindri repo add <path>` (exists) | none | yes (a job row, `SetupRows.cs`) |
-| do every automatic step | `sindri setup --apply [--repo PATH]... [--json]` (new) | none | yes |
+| do every automatic step | `sindri setup --apply [--repo PATH]... [--timeout D] [--json]` (new) | none | yes |
+| skip a step | `sindri setup skip accounts\|first-workflow [--undo]` (new) | none | yes |
 | start serve | bare `sindri` / `sindri serve` (exist) | none (no serve to answer) | yes |
-| restart serve | `sindri restart [--wait] [--timeout D]` (new) | none | no: `SND-AUTH-002` |
-| connect an account | `sindri setup connect github` or `linear` (device flow or browser), `--token-env NAME` on any of the three for the paste fallback, `slack` reads stdin otherwise (new) | none | no: `SND-AUTH-002` (the owner's browser and keychain) |
+| restart serve | `sindri restart [--wait] [--timeout D]` (new) | none | an owner-started one yes; a launched one no: `SND-AUTH-002` |
+| connect an account | `sindri setup connect github` or `linear` (device flow or browser), `--token-env NAME` on any of the three for the paste fallback, `slack` reads stdin otherwise (new) | none | an owner-started one yes, with the gh login or `--token-env`; a browser or device-code sign-in still needs the person (exit 3); a launched one no: `SND-AUTH-002` |
 | run hello-sindri | `sindri wf run hello-sindri` (exists) | `workflow_run` (exists) | yes |
 
 `sindri setup --apply --json` answers one document: `{added: [path], already: [path], failed: [{path, code, message}], serveStarted: bool, steps: [SetupStep]}`. Exit 0 when every named repo is added or already there; 1 when one failed or serve didn't start; 2 on usage or a refusal (`SND-SETUP-010`). A re-run with the same `--repo` is exit 0 with the repo under `already`.
@@ -386,7 +405,7 @@ Every free text in a setup result is fenced as untrusted, as every `sindri_*` re
 
 ## 6. Errors, in words
 
-`SND-SETUP-005` to `-007` are taken in the docs (`docs/sindri/errors.md:157-158` lists Onyx codes `-005` and `-006`; `docs/csharp/sindri.md:807` and the setup-once spec use `-007`), though `SindriErrors.cs:233-243` stops at `-004`. The new codes start at `-008`; P0 also deletes the retired Onyx rows from `docs/sindri/errors.md`. The app shows the sentence and puts the code in Details. The CLI prints `code message (fix: ...)` as today.
+`SND-SETUP-005` to `-007` are taken in the docs (`docs/sindri/errors.md:157-158` lists Onyx codes `-005` and `-006`; `docs/csharp/sindri.md:807` and the setup-once spec use `-007`), though `SindriErrors.cs:233-243` stops at `-004`. The new codes are `-008` to `-014`; P0 also deletes the retired Onyx rows from `docs/sindri/errors.md`. The app shows the sentence and puts the code in Details. The CLI prints `code message (fix: ...)` as today.
 
 | Code | When | Sentence | Button / command | Exit |
 |---|---|---|---|---|
@@ -397,6 +416,7 @@ Every free text in a setup result is fenced as untrusted, as every `sindri_*` re
 | `SND-SETUP-008` (new) | the scan root is missing, unreadable or outside the home folder | "Couldn't read <root>: <reason>." | Look in another folder… / `sindri setup scan --root DIR` | 2 |
 | `SND-SETUP-009` (new) | restart refused: runs are open | "Sindri restarts when 2 runs finish: <names, each a link to its run page>." | Restart when they finish / `sindri restart --wait`; `sindri wf run-show <run>` per run | 1 |
 | `SND-SETUP-013` (new) | GitHub or Linear refused Sindri's OAuth app (an org policy) | "Your org blocks Sindri's app. Paste a token instead." | Paste a token / `sindri setup connect github --token-env NAME` | 1 |
+| `SND-SETUP-014` (new) | this build ships no client id for the provider and the profile sets none (`setup.oauth.github` or `.linear`) | "This build has no GitHub app id. Paste a token instead." | Paste a GitHub token / `sindri setup connect github --token-env NAME` | 1 |
 | `SND-SETUP-010` (new) | `--apply` with no repo named and none known | "Name a repo to add: no repo here is one you worked on in GitHub lately." | `sindri setup --apply --repo <path>` | 2 |
 | `SND-SETUP-011` (new) | restart: the installed build has no `build-info` | "The installed Sindri isn't finished installing." | `scripts/install-cs.sh --link` | 2 |
 | `SND-SETUP-012` (new) | serve didn't answer 30 s after a start or restart | "Sindri didn't start: <first line of its error>." | Retry / `sindri serve` | 1 |
@@ -408,14 +428,14 @@ Doctor's new fail row (§3.4) has no code of its own: it is a `DoctorCheck` row 
 
 | # | Need | Lane | Notes |
 |---|---|---|---|
-| A1 | `SetupStepId` gains `serve`, `agent`, `first-workflow`; `SetupStep` gains `Cli`; `sources` moves to step 2 and is retitled, one item per account; `setup.skip` profile key | api | golden and API scenario row; the app reads the new ids in the same PR (`SetupStepView`), and an older app's test reads an unknown id |
+| A1 | `SetupStepId` gains `serve`, `agent`, `first-workflow`; `SetupStep` gains `Cli`; `sources` moves to step 2 and is retitled, one item per account; `setup.skipAccounts`, `setup.skipFirstWorkflow`, `setup.oauth.github`, `setup.oauth.linear` profile keys (owner-written, shape-checked in `ProfileRules`, in `ProfileDiff.Index`); `POST /sindri/setup/skip` and `SkipSetupStep` | api | golden and API scenario row; the app reads the new ids in the same PR (`SetupStepView`), and an older app's test reads an unknown id |
 | A2 | `sindri setup` computes steps 1, 3, 4 and 5 in process when serve is down; exit 3; `--apply`, `--repo`, the `--json` document | api | shares `SetupSteps` rules, no second copy |
 | A3 | `GET /sindri/setup/repos` (NDJSON stream), `sindri setup scan` | api | read-only; worktree fold; origin without userinfo; launched callers refused; `known` from the GitHub account |
-| A4 | `POST /sindri/restart`, `RestartProcess` catalog row checked by the human token, `GET /sindri/runs/open`, `sindri restart [--wait] [--timeout]` | api | the open-runs read in C#, one rule with `scripts/lib/sindri-open-runs.sh`'s bash test cases |
+| A4 | `POST /sindri/restart`, `RestartProcess` catalog row checked by the human token, `GET /sindri/runs/open`, `sindri restart [--wait] [--timeout]`; the caller waits for the old pid and port before the start | api | the open-runs read in C#, one rule with `scripts/lib/sindri-open-runs.sh`'s bash test cases |
 | A5 | serve step reads `build-info` of both stamps | api | `IBuildStamps` gains the two `built=` times |
 | A6 | Doctor guard per store; `SqliteException` becomes a fail row (#2954) | api | red first; aot-smoke line |
 | A7 | Bare `sindri` words and exit 0 on a missing profile (#3114) | api | aot-smoke and `Usage.cs` if text changes |
-| A8 | `ConnectAccount` row checked by the human token; `POST /sindri/setup/accounts/{github,linear,slack}`; gh login detection; device flow; sign-in that creates a missing connection; first write creates the profile | api | the Slack body is a secret type: never logged, recorded or stored outside `ISecretWriter` |
+| A8 | `ConnectAccount` row checked by the human token; `POST /sindri/setup/accounts/{github,linear,slack}`; gh login detection; device flow; sign-in that creates a missing connection; first write creates the profile; the shipped client id is a new `clientId` field in `config/connections/presets/github.json` and `linear.json`, which `setup.oauth.*` overrides | api | the Slack body is a secret type: never logged, recorded or stored outside `ISecretWriter` |
 | A9 | Status counts the same services as `GET /sindri/services` (#3127) | api | `GetStatusService.cs:69` |
 | C1 | Map step reads `BuildCodeIndex` too (#3112); `MapSetupReader.cs:22` watches one kind today | context | progress through `MapBuildProgress.Parse` |
 | C2 | Context page reads the same running fact (#3015) | context, ui | `MapSetupReader.cs:71` already has it |
@@ -423,7 +443,7 @@ Doctor's new fail row (§3.4) has no code of its own: it is a `DoctorCheck` row 
 | C4 | Six services read a null `context:` as defaults (#3131) | context | one helper, one test per service |
 | C5 | Embeddings: split long bodies, one 400 never parks the layer, doctor names the real cause (#3128) | context | `OllamaEmbedder.Embed`, `CodeIndexDoctor.cs:168` |
 | E1 | Setup service sets `workflow.agent.target` from the first agent `launcher:agents` finds | engine | the `agent` step; a line, not a question |
-| E2 | `hello-sindri` template (manual, code, notify, `create_item` in the first repo); the setup service creates and activates it when the profile first names a repo | engine | needs no map, account, model or network; a test-run case in CI (Workflows spec W4); its first code-node compile is timed in §8 |
+| E2 | `hello-sindri` template (manual, code, notify, `create_item` in the first repo); the setup service creates and activates it once, when the profile first names a repo, and records a `setup.first_workflow.created` ledger event so a deleted or dismissed hello-sindri is never made again; `CreateWorkflow` and `ActivateWorkflow` gain `ServiceGrants: ["setup"]`, as `RegisterMcp` has | engine | needs no map, account, model or network; a test-run case in CI (Workflows spec W4); its first code-node compile is timed in §8 |
 | U1 | Desktop host starts serve (decision 2) | ui | `Aw.Sindri.Ui.Desktop`, never `Aw.Sindri.Ui` |
 | U2 | `FailedReadLine` and the page empty state; `OpensInApp` true for every action with a route | ui | `ShellViewModel.Setup.cs:20` |
 
@@ -433,7 +453,7 @@ Doctor's new fail row (§3.4) has no code of its own: it is a `DoctorCheck` row 
 
 1. starts serve with bare `sindri --headless` and records the seconds;
 2. runs `sindri setup --apply --repo <checkout>` and records the seconds to the `repo` step Done;
-3. waits for the setup service to activate hello-sindri, then runs `sindri wf run hello-sindri` and records the seconds to its run row, the first code-node compile included;
+3. `--apply` has already run the setup pass (decision 10), so hello-sindri is active; it runs `sindri wf run hello-sindri` and records the seconds to its run row, the first code-node compile included;
 4. polls Home's read route until one row names the item hello-sindri made in this repo;
 5. prints one line per step and a total, for example `first-run total 142 s`.
 
@@ -497,7 +517,7 @@ Phases are the PRs. Every lane has work from day one; each phase lands its red a
 
 | Phase | What | Lane | Depends on | First red test |
 |---|---|---|---|---|
-| P0 | Contract: new step ids, order, `Cli`, `setup.skip`, exit 3, the scan line record, `POST /sindri/restart` and `GET /sindri/runs/open`, `RestartProcess` and `ConnectAccount` rows with the human-token check, `SND-SETUP-008` to `-013`, the retired Onyx doc rows, goldens, all as stubs; measure the map timeout | api | none | `Setup_lists_eight_steps_in_order` |
+| P0 | Contract: new step ids, order, `Cli`, the `setup` keys, the skip route, exit 3, the scan line record, `POST /sindri/restart` and `GET /sindri/runs/open`, `RestartProcess` and `ConnectAccount` rows with the human-token check, `SND-SETUP-008` to `-014`, the retired Onyx doc rows, goldens, all as stubs; measure the map timeout | api | none | `Setup_lists_eight_steps_in_order` |
 | P1 | #2954 doctor on an older home; #3114 bare `sindri` words and exit; aot-smoke lines | api | none (start now) | `Doctor_prints_a_fail_row_for_a_ledger_db_one_migration_behind` |
 | P2 | Stale serve: `build-info` read, serve step, restart route and open-runs read (#3052) | api | P0 | `Restart_refuses_and_names_two_open_runs`; `Restart_from_a_session_is_refused` |
 | P3 | Headless `sindri setup`, exit 3, `--apply` and its document | api | P0 | `Setup_with_serve_down_reports_not_running_first` |
@@ -522,7 +542,7 @@ Gate notes: P0, P2, P3, P4 and P5 add catalog rows, action ids and API goldens, 
 
 ## 14. Frames for design
 
-Redraw at §5.0's numbers. Each frame shows every state row of its section. No frame shows a build number: every build is its commit and its `built=` time.
+Redraw at §5.0's numbers. Each frame shows every state row of its section. The question order is now accounts (question 1), then repos (question 2): swap the two frames' headers and their "Question N of 2" lines. No frame shows a build number: every build is its commit and its `built=` time.
 
 1. `not-running`: Not running, Starting, Didn't start, Already starting (§4.1). The sentence says "about 10 seconds".
 2. `setup-connect`, now question 1: each row's states, gh login found and not found, the device code, the Slack paste open, waiting on admin, Skip before a connect and Continue after (§4.2).
@@ -600,3 +620,48 @@ Suggestions, resolved in writing (no second loop):
 - security, Linear reuses `state` and PKCE: applied (decision 15).
 - security, refuse an Origin header on the scan: not applied; serve is loopback only and the threat model is an honest mistake, not a hostile page.
 - security, refuse over auto-add for `--apply`: not applied; meta picked auto-add with each added repo printed (§15 pick 3).
+
+Round 2 (/autoplan, 2026-11-12; files in `$AW_DIR/plans/first-run-r2/`; spec read after cf80f4eaa5). Verdicts: product SHIP (C1 to C4 closed, 0 MUST), arch NEEDS_WORK (5 HIGH, 7 MUST), design NEEDS_WORK (6 MUST), devex NEEDS_WORK (4 MUST), security NEEDS_WORK (1 MUST, MEDIUM). 15 MUSTs after merging duplicates; all applied:
+
+- arch M1 and devex 1, the human token does not refuse an agent the owner started: on main that agent is the owner's caller by design; the spec now refuses only launched sessions, and exit 3 covers the browser and paste steps (§0, decisions 9 and 11, F8, §5.1).
+- arch M2 and design 4, a run that starts mid-wait: the final restart refuses again and the line waits for the new run; Cancel goes back to Stale (decision 11, §4.5).
+- arch M3, the new serve meets the old lease: the caller waits for the old pid and port first (decision 11, A4).
+- arch M4 and devex 2, no writer for skip: two scalar keys and `POST /sindri/setup/skip` with `sindri setup skip` (§3.1, §5.1).
+- arch M5, profile writers race, an older serve rejects new keys: decision 27.
+- arch M6, hello-sindri recreated: a ledger event marks it made once; service grants named (E2).
+- arch M7, untagged numbers: §2.1 now tags the rest.
+- design 1, Continue never primary: Continue is the primary once GitHub connects (§4.2).
+- design 2, a row with no button: decision 22 passes over it.
+- design 3, question 1 outside first run: decision 28, the Accounts page with Done.
+- design 5, Home's hello-sindri states: five rows in §4.6.
+- design 6, paste fallback how-to and states, device code primary and expiry: §4.2.
+- devex 3, `--apply` returns before the setup pass: it runs the pass and waits (decision 10, §8 step 3).
+- devex 4, empty `setup.oauth.*`: `SND-SETUP-014`, the preset's `clientId` field, keys in A1, A8 and P0.
+- security 1, one secret rule: decision 17 covers every token, device code and verifier, with a test per paste path.
+
+Suggestions, resolved in writing:
+
+- product N1, which read feeds own data: applied (F1b names the Reviews queue feed; 60 s marked a guess).
+- product N2, F1b and F1c not in CI: not applied; CI holds no GitHub account.
+- product N3, map ready notice: not applied, as round 1.
+- product N4, a trace of skipped steps: applied in effect; the skip route is a catalog command, so the command audit records who skipped what.
+- arch S1, a profile with no repo after question 1: applied; decision 28 shows question 2 while the profile names no repo, and Home's "no profile" row reads "no repo".
+- arch, other suggestions (restart and doctor interplay, scan when GitHub is slow, device flow plumbing): already gaps 3 and 7; no change.
+- design, two "Paste a token" labels: applied (Paste a GitHub, Linear, Slack token).
+- design, contrast: not applied here, as round 1 (X1 uses `ink-subtle`).
+- design, stale-line states announced: applied in effect; the page's live region announces state changes (§4.7).
+- design, a failed repo row has no remove: not applied; the others are added and Home opens, so the failed row never blocks.
+- devex, exit 1 meaning: applied (decision 9).
+- devex, `--apply` no-`--repo` on a gh-only box: applied in effect; `known` reads the GitHub account, gh login included.
+- devex, `already` only for the same path, `SND-JOB-409` unmapped: applied to P3's contract (same resolved path; a running AddRepo is followed, not refused).
+- devex, exit table and `--json` device code for `setup connect`, `setup scan --json` shape: left to P0's contract, which writes the goldens.
+- devex, let a session use `--token-env`: applied (§5.1, owner-started sessions).
+- devex, a 404 from an older serve maps to `SND-BUILD-001`: applied in effect; the shared older-serve line is that case (decision 21).
+- devex, stable step keys for the timed run and §6 sorted: applied in P12's contract; §6 stays grouped by existing then new.
+- security, name the owner check: applied (§0).
+- security, `setup.oauth.*` owner-only and shape-checked: applied (A1).
+- security, pin the gh command: applied in effect; the value is the literal `command:gh auth token`, resolved by `ForgeCredentialSpec` with no shell.
+- security, Linear `read` only at first sign-in: not applied; meta's pick 1 takes the preset's scopes, and Linear writes (comments) are used by the Projects page.
+- security, device flow polling rules: applied (§4.2).
+- security, binary beside `sindri-ui`: already decision 2.
+- security, actor on restart and connect events: applied in effect; both are catalog commands, and the command audit records the actor.
