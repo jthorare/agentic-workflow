@@ -18,6 +18,15 @@ internal static class RowKeys
     /// <summary>True on an items control whose rows are walked with the arrow, Home and End keys.</summary>
     public static readonly AttachedProperty<bool> EnabledProperty = AvaloniaProperty.RegisterAttached<ItemsControl, bool>("Enabled", typeof(RowKeys));
 
+    /// <summary>Raised on the list when Space asks to peek the cursor row: a tap toggles the peek, a hold shows it until the key comes up (not built yet, #2978).</summary>
+    public static readonly RoutedEvent<RowKeyEventArgs> PeekRequestedEvent = RoutedEvent.Register<ItemsControl, RowKeyEventArgs>("PeekRequested", RoutingStrategies.Bubble);
+
+    /// <summary>Raised on the list when Enter asks to open the cursor row in full (not built yet, #2978).</summary>
+    public static readonly RoutedEvent<RowKeyEventArgs> OpenRequestedEvent = RoutedEvent.Register<ItemsControl, RowKeyEventArgs>("OpenRequested", RoutingStrategies.Bubble);
+
+    /// <summary>Raised on the list when Esc asks to step back, unless a sheet is open (not built yet, #2978).</summary>
+    public static readonly RoutedEvent<RowKeyEventArgs> BackRequestedEvent = RoutedEvent.Register<ItemsControl, RowKeyEventArgs>("BackRequested", RoutingStrategies.Bubble);
+
     static RowKeys()
     {
         _ = EnabledProperty.Changed.AddClassHandler<ItemsControl>((list, e) =>
@@ -32,6 +41,12 @@ internal static class RowKeys
             }
         });
     }
+
+    /// <summary>The clock that tells a Space tap (key up under 250 ms) from a hold. Tests set a fake one.</summary>
+    internal static TimeProvider Clock { get; set; } = TimeProvider.System;
+
+    /// <summary>True while a sheet is open: Esc then belongs to the sheet and the list does not raise <see cref="BackRequestedEvent"/>. The shell sets it; tests set it directly.</summary>
+    internal static Func<bool> IsSheetOpen { get; set; } = static () => false;
 
     /// <summary>Reads <see cref="EnabledProperty"/>.</summary>
     /// <param name="element">The items control.</param>

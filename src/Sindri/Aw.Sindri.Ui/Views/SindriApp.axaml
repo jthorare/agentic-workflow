@@ -24,6 +24,7 @@
     <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/Typography.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/StatusChip.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Views/Controls/ControlStyles.axaml" />
+    <StyleInclude Source="avares://Aw.Sindri.Ui/Views/Controls/Rows/RowStyles.axaml" />
     <!-- First of the surface looks: every clickable surface rests on a clear fill, not none. A Border with no background is not hit-tested, so the
          pointer over its empty space would reach the panel behind and the surface would never be under the pointer (#2535). Each surface's own
          fill declared below (Border.card, item-row.selected, inbox-row.selected, the Needs You tints) replaces it; ClickableStyles, last, lifts it. -->
