@@ -15,7 +15,7 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
 /// <summary>
 /// #2921: Needs you's failed read uses the app's shared failed-read layout, the one ResourcesFailed, WorkflowsFailed and MemoryFailed use: a vertical
-/// stack, the failed line as a quiet caption inside a Border that carries its screen-reader name, then a plain left-aligned Retry button.
+/// stack, the failed line as a subtle caption (not .quiet, which centres) inside a Border that carries its screen-reader name, then a plain left-aligned Retry button.
 /// </summary>
 [Lane(TestLane.Integration)]
 public sealed class NeedsYouFailedLayoutTests : FrameHost
@@ -32,6 +32,8 @@ public sealed class NeedsYouFailedLayoutTests : FrameHost
         var (window, shell) = await Connected(width: width, height: 900);
         shell.GoTo(PageId.Home);
         Settle(window);
+        // Saved before the asserts, so a red run still leaves a frame to look at (qa on #2950).
+        FrameFile.Save(window, string.Create(CultureInfo.InvariantCulture, $"h2921-needs-you-failed-{width}"));
 
         var home = window.GetVisualDescendants().OfType<HomePage>().Single(h => h.IsEffectivelyVisible);
         var failed = home.GetVisualDescendants().OfType<StackPanel>().Single(p => p.Name == "NeedsYouFailed");
@@ -43,7 +45,8 @@ public sealed class NeedsYouFailedLayoutTests : FrameHost
         var line = Assert.IsType<TextBlock>(named.Child);
         Assert.Equal(FailedText, line.Text);
         Assert.Contains("caption", line.Classes, StringComparer.Ordinal);
-        Assert.Contains("quiet", line.Classes, StringComparer.Ordinal);
+        Assert.Contains("subtle", line.Classes, StringComparer.Ordinal);
+        Assert.DoesNotContain("quiet", line.Classes, StringComparer.Ordinal);
 
         var retry = Assert.IsType<Button>(failed.Children[1]);
         Assert.Equal("NeedsYouRetry", retry.Name);
@@ -54,7 +57,6 @@ public sealed class NeedsYouFailedLayoutTests : FrameHost
         var card = Assert.IsType<Visual>(failed.GetVisualParent(), exactMatch: false);
         var left = Assert.NotNull(line.TranslatePoint(default, card));
         Assert.Equal(24, left.X, precision: 1);
-        FrameFile.Save(window, string.Create(CultureInfo.InvariantCulture, $"h2921-needs-you-failed-{width}"));
         window.Close();
     });
 }
