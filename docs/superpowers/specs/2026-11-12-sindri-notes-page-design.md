@@ -1,7 +1,7 @@
 # Sindri's Notes page: write it down once, see it next to the work
 
 Status: draft, autoplan rounds 1 to 3 folded in, and the round 5 frame check's lead calls (ideas lane, 2026-11-12). Serves #2981 (Notes) and #2978 (one app that replaces the others). Builds the rows of the Notes prior-art ledger (`docs/sindri/prior-art/notes.md`, merged with #2989's rule) and the issues #3034 to #3039.
-Frames: design's round 5 at `pr-assets/notes-2981` @ `471eeb0380` (`guesses.md` beside them; round 5 replaced `notes-capture-error-down.png` with `notes-capture-saved-without-sindri.png`). Frame names below are files in that folder. §5 lists the frames this round changes.
+Frames: design's round 6 at `pr-assets/notes-2981` @ `aaf364ff40` (`guesses.md` beside them; round 5 had replaced `notes-capture-error-down.png` with `notes-capture-saved-without-sindri.png`). Frame names below are files in that folder. §5 lists the frames this round changes.
 Reviews: 3 /autoplan rounds plus the screenshot review, before ready (no owner read). Rounds 1 to 3 are folded in (2026-11-12); "Review notes" at the end lists what each round changed. The lead's calls are in §2.
 
 ## 0. Why
@@ -233,7 +233,7 @@ One window, shared with Projects (#3170). It is a frameless one-line window over
 
 ### 4.2 Today's page
 
-Opening Notes lands on today's page. If the file is missing, the page shows the daily template as a ghost and writes nothing. Sindri creates the file on the first capture or the first keystroke, and says "Created from your daily template · 09:02" (`notes-today-new.png`) at that moment. With Sindri down and no file yet, the page stays a read-only ghost, and the capture helper creates the file.
+Opening Notes lands on today's page. If the file is missing, the page shows the daily template as a ghost and writes nothing. Sindri creates the file on the first capture or the first keystroke, and says "Created from your daily template · 09:12" (`notes-today-new.png`) at that moment. With Sindri down and no file yet, the page stays a read-only ghost, and the capture helper creates the file.
 
 - **File.** The date in `notes.dailyFormat` (default `YYYY-MM-DD`, so `2026-11-12.md`) in `notes.daily` (profile key, default `daily/`). When the vault has `.obsidian/daily-notes.json`, Sindri reads its `folder`, `format` and `template` once, read-only, and uses them as the defaults. That file is the one named exception to the `.obsidian/` deny (decision 1). A profile key set by the owner wins. The file is untrusted input, since a vault may be a cloned repo or a synced folder someone else wrote. Sindri reads at most 64 KiB, as JSON, and takes only those three keys. A `.obsidian` that is a symlink is refused. The expanded daily path and the `template` path go through `NotePath.Resolve` like every other path. A `format` with `/` (`YYYY/MM/YYYY-MM-DD`) makes nested folders: Sindri walks the expanded value one segment at a time through `NotePath.Resolve`. A `folder` such as `../../outside`, an absolute `folder`, a `format` such as `[../]YYYY`, or a `template` that points at a denied or outside file is refused with `SND-NOTE-002`. The read is internal, so a session's `show` or `search` of `.obsidian/` still says "not found". Without this read, a vault whose Obsidian keeps dailies in `Journal/` as `12-11-2026.md` would get a second daily note on day one. The template is a plain `.md` file the owner names (`notes.template`). With no template, Sindri uses a built-in default with `## Today` and `## Captured`. Variables: `{{title}}`, `{{date:FORMAT}}`, `{{time}}` as Obsidian spells them. The file has no heading. A new page shows a ghost line under `## Captured`: "Lines from the capture window land here." The ghost line is not in the file. The first capture creates the file and races Obsidian's daily-note plugin; if the file appeared meanwhile, the capture retries as an append.
 - **Top of the page, outside the file.** In this order: the fold, then "Open tasks from earlier days" (a quiet label says "Drawn from the other days. Not in this file."), then the file's text with its own sections (Today, Captured).
@@ -360,7 +360,7 @@ Ctrl+Shift+H (or the toolbar button) opens History from the editor; Esc returns.
 | Todo note open | the editor's banner slot: "Sindri's todo list writes this note. Edit it from Todo." The body is read-only |
 | Empty folder | today's page shows the template as a ghost; the list shows no note until the first keystroke or capture creates today's file |
 | Index behind | rows show with "as of 14:02"; search says "Still reading" |
-| Today, first open | the template as a ghost and nothing written; after the first keystroke or capture, "Created from your daily template · 09:02" |
+| Today, first open | the template as a ghost and nothing written; after the first keystroke or capture, "Created from your daily template · 09:12" |
 | Not live / Sindri down | §4.7, §4.10 |
 | Conflict, save failed | §4.10 |
 | Note over 1 MiB (`SND-NOTE-021`) | a banner in the editor's banner slot (the style of the save-failed banner): "The note is over 1 MiB, so Sindri shows it as text only." No new frame |
@@ -427,7 +427,7 @@ Every action has a menu item and a palette entry under one id (`notes.open`, `no
 
 ## 5. Visual bar
 
-Frames are design's round 5 at `471eeb0380`. The type scale, density (32 px rows), and the Inspora bar come from the shared grammar (#2978). Text is 4.5:1 or more in both themes; non-text marks (the checkbox border `#70757c`, chip edges, glyphs) are 3:1 or more. A state is a glyph and a word, never color alone. The new page glyph has a dark and a light version.
+Frames are design's round 6 at `aaf364ff40`. The type scale, density (32 px rows), and the Inspora bar come from the shared grammar (#2978). Text is 4.5:1 or more in both themes; non-text marks (the checkbox border `#70757c`, chip edges, glyphs) are 3:1 or more. A state is a glyph and a word, never color alone. The new page glyph has a dark and a light version.
 
 Frames to reshoot (design lane, X1). A builder follows the frame, so a frame that still draws a v1.1 part is listed with what builders leave out:
 
