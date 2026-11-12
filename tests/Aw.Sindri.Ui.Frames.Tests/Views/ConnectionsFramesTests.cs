@@ -56,6 +56,24 @@ public sealed class ConnectionsFramesTests : FrameHost
     });
 
     [Fact]
+    public Task A_failed_first_read_with_no_rows_shows_the_failed_line_with_Retry_and_Retry_reads_again() => OnUi(async () =>
+    {
+        var (window, shell) = await Connected(width: 1440, height: 900);
+        Server.NextConnectionListError = new Kernel.Error("SND-API-500", Kernel.ErrorKind.Conflict, "it broke");
+        shell.GoTo(PageId.Connections);
+        await Until(window, () => shell.Connections.ReadFailure is not null, "the failed read never showed");
+
+        var line = Named<Control>(window, "ConnectionsFailed");
+        Assert.Equal((true, Labels.PageReadFailed("Connections"), "Retry"), (line.IsEffectivelyVisible, Named<TextBlock>(line, "FailedReadWords").Text, Named<Button>(line, "FailedReadPrimary").Content));
+        Assert.DoesNotContain("SND-", Named<TextBlock>(line, "FailedReadWords").Text, StringComparison.Ordinal);
+
+        Named<Button>(line, "FailedReadPrimary").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        await Until(window, () => shell.Connections.ReadFailure is null, "Retry never read again");
+
+        Assert.False(Visible(window, "ConnectionsFailed"));
+    });
+
+    [Fact]
     public Task Remove_asks_in_the_row() => OnUi(async () =>
     {
         var (window, shell) = await OnConnections(1440);

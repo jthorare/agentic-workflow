@@ -30,11 +30,6 @@ internal static partial class Labels
     /// <summary>The page when an answer can't be read.</summary>
     internal const string ConnectionsUnreadable = "The connection list can't be read from this Sindri.";
 
-    /// <summary>The page when the first read failed: the reason follows.</summary>
-    /// <param name="error">The failure.</param>
-    /// <returns>The words, with the code and detail.</returns>
-    internal static string ConnectionsFailed(Error error) => "Couldn't read the connections just now. " + InstanceRefused(error);
-
     /// <summary>The page with no connection.</summary>
     internal const string ConnectionsEmpty = "";
 

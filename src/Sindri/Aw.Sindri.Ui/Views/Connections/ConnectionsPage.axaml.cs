@@ -16,16 +16,6 @@ internal sealed partial class ConnectionsPage : UserControl
 
     private void OnAdd(object? sender, RoutedEventArgs e) => (DataContext as ConnectionsPageViewModel)?.Add.Open();
 
-#pragma warning disable MA0155 // why: an Avalonia RoutedEvent handler returns void, so it can only be async void
-    private async void OnRetry(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is ConnectionsPageViewModel page)
-        {
-            await page.Retry(CancellationToken.None).ConfigureAwait(true);
-        }
-    }
-#pragma warning restore MA0155
-
     private void OnOpen(object? sender, RoutedEventArgs e)
     {
         if (e.Source is ConnectionRow { Connection: { } connection } && DataContext is ConnectionsPageViewModel page)

@@ -4,6 +4,7 @@ using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Connections;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
+using Aw.Sindri.Ui.ViewModels.Controls;
 
 namespace Aw.Sindri.Ui.ViewModels.Connections;
 
@@ -90,11 +91,8 @@ internal sealed class ConnectionsPageViewModel : ObservableObject, IDisposable
     /// <summary>True when the first read failed and there are no rows to show.</summary>
     public bool IsFailed { get; private set => Set(ref field, value); }
 
-    /// <summary>The sentence for a failed read.</summary>
-    public string FailedText { get; private set => Set(ref field, value); } = string.Empty;
-
-    /// <summary>True when a retry is offered.</summary>
-    public bool ShowRetry { get; private set => Set(ref field, value); }
+    /// <summary>The failed read as the shared failed-read line draws it (words, Retry, the code behind Details), whether or not there are rows; null when the last read worked or was unreadable.</summary>
+    public FailedRead? ReadFailure { get; private set => Set(ref field, value); }
 
     /// <summary>The catch-up read started by the last show.</summary>
     internal Task CatchUp { get; private set; } = Task.CompletedTask;
@@ -199,14 +197,13 @@ internal sealed class ConnectionsPageViewModel : ObservableObject, IDisposable
         var unreadable = string.Equals(error.Code, SindriUiErrors.BadAnswer.Code, StringComparison.Ordinal);
         (IsReading, IsUnreadable, IsStale) = (false, unreadable, true);   // the last good rows stay, marked stale (screens §4.1)
         IsFailed = !unreadable && Rows.Count == 0;
-        ShowRetry = !unreadable;
-        FailedText = ShowRetry ? Labels.ConnectionsFailed(error) : string.Empty;
+        ReadFailure = unreadable ? null : new FailedRead(Labels.PageReadFailed("Connections"), Retry) { Code = error.Code };
     }
 
     private void Show(ConnectionList list)
     {
         Drawn++;
-        (IsReading, IsUnreadable, IsStale, IsFailed, FailedText, ShowRetry) = (false, false, false, false, string.Empty, false);
+        (IsReading, IsUnreadable, IsStale, IsFailed, ReadFailure) = (false, false, false, false, null);
         var rows = list.Connections.Select(Row).ToList();
         var present = new HashSet<string>(list.Connections.Select(c => c.Name), StringComparer.Ordinal);
         foreach (var gone in _rows.Keys.Where(k => !present.Contains(k)).ToList())
