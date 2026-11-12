@@ -14,4 +14,12 @@ public interface IResourceFiles
     /// <param name="owner">The owner.</param>
     /// <returns>How many resources were removed (0 when the owner had none).</returns>
     public Result<int> Purge(ResourceOwner owner);
+
+    /// <summary>
+    /// Moves an owner's folder out of the listing (one rename, so a run that starts after it finds no folder and provisions a fresh one) and returns the handle that deletes it or puts it back.
+    /// The caller checks the owner's runs again between the two.
+    /// </summary>
+    /// <param name="owner">The owner.</param>
+    /// <returns>The staged purge (<see cref="IStagedPurge.Count"/> 0 when the owner had no folder), or SND-RES-008 naming the folder when it could not be moved.</returns>
+    public Result<IStagedPurge> Stage(ResourceOwner owner);
 }

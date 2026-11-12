@@ -78,9 +78,9 @@ public sealed class NeedsYouOutlineTests : FrameHost
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
     });
 
-    // #2611: under the pointer an outlined row keeps its attention border, and under the pointer and a press it takes the amber fills, not the grey hover.
+    // #2780: under the pointer an outlined row keeps its neutral border, and under the pointer and a press it takes the hover fill, and the pressed fill on a press (no amber, one accent).
     [Fact]
-    public Task An_outlined_row_keeps_its_attention_border_under_the_pointer_and_its_amber_fill_while_pressed() => OnUi(async () =>
+    public Task An_outlined_row_keeps_its_neutral_border_under_the_pointer_and_the_pressed_fill_while_pressed() => OnUi(async () =>
     {
         Motion.Set(reduce: true);
         using var instant = InstantMotion.Start();
@@ -88,19 +88,23 @@ public sealed class NeedsYouOutlineTests : FrameHost
         var frame = Frame(Rows(window).First(r => r.DataContext is ViewModels.NeedsYou.NeedsYouRowViewModel { HasOutline: true }));
         var point = frame.TranslatePoint(new Point(4, 4), window)!.Value;
         Frame(window, "outlined-amber-rest", "gh2611-");
+        var rest = ((ISolidColorBrush)frame.Background!).Color;
+        Assert.Equal(Brush("Brush.Clickable.Rest"), rest);
 
         window.MouseMove(point, RawInputModifiers.None);
         Settle(window);
         Assert.True(frame.IsPointerOver);
         Frame(window, "outlined-amber-hover", "gh2611-");
-        Assert.Equal((Brush("Brush.AttentionSoft.Hover"), Brush("Brush.Attention")), (((ISolidColorBrush)frame.Background!).Color, ((ISolidColorBrush)frame.BorderBrush!).Color));
+        Assert.NotEqual(rest, Brush("Brush.Clickable.Hover"));   // rest, hover and press are three different fills
+        Assert.NotEqual(Brush("Brush.Clickable.Hover"), Brush("Brush.Clickable.Pressed"));
+        Assert.Equal((Brush("Brush.Clickable.Hover"), Brush("Brush.InkSubtle")), (((ISolidColorBrush)frame.Background!).Color, ((ISolidColorBrush)frame.BorderBrush!).Color));
 
         window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
         Settle(window);
         Assert.Contains(":pressed", frame.Classes, StringComparer.Ordinal);
         // A press selects the row, and a selected outlined row draws the selection bar (A_selected_outlined_row_keeps_the_selection_bar_colour).
         Assert.Contains("selected", frame.Classes, StringComparer.Ordinal);
-        Assert.Equal((Brush("Brush.AttentionSoft.Pressed"), Brush("Brush.Primary")), (((ISolidColorBrush)frame.Background!).Color, ((ISolidColorBrush)frame.BorderBrush!).Color));
+        Assert.Equal((Brush("Brush.Clickable.Pressed"), Brush("Brush.Primary")), (((ISolidColorBrush)frame.Background!).Color, ((ISolidColorBrush)frame.BorderBrush!).Color));
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
     });
 

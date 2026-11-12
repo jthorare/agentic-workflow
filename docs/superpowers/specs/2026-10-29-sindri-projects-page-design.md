@@ -10,7 +10,7 @@ The owner runs at least four projects at once, each in a different state. Linear
 
 Projects come from two places (#1566):
 1. **Linear projects the owner leads.** Linear's `lead` field names the owner.
-2. **Projects attached by hand.** A Linear project the owner really drives but doesn't lead, or a work stream that isn't in Linear at all.
+2. **Projects attached by hand.** A Linear project the owner drives but doesn't lead, or a work stream that isn't in Linear at all.
 
 What Sindri has today (checked in code, 2026-10-29):
 
@@ -156,7 +156,7 @@ Filter: the profile's teams (`LinearFilters.InTeams`, the issue feed's scope) an
 
 **Phases.** The driver runs Recent, then Backfill (with `Before`), then Incremental, each ending on an empty page (`RecordSyncRun.cs`). Projects have no window: their age says nothing about whether they're live. So the feed ignores `NotBefore`; **Recent returns every project in scope** (tens; one or two pages), **Backfill returns an empty page at once** (Recent already read everything), and Incremental reads `updatedAt > cursor`, usually one call that returns nothing. A test pins all three.
 
-`status`, `startedAt` and `lastUpdate` aren't in today's `Projects.graphql`; the legacy `state` is. Ph0 checks them against the owner's workspace. Without `status`, the feed reads `state` (the same six values); without `lastUpdate`, there's no health. A project update posted in Linear may not bump the project's `updatedAt`; Ph0 checks that too, and if it doesn't, the Incremental filter becomes `or: [{ updatedAt: { gt } }, { lastUpdate: { createdAt: { gt } } }]`.
+`status`, `startedAt` and `lastUpdate` aren't in the current `Projects.graphql`; the legacy `state` is. Ph0 checks them against the owner's workspace. Without `status`, the feed reads `state` (the same six values); without `lastUpdate`, there's no health. A project update posted in Linear may not bump the project's `updatedAt`; Ph0 checks that too, and if it doesn't, the Incremental filter becomes `or: [{ updatedAt: { gt } }, { lastUpdate: { createdAt: { gt } } }]`.
 
 **Stored row** (`RecordItem`, `RecordItem.cs:23-38`):
 

@@ -147,7 +147,7 @@
                 <StackPanel>
                   <Border Classes="phead">
                     <Grid ColumnDefinitions="*,Auto">
-                      <TextBlock Classes="eyebrow" Text="{Binding Text.NeedsYouPanel}" VerticalAlignment="Center"
+                      <TextBlock Classes="section-title" Text="{Binding Text.NeedsYouPanel}" VerticalAlignment="Center"
                                  AutomationProperties.Name="{Binding Text.NeedsYouPanel}" />
                       <TextBlock x:Name="ConnectingText" Grid.Column="1" Classes="caption subtle" Text="{Binding Text.Connecting}"
                                  VerticalAlignment="Center" AutomationProperties.Name="{Binding Text.Connecting}" />

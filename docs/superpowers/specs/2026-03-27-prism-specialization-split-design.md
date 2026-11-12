@@ -10,7 +10,7 @@ Delegate persistent memory, semantic search, and conversation visualization to [
 
 ## Motivation
 
-The agentic-bridge grew two responsibilities: coordination (5 tools) and memory (6 tools + ingestion pipeline + graph DB + embedding model + UI). prism-mcp handles memory better — versioned snapshots, importance-weighted corrections, visual Mind Palace dashboard, 10× embedding compression — and is actively maintained as a dedicated product. Keeping our own memory layer is redundant maintenance burden.
+The agentic-bridge grew two responsibilities: coordination (5 tools) and memory (6 tools + ingestion pipeline + graph DB + embedding model + UI). prism-mcp does memory better (versioned snapshots, importance-weighted corrections, visual Mind Palace dashboard, 10× embedding compression) and is actively maintained as a dedicated product. Keeping our own memory layer is redundant maintenance burden.
 
 The 5 coordination tools have no equivalent in prism-mcp. They remain ours.
 
@@ -69,7 +69,7 @@ The bridge is a **headless Fastify + MCP stdio server**. No UI. No memory DB. No
 |------|--------|
 | `ui/` | entire Next.js app — visualization delegated to prism Mind Palace |
 | `start.sh` | only existed to start bridge + UI together |
-| `config/hooks/bridge-context.sh` | queries memory graph; prism handles session context via its own hook |
+| `config/hooks/bridge-context.sh` | queries memory graph; prism supplies session context via its own hook |
 
 ## What Stays
 
@@ -109,7 +109,7 @@ Keep:
 - `codex mcp add agentic-bridge` registration (if codex present)
 - headroom registration
 
-**Do not add prism-mcp registration** — prism's own setup handles that.
+**Do not add prism-mcp registration** — prism's own setup does that.
 
 ## Documentation Updates
 

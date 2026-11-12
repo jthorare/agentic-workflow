@@ -69,7 +69,7 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.XS}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
     <!-- Border + padding = 7,3 to the text. Border.phrase-chip.selected (Views/Todo/TodoPanel.axaml) pairs its 2 px border with
          5,1 to keep that sum; change both together (#2761). -->
     <Setter Property="Padding" Value="6,2" />
@@ -93,7 +93,7 @@
        4.5:1 by the contrast tests, and the word is always there beside the colour. -->
   <Style Selector="controls|StateChipView">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.XS}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
     <Setter Property="Padding" Value="6,1" />
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="HorizontalAlignment" Value="Left" />

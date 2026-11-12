@@ -257,12 +257,24 @@ internal sealed partial class NeedsYouViewModel : ObservableObject
             row.SetContext(_feed.Stalled, _feed.Rebuilding, string.Equals(row.Id, id, StringComparison.Ordinal));
         }
 
+        MarkLeadAction();
         OnChanged(nameof(SelectedId));
+    }
+
+    // The page's one primary button belongs to the first listed row that has a primary action, not to the first row (#2780).
+    private void MarkLeadAction()
+    {
+        var lead = Rows.FirstOrDefault(static r => r.HasPrimaryAction);
+        foreach (var row in Rows)
+        {
+            row.IsLeadAction = ReferenceEquals(row, lead);
+        }
     }
 
     private void Changed(string[] names)
     {
         Patch.To(Rows, [.. IsExpanded ? Seen.Rows : Seen.Rows.Take(CurrentCap)]);
+        MarkLeadAction();
         foreach (var name in names)
         {
             OnChanged(name);

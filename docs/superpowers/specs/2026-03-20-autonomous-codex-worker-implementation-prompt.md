@@ -142,7 +142,7 @@ Add `"worker": "node dist/worker.js"` to `package.json` scripts.
 - Parse SSE data, extract sender/recipient/payload from the enriched event
 - Fire `osascript -e 'display notification ...'` via `child_process.execSync`
 - Platform check: `process.platform === "darwin"`, exit cleanly otherwise
-- Auto-reconnect: EventSource handles this natively, but add a `onerror` handler that logs
+- Auto-reconnect: EventSource reconnects natively, but add a `onerror` handler that logs
 
 **Verification:** `npm run typecheck`, then manual test: start bridge + notify, send a message via curl, verify macOS notification appears
 

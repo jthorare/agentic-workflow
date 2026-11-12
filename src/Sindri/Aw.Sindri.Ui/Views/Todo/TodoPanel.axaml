@@ -27,7 +27,7 @@
       <Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" />
     </Style>
     <Style Selector="Border.todo-group-head">
-      <Setter Property="Padding" Value="16,8,16,4" />
+      <Setter Property="Padding" Value="24,8,24,4" />
     </Style>
   </UserControl.Styles>
   <!-- The Todo panel on Home (todo spec §3.1, §3.4, §3.5): a labelled region. Header: the title, the count line, the "N New todo" hint.
@@ -95,7 +95,7 @@
             </Border>
           </StackPanel>
 
-          <TextBlock x:Name="TodoEmpty" Classes="caption quiet" Text="{Binding EmptyText}" Margin="16,8" HorizontalAlignment="Left" TextAlignment="Left"
+          <TextBlock x:Name="TodoEmpty" Classes="caption quiet" Text="{Binding EmptyText}" Margin="24,8" HorizontalAlignment="Left" TextAlignment="Left"
                      IsVisible="{Binding EmptyText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding EmptyText}" />
 
           <ItemsControl x:Name="TodoRows" ItemsSource="{Binding Rows}" IsVisible="{Binding !IsExpanded}">
@@ -111,7 +111,7 @@
                   AutomationProperties.Name="{Binding ShowAllText}">
             <TextBlock x:Name="TodoShowAllText" Classes="caption" Text="{Binding ShowAllText}" AutomationProperties.AccessibilityView="Raw" />
           </Button>
-          <TextBlock x:Name="TodoError" Grid.Column="1" Classes="caption" Text="{Binding Error}" Margin="16,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+          <TextBlock x:Name="TodoError" Grid.Column="1" Classes="caption" Text="{Binding Error}" Margin="24,0" HorizontalAlignment="Right" VerticalAlignment="Center"
                      TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.Attention}" ToolTip.Tip="{Binding Error}"
                      IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Error}" />
         </Grid>
@@ -144,7 +144,7 @@
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
-            <TextBlock x:Name="TodoDoneEmpty" Classes="caption subtle" Text="{Binding DoneEmptyText}" Margin="16,8"
+            <TextBlock x:Name="TodoDoneEmpty" Classes="caption subtle" Text="{Binding DoneEmptyText}" Margin="24,8"
                        IsVisible="{Binding DoneEmptyText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding DoneEmptyText}" />
           </StackPanel>
         </ScrollViewer>

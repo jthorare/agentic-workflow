@@ -129,6 +129,8 @@ node "$S/scripts/verify_page.mjs" "$SD/product-design.html" "$SD/shots" --playwr
 - Block on product questions; never carry on with a guessed default. Only the owner's words get a D-number; your defaults and Sindri's picks are labeled as such.
 - Ask only what changes the build. Answer speculative edge cases yourself from the code and the TDD's risks.
 - Schema: foreign-key columns with CHECK constraints over join tables or synced subject keys; show example rows.
+- New tables: each one states why a column (usually a foreign key) on an existing table can't hold it. The default is the column; a new table without that reason is a defect. Bad: an `order_tag` link table for "one tag per order" when `orders.tag_id` does it.
+- Source tags: every number, limit and rule in the TDD ends with `owner decision (D2)` or `agent default`. An untagged agent default goes to the open-questions list, not the body. Bad: "history is capped at 50 rows" when nobody gave 50.
 - Reuse existing filters, creation flows and screens; showing a design is not new UI.
 - Deliverables live in `$SD`; one status doc; no `-handoff-N` copies.
 - The shareable TDD and deck carry the current design only. A later round rewrites the story; it never appends an addendum to it.

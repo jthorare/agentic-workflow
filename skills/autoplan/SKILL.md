@@ -38,6 +38,7 @@ Dispatches five subagents in parallel (product, architecture, design, devex, sec
 
    - **`productReview` agent** → "Invoke the `productReview` skill with `--plan <plan-path> --output <feature-dir>/product-review.md`" — append `--mode <mode>` when `--mode` was given.
    - **`archReview` agent** → "Invoke the `archReview` skill with `--plan <plan-path> --output <feature-dir>/arch-review.md`."
+     Add to that prompt: "Schema check: every new table must say why a column (usually a foreign key) on an existing table can't hold it. A new table without that reason is a finding. Source check: every number, limit and rule in the plan must carry `owner decision (<where>)` or `agent default`; list each untagged one as a finding, to move to open questions."
      (When the plan has a state machine, protocol or concurrency, the archReview agent runs the formal check itself; autoplan has no formal-verify step and does not run it again.)
    - **`planDesignReview` agent** → "Invoke the `planDesignReview` skill with `--plan <plan-path> --output <feature-dir>/design-review.md`."
    - **`planDevexReview` agent** → "Invoke the `planDevexReview` skill with `--plan <plan-path> --output <feature-dir>/devex-review.md`."
