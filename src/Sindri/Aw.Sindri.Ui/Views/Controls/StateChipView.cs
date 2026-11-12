@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Layout;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.ViewModels.Controls;
 
@@ -15,13 +16,19 @@ internal sealed class StateChipView : Border
     public static readonly StyledProperty<StateChip?> ChipProperty = AvaloniaProperty.Register<StateChipView, StateChip?>(nameof(Chip));
 
     private static readonly string[] _tones = ["attn", "fail", "ok"];
+    private static readonly string[] _statusTones = ["ok", "running", "waiting", "attention", "error", "neutral", "draft"];
 
     private readonly TextBlock _word = new();
+    private readonly TextBlock _glyph = new() { Margin = new Thickness(0, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center };
+    private readonly StackPanel _row = new() { Orientation = Orientation.Horizontal };
 
     static StateChipView()
     {
         _ = ChipProperty.Changed.AddClassHandler<StateChipView>((chip, _) => chip.Apply());
         _ = FallbackProperty.Changed.AddClassHandler<StateChipView>((chip, _) => chip.Apply());
+        _ = WordProperty.Changed.AddClassHandler<StateChipView>((chip, _) => chip.Apply());
+        _ = ToneProperty.Changed.AddClassHandler<StateChipView>((chip, _) => chip.Apply());
+        _ = GlyphProperty.Changed.AddClassHandler<StateChipView>((chip, _) => chip.Apply());
     }
 
     /// <summary>Initializes a new instance of the <see cref="StateChipView"/> class, empty and hidden until it has a chip to draw.</summary>
@@ -80,20 +87,73 @@ internal sealed class StateChipView : Border
     }
 
     // The word as served, and the one class its tone picks; no chip at all draws nothing and takes no room.
+    // A chip a view names itself (Word or Tone set) uses the status-chip set instead: class status plus status-<tone>.
     private void Apply()
     {
-        var view = ChipView.Resolve(Chip, Fallback);
         foreach (var tone in _tones)
         {
             _ = Classes.Remove(tone);
         }
 
+        foreach (var tone in _statusTones)
+        {
+            _ = Classes.Remove("status-" + tone);
+        }
+
+        _ = Classes.Remove("status");
+        if (Word is not null)
+        {
+            ApplyStatus();
+            return;
+        }
+
+        var view = ChipView.Resolve(Chip, Fallback);
+        SetChild(glyph: null);
         IsVisible = view is not null;
         _word.Text = view?.Word;
         Avalonia.Automation.AutomationProperties.SetName(_word, view?.Word);
+        Avalonia.Automation.AutomationProperties.SetName(this, view?.Word);
         if (view?.ToneClass is { } toneClass)
         {
             Classes.Add(toneClass);
+        }
+    }
+
+    private void ApplyStatus()
+    {
+        var tone = _statusTones.Contains(Tone, StringComparer.Ordinal) ? Tone : "neutral";
+        Classes.Add("status");
+        Classes.Add("status-" + tone);
+        IsVisible = true;
+        _word.Text = Word;
+        Avalonia.Automation.AutomationProperties.SetName(_word, Word);
+        Avalonia.Automation.AutomationProperties.SetName(this, Word);
+        SetChild(string.IsNullOrEmpty(Glyph) ? null : Glyph);
+    }
+
+    // The word alone is the child; with a glyph the child is a row of glyph and word. The glyph is decoration: the word carries the meaning.
+    private void SetChild(string? glyph)
+    {
+        if (glyph is null)
+        {
+            if (!ReferenceEquals(Child, _word))
+            {
+                _row.Children.Clear();
+                Child = _word;
+            }
+
+            return;
+        }
+
+        _glyph.Text = glyph;
+        Avalonia.Automation.AutomationProperties.SetAccessibilityView(_glyph, Avalonia.Automation.AccessibilityView.Raw);
+        if (!ReferenceEquals(Child, _row))
+        {
+            Child = null;
+            _row.Children.Clear();
+            _row.Children.Add(_glyph);
+            _row.Children.Add(_word);
+            Child = _row;
         }
     }
 }
