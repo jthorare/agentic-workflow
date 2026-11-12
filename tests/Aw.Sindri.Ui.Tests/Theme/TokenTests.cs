@@ -39,6 +39,7 @@ public sealed class TokenTests
         ("AttentionFill", "#67482f"),   // the hold button's fill: Attention at 35 % over Surface2
         ("PrimarySoft", "#202442"),
         ("ErrorSoft", "#281415"),
+        ("ErrorChipText", "#ee6060"),
         ("SuccessSoft", "#0d2115"),
         ("Wire", "#4a4a52"),
         ("WireHi", "#8a8f98"),
