@@ -359,7 +359,7 @@ The footer shows only keys that work in this release: in Release 1 `r` reads "op
 |---|---|---|---|
 | Needs reply | threads that meet the one definition in §7.1. Release 1 shows class 3 and 2 only (call 21) | class, then blocks, then oldest | the §7.1 exclusions: I reply, press Done, snooze, or the thread links an issue with an owner and nothing new asks me. A read mark never removes a thread |
 | Unread | conversations with messages after my local read pointer, not muted. In Release 1 it is also where a class 1 thread shows | most recent first | the pointer passes them (lines scroll into view, or `End`) |
-| Later | threads and messages I flagged (Release 2; the rail entry is hidden until a flag exists) | newest flag first | I remove the flag |
+| Later | threads and messages I flagged (Release 2; the rail entry is hidden while no flag exists, so it hides again when the last flag goes; an open Later list shows its empty state until the owner leaves it) | newest flag first | I remove the flag |
 | Drafts | my unsent drafts, owner-written and agent-written (Release 2) | oldest first | I send or delete |
 
 Counts on the rail are computed from the store. Done and snoozed rows are not counted. Unread and Needs reply overlap: a DM I have not read is in both.
@@ -387,7 +387,7 @@ Counts on the rail are computed from the store. Done and snoozed rows are not co
 - **Agent drafts.** One rule: an agent draft is never sent without the owner's send action (`Ctrl+Enter` or the button). A workflow, a session, a timer or a row key is not that action. The button reads "Review and send" until the owner edits or opens the menu, and the draft shows its label, the run link and one chip per risk (a broadcast by the same detector, a link, an attachment). The menu opens first when the draft holds any of the three. Opened from the Drafts list or a Home Needs-you row, approve is a button, never a row key.
 - Autosave after 3 characters on leaving the composer (Zulip's rule). Drafts are local (parity row 20). In Release 1 the composer does not exist.
 - **Offline** the text box stays editable and keeps focus; only Send and `Ctrl+Enter` are off. The line above the box reads "Offline: your text is kept as a draft. Send when you're back." (SND-MSG-028) and is announced politely when it appears. `Ctrl+Enter` shows that line and no toast. Autosave runs as usual, so a person mid-sentence loses nothing. The draft is the only thing stored. Nothing is queued (lead call 12).
-- **Two words for two things.** A *toast* is Home's (an OS or in-app notification counted by the tray). Messages' one-line "Sent. Follow up if no reply? `h`" is a *confirmation line*: in-app only, not an OS notification, not counted by the tray.
+- **Two words for two things.** A *toast* is Home's (an OS or in-app notification counted by the tray). Messages' one-line "Sent." line with its **Follow up if no reply** button is a *confirmation line*: in-app only, not an OS notification, not counted by the tray.
 - A focused text field keeps its own `Ctrl+Z`; the 5 s Undo of `Ctrl+Z` applies when no text field has focus.
 
 ### 6.5 Keys
@@ -433,7 +433,7 @@ Starred channels and "all channels" are reached with `Tab` into the rail (one ta
 | `Home` `End` | top, bottom (the lines shown count as seen). Like scrolling, they have no Undo of their own; `u` moves the pointer back | 1 |
 | `[` `]` | no effect in message mode; `Esc` backs out to the list first | 1 |
 
-`→` does nothing on a message line, as on a Home row. `Tab` stays focus traversal. `g` is not a key. Every key has a palette entry with its key shown (Superhuman's rule). The footer shows a chip, "List keys" or "Message keys", and a screen reader announces a change of mode ("Message keys: reading #harbor"). A bare letter fires only when no text field has focus.
+`→` does nothing on a message line, as on a Home row. `Tab` stays focus traversal. `g` is not a key. Every key has a palette entry with its key shown (Superhuman's rule). The footer shows a chip, "List keys", "Message keys" or "Composer", and a screen reader announces a change of mode ("Message keys: reading #harbor"). Pickers, menus, sheets and the brief show their own footer keys and no mode chip. A bare letter fires only when no text field has focus. The search scope switch has no key: the scope chip is a button, and the palette has `messages.search-scope`. `B` (Release 3) runs the catch-up brief (§9.6).
 
 **Read marks are local.** A line is read after it has been on screen for 1 s with the window focused and an input in the last 2 minutes (for a screen reader, the line under the cursor, not the viewport). The pointer moves to the newest line seen; no key moves it except `u`, `End` and the palette entries. The pointer is the later of the local pointer and Slack's `last_read_ts`, so reading on the phone clears Unread here, except in a conversation where the owner pressed `u`: there the pointer stays until the owner reads past it. Nothing here writes to Slack by a bare key. With `messages.syncReadToSlack` on, the owner's own opt-in, a forward move from viewing is sent as `conversations.mark` while online, one mark per changed conversation, and the page header says so ("Read marks sync to Slack"). `u` and `End` never sync. Offline nothing is queued: the header says "Read marks not synced: offline", and on reconnect the pointer is compared with Slack's `last_read_ts` and one mark per changed conversation is sent. That is a fresh compare, not a queue: no act row is stored.
 
@@ -464,7 +464,7 @@ Every surface also shows the one status line of §5.3. Banners name the cause an
 | Drafts | skeleton | "No drafts. Anything you start typing and leave is kept here." | SND-MSG-015 shows "changed in another window" | local, fine; the list says drafts are local | send turns the draft into a line; a failed send keeps the draft |
 | Rail | counts paint from the store | "No starred channels yet. Star it from the `.` panel, or find it with `Ctrl+K`." | a count that cannot load shows a dash | counts from the store | n/a |
 | Link row | the row paints from the store with no spinner | n/a | `none`: plain text, never an error chip | local, fine | n/a |
-| Files and thumbnails (Release 3) | grey box 96 px high | n/a | "Could not load file" chip with the name and Retry (SND-MSG-010 for size) | cached thumbnails stay | n/a |
+| Files and thumbnails (Release 3) | grey box 96 px high | n/a | "Could not load file" chip with the name and Retry; for SND-MSG-010 (too large) no Retry, only "Open in Slack" | cached thumbnails stay | n/a |
 | Emoji picker | recent and cached emoji paint first | "No match" | "Emoji list unavailable: showing built-in names" | built-in names and the cache | a failed react removes the chip's own border and shows one line, "couldn't react: reason", with Retry |
 | Snooze picker | n/a | n/a | SND-MSG-013 and 014 show in the picker | local, fine | "back Mon 9:00" on the row |
 | Make-issue sheet and attach picker (Release 3) | team and project lists paint from the cache | picker: "No issue matches" | SND-MSG-017 and 018 show in the sheet | disabled with the reason | Create shows the full body first; the row then shows the issue key |
@@ -478,7 +478,7 @@ Every surface also shows the one status line of §5.3. Banners name the cause an
 - Message lines are `role=listitem` inside a `role=log`. A polite live region announces a new message in the OPEN conversation only ("Ada: review 3120 when you can"). Other conversations announce through the rail count, not a message.
 - State is never colour alone: class glyphs differ in shape (square, diamond, circle), "failed" is text, "new" is the word.
 - Every action has a palette entry and a button. Reactions have a button, not hover only. A reaction chip's name reads "thumbs up, 3: Ada, Sam".
-- Focus after Done: the next row. After send: the composer stays focused. After a failed write: focus stays on the failed line; Retry is the next tab stop. A failed send also fires one assertive announcement: "Send failed: reason. Retry is next."
+- Focus after Done: the next row. After send: the composer stays focused, and `Esc` leaves it for the conversation, where `h` works again. After a failed write: focus stays on the failed line; Retry is the next tab stop. A failed send also fires one assertive announcement: "Send failed: reason. Retry is next."
 - "Load older" keeps the focused line where it is and announces "12 older messages loaded". Entering or leaving message mode moves no focus.
 - Contrast: 4.5:1 for body and muted text, 3:1 for chips and glyphs, checked on the dark frames.
 - The emoji picker, the format toolbar and the `[[` picker are listboxes with names; a screen reader reads each emoji by name.
@@ -547,7 +547,7 @@ Messages and Home rank differently on purpose. Home ranks by what a row unblocks
 | Pat, DM | 1 | 0 | 06:00 |
 | Kim, `#harbor` thread | 1 | 0 | 08:20 |
 
-In Release 1 only Sam and Ada are in Needs reply; Pat and Kim (class 1) show in Unread (call 21). The golden test ranks all four rows, and `Release_1_needs_reply_holds_class_3_and_2_only` checks the list. Full order: Sam, Ada, then Pat before Kim (same class and blocks, Pat is older). At 09:12 Lee's DM "got a sec?" arrives. It lands in the New band, not in the list. The owner replies to Sam at 09:14: Sam's row leaves in place and no other row moves. At 09:16 the owner presses `R` (Home's re-rank key, listed in §6.5) and the New band takes its ranked place (class 3, blocks 0, 09:12: first). This is the golden test `MessageRank_orders_the_example`.
+In Release 1 only Sam and Ada are in Needs reply; Pat and Kim (class 1) show in Unread (call 21). The golden test ranks all four rows, and `Release_1_needs_reply_holds_class_3_and_2_only` checks the list. Full order: Sam, Ada, then Pat before Kim (same class and blocks, Pat is older). At 09:12 Lee's DM "got a sec?" arrives. It lands in the New band, not in the list. The owner replies to Sam at 09:14: Sam's row leaves in place and no other row moves. Until the next settle point the row stays, dimmed, with "replied 09:14" in place of its reason chip. At 09:16 the owner presses `R` (Home's re-rank key, listed in §6.5) and the New band takes its ranked place (class 3, blocks 0, 09:12: first). This is the golden test `MessageRank_orders_the_example`.
 
 **Done and return.** Done (`e`) leaves Needs reply and writes nothing to Slack. A done thread returns on its own when a new message is addressed to me: a mention, a DM, a reply in a thread I wrote in. The row says "back: new reply" (Home §5.4). A reaction to my message does not return it.
 
@@ -688,7 +688,7 @@ One picker, Home §5.3: later today, tomorrow 9:00, Monday 9:00, next week, a ty
 - **Plain snooze.** The thread leaves Needs reply and shows "back Mon 9:00" under Snoozed. It returns early when a message addressed to me arrives, and the row says "back early: new reply".
 - **Follow up if no reply.** For a thread where I spoke last. The record stores `until` and `myLastTs`. If anyone else posts in the thread after `myLastTs` before `until`, the record is dropped without a toast (Messages writes `home.row.woke` with reason `replied`, the event Home's collectors use when addressed activity arrives). The reply puts the thread in Needs reply by the normal rule, so nothing is lost. If nobody posts, the thread returns to Needs reply at `until` with "no reply since Tue" in the age column.
 - **Check before it returns.** If the sync state is "Behind" at the due time, the service reads that thread's replies once, so a thread someone answered does not come back.
-- **Offered after you send.** A sent message shows a confirmation line for 5 s: "Sent. Follow up if no reply? `h`" (it pauses while hovered or focused; the same action is in the `.` panel). The saved filter "Waiting on them" (`/`, or palette `messages.waiting`) lists these threads.
+- **Offered after you send.** A sent message shows a confirmation line for 5 s: "Sent." with a **Follow up if no reply** button (it pauses while hovered or focused; the same action is in the `.` panel). The saved filter "Waiting on them" (`/`, or palette `messages.waiting`) lists these threads.
 - **Local.** Slack's Later and reminders have no API. The snooze never writes to Slack. Undo is a reverse op within 5 s. Longest snooze is 365 days.
 
 The store and the timer are Home's: the ledger events `home.row.snoozed`, `.woke`, `.done` and `.revived`, projected into `home_rows` (Home's merged spec, "Events and migration"; #3030). Messages writes those events for its rows, sends the `unlessReplied` field and reads the replied state from its own store. There is no Messages-local record and no replay (lead call 17). "Follow up if no reply" is Release 2.
@@ -734,7 +734,7 @@ An agent draft is untrusted output. Decision 14 and §6.4 give the one rule: it 
 
 ### 9.8 Search across everything
 
-`/` in Messages, or `Ctrl+K` then a query. Two scopes.
+`Ctrl+K` then a query. `/` stays the list filter (§6.5). Two scopes.
 
 | Scope | Source | Speed |
 |---|---|---|
@@ -936,13 +936,13 @@ The whole table, its sizes, lanes and release marks are `agent default`. Size is
 1. Needs reply with the peek open at 1,440 px: 25 rows, the three class glyphs, a reason chip, buttons on the cursor row, the New band.
 2. The dense conversation: a busy channel, a DM, a thread in the peek with an inline link row, a code block, a diff block, reaction chips, the New divider, a gap marker.
 3. The composer (Release 2): empty, typing with a `[[` picker open, an agent draft with its label, run link and risk chips, the submit menu with "Notify 412 people", a failed send with the "Slack may have delivered this" lines, the offline composer with text being typed and the draft kept, a 429 wait with its countdown.
-4. The snooze picker with the "follow up if no reply" checkbox, and the "back Mon 9:00" row line.
-5. The make-issue sheet and the attach picker.
-6. The catch-up brief with source chips, and its model-off state.
-7. Search: Messages scope with "from Slack" tags; the Everything scope in groups.
+4. (Release 2) The snooze picker with the "follow up if no reply" checkbox, and the "back Mon 9:00" row line. Also the agent hand-off dialog (§9.7 item 8).
+5. (Release 3) The make-issue sheet and the attach picker.
+6. (Release 3) The catch-up brief with source chips, and its model-off state.
+7. (Release 3) Search: Messages scope with "from Slack" tags; the Everything scope in groups.
 8. First run (§6.8): the connect card in three steps (create the app, install it, paste the token), each with its failure line, the admin-blocked state with the copyable request text, then the first sync ("40 conversations, 0 messages so far") and "Listening".
 9. Header states: Live, Behind with the rate-limit words, Offline, Token expired, Scope missing.
-10. A user peek, a file chip and thumbnail, an app message with blocks, "Open in Slack" for a huddle.
+10. A user peek (Release 2); a file chip and thumbnail and an app message with blocks (Release 3), "Open in Slack" for a huddle.
 11. Dark frames of 1 and 2; the focus ring on a row, a message line and the composer.
 12. Widths 1,440, 1,200 and 1,000 px; the rail collapsed; hover and pressed states for a row, a chip and a button.
 13. The state rows of §6.6: Later and Drafts empty, a link row with `none`, an offline header, the footer mode chip ("List keys" and "Message keys"), the emoji picker with no match, a toast showing sender and place only.
