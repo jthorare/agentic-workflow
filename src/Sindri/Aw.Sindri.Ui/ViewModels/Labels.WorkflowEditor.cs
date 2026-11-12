@@ -49,7 +49,7 @@ internal static partial class Labels
     /// <param name="summary">What the API says it does.</param>
     /// <param name="problem">What is not set yet, or null.</param>
     /// <returns>The words.</returns>
-    internal static string WfStepLine(string title, string summary, string? problem) => problem is { Length: > 0 } ? $"{title}: {summary} ({problem})" : $"{title}: {summary}";
+    internal static string WfStepLine(string title, string summary, string? problem) => problem is { Length: > 0 } ? $"{title} · {summary} ({problem})" : $"{title} · {summary}";
 
     /// <summary>A form field's name; a required one says so in words, not only by a mark.</summary>
     /// <param name="name">The config key.</param>
