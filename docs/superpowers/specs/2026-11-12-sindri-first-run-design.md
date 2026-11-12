@@ -173,7 +173,7 @@ Rules:
 |---|---|---|
 | running stamp, commit, built | `InstalledBuildStamps.Running()` (`Infrastructure/Setup/InstalledBuildStamps.cs`), then that folder's `build-info` | "running 80f69df, built yesterday 22:10" |
 | installed stamp, commit, built | `bin/cs/current` and its `build-info` | "installed 7c81646, built today 10:31" |
-| open runs | launched agent sessions (as `sindri_open_runs_guard`), workflow runs `running` or `parked`, jobs `running` (decision 11) | "2 runs are open: Nightly gate (run 14), Review loop on #3120 (run 3)" |
+| open runs | launched agent sessions (as `sindri_open_runs_guard`), workflow runs `running` or `parked`, jobs `running` (decision 11) | "3 are open: Nightly gate (run 14, an agent step), Review loop on #3120 (run 3, waiting on your approval), Code index of agentic-workflow (a job)" |
 
 The app reads the step once on connect, after each restart, and every 5 s only while "Restart when they finish" shows (decision 11). A running build folder that the install pruned has no `build-info`: the step says "A different Sindri is installed" with no times.
 
@@ -309,10 +309,11 @@ Frame `states`, panel "Stale serve under the top bar". One 32 px line under the 
 | State | What shows | Primary |
 |---|---|---|
 | Stale | as above | Restart Sindri |
-| Runs open | "Sindri restarts when 2 runs finish: Nightly gate (run 14), Review loop on #3120 (run 3)." Each run name links to its run page, where Stop is | Restart when they finish |
-| Waiting for runs | "Restarts when 2 runs finish. Keep this window open." with the two run links and Cancel | none |
+| Runs open | "Sindri restarts when 3 finish: Nightly gate (run 14, an agent step), Review loop on #3120 (run 3, waiting on your approval), Code index of agentic-workflow (a job)." Each name links to its page (the run page or the job page), where Stop is | Restart when they finish |
+| Waiting for runs | "Restarts when 3 finish. Keep this window open." with the three links and Cancel | none |
 | A new run started during the wait | "A new run started: Weekday check (run 7). Sindri restarts when it finishes too." with its link; the wait goes on with the new set | none |
 | Cancelled | back to Stale | Restart Sindri |
+| Still stopping (the old serve's pid alive after 30 s) | "Sindri is still stopping." Details: the pid and the log path | Start Sindri, which starts nothing while that pid lives |
 | Restarting | "Restarting Sindri…"; pages keep their last read and writes are off | none |
 | Restarted | the line goes; one toast "Sindri restarted on 7c81646." | none |
 | Didn't come back in 30 s | "Sindri stopped but didn't start again: <first line of serve.log's last error>." Details: the log path | Start Sindri |
@@ -381,7 +382,7 @@ Every frame and example uses these. A frame with other numbers is wrong.
 | Index progress | "Indexing files: 7,000 of 15,223" |
 | Map progress | "Building the map: 4,720 of 15,223 files", chip `31%` |
 | Builds | running `80f69df`, built 2026-11-11 22:10Z; installed `7c81646`, built 2026-11-12 10:31Z |
-| Open runs | 2: Nightly gate (run 14), Review loop on #3120 (run 3) |
+| Open set | 3: Nightly gate (run 14, an agent step), Review loop on #3120 (run 3, waiting on your approval), Code index of agentic-workflow (a job) |
 | Setup page | 8 steps, 6 done (GitHub connected counts `sources` done); nav tab "Setup 6/8" |
 | Services | 16 built-in services (#3127) |
 | Today's times | serve up 9.9 s, app ready +3 s, repo added t+81 s, first code index about 18 min (ux walk) |
@@ -421,7 +422,7 @@ Every free text in a setup result is fenced as untrusted, as every `sindri_*` re
 | `SND-SETUP-001` | the folder isn't a repo's top folder (exists) | "That folder isn't the top of a git repo." | Look in another folder… / `sindri repo add <path>` | 2 |
 | `SND-SETUP-002` | the repo is already in the profile (exists; `--apply` reports it as `already`) | "That repo is already added." | none | 2 |
 | `SND-SETUP-008` (new) | the scan root is missing, unreadable or outside the home folder | "Couldn't read <root>: <reason>." | Look in another folder… / `sindri setup scan --root DIR` | 2 |
-| `SND-SETUP-009` (new) | restart refused: runs are open | "Sindri restarts when 2 runs finish: <names, each a link to its run page>." | Restart when they finish / `sindri restart --wait`; `sindri wf run-show <run>` per run | 1 |
+| `SND-SETUP-009` (new) | restart refused: runs are open | "Sindri restarts when 3 finish: <names, each a link to its run or job page>." | Restart when they finish / `sindri restart --wait`; `sindri wf run-show <run>` per run | 1 |
 | `SND-SETUP-013` (new) | GitHub or Linear refused Sindri's OAuth app (an org policy) | "Your org blocks Sindri's app. Paste a token instead." Under it, for GitHub, the fine-grained set: "Pull requests: read and write, Contents: read and write, Checks: read, Issues: read, Metadata: read" | Paste a GitHub token or Paste a Linear token / `sindri setup connect github --token-env NAME` | 1 |
 | `SND-SETUP-015` (new) | `--apply`'s setup pass didn't finish within `--timeout` | "The setup pass didn't finish in 120 s; it keeps running." | `sindri jobs show <id>`, then `sindri setup` | 1 |
 | `SND-SETUP-016` (new) | `--apply`'s setup pass failed | "The setup pass failed: <first line>." | `sindri jobs show <id>` | 1 |
@@ -517,7 +518,7 @@ Proof is the app run on scratch homes with `aw-ui-driver`, not tests alone.
 1. **The walk, timed.** Fresh home, bare `sindri`, the two questions, Home, Run hello-sindri. Shots of each screen before and after. This is F1, F1b, F1c and F2.
 2. **The CLI walk.** `sindri setup` with serve down, `--apply`, then `sindri setup` again, as the terminal and as a session (F5, F8).
 3. **State matrix.** One frames test per state row of §4 (F3).
-4. **Stale serve.** Two builds in a scratch `bin/cs`; Restart with 0 and with 2 open runs; close the app mid-wait (F6).
+4. **Stale serve.** Two builds in a scratch `bin/cs`; Restart with nothing open and with §5.0's open set (an agent step, an approval wait, a job); close the app mid-wait (F6).
 5. **Older home.** A home written by an older build, doctor run (F7).
 6. **Adversarial design review** by the ideas lane on the shots, judged against inspora.design (owner rule, 2026-11-10).
 
@@ -552,14 +553,27 @@ Gate notes: P0, P2, P3, P4 and P5 add catalog rows, action ids and API goldens, 
 
 ## 14. Frames for design
 
-Redraw at §5.0's numbers. Each frame shows every state row of its section. The question order is now accounts (question 1), then repos (question 2): swap the two frames' headers and their "Question N of 2" lines. No frame shows a build number: every build is its commit and its `built=` time.
+Redraw at §5.0's numbers. Each frame shows every state row of its section. The question order is now accounts (question 1), then repos (question 2): swap the two frames' headers and their "Question N of 2" lines. No frame shows a build number: every build is its commit and its `built=` time. One primary per frame state, picked by decision 22.
 
 1. `not-running`: Not running, Starting, Didn't start, Already starting (§4.1). The sentence says "about 10 seconds".
-2. `setup-connect`, now question 1: each row's states, gh login found and not found, the device code, the Slack paste open, waiting on admin, Skip before a connect and Continue after (§4.2).
-3. `setup-repos`, now question 2: Scanning, Done, None found, Scan failed, Adding, one row failed, nothing pre-ticked with no account (§4.3). Slugs `ada/...` for the made-up repos.
-4. `setup-steps`: 8 steps in §3.1's order, 6 done; the map in both phases; the `agent` and `first-workflow` states; serve down; the all-done move to Settings (§4.4). "running build 1118" becomes "running 7c81646, the installed one".
-5. `stale-line`: Stale, Runs open, Waiting, Restarting, Restarted, Didn't come back (§4.5). Replace "build 1112 → 1118" with "7c81646, built today 10:31" (the commit and the `built=` time of `build-info`).
-6. `states`: every row of §4.6, with the "Create my profile" panel replaced by "Connect your accounts", the new Home "Run hello-sindri" panel, and the stale panel's "build 1112 → 1118" replaced by "7c81646, built today 10:31".
+2. `setup-connect`, now question 1 (§4.2):
+   - each row's states: gh login found and not found, signing in, connected, waiting on admin, sign-in failed;
+   - the device code shown (with **Copy code and open GitHub** as the primary) and the device code expired, with **Get a new code** focused and Cancel kept;
+   - the token paste open for GitHub, with its three numbered steps, step 2 naming the fine-grained set of decision 15a ("Pull requests: read and write, Contents: read and write, Checks: read, Issues: read, Metadata: read"); the Linear paste with its three steps; token refused; store failed;
+   - `SND-SETUP-013`: "Your org blocks Sindri's app. Paste a token instead.", with the paste shown;
+   - `SND-SETUP-014`: "This build has no GitHub app id. Paste a token instead.", with the paste shown in place of the sign-in button;
+   - the Slack paste open, its button never the primary;
+   - the footer: Skip before GitHub connects, then **Continue** as the primary once GitHub connects, with the Linear and Slack buttons gone secondary.
+3. `setup-accounts` (new): the same screen as the Accounts page, opened from elsewhere (decision 28). Header "Accounts", sub-line "Connect or reconnect the accounts Sindri reads", no "Question 1 of 2", footer **Done**. Three entries, one frame each:
+   - from a Needs you row "Your Linear sign-in expired": Reconnect Linear is the primary and focused; after it connects, Done is the primary and focused;
+   - from the Setup page: the first row not connected holds the primary, Done is secondary;
+   - Done pressed: back on the page it came from (show the Setup page with the row now done).
+4. `setup-repos`, now question 2: Scanning, Done, None found, Scan failed, Adding, one row failed, nothing pre-ticked with no account (§4.3). Slugs `ada/...` for the made-up repos.
+5. `setup-steps`: 8 steps in §3.1's order, 6 done; the map in both phases; the `agent` and `first-workflow` states; serve down; the all-done move to Settings (§4.4). "running build 1118" becomes "running 7c81646, the installed one".
+6. `stale-line`: Stale, Runs open, Waiting, A new run started during the wait, Cancelled, Restarting, Restarted, Didn't come back, Still stopping (§4.5). Runs open lists §5.0's open set, not only agent sessions: "Nightly gate (run 14, an agent step)", "Review loop on #3120 (run 3, waiting on your approval)" and "Code index of agentic-workflow (a job)", each a link to its run or job page. Replace "build 1112 → 1118" with "7c81646, built today 10:31".
+7. `states`: every row of §4.6, with the "Create my profile" panel replaced by "Connect your accounts", and the stale panel's "build 1112 → 1118" replaced by "7c81646, built today 10:31". The Home hello-sindri panel in each of its states: being made, not run (Run hello-sindri as the primary), running (step 2 of 4), failed (Open the run), and own rows present (hello-sindri as a secondary line). Home's "a profile with no repo" panel with Find my repos.
+
+`sindri setup --apply` and the other CLI verbs have no frame: they are CLI only, and their output is in §5.1 and §6.
 
 ## 15. Open questions for the owner
 
