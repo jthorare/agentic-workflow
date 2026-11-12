@@ -15,10 +15,6 @@ internal static partial class Labels
     /// <summary>The page when an answer can't be read.</summary>
     internal const string WfUnreadable = "The workflow list can't be read from this Sindri.";
 
-    /// <summary>The page when a read failed: the reason follows.</summary>
-    /// <param name="error">The failure.</param>
-    /// <returns>The words.</returns>
-
     /// <summary>The list when there are none.</summary>
     internal const string WfNone = "No workflows yet.";
 

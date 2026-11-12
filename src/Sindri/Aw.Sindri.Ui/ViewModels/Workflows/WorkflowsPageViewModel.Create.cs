@@ -117,12 +117,6 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>True when the last create was refused.</summary>
     public bool HasCreateError => CreateError.Length > 0;
 
-    /// <summary>The refusal or the unsure answer as the shared failed line draws it (the sentence, Try again, the code behind Details); null for a taken short id, which the person fixes in the form.</summary>
-    public FailedRead? CreateFailure { get; private set => Set(ref field, value); }
-
-    /// <summary>True when the plain red sentence shows: a taken short id.</summary>
-    public bool ShowsPlainCreateError => HasCreateError && CreateFailure is null;
-
     /// <summary>True while a create is on the way.</summary>
     public bool IsCreateSending
     {
