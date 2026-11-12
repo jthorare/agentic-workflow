@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Automation.Peers;
 using Avalonia.Automation.Provider;
@@ -97,6 +98,21 @@ public sealed class ProjectsGridKeysTests : FrameHost
         Settle(window);
 
         Assert.Equal(["C"], Frames(window).Where(f => f.IsTabStop).Select(f => ((ProjectCardViewModel)f.DataContext!).Name), StringComparer.Ordinal);
+    });
+
+    [Fact]
+    public Task Tab_goes_from_Add_project_to_a_card_frame_then_to_the_Finished_fold() => OnUi(async () =>
+    {
+        var (window, _) = await OnProjects();
+        Assert.True(Named<Button>(window, "ProjectsAdd").Focus(NavigationMethod.Tab));
+
+        Press(window, PhysicalKey.Tab);
+        var first = window.FocusManager?.GetFocusedElement();
+        Assert.True(first is Border border && border.Classes.Contains("pcard"), $"Tab from Add project landed on {first?.GetType().Name} {(first as Control)?.Name}, not a card frame");
+
+        Press(window, PhysicalKey.Tab);
+        var second = window.FocusManager?.GetFocusedElement() as Visual;
+        Assert.Equal("ProjectsFinished", second?.GetSelfAndVisualAncestors().OfType<Expander>().FirstOrDefault()?.Name);
     });
 
     [Fact]
