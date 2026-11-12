@@ -96,4 +96,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-GRAPH-113: the contract exists, the behaviour does not yet (Workflows page P0 stubs: the test, pin, trigger-events and templates routes, and the replace_node op).</summary>
     public static readonly ErrorDefinition GraphNotBuilt = new("SND-GRAPH-113", ErrorKind.Unavailable, "That part of workflows is not built yet");
+
+    /// <summary>SND-GRAPH-112: a 'replace_node' op named a node that is not the trigger; only the trigger can be replaced (Workflows page spec decision 5).</summary>
+    public static readonly ErrorDefinition GraphOnlyTriggerReplaceable = new("SND-GRAPH-112", ErrorKind.Invalid, "Only the trigger can be replaced.");
 }

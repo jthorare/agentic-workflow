@@ -23235,3 +23235,28 @@ override sealed Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp.Equals(Aw.Sindri.Core.Gra
 static Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp.operator !=(Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp? left, Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp? right) -> bool
 static Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp.operator ==(Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp? left, Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp? right) -> bool
 static readonly Aw.Sindri.Core.SindriErrors.GraphNotBuilt -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphOnlyTriggerReplaceable -> Aw.Kernel.ErrorDefinition!
+static Aw.Sindri.Core.Graph.Ops.GraphOps.ApplyWithGaps(Aw.Sindri.Core.Graph.GraphSpec! spec, int baseRevision, int currentRevision, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Ops.GraphOp!>! ops, Aw.Sindri.Core.Graph.Validation.GraphValidator! validator) -> Aw.Kernel.Result<(Aw.Sindri.Core.Graph.GraphSpec! Spec, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Validation.GraphFinding!>! Gaps)>!
+Aw.Sindri.Core.Graph.Templates.StockTemplates
+static Aw.Sindri.Core.Graph.Templates.StockTemplates.All.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Templates.StockTemplate!>!
+Aw.Sindri.Core.Graph.Templates.StockTemplate
+Aw.Sindri.Core.Graph.Templates.StockTemplate.<Clone>$() -> Aw.Sindri.Core.Graph.Templates.StockTemplate!
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Deconstruct(out string! Key, out string! Title, out string! Trigger, out System.Collections.Generic.IReadOnlyList<string!>! Needs, out Aw.Sindri.Core.Graph.GraphSpec! Spec) -> void
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Equals(Aw.Sindri.Core.Graph.Templates.StockTemplate? other) -> bool
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Key.get -> string!
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Key.init -> void
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Needs.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Needs.init -> void
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Spec.get -> Aw.Sindri.Core.Graph.GraphSpec!
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Spec.init -> void
+Aw.Sindri.Core.Graph.Templates.StockTemplate.StockTemplate(string! Key, string! Title, string! Trigger, System.Collections.Generic.IReadOnlyList<string!>! Needs, Aw.Sindri.Core.Graph.GraphSpec! Spec) -> void
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Title.get -> string!
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Title.init -> void
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Trigger.get -> string!
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Trigger.init -> void
+override Aw.Sindri.Core.Graph.Templates.StockTemplate.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Templates.StockTemplate.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Templates.StockTemplate.ToString() -> string!
+static Aw.Sindri.Core.Graph.Templates.StockTemplate.operator !=(Aw.Sindri.Core.Graph.Templates.StockTemplate? left, Aw.Sindri.Core.Graph.Templates.StockTemplate? right) -> bool
+static Aw.Sindri.Core.Graph.Templates.StockTemplate.operator ==(Aw.Sindri.Core.Graph.Templates.StockTemplate? left, Aw.Sindri.Core.Graph.Templates.StockTemplate? right) -> bool
+static Aw.Sindri.Core.Graph.Templates.StockTemplates.Find(string! key) -> Aw.Sindri.Core.Graph.Templates.StockTemplate?

@@ -53,6 +53,19 @@ public static class GraphOps
             : SindriErrors.GraphFindings.With(string.Join("; ", validation.Blocking.Select(static f => f.ToString())));
     }
 
+    /// <summary>
+    /// Like <see cref="Apply"/>, and also returns the findings an edit leaves as wiring gaps: a 'replace_node' that swaps the trigger saves even when a step reads a field the new trigger lacks
+    /// (GRAPH-REF-*), and that reference comes back in the Gaps item as a warning (Workflows page spec decision 5). Red stub: the engine lane builds it.
+    /// </summary>
+    /// <param name="spec">The graph at <paramref name="currentRevision"/>.</param>
+    /// <param name="baseRevision">The revision the caller read before it made these ops.</param>
+    /// <param name="currentRevision">The latest revision now.</param>
+    /// <param name="ops">The edits, applied in order.</param>
+    /// <param name="validator">Checks the edited graph.</param>
+    /// <returns>The edited graph and its gaps, or why nothing changed.</returns>
+    public static Result<(GraphSpec Spec, IReadOnlyList<GraphFinding> Gaps)> ApplyWithGaps(GraphSpec spec, int baseRevision, int currentRevision, IReadOnlyList<GraphOp> ops, GraphValidator validator) =>
+        throw new NotSupportedException("replace_node gaps are not built yet");
+
     private static string Kind(GraphOp op) => op switch
     {
         AddNodeOp => "add_node",
