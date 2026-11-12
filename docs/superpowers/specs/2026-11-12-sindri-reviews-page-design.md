@@ -42,7 +42,7 @@ The rows below are the ledger problems this spec builds. Ledger 6 (structural di
 
 **Release 1** is what stops the github.com visit: the queue, the diff in Files mode, single-line comments and replies (`s` suggests the cursor line only), viewed marks, resolve and unresolve, re-request review, submit and merge. The "Release 1" column in §11 marks every phase it needs: R3a-0, R2a, R3a, R3b, R7, R8, R9, R10a1, R10b, R10c1, R10d, R12, R13, R14. It leaves out Order, pre-review, Since your review, callers, split diff, and multi-line, file-level and edit or delete comments (R1). Those are Release 2. Sizes are in §11.
 
-**Day 0 gate (question 8).** Release 1 writes with a token the work org may block. The owner tries to make it on day 0. If the org blocks it, R3a's post route and R10d wait, and Release 1 is read-only: queue, diff, threads and local viewed marks, with "Open on GitHub" for every write.
+**Day 0 gate (question 8).** Release 1 writes with a token the work org may block. The owner tries to make it on day 0. If the org blocks it, R3a's post route and R10d wait, and Release 1 is read-only: queue, diff, threads and local viewed marks, with "Open on GitHub" for every write. The page shows it as read-only mode, `review.writes: off` (§5.7).
 
 **The bets, measured.** Three bets in this spec can be wrong. Each has a number that flips it.
 
@@ -101,7 +101,7 @@ Taken for the owner. Each says where it came from. "Agent default" means nobody 
 5. **A re-review opens on "since your last review".** "Your last review" is your latest submitted review, never a pending one. One key shows the whole PR. (Take 4.)
 6. **`v` marks a file viewed on this machine, undoable for 5 s.** The marks mirror to GitHub's viewed state when the review posts, and by `.` -> Sync viewed, never per keypress. GitHub's mark wins when a PR opens. A write-through failure shows `SND-REVIEW-019` and keeps the local mark. A file with the same patch after a push stays viewed. (Take 5.)
 7. **The pending batch is the local drafts file.** A pre-review writes only there, as findings, never as GitHub comments. (Meta, #2980, 2026-11-12; supersedes Take 6's GitHub-side batch.)
-8. **Suggestions: `s` writes a suggestion block, apply copies the patch.** Sindri commits a suggestion only on a branch the signed-in account owns. (Meta, #2980, 2026-11-12, question 3.)
+8. **Suggestions: `s` writes a suggestion block, apply copies the patch.** v3 never commits a suggestion. A later commit button works only on a branch the signed-in account owns (§4.3 row 39). (Meta, #2980, 2026-11-12, question 3.)
 9. **A bare letter never writes, to GitHub or to anywhere shared.** Same rule as Home §7.4 and Agents §6.6. Approve, comment and request changes are the three buttons of the submit sheet. Resolve is `.` -> Resolve, or `Ctrl+Enter` on a focused thread, with a "Resolved. Reopen" toast. Bare letters change local state only (`v`, `y`, `d`), with one 5 s Undo toast (`Ctrl+Z`) live at a time: a new local action replaces it and ends the older Undo. In a text field `Ctrl+Z` is text undo. (Meta's key rule on #2978.)
 10. **Posting is the owner's, with the owner's own token.** A session's post gets `SND-AUTH-002`. (2026-11-04 D7 and D18.)
 11. **The pre-review agent is read-only.** It runs in the read-only sandbox, holds no GitHub token, and writes findings through `POST .../suggestions`. (Engine plan on #2980; 2026-11-04 §8.4; ledger 8 take.)
@@ -113,6 +113,17 @@ Taken for the owner. Each says where it came from. "Agent default" means nobody 
 17. **Fixtures are made up** ("Harbor ferry booking"). No app-specific names. (2026-11-04 D16.)
 18. **One owner credential for the Reviews page and its CLI.** Their reads and writes use the owner's client, built from `review.credential`; the consumer table in §8 lists each reader. Queue rows come from the stored feed, which keeps the GitHub connection's token (the owner's own). `workflow.forge` stays the babysitter's. (Arch and devex, round 2; scoped in round 3.)
 19. **A reply is a draft comment, never a direct write.** It joins the draft and posts with the review. Only resolve and viewed sync can queue offline. (Round 2.)
+20. **Meta UX pass (2026-11-12).** Meta checked the 48 R8 frames at `b62867d9b6` against this spec and filed 8 MUSTs. The calls:
+    1. First run happens in the app. A "Paste token" field and one "Save and connect" button store the token through Sindri and connect; a repo checklist follows when the profile has no repos; "Start Sindri" is a real button (§5.7).
+    2. Every state the spec names has a row with its words, key and focus (§5.7).
+    3. The submit sheet flags only text taken unedited from a finding. Text the owner typed is never flagged. Two or more flags get one "Keep all (N)" button (§5.4).
+    4. A PR the owner reviewed at its current head sits in Waiting on others until new commits or a new request. The nav tab count is the header's "need you" count (§5.1).
+    5. The queue gets Home's `e` Done and `h` snooze, Sindri-local with a 5 s Undo, in Home's store, with Home's early-return rule (§5.1).
+    6. One fixture set, listed once (§5.0). Every frame uses its numbers.
+    7. Frame-only actions: "Cancel run" in the peek is specced (§5.1, §8). "Open on GitHub" on the merged toast and the reviewer facts "reviewed 2 PRs this week" and "out until Mon" are dropped: no source holds them. One primary rule covers row, peek, header and the `Ctrl+Enter` menu (§5.1).
+    8. The queue opens with the cursor on row 1, as Home does. The review opens with the line cursor on the first changed line of the first file in the file list's order (§5.1, §5.2).
+
+    Meta's picks, each *owner can flip*: Layout A is the build, with the file list capped at 8 rows and its own scroll (§5.2). The ready-line chip puts the check name first ("build failing") and is 200 px wide in Ready to merge and Waiting on others (§5.1). Resolve shows its key chip, and a focused thread swaps the footer to "Ctrl+Enter resolve thread · r reply · . actions" (§5.2). Request changes is disabled, with its reason in text, while the body is empty (§5.4). "Start Sindri" stays as a button, with `sindri serve` under Details (§5.7).
 
 ## 4. The parity table
 
@@ -202,6 +213,24 @@ Count: 55 rows. 6 are fully later (rows 3, 15, 32, 33, 47, 52) and 1 is dropped 
 
 ## 5. The page
 
+### 5.0 The fixture numbers
+
+Every frame, mockup and example in this spec uses these numbers. A frame that shows other numbers is wrong (meta UX pass, MUST 6).
+
+| Fact | Value |
+|---|---|
+| Queue before posting | Needs your review 2 (#3120, #3127), New commits since you reviewed 1 (#3131), Returned to you 1 (#3118), Waiting on others 2, Ready to merge 2 (#3109, #3112), Drafts 1. Header "4 need you · 2 ready to merge"; nav tab "Reviews 4" |
+| Queue after posting on #3120 | #3120 moves to Waiting on others (3). Header "3 need you · 2 ready to merge"; nav tab "Reviews 3"; toast "Posted. Next: #3127 (Open)" |
+| PR #3120 | "Harbor ferry: seat holds", by ada, `ada → main`, head `a1b2c3d`, last review by you at `9f8e7d6` (3 commits back), +310 -42 |
+| Files | 8: `HoldEndpoint.cs`, `HoldRequest.cs`, `HoldService.cs`, `HoldPolicy.cs`, `0042_holds.sql`, `HoldServiceTests.cs`, `docs/holds.md`, and `packages.lock.json` folded. The header says "8 files" and the folded file counts in the 8 |
+| Viewed | 3 of 8: `HoldEndpoint.cs`, `HoldRequest.cs`, `docs/holds.md`. Header "3/8 viewed"; 3 `✓` marks in the tree |
+| Findings | 6: 2 risks and 4 questions. 1 accepted (the static clock risk, now a draft comment), 1 dropped, 4 left. Header "Pre-review: 6 findings, 4 left"; Overview "Risks 2 · Questions 4"; Findings panel "Findings 4"; the stale peek "6 findings" |
+| Threads | 3: 2 open (#1 `HoldService.cs:41` by @lee, #3 `0042_holds.sql:9` by @sam), 1 resolved and outdated (#2) |
+| Draft | 2 line comments (`HoldService.cs:41` from the accepted finding, unedited; `0042_holds.sql:9` typed by you, with a suggestion block) and a body. Header button "Submit review (2)" |
+| Line cursor on open | Files mode (the default): `0042_holds.sql` line 1, the first changed line of the first file in path order. Order mode: `HoldEndpoint.cs` line 12 |
+| Checks | 2 required, both pass; CI green |
+| Large-PR frame | a separate PR, #3140, 300 files, "showing 50 of 300", 1 file "couldn't read" |
+
 ### 5.1 The queue
 
 Rows are the stored PR records the page reads today, with sections added. Layout is Home's (Home §7.1): 32 px rows, a peek on `Space`, the full surface on `Enter`.
@@ -223,7 +252,7 @@ Rows are the stored PR records the page reads today, with sections added. Layout
 │ ✓ #3109 Pier schedule: holiday rows     Can merge            +64 -2     CI green   you     2d             │
 │ ✓ #3112 Harbor ferry: seat map          Can merge            +40 -11    CI green   you     1d             │
 ├ Drafts 1 ▸ ───────────────────────────────────────────────────────────────────────────────────────────────┤
-├ footer 28: j/k move · Space peek · Enter review · / filter · . actions · a reviewer · ? all keys ──────────┤
+├ footer 28: j/k move · Space peek · Enter review · Ctrl+Enter PR menu · . actions │ h snooze · e done · a reviewer · R re-rank · F5 refresh ┤
 └───────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -241,35 +270,42 @@ Rows are the stored PR records the page reads today, with sections added. Layout
 | ✎ | Draft | Drafts |
 
 - **Accessible name:** "Needs you, number 3120, Harbor ferry: seat holds, asked of you, 310 added 42 removed, CI green, by ada, 1 hour 40 minutes ago".
-- **Ready line:** the row, the peek and the review header show one phrase: "Can merge" or "Waiting on: required check `build`". It reads the stored decision, required checks and thread count.
-- **Peek (`Space`):** the description, the pre-review summary and risk areas when one exists, the run's cost and state (running, failed, absent, stale), the checks, and the ready line. The peek never navigates. Take 2 and ledger 1.
+- **Ready line:** the row, the peek and the review header show one phrase: "Can merge", or what is missing with the check name first: "build failing", "build running", "1 open thread", "changes requested". It reads the stored decision, required checks and thread count. In Ready to merge and Waiting on others the reason chip is 200 px wide, so "build failing" never truncates (meta's pick, *owner can flip*).
+- **Peek (`Space`):** the description, the pre-review summary and risk areas when one exists, the run's cost and state (running, failed, absent, stale), the checks, and the ready line. The peek never navigates. A running pre-review shows "Cancel run" beside its state line (in `.` too). It cancels the run through `POST {prefix}/prereview/cancel` (§8); the line then reads "Pre-review cancelled" and the spend so far still counts against the daily cap. Take 2 and ledger 1.
+- **One primary rule.** The row's primary, the peek's primary button and the preselected entry of the `Ctrl+Enter` menu follow the ready line. "Can merge" with no local draft: Merge is primary and Review is secondary. Anything else: Review (`Enter`) is primary. The review header follows the same rule (§5.2): "Submit review (N)" while a draft exists, else Merge when it reads "Can merge".
+- **Cursor.** The queue opens with the cursor ring on row 1 of the first section with rows, as Home does (Home §7.4); a header only takes the cursor by `Left`. `Esc` back from the review puts the cursor on the PR you opened. After Posted it sits on the next row (§5.2). A row that leaves moves the cursor to the next row in its section, by Home's rule (Home §4.3).
+- **Done and snooze.** `e` marks the row done and `h` opens Home's snooze picker (Home §5.3: presets `1` to `4`, `5` or a click for the date field). Both are Sindri-local, show the 5 s Undo toast (`Ctrl+Z`), and write Home's one store (Home §8), keyed by the PR, so a PR done on Reviews is done on Home too. A done or snoozed PR leaves the queue in one frame; a header toggle "Snoozed (n)" shows the snoozed rows with "back Mon 9:00". It **returns early** by Home's rule (Home §5.3, §5.4): new commits, a new review request, a reply in your thread, or CI red on your PR. It comes back through Home's New band, marked "back", with the reason in the peek ("back: 2 new commits"). Done keys to the head sha: a push always brings a done "Needs your review" row back. The footer text "Done list" opens Home's Done list.
+- **Counts.** "need you" counts the open rows of Needs your review, New commits since you reviewed, and Returned to you. Done and snoozed rows don't count. The nav tab count is the same number, from the same read; it never counts Waiting, Ready or Drafts.
+- **Empty queue.** "need you" reaches 0 when those three sections have no open row. The header then reads "0 need you · 2 ready to merge" and the body opens with the line "Nothing needs your review." (20 px, ink) above the remaining sections, plus "2 snoozed, the next back Mon 9:00" when some are snoozed. The cursor goes to the first row below, or to nothing. With every section empty the body is "Nothing waiting on you and no open PRs of yours." When a source is stale, the line is "Nothing waiting in what I could read" with the stale line and Refresh, never the done line (Home §5.5).
 - **Order inside a section:** priority, then the time the row entered the section, then the PR number. A poll never moves a row (Home §4.3). Ready to merge opens expanded when it has rows; each section keeps its fold state, and `Left` and `Right` fold and unfold. A section with 0 rows is hidden. Priority is Home's `blocks N` from the ranking route when it ships; until then it is the stored order, newest activity first. Signals named in Take 2: how many people or agents wait on the PR, linked issue priority, size, age.
-- **Needs your review** holds `ReviewWaitingKind.Requested` rows. **New commits since you reviewed** holds `NewCommits` rows. **Returned to you** holds the owner's PRs with changes requested or unreplied threads from people. **Waiting on others** holds the owner's PRs with a review pending. **Ready to merge** holds the owner's PRs with green required checks, no open thread and no changes-requested decision. A PR whose `Mergeable` is null stays there with the ready line "Checking mergeability". **Drafts** holds the owner's draft PRs.
-- **Actions from the row** (`.` menu, each with its key): Review (Enter), Run pre-review, Request reviewer (`a`), Merge when ready, Start babysitter, Open on GitHub. `Ctrl+Enter` on a row opens Home's PR menu (Merge, Approve, Comment, Request changes), the same as Home's peek. Approve, Comment and Request changes there open the submit sheet (§5.4) on that PR, with the line "You haven't read the diff of a1b2c3d" when no file is viewed. Merge opens the merge picker (§5.4). Nothing posts from the menu itself.
+- **Needs your review** holds `ReviewWaitingKind.Requested` rows. **New commits since you reviewed** holds `NewCommits` rows. **Returned to you** holds the owner's PRs with changes requested or unreplied threads from people. **Waiting on others** holds the owner's PRs with a review pending, and other people's PRs the owner reviewed at their current head. A reviewed PR leaves it for New commits since you reviewed on a push, or for Needs your review on a new request. So the toast-posted case has a home: after you post on #3120, it moves from Needs your review to Waiting on others (§5.0). **Ready to merge** holds the owner's PRs with green required checks, no open thread and no changes-requested decision. A PR whose `Mergeable` is null stays there with the ready line "Checking mergeability". **Drafts** holds the owner's draft PRs.
+- **Actions from the row** (`.` menu, in this order, each with its key chip and palette id): Review `Enter` (`reviews.open`), Snooze `h` (`reviews.snooze`), Done `e` (`reviews.done`), Request reviewer `a` (`reviews.reviewer`), Run pre-review (`reviews.prereview`; reads "Cancel run", `reviews.prereview-cancel`, while one runs), Merge when ready (`reviews.merge-when-ready`), Start babysitter (`reviews.babysit`), Open on GitHub (`reviews.open-github`), Copy link (`reviews.copy-link`). An entry that can't run shows disabled with its reason ("Merge when ready: not your PR"). Focus starts on the first entry; the footer swaps to "↑/↓ move · Enter pick · Esc cancel" (Home §7.4); `Esc` returns focus to the row.
+- **The `Ctrl+Enter` row menu** is Home's PR menu: Merge, Approve, Comment, Request changes, in that order. The preselected entry follows the one primary rule: Merge on a "Can merge" row, else Comment; Approve is never preselected. Approve and Request changes are disabled on your own PR with GitHub's reason; Merge is disabled with the ready line when it is not "Can merge". Approve, Comment and Request changes open the submit sheet (§5.4) on that PR, with the line "You haven't read the diff of a1b2c3d" when no file is viewed. Merge opens the merge picker (§5.4). `Esc` returns focus to the row. Nothing posts from the menu itself. In read-only mode (§5.7) every entry is "Open on GitHub".
 
 ### 5.2 The review surface
 
-**Layout.** The build is Layout A: the diff in the middle with the folder-grouped file list above it, and the 420 px panel column on the right, holding the seven 2026-11-04 panels, then Threads, Findings and the draft counter. Threads also show inline under their line. The mockup below is the three-pane walk, proposed (question 1) and built only on the owner's yes, as a re-layout PR after R10a1. Both share the header, line cursor, keys, states and submit sheet. R8 draws both.
+**Layout.** The build is Layout A: the diff in the middle with the folder-grouped file list above it, and the 420 px panel column on the right, holding the seven 2026-11-04 panels, then Threads, Findings and the draft counter. Threads also show inline under their line. The mockup below is the three-pane walk, proposed (question 1) and built only on the owner's yes, as a re-layout PR after R10a1. Both share the header, line cursor, keys, states and submit sheet. R8 draws both. In Layout A the file list shows at most 8 rows and scrolls on its own past that, so a 300-file PR never pushes the diff off the screen (meta's pick, *owner can flip*). The mockup's numbers are the §5.0 fixture.
 
 The three-pane walk opens on an **Overview** step; Layout A shows the same panels in its column. On a re-review the Since scope (§5.3) is already applied, and the header says "Changes since your review of 9f8e7d6 (3 commits)". The walk then moves file by file in change order.
 
 ```
-┌ header: Harbor ferry: seat holds #3120 · ada → main · head a1b2c3d · 14 files +310 -42 · 5/14 viewed ──────┐
+┌ header: Harbor ferry: seat holds #3120 · ada → main · head a1b2c3d · 8 files +310 -42 · 3/8 viewed ────────┐
 │ Pre-review: 6 findings, 4 left   ·   CI green   ·   Required 2 of 2   ·   0 conflicts   [Order|Files] [All|Since your review]
 ├ tree 260 ─────────────────┬ diff (flex) ───────────────────────────────────┬ threads 360 ─────────────────┤
 │ Overview                  │ Overview                                       │ Conversation 3               │
-│ ▾ Booking: seat hold      │  Summary (agent): adds a 10-minute hold on     │ open #1 BookingService:41    │
+│ ▾ Booking: seat hold      │  Summary (agent): adds a 10-minute hold on     │ open #1 HoldService.cs:41    │
 │   entry                   │  a seat before payment. Touches 3 layers.      │   @lee: why a static clock?  │
-│   ✓ HoldEndpoint.cs       │  Risks 2 · Questions 4                         │   [Reply] [Resolve]          │
+│   ✓ HoldEndpoint.cs       │  Risks 2 · Questions 4                         │   [r Reply] [Ctrl+⏎ Resolve] │
 │   core                    │  Required checks · Test plan · Doc map ...     │ resolved #2 (outdated)       │
+│   ✓ HoldRequest.cs   +18  │                                                │                              │
 │   ▸ HoldService.cs   +80  │                                                │                              │
 │   ▸ HoldPolicy.cs    +22  │ HoldService.cs   core   viewed ☐   owner @ada  │ Findings 4                   │
-│   data                    │ 38  public Hold Place(Seat s)                  │ ▲ high  HoldService.cs:41    │
-│   ▸ 0042_holds.sql   +14  │ 41+ var until = Clock.Now.AddMinutes(10);      │   Static clock; tests can't  │
-│   tests                   │      ▴ finding: static clock   [callers: partial]│   pin it. evidence: 2 hits   │
+│   data                    │ 38  public Hold Place(Seat s)                  │ ▲ high  HoldPolicy.cs:17     │
+│   ▸ 0042_holds.sql   +14  │ 41+ var until = Clock.Now.AddMinutes(10);      │   No cap on hold length;     │
+│   tests                   │      ▴ draft: static clock     [callers: partial]│   evidence: 0 tests cover it │
 │   ▸ HoldServiceTests +96  │ 44+ if (until < Clock.Now) throw ...           │   [y accept] [e edit] [d drop]│
 │ ▾ Other files             │                                                │                              │
-│   ▸ docs/holds.md    +9   │                                                │                              │
+│   ✓ docs/holds.md    +9   │                                                │                              │
 │ ▸ Folded: 1 lockfile      │                                                │ Draft: 2 comments  Ctrl+Enter│
 └───────────────────────────┴────────────────────────────────────────────────┴──────────────────────────────┘
 ```
@@ -277,8 +313,8 @@ The three-pane walk opens on an **Overview** step; Layout A shows the same panel
 - **Header:** title, number, author, head sha, files with +/-, the viewed count, the findings count, CI, required checks, conflicts and the ready line. Mergeable `null` reads "Checking mergeability". Two toggles: Order or Files (`m`), All or Since your review (`g s`). One primary button: "Submit review (2)" while a draft exists, "Merge" when ready with no draft. Rerun checks and Start babysitter live in `.`.
 - **Tree (260 px; the Layout A file list follows the same rules):** in **Order** mode, files group by concept and sort by band inside each concept. The order of the groups follows the earliest band of their files. Each file shows its status mark (`✓` viewed, `▸` unread, `Δ` changed since viewed) and `+/-`. Files with no concept sit in one "Other files" group, never dropped. Folded files (lockfiles, generated) keep the 2026-11-04 §7.1 rules. In **Files** mode the tree is the plain folder tree, alphabetical, GitHub's order.
 - **Diff (flex):** unified or split. The file header names its band, a visible viewed box and a "callers" link. Hunk headers name the changed symbol. A fold row loads more context. Each line has a gutter "+" or "-" mark, so color is never the only cue.
-- **Line cursor:** `↑` and `↓` move a cursor through the diff lines. A gutter marker shows it and its accessible name is "line 41, added: <text>, cursor". `c`, `s` and `Shift+Down` act on the cursor line. Hovering a line shows a gutter "+" that opens the composer like `c`. `n` and `p` put the cursor on the first line of a hunk.
-- **Footer (28 px):** `j/k file · n/p hunk · ↑↓ line · c comment · v viewed · Ctrl+Enter <what it does here> · ? all keys`. The Ctrl+Enter text changes with focus (§5.4). After `g`, the footer lists the second keys: `n p f b c s l`.
+- **Line cursor:** `↑` and `↓` move a cursor through the diff lines. A gutter marker shows it and its accessible name is "line 41, added: <text>, cursor". `c`, `s` and `Shift+Down` act on the cursor line. Hovering a line shows a gutter "+" that opens the composer like `c`. `n` and `p` put the cursor on the first line of a hunk. **Where it starts:** on open, the cursor is on the first changed line of the first file in the file list's order (Files mode: path order; Order mode: change order), and focus is on the diff. On a re-review the same rule runs on the Since scope (§5.3). Reload after a moved head keeps the cursor's file and line when the line still exists, else the file's first changed line. In the fixture that is `0042_holds.sql` line 1 in Files mode (§5.0).
+- **Footer (28 px):** `j/k file · n/p hunk · ↑↓ line · c comment · v viewed · Ctrl+Enter <what it does here> · ? all keys`. The Ctrl+Enter text changes with focus (§5.4). On a focused thread the footer reads `Ctrl+Enter resolve thread · r reply · . actions · Esc back to line`, and the thread's Resolve button carries the `Ctrl+⏎` chip as Reply carries `r` (meta's pick, *owner can flip*). After `g`, the footer lists the second keys: `n p f b c s l`.
 - **Threads (360 px, three-pane):** the conversation, then the findings (§5.5), then the draft counter. Threads on the focused file come first. At 1,100 to 1,439 px the pane becomes inline threads under their line, as GitHub does, and the tree drops to 240 px. Below 1,100 px the tree is a drop-down (`[`) and threads are inline. Below 1,440 px the "Findings 4" and "Draft 2" header chips open a popover.
 - **Overview step (three-pane only):** the middle pane shows the seven 2026-11-04 panels (required checks, doc map, test plan, CI, evidence, risk, conversation) in the settings' order, under the pre-review summary. In Layout A they are the 420 px column, so there is no Overview step. `n` or `j` leaves Overview for the first file in order.
 - **Head moved while open:** the poll detects it and shows a banner with Reload. No auto-reload. Reload keeps the file, scroll, focus and order.
@@ -332,7 +368,7 @@ When the owner has submitted a review of an earlier commit, the page opens on **
 │  HoldService.cs:41   Static clock; tests can't pin it.   [Edit][Remove]│
 │                      ⚠ from finding, unedited           [Keep]        │
 │  0042_holds.sql:9    No index on seat_id. (suggestion)  [Edit][Remove]│
-│ 2 findings not yet accepted or dropped                                │
+│ 4 findings not yet accepted or dropped                                │
 │ Required checks: 2 of 2 pass                                          │
 │ [Discard draft]                                                       │
 │ [ Comment ]   [ Approve ]   [ Request changes ]            [ Cancel ] │
@@ -341,15 +377,15 @@ When the owner has submitted a review of an earlier commit, the page opens on **
 
 - One click on a verdict posts one `SubmitReview` with the line comments, `ExpectedHead` and the marker `owner-review:<draft id>:<hash>`. The draft id is random and unguessable. The hash covers the body and comments as they stood when the sheet opened. With no draft (a body-only post) the marker is `owner-review:<hash>` over the PR, head, verdict and body. Then each draft reply posts through `Reply` in order, each with its `clientId`. A failed reply stays in the draft, marked `SND-REVIEW-019`. No typed text, no second confirm.
 - If the post times out, the sheet shows "Checking whether it posted…" with all buttons disabled. Sindri looks up the marker, in reviews by the signed-in login only, before it resends. A found marker means the first post landed; Sindri reconciles from it and sends nothing. Otherwise the sheet shows Retry. The CLI does the same lookup before any resend (§8).
-- Initial focus is on Comment, never Approve. Focus stays inside the sheet. `Ctrl+Enter` in the Body field moves focus to Comment and never posts. `Esc` is Cancel, and Cancel returns focus to the control that opened the sheet. Comment is disabled, with its reason in text, when the body and the comments are both empty.
+- Initial focus is on Comment, never Approve, or on Body when Comment is disabled. Focus stays inside the sheet. `Ctrl+Enter` in the Body field moves focus to Comment and never posts. `Esc` is Cancel, and Cancel returns focus to the control that opened the sheet. Comment is disabled, with its reason in text, when the body and the comments are both empty. Request changes is disabled while the body is empty, with the reason "Request changes needs a body" (GitHub's API refuses `REQUEST_CHANGES` without one; R10d checks it on the fake forge) (meta's pick, *owner can flip*).
 - The sheet re-reads the head and the checks when it opens. A check that went from pass to fail since the page loaded is listed at the top.
-- Flags block. The sheet flags each comment taken unedited from a finding, and any `@mention`, link or `suggestion` block in a comment. The three verdict buttons stay disabled until each flagged comment gets its own Keep click, or an Edit or Remove. Every draft row has Edit and Remove. Discard draft deletes the local draft, shows a 5 s Undo toast and keeps the viewed marks.
+- Flags block. The sheet flags only a comment whose text came from a finding and was not edited: agent text the owner has not touched. Text the owner typed is never flagged, even when it holds an `@mention`, a link or a `suggestion` block. The flag reads "⚠ from finding, unedited" with Keep. The three verdict buttons stay disabled until each flagged comment gets Keep, Edit or Remove. With 2 or more flags, one "Keep all (N)" button sits above the list and clears them all in one click; focus starts on it. Every draft row has Edit and Remove. Discard draft deletes the local draft, shows a 5 s Undo toast and keeps the viewed marks.
 - On the owner's own PR, Approve and Request changes are disabled with GitHub's reason (2026-11-04 §16 pick 4).
-- Offline, Submit and Merge are disabled with "Offline: reconnect to post". They never queue, because a queued verdict could post on a moved head. Replies and comments still join the local draft.
+- Offline, Submit and Merge are disabled with one sentence, "Offline: reconnect to post. Your draft is kept." The code (`SND-REVIEW-021`) sits under Details; no second line. They never queue, because a queued verdict could post on a moved head. Replies and comments still join the local draft.
 - Unresolved findings show as a count and never block the submit.
 - On `Posted`, the draft is deleted, local viewed marks mirror to GitHub, `review.posted` goes to the ledger (verdict, sha, comment count, link, no text) and the surface returns to the queue (§5.2). On `HeadMoved` the sheet stays open with the banner inline, the verdict buttons disabled and the draft intact; Reload reopens it on the new head. On `LineRejected` the draft stays and the refused comment is marked (`SND-REVIEW-013`).
 
-**Merge.** The primary button reads "Merge ▾" and opens a picker with merge, squash and rebase. The repo's default method is preselected, and the button names it. Initial focus is on the preselected method, except when it is rebase (a history rewrite): then focus starts on Cancel. `Esc` closes the picker and returns focus to the Merge button. After Merged, focus lands on the queue cursor row. After a refusal, focus stays in the picker. Choosing one starts the merge with `ExpectedHead`, and the picker shows "Merging…" with buttons disabled. Outcomes: **Merged** gives the toast "Merged #3109 into main", returns to the queue, and the row leaves Ready to merge. **Conflict or required check** shows GitHub's reason (`SND-REVIEW-018`) and keeps the picker open. **Head moved** shows the banner (`SND-REVIEW-011`) and merges nothing. A timeout shows "Checking whether it merged…", reads the PR state, then shows Merged or Retry. The reviewer picker (`a`) follows the same shape: list, "Requesting…", then a toast or the reason (`SND-REVIEW-019`) with the picker still open. Its focus starts in the search field, never on a name; a name toggles with `Space`, and the request needs its own Request button. `Esc` and a successful request return focus to the control that opened it. Resolve, Reopen and Sync viewed show the toast, "Syncing…" or the inline `SND-REVIEW-019` on the thread or file.
+**Merge.** The primary button reads "Merge ▾" and opens a picker with merge, squash and rebase. The repo's default method is preselected, and the button names it. Initial focus is on the preselected method, except when it is rebase (a history rewrite): then focus starts on Cancel. `Esc` closes the picker and returns focus to the Merge button. After Merged, focus lands on the queue cursor row. After a refusal, focus stays in the picker. Choosing one starts the merge with `ExpectedHead`, and the picker shows "Merging…" with buttons disabled. Outcomes: **Merged** gives the toast "Merged #3109 into main" (no "Open on GitHub" button: that lives in `.`), returns to the queue, and the row leaves Ready to merge. **Conflict or required check** shows GitHub's reason (`SND-REVIEW-018`) and keeps the picker open. **Head moved** shows the banner (`SND-REVIEW-011`) and merges nothing. A timeout shows "Checking whether it merged…", reads the PR state, then shows Merged or Retry. The reviewer picker (`a`) follows the same shape: list, "Requesting…", then a toast or the reason (`SND-REVIEW-019`) with the picker still open. Each name row shows the login, the display name and one fact from the PR's own reviews: "requested", "reviewed at 9f8e7d6" or nothing. No other reviewer fact ships ("reviewed 2 PRs this week" and "out until Mon" have no source). Its focus starts in the search field, never on a name; a name toggles with `Space`, and the request needs its own Request button. `Esc` and a successful request return focus to the control that opened it. Resolve, Reopen and Sync viewed show the toast, "Syncing…" or the inline `SND-REVIEW-019` on the thread or file.
 
 ### 5.5 The agent pre-review
 
@@ -381,10 +417,10 @@ An accepted finding is an ordinary draft comment. The submit sheet lists it with
 
 | Where | Loading | Empty | Error |
 |---|---|---|---|
-| Queue | skeleton rows; first paint from the store under 100 ms | "Nothing waiting on you and no open PRs of yours." plus where repos are set. With no credential: "Connect GitHub", the keychain command from §8 and the steps to make the token | Partial: "List is from <time>: <source> failed: <reason>" above the last rows, Retry (#3065). Serve down with a cache: the cached rows, "as of <time>". Serve down with no cache: "Sindri is not running" and `sindri serve`. A filter that matches nothing: "No match for <text>" and Clear |
+| Queue | skeleton rows; first paint from the store under 100 ms (§5.7) | "Nothing needs your review." or "Nothing waiting on you and no open PRs of yours." (§5.1). With no credential: the first-run card (§5.7). Token works, no repos: "Watch these repos" (§5.7) | Partial: "List is from <time>: <source> failed: <reason>" above the last rows, Retry (#3065). Serve down with a cache: the cached rows, "as of <time>". Serve down with no cache: "Sindri is not running" and **Start Sindri** (§5.7). A filter that matches nothing: "No match for <text>" and Clear |
 | Peek | placeholders | — | Pre-review running ("started 2m ago"), failed (reason), absent ("Run one"), stale (older head) |
 | Overview | placeholders per panel (2026-11-04 §6.3) | "This PR changes no files" | per panel, as before |
-| Tree, Order mode | "Ordering 14 files…" after 300 ms | — | "Order unavailable: <reason>", Files mode shown. One file failing shows the file with "couldn't read" and the rest load. Past 50 files: "showing 50 of 300" and a load-more row |
+| Tree, Order mode | "Ordering 14 files…" after 300 ms | — | "Order unavailable: <reason>", Files mode shown. One file failing shows the file with "couldn't read: <reason>" and a Retry on the row (`Enter` on the row), and the rest load. Past 50 files: "showing 50 of 300" and a load-more row |
 | Diff | "Reading 42 files…" | "This PR changes no files" | "Couldn't read the diff: <forge reason>"; partial: the files read, then "N files failed" with Retry; offline with a cached head shows "as of <time>" |
 | Since your review | "Comparing a1b2c3d with 9f8e7d6…" | "Nothing changed since your review" and the whole-PR key | "Couldn't compare: <reason>", whole PR shown |
 | Threads | skeleton | "No threads" | "Couldn't load threads: <reason>"; a failed resolve shows `SND-REVIEW-019` inline on the thread |
@@ -397,6 +433,74 @@ An accepted finding is an ordinary draft comment. The submit sheet lists it with
 | Merge, reviewer picker, Resolve, Sync viewed | "Merging…", "Requesting…", "Syncing…" past 300 ms, buttons disabled | — | Each outcome is in §5.4: toast on success, GitHub's reason in place on failure |
 | Reviewer picker list, `Ctrl+K` palette | "Loading reviewers…" past 300 ms; the palette needs no load | "No match for <text>" and Clear | "Couldn't load reviewers: <reason>" and Retry (`SND-REVIEW-019`) |
 | Post timeout | "Checking whether it posted…" | — | Posted, or Retry |
+
+### 5.7 First run, read-only mode and the added states
+
+This section closes meta's UX pass (MUSTs 1 and 2). Each state names what shows, the words, the key and where focus goes.
+
+**First run, no credential.** The queue body shows one card, "Connect GitHub to review here", with two steps. Sindri reads the OS and shows that OS's text only, with no macOS / Linux toggle.
+
+1. "Make a fine-grained token" and an **Open github.com** button. It opens GitHub's new-token page. The scopes it needs are listed under it (§8 table).
+2. A **Paste token** field (masked, with a Show toggle) and one primary button, **Save and connect**. `Enter` in the field presses it. Focus starts in the field.
+
+Save and connect does this, in order:
+
+1. The app sends the token to `POST /sindri/reviews/connect` (§8) over loopback. A session caller gets `SND-AUTH-002`.
+2. Sindri stores it through `ISecretWriter` (`Infrastructure/Secrets/KeychainSecretWriter.cs`). The token reaches `security` (macOS) or `secret-tool` (Linux) on stdin, never as an argument. On Linux without a Secret Service it goes to a 0600 file under `$AW_SINDRI_HOME/secrets/`. No shell step.
+3. Sindri sets `review.credential` to the command that reads that entry (§8). When `context.sources.github.token` is unset, it points that key at the same entry, so the queue feed has a token too.
+4. Sindri reads `GET /user` and saves `review.login` (the existing login route).
+5. The queue loads, or shows "Watch these repos" when `context.sources.github.repos` is empty.
+
+While it runs, the button reads "Connecting…" and the field is read-only. The app drops the token from memory when the answer comes. On failure the card stays, the field is cleared and focused, and one sentence shows above it:
+
+- GitHub refused the token: "GitHub refused this token: <GitHub's reason>. Paste a new one." (`SND-REVIEW-009` in Details.)
+- The org has to approve the token: "Your org must approve this token first: <GitHub's reason>." The card adds **Open github.com**.
+- The store failed: "Couldn't store the token: <reason>. Nothing was saved." (`SND-REVIEW-025` in Details.)
+
+The card's **Details** line holds the CLI path: the keychain command for this OS (§8), then `sindri review connect`.
+
+**Token works, no repos.** The card "Watch these repos" lists the repos the token can read (`GET /user/repos`, up to 100, most recent push first). It has a filter field when it lists more than 10. Every row has a checkbox, unticked. One **Save** button, disabled until a box is ticked, writes the ticked `owner/name` list to `context.sources.github.repos` through `PUT /sindri/reviews/repos` (§8); it applies on save. `Space` toggles the row under focus. Focus starts on the first row. Saving shows "Reading 3 repos…" and then the queue. A token that can read no repo shows "This token can't see any repo. Give it repo access on github.com." with **Open github.com**.
+
+**Start Sindri.** With serve down and nothing cached, the body shows "Sindri is not running" and the **Start Sindri** button, focused, so `Enter` presses it. It does what a bare `sindri` does: it starts `sindri serve` detached through the `sindri` binary next to `sindri-ui`. The button reads "Starting Sindri…", disabled, while the app polls `sindri status` for up to 30 s. When serve answers, the queue reads. On failure: "Sindri didn't start: <first line of its error>." with **Retry** (focused) and Details holding the log path and `sindri serve`. The nav tab shows no count while nothing is read.
+
+**Read-only mode (the day 0 gate, §1).** The profile key `review.writes` is `on` (default) or `off`. The owner sets `off` when question 8's answer is no. A write that GitHub refuses as an org policy (`SND-REVIEW-012`) also offers **Switch to read-only**, which sets it. With `off`:
+
+- The header shows one line: "Read-only: writes open github.com". Its Details names the key.
+- Every write control is replaced by **Open on GitHub**, which opens the PR at that place (the file, the thread or the merge box). That covers the verdict buttons, Merge, Resolve, re-request, Sync viewed and each `Ctrl+Enter` menu entry.
+- Local state still works: the queue, the diff, threads, local viewed marks, `e`, `h` and the draft. The submit sheet shows the draft with **Copy as text** and **Open on GitHub** in place of the verdicts.
+- `sindri doctor`'s `review` row reads info "read-only (review.writes off)".
+
+| Where | State | What shows | Key | Focus |
+|---|---|---|---|---|
+| Queue | loading | 8 skeleton rows of 32 px under the section headers; header "Reading…" in place of "as of" | none until rows paint | the list; the cursor lands on row 1 when rows paint |
+| Queue | empty | "Nothing needs your review." over the other sections, or "Nothing waiting on you and no open PRs of yours." (§5.1) | `F5` refresh | the first row below, or the header's Refresh |
+| Queue row | `.` menu open | the entries of §5.1, each with its key chip; disabled ones with a reason | `↑/↓`, `Enter` pick, `Esc` | first entry; `Esc` back to the row |
+| Queue row | `Ctrl+Enter` menu open | Merge, Approve, Comment, Request changes (§5.1) | `↑/↓`, `Enter`, `Esc` | the preselected entry |
+| Queue row | done or snoozed | the row leaves; toast "Marked done. Undo (Ctrl+Z)" or "Snoozed until Mon 9:00. Undo (Ctrl+Z)" | `Ctrl+Z` for 5 s | the next row |
+| Diff | loading | "Reading 8 files…" after 300 ms, skeleton lines | `j/k` on the file list | the file list |
+| Diff | error | "Couldn't read the diff: <forge reason>." with **Retry** and **Open on GitHub** | `Enter` Retry | Retry |
+| Diff | partial | the files read, then one row "2 files failed: HoldPolicy.cs, 0042_holds.sql" with **Retry** | `Enter` on the row | where it was |
+| Tree | a file couldn't be read | "HoldPolicy.cs  couldn't read: <reason>" with **Retry** on the row | `Enter` on the row | the row |
+| Review | offline | header "Offline · as of 09:41"; the cached diff; write controls disabled with "Offline: reconnect to post"; local keys work. Nothing cached: "#3120 isn't cached on this box. Reconnect to read it." (`SND-REVIEW-503`) | `F5` refresh | the diff, or Refresh |
+| Thread | resolve sending (offline) | "Resolving… sending" under the thread, with **Discard** | `.` then Discard | the thread |
+| Thread | resolve failed | "Couldn't resolve: <reason>." with **Retry** and **Discard** (`SND-REVIEW-019`) | `.` then Retry or Discard | the thread |
+| Thread or file | queued op expired | "Not sent: expired after 10 minutes." with **Repeat** (`SND-REVIEW-022`) | `Enter` Repeat | the thread or file |
+| Since your review | loading | "Comparing a1b2c3d with 9f8e7d6…" after 300 ms | `g s` whole PR | the diff |
+| Since your review | empty | "Nothing changed since your review of 9f8e7d6." and "g s whole PR" | `g s` | the message |
+| Since your review | error | "Couldn't compare 9f8e7d6 with a1b2c3d: <reason>. Showing the whole PR." | none | the diff, on the whole PR |
+| Callers | loading | "Finding callers…" after 300 ms in the callers popover | `Ctrl+o` back | the popover |
+| Callers | none | "No parser for <language>: callers unknown." with the mark `none (no parser)` | `Ctrl+o` back | the popover |
+| Callers | partial, empty | "No callers found, list may be incomplete." with the mark | `Ctrl+o` back | the popover |
+| Callers | unavailable | "Callers unavailable: <reason>" (for example "code index not built for acme/harbor") | `Ctrl+o` back | the popover |
+| Draft | save failed | under the composer: "Couldn't save the draft: <reason>. Your text is still here." with **Retry**. Sindri retries every 5 s; `Ctrl+Enter` keeps the comment in memory and marks it "not saved" | `Enter` on Retry | the composer |
+| Submit sheet | `SND-REVIEW-010` | "The draft changed in another window. Reopen the sheet to see it." with **Reopen** | `Enter` | Reopen |
+| Submit sheet | `SND-REVIEW-012` | "GitHub refused the review: <GitHub's reason>." The fix line in Details. An org-policy reason adds **Switch to read-only** | `Esc` | Cancel |
+| Submit sheet | `SND-REVIEW-013` | "GitHub refused 1 line comment: <reason>. It's marked below." The comment's row is marked; the verdicts come back after its Edit or Remove | `Enter` Edit | the marked row's Edit |
+| Submit sheet | `SND-REVIEW-014` | "This sheet expired. Reopen it to post." with **Reopen** | `Enter` | Reopen |
+| Submit sheet | checking whether it posted | "Checking whether it posted…", every button disabled, `Esc` off until the check ends (15 s at most); a polite live region reads it | none | the status line |
+| Submit sheet | not posted after the check | "It didn't post. Nothing was sent twice." with **Retry** | `Enter` | Retry |
+| Merge picker | checking whether it merged | "Checking whether it merged…", buttons disabled, then the Merged toast or "It didn't merge." with **Retry** | `Enter` Retry | the status line, then Retry |
+| Any write | read-only mode | **Open on GitHub** in place of the write control (above) | `Enter` | that button |
 
 ## 6. Keyboard and screen readers
 
@@ -414,14 +518,17 @@ Grammar keys are Home's: `j/k`, arrows, `Home`/`End`, `/`, `Space`, `Enter`, `Es
 | `r` | thread | reply (Home's reply key); the text goes to the draft, not to GitHub |
 | `v` | file | toggle viewed, local |
 | `y` / `e` / `d` | finding | accept, edit, drop (local) |
-| `Ctrl+Z` | review | undo the last `v`, `y`, `d` within 5 s, or reopen a resolved thread; in a text field, text undo |
+| `Ctrl+Z` | queue, review | undo the last `e`, `h`, `v`, `y`, `d` within 5 s, or reopen a resolved thread; in a text field, text undo |
 | `g c` | hunk | callers; `Ctrl+o` back |
 | `m` | review | Order or Files (`t` is Home's tell-an-agent) |
 | `g s` | review | Since your review or whole PR |
 | `g l` / `w` | diff | split or unified layout; hide whitespace |
+| `e` | queue row | Done, Sindri-local, 5 s Undo (Home §5.4); on a finding `e` is edit, a different place |
+| `h` | queue row | Home's snooze picker (Home §5.3); Sindri-local once a choice is made |
 | `a` | queue, review | reviewer picker, a cancellable sheet; the write happens on its confirm button |
 | `[` / `]` | review | collapse the tree or the threads pane |
 | `Alt+[` / `Alt+]` | review | previous or next PR of a stack |
+| `.` | queue row | actions: the list in §5.1 (Review, Snooze, Done, Request reviewer, Run pre-review or Cancel run, Merge when ready, Start babysitter, Open on GitHub, Copy link) |
 | `.` | review, thread | actions: Resolve, Sync viewed, Rerun checks, Start babysitter, Ready for review, Update branch |
 | `Ctrl+Enter` | composer / thread / queue row / review | add to draft / resolve / Home's PR menu / submit sheet (innermost focus wins, §5.4) |
 | `F6` | review | cycle regions: file list or tree, diff, panels or threads |
@@ -490,7 +597,7 @@ Who uses which credential after R3a (decision 18):
 | `sindri doctor` `review` row | the owner client |
 | `forge:credential` doctor row, the babysitter, the engine | `workflow.forge`, through `IPullRequests` |
 
-`review.credential` takes `env:NAME` or `command:argv`, parsed by `ForgeCredentialSpec` as `workflow.forge.credential` is. Today `PrReviewRules.CredentialVariable` (`Core/Profile/PrReviewRules.cs:65`) reads `env:` only and defaults to `env:AW_REVIEW_GITHUB_TOKEN`. R3a changes the default to the OS keychain: `command:security find-generic-password -s sindri-review -w` on macOS, `command:secret-tool lookup service sindri-review` on Linux (R3a checks the argv form against `ForgeCredentialSpec`). The owner stores the token once with `security add-generic-password -s sindri-review -a "$USER" -w` or `secret-tool store --label=sindri-review service sindri-review`. The docs never say to export the token shell-wide. A serve started from the tray has no shell variables, so an `env:` value fails there; the fix line of an `env:` credential says "then restart serve". A `command:` credential's output is never logged. No credential gives `SND-REVIEW-008` on reads and writes alike.
+`review.credential` takes `env:NAME` or `command:argv`, parsed by `ForgeCredentialSpec` as `workflow.forge.credential` is. Today `PrReviewRules.CredentialVariable` (`Core/Profile/PrReviewRules.cs:65`) reads `env:` only and defaults to `env:AW_REVIEW_GITHUB_TOKEN`. R3a changes the default to the OS keychain: `command:security find-generic-password -s sindri-review -w` on macOS, `command:secret-tool lookup service sindri-review` on Linux (R3a checks the argv form against `ForgeCredentialSpec`). The owner stores the token once with `security add-generic-password -s sindri-review -a "$USER" -w` or `secret-tool store --label=sindri-review service sindri-review`. The docs never say to export the token shell-wide. A serve started from the tray has no shell variables, so an `env:` value fails there; the fix line of an `env:` credential says "then restart serve". A `command:` credential's output is never logged. Save and connect (§5.7) writes the same keychain entry from the app, so the shell command is the fallback. `review.writes` (`on` | `off`, default `on`) turns read-only mode on (§5.7); any other value is `SND-REVIEW-001`. No credential gives `SND-REVIEW-008` on reads and writes alike.
 
 **Setup path.** `sindri setup` gets a `review` step, done when the doctor row is ok. `sindri review connect` (owner-only) reads `GET /user` with the credential, saves the login as `review.login` through the existing login route and prints the scopes GitHub reports; a fine-grained token reports none, so it prints which reads worked. The target is token to first queue in under 10 minutes, and the Set up Reviews doc (§11) is timed against it. The doc names the macOS keychain prompt: the first read from a tray-started serve asks to let `security` open the item, and the owner picks Always Allow. On Linux without a Secret Service, the credential is a `command:` that reads a 0600 file under `$AW_SINDRI_HOME/secrets/`, and the doctor row fails when the mode is looser.
 
@@ -508,6 +615,9 @@ Routes. Each prefix is `/sindri/reviews/{owner}/{repo}/{number}`. "Exists" is ch
 |---|---|---|---|---|
 | `GET /sindri/reviews` | queue; gains `sections[]` and `reason` | n/a | exists; fields new | `review list` |
 | `POST /sindri/reviews/login` | save `review.login` from `GET /user` | repeatable | exists, owner | `review connect` |
+| `POST /sindri/reviews/connect` | `{token}`: store it through `ISecretWriter`, set `review.credential` (and `context.sources.github.token` when unset), then the login read (§5.7) | repeatable | new, owner | none: owner-only; the CLI path is the keychain command, then `review connect` |
+| `PUT /sindri/reviews/repos` | `{repos}`: write `context.sources.github.repos` (§5.7) | repeatable | new, owner | none: owner-only; `sindri profile set` covers it |
+| `POST {prefix}/done`, `/snooze`, `/undo` | Home's Done and Snooze store, keyed by the PR (§5.1); `snooze` takes Home's `{until}` or `{preset}` | repeatable | new, owner | `sindri home done`, `snooze`, `undo` (Home §9) |
 | `GET {prefix}` | page model; gains `order`, `viewed`, `prereview` (`Files`, `Threads`, `Get`) | n/a | exists; fields new | `review show` |
 | `GET /sindri/context/diff-scope` | change order (§7) | n/a | new | `review order` |
 | `POST {prefix}/fix` | fix task (`SubmitReview`, line) | `sindri.fix:<item>` | exists | `review fix` |
@@ -530,6 +640,7 @@ Routes. Each prefix is `/sindri/reviews/{owner}/{repo}/{number}`. "Exists" is ch
 | `PUT {prefix}/labels`, `/assignees`, `/state` | labels, assignees, close and reopen | repeatable | new, owner | `review labels`, `assignees`, `state` |
 | `GET {prefix}/prereview` | latest pre-review for the head | n/a | new | `review findings` |
 | `POST {prefix}/prereview/run` | start the pre-review (`wf run pr-pre-review`) | one run per head | new, owner | `review prereview` |
+| `POST {prefix}/prereview/cancel` | cancel the running pre-review (the workflow run's cancel) | repeatable | new, owner | `review prereview --cancel` |
 | `POST {prefix}/suggestions` | write findings into the pre-review file | finding id | new, **session allowed** | `review suggest` |
 
 **The `suggestions` rule.** The call carries the run id of a `pr-pre-review` launch (the Step's `AW_REVIEW_RUN`). The route accepts it only for that run's PR and head sha, and only from a session whose `X-Sindri-Repo` matches. Anything else is `SND-AUTH-002`. The threat model is an honest mistake, not an agent that forges ids, so this binding is enough and no per-run secret is added. It can add or replace findings. It never touches drafts, the dropped-finding memory or viewed marks. Each `path:line` is checked against the head's diff at write time. A write for a head that has since moved is stored against the old head and shows `prereview-stale`.
@@ -605,6 +716,7 @@ CLI exit is 2 for every refused or invalid code below except `-017`, `-019`, `-0
 | `SND-REVIEW-022` | a queued resolve or viewed sync expired after 10 minutes, or was discarded, and was not sent | 409 | repeat the action |
 | `SND-REVIEW-023` | the CLI could not reach Sindri; nothing was sent | CLI only | `sindri serve`, then repeat |
 | `SND-REVIEW-024` | a `suggestions` write is past a cap (100 findings, 2 KiB a text, 1 MiB a file) | 413 | shorten the text or drop findings |
+| `SND-REVIEW-025` | Save and connect could not store the token (keychain locked, no Secret Service and the secrets folder not writable); nothing was saved | 500 | unlock the keychain, or store it by hand with the §8 command, then `sindri review connect` |
 
 `degraded[]` entries on the page model are data (§7).
 
@@ -612,7 +724,7 @@ CLI exit is 2 for every refused or invalid code below except `-017`, `-019`, `-0
 
 - **Posting is human-only** (D3). Every write route checks the caller class. A session gets `SND-AUTH-002`, except `suggestions`, which is bound to its own run (§8).
 - **The token stays out of sessions.** The default credential is a keychain command, so no variable holds the token. The docs never say to export it shell-wide, and `sindri doctor` warns when `AW_REVIEW_GITHUB_TOKEN` is set in a session's environment. The owner's token variable is emptied in every launched Step (2026-11-04 D7). The pre-review run has no GitHub access of its own. The token's scopes are in §8.
-- **Findings are untrusted.** PR text can steer a model. PR text reaches it through `FencedPrompt` only (§5.5). A finding is plain text, never markup, and it becomes a GitHub comment only by the owner's accept and the owner's click. The submit sheet flags unedited findings, `@mention`s, links and `suggestion` blocks before that click.
+- **Findings are untrusted.** PR text can steer a model. PR text reaches it through `FencedPrompt` only (§5.5). A finding is plain text, never markup, and it becomes a GitHub comment only by the owner's accept and the owner's click. The submit sheet flags each comment that is still a finding's unedited text before that click; text the owner typed is never flagged (§5.4).
 - **The Step sees the checkout and nothing else, and Sindri makes the checkout.** Each run gets a fresh directory holding one ref, the PR head, fetched by Sindri outside the Step (no submodules, no LFS smudge, no filters, no hooks, no owner gitdir). The token reaches that fetch through a one-shot `GIT_ASKPASS` helper or an `http.extraHeader` on the command line. It never enters a remote URL or `.git/config`, and the Step never holds it. Sindri deletes the directory after the run, pass or fail. The Step's file system is that directory: no `$AW_SINDRI_HOME` (drafts, viewed files, agent homes), none of the owner's environment, and a symlink that leaves it is dead. The Step reaches the model's host and Sindri's own loopback port (for `suggestions`), nothing else. No build runs. D13 tries each of these and greps the directory for the token.
 - **The `sindri://review/<owner>/<repo>/<number>` link only navigates.** It opens that PR's page when owner, repo and number pass the `SND-REVIEW-020` check. It never starts a pre-review, posts, merges or syncs, whatever else the URL says (D13).
 - **PR text is rendered safe.** Titles, bodies and comments show as plain text or Markdown with no remote images, links as text, and bidi and control characters stripped. Owner and repo names pass the charset check (`SND-REVIEW-020`).
@@ -632,8 +744,8 @@ Size is a rough guess: S under 1 day, M 1 to 3 days, L over 3, with the PR count
 | R2a | Forge writes B: resolve and unresolve a thread, re-request review, viewed mark, `Commits`, `Compare` | api | R3a-0; merges first of R2a, R1, R2b | `Resolve_thread_marks_it_resolved_on_the_fake_forge`; `Compare_returns_only_the_files_changed_between_two_shas` (§7 range read) | M, 2 | yes |
 | R2b | Forge writes C: labels, assignees, milestone, draft toggle, update branch, close, reopen | api | R3a-0; merges third of R2a, R1, R2b | `Set_labels_replaces_the_label_set` | M, 1 | no |
 | R3a-0 | The empty owner port: `IOwnerReviews`, `ForgeOwnerReviews`, `NoForgeOwnerReviews`, `ConfiguredOwnerReviews`, `FakeOwnerReviews` and their PublicAPI lines; `deps.yaml` checked, not edited | api | none | `Configured_owner_reviews_rebuilds_when_the_credential_changes` | S, 1 | yes |
-| R3a | Drafts file and `draft` routes; the Reviews reads moved onto the owner client per the consumer table (§8), with one shared Host mapper for `Reply`, `RerunChecks`, `Retarget` and `Merge`; `post` and `suggestions` routes; `SND-REVIEW-010` to `-014`, `-020`, `-021`, `-024`; the `review` doctor row; the `review` setup step and `sindri review connect`; the cache cap and pruning | api | R3a-0; question 8 answered yes (day 0) for the `post` route; line comments only until R1 | `Post_writes_exactly_one_review_after_a_full_draft` (D2, D6) | L, 2 | yes |
-| R3b | Routes for threads (resolve, unresolve), comments, reactions, viewed, re-request, ready, labels, update-branch, merge, rerun; the outbox service and its ledger events; `-018`, `-019`, `-022`; the ops adapters Home's `act` calls | api | viewed, resolve, re-request: R2a; merge, rerun, reactions: R3a-0; edit, delete: R1; labels, ready, update-branch, state: R2b; serialize with R3a on `EndpointTable.cs` | `Session_caller_gets_auth_refused_on_every_owner_route` (D3) | L, 2 | yes |
+| R3a | Drafts file and `draft` routes; the Reviews reads moved onto the owner client per the consumer table (§8), with one shared Host mapper for `Reply`, `RerunChecks`, `Retarget` and `Merge`; `post` and `suggestions` routes; `SND-REVIEW-010` to `-014`, `-020`, `-021`, `-024`; the `review` doctor row; the `review` setup step and `sindri review connect`; the `connect` and `repos` routes behind Save and connect (§5.7), `review.writes` and `-025`; the cache cap and pruning | api | R3a-0; question 8 answered yes (day 0) for the `post` route; line comments only until R1 | `Post_writes_exactly_one_review_after_a_full_draft` (D2, D6) | L, 2 | yes |
+| R3b | Routes for threads (resolve, unresolve), comments, reactions, viewed, re-request, ready, labels, update-branch, merge, rerun; the outbox service and its ledger events; `-018`, `-019`, `-022`; the ops adapters Home's `act` calls; the `done`, `snooze`, `undo` routes on Home's store and `prereview/cancel` | api | viewed, resolve, re-request: R2a; merge, rerun, reactions: R3a-0; edit, delete: R1; labels, ready, update-branch, state: R2b; serialize with R3a on `EndpointTable.cs` | `Session_caller_gets_auth_refused_on_every_owner_route` (D3) | L, 2 | yes |
 | R3c | The `sindri review` verbs and the MCP tools `review_list`, `review_show`, `review_suggest` (#3165); `-023` | api | R3a, R3b | `Every_route_has_a_verb_or_an_owner_only_row` (D12) | M, 1 | no |
 | R4 | `diff-scope` route and MCP tool on main's index; callers with the three marks and `partial (from main)`; 10 merged-PR fixtures; p95 under 2 s for 50 files; the Order-vs-answer-key comparison (§1) | context | #2974, #2983 (fixtures now) | `Order_is_identical_across_20_runs_of_one_head` (D4, D5); `Callers_of_a_changed_file_read_partial_from_main` | L, 3 | no |
 | R5 | Range diff route; since-last-review grouped like R4; per-thread "addressed?" proposal; outdated threads follow their line | api | R2a, R4 | `Thread_follows_its_line_to_the_new_head` | M, 2 | no |
@@ -641,7 +753,7 @@ Size is a rough guess: S under 1 day, M 1 to 3 days, L over 3, with the PR count
 | R6b | `pr-pre-review` template; the `pending_review` block writing to `suggestions`; the daily cap; the Step's file-system and network limits (§10); `pr-babysitter` start from a row | engine, api | R6a, R3a, #2985, #2988 | `Injected_diff_text_stays_inside_the_fence` (D10 data half); `Step_cannot_read_the_drafts_directory` (D13) | L, 2 | no |
 | R7 | Queue sections, reason strings, the four new fields (R7 adds `ReviewDecision` to `ReviewRow`), team reviews, the 60 s re-read, rank from the #2978 ranking route | api | ranking route (reasons now) | `Reviews_golden_has_sections_with_reasons`; `Queue_shows_a_changed_pr_within_60s` (D14) | M, 1 | yes |
 | R8 | Frames (list below) | design | Home's tokens | the numbers in §5 | M, 1 | yes |
-| R9 | Queue on `RowList`, `Row` and `PeekPane`; sections; reasons; text filter; `.` menu; header time and Refresh; the `sindri://review/<owner>/<repo>/<number>` deep link if question 9 says yes. It does not wait on the open bugs | ui | design P0 controls (#2978); starts on the stub `RowList` | `Queue_paints_200_rows_from_the_store_in_100ms` (D8) | M, 2 | yes |
+| R9 | Queue on `RowList`, `Row` and `PeekPane`; sections; reasons; text filter; `.` menu; `e` Done and `h` snooze with Undo; the cursor on row 1; the first-run, repos and Start Sindri cards (§5.7); header time and Refresh; the `sindri://review/<owner>/<repo>/<number>` deep link if question 9 says yes. It does not wait on the open bugs | ui | design P0 controls (#2978); starts on the stub `RowList` | `Queue_paints_200_rows_from_the_store_in_100ms` (D8) | M, 2 | yes |
 | R10a1 | Review surface in Layout A, Files mode: folder-grouped file list, unified diff, line cursor, keys, the panel column | ui | R8; R3a and R3b fake routes | `Tree_lists_files_in_folder_order_with_viewed_marks` | M, 2 | yes |
 | R10a2 | Order mode, split layout, whitespace toggle, word-level highlight, fold rows, search, palette | ui | R10a1; R4 for Order | `Tree_orders_files_by_band_then_distance` | M, 2 | no |
 | R10b | Threads, composer, replies as draft comments, single-line suggestions, resolve and unresolve, re-request (the `a` picker) | ui | R10a1, R3b | `Composer_writes_the_draft_as_the_owner_types` | M, 2 | yes |
@@ -664,7 +776,7 @@ Size is a rough guess: S under 1 day, M 1 to 3 days, L over 3, with the PR count
 
 Serialize R2a, R1 and R2b on `IForge` (that merge order), and R3a and R3b on `EndpointTable.cs`. Early dogfood: once R9 and R10a1 merge, the owner reads real PRs read-only and files each gap as an issue, before R14. Nothing waits on a source that does not exist: Order shows "unavailable" until R4, findings show "No pre-review" until R6b, and the submit sheet's verdict buttons stay disabled until R3a.
 
-**R8 frames.** Queue with peek (running, failed, absent, stale pre-review); queue partial, serve-down with and without a cache, filtered to nothing, and the no-credential first run; Layout A at 1,440 and 1,200 px, and the proposed three-pane surface at 1,440, 1,200 and 1,000 px plus its 1,100 to 1,439 px inline threads; a dark frame of the queue and of the surface; the focus ring on a row, a file and a diff line; the split diff; the merge picker with Merging, Merged and conflict; the Ctrl+K palette; the Posted toast; reduced motion; Overview; Since your review with its header; tree with a failing file and "showing 50 of 300"; threads (empty, error, `SND-REVIEW-019` inline); findings (stale, partial, "2 new" chip); composer; submit sheet (normal, empty, offline, flagged comments with Keep, Edit and Remove, Discard draft with its Undo toast, HeadMoved inline); the reviewer picker and palette states; focus order of the merge and reviewer pickers; head-moved banner; the ready line on row, peek and header. Motion: 120 ms for toasts, folds and sheets, none under reduced motion; every control has hover and pressed states.
+**R8 frames.** Queue with peek (running, failed, absent, stale pre-review); queue partial, serve-down with and without a cache, filtered to nothing, and the no-credential first run; Layout A at 1,440 and 1,200 px, and the proposed three-pane surface at 1,440, 1,200 and 1,000 px plus its 1,100 to 1,439 px inline threads; a dark frame of the queue and of the surface; the focus ring on a row, a file and a diff line; the split diff; the merge picker with Merging, Merged and conflict; the Ctrl+K palette; the Posted toast; reduced motion; Overview; Since your review with its header; tree with a failing file and "showing 50 of 300"; threads (empty, error, `SND-REVIEW-019` inline); findings (stale, partial, "2 new" chip); composer; submit sheet (normal, empty, offline, flagged comments with Keep, Edit and Remove, Discard draft with its Undo toast, HeadMoved inline); the reviewer picker and palette states; focus order of the merge and reviewer pickers; head-moved banner; the ready line on row, peek and header; every row of §5.7's table, the first-run card, "Watch these repos", Start Sindri, and read-only mode. Every frame uses the §5.0 numbers. Motion: 120 ms for toasts, folds and sheets, none under reduced motion; every control has hover and pressed states.
 
 **Gates per phase.** Every phase: the `-warnaserror` build, the touched projects' lanes and scoped format. R1, R2a, R2b: `Aw.Forge.Tests` contract lanes and `Aw.Forge.Testing.Tests`. R3a-0 to R3c: the ApiGoldens classes, `EndpointCqrsTests`, `check-env-example.sh`, `Aw.Architecture.Tests`, `node scripts/check-deps.mjs`, the D13 tests, and aot-smoke for the doctor row. R3b also runs `EventCatalogTests` for the `review.*` events. R4: the fixture timings. R6a, R6b: the engine unit and integration lanes. R9 to R12: `Aw.Sindri.Ui.Tests`, `Aw.Sindri.Ui.Frames.Tests` integration, `Aw.Sindri.Ui.Rendering.Tests`. Each UI PR has aw-ui-driver before and after shots and an adversarial design review before OK (owner rule, 2026-11-10).
 
@@ -721,3 +833,5 @@ Resolved in writing, not folded:
 - Doctor write-scope blind spot before the first post: accepted; the row is info-level.
 - Design MUSTs were written for the three-pane frames: they hold for both layouts.
 - Motion durations in the R8 brief are a start (120 ms); ui tunes them.
+
+**Meta UX pass (2026-11-12), on the R8 frames at `b62867d9b6`: 8 MUSTs, all folded (decision 20).** §5.0 holds the one fixture set. §5.1 gained the sections home for a reviewed PR, one count, `e` and `h`, the cursor start, the one primary rule, the `.` and `Ctrl+Enter` menu contents and Cancel run. §5.2 gained the line cursor start, the 8-row file list cap and the thread footer. §5.4 flags only unedited finding text, with Keep all. §5.7 holds first run, Start Sindri, read-only mode and 29 added states. §8 and §9 gained the `connect`, `repos`, `done`/`snooze`/`undo` and `prereview/cancel` routes and `-025`. Nits 1, 2, 3, 6 and 8 are folded; nits 4, 5 and 7 are frame fixes in design's ask. Design's frame ask lists the new and fixed frames per MUST.
