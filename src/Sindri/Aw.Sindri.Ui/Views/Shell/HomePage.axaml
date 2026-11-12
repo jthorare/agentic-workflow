@@ -127,6 +127,13 @@
               <Grid Classes="skrow" ColumnDefinitions="70,*,40"><Border Classes="skeleton" Width="60" /><Border Grid.Column="1" Classes="skeleton" Width="220" /><Border Grid.Column="2" Classes="skeleton" Width="32" /></Grid>
               <Grid Classes="skrow" ColumnDefinitions="70,*,40"><Border Classes="skeleton" Width="60" /><Border Grid.Column="1" Classes="skeleton" Width="260" /><Border Grid.Column="2" Classes="skeleton" Width="32" /></Grid>
             </StackPanel>
+            <!-- The stack sits at 16 so Retry's text, inside its padding, lines up at 24; the caption takes 8 more to reach the card's text column (24). -->
+            <StackPanel x:Name="NeedsYouFailed" Margin="16,8" Spacing="8" IsVisible="{Binding NeedsYou.HasReadError}">
+              <Border x:Name="NeedsYouFailedName" Margin="8,0,0,0" AutomationProperties.Name="{Binding NeedsYou.ReadError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                <TextBlock Classes="caption subtle" Text="{Binding NeedsYou.ReadError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+              </Border>
+              <Button x:Name="NeedsYouRetry" Content="{Binding Text.NeedsYouRetry}" Click="OnRetryNeedsYou" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text.NeedsYouRetry}" />
+            </StackPanel>
             <TextBlock x:Name="NeedsYouEmpty" Classes="caption quiet" Text="{Binding NeedsYou.EmptyLine}" Margin="24,8"
                        IsVisible="{Binding NeedsYou.EmptyLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding NeedsYou.EmptyLine}" />
             <Button x:Name="NeedsYouShowAll" HorizontalAlignment="Left" Classes="copy" Click="OnShowAllNeedsYou" IsVisible="{Binding NeedsYou.HasOverflow}"

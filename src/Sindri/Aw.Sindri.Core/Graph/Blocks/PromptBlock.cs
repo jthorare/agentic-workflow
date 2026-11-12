@@ -1,14 +1,17 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using Aw.Kernel;
 
 namespace Aw.Sindri.Core.Graph.Blocks;
 
 /// <summary>The 'prompt' block: asks the model, with every trigger and node-output reference fenced as untrusted, and checks the answer against the 'output' JSON schema; a bad answer fails the node with the reason.</summary>
-public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
+public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
 {
     // why: the schema was only used to check the answer, so the model never knew it should answer in JSON and replied in prose (#3079)
     private const string JsonInstruction = "Answer with only one JSON object that matches this schema, and no other text:";
+
+    private const int ShownLength = 200;
 
     private const string RepairLine = "\n\nYour answer was not a JSON object. Answer again with only the JSON object.";
 
@@ -80,7 +83,7 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
             return plain.IsError ? plain.Error : new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal));
         }
 
-        var read = await AskForObject(prompt, schema, cancellationToken).ConfigureAwait(false);
+        var read = await AskForObject(context, prompt, schema, cancellationToken).ConfigureAwait(false);
         if (read.IsError)
         {
             return read.Error;
@@ -95,7 +98,7 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
         return new BlockResult(Outputs(schema, fields));
     }
 
-    private async ValueTask<Result<JsonObject>> AskForObject(string prompt, JsonObject schema, CancellationToken cancellationToken)
+    private async ValueTask<Result<JsonObject>> AskForObject(BlockContext context, string prompt, JsonObject schema, CancellationToken cancellationToken)
     {
         var instructed = WithInstruction(prompt, schema);
         var asked = await model.Ask(instructed, cancellationToken).ConfigureAwait(false);
@@ -104,6 +107,8 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
             return asked.Error;
         }
 
+        // why: set before the parse, so a JSON answer the schema check then refuses also shows on the failed step; the engine reads it only when the block returns an error
+        context.LeaveFailureOutput(new JsonObject { ["answer"] = asked.Value });
         var read = Parse(asked.Value);
         if (read.IsSuccess)
         {
@@ -117,15 +122,32 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
             return again.Error;
         }
 
+        // why: the run page shows the failed step's output, so the raw answer stays there for the owner to read; the engine cuts it to the stored-output cap
+        context.LeaveFailureOutput(new JsonObject { ["answer"] = again.Value });
         read = Parse(again.Value);
         if (read.IsSuccess)
         {
             return read;
         }
 
-        var shown = again.Value.Trim();
-        return SindriErrors.GraphPromptAnswer.With($"The model answered with text, not the JSON this step asks for: \"{(shown.Length > 200 ? shown[..200] : shown)}\"");
+        return SindriErrors.GraphPromptAnswer.With($"The model answered with text, not the JSON this step asks for: \"{Shown(again.Value)}\"");
     }
+
+    // why: the message lands in the one-line runs-list row, so line breaks go and a long answer shows its first 200 characters with "…"
+    private static string Shown(string answer)
+    {
+        var flat = WhitespaceRun.Replace(answer, " ").Trim();
+        if (flat.Length <= ShownLength)
+        {
+            return flat;
+        }
+
+        var cut = char.IsHighSurrogate(flat[ShownLength - 1]) ? ShownLength - 1 : ShownLength;
+        return string.Concat(flat.AsSpan(0, cut), "…");
+    }
+
+    [GeneratedRegex(@"\s+", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex WhitespaceRun { get; }
 
     private static string WithInstruction(string prompt, JsonObject schema) => $"{prompt}\n\n{JsonInstruction}\n{schema.ToJsonString()}";
 
