@@ -42,6 +42,9 @@ internal sealed class ToggleChip : ToggleButton
         Apply();
     }
 
+    /// <summary>Gets the style key: a ToggleChip takes the ToggleButton theme and its styles (Avalonia matches a type selector on the style key, not on inheritance).</summary>
+    protected override Type StyleKeyOverride => typeof(ToggleButton);
+
     /// <summary>Gets or sets the word the chip shows and the screen reader reads.</summary>
     public string? Word
     {
