@@ -56,8 +56,12 @@ internal static partial class RowKeys
     /// <summary>The clock that tells a Space tap (key up under 250 ms) from a hold. Tests set a fake one.</summary>
     internal static TimeProvider Clock { get; set; } = TimeProvider.System;
 
-    /// <summary>True while a sheet is open: Esc then belongs to the sheet and the list does not raise <see cref="BackRequestedEvent"/>. The shell sets it; tests set it directly.</summary>
-    internal static Func<bool> IsSheetOpen { get; set; } = static () => false;
+    /// <summary>Test seam: when set, answers "is a sheet open" in place of the list's window. Tests set it and reset it to null.</summary>
+    internal static Func<bool>? IsSheetOpen { get; set; }
+
+    // True while a sheet is open: Esc then belongs to the sheet and the list does not raise BackRequestedEvent. Read from the shell of the list's own window, so no window state outlives it.
+    private static bool SheetOpen(ItemsControl list) =>
+        IsSheetOpen?.Invoke() ?? TopLevel.GetTopLevel(list)?.DataContext is ViewModels.Shell.ShellViewModel { IsSheetOpen: true };
 
     /// <summary>Reads <see cref="EnabledProperty"/>.</summary>
     /// <param name="element">The items control.</param>
@@ -186,7 +190,7 @@ internal static partial class RowKeys
         {
             Raise(list, OpenRequestedEvent, current);
         }
-        else if (IsSheetOpen())
+        else if (SheetOpen(list))
         {
             return;   // Esc belongs to the sheet
         }

@@ -33,7 +33,7 @@ public sealed class RowKeysPeekTests
         public void Dispose()
         {
             RowKeys.Clock = TimeProvider.System;
-            RowKeys.IsSheetOpen = static () => false;
+            RowKeys.IsSheetOpen = null;
             Window.Close();
         }
     }
@@ -167,7 +167,7 @@ public sealed class RowKeysPeekTests
         Tap(host.Window, PhysicalKey.Escape);
         Assert.Empty(host.Seen);
 
-        RowKeys.IsSheetOpen = static () => false;
+        RowKeys.IsSheetOpen = null;
         Tap(host.Window, PhysicalKey.Escape);
         Assert.Equal(["back"], host.Seen.Select(s => s.Name).ToList());
         return true;

@@ -42,7 +42,7 @@ internal static partial class RowKeys
 
         if (e.Key is Key.Escape or Key.Space)
         {
-            e.Handled = e.Key == Key.Space || !IsSheetOpen();
+            e.Handled = e.Key == Key.Space || !SheetOpen(list);
             if (e.Key == Key.Space)
             {
                 SpaceDown(list, -1);
