@@ -486,7 +486,7 @@ Every surface also shows the one status line of §5.3. Banners name the cause an
 - A 5 s toast or confirmation line pauses while hovered or focused, its text is focusable, and Done and Undo announce in the polite region ("Done. Undo with Ctrl+Z, 5 seconds"). The post-send follow-up is also in the `.` panel, so a screen-reader or switch user can reach it.
 - Offline, the composer announces "Offline: your text is kept as a draft" and keeps focus. The Pin and Del sheets have screen-reader names ("Pin to #harbor, dialog", "Delete message, dialog").
 - The focus ring is 3:1 against its background, as chips and glyphs are.
-- The screen-reader name of a Needs reply row: "Direct question from Sam in a direct message, 8 minutes ago: can you ship the fare table today".
+- The screen-reader name of a Needs reply row: "Direct question from Sam in a direct message, 8 minutes ago: can you ship the fare table today". A row reads its text because the row shows it on screen. Sender and place only is the toast's rule (§9.9), since a toast shows over other apps.
 
 ### 6.8 First run
 
