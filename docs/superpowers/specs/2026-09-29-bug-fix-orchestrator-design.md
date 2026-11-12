@@ -214,7 +214,7 @@ Exit codes: `0` allowed, `3` refused (reason on stderr), `1` bad usage or invali
 | `start-attempt --mode <A\|B\|C>` | Phase `reproduce` or `evaluate`; no eligible candidate; every candidate of the current attempt evaluated; `attempt` < 3; B only after a failed attempt and with ≥ 2 hypotheses not ruled out. Increments `attempt`, clears `needs-human` |
 | `record-candidate --branch <b> [--cwd <dir>]` | Phase `fix` or `evaluate` (mode B may evaluate one candidate before recording the second); one candidate per A/C attempt, two per B attempt; `--cwd` is on `<b>`, has no uncommitted or untracked changes, `HEAD` builds on the baseline, changes its tree, and differs from every other candidate; the diff (`git diff --no-renames -z`, so renames show both paths) doesn't touch the check, test/fixture/mock/e2e directories, test-named files, snapshots, runner config or setup files, `package.json`, or the check's directory (case-insensitive) unless `--allow-test-changes` (only after the user approves); mode B candidates name a distinct, not-ruled-out `--hypothesis`. The commit and changed files are read from `--cwd` |
 | `record-run <candidate> --evidence <run>` | Phase `fix` or `evaluate`; no run recorded yet; evidence registered; same check kind; not broken; same test argv as the baseline; run commit equals the candidate's commit, which is still its `HEAD`; candidate tree clean; check file and executed check hash unchanged |
-| `judge <candidate>` | Phase `evaluate`; the candidate has a passing run and has not been judged. Builds `judge-<candidate>.json` from state (ticket text verbatim, the snapshotted root cause, a description of the frozen check, diff stat) in `ResolutionCheckInputSchema` key order, runs `judge resolution-check` itself, and records that decision after checking it via `judge why` (question and `input_digest`). Exit 2 records an escalation and sets `status: needs-human`; a judge failure records nothing. The agent never handles decision ids, so a verdict can't be re-rolled |
+| `judge <candidate>` | Phase `evaluate`; the candidate has a passing run and has not been judged. Builds `judge-<candidate>.json` from state (ticket text verbatim, the snapshotted root cause, a description of the frozen check, diff stat) in `ResolutionCheckInputSchema` key order, runs `judge resolution-check` itself, and records that decision after checking it via `judge why` (question and `input_digest`). Exit 2 records an escalation and sets `status: needs-human`; a judge failure records nothing. The agent never touches decision ids, so a verdict can't be re-rolled |
 | `advance report (--candidate <id> \| --unresolved)` | Not already reported; `--candidate` needs a passing run and a `resolved` judge decision |
 | `status` / `resume` | — (print the state / the current phase and the next action) |
 
@@ -246,7 +246,7 @@ evaluation; `resume`'s next action names the exact commit to detach at.
   or if the diff hides the symptom without addressing the root cause.
 - It never defaults to `resolved`. A timeout or low confidence escalates.
 
-## Error handling
+## Errors
 
 | Situation | Behaviour |
 |-----------|-----------|
@@ -284,7 +284,7 @@ for the verdict-cache key and is not written out, so a run cannot be tied to a c
 requires `appBuild` to equal the candidate's head commit (or the baseline commit for REPRODUCE).
 It also gains `scriptSha256` (hash of the script file the run executed), so the helper can prove the
 run executed the frozen check. Both are recorded by the ui-evidence CLI; that the served app was
-actually built from `appBuild` is the orchestrator's responsibility (it restarts the app from the
+built from `appBuild` is the orchestrator's responsibility (it restarts the app from the
 detached candidate checkout).
 
 ## Install, merge gate, docs

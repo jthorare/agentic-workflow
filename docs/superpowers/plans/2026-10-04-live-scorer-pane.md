@@ -30,7 +30,7 @@
 
 **Hook latency.** Probed on 2.1.289: a mod's `classic.SessionStart`, `classic.PreToolUse`, `classic.PostToolUse`, `classic.UserPromptSubmit` and `classic.Stop` hooks did not fire under `claude -p --plugin-dir` (the mod's `session.start`, `command.run` and `tool.call` hooks did), and a mod's `tool.call` hook times the tool and the settings hooks together (1.8 to 2.3 s with one 400 ms hook configured). So all-hook latency is **not observable from a mod** in this build, and the pane does not claim it. What it shows is the latency of the judge-backed gates (p50 per gate, from `decisions.latency_ms`, which is the slow part of those hooks). No timing record is added to the bash hooks: macOS bash 3.2 has no millisecond clock without forking `perl` (about 6 ms on `context-guard`, whose hot path is already about 68 ms), and gate latency already lives in `decisions`.
 
-**Zero-cost proof path.** A mod's slash command runs under `claude -p` without a model call, and `--resume <session id>` hands the command the real session. So `claude -p "/live status" --resume <id> --plugin-dir mods/aw-live` exercises the whole chain (mod, `$.session`, `scorer live`, formatting) for free. Task 9 uses it, plus one pseudo-terminal run that really draws the pane.
+**Zero-cost proof path.** A mod's slash command runs under `claude -p` without a model call, and `--resume <session id>` hands the command the real session. So `claude -p "/live status" --resume <id> --plugin-dir mods/aw-live` exercises the whole chain (mod, `$.session`, `scorer live`, formatting) for free. Task 9 uses it, plus one pseudo-terminal run that draws the pane.
 
 **Optional labels.** Nothing in this plan needs a label. If `decision_details` and `eval_items` exist and the latest decision is labelable, the pane offers `y` ("this was right") and, for the two-answer question `ask-check` only, `x` ("wrong"). Each writes `judge label set <itemId> <label>` (an `override` label, Plan A). Joi does not have to press them, and no metric reads them.
 
@@ -3156,7 +3156,7 @@ export CLAUDE_CODE_FORCE_SESSION_PERSISTENCE=1
 ```
 Expected: the `judge` card has a `calls` row reading `3 · jev 67% · rules 33%` and a `vs rules` row reading `agreed 1 · overrode 1 · unsure 1`; the `gates` card shows `scope-gate`, `done-gate` and `send-gate` rows reading `1 · ready 1 · p50 400 ms`, `1 · continue 1 · p50 350 ms` and `1 · send 1 · p50 0 ms`. Rows that the hooks of Step 4's `claude` runs wrote with another or no session id must not appear in these counts (that is the scoping working). Record the text.
 
-- [ ] **Step 6: Proof E: the pane really draws** (a pseudo-terminal, one haiku turn, about $0.05)
+- [ ] **Step 6: Proof E: the pane draws** (a pseudo-terminal, one haiku turn, about $0.05)
 
 Run with `cwd` the **main checkout**: Claude Code already trusts it, and an untrusted directory shows a folder-trust dialog that swallows the keystrokes. This starts a real new interactive session there; nothing is edited. `W`, `REPO`, `TMP` come from Steps 3 and 4.
 

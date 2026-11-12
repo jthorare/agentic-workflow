@@ -23,7 +23,7 @@ repo and proposes the next fix.
 Sources: [Factory agent readiness](https://factory.com/product/agent-readiness), [docs overview](https://docs.factory.com/agent-readiness/overview).
 
 - **Levels:** 1 Functional · 2 Documented · 3 Standardized · 4 Optimized · 5 Autonomous. Passing **80% of a
-  level's criteria** unlocks the next level.
+  level's criteria** unlocks the next readiness level.
 - **Nine pillars:** Style & Validation · Build System · Testing · Documentation · Development Environment ·
   Debugging & Observability · Security · Task Discovery · Product & Experimentation.
 - **Scope:** some criteria are evaluated once per repo (for example CODEOWNERS and branch protection). Others are
@@ -138,8 +138,8 @@ and ports to native apps without a rewrite:
      because TS had them, no TS structure mirrored file by file;
    - tests compare C# behavior with the C# contract, never with TS output.
    The tier-2 callers of a package's CLI (ui-evidence, bugfix) are ported too, so they follow the C# contract. The
-   one compatibility target is the **hook contract** (§4c): what the bash hooks and the statusline that keep running
-   actually read, and nothing more. `.agents/rules/csharp.md` "Porting a TS package" is the working checklist.
+   one compatibility target is the **hook contract** (§4c): what the bash hooks and the statusline that keep running,
+   read, and nothing more. `.agents/rules/csharp.md` "Porting a TS package" is the working checklist.
 2. **One package at a time,** lowest tier first, in the §10 R2 order: `Redaction` (ported in R1b, #130) → `judge`
    (the MCP bridge was retired on 2026-10-10 instead of ported: it was never used) → `skills/ui-evidence` and the
    `skills/bugFixOrchestrator` state CLI. **Re-planned by the owner on 2026-10-11 (factory addendum §17.29, decision
@@ -191,7 +191,7 @@ The records live one per file in `rules/engineering/csharp/<slug>.yaml`, listed 
 ### 4b.1 Architectural shape: feature slices on a clean dependency direction
 
 Two common .NET shapes trade off differently. Clean Architecture controls complexity with layers, and fits
-features that share a rich domain. Vertical slices control it by isolating features, and fit features of very
+features that share a rich domain. Vertical slices control it by isolating features, and fit features of widely
 different complexity. The usual middle ground, used here: **organize by feature, and keep the clean dependency
 direction.**
 
