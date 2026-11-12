@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
+using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 
 namespace Aw.Sindri.Ui.Views.Controls;
@@ -26,6 +27,9 @@ internal sealed class SelectableTile : Button
     {
         _ = IsSelectedProperty.Changed.AddClassHandler<SelectableTile>((tile, e) => tile.PseudoClasses.Set(":selected", e.NewValue is true));
     }
+
+    /// <inheritdoc />
+    protected override AutomationPeer OnCreateAutomationPeer() => new SelectableTileAutomationPeer(this);
 
     /// <inheritdoc />
     protected override Type StyleKeyOverride => typeof(SelectableTile);

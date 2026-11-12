@@ -1,5 +1,7 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Automation.Peers;
+using Avalonia.Automation.Provider;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
@@ -156,6 +158,29 @@ public sealed class SelectableTileTests
         Assert.Equal(Avalonia.Layout.HorizontalAlignment.Left, row.HorizontalContentAlignment);
         window.Close();
         rowWindow.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task A_screen_reader_hears_selected_and_a_row_is_a_list_item() => await OnUi(() =>
+    {
+        var (window, tile, _) = Show(row: true);
+        var (plainWindow, plain, _) = Show();
+        var peer = ControlAutomationPeer.CreatePeerForElement(tile);
+        var item = Assert.IsAssignableFrom<ISelectionItemProvider>(peer);
+
+        Assert.False(item.IsSelected);
+        tile.IsSelected = true;
+        Assert.True(item.IsSelected);
+        Assert.Equal(AutomationControlType.ListItem, peer.GetAutomationControlType());
+        Assert.Equal(AutomationControlType.Button, ControlAutomationPeer.CreatePeerForElement(plain).GetAutomationControlType());
+
+        var clicks = 0;
+        tile.Click += (_, _) => clicks++;
+        item.Select();
+        Assert.Equal(1, clicks);
+        window.Close();
+        plainWindow.Close();
         return true;
     });
 }
