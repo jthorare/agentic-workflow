@@ -23,6 +23,10 @@ internal sealed partial class ShellViewModel
     /// <summary>True when the sheet's title is a name, not an id (a project's, or "Add project"): it is not set in mono.</summary>
     public bool SheetTitleIsMono => !IsProjectSheet && !IsProjectAddSheet && !IsPinSheet && !IsLibrarySheet && !IsFixTaskSheet;
 
+    /// <summary>True when a sheet of this kind has an id for its title (Item, Decision, Job, Node, Review): only those are set in mono.</summary>
+    /// <param name="kind">The sheet's kind.</param>
+    internal static bool TitleIsMonoFor(DeepLinkKind kind) => throw new NotSupportedException();
+
     /// <summary>True when the sheet's subject is a project.</summary>
     public bool IsProjectSheet => SheetLink?.Kind == DeepLinkKind.Project;
 

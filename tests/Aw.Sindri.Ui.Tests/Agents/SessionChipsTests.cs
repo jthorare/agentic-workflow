@@ -27,4 +27,15 @@ public sealed class SessionChipsTests
         Assert.Equal(("●", "dozing"), (chip.Glyph, chip.Word));
         Assert.Equal("dozing", SessionChips.Word("dozing"));
     }
+
+    [Fact]
+    public void Unknown_is_a_muted_dash_with_a_tip()
+    {
+        var chip = SessionChips.For("unknown");
+
+        Assert.True(chip.IsMuted);
+        Assert.Equal("–", chip.Word);
+        Assert.Contains("No recent activity", chip.Tip, StringComparison.Ordinal);
+        Assert.All(new[] { "running", "asking", "idle" }, state => Assert.False(SessionChips.For(state).IsMuted));
+    }
 }

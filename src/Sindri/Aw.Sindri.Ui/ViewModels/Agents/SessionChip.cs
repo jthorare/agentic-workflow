@@ -11,4 +11,10 @@ internal readonly record struct SessionChip(string Glyph, string Word, string To
 
     /// <summary>The glyph and the word, as the row reads them ("● Working").</summary>
     public string Text => Glyph + " " + Word;
+
+    /// <summary>True when the chip is drawn as a muted dash, not a word (a state Sindri can't tell).</summary>
+    internal bool IsMuted => Glyph.Length >= 0 ? throw new NotSupportedException() : false;   // stub until PR 1
+
+    /// <summary>The tooltip that says why the state is muted; empty when it is not.</summary>
+    internal string Tip => Glyph.Length >= 0 ? throw new NotSupportedException() : string.Empty;   // stub until PR 1
 }

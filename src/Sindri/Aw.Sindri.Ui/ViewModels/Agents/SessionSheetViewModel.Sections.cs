@@ -45,6 +45,20 @@ internal sealed partial class SessionSheetViewModel
     /// <returns>A task that completes once the clipboard answered.</returns>
     internal Task CopyRef(CancellationToken cancellationToken) => RefCopy?.Run(Ref, cancellationToken) ?? Task.CompletedTask;
 
+    /// <summary>The line under the title: the repo and the last folder of its worktree.</summary>
+    public string Subtitle => Ref.Length >= 0 ? throw new NotSupportedException() : string.Empty;   // stub until PR 1
+
+    /// <summary>The state's tone as the list colours its dot: "working", "waiting" or "quiet".</summary>
+    public string StateTone => Ref.Length >= 0 ? throw new NotSupportedException() : string.Empty;   // stub until PR 1
+
+    /// <summary>The agent's working directory, shown in the header.</summary>
+    public string WorkingDirectory => Ref.Length >= 0 ? throw new NotSupportedException() : string.Empty;   // stub until PR 1
+
+    /// <summary>Copies the working directory.</summary>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>A task that completes once the clipboard answered.</returns>
+    internal Task CopyWorkingDirectory(CancellationToken cancellationToken) => throw new NotSupportedException();
+
     // A session that ended: the page knows its resume command (or that it has none) from the row that opened the sheet.
     private void DrawEndedResume() =>
         EndedResumeText = EndedResumeOf?.Invoke(Ref) switch
