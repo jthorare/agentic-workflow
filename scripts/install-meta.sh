@@ -12,6 +12,7 @@
 #   AW_DRY_RUN=1     print what would happen, write nothing
 #   AW_SKIP_BUILD=1  don't publish; install the binary already in $AW_STATE_DIR/bin (tests)
 #   CLAUDE_LOCAL_BIN where the aw-meta and aw-meta-launch links go (default ~/.local/bin)
+#   AW_META_NO_OOM_CHECK=1  skip step 4 (the systemd DefaultOOMPolicy drop-in)
 #
 # Supported OSes: Linux (x64, arm64) and macOS (arm64, x64: the host RID is whatever `dotnet --info` reports, osx-arm64 or osx-x64). Any
 # other OS fails at once with exit 1 and says why; this script never skips quietly. On macOS aw-meta reads memory, swap and the process
@@ -41,6 +42,11 @@
 #    aw-meta-launch is linked to a copy of the launcher set (META_LAUNCH_SET below) in $AW_STATE_DIR/bin/meta-launch/<commit>/,
 #    never into this tree: a throwaway worktree is removed by the sweep later, and a link into it would dangle (#2640). The copy is
 #    frozen at the installed commit, like the binary; a tree with changes in the set gets <commit>-dirty, copied fresh each time.
+# 4. Linux with systemctl, only when the user manager's DefaultOOMPolicy is `stop` (#2931): writes
+#    ${XDG_CONFIG_HOME:-~/.config}/systemd/user.conf.d/10-oom-continue.conf ([Manager] DefaultOOMPolicy=continue), so one OOM kill in a
+#    lane's pane ends that process, not the whole pane. An existing identical file is left alone; no other file there is touched; a
+#    write failure warns and does not fail the install. It never runs `systemctl --user daemon-reload` (that blocks systemctl --user
+#    for a minute or two): the install prints the step.
 # The /meta skill itself is linked by setup.sh with the other skills.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -67,6 +73,8 @@ case "$(uname)" in
 esac
 # shellcheck source=meta-version-lib.sh
 . "$SCRIPT_DIR/scripts/meta-version-lib.sh"
+# shellcheck source=meta-oom-lib.sh
+. "$SCRIPT_DIR/scripts/meta-oom-lib.sh"
 
 # Never silently install an unmerged build. The team config's repo (when it has the launcher) is the canonical checkout: this
 # script must run from it; from any other tree (a worktree, a second clone) it refuses. With no team repo, a linked git worktree
@@ -76,7 +84,7 @@ LAUNCH_DIR="$SCRIPT_DIR"
 # build-path list meta-version-lib.sh reads, and the launcher schema and data launcher-lib.sh reads from its parent directory.
 # scripts/tests/install-meta-launch-snapshot.test.sh runs the copy with the tree removed, so a file missing here fails there.
 META_LAUNCH_SET=(scripts/meta-launch.sh scripts/meta-lane.sh scripts/launcher-lib.sh scripts/meta-team-lib.sh scripts/meta-version-lib.sh
-  scripts/meta-start-lock.sh scripts/meta-build-paths.txt schemas/launcher.schema.json config/launcher/builtins.json config/launcher/terminals.json)
+  scripts/meta-oom-lib.sh scripts/meta-start-lock.sh scripts/meta-build-paths.txt schemas/launcher.schema.json config/launcher/builtins.json config/launcher/terminals.json)
 # shellcheck source=meta-team-lib.sh
 . "$SCRIPT_DIR/scripts/meta-team-lib.sh"
 meta_amb=0
@@ -243,6 +251,26 @@ else
   ln -sfn "$LAUNCH_DIR/scripts/meta-launch.sh" "$LOCAL_BIN/aw-meta-launch"
   echo "  meta: aw-meta and aw-meta-launch in $LOCAL_BIN"
   [ -f "$META_CONFIG" ] || [ "$meta_amb" = 1 ] || echo "  meta: next, write a team config: aw-meta team-init --team <t> --repo <dir> --lanes a,b,c (example: skills/meta/examples/agentic-workflow.team.json)"
+fi
+
+# 4. systemd DefaultOOMPolicy (Linux only; see the header).
+if [ "${AW_META_NO_OOM_CHECK:-0}" != 1 ] && [ "$(meta_oom_policy)" = stop ]; then
+  oom_drop="$(meta_oom_dropin_path)"
+  oom_want=$'[Manager]\nDefaultOOMPolicy=continue'
+  if [ -f "$oom_drop" ] && [ "$(cat "$oom_drop" 2> /dev/null || true)" = "$oom_want" ]; then
+    echo "  meta: $oom_drop is there (DefaultOOMPolicy=continue); apply it with: systemctl --user daemon-reload"
+  elif dry; then
+    echo "  [dry-run] would write $oom_drop ([Manager] DefaultOOMPolicy=continue)"
+  else
+    oom_tmp="$oom_drop.tmp.$$"
+    if mkdir -p "$(dirname "$oom_drop")" 2> /dev/null && printf '[Manager]\nDefaultOOMPolicy=continue\n' > "$oom_tmp" 2> /dev/null && mv "$oom_tmp" "$oom_drop" 2> /dev/null; then
+      echo "  meta: wrote $oom_drop (DefaultOOMPolicy=continue: an OOM kill ends that process, not the whole pane)"
+      echo "  meta: apply it with: systemctl --user daemon-reload (blocks systemctl --user for a minute or two)"
+    else
+      rm -f "$oom_tmp" 2> /dev/null || true
+      echo "  meta: WARNING could not write $oom_drop; DefaultOOMPolicy stays stop (one OOM kill stops a whole pane)" >&2
+    fi
+  fi
 fi
 
 # Last line: a checkout behind origin/main installs old code. Only refs already on disk count (no fetch: it could hang), so the

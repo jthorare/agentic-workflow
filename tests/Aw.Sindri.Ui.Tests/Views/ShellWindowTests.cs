@@ -261,7 +261,7 @@ public sealed class ShellWindowTests : IDisposable
             var panel = Named<Border>(window, name);
             var head = panel.GetVisualDescendants().OfType<Border>().Single(b => b.Classes.Contains("phead"));
             Assert.Equal(new Thickness(0, 0, 0, 1), head.BorderThickness);
-            Assert.Contains(head.GetVisualDescendants().OfType<TextBlock>(), t => t.Classes.Contains("eyebrow"));
+            Assert.Contains(head.GetVisualDescendants().OfType<TextBlock>(), t => t.Classes.Contains("section-title"));
         }
 
         foreach (var (name, text) in (ReadOnlySpan<(string, string)>)[("RunningPanel", "Nothing running.")])
@@ -447,7 +447,7 @@ public sealed class ShellWindowTests : IDisposable
         var skeleton = Named<Control>(window, "ConnectingSkeleton");
 
         Assert.Contains(skeleton.GetVisualDescendants().OfType<TextBlock>(), t => t.Classes.Contains("page-title") && t.Text == Labels.Home);
-        Assert.Contains(skeleton.GetVisualDescendants().OfType<TextBlock>(), t => t.Classes.Contains("eyebrow") && t.Text == Labels.NeedsYouPanel);
+        Assert.Contains(skeleton.GetVisualDescendants().OfType<TextBlock>(), t => t.Classes.Contains("section-title") && t.Text == Labels.NeedsYouPanel);
         Assert.Equal(3, skeleton.GetVisualDescendants().OfType<Border>().Count(b => b.Classes.Contains("panel")));
         var bars = skeleton.GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("skeleton")).ToList();
         Assert.True(bars.Count >= 6);

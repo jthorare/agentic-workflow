@@ -6,4 +6,5 @@ namespace Aw.Meta.Features.Health;
 /// <param name="Snapshot">The processes.</param>
 /// <param name="Resources">Memory, swap and disk.</param>
 /// <param name="Locks">The taken heavy-job lock slots.</param>
-internal sealed record HostReading(HostSnapshot Snapshot, HostResources Resources, IReadOnlyList<HeavyLock> Locks);
+/// <param name="OomPolicy">The warning when systemd's DefaultOOMPolicy is known and is not continue; null otherwise.</param>
+internal sealed record HostReading(HostSnapshot Snapshot, HostResources Resources, IReadOnlyList<HeavyLock> Locks, string? OomPolicy = null);

@@ -5,7 +5,7 @@
        the selected row with a 2 px Primary bar (a shape, never colour alone: it also reads "selected" by focus), group
        headers as quiet toggles, timeline entries on a hairline. Tokens only. -->
   <Style Selector="Border.item-row">
-    <Setter Property="Padding" Value="16,0" />
+    <Setter Property="Padding" Value="24,0" />
     <Setter Property="MinHeight" Value="{StaticResource Row.Height.Default}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
     <Setter Property="BorderThickness" Value="0,1,0,0" />
@@ -14,7 +14,7 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
     <Setter Property="BorderThickness" Value="2,1,0,0" />
-    <Setter Property="Padding" Value="14,0,16,0" />
+    <Setter Property="Padding" Value="22,0,24,0" />
   </Style>
   <!-- Proof B2/B7: a row and the controls in it draw their focus ring inside their own template, not in the window's adorner
        layer, which is above the sheet: the page runs full width under the sheet, the sheet covers the ring and the page's
@@ -26,10 +26,10 @@
   <Style Selector="Border.item-row:focus-visible">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
     <Setter Property="BorderThickness" Value="2" />
-    <Setter Property="Padding" Value="14,0,14,0" />
+    <Setter Property="Padding" Value="22,0,22,0" />
   </Style>
   <Style Selector="Border.item-row.selected:focus-visible">
-    <Setter Property="Padding" Value="14,0,14,0" />
+    <Setter Property="Padding" Value="22,0,22,0" />
   </Style>
   <Style Selector="Border.item-row Button">
     <Setter Property="FocusAdorner" Value="{x:Null}" />
@@ -69,7 +69,7 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
     <Setter Property="BorderThickness" Value="0,1,0,0" />
     <Setter Property="CornerRadius" Value="0" />
-    <Setter Property="Padding" Value="16,0" />
+    <Setter Property="Padding" Value="24,0" />
     <Setter Property="MinHeight" Value="{StaticResource Row.Height.Default}" />
     <Setter Property="Margin" Value="0,12,0,0" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -87,14 +87,14 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.XS}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
     <Setter Property="Padding" Value="6,0" />
   </Style>
   <Style Selector="Button.held-pill">
-    <Setter Property="Background" Value="{DynamicResource Brush.PrimarySoft}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.LG}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
     <Setter Property="Padding" Value="10,2" />
   </Style>
   <Style Selector="Button.command-control.destructive">

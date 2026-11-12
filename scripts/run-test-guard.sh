@@ -55,7 +55,28 @@ sweep() {
   return 0
 }
 
-AW_RUN_GUARD="$token" setsid "$@" &
+# Own systemd scope (#2982, as scripts/heavy.sh does since #2931): setsid changes the session and process group but not the
+# cgroup, so the check would stay in the caller's pane scope (tmux-spawn-*.scope). With the default OOMPolicy=stop, one OOM
+# kill inside a UI check (Xvfb, the app, a browser) then stops the whole pane and the agent session in it.
+# `systemd-run --user --scope -p OOMPolicy=continue` puts the check in its own unit; --scope execs in place, so $! below is
+# still the check's pid and its group id, and the token sweep still finds every process by AW_RUN_GUARD.
+# Bound to the caller's scope (BindsTo+After, one-way) only when that scope belongs to the user manager: a login session-N.scope
+# belongs to the system manager and `systemd-run --user` fails on it. Fallback: plain setsid (macOS, no user bus, a failed probe).
+scope=()
+if command -v systemd-run >/dev/null 2>&1; then
+  unit="$(awk -F: '$1=="0" && $2=="" {print $3; exit}' "${AW_GUARD_TEST_CGROUP:-/proc/self/cgroup}" 2>/dev/null)"
+  bind=()
+  case "$unit" in
+    */user@[0-9]*.service/*.scope) unit="${unit##*/}"; bind=(-p "BindsTo=$unit" -p "After=$unit") ;;
+  esac
+  cand=(systemd-run --user --scope --quiet --collect -p OOMPolicy=continue "${bind[@]+"${bind[@]}"}" --)
+  # A wedged user bus under memory pressure must not hang the check, so the probe gets a timeout.
+  probe=()
+  if command -v timeout >/dev/null 2>&1; then probe=(timeout 10); fi
+  if "${probe[@]+"${probe[@]}"}" "${cand[@]}" true >/dev/null 2>&1; then scope=("${cand[@]}"); fi
+fi
+
+AW_RUN_GUARD="$token" setsid "${scope[@]+"${scope[@]}"}" "$@" &
 pgid=$!
 trap 'sweep; exit 143' TERM INT HUP
 

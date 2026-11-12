@@ -40,6 +40,15 @@ public sealed class ClickableStateTests : FrameHost
     private static Color TokenColor(string key) =>
         Application.Current is { } app && app.TryFindResource(key, app.ActualThemeVariant, out var value) && value is ISolidColorBrush brush ? brush.Color : throw new InvalidOperationException($"{key} is not a brush token");
 
+    // The unseen pulse is a fixed 1.6 s loop between AttentionSoft and Surface1 that motion tokens don't stop, so a resting row is
+    // anywhere on that path when it is read: each channel lies between the two ends (a slow run read #281D13 for #291D13).
+    private static void AssertOnPulsePath(Color actual)
+    {
+        var (a, b) = (TokenColor("Brush.AttentionSoft"), TokenColor("Brush.Surface1"));
+        static bool Between(byte v, byte x, byte y) => v >= Math.Min(x, y) && v <= Math.Max(x, y);
+        Assert.True(actual.A == 255 && Between(actual.R, a.R, b.R) && Between(actual.G, a.G, b.G) && Between(actual.B, a.B, b.B), $"{actual} is not between AttentionSoft {a} and Surface1 {b}");
+    }
+
     /// <summary>
     /// Moves the pointer to <paramref name="at"/> until <paramref name="target"/> is under it, and returns the last point. The point is read
     /// again on every try: a row still sliding in (180 ms) sits higher than it ends, and a pressed card takes focus, which scrolls it into
@@ -251,7 +260,7 @@ public sealed class ClickableStateTests : FrameHost
         Assert.DoesNotContain(":pressed", card.Classes, StringComparer.Ordinal);
     });
 
-    // A calm row only: an attention row (pulsing, steady) keeps its amber under the pointer instead (#2611, the test below).
+    // A calm row only: an attention row (pulsing, steady) lifts to the pressed fill under the pointer (#2780, the test below).
     [Theory]
     [InlineData("subtle")]
     public Task The_pointer_over_a_calm_Needs_You_row_shows_the_hover_background(string tint) => OnUi(async () =>
@@ -273,11 +282,11 @@ public sealed class ClickableStateTests : FrameHost
         Assert.NotEqual(rest, ((ISolidColorBrush)row.Background!).Color);
     });
 
-    // #2611: an attention row lifts within its own amber under the pointer and a press; it used to step aside to the grey hover fill.
+    // #2780: a steady row is neutral (one accent): it rests transparent (Clickable.Rest), takes the hover fill under the pointer and the pressed fill on a press; the unseen pulse keeps its amber and lifts within it (#2611, #2749).
     [Theory]
     [InlineData("pulsing")]
     [InlineData("steady")]
-    public Task The_pointer_over_an_attention_Needs_You_row_keeps_its_amber_and_a_press_lifts_it_again(string tint) => OnUi(async () =>
+    public Task The_pointer_over_an_attention_Needs_You_row_lifts_it_and_a_press_lifts_it_again(string tint) => OnUi(async () =>
     {
         using var instant = InstantMotion.Start();
         var (window, shell) = await Connected();
@@ -285,18 +294,26 @@ public sealed class ClickableStateTests : FrameHost
         Settle(window);
         var row = window.GetVisualDescendants().OfType<NeedsYouRow>().Where(r => r.IsEffectivelyVisible)
             .SelectMany(r => r.GetVisualDescendants().OfType<Border>()).First(b => b.Name == "RowFrame" && b.Classes.Contains(tint));
-        Assert.Equal(TokenColor("Brush.AttentionSoft"), ((ISolidColorBrush)row.Background!).Color);
+        if (tint == "pulsing")
+        {
+            AssertOnPulsePath(((ISolidColorBrush)row.Background!).Color);
+        }
+        else
+        {
+            Assert.Equal(TokenColor("Brush.Clickable.Rest"), ((ISolidColorBrush)row.Background!).Color);
+        }
+
         Frame(window, $"{tint}-rest", "gh2611-");
 
         var at = await PointAt(window, () => row.TranslatePoint(new Point(4, 4), window)!.Value, row);
         Frame(window, $"{tint}-hover", "gh2611-");
         Assert.True(row.IsPointerOver, $"at {at}, row bounds {row.Bounds}, hit {Describe(window.InputHitTest(at))}");
-        Assert.Equal(TokenColor("Brush.AttentionSoft.Hover"), ((ISolidColorBrush)row.Background!).Color);
+        Assert.Equal(TokenColor(tint == "pulsing" ? "Brush.AttentionSoft.Hover" : "Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color);
 
         window.MouseDown(at, MouseButton.Left, RawInputModifiers.LeftMouseButton);
         Settle(window);
         Assert.Contains(":pressed", row.Classes, StringComparer.Ordinal);
-        Assert.Equal(TokenColor("Brush.AttentionSoft.Pressed"), ((ISolidColorBrush)row.Background!).Color);
+        Assert.Equal(TokenColor(tint == "pulsing" ? "Brush.AttentionSoft.Pressed" : "Brush.Clickable.Pressed"), ((ISolidColorBrush)row.Background!).Color);
         window.MouseUp(at, MouseButton.Left, RawInputModifiers.None);
     });
 
@@ -507,11 +524,11 @@ public sealed class ClickableStateTests : FrameHost
         var point = await PointAt(window, () => Corner(window, row), row);
 
         Assert.True(row.IsPointerOver, $"at {point}, hit {Describe(window.InputHitTest(point))}, chain {Chain(row)}");
-        Assert.Equal(TokenColor(IsAttention(row) ? "Brush.AttentionSoft.Hover" : "Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color);
+        Assert.Equal(TokenColor(IsAttention(row) ? (row.Classes.Contains("pulsing") ? "Brush.AttentionSoft.Hover" : "Brush.Clickable.Hover") : "Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color);
         Frame(window, $"{stem}-row-hover", "gh2535-");
     });
 
-    // An attention Needs You row (an inbox row asking for you) lifts within its own amber, not to the grey hover (#2611).
+    // A steady or outlined Needs You row rests like any clickable row, so it takes the hover fill under the pointer and the pressed fill on a press; the unseen pulse keeps its amber (#2780, #2611).
     private static bool IsAttention(Border row) =>
         row.Classes.Contains("needs-you-row") && (row.Classes.Contains("pulsing") || row.Classes.Contains("steady") || row.Classes.Contains("outlined"));
 }

@@ -46,6 +46,8 @@ public sealed class AttentionSummaryTests
         Assert.Equal("1 need you", AttentionSummary.For(feed, ShellState.Normal, A.Noon, sessions: null, listed: 1).NeedsYouLine);
         Assert.Equal("", For(Feed()).NeedsYouLine);
         Assert.Equal("", For(feed: null).NeedsYouLine);
+        Assert.Equal(("2", "need you"), (For(feed).NeedsYouNumber, For(feed).NeedsYouWord));
+        Assert.Equal(("", ""), (For(Feed()).NeedsYouNumber, For(Feed()).NeedsYouWord));
     }
 
     [Fact]

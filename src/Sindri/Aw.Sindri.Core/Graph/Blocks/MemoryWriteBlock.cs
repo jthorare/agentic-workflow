@@ -22,10 +22,10 @@ public sealed class MemoryWriteBlock(IGraphMemoryPort memory) : IGraphBlock
 
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([
-        new("memory", BlockFieldType.Text),
-        new("fact", BlockFieldType.Text),
-        new("tags", BlockFieldType.TextList, Required: false),
-        new("expires", BlockFieldType.Text, Required: false),
+        new("memory", BlockFieldType.Text, Caption: "Memory"),
+        new("fact", BlockFieldType.Text, Caption: "Fact to remember"),
+        new("tags", BlockFieldType.TextList, Required: false, Caption: "Tags"),
+        new("expires", BlockFieldType.Text, Required: false, Caption: "Forget after"),
     ]);
 
     /// <inheritdoc />

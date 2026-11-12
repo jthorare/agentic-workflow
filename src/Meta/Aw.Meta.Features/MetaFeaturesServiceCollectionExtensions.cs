@@ -26,6 +26,7 @@ using Aw.Meta.Features.OwnerAnswer;
 using Aw.Meta.Features.OwnerAsk;
 using Aw.Meta.Features.QueueDrop;
 using Aw.Meta.Features.QueueGate;
+using Aw.Meta.Features.ReadEvents;
 using Aw.Meta.Features.ReportDefect;
 using Aw.Meta.Features.Roles;
 using Aw.Meta.Features.Routing;
@@ -134,6 +135,9 @@ public static class MetaFeaturesServiceCollectionExtensions
         .Validated<AskOwnerService, AskOwnerRequest, AskOwnerResponse>();
 
     private static IServiceCollection AddReportSlices(this IServiceCollection services) => services
+        .AddScoped<ReadEventsService>()
+        .AddScoped<IValidator<ReadEventsRequest>, ReadEventsValidator>()
+        .Validated<ReadEventsService, ReadEventsRequest, ReadEventsResponse>()
         .AddScoped<AppendLogService>()
         .AddScoped<IValidator<AppendLogRequest>, AppendLogValidator>()
         .Validated<AppendLogService, AppendLogRequest, AppendLogResponse>()
@@ -172,6 +176,7 @@ public static class MetaFeaturesServiceCollectionExtensions
         .AddScoped<HostProbe>()
         .AddScoped<LaneCheck>()
         .AddScoped<OrphanKiller>()
+        .AddScoped<OomPolicyCheck>()
         .AddScoped<HealthService>()
         .Plain<HealthService, HealthRequest, HealthResponse>()
         .AddScoped<UsageService>()

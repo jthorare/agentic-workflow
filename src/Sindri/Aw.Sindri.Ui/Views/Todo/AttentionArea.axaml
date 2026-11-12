@@ -9,18 +9,18 @@
       <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
       <Setter Property="BorderThickness" Value="3,1,0,0" />
-      <Setter Property="Padding" Value="13,0,16,0" />
+      <Setter Property="Padding" Value="21,0,24,0" />
     </Style>
     <Style Selector="Border.attention-row:focus-visible">
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
       <Setter Property="BorderThickness" Value="3,2,2,2" />
-      <Setter Property="Padding" Value="13,0,14,0" />
+      <Setter Property="Padding" Value="21,0,22,0" />
     </Style>
     <Style Selector="Border.attention-form">
-      <Setter Property="Padding" Value="13,12,16,12" />
+      <Setter Property="Padding" Value="21,12,24,12" />
     </Style>
     <Style Selector="Border.attention-form:focus-visible">
-      <Setter Property="Padding" Value="13,11,14,11" />
+      <Setter Property="Padding" Value="21,11,22,11" />
     </Style>
     <Style Selector="Border.attention-card">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />

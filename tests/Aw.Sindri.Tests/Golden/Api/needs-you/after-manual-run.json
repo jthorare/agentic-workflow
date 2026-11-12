@@ -25,7 +25,8 @@
       "open": {
         "route": "setup",
         "label": "Open setup"
-      }
+      },
+      "decision": null
     }
   ],
   "empty": null,
@@ -35,5 +36,6 @@
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false
-  }
+  },
+  "tag": "df885dd2fd6e900415249782ac26f8ff"
 }

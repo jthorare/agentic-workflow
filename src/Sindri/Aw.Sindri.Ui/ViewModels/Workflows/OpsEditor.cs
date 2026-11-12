@@ -34,6 +34,9 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     /// <summary>The form of the selected node.</summary>
     public ObservableCollection<ConfigFieldViewModel> Fields { get; } = [];
 
+    /// <summary>The selected step as the sheet names it ("Every weekday at 7:00 \u00b7 trigger"), never its id; empty when none is selected.</summary>
+    public string NodeHeading { get; private set => Set(ref field, value); } = string.Empty;
+
     /// <summary>True while an edit is on the way; a second edit does nothing.</summary>
     public bool IsSending { get; private set => Set(ref field, value); }
 
@@ -67,7 +70,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         {
             // another workflow: nothing of the old one stays to be saved to this one, even when this read fails
             Fields.Clear();
-            (Nodes, BaseRevision, _selected) = ([], 0, null);
+            (Nodes, BaseRevision, _selected, NodeHeading) = ([], 0, null, string.Empty);
         }
 
         (_url, Slug) = (url, slug);
@@ -106,10 +109,22 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         Fields.Clear();
         var node = Nodes.FirstOrDefault(n => string.Equals(n.Id, nodeId, StringComparison.Ordinal));
         var block = node is null ? null : Groups.SelectMany(g => g.Blocks).FirstOrDefault(b => string.Equals(b.Type, node.Type, StringComparison.Ordinal));
+        NodeHeading = HeadingOf(node, block);
         foreach (var field in block?.Config ?? [])
         {
             Fields.Add(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field)));   // why: a block was found, so node is not null
         }
+    }
+
+    private static string HeadingOf(EditorNode? node, WorkflowBlock? block)
+    {
+        if (node is null)
+        {
+            return string.Empty;
+        }
+
+        var title = node.Title is { Length: > 0 } own ? own : block?.Title ?? node.Type;
+        return Labels.WfEditorStep(title, block is null ? node.Type : block.IsTrigger ? "trigger" : block.Title);
     }
 
     /// <summary>Sends a set_config for one field of the selected node.</summary>

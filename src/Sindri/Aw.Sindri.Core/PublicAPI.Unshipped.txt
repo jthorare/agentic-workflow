@@ -13978,7 +13978,6 @@ const Aw.Sindri.Core.Events.ModelCallOutcome.NotAsked = "not-asked" -> string!
 const Aw.Sindri.Core.Events.ModelCallOutcome.Skipped = "skipped" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Estimated = "estimated" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Reported = "reported" -> string!
-const Aw.Sindri.Core.Views.ViewSchema.Version = 35 -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextModelCalled.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.ToString() -> string!
@@ -17781,6 +17780,8 @@ Aw.Sindri.Core.Graph.Validation.GraphValidation.Mode.init -> void
 Aw.Sindri.Core.Graph.Validation.GraphValidation.Passed.get -> bool
 Aw.Sindri.Core.Graph.Validation.GraphValidationContext
 Aw.Sindri.Core.Graph.Validation.GraphValidationContext.<Clone>$() -> Aw.Sindri.Core.Graph.Validation.GraphValidationContext!
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.AgentTarget.get -> Aw.Sindri.Core.Graph.Validation.GraphLookup
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.AgentTarget.init -> void
 Aw.Sindri.Core.Graph.Validation.GraphValidationContext.Blocks.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Graph.Blocks.IGraphBlockType!>!
 Aw.Sindri.Core.Graph.Validation.GraphValidationContext.Blocks.init -> void
 Aw.Sindri.Core.Graph.Validation.GraphValidationContext.Condition.get -> System.Func<string!, Aw.Sindri.Core.Graph.Validation.ConditionParse!>!
@@ -23163,3 +23164,47 @@ Aw.Sindri.Core.Reviews.ReviewLoginPrompt.Connection.get -> string?
 Aw.Sindri.Core.Reviews.ReviewLoginPrompt.Connection.init -> void
 Aw.Sindri.Core.Reviews.ReviewLoginPrompt.Reason.get -> Aw.Sindri.Core.Connections.GitHubLoginMiss
 Aw.Sindri.Core.Reviews.ReviewLoginPrompt.Reason.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.<Clone>$() -> Aw.Sindri.Core.NeedsYou.NeedsYouDecision!
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Deconstruct(out Aw.Sindri.Core.Ids.DecisionId Id, out string! Question, out string! FiledBy, out Aw.Sindri.Core.Ids.DecisionOption Recommended, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption!>! Options) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Equals(Aw.Sindri.Core.NeedsYou.NeedsYouDecision? other) -> bool
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.FiledBy.get -> string!
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.FiledBy.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Id.get -> Aw.Sindri.Core.Ids.DecisionId
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Id.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.NeedsYouDecision(Aw.Sindri.Core.Ids.DecisionId Id, string! Question, string! FiledBy, Aw.Sindri.Core.Ids.DecisionOption Recommended, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption!>! Options) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Options.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption!>!
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Options.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Question.get -> string!
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Question.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Recommended.get -> Aw.Sindri.Core.Ids.DecisionOption
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Recommended.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.<Clone>$() -> Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption!
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Cli.get -> string!
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Cli.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Deconstruct(out Aw.Sindri.Core.Ids.DecisionOption Id, out string! Label, out string! Cli, out bool RejectLike) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Equals(Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption? other) -> bool
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Id.get -> Aw.Sindri.Core.Ids.DecisionOption
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Id.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Label.get -> string!
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Label.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.NeedsYouDecisionOption(Aw.Sindri.Core.Ids.DecisionOption Id, string! Label, string! Cli, bool RejectLike) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.RejectLike.get -> bool
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.RejectLike.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouRow.Decision.get -> Aw.Sindri.Core.NeedsYou.NeedsYouDecision?
+Aw.Sindri.Core.NeedsYou.NeedsYouRow.Decision.init -> void
+const Aw.Sindri.Core.Views.ViewSchema.Version = 36 -> int
+override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Equals(object? obj) -> bool
+override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.GetHashCode() -> int
+override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.ToString() -> string!
+override Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Equals(object? obj) -> bool
+override Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.GetHashCode() -> int
+override Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.ToString() -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouDecision.operator !=(Aw.Sindri.Core.NeedsYou.NeedsYouDecision? left, Aw.Sindri.Core.NeedsYou.NeedsYouDecision? right) -> bool
+static Aw.Sindri.Core.NeedsYou.NeedsYouDecision.operator ==(Aw.Sindri.Core.NeedsYou.NeedsYouDecision? left, Aw.Sindri.Core.NeedsYou.NeedsYouDecision? right) -> bool
+static Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.operator !=(Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption? left, Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption? right) -> bool
+static Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.operator ==(Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption? left, Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption? right) -> bool
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisions
+static Aw.Sindri.Core.NeedsYou.NeedsYouDecisions.From(Aw.Sindri.Core.Views.HumanDecisionRow! row) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouDecision!>!
+static Aw.Sindri.Core.NeedsYou.NeedsYouDecisions.Question(Aw.Sindri.Core.Views.HumanDecisionRow! row) -> string!
