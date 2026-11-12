@@ -88,11 +88,15 @@ public sealed class NeedsYouOutlineTests : FrameHost
         var frame = Frame(Rows(window).First(r => r.DataContext is ViewModels.NeedsYou.NeedsYouRowViewModel { HasOutline: true }));
         var point = frame.TranslatePoint(new Point(4, 4), window)!.Value;
         Frame(window, "outlined-amber-rest", "gh2611-");
+        var rest = ((ISolidColorBrush)frame.Background!).Color;
+        Assert.Equal(Brush("Brush.Clickable.Rest"), rest);
 
         window.MouseMove(point, RawInputModifiers.None);
         Settle(window);
         Assert.True(frame.IsPointerOver);
         Frame(window, "outlined-amber-hover", "gh2611-");
+        Assert.NotEqual(rest, Brush("Brush.Clickable.Hover"));   // rest, hover and press are three different fills
+        Assert.NotEqual(Brush("Brush.Clickable.Hover"), Brush("Brush.Clickable.Pressed"));
         Assert.Equal((Brush("Brush.Clickable.Hover"), Brush("Brush.InkSubtle")), (((ISolidColorBrush)frame.Background!).Color, ((ISolidColorBrush)frame.BorderBrush!).Color));
 
         window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);

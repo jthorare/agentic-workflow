@@ -273,7 +273,7 @@ public sealed class ClickableStateTests : FrameHost
         Assert.NotEqual(rest, ((ISolidColorBrush)row.Background!).Color);
     });
 
-    // #2780: a steady row is neutral (one accent): it rests on Surface2, takes the hover fill under the pointer and the pressed fill on a press; the unseen pulse keeps its amber and lifts within it (#2611, #2749).
+    // #2780: a steady row is neutral (one accent): it rests transparent (Clickable.Rest), takes the hover fill under the pointer and the pressed fill on a press; the unseen pulse keeps its amber and lifts within it (#2611, #2749).
     [Theory]
     [InlineData("pulsing")]
     [InlineData("steady")]
@@ -285,7 +285,7 @@ public sealed class ClickableStateTests : FrameHost
         Settle(window);
         var row = window.GetVisualDescendants().OfType<NeedsYouRow>().Where(r => r.IsEffectivelyVisible)
             .SelectMany(r => r.GetVisualDescendants().OfType<Border>()).First(b => b.Name == "RowFrame" && b.Classes.Contains(tint));
-        Assert.Equal(TokenColor(tint == "pulsing" ? "Brush.AttentionSoft" : "Brush.Surface2"), ((ISolidColorBrush)row.Background!).Color);
+        Assert.Equal(TokenColor(tint == "pulsing" ? "Brush.AttentionSoft" : "Brush.Clickable.Rest"), ((ISolidColorBrush)row.Background!).Color);
         Frame(window, $"{tint}-rest", "gh2611-");
 
         var at = await PointAt(window, () => row.TranslatePoint(new Point(4, 4), window)!.Value, row);
@@ -511,7 +511,7 @@ public sealed class ClickableStateTests : FrameHost
         Frame(window, $"{stem}-row-hover", "gh2535-");
     });
 
-    // A steady or outlined Needs You row rests on Surface2 like a calm one, so it takes the hover fill under the pointer and the pressed fill on a press; the unseen pulse keeps its amber (#2780, #2611).
+    // A steady or outlined Needs You row rests like any clickable row, so it takes the hover fill under the pointer and the pressed fill on a press; the unseen pulse keeps its amber (#2780, #2611).
     private static bool IsAttention(Border row) =>
         row.Classes.Contains("needs-you-row") && (row.Classes.Contains("pulsing") || row.Classes.Contains("steady") || row.Classes.Contains("outlined"));
 }
