@@ -12,8 +12,10 @@ namespace Aw.Sindri.Ui.ViewModels.Projects;
 /// </summary>
 /// <param name="api">The API.</param>
 /// <param name="apiUrl">Where the API is now, or null while it is unreachable.</param>
-internal sealed partial class ProjectAddViewModel(ISindriApi api, Func<Uri?> apiUrl) : ObservableObject
+/// <param name="clock">Today for the Target box's relative words; the system clock when null.</param>
+internal sealed partial class ProjectAddViewModel(ISindriApi api, Func<Uri?> apiUrl, TimeProvider? clock = null) : ObservableObject
 {
+    private readonly TimeProvider _clock = clock ?? TimeProvider.System;
     private readonly ISindriApi _api = api;
     private readonly Func<Uri?> _apiUrl = apiUrl;
 
@@ -94,6 +96,14 @@ internal sealed partial class ProjectAddViewModel(ISindriApi api, Func<Uri?> api
 
     /// <summary>The target date, yyyy-MM-dd; empty for none.</summary>
     public string Target { get; set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>Under the Target box: the date the text read as ("Sat 5 Dec 2026"); empty when the box is empty or unreadable.</summary>
+    public string TargetRead => Reading.Kind == TargetReadKind.Date ? throw new NotSupportedException() : string.Empty;
+
+    /// <summary>Under the Target box: why the text is not a date; empty when it reads or the box is empty.</summary>
+    public string TargetError => Reading.Kind == TargetReadKind.Unreadable ? throw new NotSupportedException() : string.Empty;
+
+    private TargetReading Reading => TargetDateReader.Read(Target, DateOnly.FromDateTime(_clock.GetLocalNow().DateTime));
 
     /// <summary>True while the write is in flight.</summary>
     public bool IsSaving

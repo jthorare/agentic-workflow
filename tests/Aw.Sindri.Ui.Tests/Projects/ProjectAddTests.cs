@@ -15,7 +15,7 @@ public sealed class ProjectAddTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private ProjectAddViewModel Add() => new(_f.Server, () => ProjectsFixture.Url);
+    private ProjectAddViewModel Add() => new(_f.Server, () => ProjectsFixture.Url, _f.Clock);
 
     private ProjectAttach Sent() => Assert.IsType<ProjectAttach>(Assert.Single(_f.Server.ProjectWrites).Body);
 
@@ -189,4 +189,24 @@ public sealed class ProjectAddTests
     [InlineData("project/add")]
     public void Other_texts_under_projects_are_not_the_sheets_link(string text) =>
         Assert.False(DeepLink.TryParse(text, out var link) && link.Kind == DeepLinkKind.ProjectAdd);
+
+    [Fact]
+    public void A_target_that_is_not_a_date_shows_the_error_and_turns_Save_off()
+    {
+        var add = Add();
+        (add.Name, add.Target) = ("Kitchen", "soonish");
+
+        Assert.Equal((false, "Couldn't read that date. Try Dec 5, next fri or 2026-12-05.", string.Empty), (add.CanSave, add.TargetError, add.TargetRead));
+        add.Target = "";
+        Assert.Equal((true, string.Empty), (add.CanSave, add.TargetError));
+    }
+
+    [Fact]
+    public void A_target_that_reads_shows_the_date_it_read()
+    {
+        var add = Add();   // the fixture clock is Thu 1 Jan 2026
+        (add.Name, add.Target) = ("Kitchen", "Dec 5");
+
+        Assert.Equal((true, "Sat 5 Dec 2026", string.Empty), (add.CanSave, add.TargetRead, add.TargetError));
+    }
 }

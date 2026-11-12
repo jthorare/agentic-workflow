@@ -63,6 +63,16 @@ public sealed class ProjectAddViewTests : FrameHost
     });
 
     [Fact]
+    public Task Switching_to_By_hand_puts_focus_in_Name() => OnUi(async () =>
+    {
+        var (window, _) = await OnProjects();
+
+        await OpenByHand(window);
+
+        await Until(window, () => Named<TextBox>(window, "ProjectAddName").IsFocused, "focus never reached the Name box");
+    });
+
+    [Fact]
     public Task In_the_empty_state_the_header_Add_project_opens_the_sheet() => OnUi(async () =>
     {
         var (window, shell) = await OnProjects("empty-leads-nothing");

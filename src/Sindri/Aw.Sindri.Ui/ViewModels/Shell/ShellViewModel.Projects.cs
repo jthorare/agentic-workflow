@@ -40,7 +40,7 @@ internal sealed partial class ShellViewModel
     {
         Projects = new ProjectsPageViewModel(_api, _clock);
         ProjectSheet = new ProjectSheetViewModel(_api, launcher, _clock);
-        ProjectAdd = new ProjectAddViewModel(_api, Health.ApiUrl);
+        ProjectAdd = new ProjectAddViewModel(_api, Health.ApiUrl, _clock);
         Health.Follow(Projects.Refresh);
         PropertyChanged += (_, e) =>
         {
