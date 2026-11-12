@@ -22,3 +22,9 @@ Round 4: capture window opens on Note, Issue kind creates on Ctrl+Enter, no Shif
 Round 5: reshoot per spec #3205 round 2 (section 5): see guesses 26 to 34. New frames: capture-saved-without-sindri, settings-no-folder, list-folder-gone. Removed: capture-error-down.
 
 Round 6: ideas round 5 MUSTs (Notes 11, Projects 2), the round 3 ask and spec c7b11da917 calls; see guesses 35 to 42. New: today-ghost, today-ghost-down, settings-folder-error, settings-hotkey.
+
+Round 7 (redraw for meta's UX pass on #3205): 61 PNGs, 1440x900 except `notes-today-1000.png` and `notes-list-peek-1000.png` at 1000x900. Regenerate with `python3 gen.py && ./shoot.sh`. Guesses 43 to 56.
+
+Ghost text contrast (must-fix 5), measured on the PNG pixels of `notes-today-ghost.png` and `notes-today-ghost-down.png`: text `#9ca1aa` on `#08090a` is 7.68:1 (needs 4.5:1; the old `#4f5258` was 2.5:1). Italic is kept as the ghost signal. The ghost headings, hint and "Lines from the capture window land here." all read the same colour.
+
+Caption style: an italic box that starts "Caption for reviewers, not UI:". It carries every v1.1 word and every "builders leave this out" note, so none is left in app chrome.
