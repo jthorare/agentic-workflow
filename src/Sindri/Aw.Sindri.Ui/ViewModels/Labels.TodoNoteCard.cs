@@ -161,7 +161,7 @@ internal static partial class Labels
         "SND-TODO-007" => "That note path has a character Sindri can't use.",
         "SND-TODO-008" => "The note has nothing to import.",
         "SND-TODO-409" => "The note changed while Sindri was reading it. Check it again.",
-        "SND-PROFILE-001" => "Sindri couldn't read its settings. Run `sindri doctor` to see why.",
+        "SND-PROFILE-001" or "SND-PROFILE-004" or "SND-PROFILE-005" => "Sindri couldn't read its settings. Run `sindri doctor` to see why.",
         _ => $"Sindri refused that ({error.Code}). Run `sindri doctor` for details.",
     };
 

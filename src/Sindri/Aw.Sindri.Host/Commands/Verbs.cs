@@ -111,7 +111,7 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
         if (set.IsError)
         {
             var code = await output.Error(set.Error).ConfigureAwait(false);
-            return string.Equals(set.Error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal) ? code : 1;
+            return set.Error.Code is "SND-PROFILE-001" or "SND-PROFILE-004" or "SND-PROFILE-005" ? code : 1;
         }
 
         var done = set.Value;

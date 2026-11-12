@@ -78,9 +78,13 @@ internal sealed class YamlProfileSandboxWriter(SindriSettings settings, IProfile
         {
             before = File.ReadAllText(path);
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
         {
             return SindriErrors.ProfileMissing.With($"{path} can't be read: {e.Message} (fix: sindri profile init)");
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return SindriErrors.ProfileUnreadable.With($"{path} can't be read: {e.Message} (fix: check the file's permissions, e.g. chmod 600 {path})");
         }
 
         if (YamlToJson.TryConvert(before, out var json) is { } problem)

@@ -46,7 +46,7 @@ internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git)
         var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
         if (loaded.IsError)
         {
-            // a missing file is "no profile"; a file with a mistake is the step's failure
+            // a missing file is "no profile"; a file with a mistake, or one that can't be read (SND-PROFILE-004), is the step's failure
             return loaded.Error.Code != SindriErrors.ProfileMissing.Code ? loaded.Error : new ProfileFact(ProfilePresence.Missing);
         }
 

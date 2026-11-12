@@ -75,9 +75,13 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings, Core
         {
             before = File.ReadAllText(path);
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
         {
             return SindriErrors.ProfileMissing.With($"{path} can't be read: {e.Message}");
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return SindriErrors.ProfileUnreadable.With($"{path} can't be read: {e.Message} (fix: check the file's permissions, e.g. chmod 600 {path})");
         }
 
         var edited = Edit(before, source, key, line);
@@ -116,7 +120,7 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings, Core
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            return SindriErrors.ProfileMissing.With($"{path} can't be written: {e.Message}");
+            return SindriErrors.ProfileUnwritable.With($"{path} can't be written: {e.Message} (fix: check the file's permissions, e.g. chmod 600 {path})");
         }
     }
 
