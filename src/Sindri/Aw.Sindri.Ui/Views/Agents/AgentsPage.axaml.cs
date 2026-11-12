@@ -33,6 +33,8 @@ internal sealed partial class AgentsPage : UserControl
         }
     }
 
+    private void OnOpenWorkflows(object? sender, RoutedEventArgs e) => Page?.OpenWorkflows();
+
     private void OnClearFilters(object? sender, RoutedEventArgs e)
     {
         ProviderFilter.SelectedIndex = 0;

@@ -67,6 +67,15 @@ internal sealed partial class AgentsPageViewModel
         }
     }
 
+    /// <summary>The empty page's one button: "Open Workflows". Shown only when the Sindri has no session at all (a filter that matches nothing offers Clear filters instead).</summary>
+    public bool ShowsOpenWorkflows => IsEmpty && !IsFiltered && _list is { Sessions.Count: 0 };
+
+    /// <summary>The button's label.</summary>
+    public string OpenWorkflowsText { get; } = Labels.OpenWorkflows;
+
+    /// <summary>The empty page's button was pressed.</summary>
+    internal void OpenWorkflows() => WorkflowsRequested?.Invoke(this, EventArgs.Empty);
+
     /// <summary>Drops every filter and draws the list again.</summary>
     internal void ClearFilters()
     {

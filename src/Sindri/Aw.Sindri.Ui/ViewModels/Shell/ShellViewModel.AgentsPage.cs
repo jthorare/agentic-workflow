@@ -1,3 +1,5 @@
+using Aw.Sindri.Ui.Navigation;
+
 namespace Aw.Sindri.Ui.ViewModels.Shell;
 
 /// <summary>The Agents page in the shell (<see cref="ShellViewModel"/>, continued; U11a T1): it reads while it is the page shown and the window is up.</summary>
@@ -7,6 +9,7 @@ internal sealed partial class ShellViewModel
     partial void InitAgentsPage()
     {
         Health.Follow(Agents.Refresh);
+        Agents.WorkflowsRequested += (_, _) => GoTo(PageId.Workflows);
         PropertyChanged += (_, e) =>
         {
             if (string.Equals(e.PropertyName, nameof(IsAgents), StringComparison.Ordinal))

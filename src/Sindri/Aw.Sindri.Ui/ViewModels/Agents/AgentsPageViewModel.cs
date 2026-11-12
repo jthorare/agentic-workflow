@@ -30,6 +30,9 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
     /// <summary>Raised when a row asks to open its session's sheet; the shell's session-sheet partial handles it.</summary>
     internal event EventHandler<SessionOpenRequestedEventArgs>? OpenRequested;
 
+    /// <summary>Raised when the empty page's button asks for the Workflows page; the shell goes there.</summary>
+    internal event EventHandler? WorkflowsRequested;
+
     /// <summary>Raised when the page should put focus on a row or its Focus line.</summary>
     internal event EventHandler<AgentFocusEventArgs>? FocusRequested;
 
@@ -263,6 +266,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         IsEmpty = kept.Count == 0;
         EmptyText = IsEmpty ? (list.Sessions.Count == 0 ? list.Empty ?? Labels.NoSessionsMatch : Labels.NoSessionsMatch) : string.Empty;
         OnChanged(nameof(ShowsClearFilters));
+        OnChanged(nameof(ShowsOpenWorkflows));
         Reselect(before);
     }
 
