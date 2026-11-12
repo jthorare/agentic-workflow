@@ -7,7 +7,7 @@ using Microsoft.Data.Sqlite;
 
 namespace Aw.Context.Tests.Infrastructure;
 
-public sealed class RepoDocsTests
+public sealed partial class RepoDocsTests
 {
     [Fact, Trait("Lane", "integration")]
     public async Task A_planted_secret_never_reaches_the_index_and_an_edit_reads_as_a_new_version()

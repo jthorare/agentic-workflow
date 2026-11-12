@@ -77,6 +77,23 @@ public sealed class QueryFetchBoundTests
         Assert.Contains((total - read).ToString(CultureInfo.InvariantCulture) + " matching record(s)", note.Message, StringComparison.Ordinal);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_batch_the_deadline_cuts_off_is_noted_unread_not_reported_as_a_broken_source()
+    {
+        const int total = 40;
+        var clock = new FakeTimeProvider(new DateTimeOffset(2026, 11, 12, 9, 0, 0, TimeSpan.Zero));
+        var docs = SourceOf([.. Enumerable.Range(1, total).Select(i => Chunk(i, i))]);
+        docs.OnFetchMany = () => clock.Advance(TimeSpan.FromSeconds(11));   // the 10 s deadline fires inside the one batched read
+        docs.FetchHangs = true;
+        var engine = Engines.Over(new FixedSourceCatalog(docs), time: clock);
+
+        var result = await engine.Query(new ContextQuery("orientation"), Engines.Human(), TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        var note = Assert.Single(result.Value.Degraded, d => d.Source == RepoDocs.Id);
+        Assert.Contains(total.ToString(CultureInfo.InvariantCulture) + " matching record(s)", note.Message, StringComparison.Ordinal);   // why: on main, the hits the deadline cut off were counted as unread, not a source failure
+    }
+
     // A source that does not override FetchMany, so the interface's default (one Fetch after another) runs.
     private sealed class DefaultBatchSource(FakeContextSource inner) : IContextSource
     {
