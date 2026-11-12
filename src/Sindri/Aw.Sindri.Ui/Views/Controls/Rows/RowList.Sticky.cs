@@ -22,28 +22,21 @@ internal sealed partial class RowList
         }
 
         var offset = _scroll.Offset.Y;
-        if (_groups.Count == 0 || offset <= 0.5)
+        var states = _run.States;
+        if (states.Count == 0 || offset <= 0.5)
         {
             _sticky.IsVisible = false;
             return;
         }
 
-        var active = 0;
-        for (var i = 0; i < _groupTops.Count; i++)
+        var headerHeight = HeightOf("Row.GroupHeader", 28);
+        var (active, next) = ActiveGroup(offset, headerHeight);
+        if (!ReferenceEquals(_sticky.Group, states[active].Group))
         {
-            if (_groupTops[i] <= offset + 0.5)
-            {
-                active = i;
-            }
+            _sticky.Fill(states[active].Group);
         }
 
-        var next = active + 1 < _groupTops.Count ? _groupTops[active + 1] : double.PositiveInfinity;
-        if (!ReferenceEquals(_sticky.Group, _groups[active]))
-        {
-            _sticky.Fill(_groups[active]);
-        }
-
-        _sticky.RenderTransform = new TranslateTransform(0, StickyHeader.PushOut(next, offset, HeightOf("Row.GroupHeader", 28)));
+        _sticky.RenderTransform = new TranslateTransform(0, StickyHeader.PushOut(next, offset, headerHeight));
         _sticky.IsVisible = true;
     }
 
@@ -64,6 +57,27 @@ internal sealed partial class RowList
             scroll.Offset = new Vector(0, Math.Max(0, scroll.Offset.Y - (inset - top)));
             UpdateLayout();
         }
+    }
+
+    // Tops come from counts, not stored pixels: a header is one height and a row another, and the row height follows the density now (an ancestor's class comfortable).
+    private (int Active, double NextTop) ActiveGroup(double offset, double headerHeight)
+    {
+        var rowHeight = RowHeight;
+        var states = _run.States;
+        var active = 0;
+        var top = 0d;
+        for (var i = 0; i < states.Count; i++)
+        {
+            if (top > offset + 0.5)
+            {
+                return (active, top);
+            }
+
+            active = i;
+            top += headerHeight + (states[i].Visible * rowHeight);
+        }
+
+        return (active, double.PositiveInfinity);
     }
 
     private double HeightOf(string key, double fallback) => this.TryFindResource(key, ActualThemeVariant, out var v) && v is double d ? d : fallback;

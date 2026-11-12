@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -22,13 +23,25 @@ internal sealed class Row : TemplatedControl
 
     private const double Gap = 12;
 
+    private static readonly RowColumn[] _noColumns = [];
+
+    private static long _cellsBuilt;
+
     private Parts? _parts;
+    private IRowItem? _watched;
+    private IBrush? _ink;
+    private IBrush? _inkMuted;
+    private double[] _widths = [];
+    private object? _builtFor;
 
     static Row()
     {
         FocusableProperty.OverrideDefaultValue<Row>(defaultValue: true);
         AffectsMeasure<Row>(ColumnsProperty);
     }
+
+    /// <summary>How many cells (fact cells and action buttons) rows ever made. A recycle reuses them, so this grows with the containers made and not with the rows scrolled past.</summary>
+    internal static long CellsBuilt => Interlocked.Read(ref _cellsBuilt);
 
     /// <summary>The fact columns of the list, in order.</summary>
     public IReadOnlyList<RowColumn>? Columns
@@ -42,6 +55,15 @@ internal sealed class Row : TemplatedControl
     {
         get => GetValue(VisibleColumnsProperty);
         set => SetValue(VisibleColumnsProperty, value);
+    }
+
+    public Row()
+    {
+        ActualThemeVariantChanged += (_, _) =>
+        {
+            _ink = _inkMuted = null;
+            Refresh();
+        };
     }
 
     /// <inheritdoc />
@@ -66,7 +88,12 @@ internal sealed class Row : TemplatedControl
     {
         base.OnPropertyChanged(change);
         ArgumentNullException.ThrowIfNull(change);
-        if (change.Property == DataContextProperty || change.Property == ColumnsProperty)
+        if (change.Property == DataContextProperty)
+        {
+            Watch(DataContext as IRowItem);
+            Refresh();
+        }
+        else if (change.Property == ColumnsProperty)
         {
             Refresh();
         }
@@ -80,6 +107,36 @@ internal sealed class Row : TemplatedControl
         }
     }
 
+    /// <inheritdoc />
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        Watch(DataContext as IRowItem);
+    }
+
+    /// <inheritdoc />
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+        Watch(item: null);
+    }
+
+    // The row follows its item: a changed title, age or fact redraws the text in place (IRowItem's doc).
+    private void Watch(IRowItem? item)
+    {
+        var wanted = item is not null && TopLevel.GetTopLevel(this) is not null ? item : null;
+        if (ReferenceEquals(_watched, wanted))
+        {
+            return;
+        }
+
+        _watched?.PropertyChanged -= OnItemChanged;
+        _watched = wanted;
+        _watched?.PropertyChanged += OnItemChanged;
+    }
+
+    private void OnItemChanged(object? sender, PropertyChangedEventArgs e) => Refresh();
+
     private void Refresh()
     {
         if (_parts is not { } p || DataContext is not IRowItem item)
@@ -87,14 +144,19 @@ internal sealed class Row : TemplatedControl
             return;
         }
 
-        p.Glyph.Glyph = RowGlyphs.For(item.Kind, item.StateClass, item.StateKey);
+        var glyph = RowGlyphs.For(item.Kind, item.StateClass, item.StateKey);
+        if (p.Glyph.Glyph != glyph)
+        {
+            p.Glyph.Glyph = glyph;
+        }
+
         var state = StateWord(item);
         AutomationProperties.SetName(p.Glyph, state);
         AutomationProperties.SetName(this, SpokenName(item, state));
         p.Id.Text = item.Id;
         p.Title.Text = item.Title;
         p.Title.FontWeight = item.Unread ? FontWeight.Medium : FontWeight.Normal;
-        _ = p.Title.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(item.Unread ? "Brush.Ink" : "Brush.InkMuted"));
+        p.Title.Foreground = item.Unread ? Ink() : InkMuted();
         p.Sub.Text = item.SubLine;
         p.Sub.IsVisible = !string.IsNullOrEmpty(item.SubLine);
         p.Age.Text = item.Age;
@@ -134,22 +196,29 @@ internal sealed class Row : TemplatedControl
         var you = waits.Who == RowWho.Me;
         cell.Text = you ? "you" : waits.Name;
         cell.FontWeight = you ? FontWeight.Bold : FontWeight.Normal;
-        _ = cell.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(you ? "Brush.Ink" : "Brush.InkMuted"));
+        cell.Foreground = you ? Ink() : InkMuted();
     }
 
+    // The cells (a Border per column) are made once per Row, when the columns are set; a recycle sets the text and a few properties on them (#2978 review 11).
     private void FillFacts(Panel host, IRowItem item)
     {
-        host.Children.Clear();
-        foreach (var column in Columns ?? [])
+        var columns = Columns ?? _noColumns;
+        if (!ReferenceEquals(_builtFor, columns) || host.Children.Count != columns.Count || _widths.Length != columns.Count)
         {
-            var width = ColumnWidth(column);
-            var cell = new Border { Name = "Fact_" + column.Key, Width = width, ClipToBounds = true, Margin = new Thickness(Gap, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-            if (item.Facts.TryGetValue(column.Key, out var fact))
+            _builtFor = columns;
+            host.Children.Clear();
+            _widths = [.. columns.Select(ColumnWidth)];
+            for (var i = 0; i < columns.Count; i++)
             {
-                cell.Child = RowFactViews.Build(fact, width);
+                host.Children.Add(new Border { Name = "Fact_" + columns[i].Key, Width = _widths[i], ClipToBounds = true, Margin = new Thickness(Gap, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center });
+                _ = Interlocked.Increment(ref _cellsBuilt);
             }
+        }
 
-            host.Children.Add(cell);
+        for (var i = 0; i < columns.Count; i++)
+        {
+            var cell = (Border)host.Children[i];
+            RowFactViews.Update(cell, item.Facts.TryGetValue(columns[i].Key, out var fact) ? fact : null, _widths[i]);
         }
 
         ShowColumns();
@@ -164,18 +233,41 @@ internal sealed class Row : TemplatedControl
 
         for (var i = 0; i < p.Facts.Children.Count; i++)
         {
-            p.Facts.Children[i].IsVisible = i < VisibleColumns;
+            var visible = i < VisibleColumns;
+            if (p.Facts.Children[i].IsVisible != visible)
+            {
+                p.Facts.Children[i].IsVisible = visible;
+            }
         }
     }
 
     private static void FillActions(Panel host, IRowItem item)
     {
-        host.Children.Clear();
-        foreach (var action in item.Actions)
+        var actions = item.Actions;
+        while (host.Children.Count > actions.Count)
         {
-            host.Children.Add(new Button { Content = action.Label, Command = action.Command, Margin = new Thickness(4, 0, 0, 0), Padding = new Thickness(8, 0), MinHeight = 22, VerticalAlignment = VerticalAlignment.Center });
+            host.Children.RemoveAt(host.Children.Count - 1);
+        }
+
+        for (var i = 0; i < actions.Count; i++)
+        {
+            if (i >= host.Children.Count)
+            {
+                host.Children.Add(new Button { Margin = new Thickness(4, 0, 0, 0), Padding = new Thickness(8, 0), MinHeight = 22, VerticalAlignment = VerticalAlignment.Center });
+                _ = Interlocked.Increment(ref _cellsBuilt);
+            }
+
+            var button = (Button)host.Children[i];
+            button.Content = actions[i].Label;
+            button.Command = actions[i].Command;
         }
     }
+
+    private IBrush? Ink() => _ink ??= Brush("Brush.Ink");
+
+    private IBrush? InkMuted() => _inkMuted ??= Brush("Brush.InkMuted");
+
+    private IBrush? Brush(string key) => this.TryFindResource(key, ActualThemeVariant, out var v) ? v as IBrush : null;
 
     private double ColumnWidth(RowColumn column) => Resource(column.Wide ? "Row.Col.FactWide" : "Row.Col.Fact", column.Wide ? 136 : 104);
 

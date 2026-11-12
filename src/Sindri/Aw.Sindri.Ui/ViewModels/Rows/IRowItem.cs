@@ -1,10 +1,18 @@
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 namespace Aw.Sindri.Ui.ViewModels.Rows;
 
-/// <summary>A row as RowList draws it: a subset of the API's work row, so the adapter is a plain map.</summary>
+/// <summary>
+/// A row as RowList draws it: a subset of the API's work row, so the adapter is a plain map. A row updates in place two ways: raise
+/// <see cref="INotifyPropertyChanged.PropertyChanged"/> (the row redraws its text), or replace the item with a new object that has the same <see cref="Key"/>
+/// (the list swaps that one container's data and keeps focus and the peek).
+/// </summary>
 [SuppressMessage("Design", "MA0182", Justification = "Stub of the red commit (#2978); the control commit uses it.")]
-internal interface IRowItem
+internal interface IRowItem : INotifyPropertyChanged
 {
+    /// <summary>The stable identity: the API's source:kind:native id. Selection, the peek, the cursor and diffs match on it, never on object reference.</summary>
+    public string Key { get; }
+
     /// <summary>The display id (#4182, BIL-301, r-0412).</summary>
     public string Id { get; }
 

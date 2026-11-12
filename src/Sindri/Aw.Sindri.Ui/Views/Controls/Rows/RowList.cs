@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Rows;
@@ -38,9 +39,9 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
     private const string RowKey = "row";
     private const string HeaderKey = "header";
 
-    private readonly List<INotifyCollectionChanged> _watched = [];
-    private readonly List<double> _groupTops = [];
-    private readonly List<IRowGroup> _groups = [];
+    private readonly RowRun _run;
+    private INotifyCollectionChanged? _outer;
+    private bool _attached;
     private ScrollViewer? _scroll;
     private RowGroupHeader? _sticky;
 
@@ -65,6 +66,8 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
         AddHandler(PointerPressedEvent, OnPointerPressed, RoutingStrategies.Tunnel);
         AddHandler(TappedEvent, OnTapped);
         AddHandler(DoubleTappedEvent, OnDoubleTapped);
+        _run = new RowRun(OnItemsChanged, OnCollapsed);
+        ((ItemsControl)this).ItemsSource = _run.Entries;
     }
 
     /// <summary>The groups, each an <see cref="IRowGroup"/>.</summary>
@@ -88,7 +91,7 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
         set => SetValue(PeekColumnsProperty, value);
     }
 
-    /// <summary>The row being peeked or open.</summary>
+    /// <summary>The row being peeked or open: an <see cref="IRowItem"/> or its key. A row is selected when its <see cref="IRowItem.Key"/> matches, so a poll that swaps in fresh objects keeps the selection.</summary>
     public object? SelectedItem
     {
         get => GetValue(SelectedItemProperty);
@@ -107,6 +110,12 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
 
     /// <summary>How many row containers were ever made, counting recycled ones once.</summary>
     internal int ContainersCreated { get; private set; }
+
+    /// <summary>How many times the panel has asked the list to fill a container (a header or a row) with an entry.</summary>
+    internal int ContainersPrepared { get; private set; }
+
+    /// <summary>The fixed row height now, 32 px or 40 px when an ancestor has class comfortable (the grammar puts it on .app).</summary>
+    internal double RowHeight => HeightOf(IsComfortable() ? "Row.Height.Comfortable" : "Row.Height.Default", IsComfortable() ? 40 : 32);
 
     /// <summary>Raised when the cursor row should open or close its peek.</summary>
     public event EventHandler<RowRequestEventArgs>? PeekRequested;
@@ -129,7 +138,7 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
     // While the peek is open, the cursor moving to another row moves the peek with it (j/k, arrows, a click).
     private void OnRowFocused(object? source)
     {
-        if (IsPeekOpen && (source as Visual)?.FindAncestorOfType<Row>(includeSelf: true)?.DataContext is { } item && !ReferenceEquals(item, SelectedItem))
+        if (IsPeekOpen && (source as Visual)?.FindAncestorOfType<Row>(includeSelf: true)?.DataContext is { } item && !IsSelected(item))
         {
             RaisePeek(new RowRequestEventArgs { Item = item, Follow = true });
         }
@@ -140,6 +149,23 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
     internal void RaiseOpen(RowRequestEventArgs e) => OpenRequested?.Invoke(this, e);
 
     internal void RaiseBack(RowRequestEventArgs e) => BackRequested?.Invoke(this, e);
+
+    /// <inheritdoc />
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _attached = true;
+        Rebuild();   // subscribes, and catches what changed while the list was away
+    }
+
+    /// <inheritdoc />
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+        _attached = false;
+        _outer?.CollectionChanged -= OnGroupsChanged;
+        _run.Unsubscribe();
+    }
 
     /// <inheritdoc />
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
@@ -172,6 +198,7 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
     {
         ArgumentNullException.ThrowIfNull(container);
         base.PrepareContainerForItemOverride(container, item, index);
+        ContainersPrepared++;
         if (container is RowGroupHeader header && item is GroupEntry entry)
         {
             header.Fill(entry.Group);
@@ -192,6 +219,10 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
             row.Classes.Set("sel", value: false);
             row.DataContext = null;
         }
+        else if (container is RowGroupHeader header)
+        {
+            header.Fill(group: null);
+        }
 
         base.ClearContainerForItemOverride(container);
     }
@@ -200,7 +231,7 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
     {
         row.Columns = Columns;
         row.VisibleColumns = IsPeekOpen ? PeekColumns : int.MaxValue;
-        row.Classes.Set("sel", SelectedItem is not null && ReferenceEquals(row.DataContext, SelectedItem));
+        row.Classes.Set("sel", IsSelected(row.DataContext));
     }
 
     private void ForEachRow(Action<Row> action)
@@ -214,55 +245,51 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
         }
     }
 
-    // Flattens the groups into header and row entries. A change in the groups or in any group's rows builds the run again; the rows in view are rebuilt, nothing else is.
+    private bool IsSelected(object? item) => SelectedItem is { } selected && item is not null && (ReferenceEquals(item, selected) || (RowRun.KeyOf(item) is { } key && string.Equals(key, RowRun.KeyOf(selected), StringComparison.Ordinal)));
+
+    private bool IsComfortable() => this.GetSelfAndLogicalAncestors().OfType<StyledElement>().Any(a => a.Classes.Contains("comfortable"));
+
+    // Syncs the run with the groups. Groups and rows that are still there keep their entries, so their containers and focus stay.
     private void Rebuild()
     {
-        foreach (var watched in _watched)
+        var cursor = BeginCursor(fallback: -1, lookupIndex: true);
+        _outer?.CollectionChanged -= OnGroupsChanged;
+        _outer = ItemsSource as INotifyCollectionChanged;
+        if (_attached)
         {
-            watched.CollectionChanged -= OnSourceChanged;
+            _outer?.CollectionChanged += OnGroupsChanged;
         }
 
-        _watched.Clear();
-        _groups.Clear();
-        _groupTops.Clear();
-        var entries = new List<object>();
-        var rowHeight = HeightOf(Classes.Contains("comfortable") ? "Row.Height.Comfortable" : "Row.Height.Default", 32);
-        var headerHeight = HeightOf("Row.GroupHeader", 28);
-        var top = 0d;
-        Watch(ItemsSource);
-        foreach (var group in ItemsSource?.OfType<IRowGroup>() ?? [])
+        if (_run.Rebuild(ItemsSource, subscribe: _attached))
         {
-            Watch(group.Items);
-            _groups.Add(group);
-            _groupTops.Add(top);
-            entries.Add(new GroupEntry(group));
-            var count = 0;
-            foreach (var item in group.Items)
-            {
-                entries.Add(item);
-                count++;
-            }
-
-            top += headerHeight + (count * rowHeight);
+            ((ItemsControl)this).ItemsSource = _run.Entries;
         }
 
-        _ = SetValue(ItemsControl.ItemsSourceProperty, entries);
-        UpdateSticky();
+        EndEdit(cursor);
     }
 
-    private void Watch(IEnumerable? source)
+    private void OnGroupsChanged(object? sender, NotifyCollectionChangedEventArgs e) => Rebuild();
+
+    // One group's rows changed: the run applies the same change to its entries. Focus stays on its row; if that row left, it goes to the row now at its place.
+    private void OnItemsChanged(GroupState state, NotifyCollectionChangedEventArgs e)
     {
-        if (source is INotifyCollectionChanged changing)
+        var cursor = BeginCursor(fallback: -1, lookupIndex: false);
+        var removedAt = _run.Apply(state, e);
+        if (removedAt >= 0)
         {
-            changing.CollectionChanged += OnSourceChanged;
-            _watched.Add(changing);
+            PendingFallback = removedAt;
         }
+
+        EndEdit(cursor);
     }
 
-    private void OnSourceChanged(object? sender, NotifyCollectionChangedEventArgs e) => Rebuild();
+    // A group folded or unfolded: its rows leave or return; the header stays.
+    private void OnCollapsed(GroupState state)
+    {
+        var cursor = BeginCursor(fallback: _run.HeaderIndex(state), lookupIndex: false);
+        _run.SyncGroup(state);
+        EndEdit(cursor);
+    }
 
     private void OnScrollChanged(object? sender, ScrollChangedEventArgs e) => UpdateSticky();
-
-    // The entry for a group header in the flat run.
-    private sealed record GroupEntry(IRowGroup Group);
 }
