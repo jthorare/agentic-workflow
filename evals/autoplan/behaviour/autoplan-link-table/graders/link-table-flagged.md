@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: 'order_note_link[\s\S]{0,400}(?:orders\.note_id|foreign[- ]key|\bFK\b)|(?:orders\.note_id|foreign[- ]key|\bFK\b)[\s\S]{0,400}order_note_link'
+pattern: 'order_note_link[\s\S]{0,400}(?:orders\.note_id|note_id\s+(?:column\s+)?on\s+(?:the\s+)?orders|column on (?:the )?orders)|(?:orders\.note_id|note_id\s+(?:column\s+)?on\s+(?:the\s+)?orders|column on (?:the )?orders)[\s\S]{0,400}order_note_link'
 flags: i
 ---
 

@@ -11,4 +11,4 @@ Nobody is around to answer questions. The owner's only decision: D1, only the la
 
 Environment note: Bash cannot write files here. Write every file with the Write tool, inside the current directory, under the usual packet folder.
 
-When you are done, say where the 50-booking cap appears in the files you wrote.
+When you are done, paste the TDD's rules and limits into your reply.
