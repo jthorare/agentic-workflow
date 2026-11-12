@@ -22,11 +22,11 @@ The answer shapes the fix you propose. It is not a "future improvements" paragra
    1. *Code:* the same pattern (grep, symbol usages, the same API called elsewhere). Say how you searched when you
       found none.
    2. *Sibling surfaces:* other screens, tabs or endpoints that show the same data or call the same code. When the
-      repo has a per-repo config, run `skills/_shared/repo-config.sh get repo siblingSurfaces --json` (a route-map path
+      repo has a per-repo config, run `bash "$SHARED_DIR/repo-config.sh" get repo siblingSurfaces --json` (a route-map path
       or a glob list); when the reader is missing, or it exits 3 or 4, derive them from the route map and the code you
       found in 1.
    3. *Variants:* every product variant the bug could reach, not only the one reported. Run
-      `skills/_shared/repo-config.sh get repo variants --json` (an `axis` and its `values`; a value with `baseline`
+      `bash "$SHARED_DIR/repo-config.sh" get repo variants --json` (an `axis` and its `values`; a value with `baseline`
       is the reference one); when the reader is missing, or it exits 3 or 4, name the variants the code shows, or
       write "no variants found".
    4. *Data:* when the bug damaged or can damage stored records and you have read-only access, run one read-only query

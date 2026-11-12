@@ -72,7 +72,7 @@ box-wide heavy-job lock (at most two heavy jobs on the box, `AW_HEAVY_SLOTS`).
 (`AW_BUGFIX_CHECK_TIMEOUT_SECONDS`); it is stopped with SIGTERM first (its EXIT trap runs), then killed after a 30 s grace
 (`AW_BUGFIX_CHECK_GRACE_SECONDS`), and nothing it started is left running. Report the printed reason and follow it.
 
-**Per-repo config (optional).** Several steps below read `<repo>/.agentic-workflow/repo.json` through `skills/_shared/repo-config.sh get repo <key> --json` (keys: `variants`, `siblingSurfaces`, `dataRepair`, `environments`, `tickets`, `skipReviewLoop`). Every such step reads the same way: run the reader; when it is missing, or it exits 3 (no file) or 4 (no key), skip the step and keep the behaviour this skill had without it. Exit 5 (schema-invalid) or 2 (usage): stop and show the reader's message.
+**Per-repo config (optional).** Several steps below read `<repo>/.agentic-workflow/repo.json` through `bash "$SHARED_DIR/repo-config.sh" get repo <key> --json` (keys: `variants`, `siblingSurfaces`, `dataRepair`, `environments`, `tickets`). Every such step reads the same way: run the reader; when it is missing, or it exits 3 (no file) or 4 (no key), skip the step and keep the behaviour this skill had without it. Exit 5 (schema-invalid): skip that step and say so in `resolution.md`; never stop the fix because of it. Exit 2 (usage): fix the call.
 
 **Dispatch briefs:** the brief-scope gate reads each subagent prompt. Every dispatch below must
 contain explicit `Goal:`, `Acceptance criteria:` and `Proof command:` lines.
@@ -226,11 +226,11 @@ send the implementer back to fix the code instead.
 
 ### Data repair
 
-When the handoff says the bug damaged stored records (its Sweep has a data row with a count above zero, or the Root Cause says rows were written wrong), the repair is part of the fix, not a separate favour. Read `skills/_shared/repo-config.sh get repo dataRepair --json`:
+When the handoff says the bug damaged stored records (its Sweep has a data row with a count above zero, or the Root Cause says rows were written wrong), the repair is part of the fix, not a separate favour. Run `bash "$SHARED_DIR/repo-config.sh" get repo dataRepair --json`:
 
 - `mechanism` is the form the repair takes (for example a migration in the repo's own stack). Use it, in the same stack and with the same runner as the code.
 - `never` lists forms that are refused (for example a raw SQL file or a console UPDATE). A candidate that carries one goes back to Phase 4 with that reason: "the repo forbids <form>; write it as <mechanism>".
-- Every repair carries a **dry-run count** (how many rows it would change, from the read-only query of the sweep), and runs `validator` after it when `validator` is set. The count and the validator's output go in `resolution.md`.
+- Every repair carries a **dry-run count** (how many rows it would change, from the read-only query of the sweep), and runs `validator` after it when `validator` is set. Run the repair and its `validator` against a local or dev database, never a shared one. The count and the validator's output go in `resolution.md`.
 
 No `dataRepair` (no file, or no key): the repair is a migration in the repo's own migration system when it has one; say in `resolution.md` that no policy was configured, and still give the dry-run count.
 
@@ -299,7 +299,7 @@ Outcome:
    `AW_META_LANE` set) don't remove it: ship from that worktree, where the branch is checked out; the tree
    goes away through meta's merge and close triggers or a sweep meta runs.
 5. **Ship (default).** A resolved fix ships unless the person said not to (an explicit "do not open a PR" or "stop at the branch" wins over everything here). The chain is `/shipRelease` for the winning branch (outside a meta lane; in one, from the worktree that holds the branch). It opens the PR and runs the PR champion loop (`$SHARED_DIR/pr-champion.md`); `--no-champion` passes on to it. Merging stays the person's call.
-6. **After the merge and deploy** (when the person comes back with "deployed", or `/landAndDeploy` finished): re-check the reported URL or entity with the same check or a fresh look and say what you saw. Then, with the person's OK (**Ask the user**), close the tracker issue and file each follow-up row of the sweep to `tickets.followUpTeam` in state `tickets.followUpState` (`skills/_shared/repo-config.sh get repo tickets --json`; no config: file them where the ticket lives and say where).
+6. **After the merge and deploy** (when the person comes back with "deployed", or `/landAndDeploy` finished): re-check the reported URL or entity with the same check or a fresh look and say what you saw. Then, with the person's OK (**Ask the user**), close the tracker issue and file each follow-up row of the sweep to `tickets.followUpTeam` in state `tickets.followUpState` (`bash "$SHARED_DIR/repo-config.sh" get repo tickets --json`; no config: file them where the ticket lives and say where).
 
 Report to the user:
 
@@ -325,7 +325,7 @@ Shipped: {PR link, stopped before merge | not shipped: why}
 Report: {STATE}/resolution.md
 ```
 
-The Environments rows come from `skills/_shared/repo-config.sh get repo environments --json` (an ordered list of names). For each name write `reproduced: yes|no|not checked` and `fixed: yes|no|not checked`, so it is clear which environment is broken. No config: leave the line as `not configured`.
+The Environments rows come from `bash "$SHARED_DIR/repo-config.sh" get repo environments --json` (an ordered list of names). For each name write `reproduced: yes|no|not checked` and `fixed: yes|no|not checked`, so it is clear which environment is broken. No config: leave the line as `not configured`.
 
 ## Under Sindri (`AW_RESULT_SKILL=bugFixOrchestrator`)
 
