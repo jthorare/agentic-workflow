@@ -64,6 +64,35 @@ public sealed class ConnectionTileRenameTests
         Assert.Equal((false, "linear:home", "home", string.Empty), (tile.IsRenaming, tile.ConnectionName, tile.Account, tile.RenameError));
     }
 
+    // #2708: one tile per service lists every connection of it; Rename belongs to the row that was asked, never to the tile's first row.
+    [Fact]
+    public async Task Renaming_the_first_of_two_connections_keeps_both_on_the_tile_and_renames_that_row()
+    {
+        _ = _f.Server.SeedConnection(FakeSindriApi.ConnectionRow("linear:work2"));
+        var tile = await Connected();   // linear:work
+        var work = tile.Connections.Single(r => string.Equals(r.Name, "linear:work", StringComparison.Ordinal));
+
+        tile.StartRename(work);
+        tile.RenameText = "zebra";
+        await tile.Rename(Token);
+
+        Assert.Equal(["linear:work2", "linear:zebra"], [.. tile.Connections.Select(r => r.Name).Order(StringComparer.Ordinal)]);
+        Assert.Equal(["rename linear:work zebra"], [.. _f.Server.ConnectionCallLog.Where(c => c.StartsWith("rename", StringComparison.Ordinal))]);
+    }
+
+    // #2708: with two lines, a screen reader and the UI driver tell the Rename buttons apart.
+    [Fact]
+    public async Task Each_connection_line_has_its_own_Rename_name_and_id()
+    {
+        _ = _f.Server.SeedConnection(FakeSindriApi.ConnectionRow("linear:work2"));
+        var tile = await Connected();
+
+        var rows = tile.Connections.OrderBy(r => r.Name, StringComparer.Ordinal).ToArray();
+
+        Assert.Equal(["Rename linear:work", "Rename linear:work2"], [.. rows.Select(r => r.RenameName)]);
+        Assert.Equal(["ServiceTileRename.linear:work", "ServiceTileRename.linear:work2"], [.. rows.Select(r => r.RenameId)]);
+    }
+
     [Fact]
     public async Task A_name_that_is_taken_keeps_the_field_open_and_says_so_without_a_code()
     {

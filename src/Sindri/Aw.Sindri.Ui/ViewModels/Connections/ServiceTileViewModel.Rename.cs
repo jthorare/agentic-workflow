@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Aw.Kernel;
 
 namespace Aw.Sindri.Ui.ViewModels.Connections;
@@ -41,17 +42,40 @@ internal sealed partial class ServiceTileViewModel
     /// <summary>True when Save does something: a label is typed, no rename is on the way, and it is not the text the server just refused.</summary>
     public bool CanSaveRename => IsRenaming && !_renameSending && RenameText.Trim().Length > 0 && !string.Equals(RenameText.Trim(), _refusedLabel, StringComparison.Ordinal);
 
+    /// <summary>Every connection of this service, one line each (#2708).</summary>
+    public ObservableCollection<ConnectionRowViewModel> Connections { get; } = [];
+
+    /// <summary>The connection the open field renames; null while it is closed.</summary>
+    private ConnectionRowViewModel? _target;
+
+    /// <summary>The connection name the open field renames ('linear:work'), or empty.</summary>
+    public string RenamingName => _target?.Name ?? string.Empty;
+
+    /// <summary>Opens the field on one connection's label: Save renames that connection, whichever row the tile reads first.</summary>
+    /// <param name="row">The connection to rename.</param>
+    internal void StartRename(ConnectionRowViewModel row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        _target = row;
+        _refusedLabel = null;
+        (RenameText, RenameError) = (LabelOf(row.Name), string.Empty);
+        IsRenaming = true;
+        OnChanged(nameof(RenamingName));
+    }
+
+    private static string LabelOf(string name)
+    {
+        var at = name.IndexOf(':', StringComparison.Ordinal);
+        return at >= 0 ? name[(at + 1)..] : name;
+    }
+
     /// <summary>Opens the field with the current label.</summary>
     internal void StartRename()
     {
-        if (_row is null)
+        if (_row is { } first)
         {
-            return;
+            StartRename(first);
         }
-
-        _refusedLabel = null;
-        (RenameText, RenameError) = (Account, string.Empty);
-        IsRenaming = true;
     }
 
     /// <summary>Closes the field and leaves the label as it was.</summary>
@@ -59,7 +83,9 @@ internal sealed partial class ServiceTileViewModel
     {
         IsRenaming = false;
         _refusedLabel = null;
-        (RenameText, RenameError) = (Account, string.Empty);
+        (RenameText, RenameError) = (_target is { } t ? LabelOf(t.Name) : Account, string.Empty);
+        _target = null;
+        OnChanged(nameof(RenamingName));
     }
 
     /// <summary>Saves the typed label: sent once, nothing when it is the label already. A refusal keeps the field open and says why in words.</summary>
@@ -68,12 +94,12 @@ internal sealed partial class ServiceTileViewModel
     internal async Task Rename(CancellationToken cancellationToken)
     {
         var label = RenameText.Trim();
-        if (!IsRenaming || _renameSending || label.Length == 0 || _row is not { } row)
+        if (!IsRenaming || _renameSending || label.Length == 0 || _target is not { } row)
         {
             return;
         }
 
-        if (string.Equals(label, Account, StringComparison.Ordinal))
+        if (string.Equals(label, LabelOf(row.Name), StringComparison.Ordinal))
         {
             CancelRename();
             return;
@@ -90,7 +116,7 @@ internal sealed partial class ServiceTileViewModel
         catch (Exception) when (!cancellationToken.IsCancellationRequested)
 #pragma warning restore CA1031
         {
-            if (IsRenaming && ReferenceEquals(_row, row))
+            if (IsRenaming && ReferenceEquals(_target, row))
             {
                 RenameError = Labels.RenameFailed;
             }
@@ -106,11 +132,11 @@ internal sealed partial class ServiceTileViewModel
     private async Task Send(ConnectionRowViewModel row, string label, CancellationToken cancellationToken)
     {
         var renamed = await _actions.Rename(row.Name, label, cancellationToken).ConfigureAwait(true);
-        if (!ReferenceEquals(_row, row))
+        if (!ReferenceEquals(_target, row))
         {
             if (!renamed.IsError)
             {
-                await _changed().ConfigureAwait(true);   // the tile shows another connection now, but the rename happened: read again so the renamed connection's own tile shows its new name
+                await _changed().ConfigureAwait(true);   // the field moved to another connection meanwhile, but the rename happened: read again so the list shows the new name
             }
 
             return;   // this answer says nothing to the field on screen
@@ -131,6 +157,8 @@ internal sealed partial class ServiceTileViewModel
         row.Update(row.View with { Name = renamed.Value.Name });
         Raise(nameof(ConnectionName), nameof(Account), nameof(Subtitle), nameof(AccessibleName));
         IsRenaming = false;
+        _target = null;
+        OnChanged(nameof(RenamingName));
         await _changed().ConfigureAwait(true);
     }
 
@@ -145,18 +173,31 @@ internal sealed partial class ServiceTileViewModel
         _ => Labels.RenameFailed,
     };
 
-    /// <summary>The connection this tile shows, or null: the page sets it on every read.</summary>
+    /// <summary>The one connection this tile shows, or none.</summary>
     /// <param name="row">The matching row.</param>
-    internal void Bind(ConnectionRowViewModel? row)
+    internal void Bind(ConnectionRowViewModel? row) => Bind(row is null ? [] : [row]);
+
+    /// <summary>The connections of this tile's service, in list order; the first one drives the chip and the primary button. The page sets them on every read.</summary>
+    /// <param name="rows">The matching rows.</param>
+    internal void Bind(IReadOnlyList<ConnectionRowViewModel> rows)
     {
-        var closeField = IsRenaming && (row is null || !string.Equals(row.Name, _row?.Name, StringComparison.Ordinal));   // the field was for the connection that was bound
-        _row = row;
+        ArgumentNullException.ThrowIfNull(rows);
+        var closeField = IsRenaming && (_target is null || !rows.Any(r => string.Equals(r.Name, _target.Name, StringComparison.Ordinal)));   // the field was for a connection that is gone
+        _row = rows.Count > 0 ? rows[0] : null;
+        Patch.To(Connections, rows);
         if (closeField)
         {
             CancelRename();
         }
+        else if (IsRenaming && rows.FirstOrDefault(r => string.Equals(r.Name, _target?.Name, StringComparison.Ordinal)) is { } same)
+        {
+            _target = same;   // the read made a fresh row object for the same connection
+        }
 
-        Raise(nameof(IsOffered), nameof(IsConnected), nameof(NeedsAttention), nameof(ConnectionName), nameof(Account), nameof(LastUsedText), nameof(Subtitle), nameof(AccessibleName));
+        Raise(nameof(IsOffered), nameof(IsConnected), nameof(NeedsAttention), nameof(ConnectionName), nameof(Account), nameof(LastUsedText), nameof(Subtitle), nameof(AccessibleName), nameof(HasMany));
         RaiseState();
     }
+
+    /// <summary>True when the service has more than one connection: the tile then lists each with its own Rename.</summary>
+    public bool HasMany => Connections.Count > 1;
 }
