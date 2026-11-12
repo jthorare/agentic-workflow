@@ -16,5 +16,5 @@ internal static partial class Labels
     internal const string SurfaceChoiceOn = "Product surface choice: on";
 
     /// <summary>The sentence under the line: what Jev reads, where to change it, whose retention applies.</summary>
-    internal const string SurfaceChoiceSentence = "Jev reads each candidate's name, file paths and edges to decide whether lookalikes are one surface. Change it in the profile; it takes effect once you approve. Retention is the provider's.";
+    internal const string SurfaceChoiceSentence = "Jev reads each candidate's name, file paths and edges to decide whether lookalikes are one surface. Change it in the profile; it takes effect when you save. Retention is the provider's.";
 }

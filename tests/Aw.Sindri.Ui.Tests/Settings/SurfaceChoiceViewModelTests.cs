@@ -37,6 +37,6 @@ public sealed class SurfaceChoiceViewModelTests
         var line = Line("on");
 
         Assert.Equal("Product surface choice", line.Title);
-        Assert.Equal("Jev reads each candidate's name, file paths and edges to decide whether lookalikes are one surface. Change it in the profile; it takes effect once you approve. Retention is the provider's.", line.Sentence);
+        Assert.Equal("Jev reads each candidate's name, file paths and edges to decide whether lookalikes are one surface. Change it in the profile; it takes effect when you save. Retention is the provider's.", line.Sentence);
     }
 }

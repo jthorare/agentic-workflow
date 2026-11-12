@@ -18,7 +18,7 @@ internal static partial class Labels
     internal const string SetupBrowseTitle = "Choose the top folder of a git checkout";
 
     /// <summary>The line over the repo form.</summary>
-    internal const string SetupRepoBody = "Choose the top folder of a git checkout. Adding it changes your settings, so you approve them next.";
+    internal const string SetupRepoBody = "Choose the top folder of a git checkout. Adding it saves your settings.";
 
     /// <summary>The note under the repo form.</summary>
     internal const string SetupRepoNote = "Linked worktrees resolve to their main checkout. If the folder is already added, or is inside Sindri's own folder, Sindri says so here and changes nothing.";

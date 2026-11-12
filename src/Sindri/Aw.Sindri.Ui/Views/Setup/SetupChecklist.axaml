@@ -30,13 +30,6 @@
       </Border>
     </Grid>
 
-    <Border x:Name="SetupRunLine" Classes="run-line" IsVisible="{Binding HasSteps}">
-      <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-        <TextBlock Classes="caption muted" Text="{Binding RunLineText}" />
-        <TextBlock Classes="caption mono" Text="{Binding RunCommand}" />
-      </StackPanel>
-    </Border>
-
     <Border x:Name="SetupReadingName" IsVisible="{Binding IsReading}" AutomationProperties.Name="{Binding ReadingText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
       <TextBlock Classes="caption subtle" Text="{Binding ReadingText}" AutomationProperties.AccessibilityView="Raw" />
     </Border>

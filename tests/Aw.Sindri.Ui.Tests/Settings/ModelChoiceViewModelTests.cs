@@ -25,7 +25,7 @@ public sealed class ModelChoiceViewModelTests
 
     [Fact]
     public void Off_says_steps_use_the_agents_default_with_no_jev_call() =>
-        Assert.Equal("Model choice: off. Steps use the agent's default, with no Jev call.", Line("off").Line);
+        Assert.Equal("Model choice: off. Steps use the agent's default model; nothing picks one per step.", Line("off").Line);
 
     [Fact]
     public void The_sentence_says_what_jev_reads_where_to_change_it_and_that_retention_is_the_providers() =>

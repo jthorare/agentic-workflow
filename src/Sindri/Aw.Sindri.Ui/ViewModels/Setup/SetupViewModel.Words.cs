@@ -16,12 +16,6 @@ internal sealed partial class SetupViewModel
     /// <summary>The one line under the lead.</summary>
     public string SubText => Labels.SetupSubline;
 
-    /// <summary>"You've run", before the command.</summary>
-    public string RunLineText => Labels.SetupRunLine;
-
-    /// <summary>The command the person already ran.</summary>
-    public string RunCommand => Labels.SetupRunCommand;
-
     /// <summary>The checklist before its first answer.</summary>
     public string ReadingText => Labels.ReadingSetup;
 

@@ -34,12 +34,6 @@ internal static partial class Labels
     /// <summary>The one line under the lead (hidden once setup is finished).</summary>
     internal const string SetupSubline = "Five steps. Sindri does most of them for you; you decide the ones that give it access.";
 
-    /// <summary>The line that says what the person already ran.</summary>
-    internal const string SetupRunLine = "You've run";
-
-    /// <summary>The command that line names.</summary>
-    internal const string SetupRunCommand = "./setup.sh --with-sindri";
-
     /// <summary>Home's one line while any step is open.</summary>
     internal const string SetupHomeLine = "Finish setting up Sindri";
 
