@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # aw:meta-outbox — PostToolUse hook, matcher SendMessage (Claude Code only). Hands every sent message to
 # `aw-meta outbox-record`, which closes the obligations it answers (a reply to a peer, a lane-map broadcast, a "main
-# moved" announcement, an owner answer). aw-meta ignores sessions other than the registered meta. Never blocks:
-# always exits 0 and prints nothing; a failure is logged as a fail-open.
+# moved" announcement, an owner answer). aw-meta records only the registered meta's sends. For any session's send it may
+# print a warning line ("aw-meta: warning: ..."; a STATUS: message that holds a "?", #2654); that line goes back to the sender
+# as PostToolUse additionalContext. Never blocks: always exits 0 and prints nothing else; a failure is logged as a fail-open.
 set -uo pipefail
 failopen() {
   (
@@ -28,7 +29,9 @@ META="${AW_META_BIN:-${AW_STATE_DIR:-$HOME/.agentic-workflow}/bin/aw-meta}"
 [ -x "$META" ] || exit 0
 INPUT="$(cat 2>/dev/null || true)"
 [ -n "$INPUT" ] || { failopen empty-input; exit 0; }
-printf '%s' "$INPUT" | AW_LOG_LEVEL=none "$META" outbox-record > /dev/null 2>&1
-rc=$?
-[ "$rc" = 0 ] || failopen "meta-exit-$rc"
+OUT="$(printf '%s' "$INPUT" | AW_LOG_LEVEL=none "$META" outbox-record 2> /dev/null)"; rc=$?
+[ "$rc" = 0 ] || { failopen "meta-exit-$rc"; exit 0; }
+W="$(printf '%s\n' "$OUT" | grep -m1 '^aw-meta: warning: ')"
+[ -n "$W" ] || exit 0
+jq -nc --arg m "$W" '{hookSpecificOutput: {hookEventName: "PostToolUse", additionalContext: $m}}' 2> /dev/null || true
 exit 0
