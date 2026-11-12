@@ -78,7 +78,7 @@
       </StackPanel>
       <StackPanel Spacing="2">
         <TextBlock Classes="caption subtle" Text="{Binding TargetLabel}" AutomationProperties.AccessibilityView="Raw" />
-        <TextBox x:Name="ProjectAddTarget" Text="{Binding Target, Mode=TwoWay}" AutomationProperties.Name="{Binding TargetLabel}" />
+        <TextBox x:Name="ProjectAddTarget" Text="{Binding Target, Mode=TwoWay}" PlaceholderText="{Binding TargetHint}" AutomationProperties.Name="{Binding TargetLabel}" />
         <Border x:Name="ProjectAddTargetRead" IsVisible="{Binding TargetRead, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                 AutomationProperties.Name="{Binding TargetRead}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption subtle" Text="{Binding TargetRead}" AutomationProperties.AccessibilityView="Raw" />

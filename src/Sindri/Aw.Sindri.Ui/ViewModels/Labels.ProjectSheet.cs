@@ -55,7 +55,7 @@ internal static partial class Labels
     internal const string ProjectNameField = "Name";
 
     /// <summary>The target date field.</summary>
-    internal const string ProjectTargetField = "Target date";
+    internal const string ProjectTargetField = "Target date (yyyy-mm-dd)";
 
     /// <summary>The links field.</summary>
     internal const string ProjectLinksField = "Links (one https link per line)";

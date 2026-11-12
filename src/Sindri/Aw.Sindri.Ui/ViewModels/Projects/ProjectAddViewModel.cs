@@ -51,7 +51,10 @@ internal sealed partial class ProjectAddViewModel(ISindriApi api, Func<Uri?> api
     public string NotesLabel => Labels.ProjectAddNotesField;
 
     /// <summary>The target date field's label.</summary>
-    public string TargetLabel => Labels.ProjectTargetField;
+    public string TargetLabel => Labels.ProjectAddTargetField;
+
+    /// <summary>The target date box's watermark.</summary>
+    public string TargetHint => Labels.ProjectAddTargetHint;
 
     /// <summary>The Cancel button's word.</summary>
     public string CancelText => Labels.ProjectCancelEdit;

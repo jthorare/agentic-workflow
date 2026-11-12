@@ -36,6 +36,12 @@ internal static partial class Labels
     /// <summary>The notes field.</summary>
     internal const string ProjectAddNotesField = "Notes";
 
+    /// <summary>The Add sheet's target field: its label and accessible name.</summary>
+    internal const string ProjectAddTargetField = "Target date";
+
+    /// <summary>The Add sheet's target box: its watermark.</summary>
+    internal const string ProjectAddTargetHint = "Dec 5, next fri or 2026-12-05";
+
     /// <summary>The line under the Target box when its text does not read as a date.</summary>
     internal const string ProjectAddBadTarget = "Couldn't read that date. Try Dec 5, next fri or 2026-12-05.";
 
