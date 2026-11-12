@@ -6,16 +6,17 @@
        .Pressed), so the urgency stays; the pulse runs only at rest (a running animation would beat any style setter). Those rules live in Theme/ClickableStyles.axaml,
        which loads last, so they beat its grey hover. A calm row (subtle, stale) steps aside to that shared clickable hover and pressed background. -->
   <Style Selector="Border.needs-you-row.pulsing:not(:pointerover):not(:pressed)">
-    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
     <Style.Animations>
       <Animation Duration="0:0:1.6" IterationCount="Infinite" Easing="SineEaseInOut">
-        <KeyFrame Cue="0%"><Setter Property="Background" Value="{StaticResource Brush.Surface2}" /></KeyFrame>
+        <KeyFrame Cue="0%"><Setter Property="Background" Value="{StaticResource Brush.AttentionSoft}" /></KeyFrame>
         <KeyFrame Cue="50%"><Setter Property="Background" Value="{StaticResource Brush.Surface1}" /></KeyFrame>
-        <KeyFrame Cue="100%"><Setter Property="Background" Value="{StaticResource Brush.Surface2}" /></KeyFrame>
+        <KeyFrame Cue="100%"><Setter Property="Background" Value="{StaticResource Brush.AttentionSoft}" /></KeyFrame>
       </Animation>
     </Style.Animations>
   </Style>
-  <!-- A failure keeps a steady attention tint, a calm row a subtle one (R8-13); the same tokens as the pulse, no motion. -->
+  <!-- The unseen pulse above keeps its amber (#2780, #2749): it is the one "you have not seen this" status cue, so it stays a status colour under the one-accent rule.
+       A failure and a calm row are neutral Surface2 (R8-13), no motion. -->
   <Style Selector="Border.needs-you-row.steady:not(:pointerover):not(:pressed)">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
   </Style>

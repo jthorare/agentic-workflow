@@ -30,11 +30,18 @@
   </Style>
   <!-- A Needs You row rests on Surface2 whatever its urgency (#2780: one accent, so no amber tint); under the pointer it lifts to the pressed fill like a calm row,
        and an outlined row keeps its neutral border. Declared after the grey hover and press above so they win, and before the focus and selection borders below. -->
-  <Style Selector="Border.clickable.needs-you-row.pulsing:pointerover, Border.clickable.needs-you-row.steady:pointerover, Border.clickable.needs-you-row.outlined:pointerover">
+  <Style Selector="Border.clickable.needs-you-row.steady:pointerover, Border.clickable.needs-you-row.outlined:pointerover">
     <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
   </Style>
-  <Style Selector="Border.clickable.needs-you-row.pulsing:pressed, Border.clickable.needs-you-row.steady:pressed, Border.clickable.needs-you-row.outlined:pressed">
+  <Style Selector="Border.clickable.needs-you-row.steady:pressed, Border.clickable.needs-you-row.outlined:pressed">
     <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
+  </Style>
+  <!-- The unseen pulse keeps its amber under the pointer and a press (#2611, #2749). -->
+  <Style Selector="Border.clickable.needs-you-row.pulsing:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft.Hover}" />
+  </Style>
+  <Style Selector="Border.clickable.needs-you-row.pulsing:pressed">
+    <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft.Pressed}" />
   </Style>
   <Style Selector="Border.clickable.needs-you-row.outlined:pointerover, Border.clickable.needs-you-row.outlined:pressed">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.InkSubtle}" />
