@@ -5923,6 +5923,8 @@ Aw.Sindri.Core.Sessions.FleetStateFile.State.get -> Aw.Sindri.Core.Sessions.Hook
 Aw.Sindri.Core.Sessions.FleetStateFile.State.init -> void
 Aw.Sindri.Core.Sessions.FleetStateFile.Tool.get -> string?
 Aw.Sindri.Core.Sessions.FleetStateFile.Tool.init -> void
+Aw.Sindri.Core.Sessions.FleetStateFile.ToolAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Sessions.FleetStateFile.ToolAt.init -> void
 Aw.Sindri.Core.Sessions.FleetStateFile.Transcript.get -> string?
 Aw.Sindri.Core.Sessions.FleetStateFile.Transcript.init -> void
 Aw.Sindri.Core.Sessions.FleetTrackerState
