@@ -27,6 +27,9 @@ public sealed class PostgresContainer : IAsyncLifetime
 
     internal int Port { get; private set; }
 
+    /// <summary>Test seam: called with the port the container start picked, right before docker publishes it, so a test can take that port on purpose.</summary>
+    internal Func<int, ValueTask>? AfterPortChosen { get; set; }
+
     internal string ServerAddress { get; private set; } = string.Empty;
 
     internal string AdminConnectionString => Connect("postgres", AdminSecret);
@@ -40,6 +43,11 @@ public sealed class PostgresContainer : IAsyncLifetime
         listener.Start();
         Port = ((IPEndPoint)listener.LocalEndpoint).Port;
         listener.Stop();
+        if (AfterPortChosen is not null)
+        {
+            await AfterPortChosen(Port);
+        }
+
         var published = $"127.0.0.1:{Port.ToString(CultureInfo.InvariantCulture)}:5432";
         _id = (await Docker("run", "-d", "--rm", "-p", published, "-e", $"POSTGRES_PASSWORD={AdminSecret}", "-e", $"POSTGRES_DB={Database}", Image, "-c", "log_statement=all")).Trim();
         await WaitUntilReadyAsync();
