@@ -52,8 +52,8 @@ The old sub-line colour `#74787f` on Canvas is 4.49:1, below 4.5:1. All three ro
 
 ## Not done
 
-- The older panels of `states` that predate the first Add (Shell not responding, Stale serve under the top bar and the page-state panels) keep their compact bars. Only the hello-sindri and map panels got the full bar, and those panels are drawn 1440 wide because the full bar does not fit in 720.
-- Ring rule: on the "hello-sindri running by itself" panel no row holds a primary, so the ring sits on the first row not done (the running map row). That follows the spec's fallback in spirit; the done rows' Accounts and Add repos buttons are secondary. Meta to confirm.
+- Top bars: before the first Add (Not running, the two questions, the two Home states with no repo yet) the bar is reduced to the wordmark and the pill. Every panel after the first Add draws the full bar (nav with counts, Ctrl+K, Setup n/8, pill "Sindri running"), the older `states` panels included (#3315). Those panels are 1440 wide because the full bar does not fit in 720.
+- Ring rule: on the "hello-sindri running by itself" panel no row holds a primary, so the ring sits on the first row not done (the running map row); spec head 15d3dabd77 says so.
 - With a primary elsewhere on the Setup page the ring sits on that row. With none, the ring sits on the hello-sindri Open item row (it holds the page's one primary), never on the running map row.
 
 ## Fixture check against spec §5.0 (#3329)
