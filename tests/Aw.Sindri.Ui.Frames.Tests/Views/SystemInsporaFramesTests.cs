@@ -80,6 +80,17 @@ public sealed class SystemInsporaFramesTests : FrameHost
         var overview = Named<StackPanel>(window, "OverviewPanel");
         var cards = Named<Panel>(window, "SystemCards").Children.Where(c => c.IsVisible).ToList();
         var culture = System.Globalization.CultureInfo.InvariantCulture;
+
+        // The shots come before the asserts, so the same test shoots main's layout too (the before frames of #3098).
+        Frame(window, string.Create(culture, $"system-grid-{width:0}"), prefix: "gh2905-");
+        var scroll = overview.FindAncestorOfType<ScrollViewer>();
+        Assert.NotNull(scroll);
+        scroll.ScrollToEnd();
+        Settle(window);
+        Frame(window, string.Create(culture, $"system-grid-{width:0}-end"), prefix: "gh2905-");
+        scroll.Offset = default;
+        Settle(window);
+
         Assert.True(cards.Count > columns, string.Create(culture, $"{cards.Count} cards, too few to fill a row of {columns}"));
         var rows = cards.Select(c => (Card: c, At: c.TranslatePoint(default, overview)!.Value))
             .GroupBy(c => Math.Round(c.At.Y, MidpointRounding.AwayFromZero)).Select(r => r.ToList()).ToList();
@@ -93,7 +104,6 @@ public sealed class SystemInsporaFramesTests : FrameHost
         }
 
         Assert.All(cards, c => Assert.True(c.Bounds.Width >= 404, string.Create(culture, $"{c.Name} is {c.Bounds.Width} wide, under the 404 the backlog bar needs")));
-        Frame(window, string.Create(culture, $"system-grid-{width:0}"), prefix: "gh2905-");
     });
 
     // The ticks and their caption end inside the card's 24 px inset (side by side, the caption ran past the card and was clipped).
