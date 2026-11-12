@@ -11,7 +11,7 @@ using Aw.Sindri.Ui.Tests.Views;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
-/// <summary>After Load more, the arrow and End keys walk the item sheet's timeline rows and never leave it (#2922).</summary>
+/// <summary>After Load more, the arrow and End keys walk the item sheet's timeline rows and never leave it (#2922). Saved under frames/ as i2922-*.png when AW_UI_FRAMES=1.</summary>
 [Lane(TestLane.Integration)]
 public sealed class ItemTimelineKeysTests : FrameHost
 {
@@ -27,11 +27,11 @@ public sealed class ItemTimelineKeysTests : FrameHost
         return new RouteAnswer(System.Net.HttpStatusCode.OK, json.ToString());
     }
 
-    private async Task<Window> AfterLoadMore()
+    private async Task<Window> AfterLoadMore(double width = 1280)
     {
         Server.ItemTimelinePages[(A.NewItem, 0)] = Page(1, 50, "50");
         Server.ItemTimelinePages[(A.NewItem, 50)] = Page(51, 100, "null");
-        var (window, shell) = await Connected(s => !s.Queue.IsLoading, width: 1280, height: 800);
+        var (window, shell) = await Connected(s => !s.Queue.IsLoading, width: width, height: 800);
         shell.OpenItem(A.NewItem);
         await Until(window, () => shell.Item.HasItem && shell.Item.Timeline.Count == 50);
         Settle(window);
@@ -72,13 +72,16 @@ public sealed class ItemTimelineKeysTests : FrameHost
         Settle(window);
 
         AssertOnRow(window, "Event 52");
+        Frame(window, "1280-down", "i2922-");
         window.Close();
     });
 
-    [Fact]
-    public Task After_load_more_End_focuses_the_last_loaded_row() => OnUi(async () =>
+    [Theory]
+    [InlineData(1280)]
+    [InlineData(1000)]
+    public Task After_load_more_End_focuses_the_last_loaded_row(int width) => OnUi(async () =>
     {
-        var window = await AfterLoadMore();
+        var window = await AfterLoadMore(width);
 
         window.KeyPressQwerty(PhysicalKey.End, RawInputModifiers.None);
         Settle(window);
@@ -86,6 +89,7 @@ public sealed class ItemTimelineKeysTests : FrameHost
         Settle(window);
 
         AssertOnRow(window, "Event 100");
+        Frame(window, string.Create(CultureInfo.InvariantCulture, $"{width}-end"), "i2922-");
         window.Close();
     });
 }
