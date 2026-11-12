@@ -1,6 +1,7 @@
 using System.Reflection;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Sandbox.Credentials;
+using Aw.Sindri.Infrastructure.Sandbox;
 
 namespace Aw.Sindri.Tests.Sandbox.Bubblewrap;
 
