@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net;
+using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Layout;
@@ -48,6 +49,12 @@ public sealed class NeedsYouFailedLayoutTests : FrameHost
         Assert.Equal("NeedsYouRetry", retry.Name);
         Assert.DoesNotContain("copy", retry.Classes, StringComparer.Ordinal);
         Assert.Equal(HorizontalAlignment.Left, retry.HorizontalAlignment);
+
+        // The caption starts on the card's text column, the 24 the count line, banner and empty line use (qa on #2950).
+        var card = Assert.IsAssignableFrom<Visual>(failed.GetVisualParent());
+        var left = line.TranslatePoint(default, card);
+        Assert.NotNull(left);
+        Assert.Equal(24, left.Value.X, precision: 1);
         FrameFile.Save(window, string.Create(CultureInfo.InvariantCulture, $"h2921-needs-you-failed-{width}"));
         window.Close();
     });
