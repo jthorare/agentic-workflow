@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -48,7 +49,7 @@ public sealed class SelectableTileTests
 
         Assert.Equal(Colors.Transparent, Fill(chrome));
         Assert.Equal(Brush("Brush.Hairline"), Edge(chrome));
-        Assert.True(tile.Bounds.Height >= 28, $"{tile.Bounds.Height} px");
+        Assert.True(tile.Bounds.Height >= 28, tile.Bounds.Height.ToString(CultureInfo.InvariantCulture));
         window.Close();
         return true;
     });
@@ -149,7 +150,7 @@ public sealed class SelectableTileTests
         var (window, tile, _) = Show();
         var (rowWindow, row, _) = Show(row: true);
 
-        Assert.True(tile.Bounds.Width < 200, $"tile is {tile.Bounds.Width} px wide");
+        Assert.True(tile.Bounds.Width < 200, "tile is " + tile.Bounds.Width.ToString(CultureInfo.InvariantCulture));
         Assert.Equal(360, row.Bounds.Width, 1);
         Assert.Equal(Avalonia.Layout.HorizontalAlignment.Left, row.HorizontalContentAlignment);
         window.Close();

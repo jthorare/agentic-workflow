@@ -20,6 +20,11 @@ internal sealed class SelectableTile : Button
         set => SetValue(IsSelectedProperty, value);
     }
 
+    static SelectableTile()
+    {
+        _ = IsSelectedProperty.Changed.AddClassHandler<SelectableTile>((tile, e) => tile.PseudoClasses.Set(":selected", e.NewValue is true));
+    }
+
     /// <inheritdoc />
     protected override Type StyleKeyOverride => typeof(SelectableTile);
 }
