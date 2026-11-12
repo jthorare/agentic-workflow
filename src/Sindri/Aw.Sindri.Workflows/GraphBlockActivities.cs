@@ -56,6 +56,11 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             return cutConfig;   // why: the config read an output the store cut at 64 KB; the block never runs on a partial value
         }
 
+        if (Continued(scope, config) is { } continuedConfig)
+        {
+            return continuedConfig;   // why: the config read a node that failed and continued (#3235); the block never runs on a value that is not there
+        }
+
         return await Execute(row, spec, new Prepared(graphNode, block, scope, config), itemIndex, cancel).ConfigureAwait(false);
     }
 
@@ -80,6 +85,11 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         if (Cut(scope, config) is { } cutAfter)
         {
             return cutAfter;
+        }
+
+        if (Continued(scope, config) is { } continuedAfter)
+        {
+            return continuedAfter;   // why: a condition reads its references inside Execute
         }
 
         if (result.IsError)
@@ -171,6 +181,10 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         var config = GraphConfig.Interpolate(LoopBody.Enclosing(spec, node)!.ForEach.Config, outer.Lookup);
         return (null, Failed(config, SindriErrors.GraphOutputTruncated.With($"the output of '{cutNode}' was cut at 64 KB; refer to a smaller field")));
     }
+
+    private static GraphBlockOutcome? Continued(GraphNodeScope scope, JsonObject config) => scope.ContinuedFailure is var (node, reference)
+        ? Failed(config, SindriErrors.GraphReferenceToContinuedFailure.With($"'{node}' failed and continued, so '{{{{{reference}}}}}' has no value"))
+        : null;
 
     private static GraphBlockOutcome? Cut(GraphNodeScope scope, JsonObject config) => scope.Cut is { } cut
         ? Failed(config, SindriErrors.GraphOutputTruncated.With($"the output of '{cut}' was cut at 64 KB; refer to a smaller field"))

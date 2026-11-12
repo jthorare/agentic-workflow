@@ -11444,6 +11444,12 @@ override Aw.Sindri.Core.Setup.HookLocation.GetHashCode() -> int
 override Aw.Sindri.Core.Setup.HookLocation.ToString() -> string!
 static Aw.Sindri.Core.Setup.HookLocation.operator !=(Aw.Sindri.Core.Setup.HookLocation? left, Aw.Sindri.Core.Setup.HookLocation? right) -> bool
 static Aw.Sindri.Core.Setup.HookLocation.operator ==(Aw.Sindri.Core.Setup.HookLocation? left, Aw.Sindri.Core.Setup.HookLocation? right) -> bool
+Aw.Sindri.Core.Setup.IRepoCheckouts
+Aw.Sindri.Core.Setup.IRepoCheckouts.Of(string! path) -> Aw.Sindri.Core.Setup.RepoCheckout
+Aw.Sindri.Core.Setup.RepoCheckout
+Aw.Sindri.Core.Setup.RepoCheckout.Checkout = 0 -> Aw.Sindri.Core.Setup.RepoCheckout
+Aw.Sindri.Core.Setup.RepoCheckout.Missing = 2 -> Aw.Sindri.Core.Setup.RepoCheckout
+Aw.Sindri.Core.Setup.RepoCheckout.PlainFolder = 1 -> Aw.Sindri.Core.Setup.RepoCheckout
 Aw.Sindri.Core.Setup.IRepoHookStates
 Aw.Sindri.Core.Setup.IRepoHookStates.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.RepoHookState!>!>
 Aw.Sindri.Core.Setup.RepoHookState
@@ -20655,6 +20661,7 @@ static Aw.Sindri.Core.Graph.Blocks.WaitSchedule.WakeAt(System.Text.Json.Nodes.Js
 static Aw.Sindri.Core.NeedsYou.NeedsYouRowIds.WorkflowQuestion(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, Aw.Sindri.Core.Graph.Ids.NodeId node, int? item = null) -> Aw.Sindri.Core.Ids.NeedsYouRowId
 static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForWorkflowQuestion(Aw.Sindri.Core.Events.WorkflowQuestionPayload! question, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!
 static readonly Aw.Sindri.Core.SindriErrors.GraphNotWaiting -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphReferenceToContinuedFailure -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Graph.Blocks.IQuestionPort.Post(Aw.Sindri.Core.Graph.Blocks.QuestionAsk! ask, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Graph.Blocks.QuestionAsk
 Aw.Sindri.Core.Graph.Blocks.QuestionAsk.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.QuestionAsk!

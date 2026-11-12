@@ -52,9 +52,12 @@ public sealed class LaunchTargetsReader(ILedgerReader ledger, EventFactory event
     private async ValueTask<Result<IReadOnlyDictionary<string, AgentSpend>>> Spent(LaunchProbed probed, CancellationToken cancellationToken)
     {
         var used = new Dictionary<string, AgentSpend>(StringComparer.Ordinal);
-        foreach (var target in probed.Targets)
+        // start every read first so they overlap (#3213): the wait is the slowest read, not the sum
+        var reads = probed.Targets.Select(target => spend.Today(target.Id, cancellationToken).AsTask()).ToList();
+        var results = await Task.WhenAll(reads).ConfigureAwait(false);
+        for (var i = 0; i < results.Length; i++)
         {
-            var today = await spend.Today(target.Id, cancellationToken).ConfigureAwait(false);
+            var today = results[i];
             if (today.IsError)
             {
                 return today.Error;
@@ -62,7 +65,7 @@ public sealed class LaunchTargetsReader(ILedgerReader ledger, EventFactory event
 
             if (today.Value is { } found)
             {
-                used[target.Id.Value] = found;
+                used[probed.Targets[i].Id.Value] = found;
             }
         }
 

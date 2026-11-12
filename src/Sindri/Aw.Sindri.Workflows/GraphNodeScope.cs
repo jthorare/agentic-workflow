@@ -12,10 +12,19 @@ internal sealed class GraphNodeScope(WorkflowRun run, GraphSpec spec, IReadOnlyL
     /// <summary>The node whose cut output a reference read, or null.</summary>
     public string? Cut { get; private set; }
 
+    /// <summary>The first reference that read a node that failed and continued, as the node id and the reference text; null when none did.</summary>
+    public (string Node, string Reference)? ContinuedFailure { get; private set; }
+
     public JsonNode? Lookup(string reference)
     {
         var parts = reference.Split('.');
         var current = Root(parts[0]);
+        if (_failedRead is { } failed)
+        {
+            ContinuedFailure ??= (failed, reference);   // why: a failed row exists only for a node whose onFailure is 'continue' (any other failure ends the walk), so reading it is reading a continued failure
+            _failedRead = null;
+        }
+
         foreach (var part in parts.Skip(1))
         {
             current = current is JsonObject o && o.TryGetPropertyValue(part, out var next) ? next : null;
@@ -34,6 +43,16 @@ internal sealed class GraphNodeScope(WorkflowRun run, GraphSpec spec, IReadOnlyL
         _ => Output(name),
     };
 
+    private string? _failedRead;
+
+    private void NoteFailedRead(string node, int index)
+    {
+        if (nodeRuns.Any(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == index && n.Status == NodeRunStatus.Failed))
+        {
+            _failedRead = node;
+        }
+    }
+
     private JsonNode? Output(string node)
     {
         // why: a node of the loop's body has one row per item and is read at this item's; every other node has its one row at index 0
@@ -41,6 +60,7 @@ internal sealed class GraphNodeScope(WorkflowRun run, GraphSpec spec, IReadOnlyL
         var found = nodeRuns.FirstOrDefault(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == index && n.Status == NodeRunStatus.Succeeded);
         if (found is null)
         {
+            NoteFailedRead(node, index);
             return null;
         }
 
