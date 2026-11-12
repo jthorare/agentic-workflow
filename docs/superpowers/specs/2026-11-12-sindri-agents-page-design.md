@@ -66,7 +66,7 @@ Taken for the owner. Each says where it came from. "Agent default" means nobody 
 2. **A row has one primary reason and counts the rest.** The reason with the lowest class number (§4.1) names the row and sets its place. The other reasons show as "+1" and fill the peek.
 3. **Order is class, then time in class.** Within Needs you the order is the class of the primary reason, then the time the row entered that class (oldest first), then the ref. This ignores any score on purpose, so no poll can move a row. Home orders by "blocks N", so the two pages can list the same sessions in a different order. The row shows Home's `blocks N` as a fact when it exists, and never sorts by it. (Agent default. It keeps the walk's expected row 1, "ideas: at 210k", which #3018 named.)
 4. **Escalation uses the New band.** A row that enters Needs you, or rises to a lower class number, shows in a "New (n)" band at the top until the next settle point. This is Home's rule (Home §4.3), so the cursor row never jumps.
-5. **Idle with work owed and slot wait are defined by inputs, not guesses.** §3.2 gives each input, threshold and word. Home leaves both out because it makes no guesses. The Agents page owns them. Open question 1 asks whether Home may show them now that they have exact rules.
+5. **Idle with work owed and slot wait are defined by inputs, not guesses.** §3.2 gives each input, threshold and word. Home leaves both out because it makes no guesses. The Agents page owns them. Home does not show them in v1 (the lead's call, 2026-11-12); revisit after the soak.
 6. **One steer route.** `POST /sindri/rows/{id}/ops` with `message`, `answer`, `recycle` or `stop` (meta's decision on #3018). It is the route `aw-meta` and the CLI verbs also use. No op types into a tmux pane.
 7. **Message to a Claude lane is off for now.** `aw-meta lane-send` refuses a Claude lane (`Aw.Meta.Features/LaneSend/LaneSendService.cs:52`, AW-META-017, "use SendMessage"). Meta's rule says no typing into a pane. So the page cannot message a Claude lane. It says why and offers Copy message. Open question 2 asks tools for a path.
 8. **A permission prompt is answered in the terminal.** The engine comment on #3018 says a permission prompt is answered only in an attended session. So the row's action for a prompt is Jump to terminal. The reply box is for owner questions, workflow sessions and non-Claude lanes.
@@ -147,7 +147,7 @@ An idle lane that owes nothing stays in Idle. A lane that is idle for 9 minutes 
 
 **PR ready.** The reason sits on the lane that sent the PR, because the lane is done and waits on the merge. The merge itself is Home's action (`pr-ready-merge`, Home §5.1). The row's action is "Open in Home". While meta is already merging the PR (`Github` is "queued 2 (AWAITING_CHECKS)"), the reason drops: nothing is left for the owner.
 
-**Which rows Home also lists.** Permission prompt, owner question and login are Home's `agent-asking`. Usage limit is `agent-limited`. At the recycle mark is `lane-recycle`. PR ready is `pr-ready-merge`, which Home keeps as a row of the PR. Lane with no session, idle with work owed and slot wait are Agents-only for now (open question 1).
+**Which rows Home also lists.** Permission prompt, owner question and login are Home's `agent-asking`. Usage limit is `agent-limited`. At the recycle mark is `lane-recycle`. PR ready is `pr-ready-merge`, which Home keeps as a row of the PR. Lane with no session, idle with work owed and slot wait are Agents-only in v1 (decision 5); revisit after the soak.
 
 ### 3.3 Where the data comes from
 
@@ -624,7 +624,7 @@ Each phase updates its docs: `docs/sindri/README.md` or a new `docs/sindri/agent
 
 Each has my recommended answer. None blocks the phases that start now.
 
-1. **May Home list idle with work owed and slot wait now that they have exact rules?** Recommend yes. #3018 item 2 says an idle session with work owed must put a row in Home's Needs you. Home left it out only because it had no rule. After A1, Home adds a kind `agent-owed` that uses §3.2 unchanged. No guess enters Home.
+1. **May Home list idle with work owed and slot wait?** Settled: no for v1 (lead, 2026-11-12). Both stay Agents-only until the soak shows the rules hold; then Home may add an `agent-owed` kind that uses §3.2 unchanged.
 2. **How does the page message a Claude lane?** `lane-send` refuses it, and meta ruled out typing into a pane. Recommend tools adds a mail path for Claude lanes that the lane reads at its next turn, the way the engine's session inbox works, and `lane-send` uses it. Until then the page offers Copy message.
 3. **Is "waiting on a tool" worth a hook change?** Recommend no. Make the hook write PreToolUse and PostToolUse and you spend a `jq` run per tool call (`fleet-state.sh:10-11` avoids that on purpose). Show the last-activity age instead.
 4. **Does a Claude lane have an unread-mail signal?** I found none, so "idle with work owed" ignores mail for Claude lanes. Recommend tools adds a `mail.unread` fact per lane to `aw-meta status --json`, and rule 3c uses it.
