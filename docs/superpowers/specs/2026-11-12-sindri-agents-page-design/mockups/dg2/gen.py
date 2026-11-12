@@ -61,11 +61,11 @@ def lane_screen(focus):
 '  <span class="dim">⎿  Wrote 64 lines</span>\n\n\n\n\n\n\n\n\n\n\n\n'
 f'<span class="box">&gt; {cur(focus)}</span>'
 '<span class="dim sline"><span>  ? for shortcuts</span><span>context 210k</span></span>')
-def trust_screen(focus, slug='claude-code'):
+def trust_screen(focus, slug='claude-code', folder=None):
     return (
 '<span class="a">✻ Welcome to Claude Code</span>\n\n\n'
 '<span class="box"><span class="att">Do you trust the files in this folder?</span>\n\n'
-f' ~/.agentic-workflow/aw-wt/oneoff-261112-1409-{slug}\n\n'
+f' {folder or "~/.agentic-workflow/aw-wt/oneoff-261112-1409-" + slug}\n\n'
 ' <span class="hi">❯ 1. Yes, proceed</span>\n'
 '   2. No, exit\n </span>\n'
 f'  <span class="dim">Enter to confirm · Esc to cancel</span> {cur(focus)}')
@@ -149,19 +149,22 @@ def cardpair(name, title, head, rows, scr, ov, label, dimmed=True):
     one(name + '-focus-list', title + ', focus in the list', head, rows, scr, ov(False), dimmed, foot_card(label), lstfocus=True)
     one(name + '-focus-card', title + ', focus on the card', head, rows, scr, ov(True), dimmed, foot_cardfocus(label), lstfocus=False, tfocus=True)
 def kf(r, cls=''): return (cls + (' kfocus' if r else '')).strip()
-cardpair('agents3340-4-cant-reach', 'Sindri · Agents · pane, can\'t reach Sindri', phead('ideas', 'Can\'t reach Sindri', 'err'), LROWS, lane_screen(False),
+cardpair('agents3340-4-cant-reach', 'Sindri · Agents · pane, can\'t reach Sindri', phead('ideas', 'Can\'t reach Sindri', 'err', btns=btn('Close')), LROWS, lane_screen(False),
          lambda r: card('Can\'t reach Sindri', '<p>Esc closes the view.</p>', btn('Retry now', '', kf(r, 'primary'))), 'Retry now')
 cardpair('agents3340-5-take-it-back', 'Sindri · Agents · pane, open in another window', phead('ideas', '', ''), LROWS, lane_screen(False),
          lambda r: card('This pane is open in another Sindri window', '', btn('Take it back', '', kf(r, 'primary'))).replace('class="btns"', 'class="btns" style="margin-top:12px"'), 'Take it back')
-cardpair('agents3340-6-cant-attach', 'Sindri · Agents · can\'t attach', phead('design', 'Can\'t attach', 'att', sock=WARP), ROWS_DESIGN, '', noatt, 'Jump to it', dimmed=False)
+cardpair('agents3340-6-cant-attach', 'Sindri · Agents · can\'t attach', phead('design', 'Can\'t attach', 'att', sock=WARP, btns=btn('Close')), ROWS_DESIGN, '', noatt, 'Jump to it', dimmed=False)
 cardpair('agents3340-7-gone', 'Sindri · Agents · gone', phead('ideas', 'Gone', 'err', sock='tmux default', btns=btn('Close')), LROWS, lane_screen(None),
          lambda r: card('tmux session gone', '', btn('Copy resume command', '', kf(r))), 'Copy resume command')
 LANE_ENDED = sel(LROWS + [('grp','Recently ended',1),('draft','','ideas: at 210k, recycle from a digest','Ended','')], 13)
 HE = phead(PROMPT, 'Ended', 'end', sock='tmux sindri', btns=btn('Close'))
 cardpair('agents3340-8-ended', 'Sindri · Agents · ended one-off', HE, ROWS_ENDED, trust_screen(None, SLUG), lambda r: endbar(ring=r), 'Copy resume command')
 cardpair('agents3340-8b-ended-remove-refused', 'Sindri · Agents · ended one-off, remove worktree refused', HE, ROWS_ENDED, trust_screen(None, SLUG), lambda r: endbar(refused=True, ring=r), 'Copy resume command')
-cardpair('agents3340-8c-ended-no-worktree', 'Sindri · Agents · ended one-off, no worktree', HE, ROWS_ENDED, trust_screen(None, 'claude-code'), lambda r: endbar(path=None, ring=r), 'Copy resume command')
-cardpair('agents3340-8d-ended-lane', 'Sindri · Agents · ended lane', phead('ideas', 'Ended', 'end', btns=btn('Close')), LANE_ENDED, lane_screen(None), lambda r: endbar(path=None, discard=False, ring=r), 'Copy resume command')
+TITLE_C = 'Explain how the retry queue backs off'
+ROWS_ENDED_C = sel(LROWS + [('grp','Recently ended',1),('draft','',TITLE_C,'Ended','')], 13)
+HE_C = phead(TITLE_C, 'Ended', 'end', sock='tmux sindri', btns=btn('Close'))
+cardpair('agents3340-8c-ended-no-worktree', 'Sindri · Agents · ended one-off, no worktree', HE_C, ROWS_ENDED_C, trust_screen(None, folder='~/work/sindri'), lambda r: endbar(path=None, ring=r), 'Copy resume command')
+cardpair('agents3340-8d-ended-lane', 'Sindri · Agents · ended lane', phead('ideas', 'Ended', 'end', sock='tmux default', btns=btn('Close')), LANE_ENDED, lane_screen(None), lambda r: endbar(path=None, discard=False, ring=r), 'Copy resume command')
 
 # ---- New agent form (15.4) ----
 ROWS_P = [('grp','Needs you',2),('you','#3078','ideas: at 210k, recycle from a digest','recycle',''),('pr','#3067','qa: PR ready in the merge queue','PR ready',''),

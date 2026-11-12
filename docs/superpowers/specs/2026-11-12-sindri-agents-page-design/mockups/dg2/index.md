@@ -63,3 +63,5 @@
 | agents3340-f1-form-default-1000.png | New agent form, default, focus on Prompt · 1000 wide, sheet over the glyph column | §15.4 table, Keyboard |
 | agents3340-f2-form-filled-1000.png | Form filled, New worktree on · 1000 wide, sheet over the glyph column | §15.4 table |
 | agents3340-f8-form-error-013-not-signed-in-1000.png | Error 013 under Agent: sign-in command, Copy command (copy TBD) · 1000 wide, sheet over the glyph column | §15.4 Ctrl+Enter bullet |
+
+Note: at 1000 wide the glyph column hides the "Answer in the pane" chip (frame 2b).
