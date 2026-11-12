@@ -42,7 +42,7 @@ internal sealed class StartCommand(IControlPlaneProbe probe, IControlPlaneLaunch
     internal Task<int> Report(GetStatusResponse status, ControlEndpoint endpoint)
     {
         var ui = openUi?.Invoke();
-        return output.Text(SummaryText.Render(status, endpoint, ui), status.Profile.Problem is null ? 0 : 1);
+        return output.Text(SummaryText.Render(status, endpoint, ui), status.Profile is { Problem: not null, ProblemKind: not "missing" } ? 1 : 0);
     }
 
     /// <summary>

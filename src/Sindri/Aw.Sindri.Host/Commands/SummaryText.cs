@@ -58,6 +58,7 @@ internal static class SummaryText
 
     private static string Profile(ProfileStatus p) => p switch
     {
+        { ProblemKind: "missing" } => "not set up yet: finish setup in the app (or 'sindri setup' to see the steps)",
         { Problem: { } problem } => $"{problem}",
         { Live: null } => $"{p.Source} (no hash)",
         _ => $"{p.Source} (hash {p.Live.Value.Abbreviated})",
@@ -65,6 +66,7 @@ internal static class SummaryText
 
     private static string Ready(ProfileStatus p) => p switch
     {
+        { ProblemKind: "missing" } => "running; setup isn't finished",
         { Problem: not null } => "running; the live profile file has a problem",
         _ => "running",
     };
