@@ -343,4 +343,4 @@ CLAUDE.md                       (add design skills to tables and architecture)
 3. **`/design-verify` target detection** — heuristic-based: check for `Package.swift`/`.xcodeproj`/`*.xcworkspace` → iOS; `package.json` with Next.js/React/Vue → web; both present → both. No argument override.
 4. **`/design-implement` screen selection** — interactive: if multiple approved mockups exist, list them and ask which one to implement. Takes `<target>` argument (`web` or `swiftui`) only.
 5. **Impeccable installation strategy** — `setup.sh` clones/downloads Impeccable and copies skills at install time, similar to other plugin installations. Always gets latest version, no vendored copy.
-6. **Generated token file placement** — always project root. Keep it simple; handle monorepos if/when needed.
+6. **Generated token file placement** — always project root. Keep it simple; support monorepos if/when needed.
