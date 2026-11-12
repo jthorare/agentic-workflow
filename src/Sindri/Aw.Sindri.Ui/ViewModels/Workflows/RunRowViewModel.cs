@@ -55,6 +55,20 @@ internal sealed class RunRowViewModel : ObservableObject
     /// <summary>True when the run has an error.</summary>
     public bool HasError => ErrorText.Length > 0;
 
+#pragma warning disable CA1822, MA0041, IDE0060 // red commit: stubs, replaced by the green commit
+    /// <summary>"Test" on a test run; empty on a live one.</summary>
+    public string ModeText => string.Empty;
+
+    /// <summary>True for a test run.</summary>
+    public bool IsTest => false;
+
+    /// <summary>True when this is a test run that passed.</summary>
+    internal bool IsPassedTest => false;
+
+    /// <summary>The revision the run walked.</summary>
+    internal int Revision => 0;
+#pragma warning restore CA1822, MA0041, IDE0060
+
     /// <summary>The row's accessible name.</summary>
     public string Name { get; }
 }

@@ -130,7 +130,7 @@ public sealed class WorkflowGraphViewModelTests
         Assert.Equal(
             [("✓", "Succeeded", GraphTone.Success), ("✕", "Failed", GraphTone.Error), ("", "", GraphTone.None)],
             graph.Nodes.Select(n => (n.Glyph, n.StatusWord, n.Tone)));
-        Assert.Equal("a, x, succeeded", graph.Nodes[0].Name);
-        Assert.Equal("c, x", graph.Nodes[2].Name);
+        Assert.Equal("a, X step, 1 of 3, succeeded", graph.Nodes[0].Name);
+        Assert.Equal("c, X step, 3 of 3", graph.Nodes[2].Name);
     }
 }

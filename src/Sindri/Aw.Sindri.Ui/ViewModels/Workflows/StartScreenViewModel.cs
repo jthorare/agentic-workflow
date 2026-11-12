@@ -1,5 +1,7 @@
 #pragma warning disable MA0182 // wired into the page and its views in the next round (needs the P0 stubs)
 
+using Aw.Sindri.Ui.Api.Workflows;
+
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
 /// <summary>The start screen of New workflow (spec 4.1): templates A, B and C, then Blank. "Describe it" is not offered before P6.</summary>
@@ -15,6 +17,19 @@ internal sealed class StartScreenViewModel : ObservableObject
         new("C", "watch-main", "Watch main, open an issue on red", "Every weekday a check runs. If it is red, an issue opens.", "Schedule, weekdays 7:00", "4 \u00b7 schedule, check, if, issue", "nothing", Never),
         new(string.Empty, string.Empty, "Blank", "An empty trigger slot. You start at Add a trigger.", string.Empty, string.Empty, string.Empty, string.Empty),
     ];
+
+    /// <summary>Makes the screen from the app's own cards: A, B, C, then Blank.</summary>
+    internal StartScreenViewModel()
+    {
+    }
+
+    /// <summary>Makes the screen from the templates the route served, then Blank.</summary>
+    /// <param name="templates">The templates, in the order served.</param>
+    /// <param name="clock">The clock "last ran" is told against.</param>
+    internal StartScreenViewModel(WorkflowTemplateList templates, TimeProvider clock)
+    {
+        throw new NotSupportedException();
+    }
 
 #pragma warning disable CA1822, MA0041 // the view binds it
     /// <summary>The entries: A, B, C, Blank.</summary>

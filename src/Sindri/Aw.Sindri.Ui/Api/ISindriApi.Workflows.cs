@@ -107,4 +107,42 @@ internal partial interface ISindriApi
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The newest revision, SND-GRAPH-008 for an unknown workflow, or SND-UI-002/003.</returns>
     public Task<Result<WorkflowPaused>> PauseWorkflow(Uri api, string slug, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/workflows/validate: runs the activation checks on a stored workflow's revision. A read; nothing is changed.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="slug">The workflow.</param>
+    /// <param name="revision">The revision to check, or null for the newest.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The findings, SND-GRAPH-113 while the checks are not built, SND-GRAPH-008 for an unknown workflow, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowValidated>> ValidateWorkflow(Uri api, string slug, int? revision, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/workflows/{slug}/test: starts a fenced test run of a draft. A human action, sent once, never retried.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="slug">The workflow.</param>
+    /// <param name="body">What to test with: the revision, a trigger payload or a real event, pins, and the opt-ins.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The run started, SND-GRAPH-113 while test runs are not built, SND-GRAPH-008 for an unknown workflow, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowTestStarted>> TestWorkflow(Uri api, string slug, TestWorkflowBody body, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/workflows/{slug}/pins: pins a step's output for test runs. A human action, sent once, never retried.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="slug">The workflow.</param>
+    /// <param name="body">The step, and the output or a run to copy it from.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The pin, SND-GRAPH-113 while pins are not built, SND-GRAPH-008 for an unknown workflow, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowPinned>> PinWorkflowOutput(Uri api, string slug, PinWorkflowBody body, CancellationToken cancellationToken);
+
+    /// <summary>GET /sindri/workflows/templates: the templates the start screen offers.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The templates, SND-GRAPH-113 while the route is not built, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowTemplateList>> WorkflowTemplates(Uri api, CancellationToken cancellationToken);
+
+    /// <summary>GET /sindri/workflows/trigger-events: the last events of a kind, newest first.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="kind">The event kind.</param>
+    /// <param name="connection">The connection to read for, or null.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The events, SND-GRAPH-113 while the route is not built, or SND-UI-002/003.</returns>
+    public Task<Result<TriggerEventList>> TriggerEvents(Uri api, string kind, string? connection, CancellationToken cancellationToken);
 }

@@ -76,4 +76,24 @@ internal sealed partial class SindriApiClient
     /// <inheritdoc />
     public Task<Result<WorkflowPaused>> PauseWorkflow(Uri api, string slug, CancellationToken cancellationToken) =>
         Call<WorkflowPaused>(api, HttpMethod.Post, WorkflowRoutes.Pause(slug), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<WorkflowValidated>> ValidateWorkflow(Uri api, string slug, int? revision, CancellationToken cancellationToken) =>
+        Call<WorkflowValidated>(api, HttpMethod.Post, WorkflowRoutes.Validate(), cancellationToken, new CallOptions(Content: AwJson.Serialize(new ValidateWorkflowBody(slug, revision, Spec: null), Json)));
+
+    /// <inheritdoc />
+    public Task<Result<WorkflowTestStarted>> TestWorkflow(Uri api, string slug, TestWorkflowBody body, CancellationToken cancellationToken) =>
+        Call<WorkflowTestStarted>(api, HttpMethod.Post, WorkflowRoutes.Test(slug), cancellationToken, new CallOptions(Content: AwJson.Serialize(body, Json)));
+
+    /// <inheritdoc />
+    public Task<Result<WorkflowPinned>> PinWorkflowOutput(Uri api, string slug, PinWorkflowBody body, CancellationToken cancellationToken) =>
+        Call<WorkflowPinned>(api, HttpMethod.Post, WorkflowRoutes.Pins(slug), cancellationToken, new CallOptions(Content: AwJson.Serialize(body, Json)));
+
+    /// <inheritdoc />
+    public Task<Result<WorkflowTemplateList>> WorkflowTemplates(Uri api, CancellationToken cancellationToken) =>
+        Get<WorkflowTemplateList>(api, WorkflowRoutes.Templates(), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<TriggerEventList>> TriggerEvents(Uri api, string kind, string? connection, CancellationToken cancellationToken) =>
+        Get<TriggerEventList>(api, WorkflowRoutes.TriggerEvents(kind, connection), cancellationToken);
 }

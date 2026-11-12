@@ -34,6 +34,11 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     /// <summary>The workflow as last read, or null: run detail draws its graph when the run walked this revision.</summary>
     internal WorkflowView? Shown { get; private set => Set(ref field, value); }
 
+#pragma warning disable CA1822, MA0041, IDE0060 // red commit: stubs, replaced by the green commit
+    /// <summary>The workflow's state chip: "Active", "Tested" or "Not tested"; empty until the workflow is read.</summary>
+    public string StateChipText => string.Empty;
+#pragma warning restore CA1822, MA0041, IDE0060
+
     /// <summary>The runs, newest first.</summary>
     public ObservableCollection<RunRowViewModel> Rows { get; } = [];
 

@@ -37,6 +37,11 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     /// <summary>The selected step as the sheet names it ("Every weekday at 7:00 \u00b7 trigger"), never its id; empty when none is selected.</summary>
     public string NodeHeading { get; private set => Set(ref field, value); } = string.Empty;
 
+#pragma warning disable CA1822, MA0041, IDE0060 // red commit: stubs, replaced by the green commit
+    /// <summary>True while the form is that of a step not added yet.</summary>
+    public bool IsNewStep => false;
+#pragma warning restore CA1822, MA0041, IDE0060
+
     /// <summary>True while an edit is on the way; a second edit does nothing.</summary>
     public bool IsSending { get; private set => Set(ref field, value); }
 

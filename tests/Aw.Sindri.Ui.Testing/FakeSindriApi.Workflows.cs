@@ -254,4 +254,83 @@ internal sealed partial class FakeSindriApi
         await WaitFor(WorkflowStateGate, cancellationToken).ConfigureAwait(false);
         return Answer<WorkflowPaused>(api, WorkflowRoutes.Pause(slug), PauseWorkflowAnswer);
     }
+
+    // The routes of the Workflows page's second round (#3192). Until the engine builds them they answer SND-GRAPH-113, which the page shows as "not built yet", never as an error.
+    private readonly List<(string Slug, int? Revision)> _validated = [];
+    private readonly List<(string Slug, TestWorkflowBody Body)> _tested = [];
+    private readonly List<(string Slug, PinWorkflowBody Body)> _pinnedOutputs = [];
+    private int _templatesCalls;
+
+    /// <summary>The answer of a route the engine has not built yet.</summary>
+    public static RouteAnswer NotBuilt { get; } = RouteAnswer.Problem(System.Net.HttpStatusCode.NotImplemented, "SND-GRAPH-113", "This is not built yet.");
+
+    /// <summary>POST /sindri/workflows/validate's answer.</summary>
+    public RouteAnswer ValidateWorkflowAnswer { get; set; } = NotBuilt;
+
+    /// <summary>POST .../test's answer.</summary>
+    public RouteAnswer TestWorkflowAnswer { get; set; } = NotBuilt;
+
+    /// <summary>POST .../pins's answer.</summary>
+    public RouteAnswer PinWorkflowAnswer { get; set; } = NotBuilt;
+
+    /// <summary>GET /sindri/workflows/templates's answer.</summary>
+    public RouteAnswer WorkflowTemplatesAnswer { get; set; } = NotBuilt;
+
+    /// <summary>GET /sindri/workflows/trigger-events's answer.</summary>
+    public RouteAnswer TriggerEventsAnswer { get; set; } = NotBuilt;
+
+    /// <summary>Holds GET /sindri/workflows/templates until a test releases it (the call is counted first).</summary>
+    public TaskCompletionSource? WorkflowTemplatesGate { get; set; }
+
+    /// <summary>How many times the templates were read.</summary>
+    public int WorkflowTemplatesCalls => Volatile.Read(ref _templatesCalls);
+
+    /// <summary>The slug and revision of every validate sent, in order.</summary>
+    public IReadOnlyList<(string Slug, int? Revision)> ValidatedWorkflows { get { lock (_gate) { return [.. _validated]; } } }
+
+    /// <summary>The slug and body of every test sent, in order.</summary>
+    internal IReadOnlyList<(string Slug, TestWorkflowBody Body)> TestedWorkflows { get { lock (_gate) { return [.. _tested]; } } }
+
+    /// <summary>The slug and body of every pin sent, in order.</summary>
+    internal IReadOnlyList<(string Slug, PinWorkflowBody Body)> PinnedWorkflows { get { lock (_gate) { return [.. _pinnedOutputs]; } } }
+
+    public Task<Result<WorkflowValidated>> ValidateWorkflow(Uri api, string slug, int? revision, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _validated.Add((slug, revision));
+        }
+
+        return Task.FromResult(Answer<WorkflowValidated>(api, WorkflowRoutes.Validate(), ValidateWorkflowAnswer));
+    }
+
+    public Task<Result<WorkflowTestStarted>> TestWorkflow(Uri api, string slug, TestWorkflowBody body, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _tested.Add((slug, body));
+        }
+
+        return Task.FromResult(Answer<WorkflowTestStarted>(api, WorkflowRoutes.Test(slug), TestWorkflowAnswer));
+    }
+
+    public Task<Result<WorkflowPinned>> PinWorkflowOutput(Uri api, string slug, PinWorkflowBody body, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _pinnedOutputs.Add((slug, body));
+        }
+
+        return Task.FromResult(Answer<WorkflowPinned>(api, WorkflowRoutes.Pins(slug), PinWorkflowAnswer));
+    }
+
+    public async Task<Result<WorkflowTemplateList>> WorkflowTemplates(Uri api, CancellationToken cancellationToken)
+    {
+        _ = Interlocked.Increment(ref _templatesCalls);
+        await WaitFor(WorkflowTemplatesGate, cancellationToken).ConfigureAwait(false);
+        return Answer<WorkflowTemplateList>(api, WorkflowRoutes.Templates(), WorkflowTemplatesAnswer);
+    }
+
+    public Task<Result<TriggerEventList>> TriggerEvents(Uri api, string kind, string? connection, CancellationToken cancellationToken) =>
+        Task.FromResult(Answer<TriggerEventList>(api, WorkflowRoutes.TriggerEvents(kind, connection), TriggerEventsAnswer));
 }
