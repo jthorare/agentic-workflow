@@ -15,10 +15,18 @@ internal static class StatusText
     internal static string Lease(StatusView s) => string.Create(CultureInfo.InvariantCulture, $"pid {s.Pid} · epoch {s.Epoch}");
 
     // "unreadable" when the live file doesn't load, else "live": an edit applies on save, so there is no approval state to word.
-    internal static string ProfileState(ProfileView p) => p.Problem is not null ? "unreadable" : "live";
+    internal static string ProfileState(ProfileView p) => IsMissing(p) ? Labels.ProfileNotSetUp : p.Problem is not null ? "unreadable" : "live";
+
+    /// <summary>True when there is no profile yet (a brand-new home), which is not a fault. Sindri's problemKind says it; until a Sindri serves that, no live hash and no file with a problem reads as missing.</summary>
+    /// <param name="p">The status's profile part.</param>
+    /// <returns>True when the profile is missing.</returns>
+    internal static bool IsMissing(ProfileView p) => p.ProblemKind is { } kind
+        ? string.Equals(kind, "missing", StringComparison.Ordinal)
+        : p.Live is null && p.Source is null && p.Problem is not null;
 
     internal static string ProfileDetail(ProfileView p) => p switch
     {
+        _ when IsMissing(p) => Labels.ProfileNotSetUpDetail,
         { Problem: { } problem } => problem,
         _ => $"hash {Short(p.Live)} · {(p.Source is { } source ? Home(source) : null)}",
     };
@@ -51,8 +59,8 @@ internal static class StatusText
     // The profile's state in words; its glyph is ProfileGlyph's.
     internal static string ProfileHead(ProfileView p) => ProfileState(p);
 
-    // The profile state's §11.3 glyph: ✓ live, ✕ unreadable.
-    internal static StateGlyph ProfileGlyph(ProfileView p) => p.Problem is not null ? StateGlyph.Down : StateGlyph.Ok;
+    // The profile state's §11.3 glyph: ✓ live, ✕ unreadable, none (a neutral dot) when there is no profile yet.
+    internal static StateGlyph ProfileGlyph(ProfileView p) => IsMissing(p) ? StateGlyph.None : p.Problem is not null ? StateGlyph.Down : StateGlyph.Ok;
 
     // The Health page's profile rows (§4.8): the live hash, the file with ~ for home.
     internal static IEnumerable<HealthCell> Profile(ProfileView p)
