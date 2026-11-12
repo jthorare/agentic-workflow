@@ -11,8 +11,8 @@ namespace Aw.Sindri.Features.SetupSources;
 /// </summary>
 /// <param name="live">The live profile file.</param>
 /// <param name="git">The repos' git facts, kept 30 seconds, so reading the list runs no git per request.</param>
-/// <param name="profileFile">Says whether the profile file is on disk, to tell a new home from a file it can't read; null counts it absent.</param>
-internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git, IProfileFile? profileFile = null)
+/// <param name="profileFile">Says whether the profile file is on disk, to tell a new home from a file it can't read</param>
+internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git, IProfileFile profileFile)
 {
     internal async ValueTask<Result<RepoFact>> Repos(CancellationToken cancellationToken)
     {
@@ -33,7 +33,7 @@ internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git, 
     }
 
     // The source answers SND-PROFILE-001 for a file it can't read as well as for one that isn't there; only the file probe tells them apart (#3341).
-    private bool IsAbsent(Error error) => error.Code == SindriErrors.ProfileMissing.Code && profileFile?.Exists() != true;
+    private bool IsAbsent(Error error) => error.Code == SindriErrors.ProfileMissing.Code && !profileFile.Exists();
 
     private static Error Unreadable(Error error) => error.Code == SindriErrors.ProfileMissing.Code ? SindriErrors.ProfileInvalid.With("The profile file is there but can't be read; check its permissions.") : error;
 

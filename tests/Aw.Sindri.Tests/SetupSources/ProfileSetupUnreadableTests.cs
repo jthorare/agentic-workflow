@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.SetupSources;
@@ -17,7 +18,7 @@ public sealed class ProfileSetupUnreadableTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private ProfileSetupReader Reader(IProfileFile? file) => new(_profiles, new RepoGitCache(_inspector, _clock), file);
+    private ProfileSetupReader Reader(IProfileFile file) => new(_profiles, new RepoGitCache(_inspector, _clock), file);
 
     [Fact]
     public async Task An_unreadable_file_is_the_presence_steps_failure_not_missing()
@@ -25,7 +26,7 @@ public sealed class ProfileSetupUnreadableTests
         var presence = await Reader(new OnDisk(exists: true)).Presence(Token);
 
         Assert.True(presence.IsError);
-        Assert.Contains("can't be read", presence.Error.Message, StringComparison.Ordinal);
+        Assert.Equal(SindriErrors.ProfileInvalid.Code, presence.Error.Code);
     }
 
     [Fact]
@@ -34,7 +35,7 @@ public sealed class ProfileSetupUnreadableTests
         var repos = await Reader(new OnDisk(exists: true)).Repos(Token);
 
         Assert.True(repos.IsError);
-        Assert.Contains("can't be read", repos.Error.Message, StringComparison.Ordinal);
+        Assert.Equal(SindriErrors.ProfileInvalid.Code, repos.Error.Code);
     }
 
     [Fact]
@@ -44,14 +45,6 @@ public sealed class ProfileSetupUnreadableTests
 
         Assert.Equal(ProfilePresence.Missing, (await reader.Presence(Token)).Value.Presence);
         Assert.Equal(0, (await reader.Repos(Token)).Value.Count);
-    }
-
-    [Fact]
-    public async Task No_probe_counts_the_file_absent()
-    {
-        var reader = Reader(file: null);
-
-        Assert.Equal(ProfilePresence.Missing, (await reader.Presence(Token)).Value.Presence);
     }
 
     private sealed class OnDisk(bool exists) : IProfileFile
