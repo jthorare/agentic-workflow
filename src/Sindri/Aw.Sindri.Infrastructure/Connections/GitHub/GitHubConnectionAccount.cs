@@ -10,7 +10,7 @@ namespace Aw.Sindri.Infrastructure.Connections.GitHub;
 /// <summary>
 /// <see cref="IGitHubAccount"/> over the Connections page: the first connected 'github' connection (by name) is the account, else one that needs sign-in, else none.
 /// The login is the 'login' of GET https://api.github.com/user sent with the connection's token (https only, api.github.com only, no redirect followed). It is kept per connection until
-/// the connection's refresh or update time changes; a failed call gives a null login with the reason (<see cref="GitHubLoginMiss"/>) and is not asked again for a minute. A 401, and a 403 that is not a rate limit (a token missing a scope), give <see cref="GitHubLoginMiss.SignIn"/>; a 403 with <c>x-ratelimit-remaining: 0</c>, a <c>retry-after</c> header or a "rate limit" message, a 429 and every other failure give <see cref="GitHubLoginMiss.Unreachable"/>. The token is in no error, log or exception.
+/// the connection's refresh or update time changes; a failed call gives a null login with the reason (<see cref="GitHubLoginMiss"/>) and is not asked again for a minute. A 401, and a 403 that is not a rate limit (a token missing a scope), give <see cref="GitHubLoginMiss.SignIn"/>; a 403 with <c lang="text">x-ratelimit-remaining: 0</c>, a <c lang="text">retry-after</c> header or a "rate limit" message, a 429 and every other failure give <see cref="GitHubLoginMiss.Unreachable"/>. The token is in no error, log or exception.
 /// </summary>
 /// <param name="store">The Connections page's rows.</param>
 /// <param name="secrets">Reads a connection's tokens.</param>

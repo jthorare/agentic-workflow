@@ -136,7 +136,7 @@ public sealed class GitHubConnectionAccountTests : IDisposable
     {
         await Add("work", ConnectionStatus.Connected);
         var answer = Forbidden("""{"message":"Forbidden"}""");
-        answer.Headers.TryAddWithoutValidation("x-ratelimit-remaining", "0");
+        _ = answer.Headers.TryAddWithoutValidation("x-ratelimit-remaining", "0");
         _handler.Answer = answer;
 
         var account = (await Account().Current(CancellationToken.None)).Value;
@@ -149,7 +149,7 @@ public sealed class GitHubConnectionAccountTests : IDisposable
     {
         await Add("work", ConnectionStatus.Connected);
         var answer = Forbidden("""{"message":"Resource not accessible"}""");
-        answer.Headers.TryAddWithoutValidation("x-ratelimit-remaining", "4999");
+        _ = answer.Headers.TryAddWithoutValidation("x-ratelimit-remaining", "4999");
         _handler.Answer = answer;
 
         var account = (await Account().Current(CancellationToken.None)).Value;
@@ -162,7 +162,7 @@ public sealed class GitHubConnectionAccountTests : IDisposable
     {
         await Add("work", ConnectionStatus.Connected);
         var answer = Forbidden("""{"message":"Forbidden"}""");
-        answer.Headers.TryAddWithoutValidation("retry-after", "60");
+        _ = answer.Headers.TryAddWithoutValidation("retry-after", "60");
         _handler.Answer = answer;
 
         var account = (await Account().Current(CancellationToken.None)).Value;
