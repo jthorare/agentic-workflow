@@ -1,6 +1,6 @@
-using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Secrets;
@@ -19,7 +19,12 @@ namespace Aw.Sindri.Features.LinearConnection;
 /// <param name="writeTokens">Writes the write key's pointer.</param>
 /// <param name="editChecks">Says whether a profile edit would apply, before a key is touched.</param>
 /// <param name="checks">Keeps the last check of each key; the write check goes when its key does.</param>
-internal sealed class CoreLinearConnectionStore(IProfileSource live, ISecretWriter writer, ISecretPointers pointers, ISourceTokenProfileWriter tokens, ILinearWriteTokenWriter writeTokens, ILinearProfileEditCheck editChecks, ILinearCheckStore checks)
+/// <param name="connections">The Connections page's rows: the read key lives in the one Linear connection there (#3364).</param>
+/// <param name="connectionSecrets">Keeps the connection's key.</param>
+/// <param name="presets">The shipped presets, for the Linear one's kind and probe address.</param>
+/// <param name="clock">Stamps the connection row.</param>
+internal sealed class CoreLinearConnectionStore(IProfileSource live, ISecretWriter writer, ISecretPointers pointers, ISourceTokenProfileWriter tokens, ILinearWriteTokenWriter writeTokens, ILinearProfileEditCheck editChecks, ILinearCheckStore checks,
+    IConnectionStore connections, IConnectionSecrets connectionSecrets, IConnectionPresetCatalog presets, TimeProvider clock)
     : ILinearConnectionStore
 {
     private const string Service = "sindri-index";
@@ -28,38 +33,51 @@ internal sealed class CoreLinearConnectionStore(IProfileSource live, ISecretWrit
 
     public async ValueTask<bool> IsReadKey(string key, CancellationToken cancellationToken)
     {
+        if (await LinearConnectionRow.Find(connections, connectedOnly: true, cancellationToken).ConfigureAwait(false) is { SecretPointer: { } location }
+            && connectionSecrets.Read(location) is { IsSuccess: true } held
+            && string.Equals(held.Value.AccessToken, key, StringComparison.Ordinal))
+        {
+            return true;
+        }
+
         var pointer = await RawLinear("token", cancellationToken).ConfigureAwait(false);
         return pointer is not null
             && SecretPointer.Parse(pointer).Bind(pointers.Resolve) is { IsSuccess: true } stored
             && string.Equals(stored.Value, key, StringComparison.Ordinal);
     }
 
-    // why: the edits are checked before the key is stored, so a refused one (a layout Sindri won't edit, no linear entry) never leaves the new key beside the old teams. The pointer's value does not change whether an edit applies, so a
-    // keychain-shaped one stands in for what the writer will return
-    public ValueTask<Result<string>> SaveRead(string key, IReadOnlyList<string> teams, CancellationToken cancellationToken)
+    // why: the read key lives in the one Linear connection (#3364), so the Connections page and Settings show the same key; only the teams go to the profile. The teams edit is checked before the key is stored, so a refused one
+    // (a layout Sindri won't edit, no linear entry) never leaves the new key beside the old teams
+    public async ValueTask<Result<string>> SaveRead(string key, IReadOnlyList<string> teams, CancellationToken cancellationToken)
     {
-        var token = editChecks.CheckSetToken(Source, $"keychain:{Service}/{Source}");
-        var fits = token.IsError ? token : editChecks.CheckSetTeams(Source, teams);
+        var fits = editChecks.CheckSetTeams(Source, teams);
         if (fits.IsError)
         {
-            return ValueTask.FromResult<Result<string>>(fits.Error);
+            return fits.Error;
         }
 
-        var stored = writer.Store(Service, Source, key);
-        return ValueTask.FromResult(stored.IsError ? stored.Error : Point(stored.Value, teams));
-    }
-
-    private Result<string> Point(SecretPointer stored, IReadOnlyList<string> teams)
-    {
-        var resolved = pointers.Resolve(stored);
-        if (resolved.IsError)
+        var existing = await LinearConnectionRow.Find(connections, connectedOnly: false, cancellationToken).ConfigureAwait(false);
+        var name = existing?.Name ?? ConnectionName.Parse(LinearConnectionRow.DefaultName).Value;
+        var stored = connectionSecrets.Store(name, new TokenSet(key, RefreshToken: null, ExpiresAt: null));
+        if (stored.IsError)
         {
-            return SindriErrors.IndexTokenUnresolved.With($"the key was stored at {stored} but that pointer does not resolve: {resolved.Error.Message}");
+            return stored.Error;
         }
 
-        var written = tokens.SetToken(Source, stored.ToString());
-        var listed = written.IsError ? written : tokens.SetTeams(Source, teams);
-        return listed.IsError ? listed.Error : stored.ToString();
+        var now = clock.GetUtcNow();
+        var preset = presets.Find(Source);
+        var config = preset?.ProbeUrl is { } probe ? new Dictionary<string, string>(StringComparer.Ordinal) { ["probeUrl"] = probe } : [];
+        var row = existing is null
+            ? new Connection(name, preset?.Kind ?? ConnectionKind.Rest, Source, config, stored.Value, ConnectionStatus.Connected, StatusReason: null, "settings", now, now, LastRefreshedAt: null)
+            : existing with { SecretPointer = stored.Value, Status = ConnectionStatus.Connected, StatusReason = null, UpdatedAt = now };
+        var written = await connections.Upsert(row, cancellationToken).ConfigureAwait(false);
+        if (written.IsError)
+        {
+            return written.Error;
+        }
+
+        var listed = tokens.SetTeams(Source, teams);
+        return listed.IsError ? listed.Error : stored.Value.ToString();
     }
 
     public async ValueTask<Result<string>> SaveWrite(string key, CancellationToken cancellationToken)
@@ -108,20 +126,5 @@ internal sealed class CoreLinearConnectionStore(IProfileSource live, ISecretWrit
     }
 
     // The string at context.sources.linear.<name> of the loaded profile; null when the profile, the entry or the key is missing or not a string.
-    private async ValueTask<string?> RawLinear(string name, CancellationToken cancellationToken)
-    {
-        var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
-        var at = loaded.IsError ? null : loaded.Value.Profile.Context;
-        foreach (var step in new[] { "sources", Source, name })
-        {
-            if (at is not { ValueKind: JsonValueKind.Object } node || !node.TryGetProperty(step, out var next))
-            {
-                return null;
-            }
-
-            at = next;
-        }
-
-        return at is { ValueKind: JsonValueKind.String } text ? text.GetString() : null;
-    }
+    private ValueTask<string?> RawLinear(string name, CancellationToken cancellationToken) => LinearProfileText.Raw(live, name, cancellationToken);
 }

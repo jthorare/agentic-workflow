@@ -52,6 +52,7 @@ internal static class SindriHostServiceCollectionExtensions
         .AddHostedService<ToolkitAdoptionHost>()
         .AddHostedService<GraphRunRecoveryHost>()
         .AddHostedService<RunItemRepairHost>()
+        .AddScoped<IndexSources.LinearKeyImport>().AddHostedService<LinearKeyImportHost>()   // the old Linear key becomes the one Linear connection, once (#3364)
         .AddHostedService<LostSessionsHost>()
         .AddHostedService<SessionUsageHost>()
         .AddHostedService<ProfileWatch>()

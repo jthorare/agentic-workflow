@@ -23220,3 +23220,18 @@ Aw.Sindri.Core.Reviews.ReviewRequiredState
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.Counted = "counted" -> string!
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.NoneNamed = "noneNamed" -> string!
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.NotRead = "notRead" -> string!
+Aw.Sindri.Core.Events.ConnectionImported
+Aw.Sindri.Core.Events.ConnectionImported.<Clone>$() -> Aw.Sindri.Core.Events.ConnectionImported!
+Aw.Sindri.Core.Events.ConnectionImported.Connection.get -> string!
+Aw.Sindri.Core.Events.ConnectionImported.Connection.init -> void
+Aw.Sindri.Core.Events.ConnectionImported.Source.get -> string!
+Aw.Sindri.Core.Events.ConnectionImported.Source.init -> void
+Aw.Sindri.Core.Events.ConnectionImported.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Events.ConnectionImported.At.init -> void
+Aw.Sindri.Core.Events.ConnectionImported.ConnectionImported(string! Connection, string! Source, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.ConnectionImported.Deconstruct(out string! Connection, out string! Source, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.ConnectionImported.Equals(Aw.Sindri.Core.Events.ConnectionImported? other) -> bool
+override Aw.Sindri.Core.Events.ConnectionImported.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ConnectionImported.GetHashCode() -> int
+const Aw.Sindri.Core.Events.EventTypes.ConnectionImported = "connection.imported" -> string!
+Aw.Sindri.Core.Connections.ConnectionEvents.Imported(Aw.Sindri.Core.Connections.ConnectionName name, string! source, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask

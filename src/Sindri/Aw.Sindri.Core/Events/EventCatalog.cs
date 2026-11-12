@@ -127,6 +127,7 @@ public static class EventCatalog
         new(EventTypes.ConnectionNeedsSignIn, Public: true, typeof(ConnectionNeedsSignIn), "connection.needs-sign-in:<name>:<atTicks>") { Invalidates = [ApiViews.NeedsYou] },
         new(EventTypes.ConnectionSignedIn, Public: true, typeof(ConnectionSignedIn), "connection.signed-in:<name>:<atTicks>") { Invalidates = [ApiViews.NeedsYou] },
         new(EventTypes.ConnectionRemoved, Public: false, PublicPayload: null, "connection.removed:<name>:<atTicks>"),
+        new(EventTypes.ConnectionImported, Public: false, PublicPayload: null, "connection.imported:<name>"),
         new(EventTypes.ConnectionSignInRequested, Public: false, PublicPayload: null, "connection.sign-in-requested:<name>:<atTicks>"),
         new(EventTypes.MemoryFactsForgotten, Public: false, PublicPayload: null, "memory.facts.forgotten:<memory>:<selector>:<atTicks>"),
         new(EventTypes.ConnectionPolled, Public: false, PublicPayload: null, "connection.polled:<name>:<kind>:<atTicks>"),

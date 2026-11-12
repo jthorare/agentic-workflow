@@ -37,6 +37,8 @@ public sealed class RemoveLinearWriteKeyStoreTests : IDisposable
     private readonly AsyncServiceScope _scope;
     private readonly FakeSecretWriter _keychain = new();
     private readonly FakeLinearCheckStore _checks = new();
+    private readonly Aw.Sindri.Testing.Connections.InMemoryConnectionStore _connections = new();
+    private readonly Aw.Sindri.Testing.Connections.FakeConnectionSecrets _connectionSecrets = new();
 
     public RemoveLinearWriteKeyStoreTests()
     {
@@ -74,7 +76,22 @@ public sealed class RemoveLinearWriteKeyStoreTests : IDisposable
         var profile = new SindriProfile(1, "me", Context: JsonDocument.Parse(contextJson).RootElement.Clone());
         var profiles = new InMemoryProfiles { Live = new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), ProfilePath) };
         var yaml = new YamlSourceTokenProfileWriter(new SindriSettings(_home, ProfilePath), NoProfileCache.Instance);
-        return new CoreLinearConnectionStore(profiles, _keychain, _keychain, yaml, yaml, yaml, _checks);
+        return new CoreLinearConnectionStore(profiles, _keychain, _keychain, yaml, yaml, yaml, _checks,
+            _connections, _connectionSecrets, new Aw.Sindri.Testing.Connections.FakeConnectionPresets(), TimeProvider.System);
+    }
+
+    [Fact]
+    public async Task Saving_the_read_key_writes_the_one_Linear_connection_and_not_the_old_keychain_entry()
+    {
+        var saved = await Store().SaveRead("lin_api_new", ["ENG"], TestContext.Current.CancellationToken);
+
+        Assert.True(saved.IsSuccess);
+        var row = Assert.Single(_connections.Rows);
+        Assert.Equal("linear", row.Preset);
+        Assert.Equal(Aw.Sindri.Core.Connections.ConnectionStatus.Connected, row.Status);
+        Assert.Equal("lin_api_new", _connectionSecrets.Tokens(row.SecretPointer!.ToString())!.AccessToken);
+        Assert.Equal("lin_api_read", _keychain.Stored[ReadPointer]);
+        Assert.True(await Store().IsReadKey("lin_api_new", TestContext.Current.CancellationToken));
     }
 
     [Fact]

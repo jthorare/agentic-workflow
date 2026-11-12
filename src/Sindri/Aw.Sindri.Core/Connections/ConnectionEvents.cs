@@ -53,6 +53,22 @@ public sealed class ConnectionEvents(HeldLease held, ILedgerStore ledger, EventF
         _ = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Appends 'connection.imported' (#3364) for a connection made from the old Linear keychain entry. The key holds the name only, so the event is written once.</summary>
+    /// <param name="name">The connection.</param>
+    /// <param name="source">What it came from (a pointer, never a secret).</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>A task that ends when the event is recorded or skipped.</returns>
+    public async ValueTask Imported(ConnectionName name, string source, CancellationToken cancellationToken)
+    {
+        if (held.Current is not { } grant)
+        {
+            return;
+        }
+
+        var entry = events.Entry(EventTypes.ConnectionImported, new ConnectionImported(name.ToString(), source, Now), $"{EventTypes.ConnectionImported}:{name}");
+        _ = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
+    }
+
     /// <summary>Appends 'connection.sign-in-requested' for <paramref name="name"/>; the envelope's actor is who signed in (#2460).</summary>
     /// <param name="name">The connection.</param>
     /// <param name="cancellationToken">Cancels the append.</param>

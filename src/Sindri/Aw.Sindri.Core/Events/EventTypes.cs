@@ -269,6 +269,9 @@ public static partial class EventTypes
     /// <summary>A connection was removed (#2460): its secret and row are gone. The envelope's actor is who removed it. Not public.</summary>
     public const string ConnectionRemoved = "connection.removed";
 
+    /// <summary>The old Linear keychain entry was imported once as a connection on the Connections page (#3364). The key is in no field. Not public.</summary>
+    public const string ConnectionImported = "connection.imported";
+
     /// <summary>A sign-in (or sign-in again) was started for a connection (#2460). The envelope's actor is who signed in; the row keeps its original creator. Not public.</summary>
     public const string ConnectionSignInRequested = "connection.sign-in-requested";
 

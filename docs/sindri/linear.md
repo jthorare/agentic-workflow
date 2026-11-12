@@ -41,7 +41,7 @@ context:
 
 | Key | Meaning | Default |
 |---|---|---|
-| `context.sources.linear.token` | the secret pointer to the key, written by `sindri index connect linear`; required for the native source to run | none |
+| `context.sources.linear.token` | the secret pointer to the key, written by `sindri index connect linear`. Linear has one connection (#3364): the Connections page's, `linear:default` when Settings or the import made it. A connected Linear connection wins over this pointer; the pointer is the fallback, and Settings' key box no longer writes it | none |
 | `context.sources.linear.teams` | team keys (a capital, then capitals or digits: `ENG`) that scope every read; empty reads every team the key can see | `[]` |
 | `context.sources.linear.url` | Linear's GraphQL endpoint | `https://api.linear.app/graphql` |
 
@@ -121,3 +121,7 @@ Upgrading to the build with migration 0029 does the same once more for the PR li
 ### Lookups for the pickers
 
 After each tick of the `linear` feed (also one that stopped at its time cap) a second step reads, for each team in `context.sources.linear.teams` (every team the key sees when none is listed), its workflow states, its cycles (the current one, the next one and the last three), its members and its labels in one `teams` query, and replaces that team's rows in one go. It reads with the read-only key. A failed read leaves the stored rows and the tick's result as they were; the next tick asks again. The step needs the lookup tables, which arrive with the store changes of the same feature; until then a host that has no lookup store registered skips it.
+
+## One Linear connection (#3364)
+
+Settings' key box (`POST /sindri/linear/connection`) and the Connections page's Linear card write the same row in the Connections store (`IConnectionStore` and `IConnectionSecrets`), the one a `run_agent` node's `connections` reads. Settings shows that row's state; the teams stay in `context.sources.linear.teams`. On serve start, a home with the old keychain entry behind `context.sources.linear.token` and no Linear connection imports it once as `linear:default` and writes one `connection.imported` event; a second start imports nothing.

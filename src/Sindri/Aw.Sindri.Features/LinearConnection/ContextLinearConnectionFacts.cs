@@ -44,8 +44,10 @@ internal sealed class ContextLinearConnectionFacts(IProfileSource live, IContext
             return settings.IsError ? settings.Error : stored.Error;
         }
 
+        // why: one Linear connection (#3364): the Connections page's row wins, as it does for the feed's key; the profile's pointer is only the fallback
+        var connection = await LinearConnectionRow.Find(connections, connectedOnly: true, cancellationToken).ConfigureAwait(false);
         return new LinearConnectionView(
-            ReadState(settings.Value.Linear, stored.Value.Read),
+            connection is null ? ReadState(settings.Value.Linear, stored.Value.Read) : new LinearKeyStateView("resolves", connection.LastRefreshedAt ?? connection.UpdatedAt),
             WriteState(settings.Value.Linear, stored.Value.Write),
             await Teams(settings.Value.LinearTeams, cancellationToken).ConfigureAwait(false));
     }
