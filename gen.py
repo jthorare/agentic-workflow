@@ -161,26 +161,25 @@ needs_page('header-scope', state='scope', title='Messages - scope missing',
            sr='Banner: search needs the scope search:read. The feature is off, not hidden. Button: Reconnect. Details: SND-MSG-003.')
 
 # ---------------- unread (class 1 lives here in Release 1)
-UN = [  # cls (1 = a thread of mine, 0 = not mine: no glyph), who, place, title, mention
- (1, 'Pat', 'DM', 'thanks!', 0), (1, 'Kim', '#harbor', 'ok, 90 s holds then', 1),
- (0, 'Lee', '#general', '@here lunch Friday?', 0), (0, 'Lee', '#harbor', 'thanks, taking a look now', 0),
- (0, 'Mira', '#billing', 'customer says the invoice looks right now', 0), (0, 'Jo', '#ferry-ops', 'dock cam is back online', 0),
- (0, 'Lee', 'Kim, Lee', 'moving standup to 10:15', 0), (0, 'Sana', '#billing', 'rounding thread is resolved, thanks all', 0),
- (0, 'Rui', '#ops', 'export for ACME finished', 0), (0, 'Eli', 'DM', 'fyi the retry cap doc is in Notes', 0),
- (0, 'Hana', '#general', 'standup notes are in the doc', 0), (0, 'Ben', '#ferry-ops', 'dock inspection moved to Thursday', 0),
- (0, 'Uma', '#billing', 'invoice template v2 is merged', 0), (0, 'Fay', '#eng', 'on-call swap sheet is updated', 0),
+UN = [  # cls (1 = a thread of mine, 0 = not mine: no glyph), who, place, title, mention, age (newest first; clock about 09:10)
+ (0, 'Lee', '#harbor', 'thanks, taking a look now', 0, 'now'), (1, 'Kim', '#harbor', 'ok, 90 s holds then', 1, '50m'),
+ (0, 'Mira', '#billing', 'customer says the invoice looks right now', 0, '1h'), (0, 'Jo', '#ferry-ops', 'dock cam is back online', 0, '2h'),
+ (1, 'Pat', 'DM', 'thanks!', 0, '3h'), (0, 'Lee', '#general', '@here lunch Friday?', 0, '4h'),
+ (0, 'Lee', 'Kim, Lee', 'moving standup to 10:15', 0, '5h'), (0, 'Sana', '#billing', 'rounding thread is resolved, thanks all', 0, '6h'),
+ (0, 'Rui', '#ops', 'export for ACME finished', 0, '7h'), (0, 'Eli', 'DM', 'fyi the retry cap doc is in Notes', 0, '8h'),
+ (0, 'Hana', '#general', 'standup notes are in the doc', 0, '9h'), (0, 'Ben', '#ferry-ops', 'dock inspection moved to Thursday', 0, '10h'),
+ (0, 'Uma', '#billing', 'invoice template v2 is merged', 0, '11h'), (0, 'Fay', '#eng', 'on-call swap sheet is updated', 0, '12h'),
 ]
 def unread_list(n=14, cursor=0):
     o = '<div class="mgroup">Unread<span class="n">14</span></div>'
-    ages = ['3h', '3h', '4h', '4h', '5h', '6h', '6h', '7h', '8h', '9h', '10h', '11h', '12h', '13h']
-    for i, (c, who, pl, ti, men) in enumerate(UN[:n]):
-        row = (c, who, pl, ti, [], '', ages[i])
+    for i, (c, who, pl, ti, men, age) in enumerate(UN[:n]):
+        row = (c, who, pl, ti, [], '', age)
         h = mrow(row, 'full', cursor=(i == cursor), unread=True, cls=('men' if men else ''))
         h = h.replace(f'<span class="t">{ti}</span>', f'<span class="t">{ti}</span><span class="dot"></span>' + ('<span class="you">you</span>' if men else ''))
         o += h
     return f'<div class="mlist">{o}</div>'
 write('unread', shell('Messages - Unread', hdr(count='23 need reply'), f'<div class="mbody nopeek">{rail(on="Unread")}{unread_list()}</div>', keys('List keys', LIST_KEYS),
-      'Unread, list, 14 rows, all unread. Pat, direct message, 3 hours ago: thanks (circle: a thread of mine, class 1). Kim in harbor, 50 minutes ago: ok, 90 s holds then, mentions you. Rows without a circle are not mine.'))
+      'Unread, list, 14 rows, all unread. Lee in harbor, now: thanks, taking a look now. Kim in harbor, 50 minutes ago: ok, 90 s holds then, mentions you (circle: a thread of mine). Pat, direct message, 3 hours ago: thanks (circle). Rows without a circle are not mine.'))
 
 # ---------------- conversation
 def ln(name, tm, body, first=True, av='#3a3f58', ini='AD', cur=False, mention=False, extra='', hov=''):
@@ -239,9 +238,10 @@ def snooze_menu(top, follow=False):
         o += '<div class="mdiv"></div><div class="ment chk"><span class="g box on"></span><span class="lab">Follow up if no reply</span><kbd>f</kbd></div><div class="mnote">I spoke last in this thread. If nobody answers before it is due it returns, with "no reply since Tue". An answer drops the snooze.</div>'
     return o + '</div>'
 SNKEYS = [('1-5', 'pick'), ('↑↓', 'move'), ('Enter', 'snooze'), ('Esc', 'close')]
-def snooze_page(name, follow, sr, title, peek=None, rail_html=None):
-    body = f'<div class="mbody">{rail_html or rail()}<div style="min-width:0;overflow:hidden">{needs_list("full", 9, 4, False, 4, rows=ROWS[ADA - 4:ADA + 5])}</div>{peek or peek_thread()}</div>'
-    write(name, shell(title, hdr(), body, keys('Picker', SNKEYS + ([('f', 'follow up if no reply')] if follow else [])), sr, snooze_menu(284, follow)))
+def snooze_page(name, follow, sr, title, peek=None, rail_html=None, rows=None, counts=(23, 14), count='23 need reply', ncount=23, total=22, dim=False):
+    rr = ROWS if rows is None else rows
+    body = f'<div class="mbody">{rail_html or rail(counts=counts)}<div style="min-width:0;overflow:hidden">{needs_list("full", len(rr[ADA - 9:]), 9, True, 9, rows=rr[ADA - 9:], total=total, dim=((9,) if dim else ()))}</div>{peek or peek_thread()}</div>'
+    write(name, shell(title, hdr(count=count), body, keys('Picker', SNKEYS + ([('f', 'follow up if no reply')] if follow else [])), sr, snooze_menu(96 if follow else 150, follow), ncount=ncount))
 snooze_page('snooze-picker', False, 'Snooze picker on the cursor row (' + rowsr(ROWS[ADA]) + '): later today, tomorrow, Monday, next week, a typed time. Release 1 uses Home’s picker as it is: no follow-up checkbox.', 'Messages - snooze picker')
 # snoozed rows, "back Mon 9:00"
 SNZ = [(3, 'Mira', 'DM', 'did the export retry change land? asking before I tell the customer', ['#3104'], 'back Mon 9:00', '2h')]
@@ -360,9 +360,10 @@ def peek_r2(cmp, lines=None, head='Thread · #harbor', idt='slack:thread:harbor'
     return f'''<aside class="peek"><div class="peek-head"><h2>{head}</h2><span class="id">{idt}</span><span class="icon">⤢</span><span class="icon">✕</span></div>
 <dl class="peek-fields"><dt>Class</dt><dd><span class="g c2"></span>Review ask</dd><dt>Waits on</dt><dd>{waits}</dd></dl>
 <div class="mp" style="padding-top:4px"><div class="eyebrow" style="margin-top:6px">{"Thread, root only" if replies == 0 else f"Thread, root and {replies} reply"}</div>{body}</div>{ob}{cmp}</aside>'''
-def r2list(rows=None, cm=True, total=22, ncount=1, dim=False, n=14):
+def r2list(rows=None, cm=True, total=22, ncount=1, dim=False, n=None):
     rows = ROWS if rows is None else rows
     st = max(0, ADA - 9)
+    n = n or len(rows[st:])
     return needs_list('full', n, ADA - st, True, ADA - st, rows=rows[st:], total=total, ncount=ncount, cm=cm, dim=((ADA - st,) if dim else ()))
 def r2page(name, peek, sr, extra='', kb=None, state='live', title=None, rail_kw=None, center=None, off=False, drafts=0, cm=False, rel='', pill='Connected', counts=(23, 14), count='23 need reply', ncount=23):
     center = center or r2list(cm=cm)
@@ -402,7 +403,7 @@ r2page('composer-429', peek_r2(comp(None), lines=thread_lines(youline=greyed('<d
 r2page('composer-focus-ring', peek_r2(comp('Looking now.', focus=True)), 'Focus ring on the composer: 2 px accent ring, 3 to 1 against the panel. The list shows a cursor mark, not a ring. After a send the composer stays focused.', title='Messages - focus ring on the composer', cm=True)
 # agent hand-off dialog (spec 9.7 item 8)
 def dim_page(name, dlg, kbd, sr, mode='', title=None, rel='', peek=None):
-    body = f'<div class="mbody">{rail(drafts=0)}<div style="min-width:0;overflow:hidden">{r2list(cm=True, n=12)}</div>{peek or peek_r2(comp(None))}</div>'
+    body = f'<div class="mbody">{rail(drafts=0)}<div style="min-width:0;overflow:hidden">{r2list(cm=True)}</div>{peek or peek_r2(comp(None))}</div>'
     h = hdr()
     if rel: h = h.replace('</h1>', f'</h1><span class="rel">{rel}</span>', 1)
     write(name, shell(title or 'Messages - ' + name, h, body, keys(mode, kbd), sr, '<div class="dimall"></div>' + dlg))
@@ -414,7 +415,7 @@ HAND = ('<div class="dlg" style="top:130px;width:600px"><div class="dh">Hand thi
         '<div class="df"><span class="btn ghost">Cancel <kbd>Esc</kbd></span><span class="sp"></span><span class="btn primary">Send thread to claude-code</span></div></div>')
 dim_page('composer-hand-off', HAND, [('Tab', 'next field'), ('Esc', 'cancel')], 'Hand this thread to an agent, dialog. Provider claude-code. Thread of 4 messages, 1 linked row, about 1k tokens. A normal session that can run shell and gh. Send is your explicit act.')
 # snooze with follow-up (Release 2): the cursor is on a thread where I spoke last (Ada, replied 09:14)
-snooze_page('snooze-picker-followup', True, 'Snooze picker on a thread where I spoke last, with the checkbox Follow up if no reply, checked, key f. Release 2.', 'Messages - snooze picker with follow up', peek=peek_r2(comp(None)), rail_html=rail(drafts=0))
+snooze_page('snooze-picker-followup', True, 'Snooze picker on a thread where I spoke last (my 09:14 line is the last in the peek; the row reads replied 09:14), with the checkbox Follow up if no reply, checked, key f. Release 2.', 'Messages - snooze picker with follow up', peek=peek_r2(comp(None), lines=thread_lines(youline=YOU()), replies=1, waits='them'), rail_html=rail(drafts=0, counts=(22, 14)), rows=ROWS_REPLIED, count='22 need reply', ncount=22, total=21, dim=True)
 
 # ---------------- peeks (user, huddle), empty Later and Drafts, emoji (Release 2)
 def peek_other(name, head, idt, fields, body, sr, ob=True, rel='', kb=None):
@@ -473,7 +474,7 @@ def srch(name, scope, q, groups, sr):
     foot = [('↑↓', 'move'), ('Enter', 'open'), ('Esc', 'close')]
     other = 'Everything' if scope == 'Messages' else 'Messages'
     inner = f'<div class="dlg" style="top:90px;width:720px"><div class="in"><span class="scopebtn">{scope} ▾</span><span class="mono" style="font-size:14px">{q}</span><span style="display:inline-block;width:1px;height:18px;background:var(--primary-hi)"></span></div>{groups}<div class="df" style="margin-top:6px">{kk(foot)}<span class="sp"></span><span class="tag">Scope: click the chip or run messages.search-scope</span></div></div>'
-    body = f'<div class="mbody">{rail(drafts=0)}<div style="min-width:0;overflow:hidden">{r2list(cm=True, n=12)}</div>{peek_r2(comp(None))}</div>'
+    body = f'<div class="mbody">{rail(drafts=0)}<div style="min-width:0;overflow:hidden">{r2list(cm=True)}</div>{peek_r2(comp(None))}</div>'
     h = hdr().replace('</h1>', f'</h1><span class="rel">{R3}</span>', 1)
     write(name, shell('Messages - ' + name, h, body, keys('', foot), sr, '<div class="dimall"></div>' + inner))
 def hit(gl, who, place, t, tag='', age='2h'):
@@ -481,9 +482,9 @@ def hit(gl, who, place, t, tag='', age='2h'):
 srch('search-messages', 'Messages', 'seat holds from:ada', '<div class="gh">Messages · from the store, 38 ms</div>' + hit('c1', 'Ada', '#harbor', 'seat holds are still 120 s in staging', '', '3h') + hit('c2', 'Ada', '#harbor', '@joi review #3120 when you can', '', '2h') + hit('c1', 'Ada', '#billing', 'seat holds copy for the invoice email', '', '1d')
      + '<div class="gh">Slack, 3 calls a minute</div>' + hit('c1', 'Ada', '#ops-archive', 'old thread on seat hold release', 'from Slack', '4w') + hit('c1', 'Ada', 'DM Priya', 'seat holds and the demo env', 'from Slack', '5w') + '<div class="pi2" style="color:var(--ink-subtle)"><span></span><span></span><span>Search Slack too found 2. Press Enter on a Slack row to open it.</span><span></span></div>',
      'Release 3. Search in Messages: local results first, then results from Slack tagged from Slack. Operator from. The scope chip is a button, with the palette entry messages.search-scope; Tab does not switch it. Results: 3 from the store, 2 from Slack.')
-srch('search-everything', 'Everything', 'seat holds', '<div class="gh">Messages 2</div>' + hit('c1', 'Ada', '#harbor', 'seat holds are still 120 s in staging', '', '3h') + hit('c2', 'Ada', '#harbor', '@joi review #3120 when you can', '', '2h')
+srch('search-everything', 'Everything', 'seat holds', '<div class="gh">Messages 4</div>' + hit('c1', 'Ada', '#harbor', 'seat holds are still 120 s in staging', '', '3h') + hit('c2', 'Ada', '#harbor', '@joi review #3120 when you can', '', '2h') + hit('c1', 'Ada', '#billing', 'seat holds copy for the invoice email', '', '1d') + hit('c1', 'Sam', '#harbor', 'config for staging: seat hold seconds', '', '20m')
      + '<div class="gh">Pull requests and issues 2</div>' + hit('pr', '#3120', 'PR', 'Seat holds: 90 s', '', 'ada') + hit('doing', '#3055', 'issue', 'Seat hold release', '', 'you')
      + '<div class="gh">Notes 1</div>' + hit('note', 'note', 'eng/', 'Seat hold design', '', '2d') + '<div class="gh">Code 1</div>' + hit('linked', 'code', 'scope', 'export/upload (seat, hold)', '', '14 files'),
-     'Release 3. Search in Everything: results in groups of up to 5, not one fused rank: Messages 2, Pull requests and issues 2, Notes 1, Code 1. Each header count equals its rows. The scope chip is a button; Tab does not switch it.')
+     'Release 3. Search in Everything: results in groups of up to 5, not one fused rank: Messages 4 (at least the 3 that from:ada finds), Pull requests and issues 2, Notes 1, Code 1. Each header count equals its rows. The scope chip is a button; Tab does not switch it.')
 peek_other('peek-file', 'File · #harbor', 'slack:file:F0SEAT', [('From', 'Pat'), ('Name', 'fare-table.png'), ('Size', '184 KB')], '<div class="eyebrow">Thumbnail</div><div class="fileth">fare-table.png</div><div class="filechip"><span class="g note"></span>fare-table-diff.pdf · 14 MB</div><div class="fbox att" style="display:flex;gap:10px;background:var(--err-soft);border-radius:6px;padding:8px 12px;margin-top:6px;font-size:12px"><span class="g fail" style="margin-top:2px"></span><div>fare-table-diff.pdf is 14 MB, over the 10 MB limit. Open it in Slack.<div class="mono" style="font-size:11px;color:var(--ink-subtle)">Details ▸ SND-MSG-010 · too large</div></div></div>', 'Release 3. File peek: a thumbnail 96 pixels high, a file chip with name and size, and a file that is too large: 14 MB, over the 10 MB limit. No Retry, because a retry cannot change the size. Button: Open in Slack. Details: SND-MSG-010.', rel=R3)
 peek_other('peek-app-message', 'CI bot · app message', 'slack:app:B0CI', [('App', 'CI bot'), ('Place', '#harbor'), ('Time', '09:10')], '<div class="blkmsg"><div><b style="font-weight:600">Build 8861 failed</b></div><div class="ctx">agentic-workflow · main · 3 tests</div><hr><div style="color:var(--ink-muted)">Retry the nightly export job or open the run.</div><div style="display:flex;gap:8px;margin-top:6px;align-items:center"><span class="btn off">Retry</span><span class="btn"><span class="lk">Open run</span> ↗</span></div><div style="font-size:11px;color:var(--ink-subtle);margin-top:4px">Retry is off: press it in Slack. Link buttons open the URL.</div></div><div class="blkmsg" style="border-color:var(--att)"><div style="color:var(--ink-muted)">Unknown block (type: input): shown as text. Open in Slack to see it as sent.</div></div>', 'Release 3. App message with blocks: a section, a context line, a divider and an actions row. Retry is disabled with its reason: press it in Slack. Open run is a link button that opens the URL. An unknown block shows as text plus Open in Slack.', rel=R3)

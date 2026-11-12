@@ -55,3 +55,9 @@
 45. snoozed-rows draws the band as 21 rows: the list is scrolled to the end, with a "6 more above" cue and 15 rows, then Snoozed.
 46. The cursor row's title ends with an ellipsis before the buttons at 1440, 1200 and 1000. At 1200 and 1000 the linked-object chips are dropped on every row, not only the cursor row.
 47. The snooze picker has no mode chip. The loading frame shows 23 in the header, the tab and the rail.
+
+## Final 4 items (comment 6825260548)
+48. Every Release 2 list frame and both snooze pickers show the list to its end (Iris, Ravi, Jo after Omar): the window starts 9 rows above Ada and runs to the last row. The pickers open upward from the cursor row so they stay on the page.
+49. snooze-picker-followup is drawn on the composer-sent state: the row reads replied 09:14 (cursor), counts 22 and 21, and the peek ends with my 09:14 line.
+50. Plain search `seat holds` finds 4 Messages, at least the 3 that `seat holds from:ada` finds.
+51. Unread ages follow the lines: Lee's #harbor row "now" (09:10), Kim's thread 50m (08:20); rows are newest first.
