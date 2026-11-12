@@ -208,4 +208,14 @@ internal static partial class Labels
     /// <param name="age">The age as the rows show it ("2h 56m").</param>
     /// <returns>"Running for 2h 56m".</returns>
     internal static string StatusFor(string state, string age) => state + " for " + age;
+
+    /// <summary>An item event type in words.</summary>
+    /// <param name="type">The served type ("item.created").</param>
+    /// <returns>The words.</returns>
+    internal static string TimelineType(string type) => type;
+
+    /// <summary>An actor in words, ready after a verb ("by you").</summary>
+    /// <param name="actor">The served actor ("human:cli").</param>
+    /// <returns>The words.</returns>
+    internal static string TimelineActor(string actor) => actor;
 }

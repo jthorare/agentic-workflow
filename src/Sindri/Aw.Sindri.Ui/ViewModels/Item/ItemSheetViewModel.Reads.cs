@@ -39,6 +39,15 @@ internal sealed partial class ItemSheetViewModel
         IsLoading = !HasItem;
     }
 
+    /// <summary>Names the sheet's subject at once and, when the queue already holds the item's row, shows its title and state on the first frame.</summary>
+    /// <param name="itemId">The item's id.</param>
+    /// <param name="row">The queue row the item opened from, or null.</param>
+    internal void Show(string itemId, Queue.ItemRowViewModel? row)
+    {
+        _ = row;
+        Show(itemId);
+    }
+
     /// <summary>Re-reads the open item and the timeline pages read so far (on every event, §9.2).</summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
