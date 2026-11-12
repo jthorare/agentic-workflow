@@ -125,6 +125,63 @@ public sealed class ProjectsGridKeysTests : FrameHost
     });
 
     [Fact]
+    public Task J_and_K_move_to_the_next_and_previous_card() => OnUi(async () =>
+    {
+        var (window, _) = await OnProjects();
+
+        Assert.Equal(["A", "B"], Move(window, "A", PhysicalKey.J));
+        Assert.Equal(["C", "D"], Move(window, "C", PhysicalKey.J));
+        Assert.Equal(["D", "C"], Move(window, "D", PhysicalKey.K));
+        Assert.Equal(["A", "A"], Move(window, "A", PhysicalKey.K));
+    });
+
+    [Fact]
+    public Task Home_goes_to_the_first_card_and_End_to_the_last() => OnUi(async () =>
+    {
+        var (window, _) = await OnProjects();
+
+        Assert.Equal(["D", "A"], Move(window, "D", PhysicalKey.Home));
+        Assert.Equal(["D", "F"], Move(window, "D", PhysicalKey.End));
+    });
+
+    [Fact]
+    public Task PageDown_and_PageUp_move_by_a_screen_of_rows() => OnUi(async () =>
+    {
+        var (window, _) = await OnProjects();
+
+        var down = Move(window, "A", PhysicalKey.PageDown)[1];
+        Assert.Contains(down, (string?[])["E", "F"], StringComparer.Ordinal);   // why: row 2 is D, so a screen further down is beyond the next row
+
+        var up = Move(window, "F", PhysicalKey.PageUp)[1];
+        Assert.Contains(up, (string?[])["A", "B", "C"], StringComparer.Ordinal);
+    });
+
+    [Fact]
+    public Task Down_from_the_last_row_enters_an_open_fold_and_Up_from_its_first_row_comes_back() => OnUi(async () =>
+    {
+        var (window, _) = await OnProjects(finishedOpen: true);
+
+        Assert.Equal(["F", "G"], Move(window, "F", PhysicalKey.ArrowDown));
+        Assert.Equal(["G", "F"], Move(window, "G", PhysicalKey.ArrowUp));
+    });
+
+    [Fact]
+    public Task Letter_keys_typed_in_a_text_box_are_left_to_it() => OnUi(async () =>
+    {
+        var (window, _) = await OnProjects();
+        var frame = Frames(window).First(f => ((ProjectCardViewModel)f.DataContext!).Name == "B");
+        ((ProjectCardViewModel)frame.DataContext!).BeginEdit();
+        Settle(window);
+        var box = frame.GetVisualDescendants().OfType<TextBox>().Single(b => b.Name == "ProjectNotesBox");
+        Assert.True(box.Focus(NavigationMethod.Tab));
+
+        Press(window, PhysicalKey.J);
+        Press(window, PhysicalKey.End);
+
+        Assert.Same(box, window.FocusManager?.GetFocusedElement());
+    });
+
+    [Fact]
     public Task Arrows_inside_a_text_box_are_left_to_it() => OnUi(async () =>
     {
         var (window, _) = await OnProjects();
