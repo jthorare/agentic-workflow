@@ -290,13 +290,15 @@ and measured it (comment 6818215657). The reference frame, drawn on the real `To
   lexical or semantic leg did. There is no other badge colour: the frame's green "Confirmed link" becomes the word, in ink. This is aider's
   repo map (ledger problem 2 of `docs/sindri/prior-art/context-map.md`): rank by graph, then one line of reason.
 - **The bands** (centre and right) draw the same files as cards in three columns: Entry points -> Core -> Data and effects. They need
-  room: three 170 px columns and two 150 px gaps (an edge label such as "calls RateLimiter.check" is about 150 px and sits in the gap) are
-  810 px, plus the 280 px rail, so the bands draw from a window 1090 px wide. Under that, the page is the rail and the in-place open
+  room: three 170 px columns, two 150 px gaps and a 24 px inset on each side are 858 px, plus the 280 px rail, so the bands draw from a
+  window 1138 px wide. The gaps are a fixed 150 px; the columns take all extra width (at 1440: 1440 - 280 - 48 = 1112 px, minus 300 for
+  the gaps, about 270 px per column). An edge label is at most 142 px (4 px clear of each column). A longer label shortens the symbol
+  from the middle and keeps the verb whole ("calls RateLimit…check"). Under that, the page is the rail and the in-place open
   only, and the bands are not drawn (the edges are what that gives up; §6.2 has the same rule for peek). A file's band
   comes from its strongest node kind: route, job, middleware or CLI command -> Entry points; service, layer, domain type -> Core; table,
   schema, event, migration -> Data and effects; tests fold into one Tests card there. Anything else goes to Core. The bands draw at most
   6 cards each: touch cards first, then by score. More fold into "+ N more". Groups fold to one card ("Billing plans · 4 files"). Every edge carries its verb ("calls RateLimiter.check", "reads IQuotaStore.get").
-  Each band has a heading with a one-line gloss in ink-subtle ("Entry points · routes, jobs, middleware"; "Core · services and domain logic"; "Data and effects · tables, events, tests"). Inside a band, each group has a sub-heading with its name and file count ("Rate limiting · 2 files"). A file card shows the file name, its folder path under it, and the dot and score at the right. A node that is not a file (a table or an event) is a pill: the kind word ("table", "event") and the name. A folded group card shows its name, its file count and the first file name with "+ N" ("Billing plans · 4 files · PlanLimits.cs +3"; the Tests card the same). The 170 px column and 150 px gap figures are minimums: at 1440 the columns grow to fill the width.
+  Each band has a heading with a one-line gloss in ink-subtle ("Entry points · routes, jobs, middleware"; "Core · services and domain logic"; "Data and effects · tables, events, tests"). Inside a band, each group has a sub-heading with its name and file count ("Rate limiting · 2 files"). A file card shows the file name, its folder path under it, and the dot and score at the right. A node that is not a file (a table or an event) is a pill: the kind word ("table", "event") and the name. A folded group card shows its name, its file count and the first file name with "+ N" ("Billing plans · 4 files · PlanLimits.cs +3"; the Tests card the same). The 170 px column is a minimum and the 150 px gap is fixed: at 1440 only the columns grow to fill the width.
 - **The in-place open** (taken from direction 1): the selected rail row grows in place to show *Edges*, *Why here*, the decisions that
   cite the file (with a conflict marked as one, "D-37 conflicts with D-41") and its actions.
   It replaces direction 3's bottom strip, which pulled the eye away from the row you are on.
@@ -349,9 +351,9 @@ path).
 
 - **Peek**, a side pane at 40% width: the file's outline (top-level symbols), the lines that matched with two lines of context, its edges
   in and out grouped by kind (each one a link that adds that file to the scope as read), the decisions and docs that cite it, and the why.
-  Fit, in numbers: the bands need 810 px plus the 280 px rail (§6.1), 1090 px. Peek takes 40% of the window, so the bands stay drawn only
-  when 60% of the window is at least 1090 px, a window 1817 px wide or more. At 1440 the left side is 864 px, minus the rail 584 px for
-  bands that need 810: they don't fit. So below 1817 px, opening peek replaces the bands with one list, "Edges of this scope", one line
+  Fit, in numbers: the bands need 858 px plus the 280 px rail (§6.1), 1138 px. Peek takes 40% of the window, so the bands stay drawn only
+  when 60% of the window is at least 1138 px, a window 1897 px wide or more. At 1440 the left side is 864 px, minus the rail 584 px for
+  bands that need 858: they don't fit. So below 1897 px, opening peek replaces the bands with one list, "Edges of this scope", one line
   per edge ("ExportRoutes.cs calls RateLimiter.check"), in band order; the rail stays, Whole repo hides, and Esc brings the bands back.
   The drawn edges are what that gives up; every label stays whole and nothing scrolls sideways. The page's minimum window width is
   1000 px: the rail 280, the edge list 320 and the peek 400. The peek never covers the selected row.
