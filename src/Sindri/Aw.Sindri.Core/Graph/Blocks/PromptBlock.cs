@@ -80,7 +80,7 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
             return plain.IsError ? plain.Error : new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal));
         }
 
-        var read = await AskForObject(prompt, schema, cancellationToken).ConfigureAwait(false);
+        var read = await AskForObject(context, prompt, schema, cancellationToken).ConfigureAwait(false);
         if (read.IsError)
         {
             return read.Error;
@@ -95,7 +95,7 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
         return new BlockResult(Outputs(schema, fields));
     }
 
-    private async ValueTask<Result<JsonObject>> AskForObject(string prompt, JsonObject schema, CancellationToken cancellationToken)
+    private async ValueTask<Result<JsonObject>> AskForObject(BlockContext context, string prompt, JsonObject schema, CancellationToken cancellationToken)
     {
         var instructed = WithInstruction(prompt, schema);
         var asked = await model.Ask(instructed, cancellationToken).ConfigureAwait(false);
@@ -123,6 +123,8 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
             return read;
         }
 
+        // why: the run page shows the failed step's output, so the raw answer stays there for the owner to read; the engine cuts it to the stored-output cap
+        context.LeaveFailureOutput(new JsonObject { ["answer"] = again.Value });
         var shown = again.Value.Trim();
         return SindriErrors.GraphPromptAnswer.With($"The model answered with text, not the JSON this step asks for: \"{(shown.Length > 200 ? shown[..200] : shown)}\"");
     }

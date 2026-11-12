@@ -22755,6 +22755,8 @@ static Aw.Sindri.Core.Resources.ProvisionedResources.operator !=(Aw.Sindri.Core.
 static Aw.Sindri.Core.Resources.ProvisionedResources.operator ==(Aw.Sindri.Core.Resources.ProvisionedResources? left, Aw.Sindri.Core.Resources.ProvisionedResources? right) -> bool
 Aw.Sindri.Core.Graph.Blocks.BlockContext.Resources.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
 Aw.Sindri.Core.Graph.Blocks.BlockContext.Resources.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockContext.FailureOutput.get -> System.Text.Json.Nodes.JsonObject?
+Aw.Sindri.Core.Graph.Blocks.BlockContext.LeaveFailureOutput(System.Text.Json.Nodes.JsonObject! output) -> void
 Aw.Sindri.Core.Resources.ResourceDoctorRule
 const Aw.Sindri.Core.Resources.ResourceDoctorRule.NearLimit = 0.9 -> double
 static Aw.Sindri.Core.Resources.ResourceDoctorRule.Check(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ResourceEntry!>! entries, System.Collections.Generic.IReadOnlyDictionary<string!, long>! diskLimits) -> Aw.Sindri.Core.Doctor.DoctorCheck!
