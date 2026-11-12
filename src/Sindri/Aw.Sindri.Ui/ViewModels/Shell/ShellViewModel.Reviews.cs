@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Reviews;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
@@ -93,10 +94,10 @@ internal sealed partial class ShellViewModel
     internal void OpenReviews() => GoTo(PageId.Reviews);
 
     [MemberNotNull(nameof(Reviews), nameof(ReviewPage), nameof(ReviewFix))]
-    private void InitReviews()
+    private void InitReviews(IFolderPicker folders)
     {
         Reviews = new ReviewsPageViewModel(_api, _clock);
-        ReviewPage = new ReviewPageViewModel(_api);
+        ReviewPage = new ReviewPageViewModel(_api, folders: folders);
         ReviewFix = new ReviewFixSheetViewModel(_api, _clock);
         Reviews.LibraryRequested += (_, _) =>
         {

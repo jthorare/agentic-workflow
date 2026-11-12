@@ -80,6 +80,15 @@ internal static partial class Labels
 
     internal const string ReviewTryAgain = "Try again";
 
+    /// <summary>The button on the "Sindri doesn't sync this repo" page: it asks for the repo's folder and adds it.</summary>
+    internal const string ReviewAddRepo = "Add this repo";
+
+    /// <summary>The folder chooser's title for Add this repo.</summary>
+    internal const string ReviewAddRepoChooser = "Choose this repo's folder";
+
+    /// <summary>The line when adding the repo failed.</summary>
+    internal const string ReviewAddRepoFailed = "The repo couldn't be added right now.";
+
     internal const string ReviewBackButton = "← Reviews";
 
     internal const string ReviewBackName = "Back to Reviews";

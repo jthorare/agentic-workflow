@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:rvm="using:Aw.Sindri.Ui.ViewModels.Reviews"
              xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
+             xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
              x:Class="Aw.Sindri.Ui.Views.Reviews.ReviewPageView"
              x:DataType="rvm:ReviewPageViewModel">
   <!-- One PR's review page (review page spec §6.2-6.4, §16; mockups review-a-1440, review-a-1000, review-a-page-*): the header, the summary strip, the panels in a column beside the diff
@@ -28,8 +29,10 @@
         <TextBlock x:Name="ReviewLoginNote" Classes="caption subtle" Text="{Binding Note}" TextWrapping="Wrap"
                    IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Note}" />
       </StackPanel></StackPanel>
+      <ctl:FailedReadLine x:Name="ReviewAddRepoFailure" DataContext="{Binding AddRepoFailure}" />
       <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
         <Button x:Name="ReviewTryAgain" Click="OnTryAgain" IsVisible="{Binding OffersTryAgain}" Content="{Binding TryAgainText}" />
+        <Button x:Name="ReviewAddRepo" Classes="accent" Click="OnAddRepo" IsVisible="{Binding OffersAddRepo}" Content="{Binding AddRepoText}" AutomationProperties.Name="{Binding AddRepoText}" />
         <Button x:Name="ReviewOpenFromState" Click="OnOpenGitHub" Content="{Binding OpenOnGitHubText}" />
       </StackPanel>
     </StackPanel>

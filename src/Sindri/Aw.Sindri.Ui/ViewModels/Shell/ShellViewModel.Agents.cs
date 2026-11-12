@@ -20,14 +20,14 @@ internal sealed partial class ShellViewModel
 
     // ShellViewModel's constructor calls this one line: both view models exist, then each builder's hook wires its own part.
     [MemberNotNull(nameof(Agents), nameof(AgentSheet), nameof(Jobs), nameof(JobSheet), nameof(Connections), nameof(ConnectionSheet), nameof(MemoryPage), nameof(ResourcesPage), nameof(Workflows), nameof(Projects), nameof(ProjectSheet), nameof(ProjectAdd), nameof(Reviews), nameof(ReviewPage), nameof(ReviewFix), nameof(IssueSheet))]
-    private void InitAgents(IClipboard clipboard, ILauncher launcher)
+    private void InitAgents(IClipboard clipboard, ILauncher launcher, IFolderPicker folders)
     {
         Agents = new AgentsPageViewModel(_api, clipboard, _clock, Health.Catalog);
         AgentSheet = new SessionSheetViewModel(_api);
         InitAgentsPage();
         InitAgentSheet();
         InitAgentCounts();
-        InitReviews();
+        InitReviews(folders);
         WireElsewhere();   // after Reviews exists
         InitProjects(launcher);   // likewise: the Projects page reads while shown
         InitIssueSheet(launcher);

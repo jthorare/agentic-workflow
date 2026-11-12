@@ -19,6 +19,9 @@ internal sealed partial class ReviewPageViewModel
     /// <summary>"Try again".</summary>
     public string TryAgainText => Labels.ReviewTryAgain;
 
+    /// <summary>"Add this repo".</summary>
+    public string AddRepoText => Labels.ReviewAddRepo;
+
     /// <summary>"Open on GitHub".</summary>
     public string OpenOnGitHubText => Labels.ReviewOpenOnGitHub;
 

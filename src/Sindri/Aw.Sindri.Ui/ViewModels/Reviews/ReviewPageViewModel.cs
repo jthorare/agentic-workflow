@@ -1,5 +1,8 @@
 using System.Collections.ObjectModel;
 using Aw.Sindri.Ui.Api;
+using Aw.Sindri.Ui.Api.Setup;
+using Aw.Sindri.Ui.Platform;
+using Aw.Sindri.Ui.ViewModels.Controls;
 
 namespace Aw.Sindri.Ui.ViewModels.Reviews;
 
@@ -18,9 +21,11 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
     private string _settings = string.Empty;
     private ReviewFocus _seen = ReviewFocus.None;   // where focus really is: o and Enter act on it, not on the last place the page asked for
 
-    internal ReviewPageViewModel(ISindriApi api, ReviewPanelMemory? memory = null)
+    private readonly IFolderPicker? _folders;
+
+    internal ReviewPageViewModel(ISindriApi api, ReviewPanelMemory? memory = null, IFolderPicker? folders = null)
     {
-        (_api, _memory) = (api, memory ?? new ReviewPanelMemory());
+        (_api, _memory, _folders) = (api, memory ?? new ReviewPanelMemory(), folders);
         Login = new ReviewLoginViewModel(api);
         Diff = new ReviewDiffViewModel();
         ShowLoading();
@@ -37,6 +42,7 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
             OnChanged(nameof(ShowsState));
             OnChanged(nameof(IsLoginPrompt));
             OnChanged(nameof(OffersTryAgain));
+            OnChanged(nameof(OffersAddRepo));
         }
     } = ReviewPageState.Loading;
 
@@ -48,6 +54,12 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
 
     /// <summary>True when reading again can change the answer: not for a PR that does not exist or a repo Sindri does not sync (#3065; those offer Back and Open on GitHub only).</summary>
     public bool OffersTryAgain => State is not (ReviewPageState.NotFound or ReviewPageState.NotSynced);
+
+    /// <summary>True when the repo is not synced and this head can ask for a folder: the state offers Add this repo (#3065).</summary>
+    public bool OffersAddRepo => State == ReviewPageState.NotSynced && _folders is { IsAvailable: true };
+
+    /// <summary>The failed add as the shared line draws it (words, Retry, the code behind Details); null otherwise.</summary>
+    public FailedRead? AddRepoFailure { get; private set => Set(ref field, value); }
 
     /// <summary>True when the whole page is the login prompt.</summary>
     public bool IsLoginPrompt => State == ReviewPageState.LoginPrompt;
@@ -221,8 +233,37 @@ internal sealed partial class ReviewPageViewModel : ObservableObject
         Fail(answer.Error);
     }
 
+    /// <summary>Add this repo was pressed: asks for the repo's folder, adds it, then reads the review again. A cancelled chooser does nothing; a failed add shows <see cref="AddRepoFailure"/>.</summary>
+    /// <param name="cancellationToken">Cancels the calls.</param>
+    /// <returns>When the answer is shown.</returns>
+    internal async Task AddRepo(CancellationToken cancellationToken)
+    {
+        if (_url is not { } url || _folders is not { IsAvailable: true })
+        {
+            return;
+        }
+
+        var path = await _folders.Pick(Labels.ReviewAddRepoChooser, cancellationToken).ConfigureAwait(true);
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return;
+        }
+
+        var added = await _api.AddRepo(url, new AddRepoRequest(path), cancellationToken).ConfigureAwait(true);
+        if (added.IsError)
+        {
+            AddRepoFailure = new FailedRead(Labels.ReviewAddRepoFailed, AddRepo) { Code = added.Error.Code };
+            return;
+        }
+
+        AddRepoFailure = null;
+        ShowLoading();
+        await Read(cancellationToken).ConfigureAwait(true);
+    }
+
     private void Fail(Kernel.Error error)
     {
+        AddRepoFailure = null;
         Strip.Clear();
         Panels.Clear();
         (StateHeading, StateText) = error.Code switch

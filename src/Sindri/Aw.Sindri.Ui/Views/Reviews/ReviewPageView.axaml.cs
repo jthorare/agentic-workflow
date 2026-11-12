@@ -168,6 +168,8 @@ internal sealed partial class ReviewPageView : UserControl
 
     private void OnTryAgain(object? sender, RoutedEventArgs e) => _ = Page?.Reload(CancellationToken.None);
 
+    private void OnAddRepo(object? sender, RoutedEventArgs e) => _ = Page?.AddRepo(CancellationToken.None);
+
     private void OnSaveLogin(object? sender, RoutedEventArgs e) => _ = Page?.SaveLogin(CancellationToken.None);
 
     private void OnLoginKey(object? sender, KeyEventArgs e)
