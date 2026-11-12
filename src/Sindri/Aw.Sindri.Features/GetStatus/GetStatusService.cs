@@ -16,7 +16,7 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
     IProjectorStatus projector, HealthServiceRows healthRows, ISessionSnapshot sessions, IEnumerable<BuiltInService>? builtIns = null)
     : IService<GetStatusRequest, GetStatusResponse>
 {
-    /// <summary>The build's built-in services; not yet listed by <see cref="Services"/> (bug #3127, phase 2).</summary>
+    /// <summary>The build's built-in services; <see cref="Services"/> lists them next to the profile's, with or without an approved profile (bug #3127).</summary>
     internal IReadOnlyList<BuiltInService> BuiltIns { get; } = [.. builtIns ?? []];
 
     public async ValueTask<Result<GetStatusResponse>> Handle(GetStatusRequest request, CancellationToken cancellationToken)
@@ -69,7 +69,7 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
     private async ValueTask<IReadOnlyList<ServiceStatus>> Services(LoadedProfile? approved, CancellationToken cancellationToken)
     {
         var services = new List<ServiceStatus>();
-        foreach (var schedule in approved is null ? [] : ServiceSchedule.From(approved.Profile, DateTimeOffset.MinValue))
+        foreach (var schedule in ServiceSchedule.From(approved?.Profile, BuiltIns, DateTimeOffset.MinValue))
         {
             var last = await ledger.Latest(EventTypes.ServiceRun(schedule.Name), cancellationToken).ConfigureAwait(false);
             services.Add(new ServiceStatus(schedule.Name, schedule.Cadence.ToString(), last.IsSuccess ? last.Value?.Envelope.OccurredAt : null));
