@@ -1,0 +1,325 @@
+<!doctype html>
+<!--
+Direction: Answer first (search results with a map)
+How it solves the six failures:
+1. The 640-tile row is gone: the working map shows only the scope in 3 bands (Entry points, Core, Data and effects); the whole repo is a small treemap in the corner with the scope lit.
+2. One accent (Primary) marks the selection and the path; everything else is grey. Confirmed vs suggested is a filled vs hollow dot, not a colour; Attention appears once, for the conflicting decision.
+3. The answer is the left 46% of the screen and the biggest thing on it: files grouped by area, with a change set bar pinned at the bottom.
+4. Zoom is replaced by scope: the question narrows 48,000 files to 14. Remove a chip and the list and map regroup around the wider question.
+5. Selecting a row expands it in place (symbols touched, the link that put it here, confirmed or not) and lights its path in the map.
+6. The right-hand flat list is replaced by grouped results with counts, a confirmed/suggested split, and per-group select-all, with tests and records as their own groups.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Context - Answer first</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#08090a;--s1:#141517;--s2:#1c1d20;--s3:#222326;--s4:#26272a;
+  --hair:rgba(255,255,255,0.06);--hair-strong:#34343a;--hair-ter:#3e3e44;
+  --ink:#f7f8f8;--ink-muted:#d0d6e0;--ink-subtle:#8a8f98;--ink-ter:#74787f;
+  --primary:#5e6ad2;--primary-hover:#828fff;--primary-soft:#202442;
+  --success:#2eb75b;--attention:#f2994a;--attention-soft:#291d13;--violet:#a78bfa;
+  --wire:#4a4a52;--wire-hi:#8a8f98;
+  --sans:Inter,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;width:1440px;height:900px;overflow:hidden;background:#08090a;color:var(--ink);font:400 13px/20px var(--sans);position:relative;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--primary-hover);outline-offset:1px}
+
+/* top bar */
+.top{position:absolute;left:0;top:0;width:1440px;height:40px;border-bottom:1px solid var(--hair);display:flex;align-items:center;padding:0 16px;gap:4px;background:var(--canvas)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;margin-right:16px}
+.brand svg{display:block}
+.pill{height:26px;padding:0 10px;border-radius:999px;display:flex;align-items:center;gap:6px;color:var(--ink-subtle);font-size:13px;border:0;background:transparent}
+.pill:hover{background:var(--s2);color:var(--ink-muted)}
+.pill.on{background:var(--s3);color:var(--ink)}
+.pill i{font-style:normal;font-size:11px;color:var(--ink-muted);background:var(--s4);border-radius:999px;padding:0 6px;line-height:16px}
+.sp{flex:1}
+.search{width:200px;height:26px;border-radius:6px;border:1px solid var(--hair-strong);background:var(--s1);display:flex;align-items:center;padding:0 8px;color:var(--ink-ter);gap:6px}
+.search kbd{margin-left:auto;font:400 11px var(--mono);color:var(--ink-subtle)}
+.status{margin-left:8px;height:26px;padding:0 10px;border-radius:999px;background:var(--s1);border:1px solid var(--hair);display:flex;align-items:center;gap:6px;color:var(--ink-subtle);font-size:12px}
+.status b{width:6px;height:6px;border-radius:50%;background:var(--success)}
+
+/* page */
+.head{position:absolute;left:24px;top:64px;width:1392px;height:40px;display:flex;align-items:center;gap:24px}
+h1{margin:0;font-size:24px;line-height:32px;font-weight:600;letter-spacing:-0.01em}
+.ask{flex:1;height:40px;border-radius:8px;border:1px solid var(--hair-ter);background:var(--s1);display:flex;align-items:center;padding:0 8px 0 14px;gap:10px}
+.ask:focus-within{border-color:var(--primary)}
+.ask svg{flex:none}
+.ask span.q{flex:1;font-size:14px;color:var(--ink)}
+.ask kbd{font:400 11px var(--mono);color:var(--ink-subtle);border:1px solid var(--hair-strong);border-radius:4px;padding:0 5px;line-height:18px}
+.btn{height:28px;padding:0 12px;border-radius:6px;border:1px solid var(--hair-strong);background:var(--s2);color:var(--ink-muted);font-size:13px;font-weight:500}
+.btn:hover{background:var(--s3);border-color:var(--hair-ter)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.primary:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+
+.chips{position:absolute;left:24px;top:112px;width:1392px;height:24px;display:flex;align-items:center;gap:8px;font-size:12px;line-height:18px}
+.chips .lbl{color:var(--ink-ter);margin-right:2px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 4px 0 10px;border-radius:999px;background:var(--s2);border:1px solid var(--hair-strong);color:var(--ink-muted)}
+.chip em{font-style:normal;color:var(--ink-ter)}
+.chip button{width:16px;height:16px;border-radius:50%;border:0;background:transparent;color:var(--ink-ter);display:grid;place-items:center;padding:0}
+.chip button:hover{background:var(--s4);color:var(--ink)}
+.chips .meta{margin-left:auto;color:var(--ink-ter)}
+
+/* left: answer */
+.ans{position:absolute;left:24px;top:148px;width:640px;height:684px}
+.sec{display:flex;align-items:center;gap:10px;height:24px}
+.sec.scope{height:36px}.sec.scope h2{font-size:20px;line-height:28px}
+.sid{font:400 11px/18px var(--mono);color:var(--ink-muted);background:var(--s3);border:1px solid var(--hair-strong);border-radius:4px;padding:0 6px}
+.acts{grid-column:1/3;display:flex;gap:6px;margin-top:4px}
+.acts button{height:22px;padding:0 8px;border-radius:6px;border:1px solid var(--hair-strong);background:var(--s3);color:var(--ink-muted);font-size:12px;display:inline-flex;align-items:center;gap:6px}
+.acts button:hover{background:var(--s4);border-color:var(--hair-ter)}
+.acts kbd{font:400 10px var(--mono);color:var(--ink-subtle)}
+.sec h2{margin:0;font-size:15px;line-height:22px;font-weight:600}
+.sec .cap{color:var(--ink-subtle);font-size:12px}
+.sec .r{margin-left:auto;color:var(--ink-subtle);font-size:12px}
+.sec .r button{background:none;border:0;color:var(--ink-subtle);padding:0 0 0 10px}
+.sec .r button:hover{color:var(--ink)}
+.grp{margin-top:4px}
+.gh{display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-bottom:1px solid var(--hair)}
+.gh b{font-weight:600;font-size:13px}
+.gh code{font:400 11px var(--mono);color:var(--ink-ter)}
+.gh .n{margin-left:auto;font-size:12px;color:var(--ink-subtle)}
+input.cb{appearance:none;-webkit-appearance:none;width:14px;height:14px;border-radius:4px;border:1px solid var(--hair-ter);background:transparent;margin:0;flex:none;cursor:pointer}
+input.cb:checked{background:var(--primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3.5 7.2l2.3 2.3 4.7-4.9' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat;border-color:var(--primary)}
+.row{display:flex;align-items:center;gap:8px;height:24px;padding:0 8px;border:1px solid transparent;border-radius:6px;cursor:pointer}
+.row:hover{background:var(--s2);border-color:var(--hair-strong)}
+.row:active{background:var(--s3)}
+.mk{width:8px;height:8px;border-radius:50%;flex:none;background:var(--ink-subtle)}
+.mk.sug{background:transparent;border:1.25px dashed var(--ink-subtle)}
+.path{font:400 12px/18px var(--mono);color:var(--ink);width:262px;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.path s{text-decoration:none;color:var(--ink-ter)}
+.why{flex:1;color:var(--ink-subtle);font-size:12px;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc{font:400 11px var(--mono);color:var(--ink-ter);width:28px;text-align:right;flex:none}
+.sel{background:var(--s2);border:1px solid var(--hair-strong);border-radius:6px;margin:2px 0;position:relative}
+.sel::before{content:"";position:absolute;left:-1px;top:6px;bottom:6px;width:2px;border-radius:2px;background:var(--primary)}
+.sel .row{border-color:transparent;background:transparent}
+.sel .why{color:var(--ink-muted)}
+.det{padding:2px 12px 10px 38px;display:grid;grid-template-columns:60px 1fr;row-gap:4px;font-size:12px;line-height:18px}
+.det dt{color:var(--ink-ter)}
+.det dd{margin:0;color:var(--ink-muted)}
+.sym{font:400 11px/16px var(--mono);background:var(--s4);border-radius:4px;padding:0 5px;margin-right:4px;color:var(--ink-muted)}
+.tag{display:inline-flex;align-items:center;gap:5px;color:var(--ink-muted)}
+.tag .mk{width:7px;height:7px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:6px}
+.mini .gh{height:24px}
+.mini .row{height:20px}
+.mini .path{width:auto;flex:1}
+.rec{display:flex;align-items:center;gap:8px;height:20px;padding:0 8px;border-radius:6px;border:1px solid transparent;font-size:12px;color:var(--ink-muted);cursor:pointer}
+.rec:hover{background:var(--s2);border-color:var(--hair-strong)}
+.rec code{font:400 11px var(--mono);color:var(--ink-subtle);flex:none}
+.rec .t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec .d{color:var(--ink-ter);flex:none}
+.flag{font-size:11px;line-height:16px;padding:0 6px;border-radius:999px;background:var(--attention-soft);color:var(--attention);flex:none}
+.open{font-size:11px;line-height:16px;padding:0 6px;border-radius:999px;background:var(--s4);color:var(--ink-muted);flex:none}
+
+/* right: map */
+.map{position:absolute;left:688px;top:148px;width:728px;height:684px;background:var(--s1);border:1px solid var(--hair);border-radius:12px;overflow:hidden}
+.map .mh{height:48px;padding:12px 16px 0;display:flex;align-items:baseline;gap:10px}
+.map h2{margin:0;font-size:15px;line-height:22px;font-weight:600}
+.map .cap{color:var(--ink-subtle);font-size:12px}
+.legend{margin-left:auto;display:flex;gap:14px;color:var(--ink-subtle);font-size:12px;align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+svg text{font-family:var(--mono)}
+.cols{position:absolute;top:50px;left:0;width:100%;display:flex;font-size:11px;color:var(--ink-ter);padding:0 16px}
+
+/* bottom bar */
+.bar{position:absolute;left:0;bottom:0;width:1440px;height:56px;background:var(--s1);border-top:1px solid var(--hair-strong);display:flex;align-items:center;padding:0 24px;gap:16px}
+.bar strong{font-size:15px;font-weight:600}
+.bar .sub{color:var(--ink-subtle);font-size:12px}
+.hints{margin-left:auto;display:flex;gap:14px;color:var(--ink-ter);font-size:12px}
+.hints kbd{font:400 11px var(--mono);color:var(--ink-muted);border:1px solid var(--hair-strong);border-radius:4px;padding:0 5px;margin-right:4px;line-height:16px;display:inline-block}
+.bar .btn{height:32px;padding:0 14px}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M6 0.5L11.5 6L6 11.5L0.5 6Z" fill="#a78bfa"/></svg>Sindri</div>
+  <button class="pill">Home</button>
+  <button class="pill">Projects</button>
+  <button class="pill">Workflows</button>
+  <button class="pill">Work <i>4</i></button>
+  <button class="pill on">Context</button>
+  <button class="pill">Agents</button>
+  <button class="pill">System</button>
+  <button class="pill">Reviews <i>2</i></button>
+  <button class="pill">Connections</button>
+  <div class="sp"></div>
+  <div class="search"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#74787f" stroke-width="1.4"><circle cx="5" cy="5" r="3.6"/><path d="M8 8l3 3"/></svg>Search<kbd>Ctrl+K</kbd></div>
+  <div class="status"><b></b>Running · updated 0s ago</div>
+</header>
+
+<div class="head">
+  <h1>Context</h1>
+  <div class="ask">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#8a8f98" stroke-width="1.4"><circle cx="7" cy="7" r="4.6"/><path d="M10.5 10.5L14 14"/></svg>
+    <span class="q">Add per-workspace rate limits to the export API</span>
+    <kbd>Enter</kbd>
+    <button class="btn">Ask again</button>
+  </div>
+</div>
+
+<div class="chips" aria-label="How Sindri read your question">
+  <span class="lbl">Read as</span>
+  <span class="chip"><em>change</em> add<button aria-label="Remove"><svg width="8" height="8" viewBox="0 0 8 8" stroke="currentColor" stroke-width="1.3"><path d="M1 1l6 6M7 1l-6 6"/></svg></button></span>
+  <span class="chip"><em>behaviour</em> rate limit<button aria-label="Remove"><svg width="8" height="8" viewBox="0 0 8 8" stroke="currentColor" stroke-width="1.3"><path d="M1 1l6 6M7 1l-6 6"/></svg></button></span>
+  <span class="chip"><em>per</em> workspace<button aria-label="Remove"><svg width="8" height="8" viewBox="0 0 8 8" stroke="currentColor" stroke-width="1.3"><path d="M1 1l6 6M7 1l-6 6"/></svg></button></span>
+  <span class="chip"><em>feature</em> Export API<button aria-label="Remove"><svg width="8" height="8" viewBox="0 0 8 8" stroke="currentColor" stroke-width="1.3"><path d="M1 1l6 6M7 1l-6 6"/></svg></button></span>
+  <span class="meta">48,112 files · answered in 2.1 s</span>
+</div>
+
+<main class="ans">
+  <div class="sec scope"><h2>Rate limits on exports</h2><span class="sid">scope_7f3k2</span><span class="cap">Saved · 14 files · 8 confirmed, 6 suggested</span><span class="r"><button>Rename</button><button>Share</button></span></div>
+
+  <section class="grp">
+    <div class="gh"><input class="cb" type="checkbox" checked aria-label="Select api/export"><b>Export request path</b><code>services/export/src/</code><span class="n">6 files · 3 confirmed</span></div>
+    <div class="row"><input class="cb" type="checkbox" checked><span class="mk"></span><span class="path"><s>handlers/</s>ExportHandler.cs</span><span class="why">route POST /exports; calls Check</span><span class="sc">0.96</span></div>
+    <div class="row"><input class="cb" type="checkbox" checked><span class="mk"></span><span class="path"><s>routes/</s>ExportRoutes.cs</span><span class="why">route POST /exports -> ExportHandler</span><span class="sc">0.91</span></div>
+    <div class="row"><input class="cb" type="checkbox" checked><span class="mk sug"></span><span class="path">ExportJobScheduler.cs</span><span class="why">job export.enqueue; no quota check</span><span class="sc">0.84</span></div>
+    <div class="row"><input class="cb" type="checkbox" checked><span class="mk"></span><span class="path"><s>dto/</s>ExportRequest.cs</span><span class="why">carries workspaceId, the limit key</span><span class="sc">0.82</span></div>
+    <div class="row"><input class="cb" type="checkbox" checked><span class="mk sug"></span><span class="path"><s>errors/</s>ExportErrors.cs</span><span class="why">maps errors; no RateLimited (429)</span><span class="sc">0.71</span></div>
+    <div class="row"><input class="cb" type="checkbox" checked><span class="mk sug"></span><span class="path">ExportOptions.cs</span><span class="why">reads default export limits</span><span class="sc">0.63</span></div>
+  </section>
+
+  <section class="grp">
+    <div class="gh"><input class="cb" type="checkbox" checked aria-label="Select platform/ratelimit"><b>Rate limiting</b><code>platform/ratelimit/src/</code><span class="n">4 files · 3 confirmed</span></div>
+    <div class="sel">
+      <div class="row"><input class="cb" type="checkbox" checked><span class="mk"></span><span class="path">RateLimiter.cs</span><span class="why">called by ExportHandler.cs:48</span><span class="sc">0.93</span></div>
+      <dl class="det">
+        <dt>Touches</dt><dd><span class="sym">RateLimiter.Check</span><span class="sym">IBucketStore.Take</span><span class="sym">RateLimitDecision</span></dd>
+        <dt>Why here</dt><dd><span class="tag"><span class="mk"></span>Confirmed: ExportHandler.cs:48 calls RateLimiter.Check. Key is per user, needs a workspace key.</span></dd>
+        <div class="acts"><button>Pin <kbd>p</kbd></button><button>Drop <kbd>x</kbd></button><button>More like this</button><button>What calls this</button></div>
+      </dl>
+    </div>
+    <div class="row"><input class="cb" type="checkbox" checked><span class="mk"></span><span class="path"><s>Policies/</s>WorkspacePolicy.cs</span><span class="why">reads PlanLimits.ExportsPerHour</span><span class="sc">0.89</span></div>
+    <div class="row"><input class="cb" type="checkbox" checked><span class="mk"></span><span class="path">RateLimitMiddleware.cs</span><span class="why">provides RateLimiter layer</span><span class="sc">0.78</span></div>
+    <div class="row"><input class="cb" type="checkbox" checked><span class="mk sug"></span><span class="path"><s>Store/</s>RedisBucketStore.cs</span><span class="why">Take(bucket); key is per user</span><span class="sc">0.69</span></div>
+  </section>
+
+  <section class="grp">
+    <div class="gh"><input class="cb" type="checkbox" checked aria-label="Select billing/plans"><b>Plan limits</b><code>services/billing/</code><span class="n">4 files · 2 confirmed</span></div>
+    <div class="row"><input class="cb" type="checkbox" checked><span class="mk"></span><span class="path"><s>src/plans/</s>PlanLimits.cs</span><span class="why">reads table workspace_quotas</span><span class="sc">0.88</span></div>
+    <div class="row"><input class="cb" type="checkbox" checked><span class="mk"></span><span class="path"><s>src/plans/</s>PlanCatalog.cs</span><span class="why">defines the tiers that carry limits</span><span class="sc">0.80</span></div>
+    <div class="row"><input class="cb" type="checkbox" checked><span class="mk sug"></span><span class="path"><s>src/entitlements/</s>EntitlementResolver.cs</span><span class="why">resolves workspace -> plan</span><span class="sc">0.74</span></div>
+    <div class="row"><input class="cb" type="checkbox" checked><span class="mk sug"></span><span class="path"><s>migrations/</s>0042_plan_export_limits.sql</span><span class="why">writes table workspace_quotas</span><span class="sc">0.58</span></div>
+  </section>
+
+  <div class="two">
+    <section class="mini">
+      <div class="gh"><b>Tests</b><span class="n">5 · all in the change set</span></div>
+      <div class="row"><input class="cb" type="checkbox" checked><span class="mk"></span><span class="path">ExportQuotaTests.cs</span></div>
+      <div class="row"><input class="cb" type="checkbox" checked><span class="mk"></span><span class="path">ExportHandlerTests.cs</span></div>
+      <div class="row"><input class="cb" type="checkbox" checked><span class="mk"></span><span class="path">RateLimiterTests.cs</span></div>
+      <div class="row"><input class="cb" type="checkbox" checked><span class="mk sug"></span><span class="path">WorkspacePolicyTests.cs</span></div>
+      <div class="row"><input class="cb" type="checkbox" checked><span class="mk sug"></span><span class="path">PlanLimitsTests.cs</span></div>
+    </section>
+    <section class="mini">
+      <div class="gh"><b>Records</b><span class="n">2 decisions · 1 ticket</span></div>
+      <div class="rec"><code>D-118</code><span class="t">Limit per workspace, not per user</span><span class="d">Aug 14</span></div>
+      <div class="rec"><code>D-131</code><span class="t">Rate limit per API key</span><span class="flag">Conflicts with D-118</span></div>
+      <div class="rec"><code>ENG-4127</code><span class="t">Big exports starve small workspaces</span><span class="open">Open</span></div>
+    </section>
+  </div>
+</main>
+
+<aside class="map" aria-label="Scope map">
+  <div class="mh"><h2>Scope map</h2><span class="cap">Neighbourhood of the scope · 16 nodes</span>
+    <div class="legend"><span><svg width="10" height="10"><circle cx="5" cy="5" r="3.5" fill="#8a8f98"/></svg>Confirmed</span><span><svg width="10" height="10"><circle cx="5" cy="5" r="3.2" fill="none" stroke="#8a8f98" stroke-dasharray="2 1.6"/></svg>Suggested</span><span><svg width="18" height="4"><path d="M0 2h18" stroke="#5e6ad2" stroke-width="2"/></svg>Path to selection</span></div>
+  </div>
+  <svg width="728" height="634" viewBox="0 0 728 634" style="position:absolute;left:0;top:50px" role="img" aria-label="Scope neighbourhood in three bands: entry points, core, data and effects">
+    <g font-size="11" fill="#74787f" font-family="Inter,system-ui,sans-serif">
+      <text x="24" y="16">Entry points</text>
+      <text x="248" y="16">Core</text>
+      <text x="484" y="16">Data and effects</text>
+      <path d="M216 8V500M460 8V500" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+    </g>
+    <g font-family="Inter,system-ui,sans-serif" font-size="11" fill="#8a8f98">
+      <text x="24" y="44">v Export request path</text>
+      <text x="248" y="44">v Rate limiting</text>
+      <text x="248" y="190">v Plan limits</text>
+      <text x="248" y="334">v Export shape</text>
+    </g>
+    <!-- edges -->
+    <g fill="none" stroke="#4a4a52" stroke-width="1">
+      <path d="M194 72 C 222 72, 222 144, 248 144"/>
+      <path d="M194 144 C 222 144, 222 76, 248 76" stroke-dasharray="3 3"/>
+      <path d="M194 108 C 222 108, 222 354, 248 354"/>
+      <path d="M194 108 C 222 108, 222 390, 248 390"/>
+      <path d="M194 108 C 222 108, 222 426, 248 426" stroke-dasharray="3 3"/>
+      <path d="M438 108 C 456 108, 456 214, 438 214"/>
+      <path d="M438 108 C 450 108, 450 286, 438 286" stroke-dasharray="3 3"/>
+      <path d="M438 72 H484" stroke-dasharray="3 3"/>
+      <path d="M438 214 H484"/>
+      <path d="M584 226 V262"/>
+      <path d="M110 156 V176 H468 Q476 176 476 168 V144 H484"/>
+    </g>
+    <path d="M194 108 C 222 108, 222 72, 248 72" fill="none" stroke="#5e6ad2" stroke-width="2"/>
+    <g font-family="Inter,system-ui,sans-serif" font-size="10" fill="#74787f">
+      <text x="200" y="64">calls Check</text>
+      <text x="108" y="170">publishes export.completed</text>
+      <text x="294" y="170" display="none">.</text>
+      <text x="196" y="236" display="none">.</text>
+      <text x="490" y="64">Take(bucket)</text>
+      <text x="490" y="208">reads table</text>
+      <text x="590" y="248">writes table</text>
+      <text x="330" y="156" display="none">.</text>
+    </g>
+    <!-- entry -->
+    <g font-size="11" font-family="JetBrains Mono,ui-monospace,monospace" fill="#d0d6e0">
+      <rect x="24" y="60" width="170" height="24" rx="6" fill="#1c1d20" stroke="#34343a"/><text x="34" y="76">ExportRoutes.cs</text>
+      <rect x="24" y="96" width="170" height="24" rx="6" fill="#1c1d20" stroke="#34343a"/><text x="34" y="112">ExportHandler.cs</text>
+      <rect x="24" y="132" width="170" height="24" rx="6" fill="#141517" stroke="#4a4a52" stroke-dasharray="3 3"/><text x="34" y="148">ExportJobScheduler.cs</text>
+      <!-- core: rate limiting -->
+      <rect x="247" y="59" width="192" height="26" rx="7" fill="#202442" stroke="#5e6ad2" stroke-width="1.5"/><text x="257" y="76" fill="#f7f8f8">RateLimiter.cs</text>
+      <rect x="248" y="96" width="190" height="24" rx="6" fill="#1c1d20" stroke="#34343a"/><text x="258" y="112">WorkspacePolicy.cs</text>
+      <rect x="248" y="132" width="190" height="24" rx="6" fill="#1c1d20" stroke="#34343a"/><text x="258" y="148">RateLimitMiddleware.cs</text>
+      <!-- plan limits -->
+      <rect x="248" y="202" width="190" height="24" rx="6" fill="#1c1d20" stroke="#34343a"/><text x="258" y="218">PlanLimits.cs</text>
+      <rect x="248" y="238" width="190" height="24" rx="6" fill="#1c1d20" stroke="#34343a"/><text x="258" y="254">PlanCatalog.cs</text>
+      <rect x="248" y="274" width="190" height="24" rx="6" fill="#141517" stroke="#4a4a52" stroke-dasharray="3 3"/><text x="258" y="290">EntitlementResolver.cs</text>
+      <!-- export shape -->
+      <rect x="248" y="342" width="190" height="24" rx="6" fill="#141517" stroke="#4a4a52" stroke-dasharray="3 3"/><text x="258" y="358">ExportErrors.cs</text>
+      <rect x="248" y="378" width="190" height="24" rx="6" fill="#1c1d20" stroke="#34343a"/><text x="258" y="394">ExportRequest.cs</text>
+      <rect x="248" y="414" width="190" height="24" rx="6" fill="#141517" stroke="#4a4a52" stroke-dasharray="3 3"/><text x="258" y="430">ExportOptions.cs</text>
+      <!-- data and effects -->
+      <rect x="484" y="60" width="200" height="24" rx="6" fill="#141517" stroke="#4a4a52" stroke-dasharray="3 3"/><text x="494" y="76">RedisBucketStore.cs</text>
+      <rect x="484" y="132" width="200" height="24" rx="12" fill="#141517" stroke="#34343a"/><text x="494" y="148" fill="#8a8f98">event export.completed</text>
+      <rect x="484" y="202" width="200" height="24" rx="12" fill="#141517" stroke="#34343a"/><text x="494" y="218" fill="#8a8f98">table workspace_quotas</text>
+      <rect x="484" y="262" width="200" height="24" rx="6" fill="#141517" stroke="#4a4a52" stroke-dasharray="3 3"/><text x="494" y="278">0042_plan_export_limits.sql</text>
+    </g>
+    <!-- collapsed groups -->
+    <g font-family="Inter,system-ui,sans-serif" font-size="12" fill="#8a8f98">
+      <rect x="24" y="470" width="190" height="28" rx="8" fill="none" stroke="#34343a"/><text x="36" y="488">> Tests · 5 files</text>
+      <rect x="248" y="470" width="190" height="28" rx="8" fill="none" stroke="#34343a"/><text x="260" y="488">> Records · 2 decisions, 1 ticket</text>
+    </g>
+    <text x="24" y="526" font-family="Inter,system-ui,sans-serif" font-size="11" fill="#74787f">Dashed outline: suggested, not confirmed. Rounded ends: not files.</text>
+    <!-- treemap minimap -->
+    <g font-family="Inter,system-ui,sans-serif" font-size="10" fill="#74787f">
+      <text x="560" y="514">Whole repo · 31 areas</text>
+      <rect x="558" y="520" width="156" height="92" rx="6" fill="#08090a" stroke="#34343a"/>
+      <rect x="560" y="522" width="62" height="88" rx="3" fill="#222326"/>
+      <rect x="624" y="522" width="48" height="50" rx="3" fill="#222326"/>
+      <rect x="674" y="522" width="38" height="50" rx="3" fill="#1c1d20"/>
+      <rect x="624" y="574" width="26" height="36" rx="3" fill="#1c1d20"/>
+      <rect x="652" y="574" width="26" height="36" rx="3" fill="#5e6ad2"/>
+      <rect x="680" y="574" width="14" height="36" rx="3" fill="#5e6ad2"/>
+      <rect x="696" y="574" width="16" height="36" rx="3" fill="#5e6ad2" opacity="0.7"/>
+    </g>
+  </svg>
+</aside>
+
+<footer class="bar">
+  <strong>Change set: 14 files · 5 tests</strong>
+  <span class="sub">scope_7f3k2 · 6 suggested · D-118 and D-131 conflict</span>
+  <div class="hints"><span>type to filter</span><span><kbd>&uarr;</kbd><kbd>&darr;</kbd> walk edges</span><span><kbd>Enter</kbd> open</span><span><kbd>p</kbd> pin</span><span><kbd>x</kbd> drop</span></div>
+  <button class="btn">Copy paths</button>
+  <button class="btn primary">Hand to agent</button>
+</footer>
+
+</body>
+</html>

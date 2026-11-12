@@ -1,0 +1,339 @@
+<!doctype html>
+<!--
+Direction: Scope as a workspace (the scope is the document; the repo is only a 200x140 minimap)
+How it solves failures 1-6:
+1 (empty canvas, tiny tiles): nothing is drawn that cannot be labelled. The centre is a named scope document of 8 visible rows (14 files), the right pane draws 11 labelled nodes; the whole repo is a small minimap, not a working surface.
+2 (rainbow): one accent. Grey everywhere; Primary only marks what is in scope or selected. No per-tile outlines, no count markers; status colour only for the one decision conflict.
+3 (answer is smallest): the answer IS the page: ranked files grouped by concept, each with its why line, saved as scope_7f3k2 with "Open in agent".
+4 (zoom shrinks tiles): no zoom. The neighbourhood reads in 3 bands (Entry points -> Core -> Data and effects) with collapsible concept groups, and the minimap gives the repo context.
+5 (select = blue outline): the selected row expands in place with why, tests and inline actions (pin, drop, more like this, what calls this), and the right pane shows that file's edges as labelled lines.
+6 (flat Map items list): replaced by editable groups with counts, a "Suggested, not in scope yet" tray, and a history strip (undo); key hints are always visible.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Context</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --Canvas:#08090a;--Surface1:#141517;--Surface2:#1c1d20;--Surface3:#222326;--Surface4:#26272a;
+  --Hairline:rgba(255,255,255,0.06);--HairlineStrong:#34343a;--HairlineTertiary:#3e3e44;
+  --Ink:#f7f8f8;--InkMuted:#d0d6e0;--InkSubtle:#8a8f98;--InkTertiary:#74787f;
+  --Primary:#5e6ad2;--PrimaryHover:#828fff;--PrimarySoft:#202442;
+  --Success:#2eb75b;--SuccessSoft:#0d2115;--Attention:#f2994a;--AttentionSoft:#291d13;
+  --Violet:#a78bfa;--Wire:#4a4a52;--WireHi:#8a8f98;
+  --sans:Inter,system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;width:1440px;height:900px;overflow:hidden;background:#08090a;color:var(--Ink);font:400 13px/20px var(--sans);position:relative}
+button{font:inherit;color:inherit;cursor:pointer}
+.abs{position:absolute}
+kbd{font:500 10.5px/14px var(--mono);color:var(--InkSubtle);border:1px solid var(--HairlineStrong);border-radius:4px;padding:0 4px;background:var(--Canvas)}
+
+/* top bar */
+#top{left:0;top:0;width:1440px;height:40px;background:var(--Surface1);border-bottom:1px solid var(--Hairline);display:flex;align-items:center;padding:0 24px;gap:20px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px}
+.brand i{width:9px;height:9px;background:var(--Violet);transform:rotate(45deg);border-radius:2px;display:block}
+nav{display:flex;gap:2px}
+nav a{height:28px;padding:0 10px;border-radius:999px;display:flex;align-items:center;gap:6px;color:var(--InkSubtle);font-size:13px;text-decoration:none}
+nav a b{font-weight:500;color:var(--InkTertiary);font-size:12px}
+nav a.on{background:var(--Surface3);color:var(--Ink)}
+nav a:hover:not(.on){background:var(--Surface2);color:var(--InkMuted)}
+.search{margin-left:auto;width:230px;height:28px;border:1px solid var(--HairlineStrong);border-radius:6px;display:flex;align-items:center;padding:0 8px;color:var(--InkTertiary);gap:8px;background:var(--Canvas)}
+.search kbd{margin-left:auto;font-size:11px}
+.pill{height:24px;border-radius:999px;padding:0 10px;display:flex;align-items:center;gap:6px;background:var(--SuccessSoft);color:var(--Success);font-size:12px}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--Success)}
+
+/* head */
+h1{margin:0;font:600 24px/32px var(--sans);letter-spacing:-0.01em}
+#title{left:24px;top:64px}
+#ask{left:128px;top:64px;width:748px;height:32px;background:var(--Surface2);border:1px solid var(--HairlineStrong);border-radius:8px;display:flex;align-items:center;padding:0 12px;gap:10px}
+#ask .meta{margin-left:auto;color:var(--InkSubtle);font-size:12px;display:flex;gap:8px;align-items:center}
+
+/* scope */
+#scope{left:24px;top:108px;width:852px;height:748px}
+.shead{display:flex;align-items:flex-start;gap:12px;height:56px}
+.shead h2{margin:0;font:600 20px/28px var(--sans);display:flex;align-items:center;gap:8px;letter-spacing:-0.005em}
+.shead h2 svg{opacity:.5}
+.smeta{display:flex;align-items:center;gap:12px;font-size:12px;line-height:20px;color:var(--InkSubtle)}
+.smeta code{font:500 11.5px/18px var(--mono);color:var(--InkMuted);background:var(--Surface3);border-radius:4px;padding:0 6px}
+.smeta .sv{display:flex;align-items:center;gap:6px}
+.smeta .sv::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--Success)}
+.sbtn{margin-left:auto;display:flex;gap:8px;align-items:center}
+.filter{width:200px;height:32px;border:1px solid var(--HairlineStrong);border-radius:6px;display:flex;align-items:center;padding:0 8px;gap:8px;color:var(--InkTertiary);background:var(--Canvas);font-size:13px}
+.filter kbd{margin-left:auto}
+.btn{height:32px;padding:0 12px;border-radius:6px;font-weight:500;font-size:13px;border:1px solid var(--HairlineStrong);background:var(--Surface2);display:flex;align-items:center;gap:8px}
+.btn:hover{background:var(--Surface3);border-color:var(--HairlineTertiary)}
+.btn.pri{background:var(--Primary);border-color:var(--Primary);color:var(--Ink)}
+.btn.pri:hover{background:var(--PrimaryHover);border-color:var(--PrimaryHover)}
+.btn.pri kbd{background:rgba(8,9,10,.25);border-color:rgba(247,248,248,.25);color:var(--InkMuted)}
+
+.grp{display:flex;align-items:center;gap:8px;height:26px;margin-top:2px}
+.grp b{font:600 13px/20px var(--sans);color:var(--Ink)}
+.grp .where{font:400 11.5px/18px var(--mono);color:var(--InkTertiary)}
+.grp .cnt{margin-left:auto;font-size:12px;color:var(--InkSubtle)}
+.grp svg{flex:none}
+.row{position:relative;display:flex;gap:10px;padding:3px 8px 3px 10px;margin-left:16px;border-radius:6px;border:1px solid transparent;min-height:38px}
+.row:hover{background:var(--Surface2);border-color:var(--HairlineStrong)}
+.row:hover .act{opacity:1}
+.dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--WireHi);margin-top:7px}
+.dot.s{background:transparent;border:1px dashed var(--WireHi)}
+.main{flex:1;min-width:0}
+.nm{font:500 13px/20px var(--mono);color:var(--Ink);white-space:nowrap}
+.nm i{font-style:normal;font-weight:400;color:var(--InkTertiary);font-size:12px;margin-left:8px}
+.why{font-size:12px;line-height:18px;color:var(--InkSubtle);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.why em{font-style:normal;color:var(--InkMuted)}
+.why code{font:400 11.5px/18px var(--mono);color:var(--InkMuted)}
+.side{flex:none;display:flex;align-items:flex-start;gap:10px;padding-top:2px}
+.sc{font:500 12px/18px var(--mono);color:var(--InkSubtle);width:30px;text-align:right}
+.pin{width:14px;height:14px;margin-top:3px}
+.act{opacity:0;display:flex;gap:4px;transition:opacity .1s}
+.act span{font-size:11px;color:var(--InkSubtle);border:1px solid var(--HairlineStrong);border-radius:4px;padding:0 5px;line-height:16px;margin-top:1px}
+.row.sel{background:var(--Surface3);border-color:var(--HairlineStrong);outline:2px solid var(--PrimaryHover);outline-offset:1px;min-height:92px;z-index:2}
+.row.sel .nm{color:var(--Ink)}
+.row.sel .why{white-space:normal}
+.tested{font-size:12px;line-height:18px;color:var(--InkSubtle)}
+.tested code{font:400 11.5px/18px var(--mono);color:var(--InkMuted)}
+.acts{display:flex;gap:6px;margin-top:6px}
+.acts button{height:24px;padding:0 8px;border-radius:6px;font-size:12px;border:1px solid var(--HairlineStrong);background:var(--Surface2);display:flex;align-items:center;gap:6px;color:var(--InkMuted)}
+.acts button:hover{background:var(--Surface4);border-color:var(--HairlineTertiary)}
+.acts .ok{border-style:dashed;border-color:rgba(247,248,248,.5);color:var(--Ink)}
+.more{margin-left:42px;height:20px;font-size:12px;line-height:20px;color:var(--InkTertiary)}
+.more b{font-weight:400;color:var(--InkSubtle)}
+
+#tray{margin-top:8px}
+#tray h3,#hist h3{margin:0;font:600 13px/20px var(--sans);display:flex;gap:8px;align-items:center}
+#tray h3 span{font-weight:400;font-size:12px;color:var(--InkSubtle)}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px;margin-top:6px}
+.card{display:flex;align-items:center;gap:10px;height:44px;padding:0 8px 0 12px;border:1px dashed var(--HairlineTertiary);border-radius:8px}
+.card:hover{background:var(--Surface2);border-color:var(--HairlineStrong)}
+.card .tx{flex:1;min-width:0}
+.card .nm{font-size:12px;line-height:18px}
+.card .why{font-size:11.5px;line-height:16px}
+.card button{height:24px;padding:0 8px;border-radius:6px;font-size:12px;border:1px solid var(--HairlineStrong);background:var(--Surface2);display:flex;gap:6px;align-items:center;color:var(--InkMuted)}
+.card button:hover{background:var(--Surface4)}
+#hist{margin-top:8px;height:36px;display:flex;align-items:center;gap:12px;border-top:1px solid var(--Hairline);padding-top:6px}
+#hist h3{font-weight:500;font-size:12px;color:var(--InkSubtle)}
+.ev{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--InkMuted)}
+.ev::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--Wire)}
+.ev.last::before{background:var(--PrimaryHover)}
+.ev code{font:400 11.5px/18px var(--mono)}
+.ev u{text-decoration:none;color:var(--InkTertiary)}
+#hist .undo{margin-left:auto;display:flex;gap:6px;align-items:center;font-size:12px;color:var(--InkSubtle)}
+
+/* right pane */
+#right{left:892px;top:108px;width:524px;height:756px;display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--Surface1);border:1px solid var(--Hairline);border-radius:12px;padding:14px 16px}
+.eyebrow{font:400 11px/16px var(--sans);color:var(--InkSubtle)}
+#mm{height:176px;display:flex;gap:16px}
+#mm svg{flex:none;border-radius:6px;display:block;margin-top:6px}
+#mm .t{flex:1;font-size:12px;line-height:18px;color:var(--InkSubtle)}
+#mm h3,#nb h3{margin:0;font:600 15px/22px var(--sans);color:var(--Ink)}
+#mm ul{list-style:none;margin:8px 0 0;padding:0}
+#mm li{display:flex;gap:8px;color:var(--InkMuted)}
+#mm li i{font-style:normal;margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--PrimaryHover)}
+#nb{flex:1;min-height:0}
+#nb .hdr{display:flex;align-items:baseline;gap:8px}
+#nb .hdr span{font:400 12px/18px var(--mono);color:var(--InkSubtle)}
+#nb svg{display:block;margin-top:6px}
+.el{margin-top:6px;border-top:1px solid var(--Hairline);padding-top:8px}
+.er{display:flex;align-items:center;gap:8px;height:26px;padding:0 6px;margin:0 -6px;border-radius:4px;border:1px solid transparent;font-size:12px;color:var(--InkSubtle)}
+.er:hover{background:var(--Surface2);border-color:var(--HairlineStrong)}
+.er b{font:500 11.5px/18px var(--mono);color:var(--InkMuted);width:14px}
+.er span{color:var(--InkMuted)}
+.er code{margin-left:auto;font:400 11.5px/18px var(--mono);color:var(--InkSubtle)}
+
+/* footer */
+#foot{left:24px;top:868px;width:1392px;height:24px;display:flex;align-items:center;gap:18px;font-size:12px;color:var(--InkSubtle)}
+#foot .h{display:flex;gap:6px;align-items:center}
+#foot .bud{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--InkTertiary)}
+</style>
+</head>
+<body>
+
+<header id="top" class="abs">
+  <div class="brand"><i></i>Sindri</div>
+  <nav>
+    <a href="#">Home</a><a href="#">Projects</a><a href="#">Workflows</a><a href="#">Work <b>4</b></a>
+    <a href="#" class="on">Context</a><a href="#">Agents</a><a href="#">System</a><a href="#">Reviews <b>2</b></a><a href="#">Connections</a>
+  </nav>
+  <div class="search"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#74787f" stroke-width="1.4"><circle cx="6" cy="6" r="4.2"/><path d="M9.2 9.2L12.5 12.5"/></svg>Search<kbd>Ctrl K</kbd></div>
+  <div class="pill">Running · updated 0s ago</div>
+</header>
+
+<h1 id="title" class="abs">Context</h1>
+<div id="ask" class="abs">
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#828fff" stroke-width="1.4"><path d="M7 1.5l1.5 3.7 3.7 1.5-3.7 1.5L7 12l-1.5-3.8L1.8 6.7l3.7-1.5z"/></svg>
+  <span>Add per-workspace rate limits to the export API</span>
+  <span class="meta">Ask again <kbd>Ctrl L</kbd></span>
+</div>
+
+<main id="scope" class="abs">
+  <div class="shead">
+    <div>
+      <h2>Rate limits on exports
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#d0d6e0" stroke-width="1.3"><path d="M2 12l.6-2.6L9.5 2.5l2 2-6.9 6.9z"/></svg></h2>
+      <div class="smeta"><code>scope_7f3k2</code><span class="sv">Saved 2 min ago</span><span>14 files · 5 tests · 3 areas</span></div>
+    </div>
+    <div class="sbtn">
+      <div class="filter"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#74787f" stroke-width="1.4"><circle cx="6" cy="6" r="4.2"/><path d="M9.2 9.2L12.5 12.5"/></svg>Type to filter<kbd>/</kbd></div>
+      <button class="btn">Share</button>
+      <button class="btn pri">Open in agent <kbd>Ctrl Enter</kbd></button>
+    </div>
+  </div>
+
+  <!-- group 1 -->
+  <div class="grp"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#8a8f98" stroke-width="1.4"><path d="M2.5 4.5L6 8l3.5-3.5"/></svg><b>Export entry points</b><span class="where">api / export</span><span class="cnt">6 files · 2 tests</span></div>
+  <div class="row"><i class="dot"></i><div class="main"><div class="nm">ExportHandler.cs<i>services/export/src/handlers/</i></div><div class="why"><em>defines</em> <code>ExportHandler.Handle</code>, target of <code>route POST /v1/exports</code></div></div><div class="side"><div class="act"><span>p</span><span>x</span></div><svg class="pin" viewBox="0 0 14 14" style="visibility:hidden"></svg><span class="sc">0.96</span></div></div>
+  <div class="row"><i class="dot"></i><div class="main"><div class="nm">ExportRoutes.cs<i>services/export/src/routes/</i></div><div class="why"><em>registers</em> <code>route POST /v1/exports</code> and <code>GET /v1/exports/{id}</code></div></div><div class="side"><div class="act"><span>p</span><span>x</span></div><svg class="pin" viewBox="0 0 14 14" style="visibility:hidden"></svg><span class="sc">0.88</span></div></div>
+  <div class="row"><i class="dot s"></i><div class="main"><div class="nm">ExportJobRunner.cs<i>services/export/src/jobs/</i></div><div class="why"><em>publishes</em> <code>export.completed</code> after each run</div></div><div class="side"><div class="act"><span>p</span><span>x</span></div><svg class="pin" viewBox="0 0 14 14" style="visibility:hidden"></svg><span class="sc">0.52</span></div></div>
+  <div class="more"><b>3 more files</b> · ExportStatusHandler.cs, ExportAuthFilter.cs, ExportRequest.cs</div>
+
+  <!-- group 2 -->
+  <div class="grp"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#8a8f98" stroke-width="1.4"><path d="M2.5 4.5L6 8l3.5-3.5"/></svg><b>Limit decision</b><span class="where">platform / ratelimit</span><span class="cnt">5 files · 2 tests</span></div>
+  <div class="row"><i class="dot"></i><div class="main"><div class="nm">RateLimiter.cs<i>platform/ratelimit/src/</i></div><div class="why"><em>defines</em> <code>RateLimiter.Check</code>, called by RateLimitMiddleware</div></div><div class="side"><div class="act"><span>p</span><span>x</span></div><svg class="pin" viewBox="0 0 14 14" fill="#828fff"><path d="M8.6 1.5l3.9 3.9-1.5.5-2 2 .3 3-.9.9-2.6-2.6-3.1 3.1-.7-.7 3.1-3.1L2.5 6l.9-.9 3 .3 2-2z"/></svg><span class="sc">0.91</span></div></div>
+
+  <div class="row sel"><i class="dot s"></i><div class="main">
+    <div class="nm">WorkspaceLimitPolicy.cs<i>platform/ratelimit/src/</i></div>
+    <div class="why"><em>reads</em> <code>table workspace_quotas</code>. Picks the bucket key, client IP today. Suggested by AI, not confirmed.</div>
+    <div class="tested"><em style="font-style:normal;color:var(--InkMuted)">test of</em> <code>WorkspaceLimitPolicyTests.cs</code> · decision D-212 conflicts with D-248</div>
+    <div class="acts"><button class="ok">Confirm link</button><button>Pin <kbd>p</kbd></button><button>Drop <kbd>x</kbd></button><button>More like this <kbd>m</kbd></button><button>What calls this <kbd>c</kbd></button></div>
+  </div><div class="side"><svg class="pin" viewBox="0 0 14 14" style="visibility:hidden"></svg><span class="sc">0.84</span></div></div>
+
+  <div class="row"><i class="dot"></i><div class="main"><div class="nm">RateLimitMiddleware.cs<i>platform/ratelimit/src/middleware/</i></div><div class="why"><em>provides</em> <code>RateLimiter layer</code> to every export route</div></div><div class="side"><div class="act"><span>p</span><span>x</span></div><svg class="pin" viewBox="0 0 14 14" style="visibility:hidden"></svg><span class="sc">0.78</span></div></div>
+  <div class="more"><b>2 more files</b> · RateLimitStore.cs, RateLimitOptions.cs</div>
+
+  <!-- group 3 -->
+  <div class="grp"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#8a8f98" stroke-width="1.4"><path d="M2.5 4.5L6 8l3.5-3.5"/></svg><b>Plan limits</b><span class="where">billing / plans</span><span class="cnt">3 files · 1 test</span></div>
+  <div class="row"><i class="dot"></i><div class="main"><div class="nm">PlanCatalog.cs<i>services/billing/src/plans/catalog/</i></div><div class="why"><em>reads</em> <code>table plan_limits</code> to list each plan's tiers</div></div><div class="side"><div class="act"><span>p</span><span>x</span></div><svg class="pin" viewBox="0 0 14 14" style="visibility:hidden"></svg><span class="sc">0.74</span></div></div>
+  <div class="row"><i class="dot s"></i><div class="main"><div class="nm">PlanLimits.cs<i>services/billing/src/plans/models/</i></div><div class="why"><em>defines</em> <code>PlanLimits.ExportsPerMinute</code>, read by WorkspaceLimitPolicy</div></div><div class="side"><div class="act"><span>p</span><span>x</span></div><svg class="pin" viewBox="0 0 14 14" style="visibility:hidden"></svg><span class="sc">0.69</span></div></div>
+  <div class="more"><b>1 more file</b> · PlanEntitlementService.cs</div>
+
+  <section id="tray">
+    <h3>Suggested, not in scope yet <span>4 candidates, none confirmed</span></h3>
+    <div class="cards">
+      <div class="card"><div class="tx"><div class="nm">WorkspaceQuotaRepository.cs</div><div class="why"><em>reads</em> <code>table workspace_quotas</code></div></div><button>Add <kbd>a</kbd></button></div>
+      <div class="card"><div class="tx"><div class="nm">RateLimitHeadersFilter.cs</div><div class="why"><em>provides</em> <code>Retry-After header</code></div></div><button>Add</button></div>
+      <div class="card"><div class="tx"><div class="nm">ExportCompletedPublisher.cs</div><div class="why"><em>publishes</em> <code>export.completed</code></div></div><button>Add</button></div>
+      <div class="card"><div class="tx"><div class="nm">PlanChangedHandler.cs</div><div class="why"><em>subscribes</em> <code>plan.changed</code></div></div><button>Add</button></div>
+    </div>
+  </section>
+
+  <div id="hist">
+    <h3>History</h3>
+    <span class="ev"><span>pinned</span> <code>RateLimiter.cs</code></span>
+    <span class="ev"><span>dropped 2 files</span> <u>ExportMetrics.cs, ExportCsvWriter.cs</u></span>
+    <span class="ev last"><span>added</span> <code>PlanLimits.cs</code> <u>2 min ago</u></span>
+    <span class="undo"><kbd>Ctrl Z</kbd> Undo</span>
+  </div>
+</main>
+
+<aside id="right" class="abs">
+  <section id="mm" class="panel">
+    <svg id="mmsvg" width="200" height="140" viewBox="0 0 200 140"></svg>
+    <div class="t">
+      <div class="eyebrow">Where this sits</div>
+      <h3>The whole repo</h3>
+      <div>31 areas · 640 features · 48,112 files</div>
+      <ul>
+        <li>api<i>6 files</i></li>
+        <li>platform<i>5 files</i></li>
+        <li>billing<i>3 files</i></li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="nb" class="panel">
+    <div class="eyebrow">Neighbourhood</div>
+    <div class="hdr"><h3>WorkspaceLimitPolicy.cs</h3><span>2 hops</span></div>
+    <svg id="nbsvg" width="492" height="312" viewBox="0 0 492 312"></svg>
+    <div class="el">
+      <div class="er"><b>&larr;</b><span>calls <code style="margin:0;color:var(--InkMuted)">Resolve</code></span><code>RateLimiter.cs</code></div>
+      <div class="er"><b>&rarr;</b><span>reads table workspace_quotas</span><code>workspace_quotas</code></div>
+      <div class="er"><b>&rarr;</b><span>reads PlanLimits.ExportsPerMinute</span><code>PlanLimits.cs</code></div>
+      <div class="er"><b>&larr;</b><span>test of WorkspaceLimitPolicy</span><code>WorkspaceLimitPolicyTests.cs</code></div>
+    </div>
+  </section>
+</aside>
+
+<footer id="foot" class="abs">
+  <span class="h">Type to filter</span>
+  <span class="h"><kbd>&uarr;</kbd><kbd>&darr;</kbd> walk edges</span>
+  <span class="h"><kbd>Enter</kbd> open</span>
+  <span class="h"><kbd>p</kbd> pin</span>
+  <span class="h"><kbd>x</kbd> drop</span>
+  <span class="h"><kbd>m</kbd> more like this</span>
+  <span class="h"><kbd>c</kbd> what calls this</span>
+  <span class="bud">48,112 files · answered in 2.1 s</span>
+</footer>
+
+<script>
+/* ---------- minimap: whole repo, scope's areas lit ---------- */
+function squarify(nodes,x,y,w,h){
+  const total=nodes.reduce((s,n)=>s+n.v,0),k=w*h/total;
+  let rest=nodes.slice().sort((a,b)=>b.v-a.v).map(n=>({n,a:n.v*k})),out=[];
+  const worst=(row,s)=>{const sum=row.reduce((t,r)=>t+r.a,0),mx=Math.max(...row.map(r=>r.a)),mn=Math.min(...row.map(r=>r.a));return Math.max(s*s*mx/(sum*sum),sum*sum/(s*s*mn));};
+  while(rest.length){
+    const s=Math.min(w,h);let row=[rest[0]],i=1;
+    while(i<rest.length&&worst(row.concat(rest[i]),s)<=worst(row,s)){row.push(rest[i]);i++;}
+    const sum=row.reduce((t,r)=>t+r.a,0);
+    if(w>=h){const cw=sum/h;let cy=y;for(const r of row){const rh=r.a/cw;out.push({n:r.n,x,y:cy,w:cw,h:rh});cy+=rh;}x+=cw;w-=cw;}
+    else{const rh=sum/w;let cx=x;for(const r of row){const rw=r.a/rh;out.push({n:r.n,x:cx,y,w:rw,h:rh});cx+=rw;}y+=rh;h-=rh;}
+    rest=rest.slice(i);
+  }
+  return out;
+}
+const lit={platform:.8,api:.95,billing:.6};
+const areas=[['web-app',700],['mobile',460],['analytics',500],['integrations',460],['ingest',400],['workspaces',400],['data-platform',400],['storage',380],['auth',380],['search',340],['infra',300],['ml',310],['messaging',300],['notifications',290],['files',280],['observability',260],['identity',240],['reports',240],['devtools',230],['collab',220],['audit',210],['admin',200],['scheduler',190],['webhooks',170],['onboarding',150],['support',140],['growth',120],['i18n',90],['platform',866],['api',612],['billing',410]].map(([n,l])=>({n,v:l}));
+let m='<rect width="200" height="140" fill="#08090a"/>';
+squarify(areas,0,0,200,140).forEach(q=>{
+  const a=lit[q.n.n], fill=a?`rgba(94,106,210,${a})`:'#222326';
+  m+=`<rect x="${(q.x+.5).toFixed(1)}" y="${(q.y+.5).toFixed(1)}" width="${Math.max(q.w-1,0).toFixed(1)}" height="${Math.max(q.h-1,0).toFixed(1)}" rx="1.5" fill="${fill}"/>`;
+  if(a&&q.w>30&&q.h>12)m+=`<text x="${(q.x+5).toFixed(1)}" y="${(q.y+13).toFixed(1)}" font-family="Inter,system-ui" font-size="10" font-weight="500" fill="#f7f8f8">${q.n.n}</text>`;
+});
+document.getElementById('mmsvg').innerHTML=m;
+
+/* ---------- neighbourhood: 3 bands ---------- */
+const X=[0,176,352],NW=140,NH=38;
+const N={
+ job:{x:0,y:34,t:'ExportJobRunner.cs',s:'job export.run',f:1},
+ route:{x:0,y:92,t:'ExportRoutes.cs',s:'route POST /v1/exports',f:1},
+ hand:{x:0,y:150,t:'ExportHandler.cs',s:'handler',f:1},
+ mid:{x:176,y:92,t:'RateLimitMiddleware.cs',s:'provides RateLimiter layer',f:1},
+ rl:{x:176,y:150,t:'RateLimiter.cs',s:'Check',f:1,pin:1},
+ pol:{x:176,y:208,t:'WorkspaceLimitPolicy.cs',s:'Resolve',f:1,sel:1},
+ pl:{x:176,y:266,t:'PlanLimits.cs',s:'ExportsPerMinute',f:1},
+ ev:{x:352,y:34,t:'export.completed',s:'event published'},
+ redis:{x:352,y:150,t:'Redis counters',s:'external call'},
+ wq:{x:352,y:208,t:'workspace_quotas',s:'table read'},
+ plt:{x:352,y:266,t:'plan_limits',s:'table read'}
+};
+const E=[['job','ev',0],['route','hand',0],['hand','mid',0],['mid','rl',0],['rl','pol',1],['rl','redis',0],['pol','wq',1],['pol','pl',1],['pl','plt',0]];
+let s='';
+[['Entry points',0,3],['Core',176,4],['Data and effects',352,4]].forEach(([n,x,c],i)=>{
+  s+=`<rect x="${x-4}" y="0" width="${NW+8}" height="312" rx="8" fill="#1c1d20" fill-opacity=".45"/>`;
+  s+=`<text x="${x+4}" y="19" font-family="Inter,system-ui" font-size="12" font-weight="500" fill="#8a8f98">${n}</text>`;
+  s+=`<text x="${x+NW-4}" y="19" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="11" fill="#74787f">${c}</text>`;
+  if(i<2)s+=`<path d="M${x+NW+9} 16h14m-4-3l4 3-4 3" fill="none" stroke="#4a4a52" stroke-width="1.2"/>`;
+});
+const pt=(k,side)=>{const n=N[k];return side==='r'?[n.x+NW,n.y+NH/2]:side==='l'?[n.x,n.y+NH/2]:side==='b'?[n.x+NW/2,n.y+NH]:[n.x+NW/2,n.y];};
+E.forEach(([a,b,hot])=>{
+  const A=N[a],B=N[b];let p,q;
+  if(A.x===B.x){p=pt(a,B.y>A.y?'b':'t');q=pt(b,B.y>A.y?'t':'b');}
+  else{p=pt(a,'r');q=pt(b,'l');}
+  s+=`<path d="M${p[0]} ${p[1]}L${q[0]} ${q[1]}" stroke="${hot?'#828fff':'#4a4a52'}" stroke-width="${hot?1.8:1.2}" fill="none"/>`;
+  s+=`<circle cx="${q[0]}" cy="${q[1]}" r="2.4" fill="${hot?'#828fff':'#4a4a52'}"/>`;
+});
+Object.values(N).forEach(n=>{
+  const inScope=n.f,sel=n.sel;
+  const fill=sel?'rgba(94,106,210,.55)':inScope?'rgba(94,106,210,.16)':'#222326';
+  const stroke=sel?'#f7f8f8':inScope?'rgba(94,106,210,.5)':'#34343a';
+  s+=`<rect x="${n.x}" y="${n.y}" width="${NW}" height="${NH}" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="${sel?2:1}"/>`;
+  s+=`<text x="${n.x+9}" y="${n.y+16}" font-family="JetBrains Mono,monospace" font-size="11" font-weight="500" fill="#f7f8f8">${n.t.length>20?n.t.slice(0,19)+'…':n.t}</text>`;
+  s+=`<text x="${n.x+9}" y="${n.y+30}" font-family="Inter,system-ui" font-size="10.5" fill="${sel?'#d0d6e0':'#8a8f98'}">${n.s}</text>`;
+});
+document.getElementById('nbsvg').innerHTML=s;
+</script>
+</body>
+</html>

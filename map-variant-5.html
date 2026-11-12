@@ -1,0 +1,327 @@
+<!--
+Direction: Layered lanes, done right (Entry points -> Core -> Data and effects), scope-first
+How it solves failures 1-6:
+1 (empty canvas, tiny tiles): the map draws only the scope's 14 files as real cards in 3 full-width bands; the whole repo is one 140x76 treemap minimap with the scope lit.
+2 (rainbow): neutral cards, one accent (Primary) for the selected file and its edges; status colour only for the one conflict (Attention); suggested links are dashed, not coloured.
+3 (answer smallest/last): the answer is the screen: files grouped by concept, one semantic "why" line per file (route, calls, reads table, publishes), then a named scope with id, pin/drop and Hand to agent.
+4 (zoom only shrinks): zoom is a level ("Bands / Concepts / Files"): bands show counts, concepts show group headers, files show cards; groups collapse, edges are bundled per band.
+5 (no detail pane): the right pane shows the selected file: why, semantic edges, linked records (decisions, tickets) and symbols, with the scope below it.
+6 (flat map-items list): replaced by concept groups with counts inside each band, a scope summary with pinned/dropped counts, and key hints (p pin, x drop).
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Context - Layered lanes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#08090a;--s1:#141517;--s2:#1c1d20;--s3:#222326;--s4:#26272a;
+  --hair:rgba(255,255,255,.06);--hair-strong:#34343a;--hair-ter:#3e3e44;
+  --ink:#f7f8f8;--ink-muted:#d0d6e0;--ink-subtle:#8a8f98;--ink-ter:#74787f;
+  --primary:#5e6ad2;--primary-hover:#828fff;--primary-soft:#202442;
+  --success:#2eb75b;--attention:#f2994a;--attention-soft:#291d13;--violet:#a78bfa;
+  --wire:#4a4a52;--wire-hi:#8a8f98;
+  --sans:Inter,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;width:1440px;height:900px;overflow:hidden;background:#08090a;color:var(--ink);font:400 13px/20px var(--sans);position:relative}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;text-align:left;cursor:pointer}
+button:focus-visible{outline:2px solid var(--primary-hover);outline-offset:1px}
+.mono{font-family:var(--mono)}
+
+.top{position:absolute;left:0;top:0;width:1440px;height:40px;border-bottom:1px solid var(--hair);display:flex;align-items:center;padding:0 16px;gap:4px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;margin-right:16px}
+.dia{width:8px;height:8px;background:var(--violet);transform:rotate(45deg);border-radius:1px}
+.pill{height:26px;padding:0 10px;border-radius:999px;display:flex;align-items:center;gap:6px;color:var(--ink-subtle);font-size:13px}
+.pill:hover{background:var(--s2);color:var(--ink-muted)}
+.pill.sel{background:var(--s3);color:var(--ink)}
+.pill i{font-style:normal;font-size:11px;color:var(--ink-subtle);background:var(--s3);border-radius:999px;padding:0 6px;line-height:16px}
+.sp{flex:1}
+.search{height:26px;width:200px;border:1px solid var(--hair-strong);border-radius:6px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;color:var(--ink-subtle);font-size:12px}
+.search kbd{font:400 11px var(--mono);color:var(--ink-ter)}
+.status{margin-left:8px;height:24px;border-radius:999px;border:1px solid var(--hair-strong);padding:0 10px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-muted)}
+.status b{width:6px;height:6px;border-radius:50%;background:var(--success)}
+
+.title{position:absolute;left:24px;top:64px;width:1392px;height:32px;display:flex;align-items:baseline;justify-content:space-between}
+.title h1{margin:0;font:600 24px/32px var(--sans);letter-spacing:-.01em}
+.title span{font-size:12px;line-height:18px;color:var(--ink-subtle)}
+.title span b{color:var(--ink-muted);font-weight:500}
+
+.q{position:absolute;left:24px;top:108px;width:1016px;height:40px;display:flex;gap:12px}
+.qin{flex:1;border:1px solid var(--hair-strong);background:var(--s1);border-radius:8px;display:flex;align-items:center;padding:0 12px;gap:8px}
+.qin .t{flex:1;color:var(--ink)}
+.qin kbd,.keys kbd{font:400 11px/16px var(--mono);color:var(--ink-subtle);border:1px solid var(--hair-strong);border-radius:4px;padding:0 5px;background:var(--s1)}
+.zoom{display:flex;align-items:center;gap:8px}
+.zoom label{font-size:11px;line-height:16px;color:var(--ink-subtle)}
+.seg{display:flex;background:var(--s1);border:1px solid var(--hair-strong);border-radius:8px;padding:2px;height:40px;align-items:stretch}
+.seg button{padding:0 12px;border-radius:6px;display:flex;align-items:center;font-size:12px;color:var(--ink-subtle)}
+.seg button:hover{background:var(--s2);color:var(--ink-muted)}
+.seg button.on{background:var(--s4);color:var(--ink);font-weight:500}
+
+.map{position:absolute;left:24px;top:160px;width:1016px;height:716px}
+.edges{position:absolute;left:0;top:0;width:1016px;height:716px;overflow:visible;pointer-events:none;z-index:2}
+.band{position:absolute;left:0;width:1016px;border:1px solid var(--hair-strong);border-radius:12px;background:var(--s1);padding:12px}
+.bh{display:flex;align-items:baseline;gap:10px;height:28px}
+.bh h2{margin:0;font:600 15px/22px var(--sans)}
+.bh .c{font-size:12px;line-height:18px;color:var(--ink-subtle)}
+.bh .n{margin-left:auto;font-size:12px;color:var(--ink-subtle)}
+.row{display:flex;gap:16px;align-items:flex-start}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.gh{height:22px;margin-bottom:4px;display:flex;align-items:center;gap:6px;white-space:nowrap;border-radius:4px;padding:0 4px;margin-left:-4px}
+.gh:hover{background:var(--s2)}
+.gh svg{flex:none}
+.gh b{font-weight:500;color:var(--ink-muted);font-size:12px}
+.gh span{font-size:11px;color:var(--ink-ter)}
+.gh em{font:400 11px var(--sans);font-style:normal;color:var(--primary-hover);margin-left:2px}
+.gh.col{opacity:.9}
+.cards{display:flex;gap:8px}
+.stack{display:flex;flex-direction:column;gap:6px}
+.f{display:block;position:relative;width:208px;height:70px;padding:6px 10px;border:1px solid var(--hair-strong);border-radius:8px;background:var(--s2);transition:background .12s,border-color .12s}
+.stack .f{width:100%}
+.f:hover{background:var(--s3);border-color:var(--hair-ter)}
+.f.sug{border-style:dashed;background:transparent}
+.f.sug:hover{background:var(--s2)}
+.f.sel{background:var(--primary-soft);border:1px solid var(--primary)}
+.f.nb::before{content:"";position:absolute;left:-1px;top:10px;bottom:10px;width:2px;border-radius:2px;background:var(--primary)}
+.f .r1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.f .nm{font:500 12px/18px var(--mono);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{flex:none;display:flex;align-items:center;gap:5px;font-size:11px;line-height:16px;color:var(--ink-subtle)}
+.tag i,.st i{width:6px;height:6px;border-radius:50%;background:var(--success);display:block}
+.tag.s i,.st.s i{background:transparent;border:1px solid var(--ink-subtle)}
+.f .w{font-size:12px;line-height:18px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f .r3{display:flex;justify-content:space-between;font:400 11px/16px var(--mono);color:var(--ink-ter);margin-top:1px}
+.f .r3 span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tests{position:absolute;left:12px;right:12px;bottom:12px;height:28px;border-top:1px solid var(--hair);padding-top:6px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-subtle)}
+.tc{height:22px;border:1px solid var(--hair-strong);border-radius:999px;padding:0 8px;display:flex;align-items:center;font:400 11px var(--mono);color:var(--ink-muted);background:var(--s2)}
+.tc:hover{background:var(--s3)}
+
+.pane{position:absolute;left:1056px;top:108px;width:360px;height:768px;border:1px solid var(--hair-strong);border-radius:12px;background:var(--s1);display:flex;flex-direction:column}
+.det{flex:1;padding:14px 16px 0;overflow:hidden}
+.eb{font-size:11px;line-height:16px;color:var(--ink-subtle)}
+.det h3{margin:0;font:600 20px/28px var(--sans)}
+.path{font:400 11px/16px var(--mono);color:var(--ink-subtle);word-break:break-all}
+.meta{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.m{height:22px;border:1px solid var(--hair-strong);border-radius:999px;padding:0 8px;font-size:11px;display:flex;align-items:center;gap:5px;color:var(--ink-muted)}
+.m i{width:6px;height:6px;border-radius:50%;background:var(--success);display:block}
+.sec{margin-top:12px}
+.sec h4{margin:0 0 2px;font:600 13px/20px var(--sans)}
+.sec p{margin:0;color:var(--ink-muted);font-size:12px;line-height:18px}
+.lk{display:flex;align-items:center;gap:8px;height:24px;padding:0 6px;margin:0 -6px;border:1px solid transparent;border-radius:6px;width:calc(100% + 12px)}
+.lk:hover{background:var(--s2);border-color:var(--hair-strong)}
+.lk .v{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:var(--ink-muted)}
+.lk .v b{font-family:var(--mono);font-weight:500;color:var(--ink);margin-right:6px}
+.lk .k{flex:none;width:40px;font:400 11px var(--sans);color:var(--ink-ter)}
+.st{flex:none;font-size:11px;color:var(--ink-subtle);display:flex;align-items:center;gap:5px}
+.st.c{color:var(--attention)}.st.c i{background:var(--attention)}
+.scope{border-top:1px solid var(--hair-strong);padding:12px 16px 14px;background:var(--s2);border-radius:0 0 11px 11px}
+.sn{display:flex;align-items:center;gap:8px}
+.sn .nm{flex:1;height:32px;border:1px solid var(--hair-strong);border-radius:6px;background:var(--s1);padding:0 10px;display:flex;align-items:center;font-weight:500}
+.sn .id{font:400 11px var(--mono);color:var(--ink-subtle);border:1px solid var(--hair-strong);border-radius:4px;padding:0 6px;line-height:20px}
+.sb{display:flex;gap:12px;margin-top:10px}
+.sb .tx{flex:1;font-size:12px;line-height:18px;color:var(--ink-subtle)}
+.sb .tx b{color:var(--ink-muted);font-weight:500}
+.mini{flex:none;width:140px}
+.mini .cap{font-size:11px;line-height:16px;color:var(--ink-ter);margin-top:2px}
+.btns{display:flex;gap:6px;margin-top:10px}
+.btn{height:30px;padding:0 10px;border-radius:6px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:500;font-size:12px;border:1px solid var(--hair-strong);background:var(--s3);white-space:nowrap}
+.btn kbd{font:400 10px var(--mono);color:var(--ink-subtle)}
+.btn:hover{background:var(--s4);border-color:var(--hair-ter)}
+.btn.p{flex:1;background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.p:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+.btns.two .btn{flex:1}
+.foot{position:absolute;left:24px;top:880px;width:1392px;height:18px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-ter)}
+.keys{display:flex;gap:14px;align-items:center}
+.keys span{display:flex;gap:5px;align-items:center}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><span class="dia"></span>Sindri</div>
+  <button class="pill">Home</button><button class="pill">Projects</button><button class="pill">Workflows</button>
+  <button class="pill">Work <i>4</i></button><button class="pill sel">Context</button><button class="pill">Agents</button>
+  <button class="pill">System</button><button class="pill">Reviews <i>2</i></button><button class="pill">Connections</button>
+  <span class="sp"></span>
+  <div class="search"><span>Search</span><kbd>Ctrl+K</kbd></div>
+  <div class="status"><b></b>Running · updated 0s ago</div>
+</header>
+
+<div class="title">
+  <h1>Context</h1>
+  <span>Answer for your question: <b>14 files</b> in 3 areas · <b>5 tests</b> · 2 decisions · 1 open ticket</span>
+</div>
+
+<div class="q">
+  <div class="qin">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#8a8f98" stroke-width="1.4"><circle cx="6" cy="6" r="4.2"/><path d="M9.2 9.2L12.5 12.5"/></svg>
+    <span class="t">Add per-workspace rate limits to the export API</span>
+    <kbd>Enter</kbd>
+  </div>
+  <div class="zoom">
+    <label>Zoom</label>
+    <div class="seg" role="group" aria-label="Zoom level">
+      <button>Bands</button><button>Concepts</button><button class="on" aria-pressed="true">Files</button>
+    </div>
+  </div>
+</div>
+
+<main class="map">
+  <svg class="edges" viewBox="0 0 1016 716" fill="none" font-family="Inter, system-ui, sans-serif">
+    <!-- bundled band-to-band edges, thin -->
+    <g stroke="#8a8f98" stroke-opacity=".5" stroke-width="1">
+      <path d="M117 160V182"/><path d="M549 160V182"/><path d="M773 160V182"/>
+      <path d="M174 482V504"/><path d="M508 482V504"/><path d="M842 482V504"/>
+    </g>
+    <!-- selected file edges, Primary -->
+    <g stroke="#5e6ad2" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M333 137V160C333 200 300 215 300 249"/>
+      <path d="M333 160C333 200 760 200 760 249"/>
+    </g>
+    <g fill="#141517"><rect x="166" y="163" width="140" height="16" rx="4"/><rect x="430" y="193" width="232" height="16" rx="4"/></g>
+    <g font-size="11" fill="#d0d6e0">
+      <text x="174" y="175">calls RateLimiter.check</text>
+      <text x="438" y="205">calls ExportRequestValidator.Validate</text>
+    </g>
+  </svg>
+
+  <!-- Entry points -->
+  <section class="band" style="top:0;height:160px" aria-label="Entry points">
+    <div class="bh"><h2>Entry points</h2><span class="c">routes, commands, handlers, jobs</span><span class="n">4 files · 2 concepts</span></div>
+    <div class="row">
+      <div>
+        <div class="gh"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#8a8f98" stroke-width="1.4"><path d="M2 3.5L5 6.5L8 3.5"/></svg><b>Data export API</b><span>3</span><em>start</em></div>
+        <div class="cards">
+          <button class="f"><div class="r1"><span class="nm">ExportRoutes.cs</span><span class="tag"><i></i>confirmed</span></div><div class="w">route POST /v1/exports</div><div class="r3"><span>export/routes</span><span>0 tests</span></div></button>
+          <button class="f sel"><div class="r1"><span class="nm">ExportHandler.cs</span><span class="tag"><i></i>confirmed</span></div><div class="w">handles route POST /v1/exports</div><div class="r3"><span>export/handlers</span><span>2 tests</span></div></button>
+          <button class="f sug"><div class="r1"><span class="nm">ExportStatusHandler.cs</span><span class="tag s"><i></i>suggested</span></div><div class="w">route GET /v1/exports/{id}</div><div class="r3"><span>export/handlers</span><span>0 tests</span></div></button>
+        </div>
+      </div>
+      <div>
+        <div class="gh"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#8a8f98" stroke-width="1.4"><path d="M2 3.5L5 6.5L8 3.5"/></svg><b>Export jobs</b><span>1</span></div>
+        <div class="cards">
+          <button class="f"><div class="r1"><span class="nm">ExportJobWorker.cs</span><span class="tag"><i></i>confirmed</span></div><div class="w">job export.run, reads queue</div><div class="r3"><span>export/jobs</span><span>0 tests</span></div></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core -->
+  <section class="band" style="top:182px;height:300px" aria-label="Core">
+    <div class="bh"><h2>Core</h2><span class="c">services and domain logic</span><span class="n">7 files · 3 concepts</span></div>
+    <div class="cols">
+      <div>
+        <div class="gh"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#8a8f98" stroke-width="1.4"><path d="M2 3.5L5 6.5L8 3.5"/></svg><b>Workspace rate limiting</b><span>3</span><em>knock-on</em></div>
+        <div class="stack">
+          <button class="f nb"><div class="r1"><span class="nm">RateLimiter.cs</span><span class="tag"><i></i>confirmed</span></div><div class="w">provides RateLimiter layer</div><div class="r3"><span>platform/ratelimit/src</span><span>1 test</span></div></button>
+          <button class="f"><div class="r1"><span class="nm">RateLimitMiddleware.cs</span><span class="tag"><i></i>confirmed</span></div><div class="w">wraps routes with RateLimiter</div><div class="r3"><span>platform/ratelimit/middleware</span><span>0 tests</span></div></button>
+          <button class="f"><div class="r1"><span class="nm">RateLimitOptions.cs</span><span class="tag"><i></i>confirmed</span></div><div class="w">defines limit and window</div><div class="r3"><span>platform/ratelimit/src</span><span>0 tests</span></div></button>
+        </div>
+      </div>
+      <div>
+        <div class="gh"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#8a8f98" stroke-width="1.4"><path d="M2 3.5L5 6.5L8 3.5"/></svg><b>Plan entitlements</b><span>3</span><em>knock-on</em></div>
+        <div class="stack">
+          <button class="f"><div class="r1"><span class="nm">PlanLimits.cs</span><span class="tag"><i></i>confirmed</span></div><div class="w">defines export limits per tier</div><div class="r3"><span>billing/plans</span><span>1 test</span></div></button>
+          <button class="f sug"><div class="r1"><span class="nm">EntitlementResolver.cs</span><span class="tag s"><i></i>suggested</span></div><div class="w">maps workspace to plan</div><div class="r3"><span>billing/entitlements</span><span>0 tests</span></div></button>
+          <button class="f"><div class="r1"><span class="nm">PlanCatalog.cs</span><span class="tag"><i></i>confirmed</span></div><div class="w">lists tiers the limiter reads</div><div class="r3"><span>billing/plans</span><span>0 tests</span></div></button>
+        </div>
+      </div>
+      <div>
+        <div class="gh"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#8a8f98" stroke-width="1.4"><path d="M2 3.5L5 6.5L8 3.5"/></svg><b>Data export API</b><span>1</span></div>
+        <div class="stack">
+          <button class="f nb"><div class="r1"><span class="nm">ExportRequestValidator.cs</span><span class="tag"><i></i>confirmed</span></div><div class="w">called by ExportHandler</div><div class="r3"><span>export/handlers</span><span>0 tests</span></div></button>
+        </div>
+        <div class="gh" style="margin-top:12px"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#8a8f98" stroke-width="1.4"><path d="M3.5 2L6.5 5L3.5 8"/></svg><b>Usage notifications</b><span>2 hidden</span><em>knock-on</em></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Data and effects -->
+  <section class="band" style="top:504px;height:212px" aria-label="Data and effects">
+    <div class="bh"><h2>Data and effects</h2><span class="c">tables, events, external calls</span><span class="n">3 files · 2 concepts</span></div>
+    <div class="row">
+      <div>
+        <div class="gh"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#8a8f98" stroke-width="1.4"><path d="M2 3.5L5 6.5L8 3.5"/></svg><b>Quota storage</b><span>2</span><em>knock-on</em></div>
+        <div class="cards">
+          <button class="f"><div class="r1"><span class="nm">SlidingWindowStore.cs</span><span class="tag"><i></i>confirmed</span></div><div class="w">reads table workspace_quotas</div><div class="r3"><span>platform/ratelimit/src</span><span>1 test</span></div></button>
+          <button class="f sug"><div class="r1"><span class="nm">0042_workspace_quotas.sql</span><span class="tag s"><i></i>suggested</span></div><div class="w">adds column export_limit</div><div class="r3"><span>db/migrations</span><span>0 tests</span></div></button>
+        </div>
+      </div>
+      <div>
+        <div class="gh"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#8a8f98" stroke-width="1.4"><path d="M2 3.5L5 6.5L8 3.5"/></svg><b>Export events</b><span>1</span></div>
+        <div class="cards">
+          <button class="f sug nb"><div class="r1"><span class="nm">ExportEvents.cs</span><span class="tag s"><i></i>suggested</span></div><div class="w">publishes export.completed</div><div class="r3"><span>export/events</span><span>0 tests</span></div></button>
+        </div>
+      </div>
+    </div>
+    <div class="tests"><span>Tests · 5</span>
+      <button class="tc">ExportHandlerTests · 2</button><button class="tc">RateLimiterTests · 1</button><button class="tc">SlidingWindowStoreTests · 1</button><button class="tc">PlanLimitsTests · 1</button>
+      <span style="margin-left:auto">test of ExportHandler, RateLimiter, SlidingWindowStore, PlanLimits</span>
+    </div>
+  </section>
+</main>
+
+<aside class="pane" aria-label="Selected file and scope">
+  <div class="det">
+    <div class="eb">Selected file · entry point · export/handlers</div>
+    <h3>ExportHandler.cs</h3>
+    <div class="path">services/export/src/handlers/ExportHandler.cs</div>
+    <div class="meta">
+      <span class="m"><i></i>Confirmed</span><span class="m">Score 0.94</span><span class="m">Rank 1 of 14</span><span class="m">2 tests</span>
+    </div>
+
+    <div class="sec">
+      <h4>Why it is in the scope</h4>
+      <p>It handles route POST /v1/exports. The workspace limit has to be checked here, before the job is queued.</p>
+    </div>
+
+    <div class="sec">
+      <h4>Edges</h4>
+      <button class="lk"><span class="k">in</span><span class="v">route POST /v1/exports</span><span class="st"><i></i>confirmed</span></button>
+      <button class="lk"><span class="k">out</span><span class="v">calls RateLimiter.check</span><span class="st"><i></i>confirmed</span></button>
+      <button class="lk"><span class="k">out</span><span class="v">calls ExportRequestValidator.Validate</span><span class="st"><i></i>confirmed</span></button>
+      <button class="lk"><span class="k">out</span><span class="v">publishes export.completed</span><span class="st s"><i></i>suggested</span></button>
+      <button class="lk"><span class="k">test</span><span class="v">test of ExportHandler, 2 cases</span><span class="st"><i></i>confirmed</span></button>
+    </div>
+
+    <div class="sec">
+      <h4>Linked records</h4>
+      <button class="lk"><span class="k">Decision</span><span class="v"><b>D-41</b>Limits apply per workspace</span><span class="st"><i></i>confirmed</span></button>
+      <button class="lk"><span class="k">Decision</span><span class="v"><b>D-52</b>Export caps follow plan tier</span><span class="st c"><i></i>conflicts</span></button>
+      <button class="lk"><span class="k">Ticket</span><span class="v"><b>EXP-318</b>Exports time out</span><span class="st s"><i></i>suggested</span></button>
+    </div>
+  </div>
+
+  <div class="scope">
+    <div class="sn"><div class="nm">Rate limits on exports</div><span class="id">scope_7f3k2</span></div>
+    <div class="sb">
+      <div class="tx"><b>14 files · 5 tests</b><br>3 pinned · 1 dropped · saved 2 min ago<br>Shared with 1 agent session</div>
+      <div class="mini">
+        <svg width="140" height="76" viewBox="0 0 140 76" role="img" aria-label="Repo treemap, scope lit">
+          <g fill="#222326">
+            <rect x="0" y="0" width="52" height="44" rx="2"/><rect x="53" y="0" width="40" height="30" rx="2"/>
+            <rect x="53" y="31" width="40" height="45" rx="2"/><rect x="117" y="31" width="23" height="22" rx="2"/>
+            <rect x="94" y="54" width="46" height="22" rx="2"/><rect x="27" y="45" width="25" height="31" rx="2"/>
+          </g>
+          <g fill="#5e6ad2"><rect x="94" y="0" width="46" height="30" rx="2"/><rect x="94" y="31" width="22" height="22" rx="2"/><rect x="0" y="45" width="26" height="31" rx="2"/></g>
+        </svg>
+        <div class="cap">Repo · 3 of 31 areas lit</div>
+      </div>
+    </div>
+    <div class="btns two">
+      <button class="btn">Pin <kbd>p</kbd></button><button class="btn">Drop <kbd>x</kbd></button><button class="btn">More like this</button><button class="btn">What calls this</button>
+    </div>
+    <div class="btns"><button class="btn">Copy paths</button><button class="btn p">Hand to agent</button></div>
+  </div>
+</aside>
+
+<footer class="foot">
+  <div class="keys">
+    <span><kbd>type</kbd> filter</span><span><kbd>arrows</kbd> walk edges</span><span><kbd>Enter</kbd> open</span><span><kbd>p</kbd> pin</span><span><kbd>x</kbd> drop</span>
+  </div>
+  <span>48,112 files · answered in 2.1 s</span>
+</footer>
+
+</body>
+</html>

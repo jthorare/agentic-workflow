@@ -1,0 +1,316 @@
+<!doctype html>
+<!--
+Direction: Drill-down columns (Miller columns): Concepts -> Entry points -> Core -> Data and effects -> detail. The result is a saved scope (scope_7f3k2).
+How it solves failures 1-6:
+1 (tiny tiles, empty canvas): no canvas. Columns fill the window; 212 concepts collapse to the 4 selected, and the whole repo is a small treemap minimap only.
+2 (rainbow): one accent. Selection is Primary-soft rows; other colour is status only (confirmed, conflict). Counts are plain mono numbers.
+3 (answer last/smallest): the three band columns ARE the answer (14 files, each with an edge as its why line); footer has Copy paths / Hand to agent.
+4 (zoom does nothing): drilling replaces zoom. Selecting concepts narrows every band; concept groups inside a band collapse; headers show counts.
+5 (no detail on select): the last column explains the selected file: edge, symbols, tests, linked records, conflict in Attention, with pin / drop / more like this / what calls this.
+6 (flat Map items): ranked concepts with bars and counts, multi-select, files grouped by concept inside bands.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Context · Drill-down columns</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --Canvas:#08090a;--Surface1:#141517;--Surface2:#1c1d20;--Surface3:#222326;--Surface4:#26272a;
+  --Hairline:rgba(255,255,255,0.06);--HairlineStrong:#34343a;--HairlineTertiary:#3e3e44;
+  --Ink:#f7f8f8;--InkMuted:#d0d6e0;--InkSubtle:#8a8f98;--InkTertiary:#74787f;
+  --Primary:#5e6ad2;--PrimaryHover:#828fff;--PrimarySoft:#202442;
+  --Success:#2eb75b;--SuccessSoft:#0d2115;--Attention:#f2994a;--AttentionSoft:#291d13;
+  --Violet:#a78bfa;--Wire:#4a4a52;--WireHi:#8a8f98;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;width:1440px;height:900px;overflow:hidden;background:#08090a;color:var(--Ink);
+  font:400 13px/20px Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.mono{font-family:var(--mono);font-size:12px;line-height:18px}
+
+/* top bar */
+.top{height:40px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--Hairline);background:var(--Canvas)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px}
+.brand i{width:8px;height:8px;background:var(--Violet);transform:rotate(45deg);border-radius:1px}
+.nav{display:flex;gap:2px}
+.nav a{padding:3px 10px;border-radius:999px;color:var(--InkSubtle);font-size:13px;line-height:20px}
+.nav a b{font-weight:500;color:var(--InkMuted);margin-left:4px}
+.nav a.on{background:var(--Surface3);color:var(--Ink)}
+.sp{flex:1}
+.search{width:220px;height:26px;border:1px solid var(--HairlineStrong);border-radius:6px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;color:var(--InkTertiary)}
+.search kbd{font:400 11px/16px var(--mono);color:var(--InkSubtle);border:1px solid var(--HairlineStrong);border-radius:4px;padding:0 4px}
+.pill{display:flex;align-items:center;gap:6px;color:var(--InkSubtle);font-size:12px;line-height:18px}
+.pill s{width:6px;height:6px;border-radius:50%;background:var(--Success)}
+
+/* page */
+.page{padding:16px 24px 16px;height:860px;display:flex;flex-direction:column;gap:12px}
+h1{margin:0;font:600 24px/32px Inter,system-ui,sans-serif;letter-spacing:-0.01em}
+.title{display:flex;align-items:baseline;gap:12px}
+.title span{color:var(--InkTertiary);font-size:12px;line-height:18px}
+.ask{height:44px;display:flex;align-items:center;gap:12px;padding:0 8px 0 16px;background:var(--Surface1);border:1px solid var(--HairlineStrong);border-radius:8px}
+.ask svg{flex:none}
+.ask .q{flex:1;font-size:14px;color:var(--Ink)}
+.ask .meta{color:var(--InkSubtle);font-size:12px;white-space:nowrap}
+.ask .meta b{color:var(--InkMuted);font-weight:500}
+.btn{height:28px;padding:0 12px;border-radius:6px;font-weight:500;font-size:13px;border:1px solid var(--HairlineStrong);color:var(--InkMuted);background:var(--Surface2)}
+.btn:hover{background:var(--Surface3);border-color:var(--HairlineTertiary)}
+.btn.pr{background:var(--Primary);border-color:var(--Primary);color:#fff}
+.btn.pr:hover{background:var(--PrimaryHover);border-color:var(--PrimaryHover)}
+
+/* columns */
+.cols{height:596px;display:flex;background:var(--Surface1);border:1px solid var(--Hairline);border-radius:8px;overflow:hidden}
+.col{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--Hairline)}
+.col:last-child{border-right:0}
+.c1{width:204px}.c2{width:250px}.c3{width:250px}.c4{width:250px}.c5{flex:1;background:var(--Surface2)}
+.ch{height:36px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid var(--Hairline)}
+.ch h2{margin:0;font:600 13px/20px Inter,sans-serif;color:var(--InkMuted)}
+.ch h2 em{font-style:normal;font-weight:400;color:var(--InkSubtle)}
+.ch h2 em b{color:var(--Ink);font-weight:500}
+.ch small{font-size:12px;color:var(--InkTertiary)}
+.list{flex:1;overflow:auto;padding:6px 0;scrollbar-width:thin;scrollbar-color:var(--Surface4) transparent}
+.grp{padding:8px 18px 4px;font-size:11px;line-height:16px;color:var(--InkTertiary)}
+.row{display:flex;align-items:center;gap:8px;margin:0 6px;padding:0 8px;border:1px solid transparent;border-radius:6px;cursor:default}
+.row:hover{background:var(--Surface2);border-color:var(--HairlineStrong)}
+.row:active{background:var(--Surface3)}
+.row.sel{background:var(--PrimarySoft);border-color:rgba(94,106,210,.35)}
+.row.sel .nm{color:var(--Ink)}
+.row.dim .nm{color:var(--InkSubtle)}
+.cb{flex:none;width:14px;height:14px;border:1px solid var(--Wire);border-radius:4px;position:relative}
+.sel .cb{background:var(--Primary);border-color:var(--Primary)}
+.sel .cb::after{content:"";position:absolute;left:4px;top:1px;width:3px;height:7px;border:solid #fff;border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}
+.nm{flex:1;min-width:0;color:var(--InkMuted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.num{flex:none;color:var(--InkSubtle);font:400 12px/18px var(--mono);width:22px;text-align:right}
+.bar{flex:none;width:34px;height:4px;border-radius:2px;background:var(--Surface4);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--WireHi)}
+.sel .bar i{background:var(--Primary)}
+.chev{flex:none;color:var(--Primary);font-size:14px;line-height:1;margin-left:-2px}
+
+/* two-line rows */
+.r2{height:42px}
+.stack{flex:1;min-width:0;display:flex;flex-direction:column}
+.stack .nm{flex:none;line-height:20px}
+.stack .sub{font-size:12px;line-height:18px;color:var(--InkTertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{flex:none;font-size:11px;line-height:16px;padding:0 6px;border-radius:999px;color:var(--PrimaryHover);border:1px solid rgba(94,106,210,.45)}
+.kind{font:400 11px/16px var(--mono);color:var(--InkTertiary)}
+
+/* files */
+.rf{height:42px;padding:0 8px 0 10px}
+.path{display:flex;font:400 12px/18px var(--mono);min-width:0}
+.path .d{color:var(--InkTertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.path .f{color:var(--Ink);flex:none;white-space:nowrap}
+.rf .sub{display:flex;align-items:center;gap:6px}
+.rf .sub span.why{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.st{flex:none;display:inline-flex;align-items:center;gap:4px;font-size:11px;line-height:16px;color:var(--InkSubtle)}
+.st s{width:6px;height:6px;border-radius:50%;background:var(--Success)}
+.st.sg s{background:none;border:1px solid var(--InkSubtle)}
+.sc{flex:none;font:400 12px/18px var(--mono);color:var(--InkSubtle);width:30px;text-align:right}
+.rf.sel{border-color:var(--Primary)}
+.rf.sel .sc{color:var(--Ink)}
+
+/* detail */
+.dt{flex:1;overflow:hidden;padding:12px 16px 0;display:flex;flex-direction:column;gap:10px}
+.dtitle{font:600 20px/28px Inter,sans-serif;letter-spacing:-0.01em}
+.dpath{color:var(--InkTertiary);margin-top:-2px}
+.chips{display:flex;gap:8px;align-items:center;margin-top:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:18px;padding:0 8px;border-radius:999px;border:1px solid var(--HairlineStrong);color:var(--InkMuted)}
+.chip.ok{background:var(--SuccessSoft);border-color:rgba(46,183,91,.3);color:var(--Success)}
+.chip s{width:6px;height:6px;border-radius:50%;background:var(--Success)}
+.sec h3{margin:0 0 4px;font:600 15px/22px Inter,sans-serif;display:flex;align-items:baseline;gap:6px}
+.sec h3 span{font:400 12px/18px Inter;color:var(--InkSubtle)}
+.chain{display:flex;flex-wrap:wrap;gap:4px;align-items:center;color:var(--InkSubtle);font-size:12px;line-height:18px;margin:2px 0 6px}
+.chain b{font-weight:500;color:var(--InkMuted);background:var(--PrimarySoft);border-radius:4px;padding:0 6px}
+.why{color:var(--InkMuted)}
+.why code,.sec code{font:400 12px/18px var(--mono);color:var(--Ink)}
+.kv{display:flex;flex-direction:column}
+.kv div{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-top:1px solid var(--Hairline)}
+.kv div:first-child{border-top:0}
+.kv span:last-child{color:var(--InkTertiary);font-size:12px}
+.rec{display:flex;gap:8px;padding:6px 0;border-top:1px solid var(--Hairline);align-items:flex-start}
+.rec:first-of-type{border-top:0}
+.rid{flex:none;font:400 12px/20px var(--mono);color:var(--InkSubtle);width:52px}
+.rec .t{color:var(--InkMuted)}
+.rec .t small{display:block;font-size:12px;line-height:18px;color:var(--InkTertiary)}
+.conf{background:var(--AttentionSoft);border:1px solid rgba(242,153,74,.35);border-radius:6px;padding:6px 8px;margin:2px 0}
+.conf .rid{color:var(--Attention)}
+.conf .t small{color:var(--Attention)}
+.conf .t{color:var(--Ink)}
+
+/* strip */
+.strip{height:60px;display:flex;align-items:center;gap:16px}
+.strip .lb{flex:none;width:204px;color:var(--InkSubtle);font-size:12px;line-height:18px}
+.strip .lb b{color:var(--InkMuted);font-weight:500}
+.tm{flex:none;display:block;border-radius:4px}.keys{flex:1;display:flex;gap:12px;flex-wrap:wrap;color:var(--InkSubtle);font-size:12px;line-height:18px}.keys span{display:flex;gap:4px;align-items:center}.keys kbd{font:400 11px/16px var(--mono);color:var(--InkMuted);border:1px solid var(--HairlineStrong);border-radius:4px;padding:0 5px;background:var(--Surface1)}.sc2{display:flex;gap:6px;align-items:center}.sc2 .nm2{font-weight:600;font-size:14px}.id{font:400 12px/18px var(--mono);color:var(--InkMuted);border:1px solid var(--HairlineStrong);border-radius:4px;padding:0 6px}.vsep{width:1px;height:20px;background:var(--HairlineStrong)}.acts{display:flex;gap:8px;margin-top:2px}.acts .btn{height:26px;padding:0 10px;font-size:12px}.acts kbd{font:400 11px/16px var(--mono);color:var(--InkSubtle);margin-left:6px}.cg{display:flex;align-items:center;gap:6px;padding:8px 14px 4px;font-size:12px;line-height:16px;color:var(--InkSubtle)}.cg i{font-style:normal;color:var(--InkTertiary);font-size:10px}.cg span:last-child{margin-left:auto;font-family:var(--mono);color:var(--InkTertiary)}.seg{display:none}
+.seg i{display:block;border-radius:2px;background:var(--Surface4)}
+.seg i.lit{background:var(--Primary)}
+.strip .rt{flex:none;color:var(--InkSubtle);font-size:12px;line-height:18px;text-align:right}
+.strip .rt b{color:var(--InkMuted);font-weight:500}
+
+/* footer */
+.foot{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 16px;background:var(--Surface1);border:1px solid var(--HairlineStrong);border-radius:8px}
+.foot .l{display:flex;align-items:center;gap:16px}
+.foot .l strong{font:600 15px/22px Inter}
+.foot .l span{color:var(--InkMuted)}
+.foot .l span b{font-weight:500;color:var(--Ink)}
+.foot .warn{color:var(--Attention);display:flex;gap:6px;align-items:center;font-size:12px}
+.foot .warn s{width:6px;height:6px;border-radius:50%;background:var(--Attention)}
+.foot .r{display:flex;gap:8px}
+:focus-visible{outline:2px solid var(--PrimaryHover);outline-offset:1px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><i></i>Sindri</div>
+  <nav class="nav">
+    <a>Home</a><a>Projects</a><a>Workflows</a><a>Work<b>4</b></a><a class="on">Context</a><a>Agents</a><a>System</a><a>Reviews<b>2</b></a><a>Connections</a>
+  </nav>
+  <div class="sp"></div>
+  <div class="search"><span>Search</span><kbd>Ctrl+K</kbd></div>
+  <div class="pill"><s></s>Running · updated 0s ago</div>
+</header>
+
+<main class="page">
+  <div class="title"><h1>Context</h1><span>Ask in plain words. The answer is a saved scope.</span></div>
+
+  <div class="ask">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#8a8f98" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>
+    <div class="q">Add per-workspace rate limits to the export API</div>
+    <div class="vsep"></div>
+    <div class="sc2"><span class="nm2">Rate limits on exports</span><span class="id">scope_7f3k2</span></div>
+    <div class="meta">saved · 4 concepts · <b>14</b> files · <b>5</b> tests</div>
+    <button class="btn">Rename</button>
+  </div>
+
+  <section class="cols" aria-label="Context columns">
+    <div class="col c1">
+      <div class="ch"><h2>Concepts <em>· <b>4</b> of 212</em></h2><small>ranked</small></div>
+      <div class="list" id="concepts"></div>
+    </div>
+    <div class="col c2">
+      <div class="ch"><h2>Entry points <em>· <b>4</b> files</em></h2><small>routes, jobs</small></div>
+      <div class="list" id="b1"></div>
+    </div>
+    <div class="col c3">
+      <div class="ch"><h2>Core <em>· <b>6</b> files</em></h2><small>services, logic</small></div>
+      <div class="list" id="b2"></div>
+    </div>
+    <div class="col c4">
+      <div class="ch"><h2>Data and effects <em>· <b>4</b> files</em></h2><small>tables, events</small></div>
+      <div class="list" id="b3"></div>
+    </div>
+
+    <div class="col c5">
+      <div class="ch"><h2>Selected file</h2><small>why it is here</small></div>
+      <div class="dt">
+        <div>
+          <div class="dtitle">ExportHandler.cs</div>
+          <div class="path dpath"><span class="d">services/export/src/handlers/</span></div>
+          <div class="chips"><span class="chip ok"><s></s>Confirmed</span><span class="chip">Score <span class="mono" style="color:var(--Ink)">0.94</span></span><span class="chip">Entry point</span></div>
+          <div class="acts"><button class="btn">Pin<kbd>p</kbd></button><button class="btn">Drop<kbd>x</kbd></button><button class="btn">More like this<kbd>m</kbd></button><button class="btn">What calls this<kbd>c</kbd></button></div>
+        </div>
+
+        <div class="sec">
+          <h3>Why it is here</h3>
+          <div class="chain"><b>Export request flow</b>›<span>route <span class="mono" style="color:var(--Ink)">POST /exports</span></span>›<span>defines <span class="mono" style="color:var(--Ink)">ExportController.handle</span></span></div>
+          <div class="why">The only handler behind <code>POST /exports</code>. It calls <code>ExportJobRunner.Enqueue</code> with no limit check, so <code>RateLimiter.check</code> goes here to answer 429 before the job is queued. A person made this link.</div>
+        </div>
+
+        <div class="sec">
+          <h3>Edges <span>4</span></h3>
+          <div class="kv mono">
+            <div><span>calls RateLimiter.check</span><span>planned</span></div>
+            <div><span>reads table export_jobs</span><span>confirmed</span></div>
+            <div><span>test of ExportHandler</span><span>2 tests</span></div>
+            <div><span>called by ExportRoutes.Map</span><span>confirmed</span></div>
+          </div>
+        </div>
+
+        <div class="sec">
+          <h3>Linked records <span>2 decisions · 1 ticket</span></h3>
+          <div class="rec conf"><span class="rid">D-97</span><div class="t">Exports skip the global throttle<small>Conflicts with D-142 · 2026-03-02</small></div></div>
+          <div class="rec"><span class="rid">D-142</span><div class="t">Limits apply per workspace, not per user<small>2026-09-14 · accepted</small></div></div>
+          <div class="rec"><span class="rid">EXP-481</span><div class="t">Large exports starve other workspaces<small>open · 3 comments</small></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="strip">
+    <div class="lb"><svg id="tm" class="tm" width="190" height="56" viewBox="0 0 190 56"></svg></div>
+    <div class="keys" aria-label="Keyboard">
+      <span><kbd>type</kbd>filter</span><span><kbd>↑</kbd><kbd>↓</kbd>walk files</span><span><kbd>←</kbd><kbd>→</kbd>move between columns</span><span><kbd>Enter</kbd>open</span><span><kbd>p</kbd>pin</span><span><kbd>x</kbd>drop</span><span><kbd>m</kbd>more like this</span><span><kbd>c</kbd>what calls this</span>
+    </div>
+    <div class="rt">Repo: <b>3</b> of 31 areas lit<br>48,112 files · answered in 2.1 s</div>
+  </div>
+
+  <footer class="foot">
+    <div class="l">
+      <strong>Rate limits on exports</strong>
+      <span class="id">scope_7f3k2</span>
+      <span><b>14</b> files · <b>5</b> tests · 3 areas</span>
+      <span class="warn"><s></s>1 decision conflict to settle first</span>
+    </div>
+    <div class="r">
+      <button class="btn">Copy paths</button>
+      <button class="btn pr">Hand to agent</button>
+    </div>
+  </footer>
+</main>
+
+<script>
+const concepts=[["Export request flow",.96,5],["Rate limiting per workspace",.91,5],["Plan limits and entitlements",.84,3],["Export usage metering",.66,1]];
+const others=[["429 responses and retry headers",.58,4],["Limit configuration",.52,3],["Job queueing",.47,6],["Audit of limit hits",.31,3],["Scheduled exports",.29,5],["Export file formats",.26,7],["Burst allowance",.24,2],["Seat-based pricing",.19,4],["Plan upgrade prompts",.17,3],["Webhook delivery",.15,5],["Token scopes",.12,4],["Invoice line items",.10,6],["Email digests",.09,3],["Search filters",.08,5],["Data retention",.07,4],["Role permissions",.06,5],["Workspace invites",.05,3],["Usage dashboards",.05,4]];
+const C=document.getElementById('concepts');
+concepts.concat(others).forEach((a,i)=>{const s=i<4;
+ C.insertAdjacentHTML('beforeend',`<div class="row ${s?'sel':''}" style="height:30px"><span class="cb"></span><span class="nm">${a[0]}</span><span class="bar"><i style="width:${Math.round(a[1]*100)}%"></i></span><span class="num">${a[2]}</span>${i===0?'<span class="chev">›</span>':''}</div>`)});
+// bands: [concept, dir, file, why edge, status, score, sel, band]
+const B=[
+[0,1,"services/export/src/Routes/","ExportRoutes.cs","route POST /exports","c",.86],
+[0,1,"services/export/src/handlers/","ExportHandler.cs","defines ExportController.handle","c",.94,1],
+[0,1,"services/export/src/jobs/","ExportJobRunner.cs","job export.run","s",.71],
+[1,1,"services/export/src/Middleware/","ExportThrottle.cs","wraps handler, no limit yet","s",.69],
+[0,1,"tests/export/","ExportHandlerTests.cs","test of ExportHandler","c",.81,0,1],
+[0,1,"tests/export/","ExportQuotaTests.cs","test for export quotas","c",.78,0,1],
+[1,2,"platform/ratelimit/src/","RateLimiter.cs","provides RateLimiter layer","c",.92],
+[1,2,"platform/ratelimit/src/Policies/","WorkspacePolicy.cs","per-workspace window and burst","c",.90],
+[0,2,"services/export/src/Validation/","ExportRequestValidator.cs","called by ExportHandler","c",.88],
+[0,2,"services/export/src/Errors/","ExportErrors.cs","429 code is missing","c",.64],
+[2,2,"billing/plans/src/","PlanLimits.cs","reads table plan_limits","c",.83],
+[2,2,"billing/plans/src/Entitlements/","EntitlementResolver.cs","resolves workspace plan","s",.68],
+[1,2,"tests/ratelimit/","WorkspacePolicyTests.cs","test of WorkspacePolicy","c",.72,0,1],
+[1,2,"tests/ratelimit/","RateLimiterContractTests.cs","test of RateLimiter","s",.58,0,1],
+[2,2,"tests/billing/","PlanLimitsTests.cs","test of PlanLimits","s",.55,0,1],
+[1,3,"platform/ratelimit/src/Store/","RedisBucketStore.cs","writes bucket workspace:{id}","s",.66],
+[1,3,"platform/ratelimit/config/","limits.yaml","read by RateLimiter at start","c",.74],
+[2,3,"billing/plans/migrations/","0042_plan_export_limits.sql","reads table workspace_quotas","s",.61],
+[3,3,"services/export/src/Events/","ExportCompletedPublisher.cs","publishes export.completed","c",.60]];
+const cn=concepts.map(c=>c[0]);
+[1,2,3].forEach(b=>{
+ const el=document.getElementById('b'+b);
+ cn.forEach((name,ci)=>{
+  const rows=B.filter(r=>r[0]===ci&&r[1]===b);
+  if(!rows.length)return;
+  el.insertAdjacentHTML('beforeend',`<div class="cg"><i>▾</i><span>${name}</span><span>${rows.length}</span></div>`);
+  rows.forEach(f=>{const c=f[5]==='c',t=f[8];
+   el.insertAdjacentHTML('beforeend',`<div class="row rf ${f[7]?'sel':''}" ${t?'style="opacity:.8"':''}><div class="stack"><div class="path"><span class="d">${f[2]}</span><span class="f">${f[3]}</span></div><div class="sub"><span class="why">${f[4]}</span></div></div><span class="st ${c?'':'sg'}" title="${c?'confirmed':'suggested, not confirmed'}"><s></s></span><span class="sc">${f[6].toFixed(2)}</span></div>`)});
+ });
+});
+// treemap: slice-and-dice on 31 areas
+const all=[["api/export",24],["platform/ratelimit",11],["billing/plans",18],["api/gateway",31],["workspaces/core",22],["auth/tokens",19],["notifications/email",14],["billing/invoicing",27],["platform/queue",16],["storage/blobs",12],["analytics/events",33],["admin/console",29],["api/webhooks",17],["auth/sso",21],["platform/config",9],["search/index",25],["reports/builder",30],["billing/tax",13],["integrations/crm",28],["audit/log",10],["mobile/sync",26],["i18n/strings",15],["onboarding/flows",18],["support/tools",20],["data/warehouse",23],["auth/mfa",12],["platform/jobs",14],["ui/design-system",32],["devtools/cli",17],["infra/deploy",19],["compliance/gdpr",14]].sort((a,b)=>b[1]-a[1]);
+const lit=new Set(["api/export","platform/ratelimit","billing/plans"]);
+let out='';
+function lay(items,x,y,w,h,vert){
+ if(items.length===1){out+=`<rect x="${(x+.75).toFixed(1)}" y="${(y+.75).toFixed(1)}" width="${Math.max(w-1.5,0).toFixed(1)}" height="${Math.max(h-1.5,0).toFixed(1)}" rx="1.5" fill="${lit.has(items[0][0])?'#5e6ad2':'#26272a'}"><title>${items[0][0]}</title></rect>`;return}
+ const tot=items.reduce((a,b)=>a+b[1],0);let acc=0,k=0;
+ while(k<items.length-1&&acc+items[k][1]<tot/2){acc+=items[k][1];k++}
+ if(k===0){acc=items[0][1];k=1}
+ const A=items.slice(0,k),Bs=items.slice(k),f=acc/tot;
+ if(w>=h){lay(A,x,y,w*f,h);lay(Bs,x+w*f,y,w*(1-f),h)}else{lay(A,x,y,w,h*f);lay(Bs,x,y+h*f,w,h*(1-f))}
+}
+lay(all,0,0,190,56);
+document.getElementById('tm').innerHTML=out;
+</script>
+</body>
+</html>
