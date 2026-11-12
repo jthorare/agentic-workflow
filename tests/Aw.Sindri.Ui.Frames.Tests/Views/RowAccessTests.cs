@@ -236,7 +236,29 @@ public sealed class RowAccessTests
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains(("open", groups[0].Rows[2]), seen);
+        Assert.Equal([("open", (object?)groups[0].Rows[2])], seen);   // exactly one open: the second click of a double-click doesn't toggle the peek too
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task A_double_click_on_the_row_that_has_the_cursor_peeks_once_for_the_first_click_and_then_opens() => await OnUi(() =>
+    {
+        var groups = new[] { RowGallery.Group("Needs you", 6) };
+        var (window, list) = Show(groups);
+        var seen = Listen(list);
+        var row = Rows(list)[2];
+        Assert.True(row.Focus(NavigationMethod.Directional));
+        var point = row.TranslatePoint(new Point(300, 10), window) ?? default;
+
+        for (var click = 0; click < 2; click++)
+        {
+            window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
+            window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        Assert.Equal([("peek", (object?)groups[0].Rows[2]), ("open", groups[0].Rows[2])], seen);
         window.Close();
         return true;
     });

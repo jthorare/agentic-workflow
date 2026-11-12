@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Rows;
@@ -61,6 +62,10 @@ internal sealed partial class RowList
         if (index >= 0)
         {
             RowKeys.FocusRow(this, index);
+        }
+        else
+        {
+            _ = Focus(NavigationMethod.Directional);   // no row is left: the list keeps the focus, so Esc and Space still reach the page
         }
     }
 

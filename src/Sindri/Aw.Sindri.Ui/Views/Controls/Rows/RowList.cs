@@ -16,7 +16,7 @@ namespace Aw.Sindri.Ui.Views.Controls.Rows;
 /// <summary>
 /// A virtualized list of grouped rows with sticky group headers and one shared set of fact columns (#2978). ItemsSource holds <see cref="IRowGroup"/>s of
 /// <see cref="IRowItem"/>; the list flattens them into one run of header and row entries over a virtualizing panel, so only the rows in view are built. It has no key
-/// handler of its own: it listens for <see cref="RowKeys"/>' routed events and raises <see cref="PeekRequested"/>, <see cref="OpenRequested"/> and <see cref="BackRequested"/>.
+/// handler of its own: it listens for <see cref="RowKeys"/>' routed events and raises <see cref="PeekRequested"/>, <see cref="OpenRequested"/>, <see cref="ActionsRequested"/> (the `.` key: RowKeys handles it on the way down, before the shell sees it, so a page opens the cursor row's actions from this event) and <see cref="BackRequested"/>.
 /// </summary>
 [SuppressMessage("Design", "MA0182", Justification = "Pages adopt it in their own PRs (#2978).")]
 internal sealed partial class RowList : ItemsControl, IRowKeyTarget
@@ -61,6 +61,7 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
         KeyboardNavigation.SetTabNavigation(this, KeyboardNavigationMode.Once);   // the list is one tab stop; j/k and the arrows walk the rows
         AddHandler(RowKeys.PeekRequestedEvent, (_, e) => RaisePeek(new RowRequestEventArgs { Item = ItemAt(e.Index), Hold = e.Hold, Released = e.Released }));
         AddHandler(RowKeys.OpenRequestedEvent, (_, e) => RaiseOpen(new RowRequestEventArgs { Item = ItemAt(e.Index) }));
+        AddHandler(RowKeys.ActionsRequestedEvent, (_, e) => RaiseActions(new RowRequestEventArgs { Item = ItemAt(e.Index) }));
         AddHandler(RowKeys.BackRequestedEvent, (_, e) => RaiseBack(new RowRequestEventArgs { Item = ItemAt(e.Index) }));
         AddHandler(GotFocusEvent, (_, e) => OnRowFocused(e.Source));
         AddHandler(PointerPressedEvent, OnPointerPressed, RoutingStrategies.Tunnel);
@@ -131,9 +132,10 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
     internal void ScrollTo(double offset) => _scroll?.Offset = new Vector(0, Math.Max(0, offset));
 
     /// <inheritdoc />
-    public bool IsRowIndex(int index) => ItemAt(index) is not null and not GroupEntry;
+    public bool IsRowIndex(int index) => index >= 0 && index < ItemCount && Items[index] is not GroupEntry;
 
-    private object? ItemAt(int index) => index >= 0 && index < ItemCount ? Items[index] : null;
+    // The row at an index; null for a group header, so a key pressed on a header reaches the page without an item.
+    private object? ItemAt(int index) => index >= 0 && index < ItemCount && Items[index] is not GroupEntry ? Items[index] : null;
 
     // While the peek is open, the cursor moving to another row moves the peek with it (j/k, arrows, a click).
     private void OnRowFocused(object? source)

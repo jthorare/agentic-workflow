@@ -6,6 +6,7 @@ using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -330,6 +331,44 @@ public sealed class RowListLiveTests
         moving.IsCollapsed = false;
         Settle(window);
         Assert.Equal("Moving, 0 rows, expanded", AutomationProperties.GetName(Headers(list)[0]));
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task Esc_still_reaches_the_page_after_the_last_row_leaves_under_an_open_peek() => await OnUi(() =>
+    {
+        var group = Group("Needs you", 2);
+        var (window, list) = Show(new[] { group });
+        list.IsPeekOpen = true;
+        var backs = new List<object?>();
+        list.BackRequested += (_, e) => backs.Add(e.Item);
+        Focus(window, list, "k1");
+
+        group.Rows.Clear();
+        Settle(window);
+        Tap(window, PhysicalKey.Escape);
+
+        Assert.Equal([null], backs);   // one Back, with no item: the page can close the peek
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task Dot_asks_for_the_cursor_rows_actions_and_the_window_never_sees_the_key() => await OnUi(() =>
+    {
+        var group = Group("Needs you", 4);
+        var (window, list) = Show(new[] { group });
+        var asked = new List<object?>();
+        list.ActionsRequested += (_, e) => asked.Add(e.Item);
+        var shellSaw = false;
+        window.AddHandler(InputElement.KeyDownEvent, (_, _) => shellSaw = true, RoutingStrategies.Bubble);
+        Focus(window, list, "k2");
+
+        Tap(window, PhysicalKey.Period);
+
+        Assert.Same(group.Rows[2], Assert.Single(asked));
+        Assert.False(shellSaw);
         window.Close();
         return true;
     });

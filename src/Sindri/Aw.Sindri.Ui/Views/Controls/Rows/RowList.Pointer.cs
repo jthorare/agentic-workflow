@@ -9,10 +9,15 @@ namespace Aw.Sindri.Ui.Views.Controls.Rows;
 internal sealed partial class RowList
 {
     private bool _cursorBeforePress;
+    private int _clickCount;
 
     // Mouse path. A click puts the cursor on the row (focus does it, and an open peek follows); a click on the row that already had the cursor toggles the peek, like a Space tap;
     // a double-click opens the row in full. A click on a button in the row is the button's.
-    private void OnPointerPressed(object? sender, PointerPressedEventArgs e) => _cursorBeforePress = RowOf(e.Source) is { IsKeyboardFocusWithin: true };
+    private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        _cursorBeforePress = RowOf(e.Source) is { IsKeyboardFocusWithin: true };
+        _clickCount = e.ClickCount;
+    }
 
     private void OnTapped(object? sender, TappedEventArgs e)
     {
@@ -25,7 +30,7 @@ internal sealed partial class RowList
         {
             _ = row.Focus(NavigationMethod.Pointer);
         }
-        else if (_cursorBeforePress && IndexFromContainer(row) is var index and >= 0)
+        else if (_cursorBeforePress && _clickCount < 2 && IndexFromContainer(row) is var index and >= 0)
         {
             RaisePeek(new RowRequestEventArgs { Item = ItemAt(index) });
         }

@@ -22,6 +22,11 @@ internal static partial class RowKeys
                 e.Handled = target.TryFold(current, collapse: e.Key == Key.Left);
             }
         }
+        else if (e.Key == Key.OemPeriod && (e.Source as Visual)?.FindAncestorOfType<Button>(includeSelf: true) is null)
+        {
+            Raise(list, ActionsRequestedEvent, current);   // the tunnel handler runs before the shell's key handler, which never sees a handled key
+            e.Handled = true;
+        }
         else if (e.Key is Key.Space or Key.Enter or Key.Escape)
         {
             OnListKey(list, current, e);

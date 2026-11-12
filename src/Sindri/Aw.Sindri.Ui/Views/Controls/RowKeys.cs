@@ -28,6 +28,9 @@ internal static partial class RowKeys
     /// <summary>Raised on the list when Enter asks to open the cursor row in full.</summary>
     public static readonly RoutedEvent<RowKeyEventArgs> OpenRequestedEvent = RoutedEvent.Register<ItemsControl, RowKeyEventArgs>("OpenRequested", RoutingStrategies.Bubble);
 
+    /// <summary>Raised on the list when `.` asks for the cursor row's actions. RowKeys handles the key before the shell's own handler sees it.</summary>
+    public static readonly RoutedEvent<RowKeyEventArgs> ActionsRequestedEvent = RoutedEvent.Register<ItemsControl, RowKeyEventArgs>("ActionsRequested", RoutingStrategies.Bubble);
+
     /// <summary>Raised on the list when Esc asks to step back, unless a sheet is open.</summary>
     public static readonly RoutedEvent<RowKeyEventArgs> BackRequestedEvent = RoutedEvent.Register<ItemsControl, RowKeyEventArgs>("BackRequested", RoutingStrategies.Bubble);
 
