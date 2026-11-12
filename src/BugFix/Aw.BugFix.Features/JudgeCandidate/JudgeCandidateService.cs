@@ -150,29 +150,43 @@ internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger
 
     private static readonly string[] _failureWords = ["fail", "error", "exception", "assert", "expected", "not ok", "panic"];
 
-    // The candidate's own change (from the net base, so a main merge's unrelated changes stay out), after the changes of the
-    // commits main already had for this GitHub issue ("Part of #N" / "Fixes #N" in the message): a fix a merged "Part of" PR
-    // made is still the fix. Another kind of ticket gets the candidate's change alone.
+    // The red commit's own change (what the baseline holds past main: the check and its wiring) comes first, then, for a
+    // GitHub ticket, the changes of the main commits that name the issue ("Part of #N" / "Fixes #N" in the message), then the
+    // candidate's own change from the net base, so a main merge's unrelated changes stay out.
     private Result<CommitDiff> JudgeDiff(Ticket ticket, Candidate candidate, string baseline)
     {
         var own = git.Diff(candidate.Worktree, git.NetBase(candidate.Worktree, baseline, candidate.Commit), candidate.Commit);
-        if (own.IsError || GithubIssue.Number(ticket) is not { } issue)
+        if (own.IsError)
         {
             return own;
         }
 
-        var already = git.MainCommits(candidate.Worktree, baseline, candidate.Commit);
-        var named = already.IsSuccess ? already.Value.Where(commit => GithubIssue.Names(commit.Message, issue)).ToList() : [];
         var diffs = new List<CommitDiff>();
-        foreach (var commit in named)
+        var branch = git.BranchChange(candidate.Worktree, baseline);
+        if (branch.IsError)
         {
-            var diff = git.Diff(candidate.Worktree, commit.Parent, commit.Sha);
-            if (diff.IsError)
-            {
-                return diff.Error;
-            }
+            return branch.Error;
+        }
 
-            diffs.Add(diff.Value);
+        if (!string.IsNullOrEmpty(branch.Value.Stat))
+        {
+            diffs.Add(branch.Value);
+        }
+
+        if (GithubIssue.Number(ticket) is { } issue)
+        {
+            var already = git.MainCommits(candidate.Worktree, baseline, candidate.Commit);
+            var named = already.IsSuccess ? already.Value.Where(commit => GithubIssue.Names(commit.Message, issue)).ToList() : [];
+            foreach (var commit in named)
+            {
+                var diff = git.Diff(candidate.Worktree, commit.Parent, commit.Sha);
+                if (diff.IsError)
+                {
+                    return diff.Error;
+                }
+
+                diffs.Add(diff.Value);
+            }
         }
 
         return diffs.Count == 0 ? own : Joined([.. diffs, own.Value]);
