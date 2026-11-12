@@ -42,7 +42,6 @@ internal static partial class Labels
     /// <summary>The longest note the card's face shows, in characters.</summary>
     internal const int ProjectNoteFaceMax = 80;
 
-
     /// <summary>One source's part of the freshness line: its name, then its served text. Context's text already names it ("Context is not answering").</summary>
     internal static string ProjectFreshnessPart(string source, string text) => source switch
     {
