@@ -80,6 +80,19 @@ internal sealed class GitProcess : IGit
             : Failed(run, "log");
     }
 
+    // What the branch holds past main at the baseline: the red commit's own change (the check and its wiring). Empty when
+    // the baseline is on main or main can't be found.
+    public Result<CommitDiff> BranchChange(string directory, string baseline)
+    {
+        if (MainCommitOf(directory, baseline) is not { } mergeBase)
+        {
+            return new CommitDiff(string.Empty, string.Empty);
+        }
+
+        return Value(directory, "rev-parse", baseline).Bind(sha =>
+            string.Equals(sha, mergeBase, StringComparison.Ordinal) ? new CommitDiff(string.Empty, string.Empty) : Diff(directory, mergeBase, baseline));
+    }
+
     public Result<string> FileAt(string directory, string commit, string path)
     {
         var run = Run(directory, "show", $"{commit}:{path}");
