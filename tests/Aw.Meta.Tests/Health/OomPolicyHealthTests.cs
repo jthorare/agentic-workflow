@@ -57,7 +57,7 @@ public sealed class OomPolicyHealthTests
         _ = _world.Runner.When("DefaultOOMPolicy", "stop\n");
         var service = new HealthService(
             new HostProbe(_world.Processes, _world.Resources, new OomPolicyCheck(_world.Runner)),
-            new LaneCheck(_world.Config, new Aw.Meta.Core.Coordination.MissingLanes(_world.Sessions, _world.Messages, _world.Lanes), _world.LaneHealth, _world.Context),
+            new LaneCheck(_world.Config, new Core.Coordination.MissingLanes(_world.Sessions, _world.Messages, _world.Lanes), _world.LaneHealth, _world.Context),
             new OrphanKiller(_world.Processes, _world.Log, _world.Clock),
             _world.Values,
             _world.Config,
