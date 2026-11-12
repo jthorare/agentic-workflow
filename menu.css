@@ -1,0 +1,41 @@
+/* #3030 / #3031: actions menu, snooze picker, toast. New classes only; grammar.css stays untouched. */
+.app { position:relative; }
+.menu { position:absolute; width:240px; background:var(--s3); border:1px solid var(--hair-strong); border-radius:var(--r3);
+  box-shadow:0 8px 24px rgba(0,0,0,.45); padding:var(--sp2) 0; z-index:5; }
+.menu .mfield { margin:0 var(--sp2) var(--sp2); height:28px; border:1px solid var(--hair-strong); border-radius:var(--r2); background:var(--canvas);
+  display:flex; align-items:center; padding:0 var(--sp2); gap:var(--sp2); font:400 12px/18px var(--font); color:var(--ink-3); }
+.menu .mfield.focus { border-color:var(--primary-hi); }
+.menu .mfield.typed { color:var(--ink); font-family:var(--mono); }
+.menu .mfield .caret { width:1px; height:14px; background:var(--primary-hi); margin-left:-6px; }
+.menu .ment { height:32px; display:flex; align-items:center; gap:var(--sp3); padding:0 var(--sp3); margin:0 var(--sp1); border-radius:var(--r2); color:var(--ink-muted); font-size:13px; }
+.menu .ment.on { background:var(--s4); color:var(--ink); }
+.menu .ment svg { width:16px; height:16px; flex:none; stroke:currentColor; fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; color:var(--ink-subtle); }
+.menu .ment.on svg { color:var(--ink-muted); }
+.menu .ment .lab { flex:1; white-space:nowrap; }
+.menu .ment kbd { margin-left:auto; }
+.menu .ment .when { margin-left:auto; color:var(--ink-3); font-size:12px; }
+.menu .ment.on .when { color:var(--ink-subtle); }
+.menu .mdiv { height:1px; background:var(--hair-strong); margin:var(--sp1) 0; opacity:.6; }
+.menu .parse { margin:-4px var(--sp3) var(--sp2); font-size:12px; line-height:18px; color:var(--ink-muted); display:flex; gap:6px; align-items:center; }
+.menu .parse .ok { color:var(--ok); }
+.menu .mfoot { display:flex; gap:var(--sp3); padding:var(--sp2) var(--sp3) 0; margin-top:var(--sp1); border-top:1px solid var(--hair-strong); color:var(--ink-3); font-size:11px; line-height:16px; }
+.menu .mfoot span { display:flex; gap:6px; align-items:center; }
+.menu .mhead { padding:0 var(--sp3); height:20px; color:var(--ink-3); font-size:11px; font-weight:500; display:flex; align-items:center; }
+
+.toast { position:absolute; left:var(--inset); bottom:calc(var(--keys-h) + var(--sp3)); height:40px; min-width:340px; background:var(--s3);
+  border:1px solid var(--hair-strong); border-radius:var(--r3); box-shadow:0 8px 24px rgba(0,0,0,.45); display:flex; align-items:center;
+  gap:var(--sp3); padding:0 var(--sp2) 0 var(--sp3); overflow:hidden; z-index:5; font-size:13px; color:var(--ink); }
+.toast .g { margin-right:-2px; }
+.toast .say { flex:1; white-space:nowrap; }
+.toast .say .dot { color:var(--ink-3); margin:0 6px; }
+.toast .prog { position:absolute; left:0; bottom:0; height:2px; width:62%; background:var(--primary-hi); }
+.toast .btn { background:transparent; }
+.age.wide { text-align:right; }
+.row .actions .btn { height:24px; }
+.menu .ment .when{white-space:nowrap}
+
+.age.wide{margin-left:-92px;white-space:nowrap}
+.g.done.muted{background:var(--ok);opacity:.5}
+.row .actions .when{font-size:12px;line-height:18px;color:var(--ink-subtle);align-self:center;margin-right:var(--sp2);white-space:nowrap}
+.toast{box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.list.padtoast{padding-bottom:56px;overflow-y:auto;scrollbar-width:none}
