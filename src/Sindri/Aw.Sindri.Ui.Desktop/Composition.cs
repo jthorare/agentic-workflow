@@ -33,6 +33,7 @@ internal static class Composition
 #pragma warning restore CA2000
         {
             DockBadge = DockBadge(),
+            Starter = new SindriStarterPort(SindriStarter(ControlFilePath.HomeFrom(environment, userHome))),
         };
     }
 

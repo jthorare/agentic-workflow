@@ -21,6 +21,9 @@ public sealed record SindriPlatform(
     /// <summary>The app's log (the desktop head's writes JSON lines on standard error through Aw.Kernel.Telemetry); none by default.</summary>
     public ILogger Log { get; init; } = NullLogger.Instance;
 
+    /// <summary>Starts the installed 'sindri' when the app finds it down (first-run spec decision 2a); none by default, and the Not running card then only names the command.</summary>
+    public ISindriStarter? Starter { get; init; }
+
     /// <summary>The dock or taskbar badge (U3'); a platform without one keeps the <see cref="NullDockBadge"/>.</summary>
     public IDockBadge DockBadge { get; init; } = new NullDockBadge();
 }
