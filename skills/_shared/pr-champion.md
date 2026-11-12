@@ -53,7 +53,7 @@ fallback. Any login that ends in `[bot]` is a review bot, and every PR kind runs
    - **A red check:** `gh run view <run-id> --log-failed`, find the cause, fix the cause (never skip or loosen
      the check), push.
    - **A conflict with the base** (`mergeable` is `CONFLICTING`): merge the base branch into the PR branch
-     (`git merge origin/<base>`), re-run the tests the merge touched, push. No rebase and no force push.
+     (`git fetch origin <base>`, then `git merge origin/<base>`), re-run the tests the merge touched, push. No rebase and no force push.
    - After any push, the next pass re-reads everything: a push restarts the checks.
 4. **Wait, then repeat.** Use the **Wait, then run again** capability (`capabilities.md`): every 5 minutes
    (`AW_CHAMPION_INTERVAL` seconds, default 300), for at most 8 hours from the first pass. At the 8 hour mark
