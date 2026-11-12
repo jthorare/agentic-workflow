@@ -105,6 +105,12 @@ internal static partial class RowKeys
             return;
         }
 
+        if (!IsPlain(e))
+        {
+            state.Start = null;   // a modifier or a text box: no peek from this key up, and the press ends so the next Space is a fresh tap
+            return;
+        }
+
         var held = state.HoldRaised || Clock.GetElapsedTime(start) >= _holdAfter;
         if (held && !state.HoldRaised)
         {
