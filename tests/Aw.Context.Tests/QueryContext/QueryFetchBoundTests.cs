@@ -8,30 +8,46 @@ using Microsoft.Extensions.Time.Testing;
 namespace Aw.Context.Tests.QueryContext;
 
 /// <summary>
-/// #3085: a change request matched thousands of doc chunks, every one was fetched in turn (two git reads each, ~45 ms), and
-/// the 10 s deadline always ran out, so repo-docs came back SND-CONTEXT-010 with most of the answer missing.
+/// #3085: a change request matched thousands of doc chunks, every document was fetched in turn (two git reads each, ~45 ms),
+/// and the 10 s deadline always ran out, so repo-docs came back SND-CONTEXT-010 with most of the answer missing. There is no
+/// page limit and no fetch cap (owner q89/q93): the fix reads each document once and reads them together.
 /// </summary>
 public sealed class QueryFetchBoundTests
 {
     private const int Matching = 500;
+    private const int Docs = 50;
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Every_source_is_searched_for_a_bounded_page_of_hits()
+    public async Task Chunks_of_one_document_are_read_once_and_in_one_batch()
     {
-        var docs = ManyMatchingDocs();
+        var docs = SourceOf([.. Enumerable.Range(1, Matching).Select(i => Chunk(i % Docs, i))]);   // 500 chunks over 50 documents
 
         _ = await Engines.Over(docs).Query(new ContextQuery("orientation"), Engines.Human(), TestContext.Current.CancellationToken);
 
-        var search = Assert.Single(docs.Searches);
-        Assert.InRange(search.Limit, 1, 100);   // why: int.MaxValue asked for every chunk that matches any one term
+        Assert.InRange(docs.DocReads, 1, Docs);   // why: a document read per chunk was 10 reads of each document
+        Assert.Equal(1, docs.ReadCalls);   // why: one call to the source for the query, not one process per document
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Many_matching_docs_at_45_ms_a_fetch_still_answer_inside_the_deadline()
+    public async Task Every_matching_hit_is_still_asked_for_and_read_with_no_page_limit()
+    {
+        var docs = SourceOf([.. Enumerable.Range(1, Matching).Select(i => Chunk(i, i))]);   // 500 documents, one chunk each
+
+        var result = await Engines.Over(docs).Query(new ContextQuery("orientation"), Engines.Human(), TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(SourceQuery.DefaultLimit, Assert.Single(docs.Searches).Limit);   // no page limit
+        Assert.Equal(Matching, docs.BatchedReads);   // all 500 matches read, through the batched call
+        Assert.Equal(Matching, result.Value.Sections.Count);   // and all 500 answered
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Many_matching_docs_at_45_ms_a_batch_still_answer_inside_the_deadline()
     {
         var clock = new FakeTimeProvider(new DateTimeOffset(2026, 11, 12, 9, 0, 0, TimeSpan.Zero));
-        var docs = ManyMatchingDocs();
-        docs.OnFetch = () => clock.Advance(TimeSpan.FromMilliseconds(45));   // the median of git cat-file -e + blob on the ux home
+        var docs = SourceOf([.. Enumerable.Range(1, Matching).Select(i => Chunk(i, i))]);
+        docs.OnFetch = () => clock.Advance(TimeSpan.FromMilliseconds(45));   // the median of git cat-file -e + blob on the ux home, per document
+        docs.OnFetchMany = () => clock.Advance(TimeSpan.FromMilliseconds(45));   // one git cat-file --batch per query
         var engine = Engines.Over(new FixedSourceCatalog(docs), time: clock);
 
         var result = await engine.Query(new ContextQuery("orientation"), Engines.Human(), TestContext.Current.CancellationToken);
@@ -41,11 +57,12 @@ public sealed class QueryFetchBoundTests
         Assert.NotEmpty(result.Value.Sections);
     }
 
-    private static FakeContextSource ManyMatchingDocs() =>
-        new(new SourceDescriptor(RepoDocs.Id, SourceKind.Doc, SourceFreshness.Snapshot, SupportsAsOf: false),
-            [.. Enumerable.Range(1, Matching).Select(i =>
-            {
-                var n = i.ToString("D3", CultureInfo.InvariantCulture);
-                return FakeContextSource.Doc($"docs/notes/{n}.md", "Note " + n, "The orientation toggle, note " + n + ".", "v" + n);
-            })]);
+    private static FakeRecord Chunk(int doc, int chunk)
+    {
+        var path = "docs/notes/" + doc.ToString("D3", CultureInfo.InvariantCulture) + ".md";
+        return FakeContextSource.Chunk(path, chunk, "The orientation toggle, chunk " + chunk.ToString(CultureInfo.InvariantCulture) + ".", "v" + doc.ToString("D3", CultureInfo.InvariantCulture));
+    }
+
+    private static FakeContextSource SourceOf(IReadOnlyList<FakeRecord> records) =>
+        new(new SourceDescriptor(RepoDocs.Id, SourceKind.Doc, SourceFreshness.Snapshot, SupportsAsOf: false), records);
 }

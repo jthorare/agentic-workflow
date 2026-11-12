@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
@@ -39,6 +40,18 @@ public sealed class FakeContextSource(SourceDescriptor descriptor, IReadOnlyList
     /// <summary>Runs at the start of every Fetch: a test advances its clock here to give each fetch a cost (a git read per record, #3085).</summary>
     public Action? OnFetch { get; set; }
 
+    /// <summary>Runs at the start of every FetchMany call: a test advances its clock here to give one batched read a cost (#3085).</summary>
+    public Action? OnFetchMany { get; set; }
+
+    /// <summary>How many records were read, one at a time or in a batch (a record read twice counts twice).</summary>
+    public int DocReads { get; private set; }
+
+    /// <summary>How many records were read inside a FetchMany call.</summary>
+    public int BatchedReads { get; private set; }
+
+    /// <summary>How many Fetch and FetchMany calls it answered: the round trips to the source.</summary>
+    public int ReadCalls { get; private set; }
+
     /// <summary>The searches it answered.</summary>
     public IList<SourceQuery> Searches { get; } = [];
 
@@ -58,6 +71,16 @@ public sealed class FakeContextSource(SourceDescriptor descriptor, IReadOnlyList
     /// <returns>The record.</returns>
     public static FakeRecord Doc(string path, string title, string text, string version) =>
         new(new SourceRef(RepoDocs.Id, ExternalId.From("split-panes/" + path), SourceVersion.From(version), Permalink: null, RepoDocs.Key(ContextRepoName.From("split-panes"), path)), title, text);
+
+    /// <summary>One chunk of a repo-docs document: its own id (a line span of the path), the document's canonical key, as RepoDocs cites chunks.</summary>
+    /// <param name="path">The document's repo-relative path.</param>
+    /// <param name="chunk">The chunk's number; its span is lines chunk..chunk.</param>
+    /// <param name="text">Its text.</param>
+    /// <param name="version">Its version (the document's blob).</param>
+    /// <returns>The record.</returns>
+    public static FakeRecord Chunk(string path, int chunk, string text, string version) =>
+        new(new SourceRef(RepoDocs.Id, ExternalId.From(string.Create(CultureInfo.InvariantCulture, $"split-panes/{path}#L{chunk}-L{chunk}")), SourceVersion.From(version), Permalink: null,
+            RepoDocs.Key(ContextRepoName.From("split-panes"), path)), "Doc " + path, text);
 
     /// <summary>Makes <paramref name="id"/>'s current version <paramref name="version"/> (null: gone).</summary>
     /// <param name="id">The record.</param>
@@ -95,7 +118,22 @@ public sealed class FakeContextSource(SourceDescriptor descriptor, IReadOnlyList
     public async ValueTask<Result<SourceRecord>> Fetch(SourceRef reference, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(reference);
+        ReadCalls++;
         OnFetch?.Invoke();
+        if (FetchHangs)
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
+        }
+
+        return (FetchFailure ?? Failure) is { } failure ? failure : Read(reference);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<Result<IReadOnlyList<Result<SourceRecord>>>> FetchMany(IReadOnlyList<SourceRef> references, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(references);
+        ReadCalls++;
+        OnFetchMany?.Invoke();
         if (FetchHangs)
         {
             await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
@@ -106,6 +144,13 @@ public sealed class FakeContextSource(SourceDescriptor descriptor, IReadOnlyList
             return failure;
         }
 
+        BatchedReads += references.Count;
+        return references.Select(Read).ToList();
+    }
+
+    private Result<SourceRecord> Read(SourceRef reference)
+    {
+        DocReads++;
         var found = records.FirstOrDefault(r => r.Ref == reference);
         return found is null
             ? ContextErrors.UnknownAnchor.With("no such record at that version")
