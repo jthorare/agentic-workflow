@@ -137,6 +137,10 @@ scripts/tlc-check.sh [--root DIR] [--timeout SECONDS] [--witnesses] [<spec-dir>.
 
 scripts/images-lock.sh check             # Shape of deploy/images.lock (every deployment image by index and per-platform digest; unresolved ones are `todo` rows) and that the Dockerfile names only pinned images; exit 0 ok, 1 a check failed
 
+# Scoping benchmark (context scope spec §7, epic #2959): tests/fixtures/scoping/<repo>/questions.yaml, a question with its touch / read / decoy files
+node scripts/scoping-bench.mjs --questions tests/fixtures/scoping/<repo>/questions.yaml [--k 25] [--field plain|question] [--only ids] [--out DIR] [--json]   # asks each question of the Sindri AW_SINDRI_HOME / AW_SINDRI_PORT name (`sindri context query --json`), prints touch recall, recall and P@K of the files in the top K, decoys hit, p50 / p95 seconds; exit 0 all answered, 1 a query failed, 2 usage
+node scripts/scoping-bench.mjs --questions <file> --check [--root DIR]   # no query: every key path exists under DIR (default this repo; a clone at the key's commit for another repo) and none is listed twice; exit 1 on findings
+
 # Old Onyx leftovers (#1598: Sindri no longer runs Onyx)
 sindri onyx down --purge                # Once, on a box that ran the old `onyx up`: lists its labelled containers and volumes, the recorded keychain entry and onyx/, asks, then removes them; the human's verb (a session is refused, SND-AUTH-002); exit 0 done or nothing left, 1 a step failed, 2 refused
 
@@ -178,6 +182,7 @@ bash scripts/tests/check-rules.test.sh
 bash scripts/tests/check-launcher.test.sh   # launcher.json schema, fixtures, built-ins and argvHash goldens (node scripts/check-launcher.mjs; Ajv is a dev dependency of scripts/)
 bash scripts/tests/check-handoff-schema.test.sh   # schemas/handoff/inbox.openapi.yaml (the handoff inbox contract, docs/sindri/handoff.md): it parses, its operations and status codes are all there, its examples and every file in tests/fixtures/handoff/fake-inbox/ get their verdicts (node scripts/check-handoff-schema.mjs; Ajv and yaml as the other checkers)
 bash scripts/tests/check-fleet.test.sh      # fleet state schema, its valid and invalid fixtures, and the /proc-shaped sessions tree (node scripts/check-fleet.mjs; Ajv as above)
+bash scripts/tests/scoping-bench.test.sh   # scripts/scoping-bench.mjs: this repo's answer keys pass --check, a missing or repeated key path is a finding, usage errors exit 2, a stub sindri's answers scored (node, path steps, cite keys and refs; map and record keys skipped; touch recall apart from recall; a failed query exit 1) (yaml as the other checkers)
 bash scripts/tests/check-library-schemas.test.sh # schemas/library/design-doc.schema.json (the parsed design doc, docs/conventions/design-docs.md): it compiles, its examples get their verdicts, each invalid one fails at its own path (node scripts/check-library-schemas.mjs; Ajv as above)
 bash scripts/tests/check-library-fixtures.test.sh # tests/fixtures/library/ (made-up design docs) against its expected.json, the contract the C# parser's tests share: every .md listed, every SND-LIB-010..019 has a fixture, good front matter passes $defs/frontMatter, broken fails, generated shas match (node scripts/check-library-fixtures.mjs; Ajv as above)
 bash scripts/tests/check-profile-doc.test.sh # docs/csharp/sindri-profile.md names every SindriProfile key (node scripts/check-profile-doc.mjs)
