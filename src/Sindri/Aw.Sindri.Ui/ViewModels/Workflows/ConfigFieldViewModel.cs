@@ -10,7 +10,51 @@ internal sealed class ConfigFieldViewModel : ObservableObject
         Name = field.Name;
         Type = field.Type;
         IsRequired = field.Required;
+        Caption = Labels.WfFieldCaption(field.Caption.Length > 0 ? field.Caption : field.Name, field.Required);
+        IsClosedList = field.Choices is { Count: > 0 };
+        Presets = (IsClosedList ? field.Choices : field.Presets) ?? [];
+        HidesRawText = !IsClosedList && Presets.Any(p => !string.Equals(p.Label, p.Value, StringComparison.Ordinal));
         (Text, Original) = (text, text);
+        ShowAdvanced = text.Length > 0 && SelectedPreset is null;   // a value no preset names must be seen, not hidden
+    }
+
+    /// <summary>The values to pick from: the closed list when the field has one, else its presets; empty when it has neither.</summary>
+    public IReadOnlyList<WorkflowBlockChoice> Presets { get; }
+
+    /// <summary>True when the field is picked from a list (a closed list or presets) and its type is one line.</summary>
+    public bool HasPresets => Presets.Count > 0 && IsSingleLine;
+
+    /// <summary>True when only the listed values are valid: no text box.</summary>
+    public bool IsClosedList { get; }
+
+    /// <summary>True when the presets' labels differ from their values ("Every weekday at 7:00" for "0 7 * * 1-5"): the raw text is an advanced view. A time zone's labels are its values, so its text stays beside the list.</summary>
+    public bool HidesRawText { get; }
+
+    /// <summary>True when the Advanced toggle is shown.</summary>
+    public bool HasAdvanced => HasPresets && HidesRawText;
+
+    /// <summary>The Advanced toggle's words.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string AdvancedText => Labels.WfFieldAdvanced;
+#pragma warning restore CA1822, MA0041
+
+    /// <summary>True when the raw text is open.</summary>
+    public bool ShowAdvanced { get; set { Set(ref field, value); OnChanged(nameof(IsRawVisible)); } }
+
+    /// <summary>True when the text box shows: a one-line field with no closed list, and no presets hiding its raw text unless Advanced is open.</summary>
+    public bool IsRawVisible => IsSingleLine && !IsClosedList && (!HidesRawText || ShowAdvanced);
+
+    /// <summary>The preset the text equals, or null; picking one sets the text.</summary>
+    public WorkflowBlockChoice? SelectedPreset
+    {
+        get => Presets.FirstOrDefault(p => string.Equals(p.Value, Text.Trim(), StringComparison.Ordinal));
+        set
+        {
+            if (value is not null)
+            {
+                Text = value.Value;
+            }
+        }
     }
 
     /// <summary>The config key.</summary>
@@ -23,7 +67,7 @@ internal sealed class ConfigFieldViewModel : ObservableObject
     public bool IsRequired { get; }
 
     /// <summary>The text being edited: a text list has one item per line, an object is JSON.</summary>
-    public string Text { get; set { Set(ref field, value); OnChanged(nameof(IsOn)); OnChanged(nameof(IsChanged)); } }
+    public string Text { get; set { Set(ref field, value); OnChanged(nameof(IsOn)); OnChanged(nameof(IsChanged)); OnChanged(nameof(SelectedPreset)); } }
 
     /// <summary>The text the field had when the form was made: Save sends only the fields that differ from it.</summary>
     public string Original { get; }
@@ -31,8 +75,8 @@ internal sealed class ConfigFieldViewModel : ObservableObject
     /// <summary>True when the text was changed since the form was made.</summary>
     public bool IsChanged => !string.Equals(Text, Original, StringComparison.Ordinal);
 
-    /// <summary>The field's name, with "(required)" when it must have a value.</summary>
-    public string Caption => Labels.WfFieldCaption(Name, IsRequired);
+    /// <summary>The field's caption from the API (its name when none came), with "(required)" when it must have a value.</summary>
+    public string Caption { get; }
 
     /// <summary>True for a field edited with a check box.</summary>
     public bool IsBoolean => string.Equals(Type, "boolean", StringComparison.Ordinal);

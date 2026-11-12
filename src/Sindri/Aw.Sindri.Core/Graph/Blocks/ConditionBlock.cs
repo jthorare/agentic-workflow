@@ -22,7 +22,7 @@ public sealed class ConditionBlock : IGraphBlock
     public bool IsTrigger => false;
 
     /// <inheritdoc />
-    public BlockSchema Config { get; } = new([new("when", BlockFieldType.Text)]);
+    public BlockSchema Config { get; } = new([new("when", BlockFieldType.Text, Caption: "Continue when")]);
 
     /// <inheritdoc />
     public string Example => """{"when":"agent.drifted"}""";

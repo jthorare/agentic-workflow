@@ -83,7 +83,10 @@ public static class MetaErrors
     /// <summary>AW-META-026.</summary>
     public static readonly ErrorDefinition WorktreeHomeUnknown = new("AW-META-026", ErrorKind.Invalid, "The home directory is unknown, so the worktree root can't be placed");
 
+    /// <summary>AW-META-027.</summary>
+    public static readonly ErrorDefinition EventInvalid = new("AW-META-027", ErrorKind.Invalid, "An event needs a dotted lower-case kind and its fields as one JSON object");
+
     /// <summary>Every Meta error, for ErrorCatalogue.Validate.</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
-        [Invalid, NoTeamConfig, ConfigInvalid, TranscriptUnreadable, MessageNotFound, QuestionNotFound, GateStepNotFound, LogUnwritable, CommandNotStarted, HostUnreadable, ConfigExists, CommandFailed, LogUnreadable, LaneVariablesUnset, LaneNotRecorded, UnknownLane, ClaudeLane, QueueEntryNotFound, TeamAmbiguous, TeamMigrationRefused, RecycleRefused, RecycleTimedOut, BoardContended, NoRequiredChecks, WorktreeRootInRepo, WorktreeHomeUnknown];
+        [Invalid, NoTeamConfig, ConfigInvalid, TranscriptUnreadable, MessageNotFound, QuestionNotFound, GateStepNotFound, LogUnwritable, CommandNotStarted, HostUnreadable, ConfigExists, CommandFailed, LogUnreadable, LaneVariablesUnset, LaneNotRecorded, UnknownLane, ClaudeLane, QueueEntryNotFound, TeamAmbiguous, TeamMigrationRefused, RecycleRefused, RecycleTimedOut, BoardContended, NoRequiredChecks, WorktreeRootInRepo, WorktreeHomeUnknown, EventInvalid];
 }
