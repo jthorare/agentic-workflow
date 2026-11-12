@@ -82,6 +82,19 @@ One node run is one agent session on the existing launcher and agent runtime. Co
 
 **Report.** The agent reports with `sindri workflow complete <run id> --run <token> --outcome done --output fact:<field>=<file>...` (the exact line is in its brief); the token is `<node position>.<item index + 1>` (`RunAgentWire`). `CompleteStepService` finds the node, decides who may report it (`AgentReportAuthority.DecideNode`: the launched session with its launch secret, or the human of a taken-over node; a wrong secret is `SND-AUTH-003`), checks the report against the declared outputs (`RunAgentReport`: a missing, undeclared or mistyped field is refused and named, and the agent may report again; a string output is the file's text, any other type is JSON) and sends the values to the run's workflow (`agent-report` update). A session that ended unreported completes the node from `.sindri-out` only when every declared output (except optional ones) is there (`AgentRecovery.DecideNode`).
 
+**Agent state events (#3151).** Each `run_agent` node run writes a `workflow.node.agent.changed` ledger event about the run's item every time its session changes state, waiting-on text or last tool (`NodeAgentRecorder`). The Agents page reads these to show a workflow session as a row. The public shape carries only `runId`, `nodeId` and `itemIndex`; the full payload (`WorkflowNodeAgentChangedPayload`) is private. The idempotency key is `workflow.node.agent.changed:<run>:<node>:<item index>:<sequence>`. The sequence is counted in the workflow, so a replay writes the same keys and the ledger keeps each event once. A history recorded before the events (patch `node-agent-events-1`) writes none.
+
+| `state` | When | `waitingOn` |
+|---|---|---|
+| `waiting-for-slot` | the launch cap is full; the node's timeout has not started | `launch slot (waiting)` (no queue position yet) |
+| `launching` | the launch is under way | null |
+| `working` | the session runs | null |
+| `waiting-on-you` | the session's aw:fleet state file says it asks for an approval | `permission prompt` |
+| `ended-succeeded`, `ended-failed`, `ended-timed-out` | the node finished; the failure text picks one (`timeout:` gives timed out) | null |
+| `limited` | defined, not recorded yet | |
+
+The workflow reads the permission prompt every 15 s while it waits on the session (activity `AskingAgentNode`, patch `node-agent-ask-1`). It finds the session through the launch's row and reads that session's aw:fleet state file. `lastTool` and `lastToolAt` are the tool that approval asks for and when the hook saw it. They stay on the events after the person answers the prompt. They are null until the first approval, because the hook records no tool for a working session: PostToolUse writes nothing unless the file says asking (`config/hooks/fleet-state.sh`). A lane row has the same rule, so a lane row and a workflow row never disagree (Agents page spec §3.1 note, open question 3). Each event links the session: `launchId` (from launch on), `branch` (the branch the session may push) and `deadline`. The deadline is launch time plus the node's timeout.
+
 ## Flow blocks (agent-first PR 9, part C)
 
 Five more blocks, each with an example spec page under `docs/workflows/blocks/`: [`only_new`](../workflows/blocks/only_new.md), [`create_item`](../workflows/blocks/create_item.md), [`run_workflow`](../workflows/blocks/run_workflow.md), the [`workflow_call`](../workflows/blocks/workflow_call.md) trigger and [`http`](../workflows/blocks/http.md). Registered by `GraphBlockRegistry.FlowBlocks`.
