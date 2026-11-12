@@ -12482,3 +12482,5 @@ static Aw.Context.Core.Engine.AnchorChoice.operator ==(Aw.Context.Core.Engine.An
 Aw.Context.Core.Results.ContextResult.Suggestions.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.AnchorChoice!>?
 Aw.Context.Core.Results.ContextResult.Suggestions.init -> void
 static Aw.Context.Core.Graph.AnchorMatch.Choices(System.Collections.Generic.IEnumerable<Aw.Context.Core.Graph.GraphNode!>! nodes) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.AnchorChoice!>!
+static Aw.Context.Core.ContextErrors.IsMissedDeadline(Aw.Kernel.Error! error) -> bool
+static Aw.Context.Core.ContextErrors.MissedDeadline(Aw.Context.Core.Sources.SourceId source) -> Aw.Kernel.Error!

@@ -3,6 +3,7 @@ using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Sources;
 using Aw.Context.Testing.Engine;
+using Aw.Kernel;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Context.Tests.QueryContext;
@@ -55,6 +56,39 @@ public sealed class QueryFetchBoundTests
         Assert.True(result.IsSuccess);
         Assert.DoesNotContain(result.Value.Degraded, d => d.Source == RepoDocs.Id);
         Assert.NotEmpty(result.Value.Sections);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_source_on_the_default_batch_keeps_what_it_read_when_the_deadline_fires_and_the_rest_is_noted_unread()
+    {
+        const int total = 30;
+        var clock = new FakeTimeProvider(new DateTimeOffset(2026, 11, 12, 9, 0, 0, TimeSpan.Zero));
+        var inner = SourceOf([.. Enumerable.Range(1, total).Select(i => Chunk(i, i))]);
+        inner.OnFetch = () => clock.Advance(TimeSpan.FromSeconds(1));   // 10 s deadline: it fires after about ten reads
+        var engine = Engines.Over(new FixedSourceCatalog(new DefaultBatchSource(inner)), time: clock);
+
+        var result = await engine.Query(new ContextQuery("orientation"), Engines.Human(), TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        var read = inner.DocReads;
+        Assert.InRange(read, 1, total - 1);
+        Assert.Equal(read, result.Value.Sections.Count);   // every record read is in the answer
+        var note = Assert.Single(result.Value.Degraded, d => d.Source == RepoDocs.Id);
+        Assert.Contains((total - read).ToString(CultureInfo.InvariantCulture) + " matching record(s)", note.Message, StringComparison.Ordinal);
+    }
+
+    // A source that does not override FetchMany, so the interface's default (one Fetch after another) runs.
+    private sealed class DefaultBatchSource(FakeContextSource inner) : IContextSource
+    {
+        public SourceDescriptor Describe() => inner.Describe();
+
+        public ValueTask<Result<IReadOnlyList<SourceHit>>> Search(SourceQuery query, CancellationToken cancellationToken) => inner.Search(query, cancellationToken);
+
+        public ValueTask<Result<SourceRecord>> Fetch(SourceRef reference, CancellationToken cancellationToken) => inner.Fetch(reference, cancellationToken);
+
+        public ValueTask<Result<IReadOnlyList<SourceVersion?>>> Versions(IReadOnlyList<SourceRef> refs, CancellationToken cancellationToken) => inner.Versions(refs, cancellationToken);
+
+        public ValueTask<SourceHealth> Probe(CancellationToken cancellationToken) => inner.Probe(cancellationToken);
     }
 
     private static FakeRecord Chunk(int doc, int chunk)

@@ -79,13 +79,29 @@ internal sealed partial class QueryPipeline
                 continue;
             }
 
-            for (var n = 0; n < indexes.Count; n++)
-            {
-                read[indexes[n]] = batch.Value[n];
-            }
+            Place(items, indexes, batch.Value, read, degraded);
         }
 
         return read;
+    }
+
+    // The batch's answers go to their ranks; a read the deadline cut off is noted as unread, not as a failure of the source.
+    private void Place(List<FusedItem> items, List<int> indexes, IReadOnlyList<Result<SourceRecord>> answers, Result<SourceRecord>?[] read, List<DegradedSource> degraded)
+    {
+        var unread = new List<FusedItem>();
+        for (var n = 0; n < indexes.Count; n++)
+        {
+            if (answers[n].IsError && ContextErrors.IsMissedDeadline(answers[n].Error))
+            {
+                unread.Add(items[indexes[n]]);
+            }
+            else
+            {
+                read[indexes[n]] = answers[n];
+            }
+        }
+
+        NoteUnread(unread, degraded);
     }
 
     // A source whose every matching record was gone when read says so: an empty answer is never silent.

@@ -28,7 +28,7 @@ public interface IContextSource
 
     /// <summary>
     /// Fetches many records in one call (#3085): a source that can read them together (repo docs: one git batch read per repo)
-    /// overrides this; the default reads them one at a time through <see cref="Fetch"/>, so every source keeps working.
+    /// overrides this; the default reads them one at a time through <see cref="Fetch"/>, so every source keeps working. When the token fires mid-way the default keeps what it read and marks each remaining record <see cref="ContextErrors.MissedDeadline"/>.
     /// </summary>
     /// <param name="references">The records, in the order to read them.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
@@ -39,7 +39,24 @@ public interface IContextSource
         var records = new List<Result<SourceRecord>>(references.Count);
         foreach (var reference in references)
         {
-            records.Add(await Fetch(reference, cancellationToken).ConfigureAwait(false));
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;   // the deadline fired: what was read stays, the rest is marked below
+            }
+
+            try
+            {
+                records.Add(await Fetch(reference, cancellationToken).ConfigureAwait(false));
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+
+        while (records.Count < references.Count)
+        {
+            records.Add(ContextErrors.MissedDeadline(Describe().Id));   // one per record not read, so the pipeline counts them as unread
         }
 
         return records;
