@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Automation;
+using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
@@ -213,6 +214,37 @@ public sealed class RowAccessTests
         {
             RowKeys.Clock = TimeProvider.System;
         }
+    });
+
+    // #3313: the list's name carries its row count, so a changed count has to tell the screen reader.
+    [Fact]
+    public async Task A_changed_row_count_raises_one_name_changed_event_that_carries_the_new_name() => await OnUi(() =>
+    {
+        var group = new LiveGroup("Moving", Enumerable.Range(0, 3).Select(i => LiveRow.At(i)));
+        var (window, list) = Show([group]);
+        var peer = ControlAutomationPeer.CreatePeerForElement(list);
+        var events = new List<(string? Old, string? New)>();
+        peer.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == AutomationElementIdentifiers.NameProperty)
+            {
+                events.Add((e.OldValue as string, e.NewValue as string));
+            }
+        };
+
+        group.Rows.Add(LiveRow.At(3));
+        Settle(window);
+
+        Assert.Equal([("3 rows", "4 rows")], events);
+
+        events.Clear();
+        group.IsCollapsed = true;   // folding changes the count too
+        Settle(window);
+
+        Assert.Equal([("4 rows", "0 rows")], events);
+        Assert.Equal("0 rows", peer.GetName());
+        window.Close();
+        return true;
     });
 
     // Item 15: the mouse path.
