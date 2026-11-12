@@ -11,11 +11,13 @@ namespace Aw.Sindri.Tests.RemoveSessionWorktree;
 /// RemoveSessionWorktree (agents spec §15.8, A7): 'git worktree remove' without --force on the path the start recorded in its agent.op event.
 /// A tree with changes, or one no start made, is SND-AGENT-018.
 /// </summary>
-public sealed class RemoveSessionWorktreeTests
+public sealed class RemoveSessionWorktreeTests : IDisposable
 {
     private const string ActId = "k3j9x0a1";
 
     private readonly StartRig _r = new();
+
+    public void Dispose() => _r.Dispose();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -77,9 +79,22 @@ public sealed class RemoveSessionWorktreeTests
         _ = await Started();
         var afterRestart = new StartedSessions(_r.Base.Store, _r.Base.Events);   // a new process: nothing in memory
 
-        var removed = await new RemoveSessionWorktreeService(afterRestart, _r.Worktrees).Handle(new RemoveSessionWorktreeRequest(ActId), Token);
+        var removed = await new RemoveSessionWorktreeService(afterRestart, _r.Worktrees, _r.Base.Callers).Handle(new RemoveSessionWorktreeRequest(ActId), Token);
 
         Assert.True(removed.IsSuccess, removed.IsError ? removed.Error.ToString() : null);
         Assert.Single(_r.Worktrees.Removed);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_session_caller_is_refused_with_SND_AUTH_002_and_the_tree_stays()
+    {
+        _ = await Started();
+        using var session = _r.AsSession();
+
+        var refused = await _r.RemoveService().Handle(new RemoveSessionWorktreeRequest(ActId), Token);
+
+        Assert.True(refused.IsError);
+        Assert.Equal(SindriErrors.AuthRefused.Code, refused.Error.Code);
+        Assert.Empty(_r.Worktrees.Removed);
     }
 }

@@ -29,6 +29,7 @@ namespace Aw.Sindri.Features.StartSession;
 /// <param name="environment">The variables a session may inherit.</param>
 /// <param name="choices">Remembers the last repo and agent.</param>
 /// <param name="book">The stored starts.</param>
+/// <param name="callers">The caller: only the person may start an agent (agents spec §15.2).</param>
 /// <param name="clock">The clock for the worktree name.</param>
 /// <param name="ledger">Appends the event.</param>
 /// <param name="held">The lease this process holds.</param>
@@ -36,7 +37,7 @@ namespace Aw.Sindri.Features.StartSession;
 /// <param name="gate">The command gate: the start runs outside it (a start takes up to 64 s) and takes it for the ledger write only.</param>
 internal sealed partial class StartSessionService(
     IApprovedProfile approvals, IAgentCatalog catalog, IStartChecks checks, IOneOffWorktrees worktrees, ISessionHost host, ISessionPanes panes, IEnvironmentReader environment,
-    IStartChoices choices, StartedSessions book, TimeProvider clock, ILedgerStore ledger, HeldLease held, EventFactory events, ICommandGate gate)
+    IStartChoices choices, StartedSessions book, ICallerContextAccessor callers, TimeProvider clock, ILedgerStore ledger, HeldLease held, EventFactory events, ICommandGate gate)
     : IService<StartSessionRequest, StartedSession>
 {
     internal const int MaxPrompt = 8000;
@@ -48,6 +49,11 @@ internal sealed partial class StartSessionService(
     public async ValueTask<Result<StartedSession>> Handle(StartSessionRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        if (callers.Current is not { Class: CallerClass.Human })
+        {
+            return SindriErrors.AuthRefused.With("starting an agent is for the person: use the app or 'sindri agents start' in a terminal");
+        }
+
         if (request.ActId is not { } actId || !ActIdShape.IsMatch(actId))
         {
             return SindriErrors.InvalidInput.With("actId is 8 to 32 characters of a-z and 0-9");

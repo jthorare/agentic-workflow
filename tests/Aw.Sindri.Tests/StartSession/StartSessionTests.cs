@@ -10,7 +10,7 @@ namespace Aw.Sindri.Tests.StartSession;
 /// StartSession (agents spec §15.8, A7): a one-off session is a tmux session named 'sindri-&lt;actId&gt;'. The refusals are SND-AGENT-012, 013, 014 and 017; a bad actId is a plain 400.
 /// Only a 2xx result is stored under the actId, in one 'agent.op' event.
 /// </summary>
-public sealed class StartSessionTests
+public sealed class StartSessionTests : IDisposable
 {
     private const string ActId = "k3j9x0a1";
     private static readonly RepoName _repo = RepoName.From("demo");
@@ -18,6 +18,8 @@ public sealed class StartSessionTests
     private static readonly AgentId _codex = AgentId.From("codex");
 
     private readonly StartRig _r = new();
+
+    public void Dispose() => _r.Dispose();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -295,5 +297,18 @@ public sealed class StartSessionTests
         _ = await _r.Service().Handle(Request(agent: _codex), Token);
 
         Assert.Equal([("demo", "codex")], _r.Choices.Remembered);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_session_caller_is_refused_with_SND_AUTH_002_and_nothing_starts()
+    {
+        using var session = _r.AsSession();
+
+        var refused = await _r.Service().Handle(Request(), Token);
+
+        Assert.True(refused.IsError);
+        Assert.Equal(SindriErrors.AuthRefused.Code, refused.Error.Code);
+        Assert.Empty(_r.Host.Started);
+        Assert.Empty(_r.Worktrees.Names);
     }
 }

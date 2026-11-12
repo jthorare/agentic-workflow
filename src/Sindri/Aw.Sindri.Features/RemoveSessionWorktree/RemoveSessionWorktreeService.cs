@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Worktrees;
 using Aw.Sindri.Features.StartSession;
 
@@ -12,11 +13,17 @@ namespace Aw.Sindri.Features.RemoveSessionWorktree;
 /// </summary>
 /// <param name="book">The stored starts.</param>
 /// <param name="worktrees">Removes the worktree.</param>
-internal sealed class RemoveSessionWorktreeService(StartedSessions book, IOneOffWorktrees worktrees) : IService<RemoveSessionWorktreeRequest, RemovedWorktree>
+/// <param name="callers">The caller: only the person may remove it.</param>
+internal sealed class RemoveSessionWorktreeService(StartedSessions book, IOneOffWorktrees worktrees, ICallerContextAccessor callers) : IService<RemoveSessionWorktreeRequest, RemovedWorktree>
 {
     public async ValueTask<Result<RemovedWorktree>> Handle(RemoveSessionWorktreeRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        if (callers.Current is not { Class: CallerClass.Human })
+        {
+            return SindriErrors.AuthRefused.With("removing a worktree is for the person: use the app or 'sindri agents worktree remove' in a terminal");
+        }
+
         var stored = await book.Find(request.ActId, cancellationToken).ConfigureAwait(false);
         if (stored?.Worktree is not { } path)
         {
