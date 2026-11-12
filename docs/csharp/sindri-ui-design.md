@@ -8,15 +8,16 @@ Tokens live in `src/Sindri/Aw.Sindri.Ui/Theme/Tokens.axaml` as `Type.<Step>.Size
 
 | Class | Size / weight / line height | Letter spacing | Source |
 |---|---|---|---|
-| `page-title` | 24 / SemiBold / 32 | -0.3 | Linear H2 24 / 590 / 31.92 (measured, /changelog) |
-| `section-title` | 15 / SemiBold / 24 | -0.15 | Linear H3 15 / 510 / 24 (measured, /docs) |
+| `display` | 40 / SemiBold / 44 | -0.8 | inspora hero number (measured, inspora north star note 2026-11-11); one per page |
+| `page-title` | 24 / SemiBold / 32 | -0.24 | Linear H2 24 / 590 / 31.92 (measured, /changelog) |
+| `section-title` | 15 / SemiBold / 22 | 0 | Linear H3 15 / 510 / 24 (measured, /docs) |
 | `detail-title` | 20 / SemiBold / 28 | -0.24 | Linear H2 20 / 590 / 26.6 (measured, /docs) |
 | `body` | 13 / Normal / 20 | -0.13 | Linear UI text 13 / 400 / 19.5 (measured, home) |
-| `body-strong` | 13 / Medium / 20 | -0.13 | Linear 13 / 510 / 19.5 (measured) |
-| `caption` | 12 / Normal / 16 | 0 | Linear 12 / 400 / 16 (measured, home) |
-| `eyebrow` | 11 / Medium / 16 | 0.4 | Linear micro 10 to 11 px (measured); tracking and capitals are a proposal |
+| `body-strong` | 13 / Medium / 20 | 0 | Linear 13 / 510 / 19.5 (measured) |
+| `caption` | 12 / Normal / 18 | -0.24 | Linear 12 / 400 / 16 (measured, home) |
+| `eyebrow` | 11 / Normal / 16 | 0.4 | Linear micro 10 to 11 px (measured); tracking and capitals are a proposal |
 | `button` | 13 / Medium / 15.6 | 0 | Linear button 13 / 510 (measured); line height kept from before |
-| `mono` | 12 / Normal / 16 | 0 | Raycast 12 / 300 / 16, Linear 12.25 / 400 / 15.9 (measured) |
+| `mono` | 12 / Normal / 18 | 0 | Raycast 12 / 300 / 16, Linear 12.25 / 400 / 15.9 (measured) |
 | `kbd` | 11 / Medium / 16 | 0 | Raycast keycap 11 / 500 (measured, /store) |
 
 Avalonia cannot draw Linear's variable weights 510 and 590. We use Medium (500) and SemiBold (600) instead.
@@ -49,7 +50,7 @@ The `clickable` class applies hover and pressed to any element. It lives in `The
 
 ## Chips
 
-A chip is 20 px high with padding `0,6`, radius 4 and the `caption` font in Medium. Its text is `Ink Muted` (#d0d6e0) on a fill of white at 5 percent, with a white border at 8 percent. Source: Linear code chip (measured, home); Raycast chips are 20 px high with radius 4 to 6.
+A chip is 20 px high with padding `0,6`, radius 6 (`Radius.SM`) and the `caption` font in Medium. Its text is `Ink Muted` (#d0d6e0) on a fill of white at 5 percent, with a white border at 8 percent. Source: Linear code chip (measured, home); Raycast chips are 20 px high with radius 4 to 6.
 
 The `status-chip` class has these variants: neutral, primary, success, attention and error. Issue #2545 owns their definitions. This page does not repeat their colours.
 

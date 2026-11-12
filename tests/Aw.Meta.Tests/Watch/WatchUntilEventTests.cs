@@ -19,7 +19,7 @@ public sealed class WatchUntilEventTests
         _world.Values,
         _world.Delay,
         _world.Clock,
-        _world.Monitor,
+        new LaneReport(_world.Monitor, _world.Values),
         _world.Board);
 
     private WatchRequest Request(bool untilEvent) =>

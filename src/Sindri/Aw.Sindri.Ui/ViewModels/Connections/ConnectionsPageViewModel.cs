@@ -251,9 +251,9 @@ internal sealed class ConnectionsPageViewModel : ObservableObject, IDisposable
         var taken = new HashSet<ConnectionRowViewModel>();
         foreach (var tile in Tiles)
         {
-            var row = Rows.FirstOrDefault(r => string.Equals(r.View.Preset, tile.Id, StringComparison.Ordinal) || r.Name.StartsWith(tile.Id + ":", StringComparison.Ordinal));
-            tile.Bind(row);
-            _ = row is null || taken.Add(row);
+            var mine = Rows.Where(r => !taken.Contains(r) && (string.Equals(r.View.Preset, tile.Id, StringComparison.Ordinal) || r.Name.StartsWith(tile.Id + ":", StringComparison.Ordinal))).ToList();
+            tile.Bind(mine);
+            taken.UnionWith(mine);
         }
 
         Patch.To(OtherRows, [.. Rows.Where(r => !taken.Contains(r))]);

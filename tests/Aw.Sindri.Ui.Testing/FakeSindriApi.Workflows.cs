@@ -7,6 +7,7 @@ namespace Aw.Sindri.Ui.Testing;
 internal sealed partial class FakeSindriApi
 {
     private int _workflowsCalls;
+    private int _allWorkflowsCalls;
     private int _workflowCalls;
     private int _workflowRunsCalls;
     private int _workflowRunCalls;
@@ -78,6 +79,18 @@ internal sealed partial class FakeSindriApi
 
     /// <summary>How many times one run was read.</summary>
     public int WorkflowRunCalls => Volatile.Read(ref _workflowRunCalls);
+
+    /// <summary>GET /sindri/workflows?includeArchived=true's answer; null serves <see cref="WorkflowsAnswer"/> (no archived rows).</summary>
+    public RouteAnswer? AllWorkflowsAnswer { get; set; }
+
+    /// <summary>How many times the includeArchived list was read.</summary>
+    public int AllWorkflowsCalls => Volatile.Read(ref _allWorkflowsCalls);
+
+    public Task<Result<WorkflowList>> WorkflowsIncludingArchived(Uri api, CancellationToken cancellationToken)
+    {
+        _ = Interlocked.Increment(ref _allWorkflowsCalls);
+        return Task.FromResult(Answer<WorkflowList>(api, WorkflowRoutes.ListAll(), AllWorkflowsAnswer ?? WorkflowsAnswer));
+    }
 
     public async Task<Result<WorkflowList>> Workflows(Uri api, CancellationToken cancellationToken)
     {

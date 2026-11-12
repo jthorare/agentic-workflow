@@ -16,10 +16,6 @@ internal sealed partial class SindriApiClient
         Call<CodeView>(api, HttpMethod.Query, ContextRoutes.Code, cancellationToken, new CallOptions(Content: AwJson.Serialize(query, Json)));
 
     /// <inheritdoc />
-    public Task<Result<ItemScopeView>> ItemScope(Uri api, string itemId, CancellationToken cancellationToken) =>
-        Get<ItemScopeView>(api, "/sindri/items/" + Uri.EscapeDataString(itemId) + "/scope", cancellationToken);
-
-    /// <inheritdoc />
     public Task<Result<WholeMapView>> WholeMap(Uri api, WholeMapQuery query, CancellationToken cancellationToken) =>
         Get<WholeMapView>(api, ContextRoutes.WholeMap(query), cancellationToken);
 

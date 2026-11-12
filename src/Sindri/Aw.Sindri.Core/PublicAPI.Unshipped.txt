@@ -1273,11 +1273,9 @@ Aw.Sindri.Core.Items.ItemSummary
 Aw.Sindri.Core.Items.ItemSummary.<Clone>$() -> Aw.Sindri.Core.Items.ItemSummary!
 Aw.Sindri.Core.Items.ItemSummary.Actions.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>!
 Aw.Sindri.Core.Items.ItemSummary.Actions.init -> void
-Aw.Sindri.Core.Items.ItemSummary.Deconstruct(out Aw.Sindri.Core.Ids.ItemId Id, out string! Title, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.Items.Vocabulary.ItemState State, out string? Step, out System.DateTimeOffset Since, out Aw.Sindri.Core.Ids.ActionId? PrimaryAction, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, out string? Owner) -> void
 Aw.Sindri.Core.Items.ItemSummary.Equals(Aw.Sindri.Core.Items.ItemSummary? other) -> bool
 Aw.Sindri.Core.Items.ItemSummary.Id.get -> Aw.Sindri.Core.Ids.ItemId
 Aw.Sindri.Core.Items.ItemSummary.Id.init -> void
-Aw.Sindri.Core.Items.ItemSummary.ItemSummary(Aw.Sindri.Core.Ids.ItemId Id, string! Title, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Items.Vocabulary.ItemState State, string? Step, System.DateTimeOffset Since, Aw.Sindri.Core.Ids.ActionId? PrimaryAction, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, string? Owner) -> void
 Aw.Sindri.Core.Items.ItemSummary.Owner.get -> string?
 Aw.Sindri.Core.Items.ItemSummary.Owner.init -> void
 Aw.Sindri.Core.Items.ItemSummary.PrimaryAction.get -> Aw.Sindri.Core.Ids.ActionId?
@@ -13979,7 +13977,7 @@ const Aw.Sindri.Core.Events.ModelCallOutcome.NotAsked = "not-asked" -> string!
 const Aw.Sindri.Core.Events.ModelCallOutcome.Skipped = "skipped" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Estimated = "estimated" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Reported = "reported" -> string!
-const Aw.Sindri.Core.Views.ViewSchema.Version = 34 -> int
+const Aw.Sindri.Core.Views.ViewSchema.Version = 35 -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextModelCalled.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.ToString() -> string!
@@ -16056,6 +16054,8 @@ Aw.Sindri.Core.Events.WorkflowEventDetail.ResultSha256.get -> string?
 Aw.Sindri.Core.Events.WorkflowEventDetail.ResultSha256.init -> void
 Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts.DirectoryEntries.get -> System.Func<string!, System.Collections.Generic.IReadOnlyList<string!>!>?
 Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts.DirectoryEntries.init -> void
+Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts.ProfilePath.get -> string?
+Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts.ProfilePath.init -> void
 Aw.Sindri.Core.Reviews.LibraryBrokenDoc
 Aw.Sindri.Core.Reviews.LibraryBrokenDoc.<Clone>$() -> Aw.Sindri.Core.Reviews.LibraryBrokenDoc!
 Aw.Sindri.Core.Reviews.LibraryBrokenDoc.Deconstruct(out string! Doc, out string! Path, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.LibraryDocError!>! Errors) -> void
@@ -17582,8 +17582,6 @@ static Aw.Sindri.Core.Connections.ConnectionView.operator !=(Aw.Sindri.Core.Conn
 static Aw.Sindri.Core.Connections.ConnectionView.operator ==(Aw.Sindri.Core.Connections.ConnectionView? left, Aw.Sindri.Core.Connections.ConnectionView? right) -> bool
 Aw.Sindri.Core.Graph.Blocks.BlockField
 Aw.Sindri.Core.Graph.Blocks.BlockField.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.BlockField!
-Aw.Sindri.Core.Graph.Blocks.BlockField.BlockField(string! Name, Aw.Sindri.Core.Graph.Blocks.BlockFieldType Type, bool Required = true) -> void
-Aw.Sindri.Core.Graph.Blocks.BlockField.Deconstruct(out string! Name, out Aw.Sindri.Core.Graph.Blocks.BlockFieldType Type, out bool Required) -> void
 Aw.Sindri.Core.Graph.Blocks.BlockField.Equals(Aw.Sindri.Core.Graph.Blocks.BlockField? other) -> bool
 Aw.Sindri.Core.Graph.Blocks.BlockField.Name.get -> string!
 Aw.Sindri.Core.Graph.Blocks.BlockField.Name.init -> void
@@ -23058,3 +23056,91 @@ Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.Deconstruct(out Aw.Sindri.Co
 Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.WorkflowNodeHandedBackPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! By) -> void
 const Aw.Sindri.Core.Events.EventTypes.WorkflowNodeTakenOver = "workflow.node.taken-over" -> string!
 const Aw.Sindri.Core.Events.EventTypes.WorkflowNodeHandedBack = "workflow.node.handed-back" -> string!
+Aw.Sindri.Core.Graph.Blocks.BlockChoice
+Aw.Sindri.Core.Graph.Blocks.BlockChoice.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.BlockChoice!
+Aw.Sindri.Core.Graph.Blocks.BlockChoice.BlockChoice(string! Value, string! Label) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockChoice.Deconstruct(out string! Value, out string! Label) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockChoice.Equals(Aw.Sindri.Core.Graph.Blocks.BlockChoice? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.BlockChoice.Label.get -> string!
+Aw.Sindri.Core.Graph.Blocks.BlockChoice.Label.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockChoice.Value.get -> string!
+Aw.Sindri.Core.Graph.Blocks.BlockChoice.Value.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockField.Advanced.get -> bool
+Aw.Sindri.Core.Graph.Blocks.BlockField.Advanced.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockField.BlockField(string! Name, Aw.Sindri.Core.Graph.Blocks.BlockFieldType Type, bool Required = true, string? Caption = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.BlockChoice!>? Choices = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.BlockChoice!>? Presets = null, bool Advanced = false) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockField.Caption.get -> string?
+Aw.Sindri.Core.Graph.Blocks.BlockField.Caption.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockField.Choices.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.BlockChoice!>?
+Aw.Sindri.Core.Graph.Blocks.BlockField.Choices.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockField.Deconstruct(out string! Name, out Aw.Sindri.Core.Graph.Blocks.BlockFieldType Type, out bool Required, out string? Caption, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.BlockChoice!>? Choices, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.BlockChoice!>? Presets, out bool Advanced) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockField.Presets.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.BlockChoice!>?
+Aw.Sindri.Core.Graph.Blocks.BlockField.Presets.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockSummary
+Aw.Sindri.Core.Graph.Blocks.BlockSummary.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.BlockSummary!
+Aw.Sindri.Core.Graph.Blocks.BlockSummary.BlockSummary(string! Text, string? Problem = null) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockSummary.Deconstruct(out string! Text, out string? Problem) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockSummary.Equals(Aw.Sindri.Core.Graph.Blocks.BlockSummary? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.BlockSummary.Problem.get -> string?
+Aw.Sindri.Core.Graph.Blocks.BlockSummary.Problem.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockSummary.Text.get -> string!
+Aw.Sindri.Core.Graph.Blocks.BlockSummary.Text.init -> void
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.Summarize(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockSummary!
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.Summarize(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockSummary!
+override Aw.Sindri.Core.Graph.Blocks.BlockChoice.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.BlockChoice.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.BlockChoice.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.BlockSummary.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.BlockSummary.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.BlockSummary.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.BlockChoice.operator !=(Aw.Sindri.Core.Graph.Blocks.BlockChoice? left, Aw.Sindri.Core.Graph.Blocks.BlockChoice? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.BlockChoice.operator ==(Aw.Sindri.Core.Graph.Blocks.BlockChoice? left, Aw.Sindri.Core.Graph.Blocks.BlockChoice? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.BlockSummary.operator !=(Aw.Sindri.Core.Graph.Blocks.BlockSummary? left, Aw.Sindri.Core.Graph.Blocks.BlockSummary? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.BlockSummary.operator ==(Aw.Sindri.Core.Graph.Blocks.BlockSummary? left, Aw.Sindri.Core.Graph.Blocks.BlockSummary? right) -> bool
+Aw.Sindri.Core.Items.ItemSummary.Deconstruct(out Aw.Sindri.Core.Ids.ItemId Id, out string! Title, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.Items.Vocabulary.ItemState State, out string? Step, out System.DateTimeOffset Since, out Aw.Sindri.Core.Ids.ActionId? PrimaryAction, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, out string? Owner, out bool Parked) -> void
+Aw.Sindri.Core.Items.ItemSummary.ItemSummary(Aw.Sindri.Core.Ids.ItemId Id, string! Title, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Items.Vocabulary.ItemState State, string? Step, System.DateTimeOffset Since, Aw.Sindri.Core.Ids.ActionId? PrimaryAction, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, string? Owner, bool Parked = false) -> void
+Aw.Sindri.Core.Items.ItemSummary.Parked.get -> bool
+Aw.Sindri.Core.Items.ItemSummary.Parked.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPublic
+Aw.Sindri.Core.Events.WorkflowChangedPublic.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowChangedPublic!
+Aw.Sindri.Core.Events.WorkflowChangedPublic.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, out int Revision) -> void
+Aw.Sindri.Core.Events.WorkflowChangedPublic.Equals(Aw.Sindri.Core.Events.WorkflowChangedPublic? other) -> bool
+Aw.Sindri.Core.Events.WorkflowChangedPublic.Revision.get -> int
+Aw.Sindri.Core.Events.WorkflowChangedPublic.Revision.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPublic.Slug.get -> Aw.Sindri.Core.Graph.Ids.WorkflowSlug
+Aw.Sindri.Core.Events.WorkflowChangedPublic.Slug.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPublic.WorkflowChangedPublic(Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, int Revision) -> void
+Aw.Sindri.Core.Events.WorkflowChangedPublic.WorkflowId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowId
+Aw.Sindri.Core.Events.WorkflowChangedPublic.WorkflowId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodePublic
+Aw.Sindri.Core.Events.WorkflowNodePublic.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowNodePublic!
+Aw.Sindri.Core.Events.WorkflowNodePublic.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out Aw.Sindri.Core.Graph.Ids.NodeId NodeId, out int ItemIndex) -> void
+Aw.Sindri.Core.Events.WorkflowNodePublic.Equals(Aw.Sindri.Core.Events.WorkflowNodePublic? other) -> bool
+Aw.Sindri.Core.Events.WorkflowNodePublic.ItemIndex.get -> int
+Aw.Sindri.Core.Events.WorkflowNodePublic.ItemIndex.init -> void
+Aw.Sindri.Core.Events.WorkflowNodePublic.NodeId.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowNodePublic.NodeId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodePublic.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowNodePublic.RunId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodePublic.WorkflowNodePublic(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex) -> void
+Aw.Sindri.Core.Events.WorkflowRunPublic
+Aw.Sindri.Core.Events.WorkflowRunPublic.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowRunPublic!
+Aw.Sindri.Core.Events.WorkflowRunPublic.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId) -> void
+Aw.Sindri.Core.Events.WorkflowRunPublic.Equals(Aw.Sindri.Core.Events.WorkflowRunPublic? other) -> bool
+Aw.Sindri.Core.Events.WorkflowRunPublic.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowRunPublic.RunId.init -> void
+Aw.Sindri.Core.Events.WorkflowRunPublic.WorkflowRunPublic(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId) -> void
+override Aw.Sindri.Core.Events.WorkflowChangedPublic.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowChangedPublic.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowChangedPublic.ToString() -> string!
+override Aw.Sindri.Core.Events.WorkflowNodePublic.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowNodePublic.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowNodePublic.ToString() -> string!
+override Aw.Sindri.Core.Events.WorkflowRunPublic.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowRunPublic.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowRunPublic.ToString() -> string!
+static Aw.Sindri.Core.Events.WorkflowChangedPublic.operator !=(Aw.Sindri.Core.Events.WorkflowChangedPublic? left, Aw.Sindri.Core.Events.WorkflowChangedPublic? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowChangedPublic.operator ==(Aw.Sindri.Core.Events.WorkflowChangedPublic? left, Aw.Sindri.Core.Events.WorkflowChangedPublic? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowNodePublic.operator !=(Aw.Sindri.Core.Events.WorkflowNodePublic? left, Aw.Sindri.Core.Events.WorkflowNodePublic? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowNodePublic.operator ==(Aw.Sindri.Core.Events.WorkflowNodePublic? left, Aw.Sindri.Core.Events.WorkflowNodePublic? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowRunPublic.operator !=(Aw.Sindri.Core.Events.WorkflowRunPublic? left, Aw.Sindri.Core.Events.WorkflowRunPublic? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowRunPublic.operator ==(Aw.Sindri.Core.Events.WorkflowRunPublic? left, Aw.Sindri.Core.Events.WorkflowRunPublic? right) -> bool

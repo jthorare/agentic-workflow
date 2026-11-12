@@ -139,7 +139,7 @@ public sealed class ShellWindowTests : IDisposable
     // §14.2: every text is a step of the type ramp, so the Text size preference reaches all of it. At scale 1.3 each
     // visible TextBlock's size is a ramp size × 1.3 (a literal size, or one Fluent's own default sets, stays put). The
     // scale is applied, checked and reset without yielding the UI thread, so no other test sees it.
-    private static readonly double[] _ramp = [24, 20, 15, 13, 12, 11];   // PageTitle, DetailTitle, SectionTitle, Body, Caption/Mono, Eyebrow/Kbd (#2546)
+    private static readonly double[] _ramp = [40, 24, 20, 15, 13, 12, 11];   // Display, PageTitle, DetailTitle, SectionTitle, Body, Caption/Mono, Eyebrow/Kbd (#2546, #2779)
 
     private static void EveryTextIsOnTheRampAt130(Window window)
     {
@@ -1286,16 +1286,20 @@ public sealed class ShellWindowTests : IDisposable
         Settle(window);
 
         // I5 (services-health.html HEALTH): label/value rows at Body size under section heads that carry the state's
-        // glyph and word; no display-size values and no badge repeating the pill.
+        // glyph and word; no badge repeating the pill. #2779: the health word is the page's one display number, and the
+        // card titles are section titles; every other text is Body size or smaller.
         List<string?> Rows(string name) => [.. Named<ItemsControl>(window, name).GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text)];
         Assert.Equal(["pid · epoch", "4242 · 7", "Host lease", "held · expires " + A.Noon.AddSeconds(60).ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture), "API", "127.0.0.1:7410"], Rows("ProcessRows"));
         Assert.Equal((StateGlyph.Ok, Labels.Running), (Glyph(window, "ProcessGlyph"), Text(window, "ProcessWord")));
         Assert.Equal(("live", StateGlyph.Ok), (Text(window, "ProfileHeadText"), Glyph(window, "ProfileHeadGlyph")));
         Assert.Equal(["live", "ab12cd", "file", "/home/profile.yaml"], Rows("ProfileRows"));
         HealthHeadsAndPathsAreAligned(window);
+        LastEventRowKeepsTheRhythm(window);
         Assert.False(Visible(window, "HeadlineText"));
         var page = Named<Control>(window, "HealthPage");
-        Assert.DoesNotContain(page.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.FontSize > 13 && !t.Classes.Contains("page-title"));
+        Assert.Equal("HeadlineWord", Assert.Single(page.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.Classes.Contains("display")).Name);
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.FontSize > 13
+            && !t.Classes.Contains("page-title") && !t.Classes.Contains("display") && !t.Classes.Contains("section-title"));
         Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "last run " + DateTimeOffset.Parse("2026-01-01T00:00:55Z", CultureInfo.InvariantCulture).ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture));   // the Services card reads the services view
         EveryControlIsNamed(window);
         Frame(window, "health");
@@ -1316,7 +1320,7 @@ public sealed class ShellWindowTests : IDisposable
         Assert.Equal((StateGlyph.Stale, "Held for the code index", Labels.ContextMapCard), (Glyph(window, "ContextMapGlyph"), Text(window, "ContextMapState"), Text(window, "ContextMapEyebrow")));
         Assert.Equal(["Map v14 is held for the code index until 12:15Z.", "aw-split-panes: building (the map is for 1234567, the index is at abcdef0)"],
             [.. Named<ItemsControl>(window, "ContextMapLines").GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text ?? string.Empty)]);
-        Assert.StartsWith("CONTEXT MAP: Held for the code index. Map v14", AutomationProperties.GetName(Named<Border>(window, "ContextMapPanel")), StringComparison.Ordinal);
+        Assert.StartsWith("Context map: Held for the code index. Map v14", AutomationProperties.GetName(Named<Border>(window, "ContextMapPanel")), StringComparison.Ordinal);
         EveryControlIsNamed(window);
     });
 
@@ -1491,52 +1495,6 @@ public sealed class ShellWindowTests : IDisposable
         /// <summary>Degraded, with a short problem ("service broken failed") that reads in full at 1280 px (#2547). Last, as above.</summary>
         DegradedShortProblem,
     }
-
-    public static TheoryData<BarState, double> MinimumWidthStates()
-    {
-        var data = new TheoryData<BarState, double>();
-        foreach (var state in Enum.GetValues<BarState>())
-        {
-            data.Add(state, 1.0);
-            data.Add(state, 1.3);
-        }
-
-        return data;
-    }
-
-    [Theory]
-    [MemberData(nameof(MinimumWidthStates))]
-    public Task At_the_1000_px_minimum_the_top_bar_fits_in_every_pill_state(BarState state, double scale) => OnUi(async () =>
-    {
-        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 1000, 600) });
-        var window = await ShowIn(state);
-        var resources = Application.Current!.Resources;
-        TextScale.Apply(resources, scale);
-        try
-        {
-            Settle(window);
-            Assert.Equal(1000, window.ClientSize.Width);
-            if (state == BarState.VersionMismatch)
-            {
-                Assert.False(Visible(window, "TopBar"));
-                AllInside(window, Named<Control>(window, "VersionMismatchPanel"), state, scale);
-            }
-            else
-            {
-                TopBarFits(window, state, scale);
-            }
-
-            StateWords(window, state, scale);
-
-            Frame(window, string.Create(CultureInfo.InvariantCulture, $"min-width-{state.ToString().ToLowerInvariant()}-{scale * 100:0}"));
-        }
-        finally
-        {
-            TextScale.Apply(resources, 1.0);
-            _ = _server.StatusGate?.TrySetResult();
-            Settle(window);
-        }
-    });
 
     // The Projects page spec §7: every tab (nine since Workflows, PR 17 part 2a) at the 1,000 px minimum, each label whole (not trimmed, not past the window's edge)
     // at text scale 1.0 and 1.3. The counts may give way first (TopBar.Counts); the labels never do.
@@ -1762,22 +1720,6 @@ public sealed class ShellWindowTests : IDisposable
 
     private static readonly string[] _settledParts = ["BarGrid", "Brand", "BrandWord", "NavSegments", "Navigation", "SearchField", "SearchText", "SearchKeycap", "PillGroup", "PillProblems", "PillAge"];
 
-    public static TheoryData<BarState, double, double> BarWidthsAndScales()
-    {
-        var data = new TheoryData<BarState, double, double>();
-        // VersionMismatch shows VersionMismatchPanel in place of the bar, so it has no tabs, field or pill to check.
-        foreach (var state in Enum.GetValues<BarState>().Where(s => s != BarState.VersionMismatch))
-        {
-            foreach (var width in new[] { 1000.0, 1099.0, 1103.0, 1280.0 })
-            {
-                data.Add(state, width, 1.0);
-                data.Add(state, width, 1.3);
-            }
-        }
-
-        return data;
-    }
-
     // Shows the window in a state at a width and a text scale, runs the check, and puts the scale back.
     private async Task WithBar(BarState state, double width, double scale, Action<ShellWindow> check)
     {
@@ -1806,11 +1748,8 @@ public sealed class ShellWindowTests : IDisposable
     }
 
     // #2547: a bar that has settled is still after one more layout pass: no part moves, and no part is left waiting for a pass.
-    [Theory]
-    [MemberData(nameof(BarWidthsAndScales))]
-    public Task The_top_bar_has_settled_and_another_layout_pass_moves_no_part(BarState state, double width, double scale) => OnUi(() => WithBar(state, width, scale, window =>
+    private static void BarHasSettled(Window window, string at)
     {
-        var at = string.Create(CultureInfo.InvariantCulture, $"{state} at {width} px, {scale:0.0}");
         var stale = _settledParts.Select(n => Named<Control>(window, n))
             .Concat(Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<ListBoxItem>())
             .Where(c => c.IsEffectivelyVisible && !(c.IsMeasureValid && c.IsArrangeValid))
@@ -1833,7 +1772,7 @@ public sealed class ShellWindowTests : IDisposable
             .Select(p => $"{p.Name} {p.Before} -> {p.After}")
             .ToList();
         Assert.True(before.Count == after.Count && moved.Count == 0, $"{at}: moved on one more pass: {string.Join("; ", moved)}");
-    }));
+    }
 
     // A tab's content, in order: the dot, the label and the count (the item template's stack).
     private static List<Control> TabContent(ListBoxItem tab) =>
@@ -1851,11 +1790,8 @@ public sealed class ShellWindowTests : IDisposable
     // 16 px padding, the bar has settled, two tabs keep the gap floor, a tab's fill stays 6 px from its neighbour's word, and
     // the tabs keep their normal padding at 1.0 (the tight step is only for when normal padding can't fit). The placeholder
     // is whole at Full in every pill state, width and scale, also when Full keeps the field at its 184 px minimum (#2710).
-    [Theory]
-    [MemberData(nameof(BarWidthsAndScales))]
-    public Task The_top_bar_fits_and_keeps_the_gap_floor_in_every_pill_state(BarState state, double width, double scale) => OnUi(() => WithBar(state, width, scale, window =>
+    private static void BarFits(Window window, BarState state, double width, double scale, string at)
     {
-        var at = string.Create(CultureInfo.InvariantCulture, $"{state} at {width} px, {scale:0.0}");
         TopBarFits(window, state, scale);
         Assert.True(Box(window, "HealthPill").Right <= width - 16, string.Create(CultureInfo.InvariantCulture, $"{at}: the pill ends at {Box(window, "HealthPill").Right}"));
 
@@ -1872,7 +1808,77 @@ public sealed class ShellWindowTests : IDisposable
         {
             Assert.False(Named<ListBox>(window, "Navigation").Classes.Contains("tight"), $"{at}: the tabs went tight at text scale 1.0");
         }
-    }));
+    }
+
+    // §3.2 at the 1,000 px minimum (the comment above BarState): the window keeps its width, the version-mismatch panel's
+    // text stays inside it, and the state's words read in full. The bar's own fit is BarFits, run on the same window.
+    private static void FitsAtTheMinimum(Window window, BarState state, double scale)
+    {
+        Assert.Equal(1000, window.ClientSize.Width);
+        if (state == BarState.VersionMismatch)
+        {
+            Assert.False(Visible(window, "TopBar"));
+            AllInside(window, Named<Control>(window, "VersionMismatchPanel"), state, scale);
+        }
+
+        StateWords(window, state, scale);
+
+        Frame(window, string.Create(CultureInfo.InvariantCulture, $"min-width-{state.ToString().ToLowerInvariant()}-{scale * 100:0}"));
+    }
+
+    public static TheoryData<BarState, double> BarStatesAndWidths()
+    {
+        var data = new TheoryData<BarState, double>();
+        foreach (var state in Enum.GetValues<BarState>())
+        {
+            // VersionMismatch shows VersionMismatchPanel in place of the bar, so only the minimum's checks apply to it.
+            double[] widths = state == BarState.VersionMismatch ? [1000.0] : [1000.0, 1099.0, 1103.0, 1280.0];
+            foreach (var width in widths)
+            {
+                data.Add(state, width);
+            }
+        }
+
+        return data;
+    }
+
+    // One window per state and width, checked at text scale 1.0 and then at 1.3: a row used to be one window per state, width
+    // and scale for each of three tests, and those 164 windows were most of this class's run (#2841). The scale was already
+    // applied after the window opened, so each check sees the window it saw before; the settled check runs first, and when it
+    // passes the extra layout pass it makes has moved nothing.
+    [Theory]
+    [MemberData(nameof(BarStatesAndWidths))]
+    public Task The_top_bar_settles_and_fits_in_every_pill_state_width_and_text_scale(BarState state, double width) => OnUi(async () =>
+    {
+        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, width, 600) });
+        var window = await ShowIn(state);
+        var resources = Application.Current!.Resources;
+        try
+        {
+            foreach (var scale in (double[])[1.0, 1.3])
+            {
+                TextScale.Apply(resources, scale);
+                Settle(window);
+                var at = string.Create(CultureInfo.InvariantCulture, $"{state} at {width} px, {scale:0.0}");
+                if (state != BarState.VersionMismatch)
+                {
+                    BarHasSettled(window, at);
+                    BarFits(window, state, width, scale, at);
+                }
+
+                if (width == 1000)
+                {
+                    FitsAtTheMinimum(window, state, scale);
+                }
+            }
+        }
+        finally
+        {
+            TextScale.Apply(resources, 1.0);
+            _ = _server.StatusGate?.TrySetResult();
+            Settle(window);
+        }
+    });
 
     // Between every two tabs: the words keep the gap floor, and either tab's fill (selected or hover covers the whole tab)
     // stays the fill floor from the other tab's word.
@@ -2030,6 +2036,16 @@ public sealed class ShellWindowTests : IDisposable
         Assert.Equal(home.X, onSettings.X);
         Frame(window, "settings");
     });
+
+    // #2779: "Last event" sits outside ProcessRows but on the same 36 px rhythm (the card's 8 px stack gap made it 42).
+    private static void LastEventRowKeepsTheRhythm(Window window)
+    {
+        var card = Named<Control>(window, "ProcessRows").Parent as Visual ?? throw new InvalidOperationException("ProcessRows has no parent");
+        var api = Named<ItemsControl>(window, "ProcessRows").GetVisualDescendants().OfType<Grid>().Last(g => g.Classes.Contains("data-row"));
+        var apiTop = api.TranslatePoint(default, card)!.Value.Y;
+        var lastTop = Named<Control>(window, "LastEventRow").TranslatePoint(default, card)!.Value.Y;
+        Assert.True(Math.Abs(lastTop - apiTop - 36) < 0.5, string.Create(CultureInfo.InvariantCulture, $"Last event starts {lastTop - apiTop} px under the API row, not 36"));
+    }
 
     // S2 and S3 on Health: each section head's state word sits on its eyebrow's baseline, and the profile's file is a
     // path in mono like the Not running card's.

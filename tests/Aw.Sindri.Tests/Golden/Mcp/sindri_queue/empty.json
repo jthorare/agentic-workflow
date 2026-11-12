@@ -18,20 +18,24 @@
               "CloseItem:cancelled"
             ],
             "owner": null,
+            "parked": false,
             "trust": "untrusted"
           }
         ],
-        "empty": null
+        "empty": null,
+        "next": null
       },
       {
         "group": "withYou",
         "items": [],
-        "empty": "Nothing is with you."
+        "empty": "Nothing is with you.",
+        "next": null
       },
       {
         "group": "running",
         "items": [],
-        "empty": "Nothing running."
+        "empty": "Nothing running.",
+        "next": null
       },
       {
         "group": "queued",
@@ -49,6 +53,7 @@
               "CloseItem:cancelled"
             ],
             "owner": null,
+            "parked": false,
             "trust": "untrusted"
           },
           {
@@ -64,6 +69,7 @@
               "CloseItem:cancelled"
             ],
             "owner": null,
+            "parked": false,
             "trust": "untrusted"
           },
           {
@@ -79,10 +85,12 @@
               "CloseItem:cancelled"
             ],
             "owner": null,
+            "parked": false,
             "trust": "untrusted"
           }
         ],
-        "empty": null
+        "empty": null,
+        "next": null
       }
     ],
     "empty": null,
@@ -93,6 +101,8 @@
       "rebuilding": false,
       "stalled": false
     },
+    "counts": null,
+    "tag": "d75f1cff8487d5222e9ac723060d38bd",
     "page": {
       "offset": 0,
       "limit": 100,

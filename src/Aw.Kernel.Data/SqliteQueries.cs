@@ -18,8 +18,8 @@ public static class SqliteQueries
     public static async ValueTask<Result<T>> One<T>(ISqliteSession session, SqlStatement statement, IRowMapper<T> mapper, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(mapper);
-        var command = Prepare(session, statement);
-        await using var commandScope = command.ConfigureAwait(false);
+        using var lease = Prepare(session, statement);
+        var command = lease.Command;
         await using var interrupt = InterruptOnCancel(session, cancellationToken).ConfigureAwait(false);
         try
         {
@@ -49,8 +49,8 @@ public static class SqliteQueries
     public static async ValueTask<Result<IReadOnlyList<T>>> List<T>(ISqliteSession session, SqlStatement statement, IRowMapper<T> mapper, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(mapper);
-        var command = Prepare(session, statement);
-        await using var commandScope = command.ConfigureAwait(false);
+        using var lease = Prepare(session, statement);
+        var command = lease.Command;
         await using var interrupt = InterruptOnCancel(session, cancellationToken).ConfigureAwait(false);
         try
         {
@@ -81,8 +81,8 @@ public static class SqliteQueries
     /// <returns>True when the value is a non-zero integer, false for 0, NULL or no row; or an error.</returns>
     public static async ValueTask<Result<bool>> Exists(ISqliteSession session, SqlStatement statement, CancellationToken cancellationToken)
     {
-        var command = Prepare(session, statement);
-        await using var commandScope = command.ConfigureAwait(false);
+        using var lease = Prepare(session, statement);
+        var command = lease.Command;
         await using var interrupt = InterruptOnCancel(session, cancellationToken).ConfigureAwait(false);
         try
         {
@@ -106,8 +106,8 @@ public static class SqliteQueries
     /// <returns>The number of rows changed, or an error.</returns>
     public static async ValueTask<Result<int>> Execute(ISqliteSession session, SqlStatement statement, CancellationToken cancellationToken)
     {
-        var command = Prepare(session, statement);
-        await using var commandScope = command.ConfigureAwait(false);
+        using var lease = Prepare(session, statement);
+        var command = lease.Command;
         try
         {
             return await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -139,16 +139,37 @@ public static class SqliteQueries
     private static CancellationTokenRegistration InterruptOnCancel(ISqliteSession session, CancellationToken cancellationToken) =>
         cancellationToken.Register(static connection => SQLitePCL.raw.sqlite3_interrupt(((SqliteConnection)connection!).Handle), session.Connection);
 
-    private static SqliteCommand Prepare(ISqliteSession session, SqlStatement statement)
+    // why: a SqliteStatementCache keeps its commands prepared across runs (#2890: re-parsing the same upsert was 31% of a 100k
+    // catch-up), so its commands are rented and never disposed here; any other session gets a command of its own per run.
+    private static CommandLease Prepare(ISqliteSession session, SqlStatement statement)
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(statement);
+        if (session is SqliteStatementCache cache)
+        {
+            var rented = cache.Rent(statement.Sql);
+            statement.Bind?.Invoke(rented);
+            return new CommandLease(rented, Owned: false);
+        }
+
         var command = session.Connection.CreateCommand();
 #pragma warning disable CA2100 // SqlStatement is the reviewed type for command text: a constant, with values bound as parameters
         command.CommandText = statement.Sql;
 #pragma warning restore CA2100
         command.Transaction = session.Transaction;
         statement.Bind?.Invoke(command);
-        return command;
+        return new CommandLease(command, Owned: true);
+    }
+
+    /// <summary>A command for one run: disposed after it when this run made it, kept when a <see cref="SqliteStatementCache"/> lent it.</summary>
+    private readonly record struct CommandLease(SqliteCommand Command, bool Owned) : IDisposable
+    {
+        public void Dispose()
+        {
+            if (Owned)
+            {
+                Command.Dispose();
+            }
+        }
     }
 }
