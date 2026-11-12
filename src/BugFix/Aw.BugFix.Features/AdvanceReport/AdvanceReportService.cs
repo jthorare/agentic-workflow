@@ -6,7 +6,7 @@ using Aw.Kernel.Services;
 
 namespace Aw.BugFix.Features.AdvanceReport;
 
-internal sealed class AdvanceReportService(IStateStore store, TimeProvider clock) : IService<AdvanceReportRequest, AdvanceReportResponse>
+internal sealed class AdvanceReportService(IStateStore store, IFiles files, TimeProvider clock) : IService<AdvanceReportRequest, AdvanceReportResponse>
 {
     public ValueTask<Result<AdvanceReportResponse>> Handle(AdvanceReportRequest request, CancellationToken cancellationToken) =>
         ValueTask.FromResult((request.Candidate is null) == request.Unresolved
@@ -33,9 +33,17 @@ internal sealed class AdvanceReportService(IStateStore store, TimeProvider clock
             return candidate.Error;
         }
 
+        var sweep = request.SweepFile is { } file
+            ? files.ReadText(file).Bind(SweepRule.Check)
+            : BugFixErrors.SweepRefused.With("a resolved report needs the sweep: pass --sweep <file> (the \"Where else we checked\" table and the Prevention decision)");
+        if (sweep.IsError)
+        {
+            return sweep.Error;
+        }
+
         store.Save(
             request.StateDirectory,
-            (state with { Status = BugFixStatus.Resolved, ResolvedBy = id }).Step(Phase.Report, $"advance report {id.Value}", clock.GetUtcNow(), candidate.Value.Run?.Evidence));
+            (state with { Status = BugFixStatus.Resolved, ResolvedBy = id }).Step(Phase.Report, $"advance report {id.Value}", clock.GetUtcNow(), request.SweepFile));
         return new AdvanceReportResponse(Phase.Report, BugFixStatus.Resolved, id);
     }
 }

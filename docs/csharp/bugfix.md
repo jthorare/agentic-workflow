@@ -37,7 +37,7 @@ design.
 | `record-run <candidate> --evidence <run>` | fix, evaluate → evaluate | Records the frozen check's run against the candidate |
 | `record-run <candidate> --build-failed --log <build.log>` | fix, evaluate → evaluate | Marks a candidate that doesn't build as failed (no check to run), with its non-empty build log, so `start-attempt` can follow |
 | `judge <candidate>` | evaluate | Asks judge resolution-check once and records the verdict |
-| `advance report (--candidate <id> \| --unresolved)` | → report | Finishes resolved (only with a passing run and a `resolved` verdict) or unresolved |
+| `advance report (--candidate <id> --sweep <file> \| --unresolved)` | → report | Finishes resolved (only with a passing run, a `resolved` verdict and a sweep that passes, see "The sweep gate") or unresolved (no sweep needed) |
 | `status` | any | Prints the whole state |
 | `resume` | any | Prints `phase`, `status`, `attempt` and the `next` action |
 
@@ -54,6 +54,21 @@ interpreter modes that don't run the script, a planted file a loader picks up) i
 the common forms of those tricks where that was cheap, but they aren't a sandbox; the judge's resolution check and code
 review of the fix are the backstop. A review finding that needs a crafted exploit is answered against this section,
 not with another rule.
+
+## The sweep gate
+
+`advance report --candidate <id> --sweep <file>` reads a markdown file (the orchestrator writes `$STATE/sweep.md`) with two
+sections, and refuses with AW-BUGFIX-024 unless both hold:
+
+- `## Where else we checked`: a table with the columns Surface, Variant, Status. Each body row's Status is `fixed`,
+  `not affected (<reason>)` or `follow-up <link>`; a `not affected` with no reason, a `follow-up` with no link, any other
+  text or a row with fewer than three cells is refused, naming the row. This holds for every row, whatever the decision.
+- `## Prevention decision`: its first words are `existing guard`, `new mechanism` or `deferred` (case does not matter).
+  With `existing guard` or `deferred` an empty table passes; with anything else the table needs at least one row.
+
+No state field carries the sweep: the file is read when the report runs, and its full path goes into the report step's
+history entry (`evidence`). `advance report --unresolved` takes no sweep. The shape is in `skills/_shared/prevent-the-class.md`
+("Where else we checked").
 
 ## The rules
 
@@ -217,6 +232,7 @@ Everything else is one line on stderr ending with the catalogue code, and nothin
 | AW-BUGFIX-021 | conflict | Another bugfix-state call holds the state directory; retry when it finishes |
 | AW-BUGFIX-022 | unavailable | A state, run or log file can't be written or read |
 | AW-BUGFIX-023 | unavailable | The bug fix's `digest.key` is missing or malformed, so environment digests can't be made or compared |
+| AW-BUGFIX-024 | conflict | `advance report --candidate` has no usable sweep: no `--sweep` file, an empty "Where else we checked" table with a Prevention decision that is not `existing guard` or `deferred`, or a row without a valid status |
 
 ## Files
 
