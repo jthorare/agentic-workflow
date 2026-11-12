@@ -30,7 +30,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
             return found.Error;
         }
 
-        var stream = new Stream(options, found.Value, size);
+        var stream = new PaneStream(options, found.Value);
         var probe = await stream.Facts(cancellationToken).ConfigureAwait(false);
         if (probe is null)
         {
@@ -40,10 +40,9 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
         return stream;
     }
 
-    private sealed class Stream(TmuxHostOptions options, TerminalTarget target, HostSize? size) : ITerminalPaneStream
+    private sealed class PaneStream(TmuxHostOptions options, TerminalTarget target) : ITerminalPaneStream
     {
         private readonly SemaphoreSlim _kick = new(0);
-        private HostSize? _size = size;
 
         public TerminalHost Host { get; } = new(target.SocketIsPath ? "path" : target.Socket, target.Session, target.Pane);
 
@@ -126,8 +125,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
                 return SindriErrors.InvalidInput.With("A size is 20 to 400 columns and 5 to 200 rows");
             }
 
-            _size = newSize;   // how Sindri draws; a foreign window is never resized
-            if (target.Foreign)
+            if (target.Foreign)   // only how Sindri draws changes; a foreign window is never resized
             {
                 return Unit.Value;
             }
@@ -145,7 +143,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
         }
 
         /// <summary>The cursor, size and mode facts of the pane, or null when tmux or the pane is gone.</summary>
-        public async ValueTask<PaneFacts?> Facts(CancellationToken cancellationToken)
+        internal async ValueTask<PaneFacts?> Facts(CancellationToken cancellationToken)
         {
             const string format = "#{cursor_x} #{cursor_y} #{pane_width} #{pane_height} #{pane_in_mode} #{alternate_on} #{pane_dead}";
             var run = await Call(["display-message", "-p", "-t", target.Pane, format], null, cancellationToken).ConfigureAwait(false);

@@ -1,6 +1,7 @@
 using Aw.Redaction;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Mcp;
 using Aw.Sindri.Core.Profile;
@@ -20,6 +21,8 @@ internal static class LauncherServiceCollectionExtensions
         string? BuiltinHash(AgentId id) => builtinHashes.GetValueOrDefault(id.Value);
         return services
             .AddSingleton(static _ => new TmuxSessionHost(new TmuxHostOptions()))
+            .AddSingleton<ITerminalPaneLocator>(static sp => new SnapshotTerminalPaneLocator(sp.GetRequiredService<ISessionSnapshot>(), new TmuxHostOptions()))
+            .AddSingleton<ITerminalPaneSource>(static sp => new TmuxTerminalPaneSource(new TmuxHostOptions(), sp.GetRequiredService<ITerminalPaneLocator>()))
             .AddSingleton<ISessionHost>(static sp => sp.GetRequiredService<TmuxSessionHost>())   // the launcher service polls it for attached clients (API P10a U9)
             .AddSingleton<ISessionNudges>(static sp => new TmuxSessionNudges(sp.GetRequiredService<TmuxSessionHost>()))
             .AddSingleton<NoSessionHost>()

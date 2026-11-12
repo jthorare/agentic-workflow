@@ -12,6 +12,8 @@ internal static class EndpointTable
         var queries = group.MapGroup(string.Empty).WithMetadata(QueryRouteMetadata.Instance);   // X-Sindri-After honoured (read-your-writes)
         var commands = group.MapGroup(string.Empty).WithMetadata(CommandRouteMetadata.Instance);   // Origin refused before binding (SND-API-008)
 
+        _ = app.UseWebSockets();   // the terminal route (agents spec §15.8) is the one WebSocket
+        _ = group.MapTerminalSocket();
         _ = MapQueries(queries);
         _ = MapCommands(commands);
         return app;
