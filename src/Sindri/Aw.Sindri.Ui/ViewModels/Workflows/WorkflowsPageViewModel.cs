@@ -80,18 +80,24 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     public string Head { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when the head has a count to show (at least one workflow).</summary>
-    public bool HasHead { get; private set => Set(ref field, value); }
+    public bool HasHead { get; private set { Set(ref field, value); OnChanged(nameof(ShowsListHead)); } }
 
-    /// <summary>True when the list's counts show beside the title.</summary>
-    public bool ShowsListHead => HasHead;
+    /// <summary>True when the list's counts show beside the title: on the list only, never beside one workflow's or run's title.</summary>
+    public bool ShowsListHead => IsList && HasHead;
 
-    /// <summary>True when the open workflow's own state shows beside its title.</summary>
-#pragma warning disable CA1822, MA0041 // stub until the fix
-    public bool ShowsDetailState => false;
+    /// <summary>True when the open workflow's own state shows beside its title (on its runs level).</summary>
+    public bool ShowsDetailState => IsRuns && DetailStateText.Length > 0;
 
-    /// <summary>The open workflow's state.</summary>
-    public string DetailStateText => string.Empty;
-#pragma warning restore CA1822, MA0041
+    /// <summary>The open workflow's state, as its list row says it ("● Active", "○ Off"): from the workflow read, else from the list row; empty when neither is known.</summary>
+    public string DetailStateText => Runs.Shown is { } shown
+        ? StateOf(shown.ActiveRevision is not null)
+        : Rows.FirstOrDefault(r => string.Equals(r.Slug, Runs.Slug, StringComparison.Ordinal))?.StateText ?? string.Empty;
+
+    private static string StateOf(bool active)
+    {
+        var (glyph, word) = Labels.WfState(active);
+        return glyph + " " + word;
+    }
 
 #pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
     /// <summary>The empty state's create action: "New workflow".</summary>
@@ -224,6 +230,9 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         NotifyCrumb();
         OnChanged(nameof(IsRuns));
         OnChanged(nameof(IsRun));
+        OnChanged(nameof(ShowsListHead));
+        OnChanged(nameof(ShowsDetailState));
+        OnChanged(nameof(DetailStateText));
         NotifyStateButtons();
     }
 

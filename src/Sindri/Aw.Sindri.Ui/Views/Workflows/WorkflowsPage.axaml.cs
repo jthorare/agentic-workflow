@@ -254,8 +254,9 @@ internal sealed partial class WorkflowsPage : UserControl
             DispatcherPriority.Loaded);
     }
 
-    /// <summary>Returns focus to the Edit button (the sheet was closed).</summary>
-    internal void FocusEdit() => FocusLater(WorkflowEdit);
+    /// <summary>Returns focus to the Edit button (Done), or to Step settings while edit mode stays on (the sheet was closed).</summary>
+    internal void FocusEdit() =>
+        Dispatcher.UIThread.Post(() => _ = (WorkflowEdit.IsEffectivelyVisible ? WorkflowEdit : StepSettings).Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);   // Edit is hidden while edit mode is on: Step settings is the neighbour then
 
     private static Control? FirstTarget(Control within, Func<Control, bool> wanted) =>
         within.GetVisualDescendants().OfType<Control>().FirstOrDefault(c => wanted(c) && c.Focusable && c.IsEffectivelyVisible && c.IsEffectivelyEnabled);

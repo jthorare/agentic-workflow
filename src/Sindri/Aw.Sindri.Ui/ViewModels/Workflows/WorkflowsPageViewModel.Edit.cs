@@ -12,7 +12,7 @@ internal sealed partial class WorkflowsPageViewModel
     internal OpsEditor Editor { get; }
 
     /// <summary>True in graph edit mode (Edit pressed, Done not yet): the edit bar shows and works. The step settings sheet is separate, see <see cref="IsSettingsOpen"/>.</summary>
-    public bool IsEditing { get; private set => Set(ref field, value); }
+    public bool IsEditing { get; private set { Set(ref field, value); OnChanged(nameof(ShowsEdit)); } }
 
     /// <summary>True while the step settings sheet is open. It locks the edit bar, so the sheet's typed text is never reloaded under the person.</summary>
     public bool IsSettingsOpen { get; private set { Set(ref field, value); OnChanged(nameof(StepSummaryText)); OnChanged(nameof(HasStepSummary)); OnChanged(nameof(CanOpenSettings)); } }
@@ -29,8 +29,8 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>True when the open workflow can be edited: a workflow is open on its runs and it is not archived.</summary>
     public bool CanEdit => IsRuns && Runs.Shown is { ArchivedAt: null };
 
-    /// <summary>True when the Edit button shows.</summary>
-    public bool ShowsEdit => CanEdit;
+    /// <summary>True when the Edit button shows: the workflow can be edited and edit mode is off (Done is the way out while it is on).</summary>
+    public bool ShowsEdit => CanEdit && !IsEditing;
 
     /// <summary>The Edit button's words.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
@@ -146,6 +146,9 @@ internal sealed partial class WorkflowsPageViewModel
             if (string.Equals(e.PropertyName, nameof(RunsViewModel.Graph), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(RunsViewModel.IsReading), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(RunsViewModel.Shown), StringComparison.Ordinal))
             {
                 OnChanged(nameof(CanEdit));
+                OnChanged(nameof(ShowsEdit));
+                OnChanged(nameof(DetailStateText));
+                OnChanged(nameof(ShowsDetailState));
                 OnChanged(nameof(CanOpenSettings));
                 OnChanged(nameof(CanSave));
                 OnChanged(nameof(EditorHeading));
