@@ -24,11 +24,14 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="client">The API client.</param>
 /// <param name="output">Where the verbs write.</param>
 /// <param name="ensureRunning">Starts the control plane (true: this verb may launch it) or names why not; null: never start it.</param>
-internal sealed class ProjectVerbs(ControlPlaneClient client, Output output, Func<bool, CancellationToken, Task<Error?>>? ensureRunning = null)
+/// <param name="today">The local date, for the words '--target' reads; the default is this machine's.</param>
+internal sealed class ProjectVerbs(ControlPlaneClient client, Output output, Func<bool, CancellationToken, Task<Error?>>? ensureRunning = null, Func<DateOnly>? today = null)
 {
+    private static DateOnly Today() => DateOnly.FromDateTime(DateTime.Now);
+
     internal async Task<int> Run(string[] args, CancellationToken ct)
     {
-        var parsed = ProjectVerbArguments.Parse(args);
+        var parsed = ProjectVerbArguments.Parse(args, (today ?? Today)());
         if (parsed.IsError)
         {
             return await output.Error(parsed.Error).ConfigureAwait(false);

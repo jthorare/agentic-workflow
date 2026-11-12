@@ -310,6 +310,36 @@ public sealed class CliProjectVerbsTests : IDisposable
         Assert.Empty(api.Calls);
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("tomorrow")]
+    [InlineData("fri")]
+    [InlineData("12-05")]
+    [InlineData("2026-12-01")]
+    public async Task Target_reads_the_same_words_as_todo_due(string word)
+    {
+        var today = new DateOnly(2026, 11, 12);
+        var api = new RoutedApi().On("/sindri/projects", HttpStatusCode.OK, Accepted(Id, 1, "Kitchen", 9));
+
+        var code = await Verbs(api, today).Run(["project", "add", "--name", "Kitchen", "--target", word], Token);
+
+        var expected = Aw.Kernel.Dates.DueWords.Resolve(word, today).Value.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+        Assert.Equal(0, code);
+        Assert.Contains($"\"target\":\"{expected}\"", api.Calls[^1].Body, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Target_with_an_unreadable_word_is_refused_and_names_the_accepted_forms()
+    {
+        var api = new RoutedApi();
+
+        var code = await Verbs(api, new DateOnly(2026, 11, 12)).Run(["project", "add", "--name", "K", "--target", "someday"], Token);
+
+        Assert.Equal(2, code);
+        Assert.Contains("SND-PROJECT-004 target: 'someday'", _error.ToString(), StringComparison.Ordinal);
+        Assert.Contains("tomorrow, mon..sun, MM-dd or yyyy-MM-dd", _error.ToString(), StringComparison.Ordinal);
+        Assert.Empty(api.Calls);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public void Usage_names_the_project_verbs() => Assert.All(_forms, form => Assert.Contains(form, Usage.Text, StringComparison.Ordinal));
 
@@ -320,10 +350,10 @@ public sealed class CliProjectVerbsTests : IDisposable
 
     private static GetProjectResponse Shown(ProjectCard card, bool hidden) => new(_fine, Viewer: null, [], card, hidden);
 
-    private ProjectVerbs Verbs(RoutedApi api)
+    private ProjectVerbs Verbs(RoutedApi api, DateOnly? today = null)
     {
         var client = new ControlPlaneClient(_probe, SliceHarness.Json,
             CallerHeaders.For(new AgentSession(Terminal: true, Prover: false), Human, _ => ValueTask.FromResult((RepoName?)null)), handler: api);
-        return new ProjectVerbs(client, new Output(_out, _error, SliceHarness.Json), (_, _) => Task.FromResult<Kernel.Error?>(null));
+        return new ProjectVerbs(client, new Output(_out, _error, SliceHarness.Json), (_, _) => Task.FromResult<Kernel.Error?>(null), today is { } day ? () => day : null);
     }
 }
