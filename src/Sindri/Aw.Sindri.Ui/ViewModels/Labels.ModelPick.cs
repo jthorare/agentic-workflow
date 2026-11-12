@@ -8,11 +8,11 @@ internal static partial class Labels
     /// <summary>The table's heading.</summary>
     internal const string ModelPicksHeading = "Model picks";
 
-    /// <summary>The Model cell while Jev is being asked.</summary>
+    /// <summary>The Model cell while the picking model is being asked.</summary>
     internal const string ChoosingModel = "choosing model…";
 
-    /// <summary>The Why cell while Jev is being asked.</summary>
-    internal const string AskingJev = "asking Jev";
+    /// <summary>The Why cell while the picking model is being asked.</summary>
+    internal const string AskingModel = "asking a model";
 
     /// <summary>The Cost cell of a model with no price.</summary>
     internal const string CostUnknown = "cost unknown";
@@ -27,10 +27,10 @@ internal static partial class Labels
     internal const string WhyPanelTitle = "Why this model";
 
     /// <summary>The Why panel's candidates heading.</summary>
-    internal const string WhyCandidates = "Models Jev was shown";
+    internal const string WhyCandidates = "Models it compared";
 
     /// <summary>The Why panel's files heading.</summary>
-    internal const string WhyFiles = "Files Jev saw";
+    internal const string WhyFiles = "Files it read";
 
     /// <summary>The Why panel's close button.</summary>
     internal const string WhyClose = "Close";
@@ -59,10 +59,10 @@ internal static partial class Labels
     /// <summary>The Model cell's accessible name.</summary>
     /// <param name="model">The short name.</param>
     /// <param name="by">jev, constraint, rules or default.</param>
-    /// <returns>"Model: Haiku, picked by Jev".</returns>
+    /// <returns>"Model: Haiku, picked by a model".</returns>
     internal static string ModelCellName(string model, string by) => by switch
     {
-        "jev" => $"Model: {model}, picked by Jev",
+        "jev" => $"Model: {model}, picked by a model",
         "constraint" => $"Model: {model}, the only model allowed",
         "rules" => $"Model: {model}, picked by Sindri's rules",
         _ => $"Model: {model}",
