@@ -23235,3 +23235,5 @@ override sealed Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp.Equals(Aw.Sindri.Core.Gra
 static Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp.operator !=(Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp? left, Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp? right) -> bool
 static Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp.operator ==(Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp? left, Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp? right) -> bool
 static readonly Aw.Sindri.Core.SindriErrors.GraphNotBuilt -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Profile.WorkflowSettings.Editor.get -> string?
+Aw.Sindri.Core.Profile.WorkflowSettings.Editor.init -> void
