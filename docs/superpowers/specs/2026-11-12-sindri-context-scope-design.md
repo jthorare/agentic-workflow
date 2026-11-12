@@ -279,7 +279,7 @@ and measured it (comment 6818215657). The reference frame, drawn on the real `To
   1 conflict"; the noun is singular at 1 and plural otherwise, and a zero count is left out), and Hand to agent. Saved scopes are a menu on the
   name (named first, then recent, each unnamed one marked "unnamed, kept until 19 Nov"; the page with no question shows the same list
   inline, §6.4). A scope the person hasn't named shows the same "unnamed, kept until" line under its name.
-- **The ranked rail** (left, 280 px) is the scope as a list: groups that fold, one file per row. A row's columns, left to right: the role
+- **The ranked rail** (left, 280 px) is the scope as a list, under a header "Scope, ranked" with the counts "14 files · 5 tests" and the `/` filter box (placeholder "Type to filter the scope"): groups that fold, one file per row. A row's columns, left to right: the role
   glyph (`T` touch, `R` read, `Te` test, in ink, never colour alone), the file name, the dot, the score. The why is not a column: 280 px
   can't hold a name and a why on one line without cutting one (§6.7). The selected row shows its why in the in-place open, and Space shows
   it in peek. Hovering a row that is not selected shows the same why in a tooltip, so a mouse can scan the list. Width: 280 px minus 16
@@ -296,6 +296,7 @@ and measured it (comment 6818215657). The reference frame, drawn on the real `To
   comes from its strongest node kind: route, job, middleware or CLI command -> Entry points; service, layer, domain type -> Core; table,
   schema, event, migration -> Data and effects; tests fold into one Tests card there. Anything else goes to Core. The bands draw at most
   6 cards each: touch cards first, then by score. More fold into "+ N more". Groups fold to one card ("Billing plans · 4 files"). Every edge carries its verb ("calls RateLimiter.check", "reads IQuotaStore.get").
+  Each band has a heading with a one-line gloss in ink-subtle ("Entry points · routes, jobs, middleware"; "Core · services and domain logic"; "Data and effects · tables, events, tests"). Inside a band, each group has a sub-heading with its name and file count ("Rate limiting · 2 files"). A file card shows the file name, its folder path under it, and the dot and score at the right. A node that is not a file (a table or an event) is a pill: the kind word ("table", "event") and the name. A folded group card shows its name, its file count and the first file name with "+ N" ("Billing plans · 4 files · PlanLimits.cs +3"; the Tests card the same). The 170 px column and 150 px gap figures are minimums: at 1440 the columns grow to fill the width.
 - **The in-place open** (taken from direction 1): the selected rail row grows in place to show *Edges*, *Why here*, the decisions that
   cite the file (with a conflict marked as one, "D-37 conflicts with D-41") and its actions.
   It replaces direction 3's bottom strip, which pulled the eye away from the row you are on.
@@ -304,7 +305,7 @@ and measured it (comment 6818215657). The reference frame, drawn on the real `To
   row, moves the cursor to the new rail row, and fills the tray from the next-best file. While ranking the tray says "ranking…"; with
   nothing to suggest it says "Nothing else near these files". A suggestion nobody added comes back on the next `ask again`; there is no
   dismiss in ship 1.
-- **Whole repo** (bottom right, 200 px): the treemap of §6.4, with the scope's areas lit. Orientation only.  Ships in U2.
+- **Whole repo** (bottom right, 200 px): the treemap of §6.4, with the scope's areas lit. Its caption reads "Whole repo" and, right-aligned, "3 of 31 areas lit". Orientation only.  Ships in U2.
 - The key bar lists only the keys that work on the selected row.
 - **Dropped rows.** A drop removes the row from the rail and adds a line at its foot, "Dropped 2 · show", that lists them with Restore
   (`scope.restore`; Ctrl+Z undoes the last edit too). `dropped` stays a field of the row (§3), so the list survives a reload.
