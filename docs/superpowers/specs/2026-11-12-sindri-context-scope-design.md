@@ -331,7 +331,8 @@ and measured it (comment 6818215657). The reference frame, drawn on the real `To
    suite, not by eye.
 5. **Rail rows are 32 px and one line** (the #2978 grammar), not 38 px and two. The why leaves the row (it shows in the in-place open
    and on Space; qa's "why column" doesn't fit 280 px, see the rail above). The frame's 10 open rows, 7 headers and one in-place open
-   then fit the rail's 640 px at 1440x900, with no scroll (10 x 32 + 7 x 23 = 481 px, plus the open row).
+   then fit the rail's 640 px at 1440x900, with no scroll (10 x 32 + 7 x 28 = 516 px, plus the open row; group headers are 28 px
+   with no top margin, as the #2978 grammar draws them).
 
 The redraw also brings the frame in line with this text where qa's list doesn't name it: the role glyph column, the "Confirmed link"
 pill as a word in ink, the id as `scp_…`, the header counts above, and the key bar of §6.6. The frame's "Saved" label and ticket line go.
