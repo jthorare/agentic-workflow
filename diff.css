@@ -1,0 +1,72 @@
+/* #2977 revision diff: layout and the change-state pieces only. Sizes and colours come from ../grammar-2978/grammar.css. */
+.body.peeking{grid-template-columns:1fr var(--peek-w)}
+.canvas{position:relative;overflow:hidden;min-width:0;background:var(--canvas)}
+.canvas svg{position:absolute;left:0;top:0}
+.canvas .cap{position:absolute;left:24px;top:12px;font-size:12px;line-height:18px;color:var(--ink-3);white-space:nowrap}
+.crumb .sl{color:var(--ink-3)}
+.revs{margin-left:auto;display:flex;align-items:center;gap:var(--sp2);font-size:12px;line-height:18px;color:var(--ink-subtle);white-space:nowrap}
+.revs .dot{color:var(--ink-3)}
+.revs b{font-weight:500;color:var(--ink-muted)}
+.revs .av{vertical-align:middle}
+.revs .id{font:400 12px/18px var(--mono);color:var(--ink-muted)}
+
+/* node card: ~200x64, title 13/600, type 12 ink-subtle (today's shape) */
+.node{position:absolute;width:200px;height:64px;padding:10px 12px;background:var(--s1);border:1px solid var(--hair-strong);border-radius:var(--r2)}
+.node .t{font:600 13px/20px var(--font);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.node .ty{font:400 12px/18px var(--font);color:var(--ink-subtle)}
+.node.same .t{color:var(--ink-subtle)} .node.same .ty{color:var(--ink-3)}
+.node.add{background:var(--ok-soft);border-color:var(--ok)}
+.node.chg{border-color:var(--att)}
+.node.rem{opacity:.5;border:1px dashed var(--err)}
+.node.rem .t{text-decoration:line-through}
+.node.cur{box-shadow:0 0 0 2px var(--canvas),0 0 0 3px var(--primary-hi)}
+.badge{position:absolute;top:-8px;right:-8px;min-width:16px;height:16px;border-radius:8px;display:grid;place-items:center;
+  font:600 11px/16px var(--font);color:var(--canvas);padding:0 4px}
+.badge.add{background:var(--ok);font-size:13px;line-height:14px}
+.badge.chg{background:var(--att)}
+.pill{position:absolute;transform:translate(-50%,-50%);background:var(--canvas);border:1px solid var(--wire);border-radius:var(--r1);
+  padding:1px 5px;font:400 11px/14px var(--mono);color:var(--ink-subtle);white-space:nowrap}
+.pill.rem{border-color:var(--err);color:var(--err);opacity:.6;border-style:dashed}
+.legend{position:absolute;left:24px;bottom:12px;display:flex;gap:var(--sp4);font-size:12px;line-height:18px;color:var(--ink-3);align-items:center}
+.legend span{display:flex;gap:6px;align-items:center}
+.legend i{display:inline-block}
+.legend .la{width:14px;height:14px;border-radius:50%;background:var(--ok);color:var(--canvas);font:600 12px/14px var(--font);text-align:center}
+.legend .lc{width:8px;height:8px;border-radius:50%;background:var(--att);margin:3px}
+.legend .lr{width:16px;height:10px;border:1px dashed var(--err);border-radius:2px;opacity:.7}
+
+/* change list in the peek pane */
+.peek .peek-body{padding:0;display:flex;flex-direction:column;overflow:hidden}
+.peek .group{padding:0 var(--sp4);margin-top:var(--sp2)}
+.peek .group:first-child{margin-top:var(--sp2)}
+.crow{height:var(--row-h);margin:0 var(--sp2);padding:0 var(--sp2);display:grid;grid-template-columns:var(--col-glyph) minmax(0,1fr) auto;column-gap:var(--sp3);align-items:center;white-space:nowrap}
+.crow.cursor{box-shadow:inset 0 0 0 1px var(--primary-hi);border-radius:var(--r1)}
+.crow .t{color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+.crow.rem .t{color:var(--ink-muted)}
+.crow .fact{display:block}
+.cg{width:14px;height:14px;display:grid;place-items:center;font:600 14px/14px var(--mono)}
+.cg.add{color:var(--ok)} .cg.rem{color:var(--err)}
+.cg.chg::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--att)}
+.fields{margin:0 var(--sp2);padding:0 var(--sp2) var(--sp1) calc(var(--sp2) + var(--col-glyph) + var(--sp3))}
+.frow{display:grid;grid-template-columns:64px minmax(0,1fr);height:28px;align-items:center;font-size:12px;line-height:18px}
+.frow .k{color:var(--ink-3)}
+.frow .old{color:var(--ink-subtle)} .frow .arr{color:var(--ink-subtle);margin:0 6px;font:400 14px/18px var(--mono)} .frow .new{color:var(--ink)}
+.dl{font:400 12px/20px var(--mono);color:var(--ink-muted);border-radius:var(--r1);overflow:hidden;margin:0 0 var(--sp1)}
+.dl div{display:grid;grid-template-columns:20px minmax(0,1fr);padding:0 var(--sp2) 0 0;white-space:nowrap}
+.dl div b{font-weight:500;text-align:center}
+.dl .r{background:var(--err-soft)} .dl .r b{color:var(--err)}
+.dl .a{background:var(--ok-soft)} .dl .a b{color:var(--ok)}
+.conn{height:28px;display:flex;align-items:center;padding:0 var(--sp4);margin-top:var(--sp2);font-size:12px;color:var(--ink-3);gap:var(--sp2)}
+.conn b{font-weight:500;color:var(--ink-subtle)}
+.peek .state-line{margin-top:var(--sp3);padding:0 var(--sp4);grid-template-columns:var(--col-glyph) minmax(0,1fr) auto}
+.peek .state-line .g.you{margin:2px}
+.accept{margin-top:auto;border-top:1px solid var(--hair);padding:var(--sp3) var(--sp4)}
+.accept .row1{display:flex;gap:var(--sp2);align-items:center;justify-content:flex-end}
+.accept .why{margin-top:var(--sp2);text-align:right;font-size:12px;line-height:18px;color:var(--ink-subtle)}
+.btn.primary kbd{background:rgba(255,255,255,.16);border-color:transparent;color:#fff}
+.btn.off{opacity:.4}
+.toast{position:absolute;left:50%;bottom:44px;transform:translateX(-50%);display:flex;gap:var(--sp3);align-items:center;height:36px;padding:0 var(--sp3) 0 var(--sp4);
+  background:var(--s3);border:1px solid var(--hair-strong);border-radius:var(--r3);color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.5);white-space:nowrap}
+.toast .dot{color:var(--ink-3)}
+.badge.find{right:12px;min-width:20px;height:20px;top:-10px;background:var(--canvas);border-radius:50%;padding:0}
+.badge.find::after{content:"";width:10px;height:10px;background:var(--att);transform:rotate(45deg);border-radius:1px}
+.revs .av,.peek-fields .av{font-size:9px;line-height:16px}
