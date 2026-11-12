@@ -26,7 +26,8 @@ public sealed class CliSetupTests : IDisposable
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static string Body(params SetupStep[] steps) => Encoding.UTF8.GetString(AwJson.Serialize(new GetSetupResponse(steps, _asOf), SliceHarness.Json));
+    // the deriver fills Cli from the action (SetupDeriver.Derive); the raw SetupSteps.* here get the same, so the exit-3 rule sees what a served list carries
+    private static string Body(params SetupStep[] steps) => Encoding.UTF8.GetString(AwJson.Serialize(new GetSetupResponse([.. steps.Select(static s => s with { Cli = SetupActions.CliFor(s.Action) })], _asOf), SliceHarness.Json));
 
     private SetupVerbs Verbs(FakeControlPlaneProbe probe, Api api) =>
         new(new ControlPlaneClient(probe, SliceHarness.Json,
