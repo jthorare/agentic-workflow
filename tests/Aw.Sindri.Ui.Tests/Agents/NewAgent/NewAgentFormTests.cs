@@ -202,14 +202,14 @@ public sealed class NewAgentFormTests
     }
 
     [Fact]
-    public async Task Error_013_without_a_command_has_nothing_to_copy()
+    public async Task Error_013_without_a_command_shows_the_plain_line_and_no_command_row()
     {
         var form = Form();
         _route.Refuse("SND-AGENT-013", "Codex is not installed");
 
         await form.Start(background: false, Token);
 
-        Assert.Equal((string.Empty, false), (form.SignInCommand, await form.CopySignInCommand(Token)));
+        Assert.Equal(("Codex is not installed", false, false, string.Empty), (form.AgentError, form.HasSignInCommand, await form.CopySignInCommand(Token), _clipboard.Text ?? string.Empty));
     }
 
     [Fact]

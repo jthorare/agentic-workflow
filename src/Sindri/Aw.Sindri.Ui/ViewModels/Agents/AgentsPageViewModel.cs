@@ -33,6 +33,9 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
     /// <summary>Raised when the page should put focus on a row or its Focus line.</summary>
     internal event EventHandler<AgentFocusEventArgs>? FocusRequested;
 
+    /// <summary>Raised when N asks for the New agent form.</summary>
+    internal event EventHandler? NewAgentRequested;
+
     /// <summary>The API the page reads.</summary>
     internal ISindriApi Api { get; } = api;
 
