@@ -784,7 +784,7 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `SND-SESSION-404` | No live session has that ref or it has ended (the same answer for both; collector CA-5, CO-3) |
 | `SND-AGENT-012` | A one-off start named a repo that is not in the profile, or whose folder is gone (400) |
 | `SND-AGENT-013` | The agent is not installed or not signed in; the message carries the sign-in command (400) |
-| `SND-AGENT-014` | The worktree could not be made, tmux is not installed, or tmux did not start the session in 4 s; the half-made session and worktree were removed (spec says 502; answers 503 until `ErrorKind` has a gateway kind) |
+| `SND-AGENT-014` | The worktree could not be made, tmux is not installed, or tmux did not start the session in 4 s; the half-made session and worktree were removed (503) |
 | `SND-AGENT-017` | The prompt is over 8,000 characters (400) |
 | `SND-AGENT-018` | The one-off worktree was not removed: it has changes, or no start recorded it (409) |
 | `SND-SESSION-409` | The session at that ref is a different process than the caller looked at (`expectStartedAt` differs; collector CA-5; the preview read, CO-7a, answers it, and `FocusSession` will, CO-4a) |
