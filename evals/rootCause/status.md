@@ -9,3 +9,7 @@ Baseline (spec §8 step 5): agent claude-sonnet-5-5, judge sonnet, 3 runs per ca
   result file, aw-result block) now passes 3/3 with the skill and fails 3/3 without. Before that fix: 0.57 / 0.6. The one miss with the
   skill is repro-before-edit in 1 of 3 runs.
 - Caveat: 3 runs per arm. One run flips a case by about 0.1-0.3.
+
+Classification cases (#2911), not run yet (a real run needs the lane lead's spend line):
+- rc-regression: a fixture where PR #17 introduced the bug; the reply must name it and list the revert first.
+- rc-baseline: needs `skills/_shared/repo-config.sh` from #2909. Without that reader the skill skips the baseline step by design, so the case fails until #2909 merges. Do not count it in a gate run before then.
