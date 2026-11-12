@@ -26,7 +26,7 @@ public sealed class GitHubEventEnrichTests
         Assert.Equal("Fix login", e.Fields["title"]);
         Assert.Equal("ada", e.Fields["author"]);
         Assert.Equal("https://github.com/acme/app/pull/77", e.Fields["url"]);
-        Assert.Single(PullRequests(provider));
+        Assert.Equal("/repos/acme/app/pulls/77", Assert.Single(PullRequests(provider)).Uri.AbsolutePath);
     }
 
     [Theory]
