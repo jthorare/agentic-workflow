@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Aw.Sindri.Ui.ViewModels.Projects;
 
 namespace Aw.Sindri.Ui.Views.Projects;
@@ -26,6 +27,7 @@ internal sealed partial class ProjectAddView : UserControl
     {
         Sheet?.SelectByHand();
         Keep(sender);
+        Dispatcher.UIThread.Post(() => ProjectAddName.Focus(), DispatcherPriority.Input);   // why: the form shows after this click; typing the name comes next
     }
 
     // A toggle flips itself on a click; the tab shown is the view model's, so a click on the tab already on leaves it on.

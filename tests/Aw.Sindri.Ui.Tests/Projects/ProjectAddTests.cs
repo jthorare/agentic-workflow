@@ -115,10 +115,10 @@ public sealed class ProjectAddTests
     }
 
     [Theory]
-    [InlineData("tomorrow")]
+    [InlineData("soonish")]
     [InlineData("2026-13-01")]
     [InlineData("03/02/2026")]
-    public async Task A_target_that_is_not_a_date_is_refused_without_a_call(string target)
+    public async Task A_target_that_is_not_a_date_sends_nothing(string target)
     {
         var add = Add();
         (add.Name, add.Target) = ("Kitchen", target);
@@ -126,7 +126,7 @@ public sealed class ProjectAddTests
         await add.Save(Token);
 
         Assert.Empty(_f.Server.ProjectWrites);
-        Assert.Equal(("Target date must look like 2026-01-31.", "Kitchen", target), (add.SaveError, add.Name, add.Target));
+        Assert.Equal((false, "Couldn't read that date. Try Dec 5, next fri or 2026-12-05.", "Kitchen", target), (add.CanSave, add.TargetError, add.Name, add.Target));
     }
 
     [Fact]

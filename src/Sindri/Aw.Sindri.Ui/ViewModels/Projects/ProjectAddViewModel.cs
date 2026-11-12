@@ -94,14 +94,24 @@ internal sealed partial class ProjectAddViewModel(ISindriApi api, Func<Uri?> api
     /// <summary>The owner's notes.</summary>
     public string Notes { get; set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>The target date, yyyy-MM-dd; empty for none.</summary>
-    public string Target { get; set => Set(ref field, value); } = string.Empty;
+    /// <summary>The target date as typed ("Dec 5", "next fri", "2026-12-05"); empty for none.</summary>
+    public string Target
+    {
+        get;
+        set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(TargetRead));
+            OnChanged(nameof(TargetError));
+            OnChanged(nameof(CanSave));
+        }
+    } = string.Empty;
 
     /// <summary>Under the Target box: the date the text read as ("Sat 5 Dec 2026"); empty when the box is empty or unreadable.</summary>
-    public string TargetRead => Reading.Kind == TargetReadKind.Date ? throw new NotSupportedException() : string.Empty;
+    public string TargetRead => Reading is { Kind: TargetReadKind.Date } read ? read.Date.ToString("ddd d MMM yyyy", CultureInfo.InvariantCulture) : string.Empty;
 
     /// <summary>Under the Target box: why the text is not a date; empty when it reads or the box is empty.</summary>
-    public string TargetError => Reading.Kind == TargetReadKind.Unreadable ? throw new NotSupportedException() : string.Empty;
+    public string TargetError => Reading.Kind == TargetReadKind.Unreadable ? Labels.ProjectAddBadTarget : string.Empty;
 
     private TargetReading Reading => TargetDateReader.Read(Target, DateOnly.FromDateTime(_clock.GetLocalNow().DateTime));
 
@@ -120,8 +130,8 @@ internal sealed partial class ProjectAddViewModel(ISindriApi api, Func<Uri?> api
     /// <summary>"Save", or "Saving…" while the write is in flight.</summary>
     public string SaveText => IsSaving ? Labels.ProjectSaving : Labels.ProjectSave;
 
-    /// <summary>True when Save can be pressed: the name is not blank and no write is in flight.</summary>
-    public bool CanSave => !IsSaving && Name.Trim().Length > 0;
+    /// <summary>True when Save can be pressed: the name is not blank, the target is empty or reads as a date, and no write is in flight.</summary>
+    public bool CanSave => !IsSaving && Name.Trim().Length > 0 && Reading.Kind != TargetReadKind.Unreadable;
 
     /// <summary>Under the button: why the last Save failed; empty otherwise.</summary>
     public string SaveError { get; private set => Set(ref field, value); } = string.Empty;
@@ -159,13 +169,7 @@ internal sealed partial class ProjectAddViewModel(ISindriApi api, Func<Uri?> api
             return;
         }
 
-        var target = Target.Trim();
-        if (target.Length > 0 && !DateOnly.TryParseExact(target, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
-        {
-            SaveError = Labels.ProjectAddBadTarget;
-            return;
-        }
-
+        var target = Reading is { Kind: TargetReadKind.Date } read ? read.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : string.Empty;
         var attach = Body(target);
         (SaveError, IsSaving) = (string.Empty, true);
         Result<ProjectAcceptedView> answer;

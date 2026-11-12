@@ -36,8 +36,8 @@ internal static partial class Labels
     /// <summary>The notes field.</summary>
     internal const string ProjectAddNotesField = "Notes";
 
-    /// <summary>The line under Save when the target date does not read as a date.</summary>
-    internal const string ProjectAddBadTarget = "Target date must look like 2026-01-31.";
+    /// <summary>The line under the Target box when its text does not read as a date.</summary>
+    internal const string ProjectAddBadTarget = "Couldn't read that date. Try Dec 5, next fri or 2026-12-05.";
 
     /// <summary>A row's Attach button's accessible name.</summary>
     internal static string ProjectAddAttachName(string name) => "Attach " + name;
