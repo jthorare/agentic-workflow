@@ -27,7 +27,7 @@ public sealed class OnlyNewBlock(IGraphSeenStore seen) : IGraphBlock
     public bool IsTrigger => false;
 
     /// <inheritdoc />
-    public BlockSchema Config { get; } = new([new("items", BlockFieldType.Text), new("key", BlockFieldType.Text, Required: false)]);
+    public BlockSchema Config { get; } = new([new("items", BlockFieldType.Text, Caption: "List to check"), new("key", BlockFieldType.Text, Required: false, Caption: "What makes an item the same")]);
 
     /// <inheritdoc />
     public string Example => """{"items":"{{search.results}}","key":"id"}""";

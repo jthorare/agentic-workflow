@@ -25,10 +25,10 @@ public sealed class MemorySearchBlock(IGraphMemoryPort memory) : IGraphBlock
 
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([
-        new("memory", BlockFieldType.Text),
-        new("query", BlockFieldType.Text),
-        new("level", BlockFieldType.Text, Required: false),
-        new("limit", BlockFieldType.Number, Required: false),
+        new("memory", BlockFieldType.Text, Caption: "Memory"),
+        new("query", BlockFieldType.Text, Caption: "What to look for"),
+        new("level", BlockFieldType.Text, Required: false, Caption: "Detail level"),
+        new("limit", BlockFieldType.Number, Required: false, Caption: "Most results"),
     ]);
 
     /// <inheritdoc />

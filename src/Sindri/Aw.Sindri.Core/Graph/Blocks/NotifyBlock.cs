@@ -22,7 +22,7 @@ public sealed class NotifyBlock(INotifyPort notify) : IGraphBlock
     public bool IsTrigger => false;
 
     /// <inheritdoc />
-    public BlockSchema Config { get; } = new([new("title", BlockFieldType.Text), new("body", BlockFieldType.Text, Required: false)]);
+    public BlockSchema Config { get; } = new([new("title", BlockFieldType.Text, Caption: "Title"), new("body", BlockFieldType.Text, Required: false, Caption: "Message")]);
 
     /// <inheritdoc />
     public string Example => """{"title":"Drifted","body":"{{agent.summary}}"}""";
