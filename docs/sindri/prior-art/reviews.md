@@ -11,10 +11,10 @@ Licence notes: difftastic MIT, delta MIT, octorus MIT, tuicr MIT, ghui/phui MIT.
 ## 1. Know which PRs wait on me, and why
 
 **Best today**
-- Gerrit attention set. Per change, Gerrit keeps the list of users whose turn it is, with an arrow icon before the bolded name, and the dashboard's top section "Your turn" lists exactly those changes. It records why and when you were added. Adding a reviewer adds them; replying removes you. Bots never enter it. [docs](https://gerrit-review.googlesource.com/Documentation/user-attention-set.html)
-- Reviewable "Waiting on". A pointing-hand marks who moves the review forward: people in unreplied discussions, people whose last "reviewed" mark is stale on a file, else the requested reviewers. [docs](https://docs.reviewable.io/reviews)
-- Graphite inbox. Six default sections: Needs your review, Approved, Returned to you, Merging and recently merged, Drafts, Waiting for review. Custom sections with filters; sections can be shared as a link. [docs](https://graphite.com/docs/use-pr-inbox.md)
-- CodeRabbit Triage. One cross-repo queue; the card's "next action" says whether you move (`Update PR`, `Respond to feedback`, `Merge`) or someone else does (`Ping in Slack`, `Find reviewer`). [docs](https://docs.coderabbit.ai/triage.md)
+- Gerrit attention set. Per change, Gerrit keeps the list of users whose turn it is, with an arrow icon before the bolded name, and the dashboard's top section "Your turn" lists exactly those changes. It records why and when you were added. Adding a reviewer adds them; replying removes you. Bots never enter it. [docs](https://gerrit-review.googlesource.com/Documentation/user-attention-set.html) source: docs
+- Reviewable "Waiting on". A pointing-hand marks who moves the review forward: people in unreplied discussions, people whose last "reviewed" mark is stale on a file, else the requested reviewers. [docs](https://docs.reviewable.io/reviews) source: docs
+- Graphite inbox. Six default sections: Needs your review, Approved, Returned to you, Merging and recently merged, Drafts, Waiting for review. Custom sections with filters; sections can be shared as a link. [docs](https://graphite.com/docs/use-pr-inbox.md) source: docs
+- CodeRabbit Triage. One cross-repo queue; the card's "next action" says whether you move (`Update PR`, `Respond to feedback`, `Merge`) or someone else does (`Ping in Slack`, `Find reviewer`). [docs](https://docs.coderabbit.ai/triage.md) source: docs
 
 **What we take**
 - Gerrit's rule: the set holds the people who must act, with a reason string per person ("new commits since your review", "unreplied thread from @x"). Show the reason in the row, not just the badge.
@@ -37,10 +37,10 @@ Done in part. `ReviewListBuilder` puts a PR in "Waiting on you" when the owner i
 ## 2. Rank the queue by what unblocks someone
 
 **Best today**
-- CodeRabbit Triage. Priority and next action are separate on purpose: a red trivial dependency bump must not outrank a customer fix waiting for a reviewer. Precedence: manual override, model verdict with a short reason, admin rule, base score (issue severity, linked Jira/Linear priority, more signals). [docs](https://docs.coderabbit.ai/triage/prioritization.md)
-- Graphite inbox sections order work by state, not score. [docs](https://graphite.com/docs/use-pr-inbox.md)
-- Gerrit "Your turn" is a flat list, unranked. [docs](https://gerrit-review.googlesource.com/Documentation/user-attention-set.html)
-- GitHub's own review-requested list (sort by age/updated only). [GitHub docs, filtering PRs](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/filtering-and-searching-issues-and-pull-requests) (page not re-read here; unconfirmed beyond sort options).
+- CodeRabbit Triage. Priority and next action are separate on purpose: a red trivial dependency bump must not outrank a customer fix waiting for a reviewer. Precedence: manual override, model verdict with a short reason, admin rule, base score (issue severity, linked Jira/Linear priority, more signals). [docs](https://docs.coderabbit.ai/triage/prioritization.md) source: docs
+- Graphite inbox sections order work by state, not score. [docs](https://graphite.com/docs/use-pr-inbox.md) source: docs
+- Gerrit "Your turn" is a flat list, unranked. [docs](https://gerrit-review.googlesource.com/Documentation/user-attention-set.html) source: docs
+- GitHub's own review-requested list (sort by age/updated only). [GitHub docs, filtering PRs](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/filtering-and-searching-issues-and-pull-requests) (page not re-read here; unconfirmed beyond sort options). source: docs
 
 **What we take**
 - Two columns, never merged: priority (how much it is worth) and next action (what moves it, and whose move). A manual override key on the row.
@@ -62,10 +62,10 @@ Missing. The list orders by group, then newest activity (spec §6.1). The direct
 ## 3. Read a diff in the order the change makes sense, not file order
 
 **Best today**
-- CodeRabbit Change Stack. The PR becomes numbered layers ("a contract and the code that implements it and the tests that cover it belong in one layer, not three"), foundations first. Left rail toggles Layers/Files; each layer has Files and Diagrams tabs (Mermaid, kind picked per change); summaries and findings anchor to line ranges. Preview feature, model-generated, can differ between runs. [overview](https://docs.coderabbit.ai/pr-reviews/change-stack.md), [navigation](https://docs.coderabbit.ai/change-stack/navigation.md)
-- Graphite PR page: file tree beside the diff, `F` toggles it and the table of contents on the left; `.gitattributes linguist-generated` hides generated files. Order is the tree, not the story. [docs](https://graphite.com/docs/pr-page-overview.md)
-- octorus: split view, file list 35% and diff 65%, file-tree toggle, tree-sitter symbol outline. [README](https://github.com/ushironoko/octorus)
-- Zed multibuffer review of agent edits: all changed hunks of many files in one scroll tab. [docs](https://zed.dev/docs/ai/agent-panel)
+- CodeRabbit Change Stack. The PR becomes numbered layers ("a contract and the code that implements it and the tests that cover it belong in one layer, not three"), foundations first. Left rail toggles Layers/Files; each layer has Files and Diagrams tabs (Mermaid, kind picked per change); summaries and findings anchor to line ranges. Preview feature, model-generated, can differ between runs. [overview](https://docs.coderabbit.ai/pr-reviews/change-stack.md), [navigation](https://docs.coderabbit.ai/change-stack/navigation.md) source: docs
+- Graphite PR page: file tree beside the diff, `F` toggles it and the table of contents on the left; `.gitattributes linguist-generated` hides generated files. Order is the tree, not the story. [docs](https://graphite.com/docs/pr-page-overview.md) source: docs
+- octorus: split view, file list 35% and diff 65%, file-tree toggle, tree-sitter symbol outline. [README](https://github.com/ushironoko/octorus) source: docs
+- Zed multibuffer review of agent edits: all changed hunks of many files in one scroll tab. [docs](https://zed.dev/docs/ai/agent-panel) source: docs
 
 **What we take**
 - Layers as the unit, numbered, with the dependency between layers stored, not inferred from the number. Keys from Change Stack: `J/K` next/previous layer, `L/H` next/previous file, `U` unified/split, `Z` focus mode (hide rails), `[` and `]` collapse left/right panels.
@@ -88,10 +88,10 @@ Partial. The diff is grouped and folded by profile rules (`PrReviewGroup`, spec 
 ## 4. Mark files reviewed and not lose my place in a big PR
 
 **Best today**
-- GitHub "Viewed" checkbox per file, collapses the file, progress bar in the PR header. [docs](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/reviewing-proposed-changes-in-a-pull-request)
-- Reviewable reviewed-state per file per reviewer per revision. A purple "Show Diffs to Review" button sets diff bounds on all files to the range you still owe; sufficiently reviewed files hide their chip in the file matrix. [docs](https://docs.reviewable.io/files)
-- tuicr: tracking at file or hunk level, saved across sessions as a local review session. [README](https://github.com/agavra/tuicr)
-- CodeRabbit Change Stack: viewed progress is kept per snapshot, and on GitHub it ticks GitHub's own Viewed box, so teammates see it. [docs](https://docs.coderabbit.ai/change-stack/navigation.md)
+- GitHub "Viewed" checkbox per file, collapses the file, progress bar in the PR header. [docs](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/reviewing-proposed-changes-in-a-pull-request) source: docs
+- Reviewable reviewed-state per file per reviewer per revision. A purple "Show Diffs to Review" button sets diff bounds on all files to the range you still owe; sufficiently reviewed files hide their chip in the file matrix. [docs](https://docs.reviewable.io/files) source: docs
+- tuicr: tracking at file or hunk level, saved across sessions as a local review session. [README](https://github.com/agavra/tuicr) source: docs
+- CodeRabbit Change Stack: viewed progress is kept per snapshot, and on GitHub it ticks GitHub's own Viewed box, so teammates see it. [docs](https://docs.coderabbit.ai/change-stack/navigation.md) source: docs
 
 **What we take**
 - `v` toggles viewed on the focused file, collapses it, header shows "12/41 viewed". Hunk-level marks as an option (tuicr).
@@ -114,11 +114,11 @@ Missing in code on origin/main (a grep of `src/Sindri/Aw.Sindri.Ui` for viewed s
 ## 5. See only what changed since my last look
 
 **Best today**
-- Reviewable. Every push is a revision; the file matrix has a column per revision and you set diff bounds per file, so "revision 2 vs 4" is one click. Marking reviewed is tied to the bounds. [docs](https://docs.reviewable.io/files)
-- Gerrit. The change screen compares any pair of patch sets (Patchset A and B); the diff of two patch sets shows only author changes. [docs](https://gerrit-review.googlesource.com/Documentation/user-review-ui.html)
-- Phorge/Phabricator Differential. Comments port forward to the new diff and show faded; "diff of diffs" marks rebase-only changes with a separate colour so they are not read as author edits. Secondary source only (the Phorge site blocked fetches): [user guide](https://we.phorge.it/book/phorge/article/differential_inlines/) and a search summary.
-- tuicr. On reopening a PR you reviewed, it preselects commits newer than your last submitted review. [README](https://github.com/agavra/tuicr)
-- GitHub: a "since your last review" compare exists in the UI; I could not confirm its exact screen from the docs page. Unconfirmed.
+- Reviewable. Every push is a revision; the file matrix has a column per revision and you set diff bounds per file, so "revision 2 vs 4" is one click. Marking reviewed is tied to the bounds. [docs](https://docs.reviewable.io/files) source: docs
+- Gerrit. The change screen compares any pair of patch sets (Patchset A and B); the diff of two patch sets shows only author changes. [docs](https://gerrit-review.googlesource.com/Documentation/user-review-ui.html) source: docs
+- Phorge/Phabricator Differential. Comments port forward to the new diff and show faded; "diff of diffs" marks rebase-only changes with a separate colour so they are not read as author edits. Secondary source only (the Phorge site blocked fetches): [user guide](https://we.phorge.it/book/phorge/article/differential_inlines/) and a search summary. source: docs
+- tuicr. On reopening a PR you reviewed, it preselects commits newer than your last submitted review. [README](https://github.com/agavra/tuicr) source: docs
+- GitHub: a "since your last review" compare exists in the UI; I could not confirm its exact screen from the docs page. Unconfirmed. source: docs
 
 **What we take**
 - Default view on reopening is "since your last review" (your review's commit to head), computed per file, with one key to flip to the whole PR. This is Reviewable's "Show diffs to review" as the default, not a button.
@@ -141,10 +141,10 @@ Partial and thin. The list shows "reviewed, N new commits" (`ReviewListBuilder.c
 ## 6. Read a structural / semantic diff
 
 **Best today**
-- difftastic: compares syntax trees, so reformatting and moved nesting do not show as changes; 30+ languages via tree-sitter; falls back to text diff with word highlighting for unknown extensions; `--graph-limit` falls back when the graph gets too big. MIT. [manual](https://difftastic.wilfred.me.uk/introduction.html)
-- delta: word-level highlight by Levenshtein edit inference, side-by-side with wrapping, `n`/`N` jump between files. MIT. [README](https://github.com/dandavison/delta)
-- GitHub: line diff with whitespace toggle only (`?w=1`; not re-read here, unconfirmed beyond the toggle in the parity list on #2980).
-- Zed/octorus: syntax-highlighted line diffs with tree-sitter highlighting, not structural. [octorus README](https://github.com/ushironoko/octorus)
+- difftastic: compares syntax trees, so reformatting and moved nesting do not show as changes; 30+ languages via tree-sitter; falls back to text diff with word highlighting for unknown extensions; `--graph-limit` falls back when the graph gets too big. MIT. [manual](https://difftastic.wilfred.me.uk/introduction.html) source: docs
+- delta: word-level highlight by Levenshtein edit inference, side-by-side with wrapping, `n`/`N` jump between files. MIT. [README](https://github.com/dandavison/delta) source: docs
+- GitHub: line diff with whitespace toggle only (`?w=1`; not re-read here, unconfirmed beyond the toggle in the parity list on #2980). source: docs
+- Zed/octorus: syntax-highlighted line diffs with tree-sitter highlighting, not structural. [octorus README](https://github.com/ushironoko/octorus) source: docs
 
 **What we take**
 - Two layers: (1) word-level intra-line highlight always on (delta); (2) structural mode per language where we have a parser, with a visible "text diff (no parser)" label when it falls back. Keep difftastic's size cutoff and show the reason.
@@ -167,11 +167,11 @@ Missing. The diff is the patch GitHub returns, parsed by `ReviewPatch.Hunks` (`R
 ## 7. Comment, suggest, batch and resolve threads
 
 **Best today**
-- Graphite. Click a line number, drag for a range, comment on changed and unchanged lines; "Add to review" puts it in a private pending batch; `Cmd+Enter` posts a single comment now. [docs](https://graphite.com/docs/pr-page-overview.md)
-- Reviewable. Each person has a disposition per discussion (e.g. "Discussing" means "I won't resolve, others may"); a discussion resolves by rule from dispositions; drafts, dispositions and review marks all publish together. [discussions](https://docs.reviewable.io/discussions), [blog](https://www.reviewable.io/blog/discussion-semantics-overhaul)
-- octorus. Inline comments and suggestions go to the pending review on GitHub, a header counts drafts, `Shift+Enter` selects a multi-line range, comments can be resolved/reopened; text box has readline keys. [README](https://github.com/ushironoko/octorus)
-- ghui/phui. `enter` opens a commented line or starts a comment, `v` starts a range, `n/p` jumps between threads. [README](https://github.com/kitlangton/ghui)
-- GitHub suggested changes: apply one, or batch many into one commit. [docs](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/incorporating-feedback-in-your-pull-request)
+- Graphite. Click a line number, drag for a range, comment on changed and unchanged lines; "Add to review" puts it in a private pending batch; `Cmd+Enter` posts a single comment now. [docs](https://graphite.com/docs/pr-page-overview.md) source: docs
+- Reviewable. Each person has a disposition per discussion (e.g. "Discussing" means "I won't resolve, others may"); a discussion resolves by rule from dispositions; drafts, dispositions and review marks all publish together. [discussions](https://docs.reviewable.io/discussions), [blog](https://www.reviewable.io/blog/discussion-semantics-overhaul) source: docs
+- octorus. Inline comments and suggestions go to the pending review on GitHub, a header counts drafts, `Shift+Enter` selects a multi-line range, comments can be resolved/reopened; text box has readline keys. [README](https://github.com/ushironoko/octorus) source: docs
+- ghui/phui. `enter` opens a commented line or starts a comment, `v` starts a range, `n/p` jumps between threads. [README](https://github.com/kitlangton/ghui) source: docs
+- GitHub suggested changes: apply one, or batch many into one commit. [docs](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/incorporating-feedback-in-your-pull-request) source: docs
 
 **What we take**
 - `c` comment on line or range, `s` suggestion block prefilled with the selected lines, Ctrl+Enter to add to the pending batch, a draft counter in the header, `n/p` over threads.
@@ -194,11 +194,11 @@ Partial. Fix-task send exists (spec §8.2; `FixThreadPoster.cs` uses `SubmitRevi
 ## 8. Verify an agent's pre-review findings fast
 
 **Best today**
-- CodeRabbit. Each finding carries four separate labels: type (nitpick / potential issue / refactor), severity (critical to trivial), category (6 areas) and effort-versus-reward; "Needs your attention" splits what blocks merge from what does not. Findings follow across review runs. [docs](https://docs.coderabbit.ai/change-stack/findings.md)
-- Greptile. Reviews against the whole repo; inline comments carry P0/P1/P2 badges and the PR gets a 0 to 5 confidence score (vendor claims); a `/greploop` skill iterates to 5/5 with zero unresolved comments. [docs](https://www.greptile.com/docs/code-review/first-pr-review.md)
-- GitHub Copilot review. "Fix with Copilot" on a review comment makes the coding agent open a PR with the fix; suggestions apply in a few clicks, batchable. [docs](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review)
-- octorus AI Rally. A reviewer agent and a fixer agent loop; `--review-only` makes the fixer produce a written proposal under a read-only tool list (`Read,Glob,Grep`), re-reviewed until approved, posted `final` / `each` / `none`. [README](https://github.com/ushironoko/octorus)
-- Zed. Agent edits open as a multibuffer; keep or reject per hunk or all; checkpoints restore. [docs](https://zed.dev/docs/ai/agent-panel)
+- CodeRabbit. Each finding carries four separate labels: type (nitpick / potential issue / refactor), severity (critical to trivial), category (6 areas) and effort-versus-reward; "Needs your attention" splits what blocks merge from what does not. Findings follow across review runs. [docs](https://docs.coderabbit.ai/change-stack/findings.md) source: docs
+- Greptile. Reviews against the whole repo; inline comments carry P0/P1/P2 badges and the PR gets a 0 to 5 confidence score (vendor claims); a `/greploop` skill iterates to 5/5 with zero unresolved comments. [docs](https://www.greptile.com/docs/code-review/first-pr-review.md) source: docs
+- GitHub Copilot review. "Fix with Copilot" on a review comment makes the coding agent open a PR with the fix; suggestions apply in a few clicks, batchable. [docs](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review) source: docs
+- octorus AI Rally. A reviewer agent and a fixer agent loop; `--review-only` makes the fixer produce a written proposal under a read-only tool list (`Read,Glob,Grep`), re-reviewed until approved, posted `final` / `each` / `none`. [README](https://github.com/ushironoko/octorus) source: docs
+- Zed. Agent edits open as a multibuffer; keep or reject per hunk or all; checkpoints restore. [docs](https://zed.dev/docs/ai/agent-panel) source: docs
 
 **What we take**
 - Every finding is one row with: severity, a line anchor, one line of why, and three keys: accept as pending comment, edit, drop (Zed's keep/reject per item). `Shift+J/K` steps findings in a panel (Change Stack).
@@ -222,10 +222,10 @@ Missing as a product; planned as the `pr-pre-review` template (engine plan on #2
 ## 9. See CI and checks next to the code they fail on
 
 **Best today**
-- Graphite PR page: Checks is an expandable list in the info panel that opens GitHub for logs. Nothing inline. [docs](https://graphite.com/docs/pr-page-overview.md)
-- GitHub: checks box at the bottom of the conversation; annotations from actions can appear on diff lines (annotation behaviour not re-read here, unconfirmed).
-- ghui/phui and octorus: Actions/CI status inside the TUI; octorus lists CI status and Git Ops. [phui](https://github.com/phall1/phui), [octorus](https://github.com/ushironoko/octorus)
-- CodeRabbit: pre-merge checks in the walkthrough, merge readiness on the Overview. [docs](https://docs.coderabbit.ai/change-stack/findings.md)
+- Graphite PR page: Checks is an expandable list in the info panel that opens GitHub for logs. Nothing inline. [docs](https://graphite.com/docs/pr-page-overview.md) source: docs
+- GitHub: checks box at the bottom of the conversation; annotations from actions can appear on diff lines (annotation behaviour not re-read here, unconfirmed). source: docs
+- ghui/phui and octorus: Actions/CI status inside the TUI; octorus lists CI status and Git Ops. [phui](https://github.com/phall1/phui), [octorus](https://github.com/ushironoko/octorus) source: docs
+- CodeRabbit: pre-merge checks in the walkthrough, merge readiness on the Overview. [docs](https://docs.coderabbit.ai/change-stack/findings.md) source: docs
 
 **Nothing solid found for the exact job** "the failing test's log line shown under the hunk it blames". Every tool above links out for logs. This is an open lane for us, not a copy.
 
@@ -248,10 +248,10 @@ Partial. `ci` and `requiredChecks` panels exist (spec §6.2, §7.3). Not inline 
 ## 10. Review stacked PRs
 
 **Best today**
-- Graphite. A Stack section on the PR page lists every PR stacked alongside; `S` opens the stack view. [docs](https://graphite.com/docs/pr-page-overview.md)
-- Gerrit. Related changes (a relation chain) with per-link "outdated patch set" markers when an ancestor got a new patch set. [docs](https://gerrit-review.googlesource.com/Documentation/user-review-ui.html)
-- Reviewable lists "Stacking tools" as a repository setting, so each PR shows only its own diff. [docs index](https://docs.reviewable.io/files) (setting named in the table of contents; behaviour not read, unconfirmed)
-- Copilot: fixes applied "in a stacked pull request" when you mention `@copilot`. [changelog via search](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review)
+- Graphite. A Stack section on the PR page lists every PR stacked alongside; `S` opens the stack view. [docs](https://graphite.com/docs/pr-page-overview.md) source: docs
+- Gerrit. Related changes (a relation chain) with per-link "outdated patch set" markers when an ancestor got a new patch set. [docs](https://gerrit-review.googlesource.com/Documentation/user-review-ui.html) source: docs
+- Reviewable lists "Stacking tools" as a repository setting, so each PR shows only its own diff. [docs index](https://docs.reviewable.io/files) (setting named in the table of contents; behaviour not read, unconfirmed) source: docs
+- Copilot: fixes applied "in a stacked pull request" when you mention `@copilot`. [changelog via search](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review) source: docs
 
 **What we take**
 - Stack strip at the top of the PR: numbered chips with state glyph, current one highlighted, `[`/`]` moves up/down the stack. Gerrit's marker when a parent moved and this PR needs a rebase.
@@ -273,10 +273,10 @@ Missing in the review surface (no stack code in `Core/Reviews`). The babysitter 
 ## 11. Jump to context from a hunk: callers, the issue, the thread
 
 **Best today**
-- octorus. Tree-sitter symbol index with no LSP: `o` file outline, `s` fuzzy symbol search, `gd` go to definition, `Ctrl-o` jump back (stack of 100), and `i` module graph of imports/importers, each answer labelled `exact` or `approximate`. [README](https://github.com/ushironoko/octorus)
-- CodeRabbit. Blast Radius view (dependencies, consumers, tests around the change) and a "Code Peek", all pinned to the snapshot; chat from a layer, file or range. [navigation](https://docs.coderabbit.ai/change-stack/navigation.md)
-- Greptile. Reviews against the full repo graph instead of the diff (vendor claim). [docs](https://www.greptile.com/docs/code-review/first-pr-review.md)
-- Graphite PR page lists related tasks from Linear and a deployment preview link. [docs](https://graphite.com/docs/pr-page-overview.md)
+- octorus. Tree-sitter symbol index with no LSP: `o` file outline, `s` fuzzy symbol search, `gd` go to definition, `Ctrl-o` jump back (stack of 100), and `i` module graph of imports/importers, each answer labelled `exact` or `approximate`. [README](https://github.com/ushironoko/octorus) source: docs
+- CodeRabbit. Blast Radius view (dependencies, consumers, tests around the change) and a "Code Peek", all pinned to the snapshot; chat from a layer, file or range. [navigation](https://docs.coderabbit.ai/change-stack/navigation.md) source: docs
+- Greptile. Reviews against the full repo graph instead of the diff (vendor claim). [docs](https://www.greptile.com/docs/code-review/first-pr-review.md) source: docs
+- Graphite PR page lists related tasks from Linear and a deployment preview link. [docs](https://graphite.com/docs/pr-page-overview.md) source: docs
 
 **What we take**
 - The `exact | approximate` mark on every caller list (octorus), which matches the rule already set on #2980 (`complete | partial (barrels) | none (no parser)`).
@@ -299,10 +299,10 @@ Partial. `context_query --diff` exists (#2980 context plan); `diff-scope` and ca
 ## 12. Approve and merge with confidence
 
 **Best today**
-- CodeRabbit. Overview shows a merge-readiness assessment next to the provider's own mergeable state; the merge control refuses a stale snapshot instead of merging something you have not seen. [snapshots](https://docs.coderabbit.ai/change-stack/snapshots.md)
-- Triage rules. Merge ready changes, close stale PRs after notice, repair CI or feedback automatically. [docs](https://docs.coderabbit.ai/triage.md)
-- Reviewable. Completion condition is scripted per repo (who must review which file), plus merge method settings. [docs index](https://docs.reviewable.io/files)
-- Graphite review status shows "waiting on reviewers" or "ready to merge" and whether its agent found issues. [docs](https://graphite.com/docs/pr-page-overview.md)
+- CodeRabbit. Overview shows a merge-readiness assessment next to the provider's own mergeable state; the merge control refuses a stale snapshot instead of merging something you have not seen. [snapshots](https://docs.coderabbit.ai/change-stack/snapshots.md) source: docs
+- Triage rules. Merge ready changes, close stale PRs after notice, repair CI or feedback automatically. [docs](https://docs.coderabbit.ai/triage.md) source: docs
+- Reviewable. Completion condition is scripted per repo (who must review which file), plus merge method settings. [docs index](https://docs.reviewable.io/files) source: docs
+- Graphite review status shows "waiting on reviewers" or "ready to merge" and whether its agent found issues. [docs](https://graphite.com/docs/pr-page-overview.md) source: docs
 
 **What we take**
 - Refuse-on-stale: Approve and Merge compare the head you read with the live head and stop with "the PR moved to a1b2c3d; reload" (spec §8.3 `HeadMoved` already does this for posts).
@@ -324,11 +324,11 @@ Release 1 is read-only ("Approve on GitHub" link, spec §6.3/§8). `SubmitReview
 ## 13. Review a 300-file PR without the UI choking, and drive it by keyboard
 
 **Best today**
-- octorus. States 1,000,000+ diff lines and 6,000+ files handled (vendor claim), tree-sitter highlighting, background indexing that never blocks browsing. [README](https://github.com/ushironoko/octorus)
-- CodeRabbit Change Stack: search across file paths, diff text, source content, summaries and comments in the browser; capped at 200 ranked results; command palette on `Cmd/Ctrl+K` or `?` showing every key. [docs](https://docs.coderabbit.ai/change-stack/navigation.md)
-- Reviewable: `?` lists bindings, bindings are customizable; per-file "single file mode" for huge diffs. [docs](https://docs.reviewable.io/reviews)
-- Graphite: `Cmd+K` fuzzy PR search across title, description, author. [docs](https://graphite.com/docs/use-pr-inbox.md)
-- GitHub's own cap: its API lists at most 3,000 files per PR (our spec says the page shows this), and patches over a size limit are left out. [keyboard shortcuts](https://docs.github.com/en/get-started/accessibility/keyboard-shortcuts)
+- octorus. States 1,000,000+ diff lines and 6,000+ files handled (vendor claim), tree-sitter highlighting, background indexing that never blocks browsing. [README](https://github.com/ushironoko/octorus) source: docs
+- CodeRabbit Change Stack: search across file paths, diff text, source content, summaries and comments in the browser; capped at 200 ranked results; command palette on `Cmd/Ctrl+K` or `?` showing every key. [docs](https://docs.coderabbit.ai/change-stack/navigation.md) source: docs
+- Reviewable: `?` lists bindings, bindings are customizable; per-file "single file mode" for huge diffs. [docs](https://docs.reviewable.io/reviews) source: docs
+- Graphite: `Cmd+K` fuzzy PR search across title, description, author. [docs](https://graphite.com/docs/use-pr-inbox.md) source: docs
+- GitHub's own cap: its API lists at most 3,000 files per PR (our spec says the page shows this), and patches over a size limit are left out. [keyboard shortcuts](https://docs.github.com/en/get-started/accessibility/keyboard-shortcuts) source: docs
 
 **What we take**
 - Virtualized diff (only visible lines built), file panels loaded on demand, `Cmd/Ctrl+K` palette that doubles as the key reference, `/` search with source filters (file, diff, comment), remappable keys.
@@ -371,3 +371,13 @@ Partial. `j/k`, `n/p`, `o`, `c` exist in the diff; shortcuts sheet "Review page"
 - GitHub's "changes since your last review" screen: unconfirmed. GitHub's check-annotation-on-diff behaviour: unconfirmed.
 - Reviewable's stacking and completion-condition behaviour: named in its docs index, not read.
 - No screenshots captured; links point at doc pages. The design lane still needs frames for the side-by-side.
+
+## What we take
+
+1. Read the diff in change order: numbered layers with stored dependencies, a Files mode always one key away (#2980).
+2. Every row in the review list says why it is waiting on you, in one phrase, not just a badge (#2980).
+3. Agent findings as one row each (severity, line, one-line why, evidence) with three keys: accept as pending comment, edit, drop (#2980).
+4. Reopening a PR defaults to "since your last review", per file, with one key for the whole PR (#2980).
+5. `v` marks a file viewed, written through to GitHub; a file unchanged since you marked it stays viewed after a push (#2980).
+6. Comment, suggestion block and batch with `c`, `s`, Ctrl+Enter, kept as a real pending review on GitHub (#2980).
+7. Approve and Merge refuse on a moved head, and a "ready" line on the row names what is missing (#2980).
