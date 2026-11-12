@@ -9,7 +9,7 @@ namespace Aw.Sindri.Ui.Views.Controls;
 
 /// <summary>
 /// A line of text a screen reader reads as one Text (#3234): the Border-around-TextBlock pair the Workflows page repeats about forty times (a TextBlock's peer ignores
-/// <c>AutomationProperties.Name</c>, so the name sits on a wrapper and the TextBlock is Raw). Its name is <see cref="Text"/>, or <see cref="Spoken"/> when that is set.
+/// AutomationProperties.Name, so the name sits on a wrapper and the TextBlock is Raw). Its name is <see cref="Text"/>, or <see cref="Spoken"/> when that is set.
 /// </summary>
 [SuppressMessage("Design", "MA0182", Justification = "The Workflows page swaps its wrappers for it in its own PR (#3234).")]
 internal sealed class SpokenText : Border
