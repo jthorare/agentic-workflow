@@ -63,7 +63,10 @@ internal static class StatusText
     // The Health page's profile rows (§4.8): the live hash, the file with ~ for home.
     internal static IEnumerable<HealthCell> Profile(ProfileView p)
     {
-        yield return new(Labels.RowLive, Short(p.Live));
+        if (!IsMissing(p))
+        {
+            yield return new(Labels.RowLive, Short(p.Live));
+        }
 
         if (p.Source is { } source)
         {
