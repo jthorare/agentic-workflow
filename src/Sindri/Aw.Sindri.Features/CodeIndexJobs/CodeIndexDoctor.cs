@@ -122,10 +122,19 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
             return new DoctorCheck(name, CheckState.Warn, $"checkout is not on main; the index at {short7} is served", "switch the repo's checkout to its default branch");
         }
 
-        return live?.Head is { } head && head != repo.Commit
-            ? new DoctorCheck(name, CheckState.Warn, $"stale: index at {short7}, head at {head.Value[..7]}; {buildWords}", "none needed: the next tick builds it")
-            : new DoctorCheck(name, CheckState.Ok, $"{short7}, {Age(repo.BuiltAt, now)}, {string.Join(" · ", repo.Layers.Select(static l => $"{Word(l.Layer)} {Word(l.State)}"))}", Fix: null);
+        if (live?.Head is { } head && head != repo.Commit)
+        {
+            return new DoctorCheck(name, CheckState.Warn, $"stale: index at {short7}, head at {head.Value[..7]}; {buildWords}", "none needed: the next tick builds it");
+        }
+
+        return Down(name, short7, repo.Layers) ?? new DoctorCheck(name, CheckState.Ok, $"{short7}, {Age(repo.BuiltAt, now)}, {string.Join(" · ", repo.Layers.Select(static l => $"{Word(l.Layer)} {Word(l.State)}"))}", Fix: null);
     }
+
+    // A layer down for a named cause is a warning on the repo's own row (gh-3069): the live probe rows can be ok while this index still lacks the layer.
+    private static DoctorCheck? Down(string name, string short7, IReadOnlyList<LayerStatus> layers) =>
+        layers.FirstOrDefault(static l => l.State == LayerState.Unavailable && l.Code is not null) is { } down
+            ? new DoctorCheck(name, CheckState.Warn, $"{short7}: {Word(down.Layer)} unavailable ({down.Code}): {down.Detail}", Fix(down.Code))
+            : null;
 
     private static DoctorCheck Layer(string name, string word, List<LayerStatus> layers, LayerName which)
     {
