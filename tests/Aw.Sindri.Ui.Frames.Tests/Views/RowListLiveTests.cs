@@ -374,6 +374,23 @@ public sealed class RowListLiveTests
     });
 
     [Fact]
+    public async Task The_cursor_ring_is_2_px_inside_the_row_and_does_not_change_its_height() => await OnUi(() =>
+    {
+        var (window, list) = Show(new[] { Group("Needs you", 4) });
+        var row = RowOf(list, "k1");
+        var resting = row.Bounds.Height;
+
+        Focus(window, list, "k1");
+
+        var ring = row.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Ring");
+        Assert.True(ring.IsVisible);
+        Assert.Equal(new Thickness(2), ring.BorderThickness);
+        Assert.Equal(resting, row.Bounds.Height, 0.01);
+        window.Close();
+        return true;
+    });
+
+    [Fact]
     public async Task A_group_set_to_collapsed_by_the_page_starts_folded_and_rows_added_to_it_stay_hidden() => await OnUi(() =>
     {
         var moving = Group("Moving", 5);
