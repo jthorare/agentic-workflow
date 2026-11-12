@@ -142,9 +142,10 @@ public sealed class NeedsYouFramesTests : FrameHost
         Server.NeedsYouView = RouteAnswer.Api("needs-you", "stalled");
         var (window, shell) = await Connected(s => s.NeedsYou.HasBanner);
 
-        Assert.True(Visible(window, "NeedsYouBanner"));
+        Assert.False(Visible(window, "NeedsYouBanner"));   // #3056: one line with Retry, not the words twice
+        Assert.True(Visible(window, "NeedsYouStalled"));
+        Assert.Equal(shell.NeedsYou.Banner, Named<TextBlock>(window, "NeedsYouStalled").GetVisualDescendants().OfType<TextBlock>().First(t => t.Name == "FailedReadWords").Text);
         Assert.NotEmpty(Rows(window));
-        Assert.Equal(shell.NeedsYou.Banner, Named<TextBlock>(window, "NeedsYouBanner").Text);
         Frame(window, "needs-you-stalled");
     });
 

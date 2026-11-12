@@ -109,8 +109,12 @@
               <TextBlock x:Name="NeedsYouNumber" Classes="display" Text="{Binding Attention.NeedsYouNumber}" VerticalAlignment="Bottom" AutomationProperties.AccessibilityView="Raw" />
               <TextBlock x:Name="NeedsYouSummary" Classes="caption subtle" Text="{Binding Attention.NeedsYouWord}" VerticalAlignment="Bottom" Margin="0,0,0,6" AutomationProperties.AccessibilityView="Raw" />
             </StackPanel>
-            <TextBlock x:Name="NeedsYouBanner" Classes="caption" Text="{Binding NeedsYou.Banner}" IsVisible="{Binding NeedsYou.HasBanner}" Margin="24,8"
+            <TextBlock x:Name="NeedsYouBanner" Classes="caption" Text="{Binding NeedsYou.Banner}" IsVisible="{Binding NeedsYou.ShowsPlainBanner}" Margin="24,8"
                        TextWrapping="Wrap" AutomationProperties.Name="{Binding NeedsYou.Banner}" />
+            <!-- #3056: while the views are stalled the banner's words get a Retry (the shell's banner may be scrolled away). A FailedRead on the line's DataContext shows it. -->
+            <Panel x:Name="NeedsYouStalledHost" IsVisible="{Binding NeedsYou.IsStalled}">
+              <ctl:FailedReadLine x:Name="NeedsYouStalled" DataContext="{Binding StalledRead}" Margin="24,0,24,8" />
+            </Panel>
             <Button x:Name="NeedsYouHeld" Classes="held-pill" Click="OnShowNeedsYouHeld" IsVisible="{Binding NeedsYou.HasHeld}" HorizontalAlignment="Center"
                     AutomationProperties.Name="{Binding NeedsYou.HeldText}">
               <TextBlock Classes="caption" Text="{Binding NeedsYou.HeldText}" />
@@ -181,6 +185,9 @@
                       AutomationProperties.Name="{Binding Queue.ShowAllRunning}" Margin="16,8">
                 <TextBlock Classes="caption" Text="{Binding Queue.ShowAllRunning}" />
               </Button>
+              <!-- #3056: a failed first read and stale rows each get the shared line with Retry; the line shows while its DataContext is a FailedRead. -->
+              <ctl:FailedReadLine x:Name="RunningStaleLine" DockPanel.Dock="Top" DataContext="{Binding Queue.StaleRead}" Margin="24,8,24,0" />
+              <ctl:FailedReadLine x:Name="RunningFailed" DockPanel.Dock="Top" DataContext="{Binding Queue.ReadFailure}" Margin="24,12" />
               <Panel>
               <ItemsControl VerticalAlignment="Top" x:Name="RunningRows" ItemsSource="{Binding Queue.RunningRows}">
                 <ItemsControl.ItemTemplate>
@@ -211,6 +218,9 @@
                       AutomationProperties.Name="{Binding Queue.ShowAllQueued}" Margin="16,8">
                 <TextBlock Classes="caption" Text="{Binding Queue.ShowAllQueued}" />
               </Button>
+              <!-- #3056: a failed first read and stale rows each get the shared line with Retry; the line shows while its DataContext is a FailedRead. -->
+              <ctl:FailedReadLine x:Name="QueuedStaleLine" DockPanel.Dock="Top" DataContext="{Binding Queue.StaleRead}" Margin="24,8,24,0" />
+              <ctl:FailedReadLine x:Name="QueuedFailed" DockPanel.Dock="Top" DataContext="{Binding Queue.ReadFailure}" Margin="24,12" />
               <Panel>
               <ItemsControl VerticalAlignment="Top" x:Name="QueuedRows" ItemsSource="{Binding Queue.QueuedRows}">
                 <ItemsControl.ItemTemplate>

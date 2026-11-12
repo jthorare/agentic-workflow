@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
+             xmlns:vmc="using:Aw.Sindri.Ui.ViewModels.Controls"
+             x:Class="Aw.Sindri.Ui.Views.Controls.FailedReadLine"
+             x:DataType="vmc:FailedRead">
+  <!-- The inline state line (grammar "Empty and error states", #3019): one 32 px row, a glyph, one sentence, and the primary button at the right end;
+       error tint for a read that can't be read, attention tint for a stale or stalled one. The code sits behind Details, in mono, never in the sentence. -->
+  <UserControl.Styles>
+    <Style Selector="Border.state-line">
+      <Setter Property="Background" Value="{DynamicResource Brush.ErrorSoft}" />
+    </Style>
+    <Style Selector="Border.state-line.attention">
+      <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
+    </Style>
+  </UserControl.Styles>
+  <Border x:Name="FailedReadRoot" Classes="state-line" Classes.attention="{Binding IsAttention}" AutomationProperties.Name="{Binding Words}">
+    <StackPanel>
+      <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="{StaticResource Row.Height.Default}" ColumnSpacing="12" Margin="24,0">
+        <Panel VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+          <icons:StateIcon Glyph="Down" Classes="error" IsVisible="{Binding !IsAttention}" />
+          <icons:StateIcon Glyph="Stale" IsVisible="{Binding IsAttention}" />
+        </Panel>
+        <TextBlock x:Name="FailedReadWords" Grid.Column="1" Classes="caption" Text="{Binding Words}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <ToggleButton x:Name="FailedReadDetails" Classes="copy" IsVisible="{Binding HasCode}" IsChecked="{Binding #FailedReadCode.IsVisible, Mode=TwoWay}" Content="{Binding DetailsLabel}"
+                        BorderThickness="0" Background="Transparent" AutomationProperties.Name="{Binding DetailsLabel}" />
+          <Button x:Name="FailedReadGhost" Classes="copy" Click="OnGhost" IsVisible="{Binding HasGhost}" Content="{Binding GhostLabel}" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{Binding GhostLabel}" />
+          <Button x:Name="FailedReadPrimary" Classes="command-control" Click="OnPrimary" Content="{Binding PrimaryLabel}" AutomationProperties.Name="{Binding PrimaryLabel}" />
+        </StackPanel>
+      </Grid>
+      <TextBlock x:Name="FailedReadCode" Classes="caption mono subtle" Text="{Binding Code}" IsVisible="False" TextWrapping="Wrap" Margin="24,0,24,8" AutomationProperties.Name="{Binding Code}" />
+    </StackPanel>
+  </Border>
+</UserControl>

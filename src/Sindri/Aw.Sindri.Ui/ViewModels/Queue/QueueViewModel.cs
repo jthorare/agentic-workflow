@@ -47,6 +47,12 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
     /// <summary>The failed first read's code (the API's title, or the app's SND-UI code), or empty.</summary>
     public string ProblemCode { get; private set { Set(ref field, value); OnChanged(nameof(HasProblem)); } } = string.Empty;
 
+    /// <summary>The failed first read as the shared failed-read line draws it; null while there is no failed first read.</summary>
+    public FailedRead? ReadFailure { get; private set => Set(ref field, value); }
+
+    /// <summary>The "showing the last rows read" line with Retry, while the rows shown are stale; null otherwise.</summary>
+    public FailedRead? StaleRead { get; private set => Set(ref field, value); }
+
     /// <summary>The failed first read's detail, as served, or empty.</summary>
     public string ProblemDetail { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -116,18 +122,24 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
             if (_view is null)
             {
                 (ProblemCode, ProblemDetail) = (answer.Error.Code, answer.Error.Message);
+                ReadFailure = new FailedRead(Labels.QueueReadFailed, Retry) { Code = answer.Error.Code };
             }
 
             (IsStale, IsLoading) = (_view is not null, false);
+            StaleRead = IsStale ? new FailedRead(Labels.RowsStaleNote, Retry) { IsAttention = true } : null;
             return;
         }
 
         (IsStale, ProblemCode, ProblemDetail) = (answer.Value.AsOf.Stalled, string.Empty, string.Empty);   // stalled views: the rows are the last the projector made
+        (ReadFailure, StaleRead) = (null, IsStale ? new FailedRead(Labels.RowsStaleNote, Retry) { IsAttention = true } : null);
         Rest();
         Apply(Hold(answer.Value));
         IsLoading = false;   // after the rows are there: a waiter on the end of loading finds them
         await LearnClosed(url, cancellationToken).ConfigureAwait(true);
     }
+
+    // The Retry button of the failed and stale lines: the same read the follower makes (Refresh), at the URL it last used.
+    private Task Retry(CancellationToken cancellationToken) => LastUrl is { } url ? Refresh(url, cancellationToken) : Task.CompletedTask;
 
     /// <summary>Shows the running group (Home's "Show all N in Queue") or all of them (G Q, the Work tab); a selection the filter hides is cleared, silently.</summary>
     /// <param name="filter">The filter.</param>

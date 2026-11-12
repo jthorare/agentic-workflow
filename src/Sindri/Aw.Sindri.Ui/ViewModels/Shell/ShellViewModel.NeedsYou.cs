@@ -17,7 +17,7 @@ internal sealed partial class ShellViewModel
         var list = await _api.NeedsYou(url, cancellationToken).ConfigureAwait(true);
         if (list.IsError)
         {
-            NeedsYou.ReadFailed(Labels.NeedsYouReadFailed);
+            NeedsYou.ReadFailed(Labels.NeedsYouReadFailed, _ => RetryNeedsYou());
             return;
         }
 
