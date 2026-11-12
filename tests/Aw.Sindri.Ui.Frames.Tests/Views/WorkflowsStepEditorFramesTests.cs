@@ -149,4 +149,31 @@ public sealed class WorkflowsStepEditorFramesTests : FrameHost
         await shell.Workflows.Edit(CancellationToken.None);
         await Until(window, () => !Visible(window, "StepSummary"), "the summary stayed while Edit is on");
     });
+
+    [Fact]
+    public Task A_boolean_field_in_the_step_editor_draws_its_caption_once() => OnUi(async () =>
+    {
+        var workflow = Golden("workflows-slug", "found");
+        var node = workflow["spec"]!["nodes"]![0]!;
+        node["type"] = "run_workflow";
+        node["config"] = new JsonObject { ["wait"] = true };
+        Server.WorkflowAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, workflow.ToJsonString());
+        Server.WorkflowRunsAnswers[Slug] = RouteAnswer.Api("workflows-slug-runs", "list-three");
+        Server.WorkflowBlocksAnswer = RouteAnswer.Api("workflows-blocks", "listed");
+        var (window, shell) = await Connected(width: 1280, height: 1000);
+        shell.GoTo(PageId.Workflows);
+        await Until(window, () => shell.Workflows.Rows.Count > 0, "the Workflows page never read the list");
+        await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
+        await Until(window, () => shell.Workflows.Runs.Graph is not null, "the graph never showed");
+        await OpenEditorOnTrigger(window, shell);
+        Settle(window);
+
+        var field = shell.Workflows.Editor.Fields.Single(f => f.IsBoolean);
+        var fields = Named<ItemsControl>(window, "EditorFields");
+        var check = fields.GetVisualDescendants().OfType<CheckBox>().Single(c => c.Name == "EditorFieldCheck" && c.DataContext == field);
+        Assert.Equal(field.Caption, AutomationProperties.GetName(check));
+        var row = check.GetVisualAncestors().OfType<StackPanel>().First(p => p.DataContext == field);
+        var drawn = row.GetVisualDescendants().OfType<TextBlock>().Count(t => t.IsEffectivelyVisible && string.Equals(t.Text, field.Caption, StringComparison.Ordinal));
+        Assert.Equal(1, drawn);   // the caption line above the box, not the box's own content too
+    });
 }
