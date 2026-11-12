@@ -39,7 +39,7 @@ def hdr(state='live', title='Messages', count='23 need reply', hint=True):
     return f'<div class="header"><h1>{title}</h1><span class="count">{count}</span>{h}<span class="stat {c}">{t}{b}</span></div>'
 
 # ---------------- rail
-def rail(on='Needs reply', slim=False, starred=True, counts=(23, 14), later=None, drafts=None, focus=None):
+def rail(on='Needs reply', slim=False, starred=True, counts=(23, 14), later=None, drafts=None, focus=None, harbor=3):
     def it(name, n, ic):
         cls = 'on' if on == name else ''
         if focus == name: cls += ' focus'
@@ -49,7 +49,7 @@ def rail(on='Needs reply', slim=False, starred=True, counts=(23, 14), later=None
     if drafts is not None: o += it('Drafts', drafts, '<b class="l">D</b>')
     o += '<div class="sec">Starred</div>'
     if starred:
-        for nm, n, h in [('harbor', 2, '#'), ('ferry-ops', '', '#'), ('Sam', '', 'S'), ('Kim, Lee', '', 'K')]:
+        for nm, n, h in [('harbor', harbor, '#'), ('ferry-ops', '', '#'), ('Sam', '', 'S'), ('Kim, Lee', '', 'K')]:
             c = 'on' if on == nm else ''
             o += f'<div class="it {c}"><span class="ic hsh">{h}</span><span class="lbl">{nm}</span><span class="n">{n}</span></div>'
     else:
@@ -98,7 +98,7 @@ def rowsr(r, extra=''):
 A1 = ('Open in Slack', 'r')
 def mrow(r, mode='full', cursor=False, sel=False, hv=False, unread=False, cls='', actions=False, compact=False):
     c, who, pl, ti, chips, rs, age = r
-    chips_h = ''.join(CH(x) for x in chips) if mode == 'full' else ''
+    chips_h = ''.join(CH(x) for x in chips) if (mode == 'full' and not compact) else ''
     k = f'mrow {"hasact" if actions else ""} {"narrow" if mode != "full" else ""} {"n2" if mode == "n2" else ""} {"cmp" if compact else ""} {"cursor" if cursor else ""} {"sel" if sel else ""} {"hv" if hv else ""} {"unread" if unread else ""} {cls}'
     cmp_ = ' compact' if (mode != 'full' or compact) else ''
     acts = (f'<div class="actions{cmp_}"><span class="btn" title="{A1[0]}"><span class="lbl">{A1[0]} </span><kbd>{A1[1]}</kbd></span><span class="btn" title="Snooze"><span class="lbl">Snooze </span><kbd>h</kbd></span><span class="btn" title="Done"><span class="lbl">Done </span><kbd>e</kbd></span></div>') if actions else ''
@@ -120,11 +120,8 @@ def peek_thread(release=1):
     lr = '<div class="lrow"><span class="g pr"></span><span class="id">#3120</span><span class="t">Seat holds: 90 s</span><span class="r"><b>CI green</b> · asked of you · ada</span></div>'
     return f'''<aside class="peek"><div class="peek-head"><h2>Thread · #harbor</h2><span class="id">slack:thread:harbor</span><span class="icon">⤢</span><span class="icon">✕</span></div>
 <dl class="peek-fields"><dt>Class</dt><dd><span class="g c2"></span>Review ask</dd><dt>Waits on</dt><dd>you</dd><dt>Linked</dt><dd><span class="g merged"></span>#3120 · #3055 · #3125</dd></dl>
-<div class="mp"><div class="eyebrow">Thread, root and 3 replies</div>
+<div class="mp"><div class="eyebrow">Thread, root only</div>
 <div class="cl mention first"><span class="av20" style="background:#3a3f58">AD</span><span class="tx"><span class="nm">Ada</span><span class="tm">07:30</span><br><span class="you">@joi</span> review #3120 when you can{lr}</span></div>
-<div class="cl first"><span class="av20" style="background:#3b4a40">KI</span><span class="tx"><span class="nm">Kim</span><span class="tm">08:20</span><br>ok, 90 s holds then</span></div>
-<div class="cl first"><span class="av20" style="background:#3a3f58">AD</span><span class="tx"><span class="nm">Ada</span><span class="tm">08:41</span><br>I will move it to 90 s once #3120 lands</span></div>
-<div class="cl first"><span class="av20" style="background:#3b4a40">KI</span><span class="tx"><span class="nm">Kim</span><span class="tm">08:55</span><br>thanks, I will re-test after lunch</span></div>
 <div class="ob"><b>Open in Slack</b> <kbd>r</kbd><br>Reply there. Release 2 adds the composer here.<br><span class="btn primary">Open in Slack <kbd>r</kbd></span></div></div></aside>'''
 def peek_dm():
     lr = '<div class="lrow"><span class="g pr"></span><span class="id">#3120</span><span class="t">Seat holds: 90 s</span><span class="r"><b>CI green</b> · asked of you · ada</span></div>'
@@ -165,13 +162,13 @@ needs_page('header-scope', state='scope', title='Messages - scope missing',
 
 # ---------------- unread (class 1 lives here in Release 1)
 UN = [  # cls (1 = a thread of mine, 0 = not mine: no glyph), who, place, title, mention
- (1, 'Pat', 'DM', 'thanks!', 0), (1, 'Kim', '#harbor', 'ok, I will re-test after lunch', 1),
- (0, 'Lee', '#general', '@here lunch Friday?', 0), (0, 'Ada', '#harbor', 'staging is on 120 s for now', 0),
+ (1, 'Pat', 'DM', 'thanks!', 0), (1, 'Kim', '#harbor', 'ok, 90 s holds then', 1),
+ (0, 'Lee', '#general', '@here lunch Friday?', 0), (0, 'Lee', '#harbor', 'thanks, taking a look now', 0),
  (0, 'Mira', '#billing', 'customer says the invoice looks right now', 0), (0, 'Jo', '#ferry-ops', 'dock cam is back online', 0),
  (0, 'Lee', 'Kim, Lee', 'moving standup to 10:15', 0), (0, 'Sana', '#billing', 'rounding thread is resolved, thanks all', 0),
- (0, 'Noor', '#harbor', 'export for ACME finished', 0), (0, 'Eli', 'DM', 'fyi the retry cap doc is in Notes', 0),
+ (0, 'Rui', '#ops', 'export for ACME finished', 0), (0, 'Eli', 'DM', 'fyi the retry cap doc is in Notes', 0),
  (0, 'Hana', '#general', 'standup notes are in the doc', 0), (0, 'Ben', '#ferry-ops', 'dock inspection moved to Thursday', 0),
- (0, 'Uma', '#billing', 'invoice template v2 is merged', 0), (0, 'Fay', '#harbor', 'on-call swap sheet is updated', 0),
+ (0, 'Uma', '#billing', 'invoice template v2 is merged', 0), (0, 'Fay', '#eng', 'on-call swap sheet is updated', 0),
 ]
 def unread_list(n=14, cursor=0):
     o = '<div class="mgroup">Unread<span class="n">14</span></div>'
@@ -183,7 +180,7 @@ def unread_list(n=14, cursor=0):
         o += h
     return f'<div class="mlist">{o}</div>'
 write('unread', shell('Messages - Unread', hdr(count='23 need reply'), f'<div class="mbody nopeek">{rail(on="Unread")}{unread_list()}</div>', keys('List keys', LIST_KEYS),
-      'Unread, list, 14 rows, all unread. Pat, direct message, 3 hours ago: thanks (circle: a thread of mine, class 1). Kim in harbor, 3 hours ago: ok, I will re-test after lunch, mentions you. Rows without a circle are not mine.'))
+      'Unread, list, 14 rows, all unread. Pat, direct message, 3 hours ago: thanks (circle: a thread of mine, class 1). Kim in harbor, 50 minutes ago: ok, 90 s holds then, mentions you. Rows without a circle are not mine.'))
 
 # ---------------- conversation
 def ln(name, tm, body, first=True, av='#3a3f58', ini='AD', cur=False, mention=False, extra='', hov=''):
@@ -197,19 +194,22 @@ RX = lambda *a: '<div class="rx">' + ''.join(f'<span class="{c}">{e} {n}</span>'
 def chan_lines(cur=None, hov=False):
     o = '<div class="gapm"><span>12 older messages not loaded.</span><span class="btn">Load older</span><span class="cd">next in 41 s</span><span class="sp"></span><span class="cd">Behind: 12 min</span></div>'
     o += '<div class="dday"><span>Today</span></div>'
-    o += ln('Ada', '07:30', '<span class="you">@joi</span> review #3120 when you can', cur=(cur == 'm'), mention=True, extra=lrow('pr', '#3120', 'Seat holds: 90 s', '<b>CI green</b> · asked of you · ada') + RX(('✓', 3, 'me'), ('♥', 2, '')))
-    o += '<div class="thr"><span class="avs"><i></i><i></i></span><span>Kim, Ada · 3 replies · last 08:55</span></div>'
+    o += ln('Ada', '07:30', '<span class="you">@joi</span> review #3120 when you can', cur=(cur == 'm'), mention=True, extra=lrow('pr', '#3120', 'Seat holds: 90 s', '<b>CI green</b> · asked of you · ada'))
+    o += ln('You', '08:05', 'what hold time do we want in staging?', av='#4a3b3b', ini='YO')
+    o += '<div class="thr"><span class="avs"><i></i></span><span>Kim · 1 reply · last 08:20</span></div>'
     o += ln('Sam', '08:50', 'config for staging:', av='#4a3b3b', ini='SA', extra=blk([('', 'seat_hold_seconds: 90'), ('', 'hold_release: on_timeout')]))
     o += ln('', '08:51', 'that is what staging runs now', first=False, hov=hov)
     o += ln('Pat', '09:01', 'fare table change, one line each way:', av='#3b3f4a', ini='PA', extra=blk([('h', 'diff --git a/fares.yaml b/fares.yaml'), ('d', '- base: 14.50'), ('a', '+ base: 14.80')]))
     o += '<div class="ndiv">New</div>'
-    o += ln('Lee', '09:12', 'anyone around for a quick look at the fare table?', av='#3b4a40', ini='LE')
+    o += ln('Lee', '09:08', 'anyone around for a quick look at the fare table?', av='#3b4a40', ini='LE')
+    o += ln('', '09:09', 'it is the one-line change above', first=False)
+    o += ln('', '09:10', 'thanks, taking a look now', first=False)
     return o
 def conv_page(name, cur=None, hov=False, mode='Message keys', keys_=MSG_KEYS, title='Messages - #harbor', sr='', rail_on='harbor', focus=None, extra=''):
     ch = '<div class="chead"><b># harbor</b><span class="sub">412 people · starred</span></div>'
     body = f'<div class="mbody">{rail(on=rail_on, focus=focus)}<section class="conv">{ch}<div class="clines">{chan_lines(cur, hov)}</div><span class="newchip">3 new ↓</span></section>{peek_thread()}</div>'
     write(name, shell(title, hdr(count='23 need reply'), body, keys(mode, keys_), sr, extra))
-conv_page('conversation', hov=True, sr='Conversation, harbor, a log. Ada, 07:30, mentions you: review 3120 when you can. Thread: Kim and Ada, 3 replies. New messages: 1 below the divider. Gap: 12 older messages not loaded, Load older. Message keys.')
+conv_page('conversation', hov=True, sr='Conversation, harbor, a log. Ada, 07:30, mentions you: review 3120 when you can. Your thread with Kim: 1 reply. New messages: 1 below the divider. Gap: 12 older messages not loaded, Load older. Message keys.')
 conv_page('conversation-focus', cur='m', rail_on='harbor', focus='harbor', title='Messages - focus rings',
           sr='Focus ring on the message line: Ada, 07:30, mention: review 3120 when you can. Message keys: reading harbor. The rail item keeps its own ring when the rail has focus.')
 # DM, with link rows and links that stay plain text
@@ -252,7 +252,10 @@ def snz_rows():
     cur = next(i for i, r in enumerate(rows) if r['w'] == 'Ada' and r['a'] == '2h')
     o = '<div class="mgroup new">New<span class="n">1</span></div><div class="newband">' + mrow(NEW_ROW, 'full') + '</div>'
     o += '<div class="mgroup">Needs reply<span class="n">21</span></div>'
-    for i, d in enumerate(rows[:16]):
+    # 21 rows in the band; the list is scrolled to the end, so 6 are above the fold (a cue says so) and 15 show
+    o += '<div class="mgroup" style="margin-top:0;color:var(--ink-subtle);font-weight:400;height:24px">6 more above, scroll up</div>'
+    for i, d in enumerate(rows):
+        if i < 6: continue
         row = (d['c'], d['w'], d['p'], d['t'], d['ch'], 'back early: new reply' if (d['w'], d['a']) == TOMAS else d['rs'], d['a'])
         o += mrow(row, 'full', cursor=(i == cur), sel=(i == cur), actions=(i == cur))
     o += '<div class="mgroup">Snoozed<span class="n">1</span></div>'
@@ -309,10 +312,10 @@ def emptypage(name, on, h, p, sr, rail_kw=None, count='0 need reply', counts=(0,
     body = f'<div class="mbody nopeek">{rail(on=on, counts=counts, **(rail_kw or {}))}<div class="mlist"><div class="mid"><h2>{h}</h2><p>{p}</p></div></div></div>'
     write(name, shell('Messages - ' + name, hdr(count=count), body, keys('List keys', [('Ctrl+K', 'search or jump'), ('?', 'all keys')]), sr, ncount=ncount))
 emptypage('empty-needs', 'Needs reply', 'You’re caught up.', 'The next snoozed thread is back Mon 9:00.', 'Needs reply is empty: You are caught up. The next snoozed thread is back Monday 9:00. The rail shows no starred channels yet.', {'starred': False})
-emptypage('empty-unread', 'Unread', 'Nothing unread.', 'New messages in your DMs, mentions and starred channels show here.', 'Unread is empty: Nothing unread.', count='3 need reply', counts=(3, 0), ncount=3)
+emptypage('empty-unread', 'Unread', 'Nothing unread.', 'New messages in your DMs, mentions and starred channels show here.', 'Unread is empty: Nothing unread.', count='3 need reply', counts=(3, 0), rail_kw={'harbor': ''}, ncount=3)
 sk = ''.join(f'<div class="sk"><span class="g c3" style="opacity:.3"></span><i style="width:{a}px"></i><i style="width:{b}px"></i><i style="width:{c}px;background:var(--s2)"></i><i style="width:24px"></i></div>' for a, b, c in [(60, 40, 320), (50, 60, 280), (70, 50, 360), (56, 44, 240), (62, 58, 300), (48, 40, 340)])
-write('loading', shell('Messages - loading', hdr(count='…'), f'<div class="mbody nopeek">{rail()}<div class="mlist"><div class="mgroup">Needs reply<span class="n"></span></div>{sk}</div></div>', keys('List keys', [('Ctrl+K', 'search or jump'), ('?', 'all keys')]),
-      'Loading: 6 skeleton rows painted from the cache. Rows fill in from the store.', ncount=None))
+write('loading', shell('Messages - loading', hdr(count='23 need reply'), f'<div class="mbody nopeek">{rail()}<div class="mlist"><div class="mgroup">Needs reply<span class="n"></span></div>{sk}</div></div>', keys('List keys', [('Ctrl+K', 'search or jump'), ('?', 'all keys')]),
+      'Loading: 6 skeleton rows painted from the cache. Rows fill in from the store. The header, the tab and the rail all read 23.', ncount=23))
 # toast, sender and place only
 TOAST = '<div class="toast"><span class="g c3"></span><div><b style="font-weight:600">Sam, DM</b><div style="font-size:12px;color:var(--ink-subtle)">Needs reply</div></div><span class="btn" style="margin-left:auto">Open</span></div>'
 OSN = '<div class="os"><div class="h">Sindri</div><div><b style="font-weight:600">Sam, DM</b></div><div style="font-size:12px;color:var(--ink-subtle)">1 thread waits on you</div></div>'
@@ -347,20 +350,16 @@ def comp(text=None, target='#harbor, 412 people', focus=False, send='Send', send
     t = f'{text}<span class="caret"></span>' if text is not None else f'<span class="ph">{ph}</span>' + ('<span class="caret"></span>' if focus else '')
     s = f'<span class="btn primary {"off" if off else ""}">{send} <kbd>Ctrl+Enter</kbd></span>'
     return f'<div class="comp"><div class="to">To <b>{target}</b></div>{line}{tb()}<div class="box {"focus" if focus else ""}">{t}{box_extra}</div>{("<div style=margin-top:6px;display:flex;gap:6px>" + chips + "</div>") if chips else ""}<div class="acts">{s}<span class="sp"></span><span class="hint">Enter is a new line</span></div></div>'
-# one #harbor thread everywhere: root Ada 07:30 and three replies (Kim 08:20, Ada 08:41, Kim 08:55); You 09:14 where a reply was sent
+# one #harbor thread everywhere: Ada's root at 07:30 alone; You 09:14 is the first reply where a reply was sent
 def thread_lines(extra='', youline=''):
     lr = lrow('pr', '#3120', 'Seat holds: 90 s', '<b>CI green</b> · asked of you · ada')
-    o = ln('Ada', '07:30', '<span class="you">@joi</span> review #3120 when you can', mention=True, extra=lr)
-    o += ln('Kim', '08:20', 'ok, 90 s holds then', av='#3b4a40', ini='KI')
-    o += ln('Ada', '08:41', 'I will move it to 90 s once #3120 lands')
-    o += ln('Kim', '08:55', 'thanks, I will re-test after lunch', av='#3b4a40', ini='KI')
-    return o + youline
+    return ln('Ada', '07:30', '<span class="you">@joi</span> review #3120 when you can', mention=True, extra=lr) + youline
 YOU = lambda extra='', cls='': ln('You', '09:14', 'On it, reviewing #3120 now.', av='#4a3b3b', ini='YO', extra=extra)
-def peek_r2(cmp, lines=None, head='Thread · #harbor', idt='slack:thread:harbor', replies=3, waits='you', ob=''):
+def peek_r2(cmp, lines=None, head='Thread · #harbor', idt='slack:thread:harbor', replies=0, waits='you', ob=''):
     body = lines if lines is not None else thread_lines()
     return f'''<aside class="peek"><div class="peek-head"><h2>{head}</h2><span class="id">{idt}</span><span class="icon">⤢</span><span class="icon">✕</span></div>
 <dl class="peek-fields"><dt>Class</dt><dd><span class="g c2"></span>Review ask</dd><dt>Waits on</dt><dd>{waits}</dd></dl>
-<div class="mp" style="padding-top:4px"><div class="eyebrow" style="margin-top:6px">Thread, root and {replies} replies</div>{body}</div>{ob}{cmp}</aside>'''
+<div class="mp" style="padding-top:4px"><div class="eyebrow" style="margin-top:6px">{"Thread, root only" if replies == 0 else f"Thread, root and {replies} reply"}</div>{body}</div>{ob}{cmp}</aside>'''
 def r2list(rows=None, cm=True, total=22, ncount=1, dim=False, n=14):
     rows = ROWS if rows is None else rows
     st = max(0, ADA - 9)
@@ -388,17 +387,17 @@ r2page('composer-submit-menu', peek_r2(comp('Hi all, the 90 s hold ships with #3
 # sent: Ada's row stays in place, dimmed with "replied 09:14"; counts drop by one
 ROWS_REPLIED = [(r[0], r[1], r[2], r[3], r[4], 'replied 09:14' if i == ADA else r[5], r[6]) for i, r in enumerate(ROWS)]
 SENT_LINE = f'<div class="ln1" style="background:var(--s2)"><span class="g done"></span><span>Sent.</span><span class="btn">Follow up if no reply</span><span class="sp"></span><span class="dt">closes in 5 s</span></div>'
-r2page('composer-sent', peek_r2(comp(None, line=SENT_LINE, send_off=True), lines=thread_lines(youline=YOU()), replies=4, waits='them'),
+r2page('composer-sent', peek_r2(comp(None, line=SENT_LINE, send_off=True), lines=thread_lines(youline=YOU()), replies=1, waits='them'),
        'Sent. The confirmation line offers a button, Follow up if no reply. The composer keeps focus, so press Escape to leave it, then h. The row for Ada stays in place, dimmed, with replied 09:14, until the next settle point. Counts: 22 need reply.',
        center=r2list(rows=ROWS_REPLIED, total=21, dim=True), cm=True, counts=(22, 14), count='22 need reply', ncount=22)
 FAILED = thread_lines(youline=YOU(extra='<div class="fl"><span>failed: Slack refused it (restricted_action)</span><span class="btn">Retry</span><span class="btn">Discard</span><span class="dt">SND-MSG-004</span></div>').replace('class="cl first"', 'class="cl first grey"').replace('class="cl first grey"', 'class="cl first"', 3) if False else '')
 def greyed(extra): return ln('You', '09:14', 'On it, reviewing #3120 now.', av='#4a3b3b', ini='YO', extra=extra).replace('class="cl first"', 'class="cl first grey"', 1)
-r2page('composer-failed', peek_r2(comp('Sorry, rejoining the channel first.', line='<div class="ln1 err"><span class="g fail"></span><span>Couldn’t send. Your reply is kept on the line above.</span><span class="sp"></span><span class="dt">Details ▸ SND-MSG-004 · restricted_action</span></div>'), lines=thread_lines(youline=greyed('<div class="fl"><span>failed: Slack refused it (restricted_action)</span><span class="btn">Retry</span><span class="btn">Discard</span><span class="dt">SND-MSG-004</span></div>')), replies=4),
+r2page('composer-failed', peek_r2(comp('Sorry, rejoining the channel first.', line='<div class="ln1 err"><span class="g fail"></span><span>Couldn’t send. Your reply is kept on the line above.</span><span class="sp"></span><span class="dt">Details ▸ SND-MSG-004 · restricted_action</span></div>'), lines=thread_lines(youline=greyed('<div class="fl"><span>failed: Slack refused it (restricted_action)</span><span class="btn">Retry</span><span class="btn">Discard</span><span class="dt">SND-MSG-004</span></div>')), replies=1),
        'Failed send: the line stays greyed with failed, Slack refused it, Retry and Discard. The draft is kept. Details: SND-MSG-004. Announcement: Send failed. Retry is next.', drafts=1, cm=True)
-r2page('composer-send-unknown', peek_r2(comp(None), lines=thread_lines(youline=greyed('<div class="fl" style="color:var(--att)"><span>Slack may have delivered this message. Check #harbor, then:</span></div><div class="fl" style="color:var(--ink-muted)"><span class="btn">It’s there (drop it)</span><span class="btn">Send again</span><span class="dt">SND-MSG-032</span></div>')), replies=4),
+r2page('composer-send-unknown', peek_r2(comp(None), lines=thread_lines(youline=greyed('<div class="fl" style="color:var(--att)"><span>Slack may have delivered this message. Check #harbor, then:</span></div><div class="fl" style="color:var(--ink-muted)"><span class="btn">It’s there (drop it)</span><span class="btn">Send again</span><span class="dt">SND-MSG-032</span></div>')), replies=1),
        'Unknown send: Slack may have delivered this message. Check harbor, then: It is there, drop it, or Send again. Details: SND-MSG-032. A row never re-sends without proof the message is absent.', cm=True)
 r2page('composer-offline', peek_r2(comp('Sorry, rejoining the channel first. Typing while the wifi is down', focus=True, send_off=True, line='<div class="ln1"><span class="g parked"></span><span>Offline: your text is kept as a draft. Send when you’re back.</span><span class="sp"></span><span class="dt">SND-MSG-028</span></div>')), 'Offline composer: the box stays editable with focus. Send is off. The line says: Offline, your text is kept as a draft. Send when you are back. Details: SND-MSG-028. Nothing is queued.', state='offline', off=True, drafts=1, pill='Sindri running', cm=True)
-r2page('composer-429', peek_r2(comp(None), lines=thread_lines(youline=greyed('<div class="fl" style="color:var(--att)"><span>waiting, Slack asked us to wait 12 s</span><span class="dt">after 2 minutes it fails with SND-MSG-005</span></div>')), replies=4),
+r2page('composer-429', peek_r2(comp(None), lines=thread_lines(youline=greyed('<div class="fl" style="color:var(--att)"><span>waiting, Slack asked us to wait 12 s</span><span class="dt">after 2 minutes it fails with SND-MSG-005</span></div>')), replies=1),
        'Rate limited: the line is pending. Waiting, Slack asked us to wait 12 seconds. After 2 minutes it fails with SND-MSG-005 and Retry. It never sends on its own later. The header stays Live: a send limit is per method.', cm=True)
 r2page('composer-focus-ring', peek_r2(comp('Looking now.', focus=True)), 'Focus ring on the composer: 2 px accent ring, 3 to 1 against the panel. The list shows a cursor mark, not a ring. After a send the composer stays focused.', title='Messages - focus ring on the composer', cm=True)
 # agent hand-off dialog (spec 9.7 item 8)

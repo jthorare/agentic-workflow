@@ -220,11 +220,11 @@
 .g.c0{visibility:hidden;width:10px;height:10px;margin:2px}
 .mrow.hasact .actions{right:calc(var(--sp4) + 44px + var(--sp3))}
 .mrow.narrow.hasact .actions{right:calc(var(--sp3) + 44px + var(--sp3))}
-.mrow.hasact .ti{margin-right:176px}
+.mrow.hasact .ti{margin-right:224px}
 .mrow.hasact .ti .lc{display:none}.mrow.hasact .rs{visibility:hidden}
 .mrow.narrow.hasact .ti{margin-right:0}
 .mrow.narrow.hasact .ti .lc{display:none}
-.mrow.n2.hasact .ti{margin-right:92px}
+.mrow.n2.hasact .ti{margin-right:128px}
 .mrow .actions.compact{gap:4px;padding-left:0}
 .mrow .actions.compact .btn{padding:0;width:24px;justify-content:center}
 .mrow .actions.compact .lbl{display:none}
@@ -239,3 +239,5 @@
 .rel{font:500 11px/16px var(--font);color:var(--att);border:1px solid var(--att);border-radius:var(--r1);padding:0 6px;margin-left:8px}
 .dlg .scopebtn{font:500 12px/18px var(--font);color:var(--primary-hi);background:var(--primary-soft);border-radius:var(--r1);padding:1px 8px;border:1px solid var(--primary-hi)}
 .comp .ln1 .btn{height:22px}
+.mrow .ti .t{overflow:hidden;text-overflow:ellipsis;min-width:0;white-space:nowrap}
+.mrow.n2.cmp.hasact .ti{margin-right:104px}

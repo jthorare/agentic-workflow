@@ -48,3 +48,10 @@
 40. File too large (SND-MSG-010) has no Retry, only "Open in Slack". The app message's Retry is off with its reason, and Open run is a link button.
 41. composer-hand-off is a new frame (spec 9.7 item 8): provider, what goes along (4 messages, 1 linked row, about 1k tokens), a note field, the "normal session that can run shell and gh" line, and a primary "Send thread to claude-code". Counts of tokens are placeholders.
 42. List cursor is a mark, not a ring, while the composer has focus (one focus ring per frame).
+
+## R1 recheck at 09f8e96689 (spec 84d61ef298)
+43. Ada's #3120 thread is the 07:30 root alone (no replies), so its row reads Ada, the root text, 2h. Kim's 08:20 "ok, 90 s holds then" is a reply in a thread I started (08:05, "what hold time do we want in staging?"): its own class 1 row in Unread, and a collapsed "Kim, 1 reply" line in the channel. In the R2 frames the first reply to Ada's thread is my 09:14 line.
+44. One #harbor unread number: 3 messages (09:08, 09:09, 09:10 under the New divider, chip "3 new", rail 3). Unread shows one #harbor channel row plus Kim's thread row. empty-unread shows no #harbor count.
+45. snoozed-rows draws the band as 21 rows: the list is scrolled to the end, with a "6 more above" cue and 15 rows, then Snoozed.
+46. The cursor row's title ends with an ellipsis before the buttons at 1440, 1200 and 1000. At 1200 and 1000 the linked-object chips are dropped on every row, not only the cursor row.
+47. The snooze picker has no mode chip. The loading frame shows 23 in the header, the tab and the rail.
