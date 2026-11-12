@@ -32,8 +32,8 @@ public sealed class InMemoryMetaEventStore : IMetaEventStore
                 .Where(e => e.Id > after && (kind is null || e.Kind == kind) && (lane is null || e.Lane == lane))
                 .OrderBy(static e => e.Id)
                 .Take(max)],
-            0,
-            0));   // red stub: bounds come with the implementation
+            _events.Count == 0 ? _last + 1 : _events.Min(static e => e.Id),
+            _last));
 
     /// <inheritdoc />
     public ValueTask<Result<int>> Prune(DateTimeOffset olderThan, CancellationToken cancellationToken) =>
