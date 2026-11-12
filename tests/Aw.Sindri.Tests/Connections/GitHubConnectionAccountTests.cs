@@ -154,7 +154,7 @@ public sealed class GitHubConnectionAccountTests : IDisposable
 
         var account = (await Account().Current(CancellationToken.None)).Value;
 
-        Assert.Equal(new GitHubAccount(GitHubAccountState.NeedsSignIn, "github:work", Login: null), account);
+        Assert.Equal(new GitHubAccount(GitHubAccountState.NeedsSignIn, "github:work", Login: null, GitHubLoginMiss.SignIn), account);
         Assert.Equal(0, _handler.Calls);
     }
 
