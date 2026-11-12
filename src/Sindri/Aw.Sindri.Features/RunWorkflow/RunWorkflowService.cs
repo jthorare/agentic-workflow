@@ -22,6 +22,7 @@ namespace Aw.Sindri.Features.RunWorkflow;
 internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter, IGraphLaunchRuns launches, ICallerContextAccessor callers) : IService<RunWorkflowRequest, RunWorkflowResponse>
 {
     private const string TriggerKind = "manual";
+    private const int Page = 200;
     private const string SetupActor = "service:setup";
     private static readonly WorkflowSlug HelloSindri = WorkflowSlug.From("hello-sindri");
 
@@ -84,15 +85,25 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
             return SindriErrors.GraphSetupRunRefused.With($"'{record.Slug.Value}' is not the hello-sindri workflow the setup service made");
         }
 
-        var recent = await runs.Recent(record.Id, offset: 0, limit: 200, cancellationToken).ConfigureAwait(false);
-        if (recent.IsError)
+        // why: the run store has no query by trigger actor, so page through every run of this workflow (a workflow made for one greeting has a handful)
+        for (var offset = 0; ; offset += Page)
         {
-            return recent.Error;
-        }
+            var recent = await runs.Recent(record.Id, offset, Page, cancellationToken).ConfigureAwait(false);
+            if (recent.IsError)
+            {
+                return recent.Error;
+            }
 
-        return recent.Value.Any(static r => StartedBySetup(r.Trigger))
-            ? SindriErrors.GraphSetupRunRefused.With("the setup service already ran hello-sindri once (fix: sindri wf run hello-sindri)")
-            : null;
+            if (recent.Value.Any(static r => StartedBySetup(r.Trigger)))
+            {
+                return SindriErrors.GraphSetupRunRefused.With("the setup service already ran hello-sindri once (fix: sindri wf run hello-sindri)");
+            }
+
+            if (recent.Value.Count < Page)
+            {
+                return null;
+            }
+        }
     }
 
     private static bool StartedBySetup(string trigger)
