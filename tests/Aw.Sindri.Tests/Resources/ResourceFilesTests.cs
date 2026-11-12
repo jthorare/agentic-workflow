@@ -58,4 +58,43 @@ public sealed class ResourceFilesTests : IDisposable
         Assert.Equal(3, removed.Value);   // the disk, the database and the stray file
         Assert.False(Directory.Exists(folder));
     }
+
+    [Fact]
+    public void A_purge_that_cannot_put_the_folder_back_leaves_a_leftover_that_names_its_owner()
+    {
+        var folder = Path.Combine(Root, "workflow", "triage");
+        _ = Directory.CreateDirectory(folder);
+        File.WriteAllText(Path.Combine(folder, "state.db"), "four");
+        var files = new ResourceFiles(Root);
+        var staged = files.Stage(ResourceOwner.Parse("workflow:triage").Value).Value;
+        _ = Directory.CreateDirectory(Path.Combine(folder, "fresh"));   // a run provisions a fresh folder at the old path
+
+        var restored = staged.Restore();
+
+        Assert.Equal("SND-RES-008", restored.Error.Code);
+        var leftover = Assert.Single(files.Leftovers().Value);
+        Assert.Equal("workflow:triage", leftover.Owner?.ToString());
+        Assert.Equal(4, leftover.SizeBytes);
+    }
+
+    [Fact]
+    public void Any_entry_under_the_root_that_is_not_a_kind_folder_is_a_leftover_without_an_owner()
+    {
+        _ = Directory.CreateDirectory(Path.Combine(Root, "workflow", "triage"));
+        _ = Directory.CreateDirectory(Path.Combine(Root, ".staging-old"));
+
+        var leftover = Assert.Single(new ResourceFiles(Root).Leftovers().Value);
+
+        Assert.Equal(".staging-old", leftover.Name);
+        Assert.Null(leftover.Owner);
+    }
+
+    [Fact]
+    public void A_root_with_only_kind_folders_has_no_leftovers()
+    {
+        _ = Directory.CreateDirectory(Path.Combine(Root, "workflow", "triage"));
+        _ = Directory.CreateDirectory(Path.Combine(Root, "node", "triage", "n1"));
+
+        Assert.Empty(new ResourceFiles(Root).Leftovers().Value);
+    }
 }

@@ -22,4 +22,8 @@ public interface IResourceFiles
     /// <param name="owner">The owner.</param>
     /// <returns>The staged purge (<see cref="IStagedPurge.Count"/> 0 when the owner had no folder), or SND-RES-008 naming the folder when it could not be moved.</returns>
     public Result<IStagedPurge> Stage(ResourceOwner owner);
+
+    /// <summary>Lists every entry under the resources root that <see cref="List"/> never shows: a purge's aside folder left behind, or anything else that is not a known kind folder.</summary>
+    /// <returns>The leftovers, by name; none when the root holds only kind folders.</returns>
+    public Result<IReadOnlyList<ResourceLeftover>> Leftovers();
 }

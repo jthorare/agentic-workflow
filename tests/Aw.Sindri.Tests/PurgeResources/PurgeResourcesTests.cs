@@ -157,6 +157,8 @@ public sealed class PurgeResourcesTests : IDisposable
 
         public Result<IReadOnlyList<ResourceEntry>> List(ResourceOwner? owner) => inner.List(owner);
 
+        public Result<IReadOnlyList<ResourceLeftover>> Leftovers() => inner.Leftovers();
+
         public Result<int> Purge(ResourceOwner owner)
         {
             Start();

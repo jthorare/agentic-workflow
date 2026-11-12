@@ -59,6 +59,8 @@ internal sealed class ResourceFiles(string root, int entryCap = DiskMeter.FileCa
         return Results.Success<IStagedPurge>(new StagedFolder(owner, folder, aside, count));
     }
 
+    public Result<IReadOnlyList<ResourceLeftover>> Leftovers() => throw new NotSupportedException();
+
     private sealed class StagedFolder(ResourceOwner owner, string folder, string? aside, int count) : IStagedPurge
     {
         public int Count { get; } = count;

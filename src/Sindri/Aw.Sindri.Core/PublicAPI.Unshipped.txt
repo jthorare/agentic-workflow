@@ -23152,3 +23152,12 @@ static Aw.Sindri.Core.Events.WorkflowNodePublic.operator !=(Aw.Sindri.Core.Event
 static Aw.Sindri.Core.Events.WorkflowNodePublic.operator ==(Aw.Sindri.Core.Events.WorkflowNodePublic? left, Aw.Sindri.Core.Events.WorkflowNodePublic? right) -> bool
 static Aw.Sindri.Core.Events.WorkflowRunPublic.operator !=(Aw.Sindri.Core.Events.WorkflowRunPublic? left, Aw.Sindri.Core.Events.WorkflowRunPublic? right) -> bool
 static Aw.Sindri.Core.Events.WorkflowRunPublic.operator ==(Aw.Sindri.Core.Events.WorkflowRunPublic? left, Aw.Sindri.Core.Events.WorkflowRunPublic? right) -> bool
+Aw.Sindri.Core.Resources.IResourceFiles.Leftovers() -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ResourceLeftover!>!>!
+Aw.Sindri.Core.Resources.ResourceLeftover
+Aw.Sindri.Core.Resources.ResourceLeftover.Name.get -> string!
+Aw.Sindri.Core.Resources.ResourceLeftover.Owner.get -> Aw.Sindri.Core.Resources.ResourceOwner?
+Aw.Sindri.Core.Resources.ResourceLeftover.Path.get -> string!
+Aw.Sindri.Core.Resources.ResourceLeftover.ResourceLeftover(string! name, Aw.Sindri.Core.Resources.ResourceOwner? owner, long sizeBytes, System.DateTimeOffset stagedAt, string! path, bool unmeasured = false) -> void
+Aw.Sindri.Core.Resources.ResourceLeftover.SizeBytes.get -> long
+Aw.Sindri.Core.Resources.ResourceLeftover.StagedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Resources.ResourceLeftover.Unmeasured.get -> bool
