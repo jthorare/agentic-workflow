@@ -74,6 +74,17 @@ the publish fields beside it: `state` must be `published`, `published-without-wa
 anything else fails the step. If no model answers, the job still finishes and says `cleanup unavailable`. (`context map build`
 only makes a draft that you review and `promote` with a typed phrase; `refresh` is the no-human-step job.)
 
+The `context-map-refresh` service may get there first. It starts its own `RefreshContextMap` as soon as the repo is in the
+profile, and it doesn't wait for the code index. Then `context map refresh` answers `SND-JOB-409` with that job's id, and
+the script follows the job (`sindri jobs show <id> --json` every 10 s) until it ends. A failed or cancelled job fails the
+step. A succeeded job goes on to the status wait above (#3010).
+
+The extraction not waiting is how the publish gate is built, not a bug. A draft records whether each repo's code index was
+in when it was built. When the index is ok and the draft was built without it, `MapPublishDecision` answers `MapRebuild`,
+so the draft is never published and the service builds it again with the index (#1704). On a small repo that costs one
+extra build. On a big one it costs a whole second extraction: on Effect-TS/effect (2190 files) the first build started
+7 minutes before the index was ok.
+
 **7. The app.** Starts `sindri-ui` on the scratch home (`AW_SINDRI_UI`, else the newest
 `$AW_STATE_DIR/bin/cs/*/sindri-ui`) and keeps its pid in `<home>/first-run/ui.pid`. Click Context in the rail: you
 should see the map and, on Health, a Code index card for `agentic-workflow`. Skip it with `--no-ui`.

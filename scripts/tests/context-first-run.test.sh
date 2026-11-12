@@ -62,7 +62,19 @@ case "$*" in
     if [ -s "$f" ]; then st="$(head -1 "$f")"; [ "$(wc -l < "$f")" -le 1 ] || sed -i.bak 1d "$f"; fi
     printf '{"state":"%s","publishedVersion":1}\n' "$st"; exit 0 ;;
   "context map status") echo "map v1 current" ;;
-  "context map refresh") touch "$AW_SINDRI_HOME/stub/mapped" ;;
+  "context map refresh")
+    # stub/busy: the map service already runs a refresh (#3010): refuse with its job id, as the real verb does
+    if flag busy; then
+      echo "SND-JOB-409 A RefreshContextMap job is already running for refresh (fix: run \`sindri jobs show JOB-0123abcd\`, or wait for it to end)" >&2
+      exit 2
+    fi
+    touch "$AW_SINDRI_HOME/stub/mapped" ;;
+  "jobs show JOB-0123abcd --json")
+    # stub/jobstate: one state per line, read like mapstate; the service's job maps the repo when it succeeds
+    f="$AW_SINDRI_HOME/stub/jobstate"; st=succeeded
+    if [ -s "$f" ]; then st="$(head -1 "$f")"; [ "$(wc -l < "$f")" -le 1 ] || sed -i.bak 1d "$f"; fi
+    [ "$st" != succeeded ] || touch "$AW_SINDRI_HOME/stub/mapped"
+    printf '{"id":"JOB-0123abcd","kind":"RefreshContextMap","state":"%s"}\n' "$st"; exit 0 ;;
   "stop") rm -f "$AW_SINDRI_HOME/stub/serving" ;;
   *) echo "stub: unexpected: $*" >&2; exit 2 ;;
 esac
@@ -210,6 +222,20 @@ else
   expect "a map still held at the timeout fails step 6" 1 "step 6 (map)" "still held after" "context map status"
   step6 overdue overdue published-without-waiting
   expect "overdue is waited for like held, and published-without-waiting passes" 0 "the map is overdue" "map published (v1, published-without-waiting)"
+  # #3010: the map service started its own refresh before step 6, so 'context map refresh' answers SND-JOB-409
+  F="$STATE/sindri-app-firstrun/stub"
+  : > "$F/busy"; printf 'running\nrunning\nsucceeded\n' > "$F/jobstate"
+  step6 held published
+  expect "SND-JOB-409: the service's job is followed until it succeeds, then the map publishes (exit 0)" 0 "already building the map (JOB-0123abcd)" "waiting for JOB-0123abcd" "JOB-0123abcd succeeded" "map published (v1, published)"
+  if logged 'jobs show JOB-0123abcd --json'; then ok "the named job is read with jobs show"; else fail "the named job is read with jobs show"; fi
+  printf 'running\nfailed\n' > "$F/jobstate"
+  step6 published
+  expect "SND-JOB-409 and the service's job fails: step 6 fails and names the job" 1 "step 6 (map)" "JOB-0123abcd ended 'failed'" "jobs show JOB-0123abcd"
+  echo running > "$F/jobstate"
+  step6 published
+  expect "SND-JOB-409 and the job still runs at the timeout: step 6 fails" 1 "step 6 (map)" "JOB-0123abcd was still running after"
+  rm -f "$F/busy" "$F/jobstate" "$F/jobstate.bak"
+
   rm -f "$STATE/sindri-app-firstrun/stub/mapstate"; : > "$STATE/sindri-app-firstrun/stub/mapped"
 
   run status

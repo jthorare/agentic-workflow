@@ -19,6 +19,7 @@
 #      5. First code index build: `sindri services run code-index-main-move` (there is no build verb: the service starts the
 #         BuildCodeIndex job), then `sindri code-index status --repo <repo> --json` until the repo is ok.
 #      6. Context map: `sindri context map refresh` (builds, cleans and publishes the map), then `sindri context map status`.
+#         When the map service already started its own refresh (SND-JOB-409), it follows that job with `sindri jobs show <id>` first.
 #      7. The Sindri app (sindri-ui) on the scratch home.
 # status  The plane, the index and the map, read only.
 # down    `sindri stop`, closes the app this script opened, and deletes the scratch home. Nothing else is touched.
@@ -341,6 +342,31 @@ build_index() {
 # published map's number (.version is the map's own version record). No map yet is an error answer (exit non-zero).
 map_state() { printf '%s' "$OUT" | jq -r '.state // empty' 2>/dev/null; }
 map_ok() { case "$(map_state)" in published | published-without-waiting | published-by-hand) return 0 ;; *) return 1 ;; esac; }
+# refresh_map: 'context map refresh'. When the map service already started its own refresh (#3010: it starts one as soon as the repo is
+# in the profile, before the code index is ok), the verb answers SND-JOB-409 naming that job: follow it until it ends instead of failing.
+refresh_map() {
+  local err="$home/.first-run-refresh.err" rc job waited=0 st
+  sx context map refresh 2>"$err"; rc=$?
+  cat "$err" >&2
+  [ "$rc" != 0 ] || return 0
+  grep -q 'SND-JOB-409' "$err" || broke "step 6 (map): 'context map refresh' failed; see $(shown) jobs"
+  job="$(grep -o 'JOB-[0-9a-fA-F]\{6,\}' "$err" | head -1)"
+  [ -n "$job" ] || broke "step 6 (map): 'context map refresh' answered SND-JOB-409 without a job id; see $(shown) jobs"
+  note "the map service is already building the map ($job); following it"
+  while :; do
+    sx_out jobs show "$job" --json
+    [ "$RC" = 0 ] || broke "step 6 (map): 'jobs show $job' exited $RC; run: $(shown) jobs show $job"
+    st="$(printf '%s' "$OUT" | jq -r '.state // empty' 2>/dev/null)"
+    case "$st" in
+      running) ;;
+      succeeded) note "$job succeeded"; return 0 ;;
+      *) broke "step 6 (map): the map service's $job ended '${st:-unknown}'; run: $(shown) jobs show $job" ;;
+    esac
+    [ "$waited" -lt "$map_timeout" ] || broke "step 6 (map): $job was still running after ${waited}s; run: $(shown) jobs show $job"
+    sleep "$map_poll"; waited=$((waited + map_poll))
+    note "waiting for $job (${waited}s)"
+  done
+}
 publish_map() {
   step "6. publish the context map"
   if [ "$dry" = 1 ]; then
@@ -348,13 +374,14 @@ publish_map() {
     check "skip when .state is published, published-without-waiting or published-by-hand (no map is a non-zero exit)"
     sx context map refresh
     check "builds a draft, cleans the review queue and promotes it as you (no typed phrase); with the index built it is not held; exit 0"
+    check "on SND-JOB-409 (the map service already runs a refresh) follow the named job with 'jobs show <id> --json' every $map_poll s until it ends; fail unless it succeeded"
     sx context map status --json
     check "wait up to $map_timeout s (every $map_poll s) while .state is held or overdue (waitForIndexMinutes 15 plus two ticks); fail on published-stale or anything else"
     return 0
   fi
   sx_out context map status --json
   if [ "$RC" = 0 ] && map_ok; then note "a map is published ($(map_state))"; return 0; fi
-  sx context map refresh || broke "step 6 (map): 'context map refresh' failed; see $(shown) jobs"
+  refresh_map
   local waited=0
   while :; do
     sx_out context map status --json
