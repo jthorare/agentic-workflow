@@ -13,9 +13,12 @@ using Aw.Sindri.Core.Views;
 namespace Aw.Sindri.Features.GetStatus;
 
 internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, ILedgerReader ledger,
-    IProjectorStatus projector, HealthServiceRows healthRows, ISessionSnapshot sessions)
+    IProjectorStatus projector, HealthServiceRows healthRows, ISessionSnapshot sessions, IEnumerable<BuiltInService>? builtIns = null)
     : IService<GetStatusRequest, GetStatusResponse>
 {
+    /// <summary>The build's built-in services; not yet listed by <see cref="Services"/> (bug #3127, phase 2).</summary>
+    internal IReadOnlyList<BuiltInService> BuiltIns { get; } = [.. builtIns ?? []];
+
     public async ValueTask<Result<GetStatusResponse>> Handle(GetStatusRequest request, CancellationToken cancellationToken)
     {
         var approved = await profiles.Approved(cancellationToken).ConfigureAwait(false);
