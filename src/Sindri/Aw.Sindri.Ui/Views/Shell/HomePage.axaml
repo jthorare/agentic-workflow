@@ -29,18 +29,18 @@
     <Style Selector="TextBlock.attention">
       <Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" />
     </Style>
-    <!-- One accent (#2780): Primary is the nav selection and the page's ONE primary button, the first Needs-you row's primary action. Every other row's
+    <!-- One accent (#2780): Primary is the nav selection and the page's ONE primary button, the first listed Needs-you row that has one (IsLeadAction, not its position). Every other row's
          primary action draws as a secondary button, and an attention tag on a Needs-you row is a neutral chip (its word still says what it is). -->
-    <Style Selector="ItemsControl#NeedsYouRows > ContentPresenter:nth-child(n+2) Button.command-control.primary:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Border.needs-you-row:not(.lead) Button.command-control.primary:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
       <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
     </Style>
-    <Style Selector="ItemsControl#NeedsYouRows > ContentPresenter:nth-child(n+2) Button.command-control.primary:pointerover:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Border.needs-you-row:not(.lead) Button.command-control.primary:pointerover:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
     </Style>
-    <Style Selector="ItemsControl#NeedsYouRows > ContentPresenter:nth-child(n+2) Button.command-control.primary:pressed:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Border.needs-you-row:not(.lead) Button.command-control.primary:pressed:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
     </Style>

@@ -69,6 +69,12 @@ internal sealed partial class NeedsYouRowViewModel : ObservableObject
     /// <summary>The title button's accessible name: "Open", the title and the id.</summary>
     public string OpenName => Labels.OpenRow(Title, IdShown);
 
+    /// <summary>True only on the first listed row that has a primary action: the page's one primary button (#2780). Set by the list, recomputed whenever it changes.</summary>
+    public bool IsLeadAction { get; internal set => Set(ref field, value); }
+
+    /// <summary>True when one of the row's controls is primary.</summary>
+    internal bool HasPrimaryAction => Controls.Any(static c => c.IsPrimary);
+
     /// <summary>The row's controls, the primary first, then the others as served.</summary>
     public IReadOnlyList<NeedsYouActionControl> Controls { get; private set; }
 

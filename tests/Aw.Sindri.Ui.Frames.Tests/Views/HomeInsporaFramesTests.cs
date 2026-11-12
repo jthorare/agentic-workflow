@@ -9,7 +9,9 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
+using Aw.Sindri.Ui.ViewModels.NeedsYou;
 using Aw.Sindri.Ui.ViewModels.Shell;
+using Aw.Sindri.Ui.Views.NeedsYou;
 using Aw.Sindri.Ui.Views.Controls;
 using Aw.Sindri.Ui.Views.Shell;
 
@@ -51,6 +53,26 @@ public sealed class HomeInsporaFramesTests : FrameHost
 
         var (window, shell) = await Connected(width: width, height: 900);
         CheckHome(window, shell, string.Create(CultureInfo.InvariantCulture, $"home-inspora-{width:0}-error"));
+    });
+
+    // The page's one primary button is the first row that has a primary action, not the first row (#2780): with no primary on row 1, row 2's paints indigo and a later row's does not.
+    [Fact]
+    public Task The_first_row_with_a_primary_action_paints_primary_when_row_one_has_none() => OnUi(async () =>
+    {
+        var (window, shell) = await Connected(width: 1280, height: 900);
+        shell.ShowNeedsYou(new NeedsYouFeed([new NeedsYouEntry("plain", NeedsYouUrgency.Colour) { Title = "Nothing to press here" }, NeedsYouRows.Park(), NeedsYouRows.Profile()], ""));
+        Settle(window);
+
+        var primary = ((ISolidColorBrush)Resource(window, "Brush.Primary")).Color;
+        var filled = window.GetVisualDescendants().OfType<NeedsYouRow>().Where(r => r.IsEffectivelyVisible)
+            .Select(row => row.GetVisualDescendants().OfType<Button>().Where(b => b.IsEffectivelyVisible && b.Classes.Contains("primary")).Select(Fill).ToList()).ToList();
+
+        Assert.Equal(3, filled.Count);
+        Assert.Empty(filled[0]);
+        Assert.All(filled[1], fill => Assert.Equal(primary, fill));
+        Assert.NotEmpty(filled[1]);
+        Assert.All(filled[2], fill => Assert.NotEqual(primary, fill));
+        Frame(window, "home-inspora-1280-lead-action", prefix: "");
     });
 
     private static void CheckHome(ShellWindow window, ShellViewModel shell, string frame)
