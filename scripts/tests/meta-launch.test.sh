@@ -29,6 +29,7 @@ golden_transcript() {
     export HOME="$G/home" AW_STATE_DIR="$G/state" AW_WARP_LAUNCH_DIR="$G/warp" CALLS="$G/calls"
     unset TMUX AW_LAUNCHER_CONFIG
     for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done
+    export AW_META_NO_OOM_CHECK=1   # a runner whose systemd policy is stop would add a stderr line (oom-policy.test.sh covers it)
     export AW_META_NO_STALE_CHECK=1   # the stub aw-meta has no version command: the staleness check (meta-version.test.sh) would add a warning and a call
     export AW_META_LEGACY_TMUX_SOCKET=legacy-golden   # the launcher's legacy-socket check looks here (a private socket, empty), never at tmux's default
     mkdir -p "$HOME/.claude/projects/p" "$G/repo" "$G/prompts" "$AW_STATE_DIR/meta" "$G/shim"
@@ -100,6 +101,7 @@ export AW_META_CLAUDE="$WORK/claude" AW_META_BIN="$WORK/aw-meta" AW_META_NO_SHEL
 mkdir -p "$WORK/guard"
 for o in open xdg-open; do printf '#!/usr/bin/env bash\necho "$1" > "%s"\n' "$WORK/opened.guard" > "$WORK/guard/$o"; chmod +x "$WORK/guard/$o"; done
 export PATH="$WORK/guard:$PATH"
+export AW_META_NO_OOM_CHECK=1
 export AW_META_NO_STALE_CHECK=1   # the stub aw-meta has no version command; the staleness check has its own suite (meta-version.test.sh)
 export AW_META_LEGACY_TMUX_SOCKET=t1-legacy   # the launcher's legacy (default-socket) check goes to this private socket, never the real default
 cfg="$AW_STATE_DIR/meta/team.json"
@@ -386,6 +388,29 @@ cp "$WORK/cfg.route" "$cfg"
 run_model_lane ui
 check "a Claude lane with no routing entry gets no model flag" "$(grep -c -- '--model' "$CALLS.model")" "0"
 cp "$WORK/cfg.route" "$cfg"
+# team.json plugins (#2675): off minus keep.<lane> becomes one --settings argument right after the binary, fresh and resumed.
+PL_OFF='{"enabledPlugins":{"compound-engineering@compound-engineering-plugin":false,"superpowers@claude-plugins-official":false}}'
+jq '.plugins = {off:["superpowers@claude-plugins-official","compound-engineering@compound-engineering-plugin"], keep:{design:["compound-engineering@compound-engineering-plugin"]}}' "$WORK/cfg.route" > "$cfg"
+rm -f "$AW_STATE_DIR/meta/lane-sessions/ui"
+run_model_lane ui
+check "plugins.off: a fresh Claude lane gets --settings with the off ids sorted, right after the binary" "$(head -c "$(( ${#PL_OFF} + 12 ))" "$CALLS.model")" "--settings|$PL_OFF|"
+touch "$HOME/.claude/projects/p/$(cat "$AW_STATE_DIR/meta/lane-sessions/ui").jsonl"
+run_model_lane ui
+check "plugins.off: a resumed Claude lane gets it too" "$(head -c "$(( ${#PL_OFF} + 12 ))" "$CALLS.model")" "--settings|$PL_OFF|"
+jq '.plugins.keep = {ui:["compound-engineering@compound-engineering-plugin"]}' "$cfg" > "$WORK/cfg.p" && mv "$WORK/cfg.p" "$cfg"
+run_model_lane ui
+check "plugins.keep.<lane> removes that id from the settings" "$(head -c 200 "$CALLS.model" | cut -d'|' -f1-2)" '--settings|{"enabledPlugins":{"superpowers@claude-plugins-official":false}}'
+jq '.plugins.keep = {ui:["compound-engineering@compound-engineering-plugin","superpowers@claude-plugins-official"]}' "$cfg" > "$WORK/cfg.p" && mv "$WORK/cfg.p" "$cfg"
+run_model_lane ui
+check "plugins: keeping every id adds no --settings" "$(grep -c -- '--settings' "$CALLS.model")" "0"
+jq '.plugins = {off:"superpowers@claude-plugins-official"}' "$WORK/cfg.route" > "$cfg"
+rm -f "$CALLS.model"
+AW_META_CLAUDE="$WORK/agent-model" AW_META_NO_SHELL=1 bash "$DIR/meta-lane.sh" t1 ui > "$WORK/lane.out" 2>&1; RC=$?
+check "plugins: a malformed off exits 1 with the message and starts no agent" "$RC:$(grep -c -x 'meta-lane: team.json plugins: off is not an array of strings; the agent was not started' "$WORK/lane.out"):$([ -e "$CALLS.model" ] && echo started || echo none)" "1:1:none"
+jq '.plugins = {off:["-x"]}' "$WORK/cfg.route" > "$cfg"
+AW_META_CLAUDE="$WORK/agent-model" AW_META_NO_SHELL=1 bash "$DIR/meta-lane.sh" t1 ui > "$WORK/lane.out" 2>&1; RC=$?
+check "plugins: an id starting with - is refused" "$RC:$(grep -c 'an id is empty or starts with -' "$WORK/lane.out")" "1:1"
+cp "$WORK/cfg.route" "$cfg"
 unlink "$AW_STATE_DIR/launcher.json"
 rm -f "$LCFG"
 
@@ -660,7 +685,7 @@ chmod +x "$WORK/codex-idle"
 jq -n --arg c "$WORK/codex-idle" '{schema:1, agents:{codex:{override:true, bin:$c}}, meta:{lanesAgent:"codex", lanes:{meta:"codex"}}}' > "$WORK/idle.json"
 rm -f "$ids/idle" "$ids/idle.settled" "$ids/idle.ambiguous"
 OUT="$(AW_META_CONFIG="$WORK/team2.json" AW_LAUNCHER_CONFIG="$WORK/idle.json" AW_META_ID_WAIT=1 bash "$DIR/meta-launch.sh" --no-open --lanes idle,amb 2>&1)"; RC=$?
-check "an id that never arrives: the timeout message, exit 0, the next lane started" "$RC:$(grep -c 'lane idle has not reported its session id after 1s' <<< "$OUT"):$(grep -cF 'tmux t1-amb: restarted (its pane had died)' <<< "$OUT")" "0:1:1"   # killstubs above left amb's dead pane (remain-on-exit, #2856), so amb is restarted, never started fresh
+check "an id that never arrives: the timeout message, exit 0, the next lane restarted" "$RC:$(grep -c 'lane idle has not reported its session id after 1s' <<< "$OUT"):$(grep -cF 'tmux t1-amb: restarted (its pane had died)' <<< "$OUT")" "0:1:1"   # killstubs above left amb's dead pane (remain-on-exit, #2856), so amb is restarted, never started fresh
 check "an id that never arrives: nothing recorded" "$(test -s "$ids/idle" && echo id || echo none)" "none"
 tmux kill-server 2> /dev/null; killstubs
 

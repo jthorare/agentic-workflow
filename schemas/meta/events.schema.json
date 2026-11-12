@@ -1,0 +1,538 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentic-workflow/schemas/meta/events.schema.json",
+  "title": "aw-meta events --json",
+  "description": "The output of `aw-meta events --json` (docs/csharp/meta.md \"Events\"). The store accepts any dotted lower-case kind; the `if`/`then` rules below describe the fields of the known kinds, and an unknown kind only needs `fields` to be an object.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "events",
+    "next",
+    "oldest",
+    "latest",
+    "gap"
+  ],
+  "properties": {
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/event"
+      }
+    },
+    "next": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The id of the last event returned, or the --after value when there are none. Pass it back as --after."
+    },
+    "oldest": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The lowest event id still in the log, or latest + 1 when the log is empty."
+    },
+    "latest": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The highest event id ever assigned (it survives a prune that empties the log); 0 when no event was ever appended. A reader that re-snapshots after a gap puts its cursor here."
+    },
+    "gap": {
+      "type": "boolean",
+      "description": "True when --after + 1 is below oldest: the retention dropped events between the cursor and oldest. Re-snapshot from `aw-meta status --json`, then follow the cursor from latest."
+    }
+  },
+  "$defs": {
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "at",
+        "kind",
+        "lane",
+        "fields"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "kind": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$",
+          "description": "Dotted lower-case. Known kinds: obligation.opened, obligation.closed, context.high, context.ok, lane.down, lane.up, usage.limited, usage.ok, merge.recorded, heavy.wait.long, job.started, job.ended, box.health."
+        },
+        "lane": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fields": {
+          "type": "object"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "obligation.opened"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "from",
+                  "lane"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "lane": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "obligation.closed"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "from",
+                  "lane"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "lane": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "context.high"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "type": "object",
+                "required": [
+                  "lane",
+                  "tokens_k",
+                  "recycle"
+                ],
+                "properties": {
+                  "lane": {
+                    "type": "string"
+                  },
+                  "tokens_k": {
+                    "type": "number"
+                  },
+                  "recycle": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "context.ok"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "type": "object",
+                "required": [
+                  "lane",
+                  "tokens_k",
+                  "recycle"
+                ],
+                "properties": {
+                  "lane": {
+                    "type": "string"
+                  },
+                  "tokens_k": {
+                    "type": "number"
+                  },
+                  "recycle": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "lane.down"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "type": "object",
+                "required": [
+                  "lane",
+                  "reason"
+                ],
+                "properties": {
+                  "lane": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "lane.up"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "type": "object",
+                "required": [
+                  "lane",
+                  "reason"
+                ],
+                "properties": {
+                  "lane": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "usage.limited"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "type": "object",
+                "required": [
+                  "lane",
+                  "provider"
+                ],
+                "properties": {
+                  "lane": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "until": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "usage.ok"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "type": "object",
+                "required": [
+                  "lane",
+                  "provider"
+                ],
+                "properties": {
+                  "lane": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "until": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "merge.recorded"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "type": "object",
+                "required": [
+                  "pr",
+                  "sha",
+                  "lane"
+                ],
+                "properties": {
+                  "pr": {
+                    "type": "integer"
+                  },
+                  "sha": {
+                    "type": "string"
+                  },
+                  "lane": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "heavy.wait.long"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "type": "object",
+                "required": [
+                  "pid",
+                  "session",
+                  "argv",
+                  "since_min"
+                ],
+                "properties": {
+                  "pid": {
+                    "type": "integer"
+                  },
+                  "session": {
+                    "type": "string"
+                  },
+                  "argv": {
+                    "type": "string"
+                  },
+                  "since_min": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "job.started"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "pid",
+                  "log"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "pid": {
+                    "type": "integer"
+                  },
+                  "unit": {
+                    "type": "string"
+                  },
+                  "log": {
+                    "type": "string"
+                  },
+                  "exit": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "job.ended"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "pid",
+                  "log"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "pid": {
+                    "type": "integer"
+                  },
+                  "unit": {
+                    "type": "string"
+                  },
+                  "log": {
+                    "type": "string"
+                  },
+                  "exit": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "box.health"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "type": "object",
+                "required": [
+                  "mem_available_mb",
+                  "disk_free_mb"
+                ],
+                "properties": {
+                  "mem_available_mb": {
+                    "type": "number"
+                  },
+                  "disk_free_mb": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

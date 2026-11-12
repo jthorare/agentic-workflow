@@ -127,11 +127,11 @@ history `command` (`advance report c1 --sweep <path>`), and the history `evidenc
   baseline plus what main added by a merge, as `record-candidate` and the judge diff use). A shared project file that main
   changes is no weakening of the check; the history step says so (`record-run c1; the check file … changed on main …`). A
   change the fix made, or one that can't be told from the fix's (no main ref, a merge conflict), is still AW-BUGFIX-008.
-- **The judge's diff.** It is the candidate's change from the net base, so what a main merge brought in stays out. For a
+- **The judge's diff.** It is the candidate's change from the net base, so what a main merge brought in stays out. It starts with the red commit's own change (what the baseline holds past main: the check and its wiring), whatever the ticket source. For a
   `github` ticket (`id` is the issue number: `#1189`, `1189`, `owner/repo#1189` or the issue URL) it also starts with the diffs
   of main's own commits, from the baseline up to the net base, whose message says `Part of #N` or `Fixes #N` for that number
-  (not `#N0`): a fix that main already had through a merged "Part of" PR is still the fix. Any other ticket gets the net-base
-  diff alone. The input also carries `checkSource`, the frozen check's own file as committed at the candidate's commit, so a
+  (not `#N0`): a fix that main already had through a merged "Part of" PR is still the fix. Any other ticket gets the red commit's change and the net-base
+  diff. The input also carries `checkSource`, the frozen check's own file as committed at the candidate's commit, so a
   candidate whose red commit already holds the test isn't judged "proofs missing". For a `.csproj` check (`dotnet test --project X.csproj`), `checkSource` is the test class files `--filter-class` and `--filter-method` name (the part after the last `.`, so `*.BugTests` names `BugTests`; for a method, its class; a name still holding a wildcard is skipped), found by `git grep` for the file under the project's directory that declares the class, record, struct or interface, and read at the baseline commit, each under a `// path` header, capped like the diff. `baselineFailure` holds the failure lines (`fail`, `error`, `exception`, `assert`, `expected`, `not ok`, `panic`) of the baseline run's log, capped at 8000 characters; absent when there are none.
 - **A clean tree.** `run-test`, `run-ui`, `record-candidate` and `record-run` refuse a work tree with an uncommitted
   change, or with an untracked file (not ignored) that no registered run left behind: a new fixture or a module that

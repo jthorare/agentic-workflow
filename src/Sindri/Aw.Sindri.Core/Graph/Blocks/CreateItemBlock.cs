@@ -25,10 +25,10 @@ public sealed class CreateItemBlock(ICreateItemPort items) : IGraphBlock
 
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([
-        new("title", BlockFieldType.Text),
-        new("repo", BlockFieldType.Text, Required: false),
-        new("body", BlockFieldType.Text, Required: false),
-        new("linearIssue", BlockFieldType.Text, Required: false),
+        new("title", BlockFieldType.Text, Caption: "Title"),
+        new("repo", BlockFieldType.Text, Required: false, Caption: "Repository"),
+        new("body", BlockFieldType.Text, Required: false, Caption: "Details"),
+        new("linearIssue", BlockFieldType.Text, Required: false, Caption: "Linear issue"),
     ]);
 
     /// <inheritdoc />

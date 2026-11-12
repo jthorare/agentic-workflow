@@ -88,7 +88,7 @@ internal sealed partial class CodeIndexEmbedService(CodeIndexJobScopes scopes, I
     private async ValueTask<Result<RepoStep>> Step(IndexRepoStatus repo, IReadOnlyList<JobRow> embeds, CancellationToken cancellationToken)
     {
         var name = repo.Repo.Value;
-        var pending = repo.State == IndexState.Ok && repo.Layers.Any(static l => l.Layer == LayerName.Embeddings && l.State == LayerState.Pending);
+        var pending = repo.State == IndexState.Ok && repo.Layers.Any(static l => l.Layer == LayerName.Embeddings && Retryable(l));
         var mine = embeds.Where(j => IndexJobs.IsEmbedOf(j, name)).ToList();
         var attempts = Attempts(mine);
         var action = EmbedDecision.Decide(pending, mine.Exists(static j => j.State == JobState.Running), attempts, clock.GetUtcNow());
@@ -106,6 +106,11 @@ internal sealed partial class CodeIndexEmbedService(CodeIndexJobScopes scopes, I
 
         return new RepoStep(Started: true, Failing: failing);
     }
+
+    // Pending, or unavailable because the embedding server failed (SND-CODEIDX-006, gh-3069): that cause passes on its own, and the embed run probes the server first, so a
+    // server still down costs one probe and the no-progress wait. A pin mismatch (009) is not retried here: CodeIndexMainMoveService rebuilds once the pins match.
+    private static bool Retryable(LayerStatus layer) =>
+        layer.State == LayerState.Pending || (layer.State == LayerState.Unavailable && layer.Code == "SND-CODEIDX-006");
 
     // The ended jobs, newest first, each read as an attempt: a pending job is "no progress" when it ended with no more vectors than the job before it.
     private static List<EmbedAttempt> Attempts(List<JobRow> mine)

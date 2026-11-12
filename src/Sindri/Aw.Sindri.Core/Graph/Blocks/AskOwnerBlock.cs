@@ -31,10 +31,10 @@ public sealed class AskOwnerBlock(IQuestionPort questions, TimeProvider clock) :
 
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([
-        new("question", BlockFieldType.Text),
-        new("choices", BlockFieldType.TextList, Required: false),
-        new("timeout", BlockFieldType.Text, Required: false),
-        new("default", BlockFieldType.Text, Required: false),
+        new("question", BlockFieldType.Text, Caption: "Question"),
+        new("choices", BlockFieldType.TextList, Required: false, Caption: "Answers to offer"),
+        new("timeout", BlockFieldType.Text, Required: false, Caption: "Stop waiting after"),
+        new("default", BlockFieldType.Text, Required: false, Caption: "Answer if nobody replies"),
     ]);
 
     /// <inheritdoc />

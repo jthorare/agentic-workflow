@@ -31,7 +31,7 @@ public sealed class ConnectionEventBlock : IGraphBlock
     public bool IsTrigger => true;
 
     /// <inheritdoc />
-    public BlockSchema Config { get; } = new([new("connection", BlockFieldType.Text), new("event", BlockFieldType.Text), new("filter", BlockFieldType.Text, Required: false)]);
+    public BlockSchema Config { get; } = new([new("connection", BlockFieldType.Text, Caption: "Connection"), new("event", BlockFieldType.Text, Caption: "Event"), new("filter", BlockFieldType.Text, Required: false, Caption: "Only when")]);
 
     /// <inheritdoc />
     public string Example => """{"connection":"github:work","event":"github.pr.merged","filter":"trigger.repo == \"acme/api\""}""";
@@ -44,14 +44,10 @@ public sealed class ConnectionEventBlock : IGraphBlock
     {
         ArgumentNullException.ThrowIfNull(config);
         var problems = new List<(string Field, string Problem)>();
-        if (Text(config, "connection") is { } connection && !ConnectionName.Parse(connection).IsSuccess)
+        var service = Text(config, "connection") is { } connection ? ServiceOf(connection, problems) : null;
+        if (Text(config, "event") is { } kind && CheckEvent(kind, service) is { } problem)
         {
-            problems.Add(("connection", "is not a connection name ('<service>:<label>', for example 'github:work')"));
-        }
-
-        if (Text(config, "event") is { } kind && PollCatalog.Find(kind) is null)
-        {
-            problems.Add(("event", $"'{kind}' is not a pollable event; the catalog lists them per connection (workflow_blocks)"));
+            problems.Add(("event", problem));
         }
 
         if (Text(config, "filter") is { } filter && !ConditionExpression.TryParse(filter, out _, out var error))
@@ -60,6 +56,36 @@ public sealed class ConnectionEventBlock : IGraphBlock
         }
 
         return problems;
+    }
+
+    private static string? ServiceOf(string connection, List<(string Field, string Problem)> problems)
+    {
+        var name = ConnectionName.Parse(connection);
+        if (name.IsSuccess)
+        {
+            return name.Value.Service;
+        }
+
+        problems.Add(("connection", "is not a connection name ('<service>:<label>', for example 'github:work')"));
+        return null;
+    }
+
+    /// <summary>The poller of a service refuses the kinds of other services, so a kind of another service never fires; with no usable connection, only the catalog is checked.</summary>
+    private static string? CheckEvent(string kind, string? service)
+    {
+        if (service is null)
+        {
+            return PollCatalog.Find(kind) is null ? $"'{kind}' is not a pollable event; the catalog lists them per connection (workflow_blocks)" : null;
+        }
+
+        var kinds = PollCatalog.For(service);
+        if (kinds.Any(k => string.Equals(k.Key, kind, StringComparison.Ordinal)))
+        {
+            return null;
+        }
+
+        var listed = kinds.Count == 0 ? $"{service} connections have no pollable events" : $"{service} connections can poll: {string.Join(", ", kinds.Select(static k => k.Key))}";
+        return $"'{kind}' is not an event of this connection's service; {listed}";
     }
 
     /// <inheritdoc />

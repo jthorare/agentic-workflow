@@ -40,4 +40,21 @@ public sealed class GitReposContractTests : ReposContract, IDisposable
         _ = TempDirectory.Git(root, "commit", "-q", "-m", "next");
         return TempDirectory.Git(root, "rev-parse", "HEAD");
     }
+
+    /// <summary>The branch change is what the baseline holds past main; a baseline on main holds nothing.</summary>
+    [Fact]
+    public void Branch_change_is_what_the_baseline_holds_past_main()
+    {
+        var (root, onMain) = NewRepo();
+        _ = TempDirectory.Git(root, "checkout", "-q", "-b", "red");
+        Write(root, "src/wiring.txt", "wired\n");
+        var red = Commit(root);
+
+        var change = Git.BranchChange(root, red);
+        Assert.True(change.IsSuccess);
+        Assert.Contains("src/wiring.txt", change.Value.Stat, StringComparison.Ordinal);
+        var none = Git.BranchChange(root, onMain);
+        Assert.True(none.IsSuccess);
+        Assert.True(string.IsNullOrEmpty(none.Value.Stat));
+    }
 }

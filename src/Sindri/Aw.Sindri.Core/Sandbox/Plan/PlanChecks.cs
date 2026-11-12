@@ -68,7 +68,7 @@ internal static partial class PlanChecks
     {
         var ns = c.Request.RunNamespace;
         return !RunNamespace.IsMatch(ns) || ns.Contains("..", StringComparison.Ordinal) || ns.Split('/').Any(s => s.EndsWith(".lock", StringComparison.Ordinal))
-            ? Unconfinable("the run namespace is not sindri/<instance>/<run>")
+            ? Unconfinable("the run namespace is not sindri/<instance>/<run> or wf/<workflow>/<run>")
             : null;
     }
 
@@ -190,6 +190,6 @@ internal static partial class PlanChecks
 
     private static Error Failed(string reason, string detail) => SandboxRefusal.For(SindriErrors.LaunchSelfCheckFailed, reason, detail);
 
-    [GeneratedRegex("^sindri(/[A-Za-z0-9_-]([A-Za-z0-9._-]*[A-Za-z0-9_-])?){2}\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 100)]
+    [GeneratedRegex("^(?:sindri|wf)(/[A-Za-z0-9_-]([A-Za-z0-9._-]*[A-Za-z0-9_-])?){2}\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 100)]
     private static partial Regex RunNamespace { get; }
 }
