@@ -8,7 +8,7 @@ using Npgsql;
 namespace Aw.Evidence.Tests.Infrastructure;
 
 /// <summary>
-/// A throwaway PostgreSQL 15 container from the image already on the box (never pulled), published on a free loopback port and removed
+/// A throwaway PostgreSQL 15 container from the image already on the box (never pulled), published on a loopback port docker picks and removed
 /// when the tests are done. It holds a notes table, a sequence, a SECURITY DEFINER function that inserts, and four roles: a read-only
 /// one and three that must be refused. The secrets are random per run and never leave the process.
 /// </summary>
@@ -39,17 +39,18 @@ public sealed class PostgresContainer : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        using var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        Port = ((IPEndPoint)listener.LocalEndpoint).Port;
-        listener.Stop();
         if (AfterPortChosen is not null)
         {
-            await AfterPortChosen(Port);
+            // why: keeps the #3412 red test meaningful. Pick a port the old way and let the hook take it; docker must still start on a port it chose itself.
+            using var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            var chosen = ((IPEndPoint)listener.LocalEndpoint).Port;
+            listener.Stop();
+            await AfterPortChosen(chosen);
         }
 
-        var published = $"127.0.0.1:{Port.ToString(CultureInfo.InvariantCulture)}:5432";
-        _id = (await Docker("run", "-d", "--rm", "-p", published, "-e", $"POSTGRES_PASSWORD={AdminSecret}", "-e", $"POSTGRES_DB={Database}", Image, "-c", "log_statement=all")).Trim();
+        _id = (await Docker("run", "-d", "--rm", "-p", "127.0.0.1::5432", "-e", $"POSTGRES_PASSWORD={AdminSecret}", "-e", $"POSTGRES_DB={Database}", Image, "-c", "log_statement=all")).Trim();
+        Port = await PublishedPortAsync();
         await WaitUntilReadyAsync();
         await ExecuteAsync(Setup());
         ServerAddress = (string)(await ScalarAsync("SELECT host(inet_server_addr())"))!;   // why: a TCP connection always has a server address
@@ -106,6 +107,14 @@ public sealed class PostgresContainer : IAsyncLifetime
         using var process = Process.Start(start)!;   // why: docker is on the box (the heavy lane's precondition)
         await process.WaitForExitAsync(Ct);
         return process.ExitCode == 0;
+    }
+
+    /// <summary>The host port docker picked for 5432/tcp: the 127.0.0.1 line of `docker port` (`127.0.0.1:NNNNN`; other lines are other addresses).</summary>
+    private async Task<int> PublishedPortAsync()
+    {
+        var lines = (await Docker("port", _id, "5432/tcp")).Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var line = lines.First(l => l.StartsWith("127.0.0.1:", StringComparison.Ordinal));
+        return int.Parse(line["127.0.0.1:".Length..], CultureInfo.InvariantCulture);
     }
 
     private async Task WaitUntilReadyAsync()
