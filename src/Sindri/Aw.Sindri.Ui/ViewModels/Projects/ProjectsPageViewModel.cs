@@ -3,6 +3,7 @@ using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Projects;
 using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.ViewModels.Controls;
 
 namespace Aw.Sindri.Ui.ViewModels.Projects;
 
@@ -77,8 +78,11 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
     /// <summary>How many cards sit across: 1, 2 or 3.</summary>
     public int Columns { get; private set => Set(ref field, value); } = 1;
 
+    /// <summary>The last read's failure as the shared failed-read line draws it (words, Retry, the code behind Details); null when the last read worked.</summary>
+    public FailedRead? ReadFailure { get; private set { Set(ref field, value); OnChanged(nameof(Error)); } }
+
     /// <summary>The last read's failure line; empty when the last read worked.</summary>
-    public string Error { get; private set => Set(ref field, value); } = string.Empty;
+    public string Error => ReadFailure?.Words ?? string.Empty;
 
     /// <summary>A card asked for its sheet (a click, Enter).</summary>
     internal event EventHandler<ProjectOpenRequestedEventArgs>? OpenRequested;
@@ -224,15 +228,18 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
         Fail(list.Error);
     }
 
+    // The Retry button of the failed line: the same read, at the address the page last used.
+    private Task RetryRead(CancellationToken cancellationToken) => _url is { } url ? Read(url, cancellationToken) : Task.CompletedTask;
+
     private void Fail(Error error)
     {
         IsLoading = false;   // the last good answer stays under the line
-        Error = Labels.ProjectsFailed(error);
+        ReadFailure = new FailedRead(Labels.PageReadFailed("Projects"), RetryRead) { Code = error.Code };
     }
 
     private void Show(ProjectList list)
     {
-        (IsLoading, Error) = (false, string.Empty);
+        (IsLoading, ReadFailure) = (false, null);
         var failing = list.Freshness.Any(f => string.Equals(f.State, "failing", StringComparison.Ordinal));
         FreshnessFailing = failing;
         Freshness = ProjectsLinear.Freshness(list);
