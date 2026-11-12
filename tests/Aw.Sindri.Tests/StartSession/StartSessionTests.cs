@@ -150,6 +150,7 @@ public sealed class StartSessionTests : IDisposable
         Assert.Equal(SindriErrors.AgentNotReady.Code, refused.Error.Code);
         Assert.Contains(said, refused.Error.Message, StringComparison.Ordinal);
         Assert.Contains("claude login", refused.Error.Message, StringComparison.Ordinal);
+        Assert.Equal("claude login", refused.Error.Extensions!.Single(e => e.Key == "command").Value.GetString());
         Assert.Empty(_r.Host.Started);
     }
 

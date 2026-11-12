@@ -12,6 +12,7 @@ using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Worktrees;
+using Aw.Sindri.Features.LinearIssues;
 
 namespace Aw.Sindri.Features.StartSession;
 
@@ -95,7 +96,7 @@ internal sealed partial class StartSessionService(
         var ready = await checks.Agent(agent, cancellationToken).ConfigureAwait(false);
         if (!ready.Installed || !ready.SignedIn)
         {
-            return SindriErrors.AgentNotReady.With($"{agent.Label} is {(ready.Installed ? "not signed in" : "not installed")} (fix: {ready.SignInCommand})");
+            return SindriErrors.AgentNotReady.With($"{agent.Label} is {(ready.Installed ? "not signed in" : "not installed")} (fix: {ready.SignInCommand})").WithExtension("command", LinearChangeFields.Text(ready.SignInCommand));   // the form's Copy command button reads it
         }
 
         var facts = await host.Probe(cancellationToken).ConfigureAwait(false);
