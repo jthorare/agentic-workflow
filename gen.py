@@ -34,7 +34,7 @@ def plist(flag='', who='Exports v2'):
     o += prow('SSO rollout', 'Off track: main red 3d (web)', (5, 12), 'off track', 'Off track', 'Priya', 'Dec 1', '5d', 'reviewer', 'read', f('SSO rollout'))
     o += grp('At risk', 4)
     o += prow('Billing rework', 'At risk: 3 of 9 PRs red > 2 days', (14, 22), 'at risk', 'At risk', 'Mira', 'Dec 5', '1d', 'you', 'unread', f('Billing rework'))
-    o += prow('Exports v2', mm('At risk', 'On track', '2 of 4 PRs red > 2 days'), (6, 9), 'at risk', 'On track', 'Dani', 'Nov 28', '3d', 'CI', 'unread', f('Exports v2'))
+    o += prow('Exports v2', mm('At risk', 'On track', '2 of 3 PRs red > 2 days'), (6, 9), 'at risk', 'On track', 'Dani', 'Nov 28', '3d', 'CI', 'unread', f('Exports v2'))
     o += prow('Workspace transfer', 'At risk: 3 of 11 done, 9 days left', (3, 11), 'at risk', 'At risk', 'Tomas', 'Nov 21', '2d', 'Tomas', 'read', f('Workspace transfer'))
     o += prow('Role-based access', 'At risk: 2 reviews waiting > 3 days', (9, 14), 'at risk', 'At risk', 'Tomas', 'Dec 3', '4h', 'reviewer', 'read', f('Role-based access'))
     o += grp('On track', 6)
@@ -50,6 +50,9 @@ def plist(flag='', who='Exports v2'):
     o += prow('Q1 hiring loop', 'Link a repo', None, '', 'Planned', 'Dani', 'Jan 15', '6d', '')
     o += prow('Vendor security review', 'Link a repo', None, '', 'Paused', 'Priya', '', '3w', '')
     return o
+def colhead():
+    return (f'<div class="row colhead" {FACTS}><span></span><span class="title"></span><span class="fact"></span><span class="fact">Health (derived)</span>'
+            '<span class="fact">Lead’s call</span><span class="fact drop-peek">Lead</span><span class="fact drop-peek">Target</span><span class="age">Updated</span><span class="wait">Waiting on</span></div>\n')
 SR_STYLE = 'position:absolute;bottom:36px;font:400 11px/16px var(--font);color:var(--ink-subtle);max-width:560px;z-index:2'
 def sr(text, side='left', bottom=36):
     pos = 'left:24px' if side == 'left' else 'right:24px;text-align:right'
@@ -87,7 +90,7 @@ def throughput():
     return f'<svg class="chart" width="408" height="58" viewBox="0 0 408 58"><path d="M30 44H404" stroke="#26272a"/>{bars}</svg>'
 def sec(t, n=''): return f'<div class="sect" style="margin-top:10px">{t}{" <span class=n>" + n + "</span>" if n else ""}</div>'
 FIELDS = ('<dl class="peek-fields" style="margin:0;padding-top:4px;padding-bottom:4px">'
-  '<dt>Derived</dt><dd><span class="chip att">at risk</span><span>At risk: 2 of 4 PRs red > 2 days</span></dd>'
+  '<dt>Derived</dt><dd><span class="chip att">at risk</span><span>At risk: 2 of 3 PRs red > 2 days</span></dd>'
   '<dt>Linear says</dt><dd>on track<span style="color:var(--ink-subtle)">differs: Sindri says at risk</span></dd>'
   '<dt>Lead</dt><dd><span class="av">D</span>Dani Okoye</dd><dt>Target</dt><dd>Nov 28<span style="color:var(--ink-subtle)">in 16d</span></dd>'
   '<dt>Progress</dt><dd><span class="bar att"><i style="width:66%"></i></span>6/9</dd></dl>')
@@ -96,7 +99,7 @@ def rrule(grp, text, state='clear', hit=False):
 rules = ('<div class="rules">'
   + rrule('Off track', 'the target date has passed with open work')
   + rrule('', 'main CI has been red 2 days or more')
-  + rrule('At risk', 'a linked PR’s CI has been red 2 days or more', 'matched: 2 of 4 PRs red', True)
+  + rrule('At risk', 'a linked PR’s CI has been red 2 days or more', 'matched: 2 of 3 PRs red', True)
   + rrule('', 'a review request or a changes-requested review has waited 3 days or more')
   + rrule('', 'under half done with 14 days or less to the target')
   + rrule('On track', 'it has links and no rule above matches', '')
@@ -108,7 +111,7 @@ PEEK1 = ('<aside class="peek"><div class="peek-head"><h2>Exports v2</h2><span cl
   + sec('PRs merged per week') + throughput()
   + sec('How health is worked out', 'first match wins; fixed') + rules
   + '</div><div class="peek-actions"><button class="btn primary">Open <kbd>Enter</kbd></button><button class="btn">Draft update… <kbd>Ctrl+Enter</kbd></button><button class="btn ghost">Copy id</button></div></aside>')
-write('peek-burnup', head('Projects - peek, burn-up', 'Projects') + '<div class="body peeking"><div class="list">\n' + plist('sel') + '</div>\n' + PEEK1 + '</div>\n' + keys(PK) + END.replace('</body>', sr('row read as “Exports v2, project, at risk, 2 of 4 PRs red more than 2 days, Linear says on track, 6 of 9 done, lead Dani, target Nov 28, 3 days”. Each chart has a table behind it.') + '</body>'))
+write('peek-burnup', head('Projects - peek, burn-up', 'Projects') + '<div class="body peeking"><div class="list nopad">\n' + colhead() + plist('sel') + '</div>\n' + PEEK1 + '</div>\n' + keys(PK) + END.replace('</body>', sr('row read as “Exports v2, project, at risk, 2 of 3 PRs red more than 2 days, Linear says on track, 6 of 9 done, lead Dani, target Nov 28, 3 days”. Each chart has a table behind it.') + '</body>'))
 
 # ================= 2. #3169 triage: several rows picked, bulk bar =================
 TF = 'style="--facts: var(--col-fact) var(--col-fact-wide) var(--col-fact)"'
@@ -158,7 +161,7 @@ write('triage-after', triage(rest, set(), 'WSP-114', 8, TACTS, toast='<div class
 write('triage-github', triage(ROWS, set(), 'gh-3088', 13, TACTS, bulk=False, box=False, hdrchip=False, srtext='row read as “gh-3088, GitHub issue, acme/exports-api, d-okafor, 5 days”; Duplicate is read as “unavailable, Linear items only”.', srside='left', extra=f'<div style="{TIP};right:24px;top:196px;width:380px">GitHub item. Accept adds it to the project in Sindri and writes nothing to GitHub. Decline hides it from Triage. Snooze works as for Linear. Duplicate works on Linear items only.</div>'))
 
 # ================= 3. #3171 the . menu over the projects list =================
-def menu(items, field, top=292, left=44, title='Exports v2'):
+def menu(items, field, top=320, left=44, title='Exports v2'):
     o = f'<div class="menu" style="left:{left}px;top:{top}px;width:340px"><div class="mhead">{title}</div><div class="mfield focus{" typed" if field else ""}">{field or "<span class=ph>Type to filter</span>"}<span class="caret"></span></div>\n'
     for ic, lab, sub, k, on in items:
         o += f'<div class="ment{" on" if on else ""}{" dis" if sub == "No failing PR" else ""}">{svg(ic)}<span class="lab">{lab}</span><span class="sub">{sub}</span><kbd>{k}</kbd></div>\n'
@@ -170,26 +173,26 @@ I_SC = '<circle cx="8" cy="8" r="5.5"/><circle cx="8" cy="8" r="2"/>'
 I_AG = '<rect x="3" y="4" width="10" height="8" rx="2"/><path d="M6 8h.01M10 8h.01M8 2v2"/>'
 ALL = [(I_PR, 'Open PR', '#2931, failing', 'o', 1), (I_RE, 'Re-run CI', 'on #2931', 'r', 0), (I_SC, 'Scope this', '', 's', 0), (I_AG, 'Ask an agent to fix', '', 'a', 0)]
 MKS = '<div class="keys"><span><kbd>↑/↓</kbd>move</span><span><kbd>letter</kbd>jump</span><span><kbd>Enter</kbd>pick</span><span><kbd>Esc</kbd>close</span></div>'
-def menupage(name, field, items, who='Exports v2', top=292, srtext='', extra=''):
-    write(name, head('Projects - . menu', 'Projects') + '<div class="body"><div class="list">\n' + plist('cursor', who) + '</div></div>\n' + MKS + '</div>' + END.replace('</body>', menu(items, field, top, 44, who) + extra + sr(srtext, 'right') + '</body>'))
+def menupage(name, field, items, who='Exports v2', top=320, srtext='', extra=''):
+    write(name, head('Projects - . menu', 'Projects') + '<div class="body"><div class="list nopad">\n' + colhead() + plist('cursor', who) + '</div></div>\n' + MKS + '</div>' + END.replace('</body>', menu(items, field, top, 44, who) + extra + sr(srtext, 'right') + '</body>'))
 menupage('menu', '', ALL, srtext='menu read as “Exports v2 actions, menu, 4 items. Open PR, number 2931 failing, 1 of 4.” Letters move the highlight; Enter runs it.')
 menupage('menu-filtered', 'ci', [(I_RE, 'Re-run CI', 'on #2931', 'r', 1)], srtext='“1 of 1 match: Re-run CI.” The match count is announced as you type.')
 NOFAIL = [(I_PR, 'Open PR', 'No failing PR', 'o', 0), (I_RE, 'Re-run CI', 'No failing PR', 'r', 0), (I_SC, 'Scope this', '', 's', 1), (I_AG, 'Ask an agent to fix', '', 'a', 0)]
 NOFAIL = [(a_, b_, c_, d_, e_) for a_, b_, c_, d_, e_ in NOFAIL]
-menupage('menu-no-failing', '', NOFAIL, 'Workspace transfer', 324, 'Open PR and Re-run CI are read as “unavailable, no failing PR”.',
-         f'<div style="{TIP};left:400px;top:352px">No failing PR on this project</div>')
+menupage('menu-no-failing', '', NOFAIL, 'Workspace transfer', 352, 'Open PR and Re-run CI are read as “unavailable, no failing PR”.',
+         f'<div style="{TIP};left:400px;top:380px">No failing PR on this project</div>')
 
 # ================= 4. #3172 Draft update in the peek, and its reminder on Home =================
-DRAFT = ('<div class="draft"><div class="hrow"><span>Health</span><span class="chip att">at risk</span><span>At risk: 2 of 4 PRs red > 2 days. Linear says on track</span></div>'
+DRAFT = ('<div class="draft"><div class="hrow"><span>Health</span><span class="chip att">at risk</span><span>At risk: 2 of 3 PRs red > 2 days. Linear says on track</span></div>'
   '<div class="ta"><p>At risk.</p>'
   '<p><span class="k">Merged since Nov 8:</span></p><ul><li>#2920 export history filter by requester</li><li>#2912 export job progress in the toolbar</li><li>#2899 cache tax lookups for previews</li></ul>'
-  '<p><span class="k">Open risks:</span> 2 of 4 PRs red > 2 days.</p>'
+  '<p><span class="k">Open risks:</span> 2 of 3 PRs red > 2 days.</p>'
   '<p><span class="k">Next:</span> <span class="caret"></span></p></div>'
   '<div class="src">Drafted from the health reason and the PRs merged since the last update. Edit anything. Nothing is sent until you post. Esc closes and keeps the draft. Discard has a 5 s Undo.</div></div>')
 PEEK4 = ('<aside class="peek"><div class="peek-head"><h2>Exports v2</h2><span class="id">update</span><span class="icon">⤢</span><span class="icon">×</span></div>' + FIELDS
   + '<div class="peek-body"><div class="sect" style="margin-top:2px">Project update <span class="n">last one 4d ago, on track</span></div>' + DRAFT
   + '</div><div class="peek-actions"><button class="btn primary">Post to Linear <kbd>Ctrl+Enter</kbd></button><button class="btn">Redraft</button><button class="btn ghost">Discard</button></div></aside>')
-write('draft-update', head('Projects - draft update', 'Projects') + '<div class="body peeking"><div class="list">\n' + plist('sel') + '</div>\n' + PEEK4 + '</div>\n'
+write('draft-update', head('Projects - draft update', 'Projects') + '<div class="body peeking"><div class="list nopad">\n' + colhead() + plist('sel') + '</div>\n' + PEEK4 + '</div>\n'
       + '<div class="keys"><span><kbd>Ctrl+Enter</kbd>post to Linear</span><span><kbd>Esc</kbd>close, the draft is kept</span><span><kbd>Tab</kbd>next field</span></div></div>' + END.replace('</body>', sr('“Project update, draft, editable text, at risk.” Posting is announced when Linear confirms; Discard is announced with its Undo.') + '</body>'))
 
 # Home: the reminder row
@@ -275,11 +278,8 @@ write('settings-hotkey-refused', cont.replace('</body>', TRAY + sr('the Shortcut
 # ================= round 3d: projects-list and projects-peek redrawn on section 14's final rules =================
 mini = ns['mini']
 def writeraw(name, html): (D / f'{name}.html').write_text(html)
-def colhead():
-    return (f'<div class="row colhead" {FACTS}><span></span><span class="title"></span><span class="fact"></span><span class="fact">Health (derived)</span>'
-            '<span class="fact">Lead’s call</span><span class="fact drop-peek">Lead</span><span class="fact drop-peek">Target</span><span class="age">Updated</span><span class="wait">Waiting on</span></div>\n')
-HOVER = (f'<div style="{TIP};left:690px;top:324px;width:200px">Health derived from PRs, CI and reviews</div>'
-         f'<div style="{TIP};left:906px;top:324px;width:230px">Lead’s call: the health the project lead set in Linear</div>')
+HOVER = (f'<div style="{TIP};left:690px;top:50px;white-space:nowrap">Health derived from PRs, CI and reviews</div>'
+         f'<div style="{TIP};left:940px;top:50px;white-space:nowrap">Lead’s call: the health the project lead set in Linear</div>')
 writeraw('projects-list', head('Projects - list', 'Projects') + '<div class="body"><div class="list nopad">\n' + colhead() + plist('cursor') + '</div></div>\n' + keys(PK)
          + END.replace('</body>', HOVER + sr('column headers read “Health, derived”, “Lead’s call”, “Lead”, “Target”, “Updated”, “Waiting on”; a row reads “Exports v2, project, at risk, Linear says on track, 6 of 9 done, lead Dani, target Nov 28, 3 days, waits on CI”.') + '</body>'))
 PEEKL = ('<aside class="peek"><div class="peek-head"><h2>Exports v2</h2><span class="icon">⤢</span><span class="icon">×</span></div>' + FIELDS
@@ -296,4 +296,4 @@ PEEKL = ('<aside class="peek"><div class="peek-head"><h2>Exports v2</h2><span cl
   + '<div class="txt">Chunked upload landed. Retry work is the last big piece.</div></div></div></div>'
   + '<div class="peek-actions"><button class="btn primary">Open <kbd>Enter</kbd></button><button class="btn">Draft update… <kbd>Ctrl+Enter</kbd></button><button class="btn ghost">Copy id</button></div></aside>')
 writeraw('projects-peek', head('Projects - peek', 'Projects') + '<div class="body peeking"><div class="list nopad">\n' + colhead() + plist('sel') + '</div>\n' + PEEKL + '</div>\n' + keys(PK)
-         + END.replace('</body>', sr('the peek reads “Exports v2, project. Derived: at risk, 2 of 4 PRs red more than 2 days. Linear says: on track.” Work and Done are lists with PR state.') + '</body>'))
+         + END.replace('</body>', sr('the peek reads “Exports v2, project. Derived: at risk, 2 of 3 PRs red more than 2 days. Linear says: on track.” Work and Done are lists with PR state.') + '</body>'))

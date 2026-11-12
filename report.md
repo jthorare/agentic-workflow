@@ -33,3 +33,7 @@ All 1440x900 PNGs in this folder (`pr-<name>.png`), on `../grammar-2978/grammar.
 Progress track colour: `#5e6268`, which is `--ink-3` (#74787f) at 80% over the canvas (#08090a). Measured 3.25:1 on canvas (WCAG), up from 1.2:1 for `--s4`. The old `--hair-3` is 1.88:1. The checkbox border (`.g.box`) used `--hair-3` too, so it takes the same `#5e6268`; both are grammar candidates.
 
 For design-notes-r2: the window to copy is `pr-create-window` (with the switch) and `pr-create-window-no-switch` (without). Its error line is `pr-create-window-error`.
+
+## Round 3e
+
+Exports v2 now reads "2 of 3 PRs red" everywhere (list, peek, burn-up, draft, menu), matching the three open PRs in the peek's Work section. The two hover labels on projects-list sit beside the header row and cover no data row. pr-menu, pr-menu-filtered, pr-menu-no-failing, pr-draft-update and pr-peek-burnup now have the 28 px column-header row (the menus open 28 px lower to stay under their row).
