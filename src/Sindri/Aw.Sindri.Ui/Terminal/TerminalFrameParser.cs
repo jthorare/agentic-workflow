@@ -8,10 +8,15 @@ internal static class TerminalFrameParser
     /// <param name="capture">The output of capture-pane -e -p: one line per row, SGR codes inline. More lines than the pane is high means the capture reached into scrollback (-S): the extra leading lines are kept as history.</param>
     /// <param name="status">The output of display-message -p '#{cursor_x} #{cursor_y} #{pane_width} #{pane_height} #{pane_in_mode} #{alternate_on} #{pane_dead} #{pane_dead_status}'. A line that doesn't parse leaves the cursor at 0,0 and takes the size from the capture, so a missed call still draws.</param>
     /// <returns>The grid.</returns>
-    internal static TerminalGrid Parse(string capture, string status)
+    internal static TerminalGrid Parse(string capture, string status) => Parse(SplitLines(capture), TerminalStatus.Parse(status));
+
+    /// <summary>Parses a frame that arrived as lines plus its status, as the terminal WebSocket's frame message carries it.</summary>
+    /// <param name="lines">One ANSI line per row, no line endings.</param>
+    /// <param name="info">The cursor, size and pane state.</param>
+    /// <returns>The grid.</returns>
+    internal static TerminalGrid Parse(IReadOnlyList<string> lines, TerminalStatus info)
     {
-        var rows = SplitLines(capture).Select(TerminalRowParser.Parse).ToList();
-        var info = TerminalStatus.Parse(status);
+        var rows = lines.Select(TerminalRowParser.Parse).ToList();
         var width = info.Width ?? Math.Max(1, rows.Count == 0 ? 1 : rows.Max(r => r.Count));
         var height = info.Height ?? Math.Max(1, rows.Count);
         while (rows.Count < height)
