@@ -121,7 +121,8 @@
         <Border x:Name="ContextProblem" Classes="refusal" IsVisible="{Binding HasProblem}" AutomationProperties.Name="{Binding Problem}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <StackPanel Orientation="Horizontal" Spacing="10">
             <icons:StateIcon Glyph="Down" VerticalAlignment="Top" Margin="0,2,0,0" />
-            <TextBlock Classes="body" Text="{Binding Problem}" TextWrapping="Wrap" />
+            <TextBlock Classes="body" Text="{Binding Problem}" TextWrapping="Wrap" VerticalAlignment="Center" />
+            <Button x:Name="ProblemClear" VerticalAlignment="Center" Click="OnClearSearch" Content="{Binding SearchClearText}" AutomationProperties.Name="{Binding SearchClearText}" />
           </StackPanel>
         </Border>
         <!-- Bound to the page's width: the page scrolls, so a long title would otherwise widen the row past the window and push the kind tag off it. -->

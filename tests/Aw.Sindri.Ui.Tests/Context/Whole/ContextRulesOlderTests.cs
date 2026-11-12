@@ -50,7 +50,7 @@ public sealed class ContextRulesOlderTests
     {
         var page = await Shown(Status(rulesOlder: true));
 
-        Assert.Equal((true, "Built under older map rules; a refresh will rebuild it (sindri context map refresh)"), (page.ShowRulesOlder, page.RulesOlderText));
+        Assert.Equal((true, "Built under older map rules; a refresh will rebuild it."), (page.ShowRulesOlder, page.RulesOlderText));
     }
 
     [Theory]

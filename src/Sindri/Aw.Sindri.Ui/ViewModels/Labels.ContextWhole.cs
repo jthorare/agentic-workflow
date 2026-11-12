@@ -110,8 +110,8 @@ internal static partial class Labels
     /// <summary>The line by the head when the live map was built degraded on structure (the stored reason follows).</summary>
     internal const string ContextStructurePrefix = "Degraded on structure: ";
 
-    /// <summary>The line by the head when the live map was built under older map rules (the CLI's words).</summary>
-    internal const string ContextRulesOlder = "Built under older map rules; a refresh will rebuild it (sindri context map refresh)";
+    /// <summary>The line by the head when the live map was built under older map rules (the sentence only: the Refresh map button is the way out).</summary>
+    internal const string ContextRulesOlder = "Built under older map rules; a refresh will rebuild it.";
 
     /// <summary>The name of the list of the map's items.</summary>
     internal const string ContextMapItems = "Map items";
