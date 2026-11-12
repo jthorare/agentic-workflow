@@ -11,6 +11,7 @@ using Aw.Sindri.Features.CreateItem;
 using Aw.Sindri.Features.GetItem;
 using Aw.Sindri.Features.GetQueue;
 using Aw.Sindri.Features.ListItems;
+using Aw.Sindri.Features.ListJobs;
 using Aw.Sindri.Host.Endpoints;
 
 namespace Aw.Sindri.Host.Commands;
@@ -63,7 +64,24 @@ internal sealed class ItemVerbs(ControlPlaneClient client, Output output, Func<b
         var code = queue.AsOf.Rebuilding || queue.AsOf.Stalled ? 1 : 0;
         return command.Json
             ? await output.Raw(answer.Value.Body, code).ConfigureAwait(false)
-            : await output.Text(Render(queue), code).ConfigureAwait(false);
+            : await output.Text(Render(queue) + await RunningJobsLine(queue, ct).ConfigureAwait(false), code).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// The line that says jobs run when the queue's running group is empty (issue #2945): a code index build is a job, not a work item, so the queue
+    /// alone would say "Nothing running". Empty when items run, no job runs, or the jobs can't be read.
+    /// </summary>
+    private async Task<string> RunningJobsLine(QueueResponse queue, CancellationToken ct)
+    {
+        if (queue.Groups.Any(g => g.Group == QueueGroup.Running && g.Items.Count > 0))
+        {
+            return string.Empty;
+        }
+
+        var jobs = await client.GetView<JobList>("/sindri/jobs?state=running", ct).ConfigureAwait(false);
+        return jobs.IsSuccess && jobs.Value.Value.Jobs.Count > 0
+            ? string.Create(CultureInfo.InvariantCulture, $"  {jobs.Value.Value.Jobs.Count} job(s) running, not work items: sindri jobs --state running\n")
+            : string.Empty;
     }
 
     private async Task<int> Items(ItemVerbArguments.Parsed command, CancellationToken ct)

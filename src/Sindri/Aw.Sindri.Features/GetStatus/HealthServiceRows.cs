@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Health;
+using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
@@ -59,12 +60,28 @@ internal sealed class HealthServiceRows(IViewReader views, IEnumerable<BuiltInSe
     public async ValueTask<IReadOnlyList<HealthProblem>> CodeIndexProblems(LoadedProfile? approved, CancellationToken cancellationToken) =>
         codeIndex is null ? [] : await codeIndex.Problems(approved, cancellationToken).ConfigureAwait(false);
 
+    /// <summary>Whether the running jobs are read at all: false when the host gave no jobs view, which would make status show no jobs ever (issue #2945).</summary>
+    internal bool ReadsJobs() => jobs is not null;
+
     /// <summary>The jobs running now, for `sindri status` (issue #2945).</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The running jobs; none when this build has no jobs view.</returns>
-    public ValueTask<IReadOnlyList<RunningJobStatus>> RunningJobs(CancellationToken cancellationToken)
+    public async ValueTask<IReadOnlyList<RunningJobStatus>> RunningJobs(CancellationToken cancellationToken)
     {
-        _ = (jobs, cancellationToken);   // red stub: the real read arrives with the fix
-        return ValueTask.FromResult<IReadOnlyList<RunningJobStatus>>([]);
+        if (jobs is null)
+        {
+            return [];
+        }
+
+        var running = await jobs.Running(cancellationToken).ConfigureAwait(false);
+        return running.IsError ? [] : [.. running.Value.OrderBy(j => j.StartedAt).Select(Of)];
     }
+
+    private static RunningJobStatus Of(JobRow job) =>
+        new(job.Id, job.Kind, job.Repo, job.Service?.Value ?? ServiceOf(job.StartedBy), job.Progress.Count > 0 ? job.Progress[^1].Line : null, job.StartedAt);
+
+    private static string? ServiceOf(string startedBy) =>
+        startedBy.StartsWith(ServicePrefix, StringComparison.Ordinal) ? startedBy[ServicePrefix.Length..] : null;
+
+    private const string ServicePrefix = "service:";
 }

@@ -33,7 +33,7 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         var health = await Health(grant is not null, views, approvedProfile, cancellationToken).ConfigureAwait(false);
         health = healthRows.WithStaleBuild(health);
         var status = new GetStatusResponse(grant is not null, grant?.Holder.Pid ?? 0, grant?.Epoch ?? 0, grant?.ExpiresAt, profile, services);
-        return status with { ApiVersion = SindriApi.Version, Views = views, Health = health, Sessions = SessionCounts() };
+        return status with { ApiVersion = SindriApi.Version, Views = views, Health = health, Sessions = SessionCounts(), Jobs = await healthRows.RunningJobs(cancellationToken).ConfigureAwait(false) };
     }
 
     /// <summary>The collector's last pass in three numbers; zeros before the first pass (collector spec CA-8).</summary>

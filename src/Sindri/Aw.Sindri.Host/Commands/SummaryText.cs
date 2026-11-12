@@ -27,6 +27,8 @@ internal static class SummaryText
             Health(lines, health);
         }
 
+        Line(lines, "jobs", Jobs(status.Jobs));
+
         Line(lines, "api", endpoint.Url.Authority);
         if (ui is not null)
         {
@@ -46,6 +48,11 @@ internal static class SummaryText
         { Rebuilding: true } => string.Create(CultureInfo.InvariantCulture, $"rebuilding (cursor {v.Cursor} of {v.LedgerHead})"),
         _ => string.Create(CultureInfo.InvariantCulture, $"cursor {v.Cursor} of {v.LedgerHead}"),
     };
+
+    private static string Jobs(IReadOnlyList<RunningJobStatus> jobs) => jobs.Count == 0
+        ? "none running"
+        : string.Create(CultureInfo.InvariantCulture, $"{jobs.Count} running: ") + string.Join(" · ", jobs.Select(j =>
+            $"{j.Kind.Value}{(j.Repo is { } repo ? " " + repo.Value : string.Empty)}{(j.Progress is { } line ? $" ({line})" : string.Empty)}"));
 
     private static void Health(StringBuilder lines, HealthReport health)
     {

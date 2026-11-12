@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
@@ -47,9 +48,13 @@ internal sealed class ListServicesService(IApprovedProfile approvals, IViewReade
         var described = Descriptions(builtIns);
         IReadOnlyList<ServiceView> services = [.. named.Select(s => (Name: s.Key, s.Value.Every)).Concat(own.Select(s => (Name: s.Key, Every: s.Value)))
             .OrderBy(s => s.Name, StringComparer.Ordinal)
-            .Select(s => View(new Listed(s.Name, s.Every, described.GetValueOrDefault(s.Name), named.ContainsKey(s.Name)), runs.GetValueOrDefault(s.Name), running.Value.FirstOrDefault(j => j.Service?.Value == s.Name)?.Id))];
+            .Select(s => View(new Listed(s.Name, s.Every, described.GetValueOrDefault(s.Name), named.ContainsKey(s.Name)), runs.GetValueOrDefault(s.Name), running.Value.FirstOrDefault(j => Runs(j, s.Name))?.Id))];
         return new ListServicesResponse(services, EmptyText.For(current, services.Count == 0, EmptyText.Services), asOf);
     }
+
+    /// <summary>A job belongs to a service when it names it, or when it names none and the service started it (scheduled index jobs carry no Service; issue #2945).</summary>
+    private static bool Runs(JobRow job, string service) =>
+        job.Service is { } named ? named.Value == service : string.Equals(job.StartedBy, "service:" + service, StringComparison.Ordinal);
 
     /// <summary>What each service the build knows does: the built-ins carry their own sentence, a profile service of the build (the profile has no field for one) is named in <see cref="ServiceDescriptions"/>.</summary>
     private static Dictionary<string, string> Descriptions(IEnumerable<BuiltInService> builtIns)
