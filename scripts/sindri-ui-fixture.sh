@@ -138,7 +138,9 @@
 #                                  <home>/ui-fixture-forge/state/forge/file (never the owner's $AW_STATE_DIR), with ONE open PR on
 #                                  github.com/acme/api (branch feat/retry-budget, authored by fx-viewer so the fix posts a sindri.fix thread):
 #                                  the changed file src/Sync.cs (3 added lines at 41-43), three check runs (lint failing) and one open thread
-#                                  on src/Sync.cs; the world is rebuilt every run, so the PR is always #1. It stores that PR as the Context
+#                                  on src/Sync.cs; the world is rebuilt every run, so the PR is always #1. Then 3 PRs by other authors that
+#                                  request fx-viewer's review (#2-#4: dana-okafor and kai-reviewer green, lee-park's test failing; REVIEWS_OTHERS),
+#                                  so the Reviews list has a queue. It stores that PR as the Context
 #                                  record github:pr/acme/api/<N> (audience linear:SPL, with a github cursor row), replacing the last run's,
 #                                  and restarts the control plane with AW_STATE_DIR and AW_FORGE_LOGIN pointing at the forge state (the
 #                                  real state's cache/bin, where serve finds Temporal, is linked into it), which every later restart keeps
@@ -1084,8 +1086,38 @@ reviews_ensure_bin() {
   REVIEWS_CMD=(dotnet "$dll")
 }
 
-# aw-forge-fake on the fixture's own world (never the real $AW_STATE_DIR), acting as the viewer.
-reviews_forge() { AW_STATE_DIR="$(reviews_state)" AW_FORGE_ADAPTER=file AW_FORGE_HOSTS=github.com AW_FORGE_LOGIN="$PROJECTS_VIEWER" "${REVIEWS_CMD[@]}" "$@" </dev/null; }
+# aw-forge-fake on the fixture's own world (never the real $AW_STATE_DIR), acting as the viewer (or as REVIEWS_AS when set).
+reviews_forge() { AW_STATE_DIR="$(reviews_state)" AW_FORGE_ADAPTER=file AW_FORGE_HOSTS=github.com AW_FORGE_LOGIN="${REVIEWS_AS:-$PROJECTS_VIEWER}" "${REVIEWS_CMD[@]}" "$@" </dev/null; }
+
+# The 3 PRs by other authors that ask the viewer for a review, so the Reviews list has a queue to sort (one red, two green; #2980):
+# author|branch|head sha|title|opened hours ago|file|added lines|checks
+REVIEWS_OTHERS=(
+  "dana-okafor|feat/rate-limit-headers|2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d|Add rate limit headers to v3 list endpoints|5|src/RateLimit.cs|6|--state passing --passed 3 --runs build:success:github-actions,test:success:github-actions,lint:success:github-actions"
+  "kai-reviewer|fix/diacritics-search|3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e|Fold diacritics in product search|26|src/Search/Normalize.cs|12|--state passing --passed 3 --runs build:success:github-actions,test:success:github-actions,lint:success:github-actions"
+  "lee-park|chore/webhook-signing|4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f|Sign legacy webhook deliveries|50|src/Webhooks/Signer.cs|4|--state failing --failing test --passed 2 --runs build:success:github-actions,test:failure:github-actions,lint:success:github-actions"
+)
+
+# One of REVIEWS_OTHERS: opened as its author, a file with N lines added after line 20, its checks, and its Context record (the viewer requested).
+reviews_other() {
+  local db=$1 who br sha title age path n checks out number link files head="" base="" patch i
+  IFS='|' read -r who br sha title age path n checks <<<"$2"
+  out="$(REVIEWS_AS="$who" reviews_forge open --repo "github.com/$REVIEWS_SLUG" --head "$br" --base main --head-sha "$sha" --title "$title" --body "A fixture PR by $who.")" || die "reviews: aw-forge-fake open failed for $br"
+  number="$(jq -r '.number // empty' <<<"$out")"
+  [[ "$number" =~ ^[0-9]+$ ]] || die "reviews: aw-forge-fake open gave no pull number for $br: $out"
+  link="https://github.com/$REVIEWS_SLUG/pull/$number"
+  for ((i = 1; i <= 20; i++)); do head+="    Line($i);"$'\n'; done
+  base="$head"; patch="@@ -20,0 +21,$n @@"
+  for ((i = 1; i <= n; i++)); do head+="    Added$i();"$'\n'; patch+=$'\n'"+    Added$i();"; done
+  files="$(reviews_dir)/files-$number.json"
+  jq -n --arg p "$path" --arg t "$head" --arg b "$base" --arg patch "$patch" --argjson n "$n" \
+    '[{file: {path: $p, previousPath: null, status: "Modified", additions: $n, deletions: 0, patch: $patch}, text: $t, baseText: $b}]' > "$files" || die "reviews: can't write $files"
+  REVIEWS_AS="$who" reviews_forge seed files "$link" --from "$files" >/dev/null || die "reviews: seed files failed for $br"
+  # shellcheck disable=SC2086 # the checks field is the seed's own flags, split on purpose
+  REVIEWS_AS="$who" reviews_forge seed checks "$link" $checks >/dev/null || die "reviews: seed checks failed for $br"
+  sql_on "$db" "INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at, pull_facts)
+  VALUES ('github:pr/$REVIEWS_SLUG/$number', 'github', 'pr', NULL, '$PROJECTS_AUDIENCE', '$title', '$link', '$who', 'open', 'open', $(projects_ts "-$age hours"), $(projects_ts '-1 hours'), NULL, 'fixture', 'fixture-review-$number', 'fixture', 0, NULL, $(projects_ts '+0 seconds'),
+    '{\"requestedReviewers\":[\"$PROJECTS_VIEWER\"],\"headSha\":\"$sha\",\"reviews\":[]}');" >/dev/null || die "reviews: can't write the record of $link to $db"
+}
 
 # The changed file's seed (docs/csharp/forge.md "seed files"): 3 lines added after line 40, so line 42 is on the new side.
 reviews_files_json() {
@@ -1143,6 +1175,9 @@ INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, au
     '{\"requestedReviewers\":[\"reviewer-kai\"],\"headSha\":\"$REVIEWS_HEAD_SHA\",\"reviews\":[]}');
 INSERT OR REPLACE INTO source_cursor (source, repo, cursor, last_sync, last_error, phase) VALUES ('github', 'records', NULL, $(projects_ts '-3 minutes'), NULL, 'incremental');
 UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;" >/dev/null || die "reviews: can't write the PR record to $db"
+  local other
+  for other in "${REVIEWS_OTHERS[@]}"; do reviews_other "$db" "$other" || return; done
+  sql_on "$db" "UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;" >/dev/null || die "reviews: can't move the store epoch in $db"
 
   sessions_restart >&2 || return
   printf '/sindri/reviews/%s/%s\n%s\n%s:%s\n' "$REVIEWS_SLUG" "$number" "$REVIEWS_HEAD_SHA" "$REVIEWS_FILE" "$REVIEWS_LINE"

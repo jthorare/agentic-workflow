@@ -57,7 +57,7 @@ internal static class GraphAnswer
             cites[MapMarker] = Cite(map, candidates);
         }
 
-        return new GraphPart(candidates, cites, [.. anchors.Select(a => a.Key.Value)], map.Snapshot.Label, [.. suggested.Select(k => k.Value)]) { Conflicts = Conflicts(map, reached, text), DecisionRecords = DecisionRecords(graph, reached), LinkedRecords = LinkedRecords(graph, anchors, reached), RecordSignals = RecordLinks.Of(graph, Depths(own, affected), anchors), SkippedComponents = [.. skipped.Values.OrderBy(u => u.Unit, StringComparer.Ordinal).Select(u => u with { Unit = text.Line(u.Unit) })] };
+        return new GraphPart(candidates, cites, [.. anchors.Select(a => a.Key.Value)], map.Snapshot.Label, [.. suggested.Select(k => k.Value)]) { Choices = [.. AnchorMatch.Choices(suggested.Select(graph.Resolve).OfType<GraphNode>()).Select(c => c with { Label = text.Cleaned(c.Label, singleLine: true) })], Conflicts = Conflicts(map, reached, text), DecisionRecords = DecisionRecords(graph, reached), LinkedRecords = LinkedRecords(graph, anchors, reached), RecordSignals = RecordLinks.Of(graph, Depths(own, affected), anchors), SkippedComponents = [.. skipped.Values.OrderBy(u => u.Unit, StringComparer.Ordinal).Select(u => u with { Unit = text.Line(u.Unit) })] };
     }
 
     private static Dictionary<string, int> Depths(List<(NodeKey Key, NodeKey Anchor)> own, Dictionary<string, AffectedNode> affected) =>
