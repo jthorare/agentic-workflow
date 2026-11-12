@@ -75,7 +75,7 @@ Done-checks. Each is a test or a measured run in the real app (aw-ui-driver), an
 11. **Done keeps 7 days.** #3031 sets 7. The ledger's 90 days copies GitHub's retention, and a 7-day list is enough to undo a mistake without growing a second inbox.
 12. **Home reads one local store.** The first page of `GET /sindri/home` and a cached copy of it paint first; nothing on the first-paint path calls a source.
 13. **Agents get the same verbs.** Every action on the page has a CLI verb and an MCP tool; a session reads Home but never presses owner buttons (§9).
-14. **The old page stays until U4.** The profile key `home.page` (`rows` | `panels`) picks the page. U1 to U3 ship with `panels` as the default and `rows` for the owner to try. U3 flips the default to `rows`. U4 deletes the panel views after one week with no miss of D1, D4 or D11; any miss flips the default back. After U4 the profile still accepts `home.page` and ignores it for one release, so a profile that sets it does not fail validation.
+14. **The old page stays until U4.** The profile key `home.page` (`rows` | `panels`) picks the page. U1 to U3 ship with `panels` as the default and `rows` for the owner to try. Trying it is one click: U1 adds a Settings row "Home: rows (new) / panels" that sets the same key; `sindri profile set home.page rows` does the same from a terminal. U3 flips the default to `rows`. U4 deletes the panel views after one week with no miss of D1, D4 or D11; any miss flips the default back. After U4 the profile still accepts `home.page` and ignores it for one release, so a profile that sets it does not fail validation.
 
 ## 3. The model
 
@@ -336,7 +336,7 @@ Design's frame on #2978 (comment 6817965291) is the reference; every number is `
 
 ```
 ┌ top bar 40 ───────────────────────────────────────────────────────────────────────────────┐
-│ Home   [All 9] [Reviews 3] [Messages 0] [Work 4] [Agents 2]      / filter                 │ page header 48
+│ Home   [All 9] [Reviews 3] [Messages 2] [Work 1] [Agents 3]      / filter                 │ page header 48
 ├ New 1 ────────────────────────────────────────────────────────────────────────────────────┤ group header 28
 │ ◇ qa is asking to run rm -rf build/                asking     session qa    new           │ row 32
 ├ Needs you 8 ──────────────────────────────────────────────────────────────────────────────┤
@@ -401,7 +401,7 @@ Every error row has a button that fixes it.
 | New band has rows | the "New (n)" header; the page title shows "Home (n new)" in the window title for screen readers |
 | a snoozed row wakes | the age cell says "back"; the sub-line gives the reason ("back early: new reply" or "snoozed until 9:00") until first seen |
 | Needs you empty | §5.5 |
-| a split tab with no rows, the Done list empty, Moving with 0 lines, the hand-to-agent picker with no session | one plain line each ("Nothing in Reviews", "Nothing done in the last 7 days", "Nothing in flight", "No session to hand to" with **Start one**) |
+| a split tab with no rows, the Done list empty, Moving with 0 lines, the hand-to-agent picker with no session | one plain line each ("Nothing in Reviews"; the Messages tab says "Slack messages arrive with #2979" only while it has no rows and Messages is not shipped, since Linear and GitHub mentions fill it before then; "Nothing done in the last 7 days", "Nothing in flight", "No session to hand to" with **Start one**) |
 | the peek body can't load | the fields from the local store and "Couldn't load the thread" with **Retry** |
 | brief states | §6.1 table |
 | writer paused or off | §6.1 |
@@ -409,7 +409,7 @@ Every error row has a button that fixes it.
 
 ### 7.4 Keyboard and focus
 
-The grammar keys are the same on every list (#2978): `j/k` and arrows move, `Home`/`End`, `/` filters, `Space` peeks, `Enter` opens, `Esc` goes back one layer, `.` opens the row's action panel (each action shows its key), `?` shows the keys of this surface, `Ctrl+K` is the palette. **A bare key never writes to a source (Slack, GitHub, Linear, notes) and never starts work; a bare key may change Sindri's own view state when Undo shows for 5 s (`e` Done, `h` snooze).** (The owner wrote this boundary with `s` for snooze; the spec uses `h` because #3030 and Linear's flow use `h`, and `s` already means state on Projects and suggest on Reviews.) Every bare key below obeys it: `h`, `t` and `r` only open a picker or a composer, and the write or the start happens on the picker's Send or on `Ctrl+Enter`; `e` is the Undo case; `R`, `[`, `]`, `1` to `5`, `b` and the fold arrows change the view only. Home adds these, after the divider in the footer:
+The grammar keys are the same on every list (#2978): `j/k` and arrows move, `Home`/`End`, `/` filters, `Space` peeks, `Enter` opens, `Esc` goes back one layer, `.` opens the row's action panel (each action shows its key), `?` shows the keys of this surface, `Ctrl+K` is the palette. **A bare key never writes to a source (Slack, GitHub, Linear, notes) and never starts work; a bare key may change Sindri's own view state when Undo shows for 5 s (`e` Done, `h` snooze).** (The owner wrote this boundary with `s` for snooze; the spec uses `h` because #3030 and Linear's flow use `h`, and `s` already means state on Projects and suggest on Reviews.) Every bare key below obeys it: `h`, `t` and `r` only open a picker or a composer, and the write or the start happens on the picker's Send or on `Ctrl+Enter`; `e` is the Undo case; `R`, `[`, `]`, `1` to `5`, `b` and the fold arrows change the view only. `c` (create) and `x` (select) are not Home keys in v1: Home has no create verb and no bulk select (§5), and `x` is Stop on the Agents page. The footer does not show them, and the U1 build drops the two hints design's frames carry. Home adds these, after the divider in the footer:
 
 | Key | Does | Writes? |
 |---|---|---|
@@ -419,6 +419,7 @@ The grammar keys are the same on every list (#2978): `j/k` and arrows move, `Hom
 | `e` | Done, with Undo | Sindri-local |
 | `Ctrl+Enter` | opens the submit menu with the primary preselected; `Enter` commits | the source, on commit |
 | `R` | re-rank now (a settle point) | no |
+| `b` | show the brief's lines beyond the default summary line plus 2 fact lines ("b N more lines") | no |
 | `[` / `]`, `1` to `5` | previous / next split; jump to a split | no |
 | Left / Right | the tree convention, on every group (Needs you, Moving, the brief). On a group header, Left folds the group and Right unfolds it. On a row, Left moves the cursor to its group header (so Left Left folds the group the cursor is in) and Right does nothing. Bare `g` is not a Home key: the shell's G-chord (`G` then a page key (`H`, `N`, `D`, `P`, `Q`, `C`, `A`, `.`, `S`, `T` and the others `SecondKey` maps) within 1 s; `ShellViewModel.Chords.cs`, `PressKey`) owns it on every page, from a header as from a row. | no |
 
@@ -430,7 +431,6 @@ Fold rules (the table row above gives the keys):
 - Fold arrows are caret keys while a text field has focus, the same guard as the letters. On Home's split strip, Left and Right switch splits when focus is on the strip, as on Health and Queue, and fold when focus is in the list. A pending G-chord takes its second key before Home's list sees it, so `G` then `H` goes Home and never opens a snooze picker; the top bar keeps its "G ..." hint for the 1 s wait (U3 tests both).
 - On Home, `G` `D` and `G` `T` (which set `HomeFilter.Decisions` and open the Todo panel on main) retire with the old views: `G D` selects the Work split (the Done list has no chord) and `G T` opens the collapsed Todo line's panel (§12).
 - Fold and unfold have palette ids `home.fold` and `home.unfold`, the `?` sheet lists the arrows, and the footer shows "Left fold · Right open" only while the cursor is on a header. While a menu or picker is open, the page footer swaps to its keys: "↑/↓ move · Enter pick · Esc cancel"; menus carry no key strip of their own. A screen reader reads a header as "Needs you, 8 rows, expanded" or "collapsed, 8 hidden".
-| `b` | show the brief's lines beyond the default summary line plus 2 fact lines ("b N more lines") | no |
 
 Tab keeps its normal job: it moves focus between the filter box, the list, the peek and the footer. Splits do not use Tab because Tab has to stay a focus key (the ledger's Tab binding is a Superhuman snippet and is in "Not solid"). Key clashes were checked against the Context page (`c e / j k g n s`, and `m w r` inside its `.` menu), Projects (`s` state, `a` assign, `h` hide, `e` notes, `o` open, `c`), Reviews (`n p` files, `c`, `s` suggest, `v`, `r` reply) and Agents (`o` jump, `x` stop). `t` and `R` clash with none. Two letters differ by surface, as meta's rule allows because each opens something cancellable or is Sindri-local with Undo: `h` (snooze here, hide on Projects) and `e` (Done here, edit on Context and Projects). Letters work only while focus is in the list or the peek and not in a text field, as `RowKeys` will guard once #2952 merges (`Views/Controls/RowKeys.cs`; on main today the keys sit in `ShellWindow.axaml.cs:143`).
 
@@ -585,7 +585,7 @@ From a read of `origin/main` a4d03ace1c and the issues (no build, no app run for
 | A2 | act, snooze, done, undo, mute routes; write-through adapters for forge, Linear, decisions, sessions; early return and revive rules | api | after A1's first read | A1 |
 | E1 | the `home-lanes` collector (`lane-recycle`, `agent-limited`, queue `pr-ready-merge`), then the failed-run trigger | engine | now (reads aw-meta; needs no other phase) | the §3.3 fields |
 | E2 | the `HomeBrief` job: facts, writer, link check, limit states | engine | after A1's cursor event | A1 |
-| U1 | the page on `RowList`: tabs, groups, the New band and held order (D6), peek, keys, states, density setting, all on S0's fixture | ui | now, on the fixture | P0 (stub `RowList` until it lands), S0 |
+| U1 | the page on `RowList`: tabs, groups, the New band and held order (D6), peek, keys, states, density setting, the Settings row "Home: rows (new) / panels" (decision 14), all on S0's fixture | ui | now, on the fixture | P0 (stub `RowList` until it lands), S0 |
 | U2 | act in place: composers, pickers (snooze, hand to agent), the `Ctrl+Enter` menu, Retry and Discard, Done list | ui | after U1 and A2's routes (fake first) | U1, A2 |
 | U3 | brief and Moving sections, empty state, tray count and toasts, first-paint cache (D2) | ui | after U1 | U1, E2 |
 | U4 | delete the old views in §12 | ui | after U3, one week of the new page default | U3 |
@@ -682,3 +682,7 @@ The lead checked the reshoot (assets 743f55d31a) against "Frames review". It mat
 4. PR rows use the PR-open ring in the frame, as decision 12 says.
 
 Design's three calls stand: shortened refs, CI Moving titles without the PR number, and no right-hand text on a folded Needs you header. One copy fix for the UI build: the stale empty state says "cannot", not "can not".
+
+### UX pass (meta, at dcf296fdeb)
+
+PASS after four text fixes, all applied: `c` and `x` are not Home keys and leave the footer (§7.4); the §7.1 frame's tab counts match its rows; the Messages tab's "arrive with #2979" line shows only while it is empty and Messages is not shipped (§7.3); the orphan `b` row is in the key table; trying the new page is one Settings row in U1 (decision 14, §15).
