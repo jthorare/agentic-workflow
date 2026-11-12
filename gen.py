@@ -199,15 +199,15 @@ needs_page('needs-rail-collapsed', **ROW1, rail_mode='slim', title='Messages - r
            sr='The rail is collapsed to 48 px from its header button or the palette entry messages.rail. Items keep their names for a screen reader. Cursor row: ' + rowsr(NEW_ROW) + '.')
 for st, sr in [('behind', 'Header: Behind 12 minutes, history is limited to 15 messages per minute. Rows stay. Conversations show a gap marker.'),
                ('offline', 'Header: Offline, last read 09:10. Every list stays readable from the store. Writes are refused, nothing is queued.')]:
-    needs_page('header-' + st, state=st, sr=sr, title='Messages - header ' + st)
+    needs_page('header-' + st, **ROW1, state=st, sr=sr + ' Cursor and peek: Lee, got a sec.', title='Messages - header ' + st)
 def banner(cls, text, btn, det):
     return f'<div class="state-line {cls}" style="height:auto;padding:8px var(--inset)"><span class="g {"fail" if cls == "err" else "parked"}"></span><span class="what" style="white-space:normal">{text}<br><span class="mono" style="font-size:11px;color:var(--ink-subtle)">Details ▸ {det}</span></span><span class="btns">{btn}</span></div>'
-needs_page('header-expired', state='expired', title='Messages - token expired',
+needs_page('header-expired', **ROW1, state='expired', title='Messages - token expired',
            banner=banner('err', 'Slack token expired. Reconnect to read new messages. Everything already here stays readable.', '<span class="btn primary">Reconnect</span>', 'SND-MSG-002'),
-           sr='Banner: Slack token expired. Button: Reconnect. Details: SND-MSG-002. Lists stay readable and read-only.')
-needs_page('header-scope', state='scope', title='Messages - scope missing',
+           sr='Banner: Slack token expired. Button: Reconnect. Details: SND-MSG-002. Lists stay readable and read-only. Cursor: Lee.')
+needs_page('header-scope', **ROW1, state='scope', title='Messages - scope missing',
            banner=banner('att', 'Search needs the scope search:read. Reconnect after adding it in the Slack app. Reading and Done still work.', '<span class="btn primary">Reconnect</span>', 'SND-MSG-003'),
-           sr='Banner: search needs the scope search:read. The feature is off, not hidden. Button: Reconnect. Details: SND-MSG-003.')
+           sr='Banner: search needs the scope search:read. The feature is off, not hidden. Button: Reconnect. Details: SND-MSG-003. Cursor: Lee.')
 
 # ---------------- unread (class 1 lives here in Release 1)
 UN = [  # cls (1 = a thread of mine, 0 = not mine: no glyph), who, place, title, mention, age (newest first; clock about 09:10)
