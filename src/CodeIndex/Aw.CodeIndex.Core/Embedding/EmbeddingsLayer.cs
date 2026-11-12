@@ -80,14 +80,16 @@ public sealed class EmbeddingsLayer(IEmbedder embedder, TimeProvider clock)
                 return Tally(await Settle(build, model, vectors.Error, cancellationToken).ConfigureAwait(false), carried, made);
             }
 
-            var written = await build.WriteEmbeddings([.. batch.Select((c, i) => new EmbeddingRecord(c.Symbol, model, vectors.Value[i]))], cancellationToken).ConfigureAwait(false);
+            // An empty vector marks a text the model refused even alone: it is not stored and not counted.
+            var records = batch.Select((c, i) => new EmbeddingRecord(c.Symbol, model, vectors.Value[i])).Where(static r => r.Vector.Length > 0).ToList();
+            var written = await build.WriteEmbeddings(records, cancellationToken).ConfigureAwait(false);
             if (written.IsError)
             {
                 return written.Error;
             }
 
-            done += batch.Length;
-            made += batch.Length;
+            done += records.Count;
+            made += records.Count;
             progress.Report(string.Create(CultureInfo.InvariantCulture, $"embeddings {done:N0} of {before.Value.Embeddable:N0}"));
         }
 

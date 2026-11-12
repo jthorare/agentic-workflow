@@ -119,6 +119,7 @@ public sealed partial class BuildCodeIndexService(IRepoHeads heads, IRepoSnapsho
             return published.Error;
         }
 
+        _ = await store.Sweep(request.Repo.Name, cancellationToken).ConfigureAwait(false);
         request.Progress.Report("published");
         return new BuildReport(
             request.Repo.Name,

@@ -35,6 +35,9 @@ public sealed class FakeEmbedder : IEmbedder
     /// <summary>Makes <see cref="Embed"/> fail with this error once that many batches have succeeded, or never when null.</summary>
     public (int AfterBatches, Error Error)? FailEmbedAfter { get; set; }
 
+    /// <summary>When set, a text holding this string embeds to an empty vector, as an embedder does for a text the model refused even alone.</summary>
+    public string? SkipTextsContaining { get; set; }
+
     /// <summary>The vector a text embeds to.</summary>
     /// <param name="text">The text.</param>
     /// <returns>A vector of <see cref="Dimensions"/> numbers in [-1, 1), never all zero.</returns>
@@ -83,6 +86,6 @@ public sealed class FakeEmbedder : IEmbedder
 
         _succeeded++;
         _batches.Add([.. texts]);
-        return ValueTask.FromResult(Results.Success<IReadOnlyList<ReadOnlyMemory<float>>>([.. texts.Select(t => (ReadOnlyMemory<float>)VectorOf(t))]));
+        return ValueTask.FromResult(Results.Success<IReadOnlyList<ReadOnlyMemory<float>>>([.. texts.Select(t => SkipTextsContaining is { } skip && t.Contains(skip, StringComparison.Ordinal) ? ReadOnlyMemory<float>.Empty : VectorOf(t))]));
     }
 }

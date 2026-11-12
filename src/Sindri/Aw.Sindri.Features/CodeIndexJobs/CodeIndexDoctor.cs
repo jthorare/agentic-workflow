@@ -165,6 +165,7 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
     private static string? Fix(string? code) => code switch
     {
         "SND-CODEIDX-007" => "install bubblewrap (" + Setup + "), or set index.graph.enabled: false",
+        "SND-CODEIDX-017" => "a chunk is too long for the embedding model; it is skipped and the rest embed (rebuild after a model change)",
         "SND-CODEIDX-006" => "start Ollama (the pin is in context/code-index.lock)",
         _ => Setup + " installs the pin",
     };

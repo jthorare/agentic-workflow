@@ -144,6 +144,20 @@ public sealed class EmbeddingsLayerTests
     }
 
     [Fact]
+    public async Task A_skipped_input_is_not_written_and_not_counted_as_embedded_issue_3128()
+    {
+        var embedder = new FakeEmbedder { SkipTextsContaining = "M0001" };
+        var harness = Arranged(3, embedder);
+
+        var report = await harness.BuildAndEmbed(BuildHarness.First, cancellationToken: Token);
+
+        Assert.Equal((3, 4), (report.Embedded, report.Embeddable));
+        var layer = await Layer(harness);
+        Assert.Equal("3 of 4 embedded", layer.Detail);
+        Assert.Equal(LayerState.Pending, layer.State);
+    }
+
+    [Fact]
     public async Task A_layer_the_profile_turned_off_is_disabled_and_nothing_is_sent_or_kept()
     {
         var embedder = new FakeEmbedder();

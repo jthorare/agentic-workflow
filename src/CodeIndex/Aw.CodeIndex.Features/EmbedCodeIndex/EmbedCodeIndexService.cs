@@ -71,6 +71,12 @@ public sealed class EmbedCodeIndexService(IIndexStore store, EmbeddingsLayer lay
             }
 
             var published = await begun.Value.Publish(previous.Meta with { BuiltAt = clock.GetUtcNow() }, cancellationToken).ConfigureAwait(false);
+            if (published.IsSuccess)
+            {
+                // the copy this chunk replaced is no longer named by the pointer; drop it once it is old enough to have no reader (#3128)
+                _ = await store.Sweep(repo.Name, cancellationToken).ConfigureAwait(false);
+            }
+
             return published.IsError
                 ? published.Error
                 : new EmbedCodeIndexResponse(repo.Name, ran.Value.Embedded, ran.Value.Embeddable, ran.Value.Carried, ran.Value.Made, published.Value.Layers.First(l => l.Layer == LayerName.Embeddings).State);

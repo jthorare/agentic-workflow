@@ -50,6 +50,25 @@ public sealed class EmbedCodeIndexTests
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task An_embed_run_sweeps_old_unreferenced_index_copies_and_keeps_young_ones_issue_3128()
+    {
+        using var git = A.GitRepo().WithFile("src/Alpha.cs", Class("Alpha", "")).Build();
+        using var index = new RealIndex();
+        var repo = git.AsRepo("shop");
+        _ = await Build(index, repo, git.Head);
+        var old = Path.Combine(index.IndexDirectory, "shop.01JC0000000000000000000000.db");
+        var young = Path.Combine(index.IndexDirectory, "shop.01JC0000000000000000000001.db");
+        await File.WriteAllTextAsync(old, "x", Token);
+        await File.WriteAllTextAsync(young, "x", Token);
+        File.SetLastWriteTimeUtc(old, Aw.Kernel.Testing.RealTime.NowDateTime.ToUniversalTime().AddHours(-1));
+
+        _ = await EmbedToOk(index, repo);
+
+        Assert.False(File.Exists(old), "an old copy that no pointer names is swept after an embed run");
+        Assert.True(File.Exists(young), "a copy younger than 10 minutes may still be open in a reader");
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task A_repo_larger_than_one_batch_is_fully_embedded_without_a_head_move_or_the_heavy_slot()
     {
         var source = new StringBuilder("namespace Shop;\n\npublic class Big\n{\n");
