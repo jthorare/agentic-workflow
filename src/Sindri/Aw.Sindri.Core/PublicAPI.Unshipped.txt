@@ -23291,3 +23291,68 @@ static readonly Aw.Sindri.Core.SindriErrors.AgentNotReady -> Aw.Kernel.ErrorDefi
 static readonly Aw.Sindri.Core.SindriErrors.AgentStartFailed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.AgentPromptTooLong -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.AgentWorktreeKept -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Launch.AgentReadiness
+Aw.Sindri.Core.Launch.AgentReadiness.<Clone>$() -> Aw.Sindri.Core.Launch.AgentReadiness!
+Aw.Sindri.Core.Launch.AgentReadiness.AgentReadiness(bool Installed, bool SignedIn, string! SignInCommand) -> void
+Aw.Sindri.Core.Launch.AgentReadiness.Deconstruct(out bool Installed, out bool SignedIn, out string! SignInCommand) -> void
+Aw.Sindri.Core.Launch.AgentReadiness.Equals(Aw.Sindri.Core.Launch.AgentReadiness? other) -> bool
+Aw.Sindri.Core.Launch.AgentReadiness.Installed.get -> bool
+Aw.Sindri.Core.Launch.AgentReadiness.Installed.init -> void
+Aw.Sindri.Core.Launch.AgentReadiness.SignedIn.get -> bool
+Aw.Sindri.Core.Launch.AgentReadiness.SignedIn.init -> void
+Aw.Sindri.Core.Launch.AgentReadiness.SignInCommand.get -> string!
+Aw.Sindri.Core.Launch.AgentReadiness.SignInCommand.init -> void
+override Aw.Sindri.Core.Launch.AgentReadiness.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Launch.AgentReadiness.GetHashCode() -> int
+override Aw.Sindri.Core.Launch.AgentReadiness.ToString() -> string!
+static Aw.Sindri.Core.Launch.AgentReadiness.operator !=(Aw.Sindri.Core.Launch.AgentReadiness? left, Aw.Sindri.Core.Launch.AgentReadiness? right) -> bool
+static Aw.Sindri.Core.Launch.AgentReadiness.operator ==(Aw.Sindri.Core.Launch.AgentReadiness? left, Aw.Sindri.Core.Launch.AgentReadiness? right) -> bool
+Aw.Sindri.Core.Worktrees.OneOffWorktree
+Aw.Sindri.Core.Worktrees.OneOffWorktree.<Clone>$() -> Aw.Sindri.Core.Worktrees.OneOffWorktree!
+Aw.Sindri.Core.Worktrees.OneOffWorktree.OneOffWorktree(string! Path, string! Branch) -> void
+Aw.Sindri.Core.Worktrees.OneOffWorktree.Deconstruct(out string! Path, out string! Branch) -> void
+Aw.Sindri.Core.Worktrees.OneOffWorktree.Equals(Aw.Sindri.Core.Worktrees.OneOffWorktree? other) -> bool
+Aw.Sindri.Core.Worktrees.OneOffWorktree.Path.get -> string!
+Aw.Sindri.Core.Worktrees.OneOffWorktree.Path.init -> void
+Aw.Sindri.Core.Worktrees.OneOffWorktree.Branch.get -> string!
+Aw.Sindri.Core.Worktrees.OneOffWorktree.Branch.init -> void
+override Aw.Sindri.Core.Worktrees.OneOffWorktree.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Worktrees.OneOffWorktree.GetHashCode() -> int
+override Aw.Sindri.Core.Worktrees.OneOffWorktree.ToString() -> string!
+static Aw.Sindri.Core.Worktrees.OneOffWorktree.operator !=(Aw.Sindri.Core.Worktrees.OneOffWorktree? left, Aw.Sindri.Core.Worktrees.OneOffWorktree? right) -> bool
+static Aw.Sindri.Core.Worktrees.OneOffWorktree.operator ==(Aw.Sindri.Core.Worktrees.OneOffWorktree? left, Aw.Sindri.Core.Worktrees.OneOffWorktree? right) -> bool
+Aw.Sindri.Core.Events.AgentOpRecorded
+Aw.Sindri.Core.Events.AgentOpRecorded.<Clone>$() -> Aw.Sindri.Core.Events.AgentOpRecorded!
+Aw.Sindri.Core.Events.AgentOpRecorded.AgentOpRecorded(string! RowId, string! Op, string! BodyHash, string! Outcome, string? Worktree = null) -> void
+Aw.Sindri.Core.Events.AgentOpRecorded.Deconstruct(out string! RowId, out string! Op, out string! BodyHash, out string! Outcome, out string? Worktree) -> void
+Aw.Sindri.Core.Events.AgentOpRecorded.Equals(Aw.Sindri.Core.Events.AgentOpRecorded? other) -> bool
+Aw.Sindri.Core.Events.AgentOpRecorded.RowId.get -> string!
+Aw.Sindri.Core.Events.AgentOpRecorded.RowId.init -> void
+Aw.Sindri.Core.Events.AgentOpRecorded.Op.get -> string!
+Aw.Sindri.Core.Events.AgentOpRecorded.Op.init -> void
+Aw.Sindri.Core.Events.AgentOpRecorded.BodyHash.get -> string!
+Aw.Sindri.Core.Events.AgentOpRecorded.BodyHash.init -> void
+Aw.Sindri.Core.Events.AgentOpRecorded.Outcome.get -> string!
+Aw.Sindri.Core.Events.AgentOpRecorded.Outcome.init -> void
+Aw.Sindri.Core.Events.AgentOpRecorded.Worktree.get -> string?
+Aw.Sindri.Core.Events.AgentOpRecorded.Worktree.init -> void
+override Aw.Sindri.Core.Events.AgentOpRecorded.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.AgentOpRecorded.GetHashCode() -> int
+override Aw.Sindri.Core.Events.AgentOpRecorded.ToString() -> string!
+static Aw.Sindri.Core.Events.AgentOpRecorded.operator !=(Aw.Sindri.Core.Events.AgentOpRecorded? left, Aw.Sindri.Core.Events.AgentOpRecorded? right) -> bool
+static Aw.Sindri.Core.Events.AgentOpRecorded.operator ==(Aw.Sindri.Core.Events.AgentOpRecorded? left, Aw.Sindri.Core.Events.AgentOpRecorded? right) -> bool
+Aw.Sindri.Core.Launch.ISessionPanes
+Aw.Sindri.Core.Launch.ISessionPanes.PaneId(Aw.Sindri.Core.Launch.HostRef! host, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
+Aw.Sindri.Core.Launch.ISessionPanes.Socket.get -> string!
+Aw.Sindri.Core.Launch.IStartChecks
+Aw.Sindri.Core.Launch.IStartChecks.Agent(Aw.Sindri.Core.Launch.AgentEntry! agent, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Launch.AgentReadiness!>
+Aw.Sindri.Core.Launch.IStartChecks.FolderExists(string! path) -> bool
+Aw.Sindri.Core.Launch.IStartChoices
+Aw.Sindri.Core.Launch.IStartChoices.Remember(string! repo, string! agent, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Sindri.Core.Worktrees.IOneOffWorktrees
+Aw.Sindri.Core.Worktrees.IOneOffWorktrees.Make(string! repoPath, string! name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Worktrees.OneOffWorktree!>!>
+Aw.Sindri.Core.Worktrees.IOneOffWorktrees.Remove(string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Worktrees.IOneOffWorktrees.StatusSummary(string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string!>
+const Aw.Sindri.Core.Events.EventTypes.AgentOp = "agent.op" -> string!
+Aw.Sindri.Core.Launch.HostSession.CleanEnvironment.get -> bool
+Aw.Sindri.Core.Launch.HostSession.CleanEnvironment.init -> void
