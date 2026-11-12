@@ -382,7 +382,7 @@ The footer shows only keys that work in this release: in Release 1 `r` reads "op
 
 Counts on the rail are computed from the store. Done and snoozed rows are not counted. Unread and Needs reply overlap: a DM I have not read is in both.
 
-**Where the cursor starts.** On open of a list the cursor is on the first row (the New row when one exists), and an open peek shows that row. On return from a conversation (`Esc`) the cursor is on the last row opened. An empty list has no cursor and shows its empty state. Test: `Cursor_starts_on_row_one_and_returns_to_the_last_opened`.
+**Where the cursor starts.** On open of a list the cursor is on the first row (the New row when one exists), and an open peek shows that row: in `messages-needs.png` and its width frames (`-1000`, `-1200`, `-rail-collapsed`) that is Lee's "got a sec?" in the New band. The other Needs frames (`messages-needs-more-menu.png`, `messages-needs-return.png`, `messages-result-*.png`, `messages-search-*.png`) are drawn after a move or an action, so their cursor sits where that move left it, not on row 1. On return from a conversation (`Esc`) the cursor is on the last row opened. An empty list has no cursor and shows its empty state. Test: `Cursor_starts_on_row_one_and_returns_to_the_last_opened`.
 
 **Clearing Unread.** A conversation leaves Unread by three local acts: read it, press `e` on its row (the pointer goes to its newest line), or press "Mark all read" in the footer (every listed pointer goes to its newest line). None writes to Slack. None writes a `home.row.done` event, because Home never raised these rows. With 14 unread conversations the owner reaches 0 in one press, not 14 opens. Test: `E_in_unread_moves_the_pointer_and_writes_no_home_event`.
 
@@ -593,7 +593,7 @@ Sort key, in this order: class high first, then `blocks` (Home §4.1, counted ov
 
 Messages and Home rank differently on purpose. Home ranks by what a row unblocks across every source. Messages ranks by "who is waiting on a person's answer". A DM from Sam can sit under a review ask on Home and above it here.
 
-**Worked example.** All names and numbers are made up. It is the list at 09:10, and it is the top of `messages-needs.png`.
+**Worked example.** All names and numbers are made up. It is the list at 09:10, and its rows are drawn in `messages-needs.png`, from Kim's thread down to Sam's DM.
 
 - Kim, in Ada's `#harbor` thread, 08:55: "@joi can you check the group booking path uses 90 s too?" Ada's root (07:30) is "@joi review #3120 when you can", and the thread has 3 replies (Kim 08:20, Ada 08:41, Kim 08:55). The newest message is Kim's, names me and holds a `?`, so the thread is class 3. It links PR #3120, which closes issue #3055 and has PR #3125 stacked on it: blocks 2.
 - Sam, DM, 09:02: "can you ship the fare table today?" Class 3 (a `?` in a DM). Blocks 0.
