@@ -696,7 +696,7 @@ From a read of `origin/main` 7c81646696 and the issues (no build, no app run):
 | U6 | delete the old views in §11 | ui | after U4, one week of the new page default | U4 | none |
 | F0 | perf baseline on today's 5 s poll at 50 and 200 sessions | perf | now | none | D5 baseline |
 | F1 | perf: D5, D7, D8 in the real app after the push | perf | after U4 | U4, A2 | D5, D7, D8 (real-app recheck) |
-| X0 | the D13 script | ux | now | none | D13 (the script) |
+| X0 | the D13 script ([`docs/sindri/walks/day-without-the-terminal.md`](../../sindri/walks/day-without-the-terminal.md)) | ux | now | none | D13 (the script) |
 | X1 | the D1 walk on the 11-lane box state, 1 step | ux | after U1 and A1 | U1, A1 | D1 |
 | X2 | the day without the terminal (D13) | ux | after U4 | U4 | D13 |
 
