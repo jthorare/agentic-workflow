@@ -676,6 +676,7 @@ static readonly Aw.BugFix.Core.Errors.BugFixErrors.StateBusy -> Aw.Kernel.ErrorD
 static readonly Aw.BugFix.Core.Errors.BugFixErrors.StateCorrupt -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.BugFix.Core.Errors.BugFixErrors.StateMissing -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.BugFix.Core.Errors.BugFixErrors.StorageFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.BugFix.Core.Errors.BugFixErrors.SweepRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.BugFix.Core.Errors.BugFixErrors.UiEvidenceUnavailable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.BugFix.Core.Errors.BugFixErrors.UnknownCandidate -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.BugFix.Core.Errors.BugFixErrors.WrongPhase -> Aw.Kernel.ErrorDefinition!

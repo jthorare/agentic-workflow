@@ -212,8 +212,7 @@
   <!-- Home's health strip (home.html .strip): a panel that is a button (it opens Health), Surface2 on hover. -->
   <Style Selector="Button.health-strip">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.LG}" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -224,7 +223,7 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
   </Style>
   <Style Selector="StackPanel.strip-head">
-    <Setter Property="Margin" Value="16,0,12,0" />
+    <Setter Property="Margin" Value="24,0,12,0" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
   <Style Selector="Border.cell">
@@ -234,9 +233,8 @@
   </Style>
 
   <!-- Panels (home.html .panel): a Surface1 step over Canvas and no outer border (inspora note §3 Surfaces: the surface step groups,
-       hairlines only divide inside a card); a header row (.phead, 36 px, the eyebrow over a hairline). The phead stays 16 in: the
-       Home, Work and Todo rows under it are 16 in, and they move to 24 together in the Home pass (#2780); the System cards are
-       sections, inset Space.LG 24 below. -->
+       hairlines only divide inside a card); a header row (.phead, 36 px, the title over a hairline). The phead and the Home, Work and
+       Todo rows under it are all inset Space.LG 24 (#2780); the System cards are sections, inset 24 below. -->
   <Style Selector="Border.panel">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
     <Setter Property="BorderThickness" Value="0" />
@@ -244,7 +242,7 @@
   </Style>
   <Style Selector="Border.phead">
     <Setter Property="MinHeight" Value="{StaticResource Size.PanelHeader}" />
-    <Setter Property="Padding" Value="16,0" />
+    <Setter Property="Padding" Value="24,0" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
     <Setter Property="BorderThickness" Value="0,0,0,1" />
   </Style>
@@ -287,7 +285,7 @@
        (I3, states.html .empty). -->
   <Style Selector="TextBlock.quiet">
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
-    <Setter Property="Margin" Value="16" />
+    <Setter Property="Margin" Value="24" />
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="TextAlignment" Value="Center" />
   </Style>
@@ -300,7 +298,7 @@
     <Setter Property="HorizontalAlignment" Value="Left" />
   </Style>
   <Style Selector="Grid.skrow">
-    <Setter Property="Margin" Value="16,12" />
+    <Setter Property="Margin" Value="24,12" />
   </Style>
   <!-- The page's gutter (Space.LG); while the closed sheet's edge tab shows, the right gutter grows to Space.XXL so the
        tab keeps a gap from the panels. -->

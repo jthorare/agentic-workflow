@@ -53,7 +53,7 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
     /// <summary>Home's left panel: With you first, then running, at most five (§3.2).</summary>
     public ObservableCollection<ItemRowViewModel> RunningRows { get; } = [];
 
-    /// <summary>"RUNNING N · WITH YOU N".</summary>
+    /// <summary>"Running N · with you N".</summary>
     public string RunningHeader { get; private set => Set(ref field, value); } = Labels.RunningHeader(0, 0);
 
     /// <summary>The running group's sentence while the panel has no row (E-18), else empty.</summary>
@@ -68,7 +68,7 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
     /// <summary>Home's right panel: the queued group's first five rows.</summary>
     public ObservableCollection<ItemRowViewModel> QueuedRows { get; } = [];
 
-    /// <summary>"QUEUED N".</summary>
+    /// <summary>"Queued N".</summary>
     public string QueuedHeader { get; private set => Set(ref field, value); } = Labels.QueuedHeader(0);
 
     /// <summary>The queued group's sentence while it has no row (E-18), else empty.</summary>

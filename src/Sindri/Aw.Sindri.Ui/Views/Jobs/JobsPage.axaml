@@ -33,34 +33,34 @@
 
     <Border x:Name="JobsPanel" Classes="panel" AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
       <StackPanel>
-        <Border x:Name="JobsReadingName" Margin="16,8" IsVisible="{Binding IsReading}" AutomationProperties.Name="{Binding ReadingText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <Border x:Name="JobsReadingName" Margin="24,8" IsVisible="{Binding IsReading}" AutomationProperties.Name="{Binding ReadingText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption quiet" Text="{Binding ReadingText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <ItemsControl x:Name="JobsSkeleton" ItemsSource="{Binding SkeletonRows}" IsVisible="{Binding IsReading}" Margin="16,4" AutomationProperties.AccessibilityView="Raw">
+        <ItemsControl x:Name="JobsSkeleton" ItemsSource="{Binding SkeletonRows}" IsVisible="{Binding IsReading}" Margin="24,4" AutomationProperties.AccessibilityView="Raw">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="x:Int32">
               <Border Height="12" Margin="0,8" CornerRadius="4" Background="{DynamicResource Brush.Surface2}" />
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <Border x:Name="JobsUnreadableName" Margin="16,8" IsVisible="{Binding IsUnreadable}" AutomationProperties.Name="{Binding UnreadableText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <Border x:Name="JobsUnreadableName" Margin="24,8" IsVisible="{Binding IsUnreadable}" AutomationProperties.Name="{Binding UnreadableText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption quiet" Text="{Binding UnreadableText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <StackPanel x:Name="JobsFailed" Margin="16,8" Spacing="8" IsVisible="{Binding ShowRetry}">
+        <StackPanel x:Name="JobsFailed" Margin="24,8" Spacing="8" IsVisible="{Binding ShowRetry}">
           <Border x:Name="JobsFailedName" AutomationProperties.Name="{Binding FailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <TextBlock Classes="caption quiet" Text="{Binding FailedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
           <Button x:Name="JobsRetry" Content="{Binding RetryText}" Click="OnRetry" HorizontalAlignment="Left" AutomationProperties.Name="{Binding RetryText}" />
         </StackPanel>
-        <Border x:Name="JobsEmptyName" Margin="16,8" IsVisible="{Binding IsEmpty}" AutomationProperties.Name="{Binding EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <Border x:Name="JobsEmptyName" Margin="24,8" IsVisible="{Binding IsEmpty}" AutomationProperties.Name="{Binding EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock x:Name="JobsEmpty" Classes="caption quiet" Text="{Binding EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <Button x:Name="JobsServicesLink" Margin="16,0,16,8" Content="{Binding ServicesLinkText}" Click="OnServices" IsVisible="{Binding ShowServicesLink}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding ServicesLinkText}" />
-        <Border x:Name="JobsNoneRunningName" Margin="16,8" IsVisible="{Binding IsNoneRunning}" AutomationProperties.Name="{Binding NoneRunningText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <Button x:Name="JobsServicesLink" Margin="24,0,24,8" Content="{Binding ServicesLinkText}" Click="OnServices" IsVisible="{Binding ShowServicesLink}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding ServicesLinkText}" />
+        <Border x:Name="JobsNoneRunningName" Margin="24,8" IsVisible="{Binding IsNoneRunning}" AutomationProperties.Name="{Binding NoneRunningText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption quiet" Text="{Binding NoneRunningText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
         <StackPanel x:Name="JobsTable" Classes.dimmed="{Binding IsDimmed}">
-        <Grid x:Name="JobsHeader" ColumnDefinitions="1.6*,110,150,1.2*,130,56,120" Margin="16,8" AutomationProperties.AccessibilityView="Raw">
+        <Grid x:Name="JobsHeader" ColumnDefinitions="1.6*,110,150,1.2*,130,56,120" Margin="24,8" AutomationProperties.AccessibilityView="Raw">
           <TextBlock Grid.Column="0" Classes="caption subtle" Text="{Binding Columns[0]}" />
           <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding Columns[1]}" />
           <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding Columns[2]}" IsVisible="{Binding !IsCompact}" />

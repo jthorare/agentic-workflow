@@ -68,22 +68,22 @@ internal static partial class Labels
     /// <summary>The visible placeholder in the top bar; the ⌘K / Ctrl K hint is in the keycap chip (#2710).</summary>
     internal const string SearchPlaceholder = "Search…";
 
-    // The shell's chrome (§3.2; U0 Unit A). Eyebrows are written in capitals (Avalonia has no text-transform).
+    // The shell's chrome (§3.2; U0 Unit A). Home's card titles are sentence case (#2780); the other eyebrows are written in capitals (Avalonia has no text-transform).
 
     /// <summary>The brand mark's name.</summary>
     internal const string Sindri = "Sindri";
 
     /// <summary>Home's Needs you panel.</summary>
-    internal const string NeedsYouPanel = "NEEDS YOU";
+    internal const string NeedsYouPanel = "Needs you";
 
     /// <summary>Home's Running and With you panel.</summary>
-    internal const string RunningPanel = "RUNNING · WITH YOU";
+    internal const string RunningPanel = "Running · with you";
 
     /// <summary>Home's Queued panel.</summary>
-    internal const string QueuedPanel = "QUEUED";
+    internal const string QueuedPanel = "Queued";
 
     /// <summary>Home's health strip.</summary>
-    internal const string HealthPanel = "SINDRI HEALTH";
+    internal const string HealthPanel = "Sindri health";
 
     /// <summary>The Health page's process card.</summary>
     internal const string ControlPlaneCard = "Control plane";

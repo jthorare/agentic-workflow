@@ -40,6 +40,30 @@ public sealed class NeedsYouViewModelTests
         Assert.Equal(["profile:drift", "park:ITM-01JC8", "failure:service:index"], Ids(list));
     }
 
+    // #2780: the page's one primary button is the first listed row that HAS a primary action, wherever it sits.
+    private static string[] Leads(NeedsYouViewModel list) => [.. list.Rows.Where(r => r.IsLeadAction).Select(r => r.Id)];
+
+    [Fact]
+    public async Task The_lead_action_is_the_first_listed_row_with_a_primary_action_and_moves_with_the_list()
+    {
+        var noAction = new NeedsYouEntry("plain", NeedsYouUrgency.Colour);
+        var list = await List(noAction, NeedsYouRows.Park(), NeedsYouRows.Profile());
+
+        Assert.Equal(["park:ITM-01JC8"], Leads(list));
+
+        list.Update(Feed(noAction, NeedsYouRows.Profile()));
+        Assert.Equal(["profile:drift"], Leads(list));
+
+        list.MarkAllSeen();
+        Assert.Equal(["profile:drift"], Leads(list));
+
+        list.Update(Feed(NeedsYouRows.Park(), NeedsYouRows.Profile()));
+        Assert.Equal(["park:ITM-01JC8"], Leads(list));
+
+        list.Update(Feed(noAction));
+        Assert.Empty(Leads(list));
+    }
+
     [Fact]
     public async Task Row_shows_chip_id_title_repo_reason_and_age()
     {
