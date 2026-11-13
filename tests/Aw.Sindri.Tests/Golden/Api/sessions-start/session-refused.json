@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+  "title": "SND-AUTH-002",
+  "status": 403,
+  "detail": "starting an agent is for the person: use the app or 'sindri agents start' in a terminal",
+  "traceId": "<trace>"
+}

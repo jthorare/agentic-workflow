@@ -12,6 +12,9 @@ internal sealed class GraphNodeScope(WorkflowRun run, GraphSpec spec, IReadOnlyL
     /// <summary>The node whose cut output a reference read, or null.</summary>
     public string? Cut { get; private set; }
 
+    /// <summary>The node whose output the redactor blocked and a reference read, or null.</summary>
+    public string? Blocked { get; private set; }
+
     /// <summary>The first reference that read a node that failed and continued, as the node id and the reference text; null when none did.</summary>
     public (string Node, string Reference)? ContinuedFailure { get; private set; }
 
@@ -58,7 +61,20 @@ internal sealed class GraphNodeScope(WorkflowRun run, GraphSpec spec, IReadOnlyL
             return (null, null);
         }
 
-        return (found.Output is null ? null : JsonNode.Parse(found.Output), null);
+        var output = found.Output is null ? null : JsonNode.Parse(found.Output);
+        if (StoredJson.IsCut(output))
+        {
+            Cut ??= node;   // why: Fit stores an output over 64 KB as a small object, so the store never sets 'Truncated' on it (#3419)
+            return (null, null);
+        }
+
+        if (StoredJson.IsBlocked(output))
+        {
+            Blocked ??= node;
+            return (null, null);
+        }
+
+        return (output, null);
     }
 
     // why: a node of the loop's body has one row per item and is read at this item's; every other node has its one row at index 0

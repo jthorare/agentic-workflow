@@ -1435,6 +1435,24 @@
       "confirm": null
     },
     {
+      "action": "RemoveSessionWorktree",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "DELETE",
+      "route": "/sindri/sessions/{actId}/worktree",
+      "cli": "sindri agents worktree remove <actId>",
+      "ui": "ready",
+      "destructive": true,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "RenameConnection",
       "class": "desk",
       "allowedCallers": [
@@ -2020,6 +2038,24 @@
       "method": "POST",
       "route": "/sindri/setup/skip",
       "cli": "sindri setup skip <step> [--undo]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "StartSession",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/sessions",
+      "cli": "sindri agents start --repo <r> --agent <a> [--prompt <text>] [--worktree] [--act-id <id>]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
