@@ -4,6 +4,29 @@ Every bash suite in the repo, with what it covers. `bash scripts/ci/bash-tests.s
 
 Each suite runs with its own fresh temp HOME and AW_STATE_DIR and without the lane environment (AW_META_LANE*, AW_SINDRI_CHILD, TMUX, ...). Tools keep working through GIT_CONFIG_GLOBAL, DOTNET_ROOT, NUGET_PACKAGES and npm_config_cache.
 
+## Temp dirs
+
+A suite removes every temp dir it makes. Each suite that called `mktemp` with no cleanup of its own now wraps `mktemp` in a function that records each path, and an `EXIT` trap removes them all. The runner also gives each suite its own `TMPDIR` inside the suite's sandbox.
+
+CI's "Bash tests" job runs `bash scripts/ci/tmp-leak-check.sh -- bash scripts/ci/bash-tests.sh`. The check lists the `aw-*` and `tmp.*` entries in `${TMPDIR:-/tmp}` before and after the command. It exits 1 and names each new entry still there. When the command fails, its own exit code wins. It deletes nothing. `scripts/tests/tmp-leak-check.test.sh` tests it.
+
+To check a run on your own box, give it a private `TMPDIR` so other runs do not show up as leaks:
+
+```bash
+export TMPDIR="$(mktemp -d)"
+bash scripts/ci/tmp-leak-check.sh -- bash scripts/ci/bash-tests.sh
+```
+
+### One-time cleanup of old leaks (owner)
+
+Old runs left tens of thousands of dirs in `/tmp` (#3262). Run the dry run first. It prints how many entries match:
+
+```bash
+find /tmp -maxdepth 1 -user "$USER" -mmin +1440 \( -name 'aw-owner-copy-*' -o -name 'aw-separate-login-*' -o -name 'aw-golden-locks-*' -o -name 'aw-map-tabs-*' -o -name 'aw-split-panes-*' -o -name 'aw-code-lens-*' -o -name 'aw-sindri-*' -o -name 'tmp*' -o -name 'MSBuild*' \) | wc -l
+```
+
+To delete, run the same command with `-exec rm -rf {} +` in place of `| wc -l`. The command only matches your own entries older than one day (`-mmin +1440`), so a live run keeps its dirs.
+
 ```bash
 bash scripts/ci/bash-tests.sh   # each suite runs with its own fresh temp HOME and AW_STATE_DIR and without the lane environment (AW_META_LANE*, AW_SINDRI_CHILD, TMUX, ...) (tools keep working through GIT_CONFIG_GLOBAL, DOTNET_ROOT, NUGET_PACKAGES, npm_config_cache)
 bash providers/tests/install.test.sh
@@ -94,6 +117,7 @@ bash scripts/tests/agent-token.test.sh
 bash scripts/tests/signal-suites-ignored-hup.test.sh   # agent-token.test.sh, formal-verify-tlc.test.sh and meta-launch.test.sh started with SIGHUP ignored (a `nohup` gate) all pass: each wrapper resets every signal it sends (#2377, #2566)
 bash scripts/tests/ci-changed-areas.test.sh
 bash scripts/tests/ci-bash-tests.test.sh
+bash scripts/tests/tmp-leak-check.test.sh   # scripts/ci/tmp-leak-check.sh: a new aw-* or tmp.* entry the command leaves is named and exits 1, a clean command exits 0, the command's own exit code wins, old entries are ignored, nothing is deleted, usage exits 2 (#3262)
 bash scripts/tests/ci-lane-budgets.test.sh
 bash scripts/tests/tmux-isolation.test.sh   # scripts/ci/tmux-isolation.sh: no test runs a tmux outside scripts/test-tmux.sh, -L, -S or AW_TMUX
 bash scripts/tests/test-ports.test.sh   # scripts/ci/test-ports.sh: no *.test.sh binds a literal listener port or assigns digits to a *PORT variable without a "test-ports: ok <reason>" waiver (#2597)

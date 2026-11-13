@@ -2,6 +2,12 @@
 # Tests for attach.sh against a fake gh and curl, so no PR is edited.
 set -u
 
+# Temp-dir cleanup (#3262): every mktemp this suite makes is recorded and removed when it exits.
+__aw_tmp_reg="$(command mktemp)"
+mktemp() { local p; p="$(command mktemp "$@")" || return; printf '%s\n' "$p" >>"$__aw_tmp_reg"; printf '%s\n' "$p"; }
+__aw_tmp_clean() { local p; while IFS= read -r p; do [ -z "$p" ] || { chmod -R u+rwX "$p" 2>/dev/null; rm -rf "$p"; }; done <"$__aw_tmp_reg"; rm -f "$__aw_tmp_reg"; }
+trap __aw_tmp_clean EXIT
+
 ATTACH="$(cd "$(dirname "$0")" && pwd)/attach.sh"
 FAILURES=0
 UPLOAD_A="https://github.com/user-attachments/assets/aaaa"
