@@ -21631,6 +21631,9 @@ Aw.Sindri.Core.Graph.Templates.GraphTemplate.GraphTemplate(string! Name, string!
 Aw.Sindri.Core.Graph.Templates.GraphTemplate.Name.get -> string!
 Aw.Sindri.Core.Graph.Templates.GraphTemplate.Name.init -> void
 Aw.Sindri.Core.Graph.Templates.GraphTemplates
+Aw.Sindri.Core.Graph.Templates.IFirstRepo
+Aw.Sindri.Core.Graph.Templates.IFirstRepo.Name(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
+static Aw.Sindri.Core.Graph.Templates.GraphTemplates.Find(string! name, string? firstRepo) -> Aw.Sindri.Core.Graph.Templates.GraphTemplate?
 Aw.Sindri.Core.Graph.Templates.GraphTemplate.Spec.get -> Aw.Sindri.Core.Graph.GraphSpec!
 Aw.Sindri.Core.Graph.Templates.GraphTemplate.Spec.init -> void
 override Aw.Sindri.Core.Graph.Ops.AddNodeOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.AddNodeOp!

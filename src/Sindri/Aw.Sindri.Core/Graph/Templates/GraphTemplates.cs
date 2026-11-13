@@ -36,6 +36,12 @@ public static class GraphTemplates
         return source.Name is null ? null : Build(source);
     }
 
+    /// <summary>Finds a template by name and fills in the repo of its agent step (#3509): the profile's first repo. Stub until the fix.</summary>
+    /// <param name="name">The name.</param>
+    /// <param name="firstRepo">The profile's first repo, or null when it has none.</param>
+    /// <returns>The template, or null.</returns>
+    public static GraphTemplate? Find(string name, string? firstRepo) => throw new NotSupportedException($"template '{name}' with repo '{firstRepo}': not built yet (#3509)");
+
     // why: a starter that fires at 7:00 Pacific on any box is wrong for most owners; use this machine's zone, and UTC when the OS names it in a form the cron reader doesn't know
     private static string MachineTimezone() => TimeZoneInfo.Local.HasIanaId ? TimeZoneInfo.Local.Id : "UTC";
 

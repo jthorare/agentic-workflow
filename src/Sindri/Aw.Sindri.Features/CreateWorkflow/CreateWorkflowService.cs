@@ -22,6 +22,9 @@ internal sealed class CreateWorkflowService(IWorkflowStore workflows, IWorkflowC
 {
     private static readonly HashSet<string> _reserved = new(["docs", "blocks"], StringComparer.Ordinal);
 
+    /// <summary>Names the profile's first repo for a data template's agent step; null leaves the template as it is (#3509, stub: not read yet).</summary>
+    public IFirstRepo? FirstRepo { get; init; }
+
     public async ValueTask<Result<CreateWorkflowResponse>> Handle(CreateWorkflowRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
