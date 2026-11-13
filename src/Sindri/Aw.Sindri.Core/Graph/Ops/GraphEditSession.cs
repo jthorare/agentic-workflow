@@ -5,7 +5,7 @@ using Aw.Sindri.Core.Graph.Ids;
 namespace Aw.Sindri.Core.Graph.Ops;
 
 /// <summary>The working copy of a graph while a batch of ops applies: each op changes it or returns why it can't.</summary>
-internal sealed class GraphEditSession(GraphSpec spec)
+internal sealed class GraphEditSession(GraphSpec spec, Func<string, bool> isTriggerType)
 {
     private const string DefaultOutput = "out";
 
@@ -27,8 +27,31 @@ internal sealed class GraphEditSession(GraphSpec spec)
         DisconnectOp disconnect => Disconnect(disconnect),
         RenameOp rename => Rename(rename),
         SetMetaOp meta => Meta(meta),
+        ReplaceNodeOp replace => Replace(replace),
         _ => "that is not a known op",
     };
+
+    // why: returns the start of the SND-GRAPH-112 sentence when a replace_node names a node that is not the trigger, or null (a missing node is the op's own problem)
+    public string? NotTheTrigger(GraphOp op) =>
+        op is ReplaceNodeOp replace && IndexOf(replace.Node.Value) is var at and >= 0 && !isTriggerType(_nodes[at].Type) ? $"'{replace.Node.Value}' is not the trigger." : null;
+
+    private string? Replace(ReplaceNodeOp replace)
+    {
+        var index = IndexOf(replace.Node.Value);
+        if (index < 0)
+        {
+            return $"there is no node '{replace.Node.Value}'";
+        }
+
+        if (!isTriggerType(replace.Type))
+        {
+            return $"'{replace.Type}' is not a trigger, so it can't take the trigger's place";
+        }
+
+        var old = _nodes[index];
+        _nodes[index] = old with { Type = replace.Type, Title = replace.Title ?? old.Title, Config = CloneConfig(replace.Config) };
+        return null;
+    }
 
     private static JsonObject CloneConfig(JsonObject? config)
     {

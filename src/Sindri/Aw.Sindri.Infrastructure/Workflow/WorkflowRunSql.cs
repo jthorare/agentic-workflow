@@ -12,6 +12,7 @@ internal static class WorkflowRunSql
 
     internal const string Recent = SelectRun + " WHERE workflow_id = $workflow ORDER BY started_at DESC, CAST(substr(id, instr(id, ':') + 1) AS INTEGER) DESC LIMIT $limit OFFSET $offset";
     internal const string Running = SelectRun + " WHERE status = 'running' ORDER BY started_at, id";
+    internal const string QueuedWorkflows = "SELECT DISTINCT workflow_id FROM workflow_run WHERE status = 'queued' ORDER BY workflow_id";
 
     internal const string LatestOfKind = SelectRun + " WHERE workflow_id = $workflow AND json_extract(trigger, '$.kind') = $kind ORDER BY CAST(substr(id, instr(id, ':') + 1) AS INTEGER) DESC LIMIT 1";
 
@@ -44,12 +45,12 @@ internal static class WorkflowRunSql
     internal const string SelectTick = "SELECT last_tick FROM workflow_schedule_tick WHERE workflow_id = $workflow";
 
     internal const string UpsertNodeRun =
-        "INSERT INTO workflow_node_run (run_id, node_id, item_index, status, input, output, truncated, error, usage) VALUES ($run, $node, $item, $status, $input, $output, $truncated, $error, $usage) " +
-        "ON CONFLICT (run_id, node_id, item_index) DO UPDATE SET status = excluded.status, input = excluded.input, output = excluded.output, truncated = excluded.truncated, error = excluded.error, usage = excluded.usage";
+        "INSERT INTO workflow_node_run (run_id, node_id, item_index, status, input, output, truncated, error, usage, raw) VALUES ($run, $node, $item, $status, $input, $output, $truncated, $error, $usage, $raw) " +
+        "ON CONFLICT (run_id, node_id, item_index) DO UPDATE SET status = excluded.status, input = excluded.input, output = excluded.output, truncated = excluded.truncated, error = excluded.error, usage = excluded.usage, raw = excluded.raw";
 
     internal const string SelectNodeRuns =
-        "SELECT run_id, node_id, item_index, status, input, output, truncated, error, usage FROM workflow_node_run WHERE run_id = $run ORDER BY node_id, item_index";
+        "SELECT run_id, node_id, item_index, status, input, output, truncated, error, usage, raw FROM workflow_node_run WHERE run_id = $run ORDER BY node_id, item_index";
 
     internal const string SelectNodeRunsForItem =
-        "SELECT run_id, node_id, item_index, status, input, output, truncated, error, usage FROM workflow_node_run WHERE run_id = $run AND (item_index = 0 OR item_index = $item) ORDER BY node_id, item_index";
+        "SELECT run_id, node_id, item_index, status, input, output, truncated, error, usage, raw FROM workflow_node_run WHERE run_id = $run AND (item_index = 0 OR item_index = $item) ORDER BY node_id, item_index";
 }

@@ -13,13 +13,20 @@ public static class ScopeRules
     /// <param name="settings">The checked settings (its 'repos' narrows the profile's).</param>
     /// <param name="repos">The profile's repos.</param>
     /// <param name="caller">The caller.</param>
-    /// <returns>The repos in scope, in profile order; or SND-CONTEXT-001 (context.repos names a repo the profile doesn't have), 020 or 003.</returns>
-    public static Result<IReadOnlyList<ContextRepo>> Resolve(ContextSettings settings, IReadOnlyList<ContextRepo> repos, ContextCaller caller)
+    /// <param name="leftOut">The profile repos the host left out because their path is no git checkout (<see cref="ContextScope.LeftOut"/>, #3371).</param>
+    /// <returns>The repos in scope, in profile order; or SND-CONTEXT-001 (context.repos names a repo the profile doesn't have, or one left out), 020 or 003.</returns>
+    public static Result<IReadOnlyList<ContextRepo>> Resolve(ContextSettings settings, IReadOnlyList<ContextRepo> repos, ContextCaller caller, IReadOnlyList<ContextRepoName>? leftOut = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(repos);
         ArgumentNullException.ThrowIfNull(caller);
         var unknown = (settings.Repos ?? []).Where(n => !repos.Any(r => r.Name == n)).Select(n => n.Value).ToList();
+        if (unknown.Count > 0 && (leftOut ?? []).Any(n => n.Value == unknown[0]))
+        {
+            return ContextErrors.SettingsInvalid.With(
+                $"context.repos: '{unknown[0]}' is a profile repo but not a git checkout (fix: git init and commit in it, or remove it from repos:)");
+        }
+
         if (unknown.Count > 0)
         {
             return ContextErrors.SettingsInvalid.With(

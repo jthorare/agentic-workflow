@@ -70,6 +70,12 @@ public sealed class WorktreeSweeper(WorktreeInspector inspector, RepoCommands re
             _ = await values.Set(KvKeys.WorktreesSweepStart, started.ToString("O", CultureInfo.InvariantCulture), cancellationToken).ConfigureAwait(false);
         }
 
+        else if (mode == SweepMode.Remove && scope.Path is { } swept)
+        {
+            // A --path sweep records a marker for its own tree only, so the next run of it has something to compare with (#3350); the global marker and other trees are untouched.
+            _ = await values.Set(KvKeys.WorktreesPathSweepStart(WorktreeRoots.Normalize(swept)), started.ToString("O", CultureInfo.InvariantCulture), cancellationToken).ConfigureAwait(false);
+        }
+
         var line = outcome.Removed.Count + outcome.Kept.Count == 0 ? string.Empty : Summary(trigger, scope, outcome);
         if (record && line.Length > 0)
         {

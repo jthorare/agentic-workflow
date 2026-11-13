@@ -90,9 +90,26 @@ claude_found=""; [ -n "$session" ] && claude_found=1
 if [ -n "${AW_HEAVY_SESSION_PID:-}" ]; then session="$AW_HEAVY_SESSION_PID"; claude_found=1; fi
 [ -n "$session" ] || session="$PPID"
 
-mkdir -p "$LOCKS/heavy-session" "$(dirname "$LOCK")"
+mkdir -p "$LOCKS/heavy-session" "$LOCKS/heavy-wait" "$(dirname "$LOCK")"
+# <locks>/heavy-wait/<pid>: one file per job that is waiting for a slot (pid = this wrapper's $$), one JSON line:
+# {"pid","session" (number),"lock":"session"|"box-wide","since" (UTC, when the first wait began),"argv":[...] (raw),"cwd"}.
+# The reader is `aw-meta heavy --json` (#3142); it redacts argv and skips a file whose pid is dead (a SIGKILLed wrapper
+# leaves one; the dead-holder reclaim below does not touch these). Written atomically on the first pass without a slot,
+# rewritten when the wait moves from the session lock to the box-wide one, removed once a slot is taken, on the lock
+# timeout and in both traps. A job that gets its slots at once writes none. A write failure never delays the job.
+WAITFILE="$LOCKS/heavy-wait/$$"; WAIT_SINCE=""
+json_str() { local s="$1"; s="${s//\\/\\\\}"; s="${s//\"/\\\"}"; s="${s//$'\n'/\\n}"; s="${s//$'\r'/\\r}"; s="${s//$'\t'/\\t}"; printf '"%s"' "$s"; }
+rm_wait() { rm -f "$WAITFILE" 2>/dev/null; return 0; }
+# write_wait <label> <argv...>
+write_wait() {
+  local label="$1" a first=1 argv=""; shift
+  [ -n "$WAIT_SINCE" ] || WAIT_SINCE="$(date -u +%FT%TZ)"
+  for a in "$@"; do if [ "$first" = 1 ]; then first=0; else argv="$argv,"; fi; argv="$argv$(json_str "$a")"; done
+  { printf '{"pid":%s,"session":%s,"lock":"%s","since":"%s","argv":[%s],"cwd":%s}\n' \
+      "$$" "$session" "$label" "$WAIT_SINCE" "$argv" "$(json_str "$PWD")" > "$WAITFILE.tmp.$$" && mv -f "$WAITFILE.tmp.$$" "$WAITFILE"; } 2>/dev/null || true
+}
 HELD=()
-release() { local d; for d in "${HELD[@]+"${HELD[@]}"}"; do unlink "$d/owner" 2>/dev/null; rmdir "$d" 2>/dev/null || true; done; }
+release() { rm_wait; rm -f "$WAITFILE.tmp.$$" 2>/dev/null; local d; for d in "${HELD[@]+"${HELD[@]}"}"; do unlink "$d/owner" 2>/dev/null; rmdir "$d" 2>/dev/null || true; done; }
 trap release EXIT
 job=""; dog=""
 # signal_job <SIG>: the job's process group, or its pid while the group doesn't exist yet (setsid or perl hasn't made it, #2799).
@@ -175,11 +192,12 @@ acquire() {
       fi
     done
     [ -n "$got" ] && break
-    [ "$printed" -eq 0 ] && { echo "heavy: waiting for the $label lock ($slots slot(s), $base)" >&2; printed=1; }
-    [ "$waited" -ge "$TIMEOUT" ] && { echo "heavy: $label lock timeout ($base)" >&2; exit 75; }
+    [ "$printed" -eq 0 ] && { echo "heavy: waiting for the $label lock ($slots slot(s), $base)" >&2; printed=1; write_wait "$label" "${@:4}"; }
+    [ "$waited" -ge "$TIMEOUT" ] && { echo "heavy: $label lock timeout ($base)" >&2; rm_wait; exit 75; }
     # A pass that skipped a free reserved slot was blocked only by the reservation and doesn't count; any other pass does.
     sleep 1; [ "$reserve_blocked" = 1 ] || waited=$((waited + 1))
   done
+  rm_wait
   echo "$$ $(date -u +%FT%TZ) session=$session $*" > "$got/owner" 2>/dev/null || true
   HELD+=("$got")
 }
@@ -191,6 +209,9 @@ export AW_HEAVY_LOCK_HELD=1 AW_HEAVY_MODE="$mode"
 # Keep one job from taking the whole box: fewer cores per .NET process (MSBuild -m, test parallelism), no MSBuild
 # worker reuse (nodes exit with the build instead of staying resident between builds).
 export DOTNET_PROCESSOR_COUNT="${AW_HEAVY_CPUS:-4}" MSBUILDDISABLENODEREUSE=1 DOTNET_CLI_USE_MSBUILD_SERVER=0
+# why: one shared Roslyn server (VBCSCompiler) grew to 10 GB in one build and caused MEMORY LOW events (#3178). MSBuild reads
+# the variable as a property, so every wrapped job, light or expensive, compiles in process. A caller's own value wins.
+export UseSharedCompilation="${UseSharedCompilation:-false}"
 # Hang limit (owner, 2026-10-22, after an orphaned test run held a slot for 2.5 h). AW_HEAVY_RUN_MAX is minutes:
 # 45 for `dotnet test`, 120 otherwise, 0 = no limit. The clock starts here, after the slots are held. The job runs in
 # its own process group, so test hosts started under `dotnet test` go with it: TERM to the group, KILL 30 s later,
