@@ -155,8 +155,14 @@ internal static class ContextRoutes
         return With(Root + "/map", parts);
     }
 
-    internal static string Query(string text, string? concept = null) =>
-        With(Root + "/query", concept is null ? ["q=" + Uri.EscapeDataString(text)] : ["q=" + Uri.EscapeDataString(text), "concept=" + Uri.EscapeDataString(concept)]);
+    // The anchor lookup reads only the anchors and suggestions, so it asks for a window of one record: the host fetches and cleans one record, not every match (#3524).
+    internal static string QueryAnchors(string text, string? concept = null)
+    {
+        var parts = new List<string> { "q=" + Uri.EscapeDataString(text) };
+        Add(parts, "concept", concept);
+        parts.AddRange(Limit(1));
+        return With(Root + "/query", parts);
+    }
 
     internal static string Node(string key) => With(Root + "/node", ["key=" + Uri.EscapeDataString(key)]);
 
