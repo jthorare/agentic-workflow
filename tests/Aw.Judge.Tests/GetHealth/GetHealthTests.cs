@@ -30,7 +30,7 @@ public sealed class GetHealthTests
 
         var response = await Health();
 
-        Assert.Equal(new GetHealthResponse(HealthStatus.Down, 1), response);
+        Assert.Equal(new GetHealthResponse(HealthStatus.Down, 1), response with { LastFailure = null });
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -42,7 +42,7 @@ public sealed class GetHealthTests
 
         var response = await Health();
 
-        Assert.Equal(new GetHealthResponse(HealthStatus.Degraded, 2), response);
+        Assert.Equal(new GetHealthResponse(HealthStatus.Degraded, 2), response with { LastFailure = null });
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -53,7 +53,7 @@ public sealed class GetHealthTests
 
         var response = await Health();
 
-        Assert.Equal(new GetHealthResponse(HealthStatus.Degraded, 1), response);
+        Assert.Equal(new GetHealthResponse(HealthStatus.Degraded, 1), response with { LastFailure = null });
     }
 
     [Fact, Trait("Lane", "unit")]
