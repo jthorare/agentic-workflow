@@ -253,7 +253,7 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
     {
         var settings = SettingsReader.Read(scope.Settings);
         var scrubbers = settings.Bind(s => scrubberFactory.For(s.ExtraPatterns));
-        var repos = scrubbers.Bind(_ => ScopeRules.Resolve(settings.Value, scope.Repos, scope.Caller));
+        var repos = scrubbers.Bind(_ => ScopeRules.Resolve(settings.Value, scope.Repos, scope.Caller, scope.LeftOut));
         return repos.Bind(r => Results.Success((settings.Value, scrubbers.Value, r, feeds.For(settings.Value, r, scrubbers.Value))));
     }
 }

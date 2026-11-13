@@ -1,5 +1,4 @@
 using Aw.CodeIndex.Core.Values;
-using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Scheduling;
@@ -133,11 +132,5 @@ public sealed class CodeIndexOutlooksTests
         var commits = (await outlooks.IndexCommits(["demo", "other"], Ct)).Value;
 
         Assert.Equal(("demo", CodeIndexJobsRig.Old.Value), (commits.Keys.Single(), commits.Values.Single()));
-    }
-
-    private sealed class PausedServices(ServiceName name) : IServicePauses
-    {
-        public ValueTask<Result<IReadOnlySet<ServiceName>>> Paused(CancellationToken cancellationToken) =>
-            ValueTask.FromResult(Results.Success<IReadOnlySet<ServiceName>>(new HashSet<ServiceName> { name }));
     }
 }

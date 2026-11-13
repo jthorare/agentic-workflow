@@ -10,7 +10,8 @@ namespace Aw.Meta.Features.LaneRecycle;
 /// <param name="messages">The inbox.</param>
 /// <param name="sync">Reads the meta's own transcript into the inbox before settling.</param>
 /// <param name="clock">The current time.</param>
-internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, TimeProvider clock)
+/// <param name="obligations">Writes obligation.closed for each reply it settles; null to write none.</param>
+internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, TimeProvider clock, ObligationEventWriter? obligations = null)
 {
     // The lane's open messages from before this run that ask for this recycle (a `DIGEST READY` line, or one naming this digest) are answered by it: dismiss them like `inbox-dismiss`.
     internal async ValueTask<Result<IReadOnlyList<string>>> Settle(RecyclePlan plan, DateTimeOffset started, CancellationToken cancellationToken)
@@ -32,10 +33,17 @@ internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, Tim
         var settled = new List<string>();
         foreach (var message in all.Value.Where(m => AsksForThisRecycle(m, plan, started, now)))
         {
+            var owed = obligations is not null && await obligations.IsOwed(message.Id.Value, cancellationToken).ConfigureAwait(false);
             var resolved = await messages.Resolve(message.Id, new MessageResolution(MessageResolutionKind.Dismissed, reason), cancellationToken).ConfigureAwait(false);
             if (resolved.IsError)
             {
                 return resolved.Error;
+            }
+
+            if (owed && obligations is not null)
+            {
+                var who = message.FromName.Length > 0 ? message.FromName : message.From;
+                await obligations.Closed(message.Id.Value, who, cancellationToken).ConfigureAwait(false);
             }
 
             settled.Add(message.Id.Value);

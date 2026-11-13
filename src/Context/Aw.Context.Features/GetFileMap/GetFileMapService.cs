@@ -43,7 +43,7 @@ internal sealed class GetFileMapService(MapReader reader, IRepoReader repos, ICo
 
     private static Result<ContextRepo> Addressed(ContextScope scope, ContextRepoName name)
     {
-        var addressed = SettingsReader.Read(scope.Settings).Bind(s => ScopeRules.Resolve(s, scope.Repos, scope.Caller));
+        var addressed = SettingsReader.Read(scope.Settings).Bind(s => ScopeRules.Resolve(s, scope.Repos, scope.Caller, scope.LeftOut));
         if (addressed.IsError && addressed.Error.Code != ContextErrors.UnknownAnchor.Code)
         {
             return addressed.Error;

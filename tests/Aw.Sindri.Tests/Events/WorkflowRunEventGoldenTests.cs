@@ -1,6 +1,9 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.ApiGoldens;
 
@@ -27,20 +30,22 @@ public sealed class WorkflowRunEventGoldenTests
         EventTypes.WorkflowNodeFailed,
         EventTypes.WorkflowNodeTakenOver,
         EventTypes.WorkflowNodeHandedBack,
+        EventTypes.WorkflowNodeAgentChanged,
     ];
 
     private static string Of<T>(SliceHarness h, string type, T payload) => ApiGolden.Reindent(h.Events.Entry(type, payload, "key", A.FirstItemId.Value).Envelope.Payload);
 
     private static string Json(SliceHarness h, string type) => type switch
     {
-        EventTypes.WorkflowRunStarted => Of(h, type, new WorkflowRunStartedPayload(_run, WorkflowId.From("WF-00000000000000000000000000000001"), 3, "{\"kind\":\"manual\"}", "human")),
-        EventTypes.WorkflowRunFinished => Of(h, type, new WorkflowRunFinishedPayload(_run, "failed", "node 'fetch' failed: 502", "service:workflow")),
-        EventTypes.WorkflowRunCancelled => Of(h, type, new WorkflowRunCancelledPayload(_run, "owner stopped it", "human")),
+        EventTypes.WorkflowRunStarted => Of(h, type, new WorkflowRunStartedPayload(_run, WorkflowId.From("WF-00000000000000000000000000000001"), 3, "{\"kind\":\"manual\"}", "human", WorkflowRunMode.Live)),
+        EventTypes.WorkflowRunFinished => Of(h, type, new WorkflowRunFinishedPayload(_run, "failed", "node 'fetch' failed: 502", "service:workflow", WorkflowRunMode.Live)),
+        EventTypes.WorkflowRunCancelled => Of(h, type, new WorkflowRunCancelledPayload(_run, "owner stopped it", "human", WorkflowRunMode.Live)),
         EventTypes.WorkflowNodeStarted => Of(h, type, new WorkflowNodeStartedPayload(_run, _fetch, 0, "service:workflow")),
         EventTypes.WorkflowNodeFinished => Of(h, type, new WorkflowNodeFinishedPayload(_run, _fetch, 2, "succeeded", Truncated: true, "service:workflow")),
         EventTypes.WorkflowNodeFailed => Of(h, type, new WorkflowNodeFailedPayload(_run, _notify, 0, "no channel", "service:workflow")),
         EventTypes.WorkflowNodeTakenOver => Of(h, type, new WorkflowNodeTakenOverPayload(_run, _agent, 2, "human:cli")),
         EventTypes.WorkflowNodeHandedBack => Of(h, type, new WorkflowNodeHandedBackPayload(_run, _agent, 2, "session:launch:LCH-00000000000000000000000000000001")),
+        EventTypes.WorkflowNodeAgentChanged => Of(h, type, new WorkflowNodeAgentChangedPayload(_run, _agent, 0, NodeAgentStates.WaitingOnYou, "the owner", "Bash", new DateTimeOffset(2026, 11, 12, 10, 0, 0, TimeSpan.Zero), LaunchId.From("LCH-00000000000000000000000000000001"), "sindri/agent-1", new DateTimeOffset(2026, 11, 12, 12, 0, 0, TimeSpan.Zero), "service:workflow")),
         _ => throw new ArgumentOutOfRangeException(nameof(type)),
     };
 
