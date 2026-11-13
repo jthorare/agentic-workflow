@@ -30,6 +30,7 @@ internal sealed partial class SettingsView : UserControl
         _settings?.PropertyChanged += OnSettingsChanged;
         _setup = _settings?.Setup;
         _setup?.RevealRequested += OnRevealRequested;
+        WatchSources(_settings);
         if (Content is StackPanel page)
         {
             ReplaceChecklist(page);
@@ -47,6 +48,7 @@ internal sealed partial class SettingsView : UserControl
 
         if (_setup is not null)
         {
+            _ = _stale.Add(SettingsSection.Setup);
             _checklist = new SetupChecklist { Name = "SetupChecklist", DataContext = _setup, IsVisible = _settings?.ShowsSetup ?? true };
             page.Children.Insert(3, _checklist);   // after the title, the filter box and its no-match line
         }
@@ -80,9 +82,84 @@ internal sealed partial class SettingsView : UserControl
         ];
         foreach (var (section, parts) in map)
         {
+            if (!_stale.Remove(section))
+            {
+                continue;   // nothing under this section raised a change since its words were read
+            }
+
             var words = parts.OfType<Control>().SelectMany(ShownWords);
             settings.SetShownText(section, string.Join(' ', section == SettingsSection.Setup ? words.Concat(StepWords(settings)) : words));
         }
+    }
+
+    // Which sections' words must be read again: all at first, then a section when its view model raises a change or its steps come and go.
+    private readonly HashSet<SettingsSection> _stale = [.. Enum.GetValues<SettingsSection>()];
+    private readonly List<Action> _unwatch = [];
+
+    private void WatchSources(SettingsViewModel? settings)
+    {
+        _unwatch.ForEach(static undo => undo());
+        _unwatch.Clear();
+        _stale.UnionWith(Enum.GetValues<SettingsSection>());
+        if (settings is null)
+        {
+            return;
+        }
+
+        Watch(settings, SettingsSection.ThisApp, static name => !name.StartsWith("Shows", StringComparison.Ordinal) && name is not (nameof(SettingsViewModel.Filter) or nameof(SettingsViewModel.HasNoMatch) or nameof(SettingsViewModel.NoMatchText)));
+        Watch(settings.ModelChoice, SettingsSection.Choices);
+        Watch(settings.LabelChoice, SettingsSection.Choices);
+        Watch(settings.SurfaceChoice, SettingsSection.Choices);
+        Watch(settings.Sandbox, SettingsSection.Sandbox);
+        Watch(settings.Library, SettingsSection.Library);
+        Watch(settings.LinearConnection, SettingsSection.Connections);
+        Watch(settings.TodoNoteCard, SettingsSection.Connections);
+        WatchSteps(settings.Setup);
+    }
+
+    private void Watch(object? source, SettingsSection section, Func<string, bool>? counts = null)
+    {
+        if (source is not System.ComponentModel.INotifyPropertyChanged notifier)
+        {
+            return;
+        }
+
+        void OnChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (counts is null || counts(e.PropertyName ?? string.Empty))
+            {
+                _ = _stale.Add(section);
+            }
+        }
+
+        notifier.PropertyChanged += OnChanged;
+        _unwatch.Add(() => notifier.PropertyChanged -= OnChanged);
+    }
+
+    private void WatchSteps(SetupViewModel? setup)
+    {
+        if (setup is null)
+        {
+            return;
+        }
+
+        Watch(setup, SettingsSection.Setup);
+        foreach (var step in setup.Steps)
+        {
+            Watch(step, SettingsSection.Setup);
+        }
+
+        void OnSteps(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            _ = _stale.Add(SettingsSection.Setup);
+            foreach (var added in e.NewItems?.OfType<SetupStepViewModel>() ?? [])
+            {
+                Watch(added, SettingsSection.Setup);
+            }
+        }
+
+        setup.Steps.CollectionChanged += OnSteps;
+        _unwatch.Add(() => setup.Steps.CollectionChanged -= OnSteps);
     }
 
     // A collapsed step's content may not be in the visual tree, so the steps' own words are read from the view model too.

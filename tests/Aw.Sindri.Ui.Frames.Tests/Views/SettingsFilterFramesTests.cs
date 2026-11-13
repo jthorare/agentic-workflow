@@ -211,4 +211,16 @@ public sealed class SettingsFilterFramesTests : FrameHost
 
         Assert.True(settings.ShowsSetup, "'browse' is in step 1's folder row, which is collapsed: the walk missed it");
     });
+
+    [Fact]
+    public Task A_changed_word_on_the_page_is_seen_by_the_filter_after_the_cache() => OnUi(async () =>
+    {
+        var (_, _, settings, view) = await FullPage();
+        view.CollectShownText(settings);   // fills the cache with "100%"
+        settings.TextScale = 1.2;          // raises a change: This app's words are read again
+
+        settings.Filter = "120%";
+
+        Assert.True(settings.ShowsThisApp, "the filter used the cached words and missed '120%'");
+    });
 }
