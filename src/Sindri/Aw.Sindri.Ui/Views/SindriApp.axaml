@@ -1,5 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:rows="using:Aw.Sindri.Ui.Views.Controls.Rows"
              x:Class="Aw.Sindri.Ui.Views.SindriApp"
              Name="Sindri"
              RequestedThemeVariant="Dark">
@@ -24,6 +25,7 @@
     <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/Typography.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/StatusChip.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Views/Controls/ControlStyles.axaml" />
+    <StyleInclude Source="avares://Aw.Sindri.Ui/Views/Controls/Rows/RowStyles.axaml" />
     <!-- First of the surface looks: every clickable surface rests on a clear fill, not none. A Border with no background is not hit-tested, so the
          pointer over its empty space would reach the panel behind and the surface would never be under the pointer (#2535). Each surface's own
          fill declared below (Border.card, item-row.selected, inbox-row.selected, the Needs You tints) replaces it; ClickableStyles, last, lifts it. -->
@@ -41,6 +43,13 @@
     </Style>
     <Style Selector="TextBlock">
       <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    </Style>
+    <!-- The peek body (#3538, #3584). Avalonia has no selector specificity, the later style wins: this sits after the
+         catch-all TextBlock Foreground above, so ink-muted is not overwritten by Ink. -->
+    <Style Selector="rows|PeekPane /template/ ContentPresenter#PART_Body > TextBlock">
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="LineHeight" Value="{DynamicResource Type.Body.LineHeight}" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.InkMuted}" />
     </Style>
 
     <!-- S1b's status card (the window until U0's shell replaces it; its content becomes the Health page). -->

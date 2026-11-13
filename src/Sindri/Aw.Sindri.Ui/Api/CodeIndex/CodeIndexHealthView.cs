@@ -7,4 +7,5 @@ namespace Aw.Sindri.Ui.Api.CodeIndex;
 /// <param name="Waiting">The server's words while waiting ("retrying in N min"), or null.</param>
 /// <param name="NeedsLook">True when the server has a problem row for the repo (doctor's rule, #3430: a first build queued over 30 min counts); false from a server that predates it.</param>
 /// <param name="Paused">True when code-index-main-move is paused and no build is coming for the repo (#3561); false from a server that predates it.</param>
-internal sealed record CodeIndexHealthView(string Repo, string State, int? EmbeddingsPercent, string? Waiting, bool NeedsLook = false, bool Paused = false);
+/// <param name="LookWords">The server's own sentence for why the repo needs a look, repo name first (#3515); null when it does not, or from a server that predates it.</param>
+internal sealed record CodeIndexHealthView(string Repo, string State, int? EmbeddingsPercent, string? Waiting, bool NeedsLook = false, bool Paused = false, string? LookWords = null);
