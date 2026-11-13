@@ -78,7 +78,7 @@ internal sealed class AgentNodeRecovering(IWorkflowRunStore runs, IWorkflowStore
     private async Task<string?> Present(string root, IReadOnlyDictionary<string, string> declared, IReadOnlyCollection<string> names, CancellationToken cancellationToken)
     {
         var files = new JsonObject();
-        foreach (var name in names.Where(n => declared.ContainsKey(n)).Order(StringComparer.Ordinal))
+        foreach (var name in names.Where(declared.ContainsKey).Order(StringComparer.Ordinal))
         {
             var content = await outputs.Read(root, name, cancellationToken).ConfigureAwait(false);
             if (content.IsError)
