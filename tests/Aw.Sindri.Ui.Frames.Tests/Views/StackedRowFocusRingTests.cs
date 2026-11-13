@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -31,44 +32,58 @@ public sealed class StackedRowFocusRingTests
     private static Snapshot Take(Border row) =>
         new(row.Bounds.Height, row.BorderThickness, row.Padding, row.BoxShadow.Count);
 
+    private static (List<Border> Rows, Window Window) ShowRows()
+    {
+        var rows = new List<Border>();
+        var stack = new StackPanel();
+        for (var i = 0; i < 3; i++)
+        {
+            var text = new TextBlock { Text = string.Create(CultureInfo.InvariantCulture, $"Row {i}"), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+            var row = new Border { Focusable = true, Child = text, MinHeight = 48 };
+            row.Classes.Add("item-row");
+            rows.Add(row);
+            stack.Children.Add(row);
+        }
+
+        var window = new Window { Width = 400, Height = 300, Content = stack };
+        window.Show();
+        window.UpdateLayout();
+        return (rows, window);
+    }
+
+    private static (Snapshot Before, Snapshot After, BoxShadow Ring, Color TokenColour) FocusRow(int index)
+    {
+        var (rows, window) = ShowRows();
+        var target = rows[index];
+        var unfocused = Take(target);
+        _ = target.Focus(NavigationMethod.Tab);
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+        var focused = Take(target);
+        var shadow = target.BoxShadow.Count == 1 ? target.BoxShadow[0] : default;
+        window.Close();
+        return (unfocused, focused, shadow, TokenColor("Brush.PrimaryHover"));
+    }
+
+    private static (Snapshot Before, Snapshot After, BoxShadow Ring, Color TokenColour) FocusRowAtScale(int index, double scale)
+    {
+        var resources = Application.Current!.Resources;
+        TextScale.Apply(resources, scale);
+        try
+        {
+            return FocusRow(index);
+        }
+        finally
+        {
+            TextScale.Apply(resources, 1.0);
+        }
+    }
+
     [Theory]
     [MemberData(nameof(Cases))]
     public async Task Focusing_a_stacked_row_changes_no_layout_and_draws_the_ring_inside_its_bounds(int index, double scale)
     {
-        var (before, after, ring, tokenColour) = await OnUi(() =>
-        {
-            var resources = Application.Current!.Resources;
-            TextScale.Apply(resources, scale);
-            try
-            {
-                var rows = new List<Border>();
-                var stack = new StackPanel();
-                for (var i = 0; i < 3; i++)
-                {
-                    var row = new Border { Focusable = true, Child = new TextBlock { Text = $"Row {i}", VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center }, MinHeight = 48 };
-                    row.Classes.Add("item-row");
-                    rows.Add(row);
-                    stack.Children.Add(row);
-                }
-
-                var window = new Window { Width = 400, Height = 300, Content = stack };
-                window.Show();
-                window.UpdateLayout();
-                var target = rows[index];
-                var unfocused = Take(target);
-                _ = target.Focus(NavigationMethod.Tab);
-                Dispatcher.UIThread.RunJobs();
-                window.UpdateLayout();
-                var focused = Take(target);
-                var shadow = target.BoxShadow.Count == 1 ? target.BoxShadow[0] : default;
-                window.Close();
-                return (unfocused, focused, shadow, TokenColor("Brush.PrimaryHover"));
-            }
-            finally
-            {
-                TextScale.Apply(resources, 1.0);
-            }
-        });
+        var (before, after, ring, tokenColour) = await OnUi(() => FocusRowAtScale(index, scale));
 
         Assert.Equal(before.Height, after.Height);
         Assert.Equal(before.Border, after.Border);
