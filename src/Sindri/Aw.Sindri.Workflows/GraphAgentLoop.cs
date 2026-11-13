@@ -183,7 +183,7 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
         await events.Record(NodeAgentRecorder.EndState(ending.Failure)).ConfigureAwait(true);
         if (ending.Failure is { } reason)
         {
-            return Failed(started.Input, reason);
+            return Failed(started.Input, reason, ending.FailureOutput);
         }
 
         return Succeeded(started.Input, ending.Outputs, address, closed);
@@ -200,7 +200,9 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
             output[name] = value?.DeepClone();
         }
 
-        return new GraphBlockOutcome(NodeRunStatus.Succeeded, input, output.ToJsonString(), result.Taken, Error: null);
+        // why: Fit keeps an output over 64 KB as parseable JSON; the walk then records the node with 'Truncated' set (#3419)
+        var fitted = StoredJson.Fit(output.ToJsonString());
+        return new GraphBlockOutcome(NodeRunStatus.Succeeded, input, fitted.Text, result.Taken, Error: null, Truncated: fitted.Cut);
     }
 
     // Waits for the report, the end of the session or the timeout, whichever comes first. The timeout runs only while nobody holds the node: a takeover stops its clock and a handback
@@ -272,7 +274,7 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
 
         if (Unrecoverable(state) is { } failure)
         {
-            return new AgentNodeEnding(Outputs: null, failure);
+            return new AgentNodeEnding(Outputs: null, failure, state.Refused ? FailureOutputOf(state.Detail, files: null) : null);
         }
 
         var recovered = await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.RecoverAsync(new AgentNodeRecover(reference, launched.Worktree ?? string.Empty, launched.RunDirectory)), _agentRead).ConfigureAwait(true);
@@ -287,6 +289,6 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
             AgentSessionEnd.Idle => "idle: the agent sat idle at its prompt with no report",
             AgentSessionEnd.Exit or AgentSessionEnd.Limit or null or _ => $"exit: the agent exited (code {state.ExitCode?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}) without reporting",
         };
-        return new AgentNodeEnding(Outputs: null, recovered.Reason is { } detail ? $"{why}; {detail}" : why);
+        return new AgentNodeEnding(Outputs: null, recovered.Reason is { } detail ? $"{why}; {detail}" : why, FailureOutputOf(refusedReport: null, recovered.Files));
     }
 }

@@ -57,41 +57,104 @@ public sealed class HarnessProbeTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_mismatched_pinned_version_warns()
+    public async Task With_dev_a_mismatched_pinned_version_warns_with_the_golden_fix()
     {
         var pinned = new[] { Codex(pending: false, "0.40.0") };
 
-        var checks = await HarnessDoctor.Checks(pinned, Live(), new FakeHarnessVersions().With("codex", "0.41.0"), Token);
+        var checks = await HarnessDoctor.Checks(pinned, Live(), new FakeHarnessVersions().With("codex", "0.41.0"), dev: true, Token);
 
         var check = Assert.Single(checks);
         Assert.Equal(("codex:workspace-write", CheckState.Warn), (check.Name, check.State));
         Assert.Contains("codex 0.41.0 differs from the pinned probe (0.40.0)", check.Detail, StringComparison.Ordinal);
-        Assert.NotNull(check.Fix);
+        Assert.Contains("tests/Aw.Sindri.Tests/Golden/Probe/", check.Fix, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_pending_owner_probe_warns_and_a_matching_version_is_ok()
+    public async Task With_dev_a_pending_owner_probe_warns_and_a_matching_version_is_ok()
     {
         var pinned = new[] { Codex(pending: true, version: null), Codex(pending: false, "0.41.0") with { Harness = "codex:read-only" } };
 
-        var checks = await HarnessDoctor.Checks(pinned, Live(), new FakeHarnessVersions().With("codex", "0.41.0"), Token);
+        var checks = await HarnessDoctor.Checks(pinned, Live(), new FakeHarnessVersions().With("codex", "0.41.0"), dev: true, Token);
 
         Assert.Equal([("codex:workspace-write", CheckState.Warn, "pending: owner probe"), ("codex:read-only", CheckState.Ok, "codex 0.41.0 matches the pinned probe")],
             checks.Select(c => (c.Name, c.State, c.Detail)));
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Doctor_re_probes_the_claude_code_it_runs_in()
+    public async Task With_dev_doctor_re_probes_the_claude_code_it_runs_in()
     {
         var claude = PinnedProbe.All[0];
         var live = await HarnessProbe.Take(new ProbeInput(Harness: null, [.. claude.Markers.Skip(1), "PATH"], Home, InClaude, Terminal: false), new FakeHarnessVersions(), Token);
         var versions = new FakeHarnessVersions();
 
-        var checks = await HarnessDoctor.Checks([claude], live, versions, Token);
+        var checks = await HarnessDoctor.Checks([claude], live, versions, dev: true, Token);
 
         var check = Assert.Single(checks);
         Assert.Equal((CheckState.Warn, $"re-probed: {claude.Markers[0]} is no longer set"), (check.State, check.Detail));
         Assert.Empty(versions.Reads);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_user_run_shows_a_differing_installed_version_as_ok_without_a_fix()
+    {
+        var checks = await HarnessDoctor.Checks([Codex(pending: false, "0.8")], Live(), new FakeHarnessVersions().With("codex", "0.9"), dev: false, Token);
+
+        var check = Assert.Single(checks);
+        Assert.Equal((CheckState.Ok, "codex 0.9 installed (probe pinned at 0.8)", null), (check.State, check.Detail, check.Fix));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_user_run_shows_a_pending_owner_probe_as_ok_provisional_markers()
+    {
+        var checks = await HarnessDoctor.Checks([Codex(pending: true, version: null)], Live(), new FakeHarnessVersions(), dev: false, Token);
+
+        var check = Assert.Single(checks);
+        Assert.Equal(CheckState.Ok, check.State);
+        Assert.Contains("provisional markers", check.Detail, StringComparison.Ordinal);
+        Assert.Null(check.Fix);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_user_run_shows_a_differing_version_with_every_marker_set_as_ok()
+    {
+        var claude = PinnedProbe.All[0];
+        var live = await HarnessProbe.Take(new ProbeInput(Harness: null, [.. claude.Markers, "PATH"], Home, InClaude, Terminal: false), new FakeHarnessVersions(), Token);
+        live = live with { Version = "9.9.999" };
+
+        var checks = await HarnessDoctor.Checks([claude], live, new FakeHarnessVersions(), dev: false, Token);
+
+        var check = Assert.Single(checks);
+        Assert.Equal(CheckState.Ok, check.State);
+        Assert.Equal($"{claude.VersionCommand} 9.9.999 (probe pinned at {claude.Version}; the markers are all set)", check.Detail);
+        Assert.Null(check.Fix);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_user_run_keeps_the_missing_marker_warn_but_the_fix_is_not_the_golden_file()
+    {
+        var claude = PinnedProbe.All[0];
+        var live = await HarnessProbe.Take(new ProbeInput(Harness: null, [.. claude.Markers.Skip(1), "PATH"], Home, InClaude, Terminal: false), new FakeHarnessVersions(), Token);
+
+        var checks = await HarnessDoctor.Checks([claude], live, new FakeHarnessVersions(), dev: false, Token);
+
+        var check = Assert.Single(checks);
+        Assert.Equal((CheckState.Warn, $"re-probed: {claude.Markers[0]} is no longer set"), (check.State, check.Detail));
+        Assert.NotNull(check.Fix);
+        Assert.DoesNotContain("Golden", check.Fix, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task With_dev_a_differing_version_with_every_marker_set_warns_with_the_golden_fix()
+    {
+        var claude = PinnedProbe.All[0];
+        var live = await HarnessProbe.Take(new ProbeInput(Harness: null, [.. claude.Markers, "PATH"], Home, InClaude, Terminal: false), new FakeHarnessVersions(), Token);
+        live = live with { Version = "9.9.999" };
+
+        var checks = await HarnessDoctor.Checks([claude], live, new FakeHarnessVersions(), dev: true, Token);
+
+        var check = Assert.Single(checks);
+        Assert.Equal(CheckState.Warn, check.State);
+        Assert.Contains("tests/Aw.Sindri.Tests/Golden/Probe/", check.Fix, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
