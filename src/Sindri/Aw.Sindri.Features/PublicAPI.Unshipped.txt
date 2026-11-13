@@ -5574,3 +5574,7 @@ Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.NotModified.get -> bool
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.NotModified.init -> void
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.Tag.get -> string?
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.Tag.init -> void
+Aw.Sindri.Features.CodeIndexReads.RepoHealth.NeedsLook.get -> bool
+Aw.Sindri.Features.CodeIndexReads.RepoHealth.NeedsLook.init -> void
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.NeedsLook.get -> bool
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.NeedsLook.init -> void
