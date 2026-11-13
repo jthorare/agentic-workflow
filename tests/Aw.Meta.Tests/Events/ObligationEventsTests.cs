@@ -102,7 +102,7 @@ public sealed class ObligationEventsTests
         await Dismiss("m1");
         await Dismiss("m1");
 
-        Assert.Single(await Written());
+        _ = Assert.Single(await Written());
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -114,7 +114,7 @@ public sealed class ObligationEventsTests
 
         await Dismiss("m1");
 
-        Assert.Single(await Written());
+        _ = Assert.Single(await Written());
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -151,7 +151,7 @@ public sealed class ObligationEventsTests
         var settled = await settler.Settle(new RecyclePlan("t1", "api", SessionId.From("s-old"), OldTokens: null, digest), DateTimeOffset.MaxValue, CancellationToken.None);
 
         Assert.True(settled.IsSuccess, settled.IsError ? settled.Error.Message : string.Empty);
-        Assert.Equal(["m1", "m2"], settled.Value.Order(StringComparer.Ordinal));
+        Assert.Equal(["m1", "m2"], settled.Value.Order(StringComparer.Ordinal), StringComparer.Ordinal);
         Assert.Equal(
             [("obligation.closed", "api", """{"id":"m1","from":"t1-api","lane":"api"}"""), ("obligation.closed", "api", """{"id":"m2","from":"t1-api","lane":"api"}""")],
             [.. (await Written()).OrderBy(static e => e.Fields, StringComparer.Ordinal)]);
