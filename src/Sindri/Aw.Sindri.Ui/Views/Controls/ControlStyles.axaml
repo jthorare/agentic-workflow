@@ -411,8 +411,17 @@
   <!-- The context map's own controls (F3 spec 1 §2). The stage shows the hand cursor, since a drag pans it; the edges layer is
        never a keyboard stop (the nodes are); the coverage strip is a quiet button that lifts to Surface2 under the pointer, its
        words in InkMuted with the lead in Ink. -->
+  <!-- ZoomBorder as the Workflows graph's stage (#3234): the hand at rest and over it, a four-way move cursor while a drag pans (Avalonia has no grab cursor); an opt-in Tab stop
+       (IsKeyboardFocusable) shows the 2 px PrimaryHover ring for the keyboard only, the SelectableTile recipe. -->
   <Style Selector="controls|ZoomBorder">
     <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="controls|ZoomBorder:panning">
+    <Setter Property="Cursor" Value="SizeAll" />
+  </Style>
+  <Style Selector="controls|ZoomBorder:focus-visible">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+    <Setter Property="BorderThickness" Value="2" />
   </Style>
   <Style Selector="controls|GraphEdgesControl">
     <Setter Property="Focusable" Value="False" />
