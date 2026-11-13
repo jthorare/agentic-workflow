@@ -249,7 +249,7 @@ public sealed class SetupFactsTests
         var running = (await rig.Facts.Map(Token)).Value;
 
         Assert.Equal(MapPhase.NotBuilt, notBuilt.Phase);
-        Assert.Equal((MapPhase.Failed, "SND-CONTEXT-040", null), (failed.Phase, failed.FailureCode, failed.Progress));
+        Assert.Equal((MapPhase.Failed, "SND-CONTEXT-040", null, MapStage.Map), (failed.Phase, failed.FailureCode, failed.Progress, failed.Stage));
         Assert.Equal((MapPhase.Building, new SetupProgress(40, 100, "files")), (running.Phase, running.Progress));
     }
 
@@ -320,7 +320,7 @@ public sealed class SetupFactsTests
         rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
         var after = (await rig.Facts.Map(Token)).Value;
 
-        Assert.Equal((MapPhase.Failed, "SND-CODEIDX-010"), (failed.Phase, failed.FailureCode));
+        Assert.Equal((MapPhase.Failed, "SND-CODEIDX-010", MapStage.Index), (failed.Phase, failed.FailureCode, failed.Stage));
         Assert.Equal(MapPhase.NotBuilt, after.Phase);
     }
 

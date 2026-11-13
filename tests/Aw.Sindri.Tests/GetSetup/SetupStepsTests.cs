@@ -115,6 +115,17 @@ public sealed class SetupStepsTests
         Assert.Equal((SetupState.Running, stage, (SetupProgress?)null), (step.State, step.Stage, step.Progress));
     }
 
+    // #3112: a failed build keeps the stage it failed in, so the step can say which build failed.
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(MapStage.Index)]
+    [InlineData(MapStage.Map)]
+    public void Map_failed_keeps_the_stage_it_failed_in(MapStage stage)
+    {
+        var step = SetupSteps.Map(new MapFact(MapPhase.Failed, FailureCode: "SND-CODEIDX-010") { Stage = stage });
+
+        Assert.Equal((SetupState.Failed, stage), (step.State, step.Stage));
+    }
+
     [Fact, Trait("Lane", "unit")]
     public void A_built_map_has_no_stage()
     {

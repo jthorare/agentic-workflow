@@ -109,7 +109,7 @@ internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine 
         var map = Ended(maps.Value);
         var index = Ended(ours);
         var failed = index is { State: JobState.Failed } && (map is null || index.Sequence > map.Sequence) ? index : map is { State: JobState.Failed } ? map : null;
-        return failed is null ? new MapFact(MapPhase.NotBuilt) : new MapFact(MapPhase.Failed, FailureCode: failed.Code);
+        return failed is null ? new MapFact(MapPhase.NotBuilt) : new MapFact(MapPhase.Failed, FailureCode: failed.Code) { Stage = ReferenceEquals(failed, index) ? MapStage.Index : MapStage.Map };
     }
 
     // The newest build that was not cancelled (the running ones were read before), as the map step read it before #3112.

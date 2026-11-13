@@ -20,7 +20,7 @@ public sealed record SetupStep(SetupStepId Id, string Title, SetupState State, s
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<SetupPreviewLine>? Preview { get; init; }
 
-    /// <summary>Which build the map step is running (#3112): the first code index or the map itself, with or without a count; null, and left out of the JSON, for every other step and state.</summary>
+    /// <summary>Which build the map step is running (#3112): the first code index or the map itself, with or without a count, or the build that failed; null, and left out of the JSON, for every other step and state.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public MapStage? Stage { get; init; }
 }
