@@ -11,7 +11,7 @@ public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
     private const string JsonInstruction = "Answer with only one JSON object that matches this schema, and no other text:";
 
     // why: a model that can't answer used to fill the shape with defaults and the run went green (#3224); it now has a way to say so
-    private const string CouldNotAnswerInstruction = "If you can't answer from what you were given, set couldNotAnswer to true and say why in the why field; do not guess or fill the other fields with defaults.";
+    private const string CouldNotAnswerInstruction = "If you can't answer from what you were given, set couldNotAnswer to true and say why in the couldNotAnswerWhy field; do not guess or fill the other fields with defaults.";
 
     private const int ShownLength = 200;
 
@@ -134,14 +134,14 @@ public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
         }
 
         properties["couldNotAnswer"] = new JsonObject { ["type"] = "boolean" };
-        properties["why"] = new JsonObject { ["type"] = "string" };
+        properties["couldNotAnswerWhy"] = new JsonObject { ["type"] = "string" };
         return shown;
     }
 
     /// <summary>The model's reason when it says it couldn't answer; null when 'couldNotAnswer' is missing or not true.</summary>
     private static string? CouldNotAnswer(JsonObject answer) =>
         answer["couldNotAnswer"] is JsonValue flag && flag.TryGetValue<bool>(out var set) && set
-            ? Text(answer["why"]) is { Length: > 0 } why ? why : "no reason given"
+            ? Text(answer["couldNotAnswerWhy"]) is { Length: > 0 } why ? Shown(why) : "no reason given"
             : null;
 
     private static Dictionary<string, JsonNode?> Outputs(JsonObject? schema, JsonObject answer)
