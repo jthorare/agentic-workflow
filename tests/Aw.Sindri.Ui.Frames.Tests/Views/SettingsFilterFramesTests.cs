@@ -56,6 +56,8 @@ public sealed class SettingsFilterFramesTests : FrameHost
         var bar = Named<Control>(window, "TopBar");
         var barBottom = bar.TranslatePoint(new Point(0, bar.Bounds.Height), window)!.Value.Y;
         var titleTop = Named<TextBlock>(window, "TitleText").TranslatePoint(default, window)!.Value.Y;
+        var page = Named<TextBlock>(window, "TitleText").FindAncestorOfType<ScrollViewer>()!;
+        Assert.Equal(0, page.Offset.Y);
         Assert.True(titleTop >= barBottom - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the title starts at {titleTop}, under the top bar that ends at {barBottom}"));
     });
 
@@ -109,5 +111,40 @@ public sealed class SettingsFilterFramesTests : FrameHost
             settings.Filter = label!;
             Assert.True(settings.ShowsThisApp, "typing '" + label + "' hides the section that shows it");
         }
+    });
+
+    [Fact]
+    public Task The_checklist_follows_the_filter() => OnUi(async () =>
+    {
+        var (window, shell) = await Connected();
+        var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), static _ => { }, shell.Setup);
+        window.SettingsSlot.Content = new SettingsView { DataContext = settings };
+        Settle(window);
+        Assert.True(Named<Control>(window, "SetupChecklist").IsVisible);
+
+        settings.Filter = "sandbox";
+        Settle(window);
+        Assert.False(Named<Control>(window, "SetupChecklist").IsVisible);
+
+        settings.Filter = "checklist";
+        Settle(window);
+        Assert.True(Named<Control>(window, "SetupChecklist").IsVisible);
+
+        settings.Filter = string.Empty;
+        Settle(window);
+        Assert.True(Named<Control>(window, "SetupChecklist").IsVisible);
+    });
+
+    [Fact]
+    public Task The_no_match_state_names_the_filter_and_how_to_clear_it() => OnUi(async () =>
+    {
+        var (window, _) = await Connected();
+        var (_, settings) = PutSettings(window);
+
+        settings.Filter = "zzzz";
+        Settle(window);
+
+        Assert.Equal(Labels.SettingsNoMatch("zzzz"), Named<Border>(window, "SettingsNoMatchName").GetVisualDescendants().OfType<TextBlock>().Single().Text);
+        Assert.Contains(Labels.SettingsNoMatchHint, Named<Control>(window, "SettingsNoMatch").GetVisualDescendants().OfType<TextBlock>().Select(static t => t.Text), StringComparer.Ordinal);
     });
 }
