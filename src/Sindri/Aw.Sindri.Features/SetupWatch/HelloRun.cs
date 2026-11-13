@@ -6,17 +6,21 @@ using Aw.Sindri.Core.Setup;
 namespace Aw.Sindri.Features.SetupWatch;
 
 /// <summary>
-/// The one run of hello-sindri the setup service starts. It is a singleton, because the first-run steps are scoped (one per tick) and a start that failed must be tried again on a later tick:
-/// it keeps whether the run is settled (started, refused as done, gone, or not ours).
+/// The one run of hello-sindri the setup service starts. It is scoped (the runner and the store are); whether the run is settled (started, refused as done, gone, or not ours) lives in the singleton state.
 /// </summary>
 /// <param name="runner">Starts the run (the command, run as 'service:setup').</param>
 /// <param name="workflows">Reads the workflows, to tell the one setup made from one the owner made.</param>
-internal sealed class HelloRun(ISetupWorkflowRunner runner, IWorkflowStore workflows)
+/// <param name="state">What is remembered between ticks.</param>
+internal sealed class HelloRun(ISetupWorkflowRunner runner, IWorkflowStore workflows, HelloRunState state)
 {
     private const string SetupActor = "service:setup";
 
-    /// <summary>Gets or sets a value indicating whether nothing more is to be tried: the run started, was refused as done, hello-sindri is gone, or it is not ours.</summary>
-    internal bool Settled { get; set; }
+    /// <summary>Gets a value indicating whether nothing more is to be tried: the run started, was refused as done, hello-sindri is gone, or it is not ours.</summary>
+    /// <returns>True when settled.</returns>
+    internal bool IsSettled() => state.Settled;
+
+    /// <summary>Records that nothing more is to be tried.</summary>
+    internal void Settle() => state.Settled = true;
 
     /// <summary>Gets a value indicating whether the hello-sindri in the store was made by the setup service.</summary>
     /// <param name="slug">The workflow.</param>
@@ -36,19 +40,19 @@ internal sealed class HelloRun(ISetupWorkflowRunner runner, IWorkflowStore workf
     /// <returns>A task that ends when the start was tried.</returns>
     internal async ValueTask Once(WorkflowSlug slug, CancellationToken cancellationToken)
     {
-        if (Settled)
+        if (state.Settled)
         {
             return;
         }
 
         if (!await IsOurs(slug, cancellationToken).ConfigureAwait(false))
         {
-            Settled = true;
+            Settle();
             return;
         }
 
         var started = await runner.Run(slug, cancellationToken).ConfigureAwait(false);
-        Settled = started.IsSuccess || IsFinal(started.Error.Code);
+        state.Settled = started.IsSuccess || IsFinal(started.Error.Code);
     }
 
     // Already ran (132), or deleted or archived since: the run can never start, so stop asking.

@@ -67,7 +67,7 @@ internal sealed class FirstRunSetup(IProfileSource live, ILaunchSetup launch, IP
     // Create, activate, then record, then run: a crash between two of them is picked up on the next tick (a taken slug is the create that already happened, when setup made it).
     private async ValueTask MakeHello(RepoName repo, CancellationToken cancellationToken)
     {
-        if (run.Settled || await made.WasMade(cancellationToken).ConfigureAwait(false) is not { } wasMade)
+        if (run.IsSettled() || await made.WasMade(cancellationToken).ConfigureAwait(false) is not { } wasMade)
         {
             return;   // settled, or the ledger can't say
         }
@@ -105,7 +105,7 @@ internal sealed class FirstRunSetup(IProfileSource live, ILaunchSetup launch, IP
         if (created.IsError && !await run.IsOurs(_hello, cancellationToken).ConfigureAwait(false))
         {
             _ = await made.Made(_hello, repo, cancellationToken).ConfigureAwait(false);
-            run.Settled = true;
+            run.Settle();
             return false;
         }
 

@@ -55,7 +55,7 @@ public sealed class FirstRunSetupTests : IDisposable
             Create(store),
             Activate(store),
             new FirstWorkflowEvents(_rig.Harness.Held, _rig.Harness.Store, _rig.Harness.Store, _rig.Harness.Events, _rig.Harness.Callers),
-            new HelloRun(_runner, store));
+            new HelloRun(_runner, store, new HelloRunState()));
     }
 
     // the same services the slice ports wrap, called directly (no command chain in a unit test)
