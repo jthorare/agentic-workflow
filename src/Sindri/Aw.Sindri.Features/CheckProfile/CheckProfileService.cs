@@ -28,7 +28,8 @@ internal sealed class CheckProfileService(
             return previous.Error;
         }
 
-        var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
+        // an invalid live file reads as no approved profile (#3594): the check below records it as a live profile that can't be read
+        var approved = await approvals.ForRead(cancellationToken).ConfigureAwait(false);
         if (approved.IsError)
         {
             return approved.Error;

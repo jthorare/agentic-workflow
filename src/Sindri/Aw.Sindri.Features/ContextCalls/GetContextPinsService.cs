@@ -3,6 +3,7 @@ using Aw.Context.Core.Facade;
 using Aw.Context.Core.Map;
 using Aw.Kernel;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Views;
@@ -23,7 +24,7 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
         if (scope.IsError)
         {
-            return scope.Error;
+            return IsInvalid(scope.Error) ? NoProfile(scope.Error) : scope.Error;
         }
 
         var repo = Addressed(scope.Value, request.Repo);
@@ -40,7 +41,8 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
         var state = await engine.Held(service, cancellationToken).ConfigureAwait(false);
         if (loaded.IsError || latest.IsError || state.IsError)
         {
-            return loaded.IsError ? loaded.Error : latest.IsError ? latest.Error : state.Error;
+            var failure = loaded.IsError ? loaded.Error : latest.IsError ? latest.Error : state.Error;
+            return IsInvalid(failure) ? NoProfile(failure) : failure;
         }
 
         var changes = new PinChanges(MapRuleset.RunningPins(scope), state.Value.CurrentPinHashes);
@@ -51,6 +53,12 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
         var view = new ContextRebuildView(Phase(progress.Phase), scope.Caller.Kind == ContextCallerKind.Session ? null : progress.Progress, progress.RetryAt, Stale(state.Value, scope), failed);
         return new ContextPinsView(1, repo, loaded.Value.Hash.Value, state.Value.Current is { } current ? MapVersionRef.Tag(current) : null, pins, view);
     }
+
+    // An invalid profile file reads as no profile (#3594): no pins and an error line naming the file; status and doctor show the same file.
+    private static bool IsInvalid(Error error) => string.Equals(error.Code, SindriErrors.ProfileInvalid.Code, StringComparison.Ordinal);
+
+    private static ContextPinsView NoProfile(Error error) =>
+        new(1, Repo: null, FileHash: string.Empty, MapVersion: null, [], new ContextRebuildView(PinPhases.Idle, Progress: null, RetryAt: null, Stale: false, Failed: null), error.Message);
 
     // Whether the answer covers every repo the map was built from: no repo addressed, or the only repo both of the profile and of the current map's heads
     // (a repo the profile dropped stays in the map until the rebuild lands, and its pins' ids must not reach an answer for another repo). A map with no heads (an imported one)
