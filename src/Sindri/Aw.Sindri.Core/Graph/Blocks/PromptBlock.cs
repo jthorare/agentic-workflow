@@ -18,8 +18,6 @@ public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
 
     private const int ShownLength = 200;
 
-    private static readonly HashSet<string> _schemaKeywords = new(["type", "properties", "required"], StringComparer.Ordinal);
-
     private const string RepairLine = "\n\nYour answer was not a JSON object. Answer again with only the JSON object.";
 
     private const string EchoRepairLine = "\n\nYour answer repeated the schema instead of filling it in. Answer again with only the JSON object that holds your real answer.";
@@ -130,40 +128,6 @@ public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
 
     private static string WithInstruction(string prompt, JsonObject schema) =>
         $"{prompt}\n\n{JsonInstruction}\n{WithImplicitFields(schema).ToJsonString()}\n{ExampleInstruction} {ExampleAnswer(schema)}\n{CouldNotAnswerInstruction}";
-
-    // why: the required fields show what to write (all fields when none is required); a non-text placeholder is not valid JSON, so a copied example fails the parse and gets the repair ask
-    private static string ExampleAnswer(JsonObject schema)
-    {
-        if (schema["properties"] is not JsonObject properties)
-        {
-            return "{}";
-        }
-
-        var required = Required(schema);
-        var shown = properties
-            .Where(p => required.Count == 0 || required.Contains(p.Key))
-            .Select(static p => $"{Quoted(p.Key)}: {Placeholder(p.Key, TypeOf(p.Value).Name)}");
-        return "{" + string.Join(", ", shown) + "}";
-    }
-
-    private static string Placeholder(string name, string? type) => type switch
-    {
-        "boolean" => "<true or false>",
-        "number" or "integer" => "<a number>",
-        "array" => "[<items>]",
-        "object" => "{<fields>}",
-        _ => Quoted($"<your {name}>"),
-    };
-
-    // why: the default JSON writer escapes '<' and '>' to < and >, which would show the model "<your summary>"; only the quote and the backslash need escaping inside a JSON string here
-    private static string Quoted(string text) => "\"" + text.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal) + "\"";
-
-    // why: a JSON-schema-shaped object holding none of the schema's own fields is the model copying the schema, not an answer (#3588); 'type', 'properties' and 'required' are left out of the comparison because the copy always has them
-    private static bool IsSchemaEcho(JsonObject answer, JsonObject schema) =>
-        string.Equals(Text(answer["type"]), "object", StringComparison.Ordinal)
-        && answer["properties"] is JsonObject
-        && !(schema["properties"] is JsonObject properties
-            && properties.Any(p => !_schemaKeywords.Contains(p.Key) && answer.ContainsKey(p.Key)));
 
     // why: the two fields are optional and implicit, so they are added to the schema the model sees and never to the node's outputs
     private static JsonObject WithImplicitFields(JsonObject schema)
