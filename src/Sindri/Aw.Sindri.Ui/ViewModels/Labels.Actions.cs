@@ -126,6 +126,8 @@ internal static partial class Labels
         ["RegisterMcp"] = "Connect agents",
         ["RegisterRecipe"] = "Register recipe",
         ["ResumeService"] = "Resume service",
+        ["StartSession"] = "Start agent",
+        ["RemoveSessionWorktree"] = "Remove agent worktree",
         ["ReviewContextMap:accept"] = "Accept map suggestion",
         ["ReviewContextMap:accept-deterministic"] = "Accept all deterministic links",
         ["ReviewContextMap:add"] = "Add map entry",

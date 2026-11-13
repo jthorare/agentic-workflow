@@ -11,11 +11,11 @@ namespace Aw.UiDriver.Avalonia.Tests;
 /// <summary>
 /// A window with one card that draws its state from <see cref="InputElement.IsPointerOver"/>, not from a style: its label reads "hovered" while
 /// the pointer is over it and "idle" otherwise, and it counts the pointer entering and leaving. A visual layer manager gives it the overlay
-/// layer a themed window's template has.
+/// layer a themed window's template has. A covered screen draws a cover on top of the card, so no pointer move can reach the card (#3488).
 /// </summary>
 internal sealed class HoverScreen
 {
-    internal HoverScreen()
+    internal HoverScreen(bool covered)
     {
         Label = new TextBlock { Text = "idle" };
         AutomationProperties.SetAutomationId(Label, "card-label");
@@ -30,7 +30,13 @@ internal sealed class HoverScreen
                 Label.Text = Card.IsPointerOver ? "hovered" : "idle";
             }
         };
-        var form = new StackPanel { Margin = new Thickness(20), Children = { Card } };
+        var spot = new Grid { Children = { Card } };
+        if (covered)
+        {
+            spot.Children.Add(new Border { Width = 160, Height = 60, Background = Brushes.Black });
+        }
+
+        var form = new StackPanel { Margin = new Thickness(20), Children = { spot } };
         Window = new Window { Width = 400, Height = 300, Title = "Hover screen", Content = new VisualLayerManager { Child = form } };
         Window.Show();
     }
@@ -46,7 +52,8 @@ internal sealed class HoverScreen
     internal int Exited { get; private set; }
 
     /// <summary>Builds the screen on the UI thread (kept running by <see cref="UiPump"/>).</summary>
+    /// <param name="covered">True to draw a cover on top of the card.</param>
     /// <returns>The screen.</returns>
-    internal static Task<HoverScreen> OpenAsync() =>
-        Dispatcher.UIThread.InvokeAsync(static () => new HoverScreen(), DispatcherPriority.Normal, TestContext.Current.CancellationToken).GetTask();
+    internal static Task<HoverScreen> OpenAsync(bool covered = false) =>
+        Dispatcher.UIThread.InvokeAsync(() => new HoverScreen(covered), DispatcherPriority.Normal, TestContext.Current.CancellationToken).GetTask();
 }
