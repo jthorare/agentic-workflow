@@ -13,7 +13,7 @@ namespace Aw.Sindri.Ui.Views.Controls.Rows;
 /// One row of a <see cref="RowList"/> (#2978): glyph, id and title, one cell per list column, age and who it waits on. Its data context is an
 /// IRowItem. Classes: cursor (keyboard focus within), sel (the row being peeked or open). The template is in RowStyles.axaml; the cells are filled here from the item.
 /// </summary>
-internal sealed class Row : TemplatedControl
+internal sealed partial class Row : TemplatedControl
 {
     /// <summary>The fact columns of the list, in order.</summary>
     public static readonly StyledProperty<IReadOnlyList<RowColumn>?> ColumnsProperty = AvaloniaProperty.Register<Row, IReadOnlyList<RowColumn>?>(nameof(Columns));

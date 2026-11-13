@@ -24,6 +24,8 @@ public sealed class RowListBudgetTests
 
     // The specs' wall-clock budgets (Home first paint 100 ms, Messages 16 ms a frame) times this, so a loaded box does not flake them (#2946). The counts above stay the tight guard.
     private const double Loose = 5;
+    private const int WarmUp = 3;
+    private const int Timed = 31;
 
     private static Task<T> OnUi<T>(Func<T> body) =>
         HeadlessUnitTestSession.GetOrStartForAssembly(typeof(RowListBudgetTests).Assembly).Dispatch(body, TestContext.Current.CancellationToken);
@@ -197,29 +199,69 @@ public sealed class RowListBudgetTests
         return true;
     });
 
+    // A scroll step is ScrollTo plus Settle. The box runs several gates at once, so one step or the total flakes: a few warm-up steps (the pool fills and the code is jitted),
+    // then Timed steps, and the assert is on the median. The failure message also names the slowest step.
     [Fact]
-    public async Task Scrolling_10000_rows_costs_a_frame_budget_per_step_with_room_for_a_loaded_box() => await OnUi(() =>
+    public async Task A_full_window_scroll_step_of_10000_rows_has_a_median_inside_a_frame_budget_with_room_for_a_loaded_box() => await OnUi(() =>
+    {
+        var (window, list) = ShowTenThousand();
+        var steps = ScrollSteps(window, list, stepPx: 3200);   // 100 rows: every visible row is new on every step
+        var (median, slowest) = Summarize(steps);
+
+        Assert.True(median <= 16 * Loose, string.Create(CultureInfo.InvariantCulture, $"median {median:0.0} ms, slowest {slowest:0.0} ms over {Timed} full-window scroll steps (after {WarmUp} warm-up), budget {16 * Loose:0} ms (16 ms x {Loose})"));
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task A_wheel_step_of_3_rows_in_10000_costs_a_frame_at_the_median() => await OnUi(() =>
+    {
+        var (window, list) = ShowTenThousand();
+        var steps = ScrollSteps(window, list, stepPx: 96);   // 3 rows at 32 px: what one wheel notch moves
+        var (median, slowest) = Summarize(steps);
+
+        Assert.True(median <= 16, string.Create(CultureInfo.InvariantCulture, $"median {median:0.0} ms, slowest {slowest:0.0} ms over {Timed} wheel steps of 3 rows (after {WarmUp} warm-up), budget 16 ms (one frame at 60 Hz)"));
+        window.Close();
+        return true;
+    });
+
+    private static (Window Window, RowList List) ShowTenThousand()
     {
         var list = new RowList { ItemsSource = RowGallery.Many(1, 10_000), Columns = RowGallery.Columns };
         var window = new Window { Content = list, Width = 1280, Height = WindowHeight };
         window.Show();
         Settle(window);
-        var steps = 0;
-        var clock = Stopwatch.StartNew();
+        return (window, list);
+    }
 
-        for (var offset = 0d; offset <= 10_000 * 32d; offset += 3200)
+    // WarmUp steps that are not timed, then Timed steps, each ScrollTo plus Settle, in ms.
+    private static double[] ScrollSteps(Window window, RowList list, double stepPx)
+    {
+        var times = new double[Timed];
+        var offset = 0d;
+        for (var i = 0; i < WarmUp + Timed; i++)
         {
+            offset += stepPx;
+            var clock = Stopwatch.StartNew();
             list.ScrollTo(offset);
             Settle(window);
-            steps++;
+            clock.Stop();
+            if (i >= WarmUp)
+            {
+                times[i - WarmUp] = clock.Elapsed.TotalMilliseconds;
+            }
         }
 
-        clock.Stop();
-        var perStep = clock.Elapsed.TotalMilliseconds / steps;
-        Assert.True(perStep <= 16 * Loose, string.Create(CultureInfo.InvariantCulture, $"{perStep:0.0} ms a scroll step over {steps} steps, budget {16 * Loose:0} ms (16 ms x {Loose})"));
-        window.Close();
-        return true;
-    });
+        return times;
+    }
+
+    // Timed is odd, so the median is the middle step.
+    private static (double Median, double Slowest) Summarize(double[] times)
+    {
+        var sorted = (double[])times.Clone();
+        Array.Sort(sorted);
+        return (sorted[sorted.Length / 2], sorted[^1]);
+    }
 
     [Fact]
     public async Task A_recycle_reuses_the_cells_and_glyph_geometry_and_builds_none_per_row_scrolled_past() => await OnUi(() =>

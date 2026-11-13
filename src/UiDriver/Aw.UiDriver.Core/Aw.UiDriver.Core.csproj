@@ -18,5 +18,6 @@
     <InternalsVisibleTo Include="aw-ui-driver" />
     <InternalsVisibleTo Include="Aw.UiDriver.Tests" />
     <InternalsVisibleTo Include="Aw.UiDriver.Avalonia.Tests" />
+    <InternalsVisibleTo Include="Aw.Sindri.Ui.Frames.Tests" />
   </ItemGroup>
 </Project>
