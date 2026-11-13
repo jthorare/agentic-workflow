@@ -163,7 +163,7 @@ public sealed class StartCardTests
     });
 
     [Fact]
-    public void Every_state_keeps_4_5_to_1_for_text_and_3_to_1_for_the_ring_and_the_selected_border()
+    public async Task Every_state_keeps_4_5_to_1_for_text_and_3_to_1_for_the_ring_and_the_selected_border() => await OnUi(() =>
     {
         var canvas = Brush("Brush.Canvas");
         var states = new[] { canvas, Brush("Brush.Surface2"), Brush("Brush.Surface3"), Brush("Brush.PrimarySoft") };
@@ -172,5 +172,6 @@ public sealed class StartCardTests
         Assert.True(Contrast(Brush("Brush.PrimaryHover"), canvas) >= 3, "focus ring on canvas");
         Assert.True(Contrast(Brush("Brush.PrimaryHover"), Brush("Brush.PrimarySoft")) >= 3, "focus ring on the selected fill");
         Assert.True(Contrast(Brush("Brush.Primary"), canvas) >= 3, "selected border on canvas");
-    }
+        return true;
+    });
 }
