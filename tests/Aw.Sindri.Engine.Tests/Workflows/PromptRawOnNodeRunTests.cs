@@ -62,13 +62,14 @@ public sealed class PromptRawOnNodeRunTests
     }
 
     [Fact]
-    public async Task A_raw_text_over_the_cap_keeps_the_plain_cut_and_does_not_mark_the_node_truncated()
+    public async Task A_raw_text_over_the_cap_keeps_the_plain_cut()
     {
-        // why: #3486, raw is model text, not JSON; it is never put in the JSON envelope and alone it does not set Truncated
+        // why: #3486, raw is model text, not JSON; it is never put in the JSON envelope. 'Truncated' is true here anyway: the same text is the failure output, and that cut sets it.
         var outcome = await Run(new string('z', NodeRunLimits.PayloadBytes * 2), exitCode: 1);
 
         Assert.StartsWith("zzzz", outcome.Raw, StringComparison.Ordinal);
-        Assert.False(outcome.Truncated);
+        Assert.True(Encoding.UTF8.GetByteCount(outcome.Raw!) <= NodeRunLimits.PayloadBytes);
+        Assert.False(outcome.Raw!.StartsWith('{'));
     }
 
     private static async Task<GraphBlockOutcome> Run(string answer, int exitCode)
