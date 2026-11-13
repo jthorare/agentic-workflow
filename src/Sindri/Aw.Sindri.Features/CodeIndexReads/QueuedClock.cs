@@ -16,7 +16,12 @@ internal sealed class QueuedClock
     /// <returns>The time spent queued, or null when the repo isn't queued.</returns>
     internal TimeSpan? For(string repo, bool queued, DateTimeOffset now)
     {
-        _ = (repo, queued, now, _since.Count);   // red stub: counts nothing yet
-        return null;
+        if (!queued)
+        {
+            _ = _since.TryRemove(repo, out _);
+            return null;
+        }
+
+        return now - _since.GetOrAdd(repo, now);
     }
 }

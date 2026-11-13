@@ -34,7 +34,7 @@ Area `SND-CODEIDX` (`CodeIndexErrors` in `Aw.CodeIndex.Core`); 017 to 029 are re
 | `SND-CODEIDX-010` | Unavailable | the index file is damaged; it is deleted and rebuilt on the next tick |
 | `SND-CODEIDX-011` | NotFound | the symbol ref names no symbol in this index (also a repo outside the caller's scope) |
 | `SND-CODEIDX-012` | Invalid | a query is empty, too broad, or over a limit |
-| `SND-CODEIDX-013` | NotFound | no index for this repo yet (also a repo outside the caller's scope) |
+| `SND-CODEIDX-013` | NotFound | no index for this repo yet (also a repo outside the caller's scope); as a health row, a first build still queued 30 min after serve first read it queued (#3440) |
 
 ## Contracts (CI-1)
 
