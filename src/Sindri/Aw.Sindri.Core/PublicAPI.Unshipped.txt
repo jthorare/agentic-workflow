@@ -23731,3 +23731,5 @@ Aw.Sindri.Core.Launch.IStartedSessions.Find(Aw.Sindri.Core.Ids.ActId actId, Syst
 Aw.Sindri.Core.Launch.IStartedSessions.InMemory(Aw.Sindri.Core.Ids.ActId actId) -> Aw.Sindri.Core.Launch.StartedEntry?
 Aw.Sindri.Core.Launch.IStartedSessions.Keep(Aw.Sindri.Core.Ids.ActId actId, Aw.Sindri.Core.Launch.StartedEntry! entry) -> void
 static Aw.Sindri.Core.Events.AgentOpRecorded.KeyFor(Aw.Sindri.Core.Ids.ActId actId) -> string!
+Aw.Sindri.Core.Doctor.IFirstMapCheck
+Aw.Sindri.Core.Doctor.IFirstMapCheck.Check(Aw.Sindri.Core.Profile.LoadedProfile? approved, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Doctor.DoctorCheck!>

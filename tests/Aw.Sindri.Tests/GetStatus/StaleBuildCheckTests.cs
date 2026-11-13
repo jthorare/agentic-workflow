@@ -44,7 +44,7 @@ public sealed class StaleBuildCheckTests
     {
         var views = new InMemoryViewStore(SliceHarness.Json);
         var service = new RunDoctorService(H.Store, H.Probe, new LedgerFacts(H.Store, views), new ProfileFacts(H.Profiles,
-            new ContextEngineChecks(FakeContextEngine.Instance, new MapPublishDoctorCheck(new MapPublishStatusReader(FakeContextEngine.Instance, new NoIndexOutlooks(), H.Store, H.Clock), H.Clock), new LinearDoctor(FakeContextEngine.Instance, new PointerSecrets(_ => null, new FakeToolRunner(ToolRun.Missing))), new Features.CodeIndexJobs.CodeIndexDoctor(new CodeIndex.Testing.FakeCodeIndex(), new CodeIndex.Testing.FakeRepoHeads(), new InMemoryJobViews(), new CodeIndex.Testing.FakeEmbedder(), new CodeIndex.Testing.FakePins(), H.Clock, H.Profiles))),
+            new ContextEngineChecks(FakeContextEngine.Instance, new MapPublishDoctorCheck(new MapPublishStatusReader(FakeContextEngine.Instance, new NoIndexOutlooks(), H.Store, H.Clock), H.Clock), new LinearDoctor(FakeContextEngine.Instance, new PointerSecrets(_ => null, new FakeToolRunner(ToolRun.Missing))), new Features.CodeIndexJobs.CodeIndexDoctor(new CodeIndex.Testing.FakeCodeIndex(), new CodeIndex.Testing.FakeRepoHeads(), new InMemoryJobViews(), new CodeIndex.Testing.FakeEmbedder(), new CodeIndex.Testing.FakePins(), H.Clock, H.Profiles), new FirstMapDoctorCheck(new InMemoryJobViews(), new Server.NoPauses()))),
             new RuntimeFacts(new FakeControlPlaneProbe(), new FakeTemporalServer(), stamps), H.Clock);
         return (await service.Handle(new RunDoctorRequest(), Token)).Value.Checks;
     }

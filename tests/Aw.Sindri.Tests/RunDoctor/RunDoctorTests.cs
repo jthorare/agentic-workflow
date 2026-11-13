@@ -23,7 +23,7 @@ public sealed class RunDoctorTests
 
     private RunDoctorService Service() =>
         new(_h.Store, _h.Probe, new LedgerFacts(_h.Store, _views), new ProfileFacts(_h.Profiles,
-            new ContextEngineChecks(FakeContextEngine.Instance, new MapPublishDoctorCheck(new MapPublishStatusReader(FakeContextEngine.Instance, new NoIndexOutlooks(), _h.Store, _h.Clock), _h.Clock), new LinearDoctor(FakeContextEngine.Instance, new PointerSecrets(_ => null, new FakeToolRunner(ToolRun.Missing))), new Features.CodeIndexJobs.CodeIndexDoctor(new CodeIndex.Testing.FakeCodeIndex(), new CodeIndex.Testing.FakeRepoHeads(), new InMemoryJobViews(), new CodeIndex.Testing.FakeEmbedder(), new CodeIndex.Testing.FakePins(), _h.Clock, _h.Profiles))), new RuntimeFacts(_api, _temporal), _h.Clock);
+            new ContextEngineChecks(FakeContextEngine.Instance, new MapPublishDoctorCheck(new MapPublishStatusReader(FakeContextEngine.Instance, new NoIndexOutlooks(), _h.Store, _h.Clock), _h.Clock), new LinearDoctor(FakeContextEngine.Instance, new PointerSecrets(_ => null, new FakeToolRunner(ToolRun.Missing))), new Features.CodeIndexJobs.CodeIndexDoctor(new CodeIndex.Testing.FakeCodeIndex(), new CodeIndex.Testing.FakeRepoHeads(), new InMemoryJobViews(), new CodeIndex.Testing.FakeEmbedder(), new CodeIndex.Testing.FakePins(), _h.Clock, _h.Profiles), new FirstMapDoctorCheck(new InMemoryJobViews(), new Server.NoPauses()))), new RuntimeFacts(_api, _temporal), _h.Clock);
 
     [Fact, Trait("Lane", "unit")]
     public async Task RunDoctor_is_green_when_running_approved_and_answering()
@@ -38,9 +38,10 @@ public sealed class RunDoctorTests
         var report = (await Service().Handle(new RunDoctorRequest(), Token)).Value;
 
         Assert.Equal("lease,ledger,views,profile,api,temporal,context:map,context:pages,context:roles,context:retention,context:store,context:publish,context:linear,code-index", string.Join(',', report.Checks.Select(c => c.Name)));
-        Assert.All(report.Checks.Where(c => c.Name is not ("context:map" or "context:retention")), c => Assert.Equal(CheckState.Ok, c.State));
-        Assert.Equal((CheckState.Warn, "no map yet", "sindri context map import <file>"), (report.Checks[6].State, report.Checks[6].Detail, report.Checks[6].Fix));
-        Assert.Equal(1, report.ExitCode);   // the test engine has no map, so context:map warns (S-3a); everything else is green
+        Assert.All(report.Checks, c => Assert.Equal(CheckState.Ok, c.State));
+        Assert.Equal((CheckState.Ok, null), (report.Checks[6].State, report.Checks[6].Fix));
+        Assert.StartsWith("no map yet: ", report.Checks[6].Detail, StringComparison.Ordinal);   // the test engine has no map; the first map waits on its build, so nothing to fix (#3216)
+        Assert.Equal(0, report.ExitCode);
     }
 
     [Fact, Trait("Lane", "unit")]
