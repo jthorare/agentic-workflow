@@ -48,12 +48,17 @@ internal sealed class LaneReplyService(IMetaConfig config, ILaneFiles files, ILa
             return stored.Error;
         }
 
-        if (obligations is not null && !NoticeRule.IsNotice(request.Text))
-        {
-            await obligations.Opened(now, stored.Value.Value, request.Identity.SessionName, cancellationToken).ConfigureAwait(false);
-        }
-
+        await OpenObligation(request, stored.Value.Value, now, cancellationToken).ConfigureAwait(false);
         _ = await log.Append(LogLine.Event(LogKind.Note, now, $"lane reply {stored.Value.Value}: team {request.Identity.Team}, lane {request.Identity.Lane}, provider {found.Agent?.Agent ?? "unknown"}, session {session.Value}"), cancellationToken).ConfigureAwait(false);
         return new LaneReplyResponse(Recorded: true, stored.Value);
+    }
+
+    // A reply the meta owes an answer to opens an obligation; a notice opens none.
+    private async ValueTask OpenObligation(LaneReplyRequest request, string id, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        if (obligations is not null && !NoticeRule.IsNotice(request.Text))
+        {
+            await obligations.Opened(now, id, request.Identity.SessionName, cancellationToken).ConfigureAwait(false);
+        }
     }
 }
