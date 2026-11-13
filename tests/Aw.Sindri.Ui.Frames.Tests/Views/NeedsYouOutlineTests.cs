@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -189,7 +190,7 @@ public sealed class NeedsYouOutlineTests : FrameHost
         Assert.Equal((Brush("Brush.PrimaryHover"), new Thickness(1)), (BrushOf(focusedOnly), focusedOnly.BorderThickness));
         Assert.NotEqual(Brush("Brush.Surface2"), FillOf(focusedOnly));
         Assert.Equal((Brush("Brush.PrimaryHover"), new Thickness(2), Brush("Brush.Surface2")), (BrushOf(both), both.BorderThickness, FillOf(both)));
-        Assert.True(Ratio(BrushOf(both), FillOf(both)) >= 3.0, $"the ring {BrushOf(both)} on the row fill {FillOf(both)} is {Ratio(BrushOf(both), FillOf(both)):0.00}:1, below 3:1");
+        Assert.True(Ratio(BrushOf(both), FillOf(both)) >= 3.0, string.Create(CultureInfo.InvariantCulture, $"the ring {BrushOf(both)} on the row fill {FillOf(both)} is {Ratio(BrushOf(both), FillOf(both)):0.00}:1, below 3:1"));
         window.Close();
         await Task.CompletedTask;
     });
@@ -205,7 +206,7 @@ public sealed class NeedsYouOutlineTests : FrameHost
         var plain = ((TextBlock)focusedOnly.Child!).TranslatePoint(default, focusedOnly);
         var marked = ((TextBlock)both.Child!).TranslatePoint(default, both);
 
-        Assert.NotNull(plain);
+        _ = Assert.NotNull(plain);
         Assert.Equal(plain, marked);
         window.Close();
         await Task.CompletedTask;
