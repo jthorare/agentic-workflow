@@ -5677,6 +5677,8 @@ override Aw.Sindri.Features.GetLastStart.LastStartView.GetHashCode() -> int
 override Aw.Sindri.Features.GetLastStart.LastStartView.ToString() -> string!
 static Aw.Sindri.Features.GetLastStart.LastStartView.operator !=(Aw.Sindri.Features.GetLastStart.LastStartView? left, Aw.Sindri.Features.GetLastStart.LastStartView? right) -> bool
 static Aw.Sindri.Features.GetLastStart.LastStartView.operator ==(Aw.Sindri.Features.GetLastStart.LastStartView? left, Aw.Sindri.Features.GetLastStart.LastStartView? right) -> bool
+Aw.Sindri.Features.CodeIndexReads.RepoHealth.LookWords.get -> string?
+Aw.Sindri.Features.CodeIndexReads.RepoHealth.LookWords.init -> void
 Aw.Sindri.Features.CodeIndexReads.RepoHealth.NeedsLook.get -> bool
 Aw.Sindri.Features.CodeIndexReads.RepoHealth.NeedsLook.init -> void
 Aw.Sindri.Features.CodeIndexReads.RepoHealth.Paused.get -> bool

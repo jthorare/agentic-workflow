@@ -186,6 +186,31 @@ public sealed class PollConnectionsTests
     }
 
     [Fact]
+    public async Task A_poll_keeps_its_events_in_the_recent_store_even_when_no_trigger_takes_them()
+    {
+        await Seeded("c0");
+        _ = await _world.GoLive("other-only", filter: "trigger.title == \"Other\"");
+        var poller = new ScriptedEventPoller("linear", (_, _) => PollWorld.Page("c1", PollWorld.Event("linear:h-1", ("title", "Fix login")), PollWorld.Event("linear:h-2", ("title", "Docs"))));
+
+        _ = await _world.Tick(poller);
+
+        Assert.Empty(_world.Starter.Requests);
+        Assert.Equal(["linear:h-1", "linear:h-2"], _world.Recent.Newest(PollWorld.Kind, PollWorld.Name, max: 10).Select(static r => r.Event.DeliveryKey).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_rate_limited_poll_keeps_nothing_in_the_recent_store()
+    {
+        await Seeded("c0");
+        _ = await _world.GoLive("all-labels");
+        var poller = new ScriptedEventPoller("linear", (_, _) => new PollResult([], "c0", RateLimited: true, TimeSpan.FromSeconds(90)));
+
+        _ = await _world.Tick(poller);
+
+        Assert.Empty(_world.Recent.Newest(PollWorld.Kind, connection: null, max: 10));
+    }
+
+    [Fact]
     public async Task A_workflow_that_watches_nothing_makes_no_provider_call()
     {
         await Seeded("c0");

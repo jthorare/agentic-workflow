@@ -153,14 +153,35 @@ public sealed class CodeIndexCardTests
         Assert.Equal($"repo @ abcdef0, 3 min old ({waiting}), structure ok", Assert.Single(card.Lines).Text);
     }
 
-    // #3561: the doctor names the pause and the resume for the same repo; the card must not promise a retry or a build.
+    // #3561: the doctor names the pause for the same repo; the card must not promise a retry or a build.
     [Fact]
-    public async Task A_paused_repo_with_no_index_names_the_pause_and_the_resume()
+    public async Task A_paused_repo_with_no_index_says_paused()
     {
         var card = await ReadWithHealth([Repo("repo", "missing", commit: null, 0)], [Health("repo", "missing", paused: true)]);
 
-        Assert.Equal("repo: no index yet · " + Labels.CodeIndexPaused, Assert.Single(card.Lines).Text);
-        Assert.Contains("sindri services resume code-index-main-move", Labels.CodeIndexPaused, StringComparison.Ordinal);
+        Assert.Equal("repo: no index yet · paused", Assert.Single(card.Lines).Text);
+    }
+
+    // #3576: the pause is one service, so the card shows its resume command once, not on every repo line.
+    // why: Aw.Sindri.Ui references no Sindri project, so the service name is spelled out here once, as the doctor row spells it.
+    [Fact]
+    public async Task Three_paused_repos_show_one_command_on_the_card_and_none_on_the_lines()
+    {
+        var card = await ReadWithHealth([Repo("a", "missing", commit: null, 0), Repo("b", "missing", commit: null, 0), Repo("c", "missing", commit: null, 0)],
+            [Health("a", "missing", paused: true), Health("b", "missing", paused: true), Health("c", "missing", paused: true)]);
+
+        Assert.Equal(("sindri services resume code-index-main-move", true), (card.PausedCommand, card.HasPausedCommand));
+        Assert.Equal(3, card.Lines.Count);
+        Assert.All(card.Lines, l => Assert.DoesNotContain("resume", l.Text, StringComparison.OrdinalIgnoreCase));
+        Assert.All(card.Lines, l => Assert.EndsWith("· paused", l.Text, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_card_with_no_paused_repo_has_no_command()
+    {
+        var card = await ReadWithHealth([Repo("repo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("repo", "ok")]);
+
+        Assert.Equal((string.Empty, false), (card.PausedCommand, card.HasPausedCommand));
     }
 
     [Fact]
@@ -168,7 +189,7 @@ public sealed class CodeIndexCardTests
     {
         var card = await ReadWithHealth([Repo("repo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("repo", "stale", paused: true)]);
 
-        Assert.Equal("repo @ abcdef0, 3 min old (behind main · " + Labels.CodeIndexPaused + "), structure ok", Assert.Single(card.Lines).Text);
+        Assert.Equal("repo @ abcdef0, 3 min old (behind main · paused), structure ok", Assert.Single(card.Lines).Text);
         Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
     }
 
