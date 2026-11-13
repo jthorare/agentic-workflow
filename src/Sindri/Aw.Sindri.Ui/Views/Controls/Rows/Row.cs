@@ -61,9 +61,10 @@ internal sealed partial class Row : Control
         };
         ResourcesChanged += (_, _) =>
         {
-            if (TopLevel.GetTopLevel(this) is not null)
+            // Avalonia raises ResourcesChanged on every re-attach too, and a recycled row is re-attached on every fill: only a moved text size drops the layouts.
+            if (TopLevel.GetTopLevel(this) is not null && TextSizeMoved())
             {
-                DropLayouts();   // the text scale or a brush moved: every layout and brush is cut again
+                DropLayouts();
             }
         };
     }

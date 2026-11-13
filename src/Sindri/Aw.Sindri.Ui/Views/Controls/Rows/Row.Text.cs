@@ -76,6 +76,13 @@ internal sealed partial class Row
         InvalidateVisual();
     }
 
+    // True when a text size the layouts were built at is not the resource's value now (the text scale moved).
+    private bool TextSizeMoved() => _fonts is { } f
+        && (!f.Caption.Equals(Resource("Type.Caption.Size", f.Caption))
+            || !f.Body.Equals(Resource("Type.Body.Size", f.Body))
+            || !f.MonoSize.Equals(Resource("Type.Mono.Size", f.MonoSize))
+            || !f.LineHeight.Equals(Resource("Type.Caption.LineHeight", f.LineHeight)));
+
     private Metrics MetricsNow() => _metrics ??= new Metrics(
         Resource("Row.Inset", 24),
         Resource("Row.Col.Age", 44),
