@@ -20,6 +20,7 @@ public sealed class RepoHealthsReadsTests
     private static readonly RepoName _repo = RepoName.From("demo");
     private static readonly CommitSha _old = CommitSha.From(new string('1', 40));
     private static readonly CommitSha _new = CommitSha.From(new string('2', 40));
+    private static readonly string[] _notBuilding = ["queued", "waiting"];
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -109,8 +110,9 @@ public sealed class RepoHealthsReadsTests
         jobs.Put(build with { State = JobState.Failed, StartedAt = _now.AddMinutes(10), EndedAt = _now.AddMinutes(12) });
         var again = Assert.Single(await healths.Of(scope, [missing], Token));
 
-        Assert.Equal(("building", (TimeSpan?)null), (building.State, building.QueuedFor));
-        Assert.True(again.State is "queued" or "waiting", again.State);
+        Assert.Equal("building", building.State);
+        Assert.Null(building.QueuedFor);
+        Assert.Contains(again.State, _notBuilding, StringComparer.Ordinal);
     }
 
     private static async Task<(CountingJobs Jobs, RepoHealth Health)> Read(CommitSha live, int failedBuilds)
