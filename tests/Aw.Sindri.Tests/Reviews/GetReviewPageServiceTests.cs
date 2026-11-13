@@ -217,4 +217,15 @@ public sealed class GetReviewPageServiceTests : IDisposable
 
         public ValueTask<Result<Unit>> WaitFor(long sequence, TimeSpan limit, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success(Unit.Value));
     }
+
+    [Fact]
+    public async Task An_invalid_live_profile_reads_the_page_like_no_profile()
+    {
+        var none = await Read();
+        _h.Profiles.Live = SindriErrors.ProfileInvalid.With("/home/thor/profile.yaml: line 3: unknown key 'tennant'");
+
+        var invalid = await Read();
+
+        Assert.Equal(none.IsError ? none.Error.Code : "ok", invalid.IsError ? invalid.Error.Code : "ok");
+    }
 }

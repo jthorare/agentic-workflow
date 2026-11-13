@@ -123,13 +123,13 @@ internal static partial class PinListParser
 
     private static string Unbulleted(string line) => Bullet.Replace(line, string.Empty, count: 1).Trim();
 
-    [GeneratedRegex(@"^\s*(?:[-*•]|\d+[.)])(?:\s+|$)", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 100)]
+    [GeneratedRegex(@"^\s*(?:[-*•]|\d+[.)])(?:\s+|$)", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Bullet { get; }
 
-    [GeneratedRegex(@"\(\s*also\s*:\s*(?<words>[^)]*)\)\s*$", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, matchTimeoutMilliseconds: 100)]
+    [GeneratedRegex(@"\(\s*also\s*:\s*(?<words>[^)]*)\)\s*$", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Also { get; }
 
-    [GeneratedRegex(@"[.!?](?=\s|$)", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 100)]
+    [GeneratedRegex(@"[.!?](?=\s|$)", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex SentenceEnd { get; }
 }
 #pragma warning restore MA0182

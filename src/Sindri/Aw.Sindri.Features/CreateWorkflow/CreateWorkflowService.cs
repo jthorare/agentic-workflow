@@ -20,15 +20,15 @@ namespace Aw.Sindri.Features.CreateWorkflow;
 /// <param name="log">Writes the lifecycle event.</param>
 internal sealed class CreateWorkflowService(IWorkflowStore workflows, IWorkflowChecker checker, IIdGenerator ids, WorkflowChangeLog log) : IService<CreateWorkflowRequest, CreateWorkflowResponse>
 {
-    private static readonly HashSet<string> _reserved = new(["docs", "blocks"], StringComparer.Ordinal);
+    private static readonly HashSet<string> _reserved = new(["docs", "blocks", "trigger-events"], StringComparer.Ordinal);
 
     public async ValueTask<Result<CreateWorkflowResponse>> Handle(CreateWorkflowRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (_reserved.Contains(request.Slug.Value))
         {
-            // why: GET /sindri/workflows/docs and /blocks are the doc and block routes, so a workflow with that slug could never be read
-            return SindriErrors.InvalidInput.With($"'{request.Slug.Value}' is reserved for the workflow docs and blocks routes; pick another slug");
+            // why: GET /sindri/workflows/docs, /blocks and /trigger-events are the doc, block and recent-events routes, so a workflow with that slug could never be read
+            return SindriErrors.InvalidInput.With($"'{request.Slug.Value}' is reserved for the workflow docs, blocks and trigger-events routes; pick another slug");
         }
 
         var spec = Source(request);
