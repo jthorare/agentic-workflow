@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Net;
 using System.Net.Sockets;
 using Aw.Kernel.Testing;
 
@@ -23,8 +22,7 @@ public sealed class PostgresContainerPortTests
             AfterPortChosen = port =>
             {
                 heldPort = port;
-                thief = new TcpListener(IPAddress.Loopback, port);
-                thief.Start();
+                thief = PortThief.TryTake(port);   // null: another process took it first, still the case under test (#3451)
                 return ValueTask.CompletedTask;
             },
         };

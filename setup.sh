@@ -445,47 +445,7 @@ EXTERNAL_DIR="$AW_STATE_ROOT/external-skills"
 aw_run mkdir -p "$EXTERNAL_DIR"
 AW_EXTERNAL_SKILL_DIRS=""
 
-fetch_external_pack() {
-  local repo="$1"   # e.g. pbakaus/impeccable
-  local pin="$2"    # commit SHA
-  local target
-  target="$EXTERNAL_DIR/$(basename "$repo")"
-
-  if aw_dry; then
-    echo "  [dry-run] would clone/fetch $repo into $target and check out ${pin}"
-  else
-    if [ ! -d "$target/.git" ]; then
-      echo "  $repo: cloning..."
-      git clone "https://github.com/$repo.git" "$target" 2>&1 \
-        || { echo "  WARN: failed to clone $repo (non-fatal)"; return 0; }
-    fi
-    (cd "$target" && git fetch origin --quiet) || true
-    if [ -n "$pin" ] && [ "$pin" != "HEAD" ]; then
-      (cd "$target" && git checkout "$pin" --quiet) 2>/dev/null \
-        || echo "  WARN: pin $pin not found in $repo, using current HEAD"
-    fi
-  fi
-
-  # Find the skill source directory — tries both layouts
-  local skills_dir=""
-  if [ -d "$target/skills" ]; then
-    skills_dir="$target/skills"
-  elif [ -d "$target/.claude/skills" ]; then
-    skills_dir="$target/.claude/skills"
-  fi
-  if [ -z "$skills_dir" ]; then
-    aw_dry || echo "  WARN: no skills directory found in $(basename "$repo")"
-    return 0
-  fi
-
-  local skill_dir
-  for skill_dir in "$skills_dir"/*/; do
-    [ -f "$skill_dir/SKILL.md" ] || continue
-    AW_EXTERNAL_SKILL_DIRS="$AW_EXTERNAL_SKILL_DIRS${skill_dir%/}
-"
-  done
-  echo "  $repo: ready ($(basename "$skills_dir") in $target)"
-}
+source "$SCRIPT_DIR/scripts/lib/external-packs.sh"
 
 if [ -f "$SCRIPT_DIR/EXTERNAL_PINS.env" ]; then
   # Safe parser: read only well-formed KEY=value lines and validate SHA format.
@@ -500,7 +460,7 @@ if [ -f "$SCRIPT_DIR/EXTERNAL_PINS.env" ]; then
     if [[ "$value" =~ ^[0-9a-f]{7,40}$ ]] || [[ "$value" == "HEAD" ]]; then
       echo "$value"
     else
-      echo "HEAD"
+      echo "BAD:$key"   # a typo or a missing row must not unpin the pack: fetch_external_pack keeps the checkout
     fi
   }
   fetch_external_pack "pbakaus/impeccable"   "$(read_pin IMPECCABLE_PIN)"
@@ -510,6 +470,10 @@ if [ -f "$SCRIPT_DIR/EXTERNAL_PINS.env" ]; then
 else
   echo "  WARN: EXTERNAL_PINS.env missing at $SCRIPT_DIR; skipping external pack install"
 fi
+# vercel-labs/ui (ui-sdk): unpinned by the owner's decision (2026-11-13). It follows the upstream default branch on every run.
+# The repo has no license file, so it is fetched at setup time only and nothing of it is committed here.
+# Only packages/core/skills is linked: .agents/skills holds the repo's contributor skills.
+fetch_external_pack "vercel-labs/ui" "HEAD" "packages/core/skills"
 export AW_EXTERNAL_SKILL_DIRS
 
 # --- rtk ---

@@ -14,10 +14,20 @@
     <TextBlock x:Name="TitleText" Classes="page-title" Focusable="True" Text="{Binding Title}"
                AutomationProperties.Name="{Binding Title}" AutomationProperties.HeadingLevel="1" />
 
+    <!-- The filter box (#3362): typing keeps the sections whose words match; Ctrl+, lands the cursor here; Esc clears it. -->
+    <TextBox x:Name="SettingsFilterBox" Width="360" HorizontalAlignment="Left" Text="{Binding Filter, Mode=TwoWay}" PlaceholderText="{Binding FilterPlaceholder}" PlaceholderForeground="{DynamicResource Brush.InkMuted}" KeyDown="OnFilterKey"
+             AutomationProperties.Name="{Binding FilterPlaceholder}" />
+    <StackPanel x:Name="SettingsNoMatch" IsVisible="{Binding HasNoMatch}" Spacing="{StaticResource Space.XXS}" HorizontalAlignment="Left">
+      <Border x:Name="SettingsNoMatchName" AutomationProperties.Name="{Binding NoMatchText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body muted" Text="{Binding NoMatchText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <TextBlock Classes="caption subtle" Text="{Binding NoMatchHint}" AutomationProperties.AccessibilityView="Raw" />
+    </StackPanel>
+
     <!-- The setup checklist goes here, second child, put in code when the page has a setup list (a host without one draws nothing, so none of its controls exist). -->
 
     <!-- The model-choice line: read-only (the profile changes it), with its sentence and a Copy of the three lines (model-pick spec 8). -->
-    <StackPanel x:Name="ModelChoiceSection" Spacing="{StaticResource Space.XS}" IsVisible="{Binding HasModelChoice}">
+    <StackPanel x:Name="ModelChoiceSection" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowsModelChoice}">
       <Border AutomationProperties.Name="{Binding ModelChoice.Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
         <TextBlock Classes="detail-title" Text="{Binding ModelChoice.Title}" AutomationProperties.AccessibilityView="Raw" />
       </Border>
@@ -37,7 +47,7 @@
     </StackPanel>
 
     <!-- The label-choice line: read-only (the profile changes it), with its sentence (model routing spec 8.5). -->
-    <StackPanel x:Name="LabelChoiceSection" Spacing="{StaticResource Space.XS}" IsVisible="{Binding HasLabelChoice}">
+    <StackPanel x:Name="LabelChoiceSection" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowsLabelChoice}">
       <Border AutomationProperties.Name="{Binding LabelChoice.Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
         <TextBlock Classes="detail-title" Text="{Binding LabelChoice.Title}" AutomationProperties.AccessibilityView="Raw" />
       </Border>
@@ -53,7 +63,7 @@
     </StackPanel>
 
     <!-- The product-surface-choice line: read-only (the profile changes it), with its sentence (model routing spec 8.5). -->
-    <StackPanel x:Name="SurfaceChoiceSection" Spacing="{StaticResource Space.XS}" IsVisible="{Binding HasSurfaceChoice}">
+    <StackPanel x:Name="SurfaceChoiceSection" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowsSurfaceChoice}">
       <Border AutomationProperties.Name="{Binding SurfaceChoice.Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
         <TextBlock Classes="detail-title" Text="{Binding SurfaceChoice.Title}" AutomationProperties.AccessibilityView="Raw" />
       </Border>
@@ -69,17 +79,17 @@
     </StackPanel>
 
     <!-- The Sandbox section: read-only (the profile changes it), its heading carries the state (sandbox spec 8). -->
-    <StackPanel x:Name="SandboxSettingsSlot" IsVisible="{Binding HasSandbox}">
+    <StackPanel x:Name="SandboxSettingsSlot" IsVisible="{Binding ShowsSandbox}">
       <sandbox:SandboxSettingsSection x:Name="SandboxSettings" DataContext="{Binding Sandbox}" />
     </StackPanel>
 
     <!-- The Library card: the folders the design library reads (review page spec 6.3); an agent session sees no folders and nothing to edit. -->
-    <StackPanel x:Name="LibrarySettingsSlot" IsVisible="{Binding HasLibrary}" AutomationProperties.Name="{Binding Library.Title}">
+    <StackPanel x:Name="LibrarySettingsSlot" IsVisible="{Binding ShowsLibrary}" AutomationProperties.Name="{Binding Library.Title}">
       <reviews:LibraryRootsSection x:Name="LibraryRoots" DataContext="{Binding Library}" AutomationProperties.Name="{Binding Title}" />
     </StackPanel>
 
     <!-- The Connections group (Linear hub spec §3): Settings → Connections → Linear, the keys and the teams. An agent session is refused the connection and sees none of it. -->
-    <StackPanel x:Name="ConnectionsSettingsSlot" IsVisible="{Binding HasConnections}" Spacing="{StaticResource Space.MD}">
+    <StackPanel x:Name="ConnectionsSettingsSlot" IsVisible="{Binding ShowsConnections}" Spacing="{StaticResource Space.MD}">
       <StackPanel x:Name="LinearSettingsSlot" DataContext="{Binding LinearConnection}" x:DataType="lvm:LinearConnectionViewModel" IsVisible="{Binding IsAvailable}" Spacing="{StaticResource Space.XS}">
         <Border AutomationProperties.Name="{Binding Text.ConnectionsHeading}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
           <TextBlock x:Name="ConnectionsTitle" Classes="detail-title" Text="{Binding Text.ConnectionsHeading}" AutomationProperties.AccessibilityView="Raw" />
@@ -95,10 +105,10 @@
       </StackPanel>
     </StackPanel>
 
-    <Border x:Name="ThisAppName" AutomationProperties.Name="{Binding ThisAppLabel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
+    <Border x:Name="ThisAppName" IsVisible="{Binding ShowsThisApp}" AutomationProperties.Name="{Binding ThisAppLabel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
       <TextBlock Classes="detail-title" Text="{Binding ThisAppLabel}" AutomationProperties.AccessibilityView="Raw" />
     </Border>
-    <Border Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}"
+    <Border x:Name="ThisAppCard" IsVisible="{Binding ShowsThisApp}" AutomationProperties.Name="{Binding ThisAppLabel}" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}"
             BorderThickness="1" CornerRadius="{StaticResource Radius.LG}" Padding="{StaticResource Space.MD.Thickness}">
       <StackPanel Spacing="{StaticResource Space.MD}">
         <!-- Reduce motion: the switch, and a note while the OS already reduces motion (§11.4). -->

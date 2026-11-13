@@ -98,6 +98,7 @@ using Aw.Sindri.Features.ValidateWorkflow;
 using Aw.Sindri.Features.WorkflowSchedule;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Features;
 
@@ -187,6 +188,7 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<PauseServiceRequest>, AcceptAllValidator<PauseServiceRequest>>().AddCommand<PauseServiceRequest, CommandAccepted, PauseServiceService>();
         _ = services.AddScoped<IValidator<ResumeServiceRequest>, AcceptAllValidator<ResumeServiceRequest>>().AddCommand<ResumeServiceRequest, CommandAccepted, ResumeServiceService>();
         _ = services.AddScoped<IValidator<ResumeJobRequest>, AcceptAllValidator<ResumeJobRequest>>().AddCommand<ResumeJobRequest, JobStartedResponse, ResumeJobService>();
+        _ = services.AddStartSession();
         _ = services.AddRunService();
         _ = services.AddScoped<IValidator<CloseItemRequest>, CloseItemValidator>().AddCommand<CloseItemRequest, CommandAccepted, CloseItemService>();
         services.TryAddSingleton<IFixTaskFiles, NoFixTaskFiles>();   // the fix branch's file-backed adapter replaces it
@@ -270,8 +272,9 @@ public static class SindriFeaturesServiceCollectionExtensions
         .AddScoped<LinearDoctor>()
         .AddScoped<ContextEngineChecks>()
         .AddScoped<RunDoctorService>()
+        .AddSingleton<IPartTimer, LoggingPartTimer>()
         .AddScoped<IService<RunDoctorRequest, RunDoctorResponse>>(static sp =>
-            new WithMoreChecks(sp.GetRequiredService<RunDoctorService>(), sp.GetServices<IDoctorChecks>()))
+            new WithMoreChecks(sp.GetRequiredService<RunDoctorService>(), sp.GetServices<IDoctorChecks>(), sp.GetRequiredService<ILoggerFactory>().CreateLogger("Aw.Sindri.Doctor")))
         .AddScoped<IDoctorChecks, ContextDoctorChecks>().AddIndexDoctor()   // AddIndexDoctor: owned index (#1394), context:index-*
         .AddScoped<IDoctorChecks, LauncherDoctorChecks>().AddScoped<IDoctorChecks, AgentTargetDoctor>()   // #1428: `agent:target`
         .AddScoped<IDoctorChecks, SyncTodoNote.TodoNoteDoctorChecks>()                    // the Obsidian note's sync (spec §6): the `todo` row
