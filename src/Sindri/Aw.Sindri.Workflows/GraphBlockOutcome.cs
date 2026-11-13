@@ -8,4 +8,5 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="Output">The block's outputs as JSON, or what a failed block left through BlockContext.LeaveFailureOutput, or null.</param>
 /// <param name="Taken">The outputs an edge may leave by.</param>
 /// <param name="Error">Why it failed, or null.</param>
-internal sealed record GraphBlockOutcome(NodeRunStatus Status, string? Input, string? Output, IReadOnlyList<string> Taken, string? Error);
+/// <param name="Raw">The scrubbed raw model text a failed prompt step left through BlockContext.LeaveRaw, or null.</param>
+internal sealed record GraphBlockOutcome(NodeRunStatus Status, string? Input, string? Output, IReadOnlyList<string> Taken, string? Error, string? Raw = null);

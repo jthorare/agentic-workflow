@@ -2,5 +2,6 @@
   "runId": "nightly@3:12",
   "status": "failed",
   "error": "node 'fetch' failed: 502",
-  "by": "service:workflow"
+  "by": "service:workflow",
+  "mode": "live"
 }
