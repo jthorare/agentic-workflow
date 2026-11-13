@@ -82,18 +82,13 @@ internal sealed class HealthPill : ObservableObject
     /// <param name="age">How long since the views were last heard from.</param>
     /// <param name="notResponding">True after three failed refreshes while stale.</param>
     /// <param name="health">The status's health (E-14), or null before API P2.</param>
-    /// <param name="profileMissing">True on a home with no profile yet: the pill then says Not set up instead of Healthy.</param>
-    /// <param name="profileUnreadable">True when the profile file can't be read: the pill then says needs a look instead of Healthy.</param>
-    internal void Show(ShellState state, TimeSpan age, bool notResponding, HealthView? health = null, bool profileMissing = false, bool profileUnreadable = false)
+    /// <param name="profile">What the profile file says beside the server's word: missing or unreadable.</param>
+    internal void Show(ShellState state, TimeSpan age, bool notResponding, HealthView? health = null, PillProfile profile = default)
     {
-        var look = profileUnreadable && IsHealthyWord(health);   // the server's word ignores the profile, so the pill must not trust it
-        var unset = profileMissing && IsHealthyWord(health);   // a missing profile is not a fault, but the pill must not say Healthy beside it
+        var normal = NormalWord(health, profile);
         (Glyph, Word, Age) = state switch
         {
-            ShellState.Normal when look => (StateGlyph.Warning, Labels.CodeIndexNeedsLook, Labels.UpdatedAgo(age)),
-            ShellState.Normal when unset => (StateGlyph.None, Labels.NotSetUp, Labels.UpdatedAgo(age)),
-            ShellState.Normal when health is not null => (Glyphs(health.Word), Labels.HealthWord(health.Word), Labels.UpdatedAgo(age)),
-            ShellState.Normal => (StateGlyph.Ok, Labels.Running, Labels.UpdatedAgo(age)),
+            ShellState.Normal => (normal.Glyph, normal.Word, Labels.UpdatedAgo(age)),
             ShellState.Stale => (StateGlyph.Stale, Labels.Stale, Labels.UpdatedAgo(age)),
             ShellState.NotRunning => (StateGlyph.Down, Labels.NotRunning, string.Empty),
             ShellState.Unreadable => (StateGlyph.Down, Labels.Unreadable, Labels.Stale),
@@ -103,7 +98,7 @@ internal sealed class HealthPill : ObservableObject
         };
         Problems = state == ShellState.Normal && health is not null ? string.Join(" · ", health.Problems.Where(p => !_viewsCodes.Contains(p.Code)).Select(p => p.Clause ?? p.Text)) : string.Empty;
         Text = string.Join(" · ", ((string[])[Word, Age, Problems]).Where(t => t.Length > 0));
-        IsHealthy = state == ShellState.Normal && !unset && !look && IsHealthyWord(health);
+        IsHealthy = state == ShellState.Normal && normal.Healthy;
         var stale = state == ShellState.Stale;
         if (stale != IsStale)
         {
@@ -114,6 +109,24 @@ internal sealed class HealthPill : ObservableObject
         IsNotResponding = stale && notResponding;
         IsDataStale = state is ShellState.Stale or ShellState.Unreadable;
         IsDown = state is ShellState.NotRunning or ShellState.Unreadable or ShellState.VersionMismatch;
+    }
+
+    /// <summary>What the profile file says beside the server's health word: the server ignores the profile, so the pill must not trust a "healthy" next to a missing or unreadable one.</summary>
+    /// <param name="Missing">True on a home with no profile yet: the pill says Not set up instead of Healthy.</param>
+    /// <param name="Unreadable">True when the profile file can't be read: the pill says needs a look instead of Healthy.</param>
+    internal readonly record struct PillProfile(bool Missing = false, bool Unreadable = false);
+
+    // The word, glyph and healthy flag for a running shell: the profile overrides a "healthy" word only.
+    private static (StateGlyph Glyph, string Word, bool Healthy) NormalWord(HealthView? health, PillProfile profile)
+    {
+        var healthy = IsHealthyWord(health);
+        return (healthy, health) switch
+        {
+            (true, _) when profile.Unreadable => (StateGlyph.Warning, Labels.CodeIndexNeedsLook, false),
+            (true, _) when profile.Missing => (StateGlyph.None, Labels.NotSetUp, false),
+            (_, not null) => (Glyphs(health.Word), Labels.HealthWord(health.Word), healthy),
+            _ => (StateGlyph.Ok, Labels.Running, true),
+        };
     }
 
     private static bool IsHealthyWord(HealthView? health) => health is null || string.Equals(health.Word, "healthy", StringComparison.Ordinal);
