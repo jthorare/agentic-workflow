@@ -86,6 +86,11 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
 
     private string Line(CodeIndexRepoView repo, CodeIndexHealthView? health)
     {
+        if (health is { NeedsLook: true, LookWords: { Length: > 0 } lookWords })
+        {
+            return lookWords;   // the server says why (#3515): a flagged repo never reads as plain "build queued"
+        }
+
         var word = StateWords(StateOf(repo, health), health);
         if (repo.Commit is not { Length: > 0 } commit)
         {
