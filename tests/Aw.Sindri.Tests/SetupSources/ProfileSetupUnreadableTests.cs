@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.SetupSources;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Testing.Workflow;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.SetupSources;
@@ -18,7 +19,7 @@ public sealed class ProfileSetupUnreadableTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private ProfileSetupReader Reader(IProfileFile file) => new(_profiles, new RepoGitCache(_inspector, _clock), file);
+    private ProfileSetupReader Reader(IProfileFile file) => new(_profiles, new RepoGitCache(_inspector, _clock), file, new InMemoryWorkflowStore(_clock), new InMemoryWorkflowRunStore(_clock));
 
     [Fact]
     public async Task An_unreadable_file_is_the_presence_steps_failure_not_missing()
