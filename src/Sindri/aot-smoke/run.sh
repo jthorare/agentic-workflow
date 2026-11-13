@@ -307,9 +307,9 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   echo "## GET /sindri/events/catalog | jq (public types, their invalidates)"
   curl -s -m 30 "$(jq -r '.url' "$AW_SINDRI_HOME/control.json" | sed 's|/$||')/sindri/events/catalog" -H 'X-Sindri-Repo: smoke' \
     | jq -c '{commandHandled: any(.types[]; .type == "command.handled"), itemCreated: (.types[] | select(.type == "item.created") | .invalidates)}'
-  # The map is built by a context-map-refresh tick, and the smoke can't wait for the cadence (#3405), so it runs the service itself once the code
-  # index exists, silently; the poll below covers the job's finish (cap 120 s). human_run_service retries past SND-JOB-409, which the scheduler
-  # returns when its own context-map-refresh tick is in flight.
+  # The smoke runs context-map-refresh itself so the map doesn't wait for the cadence (#3405). If that run comes before the code index exists it is
+  # a quiet tick, and the scheduler's next tick builds the map; the poll below (cap 120 s) covers both. human_run_service retries past SND-JOB-409,
+  # which the scheduler returns when its own context-map-refresh tick is in flight.
   human_run_service context-map-refresh >/dev/null 2>&1 || true
   map_deadline=$((SECONDS + 120))
   until jq -e '[.jobs[] | select(.kind == "RefreshContextMap")] | length > 0' <<<"$(bounded "$bin" jobs --state succeeded --json </dev/null 2>/dev/null)" >/dev/null 2>&1; do
@@ -326,7 +326,13 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   manual_service_runs heartbeat
   job="$(bounded "$bin" jobs --json </dev/null | jq -r '.jobs[0].id')"
   run jobs show "$job"
-  run jobs --state succeeded
+  # The smoke's own context-map-refresh run (#3405) reads differently depending on which tick wins ("refresh JOB started" or a quiet tick's text),
+  # so its row is left out of the list. Same shape as `run`: header, output, exit line.
+  echo "## sindri jobs --state succeeded"
+  jobs_rc=0
+  jobs_out="$(bounded "$bin" jobs --state succeeded </dev/null 2>&1)" || jobs_rc=$?
+  { grep -v 'RunService  context-map-refresh' <<<"$jobs_out" || true; }
+  exit_line "$jobs_rc"
   human services pause heartbeat </dev/null
   session services pause heartbeat
   settle
