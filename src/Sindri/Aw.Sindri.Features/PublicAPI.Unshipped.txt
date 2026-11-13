@@ -5681,3 +5681,7 @@ Aw.Sindri.Features.CodeIndexReads.RepoHealth.NeedsLook.get -> bool
 Aw.Sindri.Features.CodeIndexReads.RepoHealth.NeedsLook.init -> void
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.NeedsLook.get -> bool
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.NeedsLook.init -> void
+Aw.Sindri.Features.ContextCalls.QueryContextRequest.Limit.get -> string?
+Aw.Sindri.Features.ContextCalls.QueryContextRequest.Limit.init -> void
+Aw.Sindri.Features.ContextCalls.QueryContextRequest.Offset.get -> string?
+Aw.Sindri.Features.ContextCalls.QueryContextRequest.Offset.init -> void
