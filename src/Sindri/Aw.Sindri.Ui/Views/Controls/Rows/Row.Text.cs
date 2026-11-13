@@ -30,6 +30,7 @@ internal sealed partial class Row
     private FontSet? _fonts;
     private Inks? _inks;
     private double _titleRoom = double.NaN;
+    private double _subRoom = double.NaN;
     private double _titleDesired;
     private bool _titleTrimmed;
     private IBrush? _titleInk;
@@ -57,6 +58,7 @@ internal sealed partial class Row
         Array.Clear(_text);
         Array.Clear(_facts);
         _titleRoom = double.NaN;
+        _subRoom = double.NaN;
         InvalidateVisual();
     }
 
@@ -73,6 +75,7 @@ internal sealed partial class Row
         _selBar = null;
         _ring = null;
         _titleRoom = double.NaN;
+        _subRoom = double.NaN;
         InvalidateVisual();
     }
 
@@ -157,7 +160,7 @@ internal sealed partial class Row
         var f = FontsNow();
         var k = InksNow();
         var id = _text[Id] ??= Make(item.Id, f.Mono, f.MonoSize, k.Subtle);
-        var sub = string.IsNullOrEmpty(item.SubLine) ? null : _text[Sub] ??= Make(item.SubLine, f.Text, f.Caption, k.Subtle);
+        var sub = BuildSubLine(item, f, k, _slots.TitleWidth - id.Width - TitleGap);
         var room = Math.Max(0, _slots.TitleWidth - id.Width - TitleGap - (sub is null ? 0 : TitleGap + sub.Width));
         if (_text[Title] is not null && _titleRoom.Equals(room))
         {
@@ -171,6 +174,25 @@ internal sealed partial class Row
         _titleTrimmed = full.Width > room + 0.01;
         _text[Title] = _titleTrimmed ? Make(item.Title, face, f.Body, _titleInk, new Fit(room)) : full;
         _titleRoom = room;
+    }
+
+    // The sub-line gets at most half of what the id leaves of the title column, and ends with an ellipsis; the title takes the rest, so neither reaches the fact cells.
+    private TextLayout? BuildSubLine(IRowItem item, FontSet f, Inks k, double afterId)
+    {
+        if (string.IsNullOrEmpty(item.SubLine))
+        {
+            return null;
+        }
+
+        var cap = Math.Max(0, (Math.Max(0, afterId) / 2) - TitleGap);
+        if (_text[Sub] is { } built && _subRoom.Equals(cap))
+        {
+            return built;
+        }
+
+        var full = Make(item.SubLine, f.Text, f.Caption, k.Subtle);
+        _subRoom = cap;
+        return _text[Sub] = full.Width > cap + 0.01 ? Make(item.SubLine, f.Text, f.Caption, k.Subtle, new Fit(cap)) : full;
     }
 
     private void BuildAgeAndWait(IRowItem item, Metrics m)
