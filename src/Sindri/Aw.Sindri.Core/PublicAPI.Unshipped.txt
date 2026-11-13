@@ -23259,6 +23259,7 @@ static Aw.Sindri.Core.Graph.Failures.FailureSentence.operator ==(Aw.Sindri.Core.
 static Aw.Sindri.Core.Graph.Failures.FailureSentences.Find(string! code) -> Aw.Sindri.Core.Graph.Failures.FailureSentence?
 static Aw.Sindri.Core.Graph.Failures.FailureSentences.Say(string! code, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! values) -> string!
 static readonly Aw.Sindri.Core.SindriErrors.GraphPromptFieldEmpty -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphPromptCouldNotAnswer -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Connections.Polling.EventKindSchema
 Aw.Sindri.Core.Connections.Polling.EventKindSchema.<Clone>$() -> Aw.Sindri.Core.Connections.Polling.EventKindSchema!
 Aw.Sindri.Core.Connections.Polling.EventKindSchema.Deconstruct(out string! Kind, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Fields, out System.Text.Json.Nodes.JsonObject! Sample) -> void
