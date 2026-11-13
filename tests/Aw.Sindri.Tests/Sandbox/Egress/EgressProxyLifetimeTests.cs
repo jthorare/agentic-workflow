@@ -27,14 +27,11 @@ public sealed class EgressProxyLifetimeTests
         var proxy = new EgressProxy(new EgressPolicy(_groups, new FakeEgressResolver(_dns)), new FakeEgressDialer(), new EgressLog(Path.Combine("/nonexistent-egress-dir", "egress.log")),
             new EgressCaps(4, 1024, TimeSpan.FromTicks(1), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)));
         var (client, server) = JoinedStream.Pair();
-        await using (client.ConfigureAwait(false))
-        {
-            var handled = proxy.Handle(server, Token);
-            await handled.WaitAsync(_cap, Token);
+        var handled = proxy.Handle(server, Token);
+        await handled.WaitAsync(_cap, Token);
 
-            var read = await client.ReadAsync(new byte[64], Token).AsTask().WaitAsync(_cap, Token);   // a closed client reads 0; an open one waits until the cap
+        var read = await client.ReadAsync(new byte[64], Token).AsTask().WaitAsync(_cap, Token);   // a closed client reads 0; an open one waits until the cap
 
-            Assert.Equal(0, read);
-        }
+        Assert.Equal(0, read);
     }
 }
