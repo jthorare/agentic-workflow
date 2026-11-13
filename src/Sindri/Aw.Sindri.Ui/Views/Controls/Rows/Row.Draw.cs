@@ -11,7 +11,8 @@ internal sealed partial class Row
     {
         DrawTitleLine(context, height);
         DrawFacts(context, item, height);
-        Put(context, _text[Age], _slots.AgeX, height);
+        var age = Built(Age);
+        Put(context, age, _slots.AgeX + MetricsNow().AgeWidth - age.Width, height);   // right-aligned in its column
         Put(context, _text[Wait], _slots.WaitX, height);
     }
 
