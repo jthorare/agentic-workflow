@@ -67,6 +67,9 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-113: a prompt step's field came out empty because a reference in it had no value (Workflows page spec §6.1).</summary>
     public static readonly ErrorDefinition GraphPromptFieldEmpty = new("SND-GRAPH-113", ErrorKind.Invalid, "A prompt field came out empty");
 
+    /// <summary>SND-GRAPH-133: a prompt step's answer said couldNotAnswer: true, so the step fails with the model's reason instead of passing a default (#3224).</summary>
+    public static readonly ErrorDefinition GraphPromptCouldNotAnswer = new("SND-GRAPH-133", ErrorKind.Invalid, "The model said it couldn't answer");
+
     /// <summary>SND-GRAPH-104: run controls (complete a Step, take over, hand back) are not available until the graph engine runs agents.</summary>
     public static readonly ErrorDefinition GraphRunControlsPending = new("SND-GRAPH-104", ErrorKind.Unavailable, "This run control returns with the graph engine's agent blocks");
 

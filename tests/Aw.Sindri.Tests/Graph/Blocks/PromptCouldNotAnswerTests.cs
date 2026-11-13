@@ -25,7 +25,7 @@ public sealed class PromptCouldNotAnswerTests
         var result = await Run(model);
 
         Assert.True(result.IsError);
-        Assert.Equal("SND-GRAPH-114", result.Error.Code);
+        Assert.Equal("SND-GRAPH-133", result.Error.Code);
         Assert.Contains("I have no access to the CI system", result.Error.Message, StringComparison.Ordinal);
     }
 
