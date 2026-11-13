@@ -84,9 +84,9 @@ public static class SetupSteps
         var step = fact.Phase switch
         {
             MapPhase.Built => new SetupStep(SetupStepId.Map, MapTitle, SetupState.Done, "Every repo has a current map.", "The map is built.", Error: null, Action: null, Progress: null),
-            MapPhase.Building when fact.Retry is { } retry => new SetupStep(SetupStepId.Map, MapTitle, SetupState.Running, "Sindri is mapping " + repos + ".", RetryDetail(retry), Error: null, SetupActions.RefreshContextMap, fact.Progress),
+            MapPhase.Building when fact.Retry is { } retry => new SetupStep(SetupStepId.Map, MapTitle, SetupState.Running, "Sindri is mapping " + repos + ".", RetryDetail(retry), Error: null, SetupActions.RefreshContextMap, Staged(fact)),
             MapPhase.Building => new SetupStep(SetupStepId.Map, MapTitle, SetupState.Running, "Sindri is mapping " + repos + ".",
-                fact.Progress is { } p ? string.Create(CultureInfo.InvariantCulture, $"{p.Done} of {p.Total} done.") : "Reading the code.", Error: null, Action: null, fact.Progress),
+                fact.Progress is { } p ? string.Create(CultureInfo.InvariantCulture, $"{p.Done} of {p.Total} done.") : "Reading the code.", Error: null, Action: null, Staged(fact)),
             MapPhase.Failed => new SetupStep(SetupStepId.Map, MapTitle, SetupState.Failed, "The last try at building the map didn't finish.", Detail: null,
                 new SetupError(fact.FailureCode ?? "SND-CONTEXT-042", "The last try at building the map didn't finish."), Action: null, Progress: null),
             MapPhase.NotBuilt => new SetupStep(SetupStepId.Map, MapTitle, SetupState.Todo, "The map isn't built yet. Sindri builds it on its own.", Detail: null, Error: null, Action: null, Progress: null),
@@ -95,6 +95,9 @@ public static class SetupSteps
         };
         return step with { Items = fact.Items.Lines };
     }
+
+    // The count with the stage it belongs to (#3112), so the step says which build it counts.
+    private static SetupProgress? Staged(MapFact fact) => fact.Progress is { } p && fact.Stage is { } stage ? p with { Stage = stage } : fact.Progress;
 
     /// <summary>The sources step: done when every github, slack or linear source the profile names has its token and at least one is named; otherwise the human's, with `sindri index connect`.</summary>
     /// <param name="fact">Where the sources stand.</param>
