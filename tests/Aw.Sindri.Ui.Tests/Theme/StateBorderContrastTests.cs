@@ -19,7 +19,7 @@ public sealed class StateBorderContrastTests
 
     private static readonly Regex _state = new(@":pressed|:focus|:checked|:selected|\.selected", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
 
-    private static readonly Regex _brush = new(@"^\{(?:Dynamic|Static)Resource (Brush\.[\w.]+)\}$", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
+    private static readonly Regex _brush = new(@"^\{(?:Dynamic|Static)Resource (?<key>Brush\.[\w.]+)\}$", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
 
     [Fact]
     public void Every_state_border_holds_3_to_1_on_the_canvas_and_on_surface_1_and_is_never_a_hairline()
@@ -58,40 +58,38 @@ public sealed class StateBorderContrastTests
     }
 
     // Every (file: selector, brush key) of a BorderBrush setter in a style whose selector names a required state.
-    private static IEnumerable<(string Where, string Key)> StateBorders()
+    private static IEnumerable<(string Where, string Key)> StateBorders() =>
+        Directory.EnumerateFiles(UiSource.Library, "*.axaml", SearchOption.AllDirectories)
+            .Where(file => !IsBuildOutput(file))
+            .SelectMany(file => XDocument.Load(file).Descendants()
+                .Where(e => string.Equals(e.Name.LocalName, "Style", StringComparison.Ordinal))
+                .SelectMany(style => BordersOf(Path.GetFileName(file), style)));
+
+    private static bool IsBuildOutput(string file) =>
+        file.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+        || file.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar, StringComparison.Ordinal);
+
+    // The state style's BorderBrush keys. A border painted the same brush as its own fill is not a separate indicator:
+    // the pressed primary button (Button.command-control.primary:pressed, Border and Background both Brush.PrimaryPressed) is the case.
+    private static IEnumerable<(string Where, string Key)> BordersOf(string fileName, XElement style)
     {
-        foreach (var file in Directory.EnumerateFiles(UiSource.Library, "*.axaml", SearchOption.AllDirectories))
+        var selector = style.Attribute("Selector")?.Value ?? string.Empty;
+        if (!_state.IsMatch(selector))
         {
-            if (file.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar, StringComparison.Ordinal) || file.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            yield break;
+        }
+
+        var setters = style.Elements().Where(e => string.Equals(e.Name.LocalName, "Setter", StringComparison.Ordinal)).ToList();
+        var background = setters.FirstOrDefault(e => string.Equals(e.Attribute("Property")?.Value, "Background", StringComparison.Ordinal))?.Attribute("Value")?.Value;
+        foreach (var value in setters
+            .Where(e => e.Attribute("Property")?.Value.EndsWith("BorderBrush", StringComparison.Ordinal) ?? false)
+            .Select(e => e.Attribute("Value")?.Value ?? string.Empty)
+            .Where(v => !string.Equals(v, background, StringComparison.Ordinal)))
+        {
+            var match = _brush.Match(value);
+            if (match.Success)
             {
-                continue;
-            }
-
-            foreach (var style in XDocument.Load(file).Descendants().Where(e => string.Equals(e.Name.LocalName, "Style", StringComparison.Ordinal)))
-            {
-                var selector = style.Attribute("Selector")?.Value ?? string.Empty;
-                if (!_state.IsMatch(selector))
-                {
-                    continue;
-                }
-
-                var setters = style.Elements().Where(e => string.Equals(e.Name.LocalName, "Setter", StringComparison.Ordinal)).ToList();
-                var background = setters.FirstOrDefault(e => string.Equals(e.Attribute("Property")?.Value, "Background", StringComparison.Ordinal))?.Attribute("Value")?.Value;
-                foreach (var setter in setters.Where(e => e.Attribute("Property")?.Value.EndsWith("BorderBrush", StringComparison.Ordinal) ?? false))
-                {
-                    // A border painted the same brush as its own fill is not a separate indicator: the pressed primary button
-                    // (Button.command-control.primary:pressed, Border and Background both Brush.PrimaryPressed) is the case.
-                    if (string.Equals(setter.Attribute("Value")?.Value, background, StringComparison.Ordinal))
-                    {
-                        continue;
-                    }
-
-                    var match = _brush.Match(setter.Attribute("Value")?.Value ?? string.Empty);
-                    if (match.Success)
-                    {
-                        yield return (Path.GetFileName(file) + ": " + selector, match.Groups[1].Value);
-                    }
-                }
+                yield return (fileName + ": " + selector, match.Groups["key"].Value);
             }
         }
     }
