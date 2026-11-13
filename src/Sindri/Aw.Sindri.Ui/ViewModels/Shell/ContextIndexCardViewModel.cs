@@ -67,8 +67,11 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
 
     private static bool Is(string? value, string word) => string.Equals(value, word, StringComparison.Ordinal);
 
-    // A source that isn't pulling and holds nothing is the case this card exists for; a running one with nothing has only just started.
-    private static bool NeedsLook(IndexSourceView source) => source.Pull switch
+    // The server's flag decides (#3430); the pull words judge only for a server that doesn't send it. A source that isn't pulling and holds nothing is the case this card
+    // exists for; a running one with nothing has only just started.
+    private static bool NeedsLook(IndexSourceView source) => source.NeedsLook ?? NeedsLookByWords(source);
+
+    private static bool NeedsLookByWords(IndexSourceView source) => source.Pull switch
     {
         null => !source.Usable && !string.IsNullOrEmpty(source.LastCode),
         "failed" or "backoff" => true,

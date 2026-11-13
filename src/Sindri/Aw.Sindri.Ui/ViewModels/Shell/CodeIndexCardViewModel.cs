@@ -68,7 +68,11 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
     private static string StateOf(CodeIndexRepoView repo, CodeIndexHealthView? health) =>
         health is { } h && One(h.State, "stale", "building", "waiting") ? h.State : repo.State;
 
+    // The server's flag decides (doctor's rule, #3430); the words below judge only for a server that doesn't send it, or a repo with no health entry.
     private static bool Fine(CodeIndexRepoView repo, CodeIndexHealthView? health) =>
+        health?.NeedsLook is { } needsLook ? !needsLook : FineByWords(repo, health);
+
+    private static bool FineByWords(CodeIndexRepoView repo, CodeIndexHealthView? health) =>
         string.Equals(StateOf(repo, health), "ok", StringComparison.Ordinal) && repo.Layers.All(static l => One(l.State, "ok", "disabled", "pending"));
 
     private string Line(CodeIndexRepoView repo, CodeIndexHealthView? health)
