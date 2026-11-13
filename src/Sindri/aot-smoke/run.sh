@@ -35,6 +35,7 @@ unset CLAUDECODE CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_EXECPATH CLAUDE_CODE_SESSION
 export AW_SINDRI_PROVER=1
 out="$root/artifacts/aot-sindri-smoke"
 mkdir -p "$out"
+rm -f "$out/timings.txt" "$out/serve.log"
 [ ! -d "$out/bin" ] || find "$out/bin" -delete
 alarm=(perl -e 'alarm shift; exec @ARGV or die "exec $ARGV[0]: $!"' 30)   # SIGALRM after 30 s; a command, so with_tty can run it
 bounded() { "${alarm[@]}" "$@"; }
@@ -91,6 +92,7 @@ cleanup() {
   [ "${cleaned:-0}" = 0 ] || return 0
   cleaned=1
   if [ "${AW_SINDRI_HOME:-}" = "$work/home" ]; then
+    [ ! -f "$AW_SINDRI_HOME/logs/serve.log" ] || cp "$AW_SINDRI_HOME/logs/serve.log" "$out/serve.log"   # kept for a failing run (#3456)
     [ ! -f "$AW_SINDRI_HOME/control.json" ] || remember_servers   # a start that was never recorded
     [ -f "$work/servers.pids" ] || { find "$scratch" -delete; return 0; }
     stop_recorded "$work/servers.pids"
@@ -178,13 +180,13 @@ fi
 
 run() { # the human, no terminal
   echo "## sindri $*"
-  local rc=0
+  local rc=0 t0=$EPOCHREALTIME call="$*"
   bounded "$bin" "$@" </dev/null 2>&1 || rc=$?
   exit_line "$rc"
 }
 human() { # the human at a terminal; stdin passed through (the typed confirmation)
   echo "## sindri $* (human, terminal)"
-  local rc=0
+  local rc=0 t0=$EPOCHREALTIME call="$*"
   with_tty "${alarm[@]}" "$bin" "$@" || rc=$?
   exit_line "$rc"
 }
@@ -251,13 +253,13 @@ JSON
 }
 session_tty() { # a CLI that can't read the token, at a terminal (the server decides)
   echo "## sindri $* (session, terminal)"
-  local rc=0
+  local rc=0 t0=$EPOCHREALTIME call="$*"
   without_token with_tty "${alarm[@]}" "$bin" "$@" || rc=$?
   exit_line "$rc"
 }
 {
   doctor
-  human --headless </dev/null
+  AW_LOG_LEVEL=information human --headless </dev/null   # serve logs at information into logs/serve.log (#3456)
   remember_servers
   run serve
   remember_servers
