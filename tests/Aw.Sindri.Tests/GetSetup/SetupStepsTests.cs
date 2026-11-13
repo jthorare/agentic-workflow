@@ -113,7 +113,7 @@ public sealed class SetupStepsTests
     {
         var step = SetupSteps.Map(new MapFact(MapPhase.Building, Progress: null) { Stage = stage });
 
-        Assert.Equal((SetupState.Running, stage, (SetupProgress?)null), (step.State, step.Stage, step.Progress));
+        Assert.Equal((SetupState.Running, stage, null), (step.State, step.Stage, step.Progress));
     }
 
     // #3112: a failed build keeps the stage it failed in, so the step can say which build failed.
@@ -128,10 +128,8 @@ public sealed class SetupStepsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_built_map_has_no_stage()
-    {
+    public void A_built_map_has_no_stage() =>
         Assert.Null(SetupSteps.Map(new MapFact(MapPhase.Built, Progress: null)).Stage);
-    }
 
     [Fact, Trait("Lane", "unit")]
     public void Sources_with_none_named_is_the_humans_and_says_no_source_is_connected_yet()
