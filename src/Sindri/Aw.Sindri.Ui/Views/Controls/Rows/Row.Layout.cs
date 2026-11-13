@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Aw.Sindri.Ui.ViewModels.Rows;
 
 namespace Aw.Sindri.Ui.Views.Controls.Rows;
@@ -40,6 +41,9 @@ internal sealed partial class Row
                 Classes.Contains("cursor"));
         }
     }
+
+    /// <summary>The top level the row listens to for render-scaling changes: set while attached, null once detached.</summary>
+    internal TopLevel? ScalingSource => _top;
 
     /// <summary>Runs what a render-scaling change runs, since the headless platform can't change the scaling itself.</summary>
     internal void ScalingChangedForTest() => OnScalingChanged(this, EventArgs.Empty);
