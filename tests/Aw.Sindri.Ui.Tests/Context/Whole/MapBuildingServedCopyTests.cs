@@ -40,7 +40,8 @@ public sealed class MapBuildingServedCopyTests
         await page.Opened(Token);
 
         Assert.True(page.ShowBuilding);
-        Assert.StartsWith("Building the map for ui-3391 · started", page.BuildingTitle, StringComparison.Ordinal);
+        Assert.Equal("Building the map for ui-3391", page.BuildingTitle);
+        Assert.StartsWith("started", page.BuildingBody, StringComparison.Ordinal);
     }
 
     [Fact]

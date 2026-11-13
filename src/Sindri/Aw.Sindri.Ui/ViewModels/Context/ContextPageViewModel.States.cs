@@ -25,6 +25,9 @@ internal sealed partial class ContextPageViewModel
         : _itemOpened is not null ? Labels.ContextStateBuilding
         : Labels.ContextBuildingFor(_repos);   // why: with no item there is no ticket and no promise of a time (#3391)
 
+    /// <summary>The Building state's whole line for a screen reader (red stub, #3463): the head and the progress.</summary>
+    public string BuildingName => BuildingTitle[..0];
+
     /// <summary>The Building state's body: "last map 2 h ago" when the answer names it; nothing when the title is the answer's.</summary>
     public string BuildingBody => !_servedBuilding ? (_itemOpened is null ? string.Empty : Labels.ContextStateBuildingBody) : _notReady.Building?.LastSyncAt is { } last ? Labels.ContextLastMap(Age(last)) : string.Empty;
 
