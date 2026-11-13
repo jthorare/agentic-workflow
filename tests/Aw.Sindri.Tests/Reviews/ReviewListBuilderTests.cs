@@ -122,6 +122,46 @@ public sealed class ReviewListBuilderTests
         Assert.Null(new ReviewSummary(Head, ReviewCi.Pass, RequiredOpen: null, Day).RequiredText);
     }
 
+    private static ReviewRow RowFor(ReviewSummary? summary) =>
+        ReviewListBuilder.Build(Login, [Pull("acme/api", number: 7, requested: [Login])], _ => summary, static _ => null).Groups[0].Sections[0].Rows[0];
+
+    [Fact]
+    public void A_row_with_no_summary_says_notRead()
+    {
+        var row = RowFor(summary: null);
+
+        Assert.Equal("notRead", row.RequiredState);
+        Assert.Null(row.RequiredOpen);
+    }
+
+    [Fact]
+    public void A_summary_whose_settings_name_no_checks_says_noneNamed_with_no_count()
+    {
+        var row = RowFor(new ReviewSummary(Head, ReviewCi.Pass, RequiredOpen: null, Day));
+
+        Assert.Equal("noneNamed", row.RequiredState);
+        Assert.Null(row.RequiredOpen);
+        Assert.Null(row.RequiredText);
+    }
+
+    [Fact]
+    public void A_summary_with_open_checks_says_counted_and_the_count()
+    {
+        var row = RowFor(new ReviewSummary(Head, ReviewCi.Fail, RequiredOpen: 2, Day));
+
+        Assert.Equal("counted", row.RequiredState);
+        Assert.Equal(2, row.RequiredOpen);
+    }
+
+    [Fact]
+    public void A_summary_with_none_open_says_counted_and_zero()
+    {
+        var row = RowFor(new ReviewSummary(Head, ReviewCi.Pass, RequiredOpen: 0, Day));
+
+        Assert.Equal("counted", row.RequiredState);
+        Assert.Equal(0, row.RequiredOpen);
+    }
+
     [Fact]
     public void The_library_line_has_four_states()
     {

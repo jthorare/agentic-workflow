@@ -6,4 +6,7 @@ public sealed record SourcesFact(int Count)
 {
     /// <summary>One line per named source, by its lower-case name: done with "connected" when its token pointer resolves, to do with "needs token" when it doesn't.</summary>
     public SetupItems Items { get; init; } = SetupItems.None;
+
+    /// <summary>True when the profile holds `setup.skipAccounts`: the owner skipped the accounts question, and the step counts as finished.</summary>
+    public bool Skipped { get; init; }
 }

@@ -17,10 +17,11 @@ internal sealed class ProbeCommands(IProcessAncestry ancestry, IHarnessVersions 
     internal ValueTask<HarnessProbeReport> Probe(string? harness, CancellationToken cancellationToken) => Live(harness, cancellationToken);
 
     /// <summary>The doctor's harness lines against the pinned probe.</summary>
+    /// <param name="dev">Whether this is the toolkit developers' run ('sindri doctor --dev').</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>The checks.</returns>
-    internal async ValueTask<IReadOnlyList<DoctorCheck>> DoctorChecks(CancellationToken cancellationToken) =>
-        await HarnessDoctor.Checks(PinnedProbe.All, await Live(harness: null, cancellationToken).ConfigureAwait(false), versions, cancellationToken).ConfigureAwait(false);
+    internal async ValueTask<IReadOnlyList<DoctorCheck>> DoctorChecks(bool dev, CancellationToken cancellationToken) =>
+        await HarnessDoctor.Checks(PinnedProbe.All, await Live(harness: null, cancellationToken).ConfigureAwait(false), versions, dev, cancellationToken).ConfigureAwait(false);
 
     private ValueTask<HarnessProbeReport> Live(string? harness, CancellationToken cancellationToken) =>
         HarnessProbe.Take(

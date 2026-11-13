@@ -82,10 +82,13 @@ internal sealed class HealthPill : ObservableObject
     /// <param name="age">How long since the views were last heard from.</param>
     /// <param name="notResponding">True after three failed refreshes while stale.</param>
     /// <param name="health">The status's health (E-14), or null before API P2.</param>
-    internal void Show(ShellState state, TimeSpan age, bool notResponding, HealthView? health = null)
+    /// <param name="profileMissing">True on a home with no profile yet: the pill then says Not set up instead of Healthy.</param>
+    internal void Show(ShellState state, TimeSpan age, bool notResponding, HealthView? health = null, bool profileMissing = false)
     {
+        var unset = profileMissing && IsHealthyWord(health);   // a missing profile is not a fault, but the pill must not say Healthy beside it
         (Glyph, Word, Age) = state switch
         {
+            ShellState.Normal when unset => (StateGlyph.None, Labels.NotSetUp, Labels.UpdatedAgo(age)),
             ShellState.Normal when health is not null => (Glyphs(health.Word), Labels.HealthWord(health.Word), Labels.UpdatedAgo(age)),
             ShellState.Normal => (StateGlyph.Ok, Labels.Running, Labels.UpdatedAgo(age)),
             ShellState.Stale => (StateGlyph.Stale, Labels.Stale, Labels.UpdatedAgo(age)),
@@ -97,7 +100,7 @@ internal sealed class HealthPill : ObservableObject
         };
         Problems = state == ShellState.Normal && health is not null ? string.Join(" · ", health.Problems.Where(p => !_viewsCodes.Contains(p.Code)).Select(p => p.Clause ?? p.Text)) : string.Empty;
         Text = string.Join(" · ", ((string[])[Word, Age, Problems]).Where(t => t.Length > 0));
-        IsHealthy = state == ShellState.Normal && (health is null || string.Equals(health.Word, "healthy", StringComparison.Ordinal));
+        IsHealthy = state == ShellState.Normal && !unset && IsHealthyWord(health);
         var stale = state == ShellState.Stale;
         if (stale != IsStale)
         {
@@ -109,6 +112,8 @@ internal sealed class HealthPill : ObservableObject
         IsDataStale = state is ShellState.Stale or ShellState.Unreadable;
         IsDown = state is ShellState.NotRunning or ShellState.Unreadable or ShellState.VersionMismatch;
     }
+
+    private static bool IsHealthyWord(HealthView? health) => health is null || string.Equals(health.Word, "healthy", StringComparison.Ordinal);
 
     // §11.3: healthy ✓, rebuilding ⌛ (the views are catching up), degraded △, stalled ✕; always beside the word.
     private static StateGlyph Glyphs(string word) => word switch

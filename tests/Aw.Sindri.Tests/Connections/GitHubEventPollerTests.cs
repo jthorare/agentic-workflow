@@ -47,6 +47,37 @@ public sealed class GitHubEventPollerTests
     }
 
     [Fact]
+    public async Task A_trimmed_PullRequestEvent_with_action_merged_maps_to_github_pr_merged()
+    {
+        var provider = new FakeProvider();
+        provider.AddGitHubEvent(ProviderFixtures.GitHubPrTrimmed("3001", "acme/app", 77, "merged", "abc123", "2026-11-08T10:00:00Z"));
+        using var h = PollerHarness.For("github", provider);
+
+        var polled = await h.Poller.Poll(h.Connection, EventKind.GitHubPrMerged, Before, TestContext.Current.CancellationToken);
+
+        var e = Assert.Single(polled.Value.Events);
+        Assert.Equal(EventKind.GitHubPrMerged, e.Kind);
+        Assert.Equal("github:3001", e.DeliveryKey);
+        Assert.Equal("acme/app", e.Fields["repo"]);
+        Assert.Equal("77", e.Fields["number"]);
+    }
+
+    [Fact]
+    public async Task A_trimmed_opened_event_still_maps_to_github_pr_opened_and_is_not_a_merge()
+    {
+        var provider = new FakeProvider();
+        provider.AddGitHubEvent(ProviderFixtures.GitHubPrTrimmed("3002", "acme/app", 78, "opened", "def456", "2026-11-08T10:00:00Z"));
+        using var h = PollerHarness.For("github", provider);
+        var ct = TestContext.Current.CancellationToken;
+
+        var merged = await h.Poller.Poll(h.Connection, EventKind.GitHubPrMerged, Before, ct);
+        var opened = await h.Poller.Poll(h.Connection, EventKind.GitHubPrOpened, Before, ct);
+
+        Assert.Empty(merged.Value.Events);
+        Assert.Equal("78", Assert.Single(opened.Value.Events).Fields["number"]);
+    }
+
+    [Fact]
     public async Task The_first_poll_is_a_baseline_with_no_events_and_the_newest_created_at_as_the_cursor()
     {
         var provider = new FakeProvider();

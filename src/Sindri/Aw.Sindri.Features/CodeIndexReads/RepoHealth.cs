@@ -8,15 +8,21 @@ using IndexRepoHead = Aw.CodeIndex.Core.Model.RepoHead;
 namespace Aw.Sindri.Features.CodeIndexReads;
 
 /// <summary>
-/// A repo's index state as the Health card words it (code index spec §7.3): the facade's file state with 'stale', 'building' and 'waiting' laid over it from the live head and the build jobs, and the embeddings
+/// A repo's index state as the Health card words it (code index spec §7.3): the facade's file state with 'stale', 'building', 'waiting' and 'queued' laid over it from the live head and the build jobs, and the embeddings
 /// layer's progress as a percent. Counts and words only.
 /// </summary>
 /// <param name="Repo">The repo.</param>
-/// <param name="State">missing, damaged, ok, stale (the head moved past the index), building (a build job runs) or waiting (a failed build holds the next one).</param>
+/// <param name="State">missing, damaged, ok, stale (the head moved past the index), building (a build job runs), waiting (a failed build holds the next one) or queued (no index yet and the head is on the default branch, so code-index-main-move starts the first build on its next tick; #3342). Off the default branch a repo with no index stays missing: no build is coming (#3181).</param>
 /// <param name="EmbeddingsPercent">The share of embeddable symbols that have a vector, or null when the layer states no count.</param>
 /// <param name="Waiting">'retrying in N min' while the state is waiting, else null.</param>
 public sealed record RepoHealth(string Repo, string State, int? EmbeddingsPercent, string? Waiting)
 {
+    /// <summary>How long this serve has read the repo as queued, or null when it isn't queued; set by RepoHealths from its <see cref="QueuedClock"/>. Internal, so it isn't in the API answer (#3440).</summary>
+    internal TimeSpan? QueuedFor { get; init; }
+
+    /// <summary>True when doctor has a problem row for the repo (issue #3430): the System card reads this, not the state word, so a new busy state needs no app change.</summary>
+    public bool NeedsLook { get; init; }
+
     /// <summary>Lays the heads and jobs over one repo's status.</summary>
     /// <param name="status">The repo's index status, from the files.</param>
     /// <param name="live">The repo's live head, or null when unread.</param>
@@ -76,12 +82,13 @@ public sealed record RepoHealth(string Repo, string State, int? EmbeddingsPercen
         var missing = status.State == IndexState.Missing;
         var behind = missing || Moved(status, live);
         var waiting = Behind(status, live) ? WaitingWords(ended, now) : null;
-        return (Word(waiting, missing, behind), waiting);
+        return (Word(waiting, missing, behind, live), waiting);
     }
 
     private static bool Moved(RepoStatus status, IndexRepoHead? live) => live?.Head is { } head && head != status.Commit;
 
-    private static string Word(string? waiting, bool missing, bool behind) => waiting is not null ? "waiting" : missing ? "missing" : behind ? "stale" : "ok";
+    private static string Word(string? waiting, bool missing, bool behind, IndexRepoHead? live) =>
+        waiting is not null ? "waiting" : missing ? (live is { Head: not null, OnDefaultBranch: true } ? "queued" : "missing") : behind ? "stale" : "ok";
 
     private static string? WaitingWords(IReadOnlyList<JobRow> builds, DateTimeOffset now) =>
         IndexBuildWords.Waiting([.. builds.Where(static j => j.EndedAt is not null).OrderByDescending(static j => j.EndedAt)], now);

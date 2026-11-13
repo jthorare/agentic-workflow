@@ -1110,6 +1110,11 @@ one the request itself names, else the kind's `models`, else `default.models`, e
 | `codex` | `gpt-6-luna` | `gpt-5.5` |
 | `cursor` | `gpt-5.6-luna-none-fast` | `gpt-5` |
 
+A built-in codex name that `codex debug models` does not list runs codex's own default model instead: the call passes no model flag, and the doctor line, the tries and the
+Jobs page name it `codex default` (issue 3389). A codex name the profile wrote is always passed as written; the doctor warns when codex does not list it. When Sindri can't
+read the list, it passes the built-in name. Codex's own default has no cheap or strong tier, so a cheap call such as labeling or rerank may run on a bigger, slower model;
+set `names.codex.cheap` to a listed model to pin one. Sindri reads the list at most once per 10 minutes, and again after 60 seconds when the last read failed.
+
 The old `context.conceptScan.models` key is no longer read (issue 1867): `profile validate` and every profile write refuse it with SND-CONTEXT-001,
 "context.conceptScan.models: was replaced by context.models.names (claude is claude-code there); move the model names there".
 
@@ -1140,7 +1145,7 @@ A cancel or the 24 hours ending makes the stalled call fail with `SND-CONTEXT-24
 
 **Where calls show.** Every call writes one `context.model.called` event (the kind, each harness tried with its outcome `answered`, `limit`, `failed` or `skipped`, the tokens). A call under a job adds to that job's row on the Jobs page (`Models: codex gpt-6-luna 3 calls · 4.1k tokens (1 fell back)`) and lists in its sheet under "Model calls", one row per attempt, the last 200. `sindri jobs show <jobId>` prints the same rows and, for a paused job, a first line `waiting on model-limit: … Resume with: sindri jobs resume <jobId>`. A call with no job is in the ledger only (`sindri ledger --type context.model.called`).
 
-**Doctor.** `context:models` prints one line per distinct route, which is also the answer to "what will run", for example `labeling, mapCleanup, rerank: claude-code haiku, then codex gpt-6-luna; conceptNaming: claude-code sonnet, then codex gpt-5.5; productSurfaces: no model`. It warns, each with its fix, for a listed harness that isn't installed, a list of one harness (no fallback), a Codex model missing from `codex debug models`, a harness on a route whose only login is a variable the minimal environment drops (Claude Code: `ANTHROPIC_API_KEY`, `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_AUTH_TOKEN` with no `.credentials.json` under `CLAUDE_CONFIG_DIR` or `~/.claude`, not checked on macOS where the login is in the keychain; Codex: `OPENAI_API_KEY` or `CODEX_API_KEY` with no `auth.json` under `CODEX_HOME` or `~/.codex`; Cursor's `CURSOR_API_KEY` passes), and no agent CLI on PATH at all; it is `ok` "not configured" until a profile is approved. A paused job is not a doctor problem.
+**Doctor.** `context:models` prints one line per distinct route, which is also the answer to "what will run", for example `labeling, mapCleanup, rerank: claude-code haiku, then codex gpt-6-luna; conceptNaming: claude-code sonnet, then codex gpt-5.5; productSurfaces: no model`. It warns, each with its fix, for a listed harness that isn't installed, a list of one harness (no fallback), a Codex model the profile wrote that is missing from `codex debug models` (a built-in one runs `codex default` instead and is `ok`), a harness on a route whose only login is a variable the minimal environment drops (Claude Code: `ANTHROPIC_API_KEY`, `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_AUTH_TOKEN` with no `.credentials.json` under `CLAUDE_CONFIG_DIR` or `~/.claude`, not checked on macOS where the login is in the keychain; Codex: `OPENAI_API_KEY` or `CODEX_API_KEY` with no `auth.json` under `CODEX_HOME` or `~/.codex`; Cursor's `CURSOR_API_KEY` passes), and no agent CLI on PATH at all; it is `ok` "not configured" until a profile is approved. A paused job is not a doctor problem.
 
 ### The Jev label pick (`labeling.pick: jev`)
 

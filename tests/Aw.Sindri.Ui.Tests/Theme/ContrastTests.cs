@@ -51,10 +51,12 @@ public sealed partial class ContrastTests
         ("AttentionFill", "Surface2", 2.05, 0),   // decoration: the fill against the button's own background
         ("Hairline", "Canvas", 1.1, 0),
         ("HairlineStrong", "Canvas", 1.6, 0),
-        // The context map (F3 spec 1 §2 "Tokens"): the wire and its ports are decoration, 1.3+ like the hairline; the
+        // The wire (#3138): a workflow graph's connectors and the context map's edges, ports and suggested borders. It is
+        // the only mark of what feeds what, so it needs the non-text 3.0 on every surface a graph or map draws on. The
         // highlighted wire and the anchor ring are the same values as InkSubtle and InkMuted, so they pass as non-text.
-        ("Wire", "Canvas", 2.3, 1.3),
-        ("Wire", "Surface1", 2.1, 1.3),
+        ("Wire", "Canvas", 3.6, NonText),
+        ("Wire", "Surface1", 3.3, NonText),
+        ("Wire", "Surface2", 3.05, NonText),
         ("WireHi", "Canvas", 6.1, NonText),
         ("WireHi", "Surface1", 5.6, NonText),
         ("RingAnchor", "Canvas", 13.6, NonText),

@@ -1284,6 +1284,8 @@ const Aw.Meta.Core.KvKeys.WatchResources = "watch.resources" -> string!
 const Aw.Meta.Core.KvKeys.WorktreesLast = "worktrees.last" -> string!
 const Aw.Meta.Core.KvKeys.WorktreesPending = "worktrees.pending-prs" -> string!
 const Aw.Meta.Core.KvKeys.WorktreesSweepStart = "worktrees.sweep-start" -> string!
+const Aw.Meta.Core.KvKeys.WorktreesSweepStartPrefix = "worktrees.sweep-start." -> string!
+static Aw.Meta.Core.KvKeys.WorktreesPathSweepStart(string! path) -> string!
 const Aw.Meta.Core.Lanes.LaneAgent.ClaudeCode = "claude-code" -> string!
 const Aw.Meta.Core.Obligations.MergeRecord.Unknown = "unknown" -> string!
 override Aw.Meta.Core.Commands.CommandRequest.Equals(object? obj) -> bool
@@ -2789,3 +2791,7 @@ static Aw.Meta.Core.Events.MetaEvents.ObligationOpened(System.DateTimeOffset at,
 static Aw.Meta.Core.Events.MetaEvents.UsageLimited(System.DateTimeOffset at, string! lane, string! provider, System.DateTimeOffset? until) -> Aw.Meta.Core.Events.MetaEvent!
 static Aw.Meta.Core.Events.MetaEvents.UsageOk(System.DateTimeOffset at, string! lane, string! provider, System.DateTimeOffset? until) -> Aw.Meta.Core.Events.MetaEvent!
 Aw.Meta.Core.Coordination.InboxSync.InboxSync(Aw.Meta.Core.Ports.ITranscriptReader! transcripts, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.IOwnerStore! owner, System.TimeProvider! clock, Aw.Meta.Core.Coordination.MetaTranscriptResolver? meta, Aw.Meta.Core.Events.MetaEventSink? events = null) -> void
+Aw.Meta.Core.Commands.CommandRequest.PathPrefix.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Meta.Core.Commands.CommandRequest.PathPrefix.init -> void
+Aw.Meta.Core.Gate.GateTools
+static Aw.Meta.Core.Gate.GateTools.PathPrefix(string! tree) -> System.Collections.Generic.IReadOnlyList<string!>!

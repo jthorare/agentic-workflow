@@ -92,6 +92,53 @@ public sealed class PromptAnswerJsonTests
         Assert.DoesNotContain(new string('z', 201), result.Error.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task A_paragraphed_prose_answer_shows_on_one_line()
+    {
+        var model = new RecordingModel((_, _) => "First paragraph.\n\n  Second\tparagraph.\r\nThird.");
+
+        var result = await Run(model, WithSchema());
+
+        Assert.True(result.IsError);
+        Assert.DoesNotContain('\n', result.Error.Message);
+        Assert.DoesNotContain('\r', result.Error.Message);
+        Assert.Contains("\"First paragraph. Second paragraph. Third.\"", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task An_answer_over_200_characters_ends_in_an_ellipsis_inside_the_quotes()
+    {
+        var model = new RecordingModel((_, _) => new string('z', 201));
+
+        var result = await Run(model, WithSchema());
+
+        Assert.True(result.IsError);
+        Assert.EndsWith(new string('z', 200) + "…\"", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task An_answer_of_exactly_200_characters_has_no_ellipsis()
+    {
+        var model = new RecordingModel((_, _) => new string('z', 200));
+
+        var result = await Run(model, WithSchema());
+
+        Assert.True(result.IsError);
+        Assert.EndsWith(new string('z', 200) + "\"", result.Error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("…", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task The_cut_never_splits_a_surrogate_pair()
+    {
+        var model = new RecordingModel((_, _) => new string('z', 199) + "😀" + new string('z', 50));
+
+        var result = await Run(model, WithSchema());
+
+        Assert.True(result.IsError);
+        Assert.EndsWith(new string('z', 199) + "…\"", result.Error.Message, StringComparison.Ordinal);
+    }
+
     public static TheoryData<string, string> StockPromptNodes()
     {
         var data = new TheoryData<string, string>();

@@ -57,6 +57,11 @@ public interface IWorkflowRunStore
     /// <returns>The runs.</returns>
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Running(CancellationToken cancellationToken);
 
+    /// <summary>The workflows that have at least one run in 'queued' (the sweep starts the head of each queue whose workflow has nothing in flight, issue 3102).</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>Each workflow once; none when nothing is queued.</returns>
+    public ValueTask<Result<IReadOnlyList<WorkflowId>>> QueuedWorkflows(CancellationToken cancellationToken);
+
     /// <summary>The highest occurrence among a workflow's runs started by one kind of trigger, over every revision and every status (a schedule reads its last fired tick from it).</summary>
     /// <param name="workflow">The workflow.</param>
     /// <param name="triggerKind">The trigger's 'kind', such as 'schedule'.</param>
