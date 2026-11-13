@@ -99,4 +99,6 @@ public static partial class SindriErrors
 
     /// <summary>SND-GRAPH-119: the contract exists, the behaviour does not yet (Workflows page P0 stubs: the test, pin, trigger-events and templates routes, and the replace_node op).</summary>
     public static readonly ErrorDefinition GraphNotBuilt = new("SND-GRAPH-119", ErrorKind.Unavailable, "That part of workflows is not built yet");
+    /// <summary>SND-GRAPH-131: a node reads a field of a node that failed and continued (onFailure 'continue'); the reader fails instead of reading nothing.</summary>
+    public static readonly ErrorDefinition GraphReferenceToContinuedFailure = new("SND-GRAPH-131", ErrorKind.Invalid, "A reference reads a node that failed and continued");
 }
