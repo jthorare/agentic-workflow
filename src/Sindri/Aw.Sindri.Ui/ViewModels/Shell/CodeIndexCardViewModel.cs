@@ -51,7 +51,7 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
         var repos = read.Value.Repos;
         var health = (read.Value.Health ?? []).ToDictionary(h => h.Repo, StringComparer.Ordinal);
         var views = repos.Select(r => (Repo: r, Health: health.GetValueOrDefault(r.Repo))).ToList();
-        Lines = [.. views.Select(v => new CodeIndexLine(Line(v.Repo, v.Health)))];
+        Lines = [.. views.Select(v => new CodeIndexLine(Line(v.Repo, v.Health), IsPaused(StateOf(v.Repo, v.Health), v.Health) ? Labels.CodeIndexResumeCommand : string.Empty))];
         Word = repos.Count == 0 ? string.Empty : WordOf(views);
         Show(repos.Count == 0 ? Labels.CodeIndexNone : string.Empty);
     }
@@ -106,9 +106,11 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
 
     private static bool Shown(CodeIndexLayerView layer) => _named.Contains(layer.Layer, StringComparer.Ordinal) || !One(layer.State, "ok", "disabled");
 
+    private static bool IsPaused(string state, CodeIndexHealthView? health) => health?.Paused == true && One(state, "missing", "stale", "waiting", "queued");
+
     // While waiting, the server's own words ("retrying in N min") replace the state's.
     // While paused, no retry or build comes: the line names the pause instead of promising one (#3561).
-    private static string StateWords(string state, CodeIndexHealthView? health) => health?.Paused == true && One(state, "missing", "stale", "waiting", "queued")
+    private static string StateWords(string state, CodeIndexHealthView? health) => IsPaused(state, health)
         ? (One(state, "waiting", "queued") ? string.Empty : Labels.CodeIndexState(state) + " · ") + Labels.CodeIndexPaused
         : string.Equals(state, "waiting", StringComparison.Ordinal) && health?.Waiting is { Length: > 0 } waiting ? waiting : Labels.CodeIndexState(state);
 

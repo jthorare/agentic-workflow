@@ -160,7 +160,7 @@ public sealed class CodeIndexCardTests
         var card = await ReadWithHealth([Repo("repo", "missing", commit: null, 0)], [Health("repo", "missing", paused: true)]);
 
         Assert.Equal("repo: no index yet · " + Labels.CodeIndexPaused, Assert.Single(card.Lines).Text);
-        Assert.Contains("sindri services resume code-index-main-move", Labels.CodeIndexPaused, StringComparison.Ordinal);
+        Assert.Equal("sindri services resume code-index-main-move", Labels.CodeIndexResumeCommand);
     }
 
     // #3576: the command sits on a row of its own so it can be copied in one piece; the repo line keeps only the words.

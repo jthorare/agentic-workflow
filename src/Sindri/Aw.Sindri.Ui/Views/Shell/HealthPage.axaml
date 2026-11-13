@@ -258,11 +258,21 @@
                 <TextBlock x:Name="CodeIndexWord" Grid.Column="1" Classes="body-strong head-word" Text="{Binding Word}" AutomationProperties.Name="{Binding Word}" />
               </Grid>
               <ItemsControl x:Name="CodeIndexLines" ItemsSource="{Binding Lines}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel Spacing="{StaticResource Space.XS}" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="shell:CodeIndexLine">
-                    <Border MinHeight="{StaticResource Row.Height.Data}">
-                      <TextBlock Classes="body" Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
-                    </Border>
+                    <StackPanel>
+                      <Border MinHeight="{StaticResource Row.Height.Data}">
+                        <TextBlock Classes="body" Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
+                      </Border>
+                      <!-- #3576: the fix command on a row of its own: mono, no wrapping, selectable so it copies in one piece. -->
+                      <SelectableTextBlock x:Name="CodeIndexCommand" Classes="mono" Text="{Binding Command}" TextWrapping="NoWrap" IsVisible="{Binding HasCommand}"
+                                           AutomationProperties.Name="{Binding Command}" />
+                    </StackPanel>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
