@@ -85,6 +85,10 @@ internal sealed partial class ContextPageViewModel
         _itemOpened = itemId;
         OnChanged(nameof(EmptyTitle));
         OnChanged(nameof(EmptyBody));
+        OnChanged(nameof(BuildingTitle));
+        OnChanged(nameof(BuildingBody));
+        OnChanged(nameof(HasBuildingBody));
+        OnChanged(nameof(BuildingName));
     }
 
     private void NoteItem(string note, bool failed = false)

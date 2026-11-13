@@ -69,7 +69,7 @@ fi
 
 sha256_of() { if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1; else shasum -a 256 "$1" | cut -d' ' -f1; fi; }
 
-rc=0
+rc=0; arc=0
 out="$(LC_ALL=C awk '
   function bad(code, msg) { printf "%s %d: %s\n", code, NR, msg; failed = 1 }
   function hex(s, n) { return s ~ /^[0-9a-f]+$/ && length(s) == n }
@@ -106,7 +106,10 @@ out="$(LC_ALL=C awk '
     if (!disk) { print "CODEIDX-LOCK-004 0: no need disk-bytes row"; failed = 1 }
     exit failed
   }
-' "$file")" || rc=1
+' "$file")" || arc=$?
+# awk exits 0 (clean) or 1 (findings). Anything else (a kill under memory pressure is 137) is a tool error, not findings (#3217).
+if [ "$arc" -gt 1 ]; then echo "code-index-lock: awk ended with status $arc (killed or failed) while checking $file" >&2; exit 2; fi
+rc=$arc
 [ -z "$out" ] || printf '%s\n' "$out"
 
 # The requirements file the graphify row hashes, (only when the row itself parsed).
