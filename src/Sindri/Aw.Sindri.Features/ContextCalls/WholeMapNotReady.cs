@@ -46,7 +46,11 @@ internal sealed class WholeMapNotReady(IJobViews jobs, IViewReader views, IConte
         return explained.WithExtension("noMap", NoMap(scope, profile.IsSuccess ? profile.Value?.ApprovedAt : null, first));
     }
 
-    private static JsonElement Building(JobRow job, IReadOnlyList<SourceStatusRow>? sources) => Write(w =>
+    /// <summary>The 'building' member for the running build <paramref name="job"/>.</summary>
+    /// <param name="job">The running BuildContextMap job.</param>
+    /// <param name="sources">The engine's sources, or null when they could not be read.</param>
+    /// <returns>The member: only what is known.</returns>
+    internal static JsonElement Building(JobRow job, IReadOnlyList<SourceStatusRow>? sources) => Write(w =>
     {
         w.WriteStartObject();
         var lastSync = sources?.Max(static s => s.LastSync);
