@@ -22,8 +22,12 @@ ACCEPTANCE="$(printf '%s' "$BRIEF_JSON" | jq -r '.acceptanceCriteria // empty')"
 # The dispatch's own final message — tool_response is whatever shape the
 # Agent tool returns; the real, generic text of interest is its `.result` or
 # a plain string response. Read both shapes rather than assuming one.
+# A real finished Agent result keeps its text in .content[] blocks (status "completed", no .result); .result and a plain string
+# are the older shapes, kept as fallbacks (#3543).
 FINAL_MESSAGE="$(printf '%s' "$INPUT" | jq -r '
   if (.tool_response | type) == "string" then .tool_response
+  elif (.tool_response.content | type) == "array" then
+    ([.tool_response.content[]? | select(.type == "text") | .text] | join("\n"))
   else (.tool_response.result // "")
   end
 ' 2>/dev/null)"
