@@ -606,7 +606,7 @@ index's container stays its own). Context never sees SQLite or a path of the ind
 
 | Situation | What the consumer sees |
 |---|---|
-| no index file yet (new repo) | `unavailable`, reason `index-not-built`, `SND-CODEIDX-013`; Health says "first build queued" or "building" |
+| no index file yet (new repo) | `unavailable`, reason `index-not-built`, `SND-CODEIDX-013`; Health says "no index yet", "build queued" or "building" |
 | index commit is the checkout's head | `ok` |
 | head moved, build not done yet | `stale` (answers still served from the old commit, `commit` and `builtAt` in the answer) |
 | as-of commit (a map version's) differs from the index's | `stale`, with both commits named (`commit` and `asOfCommit` on every row); the lens marks the rows `asOfMismatch` and reads "from abcdef0, not 1234567". This is the state a map published after its wait (§6.4) shows, and it clears itself the moment the index for the map's commit lands, with nothing re-promoted: it is computed at read time |
