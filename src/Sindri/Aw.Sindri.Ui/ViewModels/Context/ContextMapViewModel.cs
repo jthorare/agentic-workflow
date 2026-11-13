@@ -5,7 +5,7 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 
 /// <summary>
 /// The context map (F3 spec 1): the lenses answer laid out on the world, as the nodes, edges, label pills and band frames the page
-/// draws, plus the draft mark, the starting points and the coverage words of the control row. Built once per read; selection and
+/// draws, plus the draft mark, the starting points and the coverage sentence of the control row. Built once per read; selection and
 /// hover are in ContextMapViewModel.Selection.cs.
 /// </summary>
 internal sealed partial class ContextMapViewModel : ObservableObject
@@ -13,7 +13,8 @@ internal sealed partial class ContextMapViewModel : ObservableObject
 
     /// <summary>The map of one answer.</summary>
     /// <param name="view">The lenses answer.</param>
-    internal ContextMapViewModel(LensesView view)
+    /// <param name="exact">Whether the answer came from a direct pick or an exact name: the coverage sentence is then empty.</param>
+    internal ContextMapViewModel(LensesView view, bool exact = false)
     {
         ArgumentNullException.ThrowIfNull(view);
         Layout = ContextMapLayout.Build(view);
@@ -28,7 +29,7 @@ internal sealed partial class ContextMapViewModel : ObservableObject
         WorldHeight = Layout.World.Height;
         Draft = view.Draft;
         Anchors = [.. view.Anchors.Select(a => new MapAnchorViewModel(a.Key, a.Label, a.Kind))];
-        (CoverageAreas, CoverageLead, CoverageRest) = CoverageWords.Words(view);
+        Coverage = CoverageWords.Sentence(view, exact);
     }
 
     private readonly Dictionary<string, LensRecord> _records;
@@ -67,14 +68,8 @@ internal sealed partial class ContextMapViewModel : ObservableObject
     /// <summary>The starting points of the read.</summary>
     public IReadOnlyList<MapAnchorViewModel> Anchors { get; }
 
-    /// <summary>The four areas of the coverage strip.</summary>
-    internal IReadOnlyList<CoverageArea> CoverageAreas { get; }
-
-    /// <summary>The coverage sentence's bold lead.</summary>
-    public string CoverageLead { get; }
-
-    /// <summary>The coverage sentence's rest.</summary>
-    public string CoverageRest { get; }
+    /// <summary>What was searched and why the rest was not; empty when there is nothing to say.</summary>
+    public string Coverage { get; }
 
     /// <summary>The node with a key, or null.</summary>
     /// <param name="key">The node's key.</param>

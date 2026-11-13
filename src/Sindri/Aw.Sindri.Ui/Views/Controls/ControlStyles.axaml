@@ -176,20 +176,4 @@
     <Setter Property="Focusable" Value="False" />
     <Setter Property="IsTabStop" Value="False" />
   </Style>
-  <Style Selector="controls|CoverageStrip">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Padding" Value="8,4" />
-    <Setter Property="MinHeight" Value="{StaticResource Size.Control}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
-  </Style>
-  <Style Selector="controls|CoverageStrip:pointerover /template/ ContentPresenter#PART_ContentPresenter, controls|CoverageStrip:pressed /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
-  </Style>
-  <Style Selector="controls|CoverageStrip TextBlock">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.InkMuted}" />
-  </Style>
-  <Style Selector="controls|CoverageStrip TextBlock.lead">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-  </Style>
 </Styles>
