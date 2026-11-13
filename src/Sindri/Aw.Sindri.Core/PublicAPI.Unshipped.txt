@@ -19611,7 +19611,6 @@ Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.CancelQueued(Aw.Sindri.Core.Graph.Id
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Discard(Aw.Sindri.Core.Graph.Ids.WorkflowRunId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
 Aw.Sindri.Core.Graph.Runs.NodeRun
 Aw.Sindri.Core.Graph.Runs.NodeRun.<Clone>$() -> Aw.Sindri.Core.Graph.Runs.NodeRun!
-Aw.Sindri.Core.Graph.Runs.NodeRun.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out Aw.Sindri.Core.Graph.Ids.NodeId NodeId, out int ItemIndex, out Aw.Sindri.Core.Graph.Runs.NodeRunStatus Status, out string? Input, out string? Output, out bool Truncated, out string? Error, out string? Usage) -> void
 Aw.Sindri.Core.Graph.Runs.NodeRun.Equals(Aw.Sindri.Core.Graph.Runs.NodeRun? other) -> bool
 Aw.Sindri.Core.Graph.Runs.NodeRun.Error.get -> string?
 Aw.Sindri.Core.Graph.Runs.NodeRun.Error.init -> void
@@ -19622,7 +19621,6 @@ Aw.Sindri.Core.Graph.Runs.NodeRun.ItemIndex.init -> void
 Aw.Sindri.Core.Graph.Runs.NodeRunLimits
 Aw.Sindri.Core.Graph.Runs.NodeRun.NodeId.get -> Aw.Sindri.Core.Graph.Ids.NodeId
 Aw.Sindri.Core.Graph.Runs.NodeRun.NodeId.init -> void
-Aw.Sindri.Core.Graph.Runs.NodeRun.NodeRun(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, Aw.Sindri.Core.Graph.Runs.NodeRunStatus Status, string? Input, string? Output, bool Truncated, string? Error, string? Usage) -> void
 Aw.Sindri.Core.Graph.Runs.NodeRun.Output.get -> string?
 Aw.Sindri.Core.Graph.Runs.NodeRun.Output.init -> void
 Aw.Sindri.Core.Graph.Runs.NodeRun.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
@@ -23214,6 +23212,51 @@ static Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.operator ==(Aw.Sindri.Core
 Aw.Sindri.Core.NeedsYou.NeedsYouDecisions
 static Aw.Sindri.Core.NeedsYou.NeedsYouDecisions.From(Aw.Sindri.Core.Views.HumanDecisionRow! row) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouDecision!>!
 static Aw.Sindri.Core.NeedsYou.NeedsYouDecisions.Question(Aw.Sindri.Core.Views.HumanDecisionRow! row) -> string!
+Aw.Sindri.Core.Graph.Blocks.BlockContext.LeaveRaw(string! text) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockContext.Raw.get -> string?
+Aw.Sindri.Core.Graph.Blocks.IGraphModelPort.Answer(string! prompt, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.ModelAnswer!>!>
+Aw.Sindri.Core.Graph.Blocks.ModelAnswer
+Aw.Sindri.Core.Graph.Blocks.ModelAnswer.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.ModelAnswer!
+Aw.Sindri.Core.Graph.Blocks.ModelAnswer.Deconstruct(out string! Text, out int ExitCode) -> void
+Aw.Sindri.Core.Graph.Blocks.ModelAnswer.Equals(Aw.Sindri.Core.Graph.Blocks.ModelAnswer? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.ModelAnswer.ExitCode.get -> int
+Aw.Sindri.Core.Graph.Blocks.ModelAnswer.ExitCode.init -> void
+Aw.Sindri.Core.Graph.Blocks.ModelAnswer.ModelAnswer(string! Text, int ExitCode = 0) -> void
+Aw.Sindri.Core.Graph.Blocks.ModelAnswer.Text.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ModelAnswer.Text.init -> void
+Aw.Sindri.Core.Graph.Failures.FailureSentence
+Aw.Sindri.Core.Graph.Failures.FailureSentence.<Clone>$() -> Aw.Sindri.Core.Graph.Failures.FailureSentence!
+Aw.Sindri.Core.Graph.Failures.FailureSentence.Code.get -> string!
+Aw.Sindri.Core.Graph.Failures.FailureSentence.Code.init -> void
+Aw.Sindri.Core.Graph.Failures.FailureSentence.Deconstruct(out string! Code, out string! Template, out string? FixLabel, out string? FixCommand, out string? SecondaryLabel) -> void
+Aw.Sindri.Core.Graph.Failures.FailureSentence.Equals(Aw.Sindri.Core.Graph.Failures.FailureSentence? other) -> bool
+Aw.Sindri.Core.Graph.Failures.FailureSentence.FailureSentence(string! Code, string! Template, string? FixLabel, string? FixCommand, string? SecondaryLabel = null) -> void
+Aw.Sindri.Core.Graph.Failures.FailureSentence.FixCommand.get -> string?
+Aw.Sindri.Core.Graph.Failures.FailureSentence.FixCommand.init -> void
+Aw.Sindri.Core.Graph.Failures.FailureSentence.FixLabel.get -> string?
+Aw.Sindri.Core.Graph.Failures.FailureSentence.FixLabel.init -> void
+Aw.Sindri.Core.Graph.Failures.FailureSentence.SecondaryLabel.get -> string?
+Aw.Sindri.Core.Graph.Failures.FailureSentence.SecondaryLabel.init -> void
+Aw.Sindri.Core.Graph.Failures.FailureSentence.Template.get -> string!
+Aw.Sindri.Core.Graph.Failures.FailureSentence.Template.init -> void
+Aw.Sindri.Core.Graph.Failures.FailureSentences
+Aw.Sindri.Core.Graph.Runs.NodeRun.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out Aw.Sindri.Core.Graph.Ids.NodeId NodeId, out int ItemIndex, out Aw.Sindri.Core.Graph.Runs.NodeRunStatus Status, out string? Input, out string? Output, out bool Truncated, out string? Error, out string? Usage, out string? Raw) -> void
+Aw.Sindri.Core.Graph.Runs.NodeRun.NodeRun(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, Aw.Sindri.Core.Graph.Runs.NodeRunStatus Status, string? Input, string? Output, bool Truncated, string? Error, string? Usage, string? Raw = null) -> void
+Aw.Sindri.Core.Graph.Runs.NodeRun.Raw.get -> string?
+Aw.Sindri.Core.Graph.Runs.NodeRun.Raw.init -> void
+override Aw.Sindri.Core.Graph.Blocks.ModelAnswer.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.ModelAnswer.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.ModelAnswer.ToString() -> string!
+override Aw.Sindri.Core.Graph.Failures.FailureSentence.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Failures.FailureSentence.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Failures.FailureSentence.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.ModelAnswer.operator !=(Aw.Sindri.Core.Graph.Blocks.ModelAnswer? left, Aw.Sindri.Core.Graph.Blocks.ModelAnswer? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.ModelAnswer.operator ==(Aw.Sindri.Core.Graph.Blocks.ModelAnswer? left, Aw.Sindri.Core.Graph.Blocks.ModelAnswer? right) -> bool
+static Aw.Sindri.Core.Graph.Failures.FailureSentence.operator !=(Aw.Sindri.Core.Graph.Failures.FailureSentence? left, Aw.Sindri.Core.Graph.Failures.FailureSentence? right) -> bool
+static Aw.Sindri.Core.Graph.Failures.FailureSentence.operator ==(Aw.Sindri.Core.Graph.Failures.FailureSentence? left, Aw.Sindri.Core.Graph.Failures.FailureSentence? right) -> bool
+static Aw.Sindri.Core.Graph.Failures.FailureSentences.Find(string! code) -> Aw.Sindri.Core.Graph.Failures.FailureSentence?
+static Aw.Sindri.Core.Graph.Failures.FailureSentences.Say(string! code, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! values) -> string!
+static readonly Aw.Sindri.Core.SindriErrors.GraphPromptFieldEmpty -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Connections.Polling.EventKindSchema
 Aw.Sindri.Core.Connections.Polling.EventKindSchema.<Clone>$() -> Aw.Sindri.Core.Connections.Polling.EventKindSchema!
 Aw.Sindri.Core.Connections.Polling.EventKindSchema.Deconstruct(out string! Kind, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Fields, out System.Text.Json.Nodes.JsonObject! Sample) -> void
