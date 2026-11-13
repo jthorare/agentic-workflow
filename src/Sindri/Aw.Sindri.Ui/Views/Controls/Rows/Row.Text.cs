@@ -105,6 +105,7 @@ internal sealed partial class Row
     private TextLayout Make(string text, Typeface face, double size, IBrush ink, Fit? fit = null)
     {
         _layoutsBuilt++;
+        _ = Interlocked.Increment(ref _textLayoutsBuilt);
         return fit is null
             ? new TextLayout(text, face, size, ink, textWrapping: TextWrapping.NoWrap)
             : new TextLayout(text, face, size, ink, textAlignment: fit.Align, textWrapping: TextWrapping.NoWrap, textTrimming: TextTrimming.CharacterEllipsis, maxWidth: fit.MaxWidth);

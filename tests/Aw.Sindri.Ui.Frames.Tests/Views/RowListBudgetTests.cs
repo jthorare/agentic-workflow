@@ -3,6 +3,7 @@ using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Views.Controls.Rows;
@@ -264,11 +265,11 @@ public sealed class RowListBudgetTests
     }
 
     [Fact]
-    public async Task A_recycle_reuses_the_cells_and_glyph_geometry_and_builds_none_per_row_scrolled_past() => await OnUi(() =>
+    public async Task A_recycle_reuses_the_rows_glyph_geometry_and_strips_and_builds_no_controls_per_row_scrolled_past() => await OnUi(() =>
     {
-        var cellsBefore = Row.CellsBuilt;
-        var contentsBefore = RowFactViews.ContentsBuilt;
-        var glyphBefore = RowGlyphView.Allocations;
+        var layoutsBefore = Row.TextLayoutsBuilt;
+        var stripsBefore = RowActionsStrip.Made;
+        var glyphBefore = RowGlyphPainter.Allocations;
         var list = new RowList { ItemsSource = RowGallery.Many(Groups, PerGroup), Columns = RowGallery.Columns };
         var window = new Window { Content = list, Width = 1280, Height = WindowHeight };
         window.Show();
@@ -282,12 +283,12 @@ public sealed class RowListBudgetTests
         }
 
         var containers = list.ContainersCreated;
-        var columns = RowGallery.Columns.Count;
-        var cells = Row.CellsBuilt - cellsBefore;
-        var contents = RowFactViews.ContentsBuilt - contentsBefore;
-        var glyphs = RowGlyphView.Allocations - glyphBefore;
-        Assert.True(cells <= containers * (columns + 1), string.Create(CultureInfo.InvariantCulture, $"{cells} cells built for {containers} containers; rows scrolled past would make thousands"));
-        Assert.True(contents <= containers * columns, string.Create(CultureInfo.InvariantCulture, $"{contents} fact contents built for {containers} containers"));
+        var layouts = Row.TextLayoutsBuilt - layoutsBefore;
+        var strips = RowActionsStrip.Made - stripsBefore;
+        var glyphs = RowGlyphPainter.Allocations - glyphBefore;
+        Assert.True(list.GetVisualDescendants().OfType<Row>().All(r => !r.GetVisualChildren().Any()), "an idle row has no child control");
+        Assert.True(strips <= 2, string.Create(CultureInfo.InvariantCulture, $"{strips} action strips made while no row was hot"));
+        Assert.True(layouts <= (list.ContainersPrepared * 15L) + 15, string.Create(CultureInfo.InvariantCulture, $"{layouts} text layouts built for {list.ContainersPrepared} row fills: a row builds them once per item"));
         Assert.True(glyphs <= containers + 40, string.Create(CultureInfo.InvariantCulture, $"{glyphs} glyph geometries, pens and palettes built for {containers} containers"));
         window.Close();
         return true;

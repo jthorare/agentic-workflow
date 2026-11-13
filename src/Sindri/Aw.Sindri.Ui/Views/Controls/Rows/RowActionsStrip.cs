@@ -12,15 +12,20 @@ namespace Aw.Sindri.Ui.Views.Controls.Rows;
 internal sealed class RowActionsStrip : Border
 {
     private static readonly Stack<RowActionsStrip> _pool = new();
+    private static long _made;
 
     private readonly StackPanel _buttons = new() { Orientation = Orientation.Horizontal };
 
     public RowActionsStrip()
     {
+        _ = Interlocked.Increment(ref _made);
         Padding = new Thickness(8, 0, 0, 0);
         Child = _buttons;
         _ = Bind(BackgroundProperty, this.GetResourceObservable("Brush.Surface2"));
     }
+
+    /// <summary>How many strips were ever made. Rows share a few, so scrolling past thousands of rows does not move it.</summary>
+    internal static long Made => Interlocked.Read(ref _made);
 
     /// <summary>Takes a strip from the pool, or makes one.</summary>
     /// <returns>A strip with no actions.</returns>

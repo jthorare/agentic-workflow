@@ -1,5 +1,6 @@
 using Avalonia.Automation;
 using Avalonia.Automation.Peers;
+using Avalonia.Automation.Provider;
 
 namespace Aw.Sindri.Ui.Views.Controls.Rows;
 
@@ -8,8 +9,17 @@ namespace Aw.Sindri.Ui.Views.Controls.Rows;
 /// ~30 rows built; this one counts every row in the list, folded groups left out. A name the page set stays: "Needs you, 8 rows" reads "page name, N rows".
 /// </summary>
 /// <param name="owner">The list.</param>
-internal sealed class RowListAutomationPeer(RowList owner) : ItemsControlAutomationPeer(owner)
+internal sealed class RowListAutomationPeer(RowList owner) : ItemsControlAutomationPeer(owner), ISelectionProvider
 {
+    /// <inheritdoc />
+    public bool CanSelectMultiple => false;
+
+    /// <inheritdoc />
+    public bool IsSelectionRequired => false;
+
+    /// <inheritdoc />
+    public IReadOnlyList<AutomationPeer> GetSelection() => [.. owner.SelectedRows().Select(CreatePeerForElement)];
+
     /// <inheritdoc />
     protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.List;
 

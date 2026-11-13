@@ -23,6 +23,8 @@ internal sealed partial class Row : Control
     /// <summary>How many of the fact columns show; the list lowers it while the peek is open.</summary>
     public static readonly StyledProperty<int> VisibleColumnsProperty = AvaloniaProperty.Register<Row, int>(nameof(VisibleColumns), defaultValue: int.MaxValue);
 
+    private static long _textLayoutsBuilt;
+
     private const double GlyphBox = 16;
     private const double SelBarWidth = 2;
     internal const double RingStroke = 2;
@@ -66,8 +68,8 @@ internal sealed partial class Row : Control
         };
     }
 
-    /// <summary>How many cell controls rows ever made. A flat row has none, so it stays 0 (the recycle test still reads it until #3189 slice 4).</summary>
-    internal static long CellsBuilt => 0;
+    /// <summary>How many text layouts rows ever built. A row builds its layouts once per item and keeps them, so this follows the fills and not the renders.</summary>
+    internal static long TextLayoutsBuilt => Interlocked.Read(ref _textLayoutsBuilt);
 
     /// <summary>The fill behind the row.</summary>
     public IBrush? Background

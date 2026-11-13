@@ -1,3 +1,4 @@
+using Avalonia.Automation;
 using Avalonia.Automation.Peers;
 
 namespace Aw.Sindri.Ui.Views.Controls.Rows;
@@ -23,9 +24,45 @@ internal sealed partial class RowList
         return _peer = new RowListAutomationPeer(this);
     }
 
+    /// <summary>The rows built now that are the selected one: the list's selection for a screen reader.</summary>
+    internal IEnumerable<Row> SelectedRows() => ItemsPanelRoot?.Children.OfType<Row>().Where(r => r.Classes.Contains("sel")) ?? [];
+
+    // Tells a built row its place among all the rows ("3 of 40"): groups and their headers are not counted, folded groups left out.
+    private void SetPlace(Row row, int index)
+    {
+        var placed = 0;
+        var at = 0;
+        foreach (var state in _run.States)
+        {
+            var next = at + 1 + state.Visible;
+            if (index < next)
+            {
+                AutomationProperties.SetPositionInSet(row, placed + (index - at));
+                break;
+            }
+
+            placed += state.Visible;
+            at = next;
+        }
+
+        AutomationProperties.SetSizeOfSet(row, RowCount);
+    }
+
+    private void RefreshPlaces()
+    {
+        foreach (var row in ItemsPanelRoot?.Children.OfType<Row>() ?? [])
+        {
+            if (row.DataContext is not null && IndexFromContainer(row) is var index and >= 0)
+            {
+                SetPlace(row, index);
+            }
+        }
+    }
+
     // After an edit: if the row count changed, the list's name did, and the peer says so (once per change).
     private void AnnounceRowCount()
     {
+        RefreshPlaces();
         var now = RowCount;
         var before = _announcedRows;
         _announcedRows = now;

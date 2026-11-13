@@ -218,6 +218,7 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
         {
             row.DataContext = item;
             Prepare(row);
+            SetPlace(row, index);
         }
     }
 

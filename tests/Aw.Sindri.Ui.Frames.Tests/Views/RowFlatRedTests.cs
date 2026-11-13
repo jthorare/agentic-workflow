@@ -94,13 +94,13 @@ public sealed class RowFlatRedTests
     });
 
     [Fact]
-    public async Task Todays_row_peer_is_pinned_so_the_flat_peer_shows_in_the_diff() => await OnUi(() =>
+    public async Task The_row_peer_is_a_ListItem_that_is_a_control_element() => await OnUi(() =>
     {
         var (window, _, _, row) = ShowWithAction();
 
         var peer = ControlAutomationPeer.CreatePeerForElement(row);
 
-        Assert.Equal(("NoneAutomationPeer", AutomationControlType.None, false), (peer.GetType().Name, peer.GetAutomationControlType(), peer.IsControlElement()));
+        Assert.Equal(("RowAutomationPeer", AutomationControlType.ListItem, true), (peer.GetType().Name, peer.GetAutomationControlType(), peer.IsControlElement()));
         window.Close();
         return true;
     });
