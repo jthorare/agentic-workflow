@@ -139,6 +139,18 @@ public sealed class TriggerEventsRouteTests : IAsyncLifetime
         Assert.Contains("SND-CLI-003", body.GetRawText(), StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("abc")]
+    [InlineData("-1")]
+    [InlineData("0")]
+    public async Task A_limit_that_is_not_a_whole_number_of_1_or_more_is_invalid_input_not_the_default(string limit)
+    {
+        var (status, body) = await Read("?kind=github.pr.merged&limit=" + Uri.EscapeDataString(limit));
+
+        Assert.Equal(HttpStatusCode.BadRequest, status);
+        Assert.Contains("SND-CLI-003", body.GetRawText(), StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task A_workflow_may_not_take_the_slug_trigger_events_because_the_route_would_hide_it()
     {

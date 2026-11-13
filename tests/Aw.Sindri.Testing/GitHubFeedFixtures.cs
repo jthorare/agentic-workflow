@@ -174,12 +174,18 @@ public static class GitHubFeedFixtures
     /// <param name="updatedAt">ISO time of the pull request's last change.</param>
     /// <param name="mergeableState">'clean', 'dirty', 'unknown' ... for the detail answer; null for a list item, which has none.</param>
     /// <param name="draft">Whether the pull request is a draft.</param>
+    /// <param name="createdAt">ISO time the pull request was opened; null leaves created_at out.</param>
     /// <returns>The JSON object.</returns>
-    public static string OpenPull(string repo, int number, string headSha, string updatedAt, string? mergeableState = null, bool draft = false)
+    public static string OpenPull(string repo, int number, string headSha, string updatedAt, string? mergeableState = null, bool draft = false, string? createdAt = null)
     {
         var pull = Pull(repo, number, headSha, draft, merged: false);
         pull["state"] = "open";
         pull["updated_at"] = updatedAt;
+        if (createdAt is not null)
+        {
+            pull["created_at"] = createdAt;
+        }
+
         if (mergeableState is not null)
         {
             pull["mergeable_state"] = mergeableState;
@@ -192,11 +198,17 @@ public static class GitHubFeedFixtures
     /// <summary>A GET /repos/{r}/commits/{sha}/check-runs answer.</summary>
     /// <param name="runs">Each run's name, status ('queued', 'in_progress', 'completed'), conclusion ('success', 'failure', 'neutral', 'skipped', 'timed_out', 'cancelled' or null while not completed) and completed_at (ISO time or null).</param>
     /// <returns>The JSON object.</returns>
-    public static string CheckRuns(params (string Name, string Status, string? Conclusion, string? CompletedAt)[] runs)
+    public static string CheckRuns(params (string Name, string Status, string? Conclusion, string? CompletedAt)[] runs) => CheckRunsFrom(7001, runs);
+
+    /// <summary>A check-runs answer whose runs get ids counting up from <paramref name="firstId"/>, so a later answer can model a re-run (new run ids).</summary>
+    /// <param name="firstId">The id of the first run.</param>
+    /// <param name="runs">As for <see cref="CheckRuns"/>.</param>
+    /// <returns>The JSON object.</returns>
+    public static string CheckRunsFrom(int firstId, params (string Name, string Status, string? Conclusion, string? CompletedAt)[] runs)
     {
         ArgumentNullException.ThrowIfNull(runs);
         var list = new JsonArray();
-        var id = 7000;
+        var id = firstId - 1;
         foreach (var (name, status, conclusion, completedAt) in runs)
         {
             list.Add(new JsonObject { ["id"] = ++id, ["name"] = name, ["status"] = status, ["conclusion"] = conclusion, ["completed_at"] = completedAt });

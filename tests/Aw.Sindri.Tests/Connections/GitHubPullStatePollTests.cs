@@ -42,7 +42,7 @@ public sealed class GitHubPullStatePollTests
         Assert.Equal("red", fired.Fields["conclusion"]);
         Assert.Equal("[\"lint\"]", fired.Fields["failing"]);
         Assert.Equal("42", fired.Fields["number"]);
-        Assert.Equal("github:acme/app#42:checks:abc123:red", fired.DeliveryKey);
+        Assert.Equal("github:acme/app#42:checks:abc123:red:7002", fired.DeliveryKey);
         Assert.Equal(DateTimeOffset.Parse("2026-11-08T10:02:00Z", System.Globalization.CultureInfo.InvariantCulture), fired.OccurredAt);   // the last check that finished
         Assert.Empty(again.Value.Events);   // still red on the same head: nothing new
     }
@@ -77,7 +77,7 @@ public sealed class GitHubPullStatePollTests
         provider.SetGitHubCheckRuns("def456", GitHubFeedFixtures.CheckRuns(("lint", "completed", "failure", "2026-11-08T10:12:00Z")));
         var red = await h.Poller.Poll(h.Connection, _checks, baseline.Value.NextCursor, Token);
 
-        Assert.Equal("github:acme/app#42:checks:def456:red", Assert.Single(red.Value.Events).DeliveryKey);
+        Assert.Equal("github:acme/app#42:checks:def456:red:7001", Assert.Single(red.Value.Events).DeliveryKey);
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public sealed class GitHubPullStatePollTests
         Assert.Empty(baseline.Value.Events);
         var fired = Assert.Single(dirty.Value.Events);
         Assert.Equal(_conflict, fired.Kind);
-        Assert.Equal("github:acme/app#42:conflict:abc123", fired.DeliveryKey);
+        Assert.Equal("github:acme/app#42:conflict:abc123:1", fired.DeliveryKey);
         Assert.Equal("main", fired.Fields["baseRef"]);
         Assert.Empty(again.Value.Events);
     }
