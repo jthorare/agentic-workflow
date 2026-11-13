@@ -52,4 +52,8 @@
   <Style Selector="Border.clickable.selected:pointerover, Border.clickable.selected:pressed">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
   </Style>
+  <!-- A selected row with focus keeps the focus ring's colour too: the rule above comes later than the focus one and would turn it Primary (#3506). -->
+  <Style Selector="Border.clickable.selected:focus-visible:pointerover, Border.clickable.selected:focus-visible:pressed">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+  </Style>
 </Styles>
