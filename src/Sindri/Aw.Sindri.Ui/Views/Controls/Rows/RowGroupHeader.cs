@@ -36,7 +36,7 @@ internal sealed class RowGroupHeader : Border
     {
         Classes.Add("group-header");
         AddHandler(PointerPressedEvent, OnHeaderPressed, RoutingStrategies.Bubble, handledEventsToo: true);
-        SetValue(BackgroundProperty, Brushes.Transparent, Avalonia.Data.BindingPriority.Style);   // a border with no fill is not hit-testable: the padding left of the chevron would swallow the click. Style priority, so the sticky copy's template fill (Canvas) wins
+        _ = SetValue(BackgroundProperty, Brushes.Transparent, Avalonia.Data.BindingPriority.Style);   // a border with no fill is not hit-testable: the padding left of the chevron would swallow the click. Style priority, so the sticky copy's template fill (Canvas) wins
         Focusable = true;   // the cursor can stand on a header: Left folds, Right unfolds
         _chevron.HorizontalAlignment = HorizontalAlignment.Center;
         _chevronBox = new Border { Name = "PART_Chevron", Width = ChevronBox, Height = ChevronBox, Background = Brushes.Transparent, Cursor = new Cursor(StandardCursorType.Hand), Child = _chevron };
