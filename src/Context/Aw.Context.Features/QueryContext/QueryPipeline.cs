@@ -7,6 +7,7 @@ using Aw.Context.Core.Linear;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Models;
+using Aw.Context.Core.Ranking;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Trust;
@@ -68,7 +69,8 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
 
         degraded.AddRange(searched.Degraded);
         var fused = await Ranked(searched, (graph, RankerPlan.For(settings.Value.Ranker, inputs.Ranker) with { LibraryModelRoots = settings.Value.LibraryModelRoots }), scrubbers.Value.Egress, degraded, cancellationToken).ConfigureAwait(false);
-        var fetched = await Fetch(fused, (sources, scrubbers.Value.Ingest), deadline, degraded, cancellationToken).ConfigureAwait(false);
+        var (toRead, matches) = Windowed(fused, request.Query.Window, miss);
+        var fetched = await Fetch(toRead, (sources, scrubbers.Value.Ingest), deadline, degraded, cancellationToken).ConfigureAwait(false);
         if (miss is not null && !Answers(fetched, miss.Item.Trim()))
         {
             return Unknown(miss, request.Scope);   // not linked by any sync, and no live record carries that tracker key
@@ -78,7 +80,20 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         var versions = await Versions(fetched, sources, deadline, degraded, cancellationToken).ConfigureAwait(false);
         var assembly = new ResultAssembly(scrubbers.Value.Egress, QueryId.From("q_" + ids.NewId().ToString("N", CultureInfo.InvariantCulture)), clock.GetUtcNow());
         var built = assembly.Build(request.Query, new RecordPart(fetched, versions, degraded), DemotedLast(graph, request.Scope.Repos));
-        return built with { Filtered = DemotedFiles.Counts(CodeKeys(graph), request.Scope.Repos), Notes = notes };
+        return built with { Filtered = DemotedFiles.Counts(CodeKeys(graph), request.Scope.Repos), Notes = notes, Matches = matches };
+    }
+
+    // The page of ranked records the caller reads (#3370): no window reads every match (#938). An item question whose key no sync
+    // linked reads every match too, because the record that carries the key may rank past the page and the answer would wrongly say unknown.
+    private static (List<FusedItem> ToRead, RecordMatches? Matches) Windowed(List<FusedItem> ranked, QueryWindow? window, ItemMiss? miss)
+    {
+        if (window is null || miss is not null)
+        {
+            return (ranked, null);
+        }
+
+        var page = ranked.Skip(window.Offset).Take(window.Limit).ToList();
+        return (page, new RecordMatches(ranked.Count, window.Offset, page.Count));
     }
 
     private static IEnumerable<NodeKey> CodeKeys(GraphPart graph) =>

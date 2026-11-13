@@ -25,6 +25,10 @@ internal static class McpPages
     // why: the citations are looked up by marker; a page keeps only the ones its own items and conflicts name, so a page shrinks with its window
     private const string Cites = "cites";
 
+    // why: a context answer asked with a window (#3370) read only this page of its ranked records, so that list is already the page;
+    // 'matches.matched' is the list's total
+    private const string ReadSection = "records";
+
     /// <summary>The answer with one page of each top-level list, and a page object.</summary>
     /// <param name="answer">The whole answer.</param>
     /// <param name="window">Which page.</param>
@@ -39,7 +43,16 @@ internal static class McpPages
         var more = false;
         var lists = new JsonObject();
         // note: an answer that already has a top-level "page" loses it here; none does today
+        var read = DetachReadPage(root);
         Slice(root, window, "", lists, ref more);
+        if (read is { } page)
+        {
+            page.Section["items"] = page.Items;
+            var listMore = (long)window.Offset + page.Items.Count < page.Matched;
+            more |= listMore;
+            lists["sections." + ReadSection + ".items"] = new JsonObject { ["total"] = page.Matched, ["more"] = listMore };
+        }
+
         KeepPageCites(root);
         root["page"] = new JsonObject
         {
@@ -76,6 +89,25 @@ internal static class McpPages
 
             obj[name] = Cut(array, window, path + name, lists, ref more);
         }
+    }
+
+    // The records section's items of an answer that says how many matched: taken out so the window doesn't cut the page a second time.
+    private static (JsonObject Section, JsonArray Items, int Matched)? DetachReadPage(JsonObject root)
+    {
+        if (root["matches"] is not JsonObject matches || matches["matched"] is not JsonValue value || !value.TryGetValue<int>(out var matched)
+            || root["sections"] is not JsonArray sections)
+        {
+            return null;
+        }
+
+        var section = sections.OfType<JsonObject>().FirstOrDefault(s => BucketName(s) == ReadSection);
+        if (section?["items"] is not JsonArray items)
+        {
+            return null;
+        }
+
+        _ = section.Remove("items");
+        return (section, items, matched);
     }
 
     // Drops the citations no kept item or conflict names (a marker is any string value in the page outside 'cites' and 'page').
