@@ -62,7 +62,7 @@ public sealed class MapNotReadyTests
     {
         var (page, _) = await Page(RouteAnswer.Problem("context-whole", "building-in-progress"));
 
-        Assert.Equal((true, "Building the map · 1 of 1 source · started 2 h ago", "last map 2 h ago", true), (page.ShowBuilding, page.BuildingTitle, page.BuildingBody, page.HasBuildJob));
+        Assert.Equal((true, "Building the map for aw-split-panes · 1 of 1 source · started 2 h ago", "last map 2 h ago", true), (page.ShowBuilding, page.BuildingTitle, page.BuildingBody, page.HasBuildJob));
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public sealed class MapNotReadyTests
         var (started, _) = await Page(RouteAnswer.Problem("context-whole", "no-map-approved"));
         var (never, _) = await Page(RouteAnswer.Problem("context-whole", "no-map-never-run"));
 
-        Assert.Equal((true, false, "Building the map · started 2 h ago"), (started.ShowBuilding, started.ShowEmpty, started.BuildingTitle));
+        Assert.Equal((true, false, "Building the map for aw-split-panes · started 2 h ago"), (started.ShowBuilding, started.ShowEmpty, started.BuildingTitle));
         Assert.Equal((false, true), (never.ShowBuilding, never.ShowEmpty));
     }
 
