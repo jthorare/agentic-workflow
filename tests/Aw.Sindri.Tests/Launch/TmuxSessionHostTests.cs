@@ -143,6 +143,23 @@ public sealed class TmuxSessionHostTests : SessionHostContract, IDisposable
         Expect.Equal(gone, stopped.IsSuccess);   // a refused socket is not "gone": the caller keeps the secrets of a session that may still run
     }
 
+    // #3434: a kill that reaches a server while it exits (its last session just ended) gets "server exited unexpectedly" or "no current target"
+    // (22 of 600 real tmux 3.4 runs); asked again, the same server says "no server running".
+    [Theory]
+    [InlineData("server exited unexpectedly")]
+    [InlineData("no current target")]
+    public async Task Stop_asks_again_when_the_server_was_exiting(string complaint)
+    {
+        var path = Path.Combine(_tmux.Scratch, "kill-mid-exit");
+        var asked = Path.Combine(_tmux.Scratch, "asked-once");
+        _ = ExecutableScript.Write(path,
+            $"case \"$*\" in\n  *kill-session*) if [ -e '{asked}' ]; then echo 'no server running on /tmp/tmux-1000/sindri-launch' >&2; else : > '{asked}'; echo '{complaint}' >&2; fi; exit 1 ;;\nesac\nexit 0\n");
+
+        var stopped = await new TmuxSessionHost(new TmuxHostOptions(path, "sindri-launch")).Stop(new HostRef(HostKind.Tmux, "snd-x"), CancellationToken.None);
+
+        Expect.True(stopped.IsSuccess);
+    }
+
     [Fact]
     public async Task One_deadline_covers_the_version_check_and_the_new_session()
     {
