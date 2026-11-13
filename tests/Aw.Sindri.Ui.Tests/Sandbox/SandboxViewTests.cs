@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
+using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Threading;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
@@ -155,7 +156,10 @@ public sealed class SandboxViewTests
     {
         _bed.Server.SandboxStatusAnswer = RouteAnswer.SpecShaped("sandbox-status", "never-checked");
         await _bed.Card.Refresh(SandboxTestBed.Api, Token);
-        var window = Show(new SandboxHealthCard { DataContext = _bed.Card });
+        // The card lives in the shell window, whose ShellStyles give a StateIcon its Size.Icon; a bare Window would leave the mark 0 x 0.
+        var card = new SandboxHealthCard { DataContext = _bed.Card };
+        card.Styles.Add(new StyleInclude(new Uri("avares://Aw.Sindri.Ui/")) { Source = new Uri("avares://Aw.Sindri.Ui/Views/Shell/ShellStyles.axaml") });
+        var window = Show(card);
 
         var mark = Find<StateIcon>(window, "SandboxGlyph");
         var word = Find<TextBlock>(window, "SandboxWord");
