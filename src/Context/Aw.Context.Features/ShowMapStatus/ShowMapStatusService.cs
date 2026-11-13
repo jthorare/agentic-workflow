@@ -41,12 +41,19 @@ internal sealed class ShowMapStatusService(IGraphStore store) : IService<ShowMap
             return coverage.Error;
         }
 
+        var heads = await store.Heads(version.Number, cancellationToken).ConfigureAwait(false);
+        if (heads.IsError)
+        {
+            return heads.Error;
+        }
+
         var orphaned = OverrideApplier.Apply(shown, layer).Orphaned.Count;
         return new MapStatusView(version, MapCounts.Of(shown, layer.Count), orphaned, versions.Value.Count(v => v.Status == MapVersionStatus.Retained), ScopedTo(request.Scope.Caller), coverage.Value)
         {
             RulesOlder = RulesOlder(version, request.Scope),
             Checks = version.Checks,
             Roles = Roles(shown, version, request.Scope),
+            Heads = Heads(heads.Value, ScopedTo(request.Scope.Caller)),
         };
     }
 
@@ -60,6 +67,13 @@ internal sealed class ShowMapStatusService(IGraphStore store) : IService<ShowMap
         var own = ScopedTo(scope.Caller);
         var counted = RoleCounter.Of([.. scope.Repos.Where(r => own is null || r.Name == own)], RoleCounter.CodePaths(shown, version.Repo.Value), version.Dropped);
         return counted.Count == 0 ? null : counted;
+    }
+
+    // Every mapped repo with its commit (issue 3308), a session's own only; null (left out) when the version recorded none.
+    private static IReadOnlyList<MapHead>? Heads(IReadOnlyList<MapHead> heads, ContextRepoName? own)
+    {
+        var shown = own is null ? heads : [.. heads.Where(h => h.Repo == own)];
+        return shown.Count == 0 ? null : shown;
     }
 
     private static ContextRepoName? ScopedTo(ContextCaller caller) => caller.Kind == ContextCallerKind.Session ? caller.Repo : null;
