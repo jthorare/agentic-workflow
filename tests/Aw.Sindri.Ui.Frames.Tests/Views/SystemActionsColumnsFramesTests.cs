@@ -27,7 +27,7 @@ public sealed class SystemActionsColumnsFramesTests : FrameHost
         var (window, card) = await Actions(1440);
         var xs = CommandXs(window, card);
 
-        Assert.True(xs.Count >= 2, string.Create(CultureInfo.InvariantCulture, $"{xs.Count} copy commands"));
+        Assert.True(xs.Count >= 2, $"{xs.Count} copy commands");
         Assert.True(xs.Max() > card.Bounds.Width / 2, string.Create(CultureInfo.InvariantCulture, $"no command starts right of the card's middle ({card.Bounds.Width / 2}); starts: {string.Join(", ", xs)}"));
         Assert.True(xs.Min() < card.Bounds.Width / 2, "the first column is on the left");
     });
@@ -38,8 +38,8 @@ public sealed class SystemActionsColumnsFramesTests : FrameHost
         var (window, card) = await Actions(1000);
         var xs = CommandXs(window, card);
 
-        Assert.True(xs.Count >= 2, string.Create(CultureInfo.InvariantCulture, $"{xs.Count} copy commands"));
-        Assert.True(xs.Max() - xs.Min() < 1, string.Create(CultureInfo.InvariantCulture, $"commands start at {string.Join(", ", xs)}"));
+        Assert.True(xs.Count >= 2, $"{xs.Count} copy commands");
+        Assert.True(xs.Max() - xs.Min() < 1, $"commands start at {string.Join(", ", xs.Select(x => x.ToString(CultureInfo.InvariantCulture)))}");
     });
 
     [Theory]
@@ -76,7 +76,6 @@ public sealed class SystemActionsColumnsFramesTests : FrameHost
 
     // Where each copy-only command starts, across the card.
     private static List<double> CommandXs(Window window, Control card) =>
-        Named<ItemsControl>(window, "CopyOnlyActions").GetVisualDescendants().OfType<CommandControl>()
-            .Select(c => c.TranslatePoint(new Point(0, 0), card)!.Value.X)
-            .ToList();
+        [.. Named<ItemsControl>(window, "CopyOnlyActions").GetVisualDescendants().OfType<CommandControl>()
+            .Select(c => c.TranslatePoint(new Point(0, 0), card)!.Value.X)];
 }
