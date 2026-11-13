@@ -21697,7 +21697,8 @@ static Aw.Sindri.Core.Graph.Ops.SetMetaOp.operator ==(Aw.Sindri.Core.Graph.Ops.S
 static Aw.Sindri.Core.Graph.Templates.GraphTemplate.operator !=(Aw.Sindri.Core.Graph.Templates.GraphTemplate? left, Aw.Sindri.Core.Graph.Templates.GraphTemplate? right) -> bool
 static Aw.Sindri.Core.Graph.Templates.GraphTemplate.operator ==(Aw.Sindri.Core.Graph.Templates.GraphTemplate? left, Aw.Sindri.Core.Graph.Templates.GraphTemplate? right) -> bool
 static Aw.Sindri.Core.Graph.Templates.GraphTemplates.All.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Templates.GraphTemplate!>!
-static Aw.Sindri.Core.Graph.Templates.GraphTemplates.Find(string! name) -> Aw.Sindri.Core.Graph.Templates.GraphTemplate?
+static Aw.Sindri.Core.Graph.Templates.GraphTemplates.ReadsCi(string! name) -> bool
+static Aw.Sindri.Core.Graph.Templates.GraphTemplates.Find(string! name, Aw.Sindri.Core.Graph.Templates.GitHubCiSource? ci = null) -> Aw.Sindri.Core.Graph.Templates.GraphTemplate?
 static readonly Aw.Sindri.Core.SindriErrors.GraphOpInvalid -> Aw.Kernel.ErrorDefinition!
 virtual Aw.Sindri.Core.Graph.Ops.GraphOp.EqualityContract.get -> System.Type!
 virtual Aw.Sindri.Core.Graph.Ops.GraphOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
@@ -23801,3 +23802,23 @@ Aw.Sindri.Core.Doctor.IFirstMapCheck
 Aw.Sindri.Core.Doctor.IFirstMapCheck.Check(Aw.Sindri.Core.Profile.LoadedProfile? approved, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Doctor.DoctorCheck!>
 Aw.Sindri.Core.Profile.ApprovedProfileReads
 static Aw.Sindri.Core.Profile.ApprovedProfileReads.ForRead(this Aw.Sindri.Core.Profile.IApprovedProfile! approvals, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Profile.LoadedProfile?>!>
+Aw.Sindri.Core.Graph.Templates.GitHubCiSource
+Aw.Sindri.Core.Graph.Templates.GitHubCiSource.<Clone>$() -> Aw.Sindri.Core.Graph.Templates.GitHubCiSource!
+Aw.Sindri.Core.Graph.Templates.GitHubCiSource.Branch.get -> string!
+Aw.Sindri.Core.Graph.Templates.GitHubCiSource.Branch.init -> void
+Aw.Sindri.Core.Graph.Templates.GitHubCiSource.Connection.get -> string!
+Aw.Sindri.Core.Graph.Templates.GitHubCiSource.Connection.init -> void
+Aw.Sindri.Core.Graph.Templates.GitHubCiSource.Deconstruct(out string! Connection, out string! Owner, out string! Repo, out string! Branch) -> void
+Aw.Sindri.Core.Graph.Templates.GitHubCiSource.Equals(Aw.Sindri.Core.Graph.Templates.GitHubCiSource? other) -> bool
+Aw.Sindri.Core.Graph.Templates.GitHubCiSource.GitHubCiSource(string! Connection, string! Owner, string! Repo, string! Branch) -> void
+Aw.Sindri.Core.Graph.Templates.GitHubCiSource.Owner.get -> string!
+Aw.Sindri.Core.Graph.Templates.GitHubCiSource.Owner.init -> void
+Aw.Sindri.Core.Graph.Templates.GitHubCiSource.Repo.get -> string!
+Aw.Sindri.Core.Graph.Templates.GitHubCiSource.Repo.init -> void
+override Aw.Sindri.Core.Graph.Templates.GitHubCiSource.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Templates.GitHubCiSource.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Templates.GitHubCiSource.ToString() -> string!
+static Aw.Sindri.Core.Graph.Templates.GitHubCiSource.operator !=(Aw.Sindri.Core.Graph.Templates.GitHubCiSource? left, Aw.Sindri.Core.Graph.Templates.GitHubCiSource? right) -> bool
+static Aw.Sindri.Core.Graph.Templates.GitHubCiSource.operator ==(Aw.Sindri.Core.Graph.Templates.GitHubCiSource? left, Aw.Sindri.Core.Graph.Templates.GitHubCiSource? right) -> bool
+Aw.Sindri.Core.Graph.Templates.ICiSourceLookup
+Aw.Sindri.Core.Graph.Templates.ICiSourceLookup.Find(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Graph.Templates.GitHubCiSource?>

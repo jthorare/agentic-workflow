@@ -8,6 +8,7 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Templates;
+using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Features.ActivateWorkflow;
@@ -88,7 +89,7 @@ public sealed class DriftCheckAcceptanceTests : IDisposable
     private ServiceProvider Services() => new ServiceCollection()
         .AddSingleton(AwJson.CreateOptions(SindriJsonContext.Default))
         .AddSingleton(_rig.Harness.Callers)
-        .AddSingleton<IService<CreateWorkflowRequest, CreateWorkflowResponse>>(new CreateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log))
+        .AddSingleton<IService<CreateWorkflowRequest, CreateWorkflowResponse>>(new CreateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log, new FakeCiSourceLookup()))
         .AddSingleton<IService<ApplyWorkflowOpsRequest, ApplyWorkflowOpsResponse>>(new ApplyWorkflowOpsService(_rig.Workflows, _rig.Checker, _rig.Log))
         .AddSingleton<IService<ValidateWorkflowRequest, ValidateWorkflowResponse>>(new ValidateWorkflowService(_rig.Workflows, _rig.Checker))
         .AddSingleton<IService<ActivateWorkflowRequest, ActivateWorkflowResponse>>(new ActivateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Log, _rig.Harness.Callers))

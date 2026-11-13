@@ -15,6 +15,7 @@ using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Docs;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Graph.Templates;
 using Aw.Sindri.Core.Judge;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
@@ -231,6 +232,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
     private static IServiceCollection AddConnections(this IServiceCollection services)
         => services
             .AddSingleton<IConnectionStore, SqliteConnectionStore>()
+            .AddSingleton<ICiSourceLookup, GitHubCiSourceLookup>()   // #3534: the starter templates' CI step (red stage: a stub)
             .AddSingleton<IConnectionSecrets>(static sp => new KeychainConnectionSecrets(sp.GetRequiredService<ISecretWriter>(), sp.GetRequiredService<ISecretPointers>(), new ProcessToolRunner()))
             .AddSingleton<IConnectionPresetCatalog, EmbeddedConnectionPresets>()
             .AddSingleton<IEnvironmentReader, ProcessEnvironmentReader>()
