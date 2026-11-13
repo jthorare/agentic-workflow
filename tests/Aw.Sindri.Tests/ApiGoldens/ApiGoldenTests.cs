@@ -129,7 +129,7 @@ public sealed class ApiGoldenTests
     // why: sessions-start and sessions-worktree are the person's by the agents spec (A7, #3380): a session gets SND-AUTH-002 before validation, so its answer can't match the human's refusal goldens
     private static bool IsStillOwnerOnly(string slug) =>
         slug.StartsWith("profile", StringComparison.Ordinal) || slug.StartsWith("linear-connect", StringComparison.Ordinal) || slug.StartsWith("linear-disconnect", StringComparison.Ordinal)
-        || slug is "sessions-start" or "sessions-worktree";
+        || string.Equals(slug, "sessions-start", StringComparison.Ordinal) || string.Equals(slug, "sessions-worktree", StringComparison.Ordinal);
 
     private static string HumanGolden((string Slug, string Scenario) row) =>
         File.ReadAllText(Golden.SourcePath(typeof(ApiGoldenTests).Assembly, ApiGolden.PathOf(row.Slug, row.Scenario)));
