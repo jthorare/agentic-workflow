@@ -26,8 +26,8 @@ public sealed class CodeIndexCardTests
     private string Repo(string name, string state, string? commit, int builtMinutesAgo, params string[] layers) =>
         $$"""{"repo":"{{name}}","state":"{{state}}","commit":{{(commit is null ? "null" : "\"" + commit + "\"")}},"builtAt":"{{_clock.GetUtcNow().AddMinutes(-builtMinutesAgo):O}}","layers":[{{string.Join(',', layers)}}],"counts":null}""";
 
-    private static string Health(string name, string state, int? embeddingsPercent = null, string? waiting = null) =>
-        $$"""{"repo":"{{name}}","state":"{{state}}","embeddingsPercent":{{(embeddingsPercent is { } p ? p.ToString(CultureInfo.InvariantCulture) : "null")}},"waiting":{{(waiting is null ? "null" : "\"" + waiting + "\"")}}}""";
+    private static string Health(string name, string state, int? embeddingsPercent = null, string? waiting = null, bool paused = false) =>
+        $$"""{"repo":"{{name}}","state":"{{state}}","embeddingsPercent":{{(embeddingsPercent is { } p ? p.ToString(CultureInfo.InvariantCulture) : "null")}},"waiting":{{(waiting is null ? "null" : "\"" + waiting + "\"")}},"paused":{{(paused ? "true" : "false")}}}""";
 
     private async Task<CodeIndexCardViewModel> Read(params string[] repos) => await ReadWithHealth(repos, []);
 
@@ -151,6 +151,26 @@ public sealed class CodeIndexCardTests
         var card = await ReadWithHealth([Repo("repo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("repo", "waiting", waiting: waiting)]);
 
         Assert.Equal($"repo @ abcdef0, 3 min old ({waiting}), structure ok", Assert.Single(card.Lines).Text);
+    }
+
+    // #3561: the doctor names the pause and the resume for the same repo; the card must not promise a retry or a build.
+    [Theory]
+    [InlineData("missing", "repo: no index yet · index builds paused (sindri services resume code-index-main-move)")]
+    [InlineData("waiting", "repo: last build failed · index builds paused (sindri services resume code-index-main-move)")]
+    public async Task A_paused_repo_with_no_commit_names_the_pause_and_the_resume(string state, string expected)
+    {
+        var card = await ReadWithHealth([Repo("repo", "missing", commit: null, 0)], [Health("repo", state, waiting: null, paused: true)]);
+
+        Assert.Equal(expected, Assert.Single(card.Lines).Text);
+    }
+
+    [Fact]
+    public async Task A_paused_repo_in_backoff_never_reads_waiting_to_retry()
+    {
+        var card = await ReadWithHealth([Repo("repo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("repo", "waiting", paused: true)]);
+
+        Assert.DoesNotContain("waiting to retry", Assert.Single(card.Lines).Text, StringComparison.Ordinal);
+        Assert.Contains("index builds paused", card.Lines[0].Text, StringComparison.Ordinal);
     }
 
     [Fact]
