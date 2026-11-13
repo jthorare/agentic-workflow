@@ -122,6 +122,26 @@ public sealed class ContextControlsRenderingTests
     });
 
     [Fact]
+    public async Task A_highlighted_edge_is_drawn_at_double_width() => await OnUi(() =>
+    {
+        var edges = Edges(Line("a", 100), Line("b", 150));
+        edges.Highlighted = new HashSet<string>(StringComparer.Ordinal) { "a" };
+        var window = Stage(edges);
+        var frame = Capture(window, "edge-highlight-width");
+
+        for (var x = 40; x < 200; x += 7)
+        {
+            Assert.True(frame.Near(x, 98, Token("WireHi")) && frame.Near(x, 99, Token("WireHi")) && frame.Near(x, 100, Token("WireHi")) && frame.Near(x, 101, Token("WireHi")),
+                "the lit edge is not 4 px thick at " + frame.Describe(x, 100));
+            Assert.True(frame.Near(x, 96, Token("Canvas")) && frame.Near(x, 103, Token("Canvas")), "the lit edge is wider than 4 px at " + frame.Describe(x, 96));
+            Assert.True(frame.Near(x, 148, Token("Canvas")) && frame.Near(x, 152, Token("Canvas")), "the unlit edge is wider than 2 px at " + frame.Describe(x, 148));
+        }
+
+        window.Close();
+        return true;
+    });
+
+    [Fact]
     public async Task A_dimmed_edge_is_Wire_at_42_percent_over_the_canvas() => await OnUi(() =>
     {
         var edges = Edges(Line("a", 100));

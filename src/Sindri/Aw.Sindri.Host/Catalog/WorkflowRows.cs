@@ -5,7 +5,9 @@ using Aw.Sindri.Features.ApplyWorkflowOps;
 using Aw.Sindri.Features.CreateWorkflow;
 using Aw.Sindri.Features.DeleteWorkflow;
 using Aw.Sindri.Features.PauseWorkflow;
+using Aw.Sindri.Features.PinWorkflowOutput;
 using Aw.Sindri.Features.ReplaceWorkflow;
+using Aw.Sindri.Features.TestWorkflow;
 using Aw.Sindri.Features.ValidateWorkflow;
 
 namespace Aw.Sindri.Host.Catalog;
@@ -15,13 +17,15 @@ internal static class WorkflowRows
 {
     internal static IReadOnlyList<CommandRow> All { get; } =
     [
-        Row("CreateWorkflow", typeof(CreateWorkflowRequest), new RowRoute("POST", "/sindri/workflows"), "sindri wf create <slug> [--template <name>] [--file <specFile>]", destructive: false),
+        Row("CreateWorkflow", typeof(CreateWorkflowRequest), new RowRoute("POST", "/sindri/workflows"), "sindri wf create <slug> [--template <name>] [--file <specFile>]", destructive: false) with { ServiceGrants = ["setup"] },   // first-run spec E2: the setup service makes hello-sindri
         Row("ApplyWorkflowOps", typeof(ApplyWorkflowOpsRequest), new RowRoute("POST", "/sindri/workflows/{slug}/ops"), "sindri wf edit <slug> --base <revision> [--ops <json>] [--ops-file <file>]", destructive: false),
         Row("ReplaceWorkflow", typeof(ReplaceWorkflowRequest), new RowRoute("PUT", "/sindri/workflows/{slug}"), "sindri wf edit <slug> --base <revision> --file <specFile>", destructive: false),
         Row("ValidateWorkflow", typeof(ValidateWorkflowRequest), new RowRoute("POST", "/sindri/workflows/validate"), "sindri wf validate --slug <slug> [--revision <n>]", destructive: false),
-        Row("ActivateWorkflow", typeof(ActivateWorkflowRequest), new RowRoute("POST", "/sindri/workflows/{slug}/activate"), "sindri wf activate <slug> [--revision <n>]", destructive: false),
+        Row("ActivateWorkflow", typeof(ActivateWorkflowRequest), new RowRoute("POST", "/sindri/workflows/{slug}/activate"), "sindri wf activate <slug> [--revision <n>]", destructive: false) with { ServiceGrants = ["setup"] },
         Row("PauseWorkflow", typeof(PauseWorkflowRequest), new RowRoute("POST", "/sindri/workflows/{slug}/pause"), "sindri wf pause <slug>", destructive: false),
         Row("DeleteWorkflow", typeof(DeleteWorkflowRequest), new RowRoute("DELETE", "/sindri/workflows/{slug}"), "sindri wf delete <slug>", destructive: true),
+        Row("TestWorkflow", typeof(TestWorkflowRequest), new RowRoute("POST", "/sindri/workflows/{slug}/test"), "sindri wf test <slug> [--revision <n>]", destructive: false) with { SessionOk = false },   // Workflows page P0 stub (#3191): the CLI verb lands with the test route (P4b)
+        Row("PinWorkflowOutput", typeof(PinWorkflowOutputRequest), new RowRoute("POST", "/sindri/workflows/{slug}/pins"), "sindri wf pin <slug> --node <node> --run <run>", destructive: false) with { SessionOk = false },   // Workflows page P0 stub (#3191)
     ];
 
     private readonly record struct RowRoute(string Method, string Route);

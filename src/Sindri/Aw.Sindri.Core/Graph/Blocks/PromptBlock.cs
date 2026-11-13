@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using Aw.Kernel;
 
 namespace Aw.Sindri.Core.Graph.Blocks;
@@ -69,6 +68,11 @@ public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
         }
 
         var prompt = FencedPrompt.Render(raw, context.Resolve, model.Untrusted);
+        // why: a prompt that renders to nothing because its references had no value would ask the model an empty question; say which reference was empty instead (SND-GRAPH-113)
+        if (string.IsNullOrWhiteSpace(prompt) && FirstEmptyReference(raw, context.Resolve) is { } empty)
+        {
+            return SindriErrors.GraphPromptFieldEmpty.With($"the prompt came out empty: {empty} had no value in this input");
+        }
 
         var schema = context.Config["output"] as JsonObject;
         if (schema is not null && SchemaProblem(schema) is { } unusable)
@@ -76,13 +80,18 @@ public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
             return SindriErrors.GraphPromptAnswer.With($"the 'output' schema can't be used: {unusable}");
         }
 
-        if (schema is null)
-        {
-            var plain = await model.Ask(prompt, cancellationToken).ConfigureAwait(false);
-            // why: without an 'output' schema the node has no outputs, so nothing reads the answer and any text is fine
-            return plain.IsError ? plain.Error : new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal));
-        }
+        return schema is null ? await AskPlain(context, prompt, cancellationToken).ConfigureAwait(false) : await AskAndCheck(context, prompt, schema, cancellationToken).ConfigureAwait(false);
+    }
 
+    private async ValueTask<Result<BlockResult>> AskPlain(BlockContext context, string prompt, CancellationToken cancellationToken)
+    {
+        var plain = await AskChecked(context, prompt, cancellationToken).ConfigureAwait(false);
+        // why: without an 'output' schema the node has no outputs, so nothing reads the answer and any text is fine; a non-zero exit still fails
+        return plain.IsError ? plain.Error : new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal));
+    }
+
+    private async ValueTask<Result<BlockResult>> AskAndCheck(BlockContext context, string prompt, JsonObject schema, CancellationToken cancellationToken)
+    {
         var read = await AskForObject(context, prompt, schema, cancellationToken).ConfigureAwait(false);
         if (read.IsError)
         {
@@ -90,64 +99,18 @@ public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
         }
 
         var fields = read.Value;
-        if (Problem(schema, fields) is { } problem)
+        if (Problem(schema, fields) is not { } problem)
         {
-            return SindriErrors.GraphPromptAnswer.With(problem);
+            return new BlockResult(Outputs(schema, fields));
         }
 
-        return new BlockResult(Outputs(schema, fields));
+        if (context.FailureOutput?["answer"]?.GetValue<string>() is { } answer)
+        {
+            context.LeaveRaw(answer);
+        }
+
+        return SindriErrors.GraphPromptAnswer.With(problem);
     }
-
-    private async ValueTask<Result<JsonObject>> AskForObject(BlockContext context, string prompt, JsonObject schema, CancellationToken cancellationToken)
-    {
-        var instructed = WithInstruction(prompt, schema);
-        var asked = await model.Ask(instructed, cancellationToken).ConfigureAwait(false);
-        if (asked.IsError)
-        {
-            return asked.Error;
-        }
-
-        // why: set before the parse, so a JSON answer the schema check then refuses also shows on the failed step; the engine reads it only when the block returns an error
-        context.LeaveFailureOutput(new JsonObject { ["answer"] = asked.Value });
-        var read = Parse(asked.Value);
-        if (read.IsSuccess)
-        {
-            return read;
-        }
-
-        // why: one repair ask is cheap and most prose answers turn into JSON when told; a second miss is the model's, so it fails in words
-        var again = await model.Ask(instructed + RepairLine, cancellationToken).ConfigureAwait(false);
-        if (again.IsError)
-        {
-            return again.Error;
-        }
-
-        // why: the run page shows the failed step's output, so the raw answer stays there for the owner to read; the engine cuts it to the stored-output cap
-        context.LeaveFailureOutput(new JsonObject { ["answer"] = again.Value });
-        read = Parse(again.Value);
-        if (read.IsSuccess)
-        {
-            return read;
-        }
-
-        return SindriErrors.GraphPromptAnswer.With($"The model answered with text, not the JSON this step asks for: \"{Shown(again.Value)}\"");
-    }
-
-    // why: the message lands in the one-line runs-list row, so line breaks go and a long answer shows its first 200 characters with "…"
-    private static string Shown(string answer)
-    {
-        var flat = WhitespaceRun.Replace(answer, " ").Trim();
-        if (flat.Length <= ShownLength)
-        {
-            return flat;
-        }
-
-        var cut = char.IsHighSurrogate(flat[ShownLength - 1]) ? ShownLength - 1 : ShownLength;
-        return string.Concat(flat.AsSpan(0, cut), "…");
-    }
-
-    [GeneratedRegex(@"\s+", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex WhitespaceRun { get; }
 
     private static string WithInstruction(string prompt, JsonObject schema) => $"{prompt}\n\n{JsonInstruction}\n{schema.ToJsonString()}";
 

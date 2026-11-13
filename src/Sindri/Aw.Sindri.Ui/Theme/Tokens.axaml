@@ -127,9 +127,10 @@
   <SolidColorBrush x:Key="Brush.Status.Draft.Fg" Color="{StaticResource Color.InkSubtle}" />
   <SolidColorBrush x:Key="Brush.Status.Draft.Bg" Color="Transparent" />
   <SolidColorBrush x:Key="Brush.Status.Draft.Border" Color="{StaticResource Color.HairlineStrong}" />
-  <!-- context map (F3 spec 1 §2): wire is an edge, a port and a suggested node's dashed border (decoration, 2.4:1 like the
-       hairlines; a suggestion is carried by its dash and its words, never by this colour) -->
-  <Color x:Key="Color.Wire">#4a4a52</Color>
+  <!-- graph and context map: wire is a connector, an edge, a port and a suggested node's dashed border. It is the only mark
+       of which step feeds which, so it meets the 3:1 non-text minimum on Canvas, Surface1 and Surface2 (WCAG 1.4.11, #3138);
+       a suggestion is still carried by its dash and its words, never by this colour -->
+  <Color x:Key="Color.Wire">#686870</Color>
   <SolidColorBrush x:Key="Brush.Wire" Color="{StaticResource Color.Wire}" />
   <!-- context map: a hovered or selected edge and its neighbours (same value as ink-subtle, kept as its own role) -->
   <Color x:Key="Color.WireHi">#8a8f98</Color>

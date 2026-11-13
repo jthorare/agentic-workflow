@@ -10,23 +10,55 @@ internal sealed class StubDriver : IAsyncDisposable
 {
     internal const string Secret = "s3cr3t-for-the-stub";
 
-    private readonly HttpListener _listener = new();
+    private const int StartAttempts = 5;
+
+    private readonly HttpListener _listener;
     private readonly DirectoryInfo _directory = Directory.CreateTempSubdirectory("aw-uidriver-stub-");
     private readonly CancellationTokenSource _stop = new();
     private readonly Task _loop;
 
-    internal StubDriver()
+    // why: afterPortChosen is the test seam for #3415, called with each chosen port after the probe frees it and before the listener binds it, so a test can take that port on purpose.
+    internal StubDriver(Action<int>? afterPortChosen = null)
     {
-        using var probe = new TcpListener(IPAddress.Loopback, 0);
-        probe.Start();
-        var port = ((IPEndPoint)probe.LocalEndpoint).Port;
-        probe.Stop();
-        _listener.Prefixes.Add(string.Create(CultureInfo.InvariantCulture, $"http://127.0.0.1:{port}/"));
-        _listener.Start();
+        // why: the probe frees the port before the bind, so another process can take it in between; retry on address-in-use with a fresh port and listener (same loop as Aw.Sindri.Testing's LoopbackListener, which this project doesn't reference).
+        var port = 0;
+        for (var attempt = 1; ; attempt++)
+        {
+            using var probe = new TcpListener(IPAddress.Loopback, 0);
+            probe.Start();
+            port = ((IPEndPoint)probe.LocalEndpoint).Port;
+            probe.Stop();
+            if (attempt == 1)
+            {
+                afterPortChosen?.Invoke(port);
+            }
+
+            _listener = new HttpListener();
+            _listener.Prefixes.Add(string.Create(CultureInfo.InvariantCulture, $"http://127.0.0.1:{port}/"));
+            try
+            {
+                _listener.Start();
+                break;
+            }
+            catch (HttpListenerException exception) when (attempt < StartAttempts && IsAddressInUse(exception))
+            {
+                _listener.Close();
+            }
+            catch
+            {
+                _listener.Close();
+                throw;
+            }
+        }
+
+        Port = port;
         File.WriteAllText(Path.Combine(_directory.FullName, "driver.json"), string.Create(CultureInfo.InvariantCulture, $$"""{"schema":"aw-ui-driver/1","url":"http://127.0.0.1:{{port}}","pid":1}"""));
         File.WriteAllText(Path.Combine(_directory.FullName, "driver.token"), Secret);
         _loop = Task.Run(ServeAsync, _stop.Token);
     }
+
+    /// <summary>The port the listener serves on.</summary>
+    internal int Port { get; }
 
     /// <summary>The driver directory.</summary>
     internal string Folder => _directory.FullName;
@@ -56,6 +88,10 @@ internal sealed class StubDriver : IAsyncDisposable
         _stop.Dispose();
         _directory.Delete(recursive: true);
     }
+
+    private static bool IsAddressInUse(HttpListenerException exception) =>
+        exception.ErrorCode is 98 or 48 or 10048 or 32 or 183
+        || exception.Message.Contains("in use", StringComparison.OrdinalIgnoreCase);
 
     internal void Fail(int status, string code, string message) =>
         Answer = (status, "application/json", Encoding.UTF8.GetBytes($$"""{"code":"{{code}}","message":"{{message}}"}"""));

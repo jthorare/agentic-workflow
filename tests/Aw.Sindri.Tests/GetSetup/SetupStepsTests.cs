@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Setup;
+using Aw.Sindri.Host.Catalog;
 using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.GetSetup;
@@ -98,7 +99,7 @@ public sealed class SetupStepsTests
     {
         var step = SetupSteps.Sources(new SourcesFact(0));
 
-        Assert.Equal((SetupStepId.Sources, "Connect your sources", SetupState.Todo, "No source is connected yet.", SetupActions.ConnectIndexSource), (step.Id, step.Title, step.State, step.Why, step.Action));
+        Assert.Equal((SetupStepId.Sources, "Connect your accounts", SetupState.Todo, "No source is connected yet.", SetupActions.ConnectAccount), (step.Id, step.Title, step.State, step.Why, step.Action));
         Assert.Empty(step.Items);
         Assert.Null(step.Error);
     }
@@ -111,7 +112,7 @@ public sealed class SetupStepsTests
     {
         var step = SetupSteps.Sources(InMemorySetupFacts.NamedSources((source, false)));
 
-        Assert.Equal((SetupState.Todo, SetupActions.ConnectIndexSource, why), (step.State, step.Action, step.Why));
+        Assert.Equal((SetupState.Todo, SetupActions.ConnectAccount, why), (step.State, step.Action, step.Why));
         Assert.Equal([(source, SetupState.Todo, "needs token")], step.Items.Select(static i => (i.Repo, i.State, i.Detail)));
     }
 
@@ -122,7 +123,7 @@ public sealed class SetupStepsTests
         var one = SetupSteps.Sources(InMemorySetupFacts.NamedSources(("github", true), ("slack", false)));
 
         Assert.Equal(("GitHub and Slack need a token.", SetupState.Todo), (both.Why, both.State));
-        Assert.Equal(("Slack needs a token.", SetupState.Todo, SetupActions.ConnectIndexSource), (one.Why, one.State, one.Action));
+        Assert.Equal(("Slack needs a token.", SetupState.Todo, SetupActions.ConnectAccount), (one.Why, one.State, one.Action));
         Assert.Equal([("github", SetupState.Done, "connected"), ("slack", SetupState.Todo, "needs token")], one.Items.Select(static i => (i.Repo, i.State, i.Detail)));
     }
 
@@ -142,7 +143,7 @@ public sealed class SetupStepsTests
     {
         var step = SetupSteps.Unreadable(SetupStepId.Sources, "SND-PROFILE-004");
 
-        Assert.Equal((SetupState.Failed, "Connect your sources", "SND-PROFILE-004"), (step.State, step.Title, step.Error?.Code));
+        Assert.Equal((SetupState.Failed, "Connect your accounts", "SND-PROFILE-004"), (step.State, step.Title, step.Error?.Code));
         Assert.DoesNotContain("SND-", step.Why, StringComparison.Ordinal);
     }
 
@@ -170,6 +171,7 @@ public sealed class SetupStepsTests
         {
             SetupSteps.Repo(new RepoFact(0)), SetupSteps.Profile(new ProfileFact(ProfilePresence.Missing), new RepoFact(0)),
             SetupSteps.Mcp(new McpFact(0, 0, "Claude Code")), SetupSteps.Map(new MapFact(MapPhase.Waiting)), SetupSteps.Sources(new SourcesFact(0)),
+            SetupSteps.Serve(new ServeFact(Current: true)), SetupSteps.Agent(new AgentFact(Target: null), new RepoFact(0)), SetupSteps.FirstWorkflow(new FirstWorkflowFact(Succeeded: false, Dismissed: false), new RepoFact(0)),
         };
 
         Assert.Equal(Enum.GetValues<SetupStepId>(), all.Select(static s => s.Id));
@@ -179,4 +181,68 @@ public sealed class SetupStepsTests
             Assert.EndsWith(".", s.Why, StringComparison.Ordinal);
         });
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Sources_is_skipped_when_the_owner_skipped_it_and_nothing_is_connected_and_done_when_something_is()
+    {
+        var skipped = SetupSteps.Sources(new SourcesFact(0) { Skipped = true });
+        var connectedAfterSkip = SetupSteps.Sources(InMemorySetupFacts.NamedSources(("github", true)) with { Skipped = true });
+
+        Assert.Equal((SetupState.Skipped, null, "Connect your accounts"), (skipped.State, skipped.Action, skipped.Title));
+        Assert.Equal(SetupState.Done, connectedAfterSkip.State);   // a connected account wins over an old skip
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Serve_is_done_when_the_running_build_is_the_installed_one_and_otherwise_the_owners_restart()
+    {
+        var current = SetupSteps.Serve(new ServeFact(Current: true));
+        var stale = SetupSteps.Serve(new ServeFact(Current: false));
+
+        Assert.Equal((SetupState.Done, null), (current.State, current.Action));
+        Assert.Equal((SetupState.NeedsYou, SetupActions.RestartProcess), (stale.State, stale.Action));
+        Assert.Null(SetupActions.CliFor(stale.Action));   // the owner's: no command an agent runs
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Agent_waits_for_a_repo_then_picks_on_its_own_and_is_done_once_a_target_is_set()
+    {
+        var noRepo = SetupSteps.Agent(new AgentFact(Target: null), new RepoFact(0));
+        var picking = SetupSteps.Agent(new AgentFact(Target: null), Repos("demo"));
+        var done = SetupSteps.Agent(new AgentFact("claude-code"), Repos("demo"));
+
+        Assert.Equal((SetupState.Todo, "Waits for your first repo.", null), (noRepo.State, noRepo.Why, noRepo.Action));
+        Assert.Equal((SetupState.Todo, null), (picking.State, picking.Action));   // no action: the setup service sets the target
+        Assert.Equal((SetupState.Done, "Workflows run on claude-code."), (done.State, done.Detail));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void FirstWorkflow_is_done_after_a_run_skipped_when_dismissed_and_otherwise_waits()
+    {
+        var noRepo = SetupSteps.FirstWorkflow(new FirstWorkflowFact(Succeeded: false, Dismissed: false), new RepoFact(0));
+        var waiting = SetupSteps.FirstWorkflow(new FirstWorkflowFact(Succeeded: false, Dismissed: false), Repos("demo"));
+        var dismissed = SetupSteps.FirstWorkflow(new FirstWorkflowFact(Succeeded: false, Dismissed: true), Repos("demo"));
+        var done = SetupSteps.FirstWorkflow(new FirstWorkflowFact(Succeeded: true, Dismissed: false), Repos("demo"));
+
+        Assert.Equal(
+            [SetupState.Todo, SetupState.Todo, SetupState.Skipped, SetupState.Done],
+            [noRepo.State, waiting.State, dismissed.State, done.State]);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(SetupActions.AddRepo)]
+    [InlineData(SetupActions.RegisterMcp)]
+    [InlineData(SetupActions.ConnectIndexSource)]
+    [InlineData(SetupActions.RefreshContextMap)]
+    public void The_command_for_a_step_action_is_the_catalog_rows_own_form(string action)
+    {
+        var row = Assert.Single(new CommandCatalog().Rows, r => r.Action.Value == action);
+
+        Assert.Equal(row.Cli.Text, SetupActions.CliFor(action));   // one text, so the step's Cli and the catalog never drift
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(SetupActions.RestartProcess)]
+    [InlineData(SetupActions.ConnectAccount)]
+    [InlineData(null)]
+    public void An_owner_only_action_and_no_action_have_no_command_for_an_agent(string? action) => Assert.Null(SetupActions.CliFor(action));
 }

@@ -40,7 +40,7 @@ public sealed class TokenTests
         ("PrimarySoft", "#202442"),
         ("ErrorSoft", "#281415"),
         ("SuccessSoft", "#0d2115"),
-        ("Wire", "#4a4a52"),
+        ("Wire", "#686870"),
         ("WireHi", "#8a8f98"),
         ("LaneFill", "#05ffffff"),
         ("RingAnchor", "#d0d6e0"),
