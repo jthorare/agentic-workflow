@@ -65,7 +65,7 @@ public sealed class PressedBorderPixelTests : FrameHost
     {
         var pixel = Render(window);
         var edge = control.TranslatePoint(new Point(0, control.Bounds.Height / 2), window)!.Value;
-        var (x0, y) = ((int)Math.Round(edge.X), (int)Math.Round(edge.Y));
+        var (x0, y) = ((int)Math.Round(edge.X, MidpointRounding.AwayFromZero), (int)Math.Round(edge.Y, MidpointRounding.AwayFromZero));
         var outside = pixel(x0 - 9, y);
         var inside = pixel(x0 + 9, y);
         var best = 0.0;
@@ -93,8 +93,13 @@ public sealed class PressedBorderPixelTests : FrameHost
         using var instant = InstantMotion.Start();
         var sample = new Border { BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(6), Padding = new Thickness(24, 12), HorizontalAlignment = HorizontalAlignment.Left, Child = new TextBlock { Text = "Clickable" } };
         sample.Classes.Add("clickable");
-        var host = new Border { Padding = new Thickness(24), Child = sample };
-        host.Background = (IBrush?)(Application.Current!.TryFindResource("Brush.Canvas", Application.Current.ActualThemeVariant, out var canvas) ? canvas : null);
+        var app = Application.Current!;
+        var host = new Border
+        {
+            Padding = new Thickness(24),
+            Child = sample,
+            Background = app.TryFindResource("Brush.Canvas", app.ActualThemeVariant, out var canvas) ? canvas as IBrush : null,
+        };
         var window = new Window { Width = 360, Height = 140, Content = host };
         window.Show();
         Settle(window);
