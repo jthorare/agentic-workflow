@@ -15,7 +15,15 @@ public static class PortThief
     public static TcpListener? TryTake(int port)
     {
         var thief = new TcpListener(IPAddress.Loopback, port);
-        thief.Start();
-        return thief;
+        try
+        {
+            thief.Start();
+            return thief;
+        }
+        catch (SocketException exception) when (exception.SocketErrorCode == SocketError.AddressAlreadyInUse)
+        {
+            thief.Dispose();
+            return null;
+        }
     }
 }
