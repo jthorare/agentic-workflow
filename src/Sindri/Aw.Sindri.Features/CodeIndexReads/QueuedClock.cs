@@ -10,21 +10,23 @@ namespace Aw.Sindri.Features.CodeIndexReads;
 internal sealed class QueuedClock(DateTimeOffset start)
 {
     private readonly ConcurrentDictionary<string, DateTimeOffset> _since = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, byte> _seen = new(StringComparer.Ordinal);
 
-    /// <summary>How long the repo has read queued, counted from the first read that saw it queued; a read that sees it in any other state forgets it.</summary>
+    /// <summary>How long the repo has read queued: from serve start when this serve's first read of it saw it queued, else from the read that first saw it queued; a read that sees it in any other state forgets it.</summary>
     /// <param name="repo">The repo.</param>
     /// <param name="queued">Whether this read sees the repo queued.</param>
     /// <param name="now">The time of this read.</param>
     /// <returns>The time spent queued, or null when the repo isn't queued.</returns>
     internal TimeSpan? For(string repo, bool queued, DateTimeOffset now)
     {
-        _ = start;
+        var first = _seen.TryAdd(repo, 0);
         if (!queued)
         {
             _ = _since.TryRemove(repo, out _);
             return null;
         }
 
-        return now - _since.GetOrAdd(repo, now);
+        // why: a repo queued on its first read has waited since serve start, not since someone first looked (#3480)
+        return now - _since.GetOrAdd(repo, first ? start : now);
     }
 }
