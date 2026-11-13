@@ -77,6 +77,41 @@ public sealed class CodeIndexCardTests
         Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
     }
 
+    private const string BehindWords = "demo: code index is behind main; rebuild it from the System page";
+
+    [Fact]
+    public async Task A_built_stale_repo_flagged_needs_a_look_keeps_its_commit_age_and_layers()
+    {
+        var built = new[] { Repo("demo", "ok", Sha, 3, Layer("structure", "ok"), Layer("graph", "ok")) };
+        var plain = Assert.Single((await ReadWithHealth(built, [Health("demo", "stale")])).Lines);
+        var flagged = Assert.Single((await ReadWithHealth(built, [Health("demo", "stale", needsLook: true, lookWords: BehindWords)])).Lines);
+
+        Assert.Equal(plain.Text, flagged.Text);
+        Assert.Contains("@ abcdef0", flagged.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("rebuild", flagged.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_paused_stale_repo_flagged_needs_a_look_still_says_it_is_paused()
+    {
+        var card = await ReadWithHealth([Repo("demo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("demo", "stale", paused: true, needsLook: true, lookWords: BehindWords)]);
+
+        var line = Assert.Single(card.Lines);
+        Assert.Contains(Labels.CodeIndexPaused, line.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("rebuild", line.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_built_repo_with_an_unavailable_graph_flagged_needs_a_look_keeps_its_normal_line()
+    {
+        var built = new[] { Repo("demo", "ok", Sha, 3, Layer("structure", "ok"), Layer("graph", "unavailable", "SND-CODEIDX-020")) };
+        var plain = Assert.Single((await ReadWithHealth(built, [Health("demo", "ok")])).Lines);
+        var flagged = Assert.Single((await ReadWithHealth(built, [Health("demo", "ok", needsLook: true, lookWords: "demo: code graph is unavailable")])).Lines);
+
+        Assert.Equal(plain.Text, flagged.Text);
+        Assert.Contains("@ abcdef0", flagged.Text, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task A_queued_repo_the_server_does_not_flag_still_says_build_queued()
     {
