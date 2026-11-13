@@ -57,7 +57,7 @@ public sealed class NeedsYouOutlineTests : FrameHost
         var (window, _) = await Connected(s => s.NeedsYou.Count > 0);
         var frame = Frame(Rows(window).First(r => r.DataContext is ViewModels.NeedsYou.NeedsYouRowViewModel { HasOutline: true }));
         // Where the content is laid out, so a shift shows even if border and padding traded off against each other. Layout
-        // bounds, not TranslatePoint: the 1 px press push draws the row one pixel lower without moving its layout.
+        // bounds, not TranslatePoint: a press moves nothing.
         double ContentTop() => frame.Bounds.Y + frame.Child!.Bounds.Y;
         var inset = Inset(frame);
         var height = frame.Bounds.Height;

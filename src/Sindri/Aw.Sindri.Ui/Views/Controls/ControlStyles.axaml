@@ -4,11 +4,10 @@
         xmlns:icons="using:Aw.Sindri.Ui.Views.Icons">
   <!-- The control renderer's looks (UI spec §7, §11.1): secondary buttons on Surface1 with a hairline; disabled ink only
        for the disabled label; the pending line in InkSubtle; errors in the Error token, always with a word and ✕. -->
-  <!-- #3190: every Button and ToggleButton moves 1 px down on a press instead of the Fluent theme's scale(0.98). The scale put a bordered button's 1 px edge
-       on a fractional pixel, so the drawn border read about 2.4:1 at 1x (the Home Needs You primary; the Queue group head's top hairline too). A whole-pixel
-       move keeps it at its token's contrast, the same press as Border.clickable (Theme/ClickableStyles.axaml). Not :is(Button): a ScrollBar's RepeatButtons keep theirs. -->
+  <!-- #3190: a press changes only the fill and the border; nothing moves. The Fluent theme scales a pressed Button and ToggleButton to 0.98, which put a bordered
+       button's 1 px edge on a fractional pixel (about 2.4:1 at 1x); a 1 px shift got clipped at a tight clip instead. Not :is(Button): a ScrollBar's RepeatButtons keep theirs. -->
   <Style Selector="Button:pressed, ToggleButton:pressed">
-    <Setter Property="RenderTransform" Value="translate(0px, 1px)" />
+    <Setter Property="RenderTransform" Value="none" />
   </Style>
   <Style Selector="Button.command-control, Button.copy">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />

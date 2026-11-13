@@ -81,6 +81,9 @@ public sealed class ClickableStateTests : FrameHost
             .Select(v => $"{v.GetType().Name}#{(v as Control)?.Name} {v.RenderTransform!.Value} origin {v.RenderTransformOrigin}"))
         + $" ; classes {string.Join(',', (target as StyledElement)?.Classes ?? [])} ; dc {(target as Control)?.DataContext?.GetHashCode().ToString(System.Globalization.CultureInfo.InvariantCulture)}";
 
+    // A press changes the fill and the border only (#3190): a scale blurs the 1 px border and a shift gets clipped.
+    private static void AssertNothingMoves(Visual visual) => Assert.True(visual.RenderTransform is null || visual.RenderTransform.Value.IsIdentity, $"the press moved the surface: {visual.RenderTransform?.Value}");
+
     private static Point Corner(Window window, Border card) => card.TranslatePoint(new Point(6, 6), window)!.Value; // the card's own padding, no control in it
 
     [Fact]
@@ -192,7 +195,7 @@ public sealed class ClickableStateTests : FrameHost
     });
 
     [Fact]
-    public Task A_selected_row_lifts_one_step_more_under_the_pointer_and_shrinks_when_pressed() => OnUi(async () =>
+    public Task A_selected_row_lifts_one_step_more_under_the_pointer_and_stays_put_when_pressed() => OnUi(async () =>
     {
         Motion.Set(reduce: true);
         using var instant = InstantMotion.Start();
@@ -208,12 +211,11 @@ public sealed class ClickableStateTests : FrameHost
         Assert.Equal(TokenColor("Brush.Clickable.Pressed"), ((ISolidColorBrush)row.Background!).Color);
         Assert.Equal(TokenColor("Brush.Primary"), ((ISolidColorBrush)row.BorderBrush!).Color);
 
-        // The selected hover already sits on the pressed fill, so the 1 px push down is what shows the press here.
+        // The selected hover already sits on the pressed fill, so the press adds nothing visible here (the border is Primary either way); the row must still not move.
         window.MouseDown(at, MouseButton.Left, RawInputModifiers.None);
         Settle(window);
         Frame(window, "selected-pressed", "gh2535-");
-        var pressed = row.RenderTransform!.Value;
-        Assert.Equal((1.0, 1.0, 1.0), (Math.Round(pressed.M11, 3, MidpointRounding.AwayFromZero), Math.Round(pressed.M22, 3, MidpointRounding.AwayFromZero), pressed.M32)); // a whole-pixel 1 px push down, no scale (#3190)
+        AssertNothingMoves(row);
         window.MouseUp(at, MouseButton.Left, RawInputModifiers.None);
         Settle(window);
     });
@@ -318,13 +320,11 @@ public sealed class ClickableStateTests : FrameHost
     });
 
     [Fact]
-    public Task A_pressed_project_card_scales_to_098_about_its_centre_and_eases_it_over_Motion_Hover() => OnUi(async () =>
+    public Task A_pressed_project_card_changes_only_its_fill_and_border_and_moves_nothing() => OnUi(async () =>
     {
         var (window, card) = await OnFirstCard();
         var point = Corner(window, card);
-        var transition = Assert.Single((card.Transitions ?? throw new InvalidOperationException("no Transitions")).OfType<TransformOperationsTransition>());
-        Assert.Equal(150, transition.Duration.TotalMilliseconds);
-        Assert.Equal(0.0, card.RenderTransform!.Value.M32, 3); // at rest: no push
+        AssertNothingMoves(card); // at rest
 
         Motion.Set(reduce: true); // the press lands at once: the transition reads Motion.Hover again as the pointer arrives
         using var instant = InstantMotion.Start();
@@ -333,13 +333,11 @@ public sealed class ClickableStateTests : FrameHost
         window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
         Settle(window);
 
-        var pressed = card.RenderTransform!.Value;
-        Assert.Equal((1.0, 1.0, 1.0), (Math.Round(pressed.M11, 3, MidpointRounding.AwayFromZero), Math.Round(pressed.M22, 3, MidpointRounding.AwayFromZero), pressed.M32)); // a whole-pixel 1 px push down, no scale (#3190)
-        Assert.Equal(RelativePoint.Center, card.RenderTransformOrigin);
+        AssertNothingMoves(card);
 
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
         Settle(window);
-        Assert.Equal(0.0, card.RenderTransform!.Value.M32, 3);
+        AssertNothingMoves(card);
     });
 
     [Fact]
@@ -381,8 +379,7 @@ public sealed class ClickableStateTests : FrameHost
         Frame(window, "slid-in-pressed", "gh2535-");
 
         Assert.Contains(":pressed", row.Classes, StringComparer.Ordinal);
-        var pressed = row.RenderTransform!.Value;
-        Assert.Equal((1.0, 1.0, 1.0), (Math.Round(pressed.M11, 3, MidpointRounding.AwayFromZero), Math.Round(pressed.M22, 3, MidpointRounding.AwayFromZero), pressed.M32)); // a whole-pixel 1 px push down, no scale (#3190)
+        AssertNothingMoves(row);
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
     });
 
