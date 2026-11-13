@@ -2798,7 +2798,7 @@ static Aw.Meta.Core.Gate.GateTools.PathPrefix(string! tree) -> System.Collection
 Aw.Meta.Core.Coordination.LaneNames
 static Aw.Meta.Core.Coordination.LaneNames.WithoutTeam(string! sender, string! team) -> string!
 Aw.Meta.Core.Coordination.ObligationEventWriter
-Aw.Meta.Core.Coordination.ObligationEventWriter.Closed(string! id, string! sender, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
-Aw.Meta.Core.Coordination.ObligationEventWriter.IsOwed(string! id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Meta.Core.Coordination.ObligationEventWriter.Closed(string! obligationKey, string! sender, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Meta.Core.Coordination.ObligationEventWriter.IsOwed(string! obligationKey, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
 Aw.Meta.Core.Coordination.ObligationEventWriter.ObligationEventWriter(Aw.Meta.Core.Coordination.MetaEventSink! events, Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Coordination.ObligationReader! reader, System.TimeProvider! clock) -> void
-Aw.Meta.Core.Coordination.ObligationEventWriter.Opened(System.DateTimeOffset at, string! id, string! sender, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Meta.Core.Coordination.ObligationEventWriter.Opened(System.DateTimeOffset at, string! obligationKey, string! sender, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
