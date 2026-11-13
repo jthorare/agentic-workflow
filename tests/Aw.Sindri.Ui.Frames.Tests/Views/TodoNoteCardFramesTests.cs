@@ -9,6 +9,7 @@ using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
+using Aw.Sindri.Ui.ViewModels.Linear;
 using Aw.Sindri.Ui.ViewModels.Settings;
 using Aw.Sindri.Ui.ViewModels.Todo;
 using Aw.Sindri.Ui.Views;
@@ -169,6 +170,26 @@ public sealed class TodoNoteCardFramesTests : IDisposable
             .ToList();
 
         Assert.Empty(heights);
+    });
+
+    [Fact]
+    public Task An_empty_Linear_status_or_error_row_takes_no_height_on_Settings_3454() => OnUi(async () =>
+    {
+        _server.LinearConnectionAnswer = RouteAnswer.Api("linear-connection", "not-connected");
+        var linear = new LinearConnectionViewModel(() => _api, _server);
+        await linear.Refresh(_api, Token);
+        var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), _ => { }) { LinearConnection = linear };
+        var window = new Window { Width = 900, Height = 1200, Content = new SettingsView { DataContext = settings } };
+        _windows.Add(window);
+        window.Show();
+        Settle(window);
+
+        var rows = new[] { "LinearStatus", "LinearError" }
+            .Select(n => window.GetVisualDescendants().OfType<Control>().SingleOrDefault(c => string.Equals(c.Name, n, StringComparison.Ordinal)))
+            .ToList();
+
+        Assert.All(rows, r => Assert.NotNull(r));
+        Assert.Empty(rows.Where(r => r!.Bounds.Height > 0));
     });
 
     [Fact]
