@@ -72,38 +72,47 @@ public static class FailureSentences
                 throw new InvalidOperationException($"the sentence for '{code}' needs a value for {{{name}}}");
             }
 
-            if (string.Equals(name, "answer", StringComparison.Ordinal))
-            {
-                value = Shown(value);
-            }
-            else if (string.Equals(name, "message", StringComparison.Ordinal))
-            {
-                value = Shown(value);
-                // why: the template puts a period after {message}; a message that ends in a stop of its own would show two ("..", "?.")
-                if (close + 1 < template.Length && template[close + 1] == '.' && value.Length > 0)
-                {
-                    if (value[^1] == '.')
-                    {
-                        value = value[..^1];
-                    }
-                    else if (value[^1] is '?' or '!')
-                    {
-                        close++;
-                    }
-                }
-
-                // why: an exception with no message would read "Check stopped: ."; drop the lead-in so it reads "Check stopped."
-                if (value.Length == 0)
-                {
-                    DropLeadIn(text);
-                }
-            }
-
-            _ = text.Append(value);
-            i = close;
+            i = Placeholder(template, close, name, value, text);
         }
 
         return text.ToString();
+    }
+
+    // why: {answer} and {message} are shown on one line and cut; the rest go in as given. Returns the last template index the placeholder used
+    private static int Placeholder(string template, int close, string name, string value, StringBuilder text)
+    {
+        if (string.Equals(name, "message", StringComparison.Ordinal))
+        {
+            return Message(template, close, Shown(value), text);
+        }
+
+        _ = text.Append(string.Equals(name, "answer", StringComparison.Ordinal) ? Shown(value) : value);
+        return close;
+    }
+
+    private static int Message(string template, int close, string value, StringBuilder text)
+    {
+        // why: the template puts a period after {message}; a message that ends in a stop of its own would show two ("..", "?.")
+        if (close + 1 < template.Length && template[close + 1] == '.' && value.Length > 0)
+        {
+            if (value[^1] == '.')
+            {
+                value = value[..^1];
+            }
+            else if (value[^1] is '?' or '!')
+            {
+                close++;
+            }
+        }
+
+        // why: an exception with no message would read "Check stopped: ."; drop the lead-in so it reads "Check stopped."
+        if (value.Length == 0)
+        {
+            DropLeadIn(text);
+        }
+
+        _ = text.Append(value);
+        return close;
     }
 
     // why: the text before an empty {message} is its lead-in (": " or a line break); without the message it would dangle
