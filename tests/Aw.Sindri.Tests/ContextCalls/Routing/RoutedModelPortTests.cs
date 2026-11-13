@@ -95,6 +95,7 @@ public sealed class RoutedModelPortTests
     {
         var codex = Codex(Said("ok"));
         var rig = new RouterRig(settings: null, codexModels: ["claude-sonnet-4-5", "claude-haiku-4-5"], codex);
+        using var job = rig.EnterJob();   // a call outside a job that answered writes no event
 
         var answer = (await rig.Ask(RouterRig.Request())).Value;
 

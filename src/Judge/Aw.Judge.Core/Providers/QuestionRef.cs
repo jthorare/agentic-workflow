@@ -31,8 +31,8 @@ public sealed record QuestionRef
     public string? Model { get; init; }
 
     /// <summary>
-    /// Whether an agent CLI runs its own default model: no model flag at all, so neither <see cref="Model"/> nor the provider's small default
-    /// is passed (Sindri's built-in codex name when codex's list lacks it, issue 3389); false passes a model as before.
+    /// Whether Codex runs its own default model: no model flag at all, so neither <see cref="Model"/> nor the provider's small default is
+    /// passed (Sindri's built-in codex name when codex's list lacks it, issue 3389); false passes a model as before. Only the Codex provider reads it.
     /// </summary>
     public bool OwnDefaultModel { get; init; }
 

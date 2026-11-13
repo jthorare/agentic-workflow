@@ -105,8 +105,7 @@ public sealed class ModelRoutingDoctorChecksTests
         var row = await Row(Checks(Settings(new ModelEntry()), _both, "claude-sonnet-4-5", "claude-haiku-4-5"));
 
         Expect.Equal(CheckState.Ok, row.State);
-        Assert.Contains("claude-code haiku, then codex default;", row.Detail, StringComparison.Ordinal);
-        Assert.Contains("conceptNaming: claude-code sonnet, then codex default;", row.Detail, StringComparison.Ordinal);
+        Expect.Equal("labeling, conceptNaming, decisionExtraction, adjudication, mapCleanup, rerank, workflowPrompt: claude-code haiku, then codex default; productSurfaces: no model", row.Detail);
         Assert.Null(row.Fix);
     }
 
