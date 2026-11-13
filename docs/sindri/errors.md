@@ -199,6 +199,7 @@ Words from the first-run spec (`docs/superpowers/specs/2026-11-12-sindri-first-r
 | `SND-GRAPH-109` | A run of this workflow can't start the workflow again |
 | `SND-GRAPH-110` | The run is not waiting on an agent at that node, so there is nothing to take over |
 | `SND-GRAPH-111` | That agent node is not taken over, so there is nothing to hand back |
+| `SND-GRAPH-113` | A prompt field came out empty |
 | `SND-GRAPH-119` | That part of workflows is not built yet: the Workflows page contract routes (`POST .../test`, `POST .../pins`, `GET .../trigger-events`, `GET .../templates`) and the `replace_node` op answer this until their phase lands |
 | `SND-GRAPH-120` | A workflow call is nested too deep: the call would be past `workflow.callDepth` (default 3) |
 | `SND-GRAPH-121` | A run can't start its own workflow, or the workflow that called it |

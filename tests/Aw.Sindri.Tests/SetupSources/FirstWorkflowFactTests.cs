@@ -24,7 +24,7 @@ public sealed class FirstWorkflowFactTests : IAsyncDisposable
         _workflows = new InMemoryWorkflowStore(_rig.Clock);
         _runs = new InMemoryWorkflowRunStore(_rig.Clock);
         _rig.Profiles.Live = SetupFactsRig.ProfileWithRepos();
-        _reader = new ProfileSetupReader(_rig.Profiles, new Core.Setup.RepoGitCache(_rig.Inspector, _rig.Clock), _workflows, _runs);
+        _reader = new ProfileSetupReader(_rig.Profiles, new Core.Setup.RepoGitCache(_rig.Inspector, _rig.Clock), new SetupFactsRig.NoProfileFile(), _workflows, _runs);
     }
 
     public ValueTask DisposeAsync() => _rig.DisposeAsync();
