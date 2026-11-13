@@ -106,12 +106,7 @@ internal sealed partial class GraphIterationWorkflow
 
             var outcome = await Execute(node, item).ConfigureAwait(true);
             _ = decided.Add(node.Id);
-            if (outcome.Status == NodeRunStatus.Failed && !string.Equals(node.OnFailure, "continue", StringComparison.Ordinal))
-            {
-                failure = $"node '{node.Id.Value}' failed on item {item.ToString(System.Globalization.CultureInfo.InvariantCulture)}: {outcome.Error}";
-                continue;
-            }
-
+            failure = ItemFailure(spec, node, item, outcome);
             taken[node.Id] = outcome.Status == NodeRunStatus.Succeeded ? outcome.Taken : ["out"];
         }
 
