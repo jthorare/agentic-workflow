@@ -76,22 +76,31 @@ public sealed class StateBorderContrastTests
         var selector = style.Attribute("Selector")?.Value ?? string.Empty;
         if (!_state.IsMatch(selector))
         {
-            yield break;
+            return [];
         }
 
         var setters = style.Elements().Where(e => string.Equals(e.Name.LocalName, "Setter", StringComparison.Ordinal)).ToList();
-        var background = setters.FirstOrDefault(e => string.Equals(e.Attribute("Property")?.Value, "Background", StringComparison.Ordinal))?.Attribute("Value")?.Value;
-        foreach (var value in setters
+        var background = SetterValue(setters, "Background");
+        return BorderValues(setters, background)
+            .Select(BrushKey)
+            .OfType<string>()
+            .Select(key => (fileName + ": " + selector, key));
+    }
+
+    private static string? SetterValue(List<XElement> setters, string property) =>
+        setters.FirstOrDefault(e => string.Equals(e.Attribute("Property")?.Value, property, StringComparison.Ordinal))?.Attribute("Value")?.Value;
+
+    // The BorderBrush values that differ from the fill.
+    private static IEnumerable<string> BorderValues(List<XElement> setters, string? background) =>
+        setters
             .Where(e => e.Attribute("Property")?.Value.EndsWith("BorderBrush", StringComparison.Ordinal) ?? false)
             .Select(e => e.Attribute("Value")?.Value ?? string.Empty)
-            .Where(v => !string.Equals(v, background, StringComparison.Ordinal)))
-        {
-            var match = _brush.Match(value);
-            if (match.Success)
-            {
-                yield return (fileName + ": " + selector, match.Groups["key"].Value);
-            }
-        }
+            .Where(v => !string.Equals(v, background, StringComparison.Ordinal));
+
+    private static string? BrushKey(string value)
+    {
+        var match = _brush.Match(value);
+        return match.Success ? match.Groups["key"].Value : null;
     }
 
     // The Color.<name> a brush is over ("Outline"), or the literal colour's own text.
