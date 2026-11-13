@@ -134,7 +134,7 @@ public sealed class CodeIndexDoctorTests
     public void A_refused_chunk_on_the_embeddings_layer_names_the_real_cause_not_start_ollama_issue_3128()
     {
         var rejected = new LayerStatus(LayerName.Embeddings, LayerState.Unavailable, CodeIndex.Core.CodeIndexErrors.EmbeddingInputRejected.Code, "a chunk was refused");
-        var rows = CodeIndexDoctor.Rows([Built(Ok(LayerName.Structure), rejected)], [], [], _now);
+        var rows = CodeIndexDoctor.Rows(new([Built(Ok(LayerName.Structure), rejected)], [], []), _now);
 
         var fix = rows.Single(static c => c.Name == "code-index:ollama").Fix;
 
