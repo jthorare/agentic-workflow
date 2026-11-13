@@ -55,7 +55,9 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         ArgumentNullException.ThrowIfNull(nodeRun);
         var cancel = ActivityExecutionContext.Current.CancellationToken;
         // why: the node row keeps the block's input and error, which can carry prompt or trigger text; they are scrubbed like the ledger payloads. The output stays as it is: later nodes read it.
-        var scrubbed = nodeRun with { Input = StoredJson.Quote(mirror.Clean(nodeRun.Input)), Error = mirror.Clean(nodeRun.Error) };
+        // why: the scrub can make a text longer, so Fit runs after it; a cut here sets 'Truncated' like the block's own Fit does (#3486)
+        var input = StoredJson.Fit(StoredJson.Quote(mirror.Clean(nodeRun.Input)));
+        var scrubbed = nodeRun with { Input = input.Text, Truncated = nodeRun.Truncated || input.Cut, Error = mirror.Clean(nodeRun.Error) };
         var stored = GraphFailures.Value(await runs.RecordNodeRun(scrubbed, cancel).ConfigureAwait(false));
         var item = GraphFailures.Value(await runs.Get(nodeRun.RunId, cancel).ConfigureAwait(false)).ItemId?.Value;
         var prefix = $"{stored.RunId.Value}:{stored.NodeId.Value}:{stored.ItemIndex.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
