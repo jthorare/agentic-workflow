@@ -78,8 +78,8 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
 
         var notes = await AnswerNotes(graph, (fetched.Count, degraded, searched.Notes), cancellationToken).ConfigureAwait(false);
         var versions = await Versions(fetched, sources, deadline, degraded, cancellationToken).ConfigureAwait(false);
-        var assembly = new ResultAssembly(scrubbers.Value.Egress, QueryId.From("q_" + ids.NewId().ToString("N", CultureInfo.InvariantCulture)), clock.GetUtcNow());
-        var built = assembly.Build(request.Query, new RecordPart(fetched, versions, degraded), DemotedLast(graph, request.Scope.Repos));
+        var built = new ResultAssembly(scrubbers.Value.Egress, QueryId.From("q_" + ids.NewId().ToString("N", CultureInfo.InvariantCulture)), clock.GetUtcNow())
+            .Build(request.Query, new RecordPart(fetched, versions, degraded), DemotedLast(graph, request.Scope.Repos));
         return built with { Filtered = DemotedFiles.Counts(CodeKeys(graph), request.Scope.Repos), Notes = notes, Matches = matches };
     }
 
