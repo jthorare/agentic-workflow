@@ -18,11 +18,12 @@ internal sealed partial class ContextPageViewModel
     private string? _buildJob;
     private MapNotReadyView _notReady = MapNotReadyView.None;
     private bool _servedBuilding;
+    private IReadOnlyList<string> _repos = [];   // the repositories a no-map answer named; kept so serve's building line keeps the head (#3391)
 
     /// <summary>The Building state's title: the whole map's answer says how far the build is, else the item map's words.</summary>
-    public string BuildingTitle => _servedBuilding ? Labels.ContextBuildingLine(BuildingParts())
+    public string BuildingTitle => _servedBuilding ? Labels.ContextBuildingLine(BuildingParts(), _itemOpened is null ? Labels.ContextBuildingFor(_repos) : Labels.ContextBuildingFor([]))
         : _itemOpened is not null ? Labels.ContextStateBuilding
-        : Labels.ContextBuildingFor(_notReady.NoMap?.Repos ?? []);   // why: with no item there is no ticket and no promise of a time (#3391)
+        : Labels.ContextBuildingFor(_repos);   // why: with no item there is no ticket and no promise of a time (#3391)
 
     /// <summary>The Building state's body: "last map 2 h ago" when the answer names it; nothing when the title is the answer's.</summary>
     public string BuildingBody => !_servedBuilding ? (_itemOpened is null ? string.Empty : Labels.ContextStateBuildingBody) : _notReady.Building?.LastSyncAt is { } last ? Labels.ContextLastMap(Age(last)) : string.Empty;
@@ -115,6 +116,11 @@ internal sealed partial class ContextPageViewModel
     private void NoteNotReady(Error error)
     {
         _notReady = MapNotReadyView.From(error, SindriApiClient.Json);
+        if (_notReady.NoMap?.Repos is { Count: > 0 } named)
+        {
+            _repos = named;
+        }
+
         _servedBuilding = _notReady.Building is not null || _notReady.NoMap?.FirstRunStartedAt is not null;
         if (_servedBuilding)
         {
