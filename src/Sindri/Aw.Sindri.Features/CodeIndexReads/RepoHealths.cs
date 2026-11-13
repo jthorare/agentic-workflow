@@ -8,7 +8,7 @@ using Aw.Sindri.Core.Views;
 namespace Aw.Sindri.Features.CodeIndexReads;
 
 /// <summary>Lays the live heads and the build jobs over a list of repo statuses, for the status read and for GET /status's health.</summary>
-internal sealed class RepoHealths(IRepoHeads heads, IJobViews jobs, TimeProvider clock)
+internal sealed class RepoHealths(IRepoHeads heads, IJobViews jobs, TimeProvider clock, QueuedClock queued)
 {
     // Stale, building and waiting come from the live heads and the build jobs; either read failing leaves the file state as it is.
     internal async ValueTask<IReadOnlyList<RepoHealth>> Of(CodeIndexScope scope, IReadOnlyList<RepoStatus> repos, CancellationToken cancellationToken)
@@ -27,6 +27,9 @@ internal sealed class RepoHealths(IRepoHeads heads, IJobViews jobs, TimeProvider
         }
 
         var now = clock.GetUtcNow();
-        return [.. repos.Select(r => RepoHealth.Of(r, headOf(r), runningOf(r.Repo.Value), [.. ended.Where(j => IndexBuildWords.IsBuildOf(j, r.Repo.Value))], now))];
+        return [.. repos.Select(r => Timed(RepoHealth.Of(r, headOf(r), runningOf(r.Repo.Value), [.. ended.Where(j => IndexBuildWords.IsBuildOf(j, r.Repo.Value))], now), now))];
     }
+
+    // why: a first build that never starts reads queued forever; how long it has is what makes it a problem (#3440)
+    private RepoHealth Timed(RepoHealth health, DateTimeOffset now) => health with { QueuedFor = queued.For(health.Repo, health.State == "queued", now) };
 }
