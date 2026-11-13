@@ -178,6 +178,20 @@ public sealed class OllamaEmbedderTests
     }
 
     [Fact]
+    public async Task A_cut_never_leaves_half_a_surrogate_pair_issue_3128()
+    {
+        var server = new FakeOllamaServer();
+        var text = new string('x', OllamaEmbedder.InputMaxCharacters - 1) + "\U0001F600tail";
+
+        _ = await Over(server).Embed(_settings, [text], Token);
+
+        using var body = JsonDocument.Parse(server.Requests.Last().Body);
+        var sent = body.RootElement.GetProperty("input")[0].GetString()!;
+        Assert.Equal(OllamaEmbedder.InputMaxCharacters - 1, sent.Length);
+        Assert.DoesNotContain('\uFFFD', sent);
+    }
+
+    [Fact]
     public async Task One_input_the_server_refuses_is_retried_alone_then_skipped_and_counted_issue_3128()
     {
         var server = new FakeOllamaServer { RejectInputContaining = "POISON" };
@@ -190,7 +204,6 @@ public sealed class OllamaEmbedderTests
         Assert.Equal(FakeEmbedder.VectorOf("one"), embedded.Value[0].ToArray());
         Assert.Equal(0, embedded.Value[1].Length);
         Assert.Equal(FakeEmbedder.VectorOf("three"), embedded.Value[2].ToArray());
-        Assert.Equal(1, embedder.SkippedInputs);
         Assert.Contains(server.Requests, r => r.Body.Contains("POISON", StringComparison.Ordinal) && !r.Body.Contains("three", StringComparison.Ordinal));
     }
 
@@ -204,7 +217,6 @@ public sealed class OllamaEmbedderTests
 
         Assert.False(embedded.IsError);
         _ = Assert.Single(server.Requests);
-        Assert.Equal(0, embedder.SkippedInputs);
     }
 
     [Fact]

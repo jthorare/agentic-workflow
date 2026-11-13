@@ -1486,6 +1486,8 @@ Aw.CodeIndex.Core.Model.EmbeddingProgress.Carried.get -> int
 Aw.CodeIndex.Core.Model.EmbeddingProgress.Made.get -> int
 Aw.CodeIndex.Core.Model.EmbeddingProgress.Carried.init -> void
 Aw.CodeIndex.Core.Model.EmbeddingProgress.Made.init -> void
+Aw.CodeIndex.Core.Model.EmbeddingProgress.Refused.get -> int
+Aw.CodeIndex.Core.Model.EmbeddingProgress.Refused.init -> void
 Aw.CodeIndex.Core.Ports.IIndexBuild.FilesWithoutBodiesOrVectors(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlySet<string!>!>!>
 Aw.CodeIndex.Core.Facade.RepoFile
 Aw.CodeIndex.Core.Facade.RepoFile.Path.get -> string!
