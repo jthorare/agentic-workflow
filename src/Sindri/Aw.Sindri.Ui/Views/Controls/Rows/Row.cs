@@ -62,6 +62,8 @@ internal sealed partial class Row : Control
         ResourcesChanged += (_, _) =>
         {
             // Avalonia raises ResourcesChanged on every re-attach too, and a recycled row is re-attached on every fill: only a moved text size drops the layouts.
+            // Known limit (#3189, accepted in review): a brush swapped in the resource dictionary outside a theme flip does not drop the cached inks and chip brushes here, so the row
+            // draws it on its next invalidation (a new item, a theme flip, a scaling change) and not at once. No feature swaps a brush that way today.
             if (TopLevel.GetTopLevel(this) is not null && TextSizeMoved())
             {
                 DropLayouts();
