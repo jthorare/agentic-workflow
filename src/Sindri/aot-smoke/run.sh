@@ -280,12 +280,13 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   human views rebuild </dev/null
   settle
   run status
+  items_in new 1   # the setup service's one hello-sindri run files "Hello from Sindri" (spec decision 19); wait for it so the lists' order is fixed
   human item add "Smoke item" </dev/null
-  items_in new 1
+  items_in new 2
   run queue
   run items --state new
   session item add "Filed by a session"
-  item="$(bounded "$bin" items --json </dev/null | jq -r '.items[0].id')"
+  item="$(bounded "$bin" items --json </dev/null | jq -r '.items[] | select(.title == "Smoke item") | .id')"
   human item close "$item" </dev/null
   items_in done 1
   run items --state done
