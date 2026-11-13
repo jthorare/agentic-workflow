@@ -112,4 +112,21 @@ public sealed class CodeIndexProblemsTests
     [Fact, Trait("Lane", "unit")]
     public void A_current_healthy_index_is_no_problem()
         => Assert.Null(Problem(Built(), Current()));
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_first_build_still_queued_after_30_min_is_a_problem()
+    {
+        var status = Missing();
+        var problem = CodeIndexProblems.For(status, RepoHealth.Of(status, Current(), [], _now) with { QueuedFor = TimeSpan.FromMinutes(30) });
+
+        Assert.Equal(("SND-CODEIDX-013", "demo: the first code index build hasn't started in 30 min", "the code index for demo hasn't started its first build"), (problem?.Code, problem?.Text, problem?.Clause));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_first_build_queued_under_30_min_is_no_problem()
+    {
+        var status = Missing();
+
+        Assert.Null(CodeIndexProblems.For(status, RepoHealth.Of(status, Current(), [], _now) with { QueuedFor = TimeSpan.FromMinutes(29) }));
+    }
 }

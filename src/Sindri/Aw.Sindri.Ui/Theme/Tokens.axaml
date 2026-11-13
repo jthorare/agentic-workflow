@@ -28,9 +28,12 @@
   <!-- hairline-strong: input borders, the copy block -->
   <Color x:Key="Color.HairlineStrong">#34343a</Color>
   <SolidColorBrush x:Key="Brush.HairlineStrong" Color="{StaticResource Color.HairlineStrong}" />
-  <!-- hairline-tertiary: nested surfaces -->
+  <!-- hairline-tertiary: nested surfaces. Decorative only (1.9:1 on the canvas): never a control outline, use Color.Outline -->
   <Color x:Key="Color.HairlineTertiary">#3e3e44</Color>
   <SolidColorBrush x:Key="Brush.HairlineTertiary" Color="{StaticResource Color.HairlineTertiary}" />
+  <!-- outline: control outlines, 3:1 non-text contrast (WCAG 1.4.11, #3190) on the canvas, the panel and the pressed fill -->
+  <Color x:Key="Color.Outline">#70757c</Color>
+  <SolidColorBrush x:Key="Brush.Outline" Color="{StaticResource Color.Outline}" />
   <!-- ink: primary text -->
   <Color x:Key="Color.Ink">#f7f8f8</Color>
   <SolidColorBrush x:Key="Brush.Ink" Color="{StaticResource Color.Ink}" />
@@ -64,9 +67,10 @@
        and the colour ease blends each channel straight, so a rest of Transparent (#00FFFFFF) would pass through grey on the way to the hover;
        this one only gains alpha. -->
   <SolidColorBrush x:Key="Brush.Clickable.Rest" Color="#001c1d20" />
+  <!-- Hover only: not the control's boundary or state, so no 3:1 (WCAG 1.4.11). Pressed, focus and selected use Outline. -->
   <SolidColorBrush x:Key="Brush.Clickable.HoverBorder" Color="{StaticResource Color.HairlineStrong}" />
   <SolidColorBrush x:Key="Brush.Clickable.Pressed" Color="#222326" />
-  <SolidColorBrush x:Key="Brush.Clickable.PressedBorder" Color="{StaticResource Color.HairlineTertiary}" />
+  <SolidColorBrush x:Key="Brush.Clickable.PressedBorder" Color="{StaticResource Color.Outline}" />
   <!-- on-primary: primary button text -->
   <Color x:Key="Color.OnPrimary">#ffffff</Color>
   <SolidColorBrush x:Key="Brush.OnPrimary" Color="{StaticResource Color.OnPrimary}" />
@@ -130,9 +134,10 @@
   <SolidColorBrush x:Key="Brush.Status.Draft.Fg" Color="{StaticResource Color.InkSubtle}" />
   <SolidColorBrush x:Key="Brush.Status.Draft.Bg" Color="Transparent" />
   <SolidColorBrush x:Key="Brush.Status.Draft.Border" Color="{StaticResource Color.HairlineStrong}" />
-  <!-- context map (F3 spec 1 §2): wire is an edge, a port and a suggested node's dashed border (decoration, 2.4:1 like the
-       hairlines; a suggestion is carried by its dash and its words, never by this colour) -->
-  <Color x:Key="Color.Wire">#4a4a52</Color>
+  <!-- graph and context map: wire is a connector, an edge, a port and a suggested node's dashed border. It is the only mark
+       of which step feeds which, so it meets the 3:1 non-text minimum on Canvas, Surface1 and Surface2 (WCAG 1.4.11, #3138);
+       a suggestion is still carried by its dash and its words, never by this colour -->
+  <Color x:Key="Color.Wire">#686870</Color>
   <SolidColorBrush x:Key="Brush.Wire" Color="{StaticResource Color.Wire}" />
   <!-- context map: a hovered or selected edge and its neighbours (same value as ink-subtle, kept as its own role) -->
   <Color x:Key="Color.WireHi">#8a8f98</Color>
@@ -234,6 +239,20 @@
   <x:Double x:Key="Row.Height.Default">32</x:Double>
   <x:Double x:Key="Row.Height.Data">36</x:Double>
   <x:Double x:Key="Row.Height.Comfortable">40</x:Double>
+  <!-- RowList / Row / PeekPane (#2978, grammar v2). The cursor ring is PrimaryHover (the grammar's primary-hi) 1 px inset; the selected row is PrimarySoft with a 2 px Primary bar; age, id and counts are InkSubtle. -->
+  <x:Double x:Key="Row.GroupHeader">28</x:Double>
+  <x:Double x:Key="Row.Col.Glyph">16</x:Double>
+  <x:Double x:Key="Row.Col.Fact">104</x:Double>
+  <x:Double x:Key="Row.Col.FactWide">136</x:Double>
+  <x:Double x:Key="Row.Col.Age">44</x:Double>
+  <x:Double x:Key="Row.Col.Wait">112</x:Double>
+  <x:Double x:Key="Row.Col.TitleMin">200</x:Double>
+  <x:Double x:Key="Row.Gap">12</x:Double>
+  <x:Double x:Key="Row.Inset">24</x:Double>
+  <Thickness x:Key="Row.Inset.Thickness">24,0</Thickness>
+  <x:Double x:Key="Peek.Width">440</x:Double>
+  <x:Double x:Key="Peek.Header">48</x:Double>
+  <x:Double x:Key="Peek.FieldRow">28</x:Double>
   <!-- Inspora pass: a chart sits on a Surface2 inset inside its card; only a floating layer (menu, palette, dialog) casts a shadow. -->
   <SolidColorBrush x:Key="Brush.Chart.Inset" Color="{StaticResource Color.Surface2}" />
   <!-- The tick bar (a backlog as one tick per record, or per ceil(total / Max) records): lit ticks Success, the rest Surface3. -->

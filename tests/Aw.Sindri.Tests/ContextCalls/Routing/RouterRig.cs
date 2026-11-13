@@ -19,11 +19,20 @@ internal sealed class RouterRig
     private readonly FakeJobContextAccessor _jobs = new();
 
     public RouterRig(ModelsSettings? settings, params ScriptedCli[] clis)
+        : this(settings, codexModels: null, clis)
+    {
+    }
+
+    /// <summary>A router that also reads codex's model list: <paramref name="codexModels"/> are the slugs 'codex debug models' gives (empty: the list could not be read).</summary>
+    public RouterRig(ModelsSettings? settings, string[]? codexModels, params ScriptedCli[] clis)
     {
         Catalog = new ScriptedCatalog(clis);
         Clis = clis;
-        Port = new RoutedModelPort(() => Catalog, new FixedModels(settings ?? new ModelsSettings()), _jobs, Calls, new SequentialIdGenerator(), Clock);
+        CodexList = codexModels is null ? null : new FixedCodexList(codexModels);
+        Port = new RoutedModelPort(() => Catalog, new FixedModels(settings ?? new ModelsSettings()), _jobs, Calls, new SequentialIdGenerator(), Clock, CodexList);
     }
+
+    public FixedCodexList? CodexList { get; }
 
     public ScriptedCatalog Catalog { get; }
 

@@ -184,7 +184,7 @@ public sealed class GoldenContractTests
         "handoff",   // POST /sindri/handoff (#2258 PR 12): a local app or script's call; the CLI's `handoff send`, never the app's
         "ledger",   // API P5: the audit read is the CLI's; the app follows the stream and re-queries
         "services-name-run", "services-name-pause", "services-name-resume",   // API P6: the services calls are U4's (Services); the job calls are read below
-        "sessions-id-heartbeat", "sessions-id-exit", "launch-targets", "launch-targets-probe",   // API P10a (U8): U10's session wrap's own calls and the launch-target reads, never the app's
+        "sessions-id-heartbeat", "sessions-id-exit", "sessions-start", "sessions-worktree", "sessions-last-start", "sessions-id-id-terminal", "launch-targets", "launch-targets-probe",   // API P10a (U8): U10's session wrap's own calls and the launch-target reads, never the app's
         "workflow-instance-scoping",   // API2 (SC-K2): the scoping stop view; the app reads it in SC-U (U2)
         "workflow-instance-line",   // LN-API1 (LN-L): the line board of a workflow.line instance; the app reads it in LN-U (LN-UI1)
         "workflow-instance-design-stop",   // LN-API2 (LN-K): stop 2's view of a workflow.plan instance; the app reads it in LN-U (LN-UI2)

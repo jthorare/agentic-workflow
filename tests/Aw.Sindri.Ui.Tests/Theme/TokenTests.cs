@@ -20,6 +20,7 @@ public sealed class TokenTests
         ("Hairline", "#0fffffff"),
         ("HairlineStrong", "#34343a"),
         ("HairlineTertiary", "#3e3e44"),
+        ("Outline", "#70757c"),   // control outlines, 3:1 non-text contrast (#3190)
         ("Ink", "#f7f8f8"),
         ("InkMuted", "#d0d6e0"),
         ("InkSubtle", "#8a8f98"),
@@ -41,7 +42,7 @@ public sealed class TokenTests
         ("ErrorSoft", "#281415"),
         ("ErrorChipText", "#ee6060"),
         ("SuccessSoft", "#0d2115"),
-        ("Wire", "#4a4a52"),
+        ("Wire", "#686870"),
         ("WireHi", "#8a8f98"),
         ("LaneFill", "#05ffffff"),
         ("RingAnchor", "#d0d6e0"),

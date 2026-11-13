@@ -17,7 +17,8 @@ namespace Aw.Sindri.Features.GetNeedsYou;
 /// <param name="scrubber">Scrubs the text.</param>
 /// <param name="clock">Stamps the rows.</param>
 /// <param name="mcp">Says whether the owner is to be asked once to turn the automatic registration on.</param>
-internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ITextScrubber scrubber, TimeProvider clock, McpAutoGate mcp)
+/// <param name="sighting">Keeps when the turn-on row was first seen.</param>
+internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ITextScrubber scrubber, TimeProvider clock, McpAutoGate mcp, TurnOnMcpSighting sighting)
 {
     private static readonly JobKind _addRepo = JobKind.From("AddRepo");
     private static readonly JobKind _registerMcp = JobKind.From("RegisterMcp");
@@ -38,10 +39,17 @@ internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ITextScr
     {
         if (await LastFailed(_registerMcp, cancellationToken).ConfigureAwait(false) is not { } failed)
         {
-            var turnOn = await mcp.TurnOnNeeded(cancellationToken).ConfigureAwait(false) ? NeedsYouRows.ForTurnOnMcp(clock.GetUtcNow(), scrubber) : null;
+            if (!await mcp.TurnOnNeeded(cancellationToken).ConfigureAwait(false))
+            {
+                sighting.Clear();
+                return null;
+            }
+
+            var turnOn = NeedsYouRows.ForTurnOnMcp(sighting.Seen(clock.GetUtcNow()), scrubber);
             return turnOn is { IsSuccess: true } ? turnOn.Value : null;
         }
 
+        sighting.Clear();
         var row = NeedsYouRows.ForSetupMcp(failed.Summary ?? "Sindri could not register itself with your agents. Press Connect again.", failed.EndedAt ?? failed.StartedAt, scrubber);
         return row.IsSuccess ? row.Value : null;
     }
