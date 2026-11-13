@@ -11,7 +11,6 @@ using Aw.Kernel.Telemetry;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
-using Aw.Sindri.Core.Graph.Templates;
 using Aw.Sindri.Core.Graph.Validation;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launch;
@@ -63,7 +62,7 @@ internal static class Composition
             .AddSingleton(sp => new JudgeCatalog(environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<System.Text.Json.JsonSerializerOptions>()))   // Judge's provider catalog, built on first use; the router and the doctor's context:models row share it
             .AddSingleton<IModelPort>(sp => new RoutedModelPort(sp.GetRequiredService<JudgeCatalog>().Get,
                 sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJobContextAccessor>(), sp.GetRequiredService<IModelCallLog>(), sp.GetRequiredService<Kernel.Ids.IIdGenerator>(), sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<IModelCatalog>()))
-            .AddScoped<IWorkflowChecker, ProfileWorkflowChecker>().AddScoped<IFirstRepo, ProfileFirstRepo>().AddScoped<WorkflowChangeLog>()   // the workflow write slices (#2258, PR 8b): the validator with this Sindri's blocks and repos, and the lifecycle events
+            .AddScoped<IWorkflowChecker, ProfileWorkflowChecker>().AddScoped<WorkflowChangeLog>()   // the workflow write slices (#2258, PR 8b): the validator with this Sindri's blocks and repos, and the lifecycle events
             .AddSingleton<IGraphModelPort, GraphModelPortAdapter>().AddSingleton<INotifyPort, LedgerNotifyPort>()   // the prompt and notify blocks of the graph engine (#2258, PR 6): the routed model port and a 'workflow.notify' event
             .AddSingleton<IQuestionPort, LedgerQuestionPort>()   // the ask_owner block (#2258, PR 9): a 'workflow.question' event
             .AddChoicePort(environment)   // the Jev label pick: IChoicePort over the judge's batch classifier, and the route's prompt budget (model routing spec §6.7)

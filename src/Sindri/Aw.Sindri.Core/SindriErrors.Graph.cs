@@ -70,9 +70,6 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-133: a prompt step's answer said couldNotAnswer: true, so the step fails with the model's reason instead of passing a default (#3224).</summary>
     public static readonly ErrorDefinition GraphPromptCouldNotAnswer = new("SND-GRAPH-133", ErrorKind.Invalid, "The model said it couldn't answer");
 
-    /// <summary>SND-GRAPH-134: a template that reads data in a repo (an agent step) was asked for while the profile has no repo (#3509); the message names `sindri repo add`.</summary>
-    public static readonly ErrorDefinition GraphTemplateNeedsRepo = new("SND-GRAPH-134", ErrorKind.Invalid, "This template needs a repo in the profile");
-
     /// <summary>SND-GRAPH-104: run controls (complete a Step, take over, hand back) are not available until the graph engine runs agents.</summary>
     public static readonly ErrorDefinition GraphRunControlsPending = new("SND-GRAPH-104", ErrorKind.Unavailable, "This run control returns with the graph engine's agent blocks");
 

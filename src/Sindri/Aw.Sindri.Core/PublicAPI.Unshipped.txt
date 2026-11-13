@@ -21632,11 +21632,6 @@ Aw.Sindri.Core.Graph.Templates.GraphTemplate.GraphTemplate(string! Name, string!
 Aw.Sindri.Core.Graph.Templates.GraphTemplate.Name.get -> string!
 Aw.Sindri.Core.Graph.Templates.GraphTemplate.Name.init -> void
 Aw.Sindri.Core.Graph.Templates.GraphTemplates
-Aw.Sindri.Core.Graph.Templates.IFirstRepo
-Aw.Sindri.Core.Graph.Templates.IFirstRepo.Name(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
-const Aw.Sindri.Core.Graph.Templates.GraphTemplates.PlaceholderRepo = "your-repo" -> string!
-static Aw.Sindri.Core.Graph.Templates.GraphTemplates.NeedsRepo(string! name) -> bool
-static Aw.Sindri.Core.Graph.Templates.GraphTemplates.Find(string! name, string? firstRepo) -> Aw.Sindri.Core.Graph.Templates.GraphTemplate?
 Aw.Sindri.Core.Graph.Templates.GraphTemplate.Spec.get -> Aw.Sindri.Core.Graph.GraphSpec!
 Aw.Sindri.Core.Graph.Templates.GraphTemplate.Spec.init -> void
 override Aw.Sindri.Core.Graph.Ops.AddNodeOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.AddNodeOp!
@@ -23266,7 +23261,6 @@ static Aw.Sindri.Core.Graph.Failures.FailureSentences.Find(string! code) -> Aw.S
 static Aw.Sindri.Core.Graph.Failures.FailureSentences.Say(string! code, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! values) -> string!
 static readonly Aw.Sindri.Core.SindriErrors.GraphPromptFieldEmpty -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.GraphPromptCouldNotAnswer -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.GraphTemplateNeedsRepo -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Connections.Polling.EventKindSchema
 Aw.Sindri.Core.Connections.Polling.EventKindSchema.<Clone>$() -> Aw.Sindri.Core.Connections.Polling.EventKindSchema!
 Aw.Sindri.Core.Connections.Polling.EventKindSchema.Deconstruct(out string! Kind, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Fields, out System.Text.Json.Nodes.JsonObject! Sample) -> void

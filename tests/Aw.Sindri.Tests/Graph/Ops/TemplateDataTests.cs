@@ -5,87 +5,56 @@ using Aw.Sindri.Core.Graph.Expressions;
 using Aw.Sindri.Core.Graph.Schedule;
 using Aw.Sindri.Core.Graph.Templates;
 using Aw.Sindri.Core.Graph.Validation;
+using Aw.Sindri.Features.CreateWorkflow;
 using Aw.Sindri.Tests.Graph.Blocks;
+using Aw.Sindri.Tests.WorkflowWrites;
+using static Aw.Sindri.Tests.WorkflowWrites.WorkflowWriteRig;
 
 namespace Aw.Sindri.Tests.Graph.Ops;
 
-/// <summary>#3509: the Weekday check and Daily digest starters read real data (an agent step before the Prompt) instead of asking a model about nothing.</summary>
+/// <summary>#3509: the Weekday check and Daily digest starters need no outside data: no agent step (every sandbox Step denies `gh`), and the prompt reads the schedule's date.</summary>
 [Lane(TestLane.Unit)]
 public sealed class TemplateDataTests
 {
-    private const string Repo = "web";
-
     private static GraphValidator RealValidator() => GraphFixtures.Validator(
         blocks: GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"), more: [new CreateItemBlock(new FlowFakes.RecordingItemPort()), new CodeBlock(runner: null!)]).Types,
         cron: (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem,
         condition: text => ConditionExpression.TryParse(text, out var expression, out var error) ? new ConditionParse(Error: null, expression!.References) : new ConditionParse(error, []));
 
-    private static GraphSpec Built(string name) => GraphTemplates.Find(name, Repo)!.Spec;
-
-    // the ids of every node with a path to 'node' (its upstream)
-    private static HashSet<string> Upstream(GraphSpec spec, string node)
-    {
-        var seen = new HashSet<string>(StringComparer.Ordinal);
-        var todo = new Stack<string>([node]);
-        while (todo.Count > 0)
-        {
-            var at = todo.Pop();
-            foreach (var edge in spec.Edges.Where(e => string.Equals(e.To.Value, at, StringComparison.Ordinal)))
-            {
-                if (seen.Add(edge.From.Value))
-                {
-                    todo.Push(edge.From.Value);
-                }
-            }
-        }
-
-        return seen;
-    }
+    private static GraphSpec Built(string name) => GraphTemplates.Find(name)!.Spec;
 
     [Theory]
     [InlineData("weekday-check")]
     [InlineData("daily-digest")]
-    public void A_data_template_has_an_agent_step_upstream_of_its_prompt_in_the_first_repo(string name)
-    {
-        var spec = Built(name);
-
-        var prompt = Assert.Single(spec.Nodes, static n => n.Type == "prompt");
-        var agents = spec.Nodes.Where(n => n.Type == "run_agent" && Upstream(spec, prompt.Id.Value).Contains(n.Id.Value)).ToList();
-        var agent = Assert.Single(agents);
-        Assert.Equal(Repo, agent.Config["repo"]!.GetValue<string>());
-    }
+    public void The_template_has_no_agent_step(string name)
+        => Assert.DoesNotContain(Built(name).Nodes, static n => n.Type == "run_agent");
 
     [Theory]
     [InlineData("weekday-check")]
     [InlineData("daily-digest")]
-    public void The_prompt_question_reads_the_agent_output_and_the_spec_validates(string name)
+    public void The_prompt_reads_the_schedule_date_and_the_spec_validates_without_a_prompt_warning(string name)
     {
         var spec = Built(name);
 
-        var agent = Assert.Single(spec.Nodes, static n => n.Type == "run_agent");
+        var trigger = Assert.Single(spec.Nodes, static n => n.Type == "schedule");
         var question = Assert.Single(spec.Nodes, static n => n.Type == "prompt").Config["prompt"]!.GetValue<string>();
-        Assert.Contains("{{" + agent.Id.Value + ".", question, StringComparison.Ordinal);
+        Assert.Contains("{{" + trigger.Id.Value + ".scheduledFor}}", question, StringComparison.Ordinal);
         var result = RealValidator().Validate(spec, GraphMode.Activate);
         Assert.True(result.Passed, string.Join("; ", result.Blocking));
+        Assert.DoesNotContain(result.Findings, static f => f.ToString().Contains("GRAPH-PROMPT-001", StringComparison.Ordinal));
     }
 
-    [Fact]
-    public void A_repo_name_with_a_quote_or_backslash_is_kept_as_text()
+    [Theory]
+    [InlineData("weekday-check")]
+    [InlineData("daily-digest")]
+    public async Task Creating_the_template_needs_no_repo_in_the_profile(string name)
     {
-        const string odd = "we\"ird\\repo";
+        using var rig = new WorkflowWriteRig(realBlocks: true);
+        var service = new CreateWorkflowService(rig.Workflows, rig.Checker, rig.Harness.Ids, rig.Log);
+        _ = await rig.Harness.HoldLease();
 
-        var agent = Assert.Single(GraphTemplates.Find("weekday-check", odd)!.Spec.Nodes, static n => n.Type == "run_agent");
+        var result = await service.Handle(new CreateWorkflowRequest(Slug, name, Spec: null, "session:s1"), Token);
 
-        Assert.Equal(odd, agent.Config["repo"]!.GetValue<string>());
-    }
-
-    [Fact]
-    public void The_templates_that_read_no_data_take_no_repo()
-    {
-        // hello-sindri and manual-notify have no agent step, so a profile with no repo (a null first repo) still builds them (FirstRunSetup keeps calling Find(name) for hello-sindri and fills create_item's repo itself)
-        Assert.NotNull(GraphTemplates.Find("manual-notify", firstRepo: null));
-        var hello = GraphTemplates.Find("hello-sindri", firstRepo: null)!.Spec;
-        Assert.DoesNotContain(hello.Nodes, static n => n.Type == "run_agent");
-        Assert.Contains(hello.Nodes, static n => n.Type == "create_item");
+        Assert.True(result.IsSuccess);
     }
 }

@@ -18,8 +18,7 @@ namespace Aw.Sindri.Features.CreateWorkflow;
 /// <param name="checker">Builds the validator.</param>
 /// <param name="ids">Makes the workflow's id.</param>
 /// <param name="log">Writes the lifecycle event.</param>
-/// <param name="firstRepo">Names the profile's first repo for a data template's agent step (#3509); null makes templates with the stand-in repo name.</param>
-internal sealed class CreateWorkflowService(IWorkflowStore workflows, IWorkflowChecker checker, IIdGenerator ids, WorkflowChangeLog log, IFirstRepo? firstRepo = null) : IService<CreateWorkflowRequest, CreateWorkflowResponse>
+internal sealed class CreateWorkflowService(IWorkflowStore workflows, IWorkflowChecker checker, IIdGenerator ids, WorkflowChangeLog log) : IService<CreateWorkflowRequest, CreateWorkflowResponse>
 {
     private static readonly HashSet<string> _reserved = new(["docs", "blocks"], StringComparer.Ordinal);
 
@@ -32,8 +31,7 @@ internal sealed class CreateWorkflowService(IWorkflowStore workflows, IWorkflowC
             return SindriErrors.InvalidInput.With($"'{request.Slug.Value}' is reserved for the workflow docs and blocks routes; pick another slug");
         }
 
-        var repo = firstRepo is null ? null : await firstRepo.Name(cancellationToken).ConfigureAwait(false);
-        var spec = Source(request, repo, hasProfile: firstRepo is not null);
+        var spec = Source(request);
         if (spec.IsError)
         {
             return spec.Error;
@@ -62,7 +60,7 @@ internal sealed class CreateWorkflowService(IWorkflowStore workflows, IWorkflowC
         return recorded.IsError ? recorded.Error : new CreateWorkflowResponse(id, request.Slug, created.Value.Revision, created.Value.SpecHash);
     }
 
-    private static Result<GraphSpec> Source(CreateWorkflowRequest request, string? repo, bool hasProfile)
+    private static Result<GraphSpec> Source(CreateWorkflowRequest request)
     {
         if ((request.Template is null) == (request.Spec is null))
         {
@@ -74,13 +72,7 @@ internal sealed class CreateWorkflowService(IWorkflowStore workflows, IWorkflowC
             return GraphJson.Parse(text);
         }
 
-        // why: a data template runs an agent in the profile's first repo; with no repo the owner is told the fix instead of getting a workflow that names a repo that isn't there (#3509)
-        if (hasProfile && repo is null && GraphTemplates.NeedsRepo(request.Template!))
-        {
-            return SindriErrors.GraphTemplateNeedsRepo.With($"the '{request.Template}' template reads data in a repo and the profile has none; add one with `sindri repo add <path>`");
-        }
-
-        var template = hasProfile ? GraphTemplates.Find(request.Template!, repo) : GraphTemplates.Find(request.Template!);   // why: the check above leaves Template set when Spec is null
+        var template = GraphTemplates.Find(request.Template!);   // why: the check above leaves Template set when Spec is null
         return template is null
             ? SindriErrors.InvalidInput.With($"no template '{request.Template}'; the templates are {string.Join(", ", GraphTemplates.All.Select(static t => t.Name))}")
             : template.Spec;
