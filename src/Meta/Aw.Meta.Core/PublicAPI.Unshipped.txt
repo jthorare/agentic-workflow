@@ -1975,7 +1975,7 @@ Aw.Meta.Core.Coordination.LaneContextReader.Read(Aw.Meta.Core.Config.TeamConfig!
 Aw.Meta.Core.Coordination.LaneContextReader.ReadLane(string! team, string! lane, int threshold, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Lanes.LaneContext!>!>
 Aw.Meta.Core.Coordination.PaneSubmitter
 Aw.Meta.Core.Coordination.PaneSubmitter.PaneSubmitter(Aw.Meta.Core.Ports.ILanePane! pane, Aw.Meta.Core.Ports.IDelay! delay) -> void
-Aw.Meta.Core.Coordination.PaneSubmitter.Submit(string! session, string! line, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Coordination.PaneSubmitter.Submit(string! session, string! line, System.Threading.CancellationToken cancellationToken, bool exact = false) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Lanes.ContextVerdict
 Aw.Meta.Core.Lanes.ContextVerdict.Ok = 1 -> Aw.Meta.Core.Lanes.ContextVerdict
 Aw.Meta.Core.Lanes.ContextVerdict.Recycle = 2 -> Aw.Meta.Core.Lanes.ContextVerdict
@@ -2017,6 +2017,7 @@ Aw.Meta.Core.Ports.IClaudeTranscripts.Tail(Aw.Meta.Core.Ids.SessionId session, i
 Aw.Meta.Core.Ports.IDigestFiles
 Aw.Meta.Core.Ports.IDigestFiles.Stat(string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ports.DigestInfo?>!>
 Aw.Meta.Core.Ports.ILaneFiles.RecordSession(string! lane, Aw.Meta.Core.Ids.SessionId session, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Ports.ILanePane.ClearInput(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.ILanePane.Capture(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Meta.Core.Ports.ILanePane.PanePid(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int?>!>
 Aw.Meta.Core.Ports.ILanePane.PressEnter(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
@@ -2778,3 +2779,7 @@ Aw.Meta.Core.Events.MetaEventPage.<Clone>$() -> Aw.Meta.Core.Events.MetaEventPag
 Aw.Meta.Core.Events.MetaEventPage.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Events.MetaEvent!>! Events, out long Oldest, out long Latest) -> void
 static Aw.Meta.Core.Events.MetaEventPage.operator ==(Aw.Meta.Core.Events.MetaEventPage? left, Aw.Meta.Core.Events.MetaEventPage? right) -> bool
 static Aw.Meta.Core.Events.MetaEventPage.operator !=(Aw.Meta.Core.Events.MetaEventPage? left, Aw.Meta.Core.Events.MetaEventPage? right) -> bool
+Aw.Meta.Core.Commands.CommandRequest.PathPrefix.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Meta.Core.Commands.CommandRequest.PathPrefix.init -> void
+Aw.Meta.Core.Gate.GateTools
+static Aw.Meta.Core.Gate.GateTools.PathPrefix(string! tree) -> System.Collections.Generic.IReadOnlyList<string!>!
