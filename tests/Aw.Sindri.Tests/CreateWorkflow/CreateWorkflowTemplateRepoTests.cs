@@ -15,7 +15,7 @@ public sealed class CreateWorkflowTemplateRepoTests : IDisposable
     public void Dispose() => _rig.Dispose();
 
     private CreateWorkflowService Service(string? firstRepo) =>
-        new(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log) { FirstRepo = new FixedFirstRepo(firstRepo) };
+        new(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log, new FixedFirstRepo(firstRepo));
 
     [Fact]
     public async Task A_data_template_with_no_repo_in_the_profile_is_refused_and_names_the_fix()
