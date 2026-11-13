@@ -243,11 +243,11 @@ public sealed class TmuxSessionHostTests : SessionHostContract, IDisposable
         var host = Create();
         var started = await host.Start(Session("sindri-pane0001"), _deadline, CancellationToken.None);
 
-        var pane = await ((ISessionPanes)host).FirstPane(started.Value, CancellationToken.None);
+        var pane = await ((ISessionPanes)host).PaneId(started.Value, CancellationToken.None);
         _ = await host.Stop(started.Value, CancellationToken.None);
-        var gone = await ((ISessionPanes)host).FirstPane(started.Value, CancellationToken.None);
+        var gone = await ((ISessionPanes)host).PaneId(started.Value, CancellationToken.None);
 
-        Assert.Matches("^%[0-9]+$", pane ?? string.Empty);
+        Assert.Matches("^%[0-9]+$", pane?.Value ?? string.Empty);
         Assert.Null(gone);
         Expect.Equal(_tmux.Socket, ((ISessionPanes)host).Socket);
     }

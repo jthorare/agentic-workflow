@@ -1,3 +1,5 @@
+using Aw.Sindri.Core.Ids;
+
 namespace Aw.Sindri.Core.Launch;
 
 /// <summary>Where a started tmux session's pane is (agents spec §15.8): the socket and the pane id that every later call targets.</summary>
@@ -10,5 +12,5 @@ public interface ISessionPanes
     /// <param name="host">The session.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The pane id ('%N'), or null when the session is gone or tmux could not be asked.</returns>
-    public ValueTask<string?> FirstPane(HostRef host, CancellationToken cancellationToken);
+    public ValueTask<TmuxPaneId?> PaneId(HostRef host, CancellationToken cancellationToken);
 }

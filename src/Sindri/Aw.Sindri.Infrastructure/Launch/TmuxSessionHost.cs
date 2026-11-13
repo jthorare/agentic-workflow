@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using Aw.Kernel;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Infrastructure.Processes;
 
@@ -253,13 +254,13 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
     public string Socket => options.Socket;
 
     /// <inheritdoc/>
-    public async ValueTask<string?> FirstPane(HostRef host, CancellationToken cancellationToken)
+    public async ValueTask<TmuxPaneId?> PaneId(HostRef host, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(host);
         try
         {
             var listed = await Run(["list-panes", "-t", Target(host), "-F", "#{pane_id}"], cancellationToken, _callBudget).ConfigureAwait(false);
-            return listed.ExitCode == 0 && listed.Output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) is [{ } pane, ..] && PaneShape.IsMatch(pane) ? pane : null;
+            return listed.ExitCode == 0 && listed.Output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) is [{ } pane, ..] && TmuxPaneId.TryFrom(pane, out var id) ? id : null;
         }
         catch (Win32Exception)
         {
@@ -270,9 +271,6 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
             return null;
         }
     }
-
-    [GeneratedRegex("^%[0-9]+\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex PaneShape { get; }
 
     /// <summary>Whether an environment variable of Sindri's own process stays out of a tmux client that may start the server: the AW_ variables and anything named like a secret.</summary>
     private static bool IsSecretName(string name) =>

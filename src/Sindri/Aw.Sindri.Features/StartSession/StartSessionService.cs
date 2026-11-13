@@ -129,13 +129,14 @@ internal sealed partial class StartSessionService(
             return await Failed(started.Error, actId, cancellationToken).ConfigureAwait(false);
         }
 
-        var pane = await panes.FirstPane(started.Value, cancellationToken).ConfigureAwait(false);
-        if (pane is null)
+        var found = await panes.PaneId(started.Value, cancellationToken).ConfigureAwait(false);
+        if (found is not { } paneId)
         {
             await Undo(made.Value, started.Value, cancellationToken).ConfigureAwait(false);
             return SindriErrors.AgentStartFailed.With("tmux started the session but did not return its pane");
         }
 
+        var pane = paneId.Value;
         book.Keep(actId, new StartedEntry(pane, made.Value?.Path));
         await Record(request, actId, pane, made.Value?.Path, grant).ConfigureAwait(false);
         await choices.Remember(request.Repo.Value, request.Agent.Value, CancellationToken.None).ConfigureAwait(false);
@@ -170,7 +171,7 @@ internal sealed partial class StartSessionService(
             var made = await worktrees.Make(repoPath, OneOffName.Of(clock.GetLocalNow(), request.Prompt, request.Agent), deadline.Token).ConfigureAwait(false);
             return made.IsError
                 ? SindriErrors.AgentStartFailed.With("the worktree could not be made: " + made.Error.Message)
-                : (OneOffWorktree?)made.Value;
+                : made.Value;
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
@@ -214,7 +215,7 @@ internal sealed partial class StartSessionService(
             return;   // another command held the gate for 5 s: the answer stays in memory, and the worktree route still finds it
         }
 
-        var entry = events.Entry(EventTypes.AgentOp, new AgentOpRecorded("sindri-" + actId, "start", hash, pane, worktree), StartedSessions.Key(actId));
+        var entry = events.Entry(EventTypes.AgentOp, new AgentOpRecorded(AgentRowId.From("sindri-" + actId), "start", hash, pane, worktree), StartedSessions.Key(actId));
         _ = await ledger.Append(entry, grant, CancellationToken.None).ConfigureAwait(false);   // the session is running: a ledger that is down loses the durable copy, not the start
     }
 

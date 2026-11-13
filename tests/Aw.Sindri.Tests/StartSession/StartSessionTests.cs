@@ -54,7 +54,7 @@ public sealed class StartSessionTests : IDisposable
         _ = await _r.Service().Handle(Request(worktree: true), Token);
         _ = await _r.Service().Handle(Request(worktree: false, actId: "second0001"), Token);
 
-        Assert.Equal(["/wt/demo/" + Assert.Single(_r.Worktrees.Names), StartRig.RepoPath], _r.Host.Started.Select(s => s.WorkDir));
+        Assert.Equal(["/wt/demo/" + Assert.Single(_r.Worktrees.Names), StartRig.RepoPath], _r.Host.Started.Select(s => s.WorkDir), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -98,9 +98,9 @@ public sealed class StartSessionTests : IDisposable
         _ = await _r.Service().Handle(Request(), Token);
 
         var env = Assert.Single(_r.Host.Started).Env;
-        Assert.Equal(["ANTHROPIC_API_KEY", "AW_FLEET_DIR", "AW_STATE_DIR", "HOME", "PATH", "TERM"], env.Keys.Order(StringComparer.Ordinal));
-        Assert.DoesNotContain("AW_SINDRI_TOKEN", env.Keys);
-        Assert.DoesNotContain("GH_TOKEN", env.Keys);
+        Assert.Equal(["ANTHROPIC_API_KEY", "AW_FLEET_DIR", "AW_STATE_DIR", "HOME", "PATH", "TERM"], env.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.DoesNotContain("AW_SINDRI_TOKEN", env.Keys, StringComparer.Ordinal);
+        Assert.DoesNotContain("GH_TOKEN", env.Keys, StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -109,8 +109,8 @@ public sealed class StartSessionTests : IDisposable
         _ = await _r.Service().Handle(Request(agent: _codex), Token);
 
         var env = Assert.Single(_r.Host.Started).Env;
-        Assert.Contains("OPENAI_API_KEY", env.Keys);
-        Assert.DoesNotContain("ANTHROPIC_API_KEY", env.Keys);
+        Assert.Contains("OPENAI_API_KEY", env.Keys, StringComparer.Ordinal);
+        Assert.DoesNotContain("ANTHROPIC_API_KEY", env.Keys, StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -284,7 +284,7 @@ public sealed class StartSessionTests : IDisposable
 
         var recorded = Assert.Single(_r.Base.Store.Events, e => string.Equals(e.Envelope.Type, EventTypes.AgentOp, StringComparison.Ordinal));
         var payload = _r.Base.Events.Payload<AgentOpRecorded>(recorded).Value;
-        Assert.Equal(("agent.op:" + Act, "sindri-" + Act, "start", started.Value.Host.Pane), (recorded.IdempotencyKey, payload.Row, payload.Op, payload.Outcome));
+        Assert.Equal(("agent.op:" + Act, "sindri-" + Act, "start", started.Value.Host.Pane), (recorded.IdempotencyKey, payload.RowId.Value, payload.Op, payload.Outcome));
         Assert.Equal("/wt/demo/" + Assert.Single(_r.Worktrees.Names), payload.Worktree);
     }
 
