@@ -45,6 +45,7 @@
       "state": "ok",
       "embeddingsPercent": null,
       "waiting": null,
+      "paused": false,
       "needsLook": false
     },
     {
@@ -52,6 +53,7 @@
       "state": "ok",
       "embeddingsPercent": null,
       "waiting": null,
+      "paused": false,
       "needsLook": false
     }
   ]
