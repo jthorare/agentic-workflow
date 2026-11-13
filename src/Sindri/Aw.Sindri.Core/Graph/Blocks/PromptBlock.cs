@@ -142,7 +142,7 @@ public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
         var required = Required(schema);
         var shown = properties
             .Where(p => required.Count == 0 || required.Contains(p.Key))
-            .Select(static p => $"{JsonValue.Create(p.Key).ToJsonString()}: {Placeholder(p.Key, TypeOf(p.Value).Name)}");
+            .Select(static p => $"{Quoted(p.Key)}: {Placeholder(p.Key, TypeOf(p.Value).Name)}");
         return "{" + string.Join(", ", shown) + "}";
     }
 
@@ -152,8 +152,11 @@ public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
         "number" or "integer" => "<a number>",
         "array" => "[<items>]",
         "object" => "{<fields>}",
-        _ => JsonValue.Create($"<your {name}>").ToJsonString(),
+        _ => Quoted($"<your {name}>"),
     };
+
+    // why: the default JSON writer escapes '<' and '>' to < and >, which would show the model "<your summary>"; only the quote and the backslash need escaping inside a JSON string here
+    private static string Quoted(string text) => "\"" + text.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal) + "\"";
 
     // why: a JSON-schema-shaped object holding none of the schema's own fields is the model copying the schema, not an answer (#3588); 'type', 'properties' and 'required' are left out of the comparison because the copy always has them
     private static bool IsSchemaEcho(JsonObject answer, JsonObject schema) =>
