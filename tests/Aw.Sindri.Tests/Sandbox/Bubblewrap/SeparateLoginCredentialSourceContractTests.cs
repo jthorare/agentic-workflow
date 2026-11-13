@@ -12,6 +12,14 @@ public sealed class SeparateLoginCredentialSourceContractTests : IModelCredentia
 {
     private readonly List<FakeSeparateHome> _homes = [];
 
+    /// <summary>The home path of each fake made so far.</summary>
+    internal IReadOnlyList<string> HomePaths => [.. _homes.Select(h => h.SindriHome)];
+
+    /// <summary>Makes a source the way the contract base does; the cleanup tests call it.</summary>
+    /// <param name="state">The login state.</param>
+    /// <returns>The source.</returns>
+    internal IModelCredentialSource CreateForTest(LoginState state) => Create(state);
+
     public void Dispose()
     {
         foreach (var home in _homes)

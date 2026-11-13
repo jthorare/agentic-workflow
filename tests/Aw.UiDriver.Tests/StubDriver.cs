@@ -17,9 +17,10 @@ internal sealed class StubDriver : IAsyncDisposable
     private readonly CancellationTokenSource _stop = new();
     private readonly Task _loop;
 
-    // why: afterPortChosen is the test seam for #3415, called with each chosen port after the probe frees it and before the listener binds it, so a test can take that port on purpose.
-    internal StubDriver(Action<int>? afterPortChosen = null)
+    // why: afterPortChosen is the test seam for #3415, called with each chosen port (every attempt) after the probe frees it and before the listener binds it, so a test can take that port on purpose.
+    internal StubDriver(Action<int>? afterPortChosen = null, Action<string>? directoryMade = null)
     {
+        directoryMade?.Invoke(_directory.FullName);
         // why: the probe frees the port before the bind, so another process can take it in between; retry on address-in-use with a fresh port and listener (same loop as Aw.Sindri.Testing's LoopbackListener, which this project doesn't reference).
         var port = 0;
         for (var attempt = 1; ; attempt++)
@@ -28,10 +29,7 @@ internal sealed class StubDriver : IAsyncDisposable
             probe.Start();
             port = ((IPEndPoint)probe.LocalEndpoint).Port;
             probe.Stop();
-            if (attempt == 1)
-            {
-                afterPortChosen?.Invoke(port);
-            }
+            afterPortChosen?.Invoke(port);
 
             _listener = new HttpListener();
             _listener.Prefixes.Add(string.Create(CultureInfo.InvariantCulture, $"http://127.0.0.1:{port}/"));
