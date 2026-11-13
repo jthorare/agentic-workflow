@@ -22,10 +22,11 @@ public sealed class PeekScaleTests
     private static Task<T> OnUi<T>(Func<T> body) =>
         HeadlessUnitTestSession.GetOrStartForAssembly(typeof(PeekScaleTests).Assembly).Dispatch(body, TestContext.Current.CancellationToken);
 
-    private static (Window Window, PeekPane Peek, TextBlock Body) Show(double scaling)
+    // No product view fills PeekPane.Body yet (grep of src/Sindri/Aw.Sindri.Ui, 2026-11-13); the callers are tests: RowGrammarTests passes a bare TextBlock, so that is the shape here, and a plain string is the other one a caller can pass.
+    private static (Window Window, PeekPane Peek, TextBlock Body) Show(double scaling, bool asString = false)
     {
-        var body = new TextBlock { Text = LongSentence };   // the way callers pass a plain-text body: no wrapping set
-        var peek = new PeekPane { Title = "A title", ItemId = "r-1", Fields = [new PeekField("Owner", "Maya")], Body = body, Actions = new Button { Content = "Approve" } };
+        var textBlock = new TextBlock { Text = LongSentence };   // no wrapping set
+        var peek = new PeekPane { Title = "A title", ItemId = "r-1", Fields = [new PeekField("Owner", "Maya")], Body = asString ? LongSentence : textBlock, Actions = new Button { Content = "Approve" } };
         var window = new Window { Content = peek, Width = 500, Height = 600 };
         Assert.Null(RowFlatRedTests.SetHostScaling(window, scaling));
         window.Show();
@@ -33,6 +34,7 @@ public sealed class PeekScaleTests
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
         window.UpdateLayout();
+        var body = asString ? peek.GetVisualDescendants().OfType<TextBlock>().First(t => string.Equals(t.Text, LongSentence, StringComparison.Ordinal)) : textBlock;
         return (window, peek, body);
     }
 
@@ -74,11 +76,13 @@ public sealed class PeekScaleTests
     });
 
     [Theory]
-    [InlineData(1.0)]
-    [InlineData(1.3)]
-    public async Task A_long_plain_text_body_wraps_inside_the_body_area(double scaling) => await OnUi(() =>
+    [InlineData(1.0, false)]
+    [InlineData(1.3, false)]
+    [InlineData(1.0, true)]
+    [InlineData(1.3, true)]
+    public async Task A_long_plain_text_body_wraps_inside_the_body_area(double scaling, bool asString) => await OnUi(() =>
     {
-        var (window, peek, body) = Show(scaling);
+        var (window, peek, body) = Show(scaling, asString);
         var area = Part<ContentPresenter>(peek, "PART_Body").Bounds.Width;
 
         Assert.Equal(TextWrapping.Wrap, body.TextWrapping);
