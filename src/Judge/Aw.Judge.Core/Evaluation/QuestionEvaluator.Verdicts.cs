@@ -25,23 +25,11 @@ public sealed partial class QuestionEvaluator
                 await Fail(question.Name, at.Name, ProviderUnavailable.Timeout, cancellationToken).ConfigureAwait(false);
                 run.Skip(at.Name, SkipReason.Timeout);
                 return true;
-            default:
-                return await PassedAsFailure(question, run, at, verdict, cancellationToken).ConfigureAwait(false);
-        }
-    }
-
-    // The verdicts that are a real failure: recorded as a failure row and a skip. Any other verdict is not passed over.
-    private async ValueTask<bool> PassedAsFailure<TInput>(
-        QuestionDefinition<TInput> question, EvaluationRun run, ProviderAnswer at, StepVerdict verdict, CancellationToken cancellationToken)
-        where TInput : class
-    {
-        switch (verdict)
-        {
             case StepVerdict.Errored:
             case StepVerdict.OutOfEnum:
             case StepVerdict.NoReasons:
-                var limited = at.Result is ProviderErrored { UsageLimit: true };
-                await Fail(question.Name, at.Name, FailureCode(verdict, at.Result), cancellationToken).ConfigureAwait(false);
+                var limited = result is ProviderErrored { UsageLimit: true };
+                await Fail(question.Name, at.Name, FailureCode(verdict, result), cancellationToken).ConfigureAwait(false);
                 run.Skip(at.Name, SkipReason.Failed, limited ? EvaluationReasons.UsageLimit : null);
                 return true;
             case StepVerdict.Decided:
