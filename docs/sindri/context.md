@@ -63,6 +63,7 @@ when named). `context sources status` shows each intent source's last sync, link
 $SINDRI context query "split pane orientation"            # text
 $SINDRI context query "split pane orientation" --json     # the API's JSON, unchanged
 $SINDRI context query "…" --budget 4000                   # retired: read and ignored (the answer holds every ranked item)
+$SINDRI context query "…" --limit 25 [--offset 25]        # read only ranks 1-25 (or 26-50) of the ranked records; the answer says how many matched
 $SINDRI context sources status [--json]                   # each source's state; whether sessions may read
 $SINDRI context query --item SPL-103                      # a tracker key, or a Sindri item id (ITM-...): its record, decisions and conflicts, with citations
 ```
@@ -70,6 +71,8 @@ $SINDRI context query --item SPL-103                      # a tracker key, or a 
 HTTP: `GET /sindri/context/query?q=…` (a `budget` parameter is still accepted and ignored) and `GET /sindri/context/sources`, behind the loopback guard (a
 foreign `Host` is 400, a foreign browser `Origin` 403) and the API's caller rules. `--node` and `--symbol` (graph anchors) answer
 `SND-CONTEXT-003` when the anchor is unknown.
+
+**A window reads one page (issue 3370).** With no `--limit` and no `--offset`, a query reads every ranked record, as before. `--limit N` (1 or more) and `--offset N` (0 or more) read only the records at ranks offset + 1 to offset + N, so a 25-record question over 268 matches reads 25 records, not 268, and finishes inside the deadline. `--offset` alone reads from there to the end. The answer then carries `matches: {matched, offset, read}`: `matched` counts every ranked record, `read` how many records the page holds: the window's size, or fewer when fewer are left (`--limit 25` with 10 left reads 10). A record gone since the search, or one past the deadline, still counts in `read`; `degraded` says why it is missing. A bad value is `SND-CONTEXT-006`. HTTP takes the same `limit` and `offset` parameters. An `--item` question whose key no sync linked reads every match anyway, because the record that carries the key may rank past the page. MCP `context_query` passes its own page as the window (below). A decision whose record falls off the page is still in the answer, cited to the map instead of to its record.
 
 `--item <KEY>` takes a tracker key (`SPL-103`) or a Sindri item id (`ITM-...`) and answers with the anchors, the synced records, the decisions
 and the conflicts that concern it, each cited. A tracker key needs a `context-sync` run that linked the record; before that, or for a key no
@@ -150,7 +153,7 @@ The context tools (all read-only; the `sindri_*` tools are in `docs/csharp/sindr
 
 `outside` and `reason` matter only to a session launched by a scoping run: a read of a node outside the run's graph is `SND-CONTEXT-154` unless it passes `outside: true` and a `reason` (`docs/csharp/sindri-context.md`, "Scoping graph and scoped reads"). Any other session's call ignores them.
 
-**Paging (every MCP tool but `context_concepts`, which pages by `cursor`, and `context_pages`, whose `limit` and `offset` count pages and whose `truncated` says more follow).** `limit` and `offset` are both optional: `offset` defaults to 0 and `limit` to 100 items. A `limit` under 1 or an `offset` under 0 is `SND-CONTEXT-006`. Only the answer's top-level lists page (a section's or group's own list included); each list keeps its own window by index, and an item is never cut inside (its evidence and sources stay whole). The answer gains `page: {offset, limit, more, lists}`: `more` is true while some list has items past this page, and `lists` gives each list's `total` and its own `more`. `degraded` is a warning, not a list: it is never windowed, so a failed source is always shown. `cites` keeps only the citations the page's items name. `context_lenses` pages the same way (default limit 100 over HTTP, the CLI and MCP); its `page` carries `totals` by list path (`bands.product.own`, `edges`) in place of `lists`. `sindri_item_timeline` has no `after` cursor: it pages by `limit` and `offset` only. A query answer holds every ranked item (there is no token budget and no `truncated`, `budget` or `more` field), so paging with a growing `offset` until `more` is false reaches every item.
+**Paging (every MCP tool but `context_concepts`, which pages by `cursor`, and `context_pages`, whose `limit` and `offset` count pages and whose `truncated` says more follow).** `limit` and `offset` are both optional: `offset` defaults to 0 and `limit` to 100 items. A `limit` under 1 or an `offset` under 0 is `SND-CONTEXT-006`. Only the answer's top-level lists page (a section's or group's own list included); each list keeps its own window by index, and an item is never cut inside (its evidence and sources stay whole). The answer gains `page: {offset, limit, more, lists}`: `more` is true while some list has items past this page, and `lists` gives each list's `total` and its own `more`. `degraded` is a warning, not a list: it is never windowed, so a failed source is always shown. `cites` keeps only the citations the page's items name. `context_lenses` pages the same way (default limit 100 over HTTP, the CLI and MCP); its `page` carries `totals` by list path (`bands.product.own`, `edges`) in place of `lists`. `sindri_item_timeline` has no `after` cursor: it pages by `limit` and `offset` only. A query answer holds every ranked item (there is no token budget and no `truncated`, `budget` or `more` field), so paging with a growing `offset` until `more` is false reaches every item. `context_query` reads only its page of ranked records (issue 3370): page 2 (`offset` 100, `limit` 100) reads ranks 101 to 200, and its `page.lists` row `sections.records.items` gives `total` = every match and `more` while ranks remain past the page.
 
 Claude Code hands the model `structuredContent` rather than the text block when a result has both, so everything a
 session needs is in `structuredContent`; the text block is for clients that show text only. The draft map is never
@@ -164,7 +167,7 @@ learns why. Refusals are tool errors
 | `SND-CONTEXT-020` | Session reads are off, or a session asked for a human or service job (map import, preview, build, export) |
 | `SND-CONTEXT-003` | An anchor outside the session's repo, or unknown; also every call whose `X-Sindri-Repo` isn't a repo the profile maps (re-run `sindri mcp register` in the work repo). A header that isn't a valid repo name at all is refused before MCP, with HTTP 400 `SND-API-007`. Over HTTP, a graph call's problem also carries `suggestedAnchors`, an array of at most 5 in-scope node keys; over MCP the error is only `{code, message}`, and the keys are in the message's `try …` text |
 | `SND-CONTEXT-037` | A name matches several nodes the caller may see; the message lists them. Only the HTTP problem carries `candidates` (an array of at most 100 keys); over MCP the error is only `{code, message}` |
-| `SND-CONTEXT-006` | The question is invalid (no words, two shapes, depth out of range) |
+| `SND-CONTEXT-006` | The question is invalid (no words, two shapes, depth out of range, or a window `limit` under 1 or `offset` under 0 or not a whole number) |
 | `SND-CONTEXT-021` | The call has no `X-Sindri-Repo` (use a registration from `sindri mcp register`) |
 | `SND-PROFILE-005` | No profile yet, so no repo is mapped (`sindri profile init`, then `sindri repo add <path>`) |
 | `SND-CONTEXT-022` | An argument of the wrong type, or one the tool doesn't have |
@@ -1111,8 +1114,8 @@ one the request itself names, else the kind's `models`, else `default.models`, e
 | `cursor` | `gpt-5.6-luna-none-fast` | `gpt-5` |
 
 A built-in codex name that `codex debug models` does not list runs codex's own default model instead: the call passes no model flag, and the doctor line, the tries and the
-Jobs page name it `codex default` (issue 3389). A codex name the profile wrote is always passed as written; the doctor warns when codex does not list it. When the list can't
-be read, the built-in name is passed. Codex's own default has no cheap or strong tier, so a cheap call such as labeling or rerank may run on a bigger, slower model;
+Jobs page name it `codex default` (issue 3389). A codex name the profile wrote is always passed as written; the doctor warns when codex does not list it. When Sindri can't
+read the list, it passes the built-in name. Codex's own default has no cheap or strong tier, so a cheap call such as labeling or rerank may run on a bigger, slower model;
 set `names.codex.cheap` to a listed model to pin one. Sindri reads the list at most once per 10 minutes, and again after 60 seconds when the last read failed.
 
 The old `context.conceptScan.models` key is no longer read (issue 1867): `profile validate` and every profile write refuse it with SND-CONTEXT-001,

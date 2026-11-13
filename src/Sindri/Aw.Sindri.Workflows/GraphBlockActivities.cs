@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Aw.Redaction;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
@@ -19,7 +20,8 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="runs">Where the earlier nodes' outputs are read from.</param>
 /// <param name="workflows">Where the run's spec is read from.</param>
 /// <param name="provisioner">Creates the workflow's declared resources before a node runs; null on a build with none.</param>
-internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowRunStore runs, IWorkflowStore workflows, IResourceProvisioner? provisioner = null)
+/// <param name="redactor">Scrubs a block's output, error and raw model text before they are cut and stored; null uses the default rules.</param>
+internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowRunStore runs, IWorkflowStore workflows, IResourceProvisioner? provisioner = null, IRedactor? redactor = null)
 {
     private readonly GraphResourceEnsurer _resources = new(provisioner, workflows);
 
@@ -94,10 +96,53 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
 
         if (result.IsError)
         {
-            return Failed(config, result.Error, context.FailureOutput);
+            return FailedBlock(config, result.Error, context.FailureOutput, context.Raw);
         }
 
-        return Succeeded(config, result.Value);   // why: Commit waits for the run's end (CommitRunAsync): a later node can still fail the run
+        return SucceededBlock(config, result.Value);   // why: Commit waits for the run's end (CommitRunAsync): a later node can still fail the run
+    }
+
+    // why: the block's own text (an http body, a model answer) can hold a secret; it is scrubbed BEFORE Fit cuts it, so a secret the cut would split is gone first (#3225, #3196)
+    private GraphBlockOutcome FailedBlock(JsonObject input, Kernel.Error error, JsonObject? output, string? raw)
+    {
+        var (fitInput, fitOutput) = (StoredJson.Fit(input.ToJsonString()), StoredJson.Fit(CleanJson(output?.ToJsonString())));
+        // why: raw is model text, not JSON, so it keeps a plain cut at the cap and never sets 'Truncated' (#3486)
+        return new(NodeRunStatus.Failed, fitInput.Text, fitOutput.Text, [], NodeRunLimits.Cap(Clean($"{error.Code}: {error.Message}"), out _), NodeRunLimits.Cap(Clean(raw), out _), fitInput.Cut || fitOutput.Cut);
+    }
+
+    private GraphBlockOutcome SucceededBlock(JsonObject input, BlockResult result)
+    {
+        var output = new JsonObject();
+        foreach (var (name, value) in result.Outputs)
+        {
+            output[name] = value?.DeepClone();
+        }
+
+        var (fitInput, fitOutput) = (StoredJson.Fit(input.ToJsonString()), StoredJson.Fit(CleanJson(output.ToJsonString())));
+        return new GraphBlockOutcome(NodeRunStatus.Succeeded, fitInput.Text, fitOutput.Text, result.Taken, Error: null, Truncated: fitInput.Cut || fitOutput.Cut);
+    }
+
+    // why: a stored output is parsed as JSON downstream, so a blocked one becomes a JSON string, never the bare marker (#3376)
+    private string? CleanJson(string? text)
+    {
+        if (text is null)
+        {
+            return null;
+        }
+
+        var scrubbed = (redactor ?? Redactor.Default).Scrub(text);
+        return scrubbed.IsBlocked ? StoredJson.Blocked : scrubbed.Text;
+    }
+
+    private string? Clean(string? text)
+    {
+        if (text is null)
+        {
+            return null;
+        }
+
+        var scrubbed = (redactor ?? Redactor.Default).Scrub(text);
+        return scrubbed.IsBlocked ? StoredJson.BlockedMarker : scrubbed.Text;
     }
 
     private sealed record Prepared(GraphNode Node, IGraphBlock Block, GraphNodeScope Scope, JsonObject Config);
@@ -186,33 +231,17 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         ? Failed(config, SindriErrors.GraphReferenceToContinuedFailure.With($"'{node}' failed and continued, so '{{{{{reference}}}}}' has no value"))
         : null;
 
-    private static GraphBlockOutcome? Cut(GraphNodeScope scope, JsonObject config) => scope.Cut is { } cut
-        ? Failed(config, SindriErrors.GraphOutputTruncated.With($"the output of '{cut}' was cut at 64 KB; refer to a smaller field"))
-        : null;
+    private static GraphBlockOutcome? Cut(GraphNodeScope scope, JsonObject config) =>
+        StoredJson.ReadFailure(scope, loopCutNode: null) is { } failure ? Failed(config, failure) : null;
 
-    private static GraphBlockOutcome Failed(JsonObject? input, Kernel.Error error, JsonObject? output = null) =>
-        new(NodeRunStatus.Failed, Fit(input?.ToJsonString()), Fit(output?.ToJsonString()), [], NodeRunLimits.Cap($"{error.Code}: {error.Message}", out _));
-
-    private static GraphBlockOutcome Succeeded(JsonObject input, BlockResult result)
+    private static GraphBlockOutcome Failed(JsonObject? input, Kernel.Error error)
     {
-        var output = new JsonObject();
-        foreach (var (name, value) in result.Outputs)
-        {
-            output[name] = value?.DeepClone();
-        }
-
-        return new GraphBlockOutcome(NodeRunStatus.Succeeded, Fit(input.ToJsonString()), Fit(output.ToJsonString()), result.Taken, Error: null);
+        var fitInput = StoredJson.Fit(input?.ToJsonString());
+        return new(NodeRunStatus.Failed, fitInput.Text, Output: null, [], NodeRunLimits.Cap($"{error.Code}: {error.Message}", out _), Truncated: fitInput.Cut);
     }
 
-    /// <summary>
-    /// Cuts a block's input or output before it enters the workflow's history: an activity result over Temporal's 2 MB payload limit fails the workflow task, and Temporal retries it forever.
-    /// A cut text keeps one character past the store's 64 KB cap, so the store still cuts it and sets 'Truncated' (a later node that reads it fails with SND-GRAPH-108 instead of reading a half value).
-    /// </summary>
+    /// <summary>Cuts a block's input or output before it enters the workflow's history; the text that results always parses as JSON (see <see cref="StoredJson.Fit"/>).</summary>
     /// <param name="text">The input or output text, or null.</param>
-    /// <returns>The text when it fits, otherwise its first 64 KB and an ellipsis.</returns>
-    internal static string? Fit(string? text)
-    {
-        var cut = NodeRunLimits.Cap(text, out var truncated);
-        return truncated ? cut + "\u2026" : text;
-    }
+    /// <returns>The text when it fits, otherwise a small JSON object holding its first part.</returns>
+    internal static string? Fit(string? text) => StoredJson.Fit(text).Text;
 }

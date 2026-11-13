@@ -7,5 +7,5 @@ namespace Aw.Sindri.Features.CreateWorkflow;
 /// <param name="Slug">The new workflow's slug.</param>
 /// <param name="Template">A starter template's name, or null.</param>
 /// <param name="Spec">The graph as JSON text, or null.</param>
-/// <param name="By">Who creates it: 'owner' or 'session:&lt;id&gt;'.</param>
+/// <param name="By">Who creates it: 'owner', 'session:&lt;id&gt;' or 'service:setup' (the setup service making hello-sindri).</param>
 internal sealed record CreateWorkflowRequest(WorkflowSlug Slug, string? Template, string? Spec, string By) : ICommand<CreateWorkflowResponse>;

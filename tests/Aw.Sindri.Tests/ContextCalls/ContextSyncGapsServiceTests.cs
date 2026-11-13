@@ -45,7 +45,7 @@ public sealed class ContextSyncGapsServiceTests
         var loaded = SliceHarness.Profile("5s");
         loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse(LinearTeams).RootElement.Clone() : null } };
         _ = await _h.Profiles.Save(loaded, Ct);
-        return new ContextSyncGapsService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _counted, _start, _h.Clock, _log);
+        return new ContextSyncGapsService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), _engine.Proxy, _counted, _start, _h.Clock, _log);
     }
 
     private void Synced() => _engine.Gap = false;
@@ -144,7 +144,7 @@ public sealed class ContextSyncGapsServiceTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_tick_with_no_approved_profile_is_quiet_not_a_failed_run()
     {
-        var service = new ContextSyncGapsService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _counted, _start, _h.Clock, _log);
+        var service = new ContextSyncGapsService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), _engine.Proxy, _counted, _start, _h.Clock, _log);
 
         var result = await Run(service);
 

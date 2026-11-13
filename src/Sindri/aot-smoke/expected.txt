@@ -30,7 +30,7 @@ ok    library           the first read of aw hasn't finished yet (sindri library
 ok    launcher:adoption no opens in the last 30 days
 ok    todo              note: not set (no todo.obsidian key)
 ok    connections:catchup no capped or gapped read
-warn  setup             not finished: mcp (todo), map (todo), sources (todo) (fix: sindri mcp register --apply)
+warn  setup             not finished: sources (todo), mcp (todo), map (todo), first-workflow (todo) (fix: sindri setup)
 warn  pre-commit:smoke  no pre-commit hook, so staged secrets are not scanned (fix: sindri scrub --install-pre-commit --repo WORK/repo)
 warn  setup:ui-evidence ui-evidence not found (ROOT/artifacts/aot-sindri-smoke/bin/ui-evidence) (fix: run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri))
 ok    resources         no resources provisioned
@@ -39,11 +39,11 @@ ok    context:surfacepick product surface choice is off
 ok    model:pick        model choice is off
 ok    forge:credential  no forge configured
 warn  skills:folder     no skills folder (fix: set AW_SINDRI_SKILLS_DIR, or run ./setup.sh from the agentic-workflow checkout)
-warn  codex:read-only   pending: owner probe (fix: in that harness, sindri doctor --probe --harness codex:read-only > tests/Aw.Sindri.Tests/Golden/Probe/codex-read-only.json; docs/csharp/sindri.md, 'The harness probe')
-warn  codex:workspace-write pending: owner probe (fix: in that harness, sindri doctor --probe --harness codex:workspace-write > tests/Aw.Sindri.Tests/Golden/Probe/codex-workspace-write.json; docs/csharp/sindri.md, 'The harness probe')
-warn  codex:danger-full-access pending: owner probe (fix: in that harness, sindri doctor --probe --harness codex:danger-full-access > tests/Aw.Sindri.Tests/Golden/Probe/codex-danger-full-access.json; docs/csharp/sindri.md, 'The harness probe')
-warn  cursor-agent      pending: owner probe (fix: in that harness, sindri doctor --probe --harness cursor-agent > tests/Aw.Sindri.Tests/Golden/Probe/cursor-agent.json; docs/csharp/sindri.md, 'The harness probe')
-warn  cursor-terminal   pending: owner probe (fix: in that harness, sindri doctor --probe --harness cursor-terminal > tests/Aw.Sindri.Tests/Golden/Probe/cursor-terminal.json; docs/csharp/sindri.md, 'The harness probe')
+ok    codex:read-only   pending owner probe: provisional markers
+ok    codex:workspace-write pending owner probe: provisional markers
+ok    codex:danger-full-access pending owner probe: provisional markers
+ok    cursor-agent      pending owner probe: provisional markers
+ok    cursor-terminal   pending owner probe: provisional markers
 exit 2
 ## sindri --headless (human, terminal)
       _           _      _ 
@@ -77,7 +77,7 @@ removed: edits apply on save (nothing to approve; `sindri profile set`, `repo ad
 {"running":true,"apiVersion":1}
 ## /sindri/mcp initialize, then tools/list (stateless)
 "sindri"
-["context_query","context_sources","context_lenses","context_concepts","context_pages","context_node","context_neighbors","sindri_status","sindri_queue","sindri_item","sindri_item_timeline","sindri_pending_decisions","sindri_job","sindri_projects","sindri_request","sindri_handoff","sindri_todos","sindri_todo","connection_list","connection_get","connection_add","connection_signin","connection_test","connection_remove","memory_list","memory_create","memory_search","memory_write","memory_forget","workflow_list","workflow_get","workflow_runs","workflow_run_get","workflow_create","workflow_apply_ops","workflow_replace","workflow_validate","workflow_activate","workflow_pause","workflow_delete","workflow_run","workflow_cancel","workflow_docs","workflow_blocks","workflow_answer","resources_list","resources_purge","toolkit_list","toolkit_create","toolkit_build","toolkit_start","toolkit_stop","toolkit_pause","toolkit_resume","toolkit_calls"]
+["context_query","context_sources","context_lenses","context_concepts","context_pages","context_node","context_neighbors","sindri_status","sindri_queue","sindri_item","sindri_item_timeline","sindri_pending_decisions","sindri_job","sindri_projects","sindri_request","sindri_handoff","sindri_todos","sindri_todo","connection_list","connection_get","connection_add","connection_signin","connection_test","connection_remove","memory_list","memory_create","memory_search","memory_write","memory_forget","workflow_list","workflow_get","workflow_runs","workflow_run_get","workflow_create","workflow_apply_ops","workflow_replace","workflow_validate","workflow_activate","workflow_pause","workflow_delete","workflow_run","workflow_cancel","workflow_docs","workflow_blocks","workflow_answer","resources_list","resources_purge","agents_start","agents_worktree_remove","toolkit_list","toolkit_create","toolkit_build","toolkit_start","toolkit_stop","toolkit_pause","toolkit_resume","toolkit_calls"]
 ## /sindri/mcp sindri_queue, sindri_request (files as session:mcp), sindri_item (not an id), sindri_decide (no such tool)
 {"isError":null,"groups":["waitingOnYou","withYou","running","queued"]}
 {"isError":null,"request":"REQ-ID"}
@@ -105,8 +105,10 @@ withYou
 running
   Nothing running.
 queued
+  ITM-ID  Hello from Sindri  [smoke]  new  since TIME
   ITM-ID  Smoke item  new  since TIME
 ## sindri items --state new
+ITM-ID  Hello from Sindri  [smoke]  new  since TIME
 ITM-ID  Smoke item  new  since TIME
 ## sindri item add Filed by a session (session)
 ITM-ID created (sequence SEQ)
@@ -122,6 +124,7 @@ withYou
 running
   Nothing running.
 queued
+  ITM-ID  Hello from Sindri  [smoke]  new  since TIME
   ITM-ID  Filed by a session  new  since TIME
 ## sindri request note Smoke request (session)
 REQ-ID filed; DEC-ID waits for a human (sequence SEQ)
@@ -175,6 +178,7 @@ result: {"idle":false,"summary":null}
 ## sindri jobs --state succeeded
 JOB-ID  succeeded  RunService  heartbeat  TIME  1 line  ok: worked
 JOB-ID  succeeded  RunService  heartbeat  TIME  1 line  ok: worked
+JOB-ID  succeeded  RelinkPinAliases  relink  TIME  1 line  0 of 0 records relinked to pin aliases
 JOB-ID  succeeded  RefreshContextMap  refresh  TIME  4 lines  map v1: 0 kept, 0 removed
 JOB-ID  succeeded  BuildCodeIndex  index:smoke  TIME  2 lines  smoke @ 7039bb4: 0 files, 0 symbols
 ## sindri services pause heartbeat (human, terminal)
@@ -228,7 +232,7 @@ SND-API-001 not running: no control plane is recorded (fix: sindri)
 exit 1
 ## sindri doctor
 ok    lease             free (last epoch 1)
-ok    ledger            schema 19/19
+ok    ledger            schema 20/20
 ok    views             cursor N of head M
 ok    profile           hash HASH6
 fail  api               unreachable: no control plane is recorded (fix: sindri)
@@ -258,7 +262,7 @@ ok    library           the first read of aw hasn't finished yet (sindri library
 ok    launcher:adoption no opens in the last 30 days
 ok    todo              note: not set (no todo.obsidian key)
 ok    connections:catchup no capped or gapped read
-warn  setup             not finished: mcp (todo), sources (todo) (fix: sindri mcp register --apply)
+warn  setup             not finished: sources (todo), mcp (todo) (fix: sindri setup)
 ok    pre-commit:smoke  the secret-scan pre-commit hook is installed
 ok    setup:token       WORK/home/auth/human.token can be read by you alone
 warn  setup:ui-evidence ui-evidence not found (ROOT/artifacts/aot-sindri-smoke/bin/ui-evidence) (fix: run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri))
@@ -268,9 +272,9 @@ ok    context:surfacepick product surface choice is off
 ok    model:pick        model choice is off
 ok    forge:credential  no forge configured
 warn  skills:folder     no skills folder (fix: set AW_SINDRI_SKILLS_DIR, or run ./setup.sh from the agentic-workflow checkout)
-warn  codex:read-only   pending: owner probe (fix: in that harness, sindri doctor --probe --harness codex:read-only > tests/Aw.Sindri.Tests/Golden/Probe/codex-read-only.json; docs/csharp/sindri.md, 'The harness probe')
-warn  codex:workspace-write pending: owner probe (fix: in that harness, sindri doctor --probe --harness codex:workspace-write > tests/Aw.Sindri.Tests/Golden/Probe/codex-workspace-write.json; docs/csharp/sindri.md, 'The harness probe')
-warn  codex:danger-full-access pending: owner probe (fix: in that harness, sindri doctor --probe --harness codex:danger-full-access > tests/Aw.Sindri.Tests/Golden/Probe/codex-danger-full-access.json; docs/csharp/sindri.md, 'The harness probe')
-warn  cursor-agent      pending: owner probe (fix: in that harness, sindri doctor --probe --harness cursor-agent > tests/Aw.Sindri.Tests/Golden/Probe/cursor-agent.json; docs/csharp/sindri.md, 'The harness probe')
-warn  cursor-terminal   pending: owner probe (fix: in that harness, sindri doctor --probe --harness cursor-terminal > tests/Aw.Sindri.Tests/Golden/Probe/cursor-terminal.json; docs/csharp/sindri.md, 'The harness probe')
+ok    codex:read-only   pending owner probe: provisional markers
+ok    codex:workspace-write pending owner probe: provisional markers
+ok    codex:danger-full-access pending owner probe: provisional markers
+ok    cursor-agent      pending owner probe: provisional markers
+ok    cursor-terminal   pending owner probe: provisional markers
 exit 2

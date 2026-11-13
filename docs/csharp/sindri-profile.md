@@ -196,6 +196,10 @@ The defaults of the `for_each` block (`docs/csharp/sindri-graph.md`, "Loops"). A
 | Key | Type | Required | Default | Meaning |
 |---|---|---|---|---|
 | `mcp` | `auto` or `off` | no | `auto` | `auto` lets Sindri register its MCP server in each repo of the live profile on its own (local scope, once consent is given); `off` stops that, and the "Connect your agents" button and `sindri mcp register --apply` still work. Any other value is refused when you save it (`setup.mcp`) |
+| `skipAccounts` | `true` | no | absent | The owner skipped the accounts question (first run); the Connect your accounts step then counts as done. Written by `sindri setup skip accounts` and the app; `--undo` removes it. Cleared when GitHub connects |
+| `skipFirstWorkflow` | `true` | no | absent | The owner dismissed the hello-sindri step; it then counts as done. Written by `sindri setup skip first-workflow`; `--undo` removes it |
+| `oauth.github` | text, one word | no | the id this build ships | The client id of the GitHub OAuth app Sindri signs in through (device flow). Not a secret. Refused when it holds a space (`setup.oauth.github`) |
+| `oauth.linear` | text, one word | no | the id this build ships | The client id of the Linear OAuth app (PKCE, loopback sign-in). Not a secret (`setup.oauth.linear`) |
 
 ### `review`
 

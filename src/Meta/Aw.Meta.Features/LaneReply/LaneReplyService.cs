@@ -1,7 +1,9 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Meta.Core;
+using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Logs;
+using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;
 
 namespace Aw.Meta.Features.LaneReply;
@@ -16,7 +18,8 @@ namespace Aw.Meta.Features.LaneReply;
 /// <param name="mail">The lanes' inboxes.</param>
 /// <param name="log">The running log.</param>
 /// <param name="clock">Dates the reply.</param>
-internal sealed class LaneReplyService(IMetaConfig config, ILaneFiles files, ILaneMail mail, IRunningLog log, TimeProvider clock) : IService<LaneReplyRequest, LaneReplyResponse>
+/// <param name="obligations">Writes obligation.opened for the reply; null to write none.</param>
+internal sealed class LaneReplyService(IMetaConfig config, ILaneFiles files, ILaneMail mail, IRunningLog log, TimeProvider clock, ObligationEventWriter? obligations = null) : IService<LaneReplyRequest, LaneReplyResponse>
 {
     public async ValueTask<Result<LaneReplyResponse>> Handle(LaneReplyRequest request, CancellationToken cancellationToken)
     {
@@ -45,7 +48,17 @@ internal sealed class LaneReplyService(IMetaConfig config, ILaneFiles files, ILa
             return stored.Error;
         }
 
+        await OpenObligation(request, stored.Value.Value, now, cancellationToken).ConfigureAwait(false);
         _ = await log.Append(LogLine.Event(LogKind.Note, now, $"lane reply {stored.Value.Value}: team {request.Identity.Team}, lane {request.Identity.Lane}, provider {found.Agent?.Agent ?? "unknown"}, session {session.Value}"), cancellationToken).ConfigureAwait(false);
         return new LaneReplyResponse(Recorded: true, stored.Value);
+    }
+
+    // A reply the meta owes an answer to opens an obligation; a notice opens none.
+    private async ValueTask OpenObligation(LaneReplyRequest request, string id, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        if (obligations is not null && !NoticeRule.IsNotice(request.Text))
+        {
+            await obligations.Opened(now, id, request.Identity.SessionName, cancellationToken).ConfigureAwait(false);
+        }
     }
 }

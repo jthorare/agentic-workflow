@@ -60,14 +60,18 @@ public sealed class GetStatusTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task GetStatus_fails_with_the_code_and_the_file_when_the_live_profile_is_invalid()
+    public async Task GetStatus_answers_with_the_profile_problem_when_the_live_profile_is_invalid()
     {
+        var grant = await _h.HoldLease();
+        _ = await new RecordHeartbeatService(_h.Store, _h.Events, _h.Clock).Handle(new RecordHeartbeatRequest(new ScheduledRun(grant, _h.Clock.GetUtcNow())), Token);
         _h.Profiles.Live = Core.SindriErrors.ProfileInvalid.With("/home/thor/profile.yaml: line 3: unknown key 'tennant'");
 
         var result = await Service().Handle(new GetStatusRequest(), Token);
 
-        Assert.True(result.IsError);
-        Assert.Equal("SND-PROFILE-002", result.Error.Code);
-        Assert.Contains("/home/thor/profile.yaml", result.Error.Message, StringComparison.Ordinal);
+        Assert.False(result.IsError);
+        var status = result.Value;
+        Assert.True(status.Running);
+        Assert.Null(status.Profile.Live);
+        Assert.Contains("/home/thor/profile.yaml", status.Profile.Problem, StringComparison.Ordinal);
     }
 }
