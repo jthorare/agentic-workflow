@@ -146,6 +146,24 @@ public sealed class RoutedModelPortTests
         Assert.Equal(1, rig.CodexList!.Reads);
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(new[] { "claude-sonnet-4-5" }, 9 * 60, 2 * 60)]   // a list that was read is kept 10 minutes
+    [InlineData(new string[0], 50, 11)]   // a list that could not be read is kept 60 seconds only
+    public async Task Codex_list_is_read_again_once_it_is_older_than_it_is_kept(string[] list, int stillKeptSeconds, int thenSeconds)
+    {
+        var codex = Codex(Said("a"), Said("b"), Said("c"));
+        var rig = new RouterRig(settings: null, codexModels: list, codex);
+
+        _ = (await rig.Ask(RouterRig.Request())).Value;
+        rig.Clock.Advance(TimeSpan.FromSeconds(stillKeptSeconds));
+        _ = (await rig.Ask(RouterRig.Request())).Value;
+        var keptReads = rig.CodexList!.Reads;
+        rig.Clock.Advance(TimeSpan.FromSeconds(thenSeconds));
+        _ = (await rig.Ask(RouterRig.Request())).Value;
+
+        Assert.Equal((1, 2), (keptReads, rig.CodexList.Reads));
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task The_profile_orders_the_harnesses_and_names_the_model_of_a_kind()
     {

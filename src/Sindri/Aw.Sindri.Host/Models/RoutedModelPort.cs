@@ -20,12 +20,13 @@ internal sealed class RoutedModelPort : IModelPort, IModelPromptBudget
 {
     private static readonly AgentId _codex = AgentId.From("codex");
     private static readonly TimeSpan _codexListFor = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan _unreadCodexListFor = TimeSpan.FromSeconds(60);
     private static readonly ProviderName[] _agentClis = [.. AgentCliNames.DefaultOrder.Select(AgentCliNames.Provider)];
 
     private readonly Func<IProviderCatalog> _catalog;
     private readonly IApprovedModels _models;
     private readonly IModelCatalog? _codexModels;
-    private (IReadOnlyList<ModelFacts> Listed, long At)? _codexList;
+    private CodexListRead? _codexList;   // one reference, swapped whole: concurrent calls see an old read or a new one, never half of each
     private readonly IJobContextAccessor _jobs;
     private readonly TimeProvider _clock;
     private readonly JobModelLimits _limits = new();
@@ -128,16 +129,17 @@ internal sealed class RoutedModelPort : IModelPort, IModelPromptBudget
         return call;
     }
 
-    // Codex's list, read at most once per 10 minutes (each read runs 'codex debug models', up to 5 s); an unreadable list is kept too, so a box without the command doesn't pay the 5 s every call.
+    // Codex's list, read at most once per 10 minutes (each read runs 'codex debug models', up to 5 s). An unreadable list is kept 60 s only: a timeout or a
+    // fresh codex login must not hold the built-in name for 10 minutes, and the doctor, which reads fresh, agrees again within the minute.
     private async ValueTask<IReadOnlyList<ModelFacts>> CodexList(IModelCatalog catalog, CancellationToken cancellationToken)
     {
-        if (_codexList is { } kept && _clock.GetElapsedTime(kept.At) < _codexListFor)
+        if (_codexList is { } kept && _clock.GetElapsedTime(kept.At) < (kept.Listed.Count == 0 ? _unreadCodexListFor : _codexListFor))
         {
             return kept.Listed;
         }
 
         var listed = await catalog.ModelsOf(_codex, cancellationToken).ConfigureAwait(false);
-        _codexList = (listed, _clock.GetTimestamp());
+        _codexList = new CodexListRead(listed, _clock.GetTimestamp());
         return listed;
     }
 
@@ -176,4 +178,6 @@ internal sealed class RoutedModelPort : IModelPort, IModelPromptBudget
         (request.Models?.Values ?? []).Concat(request.Model is null ? [] : [request.Model]).FirstOrDefault(static n => !ModelNames.IsValid(n)) is { } bad
             ? ContextErrors.SettingsInvalid.With($"the request's model name '{bad}' is not a model name (letters, digits and . _ : / @ + -, not starting with -)")
             : null;
+
+    private sealed record CodexListRead(IReadOnlyList<ModelFacts> Listed, long At);
 }
