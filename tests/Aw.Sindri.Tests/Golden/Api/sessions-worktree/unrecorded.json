@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-AGENT-018",
+  "status": 409,
+  "detail": "no start recorded the act id never0000, so there is no worktree of it to remove",
+  "traceId": "<trace>"
+}

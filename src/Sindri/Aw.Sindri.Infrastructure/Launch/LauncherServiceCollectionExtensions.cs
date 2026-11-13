@@ -1,8 +1,10 @@
 using Aw.Redaction;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Core.Launches;
+using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Mcp;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox.Credentials;
@@ -24,6 +26,11 @@ internal static class LauncherServiceCollectionExtensions
             .AddSingleton<ITerminalPaneLocator>(static sp => new SnapshotTerminalPaneLocator(sp.GetRequiredService<ISessionSnapshot>(), new TmuxHostOptions()))
             .AddSingleton<ITerminalPaneSource>(static sp => new TmuxTerminalPaneSource(new TmuxHostOptions(), sp.GetRequiredService<ITerminalPaneLocator>()))
             .AddSingleton<ISessionHost>(static sp => sp.GetRequiredService<TmuxSessionHost>())   // the launcher service polls it for attached clients (API P10a U9)
+            .AddSingleton<ISessionPanes>(static sp => sp.GetRequiredService<TmuxSessionHost>())   // the one-off start asks it for the pane (agents spec §15.8)
+            .AddSingleton<IStartChecks>(_ => new StartChecks(environment))
+            .AddSingleton<IStartedSessions>(static sp => new StartedSessions(sp.GetRequiredService<ILedgerStore>(), sp.GetRequiredService<EventFactory>()))   // the start and the worktree remove share it (A7)
+            .AddSingleton<IStartChoices>(static sp => new StartChoicesFile(sp.GetRequiredService<ISindriHome>()))
+            .AddSingleton<Core.Worktrees.IOneOffWorktrees>(sp => new Worktrees.OneOffWorktrees(sp.GetRequiredService<Core.Worktrees.IWorktrees>(), environment))
             .AddSingleton<ISessionNudges>(static sp => new TmuxSessionNudges(sp.GetRequiredService<TmuxSessionHost>()))
             .AddSingleton<NoSessionHost>()
             .AddSingleton(sp => T3Options(sp, environment))

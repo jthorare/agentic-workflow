@@ -10,7 +10,7 @@ public static partial class SindriErrors
     /// <summary>SND-AGENT-013: the agent of a one-off start is not installed or not signed in (agents spec §15.8); the message carries the sign-in command.</summary>
     public static readonly ErrorDefinition AgentNotReady = new("SND-AGENT-013", ErrorKind.Invalid, "The agent is not installed or not signed in");
 
-    /// <summary>SND-AGENT-014: the one-off worktree could not be made, tmux is not installed, or tmux did not start the session in 4 s (agents spec §15.8); the half-made session and worktree are removed. The spec says HTTP 502; ErrorKind has no gateway kind, so it answers 503 until one is added.</summary>
+    /// <summary>SND-AGENT-014: the one-off worktree could not be made, tmux is not installed, or tmux did not start the session in 4 s (agents spec §15.8); the half-made session and worktree are removed. The spec answers HTTP 503 (Unavailable).</summary>
     public static readonly ErrorDefinition AgentStartFailed = new("SND-AGENT-014", ErrorKind.Unavailable, "The session could not be started");
 
     /// <summary>SND-AGENT-017: the prompt of a one-off start is over 8,000 characters (agents spec §15.8).</summary>

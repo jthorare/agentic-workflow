@@ -12,8 +12,8 @@ public sealed class TmuxAllowlistTests
 
     private static string[] Args(params string[] args) => args;
 
-    public static TheoryData<string[]> ForeignAccepts => new()
-    {
+    public static TheoryData<string[]> ForeignAccepts =>
+    [
         Args("capture-pane", "-e", "-p", "-t", "%3"),
         Args("capture-pane", "-e", "-p", "-t", "%3", "-S", "-200", "-E", "-1"),
         Args("send-keys", "-t", "%3", "-l", "--", "hello world"),
@@ -35,10 +35,10 @@ public sealed class TmuxAllowlistTests
         Args("send-keys", "-t", "%3", "F1"),
         Args("send-keys", "-t", "%3", "C-z"),
         Args("send-keys", "-t", "%3", "M-a"),
-    };
+    ];
 
-    public static TheoryData<string[]> ForeignRefuses => new()
-    {
+    public static TheoryData<string[]> ForeignRefuses =>
+    [
         Args("attach"),
         Args("attach-session", "-t", "main"),
         Args("copy-mode", "-t", "%3"),
@@ -66,10 +66,10 @@ public sealed class TmuxAllowlistTests
         Args("paste-buffer", "-b", "other-buffer", "-t", "%3"),
         Args("load-buffer", "-b", "other-buffer", "-"),
         Args(),
-    };
+    ];
 
-    public static TheoryData<string[]> LaunchAccepts => new()
-    {
+    public static TheoryData<string[]> LaunchAccepts =>
+    [
         Args("capture-pane", "-e", "-p", "-t", "%3"),
         Args("send-keys", "-t", "%3", "-l", "--", "hi"),
         Args("new-session", "-d", "-s", Session, "-x", "120", "-y", "40", "-c", "/work/demo", "--", "claude", "--model", "x"),
@@ -81,10 +81,10 @@ public sealed class TmuxAllowlistTests
         Args("list-panes", "-a", "-F", "#{pane_id}"),
         Args("kill-session", "-t", Session),
         Args("kill-session", "-t", "=" + Session),
-    };
+    ];
 
-    public static TheoryData<string[]> LaunchRefuses => new()
-    {
+    public static TheoryData<string[]> LaunchRefuses =>
+    [
         Args("attach"),
         Args("attach-session", "-t", Session),
         Args("copy-mode", "-t", "%3"),
@@ -108,7 +108,7 @@ public sealed class TmuxAllowlistTests
         Args("new-session", "-s", Session),
         Args("send-keys", "-t", "main:0", "Enter"),
         Args(),
-    };
+    ];
 
     [Theory, Trait("Lane", "unit")]
     [MemberData(nameof(ForeignAccepts))]

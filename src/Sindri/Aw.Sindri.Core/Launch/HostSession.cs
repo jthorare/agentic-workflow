@@ -27,4 +27,7 @@ public sealed record HostSession(string Name, string WorkDir, IReadOnlyList<stri
 
     /// <summary>True keeps the pane when the agent exits ('set-option remain-on-exit on'), so the view can show Ended (agents spec §15.2).</summary>
     public bool RemainOnExit { get; init; }
+
+    /// <summary>True runs the command in a clean environment: only <see cref="Env"/> plus TERM reaches it ('env -i'), so nothing the tmux server inherited from Sindri's own process (every AW_ variable, GH_TOKEN) does (agents spec §15.4).</summary>
+    public bool CleanEnvironment { get; init; }
 }
