@@ -21444,7 +21444,10 @@ Aw.Sindri.Core.Todos.TodoNoteImport.TodoNoteImport(Aw.Sindri.Core.Todos.Note.Not
 Aw.Sindri.Core.Todos.TodoNoteState
 Aw.Sindri.Core.Todos.TodoNoteState.Busy = 5 -> Aw.Sindri.Core.Todos.TodoNoteState
 Aw.Sindri.Core.Todos.TodoNoteState.CantRead = 3 -> Aw.Sindri.Core.Todos.TodoNoteState
+Aw.Sindri.Core.Profile.IProfileFile
+Aw.Sindri.Core.Profile.IProfileFile.Exists() -> bool
 Aw.Sindri.Core.Todos.TodoNoteState.NotSet = 0 -> Aw.Sindri.Core.Todos.TodoNoteState
+Aw.Sindri.Core.Todos.TodoNoteState.NotSetUp = 6 -> Aw.Sindri.Core.Todos.TodoNoteState
 Aw.Sindri.Core.Todos.TodoNoteState.OneWay = 4 -> Aw.Sindri.Core.Todos.TodoNoteState
 Aw.Sindri.Core.Todos.TodoNoteState.Syncing = 1 -> Aw.Sindri.Core.Todos.TodoNoteState
 Aw.Sindri.Core.Todos.TodoNoteState.WaitingForImport = 2 -> Aw.Sindri.Core.Todos.TodoNoteState
