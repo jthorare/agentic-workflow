@@ -1,4 +1,5 @@
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Health;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.GetStatus;
@@ -32,5 +33,20 @@ public sealed class GetStatusInvalidProfileKindTests
         Assert.Equal(grant.Epoch, status.Epoch);
         Assert.NotNull(status.Health);
         Assert.NotNull(status.Views);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task GetStatus_counts_a_profile_that_wont_load_as_a_health_problem()
+    {
+        _ = await _h.HoldLease();
+        _h.Profiles.Live = SindriErrors.ProfileInvalid.With("The profile file is there but can't be read; check its permissions.");
+        var service = new GetStatusService(_h.Held, new ProfileReads(_h.Profiles, _h.Profiles), _h.Store, new ProjectorProgress(_h.Clock), new HealthServiceRows(new InMemoryViewStore(SliceHarness.Json), []), new InMemorySessionSnapshot());
+
+        var health = (await service.Handle(new GetStatusRequest(), Token)).Value.Health;
+
+        Assert.NotNull(health);
+        Assert.NotEqual(HealthWord.Healthy, health.Word);
+        Assert.Contains(health.Problems, static p => p.Code == SindriErrors.ProfileInvalid.Code);
+        Assert.Contains("your profile won't load", health.Sentence, StringComparison.Ordinal);
     }
 }
