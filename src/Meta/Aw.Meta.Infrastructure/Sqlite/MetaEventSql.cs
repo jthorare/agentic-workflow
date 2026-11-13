@@ -24,6 +24,17 @@ internal static class MetaEventSql
         c => c.Bind("$after", after).Bind("$kind", kind).Bind("$lane", lane).Bind("$max", max),
         "events after " + after.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
+    // AUTOINCREMENT keeps the highest id ever assigned in sqlite_sequence, so it survives a prune that empties the table.
+    internal static readonly SqlStatement Bounds = new(
+        "SELECT (SELECT MIN(id) FROM meta_events), COALESCE((SELECT seq FROM sqlite_sequence WHERE name = 'meta_events'), 0)",
+        Subject: "event bounds");
+
+    internal static (long Oldest, long Latest) ReadBounds(SqliteDataReader r)
+    {
+        var latest = r.GetInt64(1);
+        return (r.IsDBNull(0) ? latest + 1 : r.GetInt64(0), latest);
+    }
+
     internal static MetaEvent ReadEvent(SqliteDataReader r) =>
         new(r.GetInt64(0), SqliteRead.GetTimestamp(r, 1), r.GetString(2), r.IsDBNull(3) ? null : r.GetString(3), r.GetString(4));
 }

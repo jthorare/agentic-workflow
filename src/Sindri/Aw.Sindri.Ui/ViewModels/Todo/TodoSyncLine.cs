@@ -12,7 +12,7 @@ internal static class TodoSyncLine
     /// <returns>The quiet text, the live text and whether the live text is a warning; all empty draws no line.</returns>
     internal static (string Quiet, string Live, bool IsWarning) Of(TodoNoteView? note, DateTimeOffset now, TimeZoneInfo zone)
     {
-        if (note is null || string.Equals(note.State, "not set", StringComparison.Ordinal))
+        if (note is null || string.Equals(note.State, "not set", StringComparison.Ordinal) || string.Equals(note.State, "not set up", StringComparison.Ordinal))
         {
             return (string.Empty, string.Empty, false);
         }

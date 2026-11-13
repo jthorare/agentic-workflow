@@ -12,14 +12,14 @@ public interface IMetaEventStore
     /// <returns>The new event's id.</returns>
     public ValueTask<Result<long>> Append(MetaEvent metaEvent, CancellationToken cancellationToken);
 
-    /// <summary>The events with an id above <paramref name="after"/>, oldest first.</summary>
+    /// <summary>The events with an id above <paramref name="after"/>, oldest first, with the log's oldest and latest ids read in the same transaction.</summary>
     /// <param name="after">The cursor: the last id the reader has.</param>
     /// <param name="kind">Only this kind, or null for every kind.</param>
     /// <param name="lane">Only this lane, or null for every lane.</param>
     /// <param name="max">At most this many events.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The events, ascending by id.</returns>
-    public ValueTask<Result<IReadOnlyList<MetaEvent>>> Read(long after, string? kind, string? lane, int max, CancellationToken cancellationToken);
+    /// <returns>The page: the events ascending by id, the oldest id still kept and the highest id ever assigned.</returns>
+    public ValueTask<Result<MetaEventPage>> Read(long after, string? kind, string? lane, int max, CancellationToken cancellationToken);
 
     /// <summary>Drops the events older than <paramref name="olderThan"/>.</summary>
     /// <param name="olderThan">The cutoff.</param>

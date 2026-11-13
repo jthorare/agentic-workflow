@@ -12,7 +12,8 @@ namespace Aw.Sindri.Ui.Views.Controls;
 /// <summary>
 /// The layer that draws a graph's edges (the context map, F3 spec 1 §2; the run canvas, F3 spec 3 §2) in one Render pass: a
 /// 2 px stroke in Wire (or the edge's own brush key), dashed 8 4 when suggested, a 10 px port with a 3 px radius at each end,
-/// WireHi for edges around the hovered or selected node, and a hit stroke (12 px unless the edge sets its width) so a thin line
+/// WireHi for edges around the hovered or selected node (lit edges and their ports draw at double width, so the lit state
+/// does not rest on colour alone), and a hit stroke (12 px unless the edge sets its width) so a thin line
 /// is easy to hover. Edges it is told are dimmed draw at 42 %.
 /// </summary>
 internal sealed class GraphEdgesControl : Control, ICustomHitTest
@@ -106,8 +107,12 @@ internal sealed class GraphEdgesControl : Control, ICustomHitTest
         {
             using (dim ? context.PushOpacity(DimmedOpacity) : default)
             {
-                var half = (PortSize - 1) / 2;
-                context.DrawRectangle(card, new Pen(lit ? hi : wire, 1), new Rect(at.X - half, at.Y - half, PortSize - 1, PortSize - 1), PortRadius, PortRadius);
+                // The outline is 1 px (rectangle 9, so its edge lands on a half pixel and the outline on whole ones) or, lit, 2 px
+                // (rectangle 8, edge on a whole pixel): both keep the 10 px outer size.
+                var outline = lit ? 2 : 1;
+                var size = PortSize - outline;
+                var half = size / 2;
+                context.DrawRectangle(card, new Pen(lit ? hi : wire, outline), new Rect(at.X - half, at.Y - half, size, size), PortRadius, PortRadius);
             }
         }
     }
@@ -123,7 +128,7 @@ internal sealed class GraphEdgesControl : Control, ICustomHitTest
             var dim = Dimmed.Contains(edge.Key);
             using (dim ? context.PushOpacity(DimmedOpacity) : default)
             {
-                context.DrawGeometry(brush: null, StrokePen(edge, lit ? hi : EdgeBrush(edge, wire)), geometry);
+                context.DrawGeometry(brush: null, StrokePen(edge, lit ? hi : EdgeBrush(edge, wire), lit), geometry);
             }
 
             foreach (var end in new[] { edge.Route.Start.ToAvalonia(), edge.Route.End.ToAvalonia() })
@@ -137,7 +142,7 @@ internal sealed class GraphEdgesControl : Control, ICustomHitTest
 
     private IBrush EdgeBrush(MapEdge edge, IBrush wire) => edge.BrushKey is null ? wire : Brush(edge.BrushKey);
 
-    private static Pen StrokePen(MapEdge edge, IBrush brush) => new(brush, Stroke, edge.Dashed ? new DashStyle(_dash, 0) : null, PenLineCap.Flat);
+    private static Pen StrokePen(MapEdge edge, IBrush brush, bool lit) => new(brush, lit ? 2 * Stroke : Stroke, edge.Dashed ? new DashStyle(_dash, 0) : null, PenLineCap.Flat);
 
     /// <inheritdoc/>
     protected override void OnPointerMoved(PointerEventArgs e)

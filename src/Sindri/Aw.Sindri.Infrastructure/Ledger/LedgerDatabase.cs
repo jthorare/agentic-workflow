@@ -150,6 +150,9 @@ internal sealed class LedgerDatabase : IDisposable
     /// <summary>The first migration with the 'events_item_seq' index (#2773); an older file still answers an item-filtered scan, by walking the rowid range.</summary>
     internal const int EventsItemSeqVersion = 19;
 
+    /// <summary>The first migration with 'workflow_node_run.raw' (#3196); the column is read by every node-run query, so it is always on a file Sindri opens.</summary>
+    internal const int NodeRunRawVersion = 20;
+
     private static IReadOnlyList<Migration> LoadMigrations()
     {
         var own = EmbeddedMigrations.Load(typeof(LedgerDatabase).Assembly, "Aw.Sindri.Infrastructure.Ledger.Migrations.").Value;
