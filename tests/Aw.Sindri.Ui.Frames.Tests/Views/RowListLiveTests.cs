@@ -495,7 +495,7 @@ public sealed class RowListLiveTests
         Assert.Same(first, list.StickyGroup);
         Assert.Equal(new Thickness(2), sticky.BorderThickness);
         Assert.True(sticky.TryFindResource("Brush.PrimaryHover", sticky.ActualThemeVariant, out var expected));
-        Assert.Equal(Assert.IsAssignableFrom<ISolidColorBrush>(expected).Color, Assert.IsAssignableFrom<ISolidColorBrush>(sticky.BorderBrush).Color);
+        Assert.Equal(Assert.IsType<ISolidColorBrush>(expected, exactMatch: false).Color, Assert.IsType<ISolidColorBrush>(sticky.BorderBrush, exactMatch: false).Color);
         window.Close();
         return true;
     });

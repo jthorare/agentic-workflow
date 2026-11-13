@@ -1,8 +1,8 @@
-using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -81,8 +81,8 @@ public sealed class RowFocusBarTests
         Settle(window);
         Assert.Equal(new Thickness(2), header.BorderThickness);
         Assert.True(header.TryFindResource("Brush.PrimaryHover", header.ActualThemeVariant, out var expected));
-        var wanted = Assert.IsAssignableFrom<ISolidColorBrush>(expected).Color;
-        Assert.Equal(wanted, Assert.IsAssignableFrom<ISolidColorBrush>(header.BorderBrush).Color);
+        var wanted = Assert.IsType<ISolidColorBrush>(expected, exactMatch: false).Color;
+        Assert.Equal(wanted, Assert.IsType<ISolidColorBrush>(header.BorderBrush, exactMatch: false).Color);
         Assert.Null(header.FocusAdorner);   // nothing outside the bounds
         window.Close();
         return true;
@@ -133,7 +133,7 @@ public sealed class RowFocusBarTests
         var bar = Assert.NotNull(row.Layout.SelBar);
         var inner = Assert.NotNull(row.Layout.RingRect).Deflate(Row.RingStroke);   // inside the ring's 2 px stroke
 
-        Assert.True(inner.Contains(bar.TopLeft) && inner.Contains(new Point(bar.Right - 0.01, bar.Bottom - 0.01)), string.Create(CultureInfo.InvariantCulture, $"bar {bar} is not inside {inner}"));
+        Assert.True(inner.Contains(bar.TopLeft) && inner.Contains(new Point(bar.Right - 0.01, bar.Bottom - 0.01)), $"bar {bar} is not inside {inner}");
         window.Close();
         return true;
     });
@@ -146,8 +146,8 @@ public sealed class RowFocusBarTests
         var xs = new List<(double Title, double Cell, double Age)>();
         foreach (var classes in new[] { Array.Empty<string>(), ["sel"], ["cursor"], ["sel", "cursor"] })
         {
-            row.Classes.Remove("sel");
-            row.Classes.Remove("cursor");
+            _ = row.Classes.Remove("sel");
+            _ = row.Classes.Remove("cursor");
             foreach (var c in classes)
             {
                 row.Classes.Add(c);

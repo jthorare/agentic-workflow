@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
@@ -52,7 +51,7 @@ public sealed class RowBarPixelTests
         var bytes = new byte[4];
         Marshal.Copy(frame.Address + ((int)at.Y * frame.RowBytes) + ((int)at.X * 4), bytes, 0, 4);
 
-        Assert.True(bytes[2] == ink.R && bytes[1] == ink.G && bytes[0] == ink.B, string.Create(CultureInfo.InvariantCulture, $"bar pixel is ({bytes[2]};{bytes[1]};{bytes[0]}), the bar is ({ink.R};{ink.G};{ink.B})"));
+        Assert.True(bytes[2] == ink.R && bytes[1] == ink.G && bytes[0] == ink.B, $"bar pixel is ({bytes[2]};{bytes[1]};{bytes[0]}), the bar is ({ink.R};{ink.G};{ink.B})");
         window.Close();
         return true;
     }, TestContext.Current.CancellationToken);

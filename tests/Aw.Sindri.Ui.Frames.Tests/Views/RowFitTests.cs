@@ -52,7 +52,7 @@ public sealed class RowFitTests
     [Fact]
     public async Task At_1000_px_age_and_waits_on_end_inside_the_row() => await OnUi(() =>
     {
-        var (window, list) = Show(1000, new Item("r-0001", "Row 0", null));
+        var (window, list) = Show(1000, new Item("r-0001", "Row 0", SubLine: null));
         var row = Rows(list)[0];
         var layout = row.Layout;
 
@@ -65,10 +65,10 @@ public sealed class RowFitTests
     [Fact]
     public async Task At_1000_px_the_row_drops_the_owner_column_so_the_title_keeps_its_200_px() => await OnUi(() =>
     {
-        var (window, list) = Show(1000, new Item("r-0001", "Row 0", null));
+        var (window, list) = Show(1000, new Item("r-0001", "Row 0", SubLine: null));
         var layout = Rows(list)[0].Layout;
 
-        Assert.Equal(["status", "progress", "diff", "ref"], layout.Cells.Select(c => c.Key));
+        Assert.Equal(["status", "progress", "diff", "ref"], layout.Cells.Select(c => c.Key), StringComparer.Ordinal);
         Assert.True(layout.TitleSlot.Width >= TitleMin - 0.5, Say($"the title column is {layout.TitleSlot.Width:0.0} px, its minimum is {TitleMin}"));
         Assert.True(layout.TitleSlot.Right <= layout.Cells.Min(c => c.Bounds.X) - CellGap + 0.5, Say($"the title column ends at {layout.TitleSlot.Right:0.0}, the facts start at {layout.Cells.Min(c => c.Bounds.X) - CellGap:0.0}"));
         window.Close();
@@ -112,8 +112,8 @@ public sealed class RowFitTests
     [Fact]
     public async Task Every_row_of_a_list_shows_the_same_columns_whatever_its_text() => await OnUi(() =>
     {
-        var (window, list) = Show(1000, new Item("r-0001", "Row 0", null), new Item("r-0002", LongTitle, LongSub), new Item("r-0003", "Row 2", LongSub));
-        var shown = Rows(list).Select(r => string.Join(",", r.Layout.Cells.Select(c => c.Key))).Distinct().ToList();
+        var (window, list) = Show(1000, new Item("r-0001", "Row 0", SubLine: null), new Item("r-0002", LongTitle, LongSub), new Item("r-0003", "Row 2", LongSub));
+        var shown = Rows(list).Select(r => string.Join(',', r.Layout.Cells.Select(c => c.Key))).Distinct(StringComparer.Ordinal).ToList();
 
         _ = Assert.Single(shown);
         window.Close();
@@ -125,7 +125,7 @@ public sealed class RowFitTests
     [InlineData(700, 2)]
     public async Task With_the_peek_open_a_row_shows_the_smaller_of_the_peek_count_and_what_fits(double width, int expected) => await OnUi(() =>
     {
-        var (window, list) = Show(width, new Item("r-0001", "Row 0", null));
+        var (window, list) = Show(width, new Item("r-0001", "Row 0", SubLine: null));
         list.PeekColumns = 3;
         list.IsPeekOpen = true;
         Settle(window);
@@ -140,7 +140,7 @@ public sealed class RowFitTests
     [Fact]
     public async Task A_row_widened_from_1000_to_1440_draws_the_dropped_owner_fact() => await OnUi(() =>
     {
-        var (window, list) = Show(1000, new Item("r-0001", "Row 0", null));
+        var (window, list) = Show(1000, new Item("r-0001", "Row 0", SubLine: null));
         var row = Rows(list)[0];
         Assert.Equal(4, row.Layout.Cells.Count);
 
@@ -160,7 +160,7 @@ public sealed class RowFitTests
     [Fact]
     public async Task A_row_narrowed_from_1440_to_1000_drops_the_owner_fact() => await OnUi(() =>
     {
-        var (window, list) = Show(1440, new Item("r-0001", "Row 0", null));
+        var (window, list) = Show(1440, new Item("r-0001", "Row 0", SubLine: null));
         var row = Rows(list)[0];
         Assert.Equal(5, row.Layout.Cells.Count);
 
