@@ -106,6 +106,7 @@ public sealed class PeekScaleTests
         Assert.Equal(20, body.LineHeight, 0.01);
         Assert.True(lineCount >= 2, "the body wraps to at least two lines");
         Assert.Equal(lineCount * 20, body.DesiredSize.Height, Tolerance(scaling));
+        Assert.True(body.Bounds.Height >= body.DesiredSize.Height - Tolerance(scaling), string.Create(CultureInfo.InvariantCulture, $"the body is arranged {body.Bounds.Height} tall but measures {body.DesiredSize.Height}: it is clipped"));
         window.Close();
         return true;
     });
