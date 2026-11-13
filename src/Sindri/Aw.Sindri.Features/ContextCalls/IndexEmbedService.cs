@@ -1,5 +1,6 @@
 using System.Globalization;
 using Aw.Context.Core;
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Vectors;
 using Aw.Kernel;
@@ -47,7 +48,16 @@ internal sealed class IndexEmbedService(ContextScopes scopes, IContextEngine emb
                 : report.Error;
         }
 
-        return Summarize(report.Value);
+        return report.Value.Embedded == 0 && await IndexIsEmpty(scope.Value, cancellationToken).ConfigureAwait(false)
+            ? new ScheduledResult(Idle: true, "nothing indexed yet")
+            : Summarize(report.Value);
+    }
+
+    // True only when the progress read counts every source's records and the total is 0; a failed read or an uncounted source says nothing, so the run stays quiet.
+    private async ValueTask<bool> IndexIsEmpty(ContextScope scope, CancellationToken cancellationToken)
+    {
+        var progress = await embed.Progress(scope, cancellationToken).ConfigureAwait(false);
+        return progress.IsSuccess && progress.Value.All(static p => p.Records == 0);
     }
 
     /// <summary>The run's outcome: quiet when nothing was embedded, else how many chunks and whether any are left.</summary>
@@ -56,7 +66,7 @@ internal sealed class IndexEmbedService(ContextScopes scopes, IContextEngine emb
         ArgumentNullException.ThrowIfNull(report);
         if (report.Embedded == 0)
         {
-            return new ScheduledResult(Idle: true, "nothing indexed yet");
+            return ScheduledResult.Quiet;
         }
 
         var left = report.Done ? "none left" : "more to embed";
