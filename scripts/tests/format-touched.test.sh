@@ -133,7 +133,7 @@ run "$R" --fix A/Broken.cs
 cat > "$TMP/heavy" <<'H'
 #!/usr/bin/env bash
 echo "heavy $*" >> "$FAKE_LOG"
-exec "$@"
+shift; exec "$@"
 H
 chmod +x "$TMP/heavy"
 : > "$LOG"
