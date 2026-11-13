@@ -48,6 +48,25 @@ public sealed class CodeIndexProblemsTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_stale_index_with_the_build_service_running_says_the_next_tick_rebuilds_it()
+    {
+        var problem = Problem(Built(), Moved());
+
+        Assert.Equal("demo: code index is behind main; code-index-main-move rebuilds it on its next tick", problem?.Text);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_stale_index_with_the_build_service_paused_names_the_resume_command()
+    {
+        var status = Built();
+        var health = RepoHealth.Of(status, Moved(), [], _now).Unqueued(buildServiceActive: false);
+        var problem = CodeIndexProblems.For(status, health);
+
+        Assert.True(health.Paused);
+        Assert.Equal("demo: code index is behind main; code-index-main-move is paused, so nothing rebuilds it: sindri services resume code-index-main-move", problem?.Text);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_damaged_index_rebuilds_on_the_next_check()
     {
         var problem = Problem(Damaged(), head: null);
