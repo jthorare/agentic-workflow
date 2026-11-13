@@ -18,7 +18,7 @@ public sealed class CodeIndexHealthTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static CodeIndexHealth Health(FakeCodeIndex index, FakeRepoHeads heads, InMemoryProfiles? live = null) => new(index, new RepoHealths(heads, new InMemoryJobViews(), TimeProvider.System, new QueuedClock()), live ?? new InMemoryProfiles());
+    private static CodeIndexHealth Health(FakeCodeIndex index, FakeRepoHeads heads, InMemoryProfiles? live = null) => new(index, new RepoHealths(heads, new InMemoryJobViews(), TimeProvider.System, new QueuedClock(TimeProvider.System.GetUtcNow())), live ?? new InMemoryProfiles());
 
     private static LoadedProfile Approved()
     {

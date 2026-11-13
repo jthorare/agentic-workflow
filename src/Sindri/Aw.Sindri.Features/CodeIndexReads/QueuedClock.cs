@@ -3,9 +3,11 @@ using System.Collections.Concurrent;
 namespace Aw.Sindri.Features.CodeIndexReads;
 
 /// <summary>
-/// When this serve first read each repo as queued (#3440), so a first build that never starts turns into a problem. In memory: a restart starts every count again, as it restarts the scheduler that starts the build.
+/// When each repo went queued (#3440), so a first build that never starts turns into a problem. A repo this serve has never read before counts from serve start (#3480); one that leaves queued and comes back counts from that read.
+/// In memory: a restart starts every count again, as it restarts the scheduler that starts the build.
 /// </summary>
-internal sealed class QueuedClock
+/// <param name="start">When this serve started.</param>
+internal sealed class QueuedClock(DateTimeOffset start)
 {
     private readonly ConcurrentDictionary<string, DateTimeOffset> _since = new(StringComparer.Ordinal);
 
@@ -16,6 +18,7 @@ internal sealed class QueuedClock
     /// <returns>The time spent queued, or null when the repo isn't queued.</returns>
     internal TimeSpan? For(string repo, bool queued, DateTimeOffset now)
     {
+        _ = start;
         if (!queued)
         {
             _ = _since.TryRemove(repo, out _);
