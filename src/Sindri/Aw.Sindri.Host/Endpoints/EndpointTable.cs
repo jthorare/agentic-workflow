@@ -36,7 +36,7 @@ internal static class EndpointTable
         _ = queries.MapListDecisions();
         _ = queries.MapListRequests();
         _ = queries.MapGetProfile();
-        _ = queries.MapGetSetup();
+        _ = queries.MapGetSetup().MapGetOpenRuns();
         _ = queries.MapGetStatus();
         _ = queries.MapListCommands();
         _ = queries.MapListItems();
@@ -142,6 +142,7 @@ internal static class EndpointTable
         _ = commands.MapProposeContextMap();
         _ = commands.MapReviewContextMap();
         _ = commands.MapStopProcess();
+        _ = commands.MapFirstRunWrites();
         _ = commands.MapAddRepo();
         _ = commands.MapRegisterMcp();
         _ = commands.MapOnboardRepo();

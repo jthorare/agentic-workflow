@@ -47,6 +47,9 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
     /// <summary>Opens the Create item form, or null.</summary>
     internal Action? CreateItem { get; }
 
+    /// <summary>Shows Settings filtered to the words it is given (a Settings entry runs it); null leaves the Settings section out (#3362).</summary>
+    internal Action<string>? OpenSetting { get; init; }
+
     /// <summary>Opens the quick-add box, or null.</summary>
     internal Action? NewTodo { get; }
 
@@ -168,6 +171,10 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
 
         switch (entry)
         {
+            case { SettingWords.Length: > 0 }:
+                OpenSetting?.Invoke(entry.SettingWords);
+                Close();
+                break;
             case { Page: { } page }:
                 // The page changes first, so the region the close hands focus back to already carries the new page's name.
                 _goTo(page);
@@ -194,12 +201,14 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
 
         var sindri = _sindri.Select(_catalog.For).OfType<ControlViewModel>().Select(c => PaletteEntry.For(c, Runs(c), NotRun(c), OpensForm(c)))
             .Append(PaletteEntry.For(PageId.System, "G ."));
-        return
-        [
-            new(Labels.PaletteActions, [.. actions]),
-            new(Labels.PaletteGoTo, [.. GoTo()]),
-            new(Labels.Sindri, [.. sindri]),
-        ];
+        List<PaletteSection> sections = [new(Labels.PaletteActions, [.. actions]), new(Labels.PaletteGoTo, [.. GoTo()])];
+        if (OpenSetting is not null)
+        {
+            sections.Add(new(Labels.PaletteSettings, SettingEntries()));
+        }
+
+        sections.Add(new(Labels.Sindri, [.. sindri]));
+        return sections;
     }
 
     // Home first, then Todo (G T, Home with the Todo panel focused), then the other pages.
