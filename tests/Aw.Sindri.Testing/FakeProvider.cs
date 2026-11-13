@@ -4,8 +4,10 @@ using System.Text;
 namespace Aw.Sindri.Testing;
 
 /// <summary>
-/// The GitHub, Linear, Slack and Google Calendar APIs in memory, as the innermost HttpMessageHandler of a poller's HttpClient. GitHub: any GET on
-/// api.github.com answers the added events as the repo events array, newest first. Linear: any POST on api.linear.app answers
+/// The GitHub, Linear, Slack and Google Calendar APIs in memory, as the innermost HttpMessageHandler of a poller's HttpClient. GitHub:
+/// GET /repos/{r}/pulls answers the open pull requests set, /repos/{r}/pulls/{n} the detail set for n or added to <see cref="GitHubPulls"/> (404 when none),
+/// /repos/{r}/commits/{sha}/check-runs the check runs set for sha (none when unset), and any other GET on api.github.com answers the
+/// added events as the repo events array, newest first. Linear: any POST on api.linear.app answers
 /// the added issues as {"data":{"issues":{"nodes":[...]}}}. A queued rate limit answers the next requests with 429 (or another
 /// status) and an optional Retry-After in seconds; a redirect answers every request with a 302 to another URL. Each request is
 /// recorded with the Authorization header it carried. Test infrastructure that works: the red tests need it to run.
@@ -30,6 +32,9 @@ public sealed class FakeProvider : HttpMessageHandler
 
     private readonly Lock _gate = new();
     private readonly List<string> _githubEvents = [];
+    private readonly List<string> _githubOpenPulls = [];
+    private readonly Dictionary<string, string> _githubPullDetails = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> _githubCheckRuns = new(StringComparer.Ordinal);
     private readonly List<string> _linearIssues = [];
     private readonly List<string> _slackMessages = [];
     private readonly List<string> _calendarEvents = [];
@@ -43,6 +48,9 @@ public sealed class FakeProvider : HttpMessageHandler
     private HttpStatusCode _limitStatus = HttpStatusCode.TooManyRequests;
     private TimeSpan? _limitRetryAfter;
     private Uri? _redirect;
+
+    /// <summary>Gets GitHub's single pull request answers.</summary>
+    public FakeGitHubPulls GitHubPulls { get; } = new();
 
     /// <summary>Gets the requests received, in order.</summary>
     public IReadOnlyList<ProviderRequest> Requests
@@ -63,6 +71,39 @@ public sealed class FakeProvider : HttpMessageHandler
         lock (_gate)
         {
             _githubEvents.Add(json);
+        }
+    }
+
+    /// <summary>Sets the open pull requests GET /repos/{r}/pulls answers (items from GitHubFeedFixtures.OpenPull), replacing the ones set before.</summary>
+    /// <param name="pulls">The pull requests, in the order the list answers them.</param>
+    public void SetGitHubOpenPulls(params string[] pulls)
+    {
+        lock (_gate)
+        {
+            _githubOpenPulls.Clear();
+            _githubOpenPulls.AddRange(pulls);
+        }
+    }
+
+    /// <summary>Sets what GET /repos/{r}/pulls/{n} answers for one pull request (GitHubFeedFixtures.OpenPull with a mergeable state).</summary>
+    /// <param name="number">The pull request number.</param>
+    /// <param name="json">The detail.</param>
+    public void SetGitHubPull(int number, string json)
+    {
+        lock (_gate)
+        {
+            _githubPullDetails[number.ToString(System.Globalization.CultureInfo.InvariantCulture)] = json;
+        }
+    }
+
+    /// <summary>Sets what GET /repos/{r}/commits/{sha}/check-runs answers for one commit (GitHubFeedFixtures.CheckRuns).</summary>
+    /// <param name="sha">The commit sha.</param>
+    /// <param name="json">The answer.</param>
+    public void SetGitHubCheckRuns(string sha, string json)
+    {
+        lock (_gate)
+        {
+            _githubCheckRuns[sha] = json;
         }
     }
 
@@ -193,6 +234,11 @@ public sealed class FakeProvider : HttpMessageHandler
             return Limited();
         }
 
+        if (uri.Host == GitHubHost && GitHubPulls.Answer(uri) is { } pull)
+        {
+            return pull;
+        }
+
         string? link = null;
         var json = uri.Host switch
         {
@@ -237,9 +283,23 @@ public sealed class FakeProvider : HttpMessageHandler
         return limited;
     }
 
-    // GitHub: newest first, 100 to a page, a Link header while more remain.
-    private string GitHubPage(Uri uri, out string? link)
+    // GitHub: the pulls and check-runs routes, else the events feed newest first, 100 to a page, a Link header while more remain.
+    private string? GitHubPage(Uri uri, out string? link)
     {
+        link = null;
+        var segments = uri.AbsolutePath.Trim('/').Split('/');
+        switch (segments)
+        {
+            case ["repos", _, _, "pulls"]:
+                return "[" + string.Join(',', _githubOpenPulls) + "]";
+            case ["repos", _, _, "pulls", var number]:
+                return _githubPullDetails.GetValueOrDefault(number);
+            case ["repos", _, _, "commits", var sha, "check-runs"]:
+                return _githubCheckRuns.GetValueOrDefault(sha) ?? "{\"total_count\":0,\"check_runs\":[]}";
+            default:
+                break;
+        }
+
         var page = int.TryParse(System.Web.HttpUtility.ParseQueryString(uri.Query)["page"], out var asked) && asked > 0 ? asked : 1;
         var all = Enumerable.Reverse(_githubEvents).ToList();
         link = page * GitHubPageSize < all.Count ? $"<https://{GitHubHost}{uri.AbsolutePath}?per_page={GitHubPageSize}&page={(page + 1).ToString(System.Globalization.CultureInfo.InvariantCulture)}>; rel=\"next\"" : null;

@@ -67,6 +67,15 @@ public interface IGit
     /// <returns>The "from" tree-ish.</returns>
     public string NetBase(string directory, string baseline, string candidate);
 
+    /// <summary>
+    /// The red branch's own change: the diff from the merge base of the baseline and main to the baseline, in the shape of <see cref="Diff"/>.
+    /// An empty diff (empty stat, empty full text) when main can't be found or the baseline is already on main.
+    /// </summary>
+    /// <param name="directory">A directory inside the repository.</param>
+    /// <param name="baseline">The baseline (red) commit.</param>
+    /// <returns>The diff stat and the diff.</returns>
+    public Result<CommitDiff> BranchChange(string directory, string baseline);
+
     /// <summary>The files changed between two commits, renames as delete plus add, paths raw with '/'.</summary>
     /// <param name="directory">A directory inside the repository.</param>
     /// <param name="from">The base commit.</param>

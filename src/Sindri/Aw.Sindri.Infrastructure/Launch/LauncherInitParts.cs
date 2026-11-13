@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 
@@ -19,4 +20,7 @@ internal sealed record LauncherInitParts(ReloadingAgentCatalog Catalog, Detectio
 
     /// <summary>Finds an agent CLI the way the login shell does.</summary>
     public Func<string, CancellationToken, ValueTask<string?>> ResolveBin { get; init; } = BinResolver.Resolve;
+
+    /// <summary>Takes how long each part of <c lang="text">show</c> ran (#3390); null records nothing.</summary>
+    public IPartTimer? Timer { get; init; }
 }

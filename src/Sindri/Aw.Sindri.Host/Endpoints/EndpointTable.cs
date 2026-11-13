@@ -12,6 +12,8 @@ internal static class EndpointTable
         var queries = group.MapGroup(string.Empty).WithMetadata(QueryRouteMetadata.Instance);   // X-Sindri-After honoured (read-your-writes)
         var commands = group.MapGroup(string.Empty).WithMetadata(CommandRouteMetadata.Instance);   // Origin refused before binding (SND-API-008)
 
+        _ = app.UseWebSockets();   // the terminal route (agents spec §15.8) is the one WebSocket
+        _ = group.MapTerminalSocket();
         _ = MapQueries(queries);
         _ = MapCommands(commands);
         return app;
@@ -30,13 +32,13 @@ internal static class EndpointTable
         _ = queries.MapGetItemTimeline();
         _ = MapProjectQueries(queries);
         _ = queries.MapGetQueue().MapGetReviews().MapGetReviewPage().MapGetLibrary().MapGetLibraryDoc().MapListLinearIssues().MapGetLinearIssue();
-        _ = queries.MapGetSession();
+        _ = queries.MapGetSession().MapGetLastStart();
         _ = queries.MapGetRunSuspension();
         _ = queries.MapGetNeedsYou();
         _ = queries.MapListDecisions();
         _ = queries.MapListRequests();
         _ = queries.MapGetProfile();
-        _ = queries.MapGetSetup();
+        _ = queries.MapGetSetup().MapGetOpenRuns();
         _ = queries.MapGetStatus();
         _ = queries.MapListCommands();
         _ = queries.MapListItems();
@@ -130,6 +132,7 @@ internal static class EndpointTable
         _ = commands.MapSetReviewLogin().MapSendReviewFix().MapLinearConnectionWrites();
         _ = commands.MapResumeService();
         _ = commands.MapRunService();
+        _ = commands.MapSessionStarts();
         _ = commands.MapContextJobs();
         _ = commands.MapLaunchTargetJob();
         _ = commands.MapCreateItem().MapHandoff();
@@ -141,6 +144,7 @@ internal static class EndpointTable
         _ = commands.MapProposeContextMap();
         _ = commands.MapReviewContextMap();
         _ = commands.MapStopProcess().MapRestartServe();
+        _ = commands.MapFirstRunWrites();
         _ = commands.MapAddRepo();
         _ = commands.MapRegisterMcp();
         _ = commands.MapOnboardRepo();

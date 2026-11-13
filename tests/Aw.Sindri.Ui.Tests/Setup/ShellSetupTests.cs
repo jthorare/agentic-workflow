@@ -93,7 +93,7 @@ public sealed class ShellSetupTests
 
         shell.Setup.Continue();
 
-        Assert.Equal((PageId.Settings, "mcp"), (shell.CurrentPage, at));
+        Assert.Equal((PageId.Settings, "sources"), (shell.CurrentPage, at));   // the accounts step is step 2 and the first one still to do
     }, Token);
 
     [Fact]

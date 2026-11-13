@@ -349,6 +349,10 @@ internal sealed class GraphRig : IAsyncDisposable
     public async Task<IReadOnlyDictionary<int, NodeRun>> ItemRuns(WorkflowRunId id, string node) =>
         (await Runs.NodeRuns(id, Token)).Value.Where(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal)).ToDictionary(static n => n.ItemIndex);
 
+    /// <summary>The payloads of every ledger event of one type, oldest first (#3151).</summary>
+    public async Task<IReadOnlyList<JsonObject>> Payloads(string type) =>
+        [.. (await _ledger.ReadAfter(0, 1000, Token)).Value.Where(e => string.Equals(e.Envelope.Type, type, StringComparison.Ordinal)).Select(static e => JsonNode.Parse(e.Envelope.Payload)!.AsObject())];
+
     /// <summary>The ledger rows the run wrote, as '&lt;type&gt; &lt;idempotency key&gt;', oldest first.</summary>
     public async Task<IReadOnlyList<string>> Rows()
     {

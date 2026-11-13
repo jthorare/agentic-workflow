@@ -26,6 +26,42 @@ public interface IContextSource
     /// <returns>The record, or NotFound when that version is gone.</returns>
     public ValueTask<Result<SourceRecord>> Fetch(SourceRef reference, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Fetches many records in one call (#3085): a source that can read them together (repo docs: one git batch read per repo)
+    /// overrides this; the default reads them one at a time through <see cref="Fetch"/>, so every source keeps working. When the token fires mid-way the default keeps what it read and marks each remaining record <see cref="ContextErrors.MissedDeadline"/>.
+    /// </summary>
+    /// <param name="references">The records, in the order to read them.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>One result per reference, in order (a record gone is that entry's NotFound), or an error when the whole call failed.</returns>
+    public async ValueTask<Result<IReadOnlyList<Result<SourceRecord>>>> FetchMany(IReadOnlyList<SourceRef> references, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(references);
+        var records = new List<Result<SourceRecord>>(references.Count);
+        foreach (var reference in references)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;   // the deadline fired: what was read stays, the rest is marked below
+            }
+
+            try
+            {
+                records.Add(await Fetch(reference, cancellationToken).ConfigureAwait(false));
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+
+        while (records.Count < references.Count)
+        {
+            records.Add(ContextErrors.MissedDeadline(Describe().Id.Value));   // one per record not read, so the pipeline counts them as unread
+        }
+
+        return records;
+    }
+
     /// <summary>The current version of each reference, in one batched call; a record that is gone has none.</summary>
     /// <param name="refs">The references to check.</param>
     /// <param name="cancellationToken">Cancels the call.</param>

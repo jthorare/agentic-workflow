@@ -47,7 +47,9 @@ internal sealed class ModelRoutingDoctorChecks(IApprovedModels models, IModelCat
         var problems = new List<(string Detail, string Fix)>();
         ListProblems(settings, have, problems);
         var routes = Routes(settings, have);
-        await CodexProblems(routes, problems, cancellationToken).ConfigureAwait(false);
+        var listed = routes.Exists(static r => r.Route.Any(static s => s.Harness == ModelHarness.Codex)) ? await catalog.ModelsOf(_codex, cancellationToken).ConfigureAwait(false) : [];
+        routes = [.. routes.Select(r => (r.Kind, CodexDefault.Apply(r.Route, listed)))];   // a built-in codex name codex lacks runs codex's own default (issue 3389), as the router does
+        CodexProblems(routes, listed, problems);
         problems.AddRange(logins.Problems(routes.SelectMany(static r => r.Route.Select(static s => s.Harness)).Distinct()));
         if (problems.Count == 0)
         {
@@ -98,16 +100,11 @@ internal sealed class ModelRoutingDoctorChecks(IApprovedModels models, IModelCat
     private static string Words(IReadOnlyList<RoutedModel> route) =>
         route.Count == 0 ? "no harness installed" : string.Join(", then ", route.Select(static s => ModelHarnesses.Name(s.Harness) + " " + s.Model));
 
-    private async ValueTask CodexProblems(List<(ModelKind Kind, IReadOnlyList<RoutedModel> Route)> routes, List<(string Detail, string Fix)> problems, CancellationToken cancellationToken)
+    // A codex name the profile or a request wrote that codex's list lacks; a built-in one never warns (it runs codex's own default instead).
+    private static void CodexProblems(List<(ModelKind Kind, IReadOnlyList<RoutedModel> Route)> routes, IReadOnlyList<ModelFacts> listed, List<(string Detail, string Fix)> problems)
     {
-        var steps = routes.SelectMany(static r => r.Route.Where(static s => s.Harness == ModelHarness.Codex).Select(s => (r.Kind, Step: s))).ToList();
-        if (steps.Count == 0)
-        {
-            return;
-        }
-
-        var listed = await catalog.ModelsOf(_codex, cancellationToken).ConfigureAwait(false);
-        if (listed.Count == 0)
+        var steps = routes.SelectMany(static r => r.Route.Where(static s => s.Harness == ModelHarness.Codex && !CodexDefault.Is(s)).Select(s => (r.Kind, Step: s))).ToList();
+        if (steps.Count == 0 || listed.Count == 0)
         {
             return;   // the list could not be read: nothing is said about the names (never an invented list)
         }
