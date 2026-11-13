@@ -38,7 +38,7 @@ internal sealed class WebSocketTerminalChannel(WebSocket socket) : ITerminalChan
                 return null;
             }
 
-            message.Write(buffer, 0, result.Count);
+            await message.WriteAsync(buffer.AsMemory(0, result.Count), cancellationToken).ConfigureAwait(false);
             if (result.EndOfMessage && result.MessageType == WebSocketMessageType.Text)
             {
                 return Encoding.UTF8.GetString(message.GetBuffer(), 0, (int)message.Length);

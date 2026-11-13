@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Channels;
@@ -12,27 +13,20 @@ namespace Aw.Sindri.Testing;
 /// The pane source that plays a script of frames (agents spec §15.8): the first frame at once, the next one right after each key, text or paste, none
 /// on its own. <see cref="FromFixture"/> plays 'tests/fixtures/terminal-ws/claude-session.jsonl', recorded from a real Claude Code session.
 /// </summary>
-public sealed class FakeTerminalPaneSource : ITerminalPaneSource
+/// <param name="host">The pane the streams report.</param>
+/// <param name="script">The frames, in order.</param>
+public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<TerminalFrame> script) : ITerminalPaneSource
 {
-    private readonly List<TerminalFrame> _script;
-
-    /// <summary>A source over <paramref name="script"/>.</summary>
-    /// <param name="host">The pane the streams report.</param>
-    /// <param name="script">The frames, in order.</param>
-    public FakeTerminalPaneSource(TerminalHost host, IEnumerable<TerminalFrame> script)
-    {
-        Host = host;
-        _script = [.. script];
-    }
+    private readonly List<TerminalFrame> _script = [.. script];
 
     /// <summary>The pane the streams report.</summary>
-    public TerminalHost Host { get; }
+    public TerminalHost Host { get; } = host;
 
     /// <summary>When set, <see cref="Open"/> answers this error (SND-AGENT-015 or 016).</summary>
     public Error? OpenFails { get; set; }
 
     /// <summary>What the streams were sent, in order: 'key:Enter', 'text:hi', 'paste:…', 'size:120x36'.</summary>
-    public List<string> Sent { get; } = [];
+    public IList<string> Sent { get; } = [];
 
     /// <summary>The number of streams disposed (a dispose detaches only).</summary>
     public int Detached { get; private set; }
@@ -128,14 +122,14 @@ public sealed class FakeTerminalPaneSource : ITerminalPaneSource
                 return Refuse("size is out of range");
             }
 
-            _owner.Sent.Add($"size:{size.Cols}x{size.Rows}");
+            _owner.Sent.Add(string.Create(CultureInfo.InvariantCulture, $"size:{size.Cols}x{size.Rows}"));
             return ValueTask.FromResult<Result<Unit>>(Unit.Value);
         }
 
         public ValueTask DisposeAsync()
         {
             _owner.Detached++;
-            _frames.Writer.TryComplete();
+            _ = _frames.Writer.TryComplete();
             return ValueTask.CompletedTask;
         }
 
@@ -153,7 +147,7 @@ public sealed class FakeTerminalPaneSource : ITerminalPaneSource
         {
             if (_next < _owner._script.Count)
             {
-                _frames.Writer.TryWrite(_owner._script[_next++]);
+                _ = _frames.Writer.TryWrite(_owner._script[_next++]);
             }
         }
     }

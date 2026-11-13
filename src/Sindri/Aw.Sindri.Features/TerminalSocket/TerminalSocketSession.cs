@@ -1,5 +1,5 @@
-using System.Text.Json;
 using System.Text;
+using System.Text.Json;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Core;
@@ -11,6 +11,8 @@ namespace Aw.Sindri.Features.TerminalSocket;
 /// keys, paste and size in, ping every 15 s with a 10 s pong deadline. A key makes the source capture at once (perf D14).
 /// It writes no frame or key to a log or the ledger.
 /// </summary>
+// why: internal; the Host's TerminalSocketEndpoint builds it through InternalsVisibleTo, and MA0182 only looks inside this assembly
+#pragma warning disable MA0182
 internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<string, bool> tokenOk, TimeProvider time)
 {
     private const int MaxPasteBytes = 256 * 1024;
@@ -36,55 +38,6 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
         }
     }
 
-    private static string Ready(TerminalHost host)
-    {
-        using var stream = new MemoryStream();
-        using (var json = new Utf8JsonWriter(stream))
-        {
-            json.WriteStartObject();
-            json.WriteString("t", "ready");
-            json.WriteNumber("v", 1);
-            json.WriteStartObject("host");
-            json.WriteString("socket", host.Socket);
-            json.WriteString("session", host.Session);
-            json.WriteString("pane", host.Pane);
-            json.WriteEndObject();
-            json.WriteEndObject();
-        }
-
-        return Encoding.UTF8.GetString(stream.ToArray());
-    }
-
-    private static string Frame(TerminalFrame frame)
-    {
-        using var stream = new MemoryStream();
-        using (var json = new Utf8JsonWriter(stream))
-        {
-            json.WriteStartObject();
-            json.WriteString("t", "frame");
-            json.WriteNumber("seq", frame.Seq);
-            json.WriteStartArray("rows");
-            foreach (var row in frame.Rows)
-            {
-                json.WriteStringValue(row);
-            }
-
-            json.WriteEndArray();
-            json.WriteStartObject("cursor");
-            json.WriteNumber("x", frame.CursorX);
-            json.WriteNumber("y", frame.CursorY);
-            json.WriteEndObject();
-            json.WriteNumber("w", frame.Width);
-            json.WriteNumber("h", frame.Height);
-            json.WriteNumber("alt", frame.Alt ? 1 : 0);
-            json.WriteNumber("inMode", frame.InMode ? 1 : 0);
-            json.WriteNumber("dead", frame.Dead ? 1 : 0);
-            json.WriteEndObject();
-        }
-
-        return Encoding.UTF8.GetString(stream.ToArray());
-    }
-
     private async ValueTask RunSocket(SessionRef session, ITerminalChannel channel, CancellationToken cancellationToken)
     {
         var hello = await ReadHello(channel, cancellationToken).ConfigureAwait(false);
@@ -93,7 +46,7 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
             return;
         }
 
-        var opened = await source.Open(session, hello.Value, cancellationToken).ConfigureAwait(false);
+        var opened = await source.Open(session, hello, cancellationToken).ConfigureAwait(false);
         if (opened.IsError)
         {
             var code = opened.Error.Code;
@@ -101,15 +54,26 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
             return;
         }
 
-        await using var pane = opened.Value;
-        await channel.Send(Ready(pane.Host), cancellationToken).ConfigureAwait(false);
+        var pane = opened.Value;
+        await using (pane.ConfigureAwait(false))
+        {
+            await channel.Send(TerminalSocketText.Ready(pane.Host), cancellationToken).ConfigureAwait(false);
+            await Drive(pane, channel, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>Pumps frames, pings and applies client messages until one of the three ends the socket.</summary>
+    private async ValueTask Drive(IOpenTerminalPane pane, ITerminalChannel channel, CancellationToken cancellationToken)
+    {
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        var pong = new SemaphoreSlim(0);
+        using var pong = new SemaphoreSlim(0);
+#pragma warning disable CA2025 // both tasks are awaited in the finally below (Task.WhenAll) before stop and pong are disposed
         var background = new[]
         {
             Task.Run(() => PumpFrames(pane, channel, stop), CancellationToken.None),
             Task.Run(() => Ping(channel, pong, stop), CancellationToken.None),
         };
+#pragma warning restore CA2025
         try
         {
             await ReceiveLoop(pane, channel, pong, stop.Token).ConfigureAwait(false);
@@ -125,8 +89,6 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
             {
                 // the pump and the pinger end by cancel
             }
-
-            pong.Dispose();
         }
     }
 
@@ -174,14 +136,14 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
     private static int Dimension(JsonElement root, string name, int fallback) =>
         root.TryGetProperty(name, out var value) && value.TryGetInt32(out var number) ? number : fallback;
 
-    private async Task PumpFrames(IOpenTerminalPane pane, ITerminalChannel channel, CancellationTokenSource stop)
+    private static async Task PumpFrames(IOpenTerminalPane pane, ITerminalChannel channel, CancellationTokenSource stop)
     {
         try
         {
             var dead = false;
             await foreach (var frame in pane.Frames(stop.Token).ConfigureAwait(false))
             {
-                await channel.Send(Frame(frame), stop.Token).ConfigureAwait(false);
+                await channel.Send(TerminalSocketText.Frame(frame), stop.Token).ConfigureAwait(false);
                 dead = frame.Dead;
             }
 
@@ -207,7 +169,7 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
                 await channel.Send("""{"t":"ping"}""", stop.Token).ConfigureAwait(false);
                 try
                 {
-                    await pong.WaitAsync(_pongWithin, time, stop.Token).ConfigureAwait(false);
+                    await pong.WaitAsync(stop.Token).WaitAsync(_pongWithin, time, stop.Token).ConfigureAwait(false);
                 }
                 catch (TimeoutException)
                 {
@@ -257,34 +219,49 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
         using (doc)
         {
             var root = doc.RootElement;
-            switch (root.TryGetProperty("t", out var t) ? t.GetString() : null)
+            var kind = root.TryGetProperty("t", out var t) ? t.GetString() : null;
+            if (string.Equals(kind, "paste", StringComparison.Ordinal) && root.TryGetProperty("text", out var body) && body.GetString() is { } pasted)
             {
-                case "key" when root.TryGetProperty("key", out var key) && key.GetString() is { } name:
-                    _ = await pane.SendKey(name, cancellationToken).ConfigureAwait(false);   // a name outside the list is dropped: no echo
-                    break;
-                case "key" when root.TryGetProperty("text", out var text) && text.GetString() is { } literal:
-                    _ = await pane.SendText(literal, cancellationToken).ConfigureAwait(false);
-                    break;
-                case "paste" when root.TryGetProperty("text", out var body) && body.GetString() is { } pasted:
-                    if (Encoding.UTF8.GetByteCount(pasted) > MaxPasteBytes)
-                    {
-                        await channel.Close(1009, "paste is over 256 KiB", cancellationToken).ConfigureAwait(false);
-                        return false;
-                    }
-
-                    _ = await pane.Paste(pasted, cancellationToken).ConfigureAwait(false);
-                    break;
-                case "size":
-                    _ = await pane.Resize(new HostSize(Dimension(root, "cols", 0), Dimension(root, "rows", 0)), cancellationToken).ConfigureAwait(false);
-                    break;
-                case "pong":
-                    _ = pong.Release();
-                    break;
-                default:
-                    break;
+                return await Paste(pane, channel, pasted, cancellationToken).ConfigureAwait(false);
             }
+
+            await Typed(pane, pong, kind, root, cancellationToken).ConfigureAwait(false);
         }
 
         return true;
     }
+
+    private static async ValueTask Typed(IOpenTerminalPane pane, SemaphoreSlim pong, string? kind, JsonElement root, CancellationToken cancellationToken)
+    {
+        switch (kind)
+        {
+            case "key" when root.TryGetProperty("key", out var key) && key.GetString() is { } name:
+                _ = await pane.SendKey(name, cancellationToken).ConfigureAwait(false);   // a name outside the list is dropped: no echo
+                break;
+            case "key" when root.TryGetProperty("text", out var text) && text.GetString() is { } literal:
+                _ = await pane.SendText(literal, cancellationToken).ConfigureAwait(false);
+                break;
+            case "size":
+                _ = await pane.Resize(new HostSize(Dimension(root, "cols", 0), Dimension(root, "rows", 0)), cancellationToken).ConfigureAwait(false);
+                break;
+            case "pong":
+                _ = pong.Release();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private static async ValueTask<bool> Paste(IOpenTerminalPane pane, ITerminalChannel channel, string pasted, CancellationToken cancellationToken)
+    {
+        if (Encoding.UTF8.GetByteCount(pasted) > MaxPasteBytes)
+        {
+            await channel.Close(1009, "paste is over 256 KiB", cancellationToken).ConfigureAwait(false);
+            return false;
+        }
+
+        _ = await pane.Paste(pasted, cancellationToken).ConfigureAwait(false);
+        return true;
+    }
 }
+#pragma warning restore MA0182

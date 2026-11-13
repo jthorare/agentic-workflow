@@ -31,14 +31,27 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
             return found.Error;
         }
 
-        var stream = new PaneStream(options, found.Value);
-        var probe = await stream.Facts(cancellationToken).ConfigureAwait(false);
-        if (probe is null)
+#pragma warning disable CA2000 // disposed in the finally below on every failure path; on success it is handed to the caller
+        PaneStream? stream = new(options, found.Value);
+#pragma warning restore CA2000
+        try
         {
-            return SindriErrors.AgentPaneGone.With("tmux or the session is gone");
-        }
+            if (await stream.Facts(cancellationToken).ConfigureAwait(false) is null)
+            {
+                return SindriErrors.AgentPaneGone.With("tmux or the session is gone");
+            }
 
-        return stream;
+            var opened = stream;
+            stream = null;   // the caller owns it now
+            return opened;
+        }
+        finally
+        {
+            if (stream is not null)
+            {
+                await stream.DisposeAsync().ConfigureAwait(false);
+            }
+        }
     }
 
     private sealed class PaneStream(TmuxHostOptions options, TerminalTarget target) : IOpenTerminalPane
@@ -59,7 +72,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
                     yield break;   // tmux or the session went away: the socket closes with 4016
                 }
 
-                var captured = await Call(["capture-pane", "-e", "-p", "-t", target.Pane], null, cancellationToken).ConfigureAwait(false);
+                var captured = await Call(["capture-pane", "-e", "-p", "-t", target.Pane], stdin: null, cancellationToken).ConfigureAwait(false);
                 if (captured.ExitCode != 0)
                 {
                     yield break;
@@ -91,7 +104,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
                 return named;
             }
 
-            return await Typed(["send-keys", "-t", target.Pane, key], null, cancellationToken).ConfigureAwait(false);
+            return await Typed(["send-keys", "-t", target.Pane, key], stdin: null, cancellationToken).ConfigureAwait(false);
         }
 
         public async ValueTask<Result<Unit>> SendText(string text, CancellationToken cancellationToken)
@@ -103,7 +116,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
 
             return text.Length == 0
                 ? Unit.Value
-                : await Typed(["send-keys", "-t", target.Pane, "-l", "--", text], null, cancellationToken).ConfigureAwait(false);
+                : await Typed(["send-keys", "-t", target.Pane, "-l", "--", text], stdin: null, cancellationToken).ConfigureAwait(false);
         }
 
         public async ValueTask<Result<Unit>> Paste(string text, CancellationToken cancellationToken)
@@ -116,7 +129,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
             var loaded = await Typed(["load-buffer", "-b", PasteBuffer, "-"], text, cancellationToken).ConfigureAwait(false);
             return loaded.IsError
                 ? loaded
-                : await Typed(["paste-buffer", "-p", "-d", "-b", PasteBuffer, "-t", target.Pane], null, cancellationToken).ConfigureAwait(false);
+                : await Typed(["paste-buffer", "-p", "-d", "-b", PasteBuffer, "-t", target.Pane], stdin: null, cancellationToken).ConfigureAwait(false);
         }
 
         public async ValueTask<Result<Unit>> Resize(HostSize newSize, CancellationToken cancellationToken)
@@ -133,7 +146,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
 
             return await Typed(
                 ["resize-window", "-t", target.Session, "-x", newSize.Cols.ToString(CultureInfo.InvariantCulture), "-y", newSize.Rows.ToString(CultureInfo.InvariantCulture)],
-                null,
+                stdin: null,
                 cancellationToken).ConfigureAwait(false);
         }
 
@@ -147,7 +160,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
         internal async ValueTask<PaneFacts?> Facts(CancellationToken cancellationToken)
         {
             const string format = "#{cursor_x} #{cursor_y} #{pane_width} #{pane_height} #{pane_in_mode} #{alternate_on} #{pane_dead}";
-            var run = await Call(["display-message", "-p", "-t", target.Pane, format], null, cancellationToken).ConfigureAwait(false);
+            var run = await Call(["display-message", "-p", "-t", target.Pane, format], stdin: null, cancellationToken).ConfigureAwait(false);
             if (run.ExitCode != 0)
             {
                 return null;
@@ -220,39 +233,45 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
 
             using (process)
             {
+                return await Collect(process, stdin, deadline.Token).ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>Writes stdin, reads stdout and waits for the exit; a cancel kills the client, so no tmux client is left running.</summary>
+        private static async Task<TmuxOutput> Collect(Process process, string? stdin, CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (stdin is not null)
+                {
+                    await process.StandardInput.WriteAsync(stdin.AsMemory(), cancellationToken).ConfigureAwait(false);
+                    process.StandardInput.Close();
+                }
+
+                var output = process.StandardOutput.ReadToEndAsync(cancellationToken);
+                _ = process.StandardError.ReadToEndAsync(cancellationToken);
+                await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+                return new TmuxOutput(process.ExitCode, (await output.ConfigureAwait(false)).TrimEnd('\n'));
+            }
+            catch (OperationCanceledException)
+            {
                 try
                 {
-                    if (stdin is not null)
-                    {
-                        await process.StandardInput.WriteAsync(stdin.AsMemory(), deadline.Token).ConfigureAwait(false);
-                        process.StandardInput.Close();
-                    }
-
-                    var output = process.StandardOutput.ReadToEndAsync(deadline.Token);
-                    _ = process.StandardError.ReadToEndAsync(deadline.Token);
-                    await process.WaitForExitAsync(deadline.Token).ConfigureAwait(false);
-                    return new TmuxOutput(process.ExitCode, (await output.ConfigureAwait(false)).TrimEnd('\n'));
+                    process.Kill();
                 }
-                catch (OperationCanceledException)
+                catch (InvalidOperationException)
                 {
-                    try
-                    {
-                        process.Kill();   // never leave a tmux client running
-                    }
-                    catch (InvalidOperationException)
-                    {
-                        // it ended between the cancel and the kill
-                    }
-
-                    throw;
+                    // it ended between the cancel and the kill
                 }
+
+                throw;
             }
         }
     }
 
     private sealed record PaneFacts(int CursorX, int CursorY, int Width, int Height, bool InMode, bool Alt, bool Dead)
     {
-        public string Signature => $"|{CursorX},{CursorY},{Width},{Height},{InMode},{Alt},{Dead}";
+        public string Signature => string.Create(CultureInfo.InvariantCulture, $"|{CursorX},{CursorY},{Width},{Height},{InMode},{Alt},{Dead}");
     }
 
     private readonly record struct TmuxOutput(int ExitCode, string Output);

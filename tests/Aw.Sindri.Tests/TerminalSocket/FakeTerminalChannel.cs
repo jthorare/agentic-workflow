@@ -13,7 +13,7 @@ internal sealed class FakeTerminalChannel : ITerminalChannel
     {
         foreach (var message in messages)
         {
-            _incoming.Writer.TryWrite(message);
+            _ = _incoming.Writer.TryWrite(message);
         }
     }
 

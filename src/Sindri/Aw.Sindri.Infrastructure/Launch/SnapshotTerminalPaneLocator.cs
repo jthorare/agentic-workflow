@@ -1,7 +1,6 @@
 using System.Text.RegularExpressions;
 using Aw.Kernel;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sessions;
 
@@ -18,7 +17,7 @@ internal sealed partial class SnapshotTerminalPaneLocator(ISessionSnapshot snaps
     public ValueTask<Result<TerminalTarget>> Find(SessionRef session, CancellationToken cancellationToken)
     {
         var id = session.Id.Value;
-        if (OneOff().IsMatch(id))
+        if (OneOff.IsMatch(id))
         {
             return ValueTask.FromResult<Result<TerminalTarget>>(new TerminalTarget(options.Socket, SocketIsPath: false, id, id, Foreign: false));
         }
@@ -37,6 +36,6 @@ internal sealed partial class SnapshotTerminalPaneLocator(ISessionSnapshot snaps
         return ValueTask.FromResult<Result<TerminalTarget>>(new TerminalTarget(socket, SocketIsPath: true, name, pane, Foreign: !own));
     }
 
-    [GeneratedRegex(@"\Asindri-[a-z0-9]{8,32}\z", RegexOptions.CultureInvariant)]
-    private static partial Regex OneOff();
+    [GeneratedRegex(@"\Asindri-[a-z0-9]{8,32}\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex OneOff { get; }
 }

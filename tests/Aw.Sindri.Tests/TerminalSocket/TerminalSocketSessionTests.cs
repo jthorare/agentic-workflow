@@ -6,7 +6,6 @@ using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Core;
 using Aw.Sindri.Features.TerminalSocket;
 using Aw.Sindri.Testing;
-using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.TerminalSocket;
 
@@ -152,7 +151,7 @@ public sealed class TerminalSocketSessionTests
         time.Advance(TimeSpan.FromSeconds(10.1));
         await run;
 
-        Assert.NotNull(channel.Closed);
+        _ = Assert.NotNull(channel.Closed);
         Assert.Contains("\"t\":\"ping\"", channel.Sent[^1], StringComparison.Ordinal);
     }
 }

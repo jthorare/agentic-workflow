@@ -29,13 +29,13 @@ public abstract class TerminalPaneSourceContract
     public async Task An_open_stream_sends_the_screen_first()
     {
         var source = await Create();
-        await using var stream = (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), null, Token)).Value;
+        await using var stream = (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), size: null, Token)).Value;
 
         var first = await FirstFrame(stream);
 
-        Assert.Equal(1, first.Seq);
-        Assert.False(string.IsNullOrEmpty(stream.Host.Pane));
-        Assert.True(first.Width > 0 && first.Height > 0);
+        Expect.Equal(1, first.Seq);
+        Expect.True(!string.IsNullOrEmpty(stream.Host.Pane));
+        Expect.True(first.Width > 0 && first.Height > 0);
     }
 
     /// <summary>A key is followed by a frame without waiting for a tick (perf D14), and frames count up.</summary>
@@ -44,16 +44,16 @@ public abstract class TerminalPaneSourceContract
     public async Task A_key_makes_a_frame_at_once()
     {
         var source = await Create();
-        await using var stream = (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), null, Token)).Value;
+        await using var stream = (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), size: null, Token)).Value;
         var first = await FirstFrame(stream);
 
-        Assert.True((await stream.SendKey("Enter", Token)).IsSuccess);
+        Expect.True((await stream.SendKey("Enter", Token)).IsSuccess);
         using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
         limit.CancelAfter(TimeSpan.FromMilliseconds(25));
 
         await using var frames = stream.Frames(limit.Token).GetAsyncEnumerator(limit.Token);
-        Assert.True(await frames.MoveNextAsync());
-        Assert.True(frames.Current.Seq > first.Seq);
+        Expect.True(await frames.MoveNextAsync());
+        Expect.True(frames.Current.Seq > first.Seq);
     }
 
     /// <summary>A key name outside the list is refused and nothing reaches the pane.</summary>
@@ -68,11 +68,11 @@ public abstract class TerminalPaneSourceContract
     public async Task A_key_outside_the_list_is_refused(string key)
     {
         var source = await Create();
-        await using var stream = (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), null, Token)).Value;
+        await using var stream = (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), size: null, Token)).Value;
 
         var sent = await stream.SendKey(key, Token);
 
-        Assert.Equal(SindriErrors.InvalidInput.Code, sent.Error.Code);
+        Expect.Equal(SindriErrors.InvalidInput.Code, sent.Error.Code);
     }
 
     /// <summary>Text over 4 KiB, a paste over 256 KiB and a size out of range are refused.</summary>
@@ -81,13 +81,13 @@ public abstract class TerminalPaneSourceContract
     public async Task Input_over_its_limit_is_refused()
     {
         var source = await Create();
-        await using var stream = (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), null, Token)).Value;
+        await using var stream = (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), size: null, Token)).Value;
 
-        Assert.True((await stream.SendText(new string('a', 4097), Token)).IsError);
-        Assert.True((await stream.Paste(new string('a', (256 * 1024) + 1), Token)).IsError);
-        Assert.True((await stream.Resize(new HostSize(19, 36), Token)).IsError);
-        Assert.True((await stream.Resize(new HostSize(120, 201), Token)).IsError);
-        Assert.True((await stream.Resize(new HostSize(120, 36), Token)).IsSuccess);
+        Expect.True((await stream.SendText(new string('a', 4097), Token)).IsError);
+        Expect.True((await stream.Paste(new string('a', (256 * 1024) + 1), Token)).IsError);
+        Expect.True((await stream.Resize(new HostSize(19, 36), Token)).IsError);
+        Expect.True((await stream.Resize(new HostSize(120, 201), Token)).IsError);
+        Expect.True((await stream.Resize(new HostSize(120, 36), Token)).IsSuccess);
     }
 
     /// <summary>A session with no tmux pane is SND-AGENT-015.</summary>
@@ -97,7 +97,7 @@ public abstract class TerminalPaneSourceContract
     {
         var source = await CreateRefusing(SindriErrors.AgentNoPane.Code);
 
-        Assert.Equal("SND-AGENT-015", (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("warp")), null, Token)).Error.Code);
+        Expect.Equal("SND-AGENT-015", (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("warp")), size: null, Token)).Error.Code);
     }
 
     /// <summary>A gone tmux server or session is SND-AGENT-016.</summary>
@@ -107,7 +107,7 @@ public abstract class TerminalPaneSourceContract
     {
         var source = await CreateRefusing(SindriErrors.AgentPaneGone.Code);
 
-        Assert.Equal("SND-AGENT-016", (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("gone")), null, Token)).Error.Code);
+        Expect.Equal("SND-AGENT-016", (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("gone")), size: null, Token)).Error.Code);
     }
 
     private static async Task<TerminalFrame> FirstFrame(IOpenTerminalPane stream)
@@ -115,7 +115,7 @@ public abstract class TerminalPaneSourceContract
         using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
         limit.CancelAfter(TimeSpan.FromSeconds(5));
         await using var frames = stream.Frames(limit.Token).GetAsyncEnumerator(limit.Token);
-        Assert.True(await frames.MoveNextAsync());
+        Expect.True(await frames.MoveNextAsync());
         return frames.Current;
     }
 }
