@@ -242,7 +242,7 @@ internal sealed partial class BuildMapService(
     }
 
     private static void Tell(IProgress<string>? progress, int done, int total) =>
-        progress?.Report(string.Create(CultureInfo.InvariantCulture, $"extracting {done}/{total} files"));
+        progress?.Report(new MapBuildFiles(done, total).Line);
 
     // The concepts the last build derived are rebuilt from scratch with the new features; a person's own concept nodes (human provenance) stay.
     private static GraphSnapshot WithoutDerivedConcepts(GraphSnapshot kept)
