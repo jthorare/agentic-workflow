@@ -93,6 +93,18 @@ public sealed class SetupStepsTests
         Assert.Equal("SND-CONTEXT-040", steps[4].Error?.Code);
     }
 
+    // #3112: the step's count carries the stage it belongs to, so the CLI and the app word "indexing" and "mapping" from one place (the words are api's).
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(MapStage.Index)]
+    [InlineData(MapStage.Map)]
+    public void Map_building_puts_the_stage_on_the_steps_progress(MapStage stage)
+    {
+        var step = SetupSteps.Map(new MapFact(MapPhase.Building, new SetupProgress(7000, 15223, "files")) { Stage = stage });
+
+        Assert.Equal(SetupState.Running, step.State);
+        Assert.Equal(new SetupProgress(7000, 15223, "files") { Stage = stage }, step.Progress);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public void Sources_with_none_named_is_the_humans_and_says_no_source_is_connected_yet()
     {

@@ -23620,3 +23620,10 @@ Aw.Sindri.Core.Launch.IStartedSessions.Find(Aw.Sindri.Core.Ids.ActId actId, Syst
 Aw.Sindri.Core.Launch.IStartedSessions.InMemory(Aw.Sindri.Core.Ids.ActId actId) -> Aw.Sindri.Core.Launch.StartedEntry?
 Aw.Sindri.Core.Launch.IStartedSessions.Keep(Aw.Sindri.Core.Ids.ActId actId, Aw.Sindri.Core.Launch.StartedEntry! entry) -> void
 static Aw.Sindri.Core.Events.AgentOpRecorded.KeyFor(Aw.Sindri.Core.Ids.ActId actId) -> string!
+Aw.Sindri.Core.Setup.MapFact.Stage.get -> Aw.Sindri.Core.Setup.MapStage?
+Aw.Sindri.Core.Setup.MapFact.Stage.init -> void
+Aw.Sindri.Core.Setup.MapStage
+Aw.Sindri.Core.Setup.MapStage.Index = 0 -> Aw.Sindri.Core.Setup.MapStage
+Aw.Sindri.Core.Setup.MapStage.Map = 1 -> Aw.Sindri.Core.Setup.MapStage
+Aw.Sindri.Core.Setup.SetupProgress.Stage.get -> Aw.Sindri.Core.Setup.MapStage?
+Aw.Sindri.Core.Setup.SetupProgress.Stage.init -> void

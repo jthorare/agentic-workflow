@@ -268,6 +268,75 @@ public sealed class SetupFactsTests
         Assert.Equal((MapPhase.Building, new SetupProgress(done, total, "files")), (running.Phase, running.Progress));
     }
 
+    // #3112: the first build after Add repo is the repo's code index; the map builds after it, so the step is running from the moment the index build starts.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_is_running_while_the_first_code_index_builds()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Running, ["structure 7,000 of 15,223 files"]);
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Building, MapStage.Index), (map.Phase, map.Stage));
+        Assert.Equal(new SetupProgress(7000, 15223, "files") { Stage = MapStage.Index }, map.Progress);
+        Assert.Equal(SetupState.Running, Assert.Single(map.Items.Lines).State);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_indexing_with_no_structure_line_yet_has_the_stage_and_no_count()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Running, ["snapshot"]);
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Building, MapStage.Index, (SetupProgress?)null), (map.Phase, map.Stage, map.Progress));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_building_the_map_after_the_index_says_stage_map()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+        rig.BuildJob(JobState.Running, ["extracting 40/100 files"]);
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Building, MapStage.Map), (map.Phase, map.Stage));
+        Assert.Equal(new SetupProgress(40, 100, "files") { Stage = MapStage.Map }, map.Progress);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_fails_when_the_newest_ended_build_is_a_failed_code_index_build()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Failed, ["structure 3 of 10 files"], "SND-CODEIDX-010");
+
+        var failed = (await rig.Facts.Map(Token)).Value;
+        rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+        var after = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Failed, "SND-CODEIDX-010"), (failed.Phase, failed.FailureCode));
+        Assert.Equal(MapPhase.NotBuilt, after.Phase);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_ignores_a_code_index_build_of_a_repo_the_profile_does_not_map()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("other", JobState.Running, ["structure 1 of 9 files"]);
+        rig.IndexJob("other2", JobState.Failed, [], "SND-CODEIDX-010");
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.NotBuilt, (MapStage?)null), (map.Phase, map.Stage));
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task Map_passes_on_an_engine_error_that_is_not_the_missing_map()
     {
