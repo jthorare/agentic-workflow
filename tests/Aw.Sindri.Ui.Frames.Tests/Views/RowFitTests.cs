@@ -137,6 +137,43 @@ public sealed class RowFitTests
         return true;
     });
 
+    [Fact]
+    public async Task A_row_widened_from_1000_to_1440_draws_the_dropped_owner_fact() => await OnUi(() =>
+    {
+        var (window, list) = Show(1000, new Item("r-0001", "Row 0", null));
+        var row = Rows(list)[0];
+        Assert.Equal(4, row.Layout.Cells.Count);
+
+        window.Width = 1440;
+        Settle(window);
+        var widened = Rows(list)[0];
+        var cells = widened.Layout.Cells;
+
+        Assert.Same(row, widened);
+        Assert.Equal(5, cells.Count);
+        Assert.Equal("owner", cells[4].Key);
+        Assert.True(cells[4].TextWidth > 0, Say($"the owner cell's text is {cells[4].TextWidth:0.0} px wide"));
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task A_row_narrowed_from_1440_to_1000_drops_the_owner_fact() => await OnUi(() =>
+    {
+        var (window, list) = Show(1440, new Item("r-0001", "Row 0", null));
+        var row = Rows(list)[0];
+        Assert.Equal(5, row.Layout.Cells.Count);
+
+        window.Width = 1000;
+        Settle(window);
+        var narrowed = Rows(list)[0];
+
+        Assert.Same(row, narrowed);
+        Assert.Equal(4, narrowed.Layout.Cells.Count);
+        window.Close();
+        return true;
+    });
+
     private sealed class Group(IReadOnlyList<IRowItem> rows) : IRowGroupHeading
     {
         public string Heading => "Needs you";
