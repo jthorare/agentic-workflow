@@ -41,7 +41,6 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
     /// <returns>The packed result, or the query's error.</returns>
     public async ValueTask<Result<ContextResult>> Run(QueryContextRequest request, PipelineInputs inputs, CancellationToken cancellationToken)
     {
-        var (graphs, catalog) = (inputs.Map, inputs.Catalog);
         var settings = SettingsReader.Read(request.Scope.Settings);
         var scrubbers = settings.Bind(s => scrubberFactory.For(s.ExtraPatterns));
         var repos = scrubbers.Bind(_ => ScopeRules.Resolve(settings.Value, request.Scope.Repos, request.Scope.Caller, request.Scope.LeftOut));
@@ -59,7 +58,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
 
         var (graph, terms, miss) = anchored.Value;
         var deadline = clock.GetUtcNow() + settings.Value.Deadline;
-        var catalogSources = terms.Count == 0 ? [] : catalog.For(settings.Value, repos.Value, scrubbers.Value).ToList();
+        var catalogSources = terms.Count == 0 ? [] : inputs.Catalog.For(settings.Value, repos.Value, scrubbers.Value).ToList();
         var (sources, degraded) = await WithRecordStore(catalogSources, (settings.Value, repos.Value), (inputs.AsOf, terms), (request, inputs.Map, valid.Value.Read), cancellationToken).ConfigureAwait(false);
         var searched = await WithAnchorRecord(await Search(sources, terms, (deadline, inputs.AsOf), (graph.Pins.Scope, graph.Pins.Skipped), cancellationToken).ConfigureAwait(false), (graph, sources), cancellationToken).ConfigureAwait(false);
         if (catalogSources.Count > 0 && NothingAnswered(searched, graph) && graph.Anchors.Count == 0)
