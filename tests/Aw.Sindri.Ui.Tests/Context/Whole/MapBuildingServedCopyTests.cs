@@ -66,5 +66,6 @@ public sealed class MapBuildingServedCopyTests
 
         Assert.Contains(nameof(page.BuildingTitle), changed, StringComparer.Ordinal);
         Assert.Contains(nameof(page.BuildingBody), changed, StringComparer.Ordinal);
+        Assert.Contains(nameof(page.BuildingName), changed, StringComparer.Ordinal);
     }
 }
