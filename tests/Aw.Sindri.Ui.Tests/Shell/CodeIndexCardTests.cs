@@ -113,11 +113,11 @@ public sealed class CodeIndexCardTests
     }
 
     [Fact]
-    public async Task A_queued_repo_the_server_does_not_flag_still_says_build_queued()
+    public async Task A_queued_repo_the_server_does_not_flag_keeps_the_build_queued_card_word()
     {
+        // The line reads "first build queued" for a repo with no commit (#3602); the card's own word stays "build queued".
         var card = await ReadWithHealth([Repo("demo", "missing", commit: null, 0)], [Health("demo", "queued")]);
 
-        Assert.Equal("demo: " + Labels.CodeIndexState("queued"), Assert.Single(card.Lines).Text);
         Assert.Equal(Labels.CodeIndexQueued, card.Word);
     }
 
