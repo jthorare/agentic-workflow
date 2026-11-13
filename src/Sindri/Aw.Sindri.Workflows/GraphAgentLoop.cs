@@ -200,6 +200,7 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
             output[name] = value?.DeepClone();
         }
 
+        // note: a run_agent outcome never goes through StoredJson.Fit; the store's own 64 KB cap applies (it sets 'Truncated', which readers check first), so this output can be cut mid-string (#3419)
         return new GraphBlockOutcome(NodeRunStatus.Succeeded, input, output.ToJsonString(), result.Taken, Error: null);
     }
 

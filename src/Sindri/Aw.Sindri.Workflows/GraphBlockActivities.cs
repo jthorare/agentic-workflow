@@ -126,10 +126,8 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         }
 
         var scrubbed = (redactor ?? Redactor.Default).Scrub(text);
-        return scrubbed.IsBlocked ? JsonValue.Create(BlockedMarker).ToJsonString() : scrubbed.Text;
+        return scrubbed.IsBlocked ? StoredJson.Blocked : scrubbed.Text;
     }
-
-    private const string BlockedMarker = "[blocked by the redactor]";
 
     private string? Clean(string? text)
     {
@@ -139,7 +137,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         }
 
         var scrubbed = (redactor ?? Redactor.Default).Scrub(text);
-        return scrubbed.IsBlocked ? BlockedMarker : scrubbed.Text;
+        return scrubbed.IsBlocked ? StoredJson.BlockedMarker : scrubbed.Text;
     }
 
     private sealed record Prepared(GraphNode Node, IGraphBlock Block, GraphNodeScope Scope, JsonObject Config);
@@ -230,20 +228,15 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
 
     private static GraphBlockOutcome? Cut(GraphNodeScope scope, JsonObject config) => scope.Cut is { } cut
         ? Failed(config, SindriErrors.GraphOutputTruncated.With($"the output of '{cut}' was cut at 64 KB; refer to a smaller field"))
-        : null;
+        : scope.Blocked is { } blocked
+            ? Failed(config, SindriErrors.GraphOutputTruncated.With($"the output of '{blocked}' was blocked by the redactor"))
+            : null;
 
     private static GraphBlockOutcome Failed(JsonObject? input, Kernel.Error error) =>
         new(NodeRunStatus.Failed, Fit(input?.ToJsonString()), Output: null, [], NodeRunLimits.Cap($"{error.Code}: {error.Message}", out _));
 
-    /// <summary>
-    /// Cuts a block's input or output before it enters the workflow's history: an activity result over Temporal's 2 MB payload limit fails the workflow task, and Temporal retries it forever.
-    /// A cut text keeps one character past the store's 64 KB cap, so the store still cuts it and sets 'Truncated' (a later node that reads it fails with SND-GRAPH-108 instead of reading a half value).
-    /// </summary>
+    /// <summary>Cuts a block's input or output before it enters the workflow's history; the text that results always parses as JSON (see <see cref="StoredJson.Fit"/>).</summary>
     /// <param name="text">The input or output text, or null.</param>
-    /// <returns>The text when it fits, otherwise its first 64 KB and an ellipsis.</returns>
-    internal static string? Fit(string? text)
-    {
-        var cut = NodeRunLimits.Cap(text, out var truncated);
-        return truncated ? cut + "\u2026" : text;
-    }
+    /// <returns>The text when it fits, otherwise a small JSON object holding its first part.</returns>
+    internal static string? Fit(string? text) => StoredJson.Fit(text);
 }

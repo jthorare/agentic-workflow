@@ -58,6 +58,22 @@ public sealed class StoredNodeJsonTests
         Assert.NotNull(JsonNode.Parse(stored.Input));
     }
 
+    [Fact]
+    public async Task A_reference_to_a_redactor_blocked_output_fails_with_a_named_sentence()
+    {
+        var token = TestContext.Current.CancellationToken;
+        var clock = new FakeTimeProvider(KnownInstants.Epoch);
+        var (runs, workflows, run) = await Seed(clock, token, withReader: true);
+        var ask = new NodeRun(run.Id, NodeId.From("code1"), ItemIndex: 0, NodeRunStatus.Succeeded, Input: null, Output: StoredJson.Blocked, Truncated: false, Error: null, Usage: null);
+        _ = (await runs.RecordNodeRun(ask, token)).Value;
+        var activities = new GraphBlockActivities(new GraphBlockRegistry([new CodeBlock(new FixedCode("{}"))]), runs, workflows);
+
+        var outcome = await new ActivityEnvironment().RunAsync(() => activities.RunBlockAsync(run.Id, NodeId.From("code2"), itemIndex: 0));
+
+        Assert.Equal(NodeRunStatus.Failed, outcome.Status);
+        Assert.Contains("the output of 'code1' was blocked by the redactor", outcome.Error, StringComparison.Ordinal);
+    }
+
     private static GraphRunActivities Recorder(FakeTimeProvider clock, InMemoryWorkflowRunStore runs, InMemoryWorkflowStore workflows)
     {
         var token = TestContext.Current.CancellationToken;
@@ -70,12 +86,12 @@ public sealed class StoredNodeJsonTests
         return new GraphRunActivities(runs, workflows, new NoQueue(), new GraphMirror(ledger, held, events, new BlockingRedactor()));
     }
 
-    private static async Task<(InMemoryWorkflowRunStore Runs, InMemoryWorkflowStore Workflows, WorkflowRun Run)> Seed(FakeTimeProvider clock, CancellationToken token)
+    private static async Task<(InMemoryWorkflowRunStore Runs, InMemoryWorkflowStore Workflows, WorkflowRun Run)> Seed(FakeTimeProvider clock, CancellationToken token, bool withReader = false)
     {
         var runs = new InMemoryWorkflowRunStore(clock);
         var workflows = new InMemoryWorkflowStore(clock);
         var node = new GraphNode(NodeId.From("code1"), "code", Title: null, new JsonObject { ["code"] = "return big;" });
-        var spec = new GraphSpec(Version: 1, "Stored json test", Description: null, "unlimited", Resources: null, [node], []);
+        var spec = new GraphSpec(Version: 1, "Stored json test", Description: null, "unlimited", Resources: null, withReader ? [node, new GraphNode(NodeId.From("code2"), "code", Title: null, new JsonObject { ["code"] = "return {{code1.answer}};" })] : [node], []);
         _ = (await workflows.Create(_workflow, WorkflowSlug.From("stored-json-test"), spec, "owner", token)).Value;
         var run = new WorkflowRun(WorkflowRunId.From("stored-json-test@1:1"), _workflow, Revision: 1, """{"kind":"manual"}""", WorkflowRunStatus.Running, Outputs: null, Error: null, ItemId: null, clock.GetUtcNow(), EndedAt: null);
         _ = (await runs.Insert(run, token)).Value;
