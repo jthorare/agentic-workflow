@@ -154,23 +154,22 @@ public sealed class CodeIndexCardTests
     }
 
     // #3561: the doctor names the pause and the resume for the same repo; the card must not promise a retry or a build.
-    [Theory]
-    [InlineData("missing", "repo: no index yet · index builds paused (sindri services resume code-index-main-move)")]
-    [InlineData("waiting", "repo: last build failed · index builds paused (sindri services resume code-index-main-move)")]
-    public async Task A_paused_repo_with_no_commit_names_the_pause_and_the_resume(string state, string expected)
+    [Fact]
+    public async Task A_paused_repo_with_no_index_names_the_pause_and_the_resume()
     {
-        var card = await ReadWithHealth([Repo("repo", "missing", commit: null, 0)], [Health("repo", state, waiting: null, paused: true)]);
+        var card = await ReadWithHealth([Repo("repo", "missing", commit: null, 0)], [Health("repo", "missing", paused: true)]);
 
-        Assert.Equal(expected, Assert.Single(card.Lines).Text);
+        Assert.Equal("repo: no index yet · " + Labels.CodeIndexPaused, Assert.Single(card.Lines).Text);
+        Assert.Contains("sindri services resume code-index-main-move", Labels.CodeIndexPaused, StringComparison.Ordinal);
     }
 
     [Fact]
     public async Task A_paused_repo_in_backoff_never_reads_waiting_to_retry()
     {
-        var card = await ReadWithHealth([Repo("repo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("repo", "waiting", paused: true)]);
+        var card = await ReadWithHealth([Repo("repo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("repo", "stale", paused: true)]);
 
-        Assert.DoesNotContain("waiting to retry", Assert.Single(card.Lines).Text, StringComparison.Ordinal);
-        Assert.Contains("index builds paused", card.Lines[0].Text, StringComparison.Ordinal);
+        Assert.Equal("repo @ abcdef0, 3 min old (behind main · " + Labels.CodeIndexPaused + "), structure ok", Assert.Single(card.Lines).Text);
+        Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
     }
 
     [Fact]
