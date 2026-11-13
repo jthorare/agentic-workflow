@@ -95,13 +95,13 @@ public sealed class PressedBorderPixelTests : FrameHost
         return (ratio, string.Create(CultureInfo.InvariantCulture, $"y={y} #{p.R:X2}{p.G:X2}{p.B:X2} outside #{outside.R:X2}{outside.G:X2}{outside.B:X2} inside #{inside.R:X2}{inside.G:X2}{inside.B:X2}"));
     }
 
-    // The top border row at mid-width, device pixels at the given render scale (#3507). The press pushes the control down by pushLogical, which at 1.5x is 1.5 device px:
-    // the best pixel within 3 device px of the pushed top edge, its contrast on the surface 6 device px above and on the fill 6 below, whichever is lower.
-    private static (double Ratio, string Detail) TopBorderContrast(Window window, Control control, double scale, double pushLogical)
+    // The top border row at mid-width, read at the given render scale (#3507): the best pixel within 3 device px of the laid-out top edge, its contrast on the surface
+    // 6 device px above and on the fill 6 below, whichever is lower. A press push that came back would put this border on a half device pixel at 1.5x.
+    private static (double Ratio, string Detail) TopBorderContrast(Window window, Control control, double scale)
     {
         var pixel = Render(window, scale);
         var edge = control.TranslatePoint(new Point(control.Bounds.Width / 2, 0), window)!.Value;
-        var (x, y0) = ((int)Math.Round(edge.X * scale, MidpointRounding.AwayFromZero), (int)Math.Floor((edge.Y + pushLogical) * scale));
+        var (x, y0) = ((int)Math.Round(edge.X * scale, MidpointRounding.AwayFromZero), (int)Math.Floor(edge.Y * scale));
         var (outside, inside) = (pixel(x, y0 - 6), pixel(x, y0 + 6));
         var best = 0.0;
         var detail = "";
@@ -120,7 +120,7 @@ public sealed class PressedBorderPixelTests : FrameHost
 
     private static (Window Window, Border Sample) ClickableWindow(double scale)
     {
-        // The sample of the scale 1 fact: 150 wide, host padding 24, so the unpressed top edge is logical y 24 = device y 36 at 1.5x, a whole pixel.
+        // The sample of the scale 1 fact: 150 wide, host padding 24, so the laid-out top edge is logical y 24 = device y 36 at 1.5x, a whole pixel.
         var sample = new Border { Width = 150, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(6), Padding = new Thickness(24, 12), HorizontalAlignment = HorizontalAlignment.Left, Child = new TextBlock { Text = "Clickable" } };
         sample.Classes.Add("clickable");
         var app = Application.Current!;
@@ -270,7 +270,7 @@ public sealed class PressedBorderPixelTests : FrameHost
     });
 
     [Fact]
-    public Task A_pressed_clickable_draws_its_top_border_at_3_to_1_at_scale_1_5() => OnUi(async () =>
+    public Task A_pressed_clickable_keeps_its_top_border_at_3_to_1_at_scale_1_5() => OnUi(async () =>
     {
         Motion.Set(reduce: true);
         using var instant = InstantMotion.Start();
@@ -281,53 +281,11 @@ public sealed class PressedBorderPixelTests : FrameHost
         Settle(window);
 
         Assert.Contains(":pressed", sample.Classes, StringComparer.Ordinal);
-        // The push is 1 logical px = 1.5 device px: the top edge sits at device y 37.5, on a half pixel, and antialiasing blends it with the fill.
-        var (ratio, detail) = TopBorderContrast(window, sample, scale: 1.5, pushLogical: 1);
+        // The press moves nothing (#3190), so the border sits on whole device pixels at 1.5x (logical y 24 = device y 36).
+        var (ratio, detail) = TopBorderContrast(window, sample, scale: 1.5);
         Assert.True(ratio >= Required, string.Create(CultureInfo.InvariantCulture, $"the pressed top border at 1.5x draws at {ratio:0.00}:1, below {Required}:1 ({detail})"));
         window.MouseUp(Centre(sample, window), MouseButton.Left, RawInputModifiers.None);
         window.Close();
         await Task.CompletedTask;
-    });
-
-    [Fact]
-    public Task An_unpressed_clickable_draws_its_top_border_at_3_to_1_at_scale_1_5() => OnUi(async () =>
-    {
-        Motion.Set(reduce: true);
-        using var instant = InstantMotion.Start();
-        var (window, sample) = ClickableWindow(scale: 1.5);
-
-        // The control: no press, so the red above is the push and not the 1.5x render itself.
-        var (ratio, detail) = TopBorderContrast(window, sample, scale: 1.5, pushLogical: 0);
-        Assert.True(ratio >= Required, string.Create(CultureInfo.InvariantCulture, $"the unpressed top border at 1.5x draws at {ratio:0.00}:1, below {Required}:1 ({detail})"));
-        window.Close();
-        await Task.CompletedTask;
-    });
-
-    // TEMPORARY (#3507): dumps the 1.5x geometry and the mid-width column; always fails so the message prints. Dropped before the PR.
-    private static string Dump(string label, Window window, Border sample, double scale)
-    {
-        var pixel = Render(window, scale);
-        var topLeft = sample.TranslatePoint(default, window)!.Value;
-        var x = (int)Math.Round((topLeft.X + (sample.Bounds.Width / 2)) * scale, MidpointRounding.AwayFromZero);
-        var column = string.Join(' ', Enumerable.Range(20, 41).Select(y => string.Create(CultureInfo.InvariantCulture, $"{y}:#{pixel(x, y).R:X2}{pixel(x, y).G:X2}{pixel(x, y).B:X2}")));
-        var size = new PixelSize((int)Math.Round(window.Bounds.Width * scale, MidpointRounding.AwayFromZero), (int)Math.Round(window.Bounds.Height * scale, MidpointRounding.AwayFromZero));
-        return string.Create(CultureInfo.InvariantCulture, $"[{label}] sample.Bounds={sample.Bounds} topLeft={topLeft} RenderScaling={window.RenderScaling} window.Bounds={window.Bounds} bitmap={size} x={x}\n{column}");
-    }
-
-    [Fact]
-    public Task Diag_3507_columns() => OnUi(async () =>
-    {
-        Motion.Set(reduce: true);
-        using var instant = InstantMotion.Start();
-        var (window, sample) = ClickableWindow(scale: 1.5);
-        var unpressed = Dump("unpressed", window, sample, 1.5);
-        window.MouseMove(Centre(sample, window), RawInputModifiers.None);
-        window.MouseDown(Centre(sample, window), MouseButton.Left, RawInputModifiers.None);
-        Settle(window);
-        var pressed = Dump("pressed", window, sample, 1.5);
-        window.MouseUp(Centre(sample, window), MouseButton.Left, RawInputModifiers.None);
-        window.Close();
-        await Task.CompletedTask;
-        Assert.Fail(unpressed + "\n" + pressed);
     });
 }
