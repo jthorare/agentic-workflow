@@ -104,7 +104,11 @@ public sealed class RowGrammarTests
         var hairline = Brush("Brush.Hairline");
         var rules = parts.OfType<Border>().Where(b => b.BorderBrush is ISolidColorBrush s && s.Color == hairline).Select(b => b.BorderThickness).ToList();
 
-        Assert.Equal(new Thickness(16, 12), parts.OfType<Border>().First(b => b.Name == "PART_Head").Padding);
+        var head = parts.OfType<Border>().First(b => b.Name == "PART_Head");
+        var close = parts.OfType<Button>().First(b => b.Name == "PART_Close");
+        Assert.Equal(new Thickness(16, 0), head.Padding);   // the head is a fixed 48 with centred items: grammar min-height 48 plus 12 px padding and a hairline would be 49 (#3538)
+        Assert.Equal(48, head.Bounds.Height, 0.5);
+        Assert.Equal(23.5, (close.TranslatePoint(default, head)?.Y ?? double.NaN) + (close.Bounds.Height / 2), 0.5);   // centred in the 47 px above the hairline
         Assert.Equal(new Thickness(16, 8), parts.OfType<Border>().First(b => b.Name == "PART_FieldsBox").Padding);
         Assert.Equal(new Thickness(16, 12), parts.First(c => c.Name == "PART_Body").Margin);
         Assert.Equal(new Thickness(16, 12), parts.OfType<Border>().First(b => b.Name == "PART_PeekActionsBox").Padding);

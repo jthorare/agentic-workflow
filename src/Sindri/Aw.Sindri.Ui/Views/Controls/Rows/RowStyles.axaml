@@ -47,10 +47,10 @@
       <ControlTemplate>
         <Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1,0,0,0">
           <DockPanel>
-            <Border Name="PART_Head" DockPanel.Dock="Top" MinHeight="{StaticResource Peek.Header}" Padding="16,12" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,0,0,1">
-              <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+            <Border Name="PART_Head" DockPanel.Dock="Top" Height="{StaticResource Peek.Header}" Padding="16,0" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,0,0,1">
+              <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="8">
                 <TextBlock Name="PART_Title" Text="{TemplateBinding Title}" Classes="peek-title" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" VerticalAlignment="Center" />
-                <TextBlock Name="PART_Id" Grid.Column="1" Text="{TemplateBinding ItemId}" Classes="peek-id" Margin="8,0,0,0" VerticalAlignment="Center" />
+                <TextBlock Name="PART_Id" Grid.Column="1" Text="{TemplateBinding ItemId}" Classes="peek-id" VerticalAlignment="Center" />
                 <Button Name="PART_OpenFull" Grid.Column="3" Content="⤢" Command="{TemplateBinding OpenFullCommand}" Classes="peek-icon" ToolTip.Tip="Open full" AutomationProperties.Name="Open full" />
                 <Button Name="PART_Close" Grid.Column="4" Content="×" Command="{TemplateBinding CloseCommand}" Classes="peek-icon" ToolTip.Tip="Close" AutomationProperties.Name="Close" />
               </Grid>
@@ -102,6 +102,14 @@
   </Style>
   <Style Selector="rows|PeekPane /template/ Button.peek-icon">
     <Setter Property="Background" Value="Transparent" />
-    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Width" Value="24" />
+    <Setter Property="Height" Value="24" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius.XS}" />
   </Style>
+  <!-- The peek body style (wrap, 20 px pitch, ink-muted) is in SindriApp.axaml, after the catch-all TextBlock style that would overwrite its Foreground (#3584). -->
 </Styles>
