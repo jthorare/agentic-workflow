@@ -11,6 +11,14 @@ public sealed class FakeRepoCheckoutsContractTests : RepoCheckoutsContract
 
     protected override IRepoCheckouts Create() => _checkouts;
 
+    // The contract names every path it asks about; these pin the answer the other tests lean on, for a path nobody named.
+    [Fact]
+    public void A_path_nobody_named_reads_as_a_checkout() => Assert.Equal(RepoCheckout.Checkout, new FakeRepoCheckouts().Of("/x"));
+
+    [Fact]
+    public void A_path_nobody_named_reads_as_the_kind_the_fake_was_given() =>
+        Assert.Equal(RepoCheckout.PlainFolder, new FakeRepoCheckouts(RepoCheckout.PlainFolder).Of("/x"));
+
     protected override string Clone() => Named("/work/clone", RepoCheckout.Checkout);
 
     protected override string Worktree() => Named("/work/wt-x", RepoCheckout.Checkout);
