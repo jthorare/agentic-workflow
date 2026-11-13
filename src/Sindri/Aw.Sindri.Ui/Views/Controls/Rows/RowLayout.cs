@@ -24,6 +24,7 @@ namespace Aw.Sindri.Ui.Views.Controls.Rows;
 /// <param name="SelBar">The selection bar's rectangle, or null when the row is not selected.</param>
 /// <param name="SelBarInk">The selection bar's brush.</param>
 /// <param name="Ring">True when the cursor ring is drawn.</param>
+/// <param name="SubRect">Where the sub-line is drawn (its x and laid-out width), or null when the row has none.</param>
 internal sealed record RowLayout(
     string Id,
     string Title,
@@ -44,4 +45,5 @@ internal sealed record RowLayout(
     double TitleDesiredWidth,
     Rect? SelBar,
     IBrush? SelBarInk,
-    bool Ring);
+    bool Ring,
+    Rect? SubRect);

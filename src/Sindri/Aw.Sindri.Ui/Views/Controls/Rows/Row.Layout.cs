@@ -37,7 +37,8 @@ internal sealed partial class Row
                 _titleDesired,
                 Classes.Contains("sel") ? new Rect(0, 0, SelBarWidth, size.Height) : null,
                 Brush("Brush.Primary"),
-                Classes.Contains("cursor"));
+                Classes.Contains("cursor"),
+                _text[Sub] is { } sub ? new Rect(titleX + title.Width + TitleGap, 0, sub.Width, size.Height) : null);
         }
     }
 
