@@ -98,6 +98,7 @@ cat > "$TPM_SRC/bin/install_plugins" <<'SH'
 #!/usr/bin/env bash
 v="$(tmux show-environment -g TMUX_PLUGIN_MANAGER_PATH 2>/dev/null | cut -d= -f2-)"
 echo "${v:-missing}" > "$HOME/install_plugins.ran"
+mkdir -p "$HOME/.tmux/plugins/tmux-resurrect" "$HOME/.tmux/plugins/tmux-continuum"
 SH
 chmod +x "$TPM_SRC/tpm" "$TPM_SRC/bin/install_plugins"
 git -C "$TPM_SRC" init -q && git -C "$TPM_SRC" add -A \
@@ -114,9 +115,13 @@ check "TPM is cloned" "$([ -x "$HOME/.tmux/plugins/tpm/bin/install_plugins" ] &&
 check "install_plugins ran on a server that ran tpm" "$(cat "$HOME/install_plugins.ran" 2>/dev/null)" "$HOME/.tmux/plugins/"
 contains "restore says the plugins are installed" "$out" "plugins installed"
 n="$(backups)"
+rm -f "$HOME/install_plugins.ran"
 out="$(run --restore)"
 contains "restore re-run: conf already installed" "$out" "already installed"
 contains "restore re-run: TPM already there" "$out" "TPM already in"
+contains "restore re-run: plugins already there" "$out" "plugins already installed"
+# A private server with the real continuum loaded could restore a save into it, so a re-run starts none.
+check "restore re-run starts no private server" "$([ -e "$HOME/install_plugins.ran" ] && echo ran || echo none)" "none"
 check "restore re-run makes no new backup" "$(backups)" "$n"
 
 # --- setup.sh: --with-tmux --dry-run prints the step and writes nothing; without the flag it never runs ---

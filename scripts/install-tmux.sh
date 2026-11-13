@@ -91,6 +91,14 @@ else
     || { echo "  tmux: WARN: could not clone TPM from $TPM_URL (non-fatal); session restore is not set up"; exit 0; }
   echo "  tmux: cloned TPM $TPM_REF to $TPM_DIR"
 fi
+PLUGINS="$HOME/.tmux/plugins"
+# Installed plugins are never re-installed: a private server would load the real continuum with restore on, and with no
+# other tmux server running it could restore the last save into that throwaway server. On a first install continuum
+# isn't on disk yet when tpm runs, so nothing restores.
+if [ -d "$PLUGINS/tmux-resurrect" ] && [ -d "$PLUGINS/tmux-continuum" ]; then
+  echo "  tmux: plugins already installed"
+  exit 0
+fi
 [ "$DRY" = "1" ] && { echo "  [dry-run] would install the plugins on a private tmux server"; exit 0; }
 
 # A private server reads the new config, which runs tpm and so sets TMUX_PLUGIN_MANAGER_PATH; install_plugins runs inside it.
