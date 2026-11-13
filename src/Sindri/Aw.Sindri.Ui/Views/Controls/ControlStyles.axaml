@@ -189,6 +189,28 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Draft.Border}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Draft.Fg}" />
   </Style>
+  <!-- The word: a global TextBlock style sets its Foreground, which beats inheriting the face's, so each tone names the word's brush itself (a checked chip is Ink, declared last). -->
+  <Style Selector="ToggleButton.toggle-chip.status-ok TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Ok.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-running TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Running.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-waiting TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Waiting.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-attention TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Attention.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-error TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Error.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-neutral TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Neutral.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-draft TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Draft.Fg}" />
+  </Style>
   <Style Selector="ToggleButton.toggle-chip:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Hover}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.HoverBorder}" />
@@ -200,6 +222,9 @@
   <Style Selector="ToggleButton.toggle-chip:checked /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip:checked:pressed /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource Brush.PrimarySoft}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip:checked TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
   </Style>
   <Style Selector="ToggleButton.toggle-chip:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip:checked:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip:focus-visible:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip:checked:focus-visible:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip:focus-visible:pressed /template/ ContentPresenter#PART_ContentPresenter">
