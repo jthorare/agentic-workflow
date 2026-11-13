@@ -36,7 +36,7 @@ public sealed class GraphTilePensTests
 
     private static string Token(string brushKey) => brushKey["Brush.".Length..];
 
-    private static string Label(bool pill, GraphTileStates states) => string.Create(CultureInfo.InvariantCulture, $"{(pill ? "pill" : "tile")} {states}");
+    private static string Label(bool pill, GraphTileStates states) => string.Concat(pill ? "pill" : "tile", " ", states.ToString());
 
     [Theory]
     [MemberData(nameof(Cases))]
@@ -66,7 +66,7 @@ public sealed class GraphTilePensTests
             keys.Add(paint.Border);
         }
 
-        Assert.All(keys, key => Assert.True(_tokens.Contrast(Token(key), "Canvas") >= RingMin, $"{Label(pill, states)}: {key} is {_tokens.Contrast(Token(key), "Canvas"):F2} on Canvas, below {RingMin}"));
+        Assert.All(keys, key => Assert.True(_tokens.Contrast(Token(key), "Canvas") >= RingMin, string.Create(CultureInfo.InvariantCulture, $"{Label(pill, states)}: {key} is {_tokens.Contrast(Token(key), "Canvas"):F2} on Canvas, below {RingMin}")));
     }
 
     [Theory]
@@ -94,9 +94,9 @@ public sealed class GraphTilePensTests
         var focus = Rings(pill, GraphTileStates.Focus).Single();
         var both = Rings(pill, GraphTileStates.Selected | GraphTileStates.Focus);
 
-        Assert.NotEqual(selected.Key, focus.Key);
+        Assert.NotEqual(selected.Key, focus.Key, StringComparer.Ordinal);
         Assert.True(focus.Gap > selected.Gap, "the focus ring sits outside the selected ring");
-        Assert.Equal(new[] { selected, focus }, both);
+        Assert.Equal<GraphRing>([selected, focus], both);
         Assert.Empty(Rings(pill, GraphTileStates.None));
     }
 
@@ -125,7 +125,7 @@ public sealed class GraphTilePensTests
         var hover = Paint(pill, GraphTileStates.Hover);
         var disabledHover = Paint(pill, GraphTileStates.Disabled | GraphTileStates.Hover);
 
-        Assert.NotEqual(rest.Border, hover.Border);
+        Assert.NotEqual(rest.Border, hover.Border, StringComparer.Ordinal);
         Assert.Equal(Paint(pill, GraphTileStates.Disabled), disabledHover);
     }
 }
