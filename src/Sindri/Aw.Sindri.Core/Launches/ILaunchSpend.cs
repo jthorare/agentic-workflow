@@ -11,4 +11,12 @@ public interface ILaunchSpend
     /// <param name="cancellationToken">Cancels the operation.</param>
     /// <returns>The spend, or null when the agent has no usage reader.</returns>
     public ValueTask<Result<AgentSpend?>> Today(AgentId target, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The agent's spend as far as it is known, answered without waiting and without a token. <see cref="SpendPeek.Landed"/> is false while the day's first read is in
+    /// flight (the call starts the shared read when none runs); landed with a null spend means the agent has no usage reader.
+    /// </summary>
+    /// <param name="target">The agent.</param>
+    /// <returns>What is known now.</returns>
+    public SpendPeek Peek(AgentId target);
 }
