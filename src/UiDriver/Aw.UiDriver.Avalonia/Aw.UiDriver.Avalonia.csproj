@@ -5,7 +5,7 @@
        normal launch. It knows no app.
        Hover moves a real pointer (#3467): Avalonia 12's reference assemblies hide raw pointer input (MouseDevice, RawPointerEventArgs,
        ITopLevelImpl.Input), so this project alone compiles against Avalonia's own assemblies (AvaloniaAccessUnstablePrivateApis). That is safe
-       only because Directory.Packages.props pins Avalonia to one exact version; a bump re-runs HoverTests, which fail if those APIs moved.
+       only because Directory.Packages.props pins Avalonia to one exact version. An Avalonia bump has to rerun HoverTests, which fail if those APIs moved.
        AVA3001 is the warning that says the switch is on. -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>

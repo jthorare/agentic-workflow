@@ -19,8 +19,9 @@ internal static partial class ElementActions
     private static readonly MouseDevice _mouse = new();
 
     /// <summary>
-    /// Moves the driver's pointer onto the element's centre, or out of the window. When no real move reaches the element (it is in no window, or
-    /// something covers it), it sets or clears the :pointerover pseudo-class instead, which styles follow.
+    /// Moves the driver's pointer onto the element's centre, or out of the window. The pointer stays over the element until `off` or the window
+    /// closes (one driver mouse). When no real move reaches the element (it is in no window, or something covers it), it sets or clears the
+    /// :pointerover pseudo-class instead, which styles follow.
     /// </summary>
     /// <param name="visual">The element.</param>
     /// <param name="on">True to move onto it, false to move out.</param>
