@@ -23736,3 +23736,5 @@ static Aw.Sindri.Core.Events.AgentOpRecorded.KeyFor(Aw.Sindri.Core.Ids.ActId act
 Aw.Sindri.Core.Scheduling.MainMovePause
 static Aw.Sindri.Core.Scheduling.MainMovePause.Active(Aw.Sindri.Core.Scheduling.IServicePauses! pauses, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
 static Aw.Sindri.Core.Scheduling.MainMovePause.Service.get -> Aw.Sindri.Core.Ids.ServiceName
+Aw.Sindri.Core.Doctor.IFirstMapCheck
+Aw.Sindri.Core.Doctor.IFirstMapCheck.Check(Aw.Sindri.Core.Profile.LoadedProfile? approved, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Doctor.DoctorCheck!>
