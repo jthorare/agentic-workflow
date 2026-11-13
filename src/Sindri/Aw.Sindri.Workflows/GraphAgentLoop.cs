@@ -61,7 +61,7 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
             if (started.Launched.Failure is { } failure)
             {
                 await events.Record(NodeAgentStates.EndedFailed).ConfigureAwait(true);
-                return Failed(started.Input, failure.Text);
+                return Failed(started.Input, failure.Text, inputCut: started.InputCut);
             }
 
             return await Supervise(new AgentWait(node.Id, itemIndex, launch), started, address, reference, events).ConfigureAwait(true);
@@ -183,14 +183,14 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
         await events.Record(NodeAgentRecorder.EndState(ending.Failure)).ConfigureAwait(true);
         if (ending.Failure is { } reason)
         {
-            return Failed(started.Input, reason, ending.FailureOutput);
+            return Failed(started.Input, reason, ending.FailureOutput, started.InputCut);
         }
 
-        return Succeeded(started.Input, ending.Outputs, address, closed);
+        return Succeeded(started.Input, started.InputCut, ending.Outputs, address, closed);
     }
 
     // The agent's reported outputs plus what closing the run measured, as the node's succeeded outcome.
-    private static GraphBlockOutcome Succeeded(string? input, string? reported, NodeRunAddress address, AgentNodeClosed closed)
+    private static GraphBlockOutcome Succeeded(string? input, bool inputCut, string? reported, NodeRunAddress address, AgentNodeClosed closed)
     {
         var values = ((JsonObject?)JsonNode.Parse(reported ?? "{}") ?? []).ToDictionary(static p => p.Key, static p => p.Value?.DeepClone(), StringComparer.Ordinal);
         var result = RunAgentOutput.Compose(values, new AgentNodeEnd(address.WorkBranch, closed.Commit, closed.AgentSession, closed.Tokens, closed.EmptyDiff));
@@ -202,7 +202,8 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
 
         // why: Fit keeps an output over 64 KB as parseable JSON; the walk then records the node with 'Truncated' set (#3419)
         var fitted = StoredJson.Fit(output.ToJsonString());
-        return new GraphBlockOutcome(NodeRunStatus.Succeeded, input, fitted.Text, result.Taken, Error: null, Truncated: fitted.Cut);
+        var fitInput = StoredJson.Fit(input);
+        return new GraphBlockOutcome(NodeRunStatus.Succeeded, fitInput.Text, fitted.Text, result.Taken, Error: null, Truncated: fitted.Cut || fitInput.Cut || inputCut);
     }
 
     // Waits for the report, the end of the session or the timeout, whichever comes first. The timeout runs only while nobody holds the node: a takeover stops its clock and a handback

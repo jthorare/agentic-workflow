@@ -24,13 +24,23 @@ public sealed class PaneSubmitter(ILanePane pane, IDelay delay)
     /// <param name="session">The tmux session name.</param>
     /// <param name="line">The line.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
+    /// <param name="exact">Check the input box shows exactly the line before the first Enter (#3443).</param>
     /// <returns>Success, or AW-META-012 when tmux fails or the line never left the input box.</returns>
-    public async ValueTask<Result<Unit>> Submit(string session, string line, CancellationToken cancellationToken)
+    public async ValueTask<Result<Unit>> Submit(string session, string line, CancellationToken cancellationToken, bool exact = false)
     {
         var typed = await pane.Type(session, line, cancellationToken).ConfigureAwait(false);
         if (typed.IsError)
         {
             return typed;
+        }
+
+        if (exact)
+        {
+            var checkedBox = await CheckTyped(session, line, cancellationToken).ConfigureAwait(false);
+            if (checkedBox.IsError)
+            {
+                return checkedBox;
+            }
         }
 
         for (var attempt = 0; attempt <= Retries; attempt++)
@@ -58,6 +68,22 @@ public sealed class PaneSubmitter(ILanePane pane, IDelay delay)
         return MetaErrors.CommandFailed.With($"the line is still in the input box of {session} after {Retries + 1} Enter presses");
     }
 
+    // The lane's prompt can eat the first keys ("/cl" of "/clear" read as vim keys, #3443): the rest would go in as a prompt. Before any Enter,
+    // the input box must hold exactly the line; a pane with no prompt mark can't be read and goes on as before.
+    private async ValueTask<Result<Unit>> CheckTyped(string session, string line, CancellationToken cancellationToken)
+    {
+        await delay.Wait(Pause, cancellationToken).ConfigureAwait(false);
+        var shown = await pane.Capture(session, cancellationToken).ConfigureAwait(false);
+        if (shown.IsError)
+        {
+            return shown.Error;
+        }
+
+        return InputBox(shown.Value) is not { } box || string.Equals(Squeeze(box), Squeeze(line), StringComparison.Ordinal)
+            ? Results.Ok()
+            : MetaErrors.CommandFailed.With($"the input box of {session} shows '{box.Trim()}' instead of '{line}' after typing; no Enter was pressed, so nothing was submitted. Clear that input line in the pane, then run it again");
+    }
+
     /// <summary>Whether the input box (from the last line starting with the prompt mark to the next rule) still holds the start of the line. A pane with no prompt reads as submitted.</summary>
     /// <param name="capture">The captured pane text.</param>
     /// <param name="line">The line that was typed.</param>
@@ -66,11 +92,23 @@ public sealed class PaneSubmitter(ILanePane pane, IDelay delay)
     {
         ArgumentNullException.ThrowIfNull(capture);
         ArgumentNullException.ThrowIfNull(line);
+        if (InputBox(capture) is not { } box)
+        {
+            return false;
+        }
+
+        var probe = Squeeze(line);
+        return Squeeze(box).Contains(probe[..Math.Min(ProbeLength, probe.Length)], StringComparison.Ordinal);
+    }
+
+    // The input box's text: from the last line starting with the prompt mark to the next rule, without the mark. Null when no line starts with it.
+    private static string? InputBox(string capture)
+    {
         var lines = capture.Split('\n');
         var start = Array.FindLastIndex(lines, static l => l.StartsWith('❯'));
         if (start < 0)
         {
-            return false;
+            return null;
         }
 
         var box = new List<string>();
@@ -79,9 +117,7 @@ public sealed class PaneSubmitter(ILanePane pane, IDelay delay)
             box.Add(lines[i]);
         }
 
-        var squeezed = Squeeze(string.Concat(box).TrimStart('❯'));
-        var probe = Squeeze(line);
-        return squeezed.Contains(probe[..Math.Min(ProbeLength, probe.Length)], StringComparison.Ordinal);
+        return string.Concat(box).TrimStart('❯');
     }
 
     private static string Squeeze(string text) => new([.. text.Where(static c => !char.IsWhiteSpace(c))]);

@@ -55,14 +55,14 @@ context services here. The routes are `GET /sindri/context/query` and
    missed deadline makes that source degraded (010); all of them failing is 011.
 4. `RankFusion.Fuse`: hits sharing a canonical key merge, keeping each source's best rank. Each source is re-ranked
    densely, then RRF with k = 60 runs across sources.
-5. The top 20 are fetched in turn until the deadline (what isn't fetched in time isn't shown), cleaned whole by
+5. The ranked records in `ContextQuery.Window` (`QueryWindow(Offset, Limit)`, issue 3370; no window = every match, and an item question whose key no sync linked reads every match too) are fetched in turn until the deadline (what isn't fetched in time isn't shown; `QueryPipeline.Windowed`, and the answer's `Matches` = `RecordMatches(Matched, Offset, Read)` when a window was given), cleaned whole by
    `IIngestFilter` (sanitize, collapse titles, scrub; line-preserving), kept whole. The sanitizer drops inline and
    HTML images and reduces reference-style ones to their text, so no image survives ingest wherever its definition sits, and removes
    remote reference definitions also inside block quotes and list items (one-token destination, optional title).
 6. One batched `Versions` call per source, each with only its own references, gives each citation its state.
 7. `ResultAssembly`: one `record` item and one citation each. Every field, the citation's key and ids included, is
    scrubbed again on egress (a blocked field is `[REDACTED:blocked]` alone). The title (at most 200 characters) and
-   the text are fenced as untrusted, and the items are grouped into sections with none dropped (`Packer.Pack` has no budget; the retired `truncated`, `budget` and per-section `more` fields are gone from the wire). A caller pages the result set (MCP `limit` and `offset`, `McpPages`: both optional, offset 0 and limit 100 by default, limit under 1 or offset under 0 is 006; only top-level lists page, each by its own index, never inside an item; `page.more` and `page.lists` are computed on the whole set).
+   the text are fenced as untrusted, and the items are grouped into sections with none dropped (`Packer.Pack` has no budget; the retired `truncated`, `budget` and per-section `more` fields are gone from the wire). A caller pages the result set (MCP `limit` and `offset`, `McpPages`: both optional, offset 0 and limit 100 by default, limit under 1 or offset under 0 is 006; only top-level lists page, each by its own index, never inside an item; `page.more` and `page.lists` are computed on the whole set). `context_query` passes its page to the engine as the window, so its records section is already the page: `McpPages.DetachReadPage` keeps it whole and counts its `total` from `matches.matched` (`McpPagesTests`).
 
 No model is called on the query path.
 
@@ -106,7 +106,7 @@ and the status reads "never refreshed".
 | `SND-CONTEXT-003` | NotFound (404) | 1 | Unknown anchor, or a record or decision linked only to nodes outside a session's repo scope (the same answer). When the graph has near misses, the problem body also has the top-level member `suggestedAnchors` (an array of at most 5 node keys, in scope for the caller; the detail text still says `try …`) |
 | `SND-CONTEXT-004` | Unavailable (503) | 2 | The store can't be opened or migrated (the message keeps the AW-DATA code) |
 | `SND-CONTEXT-005` | Invalid (400) | 1 | A map file or an output path inside a git worktree (links resolved) |
-| `SND-CONTEXT-006` | Invalid (400) | 1 | The question is invalid: no words, two shapes, depth out of range |
+| `SND-CONTEXT-006` | Invalid (400) | 1 | The question is invalid: no words, two shapes, depth out of range, a window `limit` under 1 or `offset` under 0 or not a whole number |
 | `SND-CONTEXT-010` | Unavailable | — | One source is unavailable: a `degraded` entry, never the answer's error |
 | `SND-CONTEXT-011` | Unavailable (503) | 2 | Every source is unavailable |
 | `SND-CONTEXT-020` | Forbidden (403) | 1 | Session reads are off (`context.sessions.enabled: false`, on by default since owner q93, 2026-10-23), on every transport; also a session asking for a human or service job (map import, export, hold, release, eval purge). Defined by S-1A (spec §3); S-1M maps it to the MCP tool error |

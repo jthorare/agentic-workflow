@@ -42,7 +42,7 @@
     </Style>
     <Style Selector="Border.needs-you-row:not(.lead) Button.command-control.primary:pressed:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.PressedBorder}" />
     </Style>
     <Style Selector="Border.needs-you-row ctl|StateChipView.attn">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
