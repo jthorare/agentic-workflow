@@ -234,7 +234,8 @@ public sealed class SheetEnterFocusTests : IDisposable
         var expected = (ISolidColorBrush)frame.FindResource("Brush.PrimaryHover")!;
         var adorners = AdornerLayer.GetAdornerLayer(frame)!.Children.Count(c => AdornerLayer.GetAdornedElement(c) == frame && c.IsEffectivelyVisible);
         Assert.Equal(restingBorder, (frame.BorderThickness, (frame.BorderBrush as ISolidColorBrush)?.Color));
-        var ring = Assert.Single(frame.BoxShadow);
+        Assert.Equal(1, frame.BoxShadow.Count);
+        var ring = frame.BoxShadow[0];
         Assert.Equal((true, 2.0, 0.0, expected.Color), (ring.IsInset, ring.Spread, ring.Blur, ring.Color));
         Assert.Equal(0, adorners);
         Assert.Null(frame.FocusAdorner);
