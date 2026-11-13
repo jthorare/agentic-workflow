@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using System.Net;
 using System.Globalization;
+using System.Net;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
