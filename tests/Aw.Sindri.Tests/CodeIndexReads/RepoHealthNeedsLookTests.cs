@@ -58,7 +58,7 @@ public sealed class RepoHealthNeedsLookTests
     {
         var heads = new FakeRepoHeads().With(_repo, live, onDefaultBranch: true);
         var scope = new CodeIndexScope([new CodeIndexRepo(_repo, "/work/demo", CodeIndexSettings.Default)], new CodeIndexCaller(CallerKind.Service, Repo: null));
-        var healths = await new RepoHealths(heads, new InMemoryJobViews(), TimeProvider.System, new QueuedClock()).Of(scope, [status], Token);
+        var healths = await new RepoHealths(heads, new InMemoryJobViews(), TimeProvider.System, new QueuedClock(TimeProvider.System.GetUtcNow())).Of(scope, [status], Token);
         return Assert.Single(healths);
     }
 }
