@@ -8,7 +8,7 @@ namespace Aw.Sindri.Ui.Views.Controls;
 /// row ends on the panel's right edge, <see cref="Spacing"/> between cards and between rows.
 /// Height rule: each card is arranged at its own measured height and is never stretched to a taller neighbour; a row advances by its
 /// tallest card, and cards are measured again at the width they are arranged at, so wrapped text fits (#3117, #3101).
-/// A child with <see cref="FullRowProperty"/> set takes a row of its own at the full width.
+/// A child with <see cref="FullRowProperty"/> set takes a row of its own at the full width, and splits a run of cards in two.
 /// A hidden child takes no column. Without a finite width (a horizontal scroller) it is one column at the minimum width.
 /// </summary>
 internal sealed class CardGrid : Panel
@@ -19,6 +19,9 @@ internal sealed class CardGrid : Panel
     /// <summary>The space between cards, across and down.</summary>
     internal static readonly StyledProperty<double> SpacingProperty = AvaloniaProperty.Register<CardGrid, double>(nameof(Spacing), 12);
 
+    /// <summary>Whether a run of cards fills down each column before the next (the list reads down the left column, then down the right); off, it fills row by row. Children order is untouched, so Tab follows the reading order.</summary>
+    internal static readonly StyledProperty<bool> ColumnMajorProperty = AvaloniaProperty.Register<CardGrid, bool>(nameof(ColumnMajor));
+
     /// <summary>Set on a child to give it a row of its own at the full width.</summary>
     public static readonly AttachedProperty<bool> FullRowProperty = AvaloniaProperty.RegisterAttached<CardGrid, Control, bool>("FullRow");
 
@@ -28,7 +31,7 @@ internal sealed class CardGrid : Panel
 
     static CardGrid()
     {
-        AffectsMeasure<CardGrid>(MinColumnWidthProperty, SpacingProperty);
+        AffectsMeasure<CardGrid>(MinColumnWidthProperty, SpacingProperty, ColumnMajorProperty);
         _ = FullRowProperty.Changed.AddClassHandler<Control>((c, _) => (c.Parent as Control)?.InvalidateMeasure());
     }
 
@@ -47,6 +50,13 @@ internal sealed class CardGrid : Panel
     {
         get => GetValue(MinColumnWidthProperty);
         set => SetValue(MinColumnWidthProperty, value);
+    }
+
+    /// <summary>Gets or sets a value indicating whether a run of cards fills down each column before the next.</summary>
+    internal bool ColumnMajor
+    {
+        get => GetValue(ColumnMajorProperty);
+        set => SetValue(ColumnMajorProperty, value);
     }
 
     /// <summary>Gets or sets the space between cards, across and down.</summary>
@@ -139,29 +149,62 @@ internal sealed class CardGrid : Panel
         return finalSize;
     }
 
-    private List<List<Control>> Rows(int columns)
+    /// <summary>Which children go in which cell: each row is the child indexes left to right. A run of cards between full-row children fills row by row, or, with <paramref name="columnMajor"/>, column by column (the first ceil(n / columns) down the left column).</summary>
+    /// <param name="full">Whether each visible child takes a full row.</param>
+    /// <param name="columns">The column count.</param>
+    /// <param name="columnMajor">True to fill down each column before the next.</param>
+    /// <returns>The rows.</returns>
+    internal static List<int[]> Place(IReadOnlyList<bool> full, int columns, bool columnMajor)
     {
-        var rows = new List<List<Control>>();
-        List<Control>? current = null;
-        foreach (var child in Children.Where(c => c.IsVisible))
+        var rows = new List<int[]>();
+        var run = new List<int>();
+        for (var i = 0; i < full.Count; i++)
         {
-            if (GetFullRow(child))
+            if (!full[i])
             {
-                rows.Add([child]);
-                current = null;
+                run.Add(i);
                 continue;
             }
 
-            if (current is null || current.Count == columns)
-            {
-                current = [];
-                rows.Add(current);
-            }
-
-            current.Add(child);
+            AddRun(rows, run, columns, columnMajor);
+            rows.Add([i]);
         }
 
+        AddRun(rows, run, columns, columnMajor);
         return rows;
+    }
+
+    // A run of cards as rows: row by row, or down each column in turn (column c holds run[c * per .. (c + 1) * per), per = ceil(n / columns)). Only the trailing cells of a row can be empty.
+    private static void AddRun(List<int[]> rows, List<int> run, int columns, bool columnMajor)
+    {
+        if (run.Count == 0)
+        {
+            return;
+        }
+
+        if (columnMajor)
+        {
+            var per = (run.Count + columns - 1) / columns;
+            for (var r = 0; r < per; r++)
+            {
+                rows.Add([.. Enumerable.Range(0, columns).Select(c => (c * per) + r).Where(at => at < run.Count).Select(at => run[at])]);
+            }
+        }
+        else
+        {
+            for (var i = 0; i < run.Count; i += columns)
+            {
+                rows.Add([.. run.Skip(i).Take(columns)]);
+            }
+        }
+
+        run.Clear();
+    }
+
+    private List<List<Control>> Rows(int columns)
+    {
+        var visible = Children.Where(c => c.IsVisible).ToList();
+        return [.. Place([.. visible.Select(GetFullRow)], columns, ColumnMajor).Select(row => row.Select(i => visible[i]).ToList())];
     }
 
     private (int Columns, double Column, double Width) Layout(double available)

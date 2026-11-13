@@ -57,7 +57,7 @@ public sealed class RemoveSessionWorktreeTests : IDisposable
 
         Assert.Equal(SindriErrors.AgentWorktreeKept.Code, kept.Error.Code);
         Assert.Contains("can't tell", kept.Error.Message, StringComparison.Ordinal);
-        Assert.DoesNotContain("still running:", kept.Error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("session still running", kept.Error.Message, StringComparison.Ordinal);   // why: not the "end it first" message; the cannot-tell one says "is still running:" too
         _ = Assert.Single(_r.Worktrees.Live);
     }
 

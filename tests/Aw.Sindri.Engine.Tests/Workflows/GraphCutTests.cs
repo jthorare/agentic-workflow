@@ -24,15 +24,15 @@ public sealed class GraphCutTests
     }
 
     [Fact]
-    public void An_output_over_two_megabytes_is_cut_to_the_store_cap_and_still_reads_as_truncated_to_the_store()
+    public void An_output_over_two_megabytes_is_stored_as_an_envelope_under_the_cap_and_reported_as_cut()
     {
         var huge = new string('x', 3 * 1024 * 1024);
 
-        var fitted = GraphBlockActivities.Fit(huge)!;
-        _ = NodeRunLimits.Cap(fitted, out var truncated);
+        var fitted = StoredJson.Fit(huge);
 
-        Assert.True(Encoding.UTF8.GetByteCount(fitted) < NodeRunLimits.PayloadBytes + 16);
-        Assert.True(truncated);   // why: the store cuts and flags it, so a later node that reads it fails with SND-GRAPH-108
+        Assert.True(Encoding.UTF8.GetByteCount(fitted.Text!) <= NodeRunLimits.PayloadBytes);
+        Assert.True(fitted.Cut);   // why: the caller sets Truncated from it, so a later node that reads it fails with SND-GRAPH-108
+        Assert.True(JsonNode.Parse(fitted.Text!)!["truncated"]!.GetValue<bool>());
     }
 
     [Fact]

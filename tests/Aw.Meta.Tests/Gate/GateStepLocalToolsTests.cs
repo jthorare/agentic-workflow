@@ -1,3 +1,4 @@
+using Aw.Kernel.Testing;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Coordination;
@@ -18,9 +19,7 @@ public sealed class GateStepLocalToolsTests : IDisposable
     public GateStepLocalToolsTests()
     {
         var bin = Directory.CreateDirectory(Path.Combine(_dir.Path, "node_modules", ".bin")).FullName;
-        var tool = Path.Combine(bin, "aw-local-tool");
-        File.WriteAllText(tool, "#!/bin/sh\necho " + Marker + "\n");
-        File.SetUnixFileMode(tool, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute | UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+        _ = ExecutableScript.Write(Path.Combine(bin, "aw-local-tool"), "echo " + Marker + "\n");
     }
 
     private MetaPaths Paths() => new(Path.Combine(_dir.Path, "state"), Path.Combine(_dir.Path, "gates"), Heavy: null, Gh: "gh");
@@ -65,9 +64,7 @@ public sealed class GateStepLocalToolsTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public async Task A_rerun_behind_the_heavy_wrapper_finds_the_trees_tools()
     {
-        var heavy = Path.Combine(_dir.Path, "heavy");
-        await File.WriteAllTextAsync(heavy, "#!/bin/sh\nexec \"$@\"\n", TestContext.Current.CancellationToken);
-        File.SetUnixFileMode(heavy, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        var heavy = ExecutableScript.Write(Path.Combine(_dir.Path, "heavy"), "exec \"$@\"\n");
         var paths = Paths() with { Heavy = heavy };
         var job = new RerunJob([heavy, "bash", "-c", "aw-local-tool"], _dir.Path, "Some_test", FilterMustMatch: true, Log("rerun-heavy"));
 

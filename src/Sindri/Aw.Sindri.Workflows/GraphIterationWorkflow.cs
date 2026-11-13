@@ -149,7 +149,7 @@ internal sealed partial class GraphIterationWorkflow
 
         // why: as in the run's walk, once the block has answered the node's result is decided, so the write is not cancelled with the workflow
         _current = null;
-        await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAsync(new NodeRun(_run, node.Id, item, outcome.Status, outcome.Input, outcome.Output, Truncated: false, outcome.Error, Usage: null, Raw: outcome.Raw)), _detached).ConfigureAwait(true);
+        await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAsync(new NodeRun(_run, node.Id, item, outcome.Status, outcome.Input, outcome.Output, outcome.Truncated, outcome.Error, Usage: null, Raw: outcome.Raw)), _detached).ConfigureAwait(true);
         return outcome;
     }
 

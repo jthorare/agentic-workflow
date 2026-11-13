@@ -47,6 +47,23 @@ public sealed class FailedAgentOutputTests
         Assert.Equal("the report is missing the field 'summary'", JsonNode.Parse(row.Output ?? "null")!["lastRefusedReport"]!.GetValue<string>());
     }
 
+    [Fact]
+    public async Task A_failed_node_whose_files_pass_64_KB_stores_parseable_json_marked_truncated()
+    {
+        // why: #3419, the failure output goes through the same fit as a succeeded output, so a big report can't land as cut, unparseable text
+        var big = new string('x', 100 * 1024);
+        var runtime = new FakeAgentNodeRuntime
+        {
+            Recovered = new AgentNodeRecovered(Outputs: null, Reason: "the agent finished but its result was not recorded", Files: $$"""{"summary":"{{big}}"}"""),
+        };
+
+        var row = await FailAs(runtime, new AgentSessionState(AgentSessionEnd.Exit, ExitCode: 1));
+
+        Assert.Equal(NodeRunStatus.Failed, row.Status);
+        Assert.True(row.Truncated);
+        Assert.True(JsonNode.Parse(row.Output!)!["truncated"]!.GetValue<bool>());
+    }
+
     private static async Task<NodeRun> FailAs(FakeAgentNodeRuntime runtime, AgentSessionState ended)
     {
         await using var rig = await GraphRig.StartAsync(runtime);
