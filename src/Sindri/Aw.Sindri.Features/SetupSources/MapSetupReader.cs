@@ -94,7 +94,7 @@ internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine 
         {
             // The newest files line (#3433), the one the whole map's 'building' answer reads too; a repo with no files (0/0) gives no count.
             var files = MapBuildFiles.Newest(running.Progress.OrderBy(static l => l.Round).Select(static l => l.Line));
-            return new MapFact(MapPhase.Building, files is { Total: > 0 } ? new SetupProgress(files.Done, files.Total, "files") { Stage = MapStage.Map } : null) { Stage = MapStage.Map };
+            return new MapFact(MapPhase.Building, files is { Total: > 0 } ? new SetupProgress(files.Done, files.Total, "files") : null) { Stage = MapStage.Map };
         }
 
         var mapped = (profile.Repos ?? []).Select(static r => r.Name).ToList();
@@ -102,7 +102,7 @@ internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine 
         if (ours.FirstOrDefault(static j => j.State == JobState.Running) is { } indexing)
         {
             var files = IndexBuildFiles.Newest(indexing.Progress.OrderBy(static l => l.Round).Select(static l => l.Line));
-            return new MapFact(MapPhase.Building, files is { Total: > 0 } ? new SetupProgress(files.Done, files.Total, "files") { Stage = MapStage.Index } : null) { Stage = MapStage.Index };
+            return new MapFact(MapPhase.Building, files is { Total: > 0 } ? new SetupProgress(files.Done, files.Total, "files") : null) { Stage = MapStage.Index };
         }
 
         // A failed index build counts only when no map build ended after it: the index rebuilds on every commit, and its success must not hide a failed map.

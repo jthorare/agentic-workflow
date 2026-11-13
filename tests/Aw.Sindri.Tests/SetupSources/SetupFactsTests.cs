@@ -279,7 +279,7 @@ public sealed class SetupFactsTests
         var map = (await rig.Facts.Map(Token)).Value;
 
         Assert.Equal((MapPhase.Building, MapStage.Index), (map.Phase, map.Stage));
-        Assert.Equal(new SetupProgress(7000, 15223, "files") { Stage = MapStage.Index }, map.Progress);
+        Assert.Equal(new SetupProgress(7000, 15223, "files"), map.Progress);
         Assert.Equal(SetupState.Running, Assert.Single(map.Items.Lines).State);
     }
 
@@ -306,7 +306,7 @@ public sealed class SetupFactsTests
         var map = (await rig.Facts.Map(Token)).Value;
 
         Assert.Equal((MapPhase.Building, MapStage.Map), (map.Phase, map.Stage));
-        Assert.Equal(new SetupProgress(40, 100, "files") { Stage = MapStage.Map }, map.Progress);
+        Assert.Equal(new SetupProgress(40, 100, "files"), map.Progress);
     }
 
     [Fact, Trait("Lane", "unit")]

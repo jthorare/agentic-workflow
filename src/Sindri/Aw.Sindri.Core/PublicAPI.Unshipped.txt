@@ -23625,5 +23625,5 @@ Aw.Sindri.Core.Setup.MapFact.Stage.init -> void
 Aw.Sindri.Core.Setup.MapStage
 Aw.Sindri.Core.Setup.MapStage.Index = 0 -> Aw.Sindri.Core.Setup.MapStage
 Aw.Sindri.Core.Setup.MapStage.Map = 1 -> Aw.Sindri.Core.Setup.MapStage
-Aw.Sindri.Core.Setup.SetupProgress.Stage.get -> Aw.Sindri.Core.Setup.MapStage?
-Aw.Sindri.Core.Setup.SetupProgress.Stage.init -> void
+Aw.Sindri.Core.Setup.SetupStep.Stage.get -> Aw.Sindri.Core.Setup.MapStage?
+Aw.Sindri.Core.Setup.SetupStep.Stage.init -> void
