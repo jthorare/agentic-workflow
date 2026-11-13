@@ -75,9 +75,9 @@ public sealed class SetupViewModelTests
         var sources = Step(await _f.Read(Token), "sources");
         await sources.Action!.Cli!.Copy(Token);
 
-        Assert.Equal(("Connect your sources", "To do", "To do"), (sources.Title, sources.ChipWord, sources.Chip.Word));
-        Assert.Equal(("ConnectIndexSource", false, null, null), (sources.Action.Action, sources.Action.IsInApp, sources.Action.Protected, sources.Repo));
-        Assert.Equal("sindri index connect <source>", _f.Clipboard.Text);
+        Assert.Equal(("Connect your accounts", "To do", "To do"), (sources.Title, sources.ChipWord, sources.Chip.Word));
+        Assert.Equal(("ConnectAccount", false, null, null), (sources.Action.Action, sources.Action.IsInApp, sources.Action.Protected, sources.Repo));
+        Assert.Equal("sindri setup connect <provider>", _f.Clipboard.Text);   // the catalog row's own form
     }
 
     [Fact]
@@ -87,10 +87,10 @@ public sealed class SetupViewModelTests
 
         var setup = await _f.Read(Token);
 
-        Assert.Equal(["repo", "profile", "mcp", "map"], Ids(setup.Steps.Take(4)));
-        Assert.Equal(["Needs you", "To do", "To do", "To do"], setup.Steps.Take(4).Select(s => s.ChipWord), StringComparer.Ordinal);
-        Assert.Equal([true, false, false, false], setup.Steps.Take(4).Select(s => s.IsOpen));
-        Assert.Equal(("Set up Sindri", Labels.SetupCount(0, setup.Steps.Count), true), (setup.Lead, setup.CountText, setup.HasSub));
+        Assert.Equal(["serve", "sources", "repo", "profile", "agent", "mcp", "map", "first-workflow"], Ids(setup.Steps));
+        Assert.Equal(["Done", "To do", "Needs you", "To do", "To do", "To do", "To do", "To do"], setup.Steps.Select(s => s.ChipWord), StringComparer.Ordinal);
+        Assert.Equal([false, false, true, false, false, false, false, false], setup.Steps.Select(s => s.IsOpen));
+        Assert.Equal(("Set up Sindri", Labels.SetupCount(1, setup.Steps.Count), true), (setup.Lead, setup.CountText, setup.HasSub));   // serve is current, so one step is done
     }
 
     [Fact]
@@ -101,10 +101,10 @@ public sealed class SetupViewModelTests
         var setup = await _f.Read(Token);
 
         Assert.Equal(
-            ["Add your repository", "Your settings", "Connect your coding agents", "Build the product map"],
-            setup.Steps.Take(4).Select(s => s.Title),
-            StringComparer.Ordinal);
-        Assert.Equal([1, 2, 3, 4], setup.Steps.Take(4).Select(s => s.Number));
+            ["Sindri is current", "Connect your accounts", "Add your repository", "Your settings", "Agent for workflows", "Connect your coding agents", "Build the product map", "Run hello-sindri"],
+            setup.Steps.Select(s => s.Title),
+            StringComparer.Ordinal);   // the app owns the words of repo, profile, mcp and map; the others show as served
+        Assert.Equal([1, 2, 3, 4, 5, 6, 7, 8], setup.Steps.Select(s => s.Number));
     }
 
     [Fact]
@@ -114,10 +114,23 @@ public sealed class SetupViewModelTests
 
         var setup = await _f.Read(Token);
 
-        Assert.Equal(["Done", "Done", "Done", "Failed", "To do"], [.. setup.Steps.Select(s => s.ChipWord).Take(4), Step(setup, "later").ChipWord], StringComparer.Ordinal);
+        Assert.Equal(["Done", "Done", "Done", "Failed", "To do"], [Step(setup, "serve").ChipWord, Step(setup, "repo").ChipWord, Step(setup, "mcp").ChipWord, Step(setup, "map").ChipWord, Step(setup, "later").ChipWord], StringComparer.Ordinal);
         Assert.Equal("paused", Step(setup, "later").Chip.Word);   // unknown: the To do chip, with the served word
         Assert.Equal("Working", Step(await ReadWith("running-progress"), "map").ChipWord);
         Assert.Equal("Skipped", Step(await ReadWith("first-run", "map", "skipped"), "map").ChipWord);
+    }
+
+    // first-run spec §3.1: a Sindri newer than the app serves serve, agent and first-workflow; the app reads Id as text, so it draws them by their served title with no button and no parse error.
+    [Fact]
+    public async Task A_step_id_this_build_has_no_words_for_shows_by_its_served_title_with_no_button()
+    {
+        _f.Serve(With("all-done", "serve", "todo"));   // serve and first-workflow have no words in the app: they show as served
+
+        var setup = await _f.Read(Token);
+
+        var serve = Step(setup, "serve");
+        Assert.Equal(("Sindri is current", "To do", false), (serve.Title, serve.ChipWord, serve.HasAction));
+        Assert.Equal(("Run hello-sindri", "Done"), (Step(setup, "first-workflow").Title, Step(setup, "first-workflow").ChipWord));
     }
 
     private async Task<SetupViewModel> ReadWith(string scenario)
@@ -146,6 +159,7 @@ public sealed class SetupViewModelTests
     public async Task Opening_a_row_never_closes_another_and_the_persons_choice_survives_a_read()
     {
         var setup = await ReadWith("profile-needs-approval");
+        Step(setup, "sources").IsOpen = false;   // the first step still to do opened by itself
         Step(setup, "mcp").IsOpen = true;
         Step(setup, "profile").IsOpen = false;
 
@@ -182,9 +196,9 @@ public sealed class SetupViewModelTests
         var done = await ReadWith("running-progress");
         var first = await ReadWith("first-run");
 
-        Assert.Equal(["done", "done", "done", "working"], done.Segments.Take(4).Select(s => s.Kind), StringComparer.Ordinal);
+        Assert.Equal(["done", "done", "done", "done", "done", "done", "working", "done"], done.Segments.Select(s => s.Kind), StringComparer.Ordinal);
         Assert.Equal(Labels.SetupCount(done.Steps.Count(s => s.IsFinished), done.Steps.Count), done.CountText);
-        Assert.Equal(["todo", "todo", "todo", "todo"], first.Segments.Take(4).Select(s => s.Kind), StringComparer.Ordinal);
+        Assert.Equal(["done", "todo", "todo", "todo", "todo", "todo", "todo", "todo"], first.Segments.Select(s => s.Kind), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -193,7 +207,7 @@ public sealed class SetupViewModelTests
         var first = await ReadWith("first-run");
         var progress = await ReadWith("running-progress");
 
-        Assert.Equal(((0.0, (double)first.Steps.Count), ((double)(progress.Steps.Count - 1), (double)progress.Steps.Count)), ((first.MeterDone, first.MeterMax), (progress.MeterDone, progress.MeterMax)));
+        Assert.Equal(((1.0, (double)first.Steps.Count), ((double)(progress.Steps.Count - 1), (double)progress.Steps.Count)), ((first.MeterDone, first.MeterMax), (progress.MeterDone, progress.MeterMax)));
     }
 
     [Fact]
@@ -214,12 +228,12 @@ public sealed class SetupViewModelTests
         var setup = await ReadWith("profile-needs-approval");
         var asked = 0;
         setup.ChecklistRequested += (_, _) => asked++;
-        Step(setup, "mcp").IsOpen = false;
+        Step(setup, "sources").IsOpen = false;
 
-        Assert.Equal(("Connect your coding agents", "Connect your coding agents", "Connect your coding agents", "Finish setting up Sindri, 2 of 5 done. Next: Connect your coding agents"), (setup.HomeStepText, setup.ContinueText, setup.ContinueName, setup.HomeLineName));
+        Assert.Equal(("Connect your accounts", "Connect your accounts", "Connect your accounts", "Finish setting up Sindri, 3 of 8 done. Next: Connect your accounts"), (setup.HomeStepText, setup.ContinueText, setup.ContinueName, setup.HomeLineName));
         setup.Continue();
 
-        Assert.Equal((1, true), (asked, Step(setup, "mcp").IsOpen));
+        Assert.Equal((1, true), (asked, Step(setup, "sources").IsOpen));
     }
 
     [Fact]
@@ -269,12 +283,12 @@ public sealed class SetupViewModelTests
     public async Task A_repeat_read_keeps_each_step_and_changes_it_in_place()
     {
         var setup = await ReadWith("first-run");
-        var repo = setup.Steps[0];
+        var repo = Step(setup, "repo");
         _f.Serve("profile-needs-approval");
 
         await setup.Refresh(Url, Token);
 
-        Assert.Same(repo, setup.Steps[0]);
+        Assert.Same(repo, Step(setup, "repo"));
         Assert.Equal("Done", repo.ChipWord);
     }
 
@@ -360,7 +374,7 @@ public sealed class SetupViewModelTests
         _f.Serve("first-run");
         await setup.Retry(Token);
 
-        Assert.Equal((false, 5), (setup.IsFailed, setup.Steps.Count));
+        Assert.Equal((false, 8), (setup.IsFailed, setup.Steps.Count));
     }
 
     [Fact]
@@ -371,6 +385,6 @@ public sealed class SetupViewModelTests
 
         await setup.Refresh(Url, Token);
 
-        Assert.Equal((5, true, false), (setup.Steps.Count, setup.IsStale, setup.IsFailed));
+        Assert.Equal((8, true, false), (setup.Steps.Count, setup.IsStale, setup.IsFailed));
     }
 }

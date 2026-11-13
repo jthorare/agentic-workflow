@@ -97,6 +97,9 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-130: no 'ask_owner' node of the run waits for an answer now.</summary>
     public static readonly ErrorDefinition GraphNotWaiting = new("SND-GRAPH-130", ErrorKind.Conflict, "No question waits at that node");
 
+    /// <summary>SND-GRAPH-132: the setup service may run only the hello-sindri workflow it made, and only once.</summary>
+    public static readonly ErrorDefinition GraphSetupRunRefused = new("SND-GRAPH-132", ErrorKind.Forbidden, "The setup service runs only the hello-sindri workflow it made, once");
+
     /// <summary>SND-GRAPH-124: a 'workflow_result' node found no result: the run is not that workflow's, is not finished, or the workflow has no succeeded run.</summary>
     public static readonly ErrorDefinition GraphResultUnavailable = new("SND-GRAPH-124", ErrorKind.Invalid, "No finished run to read a result from");
 

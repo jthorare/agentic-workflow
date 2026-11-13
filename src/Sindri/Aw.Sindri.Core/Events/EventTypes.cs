@@ -263,6 +263,9 @@ public static partial class EventTypes
     /// <summary>The owner agreed that Sindri may register itself and build the map on its own (setup-once spec §7.5).</summary>
     public const string SetupConsentGiven = "setup.consent.given";
 
+    /// <summary>The setup service made and activated hello-sindri, once per box (first-run spec decision 19).</summary>
+    public const string SetupFirstWorkflowCreated = "setup.first_workflow.created";
+
     /// <summary>A connection's token could not be refreshed, so the owner has to sign in again (connections PR 10b). Keyed by the connection and the time; no token in it.</summary>
     public const string ConnectionNeedsSignIn = "connection.needs-sign-in";
 

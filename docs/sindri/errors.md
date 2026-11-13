@@ -154,8 +154,22 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-ONYX-010` | Docker points at another machine |
 | `SND-ONYX-011` | A docker compose command failed |
 | `SND-ONYX-012` | Sindri can't use its Onyx directory |
-| `SND-SETUP-005` | The Onyx admin email and password were both needed |
-| `SND-SETUP-006` | No Onyx setup was waiting for the login |
+
+## SND-SETUP (first run)
+
+Words from the first-run spec (`docs/superpowers/specs/2026-11-12-sindri-first-run-design.md` §6). The app shows the sentence and puts the code in Details.
+
+| Code | Meaning | Fix |
+|---|---|---|
+| `SND-SETUP-008` | The scan root is missing, unreadable or outside the home folder. | `sindri setup scan --root DIR` |
+| `SND-SETUP-009` | Restart refused: agent sessions, workflow runs or jobs are open. | `sindri restart --wait`; `sindri wf run-show <run>` for each run |
+| `SND-SETUP-010` | `sindri setup --apply` named no repo and none here is one you worked on in GitHub lately. | `sindri setup --apply --repo <path>` |
+| `SND-SETUP-011` | The installed Sindri has no `build-info`, so it isn't finished installing. | `scripts/install-cs.sh --link` |
+| `SND-SETUP-012` | Sindri didn't answer 30 seconds after a start or restart. | `sindri serve` |
+| `SND-SETUP-013` | GitHub or Linear refused Sindri's OAuth app (an org policy). | Paste a token: `sindri setup connect <provider> --token-env NAME` |
+| `SND-SETUP-014` | This build ships no client id for the provider and the profile sets none (`setup.oauth.github`, `setup.oauth.linear`). | Paste a token: `sindri setup connect <provider> --token-env NAME` |
+| `SND-SETUP-015` | The setup pass of `sindri setup --apply` didn't finish within `--timeout`; it keeps running. | `sindri jobs show <id>`, then `sindri setup` |
+| `SND-SETUP-016` | The setup pass of `sindri setup --apply` failed. | `sindri jobs show <id>` |
 
 ## SND-GRAPH (workflow graphs)
 
@@ -194,4 +208,5 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-124` | A `workflow_result` node found no result: the run is not that workflow's, is not finished, or the workflow has no succeeded run |
 | `SND-GRAPH-130` | No question waits at that node |
 | `SND-GRAPH-131` | A reference reads a node that failed and continued |
+| `SND-GRAPH-132` | The setup service ran a workflow other than the hello-sindri one it made, or ran it a second time |
 | `SND-GRAPH-133` | A prompt step's answer said `couldNotAnswer: true`; the message carries the model's `couldNotAnswerWhy` |
