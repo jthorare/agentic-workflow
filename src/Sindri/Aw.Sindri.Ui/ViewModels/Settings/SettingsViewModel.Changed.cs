@@ -24,7 +24,7 @@ internal sealed partial class SettingsViewModel
     public string ResetLabel { get; } = Labels.SettingReset;
 
     /// <summary>True when the "This app" section goes above the setup checklist: the page has no checklist, or setup has answered and is finished or has no steps (Sindri is not running). Before the first answer the order holds.</summary>
-    public bool ThisAppFirst => Setup is null || (Setup.HasAnswered && (Setup.IsFinished || Setup.Steps.Count == 0));
+    public bool ThisAppFirst => Setup is null || (Setup.HasAnswered && (Setup.IsFinished || !Setup.HasSteps));
 
     /// <summary>The Text size Reset button's name.</summary>
     public string ResetTextSizeName => Labels.SettingResetName(TextSizeLabel);
@@ -48,7 +48,7 @@ internal sealed partial class SettingsViewModel
     private void WatchSetup() =>
         Setup?.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName is nameof(SetupViewModel.IsFinished) or nameof(SetupViewModel.HasAnswered))
+            if (e.PropertyName is nameof(SetupViewModel.IsFinished) or nameof(SetupViewModel.HasAnswered) or nameof(SetupViewModel.HasSteps))
             {
                 OnChanged(nameof(ThisAppFirst));
             }

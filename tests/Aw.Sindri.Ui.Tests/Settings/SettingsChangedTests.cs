@@ -119,4 +119,25 @@ public sealed class SettingsChangedTests
         Assert.Empty(setup.Steps);
         Assert.True(settings.ThisAppFirst);
     }
+
+    [Fact]
+    public async Task This_app_moves_back_down_when_sindri_comes_up_with_an_unfinished_checklist()
+    {
+        var fixture = new SetupFixture();
+        fixture.Server.GoDown();
+        var setup = await fixture.Read(Token);
+        using var settings = new SettingsViewModel(new Preferences(_store), _os, static _ => { }, setup);
+        Assert.True(settings.ThisAppFirst);
+        var raised = new List<string?>();
+        settings.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+        fixture.Server.ComeUp();
+        fixture.Serve("first-run");
+        await setup.Refresh(Url, Token);
+
+        Assert.True(setup.HasSteps);
+        Assert.False(setup.IsFinished);
+        Assert.False(settings.ThisAppFirst);
+        Assert.Contains(nameof(SettingsViewModel.ThisAppFirst), raised, StringComparer.Ordinal);
+    }
 }
