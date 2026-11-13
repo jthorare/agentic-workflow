@@ -1,13 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Automation;
-using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 using Aw.Sindri.Ui.Views.Workflows;
 
@@ -45,7 +43,7 @@ internal sealed class GraphNodeCard : UserControl
 
     private readonly Panel _rings = new() { IsHitTestVisible = false };
     private readonly Border _face = new() { Name = "Card", CornerRadius = new CornerRadius(Radius), Padding = new Thickness(12, 8) };
-    private readonly Rectangle _dash = new() { Name = "Dash", RadiusX = Radius, RadiusY = Radius, StrokeThickness = 1, StrokeDashArray = new AvaloniaList<double> { 6, 4 }, IsVisible = false, IsHitTestVisible = false };
+    private readonly Rectangle _dash = new() { Name = "Dash", RadiusX = Radius, RadiusY = Radius, StrokeThickness = 1, StrokeDashArray = [6, 4], IsVisible = false, IsHitTestVisible = false };
     private readonly TextBlock _title = new() { TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
     private readonly TextBlock _kind = new() { TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly StateChipView _chip = new() { Margin = new Thickness(8, 0, 0, 0) };
@@ -196,6 +194,20 @@ internal sealed class GraphNodeCard : UserControl
     // The look: the pens' brush keys for the states it is in, resolved from the theme.
     private void Paint()
     {
+        var states = CurrentStates();
+        var paint = GraphTilePens.Paint(states);
+        _face.Background = Resolve(paint.Fill);
+        _face.BorderThickness = new Thickness(paint.BorderThickness);
+        _face.BorderBrush = paint.Dashed ? Brushes.Transparent : Resolve(paint.Border);
+        _dash.IsVisible = paint.Dashed;
+        _dash.Stroke = Resolve(paint.Border);
+        _title.Foreground = Resolve(paint.Title);
+        _kind.Foreground = Resolve(paint.Kind);
+        PaintRings(states);
+    }
+
+    private GraphTileStates CurrentStates()
+    {
         var states = GraphTileStates.None;
         if (!IsEnabled)
         {
@@ -222,15 +234,11 @@ internal sealed class GraphNodeCard : UserControl
             states |= GraphTileStates.Focus;
         }
 
-        var paint = GraphTilePens.Paint(states);
-        _face.Background = Resolve(paint.Fill);
-        _face.BorderThickness = new Thickness(paint.BorderThickness);
-        _face.BorderBrush = paint.Dashed ? Brushes.Transparent : Resolve(paint.Border);
-        _dash.IsVisible = paint.Dashed;
-        _dash.Stroke = Resolve(paint.Border);
-        _title.Foreground = Resolve(paint.Title);
-        _kind.Foreground = Resolve(paint.Kind);
+        return states;
+    }
 
+    private void PaintRings(GraphTileStates states)
+    {
         _rings.Children.Clear();
         foreach (var ring in GraphTilePens.Rings(states))
         {
