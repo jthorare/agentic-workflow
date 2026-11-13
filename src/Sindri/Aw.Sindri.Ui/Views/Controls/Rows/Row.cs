@@ -25,15 +25,16 @@ internal sealed partial class Row : Control
 
     private const double GlyphBox = 16;
     private const double SelBarWidth = 2;
-    private const double RingStroke = 2;
-    private const double RingRadius = 3;   // the centre line of the 2 px stroke: the outer edge has the 4 px corner of the grammar
+    internal const double RingStroke = 2;
+    internal const double RingCorner = 4;   // the outer corner of the ring, as the grammar says
+    private const double RingRadius = RingCorner - (RingStroke / 2);   // the centre line of the stroke
 
     private IRowItem? _watched;
     private RowGlyph _glyph;
     private RowGlyphPainter.Palette? _palette;
     private IBrush? _selBar;
     private Pen? _ring;
-    private double? _inset;
+    private TopLevel? _top;
     private Avalonia.Styling.ThemeVariant? _variant;
 
     static Row()
@@ -54,11 +55,14 @@ internal sealed partial class Row : Control
             }
 
             _variant = ActualThemeVariant;
-            _palette = null;
-            _selBar = null;
-            _ring = null;
-            _inset = null;
-            InvalidateVisual();
+            DropLayouts();
+        };
+        ResourcesChanged += (_, _) =>
+        {
+            if (TopLevel.GetTopLevel(this) is not null)
+            {
+                DropLayouts();   // the text scale or a brush moved: every layout and brush is cut again
+            }
         };
     }
 
@@ -96,14 +100,16 @@ internal sealed partial class Row : Control
             context.FillRectangle(fill, new Rect(size));   // a Transparent fill is drawn too: it is what makes the whole row hit-testable
         }
 
-        if (DataContext is IRowItem)
+        if (DataContext is IRowItem item)
         {
             _palette ??= RowGlyphPainter.PaletteFor(this);
-            _inset ??= Resource("Row.Inset", 24);
-            using (context.PushTransform(Matrix.CreateTranslation(_inset.Value, (size.Height - GlyphBox) / 2)))
+            Prepare(item, size);
+            using (context.PushTransform(Matrix.CreateTranslation(MetricsNow().Inset, (size.Height - GlyphBox) / 2)))
             {
                 RowGlyphPainter.Paint(context, _glyph, _palette);
             }
+
+            DrawContent(context, item, size.Height);
         }
 
         if (Classes.Contains("sel"))
@@ -128,6 +134,10 @@ internal sealed partial class Row : Control
             Watch(DataContext as IRowItem);
             Refresh();
         }
+        else if (change.Property == ColumnsProperty || change.Property == VisibleColumnsProperty)
+        {
+            DropLayouts();
+        }
         else if (change.Property == IsKeyboardFocusWithinProperty)
         {
             Classes.Set("cursor", IsKeyboardFocusWithin);
@@ -139,6 +149,8 @@ internal sealed partial class Row : Control
     {
         base.OnAttachedToVisualTree(e);
         Watch(DataContext as IRowItem);
+        _top = TopLevel.GetTopLevel(this);
+        _top?.ScalingChanged += OnScalingChanged;
     }
 
     /// <inheritdoc />
@@ -146,6 +158,8 @@ internal sealed partial class Row : Control
     {
         base.OnDetachedFromVisualTree(e);
         Watch(item: null);
+        _top?.ScalingChanged -= OnScalingChanged;
+        _top = null;
     }
 
     // The row follows its item: a changed title, age or fact redraws it and renames it in place (IRowItem's doc).
@@ -173,7 +187,7 @@ internal sealed partial class Row : Control
 
         _glyph = RowGlyphs.For(item.Kind, item.StateClass, item.StateKey);
         AutomationProperties.SetName(this, SpokenName(item, StateWord(item)));
-        InvalidateVisual();
+        DropLayouts();
     }
 
     // "<state>, <title>, <facts>, waits on <who>, <age>": what a screen reader says for the row, and what aw-ui-driver reports as its text.
@@ -195,6 +209,8 @@ internal sealed partial class Row : Control
 
         return string.Join(", ", parts);
     }
+
+    private void OnScalingChanged(object? sender, EventArgs e) => DropLayouts();   // the render scaling moved: the layouts are cut again at the new scale
 
     private IBrush Brush(string key) => this.TryFindResource(key, ActualThemeVariant, out var v) && v is IBrush b ? b : Brushes.Gray;
 

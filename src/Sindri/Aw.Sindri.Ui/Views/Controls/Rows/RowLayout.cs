@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Media;
 
 namespace Aw.Sindri.Ui.Views.Controls.Rows;
@@ -14,6 +15,15 @@ namespace Aw.Sindri.Ui.Views.Controls.Rows;
 /// <param name="IdInk">The id's brush.</param>
 /// <param name="CaptionSize">The font size the caption texts were laid out at.</param>
 /// <param name="LayoutsBuilt">How many text layouts this row built since it was made.</param>
+/// <param name="SubInk">The sub-line's brush.</param>
+/// <param name="Cells">The fact cells of the visible columns.</param>
+/// <param name="AgeRect">Where the age is drawn, in the row's coordinates.</param>
+/// <param name="TitleRect">Where the title is drawn: its x and its laid-out width.</param>
+/// <param name="TitleTrimmed">True when the title is cut with an ellipsis.</param>
+/// <param name="TitleDesiredWidth">How wide the whole title would be.</param>
+/// <param name="SelBar">The selection bar's rectangle, or null when the row is not selected.</param>
+/// <param name="SelBarInk">The selection bar's brush.</param>
+/// <param name="Ring">True when the cursor ring is drawn.</param>
 internal sealed record RowLayout(
     string Id,
     string Title,
@@ -25,4 +35,13 @@ internal sealed record RowLayout(
     IBrush? TitleInk,
     IBrush? IdInk,
     double CaptionSize,
-    int LayoutsBuilt);
+    int LayoutsBuilt,
+    IBrush? SubInk,
+    IReadOnlyList<RowCell> Cells,
+    Rect AgeRect,
+    Rect TitleRect,
+    bool TitleTrimmed,
+    double TitleDesiredWidth,
+    Rect? SelBar,
+    IBrush? SelBarInk,
+    bool Ring);

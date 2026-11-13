@@ -13,8 +13,8 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
 /// <summary>
 /// The RowList's grammar in the real control (#2978): row pitch, aligned fact columns, the selected row, group headers, the sticky header, the peek's 3-column cut
-/// and ellipsis. The contract the control has to meet: a row's cells are named Fact_&lt;key&gt; and PART_Age, its title PART_Title, its selection bar
-/// PART_SelBar; a group header has the class group-header.
+/// and ellipsis. A row is flat (#3189): the tests read what it drew through Row.Layout (cells by column key, the age and title rectangles, the selection bar);
+/// a group header has the class group-header.
 /// </summary>
 [Lane(TestLane.Integration)]
 [Collection(HeadlessWindows.Name)]
@@ -48,10 +48,6 @@ public sealed class RowListFramesTests
 
     private static double Top(Visual v, Visual root) => v.TranslatePoint(default, root)?.Y ?? double.NaN;
 
-    private static double Left(Visual v, Visual root) => v.TranslatePoint(default, root)?.X ?? double.NaN;
-
-    private static Control Cell(Row row, string name) => row.GetVisualDescendants().OfType<Control>().First(c => c.Name == name);
-
     private static Color Brush(string key) => Application.Current!.FindResource(key) is ISolidColorBrush b ? b.Color : default;
 
     [Theory]
@@ -80,14 +76,14 @@ public sealed class RowListFramesTests
         Assert.True(rows.Count >= 8, $"{rows.Count} rows drawn");
         foreach (var column in RowGallery.Columns)
         {
-            var lefts = rows.Select(r => Left(Cell(r, "Fact_" + column.Key), list)).Distinct().ToList();
+            var lefts = rows.Select(r => CellOf(r, column.Key).Bounds.X).Distinct().ToList();
             Assert.True(lefts.Count == 1, $"column {column.Key} starts at {string.Join(", ", lefts)}");
         }
 
-        var rights = rows.Select(r => Left(Cell(r, "PART_Age"), list) + Cell(r, "PART_Age").Bounds.Width).Distinct().ToList();
+        var rights = rows.Select(r => r.Layout.AgeRect.Right).Distinct().ToList();
         Assert.True(rights.Count == 1, $"age ends at {string.Join(", ", rights)}");
-        var wide = Cell(rows[0], "Fact_ref").Bounds.Width;
-        var narrow = Cell(rows[0], "Fact_status").Bounds.Width;
+        var wide = CellOf(rows[0], "ref").Bounds.Width;
+        var narrow = CellOf(rows[0], "status").Bounds.Width;
         Assert.Equal(136, wide, 0.01);
         Assert.Equal(104, narrow, 0.01);
         window.Close();
@@ -106,12 +102,14 @@ public sealed class RowListFramesTests
 
         var row = Assert.Single(selected);
         Assert.Same(groups[0].Rows[3], row.DataContext);
-        var bar = Assert.IsType<Border>(Cell(row, "PART_SelBar"));
-        Assert.Equal(0, Left(bar, row), 0.01);
-        Assert.Equal(2, bar.Bounds.Width, 0.01);
-        Assert.Equal(Brush("Brush.Primary"), Assert.IsType<ISolidColorBrush>(bar.Background, exactMatch: false).Color);
+        var layout = row.Layout;
+        var bar = Assert.IsType<Rect>(layout.SelBar);
+        Assert.Equal(0, bar.X, 0.01);
+        Assert.Equal(2, bar.Width, 0.01);
+        Assert.Equal(row.Bounds.Height, bar.Height, 0.01);
+        Assert.Equal(Brush("Brush.Primary"), Assert.IsType<ISolidColorBrush>(layout.SelBarInk, exactMatch: false).Color);
         Assert.Equal(Brush("Brush.PrimarySoft"), Assert.IsType<ISolidColorBrush>(row.Background, exactMatch: false).Color);
-        Assert.All(Rows(list).Where(r => !ReferenceEquals(r, row)), r => Assert.False(Cell(r, "PART_SelBar").IsVisible));
+        Assert.All(Rows(list).Where(r => !ReferenceEquals(r, row)), r => Assert.Null(r.Layout.SelBar));
         window.Close();
         return true;
     });
@@ -170,14 +168,14 @@ public sealed class RowListFramesTests
         Assert.Equal(440, peek.Bounds.Width, 0.01);
         Assert.Equal(3, list.PeekColumns);
         var shown = VisibleFacts(Rows(list)[0]);
-        Assert.Equal([.. RowGallery.Columns.Take(3).Select(c => "Fact_" + c.Key)], shown, StringComparer.Ordinal);
+        Assert.Equal([.. RowGallery.Columns.Take(3).Select(c => c.Key)], shown, StringComparer.Ordinal);
         window.Close();
         return true;
     });
 
-    private static List<string> VisibleFacts(Row row) =>
-        [.. row.GetVisualDescendants().OfType<Control>().Where(c => c.Name?.StartsWith("Fact_", StringComparison.Ordinal) == true && c.IsEffectivelyVisible && c.Bounds.Width > 0)
-            .OrderBy(c => Left(c, row)).Select(c => c.Name!)];
+    private static List<string> VisibleFacts(Row row) => [.. row.Layout.Cells.Select(c => c.Key)];
+
+    private static RowCell CellOf(Row row, string key) => row.Layout.Cells.Single(c => string.Equals(c.Key, key, StringComparison.Ordinal));
 
     [Fact]
     public async Task A_long_title_and_a_long_ref_are_cut_with_an_ellipsis_and_do_not_wrap() => await OnUi(() =>
@@ -187,18 +185,16 @@ public sealed class RowListFramesTests
 
         var rows = Rows(list);
         var longTitle = rows.First(r => ReferenceEquals(r.DataContext, groups[0].Rows[1]));
-        var title = Assert.IsType<TextBlock>(Cell(longTitle, "PART_Title"));
-        Assert.Equal(TextTrimming.CharacterEllipsis, title.TextTrimming);
-        Assert.Equal(TextWrapping.NoWrap, title.TextWrapping);
-        Assert.True(title.DesiredSize.Width > title.Bounds.Width, string.Create(CultureInfo.InvariantCulture, $"desired {title.DesiredSize.Width}, arranged {title.Bounds.Width}"));
+        var title = longTitle.Layout;
+        Assert.True(title.TitleTrimmed);   // the title is cut with an ellipsis and does not wrap: it is one line, narrower than the whole title
+        Assert.True(title.TitleDesiredWidth > title.TitleRect.Width, string.Create(CultureInfo.InvariantCulture, $"desired {title.TitleDesiredWidth}, drawn {title.TitleRect.Width}"));
         Assert.Equal(32, longTitle.Bounds.Height, 0.01);
 
         var longRef = rows.First(r => ReferenceEquals(r.DataContext, groups[0].Rows[2]));
-        var text = Cell(longRef, "Fact_ref").GetVisualDescendants().OfType<TextBlock>().First();
-        Assert.Contains("…", text.Text, StringComparison.Ordinal);
-        Assert.EndsWith("/exports", text.Text, StringComparison.Ordinal);   // the middle goes, the end that tells refs apart stays
-        Assert.StartsWith("acme", text.Text, StringComparison.Ordinal);
-        Assert.Equal(TextTrimming.CharacterEllipsis, text.TextTrimming);
+        var text = CellOf(longRef, "ref").Text;
+        Assert.Contains("…", text, StringComparison.Ordinal);
+        Assert.EndsWith("/exports", text, StringComparison.Ordinal);   // the middle goes, the end that tells refs apart stays
+        Assert.StartsWith("acme", text, StringComparison.Ordinal);
         window.Close();
         return true;
     });

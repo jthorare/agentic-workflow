@@ -55,10 +55,10 @@ public sealed class RowAccessTests
         host.Show();
         Settle(host);
 
-        var sub = Rows(list)[0].GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("row-sub"));
+        var sub = Rows(list)[0].Layout;
         var label = peek.GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("peek-label"));
 
-        Assert.Equal(Brush("Brush.InkSubtle"), Assert.IsType<ISolidColorBrush>(sub.Foreground, exactMatch: false).Color);
+        Assert.Equal(Brush("Brush.InkSubtle"), Assert.IsType<ISolidColorBrush>(sub.SubInk, exactMatch: false).Color);
         Assert.Equal(Brush("Brush.InkSubtle"), Assert.IsType<ISolidColorBrush>(label.Foreground, exactMatch: false).Color);
         window.Close();
         host.Close();
@@ -76,7 +76,6 @@ public sealed class RowAccessTests
 
         Assert.StartsWith("in review, Row 1, In review, 3/8, +120 -4, acme/exports, Maya", name, StringComparison.Ordinal);
         Assert.EndsWith("waits on you, 12m", name, StringComparison.Ordinal);
-        Assert.Equal("in review", AutomationProperties.GetName(row.GetVisualDescendants().OfType<RowGlyphView>().Single()));
         window.Close();
         return true;
     });

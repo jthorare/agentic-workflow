@@ -64,7 +64,7 @@ public sealed class RowListLiveTests
     private static string? FocusedKey(Window window) =>
         (window.FocusManager?.GetFocusedElement() as Visual)?.FindAncestorOfType<Row>(includeSelf: true)?.DataContext is IRowItem item ? item.Key : null;
 
-    private static string TitleOf(Row row) => row.GetVisualDescendants().OfType<TextBlock>().First(t => t.Name == "PART_Title").Text ?? string.Empty;
+    private static string TitleOf(Row row) => row.Layout.Title;
 
     [Fact]
     public async Task Appending_rows_keeps_the_focused_row_in_the_same_container() => await OnUi(() =>
@@ -183,9 +183,8 @@ public sealed class RowListLiveTests
 
         Assert.Same(row, RowOf(list, "k1"));
         Assert.Equal("Failed: could not send", TitleOf(row));
-        Assert.Equal("9m", row.GetVisualDescendants().OfType<TextBlock>().First(t => t.Name == "PART_Age").Text);
-        var chip = row.GetVisualDescendants().OfType<Border>().First(b => b.Classes.Contains("status-chip"));
-        Assert.Equal("CI red", Assert.IsType<TextBlock>(chip.Child).Text);
+        Assert.Equal("9m", row.Layout.Age);
+        Assert.Equal("CI red", Assert.Single(row.Layout.Chips).Text);
         window.Close();
         return true;
     });
@@ -199,7 +198,7 @@ public sealed class RowListLiveTests
         group.Rows[2].Facts = new Dictionary<string, RowFact>(StringComparer.Ordinal) { ["status"] = new(RowFactKind.Chip, "2 of 2 ok", Tone: RowTone.Success) };
         var (window, list) = Show(new[] { group });
 
-        string[] Classes(string key) => [.. RowOf(list, key).GetVisualDescendants().OfType<Border>().First(b => b.Classes.Contains("status-chip")).Classes.Where(c => c != "status-chip")];
+        string[] Classes(string key) => [Assert.Single(RowOf(list, key).Layout.Chips).Tone];
 
         Assert.Equal(["error"], Classes("k0"));
         Assert.Equal(["neutral"], Classes("k1"));
@@ -384,10 +383,8 @@ public sealed class RowListLiveTests
 
         Focus(window, list, "k1");
 
-        var ring = row.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Ring");
-        Assert.True(ring.IsVisible);
-        Assert.Equal(new Thickness(2), ring.BorderThickness);
-        Assert.Equal(new CornerRadius(4), ring.CornerRadius);
+        Assert.True(row.Layout.Ring);
+        Assert.Equal((2.0, 4.0), (Row.RingStroke, Row.RingCorner));
         Assert.Equal(resting, row.Bounds.Height, 0.01);
         window.Close();
         return true;
@@ -425,22 +422,17 @@ public sealed class RowListLiveTests
         var group = new LiveGroup("Needs you", [LiveRow.At(0)]);
         group.Rows[0].Facts = new Dictionary<string, RowFact>(StringComparer.Ordinal) { ["ref"] = new(RowFactKind.Ref, RowGallery.LongRef) };
         var (window, list) = Show(new[] { group });
-        double Fitted()
-        {
-            var cell = list.GetVisualDescendants().OfType<Border>().First(b => b.Name == "Fact_ref");
-            var text = cell.GetVisualDescendants().OfType<TextBlock>().First();
-            text.Measure(Size.Infinity);
-            return text.DesiredSize.Width;
-        }
+        RowCell Cell() => RowOf(list, "k0").Layout.Cells.Single(c => string.Equals(c.Key, "ref", StringComparison.Ordinal));
+        double Fitted() => Cell().TextWidth;
 
         var at100 = Fitted();
         try
         {
             TextScale.Apply(resources, 1.3);
             Settle(window);
-            var cell = list.GetVisualDescendants().OfType<Border>().First(b => b.Name == "Fact_ref");
+            var width = Cell().Bounds.Width;
 
-            Assert.True(Fitted() <= cell.Width + 0.5, string.Create(CultureInfo.InvariantCulture, $"ref is {Fitted():0.0} px wide in a {cell.Width:0.0} px column at 130% (it was {at100:0.0} at 100%)"));
+            Assert.True(Fitted() <= width + 0.5, string.Create(CultureInfo.InvariantCulture, $"ref is {Fitted():0.0} px wide in a {width:0.0} px column at 130% (it was {at100:0.0} at 100%)"));
         }
         finally
         {
