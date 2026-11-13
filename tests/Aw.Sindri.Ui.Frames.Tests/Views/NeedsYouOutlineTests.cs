@@ -161,32 +161,52 @@ public sealed class NeedsYouOutlineTests : FrameHost
         return (Math.Max(x, y) + 0.05) / (Math.Min(x, y) + 0.05);
     }
 
-    // #3506: a selected inbox row that also has keyboard focus (the usual case, selecting is the focus) lost its selected border, because the focus style
-    // restates the border brush after the selected one. The selected fill alone is 1.18:1 on the canvas, so nothing marked the selection.
-    // Accepted fixes: the ring's brush differs from a focused-only row's (a different colour while selected), or its width differs, or a box shadow adds a selected edge
-    // inside it. Whatever differs must reach 3:1 on the selected row's fill. A fix that keeps the same ring and draws the selected border in a child control is not
-    // seen here; if that is the fix, change the marker below to read that child.
-    [Fact]
-    public Task A_selected_focused_row_still_shows_a_selected_marker() => OnUi(async () =>
+    private static Color FillOf(Border border) => (border.Background as ISolidColorBrush)?.Color ?? Colors.Transparent;
+
+    private static (Window Window, Border FocusedOnly, Border Both) FocusedRows()
     {
-        Motion.Set(reduce: true);
-        using var instant = InstantMotion.Start();
-        var focusedOnly = new Border { Classes = { "inbox-row" }, Width = 400, Height = 56 };
-        var both = new Border { Classes = { "inbox-row", "selected" }, Width = 400, Height = 56 };
+        var focusedOnly = new Border { Classes = { "inbox-row" }, Width = 400, Height = 56, Child = new TextBlock { Text = "Row" } };
+        var both = new Border { Classes = { "inbox-row", "selected" }, Width = 400, Height = 56, Child = new TextBlock { Text = "Row" } };
         var window = new Window { Content = new StackPanel { Children = { focusedOnly, both } }, Width = 480, Height = 240 };
         window.Show();
         ((IPseudoClasses)focusedOnly.Classes).Set(":focus-visible", value: true);
         ((IPseudoClasses)both.Classes).Set(":focus-visible", value: true);
         Settle(window);
+        return (window, focusedOnly, both);
+    }
 
-        var plain = (BrushOf(focusedOnly), focusedOnly.BorderThickness, focusedOnly.BoxShadow.ToString());
-        var marked = (BrushOf(both), both.BorderThickness, both.BoxShadow.ToString());
-        var fill = ((ISolidColorBrush)both.Background!).Color;
+    // #3506: a selected inbox row that also has keyboard focus (the usual case, selecting is the focus) lost its selected border, because the focus style
+    // restates the border brush after the selected one. The selected fill alone is 1.18:1 on the canvas, so nothing marked the selection.
+    // Both looks are pinned exactly (option 1, a 2 px ring): focused-only is a 1 px PrimaryHover border on the row's normal fill; selected and focused is a 2 px PrimaryHover
+    // border on the Surface2 fill. A later edit cannot make them equal again, and the ring must reach 3:1 on the selected fill.
+    [Fact]
+    public Task A_selected_focused_row_still_shows_a_selected_marker() => OnUi(async () =>
+    {
+        Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
+        var (window, focusedOnly, both) = FocusedRows();
 
-        Assert.True(!plain.Equals(marked), $"the selected and focused row draws {marked.Item1}, thickness {marked.Item2}, shadow '{marked.Item3}', the same as a focused-only row: no selected marker");
-        // Of what differs, the colour that is not the row's own fill must stand out from it.
-        var markerColour = marked.Item1 != plain.Item1 ? marked.Item1 : BrushOf(both);
-        Assert.True(Ratio(markerColour, fill) >= 3.0, $"the marker {markerColour} on the row fill {fill} is {Ratio(markerColour, fill):0.00}:1, below 3:1");
+        Assert.Equal((Brush("Brush.PrimaryHover"), new Thickness(1)), (BrushOf(focusedOnly), focusedOnly.BorderThickness));
+        Assert.NotEqual(Brush("Brush.Surface2"), FillOf(focusedOnly));
+        Assert.Equal((Brush("Brush.PrimaryHover"), new Thickness(2), Brush("Brush.Surface2")), (BrushOf(both), both.BorderThickness, FillOf(both)));
+        Assert.True(Ratio(BrushOf(both), FillOf(both)) >= 3.0, $"the ring {BrushOf(both)} on the row fill {FillOf(both)} is {Ratio(BrushOf(both), FillOf(both)):0.00}:1, below 3:1");
+        window.Close();
+        await Task.CompletedTask;
+    });
+
+    // The 2 px ring cuts the padding by 1 (15,7 against 16,8), so the content stays where it is. That holds only while the base border is 1 px.
+    [Fact]
+    public Task A_selected_focused_rows_content_sits_where_a_focused_only_rows_content_does() => OnUi(async () =>
+    {
+        Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
+        var (window, focusedOnly, both) = FocusedRows();
+
+        var plain = ((TextBlock)focusedOnly.Child!).TranslatePoint(default, focusedOnly);
+        var marked = ((TextBlock)both.Child!).TranslatePoint(default, both);
+
+        Assert.NotNull(plain);
+        Assert.Equal(plain, marked);
         window.Close();
         await Task.CompletedTask;
     });
