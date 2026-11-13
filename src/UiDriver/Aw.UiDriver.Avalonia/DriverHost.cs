@@ -64,19 +64,38 @@ internal sealed class DriverHost(Func<Window?> window, TimeProvider clock)
     /// <summary>
     /// Hovers. Hit testing reads the drawn scene, which a just-shown or just-changed window brings up to date on its next frame, so a move that
     /// lands before that frame misses: the move is sent again each poll until the element reports the pointer over it, for up to ten polls.
+    /// The answer says which path held (#3488): "real" when the pointer is over the element, "class" when it never landed and only the
+    /// :pointerover class is set.
     /// </summary>
     /// <param name="request">The element, and whether to move off it.</param>
-    /// <returns>The element, or the error that stopped the hover.</returns>
+    /// <returns>The element and the path that held, or the error that stopped the hover.</returns>
     internal async Task<Result<ActedResponse>> Hover(HoverRequest request)
     {
         var done = await HoverOnce(request).ConfigureAwait(false);
-        for (var polls = 0; !request.Off && done.IsSuccess && polls < 10 && !await PointerOver(request.Selector).ConfigureAwait(false); polls++)
+        if (request.Off || done.IsError)
         {
-            await Task.Delay(_poll, clock).ConfigureAwait(false);
-            done = await HoverOnce(request).ConfigureAwait(false);
+            return done;
         }
 
-        return done;
+        for (var polls = 0; ; polls++)
+        {
+            if (await PointerOver(request.Selector).ConfigureAwait(false))
+            {
+                return done.Value with { Pointer = ActedResponse.RealPointer };
+            }
+
+            if (polls == 10)
+            {
+                return done.Value with { Pointer = ActedResponse.ClassOnly };
+            }
+
+            await Task.Delay(_poll, clock).ConfigureAwait(false);
+            done = await HoverOnce(request).ConfigureAwait(false);
+            if (done.IsError)
+            {
+                return done;
+            }
+        }
     }
 
     private Task<Result<ActedResponse>> HoverOnce(HoverRequest request) => Act(request.Selector, (_, visual) => ElementActions.Hover(visual, !request.Off));
