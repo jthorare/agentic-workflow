@@ -18,7 +18,8 @@ check() {
   fi
 }
 has() { # has <name> <text> <fixed string>
-  if printf '%s' "$2" | grep -qF -- "$3"; then echo "ok - $1"; else echo "not ok - $1"; echo "  missing: $3"; echo "  in: $2"; fail=1; fi
+  # No `printf | grep -q`: under pipefail grep's early exit kills printf with SIGPIPE and a present needle reads as missing (#3551).
+  case "$2" in *"$3"*) echo "ok - $1" ;; *) echo "not ok - $1"; echo "  missing: $3"; echo "  in: $2"; fail=1 ;; esac
 }
 # #3551: `has` was `printf | grep -q` under pipefail. printf writes one line per write(), and grep -q exits at the first match, so
 # a later write hit a closed pipe, printf died of SIGPIPE and pipefail made `has` say "missing" for text that was there. It fired when
