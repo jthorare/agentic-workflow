@@ -270,7 +270,7 @@ public sealed class RowFlatRedTests
     });
 
     // Null when the window now has this render scaling; otherwise why it could not be set.
-    private static string? SetHostScaling(Window window, double scaling)
+    internal static string? SetHostScaling(Window window, double scaling)
     {
         var type = typeof(AvaloniaHeadlessPlatform).Assembly.GetType("Avalonia.Headless.IHeadlessWindow", throwOnError: false);
         var method = type?.GetMethod("SetRenderScaling");
