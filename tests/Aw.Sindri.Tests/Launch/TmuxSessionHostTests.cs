@@ -295,8 +295,8 @@ public sealed class TmuxSessionHostTests : SessionHostContract, IDisposable
     private async Task<string?> PaneDeadWhenSet(string name)
     {
         string? dead = null;
-        var deadline = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(10);
-        while (DateTimeOffset.UtcNow < deadline && dead != "1")
+        var deadline = RealTime.NowOffset + TimeSpan.FromSeconds(10);
+        while (RealTime.NowOffset < deadline && dead != "1")
         {
             dead = _tmux.HasSession(name) ? _tmux.Run("list-panes", "-t", "=" + name, "-F", "#{pane_dead}")?.Trim() : null;
             if (dead != "1")
