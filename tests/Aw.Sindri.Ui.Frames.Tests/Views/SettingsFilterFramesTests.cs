@@ -117,7 +117,8 @@ public sealed class SettingsFilterFramesTests : FrameHost
         var (window, shell) = await Connected();
         var (_, settings) = PutSettings(window, shell);
         Settle(window);
-        var labels = Named<Border>(window, "ThisAppCard").GetVisualDescendants().OfType<TextBlock>().Select(static t => t.Text).Where(static s => !string.IsNullOrWhiteSpace(s)).Distinct(StringComparer.Ordinal).ToList();
+        // Only labels on screen: a mark hidden by its own binding (the "Changed" mark while nothing changed) is not a word the filter matches.
+        var labels = Named<Border>(window, "ThisAppCard").GetVisualDescendants().OfType<TextBlock>().Where(static t => t.IsEffectivelyVisible).Select(static t => t.Text).Where(static s => !string.IsNullOrWhiteSpace(s)).Distinct(StringComparer.Ordinal).ToList();
         Assert.NotEmpty(labels);
 
         foreach (var label in labels)
