@@ -65,23 +65,26 @@ public sealed class CodeIndexCardViewTests : FrameHost
         Frame(window, "health-code-index", "ci10b-");
     });
 
-    private static string TwoRepos(string a, string b) => """{"repos":[""" + Repo(a) + "," + Repo(b) + "]}";
-
-    private static string Repo(string name) => $$"""{"repo":"{{name}}","state":"ok","commit":"abcdef0123456789abcdef0123456789abcdef01","builtAt":"2026-10-20T12:00:00Z","layers":[{"layer":"structure","state":"ok","code":null,"detail":"ok"}],"counts":null}""";
-
-    // #3577: two repo lines that both wrap touched, because the row Border had a MinHeight and the list no spacing.
+    // #3577, qa round 4: the ink gap (text bottom to next text top) was 31, 23, 15 or 7 px depending on whether a line wrapped, and last line to note was another 23.
+    // Every gap on the card is now one thing: a line's own padding on each side, so wrapped or not they are equal and the last line meets the note the same way.
     [Fact]
-    public Task Two_wrapped_repo_lines_keep_a_gap_between_them() => OnUi(async () =>
+    public Task Every_gap_between_repo_lines_and_before_the_note_is_the_same() => OnUi(async () =>
     {
-        Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, TwoRepos(LongRepo, LongRepo + "-2"));
-        var (window, shell) = await Connected(s => s.Health.CodeIndex.Lines.Count > 1, width: 360, height: 800);
+        string[] names = [LongRepo, LongRepo + "-2", "short-a", "short-b"];
+        Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, "{\"repos\":[" + string.Join(',', names.Select(Missing)) + "],\"health\":[" + string.Join(',', names.Select(Paused)) + "]}");
+        var (window, shell) = await Connected(s => s.Health.CodeIndex.Lines.Count > 3, width: 360, height: 1000);
         shell.GoTo(PageId.System);
         Settle(window);
 
-        var rows = Named<ItemsControl>(window, "CodeIndexLines").ItemsPanelRoot!.Children;
+        var lines = Named<ItemsControl>(window, "CodeIndexLines").GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).ToList();
+        var note = Named<TextBlock>(window, "CodeIndexPausedNote");
+        Assert.Equal(4, lines.Count);
+        Assert.True(lines[0].Bounds.Height > lines[2].Bounds.Height * 1.5 && lines[1].Bounds.Height > lines[3].Bounds.Height * 1.5, "the long lines wrap and the short ones do not");
+        double Ink(TextBlock above, TextBlock below) => below.TranslatePoint(new Point(0, 0), window)!.Value.Y - above.TranslatePoint(new Point(0, above.Bounds.Height), window)!.Value.Y;
+        var gaps = new[] { Ink(lines[0], lines[1]), Ink(lines[1], lines[2]), Ink(lines[2], lines[3]), Ink(lines[3], note) };
         var space = Assert.IsType<double>(Application.Current!.FindResource("Space.XS"));
-        Assert.Equal(2, rows.Count);
-        Assert.True(rows[1].Bounds.Top - rows[0].Bounds.Bottom >= space, "the second line starts a Space.XS below the first");
+        Assert.All(gaps, g => Assert.Equal(gaps[0], g, 1));
+        Assert.True(gaps[0] >= space, "a gap is at least Space.XS");
     });
 
     // #3576: one command for the whole card (the pause is one service), under its own words, mono and unwrapped.
