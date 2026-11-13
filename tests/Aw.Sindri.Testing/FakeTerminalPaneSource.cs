@@ -25,6 +25,18 @@ public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<Termin
     /// <summary>When set, <see cref="Open"/> answers this error (SND-AGENT-015 or 016).</summary>
     public Error? OpenFails { get; set; }
 
+    /// <summary>
+    /// When true, typed text (not keys, not paste) is echoed like a tty does: the next frame is the last one with the text added to its first row, instead of the next
+    /// scripted frame. Lets the contract check that typed text arrives.
+    /// </summary>
+    public bool EchoText { get; set; }
+
+    /// <summary>When true, a stream's frame pump throws <see cref="OperationCanceledException"/> after its first frame without any cancel: a slow capture that hit the source's call budget.</summary>
+    public bool CaptureTimesOut { get; set; }
+
+    /// <summary>When true, typing text or a key throws <see cref="OperationCanceledException"/> without any cancel: a slow send that hit the source's call budget.</summary>
+    public bool SendTimesOut { get; set; }
+
     /// <summary>What the streams were sent, in order: 'key:Enter', 'text:hi', 'paste:…', 'size:120x36'.</summary>
     public IList<string> Sent { get; } = [];
 
@@ -74,6 +86,8 @@ public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<Termin
         private readonly FakeTerminalPaneSource _owner;
         private readonly Channel<TerminalFrame> _frames = Channel.CreateUnbounded<TerminalFrame>();
         private int _next;
+        private TerminalFrame? _last;
+        private string _typed = string.Empty;
 
         public Stream(FakeTerminalPaneSource owner)
         {
@@ -90,6 +104,11 @@ public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<Termin
                 while (_frames.Reader.TryRead(out var frame))
                 {
                     yield return frame;
+                    if (_owner.CaptureTimesOut)
+                    {
+                        throw new OperationCanceledException("the capture hit its call budget");
+                    }
+
                     if (frame.Dead)
                     {
                         yield break;
@@ -100,6 +119,11 @@ public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<Termin
 
         public ValueTask<Result<Unit>> SendKey(string key, CancellationToken cancellationToken)
         {
+            if (_owner.SendTimesOut)
+            {
+                throw new OperationCanceledException("the send hit its call budget");
+            }
+
             var checkedKey = TerminalKeys.Check(key);
             if (checkedKey.IsError)
             {
@@ -109,8 +133,31 @@ public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<Termin
             return Sent($"key:{key}");
         }
 
-        public ValueTask<Result<Unit>> SendText(string text, CancellationToken cancellationToken) =>
-            text.Length > 4096 ? Refuse("text is over 4 KiB") : Sent($"text:{text}");
+        public ValueTask<Result<Unit>> SendText(string text, CancellationToken cancellationToken)
+        {
+            if (_owner.SendTimesOut)
+            {
+                throw new OperationCanceledException("the send hit its call budget");
+            }
+
+            if (text.Length > 4096)
+            {
+                return Refuse("text is over 4 KiB");
+            }
+
+            if (!_owner.EchoText || _last is null)
+            {
+                return Sent($"text:{text}");
+            }
+
+            _typed += text;
+            _owner.Sent.Add($"text:{text}");
+            var rows = _last.Rows.ToList();
+            rows[0] += _typed;
+            _last = _last with { Seq = _last.Seq + 1, Rows = rows };
+            _ = _frames.Writer.TryWrite(_last);
+            return ValueTask.FromResult<Result<Unit>>(Unit.Value);
+        }
 
         public ValueTask<Result<Unit>> Paste(string text, CancellationToken cancellationToken) =>
             text.Length > 256 * 1024 ? Refuse("paste is over 256 KiB") : Sent($"paste:{text}");
@@ -147,7 +194,8 @@ public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<Termin
         {
             if (_next < _owner._script.Count)
             {
-                _ = _frames.Writer.TryWrite(_owner._script[_next++]);
+                _last = _owner._script[_next++];
+                _ = _frames.Writer.TryWrite(_last);
             }
         }
     }

@@ -90,6 +90,35 @@ public abstract class TerminalPaneSourceContract
         Expect.True((await stream.Resize(new HostSize(120, 36), Token)).IsSuccess);
     }
 
+    /// <summary>Typed text arrives whole, a trailing ';' included (tmux reads a trailing ';' in an argument as a command separator and drops it).</summary>
+    /// <param name="before">Text typed first in its own message, or empty.</param>
+    /// <param name="text">The text typed in one message.</param>
+    /// <returns>The test.</returns>
+    [Theory]
+    [InlineData("", "ab;")]
+    [InlineData("ab", ";")]
+    [InlineData("", "ab;;")]
+    [InlineData("", "x\\;")]
+    public async Task Typed_text_arrives_with_its_semicolons(string before, string text)
+    {
+        var source = await Create();
+        await using var stream = (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), size: null, Token)).Value;
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        limit.CancelAfter(TimeSpan.FromSeconds(5));
+        await using var frames = stream.Frames(limit.Token).GetAsyncEnumerator(limit.Token);
+        Expect.True(await frames.MoveNextAsync());
+        if (before.Length > 0)
+        {
+            Expect.True((await stream.SendText(before, Token)).IsSuccess);
+        }
+
+        Expect.True((await stream.SendText(text, Token)).IsSuccess);
+        while (!string.Join('\n', frames.Current.Rows).Contains(before + text, StringComparison.Ordinal))
+        {
+            Expect.True(await frames.MoveNextAsync());
+        }
+    }
+
     /// <summary>A session with no tmux pane is SND-AGENT-015.</summary>
     /// <returns>The test.</returns>
     [Fact]

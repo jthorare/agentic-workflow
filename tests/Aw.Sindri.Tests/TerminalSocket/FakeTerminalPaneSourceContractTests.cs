@@ -8,7 +8,12 @@ namespace Aw.Sindri.Tests.TerminalSocket;
 [Lane(TestLane.Unit)]
 public sealed class FakeTerminalPaneSourceContractTests : TerminalPaneSourceContract
 {
-    protected override ValueTask<ITerminalPaneSource> Create() => ValueTask.FromResult<ITerminalPaneSource>(FakeTerminalPaneSource.FromFixture());
+    protected override ValueTask<ITerminalPaneSource> Create()
+    {
+        var fake = FakeTerminalPaneSource.FromFixture();
+        fake.EchoText = true;   // typed text shows on the screen, like the tmux pane's tty echo
+        return ValueTask.FromResult<ITerminalPaneSource>(fake);
+    }
 
     protected override ValueTask<ITerminalPaneSource> CreateRefusing(string code)
     {
