@@ -6,6 +6,8 @@ namespace Aw.Sindri.Features.SetupWatch;
 /// <summary>
 /// Finds the first agent whose binary the login shell finds. The launcher's answer costs one login-shell call per agent binary, so a search that found none is not repeated on the next ticks:
 /// it runs again after <see cref="RetryEvery"/> ticks, or at once when the PATH changed.
+/// The PATH check reads serve's own process PATH, which is fixed when serve starts, while the launcher looks agents up through a login shell; so in a running serve an agent installed later is
+/// found by the retry (about 5-6 min at the 60 s tick), and the PATH check only helps a host whose own PATH changes.
 /// </summary>
 /// <param name="launch">The launcher's catalog: which agents are installed.</param>
 /// <param name="environment">Reads PATH, to tell a changed PATH from the same one.</param>
