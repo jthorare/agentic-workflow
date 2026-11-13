@@ -258,12 +258,37 @@ public sealed class TmuxSessionHostTests : SessionHostContract, IDisposable
         var session = new HostSession("sindri-stay0001", _tmux.Scratch, ["sh", "-c", "sleep 1"], new Dictionary<string, string>(StringComparer.Ordinal)) { Size = new HostSize(100, 30), RemainOnExit = true };
 
         var started = await Create().Start(session, _deadline, CancellationToken.None);
-        await Task.Delay(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken);
 
         Expect.True(started.IsSuccess);
-        Expect.True(_tmux.HasSession("sindri-stay0001"));   // the process ended; the pane stays so the view can show Ended
-        Expect.Equal("1", _tmux.Run("list-panes", "-t", "=sindri-stay0001", "-F", "#{pane_dead}")?.Trim());
+        Expect.Equal("1", await PaneDeadWhenSet("sindri-stay0001"));   // the process ended; the pane stays so the view can show Ended
         Expect.Equal("100x30", _tmux.Run("list-windows", "-t", "=sindri-stay0001", "-F", "#{window_width}x#{window_height}")?.Trim());
+    }
+
+    [Fact]
+    public async Task An_agent_that_dies_at_once_keeps_its_dead_pane()
+    {
+        var session = new HostSession("sindri-dies0001", _tmux.Scratch, ["false"], new Dictionary<string, string>(StringComparer.Ordinal)) { RemainOnExit = true };
+
+        var started = await Create().Start(session, _deadline, CancellationToken.None);
+
+        Expect.True(started.IsSuccess);
+        Expect.Equal("1", await PaneDeadWhenSet("sindri-dies0001"));   // why: remain-on-exit lands in the new-session call, before tmux reaps 'false' (#3466)
+    }
+
+    private async Task<string?> PaneDeadWhenSet(string name)
+    {
+        string? dead = null;
+        var deadline = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(10);
+        while (DateTimeOffset.UtcNow < deadline && dead != "1")
+        {
+            dead = _tmux.HasSession(name) ? _tmux.Run("list-panes", "-t", "=" + name, "-F", "#{pane_dead}")?.Trim() : null;
+            if (dead != "1")
+            {
+                await Task.Delay(50, TestContext.Current.CancellationToken);
+            }
+        }
+
+        return dead;
     }
 
     [Fact]

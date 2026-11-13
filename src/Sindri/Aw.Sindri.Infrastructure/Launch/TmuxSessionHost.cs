@@ -82,12 +82,6 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
 
         if (started)
         {
-            if (session.RemainOnExit)
-            {
-                // the plain name, not '=name': a window option takes a window target, and '=name' is not one (tmux 3.4: "no such window")
-                _ = await Run(["set-option", "-t", session.Name, "remain-on-exit", "on"], deadline).ConfigureAwait(false);
-            }
-
             await ShowStatusLine(session, name, deadline).ConfigureAwait(false);
             return name;
         }
@@ -239,8 +233,11 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
 
     private static string Short(string text) => text.Trim() is { Length: > 200 } t ? t[..200] : text.Trim();
 
+    // why: remain-on-exit goes in the same tmux call, after ';', so the server sets it before it reaps the child: an agent that dies at once keeps its pane and its error text (#3466).
+    // The plain name, not '=name': a window option takes a window target, and '=name' is not one (tmux 3.4: "no such window").
     private static List<string> Create(HostSession session, string script) =>
-        ["new-session", "-d", "-s", session.Name, .. session.Size is { } size ? (string[])["-x", Text(size.Cols), "-y", Text(size.Rows)] : [], "-c", session.WorkDir, "sh", script];
+        ["new-session", "-d", "-s", session.Name, .. session.Size is { } size ? (string[])["-x", Text(size.Cols), "-y", Text(size.Rows)] : [], "-c", session.WorkDir, "sh", script,
+            .. session.RemainOnExit ? (string[])[";", "set-option", "-t", session.Name, "remain-on-exit", "on"] : []];
 
     private static string Text(int number) => number.ToString(CultureInfo.InvariantCulture);
 
