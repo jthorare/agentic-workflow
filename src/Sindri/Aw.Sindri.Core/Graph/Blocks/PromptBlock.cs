@@ -18,7 +18,7 @@ public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
 
     private const int ShownLength = 200;
 
-    private static readonly HashSet<string> SchemaKeywords = new(["type", "properties", "required"], StringComparer.Ordinal);
+    private static readonly HashSet<string> _schemaKeywords = new(["type", "properties", "required"], StringComparer.Ordinal);
 
     private const string RepairLine = "\n\nYour answer was not a JSON object. Answer again with only the JSON object.";
 
@@ -160,7 +160,7 @@ public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
         string.Equals(Text(answer["type"]), "object", StringComparison.Ordinal)
         && answer["properties"] is JsonObject
         && !(schema["properties"] is JsonObject properties
-            && properties.Any(p => !SchemaKeywords.Contains(p.Key) && answer.ContainsKey(p.Key)));
+            && properties.Any(p => !_schemaKeywords.Contains(p.Key) && answer.ContainsKey(p.Key)));
 
     // why: the two fields are optional and implicit, so they are added to the schema the model sees and never to the node's outputs
     private static JsonObject WithImplicitFields(JsonObject schema)
