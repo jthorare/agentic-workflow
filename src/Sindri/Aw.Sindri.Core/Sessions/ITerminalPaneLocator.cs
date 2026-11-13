@@ -1,7 +1,7 @@
 using Aw.Kernel;
-using Aw.Sindri.Core.Sessions;
+using Aw.Sindri.Core.Launch;
 
-namespace Aw.Sindri.Core.Launch;
+namespace Aw.Sindri.Core.Sessions;
 
 /// <summary>Finds the tmux pane of a session (agents spec §15.2): the 'sindri-&lt;actId&gt;' name joins the launch socket, a discovered session joins its fleet facts by session name plus pane id.</summary>
 public interface ITerminalPaneLocator

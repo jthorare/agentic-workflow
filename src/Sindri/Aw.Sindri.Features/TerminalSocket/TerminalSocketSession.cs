@@ -1,8 +1,8 @@
 using System.Text;
 using System.Text.Json;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sessions;
-using Aw.Sindri.Core;
 
 namespace Aw.Sindri.Features.TerminalSocket;
 

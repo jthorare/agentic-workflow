@@ -4,9 +4,9 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Aw.Kernel;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sessions;
-using Aw.Sindri.Core;
 using Aw.Sindri.Infrastructure.Processes;
 
 namespace Aw.Sindri.Infrastructure.Launch;
@@ -57,13 +57,13 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
     private sealed class PaneStream(TmuxHostOptions options, TerminalTarget target) : IOpenTerminalPane
     {
         private readonly SemaphoreSlim _kick = new(0);
+        private long _seq;   // per stream, not per enumeration: a reader that comes back gets the next number, so frames always count up
 
         public TerminalHost Host { get; } = new(target.SocketIsPath ? "path" : target.Socket, target.Session, target.Pane);
 
         public async IAsyncEnumerable<TerminalFrame> Frames([EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            long seq = 0;
-            string? last = null;
+            string? last = null;   // a new reader gets the current screen at once
             while (!cancellationToken.IsCancellationRequested)
             {
                 var facts = await Facts(cancellationToken).ConfigureAwait(false);
@@ -83,8 +83,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
                 if (!string.Equals(signature, last, StringComparison.Ordinal))
                 {
                     last = signature;
-                    seq++;
-                    yield return new TerminalFrame(seq, rows, facts.CursorX, facts.CursorY, facts.Width, facts.Height, facts.Alt, facts.InMode, facts.Dead);
+                    yield return new TerminalFrame(Interlocked.Increment(ref _seq), rows, facts.CursorX, facts.CursorY, facts.Width, facts.Height, facts.Alt, facts.InMode, facts.Dead);
                     if (facts.Dead)
                     {
                         yield break;

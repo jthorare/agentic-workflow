@@ -147,7 +147,7 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddContextJobs()
             .AddCodeIndexJobs()
             .AddEngineSlices()
-            .AddSessionSlices()
+            .AddSessionSlices().AddTerminalSocket()
             .AddLaunchSlices()
             .AddLaunchTargetJob()
             .AddAddRepo().AddToolkits().AddPinConcepts().AddSetPages().AddRegisterMcpJob().AddOnboardRepo();

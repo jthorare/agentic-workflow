@@ -1,8 +1,8 @@
-using Aw.Kernel.Testing;
 using Aw.Kernel;
+using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sessions;
-using Aw.Sindri.Core;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Testing;
 

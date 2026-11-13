@@ -5685,3 +5685,27 @@ Aw.Sindri.Features.ContextCalls.QueryContextRequest.Limit.get -> string?
 Aw.Sindri.Features.ContextCalls.QueryContextRequest.Limit.init -> void
 Aw.Sindri.Features.ContextCalls.QueryContextRequest.Offset.get -> string?
 Aw.Sindri.Features.ContextCalls.QueryContextRequest.Offset.init -> void
+Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest
+Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest.<Clone>$() -> Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest!
+Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest.Deconstruct(out Aw.Sindri.Core.Sessions.SessionRef Session) -> void
+Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest.Equals(Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest? other) -> bool
+Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest.Session.get -> Aw.Sindri.Core.Sessions.SessionRef
+Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest.Session.init -> void
+Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest.FindTerminalPaneRequest(Aw.Sindri.Core.Sessions.SessionRef Session) -> void
+override Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest.GetHashCode() -> int
+override Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest.ToString() -> string!
+static Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest.operator !=(Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest? left, Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest? right) -> bool
+static Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest.operator ==(Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest? left, Aw.Sindri.Features.TerminalSocket.FindTerminalPaneRequest? right) -> bool
+Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse
+Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.<Clone>$() -> Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse!
+Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.Deconstruct(out Aw.Sindri.Core.Launch.TerminalTarget! Pane) -> void
+Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.Equals(Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? other) -> bool
+Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.Pane.get -> Aw.Sindri.Core.Launch.TerminalTarget!
+Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.Pane.init -> void
+Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.FindTerminalPaneResponse(Aw.Sindri.Core.Launch.TerminalTarget! Pane) -> void
+override Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.GetHashCode() -> int
+override Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.ToString() -> string!
+static Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.operator !=(Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? left, Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? right) -> bool
+static Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.operator ==(Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? left, Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? right) -> bool

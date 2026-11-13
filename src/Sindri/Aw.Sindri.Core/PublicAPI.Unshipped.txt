@@ -23555,8 +23555,8 @@ Aw.Sindri.Core.Launch.TerminalHost.Pane.get -> string!
 Aw.Sindri.Core.Launch.TerminalHost.Session.get -> string!
 Aw.Sindri.Core.Launch.TerminalHost.Socket.get -> string!
 Aw.Sindri.Core.Launch.TerminalHost.TerminalHost(string! Socket, string! Session, string! Pane) -> void
-Aw.Sindri.Core.Launch.ITerminalPaneSource
-Aw.Sindri.Core.Launch.ITerminalPaneSource.Open(Aw.Sindri.Core.Sessions.SessionRef session, Aw.Sindri.Core.Launch.HostSize? size, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Launch.IOpenTerminalPane!>!>
+Aw.Sindri.Core.Sessions.ITerminalPaneSource
+Aw.Sindri.Core.Sessions.ITerminalPaneSource.Open(Aw.Sindri.Core.Sessions.SessionRef session, Aw.Sindri.Core.Launch.HostSize? size, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Launch.IOpenTerminalPane!>!>
 Aw.Sindri.Core.Launch.IOpenTerminalPane
 Aw.Sindri.Core.Launch.IOpenTerminalPane.Frames(System.Threading.CancellationToken cancellationToken) -> System.Collections.Generic.IAsyncEnumerable<Aw.Sindri.Core.Launch.TerminalFrame!>!
 Aw.Sindri.Core.Launch.IOpenTerminalPane.Host.get -> Aw.Sindri.Core.Launch.TerminalHost!
@@ -23573,8 +23573,8 @@ Aw.Sindri.Core.Launch.TerminalTarget.Session.get -> string!
 Aw.Sindri.Core.Launch.TerminalTarget.Socket.get -> string!
 Aw.Sindri.Core.Launch.TerminalTarget.SocketIsPath.get -> bool
 Aw.Sindri.Core.Launch.TerminalTarget.TerminalTarget(string! Socket, bool SocketIsPath, string! Session, string! Pane, bool Foreign) -> void
-Aw.Sindri.Core.Launch.ITerminalPaneLocator
-Aw.Sindri.Core.Launch.ITerminalPaneLocator.Find(Aw.Sindri.Core.Sessions.SessionRef session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Launch.TerminalTarget!>!>
+Aw.Sindri.Core.Sessions.ITerminalPaneLocator
+Aw.Sindri.Core.Sessions.ITerminalPaneLocator.Find(Aw.Sindri.Core.Sessions.SessionRef session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Launch.TerminalTarget!>!>
 Aw.Sindri.Core.Launch.AgentReadiness
 Aw.Sindri.Core.Launch.AgentReadiness.<Clone>$() -> Aw.Sindri.Core.Launch.AgentReadiness!
 Aw.Sindri.Core.Launch.AgentReadiness.AgentReadiness(bool Installed, bool SignedIn, string! SignInCommand) -> void

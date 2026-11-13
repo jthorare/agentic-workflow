@@ -1,7 +1,7 @@
 using Aw.Kernel;
-using Aw.Sindri.Core.Sessions;
+using Aw.Sindri.Core.Launch;
 
-namespace Aw.Sindri.Core.Launch;
+namespace Aw.Sindri.Core.Sessions;
 
 /// <summary>
 /// Serve's side of the pane seam (agents spec §15.7, way C): it produces the frames of one pane and takes keys, paste and size in.
