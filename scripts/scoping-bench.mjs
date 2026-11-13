@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // scripts/scoping-bench.mjs: the scoping benchmark's runner (context scope spec §7, epic #2959).
 //
-//   node scripts/scoping-bench.mjs --questions tests/fixtures/scoping/<repo>/questions.yaml [--k 25] [--field plain|question]
+//   node scripts/scoping-bench.mjs --questions tests/fixtures/scoping/<repo>/questions.yaml [--k 25] [--limit N] [--field plain|question]
 //        [--only id,id] [--sindri BIN] [--out DIR] [--json]
 //   node scripts/scoping-bench.mjs --questions FILE --check [--root DIR]
 //
@@ -25,18 +25,19 @@ import { parse } from 'yaml';
 
 function usage(msg) {
   if (msg) console.error(`scoping-bench: ${msg}`);
-  console.error('usage: node scripts/scoping-bench.mjs --questions FILE [--k N] [--field plain|question] [--only ids] [--sindri BIN] [--out DIR] [--json]');
+  console.error('usage: node scripts/scoping-bench.mjs --questions FILE [--k N] [--limit N] [--field plain|question] [--only ids] [--sindri BIN] [--out DIR] [--json]');
   console.error('       node scripts/scoping-bench.mjs --questions FILE --check [--root DIR]');
   process.exit(2);
 }
 
-const opts = { k: 25, field: 'plain', sindri: 'sindri', json: false, check: false, root: resolve(dirname(fileURLToPath(import.meta.url)), '..') };
+const opts = { k: 25, limit: null, field: 'plain', sindri: 'sindri', json: false, check: false, root: resolve(dirname(fileURLToPath(import.meta.url)), '..') };
 const argv = process.argv.slice(2);
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i];
   const val = () => (i + 1 < argv.length ? argv[++i] : usage(`${a} needs a value`));
   if (a === '--questions') opts.questions = val();
   else if (a === '--k') opts.k = Number(val());
+  else if (a === '--limit') opts.limit = Number(val());
   else if (a === '--field') opts.field = val();
   else if (a === '--only') opts.only = val().split(',').filter(Boolean);
   else if (a === '--sindri') opts.sindri = val();
@@ -49,6 +50,7 @@ for (let i = 0; i < argv.length; i++) {
 }
 if (!opts.questions) usage('--questions is required');
 if (!Number.isInteger(opts.k) || opts.k < 1) usage('--k must be a whole number of 1 or more');
+if (opts.limit !== null && (!Number.isInteger(opts.limit) || opts.limit < 1)) usage('--limit must be a whole number of 1 or more');
 if (!['plain', 'question'].includes(opts.field)) usage("--field is 'plain' or 'question'");
 
 let keys;
@@ -124,7 +126,7 @@ const rows = [];
 let failed = 0;
 for (const q of questions) {
   const started = process.hrtime.bigint();
-  const run = spawnSync(opts.sindri, ['context', 'query', q.text, '--json'], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
+  const run = spawnSync(opts.sindri, ['context', 'query', q.text, ...(opts.limit === null ? [] : ['--limit', String(opts.limit)]), '--json'], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
   const seconds = Number(process.hrtime.bigint() - started) / 1e9;
   if (opts.out) writeFileSync(`${opts.out}/${q.id}.json`, JSON.stringify({ rc: run.status, stdout: run.stdout, stderr: run.stderr }));
   let answer = null;
@@ -155,7 +157,7 @@ const mean = (f) => ratio(answered.reduce((s, r) => s + f(r), 0), answered.lengt
 const sorted = rows.map((r) => r.seconds).sort((a, b) => a - b);
 const pct = (p) => (sorted.length === 0 ? 0 : sorted[Math.min(sorted.length - 1, Math.ceil(p * sorted.length) - 1)]);
 const totals = {
-  questions: rows.length, answered: answered.length, failed, k: opts.k,
+  questions: rows.length, answered: answered.length, failed, k: opts.k, limit: opts.limit,
   touchRecall: mean((r) => r.touchRecall), recall: mean((r) => r.recall), precision: mean((r) => r.precision),
   decoysHit: answered.reduce((s, r) => s + r.decoysHit.length, 0), p50Seconds: pct(0.5), p95Seconds: pct(0.95),
 };
@@ -164,7 +166,7 @@ const f2 = (x) => x.toFixed(2);
 if (opts.json) {
   console.log(JSON.stringify({ questions: opts.questions, field: opts.field, rows, totals }, null, 2));
 } else {
-  console.log(`# scoping-bench ${opts.questions} · ${opts.field} · top ${opts.k}`);
+  console.log(`# scoping-bench ${opts.questions} · ${opts.field} · top ${opts.k}${opts.limit === null ? '' : ` · reads ${opts.limit}`}`);
   for (const r of rows) {
     if (r.error) { console.log(`${r.id}  ${f2(r.seconds)}s  ERROR ${r.error}`); continue; }
     console.log(`${r.id}  ${f2(r.seconds)}s  files=${r.files}  touch ${r.touch.hit}/${r.touch.of}  read ${r.read.hit}/${r.read.of}  recall=${f2(r.recall)}  P@${opts.k}=${f2(r.precision)}  decoys ${r.decoysHit.length}`
