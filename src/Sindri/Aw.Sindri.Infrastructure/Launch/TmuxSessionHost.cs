@@ -92,27 +92,6 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
     }
 
     /// <inheritdoc/>
-    public async ValueTask<Result<Unit>> Stop(HostRef host, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(host);
-        try
-        {
-            var killed = await Run(["kill-session", "-t", Target(host)], cancellationToken, _callBudget).ConfigureAwait(false);
-            return killed.ExitCode == 0 || IsGone(killed.Error)
-                ? Unit.Value
-                : KernelErrors.Unavailable.With($"tmux could not end {host.Name}: {Short(killed.Error)}");
-        }
-        catch (Win32Exception)
-        {
-            return Unit.Value;   // no tmux, so no session to end
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            return KernelErrors.Unavailable.With($"tmux did not answer while ending {host.Name}");
-        }
-    }
-
-    /// <inheritdoc/>
     public async ValueTask<bool> Exists(HostRef host, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(host);
@@ -224,12 +203,6 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
     private static partial Regex ShellName { get; }
 
     private static string Target(HostRef host) => "=" + host.Name;   // '=' : this exact name, never a prefix
-
-    private static bool IsGone(string error) =>
-        error.Contains("can't find session", StringComparison.Ordinal)
-        || error.Contains("no server running", StringComparison.Ordinal)
-        || (error.Contains("error connecting to", StringComparison.Ordinal)
-            && (error.Contains("(No such file or directory)", StringComparison.Ordinal) || error.Contains("(Connection refused)", StringComparison.Ordinal)));   // a permission error is not "gone"
 
     private static string Short(string text) => text.Trim() is { Length: > 200 } t ? t[..200] : text.Trim();
 
