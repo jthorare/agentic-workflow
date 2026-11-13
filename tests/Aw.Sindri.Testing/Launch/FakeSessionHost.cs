@@ -8,6 +8,7 @@ namespace Aw.Sindri.Testing.Launch;
 public sealed class FakeSessionHost : ISessionHost, ISessionPanes
 {
     private readonly Dictionary<string, string> _panes = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _ended = new(StringComparer.Ordinal);
     private readonly Dictionary<string, int> _clients = new(StringComparer.Ordinal);
     private readonly List<HostSession> _started = [];
     private Error? _nextStartFailure;
@@ -108,5 +109,16 @@ public sealed class FakeSessionHost : ISessionHost, ISessionPanes
     {
         ArgumentNullException.ThrowIfNull(host);
         return ValueTask.FromResult(PaneLookupFails || !_panes.TryGetValue(host.Name, out var pane) ? (TmuxPaneId?)null : TmuxPaneId.From(pane));
+    }
+
+    /// <summary>Ends a session's agent: <see cref="Running"/> answers false for it from now on (null while <see cref="PaneLookupFails"/>).</summary>
+    /// <param name="name">The session name.</param>
+    public void End(string name) => _ended.Add(name);
+
+    /// <inheritdoc/>
+    public ValueTask<bool?> Running(HostRef host, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(host);
+        return ValueTask.FromResult<bool?>(PaneLookupFails ? null : _panes.ContainsKey(host.Name) && !_ended.Contains(host.Name));
     }
 }

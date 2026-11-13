@@ -68,8 +68,10 @@ public abstract class SessionHostContract
         var second = await host.Stop(started.Value, CancellationToken.None);
         var never = await host.Stop(new HostRef(host.Kind, "snd-never"), CancellationToken.None);
 
-        Expect.True(first.IsSuccess && second.IsSuccess && never.IsSuccess);
+        Expect.True(first.IsSuccess && second.IsSuccess && never.IsSuccess, $"every Stop to succeed; first: {Said(first)}, second: {Said(second)}, never: {Said(never)}");
     }
+
+    private static string Said(Result<Unit> stopped) => stopped.IsSuccess ? "ok" : stopped.Error.Message;
 
     /// <summary>A stopped name can be started again.</summary>
     /// <returns>The test.</returns>

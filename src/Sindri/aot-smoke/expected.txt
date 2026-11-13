@@ -175,6 +175,7 @@ result: {"idle":false,"summary":null}
 ## sindri jobs --state succeeded
 JOB-ID  succeeded  RunService  heartbeat  TIME  1 line  ok: worked
 JOB-ID  succeeded  RunService  heartbeat  TIME  1 line  ok: worked
+JOB-ID  succeeded  RelinkPinAliases  relink  TIME  1 line  0 of 0 records relinked to pin aliases
 JOB-ID  succeeded  RefreshContextMap  refresh  TIME  4 lines  map v1: 0 kept, 0 removed
 JOB-ID  succeeded  BuildCodeIndex  index:smoke  TIME  2 lines  smoke @ 7039bb4: 0 files, 0 symbols
 ## sindri services pause heartbeat (human, terminal)

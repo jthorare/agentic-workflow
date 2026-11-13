@@ -16,7 +16,7 @@ internal sealed class StartChoicesFile(ISindriHome home) : IStartChoices
         {
             _ = Directory.CreateDirectory(home.Path);
             var path = Path.Combine(home.Path, FileName);
-            var temp = path + ".tmp";
+            var temp = path + "." + Path.GetRandomFileName() + ".tmp";   // why: two starts at once never share a temp file (#3466)
             var stream = new FileStream(temp, FileMode.Create, FileAccess.Write);
             await using (stream.ConfigureAwait(false))
             {

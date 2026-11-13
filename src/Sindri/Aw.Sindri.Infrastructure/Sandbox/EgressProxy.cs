@@ -23,7 +23,7 @@ internal sealed class EgressProxy(EgressPolicy policy, IEgressDialer dialer, Egr
     /// <summary>Serves one client connection.</summary>
     /// <param name="client">The client's stream.</param>
     /// <param name="cancellationToken">Ends the connection.</param>
-    /// <returns>A task that ends with the connection.</returns>
+    /// <returns>A task that ends with the connection; the client is closed when it ends.</returns>
     public async Task Handle(Stream client, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(client);
@@ -33,6 +33,7 @@ internal sealed class EgressProxy(EgressPolicy policy, IEgressDialer dialer, Egr
             Denials?.Record(new DenialObservation(DenialKind.Network, "(cap)", DenialRules.Cap));
             await Reply(client, 503, "Service Unavailable", cancellationToken).ConfigureAwait(false);
             _ = Interlocked.Decrement(ref _active);
+            await client.DisposeAsync().ConfigureAwait(false);
             return;
         }
 
@@ -49,6 +50,7 @@ internal sealed class EgressProxy(EgressPolicy policy, IEgressDialer dialer, Egr
         finally
         {
             _ = Interlocked.Decrement(ref _active);
+            await client.DisposeAsync().ConfigureAwait(false);   // why: a lifetime or head timeout that ends Serve mid-step must not leave the client waiting on a reply (#3457)
         }
     }
 

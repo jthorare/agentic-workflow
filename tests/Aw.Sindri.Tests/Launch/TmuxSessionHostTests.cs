@@ -143,6 +143,23 @@ public sealed class TmuxSessionHostTests : SessionHostContract, IDisposable
         Expect.Equal(gone, stopped.IsSuccess);   // a refused socket is not "gone": the caller keeps the secrets of a session that may still run
     }
 
+    // #3434: a kill that reaches a server while it exits (its last session just ended) gets "server exited unexpectedly" or "no current target"
+    // (22 of 600 real tmux 3.4 runs); asked again, the same server says "no server running".
+    [Theory]
+    [InlineData("server exited unexpectedly")]
+    [InlineData("no current target")]
+    public async Task Stop_asks_again_when_the_server_was_exiting(string complaint)
+    {
+        var path = Path.Combine(_tmux.Scratch, "kill-mid-exit");
+        var asked = Path.Combine(_tmux.Scratch, "asked-once");
+        _ = ExecutableScript.Write(path,
+            $"case \"$*\" in\n  *kill-session*) if [ -e '{asked}' ]; then echo 'no server running on /tmp/tmux-1000/sindri-launch' >&2; else : > '{asked}'; echo '{complaint}' >&2; fi; exit 1 ;;\nesac\nexit 0\n");
+
+        var stopped = await new TmuxSessionHost(new TmuxHostOptions(path, "sindri-launch")).Stop(new HostRef(HostKind.Tmux, "snd-x"), CancellationToken.None);
+
+        Expect.True(stopped.IsSuccess);
+    }
+
     [Fact]
     public async Task One_deadline_covers_the_version_check_and_the_new_session()
     {
@@ -258,12 +275,37 @@ public sealed class TmuxSessionHostTests : SessionHostContract, IDisposable
         var session = new HostSession("sindri-stay0001", _tmux.Scratch, ["sh", "-c", "sleep 1"], new Dictionary<string, string>(StringComparer.Ordinal)) { Size = new HostSize(100, 30), RemainOnExit = true };
 
         var started = await Create().Start(session, _deadline, CancellationToken.None);
-        await Task.Delay(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken);
 
         Expect.True(started.IsSuccess);
-        Expect.True(_tmux.HasSession("sindri-stay0001"));   // the process ended; the pane stays so the view can show Ended
-        Expect.Equal("1", _tmux.Run("list-panes", "-t", "=sindri-stay0001", "-F", "#{pane_dead}")?.Trim());
+        Expect.Equal("1", await PaneDeadWhenSet("sindri-stay0001"));   // the process ended; the pane stays so the view can show Ended
         Expect.Equal("100x30", _tmux.Run("list-windows", "-t", "=sindri-stay0001", "-F", "#{window_width}x#{window_height}")?.Trim());
+    }
+
+    [Fact]
+    public async Task An_agent_that_dies_at_once_keeps_its_dead_pane()
+    {
+        var session = new HostSession("sindri-dies0001", _tmux.Scratch, ["false"], new Dictionary<string, string>(StringComparer.Ordinal)) { RemainOnExit = true };
+
+        var started = await Create().Start(session, _deadline, CancellationToken.None);
+
+        Expect.True(started.IsSuccess);
+        Expect.Equal("1", await PaneDeadWhenSet("sindri-dies0001"));   // why: remain-on-exit lands in the new-session call, before tmux reaps 'false' (#3466)
+    }
+
+    private async Task<string?> PaneDeadWhenSet(string name)
+    {
+        string? dead = null;
+        var deadline = RealTime.NowOffset + TimeSpan.FromSeconds(10);
+        while (RealTime.NowOffset < deadline && dead != "1")
+        {
+            dead = _tmux.HasSession(name) ? _tmux.Run("list-panes", "-t", "=" + name, "-F", "#{pane_dead}")?.Trim() : null;
+            if (dead != "1")
+            {
+                await Task.Delay(50, TestContext.Current.CancellationToken);
+            }
+        }
+
+        return dead;
     }
 
     [Fact]

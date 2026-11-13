@@ -54,5 +54,5 @@ internal sealed class StartRig : IDisposable
             new StartRecord(Choices, Base.Store, Base.Held, Base.Events, new OpenGate()),
             Host, Book, Base.Callers);
 
-    public Features.RemoveSessionWorktree.RemoveSessionWorktreeService RemoveService() => new(Book, Worktrees, Base.Callers);
+    public Features.RemoveSessionWorktree.RemoveSessionWorktreeService RemoveService() => new(Book, Worktrees, Base.Callers, Host);
 }

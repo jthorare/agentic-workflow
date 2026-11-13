@@ -845,6 +845,10 @@ Aw.Sindri.Features.RegisterMcp.RegisterMcpResponse.Repo.init -> void
 Aw.Sindri.Features.RunDoctor.RunDoctorRequest
 Aw.Sindri.Features.RunDoctor.RunDoctorRequest.<Clone>$() -> Aw.Sindri.Features.RunDoctor.RunDoctorRequest!
 Aw.Sindri.Features.RunDoctor.RunDoctorRequest.Equals(Aw.Sindri.Features.RunDoctor.RunDoctorRequest? other) -> bool
+Aw.Sindri.Features.RunDoctor.RunDoctorRequest.Harnesses.get -> System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Doctor.DoctorCheck!>!>>?
+Aw.Sindri.Features.RunDoctor.RunDoctorRequest.Harnesses.init -> void
+Aw.Sindri.Features.RunDoctor.RunDoctorRequest.OnRow.get -> System.Action<Aw.Sindri.Core.Doctor.DoctorCheck!>?
+Aw.Sindri.Features.RunDoctor.RunDoctorRequest.OnRow.init -> void
 Aw.Sindri.Features.RunDoctor.RunDoctorRequest.RunDoctorRequest() -> void
 Aw.Sindri.Features.RunDoctor.RunDoctorResponse
 Aw.Sindri.Features.RunDoctor.RunDoctorResponse.<Clone>$() -> Aw.Sindri.Features.RunDoctor.RunDoctorResponse!
@@ -5673,3 +5677,7 @@ override Aw.Sindri.Features.GetLastStart.LastStartView.GetHashCode() -> int
 override Aw.Sindri.Features.GetLastStart.LastStartView.ToString() -> string!
 static Aw.Sindri.Features.GetLastStart.LastStartView.operator !=(Aw.Sindri.Features.GetLastStart.LastStartView? left, Aw.Sindri.Features.GetLastStart.LastStartView? right) -> bool
 static Aw.Sindri.Features.GetLastStart.LastStartView.operator ==(Aw.Sindri.Features.GetLastStart.LastStartView? left, Aw.Sindri.Features.GetLastStart.LastStartView? right) -> bool
+Aw.Sindri.Features.CodeIndexReads.RepoHealth.NeedsLook.get -> bool
+Aw.Sindri.Features.CodeIndexReads.RepoHealth.NeedsLook.init -> void
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.NeedsLook.get -> bool
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.NeedsLook.init -> void

@@ -22,8 +22,44 @@ public sealed class RemoveSessionWorktreeTests : IDisposable
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private async Task<StartedSession> Started(bool worktree = true) =>
-        (await _r.Service().Handle(new StartSessionRequest(RepoName.From("demo"), AgentId.From("claude-code"), "hi", worktree, ActId.From(Act)), Token)).Value;
+    private async Task<StartedSession> Started(bool worktree = true, bool ended = true)
+    {
+        var started = (await _r.Service().Handle(new StartSessionRequest(RepoName.From("demo"), AgentId.From("claude-code"), "hi", worktree, ActId.From(Act)), Token)).Value;
+        if (ended)
+        {
+            _r.Host.End("sindri-" + Act);   // why: a worktree is removed only once its session has Ended (#3466)
+        }
+
+        return started;
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Remove_while_the_session_still_runs_is_SND_AGENT_018_and_keeps_the_tree()
+    {
+        _ = await Started(ended: false);
+
+        var kept = await _r.RemoveService().Handle(new RemoveSessionWorktreeRequest(ActId.From(Act)), Token);
+
+        Assert.True(kept.IsError);
+        Assert.Equal(SindriErrors.AgentWorktreeKept.Code, kept.Error.Code);
+        Assert.Contains("still running", kept.Error.Message, StringComparison.Ordinal);
+        _ = Assert.Single(_r.Worktrees.Live);
+        Assert.Empty(_r.Worktrees.Removed);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Remove_when_tmux_cannot_be_asked_is_SND_AGENT_018_that_says_so_and_keeps_the_tree()
+    {
+        _ = await Started();
+        _r.Host.PaneLookupFails = true;
+
+        var kept = await _r.RemoveService().Handle(new RemoveSessionWorktreeRequest(ActId.From(Act)), Token);
+
+        Assert.Equal(SindriErrors.AgentWorktreeKept.Code, kept.Error.Code);
+        Assert.Contains("can't tell", kept.Error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("session still running", kept.Error.Message, StringComparison.Ordinal);   // why: not the "end it first" message; the cannot-tell one says "is still running:" too
+        _ = Assert.Single(_r.Worktrees.Live);
+    }
 
     [Fact, Trait("Lane", "unit")]
     public async Task Remove_takes_a_clean_worktree_of_a_started_session_and_answers_its_path()
@@ -80,7 +116,7 @@ public sealed class RemoveSessionWorktreeTests : IDisposable
         _ = await Started();
         var afterRestart = new StartedSessions(_r.Base.Store, _r.Base.Events);   // a new process: nothing in memory
 
-        var removed = await new RemoveSessionWorktreeService(afterRestart, _r.Worktrees, _r.Base.Callers).Handle(new RemoveSessionWorktreeRequest(ActId.From(Act)), Token);
+        var removed = await new RemoveSessionWorktreeService(afterRestart, _r.Worktrees, _r.Base.Callers, _r.Host).Handle(new RemoveSessionWorktreeRequest(ActId.From(Act)), Token);
 
         Assert.True(removed.IsSuccess, removed.IsError ? removed.Error.ToString() : null);
         _ = Assert.Single(_r.Worktrees.Removed);

@@ -98,9 +98,29 @@ public sealed class StartSessionTests : IDisposable
         _ = await _r.Service().Handle(Request(), Token);
 
         var env = Assert.Single(_r.Host.Started).Env;
-        Assert.Equal(["ANTHROPIC_API_KEY", "AW_FLEET_DIR", "AW_STATE_DIR", "HOME", "PATH", "TERM"], env.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["ANTHROPIC_API_KEY", "AW_FLEET_DIR", "AW_SINDRI_ONEOFF", "AW_STATE_DIR", "HOME", "PATH", "TERM"], env.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal("1", env["AW_SINDRI_ONEOFF"]);   // why: the CLI inside never calls as the person (#3466)
         Assert.DoesNotContain("AW_SINDRI_TOKEN", env.Keys, StringComparer.Ordinal);
         Assert.DoesNotContain("GH_TOKEN", env.Keys, StringComparer.Ordinal);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("GH_TOKEN")]
+    [InlineData("GITHUB_TOKEN")]
+    [InlineData("GH_ENTERPRISE_TOKEN")]
+    [InlineData("AW_FORGE_TOKEN")]
+    [InlineData("AW_SINDRI_TOKEN")]
+    [InlineData("AW_SINDRI_HOME")]
+    [InlineData("AW_SINDRI_PORT")]
+    [InlineData("OPENAI_API_KEY")]
+    [InlineData("AWS_SECRET_ACCESS_KEY")]
+    public async Task A_real_secret_or_Sindri_variable_never_reaches_a_Claude_session(string name)
+    {
+        _r.Environment.Values[name] = "value-" + name;   // why: the real names the scrub claims to drop, not stand-ins (#3470)
+
+        _ = await _r.Service().Handle(Request(), Token);
+
+        Assert.DoesNotContain(name, Assert.Single(_r.Host.Started).Env.Keys, StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -82,12 +82,6 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
 
         if (started)
         {
-            if (session.RemainOnExit)
-            {
-                // the plain name, not '=name': a window option takes a window target, and '=name' is not one (tmux 3.4: "no such window")
-                _ = await Run(["set-option", "-t", session.Name, "remain-on-exit", "on"], deadline).ConfigureAwait(false);
-            }
-
             await ShowStatusLine(session, name, deadline).ConfigureAwait(false);
             return name;
         }
@@ -95,27 +89,6 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
         return created.Error.Contains("duplicate session", StringComparison.Ordinal)
             ? KernelErrors.Conflict.With($"A session named {session.Name} already exists")
             : SindriErrors.LaunchTimedOut.With($"tmux could not start the session: {Short(created.Error)}");
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<Result<Unit>> Stop(HostRef host, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(host);
-        try
-        {
-            var killed = await Run(["kill-session", "-t", Target(host)], cancellationToken, _callBudget).ConfigureAwait(false);
-            return killed.ExitCode == 0 || IsGone(killed.Error)
-                ? Unit.Value
-                : KernelErrors.Unavailable.With($"tmux could not end {host.Name}: {Short(killed.Error)}");
-        }
-        catch (Win32Exception)
-        {
-            return Unit.Value;   // no tmux, so no session to end
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            return KernelErrors.Unavailable.With($"tmux did not answer while ending {host.Name}");
-        }
     }
 
     /// <inheritdoc/>
@@ -231,16 +204,13 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
 
     private static string Target(HostRef host) => "=" + host.Name;   // '=' : this exact name, never a prefix
 
-    private static bool IsGone(string error) =>
-        error.Contains("can't find session", StringComparison.Ordinal)
-        || error.Contains("no server running", StringComparison.Ordinal)
-        || (error.Contains("error connecting to", StringComparison.Ordinal)
-            && (error.Contains("(No such file or directory)", StringComparison.Ordinal) || error.Contains("(Connection refused)", StringComparison.Ordinal)));   // a permission error is not "gone"
-
     private static string Short(string text) => text.Trim() is { Length: > 200 } t ? t[..200] : text.Trim();
 
+    // why: remain-on-exit goes in the same tmux call, after ';', so the server sets it before it reaps the child: an agent that dies at once keeps its pane and its error text (#3466).
+    // The plain name, not '=name': a window option takes a window target, and '=name' is not one (tmux 3.4: "no such window").
     private static List<string> Create(HostSession session, string script) =>
-        ["new-session", "-d", "-s", session.Name, .. session.Size is { } size ? (string[])["-x", Text(size.Cols), "-y", Text(size.Rows)] : [], "-c", session.WorkDir, "sh", script];
+        ["new-session", "-d", "-s", session.Name, .. session.Size is { } size ? (string[])["-x", Text(size.Cols), "-y", Text(size.Rows)] : [], "-c", session.WorkDir, "sh", script,
+            .. session.RemainOnExit ? (string[])[";", "set-option", "-t", session.Name, "remain-on-exit", "on"] : []];
 
     private static string Text(int number) => number.ToString(CultureInfo.InvariantCulture);
 
