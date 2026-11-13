@@ -20,6 +20,7 @@ namespace Aw.Sindri.Infrastructure.Launch;
 internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessionHost
 {
     private static readonly TimeSpan _callBudget = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan _stopRetryPause = TimeSpan.FromMilliseconds(100);
     private static readonly (int Major, int Minor) _minimum = (3, 2);
 
     /// <inheritdoc/>
@@ -100,6 +101,14 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
         try
         {
             var killed = await Run(["kill-session", "-t", Target(host)], cancellationToken, _callBudget).ConfigureAwait(false);
+            if (killed.ExitCode != 0 && !IsGone(killed.Error))
+            {
+                // why (#3434): a server that is exiting (its last session just ended) answers "server exited unexpectedly" or "no current target";
+                // asked once more it says "no server running". Only that second answer decides, so an unknown text is never taken as "gone".
+                await Task.Delay(_stopRetryPause, cancellationToken).ConfigureAwait(false);
+                killed = await Run(["kill-session", "-t", Target(host)], cancellationToken, _callBudget).ConfigureAwait(false);
+            }
+
             return killed.ExitCode == 0 || IsGone(killed.Error)
                 ? Unit.Value
                 : KernelErrors.Unavailable.With($"tmux could not end {host.Name}: {Short(killed.Error)}");
