@@ -45,7 +45,7 @@ public sealed class FirstRunSetupTests : IDisposable
         _rig.Harness.Profiles.Live = new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml");
     }
 
-    private FirstRunSetup Setup(InMemoryWorkflowStore? workflows = null)
+        private FirstRunSetup Setup(InMemoryWorkflowStore? workflows = null)
     {
         var store = workflows ?? _rig.Workflows;
         return new FirstRunSetup(
@@ -54,8 +54,8 @@ public sealed class FirstRunSetupTests : IDisposable
             _keys,
             Create(store),
             Activate(store),
-            _runner,
-            new FirstWorkflowEvents(_rig.Harness.Held, _rig.Harness.Store, _rig.Harness.Store, _rig.Harness.Events, _rig.Harness.Callers));
+            new FirstWorkflowEvents(_rig.Harness.Held, _rig.Harness.Store, _rig.Harness.Store, _rig.Harness.Events, _rig.Harness.Callers),
+            new HelloRun(_runner, store));
     }
 
     // the same services the slice ports wrap, called directly (no command chain in a unit test)
@@ -108,6 +108,67 @@ public sealed class FirstRunSetupTests : IDisposable
         await Setup(new InMemoryWorkflowStore(_rig.Harness.Clock)).Run(Token);
 
         _ = Assert.Single(_runner.Started);
+    }
+
+    [Fact]
+    public async Task A_run_that_failed_to_start_is_tried_on_the_next_tick_and_a_started_run_is_not_repeated()
+    {
+        _ = await _rig.Harness.HoldLease();
+        Profile(repos: "demo");
+        _runner.FailTimes = 1;
+        var setup = Setup();
+
+        await setup.Run(Token);
+        await setup.Run(Token);
+        await setup.Run(Token);
+
+        Assert.Equal(["hello-sindri", "hello-sindri"], _runner.Started);
+    }
+
+    [Fact]
+    public async Task A_run_the_engine_refuses_as_already_done_is_not_tried_again()
+    {
+        _ = await _rig.Harness.HoldLease();
+        Profile(repos: "demo");
+        _runner.Refuse = true;
+        var setup = Setup();
+
+        await setup.Run(Token);
+        await setup.Run(Token);
+
+        _ = Assert.Single(_runner.Started);
+    }
+
+    [Fact]
+    public async Task A_run_refused_as_not_found_or_archived_is_not_tried_again()
+    {
+        _ = await _rig.Harness.HoldLease();
+        Profile(repos: "demo");
+        _runner.Gone = SindriErrors.GraphNotFound;
+        var setup = Setup();
+
+        await setup.Run(Token);
+        await setup.Run(Token);
+
+        _ = Assert.Single(_runner.Started);
+    }
+
+    [Fact]
+    public async Task A_hello_sindri_the_owner_made_is_recorded_but_never_activated_or_run()
+    {
+        _ = await _rig.Harness.HoldLease();
+        Profile(repos: "demo");
+        var template = Core.Graph.Templates.GraphTemplates.Find("hello-sindri")!;
+        _ = await new CreateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log)
+            .Handle(new CreateWorkflowRequest(_hello, Template: null, Core.Graph.GraphJson.Write(template.Spec), "owner"), Token);
+        var setup = Setup();
+
+        await setup.Run(Token);
+        await setup.Run(Token);
+
+        Assert.Null(Assert.Single(await Made()).ActiveRevision);
+        Assert.Empty(_runner.Started);
+        _ = Assert.Single(_rig.Recorded(EventTypes.SetupFirstWorkflowCreated));
     }
 
     [Fact]
@@ -193,9 +254,30 @@ public sealed class FirstRunSetupTests : IDisposable
     {
         public List<string> Started { get; } = [];
 
+        public int FailTimes { get; set; }
+
+        public bool Refuse { get; set; }
+
+        public ErrorDefinition? Gone { get; set; }
+
         public ValueTask<Result<Unit>> Run(WorkflowSlug slug, CancellationToken cancellationToken)
         {
             Started.Add(slug.Value);
+            if (Refuse)
+            {
+                return ValueTask.FromResult<Result<Unit>>(SindriErrors.GraphSetupRunRefused.With("already ran"));
+            }
+
+            if (Gone is { } gone)
+            {
+                return ValueTask.FromResult<Result<Unit>>(gone.With("gone"));
+            }
+
+            if (FailTimes-- > 0)
+            {
+                return ValueTask.FromResult<Result<Unit>>(SindriErrors.NotRunning.With("engine not ready"));
+            }
+
             return ValueTask.FromResult<Result<Unit>>(Unit.Value);
         }
     }
