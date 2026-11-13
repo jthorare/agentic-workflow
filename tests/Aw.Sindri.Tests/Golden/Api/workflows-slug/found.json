@@ -52,12 +52,14 @@
     {
       "node": "start",
       "summary": "When called",
-      "summaryProblem": null
+      "summaryProblem": null,
+      "kindTitle": "When called"
     },
     {
       "node": "agent",
       "summary": "Run agent",
-      "summaryProblem": null
+      "summaryProblem": null,
+      "kindTitle": "Run agent"
     }
   ]
 }

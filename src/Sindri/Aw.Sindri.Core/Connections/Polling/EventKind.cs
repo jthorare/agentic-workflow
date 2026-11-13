@@ -16,6 +16,27 @@ public readonly record struct EventKind(string Key)
     /// <summary>Gets 'github.pr.review_requested'.</summary>
     public static EventKind GitHubPrReviewRequested { get; } = new("github.pr.review_requested");
 
+    /// <summary>Gets 'github.pr.updated'.</summary>
+    public static EventKind GitHubPrUpdated { get; } = new("github.pr.updated");
+
+    /// <summary>Gets 'github.pr.ready_for_review'.</summary>
+    public static EventKind GitHubPrReadyForReview { get; } = new("github.pr.ready_for_review");
+
+    /// <summary>Gets 'github.pr.closed'.</summary>
+    public static EventKind GitHubPrClosed { get; } = new("github.pr.closed");
+
+    /// <summary>Gets 'github.pr.review_submitted'.</summary>
+    public static EventKind GitHubPrReviewSubmitted { get; } = new("github.pr.review_submitted");
+
+    /// <summary>Gets 'github.pr.comment'.</summary>
+    public static EventKind GitHubPrComment { get; } = new("github.pr.comment");
+
+    /// <summary>Gets 'github.pr.checks'.</summary>
+    public static EventKind GitHubPrChecks { get; } = new("github.pr.checks");
+
+    /// <summary>Gets 'github.pr.conflict'.</summary>
+    public static EventKind GitHubPrConflict { get; } = new("github.pr.conflict");
+
     /// <summary>Gets 'github.issue.opened'.</summary>
     public static EventKind GitHubIssueOpened { get; } = new("github.issue.opened");
 

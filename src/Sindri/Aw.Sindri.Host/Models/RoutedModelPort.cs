@@ -6,6 +6,7 @@ using Aw.Judge.Core.Providers;
 using Aw.Kernel;
 using Aw.Kernel.Ids;
 using Aw.Sindri.Core.Jobs;
+using Aw.Sindri.Core.Launch;
 
 namespace Aw.Sindri.Host.Models;
 
@@ -17,11 +18,17 @@ namespace Aw.Sindri.Host.Models;
 /// </summary>
 internal sealed class RoutedModelPort : IModelPort, IModelPromptBudget
 {
+    private static readonly AgentId _codex = AgentId.From("codex");
+    private static readonly TimeSpan _codexListFor = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan _unreadCodexListFor = TimeSpan.FromSeconds(60);
     private static readonly ProviderName[] _agentClis = [.. AgentCliNames.DefaultOrder.Select(AgentCliNames.Provider)];
 
     private readonly Func<IProviderCatalog> _catalog;
     private readonly IApprovedModels _models;
+    private readonly IModelCatalog? _codexModels;
+    private CodexListRead? _codexList;   // one reference, swapped whole: concurrent calls see an old read or a new one, never half of each
     private readonly IJobContextAccessor _jobs;
+    private readonly TimeProvider _clock;
     private readonly JobModelLimits _limits = new();
     private readonly ModelWalker _walker;
     private readonly ModelPauser _pauser;
@@ -34,7 +41,8 @@ internal sealed class RoutedModelPort : IModelPort, IModelPromptBudget
     /// <param name="log">Where the call's event is written.</param>
     /// <param name="ids">Names each call's event.</param>
     /// <param name="clock">Dates and times the tries.</param>
-    public RoutedModelPort(Func<IProviderCatalog> catalog, IApprovedModels models, IJobContextAccessor jobs, IModelCallLog log, IIdGenerator ids, TimeProvider clock)
+    /// <param name="codexModels">Codex's model list ('codex debug models'): a built-in codex name it lacks runs codex's own default (issue 3389); null never reads it.</param>
+    public RoutedModelPort(Func<IProviderCatalog> catalog, IApprovedModels models, IJobContextAccessor jobs, IModelCallLog log, IIdGenerator ids, TimeProvider clock, IModelCatalog? codexModels = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(models);
@@ -43,8 +51,10 @@ internal sealed class RoutedModelPort : IModelPort, IModelPromptBudget
         ArgumentNullException.ThrowIfNull(ids);
         ArgumentNullException.ThrowIfNull(clock);
         _catalog = catalog;
+        _codexModels = codexModels;
         _models = models;
         _jobs = jobs;
+        _clock = clock;
         _recorder = new ModelCallRecorder(log, ids, clock);
         _walker = new ModelWalker(_limits, clock);
         _pauser = new ModelPauser(_limits, _recorder);
@@ -108,9 +118,29 @@ internal sealed class RoutedModelPort : IModelPort, IModelPromptBudget
     {
         var settings = await _models.Current(cancellationToken).ConfigureAwait(false);
         var installed = Installed(_catalog().Lineup(config: null, _agentClis, new NoRulesProvider()));
-        var call = new ModelCall(request, settings, _jobs.Current, installed) { Route = ModelRouting.Resolve(settings, request, [.. installed.Select(static i => i.Harness)]) };
+        var route = ModelRouting.Resolve(settings, request, [.. installed.Select(static i => i.Harness)]);
+        if (_codexModels is not null && CodexDefault.Needed(route))
+        {
+            route = CodexDefault.Apply(route, await CodexList(_codexModels, cancellationToken).ConfigureAwait(false));
+        }
+
+        var call = new ModelCall(request, settings, _jobs.Current, installed) { Route = route };
         _recorder.Begin(call);
         return call;
+    }
+
+    // Codex's list, read at most once per 10 minutes (each read runs 'codex debug models', up to 5 s). An unreadable list is kept 60 s only: a timeout or a
+    // fresh codex login must not hold the built-in name for 10 minutes, and the doctor, which reads fresh, agrees again within the minute.
+    private async ValueTask<IReadOnlyList<ModelFacts>> CodexList(IModelCatalog catalog, CancellationToken cancellationToken)
+    {
+        if (_codexList is { } kept && _clock.GetElapsedTime(kept.At) < (kept.Listed.Count == 0 ? _unreadCodexListFor : _codexListFor))
+        {
+            return kept.Listed;
+        }
+
+        var listed = await catalog.ModelsOf(_codex, cancellationToken).ConfigureAwait(false);
+        _codexList = new CodexListRead(listed, _clock.GetTimestamp());
+        return listed;
     }
 
     private async ValueTask<Result<ModelAnswer>> Fail(ModelCall call, Error error)
@@ -148,4 +178,6 @@ internal sealed class RoutedModelPort : IModelPort, IModelPromptBudget
         (request.Models?.Values ?? []).Concat(request.Model is null ? [] : [request.Model]).FirstOrDefault(static n => !ModelNames.IsValid(n)) is { } bad
             ? ContextErrors.SettingsInvalid.With($"the request's model name '{bad}' is not a model name (letters, digits and . _ : / @ + -, not starting with -)")
             : null;
+
+    private sealed record CodexListRead(IReadOnlyList<ModelFacts> Listed, long At);
 }

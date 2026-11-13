@@ -37,7 +37,11 @@ public sealed class ConnectionEventBlock : IGraphBlock
     public string Example => """{"connection":"github:work","event":"github.pr.merged","filter":"trigger.repo == \"acme/api\""}""";
 
     /// <inheritdoc />
-    public BlockOutputs OutputsFor(JsonObject config) => _outputs;
+    public BlockOutputs OutputsFor(JsonObject config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        return Text(config, "event") is { } kind && EventKindSchemas.Find(kind) is { } schema ? new BlockOutputs(schema.Fields) : _outputs;
+    }
 
     /// <inheritdoc />
     public IReadOnlyList<(string Field, string Problem)> CheckConfig(JsonObject config)
@@ -93,7 +97,7 @@ public sealed class ConnectionEventBlock : IGraphBlock
     {
         ArgumentNullException.ThrowIfNull(context);
         var values = new Dictionary<string, JsonNode?>(StringComparer.Ordinal);
-        foreach (var name in Fields().Keys.Select(static k => k.TrimEnd('?')))
+        foreach (var name in OutputsFor(context.Config).Fields.Keys.Select(static k => k.TrimEnd('?')))
         {
             values[name] = context.Resolve("trigger." + name);
         }
