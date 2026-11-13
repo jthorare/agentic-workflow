@@ -45,7 +45,7 @@ public sealed class FirstRunSetupTests : IDisposable
         _rig.Harness.Profiles.Live = new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml");
     }
 
-        private FirstRunSetup Setup(InMemoryWorkflowStore? workflows = null)
+    private FirstRunSetup Setup(InMemoryWorkflowStore? workflows = null)
     {
         var store = workflows ?? _rig.Workflows;
         return new FirstRunSetup(
