@@ -38,10 +38,10 @@ internal sealed class AgentNodeLaunching(AgentNodeReading reading, IWorkflowStor
         var read = await reading.Read(node, cancellationToken).ConfigureAwait(false);
         var row = read.Run;
         var config = read.Config;
-        var input = config.ToJsonString();
+        var input = StoredJson.Fit(config.ToJsonString());   // why: a big interpolated prompt would go into Temporal history raw and pass its 2 MB limit; the row keeps the fitted text (#3486)
         if (StoredJson.ReadFailure(read.Scope, read.CutNode) is { } unreadable)
         {
-            return Failed(read.CutNode is null ? input : "{}", unreadable);   // why: a cut or blocked output the references read, or the list a loop needs
+            return Failed(read.CutNode is null ? input : new Fitted("{}", Cut: false), unreadable);   // why: a cut or blocked output the references read, or the list a loop needs
         }
 
         var parsed = RunAgentConfig.Parse(config);
@@ -66,7 +66,7 @@ internal sealed class AgentNodeLaunching(AgentNodeReading reading, IWorkflowStor
 
         // why: idempotent; the workflow's database and disk folders and its declared sandbox size reach the session's plan (#2532), made after the ended check so a retry never fails on them
         var launched = await starting.Start(request, ct => _resources.Ensure(row.WorkflowId, read.Spec, ct), cancellationToken).ConfigureAwait(false);
-        return new AgentNodeLaunched(launched, input, parsed.Value.Timeout);
+        return new AgentNodeLaunched(launched, input.Text, parsed.Value.Timeout, InputCut: input.Cut);
     }
 
     // The repo checkout, the agent and the read-only checkouts from the live profile; the run's item, or one made from the run's id when it has none.
@@ -129,8 +129,8 @@ internal sealed class AgentNodeLaunching(AgentNodeReading reading, IWorkflowStor
     private static ItemId ItemOf(string run) =>
         ItemId.From("ITM-" + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("graph-run:" + run)))[..32]);
 
-    private static AgentNodeLaunched Failed(string input, Error error) =>
-        new(new AgentLaunched(Worktree: null, StartHead: null, new AgentLaunchFailure(AgentLaunchFailureKind.StepFailed, error.Code, error.Message)), input, TimeSpan.Zero);
+    private static AgentNodeLaunched Failed(Fitted input, Error error) =>
+        new(new AgentLaunched(Worktree: null, StartHead: null, new AgentLaunchFailure(AgentLaunchFailureKind.StepFailed, error.Code, error.Message)), input.Text, TimeSpan.Zero, InputCut: input.Cut);
 
     private sealed record Placed(AgentStepTarget Target, IReadOnlyList<string> ReadOnlyPaths);
 }
