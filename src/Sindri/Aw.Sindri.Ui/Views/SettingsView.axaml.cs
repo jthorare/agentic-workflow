@@ -1,3 +1,4 @@
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -29,6 +30,7 @@ internal sealed partial class SettingsView : UserControl
         _settings?.PropertyChanged += OnSettingsChanged;
         _setup = _settings?.Setup;
         _setup?.RevealRequested += OnRevealRequested;
+        _filterWasEmpty = true;
         if (Content is StackPanel page)
         {
             ReplaceChecklist(page);
@@ -55,6 +57,17 @@ internal sealed partial class SettingsView : UserControl
     // The checklist is drawn in code, so its visibility follows the filter here.
     private void OnSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (_settings is not null && string.Equals(e.PropertyName, nameof(SettingsViewModel.Filter), StringComparison.Ordinal))
+        {
+            var empty = _settings.Filter.Trim().Length == 0;
+            if (_filterWasEmpty && !empty)
+            {
+                CollectShownText(_settings);   // before the Shows* changes are read: the filter matches the words on the page
+            }
+
+            _filterWasEmpty = empty;
+        }
+
         if (_checklist is not null && _settings is not null && string.Equals(e.PropertyName, nameof(SettingsViewModel.ShowsSetup), StringComparison.Ordinal))
         {
             _checklist.IsVisible = _settings.ShowsSetup;
@@ -88,6 +101,38 @@ internal sealed partial class SettingsView : UserControl
             page.Children.AddRange(parts);
         }
     }
+
+    // The text each section shows now: its labels, buttons, descriptions and accessible names (Browse, Reset, Copy, Read key ...).
+    internal void CollectShownText(SettingsViewModel settings)
+    {
+        (SettingsSection Section, Control?[] Parts)[] map =
+        [
+            (SettingsSection.Setup, [_checklist]),
+            (SettingsSection.Choices, [ModelChoiceSection, LabelChoiceSection, SurfaceChoiceSection]),
+            (SettingsSection.Sandbox, [SandboxSettingsSlot]),
+            (SettingsSection.Library, [LibrarySettingsSlot]),
+            (SettingsSection.Connections, [ConnectionsSettingsSlot]),
+            (SettingsSection.ThisApp, [ThisAppName, ThisAppCard]),
+        ];
+        foreach (var (section, parts) in map)
+        {
+            var words = parts.OfType<Control>().SelectMany(ShownWords);
+            settings.SetShownText(section, string.Join(' ', section == SettingsSection.Setup ? words.Concat(StepWords(settings)) : words));
+        }
+    }
+
+    // The words are read again each time the box goes from empty to text, and kept while it has text: rows inside a section raise changes on themselves, not on
+    // the section's view model, so no change watcher would see them all (#3453).
+    private bool _filterWasEmpty = true;
+
+    // A collapsed step's content may not be in the visual tree, so the steps' own words are read from the view model too.
+    private static IEnumerable<string> StepWords(SettingsViewModel settings) =>
+        (settings.Setup?.Steps ?? []).SelectMany(static s => new[] { s.Title, s.Sub, s.DetailText, s.HintText, s.Name, s.Note, s.ProgressText, s.ErrorText, s.ChipWord, s.Repo?.FolderLabel, s.Repo?.BrowseText, s.Repo?.BodyText, s.Repo?.NoteText, s.Repo?.AddText })
+            .OfType<string>().Where(static w => w.Length > 0);
+
+    private static IEnumerable<string> ShownWords(Control root) =>
+        root.GetSelfAndVisualDescendants().OfType<Control>().SelectMany(static c => new[] { (c as TextBlock)?.Text, (c as ContentControl)?.Content as string, AutomationProperties.GetName(c) })
+            .OfType<string>().Where(static s => s.Length > 0);
 
     // Esc in the filter box clears it.
     private void OnFilterKey(object? sender, Avalonia.Input.KeyEventArgs e)

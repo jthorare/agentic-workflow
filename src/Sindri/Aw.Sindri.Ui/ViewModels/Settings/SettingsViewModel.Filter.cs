@@ -16,16 +16,7 @@ internal sealed partial class SettingsViewModel
 
             field = value;
             OnChanged(nameof(Filter));
-            OnChanged(nameof(ShowsSetup));
-            OnChanged(nameof(ShowsModelChoice));
-            OnChanged(nameof(ShowsLabelChoice));
-            OnChanged(nameof(ShowsSurfaceChoice));
-            OnChanged(nameof(ShowsSandbox));
-            OnChanged(nameof(ShowsLibrary));
-            OnChanged(nameof(ShowsConnections));
-            OnChanged(nameof(ShowsThisApp));
-            OnChanged(nameof(HasNoMatch));
-            OnChanged(nameof(NoMatchText));
+            NotifyShown();
         }
     } = string.Empty;
 
@@ -33,13 +24,13 @@ internal sealed partial class SettingsViewModel
     public bool ShowsSetup => Shows(SettingsSection.Setup);
 
     /// <summary>True when the page has the model-choice line and the filter keeps the choices.</summary>
-    public bool ShowsModelChoice => HasModelChoice && SettingsFilter.Matches(SettingsSection.Choices, Filter);
+    public bool ShowsModelChoice => HasModelChoice && SettingsFilter.Matches(SettingsSection.Choices, Filter, _shown[(int)SettingsSection.Choices]);
 
     /// <summary>True when the page has the label-choice line and the filter keeps the choices.</summary>
-    public bool ShowsLabelChoice => HasLabelChoice && SettingsFilter.Matches(SettingsSection.Choices, Filter);
+    public bool ShowsLabelChoice => HasLabelChoice && SettingsFilter.Matches(SettingsSection.Choices, Filter, _shown[(int)SettingsSection.Choices]);
 
     /// <summary>True when the page has the product-surface-choice line and the filter keeps the choices.</summary>
-    public bool ShowsSurfaceChoice => HasSurfaceChoice && SettingsFilter.Matches(SettingsSection.Choices, Filter);
+    public bool ShowsSurfaceChoice => HasSurfaceChoice && SettingsFilter.Matches(SettingsSection.Choices, Filter, _shown[(int)SettingsSection.Choices]);
 
     /// <summary>True when the page has the Sandbox section and the filter keeps it.</summary>
     public bool ShowsSandbox => Shows(SettingsSection.Sandbox);
@@ -52,6 +43,9 @@ internal sealed partial class SettingsViewModel
 
     /// <summary>The filter box's placeholder.</summary>
     public string FilterPlaceholder { get; } = Labels.SettingsFilterPlaceholder;
+
+    /// <summary>The line under the no-match line: how to clear the filter.</summary>
+    public string NoMatchHint { get; } = Labels.SettingsNoMatchHint;
 
     /// <summary>The line shown when no section matches the filter.</summary>
     public string NoMatchText => Labels.SettingsNoMatch(Filter.Trim());
@@ -72,5 +66,27 @@ internal sealed partial class SettingsViewModel
         SettingsSection.Connections => HasConnections,
         SettingsSection.ThisApp => true,
         _ => false,
-    } && SettingsFilter.Matches(section, Filter);
+    } && SettingsFilter.Matches(section, Filter, _shown[(int)section]);
+
+    // What each section shows now, read from the page by the view so the filter matches the words a person sees (#3362).
+    private readonly string[] _shown = [.. Enumerable.Repeat(string.Empty, Enum.GetValues<SettingsSection>().Length)];
+
+    /// <summary>Records the text a section shows; the filter matches it besides the section's synonyms.</summary>
+    /// <param name="section">The section.</param>
+    /// <param name="text">Its headings, row labels, buttons and descriptions.</param>
+    internal void SetShownText(SettingsSection section, string text) => _shown[(int)section] = text;
+
+    private void NotifyShown()
+    {
+        OnChanged(nameof(ShowsSetup));
+        OnChanged(nameof(ShowsModelChoice));
+        OnChanged(nameof(ShowsLabelChoice));
+        OnChanged(nameof(ShowsSurfaceChoice));
+        OnChanged(nameof(ShowsSandbox));
+        OnChanged(nameof(ShowsLibrary));
+        OnChanged(nameof(ShowsConnections));
+        OnChanged(nameof(ShowsThisApp));
+        OnChanged(nameof(HasNoMatch));
+        OnChanged(nameof(NoMatchText));
+    }
 }
