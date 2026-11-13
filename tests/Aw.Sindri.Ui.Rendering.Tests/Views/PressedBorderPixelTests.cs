@@ -302,4 +302,32 @@ public sealed class PressedBorderPixelTests : FrameHost
         window.Close();
         await Task.CompletedTask;
     });
+
+    // TEMPORARY (#3507): dumps the 1.5x geometry and the mid-width column; always fails so the message prints. Dropped before the PR.
+    private static string Dump(string label, Window window, Border sample, double scale)
+    {
+        var pixel = Render(window, scale);
+        var topLeft = sample.TranslatePoint(default, window)!.Value;
+        var x = (int)Math.Round((topLeft.X + (sample.Bounds.Width / 2)) * scale, MidpointRounding.AwayFromZero);
+        var column = string.Join(' ', Enumerable.Range(20, 41).Select(y => string.Create(CultureInfo.InvariantCulture, $"{y}:#{pixel(x, y).R:X2}{pixel(x, y).G:X2}{pixel(x, y).B:X2}")));
+        var size = new PixelSize((int)Math.Round(window.Bounds.Width * scale, MidpointRounding.AwayFromZero), (int)Math.Round(window.Bounds.Height * scale, MidpointRounding.AwayFromZero));
+        return string.Create(CultureInfo.InvariantCulture, $"[{label}] sample.Bounds={sample.Bounds} topLeft={topLeft} RenderScaling={window.RenderScaling} window.Bounds={window.Bounds} bitmap={size} x={x}\n{column}");
+    }
+
+    [Fact]
+    public Task Diag_3507_columns() => OnUi(async () =>
+    {
+        Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
+        var (window, sample) = ClickableWindow(scale: 1.5);
+        var unpressed = Dump("unpressed", window, sample, 1.5);
+        window.MouseMove(Centre(sample, window), RawInputModifiers.None);
+        window.MouseDown(Centre(sample, window), MouseButton.Left, RawInputModifiers.None);
+        Settle(window);
+        var pressed = Dump("pressed", window, sample, 1.5);
+        window.MouseUp(Centre(sample, window), MouseButton.Left, RawInputModifiers.None);
+        window.Close();
+        await Task.CompletedTask;
+        Assert.Fail(unpressed + "\n" + pressed);
+    });
 }
