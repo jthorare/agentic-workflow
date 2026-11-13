@@ -74,6 +74,13 @@
   <!-- on-primary: primary button text -->
   <Color x:Key="Color.OnPrimary">#ffffff</Color>
   <SolidColorBrush x:Key="Brush.OnPrimary" Color="{StaticResource Color.OnPrimary}" />
+  <!-- error-fill: the danger primary button (the sheet's Remove). Error itself is 3.5:1 under white, so the fill is darker: white on it is 5.0:1, hover 5.9:1, pressed 6.9:1 -->
+  <Color x:Key="Color.ErrorFill">#c93c3c</Color>
+  <SolidColorBrush x:Key="Brush.ErrorFill" Color="{StaticResource Color.ErrorFill}" />
+  <Color x:Key="Color.ErrorFillHover">#b83232</Color>
+  <SolidColorBrush x:Key="Brush.ErrorFillHover" Color="{StaticResource Color.ErrorFillHover}" />
+  <Color x:Key="Color.ErrorFillPressed">#a82c2c</Color>
+  <SolidColorBrush x:Key="Brush.ErrorFillPressed" Color="{StaticResource Color.ErrorFillPressed}" />
   <!-- semantic-success: ok glyphs, always with the word -->
   <Color x:Key="Color.Success">#2eb75b</Color>
   <SolidColorBrush x:Key="Brush.Success" Color="{StaticResource Color.Success}" />

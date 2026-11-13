@@ -34,6 +34,20 @@
     <Setter Property="Background" Value="{DynamicResource Brush.PrimaryPressed}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryPressed}" />
   </Style>
+  <!-- The danger primary button (the sheet's Remove): the ErrorFill, white text; hover and pressed use the darker fills. -->
+  <Style Selector="Button.command-control.destructive.primary:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.ErrorFill}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.ErrorFill}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.OnPrimary}" />
+  </Style>
+  <Style Selector="Button.command-control.destructive.primary:pointerover:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.ErrorFillHover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.ErrorFillHover}" />
+  </Style>
+  <Style Selector="Button.command-control.destructive.primary:pressed:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.ErrorFillPressed}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.ErrorFillPressed}" />
+  </Style>
   <Style Selector="Button.command-control:disabled TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkTertiary}" />
   </Style>
@@ -412,6 +426,47 @@
     <Setter Property="Background" Value="Transparent" />
   </Style>
   <Style Selector="controls|StartCard:disabled TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+  </Style>
+  <!-- SelectableTile (#3234): one choice of several. Rest is transparent with a hairline; hover Surface2; pressed Surface3; keyboard focus a 2 px PrimaryHover ring;
+       selected PrimarySoft with a Primary border (it keeps its fill under the pointer); disabled dims the word and takes no hover. Class row: full width, content on the left. -->
+  <Style Selector="controls|SelectableTile">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    <Setter Property="Focusable" Value="True" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="PART_Chrome" Background="Transparent" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.SM}" MinHeight="28" Padding="12,4">
+          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="controls|SelectableTile.row">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+  </Style>
+  <Style Selector="controls|SelectableTile:pointerover /template/ Border#PART_Chrome">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+  </Style>
+  <Style Selector="controls|SelectableTile:pressed /template/ Border#PART_Chrome">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+  </Style>
+  <Style Selector="controls|SelectableTile:selected /template/ Border#PART_Chrome">
+    <Setter Property="Background" Value="{DynamicResource Brush.PrimarySoft}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
+  </Style>
+  <Style Selector="controls|SelectableTile:focus-visible /template/ Border#PART_Chrome">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+  <Style Selector="controls|SelectableTile:disabled /template/ Border#PART_Chrome">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="controls|SelectableTile:disabled">
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
   </Style>
   <!-- A quiet full-width group toggle (the Agents page's group heads): a hairline above, no radius. -->
