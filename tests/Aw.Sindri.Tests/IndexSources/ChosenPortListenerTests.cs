@@ -1,5 +1,5 @@
-using System.Net;
 using System.Net.Sockets;
+using Aw.Kernel.Testing;
 
 namespace Aw.Sindri.Tests.IndexSources;
 
@@ -20,8 +20,7 @@ public sealed class ChosenPortListenerTests
                 }
 
                 heldPort = chosen;
-                thief = new TcpListener(IPAddress.Loopback, chosen);
-                thief.Start();
+                thief = PortThief.TryTake(chosen);   // null: another process took it first, still the case under test (#3451)
             });
             listener.Close();
 
