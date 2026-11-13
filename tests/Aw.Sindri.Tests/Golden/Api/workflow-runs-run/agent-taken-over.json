@@ -22,7 +22,8 @@
       "output": null,
       "truncated": false,
       "error": null,
-      "agent": "taken_over"
+      "agent": "taken_over",
+      "raw": null
     },
     {
       "node": "start",
@@ -34,7 +35,8 @@
       },
       "truncated": false,
       "error": null,
-      "agent": null
+      "agent": null,
+      "raw": null
     }
   ]
 }
