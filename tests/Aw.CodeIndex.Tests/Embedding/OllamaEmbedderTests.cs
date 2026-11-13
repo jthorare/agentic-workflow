@@ -185,7 +185,7 @@ public sealed class OllamaEmbedderTests
 
         _ = await Over(server).Embed(_settings, [text], Token);
 
-        using var body = JsonDocument.Parse(server.Requests.Last().Body);
+        using var body = JsonDocument.Parse(server.Requests[^1].Body);
         var sent = body.RootElement.GetProperty("input")[0].GetString()!;
         Assert.Equal(OllamaEmbedder.InputMaxCharacters - 1, sent.Length);
         Assert.DoesNotContain('\uFFFD', sent);
