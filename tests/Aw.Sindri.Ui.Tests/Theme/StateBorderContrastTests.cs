@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+using System.Xml;
 using System.Xml.Linq;
 using Aw.Kernel.Testing;
 
@@ -7,7 +8,7 @@ namespace Aw.Sindri.Ui.Tests.Theme;
 
 /// <summary>
 /// The guard behind #3190: a border a control draws in a required state (pressed, focus, selected, checked) is a state indicator, so it holds 3:1 against the
-/// Canvas and against Surface1 (WCAG 1.4.11) and is never a Hairline colour. Rest and hover borders are exempt: hover is not a required state. The test reads every
+/// Canvas and against Surface1 (WCAG 1.4.11) and is never a Hairline colour. Rest, hover and disabled borders are exempt (hover is not a required state; a disabled control is inactive). A pseudo-class that is neither required nor exempt fails the test until someone classifies it. The test reads every
 /// style under src/Sindri/Aw.Sindri.Ui whose selector names one of those states and resolves each BorderBrush setter through Theme/Tokens.axaml.
 /// </summary>
 [Lane(TestLane.Unit)]
@@ -22,21 +23,60 @@ public sealed class StateBorderContrastTests
         Unknown,
     }
 
-#pragma warning disable IDE0060 // the red stub reads nothing
-    /// <summary>Reads a style selector's pseudo-classes. Stub: the red commit compiles and classifies nothing.</summary>
+    /// <summary>
+    /// Reads a style selector's pseudo-classes. Required: the states a user must see (pressed, the focus family, checked, selected, and the .selected class). Exempt: :pointerover (hover is not a required state)
+    /// and :disabled (an inactive component is outside WCAG 1.4.11). Functional :not, :is and :nth-child are not states themselves, but the states inside them count. Any other pseudo-class is Unknown.
+    /// </summary>
     internal static class StateSelectors
     {
-        internal static SelectorState Classify(string selector) => SelectorState.None;
+        private static readonly Regex _pseudo = new(@":(?<name>[a-zA-Z][\w-]*)", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(1));
 
-        internal static IReadOnlyList<string> UnknownIn(string fileName, XElement style) => [];
+        private static readonly Regex _selectedClass = new(@"\.selected(?![\w-])", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
+
+        private static readonly HashSet<string> _required = new(StringComparer.Ordinal) { "pressed", "focus", "focus-visible", "focus-within", "checked", "selected" };
+
+        private static readonly HashSet<string> _exempt = new(StringComparer.Ordinal) { "pointerover", "disabled" };
+
+        private static readonly HashSet<string> _functional = new(StringComparer.Ordinal) { "not", "is", "nth-child", "nth-last-child" };
+
+        internal static SelectorState Classify(string selector)
+        {
+            var names = PseudoClasses(selector);
+            if (names.Exists(_required.Contains) || _selectedClass.IsMatch(selector))
+            {
+                return SelectorState.Required;
+            }
+
+            if (names.Exists(name => !_exempt.Contains(name)))
+            {
+                return SelectorState.Unknown;
+            }
+
+            return names.Count > 0 ? SelectorState.Exempt : SelectorState.None;
+        }
+
+        // One failure per style that paints a BorderBrush under a pseudo-class nobody classified: file:line, the selector and the class.
+        internal static IReadOnlyList<string> UnknownIn(string fileName, XElement style)
+        {
+            var selector = style.Attribute("Selector")?.Value ?? string.Empty;
+            var paintsBorder = style.Elements().Any(e => string.Equals(e.Name.LocalName, "Setter", StringComparison.Ordinal) && (e.Attribute("Property")?.Value.EndsWith("BorderBrush", StringComparison.Ordinal) ?? false));
+            if (!paintsBorder || Classify(selector) != SelectorState.Unknown)
+            {
+                return [];
+            }
+
+            var unknown = PseudoClasses(selector).Where(name => !_required.Contains(name) && !_exempt.Contains(name)).Distinct(StringComparer.Ordinal).Select(name => ":" + name);
+            var line = ((IXmlLineInfo)style).LineNumber.ToString(CultureInfo.InvariantCulture);
+            return [fileName + ":" + line + ": " + selector + " -> unclassified pseudo-class " + string.Join(", ", unknown) + " (add it to required or exempt in StateSelectors)"];
+        }
+
+        private static List<string> PseudoClasses(string selector) =>
+            [.. _pseudo.Matches(selector).Select(m => m.Groups["name"].Value).Where(name => !_functional.Contains(name))];
     }
-#pragma warning restore IDE0060
 
     private const double NonText = 3;
 
     private static readonly TokenFile _tokens = TokenFile.Load();
-
-    private static readonly Regex _state = new(@":pressed|:focus|:checked|:selected|\.selected", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
 
     private static readonly Regex _brush = new(@"^\{(?:Dynamic|Static)Resource (?<key>Brush\.[\w.]+)\}$", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
 
@@ -66,6 +106,8 @@ public sealed class StateBorderContrastTests
                 failures.Add(string.Create(CultureInfo.InvariantCulture, $"{where} -> {key}: {onCanvas:F2}:1 on Canvas, {onSurface:F2}:1 on Surface1"));
             }
         }
+
+        failures.AddRange(Styles().SelectMany(s => StateSelectors.UnknownIn(s.File, s.Style)));
 
         // The scan reads real styles: the pressed clickable border and the focus ring are among them.
         var keys = borders.Select(b => b.Key).ToHashSet(StringComparer.Ordinal);
@@ -107,13 +149,16 @@ public sealed class StateBorderContrastTests
         Assert.Empty(StateSelectors.UnknownIn("Some.axaml", style));
     }
 
-    // Every (file: selector, brush key) of a BorderBrush setter in a style whose selector names a required state.
-    private static IEnumerable<(string Where, string Key)> StateBorders() =>
+    // Every style of every axaml file under the Ui project, with its file name.
+    private static IEnumerable<(string File, XElement Style)> Styles() =>
         Directory.EnumerateFiles(UiSource.Library, "*.axaml", SearchOption.AllDirectories)
             .Where(file => !IsBuildOutput(file))
-            .SelectMany(file => XDocument.Load(file).Descendants()
+            .SelectMany(file => XDocument.Load(file, LoadOptions.SetLineInfo).Descendants()
                 .Where(e => string.Equals(e.Name.LocalName, "Style", StringComparison.Ordinal))
-                .SelectMany(style => BordersOf(Path.GetFileName(file), style)));
+                .Select(style => (Path.GetFileName(file), style)));
+
+    // Every (file: selector, brush key) of a BorderBrush setter in a style whose selector names a required state.
+    private static IEnumerable<(string Where, string Key)> StateBorders() => Styles().SelectMany(s => BordersOf(s.File, s.Style));
 
     private static bool IsBuildOutput(string file) =>
         file.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar, StringComparison.Ordinal)
@@ -124,7 +169,7 @@ public sealed class StateBorderContrastTests
     private static IEnumerable<(string Where, string Key)> BordersOf(string fileName, XElement style)
     {
         var selector = style.Attribute("Selector")?.Value ?? string.Empty;
-        if (!_state.IsMatch(selector))
+        if (StateSelectors.Classify(selector) != SelectorState.Required)
         {
             return [];
         }
