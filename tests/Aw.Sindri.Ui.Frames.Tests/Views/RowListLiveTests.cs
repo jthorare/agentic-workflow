@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -475,6 +476,26 @@ public sealed class RowListLiveTests
         Assert.Contains("Needs a reply", texts, StringComparer.Ordinal);
         Assert.Contains("oldest 3d", texts, StringComparer.Ordinal);
         Assert.Contains("4", texts, StringComparer.Ordinal);
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task The_sticky_header_draws_the_ring_while_the_focused_header_it_covers_is_under_it() => await OnUi(() =>
+    {
+        var first = Group("First", 14);
+        var second = Group("Second", 14, first: 100);
+        var (window, list) = Show(new[] { first, second }, height: 300);
+        var real = list.GetVisualDescendants().OfType<RowGroupHeader>().First(h => h.Name != "PART_Sticky" && ReferenceEquals(h.Group, first));
+        Assert.True(real.Focus(NavigationMethod.Directional));
+
+        list.ScrollTo(10);   // the first header sits 10 px under the sticky copy of the same group
+        Settle(window);
+        var sticky = list.GetVisualDescendants().OfType<RowGroupHeader>().First(h => h.Name == "PART_Sticky");
+        Assert.Same(first, list.StickyGroup);
+        Assert.Equal(new Thickness(2), sticky.BorderThickness);
+        Assert.True(sticky.TryFindResource("Brush.PrimaryHover", sticky.ActualThemeVariant, out var expected));
+        Assert.Equal(Assert.IsAssignableFrom<ISolidColorBrush>(expected).Color, Assert.IsAssignableFrom<ISolidColorBrush>(sticky.BorderBrush).Color);
         window.Close();
         return true;
     });

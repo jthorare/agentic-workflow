@@ -62,6 +62,66 @@ public sealed class RowFocusBarTests
         return true;
     });
 
+    private static RowGroupHeader FirstHeader(RowList list) =>
+        list.GetVisualDescendants().OfType<RowGroupHeader>().First(h => h.Group is not null && h.Name != "PART_Sticky" && h.Bounds.Height > 0);
+
+    private static (double Chevron, double Heading) ContentX(RowGroupHeader header)
+    {
+        var blocks = header.GetVisualDescendants().OfType<TextBlock>().ToList();   // chevron, heading, count, summary
+        return (blocks[0].TranslatePoint(default, header)!.Value.X, blocks[1].TranslatePoint(default, header)!.Value.X);
+    }
+
+    [Fact]
+    public async Task A_focused_group_header_draws_a_2px_ring_inside_its_bounds() => await OnUi(() =>
+    {
+        var (window, list) = Show();
+        var header = FirstHeader(list);
+
+        Assert.True(header.Focus(NavigationMethod.Directional));
+        Settle(window);
+        Assert.Equal(new Thickness(2), header.BorderThickness);
+        Assert.True(header.TryFindResource("Brush.PrimaryHover", header.ActualThemeVariant, out var expected));
+        var wanted = Assert.IsAssignableFrom<ISolidColorBrush>(expected).Color;
+        Assert.Equal(wanted, Assert.IsAssignableFrom<ISolidColorBrush>(header.BorderBrush).Color);
+        Assert.Null(header.FocusAdorner);   // nothing outside the bounds
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task Group_header_content_x_is_the_same_focused_or_not() => await OnUi(() =>
+    {
+        var (window, list) = Show();
+        var header = FirstHeader(list);
+        var plain = ContentX(header);
+
+        window.MouseMove(header.TranslatePoint(new Point(header.Bounds.Width / 2, header.Bounds.Height / 2), window)!.Value);
+        Settle(window);
+        var hovered = ContentX(header);
+        Assert.True(header.Focus(NavigationMethod.Directional));
+        Settle(window);
+        var focused = ContentX(header);
+
+        Assert.Equal(plain, hovered);
+        Assert.Equal(plain, focused);
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task A_hovered_unfocused_group_header_has_no_ring() => await OnUi(() =>
+    {
+        var (window, list) = Show();
+        var header = FirstHeader(list);
+
+        window.MouseMove(header.TranslatePoint(new Point(header.Bounds.Width / 2, header.Bounds.Height / 2), window)!.Value);
+        Settle(window);
+        Assert.False(header.IsKeyboardFocusWithin);
+        Assert.True(header.BorderThickness == default || header.BorderBrush is null || (header.BorderBrush is ISolidColorBrush b && b.Color.A == 0));
+        window.Close();
+        return true;
+    });
+
     [Fact]
     public async Task A_selected_focused_row_keeps_the_bar_inside_the_ring() => await OnUi(() =>
     {
