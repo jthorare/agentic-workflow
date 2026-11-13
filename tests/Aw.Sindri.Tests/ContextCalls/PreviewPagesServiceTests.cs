@@ -11,6 +11,7 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
@@ -41,7 +42,7 @@ public sealed class PreviewPagesServiceTests
         _hash = ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json));
         _h.Profiles.Live = new LoadedProfile(profile, _hash, "/home/profile.yaml");
         _engine.Answer = View([Suggested("schedule-week", "Schedule week", Week, Submit())]);
-        return new PreviewPagesService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _h.Profiles, _map);
+        return new PreviewPagesService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), _engine.Proxy, _h.Profiles, _map);
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -5,6 +5,7 @@ using Aw.Context.Testing.Engine;
 using Aw.Kernel;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
@@ -31,7 +32,7 @@ public sealed class IndexEmbedServiceTests
             _asked.Add(request);
             return answer(request);
         });
-        return await new IndexEmbedService(new ContextScopes(_h.Profiles, _h.Callers), engine).Run(new ScheduledRun(grant, _now), Ct);
+        return await new IndexEmbedService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), engine).Run(new ScheduledRun(grant, _now), Ct);
     }
 
     [Fact, Trait("Lane", "unit")]

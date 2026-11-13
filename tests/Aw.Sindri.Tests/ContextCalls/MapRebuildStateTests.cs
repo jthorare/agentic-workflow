@@ -25,7 +25,7 @@ public sealed class MapRebuildStateTests
         var loaded = SliceHarness.Profile("5s");
         loaded = loaded with { Profile = loaded.Profile with { Context = JsonDocument.Parse("""{"docs":{"globs":["docs/**/*.md"]}}""").RootElement.Clone() } };
         _ = await _h.Profiles.Save(loaded, Ct);
-        return new MapRebuildState(new ContextScopes(_h.Profiles, _h.Callers), () => _engine.Proxy, _jobs, _h.Clock);
+        return new MapRebuildState(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), () => _engine.Proxy, _jobs, _h.Clock);
     }
 
     private void Refresh(JobState state, TimeSpan endedAgo, params string[] lines)

@@ -24,7 +24,7 @@ public sealed class RelinkPinAliasesServiceTests
     private async Task<Result<RelinkPinAliasesJobResult>> Run()
     {
         _ = await _h.Profiles.Save(SliceHarness.Profile(), Ct);
-        var service = new RelinkPinAliasesService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _jobs);
+        var service = new RelinkPinAliasesService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), _engine.Proxy, _jobs);
         using var job = _jobs.Enter(new JobContext(JobId.New(_h.Ids), JobKind.From("RelinkPinAliases"), new Progress(_progress)));
         using var caller = _h.Callers.EnterService("context-map-refresh");
         return await service.Handle(new RelinkPinAliasesRequest(), Ct);

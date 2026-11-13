@@ -1,6 +1,7 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Pages;
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
@@ -15,7 +16,7 @@ public sealed class GetContextPagesServiceTests
     private async Task<GetContextPagesService> Service()
     {
         _ = await _h.Profiles.Save(SliceHarness.Profile(), Ct);
-        return new GetContextPagesService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy);
+        return new GetContextPagesService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), _engine.Proxy);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -74,7 +75,7 @@ public sealed class GetContextPagesServiceTests
     [Fact, Trait("Lane", "unit")]
     public async Task Pages_without_a_profile_is_refused()
     {
-        var service = new GetContextPagesService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy);
+        var service = new GetContextPagesService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), _engine.Proxy);
 
         var answer = await service.Handle(new GetContextPagesRequest(), Ct);
 

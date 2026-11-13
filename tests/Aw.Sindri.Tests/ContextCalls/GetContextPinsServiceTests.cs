@@ -45,7 +45,7 @@ public sealed class GetContextPinsServiceTests
         _engine.Heads = _engine.Heads.Count == 0 ? [new RepoHead(ContextRepoName.From("alpha"), "1", OnDefault: true)] : _engine.Heads;
         _ = await _h.Profiles.Save(approved, Ct);
         _h.Profiles.Live = live;
-        var scopes = new ContextScopes(_h.Profiles, _h.Callers);
+        var scopes = new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts());
         var service = new GetContextPinsService(scopes, _engine.Proxy, _h.Profiles, _h.Profiles, new MapRebuildState(scopes, () => _engine.Proxy, _jobs, _h.Clock), _jobs);
         return await service.Handle(new GetContextPinsRequest(repo), Ct);
     }

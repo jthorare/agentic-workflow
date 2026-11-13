@@ -3,6 +3,7 @@ using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
@@ -52,7 +53,7 @@ public sealed class IndexSourceNeedsLookTests
         _index.Standing = [_sources[name]];
         using var caller = _h.Callers.EnterService("test");
 
-        var view = await new GetIndexStatusService(new ContextScopes(_h.Profiles, _h.Callers), IndexStoreEngineProxy.Create(_index, new MapHealth("context:store", MapHealthState.Ok, "ok", Fix: null))).Handle(new GetIndexStatusRequest(), Ct);
+        var view = await new GetIndexStatusService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), IndexStoreEngineProxy.Create(_index, new MapHealth("context:store", MapHealthState.Ok, "ok", Fix: null))).Handle(new GetIndexStatusRequest(), Ct);
 
         Assert.True(view.IsSuccess, name);
         Assert.Equal(look, Assert.Single(view.Value.Sources).NeedsLook);

@@ -44,7 +44,7 @@ public sealed class ContextConceptScanServiceTests
             _ = await _h.Profiles.Save(loaded, Ct);
         }
 
-        return new ContextConceptScanService(new ContextScopes(harness.Profiles, _h.Callers), _engine.Proxy, _jobs, _start, _h.Clock, NullLogger<ContextConceptScanService>.Instance);
+        return new ContextConceptScanService(new ContextScopes(harness.Profiles, _h.Callers, new FakeRepoCheckouts()), _engine.Proxy, _jobs, _start, _h.Clock, NullLogger<ContextConceptScanService>.Instance);
     }
 
     private void Scan(JobState state, TimeSpan endedAgo, int version = 7)
