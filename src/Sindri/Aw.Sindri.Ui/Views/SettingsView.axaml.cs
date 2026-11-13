@@ -1,3 +1,4 @@
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -54,11 +55,38 @@ internal sealed partial class SettingsView : UserControl
     // The checklist is drawn in code, so its visibility follows the filter here.
     private void OnSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (_settings is not null && string.Equals(e.PropertyName, nameof(SettingsViewModel.Filter), StringComparison.Ordinal))
+        {
+            CollectShownText(_settings);   // before the Shows* changes are read: the filter matches the words on the page
+        }
+
         if (_checklist is not null && _settings is not null && string.Equals(e.PropertyName, nameof(SettingsViewModel.ShowsSetup), StringComparison.Ordinal))
         {
             _checklist.IsVisible = _settings.ShowsSetup;
         }
     }
+
+    // The text each section shows now: its labels, buttons, descriptions and accessible names (Browse, Reset, Copy, Read key ...).
+    private void CollectShownText(SettingsViewModel settings)
+    {
+        (SettingsSection Section, Control?[] Parts)[] map =
+        [
+            (SettingsSection.Setup, [_checklist]),
+            (SettingsSection.Choices, [ModelChoiceSection, LabelChoiceSection, SurfaceChoiceSection]),
+            (SettingsSection.Sandbox, [SandboxSettingsSlot]),
+            (SettingsSection.Library, [LibrarySettingsSlot]),
+            (SettingsSection.Connections, [ConnectionsSettingsSlot]),
+            (SettingsSection.ThisApp, [ThisAppName, ThisAppCard]),
+        ];
+        foreach (var (section, parts) in map)
+        {
+            settings.SetShownText(section, string.Join(' ', parts.OfType<Control>().SelectMany(ShownWords)));
+        }
+    }
+
+    private static IEnumerable<string> ShownWords(Control root) =>
+        root.GetSelfAndVisualDescendants().OfType<Control>().SelectMany(static c => new[] { (c as TextBlock)?.Text, (c as ContentControl)?.Content as string, AutomationProperties.GetName(c) })
+            .OfType<string>().Where(static s => s.Length > 0);
 
     // Esc in the filter box clears it.
     private void OnFilterKey(object? sender, Avalonia.Input.KeyEventArgs e)

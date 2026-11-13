@@ -1,6 +1,6 @@
 namespace Aw.Sindri.Ui.ViewModels.Settings;
 
-/// <summary>Which Settings sections a typed filter keeps (#3362): a section stays when the filter is empty or every word typed is part of one of the section's words.</summary>
+/// <summary>Which Settings sections a typed filter keeps (#3362): a section stays when the filter is empty or every word typed is part of the text the section shows or of one of its synonyms (zoom, font, animation).</summary>
 internal static class SettingsFilter
 {
     // What a person might type to find each section: its headings and the settings in it.
@@ -18,10 +18,11 @@ internal static class SettingsFilter
     /// <param name="section">The section.</param>
     /// <param name="filter">What the person typed; empty keeps every section.</param>
     /// <returns>True when the section stays.</returns>
-    internal static bool Matches(SettingsSection section, string filter)
+    /// <param name="shownText">The text the section shows now (its headings, row labels, buttons and descriptions), read from the page; empty when it has not been read.</param>
+    internal static bool Matches(SettingsSection section, string filter, string shownText = "")
     {
         var typed = filter.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
         var words = _words[(int)section];
-        return typed.All(t => words.Any(w => w.Contains(t, StringComparison.OrdinalIgnoreCase)));
+        return typed.All(t => words.Any(w => w.Contains(t, StringComparison.OrdinalIgnoreCase)) || shownText.Contains(t, StringComparison.OrdinalIgnoreCase));
     }
 }

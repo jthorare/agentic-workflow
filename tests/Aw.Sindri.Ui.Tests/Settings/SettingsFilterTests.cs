@@ -86,4 +86,26 @@ public sealed class SettingsFilterTests
         Assert.Contains(nameof(SettingsViewModel.ShowsThisApp), raised, StringComparer.Ordinal);
         Assert.Contains(nameof(SettingsViewModel.HasNoMatch), raised, StringComparer.Ordinal);
     }
+
+    [Theory]
+    [InlineData("browse", "Browse Add folder")]
+    [InlineData("reset", "Linear Reset key")]
+    [InlineData("read key", "Linear read key Copy")]
+    public void A_word_the_section_shows_matches_it_even_when_no_synonym_has_it(string typed, string shown)
+    {
+        Assert.True(SettingsFilter.Matches(SettingsSection.Library, typed, shown));
+        Assert.False(SettingsFilter.Matches(SettingsSection.Library, typed));
+    }
+
+    [Fact]
+    public void Clearing_the_filter_shows_every_section_the_page_has_again()
+    {
+        using var settings = Settings();
+        settings.Filter = "zzzz";
+
+        settings.Filter = string.Empty;
+
+        Assert.True(settings.ShowsThisApp);
+        Assert.False(settings.HasNoMatch);
+    }
 }

@@ -125,6 +125,7 @@ internal sealed partial class ShellWindow
             var slot = this.Get<Control>("SettingsSlot");
             var target = slot.GetVisualDescendants().OfType<TextBox>().FirstOrDefault(static t => string.Equals(t.Name, "SettingsFilterBox", StringComparison.Ordinal) && t.IsEffectivelyVisible) ?? FirstFocusable(slot);
             _ = target?.Focus(NavigationMethod.Tab);
+            slot.FindAncestorOfType<ScrollViewer>()?.ScrollToHome();   // the box brings itself into view and over-scrolls: the title stays under the top bar otherwise (#3453)
         }, DispatcherPriority.Loaded);
         return true;
     }
