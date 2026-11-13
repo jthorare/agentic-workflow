@@ -133,6 +133,57 @@ public sealed class SetupViewModelTests
         Assert.Equal(("Run hello-sindri", "Done"), (Step(setup, "first-workflow").Title, Step(setup, "first-workflow").ChipWord));
     }
 
+    private const string UnreadableFix = "The profile file is there but can't be read; check its permissions.";
+
+    private static System.Text.Json.Nodes.JsonNode UnreadableProfile()
+    {
+        var list = Golden("first-run");
+        foreach (var (step, why) in (ReadOnlySpan<(string, string)>)[
+            ("repo", "Sindri couldn't read your profile, so it can't tell which repositories are added."),
+            ("profile", "Sindri couldn't read your profile."),
+            ("agent", "Sindri couldn't read your profile, so it can't tell which agent runs workflows."),
+            ("first-workflow", "Sindri couldn't read your profile, so it can't run a workflow.")])
+        {
+            list = WithFailure(list, step, why, why, UnreadableFix);
+        }
+
+        return list;
+    }
+
+    [Fact]
+    public async Task An_unreadable_profile_says_its_fix_once_for_the_page_and_on_no_step()
+    {
+        _f.Serve(UnreadableProfile());
+
+        var setup = await _f.Read(Token);
+
+        Assert.Equal((true, UnreadableFix), (setup.HasProblem, setup.ProblemText));
+        Assert.All(setup.Steps.Where(s => s.IsFailed), s => Assert.Equal((false, string.Empty), (s.HasDetail, s.DetailText)));   // #3610: was on 4 steps
+    }
+
+    [Fact]
+    public async Task A_failed_steps_band_does_not_repeat_the_line_under_its_title()
+    {
+        _f.Serve(UnreadableProfile());
+
+        var repo = Step(await _f.Read(Token), "repo");
+
+        Assert.Equal("Sindri couldn't read your profile, so it can't tell which repositories are added.", repo.Sub);
+        Assert.Equal((false, string.Empty), (repo.HasError, repo.ErrorText));   // the chip says Failed and the line under the title says why
+    }
+
+    [Fact]
+    public async Task A_fix_on_one_failed_step_stays_on_that_step_and_the_page_has_no_line()
+    {
+        _f.Serve(WithFailure(Golden("first-run"), "repo", "Sindri couldn't add the repository.", "The folder is not a git repository.", "Pick the folder that holds .git."));
+
+        var setup = await _f.Read(Token);
+        var repo = Step(setup, "repo");
+
+        Assert.Equal((false, string.Empty), (setup.HasProblem, setup.ProblemText));
+        Assert.Equal(("Pick the folder that holds .git.", "The folder is not a git repository."), (repo.DetailText, repo.ErrorText));
+    }
+
     private async Task<SetupViewModel> ReadWith(string scenario)
     {
         _f.Serve(scenario);

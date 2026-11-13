@@ -124,6 +124,12 @@ internal sealed partial class SetupViewModel : ObservableObject
     /// <summary>True once the list has steps.</summary>
     public bool HasSteps { get; private set => Set(ref field, value); }
 
+    /// <summary>The one line for the whole page when several failed steps carry the same fix (an unreadable profile, #3610); empty otherwise.</summary>
+    public string ProblemText { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>True when the page shows <see cref="ProblemText"/>.</summary>
+    public bool HasProblem { get; private set => Set(ref field, value); }
+
     /// <summary>Asks the shell for Settings at the checklist (Home's line).</summary>
     internal void RequestChecklist() => ChecklistRequested?.Invoke(this, EventArgs.Empty);
 
