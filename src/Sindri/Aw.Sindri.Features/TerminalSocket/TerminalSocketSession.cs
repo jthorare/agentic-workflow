@@ -1,7 +1,8 @@
-using System.Text;
 using System.Text.Json;
-using Aw.Sindri.Core;
+using System.Text;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sessions;
+using Aw.Sindri.Core;
 
 namespace Aw.Sindri.Features.TerminalSocket;
 
@@ -18,17 +19,16 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
     private static readonly TimeSpan _pongWithin = TimeSpan.FromSeconds(10);
 
     /// <summary>Runs the socket until it closes.</summary>
-    /// <param name="provider">The provider of the session.</param>
-    /// <param name="id">The provider session id, or the tmux session name.</param>
+    /// <param name="session">The session.</param>
     /// <param name="channel">The socket.</param>
     /// <param name="cancellationToken">Ends the session (Serve stopping closes with 1001).</param>
     /// <returns>A task that ends when the socket is closed.</returns>
-    public async ValueTask Run(string provider, string id, ITerminalChannel channel, CancellationToken cancellationToken)
+    public async ValueTask Run(SessionRef session, ITerminalChannel channel, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
         try
         {
-            await RunSocket(provider, id, channel, cancellationToken).ConfigureAwait(false);
+            await RunSocket(session, channel, cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -85,7 +85,7 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
         return Encoding.UTF8.GetString(stream.ToArray());
     }
 
-    private async ValueTask RunSocket(string provider, string id, ITerminalChannel channel, CancellationToken cancellationToken)
+    private async ValueTask RunSocket(SessionRef session, ITerminalChannel channel, CancellationToken cancellationToken)
     {
         var hello = await ReadHello(channel, cancellationToken).ConfigureAwait(false);
         if (hello is null)
@@ -93,7 +93,7 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
             return;
         }
 
-        var opened = await source.Open(provider, id, hello.Value, cancellationToken).ConfigureAwait(false);
+        var opened = await source.Open(session, hello.Value, cancellationToken).ConfigureAwait(false);
         if (opened.IsError)
         {
             var code = opened.Error.Code;
@@ -174,7 +174,7 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
     private static int Dimension(JsonElement root, string name, int fallback) =>
         root.TryGetProperty(name, out var value) && value.TryGetInt32(out var number) ? number : fallback;
 
-    private async Task PumpFrames(ITerminalPaneStream pane, ITerminalChannel channel, CancellationTokenSource stop)
+    private async Task PumpFrames(IOpenTerminalPane pane, ITerminalChannel channel, CancellationTokenSource stop)
     {
         try
         {
@@ -223,7 +223,7 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
         }
     }
 
-    private static async ValueTask ReceiveLoop(ITerminalPaneStream pane, ITerminalChannel channel, SemaphoreSlim pong, CancellationToken cancellationToken)
+    private static async ValueTask ReceiveLoop(IOpenTerminalPane pane, ITerminalChannel channel, SemaphoreSlim pong, CancellationToken cancellationToken)
     {
         try
         {
@@ -242,7 +242,7 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
     }
 
     /// <summary>Applies one client message. Returns false when the socket was closed for it.</summary>
-    private static async ValueTask<bool> Apply(ITerminalPaneStream pane, ITerminalChannel channel, SemaphoreSlim pong, string message, CancellationToken cancellationToken)
+    private static async ValueTask<bool> Apply(IOpenTerminalPane pane, ITerminalChannel channel, SemaphoreSlim pong, string message, CancellationToken cancellationToken)
     {
         JsonDocument doc;
         try

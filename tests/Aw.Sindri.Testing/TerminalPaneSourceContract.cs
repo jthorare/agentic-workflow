@@ -1,5 +1,7 @@
-using Aw.Sindri.Core;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sessions;
+using Aw.Sindri.Core;
 using Xunit;
 
 namespace Aw.Sindri.Testing;
@@ -27,7 +29,7 @@ public abstract class TerminalPaneSourceContract
     public async Task An_open_stream_sends_the_screen_first()
     {
         var source = await Create();
-        await using var stream = (await source.Open("claude-code", "live", null, Token)).Value;
+        await using var stream = (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), null, Token)).Value;
 
         var first = await FirstFrame(stream);
 
@@ -42,7 +44,7 @@ public abstract class TerminalPaneSourceContract
     public async Task A_key_makes_a_frame_at_once()
     {
         var source = await Create();
-        await using var stream = (await source.Open("claude-code", "live", null, Token)).Value;
+        await using var stream = (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), null, Token)).Value;
         var first = await FirstFrame(stream);
 
         Assert.True((await stream.SendKey("Enter", Token)).IsSuccess);
@@ -66,7 +68,7 @@ public abstract class TerminalPaneSourceContract
     public async Task A_key_outside_the_list_is_refused(string key)
     {
         var source = await Create();
-        await using var stream = (await source.Open("claude-code", "live", null, Token)).Value;
+        await using var stream = (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), null, Token)).Value;
 
         var sent = await stream.SendKey(key, Token);
 
@@ -79,7 +81,7 @@ public abstract class TerminalPaneSourceContract
     public async Task Input_over_its_limit_is_refused()
     {
         var source = await Create();
-        await using var stream = (await source.Open("claude-code", "live", null, Token)).Value;
+        await using var stream = (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), null, Token)).Value;
 
         Assert.True((await stream.SendText(new string('a', 4097), Token)).IsError);
         Assert.True((await stream.Paste(new string('a', (256 * 1024) + 1), Token)).IsError);
@@ -95,7 +97,7 @@ public abstract class TerminalPaneSourceContract
     {
         var source = await CreateRefusing(SindriErrors.AgentNoPane.Code);
 
-        Assert.Equal("SND-AGENT-015", (await source.Open("claude-code", "warp", null, Token)).Error.Code);
+        Assert.Equal("SND-AGENT-015", (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("warp")), null, Token)).Error.Code);
     }
 
     /// <summary>A gone tmux server or session is SND-AGENT-016.</summary>
@@ -105,10 +107,10 @@ public abstract class TerminalPaneSourceContract
     {
         var source = await CreateRefusing(SindriErrors.AgentPaneGone.Code);
 
-        Assert.Equal("SND-AGENT-016", (await source.Open("claude-code", "gone", null, Token)).Error.Code);
+        Assert.Equal("SND-AGENT-016", (await source.Open(new SessionRef(AgentId.From("claude-code"), SessionId.From("gone")), null, Token)).Error.Code);
     }
 
-    private static async Task<TerminalFrame> FirstFrame(ITerminalPaneStream stream)
+    private static async Task<TerminalFrame> FirstFrame(IOpenTerminalPane stream)
     {
         using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
         limit.CancelAfter(TimeSpan.FromSeconds(5));

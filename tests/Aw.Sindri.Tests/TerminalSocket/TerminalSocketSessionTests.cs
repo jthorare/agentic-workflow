@@ -1,7 +1,9 @@
 using System.Text.Json;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sessions;
+using Aw.Sindri.Core;
 using Aw.Sindri.Features.TerminalSocket;
 using Aw.Sindri.Testing;
 using Microsoft.Extensions.Time.Testing;
@@ -30,7 +32,7 @@ public sealed class TerminalSocketSessionTests
         var (session, source, _) = Build();
         var channel = new FakeTerminalChannel(Hello());
 
-        var run = session.Run("claude-code", "live", channel, Cancel).AsTask();
+        var run = session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), channel, Cancel).AsTask();
         await channel.WaitForSent(2, Cancel);
         channel.End();
         await run;
@@ -49,7 +51,7 @@ public sealed class TerminalSocketSessionTests
         var (session, _, _) = Build();
         var channel = new FakeTerminalChannel(Hello("wrong"));
 
-        await session.Run("claude-code", "live", channel, Cancel);
+        await session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), channel, Cancel);
 
         Assert.Equal((1008, "SND-AUTH-002"), channel.Closed);
         Assert.Empty(channel.Sent);
@@ -61,7 +63,7 @@ public sealed class TerminalSocketSessionTests
         var (session, _, time) = Build();
         var channel = new FakeTerminalChannel();
 
-        var run = session.Run("claude-code", "live", channel, Cancel).AsTask();
+        var run = session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), channel, Cancel).AsTask();
         time.Advance(TimeSpan.FromSeconds(3.1));
         await run;
 
@@ -78,7 +80,7 @@ public sealed class TerminalSocketSessionTests
         var (session, _, _) = Build(source);
         var channel = new FakeTerminalChannel(Hello());
 
-        await session.Run("claude-code", "warp", channel, Cancel);
+        await session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("warp")), channel, Cancel);
 
         Assert.Equal((closeCode, code), channel.Closed);
     }
@@ -89,7 +91,7 @@ public sealed class TerminalSocketSessionTests
         var (session, source, _) = Build();
         var channel = new FakeTerminalChannel(Hello(), """{"t":"key","key":"Enter"}""");
 
-        var run = session.Run("claude-code", "live", channel, Cancel).AsTask();
+        var run = session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), channel, Cancel).AsTask();
         await channel.WaitForSent(3, Cancel);   // ready, first frame, the frame the key made — the fake clock never ticked
         channel.End();
         await run;
@@ -103,7 +105,7 @@ public sealed class TerminalSocketSessionTests
         var (session, source, _) = Build();
         var channel = new FakeTerminalChannel(Hello(), """{"t":"key","key":"F13"}""");
 
-        var run = session.Run("claude-code", "live", channel, Cancel).AsTask();
+        var run = session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), channel, Cancel).AsTask();
         await channel.WaitForSent(2, Cancel);
         channel.End();
         await run;
@@ -118,7 +120,7 @@ public sealed class TerminalSocketSessionTests
         var (session, _, _) = Build();
         var channel = new FakeTerminalChannel(Hello(), "{\"t\":\"paste\",\"text\":\"" + new string('a', (256 * 1024) + 1) + "\"}");
 
-        await session.Run("claude-code", "live", channel, Cancel);
+        await session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), channel, Cancel);
 
         Assert.Equal(1009, channel.Closed?.Code);
     }
@@ -129,7 +131,7 @@ public sealed class TerminalSocketSessionTests
         var (session, source, _) = Build();
         var channel = new FakeTerminalChannel(Hello());
 
-        var run = session.Run("claude-code", "live", channel, Cancel).AsTask();
+        var run = session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), channel, Cancel).AsTask();
         await channel.WaitForSent(2, Cancel);
         channel.End();
         await run;
@@ -143,7 +145,7 @@ public sealed class TerminalSocketSessionTests
         var (session, _, time) = Build();
         var channel = new FakeTerminalChannel(Hello());
 
-        var run = session.Run("claude-code", "live", channel, Cancel).AsTask();
+        var run = session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), channel, Cancel).AsTask();
         await channel.WaitForSent(2, Cancel);
         time.Advance(TimeSpan.FromSeconds(15));
         await channel.WaitForSent(3, Cancel);   // the ping

@@ -15,15 +15,15 @@ namespace Aw.Sindri.Infrastructure.Launch;
 internal sealed partial class SnapshotTerminalPaneLocator(ISessionSnapshot snapshot, TmuxHostOptions options) : ITerminalPaneLocator
 {
     /// <inheritdoc/>
-    public ValueTask<Result<TerminalTarget>> Find(string provider, string id, CancellationToken cancellationToken)
+    public ValueTask<Result<TerminalTarget>> Find(SessionRef session, CancellationToken cancellationToken)
     {
+        var id = session.Id.Value;
         if (OneOff().IsMatch(id))
         {
             return ValueTask.FromResult<Result<TerminalTarget>>(new TerminalTarget(options.Socket, SocketIsPath: false, id, id, Foreign: false));
         }
 
-        if (!AgentId.TryFrom(provider, out var agent) || !SessionId.TryFrom(id, out var session) || snapshot.Current is not { } pass
-            || SessionRows.Find(pass, new SessionRef(agent, session)) is not { } found)
+        if (snapshot.Current is not { } pass || SessionRows.Find(pass, session) is not { } found)
         {
             return ValueTask.FromResult<Result<TerminalTarget>>(SindriErrors.AgentPaneGone.With("no live session has that ref"));
         }

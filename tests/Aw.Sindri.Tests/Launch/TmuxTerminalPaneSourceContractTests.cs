@@ -1,7 +1,8 @@
-using Aw.Kernel;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core;
+using Aw.Kernel;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sessions;
+using Aw.Sindri.Core;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Testing;
 
@@ -35,6 +36,6 @@ public sealed class TmuxTerminalPaneSourceContractTests : TerminalPaneSourceCont
 
     private sealed class OneTarget(Result<TerminalTarget> answer) : ITerminalPaneLocator
     {
-        public ValueTask<Result<TerminalTarget>> Find(string provider, string id, CancellationToken cancellationToken) => ValueTask.FromResult(answer);
+        public ValueTask<Result<TerminalTarget>> Find(SessionRef session, CancellationToken cancellationToken) => ValueTask.FromResult(answer);
     }
 }

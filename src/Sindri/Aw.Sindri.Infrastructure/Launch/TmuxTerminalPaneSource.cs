@@ -4,8 +4,9 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Aw.Kernel;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sessions;
+using Aw.Sindri.Core;
 using Aw.Sindri.Infrastructure.Processes;
 
 namespace Aw.Sindri.Infrastructure.Launch;
@@ -22,9 +23,9 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
     private static readonly TimeSpan _callBudget = TimeSpan.FromSeconds(5);
 
     /// <inheritdoc/>
-    public async ValueTask<Result<ITerminalPaneStream>> Open(string provider, string id, HostSize? size, CancellationToken cancellationToken)
+    public async ValueTask<Result<IOpenTerminalPane>> Open(SessionRef session, HostSize? size, CancellationToken cancellationToken)
     {
-        var found = await locator.Find(provider, id, cancellationToken).ConfigureAwait(false);
+        var found = await locator.Find(session, cancellationToken).ConfigureAwait(false);
         if (found.IsError)
         {
             return found.Error;
@@ -40,7 +41,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
         return stream;
     }
 
-    private sealed class PaneStream(TmuxHostOptions options, TerminalTarget target) : ITerminalPaneStream
+    private sealed class PaneStream(TmuxHostOptions options, TerminalTarget target) : IOpenTerminalPane
     {
         private readonly SemaphoreSlim _kick = new(0);
 

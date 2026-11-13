@@ -16,6 +16,12 @@ internal static class TerminalSocketEndpoint
     {
         _ = group.MapGet("/sessions/{provider}/{id}/terminal", static async (HttpContext context, string provider, string id, ITerminalPaneSource source, IHumanTokenStore tokens, TimeProvider time) =>
         {
+            var session = SessionRoute.Ref(provider, id);
+            if (session.IsError)
+            {
+                return session.ToHttpResult();
+            }
+
             if (!context.WebSockets.IsWebSocketRequest)
             {
                 return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: SindriErrors.InvalidInput.Code, detail: "This route is a WebSocket: connect with ws://");
@@ -24,8 +30,8 @@ internal static class TerminalSocketEndpoint
             var held = (await tokens.Read(context.RequestAborted).ConfigureAwait(false)).Match(static token => token, static _ => null);
             using var socket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
             using var channel = new WebSocketTerminalChannel(socket);
-            var session = new TerminalSocketSession(source, token => held?.Matches(token) == true, time);
-            await session.Run(provider, id, channel, context.RequestAborted).ConfigureAwait(false);
+            var terminal = new TerminalSocketSession(source, token => held?.Matches(token) == true, time);
+            await terminal.Run(session.Value, channel, context.RequestAborted).ConfigureAwait(false);
             return Results.Empty;
         }).WithMetadata(CommandRouteMetadata.Instance);
         return group;

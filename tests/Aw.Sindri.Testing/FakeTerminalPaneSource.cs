@@ -2,8 +2,9 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Channels;
 using Aw.Kernel;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sessions;
+using Aw.Sindri.Core;
 
 namespace Aw.Sindri.Testing;
 
@@ -71,10 +72,10 @@ public sealed class FakeTerminalPaneSource : ITerminalPaneSource
     }
 
     /// <inheritdoc/>
-    public ValueTask<Result<ITerminalPaneStream>> Open(string provider, string id, HostSize? size, CancellationToken cancellationToken) =>
-        ValueTask.FromResult<Result<ITerminalPaneStream>>(OpenFails is { } error ? error : new Stream(this));
+    public ValueTask<Result<IOpenTerminalPane>> Open(SessionRef session, HostSize? size, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<IOpenTerminalPane>>(OpenFails is { } error ? error : new Stream(this));
 
-    private sealed class Stream : ITerminalPaneStream
+    private sealed class Stream : IOpenTerminalPane
     {
         private readonly FakeTerminalPaneSource _owner;
         private readonly Channel<TerminalFrame> _frames = Channel.CreateUnbounded<TerminalFrame>();
