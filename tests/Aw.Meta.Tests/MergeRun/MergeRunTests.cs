@@ -93,7 +93,7 @@ public sealed class MergeRunTests
     public async Task A_recorded_merge_appends_merge_recorded_with_the_lane_that_sent_the_ready_notice()
     {
         await Ready();
-        await _world.Receive("m1", "t1-api", "ready #190 headsha");
+        await _world.Receive("m1", "t1-api", "ready #190 ab12cd3");
 
         _ = await Service().Handle(new MergeRunRequest(190), CancellationToken.None);
 

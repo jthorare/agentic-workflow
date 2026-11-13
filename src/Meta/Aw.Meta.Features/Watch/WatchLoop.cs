@@ -40,7 +40,7 @@ internal sealed partial class WatchLoop(TeamConfig team, WatchPoller poller, Fun
     internal Func<bool, ValueTask<string?>> KeepFailing { get; init; } = static _ => ValueTask.FromResult<string?>(null);
 
     /// <summary>Receives context.high and context.ok; null writes none.</summary>
-    internal Core.Events.MetaEventSink? EventSink { get; init; }
+    internal Core.Coordination.MetaEventSink? EventSink { get; init; }
 
     /// <summary>Dates the events.</summary>
     internal TimeProvider Clock { get; init; } = TimeProvider.System;

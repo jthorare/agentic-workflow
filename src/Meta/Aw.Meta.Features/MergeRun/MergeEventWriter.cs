@@ -1,4 +1,5 @@
 using Aw.Meta.Core.Config;
+using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Events;
 using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;

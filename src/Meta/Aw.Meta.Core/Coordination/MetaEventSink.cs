@@ -1,6 +1,7 @@
+using Aw.Meta.Core.Events;
 using Aw.Meta.Core.Ports;
 
-namespace Aw.Meta.Core.Events;
+namespace Aw.Meta.Core.Coordination;
 
 /// <summary>Appends events for the commands that decide a fact. An append that fails never fails the caller.</summary>
 /// <param name="store">The event log.</param>
