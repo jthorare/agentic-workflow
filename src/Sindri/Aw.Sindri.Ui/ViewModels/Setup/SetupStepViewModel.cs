@@ -19,6 +19,7 @@ internal sealed partial class SetupStepViewModel : ObservableObject
 
     private readonly Func<SetupStepView, SetupActionViewModel?, SetupActionViewModel?> _action;
     private string? _overrideNote;
+    private string _shared = string.Empty;
 
     internal SetupStepViewModel(SetupStepView step, int number, Func<SetupStepView, SetupActionViewModel?, SetupActionViewModel?> action)
     {
@@ -190,6 +191,33 @@ internal sealed partial class SetupStepViewModel : ObservableObject
         OnChanged(nameof(HasNote));
     }
 
+    /// <summary>Takes the line the page shows once for several failed steps; a step whose fix is that line leaves it off its own body.</summary>
+    /// <param name="line">The page's line, or empty.</param>
+    internal void Share(string line)
+    {
+        if (!string.Equals(_shared, line, StringComparison.Ordinal))
+        {
+            _shared = line;
+            Derive();
+        }
+    }
+
+    // The step's own fix; empty once finished, while a retry runs, or when the page says it once for several steps (#3610).
+    private string Detail(bool running)
+    {
+        var detail = IsFinished || running ? string.Empty : Step.Detail ?? string.Empty;
+        return SaysOnPage(detail) ? string.Empty : TakeLink(detail, reset: false);
+    }
+
+    // The red band's sentence; empty while a retry runs, or when the line under the title already says it (#3610).
+    private string Band(bool running, string sub)
+    {
+        var sentence = running ? string.Empty : Step.Error?.Sentence ?? string.Empty;
+        return string.Equals(sentence, sub, StringComparison.Ordinal) ? string.Empty : sentence;
+    }
+
+    private bool SaysOnPage(string detail) => detail.Length > 0 && string.Equals(detail, _shared, StringComparison.Ordinal);
+
     /// <summary>Asks again whether the app can do its action now (the catalog or the Needs-you list changed).</summary>
     internal void Rederive()
     {
@@ -216,10 +244,11 @@ internal sealed partial class SetupStepViewModel : ObservableObject
         var state = running ? "running" : Step.State;
         var (word, said, tone) = Labels.SetupChip(state);
         (Title, Chip, ChipWord) = (Labels.SetupTitle(Step.Id, Step.Title), new StateChip(word, tone), said);
-        Sub = TakeLink(SubFor(state), reset: true);
+        var sub = SubFor(state);
+        Sub = TakeLink(sub, reset: true);
         Note = _overrideNote ?? string.Empty;
-        DetailText = IsFinished || running ? string.Empty : TakeLink(Step.Detail ?? string.Empty, reset: false);
-        ErrorText = running ? string.Empty : Step.Error?.Sentence ?? string.Empty;
+        DetailText = Detail(running);
+        ErrorText = Band(running, sub);
         Name = Labels.SetupStepName(Title, said, Sub);
         Preview = PreviewLines();
         DeriveProgress();

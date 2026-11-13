@@ -25,9 +25,6 @@
       <HyperlinkButton x:Name="SetupStepLink" IsVisible="{Binding HasLink}" NavigateUri="{Binding LinkUri}" Padding="0" AutomationProperties.Name="{Binding LinkText}">
         <TextBlock Classes="caption" Text="{Binding LinkText}" AutomationProperties.AccessibilityView="Raw" />
       </HyperlinkButton>
-      <Border IsVisible="{Binding HasDetail}" AutomationProperties.Name="{Binding DetailText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-        <TextBlock Classes="caption" Text="{Binding DetailText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-      </Border>
       <StackPanel IsVisible="{Binding HasProgress}" Spacing="4">
         <ProgressBar x:Name="SetupStepMeter" Classes="map-meter" Classes.failed="{Binding IsMeterFailed}" Minimum="0" Maximum="1" Value="{Binding ProgressFraction}" AutomationProperties.AccessibilityView="Raw" />
         <Border AutomationProperties.Name="{Binding ProgressText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
@@ -58,6 +55,10 @@
       </ItemsControl>
       <Border x:Name="SetupStepError" Classes="error-panel" IsVisible="{Binding HasError}" AutomationProperties.Name="{Binding ErrorText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption" Text="{Binding ErrorText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <!-- What broke (the band) comes before what to do (the detail), #3610. -->
+      <Border x:Name="SetupStepDetail" IsVisible="{Binding HasDetail}" AutomationProperties.Name="{Binding DetailText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption" Text="{Binding DetailText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
       <Border x:Name="SetupStepHint" IsVisible="{Binding HasHint}" AutomationProperties.Name="{Binding HintText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption subtle" Text="{Binding HintText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
