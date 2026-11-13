@@ -62,12 +62,37 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
                 }
             }
 
-            cache?.Save(Name, _files);
+            Persist();
             return UsageJson.PerModel(byMessage.Values);
         }
         finally
         {
             _ = _gate.Release();
+        }
+    }
+
+    /// <summary>Saves what changed; a save that fails keeps the state in memory and tries again, in full, on the next pass.</summary>
+    private void Persist()
+    {
+        if (cache is null)
+        {
+            return;
+        }
+
+        try
+        {
+            cache.Save(Name, _files);
+            foreach (var state in _files.Values)
+            {
+                state.Dirty = false;
+            }
+        }
+        catch (Exception e) when (e is Microsoft.Data.Sqlite.SqliteException or InvalidDataException or IOException or UnauthorizedAccessException)
+        {
+            foreach (var state in _files.Values)
+            {
+                state.Dirty = true;
+            }
         }
     }
 
@@ -103,6 +128,7 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
             }
         }
 
+        state.Dirty |= restarted || offset != state.Offset;
         state.Offset = offset;
     }
 

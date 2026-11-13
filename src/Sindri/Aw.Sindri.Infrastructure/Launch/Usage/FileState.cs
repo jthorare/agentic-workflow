@@ -7,5 +7,8 @@ internal sealed class FileState
 {
     public long Offset { get; set; }
 
+    /// <summary>True when this state changed since it was last saved to the read cache.</summary>
+    public bool Dirty { get; set; }
+
     public Dictionary<string, (DateTimeOffset? At, ModelTokens Tokens)> Messages { get; } = new(StringComparer.Ordinal);
 }

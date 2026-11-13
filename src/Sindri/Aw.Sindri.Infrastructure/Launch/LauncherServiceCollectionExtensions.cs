@@ -226,7 +226,7 @@ internal static class LauncherServiceCollectionExtensions
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var claude = LauncherStartup.NonEmpty(environment("CLAUDE_CONFIG_DIR")) ?? Path.Combine(home, ".claude");
         var codex = LauncherStartup.NonEmpty(environment("CODEX_HOME")) ?? Path.Combine(home, ".codex");
-        IUsageReader[] readers = [new ClaudeCodeUsage(Path.Combine(claude, "projects"), [$"{AgentHomes.For(settings.Home, AgentId.From("claude-code"))}/projects"]), new CodexUsage(Path.Combine(codex, "sessions"), [$"{AgentHomes.For(settings.Home, AgentId.From("codex"))}/sessions"]), new CursorUsage(Path.Combine(home, ".cursor", "projects"))];
+        IUsageReader[] readers = [new ClaudeCodeUsage(Path.Combine(claude, "projects"), [$"{AgentHomes.For(settings.Home, AgentId.From("claude-code"))}/projects"], new UsageReadCache(Path.Combine(settings.Home, "usage-cache"))), new CodexUsage(Path.Combine(codex, "sessions"), [$"{AgentHomes.For(settings.Home, AgentId.From("codex"))}/sessions"]), new CursorUsage(Path.Combine(home, ".cursor", "projects"))];
         return readers.ToDictionary(static r => r.Name, StringComparer.Ordinal);
     }
 
