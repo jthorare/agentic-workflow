@@ -31,6 +31,16 @@ internal sealed partial class ContextMapRefreshService
         return !builds.Value.Any(j => j.State == JobState.Succeeded && j.Repo is { } repo && mapped.Contains(repo.Value));
     }
 
-    private static string? Left(string[] elsewhere) =>
-        elsewhere.Length == 0 ? null : "not on trunk, left out: " + string.Join(", ", elsewhere);
+    private static string? Left(LeftOutRepos elsewhere)
+    {
+        string?[] notes =
+        [
+            elsewhere.OffTrunk.Length == 0 ? null : "not on trunk, left out: " + string.Join(", ", elsewhere.OffTrunk),
+            elsewhere.NotCheckout.Length == 0 ? null : "not a git checkout, left out: " + string.Join(", ", elsewhere.NotCheckout) + " (fix: git init and commit in it, or remove it from repos:)",
+        ];
+        return notes.OfType<string>().ToList() is { Count: > 0 } said ? string.Join("; ", said) : null;
+    }
+
+    // The mapped repos a tick leaves out (#3371): a checkout off its default branch, and a profile repo that is no git checkout at all.
+    private sealed record LeftOutRepos(string[] OffTrunk, string[] NotCheckout);
 }

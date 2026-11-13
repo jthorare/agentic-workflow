@@ -112,8 +112,10 @@ public sealed class PostgresContainer : IAsyncLifetime
     /// <summary>The host port docker picked for 5432/tcp: the 127.0.0.1 line of `docker port` (`127.0.0.1:NNNNN`; other lines are other addresses).</summary>
     private async Task<int> PublishedPortAsync()
     {
-        var lines = (await Docker("port", _id, "5432/tcp")).Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var line = lines.First(l => l.StartsWith("127.0.0.1:", StringComparison.Ordinal));
+        var output = await Docker("port", _id, "5432/tcp");
+        var lines = output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var line = lines.FirstOrDefault(l => l.StartsWith("127.0.0.1:", StringComparison.Ordinal))
+            ?? throw new InvalidOperationException($"`docker port` printed no 127.0.0.1: line for 5432/tcp. Raw output: {output}");
         return int.Parse(line["127.0.0.1:".Length..], CultureInfo.InvariantCulture);
     }
 
