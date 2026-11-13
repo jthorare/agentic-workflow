@@ -77,7 +77,7 @@ internal static class StoredJson
     {
         if (text is null)
         {
-            return new Fitted(null, Cut: false);
+            return new Fitted(Text: null, Cut: false);
         }
 
         var bytes = Encoding.UTF8.GetByteCount(text);
@@ -102,8 +102,3 @@ internal static class StoredJson
         }
     }
 }
-
-/// <summary>A text after <see cref="StoredJson.Fit"/>.</summary>
-/// <param name="Text">The text that fits, or null.</param>
-/// <param name="Cut">True when Text is the envelope for a text that was over the cap.</param>
-internal readonly record struct Fitted(string? Text, bool Cut);
