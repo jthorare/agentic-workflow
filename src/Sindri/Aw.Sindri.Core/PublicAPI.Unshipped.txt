@@ -6774,7 +6774,7 @@ static Aw.Sindri.Core.Launches.LaunchTargetRow.operator !=(Aw.Sindri.Core.Launch
 static Aw.Sindri.Core.Launches.LaunchTargetRow.operator ==(Aw.Sindri.Core.Launches.LaunchTargetRow? left, Aw.Sindri.Core.Launches.LaunchTargetRow? right) -> bool
 static Aw.Sindri.Core.Launches.LaunchTargets.operator !=(Aw.Sindri.Core.Launches.LaunchTargets? left, Aw.Sindri.Core.Launches.LaunchTargets? right) -> bool
 static Aw.Sindri.Core.Launches.LaunchTargets.operator ==(Aw.Sindri.Core.Launches.LaunchTargets? left, Aw.Sindri.Core.Launches.LaunchTargets? right) -> bool
-static Aw.Sindri.Core.Launches.LaunchTargetsProjection.Project(Aw.Sindri.Core.Launch.LaunchProbed? probed, System.DateTimeOffset? probedAt, Aw.Sindri.Core.Profile.AgentSettings? agents, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Launches.AgentSpend!>! spend, Aw.Sindri.Core.Views.AsOf! asOf) -> Aw.Sindri.Core.Launches.LaunchTargets!
+static Aw.Sindri.Core.Launches.LaunchTargetsProjection.Project(Aw.Sindri.Core.Launch.LaunchProbed? probed, System.DateTimeOffset? probedAt, Aw.Sindri.Core.Profile.AgentSettings? agents, Aw.Sindri.Core.Launches.TodaysSpend! spend, Aw.Sindri.Core.Views.AsOf! asOf) -> Aw.Sindri.Core.Launches.LaunchTargets!
 static Aw.Sindri.Core.Launches.ModelPrice.operator !=(Aw.Sindri.Core.Launches.ModelPrice? left, Aw.Sindri.Core.Launches.ModelPrice? right) -> bool
 static Aw.Sindri.Core.Launches.ModelPrice.operator ==(Aw.Sindri.Core.Launches.ModelPrice? left, Aw.Sindri.Core.Launches.ModelPrice? right) -> bool
 static Aw.Sindri.Core.Launches.ModelTokens.operator !=(Aw.Sindri.Core.Launches.ModelTokens? left, Aw.Sindri.Core.Launches.ModelTokens? right) -> bool
@@ -23254,6 +23254,32 @@ static Aw.Sindri.Core.Graph.Failures.FailureSentence.operator ==(Aw.Sindri.Core.
 static Aw.Sindri.Core.Graph.Failures.FailureSentences.Find(string! code) -> Aw.Sindri.Core.Graph.Failures.FailureSentence?
 static Aw.Sindri.Core.Graph.Failures.FailureSentences.Say(string! code, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! values) -> string!
 static readonly Aw.Sindri.Core.SindriErrors.GraphPromptFieldEmpty -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Connections.Polling.EventKindSchema
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.<Clone>$() -> Aw.Sindri.Core.Connections.Polling.EventKindSchema!
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.Deconstruct(out string! Kind, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Fields, out System.Text.Json.Nodes.JsonObject! Sample) -> void
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.Equals(Aw.Sindri.Core.Connections.Polling.EventKindSchema? other) -> bool
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.EventKindSchema(string! Kind, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Fields, System.Text.Json.Nodes.JsonObject! Sample) -> void
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.Fields.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.Fields.init -> void
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.Kind.get -> string!
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.Kind.init -> void
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.Sample.get -> System.Text.Json.Nodes.JsonObject!
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.Sample.init -> void
+Aw.Sindri.Core.Connections.Polling.EventKindSchemas
+override Aw.Sindri.Core.Connections.Polling.EventKindSchema.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.Polling.EventKindSchema.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.Polling.EventKindSchema.ToString() -> string!
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrChecks.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrClosed.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrComment.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrConflict.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrReadyForReview.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrReviewSubmitted.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrUpdated.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKindSchema.operator !=(Aw.Sindri.Core.Connections.Polling.EventKindSchema? left, Aw.Sindri.Core.Connections.Polling.EventKindSchema? right) -> bool
+static Aw.Sindri.Core.Connections.Polling.EventKindSchema.operator ==(Aw.Sindri.Core.Connections.Polling.EventKindSchema? left, Aw.Sindri.Core.Connections.Polling.EventKindSchema? right) -> bool
+static Aw.Sindri.Core.Connections.Polling.EventKindSchemas.All.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Connections.Polling.EventKindSchema!>!
+static Aw.Sindri.Core.Connections.Polling.EventKindSchemas.Find(string! kind) -> Aw.Sindri.Core.Connections.Polling.EventKindSchema?
 Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out string? Reason, out string! By, out string! Mode) -> void
 Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.Mode.get -> string!
 Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.Mode.init -> void
@@ -23303,6 +23329,31 @@ override sealed Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp.Equals(Aw.Sindri.Core.Gra
 static Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp.operator !=(Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp? left, Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp? right) -> bool
 static Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp.operator ==(Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp? left, Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp? right) -> bool
 static readonly Aw.Sindri.Core.SindriErrors.GraphNotBuilt -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphOnlyTriggerReplaceable -> Aw.Kernel.ErrorDefinition!
+static Aw.Sindri.Core.Graph.Ops.GraphOps.ApplyWithGaps(Aw.Sindri.Core.Graph.GraphSpec! spec, int baseRevision, int currentRevision, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Ops.GraphOp!>! ops, Aw.Sindri.Core.Graph.Validation.GraphValidator! validator) -> Aw.Kernel.Result<(Aw.Sindri.Core.Graph.GraphSpec! Spec, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Validation.GraphFinding!>! Gaps)>!
+Aw.Sindri.Core.Graph.Templates.StockTemplates
+static Aw.Sindri.Core.Graph.Templates.StockTemplates.All.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Templates.StockTemplate!>!
+Aw.Sindri.Core.Graph.Templates.StockTemplate
+Aw.Sindri.Core.Graph.Templates.StockTemplate.<Clone>$() -> Aw.Sindri.Core.Graph.Templates.StockTemplate!
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Deconstruct(out string! Key, out string! Title, out string! Trigger, out System.Collections.Generic.IReadOnlyList<string!>! Needs, out Aw.Sindri.Core.Graph.GraphSpec! Spec) -> void
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Equals(Aw.Sindri.Core.Graph.Templates.StockTemplate? other) -> bool
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Key.get -> string!
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Key.init -> void
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Needs.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Needs.init -> void
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Spec.get -> Aw.Sindri.Core.Graph.GraphSpec!
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Spec.init -> void
+Aw.Sindri.Core.Graph.Templates.StockTemplate.StockTemplate(string! Key, string! Title, string! Trigger, System.Collections.Generic.IReadOnlyList<string!>! Needs, Aw.Sindri.Core.Graph.GraphSpec! Spec) -> void
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Title.get -> string!
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Title.init -> void
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Trigger.get -> string!
+Aw.Sindri.Core.Graph.Templates.StockTemplate.Trigger.init -> void
+override Aw.Sindri.Core.Graph.Templates.StockTemplate.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Templates.StockTemplate.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Templates.StockTemplate.ToString() -> string!
+static Aw.Sindri.Core.Graph.Templates.StockTemplate.operator !=(Aw.Sindri.Core.Graph.Templates.StockTemplate? left, Aw.Sindri.Core.Graph.Templates.StockTemplate? right) -> bool
+static Aw.Sindri.Core.Graph.Templates.StockTemplate.operator ==(Aw.Sindri.Core.Graph.Templates.StockTemplate? left, Aw.Sindri.Core.Graph.Templates.StockTemplate? right) -> bool
+static Aw.Sindri.Core.Graph.Templates.StockTemplates.Find(string! key) -> Aw.Sindri.Core.Graph.Templates.StockTemplate?
 Aw.Sindri.Core.Profile.WorkflowSettings.Editor.get -> string?
 Aw.Sindri.Core.Profile.WorkflowSettings.Editor.init -> void
 Aw.Sindri.Core.Graph.GraphContinueRule
@@ -23353,3 +23404,36 @@ Aw.Sindri.Core.Reviews.ReviewRequiredState
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.Counted = "counted" -> string!
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.NoneNamed = "noneNamed" -> string!
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.NotRead = "notRead" -> string!
+Aw.Sindri.Core.Launches.LaunchBudgetState.Counting = 5 -> Aw.Sindri.Core.Launches.LaunchBudgetState
+Aw.Sindri.Core.Launches.ILaunchSpend.Peek(Aw.Sindri.Core.Launch.AgentId target) -> Aw.Sindri.Core.Launches.SpendPeek
+Aw.Sindri.Core.Launches.SpendPeek
+Aw.Sindri.Core.Launches.SpendPeek.SpendPeek() -> void
+Aw.Sindri.Core.Launches.SpendPeek.SpendPeek(bool Landed, Aw.Sindri.Core.Launches.AgentSpend? Spend) -> void
+Aw.Sindri.Core.Launches.SpendPeek.Landed.get -> bool
+Aw.Sindri.Core.Launches.SpendPeek.Landed.init -> void
+Aw.Sindri.Core.Launches.SpendPeek.Spend.get -> Aw.Sindri.Core.Launches.AgentSpend?
+Aw.Sindri.Core.Launches.SpendPeek.Spend.init -> void
+Aw.Sindri.Core.Launches.SpendPeek.Deconstruct(out bool Landed, out Aw.Sindri.Core.Launches.AgentSpend? Spend) -> void
+Aw.Sindri.Core.Launches.SpendPeek.Equals(Aw.Sindri.Core.Launches.SpendPeek other) -> bool
+~override Aw.Sindri.Core.Launches.SpendPeek.Equals(object obj) -> bool
+override Aw.Sindri.Core.Launches.SpendPeek.GetHashCode() -> int
+~override Aw.Sindri.Core.Launches.SpendPeek.ToString() -> string
+static Aw.Sindri.Core.Launches.SpendPeek.operator !=(Aw.Sindri.Core.Launches.SpendPeek left, Aw.Sindri.Core.Launches.SpendPeek right) -> bool
+static Aw.Sindri.Core.Launches.SpendPeek.operator ==(Aw.Sindri.Core.Launches.SpendPeek left, Aw.Sindri.Core.Launches.SpendPeek right) -> bool
+
+static Aw.Sindri.Core.Launches.Budgets.Counting(Aw.Sindri.Core.Profile.AgentSettings? agents, Aw.Sindri.Core.Launch.AgentId target) -> Aw.Sindri.Core.Launches.BudgetFacts!
+Aw.Sindri.Core.Launches.TodaysSpend
+Aw.Sindri.Core.Launches.TodaysSpend.TodaysSpend(System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Launches.AgentSpend!>! Used, System.Collections.Generic.IReadOnlySet<string!>! Counting) -> void
+Aw.Sindri.Core.Launches.TodaysSpend.Used.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Launches.AgentSpend!>!
+Aw.Sindri.Core.Launches.TodaysSpend.Used.init -> void
+Aw.Sindri.Core.Launches.TodaysSpend.Counting.get -> System.Collections.Generic.IReadOnlySet<string!>!
+Aw.Sindri.Core.Launches.TodaysSpend.Counting.init -> void
+Aw.Sindri.Core.Launches.TodaysSpend.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Launches.AgentSpend!>! Used, out System.Collections.Generic.IReadOnlySet<string!>! Counting) -> void
+Aw.Sindri.Core.Launches.TodaysSpend.Equals(Aw.Sindri.Core.Launches.TodaysSpend? other) -> bool
+Aw.Sindri.Core.Launches.TodaysSpend.<Clone>$() -> Aw.Sindri.Core.Launches.TodaysSpend!
+static Aw.Sindri.Core.Launches.TodaysSpend.None.get -> Aw.Sindri.Core.Launches.TodaysSpend!
+static Aw.Sindri.Core.Launches.TodaysSpend.operator !=(Aw.Sindri.Core.Launches.TodaysSpend? left, Aw.Sindri.Core.Launches.TodaysSpend? right) -> bool
+static Aw.Sindri.Core.Launches.TodaysSpend.operator ==(Aw.Sindri.Core.Launches.TodaysSpend? left, Aw.Sindri.Core.Launches.TodaysSpend? right) -> bool
+override Aw.Sindri.Core.Launches.TodaysSpend.GetHashCode() -> int
+override Aw.Sindri.Core.Launches.TodaysSpend.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Launches.TodaysSpend.ToString() -> string!

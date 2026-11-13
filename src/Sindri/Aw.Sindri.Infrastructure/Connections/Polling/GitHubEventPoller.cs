@@ -85,7 +85,8 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
     {
         var newest = feed.Newest.Later(cursor);
         var events = PollJson.Time(cursor) is null ? [] : feed.Events.DistinctBy(static e => e.DeliveryKey, StringComparer.Ordinal).OrderBy(static e => e.OccurredAt).ThenBy(static e => e.DeliveryKey, StringComparer.Ordinal).ToList();
-        for (var i = 0; i < events.Count && i < MaxEnriched; i++)
+        // Only the newest MaxEnriched get a GET /pulls/{n}: in a burst those are the ones a person acts on next; older ones go out as the feed had them.
+        for (var i = events.Count - 1; i >= 0 && i >= events.Count - MaxEnriched; i--)
         {
             events[i] = await Enrich(target, events[i], cancellationToken).ConfigureAwait(false);
         }

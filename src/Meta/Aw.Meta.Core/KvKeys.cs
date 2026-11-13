@@ -31,9 +31,9 @@ public static class KvKeys
     public const string WorktreesSweepStartPrefix = "worktrees.sweep-start.";
 
     /// <summary>The key holding when a <c lang="text">--path</c> sweep of one worktree last started (ISO 8601, round-trip).</summary>
-    /// <param name="path">The worktree path the sweep was given; it is normalized like the scope match, so a trailing slash does not change the key.</param>
+    /// <param name="path">The worktree path, already normalized by the caller with <c lang="C#">WorktreeRoots.Normalize</c> (the root namespace may not depend on Worktrees: ARCH-CYCLE-001, #3422).</param>
     /// <returns>The key.</returns>
-    public static string WorktreesPathSweepStart(string path) => WorktreesSweepStartPrefix + Worktrees.WorktreeRoots.Normalize(path);
+    public static string WorktreesPathSweepStart(string path) => WorktreesSweepStartPrefix + path;
 
     /// <summary>Pull requests the watch saw end whose worktrees it could not yet sweep (the sweep could not run), comma separated; retried on each poll.</summary>
     public const string WorktreesPending = "worktrees.pending-prs";
