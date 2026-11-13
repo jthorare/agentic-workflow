@@ -24,9 +24,11 @@ public sealed class PaneSubmitter(ILanePane pane, IDelay delay)
     /// <param name="session">The tmux session name.</param>
     /// <param name="line">The line.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
+    /// <param name="exact">Check the input box shows exactly the line before the first Enter (#3443).</param>
     /// <returns>Success, or AW-META-012 when tmux fails or the line never left the input box.</returns>
-    public async ValueTask<Result<Unit>> Submit(string session, string line, CancellationToken cancellationToken)
+    public async ValueTask<Result<Unit>> Submit(string session, string line, CancellationToken cancellationToken, bool exact = false)
     {
+        _ = exact;   // red stub (#3443): the check comes with the fix
         var typed = await pane.Type(session, line, cancellationToken).ConfigureAwait(false);
         if (typed.IsError)
         {

@@ -34,6 +34,9 @@ public sealed class InMemoryLanePane : ILanePane
     /// <summary>How many Enter presses are swallowed (the text stays in the input box) before one submits.</summary>
     public int SwallowEnters { get; set; }
 
+    /// <summary>How many leading characters the next typed text loses before it reaches the input box, as when a lane's prompt reads them as keys (#3443).</summary>
+    public int EatNextTyped { get; set; }
+
     /// <summary>How many Enter presses were made.</summary>
     public int Enters { get; private set; }
 
@@ -62,7 +65,9 @@ public sealed class InMemoryLanePane : ILanePane
             return Done.Failed<Unit>(MetaErrors.CommandFailed.With(WakeFailure ?? $"no such session: {session}"));
         }
 
-        _pending[session] = text;
+        var eaten = Math.Min(EatNextTyped, text.Length);
+        EatNextTyped = 0;
+        _pending[session] = _pending.GetValueOrDefault(session, string.Empty) + text[eaten..];
         return Done.Unit();
     }
 
