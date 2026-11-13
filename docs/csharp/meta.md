@@ -149,18 +149,19 @@ writer adds; the schema lists the known ones. Every append also deletes the even
 | `lane.down` / `lane.up` | `lane`, `reason` |
 | `usage.limited` / `usage.ok` | `lane`, `provider`, `until` (optional) |
 | `merge.recorded` | `pr`, `sha`, `lane` |
+| `heavy.wait.long` | `pid`, `session`, `argv`, `since_min` |
+| `job.started` / `job.ended` | `name`, `pid`, `unit` (optional), `log`, `exit` (optional, on `job.ended`) |
+| `box.health` | `mem_available_mb`, `disk_free_mb` |
 
 Who writes what:
 
-- `obligation.opened`: `inbox-sync` and `stop-check`, for each new message that asks something (notices open nothing). `id` is the message id. `from` and `lane` are the sender's session name, the lane that waits for the reply. Owner-answer relays write no event.
-- `obligation.closed`: `outbox-record` when the send answers a message, and `inbox-dismiss`. Same fields.
+- `obligation.opened`: `inbox-sync` and `stop-check`, for each new message that asks something (notices open nothing), and `lane-reply`, for a reply it stores (id `lane:<lane>:<n>`). `id` is the message id. `from` is the sender's session name. `lane` is the same name without the `<team>-` prefix ("t1-api" is lane "api"). Owner-answer relays write no event.
+- `obligation.closed`: `outbox-record` when the send answers a message, `inbox-dismiss` and `lane-recycle` (when it settles the lane's request). Same fields. It is written once, and only for a reply that was owed at that moment: dismissing an answered message, a notice or an already dismissed message writes nothing.
 - `context.high` / `context.ok`: `watch`, when a lane crosses its recycle mark or drops back (the same edges as the CONTEXT HIGH and CONTEXT OK lines). `recycle` is true on `context.high` and false on `context.ok`.
 - `lane.down` / `lane.up`: `watch`, on the same edges as LANE DOWN and LANE UP. `reason` is `no live session` or `live session`.
 - `usage.limited` / `usage.ok`: `watch`, when a new usage stop appears and the first time its window is back (not on the repeated probe lines). `provider` is `claude`. `until` is the stop's reset time, left out when the stop gave none.
 - `merge.recorded`: `merge-run`, when the merge is recorded. `lane` is the sender of the newest `ready #<pr>` notice, with the team prefix removed; the event's lane is null and the field empty when there is none.
-| `heavy.wait.long` | `pid`, `session`, `argv`, `since_min` |
-| `job.started` / `job.ended` | `name`, `pid`, `unit` (optional), `log`, `exit` (optional, on `job.ended`) |
-| `box.health` | `mem_available_mb`, `disk_free_mb` |
+- A merge through GitHub's merge queue writes no `merge.recorded`: only `merge-run` writes it.
 
 ## Merge queue
 

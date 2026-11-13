@@ -2790,8 +2790,15 @@ static Aw.Meta.Core.Events.MetaEvents.ObligationClosed(System.DateTimeOffset at,
 static Aw.Meta.Core.Events.MetaEvents.ObligationOpened(System.DateTimeOffset at, string! obligationKey, string! from, string! lane) -> Aw.Meta.Core.Events.MetaEvent!
 static Aw.Meta.Core.Events.MetaEvents.UsageLimited(System.DateTimeOffset at, string! lane, string! provider, System.DateTimeOffset? until) -> Aw.Meta.Core.Events.MetaEvent!
 static Aw.Meta.Core.Events.MetaEvents.UsageOk(System.DateTimeOffset at, string! lane, string! provider, System.DateTimeOffset? until) -> Aw.Meta.Core.Events.MetaEvent!
-Aw.Meta.Core.Coordination.InboxSync.InboxSync(Aw.Meta.Core.Ports.ITranscriptReader! transcripts, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.IOwnerStore! owner, System.TimeProvider! clock, Aw.Meta.Core.Coordination.MetaTranscriptResolver? meta, Aw.Meta.Core.Coordination.MetaEventSink? events = null) -> void
+Aw.Meta.Core.Coordination.InboxSync.InboxSync(Aw.Meta.Core.Ports.ITranscriptReader! transcripts, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.IOwnerStore! owner, System.TimeProvider! clock, Aw.Meta.Core.Coordination.MetaTranscriptResolver? meta, Aw.Meta.Core.Coordination.ObligationEventWriter? obligations = null) -> void
 Aw.Meta.Core.Commands.CommandRequest.PathPrefix.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Meta.Core.Commands.CommandRequest.PathPrefix.init -> void
 Aw.Meta.Core.Gate.GateTools
 static Aw.Meta.Core.Gate.GateTools.PathPrefix(string! tree) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Meta.Core.Coordination.LaneNames
+static Aw.Meta.Core.Coordination.LaneNames.WithoutTeam(string! sender, string! team) -> string!
+Aw.Meta.Core.Coordination.ObligationEventWriter
+Aw.Meta.Core.Coordination.ObligationEventWriter.Closed(string! id, string! sender, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Meta.Core.Coordination.ObligationEventWriter.IsOwed(string! id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Meta.Core.Coordination.ObligationEventWriter.ObligationEventWriter(Aw.Meta.Core.Coordination.MetaEventSink! events, Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Coordination.ObligationReader! reader, System.TimeProvider! clock) -> void
+Aw.Meta.Core.Coordination.ObligationEventWriter.Opened(System.DateTimeOffset at, string! id, string! sender, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask

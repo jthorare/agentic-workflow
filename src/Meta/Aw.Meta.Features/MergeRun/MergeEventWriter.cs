@@ -32,7 +32,6 @@ internal sealed class MergeEventWriter(MetaEventSink events, IMessageStore messa
             .OrderByDescending(static m => m.At)
             .Select(static m => m.FromName)
             .FirstOrDefault(static name => name.Length > 0);
-        var prefix = team.Team + "-";
-        return sender is null ? string.Empty : sender.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? sender[prefix.Length..] : sender;
+        return sender is null ? string.Empty : LaneNames.WithoutTeam(sender, team.Team);
     }
 }

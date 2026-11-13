@@ -1,5 +1,4 @@
 using Aw.Kernel;
-using Aw.Meta.Core.Events;
 using Aw.Meta.Core.Ids;
 using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Owner;
@@ -16,10 +15,9 @@ namespace Aw.Meta.Core.Coordination;
 /// <param name="owner">Queues owner questions.</param>
 /// <param name="clock">Dates a record that carries no timestamp.</param>
 /// <param name="meta">Finds the meta's live transcript; null when the caller never syncs the meta's own transcript.</param>
-/// <param name="events">Receives obligation.opened for each new message that is owed a reply; null to write none.</param>
-public sealed class InboxSync(ITranscriptReader transcripts, IMessageStore messages, IOwnerStore owner, TimeProvider clock, MetaTranscriptResolver? meta, MetaEventSink? events = null)
+/// <param name="obligations">Writes obligation.opened for each new message that is owed a reply; null to write none.</param>
+public sealed class InboxSync(ITranscriptReader transcripts, IMessageStore messages, IOwnerStore owner, TimeProvider clock, MetaTranscriptResolver? meta, ObligationEventWriter? obligations = null)
 {
-    internal MetaEventSink? Events { get; } = events;
 
     /// <summary>Creates a sync that can't find the meta's own transcript.</summary>
     /// <param name="transcripts">Reads the transcript.</param>
@@ -27,7 +25,7 @@ public sealed class InboxSync(ITranscriptReader transcripts, IMessageStore messa
     /// <param name="owner">Queues owner questions.</param>
     /// <param name="clock">Dates a record that carries no timestamp.</param>
     public InboxSync(ITranscriptReader transcripts, IMessageStore messages, IOwnerStore owner, TimeProvider clock)
-        : this(transcripts, messages, owner, clock, meta: null, events: null)
+        : this(transcripts, messages, owner, clock, meta: null, obligations: null)
     {
     }
 
@@ -94,7 +92,7 @@ public sealed class InboxSync(ITranscriptReader transcripts, IMessageStore messa
     // A new message that asks something owes a reply (the evaluator skips notices the same way); the sender's name is the lane that waits.
     private async ValueTask WriteOpened(IEnumerable<InboxMessage> fresh, CancellationToken cancellationToken)
     {
-        if (Events is null)
+        if (obligations is null)
         {
             return;
         }
@@ -102,7 +100,7 @@ public sealed class InboxSync(ITranscriptReader transcripts, IMessageStore messa
         foreach (var message in fresh.Where(m => !NoticeRule.IsNotice(m.Body)))
         {
             var who = message.FromName.Length > 0 ? message.FromName : message.From;
-            await Events.Emit(MetaEvents.ObligationOpened(message.At, message.Id.Value, who, who), cancellationToken).ConfigureAwait(false);
+            await obligations.Opened(message.At, message.Id.Value, who, cancellationToken).ConfigureAwait(false);
         }
     }
 

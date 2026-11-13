@@ -1,7 +1,9 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Meta.Core;
+using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Logs;
+using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;
 
 namespace Aw.Meta.Features.LaneReply;
@@ -16,7 +18,8 @@ namespace Aw.Meta.Features.LaneReply;
 /// <param name="mail">The lanes' inboxes.</param>
 /// <param name="log">The running log.</param>
 /// <param name="clock">Dates the reply.</param>
-internal sealed class LaneReplyService(IMetaConfig config, ILaneFiles files, ILaneMail mail, IRunningLog log, TimeProvider clock) : IService<LaneReplyRequest, LaneReplyResponse>
+/// <param name="obligations">Writes obligation.opened for the reply; null to write none.</param>
+internal sealed class LaneReplyService(IMetaConfig config, ILaneFiles files, ILaneMail mail, IRunningLog log, TimeProvider clock, ObligationEventWriter? obligations = null) : IService<LaneReplyRequest, LaneReplyResponse>
 {
     public async ValueTask<Result<LaneReplyResponse>> Handle(LaneReplyRequest request, CancellationToken cancellationToken)
     {
@@ -43,6 +46,11 @@ internal sealed class LaneReplyService(IMetaConfig config, ILaneFiles files, ILa
         if (stored.IsError)
         {
             return stored.Error;
+        }
+
+        if (obligations is not null && !NoticeRule.IsNotice(request.Text))
+        {
+            await obligations.Opened(now, stored.Value.Value, request.Identity.SessionName, cancellationToken).ConfigureAwait(false);
         }
 
         _ = await log.Append(LogLine.Event(LogKind.Note, now, $"lane reply {stored.Value.Value}: team {request.Identity.Team}, lane {request.Identity.Lane}, provider {found.Agent?.Agent ?? "unknown"}, session {session.Value}"), cancellationToken).ConfigureAwait(false);
