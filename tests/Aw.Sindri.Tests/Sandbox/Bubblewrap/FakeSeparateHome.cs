@@ -38,5 +38,16 @@ internal sealed class FakeSeparateHome : IDisposable
 
     internal SeparateLoginCredentialSource Source(IKeychainLogin? keychain = null) => new(SindriHome, Clock, keychain);
 
-    public void Dispose() => Directory.Delete(SindriHome, recursive: true);
+    public void Dispose()
+    {
+        // why: best effort, a home already gone or a late file must not fail the test or skip the next home (#3262)
+        try
+        {
+            Directory.Delete(SindriHome, recursive: true);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // Nothing to clean up, or a leftover the OS temp sweep takes.
+        }
+    }
 }

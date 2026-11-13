@@ -8,6 +8,7 @@ using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Mcp;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox.Credentials;
+using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Infrastructure.Launch.Usage;
 using Aw.Sindri.Infrastructure.Sandbox;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,7 +22,7 @@ internal static class LauncherServiceCollectionExtensions
     {
         var builtinHashes = LauncherConfigFile.Read(LauncherStartup.Builtins(), user: null).Value.Agents.ToDictionary(static a => a.Id.Value, static a => a.ArgvHash, StringComparer.Ordinal);
         string? BuiltinHash(AgentId id) => builtinHashes.GetValueOrDefault(id.Value);
-        return services
+        return AddTerminalPanes(services)
             .AddSingleton(static _ => new TmuxSessionHost(new TmuxHostOptions()))
             .AddSingleton<ISessionHost>(static sp => sp.GetRequiredService<TmuxSessionHost>())   // the launcher service polls it for attached clients (API P10a U9)
             .AddSingleton<ISessionPanes>(static sp => sp.GetRequiredService<TmuxSessionHost>())   // the one-off start asks it for the pane (agents spec §15.8)
@@ -59,6 +60,11 @@ internal static class LauncherServiceCollectionExtensions
                 Timer = sp.GetService<IPartTimer>(),
             }));
     }
+
+    /// <summary>The terminal WebSocket's pane locator and tmux pane source (A8, agents spec §15.7).</summary>
+    private static IServiceCollection AddTerminalPanes(IServiceCollection services) => services
+        .AddSingleton<ITerminalPaneLocator>(static sp => new SnapshotTerminalPaneLocator(sp.GetRequiredService<ISessionSnapshot>(), new TmuxHostOptions()))
+        .AddSingleton<ITerminalPaneSource>(static sp => new TmuxTerminalPaneSource(new TmuxHostOptions(), sp.GetRequiredService<ITerminalPaneLocator>()));
 
     private static LauncherOptions Options(Func<string, string?> environment, SindriSettings settings) => new(settings.Home)
     {

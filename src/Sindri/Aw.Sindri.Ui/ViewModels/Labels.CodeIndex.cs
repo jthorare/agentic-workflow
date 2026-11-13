@@ -35,7 +35,7 @@ internal static partial class Labels
     internal static string CodeIndexState(string state) => state switch
     {
         "ok" => "ok",
-        "missing" => "first build queued",
+        "missing" => "no index yet",
         "damaged" => "damaged, rebuilding on the next check",
         "stale" => "behind main",
         "building" => "building",
@@ -43,6 +43,9 @@ internal static partial class Labels
         "waiting" => "waiting to retry",
         _ => state,
     };
+
+    /// <summary>What a repo's line adds while code-index-main-move is paused: no build or retry comes, and doctor gives the same fix (#3561).</summary>
+    internal const string CodeIndexPaused = "index builds paused: run sindri services resume code-index-main-move";
 
     /// <summary>How old an index is.</summary>
     /// <param name="age">Since it was built.</param>

@@ -45,8 +45,8 @@ public sealed class GitHubEventEnrichTests
         Assert.False(polled.Value.RateLimited);
         var e = Assert.Single(polled.Value.Events);
         Assert.Equal("77", e.Fields["number"]);
-        Assert.False(e.Fields.ContainsKey("title"));
-        Assert.False(e.Fields.ContainsKey("author"));
+        Assert.Equal(string.Empty, e.Fields["title"]);
+        Assert.Equal(string.Empty, e.Fields["author"]);
     }
 
     [Theory]
@@ -63,8 +63,8 @@ public sealed class GitHubEventEnrichTests
         var polled = await h.Poller.Poll(h.Connection, EventKind.GitHubPrMerged, Before, TestContext.Current.CancellationToken);
 
         var e = Assert.Single(polled.Value.Events);
-        Assert.False(e.Fields.ContainsKey("title"));
-        Assert.False(e.Fields.ContainsKey("author"));
+        Assert.Equal(string.Empty, e.Fields["title"]);
+        Assert.Equal(string.Empty, e.Fields["author"]);
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public sealed class GitHubEventEnrichTests
         var events = polled.Value.Events;
         Assert.Equal(25, events.Count);
         Assert.Equal(20, PullRequests(provider).Count);
-        Assert.All(events.Take(5), static e => Assert.False(e.Fields.ContainsKey("title")));   // the oldest 5 go out bare
+        Assert.All(events.Take(5), static e => Assert.Equal(string.Empty, e.Fields["title"]));   // the oldest 5 go out bare
         Assert.Equal(Enumerable.Range(6, 20).Select(static n => "t" + n.ToString(CultureInfo.InvariantCulture)).ToArray(), events.Skip(5).Select(static e => e.Fields["title"]).ToArray());
     }
 

@@ -287,7 +287,7 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     // The pill for the state now (under the gate): its age counts from the last event, status or answered ping.
     private void Word()
     {
-        Pill.Show(State, clock.GetUtcNow() - (_projectedAt ?? _heard), _failedRefreshes >= NotRespondingAfter, _health, IsProfileMissing);
+        Pill.Show(State, clock.GetUtcNow() - (_projectedAt ?? _heard), _failedRefreshes >= NotRespondingAfter, _health, new HealthPill.PillProfile(IsProfileMissing, IsProfileUnreadable));
         StripName = Pill.IsDataStale ? HealthLine + " · " + Labels.Stale : HealthLine;
         ShowSystemState();
     }

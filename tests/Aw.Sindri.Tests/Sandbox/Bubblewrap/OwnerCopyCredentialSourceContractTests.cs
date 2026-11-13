@@ -10,12 +10,22 @@ public sealed class OwnerCopyCredentialSourceContractTests : IModelCredentialSou
 {
     private readonly List<FakeOwnerHome> _homes = [];
 
+    /// <summary>The home path of each fake made so far.</summary>
+    internal IReadOnlyList<string> HomePaths => [.. _homes.Select(h => h.Root)];
+
+    /// <summary>Makes a source the way the contract base does; the cleanup tests call it.</summary>
+    /// <param name="state">The login state.</param>
+    /// <returns>The source.</returns>
+    internal IModelCredentialSource CreateForTest(LoginState state) => Create(state);
+
     public void Dispose()
     {
         foreach (var home in _homes)
         {
-            home.Dispose();
+            home.Dispose();   // best effort by itself, so one home cannot skip the next (#3262)
         }
+
+        _homes.Clear();
     }
 
     protected override IModelCredentialSource Create(LoginState state)
