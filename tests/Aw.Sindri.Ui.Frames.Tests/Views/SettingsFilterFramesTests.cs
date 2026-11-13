@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
@@ -10,6 +11,7 @@ using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
+using Aw.Sindri.Ui.ViewModels.Reviews;
 using Aw.Sindri.Ui.ViewModels.Sandbox;
 using Aw.Sindri.Ui.ViewModels.Settings;
 using Aw.Sindri.Ui.ViewModels.Shell;
@@ -213,14 +215,24 @@ public sealed class SettingsFilterFramesTests : FrameHost
     });
 
     [Fact]
-    public Task A_changed_word_on_the_page_is_seen_by_the_filter_after_the_cache() => OnUi(async () =>
+    public Task A_filter_after_a_library_row_changed_sees_the_new_words() => OnUi(async () =>
     {
-        var (_, _, settings, view) = await FullPage();
-        view.CollectShownText(settings);   // fills the cache with "100%"
-        settings.TextScale = 1.2;          // raises a change: This app's words are read again
+        var (window, shell) = await Connected();
+        var url = new Uri("http://127.0.0.1:7410/");
+        var card = new LibraryRootsViewModel(() => url, Server, Folders, Clock);
+        await card.Refresh(url, Token);
+        var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), static _ => { }) { Library = card };
+        window.SettingsSlot.Content = new SettingsView { DataContext = settings };
+        shell.GoTo(PageId.Settings);
+        Settle(window);
+        settings.Filter = "zzzz";   // empty -> text: the words are read
+        settings.Filter = string.Empty;
 
-        settings.Filter = "120%";
+        Server.LibraryAnswer = new RouteAnswer(HttpStatusCode.OK, GoldenFiles.Api("library", "ok").Replace("\"unreadable\": null", "\"unreadable\": \"permission denied\"", StringComparison.Ordinal));
+        await card.Refresh(url, Token);
+        Settle(window);
+        settings.Filter = "permission";
 
-        Assert.True(settings.ShowsThisApp, "the filter used the cached words and missed '120%'");
+        Assert.True(settings.ShowsLibrary, "the filter used the words read before the row became unreadable");
     });
 }
