@@ -111,6 +111,10 @@ public sealed partial class ContrastTests
         { "Clickable.PressedBorder", "Canvas", 4.29, NonText },
         { "Clickable.PressedBorder", "Surface1", 3.94, NonText },
         { "Clickable.PressedBorder", "Brush.Clickable.Pressed", 3.39, NonText },
+        // Pressed and selected borders (inbox-row.selected, Button.segment.selected, the pressed hold part and primary) draw Brush.Clickable.PressedBorder on the other surfaces a clickable sits on (#3504).
+        { "Clickable.PressedBorder", "Surface2", 3.63, NonText },
+        { "Clickable.PressedBorder", "Surface3", 3.39, NonText },
+        { "Clickable.PressedBorder", "Surface4", 3.22, NonText },
     };
 
     [Theory]
