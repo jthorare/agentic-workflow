@@ -20,10 +20,12 @@ internal sealed partial class ContextPageViewModel
     private bool _servedBuilding;
 
     /// <summary>The Building state's title: the whole map's answer says how far the build is, else the item map's words.</summary>
-    public string BuildingTitle => _servedBuilding ? Labels.ContextBuildingLine(BuildingParts()) : Labels.ContextStateBuilding;
+    public string BuildingTitle => _servedBuilding ? Labels.ContextBuildingLine(BuildingParts())
+        : _itemOpened is not null ? Labels.ContextStateBuilding
+        : Labels.ContextBuildingFor(_notReady.NoMap?.Repos ?? []);   // why: with no item there is no ticket and no promise of a time (#3391)
 
     /// <summary>The Building state's body: "last map 2 h ago" when the answer names it; nothing when the title is the answer's.</summary>
-    public string BuildingBody => !_servedBuilding ? Labels.ContextStateBuildingBody : _notReady.Building?.LastSyncAt is { } last ? Labels.ContextLastMap(Age(last)) : string.Empty;
+    public string BuildingBody => !_servedBuilding ? (_itemOpened is null ? string.Empty : Labels.ContextStateBuildingBody) : _notReady.Building?.LastSyncAt is { } last ? Labels.ContextLastMap(Age(last)) : string.Empty;
 
     /// <summary>Whether the Building state's body has words.</summary>
     public bool HasBuildingBody => BuildingBody.Length > 0;

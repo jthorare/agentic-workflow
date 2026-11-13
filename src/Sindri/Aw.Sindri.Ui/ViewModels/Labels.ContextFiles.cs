@@ -120,6 +120,11 @@ internal static partial class Labels
     /// <summary>The No map state's body when no item is picked.</summary>
     internal const string ContextStateEmptyBody = "Build one to see what your repo is made of and how its parts connect.";
 
+    /// <summary>The Building title on the bare page: which repositories are being built, and no time.</summary>
+    /// <param name="repos">The repositories the no-map answer named, or none.</param>
+    /// <returns>"Building the map for agentic-workflow", or "Building the map".</returns>
+    internal static string ContextBuildingFor(IReadOnlyList<string> repos) => repos.Count > 0 ? "Building the map for " + string.Join(", ", repos) : "Building the map";
+
     /// <summary>The whole map's Building overlay when the API says how far it is: the parts it knows, joined.</summary>
     /// <param name="parts">The parts that are known ("3 of 7 sources", "started 4 min ago").</param>
     /// <returns>"Building the map · 3 of 7 sources · started 4 min ago".</returns>
