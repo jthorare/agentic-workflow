@@ -45,28 +45,17 @@ internal sealed partial class Row
 
     private sealed record ChipBrushes(IBrush Fill, IBrush Ink, IBrush Border);
 
-    // How a text is cut: the width it may take; an ellipsis ends a text that is wider.
-    private sealed record Fit(double MaxWidth);
+    // How a text is cut: the width it may take (an ellipsis ends it) and how it sits in that width.
+    private sealed record Fit(double MaxWidth, TextAlignment Align = TextAlignment.Left);
 
     [StructLayout(LayoutKind.Auto)]
     private readonly record struct Slots(double TitleX, double TitleWidth, double FactsX, double AgeX, double WaitX);
 
-    // A dropped layout gives its text lines back; the slot is empty until the next Prepare lays it out again.
-    private static void Release(TextLayout?[] layouts)
-    {
-        foreach (var layout in layouts)
-        {
-            layout?.Dispose();
-        }
-
-        Array.Clear(layouts);
-    }
-
     // A new item or a changed one: only its texts are laid out again. The fonts, brushes, glyph palette and metrics do not depend on the item, so a recycle keeps them.
     private void DropText()
     {
-        Release(_text);
-        Release(_facts);
+        Array.Clear(_text);
+        Array.Clear(_facts);
         _titleRoom = double.NaN;
         InvalidateVisual();
     }
@@ -74,8 +63,8 @@ internal sealed partial class Row
     // The columns, the theme, the text scale and the render scaling change what every layout and brush was built from: each one drops them all.
     private void DropLayouts()
     {
-        Release(_text);
-        Release(_facts);
+        Array.Clear(_text);
+        Array.Clear(_facts);
         Array.Clear(_chips);
         _metrics = null;
         _fonts = null;
@@ -129,51 +118,13 @@ internal sealed partial class Row
 
     private ChipBrushes NewChip(string key) => new(Brush("Brush.Status." + key + ".Bg"), Brush("Brush.Status." + key + ".Fg"), Brush("Brush.Status." + key + ".Border"));
 
-    // Only plain layouts are drawn: one with a maximum width and trimming drew nothing at a render scaling of 2 (the title and id layouts have neither, and drew). A text wider than its room is cut here.
     private TextLayout Make(string text, Typeface face, double size, IBrush ink, Fit? fit = null)
-    {
-        var full = Plain(text, face, size, ink);
-        if (fit is null || full.Width <= fit.MaxWidth + 0.01)
-        {
-            return full;
-        }
-
-        full.Dispose();
-        return Cut(text, face, size, ink, fit.MaxWidth);
-    }
-
-    private TextLayout Plain(string text, Typeface face, double size, IBrush ink)
     {
         _layoutsBuilt++;
         _ = Interlocked.Increment(ref _textLayoutsBuilt);
-        return new TextLayout(text, face, size, ink, textWrapping: TextWrapping.NoWrap);
-    }
-
-    private double WidthOf(string text, Typeface face, double size, IBrush ink)
-    {
-        using var probe = Plain(text, face, size, ink);
-        return probe.Width;
-    }
-
-    // The longest start of the text that fits its room with an ellipsis after it.
-    private TextLayout Cut(string text, Typeface face, double size, IBrush ink, double room)
-    {
-        var low = 0;
-        var high = text.Length;
-        while (low < high)
-        {
-            var mid = (low + high + 1) / 2;
-            if (WidthOf(text[..mid].TrimEnd() + "…", face, size, ink) <= room)
-            {
-                low = mid;
-            }
-            else
-            {
-                high = mid - 1;
-            }
-        }
-
-        return Plain(text[..low].TrimEnd() + "…", face, size, ink);
+        return fit is null
+            ? new TextLayout(text, face, size, ink, textWrapping: TextWrapping.NoWrap)
+            : new TextLayout(text, face, size, ink, textAlignment: fit.Align, textWrapping: TextWrapping.NoWrap, textTrimming: TextTrimming.CharacterEllipsis, maxWidth: fit.MaxWidth);
     }
 
     // The layout Prepare built for a slot of the title line, age or wait.
@@ -215,14 +166,10 @@ internal sealed partial class Row
 
         var face = item.Unread ? f.Medium : f.Text;
         _titleInk = item.Unread ? k.Ink : k.Muted;
-        var full = Plain(item.Title, face, f.Body, _titleInk);
+        var full = Make(item.Title, face, f.Body, _titleInk);
         _titleDesired = full.Width;
         _titleTrimmed = full.Width > room + 0.01;
-        if (_titleTrimmed)
-        {
-            full.Dispose();   // only its width was needed
-        }
-        _text[Title] = _titleTrimmed ? Cut(item.Title, face, f.Body, _titleInk, room) : full;
+        _text[Title] = _titleTrimmed ? Make(item.Title, face, f.Body, _titleInk, new Fit(room)) : full;
         _titleRoom = room;
     }
 
@@ -230,7 +177,7 @@ internal sealed partial class Row
     {
         var f = FontsNow();
         var k = InksNow();
-        _text[Age] ??= Make(item.Age ?? string.Empty, f.Text, f.Caption, k.Subtle, new Fit(m.AgeWidth));
+        _text[Age] ??= Make(item.Age ?? string.Empty, f.Text, f.Caption, k.Subtle, new Fit(m.AgeWidth, TextAlignment.Right));
         var you = item.WaitsOn is { Who: RowWho.Me };
         _text[Wait] ??= Make(WaitText(item), you ? f.Bold : f.Text, f.Caption, you ? k.Ink : k.Muted, new Fit(m.WaitWidth));
     }
