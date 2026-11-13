@@ -43,7 +43,7 @@ internal sealed class StartRig : IDisposable
 
     public FakeEnvironment Environment { get; } = new();
 
-    public IAgentCatalog Catalog { get; } = new Infrastructure.Launch.AgentCatalog(SessionData.Agents);
+    public IAgentCatalog Catalog { get; } = new AgentCatalog(SessionData.Agents);
 
     public StartedSessions Book => field ??= new(Base.Store, Base.Events);
 
