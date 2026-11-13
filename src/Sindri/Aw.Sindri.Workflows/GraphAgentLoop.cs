@@ -183,7 +183,7 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
         await events.Record(NodeAgentRecorder.EndState(ending.Failure)).ConfigureAwait(true);
         if (ending.Failure is { } reason)
         {
-            return Failed(started.Input, reason);
+            return Failed(started.Input, reason, ending.FailureOutput);
         }
 
         return Succeeded(started.Input, ending.Outputs, address, closed);
@@ -272,7 +272,7 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
 
         if (Unrecoverable(state) is { } failure)
         {
-            return new AgentNodeEnding(Outputs: null, failure);
+            return new AgentNodeEnding(Outputs: null, failure, state.Refused ? FailureOutputOf(state.Detail, files: null) : null);
         }
 
         var recovered = await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.RecoverAsync(new AgentNodeRecover(reference, launched.Worktree ?? string.Empty, launched.RunDirectory)), _agentRead).ConfigureAwait(true);
@@ -287,6 +287,6 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
             AgentSessionEnd.Idle => "idle: the agent sat idle at its prompt with no report",
             AgentSessionEnd.Exit or AgentSessionEnd.Limit or null or _ => $"exit: the agent exited (code {state.ExitCode?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}) without reporting",
         };
-        return new AgentNodeEnding(Outputs: null, recovered.Reason is { } detail ? $"{why}; {detail}" : why);
+        return new AgentNodeEnding(Outputs: null, recovered.Reason is { } detail ? $"{why}; {detail}" : why, FailureOutputOf(refusedReport: null, recovered.Files));
     }
 }
