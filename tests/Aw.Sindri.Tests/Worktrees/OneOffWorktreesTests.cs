@@ -31,8 +31,8 @@ public sealed class OneOffWorktreesTests : IDisposable
         var made = await Task.WhenAll(sut.Make(repo, "fix-login", Token).AsTask(), sut.Make(repo, "fix-login", Token).AsTask());
 
         Assert.All(made, m => Assert.True(m.IsSuccess, m.IsError ? m.Error.ToString() : null));
-        Assert.NotEqual(made[0].Value.Path, made[1].Value.Path);
-        Assert.NotEqual(made[0].Value.Branch, made[1].Value.Branch);
+        Assert.NotEqual(made[0].Value.Path, made[1].Value.Path, StringComparer.Ordinal);
+        Assert.NotEqual(made[0].Value.Branch, made[1].Value.Branch, StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]
@@ -45,7 +45,7 @@ public sealed class OneOffWorktreesTests : IDisposable
         var made = await Task.WhenAll(sut.Make(repo, "fix-login", Token).AsTask(), sut.Make(link, "fix-login", Token).AsTask());
 
         Assert.All(made, m => Assert.True(m.IsSuccess, m.IsError ? m.Error.ToString() : null));
-        Assert.NotEqual(made[0].Value.Branch, made[1].Value.Branch);
+        Assert.NotEqual(made[0].Value.Branch, made[1].Value.Branch, StringComparer.Ordinal);
     }
 
     private async Task<(OneOffWorktrees Sut, string Repo)> Rig()
@@ -70,7 +70,7 @@ public sealed class OneOffWorktreesTests : IDisposable
         {
             if (Interlocked.Increment(ref _arrived) >= 2)
             {
-                _both.TrySetResult();
+                _ = _both.TrySetResult();
             }
 
             _ = await Task.WhenAny(_both.Task, Task.Delay(TimeSpan.FromSeconds(1), cancellationToken));
