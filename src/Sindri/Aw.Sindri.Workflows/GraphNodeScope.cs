@@ -45,13 +45,11 @@ internal sealed class GraphNodeScope(WorkflowRun run, GraphSpec spec, IReadOnlyL
 
     private (JsonNode? Value, string? FailedNode) Output(string node)
     {
-        // why: a node of the loop's body has one row per item and is read at this item's; every other node has its one row at index 0
-        var index = loop is not null && loop.Shape.Body.Any(b => string.Equals(b.Id.Value, node, StringComparison.Ordinal)) ? loop.ItemIndex : 0;
-        var found = nodeRuns.FirstOrDefault(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == index && n.Status == NodeRunStatus.Succeeded);
+        var index = IndexOf(node);
+        var found = RowAt(node, index, NodeRunStatus.Succeeded);
         if (found is null)
         {
-            var failed = nodeRuns.Any(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == index && n.Status == NodeRunStatus.Failed);
-            return (null, failed ? node : null);
+            return (null, RowAt(node, index, NodeRunStatus.Failed) is null ? null : node);
         }
 
         if (found.Truncated)
@@ -62,4 +60,11 @@ internal sealed class GraphNodeScope(WorkflowRun run, GraphSpec spec, IReadOnlyL
 
         return (found.Output is null ? null : JsonNode.Parse(found.Output), null);
     }
+
+    // why: a node of the loop's body has one row per item and is read at this item's; every other node has its one row at index 0
+    private int IndexOf(string node) =>
+        loop is not null && loop.Shape.Body.Any(b => string.Equals(b.Id.Value, node, StringComparison.Ordinal)) ? loop.ItemIndex : 0;
+
+    private NodeRun? RowAt(string node, int index, NodeRunStatus status) =>
+        nodeRuns.FirstOrDefault(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == index && n.Status == status);
 }
