@@ -70,10 +70,7 @@ internal sealed partial class Row
             x += Gap;
             if (item.Facts.TryGetValue(columns[i].Key, out var fact))
             {
-                using (context.PushClip(new Rect(x, 0, m.Columns[i], height)))
-                {
-                    DrawFact(context, fact, i, new Rect(x, 0, m.Columns[i], height));
-                }
+                DrawFact(context, fact, i, new Rect(x, 0, m.Columns[i], height));   // the texts end with an ellipsis inside their cell, so no clip
             }
 
             x += m.Columns[i];
@@ -119,10 +116,7 @@ internal sealed partial class Row
         var share = fact.Total > 0 ? Math.Clamp((double)fact.Done / fact.Total, 0, 1) : 0;
         if (share > 0)
         {
-            using (context.PushClip(new RoundedRect(bar, 2)))
-            {
-                context.FillRectangle(k.Primary, new Rect(bar.X, bar.Y, BarWidth * share, BarHeight));
-            }
+            context.DrawRectangle(k.Primary, pen: null, new Rect(bar.X, bar.Y, BarWidth * share, BarHeight), 2, 2);
         }
 
         Put(context, _facts[2 * index], cell.X + BarWidth + 8, cell.Height);

@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Media;
 using Aw.Sindri.Ui.ViewModels.Rows;
 
@@ -15,19 +14,17 @@ internal sealed partial class Row
         Put(context, _text[Wait], _slots.WaitX, height);
     }
 
-    // The id and the sub-line keep their width, the title takes what is left and ends with an ellipsis; all three stay inside the title column.
+    // The id and the sub-line keep their width, the title takes what is left and ends with an ellipsis, so all three stay inside the title column without a clip. No clip is pushed anywhere
+    // in this Render: at a render scaling of 2 a clip pushed and popped left every later draw of the Render empty.
     private void DrawTitleLine(DrawingContext context, double height)
     {
-        using (context.PushClip(new Rect(_slots.TitleX, 0, _slots.TitleWidth, height)))
-        {
-            var x = _slots.TitleX;
-            var id = Built(Id);
-            Put(context, id, x, height);
-            x += id.Width + TitleGap;
-            var title = Built(Title);
-            Put(context, title, x, height);
-            x += title.Width + TitleGap;
-            Put(context, _text[Sub], x, height);
-        }
+        var x = _slots.TitleX;
+        var id = Built(Id);
+        Put(context, id, x, height);
+        x += id.Width + TitleGap;
+        var title = Built(Title);
+        Put(context, title, x, height);
+        x += title.Width + TitleGap;
+        Put(context, _text[Sub], x, height);
     }
 }
