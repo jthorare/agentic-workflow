@@ -109,6 +109,27 @@ public static class HealthSummary
         return new HealthReport(word, problems, Sentence(word, problems));
     }
 
+    /// <summary>
+    /// A report that also names a live profile that won't load (#3436): the file is there but is invalid or can't be read, so Sindri runs with no
+    /// repos. It makes a healthy report degraded. No profile file at all is a fresh home, not a fault: pass false for it.
+    /// </summary>
+    /// <param name="report">The report so far.</param>
+    /// <param name="wontLoad">True when the profile file is there and won't load (status's problemKind 'invalid').</param>
+    /// <returns>The report; the same one when the profile loads or is missing.</returns>
+    public static HealthReport WithProfileProblem(HealthReport report, bool wontLoad)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        if (!wontLoad)
+        {
+            return report;
+        }
+
+        const string clause = "your profile won't load";
+        var problems = report.Problems.Append(new HealthProblem(SindriErrors.ProfileInvalid.Code, "Your profile won't load, so Sindri runs with no repos: the System page names the problem", clause)).ToList();
+        var word = report.Word == HealthWord.Healthy ? HealthWord.Degraded : report.Word;
+        return new HealthReport(word, problems, Sentence(word, problems));
+    }
+
     private static IEnumerable<HealthProblem> Views(ViewsStatus views)
     {
         if (views.Stalled)
