@@ -10,19 +10,22 @@
     <Border x:Name="InboxRowFrame" Classes="inbox-row needs-you-row clickable" Classes.selected="{Binding IsSelected}" Classes.pulsing="{Binding IsPulsing}" Classes.steady="{Binding IsSteady}" Classes.subtle="{Binding IsSubtle}"
             Classes.slides-in="{Binding SlidesIn}" Classes.stale="{Binding IsStale}" Focusable="True"
             AutomationProperties.Name="{Binding InboxName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-      <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" VerticalAlignment="Center">
-        <Border x:Name="InboxRowTile" Classes="kind-tile" VerticalAlignment="Top">
-          <icons:StateIcon Glyph="Profile" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Attention}" />
-        </Border>
-        <StackPanel Grid.Column="1" Spacing="1">
-          <Grid ColumnDefinitions="*,Auto">
-            <TextBlock x:Name="InboxRowTitle" Classes="body-strong" Text="{Binding Title}" ToolTip.Tip="{Binding OpenLabel}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
-            <TextBlock x:Name="InboxRowNew" Grid.Column="1" Classes="caption" Text="{Binding NewWord}" IsVisible="{Binding HasNewWord}" Margin="8,0,0,0" AutomationProperties.AccessibilityView="Raw" />
-          </Grid>
-          <TextBlock x:Name="InboxRowLine" Classes="caption muted" Text="{Binding InboxLine}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
-        </StackPanel>
-        <TextBlock Grid.Column="2" Classes="caption subtle mono" Text="{Binding Age}" VerticalAlignment="Top" AutomationProperties.AccessibilityView="Raw" />
-      </Grid>
+      <!-- The frame draws the focus ring and hover; this line draws "selected" inside it, so a focused row still shows it is selected (#3506). -->
+      <Border x:Name="InboxRowSelectLine" Classes="inbox-row-line">
+        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" VerticalAlignment="Center">
+          <Border x:Name="InboxRowTile" Classes="kind-tile" VerticalAlignment="Top">
+            <icons:StateIcon Glyph="Profile" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Attention}" />
+          </Border>
+          <StackPanel Grid.Column="1" Spacing="1">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock x:Name="InboxRowTitle" Classes="body-strong" Text="{Binding Title}" ToolTip.Tip="{Binding OpenLabel}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+              <TextBlock x:Name="InboxRowNew" Grid.Column="1" Classes="caption" Text="{Binding NewWord}" IsVisible="{Binding HasNewWord}" Margin="8,0,0,0" AutomationProperties.AccessibilityView="Raw" />
+            </Grid>
+            <TextBlock x:Name="InboxRowLine" Classes="caption muted" Text="{Binding InboxLine}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+          </StackPanel>
+          <TextBlock Grid.Column="2" Classes="caption subtle mono" Text="{Binding Age}" VerticalAlignment="Top" AutomationProperties.AccessibilityView="Raw" />
+        </Grid>
+      </Border>
     </Border>
     <Border Grid.Row="1" Classes="hairline" />
   </Grid>

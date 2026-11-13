@@ -26,7 +26,8 @@ public sealed class ContextPagesDoctorTests
         var clock = new FakeTimeProvider(new DateTimeOffset(2026, 10, 30, 12, 0, 0, TimeSpan.Zero));
         var checks = new ContextEngineChecks(engine.Proxy, new MapPublishDoctorCheck(new MapPublishStatusReader(FakeContextEngine.Instance, new NoIndexOutlooks(), h.Store, clock), clock),
             new LinearDoctor(FakeContextEngine.Instance, new PointerSecrets(_ => null, new FakeToolRunner(ToolRun.Missing))),
-            new CodeIndexDoctor(new CodeIndex.Testing.FakeCodeIndex(), new CodeIndex.Testing.FakeRepoHeads(), new InMemoryJobViews(), new CodeIndexProbes(new CodeIndex.Testing.FakeEmbedder(), new CodeIndex.Testing.FakePins()), clock, new InMemoryProfiles(), new NoPauses()));
+            new CodeIndexDoctor(new CodeIndex.Testing.FakeCodeIndex(), new CodeIndex.Testing.FakeRepoHeads(), new InMemoryJobViews(), new CodeIndexProbes(new CodeIndex.Testing.FakeEmbedder(), new CodeIndex.Testing.FakePins()), clock, new InMemoryProfiles(), new NoPauses()),
+            new FirstMapDoctorCheck(new InMemoryJobViews(), new NoPauses()));
         var rows = await checks.Check(approved, Ct);
         return ([.. rows.Select(r => r.Name)], engine);
     }

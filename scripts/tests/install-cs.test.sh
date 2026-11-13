@@ -470,6 +470,23 @@ check "judge change: judge's hash changed" "$(differs "$(cat "$B/$S0/inputs/judg
 check "judge change: no stage left" "$(find "$B" -mindepth 1 -maxdepth 1 -name '.stage*' | wc -l | tr -d ' ')" "0"
 check "judge change: current points at the new build" "$S1" "$(readlink "$B/current")"
 
+# (a2) #3218: a git that fails while the per-binary hashes are made (killed under memory pressure) must stop the publish with a message.
+# It used to end the script silently after the "uncommitted changes" line (set -e), which looked like a dirty tree that would not reuse sindri.
+# The stub fails every `git ls-files` after the first (the stamp's own call), like a git killed mid-publish.
+REALGIT="$(command -v git)"
+mkdir "$WORK/failgit"
+cat > "$WORK/failgit/git" <<STUB
+#!/usr/bin/env bash
+case " \$* " in *" ls-files "*) n="\$(cat "$WORK/failgit/n" 2> /dev/null || echo 0)"; echo \$((n + 1)) > "$WORK/failgit/n"; [ "\$n" -lt 1 ] || exit 137 ;; esac
+exec "$REALGIT" "\$@"
+STUB
+chmod +x "$WORK/failgit/git"
+echo "git fails" >> "$REPO/src/Judge/Aw.Judge.Host/J.cs"
+fgout="$(PATH="$WORK/failgit:$PATH" bash "$INSTALL" --publish 2>&1)" && fgrc=0 || fgrc=$?
+sed -i '$d' "$REPO/src/Judge/Aw.Judge.Host/J.cs"
+check "git failing in the per-binary hashes: the publish exits 1" "$fgrc" "1"
+has "git failing in the per-binary hashes: says which step failed" "$fgout" "git ls-files failed"
+
 # (b) scripts/heavy.sh only: nothing is published, the new build has the new heavy
 echo "# a comment" >> "$REPO/scripts/heavy.sh"
 run_pl; S2="$NB"
