@@ -1,7 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
-using Aw.Sindri.Features.Commands;
 
 namespace Aw.Sindri.Features.RestartProcess;
 

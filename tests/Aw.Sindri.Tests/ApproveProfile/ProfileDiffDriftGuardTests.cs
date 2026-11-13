@@ -30,7 +30,7 @@ public sealed class ProfileDiffDriftGuardTests
         (typeof(LaunchRepoSettings), ["Default"]),
         (typeof(AgentSettings), ["SoftLimit", "Targets"]),
         (typeof(AgentLimits), ["DailyBudget", "StepArgvHash"]),
-        (typeof(WorkflowSettings), ["DeskTimeout", "EventHold", "Effects", "DispatchDelay", "Judge", "Agent", "Forge", "Route", "Packs", "Line", "Plan", "Prove", "Build", "Ship", "Design", "Review", "Steps", "Docs", "Pr", "Scoping", "Poll", "Http", "CallDepth", "ForEach"]),
+        (typeof(WorkflowSettings), ["DeskTimeout", "EventHold", "Effects", "DispatchDelay", "Judge", "Agent", "Forge", "Route", "Packs", "Line", "Plan", "Prove", "Build", "Ship", "Design", "Review", "Steps", "Docs", "Pr", "Scoping", "Poll", "Http", "CallDepth", "Editor", "ForEach"]),
         (typeof(PollSettings), ["IntervalSeconds", "CatchUpPages"]),
         (typeof(HttpSettings), ["Hosts"]),
         (typeof(ScopingSettings), ["HistoryWindow"]),

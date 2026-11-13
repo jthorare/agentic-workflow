@@ -51,6 +51,6 @@ internal sealed class GetWorkflowService(IWorkflowStore workflows, IGraphBlockCa
     private NodeSummary Summary(GraphNode node)
     {
         var line = catalog.Types.TryGetValue(node.Type, out var block) ? block.Summarize(node.Config) : new BlockSummary(node.Type);
-        return new NodeSummary(node.Id.Value, line.Text, line.Problem);
+        return new NodeSummary(node.Id.Value, line.Text, line.Problem, block?.Title);
     }
 }
