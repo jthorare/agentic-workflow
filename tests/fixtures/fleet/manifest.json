@@ -12,6 +12,16 @@
       "note": "UserPromptSubmit -> running"
     },
     {
+      "file": "claude-code/pre-tool-use.json",
+      "schema": "valid",
+      "note": "PreToolUse -> running with the last tool and when (tool name only)"
+    },
+    {
+      "file": "claude-code/post-tool-use-last-tool.json",
+      "schema": "valid",
+      "note": "PostToolUse -> running with the last tool: an MCP name"
+    },
+    {
       "file": "claude-code/permission-request.json",
       "schema": "valid",
       "note": "PermissionRequest -> asking approval with the tool"
@@ -100,6 +110,21 @@
       "file": "invalid/reason-on-idle.json",
       "schema": "invalid",
       "note": "reason only with asking"
+    },
+    {
+      "file": "invalid/tool-on-idle.json",
+      "schema": "invalid",
+      "note": "tool only in asking approval or running"
+    },
+    {
+      "file": "invalid/tool-running-without-toolat.json",
+      "schema": "invalid",
+      "note": "a running tool needs toolAt"
+    },
+    {
+      "file": "invalid/toolat-without-tool.json",
+      "schema": "invalid",
+      "note": "toolAt only with tool"
     },
     {
       "file": "invalid/tool-with-input-reason.json",

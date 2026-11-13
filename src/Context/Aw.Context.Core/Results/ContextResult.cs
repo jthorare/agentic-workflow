@@ -44,4 +44,12 @@ public sealed record ContextResult(
     /// <summary>How many demoted files the answer carries, per role ('index.demote'); left out when none.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public FilteredCounts? Filtered { get; init; }
+
+    /// <summary>How many records matched and how many the window read (#3370); left out when the query had no window.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public RecordMatches? Matches { get; init; }
+
+    /// <summary>The <see cref="SuggestedAnchors"/> with each node's label and kind, in the same order (#2809); left out when none.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<AnchorChoice>? Suggestions { get; init; }
 }

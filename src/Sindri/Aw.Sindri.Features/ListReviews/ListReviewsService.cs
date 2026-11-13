@@ -24,7 +24,7 @@ internal sealed class ListReviewsService(IApprovedProfile approvals, IReviewFact
     public async ValueTask<Result<ListReviewsResponse>> Handle(ListReviewsRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
+        var approved = await approvals.ForRead(cancellationToken).ConfigureAwait(false);
         if (approved.IsError)
         {
             return approved.Error;
@@ -55,13 +55,13 @@ internal sealed class ListReviewsService(IApprovedProfile approvals, IReviewFact
 
         return who.Value.Login is { } login && !string.IsNullOrWhiteSpace(login)
             ? await Rows(login, profile?.Review, snapshot, header, cancellationToken).ConfigureAwait(false)
-            : await LoginPrompt(header, cancellationToken).ConfigureAwait(false);
+            : await LoginPrompt(header, who.Value, cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask<ListReviewsResponse> LoginPrompt(Header header, CancellationToken cancellationToken)
+    private async ValueTask<ListReviewsResponse> LoginPrompt(Header header, ReviewIdentity who, CancellationToken cancellationToken)
     {
         var suggested = await account.Suggested(cancellationToken).ConfigureAwait(false);
-        return new ListReviewsResponse(status.Current.AsOf, Login: null, ReviewLoginPrompt.For(suggested), Notice: null, header.Freshness, header.Stale, header.Library, WaitingCount: 0, Groups: [], Empty: null, Connect: null);
+        return new ListReviewsResponse(status.Current.AsOf, Login: null, ReviewLoginPrompt.For(suggested, who.Connection, who.Miss), Notice: null, header.Freshness, header.Stale, header.Library, WaitingCount: 0, Groups: [], Empty: null, Connect: null);
     }
 
     private async ValueTask<ListReviewsResponse> Rows(string login, PrReviewSettings? review, ReviewFactsSnapshot snapshot, Header header, CancellationToken cancellationToken)

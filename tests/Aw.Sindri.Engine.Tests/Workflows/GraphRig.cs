@@ -49,6 +49,7 @@ internal sealed class GraphRig : IAsyncDisposable
         _taskQueue = $"graph-test-{number}";
         var clock = new FakeTimeProvider(KnownInstants.Epoch);
         Runs = new InMemoryWorkflowRunStore(clock);
+        RunFaults = new FaultingRunStore(Runs);
         Workflows = new InMemoryWorkflowStore(clock);
         Blocks = new GraphTestBlocks();
         Client = environment.Client;
@@ -60,8 +61,7 @@ internal sealed class GraphRig : IAsyncDisposable
         var ids = new SequentialIdGenerator();
         var mirror = new GraphMirror(_ledger, held, new EventFactory(EventScope.ControlPlane, clock, ids, SliceHarness.Json, new AsyncLocalCallerContextAccessor(ids)));
         var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success(Client)), _taskQueue, agentLaunchAttempts);
-        var starter = new GraphRunStarter(Runs, launcher, mirror, clock, NullLogger<GraphRunStarter>.Instance);
-        _starter = starter;
+        var starter = _starter = new GraphRunStarter(RunFaults, launcher, mirror, clock, NullLogger<GraphRunStarter>.Instance);
         // why: the real wait polls on a clock; the fake one never moves while a node waits, so the caller gets the system clock
         var caller = new GraphWorkflowCaller(Workflows, Runs, starter, new InMemoryProfiles(), TimeProvider.System);
         Seen = new GraphTestBlocks.MemorySeen();
@@ -69,7 +69,7 @@ internal sealed class GraphRig : IAsyncDisposable
         var options = new TemporalWorkerOptions(_taskQueue) { LoggerFactory = _log }
             .AddWorkflow<GraphWorkflow>()
             .AddWorkflow<GraphIterationWorkflow>()
-            .AddAllActivities(new GraphRunActivities(Runs, Workflows, starter, mirror, new GraphRunItemRepair(ItemRepair, NullLogger<GraphRunItemRepair>.Instance)))
+            .AddAllActivities(new GraphRunActivities(RunFaults, Workflows, starter, mirror, new GraphRunItemRepair(ItemRepair, NullLogger<GraphRunItemRepair>.Instance)))
             .AddAllActivities(new GraphBlockActivities(registry, Runs, Workflows));
         if (agents is not null)
         {
@@ -82,6 +82,9 @@ internal sealed class GraphRig : IAsyncDisposable
     }
 
     public InMemoryWorkflowRunStore Runs { get; }
+
+    /// <summary>The store the starter and the activities write through: it is <see cref="Runs"/> until a test sets <see cref="FaultingRunStore.FailWhen"/> (issue 2999). Tests read through <see cref="Runs"/>.</summary>
+    internal FaultingRunStore RunFaults { get; }
 
     /// <summary>The run-item repair the activities call when a run ends; it records the runs it was asked about (issue 2588).</summary>
     public SpyRunItemRepair ItemRepair { get; } = new();
@@ -345,6 +348,10 @@ internal sealed class GraphRig : IAsyncDisposable
     /// <summary>Every row of one node, by item index (0 is the node's own row).</summary>
     public async Task<IReadOnlyDictionary<int, NodeRun>> ItemRuns(WorkflowRunId id, string node) =>
         (await Runs.NodeRuns(id, Token)).Value.Where(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal)).ToDictionary(static n => n.ItemIndex);
+
+    /// <summary>The payloads of every ledger event of one type, oldest first (#3151).</summary>
+    public async Task<IReadOnlyList<JsonObject>> Payloads(string type) =>
+        [.. (await _ledger.ReadAfter(0, 1000, Token)).Value.Where(e => string.Equals(e.Envelope.Type, type, StringComparison.Ordinal)).Select(static e => JsonNode.Parse(e.Envelope.Payload)!.AsObject())];
 
     /// <summary>The ledger rows the run wrote, as '&lt;type&gt; &lt;idempotency key&gt;', oldest first.</summary>
     public async Task<IReadOnlyList<string>> Rows()

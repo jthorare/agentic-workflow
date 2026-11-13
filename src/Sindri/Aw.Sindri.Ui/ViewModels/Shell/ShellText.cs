@@ -130,6 +130,9 @@ internal sealed class ShellText
     /// <summary><see cref="Labels.UndoMarkAllSeen"/>.</summary>
     public string UndoMarkAllSeen { get; } = Labels.UndoMarkAllSeen;
 
+    /// <summary><see cref="Labels.NeedsYouRetry"/>.</summary>
+    public string NeedsYouRetry { get; } = Labels.NeedsYouRetry;
+
     /// <summary><see cref="Labels.NeedsYouPanel"/>.</summary>
     public string NeedsYouPanel { get; } = Labels.NeedsYouPanel;
 

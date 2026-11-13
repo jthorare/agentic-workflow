@@ -40,6 +40,7 @@ internal sealed class ResultAssembly(IEgressScrubber egress, QueryId queryId, Da
         {
             SkippedComponents = graph.SkippedComponents.Count == 0 ? null : graph.SkippedComponents,
             Notes = graph.Notes.Count == 0 ? null : graph.Notes,
+            Suggestions = graph.Choices.Count == 0 ? null : graph.Choices,
         };
     }
 

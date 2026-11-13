@@ -10,7 +10,9 @@
   "loginPrompt": {
     "code": "SND-REVIEW-007",
     "text": "Set your GitHub login",
-    "suggested": "joi-example"
+    "suggested": "joi-example",
+    "connection": "github:work",
+    "reason": "none"
   },
   "notice": null,
   "freshness": [

@@ -18,6 +18,13 @@ internal sealed partial class ContextPageViewModel
     /// <summary>The served suggestions after a refusal, as choices (the anchors to pick).</summary>
     public IReadOnlyList<string> Choices { get; private set; } = [];
 
+    /// <summary>The <see cref="Choices"/> with their titles and kinds, as the "Did you mean" row draws them (#2809).</summary>
+    public IReadOnlyList<ContextChoice> ChoiceRows =>
+        [.. Choices.Select(k => _choiceTitles.TryGetValue(k, out var known) ? known : new ContextChoice(k, k, string.Empty))];
+
+    // The titles and kinds the server sent with its suggestions (a refusal's 'choices', a question's 'suggestions'), by key (#2809).
+    private readonly Dictionary<string, ContextChoice> _choiceTitles = new(StringComparer.Ordinal);
+
     /// <summary>The refusal's own words, or empty.</summary>
     public string Problem { get; private set; } = string.Empty;
 
@@ -113,7 +120,7 @@ internal sealed partial class ContextPageViewModel
         return Submit(cancellationToken);
     }
 
-    private static List<string> Suggestions(Error error)
+    private List<string> Suggestions(Error error)
     {
         var name = string.Equals(error.Code, "SND-CONTEXT-003", StringComparison.Ordinal) ? "suggestedAnchors"
             : string.Equals(error.Code, "SND-CONTEXT-037", StringComparison.Ordinal) ? "candidates"
@@ -123,8 +130,42 @@ internal sealed partial class ContextPageViewModel
             return [];
         }
 
+        foreach (var choice in error.Extensions.Where(m => string.Equals(m.Key, "choices", StringComparison.Ordinal) && m.Value.ValueKind == JsonValueKind.Array)
+            .SelectMany(m => m.Value.EnumerateArray()).Select(Choice).OfType<ContextChoice>())
+        {
+            _choiceTitles[choice.Key] = choice;
+        }
+
         return [.. error.Extensions.Where(m => string.Equals(m.Key, name, StringComparison.Ordinal) && m.Value.ValueKind == JsonValueKind.Array)
             .SelectMany(m => m.Value.EnumerateArray()).Where(v => v.ValueKind == JsonValueKind.String).Select(v => v.GetString() ?? string.Empty)];
+    }
+
+    // One served choice; null when it has no key. A missing or blank label shows the key.
+    private static ContextChoice? Choice(JsonElement e)
+    {
+        var key = Text(e, "key");
+        if (key.Length == 0)
+        {
+            return null;
+        }
+
+        var label = Text(e, "label");
+        return new ContextChoice(key, label.Length == 0 ? key : label, Text(e, "kind"));
+    }
+
+    private static string Text(JsonElement e, string name) =>
+        e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? (v.GetString() ?? string.Empty).Trim() : string.Empty;
+
+    /// <summary>Keeps the titles a question's answer sent with its suggestions.</summary>
+    private void KeepTitles(IReadOnlyList<QueryChoiceView>? suggestions)
+    {
+        foreach (var s in suggestions ?? [])
+        {
+            if (!string.IsNullOrWhiteSpace(s.Key))
+            {
+                _choiceTitles[s.Key] = new ContextChoice(s.Key, string.IsNullOrWhiteSpace(s.Label) ? s.Key : s.Label.Trim(), s.Kind?.Trim() ?? string.Empty);
+            }
+        }
     }
 
     private void Show(LensesView? view, List<string> choices, bool fromQuestion = false)
@@ -152,6 +193,7 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(HasHead));
         OnChanged(nameof(Missing));
         OnChanged(nameof(Choices));
+        OnChanged(nameof(ChoiceRows));
         OnChanged(nameof(Problem));
         OnChanged(nameof(HasStack));
         OnChanged(nameof(MapVisible));

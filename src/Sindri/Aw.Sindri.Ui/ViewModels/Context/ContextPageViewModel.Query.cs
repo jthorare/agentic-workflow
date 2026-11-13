@@ -38,6 +38,7 @@ internal sealed partial class ContextPageViewModel
             return ([AnchorText.Trim()], false, []);
         }
 
+        KeepTitles(asked.Value.Suggestions);
         return asked.Value.Anchors.Count > 0
             ? ([.. asked.Value.Anchors.Distinct(StringComparer.Ordinal)], true, [])
             : ([AnchorText.Trim()], false, [.. asked.Value.SuggestedAnchors.Distinct(StringComparer.Ordinal)]);

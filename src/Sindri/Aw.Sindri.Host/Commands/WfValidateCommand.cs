@@ -1,10 +1,12 @@
 using System.Text.Json.Nodes;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Expressions;
 using Aw.Sindri.Core.Graph.Schedule;
 using Aw.Sindri.Core.Graph.Validation;
+using Aw.Sindri.Core.Memory;
 using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Host.Commands;
@@ -55,7 +57,7 @@ internal static class WfValidateCommand
             return await Print([refused], hash: null, json, output).ConfigureAwait(false);
         }
 
-        var world = services.GetService<IGraphWorld>() ?? await ProfileGraphWorld.Load(services.GetService<IApprovedProfile>(), ct).ConfigureAwait(false);
+        var world = services.GetService<IGraphWorld>() ?? await ProfileGraphWorld.Load(services.GetService<IApprovedProfile>(), services.GetService<IConnectionStore>(), services.GetService<IMemoryStore>(), ct).ConfigureAwait(false);
         var context = new GraphValidationContext(services.GetRequiredService<IGraphBlockCatalog>().Types, world, (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem, ParseCondition) { CodeCheck = services.GetService<ICodeCheck>() is { } check ? body => check.Check(body, ct) : null };
         var result = new GraphValidator(context).Validate(spec.Value, GraphMode.Activate);
         return await Print(result.Findings, result.Passed ? GraphJson.Hash(spec.Value) : null, json, output).ConfigureAwait(false);

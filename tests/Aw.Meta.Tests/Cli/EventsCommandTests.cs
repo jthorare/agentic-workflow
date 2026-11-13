@@ -60,6 +60,37 @@ public sealed class EventsCommandTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task Events_json_carries_oldest_latest_and_gap_on_an_empty_log_and_on_a_gap()
+    {
+        var empty = await _cli.Run("events", "--json");
+        using var emptyDocument = JsonDocument.Parse(empty.Out);
+        await Seed();
+        var events = new SqliteMetaEventStore(new MetaDatabase(MetaDatabase.OptionsFor(_cli.File("meta")), _cli.Clock));
+        _ = await events.Prune(new DateTimeOffset(2026, 10, 15, 5, 1, 0, TimeSpan.Zero), TestContext.Current.CancellationToken);   // drops event 1
+        var gap = await _cli.Run("events", "--json");
+        using var gapDocument = JsonDocument.Parse(gap.Out);
+        var caughtUp = await _cli.Run("events", "--after", "1", "--json");
+        using var caughtUpDocument = JsonDocument.Parse(caughtUp.Out);
+
+        Assert.Equal((1L, 0L, false), (emptyDocument.RootElement.GetProperty("oldest").GetInt64(), emptyDocument.RootElement.GetProperty("latest").GetInt64(), emptyDocument.RootElement.GetProperty("gap").GetBoolean()));
+        Assert.Equal((2L, 3L, true), (gapDocument.RootElement.GetProperty("oldest").GetInt64(), gapDocument.RootElement.GetProperty("latest").GetInt64(), gapDocument.RootElement.GetProperty("gap").GetBoolean()));
+        Assert.False(caughtUpDocument.RootElement.GetProperty("gap").GetBoolean());
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task Events_text_warns_on_a_gap()
+    {
+        await Seed();
+        var events = new SqliteMetaEventStore(new MetaDatabase(MetaDatabase.OptionsFor(_cli.File("meta")), _cli.Clock));
+        _ = await events.Prune(new DateTimeOffset(2026, 10, 15, 5, 1, 0, TimeSpan.Zero), TestContext.Current.CancellationToken);
+
+        var shown = await _cli.Run("events");
+
+        Assert.Equal(0, shown.Exit);
+        Assert.Contains("events before #2 were dropped (7-day retention): re-read status", shown.Out, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task Events_filters_by_kind_and_lane()
     {
         await Seed();

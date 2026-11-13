@@ -7,5 +7,17 @@
     "feature:layout.a",
     "feature:layout.b"
   ],
+  "choices": [
+    {
+      "key": "feature:layout.a",
+      "label": "Layout",
+      "kind": "feature"
+    },
+    {
+      "key": "feature:layout.b",
+      "label": "Layout",
+      "kind": "feature"
+    }
+  ],
   "traceId": "<trace>"
 }

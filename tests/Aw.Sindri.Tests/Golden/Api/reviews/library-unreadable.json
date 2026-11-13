@@ -55,6 +55,7 @@
               "newCommits": null,
               "ci": "fail",
               "requiredOpen": 2,
+              "requiredState": "counted",
               "requiredText": "2 open",
               "claimsDoc": true,
               "href": "/reviews/acme/api/2071"
@@ -79,6 +80,7 @@
               "newCommits": 2,
               "ci": "pass",
               "requiredOpen": 0,
+              "requiredState": "counted",
               "requiredText": "none open",
               "claimsDoc": false,
               "href": "/reviews/acme/web/880"
@@ -109,6 +111,7 @@
               "newCommits": null,
               "ci": "running",
               "requiredOpen": 1,
+              "requiredState": "counted",
               "requiredText": "1 open",
               "claimsDoc": true,
               "href": "/reviews/acme/api/2064"
@@ -133,6 +136,7 @@
               "newCommits": null,
               "ci": "none",
               "requiredOpen": null,
+              "requiredState": "notRead",
               "requiredText": null,
               "claimsDoc": false,
               "href": "/reviews/acme/web/875"

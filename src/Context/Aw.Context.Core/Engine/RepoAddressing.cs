@@ -12,7 +12,7 @@ public static class RepoAddressing
     /// <returns>The repo to read and whether to cut the graph to it; or SND-CONTEXT refusing a repo outside the caller's scope.</returns>
     public static Result<RepoChoice> Addressed(ContextSettings settings, ContextScope scope, string? asked)
     {
-        var resolved = ScopeRules.Resolve(settings, scope.Repos, scope.Caller);
+        var resolved = ScopeRules.Resolve(settings, scope.Repos, scope.Caller, scope.LeftOut);
         if (resolved.IsError && resolved.Error.Code != ContextErrors.UnknownAnchor.Code)
         {
             return resolved.Error;

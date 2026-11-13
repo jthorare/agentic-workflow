@@ -60,6 +60,36 @@ public sealed class ReadEventsTests
     }
 
     [Theory, Trait("Lane", "unit")]
+    [InlineData(0, true)]
+    [InlineData(1, false)]
+    [InlineData(2, false)]
+    [InlineData(3, false)]
+    [InlineData(9, false)]
+    public async Task Gap_is_true_only_when_the_cursor_is_below_the_oldest_kept_id_minus_one(long after, bool gap)
+    {
+        await Seed();
+        _ = await _world.Events.Prune(A.At(2), CancellationToken.None);   // drops event 1; oldest is 2, latest 3
+
+        var response = await Service().Handle(Req(after: after, kind: null, lane: null, max: 10), CancellationToken.None);
+
+        Assert.Equal(gap, response.Value.Gap);
+        Assert.Equal(2, response.Value.Oldest);
+        Assert.Equal(3, response.Value.Latest);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_empty_page_still_carries_oldest_latest_and_gap()
+    {
+        var empty = await Service().Handle(Req(after: 0, kind: null, lane: null, max: 10), CancellationToken.None);
+        await Seed();
+        _ = await _world.Events.Prune(A.At(100), CancellationToken.None);   // drops all three
+        var emptied = await Service().Handle(Req(after: 1, kind: null, lane: null, max: 10), CancellationToken.None);
+
+        Assert.Equal((1L, 0L, false), (empty.Value.Oldest, empty.Value.Latest, empty.Value.Gap));
+        Assert.Equal((4L, 3L, true), (emptied.Value.Oldest, emptied.Value.Latest, emptied.Value.Gap));
+    }
+
+    [Theory, Trait("Lane", "unit")]
     [InlineData("Lane.Down", 0, 10, "AW-META-027")]
     [InlineData("down", 0, 10, "AW-META-027")]
     [InlineData(null, -1, 10, "AW-META-001")]

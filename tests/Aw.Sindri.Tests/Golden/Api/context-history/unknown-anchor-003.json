@@ -8,5 +8,22 @@
     "feature:tabs.tab-manager",
     "surface:command/switch-tab"
   ],
+  "choices": [
+    {
+      "key": "action:tab-manager.restore-layout",
+      "label": "Restore a tab's pane layout",
+      "kind": "action"
+    },
+    {
+      "key": "feature:tabs.tab-manager",
+      "label": "Tabs",
+      "kind": "feature"
+    },
+    {
+      "key": "surface:command/switch-tab",
+      "label": "Switch tab (command)",
+      "kind": "surface"
+    }
+  ],
   "traceId": "<trace>"
 }

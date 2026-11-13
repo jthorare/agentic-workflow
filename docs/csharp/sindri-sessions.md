@@ -23,7 +23,8 @@ reader.
   "event": "PermissionRequest",         // the event as the canonical hook sees it
   "state": "asking",                    // running | asking | idle | ended
   "reason": "approval",                 // asking only: approval | input | auth
-  "tool": "Bash",                       // approval only: <= 64 chars of [A-Za-z0-9_.:-]; never tool_input
+  "tool": "Bash",                       // asking approval: the tool asked about; running: the last tool. <= 64 chars of [A-Za-z0-9_.:-]; never tool_input
+  "toolAt": "2026-10-16T11:02:03.123Z", // running only, with tool: when the hook saw that tool event (PreToolUse or PostToolUse)
   "at": "2026-10-16T11:02:03.123Z",
   "cwd": "/home/…/repo",
   "transcript": "/home/…/x.jsonl",      // a path, or null
@@ -34,7 +35,9 @@ reader.
 
 The schema also states what must never be in the file: unknown keys are errors, so a `tool_input` or a notification
 `message` key fails validation (privacy, spec §12). `reason` is present exactly when `state` is `asking`, `tool` only
-with `reason: approval`, and `agentStartTicks` is an integer exactly when `agentPid` is.
+with `reason: approval` or in `running` (where `toolAt` must come with it, and an approval ask has none), and
+`agentStartTicks` is an integer exactly when `agentPid` is. A tool event rewrites a `running` file in bash without `jq`;
+`Stop` drops the last tool.
 
 **Provider mapping.** The hook learns its provider from `AW_HOOK_PROVIDER`, which the adapters set to `codex` or
 `cursor` and which is unset or `claude` for a Claude hook. It maps `claude` or unset to `claude-code`, `codex` to

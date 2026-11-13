@@ -388,6 +388,29 @@ cp "$WORK/cfg.route" "$cfg"
 run_model_lane ui
 check "a Claude lane with no routing entry gets no model flag" "$(grep -c -- '--model' "$CALLS.model")" "0"
 cp "$WORK/cfg.route" "$cfg"
+# team.json plugins (#2675): off minus keep.<lane> becomes one --settings argument right after the binary, fresh and resumed.
+PL_OFF='{"enabledPlugins":{"compound-engineering@compound-engineering-plugin":false,"superpowers@claude-plugins-official":false}}'
+jq '.plugins = {off:["superpowers@claude-plugins-official","compound-engineering@compound-engineering-plugin"], keep:{design:["compound-engineering@compound-engineering-plugin"]}}' "$WORK/cfg.route" > "$cfg"
+rm -f "$AW_STATE_DIR/meta/lane-sessions/ui"
+run_model_lane ui
+check "plugins.off: a fresh Claude lane gets --settings with the off ids sorted, right after the binary" "$(head -c "$(( ${#PL_OFF} + 12 ))" "$CALLS.model")" "--settings|$PL_OFF|"
+touch "$HOME/.claude/projects/p/$(cat "$AW_STATE_DIR/meta/lane-sessions/ui").jsonl"
+run_model_lane ui
+check "plugins.off: a resumed Claude lane gets it too" "$(head -c "$(( ${#PL_OFF} + 12 ))" "$CALLS.model")" "--settings|$PL_OFF|"
+jq '.plugins.keep = {ui:["compound-engineering@compound-engineering-plugin"]}' "$cfg" > "$WORK/cfg.p" && mv "$WORK/cfg.p" "$cfg"
+run_model_lane ui
+check "plugins.keep.<lane> removes that id from the settings" "$(head -c 200 "$CALLS.model" | cut -d'|' -f1-2)" '--settings|{"enabledPlugins":{"superpowers@claude-plugins-official":false}}'
+jq '.plugins.keep = {ui:["compound-engineering@compound-engineering-plugin","superpowers@claude-plugins-official"]}' "$cfg" > "$WORK/cfg.p" && mv "$WORK/cfg.p" "$cfg"
+run_model_lane ui
+check "plugins: keeping every id adds no --settings" "$(grep -c -- '--settings' "$CALLS.model")" "0"
+jq '.plugins = {off:"superpowers@claude-plugins-official"}' "$WORK/cfg.route" > "$cfg"
+rm -f "$CALLS.model"
+AW_META_CLAUDE="$WORK/agent-model" AW_META_NO_SHELL=1 bash "$DIR/meta-lane.sh" t1 ui > "$WORK/lane.out" 2>&1; RC=$?
+check "plugins: a malformed off exits 1 with the message and starts no agent" "$RC:$(grep -c -x 'meta-lane: team.json plugins: off is not an array of strings; the agent was not started' "$WORK/lane.out"):$([ -e "$CALLS.model" ] && echo started || echo none)" "1:1:none"
+jq '.plugins = {off:["-x"]}' "$WORK/cfg.route" > "$cfg"
+AW_META_CLAUDE="$WORK/agent-model" AW_META_NO_SHELL=1 bash "$DIR/meta-lane.sh" t1 ui > "$WORK/lane.out" 2>&1; RC=$?
+check "plugins: an id starting with - is refused" "$RC:$(grep -c 'an id is empty or starts with -' "$WORK/lane.out")" "1:1"
+cp "$WORK/cfg.route" "$cfg"
 unlink "$AW_STATE_DIR/launcher.json"
 rm -f "$LCFG"
 
