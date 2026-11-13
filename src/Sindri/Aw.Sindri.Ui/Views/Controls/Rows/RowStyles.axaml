@@ -111,10 +111,5 @@
     <Setter Property="VerticalContentAlignment" Value="Center" />
     <Setter Property="CornerRadius" Value="{DynamicResource Radius.XS}" />
   </Style>
-  <!-- A plain string or TextBlock body: direct child only, wraps, 20 px line pitch, ink-muted (#3538, #3584). A TextBlock nested in a structured body keeps its own wrapping. -->
-  <Style Selector="rows|PeekPane /template/ ContentPresenter#PART_Body > TextBlock">
-    <Setter Property="TextWrapping" Value="Wrap" />
-    <Setter Property="LineHeight" Value="{DynamicResource Type.Body.LineHeight}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.InkMuted}" />
-  </Style>
+  <!-- The peek body style (wrap, 20 px pitch, ink-muted) is in SindriApp.axaml, after the catch-all TextBlock style that would overwrite its Foreground (#3584). -->
 </Styles>
