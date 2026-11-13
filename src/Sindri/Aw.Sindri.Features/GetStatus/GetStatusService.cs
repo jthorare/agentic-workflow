@@ -23,11 +23,6 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         var loaded = await profiles.Live(cancellationToken).ConfigureAwait(false);
         var approvedProfile = approved.IsSuccess ? approved.Value : null;
         var services = await Services(approvedProfile, cancellationToken).ConfigureAwait(false);
-        if (approved.IsError)
-        {
-            return approved.Error;
-        }
-
         var grant = held.Current;
         var profile = Profile(approvedProfile, loaded, await profiles.LabelPick(approvedProfile, cancellationToken).ConfigureAwait(false), await profiles.SurfacePick(approvedProfile, cancellationToken).ConfigureAwait(false));
         var views = await Views(cancellationToken).ConfigureAwait(false);
