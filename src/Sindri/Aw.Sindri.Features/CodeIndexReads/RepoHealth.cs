@@ -55,11 +55,7 @@ public sealed record RepoHealth(string Repo, string State, int? EmbeddingsPercen
     /// <summary>The health with 'queued' read again against code-index-main-move: a paused service starts no first build, so the repo is missing (#3399).</summary>
     /// <param name="buildServiceActive">Whether code-index-main-move runs.</param>
     /// <returns>The health.</returns>
-    internal RepoHealth Unqueued(bool buildServiceActive)
-    {
-        _ = buildServiceActive;
-        return this;
-    }
+    internal RepoHealth Unqueued(bool buildServiceActive) => buildServiceActive || State != "queued" ? this : this with { State = "missing" };
 
     /// <summary>Whether the repo's health words need its ended builds: the index isn't damaged, no build runs, and the repo is behind or has a pending layer.</summary>
     /// <param name="status">The repo's index status.</param>

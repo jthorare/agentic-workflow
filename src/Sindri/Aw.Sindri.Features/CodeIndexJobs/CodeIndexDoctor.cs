@@ -14,7 +14,7 @@ using IndexRepoStatus = Aw.CodeIndex.Core.Facade.RepoStatus;
 namespace Aw.Sindri.Features.CodeIndexJobs;
 
 /// <summary>
-/// The code index's doctor rows (code index spec §8): 'code-index:&lt;repo&gt;' per repo (ok, warn when stale, first build queued, waiting or retrying, fail when damaged) and 'code-index:graphify',
+/// The code index's doctor rows (code index spec §8): 'code-index:&lt;repo&gt;' per repo (ok, warn when stale, first build queued, waiting or retrying, or code-index-main-move paused, fail when damaged) and 'code-index:graphify',
 /// 'code-index:ollama' and 'code-index:lock', read from the layer statuses the last builds stored, so doctor runs no tool. A layer that is unavailable is a warning, never a failure.
 /// </summary>
 /// <param name="index">The code index: its status, from the files only.</param>
@@ -30,6 +30,8 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
     private const string OllamaCheck = "code-index:ollama";
     private const string LockCheck = "code-index:lock";
     private const string Setup = "./setup.sh";
+    private const string PausedWords = "code-index-main-move is paused";
+    private const string Resume = "sindri services resume code-index-main-move";
 
     /// <summary>The checks, in the order doctor prints them.</summary>
     /// <param name="approved">The profile, or null.</param>
@@ -89,7 +91,6 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
     {
         ArgumentNullException.ThrowIfNull(reads);
         var (repos, live, builds, buildServiceActive) = reads;
-        _ = buildServiceActive;
         ArgumentNullException.ThrowIfNull(repos);
         ArgumentNullException.ThrowIfNull(live);
         ArgumentNullException.ThrowIfNull(builds);
@@ -101,28 +102,32 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
         var layers = repos.SelectMany(static r => r.Layers).ToList();
         return
         [
-            .. repos.Select(r => Repo(r, live.FirstOrDefault(h => h.Repo == r.Repo), [.. builds.Where(j => IndexJobs.IsOf(j, r.Repo.Value))], now)),
+            .. repos.Select(r => Repo(r, live.FirstOrDefault(h => h.Repo == r.Repo), [.. builds.Where(j => IndexJobs.IsOf(j, r.Repo.Value))], now, buildServiceActive)),
             Layer(GraphCheck, "graph", layers, LayerName.Graph),
             probes is null ? Layer(OllamaCheck, "embeddings", layers, LayerName.Embeddings) : Ollama(probes.Model),
             probes is null ? new DoctorCheck(LockCheck, CheckState.Ok, "lock not checked", Fix: null) : Lock(probes.Lock),
         ];
     }
 
-    private static DoctorCheck Repo(IndexRepoStatus repo, IndexRepoHead? live, List<JobRow> mine, DateTimeOffset now)
+    private static DoctorCheck Repo(IndexRepoStatus repo, IndexRepoHead? live, List<JobRow> mine, DateTimeOffset now, bool buildServiceActive)
     {
         var name = "code-index:" + repo.Repo.Value;
         var running = mine.Exists(static j => j.State == JobState.Running);
         var finished = mine.Where(static j => j.State != JobState.Running && j.EndedAt is not null).OrderByDescending(static j => j.EndedAt).ToList();
-        var buildWords = running ? "building" : IndexBuildWords.Waiting(finished, now) ?? "build queued";
+
+        // why: queued and "the next tick builds it" promise a build that code-index-main-move starts; paused, it starts none (#3399)
+        var paused = !running && !buildServiceActive;
+        var buildWords = running ? "building" : paused ? PausedWords : IndexBuildWords.Waiting(finished, now) ?? "build queued";
         return repo.State switch
         {
             IndexState.Damaged => new DoctorCheck(name, CheckState.Fail, "index damaged, rebuilding (SND-CODEIDX-010)", "none needed: the next tick deletes and rebuilds it; sindri jobs shows the build"),
+            IndexState.Missing when paused => new DoctorCheck(name, CheckState.Warn, $"no index: {PausedWords}, so no build starts", Resume),
             IndexState.Missing => new DoctorCheck(name, CheckState.Warn, running ? "building the first index" : IndexBuildWords.Waiting(finished, now) ?? "first build queued", Fix: null),
-            IndexState.Ok or _ => Readable(name, repo, live, buildWords, now),
+            IndexState.Ok or _ => Readable(name, repo, live, buildWords, now, paused),
         };
     }
 
-    private static DoctorCheck Readable(string name, IndexRepoStatus repo, IndexRepoHead? live, string buildWords, DateTimeOffset now)
+    private static DoctorCheck Readable(string name, IndexRepoStatus repo, IndexRepoHead? live, string buildWords, DateTimeOffset now, bool paused)
     {
         var commit = repo.Commit?.Value ?? string.Empty;
         var short7 = commit.Length >= 7 ? commit[..7] : commit;
@@ -133,7 +138,7 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
 
         if (live?.Head is { } head && head != repo.Commit)
         {
-            return new DoctorCheck(name, CheckState.Warn, $"stale: index at {short7}, head at {head.Value[..7]}; {buildWords}", "none needed: the next tick builds it");
+            return new DoctorCheck(name, CheckState.Warn, $"stale: index at {short7}, head at {head.Value[..7]}; {buildWords}", paused ? Resume : "none needed: the next tick builds it");
         }
 
         return Down(name, short7, repo.Layers) ?? new DoctorCheck(name, CheckState.Ok, $"{short7}, {Age(repo.BuiltAt, now)}, {string.Join(" · ", repo.Layers.Select(static l => $"{Word(l.Layer)} {Word(l.State)}"))}", Fix: null);
