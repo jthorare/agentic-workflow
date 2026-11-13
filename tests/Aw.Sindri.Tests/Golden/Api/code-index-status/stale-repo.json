@@ -45,6 +45,7 @@
       "state": "stale",
       "embeddingsPercent": null,
       "waiting": null,
+      "paused": false,
       "needsLook": true,
       "lookWords": "demo: code index is behind main; rebuild it from the System page"
     },
@@ -53,6 +54,7 @@
       "state": "ok",
       "embeddingsPercent": null,
       "waiting": null,
+      "paused": false,
       "needsLook": false,
       "lookWords": null
     }

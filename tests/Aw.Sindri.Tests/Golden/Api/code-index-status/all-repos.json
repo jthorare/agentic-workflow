@@ -46,7 +46,8 @@
       "embeddingsPercent": null,
       "waiting": null,
       "paused": false,
-      "needsLook": false
+      "needsLook": false,
+      "lookWords": null
     },
     {
       "repo": "other",
@@ -54,7 +55,8 @@
       "embeddingsPercent": null,
       "waiting": null,
       "paused": false,
-      "needsLook": false
+      "needsLook": false,
+      "lookWords": null
     }
   ]
 }
