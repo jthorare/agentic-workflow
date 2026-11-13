@@ -361,11 +361,11 @@
                        AutomationProperties.Name="{Binding Counts}" />
             <ccontrols:CommandControl x:Name="StopControl" DataContext="{Binding Stop}"
                                       IsVisible="{Binding $self.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}" />
-            <!-- Two columns when two of the widest commands fit (600 px each and the grid's 12 px gap), one below that; the order reads row by row (#3356). -->
+            <!-- Two columns when two fit (540 px each and the grid's 12 px gap), one below that; the list reads down the left column, then down the right (#3356, #3478). A command longer than its column wraps. -->
             <ItemsControl x:Name="CopyOnlyActions" ItemsSource="{Binding CopyOnly}">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                  <ccontrols:CardGrid MinColumnWidth="600" Spacing="12" />
+                  <ccontrols:CardGrid MinColumnWidth="540" Spacing="12" ColumnMajor="True" />
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
