@@ -22,9 +22,13 @@ internal static class SettingsFromEnvironment
             Path.Combine(state, "lane-sessions"),
             environment("AW_TMUX") is { Length: > 0 } tmux ? tmux : "tmux",
             environment("AW_META_TMUX_SOCKET") is { Length: > 0 } socket ? socket : null,
-            new MetaPaths(state, Path.Combine(state, "gates"), File.Exists(heavy) ? heavy : null, environment("AW_GH") is { Length: > 0 } gh ? gh : "gh", home),
+            new MetaPaths(state, Path.Combine(state, "gates"), File.Exists(heavy) ? heavy : null, environment("AW_GH") is { Length: > 0 } gh ? gh : "gh", home, UserConfig(environment, home)),
             layout);
     }
+
+    // Where the installer writes the systemd drop-in: $XDG_CONFIG_HOME, else <home>/.config.
+    private static string UserConfig(Func<string, string?> environment, string home) =>
+        environment("XDG_CONFIG_HOME") is { Length: > 0 } xdg ? xdg : Path.Combine(home, ".config");
 
     // AW_META_CONFIG overrides the config path, but a lane's own variable must not carry over to another team: when a team is selected
     // and the file names a different one (a lane of team A running `aw-meta --team B ...`), the override is ignored.

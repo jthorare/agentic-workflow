@@ -160,9 +160,10 @@
         </StackPanel>
       </Border>
 
-      <WrapPanel x:Name="SystemCards" Orientation="Horizontal" IsVisible="{Binding ShowOverviewCards}">
+      <!-- The cards fill each row (#2905): as many columns of 420 px or more as fit, stretched to the content edge (two at 1000 and 1280, three at 1440). -->
+      <ccontrols:CardGrid x:Name="SystemCards" IsVisible="{Binding ShowOverviewCards}">
         <!-- The control plane: its state is the pill's glyph and word (running, stale, not running). -->
-        <Border Classes="panel" Width="440" Margin="0,0,12,12">
+        <Border Classes="panel">
           <Border Classes="section last">
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
@@ -194,7 +195,7 @@
           </Border>
         </Border>
 
-        <Border Classes="panel" Width="440" Margin="0,0,12,12">
+        <Border Classes="panel">
           <Border Classes="section last">
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
@@ -223,7 +224,7 @@
           </Border>
         </Border>
 
-        <Border x:Name="ViewsCard" Classes="panel" Width="440" Margin="0,0,12,12">
+        <Border x:Name="ViewsCard" Classes="panel">
           <Border Classes="section last">
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
@@ -247,7 +248,7 @@
         </Border>
 
         <!-- CI-10b (code-index spec §7.3): the Code index card: one wrapped line per repo, its state a word and never colour alone. -->
-        <Border x:Name="CodeIndexPanel" Classes="panel" Width="440" Margin="0,0,12,12" DataContext="{Binding CodeIndex}" x:DataType="shell:CodeIndexCardViewModel">
+        <Border x:Name="CodeIndexPanel" Classes="panel" DataContext="{Binding CodeIndex}" x:DataType="shell:CodeIndexCardViewModel">
           <Border Classes="section last">
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
@@ -270,7 +271,7 @@
         </Border>
 
         <!-- #1597: the Context index card: one wrapped line per context source, its state a word and never colour alone. -->
-        <Border x:Name="ContextIndexPanel" Classes="panel" Width="440" Margin="0,0,12,12" DataContext="{Binding ContextIndex}" x:DataType="shell:ContextIndexCardViewModel">
+        <Border x:Name="ContextIndexPanel" Classes="panel" DataContext="{Binding ContextIndex}" x:DataType="shell:ContextIndexCardViewModel">
           <Border Classes="section last">
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
@@ -301,7 +302,7 @@
         <!-- Sandbox (sandbox spec 8): the row "Sandbox: <state>" and, while it is blocked or never checked, Check again. -->
         <sandbox:SandboxHealthCard x:Name="SandboxCard" DataContext="{Binding Sandbox}" />
 
-        <Border x:Name="AgentsCard" Classes="panel" Width="440" Margin="0,0,12,12">
+        <Border x:Name="AgentsCard" Classes="panel">
           <Border Classes="section last">
             <StackPanel Spacing="{StaticResource Space.XS}">
               <TextBlock Classes="section-title head-title" Text="{Binding AgentsCardName}" AutomationProperties.Name="{Binding AgentsCardName}" />
@@ -319,7 +320,7 @@
           </Border>
         </Border>
 
-        <Border Classes="panel" Width="440" Margin="0,0,12,12">
+        <Border Classes="panel">
           <Border Classes="section last">
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
@@ -348,7 +349,7 @@
           </Border>
         </Border>
 
-        <Border Classes="panel" Width="440" Margin="0,0,12,12">
+        <Border Classes="panel" ccontrols:CardGrid.FullRow="True">
           <!-- The catalog (§4.8): the actions the app has no form for (copy blocks). Every control comes from the control renderer; nothing here runs a command. -->
         <Border x:Name="ActionsSection" Classes="section last" DataContext="{Binding Catalog}" x:DataType="controls:CatalogViewModel">
           <StackPanel Spacing="{StaticResource Space.XS}">
@@ -375,7 +376,7 @@
 
         </Border>
 
-      </WrapPanel>
+      </ccontrols:CardGrid>
     </StackPanel>
 
     <!-- The Services tab: each scheduled service, what it does, and its own Run now and Pause or Resume. -->

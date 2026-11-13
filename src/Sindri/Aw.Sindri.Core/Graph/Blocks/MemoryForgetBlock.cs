@@ -22,9 +22,9 @@ public sealed class MemoryForgetBlock(IGraphMemoryPort memory) : IGraphBlock
 
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([
-        new("memory", BlockFieldType.Text),
-        new("fact", BlockFieldType.Text, Required: false),
-        new("tag", BlockFieldType.Text, Required: false),
+        new("memory", BlockFieldType.Text, Caption: "Memory"),
+        new("fact", BlockFieldType.Text, Required: false, Caption: "Fact to forget"),
+        new("tag", BlockFieldType.Text, Required: false, Caption: "Forget everything tagged"),
     ]);
 
     /// <inheritdoc />

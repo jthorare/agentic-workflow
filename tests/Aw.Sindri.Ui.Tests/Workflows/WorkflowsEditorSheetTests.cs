@@ -46,7 +46,7 @@ public sealed class WorkflowsEditorSheetTests
         Assert.Equal((true, true), (page.IsEditing, page.CanEdit));
         Assert.Equal(["prompt", "strict"], page.Editor.Fields.Select(f => f.Name), StringComparer.Ordinal);
         Assert.Equal("Look for drift", page.Editor.Fields[0].Text);
-        Assert.Equal("Edit Morning check \u00b7 revision 2", page.EditorHeading);
+        Assert.Equal("Check the repos \u00b7 Run an agent", page.EditorHeading);   // the step's title and its kind, never the node id or the revision
         page.CloseEditor();
         Assert.False(page.IsEditing);
     }
@@ -221,7 +221,7 @@ public sealed class WorkflowsEditorSheetTests
         await staleEdit;
 
         Assert.Equal((true, Other), (page.IsEditing, page.Editor.Slug));
-        Assert.Equal("Settings of start", page.EditorNodeText);
+        Assert.Equal("Manual \u00b7 trigger", page.EditorHeading);   // the node has no title: its block's
         Assert.Empty(page.Editor.Fields);
     }
 

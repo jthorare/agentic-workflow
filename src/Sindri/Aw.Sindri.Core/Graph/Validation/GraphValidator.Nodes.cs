@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Aw.Sindri.Core.Graph.Blocks;
 
 namespace Aw.Sindri.Core.Graph.Validation;
 
@@ -19,6 +20,8 @@ public sealed partial class GraphValidator
             found.Add(Found.At("GRAPH-BLOCK-001", id, "type", $"there is no block type '{node.Type}'", $"use one of: {string.Join(", ", context.Blocks.Keys.Order(StringComparer.Ordinal))}"));
             return;
         }
+
+        ContinuePath(node, block, found);
 
         foreach (var (field, problem) in block.Config.Check(node.Config))
         {
@@ -43,6 +46,15 @@ public sealed partial class GraphValidator
         Names(node, found);
     }
 
+    // why: a failed node takes no named branch, so a node with only named outputs has nowhere to continue and every node after it would be skipped (#3003)
+    private static void ContinuePath(GraphNode node, IGraphBlockType block, List<GraphFinding> found)
+    {
+        if (string.Equals(node.OnFailure, "continue", StringComparison.Ordinal) && !block.OutputsFor(node.Config).BranchNames.Contains("out", StringComparer.Ordinal))
+        {
+            found.Add(Found.At("GRAPH-NODE-004", node.Id.Value, "onFailure", $"'{node.Id.Value}' is a {node.Type}, so it has no single path to continue on when it fails", "remove onFailure continue, or add a step after both branches"));
+        }
+    }
+
     private void Crons(GraphNode node, List<GraphFinding> found)
     {
         var crons = StringsOf(node.Config["cron"]).ToList();
@@ -64,11 +76,26 @@ public sealed partial class GraphValidator
         {
             Lookup(node, new NameCheck("repo", context.World.Repo, "GRAPH-REPO", "repo"), found);
             Lookup(node, new NameCheck("readOnlyRepos", context.World.Repo, "GRAPH-REPO", "repo"), found);
+            AgentTarget(node, found);
         }
 
         Lookup(node, new NameCheck("connection", context.World.Connection, "GRAPH-NAME", "connection"), found);
         Lookup(node, new NameCheck("connections", context.World.Connection, "GRAPH-NAME", "connection"), found);   // a 'run_agent' node names its connections as a list (PR 7)
         Lookup(node, new NameCheck("memory", context.World.Memory, "GRAPH-NAME", "memory"), found);
+    }
+
+    // why: a node with no 'agent' runs on the profile's workflow.agent.target (AgentNodeLaunching.AgentOf); with neither, the first run fails at launch (SND-LAUNCH-003), so say so before activate (#2986)
+    private void AgentTarget(GraphNode node, List<GraphFinding> found)
+    {
+        if (context.AgentTarget == GraphLookup.Known || node.Config["agent"] is not null)
+        {
+            return;
+        }
+
+        var id = node.Id.Value;
+        found.Add(context.AgentTarget == GraphLookup.Unknown
+            ? Found.Gap("GRAPH-AGENT-001", [id], $"node '{id}' names no 'agent' and the profile has no workflow.agent.target, so it has no agent to run", "run `sindri profile set workflow.agent.target <id>`, or set 'agent' on the node")
+            : new GraphFinding("GRAPH-AGENT-002", GraphSeverity.Warning, [id], "config.agent", $"could not check which agent node '{id}' runs on yet", "check by hand that the profile sets workflow.agent.target, or set 'agent' on the node"));
     }
 
     private static void Lookup(GraphNode node, NameCheck check, List<GraphFinding> found)

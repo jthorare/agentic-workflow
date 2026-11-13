@@ -120,6 +120,9 @@ public sealed class MetaWorld
     /// <summary>The messages to and from the non-Claude lanes, over <see cref="Messages"/>.</summary>
     public InMemoryLaneMail LaneMail { get; }
 
+    /// <summary>The event log.</summary>
+    public InMemoryMetaEventStore Events { get; } = new();
+
     /// <summary>A world with all its fakes.</summary>
     public MetaWorld()
     {

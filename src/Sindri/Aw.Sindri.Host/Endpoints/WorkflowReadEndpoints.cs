@@ -8,6 +8,7 @@ using Aw.Sindri.Features.ListTriggerEvents;
 using Aw.Sindri.Features.ListWorkflowBlocks;
 using Aw.Sindri.Features.ListWorkflowRuns;
 using Aw.Sindri.Features.ListWorkflows;
+using Aw.Sindri.Features.ListWorkflowTemplates;
 using Aw.Sindri.Features.SearchWorkflowDocs;
 
 namespace Aw.Sindri.Host.Endpoints;
@@ -27,6 +28,8 @@ internal static class WorkflowReadEndpoints
             => (await service.Handle(TriggerEvents(http.Query), ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapGet("/workflows/blocks", static async (IService<ListWorkflowBlocksRequest, ListWorkflowBlocksResponse> service, CancellationToken ct)
             => (await service.Handle(new ListWorkflowBlocksRequest(), ct).ConfigureAwait(false)).ToHttpResult());
+        _ = group.MapGet("/workflows/templates", static async (IService<ListWorkflowTemplatesRequest, ListWorkflowTemplatesResponse> service, CancellationToken ct)
+            => (await service.Handle(new ListWorkflowTemplatesRequest(), ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapGet("/workflows/docs", static async (string? question, string? page, IService<SearchWorkflowDocsRequest, SearchWorkflowDocsResponse> service, CancellationToken ct)
             => (await service.Handle(new SearchWorkflowDocsRequest(question, page), ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapGet("/workflows/{slug}", static async (string slug, IService<GetWorkflowRequest, GetWorkflowResponse> service, CancellationToken ct) =>

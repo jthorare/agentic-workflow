@@ -100,7 +100,7 @@ public sealed class WorkflowGoldenContractTests
         var activate = Encoding.UTF8.GetString(AwJson.Serialize(new ActivateWorkflowBody(Revision: null), SindriApiClient.Json));
         var ops = Encoding.UTF8.GetString(AwJson.Serialize(new ApplyWorkflowOpsBody(2, JsonDocument.Parse("[{\"op\":\"remove_node\",\"node\":\"a\"}]").RootElement), SindriApiClient.Json));
 
-        Assert.Equal("{\"revision\":null}", activate);
+        Assert.Equal("{\"revision\":null,\"ifLatest\":false,\"untestedOk\":false}", activate);
         Assert.Equal("{\"baseRevision\":2,\"ops\":[{\"op\":\"remove_node\",\"node\":\"a\"}]}", ops);
     }
 
@@ -115,7 +115,10 @@ public sealed class WorkflowGoldenContractTests
         Assert.Equal("start", manual.ExampleSpec!.Value.GetProperty("nodes")[0].GetProperty("id").GetString());
         Assert.Equal(["prompt", "run_agent"], read.Groups[2].Blocks.Select(b => b.Type), StringComparer.Ordinal);
         var prompt = read.Groups[2].Blocks[0];
-        Assert.Equal(new WorkflowBlockField("prompt", "text", Required: true), prompt.Config[0]);
+        Assert.Equal(("prompt", "text", true), (prompt.Config[0].Name, prompt.Config[0].Type, prompt.Config[0].Required));
+        Assert.False(string.IsNullOrEmpty(prompt.Config[0].Caption), "a field is served with its caption");
+        var cron = read.Groups[0].Blocks.Single(b => b.Type == "schedule").Config.Single(f => f.Name == "cron");
+        Assert.Equal(("Runs at", "0 7 * * 1-5", "Every weekday at 7:00"), (cron.Caption, cron.Presets![0].Value, cron.Presets[0].Label));
         Assert.Equal("Summarize {{search.facts}}", prompt.ExampleConfig!.Value.GetProperty("prompt").GetString());
         Assert.Equal(["http", "memory_search", "call_tool", "workflow_result"], read.Groups[1].Blocks.Select(b => b.Type), StringComparer.Ordinal);
         Assert.Equal(["code", "collect", "for_each", "memory_forget", "condition", "only_new", "memory_write", "run_workflow", "wait"], read.Groups[3].Blocks.Select(b => b.Type), StringComparer.Ordinal);

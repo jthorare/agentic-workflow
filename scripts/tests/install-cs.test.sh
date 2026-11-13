@@ -114,14 +114,35 @@ printf '#!/usr/bin/env bash\n[ "${1:-}" = --expensive ] && shift\nexec "$@"\n' >
 printf '#!/bin/sh\necho "reserve-stub $*"\n' > "$REPO/scripts/meta-gate-reserve.sh"; chmod +x "$REPO/scripts/meta-gate-reserve.sh"
 printf '{"sdk":{"version":"%s"}}\n' "$FAKE_SDK" > "$REPO/global.json"
 echo a > "$REPO/src/Sindri/Aw.Sindri.Host/a.cs"; echo b > "$REPO/src/Judge/b.cs"
+# A small reference graph that mirrors the real one where it matters (#3041): sindri, judge and aw-packets reference the shared
+# Aw.Kernel project; sindri-ui reaches it only through Aw.Sindri.Core (a transitive reference); the other four reference nothing.
+# The Include paths are relative to the csproj and mix / and \, as the real ones do.
+proj() { # proj <dir> [<reference as written>]...
+  local d="$1" n r; n="$(basename "$d")"; shift
+  mkdir -p "$REPO/$d"
+  { echo '<Project Sdk="Microsoft.NET.Sdk">'; echo '  <ItemGroup>'
+    for r in "$@"; do printf '    <ProjectReference Include="%s" />\n' "$r"; done
+    echo '  </ItemGroup>'; echo '</Project>'; } > "$REPO/$d/$n.csproj"
+}
+proj src/Aw.Kernel
+proj src/Sindri/Aw.Sindri.Core '..\..\Aw.Kernel\Aw.Kernel.csproj'
+proj src/Sindri/Aw.Sindri.Host '../Aw.Sindri.Core/Aw.Sindri.Core.csproj'
+proj src/Sindri/Aw.Sindri.Ui.Desktop '..\Aw.Sindri.Core\Aw.Sindri.Core.csproj'
+proj src/Sindri/Aw.Sindri.CodeRunner
+proj src/Judge/Aw.Judge.Host '..\..\Aw.Kernel\Aw.Kernel.csproj'
+proj src/Packets/Aw.Packets.App '../../Aw.Kernel/Aw.Kernel.csproj'
+proj src/BugFix/Aw.BugFix.Host
+proj src/Evidence/Aw.Evidence.Host
+proj src/Readiness/Aw.Readiness.App
+echo '<Project />' > "$REPO/Directory.Build.props"
 g() { git -C "$REPO" -c user.name=t -c user.email=t@example.invalid "$@"; }
 ccommit() { g commit -q "$@" > /dev/null 2>&1; }
 g init -q -b main && g add -A && g commit -q -m base
 INSTALL="$REPO/scripts/install-cs.sh"
 B="$AW_STATE_DIR/bin/cs"
 stamps() { find "$B" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -exec basename {} \; | sort | tr '\n' ' '; }
-# change a source file (uncommitted: the stamp changes, the tree is "-dirty")
-bump() { echo "$1" >> "$REPO/src/Judge/b.cs"; }
+# change a root build file (uncommitted: the stamp changes, the tree is "-dirty", and every binary's inputs change, so all eight publish)
+bump() { echo "$1" >> "$REPO/Directory.Build.props"; }
 # give the named builds distinct old mtimes, oldest first, so "newest two" is deterministic
 age() { local m=1 d; for d in "$@"; do touch -t "20200101$(printf '%02d' "$m")00" "$B/$d"; m=$((m + 1)); done; }
 others() { stamps | tr ' ' '\n' | grep . | grep -vxF -f <(printf '%s\n' "$@") || true; }
@@ -408,5 +429,91 @@ out="$(bash "$INSTALL" --publish 2>&1)"
 has "the install after a failed pack packs again" "$out" "packed Aw.Sindri.Toolkit 0.1.0-local."
 check "the retry is one more pack call" "$(packs)" "5"
 unset AW_SINDRI_SDK_FEED AW_HEAVY_TEST_PATH
+
+# --- only the binaries whose inputs changed are published (#3041) ---
+# Expected: each binary's inputs are its project's ProjectReference closure plus the root build files; the build records a hash
+# per binary (inputs/<name>.sha256) and the files it published (inputs/<name>.files). A publish copies a binary whose hash equals
+# the one in `current` instead of publishing it, in the same order as a fresh publish (sindri-ui's libSkiaSharp.so still wins).
+# A root build file or --rebuild publishes all eight; a current build without inputs/ publishes all eight.
+export AW_STATE_DIR="$WORK/state2" AW_SINDRI_HOME="$WORK/sindri-home2" AW_HEAVY_TEST_PATH="$WORK/fakebin"
+B="$AW_STATE_DIR/bin/cs"
+ALL8="aw-packets aw-readiness bugfix-state judge sindri sindri-code-runner sindri-ui ui-evidence "
+NB=""
+pubs() { grep -v '^pack ' "$FAKE_LOG" | cut -d' ' -f1 | LC_ALL=C sort | tr '\n' ' '; }
+run_pl() { : > "$FAKE_LOG"; out="$(bash "$INSTALL" --publish "$@" 2>&1)"; rc=$?; bash "$INSTALL" --link > /dev/null 2>&1; NB="$(readlink "$B/current")"; }
+have_all() { local n r=yes; for n in $ALL8; do [ -x "$B/$NB/$n" ] || r=no; done; echo "$r"; }
+differs() { if [ "$1" != "$2" ]; then echo yes; else echo no; fi; }
+
+run_pl; S0="$NB"
+check "per-binary: the first publish builds all eight" "$(pubs)" "$ALL8"
+check "per-binary: the build records a hash per binary" "$(ls "$B/$S0/inputs"/*.sha256 2> /dev/null | wc -l | tr -d ' ')" "8"
+check "per-binary: the build records the file list per binary" "$(ls "$B/$S0/inputs"/*.files 2> /dev/null | wc -l | tr -d ' ')" "8"
+check "per-binary: the judge file list names its libe_sqlite3.so" "$(grep -cx 'libe_sqlite3.so' "$B/$S0/inputs/judge.files" 2> /dev/null)" "1"
+check "per-binary: the ui-evidence file list names its dot folder" "$(grep -cx '.playwright' "$B/$S0/inputs/ui-evidence.files" 2> /dev/null)" "1"
+
+# (a) a change under the judge project: judge only
+echo "judge change" >> "$REPO/src/Judge/Aw.Judge.Host/J.cs"
+run_pl; S1="$NB"
+check "judge change: the publish exits 0" "$rc" "0"
+check "judge change: a new build" "$(differs "$S1" "$S0")" "yes"
+check "judge change: only judge is published" "$(pubs)" "judge "
+check "judge change: the new build has all eight binaries" "$(have_all)" "yes"
+has "judge change: says it reused sindri" "$out" "reusing sindri from $S0"
+has "judge change: says it reused sindri-ui" "$out" "reusing sindri-ui from $S0"
+check "judge change: says nothing is reused for judge" "$(printf '%s' "$out" | grep -c 'reusing judge')" "0"
+check "judge change: a copied binary is the earlier build's file" "$(cmp -s "$B/$S0/sindri" "$B/$S1/sindri" && echo same || echo differs)" "same"
+check "judge change: (f) the staged libSkiaSharp.so is still sindri-ui's (needs fontconfig)" "$(grep -c fontconfig "$B/$S1/libSkiaSharp.so")" "1"
+check "judge change: ui-evidence's Playwright dot folder was copied" "$(cat "$B/$S1/.playwright/package/cli.js" 2> /dev/null)" "driver"
+check "judge change: judge's libe_sqlite3.so is there" "$([ -e "$B/$S1/libe_sqlite3.so" ] && echo yes || echo no)" "yes"
+check "judge change: the copied binaries carry their hash and file list" "$(cmp -s "$B/$S0/inputs/sindri.sha256" "$B/$S1/inputs/sindri.sha256" && cmp -s "$B/$S0/inputs/sindri.files" "$B/$S1/inputs/sindri.files" && echo same || echo differs)" "same"
+check "judge change: judge's hash changed" "$(differs "$(cat "$B/$S0/inputs/judge.sha256")" "$(cat "$B/$S1/inputs/judge.sha256")")" "yes"
+check "judge change: no stage left" "$(find "$B" -mindepth 1 -maxdepth 1 -name '.stage*' | wc -l | tr -d ' ')" "0"
+check "judge change: current points at the new build" "$S1" "$(readlink "$B/current")"
+
+# (b) scripts/heavy.sh only: nothing is published, the new build has the new heavy
+echo "# a comment" >> "$REPO/scripts/heavy.sh"
+run_pl; S2="$NB"
+check "heavy change: the publish exits 0" "$rc" "0"
+check "heavy change: a new build" "$(differs "$S2" "$S1")" "yes"
+check "heavy change: nothing is published" "$(pubs)" ""
+check "heavy change: the new build has all eight binaries" "$(have_all)" "yes"
+check "heavy change: the new build's heavy is the new scripts/heavy.sh" "$(cmp -s "$B/$S2/heavy" "$REPO/scripts/heavy.sh" && echo same || echo differs)" "same"
+
+# (c) a root build file: all eight
+echo "<!-- root -->" >> "$REPO/Directory.Build.props"
+run_pl; S3="$NB"
+check "root build file change: the publish exits 0" "$rc" "0"
+check "root build file change: all eight are published" "$(pubs)" "$ALL8"
+check "root build file change: all eight binaries are there" "$(have_all)" "yes"
+
+# (d) --rebuild: all eight, although nothing changed
+run_pl --rebuild
+check "--rebuild: the publish exits 0" "$rc" "0"
+check "--rebuild: all eight are published" "$(pubs)" "$ALL8"
+
+# (e) the shared kernel project: every binary whose closure includes it, none of the others
+echo "kernel change" >> "$REPO/src/Aw.Kernel/K.cs"
+run_pl
+check "kernel change: the publish exits 0" "$rc" "0"
+check "kernel change: sindri, sindri-ui (through Aw.Sindri.Core), judge and aw-packets are published" "$(pubs)" "aw-packets judge sindri sindri-ui "
+check "kernel change: all eight binaries are there" "$(have_all)" "yes"
+has "kernel change: says it reused bugfix-state" "$out" "reusing bugfix-state from"
+check "kernel change: the staged libSkiaSharp.so is still sindri-ui's" "$(grep -c fontconfig "$B/$NB/libSkiaSharp.so")" "1"
+
+# (e2) the middle project: sindri and sindri-ui, not judge
+echo "core change" >> "$REPO/src/Sindri/Aw.Sindri.Core/C.cs"
+run_pl
+check "core change: only sindri and sindri-ui are published" "$(pubs)" "sindri sindri-ui "
+check "core change: all eight binaries are there" "$(have_all)" "yes"
+check "core change: the staged libSkiaSharp.so is still sindri-ui's" "$(grep -c fontconfig "$B/$NB/libSkiaSharp.so")" "1"
+
+# (g) a current build without inputs/ (made before this change): everything is published
+find "$B/$(readlink "$B/current")/inputs" -delete
+echo "# another comment" >> "$REPO/scripts/heavy.sh"
+run_pl
+check "no inputs/ in current: the publish exits 0" "$rc" "0"
+check "no inputs/ in current: all eight are published" "$(pubs)" "$ALL8"
+check "no inputs/ in current: the new build records its inputs" "$(ls "$B/$NB/inputs"/*.sha256 2> /dev/null | wc -l | tr -d ' ')" "8"
+unset AW_HEAVY_TEST_PATH
 
 [ "$fail" = 0 ] && echo "all install-cs tests passed" || { echo "install-cs tests FAILED"; exit 1; }

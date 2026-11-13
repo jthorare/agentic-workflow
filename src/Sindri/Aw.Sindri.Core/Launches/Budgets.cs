@@ -83,6 +83,16 @@ public static class Budgets
         return Facts(daily, spend, LaunchBudgets.Of(agents, target, spend));
     }
 
+    /// <summary>The facts of <paramref name="target"/> while its first spend read of the day hasn't landed: counting when a budget is set, none otherwise.</summary>
+    /// <param name="agents">The approved profile's 'agents:' block, or null.</param>
+    /// <param name="target">The agent.</param>
+    /// <returns>The facts, with no spend.</returns>
+    public static BudgetFacts Counting(AgentSettings? agents, AgentId target)
+    {
+        var daily = agents?.Targets is { } targets && targets.TryGetValue(target.Value, out var limits) ? limits.DailyBudget : null;
+        return new BudgetFacts(daily, SpentUsd: null, Fraction: null, daily is null ? LaunchBudgetState.None : LaunchBudgetState.Counting, Basis: null, Tokens: 0);
+    }
+
     /// <summary>The facts over all of <paramref name="targets"/>: budgets and spend added, and the state those totals earn.</summary>
     /// <param name="agents">The approved profile's 'agents:' block, or null.</param>
     /// <param name="targets">Every target's facts.</param>
@@ -96,7 +106,8 @@ public static class Budgets
         var basis = BasisOf(counted);
         var priced = basis == SpendBasis.PriceTable;
         var fraction = Ratio(spent, daily, priced);
-        return new BudgetFacts(daily, spent, fraction, TotalState(daily, spent, priced, agents), basis, targets.Sum(static t => t.Tokens));
+        var state = daily is not null && targets.Any(static t => t.State == LaunchBudgetState.Counting) ? LaunchBudgetState.Counting : TotalState(daily, spent, priced, agents);
+        return new BudgetFacts(daily, spent, fraction, state, basis, targets.Sum(static t => t.Tokens));
     }
 
     /// <summary>Tokens only when any counted target is; null when nothing was counted.</summary>

@@ -43,6 +43,7 @@ internal static class CommandTable
         HealthCommand.Entry,
         WatchCommand.Entry,
         WorktreeListCommand.Entry,
+        EventsCommand.Entry,
         WorktreeSweepCommand.Entry,
         LaneSendCommand.Entry,
         LanesContextCommand.Entry,

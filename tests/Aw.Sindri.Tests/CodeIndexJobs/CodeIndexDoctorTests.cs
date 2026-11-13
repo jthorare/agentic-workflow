@@ -36,6 +36,26 @@ public sealed class CodeIndexDoctorTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_current_index_with_embeddings_left_unavailable_is_a_warning_that_names_the_code_gh_3069()
+    {
+        var down = new LayerStatus(LayerName.Embeddings, LayerState.Unavailable, "SND-CODEIDX-006", "8576 of 26249 embedded");
+        var row = RepoRow(Built(Ok(LayerName.Structure), Ok(LayerName.Graph), down), new IndexRepoHead(_repo, _old, OnDefaultBranch: true));
+
+        Assert.Equal(CheckState.Warn, row.State);
+        Assert.Contains("embeddings unavailable (SND-CODEIDX-006): 8576 of 26249 embedded", row.Detail, StringComparison.Ordinal);
+        Assert.NotNull(row.Fix);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_layer_unavailable_with_no_code_keeps_the_row_ok_gh_3069()
+    {
+        var deps = new LayerStatus(LayerName.Deps, LayerState.Unavailable, Code: null, "not built by this version");
+        var row = RepoRow(Built(Ok(LayerName.Structure), deps), new IndexRepoHead(_repo, _old, OnDefaultBranch: true));
+
+        Assert.Equal(CheckState.Ok, row.State);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_head_past_the_index_is_a_warning_that_names_both_commits()
     {
         var row = RepoRow(Built(Ok(LayerName.Structure)), new IndexRepoHead(_repo, _new, OnDefaultBranch: true));

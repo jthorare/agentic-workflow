@@ -34,14 +34,14 @@ public sealed class RunAgentBlock : IGraphBlock
     /// <inheritdoc />
     public BlockSchema Config { get; } = new(
     [
-        new("repo", BlockFieldType.Text),
-        new("prompt", BlockFieldType.Text),
-        new("readOnlyRepos", BlockFieldType.TextList, Required: false),
-        new("agent", BlockFieldType.Text, Required: false),
-        new("outputs", BlockFieldType.Map, Required: false),
-        new("timeout", BlockFieldType.Text, Required: false),
-        new("connections", BlockFieldType.TextList, Required: false),
-        new("resources", BlockFieldType.Map, Required: false),
+        new("repo", BlockFieldType.Text, Caption: "Repository"),
+        new("prompt", BlockFieldType.Text, Caption: "What the agent should do"),
+        new("readOnlyRepos", BlockFieldType.TextList, Required: false, Caption: "Repositories it can read"),
+        new("agent", BlockFieldType.Text, Required: false, Caption: "Agent"),
+        new("outputs", BlockFieldType.Map, Required: false, Caption: "What it reports back"),
+        new("timeout", BlockFieldType.Text, Required: false, Caption: "Stop after"),
+        new("connections", BlockFieldType.TextList, Required: false, Caption: "Connections it can use"),
+        new("resources", BlockFieldType.Map, Required: false, Caption: "Resources it needs"),
     ]);
 
     /// <inheritdoc />

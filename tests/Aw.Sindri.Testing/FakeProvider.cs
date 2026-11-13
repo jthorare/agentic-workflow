@@ -5,7 +5,7 @@ namespace Aw.Sindri.Testing;
 
 /// <summary>
 /// The GitHub, Linear, Slack and Google Calendar APIs in memory, as the innermost HttpMessageHandler of a poller's HttpClient. GitHub:
-/// GET /repos/{r}/pulls answers the open pull requests set, /repos/{r}/pulls/{n} the detail set for n (404 when none),
+/// GET /repos/{r}/pulls answers the open pull requests set, /repos/{r}/pulls/{n} the detail set for n or added to <see cref="GitHubPulls"/> (404 when none),
 /// /repos/{r}/commits/{sha}/check-runs the check runs set for sha (none when unset), and any other GET on api.github.com answers the
 /// added events as the repo events array, newest first. Linear: any POST on api.linear.app answers
 /// the added issues as {"data":{"issues":{"nodes":[...]}}}. A queued rate limit answers the next requests with 429 (or another
@@ -48,6 +48,9 @@ public sealed class FakeProvider : HttpMessageHandler
     private HttpStatusCode _limitStatus = HttpStatusCode.TooManyRequests;
     private TimeSpan? _limitRetryAfter;
     private Uri? _redirect;
+
+    /// <summary>Gets GitHub's single pull request answers.</summary>
+    public FakeGitHubPulls GitHubPulls { get; } = new();
 
     /// <summary>Gets the requests received, in order.</summary>
     public IReadOnlyList<ProviderRequest> Requests
@@ -229,6 +232,11 @@ public sealed class FakeProvider : HttpMessageHandler
         {
             _limitedLeft--;
             return Limited();
+        }
+
+        if (uri.Host == GitHubHost && GitHubPulls.Answer(uri) is { } pull)
+        {
+            return pull;
         }
 
         string? link = null;

@@ -27,9 +27,9 @@ public sealed class WaitBlock(TimeProvider clock) : IGraphBlock
 
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([
-        new("duration", BlockFieldType.Text, Required: false),
-        new("until", BlockFieldType.Text, Required: false),
-        new("timezone", BlockFieldType.Text, Required: false),
+        new("duration", BlockFieldType.Text, Required: false, Caption: "Wait for"),
+        new("until", BlockFieldType.Text, Required: false, Caption: "Wait until"),
+        new("timezone", BlockFieldType.Text, Required: false, Caption: "Time zone"),
     ]);
 
     /// <inheritdoc />

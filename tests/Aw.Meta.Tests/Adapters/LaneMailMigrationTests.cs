@@ -40,7 +40,7 @@ public sealed class LaneMailMigrationTests : IDisposable
         await using var check = (await connections.Open(CancellationToken.None)).Value;
         await using var version = check.CreateCommand();
         version.CommandText = "SELECT MAX(version) FROM schema_version";
-        Assert.Equal(5L, await version.ExecuteScalarAsync(CancellationToken.None));
+        Assert.Equal(6L, await version.ExecuteScalarAsync(CancellationToken.None));
         Assert.True(File.Exists(options.DatabasePath + ".bak-v2"));
     }
 

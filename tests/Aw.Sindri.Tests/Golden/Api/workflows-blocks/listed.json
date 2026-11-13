@@ -54,21 +54,21 @@
               "name": "connection",
               "type": "text",
               "required": true,
-              "caption": "connection",
+              "caption": "Connection",
               "advanced": false
             },
             {
               "name": "event",
               "type": "text",
               "required": true,
-              "caption": "event",
+              "caption": "Event",
               "advanced": false
             },
             {
               "name": "filter",
               "type": "text",
               "required": false,
-              "caption": "filter",
+              "caption": "Only when",
               "advanced": false
             }
           ],
@@ -77,20 +77,14 @@
             "occurredAt": "string",
             "connection": "string",
             "event": "string",
-            "repo?": "string",
-            "number?": "string",
-            "title?": "string",
-            "url?": "string",
-            "author?": "string",
-            "ref?": "string",
-            "identifier?": "string",
-            "label?": "string",
-            "to?": "string",
-            "channel?": "string",
-            "ts?": "string",
-            "user?": "string",
-            "text?": "string",
-            "start?": "string"
+            "repo": "string",
+            "number": "number",
+            "title": "string",
+            "author": "string",
+            "url": "string",
+            "headSha": "string",
+            "baseRef": "string",
+            "draft": "boolean"
           },
           "branches": [
             "out"
@@ -397,35 +391,35 @@
               "name": "url",
               "type": "text",
               "required": true,
-              "caption": "url",
+              "caption": "Web address",
               "advanced": false
             },
             {
               "name": "method",
               "type": "text",
               "required": false,
-              "caption": "method",
+              "caption": "Request type",
               "advanced": false
             },
             {
               "name": "headers",
               "type": "object",
               "required": false,
-              "caption": "headers",
+              "caption": "Headers",
               "advanced": false
             },
             {
               "name": "body",
               "type": "object",
               "required": false,
-              "caption": "body",
+              "caption": "Request body",
               "advanced": false
             },
             {
               "name": "expect",
               "type": "text",
               "required": false,
-              "caption": "expect",
+              "caption": "Accepted answer codes",
               "advanced": false
             }
           ],
@@ -494,28 +488,28 @@
               "name": "memory",
               "type": "text",
               "required": true,
-              "caption": "memory",
+              "caption": "Memory",
               "advanced": false
             },
             {
               "name": "query",
               "type": "text",
               "required": true,
-              "caption": "query",
+              "caption": "What to look for",
               "advanced": false
             },
             {
               "name": "level",
               "type": "text",
               "required": false,
-              "caption": "level",
+              "caption": "How close a match",
               "advanced": false
             },
             {
               "name": "limit",
               "type": "number",
               "required": false,
-              "caption": "limit",
+              "caption": "Most results",
               "advanced": false
             }
           ],
@@ -580,21 +574,21 @@
               "name": "tool",
               "type": "text",
               "required": true,
-              "caption": "tool",
+              "caption": "Tool",
               "advanced": false
             },
             {
               "name": "connection",
               "type": "text",
               "required": false,
-              "caption": "connection",
+              "caption": "Connection",
               "advanced": false
             },
             {
               "name": "arguments",
               "type": "object",
               "required": false,
-              "caption": "arguments",
+              "caption": "Tool input",
               "advanced": false
             }
           ],
@@ -667,14 +661,14 @@
               "name": "workflow",
               "type": "text",
               "required": true,
-              "caption": "workflow",
+              "caption": "Workflow",
               "advanced": false
             },
             {
               "name": "run",
               "type": "text",
               "required": false,
-              "caption": "run",
+              "caption": "Run",
               "advanced": false
             }
           ],
@@ -745,14 +739,14 @@
               "name": "prompt",
               "type": "text",
               "required": true,
-              "caption": "prompt",
+              "caption": "Question for the model",
               "advanced": false
             },
             {
               "name": "output",
               "type": "object",
               "required": true,
-              "caption": "output",
+              "caption": "Answer shape",
               "advanced": false
             }
           ],
@@ -836,56 +830,56 @@
               "name": "repo",
               "type": "text",
               "required": true,
-              "caption": "repo",
+              "caption": "Repository",
               "advanced": false
             },
             {
               "name": "prompt",
               "type": "text",
               "required": true,
-              "caption": "prompt",
+              "caption": "What the agent should do",
               "advanced": false
             },
             {
               "name": "readOnlyRepos",
               "type": "text list",
               "required": false,
-              "caption": "readOnlyRepos",
+              "caption": "Repositories it can read",
               "advanced": false
             },
             {
               "name": "agent",
               "type": "text",
               "required": false,
-              "caption": "agent",
+              "caption": "Agent",
               "advanced": false
             },
             {
               "name": "outputs",
               "type": "object",
               "required": false,
-              "caption": "outputs",
+              "caption": "What it reports back",
               "advanced": false
             },
             {
               "name": "timeout",
               "type": "text",
               "required": false,
-              "caption": "timeout",
+              "caption": "Stop after",
               "advanced": false
             },
             {
               "name": "connections",
               "type": "text list",
               "required": false,
-              "caption": "connections",
+              "caption": "Connections it can use",
               "advanced": false
             },
             {
               "name": "resources",
               "type": "object",
               "required": false,
-              "caption": "resources",
+              "caption": "Resources it needs",
               "advanced": false
             }
           ],
@@ -967,42 +961,42 @@
               "name": "input",
               "type": "text",
               "required": false,
-              "caption": "input",
+              "caption": "Input",
               "advanced": false
             },
             {
               "name": "code",
               "type": "text",
               "required": true,
-              "caption": "code",
+              "caption": "Code",
               "advanced": false
             },
             {
               "name": "repo",
               "type": "text",
               "required": false,
-              "caption": "repo",
+              "caption": "Repository",
               "advanced": false
             },
             {
               "name": "branch",
               "type": "text",
               "required": false,
-              "caption": "branch",
+              "caption": "Branch",
               "advanced": false
             },
             {
               "name": "timeout",
               "type": "text",
               "required": false,
-              "caption": "timeout",
+              "caption": "Stop after",
               "advanced": false
             },
             {
               "name": "memoryMb",
               "type": "number",
               "required": false,
-              "caption": "memoryMb",
+              "caption": "Memory limit (MB)",
               "advanced": false
             }
           ],
@@ -1063,7 +1057,7 @@
               "name": "value",
               "type": "text",
               "required": true,
-              "caption": "value",
+              "caption": "Value to collect",
               "advanced": false
             }
           ],
@@ -1157,21 +1151,21 @@
               "name": "items",
               "type": "text",
               "required": true,
-              "caption": "items",
+              "caption": "List to loop over",
               "advanced": false
             },
             {
               "name": "maxItems",
               "type": "number",
               "required": false,
-              "caption": "maxItems",
+              "caption": "Most items",
               "advanced": false
             },
             {
               "name": "batchSize",
               "type": "number",
               "required": false,
-              "caption": "batchSize",
+              "caption": "Items per batch",
               "advanced": false
             }
           ],
@@ -1266,21 +1260,21 @@
               "name": "memory",
               "type": "text",
               "required": true,
-              "caption": "memory",
+              "caption": "Memory",
               "advanced": false
             },
             {
               "name": "fact",
               "type": "text",
               "required": false,
-              "caption": "fact",
+              "caption": "Fact to forget",
               "advanced": false
             },
             {
               "name": "tag",
               "type": "text",
               "required": false,
-              "caption": "tag",
+              "caption": "Forget everything tagged",
               "advanced": false
             }
           ],
@@ -1330,7 +1324,7 @@
               "name": "when",
               "type": "text",
               "required": true,
-              "caption": "when",
+              "caption": "Continue when",
               "advanced": false
             }
           ],
@@ -1413,14 +1407,14 @@
               "name": "items",
               "type": "text",
               "required": true,
-              "caption": "items",
+              "caption": "List to check",
               "advanced": false
             },
             {
               "name": "key",
               "type": "text",
               "required": false,
-              "caption": "key",
+              "caption": "What makes an item the same",
               "advanced": false
             }
           ],
@@ -1483,28 +1477,28 @@
               "name": "memory",
               "type": "text",
               "required": true,
-              "caption": "memory",
+              "caption": "Memory",
               "advanced": false
             },
             {
               "name": "fact",
               "type": "text",
               "required": true,
-              "caption": "fact",
+              "caption": "Fact to remember",
               "advanced": false
             },
             {
               "name": "tags",
               "type": "text list",
               "required": false,
-              "caption": "tags",
+              "caption": "Tags",
               "advanced": false
             },
             {
               "name": "expires",
               "type": "text",
               "required": false,
-              "caption": "expires",
+              "caption": "Forget after",
               "advanced": false
             }
           ],
@@ -1564,28 +1558,28 @@
               "name": "workflow",
               "type": "text",
               "required": true,
-              "caption": "workflow",
+              "caption": "Workflow to run",
               "advanced": false
             },
             {
               "name": "payload",
               "type": "object",
               "required": false,
-              "caption": "payload",
+              "caption": "Data to send",
               "advanced": false
             },
             {
               "name": "wait",
               "type": "boolean",
               "required": false,
-              "caption": "wait",
+              "caption": "Wait for it to finish",
               "advanced": false
             },
             {
               "name": "waitSeconds",
               "type": "number",
               "required": false,
-              "caption": "waitSeconds",
+              "caption": "Wait (seconds)",
               "advanced": false
             }
           ],
@@ -1657,21 +1651,21 @@
               "name": "duration",
               "type": "text",
               "required": false,
-              "caption": "duration",
+              "caption": "Wait for",
               "advanced": false
             },
             {
               "name": "until",
               "type": "text",
               "required": false,
-              "caption": "until",
+              "caption": "Wait until",
               "advanced": false
             },
             {
               "name": "timezone",
               "type": "text",
               "required": false,
-              "caption": "timezone",
+              "caption": "Time zone",
               "advanced": false
             }
           ],
@@ -1738,28 +1732,28 @@
               "name": "question",
               "type": "text",
               "required": true,
-              "caption": "question",
+              "caption": "Question",
               "advanced": false
             },
             {
               "name": "choices",
               "type": "text list",
               "required": false,
-              "caption": "choices",
+              "caption": "Answers to offer",
               "advanced": false
             },
             {
               "name": "timeout",
               "type": "text",
               "required": false,
-              "caption": "timeout",
+              "caption": "Stop waiting after",
               "advanced": false
             },
             {
               "name": "default",
               "type": "text",
               "required": false,
-              "caption": "default",
+              "caption": "Answer if nobody replies",
               "advanced": false
             }
           ],
@@ -1846,28 +1840,28 @@
               "name": "title",
               "type": "text",
               "required": true,
-              "caption": "title",
+              "caption": "Title",
               "advanced": false
             },
             {
               "name": "repo",
               "type": "text",
               "required": false,
-              "caption": "repo",
+              "caption": "Repository",
               "advanced": false
             },
             {
               "name": "body",
               "type": "text",
               "required": false,
-              "caption": "body",
+              "caption": "Details",
               "advanced": false
             },
             {
               "name": "linearIssue",
               "type": "text",
               "required": false,
-              "caption": "linearIssue",
+              "caption": "Linear issue",
               "advanced": false
             }
           ],
@@ -1920,14 +1914,14 @@
               "name": "title",
               "type": "text",
               "required": true,
-              "caption": "title",
+              "caption": "Title",
               "advanced": false
             },
             {
               "name": "body",
               "type": "text",
               "required": false,
-              "caption": "body",
+              "caption": "Message",
               "advanced": false
             }
           ],
