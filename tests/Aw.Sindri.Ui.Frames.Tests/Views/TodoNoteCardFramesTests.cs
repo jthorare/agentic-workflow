@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json.Nodes;
+using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -192,6 +193,52 @@ public sealed class TodoNoteCardFramesTests : IDisposable
 
         Assert.All(rows, r => Assert.NotNull(r));
         Assert.DoesNotContain(rows, r => r!.Bounds.Height > 0);
+    });
+
+    // The empty rows must stay in the tree (an empty polite live region is how a screen reader hears the first status), take no height and leave no band:
+    // the gap from the row above to the row below is the card's one normal spacing, not that plus one more for each empty row.
+    private static double GapBetween(Window window, Control above, Control below) =>
+        below.TranslatePoint(new Point(0, 0), window)!.Value.Y - above.TranslatePoint(new Point(0, above.Bounds.Height), window)!.Value.Y;
+
+    private static void AssertLiveRowsStayAndTakeNoHeight(Window window, IEnumerable<string> names)
+    {
+        foreach (var name in names)
+        {
+            var row = Find<TextBlock>(window, name);
+            Assert.True(row.IsEffectivelyVisible, name + " stays in the tree");
+            Assert.Equal(AutomationLiveSetting.Polite, AutomationProperties.GetLiveSetting(row));
+            Assert.Equal(0, row.Bounds.Height);
+        }
+    }
+
+    [Fact]
+    public Task Empty_Obsidian_status_and_error_rows_stay_polite_and_leave_one_normal_gap_3454() => OnUi(async () =>
+    {
+        var (window, _) = await Show();
+
+        AssertLiveRowsStayAndTakeNoHeight(window, ["TodoNoteStatus", "TodoNoteError"]);
+        var space = Assert.IsType<double>(Application.Current!.FindResource("Space.MD"));
+        var above = Find<TextBlock>(window, "TodoNoteName").GetVisualParent<Control>()!;
+        Assert.Equal(space, GapBetween(window, above, Find<StackPanel>(window, "TodoNoteFields")), 0.5);
+    });
+
+    [Fact]
+    public Task Empty_Linear_status_and_error_rows_stay_polite_and_leave_one_normal_gap_3454() => OnUi(async () =>
+    {
+        _server.LinearConnectionAnswer = RouteAnswer.Api("linear-connection", "not-connected");
+        var linear = new LinearConnectionViewModel(() => _api, _server);
+        await linear.Refresh(_api, Token);
+        var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), _ => { }) { LinearConnection = linear };
+        var window = new Window { Width = 900, Height = 1200, Content = new SettingsView { DataContext = settings } };
+        _windows.Add(window);
+        window.Show();
+        Settle(window);
+
+        AssertLiveRowsStayAndTakeNoHeight(window, _linearStatusRows);
+        var space = Assert.IsType<double>(Application.Current!.FindResource("Space.MD"));
+        var above = Find<TextBlock>(window, "LinearName").GetVisualParent<Control>()!;
+        var below = Find<StackPanel>(window, "LinearReadPaste").GetVisualParent<Control>()!;
+        Assert.Equal(space, GapBetween(window, above, below), 0.5);
     });
 
     [Fact]
