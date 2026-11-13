@@ -260,12 +260,13 @@
               <ItemsControl x:Name="CodeIndexLines" ItemsSource="{Binding Lines}">
                 <ItemsControl.ItemsPanel>
                   <ItemsPanelTemplate>
-                    <StackPanel Spacing="{StaticResource Space.XS}" />
+                    <StackPanel Spacing="0" />
                   </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="shell:CodeIndexLine">
-                    <Border MinHeight="{StaticResource Row.Height.Data}">
+                    <!-- qa on #3586: a line's gap is its own padding (Space.XS above and below), no MinHeight and no list spacing, so wrapped or not every gap is the same; a one-row line is 20 + 16 = 36, the Control plane row pitch. -->
+                    <Border Padding="0,8">
                       <TextBlock Classes="body" Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
                     </Border>
                   </DataTemplate>
