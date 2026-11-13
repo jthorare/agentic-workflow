@@ -55,7 +55,7 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         ArgumentNullException.ThrowIfNull(nodeRun);
         var cancel = ActivityExecutionContext.Current.CancellationToken;
         // why: the node row keeps the block's input and error, which can carry prompt or trigger text; they are scrubbed like the ledger payloads. The output stays as it is: later nodes read it.
-        var scrubbed = nodeRun with { Input = mirror.Clean(nodeRun.Input), Error = mirror.Clean(nodeRun.Error) };
+        var scrubbed = nodeRun with { Input = StoredJson.Quote(mirror.Clean(nodeRun.Input)), Error = mirror.Clean(nodeRun.Error) };
         var stored = GraphFailures.Value(await runs.RecordNodeRun(scrubbed, cancel).ConfigureAwait(false));
         var item = GraphFailures.Value(await runs.Get(nodeRun.RunId, cancel).ConfigureAwait(false)).ItemId?.Value;
         var prefix = $"{stored.RunId.Value}:{stored.NodeId.Value}:{stored.ItemIndex.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
@@ -75,6 +75,20 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
                 await mirror.Append(EventTypes.WorkflowNodeFinished, new WorkflowNodeFinishedPayload(stored.RunId, stored.NodeId, stored.ItemIndex, GraphMirror.Name(stored.Status), stored.Truncated, GraphMirror.By), $"{EventTypes.WorkflowNodeFinished}:{prefix}", item, cancel).ConfigureAwait(false);
                 break;
         }
+    }
+
+    /// <summary>Mirrors one change of a 'run_agent' node's session into the ledger (#3151). Keyed by the node run and the change's place in its series, so a retry or a replay writes it once.</summary>
+    /// <param name="record">The event and its place.</param>
+    /// <returns>Completes when the event is written.</returns>
+    [Activity("GraphRecordNodeAgent")]
+    public async Task RecordNodeAgentAsync(GraphNodeAgent record)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+        var cancel = ActivityExecutionContext.Current.CancellationToken;
+        var p = record.Payload;
+        var item = GraphFailures.Value(await runs.Get(p.RunId, cancel).ConfigureAwait(false)).ItemId?.Value;
+        var key = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{EventTypes.WorkflowNodeAgentChanged}:{p.RunId.Value}:{p.NodeId.Value}:{p.ItemIndex}:{record.Sequence}");
+        await mirror.Append(EventTypes.WorkflowNodeAgentChanged, p with { WaitingOn = mirror.Clean(p.WaitingOn), LastTool = mirror.Clean(p.LastTool) }, key, item, cancel).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -108,13 +122,13 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
     internal static (string? Output, string? Failure) Gather(IReadOnlyList<NodeRun> rows)
     {
         ArgumentNullException.ThrowIfNull(rows);
-        var cut = rows.FirstOrDefault(static r => r.Truncated);
+        var cut = rows.FirstOrDefault(static r => r.Truncated || StoredJson.IsCut(StoredJson.Parse(r.Output)));
         if (cut is not null)
         {
             return (null, $"the value of item {cut.ItemIndex.ToString(System.Globalization.CultureInfo.InvariantCulture)} was cut at 64 KB; collect a smaller field");
         }
 
-        var items = new JsonArray([.. rows.Select(static r => JsonNode.Parse(r.Output ?? "{}")?["value"]?.DeepClone())]);
+        var items = new JsonArray([.. rows.Select(static r => (StoredJson.Parse(r.Output) as JsonObject)?["value"]?.DeepClone())]);
         var text = new JsonObject { ["items"] = items, ["count"] = rows.Count }.ToJsonString();
         var bytes = System.Text.Encoding.UTF8.GetByteCount(text);
         return bytes > NodeRunLimits.PayloadBytes
@@ -139,11 +153,11 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
             await mirror.AppendStarted(ended, cancel).ConfigureAwait(false);
             if (finish.Status == WorkflowRunStatus.Cancelled)
             {
-                await mirror.Append(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(finish.Run, mirror.Clean(finish.Error), GraphMirror.By), $"{EventTypes.WorkflowRunCancelled}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
+                await mirror.Append(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(finish.Run, mirror.Clean(finish.Error), GraphMirror.By, WorkflowRunMode.Live), $"{EventTypes.WorkflowRunCancelled}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
             }
             else
             {
-                await mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(finish.Run, GraphMirror.Name(finish.Status), mirror.Clean(finish.Error), GraphMirror.By), $"{EventTypes.WorkflowRunFinished}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
+                await mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(finish.Run, GraphMirror.Name(finish.Status), mirror.Clean(finish.Error), GraphMirror.By, WorkflowRunMode.Live), $"{EventTypes.WorkflowRunFinished}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
             }
         }
 

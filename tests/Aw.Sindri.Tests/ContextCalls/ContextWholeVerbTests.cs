@@ -71,7 +71,7 @@ public sealed class ContextWholeVerbTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Whole_with_no_map_and_a_build_running_says_how_far_it_is_in_plain_words()
     {
-        const string Body = """{"type":"x","title":"SND-CONTEXT-030","status":404,"detail":"there is no map yet (fix: sindri context map import <file>)","building":{"nodesSoFar":12,"sourcesDone":40,"sourcesTotal":100,"startedAt":"2026-10-23T06:00:00.0000000Z","lastSyncAt":"2026-10-23T05:30:00.0000000Z","jobId":"JOB-7"},"noMap":{"repos":["my-app","docs"],"approvedAt":"2026-10-23T05:00:00.0000000Z","firstRunStartedAt":"2026-10-23T06:00:00.0000000Z"}}""";
+        const string Body = """{"type":"x","title":"SND-CONTEXT-030","status":404,"detail":"there is no map yet (fix: sindri context map import <file>)","building":{"nodesSoFar":12,"sourcesDone":40,"sourcesTotal":100,"filesDone":150,"filesTotal":412,"startedAt":"2026-10-23T06:00:00.0000000Z","lastSyncAt":"2026-10-23T05:30:00.0000000Z","jobId":"JOB-7"},"noMap":{"repos":["my-app","docs"],"approvedAt":"2026-10-23T05:00:00.0000000Z","firstRunStartedAt":"2026-10-23T06:00:00.0000000Z"}}""";
         var api = new ScriptedApi((HttpStatusCode.NotFound, Body));
 
         var exit = await Run(api);
@@ -81,6 +81,7 @@ public sealed class ContextWholeVerbTests : IDisposable
         Assert.Contains("SND-CONTEXT-030", said, StringComparison.Ordinal);
         Assert.Contains("a map build is running since 2026-10-23 06:00 UTC (job JOB-7)", said, StringComparison.Ordinal);
         Assert.Contains("40 of 100 sources read", said, StringComparison.Ordinal);
+        Assert.Contains("150 of 412 files of the current repo read", said, StringComparison.Ordinal);
         Assert.Contains("last sync 2026-10-23 05:30 UTC", said, StringComparison.Ordinal);
         Assert.Contains("my-app, docs", said, StringComparison.Ordinal);
         Assert.Contains("approved 2026-10-23 05:00 UTC", said, StringComparison.Ordinal);

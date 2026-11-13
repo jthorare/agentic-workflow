@@ -27,7 +27,7 @@ public static class SourceCalls
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            return ContextErrors.SourceUnavailable.With($"{source.Describe().Id.Value} missed the query's deadline");
+            return ContextErrors.MissedDeadline(source.Describe().Id.Value);
         }
     }
 
