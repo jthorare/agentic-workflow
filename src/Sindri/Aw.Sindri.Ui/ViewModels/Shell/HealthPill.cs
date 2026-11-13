@@ -83,11 +83,14 @@ internal sealed class HealthPill : ObservableObject
     /// <param name="notResponding">True after three failed refreshes while stale.</param>
     /// <param name="health">The status's health (E-14), or null before API P2.</param>
     /// <param name="profileMissing">True on a home with no profile yet: the pill then says Not set up instead of Healthy.</param>
-    internal void Show(ShellState state, TimeSpan age, bool notResponding, HealthView? health = null, bool profileMissing = false)
+    /// <param name="profileUnreadable">True when the profile file can't be read: the pill then says needs a look instead of Healthy.</param>
+    internal void Show(ShellState state, TimeSpan age, bool notResponding, HealthView? health = null, bool profileMissing = false, bool profileUnreadable = false)
     {
+        var look = profileUnreadable && IsHealthyWord(health);   // the server's word ignores the profile, so the pill must not trust it
         var unset = profileMissing && IsHealthyWord(health);   // a missing profile is not a fault, but the pill must not say Healthy beside it
         (Glyph, Word, Age) = state switch
         {
+            ShellState.Normal when look => (StateGlyph.Warning, Labels.CodeIndexNeedsLook, Labels.UpdatedAgo(age)),
             ShellState.Normal when unset => (StateGlyph.None, Labels.NotSetUp, Labels.UpdatedAgo(age)),
             ShellState.Normal when health is not null => (Glyphs(health.Word), Labels.HealthWord(health.Word), Labels.UpdatedAgo(age)),
             ShellState.Normal => (StateGlyph.Ok, Labels.Running, Labels.UpdatedAgo(age)),
@@ -100,7 +103,7 @@ internal sealed class HealthPill : ObservableObject
         };
         Problems = state == ShellState.Normal && health is not null ? string.Join(" · ", health.Problems.Where(p => !_viewsCodes.Contains(p.Code)).Select(p => p.Clause ?? p.Text)) : string.Empty;
         Text = string.Join(" · ", ((string[])[Word, Age, Problems]).Where(t => t.Length > 0));
-        IsHealthy = state == ShellState.Normal && !unset && IsHealthyWord(health);
+        IsHealthy = state == ShellState.Normal && !unset && !look && IsHealthyWord(health);
         var stale = state == ShellState.Stale;
         if (stale != IsStale)
         {
