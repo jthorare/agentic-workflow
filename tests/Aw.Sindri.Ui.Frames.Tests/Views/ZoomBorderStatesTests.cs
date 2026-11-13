@@ -107,10 +107,10 @@ public sealed class ZoomBorderStatesTests
         window.MouseDown(new Point(100, 100), MouseButton.Left);
         window.MouseMove(new Point(140, 130), RawInputModifiers.LeftMouseButton);
         var panning = zoom.Cursor;
-        Assert.Contains(":panning", zoom.Classes);
+        Assert.Contains(":panning", zoom.Classes, StringComparer.Ordinal);
         window.MouseUp(new Point(140, 130), MouseButton.Left);
 
-        Assert.DoesNotContain(":panning", zoom.Classes);
+        Assert.DoesNotContain(":panning", zoom.Classes, StringComparer.Ordinal);
         Assert.NotSame(rest, panning);
         Assert.Same(rest, zoom.Cursor);
         window.Close();
