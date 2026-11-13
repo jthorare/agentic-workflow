@@ -46,7 +46,7 @@ public static class GraphTemplates
     {
         ArgumentNullException.ThrowIfNull(name);
         var source = _sources.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.Ordinal));
-        return source.Name is null || (firstRepo is null && NeedsRepo(source.Json)) ? null : Build(source, firstRepo);
+        return source.Name is null || (firstRepo is null && ReadsRepo(source.Json)) ? null : Build(source, firstRepo);
     }
 
     /// <summary>Whether the template reads data in a repo through an agent step, so it can't be made without one.</summary>
@@ -55,10 +55,10 @@ public static class GraphTemplates
     public static bool NeedsRepo(string name)
     {
         ArgumentNullException.ThrowIfNull(name);
-        return _sources.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.Ordinal)) is { Name: not null } source && NeedsRepo(source.Json);
+        return _sources.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.Ordinal)) is { Name: not null } source && ReadsRepo(source.Json);
     }
 
-    private static bool NeedsRepo(string json) => json.Contains(RepoMarker, StringComparison.Ordinal);
+    private static bool ReadsRepo(string json) => json.Contains(RepoMarker, StringComparison.Ordinal);
 
     // why: a starter that fires at 7:00 Pacific on any box is wrong for most owners; use this machine's zone, and UTC when the OS names it in a form the cron reader doesn't know
     private static string MachineTimezone() => TimeZoneInfo.Local.HasIanaId ? TimeZoneInfo.Local.Id : "UTC";
