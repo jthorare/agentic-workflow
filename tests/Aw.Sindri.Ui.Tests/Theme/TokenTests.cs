@@ -54,6 +54,9 @@ public sealed class TokenTests
         ("Area6", "#ff9e8f"),
     ];
 
+    // A colour that only feeds role brushes (Brush.Clickable.PressedBorder), so it has no Brush.<name> (#3505).
+    private static readonly string[] _brushlessColours = ["Outline"];
+
     public static TheoryData<string, string> Colours
     {
         get
@@ -89,12 +92,12 @@ public sealed class TokenTests
     [Fact]
     public void Every_colour_is_one_of_the_spec_tokens_and_every_brush_has_its_colour()
     {
-        var spec = Colours.Select(row => row.Data.Item1).ToHashSet(StringComparer.Ordinal);
+        var spec = Colours.Select(row => row.Data.Item1).Concat(_brushlessColours).ToHashSet(StringComparer.Ordinal);
         var colours = Names("Color.");
         var brushes = Names("Brush.");
 
         Assert.Empty(colours.Except(spec, StringComparer.Ordinal));
-        Assert.Equal(colours.Order(StringComparer.Ordinal), brushes.Order(StringComparer.Ordinal));
+        Assert.Equal(colours.Except(_brushlessColours, StringComparer.Ordinal).Order(StringComparer.Ordinal), brushes.Order(StringComparer.Ordinal));
     }
 
     [Fact]
