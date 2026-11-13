@@ -481,9 +481,10 @@ case " \$* " in *" ls-files "*) n="\$(cat "$WORK/failgit/n" 2> /dev/null || echo
 exec "$REALGIT" "\$@"
 STUB
 chmod +x "$WORK/failgit/git"
+cp "$REPO/src/Judge/Aw.Judge.Host/J.cs" "$WORK/J.cs.before"
 echo "git fails" >> "$REPO/src/Judge/Aw.Judge.Host/J.cs"
 fgout="$(PATH="$WORK/failgit:$PATH" bash "$INSTALL" --publish 2>&1)" && fgrc=0 || fgrc=$?
-sed -i '$d' "$REPO/src/Judge/Aw.Judge.Host/J.cs"
+mv "$WORK/J.cs.before" "$REPO/src/Judge/Aw.Judge.Host/J.cs"  # copy back, not an in-place sed edit: BSD sed differs (#3575)
 check "git failing in the per-binary hashes: the publish exits 1" "$fgrc" "1"
 has "git failing in the per-binary hashes: says which step failed" "$fgout" "git ls-files failed"
 

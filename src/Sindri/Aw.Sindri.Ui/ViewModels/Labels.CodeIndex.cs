@@ -44,6 +44,9 @@ internal static partial class Labels
         _ => state,
     };
 
+    /// <summary>What a repo's line adds while code-index-main-move is paused: no build or retry comes, and doctor gives the same fix (#3561).</summary>
+    internal const string CodeIndexPaused = "index builds paused: run sindri services resume code-index-main-move";
+
     /// <summary>How old an index is.</summary>
     /// <param name="age">Since it was built.</param>
     /// <returns>"3 min old".</returns>
