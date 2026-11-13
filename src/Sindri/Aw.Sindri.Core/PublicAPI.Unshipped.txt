@@ -23211,6 +23211,32 @@ static Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.operator ==(Aw.Sindri.Core
 Aw.Sindri.Core.NeedsYou.NeedsYouDecisions
 static Aw.Sindri.Core.NeedsYou.NeedsYouDecisions.From(Aw.Sindri.Core.Views.HumanDecisionRow! row) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouDecision!>!
 static Aw.Sindri.Core.NeedsYou.NeedsYouDecisions.Question(Aw.Sindri.Core.Views.HumanDecisionRow! row) -> string!
+Aw.Sindri.Core.Connections.Polling.EventKindSchema
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.<Clone>$() -> Aw.Sindri.Core.Connections.Polling.EventKindSchema!
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.Deconstruct(out string! Kind, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Fields, out System.Text.Json.Nodes.JsonObject! Sample) -> void
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.Equals(Aw.Sindri.Core.Connections.Polling.EventKindSchema? other) -> bool
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.EventKindSchema(string! Kind, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Fields, System.Text.Json.Nodes.JsonObject! Sample) -> void
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.Fields.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.Fields.init -> void
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.Kind.get -> string!
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.Kind.init -> void
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.Sample.get -> System.Text.Json.Nodes.JsonObject!
+Aw.Sindri.Core.Connections.Polling.EventKindSchema.Sample.init -> void
+Aw.Sindri.Core.Connections.Polling.EventKindSchemas
+override Aw.Sindri.Core.Connections.Polling.EventKindSchema.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.Polling.EventKindSchema.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.Polling.EventKindSchema.ToString() -> string!
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrChecks.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrClosed.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrComment.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrConflict.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrReadyForReview.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrReviewSubmitted.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrUpdated.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKindSchema.operator !=(Aw.Sindri.Core.Connections.Polling.EventKindSchema? left, Aw.Sindri.Core.Connections.Polling.EventKindSchema? right) -> bool
+static Aw.Sindri.Core.Connections.Polling.EventKindSchema.operator ==(Aw.Sindri.Core.Connections.Polling.EventKindSchema? left, Aw.Sindri.Core.Connections.Polling.EventKindSchema? right) -> bool
+static Aw.Sindri.Core.Connections.Polling.EventKindSchemas.All.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Connections.Polling.EventKindSchema!>!
+static Aw.Sindri.Core.Connections.Polling.EventKindSchemas.Find(string! kind) -> Aw.Sindri.Core.Connections.Polling.EventKindSchema?
 Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out string? Reason, out string! By, out string! Mode) -> void
 Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.Mode.get -> string!
 Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.Mode.init -> void
