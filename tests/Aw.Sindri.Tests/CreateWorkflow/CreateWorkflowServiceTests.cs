@@ -177,5 +177,5 @@ public sealed class CreateWorkflowServiceTests : IDisposable
         _ = Assert.Single(_rig.Recorded(EventTypes.WorkflowCreated));
     }
 
-    private static GraphSpec GraphTemplates_Find(string name) => Core.Graph.Templates.GraphTemplates.Find(name)!.Spec;   // why: the test names a template that exists
+    private static GraphSpec GraphTemplates_Find(string name) => GraphTemplates.Find(name)!.Spec;   // why: the test names a template that exists
 }
