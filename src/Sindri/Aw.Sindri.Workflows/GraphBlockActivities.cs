@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Aw.Redaction;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
@@ -19,7 +20,8 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="runs">Where the earlier nodes' outputs are read from.</param>
 /// <param name="workflows">Where the run's spec is read from.</param>
 /// <param name="provisioner">Creates the workflow's declared resources before a node runs; null on a build with none.</param>
-internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowRunStore runs, IWorkflowStore workflows, IResourceProvisioner? provisioner = null)
+/// <param name="redactor">Scrubs a block's output, error and raw model text before they are cut and stored; null uses the default rules.</param>
+internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowRunStore runs, IWorkflowStore workflows, IResourceProvisioner? provisioner = null, IRedactor? redactor = null)
 {
     private readonly GraphResourceEnsurer _resources = new(provisioner, workflows);
 
@@ -94,10 +96,36 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
 
         if (result.IsError)
         {
-            return Failed(config, result.Error, context.FailureOutput);
+            return FailedBlock(config, result.Error, context.FailureOutput, context.Raw);
         }
 
-        return Succeeded(config, result.Value);   // why: Commit waits for the run's end (CommitRunAsync): a later node can still fail the run
+        return SucceededBlock(config, result.Value);   // why: Commit waits for the run's end (CommitRunAsync): a later node can still fail the run
+    }
+
+    // why: the block's own text (an http body, a model answer) can hold a secret; it is scrubbed BEFORE Fit cuts it, so a secret the cut would split is gone first (#3225, #3196)
+    private GraphBlockOutcome FailedBlock(JsonObject input, Kernel.Error error, JsonObject? output, string? raw) =>
+        new(NodeRunStatus.Failed, Fit(input.ToJsonString()), Fit(Clean(output?.ToJsonString())), [], NodeRunLimits.Cap(Clean($"{error.Code}: {error.Message}"), out _), Fit(Clean(raw)));
+
+    private GraphBlockOutcome SucceededBlock(JsonObject input, BlockResult result)
+    {
+        var output = new JsonObject();
+        foreach (var (name, value) in result.Outputs)
+        {
+            output[name] = value?.DeepClone();
+        }
+
+        return new GraphBlockOutcome(NodeRunStatus.Succeeded, Fit(input.ToJsonString()), Fit(Clean(output.ToJsonString())), result.Taken, Error: null);
+    }
+
+    private string? Clean(string? text)
+    {
+        if (text is null)
+        {
+            return null;
+        }
+
+        var scrubbed = (redactor ?? Redactor.Default).Scrub(text);
+        return scrubbed.IsBlocked ? "[blocked by the redactor]" : scrubbed.Text;
     }
 
     private sealed record Prepared(GraphNode Node, IGraphBlock Block, GraphNodeScope Scope, JsonObject Config);
@@ -190,19 +218,8 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         ? Failed(config, SindriErrors.GraphOutputTruncated.With($"the output of '{cut}' was cut at 64 KB; refer to a smaller field"))
         : null;
 
-    private static GraphBlockOutcome Failed(JsonObject? input, Kernel.Error error, JsonObject? output = null) =>
-        new(NodeRunStatus.Failed, Fit(input?.ToJsonString()), Fit(output?.ToJsonString()), [], NodeRunLimits.Cap($"{error.Code}: {error.Message}", out _));
-
-    private static GraphBlockOutcome Succeeded(JsonObject input, BlockResult result)
-    {
-        var output = new JsonObject();
-        foreach (var (name, value) in result.Outputs)
-        {
-            output[name] = value?.DeepClone();
-        }
-
-        return new GraphBlockOutcome(NodeRunStatus.Succeeded, Fit(input.ToJsonString()), Fit(output.ToJsonString()), result.Taken, Error: null);
-    }
+    private static GraphBlockOutcome Failed(JsonObject? input, Kernel.Error error) =>
+        new(NodeRunStatus.Failed, Fit(input?.ToJsonString()), Output: null, [], NodeRunLimits.Cap($"{error.Code}: {error.Message}", out _));
 
     /// <summary>
     /// Cuts a block's input or output before it enters the workflow's history: an activity result over Temporal's 2 MB payload limit fails the workflow task, and Temporal retries it forever.
