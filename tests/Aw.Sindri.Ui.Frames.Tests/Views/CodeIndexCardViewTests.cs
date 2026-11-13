@@ -64,4 +64,39 @@ public sealed class CodeIndexCardViewTests : FrameHost
         Assert.InRange(panel.Bounds.Right, 0, window.Width);
         Frame(window, "health-code-index", "ci10b-");
     });
+
+    private static string TwoRepos(string a, string b) => """{"repos":[""" + Repo(a) + "," + Repo(b) + "]}";
+
+    private static string Repo(string name) => $$"""{"repo":"{{name}}","state":"ok","commit":"abcdef0123456789abcdef0123456789abcdef01","builtAt":"2026-10-20T12:00:00Z","layers":[{"layer":"structure","state":"ok","code":null,"detail":"ok"}],"counts":null}""";
+
+    // #3577: two repo lines that both wrap touched, because the row Border had a MinHeight and the list no spacing.
+    [Fact]
+    public Task Two_wrapped_repo_lines_keep_a_gap_between_them() => OnUi(async () =>
+    {
+        Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, TwoRepos(LongRepo, LongRepo + "-2"));
+        var (window, shell) = await Connected(s => s.Health.CodeIndex.Lines.Count > 1, width: 360, height: 800);
+        shell.GoTo(PageId.System);
+        Settle(window);
+
+        var rows = Named<ItemsControl>(window, "CodeIndexLines").ItemsPanelRoot!.Children;
+        var space = Assert.IsType<double>(Application.Current!.FindResource("Space.XS"));
+        Assert.Equal(2, rows.Count);
+        Assert.True(rows[1].Bounds.Top - rows[0].Bounds.Bottom >= space, "the second line starts a Space.XS below the first");
+    });
+
+    // #3576: the resume command is its own selectable, unwrapped row in the mono style.
+    [Fact]
+    public Task A_paused_repo_shows_the_resume_command_on_its_own_row() => OnUi(async () =>
+    {
+        Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, """{"repos":[{"repo":"repo","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[{"repo":"repo","state":"missing","embeddingsPercent":null,"waiting":null,"paused":true}]}""");
+        var (window, shell) = await Connected(s => s.Health.CodeIndex.Lines.Count > 0);
+        shell.GoTo(PageId.System);
+        Settle(window);
+
+        var command = Named<SelectableTextBlock>(window, "CodeIndexCommand");
+        Assert.Equal(("sindri services resume code-index-main-move", TextWrapping.NoWrap, true), (command.Text, command.TextWrapping, command.IsEffectivelyVisible));
+        Assert.True(command.Classes.Contains("mono"), "the command takes the mono style");
+        var line = Assert.Single(Named<ItemsControl>(window, "CodeIndexLines").GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.Name != "CodeIndexCommand");
+        Assert.DoesNotContain("sindri services", line.Text, StringComparison.Ordinal);
+    });
 }

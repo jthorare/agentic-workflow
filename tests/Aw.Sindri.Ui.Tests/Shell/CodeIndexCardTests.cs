@@ -163,6 +163,26 @@ public sealed class CodeIndexCardTests
         Assert.Contains("sindri services resume code-index-main-move", Labels.CodeIndexPaused, StringComparison.Ordinal);
     }
 
+    // #3576: the command sits on a row of its own so it can be copied in one piece; the repo line keeps only the words.
+    // why: Aw.Sindri.Ui references no Sindri project, so the service name is spelled out here once, as the doctor row spells it.
+    [Fact]
+    public async Task A_paused_repo_exposes_the_resume_command_on_its_own()
+    {
+        var card = await ReadWithHealth([Repo("repo", "missing", commit: null, 0)], [Health("repo", "missing", paused: true)]);
+
+        var line = Assert.Single(card.Lines);
+        Assert.Equal("sindri services resume code-index-main-move", line.Command);
+        Assert.Equal("repo: no index yet · index builds paused:", line.Text);
+    }
+
+    [Fact]
+    public async Task A_repo_that_is_not_paused_has_no_command()
+    {
+        var card = await ReadWithHealth([Repo("repo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("repo", "ok")]);
+
+        Assert.Equal(string.Empty, Assert.Single(card.Lines).Command);
+    }
+
     [Fact]
     public async Task A_paused_repo_in_backoff_never_reads_waiting_to_retry()
     {
