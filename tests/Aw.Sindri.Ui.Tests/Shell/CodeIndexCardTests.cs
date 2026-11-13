@@ -121,6 +121,34 @@ public sealed class CodeIndexCardTests
         Assert.Equal(Labels.CodeIndexQueued, card.Word);
     }
 
+    [Fact]
+    public async Task An_unflagged_queued_repo_with_no_commit_reads_first_build_queued()
+    {
+        var card = await ReadWithHealth([Repo("demo", "missing", commit: null, 0)], [Health("demo", "queued")]);
+
+        Assert.Equal("demo: first build queued", Assert.Single(card.Lines).Text);
+    }
+
+    [Fact]
+    public async Task A_flagged_queued_repo_line_holds_the_wait_from_the_server_words()
+    {
+        // The server's words for a first build queued past its limit (CodeIndexProblems.For, QueuedLimitMinutes).
+        const string Words = "demo: the first code index build hasn't started in 30 min";
+        var card = await ReadWithHealth([Repo("demo", "missing", commit: null, 0)], [Health("demo", "queued", needsLook: true, lookWords: Words)]);
+
+        Assert.Contains("hasn't started in 30 min", Assert.Single(card.Lines).Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task An_unflagged_queued_repo_with_a_commit_still_reads_build_queued()
+    {
+        var card = await ReadWithHealth([Repo("demo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("demo", "queued")]);
+
+        var line = Assert.Single(card.Lines).Text;
+        Assert.Contains("(" + Labels.CodeIndexState("queued") + ")", line, StringComparison.Ordinal);
+        Assert.DoesNotContain("first build", line, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("missing", "repo: no index yet")]
     [InlineData("damaged", "repo: damaged, rebuilding on the next check")]
