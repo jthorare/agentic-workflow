@@ -34,7 +34,7 @@ cleanup() { for p in ${bgpids[@]+"${bgpids[@]}"}; do kill "$p" 2> /dev/null; don
 trap cleanup EXIT
 
 for v in $(compgen -e | grep -E '^AW_(HEAVY|SESSION_HEAVY)'); do unset "$v"; done   # this suite may itself run under a heavy job
-unset DOTNET_PROCESSOR_COUNT MSBUILDDISABLENODEREUSE
+unset DOTNET_PROCESSOR_COUNT MSBUILDDISABLENODEREUSE UseSharedCompilation
 STATE="$WORK/state"; LOCKS="$STATE/locks"
 export AW_STATE_DIR="$STATE" AW_HEAVY_SESSION_PID="$$"
 STUB="$WORK/stub"; mkdir -p "$STUB"
@@ -114,6 +114,11 @@ has "light: AW_HEAVY_LOCK_HELD=1 is exported" "$out" "held=1"
 has "light: AW_HEAVY_SLOT is not set" "$out" "slot=unset"
 has "default DOTNET_PROCESSOR_COUNT is 4" "$out" "cpus=4"
 has "MSBuild node reuse is off" "$out" "nodereuse=1"
+# #3178: no shared Roslyn server; a caller's own value is kept
+ucmd='echo "usc=${UseSharedCompilation-unset}"'
+check "UseSharedCompilation=false for a light job (#3178)" "$(unset UseSharedCompilation; H --light bash -c "$ucmd" 2>&1)" "usc=false"
+check "UseSharedCompilation=false for an expensive job (#3178)" "$(unset UseSharedCompilation; H --expensive bash -c "$ucmd" 2>&1)" "usc=false"
+check "a caller's UseSharedCompilation=true is kept (#3178)" "$(UseSharedCompilation=true H --light bash -c "$ucmd" 2>&1)" "usc=true"
 pg="$(printf '%s\n' "$out" | sed -n 's/^pgid=//p')"
 check "the job is its own process group leader" "${pg%%/*}" "${pg##*/}"
 wp="$(printf '%s\n' "$out" | sed -n 's/^ppid=//p')"

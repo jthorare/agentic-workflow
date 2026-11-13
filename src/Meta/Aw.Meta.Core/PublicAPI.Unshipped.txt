@@ -1284,6 +1284,8 @@ const Aw.Meta.Core.KvKeys.WatchResources = "watch.resources" -> string!
 const Aw.Meta.Core.KvKeys.WorktreesLast = "worktrees.last" -> string!
 const Aw.Meta.Core.KvKeys.WorktreesPending = "worktrees.pending-prs" -> string!
 const Aw.Meta.Core.KvKeys.WorktreesSweepStart = "worktrees.sweep-start" -> string!
+const Aw.Meta.Core.KvKeys.WorktreesSweepStartPrefix = "worktrees.sweep-start." -> string!
+static Aw.Meta.Core.KvKeys.WorktreesPathSweepStart(string! path) -> string!
 const Aw.Meta.Core.Lanes.LaneAgent.ClaudeCode = "claude-code" -> string!
 const Aw.Meta.Core.Obligations.MergeRecord.Unknown = "unknown" -> string!
 override Aw.Meta.Core.Commands.CommandRequest.Equals(object? obj) -> bool
@@ -2776,3 +2778,7 @@ Aw.Meta.Core.Events.MetaEventPage.<Clone>$() -> Aw.Meta.Core.Events.MetaEventPag
 Aw.Meta.Core.Events.MetaEventPage.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Events.MetaEvent!>! Events, out long Oldest, out long Latest) -> void
 static Aw.Meta.Core.Events.MetaEventPage.operator ==(Aw.Meta.Core.Events.MetaEventPage? left, Aw.Meta.Core.Events.MetaEventPage? right) -> bool
 static Aw.Meta.Core.Events.MetaEventPage.operator !=(Aw.Meta.Core.Events.MetaEventPage? left, Aw.Meta.Core.Events.MetaEventPage? right) -> bool
+Aw.Meta.Core.Commands.CommandRequest.PathPrefix.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Meta.Core.Commands.CommandRequest.PathPrefix.init -> void
+Aw.Meta.Core.Gate.GateTools
+static Aw.Meta.Core.Gate.GateTools.PathPrefix(string! tree) -> System.Collections.Generic.IReadOnlyList<string!>!

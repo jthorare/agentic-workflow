@@ -134,32 +134,19 @@ internal sealed partial class ItemSheet : UserControl
         var appended = await sheet.LoadMore(CancellationToken.None).ConfigureAwait(true);
         if (appended && sheet.Timeline.Count > before)
         {
-            Dispatcher.UIThread.Post(() => FocusRow(before), DispatcherPriority.Loaded);
+            Dispatcher.UIThread.Post(() => FocusTimelineRow(before), DispatcherPriority.Loaded);
         }
         else if (appended && !sheet.HasMore)
         {
-            Dispatcher.UIThread.Post(() => FocusRow(sheet.Timeline.Count - 1), DispatcherPriority.Loaded);
+            Dispatcher.UIThread.Post(() => FocusTimelineRow(sheet.Timeline.Count - 1), DispatcherPriority.Loaded);
         }
     }
 
-    // The timeline is virtualized: the row may not be built yet. Scroll it into view by index, then focus the container the list built for it.
-    private void FocusRow(int index, bool retry = true)
+    private void FocusTimelineRow(int index)
     {
-        if (this.FindControl<ItemsControl>("TimelineList") is not { } list || index < 0 || index >= list.ItemCount)
+        if (this.FindControl<ItemsControl>("TimelineList") is { } list)
         {
-            return;
-        }
-
-        list.ScrollIntoView(index);
-        list.UpdateLayout();
-        var row = list.ContainerFromIndex(index)?.GetSelfAndVisualDescendants().OfType<Border>().FirstOrDefault(b => b.Classes.Contains("timeline-row"));
-        if (row is not null)
-        {
-            _ = row.Focus(NavigationMethod.Tab);
-        }
-        else if (retry)
-        {
-            Dispatcher.UIThread.Post(() => FocusRow(index, retry: false), DispatcherPriority.Loaded);   // the scroll's layout pass builds it
+            RowKeys.FocusRow(list, index);
         }
     }
 }

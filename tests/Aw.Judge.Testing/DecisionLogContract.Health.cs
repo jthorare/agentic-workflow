@@ -41,8 +41,8 @@ public abstract partial class DecisionLogContract
         var one = await log.LatestFailuresSince(since, 1, _none);
         var all = await log.LatestFailuresSince(since, 10, _none);
 
-        Expect.That(one.IsSuccess && one.Value.Select(f => f.ReasonCode).SequenceEqual(["newest"]), "the newest failure alone");
-        Expect.That(all.IsSuccess && all.Value.Select(f => f.ReasonCode).SequenceEqual(["newest", "middle", "first"]), "newest first; the one before the window is left out");
+        Expect.That(one.IsSuccess && one.Value.Select(f => f.ReasonCode).SequenceEqual(["newest"], StringComparer.Ordinal), "the newest failure alone");
+        Expect.That(all.IsSuccess && all.Value.Select(f => f.ReasonCode).SequenceEqual(["newest", "middle", "first"], StringComparer.Ordinal), "newest first; the one before the window is left out");
         Expect.That(all.Value[0] == new FailureRecord(since.AddHours(3), "wake-gate", "claude-cli", "newest"), "the whole failure comes back");
     }
 

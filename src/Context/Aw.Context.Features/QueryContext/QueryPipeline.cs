@@ -43,7 +43,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         var (graphs, catalog) = (inputs.Map, inputs.Catalog);
         var settings = SettingsReader.Read(request.Scope.Settings);
         var scrubbers = settings.Bind(s => scrubberFactory.For(s.ExtraPatterns));
-        var repos = scrubbers.Bind(_ => ScopeRules.Resolve(settings.Value, request.Scope.Repos, request.Scope.Caller));
+        var repos = scrubbers.Bind(_ => ScopeRules.Resolve(settings.Value, request.Scope.Repos, request.Scope.Caller, request.Scope.LeftOut));
         var valid = repos.Bind(_ => CheckedQuery.Of(request.Query, settings.Value));
         if (valid.IsError)
         {

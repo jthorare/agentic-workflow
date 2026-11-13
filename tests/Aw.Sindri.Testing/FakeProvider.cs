@@ -4,8 +4,9 @@ using System.Text;
 namespace Aw.Sindri.Testing;
 
 /// <summary>
-/// The GitHub, Linear, Slack and Google Calendar APIs in memory, as the innermost HttpMessageHandler of a poller's HttpClient. GitHub: any GET on
-/// api.github.com answers the added events as the repo events array, newest first. Linear: any POST on api.linear.app answers
+/// The GitHub, Linear, Slack and Google Calendar APIs in memory, as the innermost HttpMessageHandler of a poller's HttpClient. GitHub: a GET of
+/// /repos/{owner}/{name}/pulls/{n} answers from <see cref="GitHubPulls"/>; any other GET on api.github.com answers the added events as the
+/// repo events array, newest first. Linear: any POST on api.linear.app answers
 /// the added issues as {"data":{"issues":{"nodes":[...]}}}. A queued rate limit answers the next requests with 429 (or another
 /// status) and an optional Retry-After in seconds; a redirect answers every request with a 302 to another URL. Each request is
 /// recorded with the Authorization header it carried. Test infrastructure that works: the red tests need it to run.
@@ -43,6 +44,9 @@ public sealed class FakeProvider : HttpMessageHandler
     private HttpStatusCode _limitStatus = HttpStatusCode.TooManyRequests;
     private TimeSpan? _limitRetryAfter;
     private Uri? _redirect;
+
+    /// <summary>Gets GitHub's single pull request answers.</summary>
+    public FakeGitHubPulls GitHubPulls { get; } = new();
 
     /// <summary>Gets the requests received, in order.</summary>
     public IReadOnlyList<ProviderRequest> Requests
@@ -191,6 +195,11 @@ public sealed class FakeProvider : HttpMessageHandler
         {
             _limitedLeft--;
             return Limited();
+        }
+
+        if (uri.Host == GitHubHost && GitHubPulls.Answer(uri) is { } pull)
+        {
+            return pull;
         }
 
         string? link = null;

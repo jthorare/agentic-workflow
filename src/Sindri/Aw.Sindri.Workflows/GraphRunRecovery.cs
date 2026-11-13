@@ -180,7 +180,7 @@ internal sealed partial class GraphRunRecovery(IWorkflowRunStore runs, IGraphRun
         try
         {
             await _mirror.AppendStarted(failed, cancellationToken).ConfigureAwait(false);
-            await _mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(failed.Id, GraphMirror.Name(WorkflowRunStatus.Failed), _mirror.Clean(Reason), GraphMirror.By),
+            await _mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(failed.Id, GraphMirror.Name(WorkflowRunStatus.Failed), _mirror.Clean(Reason), GraphMirror.By, WorkflowRunMode.Live),
                 $"{EventTypes.WorkflowRunFinished}:{failed.Id.Value}", failed.ItemId?.Value, cancellationToken).ConfigureAwait(false);
             return null;
         }

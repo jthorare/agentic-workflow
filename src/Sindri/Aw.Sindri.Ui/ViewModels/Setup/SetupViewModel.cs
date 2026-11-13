@@ -82,6 +82,9 @@ internal sealed partial class SetupViewModel : ObservableObject
     /// <summary>The steps done, for Home's meter.</summary>
     public double MeterDone { get; private set => Set(ref field, value); }
 
+    /// <summary>Home's meter opacity: 0 while no step is done (an empty track is near-invisible noise), 1 from the first; the meter keeps its slot either way.</summary>
+    public double MeterOpacity { get; private set => Set(ref field, value); }
+
     /// <summary>All the steps, the meter's full length.</summary>
     public double MeterMax { get; private set => Set(ref field, value); }
 
@@ -247,6 +250,7 @@ internal sealed partial class SetupViewModel : ObservableObject
         HasSub = HasSteps && !IsFinished;
         Segments = [.. Steps.Select(s => new SetupSegment(s.SegmentKind))];
         (MeterDone, MeterMax) = (Steps.Count(s => s.IsFinished), Steps.Count);
+        MeterOpacity = MeterDone > 0 ? 1 : 0;
         FoldHomeLine();
     }
 

@@ -289,7 +289,9 @@ public sealed class ContextReviewApiTests : IDisposable
     {
         TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
         await using var host = await Host(sessions: false);
+        // A '.git' that is there but names no gitdir: still a checkout to Sindri, so the build reads it and git fails (a plain folder is left out instead, #3371).
         Directory.Delete(Path.Combine(_repo.Path, ".git"), recursive: true);
+        await File.WriteAllTextAsync(Path.Combine(_repo.Path, ".git"), "gitdir: " + Path.Combine(_repo.Path, "no-such-gitdir") + "\n", TestContext.Current.CancellationToken);
 
         var built = await Run(host, "context-rebuild");
         var queue = await host.Http.Ask(Get("/sindri/context/map/review", Terminal(host)));
