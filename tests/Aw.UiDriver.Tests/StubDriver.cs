@@ -21,6 +21,7 @@ internal sealed class StubDriver : IAsyncDisposable
     internal StubDriver(Action<int>? afterPortChosen = null, Action<string>? directoryMade = null)
     {
         directoryMade?.Invoke(_directory.FullName);
+
         // why: the probe frees the port before the bind, so another process can take it in between; retry on address-in-use with a fresh port and listener (same loop as Aw.Sindri.Testing's LoopbackListener, which this project doesn't reference).
         var port = 0;
         for (var attempt = 1; ; attempt++)
@@ -38,13 +39,18 @@ internal sealed class StubDriver : IAsyncDisposable
                 _listener.Start();
                 break;
             }
-            catch (HttpListenerException exception) when (attempt < StartAttempts && IsAddressInUse(exception))
+            catch (HttpListenerException exception) when (IsAddressInUse(exception))
             {
                 _listener.Close();
+                if (attempt >= StartAttempts)
+                {
+                    throw GaveUp(exception);
+                }
             }
             catch
             {
                 _listener.Close();
+                _directory.Delete(recursive: true);   // why: the directory is made before the loop and no DisposeAsync runs for a constructor that threw (#3262)
                 throw;
             }
         }
@@ -85,6 +91,12 @@ internal sealed class StubDriver : IAsyncDisposable
 
         _stop.Dispose();
         _directory.Delete(recursive: true);
+    }
+
+    private InvalidOperationException GaveUp(HttpListenerException inner)
+    {
+        _directory.Delete(recursive: true);   // why: as above, nothing disposes a stub whose constructor threw (#3262)
+        return new InvalidOperationException(string.Create(CultureInfo.InvariantCulture, $"gave up after {StartAttempts} ports: each was taken before the listener bound it"), inner);
     }
 
     private static bool IsAddressInUse(HttpListenerException exception) =>

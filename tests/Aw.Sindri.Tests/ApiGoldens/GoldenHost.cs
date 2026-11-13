@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Services;
 using Aw.Kernel.Testing;
@@ -119,26 +120,62 @@ public sealed class GoldenHost : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         Http.Dispose();
+        var errors = new List<Exception>();
+
+        // why: every step is best effort and the file cleanup sits last, so one throw (a StopAsync that times out) cannot leave the fixture dirs behind (#3262)
         if (_app is not null && !_stopped)
         {
             _stopped = true;   // a second dispose (a test's finally) must not reach the disposed container
-
-            // why: an open event stream ends only on the shutdown signal (serve's stop path trips it); without it StopAsync waits out the 30 s host shutdown timeout (#1546)
-            _app.Services.GetService<IShutdown>()?.Request();
-            await _app.StopAsync(CancellationToken.None);
-            await _app.DisposeAsync();
+            await Try(async () =>
+            {
+                // why: an open event stream ends only on the shutdown signal (serve's stop path trips it); without it StopAsync waits out the 30 s host shutdown timeout (#1546)
+                _app.Services.GetService<IShutdown>()?.Request();
+                await _app.StopAsync(CancellationToken.None);
+            }, errors);
+            await Try(async () => await _app.DisposeAsync(), errors);
         }
 
         // why: a background task (the views pump) writes under the home, so it is stopped and waited for before the recursive delete, which a late file fails (#1414)
         foreach (var running in _running)
         {
-            await running.DisposeAsync();
+            await Try(async () => await running.DisposeAsync(), errors);
         }
 
         _running.Clear();   // a second dispose (a test's finally) must not stop them again
-        _owned.ForEach(o => o.Dispose());
-        _ownHome?.Dispose();
-        _elsewhere?.Dispose();
+        foreach (var owned in _owned)
+        {
+            await Try(() => { owned.Dispose(); return Task.CompletedTask; }, errors);
+        }
+
+        _owned.Clear();
+        await Try(() => { _ownHome?.Dispose(); return Task.CompletedTask; }, errors);
+        await Try(() => { _elsewhere?.Dispose(); return Task.CompletedTask; }, errors);
+        Rethrow(errors);
+    }
+
+    private static void Rethrow(List<Exception> errors)
+    {
+        if (errors.Count == 1)
+        {
+            ExceptionDispatchInfo.Capture(errors[0]).Throw();
+        }
+
+        if (errors.Count > 1)
+        {
+            throw new AggregateException(errors);
+        }
+    }
+
+    private static async Task Try(Func<Task> step, List<Exception> errors)
+    {
+        try
+        {
+            await step();
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            errors.Add(e);
+        }
     }
 
     private async Task Run(CancellationToken ct)

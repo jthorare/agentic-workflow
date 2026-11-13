@@ -24,8 +24,10 @@ public sealed class SeparateLoginCredentialSourceContractTests : IModelCredentia
     {
         foreach (var home in _homes)
         {
-            home.Dispose();
+            home.Dispose();   // best effort by itself, so one home cannot skip the next (#3262)
         }
+
+        _homes.Clear();
     }
 
     protected override IModelCredentialSource Create(LoginState state)
