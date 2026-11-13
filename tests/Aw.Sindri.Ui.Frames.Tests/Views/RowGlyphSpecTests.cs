@@ -28,7 +28,7 @@ public sealed class RowGlyphSpecTests
     [Fact]
     public Task Failed_is_a_14_px_error_disc_with_a_canvas_x() => Check(RowGlyph.Failed, 14, 14, "Brush.Error", (g, shot) =>
     {
-        Assert.True(shot.AllOpaqueNearEither(g.Colour("Brush.Error"), g.Colour("Brush.Canvas")), "Failed: a solid pixel is neither Brush.Error nor Brush.Canvas");
+        Assert.True(shot.AllOpaqueOnBlend(g.Colour("Brush.Error"), g.Colour("Brush.Canvas")), "Failed: a solid pixel is off the Brush.Error to Brush.Canvas blend");
         Assert.True(shot.Near(8, 3, g.Colour("Brush.Error")), shot.Describe(8, 3));
         Assert.True(shot.Near(3, 8, g.Colour("Brush.Error")), shot.Describe(3, 8));
         Assert.True(shot.Near(8, 8, g.Colour("Brush.Canvas")), shot.Describe(8, 8));
@@ -151,17 +151,34 @@ public sealed class RowGlyphSpecTests
             return any;
         }
 
-        public bool AllOpaqueNearEither(Color a, Color b)
+        public bool AllOpaqueOnBlend(Color from, Color to)
         {
+            int[] f = [from.R, from.G, from.B];
+            int[] e = [to.R, to.G, to.B];
+            var lead = 0;
+            for (var c = 1; c < 3; c++)
+            {
+                if (Math.Abs(e[c] - f[c]) > Math.Abs(e[lead] - f[lead]))
+                {
+                    lead = c;
+                }
+            }
+
             var any = false;
             for (var i = 0; i < bytes.Length; i += 4)
             {
-                if (bytes[i + 3] >= 250)
+                if (bytes[i + 3] < 250)
                 {
-                    any = true;
-                    var near = (Within(bytes[i + 2], a.R) && Within(bytes[i + 1], a.G) && Within(bytes[i], a.B))
-                        || (Within(bytes[i + 2], b.R) && Within(bytes[i + 1], b.G) && Within(bytes[i], b.B));
-                    if (!near)
+                    continue;
+                }
+
+                any = true;
+                int[] v = [bytes[i + 2], bytes[i + 1], bytes[i]];
+                var span = e[lead] - f[lead];
+                var t = span == 0 ? 0 : Math.Clamp((v[lead] - f[lead]) / (double)span, 0, 1);
+                for (var c = 0; c < 3; c++)
+                {
+                    if (Math.Abs(v[c] - (f[c] + (t * (e[c] - f[c])))) > Tolerance)
                     {
                         return false;
                     }
