@@ -48,6 +48,20 @@ public sealed class RemoveSessionWorktreeTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Remove_when_tmux_cannot_be_asked_is_SND_AGENT_018_that_says_so_and_keeps_the_tree()
+    {
+        _ = await Started();
+        _r.Host.PaneLookupFails = true;
+
+        var kept = await _r.RemoveService().Handle(new RemoveSessionWorktreeRequest(ActId.From(Act)), Token);
+
+        Assert.Equal(SindriErrors.AgentWorktreeKept.Code, kept.Error.Code);
+        Assert.Contains("can't tell", kept.Error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("still running:", kept.Error.Message, StringComparison.Ordinal);
+        _ = Assert.Single(_r.Worktrees.Live);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Remove_takes_a_clean_worktree_of_a_started_session_and_answers_its_path()
     {
         _ = await Started();

@@ -17,6 +17,6 @@ public interface ISessionPanes
     /// <summary>Whether the session's agent still runs (agents spec §15.8: a worktree is removed only once its session has Ended).</summary>
     /// <param name="host">The session.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>False when the session is gone or its first pane is dead; true while it runs, and when tmux could not be asked.</returns>
-    public ValueTask<bool> Running(HostRef host, CancellationToken cancellationToken);
+    /// <returns>False when the session is gone or its first pane is dead, true while it runs, null when tmux could not be asked.</returns>
+    public ValueTask<bool?> Running(HostRef host, CancellationToken cancellationToken);
 }

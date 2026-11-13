@@ -33,9 +33,12 @@ internal sealed class RemoveSessionWorktreeService(IStartedSessions book, IOneOf
                 : "that start made no worktree");
         }
 
-        if (await panes.Running(new HostRef(HostKind.Tmux, "sindri-" + request.ActId.Value), cancellationToken).ConfigureAwait(false))
+        var running = await panes.Running(new HostRef(HostKind.Tmux, "sindri-" + request.ActId.Value), cancellationToken).ConfigureAwait(false);
+        if (running != false)
         {
-            return SindriErrors.AgentWorktreeKept.With($"session still running: end sindri-{request.ActId.Value} first, then remove {path}");
+            return SindriErrors.AgentWorktreeKept.With(running is null
+                ? $"can't tell if sindri-{request.ActId.Value} is still running: tmux did not answer; {path} stays (try again)"
+                : $"session still running: end sindri-{request.ActId.Value} first, then remove {path}");
         }
 
         var removed = await worktrees.Remove(path, cancellationToken).ConfigureAwait(false);

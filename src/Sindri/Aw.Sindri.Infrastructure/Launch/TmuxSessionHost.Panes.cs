@@ -29,7 +29,7 @@ internal sealed partial class TmuxSessionHost
     }
 
     /// <inheritdoc/>
-    public async ValueTask<bool> Running(HostRef host, CancellationToken cancellationToken)
+    public async ValueTask<bool?> Running(HostRef host, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(host);
         try
@@ -37,7 +37,7 @@ internal sealed partial class TmuxSessionHost
             var listed = await Run(["list-panes", "-t", Target(host), "-F", "#{pane_dead}"], cancellationToken, _callBudget).ConfigureAwait(false);
             if (listed.ExitCode != 0)
             {
-                return !IsGone(listed.Error);   // why: a session tmux can't find has Ended; any other failure keeps the tree
+                return IsGone(listed.Error) ? false : null;   // why: a session tmux can't find has Ended; any other failure is "can't tell", which keeps the tree
             }
 
             return listed.Output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) is not ["1", ..];
@@ -48,7 +48,7 @@ internal sealed partial class TmuxSessionHost
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            return true;
+            return null;
         }
     }
 }

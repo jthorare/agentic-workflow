@@ -111,14 +111,14 @@ public sealed class FakeSessionHost : ISessionHost, ISessionPanes
         return ValueTask.FromResult(PaneLookupFails || !_panes.TryGetValue(host.Name, out var pane) ? (TmuxPaneId?)null : TmuxPaneId.From(pane));
     }
 
-    /// <summary>Ends a session's agent: <see cref="Running"/> answers false for it from now on.</summary>
+    /// <summary>Ends a session's agent: <see cref="Running"/> answers false for it from now on (null while <see cref="PaneLookupFails"/>).</summary>
     /// <param name="name">The session name.</param>
     public void End(string name) => _ended.Add(name);
 
     /// <inheritdoc/>
-    public ValueTask<bool> Running(HostRef host, CancellationToken cancellationToken)
+    public ValueTask<bool?> Running(HostRef host, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(host);
-        return ValueTask.FromResult(_panes.ContainsKey(host.Name) && !_ended.Contains(host.Name));
+        return ValueTask.FromResult<bool?>(PaneLookupFails ? null : _panes.ContainsKey(host.Name) && !_ended.Contains(host.Name));
     }
 }
