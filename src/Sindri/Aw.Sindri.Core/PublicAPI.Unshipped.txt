@@ -184,6 +184,7 @@ Aw.Sindri.Core.Commands.IJob<TResult>
 Aw.Sindri.Core.Commands.IQuery<TView>
 Aw.Sindri.Core.Commands.IRefusalCli
 Aw.Sindri.Core.Commands.IRefusalCli.RefusalCli.get -> string?
+Aw.Sindri.Core.Commands.OwnerCaller
 Aw.Sindri.Core.Commands.SindriApi
 Aw.Sindri.Core.Control.ControlEndpoint
 Aw.Sindri.Core.Control.ControlEndpoint.<Clone>$() -> Aw.Sindri.Core.Control.ControlEndpoint!
@@ -11503,6 +11504,7 @@ override Aw.Sindri.Core.Commands.HttpCaller.GetHashCode() -> int
 override Aw.Sindri.Core.Commands.HttpCaller.ToString() -> string!
 static Aw.Sindri.Core.Commands.HttpCaller.operator !=(Aw.Sindri.Core.Commands.HttpCaller? left, Aw.Sindri.Core.Commands.HttpCaller? right) -> bool
 static Aw.Sindri.Core.Commands.HttpCaller.operator ==(Aw.Sindri.Core.Commands.HttpCaller? left, Aw.Sindri.Core.Commands.HttpCaller? right) -> bool
+static Aw.Sindri.Core.Commands.OwnerCaller.Refusal(Aw.Sindri.Core.Commands.ICallerContextAccessor! callers, string! what) -> Aw.Kernel.Error?
 static Aw.Sindri.Core.Launches.LaunchRules.IdleTurn(System.DateTimeOffset turnEnded, System.DateTimeOffset now) -> bool
 static Aw.Sindri.Core.Health.HealthSummary.WithStalledAgents(Aw.Sindri.Core.Health.HealthReport! report, int stalled) -> Aw.Sindri.Core.Health.HealthReport!
 static Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepBrief.Needed(Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor! descriptor, Aw.Sindri.Core.Workflow.Ids.OutcomeName outcome) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Ids.FactKey>!
