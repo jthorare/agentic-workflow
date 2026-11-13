@@ -106,7 +106,7 @@ internal sealed partial class Row : Control
 
         if (DataContext is IRowItem item)
         {
-            Prepare(item, size);   // first: it may drop the palette and the brushes after a theme flip
+            Prepare(item, size);
             _palette ??= RowGlyphPainter.PaletteFor(this);
             using (context.PushTransform(Matrix.CreateTranslation(MetricsNow().Inset, (size.Height - GlyphBox) / 2)))
             {
