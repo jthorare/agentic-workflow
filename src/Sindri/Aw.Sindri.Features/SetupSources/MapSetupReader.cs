@@ -21,7 +21,8 @@ namespace Aw.Sindri.Features.SetupSources;
 /// <param name="approvals">The approved profile (its context section and repos make the scope).</param>
 /// <param name="engine">The context engine.</param>
 /// <param name="jobs">The 'jobs' view.</param>
-internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine engine, IJobViews jobs)
+/// <param name="pauses">The paused services: the first map waits on the context-map-refresh service's next tick, which a pause stops (#3593).</param>
+internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine engine, IJobViews jobs, IServicePauses pauses)
 {
     private static readonly JobKind _build = JobKind.From("BuildContextMap");
 
@@ -116,7 +117,22 @@ internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine 
             return new MapFact(MapPhase.Building, files is { Total: > 0 } ? new SetupProgress(files.Done, files.Total, "files") : null) { Stage = MapStage.Index };
         }
 
-        return LastTry(Ended(maps), Ended(ours));
+        var lastMap = Ended(maps);
+        var lastIndex = Ended(ours);
+        return await FirstTickDue(lastMap, lastIndex, cancellationToken).ConfigureAwait(false) ? new MapFact(MapPhase.Building) { Stage = MapStage.Map } : LastTry(lastMap, lastIndex);
+    }
+
+    // #3593: the first map starts on the context-map-refresh service's next tick (it runs every minute), not chained off the index build. In that gap nothing runs; the step reads
+    // building while the newest index build of a mapped repo succeeded after the newest ended map job and the service is not paused. A pause read that fails counts as paused: show today's answer.
+    private async ValueTask<bool> FirstTickDue(JobRow? map, JobRow? index, CancellationToken cancellationToken)
+    {
+        if (index is not { State: JobState.Succeeded } || (map is not null && map.Sequence > index.Sequence))
+        {
+            return false;
+        }
+
+        var paused = await pauses.Paused(cancellationToken).ConfigureAwait(false);
+        return !paused.IsError && !paused.Value.Contains(ServiceName.From("context-map-refresh"));
     }
 
     // Nothing runs: the newest ended builds say whether the last try failed. A failed index build counts only when no map build ended after it:
