@@ -131,6 +131,22 @@ public sealed class GitHubPullStatePollRepeatTests
     }
 
     [Fact]
+    public async Task An_old_pull_request_whose_mergeable_state_is_unknown_on_the_first_poll_fires_nothing_when_it_reads_dirty()
+    {
+        var provider = new FakeProvider();
+        provider.SetGitHubOpenPulls(GitHubFeedFixtures.OpenPull(Repo, 42, "abc123", "2026-11-08T10:00:00Z", createdAt: Old));
+        provider.SetGitHubPull(42, GitHubFeedFixtures.OpenPull(Repo, 42, "abc123", "2026-11-08T10:00:00Z", mergeableState: "unknown"));
+        using var h = PollerHarness.For("github", provider);
+
+        var baseline = await h.Poller.Poll(h.Connection, _conflict, cursor: null, Token);   // the connection's first poll: GitHub has not worked the state out
+        provider.SetGitHubPull(42, GitHubFeedFixtures.OpenPull(Repo, 42, "abc123", "2026-11-08T10:10:00Z", mergeableState: "dirty"));
+        var dirty = await h.Poller.Poll(h.Connection, _conflict, baseline.Value.NextCursor, Token);   // a conflict that predates the connection
+
+        Assert.Empty(baseline.Value.Events);
+        Assert.Empty(dirty.Value.Events);
+    }
+
+    [Fact]
     public async Task A_dirty_pull_request_pushed_to_a_new_head_that_stays_dirty_fires_nothing()
     {
         var provider = new FakeProvider();
