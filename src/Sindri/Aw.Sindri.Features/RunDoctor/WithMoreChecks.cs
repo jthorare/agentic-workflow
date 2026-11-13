@@ -35,7 +35,7 @@ internal sealed partial class WithMoreChecks(IService<RunDoctorRequest, RunDocto
             request.OnRow?.Invoke(row);
         }
 
-        var sources = more.Select(static source => (Name: source.GetType().Name, Run: (Func<CancellationToken, ValueTask<IReadOnlyList<DoctorCheck>>>)source.Run)).ToList();
+        var sources = more.Select(static source => (source.GetType().Name, Run: (Func<CancellationToken, ValueTask<IReadOnlyList<DoctorCheck>>>)source.Run)).ToList();
         if (request.Harnesses is { } harnesses)
         {
             sources.Add(("harnesses", harnesses));
