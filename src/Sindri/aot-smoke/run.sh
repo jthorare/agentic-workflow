@@ -317,6 +317,14 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
     if ((SECONDS >= map_deadline)); then echo "## map wait: no RefreshContextMap job had succeeded after 120 s"; break; fi
     sleep 1
   done
+  # A new current map makes a later tick queue RelinkPinAliases, once that tick has nothing else to do (#3462). Run one more tick by hand and
+  # wait (cap 120 s) for the relink to succeed, so the jobs list below always holds its row instead of only when a scheduler tick won the race.
+  human_run_service context-map-refresh >/dev/null 2>&1 || true
+  relink_deadline=$((SECONDS + 120))
+  until jq -e '[.jobs[] | select(.kind == "RelinkPinAliases")] | length > 0' <<<"$(bounded "$bin" jobs --state succeeded --json </dev/null 2>/dev/null)" >/dev/null 2>&1; do
+    if ((SECONDS >= relink_deadline)); then echo "## relink wait: no RelinkPinAliases job had succeeded after 120 s"; break; fi
+    sleep 1
+  done
   echo "## QUERY /sindri/context/subgraph with a JSON body on the published host (the HTTP QUERY method; POST is not a route)"
   base="$(jq -r '.url' "$AW_SINDRI_HOME/control.json" | sed 's|/$||')"
   curl -s -m 30 -X QUERY "$base/sindri/context/subgraph" -H 'X-Sindri-Repo: smoke' -H 'Content-Type: application/json' -d '{"nodes":["feature:smoke.none"]}' \

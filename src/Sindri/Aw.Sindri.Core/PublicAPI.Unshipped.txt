@@ -320,6 +320,8 @@ Aw.Sindri.Core.Doctor.DoctorCheck.State.init -> void
 Aw.Sindri.Core.Doctor.DoctorRules
 Aw.Sindri.Core.Doctor.IDoctorChecks
 Aw.Sindri.Core.Doctor.IDoctorChecks.Run(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Doctor.DoctorCheck!>!>
+Aw.Sindri.Core.Doctor.IPartTimer
+Aw.Sindri.Core.Doctor.IPartTimer.Took(string! part, long elapsedMilliseconds) -> void
 Aw.Sindri.Core.Events.ApiViews
 Aw.Sindri.Core.Events.CommandHandled
 Aw.Sindri.Core.Events.CommandHandled.<Clone>$() -> Aw.Sindri.Core.Events.CommandHandled!
