@@ -137,8 +137,11 @@ public sealed class DriftCheckRunAcceptanceTests
             using var caller = _callers.Enter(new CallerContext(CallerClass.Session, Terminal: false, actor, _ids.New<CommandId>(), _ids.New<CorrelationId>(), Repo: null, launch));
             var made = await Call(services, HostWorkflowTools.Create, ("slug", _slug.Value), ("template", "weekday-check"));
             // why: the template's timezone is the box's; fixing it to UTC makes the tick 07:00Z on any machine
+            // why: the template's `ci` agent step (#3509) would launch a real agent session; this story is about who writes each event, so the session drops it and wires the schedule straight to `check`
             var edited = await Call(services, HostWorkflowTools.ApplyOps, ("slug", _slug.Value), ("baseRevision", 1), ("ops", new object[]
             {
+                new { op = "remove_node", node = "ci" },
+                new { op = "connect", from = "weekdays", to = "check" },
                 new { op = "set_config", node = "weekdays", path = "timezone", value = "UTC" },
                 new { op = "set_config", node = "check", path = "prompt", value = "Compare the API contract with the client's types. Set flagged to true when a field is missing or wrong, and summarize why." },
             }));
