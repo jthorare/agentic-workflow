@@ -68,7 +68,7 @@ internal sealed class TerminalPen
                 Style |= StyleOf(code);
                 break;
             case 22 or 23 or 24 or 27:
-                Style &= ~StyleOf(code - 20);
+                Style &= ~StyleCleared(code);
                 break;
             case 39:
                 Fg = TerminalColor.Default;
@@ -81,6 +81,14 @@ internal sealed class TerminalPen
                 break;
         }
     }
+
+    private static TerminalStyle StyleCleared(int off) => off switch
+    {
+        22 => TerminalStyle.Bold,
+        23 => TerminalStyle.Italic,
+        24 => TerminalStyle.Underline,
+        _ => TerminalStyle.Inverse,
+    };
 
     private static TerminalStyle StyleOf(int on) => on switch
     {
