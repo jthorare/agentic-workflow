@@ -114,6 +114,13 @@ internal sealed class CardGrid : Panel
         return finalSize;
     }
 
+    /// <summary>Which children go in which cell: each row is the child indexes left to right. A run of cards between full-row children fills row by row, or, with <paramref name="columnMajor"/>, column by column (the first ceil(n / columns) down the left column).</summary>
+    /// <param name="full">Whether each visible child takes a full row.</param>
+    /// <param name="columns">The column count.</param>
+    /// <param name="columnMajor">True to fill down each column before the next.</param>
+    /// <returns>The rows.</returns>
+    internal static List<int[]> Place(IReadOnlyList<bool> full, int columns, bool columnMajor) => throw new NotSupportedException();
+
     private List<List<Control>> Rows(int columns)
     {
         var rows = new List<List<Control>>();
