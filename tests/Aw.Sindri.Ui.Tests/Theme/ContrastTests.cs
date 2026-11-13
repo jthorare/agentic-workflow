@@ -139,6 +139,38 @@ public sealed partial class ContrastTests
         Assert.True(ratio >= 1.2, string.Create(CultureInfo.InvariantCulture, $"Brush.Clickable.Pressed is {ratio:F2}:1 off Brush.Clickable.Hover, below 1.2"));
     }
 
+    // A subtle (calm Needs You) or selected row rests on Surface2, so its hover is the lift fill, not the pressed fill (#3517, #3611): InkSubtle text on a hovered row stays at 4.5:1.
+    [Theory]
+    [InlineData("Border.clickable.subtle:pointerover")]
+    [InlineData("Border.clickable.selected:pointerover")]
+    public void Subtle_and_selected_rows_lift_to_the_lift_fill_on_hover(string selector)
+    {
+        var style = XDocument.Load(Path.Combine(UiSource.Theme, "ClickableStyles.axaml")).Descendants().Single(e => string.Equals(e.Attribute("Selector")?.Value, selector, StringComparison.Ordinal));
+        var background = style.Elements().Single(e => string.Equals(e.Attribute("Property")?.Value, "Background", StringComparison.Ordinal)).Attribute("Value")?.Value;
+
+        Assert.Equal("{DynamicResource Brush.Clickable.Lift}", background);
+    }
+
+    // Brush.Clickable.Pressed stays out on purpose: a press is momentary, and its 1.2:1 step over hover cannot also hold 4.5:1 for InkSubtle.
+    [Theory]
+    [InlineData("Surface2")]
+    [InlineData("Brush.Clickable.Hover")]
+    [InlineData("Brush.Clickable.Lift")]
+    public void InkSubtle_holds_4_5_to_1_on_every_rest_and_hover_row_fill(string fill)
+    {
+        var ratio = Wcag.Contrast(_tokens.Color("InkSubtle"), Background(fill));
+
+        Assert.True(ratio >= TextAa, string.Create(CultureInfo.InvariantCulture, $"InkSubtle on {fill} is {ratio:F2}:1, below {TextAa}"));
+    }
+
+    [Fact]
+    public void Pressed_steps_over_the_lift()
+    {
+        var ratio = Wcag.Contrast(BrushColor("Clickable.Pressed"), BrushColor("Clickable.Lift"));
+
+        Assert.True(ratio >= 1.1, string.Create(CultureInfo.InvariantCulture, $"Brush.Clickable.Pressed is {ratio:F2}:1 off Brush.Clickable.Lift, below 1.1"));
+    }
+
     [Fact]
     public void Pressed_border_holds_3_to_1_on_the_pressed_fill()
     {
