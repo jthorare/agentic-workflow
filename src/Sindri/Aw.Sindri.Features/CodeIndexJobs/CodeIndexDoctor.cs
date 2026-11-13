@@ -20,12 +20,11 @@ namespace Aw.Sindri.Features.CodeIndexJobs;
 /// <param name="index">The code index: its status, from the files only.</param>
 /// <param name="heads">The repos' live heads.</param>
 /// <param name="jobs">The 'jobs' view.</param>
-/// <param name="embedder">Probed for reachability and the model digest: a live check, never a build.</param>
-/// <param name="pins">Reads the lock file and compares it with the build's pins.</param>
+/// <param name="probes">The live checks: the embedding server and model, and the lock file.</param>
 /// <param name="clock">Dates the retry words.</param>
 /// <param name="liveProfile">The live profile file: its repos the profile doesn't name are checked too (owner q102, CIX-L59).</param>
 /// <param name="pauses">The paused services: no build is coming while code-index-main-move is paused (#3399).</param>
-internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobViews jobs, IEmbedder embedder, ICodeIndexPins pins, TimeProvider clock, IProfileSource liveProfile, IServicePauses pauses) : ICodeIndexChecks
+internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobViews jobs, CodeIndexProbes probes, TimeProvider clock, IProfileSource liveProfile, IServicePauses pauses) : ICodeIndexChecks
 {
     private const string GraphCheck = "code-index:graphify";
     private const string OllamaCheck = "code-index:ollama";
@@ -59,9 +58,9 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
         var live = await heads.Heads(scope.Value.Repos, cancellationToken).ConfigureAwait(false);
         var builds = await jobs.List(state: null, IndexJobs.BuildKind, cancellationToken).ConfigureAwait(false);
         var embeddings = scope.Value.Repos.Select(static r => r.Settings.Embeddings).FirstOrDefault();
-        var model = embeddings is { Enabled: true } ? new ModelProbe(Enabled: true, await embedder.Probe(embeddings, cancellationToken).ConfigureAwait(false)) : new ModelProbe(Enabled: false, Unit.Value);
+        var found = await probes.Check(embeddings, cancellationToken).ConfigureAwait(false);
         var active = await MainMovePause.Active(pauses, cancellationToken).ConfigureAwait(false);
-        return Rows(status.Value.Repos, live.IsError ? [] : live.Value, builds.IsError ? [] : builds.Value, clock.GetUtcNow(), new Probes(model, pins.Check()), active);
+        return Rows(new IndexReads(status.Value.Repos, live.IsError ? [] : live.Value, builds.IsError ? [] : builds.Value, active), clock.GetUtcNow(), found);
     }
 
     /// <summary>What the live checks found: the embedding server and model, and the lock file.</summary>
@@ -74,16 +73,22 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
     /// <param name="Result">The probe's answer.</param>
     internal sealed record ModelProbe(bool Enabled, Result<Unit> Result);
 
+    /// <summary>What the doctor read from the stored index, the heads, the jobs and the services.</summary>
+    /// <param name="Repos">Each repo's index status.</param>
+    /// <param name="Live">The repos' live heads (empty when unreadable).</param>
+    /// <param name="Builds">The build jobs of every repo.</param>
+    /// <param name="BuildServiceActive">Whether code-index-main-move runs; false means no build is coming (#3399).</param>
+    internal sealed record IndexReads(IReadOnlyList<IndexRepoStatus> Repos, IReadOnlyList<IndexRepoHead> Live, IReadOnlyList<JobRow> Builds, bool BuildServiceActive = true);
+
     /// <summary>The rows for what was read; pure, so the words are tested without a box.</summary>
-    /// <param name="repos">Each repo's index status.</param>
-    /// <param name="live">The repos' live heads (empty when unreadable).</param>
-    /// <param name="builds">The build jobs of every repo.</param>
+    /// <param name="reads">What was read.</param>
     /// <param name="now">The time.</param>
     /// <param name="probes">The live checks, or null when none was made (the ollama and lock rows then read the stored layers only).</param>
-    /// <param name="buildServiceActive">Whether code-index-main-move runs; false means no build is coming (#3399).</param>
     /// <returns>The rows.</returns>
-    internal static DoctorCheck[] Rows(IReadOnlyList<IndexRepoStatus> repos, IReadOnlyList<IndexRepoHead> live, IReadOnlyList<JobRow> builds, DateTimeOffset now, Probes? probes = null, bool buildServiceActive = true)
+    internal static DoctorCheck[] Rows(IndexReads reads, DateTimeOffset now, Probes? probes = null)
     {
+        ArgumentNullException.ThrowIfNull(reads);
+        var (repos, live, builds, buildServiceActive) = reads;
         _ = buildServiceActive;
         ArgumentNullException.ThrowIfNull(repos);
         ArgumentNullException.ThrowIfNull(live);
