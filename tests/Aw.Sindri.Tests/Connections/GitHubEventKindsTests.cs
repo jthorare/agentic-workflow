@@ -89,6 +89,35 @@ public sealed class GitHubEventKindsTests
     }
 
     [Fact]
+    public void A_checks_trigger_payload_types_number_and_failing_as_the_schema_says()
+    {
+        using var pull = JsonDocument.Parse(GitHubFeedFixtures.OpenPull(Repo, 42, "abc123", At));
+        var polled = GitHubEventMapper.Checks(pull.RootElement, Repo, "red", ["build", "lint"], DateTimeOffset.Parse(At, System.Globalization.CultureInfo.InvariantCulture));
+
+        var payload = JsonNode.Parse(TriggerMatch.Trigger(_connection, polled))!.AsObject();
+
+        Assert.Equal(JsonValueKind.Number, payload["number"]!.GetValueKind());
+        Assert.Equal(42, payload["number"]!.GetValue<long>());
+        Assert.Equal(["build", "lint"], payload["failing"]!.AsArray().Select(static n => n!.GetValue<string>()), StringComparer.Ordinal);
+        Assert.Equal(JsonValueKind.String, payload["title"]!.GetValueKind());
+    }
+
+    [Theory]
+    [InlineData("true", JsonValueKind.True)]
+    [InlineData("false", JsonValueKind.False)]
+    [InlineData("", JsonValueKind.Null)]
+    public void A_draft_flag_is_a_boolean_in_the_trigger_payload_and_null_when_the_poll_left_it_empty(string draft, JsonValueKind expected)
+    {
+        var fields = new Dictionary<string, string>(StringComparer.Ordinal) { ["number"] = "7", ["draft"] = draft };
+        var polled = new PolledEvent("github:1", EventKind.GitHubPrOpened, DateTimeOffset.UnixEpoch, fields);
+
+        var payload = JsonNode.Parse(TriggerMatch.Trigger(_connection, polled))!.AsObject();
+
+        Assert.Equal(expected, payload["draft"]?.GetValueKind() ?? JsonValueKind.Null);
+        Assert.Equal(JsonValueKind.Number, payload["number"]!.GetValueKind());
+    }
+
+    [Fact]
     public void A_conflict_event_holds_exactly_the_shared_pull_request_fields()
     {
         using var pull = JsonDocument.Parse(GitHubFeedFixtures.OpenPull(Repo, 42, "abc123", At, mergeableState: "dirty"));
@@ -101,10 +130,8 @@ public sealed class GitHubEventKindsTests
     }
 
     [Fact]
-    public void Every_kind_of_the_list_is_covered_by_a_key_test()
-    {
+    public void Every_kind_of_the_list_is_covered_by_a_key_test() =>
         Assert.Equal(_fields.Keys.Order(StringComparer.Ordinal), _feed.Keys.Concat(["github.pr.checks", "github.pr.conflict"]).Order(StringComparer.Ordinal));
-    }
 
     [Theory]
     [InlineData("opened", false, "github.pr.opened")]
@@ -117,10 +144,8 @@ public sealed class GitHubEventKindsTests
     [InlineData("reopened", false, null)]
     [InlineData("edited", false, null)]
     [InlineData("labeled", false, null)]
-    public void A_PullRequestEvent_action_maps_to_its_kind(string action, bool merged, string? kind)
-    {
+    public void A_PullRequestEvent_action_maps_to_its_kind(string action, bool merged, string? kind) =>
         Assert.Equal(kind, KindOf(GitHubFeedFixtures.PullRequest("1", Repo, 42, action, At, merged: merged)));
-    }
 
     [Fact]
     public void A_trimmed_closed_PullRequestEvent_is_a_close_and_a_trimmed_merged_one_is_a_merge()
@@ -145,10 +170,8 @@ public sealed class GitHubEventKindsTests
     }
 
     [Fact]
-    public void A_dismissed_review_is_no_catalog_event()
-    {
+    public void A_dismissed_review_is_no_catalog_event() =>
         Assert.Null(KindOf(GitHubFeedFixtures.ReviewSubmitted("1", Repo, 42, "bob", "dismissed", At)));
-    }
 
     [Fact]
     public void A_reply_on_a_diff_thread_names_the_threads_first_comment_as_its_thread()
@@ -178,10 +201,8 @@ public sealed class GitHubEventKindsTests
     [InlineData("opened", "github.issue.opened")]
     [InlineData("labeled", "github.issue.labeled")]
     [InlineData("closed", null)]
-    public void An_IssuesEvent_action_maps_to_its_kind(string action, string? kind)
-    {
+    public void An_IssuesEvent_action_maps_to_its_kind(string action, string? kind) =>
         Assert.Equal(kind, KindOf(GitHubFeedFixtures.Issue("1", Repo, 7, action, At, label: "bug")));
-    }
 
     [Fact]
     public void A_push_carries_its_ref_head_sha_and_pusher()
@@ -194,10 +215,8 @@ public sealed class GitHubEventKindsTests
     }
 
     [Fact]
-    public void An_event_no_kind_takes_maps_to_nothing()
-    {
+    public void An_event_no_kind_takes_maps_to_nothing() =>
         Assert.Null(KindOf(GitHubFeedFixtures.Watch("1", Repo, At)));
-    }
 
     [Fact]
     public void A_pull_request_payload_carries_number_draft_head_and_base()

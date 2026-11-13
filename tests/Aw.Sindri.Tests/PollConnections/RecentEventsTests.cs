@@ -32,7 +32,7 @@ public sealed class RecentEventsTests
 
         var listed = recent.Newest(_merged, _work, max: 10);
 
-        Assert.Equal(["github:3", "github:2", "github:1"], listed.Select(static r => r.Event.DeliveryKey));
+        Assert.Equal(["github:3", "github:2", "github:1"], listed.Select(static r => r.Event.DeliveryKey), StringComparer.Ordinal);
         Assert.All(listed, static r => Assert.Equal(_work, r.Connection));
     }
 
@@ -87,9 +87,9 @@ public sealed class RecentEventsTests
         recent.Record(_home, Event("github:2", minutes: 2));
         recent.Record(_work, Event("github:3", minutes: 3, EventKind.GitHubPrOpened));
 
-        Assert.Equal(["github:1"], recent.Newest(_merged, _work, max: 10).Select(static r => r.Event.DeliveryKey));
-        Assert.Equal(["github:2", "github:1"], recent.Newest(_merged, connection: null, max: 10).Select(static r => r.Event.DeliveryKey));
-        Assert.Equal(["github:3"], recent.Newest(EventKind.GitHubPrOpened, connection: null, max: 10).Select(static r => r.Event.DeliveryKey));
+        Assert.Equal(["github:1"], recent.Newest(_merged, _work, max: 10).Select(static r => r.Event.DeliveryKey), StringComparer.Ordinal);
+        Assert.Equal(["github:2", "github:1"], recent.Newest(_merged, connection: null, max: 10).Select(static r => r.Event.DeliveryKey), StringComparer.Ordinal);
+        Assert.Equal(["github:3"], recent.Newest(EventKind.GitHubPrOpened, connection: null, max: 10).Select(static r => r.Event.DeliveryKey), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -99,6 +99,6 @@ public sealed class RecentEventsTests
         recent.Record(_work, Event("github:1", minutes: 1));
         recent.Record(_work, Event("github:2", minutes: 2));
 
-        Assert.Equal(["github:2"], recent.Newest(_merged, _work, max: 1).Select(static r => r.Event.DeliveryKey));
+        Assert.Equal(["github:2"], recent.Newest(_merged, _work, max: 1).Select(static r => r.Event.DeliveryKey), StringComparer.Ordinal);
     }
 }

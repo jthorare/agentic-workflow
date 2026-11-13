@@ -195,7 +195,7 @@ public sealed class PollConnectionsTests
         _ = await _world.Tick(poller);
 
         Assert.Empty(_world.Starter.Requests);
-        Assert.Equal(["linear:h-1", "linear:h-2"], _world.Recent.Newest(PollWorld.Kind, PollWorld.Name, max: 10).Select(static r => r.Event.DeliveryKey).Order(StringComparer.Ordinal));
+        Assert.Equal(["linear:h-1", "linear:h-2"], _world.Recent.Newest(PollWorld.Kind, PollWorld.Name, max: 10).Select(static r => r.Event.DeliveryKey).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 
     [Fact]

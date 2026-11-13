@@ -34,6 +34,7 @@ internal sealed class GitHubPullStates(PollerClient client)
         var listed = await Get(connection, root + "/pulls?state=open&sort=updated&direction=desc&per_page=100", cancellationToken).ConfigureAwait(false);
         if (listed.IsError || listed.Value.Limited is not null)
         {
+            // why: the branch is taken only when IsError or Limited is not null, so Limited is set when it's read
             return listed.IsError ? listed.Error : Limited(listed.Value.Limited!, cursor);
         }
 
@@ -53,6 +54,7 @@ internal sealed class GitHubPullStates(PollerClient client)
             var step = await Observe(walk, kind, pull, cancellationToken).ConfigureAwait(false);
             if (step.IsError || step.Value.Limited is not null)
             {
+                // why: the branch is taken only when IsError or Limited is not null, so Limited is set when it's read
                 return step.IsError ? step.Error : Limited(step.Value.Limited!, cursor);
             }
 
@@ -88,7 +90,7 @@ internal sealed class GitHubPullStates(PollerClient client)
         }
 
         var failing = runs.Where(IsRed).Select(static r => PollJson.Text(PollJson.Member(r, "name")) ?? string.Empty).ToList();
-        var at = runs.Select(static r => PollJson.Time(PollJson.Text(PollJson.Member(r, "completed_at")))).Max() ?? UpdatedAt(walk, pull);   // the last check that finished
+        var at = runs.Max(static r => PollJson.Time(PollJson.Text(PollJson.Member(r, "completed_at")))) ?? UpdatedAt(walk, pull);   // the last check that finished
         return new Step(head + ":" + conclusion, GitHubEventMapper.Checks(pull, walk.Repo, conclusion, failing, at), Limited: null);
     }
 

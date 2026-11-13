@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-namespace Aw.Sindri.Features.ListTriggerEvents;
+namespace Aw.Sindri.Features.PollConnections;
 
 /// <summary>One seen event, as the trigger step lists it. Its text is provider text: untrusted.</summary>
 /// <param name="DeliveryId">The stable delivery id ('github:1001').</param>

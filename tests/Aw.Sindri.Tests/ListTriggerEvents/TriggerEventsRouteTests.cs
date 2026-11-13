@@ -68,7 +68,7 @@ public sealed class TriggerEventsRouteTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.OK, status);
         Assert.Equal("github.pr.merged", body.GetProperty("kind").GetString());
         var events = body.GetProperty("events").EnumerateArray().ToList();
-        Assert.Equal(["github:2", "github:1"], events.Select(static e => e.GetProperty("deliveryId").GetString()));
+        Assert.Equal(["github:2", "github:1"], events.Select(static e => e.GetProperty("deliveryId").GetString()), StringComparer.Ordinal);
         var newest = events[0];
         Assert.Equal("github:work", newest.GetProperty("connection").GetString());
         Assert.Equal("acme/app#42 Fix login (ada)", newest.GetProperty("summary").GetString());
@@ -87,7 +87,7 @@ public sealed class TriggerEventsRouteTests : IAsyncLifetime
 
         var (_, body) = await Read("?kind=github.pr.merged&connection=github:home");
 
-        Assert.Equal(["github:2"], body.GetProperty("events").EnumerateArray().Select(static e => e.GetProperty("deliveryId").GetString()));
+        Assert.Equal(["github:2"], body.GetProperty("events").EnumerateArray().Select(static e => e.GetProperty("deliveryId").GetString()), StringComparer.Ordinal);
     }
 
     [Fact]

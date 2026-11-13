@@ -5,9 +5,8 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.Polling;
 using Aw.Sindri.Core.Graph.Expressions;
-using Aw.Sindri.Features.PollConnections;
 
-namespace Aw.Sindri.Features.ListTriggerEvents;
+namespace Aw.Sindri.Features.PollConnections;
 
 /// <summary>
 /// Reads the recent events store for one kind: newest first, cut to the limit, each with a one-line summary, the trigger JSON a run would get and

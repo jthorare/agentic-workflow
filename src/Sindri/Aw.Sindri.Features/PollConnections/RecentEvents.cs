@@ -10,7 +10,7 @@ namespace Aw.Sindri.Features.PollConnections;
 internal sealed class RecentEvents
 {
     private readonly Lock _gate = new();
-    private readonly Dictionary<(ConnectionName Connection, string Kind), List<PolledEvent>> _byGroup = new();
+    private readonly Dictionary<(ConnectionName Connection, string Kind), List<PolledEvent>> _byGroup = [];
 
     /// <summary>How many events one (connection, kind) keeps.</summary>
     internal const int PerKind = 20;
@@ -58,8 +58,3 @@ internal sealed class RecentEvents
         }
     }
 }
-
-/// <summary>One kept event and the connection it came from.</summary>
-/// <param name="Connection">The connection.</param>
-/// <param name="Event">The event.</param>
-internal sealed record RecentEvent(ConnectionName Connection, PolledEvent Event);

@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-namespace Aw.Sindri.Features.ListTriggerEvents;
+namespace Aw.Sindri.Features.PollConnections;
 
 /// <summary>The events of a kind seen on this box, newest first, and the kind's example payload.</summary>
 /// <param name="Kind">The catalog id.</param>

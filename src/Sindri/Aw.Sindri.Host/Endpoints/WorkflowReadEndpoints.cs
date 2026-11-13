@@ -4,11 +4,11 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Features.GetWorkflow;
 using Aw.Sindri.Features.GetWorkflowRun;
-using Aw.Sindri.Features.ListTriggerEvents;
 using Aw.Sindri.Features.ListWorkflowBlocks;
 using Aw.Sindri.Features.ListWorkflowRuns;
 using Aw.Sindri.Features.ListWorkflows;
 using Aw.Sindri.Features.ListWorkflowTemplates;
+using Aw.Sindri.Features.PollConnections;
 using Aw.Sindri.Features.SearchWorkflowDocs;
 
 namespace Aw.Sindri.Host.Endpoints;

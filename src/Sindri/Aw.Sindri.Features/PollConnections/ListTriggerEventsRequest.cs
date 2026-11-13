@@ -1,6 +1,6 @@
 using Aw.Sindri.Core.Commands;
 
-namespace Aw.Sindri.Features.ListTriggerEvents;
+namespace Aw.Sindri.Features.PollConnections;
 
 /// <summary>List the events of a kind seen on this box (GET /sindri/workflows/trigger-events, spec 2026-11-12-sindri-workflows-page-design.md §4.3 and §9 E6).</summary>
 /// <param name="Kind">The catalog id ('github.pr.merged'); null or unknown is invalid input.</param>
