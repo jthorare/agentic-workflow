@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sessions;
@@ -46,7 +47,16 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
             return;
         }
 
-        var opened = await source.Open(session, hello, cancellationToken).ConfigureAwait(false);
+        Result<IOpenTerminalPane> opened;
+        try
+        {
+            opened = await source.Open(session, hello, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            opened = SindriErrors.AgentPaneGone.With("the pane source timed out");   // a call budget fired, not the caller: close with a code instead of throwing out of the endpoint
+        }
+
         if (opened.IsError)
         {
             var code = opened.Error.Code;
@@ -153,6 +163,12 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
                 await stop.CancelAsync().ConfigureAwait(false);
             }
         }
+        catch (OperationCanceledException) when (!stop.IsCancellationRequested)
+        {
+            // The source's own call budget fired, not the socket closing: the screen would freeze while pings keep passing, so close with a code.
+            await channel.Close(4016, SindriErrors.AgentPaneGone.Code, CancellationToken.None).ConfigureAwait(false);
+            await stop.CancelAsync().ConfigureAwait(false);
+        }
         catch (OperationCanceledException)
         {
             // the socket is closing
@@ -196,6 +212,11 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
                     return;
                 }
             }
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            // A send hit the source's call budget while the socket was still open: close with a code, not silently.
+            await channel.Close(4016, SindriErrors.AgentPaneGone.Code, CancellationToken.None).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {

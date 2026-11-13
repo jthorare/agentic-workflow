@@ -35,10 +35,22 @@ public sealed class TerminalSocketRouteTests
     }
 
     [Fact(Timeout = 30_000), Trait("Lane", "integration")]
-    public async Task A_foreign_Origin_is_a_403_before_the_upgrade()
+    public async Task A_foreign_Origin_is_a_bare_403_from_the_loopback_guard()
     {
         await using var host = await Start(TestContext.Current.CancellationToken);
         using var request = Get(Route, [.. Human(host.Token.Value), ("Origin", "http://evil.example")]);
+
+        var answer = await host.Http.Ask(request);
+
+        Assert.Equal(HttpStatusCode.Forbidden, answer.Status);
+        Assert.Null(answer.Code);   // a bare 403 from the loopback guard, not the route's SND-API-008
+    }
+
+    [Fact(Timeout = 30_000), Trait("Lane", "integration")]
+    public async Task A_local_page_Origin_is_a_403_SND_API_008_before_the_upgrade()
+    {
+        await using var host = await Start(TestContext.Current.CancellationToken);
+        using var request = Get(Route, [.. Human(host.Token.Value), ("Origin", "http://localhost:3000")]);
 
         var answer = await host.Http.Ask(request);
 

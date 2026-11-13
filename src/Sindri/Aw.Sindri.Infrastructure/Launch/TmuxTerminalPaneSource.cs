@@ -18,6 +18,7 @@ namespace Aw.Sindri.Infrastructure.Launch;
 /// </summary>
 internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalPaneLocator locator) : ITerminalPaneSource
 {
+    private const int TimedOut = 124;   // the exit code timeout(1) uses
     private const string PasteBuffer = "sindri-paste";
     private static readonly TimeSpan _tick = TimeSpan.FromMilliseconds(33);   // 30 a second
     private static readonly TimeSpan _callBudget = TimeSpan.FromSeconds(5);
@@ -115,8 +116,14 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
 
             return text.Length == 0
                 ? Unit.Value
-                : await Typed(["send-keys", "-t", target.Pane, "-l", "--", text], stdin: null, cancellationToken).ConfigureAwait(false);
+                : await Typed(["send-keys", "-t", target.Pane, "-l", "--", EscapeTrailingSemicolon(text)], stdin: null, cancellationToken).ConfigureAwait(false);
         }
+
+        /// <summary>
+        /// tmux reads an argument that ends in ';' as a command separator, even after '-l --', and drops that ';' (so "ls;" types "ls"). An argument that ends
+        /// in '\;' loses one backslash and keeps the ';', so one more backslash before the last ';' types the text exactly (checked on tmux 3.4 for 0 to 6 backslashes).
+        /// </summary>
+        private static string EscapeTrailingSemicolon(string text) => text.EndsWith(';') ? string.Concat(text.AsSpan(0, text.Length - 1), "\\;") : text;
 
         public async ValueTask<Result<Unit>> Paste(string text, CancellationToken cancellationToken)
         {
@@ -232,7 +239,15 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
 
             using (process)
             {
-                return await Collect(process, stdin, deadline.Token).ConfigureAwait(false);
+                try
+                {
+                    return await Collect(process, stdin, deadline.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    // The 5 s budget fired, not the caller: a failed call (the stream closes with 4016 or the key is refused), never a silent cancel.
+                    return new TmuxOutput(TimedOut, string.Empty);
+                }
             }
         }
 

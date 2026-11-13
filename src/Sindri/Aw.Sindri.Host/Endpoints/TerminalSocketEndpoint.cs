@@ -4,6 +4,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Features.TerminalSocket;
+using Aw.Sindri.Host.Statuses;
 
 namespace Aw.Sindri.Host.Endpoints;
 
@@ -52,21 +53,5 @@ internal static class TerminalSocketEndpoint
         return TypedResults.Empty;
     }
 
-    // Local, like the event stream opener's: a method-group endpoint that reached for the Host root's HttpResults closed a namespace cycle (ARCH-CYCLE-001).
-    private static Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult Refused(Error error) => TypedResults.Problem(title: error.Code, detail: error.Message, statusCode: StatusOf(error.Kind));
-
-    private static int StatusOf(ErrorKind kind)
-    {
-        if (kind == ErrorKind.Invalid)
-        {
-            return StatusCodes.Status400BadRequest;
-        }
-
-        if (kind == ErrorKind.NotFound)
-        {
-            return StatusCodes.Status404NotFound;
-        }
-
-        return kind == ErrorKind.Conflict ? StatusCodes.Status409Conflict : StatusCodes.Status500InternalServerError;
-    }
+    private static Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult Refused(Error error) => TypedResults.Problem(title: error.Code, detail: error.Message, statusCode: ErrorStatus.Of(error.Kind));
 }
