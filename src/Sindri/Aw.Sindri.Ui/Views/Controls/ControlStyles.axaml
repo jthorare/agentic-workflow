@@ -75,6 +75,10 @@
   <Style Selector="TextBox.typed-field.match /template/ Border#PART_BorderElement">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Success}" />
   </Style>
+  <!-- A failed field (#3234, LabelledField): the TextBox border is Error (3:1 on the panel and the input) at rest, under the pointer and while focused, so the stock hover and focus borders never hide it. -->
+  <Style Selector="TextBox.field-invalid /template/ Border#PART_BorderElement, TextBox.field-invalid:pointerover /template/ Border#PART_BorderElement, TextBox.field-invalid:focus /template/ Border#PART_BorderElement, TextBox.field-invalid:focus:pointerover /template/ Border#PART_BorderElement">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Error}" />
+  </Style>
   <Style Selector="Border.phrase-chip">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
