@@ -164,9 +164,9 @@ internal sealed partial class SettingsView : UserControl
     }
 
     // Esc in the filter box clears it.
-    private void OnFilterKey(object? sender, Avalonia.Input.KeyEventArgs e)
+    private void OnFilterKey(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Avalonia.Input.Key.Escape && _settings is { Filter.Length: > 0 })
+        if (e.Key == Key.Escape && _settings is { Filter.Length: > 0 })
         {
             _settings.Filter = string.Empty;
             e.Handled = true;

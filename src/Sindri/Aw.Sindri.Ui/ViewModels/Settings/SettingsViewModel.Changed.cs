@@ -48,7 +48,7 @@ internal sealed partial class SettingsViewModel
     private void WatchSetup() =>
         Setup?.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName is nameof(SetupViewModel.IsFinished) or nameof(SetupViewModel.HasAnswered) or nameof(SetupViewModel.HasSteps))
+            if (string.Equals(e.PropertyName, nameof(SetupViewModel.IsFinished), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(SetupViewModel.HasAnswered), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(SetupViewModel.HasSteps), StringComparison.Ordinal))
             {
                 OnChanged(nameof(ThisAppFirst));
             }
