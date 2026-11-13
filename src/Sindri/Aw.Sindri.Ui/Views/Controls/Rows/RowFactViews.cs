@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
@@ -7,6 +8,7 @@ using Aw.Sindri.Ui.ViewModels.Rows;
 namespace Aw.Sindri.Ui.Views.Controls.Rows;
 
 /// <summary>Builds the cell of one fact (#2978 grammar): chip, 56 by 4 progress bar, diffstat, ref, person, count or text. Every cell ellipsizes.</summary>
+[SuppressMessage("Design", "MA0182", Justification = "Used by the Frames tests until the flat Row slices move them (#3189 slice 4).")]
 internal static class RowFactViews
 {
     private const double MonoCharWidth = 7.2;   // JetBrains Mono at 12 px

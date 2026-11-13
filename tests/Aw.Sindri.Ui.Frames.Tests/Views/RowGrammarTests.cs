@@ -80,8 +80,8 @@ public sealed class RowGrammarTests
     [Fact]
     public async Task The_state_glyph_ring_is_14_px_outside_to_outside() => await OnUi(() =>
     {
-        var radius = (double)typeof(RowGlyphView).GetField("Radius", BindingFlags.NonPublic | BindingFlags.Static)!.GetRawConstantValue()!;
-        var stroke = (double)typeof(RowGlyphView).GetField("Stroke", BindingFlags.NonPublic | BindingFlags.Static)!.GetRawConstantValue()!;
+        var radius = (double)typeof(RowGlyphPainter).GetField("Radius", BindingFlags.NonPublic | BindingFlags.Static)!.GetRawConstantValue()!;
+        var stroke = (double)typeof(RowGlyphPainter).GetField("Stroke", BindingFlags.NonPublic | BindingFlags.Static)!.GetRawConstantValue()!;
 
         Assert.Equal(14, 2 * (radius + (stroke / 2)), 0.01);
         return true;
