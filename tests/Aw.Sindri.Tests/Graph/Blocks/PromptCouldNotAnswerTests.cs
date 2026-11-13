@@ -20,7 +20,7 @@ public sealed class PromptCouldNotAnswerTests
     [Fact]
     public async Task A_could_not_answer_reply_fails_the_step_with_its_reason()
     {
-        var model = new ScriptedModel("""{"flagged":false,"summary":"x","couldNotAnswer":true,"why":"I have no access to the CI system"}""");
+        var model = new ScriptedModel("""{"flagged":false,"summary":"x","couldNotAnswer":true,"couldNotAnswerWhy":"I have no access to the CI system"}""");
 
         var result = await Run(model);
 
@@ -32,7 +32,7 @@ public sealed class PromptCouldNotAnswerTests
     [Fact]
     public async Task A_normal_reply_still_passes_and_hides_the_two_fields()
     {
-        var model = new ScriptedModel("""{"flagged":true,"summary":"red","couldNotAnswer":false,"why":""}""");
+        var model = new ScriptedModel("""{"flagged":true,"summary":"red","couldNotAnswer":false,"couldNotAnswerWhy":""}""");
 
         var result = await Run(model);
 
@@ -40,18 +40,43 @@ public sealed class PromptCouldNotAnswerTests
         Assert.True(result.Value.Outputs["flagged"]!.GetValue<bool>());
         Assert.Equal("red", result.Value.Outputs["summary"]!.GetValue<string>());
         Assert.False(result.Value.Outputs.ContainsKey("couldNotAnswer"));
-        Assert.False(result.Value.Outputs.ContainsKey("why"));
+        Assert.False(result.Value.Outputs.ContainsKey("couldNotAnswerWhy"));
     }
 
     [Fact]
     public async Task The_prompt_sent_to_the_model_asks_for_couldNotAnswer()
     {
-        var model = new ScriptedModel("""{"flagged":false,"summary":"ok","couldNotAnswer":false,"why":""}""");
+        var model = new ScriptedModel("""{"flagged":false,"summary":"ok","couldNotAnswer":false,"couldNotAnswerWhy":""}""");
 
         _ = await Run(model);
 
         var prompt = Assert.Single(model.Prompts);
         Assert.Contains("couldNotAnswer", prompt, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_user_field_named_why_keeps_its_meaning_in_the_schema_and_the_outputs()
+    {
+        var config = (JsonObject)JsonNode.Parse("""{"prompt":"Why is the build red?","output":{"type":"object","required":["why"],"properties":{"why":{"type":"string","description":"keep me"}}}}""")!;
+        var model = new ScriptedModel("""{"why":"flaky test","couldNotAnswer":false}""");
+
+        var result = await new PromptBlock(model).Execute(BlockFakes.Context(config), TestContext.Current.CancellationToken).AsTask();
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : null);
+        Assert.Contains("\"description\":\"keep me\"", Assert.Single(model.Prompts), StringComparison.Ordinal);
+        Assert.Equal("flaky test", result.Value.Outputs["why"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public async Task A_long_reason_is_cut_at_200_characters_with_an_ellipsis()
+    {
+        var model = new ScriptedModel($$"""{"couldNotAnswer":true,"couldNotAnswerWhy":"{{new string('x', 500)}}"}""");
+
+        var result = await Run(model);
+
+        Assert.True(result.IsError);
+        Assert.Equal("SND-GRAPH-133", result.Error.Code);
+        Assert.EndsWith(new string('x', 200) + "…", result.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact]
