@@ -68,7 +68,7 @@ public sealed class CodeIndexCardTests
     }
 
     [Theory]
-    [InlineData("missing", "repo: first build queued")]
+    [InlineData("missing", "repo: no index yet")]
     [InlineData("damaged", "repo: damaged, rebuilding on the next check")]
     [InlineData("building", "repo: building")]
     [InlineData("waiting", "repo: waiting to retry")]
@@ -80,6 +80,11 @@ public sealed class CodeIndexCardTests
         Assert.Equal(expected, Assert.Single(card.Lines).Text);
         Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
     }
+
+    // #3399: missing comes paused or off the default branch too, where no build is coming; only queued may promise one.
+    [Fact]
+    public void Missing_never_promises_a_build()
+        => Assert.DoesNotContain("queued", Labels.CodeIndexState("missing"), StringComparison.Ordinal);
 
     [Fact]
     public async Task A_stale_index_names_the_state_beside_its_age()
@@ -95,7 +100,7 @@ public sealed class CodeIndexCardTests
     {
         var card = await Read(Repo("a", "ok", Sha, 5, Layer("structure", "ok")), Repo("b", "missing", commit: null, 0));
 
-        Assert.Equal(["a @ abcdef0, 5 min old, structure ok", "b: first build queued"], card.Lines.Select(l => l.Text), StringComparer.Ordinal);
+        Assert.Equal(["a @ abcdef0, 5 min old, structure ok", "b: no index yet"], card.Lines.Select(l => l.Text), StringComparer.Ordinal);
     }
 
     [Fact]
