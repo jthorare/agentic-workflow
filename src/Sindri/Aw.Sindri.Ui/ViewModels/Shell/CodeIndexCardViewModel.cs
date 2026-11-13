@@ -103,12 +103,12 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
 
     private string Line(CodeIndexRepoView repo, CodeIndexHealthView? health)
     {
-        var word = StateWords(StateOf(repo, health), health);
         if (repo.Commit is not { Length: > 0 } commit)
         {
-            return repo.Repo + ": " + word;
+            return NoCommitLine(repo, health);
         }
 
+        var word = StateWords(StateOf(repo, health), health);
         var age = repo.BuiltAt is { } built ? ", " + Labels.CodeIndexAge(clock.GetUtcNow() - built) : string.Empty;
         var state = string.Equals(StateOf(repo, health), "ok", StringComparison.Ordinal) ? string.Empty : " (" + word + ")";
         var shown = repo.Layers.Where(Shown).Select(l => Words(l, health)).ToList();
@@ -119,6 +119,19 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
 
         var layers = string.Join(" · ", shown);
         return repo.Repo + " @ " + commit[..Math.Min(ShortSha, commit.Length)] + age + state + (layers.Length == 0 ? string.Empty : ", " + layers);
+    }
+
+    // A repo with no commit: the server's look words when it flags the repo and no pause holds the build (#3515: a flagged repo with no build yet never reads as plain "build queued"),
+    // else the state's words; "build queued" reads "first build queued" here, since a repo never built has no rebuild to wait for (#3602).
+    private static string NoCommitLine(CodeIndexRepoView repo, CodeIndexHealthView? health)
+    {
+        if (health is { NeedsLook: true, Paused: false, LookWords: { Length: > 0 } lookWords })
+        {
+            return lookWords;
+        }
+
+        var word = StateWords(StateOf(repo, health), health);
+        return repo.Repo + ": " + (string.Equals(word, Labels.CodeIndexQueued, StringComparison.Ordinal) ? Labels.CodeIndexFirstBuildQueued : word);
     }
 
     private static bool Shown(CodeIndexLayerView layer) => _named.Contains(layer.Layer, StringComparer.Ordinal) || !One(layer.State, "ok", "disabled");
