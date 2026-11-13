@@ -78,12 +78,13 @@ Each command prints one JSON document on stdout. Exit codes: 0 ok; 1 invalid inp
 |---|---|---|
 | `AW-FORGE-001` | invalid | A link, ref or request failed validation; the message names the part |
 | `AW-FORGE-002` | forbidden | The host is not in the allowed hosts; nothing was sent |
-| `AW-FORGE-003` | forbidden | The credential is missing, expired or rejected (also an HTTP 403 that is not a rate limit) |
+| `AW-FORGE-003` | forbidden | The credential is missing, expired or rejected |
 | `AW-FORGE-004` | not found | No such pull request, repository, thread or check |
 | `AW-FORGE-005` | unavailable | The forge or the network is unavailable (transport failure, timeout, HTTP 5xx) |
 | `AW-FORGE-006` | rate limited | HTTP 429, or a 403 with no rate limit left |
 | `AW-FORGE-007` | invalid | The forge refused a well-formed request |
 | `AW-FORGE-008` | unavailable | git could not push (not a lease refusal, which is `HeadMoved`) |
+| `AW-FORGE-009` | forbidden | The forge refused this request for the repo: an HTTP 403 that is not a rate limit (the credential itself was accepted) |
 
 ## Configuration and credentials
 
@@ -134,4 +135,4 @@ The adapter lives in `Aw.Sindri.Host/Forge` (the one project that references thi
 - `ConfiguredPullRequests` is what Sindri registers. Each call reads the approved profile's `workflow.forge` block and builds the adapter it names once (`file` or `github`, `hosts`, `credential`, with the choices `aw-forge-fake` makes), so approving a profile switches the forge without a restart.
 - `NoForgePullRequests` answers `SND-FORGE-001` for every call when the block names no adapter.
 
-Forge errors become `SND-FORGE-002` (a host outside the list, a missing or rejected credential, input the forge refuses), `SND-FORGE-003` (no such pull request) or `SND-FORGE-004` (unreachable, rate limited, push failed); the forge's own code leads the message. `PullRequestsContract` (in `Aw.Sindri.Testing`) runs over `FakePullRequests` and over `ForgePullRequests` on the file forge.
+Forge errors become `SND-FORGE-002` (a host outside the list, a missing or rejected credential, input the forge refuses), `SND-FORGE-003` (no such pull request), `SND-FORGE-005` (`AW-FORGE-009`: the forge refused this one repo) or `SND-FORGE-004` (unreachable, rate limited, push failed); the forge's own code leads the message. `PullRequestsContract` (in `Aw.Sindri.Testing`) runs over `FakePullRequests` and over `ForgePullRequests` on the file forge.
