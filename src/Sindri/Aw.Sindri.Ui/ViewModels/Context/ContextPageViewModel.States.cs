@@ -20,16 +20,18 @@ internal sealed partial class ContextPageViewModel
     private bool _servedBuilding;
     private IReadOnlyList<string> _repos = [];   // the repositories a no-map answer named; kept so serve's building line keeps the head (#3391)
 
-    /// <summary>The Building state's title: the whole map's answer says how far the build is, else the item map's words.</summary>
-    public string BuildingTitle => _servedBuilding ? Labels.ContextBuildingLine(BuildingParts(), _itemOpened is null ? Labels.ContextBuildingFor(_repos) : Labels.ContextBuildingFor([]))
+    /// <summary>The Building state's title: the head only ("Building the map for aw"); the progress is the body, so a long name cannot cut it off (#3463).</summary>
+    public string BuildingTitle => _servedBuilding ? BuildingHead()
         : _itemOpened is not null ? Labels.ContextStateBuilding
         : Labels.ContextBuildingFor(_repos);   // why: with no item there is no ticket and no promise of a time (#3391)
 
-    /// <summary>The Building state's whole line for a screen reader (red stub, #3463): the head and the progress.</summary>
-    public string BuildingName => BuildingTitle[..0];
+    /// <summary>The Building state's whole line for a screen reader: the head and the progress, as the title once held them.</summary>
+    public string BuildingName => _servedBuilding ? Labels.ContextBuildingLine(BuildingParts(), BuildingHead()) : BuildingTitle;
 
-    /// <summary>The Building state's body: "last map 2 h ago" when the answer names it; nothing when the title is the answer's.</summary>
-    public string BuildingBody => !_servedBuilding ? (_itemOpened is null ? string.Empty : Labels.ContextStateBuildingBody) : _notReady.Building?.LastSyncAt is { } last ? Labels.ContextLastMap(Age(last)) : string.Empty;
+    private string BuildingHead() => _itemOpened is null ? Labels.ContextBuildingFor(_repos) : Labels.ContextBuildingFor([]);
+
+    /// <summary>The Building state's body: the progress parts and "last map 2 h ago" when the answer names it; it wraps, so nothing is cut.</summary>
+    public string BuildingBody => !_servedBuilding ? (_itemOpened is null ? string.Empty : Labels.ContextStateBuildingBody) : string.Join(" · ", BuildingParts().Concat(_notReady.Building?.LastSyncAt is { } last ? [Labels.ContextLastMap(Age(last))] : []));
 
     /// <summary>Whether the Building state's body has words.</summary>
     public bool HasBuildingBody => BuildingBody.Length > 0;
@@ -224,6 +226,7 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(NoMap));
         OnChanged(nameof(IsBuilding));
         OnChanged(nameof(BuildingTitle));
+        OnChanged(nameof(BuildingName));
         OnChanged(nameof(BuildingBody));
         OnChanged(nameof(HasBuildingBody));
         OnChanged(nameof(EmptyTitle));
