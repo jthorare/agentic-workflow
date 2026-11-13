@@ -41,6 +41,13 @@ internal sealed class ShowMapStatusService(IGraphStore store) : IService<ShowMap
             return coverage.Error;
         }
 
+        var retained = versions.Value.Count(v => v.Status == MapVersionStatus.Retained);
+        return await Status(version, retained, shown, layer, coverage.Value, request.Scope, cancellationToken).ConfigureAwait(false);
+    }
+
+    // The view of the current version as the caller reads it, with the commit of every repo it maps (issue 3308).
+    private async ValueTask<Result<MapStatusView>> Status(MapVersion version, int retained, GraphSnapshot shown, IReadOnlyList<MapOverride> layer, LensCoverage? coverage, ContextScope scope, CancellationToken cancellationToken)
+    {
         var heads = await store.Heads(version.Number, cancellationToken).ConfigureAwait(false);
         if (heads.IsError)
         {
@@ -48,12 +55,12 @@ internal sealed class ShowMapStatusService(IGraphStore store) : IService<ShowMap
         }
 
         var orphaned = OverrideApplier.Apply(shown, layer).Orphaned.Count;
-        return new MapStatusView(version, MapCounts.Of(shown, layer.Count), orphaned, versions.Value.Count(v => v.Status == MapVersionStatus.Retained), ScopedTo(request.Scope.Caller), coverage.Value)
+        return new MapStatusView(version, MapCounts.Of(shown, layer.Count), orphaned, retained, ScopedTo(scope.Caller), coverage)
         {
-            RulesOlder = RulesOlder(version, request.Scope),
+            RulesOlder = RulesOlder(version, scope),
             Checks = version.Checks,
-            Roles = Roles(shown, version, request.Scope),
-            Heads = Heads(heads.Value, ScopedTo(request.Scope.Caller)),
+            Roles = Roles(shown, version, scope),
+            Heads = Heads(heads.Value, ScopedTo(scope.Caller)),
         };
     }
 
