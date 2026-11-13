@@ -73,7 +73,7 @@ public sealed class CheckContextTests
     public async Task The_checks_read_the_live_profile_and_every_provider_file()
     {
         var harness = new SliceHarness();
-        var checks = new ContextDoctorChecks(new ContextScopes(harness.Profiles, harness.Callers), FakeContextEngine.Instance,
+        var checks = new ContextDoctorChecks(new ContextScopes(harness.Profiles, harness.Callers, new FakeRepoCheckouts()), FakeContextEngine.Instance,
             new FakeProviderFiles().With(ProviderFile.Codex, "[mcp_servers.sindri]\n"));
 
         var none = await checks.Run(TestContext.Current.CancellationToken);
@@ -88,7 +88,7 @@ public sealed class CheckContextTests
     {
         var harness = new SliceHarness();
         _ = await harness.Profiles.Save(SliceHarness.Profile(), TestContext.Current.CancellationToken);
-        var checks = new ContextDoctorChecks(new ContextScopes(harness.Profiles, harness.Callers), FakeContextEngine.Instance, new FakeProviderFiles());
+        var checks = new ContextDoctorChecks(new ContextScopes(harness.Profiles, harness.Callers, new FakeRepoCheckouts()), FakeContextEngine.Instance, new FakeProviderFiles());
 
         var rows = await checks.Run(TestContext.Current.CancellationToken);
 

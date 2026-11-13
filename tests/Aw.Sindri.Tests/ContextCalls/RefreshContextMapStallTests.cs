@@ -27,7 +27,7 @@ public sealed class RefreshContextMapStallTests
         _h.Clock.SetUtcNow(_now);
         _ = await _h.HoldLease();
         _ = await _h.Profiles.Save(SliceHarness.Profile(), Ct);
-        var service = new RefreshContextMapService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _outlooks, new MapEventSource(_h.Held, _h.Store, _h.Events), _jobs, _h.Clock);
+        var service = new RefreshContextMapService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), _engine.Proxy, _outlooks, new MapEventSource(_h.Held, _h.Store, _h.Events), _jobs, _h.Clock);
         using var job = _jobs.Enter(new JobContext(JobId.New(_h.Ids), JobKind.From("RefreshContextMap"), new Progress(_progress)));
         using var caller = _h.Callers.EnterService("context-map-refresh");
         return await service.Handle(new RefreshContextMapRequest(), Ct);
