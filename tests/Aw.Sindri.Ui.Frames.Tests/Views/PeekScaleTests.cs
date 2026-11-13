@@ -101,10 +101,11 @@ public sealed class PeekScaleTests
     public async Task Body_lines_sit_20_px_apart(double scaling) => await OnUi(() =>
     {
         var (window, _, body) = Show(scaling);
-        var lines = body.TextLayout.TextLines;
+        var lineCount = Math.Round(body.Bounds.Height / 20, MidpointRounding.AwayFromZero);
 
-        Assert.True(lines.Count >= 2, "the body wraps to at least two lines");
-        Assert.Equal(20, body.Bounds.Height / lines.Count, Tolerance(scaling));
+        Assert.Equal(20, body.LineHeight, 0.01);
+        Assert.True(lineCount >= 2, "the body wraps to at least two lines");
+        Assert.Equal(lineCount * 20, body.Bounds.Height, Tolerance(scaling));
         window.Close();
         return true;
     });
