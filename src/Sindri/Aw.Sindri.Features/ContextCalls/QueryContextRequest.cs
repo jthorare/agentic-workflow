@@ -20,4 +20,10 @@ public sealed record QueryContextRequest(string? Q, string? Node = null, string?
 {
     /// <summary>A pin id (or 'concept:&lt;id&gt;') to answer inside, or null; any shape, and with <see cref="Repo"/>.</summary>
     public string? Concept { get; init; }
+
+    /// <summary>How many ranked records to read (#3370), as sent: a whole number of 1 or more, or null for every match (#938).</summary>
+    public string? Limit { get; init; }
+
+    /// <summary>How many ranked records to skip before reading (#3370), as sent: a whole number of 0 or more, or null for 0.</summary>
+    public string? Offset { get; init; }
 }

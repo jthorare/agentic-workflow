@@ -64,4 +64,33 @@ public sealed class SetupSettingsTests : IDisposable
     [InlineData("off")]
     [InlineData(null)]
     public void The_two_choices_pass(string? mcp) => Assert.True(ProfileRules.Check(new SindriProfile(1, "thor", Setup: new SetupSettings(mcp))).IsSuccess);
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task The_yaml_profile_reads_the_first_run_keys()
+    {
+        _files.Write(Base + "setup:\n  skipAccounts: true\n  skipFirstWorkflow: true\n  oauth:\n    github: Iv1.abc123\n    linear: lin_abc\n");
+
+        var setup = (await _files.Source.Load(Token)).Value.Profile.Setup!;
+
+        Assert.Equal((true, true, "Iv1.abc123", "lin_abc"), (setup.SkipAccounts, setup.SkipFirstWorkflow, setup.Oauth!.Github, setup.Oauth.Linear));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_client_id_with_a_space_is_refused_naming_its_key()
+    {
+        var github = ProfileRules.Check(new SindriProfile(1, "thor", Setup: new SetupSettings { Oauth = new SetupOauthSettings(Github: "two words") })).Error;
+        var linear = ProfileRules.Check(new SindriProfile(1, "thor", Setup: new SetupSettings { Oauth = new SetupOauthSettings(Linear: " ") })).Error;
+
+        Assert.Equal(SindriErrors.ProfileInvalid.Code, github.Code);
+        Assert.Contains("setup.oauth.github", github.Message, StringComparison.Ordinal);
+        Assert.Contains("setup.oauth.linear", linear.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_skip_flags_and_a_client_id_pass()
+    {
+        var setup = new SetupSettings { SkipAccounts = true, SkipFirstWorkflow = true, Oauth = new SetupOauthSettings("Iv1.abc123", "lin_abc") };
+
+        Assert.True(ProfileRules.Check(new SindriProfile(1, "thor", Setup: setup)).IsSuccess);
+    }
 }
