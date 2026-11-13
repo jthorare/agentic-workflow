@@ -18,12 +18,20 @@ internal sealed partial class ContextPageViewModel
     private string? _buildJob;
     private MapNotReadyView _notReady = MapNotReadyView.None;
     private bool _servedBuilding;
+    private IReadOnlyList<string> _repos = [];   // the repositories a no-map answer named; kept so serve's building line keeps the head (#3391)
 
-    /// <summary>The Building state's title: the whole map's answer says how far the build is, else the item map's words.</summary>
-    public string BuildingTitle => _servedBuilding ? Labels.ContextBuildingLine(BuildingParts()) : Labels.ContextStateBuilding;
+    /// <summary>The Building state's title: the head only ("Building the map for aw"); the progress is the body, so a long name cannot cut it off (#3463).</summary>
+    public string BuildingTitle => _servedBuilding ? BuildingHead()
+        : _itemOpened is not null ? Labels.ContextStateBuilding
+        : Labels.ContextBuildingFor(_repos);   // why: with no item there is no ticket and no promise of a time (#3391)
 
-    /// <summary>The Building state's body: "last map 2 h ago" when the answer names it; nothing when the title is the answer's.</summary>
-    public string BuildingBody => !_servedBuilding ? Labels.ContextStateBuildingBody : _notReady.Building?.LastSyncAt is { } last ? Labels.ContextLastMap(Age(last)) : string.Empty;
+    /// <summary>The Building state's whole line for a screen reader: the head and the progress, as the title once held them.</summary>
+    public string BuildingName => _servedBuilding ? Labels.ContextBuildingLine(BuildingParts(), BuildingHead()) : BuildingTitle;
+
+    private string BuildingHead() => _itemOpened is null ? Labels.ContextBuildingFor(_repos) : Labels.ContextBuildingFor([]);
+
+    /// <summary>The Building state's body: the progress parts and "last map 2 h ago" when the answer names it; it wraps, so nothing is cut.</summary>
+    public string BuildingBody => !_servedBuilding ? (_itemOpened is null ? string.Empty : Labels.ContextStateBuildingBody) : string.Join(" · ", BuildingParts().Concat(_notReady.Building?.LastSyncAt is { } last ? [Labels.ContextLastMap(Age(last))] : []));
 
     /// <summary>Whether the Building state's body has words.</summary>
     public bool HasBuildingBody => BuildingBody.Length > 0;
@@ -113,6 +121,11 @@ internal sealed partial class ContextPageViewModel
     private void NoteNotReady(Error error)
     {
         _notReady = MapNotReadyView.From(error, SindriApiClient.Json);
+        if (_notReady.NoMap?.Repos is { Count: > 0 } named)
+        {
+            _repos = named;
+        }
+
         _servedBuilding = _notReady.Building is not null || _notReady.NoMap?.FirstRunStartedAt is not null;
         if (_servedBuilding)
         {
@@ -213,6 +226,7 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(NoMap));
         OnChanged(nameof(IsBuilding));
         OnChanged(nameof(BuildingTitle));
+        OnChanged(nameof(BuildingName));
         OnChanged(nameof(BuildingBody));
         OnChanged(nameof(HasBuildingBody));
         OnChanged(nameof(EmptyTitle));

@@ -53,7 +53,8 @@ public sealed class MapNotReadyTests
         var (page, _) = await Page(Refusal(building: """{"sourcesDone":3,"sourcesTotal":7,"startedAt":"2026-01-01T01:56:00.0000000Z","lastSyncAt":"2025-12-31T23:59:00.0000000Z","jobId":"JOB-1"}"""));
 
         Assert.Equal((true, false, false), (page.ShowBuilding, page.ShowEmpty, page.ShowWhole));
-        Assert.Equal(("Building the map · 3 of 7 sources · started 4 min ago", "last map 2 h ago", true), (page.BuildingTitle, page.BuildingBody, page.HasBuildingBody));
+        Assert.Equal(("Building the map", "3 of 7 sources · started 4 min ago · last map 2 h ago", true), (page.BuildingTitle, page.BuildingBody, page.HasBuildingBody));
+        Assert.Equal("Building the map · 3 of 7 sources · started 4 min ago", page.BuildingName);   // the screen reader hears the whole line
         Assert.True(page.HasBuildJob);
     }
 
@@ -62,7 +63,7 @@ public sealed class MapNotReadyTests
     {
         var (page, _) = await Page(RouteAnswer.Problem("context-whole", "building-in-progress"));
 
-        Assert.Equal((true, "Building the map · 1 of 1 source · started 2 h ago", "last map 2 h ago", true), (page.ShowBuilding, page.BuildingTitle, page.BuildingBody, page.HasBuildJob));
+        Assert.Equal((true, "Building the map for aw-split-panes", "1 of 1 source · started 2 h ago · last map 2 h ago", true), (page.ShowBuilding, page.BuildingTitle, page.BuildingBody, page.HasBuildJob));
     }
 
     [Fact]
@@ -73,8 +74,8 @@ public sealed class MapNotReadyTests
         var (half, _) = await Page(Refusal(building: """{"sourcesDone":2}"""));
         var (bare, _) = await Page(Refusal(building: "{}"));
 
-        Assert.Equal(("Building the map · 2 of 5 sources", string.Empty, false, false), (counts.BuildingTitle, counts.BuildingBody, counts.HasBuildingBody, counts.HasBuildJob));
-        Assert.Equal(("Building the map · started 30 min ago", false), (started.BuildingTitle, started.HasBuildJob));
+        Assert.Equal(("Building the map", "2 of 5 sources", true, false), (counts.BuildingTitle, counts.BuildingBody, counts.HasBuildingBody, counts.HasBuildJob));
+        Assert.Equal(("Building the map", "started 30 min ago", false), (started.BuildingTitle, started.BuildingBody, started.HasBuildJob));
         Assert.Equal("Building the map", half.BuildingTitle);
         Assert.Equal((true, "Building the map", string.Empty), (bare.ShowBuilding, bare.BuildingTitle, bare.BuildingBody));
     }
@@ -104,7 +105,7 @@ public sealed class MapNotReadyTests
         var (started, _) = await Page(RouteAnswer.Problem("context-whole", "no-map-approved"));
         var (never, _) = await Page(RouteAnswer.Problem("context-whole", "no-map-never-run"));
 
-        Assert.Equal((true, false, "Building the map · started 2 h ago"), (started.ShowBuilding, started.ShowEmpty, started.BuildingTitle));
+        Assert.Equal((true, false, "Building the map for aw-split-panes", "started 2 h ago"), (started.ShowBuilding, started.ShowEmpty, started.BuildingTitle, started.BuildingBody));
         Assert.Equal((false, true), (never.ShowBuilding, never.ShowEmpty));
     }
 
