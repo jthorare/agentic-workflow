@@ -7,7 +7,7 @@ namespace Aw.Sindri.Ui.Views.Controls;
 /// Cards in rows that fill the width (#2905): as many columns of at least <see cref="MinColumnWidth"/> as fit, each stretched so a full
 /// row ends on the panel's right edge, <see cref="Spacing"/> between cards and between rows.
 /// Height rule: each card is arranged at its own measured height and is never stretched to a taller neighbour; a row advances by its
-/// tallest card, and cards are measured again at the width they are arranged at, so wrapped text fits (#3117, #3101).
+/// tallest card (with ColumnMajor each column stacks on its own instead, so a tall card leaves no gap beside it), and cards are measured again at the width they are arranged at, so wrapped text fits (#3117, #3101).
 /// A child with <see cref="FullRowProperty"/> set takes a row of its own at the full width, and splits a run of cards in two.
 /// A hidden child takes no column. Without a finite width (a horizontal scroller) it is one column at the minimum width.
 /// </summary>
@@ -95,50 +95,17 @@ internal sealed class CardGrid : Panel
         var (_, _, offered) = Layout(availableSize.Width);
         var measureWidth = _arrangedWidth is { } arranged && arranged < availableSize.Width ? arranged : availableSize.Width;
         var (columns, column, width) = Layout(measureWidth);
-        var height = 0.0;
-        var count = 0;
-        foreach (var row in Rows(columns))
-        {
-            var tallest = 0.0;
-            foreach (var child in row)
-            {
-                child.Measure(new Size(row.Count == 1 && GetFullRow(child) ? width : column, double.PositiveInfinity));
-                tallest = Math.Max(tallest, child.DesiredSize.Height);
-            }
-
-            height += tallest + (count++ == 0 ? 0 : Spacing);
-        }
-
-        return new Size(count == 0 ? 0 : offered, height);
+        var (height, any) = Flow(columns, column, width, arrange: false);
+        return new Size(any ? offered : 0, height);
     }
 
     /// <inheritdoc />
     protected override Size ArrangeOverride(Size finalSize)
     {
         var (columns, column, width) = Layout(finalSize.Width);
-        var y = 0.0;
-        var rows = 0;
-        foreach (var row in Rows(columns))
-        {
-            rows++;
-            var tallest = 0.0;
-            for (var i = 0; i < row.Count; i++)
-            {
-                var full = row.Count == 1 && GetFullRow(row[i]);
-                var cardWidth = full ? width : column;
-
-                // Measured again at the width it is arranged at, so wrapped text fits (#3101); a no-op when the width is unchanged.
-                row[i].Measure(new Size(cardWidth, double.PositiveInfinity));
-                var height = row[i].DesiredSize.Height;
-                row[i].Arrange(new Rect(i * (column + Spacing), y, cardWidth, height));
-                tallest = Math.Max(tallest, height);
-            }
-
-            y += tallest + Spacing;
-        }
+        var (stacked, _) = Flow(columns, column, width, arrange: true);
 
         // The cards took more or less room at this width than at the measured one: measure again at it, once per width (#3355).
-        var stacked = rows == 0 ? 0 : y - Spacing;
         if (Math.Abs(stacked - DesiredSize.Height) > 0.5 && finalSize.Width != _settledFor)
         {
             _arrangedWidth = finalSize.Width;
@@ -147,6 +114,51 @@ internal sealed class CardGrid : Panel
         }
 
         return finalSize;
+    }
+
+    // Measures every card at its width and, when arranging, places it. Row-major rows are paired: a row is as tall as its tallest card. Column-major stacks each column on its own, so a tall
+    // card leaves no gap beside it (#3493); a full-row card starts below the taller column. Returns the stacked height (no trailing gap) and whether there was any card.
+    private (double Height, bool Any) Flow(int columns, double column, double width, bool arrange)
+    {
+        var tops = new double[columns];
+        var any = false;
+        foreach (var row in Rows(columns))
+        {
+            any = true;
+            var full = row.Count == 1 && GetFullRow(row[0]);
+            var rowTop = tops.Max();
+            var tallest = PlaceRow(row, new Pass(column, width, arrange), full, tops, rowTop);
+            if (!ColumnMajor || full)
+            {
+                Array.Fill(tops, rowTop + tallest + Spacing);
+            }
+        }
+
+        return (any ? tops.Max() - Spacing : 0, any);
+    }
+
+    private readonly record struct Pass(double Column, double Width, bool Arrange);
+
+    // One row: each card measured at its width (again at the width it is arranged at, so wrapped text fits, #3101; a no-op when unchanged) and placed at its column's top (column-major) or the row's top.
+    private double PlaceRow(List<Control> row, Pass pass, bool full, double[] tops, double rowTop)
+    {
+        var cardWidth = full ? pass.Width : pass.Column;
+        var tallest = 0.0;
+        for (var i = 0; i < row.Count; i++)
+        {
+            row[i].Measure(new Size(cardWidth, double.PositiveInfinity));
+            var height = row[i].DesiredSize.Height;
+            var y = ColumnMajor && !full ? tops[i] : rowTop;
+            if (pass.Arrange)
+            {
+                row[i].Arrange(new Rect(i * (pass.Column + Spacing), y, cardWidth, height));
+            }
+
+            tops[i] = y + height + Spacing;
+            tallest = Math.Max(tallest, height);
+        }
+
+        return tallest;
     }
 
     /// <summary>Which children go in which cell: each row is the child indexes left to right. A run of cards between full-row children fills row by row, or, with <paramref name="columnMajor"/>, column by column (the first ceil(n / columns) down the left column).</summary>
