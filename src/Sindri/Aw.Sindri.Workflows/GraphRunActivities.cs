@@ -122,7 +122,7 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
     internal static (string? Output, string? Failure) Gather(IReadOnlyList<NodeRun> rows)
     {
         ArgumentNullException.ThrowIfNull(rows);
-        var cut = rows.FirstOrDefault(static r => r.Truncated || StoredJson.IsCut(StoredJson.Parse(r.Output)));
+        var cut = rows.FirstOrDefault(static r => r.Truncated);
         if (cut is not null)
         {
             return (null, $"the value of item {cut.ItemIndex.ToString(System.Globalization.CultureInfo.InvariantCulture)} was cut at 64 KB; collect a smaller field");

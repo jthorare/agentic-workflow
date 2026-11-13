@@ -39,12 +39,6 @@ internal static class StoredJson
         }
     }
 
-    /// <summary>True when the node is the object <see cref="Fit"/> writes for a text over the cap. Only for reading a stored output back in a scope; a writer uses <see cref="Fitted.Cut"/>.</summary>
-    /// <param name="node">The parsed stored text.</param>
-    /// <returns>Whether it is a cut envelope.</returns>
-    internal static bool IsCut(JsonNode? node) =>
-        node is JsonObject o && o.ContainsKey("head") && o["truncated"] is JsonValue v && v.TryGetValue<bool>(out var cut) && cut;
-
     /// <summary>True when the node is the JSON string <see cref="Blocked"/> writes.</summary>
     /// <param name="node">The parsed stored text.</param>
     /// <returns>Whether the redactor blocked it.</returns>
