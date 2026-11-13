@@ -20,7 +20,6 @@ namespace Aw.Sindri.Infrastructure.Launch;
 internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessionHost
 {
     private static readonly TimeSpan _callBudget = TimeSpan.FromSeconds(5);
-    private static readonly TimeSpan _stopRetryPause = TimeSpan.FromMilliseconds(100);
     private static readonly (int Major, int Minor) _minimum = (3, 2);
 
     /// <inheritdoc/>
@@ -92,35 +91,6 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
         return created.Error.Contains("duplicate session", StringComparison.Ordinal)
             ? KernelErrors.Conflict.With($"A session named {session.Name} already exists")
             : SindriErrors.LaunchTimedOut.With($"tmux could not start the session: {Short(created.Error)}");
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<Result<Unit>> Stop(HostRef host, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(host);
-        try
-        {
-            var killed = await Run(["kill-session", "-t", Target(host)], cancellationToken, _callBudget).ConfigureAwait(false);
-            if (killed.ExitCode != 0 && !IsGone(killed.Error))
-            {
-                // why (#3434): a server that is exiting (its last session just ended) answers "server exited unexpectedly" or "no current target";
-                // asked once more it says "no server running". Only that second answer decides, so an unknown text is never taken as "gone".
-                await Task.Delay(_stopRetryPause, cancellationToken).ConfigureAwait(false);
-                killed = await Run(["kill-session", "-t", Target(host)], cancellationToken, _callBudget).ConfigureAwait(false);
-            }
-
-            return killed.ExitCode == 0 || IsGone(killed.Error)
-                ? Unit.Value
-                : KernelErrors.Unavailable.With($"tmux could not end {host.Name}: {Short(killed.Error)}");
-        }
-        catch (Win32Exception)
-        {
-            return Unit.Value;   // no tmux, so no session to end
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            return KernelErrors.Unavailable.With($"tmux did not answer while ending {host.Name}");
-        }
     }
 
     /// <inheritdoc/>
@@ -235,12 +205,6 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
     private static partial Regex ShellName { get; }
 
     private static string Target(HostRef host) => "=" + host.Name;   // '=' : this exact name, never a prefix
-
-    private static bool IsGone(string error) =>
-        error.Contains("can't find session", StringComparison.Ordinal)
-        || error.Contains("no server running", StringComparison.Ordinal)
-        || (error.Contains("error connecting to", StringComparison.Ordinal)
-            && (error.Contains("(No such file or directory)", StringComparison.Ordinal) || error.Contains("(Connection refused)", StringComparison.Ordinal)));   // a permission error is not "gone"
 
     private static string Short(string text) => text.Trim() is { Length: > 200 } t ? t[..200] : text.Trim();
 
