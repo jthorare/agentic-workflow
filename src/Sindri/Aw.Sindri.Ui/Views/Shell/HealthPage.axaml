@@ -265,18 +265,18 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="shell:CodeIndexLine">
-                    <!-- The row's MinHeight is on the whole block, so a one-row line still centres in it and the command sits right under its text (qa on #3586). -->
                     <Border MinHeight="{StaticResource Row.Height.Data}">
-                      <StackPanel VerticalAlignment="Center">
-                        <TextBlock Classes="body" Text="{Binding Text}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Name}" />
-                        <!-- #3576: the fix command on a row of its own: mono, no wrapping, selectable so it copies in one piece. -->
-                        <SelectableTextBlock x:Name="CodeIndexCommand" Classes="mono" Text="{Binding Command}" TextWrapping="NoWrap" IsVisible="{Binding HasCommand}"
-                                             AutomationProperties.Name="{Binding Command}" />
-                      </StackPanel>
+                      <TextBlock Classes="body" Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
                     </Border>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
+              <!-- #3576: the pause is one service, so its resume command shows once, tight under its words: mono, no wrapping, selectable so it copies in one piece. -->
+              <StackPanel x:Name="CodeIndexPausedFoot" IsVisible="{Binding HasPausedCommand}">
+                <TextBlock x:Name="CodeIndexPausedNote" Classes="body" Text="{Binding PausedNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding PausedNote}" />
+                <SelectableTextBlock x:Name="CodeIndexCommand" Classes="mono" Text="{Binding PausedCommand}" TextWrapping="NoWrap"
+                                     AutomationProperties.Name="{Binding PausedCommand}" />
+              </StackPanel>
               <TextBlock x:Name="CodeIndexMessage" Classes="body subtle" Text="{Binding Message}" TextWrapping="Wrap" IsVisible="{Binding HasMessage}"
                          AutomationProperties.Name="{Binding Message}" />
             </StackPanel>

@@ -44,10 +44,13 @@ internal static partial class Labels
         _ => state,
     };
 
-    /// <summary>What a repo's line adds while code-index-main-move is paused: no build or retry comes (#3561). The fix is CodeIndexResumeCommand, on its own row (#3576).</summary>
-    internal const string CodeIndexPaused = "index builds paused:";
+    /// <summary>What a repo's line adds while code-index-main-move is paused: no build or retry comes (#3561). The fix is CodeIndexResumeCommand, once at the card's foot (#3576).</summary>
+    internal const string CodeIndexPaused = "paused";
 
-    /// <summary>The command that resumes the paused service, shown on its own row in the mono style; the service's name is MainMovePause.Service in Core, which this project does not reference, and doctor gives the same words.</summary>
+    /// <summary>The words above the resume command at the card's foot: the pause is one service, so it holds for every repo.</summary>
+    internal const string CodeIndexPausedNote = "Index builds are paused for every repo:";
+
+    /// <summary>The command that resumes the paused service, shown once in the mono style; the service's name is MainMovePause.Service in Core, which this project does not reference, and doctor gives the same words.</summary>
     internal const string CodeIndexResumeCommand = "sindri services resume code-index-main-move";
 
     /// <summary>How old an index is.</summary>

@@ -31,10 +31,13 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
     public bool HasMessage => Message.Length > 0;
 
     /// <summary>The command that resumes the paused service, once for the whole card; empty when no repo is paused.</summary>
-    public string PausedCommand => Heading[..0];   // red stub (#3576)
+    public string PausedCommand { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when a line is paused, so the card's foot names the command.</summary>
-    public bool HasPausedCommand => Heading.Length < 0;   // red stub (#3576)
+    public bool HasPausedCommand => PausedCommand.Length > 0;
+
+    /// <summary>The words above the command.</summary>
+    public string PausedNote { get; } = Labels.CodeIndexPausedNote;
 
     /// <summary>The state in a word at the heading's right: "ok" or "needs a look"; empty with no lines.</summary>
     public string Word { get; private set => Set(ref field, value); } = string.Empty;
@@ -50,6 +53,7 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
         {
             Lines = [];
             Word = string.Empty;
+            ShowCommand(paused: false);
             Show(Labels.CodeIndexUnreadable);
             return;
         }
@@ -57,9 +61,16 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
         var repos = read.Value.Repos;
         var health = (read.Value.Health ?? []).ToDictionary(h => h.Repo, StringComparer.Ordinal);
         var views = repos.Select(r => (Repo: r, Health: health.GetValueOrDefault(r.Repo))).ToList();
-        Lines = [.. views.Select(v => new CodeIndexLine(Line(v.Repo, v.Health), IsPaused(StateOf(v.Repo, v.Health), v.Health) ? Labels.CodeIndexResumeCommand : string.Empty))];
+        Lines = [.. views.Select(v => new CodeIndexLine(Line(v.Repo, v.Health)))];
         Word = repos.Count == 0 ? string.Empty : WordOf(views);
+        ShowCommand(views.Exists(static v => IsPaused(StateOf(v.Repo, v.Health), v.Health)));
         Show(repos.Count == 0 ? Labels.CodeIndexNone : string.Empty);
+    }
+
+    private void ShowCommand(bool paused)
+    {
+        PausedCommand = paused ? Labels.CodeIndexResumeCommand : string.Empty;
+        OnChanged(nameof(HasPausedCommand));
     }
 
     private void Show(string message)
