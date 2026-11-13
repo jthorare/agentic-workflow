@@ -353,12 +353,12 @@ public sealed class ClickableStateTests : FrameHost
         Settle(window);
 
         Assert.True(card.IsPointerOver);
-        Assert.Equal(3, transitions.Count);
+        Assert.Equal(2, transitions.Count); // the fill and the border: a press moves nothing, so no transform transition (#3190)
         Assert.All(transitions, t => Assert.Equal(TimeSpan.Zero, Length(t)));
     });
 
     [Fact]
-    public Task A_Needs_You_row_that_slid_in_scales_to_098_while_pressed() => OnUi(async () =>
+    public Task A_Needs_You_row_that_slid_in_moves_nothing_while_pressed() => OnUi(async () =>
     {
         var (window, shell) = await Connected();
         shell.ShowNeedsYou(new NeedsYouFeed([NeedsYouRows.Failure()], ""));
