@@ -43,5 +43,6 @@ public sealed class RecycleClearLandsGarbledTests
         Assert.Empty(_world.Panes.Woken);
         Assert.True(_world.Delay.Waits.Sum(static w => w.TotalSeconds) < 30, string.Join(", ", _world.Delay.Waits));
         Assert.Empty(_world.Log.Lines);
+        Assert.Equal(string.Empty, _world.Panes.InputBox("t1-api"));
     }
 }
