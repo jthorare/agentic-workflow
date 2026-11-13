@@ -27,18 +27,17 @@ internal sealed class EgressProxy(EgressPolicy policy, IEgressDialer dialer, Egr
     public async Task Handle(Stream client, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(client);
-        if (Interlocked.Increment(ref _active) > caps.MaxConnections || Interlocked.Read(ref _bytes) >= caps.MaxBytes)
-        {
-            log.Record("(cap)", 0, EgressVerdict.Refused);
-            Denials?.Record(new DenialObservation(DenialKind.Network, "(cap)", DenialRules.Cap));
-            await Reply(client, 503, "Service Unavailable", cancellationToken).ConfigureAwait(false);
-            _ = Interlocked.Decrement(ref _active);
-            await client.DisposeAsync().ConfigureAwait(false);
-            return;
-        }
-
+        var overCap = Interlocked.Increment(ref _active) > caps.MaxConnections || Interlocked.Read(ref _bytes) >= caps.MaxBytes;
         try
         {
+            if (overCap)
+            {
+                log.Record("(cap)", 0, EgressVerdict.Refused);
+                Denials?.Record(new DenialObservation(DenialKind.Network, "(cap)", DenialRules.Cap));
+                await Reply(client, 503, "Service Unavailable", cancellationToken).ConfigureAwait(false);   // why: a client gone during the 503 must still give its slot back (#3484)
+                return;
+            }
+
             using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             limit.CancelAfter(caps.ConnectionLifetime);
             await Serve(client, limit.Token).ConfigureAwait(false);
