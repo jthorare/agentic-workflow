@@ -38,7 +38,7 @@ internal static class TriggerMatch
         var json = new JsonObject();
         foreach (var (name, value) in polled.Fields)
         {
-            json[name] = value;
+            json[name] = Typed(polled.Kind.Key, name, value);
         }
 
         // why: written last so a provider field named 'event' or 'deliveryId' can't replace the trigger's own
@@ -64,7 +64,37 @@ internal static class TriggerMatch
             "event" => polled.Kind.Key,
             "deliveryId" => polled.DeliveryKey,
             "occurredAt" => polled.OccurredAt.UtcDateTime.ToString("O", CultureInfo.InvariantCulture),
-            var field => polled.Fields.TryGetValue(field, out var value) ? value : null,
+            var field => polled.Fields.TryGetValue(field, out var value) ? Typed(polled.Kind.Key, field, value) : null,
         };
+    }
+
+    // why: a poll keeps every field as text; the kind's schema (EventKindSchemas, #3237) says what a workflow reads. A number is a JSON number, draft a boolean and failing an array.
+    // A value that doesn't read as its declared type is null, not text: a workflow then never sees a string where the schema says number.
+    private static JsonNode? Typed(string kind, string name, string value)
+    {
+        if (EventKindSchemas.Find(kind)?.Fields.GetValueOrDefault(name) is not { } type)
+        {
+            return value;
+        }
+
+        return type switch
+        {
+            "number" => long.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var number) ? number : null,
+            "boolean" => bool.TryParse(value, out var flag) ? flag : null,
+            "array" => ArrayOf(value),
+            _ => value,
+        };
+    }
+
+    private static JsonArray? ArrayOf(string value)
+    {
+        try
+        {
+            return JsonNode.Parse(value) as JsonArray;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
     }
 }
