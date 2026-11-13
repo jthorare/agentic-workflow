@@ -26,8 +26,8 @@ public sealed class CodeIndexCardTests
     private string Repo(string name, string state, string? commit, int builtMinutesAgo, params string[] layers) =>
         $$"""{"repo":"{{name}}","state":"{{state}}","commit":{{(commit is null ? "null" : "\"" + commit + "\"")}},"builtAt":"{{_clock.GetUtcNow().AddMinutes(-builtMinutesAgo):O}}","layers":[{{string.Join(',', layers)}}],"counts":null}""";
 
-    private static string Health(string name, string state, int? embeddingsPercent = null, string? waiting = null, bool paused = false) =>
-        $$"""{"repo":"{{name}}","state":"{{state}}","embeddingsPercent":{{(embeddingsPercent is { } p ? p.ToString(CultureInfo.InvariantCulture) : "null")}},"waiting":{{(waiting is null ? "null" : "\"" + waiting + "\"")}},"paused":{{(paused ? "true" : "false")}}}""";
+    private static string Health(string name, string state, int? embeddingsPercent = null, string? waiting = null, bool paused = false, bool needsLook = false, string? lookWords = null) =>
+        $$"""{"repo":"{{name}}","state":"{{state}}","embeddingsPercent":{{(embeddingsPercent is { } p ? p.ToString(CultureInfo.InvariantCulture) : "null")}},"waiting":{{(waiting is null ? "null" : "\"" + waiting + "\"")}},"paused":{{(paused ? "true" : "false")}},"needsLook":{{(needsLook ? "true" : "false")}},"lookWords":{{(lookWords is null ? "null" : "\"" + lookWords + "\"")}}}""";
 
     private async Task<CodeIndexCardViewModel> Read(params string[] repos) => await ReadWithHealth(repos, []);
 
@@ -65,6 +65,60 @@ public sealed class CodeIndexCardTests
         var card = await Read(Repo("repo", "ok", Sha, 1, Layer("structure", "ok"), Layer("clones", "ok"), Layer("deps", "unavailable", "SND-CODEIDX-021")));
 
         Assert.Equal("repo @ abcdef0, 1 min old, structure ok · deps unavailable (SND-CODEIDX-021)", Assert.Single(card.Lines).Text);
+    }
+
+    [Fact]
+    public async Task A_repo_flagged_needs_a_look_says_its_look_words_on_its_line()
+    {
+        const string Words = "demo: first build queued for 40 min; check that code-index-main-move is running";
+        var card = await ReadWithHealth([Repo("demo", "missing", commit: null, 0)], [Health("demo", "queued", needsLook: true, lookWords: Words)]);
+
+        Assert.Equal(Words, Assert.Single(card.Lines).Text);
+        Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
+    }
+
+    private const string BehindWords = "demo: code index is behind main; rebuild it from the System page";
+
+    [Fact]
+    public async Task A_built_stale_repo_flagged_needs_a_look_keeps_its_commit_age_and_layers()
+    {
+        var built = new[] { Repo("demo", "ok", Sha, 3, Layer("structure", "ok"), Layer("graph", "ok")) };
+        var plain = Assert.Single((await ReadWithHealth(built, [Health("demo", "stale")])).Lines);
+        var flagged = Assert.Single((await ReadWithHealth(built, [Health("demo", "stale", needsLook: true, lookWords: BehindWords)])).Lines);
+
+        Assert.Equal(plain.Text, flagged.Text);
+        Assert.Contains("@ abcdef0", flagged.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("rebuild", flagged.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_paused_stale_repo_flagged_needs_a_look_still_says_it_is_paused()
+    {
+        var card = await ReadWithHealth([Repo("demo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("demo", "stale", paused: true, needsLook: true, lookWords: BehindWords)]);
+
+        var line = Assert.Single(card.Lines);
+        Assert.Contains(Labels.CodeIndexPaused, line.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("rebuild", line.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_built_repo_with_an_unavailable_graph_flagged_needs_a_look_keeps_its_normal_line()
+    {
+        var built = new[] { Repo("demo", "ok", Sha, 3, Layer("structure", "ok"), Layer("graph", "unavailable", "SND-CODEIDX-020")) };
+        var plain = Assert.Single((await ReadWithHealth(built, [Health("demo", "ok")])).Lines);
+        var flagged = Assert.Single((await ReadWithHealth(built, [Health("demo", "ok", needsLook: true, lookWords: "demo: code graph is unavailable")])).Lines);
+
+        Assert.Equal(plain.Text, flagged.Text);
+        Assert.Contains("@ abcdef0", flagged.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_queued_repo_the_server_does_not_flag_still_says_build_queued()
+    {
+        var card = await ReadWithHealth([Repo("demo", "missing", commit: null, 0)], [Health("demo", "queued")]);
+
+        Assert.Equal("demo: " + Labels.CodeIndexState("queued"), Assert.Single(card.Lines).Text);
+        Assert.Equal(Labels.CodeIndexQueued, card.Word);
     }
 
     [Theory]

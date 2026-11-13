@@ -23799,6 +23799,10 @@ static Aw.Sindri.Core.Scheduling.MainMovePause.Active(Aw.Sindri.Core.Scheduling.
 static Aw.Sindri.Core.Scheduling.MainMovePause.Service.get -> Aw.Sindri.Core.Ids.ServiceName
 Aw.Sindri.Core.Doctor.IFirstMapCheck
 Aw.Sindri.Core.Doctor.IFirstMapCheck.Check(Aw.Sindri.Core.Profile.LoadedProfile? approved, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Doctor.DoctorCheck!>
+static Aw.Sindri.Core.Setup.SetupSteps.Unreadable(Aw.Sindri.Core.Setup.SetupStepId id, Aw.Kernel.Error! error) -> Aw.Sindri.Core.Setup.SetupStep!
+Aw.Sindri.Core.Graph.Schedule.ScheduleStamp
+static Aw.Sindri.Core.Graph.Schedule.ScheduleStamp.Add(System.Text.Json.Nodes.JsonObject! trigger, System.DateTimeOffset at, string? timezone) -> void
+static Aw.Sindri.Core.Graph.Schedule.ScheduleStamp.ZoneOf(Aw.Sindri.Core.Graph.GraphNode! node) -> string?
 Aw.Sindri.Core.Profile.ApprovedProfileReads
 static Aw.Sindri.Core.Profile.ApprovedProfileReads.ForRead(this Aw.Sindri.Core.Profile.IApprovedProfile! approvals, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Profile.LoadedProfile?>!>
 static Aw.Sindri.Core.Health.HealthSummary.WithProfileProblem(Aw.Sindri.Core.Health.HealthReport! report, bool wontLoad) -> Aw.Sindri.Core.Health.HealthReport!

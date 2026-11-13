@@ -6,7 +6,7 @@ namespace Aw.Sindri.Core.Graph.Blocks;
 /// <summary>The 'schedule' trigger: a cron and a timezone; hands on the tick it fired for.</summary>
 public sealed class ScheduleBlock : IGraphBlock
 {
-    private static readonly BlockOutputs _outputs = new(new Dictionary<string, string>(StringComparer.Ordinal) { ["scheduledFor"] = "string" });
+    private static readonly BlockOutputs _outputs = new(new Dictionary<string, string>(StringComparer.Ordinal) { ["scheduledFor"] = "string", ["localDate"] = "string", ["weekday"] = "string" });
 
     // why: the one-click cron fills; any other cron is still allowed. Each has the words its node's summary line uses.
     private static readonly (string Cron, string Label, string Runs)[] _presets =
@@ -72,7 +72,12 @@ public sealed class ScheduleBlock : IGraphBlock
     public ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        return ValueTask.FromResult<Result<BlockResult>>(new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal) { ["scheduledFor"] = context.Resolve("trigger.scheduledFor") }));
+        return ValueTask.FromResult<Result<BlockResult>>(new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal)
+        {
+            ["scheduledFor"] = context.Resolve("trigger.scheduledFor"),
+            ["localDate"] = context.Resolve("trigger.localDate"),
+            ["weekday"] = context.Resolve("trigger.weekday"),
+        }));
     }
 
     private static string? Text(JsonNode? node) => node is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;
