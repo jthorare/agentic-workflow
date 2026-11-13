@@ -45,6 +45,7 @@ internal static class SindriHostServiceCollectionExtensions
     internal static IServiceCollection AddSindriServe(this IServiceCollection services) => services
         .AddSingleton<ServePort>()
         .AddHostedService<ServeListenerCheck>()
+        .AddHostedService<QueuedClockStart>()   // the queued count starts at serve start (#3480)
         .AddHostedService<SchedulerHost>()
         .AddHostedService<ProjectorHost>()
         .AddHostedService<JobRecoveryHost>()
