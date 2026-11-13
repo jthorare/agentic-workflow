@@ -4,6 +4,8 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Shapes;
+using Avalonia.Layout;
 
 namespace Aw.Sindri.Ui.Views.Controls;
 
@@ -27,6 +29,9 @@ internal sealed class ToggleChip : ToggleButton
 
     private readonly TextBlock _word = new();
 
+    // The state dot before the word: hollow when the chip is off, filled when it is on (the cue that is not colour alone). Its colours come from the styles, never from a local value.
+    private readonly Ellipse _dot = new() { Name = "PART_Dot", Width = 8, Height = 8, StrokeThickness = 1, Margin = new Thickness(0, 0, 6, 0), VerticalAlignment = VerticalAlignment.Center, IsHitTestVisible = false };
+
     static ToggleChip()
     {
         _ = WordProperty.Changed.AddClassHandler<ToggleChip>((chip, _) => chip.Apply());
@@ -38,7 +43,8 @@ internal sealed class ToggleChip : ToggleButton
     public ToggleChip()
     {
         Classes.Add("toggle-chip");
-        Content = _word;
+        AutomationProperties.SetAccessibilityView(_dot, AccessibilityView.Raw);
+        Content = new StackPanel { Orientation = Orientation.Horizontal, Children = { _dot, _word } };
         Apply();
     }
 

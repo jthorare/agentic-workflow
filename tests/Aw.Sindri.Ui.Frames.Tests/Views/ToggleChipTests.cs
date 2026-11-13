@@ -4,6 +4,7 @@ using Avalonia.Automation.Peers;
 using Avalonia.Automation.Provider;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
+using Avalonia.Controls.Shapes;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -24,7 +25,7 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 [Collection(HeadlessWindows.Name)]
 public sealed class ToggleChipTests
 {
-    public static TheoryData<string> Tones => ["neutral", "ok", "attention", "error"];
+    public static TheoryData<string> Tones => ["ok", "running", "waiting", "attention", "error", "neutral", "draft"];
 
     private static Task<T> OnUi<T>(Func<T> body) =>
         HeadlessUnitTestSession.GetOrStartForAssembly(typeof(ToggleChipTests).Assembly).Dispatch(body, TestContext.Current.CancellationToken);
@@ -87,54 +88,121 @@ public sealed class ToggleChipTests
         return true;
     });
 
-    [Fact]
-    public async Task A_checked_chip_takes_PrimarySoft_and_a_Primary_border_with_Ink_on_it() => await OnUi(() =>
-    {
-        var (window, chip) = Show("Advanced");
-        var before = Colour(Face(chip).Background);
-        chip.IsChecked = true;
-        Dispatcher.UIThread.RunJobs();
+    private static string Key(string tone, string part) => "Brush.Status." + char.ToUpperInvariant(tone[0]) + tone[1..] + "." + part;
 
-        var face = Face(chip);
-        Assert.NotEqual(before, Colour(face.Background));
-        Assert.Equal(Colour(Resource("Brush.PrimarySoft")), Colour(face.Background));
-        Assert.Equal(Colour(Resource("Brush.Primary")), Colour(face.BorderBrush));
+    private static Ellipse Dot(ToggleChip chip) => chip.GetVisualDescendants().OfType<Ellipse>().First();
+
+    private static Color Panel => Colour(Resource("Brush.Surface1"));
+
+    private static Color FaceFill(ToggleChip chip) => Over(Colour(Face(chip).Background), Panel);
+
+    [Theory]
+    [MemberData(nameof(Tones))]
+    public async Task Off_is_the_grey_pill_with_Ink_and_a_hollow_dot_in_the_state_colour(string tone) => await OnUi(() =>
+    {
+        var (window, chip) = Show("Word", tone);
+        var dot = Dot(chip);
+
         Assert.Equal(Colour(Resource("Brush.Ink")), Colour(Text(chip).Foreground));
-        Assert.True(Contrast(Colour(Text(chip).Foreground), Over(Colour(face.Background), Colour(Resource("Brush.Surface1")))) >= 4.5, "checked word");
+        Assert.Equal(Colour(Resource("Brush.Status.Neutral.Bg")), Colour(Face(chip).Background));
+        Assert.Equal(Colour(Resource("Brush.Status.Neutral.Border")), Colour(Face(chip).BorderBrush));
+        Assert.Equal(Colour(Resource(Key(tone, "Fg"))), Colour(dot.Stroke));
+        Assert.Equal(0, Colour(dot.Fill).A);   // hollow
         window.Close();
         return true;
     });
 
     [Theory]
     [MemberData(nameof(Tones))]
-    public async Task The_word_holds_4_5_to_1_at_rest_under_the_pointer_and_pressed(string tone) => await OnUi(() =>
+    public async Task On_is_the_state_tint_with_a_state_border_Ink_and_a_filled_dot(string tone) => await OnUi(() =>
     {
         var (window, chip) = Show("Word", tone);
-        var panel = Colour(Resource("Brush.Surface1"));
+        chip.IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+        var dot = Dot(chip);
 
-        double Ratio() => Contrast(Colour(Text(chip).Foreground), Over(Colour(Face(chip).Background), panel));
-
-        var rest = Ratio();
-        Pseudo(chip, ":pointerover", on: true);
-        Assert.Equal(Colour(Resource("Brush.Clickable.Hover")), Colour(Face(chip).Background));
-        var hover = Ratio();
-        Pseudo(chip, ":pressed", on: true);
-        Assert.Equal(Colour(Resource("Brush.Clickable.Pressed")), Colour(Face(chip).Background));
-        var pressed = Ratio();
-
-        Assert.True(rest >= 4.5 && hover >= 4.5 && pressed >= 4.5, string.Create(CultureInfo.InvariantCulture, $"{tone}: rest {rest:F2}, hover {hover:F2}, pressed {pressed:F2}"));
+        Assert.Equal(Colour(Resource("Brush.Ink")), Colour(Text(chip).Foreground));
+        Assert.Equal(Colour(Resource(Key(tone, "On"))), Colour(Face(chip).Background));
+        Assert.Equal(Colour(Resource(Key(tone, "Fg"))), Colour(Face(chip).BorderBrush));
+        Assert.Equal(Colour(Resource(Key(tone, "Fg"))), Colour(dot.Fill));   // filled: the cue that is not colour alone
         window.Close();
         return true;
     });
 
-    [Fact]
-    public async Task A_chip_uses_the_status_brushes_of_its_tone_at_rest() => await OnUi(() =>
+    [Theory]
+    [MemberData(nameof(Tones))]
+    public async Task The_chip_keeps_its_width_when_it_turns_on(string tone) => await OnUi(() =>
     {
-        var (window, chip) = Show("Fix 2 things", "error");
+        var (window, chip) = Show("Advanced", tone);
+        var off = chip.Bounds.Width;
+        chip.IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
 
-        Assert.Equal(Colour(Resource("Brush.Status.Error.Fg")), Colour(Text(chip).Foreground));
-        Assert.Equal(Colour(Resource("Brush.Status.Error.Bg")), Colour(Face(chip).Background));
-        Assert.Equal(Colour(Resource("Brush.Status.Error.Border")), Colour(Face(chip).BorderBrush));
+        Assert.Equal(off, chip.Bounds.Width);
+        window.Close();
+        return true;
+    });
+
+    [Theory]
+    [MemberData(nameof(Tones))]
+    public async Task Ink_holds_4_5_to_1_and_the_dot_and_an_on_border_3_to_1_off_and_on_at_rest_under_the_pointer_and_pressed(string tone) => await OnUi(() =>
+    {
+        var (window, chip) = Show("Word", tone);
+        var low = new List<string>();
+
+        void Check(string at)
+        {
+            var fill = FaceFill(chip);
+            var ink = Contrast(Colour(Text(chip).Foreground), fill);
+            var dot = Contrast(Over(Colour(Dot(chip).Stroke), fill), fill);
+            var border = chip.IsChecked == true ? Contrast(Colour(Face(chip).BorderBrush), Panel) : 3;
+            if (ink < 4.5 || dot < 3 || border < 3)
+            {
+                low.Add(string.Create(CultureInfo.InvariantCulture, $"{tone} {at}: ink {ink:F2}, dot {dot:F2}, border {border:F2}"));
+            }
+        }
+
+        bool[] states = [false, true];
+        foreach (var on in states)
+        {
+            chip.IsChecked = on;
+            Pseudo(chip, ":pointerover", on: false);
+            Pseudo(chip, ":pressed", on: false);
+            Check(on ? "on rest" : "off rest");
+            Pseudo(chip, ":pointerover", on: true);
+            Check(on ? "on hover" : "off hover");
+            Pseudo(chip, ":pressed", on: true);
+            Check(on ? "on pressed" : "off pressed");
+        }
+
+        Assert.True(low.Count == 0, string.Join("; ", low));
+        window.Close();
+        return true;
+    });
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Hover_and_pressed_lift_the_fill_and_the_focus_ring_replaces_the_border_without_growing_the_chip(bool on) => await OnUi(() =>
+    {
+        var (window, chip) = Show("Word", "ok");
+        chip.IsChecked = on;
+        Dispatcher.UIThread.RunJobs();
+        var rest = Face(chip).Bounds.Size;
+        Pseudo(chip, ":pointerover", on: true);
+        Assert.Equal(Colour(Resource(on ? "Brush.Status.Ok.OnHover" : "Brush.Clickable.Hover")), Colour(Face(chip).Background));
+        Pseudo(chip, ":pressed", on: true);
+        Assert.Equal(Colour(Resource(on ? "Brush.Status.Ok.OnPressed" : "Brush.Clickable.Pressed")), Colour(Face(chip).Background));
+        Pseudo(chip, ":pointerover", on: false);
+        Pseudo(chip, ":pressed", on: false);
+
+        Assert.True(chip.Focus(NavigationMethod.Tab));
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+        Assert.Equal(2, Face(chip).BorderThickness.Left);
+        Assert.Equal(Colour(Resource("Brush.PrimaryHover")), Colour(Face(chip).BorderBrush));
+        Assert.Equal(rest, Face(chip).Bounds.Size);
         window.Close();
         return true;
     });
