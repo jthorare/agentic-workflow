@@ -146,40 +146,48 @@ public static partial class TmuxAllowlist
         var i = 0;
         for (; i < args.Length; i++)
         {
-            var flag = args[i];
-            if (flag == "--")
+            if (args[i] == "--")
             {
                 i++;
                 break;
             }
 
-            switch (flag)
+            if (!args[i].StartsWith('-'))
             {
-                case "-d":
-                    detached = true;
-                    break;
-                case "-P":
-                    break;
-                case "-s" when i + 1 < args.Length:
-                    name = args[++i];
-                    break;
-                case "-x" or "-y" when i + 1 < args.Length && Size(args[i + 1]):
-                    i++;
-                    break;
-                case "-c" or "-F" or "-e" when i + 1 < args.Length && args[i + 1].Length > 0:
-                    i++;
-                    break;
-                default:
-                    if (!flag.StartsWith('-'))
-                    {
-                        return CommandPart(name, detached, args.Length - i);   // the command starts here ('sh <script>')
-                    }
+                break;   // the command starts here ('sh <script>')
+            }
 
-                    return $"new-session does not take '{flag}'";
+            if (NewSessionFlag(args, ref i, ref name, ref detached) is { } problem)
+            {
+                return problem;
             }
         }
 
         return CommandPart(name, detached, args.Length - i);
+    }
+
+    private static string? NewSessionFlag(string[] args, ref int i, ref string? name, ref bool detached)
+    {
+        var hasValue = i + 1 < args.Length;
+        switch (args[i])
+        {
+            case "-d":
+                detached = true;
+                return null;
+            case "-P":
+                return null;
+            case "-s" when hasValue:
+                name = args[++i];
+                return null;
+            case "-x" or "-y" when hasValue && Size(args[i + 1]):
+                i++;
+                return null;
+            case "-c" or "-F" or "-e" when hasValue && args[i + 1].Length > 0:
+                i++;
+                return null;
+            default:
+                return $"new-session does not take '{args[i]}'";
+        }
     }
 
     private static string? CommandPart(string? name, bool detached, int commandLength) =>
@@ -227,21 +235,21 @@ public static partial class TmuxAllowlist
         return mustHave.All(seen.Contains) ? null : $"needs {string.Join(", ", mustHave)}";
     }
 
-    [GeneratedRegex(@"^(%[0-9]+|=?[A-Za-z0-9_.-]{1,64})\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex(@"^(%[0-9]+|=?[A-Za-z0-9_.-]{1,64})\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex PaneOrSession { get; }
 
-    [GeneratedRegex(@"^(sindri-[a-z0-9]{8,32}|snd-[A-Za-z0-9_-]{1,64})\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex(@"^(sindri-[a-z0-9]{8,32}|snd-[A-Za-z0-9_-]{1,64})\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex OwnedName { get; }
 
-    [GeneratedRegex(@"^sindri-[a-z0-9]{8,32}\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex(@"^sindri-[a-z0-9]{8,32}\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex KillName { get; }
 
-    [GeneratedRegex(@"^(C|M)-[a-z]\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex(@"^(C|M)-[a-z]\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex ModifiedKey { get; }
 
-    [GeneratedRegex(@"^-?[0-9]+\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex(@"^-?[0-9]+\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Number { get; }
 
-    [GeneratedRegex(@"^[0-9]+\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex(@"^[0-9]+\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Digits { get; }
 }

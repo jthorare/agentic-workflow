@@ -10,5 +10,5 @@ public interface ISessionPanes
     /// <param name="host">The session.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The pane id ('%N'), or null when the session is gone or tmux could not be asked.</returns>
-    public ValueTask<string?> PaneId(HostRef host, CancellationToken cancellationToken);
+    public ValueTask<string?> FirstPane(HostRef host, CancellationToken cancellationToken);
 }

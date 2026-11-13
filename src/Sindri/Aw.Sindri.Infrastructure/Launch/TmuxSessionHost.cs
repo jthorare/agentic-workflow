@@ -253,7 +253,7 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
     public string Socket => options.Socket;
 
     /// <inheritdoc/>
-    public async ValueTask<string?> PaneId(HostRef host, CancellationToken cancellationToken)
+    public async ValueTask<string?> FirstPane(HostRef host, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(host);
         try

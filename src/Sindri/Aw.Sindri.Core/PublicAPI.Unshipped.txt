@@ -23370,11 +23370,11 @@ static Aw.Sindri.Core.Worktrees.OneOffWorktree.operator !=(Aw.Sindri.Core.Worktr
 static Aw.Sindri.Core.Worktrees.OneOffWorktree.operator ==(Aw.Sindri.Core.Worktrees.OneOffWorktree? left, Aw.Sindri.Core.Worktrees.OneOffWorktree? right) -> bool
 Aw.Sindri.Core.Events.AgentOpRecorded
 Aw.Sindri.Core.Events.AgentOpRecorded.<Clone>$() -> Aw.Sindri.Core.Events.AgentOpRecorded!
-Aw.Sindri.Core.Events.AgentOpRecorded.AgentOpRecorded(string! RowId, string! Op, string! BodyHash, string! Outcome, string? Worktree = null) -> void
-Aw.Sindri.Core.Events.AgentOpRecorded.Deconstruct(out string! RowId, out string! Op, out string! BodyHash, out string! Outcome, out string? Worktree) -> void
+Aw.Sindri.Core.Events.AgentOpRecorded.AgentOpRecorded(string! Row, string! Op, string! BodyHash, string! Outcome, string? Worktree = null) -> void
+Aw.Sindri.Core.Events.AgentOpRecorded.Deconstruct(out string! Row, out string! Op, out string! BodyHash, out string! Outcome, out string? Worktree) -> void
 Aw.Sindri.Core.Events.AgentOpRecorded.Equals(Aw.Sindri.Core.Events.AgentOpRecorded? other) -> bool
-Aw.Sindri.Core.Events.AgentOpRecorded.RowId.get -> string!
-Aw.Sindri.Core.Events.AgentOpRecorded.RowId.init -> void
+Aw.Sindri.Core.Events.AgentOpRecorded.Row.get -> string!
+Aw.Sindri.Core.Events.AgentOpRecorded.Row.init -> void
 Aw.Sindri.Core.Events.AgentOpRecorded.Op.get -> string!
 Aw.Sindri.Core.Events.AgentOpRecorded.Op.init -> void
 Aw.Sindri.Core.Events.AgentOpRecorded.BodyHash.get -> string!
@@ -23389,7 +23389,7 @@ override Aw.Sindri.Core.Events.AgentOpRecorded.ToString() -> string!
 static Aw.Sindri.Core.Events.AgentOpRecorded.operator !=(Aw.Sindri.Core.Events.AgentOpRecorded? left, Aw.Sindri.Core.Events.AgentOpRecorded? right) -> bool
 static Aw.Sindri.Core.Events.AgentOpRecorded.operator ==(Aw.Sindri.Core.Events.AgentOpRecorded? left, Aw.Sindri.Core.Events.AgentOpRecorded? right) -> bool
 Aw.Sindri.Core.Launch.ISessionPanes
-Aw.Sindri.Core.Launch.ISessionPanes.PaneId(Aw.Sindri.Core.Launch.HostRef! host, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
+Aw.Sindri.Core.Launch.ISessionPanes.FirstPane(Aw.Sindri.Core.Launch.HostRef! host, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
 Aw.Sindri.Core.Launch.ISessionPanes.Socket.get -> string!
 Aw.Sindri.Core.Launch.IStartChecks
 Aw.Sindri.Core.Launch.IStartChecks.Agent(Aw.Sindri.Core.Launch.AgentEntry! agent, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Launch.AgentReadiness!>

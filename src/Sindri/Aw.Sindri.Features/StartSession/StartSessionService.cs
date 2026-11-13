@@ -129,7 +129,7 @@ internal sealed partial class StartSessionService(
             return await Failed(started.Error, actId, cancellationToken).ConfigureAwait(false);
         }
 
-        var pane = await panes.PaneId(started.Value, cancellationToken).ConfigureAwait(false);
+        var pane = await panes.FirstPane(started.Value, cancellationToken).ConfigureAwait(false);
         if (pane is null)
         {
             await Undo(made.Value, started.Value, cancellationToken).ConfigureAwait(false);

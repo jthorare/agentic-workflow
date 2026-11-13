@@ -284,7 +284,7 @@ public sealed class StartSessionTests : IDisposable
 
         var recorded = Assert.Single(_r.Base.Store.Events, e => string.Equals(e.Envelope.Type, EventTypes.AgentOp, StringComparison.Ordinal));
         var payload = _r.Base.Events.Payload<AgentOpRecorded>(recorded).Value;
-        Assert.Equal(("agent.op:" + Act, "sindri-" + Act, "start", started.Value.Host.Pane), (recorded.IdempotencyKey, payload.RowId, payload.Op, payload.Outcome));
+        Assert.Equal(("agent.op:" + Act, "sindri-" + Act, "start", started.Value.Host.Pane), (recorded.IdempotencyKey, payload.Row, payload.Op, payload.Outcome));
         Assert.Equal("/wt/demo/" + Assert.Single(_r.Worktrees.Names), payload.Worktree);
     }
 

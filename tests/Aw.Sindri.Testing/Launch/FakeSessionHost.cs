@@ -20,7 +20,7 @@ public sealed class FakeSessionHost : ISessionHost, ISessionPanes
     /// <inheritdoc/>
     public string Socket => "sindri-launch";
 
-    /// <summary>When true, <see cref="PaneId"/> answers null, as tmux does when it can't be asked.</summary>
+    /// <summary>When true, <see cref="FirstPane"/> answers null, as tmux does when it can't be asked.</summary>
     public bool PaneLookupFails { get; set; }
 
     /// <summary>When true, <see cref="Probe"/> reports tmux as not installed.</summary>
@@ -103,7 +103,7 @@ public sealed class FakeSessionHost : ISessionHost, ISessionPanes
         ValueTask.FromResult(TmuxMissing ? new HostFacts(HostKind.Tmux, Present: false, Version: null, "not-installed") : new HostFacts(HostKind.Tmux, Present: true, "3.4", Problem: null));
 
     /// <inheritdoc/>
-    public ValueTask<string?> PaneId(HostRef host, CancellationToken cancellationToken)
+    public ValueTask<string?> FirstPane(HostRef host, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(host);
         return ValueTask.FromResult(PaneLookupFails ? null : _panes.GetValueOrDefault(host.Name));
