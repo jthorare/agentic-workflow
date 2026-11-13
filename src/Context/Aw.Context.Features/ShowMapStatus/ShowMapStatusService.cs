@@ -42,12 +42,13 @@ internal sealed class ShowMapStatusService(IGraphStore store) : IService<ShowMap
         }
 
         var retained = versions.Value.Count(v => v.Status == MapVersionStatus.Retained);
-        return await Status(version, retained, shown, layer, coverage.Value, request.Scope, cancellationToken).ConfigureAwait(false);
+        return await Status(new StatusParts(version, retained, shown, layer, coverage.Value), request.Scope, cancellationToken).ConfigureAwait(false);
     }
 
     // The view of the current version as the caller reads it, with the commit of every repo it maps (issue 3308).
-    private async ValueTask<Result<MapStatusView>> Status(MapVersion version, int retained, GraphSnapshot shown, IReadOnlyList<MapOverride> layer, LensCoverage? coverage, ContextScope scope, CancellationToken cancellationToken)
+    private async ValueTask<Result<MapStatusView>> Status(StatusParts parts, ContextScope scope, CancellationToken cancellationToken)
     {
+        var (version, retained, shown, layer, coverage) = parts;
         var heads = await store.Heads(version.Number, cancellationToken).ConfigureAwait(false);
         if (heads.IsError)
         {
@@ -91,4 +92,7 @@ internal sealed class ShowMapStatusService(IGraphStore store) : IService<ShowMap
         var node = AnchorMatch.Resolve(applied, anchor, repos);
         return node.IsError ? node.Error : Results.Success<LensCoverage?>(LensCoverageBuilder.ForAnchor(applied, node.Value.Key));
     }
+
+    // What Handle has read and checked, handed to Status in one piece (AW1006: at most 5 parameters).
+    private sealed record StatusParts(MapVersion Version, int Retained, GraphSnapshot Shown, IReadOnlyList<MapOverride> Layer, LensCoverage? Coverage);
 }
