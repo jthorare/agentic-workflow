@@ -30,6 +30,12 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
     /// <summary>True when there is a message to show.</summary>
     public bool HasMessage => Message.Length > 0;
 
+    /// <summary>The command that resumes the paused service, once for the whole card; empty when no repo is paused.</summary>
+    public string PausedCommand => Heading[..0];   // red stub (#3576)
+
+    /// <summary>True when a line is paused, so the card's foot names the command.</summary>
+    public bool HasPausedCommand => Heading.Length < 0;   // red stub (#3576)
+
     /// <summary>The state in a word at the heading's right: "ok" or "needs a look"; empty with no lines.</summary>
     public string Word { get; private set => Set(ref field, value); } = string.Empty;
 

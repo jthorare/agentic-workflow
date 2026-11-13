@@ -84,52 +84,28 @@ public sealed class CodeIndexCardViewTests : FrameHost
         Assert.True(rows[1].Bounds.Top - rows[0].Bounds.Bottom >= space, "the second line starts a Space.XS below the first");
     });
 
-    // #3576: the resume command is its own selectable, unwrapped row in the mono style.
+    // #3576: one command for the whole card (the pause is one service), under its own words, mono and unwrapped.
     [Fact]
-    public Task A_paused_repo_shows_the_resume_command_on_its_own_row() => OnUi(async () =>
+    public Task Three_paused_repos_show_the_resume_command_once_directly_under_its_text() => OnUi(async () =>
     {
-        Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, """{"repos":[{"repo":"repo","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[{"repo":"repo","state":"missing","embeddingsPercent":null,"waiting":null,"paused":true}]}""");
-        var (window, shell) = await Connected(s => s.Health.CodeIndex.Lines.Count > 0);
+        string[] names = ["repo-a", "repo-b", "repo-c"];
+        Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, "{\"repos\":[" + string.Join(',', names.Select(Missing)) + "],\"health\":[" + string.Join(',', names.Select(Paused)) + "]}");
+        var (window, shell) = await Connected(s => s.Health.CodeIndex.Lines.Count > 2);
         shell.GoTo(PageId.System);
         Settle(window);
 
-        var command = Named<SelectableTextBlock>(window, "CodeIndexCommand");
+        var panel = Named<Border>(window, "CodeIndexPanel");
+        var command = Assert.Single(panel.GetVisualDescendants().OfType<SelectableTextBlock>(), c => c.Name == "CodeIndexCommand");
+        var note = Named<TextBlock>(window, "CodeIndexPausedNote");
+        var space = Assert.IsType<double>(Application.Current!.FindResource("Space.XS"));
         Assert.Equal(("sindri services resume code-index-main-move", TextWrapping.NoWrap, true), (command.Text, command.TextWrapping, command.IsEffectivelyVisible));
         Assert.True(command.Classes.Contains("mono"), "the command takes the mono style");
-        var line = Assert.Single(Named<ItemsControl>(window, "CodeIndexLines").GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.Name != "CodeIndexCommand");
-        Assert.DoesNotContain("sindri services", line.Text, StringComparison.Ordinal);
-    });
-
-    // qa on #3586: the command sat 18 px under a wrapped line but 26 px under a one-row line, because the one-row text was centred in the 36 px row before the command.
-    [Fact]
-    public Task The_command_sits_the_same_distance_under_a_one_row_and_a_two_row_line() => OnUi(async () =>
-    {
-        const string Short = "s3576-short";
-        Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, "{\"repos\":[" + Missing(LongRepo) + "," + Missing(Short) + "],\"health\":[" + Paused(LongRepo) + "," + Paused(Short) + "]}");
-        var (window, shell) = await Connected(s => s.Health.CodeIndex.Lines.Count > 1, width: 360, height: 800);
-        shell.GoTo(PageId.System);
-        Settle(window);
-
-        var lines = Named<ItemsControl>(window, "CodeIndexLines");
-        var gaps = lines.GetVisualDescendants().OfType<SelectableTextBlock>().Where(c => c.Name == "CodeIndexCommand")
-            .Select(c => (Gap: c.TranslatePoint(new Point(0, 0), window)!.Value.Y - TextBottom(c, window), Rows: TextOf(c).Bounds.Height))
-            .ToList();
-        Assert.Equal(2, gaps.Count);
-        Assert.True(gaps[0].Rows > gaps[1].Rows * 1.5, "the first line wraps to more rows than the second");
-        Assert.InRange(Math.Abs(gaps[0].Gap - gaps[1].Gap), 0, 1);
+        Assert.Equal("Index builds are paused for every repo:", note.Text);
+        Assert.InRange(command.TranslatePoint(new Point(0, 0), window)!.Value.Y - note.TranslatePoint(new Point(0, note.Bounds.Height), window)!.Value.Y, 0, space);
+        Assert.DoesNotContain(panel.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name != "CodeIndexCommand"), t => t.Text?.Contains("resume", StringComparison.Ordinal) == true);
     });
 
     private static string Missing(string name) => $$"""{"repo":"{{name}}","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null}""";
 
     private static string Paused(string name) => $$"""{"repo":"{{name}}","state":"missing","embeddingsPercent":null,"waiting":null,"paused":true}""";
-
-    // The words' TextBlock of the same card line as a command row: the item's first TextBlock that is not the command.
-    private static TextBlock TextOf(SelectableTextBlock command) => command.GetVisualAncestors().OfType<StackPanel>().First()
-        .GetVisualDescendants().OfType<TextBlock>().First(t => t is not SelectableTextBlock);
-
-    private static double TextBottom(SelectableTextBlock command, Window window)
-    {
-        var text = TextOf(command);
-        return text.TranslatePoint(new Point(0, text.Bounds.Height), window)!.Value.Y;
-    }
 }
