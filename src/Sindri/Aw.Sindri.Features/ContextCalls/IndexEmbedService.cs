@@ -3,7 +3,6 @@ using Aw.Context.Core;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Vectors;
 using Aw.Kernel;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
@@ -13,7 +12,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <summary>
 /// The 'index-embed' background service (owned-index spec §5.6): every minute while serve runs it asks Context for one embed run, through the facade (<see cref="IContextEngine"/>) only,
 /// so every chunk that has no vector for the pinned model gets one, 4,096 chunks at a time, newest-updated record first. A run with nothing to embed is quiet. A model that is down is the
-/// "meaning search is off" state, not a failed run (the next tick tries again; what was stored stays); so is a missing or unprofile. 'sindri index embed pause|resume' is
+/// "meaning search is off" state, not a failed run (the next tick tries again; what was stored stays); so is a missing profile. A profile with no context section embeds on the default settings. 'sindri index embed pause|resume' is
 /// 'services pause|resume index-embed', the scheduler's own pause.
 /// </summary>
 /// <param name="scopes">The profile's scope and the caller.</param>
@@ -34,10 +33,10 @@ internal sealed class IndexEmbedService(ContextScopes scopes, IContextEngine emb
     {
         ArgumentNullException.ThrowIfNull(run);
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
-        if (scope.IsError || scope.Value.Settings is null)
+        if (scope.IsError)
         {
-            // no profile, or no context section, is nothing to embed, not a failed run (a failed run would land in needs-you every tick)
-            return scope.IsError && scope.Error.Code != SindriErrors.ProfileMissing.Code ? scope.Error : ScheduledResult.Quiet;
+            // no profile is nothing to embed, not a failed run (a failed run would land in needs-you every tick)
+            return ContextScopes.NoProfile(scope) ? ScheduledResult.Quiet : scope.Error;
         }
 
         var report = await embed.Embed(new EmbedRecordsRequest(), scope.Value, cancellationToken).ConfigureAwait(false);
@@ -57,7 +56,7 @@ internal sealed class IndexEmbedService(ContextScopes scopes, IContextEngine emb
         ArgumentNullException.ThrowIfNull(report);
         if (report.Embedded == 0)
         {
-            return ScheduledResult.Quiet;
+            return new ScheduledResult(Idle: true, "nothing indexed yet");
         }
 
         var left = report.Done ? "none left" : "more to embed";
