@@ -55,14 +55,14 @@ context services here. The routes are `GET /sindri/context/query` and
    missed deadline makes that source degraded (010); all of them failing is 011.
 4. `RankFusion.Fuse`: hits sharing a canonical key merge, keeping each source's best rank. Each source is re-ranked
    densely, then RRF with k = 60 runs across sources.
-5. The top 20 are fetched in turn until the deadline (what isn't fetched in time isn't shown), cleaned whole by
+5. The ranked records in `ContextQuery.Window` (`QueryWindow(Offset, Limit)`, issue 3370; no window = every match, and an item question whose key no sync linked reads every match too) are fetched in turn until the deadline (what isn't fetched in time isn't shown; `QueryPipeline.Windowed`, and the answer's `Matches` = `RecordMatches(Matched, Offset, Read)` when a window was given), cleaned whole by
    `IIngestFilter` (sanitize, collapse titles, scrub; line-preserving), kept whole. The sanitizer drops inline and
    HTML images and reduces reference-style ones to their text, so no image survives ingest wherever its definition sits, and removes
    remote reference definitions also inside block quotes and list items (one-token destination, optional title).
 6. One batched `Versions` call per source, each with only its own references, gives each citation its state.
 7. `ResultAssembly`: one `record` item and one citation each. Every field, the citation's key and ids included, is
    scrubbed again on egress (a blocked field is `[REDACTED:blocked]` alone). The title (at most 200 characters) and
-   the text are fenced as untrusted, and the items are grouped into sections with none dropped (`Packer.Pack` has no budget; the retired `truncated`, `budget` and per-section `more` fields are gone from the wire). A caller pages the result set (MCP `limit` and `offset`, `McpPages`: both optional, offset 0 and limit 100 by default, limit under 1 or offset under 0 is 006; only top-level lists page, each by its own index, never inside an item; `page.more` and `page.lists` are computed on the whole set).
+   the text are fenced as untrusted, and the items are grouped into sections with none dropped (`Packer.Pack` has no budget; the retired `truncated`, `budget` and per-section `more` fields are gone from the wire). A caller pages the result set (MCP `limit` and `offset`, `McpPages`: both optional, offset 0 and limit 100 by default, limit under 1 or offset under 0 is 006; only top-level lists page, each by its own index, never inside an item; `page.more` and `page.lists` are computed on the whole set). `context_query` passes its page to the engine as the window, so its records section is already the page: `McpPages.DetachReadPage` keeps it whole and counts its `total` from `matches.matched` (`McpPagesTests`).
 
 No model is called on the query path.
 

@@ -80,6 +80,8 @@ internal sealed class ContextVerbs(ControlPlaneClient client, Output output)
             ["--diff"] = "diff",
             ["--repo"] = "repo",
             ["--map-version"] = "mapVersion",
+            ["--limit"] = "limit",
+            ["--offset"] = "offset",
         };
 
         internal static Kernel.Result<QueryArguments> Parse(string[] args)
@@ -101,7 +103,7 @@ internal sealed class ContextVerbs(ControlPlaneClient client, Output output)
                         pairs.Add((key, args[++i]));
                         break;
                     case var flag when flag.StartsWith("--", StringComparison.Ordinal):
-                        return SindriErrors.InvalidInput.With($"'{flag}' isn't a context query flag (or it needs a value): --node K | --item I | --symbol S | --diff BASE..HEAD [--repo R] | --depth N | --hops H | --concept ID | --budget N | --map-version V | --draft | --json");
+                        return SindriErrors.InvalidInput.With($"'{flag}' isn't a context query flag (or it needs a value): --node K | --item I | --symbol S | --diff BASE..HEAD [--repo R] | --depth N | --hops H | --concept ID | --budget N | --map-version V | --draft | --limit N | --offset N | --json");
                     default:
                         words.Add(args[i]);
                         break;

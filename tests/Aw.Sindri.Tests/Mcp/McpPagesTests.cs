@@ -24,6 +24,23 @@ public sealed class McpPagesTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_windowed_answers_records_are_already_the_page_so_page_2_keeps_them_and_counts_every_match()
+    {
+        // why: page 2 (offset 100, limit 100) of a 268-match answer read ranks 101-200 only (#3370); a second cut would drop them all
+        var records = string.Join(',', Enumerable.Range(100, 100).Select(i => "\"r" + i.ToString(System.Globalization.CultureInfo.InvariantCulture) + "\""));
+        var answer = Json("{\"sections\":[{\"name\":\"graph\",\"items\":[\"g0\"],\"more\":[]},{\"name\":\"records\",\"items\":[" + records + "],\"more\":[]}],\"matches\":{\"matched\":268,\"offset\":100,\"read\":100}}");
+
+        var page = McpPages.Apply(answer, new McpWindow(Limit: 100, Offset: 100));
+
+        var items = Items(page, "sections", 1);
+        Assert.Equal(100, items.Length);
+        Assert.Equal("r100", items[0]);
+        var list = page.GetProperty("page").GetProperty("lists").GetProperty("sections.records.items");
+        Assert.Equal((268, true), (list.GetProperty("total").GetInt32(), list.GetProperty("more").GetBoolean()));
+        Assert.Empty(Items(page, "sections", 0));   // the graph section is not windowed by the fetch, so the page cuts it as before
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void The_next_offset_continues_and_an_offset_past_the_end_is_empty()
     {
         var answer = Json("""{ "edges": ["e0", "e1", "e2"] }""");
