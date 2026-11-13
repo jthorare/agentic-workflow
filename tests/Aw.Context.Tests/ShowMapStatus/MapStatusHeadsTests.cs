@@ -1,5 +1,6 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
+using Aw.Context.Testing.Map;
 using Aw.Context.Tests.Map;
 
 namespace Aw.Context.Tests.ShowMapStatus;
@@ -31,7 +32,8 @@ public sealed class MapStatusHeadsTests : IDisposable
 
         var status = (await _world.Map.MapStatus(anchor: null, MapWorld.Session("other"), MapWorld.None)).Value;
 
-        Assert.Equal(new[] { _twoRepos[1] }, status.Heads);
+        MapHead[] own = [_twoRepos[1]];
+        Assert.Equal(own, status.Heads);
     }
 
     [Fact, Trait("Lane", "unit")]
