@@ -11,7 +11,7 @@ namespace Aw.Meta.Infrastructure.Processes;
 /// ICommandRunner over System.Diagnostics.Process. Both streams are read from the start, kept to their tail, and
 /// appended to the request's log file as they arrive. On a timeout or a cancellation the whole process tree is killed.
 /// </summary>
-internal sealed class SystemCommandRunner : ICommandRunner
+internal sealed partial class SystemCommandRunner : ICommandRunner
 {
     private readonly TimeSpan _drainGrace;
     private readonly TimeSpan _termGrace;
@@ -121,7 +121,7 @@ internal sealed class SystemCommandRunner : ICommandRunner
     private static ProcessStartInfo StartInfo(CommandRequest request, Sandbox? sandbox)
     {
         var (argv, unset, environment) = Plan(request, sandbox);
-        var info = new ProcessStartInfo(ProgramPath.Resolve(argv[0], request.Cwd))
+        var info = new ProcessStartInfo(FromPrefix(argv[0], request.PathPrefix) ?? ProgramPath.Resolve(argv[0], request.Cwd))
         {
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
@@ -148,35 +148,12 @@ internal sealed class SystemCommandRunner : ICommandRunner
             info.Environment[name] = value;
         }
 
+        if (request.PathPrefix.Count > 0)
+        {
+            info.Environment["PATH"] = WithPrefix(request.PathPrefix, info.Environment.TryGetValue("PATH", out var inherited) ? inherited : null);
+        }
+
         return info;
-    }
-
-    // What to run and with which environment. An isolated command gets the sandbox in our process environment, or, behind a wrapper, through "env".
-    private static (IReadOnlyList<string> Argv, IEnumerable<string> Unset, IEnumerable<KeyValuePair<string, string>> Env) Plan(CommandRequest request, Sandbox? sandbox)
-    {
-        if (sandbox is null)
-        {
-            return (request.Argv, request.UnsetEnv, request.Env);
-        }
-
-        return request.IsolatedFrom > 0 && request.IsolatedFrom < request.Argv.Count
-            ? (WithEnv(request.Argv, request.IsolatedFrom, sandbox), request.UnsetEnv, request.Env)
-            : (request.Argv, request.UnsetEnv.Concat(Sandbox.Unset), sandbox.Variables().Concat(request.Env));
-    }
-
-    // [wrapper..., env -u X... NAME=value..., command...]: the sandbox reaches the command and not the wrapper.
-    private static List<string> WithEnv(IReadOnlyList<string> argv, int from, Sandbox sandbox)
-    {
-        var words = new List<string>(argv.Take(from)) { "env" };
-        foreach (var name in Sandbox.Unset)
-        {
-            words.Add("-u");
-            words.Add(name);
-        }
-
-        words.AddRange(sandbox.Variables().Select(pair => pair.Key + "=" + pair.Value));
-        words.AddRange(argv.Skip(from));
-        return words;
     }
 
     private static StreamWriter? OpenLog(string? file)
