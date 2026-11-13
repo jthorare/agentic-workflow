@@ -1,7 +1,6 @@
 using Aw.Meta.Core;
 using Aw.Meta.Core.Commands;
 using Aw.Meta.Core.Coordination;
-using Aw.Meta.Core.Events;
 using Aw.Meta.Core.Gate;
 using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Merge;

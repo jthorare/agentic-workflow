@@ -1,5 +1,4 @@
 using Aw.Meta.Core.Coordination;
-using Aw.Meta.Core.Events;
 using Aw.Meta.Core.Ids;
 using Aw.Meta.Features.InboxDismiss;
 using Aw.Meta.Features.OutboxRecord;

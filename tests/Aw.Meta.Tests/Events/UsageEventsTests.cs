@@ -1,6 +1,5 @@
 using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Coordination;
-using Aw.Meta.Core.Events;
 using Aw.Meta.Core.Usage;
 using Aw.Meta.Testing;
 using Aw.Meta.Tests.Usage;
