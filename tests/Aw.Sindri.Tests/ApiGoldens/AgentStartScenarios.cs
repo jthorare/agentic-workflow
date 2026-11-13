@@ -88,17 +88,10 @@ internal static class AgentStartScenarios
     private static async Task<string> TerminalBody(GoldenHost host, string scenario)
     {
         var owner = Human(host.Token.Value);
+        // Plain GETs: the ref and the pane lookup both answer before the upgrade check, so the refusal comes back as plain HTTP (#3563).
         return string.Equals(scenario, "bad-ref", StringComparison.Ordinal)
-            ? await Ask(host, Get("/sindri/sessions/claude-code/a..b/terminal", owner))   // the ref is bound before the upgrade check, so a plain GET answers it
-            : await Ask(host, Upgrade(Get("/sindri/sessions/claude-code/live/terminal", owner)));
-    }
-
-    // The lookup answers only a request that asks for the upgrade; the refusal then comes back as plain HTTP, which this reads as a body.
-    private static HttpRequestMessage Upgrade(HttpRequestMessage request)
-    {
-        request.Headers.Connection.Add("Upgrade");
-        request.Headers.Upgrade.Add(new System.Net.Http.Headers.ProductHeaderValue("websocket"));
-        return request;
+            ? await Ask(host, Get("/sindri/sessions/claude-code/a..b/terminal", owner))
+            : await Ask(host, Get("/sindri/sessions/claude-code/live/terminal", owner));
     }
 
     private sealed class RefusingLocator(Error error) : ITerminalPaneLocator
