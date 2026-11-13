@@ -109,7 +109,7 @@ internal sealed partial class SchedulerHost(
         var advanced = new List<ServiceSchedule>(_schedules.Count);
         foreach (var schedule in _schedules)
         {
-            if (schedule.NextSlot > now)
+            if (!Due(schedule, now))
             {
                 advanced.Add(schedule);
                 continue;
@@ -121,7 +121,7 @@ internal sealed partial class SchedulerHost(
             {
                 if ((_pausesKnown || IsBuiltIn(schedule.Name)) && !_paused.Contains(schedule.Name) && guard.TryClaim(schedule.Name, out claim))
                 {
-                    var run = RunOne(schedule, new ScheduledRun(grant, schedule.NextSlot), claim, ct);   // its own loop: not awaited here; it owns the claim now
+                    var run = RunOne(schedule, new ScheduledRun(grant, SlotOf(schedule)), claim, ct);   // its own loop: not awaited here; it owns the claim now
                     claim = null;
                     if (run.IsCompleted)
                     {
@@ -139,7 +139,7 @@ internal sealed partial class SchedulerHost(
                 claim?.Dispose();
             }
 
-            advanced.Add(schedule.Advance(now));
+            advanced.Add(Next(schedule, now));
         }
 
         inputs.Live.Publish(_schedules = advanced);   // the services listing reads these: without the lease nothing advances, so a slot left in the past was missed
@@ -179,7 +179,7 @@ internal sealed partial class SchedulerHost(
         await using (scope.ConfigureAwait(false))
         {
             var outcome = await Outcome(scope.ServiceProvider, schedule.Name, run, ct).ConfigureAwait(false);
-            if (await Skip(scope.ServiceProvider, schedule.Name, outcome, ct).ConfigureAwait(false))
+            if (Busy(schedule.Name, run.Slot, outcome) || await Skip(scope.ServiceProvider, schedule.Name, outcome, ct).ConfigureAwait(false))
             {
                 return;
             }
@@ -209,7 +209,7 @@ internal sealed partial class SchedulerHost(
         try
         {
             var result = await service.Run(run, ct).ConfigureAwait(false);
-            if (result.IsError)
+            if (result.IsError && !IsBusy(result.Error))
             {
                 LogServiceFailed(log, name.Value, result.Error.Code, result.Error.Message);
             }
