@@ -47,7 +47,7 @@
       <ControlTemplate>
         <Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1,0,0,0">
           <DockPanel>
-            <Border Name="PART_Head" DockPanel.Dock="Top" MinHeight="{StaticResource Peek.Header}" Padding="16,12" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,0,0,1">
+            <Border Name="PART_Head" DockPanel.Dock="Top" Height="{StaticResource Peek.Header}" Padding="16,0" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,0,0,1">
               <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="8">
                 <TextBlock Name="PART_Title" Text="{TemplateBinding Title}" Classes="peek-title" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" VerticalAlignment="Center" />
                 <TextBlock Name="PART_Id" Grid.Column="1" Text="{TemplateBinding ItemId}" Classes="peek-id" VerticalAlignment="Center" />

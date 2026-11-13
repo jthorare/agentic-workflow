@@ -38,6 +38,9 @@ public sealed class PeekScaleTests
         return (window, peek, body);
     }
 
+    // One device pixel in DIPs: at 1.3 a 24 DIP icon is 31.2 px, layout rounds it to 32 px and it reads back as 24.6 DIP.
+    private static double Tolerance(double scaling) => Math.Max(0.5, 1 / scaling);
+
     private static T Part<T>(PeekPane peek, string name)
         where T : Control => peek.GetVisualDescendants().OfType<T>().First(c => c.Name == name);
 
@@ -48,7 +51,7 @@ public sealed class PeekScaleTests
     {
         var (window, peek, _) = Show(scaling);
 
-        Assert.Equal(48, Part<Border>(peek, "PART_Head").Bounds.Height, 0.5);
+        Assert.Equal(48, Part<Border>(peek, "PART_Head").Bounds.Height, Tolerance(scaling));
         window.Close();
         return true;
     });
@@ -64,13 +67,13 @@ public sealed class PeekScaleTests
         var title = Part<TextBlock>(peek, "PART_Title");
         var id = Part<TextBlock>(peek, "PART_Id");
 
-        Assert.Equal(24, open.Bounds.Width, 0.5);
-        Assert.Equal(24, open.Bounds.Height, 0.5);
-        Assert.Equal(24, close.Bounds.Width, 0.5);
-        Assert.Equal(24, close.Bounds.Height, 0.5);
-        Assert.Equal(8, close.Bounds.X - open.Bounds.Right, 0.5);
-        Assert.Equal(8, id.Bounds.X - title.Bounds.Right, 0.5);
-        Assert.True(open.Bounds.X - id.Bounds.Right >= 8 - 0.5, "the id sits 8 px or more from the first icon");
+        Assert.Equal(24, open.Bounds.Width, Tolerance(scaling));
+        Assert.Equal(24, open.Bounds.Height, Tolerance(scaling));
+        Assert.Equal(24, close.Bounds.Width, Tolerance(scaling));
+        Assert.Equal(24, close.Bounds.Height, Tolerance(scaling));
+        Assert.Equal(8, close.Bounds.X - open.Bounds.Right, Tolerance(scaling));
+        Assert.Equal(8, id.Bounds.X - title.Bounds.Right, Tolerance(scaling));
+        Assert.True(open.Bounds.X - id.Bounds.Right >= 8 - Tolerance(scaling), "the id sits 8 px or more from the first icon");
         window.Close();
         return true;
     });
