@@ -121,7 +121,7 @@ internal sealed class SystemCommandRunner : ICommandRunner
     private static ProcessStartInfo StartInfo(CommandRequest request, Sandbox? sandbox)
     {
         var (argv, unset, environment) = Plan(request, sandbox);
-        var info = new ProcessStartInfo(ProgramPath.Resolve(argv[0], request.Cwd))
+        var info = new ProcessStartInfo(FromPrefix(argv[0], request.PathPrefix) ?? ProgramPath.Resolve(argv[0], request.Cwd))
         {
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
@@ -148,8 +148,18 @@ internal sealed class SystemCommandRunner : ICommandRunner
             info.Environment[name] = value;
         }
 
+        if (request.PathPrefix.Count > 0)
+        {
+            var prefix = string.Join(Path.PathSeparator, request.PathPrefix);
+            info.Environment["PATH"] = info.Environment.TryGetValue("PATH", out var inherited) && !string.IsNullOrEmpty(inherited) ? prefix + Path.PathSeparator + inherited : prefix;
+        }
+
         return info;
     }
+
+    // A bare program name that sits in one of the prefix directories starts from there: the OS looks a name up in our PATH, not the child's.
+    private static string? FromPrefix(string program, IReadOnlyList<string> prefix) =>
+        program.Contains('/', StringComparison.Ordinal) ? null : prefix.Select(directory => Path.Combine(directory, program)).FirstOrDefault(File.Exists);
 
     // What to run and with which environment. An isolated command gets the sandbox in our process environment, or, behind a wrapper, through "env".
     private static (IReadOnlyList<string> Argv, IEnumerable<string> Unset, IEnumerable<KeyValuePair<string, string>> Env) Plan(CommandRequest request, Sandbox? sandbox)
