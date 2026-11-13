@@ -43,7 +43,7 @@ Use 6 only inside chips and small buttons, as in `Padding="6,0"`. Do not use 6 f
 ## Pressed and hover
 
 - Hover fills the background with one tertiary token over 150 ms with ease. Source: Linear 0.15 s and Raycast 0.15 s (measured).
-- Pressed scales the element to 0.98. Linear presses buttons to 0.97 and Raycast presses cards to 0.98 (measured `:active` rules). We use 0.98 for everything so a row does not jump.
+- Pressed takes Brush.Clickable.Pressed and PressedBorder (Outline, 3:1); nothing moves, because a scale blurs 1 px borders and a shift gets clipped (#3190).
 - Pressed does not change the colour of the label.
 
 The `clickable` class applies hover and pressed to any element. It lives in `Theme/ClickableStyles.axaml`, added by the hover states fix (#2535). Put `Classes="clickable"` on a row or card instead of writing a trigger.

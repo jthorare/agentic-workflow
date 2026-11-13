@@ -60,6 +60,50 @@ public sealed class PaneSubmitterTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task An_exact_line_that_lands_without_its_first_keys_presses_no_Enter_and_names_what_the_box_shows()
+    {
+        var world = new Testing.MetaWorld();
+        world.Panes.Put("t1-api", "claude");
+        world.Panes.EatNextTyped = 3;
+
+        var result = await new PaneSubmitter(world.Panes, world.Delay).Submit("t1-api", "/clear", CancellationToken.None, exact: true);
+
+        Assert.Equal(Core.MetaErrors.CommandFailed.Code, result.Error.Code);
+        Assert.Contains("'ear'", result.Error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("still in the input box", result.Error.Message, StringComparison.Ordinal);
+        Assert.Equal(0, world.Panes.Enters);
+        Assert.Empty(world.Panes.Woken);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_exact_line_behind_leftover_text_presses_no_Enter()
+    {
+        var world = new Testing.MetaWorld();
+        world.Panes.Put("t1-api", "claude");
+        world.Panes.EatNextTyped = 3;
+        _ = await new PaneSubmitter(world.Panes, world.Delay).Submit("t1-api", "/clear", CancellationToken.None, exact: true);
+
+        var again = await new PaneSubmitter(world.Panes, world.Delay).Submit("t1-api", "/clear", CancellationToken.None, exact: true);
+
+        Assert.True(again.IsError);
+        Assert.Contains("'ear/clear'", again.Error.Message, StringComparison.Ordinal);
+        Assert.Equal(0, world.Panes.Enters);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_exact_line_that_lands_whole_is_submitted_once()
+    {
+        var world = new Testing.MetaWorld();
+        world.Panes.Put("t1-api", "claude");
+
+        var result = await new PaneSubmitter(world.Panes, world.Delay).Submit("t1-api", "/clear", CancellationToken.None, exact: true);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal([("t1-api", "/clear")], world.Panes.Woken);
+        Assert.Equal(1, world.Panes.Enters);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_failed_type_presses_no_key()
     {
         var world = new Testing.MetaWorld();
