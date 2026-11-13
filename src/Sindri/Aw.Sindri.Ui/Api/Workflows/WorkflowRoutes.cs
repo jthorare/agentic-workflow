@@ -29,5 +29,16 @@ internal static class WorkflowRoutes
 
     internal static string Activate(string slug) => $"{One(slug)}/activate";
 
+    internal static string Validate() => $"{Root}/validate";
+
+    internal static string Test(string slug) => $"{One(slug)}/test";
+
+    internal static string Pins(string slug) => $"{One(slug)}/pins";
+
+    internal static string Templates() => $"{Root}/templates";
+
+    internal static string TriggerEvents(string kind, string? connection = null) =>
+        $"{Root}/trigger-events?kind={Uri.EscapeDataString(kind)}" + (connection is null ? string.Empty : $"&connection={Uri.EscapeDataString(connection)}");
+
     internal static string Pause(string slug) => $"{One(slug)}/pause";
 }

@@ -67,7 +67,7 @@ public static class MapAccess
             return settings.Error;
         }
 
-        var repos = ScopeRules.Resolve(settings.Value, scope.Repos, scope.Caller);
+        var repos = ScopeRules.Resolve(settings.Value, scope.Repos, scope.Caller, scope.LeftOut);
         if (repos.IsError)
         {
             return repos.Error;
@@ -115,7 +115,7 @@ public static class MapAccess
             return settings.Error;
         }
 
-        var repos = ScopeRules.Resolve(settings.Value, scope.Repos, scope.Caller);
+        var repos = ScopeRules.Resolve(settings.Value, scope.Repos, scope.Caller, scope.LeftOut);
         return repos.IsError ? repos.Error : null;
     }
 
@@ -135,7 +135,7 @@ public static class MapAccess
             return settings.Error;
         }
 
-        var mapped = ScopeRules.Resolve(settings.Value, scope.Repos, scope.Caller with { Kind = ContextCallerKind.Human });
+        var mapped = ScopeRules.Resolve(settings.Value, scope.Repos, scope.Caller with { Kind = ContextCallerKind.Human }, scope.LeftOut);
         return mapped.IsError || mapped.Value.Any(r => string.Equals(r.Name.Value, repo.Value, StringComparison.Ordinal))
             ? (mapped.IsError ? mapped.Error : null)
             : ContextErrors.MapFileInvalid.With(
