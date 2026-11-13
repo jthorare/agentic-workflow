@@ -193,6 +193,62 @@ public sealed class LoopbackBindingTests
         }
     }
 
+    // #3459: the builder's appsettings reload watcher cost one inotify instance per host, on a file the host never
+    // reads. A user gets 128 instances, so a few test runs side by side used them all.
+    [Fact, Trait("Lane", "integration")]
+    public async Task Building_hosts_opens_no_inotify_instance_per_host()
+    {
+        if (!Directory.Exists("/proc/self/fdinfo"))
+        {
+            Assert.Skip("inotify instances are counted through /proc, which only Linux has");
+        }
+
+        const int Hosts = 16;
+        var before = InotifyInstances();
+        var apps = new List<WebApplication>();
+        try
+        {
+            for (var i = 0; i < Hosts; i++)
+            {
+                apps.Add(LoopbackBinding.Build([], _ => null, new FakeTimeProvider()));
+            }
+
+            var added = InotifyInstances() - before;
+
+            // why: tests that run beside this one may open a few watchers of their own, never one per host here
+            Assert.True(added < Hosts, string.Create(CultureInfo.InvariantCulture, $"{Hosts} hosts added {added} inotify instances"));
+        }
+        finally
+        {
+            foreach (var app in apps)
+            {
+                await app.DisposeAsync();
+            }
+        }
+    }
+
+    /// <summary>How many of this process's file descriptors are inotify instances that watch something.</summary>
+    private static int InotifyInstances()
+    {
+        var count = 0;
+        foreach (var descriptor in Directory.EnumerateFiles("/proc/self/fdinfo"))
+        {
+            try
+            {
+                if (File.ReadLines(descriptor).Any(line => line.StartsWith("inotify wd:", StringComparison.Ordinal)))
+                {
+                    count++;
+                }
+            }
+            catch (IOException)
+            {
+                // boundary: the descriptor closed between the listing and the read
+            }
+        }
+
+        return count;
+    }
+
     private static async Task<WebApplication> Started()
     {
         var app = LoopbackBinding.Build([], _ => null, new FakeTimeProvider());

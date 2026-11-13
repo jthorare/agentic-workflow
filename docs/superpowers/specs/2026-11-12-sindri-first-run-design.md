@@ -467,7 +467,7 @@ Doctor's new fail row (§3.4) has no code of its own: it is a `DoctorCheck` row 
 | A7 | Bare `sindri` words and exit 0 on a missing profile (#3114) | api | aot-smoke and `Usage.cs` if text changes |
 | A8 | `ConnectAccount` row checked by the human token; `POST /sindri/setup/accounts/{github,linear,slack}`; gh login detection; device flow; sign-in that creates a missing connection; first write creates the profile; the shipped client id is a new `clientId` field in `config/connections/presets/github.json` and `linear.json`, which `setup.oauth.*` overrides | api | the Slack body is a secret type: never logged, recorded or stored outside `ISecretWriter` |
 | A9 | Status counts the same services as `GET /sindri/services` (#3127) | api | `GetStatusService.cs:69` |
-| C1 | Map step reads `BuildCodeIndex` too (#3112); `MapSetupReader.cs:22` watches one kind today | context | progress through `MapBuildProgress.Parse` |
+| C1 | Map step reads `BuildCodeIndex` too (#3112); `MapSetupReader.cs:22` watches one kind today | context | progress through `MapBuildFiles.Newest` (#3433) |
 | C2 | Context page reads the same running fact (#3015) | context, ui | `MapSetupReader.cs:71` already has it |
 | C3 | Doctor's no-map row says what it waits on (#3216) | context | `MapReader.cs:87`, `CheckStructureService.cs:49`; aot-smoke |
 | C4 | Six services read a null `context:` as defaults (#3131) | context | one helper, one test per service |

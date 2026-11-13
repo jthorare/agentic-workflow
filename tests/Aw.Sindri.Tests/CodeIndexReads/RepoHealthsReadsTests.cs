@@ -41,6 +41,36 @@ public sealed class RepoHealthsReadsTests
         Assert.Equal(("waiting", "retrying in 8 min"), (health.State, health.Waiting));   // 2 failures wait 10 min, the newest ended 2 min ago
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_repo_read_queued_twice_31_min_apart_has_been_queued_31_min()
+    {
+        var now = new MovingClock(_now);
+        var healths = new RepoHealths(new FakeRepoHeads().With(_repo, _old, onDefaultBranch: true), new InMemoryJobViews(), now, new QueuedClock());
+        var missing = new RepoStatus(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null);
+        var scope = new CodeIndexScope([new CodeIndexRepo(_repo, "/work/demo", CodeIndexSettings.Default)], new CodeIndexCaller(CallerKind.Service, Repo: null));
+
+        _ = await healths.Of(scope, [missing], Token);
+        now.Now = _now.AddMinutes(31);
+        var health = Assert.Single(await healths.Of(scope, [missing], Token));
+
+        Assert.Equal(("queued", TimeSpan.FromMinutes(31)), (health.State, health.QueuedFor));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_repo_queued_past_30_min_needs_a_look_and_one_under_does_not()
+    {
+        var now = new MovingClock(_now);
+        var healths = new RepoHealths(new FakeRepoHeads().With(_repo, _old, onDefaultBranch: true), new InMemoryJobViews(), now, new QueuedClock());
+        var missing = new RepoStatus(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null);
+        var scope = new CodeIndexScope([new CodeIndexRepo(_repo, "/work/demo", CodeIndexSettings.Default)], new CodeIndexCaller(CallerKind.Service, Repo: null));
+
+        var first = Assert.Single(await healths.Of(scope, [missing], Token));
+        now.Now = _now.AddMinutes(30);
+        var later = Assert.Single(await healths.Of(scope, [missing], Token));
+
+        Assert.Equal((false, true), (first.NeedsLook, later.NeedsLook));
+    }
+
     private static async Task<(CountingJobs Jobs, RepoHealth Health)> Read(CommitSha live, int failedBuilds)
     {
         var history = new InMemoryJobViews();
@@ -55,8 +85,15 @@ public sealed class RepoHealthsReadsTests
         var status = new RepoStatus(_repo, IndexState.Ok, _old, _now.AddHours(-1), [new LayerStatus(LayerName.Structure, LayerState.Ok, Code: null, "ok")], new IndexCounts(Files: 1, Symbols: 2, Edges: 3));
         var scope = new CodeIndexScope([new CodeIndexRepo(_repo, "/work/demo", CodeIndexSettings.Default)], new CodeIndexCaller(CallerKind.Service, Repo: null));
 
-        var healths = await new RepoHealths(heads, jobs, new FixedClock(_now)).Of(scope, [status], Token);
+        var healths = await new RepoHealths(heads, jobs, new FixedClock(_now), new QueuedClock()).Of(scope, [status], Token);
         return (jobs, Assert.Single(healths));
+    }
+
+    private sealed class MovingClock(DateTimeOffset now) : TimeProvider
+    {
+        public DateTimeOffset Now { get; set; } = now;
+
+        public override DateTimeOffset GetUtcNow() => Now;
     }
 
     private sealed class FixedClock(DateTimeOffset now) : TimeProvider
