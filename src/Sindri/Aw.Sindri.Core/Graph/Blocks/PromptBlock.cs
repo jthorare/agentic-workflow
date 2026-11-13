@@ -8,7 +8,10 @@ namespace Aw.Sindri.Core.Graph.Blocks;
 public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
 {
     // why: the schema was only used to check the answer, so the model never knew it should answer in JSON and replied in prose (#3079)
-    private const string JsonInstruction = "Answer with only one JSON object that matches this schema, and no other text:";
+    // why: the model sometimes copied the schema itself as its answer (#3588), so the line says to fill it in and an example answer follows the schema
+    private const string JsonInstruction = "Answer with only one JSON object that fills in this schema with your real answer, and no other text. The schema is the shape to follow; never repeat the schema itself:";
+
+    private const string ExampleInstruction = "Example of a good answer:";
 
     // why: a model that can't answer used to fill the shape with defaults and the run went green (#3224); it now has a way to say so
     private const string CouldNotAnswerInstruction = "If you can't answer from what you were given, set couldNotAnswer to true and say why in the couldNotAnswerWhy field; do not guess or fill the other fields with defaults.";
@@ -16,6 +19,8 @@ public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
     private const int ShownLength = 200;
 
     private const string RepairLine = "\n\nYour answer was not a JSON object. Answer again with only the JSON object.";
+
+    private const string EchoRepairLine = "\n\nYour answer repeated the schema instead of filling it in. Answer again with only the JSON object that holds your real answer.";
 
     /// <inheritdoc />
     public string Type => "prompt";
@@ -121,7 +126,8 @@ public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
         return SindriErrors.GraphPromptAnswer.With(problem);
     }
 
-    private static string WithInstruction(string prompt, JsonObject schema) => $"{prompt}\n\n{JsonInstruction}\n{WithImplicitFields(schema).ToJsonString()}\n{CouldNotAnswerInstruction}";
+    private static string WithInstruction(string prompt, JsonObject schema) =>
+        $"{prompt}\n\n{JsonInstruction}\n{WithImplicitFields(schema).ToJsonString()}\n{ExampleInstruction} {ExampleAnswer(schema)}\n{CouldNotAnswerInstruction}";
 
     // why: the two fields are optional and implicit, so they are added to the schema the model sees and never to the node's outputs
     private static JsonObject WithImplicitFields(JsonObject schema)
