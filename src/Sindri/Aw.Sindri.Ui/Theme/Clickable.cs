@@ -10,7 +10,7 @@ namespace Aw.Sindri.Ui.Theme;
 #pragma warning disable MA0182 // why: ClickableStyles.axaml sets Clickable.Track from a style; the analyzer cannot see XAML
 /// <summary>
 /// The shared look of a clickable surface (#2535): a Border with the clickable class (Theme/ClickableStyles.axaml) lifts its
-/// background and border under the pointer and takes a pressed look (a 0.98 scale about its centre and the pressed fill) while a button is down, eased over Motion.Hover (zero under
+/// background and border under the pointer and takes a pressed look (a 1 px push down and the pressed fill) while a button is down, eased over Motion.Hover (zero under
 /// reduced motion). The style sets <see cref="TrackProperty"/>, which gives the control its colour Transitions and keeps the
 /// :pressed pseudo-class (a Border has none of its own) in step with the pointer.
 /// </summary>
@@ -61,8 +61,8 @@ internal static class Clickable
         };
         border.PointerReleased += (_, _) => Set(border, pressed: false);
         border.PointerCaptureLost += (_, _) => Set(border, pressed: false);
-        // A press holds the pointer (implicit capture), as a Button's does: the 0.98 scale pulls the edges in, so a press near one
-        // leaves the pointer outside; the press lasts until the release or a lost capture, not until the pointer leaves. The capture
+        // A press holds the pointer (implicit capture), as a Button's does: the 1 px push moves the edge under a press at the bottom,
+        // so it can leave the pointer outside; the press lasts until the release or a lost capture, not until the pointer leaves. The capture
         // goes to what was hit, which is often a child (a TextBlock, a chip), so a holder inside the border counts as the border.
         border.PointerExited += (_, e) =>
         {
