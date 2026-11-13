@@ -123,11 +123,14 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
             IndexState.Damaged => new DoctorCheck(name, CheckState.Fail, "index damaged, rebuilding (SND-CODEIDX-010)", "none needed: the next tick deletes and rebuilds it; sindri jobs shows the build"),
             IndexState.Missing when paused => new DoctorCheck(name, CheckState.Warn, $"no index: {PausedWords}, so no build starts", Resume),
             IndexState.Missing => new DoctorCheck(name, CheckState.Warn, running ? "building the first index" : IndexBuildWords.Waiting(finished, now) ?? "first build queued", Fix: null),
-            IndexState.Ok or _ => Readable(name, repo, live, buildWords, now, paused),
+            IndexState.Ok or _ => Readable(name, repo, live, new StaleWords(buildWords, paused ? Resume : "none needed: the next tick builds it"), now),
         };
     }
 
-    private static DoctorCheck Readable(string name, IndexRepoStatus repo, IndexRepoHead? live, string buildWords, DateTimeOffset now, bool paused)
+    // What a stale row says about the next build and how to get one (#3399: paused, the fix is the resume).
+    private readonly record struct StaleWords(string Build, string Fix);
+
+    private static DoctorCheck Readable(string name, IndexRepoStatus repo, IndexRepoHead? live, StaleWords stale, DateTimeOffset now)
     {
         var commit = repo.Commit?.Value ?? string.Empty;
         var short7 = commit.Length >= 7 ? commit[..7] : commit;
@@ -138,7 +141,7 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
 
         if (live?.Head is { } head && head != repo.Commit)
         {
-            return new DoctorCheck(name, CheckState.Warn, $"stale: index at {short7}, head at {head.Value[..7]}; {buildWords}", paused ? Resume : "none needed: the next tick builds it");
+            return new DoctorCheck(name, CheckState.Warn, $"stale: index at {short7}, head at {head.Value[..7]}; {stale.Build}", stale.Fix);
         }
 
         return Down(name, short7, repo.Layers) ?? new DoctorCheck(name, CheckState.Ok, $"{short7}, {Age(repo.BuiltAt, now)}, {string.Join(" · ", repo.Layers.Select(static l => $"{Word(l.Layer)} {Word(l.State)}"))}", Fix: null);
