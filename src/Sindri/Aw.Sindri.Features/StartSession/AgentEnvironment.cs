@@ -5,7 +5,8 @@ namespace Aw.Sindri.Features.StartSession;
 
 /// <summary>
 /// What a one-off session's environment holds (agents spec §15.4): HOME, PATH, USER, LANG, LC_*, SHELL, TERM, the agent's home variable and its sign-in variable when set, and AW_FLEET_DIR and AW_STATE_DIR
-/// so the fleet hook writes where Sindri reads. Sindri's tokens, every other AW_ variable and GH_TOKEN never pass.
+/// so the fleet hook writes where Sindri reads. Sindri's tokens, every other AW_ variable and GH_TOKEN never pass. AW_SINDRI_ONEOFF=1 is set, so the sindri CLI
+/// inside never calls as the person, though it runs as the same Unix user and could read the human token file (#3466).
 /// </summary>
 internal static class AgentEnvironment
 {
@@ -33,6 +34,7 @@ internal static class AgentEnvironment
             }
         }
 
+        env["AW_SINDRI_ONEOFF"] = "1";
         return env;
     }
 

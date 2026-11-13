@@ -98,7 +98,8 @@ public sealed class StartSessionTests : IDisposable
         _ = await _r.Service().Handle(Request(), Token);
 
         var env = Assert.Single(_r.Host.Started).Env;
-        Assert.Equal(["ANTHROPIC_API_KEY", "AW_FLEET_DIR", "AW_STATE_DIR", "HOME", "PATH", "TERM"], env.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["ANTHROPIC_API_KEY", "AW_FLEET_DIR", "AW_SINDRI_ONEOFF", "AW_STATE_DIR", "HOME", "PATH", "TERM"], env.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal("1", env["AW_SINDRI_ONEOFF"]);   // why: the CLI inside never calls as the person (#3466)
         Assert.DoesNotContain("AW_SINDRI_TOKEN", env.Keys, StringComparer.Ordinal);
         Assert.DoesNotContain("GH_TOKEN", env.Keys, StringComparer.Ordinal);
     }
