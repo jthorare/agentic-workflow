@@ -324,6 +324,49 @@ public sealed class SetupFactsTests
         Assert.Equal(MapPhase.NotBuilt, after.Phase);
     }
 
+    // #3322: the first map is a RefreshContextMap job of the context-map-refresh service, not a BuildContextMap job.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_is_building_with_stage_map_while_the_first_map_refreshes()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+        rig.RefreshJob(JobState.Running, ["building", "extracting 40/100 files"]);
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Building, MapStage.Map), (map.Phase, map.Stage));
+        Assert.Equal(new SetupProgress(40, 100, "files"), map.Progress);
+        Assert.Equal(SetupState.Running, Assert.Single(map.Items.Lines).State);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_fails_when_the_first_map_refresh_failed()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+        rig.RefreshJob(JobState.Failed, ["building"], "SND-CONTEXT-001");
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Failed, "SND-CONTEXT-001", MapStage.Map), (map.Phase, map.FailureCode, map.Stage));
+    }
+
+    // Guard: once the map is built, a failed refresh of a later tick leaves the step done.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_stays_done_when_a_later_refresh_fails()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.RefreshJob(JobState.Failed, ["building"], "SND-CONTEXT-001");
+        rig.Engine.Answer = SetupFactsRig.CurrentMap();
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal(MapPhase.Built, map.Phase);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task Map_step_ignores_a_code_index_build_of_a_repo_the_profile_does_not_map()
     {

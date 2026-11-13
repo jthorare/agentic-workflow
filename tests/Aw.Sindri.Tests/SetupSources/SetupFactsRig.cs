@@ -126,6 +126,18 @@ internal sealed class SetupFactsRig : IAsyncDisposable
             "human:cli", at, state == JobState.Running ? null : at.AddMinutes(1), [.. lines.Select((l, i) => new JobLine(i + 1, l, at))], lines.Length, Summary: null, code, Result: null, CancelledBy: null, Sequence: _jobs));
     }
 
+    /// <summary>Puts a RefreshContextMap job (the built-in context-map-refresh service's, which builds the first map) into the jobs view.</summary>
+    /// <param name="state">Its state.</param>
+    /// <param name="lines">Its progress lines.</param>
+    /// <param name="code">The error code of a failed one.</param>
+    internal void RefreshJob(JobState state, string[] lines, string? code = null)
+    {
+        _jobs++;
+        var at = new DateTimeOffset(2026, 10, 19, 9, _jobs, 0, TimeSpan.Zero);
+        Jobs.Put(new JobRow(JobId.From($"JOB-{_jobs:x32}"), JobKind.From("RefreshContextMap"), JobKey.From("refresh"), Item: null, Repo: null, Service: null, state,
+            "service:context-map-refresh", at, state == JobState.Running ? null : at.AddMinutes(1), [.. lines.Select((l, i) => new JobLine(i + 1, l, at))], lines.Length, Summary: null, code, Result: null, CancelledBy: null, Sequence: _jobs));
+    }
+
     /// <summary>Puts a code index build job of <paramref name="repo"/> into the jobs view (kind BuildCodeIndex, key 'index:&lt;repo&gt;').</summary>
     /// <param name="repo">The repo it builds.</param>
     /// <param name="state">Its state.</param>
