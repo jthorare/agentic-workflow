@@ -105,8 +105,9 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
     // why: the block's own text (an http body, a model answer) can hold a secret; it is scrubbed BEFORE Fit cuts it, so a secret the cut would split is gone first (#3225, #3196)
     private GraphBlockOutcome FailedBlock(JsonObject input, Kernel.Error error, JsonObject? output, string? raw)
     {
-        var (fitInput, fitOutput, fitRaw) = (StoredJson.Fit(input.ToJsonString()), StoredJson.Fit(CleanJson(output?.ToJsonString())), StoredJson.Fit(Clean(raw)));
-        return new(NodeRunStatus.Failed, fitInput.Text, fitOutput.Text, [], NodeRunLimits.Cap(Clean($"{error.Code}: {error.Message}"), out _), fitRaw.Text, fitInput.Cut || fitOutput.Cut || fitRaw.Cut);
+        var (fitInput, fitOutput) = (StoredJson.Fit(input.ToJsonString()), StoredJson.Fit(CleanJson(output?.ToJsonString())));
+        // why: raw is model text, not JSON, so it keeps a plain cut at the cap and never sets 'Truncated' (#3486)
+        return new(NodeRunStatus.Failed, fitInput.Text, fitOutput.Text, [], NodeRunLimits.Cap(Clean($"{error.Code}: {error.Message}"), out _), NodeRunLimits.Cap(Clean(raw), out _), fitInput.Cut || fitOutput.Cut);
     }
 
     private GraphBlockOutcome SucceededBlock(JsonObject input, BlockResult result)
