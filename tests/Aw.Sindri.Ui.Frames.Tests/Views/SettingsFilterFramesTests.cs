@@ -5,10 +5,13 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Setup;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Reviews;
@@ -234,5 +237,93 @@ public sealed class SettingsFilterFramesTests : FrameHost
 
         settings.Filter = "permission";
         Assert.True(settings.ShowsLibrary, "the filter used the words read before the row became unreadable");
+    });
+
+    private static readonly string[] _orderedNames = ["TitleText", "SettingsFilterBox", "SettingsNoMatch", "ThisAppName", "ThisAppCard", "SetupChecklist"];
+
+    private async Task<(ShellWindow Window, ShellViewModel Shell, SettingsViewModel Settings, SettingsView View, Preferences Prefs)> WithSetup(string scenario)
+    {
+        Server.SetupAnswer = SetupFixture.Answer(scenario);
+        var (window, shell) = await Connected(static s => s.Setup.Steps.Count > 0);
+        var prefs = new Preferences(new InMemoryPreferencesStore());
+        var settings = new SettingsViewModel(prefs, new FakeMotionPreference(), static _ => { }, shell.Setup);
+        var view = new SettingsView { DataContext = settings };
+        window.SettingsSlot.Content = view;
+        shell.GoTo(PageId.Settings);
+        Settle(window);
+        return (window, shell, settings, view, prefs);
+    }
+
+    private static string[] Order(SettingsView view) =>
+        [.. ((StackPanel)view.Content!).Children.Select(static c => c.Name ?? string.Empty).Where(static n => _orderedNames.Contains(n, StringComparer.Ordinal))];
+
+    [Fact]
+    public Task This_app_is_above_the_checklist_when_setup_is_done_and_below_it_on_a_first_run() => OnUi(async () =>
+    {
+        var done = await WithSetup("all-done");
+        Assert.Equal(_orderedNames, Order(done.View));
+
+        var first = await WithSetup("first-run");
+        Assert.Equal(["TitleText", "SettingsFilterBox", "SettingsNoMatch", "SetupChecklist", "ThisAppName", "ThisAppCard"], Order(first.View));
+    });
+
+    [Fact]
+    public Task This_app_moves_above_the_checklist_when_setup_finishes_while_the_page_is_open() => OnUi(async () =>
+    {
+        var (window, shell, _, view, _) = await WithSetup("first-run");
+        Assert.Equal("SetupChecklist", Order(view)[3]);
+
+        Server.SetupAnswer = SetupFixture.Answer("all-done");
+        await shell.Setup.Refresh(SetupFixture.Url, Token);
+        Settle(window);
+
+        Assert.Equal(_orderedNames, Order(view));
+    });
+
+    [Fact]
+    public Task Reset_puts_Text_size_back_hides_itself_hands_focus_to_the_slider_and_is_stored() => OnUi(async () =>
+    {
+        var (window, _, settings, _, prefs) = await WithSetup("all-done");
+        settings.TextScale = 1.2;
+        Settle(window);
+        Assert.True(Visible(window, "TextSizeReset"));
+
+        Named<Button>(window, "TextSizeReset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+        await prefs.Flush();
+
+        Assert.Equal(1.0, settings.TextScale);
+        Assert.False(Visible(window, "TextSizeReset"));
+        Assert.True(Named<Slider>(window, "TextScaleSlider").IsFocused, "focus did not go to the Text size slider");
+        Assert.Equal(1.0, (await prefs.Load(Token)).TextScale);
+    });
+
+    [Fact]
+    public Task Reset_turns_Reduce_motion_off_hides_itself_hands_focus_to_the_switch_and_is_stored() => OnUi(async () =>
+    {
+        var (window, _, settings, _, prefs) = await WithSetup("all-done");
+        settings.ReduceMotion = true;
+        Settle(window);
+        Assert.True(Visible(window, "ReduceMotionReset"));
+
+        Named<Button>(window, "ReduceMotionReset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+        await prefs.Flush();
+
+        Assert.False(settings.ReduceMotion);
+        Assert.False(Visible(window, "ReduceMotionReset"));
+        Assert.True(Named<ToggleSwitch>(window, "ReduceMotionSwitch").IsFocused, "focus did not go to the Reduce motion switch");
+        Assert.False((await prefs.Load(Token)).ReduceMotion);
+    });
+
+    [Fact]
+    public Task The_filter_placeholder_is_drawn_in_Ink() => OnUi(async () =>
+    {
+        var (window, _, _, _, _) = await WithSetup("all-done");
+        var box = Named<TextBox>(window, "SettingsFilterBox");
+
+        var expected = Assert.IsAssignableFrom<ISolidColorBrush>(box.FindResource("Brush.Ink"));
+
+        Assert.Equal(expected.Color, Assert.IsAssignableFrom<ISolidColorBrush>(box.PlaceholderForeground).Color);
     });
 }

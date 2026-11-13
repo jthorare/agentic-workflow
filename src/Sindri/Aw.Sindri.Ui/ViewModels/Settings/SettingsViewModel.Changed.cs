@@ -1,4 +1,5 @@
 using Aw.Sindri.Ui.Platform;
+using Aw.Sindri.Ui.ViewModels.Setup;
 
 namespace Aw.Sindri.Ui.ViewModels.Settings;
 
@@ -22,8 +23,20 @@ internal sealed partial class SettingsViewModel
     /// <summary>The Reset button's label.</summary>
     public string ResetLabel { get; } = Labels.SettingReset;
 
-    /// <summary>True when the "This app" section goes above the setup checklist: the page has no checklist, or setup is finished.</summary>
-    public bool ThisAppFirst => Setup is null || Setup.IsFinished;
+    /// <summary>True when the "This app" section goes above the setup checklist: the page has no checklist, or setup has answered and is finished. Before the first answer the order holds.</summary>
+    public bool ThisAppFirst => Setup is null || (Setup.HasAnswered && Setup.IsFinished);
+
+    /// <summary>The Text size Reset button's name.</summary>
+    public string ResetTextSizeName => Labels.SettingResetName(TextSizeLabel);
+
+    /// <summary>The Reduce motion Reset button's name.</summary>
+    public string ResetMotionName => Labels.SettingResetName(ReduceMotionLabel);
+
+    /// <summary>The Text size slider's accessible name: "Text size, changed" while it is not the default.</summary>
+    public string TextSizeName => TextScaleChanged ? Labels.SettingChangedName(TextSizeLabel) : TextSizeLabel;
+
+    /// <summary>The Reduce motion switch's accessible name: "Reduce motion, changed" while it is on.</summary>
+    public string ReduceMotionName => ReduceMotionChanged ? Labels.SettingChangedName(ReduceMotionLabel) : ReduceMotionLabel;
 
     /// <summary>Puts the text size back to 100%.</summary>
     internal void ResetTextScale() => TextScale = UiPreferences.Defaults.TextScale;
@@ -35,7 +48,7 @@ internal sealed partial class SettingsViewModel
     private void WatchSetup() =>
         Setup?.PropertyChanged += (_, e) =>
         {
-            if (string.Equals(e.PropertyName, nameof(Setup.IsFinished), StringComparison.Ordinal))
+            if (e.PropertyName is nameof(SetupViewModel.IsFinished) or nameof(SetupViewModel.HasAnswered))
             {
                 OnChanged(nameof(ThisAppFirst));
             }
@@ -46,5 +59,11 @@ internal sealed partial class SettingsViewModel
         OnChanged(nameof(TextScaleChanged));
         OnChanged(nameof(ReduceMotionChanged));
         OnChanged(nameof(ChangedCount));
+        OnChanged(nameof(TextSizeName));
+        OnChanged(nameof(ReduceMotionName));
     }
+
+    /// <summary>Makes a palette Settings entry set the filter: the shell asks for the words and this page takes them.</summary>
+    /// <param name="subscribe">Subscribes a handler to the shell's setting-filter request.</param>
+    internal void FollowPalette(Action<EventHandler<ValueEventArgs<string>>> subscribe) => subscribe((_, e) => Filter = e.Value);
 }

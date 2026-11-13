@@ -9,7 +9,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Palette;
 
-/// <summary>#3362: the palette lists a Settings entry per setting ("Settings: Text size"); running one shows Settings filtered to that setting.</summary>
+/// <summary>#3362: the palette lists a Settings entry per setting ("Text size"); running one shows Settings filtered to that setting.</summary>
 [Lane(TestLane.Unit)]
 public sealed class CommandPaletteSettingsTests
 {
@@ -31,9 +31,9 @@ public sealed class CommandPaletteSettingsTests
         new(_controls, static _ => { }, static _ => { }) { OpenSetting = withSettings ? _opened.Add : null };
 
     [Theory]
-    [InlineData("setting:TextSize", "Settings: Text size", "text size")]
-    [InlineData("setting:ReduceMotion", "Settings: Reduce motion", "reduce motion")]
-    [InlineData("setting:Sandbox", "Settings: Sandbox", "sandbox")]
+    [InlineData("setting:TextSize", "Text size", "text size")]
+    [InlineData("setting:ReduceMotion", "Reduce motion", "reduce motion")]
+    [InlineData("setting:Sandbox", "Sandbox", "sandbox")]
     public void Every_setting_has_an_entry_that_names_it_and_carries_its_filter_words(string id, string label, string words)
     {
         var palette = Palette();

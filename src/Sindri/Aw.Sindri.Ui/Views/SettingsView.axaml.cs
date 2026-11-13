@@ -66,20 +66,34 @@ internal sealed partial class SettingsView : UserControl
             _checklist.IsVisible = _settings.ShowsSetup;
         }
 
-        if (Content is StackPanel page && string.Equals(e.PropertyName, nameof(SettingsViewModel.ThisAppFirst), StringComparison.Ordinal))
+        if (Content is StackPanel page && _settings is not null && string.Equals(e.PropertyName, nameof(SettingsViewModel.ThisAppFirst), StringComparison.Ordinal) && _settings.ThisAppFirst != _placedFirst)
         {
-            PlaceThisApp(page);
+            PlaceThisApp(page);   // only when the order really changes
         }
     }
 
-    private void OnResetMotion(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => _settings?.ResetReduceMotion();
+    // The Reset button hides itself when it resets, so focus goes to the control it reset.
+    private void OnResetMotion(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        _settings?.ResetReduceMotion();
+        _ = ReduceMotionSwitch.Focus();
+    }
 
-    private void OnResetTextSize(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => _settings?.ResetTextScale();
+    private void OnResetTextSize(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        _settings?.ResetTextScale();
+        _ = TextScaleSlider.Focus();
+    }
 
     // "This app" sits above the checklist once setup is finished (or when the page has none), and below the other sections before that.
+    private bool _placedFirst;
+
     private void PlaceThisApp(StackPanel page)
     {
         Control[] parts = [ThisAppName, ThisAppCard];
+        _placedFirst = _settings?.ThisAppFirst == true;
+        var focused = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Control;   // moving the parts drops focus from inside them
+        var wasInside = focused is not null && parts.Any(p => p.IsVisualAncestorOf(focused));
         foreach (var part in parts)
         {
             _ = page.Children.Remove(part);
@@ -92,6 +106,11 @@ internal sealed partial class SettingsView : UserControl
         else
         {
             page.Children.AddRange(parts);
+        }
+
+        if (wasInside)
+        {
+            Dispatcher.UIThread.Post(() => focused?.Focus(), DispatcherPriority.Loaded);
         }
     }
 
@@ -119,9 +138,29 @@ internal sealed partial class SettingsView : UserControl
         (settings.Setup?.Steps ?? []).SelectMany(static s => new[] { s.Title, s.Sub, s.DetailText, s.HintText, s.Name, s.Note, s.ProgressText, s.ErrorText, s.ChipWord, s.Repo?.FolderLabel, s.Repo?.BrowseText, s.Repo?.BodyText, s.Repo?.NoteText, s.Repo?.AddText })
             .OfType<string>().Where(static w => w.Length > 0);
 
-    private static IEnumerable<string> ShownWords(Control root) =>
-        root.GetSelfAndVisualDescendants().OfType<Control>().SelectMany(static c => new[] { (c as TextBlock)?.Text, (c as ContentControl)?.Content as string, AutomationProperties.GetName(c) })
-            .OfType<string>().Where(static s => s.Length > 0);
+    // The words of a section as shown: a control hidden by its own binding (the "Changed" mark, "Reset" while nothing changed) adds none. The root itself may be hidden by the filter.
+    private static IEnumerable<string> ShownWords(Control root) => ShownWords(root, isRoot: true);
+
+    private static IEnumerable<string> ShownWords(Control control, bool isRoot)
+    {
+        if (!isRoot && !control.IsVisible)
+        {
+            yield break;
+        }
+
+        foreach (var word in new[] { (control as TextBlock)?.Text, (control as ContentControl)?.Content as string, AutomationProperties.GetName(control) }.OfType<string>().Where(static s => s.Length > 0))
+        {
+            yield return word;
+        }
+
+        foreach (var child in control.GetVisualChildren().OfType<Control>())
+        {
+            foreach (var word in ShownWords(child, isRoot: false))
+            {
+                yield return word;
+            }
+        }
+    }
 
     // Esc in the filter box clears it.
     private void OnFilterKey(object? sender, Avalonia.Input.KeyEventArgs e)
