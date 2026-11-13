@@ -3,5 +3,6 @@
   "workflowId": "WF-00000000000000000000000000000001",
   "revision": 3,
   "trigger": "{\"kind\":\"manual\"}",
-  "by": "human"
+  "by": "human",
+  "mode": "live"
 }
