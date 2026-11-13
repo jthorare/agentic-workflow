@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using System.Text;
 using Aw.Context.Core.Engine;
@@ -64,6 +65,23 @@ public sealed class ContextMcpTests : IDisposable
         Assert.Contains("focused pane", result.StructuredContent.Value.GetRawText(), StringComparison.Ordinal);
         Assert.NotEmpty(mcp.Sent);
         Assert.DoesNotContain(mcp.Sent, h => h.Origin is not null);                                   // why: /sindri/mcp refuses any Origin
+    }
+
+    [Fact(Timeout = 60_000), Trait("Lane", "integration")]
+    public async Task Context_query_reads_only_its_page_of_records_and_counts_every_match()
+    {
+        // why: the MCP page is also the fetch window (#3370, ContextTools.CallQuery); without it the call read every match and cut the page afterwards
+        var ct = TestContext.Current.CancellationToken;
+        PlantMany(_repo, "docs/window", 30, i => $"# Window note {i}\n\nThe pane orientation toggle, window note {i}.\n");
+        await using var host = await ContextHosts.Approved(_repo, sessions: true, ct);
+        await using var mcp = await McpSession.Open(host, "split-panes", ct);
+
+        var result = await mcp.Call("context_query", """{"q":"orientation toggle","limit":25}""", ct);
+
+        Assert.NotEqual(true, result.IsError);
+        var matches = result.StructuredContent!.Value.GetProperty("matches");
+        Assert.Equal(25, matches.GetProperty("read").GetInt32());
+        Assert.True(matches.GetProperty("matched").GetInt32() > 25);
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
@@ -186,7 +204,7 @@ public sealed class ContextMcpTests : IDisposable
         Assert.NotEqual(true, result.IsError);
         Assert.True(result.StructuredContent!.Value.GetProperty("sessionsEnabled").GetBoolean());
         Assert.Contains("\"state\":\"ok\"", result.StructuredContent.Value.GetRawText(), StringComparison.Ordinal);
-        Assert.Contains("port " + host.Http.BaseAddress!.Port.ToString(System.Globalization.CultureInfo.InvariantCulture), Text(result), StringComparison.Ordinal);
+        Assert.Contains("port " + host.Http.BaseAddress!.Port.ToString(CultureInfo.InvariantCulture), Text(result), StringComparison.Ordinal);
         Assert.Equal(host.Http.BaseAddress.Port, result.StructuredContent.Value.GetProperty("instance").GetProperty("port").GetInt32());   // why: Claude Code reads structuredContent, not the text
         Assert.Matches(@"repo-docs\s+split-panes\s+ok", Text(result));
     }
@@ -275,6 +293,19 @@ public sealed class ContextMcpTests : IDisposable
         File.WriteAllText(file, text);
         Git(repo.Path, "add", path);
         Git(repo.Path, "-c", "user.name=fixture", "-c", "user.email=fixture@example.invalid", "commit", "-q", "-m", "plant " + path);
+    }
+
+    /// <summary>Commits <paramref name="count"/> files under <paramref name="folder"/> in the fixture repo as one commit.</summary>
+    private static void PlantMany(FixtureRepo repo, string folder, int count, Func<int, string> text)
+    {
+        _ = Directory.CreateDirectory(Path.Combine(repo.Path, folder));
+        for (var i = 0; i < count; i++)
+        {
+            File.WriteAllText(Path.Combine(repo.Path, folder, "note-" + i.ToString("D2", CultureInfo.InvariantCulture) + ".md"), text(i));
+        }
+
+        Git(repo.Path, "add", folder);
+        Git(repo.Path, "-c", "user.name=fixture", "-c", "user.email=fixture@example.invalid", "commit", "-q", "-m", "plant " + folder);
     }
 
     private static void Git(string repo, params string[] args)
