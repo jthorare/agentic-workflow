@@ -44,7 +44,7 @@ internal sealed partial class Row
     }
 
     /// <summary>The top level the row listens to for render-scaling changes: set while attached, null once detached.</summary>
-    internal TopLevel? ScalingSource => _top;
+    internal TopLevel? ScalingSource { get; private set; }
 
     /// <summary>Runs what a render-scaling change runs, since the headless platform can't change the scaling itself.</summary>
     internal void ScalingChangedForTest() => OnScalingChanged(this, EventArgs.Empty);

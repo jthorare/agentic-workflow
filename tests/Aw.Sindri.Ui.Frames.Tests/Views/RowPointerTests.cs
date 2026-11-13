@@ -7,7 +7,6 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Tests.Views;
-using Aw.Sindri.Ui.ViewModels.Rows;
 using Aw.Sindri.Ui.Views.Controls.Rows;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
@@ -33,8 +32,8 @@ public sealed class RowPointerTests
             window.MouseMove(over, RawInputModifiers.None);
             Settle(window);
 
-            var surface2 = Assert.IsAssignableFrom<ISolidColorBrush>(window.FindResource("Brush.Surface2")).Color;
-            Assert.Equal(surface2, Assert.IsAssignableFrom<ISolidColorBrush>(row.Background).Color);
+            var surface2 = Assert.IsType<ISolidColorBrush>(window.FindResource("Brush.Surface2"), exactMatch: false).Color;
+            Assert.Equal(surface2, Assert.IsType<ISolidColorBrush>(row.Background, exactMatch: false).Color);
             var strip = Assert.IsType<RowActionsStrip>(row.Strip);
             var button = Assert.Single(strip.GetVisualDescendants().OfType<Button>());
 

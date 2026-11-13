@@ -36,7 +36,6 @@ internal sealed partial class Row : Control
     private RowGlyphPainter.Palette? _palette;
     private IBrush? _selBar;
     private Pen? _ring;
-    private TopLevel? _top;
     private Avalonia.Styling.ThemeVariant? _variant;
 
     static Row()
@@ -160,8 +159,8 @@ internal sealed partial class Row : Control
     {
         base.OnAttachedToVisualTree(e);
         Watch(DataContext as IRowItem);
-        _top = TopLevel.GetTopLevel(this);
-        _top?.ScalingChanged += OnScalingChanged;
+        ScalingSource = TopLevel.GetTopLevel(this);
+        ScalingSource?.ScalingChanged += OnScalingChanged;
     }
 
     /// <inheritdoc />
@@ -169,8 +168,8 @@ internal sealed partial class Row : Control
     {
         base.OnDetachedFromVisualTree(e);
         Watch(item: null);
-        _top?.ScalingChanged -= OnScalingChanged;
-        _top = null;
+        ScalingSource?.ScalingChanged -= OnScalingChanged;
+        ScalingSource = null;
         DropStrip();
     }
 
