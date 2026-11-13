@@ -83,15 +83,30 @@ internal sealed partial class Row
         var mono = FamilyOf("Font.Mono", text);
         var chip = FamilyOf("Font.Text", text);
         return new FontSet(
-            new Typeface(text),
-            new Typeface(text, FontStyle.Normal, FontWeight.Medium),
-            new Typeface(text, FontStyle.Normal, FontWeight.Bold),
-            new Typeface(mono),
-            new Typeface(chip, FontStyle.Normal, FontWeight.Medium),
+            FaceOf(text, FontWeight.Normal),
+            FaceOf(text, FontWeight.Medium),
+            FaceOf(text, FontWeight.Bold),
+            FaceOf(mono, FontWeight.Normal),
+            FaceOf(chip, FontWeight.Medium),
             Resource("Type.Body.Size", 13),
             Resource("Type.Caption.Size", 12),
             Resource("Type.Caption.LineHeight", 18),
             Resource("Type.Mono.Size", 12));
+    }
+
+    // A face the font manager can't turn into a glyph typeface (a keyed collection that is not registered, or a weight it lacks, as in a headless test app) must not make TextLayout throw:
+    // the same weight of the default family stands in, then its regular weight.
+    private static Typeface FaceOf(FontFamily family, FontWeight weight)
+    {
+        var manager = FontManager.Current;
+        var wanted = new Typeface(family, FontStyle.Normal, weight);
+        if (manager.TryGetGlyphTypeface(wanted, out _))
+        {
+            return wanted;
+        }
+
+        var sameWeight = new Typeface(FontFamily.Default, FontStyle.Normal, weight);
+        return manager.TryGetGlyphTypeface(sameWeight, out _) ? sameWeight : new Typeface(FontFamily.Default);
     }
 
     private FontFamily FamilyOf(string key, FontFamily fallback) => this.TryFindResource(key, ActualThemeVariant, out var found) && found is FontFamily family ? family : fallback;
