@@ -45,7 +45,7 @@ Use 6 only inside chips and small buttons, as in `Padding="6,0"`. Do not use 6 f
 - Hover fills the background with one tertiary token over 150 ms with ease. Source: Linear 0.15 s and Raycast 0.15 s (measured).
 - Pressed takes Brush.Clickable.Pressed and PressedBorder (Outline, 3:1); nothing moves, because a scale blurs 1 px borders and a shift gets clipped (#3190).
 - Pressed does not change the colour of the label.
-- A selected + focused row draws a 2 px PrimaryHover ring inside the row, with its padding cut by 1 so the content stays put (a focused-only row has a 1 px ring). Every row type copies it (#3506).
+- Focus is the same 2 px PrimaryHover ring on every row. A selected row that has focus keeps its 1 px selected line (PressedBorder) just inside the ring, and the padding gives the ring's extra 1 px back, so the content stays put. Hover and press keep the ring's colour (#3506).
 
 The `clickable` class applies hover and pressed to any element. It lives in `Theme/ClickableStyles.axaml`, added by the hover states fix (#2535). Put `Classes="clickable"` on a row or card instead of writing a trigger.
 
