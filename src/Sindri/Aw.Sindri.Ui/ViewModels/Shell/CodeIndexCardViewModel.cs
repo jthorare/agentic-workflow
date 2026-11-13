@@ -94,7 +94,7 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
         var word = StateWords(StateOf(repo, health), health);
         if (repo.Commit is not { Length: > 0 } commit)
         {
-            return repo.Repo + ": " + word;
+            return repo.Repo + ": " + (string.Equals(word, Labels.CodeIndexQueued, StringComparison.Ordinal) ? Labels.CodeIndexFirstBuildQueued : word);   // never built: its first build, not a rebuild (#3602)
         }
 
         var age = repo.BuiltAt is { } built ? ", " + Labels.CodeIndexAge(clock.GetUtcNow() - built) : string.Empty;
