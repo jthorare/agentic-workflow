@@ -4,9 +4,13 @@
              x:Class="Aw.Sindri.Ui.Views.Todo.TodoNoteCardSection"
              x:DataType="todo:TodoNoteCardViewModel">
   <UserControl.Styles>
-    <!-- #3454: a TextBlock with no text still measures one line (18 px). The live-region rows stay visible and in the tree, so while a row is empty it is held to no height. -->
-    <Style Selector="TextBlock.empty">
+    <!-- #3454: a TextBlock with no text still measures one line (18 px). The live-region rows stay visible and in the tree, so they are held to no height unless they are filled. The rule is
+         "collapsed unless filled", not "collapsed when empty": with no data context (the card is not set up) the binding is unset, and the row must still be flat. -->
+    <Style Selector="TextBlock.live-row">
       <Setter Property="MaxHeight" Value="0" />
+    </Style>
+    <Style Selector="TextBlock.live-row.filled">
+      <Setter Property="MaxHeight" Value="Infinity" />
     </Style>
   </UserControl.Styles>
   <!-- Settings → Connections → Obsidian todo note (todo spec §3.4 "Settings card", §3.5): the status line is a polite live region that is always in the tree (its flag is set before any text). Vault, note and
@@ -22,9 +26,9 @@
           <TextBlock Classes="caption subtle" Text="{Binding Text.Intro}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text.Intro}" />
         </StackPanel>
         <Border Height="{StaticResource Space.MD}" IsVisible="{Binding StatusText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-        <TextBlock x:Name="TodoNoteStatus" Classes="caption" Classes.empty="{Binding StatusText, Converter={x:Static StringConverters.IsNullOrEmpty}}" AutomationProperties.LiveSetting="Polite" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StatusText}" />
+        <TextBlock x:Name="TodoNoteStatus" Classes="caption live-row" Classes.filled="{Binding StatusText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.LiveSetting="Polite" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StatusText}" />
         <Border Height="{StaticResource Space.MD}" IsVisible="{Binding ErrorText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-        <TextBlock x:Name="TodoNoteError" Classes="caption" Classes.empty="{Binding ErrorText, Converter={x:Static StringConverters.IsNullOrEmpty}}" AutomationProperties.LiveSetting="Polite" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" TextWrapping="Wrap"
+        <TextBlock x:Name="TodoNoteError" Classes="caption live-row" Classes.filled="{Binding ErrorText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.LiveSetting="Polite" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" TextWrapping="Wrap"
                    AutomationProperties.Name="{Binding ErrorText}" />
       </StackPanel>
 
