@@ -127,9 +127,12 @@ kbd { font:500 11px/16px var(--mono); color:var(--ink-subtle); background:var(--
 .g.doing { border:1.5px solid var(--primary-hi); border-radius:50%; background:linear-gradient(90deg, var(--primary-hi) 50%, transparent 50%); background-clip:content-box; padding:2px; }
 .g.done { border-radius:50%; background:var(--ok); }
 .g.done::after { content:''; position:absolute; left:4px; top:2px; width:3px; height:6px; border:solid var(--canvas); border-width:0 1.5px 1.5px 0; transform:rotate(45deg); }
-/* linked: a confirmed link or a saved thing. Neutral on purpose: "confirmed" is not a status, so no green (#2959). */
-.g.linked { border:1.5px solid var(--ink-subtle); border-radius:50%; }
-.g.linked::after { content:''; position:absolute; left:3px; top:3px; width:5px; height:5px; border-radius:50%; background:var(--ink-subtle); }
+/* linked: a confirmed link or a saved thing. Neutral on purpose: "confirmed" is not a status, so no green (#2959).
+   Two chained links, so its outline differs from the PR ring + dot at 1x, not only its size or ink (#3581). Each link is an
+   8.5 x 6 rounded outline turned -45deg; centres (5.25, 8.75) and (8.75, 5.25), so each link's end sits in the other's hole (3.5 px overlap). */
+.g.linked::before, .g.linked::after { content:''; position:absolute; width:8.5px; height:6px; border:1.5px solid var(--ink-subtle); border-radius:3px; transform:rotate(-45deg); }
+.g.linked::before { left:1px; top:5.75px; }
+.g.linked::after { left:4.5px; top:2.25px; }
 .g.you { width:10px; height:10px; margin:2px; background:var(--att); transform:rotate(45deg); border-radius:1px; }
 .g.fail { border-radius:50%; background:var(--err); }
 .g.fail::before, .g.fail::after { content:''; position:absolute; left:6px; top:3px; width:1.5px; height:8px; background:var(--canvas); transform:rotate(45deg); }

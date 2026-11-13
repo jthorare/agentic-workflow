@@ -12,7 +12,7 @@ So the body is 784 px tall: with 8 px padding and 2 group headers (28 each), tha
 ## Row (32 px compact, the default; 40 px comfortable via `.comfortable` on .app)
 `[glyph 16] [title, flex, min 200] [3-5 facts, fixed columns 104 or 136] [age 44, right-aligned] [waits on 112]`, 12 px column gap,
 24 px side inset. Columns line up down the whole list and between pages: the eye scans a column, not a sentence.
-- **Glyph:** the state, drawn, 14 px. `linked` (ring + dot, ink-subtle) = a confirmed link or a saved thing: neutral, never green. Colour means status only: todo (open ring, grey), doing (half ring, primary), done (check, green),
+- **Glyph:** the state, drawn, 14 px. `linked` (two chained links, ink-subtle; never a ring, so it never reads as a PR, #3581) = a confirmed link or a saved thing: neutral, never green. Colour means status only: todo (open ring, grey), doing (half ring, primary), done (check, green),
   draft (dashed ring), in review (3/4 ring, primary; never the doing half ring), needs you (diamond, attention), failed (x, error), parked (pause ring, attention), agent running (arc, primary),
   message (bubble with a tail, never a box: `x` selects, so a box reads as a checkbox), mention (dot, primary), PR open (ring with dot, green), PR draft (same, grey), merged (violet disc), CI running (dotted ring, attention).
 - **Title:** the only 13 px ink text in the row. The id (mono 12, ink-3) sits LEFT of the title on every row kind, never in a fact column
