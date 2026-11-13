@@ -25,4 +25,8 @@ public enum LaunchBudgetState
     /// <summary>A budget is set but the agent has no usage reader, so the spend can't be known: refused (SND-LAUNCH-010).</summary>
     [JsonStringEnumMemberName("no-usage-reader")]
     NoUsageReader,
+
+    /// <summary>A budget is set and the agent's first spend read today hasn't landed: never refused at the list; the open waits on the real read.</summary>
+    [JsonStringEnumMemberName("counting")]
+    Counting,
 }

@@ -124,21 +124,18 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
 
     internal async Task<int> Doctor(bool json, CancellationToken ct, Func<CancellationToken, ValueTask<IReadOnlyList<DoctorCheck>>>? harnesses = null)
     {
-        var report = (await scope.GetRequiredService<IService<RunDoctorRequest, RunDoctorResponse>>().Handle(new RunDoctorRequest(), ct).ConfigureAwait(false)).Value;
-        if (harnesses is not null)   // the pinned harness probe's lines (engine spec §6.2)
+        var request = new RunDoctorRequest
         {
-            DoctorCheck[] checks = [.. report.Checks, .. await harnesses(ct).ConfigureAwait(false)];
-            report = new RunDoctorResponse(checks, DoctorRules.ExitCode(checks));
-        }
-
-        if (json)
-        {
-            return await output.Json(report, report.ExitCode).ConfigureAwait(false);
-        }
-
-        var lines = report.Checks.Select(c => $"{Word(c.State),-5} {c.Name,-17} {c.Detail}{(c.Fix is null ? string.Empty : $" (fix: {c.Fix})")}");
-        return await output.Text(string.Join('\n', lines) + "\n", report.ExitCode).ConfigureAwait(false);
+            OnRow = json ? null : row => { output.Out.Write(Line(row)); output.Out.Flush(); },   // text: each row prints as its check finishes (#3390)
+            Harnesses = harnesses,   // the pinned harness probe's lines (engine spec §6.2), in the same parallel pass (#3390)
+        };
+        var report = (await scope.GetRequiredService<IService<RunDoctorRequest, RunDoctorResponse>>().Handle(request, ct).ConfigureAwait(false)).Value;
+        return json
+            ? await output.Json(report, report.ExitCode).ConfigureAwait(false)
+            : report.ExitCode;
     }
+
+    private static string Line(DoctorCheck c) => $"{Word(c.State),-5} {c.Name,-17} {c.Detail}{(c.Fix is null ? string.Empty : $" (fix: {c.Fix})")}\n";
 
     /// <summary>'profile approve [&lt;hash&gt;]' after approval is gone (#2258 PR 1): says so and exits 0, so an old script keeps going; needs no control plane.</summary>
     internal async Task<int> Approve(string? hashText, CancellationToken ct)

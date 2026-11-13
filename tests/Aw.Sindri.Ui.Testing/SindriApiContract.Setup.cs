@@ -7,15 +7,15 @@ namespace Aw.Sindri.Ui.Testing;
 public abstract partial class SindriApiContract
 {
     [Fact]
-    public async Task Setup_answers_the_five_steps_in_the_served_order()
+    public async Task Setup_answers_the_eight_steps_in_the_served_order()
     {
         var golden = GoldenFiles.Node("setup", "first-run");
 
         var view = (await Reach(new FakeSindriApi { SetupAnswer = RouteAnswer.Api("setup", "first-run") }).Setup(_api, Token)).Value;
 
         Expect.Sequence(golden["steps"]!.AsArray().Select(s => (string)s!["id"]!), view.Steps.Select(s => s.Id));
-        Expect.Sequence(["repo", "profile", "mcp", "map"], view.Steps.Take(4).Select(s => s.Id));
-        var repo = view.Steps[0];
+        Expect.Sequence(["serve", "sources", "repo", "profile", "agent", "mcp", "map", "first-workflow"], view.Steps.Select(s => s.Id));
+        var repo = view.Steps[2];
         Expect.Equal(("Add your repo", "needs-you", "AddRepo", null), (repo.Title, repo.State, repo.Action, repo.Error));
     }
 
@@ -51,7 +51,7 @@ public abstract partial class SindriApiContract
     }
 
     [Fact]
-    public async Task Setup_reads_the_saved_profile_as_done_and_mcp_as_the_next_step()
+    public async Task Setup_reads_the_saved_profile_as_done_and_mcp_as_waiting()
     {
         var steps = (await Reach(new FakeSindriApi { SetupAnswer = RouteAnswer.Api("setup", "profile-needs-approval") }).Setup(_api, Token)).Value.Steps;
 
@@ -59,7 +59,7 @@ public abstract partial class SindriApiContract
         var mcp = steps.Single(s => s.Id == "mcp");
         Expect.Equal(("done", null), (profile.State, profile.Action));
         Expect.Equal(("todo", null), (mcp.State, mcp.Action));
-        Expect.Sequence(["repo", "profile", "mcp"], steps.Take(3).Select(s => s.Id));
+        Expect.Sequence(["serve", "sources", "repo", "profile", "agent", "mcp"], steps.Take(6).Select(s => s.Id));
     }
 
     [Fact]

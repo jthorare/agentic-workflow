@@ -253,6 +253,21 @@ public sealed class SetupFactsTests
         Assert.Equal((MapPhase.Building, new SetupProgress(40, 100, "files")), (running.Phase, running.Progress));
     }
 
+    // #3433: the setup page reads the count the way the whole map's 'building' answer does: the newest "extracting n/N files" line, nothing else.
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("labeling 12 features", 40, 100)]
+    [InlineData("clusters 3/9", 40, 100)]
+    public async Task Map_building_counts_the_newest_files_line_only(string later, int done, int total)
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.BuildJob(JobState.Running, ["starting", "extracting 40/100 files", later]);
+
+        var running = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Building, new SetupProgress(done, total, "files")), (running.Phase, running.Progress));
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task Map_passes_on_an_engine_error_that_is_not_the_missing_map()
     {

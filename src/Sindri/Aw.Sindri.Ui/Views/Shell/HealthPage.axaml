@@ -220,6 +220,8 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
+              <Button x:Name="ProfileSetupLink" Classes="row-title" IsVisible="{Binding IsProfileMissing}" Click="OnOpenSetup" Content="{Binding ProfileDetail}"
+                      AutomationProperties.Name="{Binding ProfileDetail}" />
             </StackPanel>
           </Border>
         </Border>
@@ -361,10 +363,16 @@
                        AutomationProperties.Name="{Binding Counts}" />
             <ccontrols:CommandControl x:Name="StopControl" DataContext="{Binding Stop}"
                                       IsVisible="{Binding $self.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            <!-- Two columns when two fit (540 px each and the grid's 12 px gap), one below that; the list reads down the left column, then down the right (#3356, #3478). A command longer than its column wraps. -->
             <ItemsControl x:Name="CopyOnlyActions" ItemsSource="{Binding CopyOnly}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <ccontrols:CardGrid MinColumnWidth="540" Spacing="12" ColumnMajor="True" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="controls:ControlViewModel">
-                  <StackPanel Spacing="{StaticResource Space.XXS}" Margin="0,0,0,8">
+                  <StackPanel Spacing="{StaticResource Space.XXS}">
                     <TextBlock Classes="caption subtle" Text="{Binding Label}" AutomationProperties.Name="{Binding Label}" />
                     <ccontrols:CommandControl />
                   </StackPanel>

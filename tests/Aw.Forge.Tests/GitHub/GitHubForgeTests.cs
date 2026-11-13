@@ -141,7 +141,7 @@ public sealed class GitHubForgeTests
     }
 
     [Fact]
-    public async Task A_403_with_no_rate_limit_left_is_AW_FORGE_006_and_without_it_is_AW_FORGE_003()
+    public async Task A_403_with_no_rate_limit_left_is_AW_FORGE_006_and_without_it_is_AW_FORGE_009()
     {
         var limited = new StubHandler().On(HttpMethod.Get, "/repos/acme/widgets", HttpStatusCode.Forbidden, "{}", ("X-RateLimit-Remaining", "0"));
         var plain = new StubHandler().On(HttpMethod.Get, "/repos/acme/widgets", HttpStatusCode.Forbidden, "{\"message\":\"Resource not accessible\"}");
@@ -150,7 +150,17 @@ public sealed class GitHubForgeTests
         var second = await Build(plain).Forge.DefaultBranch(_repo, TestContext.Current.CancellationToken);
 
         Assert.Equal(ForgeErrors.RateLimited.Code, first.Error.Code);
-        Assert.Equal(ForgeErrors.Unauthorized.Code, second.Error.Code);
+        Assert.Equal(ForgeErrors.Refused.Code, second.Error.Code);   // the repo turned the request away; the credential is fine
+    }
+
+    [Fact]
+    public async Task A_403_with_Retry_After_is_AW_FORGE_006()
+    {
+        var http = new StubHandler().On(HttpMethod.Get, "/repos/acme/widgets", HttpStatusCode.Forbidden, "{\"message\":\"You have exceeded a secondary rate limit\"}", ("Retry-After", "60"));
+
+        var result = await Build(http).Forge.DefaultBranch(_repo, TestContext.Current.CancellationToken);
+
+        Assert.Equal(ForgeErrors.RateLimited.Code, result.Error.Code);   // GitHub's secondary limit: no X-RateLimit-Remaining: 0, only Retry-After
     }
 
     [Fact]

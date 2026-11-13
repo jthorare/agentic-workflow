@@ -44,7 +44,7 @@ public sealed partial class WorktreeInspector(RepoCommands repo, IProcessLocatio
             return since.Error;
         }
 
-        var treeSince = scope.Path is { } treePath ? await values.Get(KvKeys.WorktreesPathSweepStart(treePath), cancellationToken).ConfigureAwait(false) : Results.Success<string?>(value: null);
+        var treeSince = scope.Path is { } treePath ? await values.Get(KvKeys.WorktreesPathSweepStart(WorktreeRoots.Normalize(treePath)), cancellationToken).ConfigureAwait(false) : Results.Success<string?>(value: null);
         if (treeSince.IsError)
         {
             return treeSince.Error;

@@ -31,6 +31,18 @@ public static class ProviderFixtures
         return "{\"id\":\"" + eventId + "\",\"type\":\"PullRequestEvent\",\"repo\":{\"name\":\"" + repo + "\"},\"created_at\":\"" + createdAt + "\",\"payload\":{\"action\":\"" + action + "\",\"number\":" + n + ",\"pull_request\":" + pr + "}}";
     }
 
+    /// <summary>GitHub's answer to GET /repos/{owner}/{name}/pulls/{n}: the full pull request, with its title, author and page url.</summary>
+    /// <param name="repo">'owner/name'.</param>
+    /// <param name="number">The pull request number.</param>
+    /// <param name="title">The title.</param>
+    /// <param name="author">The author's login.</param>
+    /// <returns>The JSON object.</returns>
+    public static string GitHubPull(string repo, int number, string title, string author)
+    {
+        var n = number.ToString(CultureInfo.InvariantCulture);
+        return "{\"number\":" + n + ",\"title\":\"" + title + "\",\"html_url\":\"https://github.com/" + repo + "/pull/" + n + "\",\"user\":{\"login\":\"" + author + "\"}}";
+    }
+
     /// <summary>A GitHub PullRequestEvent with action 'review_requested'.</summary>
     /// <param name="eventId">GitHub's event id.</param>
     /// <param name="repo">'owner/name'.</param>

@@ -7,6 +7,7 @@ using Aw.Context.Core.Sync;
 using Aw.Kernel;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Workflow.Blocks.Input;
 
 namespace Aw.Sindri.Tests.ContextCalls;
@@ -29,7 +30,7 @@ public sealed class IndexSyncServiceTests
         _ = await _h.Profiles.Save(loaded, Ct);
         var grant = await _h.HoldLease();
         using var caller = _h.Callers.EnterService("index-sync");
-        return await new IndexSyncService(new ContextScopes(_h.Profiles, _h.Callers), EngineProxy.Of(_index)).Run(new ScheduledRun(grant, _now), Ct);
+        return await new IndexSyncService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), EngineProxy.Of(_index)).Run(new ScheduledRun(grant, _now), Ct);
     }
 
     private static SourceSync Row(string source, int fetched, string? code = null) =>

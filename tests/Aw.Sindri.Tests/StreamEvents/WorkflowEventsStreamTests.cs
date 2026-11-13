@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Features.StreamEvents;
 
@@ -37,9 +38,9 @@ public sealed class WorkflowEventsStreamTests
     {
         var h = new SliceHarness();
         var grant = await h.HoldLease();
-        await Append(h, grant, EventTypes.WorkflowRunStarted, new WorkflowRunStartedPayload(_run, _wf, 1, "manual: secret trigger", "human:cli"), "run.started");
-        await Append(h, grant, EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "failed", "secret error", "engine"), "run.finished");
-        await Append(h, grant, EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(_run, "secret reason", "human:cli"), "run.cancelled");
+        await Append(h, grant, EventTypes.WorkflowRunStarted, new WorkflowRunStartedPayload(_run, _wf, 1, "manual: secret trigger", "human:cli", WorkflowRunMode.Live), "run.started");
+        await Append(h, grant, EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "failed", "secret error", "engine", WorkflowRunMode.Live), "run.finished");
+        await Append(h, grant, EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(_run, "secret reason", "human:cli", WorkflowRunMode.Live), "run.cancelled");
         await Append(h, grant, EventTypes.WorkflowNodeStarted, new WorkflowNodeStartedPayload(_run, _node, 2, "engine"), "node.started");
         await Append(h, grant, EventTypes.WorkflowNodeFinished, new WorkflowNodeFinishedPayload(_run, _node, 2, "ok", Truncated: true, "engine"), "node.finished");
         await Append(h, grant, EventTypes.WorkflowNodeFailed, new WorkflowNodeFailedPayload(_run, _node, 2, "secret error", "engine"), "node.failed");
@@ -47,7 +48,7 @@ public sealed class WorkflowEventsStreamTests
         var page = (await StreamEventsServices.Over(h).Handle(new StreamEventsRequest(After: 0), TestContext.Current.CancellationToken)).Value;
 
         Assert.Equal(6, page.Events.Count);
-        Assert.All(page.Events.Take(3), e => Assert.Equal(["runId"], Names(e.Payload)));
+        Assert.All(page.Events.Take(3), e => Assert.Equal(["mode", "runId", "status"], Names(e.Payload)));   // why: the public run form carries the state and mode (Workflows page P0); status is null on started and cancelled
         Assert.All(page.Events.Skip(3), e => Assert.Equal(["itemIndex", "nodeId", "runId"], Names(e.Payload)));
         Assert.All(page.Events, e => Assert.Equal(_run.Value, e.Payload.GetProperty("runId").GetString()));
     }

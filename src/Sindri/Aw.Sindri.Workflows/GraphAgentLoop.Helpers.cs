@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Temporalio.Exceptions;
@@ -43,7 +44,31 @@ internal sealed partial class GraphAgentLoop
         CancellationType = ActivityCancellationType.TryCancel,
     };
 
-    private static GraphBlockOutcome Failed(string? input, string error) => new(NodeRunStatus.Failed, input, Output: null, [], error);
+    // why: the agent's failure output goes through Fit like a succeeded one, so one over 64 KB stays parseable JSON with 'Truncated' set (#3419)
+    // The input is fitted too (#3486): it is the interpolated config, and a big prompt must not reach the store as cut, unparseable text.
+    private static GraphBlockOutcome Failed(string? input, string error, string? output = null, bool inputCut = false)
+    {
+        var fitted = StoredJson.Fit(output);
+        var fitInput = StoredJson.Fit(input);
+        return new(NodeRunStatus.Failed, fitInput.Text, fitted.Text, [], error, Truncated: fitted.Cut || fitInput.Cut || inputCut);
+    }
+
+    // What a failed node keeps of the agent's work: the last refused report and the declared output files it wrote. Null when both are empty, so a node that left nothing keeps no output.
+    private static string? FailureOutputOf(string? refusedReport, string? files)
+    {
+        var output = new JsonObject();
+        if (!string.IsNullOrEmpty(refusedReport))
+        {
+            output["lastRefusedReport"] = refusedReport;
+        }
+
+        if (files is not null && JsonNode.Parse(files) is JsonObject { Count: > 0 } parsed)
+        {
+            output["files"] = parsed;
+        }
+
+        return output.Count == 0 ? null : output.ToJsonString();
+    }
 
     // The ask activity reads the state file this often and hands back after the cap with nothing new (#3151). Each call is one activity in the run's history, so the cap keeps a long node to a few calls.
     private static readonly TimeSpan _defaultAskEvery = TimeSpan.FromSeconds(2);
