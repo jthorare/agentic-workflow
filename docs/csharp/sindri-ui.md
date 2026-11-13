@@ -168,7 +168,7 @@ the palette's Go to, a pointer click on a nav tab) always lands focus on the new
 beside the page), and `ShellWindow.KeepFocusOrReannounce` does it: Avalonia 12.1.3 has no `ClearFocus`, so when the region
 already has focus it pulses `Page.IsEnabled` false and true (focus drops) and focuses it again, which raises the fresh event
 the screen reader speaks. From the palette, opened from the region, it raises two (the palette's close hands focus back, then the re-announce); the page changes before the palette closes, so both carry the new page's name. Over a
-covering sheet the page is disabled and the usual keep-focus rule applies. ⌘, keeps its own rule (Settings' first control,
+covering sheet the page is disabled and the usual keep-focus rule applies. ⌘, keeps its own rule (Settings' filter box,
 once, via `_openingSettings`). The nav tabs are a tabs pattern with automatic activation: Right, Left, Home and End on a focused tab select the neighbouring
 tab and focus stays on that tab (`ShellWindow.WatchNavigationKeys`; only a pointer click on a tab moves focus to the region).
 Other page changes that are not a navigation command (`LeaveSettings`, the Home health strip, the pill's `GoTo(System)`) take the
@@ -194,6 +194,22 @@ unreadable preferences file leaves the defaults), puts `new SettingsView { DataC
 own transitions don't read the `Motion.*` tokens: `SettingsTheme.Follow(window, settings)` keeps the window's
 `reduce-motion` class in step with `IsMotionReduced`, and `Theme/FluentOverrides.axaml` turns those transitions off
 under it (today the ToggleSwitch knob); another stock control with its own transitions gets its line there.
+
+### The Settings filter (#3362)
+
+A filter box sits under the Settings title, up to 480 px wide and on the left. Typing keeps the sections whose text holds every word typed, and hides the others.
+It matches whole sections, not single rows: "reset" keeps the section that has a Reset button.
+
+The sections are the setup checklist, the model, label and product-surface
+choices, Sandbox, Library, Connections, and This app. A section matches on the text it shows: headings, row labels, buttons and descriptions. The view reads that text from the page when the
+filter changes. A few synonyms (zoom, font and animation for This app) match too.
+
+`ViewModels/Settings/SettingsFilter` holds the rule and `SettingsViewModel.Filter` the text.
+
+When no section matches, the page says "Nothing matches" and "Esc clears the filter."
+
+Esc in the box clears it. Ctrl+, (⌘, on macOS) opens Settings with the cursor in the box. With Settings already open, Ctrl+, puts the cursor back in the box.
+The page also scrolls to its top, because the box brings itself into view and would otherwise hide the title under the top bar. The box's placeholder names the shortcut for the OS.
 
 ### Model choice in Settings (model-pick spec 8)
 

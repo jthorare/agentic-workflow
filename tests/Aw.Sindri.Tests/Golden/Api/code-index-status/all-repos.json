@@ -44,13 +44,15 @@
       "repo": "demo",
       "state": "ok",
       "embeddingsPercent": null,
-      "waiting": null
+      "waiting": null,
+      "needsLook": false
     },
     {
       "repo": "other",
       "state": "ok",
       "embeddingsPercent": null,
-      "waiting": null
+      "waiting": null,
+      "needsLook": false
     }
   ]
 }
