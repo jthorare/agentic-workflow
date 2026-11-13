@@ -19,7 +19,7 @@ internal sealed class ShowPublishStatusService(IGraphStore store) : IService<Sho
             return refused;
         }
 
-        var repos = SettingsReader.Read(scope.Settings).Bind(settings => ScopeRules.Resolve(settings, scope.Repos, scope.Caller));
+        var repos = SettingsReader.Read(scope.Settings).Bind(settings => ScopeRules.Resolve(settings, scope.Repos, scope.Caller, scope.LeftOut));
         if (repos.IsError)
         {
             return repos.Error;

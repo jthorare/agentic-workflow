@@ -26,4 +26,11 @@ public sealed record BlockContext(WorkflowRunId RunId, NodeId Node, JsonObject C
     /// <summary>Leaves the output the engine stores when this block then returns an error (a prompt step leaves the model's raw answer); the engine cuts it to the stored-output cap.</summary>
     /// <param name="output">The fields to show on the failed step.</param>
     public void LeaveFailureOutput(JsonObject output) => FailureOutput = output;
+
+    /// <summary>Gets the model text a failing prompt block left for the run page's Raw answer tab, or null (P3e, spec §6.2); the engine scrubs it with Aw.Redaction and cuts it at 64 KB before it is stored.</summary>
+    public string? Raw { get; private set; }
+
+    /// <summary>Leaves the model's text for the node run's raw.</summary>
+    /// <param name="text">The text the model answered.</param>
+    public void LeaveRaw(string text) => Raw = text;
 }

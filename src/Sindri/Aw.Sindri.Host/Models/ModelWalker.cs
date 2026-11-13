@@ -58,7 +58,7 @@ internal sealed class ModelWalker(JobModelLimits limits, TimeProvider clock)
         var name = ModelHarnesses.Name(step.Harness);
         var started = clock.GetTimestamp();
         var provider = call.Installed.First(i => i.Harness == step.Harness).Provider;
-        var result = await provider.Decide(question with { Model = step.Model }, input: null, call.Request.Budget, cancellationToken).ConfigureAwait(false);
+        var result = await provider.Decide(question with { Model = CodexDefault.Is(step) ? null : step.Model, OwnDefaultModel = CodexDefault.Is(step) }, input: null, call.Request.Budget, cancellationToken).ConfigureAwait(false);
         var ms = (int)Math.Min(clock.GetElapsedTime(started).TotalMilliseconds, int.MaxValue);
         if (Text(result) is { } text)
         {

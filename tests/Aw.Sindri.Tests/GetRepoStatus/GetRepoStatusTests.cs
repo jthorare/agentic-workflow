@@ -31,6 +31,17 @@ public sealed class GetRepoStatusTests
         => Assert.Equal(new RepoStatus(RepoState.NoApprovedProfile, "/work/demo", Name: null), await Status("/work/demo/src"));
 
     [Fact, Trait("Lane", "unit")]
+    public async Task GetRepoStatus_answers_as_for_no_approved_profile_when_the_live_profile_is_invalid()
+    {
+        _profiles.Live = Core.SindriErrors.ProfileInvalid.With("/home/profile.yaml: line 3: unknown key 'tennant'");
+
+        var result = await new GetRepoStatusService(_profiles, _profiles, _locator).Handle(new GetRepoStatusRequest("/work/demo/src"), Token);
+
+        Assert.False(result.IsError);
+        Assert.Equal(new RepoStatus(RepoState.NoApprovedProfile, "/work/demo", Name: null), result.Value.Status);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task GetRepoStatus_is_onboarded_when_the_approved_profile_names_the_checkout_even_from_a_worktree()
     {
         _ = await _profiles.Save(Profile(new RepoEntry("demo", "/work/demo")), Token);
