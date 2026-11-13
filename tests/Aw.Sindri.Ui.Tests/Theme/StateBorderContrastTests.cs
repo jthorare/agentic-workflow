@@ -13,6 +13,25 @@ namespace Aw.Sindri.Ui.Tests.Theme;
 [Lane(TestLane.Unit)]
 public sealed class StateBorderContrastTests
 {
+    /// <summary>How a style's selector relates to the 3:1 rule (#3490): a required state, one the rule exempts, a pseudo-class nobody classified, or no state at all.</summary>
+    public enum SelectorState
+    {
+        None,
+        Required,
+        Exempt,
+        Unknown,
+    }
+
+#pragma warning disable IDE0060 // the red stub reads nothing
+    /// <summary>Reads a style selector's pseudo-classes. Stub: the red commit compiles and classifies nothing.</summary>
+    internal static class StateSelectors
+    {
+        internal static SelectorState Classify(string selector) => SelectorState.None;
+
+        internal static IReadOnlyList<string> UnknownIn(string fileName, XElement style) => [];
+    }
+#pragma warning restore IDE0060
+
     private const double NonText = 3;
 
     private static readonly TokenFile _tokens = TokenFile.Load();
@@ -55,6 +74,37 @@ public sealed class StateBorderContrastTests
         Assert.Contains(borders, b => b.Where.EndsWith(": Button.segment.selected", StringComparison.Ordinal));
         Assert.DoesNotContain(borders, b => b.Where.Contains("Button.command-control.primary:pressed", StringComparison.Ordinal) && string.Equals(b.Key, "Brush.PrimaryPressed", StringComparison.Ordinal));
         Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures.Distinct(StringComparer.Ordinal)));
+    }
+
+    [Theory]
+    [InlineData("Button.x:pressed", SelectorState.Required)]
+    [InlineData("Border.item-row:focus-visible", SelectorState.Required)]
+    [InlineData("Border.review-row:focus-within, Border.review-row:focus", SelectorState.Required)]
+    [InlineData("Button.segment.selected", SelectorState.Required)]
+    [InlineData("Button.command-control.primary:pointerover:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter", SelectorState.Exempt)]
+    [InlineData("Expander:expanded /template/ Border", SelectorState.Unknown)]
+    [InlineData("Border.card", SelectorState.None)]
+    public void A_selector_is_required_exempt_unknown_or_no_state(string selector, SelectorState expected) =>
+        Assert.Equal(expected, StateSelectors.Classify(selector));
+
+    [Fact]
+    public void A_border_brush_under_a_pseudo_class_nobody_classified_is_a_guard_failure_naming_file_line_and_class()
+    {
+        var style = XElement.Parse("<Style Selector=\"Expander:expanded /template/ Border\">\n  <Setter Property=\"BorderBrush\" Value=\"{DynamicResource Brush.Outline}\" />\n</Style>", LoadOptions.SetLineInfo);
+
+        var failures = StateSelectors.UnknownIn("Some.axaml", style);
+
+        var failure = Assert.Single(failures);
+        Assert.Contains("Some.axaml:1", failure, StringComparison.Ordinal);
+        Assert.Contains(":expanded", failure, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_style_with_no_border_brush_is_never_a_guard_failure_whatever_its_pseudo_class()
+    {
+        var style = XElement.Parse("<Style Selector=\"Expander:expanded\"><Setter Property=\"Background\" Value=\"{DynamicResource Brush.Surface2}\" /></Style>", LoadOptions.SetLineInfo);
+
+        Assert.Empty(StateSelectors.UnknownIn("Some.axaml", style));
     }
 
     // Every (file: selector, brush key) of a BorderBrush setter in a style whose selector names a required state.
