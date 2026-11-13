@@ -292,7 +292,7 @@ public sealed class SetupFactsTests
 
         var map = (await rig.Facts.Map(Token)).Value;
 
-        Assert.Equal((MapPhase.Building, MapStage.Index, (SetupProgress?)null), (map.Phase, map.Stage, map.Progress));
+        Assert.Equal((MapPhase.Building, MapStage.Index, null), (map.Phase, map.Stage, map.Progress));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -334,7 +334,7 @@ public sealed class SetupFactsTests
 
         var map = (await rig.Facts.Map(Token)).Value;
 
-        Assert.Equal((MapPhase.NotBuilt, (MapStage?)null), (map.Phase, map.Stage));
+        Assert.Equal((MapPhase.NotBuilt, null), (map.Phase, map.Stage));
     }
 
     [Fact, Trait("Lane", "unit")]
