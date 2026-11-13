@@ -126,6 +126,8 @@ public sealed class StateBorderContrastTests
     [InlineData("Button.command-control.primary:pointerover:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter", SelectorState.Exempt)]
     [InlineData("Expander:expanded /template/ Border", SelectorState.Unknown)]
     [InlineData("Border.card", SelectorState.None)]
+    [InlineData("A:focus, B:expanded", SelectorState.Unknown)]
+    [InlineData("Button:not(:pressed)", SelectorState.None)]
     public void A_selector_is_required_exempt_unknown_or_no_state(string selector, SelectorState expected) =>
         Assert.Equal(expected, StateSelectors.Classify(selector));
 
