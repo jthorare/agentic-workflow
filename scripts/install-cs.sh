@@ -228,8 +228,11 @@ input_hash() { # input_hash <csproj>: the hash of one binary's inputs, made as t
       src/Judge | src/Judge/*) specs+=("${JUDGE_EXTRA_INPUTS[@]}") ;;
     esac
   done
-  git -C "$root" ls-files -z --cached --others --exclude-standard -- "${specs[@]}" \
-    | while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done | LC_ALL=C sort -u > "$list"
+  # A git that dies here (killed under memory pressure) stops the publish with a message; it never ends the script silently (#3218).
+  git -C "$root" ls-files -z --cached --others --exclude-standard -- "${specs[@]}" > "$list.z" \
+    || { rm -f "$list" "$list.z"; die "git ls-files failed while hashing the inputs of $1 (git ended with an error; run it again)"; }
+  while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done < "$list.z" | LC_ALL=C sort -u > "$list"
+  rm -f "$list.z"
   { printf '%s\n' "$sdk" "$platform"; cat "$list"; (cd "$root" && git hash-object --stdin-paths < "$list"); } | sha256 | cut -c1-16
   rm -f "$list"
 }
