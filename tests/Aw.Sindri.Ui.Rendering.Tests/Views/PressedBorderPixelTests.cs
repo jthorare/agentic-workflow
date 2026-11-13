@@ -38,7 +38,7 @@ public sealed class PressedBorderPixelTests : FrameHost
 
     private static Func<int, int, (byte R, byte G, byte B)> Render(Window window, double scale = 1)
     {
-        var size = new PixelSize((int)Math.Round(window.Bounds.Width * scale), (int)Math.Round(window.Bounds.Height * scale));
+        var size = new PixelSize((int)Math.Round(window.Bounds.Width * scale, MidpointRounding.AwayFromZero), (int)Math.Round(window.Bounds.Height * scale, MidpointRounding.AwayFromZero));
         using var bitmap = new RenderTargetBitmap(size, new Vector(96 * scale, 96 * scale));
         bitmap.Render(window);
         var stride = size.Width * 4;
