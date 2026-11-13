@@ -35,6 +35,38 @@ public sealed class GraphCutTests
         Assert.True(JsonNode.Parse(fitted.Text!)!["truncated"]!.GetValue<bool>());
     }
 
+    private static string Build(string kind)
+    {
+        var cap = NodeRunLimits.PayloadBytes;
+        var beforeCut = new string('x', cap - 128 - 1);   // why: Fit keeps cap - 128 characters, so the next character sits on the cut
+        return kind switch
+        {
+            "two-byte" => new string('\u00e9', cap),
+            "three-byte" => new string('\u4e2d', cap),
+            "surrogate-at-cut" => beforeCut + "\U0001F600" + new string('x', cap),
+            "surrogates-throughout" => string.Concat(Enumerable.Repeat("\U0001F600", cap)),
+            "quotes-at-cut" => beforeCut + new string('"', 200) + new string('x', cap),
+            "backslashes-at-cut" => beforeCut + new string('\\', 200) + new string('x', cap),
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, message: null),
+        };
+    }
+
+    [Theory]
+    [InlineData("two-byte")]
+    [InlineData("three-byte")]
+    [InlineData("surrogate-at-cut")]
+    [InlineData("surrogates-throughout")]
+    [InlineData("quotes-at-cut")]
+    [InlineData("backslashes-at-cut")]
+    public void A_text_over_the_cap_is_cut_to_json_that_parses_and_fits(string kind)
+    {
+        var fitted = StoredJson.Fit(Build(kind));
+
+        Assert.True(fitted.Cut);
+        Assert.True(Encoding.UTF8.GetByteCount(fitted.Text!) <= NodeRunLimits.PayloadBytes);
+        Assert.NotNull(JsonNode.Parse(fitted.Text!));
+    }
+
     [Fact]
     public void Two_hundred_items_of_400_bytes_collect_into_a_failure_that_names_the_size_and_the_cap()
     {

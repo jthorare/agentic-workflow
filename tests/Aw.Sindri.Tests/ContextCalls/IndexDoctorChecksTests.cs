@@ -288,7 +288,7 @@ public sealed class IndexDoctorChecksTests
             DateTimeOffset.UnixEpoch, ClosedAt: null, OpenIssues: 0, OpenPrs: null, LastActivity: null, Repos: null, Counting: false);
 
     private IndexDoctorChecks Checks(PointerSecrets secrets, FakeProbe probe, TimeSpan? limit = null) =>
-        new(_h.Profiles, new ContextScopes(_h.Profiles, _h.Callers), FakeContextEngine.Instance, secrets, new ConnectionCredentials(_connections, _connectionSecrets, secrets), probe, limit ?? TimeSpan.FromSeconds(3));
+        new(_h.Profiles, new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), FakeContextEngine.Instance, secrets, new ConnectionCredentials(_connections, _connectionSecrets, secrets), probe, limit ?? TimeSpan.FromSeconds(3));
 
     private async Task Connect(string preset, ConnectionStatus status)
     {

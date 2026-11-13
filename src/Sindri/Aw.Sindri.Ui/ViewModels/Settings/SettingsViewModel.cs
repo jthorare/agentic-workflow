@@ -42,6 +42,7 @@ internal sealed partial class SettingsViewModel : ObservableObject, IDisposable
         _apply = apply;
         SystemReducesMotion = motion.ReduceMotion;
         motion.Changed += OnMotionChanged;
+        WatchSetup();
     }
 
     /// <summary>The page title.</summary>
@@ -211,6 +212,7 @@ internal sealed partial class SettingsViewModel : ObservableObject, IDisposable
     // A change the user made: shown at once and kept.
     private void Changed()
     {
+        NotifyChangedMarks();
         if (_loading)
         {
             return;

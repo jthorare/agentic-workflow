@@ -1975,7 +1975,7 @@ Aw.Meta.Core.Coordination.LaneContextReader.Read(Aw.Meta.Core.Config.TeamConfig!
 Aw.Meta.Core.Coordination.LaneContextReader.ReadLane(string! team, string! lane, int threshold, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Lanes.LaneContext!>!>
 Aw.Meta.Core.Coordination.PaneSubmitter
 Aw.Meta.Core.Coordination.PaneSubmitter.PaneSubmitter(Aw.Meta.Core.Ports.ILanePane! pane, Aw.Meta.Core.Ports.IDelay! delay) -> void
-Aw.Meta.Core.Coordination.PaneSubmitter.Submit(string! session, string! line, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Coordination.PaneSubmitter.Submit(string! session, string! line, System.Threading.CancellationToken cancellationToken, bool exact = false) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Lanes.ContextVerdict
 Aw.Meta.Core.Lanes.ContextVerdict.Ok = 1 -> Aw.Meta.Core.Lanes.ContextVerdict
 Aw.Meta.Core.Lanes.ContextVerdict.Recycle = 2 -> Aw.Meta.Core.Lanes.ContextVerdict
@@ -2017,6 +2017,7 @@ Aw.Meta.Core.Ports.IClaudeTranscripts.Tail(Aw.Meta.Core.Ids.SessionId session, i
 Aw.Meta.Core.Ports.IDigestFiles
 Aw.Meta.Core.Ports.IDigestFiles.Stat(string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ports.DigestInfo?>!>
 Aw.Meta.Core.Ports.ILaneFiles.RecordSession(string! lane, Aw.Meta.Core.Ids.SessionId session, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Ports.ILanePane.ClearInput(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.ILanePane.Capture(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Meta.Core.Ports.ILanePane.PanePid(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int?>!>
 Aw.Meta.Core.Ports.ILanePane.PressEnter(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>

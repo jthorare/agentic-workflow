@@ -1,5 +1,6 @@
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Settings;
@@ -30,10 +31,10 @@ internal sealed partial class SettingsView : UserControl
         _settings?.PropertyChanged += OnSettingsChanged;
         _setup = _settings?.Setup;
         _setup?.RevealRequested += OnRevealRequested;
-        _filterWasEmpty = true;
         if (Content is StackPanel page)
         {
             ReplaceChecklist(page);
+            PlaceThisApp(page);
         }
     }
 
@@ -58,18 +59,59 @@ internal sealed partial class SettingsView : UserControl
     {
         if (_settings is not null && string.Equals(e.PropertyName, nameof(SettingsViewModel.Filter), StringComparison.Ordinal))
         {
-            var empty = _settings.Filter.Trim().Length == 0;
-            if (_filterWasEmpty && !empty)
-            {
-                CollectShownText(_settings);   // before the Shows* changes are read: the filter matches the words on the page
-            }
-
-            _filterWasEmpty = empty;
+            CollectShownText(_settings);   // before the Shows* changes are read: the filter matches the words on the page, read again on every change (#3476)
         }
 
         if (_checklist is not null && _settings is not null && string.Equals(e.PropertyName, nameof(SettingsViewModel.ShowsSetup), StringComparison.Ordinal))
         {
             _checklist.IsVisible = _settings.ShowsSetup;
+        }
+
+        if (Content is StackPanel page && _settings is not null && string.Equals(e.PropertyName, nameof(SettingsViewModel.ThisAppFirst), StringComparison.Ordinal) && _settings.ThisAppFirst != _placedFirst)
+        {
+            PlaceThisApp(page);   // only when the order really changes
+        }
+    }
+
+    // The Reset button hides itself when it resets, so focus goes to the control it reset.
+    private void OnResetMotion(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        _settings?.ResetReduceMotion();
+        _ = ReduceMotionSwitch.Focus(NavigationMethod.Tab);   // keyboard focus, so :focus-visible draws the ring
+    }
+
+    private void OnResetTextSize(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        _settings?.ResetTextScale();
+        _ = TextScaleSlider.Focus(NavigationMethod.Tab);
+    }
+
+    // "This app" sits above the checklist once setup is finished (or when the page has none), and below the other sections before that.
+    private bool _placedFirst;
+
+    private void PlaceThisApp(StackPanel page)
+    {
+        Control[] parts = [ThisAppName, ThisAppCard];
+        _placedFirst = _settings?.ThisAppFirst == true;
+        var focused = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Control;   // moving the parts drops focus from inside them
+        var wasInside = focused is not null && parts.Any(p => p.IsVisualAncestorOf(focused));
+        foreach (var part in parts)
+        {
+            _ = page.Children.Remove(part);
+        }
+
+        if (_settings?.ThisAppFirst == true)
+        {
+            page.Children.InsertRange(3, parts);   // after the title, the filter box and its no-match line, before the checklist
+        }
+        else
+        {
+            page.Children.AddRange(parts);
+        }
+
+        if (wasInside)
+        {
+            Dispatcher.UIThread.Post(() => focused?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
         }
     }
 
@@ -92,23 +134,39 @@ internal sealed partial class SettingsView : UserControl
         }
     }
 
-    // The words are read again each time the box goes from empty to text, and kept while it has text: rows inside a section raise changes on themselves, not on
-    // the section's view model, so no change watcher would see them all (#3453).
-    private bool _filterWasEmpty = true;
-
     // A collapsed step's content may not be in the visual tree, so the steps' own words are read from the view model too.
     private static IEnumerable<string> StepWords(SettingsViewModel settings) =>
         (settings.Setup?.Steps ?? []).SelectMany(static s => new[] { s.Title, s.Sub, s.DetailText, s.HintText, s.Name, s.Note, s.ProgressText, s.ErrorText, s.ChipWord, s.Repo?.FolderLabel, s.Repo?.BrowseText, s.Repo?.BodyText, s.Repo?.NoteText, s.Repo?.AddText })
             .OfType<string>().Where(static w => w.Length > 0);
 
-    private static IEnumerable<string> ShownWords(Control root) =>
-        root.GetSelfAndVisualDescendants().OfType<Control>().SelectMany(static c => new[] { (c as TextBlock)?.Text, (c as ContentControl)?.Content as string, AutomationProperties.GetName(c) })
-            .OfType<string>().Where(static s => s.Length > 0);
+    // The words of a section as shown: a control hidden by its own binding (the "Changed" mark, "Reset" while nothing changed) adds none. The root itself may be hidden by the filter.
+    private static IEnumerable<string> ShownWords(Control root) => ShownWords(root, isRoot: true);
+
+    private static IEnumerable<string> ShownWords(Control control, bool isRoot)
+    {
+        if (!isRoot && !control.IsVisible)
+        {
+            yield break;
+        }
+
+        foreach (var word in new[] { (control as TextBlock)?.Text, (control as ContentControl)?.Content as string, AutomationProperties.GetName(control) }.OfType<string>().Where(static s => s.Length > 0))
+        {
+            yield return word;
+        }
+
+        foreach (var child in control.GetVisualChildren().OfType<Control>())
+        {
+            foreach (var word in ShownWords(child, isRoot: false))
+            {
+                yield return word;
+            }
+        }
+    }
 
     // Esc in the filter box clears it.
-    private void OnFilterKey(object? sender, Avalonia.Input.KeyEventArgs e)
+    private void OnFilterKey(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Avalonia.Input.Key.Escape && _settings is { Filter.Length: > 0 })
+        if (e.Key == Key.Escape && _settings is { Filter.Length: > 0 })
         {
             _settings.Filter = string.Empty;
             e.Handled = true;
