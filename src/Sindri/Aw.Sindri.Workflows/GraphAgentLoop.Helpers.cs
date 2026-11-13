@@ -44,7 +44,12 @@ internal sealed partial class GraphAgentLoop
         CancellationType = ActivityCancellationType.TryCancel,
     };
 
-    private static GraphBlockOutcome Failed(string? input, string error, string? output = null) => new(NodeRunStatus.Failed, input, output, [], error);
+    // why: the agent's failure output goes through Fit like a succeeded one, so one over 64 KB stays parseable JSON with 'Truncated' set (#3419)
+    private static GraphBlockOutcome Failed(string? input, string error, string? output = null)
+    {
+        var fitted = StoredJson.Fit(output);
+        return new(NodeRunStatus.Failed, input, fitted.Text, [], error, Truncated: fitted.Cut);
+    }
 
     // What a failed node keeps of the agent's work: the last refused report and the declared output files it wrote. Null when both are empty, so a node that left nothing keeps no output.
     private static string? FailureOutputOf(string? refusedReport, string? files)
