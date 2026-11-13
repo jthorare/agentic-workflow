@@ -1,14 +1,20 @@
+using System.Diagnostics;
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.VisualTree;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
+using Aw.Sindri.Ui.ViewModels.Sandbox;
 using Aw.Sindri.Ui.ViewModels.Settings;
+using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views;
+using Aw.Sindri.Ui.Views.Shell;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
@@ -37,11 +43,11 @@ public sealed class SettingsFilterFramesTests : FrameHost
     });
 
     // The page sits in a hidden slot until Settings is the current page: only then is it laid out and in the window's visual tree.
-    private static (Aw.Sindri.Ui.Views.Shell.ShellWindow Window, SettingsViewModel Settings) PutSettings(Aw.Sindri.Ui.Views.Shell.ShellWindow window, Aw.Sindri.Ui.ViewModels.Shell.ShellViewModel shell)
+    private static (ShellWindow Window, SettingsViewModel Settings) PutSettings(ShellWindow window, ShellViewModel shell)
     {
         var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), static _ => { });
         window.SettingsSlot.Content = new SettingsView { DataContext = settings };
-        shell.GoTo(Aw.Sindri.Ui.Navigation.PageId.Settings);
+        shell.GoTo(PageId.Settings);
         Settle(window);
         return (window, settings);
     }
@@ -61,7 +67,7 @@ public sealed class SettingsFilterFramesTests : FrameHost
         var titleTop = Named<TextBlock>(window, "TitleText").TranslatePoint(default, window)!.Value.Y;
         var page = Named<TextBlock>(window, "TitleText").FindAncestorOfType<ScrollViewer>()!;
         Assert.Equal(0, page.Offset.Y);
-        Assert.True(titleTop >= barBottom - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the title starts at {titleTop}, under the top bar that ends at {barBottom}"));
+        Assert.True(titleTop >= barBottom - 0.5, string.Create(CultureInfo.InvariantCulture, $"the title starts at {titleTop}, under the top bar that ends at {barBottom}"));
     });
 
     [Fact]
@@ -122,7 +128,7 @@ public sealed class SettingsFilterFramesTests : FrameHost
         var (window, shell) = await Connected();
         var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), static _ => { }, shell.Setup);
         window.SettingsSlot.Content = new SettingsView { DataContext = settings };
-        shell.GoTo(Aw.Sindri.Ui.Navigation.PageId.Settings);
+        shell.GoTo(PageId.Settings);
         Settle(window);
         Assert.True(Named<Control>(window, "SetupChecklist").IsVisible);
 
@@ -152,11 +158,11 @@ public sealed class SettingsFilterFramesTests : FrameHost
         Assert.Contains(Labels.SettingsNoMatchHint, Named<Control>(window, "SettingsNoMatch").GetVisualDescendants().OfType<TextBlock>().Select(static t => t.Text), StringComparer.Ordinal);
     });
 
-    private async Task<(Aw.Sindri.Ui.Views.Shell.ShellWindow Window, Aw.Sindri.Ui.ViewModels.Shell.ShellViewModel Shell, SettingsViewModel Settings, SettingsView View)> FullPage()
+    private async Task<(ShellWindow Window, ShellViewModel Shell, SettingsViewModel Settings, SettingsView View)> FullPage()
     {
         var (window, shell) = await Connected();
         var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), static _ => { }, shell.Setup, shell.Health.ModelChoice,
-            new Aw.Sindri.Ui.ViewModels.Sandbox.SandboxSettingsViewModel(shell.Health.Sandbox))
+            new SandboxSettingsViewModel(shell.Health.Sandbox))
         {
             Library = shell.LibraryRoots,
             LinearConnection = shell.LinearConnection,
@@ -164,7 +170,7 @@ public sealed class SettingsFilterFramesTests : FrameHost
         };
         var view = new SettingsView { DataContext = settings };
         window.SettingsSlot.Content = view;
-        shell.GoTo(Aw.Sindri.Ui.Navigation.PageId.Settings);
+        shell.GoTo(PageId.Settings);
         Settle(window);
         return (window, shell, settings, view);
     }
@@ -175,7 +181,7 @@ public sealed class SettingsFilterFramesTests : FrameHost
         var (_, _, settings, view) = await FullPage();
         view.CollectShownText(settings);   // warm: the first walk builds the lazy parts
 
-        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var watch = Stopwatch.StartNew();
         for (var i = 0; i < 10; i++)
         {
             view.CollectShownText(settings);
@@ -183,10 +189,10 @@ public sealed class SettingsFilterFramesTests : FrameHost
 
         watch.Stop();
         var each = watch.Elapsed.TotalMilliseconds / 10;
-        var line = "CollectShownText on a full Settings page: " + each.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + " ms per walk";
+        var line = "CollectShownText on a full Settings page: " + each.ToString("F2", CultureInfo.InvariantCulture) + " ms per walk";
         TestContext.Current.SendDiagnosticMessage(line);
         TestContext.Current.TestOutputHelper?.WriteLine(line);
-        Assert.True(each < 50, "one walk took " + each.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + " ms");
+        Assert.True(each < 50, "one walk took " + each.ToString("F1", CultureInfo.InvariantCulture) + " ms");
     });
 
     [Fact]

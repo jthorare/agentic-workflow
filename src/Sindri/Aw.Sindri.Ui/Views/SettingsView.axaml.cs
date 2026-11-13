@@ -80,9 +80,15 @@ internal sealed partial class SettingsView : UserControl
         ];
         foreach (var (section, parts) in map)
         {
-            settings.SetShownText(section, string.Join(' ', parts.OfType<Control>().SelectMany(ShownWords)));
+            var words = parts.OfType<Control>().SelectMany(ShownWords);
+            settings.SetShownText(section, string.Join(' ', section == SettingsSection.Setup ? words.Concat(StepWords(settings)) : words));
         }
     }
+
+    // A collapsed step's content may not be in the visual tree, so the steps' own words are read from the view model too.
+    private static IEnumerable<string> StepWords(SettingsViewModel settings) =>
+        (settings.Setup?.Steps ?? []).SelectMany(static s => new[] { s.Title, s.Sub, s.DetailText, s.HintText, s.Name, s.Note, s.ProgressText, s.ErrorText, s.ChipWord, s.Repo?.FolderLabel, s.Repo?.BrowseText, s.Repo?.BodyText, s.Repo?.NoteText, s.Repo?.AddText })
+            .OfType<string>().Where(static w => w.Length > 0);
 
     private static IEnumerable<string> ShownWords(Control root) =>
         root.GetSelfAndVisualDescendants().OfType<Control>().SelectMany(static c => new[] { (c as TextBlock)?.Text, (c as ContentControl)?.Content as string, AutomationProperties.GetName(c) })
