@@ -61,5 +61,21 @@ public sealed class GateStepLocalToolsTests : IDisposable
         Assert.True(result.Value.Passed);
     }
 
+    // A non-dotnet rerun behind heavy is isolated through "env ... PATH=<sandbox PATH>": that PATH must still start with the tree's tools.
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_rerun_behind_the_heavy_wrapper_finds_the_trees_tools()
+    {
+        var heavy = Path.Combine(_dir.Path, "heavy");
+        await File.WriteAllTextAsync(heavy, "#!/bin/sh\nexec \"$@\"\n", TestContext.Current.CancellationToken);
+        File.SetUnixFileMode(heavy, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        var paths = Paths() with { Heavy = heavy };
+        var job = new RerunJob([heavy, "bash", "-c", "aw-local-tool"], _dir.Path, "Some_test", FilterMustMatch: true, Log("rerun-heavy"));
+
+        var result = await new RerunExecutor(new SystemCommandRunner(), paths).Run(job, CancellationToken.None);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.True(result.Value.Passed, await File.ReadAllTextAsync(Log("rerun-heavy"), TestContext.Current.CancellationToken));
+    }
+
     public void Dispose() => _dir.Dispose();
 }
