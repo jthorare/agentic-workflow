@@ -250,4 +250,47 @@ public sealed class RowFlatRedTests
         window.Close();
         return true;
     });
+
+    [Fact]
+    public async Task A_window_at_render_scaling_2_from_the_first_frame_lays_out_every_fact_text() => await OnUi(() =>
+    {
+        var list = new RowList { ItemsSource = new[] { RowGallery.Group("Needs you", 4) }, Columns = RowGallery.Columns };
+        var window = new Window { Content = list, Width = 1440, Height = 600 };
+        Assert.Null(SetHostScaling(window, 2));   // Avalonia.Headless raises it by reflection: IHeadlessWindow is internal
+        window.Show();
+        Settle(window);
+
+        var layout = Rows(list)[1].Layout;
+
+        Assert.Equal(2, window.RenderScaling);
+        Assert.Equal(RowGallery.Columns.Count, layout.Cells.Count);
+        Assert.All(layout.Cells, cell => Assert.True(cell.Text.Length > 0 && cell.TextWidth > 0, $"the {cell.Key} fact has no drawn text at render scaling 2"));
+        window.Close();
+        return true;
+    });
+
+    // Null when the window now has this render scaling; otherwise why it could not be set.
+    private static string? SetHostScaling(Window window, double scaling)
+    {
+        var type = typeof(AvaloniaHeadlessPlatform).Assembly.GetType("Avalonia.Headless.IHeadlessWindow", throwOnError: false);
+        var method = type?.GetMethod("SetRenderScaling");
+        if (type is null || method is null)
+        {
+            return "IHeadlessWindow.SetRenderScaling not found";
+        }
+
+        if (window.PlatformImpl is not { } impl || !type.IsInstanceOfType(impl))
+        {
+            return "the window's platform impl is not an IHeadlessWindow";
+        }
+
+        var parameters = method.GetParameters();
+        if (parameters.Length != 1)
+        {
+            return "SetRenderScaling takes another number of parameters than one";
+        }
+
+        _ = method.Invoke(impl, [Convert.ChangeType(scaling, parameters[0].ParameterType, CultureInfo.InvariantCulture)]);
+        return null;
+    }
 }
