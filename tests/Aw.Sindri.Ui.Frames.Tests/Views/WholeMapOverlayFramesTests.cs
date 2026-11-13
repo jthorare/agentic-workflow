@@ -35,7 +35,7 @@ public sealed class WholeMapOverlayFramesTests : FrameHost
         Assert.Equal(shell.Context.BuildingTitle, Named<TextBlock>(window, "ContextBuildingTitle").Text);
         Assert.StartsWith("Building the map", Named<TextBlock>(window, "ContextBuildingTitle").Text, StringComparison.Ordinal);
         Assert.StartsWith("1 of 1 source · started ", Named<TextBlock>(window, "ContextBuildingBody").Text, StringComparison.Ordinal);
-        Assert.EndsWith("last map 2 h ago", Named<TextBlock>(window, "ContextBuildingBody").Text, StringComparison.Ordinal);
+        Assert.Contains(" · last map ", Named<TextBlock>(window, "ContextBuildingBody").Text, StringComparison.Ordinal);   // why: the fixture's last map is a fixed date, so its age moves with the clock
         Assert.True(Visible(window, "ContextBuildingJob"));
         Frame(window, "building-1440", "overlay-");
 
