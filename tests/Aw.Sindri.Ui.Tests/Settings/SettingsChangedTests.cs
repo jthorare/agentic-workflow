@@ -1,7 +1,9 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Setup;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Settings;
+using static Aw.Sindri.Ui.Tests.Setup.SetupFixture;
 
 namespace Aw.Sindri.Ui.Tests.Settings;
 
@@ -71,5 +73,37 @@ public sealed class SettingsChangedTests
         using var settings = Settings();
 
         Assert.True(settings.ThisAppFirst);
+    }
+
+    private static CancellationToken Token => TestContext.Current.CancellationToken;
+
+    [Fact]
+    public async Task This_app_stays_below_an_unfinished_checklist()
+    {
+        var fixture = new SetupFixture();
+        fixture.Serve(Golden("first-run"));
+        var setup = await fixture.Read(Token);
+        using var settings = new SettingsViewModel(new Preferences(_store), _os, static _ => { }, setup);
+
+        Assert.False(setup.IsFinished);
+        Assert.False(settings.ThisAppFirst);
+    }
+
+    [Fact]
+    public async Task This_app_goes_first_once_the_checklist_finishes_and_says_so()
+    {
+        var fixture = new SetupFixture();
+        fixture.Serve(Golden("first-run"));
+        var setup = await fixture.Read(Token);
+        using var settings = new SettingsViewModel(new Preferences(_store), _os, static _ => { }, setup);
+        var raised = new List<string?>();
+        settings.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+        fixture.Serve(Golden("all-done"));
+        await setup.Refresh(Url, Token);
+
+        Assert.True(setup.IsFinished);
+        Assert.True(settings.ThisAppFirst);
+        Assert.Contains(nameof(SettingsViewModel.ThisAppFirst), raised, StringComparer.Ordinal);
     }
 }
