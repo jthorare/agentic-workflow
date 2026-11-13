@@ -63,9 +63,10 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
     }
 
     // A repo the server serves as 'queued' (no index yet, a build starts within about a minute) is normal work: the card reads "build queued" unless another repo needs a look.
+    // A queued repo the server flags needsLook (queued over 30 min, #3479) is a look, not work: it stays in the list the card judges.
     private static string WordOf(List<(CodeIndexRepoView Repo, CodeIndexHealthView? Health)> views)
     {
-        var rest = views.Where(static v => !string.Equals(StateOf(v.Repo, v.Health), "queued", StringComparison.Ordinal)).ToList();
+        var rest = views.Where(static v => !(string.Equals(StateOf(v.Repo, v.Health), "queued", StringComparison.Ordinal) && v.Health?.NeedsLook != true)).ToList();
         if (!rest.TrueForAll(static v => Fine(v.Repo, v.Health)))
         {
             return Labels.CodeIndexNeedsLook;

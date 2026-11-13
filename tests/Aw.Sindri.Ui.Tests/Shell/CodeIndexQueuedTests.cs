@@ -16,6 +16,8 @@ public sealed class CodeIndexQueuedTests
     private const string Waiting = """{"repos":[{"repo":"repo","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[{"repo":"repo","state":"waiting","embeddingsPercent":null,"waiting":"retrying in 5 min"}]}""";
     private const string QueuedBehindMain = """{"repos":[{"repo":"a","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null},{"repo":"b","state":"stale","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[{"repo":"a","state":"queued","embeddingsPercent":null,"waiting":null}]}""";
 
+    private const string QueuedTooLong = """{"repos":[{"repo":"repo","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[{"repo":"repo","state":"queued","embeddingsPercent":null,"waiting":null,"needsLook":true}]}""";
+
     private static readonly Uri _api = new("http://127.0.0.1:7410/");
 
     private readonly FakeSindriApi _server = new();
@@ -47,6 +49,29 @@ public sealed class CodeIndexQueuedTests
 
         Assert.Equal(Labels.AllRunning, system.Vm.Sentence);
         Assert.False(system.Vm.ToneWarn);
+    }
+
+    [Fact]
+    public async Task A_queued_repo_the_server_flags_needsLook_reads_needs_a_look()
+    {
+        _server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, QueuedTooLong);
+        var card = new CodeIndexCardViewModel(_server, _clock);
+
+        await card.Refresh(_api, Token);
+
+        Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
+    }
+
+    [Fact]
+    public async Task A_queued_repo_the_server_flags_needsLook_names_the_code_index_in_the_headline()
+    {
+        var system = new SystemTestHarness();
+        await system.Show(A.Status() with { Health = new HealthView("healthy", []) });
+        system.Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, QueuedTooLong);
+
+        await system.Vm.CodeIndex.Refresh(_api, Token);
+
+        Assert.Contains(Labels.CodeIndexLookName, system.Vm.Sentence, StringComparison.Ordinal);
     }
 
     [Fact]
