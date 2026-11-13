@@ -64,7 +64,7 @@
           </StackPanel>
         </Button>
         <!-- F3 home spec §1 Q6: the 120 px meter after the words, done steps of all of them; the words above carry the same count. -->
-        <ProgressBar x:Name="SetupHomeMeter" Grid.Column="1" Classes="map-meter home-meter" Width="120" MinWidth="0" VerticalAlignment="Center" Minimum="0" Maximum="{Binding Setup.MeterMax}" Value="{Binding Setup.MeterDone}" AutomationProperties.AccessibilityView="Raw" />
+        <ProgressBar x:Name="SetupHomeMeter" Grid.Column="1" Classes="map-meter home-meter" Width="120" MinWidth="0" Opacity="{Binding Setup.MeterOpacity}" VerticalAlignment="Center" Minimum="0" Maximum="{Binding Setup.MeterMax}" Value="{Binding Setup.MeterDone}" AutomationProperties.AccessibilityView="Raw" />
         <Button x:Name="SetupHomeContinue" Grid.Column="2" Classes="command-control" Click="OnSetupContinue" VerticalAlignment="Center" Margin="0,0,24,0" AutomationProperties.Name="{Binding Setup.ContinueName}">
           <TextBlock Classes="button" Text="{Binding Setup.ContinueText}" AutomationProperties.AccessibilityView="Raw" />
         </Button>

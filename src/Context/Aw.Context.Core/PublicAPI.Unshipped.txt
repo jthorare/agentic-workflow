@@ -12486,3 +12486,20 @@ Aw.Context.Core.Results.ContextResult.Suggestions.init -> void
 static Aw.Context.Core.Graph.AnchorMatch.Choices(System.Collections.Generic.IEnumerable<Aw.Context.Core.Graph.GraphNode!>! nodes) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.AnchorChoice!>!
 static Aw.Context.Core.ContextErrors.IsMissedDeadline(Aw.Kernel.Error! error) -> bool
 static Aw.Context.Core.ContextErrors.MissedDeadline(string! source) -> Aw.Kernel.Error!
+Aw.Context.Core.Extract.MapBuildFiles
+Aw.Context.Core.Extract.MapBuildFiles.<Clone>$() -> Aw.Context.Core.Extract.MapBuildFiles!
+Aw.Context.Core.Extract.MapBuildFiles.Deconstruct(out int Done, out int Total) -> void
+Aw.Context.Core.Extract.MapBuildFiles.Done.get -> int
+Aw.Context.Core.Extract.MapBuildFiles.Done.init -> void
+Aw.Context.Core.Extract.MapBuildFiles.Equals(Aw.Context.Core.Extract.MapBuildFiles? other) -> bool
+Aw.Context.Core.Extract.MapBuildFiles.Line.get -> string!
+Aw.Context.Core.Extract.MapBuildFiles.MapBuildFiles(int Done, int Total) -> void
+Aw.Context.Core.Extract.MapBuildFiles.Total.get -> int
+Aw.Context.Core.Extract.MapBuildFiles.Total.init -> void
+override Aw.Context.Core.Extract.MapBuildFiles.Equals(object? obj) -> bool
+override Aw.Context.Core.Extract.MapBuildFiles.GetHashCode() -> int
+override Aw.Context.Core.Extract.MapBuildFiles.ToString() -> string!
+static Aw.Context.Core.Extract.MapBuildFiles.From(string! line) -> Aw.Context.Core.Extract.MapBuildFiles?
+static Aw.Context.Core.Extract.MapBuildFiles.Newest(System.Collections.Generic.IEnumerable<string!>! lines) -> Aw.Context.Core.Extract.MapBuildFiles?
+static Aw.Context.Core.Extract.MapBuildFiles.operator !=(Aw.Context.Core.Extract.MapBuildFiles? left, Aw.Context.Core.Extract.MapBuildFiles? right) -> bool
+static Aw.Context.Core.Extract.MapBuildFiles.operator ==(Aw.Context.Core.Extract.MapBuildFiles? left, Aw.Context.Core.Extract.MapBuildFiles? right) -> bool
