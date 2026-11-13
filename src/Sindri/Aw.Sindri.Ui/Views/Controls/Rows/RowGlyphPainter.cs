@@ -19,7 +19,7 @@ internal static class RowGlyphPainter
         ctx.EndFigure(isClosed: false);
     }));
 
-    private static readonly Lazy<StreamGeometry> _diamond = new(() => BuildPolygon(filled: true, [new Point(8, 2), new Point(14, 8), new Point(8, 14), new Point(2, 8)]));
+    private static readonly Lazy<StreamGeometry> _diamond = new(() => BuildPolygon(filled: true, [new Point(8, 1), new Point(15, 8), new Point(8, 15), new Point(1, 8)]));
     private static readonly Lazy<StreamGeometry> _bubble = new(() => BuildPolygon(filled: false, [new Point(3, 4), new Point(13, 4), new Point(13, 10), new Point(8, 10), new Point(5, 13), new Point(5, 10), new Point(3, 10)]));
     private static readonly ConditionalWeakTable<IBrush, Pens> _pens = [];
 
@@ -33,16 +33,16 @@ internal static class RowGlyphPainter
         [RowGlyph.Todo] = (g, p) => Ring(g, p.Subtle),
         [RowGlyph.Doing] = (g, p) => { Ring(g, p.Primary); Pie(g, p.Primary, sweepDegrees: 180); },
         [RowGlyph.Done] = (g, p) => { Disc(g, p.Ok, Outer); Check(g); },
-        [RowGlyph.Draft] = (g, p) => Dashed(g, p.Subtle, dash: 2),
+        [RowGlyph.Draft] = (g, p) => Dashed(g, p.Tertiary, dash: 2),
         [RowGlyph.InReview] = (g, p) => { Ring(g, p.Primary); Pie(g, p.Primary, sweepDegrees: 270); },
         [RowGlyph.NeedsYou] = (g, p) => Diamond(g, p.Attention),
-        [RowGlyph.Failed] = (g, p) => Cross(g, p.Error),
+        [RowGlyph.Failed] = (g, p) => { Disc(g, p.Error, Outer); Cross(g, p.Canvas); },
         [RowGlyph.Parked] = (g, p) => { Ring(g, p.Attention); Bars(g, p.Attention); },
         [RowGlyph.AgentRunning] = (g, p) => Arc(g, p.Primary),
         [RowGlyph.Message] = (g, p) => Bubble(g, p.Subtle),
-        [RowGlyph.Mention] = (g, p) => Disc(g, p.Primary, radius: 3),
+        [RowGlyph.Mention] = (g, p) => Disc(g, p.Primary, radius: 4),
         [RowGlyph.PrOpen] = (g, p) => { Ring(g, p.Ok); Disc(g, p.Ok, radius: 2); },
-        [RowGlyph.PrDraft] = (g, p) => { Ring(g, p.Subtle); Disc(g, p.Subtle, radius: 2); },
+        [RowGlyph.PrDraft] = (g, p) => { Ring(g, p.Tertiary); Disc(g, p.Tertiary, radius: 2); },
         [RowGlyph.Merged] = (g, p) => Disc(g, p.Violet, Outer),
         [RowGlyph.CiRunning] = (g, p) => Dashed(g, p.Attention, dash: 1),
         [RowGlyph.Linked] = (g, p) => { Ring(g, p.Subtle); Disc(g, p.Subtle, radius: 1.5); },
@@ -58,7 +58,7 @@ internal static class RowGlyphPainter
     {
         ArgumentNullException.ThrowIfNull(owner);
         _ = Interlocked.Increment(ref _allocations);
-        return new Palette(Find(owner, "Brush.InkSubtle"), Find(owner, "Brush.PrimaryHover"), Find(owner, "Brush.Success"), Find(owner, "Brush.Attention"), Find(owner, "Brush.Error"), Find(owner, "Brush.Violet"));
+        return new Palette(Find(owner, "Brush.InkSubtle"), Find(owner, "Brush.PrimaryHover"), Find(owner, "Brush.Success"), Find(owner, "Brush.Attention"), Find(owner, "Brush.Error"), Find(owner, "Brush.Violet"), Find(owner, "Brush.Canvas"), Find(owner, "Brush.InkTertiary"));
     }
 
     /// <summary>Draws a glyph in the 16 px box at the origin of the context (translate first to place it).</summary>
@@ -144,8 +144,9 @@ internal static class RowGlyphPainter
 
     private static void Cross(DrawingContext g, IBrush brush)
     {
-        Line(g, brush, new Point(4.5, 4.5), new Point(11.5, 11.5));
-        Line(g, brush, new Point(4.5, 11.5), new Point(11.5, 4.5));
+        // Two 8 px lines at +-45 degrees through the centre: half-length 4 -> 2.83 on each axis.
+        Line(g, brush, new Point(8 - 2.83, 8 - 2.83), new Point(8 + 2.83, 8 + 2.83));
+        Line(g, brush, new Point(8 - 2.83, 8 + 2.83), new Point(8 + 2.83, 8 - 2.83));
     }
 
     private static void Bars(DrawingContext g, IBrush brush)
@@ -161,12 +162,14 @@ internal static class RowGlyphPainter
 
     private sealed record Pens(Pen Solid, Pen Round, Pen RoundJoin, Pen DashedLong, Pen DashedShort);
 
-    /// <summary>The brushes the glyphs draw with: subtle ink, primary, ok, attention, error and violet.</summary>
-    /// <param name="Subtle">Todo, draft, message and linked.</param>
+    /// <summary>The brushes the glyphs draw with: subtle ink, primary, ok, attention, error, violet, canvas and tertiary ink.</summary>
+    /// <param name="Subtle">Todo, message and linked.</param>
     /// <param name="Primary">Doing, in review, running and mention.</param>
     /// <param name="Ok">Done and PR open.</param>
     /// <param name="Attention">Needs you, parked and CI running.</param>
-    /// <param name="Error">Failed.</param>
+    /// <param name="Error">Failed disc.</param>
     /// <param name="Violet">Merged.</param>
-    internal sealed record Palette(IBrush Subtle, IBrush Primary, IBrush Ok, IBrush Attention, IBrush Error, IBrush Violet);
+    /// <param name="Canvas">The x inside the failed disc.</param>
+    /// <param name="Tertiary">Draft and PR draft.</param>
+    internal sealed record Palette(IBrush Subtle, IBrush Primary, IBrush Ok, IBrush Attention, IBrush Error, IBrush Violet, IBrush Canvas, IBrush Tertiary);
 }
