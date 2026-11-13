@@ -61,6 +61,16 @@ public sealed class PromptRawOnNodeRunTests
         Assert.True(Encoding.UTF8.GetByteCount(outcome.Raw) <= NodeRunLimits.PayloadBytes + 4);
     }
 
+    [Fact]
+    public async Task A_raw_text_over_the_cap_keeps_the_plain_cut_and_does_not_mark_the_node_truncated()
+    {
+        // why: #3486, raw is model text, not JSON; it is never put in the JSON envelope and alone it does not set Truncated
+        var outcome = await Run(new string('z', NodeRunLimits.PayloadBytes * 2), exitCode: 1);
+
+        Assert.StartsWith("zzzz", outcome.Raw, StringComparison.Ordinal);
+        Assert.False(outcome.Truncated);
+    }
+
     private static async Task<GraphBlockOutcome> Run(string answer, int exitCode)
     {
         var token = TestContext.Current.CancellationToken;
