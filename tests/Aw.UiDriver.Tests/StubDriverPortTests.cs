@@ -20,8 +20,16 @@ public sealed class StubDriverPortTests
                 }
 
                 heldPort = port;
-                thief = new TcpListener(IPAddress.Loopback, port);
-                thief.Start();
+                var taker = new TcpListener(IPAddress.Loopback, port);
+                try
+                {
+                    taker.Start();
+                    thief = taker;
+                }
+                catch (SocketException exception) when (exception.SocketErrorCode == SocketError.AddressAlreadyInUse)
+                {
+                    taker.Dispose();   // another process took it first, still the case under test (#3451); Aw.Kernel.Testing.PortThief isn't referenced here
+                }
             });
 
             Assert.True(stub.Port > 0);
