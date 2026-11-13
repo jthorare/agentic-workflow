@@ -86,6 +86,7 @@ public sealed class FileMapViewModelTests
                 body["symbols"] = new System.Text.Json.Nodes.JsonObject
                 {
                     ["state"] = state,
+                    ["reason"] = null, // AwJson requires every constructor parameter, a null one too
                     ["items"] = new System.Text.Json.Nodes.JsonArray(),
                     ["commit"] = "7c3e1a2f4b5d6e7081920a1b2c3d4e5f60718293",
                 };
