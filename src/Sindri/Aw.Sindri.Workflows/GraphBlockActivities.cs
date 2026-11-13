@@ -103,8 +103,11 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
     }
 
     // why: the block's own text (an http body, a model answer) can hold a secret; it is scrubbed BEFORE Fit cuts it, so a secret the cut would split is gone first (#3225, #3196)
-    private GraphBlockOutcome FailedBlock(JsonObject input, Kernel.Error error, JsonObject? output, string? raw) =>
-        new(NodeRunStatus.Failed, Fit(input.ToJsonString()), Fit(CleanJson(output?.ToJsonString())), [], NodeRunLimits.Cap(Clean($"{error.Code}: {error.Message}"), out _), Fit(Clean(raw)));
+    private GraphBlockOutcome FailedBlock(JsonObject input, Kernel.Error error, JsonObject? output, string? raw)
+    {
+        var (fitInput, fitOutput, fitRaw) = (StoredJson.Fit(input.ToJsonString()), StoredJson.Fit(CleanJson(output?.ToJsonString())), StoredJson.Fit(Clean(raw)));
+        return new(NodeRunStatus.Failed, fitInput.Text, fitOutput.Text, [], NodeRunLimits.Cap(Clean($"{error.Code}: {error.Message}"), out _), fitRaw.Text, fitInput.Cut || fitOutput.Cut || fitRaw.Cut);
+    }
 
     private GraphBlockOutcome SucceededBlock(JsonObject input, BlockResult result)
     {
@@ -114,7 +117,8 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             output[name] = value?.DeepClone();
         }
 
-        return new GraphBlockOutcome(NodeRunStatus.Succeeded, Fit(input.ToJsonString()), Fit(CleanJson(output.ToJsonString())), result.Taken, Error: null);
+        var (fitInput, fitOutput) = (StoredJson.Fit(input.ToJsonString()), StoredJson.Fit(CleanJson(output.ToJsonString())));
+        return new GraphBlockOutcome(NodeRunStatus.Succeeded, fitInput.Text, fitOutput.Text, result.Taken, Error: null, Truncated: fitInput.Cut || fitOutput.Cut);
     }
 
     // why: a stored output is parsed as JSON downstream, so a blocked one becomes a JSON string, never the bare marker (#3376)
@@ -229,11 +233,14 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
     private static GraphBlockOutcome? Cut(GraphNodeScope scope, JsonObject config) =>
         StoredJson.ReadFailure(scope, loopCutNode: null) is { } failure ? Failed(config, failure) : null;
 
-    private static GraphBlockOutcome Failed(JsonObject? input, Kernel.Error error) =>
-        new(NodeRunStatus.Failed, Fit(input?.ToJsonString()), Output: null, [], NodeRunLimits.Cap($"{error.Code}: {error.Message}", out _));
+    private static GraphBlockOutcome Failed(JsonObject? input, Kernel.Error error)
+    {
+        var fitInput = StoredJson.Fit(input?.ToJsonString());
+        return new(NodeRunStatus.Failed, fitInput.Text, Output: null, [], NodeRunLimits.Cap($"{error.Code}: {error.Message}", out _), Truncated: fitInput.Cut);
+    }
 
     /// <summary>Cuts a block's input or output before it enters the workflow's history; the text that results always parses as JSON (see <see cref="StoredJson.Fit"/>).</summary>
     /// <param name="text">The input or output text, or null.</param>
     /// <returns>The text when it fits, otherwise a small JSON object holding its first part.</returns>
-    internal static string? Fit(string? text) => StoredJson.Fit(text);
+    internal static string? Fit(string? text) => StoredJson.Fit(text).Text;
 }

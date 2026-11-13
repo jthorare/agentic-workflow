@@ -39,7 +39,7 @@ internal static class StoredJson
         }
     }
 
-    /// <summary>True when the node is the object <see cref="Fit"/> writes for a text over the cap.</summary>
+    /// <summary>True when the node is the object <see cref="Fit"/> writes for a text over the cap. Only for reading a stored output back in a scope; a writer uses <see cref="Fitted.Cut"/>.</summary>
     /// <param name="node">The parsed stored text.</param>
     /// <returns>Whether it is a cut envelope.</returns>
     internal static bool IsCut(JsonNode? node) =>
@@ -72,18 +72,18 @@ internal static class StoredJson
     /// {"truncated":true,"bytes":N,"head":"first part"}, which is under the cap and parses.
     /// </summary>
     /// <param name="text">The input or output text, or null.</param>
-    /// <returns>The text when it fits, otherwise the envelope.</returns>
-    internal static string? Fit(string? text)
+    /// <returns>The text when it fits, otherwise the envelope, and whether it was cut.</returns>
+    internal static Fitted Fit(string? text)
     {
         if (text is null)
         {
-            return null;
+            return new Fitted(null, Cut: false);
         }
 
         var bytes = Encoding.UTF8.GetByteCount(text);
         if (bytes <= NodeRunLimits.PayloadBytes)
         {
-            return text;
+            return new Fitted(text, Cut: false);
         }
 
         var length = Math.Min(text.Length, NodeRunLimits.PayloadBytes - Slack);
@@ -94,7 +94,7 @@ internal static class StoredJson
             var size = Encoding.UTF8.GetByteCount(envelope);
             if (size <= NodeRunLimits.PayloadBytes || head == 0)
             {
-                return envelope;
+                return new Fitted(envelope, Cut: true);
             }
 
             length = head - ((size - NodeRunLimits.PayloadBytes) / 2) - 1;   // why: escaping can make the head longer than its text; shrink by the excess
@@ -102,3 +102,8 @@ internal static class StoredJson
         }
     }
 }
+
+/// <summary>A text after <see cref="StoredJson.Fit"/>.</summary>
+/// <param name="Text">The text that fits, or null.</param>
+/// <param name="Cut">True when Text is the envelope for a text that was over the cap.</param>
+internal readonly record struct Fitted(string? Text, bool Cut);

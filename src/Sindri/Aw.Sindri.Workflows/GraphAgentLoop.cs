@@ -201,7 +201,8 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
         }
 
         // why: Fit keeps an output over 64 KB as parseable JSON; the walk then records the node with 'Truncated' set (#3419)
-        return new GraphBlockOutcome(NodeRunStatus.Succeeded, input, StoredJson.Fit(output.ToJsonString()), result.Taken, Error: null);
+        var fitted = StoredJson.Fit(output.ToJsonString());
+        return new GraphBlockOutcome(NodeRunStatus.Succeeded, input, fitted.Text, result.Taken, Error: null, Truncated: fitted.Cut);
     }
 
     // Waits for the report, the end of the session or the timeout, whichever comes first. The timeout runs only while nobody holds the node: a takeover stops its clock and a handback
