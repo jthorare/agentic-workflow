@@ -2,7 +2,6 @@ using System.Diagnostics;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
-using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Features.Launching;
 
@@ -11,26 +10,26 @@ namespace Aw.Sindri.Features.Launching;
 /// <param name="launches">The launches projection.</param>
 /// <param name="targets">The last probe of the viewer, host and agents.</param>
 /// <param name="clock">Now.</param>
-/// <param name="log">Where each part's elapsed time goes at debug level (#3390); null logs nothing.</param>
-internal sealed partial class LauncherDoctorChecks(ILaunchSetup setup, ILaunchViews launches, LaunchTargetsReader targets, TimeProvider clock, ILogger<LauncherDoctorChecks>? log = null) : IDoctorChecks
+/// <param name="timer">Takes each part's elapsed time (#3390), the same sink as the launcher's own parts; null records nothing.</param>
+internal sealed class LauncherDoctorChecks(ILaunchSetup setup, ILaunchViews launches, LaunchTargetsReader targets, TimeProvider clock, IPartTimer? timer = null) : IDoctorChecks
 {
     public async ValueTask<IReadOnlyList<DoctorCheck>> Run(CancellationToken cancellationToken)
     {
-        var timer = Stopwatch.StartNew();
+        var watch = Stopwatch.StartNew();
         var shown = await setup.Show(only: null, cancellationToken).ConfigureAwait(false);
-        Timed("Launcher.show", timer);
+        timer?.Took("Launcher.show", watch.ElapsedMilliseconds);
         if (shown.IsError)
         {
             return [new DoctorCheck("launcher", CheckState.Fail, shown.Error.Message, "sindri launch show")];
         }
 
         var report = shown.Value;
-        timer.Restart();
+        watch.Restart();
         var rows = await launches.Since(clock.GetUtcNow() - LaunchAdoption.Window, cancellationToken).ConfigureAwait(false);
-        Timed("Launcher.since", timer);
-        timer.Restart();
+        timer?.Took("Launcher.since", watch.ElapsedMilliseconds);
+        watch.Restart();
         var probed = await targets.Read(cancellationToken).ConfigureAwait(false);
-        Timed("Launcher.targets", timer);
+        timer?.Took("Launcher.targets", watch.ElapsedMilliseconds);
         var now = clock.GetUtcNow();
         var facts = Facts(probed.IsError ? null : probed.Value.ProbedAt, (probed.IsError, rows.IsError), rows.IsError ? [] : rows.Value, now);
         var checks = new List<DoctorCheck>
@@ -89,15 +88,4 @@ internal sealed partial class LauncherDoctorChecks(ILaunchSetup setup, ILaunchVi
         var detail = string.Join("; ", lines) + (parked.Count == 0 ? string.Empty : "; " + string.Join("; ", parked));
         return new DoctorCheck("launcher:agents", missing || parked.Count > 0 ? CheckState.Warn : CheckState.Ok, detail, missing || parked.Count > 0 ? "sindri launch show" : null);
     }
-
-    private void Timed(string part, Stopwatch timer)
-    {
-        if (log is not null)
-        {
-            LogPart(log, part, timer.ElapsedMilliseconds);
-        }
-    }
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "doctor.check {Check} {ElapsedMs} ms")]
-    private static partial void LogPart(ILogger logger, string check, long elapsedMs);
 }

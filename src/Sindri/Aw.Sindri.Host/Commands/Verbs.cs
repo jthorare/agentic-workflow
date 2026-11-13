@@ -124,19 +124,12 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
 
     internal async Task<int> Doctor(bool json, CancellationToken ct, Func<CancellationToken, ValueTask<IReadOnlyList<DoctorCheck>>>? harnesses = null)
     {
-        var request = json ? new RunDoctorRequest() : new RunDoctorRequest { OnRow = row => { output.Out.Write(Line(row)); output.Out.Flush(); } };   // text: each row prints as its check finishes (#3390)
-        var report = (await scope.GetRequiredService<IService<RunDoctorRequest, RunDoctorResponse>>().Handle(request, ct).ConfigureAwait(false)).Value;
-        if (harnesses is not null)   // the pinned harness probe's lines (engine spec §6.2)
+        var request = new RunDoctorRequest
         {
-            var extra = await harnesses(ct).ConfigureAwait(false);
-            DoctorCheck[] checks = [.. report.Checks, .. extra];
-            report = new RunDoctorResponse(checks, DoctorRules.ExitCode(checks));
-            if (!json)
-            {
-                return await output.Text(string.Concat(extra.Select(Line)), report.ExitCode).ConfigureAwait(false);
-            }
-        }
-
+            OnRow = json ? null : row => { output.Out.Write(Line(row)); output.Out.Flush(); },   // text: each row prints as its check finishes (#3390)
+            Harnesses = harnesses,   // the pinned harness probe's lines (engine spec §6.2), in the same parallel pass (#3390)
+        };
+        var report = (await scope.GetRequiredService<IService<RunDoctorRequest, RunDoctorResponse>>().Handle(request, ct).ConfigureAwait(false)).Value;
         return json
             ? await output.Json(report, report.ExitCode).ConfigureAwait(false)
             : report.ExitCode;

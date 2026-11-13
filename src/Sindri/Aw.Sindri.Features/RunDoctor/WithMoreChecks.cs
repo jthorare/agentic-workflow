@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Globalization;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Doctor;
@@ -9,8 +8,9 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Aw.Sindri.Features.RunDoctor;
 
 /// <summary>
-/// Appends every registered <see cref="IDoctorChecks"/> to the core report and applies the exit rule to the whole list. The classes run in parallel (#3390),
-/// each under a time cap; a class past its cap becomes one warn row and the others carry on. Rows reach <see cref="RunDoctorRequest.OnRow"/> in registration order, each as soon as every class before it has finished.
+/// Appends every registered <see cref="IDoctorChecks"/>, then the request's harness probe, to the core report and applies the exit rule to the whole list.
+/// The classes and the probe run in parallel (#3390), with no time cap: rows stream, so a slow check shows as the one still open. A class that throws
+/// becomes one fail row and the others carry on. Rows reach <see cref="RunDoctorRequest.OnRow"/> in registration order, each as soon as every class before it has finished.
 /// </summary>
 /// <param name="inner">The core doctor.</param>
 /// <param name="more">The other checks, in registration order.</param>
@@ -18,8 +18,6 @@ namespace Aw.Sindri.Features.RunDoctor;
 internal sealed partial class WithMoreChecks(IService<RunDoctorRequest, RunDoctorResponse> inner, IEnumerable<IDoctorChecks> more, ILogger? log = null)
     : Decorated<RunDoctorRequest, RunDoctorResponse>(inner)
 {
-    private static readonly TimeSpan _defaultCap = TimeSpan.FromSeconds(20);
-
     public override async ValueTask<Result<RunDoctorResponse>> Handle(RunDoctorRequest request, CancellationToken cancellationToken)
     {
         var logger = log ?? NullLogger.Instance;
@@ -31,14 +29,19 @@ internal sealed partial class WithMoreChecks(IService<RunDoctorRequest, RunDocto
             return core;
         }
 
-        var cap = request.Cap ?? _defaultCap;
         var checks = new List<DoctorCheck>(core.Value.Checks);
         foreach (var row in checks)
         {
             request.OnRow?.Invoke(row);
         }
 
-        var running = more.Select(source => RunOne(source, cap, logger, cancellationToken)).ToArray();
+        var sources = more.Select(static source => (Name: source.GetType().Name, Run: (Func<CancellationToken, ValueTask<IReadOnlyList<DoctorCheck>>>)source.Run)).ToList();
+        if (request.Harnesses is { } harnesses)
+        {
+            sources.Add(("harnesses", harnesses));
+        }
+
+        var running = sources.Select(source => RunOne(source.Name, source.Run, logger, cancellationToken)).ToArray();
         foreach (var task in running)   // why: awaited in registration order, so a row prints once every class before it is done and the output order is stable
         {
             var rows = await task.ConfigureAwait(false);
@@ -52,34 +55,21 @@ internal sealed partial class WithMoreChecks(IService<RunDoctorRequest, RunDocto
         return new RunDoctorResponse(checks, DoctorRules.ExitCode(checks));
     }
 
-    private static async Task<IReadOnlyList<DoctorCheck>> RunOne(IDoctorChecks source, TimeSpan cap, ILogger logger, CancellationToken cancellationToken)
+    private static async Task<IReadOnlyList<DoctorCheck>> RunOne(string name, Func<CancellationToken, ValueTask<IReadOnlyList<DoctorCheck>>> run, ILogger logger, CancellationToken cancellationToken)
     {
-        var name = source.GetType().Name;
         var timer = Stopwatch.StartNew();
-        using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        IReadOnlyList<DoctorCheck> rows;
         try
         {
-            var work = Task.Run(async () => await source.Run(limit.Token).ConfigureAwait(false), CancellationToken.None);
-            var finished = await Task.WhenAny(work, Task.Delay(cap, cancellationToken)).ConfigureAwait(false);
-            if (finished == work)
-            {
-                rows = await work.ConfigureAwait(false);
-            }
-            else
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await limit.CancelAsync().ConfigureAwait(false);
-                _ = work.ContinueWith(static t => _ = t.Exception, TaskScheduler.Default);   // why: a late failure of the skipped check is observed, not rethrown
-                rows = [new DoctorCheck(name, CheckState.Warn, $"took over {cap.TotalSeconds.ToString("0.##", CultureInfo.InvariantCulture)} s (skipped)", Fix: null)];
-            }
+            return await Task.Run(async () => await run(cancellationToken).ConfigureAwait(false), CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (!cancellationToken.IsCancellationRequested)   // boundary: one broken class must not end the pass while the others still run against the scope (#3390)
+        {
+            return [new DoctorCheck(name, CheckState.Fail, $"the check threw {ex.GetType().Name}: {ex.Message}", "AW_LOG_LEVEL=debug sindri doctor")];
         }
         finally
         {
             LogCheck(logger, name, timer.ElapsedMilliseconds);
         }
-
-        return rows;
     }
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "doctor.check {Check} {ElapsedMs} ms")]

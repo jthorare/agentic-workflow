@@ -845,8 +845,8 @@ Aw.Sindri.Features.RegisterMcp.RegisterMcpResponse.Repo.init -> void
 Aw.Sindri.Features.RunDoctor.RunDoctorRequest
 Aw.Sindri.Features.RunDoctor.RunDoctorRequest.<Clone>$() -> Aw.Sindri.Features.RunDoctor.RunDoctorRequest!
 Aw.Sindri.Features.RunDoctor.RunDoctorRequest.Equals(Aw.Sindri.Features.RunDoctor.RunDoctorRequest? other) -> bool
-Aw.Sindri.Features.RunDoctor.RunDoctorRequest.Cap.get -> System.TimeSpan?
-Aw.Sindri.Features.RunDoctor.RunDoctorRequest.Cap.init -> void
+Aw.Sindri.Features.RunDoctor.RunDoctorRequest.Harnesses.get -> System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Doctor.DoctorCheck!>!>>?
+Aw.Sindri.Features.RunDoctor.RunDoctorRequest.Harnesses.init -> void
 Aw.Sindri.Features.RunDoctor.RunDoctorRequest.OnRow.get -> System.Action<Aw.Sindri.Core.Doctor.DoctorCheck!>?
 Aw.Sindri.Features.RunDoctor.RunDoctorRequest.OnRow.init -> void
 Aw.Sindri.Features.RunDoctor.RunDoctorRequest.RunDoctorRequest() -> void
