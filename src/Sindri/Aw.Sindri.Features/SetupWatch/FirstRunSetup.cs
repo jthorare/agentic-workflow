@@ -18,9 +18,9 @@ namespace Aw.Sindri.Features.SetupWatch;
 /// <param name="keys">Edits one key of the profile file in place.</param>
 /// <param name="create">Makes the workflow (the command, run as 'service:setup').</param>
 /// <param name="activate">Turns the workflow on (the command, run as 'service:setup').</param>
-/// <param name="runner">Starts the one run (the command, run as 'service:setup').</param>
 /// <param name="made">The ledger event that says hello-sindri was made once.</param>
-internal sealed class FirstRunSetup(IProfileSource live, ILaunchSetup launch, IProfileKeyWriter keys, ISetupWorkflowCreator create, ISetupWorkflowActivator activate, ISetupWorkflowRunner runner, FirstWorkflowEvents made)
+/// <param name="run">The one run of hello-sindri, tried again on later ticks until it starts or can never start.</param>
+internal sealed class FirstRunSetup(IProfileSource live, ILaunchSetup launch, IProfileKeyWriter keys, ISetupWorkflowCreator create, ISetupWorkflowActivator activate, FirstWorkflowEvents made, HelloRun run)
 {
     private const string TargetKey = "workflow.agent.target";
     private static readonly WorkflowSlug _hello = WorkflowSlug.From("hello-sindri");
@@ -64,37 +64,52 @@ internal sealed class FirstRunSetup(IProfileSource live, ILaunchSetup launch, IP
         }
     }
 
-    // Create, activate, then record: a crash between two of them is picked up on the next tick (a taken slug is the create that already happened).
+    // Create, activate, then record, then run: a crash between two of them is picked up on the next tick (a taken slug is the create that already happened, when setup made it).
     private async ValueTask MakeHello(RepoName repo, CancellationToken cancellationToken)
     {
-        if (await made.WasMade(cancellationToken).ConfigureAwait(false) is not false)
+        if (run.Settled || await made.WasMade(cancellationToken).ConfigureAwait(false) is not { } wasMade)
         {
-            return;   // made before, or the ledger can't say
+            return;   // settled, or the ledger can't say
         }
 
+        if (wasMade)
+        {
+            await run.Once(_hello, cancellationToken).ConfigureAwait(false);   // the event is there; the run is retried until it starts or can never start
+            return;
+        }
+
+        if (await Create(repo, cancellationToken).ConfigureAwait(false)
+            && (await made.Made(_hello, repo, cancellationToken).ConfigureAwait(false)).IsSuccess)
+        {
+            await run.Once(_hello, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    // True when hello-sindri exists, is ours and is active. The owner's own hello-sindri is recorded (so setup stops trying) and left alone.
+    private async ValueTask<bool> Create(RepoName repo, CancellationToken cancellationToken)
+    {
         var template = GraphTemplates.Find("hello-sindri");
         var item = template?.Spec.Nodes.FirstOrDefault(static n => string.Equals(n.Type, "create_item", StringComparison.Ordinal));
         if (template is null || item is null)
         {
-            return;
+            return false;
         }
 
         item.Config["repo"] = repo.Value;
         var created = await create.Create(_hello, GraphJson.Write(template.Spec), cancellationToken).ConfigureAwait(false);
         if (created.IsError && !string.Equals(created.Error.Code, SindriErrors.GraphSlugTaken.Code, StringComparison.Ordinal))
         {
-            return;
+            return false;
+        }
+
+        if (created.IsError && !await run.IsOurs(_hello, cancellationToken).ConfigureAwait(false))
+        {
+            _ = await made.Made(_hello, repo, cancellationToken).ConfigureAwait(false);
+            run.Settled = true;
+            return false;
         }
 
         var activated = await activate.Activate(_hello, cancellationToken).ConfigureAwait(false);
-        if (activated.IsError && !string.Equals(activated.Error.Code, SindriErrors.GraphArchived.Code, StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        if ((await made.Made(_hello, repo, cancellationToken).ConfigureAwait(false)).IsSuccess)
-        {
-            _ = await runner.Run(_hello, cancellationToken).ConfigureAwait(false);   // once: the event is recorded first, so a failed start is not retried (Run again is the owner's)
-        }
+        return activated.IsSuccess || string.Equals(activated.Error.Code, SindriErrors.GraphArchived.Code, StringComparison.Ordinal);
     }
 }
