@@ -20,7 +20,6 @@ public sealed class RepoHealthsReadsTests
     private static readonly RepoName _repo = RepoName.From("demo");
     private static readonly CommitSha _old = CommitSha.From(new string('1', 40));
     private static readonly CommitSha _new = CommitSha.From(new string('2', 40));
-    private static readonly string[] _notBuilding = ["queued", "waiting"];
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -108,11 +107,14 @@ public sealed class RepoHealthsReadsTests
         var building = Assert.Single(await healths.Of(scope, [missing], Token));
         now.Now = _now.AddMinutes(40);
         jobs.Put(build with { State = JobState.Failed, StartedAt = _now.AddMinutes(10), EndedAt = _now.AddMinutes(12) });
-        var again = Assert.Single(await healths.Of(scope, [missing], Token));
+        var again = Assert.Single(await healths.Of(scope, [missing], Token));   // one failure's retry wait ended long before +40 min, so the repo reads queued again
+        now.Now = _now.AddMinutes(45);
+        var later = Assert.Single(await healths.Of(scope, [missing], Token));
 
         Assert.Equal("building", building.State);
         Assert.Null(building.QueuedFor);
-        Assert.Contains(again.State, _notBuilding, StringComparer.Ordinal);
+        Assert.Equal(("queued", (TimeSpan?)TimeSpan.Zero), (again.State, again.QueuedFor));
+        Assert.Equal(TimeSpan.FromMinutes(5), later.QueuedFor);
     }
 
     private static async Task<(CountingJobs Jobs, RepoHealth Health)> Read(CommitSha live, int failedBuilds)
