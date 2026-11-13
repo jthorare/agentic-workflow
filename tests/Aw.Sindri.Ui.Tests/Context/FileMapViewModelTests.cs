@@ -72,6 +72,33 @@ public sealed class FileMapViewModelTests
         Assert.True(files.HasNote);
     }
 
+    [Theory]
+    [InlineData("ok", "")]
+    [InlineData("stale", "Function names come from an older index build (7c3e1a2), so they may be out of date.")]
+    [InlineData("unavailable", "Function names are not available yet: the code index isn't built.")]
+    public async Task The_function_names_note_follows_the_state_the_server_sends(string state, string note)
+    {
+        var api = new FakeSindriApi
+        {
+            FileMapResponder = _ =>
+            {
+                var body = Golden("src-tabs");
+                body["symbols"] = new System.Text.Json.Nodes.JsonObject
+                {
+                    ["state"] = state,
+                    ["items"] = new System.Text.Json.Nodes.JsonArray(),
+                    ["commit"] = "7c3e1a2f4b5d6e7081920a1b2c3d4e5f60718293",
+                };
+                return new RouteAnswer(System.Net.HttpStatusCode.OK, body.ToJsonString());
+            },
+        };
+        var files = Files(api);
+
+        await files.Load("src/tabs/", Token);
+
+        Assert.Equal((note, note.Length > 0), (files.Note, files.HasNote));
+    }
+
     private static IEnumerable<(string Text, bool IsLink)> Trail(FileMapViewModel files) => files.Crumbs.Select(c => (c.Text, c.IsLink));
 
     [Fact]
