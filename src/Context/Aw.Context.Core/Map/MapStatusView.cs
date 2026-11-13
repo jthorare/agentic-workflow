@@ -31,4 +31,8 @@ public sealed record MapStatusView(
     /// <summary>Per repo, the indexed files each configured role matches and the role-like files no glob covers (issue 1105); left out when no repo in scope configures a role or has such a file.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<RepoRoles>? Roles { get; init; }
+
+    /// <summary>Every mapped repo the caller reads with the commit the map was built at, in the build's order (issue 3308: the version's <see cref="MapVersion.Repo"/> is only the first one); left out for a version that recorded no heads (an import with no commit).</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<MapHead>? Heads { get; init; }
 }
