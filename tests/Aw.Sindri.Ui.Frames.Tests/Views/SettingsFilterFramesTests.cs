@@ -36,18 +36,21 @@ public sealed class SettingsFilterFramesTests : FrameHost
         Assert.True(Named<TextBox>(window, "SettingsFilterBox").IsFocused, "Esc moved focus out of the filter box");
     });
 
-    private static (Aw.Sindri.Ui.Views.Shell.ShellWindow Window, SettingsViewModel Settings) PutSettings(Aw.Sindri.Ui.Views.Shell.ShellWindow window)
+    // The page sits in a hidden slot until Settings is the current page: only then is it laid out and in the window's visual tree.
+    private static (Aw.Sindri.Ui.Views.Shell.ShellWindow Window, SettingsViewModel Settings) PutSettings(Aw.Sindri.Ui.Views.Shell.ShellWindow window, Aw.Sindri.Ui.ViewModels.Shell.ShellViewModel shell)
     {
         var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), static _ => { });
         window.SettingsSlot.Content = new SettingsView { DataContext = settings };
+        shell.GoTo(Aw.Sindri.Ui.Navigation.PageId.Settings);
+        Settle(window);
         return (window, settings);
     }
 
     [Fact]
     public Task After_Command_comma_the_title_is_not_under_the_top_bar() => OnUi(async () =>
     {
-        var (window, _) = await Connected();
-        _ = PutSettings(window);
+        var (window, shell) = await Connected();
+        _ = PutSettings(window, shell);
         var command = OperatingSystem.IsMacOS() ? RawInputModifiers.Meta : RawInputModifiers.Control;
 
         window.KeyPress(Key.OemComma, command, PhysicalKey.Comma, keySymbol: ",");
@@ -64,8 +67,8 @@ public sealed class SettingsFilterFramesTests : FrameHost
     [Fact]
     public Task Command_comma_with_Settings_already_open_puts_focus_back_in_the_filter_box() => OnUi(async () =>
     {
-        var (window, _) = await Connected();
-        _ = PutSettings(window);
+        var (window, shell) = await Connected();
+        _ = PutSettings(window, shell);
         var command = OperatingSystem.IsMacOS() ? RawInputModifiers.Meta : RawInputModifiers.Control;
         window.KeyPress(Key.OemComma, command, PhysicalKey.Comma, keySymbol: ",");
         await Until(window, () => Named<TextBox>(window, "SettingsFilterBox").IsFocused, "Ctrl+, never put focus in the Settings filter box");
@@ -81,8 +84,8 @@ public sealed class SettingsFilterFramesTests : FrameHost
     [Fact]
     public Task A_filter_that_matches_nothing_hides_the_sections_and_clearing_it_brings_them_back() => OnUi(async () =>
     {
-        var (window, _) = await Connected();
-        var (_, settings) = PutSettings(window);
+        var (window, shell) = await Connected();
+        var (_, settings) = PutSettings(window, shell);
 
         settings.Filter = "zzzz";
         Settle(window);
@@ -100,8 +103,8 @@ public sealed class SettingsFilterFramesTests : FrameHost
     [Fact]
     public Task Every_label_shown_in_This_app_matches_its_own_section() => OnUi(async () =>
     {
-        var (window, _) = await Connected();
-        var (_, settings) = PutSettings(window);
+        var (window, shell) = await Connected();
+        var (_, settings) = PutSettings(window, shell);
         Settle(window);
         var labels = Named<Border>(window, "ThisAppCard").GetVisualDescendants().OfType<TextBlock>().Select(static t => t.Text).Where(static s => !string.IsNullOrWhiteSpace(s)).Distinct(StringComparer.Ordinal).ToList();
         Assert.NotEmpty(labels);
@@ -119,6 +122,7 @@ public sealed class SettingsFilterFramesTests : FrameHost
         var (window, shell) = await Connected();
         var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), static _ => { }, shell.Setup);
         window.SettingsSlot.Content = new SettingsView { DataContext = settings };
+        shell.GoTo(Aw.Sindri.Ui.Navigation.PageId.Settings);
         Settle(window);
         Assert.True(Named<Control>(window, "SetupChecklist").IsVisible);
 
@@ -138,8 +142,8 @@ public sealed class SettingsFilterFramesTests : FrameHost
     [Fact]
     public Task The_no_match_state_names_the_filter_and_how_to_clear_it() => OnUi(async () =>
     {
-        var (window, _) = await Connected();
-        var (_, settings) = PutSettings(window);
+        var (window, shell) = await Connected();
+        var (_, settings) = PutSettings(window, shell);
 
         settings.Filter = "zzzz";
         Settle(window);
@@ -160,6 +164,7 @@ public sealed class SettingsFilterFramesTests : FrameHost
         };
         var view = new SettingsView { DataContext = settings };
         window.SettingsSlot.Content = view;
+        shell.GoTo(Aw.Sindri.Ui.Navigation.PageId.Settings);
         Settle(window);
         return (window, shell, settings, view);
     }
@@ -178,7 +183,9 @@ public sealed class SettingsFilterFramesTests : FrameHost
 
         watch.Stop();
         var each = watch.Elapsed.TotalMilliseconds / 10;
-        TestContext.Current.SendDiagnosticMessage("CollectShownText on a full Settings page: " + each.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + " ms per walk");
+        var line = "CollectShownText on a full Settings page: " + each.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + " ms per walk";
+        TestContext.Current.SendDiagnosticMessage(line);
+        TestContext.Current.TestOutputHelper?.WriteLine(line);
         Assert.True(each < 50, "one walk took " + each.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + " ms");
     });
 
