@@ -162,11 +162,51 @@ public sealed class RunWorkflowServiceTests
         Assert.Empty(_starter.Requests);
     }
 
-    private async Task Create(string? concurrency, bool activate)
+    [Fact]
+    public async Task Setup_service_is_refused_for_another_workflow_slug()
+    {
+        await Create(concurrency: null, activate: true);
+        using var caller = _callers.EnterService("setup");
+
+        var result = await _service.Handle(new RunWorkflowRequest(_slug, Payload: null, "service:setup"), Token);
+
+        Assert.Equal(SindriErrors.GraphSetupRunRefused.Code, result.Error.Code);
+        Assert.Empty(_starter.Requests);
+    }
+
+    [Fact]
+    public async Task Setup_service_is_refused_a_second_run_of_hello_sindri()
+    {
+        await Create(concurrency: "unlimited", activate: true, WorkflowSlug.From("hello-sindri"), "service:setup");
+        using var caller = _callers.EnterService("setup");
+        var first = await _service.Handle(new RunWorkflowRequest(WorkflowSlug.From("hello-sindri"), Payload: null, "service:setup"), Token);
+
+        var second = await _service.Handle(new RunWorkflowRequest(WorkflowSlug.From("hello-sindri"), Payload: null, "service:setup"), Token);
+
+        Assert.True(first.IsSuccess);
+        Assert.Equal(SindriErrors.GraphSetupRunRefused.Code, second.Error.Code);
+        _ = Assert.Single(_starter.Requests);
+    }
+
+    [Fact]
+    public async Task Another_caller_may_run_hello_sindri_again()
+    {
+        await Create(concurrency: "unlimited", activate: true, WorkflowSlug.From("hello-sindri"), "service:setup");
+        using (var caller = _callers.EnterService("setup"))
+        {
+            _ = await _service.Handle(new RunWorkflowRequest(WorkflowSlug.From("hello-sindri"), Payload: null, "service:setup"), Token);
+        }
+
+        var again = await _service.Handle(new RunWorkflowRequest(WorkflowSlug.From("hello-sindri"), Payload: null, "owner"), Token);
+
+        Assert.True(again.IsSuccess);
+    }
+
+    private async Task Create(string? concurrency, bool activate, WorkflowSlug? slug = null, string createdBy = "owner")
     {
         var spec = new GraphSpec(Version: 1, Name: "Morning check", Description: null, Concurrency: concurrency, Resources: null,
             Nodes: [new GraphNode(NodeId.From("start"), "manual", Title: null, [])], Edges: []);
-        _ = (await _workflows.Create(_id, _slug, spec, "owner", Token)).Value;
+        _ = (await _workflows.Create(_id, slug ?? _slug, spec, createdBy, Token)).Value;
         if (activate)
         {
             _ = (await _workflows.Activate(_id, 1, Token)).Value;

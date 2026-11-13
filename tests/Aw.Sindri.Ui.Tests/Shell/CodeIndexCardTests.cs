@@ -26,8 +26,8 @@ public sealed class CodeIndexCardTests
     private string Repo(string name, string state, string? commit, int builtMinutesAgo, params string[] layers) =>
         $$"""{"repo":"{{name}}","state":"{{state}}","commit":{{(commit is null ? "null" : "\"" + commit + "\"")}},"builtAt":"{{_clock.GetUtcNow().AddMinutes(-builtMinutesAgo):O}}","layers":[{{string.Join(',', layers)}}],"counts":null}""";
 
-    private static string Health(string name, string state, int? embeddingsPercent = null, string? waiting = null) =>
-        $$"""{"repo":"{{name}}","state":"{{state}}","embeddingsPercent":{{(embeddingsPercent is { } p ? p.ToString(CultureInfo.InvariantCulture) : "null")}},"waiting":{{(waiting is null ? "null" : "\"" + waiting + "\"")}}}""";
+    private static string Health(string name, string state, int? embeddingsPercent = null, string? waiting = null, bool paused = false) =>
+        $$"""{"repo":"{{name}}","state":"{{state}}","embeddingsPercent":{{(embeddingsPercent is { } p ? p.ToString(CultureInfo.InvariantCulture) : "null")}},"waiting":{{(waiting is null ? "null" : "\"" + waiting + "\"")}},"paused":{{(paused ? "true" : "false")}}}""";
 
     private async Task<CodeIndexCardViewModel> Read(params string[] repos) => await ReadWithHealth(repos, []);
 
@@ -68,7 +68,7 @@ public sealed class CodeIndexCardTests
     }
 
     [Theory]
-    [InlineData("missing", "repo: first build queued")]
+    [InlineData("missing", "repo: no index yet")]
     [InlineData("damaged", "repo: damaged, rebuilding on the next check")]
     [InlineData("building", "repo: building")]
     [InlineData("waiting", "repo: waiting to retry")]
@@ -80,6 +80,11 @@ public sealed class CodeIndexCardTests
         Assert.Equal(expected, Assert.Single(card.Lines).Text);
         Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
     }
+
+    // #3399: missing comes paused or off the default branch too, where no build is coming; only queued may promise one.
+    [Fact]
+    public void Missing_never_promises_a_build()
+        => Assert.DoesNotContain("queued", Labels.CodeIndexState("missing"), StringComparison.Ordinal);
 
     [Fact]
     public async Task A_stale_index_names_the_state_beside_its_age()
@@ -95,7 +100,7 @@ public sealed class CodeIndexCardTests
     {
         var card = await Read(Repo("a", "ok", Sha, 5, Layer("structure", "ok")), Repo("b", "missing", commit: null, 0));
 
-        Assert.Equal(["a @ abcdef0, 5 min old, structure ok", "b: first build queued"], card.Lines.Select(l => l.Text), StringComparer.Ordinal);
+        Assert.Equal(["a @ abcdef0, 5 min old, structure ok", "b: no index yet"], card.Lines.Select(l => l.Text), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -146,6 +151,25 @@ public sealed class CodeIndexCardTests
         var card = await ReadWithHealth([Repo("repo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("repo", "waiting", waiting: waiting)]);
 
         Assert.Equal($"repo @ abcdef0, 3 min old ({waiting}), structure ok", Assert.Single(card.Lines).Text);
+    }
+
+    // #3561: the doctor names the pause and the resume for the same repo; the card must not promise a retry or a build.
+    [Fact]
+    public async Task A_paused_repo_with_no_index_names_the_pause_and_the_resume()
+    {
+        var card = await ReadWithHealth([Repo("repo", "missing", commit: null, 0)], [Health("repo", "missing", paused: true)]);
+
+        Assert.Equal("repo: no index yet · " + Labels.CodeIndexPaused, Assert.Single(card.Lines).Text);
+        Assert.Contains("sindri services resume code-index-main-move", Labels.CodeIndexPaused, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_paused_repo_in_backoff_never_reads_waiting_to_retry()
+    {
+        var card = await ReadWithHealth([Repo("repo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("repo", "stale", paused: true)]);
+
+        Assert.Equal("repo @ abcdef0, 3 min old (behind main · " + Labels.CodeIndexPaused + "), structure ok", Assert.Single(card.Lines).Text);
+        Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
     }
 
     [Fact]

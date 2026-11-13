@@ -37,4 +37,8 @@ public sealed record ContextQuery(
     /// <summary>A pin id (or 'concept:&lt;id&gt;') to answer inside: only results the pin holds. Combines with every shape and with Repo; left out of JSON when null.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Concept { get; init; }
+
+    /// <summary>The page of ranked records to read (#3370), or null to read every match (#938). Left out of JSON when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public QueryWindow? Window { get; init; }
 }

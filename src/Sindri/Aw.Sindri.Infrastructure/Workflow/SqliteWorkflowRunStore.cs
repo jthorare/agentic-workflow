@@ -228,7 +228,7 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
 
             var written = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.UpsertNodeRun,
                 c => c.Bind("$run", stored.RunId.Value).Bind("$node", stored.NodeId.Value).Bind("$item", stored.ItemIndex).Bind("$status", RunStatusText.Of(stored.Status))
-                    .Bind("$input", stored.Input).Bind("$output", stored.Output).Bind("$truncated", stored.Truncated ? 1 : 0).Bind("$error", stored.Error).Bind("$usage", stored.Usage),
+                    .Bind("$input", stored.Input).Bind("$output", stored.Output).Bind("$truncated", stored.Truncated ? 1 : 0).Bind("$error", stored.Error).Bind("$usage", stored.Usage).Bind("$raw", stored.Raw),
                 $"node {stored.NodeId.Value}"), token).ConfigureAwait(false);
             return written.IsError ? written.Error : stored;
         }, cancellationToken);

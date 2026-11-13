@@ -1,5 +1,7 @@
+using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
@@ -86,5 +88,62 @@ public sealed class GetLaunchTargetsTests
         var view = (await Service().Handle(A.GetLaunchTargetsRequest().Build(), Token)).Value;
 
         Expect.Equal(LaunchBudgetState.NoUsageReader, view.Targets[0].Budget.State);
+    }
+
+    private sealed class GatedSpend(params AgentId[] targets) : ILaunchSpend
+    {
+        private readonly Dictionary<AgentId, TaskCompletionSource<bool>> _gates = targets.ToDictionary(static t => t, static _ => new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously));
+        private int _released;
+
+        public SpendPeek Peek(AgentId target) => new(Volatile.Read(ref _released) == 1, Spend: null);
+
+        public void Release()
+        {
+            _ = Interlocked.Exchange(ref _released, 1);
+            foreach (var gate in _gates.Values)
+            {
+                _ = gate.TrySetResult(true);
+            }
+        }
+
+        public async ValueTask<Result<AgentSpend?>> Today(AgentId target, CancellationToken cancellationToken)
+        {
+            _ = await _gates[target].Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+            return Results.Success<AgentSpend?>(new AgentSpend(1m, Tokens: 0, SpendBasis.PriceTable));
+        }
+    }
+
+    [Fact]
+    public async Task Targets_answer_counting_while_a_first_spend_read_is_in_flight()
+    {
+        var gated = new GatedSpend(_claude);
+        await Probed(Target(_claude));
+        await Approve(10m);
+        var reader = new LaunchTargetsReader(_v.Slice.Store, _v.Slice.Events, _v.Slice.Profiles, gated, _v.Progress);
+
+        var read = reader.Read(Token).AsTask();
+        try
+        {
+            // red today: Read awaits Today, which never completes, so the list never answers
+            var view = (await read.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token)).Value;
+
+            Expect.Equal(LaunchBudgetState.Counting, view.Targets[0].Budget.State);
+        }
+        finally
+        {
+            gated.Release();
+        }
+    }
+
+    [Fact]
+    public async Task An_invalid_live_profile_reads_as_no_profile()
+    {
+        await Probed(Target(_claude));
+        _v.Slice.Profiles.Live = SindriErrors.ProfileInvalid.With("/home/thor/profile.yaml: line 3: unknown key 'tennant'");
+
+        var result = await Service().Handle(A.GetLaunchTargetsRequest().Build(), Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        Assert.Equal(["claude-code"], result.Value.Targets.Select(static t => t.Facts.Id.Value), StringComparer.Ordinal);
     }
 }

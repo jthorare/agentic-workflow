@@ -27,7 +27,7 @@ public static class SourceCalls
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            return ContextErrors.MissedDeadline(source.Describe().Id);
+            return ContextErrors.MissedDeadline(source.Describe().Id.Value);
         }
     }
 

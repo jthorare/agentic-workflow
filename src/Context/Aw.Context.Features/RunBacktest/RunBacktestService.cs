@@ -22,7 +22,7 @@ internal sealed class RunBacktestService(CorpusLoader corpus, SampleScorer score
         ArgumentNullException.ThrowIfNull(request);
         var scope = request.Scope;
         var settings = SettingsReader.Read(scope.Settings);
-        var repos = settings.Bind(s => ScopeRules.Resolve(s, scope.Repos, scope.Caller));
+        var repos = settings.Bind(s => ScopeRules.Resolve(s, scope.Repos, scope.Caller, scope.LeftOut));
         var scrubbers = settings.Bind(s => scrubberFactory.For(s.ExtraPatterns));
         if (repos.IsError || scrubbers.IsError || repos.Value.Count == 0)
         {

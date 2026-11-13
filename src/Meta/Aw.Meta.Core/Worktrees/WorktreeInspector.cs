@@ -44,9 +44,15 @@ public sealed partial class WorktreeInspector(RepoCommands repo, IProcessLocatio
             return since.Error;
         }
 
+        var treeSince = scope.Path is { } treePath ? await values.Get(KvKeys.WorktreesPathSweepStart(WorktreeRoots.Normalize(treePath)), cancellationToken).ConfigureAwait(false) : Results.Success<string?>(value: null);
+        if (treeSince.IsError)
+        {
+            return treeSince.Error;
+        }
+
         var (entries, pulls, scan) = world.Value;
         var repoRoot = await RepoWorktreeRoot.ResolveOrNull(files, team.Repo, paths.Home, cancellationToken).ConfigureAwait(false);
-        var inspection = new Inspection(team, paths, repoRoot, pulls, scan, DateTimeOffset.TryParse(since.Value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var start) ? start : null, cancellationToken)
+        var inspection = new Inspection(team, paths, repoRoot, pulls, scan, Later(Parse(since.Value), Parse(treeSince.Value)), cancellationToken)
         {
             Scope = scope,
         };
@@ -61,6 +67,10 @@ public sealed partial class WorktreeInspector(RepoCommands repo, IProcessLocatio
 
         return reports;
     }
+
+    private static DateTimeOffset? Parse(string? text) => DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var at) ? at : null;
+
+    private static DateTimeOffset? Later(DateTimeOffset? a, DateTimeOffset? b) => a is { } x && b is { } y ? (x > y ? x : y) : a ?? b;
 
     private async ValueTask<Result<(IReadOnlyList<WorktreeEntry> Entries, List<PrBranch> Pulls, IReadOnlyList<ProcessLocation> Scan)>> World(TeamConfig team, bool fetch, CancellationToken cancellationToken)
     {

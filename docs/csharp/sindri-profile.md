@@ -77,6 +77,7 @@ not in the profile: they live in `launcher.json` (`docs/csharp/sindri-launcher.m
 | `poll` | object (`intervalSeconds`, `catchUpPages`) | no | none | How connections are polled for events that start workflows (`connection_event` trigger, `docs/workflows/blocks/poll.md`); see `workflow.poll.intervalSeconds` and `workflow.poll.catchUpPages` below |
 | `http` | object (`hosts`) | no | none | What a workflow `http` node may reach (agent-first PR 9; see `workflow.http.hosts` below) |
 | `callDepth` | integer, 1 to 10 | no | `3` | How many calls deep one workflow may start another through `run_workflow` (see `workflow.callDepth` below) |
+| `editor` | `sheet` or `steps` | no | `sheet` | Which workflow editor the app opens (Workflows page spec decision 14; `workflow.editor`, below) |
 | `forEach` | object (`maxItems`, `batchSize`) | no | none | The item cap (a node may only lower it) and the default batch size of the `for_each` workflow block (`workflow.forEach`, below) |
 
 ### `workflow.agent` model keys
@@ -129,6 +130,7 @@ Line spec Appendix D and LN-WF9. Every key is optional and applies on save. A pr
 | `workflow.poll.catchUpPages` | int | no | `20`, `1` to `100` | The most provider calls a catch-up makes for one connection and event before it stops, records `catchup.capped` and keeps the cursor where it stopped. A catch-up runs once after the control plane starts and again after the machine wakes (`docs/workflows/blocks/poll.md`). Outside 1 to 100 is refused when you save it |
 | `workflow.http.hosts` | string[] | no | none (every request refused) | The hosts a workflow `http` node may send to: bare lower-case DNS names such as `api.example.com`, at most 50, none twice. No scheme, port or path, no IP address, no `localhost`; a bad entry is refused when you save it (`workflow.http.hosts[i]`). Requests are https only and unauthenticated until connections exist; a redirect to another host is never followed. A change needs a re-approval (it is in the profile diff) |
 | `workflow.callDepth` | integer, 1 to 10 | no | `3` | The deepest `run_workflow` chain: a top-level run is depth 0, the run it calls is 1. A call that would pass this is `SND-GRAPH-120`. A run can't start its own workflow or the one that called it (`SND-GRAPH-121`) whatever this says |
+| `workflow.editor` | `sheet` or `steps` | no | `sheet` | Which workflow editor the app opens. Any other value is a profile error that names both. `sindri profile set workflow.editor steps` sets it; `GET /sindri/profile` serves it as `workflowEditor` (null when unset) |
 | `workflow.docs.globs` | string[] | no | `docs/**`, `*.md` | The paths docs sync may write (BD5): repo-relative globs with `/` separators and no `..`, as `index.denyPaths` takes them |
 
 `workflow.effects` gains no key of its own: the line's effects (`effect.line.start-phase`, `effect.line.report`, `effect.pr.open`) are entries of the allowlist. Code reads the values with their defaults through `LineProfile` (`Aw.Sindri.Core.Profile`).
@@ -194,6 +196,10 @@ The defaults of the `for_each` block (`docs/csharp/sindri-graph.md`, "Loops"). A
 | Key | Type | Required | Default | Meaning |
 |---|---|---|---|---|
 | `mcp` | `auto` or `off` | no | `auto` | `auto` lets Sindri register its MCP server in each repo of the live profile on its own (local scope, once consent is given); `off` stops that, and the "Connect your agents" button and `sindri mcp register --apply` still work. Any other value is refused when you save it (`setup.mcp`) |
+| `skipAccounts` | `true` | no | absent | The owner skipped the accounts question (first run); the Connect your accounts step then counts as done. Written by `sindri setup skip accounts` and the app; `--undo` removes it. Cleared when GitHub connects |
+| `skipFirstWorkflow` | `true` | no | absent | The owner dismissed the hello-sindri step; it then counts as done. Written by `sindri setup skip first-workflow`; `--undo` removes it |
+| `oauth.github` | text, one word | no | the id this build ships | The client id of the GitHub OAuth app Sindri signs in through (device flow). Not a secret. Refused when it holds a space (`setup.oauth.github`) |
+| `oauth.linear` | text, one word | no | the id this build ships | The client id of the Linear OAuth app (PKCE, loopback sign-in). Not a secret (`setup.oauth.linear`) |
 
 ### `review`
 

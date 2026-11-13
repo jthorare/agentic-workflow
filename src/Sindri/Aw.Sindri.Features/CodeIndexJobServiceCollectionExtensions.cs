@@ -17,6 +17,7 @@ internal static class CodeIndexJobServiceCollectionExtensions
             .AddScoped<CodeIndexJobScopes>()
             .AddScoped<CodeIndexEventSource>()
             .AddScoped<IIndexOutlooks, CodeIndexOutlooks>()
+            .AddScoped<CodeIndexProbes>()
             .AddScoped<Core.Doctor.ICodeIndexChecks, CodeIndexDoctor>()
             .AddScoped<IScheduledService, CodeIndexMainMoveService>()
             .AddSingleton(CodeIndexMainMoveService.BuiltIn)
