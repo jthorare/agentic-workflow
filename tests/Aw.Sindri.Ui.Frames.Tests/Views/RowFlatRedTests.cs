@@ -197,6 +197,29 @@ public sealed class RowFlatRedTests
         window.TryFindResource("Type.Caption.Size", window.ActualThemeVariant, out var found) && found is double size ? size : 0;
 
     [Fact]
+    public async Task A_row_detached_during_a_theme_flip_draws_the_new_ink_when_it_is_attached_again() => await OnUi(() =>
+    {
+        var list = new RowList { ItemsSource = RowGallery.Many(1, 20), Columns = RowGallery.Columns };
+        var window = new Window { Content = list, Width = 1280, Height = 600 };
+        var red = Colors.Red;
+        window.Resources.ThemeDictionaries[ThemeVariant.Light] = new ResourceDictionary { ["Brush.InkSubtle"] = new SolidColorBrush(red) };
+        window.Show();
+        Settle(window);
+        var row = Rows(list)[0];
+        Assert.NotEqual(red, Of(row.Layout.IdInk));
+
+        window.Content = null;   // the list and its rows leave the tree
+        window.RequestedThemeVariant = ThemeVariant.Light;
+        Settle(window);
+        window.Content = list;
+        Settle(window);
+
+        Assert.Equal(red, Of(Rows(list)[0].Layout.IdInk));
+        window.Close();
+        return true;
+    });
+
+    [Fact]
     public async Task A_row_listens_for_render_scaling_while_attached_and_stops_when_detached() => await OnUi(() =>
     {
         var (window, list) = Show(RowGallery.Many(1, 20));
