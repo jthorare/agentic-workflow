@@ -68,7 +68,7 @@ public sealed class IndexEmbedServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.True(result.Value.Idle);
-        Assert.Null(result.Value.Summary);
+        Assert.Equal("nothing indexed yet", result.Value.Summary);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -91,12 +91,13 @@ public sealed class IndexEmbedServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Without_a_context_section_the_engine_is_not_asked()
+    public async Task Without_a_context_section_the_engine_is_asked_and_nothing_embedded_says_nothing_indexed_yet()
     {
-        var result = await Run(context: false, _ => new EmbedRecordsReport(1, 1, Done: true));
+        var result = await Run(context: false, _ => new EmbedRecordsReport(0, 0, Done: true));
 
         Assert.True(result.IsSuccess);
+        Assert.Equal([new EmbedRecordsRequest()], _asked);
         Assert.True(result.Value.Idle);
-        Assert.Empty(_asked);
+        Assert.Equal("nothing indexed yet", result.Value.Summary);
     }
 }
