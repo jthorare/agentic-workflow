@@ -2808,3 +2808,6 @@ Aw.Meta.Core.Github.MergeQueueView.Stacked.init -> void
 Aw.Meta.Core.Merge.MergeFacts.BaseHasMergeQueue.get -> bool
 Aw.Meta.Core.Merge.MergeFacts.BaseHasMergeQueue.init -> void
 static readonly Aw.Meta.Core.MetaErrors.StackExtensionMissing -> Aw.Kernel.ErrorDefinition!
+const Aw.Meta.Core.Github.GhExtensions.StackInstall = "gh extension install github/gh-stack" -> string!
+static Aw.Meta.Core.Github.GhExtensions.HasStack(string! list) -> bool
+Aw.Meta.Core.Github.GhExtensions

@@ -354,4 +354,24 @@ public sealed class MergeRunTests
         Assert.DoesNotContain(_world.Runner.Lines, l => l.StartsWith("gh extension", StringComparison.Ordinal));
         Assert.Contains("gh pr merge 190 --merge", _world.Runner.Lines, StringComparer.Ordinal);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_host_without_the_stack_field_is_asked_again_and_reads_as_not_stacked()
+    {
+        var asked = new List<string>();
+        _ = _world.Runner.When("gh api graphql", request =>
+        {
+            var query = request.Argv[^1];
+            asked.Add(query);
+            return query.Contains("stack{number}", StringComparison.Ordinal)
+                ? new CommandResult(1, string.Empty, "gh: Field 'stack' doesn't exist on type 'PullRequest'", TimedOut: false)
+                : new CommandResult(0, QueueAnswers.OnNotQueued, string.Empty, TimedOut: false);
+        });
+
+        var view = await _world.Repo.QueueView("/repo", 190);
+
+        Assert.True(view.IsSuccess, view.IsError ? view.Error.Message : string.Empty);
+        Assert.Equal((true, false), (view.Value.Enabled, view.Value.Stacked));
+        Assert.Equal(2, asked.Count);
+    }
 }
