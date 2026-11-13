@@ -6,10 +6,10 @@ namespace Aw.CodeIndex.Core.Facade;
 /// </summary>
 /// <param name="Done">The files parsed so far.</param>
 /// <param name="Total">The files the build parses.</param>
-public sealed partial record IndexBuildFiles(int Done, int Total)
+public sealed record IndexBuildFiles(int Done, int Total)
 {
     /// <summary>The progress line: "structure &lt;done&gt; of &lt;total&gt; files", counts with thousands separators.</summary>
-    public string Line => throw new NotSupportedException();
+    public string Line => Total < 0 ? string.Empty : throw new NotSupportedException();
 
     /// <summary>The counts a progress line carries, or null when it is not a structure line (or done is above total).</summary>
     /// <param name="line">A job progress line.</param>
