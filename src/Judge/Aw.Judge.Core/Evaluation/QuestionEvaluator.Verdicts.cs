@@ -28,9 +28,8 @@ public sealed partial class QuestionEvaluator
             case StepVerdict.Errored:
             case StepVerdict.OutOfEnum:
             case StepVerdict.NoReasons:
-                var limited = result is ProviderErrored { UsageLimit: true };
                 await Fail(question.Name, at.Name, FailureCode(verdict, result), cancellationToken).ConfigureAwait(false);
-                run.Skip(at.Name, SkipReason.Failed, limited ? EvaluationReasons.UsageLimit : null);
+                run.Skip(at.Name, SkipReason.Failed, FailedSkipCode(result));
                 return true;
             case StepVerdict.Decided:
             case StepVerdict.BelowThreshold:
@@ -50,6 +49,10 @@ public sealed partial class QuestionEvaluator
         ProviderUnavailable.ImagesOff or ProviderUnavailable.ImageOutOfLimits or ProviderUnavailable.ImageTooLarge => result.ReasonCode,
         _ => null,
     };
+
+    // A failed skip names the usage limit when the CLI said it hit one, so `judge health` can tell the two apart.
+    private static string? FailedSkipCode(ProviderResult result) =>
+        result is ProviderErrored { UsageLimit: true } ? EvaluationReasons.UsageLimit : null;
 
     private static StepVerdict Judged<TInput>(QuestionDefinition<TInput> question, EvaluationRun run, ProviderResult result)
         where TInput : class =>
