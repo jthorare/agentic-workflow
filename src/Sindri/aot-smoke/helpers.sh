@@ -6,7 +6,7 @@ exit_line() { # $1 = exit code. Reads the caller's t0 and call (set with its rc)
   [ "$rc" -ne 142 ] || rc=124   # killed by the alarm
   if [ -n "${t0:-}" ]; then
     ms=$(( (${EPOCHREALTIME/./} - ${t0/./}) / 1000 ))
-    printf '%s ms  exit %s  sindri %s\n' "$ms" "$rc" "${call:-}" >>"$out/timings.txt"
+    [ ! -d "${out:-}" ] || printf '%s ms  exit %s  sindri %s\n' "$ms" "$rc" "${call:-}" >>"$out/timings.txt"
   fi
   [ "$rc" -eq 0 ] || echo "exit $rc"
   # A call the alarm stopped: say how long it ran, and where every call's time and serve's log are (only on a failing run)
