@@ -15,7 +15,7 @@
                AutomationProperties.Name="{Binding Title}" AutomationProperties.HeadingLevel="1" />
 
     <!-- The filter box (#3362): typing keeps the sections whose words match; Ctrl+, lands the cursor here; Esc clears it. -->
-    <TextBox x:Name="SettingsFilterBox" MaxWidth="480" HorizontalAlignment="Left" Text="{Binding Filter, Mode=TwoWay}" PlaceholderText="{Binding FilterPlaceholder}" PlaceholderForeground="{DynamicResource Brush.InkMuted}" KeyDown="OnFilterKey"
+    <TextBox x:Name="SettingsFilterBox" Width="360" HorizontalAlignment="Left" Text="{Binding Filter, Mode=TwoWay}" PlaceholderText="{Binding FilterPlaceholder}" PlaceholderForeground="{DynamicResource Brush.InkMuted}" KeyDown="OnFilterKey"
              AutomationProperties.Name="{Binding FilterPlaceholder}" />
     <StackPanel x:Name="SettingsNoMatch" IsVisible="{Binding HasNoMatch}" Spacing="{StaticResource Space.XXS}" HorizontalAlignment="Left">
       <Border x:Name="SettingsNoMatchName" AutomationProperties.Name="{Binding NoMatchText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
