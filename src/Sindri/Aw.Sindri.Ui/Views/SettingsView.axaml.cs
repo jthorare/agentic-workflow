@@ -67,7 +67,7 @@ internal sealed partial class SettingsView : UserControl
     }
 
     // The text each section shows now: its labels, buttons, descriptions and accessible names (Browse, Reset, Copy, Read key ...).
-    private void CollectShownText(SettingsViewModel settings)
+    internal void CollectShownText(SettingsViewModel settings)
     {
         (SettingsSection Section, Control?[] Parts)[] map =
         [

@@ -147,4 +147,55 @@ public sealed class SettingsFilterFramesTests : FrameHost
         Assert.Equal(Labels.SettingsNoMatch("zzzz"), Named<Border>(window, "SettingsNoMatchName").GetVisualDescendants().OfType<TextBlock>().Single().Text);
         Assert.Contains(Labels.SettingsNoMatchHint, Named<Control>(window, "SettingsNoMatch").GetVisualDescendants().OfType<TextBlock>().Select(static t => t.Text), StringComparer.Ordinal);
     });
+
+    private async Task<(Aw.Sindri.Ui.Views.Shell.ShellWindow Window, Aw.Sindri.Ui.ViewModels.Shell.ShellViewModel Shell, SettingsViewModel Settings, SettingsView View)> FullPage()
+    {
+        var (window, shell) = await Connected();
+        var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), static _ => { }, shell.Setup, shell.Health.ModelChoice,
+            new Aw.Sindri.Ui.ViewModels.Sandbox.SandboxSettingsViewModel(shell.Health.Sandbox))
+        {
+            Library = shell.LibraryRoots,
+            LinearConnection = shell.LinearConnection,
+            TodoNoteCard = shell.TodoNoteCard,
+        };
+        var view = new SettingsView { DataContext = settings };
+        window.SettingsSlot.Content = view;
+        Settle(window);
+        return (window, shell, settings, view);
+    }
+
+    [Fact]
+    public Task Reading_the_text_of_a_full_Settings_page_takes_a_few_milliseconds() => OnUi(async () =>
+    {
+        var (_, _, settings, view) = await FullPage();
+        view.CollectShownText(settings);   // warm: the first walk builds the lazy parts
+
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        for (var i = 0; i < 10; i++)
+        {
+            view.CollectShownText(settings);
+        }
+
+        watch.Stop();
+        var each = watch.Elapsed.TotalMilliseconds / 10;
+        TestContext.Current.SendDiagnosticMessage("CollectShownText on a full Settings page: " + each.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + " ms per walk");
+        Assert.True(each < 50, "one walk took " + each.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + " ms");
+    });
+
+    [Fact]
+    public Task A_word_inside_a_collapsed_setup_step_still_keeps_the_checklist() => OnUi(async () =>
+    {
+        var (window, shell, settings, view) = await FullPage();
+        await Until(window, () => shell.Setup.Steps.Count > 0, "the setup steps never loaded");
+        foreach (var expander in Named<Control>(window, "SetupChecklist").GetVisualDescendants().OfType<Expander>())
+        {
+            expander.IsExpanded = false;
+        }
+
+        Settle(window);
+        view.CollectShownText(settings);
+        settings.Filter = "browse";
+
+        Assert.True(settings.ShowsSetup, "'browse' is in step 1's folder row, which is collapsed: the walk missed it");
+    });
 }
