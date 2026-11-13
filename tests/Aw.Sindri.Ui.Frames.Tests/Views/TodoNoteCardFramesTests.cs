@@ -157,6 +157,21 @@ public sealed class TodoNoteCardFramesTests : IDisposable
     });
 
     [Fact]
+    public Task An_empty_status_or_error_row_takes_no_height_on_Settings_3454() => OnUi(async () =>
+    {
+        var (window, card) = await Show();
+        Assert.True(card.StatusText.Length == 0 && card.ErrorText.Length == 0);
+
+        var rows = new[] { "TodoNoteStatus", "TodoNoteError", "LinearStatus", "LinearError" };
+        var heights = rows.SelectMany(n => window.GetVisualDescendants().OfType<Control>().Where(c => string.Equals(c.Name, n, StringComparison.Ordinal)))
+            .Where(c => c.Bounds.Height > 0)
+            .Select(c => c.Name)
+            .ToList();
+
+        Assert.Empty(heights);
+    });
+
+    [Fact]
     public Task A_new_note_says_Sindri_will_create_it_with_Start_syncing() => OnUi(async () =>
     {
         var (window, _) = await Checked(TodoNoteSetupSample.NewNote);
