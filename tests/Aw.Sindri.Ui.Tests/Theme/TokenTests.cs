@@ -73,7 +73,7 @@ public sealed class TokenTests
     public void Outline_is_a_colour_with_no_brush_of_its_own()
     {
         Assert.Equal("#767b82", _tokens.Color("Outline"));
-        Assert.DoesNotContain("Brush.Outline", _tokens.Resources.Keys);
+        Assert.False(_tokens.Resources.ContainsKey("Brush.Outline"));
     }
 
     [Theory]
