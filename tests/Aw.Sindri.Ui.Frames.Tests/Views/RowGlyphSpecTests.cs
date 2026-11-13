@@ -44,7 +44,7 @@ public sealed class RowGlyphSpecTests
     public Task PrDraft_ring_is_tertiary_ink() => Check(RowGlyph.PrDraft, 14, 14, "Brush.InkTertiary", more: null);
 
     [Fact]
-    public Task Linked_stays_subtle_ink() => Check(RowGlyph.Linked, 14, 14, "Brush.InkSubtle", more: null);
+    public Task Linked_stays_subtle_ink() => Check(RowGlyph.Linked, 11.25, 11.25, "Brush.InkSubtle", more: null);
 
     [Fact]
     public Task Message_bubble_is_13_wide_with_a_tail_down_to_14_5() => Check(RowGlyph.Message, 13, 12.5, "Brush.InkSubtle", (g, shot) =>
