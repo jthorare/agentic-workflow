@@ -5,6 +5,7 @@ using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Features.BuildCodeIndex;
 using Aw.CodeIndex.Features.EmbedCodeIndex;
 using Aw.CodeIndex.Testing;
+using Aw.Kernel.Testing;
 
 namespace Aw.CodeIndex.Tests.Build;
 
@@ -60,7 +61,7 @@ public sealed class EmbedCodeIndexTests
         var young = Path.Combine(index.IndexDirectory, "shop.01JC0000000000000000000001.db");
         await File.WriteAllTextAsync(old, "x", Token);
         await File.WriteAllTextAsync(young, "x", Token);
-        File.SetLastWriteTimeUtc(old, Aw.Kernel.Testing.RealTime.NowDateTime.ToUniversalTime().AddHours(-1));
+        File.SetLastWriteTimeUtc(old, RealTime.NowDateTime.ToUniversalTime().AddHours(-1));
 
         _ = await EmbedToOk(index, repo);
 
