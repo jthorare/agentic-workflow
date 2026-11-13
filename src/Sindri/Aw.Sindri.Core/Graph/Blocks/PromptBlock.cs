@@ -105,7 +105,7 @@ public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
         // why: checked before the shape, because an answer that says it couldn't answer may not fill the required fields
         if (CouldNotAnswer(fields) is { } why)
         {
-            return SindriErrors.GraphPromptCouldNotAnswer.With($"{context.Node} couldn't answer: {why}");
+            return SindriErrors.GraphPromptCouldNotAnswer.With($"{context.Node.Value} couldn't answer: {why}");
         }
 
         if (Problem(schema, fields) is not { } problem)
