@@ -91,7 +91,7 @@ public sealed class RowListFramesTests
     });
 
     [Fact]
-    public async Task The_selected_row_has_a_2_px_primary_bar_at_its_left_edge_and_a_primary_soft_fill() => await OnUi(() =>
+    public async Task The_selected_row_has_a_2_px_primary_bar_inside_the_ring_and_a_primary_soft_fill() => await OnUi(() =>
     {
         var groups = RowGallery.Three();
         var (window, list, _, _) = Show(groups);
@@ -104,9 +104,10 @@ public sealed class RowListFramesTests
         Assert.Same(groups[0].Rows[3], row.DataContext);
         var layout = row.Layout;
         var bar = Assert.IsType<Rect>(layout.SelBar);
-        Assert.Equal(0, bar.X, 0.01);
+        Assert.Equal(Row.RingStroke, bar.X, 0.01);   // inside the ring's 2 px slot, so nothing moves when the cursor arrives
+        Assert.Equal(Row.RingStroke, bar.Y, 0.01);
         Assert.Equal(2, bar.Width, 0.01);
-        Assert.Equal(row.Bounds.Height, bar.Height, 0.01);
+        Assert.Equal(row.Bounds.Height - (2 * Row.RingStroke), bar.Height, 0.01);
         Assert.Equal(Brush("Brush.Primary"), Assert.IsType<ISolidColorBrush>(layout.SelBarInk, exactMatch: false).Color);
         Assert.Equal(Brush("Brush.PrimarySoft"), Assert.IsType<ISolidColorBrush>(row.Background, exactMatch: false).Color);
         Assert.All(Rows(list).Where(r => !ReferenceEquals(r, row)), r => Assert.Null(r.Layout.SelBar));
