@@ -16,7 +16,7 @@ public sealed class PauseWorkflowServiceTests : IDisposable
 
     public PauseWorkflowServiceTests()
     {
-        _service = new PauseWorkflowService(_rig.Workflows, _rig.Log);
+        _service = new PauseWorkflowService(_rig.Workflows, _rig.Log, _rig.Harness.Callers);
     }
 
     public void Dispose() => _rig.Dispose();

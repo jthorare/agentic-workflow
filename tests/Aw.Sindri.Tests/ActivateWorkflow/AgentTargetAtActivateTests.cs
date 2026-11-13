@@ -59,7 +59,7 @@ public sealed class AgentTargetAtActivateTests : IDisposable
     public async Task Activate_refuses_a_node_with_no_agent_when_the_profile_has_no_target()
     {
         var revision = await StoreRevision(AgentGraph(agent: null));
-        var service = new ActivateWorkflowService(_rig.Workflows, Checker(target: null), _rig.Log);
+        var service = new ActivateWorkflowService(_rig.Workflows, Checker(target: null), _rig.Log, _rig.Harness.Callers);
 
         var result = await service.Handle(new ActivateWorkflowRequest(Slug, revision, "owner"), Token);
 
@@ -89,7 +89,7 @@ public sealed class AgentTargetAtActivateTests : IDisposable
     public async Task Activate_passes_when_the_node_names_its_own_agent()
     {
         var revision = await StoreRevision(AgentGraph("codex"));
-        var service = new ActivateWorkflowService(_rig.Workflows, Checker(target: null), _rig.Log);
+        var service = new ActivateWorkflowService(_rig.Workflows, Checker(target: null), _rig.Log, _rig.Harness.Callers);
 
         var result = await service.Handle(new ActivateWorkflowRequest(Slug, revision, "owner"), Token);
 
@@ -100,7 +100,7 @@ public sealed class AgentTargetAtActivateTests : IDisposable
     public async Task Activate_passes_when_the_profile_has_a_target()
     {
         var revision = await StoreRevision(AgentGraph(agent: null));
-        var service = new ActivateWorkflowService(_rig.Workflows, Checker(target: "claude-code"), _rig.Log);
+        var service = new ActivateWorkflowService(_rig.Workflows, Checker(target: "claude-code"), _rig.Log, _rig.Harness.Callers);
 
         var result = await service.Handle(new ActivateWorkflowRequest(Slug, revision, "owner"), Token);
 

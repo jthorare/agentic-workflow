@@ -136,7 +136,7 @@ An unknown slug is `SND-GRAPH-008` (404), an unknown run `SND-GRAPH-101`, a slug
 
 ## Writing workflows (PR 8b)
 
-Seven writes, each one slice (`Features/CreateWorkflow`, `ApplyWorkflowOps`, `ReplaceWorkflow`, `ValidateWorkflow`, `ActivateWorkflow`, `PauseWorkflow`, `DeleteWorkflow`) behind a route, an MCP tool and a `sindri wf` verb. `workflow_run` and `workflow_cancel` are the existing run and cancel slices (PR 6) as tools. Every write is a catalog row (`Host/Catalog/WorkflowRows.cs`) an agent session may run. The CLI verbs start the control plane first, like `wf run`.
+Seven writes, each one slice (`Features/CreateWorkflow`, `ApplyWorkflowOps`, `ReplaceWorkflow`, `ValidateWorkflow`, `ActivateWorkflow`, `PauseWorkflow`, `DeleteWorkflow`) behind a route, an MCP tool and a `sindri wf` verb. `workflow_run` and `workflow_cancel` are the existing run and cancel slices (PR 6) as tools. Every write is a catalog row (`Host/Catalog/WorkflowRows.cs`) an agent session may run, except activate and pause: those are the owner's, and a session is refused with `SND-AUTH-002` (the check sits in `ActivateWorkflowService` and `PauseWorkflowService`, so the route, the MCP tool and the CLI share it; the rows have `SessionOk: false`). The CLI verbs start the control plane first, like `wf run`.
 
 | Write | Route | MCP tool | CLI |
 |---|---|---|---|
