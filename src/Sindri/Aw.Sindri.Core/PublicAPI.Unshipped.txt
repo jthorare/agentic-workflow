@@ -23759,6 +23759,13 @@ Aw.Sindri.Core.Launch.IStartedSessions.Find(Aw.Sindri.Core.Ids.ActId actId, Syst
 Aw.Sindri.Core.Launch.IStartedSessions.InMemory(Aw.Sindri.Core.Ids.ActId actId) -> Aw.Sindri.Core.Launch.StartedEntry?
 Aw.Sindri.Core.Launch.IStartedSessions.Keep(Aw.Sindri.Core.Ids.ActId actId, Aw.Sindri.Core.Launch.StartedEntry! entry) -> void
 static Aw.Sindri.Core.Events.AgentOpRecorded.KeyFor(Aw.Sindri.Core.Ids.ActId actId) -> string!
+Aw.Sindri.Core.Setup.MapFact.Stage.get -> Aw.Sindri.Core.Setup.MapStage?
+Aw.Sindri.Core.Setup.MapFact.Stage.init -> void
+Aw.Sindri.Core.Setup.MapStage
+Aw.Sindri.Core.Setup.MapStage.Index = 0 -> Aw.Sindri.Core.Setup.MapStage
+Aw.Sindri.Core.Setup.MapStage.Map = 1 -> Aw.Sindri.Core.Setup.MapStage
+Aw.Sindri.Core.Setup.SetupStep.Stage.get -> Aw.Sindri.Core.Setup.MapStage?
+Aw.Sindri.Core.Setup.SetupStep.Stage.init -> void
 Aw.Sindri.Core.Launch.TerminalFrame
 Aw.Sindri.Core.Launch.TerminalFrame.<Clone>$() -> Aw.Sindri.Core.Launch.TerminalFrame!
 Aw.Sindri.Core.Launch.TerminalFrame.Equals(Aw.Sindri.Core.Launch.TerminalFrame? other) -> bool
@@ -23792,3 +23799,8 @@ static Aw.Sindri.Core.Scheduling.MainMovePause.Active(Aw.Sindri.Core.Scheduling.
 static Aw.Sindri.Core.Scheduling.MainMovePause.Service.get -> Aw.Sindri.Core.Ids.ServiceName
 Aw.Sindri.Core.Doctor.IFirstMapCheck
 Aw.Sindri.Core.Doctor.IFirstMapCheck.Check(Aw.Sindri.Core.Profile.LoadedProfile? approved, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Doctor.DoctorCheck!>
+Aw.Sindri.Core.Graph.Schedule.ScheduleStamp
+static Aw.Sindri.Core.Graph.Schedule.ScheduleStamp.Add(System.Text.Json.Nodes.JsonObject! trigger, System.DateTimeOffset at, string? timezone) -> void
+static Aw.Sindri.Core.Graph.Schedule.ScheduleStamp.ZoneOf(Aw.Sindri.Core.Graph.GraphNode! node) -> string?
+Aw.Sindri.Core.Profile.ApprovedProfileReads
+static Aw.Sindri.Core.Profile.ApprovedProfileReads.ForRead(this Aw.Sindri.Core.Profile.IApprovedProfile! approvals, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Profile.LoadedProfile?>!>
