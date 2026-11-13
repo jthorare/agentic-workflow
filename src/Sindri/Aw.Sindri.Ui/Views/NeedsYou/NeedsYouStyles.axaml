@@ -109,6 +109,12 @@
   <Style Selector="Border.inbox-row:focus-visible">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
   </Style>
+  <!-- selected + focused: a 2 px ring marks selected (a focused-only row has 1 px), drawn inside the row so no parent clip cuts it (#3506) -->
+  <Style Selector="Border.inbox-row.selected:focus-visible">
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+    <Setter Property="Padding" Value="15,7" />
+  </Style>
   <Style Selector="Border.kind-tile">
     <Setter Property="Width" Value="24" />
     <Setter Property="Height" Value="24" />
