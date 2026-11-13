@@ -73,4 +73,24 @@ public sealed class CodeIndexHealthTests
         Assert.Contains("fresh", index.Scopes[0].Repos.Select(static r => r.Name.Value), StringComparer.Ordinal);
         Assert.Equal(["SND-CODEIDX-014"], problems.Select(static p => p.Code), StringComparer.Ordinal);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_repo_queued_since_serve_started_30_min_ago_is_a_queued_row_on_its_first_read_3482()
+    {
+        var demo = RepoName.From("demo");
+        var other = RepoName.From("other");
+        var index = new FakeCodeIndex().WithIndex(other, _old);
+        var heads = new FakeRepoHeads().With(demo, _old, onDefaultBranch: true).With(other, _old, onDefaultBranch: true);
+        var now = new DateTimeOffset(2026, 11, 13, 12, 0, 0, TimeSpan.Zero);
+        var health = new CodeIndexHealth(index, new RepoHealths(heads, new InMemoryJobViews(), new FixedClock(now), new QueuedClock(now.AddMinutes(-30))), new InMemoryProfiles());
+
+        var problems = await health.Problems(Approved(), Token);
+
+        Assert.Equal(["SND-CODEIDX-013"], problems.Select(static p => p.Code), StringComparer.Ordinal);
+    }
+
+    private sealed class FixedClock(DateTimeOffset now) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => now;
+    }
 }
