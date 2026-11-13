@@ -1,6 +1,7 @@
 using Aw.CodeIndex.Core.Embedding;
 using Aw.CodeIndex.Core.Facade;
 using Aw.CodeIndex.Core.Ports;
+using Aw.CodeIndex.Core.Values;
 using Aw.CodeIndex.Features;
 using Aw.CodeIndex.Features.BuildCodeIndex;
 using Aw.CodeIndex.Features.EmbedCodeIndex;
@@ -11,6 +12,7 @@ using Aw.CodeIndex.Infrastructure.Store;
 using Aw.CodeIndex.Testing;
 using Aw.Kernel.Services;
 using Aw.Kernel.Testing;
+using Microsoft.Data.Sqlite;
 
 namespace Aw.CodeIndex.Tests.Build;
 
@@ -41,6 +43,29 @@ internal sealed class RealIndex : IDisposable
     public CodeIndexFacade Facade { get; }
 
     public IService<EmbedCodeIndexRequest, EmbedCodeIndexResponse> Embed { get; }
+
+    /// <summary>Counts the rows of one graph table ('graph_nodes' or 'graph_edges') in the repo's published index file, read straight from SQLite (the graph tables have no read on the facade).</summary>
+    public async Task<long> CountRows(RepoName repo, string table)
+    {
+        var directory = Path.Combine(_directory, "index");
+        var live = Path.Combine(directory, $"{repo.Value}.{(await File.ReadAllTextAsync(Path.Combine(directory, $"{repo.Value}.current"), CancellationToken.None)).Trim()}.db");
+        var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = live, Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
+        await using (connection)
+        {
+            await connection.OpenAsync(CancellationToken.None);
+            var command = connection.CreateCommand();
+            await using (command)
+            {
+                command.CommandText = table switch
+                {
+                    "graph_nodes" => "SELECT COUNT(*) FROM graph_nodes",
+                    "graph_edges" => "SELECT COUNT(*) FROM graph_edges",
+                    _ => throw new ArgumentOutOfRangeException(nameof(table), table, "not a graph table"),
+                };
+                return (long)(await command.ExecuteScalarAsync(CancellationToken.None))!;
+            }
+        }
+    }
 
     public static CodeIndexScope ScopeOf(CodeIndexRepo repo) => new([repo], new CodeIndexCaller(CallerKind.Service, Repo: null));
 
