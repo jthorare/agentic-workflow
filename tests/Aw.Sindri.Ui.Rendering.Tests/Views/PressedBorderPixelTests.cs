@@ -84,6 +84,17 @@ public sealed class PressedBorderPixelTests : FrameHost
         return (best, detail);
     }
 
+    // The bottom border row at the control's laid-out bottom edge (bounds, not the drawn one: a press that moves the control must not move the row that is read), mid-width.
+    private static (double Ratio, string Detail) BottomBorderContrast(Window window, Control control)
+    {
+        var pixel = Render(window);
+        var edge = control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height), window)!.Value;
+        var (x, y) = ((int)Math.Round(edge.X, MidpointRounding.AwayFromZero), (int)Math.Round(edge.Y, MidpointRounding.AwayFromZero) - 1);
+        var (outside, inside, p) = (pixel(x, y + 5), pixel(x, y - 5), pixel(x, y));
+        var ratio = Math.Min(Contrast(p, outside), Contrast(p, inside));
+        return (ratio, string.Create(CultureInfo.InvariantCulture, $"y={y} #{p.R:X2}{p.G:X2}{p.B:X2} outside #{outside.R:X2}{outside.G:X2}{outside.B:X2} inside #{inside.R:X2}{inside.G:X2}{inside.B:X2}"));
+    }
+
     private static Point Centre(Control control, Window window) =>
         control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), window) ?? default;
 
@@ -137,5 +148,56 @@ public sealed class PressedBorderPixelTests : FrameHost
         var (ratio, detail) = BorderContrast(window, button);
         Assert.True(ratio >= Required, string.Create(CultureInfo.InvariantCulture, $"the pressed primary button draws its border at {ratio:0.00}:1, below {Required}:1 ({detail})"));
         window.MouseUp(Centre(button, window), MouseButton.Left, RawInputModifiers.None);
+    });
+
+    [Fact]
+    public Task The_Home_needs_you_primary_button_pressed_draws_its_bottom_border_inside_the_page_clip() => OnUi(async () =>
+    {
+        Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
+        var (window, _) = await Connected(s => s.NeedsYou.Count > 0);
+        var row = window.GetVisualDescendants().OfType<Border>().First(b => b.IsEffectivelyVisible && b.Classes.Contains("needs-you-row") && !b.Classes.Contains("lead")
+            && b.GetVisualDescendants().OfType<Button>().Any(x => x.Classes.Contains("primary") && x.IsEffectivelyVisible));
+        var button = row.GetVisualDescendants().OfType<Button>().First(x => x.Classes.Contains("primary") && x.IsEffectivelyVisible);
+
+        window.MouseMove(Centre(button, window), RawInputModifiers.None);
+        window.MouseDown(Centre(button, window), MouseButton.Left, RawInputModifiers.None);
+        Settle(window);
+
+        Assert.Contains(":pressed", button.Classes, StringComparer.Ordinal);
+        var (ratio, detail) = BottomBorderContrast(window, button);
+        Assert.True(ratio >= Required, string.Create(CultureInfo.InvariantCulture, $"the pressed primary button draws its bottom border at {ratio:0.00}:1, below {Required}:1 ({detail})"));
+        window.MouseUp(Centre(button, window), MouseButton.Left, RawInputModifiers.None);
+    });
+
+    [Fact]
+    public Task A_pressed_clickable_in_a_host_that_clips_at_its_bottom_edge_draws_its_bottom_border() => OnUi(async () =>
+    {
+        Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
+        var sample = new Border { Width = 150, Height = 44, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(6), Padding = new Thickness(24, 12), HorizontalAlignment = HorizontalAlignment.Left, Child = new TextBlock { Text = "Clickable" } };
+        sample.Classes.Add("clickable");
+        var clip = new Panel { Height = 44, ClipToBounds = true, Children = { sample } };
+        var app = Application.Current!;
+        var host = new Border
+        {
+            Padding = new Thickness(24),
+            Child = clip,
+            Background = app.TryFindResource("Brush.Canvas", app.ActualThemeVariant, out var canvas) ? canvas as IBrush : null,
+        };
+        var window = new Window { Width = 360, Height = 140, Content = host };
+        window.Show();
+        Settle(window);
+
+        window.MouseMove(Centre(sample, window), RawInputModifiers.None);
+        window.MouseDown(Centre(sample, window), MouseButton.Left, RawInputModifiers.None);
+        Settle(window);
+
+        Assert.Contains(":pressed", sample.Classes, StringComparer.Ordinal);
+        var (ratio, detail) = BottomBorderContrast(window, sample);
+        Assert.True(ratio >= Required, string.Create(CultureInfo.InvariantCulture, $"the pressed clickable draws its bottom border at {ratio:0.00}:1, below {Required}:1 ({detail})"));
+        window.MouseUp(Centre(sample, window), MouseButton.Left, RawInputModifiers.None);
+        window.Close();
+        await Task.CompletedTask;
     });
 }
