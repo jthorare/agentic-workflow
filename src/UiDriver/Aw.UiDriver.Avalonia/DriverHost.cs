@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Threading;
 using Aw.Kernel;
 using Aw.UiDriver.Core;
@@ -60,7 +61,32 @@ internal sealed class DriverHost(Func<Window?> window, TimeProvider clock)
     internal Task<Result<ActedResponse>> Scroll(ScrollRequest request) =>
         Act(request.Selector, (_, visual) => ElementActions.Scroll(visual, request.Dx, request.Dy));
 
-    internal Task<Result<ActedResponse>> Hover(HoverRequest request) => Act(request.Selector, (_, visual) => ElementActions.Hover(visual, !request.Off));
+    /// <summary>
+    /// Hovers. Hit testing reads the drawn scene, which a just-shown or just-changed window brings up to date on its next frame, so a move that
+    /// lands before that frame misses: the move is sent again each poll until the element reports the pointer over it, for up to ten polls.
+    /// </summary>
+    /// <param name="request">The element, and whether to move off it.</param>
+    /// <returns>The element, or the error that stopped the hover.</returns>
+    internal async Task<Result<ActedResponse>> Hover(HoverRequest request)
+    {
+        var done = await HoverOnce(request).ConfigureAwait(false);
+        for (var polls = 0; !request.Off && done.IsSuccess && polls < 10 && !await PointerOver(request.Selector).ConfigureAwait(false); polls++)
+        {
+            await Task.Delay(_poll, clock).ConfigureAwait(false);
+            done = await HoverOnce(request).ConfigureAwait(false);
+        }
+
+        return done;
+    }
+
+    private Task<Result<ActedResponse>> HoverOnce(HoverRequest request) => Act(request.Selector, (_, visual) => ElementActions.Hover(visual, !request.Off));
+
+    // Whether the element reports the pointer over it; an element that is no input element never does.
+    private async Task<bool> PointerOver(Selector? selector)
+    {
+        var seen = await Act(selector, static (_, visual) => visual is InputElement { IsPointerOver: true } ? Unit.Value : UiDriverErrors.NotActionable.With("not over")).ConfigureAwait(false);
+        return seen.IsSuccess;
+    }
 
     internal Task<Result<WindowResponse>> WindowSize(WindowRequest request) => OnUi<WindowResponse>(tree =>
     {
