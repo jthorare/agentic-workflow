@@ -147,7 +147,7 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddContextJobs()
             .AddCodeIndexJobs()
             .AddEngineSlices()
-            .AddSessionSlices()
+            .AddSessionSlices().AddTerminalSocket()
             .AddLaunchSlices()
             .AddLaunchTargetJob()
             .AddAddRepo().AddToolkits().AddPinConcepts().AddSetPages().AddRegisterMcpJob().AddOnboardRepo();
@@ -233,7 +233,7 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<GetQueueRequest>, AcceptAllValidator<GetQueueRequest>>().AddQuery<GetQueueRequest, QueueResponse, GetQueueService>();
         _ = services.AddScoped<IValidator<ExportContextMapRequest>, AcceptAllValidator<ExportContextMapRequest>>().AddQuery<ExportContextMapRequest, MapExported, ExportContextMapService>();
         _ = services.AddScoped<IValidator<GetContextMapRequest>, AcceptAllValidator<GetContextMapRequest>>().AddQuery<GetContextMapRequest, MapStatusView, GetContextMapService>();
-        _ = services.AddScoped<IValidator<GetMapPublishStatusRequest>, AcceptAllValidator<GetMapPublishStatusRequest>>().AddQuery<GetMapPublishStatusRequest, MapPublishStatusView, GetMapPublishStatusService>().AddScoped<MapPublishStatusReader>().AddScoped<IMapPublishCheck, MapPublishDoctorCheck>();
+        _ = services.AddScoped<IValidator<GetMapPublishStatusRequest>, AcceptAllValidator<GetMapPublishStatusRequest>>().AddQuery<GetMapPublishStatusRequest, MapPublishStatusView, GetMapPublishStatusService>().AddScoped<MapPublishStatusReader>().AddScoped<IMapPublishCheck, MapPublishDoctorCheck>().AddScoped<IFirstMapCheck, FirstMapDoctorCheck>();
         _ = services.AddScoped<IValidator<GetContextSourcesRequest>, AcceptAllValidator<GetContextSourcesRequest>>().AddQuery<GetContextSourcesRequest, SourcesView, GetContextSourcesService>();
         _ = services.AddScoped<IValidator<GetProfileRequest>, AcceptAllValidator<GetProfileRequest>>().AddQuery<GetProfileRequest, GetProfileResponse, GetProfileService>();
         _ = services.AddReviewQueries();

@@ -10514,6 +10514,7 @@ Aw.Sindri.Core.Forge.IPullRequests.Update(string! link, string? title, string? b
 static readonly Aw.Sindri.Core.SindriErrors.NoForge -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ForgeRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ForgeNotFound -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ForgeRepoRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ForgeUnavailable -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Forge.IForgeRepos
 Aw.Sindri.Core.Forge.IForgeRepos.OfWorkspace(string! workspace, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Forge.PullRepo!>!>
@@ -23259,6 +23260,7 @@ static Aw.Sindri.Core.Graph.Failures.FailureSentence.operator ==(Aw.Sindri.Core.
 static Aw.Sindri.Core.Graph.Failures.FailureSentences.Find(string! code) -> Aw.Sindri.Core.Graph.Failures.FailureSentence?
 static Aw.Sindri.Core.Graph.Failures.FailureSentences.Say(string! code, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! values) -> string!
 static readonly Aw.Sindri.Core.SindriErrors.GraphPromptFieldEmpty -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphPromptCouldNotAnswer -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Connections.Polling.EventKindSchema
 Aw.Sindri.Core.Connections.Polling.EventKindSchema.<Clone>$() -> Aw.Sindri.Core.Connections.Polling.EventKindSchema!
 Aw.Sindri.Core.Connections.Polling.EventKindSchema.Deconstruct(out string! Kind, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Fields, out System.Text.Json.Nodes.JsonObject! Sample) -> void
@@ -23546,6 +23548,33 @@ static readonly Aw.Sindri.Core.SindriErrors.AgentNotReady -> Aw.Kernel.ErrorDefi
 static readonly Aw.Sindri.Core.SindriErrors.AgentStartFailed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.AgentPromptTooLong -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.AgentWorktreeKept -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentNoPane -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentPaneGone -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Launch.TerminalHost
+Aw.Sindri.Core.Launch.TerminalHost.Pane.get -> string!
+Aw.Sindri.Core.Launch.TerminalHost.Session.get -> string!
+Aw.Sindri.Core.Launch.TerminalHost.Socket.get -> string!
+Aw.Sindri.Core.Launch.TerminalHost.TerminalHost(string! Socket, string! Session, string! Pane) -> void
+Aw.Sindri.Core.Sessions.ITerminalPaneSource
+Aw.Sindri.Core.Sessions.ITerminalPaneSource.Open(Aw.Sindri.Core.Sessions.SessionRef session, Aw.Sindri.Core.Launch.HostSize? size, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Launch.IOpenTerminalPane!>!>
+Aw.Sindri.Core.Launch.IOpenTerminalPane
+Aw.Sindri.Core.Launch.IOpenTerminalPane.Frames(System.Threading.CancellationToken cancellationToken) -> System.Collections.Generic.IAsyncEnumerable<Aw.Sindri.Core.Launch.TerminalFrame!>!
+Aw.Sindri.Core.Launch.IOpenTerminalPane.Host.get -> Aw.Sindri.Core.Launch.TerminalHost!
+Aw.Sindri.Core.Launch.IOpenTerminalPane.Paste(string! text, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Launch.IOpenTerminalPane.Resize(Aw.Sindri.Core.Launch.HostSize! size, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Launch.IOpenTerminalPane.SendKey(string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Launch.IOpenTerminalPane.SendText(string! text, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Launch.TerminalKeys
+static Aw.Sindri.Core.Launch.TerminalKeys.Check(string! key) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Sindri.Core.Launch.TerminalTarget
+Aw.Sindri.Core.Launch.TerminalTarget.Foreign.get -> bool
+Aw.Sindri.Core.Launch.TerminalTarget.Pane.get -> string!
+Aw.Sindri.Core.Launch.TerminalTarget.Session.get -> string!
+Aw.Sindri.Core.Launch.TerminalTarget.Socket.get -> string!
+Aw.Sindri.Core.Launch.TerminalTarget.SocketIsPath.get -> bool
+Aw.Sindri.Core.Launch.TerminalTarget.TerminalTarget(string! Socket, bool SocketIsPath, string! Session, string! Pane, bool Foreign) -> void
+Aw.Sindri.Core.Sessions.ITerminalPaneLocator
+Aw.Sindri.Core.Sessions.ITerminalPaneLocator.Find(Aw.Sindri.Core.Sessions.SessionRef session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Launch.TerminalTarget!>!>
 Aw.Sindri.Core.Launch.AgentReadiness
 Aw.Sindri.Core.Launch.AgentReadiness.<Clone>$() -> Aw.Sindri.Core.Launch.AgentReadiness!
 Aw.Sindri.Core.Launch.AgentReadiness.AgentReadiness(bool Installed, bool SignedIn, string! SignInCommand) -> void
@@ -23708,7 +23737,6 @@ override Aw.Sindri.Core.Launches.SpendPeek.GetHashCode() -> int
 ~override Aw.Sindri.Core.Launches.SpendPeek.ToString() -> string
 static Aw.Sindri.Core.Launches.SpendPeek.operator !=(Aw.Sindri.Core.Launches.SpendPeek left, Aw.Sindri.Core.Launches.SpendPeek right) -> bool
 static Aw.Sindri.Core.Launches.SpendPeek.operator ==(Aw.Sindri.Core.Launches.SpendPeek left, Aw.Sindri.Core.Launches.SpendPeek right) -> bool
-
 static Aw.Sindri.Core.Launches.Budgets.Counting(Aw.Sindri.Core.Profile.AgentSettings? agents, Aw.Sindri.Core.Launch.AgentId target) -> Aw.Sindri.Core.Launches.BudgetFacts!
 Aw.Sindri.Core.Launches.TodaysSpend
 Aw.Sindri.Core.Launches.TodaysSpend.TodaysSpend(System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Launches.AgentSpend!>! Used, System.Collections.Generic.IReadOnlySet<string!>! Counting) -> void
@@ -23738,3 +23766,36 @@ Aw.Sindri.Core.Setup.MapStage.Index = 0 -> Aw.Sindri.Core.Setup.MapStage
 Aw.Sindri.Core.Setup.MapStage.Map = 1 -> Aw.Sindri.Core.Setup.MapStage
 Aw.Sindri.Core.Setup.SetupStep.Stage.get -> Aw.Sindri.Core.Setup.MapStage?
 Aw.Sindri.Core.Setup.SetupStep.Stage.init -> void
+Aw.Sindri.Core.Launch.TerminalFrame
+Aw.Sindri.Core.Launch.TerminalFrame.<Clone>$() -> Aw.Sindri.Core.Launch.TerminalFrame!
+Aw.Sindri.Core.Launch.TerminalFrame.Equals(Aw.Sindri.Core.Launch.TerminalFrame? other) -> bool
+Aw.Sindri.Core.Launch.TerminalFrame.Deconstruct(out long Seq, out System.Collections.Generic.IReadOnlyList<string!>! Rows, out int CursorX, out int CursorY, out int Width, out int Height, out bool Alt, out bool InMode, out bool Dead) -> void
+Aw.Sindri.Core.Launch.TerminalFrame.TerminalFrame(long Seq, System.Collections.Generic.IReadOnlyList<string!>! Rows, int CursorX, int CursorY, int Width, int Height, bool Alt, bool InMode, bool Dead) -> void
+Aw.Sindri.Core.Launch.TerminalFrame.Seq.get -> long
+Aw.Sindri.Core.Launch.TerminalFrame.Seq.init -> void
+Aw.Sindri.Core.Launch.TerminalFrame.Rows.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Launch.TerminalFrame.Rows.init -> void
+Aw.Sindri.Core.Launch.TerminalFrame.CursorX.get -> int
+Aw.Sindri.Core.Launch.TerminalFrame.CursorX.init -> void
+Aw.Sindri.Core.Launch.TerminalFrame.CursorY.get -> int
+Aw.Sindri.Core.Launch.TerminalFrame.CursorY.init -> void
+Aw.Sindri.Core.Launch.TerminalFrame.Width.get -> int
+Aw.Sindri.Core.Launch.TerminalFrame.Width.init -> void
+Aw.Sindri.Core.Launch.TerminalFrame.Height.get -> int
+Aw.Sindri.Core.Launch.TerminalFrame.Height.init -> void
+Aw.Sindri.Core.Launch.TerminalFrame.Alt.get -> bool
+Aw.Sindri.Core.Launch.TerminalFrame.Alt.init -> void
+Aw.Sindri.Core.Launch.TerminalFrame.InMode.get -> bool
+Aw.Sindri.Core.Launch.TerminalFrame.InMode.init -> void
+Aw.Sindri.Core.Launch.TerminalFrame.Dead.get -> bool
+Aw.Sindri.Core.Launch.TerminalFrame.Dead.init -> void
+override Aw.Sindri.Core.Launch.TerminalFrame.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Launch.TerminalFrame.GetHashCode() -> int
+override Aw.Sindri.Core.Launch.TerminalFrame.ToString() -> string!
+static Aw.Sindri.Core.Launch.TerminalFrame.operator !=(Aw.Sindri.Core.Launch.TerminalFrame? left, Aw.Sindri.Core.Launch.TerminalFrame? right) -> bool
+static Aw.Sindri.Core.Launch.TerminalFrame.operator ==(Aw.Sindri.Core.Launch.TerminalFrame? left, Aw.Sindri.Core.Launch.TerminalFrame? right) -> bool
+Aw.Sindri.Core.Scheduling.MainMovePause
+static Aw.Sindri.Core.Scheduling.MainMovePause.Active(Aw.Sindri.Core.Scheduling.IServicePauses! pauses, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+static Aw.Sindri.Core.Scheduling.MainMovePause.Service.get -> Aw.Sindri.Core.Ids.ServiceName
+Aw.Sindri.Core.Doctor.IFirstMapCheck
+Aw.Sindri.Core.Doctor.IFirstMapCheck.Check(Aw.Sindri.Core.Profile.LoadedProfile? approved, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Doctor.DoctorCheck!>

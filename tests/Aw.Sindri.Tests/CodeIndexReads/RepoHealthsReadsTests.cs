@@ -6,9 +6,11 @@ using Aw.CodeIndex.Testing;
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
+using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.CodeIndexReads;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.Server;
 using RepoName = Aw.CodeIndex.Core.Values.RepoName;
 
 namespace Aw.Sindri.Tests.CodeIndexReads;
@@ -45,7 +47,7 @@ public sealed class RepoHealthsReadsTests
     public async Task A_repo_read_queued_twice_31_min_apart_has_been_queued_31_min()
     {
         var now = new MovingClock(_now);
-        var healths = new RepoHealths(new FakeRepoHeads().With(_repo, _old, onDefaultBranch: true), new InMemoryJobViews(), now, new QueuedClock(_now));
+        var healths = new RepoHealths(new FakeRepoHeads().With(_repo, _old, onDefaultBranch: true), new InMemoryJobViews(), new NoPauses(), now, new QueuedClock(_now));
         var missing = new RepoStatus(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null);
         var scope = new CodeIndexScope([new CodeIndexRepo(_repo, "/work/demo", CodeIndexSettings.Default)], new CodeIndexCaller(CallerKind.Service, Repo: null));
 
@@ -59,7 +61,7 @@ public sealed class RepoHealthsReadsTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_repo_added_3_h_into_serve_and_queued_on_its_first_read_counts_from_that_read_3502()
     {
-        var healths = new RepoHealths(new FakeRepoHeads().With(_repo, _old, onDefaultBranch: true), new InMemoryJobViews(), new MovingClock(_now.AddHours(3)), new QueuedClock(_now));
+        var healths = new RepoHealths(new FakeRepoHeads().With(_repo, _old, onDefaultBranch: true), new InMemoryJobViews(), new NoPauses(), new MovingClock(_now.AddHours(3)), new QueuedClock(_now));
         var missing = new RepoStatus(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null);
         var scope = new CodeIndexScope([new CodeIndexRepo(_repo, "/work/demo", CodeIndexSettings.Default)], new CodeIndexCaller(CallerKind.Service, Repo: null));
 
@@ -69,10 +71,25 @@ public sealed class RepoHealthsReadsTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_repo_with_no_index_reads_missing_with_no_queued_count_while_code_index_main_move_is_paused_3399()
+    {
+        var now = new MovingClock(_now);
+        var healths = new RepoHealths(new FakeRepoHeads().With(_repo, _old, onDefaultBranch: true), new InMemoryJobViews(), new PausedServices(MainMovePause.Service), now, new QueuedClock(_now));
+        var missing = new RepoStatus(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null);
+        var scope = new CodeIndexScope([new CodeIndexRepo(_repo, "/work/demo", CodeIndexSettings.Default)], new CodeIndexCaller(CallerKind.Service, Repo: null));
+
+        now.Now = _now.AddMinutes(31);
+        var health = Assert.Single(await healths.Of(scope, [missing], Token));
+
+        Assert.Equal("missing", health.State);
+        Assert.Null(health.QueuedFor);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_repo_queued_past_30_min_needs_a_look_and_one_under_does_not()
     {
         var now = new MovingClock(_now);
-        var healths = new RepoHealths(new FakeRepoHeads().With(_repo, _old, onDefaultBranch: true), new InMemoryJobViews(), now, new QueuedClock(_now));
+        var healths = new RepoHealths(new FakeRepoHeads().With(_repo, _old, onDefaultBranch: true), new InMemoryJobViews(), new NoPauses(), now, new QueuedClock(_now));
         var missing = new RepoStatus(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null);
         var scope = new CodeIndexScope([new CodeIndexRepo(_repo, "/work/demo", CodeIndexSettings.Default)], new CodeIndexCaller(CallerKind.Service, Repo: null));
 
@@ -90,7 +107,7 @@ public sealed class RepoHealthsReadsTests
         var jobs = new FlakyRunningJobs(new InMemoryJobViews());
         var clock = new QueuedClock(_now);
         clock.Seed([_repo.Value]);   // there at serve start, so its count runs from serve start (#3480)
-        var healths = new RepoHealths(new FakeRepoHeads().With(_repo, _old, onDefaultBranch: true), jobs, now, clock);
+        var healths = new RepoHealths(new FakeRepoHeads().With(_repo, _old, onDefaultBranch: true), jobs, new NoPauses(), now, clock);
         var missing = new RepoStatus(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null);
         var scope = new CodeIndexScope([new CodeIndexRepo(_repo, "/work/demo", CodeIndexSettings.Default)], new CodeIndexCaller(CallerKind.Service, Repo: null));
 
@@ -110,7 +127,7 @@ public sealed class RepoHealthsReadsTests
     {
         var now = new MovingClock(_now);
         var jobs = new InMemoryJobViews();
-        var healths = new RepoHealths(new FakeRepoHeads().With(_repo, _old, onDefaultBranch: true), jobs, now, new QueuedClock(_now));
+        var healths = new RepoHealths(new FakeRepoHeads().With(_repo, _old, onDefaultBranch: true), jobs, new NoPauses(), now, new QueuedClock(_now));
         var missing = new RepoStatus(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null);
         var scope = new CodeIndexScope([new CodeIndexRepo(_repo, "/work/demo", CodeIndexSettings.Default)], new CodeIndexCaller(CallerKind.Service, Repo: null));
         var build = Testing.A.Job().WithId(JobId.From("JOB-" + new string('b', 32))).OfKind(JobKind.From("BuildCodeIndex"), JobKey.From("index:demo")).Build();
@@ -145,7 +162,7 @@ public sealed class RepoHealthsReadsTests
         var status = new RepoStatus(_repo, IndexState.Ok, _old, _now.AddHours(-1), [new LayerStatus(LayerName.Structure, LayerState.Ok, Code: null, "ok")], new IndexCounts(Files: 1, Symbols: 2, Edges: 3));
         var scope = new CodeIndexScope([new CodeIndexRepo(_repo, "/work/demo", CodeIndexSettings.Default)], new CodeIndexCaller(CallerKind.Service, Repo: null));
 
-        var healths = await new RepoHealths(heads, jobs, new FixedClock(_now), new QueuedClock(_now)).Of(scope, [status], Token);
+        var healths = await new RepoHealths(heads, jobs, new NoPauses(), new FixedClock(_now), new QueuedClock(_now)).Of(scope, [status], Token);
         return (jobs, Assert.Single(healths));
     }
 

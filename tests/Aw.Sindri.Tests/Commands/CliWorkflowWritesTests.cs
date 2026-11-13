@@ -87,6 +87,18 @@ public sealed class CliWorkflowWritesTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Wf_activate_and_pause_from_a_session_print_the_servers_refusal_and_exit_2()
+    {
+        var api = new Api(HttpStatusCode.Forbidden, "{\"type\":\"about:blank\",\"title\":\"SND-AUTH-002\",\"status\":403,\"detail\":\"Activating a workflow is the owner's to do; a session can't\"}");
+
+        var activate = await Verbs(_up, api).Activate(["drift-check"], Token);
+        var pause = await Verbs(_up, api).Pause(["drift-check"], Token);
+
+        Assert.Equal((2, 2), (activate, pause));
+        Assert.Contains("SND-AUTH-002", _error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Wf_activate_sends_the_revision_and_pause_and_delete_use_their_routes()
     {
         var activate = new Api(HttpStatusCode.OK, Body(new ActivateWorkflowResponse(_slug, 2, "abc")));
