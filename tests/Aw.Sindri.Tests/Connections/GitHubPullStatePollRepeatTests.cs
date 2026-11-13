@@ -115,6 +115,22 @@ public sealed class GitHubPullStatePollRepeatTests
     }
 
     [Fact]
+    public async Task A_new_pull_request_whose_mergeable_state_is_unknown_on_first_sight_fires_when_it_turns_dirty()
+    {
+        var provider = new FakeProvider();
+        provider.SetGitHubOpenPulls(GitHubFeedFixtures.OpenPull(Repo, 42, "abc123", "2026-11-08T10:00:00Z", createdAt: Old));   // opened after the cursor's "@at" below
+        provider.SetGitHubPull(42, GitHubFeedFixtures.OpenPull(Repo, 42, "abc123", "2026-11-08T10:00:00Z", mergeableState: "unknown"));
+        using var h = PollerHarness.For("github", provider);
+
+        var unknown = await h.Poller.Poll(h.Connection, _conflict, "{\"@at\":\"2025-11-01T00:00:00Z\"}", Token);
+        provider.SetGitHubPull(42, GitHubFeedFixtures.OpenPull(Repo, 42, "abc123", "2026-11-08T10:10:00Z", mergeableState: "dirty"));
+        var dirty = await h.Poller.Poll(h.Connection, _conflict, unknown.Value.NextCursor, Token);   // its "@at" is now past the pull request's creation
+
+        Assert.Empty(unknown.Value.Events);
+        Assert.Equal("42", Assert.Single(dirty.Value.Events).Fields["number"]);
+    }
+
+    [Fact]
     public async Task A_dirty_pull_request_pushed_to_a_new_head_that_stays_dirty_fires_nothing()
     {
         var provider = new FakeProvider();
