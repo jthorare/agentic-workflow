@@ -130,7 +130,7 @@
         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.MD}">
           <StackPanel VerticalAlignment="Center" Spacing="{StaticResource Space.XXS}">
             <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}" MinHeight="24" VerticalAlignment="Center">
-              <TextBlock x:Name="ReduceMotionText" Classes="body-strong" Text="{Binding ReduceMotionLabel}"
+              <TextBlock x:Name="ReduceMotionText" Classes="body-strong" VerticalAlignment="Center" Text="{Binding ReduceMotionLabel}"
                          AutomationProperties.Name="{Binding ReduceMotionLabel}" />
               <Border x:Name="ReduceMotionChanged" Classes="status-chip" IsVisible="{Binding ReduceMotionChanged}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
                 <TextBlock Text="{Binding ChangedMark}" />
@@ -153,7 +153,7 @@
         <StackPanel Spacing="{StaticResource Space.XS}">
           <Grid ColumnDefinitions="*,Auto">
             <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}" MinHeight="24" VerticalAlignment="Center">
-              <TextBlock x:Name="TextSizeText" Classes="body-strong" Text="{Binding TextSizeLabel}"
+              <TextBlock x:Name="TextSizeText" Classes="body-strong" VerticalAlignment="Center" Text="{Binding TextSizeLabel}"
                          AutomationProperties.Name="{Binding TextSizeName}" />
               <Border x:Name="TextSizeChanged" Classes="status-chip" IsVisible="{Binding TextScaleChanged}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
                 <TextBlock Text="{Binding ChangedMark}" />

@@ -287,6 +287,7 @@ public sealed class SettingsFilterFramesTests : FrameHost
         settings.TextScale = 1.2;
         Settle(window);
         Assert.True(Visible(window, "TextSizeReset"));
+        AssertCentred(window, "TextSizeText", "TextSizeChanged", "TextSizeReset");
 
         Named<Button>(window, "TextSizeReset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Settle(window);
@@ -307,6 +308,7 @@ public sealed class SettingsFilterFramesTests : FrameHost
         settings.ReduceMotion = true;
         Settle(window);
         Assert.True(Visible(window, "ReduceMotionReset"));
+        AssertCentred(window, "ReduceMotionText", "ReduceMotionChanged", "ReduceMotionReset");
 
         Named<Button>(window, "ReduceMotionReset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Settle(window);
@@ -330,4 +332,11 @@ public sealed class SettingsFilterFramesTests : FrameHost
 
         Assert.Equal(expected.Color, Assert.IsAssignableFrom<ISolidColorBrush>(box.PlaceholderForeground).Color);
     });
+
+    // The name, the Changed chip and Reset share one centre line (within a pixel) while a setting is changed.
+    private static void AssertCentred(Window window, params string[] names)
+    {
+        var centres = names.Select(n => { var c = Named<Control>(window, n); return c.TranslatePoint(new Point(0, c.Bounds.Height / 2), window)!.Value.Y; }).ToList();
+        Assert.True(centres.Max() - centres.Min() <= 1.0, "centres differ: " + string.Join(", ", centres.Select(static y => y.ToString("F1", CultureInfo.InvariantCulture))));
+    }
 }

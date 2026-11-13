@@ -165,7 +165,7 @@ public sealed partial class SindriApp : Application, IDisposable
             LinearConnection = shell.LinearConnection,
             TodoNoteCard = shell.TodoNoteCard,
         };
-        shell.SettingFilterRequested += (_, e) => settings.Filter = e.Value;   // a palette Settings entry (#3362)   // a palette Settings entry (#3362)
+        shell.SettingFilterRequested += (_, e) => settings.Filter = e.Value;   // a palette Settings entry (#3362)
         try
         {
             await settings.Load(CancellationToken.None).ConfigureAwait(true);

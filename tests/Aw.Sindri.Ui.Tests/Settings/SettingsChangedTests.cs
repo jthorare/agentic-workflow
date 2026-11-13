@@ -106,4 +106,17 @@ public sealed class SettingsChangedTests
         Assert.True(settings.ThisAppFirst);
         Assert.Contains(nameof(SettingsViewModel.ThisAppFirst), raised, StringComparer.Ordinal);
     }
+
+    [Fact]
+    public async Task This_app_goes_first_when_sindri_is_not_running_and_setup_has_answered_with_no_steps()
+    {
+        var fixture = new SetupFixture();
+        fixture.Server.GoDown();
+        var setup = await fixture.Read(Token);
+        using var settings = new SettingsViewModel(new Preferences(_store), _os, static _ => { }, setup);
+
+        Assert.True(setup.IsNotRunning);
+        Assert.Empty(setup.Steps);
+        Assert.True(settings.ThisAppFirst);
+    }
 }
