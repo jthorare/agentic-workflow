@@ -44,10 +44,8 @@ public sealed class ContextMapTextTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_status_with_no_heads_has_no_repos_line()
-    {
+    public void A_status_with_no_heads_has_no_repos_line() =>
         Assert.DoesNotContain("repos:", ContextMapText.Status(View(scopedTo: null)), StringComparison.Ordinal);
-    }
 
     [Fact, Trait("Lane", "unit")]
     public void The_publish_state_reads_in_the_specs_short_form_then_Sindris_sentences_indented()
