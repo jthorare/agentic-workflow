@@ -13,7 +13,7 @@ namespace Aw.Sindri.Ui.ViewModels.Settings;
 /// the theme through the apply callback (no Avalonia types here). Built on the UI thread: an OS change raised elsewhere is
 /// posted back to it.
 /// </summary>
-internal sealed class SettingsViewModel : ObservableObject, IDisposable
+internal sealed partial class SettingsViewModel : ObservableObject, IDisposable
 {
     private readonly Preferences _preferences;
     private readonly IMotionPreference _motion;
