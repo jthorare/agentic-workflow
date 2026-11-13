@@ -5679,6 +5679,8 @@ static Aw.Sindri.Features.GetLastStart.LastStartView.operator !=(Aw.Sindri.Featu
 static Aw.Sindri.Features.GetLastStart.LastStartView.operator ==(Aw.Sindri.Features.GetLastStart.LastStartView? left, Aw.Sindri.Features.GetLastStart.LastStartView? right) -> bool
 Aw.Sindri.Features.CodeIndexReads.RepoHealth.NeedsLook.get -> bool
 Aw.Sindri.Features.CodeIndexReads.RepoHealth.NeedsLook.init -> void
+Aw.Sindri.Features.CodeIndexReads.RepoHealth.Paused.get -> bool
+Aw.Sindri.Features.CodeIndexReads.RepoHealth.Paused.init -> void
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.NeedsLook.get -> bool
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.NeedsLook.init -> void
 Aw.Sindri.Features.ContextCalls.QueryContextRequest.Limit.get -> string?

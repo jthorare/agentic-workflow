@@ -107,8 +107,10 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
     private static bool Shown(CodeIndexLayerView layer) => _named.Contains(layer.Layer, StringComparer.Ordinal) || !One(layer.State, "ok", "disabled");
 
     // While waiting, the server's own words ("retrying in N min") replace the state's.
-    private static string StateWords(string state, CodeIndexHealthView? health) =>
-        string.Equals(state, "waiting", StringComparison.Ordinal) && health?.Waiting is { Length: > 0 } waiting ? waiting : Labels.CodeIndexState(state);
+    // While paused, no retry or build comes: the line names the pause instead of promising one (#3561).
+    private static string StateWords(string state, CodeIndexHealthView? health) => health?.Paused == true && One(state, "missing", "stale", "waiting", "queued")
+        ? (One(state, "waiting", "queued") ? string.Empty : Labels.CodeIndexState(state) + " · ") + Labels.CodeIndexPaused
+        : string.Equals(state, "waiting", StringComparison.Ordinal) && health?.Waiting is { Length: > 0 } waiting ? waiting : Labels.CodeIndexState(state);
 
     // The health's percent is the server's figure for the embeddings layer; the layer's own detail is the fallback.
     private static string Words(CodeIndexLayerView layer, CodeIndexHealthView? health) =>
