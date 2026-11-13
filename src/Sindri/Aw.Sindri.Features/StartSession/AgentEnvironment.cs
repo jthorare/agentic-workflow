@@ -18,7 +18,7 @@ internal static class AgentEnvironment
 
     internal static IReadOnlyDictionary<string, string> Of(IEnvironmentReader environment, AgentId agent)
     {
-        string[] names = agent.Value switch
+        var names = agent.Value switch
         {
             "claude-code" => [.. _common, "CLAUDE_CONFIG_DIR", "ANTHROPIC_API_KEY"],
             "codex" => [.. _common, "CODEX_HOME", "OPENAI_API_KEY"],

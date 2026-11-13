@@ -48,7 +48,7 @@ public sealed class RemoveSessionWorktreeTests : IDisposable
         Assert.True(kept.IsError);
         Assert.Equal(SindriErrors.AgentWorktreeKept.Code, kept.Error.Code);
         Assert.Contains("M src/Checkout.cs", kept.Error.Message, StringComparison.Ordinal);
-        Assert.Single(_r.Worktrees.Live);
+        _ = Assert.Single(_r.Worktrees.Live);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -82,7 +82,7 @@ public sealed class RemoveSessionWorktreeTests : IDisposable
         var removed = await new RemoveSessionWorktreeService(afterRestart, _r.Worktrees, _r.Base.Callers).Handle(new RemoveSessionWorktreeRequest(ActId.From(Act)), Token);
 
         Assert.True(removed.IsSuccess, removed.IsError ? removed.Error.ToString() : null);
-        Assert.Single(_r.Worktrees.Removed);
+        _ = Assert.Single(_r.Worktrees.Removed);
     }
 
     [Fact, Trait("Lane", "unit")]

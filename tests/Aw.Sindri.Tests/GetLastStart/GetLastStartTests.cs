@@ -16,7 +16,7 @@ public sealed class GetLastStartTests : IDisposable
 
     private StartChoicesFile File_() => new(new FixedHome(_home));
 
-    private static async Task<LastStartView> Ask(Aw.Sindri.Core.Launch.IStartChoices choices) =>
+    private static async Task<LastStartView> Ask(Core.Launch.IStartChoices choices) =>
         (await new GetLastStartService(choices).Handle(new GetLastStartRequest(), Token)).Value;
 
     [Fact, Trait("Lane", "unit")]
@@ -30,9 +30,7 @@ public sealed class GetLastStartTests : IDisposable
 
     [Fact, Trait("Lane", "unit")]
     public async Task Absent_answers_both_null()
-    {
-        Assert.Equal(new LastStartView(null, null), await Ask(File_()));
-    }
+        => Assert.Equal(new LastStartView(Repo: null, Agent: null), await Ask(File_()));
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("{not json")]
@@ -46,7 +44,7 @@ public sealed class GetLastStartTests : IDisposable
         var result = await new GetLastStartService(File_()).Handle(new GetLastStartRequest(), Token);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(new LastStartView(null, null), result.Value);
+        Assert.Equal(new LastStartView(Repo: null, Agent: null), result.Value);
     }
 
     [Fact, Trait("Lane", "unit")]

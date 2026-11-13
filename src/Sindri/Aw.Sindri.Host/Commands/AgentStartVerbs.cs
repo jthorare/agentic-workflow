@@ -38,7 +38,7 @@ internal sealed class AgentStartVerbs(ControlPlaneClient client, Output output)
         var started = answer.Value.Value;
         return json
             ? await output.Raw(answer.Value.Body, 0).ConfigureAwait(false)
-            : await output.Text($"started {started.Id} (act id {started.ActId}, pane {started.Host.Pane})\nattach: tmux -L {started.Host.Socket} attach -t ={started.Host.Session}\n", 0).ConfigureAwait(false);
+            : await output.Text($"started {started.Id.Value} (act id {started.ActId.Value}, pane {started.Host.Pane})\nattach: tmux -L {started.Host.Socket} attach -t ={started.Host.Session}\n", 0).ConfigureAwait(false);
     }
 
     internal async Task<int> RemoveWorktree(string[] args, bool json, CancellationToken ct)
@@ -67,38 +67,34 @@ internal sealed class AgentStartVerbs(ControlPlaneClient client, Output output)
         return 1;
     }
 
+    private static readonly string[] _valuedFlags = ["--repo", "--agent", "--prompt", "--act-id"];
+
     private static Result<StartSessionRequest> ParseStart(string[] args)
     {
-        string? repo = null;
-        string? agent = null;
-        string? prompt = null;
-        string? actId = null;
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
         var worktree = false;
         for (var i = 0; i < args.Length; i++)
         {
-            switch (args[i])
+            if (string.Equals(args[i], "--worktree", StringComparison.Ordinal))
             {
-                case "--worktree":
-                    worktree = true;
-                    break;
-                case "--repo" when i + 1 < args.Length:
-                    repo = args[++i];
-                    break;
-                case "--agent" when i + 1 < args.Length:
-                    agent = args[++i];
-                    break;
-                case "--prompt" when i + 1 < args.Length:
-                    prompt = args[++i];
-                    break;
-                case "--act-id" when i + 1 < args.Length:
-                    actId = args[++i];
-                    break;
-                default:
-                    return SindriErrors.InvalidInput.With($"'{args[i]}' isn't an argument of this command (or it needs a value): {StartUsage}");
+                worktree = true;
+            }
+            else if (_valuedFlags.Contains(args[i], StringComparer.Ordinal) && i + 1 < args.Length)
+            {
+                values[args[i]] = args[++i];
+            }
+            else
+            {
+                return SindriErrors.InvalidInput.With($"'{args[i]}' isn't an argument of this command (or it needs a value): {StartUsage}");
             }
         }
 
-        if (repo is null || agent is null)
+        return StartRequest(values, worktree);
+    }
+
+    private static Result<StartSessionRequest> StartRequest(Dictionary<string, string> values, bool worktree)
+    {
+        if (!values.TryGetValue("--repo", out var repo) || !values.TryGetValue("--agent", out var agent))
         {
             return SindriErrors.InvalidInput.With("--repo and --agent are required: " + StartUsage);
         }
@@ -113,11 +109,9 @@ internal sealed class AgentStartVerbs(ControlPlaneClient client, Output output)
             return SindriErrors.InvalidInput.With($"'{agent}' is not an agent id");
         }
 
-        if (!ActId.TryFrom(actId ?? Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(6)), out var act))
-        {
-            return SindriErrors.InvalidInput.With($"'{actId}' is not an act id");
-        }
-
-        return new StartSessionRequest(repoName, agentId, prompt, worktree, act);
+        var actText = values.GetValueOrDefault("--act-id") ?? Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(6));
+        return ActId.TryFrom(actText, out var act)
+            ? new StartSessionRequest(repoName, agentId, values.GetValueOrDefault("--prompt"), worktree, act)
+            : SindriErrors.InvalidInput.With($"'{actText}' is not an act id");
     }
 }

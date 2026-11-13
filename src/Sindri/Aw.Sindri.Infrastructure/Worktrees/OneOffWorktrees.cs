@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Worktrees;
@@ -29,7 +30,7 @@ internal sealed class OneOffWorktrees(IWorktrees worktrees, Func<string, string?
 
         for (var attempt = 1; attempt <= Attempts; attempt++)
         {
-            var candidate = attempt == 1 ? name : $"{name}-{attempt}";
+            var candidate = attempt == 1 ? name : string.Create(CultureInfo.InvariantCulture, $"{name}-{attempt}");
             var path = await PathFor(repoPath, candidate, cancellationToken).ConfigureAwait(false);
             if (path.IsError)
             {

@@ -46,7 +46,7 @@ internal static class AgentStartScenarios
                 }
 
             case ("sessions-last-start", "present"):
-                await File.WriteAllTextAsync(Path.Combine(host.Home, "last-start.json"), """{"repo":"demo","agent":"codex"}""");
+                await File.WriteAllTextAsync(Path.Combine(host.Home, "last-start.json"), """{"repo":"demo","agent":"codex"}""", TestContext.Current.CancellationToken);
                 return await Ask(host, Get("/sindri/sessions/last-start", owner));
             case ("sessions-last-start", "absent"):
                 return await Ask(host, Get("/sindri/sessions/last-start", owner));

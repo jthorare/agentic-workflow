@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
@@ -60,32 +61,39 @@ internal static class AgentTools
 
     private static async ValueTask<CallToolResult> CallStart(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {
-        var refused = McpArguments.Only(Start, arguments, "repo", "agent", "prompt", "worktree", "actId");
+        var request = StartRequest(arguments);
+        if (request.IsError)
+        {
+            return McpResults.Failure(services, request.Error);
+        }
+
+        var answer = await services.GetRequiredService<IService<StartSessionRequest, StartedSession>>().Handle(request.Value, ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static a => $"started {a.Id.Value} (pane {a.Host.Pane})");
+    }
+
+    private static Result<StartSessionRequest> StartRequest(IDictionary<string, JsonElement>? arguments)
+    {
         var repo = McpArguments.RequiredString(Start, arguments, "repo", "sindri");
         var agent = McpArguments.RequiredString(Start, arguments, "agent", "claude-code");
         var actId = McpArguments.RequiredString(Start, arguments, "actId", "k3j9x0a1");
         var prompt = McpArguments.OptionalString(Start, arguments, "prompt");
         var worktree = McpArguments.OptionalBool(Start, arguments, "worktree");
-        var bad = refused ?? (repo.IsError ? repo.Error : agent.IsError ? agent.Error : actId.IsError ? actId.Error : prompt.IsError ? prompt.Error : worktree.IsError ? worktree.Error : null);
-        if (bad is { } error)
+        if ((McpArguments.Only(Start, arguments, "repo", "agent", "prompt", "worktree", "actId") ?? Failed(repo) ?? Failed(agent) ?? Failed(actId) ?? Failed(prompt) ?? Failed(worktree)) is { } error)
         {
-            return McpResults.Failure(services, error);
+            return error;
         }
 
         if (!RepoName.TryFrom(repo.Value, out var repoName) || !AgentId.TryFrom(agent.Value, out var agentId))
         {
-            return McpResults.Failure(services, Core.SindriErrors.InvalidInput.With("repo is a repo name and agent an agent id, for example claude-code"));
+            return Core.SindriErrors.InvalidInput.With("repo is a repo name and agent an agent id, for example claude-code");
         }
 
-        if (!ActId.TryFrom(actId.Value, out var act))
-        {
-            return McpResults.Failure(services, Core.SindriErrors.InvalidInput.With("actId is 8 to 32 characters of a-z and 0-9"));
-        }
-
-        var answer = await services.GetRequiredService<IService<StartSessionRequest, StartedSession>>()
-            .Handle(new StartSessionRequest(repoName, agentId, prompt.Value, worktree.Value ?? false, act), ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, static a => $"started {a.Id} (pane {a.Host.Pane})");
+        return ActId.TryFrom(actId.Value, out var act)
+            ? new StartSessionRequest(repoName, agentId, prompt.Value, worktree.Value == true, act)
+            : Core.SindriErrors.InvalidInput.With("actId is 8 to 32 characters of a-z and 0-9");
     }
+
+    private static Error? Failed<T>(Result<T> result) => result.IsError ? result.Error : null;
 
     private static async ValueTask<CallToolResult> CallRemove(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {

@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Launch;
@@ -11,20 +10,24 @@ internal sealed class StartChoicesFile(ISindriHome home) : IStartChoices
 {
     internal const string FileName = "last-start.json";
 
-    public ValueTask Remember(string repo, string agent, CancellationToken cancellationToken)
+    public async ValueTask Remember(string repo, string agent, CancellationToken cancellationToken)
     {
         try
         {
             _ = Directory.CreateDirectory(home.Path);
             var path = Path.Combine(home.Path, FileName);
             var temp = path + ".tmp";
-            using (var stream = new FileStream(temp, FileMode.Create, FileAccess.Write))
-            using (var writer = new Utf8JsonWriter(stream))
+            var stream = new FileStream(temp, FileMode.Create, FileAccess.Write);
+            await using (stream.ConfigureAwait(false))
             {
-                writer.WriteStartObject();
-                writer.WriteString("repo", repo);
-                writer.WriteString("agent", agent);
-                writer.WriteEndObject();
+                var writer = new Utf8JsonWriter(stream);
+                await using (writer.ConfigureAwait(false))
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("repo", repo);
+                    writer.WriteString("agent", agent);
+                    writer.WriteEndObject();
+                }
             }
 
             File.Move(temp, path, overwrite: true);
@@ -37,8 +40,6 @@ internal sealed class StartChoicesFile(ISindriHome home) : IStartChoices
         {
             // same
         }
-
-        return ValueTask.CompletedTask;
     }
 
     public async ValueTask<StartChoice> Last(CancellationToken cancellationToken)
@@ -48,24 +49,24 @@ internal sealed class StartChoicesFile(ISindriHome home) : IStartChoices
             var path = Path.Combine(home.Path, FileName);
             if (!File.Exists(path))
             {
-                return new StartChoice(null, null);
+                return new StartChoice(Repo: null, Agent: null);
             }
 
             using var document = JsonDocument.Parse(await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false));
             var root = document.RootElement;
-            return root.ValueKind == JsonValueKind.Object ? new StartChoice(Text(root, "repo"), Text(root, "agent")) : new StartChoice(null, null);
+            return root.ValueKind == JsonValueKind.Object ? new StartChoice(Text(root, "repo"), Text(root, "agent")) : new StartChoice(Repo: null, Agent: null);
         }
         catch (JsonException)
         {
-            return new StartChoice(null, null);   // a half-written or hand-edited file is the same as none
+            return new StartChoice(Repo: null, Agent: null);   // a half-written or hand-edited file is the same as none
         }
         catch (IOException)
         {
-            return new StartChoice(null, null);
+            return new StartChoice(Repo: null, Agent: null);
         }
         catch (UnauthorizedAccessException)
         {
-            return new StartChoice(null, null);
+            return new StartChoice(Repo: null, Agent: null);
         }
     }
 

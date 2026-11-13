@@ -23469,3 +23469,24 @@ static Aw.Sindri.Core.Ids.TmuxPaneId.TryFrom(string? value, out Aw.Sindri.Core.I
 static Aw.Sindri.Core.Ids.TmuxPaneId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.TmuxPaneId result) -> bool
 static Aw.Sindri.Core.Ids.TmuxPaneId.operator !=(Aw.Sindri.Core.Ids.TmuxPaneId left, Aw.Sindri.Core.Ids.TmuxPaneId right) -> bool
 static Aw.Sindri.Core.Ids.TmuxPaneId.operator ==(Aw.Sindri.Core.Ids.TmuxPaneId left, Aw.Sindri.Core.Ids.TmuxPaneId right) -> bool
+Aw.Sindri.Core.Launch.StartedSessions
+Aw.Sindri.Core.Launch.StartedSessions.Enter(Aw.Sindri.Core.Ids.ActId actId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.IDisposable!>
+Aw.Sindri.Core.Launch.StartedSessions.Find(Aw.Sindri.Core.Ids.ActId actId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Launch.StartedEntry?>
+Aw.Sindri.Core.Launch.StartedSessions.InMemory(Aw.Sindri.Core.Ids.ActId actId) -> Aw.Sindri.Core.Launch.StartedEntry?
+Aw.Sindri.Core.Launch.StartedSessions.Keep(Aw.Sindri.Core.Ids.ActId actId, Aw.Sindri.Core.Launch.StartedEntry! entry) -> void
+Aw.Sindri.Core.Launch.StartedSessions.StartedSessions(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events) -> void
+static Aw.Sindri.Core.Launch.StartedSessions.Key(Aw.Sindri.Core.Ids.ActId actId) -> string!
+Aw.Sindri.Core.Launch.StartedEntry
+Aw.Sindri.Core.Launch.StartedEntry.<Clone>$() -> Aw.Sindri.Core.Launch.StartedEntry!
+Aw.Sindri.Core.Launch.StartedEntry.Deconstruct(out Aw.Sindri.Core.Ids.TmuxPaneId Pane, out string? Worktree) -> void
+Aw.Sindri.Core.Launch.StartedEntry.Equals(Aw.Sindri.Core.Launch.StartedEntry? other) -> bool
+Aw.Sindri.Core.Launch.StartedEntry.Pane.get -> Aw.Sindri.Core.Ids.TmuxPaneId
+Aw.Sindri.Core.Launch.StartedEntry.Pane.init -> void
+Aw.Sindri.Core.Launch.StartedEntry.StartedEntry(Aw.Sindri.Core.Ids.TmuxPaneId Pane, string? Worktree) -> void
+Aw.Sindri.Core.Launch.StartedEntry.Worktree.get -> string?
+Aw.Sindri.Core.Launch.StartedEntry.Worktree.init -> void
+override Aw.Sindri.Core.Launch.StartedEntry.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Launch.StartedEntry.GetHashCode() -> int
+override Aw.Sindri.Core.Launch.StartedEntry.ToString() -> string!
+static Aw.Sindri.Core.Launch.StartedEntry.operator !=(Aw.Sindri.Core.Launch.StartedEntry? left, Aw.Sindri.Core.Launch.StartedEntry? right) -> bool
+static Aw.Sindri.Core.Launch.StartedEntry.operator ==(Aw.Sindri.Core.Launch.StartedEntry? left, Aw.Sindri.Core.Launch.StartedEntry? right) -> bool

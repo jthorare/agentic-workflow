@@ -2,8 +2,8 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Worktrees;
-using Aw.Sindri.Features.StartSession;
 
 namespace Aw.Sindri.Features.RemoveSessionWorktree;
 
@@ -24,11 +24,11 @@ internal sealed class RemoveSessionWorktreeService(StartedSessions book, IOneOff
             return SindriErrors.AuthRefused.With("removing a worktree is for the person: use the app or 'sindri agents worktree remove' in a terminal");
         }
 
-        var stored = await book.Find(request.ActId.Value, cancellationToken).ConfigureAwait(false);
+        var stored = await book.Find(request.ActId, cancellationToken).ConfigureAwait(false);
         if (stored?.Worktree is not { } path)
         {
             return SindriErrors.AgentWorktreeKept.With(stored is null
-                ? $"no start recorded the act id {request.ActId}, so there is no worktree of it to remove"
+                ? $"no start recorded the act id {request.ActId.Value}, so there is no worktree of it to remove"
                 : "that start made no worktree");
         }
 

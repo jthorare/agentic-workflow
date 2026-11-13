@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
-using Aw.Kernel;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Ledger;
 
-namespace Aw.Sindri.Features.StartSession;
+namespace Aw.Sindri.Core.Launch;
 
 /// <summary>
 /// The one-off sessions this process started, by act id (agents spec §15.8): the stored answer of a 2xx start and the worktree it made. The 'agent.op' event keyed by the act id is the durable copy; this
@@ -11,30 +11,36 @@ namespace Aw.Sindri.Features.StartSession;
 /// </summary>
 /// <param name="ledger">Reads the event back after a restart.</param>
 /// <param name="events">Reads the payload.</param>
-internal sealed class StartedSessions(ILedgerStore ledger, EventFactory events)
+public sealed class StartedSessions(ILedgerStore ledger, EventFactory events)
 {
     private const int Page = 500;
 
     private readonly ConcurrentDictionary<string, StartedEntry> _byAct = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _gates = new(StringComparer.Ordinal);
 
-    internal static string Key(string actId) => $"{EventTypes.AgentOp}:{actId}";
+    /// <summary>The idempotency key of the act id's 'agent.op' event.</summary>
+    /// <param name="actId">The act id.</param>
+    /// <returns>The key.</returns>
+    public static string Key(ActId actId) => $"{EventTypes.AgentOp}:{actId.Value}";
 
     /// <summary>Holds the act id's gate: two calls with one act id run one after the other, so the second sees the first's result. Dispose releases it.</summary>
-    internal async ValueTask<IDisposable> Enter(string actId, CancellationToken cancellationToken)
+    public async ValueTask<IDisposable> Enter(ActId actId, CancellationToken cancellationToken)
     {
-        var gate = _gates.GetOrAdd(actId, static _ => new SemaphoreSlim(1, 1));
+        var gate = _gates.GetOrAdd(actId.Value, static _ => new SemaphoreSlim(1, 1));
         await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         return new Release(gate);
     }
 
     /// <summary>The 2xx start stored under <paramref name="actId"/> in this process, or null.</summary>
-    internal StartedEntry? InMemory(string actId) => _byAct.GetValueOrDefault(actId);
+    public StartedEntry? InMemory(ActId actId) => _byAct.GetValueOrDefault(actId.Value);
 
-    internal void Keep(string actId, StartedEntry entry) => _byAct[actId] = entry;
+    /// <summary>Stores the 2xx start under the act id.</summary>
+    /// <param name="actId">The act id.</param>
+    /// <param name="entry">What the start left behind.</param>
+    public void Keep(ActId actId, StartedEntry entry) => _byAct[actId.Value] = entry;
 
     /// <summary>The start stored under <paramref name="actId"/>: this process's, else the ledger's 'agent.op' event.</summary>
-    internal async ValueTask<StartedEntry?> Find(string actId, CancellationToken cancellationToken)
+    public async ValueTask<StartedEntry?> Find(ActId actId, CancellationToken cancellationToken)
     {
         if (InMemory(actId) is { } known)
         {
@@ -53,10 +59,8 @@ internal sealed class StartedSessions(ILedgerStore ledger, EventFactory events)
 
             foreach (var recorded in read.Value)
             {
-                if (string.Equals(recorded.IdempotencyKey, key, StringComparison.Ordinal) && string.Equals(recorded.Envelope.Type, EventTypes.AgentOp, StringComparison.Ordinal)
-                    && events.Payload<AgentOpRecorded>(recorded) is { IsSuccess: true } payload && payload.Value.Op == "start")
+                if (StartOf(recorded, key) is { } entry)
                 {
-                    var entry = new StartedEntry(payload.Value.Outcome, payload.Value.Worktree);
                     Keep(actId, entry);
                     return entry;
                 }
@@ -66,13 +70,15 @@ internal sealed class StartedSessions(ILedgerStore ledger, EventFactory events)
         }
     }
 
+    private StartedEntry? StartOf(LedgerEvent recorded, string key) =>
+        string.Equals(recorded.IdempotencyKey, key, StringComparison.Ordinal) && string.Equals(recorded.Envelope.Type, EventTypes.AgentOp, StringComparison.Ordinal)
+            && events.Payload<AgentOpRecorded>(recorded) is { IsSuccess: true } payload && payload.Value.Op == "start"
+            && TmuxPaneId.TryFrom(payload.Value.Outcome, out var pane)   // an outcome that is no pane id is no stored answer
+            ? new StartedEntry(pane, payload.Value.Worktree)
+            : null;
+
     private sealed class Release(SemaphoreSlim gate) : IDisposable
     {
         public void Dispose() => _ = gate.Release();
     }
 }
-
-/// <summary>What a 2xx start left behind.</summary>
-/// <param name="Pane">The pane id the answer carried.</param>
-/// <param name="Worktree">The worktree folder the start made, or null when it made none.</param>
-internal sealed record StartedEntry(string Pane, string? Worktree);
