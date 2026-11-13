@@ -32,6 +32,22 @@ public sealed class ClaudeCodeUsageTests : IDisposable
         Expect.Equal(new ModelTokens("claude-sonnet-4-5", 101, 51, 11, 21), Assert.Single(used));
     }
 
+    /// <summary>#3420: the read state outlives the process. A reader built after a restart resumes at the byte the last one stopped at, so it reads only what was appended since.</summary>
+    [Fact]
+    public async Task A_restarted_reader_reads_only_what_was_appended_since_the_last_run()
+    {
+        using var saved = new UsageFixture();
+        _files.Write("-repo/a.jsonl", UsageFixture.Claude("m1", "2026-10-17T08:00:00.000Z", "claude-sonnet-4-5", 10, 0, 0, 0));
+        var first = await new ClaudeCodeUsage(_files.Root, [], new UsageReadCache(saved.Root)).Between(_from, _to, Token);
+        Expect.Equal(10L, Assert.Single(first).Input);
+
+        // same byte length, so only a reader that re-reads from byte 0 sees the 99
+        _files.Write("-repo/a.jsonl", UsageFixture.Claude("m1", "2026-10-17T08:00:00.000Z", "claude-sonnet-4-5", 99, 0, 0, 0));
+        var restarted = await new ClaudeCodeUsage(_files.Root, [], new UsageReadCache(saved.Root)).Between(_from, _to, Token);
+
+        Expect.Equal(10L, Assert.Single(restarted).Input);   // red today: 99, the whole file was read again
+    }
+
     [Fact]
     public async Task A_separate_login_launchs_transcript_under_its_agent_home_is_found_by_session()
     {
