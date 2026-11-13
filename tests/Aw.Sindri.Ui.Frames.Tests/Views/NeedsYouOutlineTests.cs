@@ -164,50 +164,95 @@ public sealed class NeedsYouOutlineTests : FrameHost
 
     private static Color FillOf(Border border) => (border.Background as ISolidColorBrush)?.Color ?? Colors.Transparent;
 
-    private static (Window Window, Border FocusedOnly, Border Both) FocusedRows()
+    // An inbox row as NeedsYouInboxRow builds it: the frame (focus ring and hover) around the selected line (InboxRowSelectLine), around the content.
+    private static (Border Frame, Border Line, TextBlock Text) InboxRow(params string[] classes)
     {
-        var focusedOnly = new Border { Classes = { "inbox-row" }, Width = 400, Height = 56, Child = new TextBlock { Text = "Row" } };
-        var both = new Border { Classes = { "inbox-row", "selected" }, Width = 400, Height = 56, Child = new TextBlock { Text = "Row" } };
-        var window = new Window { Content = new StackPanel { Children = { focusedOnly, both } }, Width = 480, Height = 240 };
-        window.Show();
-        ((IPseudoClasses)focusedOnly.Classes).Set(":focus-visible", value: true);
-        ((IPseudoClasses)both.Classes).Set(":focus-visible", value: true);
-        Settle(window);
-        return (window, focusedOnly, both);
+        var text = new TextBlock { Text = "Row" };
+        var line = new Border { Classes = { "inbox-row-line" }, Child = text };
+        var frame = new Border { Width = 400, Height = 56, Child = line };
+        frame.Classes.AddRange(["inbox-row", "needs-you-row", "clickable", .. classes]);
+        return (frame, line, text);
     }
 
+    // The four states of an inbox row: at rest, selected, focused, selected and focused.
+    private static (Window Window, (Border Frame, Border Line, TextBlock Text)[] Rows) FourRows()
+    {
+        var rest = InboxRow();
+        var selected = InboxRow("selected");
+        var focused = InboxRow();
+        var both = InboxRow("selected");
+        var window = new Window { Content = new StackPanel { Children = { rest.Frame, selected.Frame, focused.Frame, both.Frame } }, Width = 480, Height = 320 };
+        window.Show();
+        ((IPseudoClasses)focused.Frame.Classes).Set(":focus-visible", value: true);
+        ((IPseudoClasses)both.Frame.Classes).Set(":focus-visible", value: true);
+        Settle(window);
+        return (window, [rest, selected, focused, both]);
+    }
+
+    // #3506: focus on an inbox row is the 2 px PrimaryHover ring every focusable row draws (Queue item-row, FluentOverrides). Only one row ever has focus,
+    // so the ring's width can't also carry "selected".
+    [Fact]
+    public Task A_focused_inbox_row_draws_the_2px_ring_and_no_selected_line() => OnUi(async () =>
+    {
+        Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
+        var (window, rows) = FourRows();
+        var focused = rows[2];
+
+        Assert.Equal((Brush("Brush.PrimaryHover"), new Thickness(2)), (BrushOf(focused.Frame), focused.Frame.BorderThickness));
+        Assert.Equal(Colors.Transparent, BrushOf(focused.Line));
+        window.Close();
+        await Task.CompletedTask;
+    });
+
     // #3506: a selected inbox row that also has keyboard focus (the usual case, selecting is the focus) lost its selected border, because the focus style
-    // restates the border brush after the selected one. The selected fill alone is 1.18:1 on the canvas, so nothing marked the selection.
-    // Both looks are pinned exactly (option 1, a 2 px ring): focused-only is a 1 px PrimaryHover border on the row's normal fill; selected and focused is a 2 px PrimaryHover
-    // border on the Surface2 fill. A later edit cannot make them equal again, and the ring must reach 3:1 on the selected fill.
+    // restates the border brush after the selected one, and the selected fill alone is 1.18:1. Now the selected grey line stays, inside the ring.
     [Fact]
     public Task A_selected_focused_row_still_shows_a_selected_marker() => OnUi(async () =>
     {
         Motion.Set(reduce: true);
         using var instant = InstantMotion.Start();
-        var (window, focusedOnly, both) = FocusedRows();
+        var (window, rows) = FourRows();
+        var (selected, both) = (rows[1], rows[3]);
 
-        Assert.Equal((Brush("Brush.PrimaryHover"), new Thickness(1)), (BrushOf(focusedOnly), focusedOnly.BorderThickness));
-        Assert.NotEqual(Brush("Brush.Surface2"), FillOf(focusedOnly));
-        Assert.Equal((Brush("Brush.PrimaryHover"), new Thickness(2), Brush("Brush.Surface2")), (BrushOf(both), both.BorderThickness, FillOf(both)));
-        Assert.True(Ratio(BrushOf(both), FillOf(both)) >= 3.0, string.Create(CultureInfo.InvariantCulture, $"the ring {BrushOf(both)} on the row fill {FillOf(both)} is {Ratio(BrushOf(both), FillOf(both)):0.00}:1, below 3:1"));
+        Assert.Equal((Brush("Brush.Clickable.PressedBorder"), new Thickness(1)), (BrushOf(selected.Frame), selected.Frame.BorderThickness));
+        Assert.Equal((Brush("Brush.PrimaryHover"), new Thickness(2), Brush("Brush.Surface2")), (BrushOf(both.Frame), both.Frame.BorderThickness, FillOf(both.Frame)));
+        Assert.Equal((Brush("Brush.Clickable.PressedBorder"), new Thickness(1)), (BrushOf(both.Line), both.Line.BorderThickness));
+        var ratio = Ratio(BrushOf(both.Line), FillOf(both.Frame));
+        Assert.True(ratio >= 3.0, string.Create(CultureInfo.InvariantCulture, $"the selected line {BrushOf(both.Line)} on the row fill {FillOf(both.Frame)} is {ratio:0.00}:1, below 3:1"));
         window.Close();
         await Task.CompletedTask;
     });
 
-    // The 2 px ring cuts the padding by 1 (15,7 against 16,8), so the content stays where it is. That holds only while the base border is 1 px.
+    // The ring takes 1 px more than the rest border, and the line's padding gives it back, so the content sits at the same place in all four states.
     [Fact]
-    public Task A_selected_focused_rows_content_sits_where_a_focused_only_rows_content_does() => OnUi(async () =>
+    public Task An_inbox_rows_content_sits_at_the_same_place_in_all_four_states() => OnUi(async () =>
     {
         Motion.Set(reduce: true);
         using var instant = InstantMotion.Start();
-        var (window, focusedOnly, both) = FocusedRows();
+        var (window, rows) = FourRows();
 
-        var plain = ((TextBlock)focusedOnly.Child!).TranslatePoint(default, focusedOnly);
-        var marked = ((TextBlock)both.Child!).TranslatePoint(default, both);
+        var at = rows.Select(r => r.Text.TranslatePoint(default, r.Frame)).ToList();
 
-        _ = Assert.NotNull(plain);
-        Assert.Equal(plain, marked);
+        Assert.All(at, p => Assert.Equal(at[0], p));
+        _ = Assert.NotNull(at[0]);
+        window.Close();
+        await Task.CompletedTask;
+    });
+
+    // Under the pointer a selected and focused row keeps the PrimaryHover ring; `.clickable.selected:pointerover` comes later in ClickableStyles and turned it Primary.
+    [Fact]
+    public Task A_selected_focused_row_keeps_its_ring_colour_under_the_pointer() => OnUi(async () =>
+    {
+        Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
+        var (window, rows) = FourRows();
+        var both = rows[3];
+
+        ((IPseudoClasses)both.Frame.Classes).Set(":pointerover", value: true);
+        Settle(window);
+
+        Assert.Equal((Brush("Brush.PrimaryHover"), Brush("Brush.Clickable.PressedBorder")), (BrushOf(both.Frame), BrushOf(both.Line)));
         window.Close();
         await Task.CompletedTask;
     });
