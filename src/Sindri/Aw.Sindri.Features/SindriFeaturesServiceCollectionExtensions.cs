@@ -188,6 +188,7 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<PauseServiceRequest>, AcceptAllValidator<PauseServiceRequest>>().AddCommand<PauseServiceRequest, CommandAccepted, PauseServiceService>();
         _ = services.AddScoped<IValidator<ResumeServiceRequest>, AcceptAllValidator<ResumeServiceRequest>>().AddCommand<ResumeServiceRequest, CommandAccepted, ResumeServiceService>();
         _ = services.AddScoped<IValidator<ResumeJobRequest>, AcceptAllValidator<ResumeJobRequest>>().AddCommand<ResumeJobRequest, JobStartedResponse, ResumeJobService>();
+        _ = services.AddStartSession();
         _ = services.AddRunService();
         _ = services.AddScoped<IValidator<CloseItemRequest>, CloseItemValidator>().AddCommand<CloseItemRequest, CommandAccepted, CloseItemService>();
         services.TryAddSingleton<IFixTaskFiles, NoFixTaskFiles>();   // the fix branch's file-backed adapter replaces it

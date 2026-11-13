@@ -15,7 +15,7 @@ namespace Aw.UiDriver.Avalonia;
 /// reader uses: invoke, toggle, select, expand), so they run the same commands a person's click does; typing sets a text box; keys are raised as
 /// key events on the element. Nothing reads a property by name.
 /// </summary>
-internal static class ElementActions
+internal static partial class ElementActions
 {
     private static readonly string[] _clickActions = ["invoke", "toggle", "select", "expand"];
     private static readonly string[] _providerActions = ["INVOKE", "TOGGLE", "SELECT", "EXPAND", "COLLAPSE"];
@@ -138,21 +138,6 @@ internal static class ElementActions
         var x = Math.Clamp(viewer.Offset.X + dx, 0, Math.Max(0, viewer.Extent.Width - viewer.Viewport.Width));
         var y = Math.Clamp(viewer.Offset.Y + dy, 0, Math.Max(0, viewer.Extent.Height - viewer.Viewport.Height));
         viewer.Offset = new Vector(x, y);
-        return Unit.Value;
-    }
-
-    /// <summary>Sets or clears the :pointerover pseudo-class, as the pointer entering or leaving would (it stays until `off`, or a real pointer enters and leaves this element).</summary>
-    /// <param name="visual">The element.</param>
-    /// <param name="on">True to set it, false to clear it.</param>
-    /// <returns>Success, or AW-UIDRIVER-003 for an element that has no classes.</returns>
-    internal static Result<Unit> Hover(Visual visual, bool on)
-    {
-        if (visual is not StyledElement element)
-        {
-            return UiDriverErrors.NotActionable.With($"{visual.GetType().Name} has no style classes to hover");
-        }
-
-        ((IPseudoClasses)element.Classes).Set(":pointerover", on);
         return Unit.Value;
     }
 
