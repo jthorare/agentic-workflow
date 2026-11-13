@@ -71,6 +71,27 @@ test_long_criteria_are_quoted_short() {
   echo "PASS: test_long_criteria_are_quoted_short"
 }
 
+# A real finished Agent result has no .result: its text is in .content[] blocks (status "completed").
+test_real_completed_shape_that_matches_annotates_satisfied() {
+  local bin_dir out
+  bin_dir="$(setup_fake_judge '{"acceptanceCriteria":"tests pass and PR opened"}')"
+  out="$(PATH="$bin_dir:$PATH" bash "$HOOK" <<< '{"tool_use_id":"tu9","tool_response":{"status":"completed","content":[{"type":"text","text":"Done: tests pass and PR opened, see #123."}],"agentId":"a1"}}')"
+  echo "$out" | jq -e '.hookSpecificOutput.additionalContext | test("plausibly met"; "i")' > /dev/null \
+    || { echo "FAIL: expected 'plausibly met' for a real completed result, got: $out"; exit 1; }
+  echo "PASS: test_real_completed_shape_that_matches_annotates_satisfied"
+}
+
+test_real_completed_shape_that_misses_annotates_flagged() {
+  local bin_dir out
+  bin_dir="$(setup_fake_judge '{"acceptanceCriteria":"the migration runs cleanly on staging"}')"
+  out="$(PATH="$bin_dir:$PATH" bash "$HOOK" <<< '{"tool_use_id":"tu10","tool_response":{"status":"completed","content":[{"type":"text","text":"Done, ran the unit tests."}],"agentId":"a1"}}')"
+  echo "$out" | jq -e '.hookSpecificOutput.additionalContext | test("NOT clearly addressed")' > /dev/null \
+    || { echo "FAIL: expected 'NOT clearly addressed' for a real completed result that misses, got: $out"; exit 1; }
+  echo "PASS: test_real_completed_shape_that_misses_annotates_flagged"
+}
+
+test_real_completed_shape_that_matches_annotates_satisfied
+test_real_completed_shape_that_misses_annotates_flagged
 test_background_spawn_adds_no_annotation
 test_long_criteria_are_quoted_short
 test_matching_final_message_annotates_satisfied
