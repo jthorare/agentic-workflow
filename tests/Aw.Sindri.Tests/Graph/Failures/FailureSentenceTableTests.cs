@@ -204,6 +204,102 @@ public sealed class FailureSentenceTableTests
     }
 
     [Fact]
+    public void SND_CODE_001_says_the_step_does_not_compile_and_shows_the_errors()
+    {
+        var row = Row("SND-CODE-001");
+
+        Assert.Equal("Check doesn't compile: line 3, column 5: CS1002 ; expected.", FailureSentences.Say(row.Code, With(("step", "Check"), ("message", "line 3, column 5: CS1002 ; expected"))));
+        Assert.Equal("Open {step}", row.FixLabel);
+    }
+
+    [Fact]
+    public void SND_CODE_002_says_the_step_ran_past_its_time_limit()
+    {
+        var row = Row("SND-CODE-002");
+
+        Assert.Equal("Check ran past its time limit.", FailureSentences.Say(row.Code, With(("step", "Check"))));
+        Assert.Equal("Open {step}", row.FixLabel);
+    }
+
+    [Fact]
+    public void SND_CODE_003_says_the_step_used_more_memory_than_its_limit()
+    {
+        var row = Row("SND-CODE-003");
+
+        Assert.Equal("Check used more memory than its limit.", FailureSentences.Say(row.Code, With(("step", "Check"))));
+        Assert.Equal("Open {step}", row.FixLabel);
+    }
+
+    [Fact]
+    public void SND_CODE_004_says_the_step_stopped_with_the_exception_message()
+    {
+        var row = Row("SND-CODE-004");
+
+        Assert.Equal("Check stopped: Index was outside the bounds of the array.", FailureSentences.Say(row.Code, With(("step", "Check"), ("message", "Index was outside the bounds of the array"))));
+        Assert.Equal("Open {step}", row.FixLabel);
+    }
+
+    [Fact]
+    public void SND_CODE_005_says_the_runner_could_not_start_shows_the_reason_and_offers_no_install_button()
+    {
+        var row = Row("SND-CODE-005");
+
+        Assert.Equal("Sindri can't run code steps: the code runner couldn't start.\nthe runner binary is not at /x/sindri-code-runner", FailureSentences.Say(row.Code, With(("message", "the runner binary is not at /x/sindri-code-runner"))));
+        Assert.Null(row.FixLabel);
+        Assert.Null(row.FixCommand);
+    }
+
+    [Fact]
+    public void A_long_multi_line_message_is_cut_to_one_line_of_200_characters()
+    {
+        var message = "line 1, column 2: CS1002 first\nline 3, column 4: CS1002 " + new string('x', 300);
+
+        var said = FailureSentences.Say("SND-CODE-001", With(("step", "Check"), ("message", message)));
+
+        Assert.DoesNotContain('\n', said);
+        Assert.Equal("Check doesn't compile: ".Length + 200 + "….".Length, said.Length);
+        Assert.EndsWith("….", said, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_message_that_ends_in_a_period_does_not_double_it()
+        => Assert.Equal("Check stopped: Boom.", FailureSentences.Say("SND-CODE-004", With(("step", "Check"), ("message", "Boom."))));
+
+    [Fact]
+    public void A_message_that_ends_in_a_question_mark_keeps_it_and_adds_no_period()
+        => Assert.Equal("Check stopped: Is it null?", FailureSentences.Say("SND-CODE-004", With(("step", "Check"), ("message", "Is it null?"))));
+
+    [Theory]
+    [InlineData("SND-CODE-001", "Check doesn't compile.")]
+    [InlineData("SND-CODE-004", "Check stopped.")]
+    [InlineData("SND-CODE-005", "Sindri can't run code steps: the code runner couldn't start.")]
+    public void An_empty_message_drops_its_lead_in(string code, string expected)
+        => Assert.Equal(expected, FailureSentences.Say(code, With(("step", "Check"), ("message", "  "))));
+
+    [Fact]
+    public void SND_CODE_005_cuts_its_message_to_one_line_of_200_characters_too()
+    {
+        var said = FailureSentences.Say("SND-CODE-005", With(("message", new string('x', 150) + "\n" + new string('y', 150))));
+
+        var reason = said.Split('\n')[1];
+        Assert.Equal(201, reason.Length);
+        Assert.EndsWith("…", reason, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("SND-CODE-001")]
+    [InlineData("SND-CODE-002")]
+    [InlineData("SND-CODE-003")]
+    [InlineData("SND-CODE-004")]
+    public void An_SND_CODE_sentence_names_the_step_by_its_title_never_a_node_id(string code)
+    {
+        var said = FailureSentences.Say(code, With(("step", "Nightly check"), ("message", "boom")));
+
+        Assert.StartsWith("Nightly check ", said, StringComparison.Ordinal);
+        Assert.DoesNotContain("node '", said, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void A_placeholder_with_no_value_fails_instead_of_leaving_braces_in_the_sentence()
         => Assert.Throws<InvalidOperationException>(() => FailureSentences.Say("GRAPH-CONFIG-001", With()));
 

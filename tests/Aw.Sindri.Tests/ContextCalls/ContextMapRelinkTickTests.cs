@@ -69,7 +69,7 @@ public sealed class ContextMapRelinkTickTests
     {
         _h.Clock.SetUtcNow(_now);
         _ = await _h.Profiles.Save(profile ?? Plain(), Ct);
-        var service = new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _jobs, new ScriptedOutlooks(), new MapJobStarts(_refresh, new PublishStarter(_h), _relink), _h.Clock, NullLogger<ContextMapRefreshService>.Instance);
+        var service = new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), _engine.Proxy, _jobs, new ScriptedOutlooks(), new MapJobStarts(_refresh, new PublishStarter(_h), _relink), _h.Clock, NullLogger<ContextMapRefreshService>.Instance);
         _grant ??= await _h.HoldLease();
         using var caller = _h.Callers.EnterService("context-map-refresh");
         return await service.Run(new ScheduledRun(_grant, _now), Ct);

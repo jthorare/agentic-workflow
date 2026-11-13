@@ -1,5 +1,6 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Extract;
 using Aw.Context.Core.Facade;
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
@@ -79,8 +80,9 @@ internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine 
 
         if (recent.Value.FirstOrDefault(static j => j.State == JobState.Running) is { } running)
         {
-            var last = running.Progress.MaxBy(static l => l.Round);
-            return new MapFact(MapPhase.Building, last is null ? null : MapBuildProgress.Parse(last.Line));
+            // The newest files line (#3433), the one the whole map's 'building' answer reads too; a repo with no files (0/0) gives no count.
+            var files = MapBuildFiles.Newest(running.Progress.OrderBy(static l => l.Round).Select(static l => l.Line));
+            return new MapFact(MapPhase.Building, files is { Total: > 0 } ? new SetupProgress(files.Done, files.Total, "files") : null);
         }
 
         return recent.Value.FirstOrDefault(static j => j.State != JobState.Cancelled) is { State: JobState.Failed } failed

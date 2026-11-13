@@ -62,7 +62,7 @@ internal sealed class WholeMapNotReady(IJobViews jobs, IViewReader views, IConte
             w.WriteNumber("sourcesTotal", sources.Count);
         }
 
-        if (Files(job.Progress) is { } files)
+        if (MapBuildFiles.Newest(job.Progress.Select(static l => l.Line)) is { } files)
         {
             w.WriteNumber("filesDone", files.Done);
             w.WriteNumber("filesTotal", files.Total);
@@ -77,20 +77,6 @@ internal sealed class WholeMapNotReady(IJobViews jobs, IViewReader views, IConte
         w.WriteString("jobId", job.Id.Value);
         w.WriteEndObject();
     });
-
-    // The newest files line: later lines (labeling, heartbeats) say nothing about files, and the job keeps only its last 200 lines, so an old build can have none left.
-    private static MapBuildFiles? Files(IReadOnlyList<JobLine> progress)
-    {
-        for (var i = progress.Count - 1; i >= 0; i--)
-        {
-            if (MapBuildFiles.From(progress[i].Line) is { } files)
-            {
-                return files;
-            }
-        }
-
-        return null;
-    }
 
     private static JsonElement NoMap(ContextScope scope, DateTimeOffset? approvedAt, DateTimeOffset? firstRunStartedAt) => Write(w =>
     {

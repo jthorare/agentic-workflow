@@ -14,14 +14,21 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="output">Where the verbs write.</param>
 internal sealed class AgentsVerbs(ControlPlaneClient client, Output output)
 {
-    internal const string Usage = "agents [--provider <agent>] [--state <s>] [--repo <r>] [--json] | agents show <provider>/<id> [--json]";
+    internal const string Usage = "agents [--provider <agent>] [--state <s>] [--repo <r>] [--json] | agents show <provider>/<id> [--json] | " + AgentStartVerbs.StartUsage + " | " + AgentStartVerbs.RemoveUsage;
 
     internal async Task<int> Run(string[] args, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(args);
         var json = args.Contains("--json", StringComparer.Ordinal);
         var rest = args.Where(static a => a != "--json").ToArray();
-        return rest is ["show", ..] ? await Show(rest[1..], json, ct).ConfigureAwait(false) : await List(rest, json, ct).ConfigureAwait(false);
+        var starts = new AgentStartVerbs(client, output);
+        return rest switch
+        {
+            ["start", ..] => await starts.Start(rest[1..], json, ct).ConfigureAwait(false),
+            ["worktree", "remove", ..] => await starts.RemoveWorktree(rest[2..], json, ct).ConfigureAwait(false),
+            ["show", ..] => await Show(rest[1..], json, ct).ConfigureAwait(false),
+            _ => await List(rest, json, ct).ConfigureAwait(false),
+        };
     }
 
     private async Task<int> List(string[] args, bool json, CancellationToken ct)

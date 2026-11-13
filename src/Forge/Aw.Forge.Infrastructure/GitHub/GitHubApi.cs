@@ -182,9 +182,7 @@ internal sealed class GitHubApi(HttpClient http, ICredentialSource credentials, 
             return ForgeErrors.Unavailable.With(Inv.S($"the forge answered {status}"));
         }
 
-        // why: GitHub's secondary rate limit is a 403 with Retry-After and no X-RateLimit-Remaining: 0; read as a refusal it would skip the repo instead of stopping the pass
-        if (status == 429 || (status == 403 && (response.Headers.RetryAfter is not null
-            || (response.Headers.TryGetValues("X-RateLimit-Remaining", out var left) && left.FirstOrDefault() == "0"))))
+        if (IsRateLimited(response, status))
         {
             return ForgeErrors.RateLimited.With("the forge is rate limiting this credential");
         }
@@ -207,6 +205,11 @@ internal sealed class GitHubApi(HttpClient http, ICredentialSource credentials, 
 
         return new GitHubReply(status, ParseBody(text), NextPage(response));
     }
+
+    // why: GitHub's secondary rate limit is a 403 with Retry-After and no X-RateLimit-Remaining: 0; read as a refusal it would skip the repo instead of stopping the pass
+    private static bool IsRateLimited(HttpResponseMessage response, int status) =>
+        status == 429 || (status == 403 && (response.Headers.RetryAfter is not null
+            || (response.Headers.TryGetValues("X-RateLimit-Remaining", out var left) && left.FirstOrDefault() == "0")));
 
     private static JsonElement ParseBody(string text)
     {

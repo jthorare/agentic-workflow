@@ -12,6 +12,7 @@ using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Core.Scheduling;
+using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.ActivateWorkflow;
 using Aw.Sindri.Features.AgentNodeControl;
 using Aw.Sindri.Features.AnswerQuestion;
@@ -98,6 +99,7 @@ using Aw.Sindri.Features.ValidateWorkflow;
 using Aw.Sindri.Features.WorkflowSchedule;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Features;
 
@@ -156,7 +158,7 @@ public static class SindriFeaturesServiceCollectionExtensions
     {
         _ = services
             .AddScoped<IScheduledService, WorkflowScheduleService>().AddSingleton(WorkflowScheduleService.BuiltIn)   // the built-in 'workflow-schedule' service (#2258, PR 6): runs without a profile entry, every minute
-            .AddScoped<IValidator<RunWorkflowRequest>, AcceptAllValidator<RunWorkflowRequest>>().AddCommand<RunWorkflowRequest, RunWorkflowResponse, RunWorkflowService>()   // 'sindri wf run' and 'wf cancel' (#2258, PR 6): behind the command chain; the slug and payload are checked by the service
+            .AddScoped<IValidator<RunWorkflowRequest>, AcceptAllValidator<RunWorkflowRequest>>().AddCommand<RunWorkflowRequest, RunWorkflowResponse, RunWorkflowService>().AddScoped<ISetupWorkflowRunner, SetupWorkflowRunner>()   // 'sindri wf run' and 'wf cancel' (#2258, PR 6): behind the command chain; the slug and payload are checked by the service
             .AddScoped<IValidator<CancelWorkflowRunRequest>, AcceptAllValidator<CancelWorkflowRunRequest>>().AddCommand<CancelWorkflowRunRequest, CancelWorkflowRunResponse, CancelWorkflowRunService>()
             .AddScoped<IValidator<TakeOverAgentNodeRequest>, AcceptAllValidator<TakeOverAgentNodeRequest>>().AddCommand<TakeOverAgentNodeRequest, AgentNodeControlled, TakeOverAgentNodeService>()   // the human takes a run_agent node over and hands it back (#2472): behind the command chain; the services check the caller, the run and the node
             .AddScoped<IValidator<HandBackAgentNodeRequest>, AcceptAllValidator<HandBackAgentNodeRequest>>().AddCommand<HandBackAgentNodeRequest, AgentNodeControlled, HandBackAgentNodeService>()
@@ -164,11 +166,11 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IValidator<GetWorkflowRequest>, AcceptAllValidator<GetWorkflowRequest>>().AddQuery<GetWorkflowRequest, GetWorkflowResponse, GetWorkflowService>()
             .AddScoped<IValidator<ListWorkflowRunsRequest>, AcceptAllValidator<ListWorkflowRunsRequest>>().AddQuery<ListWorkflowRunsRequest, ListWorkflowRunsResponse, ListWorkflowRunsService>()
             .AddScoped<IValidator<GetWorkflowRunRequest>, AcceptAllValidator<GetWorkflowRunRequest>>().AddQuery<GetWorkflowRunRequest, GetWorkflowRunResponse, GetWorkflowRunService>()   // PR 8b below: the workflow writes
-            .AddScoped<IValidator<CreateWorkflowRequest>, AcceptAllValidator<CreateWorkflowRequest>>().AddCommand<CreateWorkflowRequest, CreateWorkflowResponse, CreateWorkflowService>()
+            .AddScoped<IValidator<CreateWorkflowRequest>, AcceptAllValidator<CreateWorkflowRequest>>().AddCommand<CreateWorkflowRequest, CreateWorkflowResponse, CreateWorkflowService>().AddScoped<ISetupWorkflowCreator, SetupWorkflowCreator>()
             .AddScoped<IValidator<ApplyWorkflowOpsRequest>, AcceptAllValidator<ApplyWorkflowOpsRequest>>().AddCommand<ApplyWorkflowOpsRequest, ApplyWorkflowOpsResponse, ApplyWorkflowOpsService>()
             .AddScoped<IValidator<ReplaceWorkflowRequest>, AcceptAllValidator<ReplaceWorkflowRequest>>().AddCommand<ReplaceWorkflowRequest, ReplaceWorkflowResponse, ReplaceWorkflowService>()
             .AddScoped<IValidator<ValidateWorkflowRequest>, AcceptAllValidator<ValidateWorkflowRequest>>().AddCommand<ValidateWorkflowRequest, ValidateWorkflowResponse, ValidateWorkflowService>()
-            .AddScoped<IValidator<ActivateWorkflowRequest>, AcceptAllValidator<ActivateWorkflowRequest>>().AddCommand<ActivateWorkflowRequest, ActivateWorkflowResponse, ActivateWorkflowService>()
+            .AddScoped<IValidator<ActivateWorkflowRequest>, AcceptAllValidator<ActivateWorkflowRequest>>().AddCommand<ActivateWorkflowRequest, ActivateWorkflowResponse, ActivateWorkflowService>().AddScoped<ISetupWorkflowActivator, SetupWorkflowActivator>()
             .AddScoped<IValidator<PauseWorkflowRequest>, AcceptAllValidator<PauseWorkflowRequest>>().AddCommand<PauseWorkflowRequest, PauseWorkflowResponse, PauseWorkflowService>()
             .AddScoped<IValidator<DeleteWorkflowRequest>, AcceptAllValidator<DeleteWorkflowRequest>>().AddCommand<DeleteWorkflowRequest, DeleteWorkflowResponse, DeleteWorkflowService>()
             .AddScoped<IValidator<ListWorkflowBlocksRequest>, AcceptAllValidator<ListWorkflowBlocksRequest>>().AddQuery<ListWorkflowBlocksRequest, ListWorkflowBlocksResponse, ListWorkflowBlocksService>()   // 'wf blocks' and 'wf docs'
@@ -187,6 +189,7 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<PauseServiceRequest>, AcceptAllValidator<PauseServiceRequest>>().AddCommand<PauseServiceRequest, CommandAccepted, PauseServiceService>();
         _ = services.AddScoped<IValidator<ResumeServiceRequest>, AcceptAllValidator<ResumeServiceRequest>>().AddCommand<ResumeServiceRequest, CommandAccepted, ResumeServiceService>();
         _ = services.AddScoped<IValidator<ResumeJobRequest>, AcceptAllValidator<ResumeJobRequest>>().AddCommand<ResumeJobRequest, JobStartedResponse, ResumeJobService>();
+        _ = services.AddStartSession();
         _ = services.AddRunService();
         _ = services.AddScoped<IValidator<CloseItemRequest>, CloseItemValidator>().AddCommand<CloseItemRequest, CommandAccepted, CloseItemService>();
         services.TryAddSingleton<IFixTaskFiles, NoFixTaskFiles>();   // the fix branch's file-backed adapter replaces it
@@ -236,7 +239,7 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddReviewQueries();
         _ = services.AddLinearQueries().AddLinearWrites().AddLinearCommentCreate();
         _ = services.AddScoped<ProfileReads>().AddScoped<HealthServiceRows>();
-        _ = services.AddGetSetup().AddAppConfirm();
+        _ = services.AddGetSetup().AddAppConfirm().AddFirstRun();
         _ = services.AddScoped<IValidator<GetStatusRequest>, AcceptAllValidator<GetStatusRequest>>().AddQuery<GetStatusRequest, GetStatusResponse, GetStatusService>();
         _ = services.AddScoped<IValidator<ListCommandsRequest>, AcceptAllValidator<ListCommandsRequest>>().AddQuery<ListCommandsRequest, ListCommandsResponse, ListCommandsService>();
         _ = services.AddScoped<IValidator<ListItemsRequest>, AcceptAllValidator<ListItemsRequest>>().AddQuery<ListItemsRequest, ListItemsResponse, ListItemsService>();
@@ -270,8 +273,9 @@ public static class SindriFeaturesServiceCollectionExtensions
         .AddScoped<LinearDoctor>()
         .AddScoped<ContextEngineChecks>()
         .AddScoped<RunDoctorService>()
+        .AddSingleton<IPartTimer, LoggingPartTimer>()
         .AddScoped<IService<RunDoctorRequest, RunDoctorResponse>>(static sp =>
-            new WithMoreChecks(sp.GetRequiredService<RunDoctorService>(), sp.GetServices<IDoctorChecks>()))
+            new WithMoreChecks(sp.GetRequiredService<RunDoctorService>(), sp.GetServices<IDoctorChecks>(), sp.GetRequiredService<ILoggerFactory>().CreateLogger("Aw.Sindri.Doctor")))
         .AddScoped<IDoctorChecks, ContextDoctorChecks>().AddIndexDoctor()   // AddIndexDoctor: owned index (#1394), context:index-*
         .AddScoped<IDoctorChecks, LauncherDoctorChecks>().AddScoped<IDoctorChecks, AgentTargetDoctor>()   // #1428: `agent:target`
         .AddScoped<IDoctorChecks, SyncTodoNote.TodoNoteDoctorChecks>()                    // the Obsidian note's sync (spec §6): the `todo` row

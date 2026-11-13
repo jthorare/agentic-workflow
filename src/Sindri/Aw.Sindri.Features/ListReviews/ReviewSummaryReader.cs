@@ -155,7 +155,7 @@ internal sealed partial class ReviewSummaryReader(IReviewSummaries cache, IPullR
         {
             if (error.Code == SindriErrors.ForgeRepoRefused.Code)
             {
-                return _refusedRepos.TryAdd(repo, true);
+                return _refusedRepos.TryAdd(repo, value: true);
             }
 
             if (error.Kind != ErrorKind.NotFound)

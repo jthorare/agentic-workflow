@@ -42,7 +42,8 @@ internal sealed class LoopbackServer : IAsyncDisposable
     public static async Task<LoopbackServer> Start(string name, Func<FakeHttpRequest, FakeHttpReply> handler, TimeSpan delay = default)
     {
         var log = new ConcurrentQueue<string>();
-        var builder = WebApplication.CreateSlimBuilder(new WebApplicationOptions { Args = [], ApplicationName = name, ContentRootPath = AppContext.BaseDirectory });
+        // why: no appsettings reload watcher, each one is an inotify instance (#3459)
+        var builder = WebApplication.CreateSlimBuilder(new WebApplicationOptions { Args = ["--hostBuilder:reloadConfigOnChange=false"], ApplicationName = name, ContentRootPath = AppContext.BaseDirectory });
         _ = builder.Logging.ClearProviders().AddProvider(new ListLoggerProvider(log)).SetMinimumLevel(LogLevel.Trace);
         _ = builder.WebHost.ConfigureKestrel(k => k.Listen(IPAddress.Loopback, 0));
         var server = new LoopbackServer(builder.Build(), log, handler, delay);
