@@ -20,6 +20,8 @@ public sealed class PaneSubmitter(ILanePane pane, IDelay delay)
 
     private const int ProbeLength = 30;
 
+    private const int LastLineCount = 5;
+
     /// <summary>Types the line, presses Enter and verifies.</summary>
     /// <param name="session">The tmux session name.</param>
     /// <param name="line">The line.</param>
@@ -69,19 +71,71 @@ public sealed class PaneSubmitter(ILanePane pane, IDelay delay)
     }
 
     // The lane's prompt can eat the first keys ("/cl" of "/clear" read as vim keys, #3443): the rest would go in as a prompt. Before any Enter,
-    // the input box must hold exactly the line; a pane with no prompt mark can't be read and goes on as before.
+    // the input box must hold exactly the line. When it doesn't, or no prompt line can be read even after a second look, no Enter is pressed and
+    // the typed text is cleared (Ctrl+U), so the next line sent to the pane doesn't append to it and submit both (#3521).
     private async ValueTask<Result<Unit>> CheckTyped(string session, string line, CancellationToken cancellationToken)
     {
-        await delay.Wait(Pause, cancellationToken).ConfigureAwait(false);
-        var shown = await pane.Capture(session, cancellationToken).ConfigureAwait(false);
+        var shown = await Look(session, cancellationToken).ConfigureAwait(false);
         if (shown.IsError)
         {
             return shown.Error;
         }
 
-        return InputBox(shown.Value) is not { } box || string.Equals(Squeeze(box), Squeeze(line), StringComparison.Ordinal)
-            ? Results.Ok()
-            : MetaErrors.CommandFailed.With($"the input box of {session} shows '{box.Trim()}' instead of '{line}' after typing; no Enter was pressed, so nothing was submitted. Clear that input line in the pane, then run it again");
+        var box = InputBox(shown.Value);
+        if (box is null)
+        {
+            shown = await Look(session, cancellationToken).ConfigureAwait(false);
+            if (shown.IsError)
+            {
+                return shown.Error;
+            }
+
+            box = InputBox(shown.Value);
+        }
+
+        if (box is not null && string.Equals(Squeeze(box), Squeeze(line), StringComparison.Ordinal))
+        {
+            return Results.Ok();
+        }
+
+        var cleared = await Clear(session, box, cancellationToken).ConfigureAwait(false);
+        return box is null
+            ? MetaErrors.CommandFailed.With($"no input box (a line starting with ❯) shows in {session} after typing '{line}', so it can't be checked; no Enter was pressed. {cleared} The pane's last lines: {LastLines(shown.Value)}")
+            : MetaErrors.CommandFailed.With($"the input box of {session} shows '{box.Trim()}' instead of '{line}' after typing; no Enter was pressed, so nothing was submitted. {cleared}");
+    }
+
+    private async ValueTask<Result<string>> Look(string session, CancellationToken cancellationToken)
+    {
+        await delay.Wait(Pause, cancellationToken).ConfigureAwait(false);
+        return await pane.Capture(session, cancellationToken).ConfigureAwait(false);
+    }
+
+    // Clears the input line and reads it back: the box no longer holding the text means it cleared. An empty box shows Claude's placeholder
+    // ("Try ..."), so "cleared" can't mean "nothing after the mark". With no box to compare, the clear is sent and reported as unchecked.
+    private async ValueTask<string> Clear(string session, string? box, CancellationToken cancellationToken)
+    {
+        var sent = await pane.ClearInput(session, cancellationToken).ConfigureAwait(false);
+        if (sent.IsError)
+        {
+            return $"Clearing the input line failed ({sent.Error.Message}): clear it in the pane by hand, then run it again.";
+        }
+
+        if (box is null)
+        {
+            return "It sent Ctrl+U to clear what was typed; look at the pane before you run it again.";
+        }
+
+        var after = await Look(session, cancellationToken).ConfigureAwait(false);
+        var junk = Squeeze(box);
+        return after.IsSuccess && (InputBox(after.Value) is not { } now || junk.Length == 0 || !Squeeze(now).StartsWith(junk, StringComparison.Ordinal))
+            ? "It cleared the input box; run it again."
+            : "It could not clear the input box: clear that input line in the pane by hand, then run it again.";
+    }
+
+    private static string LastLines(string capture)
+    {
+        var lines = capture.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return lines.Length == 0 ? "(empty)" : string.Join(" | ", lines[^Math.Min(LastLineCount, lines.Length)..]);
     }
 
     /// <summary>Whether the input box (from the last line starting with the prompt mark to the next rule) still holds the start of the line. A pane with no prompt reads as submitted.</summary>
