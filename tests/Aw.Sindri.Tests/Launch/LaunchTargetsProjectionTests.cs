@@ -29,7 +29,7 @@ public sealed class LaunchTargetsProjectionTests
     [Fact]
     public void Before_the_first_probe_nothing_is_known()
     {
-        var view = LaunchTargetsProjection.Project(probed: null, probedAt: null, agents: null, new Dictionary<string, AgentSpend>(StringComparer.Ordinal), _asOf);
+        var view = LaunchTargetsProjection.Project(probed: null, probedAt: null, agents: null, TodaysSpend.None, _asOf);
 
         Assert.False(view.Probed);
         Assert.Empty(view.Targets);
@@ -42,7 +42,7 @@ public sealed class LaunchTargetsProjectionTests
     {
         var spend = new Dictionary<string, AgentSpend>(StringComparer.Ordinal) { [_claude.Value] = new(8m, 10, SpendBasis.PriceTable) };
 
-        var view = LaunchTargetsProjection.Project(Probed(), _at, Agents(), spend, _asOf);
+        var view = LaunchTargetsProjection.Project(Probed(), _at, Agents(), new TodaysSpend(spend, new HashSet<string>(StringComparer.Ordinal)), _asOf);
 
         Assert.True(view.Probed);
         Expect.Equal((_at, "kitty", _asOf), (view.ProbedAt, view.Terminal!.Label, view.AsOf));
@@ -57,7 +57,7 @@ public sealed class LaunchTargetsProjectionTests
     {
         var agents = new AgentSettings(SoftLimit: null, new Dictionary<string, AgentLimits>(StringComparer.Ordinal) { [_codex.Value] = new(DailyBudget: 5m) });
 
-        var view = LaunchTargetsProjection.Project(Probed(), _at, agents, new Dictionary<string, AgentSpend>(StringComparer.Ordinal), _asOf);
+        var view = LaunchTargetsProjection.Project(Probed(), _at, agents, TodaysSpend.None, _asOf);
 
         Expect.Equal(LaunchBudgetState.NoUsageReader, view.Targets[1].Budget.State);   // the state OpenItem and the launcher refuse as SND-LAUNCH-010
         Expect.Equal(LaunchBudgetState.NoUsageReader, LaunchBudgets.Of(agents, _codex, (AgentSpend?)null));

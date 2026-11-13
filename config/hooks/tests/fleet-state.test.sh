@@ -56,9 +56,9 @@ step permission-request asking approval Bash
 cp "$FILE" "$WORK/before-notification"
 step notification-permission asking approval Bash   # the notification that follows the request leaves the file as it is
 check "permission_prompt after the request: the file is byte-identical" "$(cmp -s "$FILE" "$WORK/before-notification" && echo same || echo changed)" "same"
-step post-tool-use running - -
+step post-tool-use running - Bash   # an approval ends: running again, the finished tool is the last tool
 step notification-elicitation asking input -
-step post-tool-use running - -
+step post-tool-use running - Bash
 step notification-idle idle - -
 cp "$FILE" "$WORK/before-other"
 run notification-other
@@ -89,10 +89,10 @@ check "PostToolUse on an unparseable file: exit 0, untouched" "$RC:$(cat "$FILE"
 
 # --- no payload text in the file ---
 fresh
-for f in session-start prompt-submit permission-request notification-permission notification-elicitation post-tool-use stop session-end; do run "$f"; done
+for f in session-start prompt-submit permission-request notification-permission notification-elicitation post-tool-use pre-tool-use stop session-end; do run "$f"; done
 run permission-request
 check "no tool_input, command, message or prompt in the file" "$(grep -cE 'tool_input|"command"|"message"|List files|list the files|needs your' "$FILE")" "0"
-check "only schema keys" "$(jq -r 'keys | join(",")' "$FILE")" "agentPid,agentStartTicks,at,cwd,env,event,provider,reason,schema,sessionId,state,tool,transcript"
+check "only schema keys (approval ask: tool, no toolAt)" "$(jq -r 'keys | join(",")' "$FILE")" "agentPid,agentStartTicks,at,cwd,env,event,provider,reason,schema,sessionId,state,tool,transcript"
 
 # --- modes: file 0600, directories 0700, marker ---
 check "file mode 0600" "$(mode "$FILE")" "600"
@@ -115,10 +115,41 @@ check "PostToolUse with no file: exit 0, no file, no output, no jq" "$rc:$([ -e 
 run prompt-submit
 cp "$FILE" "$WORK/running"; rm -f "$WORK/jq-calls"
 PATH="$SHIM:$PATH" bash "$HOOK" < "$FIX/post-tool-use.json" > "$WORK/o" 2>&1; rc=$?
-check "PostToolUse on a running file: unchanged, no jq" "$rc:$(cmp -s "$FILE" "$WORK/running" && echo same || echo changed):$(jqcalls)" "0:same:0"
+check "PostToolUse on a running file: tool written, no jq" "$rc:$(field '[.state, .event, .tool] | join(" ")'):$(valid "$FILE"):$(jqcalls)" "0:running PostToolUse Bash:valid:0"
 run permission-request; rm -f "$WORK/jq-calls"
 PATH="$SHIM:$PATH" bash "$HOOK" < "$FIX/post-tool-use.json" > "$WORK/o" 2>&1; rc=$?
 check "PostToolUse on an asking file: running, one jq" "$rc:$(field .state):$(jqcalls)" "0:running:1"
+
+# --- the last tool: PreToolUse and PostToolUse write tool + toolAt (the name only) into a running file ---
+STAMP='^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[.][0-9]{3}Z$'
+fresh; run prompt-submit
+check "UserPromptSubmit: running, no tool yet" "$(field '.tool // "-"'):$(field '.toolAt // "-"')" "-:-"
+: > "$WORK/jq-calls"
+PATH="$SHIM:$PATH" bash "$HOOK" < "$FIX/pre-tool-use.json" > "$WORK/o" 2>&1; rc=$?
+check "PreToolUse on a running file: exit 0, silent, no jq" "$rc:$(cat "$WORK/o"):$(jqcalls)" "0::0"
+check "PreToolUse: running with tool Read" "$(field '[.state, .event, .tool] | join(" ")')" "running PreToolUse Read"
+check "PreToolUse: toolAt is a millisecond UTC stamp equal to at" "$(field '[.toolAt, .at] | map(test("'"$STAMP"'")) | all'):$(field '.toolAt == .at')" "true:true"
+check "PreToolUse: schema-valid" "$(valid "$FILE")" "valid"
+check "PreToolUse: only schema keys" "$(jq -r 'keys | join(",")' "$FILE")" "agentPid,agentStartTicks,at,cwd,env,event,provider,schema,sessionId,state,tool,toolAt,transcript"
+check "PreToolUse: no tool_input, key or secret from it in the file" "$(grep -cE 'tool_input|file_path|Sneaky|canary-7f3a|README' "$FILE")" "0"
+check "PreToolUse: file mode 0600, no temp file left" "$(mode "$FILE"):$(ls -A "$AW_FLEET_DIR/claude-code" | grep -c '^\.tmp')" "600:0"
+run post-tool-use
+check "PostToolUse replaces tool and event" "$(field '[.state, .event, .tool] | join(" ")')" "running PostToolUse Bash"
+check "PostToolUse: schema-valid, one line" "$(valid "$FILE"):$(wc -l < "$FILE" | tr -d ' ')" "valid:1"
+check "PostToolUse: no tool_input or output text in the file" "$(grep -cE 'tool_input|tool_response|README|List files' "$FILE")" "0"
+run stop
+check "Stop drops the last tool" "$(field '[.state, (.tool // "-"), (.toolAt // "-")] | join(" ")'):$(valid "$FILE")" "idle - -:valid"
+cp "$FILE" "$WORK/idle"; run pre-tool-use
+check "PreToolUse on an idle file: unchanged" "$(cmp -s "$FILE" "$WORK/idle" && echo same || echo changed)" "same"
+run permission-request; cp "$FILE" "$WORK/asking"; run pre-tool-use
+check "PreToolUse on an asking file: unchanged (a parallel call must not undo the ask)" "$(cmp -s "$FILE" "$WORK/asking" && echo same || echo changed)" "same"
+fresh; run pre-tool-use
+check "PreToolUse with no file: running with the tool (hook installed mid-turn)" "$(field '[.state, .tool] | join(" ")'):$(valid "$FILE")" "running Read:valid"
+sed 's/"tool_name": *"Read"/"tool_name":"bad tool\/x"/' "$FIX/pre-tool-use.json" > "$WORK/bad-tool.json"
+cp "$FILE" "$WORK/before-bad"; bash "$HOOK" < "$WORK/bad-tool.json"
+check "a tool name outside the pattern on a running file: unchanged" "$(cmp -s "$FILE" "$WORK/before-bad" && echo same || echo changed)" "same"
+fresh; run permission-request
+check "the approval ask still writes tool and no toolAt" "$(field '[.state, .reason, .tool, (.toolAt // "-")] | join(" ")'):$(valid "$FILE")" "asking approval Bash -:valid"
 
 # --- refusals: exit 0, no file, no output ---
 refuse() { # <label> <fleet-dir> <stdin-file>
@@ -217,7 +248,7 @@ budget_ms=100; [ "${CI:-}" = true ] && budget_ms=250
 now_us() { if [ -n "${EPOCHREALTIME:-}" ]; then echo "${EPOCHREALTIME/./}"; else perl -MTime::HiRes=time -e 'printf "%d\n", time * 1000000'; fi; }
 fresh
 slowest=0
-for f in session-start prompt-submit permission-request notification-permission post-tool-use stop session-end; do
+for f in session-start prompt-submit permission-request notification-permission post-tool-use pre-tool-use stop session-end; do
   best=999999
   for _ in 1 2 3 4 5; do
     s="$(now_us)"; bash "$HOOK" < "$FIX/$f.json"; e="$(now_us)"

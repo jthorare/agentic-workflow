@@ -70,6 +70,30 @@ public sealed class RepoHealthTests
         Assert.Equal(("missing", null), (health.State, health.EmbeddingsPercent));
     }
 
+    // #3342: the first build of a repo on its default branch starts on code-index-main-move's next tick, so the card can say "first build queued" without guessing.
+    [Fact, Trait("Lane", "unit")]
+    public void A_repo_with_no_index_and_its_head_on_the_default_branch_is_queued()
+    {
+        var health = Of(Missing(), new IndexRepoHead(_repo, _new, OnDefaultBranch: true));
+
+        Assert.Equal(("queued", null), (health.State, health.Waiting));
+    }
+
+    // #3181: off its default branch no build ever starts, so the repo must stay missing ("needs a look"), never queued.
+    [Fact, Trait("Lane", "unit")]
+    public void A_repo_with_no_index_off_its_default_branch_stays_missing()
+        => Assert.Equal("missing", Of(Missing(), new IndexRepoHead(_repo, _new, OnDefaultBranch: false)).State);
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_first_build_that_failed_inside_its_backoff_is_waiting_not_queued()
+        => Assert.Equal("waiting", Of(Missing(), new IndexRepoHead(_repo, _new, OnDefaultBranch: true), Job(JobState.Failed, TimeSpan.FromSeconds(10))).State);
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_first_build_that_runs_is_building_not_queued()
+        => Assert.Equal("building", Of(Missing(), new IndexRepoHead(_repo, _new, OnDefaultBranch: true), Job(JobState.Running, TimeSpan.Zero)).State);
+
+    private static RepoStatus Missing() => new(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null);
+
     [Fact, Trait("Lane", "unit")]
     public void A_detail_that_is_not_a_count_gives_no_percent() =>
         Assert.Null(Of(Built("unavailable", "SND-CODEIDX-006"), new IndexRepoHead(_repo, _old, OnDefaultBranch: true)).EmbeddingsPercent);
