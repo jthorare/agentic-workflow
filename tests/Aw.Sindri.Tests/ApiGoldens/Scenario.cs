@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Aw.Context.Core.Extract;
 using Aw.Context.Core.Graph;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Host;
@@ -119,7 +120,8 @@ internal sealed class Scenario(GoldenHost host)
             {
                 await ViewScenarios.CatchUp(host, ct);
                 var running = await jobs.Running(ct);
-                if (running.IsSuccess && running.Value.Any(j => j.Progress.Count > 0))
+                // The files line, not just any line: the golden carries its filesDone and filesTotal (#3394).
+                if (running.IsSuccess && running.Value.Any(j => j.Progress.Any(l => MapBuildFiles.From(l.Line) is not null)))
                 {
                     break;
                 }
