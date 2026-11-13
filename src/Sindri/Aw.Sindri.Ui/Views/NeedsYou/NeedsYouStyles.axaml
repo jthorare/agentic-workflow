@@ -100,6 +100,8 @@
        (InboxRowSelectLine) draws "selected" while the row has focus. Focus is the 2 px PrimaryHover ring of every focusable row
        (Queue item-row, FluentOverrides); the line's padding gives the ring's extra 1 px back, so the content sits at 17,9 in every state. -->
   <Style Selector="Border.inbox-row">
+    <!-- The frame draws its own focus ring (below); without this the app-wide adorner (FluentOverrides, 2 px at Margin -4) draws a second one around it. Same as Queue's item-row. -->
+    <Setter Property="FocusAdorner" Value="{x:Null}" />
     <Setter Property="MinHeight" Value="56" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="BorderBrush" Value="Transparent" />
