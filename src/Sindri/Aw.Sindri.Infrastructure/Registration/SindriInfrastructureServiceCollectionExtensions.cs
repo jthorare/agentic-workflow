@@ -169,6 +169,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IModelHistory, SqliteModelHistory>().AddSingleton<IModelPickSettings, ProfileModelPickSettings>().AddSingleton<IModelPickHistory, ModelPickHistoryAdapter>()   // the pick's ports read the approved profile and the model-history view
             .AddSingleton<IJobViews, SqliteJobViews>().AddSingleton<IServicePauses, ViewServicePauses>()
             .AddSingleton<IProfileSource>(sp => new YamlProfileSource(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory)))
+            .AddSingleton<IProfileFile>(static sp => new SettingsProfileFile(sp.GetRequiredService<SindriSettings>()))   // #3113: a profile file the source can't read is not a missing one
             .AddSingleton<IOldApprovalsCleanup, ApprovalsDirectoryCleanup>()   // #2258 PR 1: run once at start by serve
             .AddSingleton<IBoxLimitsSource>(sp => new HeavyCapSource(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))
             .AddSingleton(static sp => new LiveApprovedProfile(sp.GetRequiredService<IProfileSource>(), sp.GetRequiredService<SindriSettings>().ProfilePath)).AddSingleton<IApprovedProfile>(static sp => sp.GetRequiredService<LiveApprovedProfile>()).AddSingleton<IProfileCache>(static sp => sp.GetRequiredService<LiveApprovedProfile>())

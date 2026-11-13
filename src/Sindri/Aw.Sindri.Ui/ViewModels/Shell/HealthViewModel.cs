@@ -148,6 +148,9 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     /// <summary>The live profile's hash from the last status, when it loads; the typed approval is tied to it.</summary>
     internal string? LiveProfile { get; private set; }
 
+    /// <summary>True when the last status had no profile yet (a brand-new home), which is not a fault: the pill, the Todo card and the From elsewhere line read it.</summary>
+    public bool IsProfileMissing { get; private set => Set(ref field, value); }
+
     /// <summary>A status: the card's words, or a version mismatch.</summary>
     /// <param name="url">Where the API answered.</param>
     /// <param name="status">The status.</param>
@@ -167,6 +170,7 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
 
         _url = url;
         (_health, _projectedAt) = (status.Health, status.Views?.ProjectedAt);
+        IsProfileMissing = StatusText.IsMissing(status.Profile);
         Sessions = status.Sessions;
         Detail.Show(url, status);
         Api = url.Authority;
@@ -283,7 +287,7 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     // The pill for the state now (under the gate): its age counts from the last event, status or answered ping.
     private void Word()
     {
-        Pill.Show(State, clock.GetUtcNow() - (_projectedAt ?? _heard), _failedRefreshes >= NotRespondingAfter, _health);
+        Pill.Show(State, clock.GetUtcNow() - (_projectedAt ?? _heard), _failedRefreshes >= NotRespondingAfter, _health, IsProfileMissing);
         StripName = Pill.IsDataStale ? HealthLine + " · " + Labels.Stale : HealthLine;
         ShowSystemState();
     }
