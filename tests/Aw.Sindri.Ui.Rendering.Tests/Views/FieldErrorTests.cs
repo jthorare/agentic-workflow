@@ -7,10 +7,11 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Views.Controls;
 using Aw.Sindri.Ui.Views.Icons;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Rendering.Tests.Views;
 
 /// <summary>
 /// The field error box (#3234): a failed field draws its input's border red and an error line under it. The error text holds 4.5:1 and the
@@ -18,6 +19,7 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 /// reads the line as text and the input by its caption.
 /// </summary>
 [Lane(TestLane.Integration)]
+[Collection(HeadlessWindows.Name)]
 public sealed class FieldErrorTests
 {
     private const string Sentence = "Short ids use lowercase letters, numbers and dashes.";
