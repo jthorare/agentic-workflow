@@ -7,4 +7,5 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <param name="MapVersion">The current map's version ('v13'), or null when no map is built.</param>
 /// <param name="Pins">Every pin of the live profile and its repos in file order, then the approved pins the live profile removed.</param>
 /// <param name="Rebuild">Why the map is, or is not, being rebuilt.</param>
-internal sealed record ContextPinsView(int ApiVersion, string? Repo, string FileHash, string? MapVersion, IReadOnlyList<ContextPinRow> Pins, ContextRebuildView Rebuild);
+/// <param name="ProfileError">The error line naming the profile file when it is invalid (the answer is then the no-profile one: no pins), or null (#3594).</param>
+internal sealed record ContextPinsView(int ApiVersion, string? Repo, string FileHash, string? MapVersion, IReadOnlyList<ContextPinRow> Pins, ContextRebuildView Rebuild, string? ProfileError = null);

@@ -5563,13 +5563,15 @@ static Aw.Sindri.Core.Items.InstanceScope.Unknown(Aw.Kernel.Error! error, string
 Aw.Sindri.Core.Launch.ILauncher.Probe(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Launch.LaunchProbed!>
 Aw.Sindri.Core.Launch.LaunchProbed
 Aw.Sindri.Core.Launch.LaunchProbed.<Clone>$() -> Aw.Sindri.Core.Launch.LaunchProbed!
-Aw.Sindri.Core.Launch.LaunchProbed.Deconstruct(out Aw.Sindri.Core.Launch.TerminalFacts! Terminal, out Aw.Sindri.Core.Launch.HostFacts! Host, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.TargetFacts!>! Targets, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.RepoFacts!>! Repos) -> void
+Aw.Sindri.Core.Launch.LaunchProbed.Deconstruct(out Aw.Sindri.Core.Launch.TerminalFacts! Terminal, out Aw.Sindri.Core.Launch.HostFacts! Host, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.TargetFacts!>! Targets, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.RepoFacts!>! Repos, out string? Stopped) -> void
 Aw.Sindri.Core.Launch.LaunchProbed.Equals(Aw.Sindri.Core.Launch.LaunchProbed? other) -> bool
 Aw.Sindri.Core.Launch.LaunchProbed.Host.get -> Aw.Sindri.Core.Launch.HostFacts!
 Aw.Sindri.Core.Launch.LaunchProbed.Host.init -> void
-Aw.Sindri.Core.Launch.LaunchProbed.LaunchProbed(Aw.Sindri.Core.Launch.TerminalFacts! Terminal, Aw.Sindri.Core.Launch.HostFacts! Host, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.TargetFacts!>! Targets, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.RepoFacts!>! Repos) -> void
+Aw.Sindri.Core.Launch.LaunchProbed.LaunchProbed(Aw.Sindri.Core.Launch.TerminalFacts! Terminal, Aw.Sindri.Core.Launch.HostFacts! Host, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.TargetFacts!>! Targets, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.RepoFacts!>! Repos, string? Stopped = null) -> void
 Aw.Sindri.Core.Launch.LaunchProbed.Repos.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.RepoFacts!>!
 Aw.Sindri.Core.Launch.LaunchProbed.Repos.init -> void
+Aw.Sindri.Core.Launch.LaunchProbed.Stopped.get -> string?
+Aw.Sindri.Core.Launch.LaunchProbed.Stopped.init -> void
 Aw.Sindri.Core.Launch.LaunchProbed.Targets.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.TargetFacts!>!
 Aw.Sindri.Core.Launch.LaunchProbed.Targets.init -> void
 Aw.Sindri.Core.Launch.LaunchProbed.Terminal.get -> Aw.Sindri.Core.Launch.TerminalFacts!

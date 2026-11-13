@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
@@ -83,5 +84,26 @@ public sealed class ProbeLaunchTargetsTests
 
         Assert.True(result.IsError);
         Assert.Empty(Probes);
+    }
+
+    [Fact]
+    public async Task An_invalid_profile_file_stops_the_probe_once_with_its_reason_and_keeps_the_last_targets()
+    {
+        _launcher.Probed = _launcher.Probed with { Targets = [Target("claude-code", present: true)] };
+        var service = await Service();
+        _ = await service.Handle(A.ProbeLaunchTargetsRequest().Build(), Token);
+        _launcher.Probed = _launcher.Probed with { Targets = [Target("claude-code", present: false)] };
+        _slice.Profiles.Live = SindriErrors.ProfileInvalid.With("/home/thor/profile.yaml: line 3: unknown key 'tennant'");
+
+        var first = await service.Handle(A.ProbeLaunchTargetsRequest().Build(), Token);
+        var again = await service.Handle(A.ProbeLaunchTargetsRequest().Build(), Token);
+
+        Assert.True(first.IsSuccess, first.IsError ? first.Error.ToString() : null);
+        Assert.True(first.Value.Changed);
+        Assert.False(again.Value.Changed);
+        Assert.Equal(2, Probes.Count);
+        var stopped = _slice.Events.Payload<LaunchProbed>(Probes[1]).Value;
+        Assert.Contains("/home/thor/profile.yaml", stopped.Stopped, StringComparison.Ordinal);
+        Assert.Equal([("claude-code", true)], stopped.Targets.Select(static t => (t.Id.Value, t.Present)));
     }
 }

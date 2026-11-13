@@ -5,6 +5,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Kernel;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Profile;
@@ -509,4 +510,19 @@ public sealed class GetContextPinsServiceTests
     private void Refresh(JobState state, TimeSpan endedAgo, long sequence, string? code = null, params string[] lines) =>
         _jobs.Put(new JobRow(JobId.New(_h.Ids), ContextMapRefreshService.RefreshKind, JobKey.From("refresh"), Item: null, Repo: null, Service: null, state,
             "service:context-map-refresh", _now - endedAgo - TimeSpan.FromSeconds(5), _now - endedAgo, [.. lines.Select((l, i) => new JobLine(i + 1, l, _now))], Rounds: 0, Summary: null, code, Result: null, CancelledBy: null, Sequence: sequence));
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_invalid_live_profile_file_reads_as_no_pins_with_an_error_line_naming_the_file()
+    {
+        _h.Clock.SetUtcNow(_now);
+        _h.Profiles.Live = SindriErrors.ProfileInvalid.With("/home/thor/profile.yaml: line 3: unknown key 'tennant'");
+        var scopes = new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts());
+        var service = new GetContextPinsService(scopes, _engine.Proxy, _h.Profiles, _h.Profiles, new MapRebuildState(scopes, () => _engine.Proxy, _jobs, _h.Clock), _jobs);
+
+        var read = await service.Handle(new GetContextPinsRequest(null), Ct);
+
+        Assert.True(read.IsSuccess, read.IsError ? read.Error.ToString() : null);
+        Assert.Empty(read.Value.Pins);
+        Assert.Contains("/home/thor/profile.yaml", read.Value.ProfileError, StringComparison.Ordinal);
+    }
 }

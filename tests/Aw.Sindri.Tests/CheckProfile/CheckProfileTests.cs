@@ -1,3 +1,4 @@
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Profile;
@@ -82,6 +83,24 @@ public sealed class CheckProfileTests
 
         var check = Assert.Single(Checks());
         Assert.Equal((_a.Hash, false), (check.Live!.Value, check.Drifted));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_invalid_live_profile_file_is_recorded_as_a_check_with_no_live_hash()
+    {
+        var grant = await Approve(_a);
+        _h.Profiles.Live = _a;
+        _ = await Check(grant);
+        _h.Profiles.Live = SindriErrors.ProfileInvalid.With("/home/thor/profile.yaml: line 3: unknown key 'tennant'");
+
+        var result = await new CheckProfileService(_h.Profiles, _h.Profiles, _h.Store, _h.Events, _h.Callers, _h.Ids).Handle(new CheckProfileRequest(grant), Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        _ = Assert.NotNull(result.Value.Sequence);
+        var last = Checks()[^1];
+        Assert.Null(last.Live);
+        Assert.False(last.Drifted);
+        Assert.Equal(2, Checks().Count);
     }
 
     private async Task<LeaseGrant> Approve(LoadedProfile profile)
