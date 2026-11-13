@@ -148,4 +148,46 @@ public sealed class NeedsYouOutlineTests : FrameHost
         Assert.Equal(before, Inset(frame));
         Frame(window, "needs-you-outlined-selected");
     });
+
+    private static double Relative(Color c)
+    {
+        static double Lin(byte v) { var x = v / 255d; return x <= 0.03928 ? x / 12.92 : Math.Pow((x + 0.055) / 1.055, 2.4); }
+        return (0.2126 * Lin(c.R)) + (0.7152 * Lin(c.G)) + (0.0722 * Lin(c.B));
+    }
+
+    private static double Ratio(Color a, Color b)
+    {
+        var (x, y) = (Relative(a), Relative(b));
+        return (Math.Max(x, y) + 0.05) / (Math.Min(x, y) + 0.05);
+    }
+
+    // #3506: a selected inbox row that also has keyboard focus (the usual case, selecting is the focus) lost its selected border, because the focus style
+    // restates the border brush after the selected one. The selected fill alone is 1.18:1 on the canvas, so nothing marked the selection.
+    // Accepted fixes: the ring's brush differs from a focused-only row's (a different colour while selected), or its width differs, or a box shadow adds a selected edge
+    // inside it. Whatever differs must reach 3:1 on the selected row's fill. A fix that keeps the same ring and draws the selected border in a child control is not
+    // seen here; if that is the fix, change the marker below to read that child.
+    [Fact]
+    public Task A_selected_focused_row_still_shows_a_selected_marker() => OnUi(async () =>
+    {
+        Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
+        var focusedOnly = new Border { Classes = { "inbox-row" }, Width = 400, Height = 56 };
+        var both = new Border { Classes = { "inbox-row", "selected" }, Width = 400, Height = 56 };
+        var window = new Window { Content = new StackPanel { Children = { focusedOnly, both } }, Width = 480, Height = 240 };
+        window.Show();
+        ((IPseudoClasses)focusedOnly.Classes).Set(":focus-visible", value: true);
+        ((IPseudoClasses)both.Classes).Set(":focus-visible", value: true);
+        Settle(window);
+
+        var plain = (BrushOf(focusedOnly), focusedOnly.BorderThickness, focusedOnly.BoxShadow.ToString());
+        var marked = (BrushOf(both), both.BorderThickness, both.BoxShadow.ToString());
+        var fill = ((ISolidColorBrush)both.Background!).Color;
+
+        Assert.True(!plain.Equals(marked), $"the selected and focused row draws {marked.Item1}, thickness {marked.Item2}, shadow '{marked.Item3}', the same as a focused-only row: no selected marker");
+        // Of what differs, the colour that is not the row's own fill must stand out from it.
+        var markerColour = marked.Item1 != plain.Item1 ? marked.Item1 : BrushOf(both);
+        Assert.True(Ratio(markerColour, fill) >= 3.0, $"the marker {markerColour} on the row fill {fill} is {Ratio(markerColour, fill):0.00}:1, below 3:1");
+        window.Close();
+        await Task.CompletedTask;
+    });
 }
