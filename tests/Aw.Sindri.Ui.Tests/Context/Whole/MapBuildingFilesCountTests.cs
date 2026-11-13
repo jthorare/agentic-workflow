@@ -11,6 +11,8 @@ namespace Aw.Sindri.Ui.Tests.Context.Whole;
 [Lane(TestLane.Unit)]
 public sealed class MapBuildingFilesCountTests
 {
+    private static readonly DateTimeOffset _now = new(2026, 1, 1, 2, 0, 0, TimeSpan.Zero);   // why: the view model ages "startedAt" against the clock it is given, so the tests set it
+
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private static async Task<ContextPageViewModel> Page(string building)
@@ -19,7 +21,7 @@ public sealed class MapBuildingFilesCountTests
             "{\"type\":\"about:blank\",\"title\":\"SND-CONTEXT-030\",\"status\":404,\"detail\":\"there is no map yet\",\"building\":" + building + ",\"traceId\":\"<trace>\"}");
         var api = new FakeSindriApi { WholeMapAnswer = _ => answer };
         var clipboard = new FakeClipboard();
-        var clock = new FakeTimeProvider(A.Noon);
+        var clock = new FakeTimeProvider(_now);
         var catalog = new CatalogViewModel(clipboard, clock);
         var url = new Uri("http://127.0.0.1:1/");
         catalog.Show(url, api, (await api.Commands(url, Token)).Value);
