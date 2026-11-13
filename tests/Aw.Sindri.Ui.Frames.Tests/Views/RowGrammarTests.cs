@@ -68,9 +68,11 @@ public sealed class RowGrammarTests
         Assert.True(row.Focus(NavigationMethod.Directional));
         Settle(window);
 
-        var strip = row.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_ActionsBox");
+        var strip = Assert.IsType<RowActionsStrip>(Assert.Single(row.GetVisualChildren()));   // the row's only child, and only while it is hot
 
         Assert.True(strip.IsVisible);
+        Assert.Equal(row.Bounds.Width - 24, strip.Bounds.Right, 0.5);   // 24 px from the right edge, over the age and waits-on text
+        Assert.True(strip.Bounds.X < row.Layout.AgeRect.Right);
         Assert.Equal(Brush("Brush.Surface2"), Assert.IsType<ISolidColorBrush>(strip.Background, exactMatch: false).Color);
         Assert.Equal(8, strip.Padding.Left, 0.01);
         window.Close();

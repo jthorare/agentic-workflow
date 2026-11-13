@@ -133,6 +133,7 @@ internal sealed partial class Row : Control
         {
             Watch(DataContext as IRowItem);
             Refresh();
+            UpdateStrip();
         }
         else if (change.Property == ColumnsProperty || change.Property == VisibleColumnsProperty)
         {
@@ -141,6 +142,11 @@ internal sealed partial class Row : Control
         else if (change.Property == IsKeyboardFocusWithinProperty)
         {
             Classes.Set("cursor", IsKeyboardFocusWithin);
+            UpdateStrip();
+        }
+        else if (change.Property == IsPointerOverProperty)
+        {
+            UpdateStrip();
         }
     }
 
@@ -188,6 +194,7 @@ internal sealed partial class Row : Control
         _glyph = RowGlyphs.For(item.Kind, item.StateClass, item.StateKey);
         AutomationProperties.SetName(this, SpokenName(item, StateWord(item)));
         DropLayouts();
+        UpdateStrip();
     }
 
     // "<state>, <title>, <facts>, waits on <who>, <age>": what a screen reader says for the row, and what aw-ui-driver reports as its text.
