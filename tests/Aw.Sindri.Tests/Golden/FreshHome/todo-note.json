@@ -1,0 +1,19 @@
+{
+  "asOf": {
+    "cursor": 0,
+    "ledgerHead": 0,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "state": "not set up",
+  "vault": null,
+  "note": null,
+  "lastCheckAt": null,
+  "lastSyncAt": null,
+  "lastError": null,
+  "conflicts": [],
+  "hold": null,
+  "picks": [],
+  "cantSync": []
+}

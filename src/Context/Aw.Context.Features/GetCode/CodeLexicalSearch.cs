@@ -33,7 +33,7 @@ internal sealed class CodeLexicalSearch(IRepoReader repos, ICodeSearch search, L
 
     private async ValueTask Run(LexicalPass pass, CodeLexicalRequest request, CancellationToken cancellationToken)
     {
-        var inScope = ScopeRules.Resolve(request.Settings, request.Scope.Repos, request.Scope.Caller);
+        var inScope = ScopeRules.Resolve(request.Settings, request.Scope.Repos, request.Scope.Caller, request.Scope.LeftOut);
         var allowed = inScope.IsError ? [] : inScope.Value;
         var implementing = Implementing(request.View, out var capped);
         pass.Capped = capped;
