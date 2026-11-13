@@ -112,7 +112,7 @@ internal sealed partial class GraphWorkflow
 
         // why: once the block has answered, the node's result is decided; clearing _current first and writing detached means a cancel now cannot overwrite 'succeeded' with 'cancelled'
         _current = null;
-        await Record(new NodeRun(_run, node.Id, 0, outcome.Status, outcome.Input, outcome.Output, Truncated: false, outcome.Error, Usage: null, Raw: outcome.Raw), _detached).ConfigureAwait(true);
+        await Record(new NodeRun(_run, node.Id, 0, outcome.Status, outcome.Input, outcome.Output, outcome.Truncated, outcome.Error, Usage: null, Raw: outcome.Raw), _detached).ConfigureAwait(true);
         return outcome;
     }
 

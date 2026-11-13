@@ -8,7 +8,7 @@ using Aw.Sindri.Core.Views;
 namespace Aw.Sindri.Features.CodeIndexReads;
 
 /// <summary>Lays the live heads and the build jobs over a list of repo statuses, for the status read and for GET /status's health.</summary>
-internal sealed class RepoHealths(IRepoHeads heads, IJobViews jobs, TimeProvider clock)
+internal sealed class RepoHealths(IRepoHeads heads, IJobViews jobs, TimeProvider clock, QueuedClock queued)
 {
     // Stale, building and waiting come from the live heads and the build jobs; either read failing leaves the file state as it is.
     internal async ValueTask<IReadOnlyList<RepoHealth>> Of(CodeIndexScope scope, IReadOnlyList<RepoStatus> repos, CancellationToken cancellationToken)
@@ -27,6 +27,13 @@ internal sealed class RepoHealths(IRepoHeads heads, IJobViews jobs, TimeProvider
         }
 
         var now = clock.GetUtcNow();
-        return [.. repos.Select(r => RepoHealth.Of(r, headOf(r), runningOf(r.Repo.Value), [.. ended.Where(j => IndexBuildWords.IsBuildOf(j, r.Repo.Value))], now))];
+        return [.. repos.Select(r => Looked(r, Timed(RepoHealth.Of(r, headOf(r), runningOf(r.Repo.Value), [.. ended.Where(j => IndexBuildWords.IsBuildOf(j, r.Repo.Value))], now), now, running.IsError)))];
     }
+
+    // why: a first build that never starts reads queued forever; how long it has is what makes it a problem (#3440). Timed before Looked: the rule reads QueuedFor.
+    // why: a failed running-jobs read can't tell queued from building, so it neither starts nor forgets the count (#3481)
+    private RepoHealth Timed(RepoHealth health, DateTimeOffset now, bool blind) => blind ? health with { QueuedFor = null } : health with { QueuedFor = queued.For(health.Repo, health.State == "queued", now) };
+
+    // why: doctor's rule is the one rule, so the System card and `sindri doctor` can't disagree (#3430)
+    private static RepoHealth Looked(RepoStatus status, RepoHealth health) => health with { NeedsLook = CodeIndexProblems.For(status, health) is not null };
 }

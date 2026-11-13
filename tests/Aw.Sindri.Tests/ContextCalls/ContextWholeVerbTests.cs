@@ -81,7 +81,7 @@ public sealed class ContextWholeVerbTests : IDisposable
         Assert.Contains("SND-CONTEXT-030", said, StringComparison.Ordinal);
         Assert.Contains("a map build is running since 2026-10-23 06:00 UTC (job JOB-7)", said, StringComparison.Ordinal);
         Assert.Contains("40 of 100 sources read", said, StringComparison.Ordinal);
-        Assert.Contains("150 of 412 files read", said, StringComparison.Ordinal);
+        Assert.Contains("150 of 412 files of the current repo read", said, StringComparison.Ordinal);
         Assert.Contains("last sync 2026-10-23 05:30 UTC", said, StringComparison.Ordinal);
         Assert.Contains("my-app, docs", said, StringComparison.Ordinal);
         Assert.Contains("approved 2026-10-23 05:00 UTC", said, StringComparison.Ordinal);

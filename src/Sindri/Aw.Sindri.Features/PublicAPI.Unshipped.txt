@@ -845,6 +845,10 @@ Aw.Sindri.Features.RegisterMcp.RegisterMcpResponse.Repo.init -> void
 Aw.Sindri.Features.RunDoctor.RunDoctorRequest
 Aw.Sindri.Features.RunDoctor.RunDoctorRequest.<Clone>$() -> Aw.Sindri.Features.RunDoctor.RunDoctorRequest!
 Aw.Sindri.Features.RunDoctor.RunDoctorRequest.Equals(Aw.Sindri.Features.RunDoctor.RunDoctorRequest? other) -> bool
+Aw.Sindri.Features.RunDoctor.RunDoctorRequest.Harnesses.get -> System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Doctor.DoctorCheck!>!>>?
+Aw.Sindri.Features.RunDoctor.RunDoctorRequest.Harnesses.init -> void
+Aw.Sindri.Features.RunDoctor.RunDoctorRequest.OnRow.get -> System.Action<Aw.Sindri.Core.Doctor.DoctorCheck!>?
+Aw.Sindri.Features.RunDoctor.RunDoctorRequest.OnRow.init -> void
 Aw.Sindri.Features.RunDoctor.RunDoctorRequest.RunDoctorRequest() -> void
 Aw.Sindri.Features.RunDoctor.RunDoctorResponse
 Aw.Sindri.Features.RunDoctor.RunDoctorResponse.<Clone>$() -> Aw.Sindri.Features.RunDoctor.RunDoctorResponse!
@@ -5570,3 +5574,110 @@ Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.NotModified.get -> bool
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.NotModified.init -> void
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.Tag.get -> string?
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.Tag.init -> void
+Aw.Sindri.Features.StartSession.StartSessionRequest
+Aw.Sindri.Features.StartSession.StartSessionRequest.<Clone>$() -> Aw.Sindri.Features.StartSession.StartSessionRequest!
+Aw.Sindri.Features.StartSession.StartSessionRequest.StartSessionRequest(Aw.Sindri.Core.Ids.RepoName Repo, Aw.Sindri.Core.Launch.AgentId Agent, string? Prompt, bool Worktree, Aw.Sindri.Core.Ids.ActId ActId) -> void
+Aw.Sindri.Features.StartSession.StartSessionRequest.Deconstruct(out Aw.Sindri.Core.Ids.RepoName Repo, out Aw.Sindri.Core.Launch.AgentId Agent, out string? Prompt, out bool Worktree, out Aw.Sindri.Core.Ids.ActId ActId) -> void
+Aw.Sindri.Features.StartSession.StartSessionRequest.Equals(Aw.Sindri.Features.StartSession.StartSessionRequest? other) -> bool
+Aw.Sindri.Features.StartSession.StartSessionRequest.Repo.get -> Aw.Sindri.Core.Ids.RepoName
+Aw.Sindri.Features.StartSession.StartSessionRequest.Repo.init -> void
+Aw.Sindri.Features.StartSession.StartSessionRequest.Agent.get -> Aw.Sindri.Core.Launch.AgentId
+Aw.Sindri.Features.StartSession.StartSessionRequest.Agent.init -> void
+Aw.Sindri.Features.StartSession.StartSessionRequest.Prompt.get -> string?
+Aw.Sindri.Features.StartSession.StartSessionRequest.Prompt.init -> void
+Aw.Sindri.Features.StartSession.StartSessionRequest.Worktree.get -> bool
+Aw.Sindri.Features.StartSession.StartSessionRequest.Worktree.init -> void
+Aw.Sindri.Features.StartSession.StartSessionRequest.ActId.get -> Aw.Sindri.Core.Ids.ActId
+Aw.Sindri.Features.StartSession.StartSessionRequest.ActId.init -> void
+override Aw.Sindri.Features.StartSession.StartSessionRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.StartSession.StartSessionRequest.GetHashCode() -> int
+override Aw.Sindri.Features.StartSession.StartSessionRequest.ToString() -> string!
+static Aw.Sindri.Features.StartSession.StartSessionRequest.operator !=(Aw.Sindri.Features.StartSession.StartSessionRequest? left, Aw.Sindri.Features.StartSession.StartSessionRequest? right) -> bool
+static Aw.Sindri.Features.StartSession.StartSessionRequest.operator ==(Aw.Sindri.Features.StartSession.StartSessionRequest? left, Aw.Sindri.Features.StartSession.StartSessionRequest? right) -> bool
+Aw.Sindri.Features.StartSession.StartedSession
+Aw.Sindri.Features.StartSession.StartedSession.<Clone>$() -> Aw.Sindri.Features.StartSession.StartedSession!
+Aw.Sindri.Features.StartSession.StartedSession.StartedSession(Aw.Sindri.Core.Ids.SessionId Id, Aw.Sindri.Core.Ids.ActId ActId, string! State, Aw.Sindri.Features.StartSession.StartedHost! Host) -> void
+Aw.Sindri.Features.StartSession.StartedSession.Deconstruct(out Aw.Sindri.Core.Ids.SessionId Id, out Aw.Sindri.Core.Ids.ActId ActId, out string! State, out Aw.Sindri.Features.StartSession.StartedHost! Host) -> void
+Aw.Sindri.Features.StartSession.StartedSession.Equals(Aw.Sindri.Features.StartSession.StartedSession? other) -> bool
+Aw.Sindri.Features.StartSession.StartedSession.Id.get -> Aw.Sindri.Core.Ids.SessionId
+Aw.Sindri.Features.StartSession.StartedSession.Id.init -> void
+Aw.Sindri.Features.StartSession.StartedSession.ActId.get -> Aw.Sindri.Core.Ids.ActId
+Aw.Sindri.Features.StartSession.StartedSession.ActId.init -> void
+Aw.Sindri.Features.StartSession.StartedSession.State.get -> string!
+Aw.Sindri.Features.StartSession.StartedSession.State.init -> void
+Aw.Sindri.Features.StartSession.StartedSession.Host.get -> Aw.Sindri.Features.StartSession.StartedHost!
+Aw.Sindri.Features.StartSession.StartedSession.Host.init -> void
+override Aw.Sindri.Features.StartSession.StartedSession.Equals(object? obj) -> bool
+override Aw.Sindri.Features.StartSession.StartedSession.GetHashCode() -> int
+override Aw.Sindri.Features.StartSession.StartedSession.ToString() -> string!
+static Aw.Sindri.Features.StartSession.StartedSession.operator !=(Aw.Sindri.Features.StartSession.StartedSession? left, Aw.Sindri.Features.StartSession.StartedSession? right) -> bool
+static Aw.Sindri.Features.StartSession.StartedSession.operator ==(Aw.Sindri.Features.StartSession.StartedSession? left, Aw.Sindri.Features.StartSession.StartedSession? right) -> bool
+Aw.Sindri.Features.StartSession.StartedHost
+Aw.Sindri.Features.StartSession.StartedHost.<Clone>$() -> Aw.Sindri.Features.StartSession.StartedHost!
+Aw.Sindri.Features.StartSession.StartedHost.StartedHost(string! Socket, string! Session, string! Pane) -> void
+Aw.Sindri.Features.StartSession.StartedHost.Deconstruct(out string! Socket, out string! Session, out string! Pane) -> void
+Aw.Sindri.Features.StartSession.StartedHost.Equals(Aw.Sindri.Features.StartSession.StartedHost? other) -> bool
+Aw.Sindri.Features.StartSession.StartedHost.Socket.get -> string!
+Aw.Sindri.Features.StartSession.StartedHost.Socket.init -> void
+Aw.Sindri.Features.StartSession.StartedHost.Session.get -> string!
+Aw.Sindri.Features.StartSession.StartedHost.Session.init -> void
+Aw.Sindri.Features.StartSession.StartedHost.Pane.get -> string!
+Aw.Sindri.Features.StartSession.StartedHost.Pane.init -> void
+override Aw.Sindri.Features.StartSession.StartedHost.Equals(object? obj) -> bool
+override Aw.Sindri.Features.StartSession.StartedHost.GetHashCode() -> int
+override Aw.Sindri.Features.StartSession.StartedHost.ToString() -> string!
+static Aw.Sindri.Features.StartSession.StartedHost.operator !=(Aw.Sindri.Features.StartSession.StartedHost? left, Aw.Sindri.Features.StartSession.StartedHost? right) -> bool
+static Aw.Sindri.Features.StartSession.StartedHost.operator ==(Aw.Sindri.Features.StartSession.StartedHost? left, Aw.Sindri.Features.StartSession.StartedHost? right) -> bool
+Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest
+Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest.<Clone>$() -> Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest!
+Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest.RemoveSessionWorktreeRequest(Aw.Sindri.Core.Ids.ActId ActId) -> void
+Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest.Deconstruct(out Aw.Sindri.Core.Ids.ActId ActId) -> void
+Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest.Equals(Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest? other) -> bool
+Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest.ActId.get -> Aw.Sindri.Core.Ids.ActId
+Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest.ActId.init -> void
+override Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest.GetHashCode() -> int
+override Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest.ToString() -> string!
+static Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest.operator !=(Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest? left, Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest? right) -> bool
+static Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest.operator ==(Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest? left, Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest? right) -> bool
+Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree
+Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.<Clone>$() -> Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree!
+Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.RemovedWorktree(Aw.Sindri.Core.Ids.ActId ActId, string! Path) -> void
+Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.Deconstruct(out Aw.Sindri.Core.Ids.ActId ActId, out string! Path) -> void
+Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.Equals(Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree? other) -> bool
+Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.ActId.get -> Aw.Sindri.Core.Ids.ActId
+Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.ActId.init -> void
+Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.Path.get -> string!
+Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.Path.init -> void
+override Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.Equals(object? obj) -> bool
+override Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.GetHashCode() -> int
+override Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.ToString() -> string!
+static Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.operator !=(Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree? left, Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree? right) -> bool
+static Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.operator ==(Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree? left, Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree? right) -> bool
+Aw.Sindri.Features.GetLastStart.GetLastStartRequest
+Aw.Sindri.Features.GetLastStart.GetLastStartRequest.<Clone>$() -> Aw.Sindri.Features.GetLastStart.GetLastStartRequest!
+Aw.Sindri.Features.GetLastStart.GetLastStartRequest.Equals(Aw.Sindri.Features.GetLastStart.GetLastStartRequest? other) -> bool
+Aw.Sindri.Features.GetLastStart.GetLastStartRequest.GetLastStartRequest() -> void
+override Aw.Sindri.Features.GetLastStart.GetLastStartRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetLastStart.GetLastStartRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetLastStart.GetLastStartRequest.ToString() -> string!
+static Aw.Sindri.Features.GetLastStart.GetLastStartRequest.operator !=(Aw.Sindri.Features.GetLastStart.GetLastStartRequest? left, Aw.Sindri.Features.GetLastStart.GetLastStartRequest? right) -> bool
+static Aw.Sindri.Features.GetLastStart.GetLastStartRequest.operator ==(Aw.Sindri.Features.GetLastStart.GetLastStartRequest? left, Aw.Sindri.Features.GetLastStart.GetLastStartRequest? right) -> bool
+Aw.Sindri.Features.GetLastStart.LastStartView
+Aw.Sindri.Features.GetLastStart.LastStartView.<Clone>$() -> Aw.Sindri.Features.GetLastStart.LastStartView!
+Aw.Sindri.Features.GetLastStart.LastStartView.LastStartView(string? Repo, string? Agent) -> void
+Aw.Sindri.Features.GetLastStart.LastStartView.Deconstruct(out string? Repo, out string? Agent) -> void
+Aw.Sindri.Features.GetLastStart.LastStartView.Equals(Aw.Sindri.Features.GetLastStart.LastStartView? other) -> bool
+Aw.Sindri.Features.GetLastStart.LastStartView.Repo.get -> string?
+Aw.Sindri.Features.GetLastStart.LastStartView.Repo.init -> void
+Aw.Sindri.Features.GetLastStart.LastStartView.Agent.get -> string?
+Aw.Sindri.Features.GetLastStart.LastStartView.Agent.init -> void
+override Aw.Sindri.Features.GetLastStart.LastStartView.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetLastStart.LastStartView.GetHashCode() -> int
+override Aw.Sindri.Features.GetLastStart.LastStartView.ToString() -> string!
+static Aw.Sindri.Features.GetLastStart.LastStartView.operator !=(Aw.Sindri.Features.GetLastStart.LastStartView? left, Aw.Sindri.Features.GetLastStart.LastStartView? right) -> bool
+static Aw.Sindri.Features.GetLastStart.LastStartView.operator ==(Aw.Sindri.Features.GetLastStart.LastStartView? left, Aw.Sindri.Features.GetLastStart.LastStartView? right) -> bool
+Aw.Sindri.Features.CodeIndexReads.RepoHealth.NeedsLook.get -> bool
+Aw.Sindri.Features.CodeIndexReads.RepoHealth.NeedsLook.init -> void
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.NeedsLook.get -> bool
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.NeedsLook.init -> void
