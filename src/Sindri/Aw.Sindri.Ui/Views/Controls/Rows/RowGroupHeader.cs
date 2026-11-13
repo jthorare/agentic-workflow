@@ -29,7 +29,6 @@ internal sealed class RowGroupHeader : Border
     private readonly TextBlock _heading = Caption(FontWeight.Medium);
     private readonly TextBlock _count = Caption(FontWeight.Normal);
     private readonly TextBlock _summary = Caption(FontWeight.Normal);
-    private IBrush? _restBackground;
     private INotifyPropertyChanged? _watchedGroup;
     private INotifyCollectionChanged? _watchedItems;
 
@@ -37,7 +36,7 @@ internal sealed class RowGroupHeader : Border
     {
         Classes.Add("group-header");
         AddHandler(PointerPressedEvent, OnHeaderPressed, RoutingStrategies.Bubble, handledEventsToo: true);
-        Background = Brushes.Transparent;   // a border with no fill is not hit-testable: the padding left of the chevron would swallow the click
+        SetValue(BackgroundProperty, Brushes.Transparent, Avalonia.Data.BindingPriority.Style);   // a border with no fill is not hit-testable: the padding left of the chevron would swallow the click. Style priority, so the sticky copy's template fill (Canvas) wins
         Focusable = true;   // the cursor can stand on a header: Left folds, Right unfolds
         _chevron.HorizontalAlignment = HorizontalAlignment.Center;
         _chevronBox = new Border { Name = "PART_Chevron", Width = ChevronBox, Height = ChevronBox, Background = Brushes.Transparent, Cursor = new Cursor(StandardCursorType.Hand), Child = _chevron };
@@ -94,13 +93,11 @@ internal sealed class RowGroupHeader : Border
 
         if (IsKeyboardFocusWithin)
         {
-            _restBackground = Background;
             _ = Bind(BackgroundProperty, this.GetResourceObservable("Brush.Surface2"));
         }
         else
         {
-            ClearValue(BackgroundProperty);
-            Background = _restBackground;   // back to the fill it had (Transparent, or the sticky copy's Canvas), not to nothing
+            ClearValue(BackgroundProperty);   // back to the fill under the local one: Transparent, or the sticky copy's template Canvas
         }
     }
 
