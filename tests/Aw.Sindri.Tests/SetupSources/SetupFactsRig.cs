@@ -22,8 +22,9 @@ internal sealed class SetupFactsRig : IAsyncDisposable
 
     private int _jobs;
 
-    internal SetupFactsRig(FakeProviderHost? host = null)
+    internal SetupFactsRig(FakeProviderHost? host = null, Core.Scheduling.IServicePauses? pauses = null)
     {
+        Pauses = pauses ?? new Server.NoPauses();
         Host = host ?? new FakeProviderHost().WithoutProvider(Core.Mcp.ProviderFile.Codex).WithoutProvider(Core.Mcp.ProviderFile.Cursor);
         Engine = MapEngineProxy.Create();
         Facts = new SetupFacts(
@@ -56,6 +57,9 @@ internal sealed class SetupFactsRig : IAsyncDisposable
     }
 
     private SourcesSetupReader Sources(PointerSecrets secrets) => new(Profiles, FakeContextEngine.Instance, secrets, new Core.Connections.ConnectionCredentials(Connections, ConnectionSecrets, secrets));
+
+    /// <summary>The services a human paused (none unless the test names them).</summary>
+    internal Core.Scheduling.IServicePauses Pauses { get; }
 
     internal InMemoryProfiles Profiles { get; } = new();
 

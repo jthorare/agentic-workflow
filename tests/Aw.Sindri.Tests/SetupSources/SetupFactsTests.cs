@@ -309,6 +309,45 @@ public sealed class SetupFactsTests
         Assert.Equal(new SetupProgress(40, 100, "files"), map.Progress);
     }
 
+    // #3593: the first map starts on the context-map-refresh service's next tick (up to a minute after the index build ends); the step must not blink back to To do in that gap.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_reads_building_between_the_index_build_and_the_first_map_tick()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Building, MapStage.Map, null), (map.Phase, map.Stage, map.Progress));
+    }
+
+    // Guard: a paused context-map-refresh service never starts the map, so the step stays what it is without the fix.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_stays_to_do_after_the_index_build_when_the_refresh_service_is_paused()
+    {
+        await using var rig = new SetupFactsRig(pauses: new Server.PausedServices(Core.Ids.ServiceName.From("context-map-refresh")));
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal(MapPhase.NotBuilt, map.Phase);
+    }
+
+    // Guard: a failed index build shows as failed, as before.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_still_fails_after_a_failed_index_build_with_the_refresh_service_running()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Failed, ["structure 3 of 10 files"], "SND-CODEIDX-010");
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Failed, "SND-CODEIDX-010", MapStage.Index), (map.Phase, map.FailureCode, map.Stage));
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task Map_step_fails_when_the_newest_ended_build_is_a_failed_code_index_build()
     {
