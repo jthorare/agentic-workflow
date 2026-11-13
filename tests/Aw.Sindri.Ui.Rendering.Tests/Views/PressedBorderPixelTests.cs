@@ -95,27 +95,22 @@ public sealed class PressedBorderPixelTests : FrameHost
         return (ratio, string.Create(CultureInfo.InvariantCulture, $"y={y} #{p.R:X2}{p.G:X2}{p.B:X2} outside #{outside.R:X2}{outside.G:X2}{outside.B:X2} inside #{inside.R:X2}{inside.G:X2}{inside.B:X2}"));
     }
 
-    // The top border row at mid-width, read at the given render scale (#3507): the best pixel within 3 device px of the laid-out top edge, its contrast on the surface
-    // 6 device px above and on the fill 6 below, whichever is lower. A press push that came back would put this border on a half device pixel at 1.5x.
+    // The laid-out top border row at mid-width, read at the given render scale (#3507): ONE row, y0 = the laid-out top edge in device pixels, its contrast on the surface
+    // 6 device px above and on the fill 6 below, whichever is lower. The edge comes from layout (the Bounds of the control and its parents), not TranslatePoint, which
+    // follows the render transform. A push of any size moves the border off this row, so the row reads canvas or a blend and the fact goes red.
     private static (double Ratio, string Detail) TopBorderContrast(Window window, Control control, double scale)
     {
         var pixel = Render(window, scale);
-        var edge = control.TranslatePoint(new Point(control.Bounds.Width / 2, 0), window)!.Value;
-        var (x, y0) = ((int)Math.Round(edge.X * scale, MidpointRounding.AwayFromZero), (int)Math.Floor(edge.Y * scale));
-        var (outside, inside) = (pixel(x, y0 - 6), pixel(x, y0 + 6));
-        var best = 0.0;
-        var detail = "";
-        for (var y = y0 - 3; y <= y0 + 3; y++)
+        Point layout = default;
+        for (Visual? v = control; v is not null && v != window; v = v.GetVisualParent())
         {
-            var p = pixel(x, y);
-            var ratio = Math.Min(Contrast(p, outside), Contrast(p, inside));
-            if (ratio > best)
-            {
-                (best, detail) = (ratio, string.Create(CultureInfo.InvariantCulture, $"y={y} #{p.R:X2}{p.G:X2}{p.B:X2} outside #{outside.R:X2}{outside.G:X2}{outside.B:X2} inside #{inside.R:X2}{inside.G:X2}{inside.B:X2}"));
-            }
+            layout += v.Bounds.Position;
         }
 
-        return (best, detail);
+        var (x, y0) = ((int)Math.Round((layout.X + (control.Bounds.Width / 2)) * scale, MidpointRounding.AwayFromZero), (int)Math.Round(layout.Y * scale, MidpointRounding.AwayFromZero));
+        var (outside, inside, p) = (pixel(x, y0 - 6), pixel(x, y0 + 6), pixel(x, y0));
+        var ratio = Math.Min(Contrast(p, outside), Contrast(p, inside));
+        return (ratio, string.Create(CultureInfo.InvariantCulture, $"scale {scale} y0={y0} row #{p.R:X2}{p.G:X2}{p.B:X2} above #{outside.R:X2}{outside.G:X2}{outside.B:X2} below #{inside.R:X2}{inside.G:X2}{inside.B:X2}"));
     }
 
     private static (Window Window, Border Sample) ClickableWindow(double scale)
