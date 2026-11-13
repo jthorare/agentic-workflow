@@ -64,6 +64,26 @@ public sealed class FailedAgentOutputTests
         Assert.True(JsonNode.Parse(row.Output!)!["truncated"]!.GetValue<bool>());
     }
 
+    [Fact]
+    public async Task A_failed_node_whose_input_passes_64_KB_stores_parseable_json_marked_truncated()
+    {
+        // why: #3486, the interpolated config of a failed run_agent node is its input; a big prompt must not land as cut, unparseable text
+        var runtime = new FakeAgentNodeRuntime();
+        await using var rig = await GraphRig.StartAsync(runtime);
+        var agent = GraphRig.Node("agent", "run_agent", config: new JsonObject { ["repo"] = "web", ["prompt"] = new string('p', 100 * 1024), ["outputs"] = JsonNode.Parse("""{"drifted":"boolean"}""") });
+        var workflow = await rig.Define(GraphRig.Spec("unlimited", [GraphRig.Node("start", "manual"), agent], [GraphRig.Edge("start", "agent")]));
+        var run = (await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited)).RunId;
+        await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
+
+        runtime.End(new AgentSessionState(AgentSessionEnd.Exit, ExitCode: 1));
+        _ = await rig.Final(run);
+        var row = await AgentNodeRig.Row(rig, run);
+
+        Assert.Equal(NodeRunStatus.Failed, row.Status);
+        Assert.True(row.Truncated);
+        Assert.True(JsonNode.Parse(row.Input!)!["truncated"]!.GetValue<bool>());
+    }
+
     private static async Task<NodeRun> FailAs(FakeAgentNodeRuntime runtime, AgentSessionState ended)
     {
         await using var rig = await GraphRig.StartAsync(runtime);
