@@ -70,7 +70,12 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
         AddHandler(RowKeys.OpenRequestedEvent, (_, e) => RaiseOpen(new RowRequestEventArgs { Item = ItemAt(e.Index) }));
         AddHandler(RowKeys.ActionsRequestedEvent, (_, e) => RaiseActions(new RowRequestEventArgs { Item = ItemAt(e.Index) }));
         AddHandler(RowKeys.BackRequestedEvent, (_, e) => RaiseBack(new RowRequestEventArgs { Item = ItemAt(e.Index) }));
-        AddHandler(GotFocusEvent, (_, e) => OnRowFocused(e.Source));
+        AddHandler(GotFocusEvent, (_, e) =>
+        {
+            OnRowFocused(e.Source);
+            PostStickyFocusSync();
+        });
+        AddHandler(LostFocusEvent, (_, _) => PostStickyFocusSync());
         AddHandler(PointerPressedEvent, OnPointerPressed, RoutingStrategies.Tunnel);
         AddHandler(TappedEvent, OnTapped);
         AddHandler(DoubleTappedEvent, OnDoubleTapped);

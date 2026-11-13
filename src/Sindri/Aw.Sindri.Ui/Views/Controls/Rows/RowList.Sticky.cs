@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 namespace Aw.Sindri.Ui.Views.Controls.Rows;
 
@@ -38,7 +40,22 @@ internal sealed partial class RowList
 
         _sticky.RenderTransform = new TranslateTransform(0, StickyHeader.PushOut(next, offset, headerHeight));
         _sticky.IsVisible = true;
+        SyncStickyFocus();
     }
+
+    // The sticky copy never takes focus: it mirrors the real header of its group while that one holds the keyboard focus, so the cursor stays visible under the copy.
+    private void SyncStickyFocus()
+    {
+        if (_sticky is null)
+        {
+            return;
+        }
+
+        _sticky.MirrorsFocus = _sticky.IsVisible && _sticky.Group is { } group
+            && this.GetVisualDescendants().OfType<RowGroupHeader>().Any(h => !ReferenceEquals(h, _sticky) && ReferenceEquals(h.Group, group) && h.IsKeyboardFocusWithin);
+    }
+
+    private void PostStickyFocusSync() => Dispatcher.UIThread.Post(SyncStickyFocus);
 
     /// <inheritdoc />
     public void RevealRow(int index)

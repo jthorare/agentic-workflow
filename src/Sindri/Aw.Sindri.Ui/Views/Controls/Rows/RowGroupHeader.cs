@@ -23,12 +23,14 @@ namespace Aw.Sindri.Ui.Views.Controls.Rows;
 internal sealed class RowGroupHeader : Border
 {
     private const double ChevronBox = 28;
+    private const double FocusRing = 2;
 
     private readonly TextBlock _chevron = Caption(FontWeight.Normal);
     private readonly Border _chevronBox;
     private readonly TextBlock _heading = Caption(FontWeight.Medium);
     private readonly TextBlock _count = Caption(FontWeight.Normal);
     private readonly TextBlock _summary = Caption(FontWeight.Normal);
+    private bool _ringOn;
     private INotifyPropertyChanged? _watchedGroup;
     private INotifyCollectionChanged? _watchedItems;
 
@@ -92,13 +94,43 @@ internal sealed class RowGroupHeader : Border
             return;
         }
 
-        if (IsKeyboardFocusWithin)
+        ApplyFocus();
+    }
+
+    /// <summary>True while the sticky copy stands in for a keyboard-focused header it covers: it draws the same ring (the copy never takes focus itself).</summary>
+    internal bool MirrorsFocus
+    {
+        get;
+        set
+        {
+            field = value;
+            ApplyFocus();
+        }
+    }
+
+    private void ApplyFocus()
+    {
+        var ring = IsKeyboardFocusWithin || MirrorsFocus;
+        if (ring == _ringOn)
+        {
+            return;   // a scroll re-checks the mirror on every tick; the ring goes on and off once
+        }
+
+        _ringOn = ring;
+        if (ring)
         {
             _ = Bind(BackgroundProperty, this.GetResourceObservable("Brush.Surface2"));
+            var pad = Padding;   // the styled padding, read before the local one goes on
+            Padding = new Thickness(pad.Left - FocusRing, pad.Top - FocusRing, pad.Right - FocusRing, pad.Bottom - FocusRing);   // the ring takes 2 px of the box: chevron and heading stay where they are
+            BorderThickness = new Thickness(FocusRing);
+            _ = Bind(BorderBrushProperty, this.GetResourceObservable("Brush.PrimaryHover"));   // the same brush the row's cursor ring uses; 1.18:1 fill alone is no cursor
         }
         else
         {
             ClearValue(BackgroundProperty);   // back to the fill under the local one: Transparent, or the sticky copy's template Canvas
+            ClearValue(PaddingProperty);
+            ClearValue(BorderThicknessProperty);
+            ClearValue(BorderBrushProperty);
         }
     }
 
