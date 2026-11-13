@@ -198,7 +198,9 @@ under it (today the ToggleSwitch knob); another stock control with its own trans
 ### The Settings filter (#3362)
 
 A filter box sits under the Settings title, up to 480 px wide and on the left. Typing keeps the sections whose text holds every word typed, and hides the others.
-It matches whole sections, not single rows: "reset" keeps the section that has a Reset button. The sections are the setup checklist, the model, label and product-surface
+It matches whole sections, not single rows: "reset" keeps the section that has a Reset button.
+
+The sections are the setup checklist, the model, label and product-surface
 choices, Sandbox, Library, Connections, and This app. A section matches on the text it shows: headings, row labels, buttons and descriptions. The view reads that text from the page when the
 filter changes. A few synonyms (zoom, font and animation for This app) match too.
 
