@@ -12,7 +12,7 @@ namespace Aw.Sindri.Tests.Graph.Ops;
 public sealed class TemplatesTests
 {
     private static GraphValidator RealValidator() => GraphFixtures.Validator(
-        blocks: GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}")).Types,
+        blocks: GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"), more: [new CreateItemBlock(new FlowFakes.RecordingItemPort()), new CodeBlock(runner: null!)]).Types,
         cron: (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem,
         condition: text => ConditionExpression.TryParse(text, out var expression, out var error) ? new ConditionParse(Error: null, expression!.References) : new ConditionParse(error, []));
 
@@ -69,5 +69,16 @@ public sealed class TemplatesTests
         var second = GraphTemplates.Find("weekday-check")!.Spec;
 
         Assert.NotEqual("* * * * *", second.Nodes[0].Config["cron"]!.GetValue<string>(), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void The_hello_sindri_template_needs_no_account_model_or_network_and_makes_one_item()
+    {
+        var spec = GraphTemplates.Find("hello-sindri")!.Spec;
+
+        Assert.Equal(["manual", "code", "notify", "create_item"], spec.Nodes.Select(static n => n.Type), StringComparer.Ordinal);
+        Assert.Equal("60s", spec.Nodes.Single(static n => n.Type == "code").Config["timeout"]!.GetValue<string>());
+        string[] needsSomethingOutside = ["prompt", "run_agent", "http", "schedule", "connection_event"];
+        Assert.DoesNotContain(spec.Nodes, n => needsSomethingOutside.Contains(n.Type, StringComparer.Ordinal));
     }
 }

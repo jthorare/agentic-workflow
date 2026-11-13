@@ -178,6 +178,7 @@ scripts/install-<lever>.sh --provider claude|codex|cursor
 scripts/probe.sh [--provider claude|codex|cursor] on|off|status
 scripts/install-headroom.sh --provider claude|codex   # headroom as a proxy wrapper only (no MCP server): installs the CLI when missing and the `aw-headroom` launcher; setup.sh runs it per provider (Cursor: skipped), fail-open
 scripts/install-tldraw.sh [--dry-run]   # tldraw offline, the canvas agents drive for diagrams: brew cask on macOS, the pinned AppImage on Linux; prints the app's Develop → Install Agent Skills step until a provider has its skill (setup.sh runs it; skip with --no-tldraw), fail-open
+scripts/install-tmux.sh [--restore] [--dry-run]   # The toolkit's tmux config (config/tmux/tmux.conf, ANSI colors) to ~/.tmux.conf, a different old file backed up to ~/.tmux.conf.aw-bak first; --restore adds TPM, tmux-resurrect and tmux-continuum (setup.sh --with-tmux / --with-tmux-restore; opt-in), fail-open
 aw-headroom claude|codex [args]         # Run the tool through a loopback headroom proxy chained in front of its current upstream (e.g. EasyCLIProxyAPI); nothing on disk is edited; `aw-headroom upstream|status|stop`
 sindri doctor                           # Sindri health checks (ok / warn / fail + fix)
 sindri repo onboard [<path>]            # add + pre-commit hook + first index build
