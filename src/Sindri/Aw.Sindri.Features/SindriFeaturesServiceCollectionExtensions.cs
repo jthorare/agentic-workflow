@@ -59,13 +59,16 @@ using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Features.ListResources;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.ListSessions;
+using Aw.Sindri.Features.ListTriggerEvents;
 using Aw.Sindri.Features.ListWorkflowBlocks;
 using Aw.Sindri.Features.ListWorkflowRuns;
 using Aw.Sindri.Features.ListWorkflows;
+using Aw.Sindri.Features.ListWorkflowTemplates;
 using Aw.Sindri.Features.OpenItem;
 using Aw.Sindri.Features.PauseService;
 using Aw.Sindri.Features.PauseWorkflow;
 using Aw.Sindri.Features.PingProcess;
+using Aw.Sindri.Features.PinWorkflowOutput;
 using Aw.Sindri.Features.PurgeResources;
 using Aw.Sindri.Features.ReadLedger;
 using Aw.Sindri.Features.RebuildViews;
@@ -89,6 +92,7 @@ using Aw.Sindri.Features.StartProcess;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Features.StreamEvents;
 using Aw.Sindri.Features.SweepLostSessions;
+using Aw.Sindri.Features.TestWorkflow;
 using Aw.Sindri.Features.ValidateProfile;
 using Aw.Sindri.Features.ValidateWorkflow;
 using Aw.Sindri.Features.WorkflowSchedule;
@@ -169,7 +173,11 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IValidator<PauseWorkflowRequest>, AcceptAllValidator<PauseWorkflowRequest>>().AddCommand<PauseWorkflowRequest, PauseWorkflowResponse, PauseWorkflowService>()
             .AddScoped<IValidator<DeleteWorkflowRequest>, AcceptAllValidator<DeleteWorkflowRequest>>().AddCommand<DeleteWorkflowRequest, DeleteWorkflowResponse, DeleteWorkflowService>()
             .AddScoped<IValidator<ListWorkflowBlocksRequest>, AcceptAllValidator<ListWorkflowBlocksRequest>>().AddQuery<ListWorkflowBlocksRequest, ListWorkflowBlocksResponse, ListWorkflowBlocksService>()   // 'wf blocks' and 'wf docs'
-            .AddScoped<IValidator<SearchWorkflowDocsRequest>, AcceptAllValidator<SearchWorkflowDocsRequest>>().AddQuery<SearchWorkflowDocsRequest, SearchWorkflowDocsResponse, SearchWorkflowDocsService>();
+            .AddScoped<IValidator<SearchWorkflowDocsRequest>, AcceptAllValidator<SearchWorkflowDocsRequest>>().AddQuery<SearchWorkflowDocsRequest, SearchWorkflowDocsResponse, SearchWorkflowDocsService>()
+            .AddScoped<IValidator<TestWorkflowRequest>, AcceptAllValidator<TestWorkflowRequest>>().AddCommand<TestWorkflowRequest, TestWorkflowResponse, TestWorkflowService>()   // the Workflows page P0 contract stubs (#3191): each refuses with SND-GRAPH-119 until its phase builds it
+            .AddScoped<IValidator<PinWorkflowOutputRequest>, AcceptAllValidator<PinWorkflowOutputRequest>>().AddCommand<PinWorkflowOutputRequest, PinWorkflowOutputResponse, PinWorkflowOutputService>()
+            .AddScoped<IValidator<ListTriggerEventsRequest>, AcceptAllValidator<ListTriggerEventsRequest>>().AddQuery<ListTriggerEventsRequest, ListTriggerEventsResponse, ListTriggerEventsService>()
+            .AddScoped<IValidator<ListWorkflowTemplatesRequest>, AcceptAllValidator<ListWorkflowTemplatesRequest>>().AddQuery<ListWorkflowTemplatesRequest, ListWorkflowTemplatesResponse, ListWorkflowTemplatesService>();
         return services;
     }
 
