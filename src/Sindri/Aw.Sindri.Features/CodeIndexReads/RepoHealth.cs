@@ -23,6 +23,9 @@ public sealed record RepoHealth(string Repo, string State, int? EmbeddingsPercen
     /// <summary>True when doctor has a problem row for the repo (issue #3430): the System card reads this, not the state word, so a new busy state needs no app change.</summary>
     public bool NeedsLook { get; init; }
 
+    /// <summary>Doctor's words for the problem that set <see cref="NeedsLook"/> ("demo: code index is behind main; rebuild it from the System page"), or null when the repo needs no look (#3515): the app shows these on the repo's line, so it keeps no list of its own.</summary>
+    public string? LookWords { get; init; }
+
     /// <summary>Lays the heads and jobs over one repo's status.</summary>
     /// <param name="status">The repo's index status, from the files.</param>
     /// <param name="live">The repo's live head, or null when unread.</param>
