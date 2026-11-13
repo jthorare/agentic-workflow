@@ -120,10 +120,21 @@ internal static partial class Labels
     /// <summary>The No map state's body when no item is picked.</summary>
     internal const string ContextStateEmptyBody = "Build one to see what your repo is made of and how its parts connect.";
 
+    /// <summary>The Building title on the bare page: which repository is being built, and no time.</summary>
+    /// <param name="repos">The repositories the no-map answer named, or none.</param>
+    /// <returns>"Building the map for agentic-workflow", "Building the map for 3 repos", or "Building the map".</returns>
+    internal static string ContextBuildingFor(IReadOnlyList<string> repos) => repos.Count switch
+    {
+        0 => "Building the map",
+        1 => "Building the map for " + repos[0],
+        _ => string.Create(CultureInfo.InvariantCulture, $"Building the map for {repos.Count} repos"),
+    };
+
     /// <summary>The whole map's Building overlay when the API says how far it is: the parts it knows, joined.</summary>
     /// <param name="parts">The parts that are known ("3 of 7 sources", "started 4 min ago").</param>
+    /// <param name="head">The line's first words.</param>
     /// <returns>"Building the map · 3 of 7 sources · started 4 min ago".</returns>
-    internal static string ContextBuildingLine(IEnumerable<string> parts) => string.Join(" · ", ((string[])["Building the map"]).Concat(parts));
+    internal static string ContextBuildingLine(IEnumerable<string> parts, string head = "Building the map") => string.Join(" · ", ((string[])[head]).Concat(parts));
 
     /// <summary>How far a build has read.</summary>
     /// <param name="done">Sources read.</param>
