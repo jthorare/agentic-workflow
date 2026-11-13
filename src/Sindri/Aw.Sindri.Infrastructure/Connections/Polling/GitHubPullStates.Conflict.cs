@@ -6,13 +6,14 @@ namespace Aw.Sindri.Infrastructure.Connections.Polling;
 internal sealed partial class GitHubPullStates
 {
     // The next conflict state and event from the pull request's detail.
-    private static Step ConflictStep(Walk walk, string number, JsonElement detail)
+    private static Step ConflictStep(Walk walk, JsonElement pull, string number, JsonElement detail)
     {
         var state = PollJson.Text(PollJson.Member(detail, "mergeable_state"));
         if (state is null || string.Equals(state, "unknown", StringComparison.Ordinal))
         {
-            // why: a pull request seen for the first time while GitHub works it out gets an entry, or its first dirty would read as a baseline
-            return new Step(walk.Before(number) is null ? Unknown + ":0" : null, Event: null, Limited: null);
+            // why: a pull request opened since the last poll and seen while GitHub works it out gets an entry, or its first dirty would read as a baseline;
+            // an old one gets none, so its first known state is the baseline (a conflict that predates the connection fires nothing)
+            return new Step(walk.Before(number) is null && walk.IsNew(pull) ? Unknown + ":0" : null, Event: null, Limited: null);
         }
 
         // why: the state does not hold the head, so a push that leaves the pull request dirty fires nothing; the count makes the next dirty spell a new event
@@ -29,7 +30,7 @@ internal sealed partial class GitHubPullStates
 
     private static string Count(int count) => count.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-    // The stored conflict state: 'dirty:2' / 'clean:2' (2 = times it turned dirty), 'unknown:0' (first seen before GitHub worked it out, read as not dirty);
+    // The stored conflict state: 'dirty:2' / 'clean:2' (2 = times it turned dirty), 'unknown:0' (a new pull request first seen before GitHub worked it out, read as not dirty);
     // an older cursor's 'sha:dirty' reads as dirty with 0.
     private static (string State, int Count) ConflictState(string? stored)
     {

@@ -20,8 +20,8 @@ namespace Aw.Sindri.Infrastructure.Connections.Polling;
 /// before, or one created after "@at" (a cursor without "@at" is a baseline for every pull request not seen before). Checks that finished red or green
 /// fire, and so does a mergeable state that turned dirty; a push that leaves a pull request dirty does not fire again. A state GitHub has not worked out
 /// yet (checks still running, mergeable state 'unknown') fires nothing; for conflict it keeps the state stored before, or stores 'unknown:0' for a pull
-/// request with none, so its first dirty fires. A pull request that leaves the open list loses its count: if it reopens and turns dirty, spell 1 can
-/// repeat an old delivery id and be dropped as a duplicate.
+/// request with none that opened after "@at", so its first dirty fires (an old one stores nothing: its first known state is the baseline). A pull
+/// request that leaves the open list loses its count: if it reopens and turns dirty, spell 1 can repeat an old delivery id and be dropped as a duplicate.
 /// </summary>
 /// <param name="client">Sends the requests with the connection's token, to api.github.com only.</param>
 internal sealed partial class GitHubPullStates(PollerClient client)
@@ -124,7 +124,7 @@ internal sealed partial class GitHubPullStates(PollerClient client)
             return read.IsError ? read.Error : new Step(State: null, Event: null, read.Value.Limited);
         }
 
-        return ConflictStep(walk, number, read.Value.Body);
+        return ConflictStep(walk, pull, number, read.Value.Body);
     }
 
     private static string Conclusion(List<JsonElement> runs)
@@ -261,7 +261,8 @@ internal sealed partial class GitHubPullStates(PollerClient client)
             return cursor.ToJsonString();
         }
 
-        private bool IsNew(JsonElement pull) =>
+        // A pull request opened after the last poll's "@at"; with no "@at" (the first poll, or an older cursor) none is new.
+        internal bool IsNew(JsonElement pull) =>
             _since is { } since && PollJson.Time(PollJson.Text(PollJson.Member(pull, "created_at"))) is { } created && created > since;
     }
 }
