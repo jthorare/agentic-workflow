@@ -1,5 +1,4 @@
 using Aw.Kernel.Services;
-using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.GetLastStart;
 using Aw.Sindri.Features.RemoveSessionWorktree;

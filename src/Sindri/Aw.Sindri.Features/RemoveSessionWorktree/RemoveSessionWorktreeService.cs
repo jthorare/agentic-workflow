@@ -2,8 +2,8 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
-using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Worktrees;
+using Aw.Sindri.Features.StartSession;
 
 namespace Aw.Sindri.Features.RemoveSessionWorktree;
 

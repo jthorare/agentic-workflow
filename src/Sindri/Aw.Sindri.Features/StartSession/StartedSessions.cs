@@ -1,17 +1,18 @@
 using System.Collections.Concurrent;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Ledger;
 
-namespace Aw.Sindri.Core.Launch;
+namespace Aw.Sindri.Features.StartSession;
 
 /// <summary>
 /// The one-off sessions this process started, by act id (agents spec §15.8): the stored answer of a 2xx start and the worktree it made. The 'agent.op' event keyed by the act id is the durable copy; this
-/// map answers a replay and a worktree remove without reading the ledger, and a miss after a restart reads it back once.
+/// map answers a replay and a worktree remove without reading the ledger, and a miss after a restart reads it back once. It reads the ledger, so it lives here and not in Core.Launch (a Launch -> Ledger edge closes a Core namespace cycle, ARCH-CYCLE-001).
 /// </summary>
 /// <param name="ledger">Reads the event back after a restart.</param>
 /// <param name="events">Reads the payload.</param>
-public sealed class StartedSessions(ILedgerStore ledger, EventFactory events)
+internal sealed class StartedSessions(ILedgerStore ledger, EventFactory events)
 {
     private const int Page = 500;
 
