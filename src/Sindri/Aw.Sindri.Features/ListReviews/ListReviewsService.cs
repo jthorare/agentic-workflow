@@ -24,7 +24,7 @@ internal sealed class ListReviewsService(IApprovedProfile approvals, IReviewFact
     public async ValueTask<Result<ListReviewsResponse>> Handle(ListReviewsRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
+        var approved = await approvals.ForRead(cancellationToken).ConfigureAwait(false);
         if (approved.IsError)
         {
             return approved.Error;
