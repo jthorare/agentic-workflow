@@ -74,7 +74,42 @@ public sealed class StoredNodeJsonTests
         Assert.Contains("the output of 'code1' was blocked by the redactor", outcome.Error, StringComparison.Ordinal);
     }
 
-    private static GraphRunActivities Recorder(FakeTimeProvider clock, InMemoryWorkflowRunStore runs, InMemoryWorkflowStore workflows)
+    [Fact]
+    public async Task A_reference_to_a_real_output_shaped_like_a_cut_envelope_resolves_to_its_value()
+    {
+        // why: #3486, a code node's own output {"head":..,"truncated":true} is a value, not a cut; only the node run's Truncated flag says cut
+        var token = TestContext.Current.CancellationToken;
+        var clock = new FakeTimeProvider(KnownInstants.Epoch);
+        var (runs, workflows, run) = await Seed(clock, token, withReader: true);
+        var real = new NodeRun(run.Id, NodeId.From("code1"), ItemIndex: 0, NodeRunStatus.Succeeded, Input: null, Output: """{"answer":"yes","head":"x","truncated":true}""", Truncated: false, Error: null, Usage: null);
+        _ = (await runs.RecordNodeRun(real, token)).Value;
+        var activities = new GraphBlockActivities(new GraphBlockRegistry([new CodeBlock(new FixedCode("{}"))]), runs, workflows);
+
+        var outcome = await new ActivityEnvironment().RunAsync(() => activities.RunBlockAsync(run.Id, NodeId.From("code2"), itemIndex: 0));
+
+        Assert.Equal(NodeRunStatus.Succeeded, outcome.Status);
+        Assert.Contains("yes", outcome.Input, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task An_input_the_redactor_makes_longer_than_64_KB_is_stored_as_json_that_parses()
+    {
+        // why: #3486, the scrub runs after the block's own Fit; a text that grows past the cap in the scrub must still be cut as JSON
+        var token = TestContext.Current.CancellationToken;
+        var clock = new FakeTimeProvider(KnownInstants.Epoch);
+        var (runs, workflows, run) = await Seed(clock, token);
+        var activities = Recorder(clock, runs, workflows, new DoublingRedactor());
+        var input = $$"""{"prompt":"{{new string('a', 60 * 1024)}}"}""";
+        var nodeRun = new NodeRun(run.Id, NodeId.From("code1"), ItemIndex: 0, NodeRunStatus.Running, input, Output: null, Truncated: false, Error: null, Usage: null);
+
+        await new ActivityEnvironment().RunAsync(() => activities.RecordNodeAsync(nodeRun));
+
+        var stored = (await runs.NodeRuns(run.Id, token)).Value.Single();
+        Assert.True(stored.Truncated);
+        Assert.True(JsonNode.Parse(stored.Input!)!["truncated"]!.GetValue<bool>());
+    }
+
+    private static GraphRunActivities Recorder(FakeTimeProvider clock, InMemoryWorkflowRunStore runs, InMemoryWorkflowStore workflows, IRedactor? redactor = null)
     {
         var token = TestContext.Current.CancellationToken;
         var probe = new FakeProcessProbe();
@@ -83,7 +118,7 @@ public sealed class StoredNodeJsonTests
         held.Hold(ledger.Acquire(probe.Self(), token).AsTask().GetAwaiter().GetResult().Value);
         var ids = new SequentialIdGenerator();
         var events = new EventFactory(EventScope.ControlPlane, clock, ids, AwJson.CreateOptions(SindriJsonContext.Default), new AsyncLocalCallerContextAccessor(ids));
-        return new GraphRunActivities(runs, workflows, new NoQueue(), new GraphMirror(ledger, held, events, new BlockingRedactor()));
+        return new GraphRunActivities(runs, workflows, new NoQueue(), new GraphMirror(ledger, held, events, redactor ?? new BlockingRedactor()));
     }
 
     private static async Task<(InMemoryWorkflowRunStore Runs, InMemoryWorkflowStore Workflows, WorkflowRun Run)> Seed(FakeTimeProvider clock, CancellationToken token, bool withReader = false)
@@ -101,6 +136,13 @@ public sealed class StoredNodeJsonTests
     private sealed class FixedCode(string json) : ICodeRunPort
     {
         public ValueTask<Result<string>> Run(CodeRun run, CancellationToken cancellationToken) => ValueTask.FromResult<Result<string>>(json);
+    }
+
+    private sealed class DoublingRedactor : IRedactor
+    {
+        public ScrubResult Scrub(string text) => new(text.Replace("a", "aa", StringComparison.Ordinal), [], ScrubOutcome.Redacted, BlockCode: null);
+
+        public bool IsSecretName(string name) => false;
     }
 
     private sealed class BlockingRedactor : IRedactor
