@@ -50,15 +50,16 @@ internal sealed class HelloRun(ISetupWorkflowRunner runner, IWorkflowStore workf
             return;
         }
 
-        switch (await OwnerOf(slug, cancellationToken).ConfigureAwait(false))
+        var owner = await OwnerOf(slug, cancellationToken).ConfigureAwait(false);
+        if (owner == HelloOwner.Unknown)
         {
-            case HelloOwner.Unknown:
-                return;   // can't tell: asked again on the next tick, never taken for "not ours"
-            case HelloOwner.NotOurs:
-                Settle();
-                return;
-            case HelloOwner.Ours:
-                break;
+            return;   // can't tell: asked again on the next tick, never taken for "not ours"
+        }
+
+        if (owner == HelloOwner.NotOurs)
+        {
+            Settle();
+            return;
         }
 
         var started = await runner.Run(slug, cancellationToken).ConfigureAwait(false);

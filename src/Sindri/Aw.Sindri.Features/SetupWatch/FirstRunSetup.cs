@@ -100,18 +100,26 @@ internal sealed class FirstRunSetup(IProfileSource live, AgentTargetSearch searc
             return false;
         }
 
-        if (created.IsError && await run.OwnerOf(_hello, cancellationToken).ConfigureAwait(false) is var owner && owner != HelloOwner.Ours)
+        if (created.IsError && !await TakenIsOurs(repo, cancellationToken).ConfigureAwait(false))
         {
-            if (owner == HelloOwner.NotOurs)
-            {
-                _ = await made.Made(_hello, repo, cancellationToken).ConfigureAwait(false);
-                run.Settle();
-            }
-
-            return false;   // unknown: the store can't say who made it; nothing is recorded, so the next tick looks again
+            return false;
         }
 
         var activated = await activate.Activate(_hello, cancellationToken).ConfigureAwait(false);
         return activated.IsSuccess || string.Equals(activated.Error.Code, SindriErrors.GraphArchived.Code, StringComparison.Ordinal);
+    }
+
+    // The slug was taken: true when setup made that workflow (a create that already happened). The owner's own hello-sindri is recorded (so setup stops trying) and left alone;
+    // when the store can't say who made it, nothing is recorded and the next tick looks again.
+    private async ValueTask<bool> TakenIsOurs(RepoName repo, CancellationToken cancellationToken)
+    {
+        var owner = await run.OwnerOf(_hello, cancellationToken).ConfigureAwait(false);
+        if (owner == HelloOwner.NotOurs)
+        {
+            _ = await made.Made(_hello, repo, cancellationToken).ConfigureAwait(false);
+            run.Settle();
+        }
+
+        return owner == HelloOwner.Ours;
     }
 }
