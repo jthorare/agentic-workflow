@@ -157,8 +157,8 @@ public sealed class TodoNoteCardFramesTests : IDisposable
         await Until(window, () => !card.IsBusy);
     });
 
-    private static readonly string[] SettingsStatusRows = ["TodoNoteStatus", "TodoNoteError", "LinearStatus", "LinearError"];
-    private static readonly string[] LinearStatusRows = ["LinearStatus", "LinearError"];
+    private static readonly string[] _settingsStatusRows = ["TodoNoteStatus", "TodoNoteError", "LinearStatus", "LinearError"];
+    private static readonly string[] _linearStatusRows = ["LinearStatus", "LinearError"];
 
     [Fact]
     public Task An_empty_status_or_error_row_takes_no_height_on_Settings_3454() => OnUi(async () =>
@@ -166,7 +166,7 @@ public sealed class TodoNoteCardFramesTests : IDisposable
         var (window, card) = await Show();
         Assert.True(card.StatusText.Length == 0 && card.ErrorText.Length == 0);
 
-        var heights = SettingsStatusRows.SelectMany(n => window.GetVisualDescendants().OfType<Control>().Where(c => string.Equals(c.Name, n, StringComparison.Ordinal)))
+        var heights = _settingsStatusRows.SelectMany(n => window.GetVisualDescendants().OfType<Control>().Where(c => string.Equals(c.Name, n, StringComparison.Ordinal)))
             .Where(c => c.Bounds.Height > 0)
             .Select(c => c.Name)
             .ToList();
@@ -186,7 +186,7 @@ public sealed class TodoNoteCardFramesTests : IDisposable
         window.Show();
         Settle(window);
 
-        var rows = LinearStatusRows
+        var rows = _linearStatusRows
             .Select(n => window.GetVisualDescendants().OfType<Control>().SingleOrDefault(c => string.Equals(c.Name, n, StringComparison.Ordinal)))
             .ToList();
 
