@@ -27,6 +27,7 @@ internal sealed class GraphEditSession(GraphSpec spec)
         DisconnectOp disconnect => Disconnect(disconnect),
         RenameOp rename => Rename(rename),
         SetMetaOp meta => Meta(meta),
+        ReplaceNodeOp => $"replace_node is not built yet ({SindriErrors.GraphNotBuilt.Code})",   // why: P0 contract stub (Workflows page spec E3); the engine lane builds it
         _ => "that is not a known op",
     };
 

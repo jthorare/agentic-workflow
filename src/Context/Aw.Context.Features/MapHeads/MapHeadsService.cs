@@ -14,7 +14,7 @@ internal sealed class MapHeadsService(IRepoReader repos, IDefaultBranch defaults
     public async ValueTask<Result<IReadOnlyList<RepoHead>>> Handle(MapHeadsRequest request, CancellationToken cancellationToken)
     {
         var scope = request.Scope;
-        var mapped = SettingsReader.Read(scope.Settings).Bind(settings => ScopeRules.Resolve(settings, scope.Repos, scope.Caller));
+        var mapped = SettingsReader.Read(scope.Settings).Bind(settings => ScopeRules.Resolve(settings, scope.Repos, scope.Caller, scope.LeftOut));
         if (mapped.IsError)
         {
             return mapped.Error;
