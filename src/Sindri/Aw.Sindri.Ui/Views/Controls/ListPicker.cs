@@ -7,7 +7,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Controls;
 using Aw.Sindri.Ui.Views.Icons;
@@ -233,14 +232,27 @@ internal sealed class ListPicker : UserControl
 
         var rows = Enabled().ToList();
         var at = rows.FindIndex(t => t.IsFocused);
-        var target = e.Key switch
+        SelectableTile? target = null;
+        if (rows.Count > 0)
         {
-            Key.Down when rows.Count > 0 => rows[Math.Min(at + 1, rows.Count - 1)],
-            Key.Up when rows.Count > 0 => rows[Math.Max(at - 1, 0)],
-            Key.Home when rows.Count > 0 => rows[0],
-            Key.End when rows.Count > 0 => rows[^1],
-            _ => null,
-        };
+            if (e.Key == Key.Down)
+            {
+                target = rows[Math.Min(at + 1, rows.Count - 1)];
+            }
+            else if (e.Key == Key.Up)
+            {
+                target = rows[Math.Max(at - 1, 0)];
+            }
+            else if (e.Key == Key.Home)
+            {
+                target = rows[0];
+            }
+            else if (e.Key == Key.End)
+            {
+                target = rows[^1];
+            }
+        }
+
         if (target is not null)
         {
             _ = target.Focus(NavigationMethod.Directional);
