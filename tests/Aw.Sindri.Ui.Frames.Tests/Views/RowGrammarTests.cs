@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
@@ -72,9 +73,12 @@ public sealed class RowGrammarTests
 
         Assert.True(strip.IsVisible);
         Assert.Equal(row.Bounds.Width - 24, strip.Bounds.Right, 0.5);   // 24 px from the right edge, over the age and waits-on text
-        Assert.True(strip.Bounds.Right > row.Layout.AgeRect.Right + 12);   // it sits over the waits-on column, which starts 12 px after the age
+        Assert.True(strip.Bounds.X <= row.Layout.AgeRect.X, string.Create(CultureInfo.InvariantCulture, $"strip starts at {strip.Bounds.X}, the age at {row.Layout.AgeRect.X}"));   // it covers the age and the waits-on column whole
+        Assert.True(strip.Bounds.Width >= row.Layout.AgeRect.Width + 12 + row.Layout.WaitRect.Width, string.Create(CultureInfo.InvariantCulture, $"strip is {strip.Bounds.Width} wide"));   // grammar.css: min-width col-age + col-wait + sp3 (44 + 112 + 12 = 168)
         Assert.Equal(Brush("Brush.Surface2"), Assert.IsType<ISolidColorBrush>(strip.Background, exactMatch: false).Color);
         Assert.Equal(8, strip.Padding.Left, 0.01);
+        var first = strip.GetVisualDescendants().OfType<Button>().First();
+        Assert.Equal(8, first.TranslatePoint(default, strip)?.X ?? double.NaN, 0.5);   // grammar.css: padding-left 8 and the 4 px gap only between buttons, so the first button starts at 8
         window.Close();
         return true;
     });

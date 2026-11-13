@@ -24,6 +24,7 @@ namespace Aw.Sindri.Ui.Views.Controls.Rows;
 /// <param name="SelBar">The selection bar's rectangle, or null when the row is not selected.</param>
 /// <param name="SelBarInk">The selection bar's brush.</param>
 /// <param name="Ring">True when the cursor ring is drawn.</param>
+/// <param name="RingRect">The cursor ring's outer rectangle (its stroke is inside it), or null when the row has no cursor.</param>
 /// <param name="SubRect">Where the sub-line is drawn (its x and laid-out width), or null when the row has none.</param>
 /// <param name="WaitRect">The waits-on slot, in the row's coordinates.</param>
 /// <param name="TitleSlot">The title column: from where the id starts to where the title and sub-line must end.</param>
@@ -48,6 +49,7 @@ internal sealed record RowLayout(
     Rect? SelBar,
     IBrush? SelBarInk,
     bool Ring,
+    Rect? RingRect,
     Rect? SubRect,
     Rect WaitRect,
     Rect TitleSlot);
