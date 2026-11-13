@@ -27,7 +27,8 @@
       "embeddingsPercent": null,
       "waiting": null,
       "paused": false,
-      "needsLook": false
+      "needsLook": false,
+      "lookWords": null
     }
   ]
 }

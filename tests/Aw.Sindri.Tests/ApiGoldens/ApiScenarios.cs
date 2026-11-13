@@ -65,7 +65,7 @@ internal static class ApiScenarios
     /// <summary>Starts the host the scenario runs on: the plain golden host, or for the context routes one over a small git repo with a map.</summary>
     public static async Task<GoldenHost> Start(string slug, string scenario, CancellationToken ct) =>
         CodeIndexScenarios.Handles(slug, scenario)
-            ? await CodeIndexScenarios.Start(ct, demoBehindMain: scenario == CodeIndexScenarios.StaleScenario)
+            ? await CodeIndexScenarios.Start(ct, demoBehindMain: CodeIndexScenarios.DemoBehindMain(scenario))
             : ConnectionSignInScenarios.Handles(slug, scenario)
             ? await ConnectionSignInScenarios.Start(scenario, ct)
             : ConnectionScenarios.Handles(slug, scenario)
