@@ -13,8 +13,8 @@
         <TextBlock Classes="caption subtle" Text="{Binding Text.Intro}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text.Intro}" />
       </StackPanel>
 
-      <TextBlock x:Name="TodoNoteStatus" Classes="caption" AutomationProperties.LiveSetting="Polite" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StatusText}" />
-      <TextBlock x:Name="TodoNoteError" Classes="caption" AutomationProperties.LiveSetting="Polite" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" TextWrapping="Wrap"
+      <TextBlock x:Name="TodoNoteStatus" IsVisible="{Binding StatusText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Classes="caption" AutomationProperties.LiveSetting="Polite" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StatusText}" />
+      <TextBlock x:Name="TodoNoteError" IsVisible="{Binding ErrorText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Classes="caption" AutomationProperties.LiveSetting="Polite" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" TextWrapping="Wrap"
                  AutomationProperties.Name="{Binding ErrorText}" />
 
       <TextBlock x:Name="TodoNoteReading" Classes="caption subtle" Text="{Binding Text.Reading}" IsVisible="{Binding ShowReading}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text.Reading}" />

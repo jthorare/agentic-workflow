@@ -13,8 +13,8 @@
         <TextBlock x:Name="LinearSummary" Classes="caption subtle" Text="{Binding Summary}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Summary}" />
       </StackPanel>
 
-      <TextBlock x:Name="LinearStatus" Classes="caption" AutomationProperties.LiveSetting="Polite" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StatusText}" />
-      <TextBlock x:Name="LinearError" Classes="caption" AutomationProperties.LiveSetting="Polite" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" TextWrapping="Wrap"
+      <TextBlock x:Name="LinearStatus" IsVisible="{Binding StatusText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Classes="caption" AutomationProperties.LiveSetting="Polite" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StatusText}" />
+      <TextBlock x:Name="LinearError" IsVisible="{Binding ErrorText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Classes="caption" AutomationProperties.LiveSetting="Polite" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" TextWrapping="Wrap"
                  AutomationProperties.Name="{Binding ErrorText}" />
       <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}" IsVisible="{Binding HasAttention}">
         <TextBlock x:Name="LinearAttention" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding AttentionText}" TextWrapping="Wrap" VerticalAlignment="Center"
