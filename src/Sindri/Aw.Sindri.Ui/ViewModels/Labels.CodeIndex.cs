@@ -35,7 +35,7 @@ internal static partial class Labels
     internal static string CodeIndexState(string state) => state switch
     {
         "ok" => "ok",
-        "missing" => "first build queued",
+        "missing" => "no index yet",
         "damaged" => "damaged, rebuilding on the next check",
         "stale" => "behind main",
         "building" => "building",

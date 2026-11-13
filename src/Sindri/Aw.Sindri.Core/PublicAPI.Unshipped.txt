@@ -23787,3 +23787,8 @@ override Aw.Sindri.Core.Launch.TerminalFrame.GetHashCode() -> int
 override Aw.Sindri.Core.Launch.TerminalFrame.ToString() -> string!
 static Aw.Sindri.Core.Launch.TerminalFrame.operator !=(Aw.Sindri.Core.Launch.TerminalFrame? left, Aw.Sindri.Core.Launch.TerminalFrame? right) -> bool
 static Aw.Sindri.Core.Launch.TerminalFrame.operator ==(Aw.Sindri.Core.Launch.TerminalFrame? left, Aw.Sindri.Core.Launch.TerminalFrame? right) -> bool
+Aw.Sindri.Core.Scheduling.MainMovePause
+static Aw.Sindri.Core.Scheduling.MainMovePause.Active(Aw.Sindri.Core.Scheduling.IServicePauses! pauses, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+static Aw.Sindri.Core.Scheduling.MainMovePause.Service.get -> Aw.Sindri.Core.Ids.ServiceName
+Aw.Sindri.Core.Doctor.IFirstMapCheck
+Aw.Sindri.Core.Doctor.IFirstMapCheck.Check(Aw.Sindri.Core.Profile.LoadedProfile? approved, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Doctor.DoctorCheck!>
