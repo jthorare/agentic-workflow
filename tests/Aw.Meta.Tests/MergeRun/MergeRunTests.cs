@@ -14,8 +14,12 @@ namespace Aw.Meta.Tests.MergeRun;
 public sealed class MergeRunTests
 {
     private readonly MetaWorld _world = new();
+    private readonly InMemoryMetaEventStore _events = new();
 
-    private MergeRunService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages), _world.Repo, _world.Gates, new MergeRecorder(_world.Repo, _world.Values, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock, _world.Board));
+    private MergeRunService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages), _world.Repo, _world.Gates, new MergeRecorder(_world.Repo, _world.Values, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock, _world.Board), new MergeEventWriter(new MetaEventSink(_events), _world.Messages, _world.Clock));
+
+    private async Task<IReadOnlyList<(string Kind, string? Lane, string Fields)>> Written() =>
+        [.. (await _events.Read(0, kind: null, lane: null, 100, CancellationToken.None)).Value.Events.Select(e => (e.Kind, e.Lane, e.Fields))];
 
     private async Task Ready(bool gated = true, bool mergeFails = false, bool fetchFails = false, string state = "OPEN", string? mergeCommit = null, string queue = QueueAnswers.Off, bool queueFails = false, bool positionFails = false, string? queueBefore = null)
     {
@@ -82,6 +86,37 @@ public sealed class MergeRunTests
         Assert.Equal(new MergeRecord(190, "newmainsha1234", _world.Clock.GetUtcNow()), (await _world.Gates.LatestMerge(CancellationToken.None)).Value);
         Assert.Equal("- MERGE 2026-10-15 05:00: #190 Add x merged; main is now newmain", Assert.Single(_world.Log.Lines));
         Assert.DoesNotContain(await _world.Open(), o => o.Kind == ObligationKind.AnnounceMain);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_recorded_merge_appends_merge_recorded_with_the_lane_that_sent_the_ready_notice()
+    {
+        await Ready();
+        await _world.Receive("m1", "t1-api", "ready #190 ab12cd3");
+
+        _ = await Service().Handle(new MergeRunRequest(190), CancellationToken.None);
+
+        Assert.Equal([("merge.recorded", "api", """{"pr":190,"sha":"newmainsha1234","lane":"api"}""")], await Written());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_recorded_merge_with_no_ready_notice_has_no_event_lane()
+    {
+        await Ready();
+
+        _ = await Service().Handle(new MergeRunRequest(190), CancellationToken.None);
+
+        Assert.Equal([("merge.recorded", null, """{"pr":190,"sha":"newmainsha1234","lane":""}""")], await Written());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_refused_merge_appends_nothing()
+    {
+        await Ready(gated: false);
+
+        _ = await Service().Handle(new MergeRunRequest(190), CancellationToken.None);
+
+        Assert.Empty(await Written());
     }
 
     [Fact, Trait("Lane", "unit")]

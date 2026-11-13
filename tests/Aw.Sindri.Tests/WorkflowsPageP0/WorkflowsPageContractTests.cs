@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
@@ -9,9 +8,9 @@ using Aw.Sindri.Core.Graph.Ops;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Toolkits;
 using Aw.Sindri.Features.GetWorkflowRun;
-using Aw.Sindri.Features.ListTriggerEvents;
 using Aw.Sindri.Features.ListWorkflowTemplates;
 using Aw.Sindri.Features.PinWorkflowOutput;
+using Aw.Sindri.Features.PollConnections;
 using Aw.Sindri.Features.TestWorkflow;
 using Aw.Sindri.Features.ValidateWorkflow;
 using Aw.Sindri.Host;
@@ -124,17 +123,9 @@ public sealed class WorkflowsPageContractTests
     }
 
     [Fact]
-    public async Task The_trigger_events_route_stub_refuses_with_not_built()
-    {
-        var result = await new ListTriggerEventsService().Handle(new ListTriggerEventsRequest("github.pr.opened", Connection: null), Token);
-
-        Assert.Equal("SND-GRAPH-119", result.Error.Code);
-    }
-
-    [Fact]
     public void The_new_response_shapes_serialise_in_camel_case()
     {
-        var events = JsonSerializer.Serialize(new ListTriggerEventsResponse("github.pr.opened", [new TriggerEventView("e1", DateTimeOffset.UnixEpoch, "PR #1 opened", JsonNode.Parse("{}"), WouldMatch: true)], Example: null), _json);
+        var events = JsonSerializer.Serialize(new ListTriggerEventsResponse("github.pr.opened", [new TriggerEventView("github:1", "github:work", DateTimeOffset.UnixEpoch, "PR #1 opened", [], WouldMatch: true)], Example: null), _json);
         var templates = JsonSerializer.Serialize(new ListWorkflowTemplatesResponse([new WorkflowTemplateView("A", "Review new PRs", "github.pr.opened", 3, ["connection:github"], LastRunAt: null)]), _json);
 
         Assert.Contains("\"wouldMatch\":true", events, StringComparison.Ordinal);

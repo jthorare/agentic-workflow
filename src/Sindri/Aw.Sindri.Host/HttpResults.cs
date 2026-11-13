@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Sindri.Host.Statuses;
 
 namespace Aw.Sindri.Host;
 
@@ -19,15 +20,5 @@ internal static class HttpResults
             ? new ProblemWithExtensions(error, status)
             : TypedResults.Problem(title: error.Code, detail: error.Message, statusCode: status);
 
-    internal static int StatusOf(ErrorKind kind) => kind switch
-    {
-        ErrorKind.Invalid => StatusCodes.Status400BadRequest,
-        ErrorKind.NotFound => StatusCodes.Status404NotFound,
-        ErrorKind.Conflict => StatusCodes.Status409Conflict,
-        ErrorKind.RateLimited or ErrorKind.BudgetExceeded => StatusCodes.Status429TooManyRequests,
-        ErrorKind.Unavailable => StatusCodes.Status503ServiceUnavailable,
-        ErrorKind.Timeout => StatusCodes.Status504GatewayTimeout,
-        ErrorKind.Forbidden => StatusCodes.Status403Forbidden,
-        _ => StatusCodes.Status500InternalServerError,
-    };
+    internal static int StatusOf(ErrorKind kind) => ErrorStatus.Of(kind);
 }
