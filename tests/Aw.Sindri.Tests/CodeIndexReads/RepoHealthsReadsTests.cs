@@ -88,7 +88,9 @@ public sealed class RepoHealthsReadsTests
     {
         var now = new MovingClock(_now);
         var jobs = new FlakyRunningJobs(new InMemoryJobViews());
-        var healths = new RepoHealths(new FakeRepoHeads().With(_repo, _old, onDefaultBranch: true), jobs, now, new QueuedClock(_now));
+        var clock = new QueuedClock(_now);
+        clock.Seed([_repo.Value]);   // there at serve start, so its count runs from serve start (#3480)
+        var healths = new RepoHealths(new FakeRepoHeads().With(_repo, _old, onDefaultBranch: true), jobs, now, clock);
         var missing = new RepoStatus(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null);
         var scope = new CodeIndexScope([new CodeIndexRepo(_repo, "/work/demo", CodeIndexSettings.Default)], new CodeIndexCaller(CallerKind.Service, Repo: null));
 
