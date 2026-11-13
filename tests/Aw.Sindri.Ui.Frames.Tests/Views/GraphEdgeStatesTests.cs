@@ -39,7 +39,7 @@ public sealed class GraphEdgeStatesTests
         Assert.NotNull(head);
         Assert.Equal(3, head.Length);
         Assert.Equal(new Point(220, 100), head[0]);   // the tip sits on the edge's end
-        Assert.All(head.Skip(1), wing => Assert.True(wing.X < 220 && Math.Abs(Math.Hypot(wing.X - 220, wing.Y - 100) - 9) < 0.01, $"wing {wing}"));
+        Assert.All(head.Skip(1), wing => Assert.True(wing.X < 220 && Math.Abs(Math.Sqrt(Math.Pow(wing.X - 220, 2) + Math.Pow(wing.Y - 100, 2)) - 9) < 0.01, $"wing {wing}"));
         Assert.True(head[1].Y < 100 && head[2].Y > 100, "the wings sit either side of the line");
         Assert.Null(edges.ArrowHead("plain"));
         window.Close();
@@ -52,7 +52,7 @@ public sealed class GraphEdgeStatesTests
         var edges = Show(out var window, Line("a", label: "if ok"), Line("plain"));
         var pill = edges.LabelPill("a");
 
-        Assert.NotNull(pill);
+        _ = Assert.NotNull(pill);
         Assert.Equal(120, pill.Value.Center.X, 1);
         Assert.Equal(100, pill.Value.Center.Y, 1);
         Assert.True(pill.Value.Width > 12 && pill.Value.Height > 4, $"{pill}");
