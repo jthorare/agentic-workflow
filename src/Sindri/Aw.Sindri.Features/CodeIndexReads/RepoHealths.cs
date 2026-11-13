@@ -27,6 +27,9 @@ internal sealed class RepoHealths(IRepoHeads heads, IJobViews jobs, TimeProvider
         }
 
         var now = clock.GetUtcNow();
-        return [.. repos.Select(r => RepoHealth.Of(r, headOf(r), runningOf(r.Repo.Value), [.. ended.Where(j => IndexBuildWords.IsBuildOf(j, r.Repo.Value))], now))];
+        return [.. repos.Select(r => Looked(r, RepoHealth.Of(r, headOf(r), runningOf(r.Repo.Value), [.. ended.Where(j => IndexBuildWords.IsBuildOf(j, r.Repo.Value))], now)))];
     }
+
+    // why: doctor's rule is the one rule, so the System card and `sindri doctor` can't disagree (#3430)
+    private static RepoHealth Looked(RepoStatus status, RepoHealth health) => health with { NeedsLook = CodeIndexProblems.For(status, health) is not null };
 }

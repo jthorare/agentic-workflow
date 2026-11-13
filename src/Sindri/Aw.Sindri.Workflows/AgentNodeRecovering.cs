@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
@@ -39,7 +41,7 @@ internal sealed class AgentNodeRecovering(IWorkflowRunStore runs, IWorkflowStore
 
         var folder = Path.Combine(recover.Root, AgentRecovery.OutputFolder);
         var decision = AgentRecovery.DecideNode(declared, names.Value, folder);
-        return decision.Reason is { } reason ? new AgentNodeRecovered(Outputs: null, reason) : await Checked(recover.Root, declared, decision.Names, folder, cancellationToken).ConfigureAwait(false);
+        return decision.Reason is { } reason ? new AgentNodeRecovered(Outputs: null, reason, await Present(recover.Root, declared, names.Value, cancellationToken).ConfigureAwait(false)) : await Checked(recover.Root, declared, decision.Names, folder, cancellationToken).ConfigureAwait(false);
     }
 
     // Reads each file and checks the report as 'workflow complete' does; a file that can't be read parks the node.
@@ -51,7 +53,7 @@ internal sealed class AgentNodeRecovering(IWorkflowRunStore runs, IWorkflowStore
             var content = await outputs.Read(root, name, cancellationToken).ConfigureAwait(false);
             if (content.IsError)
             {
-                return new AgentNodeRecovered(Outputs: null, $"the agent finished but its result was not recorded: {folder} ({content.Error.Message})");
+                return new AgentNodeRecovered(Outputs: null, $"the agent finished but its result was not recorded: {folder} ({content.Error.Message})", await Present(root, declared, names, cancellationToken).ConfigureAwait(false));
             }
 
             reported[name] = content.Value;
@@ -60,7 +62,7 @@ internal sealed class AgentNodeRecovering(IWorkflowRunStore runs, IWorkflowStore
         var checkedReport = RunAgentReport.Check(declared, reported);
         if (checkedReport.IsError)
         {
-            return new AgentNodeRecovered(Outputs: null, $"the agent finished but {checkedReport.Error.Message}: {folder}");   // the same check 'complete' applies: the output was never acceptable
+            return new AgentNodeRecovered(Outputs: null, $"the agent finished but {checkedReport.Error.Message}: {folder}", await Present(root, declared, names, cancellationToken).ConfigureAwait(false));   // the same check 'complete' applies: the output was never acceptable
         }
 
         var values = new JsonObject();
@@ -70,5 +72,36 @@ internal sealed class AgentNodeRecovering(IWorkflowRunStore runs, IWorkflowStore
         }
 
         return new AgentNodeRecovered(values.ToJsonString(), Reason: null);
+    }
+
+    // The declared output files the folder holds, as a JSON object by output name for the failed node's output: a file that parses is its JSON value, else its text. Null when none can be read.
+    private async Task<string?> Present(string root, IReadOnlyDictionary<string, string> declared, IReadOnlyCollection<string> names, CancellationToken cancellationToken)
+    {
+        var files = new JsonObject();
+        foreach (var name in names.Where(declared.ContainsKey).Order(StringComparer.Ordinal))
+        {
+            var content = await outputs.Read(root, name, cancellationToken).ConfigureAwait(false);
+            if (content.IsError)
+            {
+                continue;
+            }
+
+            var text = Encoding.UTF8.GetString(content.Value.Span);
+            files[name] = Parsed(text);
+        }
+
+        return files.Count == 0 ? null : files.ToJsonString();
+    }
+
+    private static JsonNode? Parsed(string text)
+    {
+        try
+        {
+            return JsonNode.Parse(text) ?? JsonValue.Create(text);
+        }
+        catch (JsonException)
+        {
+            return JsonValue.Create(text.TrimEnd('\n'));
+        }
     }
 }
