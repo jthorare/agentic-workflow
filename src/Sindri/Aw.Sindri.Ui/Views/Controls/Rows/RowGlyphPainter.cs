@@ -46,7 +46,7 @@ internal static class RowGlyphPainter
         [RowGlyph.PrDraft] = (g, p) => { Ring(g, p.Tertiary); Disc(g, p.Tertiary, radius: 2); },
         [RowGlyph.Merged] = (g, p) => Disc(g, p.Violet, Outer),
         [RowGlyph.CiRunning] = (g, p) => Dashed(g, p.Attention, dash: 1),
-        [RowGlyph.Linked] = (g, p) => { Ring(g, p.Subtle); Disc(g, p.Subtle, radius: 2.5); },
+        [RowGlyph.Linked] = (g, p) => Chain(g, p.Subtle),
     };
 
     /// <summary>How many geometries, pens and palettes the glyphs ever built. They are cached, so scrolling past thousands of rows does not move it.</summary>
@@ -163,6 +163,20 @@ internal static class RowGlyphPainter
     {
         g.DrawRectangle(brush: null, PensFor(brush).Solid, new Rect(2.75, 2.75, 11.5, 8.5), radiusX: 4.25, radiusY: 4.25);
         g.DrawGeometry(brush, pen: null, _tail.Value);
+    }
+
+    // Linked is two chained links (grammar .g.linked, #3581): each a 7 x 4.5 rounded rect of stroke centre line, radius 2.25 (an 8.5 x 6 border box,
+    // a full pill), turned -45 degrees about its own centre. In the 16 px box the centres are (6.25, 9.75) and (9.75, 6.25); the chain spans 11.26 px.
+    private static void Chain(DrawingContext g, IBrush brush)
+    {
+        var pen = PensFor(brush).Solid;
+        foreach (var centre in (ReadOnlySpan<Point>)[new Point(6.25, 9.75), new Point(9.75, 6.25)])
+        {
+            using (g.PushTransform(Matrix.CreateRotation(-Math.PI / 4) * Matrix.CreateTranslation(centre.X, centre.Y)))
+            {
+                g.DrawRectangle(brush: null, pen, new Rect(-3.5, -2.25, 7, 4.5), radiusX: 2.25, radiusY: 2.25);
+            }
+        }
     }
 
     private sealed record Pens(Pen Solid, Pen Round, Pen RoundJoin, Pen DashedLong, Pen DashedShort);

@@ -44,7 +44,7 @@ public sealed class RowGlyphSpecTests
     public Task PrDraft_ring_is_tertiary_ink() => Check(RowGlyph.PrDraft, 14, 14, "Brush.InkTertiary", more: null);
 
     [Fact]
-    public Task Linked_ring_stays_subtle_ink() => Check(RowGlyph.Linked, 14, 14, "Brush.InkSubtle", more: null);
+    public Task Linked_stays_subtle_ink() => Check(RowGlyph.Linked, 11.25, 11.25, "Brush.InkSubtle", more: null);
 
     [Fact]
     public Task Message_bubble_is_13_wide_with_a_tail_down_to_14_5() => Check(RowGlyph.Message, 13, 12.5, "Brush.InkSubtle", (g, shot) =>
@@ -54,12 +54,72 @@ public sealed class RowGlyphSpecTests
         Assert.True(shot.Near(8.5, 2.75, g.Colour("Brush.InkSubtle")), shot.Describe(8.5, 2.75));
     });
 
+    /// <summary>
+    /// Linked is two chained links on the diagonal (#3581, grammar.css .g.linked), not a ring. Coordinates are glyph-box px (14 x 14);
+    /// the probe centres that box in 16 px, so add 1 to each. Link A's stroke centreline is a 7 x 4.5 rounded rect about (5.25, 8.75),
+    /// turned -45 deg, so its long axis runs (0.707, -0.707) and its far end is the centre minus 3.5 along it: (2.78, 11.22).
+    /// Link B is about (8.75, 5.25), far end (11.22, 2.78). The ring's outline touches the left, right, top and bottom middles; the
+    /// nearest link is 4.42 away along its short axis, past its half height of 3, so those points are clear of antialiasing.
+    /// Box: each link is a pill (8.5 x 6, radius 3), whose end caps are radius-3 half circles about (+-1.25, 0). Turned 45 deg, its half-extent
+    /// in x and y is 1.25 * 0.707 + 3 = 3.88, so the chain spans 5.25 - 3.88 = 1.37 to 8.75 + 3.88 = 12.63: 11.26 px each way (the old ring was 14).
+    /// </summary>
     [Fact]
-    public Task Linked_centre_dot_is_5_px() => Check(RowGlyph.Linked, 14, 14, "Brush.InkSubtle", (g, shot) =>
+    public Task Linked_is_two_links_on_the_diagonal_not_a_ring() => Check(RowGlyph.Linked, 11.25, 11.25, "Brush.InkSubtle", (g, shot) =>
     {
-        var (w, h) = shot.Box(centreRadius: 4, ink: g.Colour("Brush.InkSubtle"));
-        Assert.True(Math.Abs(w - 5) <= 0.5 && Math.Abs(h - 5) <= 0.5, string.Create(CultureInfo.InvariantCulture, $"Linked centre dot is {w} x {h} px, grammar.css says 5 x 5"));
+        (double X, double Y)[] empty = [(0.75, 7), (13.25, 7), (7, 0.75), (7, 13.25)];
+        foreach (var (x, y) in empty)
+        {
+            Assert.True(shot.Alpha(x + 1, y + 1) <= 64, $"Linked: a ring outline point is inked, so it is still a ring. {shot.Describe(x + 1, y + 1)}");
+        }
+
+        (double X, double Y)[] ink = [(2.78, 11.22), (11.22, 2.78)];
+        foreach (var (x, y) in ink)
+        {
+            Assert.True(shot.Alpha(x + 1, y + 1) >= 250 && shot.Near(x + 1, y + 1, g.Colour("Brush.InkSubtle")), $"Linked: the far end of a link is not Brush.InkSubtle. {shot.Describe(x + 1, y + 1)}");
+        }
     });
+
+    [Fact]
+    public Task Linked_and_PrDraft_outlines_differ_at_1x() => HeadlessUnitTestSession.GetOrStartForAssembly(typeof(RowGlyphSpecTests).Assembly).Dispatch(() =>
+    {
+        if (!_draws)
+        {
+            return true;
+        }
+
+        var linked = Mask1x(RowGlyph.Linked);
+        var draft = Mask1x(RowGlyph.PrDraft);
+        var differing = linked.Zip(draft).Count(pair => pair.First != pair.Second);
+        Assert.True(differing >= 20, string.Create(CultureInfo.InvariantCulture, $"Linked and PrDraft differ in {differing} px at 1x, need at least 20: the outline must differ, not only size or ink"));
+        return true;
+    }, TestContext.Current.CancellationToken);
+
+    private static bool[] Mask1x(RowGlyph glyph)
+    {
+        var probe = new Probe(glyph) { Width = 16, Height = 16 };
+        var window = new Window { Content = probe, Width = 64, Height = 64, SizeToContent = SizeToContent.Manual };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+        using var bitmap = new RenderTargetBitmap(new PixelSize(16, 16), new Vector(96, 96));
+        bitmap.Render(probe);
+        using var stream = new MemoryStream();
+        bitmap.Save(stream, PngBitmapEncoderOptions.Default);
+        stream.Position = 0;
+        using var read = WriteableBitmap.Decode(stream);
+        using var frame = read.Lock();
+        var mask = new bool[16 * 16];
+        for (var y = 0; y < 16; y++)
+        {
+            for (var x = 0; x < 16; x++)
+            {
+                mask[(y * 16) + x] = Marshal.ReadByte(frame.Address, (y * frame.RowBytes) + (x * 4) + 3) > 128;
+            }
+        }
+
+        window.Close();
+        return mask;
+    }
 
     [Fact]
     public Task PrDraft_centre_dot_stays_4_px() => Check(RowGlyph.PrDraft, 14, 14, "Brush.InkTertiary", (g, shot) =>
@@ -178,6 +238,8 @@ public sealed class RowGlyphSpecTests
 
             return ink is not { } want || (Within(bytes[i + 2], want.R) && Within(bytes[i + 1], want.G) && Within(bytes[i], want.B));
         }
+
+        public int Alpha(double x, double y) => bytes[(((((int)(y * Scale)) * size) + (int)(x * Scale)) * 4) + 3];
 
         public bool Near(double x, double y, Color want)
         {
