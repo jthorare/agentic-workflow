@@ -72,7 +72,12 @@ public sealed class ScheduleBlock : IGraphBlock
     public ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        return ValueTask.FromResult<Result<BlockResult>>(new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal) { ["scheduledFor"] = context.Resolve("trigger.scheduledFor") }));
+        return ValueTask.FromResult<Result<BlockResult>>(new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal)
+        {
+            ["scheduledFor"] = context.Resolve("trigger.scheduledFor"),
+            ["localDate"] = context.Resolve("trigger.localDate"),
+            ["weekday"] = context.Resolve("trigger.weekday"),
+        }));
     }
 
     private static string? Text(JsonNode? node) => node is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;
