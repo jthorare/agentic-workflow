@@ -19,16 +19,19 @@ namespace Aw.Sindri.Infrastructure.Connections.Polling;
 /// A null cursor is a baseline: it stores the state and fires nothing. A state that changed fires once, only for a pull request that had an entry
 /// before, or one created after "@at" (a cursor without "@at" is a baseline for every pull request not seen before). Checks that finished red or green
 /// fire, and so does a mergeable state that turned dirty; a push that leaves a pull request dirty does not fire again. A state GitHub has not worked out
-/// yet (checks still running, mergeable state 'unknown') fires nothing; for conflict it keeps the state stored before.
+/// yet (checks still running, mergeable state 'unknown') fires nothing; for conflict it keeps the state stored before, or stores 'unknown:0' for a pull
+/// request with none, so its first dirty fires. A pull request that leaves the open list loses its count: if it reopens and turns dirty, spell 1 can
+/// repeat an old delivery id and be dropped as a duplicate.
 /// </summary>
 /// <param name="client">Sends the requests with the connection's token, to api.github.com only.</param>
-internal sealed class GitHubPullStates(PollerClient client)
+internal sealed partial class GitHubPullStates(PollerClient client)
 {
     /// <summary>The most open pull requests one poll reads the state of (one more call each).</summary>
     internal const int MaxPulls = 20;
 
     private const string Host = "api.github.com";
     private const string Pending = "pending";
+    private const string Unknown = "unknown";
 
     private static readonly FrozenSet<string> _red = new[] { "failure", "timed_out", "cancelled", "action_required", "startup_failure" }.ToFrozenSet(StringComparer.Ordinal);
 
@@ -36,6 +39,7 @@ internal sealed class GitHubPullStates(PollerClient client)
     {
         ArgumentNullException.ThrowIfNull(parts);
         var root = $"https://{Host}/repos/{Uri.EscapeDataString(parts[0])}/{Uri.EscapeDataString(parts[1])}";
+        var now = client.Clock.GetUtcNow();   // why: before the list read, so a pull request opened while it runs is after this poll's "@at"
         var listed = await Get(connection, root + "/pulls?state=open&sort=updated&direction=desc&per_page=100", cancellationToken).ConfigureAwait(false);
         if (listed.IsError || listed.Value.Limited is not null)
         {
@@ -48,7 +52,7 @@ internal sealed class GitHubPullStates(PollerClient client)
             return SindriErrors.ConnectionProviderChanged.With("the open pull requests answer is not a list");
         }
 
-        var walk = new Walk(Snapshot(cursor), connection, root, parts[0] + "/" + parts[1], client.Clock.GetUtcNow());
+        var walk = new Walk(Snapshot(cursor), connection, root, parts[0] + "/" + parts[1], now);
         return await WalkAll(walk, kind, listed.Value.Body, cursor, cancellationToken).ConfigureAwait(false);
     }
 
@@ -120,37 +124,7 @@ internal sealed class GitHubPullStates(PollerClient client)
             return read.IsError ? read.Error : new Step(State: null, Event: null, read.Value.Limited);
         }
 
-        var detail = read.Value.Body;
-        var state = PollJson.Text(PollJson.Member(detail, "mergeable_state"));
-        if (state is null || string.Equals(state, "unknown", StringComparison.Ordinal))
-        {
-            return new Step(State: null, Event: null, Limited: null);
-        }
-
-        // why: the state does not hold the head, so a push that leaves the pull request dirty fires nothing; the count makes the next dirty spell a new event
-        var (was, count) = ConflictState(walk.Before(number));
-        if (!string.Equals(state, "dirty", StringComparison.Ordinal))
-        {
-            return new Step("clean:" + Count(count), Event: null, Limited: null);
-        }
-
-        var spell = string.Equals(was, "dirty", StringComparison.Ordinal) ? count : count + 1;
-        var turned = spell == count ? null : GitHubEventMapper.Conflict(detail, walk.Repo, UpdatedAt(walk, detail), spell);
-        return new Step("dirty:" + Count(spell), turned, Limited: null);
-    }
-
-    private static string Count(int count) => count.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-    // The stored conflict state: 'dirty:2' / 'clean:2' (2 = times it turned dirty); an older cursor's 'sha:dirty' reads as dirty with 0.
-    private static (string State, int Count) ConflictState(string? stored)
-    {
-        if (stored is null)
-        {
-            return (string.Empty, 0);
-        }
-
-        var parts = stored.Split(':');
-        return parts is ["dirty" or "clean", var n] && int.TryParse(n, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var count) ? (parts[0], count) : (parts[^1], 0);
+        return ConflictStep(walk, number, read.Value.Body);
     }
 
     private static string Conclusion(List<JsonElement> runs)
