@@ -114,7 +114,7 @@ public sealed class NodeSourceLinkTests : IDisposable
 
         var source = await SourceOf("feature:a");
 
-        Assert.Equal(new NodeSource("doc", "repo:aw-split-panes/docs/a.md", Title: null, Url: Blob + "HEAD/docs/a.md"), source);
+        Assert.Equal(new NodeSource("doc", "repo:aw-split-panes/docs/a.md", Title: null, Url: Blob + "HEAD/docs/a.md", Path: Path.Combine("/work/aw-split-panes", "docs", "a.md")), source);
         Assert.DoesNotContain(Leak, source!.Url, StringComparison.Ordinal);
     }
 
@@ -126,7 +126,7 @@ public sealed class NodeSourceLinkTests : IDisposable
 
         var source = await SourceOf("code:src/a.ts");
 
-        Assert.Equal(new NodeSource("file", "src/a.ts", Title: null, Url: Blob + "HEAD/src/a.ts"), source);
+        Assert.Equal(new NodeSource("file", "src/a.ts", Title: null, Url: Blob + "HEAD/src/a.ts", Path: Path.Combine("/work/aw-split-panes", "src", "a.ts")), source);
     }
 
     [Fact, Trait("Lane", "unit")]
