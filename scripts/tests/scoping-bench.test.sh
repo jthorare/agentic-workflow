@@ -51,6 +51,7 @@ expect_out "the count" "scoping-bench: 2 finding(s)"
 echo "usage"
 run; expect_rc "no --questions" 2; expect_out "says so" "--questions is required"
 run --questions "$TMPROOT/keys.yaml" --k 0; expect_rc "--k 0" 2
+run --questions "$TMPROOT/keys.yaml" --limit 0; expect_rc "--limit 0" 2; expect_out "says so" "--limit must be a whole number of 1 or more"
 run --questions "$TMPROOT/keys.yaml" --field title; expect_rc "an unknown --field" 2
 run --questions "$TMPROOT/keys.yaml" --only q1,q9; expect_rc "--only with an unknown id" 2; expect_out "names it" "unknown question(s): q9"
 run --questions "$TMPROOT/nope.yaml"; expect_rc "a questions file that isn't there" 2
@@ -115,6 +116,12 @@ if has -Fx -- "context query Where is a, precisely? --json" "$STUB_LOG"; then ok
 if [ "$(printf '%s' "$OUT" | jq -r '[(.rows | length), .rows[0].touch.hit, .rows[0].precision, .totals.k] | join(" ")')" = "1 1 1 2" ]; then
   ok "--json: one row, top 2 = src/a.ts src/c.ts, both relevant"
 else fail "--json rows and totals"; printf '%s\n' "$OUT" | sed 's/^/      | /'; fi
+
+: > "$STUB_LOG"
+run --questions "$TMPROOT/score.yaml" --sindri "$STUB" --only q1 --limit 25
+expect_rc "--limit" 0
+if has -Fx -- "context query where is a --limit 25 --json" "$STUB_LOG"; then ok "--limit asks sindri for that window"; else fail "--limit asks sindri for that window"; cat "$STUB_LOG"; fi
+expect_out "the header names the window" "reads 25"
 
 printf 'questions:\n  - id: qb\n    plain: "where is b"\n    touch: [{path: src/b.ts}]\n  - id: q1\n    plain: "where is a"\n    touch: [{path: src/a.ts}]\n' > "$TMPROOT/fails.yaml"
 run --questions "$TMPROOT/fails.yaml" --sindri "$STUB" --out "$TMPROOT/raw"

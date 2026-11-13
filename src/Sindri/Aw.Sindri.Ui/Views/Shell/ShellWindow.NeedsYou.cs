@@ -21,6 +21,7 @@ internal sealed partial class ShellWindow
         {
             shell.NeedsYou.FocusRequested += OnNeedsYouFocus;
             shell.HomeFocusRequested += OnHomeFocus;
+            shell.SettingFilterRequested += OnSettingFilter;
             shell.NeedsYou.PropertyChanged += OnNeedsYouChanged;
             shell.NeedsYou.Seen.PropertyChanged += OnSeenChanged;
         }
@@ -28,6 +29,7 @@ internal sealed partial class ShellWindow
         {
             shell.NeedsYou.FocusRequested -= OnNeedsYouFocus;
             shell.HomeFocusRequested -= OnHomeFocus;
+            shell.SettingFilterRequested -= OnSettingFilter;
             shell.NeedsYou.PropertyChanged -= OnNeedsYouChanged;
             shell.NeedsYou.Seen.PropertyChanged -= OnSeenChanged;
         }

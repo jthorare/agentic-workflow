@@ -23,7 +23,7 @@ public sealed class ChainRegistrationTests
             var commands = Registered(services, typeof(ICommand<>));
 
             Assert.NotEmpty(commands);
-            Assert.All(commands.Where(type => !IsStop(type) && !IsTestConnection(type) && !IsSignInConnection(type)), type => Assert.Equal(
+            Assert.All(commands.Where(type => !IsStop(type) && !IsTestConnection(type) && !IsSignInConnection(type) && !IsStartSession(type)), type => Assert.Equal(
                 [typeof(CommandGate<,>), typeof(AuditingService<,>), typeof(AuthorizingService<,>), typeof(ValidatingService<,>), typeof(AwaitingViews<,>), null],
                 Chain(scope.ServiceProvider.GetRequiredService(type))));
         }
@@ -73,6 +73,23 @@ public sealed class ChainRegistrationTests
                 Chain(scope.ServiceProvider.GetRequiredService(signIn)));
         }
     }
+
+    // A start makes a worktree, then a tmux session (up to 64 s): holding the gate that long blocks every other command. Only its ledger write takes the gate (A7, #3380).
+    [Fact, Trait("Lane", "unit")]
+    public void The_session_start_is_audited_and_authorized_but_does_not_hold_the_gate_while_it_starts()
+    {
+        var (services, scope) = Composed();
+        using (scope)
+        {
+            var start = Assert.Single(Registered(services, typeof(ICommand<>)), IsStartSession);
+
+            Assert.Equal(
+                [typeof(AuditingService<,>), typeof(AuthorizingService<,>), typeof(ValidatingService<,>), typeof(AwaitingViews<,>), null],
+                Chain(scope.ServiceProvider.GetRequiredService(start)));
+        }
+    }
+
+    private static bool IsStartSession(Type service) => service.GenericTypeArguments[0] == typeof(Features.StartSession.StartSessionRequest);
 
     private static bool IsStop(Type service) => service.GenericTypeArguments[0] == typeof(Features.StopProcess.StopProcessRequest);
 

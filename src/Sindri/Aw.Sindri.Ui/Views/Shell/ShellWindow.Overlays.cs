@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Palette;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Item;
@@ -97,6 +98,10 @@ internal sealed partial class ShellWindow
         (e.Key is Key.K or Key.OemComma && e.KeyModifiers == _command) || (IsQuestionMark(e) && e.Source is not TextBox);
     private bool _openingSettings;
 
+    // A palette Settings entry shows Settings from the top, as ⌘, does (#3362).
+    private void OnSettingFilter(object? sender, ValueEventArgs<string> e) =>
+        Dispatcher.UIThread.Post(() => this.Get<Control>("SettingsSlot").FindAncestorOfType<ScrollViewer>()?.ScrollToHome(), DispatcherPriority.Loaded);
+
     private bool OpenSettingsByKey(KeyEventArgs e, ShellViewModel shell)
     {
         if (e.Key != Key.OemComma || e.KeyModifiers != _command)
@@ -119,8 +124,14 @@ internal sealed partial class ShellWindow
             _openingSettings = false;
         }
 
-        // Like the sheet's heading (§11.2), opening Settings moves focus into it: its first control.
-        Dispatcher.UIThread.Post(() => FirstFocusable(this.Get<Control>("SettingsSlot"))?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
+        // Like the sheet's heading (§11.2), opening Settings moves focus into it: the filter box (#3362), else its first control (the title is focusable and comes first).
+        Dispatcher.UIThread.Post(() =>
+        {
+            var slot = this.Get<Control>("SettingsSlot");
+            var target = slot.GetVisualDescendants().OfType<TextBox>().FirstOrDefault(static t => string.Equals(t.Name, "SettingsFilterBox", StringComparison.Ordinal) && t.IsEffectivelyVisible) ?? FirstFocusable(slot);
+            _ = target?.Focus(NavigationMethod.Tab);
+            slot.FindAncestorOfType<ScrollViewer>()?.ScrollToHome();   // the box brings itself into view and over-scrolls: the title stays under the top bar otherwise (#3453)
+        }, DispatcherPriority.Loaded);
         return true;
     }
 

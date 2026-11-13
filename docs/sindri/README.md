@@ -29,6 +29,8 @@ Live check of the Sindri-owned index (the ConnectAI replacement: GitHub, Linear,
 
 The Agents page's rows, reasons and profile keys: [agents.md](agents.md).
 
+The Agents page shows a workflow session as a row under its run. The row comes from the `workflow.node.agent.changed` ledger event, which each `run_agent` node run writes (`docs/csharp/sindri-graph.md`, "Agent state events").
+
 Walk scripts: [walks/day-without-the-terminal.md](walks/day-without-the-terminal.md) is the Agents page's D13 check. It counts how often a day of agent work sends you to a terminal, before and after each phase of the Agents page spec.
 
 Demo handoff and remaining work: [demo-handoff.md](demo-handoff.md) is a prompt for an agent on a fresh machine to set up and rehearse the Sindri demo, and its section 9 lists what is not built yet against the spec.

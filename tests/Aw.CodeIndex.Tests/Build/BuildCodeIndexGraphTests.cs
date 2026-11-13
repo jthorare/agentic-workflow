@@ -67,6 +67,58 @@ public sealed class BuildCodeIndexGraphTests
         Assert.Equal(LayerState.Ok, report.Layers.Single(l => l.Layer == LayerName.Structure).State);
     }
 
+    // A fresh repo on day one (#3256): no file a parser covers, so graphify has nothing to read and would exit 1 "graph is empty". That is no failure.
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_repo_with_no_code_file_leaves_the_graph_layer_ok_with_nothing_to_index_and_never_runs_the_tool()
+    {
+        using var git = A.GitRepo().Build();
+        var tool = new FakeGraphRunner { RunError = CodeIndexErrors.GraphUnavailable.With("failed: graph is empty") };
+        using var index = new RealIndex(graph: tool);
+        var repo = git.AsRepo("fresh");
+
+        var report = await Build(index, repo, git.Head);
+
+        var layer = report.Layers.Single(l => l.Layer == LayerName.Graph);
+        Assert.Equal(BuildOutcome.Published, report.Outcome);
+        Assert.Equal((LayerState.Ok, null, "nothing to index yet"), (layer.State, layer.Code, layer.Detail));
+        Assert.Equal(0, tool.Runs);
+        await An_empty_graph_is_stored(index, repo);
+    }
+
+    // #3372: a later read sees the stored empty graph, an ok index whose graph layer says nothing to index yet with 0 graph rows, not a missing index.
+    private static async Task An_empty_graph_is_stored(RealIndex index, CodeIndexRepo repo)
+    {
+        var status = (await index.Facade.Status(RealIndex.ScopeOf(repo), Token)).Value.Repos.Single();
+        var graph = status.Layers.Single(l => l.Layer == LayerName.Graph);
+        Assert.Equal(IndexState.Ok, status.State);
+        Assert.Equal((LayerState.Ok, "nothing to index yet"), (graph.State, graph.Detail));
+        Assert.Equal((0L, 0L), (await index.CountRows(repo.Name, "graph_nodes"), await index.CountRows(repo.Name, "graph_edges")));
+    }
+
+    // #3372: code shows up in a later commit, so the next build runs graphify and stores a real graph in place of the empty one.
+    [Fact, Trait("Lane", "integration")]
+    public async Task Code_committed_after_an_empty_build_runs_the_tool_on_the_next_build_and_stores_its_graph()
+    {
+        using var git = A.GitRepo().Build();
+        var tool = new FakeGraphRunner { Graph = _graph };
+        using var index = new RealIndex(graph: tool);
+        var repo = git.AsRepo("fresh");
+        _ = await Build(index, repo, git.Head);
+        git.WriteFile("src/a.ts", FileA);
+        git.WriteFile("src/b.ts", FileB);
+        var second = git.Commit("first code");
+
+        var report = await Build(index, repo, second);
+
+        var layer = report.Layers.Single(l => l.Layer == LayerName.Graph);
+        var g = await Find(index, repo, "g");
+        var callers = (await index.Facade.Callers(RealIndex.ScopeOf(repo), g, CallDepth.One, includeImplementations: false, Token)).Value;
+        Assert.Equal(1, tool.Runs);
+        Assert.Equal((LayerState.Ok, "2 symbols, 1 calls, 0 dropped"), (layer.State, layer.Detail));
+        Assert.Equal("f", Assert.Single(callers.Edges).Other!.Name);
+        Assert.Equal((2L, 1L), (await index.CountRows(repo.Name, "graph_nodes"), await index.CountRows(repo.Name, "graph_edges")));
+    }
+
     [Fact, Trait("Lane", "integration")]
     public async Task A_failure_that_is_no_layer_code_reads_as_the_graph_code_failed()
     {

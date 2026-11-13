@@ -7,11 +7,14 @@ namespace Aw.Sindri.Features.CodeIndexReads;
 
 /// <summary>
 /// The health row a repo's code index makes, if any (the Health card's words, code index spec §7.3): damaged, a build retrying after failures, a failed code graph, or an index behind main.
-/// Missing, building, waiting for a build slot and pending embeddings are not problems. At most one row a repo: damaged, then retrying, then unavailable, then stale.
+/// Missing, building, queued under 30 min (a first build not started yet) and pending embeddings are not problems. At most one row a repo: damaged, then retrying, then unavailable, then queued too long, then stale.
 /// </summary>
 internal static class CodeIndexProblems
 {
     private const string Retrying = "retrying in ";
+
+    /// <summary>How long a first build may stay queued before it is a problem (#3440): code-index-main-move ticks every minute and holds a repo up to 10 min, so a normal wait ends well inside it.</summary>
+    internal const int QueuedLimitMinutes = 30;
 
     /// <summary>The repo's problem.</summary>
     /// <param name="status">The repo's index status, from the files.</param>
@@ -36,6 +39,11 @@ internal static class CodeIndexProblems
         if (status.Layers.FirstOrDefault(static l => l is { Layer: LayerName.Graph, State: LayerState.Unavailable, Code: not null }) is { Code: { } code })
         {
             return new(code, $"{repo}: code graph is unavailable", $"the code index for {repo} is unavailable");
+        }
+
+        if (health.State == "queued" && health.QueuedFor >= TimeSpan.FromMinutes(QueuedLimitMinutes))
+        {
+            return new(CodeIndexErrors.IndexNotBuilt.Code, $"{repo}: the first code index build hasn't started in {QueuedLimitMinutes} min", $"the code index for {repo} hasn't started its first build");
         }
 
         return health.State == "stale"

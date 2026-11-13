@@ -168,13 +168,14 @@ internal static partial class CommandTable
             _ => await UnknownVerb(args, io.Output).ConfigureAwait(false),
         };
 
-    /// <summary>'sindri doctor [--json]' and 'sindri doctor --probe [--harness NAME] [--json]'.</summary>
+    /// <summary>'sindri doctor [--dev] [--json]' and 'sindri doctor --probe [--harness NAME] [--json]'.</summary>
     private static async Task<int> Doctor(string[] args, Verbs verbs, ProbeCommands harnesses, Output output, CancellationToken ct) =>
         args switch
         {
             ["doctor", "--probe"] or ["doctor", "--probe", "--json"] => await output.Json(await harnesses.Probe(harness: null, ct).ConfigureAwait(false), 0).ConfigureAwait(false),
             ["doctor", "--probe", "--harness", var name, .. var rest] when Json(rest) is not null => await output.Json(await harnesses.Probe(name, ct).ConfigureAwait(false), 0).ConfigureAwait(false),
-            ["doctor", .. var rest] when Json(rest) is { } json => await verbs.Doctor(json, ct, harnesses.DoctorChecks).ConfigureAwait(false),
+            ["doctor", .. var rest] when WithoutDev(rest) is var plain && Json(plain.Args) is { } json =>
+                await verbs.Doctor(json, ct, token => harnesses.DoctorChecks(plain.Dev, token)).ConfigureAwait(false),
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
 
@@ -237,6 +238,10 @@ internal static partial class CommandTable
         ["--follow", "--json"] or ["--json", "--follow"] => true,
         _ => null,
     };
+
+    /// <summary>'sindri doctor' arguments without '--dev', and whether it was there.</summary>
+    private static (bool Dev, string[] Args) WithoutDev(string[] rest) =>
+        rest.Contains("--dev", StringComparer.Ordinal) ? (true, [.. rest.Where(a => !string.Equals(a, "--dev", StringComparison.Ordinal))]) : (false, rest);
 
     private static bool? Json(string[] rest) => rest switch
     {

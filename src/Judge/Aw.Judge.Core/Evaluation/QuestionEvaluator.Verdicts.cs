@@ -29,7 +29,7 @@ public sealed partial class QuestionEvaluator
             case StepVerdict.OutOfEnum:
             case StepVerdict.NoReasons:
                 await Fail(question.Name, at.Name, FailureCode(verdict, result), cancellationToken).ConfigureAwait(false);
-                run.Skip(at.Name, SkipReason.Failed);
+                run.Skip(at.Name, SkipReason.Failed, FailedSkipCode(result));
                 return true;
             case StepVerdict.Decided:
             case StepVerdict.BelowThreshold:
@@ -50,6 +50,10 @@ public sealed partial class QuestionEvaluator
         _ => null,
     };
 
+    // A failed skip names the usage limit when the CLI said it hit one, so `judge health` can tell the two apart.
+    private static string? FailedSkipCode(ProviderResult result) =>
+        result is ProviderErrored { UsageLimit: true } ? EvaluationReasons.UsageLimit : null;
+
     private static StepVerdict Judged<TInput>(QuestionDefinition<TInput> question, EvaluationRun run, ProviderResult result)
         where TInput : class =>
         StepVerdicts.Of(result, question.Outputs, run.Threshold, lacksReasons: result is ProviderDecided decided && question.LacksReasons(decided));
@@ -62,6 +66,12 @@ public sealed partial class QuestionEvaluator
             return EvaluationReasons.NoReasons;
         }
 
-        return result is ProviderDecided ? EvaluationReasons.OutOfEnum : result.ReasonCode;
+        return result switch
+        {
+            ProviderDecided => EvaluationReasons.OutOfEnum,
+            // The CLI said it hit the usage limit: name that, not its exit code, so a stored failure tells the two apart.
+            ProviderErrored { UsageLimit: true } => EvaluationReasons.UsageLimit,
+            _ => result.ReasonCode,
+        };
     }
 }
