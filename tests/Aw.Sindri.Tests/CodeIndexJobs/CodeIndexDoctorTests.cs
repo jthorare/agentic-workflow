@@ -6,6 +6,7 @@ using Aw.CodeIndex.Testing;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.CodeIndexJobs;
+using Aw.Sindri.Tests.Server;
 using IndexRepoHead = Aw.CodeIndex.Core.Model.RepoHead;
 using RepoStatus = Aw.CodeIndex.Core.Facade.RepoStatus;
 
@@ -79,6 +80,28 @@ public sealed class CodeIndexDoctorTests
 
         Assert.Equal((CheckState.Fail, "index damaged, rebuilding (SND-CODEIDX-010)"), (row.State, row.Detail));
     }
+
+    // #3399: while code-index-main-move is paused no build starts, so the row names the pause and the resume, never "queued".
+    [Fact, Trait("Lane", "unit")]
+    public void A_repo_with_no_index_while_code_index_main_move_is_paused_names_the_resume()
+    {
+        var row = PausedRow(new RepoStatus(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null), new IndexRepoHead(_repo, _new, OnDefaultBranch: true));
+
+        Assert.Equal((CheckState.Warn, "no index: code-index-main-move is paused, so no build starts", Resume), (row.State, row.Detail, row.Fix));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_stale_index_while_code_index_main_move_is_paused_names_the_resume()
+    {
+        var row = PausedRow(Built(Ok(LayerName.Structure)), new IndexRepoHead(_repo, _new, OnDefaultBranch: true));
+
+        Assert.Equal((CheckState.Warn, "stale: index at 1111111, head at 2222222; code-index-main-move is paused", Resume), (row.State, row.Detail, row.Fix));
+    }
+
+    private const string Resume = "sindri services resume code-index-main-move";
+
+    private static DoctorCheck PausedRow(RepoStatus status, IndexRepoHead head) =>
+        CodeIndexDoctor.Rows([status], [head], [], _now, buildServiceActive: false).Single(static c => c.Name == "code-index:demo");
 
     [Fact, Trait("Lane", "unit")]
     public void A_repo_with_no_index_is_a_queued_first_build()
@@ -154,7 +177,7 @@ public sealed class CodeIndexDoctorTests
         var fresh = new SindriProfile(1, "thor", Repos: [new RepoEntry("demo", "/work/demo"), new RepoEntry("other", "/work/other"), new RepoEntry("fresh", "/work/fresh")]);
         rig.Harness.Profiles.Live = new LoadedProfile(fresh, Core.Ids.ProfileHash.From(new string('a', 64)), "/home/profile.yaml");
         _ = rig.Index.WithIndex(CodeIndexJobsRig.Fresh, CodeIndexJobsRig.Old);
-        var doctor = new CodeIndexDoctor(rig.Index, rig.Heads, rig.Jobs, new FakeEmbedder(), new FakePins(), rig.Harness.Clock, rig.Harness.Profiles);
+        var doctor = new CodeIndexDoctor(rig.Index, rig.Heads, rig.Jobs, new FakeEmbedder(), new FakePins(), rig.Harness.Clock, rig.Harness.Profiles, new NoPauses());
         var approved = (await rig.Harness.Profiles.Latest(TestContext.Current.CancellationToken)).Value;
 
         var rows = await doctor.Check(approved, TestContext.Current.CancellationToken);

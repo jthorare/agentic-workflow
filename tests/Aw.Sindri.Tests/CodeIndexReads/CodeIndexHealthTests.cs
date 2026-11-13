@@ -6,6 +6,7 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.CodeIndexReads;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.Server;
 using RepoName = Aw.CodeIndex.Core.Values.RepoName;
 
 namespace Aw.Sindri.Tests.CodeIndexReads;
@@ -18,7 +19,7 @@ public sealed class CodeIndexHealthTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static CodeIndexHealth Health(FakeCodeIndex index, FakeRepoHeads heads, InMemoryProfiles? live = null) => new(index, new RepoHealths(heads, new InMemoryJobViews(), TimeProvider.System, new QueuedClock(TimeProvider.System.GetUtcNow())), live ?? new InMemoryProfiles());
+    private static CodeIndexHealth Health(FakeCodeIndex index, FakeRepoHeads heads, InMemoryProfiles? live = null) => new(index, new RepoHealths(heads, new InMemoryJobViews(), new NoPauses(), TimeProvider.System, new QueuedClock(TimeProvider.System.GetUtcNow())), live ?? new InMemoryProfiles());
 
     private static LoadedProfile Approved()
     {
@@ -84,7 +85,7 @@ public sealed class CodeIndexHealthTests
         var now = new DateTimeOffset(2026, 11, 13, 12, 0, 0, TimeSpan.Zero);
         var clock = new QueuedClock(now.AddMinutes(-30));
         clock.Seed(["demo", "other"]);
-        var health = new CodeIndexHealth(index, new RepoHealths(heads, new InMemoryJobViews(), new FixedClock(now), clock), new InMemoryProfiles());
+        var health = new CodeIndexHealth(index, new RepoHealths(heads, new InMemoryJobViews(), new NoPauses(), new FixedClock(now), clock), new InMemoryProfiles());
 
         var problems = await health.Problems(Approved(), Token);
 
