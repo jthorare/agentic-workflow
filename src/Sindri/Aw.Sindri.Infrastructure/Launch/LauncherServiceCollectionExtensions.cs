@@ -1,5 +1,6 @@
 using Aw.Redaction;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Mcp;
@@ -48,6 +49,7 @@ internal static class LauncherServiceCollectionExtensions
                 BuiltinHash = BuiltinHash,
                 Approved = Approved(sp),
                 Models = sp.GetRequiredService<IModelCatalog>(),
+                Timer = sp.GetService<IPartTimer>(),
             }));
     }
 

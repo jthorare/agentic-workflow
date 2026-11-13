@@ -130,7 +130,7 @@ internal sealed class ProposeFromScopeService(IGraphStore store, IProposalRuns r
 
     private static Error? Addressable(ContextScope scope, ScopeProposal proposal)
     {
-        var addressed = SettingsReader.Read(scope.Settings).Bind(s => ScopeRules.Resolve(s, scope.Repos, scope.Caller));
+        var addressed = SettingsReader.Read(scope.Settings).Bind(s => ScopeRules.Resolve(s, scope.Repos, scope.Caller, scope.LeftOut));
         if (addressed.IsError && addressed.Error.Code != ContextErrors.UnknownAnchor.Code)
         {
             return addressed.Error;
