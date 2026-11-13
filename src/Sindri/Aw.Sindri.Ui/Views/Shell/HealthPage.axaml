@@ -170,8 +170,8 @@
                 <TextBlock x:Name="ControlPlaneEyebrow" Classes="section-title head-title" Text="{Binding Text.ControlPlaneCard}"
                            AutomationProperties.Name="{Binding Text.ControlPlaneCard}" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                  <icons:StateIcon x:Name="ProcessGlyph" Glyph="{Binding Pill.Glyph}" VerticalAlignment="Center" />
-                  <TextBlock x:Name="ProcessWord" Classes="body-strong head-word" Text="{Binding Pill.Word}" AutomationProperties.Name="{Binding Pill.Text}" />
+                  <icons:StateIcon x:Name="ProcessGlyph" Glyph="{Binding Pill.ProcessGlyph}" VerticalAlignment="Center" />
+                  <TextBlock x:Name="ProcessWord" Classes="body-strong head-word" Text="{Binding Pill.ProcessWord}" AutomationProperties.Name="{Binding Pill.ProcessText}" />
                 </StackPanel>
               </Grid>
               <StackPanel>

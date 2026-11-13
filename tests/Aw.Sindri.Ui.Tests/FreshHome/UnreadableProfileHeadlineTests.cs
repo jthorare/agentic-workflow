@@ -26,6 +26,7 @@ public sealed class UnreadableProfileHeadlineTests
         Assert.False(system.Vm.Pill.IsHealthy);
         Assert.NotEqual("Healthy", system.Vm.Pill.Word, StringComparer.Ordinal);
         Assert.Equal(Labels.PillNeedsLook, system.Vm.Pill.Word, StringComparer.Ordinal);
+        Assert.Equal(Labels.HealthWord("healthy"), system.Vm.Pill.ProcessWord, StringComparer.Ordinal);   // the Control plane card keeps the server's word
     }
 
     [Fact]
