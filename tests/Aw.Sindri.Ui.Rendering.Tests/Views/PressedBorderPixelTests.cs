@@ -118,7 +118,7 @@ public sealed class PressedBorderPixelTests : FrameHost
         return (best, detail);
     }
 
-    private static (Window Window, Border Sample) ClickableWindow()
+    private static (Window Window, Border Sample) ClickableWindow(double scale)
     {
         // The sample of the scale 1 fact: 150 wide, host padding 24, so the unpressed top edge is logical y 24 = device y 36 at 1.5x, a whole pixel.
         var sample = new Border { Width = 150, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(6), Padding = new Thickness(24, 12), HorizontalAlignment = HorizontalAlignment.Left, Child = new TextBlock { Text = "Clickable" } };
@@ -131,9 +131,36 @@ public sealed class PressedBorderPixelTests : FrameHost
             Background = app.TryFindResource("Brush.Canvas", app.ActualThemeVariant, out var canvas) ? canvas as IBrush : null,
         };
         var window = new Window { Width = 360, Height = 140, Content = host };
+        Assert.Null(SetHostScaling(window, scale));   // before Show, as RowFlatRedTests does: the window then reports this RenderScaling to the styles and to TopLevel
         window.Show();
         Settle(window);
+        Assert.Equal(scale, window.RenderScaling);
         return (window, sample);
+    }
+
+    // Null when the window now has this render scaling; otherwise why it could not be set. Copied from RowFlatRedTests: Avalonia.Headless raises it by reflection (IHeadlessWindow is internal).
+    private static string? SetHostScaling(Window window, double scaling)
+    {
+        var type = typeof(Avalonia.Headless.AvaloniaHeadlessPlatform).Assembly.GetType("Avalonia.Headless.IHeadlessWindow", throwOnError: false);
+        var method = type?.GetMethod("SetRenderScaling");
+        if (type is null || method is null)
+        {
+            return "IHeadlessWindow.SetRenderScaling not found";
+        }
+
+        if (window.PlatformImpl is not { } impl || !type.IsInstanceOfType(impl))
+        {
+            return "the window's platform impl is not an IHeadlessWindow";
+        }
+
+        var parameters = method.GetParameters();
+        if (parameters.Length != 1)
+        {
+            return "SetRenderScaling takes another number of parameters than one";
+        }
+
+        _ = method.Invoke(impl, [Convert.ChangeType(scaling, parameters[0].ParameterType, CultureInfo.InvariantCulture)]);
+        return null;
     }
 
     private static Point Centre(Control control, Window window) =>
@@ -247,7 +274,7 @@ public sealed class PressedBorderPixelTests : FrameHost
     {
         Motion.Set(reduce: true);
         using var instant = InstantMotion.Start();
-        var (window, sample) = ClickableWindow();
+        var (window, sample) = ClickableWindow(scale: 1.5);
 
         window.MouseMove(Centre(sample, window), RawInputModifiers.None);
         window.MouseDown(Centre(sample, window), MouseButton.Left, RawInputModifiers.None);
@@ -267,7 +294,7 @@ public sealed class PressedBorderPixelTests : FrameHost
     {
         Motion.Set(reduce: true);
         using var instant = InstantMotion.Start();
-        var (window, sample) = ClickableWindow();
+        var (window, sample) = ClickableWindow(scale: 1.5);
 
         // The control: no press, so the red above is the push and not the 1.5x render itself.
         var (ratio, detail) = TopBorderContrast(window, sample, scale: 1.5, pushLogical: 0);
