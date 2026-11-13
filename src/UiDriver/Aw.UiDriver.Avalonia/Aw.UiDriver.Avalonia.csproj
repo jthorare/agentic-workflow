@@ -19,6 +19,5 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Aw.UiDriver.Avalonia.Tests" />
-    <InternalsVisibleTo Include="Aw.Sindri.Ui.Frames.Tests" />
   </ItemGroup>
 </Project>

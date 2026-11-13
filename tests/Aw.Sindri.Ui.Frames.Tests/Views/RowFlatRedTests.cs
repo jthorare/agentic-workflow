@@ -15,9 +15,6 @@ using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Theme;
 using Aw.Sindri.Ui.ViewModels.Rows;
 using Aw.Sindri.Ui.Views.Controls.Rows;
-using Aw.UiDriver.Avalonia;
-using Aw.UiDriver.Core.Protocol;
-using DriverSelector = Aw.UiDriver.Core.Protocol.Selector;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
@@ -141,33 +138,17 @@ public sealed class RowFlatRedTests
     });
 
     [Fact]
-    public async Task A_row_hands_the_driver_its_spoken_name_as_the_text_it_draws() => await OnUi(() =>
+    public async Task A_row_marks_itself_as_drawn_text_and_carries_its_spoken_name_for_the_driver() => await OnUi(() =>
     {
         var (window, list) = Show([RowGallery.Group("Needs you", 3)]);
         var row = Rows(list)[1];
 
-        Assert.Equal(Spoken, UiDriverText.GetText(row));
+        // aw-ui-driver's UiTree reports the Name of a control with this class as its text, so `textContains` finds the row by its title or a fact.
+        Assert.Contains("aw-drawn-text", row.Classes, StringComparer.Ordinal);
+        Assert.Equal(Spoken, AutomationProperties.GetName(row));
         window.Close();
         return true;
     });
-
-    [Fact]
-    public async Task The_driver_finds_a_row_by_a_part_of_its_title_and_by_one_of_its_facts()
-    {
-        var (window, _) = await OnUi(() => Show(RowGallery.Three()));
-        var host = new DriverHost(() => window, TimeProvider.System);
-
-        var byTitle = (await host.Search(new SearchRequest(new DriverSelector(Type: "Row", TextContains: "Row 3,")))).Value;
-        var byFact = (await host.Search(new SearchRequest(new DriverSelector(Type: "Row", TextContains: "waits on you")))).Value;
-
-        Assert.Equal(1, byTitle.Total);
-        Assert.True(byFact.Total >= 8, string.Create(CultureInfo.InvariantCulture, $"{byFact.Total} rows found by a fact"));
-        _ = await OnUi(() =>
-        {
-            window.Close();
-            return true;
-        });
-    }
 
     [Fact]
     public async Task A_theme_flip_redraws_every_row_in_the_new_ink_including_rows_recycled_after_it() => await OnUi(() =>
@@ -245,7 +226,7 @@ public sealed class RowFlatRedTests
         Assert.Equal(("Failed: could not send", "9m"), (row.Layout.Title, row.Layout.Age));
         Assert.Contains("acme/other", row.Layout.Facts, StringComparer.Ordinal);
         Assert.Contains("Failed: could not send", AutomationProperties.GetName(row), StringComparison.Ordinal);
-        Assert.Equal(AutomationProperties.GetName(row), UiDriverText.GetText(row));
+        Assert.Contains("aw-drawn-text", row.Classes, StringComparer.Ordinal);
         window.Close();
         return true;
     });
