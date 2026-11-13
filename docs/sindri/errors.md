@@ -185,9 +185,11 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-109` | A run of this workflow can't start the workflow again |
 | `SND-GRAPH-110` | The run is not waiting on an agent at that node, so there is nothing to take over |
 | `SND-GRAPH-111` | That agent node is not taken over, so there is nothing to hand back |
+| `SND-GRAPH-119` | That part of workflows is not built yet: the Workflows page contract routes (`POST .../test`, `POST .../pins`, `GET .../trigger-events`, `GET .../templates`) and the `replace_node` op answer this until their phase lands |
 | `SND-GRAPH-120` | A workflow call is nested too deep: the call would be past `workflow.callDepth` (default 3) |
 | `SND-GRAPH-121` | A run can't start its own workflow, or the workflow that called it |
 | `SND-GRAPH-122` | An `http` node's request was refused before it was sent: host not on `workflow.http.hosts`, an address that is this machine, plain http, or a credential header |
 | `SND-GRAPH-123` | An `http` node's request got no acceptable answer: status outside `expect`, a redirect loop, an answer over 1 MB, or a network failure |
 | `SND-GRAPH-124` | A `workflow_result` node found no result: the run is not that workflow's, is not finished, or the workflow has no succeeded run |
 | `SND-GRAPH-130` | No question waits at that node |
+| `SND-GRAPH-131` | A reference reads a node that failed and continued |

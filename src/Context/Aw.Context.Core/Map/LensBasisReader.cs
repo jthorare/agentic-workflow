@@ -56,7 +56,7 @@ public sealed class LensBasisReader(IRepoReader repos, TimeProvider clock, IInde
 
     private async ValueTask<IReadOnlyList<string>> Files(ContextRepoName name, ContextSettings settings, ContextScope scope, CancellationToken cancellationToken)
     {
-        var inScope = ScopeRules.Resolve(settings, scope.Repos, scope.Caller);
+        var inScope = ScopeRules.Resolve(settings, scope.Repos, scope.Caller, scope.LeftOut);
         if (inScope.IsError || inScope.Value.FirstOrDefault(r => r.Name == name) is not { } repo)
         {
             return [];
