@@ -16,8 +16,8 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// </summary>
 /// <param name="approvals">The profile.</param>
 /// <param name="callers">The current caller.</param>
-/// <param name="checkouts">Which profile repos are git checkouts (#3371); null reads every repo as one.</param>
-internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAccessor callers, IRepoCheckouts? checkouts = null)
+/// <param name="checkouts">Which profile repos are git checkouts (#3371). Required: a dropped registration fails at resolve, not by quietly mapping plain folders (#3408).</param>
+internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAccessor callers, IRepoCheckouts checkouts)
 {
     /// <summary>The scope of the call running now.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
@@ -31,7 +31,7 @@ internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAc
         }
 
         var scope = For(loaded.Profile, Caller(callers.Current));
-        return checkouts is null ? scope : WithoutPlainFolders(scope, checkouts);
+        return WithoutPlainFolders(scope, checkouts);
     }
 
     // #3371: a profile repo whose path is a plain folder fails every git read (SND-CONTEXT-048). 'sindri repo add' refuses one, so only a hand-written
