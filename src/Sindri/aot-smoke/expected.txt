@@ -30,7 +30,7 @@ ok    library           the first read of aw hasn't finished yet (sindri library
 ok    launcher:adoption no opens in the last 30 days
 ok    todo              note: not set (no todo.obsidian key)
 ok    connections:catchup no capped or gapped read
-warn  setup             not finished: sources (todo), agent (todo), mcp (todo), map (todo), first-workflow (todo) (fix: sindri setup)
+warn  setup             not finished: sources (todo), mcp (todo), map (todo), first-workflow (todo) (fix: sindri setup)
 warn  pre-commit:smoke  no pre-commit hook, so staged secrets are not scanned (fix: sindri scrub --install-pre-commit --repo WORK/repo)
 warn  setup:ui-evidence ui-evidence not found (ROOT/artifacts/aot-sindri-smoke/bin/ui-evidence) (fix: run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri))
 ok    resources         no resources provisioned
