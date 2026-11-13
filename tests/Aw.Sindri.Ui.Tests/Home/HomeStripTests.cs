@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -20,14 +21,14 @@ public sealed class HomeStripTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static async Task OnHome(double width, Action<ShellWindow> check)
+    private static async Task OnHome(double width, Action<ShellWindow> check, RouteAnswer? setup = null)
     {
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(Token);
         _ = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(HomeStripTests).Assembly).Dispatch(async () =>
         {
             var records = new InMemoryEndpointRecords();
             records.Write(A.Record());
-            var api = new FakeSindriApi { Catalog = RouteAnswer.Api("commands", "catalog"), SetupAnswer = SetupFixture.Answer("running-progress") };
+            var api = new FakeSindriApi { Catalog = RouteAnswer.Api("commands", "catalog"), SetupAnswer = setup ?? SetupFixture.Answer("running-progress") };
             var shell = new ShellViewModel(records, api, new FakeTimeProvider(A.Noon), new Preferences(new InMemoryPreferencesStore()), new FakeClipboard());
             await shell.Restore(Token);
             var window = new ShellWindow { DataContext = shell, Width = width };
@@ -74,6 +75,36 @@ public sealed class HomeStripTests
             Assert.True(meter.Left >= link.Left && meter.Right <= go.Left + 0.5, "the meter sits before Continue");
             Assert.True(line.Contains(meter.TopLeft) && line.Contains(go.BottomRight - new Point(1, 1)), "the line holds the meter and Continue");
         });
+    }
+
+    // The served running-progress list with its first `done` steps done and every other step todo.
+    private static RouteAnswer SetupWithDone(int done)
+    {
+        var list = SetupFixture.Golden("running-progress");
+        var steps = list["steps"]!.AsArray();   // why: the golden is a JSON document
+        for (var i = 0; i < steps.Count; i++)
+        {
+            steps[i]!["state"] = i < done ? "done" : "todo";
+        }
+
+        return new RouteAnswer(HttpStatusCode.OK, list.ToJsonString());
+    }
+
+    [Fact]
+    public async Task The_setup_meter_is_not_drawn_at_0_done_and_keeps_its_slot()
+    {
+        await OnHome(1440, window =>
+        {
+            var meter = window.GetVisualDescendants().OfType<Control>().Single(c => c.Name == "SetupHomeMeter");
+            Assert.Equal(0, meter.Opacity);
+            Assert.True(Math.Abs(meter.Bounds.Width - 120) < 1, string.Create(CultureInfo.InvariantCulture, $"the hidden meter keeps its 120 px slot, was {meter.Bounds.Width}"));
+        }, SetupWithDone(0));
+
+        await OnHome(1440, window =>
+        {
+            var meter = window.GetVisualDescendants().OfType<Control>().Single(c => c.Name == "SetupHomeMeter");
+            Assert.Equal(1, meter.Opacity);
+        }, SetupWithDone(1));
     }
 
     [Fact]

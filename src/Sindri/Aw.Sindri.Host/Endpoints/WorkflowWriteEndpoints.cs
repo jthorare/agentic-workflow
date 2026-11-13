@@ -8,7 +8,9 @@ using Aw.Sindri.Features.ApplyWorkflowOps;
 using Aw.Sindri.Features.CreateWorkflow;
 using Aw.Sindri.Features.DeleteWorkflow;
 using Aw.Sindri.Features.PauseWorkflow;
+using Aw.Sindri.Features.PinWorkflowOutput;
 using Aw.Sindri.Features.ReplaceWorkflow;
+using Aw.Sindri.Features.TestWorkflow;
 using Aw.Sindri.Features.ValidateWorkflow;
 
 namespace Aw.Sindri.Host.Endpoints;
@@ -28,6 +30,8 @@ internal static class WorkflowWriteEndpoints
         MapActivate(group);
         MapPause(group);
         MapDelete(group);
+        MapTest(group);
+        MapPin(group);
         return group;
     }
 
@@ -97,7 +101,7 @@ internal static class WorkflowWriteEndpoints
             var parsed = WorkflowReadEndpoints.Slug(slug);
             return parsed.IsError
                 ? ((Result<ActivateWorkflowResponse>)parsed.Error).ToHttpResult()
-                : (await service.Handle(new ActivateWorkflowRequest(parsed.Value, body?.Revision, By(callers)), ct).ConfigureAwait(false)).ToHttpResult();
+                : (await service.Handle(new ActivateWorkflowRequest(parsed.Value, body?.Revision, By(callers), body?.IfLatest == true, body?.UntestedOk == true), ct).ConfigureAwait(false)).ToHttpResult();
         });
     }
 
@@ -120,6 +124,48 @@ internal static class WorkflowWriteEndpoints
             return parsed.IsError
                 ? ((Result<DeleteWorkflowResponse>)parsed.Error).ToHttpResult()
                 : (await service.Handle(new DeleteWorkflowRequest(parsed.Value, By(callers)), ct).ConfigureAwait(false)).ToHttpResult();
+        });
+    }
+
+    private static void MapTest(RouteGroupBuilder group)
+    {
+        _ = group.MapPost("/workflows/{slug}/test", static async (string slug, TestWorkflowBody? body, IService<TestWorkflowRequest, TestWorkflowResponse> service, ICallerContextAccessor callers, CancellationToken ct) =>
+        {
+            var parsed = WorkflowReadEndpoints.Slug(slug);
+            if (parsed.IsError)
+            {
+                return ((Result<TestWorkflowResponse>)parsed.Error).ToHttpResult();
+            }
+
+            return (await service.Handle(new TestWorkflowRequest(parsed.Value, body?.Revision, body?.Trigger?.ToJsonString(), body?.TriggerEvent, Pins(body), body?.WithModel == true, body?.WithAgents == true, By(callers)), ct).ConfigureAwait(false)).ToHttpResult();
+        });
+    }
+
+    private static List<TestPin>? Pins(TestWorkflowBody? body) =>
+        body?.Pins is { } map ? [.. map.Select(static p => new TestPin(p.Key, p.Value?.ToJsonString() ?? "null"))] : null;
+
+    private static void MapPin(RouteGroupBuilder group)
+    {
+        _ = group.MapPost("/workflows/{slug}/pins", static async (string slug, PinWorkflowOutputBody? body, IService<PinWorkflowOutputRequest, PinWorkflowOutputResponse> service, ICallerContextAccessor callers, CancellationToken ct) =>
+        {
+            var parsed = WorkflowReadEndpoints.Slug(slug);
+            if (parsed.IsError || body?.Node is not { } node)
+            {
+                return ((Result<PinWorkflowOutputResponse>)(parsed.IsError ? parsed.Error : SindriErrors.InvalidInput.With("send {\"node\": <node id>, \"run\": <run id> or \"output\": {...}}"))).ToHttpResult();
+            }
+
+            WorkflowRunId? run = null;
+            if (body.Run is { } runText)
+            {
+                if (!WorkflowRunId.TryFrom(runText, out var parsedRun))
+                {
+                    return ((Result<PinWorkflowOutputResponse>)SindriErrors.InvalidInput.With($"'{runText}' is not a run id")).ToHttpResult();
+                }
+
+                run = parsedRun;
+            }
+
+            return (await service.Handle(new PinWorkflowOutputRequest(parsed.Value, body.Revision, node, run, body.Output?.ToJsonString(), By(callers)), ct).ConfigureAwait(false)).ToHttpResult();
         });
     }
 
