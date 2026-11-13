@@ -51,8 +51,12 @@ internal sealed partial class RowList
             return;
         }
 
+        // Walk up from the focused element, not down through every realized row: a scroll tick costs the tree's depth.
+        var focusedHeader = (TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Visual)?
+            .GetSelfAndVisualAncestors().OfType<RowGroupHeader>().FirstOrDefault();
         _sticky.MirrorsFocus = _sticky.IsVisible && _sticky.Group is { } group
-            && this.GetVisualDescendants().OfType<RowGroupHeader>().Any(h => !ReferenceEquals(h, _sticky) && ReferenceEquals(h.Group, group) && h.IsKeyboardFocusWithin);
+            && focusedHeader is not null && !ReferenceEquals(focusedHeader, _sticky)
+            && ReferenceEquals(focusedHeader.Group, group) && this.IsVisualAncestorOf(focusedHeader);
     }
 
     private void PostStickyFocusSync() => Dispatcher.UIThread.Post(SyncStickyFocus);

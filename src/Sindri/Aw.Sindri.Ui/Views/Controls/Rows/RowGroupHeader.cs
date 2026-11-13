@@ -122,6 +122,7 @@ internal sealed class RowGroupHeader : Border
             _ = Bind(BackgroundProperty, this.GetResourceObservable("Brush.Surface2"));
             var pad = Padding;   // the styled padding, read before the local one goes on
             Padding = new Thickness(pad.Left - FocusRing, pad.Top - FocusRing, pad.Right - FocusRing, pad.Bottom - FocusRing);   // the ring takes 2 px of the box: chevron and heading stay where they are
+            // Row.Inset is 24,0, so this padding is 22,-2,22,-2. The negative vertical part is on purpose: the 28 px chevron box stays put in the 28 px header, and that box is Transparent, so the ring still shows over it.
             BorderThickness = new Thickness(FocusRing);
             _ = Bind(BorderBrushProperty, this.GetResourceObservable("Brush.PrimaryHover"));   // the same brush the row's cursor ring uses; 1.18:1 fill alone is no cursor
         }
