@@ -7,6 +7,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
+using Aw.Sindri.Ui.ViewModels.Controls;
 using Aw.Sindri.Ui.Views.Controls;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
@@ -58,6 +59,28 @@ public sealed class SystemActionsColumnsFramesTests : FrameHost
         Assert.True(points.Skip(left).All(p => p.X > card.Bounds.Width / 2), "the rest is in the right column");
         Assert.True(points.Take(left).Zip(points.Take(left).Skip(1), (a, b) => b.Y > a.Y).All(down => down), "the left column runs top to bottom in catalog order");
         Assert.True(points.Skip(left).Zip(points.Skip(left + 1), (a, b) => b.Y > a.Y).All(down => down), "the right column runs top to bottom in catalog order");
+    });
+
+    // The commands reading down the left column, then down the right, are the catalog's own list in the catalog's order: two commands swapped inside a column would fail this where a "y grows" check would not (#3492).
+    [Theory]
+    [InlineData(1280)]
+    [InlineData(1440)]
+    public Task The_commands_keep_the_catalogs_order_down_each_column_and_across(double width) => OnUi(async () =>
+    {
+        var (window, card) = await Actions(width);
+        var list = Named<ItemsControl>(window, "CopyOnlyActions");
+        string[] catalog = [.. list.ItemsSource!.Cast<ControlViewModel>().Select(c => c.Label)];
+        string[] drawn =
+        [
+            .. list.GetVisualDescendants().OfType<CommandControl>()
+                .Select(c => (((ControlViewModel)c.DataContext!).Label, At: c.TranslatePoint(new Point(0, 0), card)!.Value))
+                .OrderBy(c => c.At.X > card.Bounds.Width / 2 ? 1 : 0)
+                .ThenBy(c => c.At.Y)
+                .Select(c => c.Label),
+        ];
+
+        Assert.True(catalog.Length >= 3, $"{catalog.Length} copy commands");
+        Assert.Equal(catalog, drawn, StringComparer.Ordinal);
     });
 
     [Fact]
