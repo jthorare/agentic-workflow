@@ -1,6 +1,8 @@
+using System.Globalization;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -74,7 +76,7 @@ public sealed class PressedBorderPixelTests : FrameHost
             var ratio = Math.Min(Contrast(p, outside), Contrast(p, inside));
             if (ratio > best)
             {
-                (best, detail) = (ratio, $"x={x} #{p.R:X2}{p.G:X2}{p.B:X2} outside #{outside.R:X2}{outside.G:X2}{outside.B:X2} inside #{inside.R:X2}{inside.G:X2}{inside.B:X2}");
+                (best, detail) = (ratio, string.Create(CultureInfo.InvariantCulture, $"x={x} #{p.R:X2}{p.G:X2}{p.B:X2} outside #{outside.R:X2}{outside.G:X2}{outside.B:X2} inside #{inside.R:X2}{inside.G:X2}{inside.B:X2}"));
             }
         }
 
@@ -103,7 +105,7 @@ public sealed class PressedBorderPixelTests : FrameHost
 
         Assert.Contains(":pressed", sample.Classes, StringComparer.Ordinal);
         var (ratio, detail) = BorderContrast(window, sample);
-        Assert.True(ratio >= Required, $"the pressed border draws at {ratio:0.00}:1, below {Required}:1 ({detail})");
+        Assert.True(ratio >= Required, string.Create(CultureInfo.InvariantCulture, $"the pressed border draws at {ratio:0.00}:1, below {Required}:1 ({detail})"));
         window.MouseUp(Centre(sample, window), MouseButton.Left, RawInputModifiers.None);
         window.Close();
         await Task.CompletedTask;
@@ -125,7 +127,7 @@ public sealed class PressedBorderPixelTests : FrameHost
 
         Assert.Contains(":pressed", button.Classes, StringComparer.Ordinal);
         var (ratio, detail) = BorderContrast(window, button);
-        Assert.True(ratio >= Required, $"the pressed primary button draws its border at {ratio:0.00}:1, below {Required}:1 ({detail})");
+        Assert.True(ratio >= Required, string.Create(CultureInfo.InvariantCulture, $"the pressed primary button draws its border at {ratio:0.00}:1, below {Required}:1 ({detail})"));
         window.MouseUp(Centre(button, window), MouseButton.Left, RawInputModifiers.None);
     });
 }
