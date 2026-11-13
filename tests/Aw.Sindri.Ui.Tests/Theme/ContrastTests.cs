@@ -107,17 +107,17 @@ public sealed partial class ContrastTests
     };
 
     // Control outlines are UI parts: 3:1 (WCAG 1.4.11, #3190). The rows name the brush the control draws (Brush.<name>), so the fix may
-    // repoint it at any colour. The recorded ratios are the ones #70757c has on the canvas, the panel and the pressed fill (#222326);
-    // #5e6268 would pass the first two but measures only 2.6 on the pressed fill.
+    // repoint it at any colour. The recorded ratios are the ones #767b82 has on the canvas, the panel and the pressed fill (#2c2d30, #3517);
+    // #70757c measured 2.97 on that fill.
     public static TheoryData<string, string, double, double> OutlinePairs => new()
     {
-        { "Clickable.PressedBorder", "Canvas", 4.29, NonText },
-        { "Clickable.PressedBorder", "Surface1", 3.94, NonText },
-        { "Clickable.PressedBorder", "Brush.Clickable.Pressed", 3.39, NonText },
+        { "Clickable.PressedBorder", "Canvas", 4.67, NonText },
+        { "Clickable.PressedBorder", "Surface1", 4.29, NonText },
+        { "Clickable.PressedBorder", "Brush.Clickable.Pressed", 3.23, NonText },
         // Pressed and selected borders (inbox-row.selected, Button.segment.selected, the pressed hold part and primary) draw Brush.Clickable.PressedBorder on the other surfaces a clickable sits on (#3504).
-        { "Clickable.PressedBorder", "Surface2", 3.63, NonText },
-        { "Clickable.PressedBorder", "Surface3", 3.39, NonText },
-        { "Clickable.PressedBorder", "Surface4", 3.22, NonText },
+        { "Clickable.PressedBorder", "Surface2", 3.95, NonText },
+        { "Clickable.PressedBorder", "Surface3", 3.69, NonText },
+        { "Clickable.PressedBorder", "Surface4", 3.50, NonText },
     };
 
     [Theory]
@@ -128,6 +128,23 @@ public sealed partial class ContrastTests
 
         Assert.True(Math.Abs(ratio - recorded) <= 0.1, string.Create(CultureInfo.InvariantCulture, $"Brush.{brush} on {background} is {ratio:F2}, #3190 records {recorded}"));
         Assert.True(ratio >= minimum, string.Create(CultureInfo.InvariantCulture, $"Brush.{brush} on {background} is {ratio:F2}, below {minimum}"));
+    }
+
+    // A press shows in the fill as well as the border (#3517): the pressed fill is at least 1.2:1 off the hover fill, and the pressed border holds 3:1 on it.
+    [Fact]
+    public void Pressed_fill_steps_at_least_1_2_to_1_over_hover()
+    {
+        var ratio = Wcag.Contrast(BrushColor("Clickable.Pressed"), BrushColor("Clickable.Hover"));
+
+        Assert.True(ratio >= 1.2, string.Create(CultureInfo.InvariantCulture, $"Brush.Clickable.Pressed is {ratio:F2}:1 off Brush.Clickable.Hover, below 1.2"));
+    }
+
+    [Fact]
+    public void Pressed_border_holds_3_to_1_on_the_pressed_fill()
+    {
+        var ratio = Wcag.Contrast(BrushColor("Clickable.PressedBorder"), BrushColor("Clickable.Pressed"));
+
+        Assert.True(ratio >= NonText, string.Create(CultureInfo.InvariantCulture, $"Brush.Clickable.PressedBorder is {ratio:F2}:1 on Brush.Clickable.Pressed, below {NonText}"));
     }
 
     [Theory]

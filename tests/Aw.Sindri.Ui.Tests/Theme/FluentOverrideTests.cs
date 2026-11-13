@@ -52,7 +52,6 @@ public sealed class FluentOverrideTests
     [InlineData("ButtonBackgroundPointerOver", "Surface2")]
     [InlineData("ButtonBorderBrushPointerOver", "HairlineStrong")]
     [InlineData("ButtonForegroundPointerOver", "Ink")]
-    [InlineData("ButtonBackgroundPressed", "Surface3")]
     [InlineData("ButtonForegroundPressed", "Ink")]
     [InlineData("ButtonForegroundDisabled", "InkTertiary")]
     [InlineData("AccentButtonBackground", "Primary")]
@@ -67,7 +66,6 @@ public sealed class FluentOverrideTests
     // A focused combo box keeps its dark face and readable text: Fluent fills it from the palette accent unless these say otherwise (#1080).
     [InlineData("ComboBoxBackground", "Surface1")]
     [InlineData("ComboBoxBackgroundPointerOver", "Surface2")]
-    [InlineData("ComboBoxBackgroundPressed", "Surface3")]
     [InlineData("ComboBoxBackgroundUnfocused", "Surface1")]
     [InlineData("ComboBoxBackgroundBorderBrushFocused", "HairlineStrong")]
     [InlineData("ComboBoxForegroundFocused", "Ink")]
@@ -76,6 +74,18 @@ public sealed class FluentOverrideTests
     [InlineData("ComboBoxDropDownGlyphForegroundFocused", "Ink")]
     [InlineData("ComboBoxDropDownGlyphForegroundFocusedPressed", "Ink")]
     public void Each_brush_override_is_its_token(string key, string token) => Assert.Equal(_tokens.Color(token), Override(key)?.ToLowerInvariant());
+
+    // The pressed fill of a Fluent button and combo box is the clickable token's colour (#3517); the key may hold the hex or a reference to the token.
+    [Theory]
+    [InlineData("ButtonBackgroundPressed")]
+    [InlineData("ComboBoxBackgroundPressed")]
+    public void Fluent_pressed_backgrounds_match_the_clickable_token(string key)
+    {
+        var token = _tokens.Resources["Brush.Clickable.Pressed"].Attribute("Color")!.Value.Trim().ToLowerInvariant();
+        var value = Override(key)?.Trim().ToLowerInvariant();
+
+        Assert.True(value == token || (value is not null && value.StartsWith('{') && value.EndsWith("brush.clickable.pressed}", StringComparison.Ordinal)), $"{key} is {value}, the token is {token}");
+    }
 
     [Fact]
     public void Buttons_and_inputs_use_the_medium_radius() => Assert.Equal(_tokens.Resources["Radius.MD"].Value.Trim(), Override("ControlCornerRadius"));

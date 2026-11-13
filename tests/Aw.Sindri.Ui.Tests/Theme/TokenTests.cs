@@ -20,7 +20,6 @@ public sealed class TokenTests
         ("Hairline", "#0fffffff"),
         ("HairlineStrong", "#34343a"),
         ("HairlineTertiary", "#3e3e44"),
-        ("Outline", "#70757c"),   // control outlines, 3:1 non-text contrast (#3190)
         ("Ink", "#f7f8f8"),
         ("InkMuted", "#d0d6e0"),
         ("InkSubtle", "#8a8f98"),
@@ -67,6 +66,14 @@ public sealed class TokenTests
 
             return data;
         }
+    }
+
+    // Control boundaries (pressed, focus, selected) at 3:1 on the pressed fill (#3190, #3517). Colour only: nothing draws Brush.Outline, the controls use Brush.Clickable.PressedBorder (#3505).
+    [Fact]
+    public void Outline_is_a_colour_with_no_brush_of_its_own()
+    {
+        Assert.Equal("#767b82", _tokens.Color("Outline"));
+        Assert.DoesNotContain("Brush.Outline", _tokens.Resources.Keys);
     }
 
     [Theory]
