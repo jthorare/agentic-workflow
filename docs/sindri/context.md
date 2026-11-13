@@ -1111,8 +1111,8 @@ one the request itself names, else the kind's `models`, else `default.models`, e
 | `cursor` | `gpt-5.6-luna-none-fast` | `gpt-5` |
 
 A built-in codex name that `codex debug models` does not list runs codex's own default model instead: the call passes no model flag, and the doctor line, the tries and the
-Jobs page name it `codex default` (issue 3389). A codex name the profile wrote is always passed as written; the doctor warns when codex does not list it. When the list can't
-be read, the built-in name is passed. Codex's own default has no cheap or strong tier, so a cheap call such as labeling or rerank may run on a bigger, slower model;
+Jobs page name it `codex default` (issue 3389). A codex name the profile wrote is always passed as written; the doctor warns when codex does not list it. When Sindri can't
+read the list, it passes the built-in name. Codex's own default has no cheap or strong tier, so a cheap call such as labeling or rerank may run on a bigger, slower model;
 set `names.codex.cheap` to a listed model to pin one. Sindri reads the list at most once per 10 minutes, and again after 60 seconds when the last read failed.
 
 The old `context.conceptScan.models` key is no longer read (issue 1867): `profile validate` and every profile write refuse it with SND-CONTEXT-001,
