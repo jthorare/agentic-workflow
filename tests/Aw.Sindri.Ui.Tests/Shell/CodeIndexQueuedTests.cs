@@ -33,6 +33,7 @@ public sealed class CodeIndexQueuedTests
 
         Assert.Equal("build queued", card.Word, StringComparer.Ordinal);
         Assert.NotEqual(Labels.CodeIndexNeedsLook, card.Word, StringComparer.Ordinal);
+        Assert.Equal("repo: build queued", Assert.Single(card.Lines).Text);
     }
 
     [Fact]
