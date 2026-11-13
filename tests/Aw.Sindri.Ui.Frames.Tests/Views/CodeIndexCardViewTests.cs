@@ -99,4 +99,37 @@ public sealed class CodeIndexCardViewTests : FrameHost
         var line = Assert.Single(Named<ItemsControl>(window, "CodeIndexLines").GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.Name != "CodeIndexCommand");
         Assert.DoesNotContain("sindri services", line.Text, StringComparison.Ordinal);
     });
+
+    // qa on #3586: the command sat 18 px under a wrapped line but 26 px under a one-row line, because the one-row text was centred in the 36 px row before the command.
+    [Fact]
+    public Task The_command_sits_the_same_distance_under_a_one_row_and_a_two_row_line() => OnUi(async () =>
+    {
+        const string Short = "s3576-short";
+        Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, "{\"repos\":[" + Missing(LongRepo) + "," + Missing(Short) + "],\"health\":[" + Paused(LongRepo) + "," + Paused(Short) + "]}");
+        var (window, shell) = await Connected(s => s.Health.CodeIndex.Lines.Count > 1, width: 360, height: 800);
+        shell.GoTo(PageId.System);
+        Settle(window);
+
+        var lines = Named<ItemsControl>(window, "CodeIndexLines");
+        var gaps = lines.GetVisualDescendants().OfType<SelectableTextBlock>().Where(c => c.Name == "CodeIndexCommand")
+            .Select(c => (Gap: c.TranslatePoint(new Point(0, 0), window)!.Value.Y - TextBottom(c, window), Rows: TextOf(c).Bounds.Height))
+            .ToList();
+        Assert.Equal(2, gaps.Count);
+        Assert.True(gaps[0].Rows > gaps[1].Rows * 1.5, "the first line wraps to more rows than the second");
+        Assert.InRange(Math.Abs(gaps[0].Gap - gaps[1].Gap), 0, 1);
+    });
+
+    private static string Missing(string name) => $$"""{"repo":"{{name}}","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null}""";
+
+    private static string Paused(string name) => $$"""{"repo":"{{name}}","state":"missing","embeddingsPercent":null,"waiting":null,"paused":true}""";
+
+    // The words' TextBlock of the same card line as a command row: the item's first TextBlock that is not the command.
+    private static TextBlock TextOf(SelectableTextBlock command) => command.GetVisualAncestors().OfType<StackPanel>().First()
+        .GetVisualDescendants().OfType<TextBlock>().First(t => t is not SelectableTextBlock);
+
+    private static double TextBottom(SelectableTextBlock command, Window window)
+    {
+        var text = TextOf(command);
+        return text.TranslatePoint(new Point(0, text.Bounds.Height), window)!.Value.Y;
+    }
 }

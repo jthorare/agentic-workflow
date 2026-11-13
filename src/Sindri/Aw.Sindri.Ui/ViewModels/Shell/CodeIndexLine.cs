@@ -8,6 +8,6 @@ internal sealed record CodeIndexLine(string Text, string Command = "")
     /// <summary>True when the line has a command row.</summary>
     public bool HasCommand => Command.Length > 0;
 
-    /// <summary>The line read aloud: "Code index: " first, then the words and the command.</summary>
+    /// <summary>The line read aloud: "Code index: " first, then the words (the command is read from its own row).</summary>
     public string Name { get; } = Labels.CodeIndexNamePrefix + Text;
 }
