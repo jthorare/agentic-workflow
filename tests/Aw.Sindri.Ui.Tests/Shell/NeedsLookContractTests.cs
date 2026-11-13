@@ -69,6 +69,19 @@ public sealed class NeedsLookContractTests
         Assert.Equal(Expected(needsLook), card.Word);
     }
 
+    [Fact]
+    public async Task A_missing_index_is_fine_because_doctor_does_not_count_it_as_a_problem()
+    {
+        var repo = """{"repo":"repo","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null}""";
+        var health = """{"repo":"repo","state":"missing","embeddingsPercent":null,"waiting":null,"needsLook":false}""";
+        _server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, $$"""{"repos":[{{repo}}],"health":[{{health}}]}""");
+        var card = new CodeIndexCardViewModel(_server, _clock);
+
+        await card.Refresh(_api, Token);
+
+        Assert.Equal(Labels.CodeIndexOk, card.Word);   // pinned on purpose (#3430): before the flag a missing repo read "needs a look"
+    }
+
     [Theory]
     [MemberData(nameof(ContextCases))]
     public async Task The_context_card_word_follows_needsLook_for_every_pull_state(string pull, bool needsLook)
