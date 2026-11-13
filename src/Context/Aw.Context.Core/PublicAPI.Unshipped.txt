@@ -12503,3 +12503,38 @@ static Aw.Context.Core.Extract.MapBuildFiles.From(string! line) -> Aw.Context.Co
 static Aw.Context.Core.Extract.MapBuildFiles.Newest(System.Collections.Generic.IEnumerable<string!>! lines) -> Aw.Context.Core.Extract.MapBuildFiles?
 static Aw.Context.Core.Extract.MapBuildFiles.operator !=(Aw.Context.Core.Extract.MapBuildFiles? left, Aw.Context.Core.Extract.MapBuildFiles? right) -> bool
 static Aw.Context.Core.Extract.MapBuildFiles.operator ==(Aw.Context.Core.Extract.MapBuildFiles? left, Aw.Context.Core.Extract.MapBuildFiles? right) -> bool
+static Aw.Context.Core.Map.MapHealth.NoMapDetail.get -> string!
+Aw.Context.Core.Engine.QueryWindow
+Aw.Context.Core.Engine.QueryWindow.<Clone>$() -> Aw.Context.Core.Engine.QueryWindow!
+Aw.Context.Core.Engine.QueryWindow.Deconstruct(out int Offset, out int Limit) -> void
+Aw.Context.Core.Engine.QueryWindow.Offset.get -> int
+Aw.Context.Core.Engine.QueryWindow.Offset.init -> void
+Aw.Context.Core.Engine.QueryWindow.Limit.get -> int
+Aw.Context.Core.Engine.QueryWindow.Limit.init -> void
+Aw.Context.Core.Engine.QueryWindow.Equals(Aw.Context.Core.Engine.QueryWindow? other) -> bool
+Aw.Context.Core.Engine.QueryWindow.QueryWindow(int Offset, int Limit) -> void
+override Aw.Context.Core.Engine.QueryWindow.Equals(object? obj) -> bool
+override Aw.Context.Core.Engine.QueryWindow.GetHashCode() -> int
+override Aw.Context.Core.Engine.QueryWindow.ToString() -> string!
+static Aw.Context.Core.Engine.QueryWindow.operator !=(Aw.Context.Core.Engine.QueryWindow? left, Aw.Context.Core.Engine.QueryWindow? right) -> bool
+static Aw.Context.Core.Engine.QueryWindow.operator ==(Aw.Context.Core.Engine.QueryWindow? left, Aw.Context.Core.Engine.QueryWindow? right) -> bool
+Aw.Context.Core.Results.RecordMatches
+Aw.Context.Core.Results.RecordMatches.<Clone>$() -> Aw.Context.Core.Results.RecordMatches!
+Aw.Context.Core.Results.RecordMatches.Deconstruct(out int Matched, out int Offset, out int Read) -> void
+Aw.Context.Core.Results.RecordMatches.Matched.get -> int
+Aw.Context.Core.Results.RecordMatches.Matched.init -> void
+Aw.Context.Core.Results.RecordMatches.Offset.get -> int
+Aw.Context.Core.Results.RecordMatches.Offset.init -> void
+Aw.Context.Core.Results.RecordMatches.Read.get -> int
+Aw.Context.Core.Results.RecordMatches.Read.init -> void
+Aw.Context.Core.Results.RecordMatches.Equals(Aw.Context.Core.Results.RecordMatches? other) -> bool
+Aw.Context.Core.Results.RecordMatches.RecordMatches(int Matched, int Offset, int Read) -> void
+override Aw.Context.Core.Results.RecordMatches.Equals(object? obj) -> bool
+override Aw.Context.Core.Results.RecordMatches.GetHashCode() -> int
+override Aw.Context.Core.Results.RecordMatches.ToString() -> string!
+static Aw.Context.Core.Results.RecordMatches.operator !=(Aw.Context.Core.Results.RecordMatches? left, Aw.Context.Core.Results.RecordMatches? right) -> bool
+static Aw.Context.Core.Results.RecordMatches.operator ==(Aw.Context.Core.Results.RecordMatches? left, Aw.Context.Core.Results.RecordMatches? right) -> bool
+Aw.Context.Core.Engine.ContextQuery.Window.get -> Aw.Context.Core.Engine.QueryWindow?
+Aw.Context.Core.Engine.ContextQuery.Window.init -> void
+Aw.Context.Core.Results.ContextResult.Matches.get -> Aw.Context.Core.Results.RecordMatches?
+Aw.Context.Core.Results.ContextResult.Matches.init -> void
