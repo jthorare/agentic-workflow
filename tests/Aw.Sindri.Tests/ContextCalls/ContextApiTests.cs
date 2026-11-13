@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using Aw.Context.Testing.Fixtures;
@@ -97,6 +99,29 @@ public sealed class ContextApiTests : IDisposable
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
+    public async Task An_offset_alone_reads_from_that_rank_to_the_end_and_a_limit_past_int_range_is_006()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        for (var i = 0; i < 4; i++)
+        {
+            Plant(_repo, "docs/offset-" + i.ToString(CultureInfo.InvariantCulture) + ".md", "# Offset note\n\nThe pane orientation toggle, offset note " + i.ToString(CultureInfo.InvariantCulture) + ".\n");
+        }
+
+        await using var host = await Approved(sessions: false, ct);
+
+        var rest = await host.Http.Ask(Get("/sindri/context/query?q=orientation%20toggle&offset=2", Human(host.Token.Value)));
+        var huge = await host.Http.Ask(Get("/sindri/context/query?q=orientation%20toggle&limit=2147483648", Human(host.Token.Value)));
+
+        Assert.Equal(HttpStatusCode.OK, rest.Status);
+        using var answer = JsonDocument.Parse(rest.Body);
+        var matches = answer.RootElement.GetProperty("matches");
+        Assert.True(matches.GetProperty("matched").GetInt32() >= 3);   // why: rank 3 exists, so the page is not empty
+        Assert.Equal(2, matches.GetProperty("offset").GetInt32());
+        Assert.Equal(matches.GetProperty("matched").GetInt32() - 2, matches.GetProperty("read").GetInt32());   // to the end: no limit means every rank after the skipped two
+        Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (huge.Status, huge.Code));
+    }
+
+    [Fact(Timeout = 60_000), Trait("Lane", "integration")]
     public async Task Neither_the_question_nor_record_text_reaches_a_log_line()
     {
         var ct = TestContext.Current.CancellationToken;
@@ -114,6 +139,23 @@ public sealed class ContextApiTests : IDisposable
         Assert.NotEmpty(sink.Lines);                                             // … and the host did log
         Assert.DoesNotContain("zebra", sink.Text, StringComparison.Ordinal);
         Assert.DoesNotContain("focused pane", sink.Text, StringComparison.Ordinal);
+    }
+
+    private static void Plant(FixtureRepo repo, string path, string text)
+    {
+        File.WriteAllText(Path.Combine(repo.Path, path), text);
+        Git(repo.Path, "add", path);
+        Git(repo.Path, "-c", "user.name=fixture", "-c", "user.email=fixture@example.invalid", "commit", "-q", "-m", "plant " + path);
+    }
+
+    private static void Git(string repo, params string[] args)
+    {
+        var start = new ProcessStartInfo("git", ["-C", repo, .. args]) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+        start.Environment["GIT_CONFIG_GLOBAL"] = "/dev/null";
+        start.Environment["GIT_CONFIG_NOSYSTEM"] = "1";
+        using var git = Process.Start(start)!;
+        git.WaitForExit();
+        Assert.True(git.ExitCode == 0, git.StandardError.ReadToEnd());
     }
 
     private Task<GoldenHost> Approved(bool sessions, CancellationToken ct, Action<IServiceCollection>? extra = null) =>

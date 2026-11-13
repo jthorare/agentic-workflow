@@ -36,12 +36,23 @@ public sealed class CardGridLayoutFramesTests
     private static string At(Border card) => string.Create(CultureInfo.InvariantCulture, $"{card.Bounds.X:0},{card.Bounds.Y:0}");
 
     [Fact]
-    public Task Column_major_with_five_cards_puts_three_on_the_left_and_a_row_is_as_tall_as_its_tallest_card() => OnUi(() =>
+    public Task Column_major_stacks_each_column_on_its_own_so_a_tall_card_leaves_no_gap_beside_it() => OnUi(() =>
     {
-        // Rows: (0, 3) is 40 tall, (1, 4) is 60 tall, (2) is 20 tall.
+        // Left column: 0 (20), 1 (60), 2 (20) at y 0, 32, 104. Right column: 3 (40), 4 (20) at y 0, 52. Card 4 sits at card 3's bottom plus the gap, not under the tall card 1 (#3493).
         var (_, cards) = Lay(columnMajor: true, [20, 60, 20, 40, 20]);
 
-        string[] expected = ["0,0", "0,52", "0,124", Right + ",0", Right + ",52"];
+        string[] expected = ["0,0", "0,32", "0,104", Right + ",0", Right + ",52"];
+        Assert.Equal(expected, cards.Select(At), StringComparer.Ordinal);
+        return true;
+    });
+
+    [Fact]
+    public Task Without_ColumnMajor_a_row_is_as_tall_as_its_tallest_card() => OnUi(() =>
+    {
+        // Rows (0, 1) are 60 tall, (2, 3) 40 tall, (4) alone: the paired rows stay (the Projects page and #3421 rely on them).
+        var (_, cards) = Lay(columnMajor: false, [20, 60, 20, 40, 20]);
+
+        string[] expected = ["0,0", Right + ",0", "0,72", Right + ",72", "0,124"];
         Assert.Equal(expected, cards.Select(At), StringComparer.Ordinal);
         return true;
     });
