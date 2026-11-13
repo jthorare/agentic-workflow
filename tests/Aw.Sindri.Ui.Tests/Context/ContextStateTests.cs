@@ -87,7 +87,7 @@ public sealed class ContextStateTests
 
         Assert.Equal(1, server.BuildContextMapCalls);
         Assert.Equal((ContextOverlay.Building, true, false), (page.Overlay, page.ShowBuilding, page.ShowEmpty));
-        Assert.Equal((Labels.ContextStateBuilding, Labels.ContextStateBuildingBody), (page.BuildingTitle, page.BuildingBody));
+        Assert.Equal(("Building the map", string.Empty), (page.BuildingTitle, page.BuildingBody));   // #3391: no item open, no time promise
     }
 
     [Fact]

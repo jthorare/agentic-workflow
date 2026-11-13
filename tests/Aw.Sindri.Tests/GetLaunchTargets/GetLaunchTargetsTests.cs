@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
@@ -132,5 +133,17 @@ public sealed class GetLaunchTargetsTests
         {
             gated.Release();
         }
+    }
+
+    [Fact]
+    public async Task An_invalid_live_profile_reads_as_no_profile()
+    {
+        await Probed(Target(_claude));
+        _v.Slice.Profiles.Live = SindriErrors.ProfileInvalid.With("/home/thor/profile.yaml: line 3: unknown key 'tennant'");
+
+        var result = await Service().Handle(A.GetLaunchTargetsRequest().Build(), Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        Assert.Equal(["claude-code"], result.Value.Targets.Select(static t => t.Facts.Id.Value), StringComparer.Ordinal);
     }
 }

@@ -5,6 +5,7 @@ using Aw.CodeIndex.Core.Values;
 using Aw.CodeIndex.Testing;
 using Aw.Sindri.Features.CodeIndexReads;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.Server;
 using RepoName = Aw.CodeIndex.Core.Values.RepoName;
 
 namespace Aw.Sindri.Tests.CodeIndexReads;
@@ -51,6 +52,22 @@ public sealed class RepoHealthNeedsLookTests
         Assert.Equal(("queued", false), (health.State, health.NeedsLook));
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_look_carries_doctors_words_for_it()
+    {
+        var health = await Read(Status(IndexState.Ok, _old), live: _new);
+
+        Assert.Equal("demo: code index is behind main; rebuild it from the System page", health.LookWords);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task No_look_has_no_words()
+    {
+        var health = await Read(Status(IndexState.Missing, commit: null), live: _new);
+
+        Assert.Null(health.LookWords);
+    }
+
     private static RepoStatus Status(IndexState state, CommitSha? commit) =>
         new(_repo, state, commit, commit is null ? null : _now.AddHours(-1), [new LayerStatus(LayerName.Structure, LayerState.Ok, Code: null, "ok")], new IndexCounts(Files: 1, Symbols: 2, Edges: 3));
 
@@ -58,7 +75,7 @@ public sealed class RepoHealthNeedsLookTests
     {
         var heads = new FakeRepoHeads().With(_repo, live, onDefaultBranch: true);
         var scope = new CodeIndexScope([new CodeIndexRepo(_repo, "/work/demo", CodeIndexSettings.Default)], new CodeIndexCaller(CallerKind.Service, Repo: null));
-        var healths = await new RepoHealths(heads, new InMemoryJobViews(), TimeProvider.System, new QueuedClock(TimeProvider.System.GetUtcNow())).Of(scope, [status], Token);
+        var healths = await new RepoHealths(heads, new InMemoryJobViews(), new NoPauses(), TimeProvider.System, new QueuedClock(TimeProvider.System.GetUtcNow())).Of(scope, [status], Token);
         return Assert.Single(healths);
     }
 }
