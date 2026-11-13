@@ -25,6 +25,9 @@ internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine 
 {
     private static readonly JobKind _build = JobKind.From("BuildContextMap");
 
+    // The first map is built by the context-map-refresh service's job, not a BuildContextMap job (#3322); both read as a map build.
+    private static readonly JobKind _refresh = JobKind.From("RefreshContextMap");
+
     // The code index's build job (its slice owns the kind; AW1003 keeps slices off each other's types).
     private static readonly JobKind _index = JobKind.From("BuildCodeIndex");
 
@@ -75,14 +78,22 @@ internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine 
     private static ContextScope Scope(SindriProfile profile) =>
         new(profile.Context, ScopeRules.Usable([.. (profile.Repos ?? []).Select(r => new ProfileRepoEntry(r.Name, r.Path, RepoDenyGlobs.For(profile, r), [.. RepoConcepts.For(profile, r).Select(c => ConceptPin.Of(c.Id is { } id ? ConceptId.From(id.Value) : null, c.Name, c.Summary, c.Features, c.Paths).Declaring(c.DependsOn, c.Owns).WithAliases(c.Aliases))], DemotePaths: RepoDemoteGlobs.For(profile, r)) { Roles = RepoRoleSets.For(profile, r) is { } sets ? [.. sets.Select(x => new RepoRole(x.Name, x.Demoted, x.Globs))] : null })]), new ContextCaller(ContextCallerKind.Service, Repo: null, ContextClient.Service));
 
-    // No map yet: a running map build is under way, else a running code index build of a mapped repo (#3112); else the newest ended build says whether the last try failed.
+    // No map yet: a running map build (a BuildContextMap or a RefreshContextMap job, #3322) is under way, else a running code index build of a mapped repo (#3112); else the newest ended build says whether the last try failed.
     private async ValueTask<Result<MapFact>> Builds(SindriProfile profile, CancellationToken cancellationToken)
     {
-        var maps = await jobs.List(state: null, _build, cancellationToken).ConfigureAwait(false);
-        if (maps.IsError)
+        var builds = await jobs.List(state: null, _build, cancellationToken).ConfigureAwait(false);
+        if (builds.IsError)
         {
-            return maps.Error;
+            return builds.Error;
         }
+
+        var refreshes = await jobs.List(state: null, _refresh, cancellationToken).ConfigureAwait(false);
+        if (refreshes.IsError)
+        {
+            return refreshes.Error;
+        }
+
+        var maps = builds.Value.Concat(refreshes.Value).ToList();
 
         var indexes = await jobs.List(state: null, _index, cancellationToken).ConfigureAwait(false);
         if (indexes.IsError)
@@ -90,7 +101,7 @@ internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine 
             return indexes.Error;
         }
 
-        if (maps.Value.FirstOrDefault(static j => j.State == JobState.Running) is { } running)
+        if (maps.FirstOrDefault(static j => j.State == JobState.Running) is { } running)
         {
             // The newest files line (#3433), the one the whole map's 'building' answer reads too; a repo with no files (0/0) gives no count.
             var files = MapBuildFiles.Newest(running.Progress.OrderBy(static l => l.Round).Select(static l => l.Line));
@@ -105,7 +116,7 @@ internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine 
             return new MapFact(MapPhase.Building, files is { Total: > 0 } ? new SetupProgress(files.Done, files.Total, "files") : null) { Stage = MapStage.Index };
         }
 
-        return LastTry(Ended(maps.Value), Ended(ours));
+        return LastTry(Ended(maps), Ended(ours));
     }
 
     // Nothing runs: the newest ended builds say whether the last try failed. A failed index build counts only when no map build ended after it:
