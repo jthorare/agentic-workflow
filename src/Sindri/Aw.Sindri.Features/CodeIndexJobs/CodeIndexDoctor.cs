@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.CodeIndex.Core;
 using Aw.CodeIndex.Core.Facade;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Core.Ports;
@@ -156,7 +157,7 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
                 : null;
 
     // An embeddings layer that settled with refused chunks: ok, with code 017 and the count in its detail (#3128).
-    private static bool IsRefused(LayerStatus layer) => layer.State != LayerState.Unavailable && string.Equals(layer.Code, Aw.CodeIndex.Core.CodeIndexErrors.EmbeddingInputRejected.Code, StringComparison.Ordinal);
+    private static bool IsRefused(LayerStatus layer) => layer.State != LayerState.Unavailable && string.Equals(layer.Code, CodeIndexErrors.EmbeddingInputRejected.Code, StringComparison.Ordinal);
 
     private static DoctorCheck Layer(string name, string word, List<LayerStatus> layers, LayerName which)
     {

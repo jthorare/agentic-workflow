@@ -135,7 +135,7 @@ public sealed class CodeIndexDoctorTests
     [Fact, Trait("Lane", "unit")]
     public void A_refused_chunk_on_the_embeddings_layer_names_the_real_cause_not_start_ollama_issue_3128()
     {
-        var rejected = new LayerStatus(LayerName.Embeddings, LayerState.Unavailable, CodeIndex.Core.CodeIndexErrors.EmbeddingInputRejected.Code, "a chunk was refused");
+        var rejected = new LayerStatus(LayerName.Embeddings, LayerState.Unavailable, CodeIndexErrors.EmbeddingInputRejected.Code, "a chunk was refused");
         var rows = CodeIndexDoctor.Rows(new([Built(Ok(LayerName.Structure), rejected)], [], []), _now);
 
         var fix = rows.Single(static c => c.Name == "code-index:ollama").Fix;
@@ -197,7 +197,7 @@ public sealed class CodeIndexDoctorTests
     [Fact, Trait("Lane", "unit")]
     public void An_unreachable_embedding_server_is_a_warning_from_the_live_probe()
     {
-        var row = Row("code-index:ollama", Probes(LockState.Matches, CodeIndex.Core.CodeIndexErrors.EmbeddingServerFailed.With("no answer")));
+        var row = Row("code-index:ollama", Probes(LockState.Matches, CodeIndexErrors.EmbeddingServerFailed.With("no answer")));
 
         Assert.Equal(CheckState.Warn, row.State);
         Assert.Contains("SND-CODEIDX-006", row.Detail, StringComparison.Ordinal);
