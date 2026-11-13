@@ -1,0 +1,428 @@
+width 1280 window 1280x800
+card Actions x=24 y=-4128 w=1232 h=4796
+command 1 x=48 y=-3986 w=586 h=42 cli=sindri wf activate <slug> [--revision <n>]
+command 2 x=48 y=-3910 w=586 h=72 cli=sindri connection add <name> [--preset <preset>] [--kind <kind>] [--client-id <id>] [--client-secret-env <name>] [--key-env <name>] [--url <address>]
+command 3 x=48 y=-3804 w=586 h=42 cli=sindri repo add <path>
+command 4 x=48 y=-3728 w=586 h=54 cli=sindri todo add <text> [--due <day>] [--link <ref>] [--client-id <id>]
+command 5 x=48 y=-3640 w=586 h=42 cli=sindri sandbox allow <launch> <target>
+command 6 x=48 y=-3564 w=586 h=54 cli=sindri answer <question> [--text <text>] [--choice <choice>] [--item <index>]
+command 7 x=48 y=-3476 w=586 h=54 cli=sindri wf edit <slug> --base <revision> [--ops <json>] [--ops-file <file>]
+command 8 x=48 y=-3388 w=586 h=54 cli=sindri project add [--linear <key>] [--name <text>] [--link <url>] [--state <state>] [--notes <text>] [--target <date>]
+command 9 x=48 y=-3300 w=586 h=42 cli=sindri services run code-index-main-move
+command 10 x=48 y=-3224 w=586 h=42 cli=sindri context map build
+command 11 x=48 y=-3148 w=586 h=42 cli=sindri toolkit build <name>
+command 12 x=48 y=-3072 w=586 h=42 cli=sindri jobs cancel <jobId>
+command 13 x=48 y=-2996 w=586 h=42 cli=sindri wf cancel <run>
+command 14 x=48 y=-2920 w=586 h=54 cli=sindri linear edit <issue> [--title <text>] [--state <state>] [--assignee <person>] [--priority <level>]
+command 15 x=48 y=-2832 w=586 h=72 cli=sindri project edit <project> --version <n> [--name <text>] [--link <url>] [--state <state>] [--clear-state] [--notes <text>] [--target <date>]
+command 16 x=48 y=-2726 w=586 h=54 cli=sindri todo edit <id> [--text <text>] [--due <day>] [--no-due] [--link <ref>] [--no-links] [--version <n>]
+command 17 x=48 y=-2638 w=586 h=42 cli=sindri context map checks [--draft] [--build]
+command 18 x=48 y=-2562 w=586 h=42 cli=sindri todo note set <vault> <note> [--json]
+command 19 x=48 y=-2486 w=586 h=42 cli=sindri item close <itemId> --cancelled [--version <n>]
+command 20 x=48 y=-2410 w=586 h=42 cli=sindri item close <itemId> [--version <n>]
+command 21 x=48 y=-2334 w=586 h=42 cli=sindri linear comment <key> <text>
+command 22 x=48 y=-2258 w=586 h=54 cli=sindri workflow complete <address> --run <token> --outcome <outcome>
+command 23 x=48 y=-2170 w=586 h=54 cli=sindri workflow complete <address> --run <token> --outcome <outcome>
+command 24 x=48 y=-2082 w=586 h=42 cli=sindri index connect <source>
+command 25 x=48 y=-2006 w=586 h=54 cli=sindri handoff send <title> [--source <name>] [--repo <repo>] [--branch <b>] [--prompt <text>] [--link <url>] [--label <l>]
+command 26 x=48 y=-1918 w=586 h=42 cli=sindri item add <title> [--repo <repo>]
+command 27 x=48 y=-1842 w=586 h=42 cli=sindri linear create <team> <title>
+command 28 x=48 y=-1766 w=586 h=42 cli=sindri memory create <name> [--description <text>]
+command 29 x=48 y=-1690 w=586 h=42 cli=sindri toolkit create <name> --tool <tool>
+command 30 x=48 y=-1614 w=586 h=42 cli=sindri wf create <slug> [--template <name>] [--file <specFile>]
+command 31 x=48 y=-1538 w=586 h=42 cli=sindri decide <decisionId> <choice> [--note <note>]
+command 32 x=48 y=-1462 w=586 h=42 cli=sindri wf delete <slug>
+command 33 x=48 y=-1386 w=586 h=42 cli=sindri project remove <project> --version <n>
+command 34 x=48 y=-1310 w=586 h=42 cli=sindri services run code-index-embed
+command 35 x=48 y=-1234 w=586 h=42 cli=sindri sandbox learn off [--repo <repo>] [--json]
+command 36 x=48 y=-1158 w=586 h=42 cli=sindri request <kind> [--item <itemId>] <text>
+command 37 x=48 y=-1082 w=586 h=42 cli=sindri agents focus <ref>
+command 38 x=48 y=-1006 w=586 h=42 cli=sindri memory forget <name> [--fact <id>] [--tag <tag>] [--expired]
+command 39 x=48 y=-930 w=586 h=42 cli=sindri wf handback <run> <node> [--item <index>]
+command 40 x=48 y=-854 w=586 h=42 cli=sindri project hide <project> --version <n>
+command 41 x=48 y=-778 w=586 h=42 cli=sindri context map import <file>
+command 42 x=48 y=-702 w=586 h=42 cli=sindri todo note import [--expect <n>] [--dry-run] [--json]
+command 43 x=48 y=-626 w=586 h=42 cli=sindri profile init
+command 44 x=48 y=-550 w=586 h=42 cli=sindri profile approve <hash>
+command 45 x=48 y=-474 w=586 h=42 cli=sindri profile approve <hash>
+command 46 x=48 y=-398 w=586 h=42 cli=sindri todo keep <id> <side>
+command 47 x=48 y=-322 w=586 h=42 cli=sindri todo keep <id> --undo
+command 48 x=48 y=-246 w=586 h=42 cli=sindri launch init [--viewer <name>] [--force] [--stdout]
+command 49 x=48 y=-170 w=586 h=42 cli=sindri launch show [<id>] [--json]
+command 50 x=48 y=-94 w=586 h=42 cli=sindri index connect linear
+command 51 x=48 y=-18 w=586 h=42 cli=sindri todo done <id> [--version <n>]
+command 52 x=48 y=58 w=586 h=42 cli=sindri todo remove <id> [--version <n>]
+command 53 x=48 y=134 w=586 h=42 cli=sindri todo reopen <id> [--version <n>]
+command 54 x=48 y=210 w=586 h=42 cli=sindri todo restore <id> [--version <n>]
+command 55 x=48 y=286 w=586 h=42 cli=sindri repo onboard [<path>]
+command 56 x=48 y=362 w=586 h=42 cli=sindri open <itemId> --attach [--agent <agent>]
+command 57 x=48 y=438 w=586 h=42 cli=sindri open <itemId> [--agent <agent>]
+command 58 x=48 y=514 w=586 h=42 cli=sindri open <itemId> --resume [--agent <agent>]
+command 59 x=48 y=590 w=586 h=42 cli=sindri services pause <name>
+command 60 x=646 y=-3986 w=586 h=42 cli=sindri toolkit pause <name>
+command 61 x=646 y=-3910 w=586 h=42 cli=sindri wf pause <slug>
+command 62 x=646 y=-3804 w=586 h=42 cli=sindri todo note hold apply
+command 63 x=646 y=-3728 w=586 h=42 cli=sindri todo note hold restore
+command 64 x=646 y=-3640 w=586 h=42 cli=sindri context pin set <name>
+command 65 x=646 y=-3564 w=586 h=42 cli=sindri launch probe
+command 66 x=646 y=-3476 w=586 h=42 cli=sindri context map promote
+command 67 x=646 y=-3388 w=586 h=42 cli=sindri context map propose <file>
+command 68 x=646 y=-3300 w=586 h=42 cli=sindri services run context-map-refresh
+command 69 x=646 y=-3224 w=586 h=42 cli=sindri index purge <source>
+command 70 x=646 y=-3148 w=586 h=42 cli=sindri resources purge <owner>
+command 71 x=646 y=-3072 w=586 h=42 cli=sindri session wrap --launch <launchId>
+command 72 x=646 y=-2996 w=586 h=42 cli=sindri context map refresh
+command 73 x=646 y=-2920 w=586 h=42 cli=sindri mcp register --apply
+command 74 x=646 y=-2832 w=586 h=42 cli=sindri services run context-map-refresh
+command 75 x=646 y=-2726 w=586 h=42 cli=sindri connection remove <name>
+command 76 x=646 y=-2638 w=586 h=42 cli=sindri profile set <key> <value>
+command 77 x=646 y=-2562 w=586 h=42 cli=sindri connection rename <name> <label>
+command 78 x=646 y=-2486 w=586 h=42 cli=sindri wf edit <slug> --base <revision> --file <specFile>
+command 79 x=646 y=-2410 w=586 h=42 cli=sindri jobs resume <jobId>
+command 80 x=646 y=-2334 w=586 h=42 cli=sindri services resume <name>
+command 81 x=646 y=-2258 w=586 h=42 cli=sindri toolkit resume <name>
+command 82 x=646 y=-2170 w=586 h=42 cli=sindri context map review accept <target>
+command 83 x=646 y=-2082 w=586 h=42 cli=sindri context map review --accept-deterministic
+command 84 x=646 y=-2006 w=586 h=42 cli=sindri context map review add <node> <name> [--under <node>]
+command 85 x=646 y=-1918 w=586 h=42 cli=sindri context map review --apply <file>
+command 86 x=646 y=-1842 w=586 h=42 cli=sindri context map review delete <node>
+command 87 x=646 y=-1766 w=586 h=42 cli=sindri context map review --drop <id>
+command 88 x=646 y=-1690 w=586 h=42 cli=sindri context map review merge <node> --into <node>
+command 89 x=646 y=-1614 w=586 h=42 cli=sindri context map review move <node> --under <node>
+command 90 x=646 y=-1538 w=586 h=42 cli=sindri context map review reject <target>
+command 91 x=646 y=-1462 w=586 h=42 cli=sindri context map review rename <node> <name>
+command 92 x=646 y=-1386 w=586 h=42 cli=sindri context map review --repoint <id> --to <node>
+command 93 x=646 y=-1310 w=586 h=42 cli=sindri context map review --undo <id>
+command 94 x=646 y=-1234 w=586 h=42 cli=sindri context eval backtest
+command 95 x=646 y=-1158 w=586 h=42 cli=sindri doctor
+command 96 x=646 y=-1082 w=586 h=42 cli=sindri services run <name>
+command 97 x=646 y=-1006 w=586 h=42 cli=sindri wf run <slug> [--payload <json>]
+command 98 x=646 y=-930 w=586 h=42 cli=sindri index connect linear
+command 99 x=646 y=-854 w=586 h=42 cli=sindri services run context-concept-scan
+command 100 x=646 y=-778 w=586 h=42 cli=sindri review fix <pr> <text>
+command 101 x=646 y=-702 w=586 h=42 cli=sindri session wrap --launch <launchId>
+command 102 x=646 y=-626 w=586 h=42 cli=sindri session wrap --launch <launchId>
+command 103 x=646 y=-550 w=586 h=42 cli=sindri context page set <name>
+command 104 x=646 y=-474 w=586 h=42 cli=sindri profile set <key> <value> [--json]
+command 105 x=646 y=-398 w=586 h=42 cli=sindri profile set <key> <value>
+command 106 x=646 y=-322 w=586 h=42 cli=sindri todo note set <vault> <note> [--json]
+command 107 x=646 y=-246 w=586 h=42 cli=sindri connection signin <name>
+command 108 x=646 y=-170 w=586 h=42 cli=sindri toolkit start <name>
+command 109 x=646 y=-94 w=586 h=42 cli=sindri todo note stop [--json]
+command 110 x=646 y=-18 w=586 h=42 cli=sindri toolkit stop <name>
+command 111 x=646 y=58 w=586 h=42 cli=sindri index sync <source>
+command 112 x=646 y=134 w=586 h=42 cli=sindri context sources sync
+command 113 x=646 y=210 w=586 h=42 cli=sindri wf takeover <run> <node> [--item <index>]
+command 114 x=646 y=286 w=586 h=42 cli=sindri connection test <name>
+command 115 x=646 y=362 w=586 h=42 cli=sindri todo note hold undo
+command 116 x=646 y=438 w=586 h=42 cli=sindri profile validate
+command 117 x=646 y=514 w=586 h=42 cli=sindri wf validate --slug <slug> [--revision <n>]
+command 118 x=646 y=590 w=586 h=54 cli=sindri memory write <name> <text> [--tag <tag>] [--expires-at <time>]
+sandbox card Sandbox x=646 y=-4558 w=610 h=98
+sandbox title x=670 y=-4534 w=502 h=22
+sandbox body x=670 y=-4504 w=562 h=20
+sandbox glyph x=1172 y=-4531 w=16 h=16
+sandbox word x=1196 y=-4532 w=36 h=20
+sandbox glyph-vs-word dy=-1 gap=8
+sandbox-view card Sandbox x=646 y=48 w=610 h=98
+sandbox-view title x=670 y=72 w=502 h=22
+sandbox-view body x=670 y=102 w=562 h=20
+sandbox-view glyph x=1172 y=75 w=16 h=16
+sandbox-view word x=1196 y=74 w=36 h=20
+sandbox-view glyph-vs-word dy=-1 gap=8
+width 1000 window 1000x800
+card Actions x=24 y=-8480 w=952 h=9148
+command 1 x=48 y=-8338 w=904 h=42 cli=sindri wf activate <slug> [--revision <n>]
+command 2 x=48 y=-8262 w=904 h=54 cli=sindri connection add <name> [--preset <preset>] [--kind <kind>] [--client-id <id>] [--client-secret-env <name>] [--key-env <name>] [--url <address>]
+command 3 x=48 y=-8174 w=904 h=42 cli=sindri repo add <path>
+command 4 x=48 y=-8098 w=904 h=42 cli=sindri todo add <text> [--due <day>] [--link <ref>] [--client-id <id>]
+command 5 x=48 y=-8022 w=904 h=42 cli=sindri sandbox allow <launch> <target>
+command 6 x=48 y=-7946 w=904 h=42 cli=sindri answer <question> [--text <text>] [--choice <choice>] [--item <index>]
+command 7 x=48 y=-7870 w=904 h=42 cli=sindri wf edit <slug> --base <revision> [--ops <json>] [--ops-file <file>]
+command 8 x=48 y=-7794 w=904 h=54 cli=sindri project add [--linear <key>] [--name <text>] [--link <url>] [--state <state>] [--notes <text>] [--target <date>]
+command 9 x=48 y=-7706 w=904 h=42 cli=sindri services run code-index-main-move
+command 10 x=48 y=-7630 w=904 h=42 cli=sindri context map build
+command 11 x=48 y=-7554 w=904 h=42 cli=sindri toolkit build <name>
+command 12 x=48 y=-7478 w=904 h=42 cli=sindri jobs cancel <jobId>
+command 13 x=48 y=-7402 w=904 h=42 cli=sindri wf cancel <run>
+command 14 x=48 y=-7326 w=904 h=42 cli=sindri linear edit <issue> [--title <text>] [--state <state>] [--assignee <person>] [--priority <level>]
+command 15 x=48 y=-7250 w=904 h=54 cli=sindri project edit <project> --version <n> [--name <text>] [--link <url>] [--state <state>] [--clear-state] [--notes <text>] [--target <date>]
+command 16 x=48 y=-7162 w=904 h=42 cli=sindri todo edit <id> [--text <text>] [--due <day>] [--no-due] [--link <ref>] [--no-links] [--version <n>]
+command 17 x=48 y=-7086 w=904 h=42 cli=sindri context map checks [--draft] [--build]
+command 18 x=48 y=-7010 w=904 h=42 cli=sindri todo note set <vault> <note> [--json]
+command 19 x=48 y=-6934 w=904 h=42 cli=sindri item close <itemId> --cancelled [--version <n>]
+command 20 x=48 y=-6858 w=904 h=42 cli=sindri item close <itemId> [--version <n>]
+command 21 x=48 y=-6782 w=904 h=42 cli=sindri linear comment <key> <text>
+command 22 x=48 y=-6706 w=904 h=42 cli=sindri workflow complete <address> --run <token> --outcome <outcome>
+command 23 x=48 y=-6630 w=904 h=42 cli=sindri workflow complete <address> --run <token> --outcome <outcome>
+command 24 x=48 y=-6554 w=904 h=42 cli=sindri index connect <source>
+command 25 x=48 y=-6478 w=904 h=54 cli=sindri handoff send <title> [--source <name>] [--repo <repo>] [--branch <b>] [--prompt <text>] [--link <url>] [--label <l>]
+command 26 x=48 y=-6390 w=904 h=42 cli=sindri item add <title> [--repo <repo>]
+command 27 x=48 y=-6314 w=904 h=42 cli=sindri linear create <team> <title>
+command 28 x=48 y=-6238 w=904 h=42 cli=sindri memory create <name> [--description <text>]
+command 29 x=48 y=-6162 w=904 h=42 cli=sindri toolkit create <name> --tool <tool>
+command 30 x=48 y=-6086 w=904 h=42 cli=sindri wf create <slug> [--template <name>] [--file <specFile>]
+command 31 x=48 y=-6010 w=904 h=42 cli=sindri decide <decisionId> <choice> [--note <note>]
+command 32 x=48 y=-5934 w=904 h=42 cli=sindri wf delete <slug>
+command 33 x=48 y=-5858 w=904 h=42 cli=sindri project remove <project> --version <n>
+command 34 x=48 y=-5782 w=904 h=42 cli=sindri services run code-index-embed
+command 35 x=48 y=-5706 w=904 h=42 cli=sindri sandbox learn off [--repo <repo>] [--json]
+command 36 x=48 y=-5630 w=904 h=42 cli=sindri request <kind> [--item <itemId>] <text>
+command 37 x=48 y=-5554 w=904 h=42 cli=sindri agents focus <ref>
+command 38 x=48 y=-5478 w=904 h=42 cli=sindri memory forget <name> [--fact <id>] [--tag <tag>] [--expired]
+command 39 x=48 y=-5402 w=904 h=42 cli=sindri wf handback <run> <node> [--item <index>]
+command 40 x=48 y=-5326 w=904 h=42 cli=sindri project hide <project> --version <n>
+command 41 x=48 y=-5250 w=904 h=42 cli=sindri context map import <file>
+command 42 x=48 y=-5174 w=904 h=42 cli=sindri todo note import [--expect <n>] [--dry-run] [--json]
+command 43 x=48 y=-5098 w=904 h=42 cli=sindri profile init
+command 44 x=48 y=-5022 w=904 h=42 cli=sindri profile approve <hash>
+command 45 x=48 y=-4946 w=904 h=42 cli=sindri profile approve <hash>
+command 46 x=48 y=-4870 w=904 h=42 cli=sindri todo keep <id> <side>
+command 47 x=48 y=-4794 w=904 h=42 cli=sindri todo keep <id> --undo
+command 48 x=48 y=-4718 w=904 h=42 cli=sindri launch init [--viewer <name>] [--force] [--stdout]
+command 49 x=48 y=-4642 w=904 h=42 cli=sindri launch show [<id>] [--json]
+command 50 x=48 y=-4566 w=904 h=42 cli=sindri index connect linear
+command 51 x=48 y=-4490 w=904 h=42 cli=sindri todo done <id> [--version <n>]
+command 52 x=48 y=-4414 w=904 h=42 cli=sindri todo remove <id> [--version <n>]
+command 53 x=48 y=-4338 w=904 h=42 cli=sindri todo reopen <id> [--version <n>]
+command 54 x=48 y=-4262 w=904 h=42 cli=sindri todo restore <id> [--version <n>]
+command 55 x=48 y=-4186 w=904 h=42 cli=sindri repo onboard [<path>]
+command 56 x=48 y=-4110 w=904 h=42 cli=sindri open <itemId> --attach [--agent <agent>]
+command 57 x=48 y=-4034 w=904 h=42 cli=sindri open <itemId> [--agent <agent>]
+command 58 x=48 y=-3958 w=904 h=42 cli=sindri open <itemId> --resume [--agent <agent>]
+command 59 x=48 y=-3882 w=904 h=42 cli=sindri services pause <name>
+command 60 x=48 y=-3806 w=904 h=42 cli=sindri toolkit pause <name>
+command 61 x=48 y=-3730 w=904 h=42 cli=sindri wf pause <slug>
+command 62 x=48 y=-3654 w=904 h=42 cli=sindri todo note hold apply
+command 63 x=48 y=-3578 w=904 h=42 cli=sindri todo note hold restore
+command 64 x=48 y=-3502 w=904 h=42 cli=sindri context pin set <name>
+command 65 x=48 y=-3426 w=904 h=42 cli=sindri launch probe
+command 66 x=48 y=-3350 w=904 h=42 cli=sindri context map promote
+command 67 x=48 y=-3274 w=904 h=42 cli=sindri context map propose <file>
+command 68 x=48 y=-3198 w=904 h=42 cli=sindri services run context-map-refresh
+command 69 x=48 y=-3122 w=904 h=42 cli=sindri index purge <source>
+command 70 x=48 y=-3046 w=904 h=42 cli=sindri resources purge <owner>
+command 71 x=48 y=-2970 w=904 h=42 cli=sindri session wrap --launch <launchId>
+command 72 x=48 y=-2894 w=904 h=42 cli=sindri context map refresh
+command 73 x=48 y=-2818 w=904 h=42 cli=sindri mcp register --apply
+command 74 x=48 y=-2742 w=904 h=42 cli=sindri services run context-map-refresh
+command 75 x=48 y=-2666 w=904 h=42 cli=sindri connection remove <name>
+command 76 x=48 y=-2590 w=904 h=42 cli=sindri profile set <key> <value>
+command 77 x=48 y=-2514 w=904 h=42 cli=sindri connection rename <name> <label>
+command 78 x=48 y=-2438 w=904 h=42 cli=sindri wf edit <slug> --base <revision> --file <specFile>
+command 79 x=48 y=-2362 w=904 h=42 cli=sindri jobs resume <jobId>
+command 80 x=48 y=-2286 w=904 h=42 cli=sindri services resume <name>
+command 81 x=48 y=-2210 w=904 h=42 cli=sindri toolkit resume <name>
+command 82 x=48 y=-2134 w=904 h=42 cli=sindri context map review accept <target>
+command 83 x=48 y=-2058 w=904 h=42 cli=sindri context map review --accept-deterministic
+command 84 x=48 y=-1982 w=904 h=42 cli=sindri context map review add <node> <name> [--under <node>]
+command 85 x=48 y=-1906 w=904 h=42 cli=sindri context map review --apply <file>
+command 86 x=48 y=-1830 w=904 h=42 cli=sindri context map review delete <node>
+command 87 x=48 y=-1754 w=904 h=42 cli=sindri context map review --drop <id>
+command 88 x=48 y=-1678 w=904 h=42 cli=sindri context map review merge <node> --into <node>
+command 89 x=48 y=-1602 w=904 h=42 cli=sindri context map review move <node> --under <node>
+command 90 x=48 y=-1526 w=904 h=42 cli=sindri context map review reject <target>
+command 91 x=48 y=-1450 w=904 h=42 cli=sindri context map review rename <node> <name>
+command 92 x=48 y=-1374 w=904 h=42 cli=sindri context map review --repoint <id> --to <node>
+command 93 x=48 y=-1298 w=904 h=42 cli=sindri context map review --undo <id>
+command 94 x=48 y=-1222 w=904 h=42 cli=sindri context eval backtest
+command 95 x=48 y=-1146 w=904 h=42 cli=sindri doctor
+command 96 x=48 y=-1070 w=904 h=42 cli=sindri services run <name>
+command 97 x=48 y=-994 w=904 h=42 cli=sindri wf run <slug> [--payload <json>]
+command 98 x=48 y=-918 w=904 h=42 cli=sindri index connect linear
+command 99 x=48 y=-842 w=904 h=42 cli=sindri services run context-concept-scan
+command 100 x=48 y=-766 w=904 h=42 cli=sindri review fix <pr> <text>
+command 101 x=48 y=-690 w=904 h=42 cli=sindri session wrap --launch <launchId>
+command 102 x=48 y=-614 w=904 h=42 cli=sindri session wrap --launch <launchId>
+command 103 x=48 y=-538 w=904 h=42 cli=sindri context page set <name>
+command 104 x=48 y=-462 w=904 h=42 cli=sindri profile set <key> <value> [--json]
+command 105 x=48 y=-386 w=904 h=42 cli=sindri profile set <key> <value>
+command 106 x=48 y=-310 w=904 h=42 cli=sindri todo note set <vault> <note> [--json]
+command 107 x=48 y=-234 w=904 h=42 cli=sindri connection signin <name>
+command 108 x=48 y=-158 w=904 h=42 cli=sindri toolkit start <name>
+command 109 x=48 y=-82 w=904 h=42 cli=sindri todo note stop [--json]
+command 110 x=48 y=-6 w=904 h=42 cli=sindri toolkit stop <name>
+command 111 x=48 y=70 w=904 h=42 cli=sindri index sync <source>
+command 112 x=48 y=146 w=904 h=42 cli=sindri context sources sync
+command 113 x=48 y=222 w=904 h=42 cli=sindri wf takeover <run> <node> [--item <index>]
+command 114 x=48 y=298 w=904 h=42 cli=sindri connection test <name>
+command 115 x=48 y=374 w=904 h=42 cli=sindri todo note hold undo
+command 116 x=48 y=450 w=904 h=42 cli=sindri profile validate
+command 117 x=48 y=526 w=904 h=42 cli=sindri wf validate --slug <slug> [--revision <n>]
+command 118 x=48 y=602 w=904 h=42 cli=sindri memory write <name> <text> [--tag <tag>] [--expires-at <time>]
+sandbox card Sandbox x=506 y=-8910 w=470 h=98
+sandbox title x=530 y=-8886 w=362 h=22
+sandbox body x=530 y=-8856 w=422 h=20
+sandbox glyph x=892 y=-8883 w=16 h=16
+sandbox word x=916 y=-8884 w=36 h=20
+sandbox glyph-vs-word dy=-1 gap=8
+sandbox-view card Sandbox x=506 y=48 w=470 h=98
+sandbox-view title x=530 y=72 w=362 h=22
+sandbox-view body x=530 y=102 w=422 h=20
+sandbox-view glyph x=892 y=75 w=16 h=16
+sandbox-view word x=916 y=74 w=36 h=20
+sandbox-view glyph-vs-word dy=-1 gap=8
+width 1440 window 1440x800
+card Actions x=24 y=-4020 w=1392 h=4688
+command 1 x=48 y=-3878 w=666 h=42 cli=sindri wf activate <slug> [--revision <n>]
+command 2 x=48 y=-3802 w=666 h=54 cli=sindri connection add <name> [--preset <preset>] [--kind <kind>] [--client-id <id>] [--client-secret-env <name>] [--key-env <name>] [--url <address>]
+command 3 x=48 y=-3714 w=666 h=42 cli=sindri repo add <path>
+command 4 x=48 y=-3638 w=666 h=42 cli=sindri todo add <text> [--due <day>] [--link <ref>] [--client-id <id>]
+command 5 x=48 y=-3562 w=666 h=42 cli=sindri sandbox allow <launch> <target>
+command 6 x=48 y=-3486 w=666 h=42 cli=sindri answer <question> [--text <text>] [--choice <choice>] [--item <index>]
+command 7 x=48 y=-3410 w=666 h=42 cli=sindri wf edit <slug> --base <revision> [--ops <json>] [--ops-file <file>]
+command 8 x=48 y=-3334 w=666 h=54 cli=sindri project add [--linear <key>] [--name <text>] [--link <url>] [--state <state>] [--notes <text>] [--target <date>]
+command 9 x=48 y=-3246 w=666 h=42 cli=sindri services run code-index-main-move
+command 10 x=48 y=-3170 w=666 h=42 cli=sindri context map build
+command 11 x=48 y=-3094 w=666 h=42 cli=sindri toolkit build <name>
+command 12 x=48 y=-3018 w=666 h=42 cli=sindri jobs cancel <jobId>
+command 13 x=48 y=-2942 w=666 h=42 cli=sindri wf cancel <run>
+command 14 x=48 y=-2866 w=666 h=54 cli=sindri linear edit <issue> [--title <text>] [--state <state>] [--assignee <person>] [--priority <level>]
+command 15 x=48 y=-2778 w=666 h=54 cli=sindri project edit <project> --version <n> [--name <text>] [--link <url>] [--state <state>] [--clear-state] [--notes <text>] [--target <date>]
+command 16 x=48 y=-2690 w=666 h=54 cli=sindri todo edit <id> [--text <text>] [--due <day>] [--no-due] [--link <ref>] [--no-links] [--version <n>]
+command 17 x=48 y=-2602 w=666 h=42 cli=sindri context map checks [--draft] [--build]
+command 18 x=48 y=-2526 w=666 h=42 cli=sindri todo note set <vault> <note> [--json]
+command 19 x=48 y=-2450 w=666 h=42 cli=sindri item close <itemId> --cancelled [--version <n>]
+command 20 x=48 y=-2374 w=666 h=42 cli=sindri item close <itemId> [--version <n>]
+command 21 x=48 y=-2298 w=666 h=42 cli=sindri linear comment <key> <text>
+command 22 x=48 y=-2222 w=666 h=42 cli=sindri workflow complete <address> --run <token> --outcome <outcome>
+command 23 x=48 y=-2146 w=666 h=42 cli=sindri workflow complete <address> --run <token> --outcome <outcome>
+command 24 x=48 y=-2070 w=666 h=42 cli=sindri index connect <source>
+command 25 x=48 y=-1994 w=666 h=54 cli=sindri handoff send <title> [--source <name>] [--repo <repo>] [--branch <b>] [--prompt <text>] [--link <url>] [--label <l>]
+command 26 x=48 y=-1906 w=666 h=42 cli=sindri item add <title> [--repo <repo>]
+command 27 x=48 y=-1830 w=666 h=42 cli=sindri linear create <team> <title>
+command 28 x=48 y=-1754 w=666 h=42 cli=sindri memory create <name> [--description <text>]
+command 29 x=48 y=-1678 w=666 h=42 cli=sindri toolkit create <name> --tool <tool>
+command 30 x=48 y=-1602 w=666 h=42 cli=sindri wf create <slug> [--template <name>] [--file <specFile>]
+command 31 x=48 y=-1526 w=666 h=42 cli=sindri decide <decisionId> <choice> [--note <note>]
+command 32 x=48 y=-1450 w=666 h=42 cli=sindri wf delete <slug>
+command 33 x=48 y=-1374 w=666 h=42 cli=sindri project remove <project> --version <n>
+command 34 x=48 y=-1298 w=666 h=42 cli=sindri services run code-index-embed
+command 35 x=48 y=-1222 w=666 h=42 cli=sindri sandbox learn off [--repo <repo>] [--json]
+command 36 x=48 y=-1146 w=666 h=42 cli=sindri request <kind> [--item <itemId>] <text>
+command 37 x=48 y=-1070 w=666 h=42 cli=sindri agents focus <ref>
+command 38 x=48 y=-994 w=666 h=42 cli=sindri memory forget <name> [--fact <id>] [--tag <tag>] [--expired]
+command 39 x=48 y=-918 w=666 h=42 cli=sindri wf handback <run> <node> [--item <index>]
+command 40 x=48 y=-842 w=666 h=42 cli=sindri project hide <project> --version <n>
+command 41 x=48 y=-766 w=666 h=42 cli=sindri context map import <file>
+command 42 x=48 y=-690 w=666 h=42 cli=sindri todo note import [--expect <n>] [--dry-run] [--json]
+command 43 x=48 y=-614 w=666 h=42 cli=sindri profile init
+command 44 x=48 y=-538 w=666 h=42 cli=sindri profile approve <hash>
+command 45 x=48 y=-462 w=666 h=42 cli=sindri profile approve <hash>
+command 46 x=48 y=-386 w=666 h=42 cli=sindri todo keep <id> <side>
+command 47 x=48 y=-310 w=666 h=42 cli=sindri todo keep <id> --undo
+command 48 x=48 y=-234 w=666 h=42 cli=sindri launch init [--viewer <name>] [--force] [--stdout]
+command 49 x=48 y=-158 w=666 h=42 cli=sindri launch show [<id>] [--json]
+command 50 x=48 y=-82 w=666 h=42 cli=sindri index connect linear
+command 51 x=48 y=-6 w=666 h=42 cli=sindri todo done <id> [--version <n>]
+command 52 x=48 y=70 w=666 h=42 cli=sindri todo remove <id> [--version <n>]
+command 53 x=48 y=146 w=666 h=42 cli=sindri todo reopen <id> [--version <n>]
+command 54 x=48 y=222 w=666 h=42 cli=sindri todo restore <id> [--version <n>]
+command 55 x=48 y=298 w=666 h=42 cli=sindri repo onboard [<path>]
+command 56 x=48 y=374 w=666 h=42 cli=sindri open <itemId> --attach [--agent <agent>]
+command 57 x=48 y=450 w=666 h=42 cli=sindri open <itemId> [--agent <agent>]
+command 58 x=48 y=526 w=666 h=42 cli=sindri open <itemId> --resume [--agent <agent>]
+command 59 x=48 y=602 w=666 h=42 cli=sindri services pause <name>
+command 60 x=726 y=-3878 w=666 h=42 cli=sindri toolkit pause <name>
+command 61 x=726 y=-3802 w=666 h=42 cli=sindri wf pause <slug>
+command 62 x=726 y=-3714 w=666 h=42 cli=sindri todo note hold apply
+command 63 x=726 y=-3638 w=666 h=42 cli=sindri todo note hold restore
+command 64 x=726 y=-3562 w=666 h=42 cli=sindri context pin set <name>
+command 65 x=726 y=-3486 w=666 h=42 cli=sindri launch probe
+command 66 x=726 y=-3410 w=666 h=42 cli=sindri context map promote
+command 67 x=726 y=-3334 w=666 h=42 cli=sindri context map propose <file>
+command 68 x=726 y=-3246 w=666 h=42 cli=sindri services run context-map-refresh
+command 69 x=726 y=-3170 w=666 h=42 cli=sindri index purge <source>
+command 70 x=726 y=-3094 w=666 h=42 cli=sindri resources purge <owner>
+command 71 x=726 y=-3018 w=666 h=42 cli=sindri session wrap --launch <launchId>
+command 72 x=726 y=-2942 w=666 h=42 cli=sindri context map refresh
+command 73 x=726 y=-2866 w=666 h=42 cli=sindri mcp register --apply
+command 74 x=726 y=-2778 w=666 h=42 cli=sindri services run context-map-refresh
+command 75 x=726 y=-2690 w=666 h=42 cli=sindri connection remove <name>
+command 76 x=726 y=-2602 w=666 h=42 cli=sindri profile set <key> <value>
+command 77 x=726 y=-2526 w=666 h=42 cli=sindri connection rename <name> <label>
+command 78 x=726 y=-2450 w=666 h=42 cli=sindri wf edit <slug> --base <revision> --file <specFile>
+command 79 x=726 y=-2374 w=666 h=42 cli=sindri jobs resume <jobId>
+command 80 x=726 y=-2298 w=666 h=42 cli=sindri services resume <name>
+command 81 x=726 y=-2222 w=666 h=42 cli=sindri toolkit resume <name>
+command 82 x=726 y=-2146 w=666 h=42 cli=sindri context map review accept <target>
+command 83 x=726 y=-2070 w=666 h=42 cli=sindri context map review --accept-deterministic
+command 84 x=726 y=-1994 w=666 h=42 cli=sindri context map review add <node> <name> [--under <node>]
+command 85 x=726 y=-1906 w=666 h=42 cli=sindri context map review --apply <file>
+command 86 x=726 y=-1830 w=666 h=42 cli=sindri context map review delete <node>
+command 87 x=726 y=-1754 w=666 h=42 cli=sindri context map review --drop <id>
+command 88 x=726 y=-1678 w=666 h=42 cli=sindri context map review merge <node> --into <node>
+command 89 x=726 y=-1602 w=666 h=42 cli=sindri context map review move <node> --under <node>
+command 90 x=726 y=-1526 w=666 h=42 cli=sindri context map review reject <target>
+command 91 x=726 y=-1450 w=666 h=42 cli=sindri context map review rename <node> <name>
+command 92 x=726 y=-1374 w=666 h=42 cli=sindri context map review --repoint <id> --to <node>
+command 93 x=726 y=-1298 w=666 h=42 cli=sindri context map review --undo <id>
+command 94 x=726 y=-1222 w=666 h=42 cli=sindri context eval backtest
+command 95 x=726 y=-1146 w=666 h=42 cli=sindri doctor
+command 96 x=726 y=-1070 w=666 h=42 cli=sindri services run <name>
+command 97 x=726 y=-994 w=666 h=42 cli=sindri wf run <slug> [--payload <json>]
+command 98 x=726 y=-918 w=666 h=42 cli=sindri index connect linear
+command 99 x=726 y=-842 w=666 h=42 cli=sindri services run context-concept-scan
+command 100 x=726 y=-766 w=666 h=42 cli=sindri review fix <pr> <text>
+command 101 x=726 y=-690 w=666 h=42 cli=sindri session wrap --launch <launchId>
+command 102 x=726 y=-614 w=666 h=42 cli=sindri session wrap --launch <launchId>
+command 103 x=726 y=-538 w=666 h=42 cli=sindri context page set <name>
+command 104 x=726 y=-462 w=666 h=42 cli=sindri profile set <key> <value> [--json]
+command 105 x=726 y=-386 w=666 h=42 cli=sindri profile set <key> <value>
+command 106 x=726 y=-310 w=666 h=42 cli=sindri todo note set <vault> <note> [--json]
+command 107 x=726 y=-234 w=666 h=42 cli=sindri connection signin <name>
+command 108 x=726 y=-158 w=666 h=42 cli=sindri toolkit start <name>
+command 109 x=726 y=-82 w=666 h=42 cli=sindri todo note stop [--json]
+command 110 x=726 y=-6 w=666 h=42 cli=sindri toolkit stop <name>
+command 111 x=726 y=70 w=666 h=42 cli=sindri index sync <source>
+command 112 x=726 y=146 w=666 h=42 cli=sindri context sources sync
+command 113 x=726 y=222 w=666 h=42 cli=sindri wf takeover <run> <node> [--item <index>]
+command 114 x=726 y=298 w=666 h=42 cli=sindri connection test <name>
+command 115 x=726 y=374 w=666 h=42 cli=sindri todo note hold undo
+command 116 x=726 y=450 w=666 h=42 cli=sindri profile validate
+command 117 x=726 y=526 w=666 h=42 cli=sindri wf validate --slug <slug> [--revision <n>]
+command 118 x=726 y=602 w=666 h=42 cli=sindri memory write <name> <text> [--tag <tag>] [--expires-at <time>]
+sandbox card Sandbox x=960 y=-4450 w=456 h=98
+sandbox title x=984 y=-4426 w=348 h=22
+sandbox body x=984 y=-4396 w=408 h=20
+sandbox glyph x=1332 y=-4423 w=16 h=16
+sandbox word x=1356 y=-4424 w=36 h=20
+sandbox glyph-vs-word dy=-1 gap=8
+sandbox-view card Sandbox x=960 y=48 w=456 h=98
+sandbox-view title x=984 y=72 w=348 h=22
+sandbox-view body x=984 y=102 w=408 h=20
+sandbox-view glyph x=1332 y=75 w=16 h=16
+sandbox-view word x=1356 y=74 w=36 h=20
+sandbox-view glyph-vs-word dy=-1 gap=8
+width-check 1280 window 1280x800
+sandbox-check slot visible True
+sandbox-check card Sandbox x=646 y=48 w=610 h=164
+sandbox-check title x=670 y=72 w=461 h=22
+sandbox-check body x=670 y=102 w=562 h=20
+sandbox-check glyph x=1131 y=75 w=16 h=16
+sandbox-check word x=1155 y=74 w=77 h=20
+sandbox-check glyph-vs-word dy=-1 gap=8
+width-check 1440 window 1440x800
+sandbox-check slot visible True
+sandbox-check card Sandbox x=960 y=48 w=456 h=164
+sandbox-check title x=984 y=72 w=307 h=22
+sandbox-check body x=984 y=102 w=408 h=20
+sandbox-check glyph x=1291 y=75 w=16 h=16
+sandbox-check word x=1315 y=74 w=77 h=20
+sandbox-check glyph-vs-word dy=-1 gap=8
+width-check 1000 window 1000x800
+sandbox-check slot visible True
+sandbox-check card Sandbox x=506 y=48 w=470 h=164
+sandbox-check title x=530 y=72 w=321 h=22
+sandbox-check body x=530 y=102 w=422 h=20
+sandbox-check glyph x=851 y=75 w=16 h=16
+sandbox-check word x=875 y=74 w=77 h=20
+sandbox-check glyph-vs-word dy=-1 gap=8
+projects-width 1280 window 1280x800
+project-card 1 x=24 y=162 w=399 h=197
+project-card 2 x=24 y=403 w=399 h=141
+project-card 3 x=24 y=588 w=399 h=235
+projects-width 1440 window 1440x800
+project-card 1 x=24 y=162 w=452 h=197
+project-card 2 x=24 y=403 w=452 h=141
+project-card 3 x=24 y=588 w=452 h=235
