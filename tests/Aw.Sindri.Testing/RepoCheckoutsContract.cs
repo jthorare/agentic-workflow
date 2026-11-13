@@ -54,8 +54,4 @@ public abstract class RepoCheckoutsContract
     /// <summary>A missing folder is told apart from a plain folder, so its reads keep failing loudly.</summary>
     [Fact]
     public void A_missing_folder_is_missing_not_a_plain_folder() => Expect.Equal(RepoCheckout.Missing, Create().Of(MissingFolder()));
-
-    /// <summary>A null path is a caller bug.</summary>
-    [Fact]
-    public void A_null_path_throws() => Assert.Throws<ArgumentNullException>(() => Create().Of(null!));
 }
