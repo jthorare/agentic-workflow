@@ -107,8 +107,8 @@ internal sealed partial class Row : Control
 
         if (DataContext is IRowItem item)
         {
+            Prepare(item, size);   // first: it may drop the palette and the brushes after a theme flip
             _palette ??= RowGlyphPainter.PaletteFor(this);
-            Prepare(item, size);
             using (context.PushTransform(Matrix.CreateTranslation(MetricsNow().Inset, (size.Height - GlyphBox) / 2)))
             {
                 RowGlyphPainter.Paint(context, _glyph, _palette);
@@ -171,6 +171,7 @@ internal sealed partial class Row : Control
         Watch(item: null);
         _top?.ScalingChanged -= OnScalingChanged;
         _top = null;
+        DropStrip();
     }
 
     // The row follows its item: a changed title, age or fact redraws it and renames it in place (IRowItem's doc).
@@ -224,7 +225,7 @@ internal sealed partial class Row : Control
 
     private void OnScalingChanged(object? sender, EventArgs e) => DropLayouts();   // the render scaling moved: the layouts are cut again at the new scale
 
-    private IBrush Brush(string key) => this.TryFindResource(key, ActualThemeVariant, out var v) && v is IBrush b ? b : Brushes.Gray;
+    private IBrush Brush(string key) => this.TryFindResource(key, ActualThemeVariant, out var v) && v is IBrush b ? b : throw new InvalidOperationException($"The theme has no brush {key}; the row draws only from the tokens.");
 
     private double Resource(string key, double fallback) => this.TryFindResource(key, ActualThemeVariant, out var v) && v is double d ? d : fallback;
 }

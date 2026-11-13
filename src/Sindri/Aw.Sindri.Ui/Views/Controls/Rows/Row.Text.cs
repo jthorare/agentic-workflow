@@ -54,6 +54,8 @@ internal sealed partial class Row
     // A new item or a changed one: only its texts are laid out again. The fonts, brushes, glyph palette and metrics do not depend on the item, so a recycle keeps them.
     private void DropText()
     {
+        DisposeAll(_text);
+        DisposeAll(_facts);
         Array.Clear(_text);
         Array.Clear(_facts);
         _titleRoom = double.NaN;
@@ -63,6 +65,15 @@ internal sealed partial class Row
     // The columns, the theme, the text scale and the render scaling change what every layout and brush was built from: each one drops them all.
     private void DropLayouts()
     {
+        DropCaches();
+        InvalidateVisual();
+    }
+
+    // DropLayouts without the invalidation, for Prepare, which runs inside Render.
+    private void DropCaches()
+    {
+        DisposeAll(_text);
+        DisposeAll(_facts);
         Array.Clear(_text);
         Array.Clear(_facts);
         Array.Clear(_chips);
@@ -73,7 +84,15 @@ internal sealed partial class Row
         _selBar = null;
         _ring = null;
         _titleRoom = double.NaN;
-        InvalidateVisual();
+    }
+
+    // A TextLayout holds pooled shaping buffers until it is disposed.
+    private static void DisposeAll(TextLayout?[] layouts)
+    {
+        foreach (var layout in layouts)
+        {
+            (layout as IDisposable)?.Dispose();
+        }
     }
 
     // True when a text size the layouts were built at is not the resource's value now (the text scale moved).
@@ -135,6 +154,17 @@ internal sealed partial class Row
     // Lays out every text of the row for its size and keeps what is still good. Render draws from these fields and the Layout hook reads them.
     private void Prepare(IRowItem item, Size size)
     {
+        if (!Equals(_variant, ActualThemeVariant))
+        {
+            // A row detached during a theme flip never saw ActualThemeVariantChanged do its work: it drops here what it built under the old variant.
+            if (_variant is not null)
+            {
+                DropCaches();
+            }
+
+            _variant = ActualThemeVariant;
+        }
+
         var m = MetricsNow();
         _shown = Math.Min(m.Columns.Length, VisibleColumns);
         var factsWidth = 0d;

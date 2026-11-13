@@ -34,6 +34,7 @@ public sealed partial class ContrastTests
         ("InkTertiary", "Surface1", 4.1, 0),
         ("PrimaryHover", "Canvas", 7.0, TextAa),
         ("PrimaryHover", "Surface1", 6.4, NonText),
+        ("PrimaryHover", "Surface2", 5.9, NonText),   // the flat row's cursor ring on a hovered row (#3189)
         ("PrimaryHover", "Surface3", 5.5, NonText),   // the palette's selected-row bar on its card (U1 run 1, a11y-4)
         ("OnPrimary", "Primary", 4.70, TextAa),
         ("OnPrimary", "PrimaryHoverFill", 5.5, TextAa),
