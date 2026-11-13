@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -38,6 +39,9 @@ internal sealed class GraphEdgesControl : Control, ICustomHitTest
     private const double PortSize = 10;   // outer, the 1 px outline included: the rectangle itself is 9 so the outline lands on whole pixels
     private const double PortRadius = 3;
     private const double DimmedOpacity = 0.42;
+    private const double ArrowSize = 9;
+    private const double LabelSize = 11;
+    private const double LabelMaxWidth = 80;
 
     private static readonly double[] _dash = [4, 2];   // Pen dashes count in stroke widths: 8 4 at 2 px
 
@@ -93,6 +97,48 @@ internal sealed class GraphEdgesControl : Control, ICustomHitTest
         return null;
     }
 
+    /// <summary>The pill behind an edge's label, in this control's coordinates.</summary>
+    /// <param name="key">The edge's key.</param>
+    /// <returns>The pill, or null when the edge has no label or does not exist.</returns>
+    internal Rect? LabelPill(string key) =>
+        Edges.FirstOrDefault(e => string.Equals(e.Key, key, StringComparison.Ordinal)) is { Label: { } label } edge ? PillFor(edge, LabelText(label, Brushes.Black)) : null;
+
+    /// <summary>The three corners of an edge's arrow head, the tip first (#3234).</summary>
+    /// <param name="key">The edge's key.</param>
+    /// <returns>The corners, or null when the edge has no arrow or does not exist.</returns>
+    internal Point[]? ArrowHead(string key) =>
+        Edges.FirstOrDefault(e => string.Equals(e.Key, key, StringComparison.Ordinal)) is { Arrow: true } edge ? HeadFor(edge) : null;
+
+    // The tip is the route's end; the wings trail back along its last stretch, 0.45 rad either side, ArrowSize long.
+    private static Point[] HeadFor(MapEdge edge)
+    {
+        var line = edge.Route.Flatten();
+        var end = edge.Route.End.ToAvalonia();
+        var before = line.Count > 1 ? line[^2].ToAvalonia() : edge.Route.Start.ToAvalonia();
+        var angle = Math.Atan2(end.Y - before.Y, end.X - before.X);
+        Point Wing(double turn) => new(end.X - (ArrowSize * Math.Cos(angle + turn)), end.Y - (ArrowSize * Math.Sin(angle + turn)));
+        return [end, Wing(-0.45), Wing(0.45)];
+    }
+
+    private static FormattedText LabelText(string label, IBrush brush) =>
+        new(label, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, new Typeface(FontFamily.Default, FontStyle.Normal, FontWeight.SemiBold), LabelSize, brush) { MaxTextWidth = LabelMaxWidth, MaxTextHeight = LabelSize * 2 };
+
+    private static Rect PillFor(MapEdge edge, FormattedText text)
+    {
+        var mid = edge.Route.Midpoint().ToAvalonia();
+        return new Rect(mid.X - (text.Width / 2) - 6, mid.Y - (text.Height / 2) - 2, text.Width + 12, text.Height + 4);
+    }
+
+    /// <summary>The stroke width an edge draws at: 2 px, or double when lit.</summary>
+    /// <param name="key">The edge's key.</param>
+    /// <returns>The width in px.</returns>
+    internal double StrokeWidth(string key) => Highlighted.Contains(key) || string.Equals(key, Hovered, StringComparison.Ordinal) ? 2 * Stroke : Stroke;
+
+    /// <summary>The opacity an edge draws at: 0.42 when dimmed, otherwise 1.</summary>
+    /// <param name="key">The edge's key.</param>
+    /// <returns>The opacity.</returns>
+    internal double StrokeOpacity(string key) => Dimmed.Contains(key) ? DimmedOpacity : 1;
+
     /// <inheritdoc/>
     public bool HitTest(Point point) => EdgeAt(point) is not null;
 
@@ -101,6 +147,8 @@ internal sealed class GraphEdgesControl : Control, ICustomHitTest
     {
         var (wire, hi, card) = (Brush(DefaultBrushKey), Brush("Brush.WireHi"), Brush("Brush.Surface1"));
         var ports = DrawStrokes(context, wire, hi);
+
+        DrawArrowsAndLabels(context, wire, hi);
 
         // The ports go on after every stroke, so no later edge paints over one.
         foreach (var (at, (lit, dim)) in ports)
@@ -113,6 +161,41 @@ internal sealed class GraphEdgesControl : Control, ICustomHitTest
                 var size = PortSize - outline;
                 var half = size / 2;
                 context.DrawRectangle(card, new Pen(lit ? hi : wire, outline), new Rect(at.X - half, at.Y - half, size, size), PortRadius, PortRadius);
+            }
+        }
+    }
+
+    // Arrow heads and label pills, over the strokes and under the ports; they dim with their edge.
+    private void DrawArrowsAndLabels(DrawingContext context, IBrush wire, IBrush hi)
+    {
+        var (ink, card, hairline) = (Brush("Brush.Ink"), Brush("Brush.Surface1"), Brush("Brush.Hairline"));
+        foreach (var (edge, _) in _built)
+        {
+            var lit = Highlighted.Contains(edge.Key) || string.Equals(edge.Key, Hovered, StringComparison.Ordinal);
+            using (Dimmed.Contains(edge.Key) ? context.PushOpacity(DimmedOpacity) : default)
+            {
+                if (edge.Arrow)
+                {
+                    var corners = HeadFor(edge);
+                    var head = new StreamGeometry();
+                    using (var ctx = head.Open())
+                    {
+                        ctx.BeginFigure(corners[0], isFilled: true);
+                        ctx.LineTo(corners[1]);
+                        ctx.LineTo(corners[2]);
+                        ctx.EndFigure(isClosed: true);
+                    }
+
+                    context.DrawGeometry(lit ? hi : EdgeBrush(edge, wire), pen: null, head);
+                }
+
+                if (edge.Label is { } label)
+                {
+                    var text = LabelText(label, ink);
+                    var pill = PillFor(edge, text);
+                    context.DrawRectangle(card, new Pen(hairline, 1), pill, 4, 4);
+                    context.DrawText(text, new Point(pill.X + 6, pill.Y + 2));
+                }
             }
         }
     }
