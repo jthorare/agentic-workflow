@@ -11,6 +11,7 @@ using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Sandbox;
 using Aw.Sindri.Ui.ViewModels.Settings;
 using Aw.Sindri.Ui.Views;
+using Aw.Sindri.Ui.Views.Icons;
 using Aw.Sindri.Ui.Views.Sandbox;
 
 namespace Aw.Sindri.Ui.Tests.Sandbox;
@@ -146,6 +147,24 @@ public sealed class SandboxViewTests
         await _bed.Card.Refresh(SandboxTestBed.Api, Token);
         Settle(window);
         Assert.Equal(("Sandbox: ready", false), (row.Text, Find<Control>(window, "SandboxCheckSlot").IsEffectivelyVisible));
+    });
+
+    // #3494: every state is a word and a mark (sandbox spec 8; UI spec 11.3). The never-checked card had the word and no mark.
+    [Fact]
+    public Task The_never_checked_card_has_a_state_mark_before_its_word_on_the_same_centre_line_8_px_apart() => OnUi(async () =>
+    {
+        _bed.Server.SandboxStatusAnswer = RouteAnswer.SpecShaped("sandbox-status", "never-checked");
+        await _bed.Card.Refresh(SandboxTestBed.Api, Token);
+        var window = Show(new SandboxHealthCard { DataContext = _bed.Card });
+
+        var mark = Find<StateIcon>(window, "SandboxGlyph");
+        var word = Find<TextBlock>(window, "SandboxWord");
+        var markBox = new Rect(mark.TranslatePoint(default, window) ?? default, mark.Bounds.Size);
+        var wordBox = new Rect(word.TranslatePoint(default, window) ?? default, word.Bounds.Size);
+
+        Assert.Equal(("not checked", StateGlyph.Stale, true), (word.Text, mark.Glyph, mark.IsEffectivelyVisible && markBox.Width > 0 && markBox.Height > 0));
+        Assert.Equal(8, wordBox.X - markBox.Right, 0.5);
+        Assert.Equal(markBox.Center.Y, wordBox.Center.Y, 1);
     });
 
     [Fact]
