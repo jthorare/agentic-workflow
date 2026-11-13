@@ -56,4 +56,12 @@ public sealed class MapBuildingFilesCountTests
         Assert.Equal("1 of 2 sources · started 30 min ago", page.BuildingBody);
         Assert.DoesNotContain("files", half.BuildingBody, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task Big_file_counts_group_their_digits()
+    {
+        var page = await Page("{\"filesDone\":150,\"filesTotal\":10224,\"startedAt\":\"2026-01-01T01:30:00.0000000Z\"}");
+
+        Assert.Equal("150 of 10,224 files of the current repo · started 30 min ago", page.BuildingBody);
+    }
 }
