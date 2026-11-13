@@ -35,7 +35,7 @@ internal static partial class Labels
     /// <returns>"Function names come from an older index build (7c3e1a2), so they may be out of date."</returns>
     internal static string ContextFilesNamesStale(string? commit) =>
         commit is { Length: > 0 }
-            ? string.Create(CultureInfo.InvariantCulture, $"Function names come from an older index build ({(commit.Length > 7 ? commit[..7] : commit)}), so they may be out of date.")
+            ? $"Function names come from an older index build ({(commit.Length > 7 ? commit[..7] : commit)}), so they may be out of date."
             : "Function names come from an older index build, so they may be out of date.";
 
     /// <summary>The word while a folder is read.</summary>
