@@ -18,21 +18,24 @@ internal static class CoverageWords
         }
 
         var c = view.Coverage;
-        var searched = new List<string>();
-        var empty = new List<string>();
-        var partly = new List<string>();
-        Sort(Labels.ContextMapWordIntent, view.Searched.Bands.Intent.Empty, c.Intent.Covered < c.Intent.Of, searched, empty, partly);
-        Sort(Labels.ContextMapWordProduct, view.Searched.Bands.Product.Empty, c.Product.Confirmed < c.Product.Of, searched, empty, partly);
-        Sort(Labels.ContextMapWordCode, view.Searched.Bands.Code.Empty, c.Code.Implemented < c.Code.Of, searched, empty, partly);
+        var areas = new Areas();
+        areas.Sort(Labels.ContextMapWordIntent, view.Searched.Bands.Intent.Empty, c.Intent.Covered < c.Intent.Of);
+        areas.Sort(Labels.ContextMapWordProduct, view.Searched.Bands.Product.Empty, c.Product.Confirmed < c.Product.Of);
+        areas.Sort(Labels.ContextMapWordCode, view.Searched.Bands.Code.Empty, c.Code.Implemented < c.Code.Of);
         var names = view.Bands.Code.Symbols.State;
         var stale = string.Equals(names, "stale", StringComparison.Ordinal);
         var missing = !stale && !string.Equals(names, "ok", StringComparison.Ordinal);
-        Sort(Labels.ContextMapWordNames, missing, stale, searched, [], partly);
-        return searched.Count == 4 ? string.Empty : Compose(searched, empty, partly, missing);
+        if (!missing)
+        {
+            areas.Sort(Labels.ContextMapWordNames, none: false, some: stale);
+        }
+
+        return areas.Searched.Count == 4 ? string.Empty : Compose(areas, missing);
     }
 
-    private static string Compose(List<string> searched, List<string> empty, List<string> partly, bool namesMissing)
+    private static string Compose(Areas areas, bool namesMissing)
     {
+        var (searched, empty, partly) = (areas.Searched, areas.Empty, areas.Partly);
         var parts = new List<string> { searched.Count == 0 ? Labels.ContextMapSearchedNothing : Labels.ContextMapSearchedSentence(searched) };
         if (empty.Count > 0)
         {
@@ -52,19 +55,29 @@ internal static class CoverageWords
         return string.Join(' ', parts);
     }
 
-    private static void Sort(string word, bool none, bool some, List<string> searched, List<string> noneAreas, List<string> someAreas)
+    /// <summary>The area words, sorted by how much of each area was searched.</summary>
+    private sealed class Areas
     {
-        if (none)
+        public List<string> Searched { get; } = [];
+
+        public List<string> Empty { get; } = [];
+
+        public List<string> Partly { get; } = [];
+
+        public void Sort(string word, bool none, bool some)
         {
-            noneAreas.Add(word);
-        }
-        else if (some)
-        {
-            someAreas.Add(word);
-        }
-        else
-        {
-            searched.Add(word);
+            if (none)
+            {
+                Empty.Add(word);
+            }
+            else if (some)
+            {
+                Partly.Add(word);
+            }
+            else
+            {
+                Searched.Add(word);
+            }
         }
     }
 }
