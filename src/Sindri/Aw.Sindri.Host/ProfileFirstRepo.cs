@@ -10,6 +10,6 @@ internal sealed class ProfileFirstRepo(IApprovedProfile profile) : IFirstRepo
     public async ValueTask<string?> Name(CancellationToken cancellationToken)
     {
         var latest = await profile.Latest(cancellationToken).ConfigureAwait(false);
-        return latest.IsSuccess && latest.Value is { } loaded ? loaded.Profile.Repos?.FirstOrDefault()?.Name : null;
+        return latest.IsSuccess && latest.Value is { Profile.Repos: [var first, ..] } ? first.Name : null;
     }
 }
