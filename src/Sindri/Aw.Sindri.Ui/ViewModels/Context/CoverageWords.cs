@@ -27,6 +27,12 @@ internal static class CoverageWords
         return (areas, Labels.ContextMapCoverageLead(searched, areas.Count), limited.Count == 0 ? string.Empty : Labels.ContextMapCoverageRest(limited));
     }
 
+    /// <summary>The one plain sentence under the answer: what was searched and why the rest was not.</summary>
+    /// <param name="view">The lenses answer.</param>
+    /// <param name="exact">Whether the answer came from a direct pick or an exact name.</param>
+    /// <returns>The sentence, or empty on an exact hit or when every area was searched.</returns>
+    internal static string Sentence(LensesView view, bool exact) => throw new NotSupportedException();
+
     private static CoverageArea Area(string name, bool empty, int covered, int of) =>
         Level(name, empty ? CoverageLevel.NotAvailable : covered < of ? CoverageLevel.Limited : CoverageLevel.Searched, detail: null);
 
