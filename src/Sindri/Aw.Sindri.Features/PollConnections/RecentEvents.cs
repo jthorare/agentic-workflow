@@ -32,7 +32,8 @@ internal sealed class RecentEvents
 
             _ = kept.RemoveAll(e => string.Equals(e.DeliveryKey, polled.DeliveryKey, StringComparison.Ordinal));
             kept.Add(polled);
-            kept.Sort(static (a, b) => b.OccurredAt.CompareTo(a.OccurredAt));   // newest first; the oldest is last, so the cut drops it
+            // newest first; the oldest is last, so the cut drops it. why: List.Sort is unstable, so rows with one time order by delivery id and the cut is the same every time
+            kept.Sort(static (a, b) => b.OccurredAt != a.OccurredAt ? b.OccurredAt.CompareTo(a.OccurredAt) : string.CompareOrdinal(a.DeliveryKey, b.DeliveryKey));
             if (kept.Count > PerKind)
             {
                 kept.RemoveRange(PerKind, kept.Count - PerKind);

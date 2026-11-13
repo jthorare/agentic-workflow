@@ -12,15 +12,6 @@ namespace Aw.Sindri.Infrastructure.Connections.Polling;
 /// </summary>
 internal static class GitHubEventMapper
 {
-    // why: engine owns the catalog ids (EventKind, PollableEvents); until its PR lands these are the same ids as literals
-    internal static readonly EventKind PrUpdated = new("github.pr.updated");
-    internal static readonly EventKind PrReadyForReview = new("github.pr.ready_for_review");
-    internal static readonly EventKind PrClosed = new("github.pr.closed");
-    internal static readonly EventKind PrReviewSubmitted = new("github.pr.review_submitted");
-    internal static readonly EventKind PrComment = new("github.pr.comment");
-    internal static readonly EventKind PrChecks = new("github.pr.checks");
-    internal static readonly EventKind PrConflict = new("github.pr.conflict");
-
     private static readonly string[] _prBase = ["repo", "number", "title", "author", "url", "headSha", "baseRef"];
     private static readonly string[] _issue = ["repo", "number", "title", "url", "author"];
 
@@ -28,15 +19,15 @@ internal static class GitHubEventMapper
     private static readonly FrozenDictionary<string, string[]> _fields = new Dictionary<string, string[]>(StringComparer.Ordinal)
     {
         [EventKind.GitHubPrOpened.Key] = [.. _prBase, "draft"],
-        [PrUpdated.Key] = [.. _prBase, "draft"],
-        [PrReadyForReview.Key] = [.. _prBase, "draft"],
-        [PrClosed.Key] = [.. _prBase, "draft"],
+        [EventKind.GitHubPrUpdated.Key] = [.. _prBase, "draft"],
+        [EventKind.GitHubPrReadyForReview.Key] = [.. _prBase, "draft"],
+        [EventKind.GitHubPrClosed.Key] = [.. _prBase, "draft"],
         [EventKind.GitHubPrMerged.Key] = [.. _prBase, "draft"],
         [EventKind.GitHubPrReviewRequested.Key] = [.. _prBase, "reviewer"],
-        [PrReviewSubmitted.Key] = [.. _prBase, "reviewer", "state"],
-        [PrComment.Key] = [.. _prBase, "commenter", "body", "threadId"],
-        [PrChecks.Key] = [.. _prBase, "conclusion", "failing"],
-        [PrConflict.Key] = _prBase,
+        [EventKind.GitHubPrReviewSubmitted.Key] = [.. _prBase, "reviewer", "state"],
+        [EventKind.GitHubPrComment.Key] = [.. _prBase, "commenter", "body", "threadId"],
+        [EventKind.GitHubPrChecks.Key] = [.. _prBase, "conclusion", "failing"],
+        [EventKind.GitHubPrConflict.Key] = _prBase,
         [EventKind.GitHubIssueOpened.Key] = _issue,
         [EventKind.GitHubIssueLabeled.Key] = [.. _issue, "label"],
         [EventKind.GitHubPush.Key] = ["repo", "ref", "headSha", "pusher"],
@@ -53,7 +44,7 @@ internal static class GitHubEventMapper
     /// <summary>Whether a kind comes from the open pull requests' state instead of the events feed.</summary>
     /// <param name="kind">The kind.</param>
     /// <returns>True for github.pr.checks and github.pr.conflict.</returns>
-    internal static bool FromPullState(EventKind kind) => kind == PrChecks || kind == PrConflict;
+    internal static bool FromPullState(EventKind kind) => kind == EventKind.GitHubPrChecks || kind == EventKind.GitHubPrConflict;
 
     internal static EventKind? KindOf(JsonElement item)
     {
@@ -103,32 +94,31 @@ internal static class GitHubEventMapper
     /// <summary>A github.pr.checks event: the checks on an open pull request's head finished red or green (#3201). Not in the events feed; the pull request state poll builds it.</summary>
     /// <param name="pull">The pull request as GET /repos/{r}/pulls lists it.</param>
     /// <param name="repo">'owner/name'.</param>
-    /// <param name="conclusion">'red' or 'green'.</param>
-    /// <param name="failing">The names of the failing checks (empty when green).</param>
-    /// <param name="at">When the last check finished.</param>
-    /// <returns>The event, keyed by pull request, head and conclusion.</returns>
-    internal static PolledEvent Checks(JsonElement pull, string repo, string conclusion, IReadOnlyList<string> failing, DateTimeOffset at)
+    /// <param name="outcome">How the head's check runs ended: conclusion, failing names, when the last finished and the highest run id.</param>
+    /// <returns>The event, keyed by pull request, head, conclusion and run id (a re-run that ends in the same state is a new occurrence).</returns>
+    internal static PolledEvent Checks(JsonElement pull, string repo, CheckRunOutcome outcome)
     {
-        ArgumentNullException.ThrowIfNull(failing);
-        var fields = Blank(PrChecks);
+        ArgumentNullException.ThrowIfNull(outcome);
+        var fields = Blank(EventKind.GitHubPrChecks);
         fields["repo"] = repo;
         PullFields(fields, pull, repo);
-        fields["conclusion"] = conclusion;
-        fields["failing"] = new JsonArray([.. failing.Select(static f => (JsonNode?)JsonValue.Create(f))]).ToJsonString();
-        return new PolledEvent($"github:{repo}#{fields["number"]}:checks:{fields["headSha"]}:{conclusion}", PrChecks, at, fields);
+        fields["conclusion"] = outcome.Conclusion;
+        fields["failing"] = new JsonArray([.. outcome.Failing.Select(static f => (JsonNode?)JsonValue.Create(f))]).ToJsonString();
+        return new PolledEvent($"github:{repo}#{fields["number"]}:checks:{fields["headSha"]}:{outcome.Conclusion}:{outcome.RunId.ToString(System.Globalization.CultureInfo.InvariantCulture)}", EventKind.GitHubPrChecks, outcome.At, fields);
     }
 
     /// <summary>A github.pr.conflict event: an open pull request's mergeable state turned dirty (#3201). Not in the events feed; the pull request state poll builds it.</summary>
     /// <param name="pull">The pull request detail (GET /repos/{r}/pulls/{n}).</param>
     /// <param name="repo">'owner/name'.</param>
     /// <param name="at">When the pull request last changed.</param>
-    /// <returns>The event, keyed by pull request and head.</returns>
-    internal static PolledEvent Conflict(JsonElement pull, string repo, DateTimeOffset at)
+    /// <param name="occurrence">How many times this pull request has turned dirty (1 for the first), so a second conflict is a new event.</param>
+    /// <returns>The event, keyed by pull request, head and occurrence.</returns>
+    internal static PolledEvent Conflict(JsonElement pull, string repo, DateTimeOffset at, int occurrence)
     {
-        var fields = Blank(PrConflict);
+        var fields = Blank(EventKind.GitHubPrConflict);
         fields["repo"] = repo;
         PullFields(fields, pull, repo);
-        return new PolledEvent($"github:{repo}#{fields["number"]}:conflict:{fields["headSha"]}", PrConflict, at, fields);
+        return new PolledEvent($"github:{repo}#{fields["number"]}:conflict:{fields["headSha"]}:{occurrence.ToString(System.Globalization.CultureInfo.InvariantCulture)}", EventKind.GitHubPrConflict, at, fields);
     }
 
     /// <summary>Fills the fields a trimmed feed item left empty from the pull request detail (GET /repos/{r}/pulls/{n}); a field that has a value keeps it.</summary>
@@ -161,19 +151,19 @@ internal static class GitHubEventMapper
     private static EventKind? PullRequestKind(JsonElement payload, string? action) => action switch
     {
         "opened" => EventKind.GitHubPrOpened,
-        "synchronize" => PrUpdated,
-        "ready_for_review" => PrReadyForReview,
+        "synchronize" => EventKind.GitHubPrUpdated,
+        "ready_for_review" => EventKind.GitHubPrReadyForReview,
         "review_requested" => EventKind.GitHubPrReviewRequested,
         "merged" => EventKind.GitHubPrMerged,   // the feed's shape since late 2026 (#3008)
-        "closed" => PollJson.Path(payload, "pull_request", "merged") is { ValueKind: JsonValueKind.True } ? EventKind.GitHubPrMerged : PrClosed,
+        "closed" => PollJson.Path(payload, "pull_request", "merged") is { ValueKind: JsonValueKind.True } ? EventKind.GitHubPrMerged : EventKind.GitHubPrClosed,
         _ => null,
     };
 
-    private static EventKind? ReviewKind(JsonElement payload) => ReviewState(payload) is null ? null : PrReviewSubmitted;
+    private static EventKind? ReviewKind(JsonElement payload) => ReviewState(payload) is null ? null : EventKind.GitHubPrReviewSubmitted;
 
     // A diff comment carries pull_request; a conversation comment is on a pull request only when its issue links one.
     private static EventKind? CommentKind(JsonElement payload, string? action) =>
-        Is(action, "created") && (PollJson.Member(payload, "pull_request") is not null || PollJson.Path(payload, "issue", "pull_request") is not null) ? PrComment : null;
+        Is(action, "created") && (PollJson.Member(payload, "pull_request") is not null || PollJson.Path(payload, "issue", "pull_request") is not null) ? EventKind.GitHubPrComment : null;
 
     private static EventKind? IssueKind(string? action) => action switch
     {
@@ -196,7 +186,7 @@ internal static class GitHubEventMapper
 
     // A conversation comment's subject is the issue the pull request is; every other pull request event carries pull_request.
     private static JsonElement PullOf(JsonElement payload, EventKind kind) =>
-        PollJson.Member(payload, "pull_request") ?? (kind == PrComment ? PollJson.Member(payload, "issue") : null) ?? default;
+        PollJson.Member(payload, "pull_request") ?? (kind == EventKind.GitHubPrComment ? PollJson.Member(payload, "issue") : null) ?? default;
 
     // Sets a field only when the kind holds it, so a kind never gains a key its list lacks.
     private static void Set(Dictionary<string, string> fields, string name, string? value)

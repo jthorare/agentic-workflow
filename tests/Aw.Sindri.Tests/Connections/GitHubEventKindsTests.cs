@@ -78,21 +78,21 @@ public sealed class GitHubEventKindsTests
     {
         using var pull = JsonDocument.Parse(GitHubFeedFixtures.OpenPull(Repo, 42, "abc123", At));
 
-        var polled = GitHubEventMapper.Checks(pull.RootElement, Repo, "red", ["build", "lint"], DateTimeOffset.Parse(At, System.Globalization.CultureInfo.InvariantCulture));
+        var polled = GitHubEventMapper.Checks(pull.RootElement, Repo, new CheckRunOutcome("red", ["build", "lint"], DateTimeOffset.Parse(At, System.Globalization.CultureInfo.InvariantCulture), RunId: 7001));
 
         Assert.Equal("github.pr.checks", polled.Kind.Key);
         AssertKeys("github.pr.checks", polled);
         Assert.Equal("red", polled.Fields["conclusion"]);
         Assert.Equal("[\"build\",\"lint\"]", polled.Fields["failing"]);
         Assert.Equal("abc123", polled.Fields["headSha"]);
-        Assert.Equal("github:acme/app#42:checks:abc123:red", polled.DeliveryKey);
+        Assert.Equal("github:acme/app#42:checks:abc123:red:7001", polled.DeliveryKey);
     }
 
     [Fact]
     public void A_checks_trigger_payload_types_number_and_failing_as_the_schema_says()
     {
         using var pull = JsonDocument.Parse(GitHubFeedFixtures.OpenPull(Repo, 42, "abc123", At));
-        var polled = GitHubEventMapper.Checks(pull.RootElement, Repo, "red", ["build", "lint"], DateTimeOffset.Parse(At, System.Globalization.CultureInfo.InvariantCulture));
+        var polled = GitHubEventMapper.Checks(pull.RootElement, Repo, new CheckRunOutcome("red", ["build", "lint"], DateTimeOffset.Parse(At, System.Globalization.CultureInfo.InvariantCulture), RunId: 7001));
 
         var payload = JsonNode.Parse(TriggerMatch.Trigger(_connection, polled))!.AsObject();
 
@@ -122,11 +122,11 @@ public sealed class GitHubEventKindsTests
     {
         using var pull = JsonDocument.Parse(GitHubFeedFixtures.OpenPull(Repo, 42, "abc123", At, mergeableState: "dirty"));
 
-        var polled = GitHubEventMapper.Conflict(pull.RootElement, Repo, DateTimeOffset.Parse(At, System.Globalization.CultureInfo.InvariantCulture));
+        var polled = GitHubEventMapper.Conflict(pull.RootElement, Repo, DateTimeOffset.Parse(At, System.Globalization.CultureInfo.InvariantCulture), occurrence: 1);
 
         Assert.Equal("github.pr.conflict", polled.Kind.Key);
         AssertKeys("github.pr.conflict", polled);
-        Assert.Equal("github:acme/app#42:conflict:abc123", polled.DeliveryKey);
+        Assert.Equal("github:acme/app#42:conflict:abc123:1", polled.DeliveryKey);
     }
 
     [Fact]

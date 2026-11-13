@@ -10,11 +10,16 @@ namespace Aw.Sindri.Infrastructure.Connections.Polling;
 
 /// <summary>
 /// The GitHub kinds the events feed doesn't carry (#3201, #2988): github.pr.checks and github.pr.conflict, from the open pull requests' state.
-/// One poll reads GET /repos/{r}/pulls (open, most recently updated first) and, for each of the first <see cref="MaxPulls"/>, the head's check runs
-/// (checks) or the pull request detail's mergeable state (conflict). The cursor is the state per pull request ({"42":"abc123:red"}), so it is saved
-/// with the cursor only after the runs started, and a restart compares against the same state. A null cursor is a baseline: it stores the state and
-/// fires nothing. A state that changed fires once: checks that finished red or green, a mergeable state that turned dirty. A state GitHub has not
-/// worked out yet (checks still running, mergeable state 'unknown') fires nothing; for conflict it keeps the state stored before.
+/// One poll reads GET /repos/{r}/pulls (open, most recently updated first, one page of 100) and, for each of the first <see cref="MaxPulls"/>, the head's
+/// check runs (checks) or the pull request detail's mergeable state (conflict). Check runs are not paged: only the first 100 runs of a head are read, and
+/// legacy commit statuses (Jenkins and the like) are not read at all. One failed read fails the whole poll with the cursor unchanged.
+/// The cursor is a JSON object: one entry per open pull request ({"42":"abc123:red"} for checks, {"42":"dirty:1"} for conflict, where 1 counts the times
+/// it turned dirty) and "@at", the time of the poll that wrote it. A pull request past the cap keeps its entry from the poll before, and one that closed
+/// drops out, so the cursor stays bounded. It is saved only after the runs started, so a restart compares against the same state.
+/// A null cursor is a baseline: it stores the state and fires nothing. A state that changed fires once, only for a pull request that had an entry
+/// before, or one created after "@at" (a cursor without "@at" is a baseline for every pull request not seen before). Checks that finished red or green
+/// fire, and so does a mergeable state that turned dirty; a push that leaves a pull request dirty does not fire again. A state GitHub has not worked out
+/// yet (checks still running, mergeable state 'unknown') fires nothing; for conflict it keeps the state stored before.
 /// </summary>
 /// <param name="client">Sends the requests with the connection's token, to api.github.com only.</param>
 internal sealed class GitHubPullStates(PollerClient client)
@@ -49,6 +54,11 @@ internal sealed class GitHubPullStates(PollerClient client)
 
     private async ValueTask<Result<PollResult>> WalkAll(Walk walk, EventKind kind, JsonElement pulls, string? cursor, CancellationToken cancellationToken)
     {
+        foreach (var pull in pulls.EnumerateArray().Skip(MaxPulls))
+        {
+            walk.Carry(pull);   // why: a pull request past the cap keeps its entry, or it would fire as new when it ranks back in
+        }
+
         foreach (var pull in pulls.EnumerateArray().Take(MaxPulls))
         {
             var step = await Observe(walk, kind, pull, cancellationToken).ConfigureAwait(false);
@@ -65,7 +75,7 @@ internal sealed class GitHubPullStates(PollerClient client)
     }
 
     private ValueTask<Result<Step>> Observe(Walk walk, EventKind kind, JsonElement pull, CancellationToken cancellationToken) =>
-        kind == GitHubEventMapper.PrChecks ? Checks(walk, pull, cancellationToken) : Conflict(walk, pull, cancellationToken);
+        kind == EventKind.GitHubPrChecks ? Checks(walk, pull, cancellationToken) : Conflict(walk, pull, cancellationToken);
 
     // The head's check runs: any still running is pending; else any red conclusion is red; else green. No check runs at all is pending.
     private async ValueTask<Result<Step>> Checks(Walk walk, JsonElement pull, CancellationToken cancellationToken)
@@ -91,7 +101,8 @@ internal sealed class GitHubPullStates(PollerClient client)
 
         var failing = runs.Where(IsRed).Select(static r => PollJson.Text(PollJson.Member(r, "name")) ?? string.Empty).ToList();
         var at = runs.Max(static r => PollJson.Time(PollJson.Text(PollJson.Member(r, "completed_at")))) ?? UpdatedAt(walk, pull);   // the last check that finished
-        return new Step(head + ":" + conclusion, GitHubEventMapper.Checks(pull, walk.Repo, conclusion, failing, at), Limited: null);
+        var runId = runs.Max(static r => long.TryParse(PollJson.Text(PollJson.Member(r, "id")), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var id) ? id : 0);   // in the delivery id: a re-run gets a new run id, so one that ends the same is a new event
+        return new Step(head + ":" + conclusion, GitHubEventMapper.Checks(pull, walk.Repo, new CheckRunOutcome(conclusion, failing, at, runId)), Limited: null);
     }
 
     // The detail's mergeable state: 'dirty' is a conflict, 'unknown' (or none) is not worked out yet, anything else is clean.
@@ -111,13 +122,35 @@ internal sealed class GitHubPullStates(PollerClient client)
 
         var detail = read.Value.Body;
         var state = PollJson.Text(PollJson.Member(detail, "mergeable_state"));
-        var head = PollJson.Text(PollJson.Path(detail, "head", "sha")) ?? string.Empty;
-        return state switch
+        if (state is null || string.Equals(state, "unknown", StringComparison.Ordinal))
         {
-            null or "unknown" => new Step(State: null, Event: null, Limited: null),
-            "dirty" => new Step(head + ":dirty", GitHubEventMapper.Conflict(detail, walk.Repo, UpdatedAt(walk, detail)), Limited: null),
-            _ => new Step(head + ":clean", Event: null, Limited: null),
-        };
+            return new Step(State: null, Event: null, Limited: null);
+        }
+
+        // why: the state does not hold the head, so a push that leaves the pull request dirty fires nothing; the count makes the next dirty spell a new event
+        var (was, count) = ConflictState(walk.Before(number));
+        if (!string.Equals(state, "dirty", StringComparison.Ordinal))
+        {
+            return new Step("clean:" + Count(count), Event: null, Limited: null);
+        }
+
+        var spell = string.Equals(was, "dirty", StringComparison.Ordinal) ? count : count + 1;
+        var turned = spell == count ? null : GitHubEventMapper.Conflict(detail, walk.Repo, UpdatedAt(walk, detail), spell);
+        return new Step("dirty:" + Count(spell), turned, Limited: null);
+    }
+
+    private static string Count(int count) => count.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    // The stored conflict state: 'dirty:2' / 'clean:2' (2 = times it turned dirty); an older cursor's 'sha:dirty' reads as dirty with 0.
+    private static (string State, int Count) ConflictState(string? stored)
+    {
+        if (stored is null)
+        {
+            return (string.Empty, 0);
+        }
+
+        var parts = stored.Split(':');
+        return parts is ["dirty" or "clean", var n] && int.TryParse(n, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var count) ? (parts[0], count) : (parts[^1], 0);
     }
 
     private static string Conclusion(List<JsonElement> runs)
@@ -193,7 +226,10 @@ internal sealed class GitHubPullStates(PollerClient client)
     // One poll's walk over the open pull requests: the state before, the state now, and the events that fire.
     private sealed class Walk(Dictionary<string, string>? previous, Connection connection, string root, string repo, DateTimeOffset now)
     {
+        private const string AtKey = "@at";   // why: not a pull request number, so it can't clash with an entry
+
         private readonly Dictionary<string, string> _next = new(StringComparer.Ordinal);
+        private readonly DateTimeOffset? _since = PollJson.Time(previous?.GetValueOrDefault(AtKey));
 
         internal Connection Connection { get; } = connection;
 
@@ -205,6 +241,17 @@ internal sealed class GitHubPullStates(PollerClient client)
 
         internal List<PolledEvent> Events { get; } = [];
 
+        internal string? Before(string number) => previous?.GetValueOrDefault(number);
+
+        // A pull request the walk does not reach keeps what the last poll stored for it.
+        internal void Carry(JsonElement pull)
+        {
+            if (PollJson.Text(PollJson.Member(pull, "number")) is { } number && Before(number) is { } kept)
+            {
+                _next[number] = kept;
+            }
+        }
+
         // why: a state not worked out yet keeps the one stored before, so 'clean -> unknown -> dirty' still fires
         internal void Take(JsonElement pull, Step step)
         {
@@ -214,19 +261,33 @@ internal sealed class GitHubPullStates(PollerClient client)
                 return;
             }
 
-            var before = previous?.GetValueOrDefault(number);
+            var before = Before(number);
             var state = step.State ?? before;
             if (state is not null)
             {
                 _next[number] = state;
             }
 
-            if (previous is not null && step.Event is not null && !string.Equals(state, before, StringComparison.Ordinal))
+            // why: no entry before is a baseline (it ranked past the cap, or the first poll), unless the pull request was opened after the last poll
+            if (previous is not null && step.Event is not null && !string.Equals(state, before, StringComparison.Ordinal) && (before is not null || IsNew(pull)))
             {
                 Events.Add(step.Event);
             }
         }
 
-        internal string Cursor() => new JsonObject([.. _next.Select(static p => KeyValuePair.Create(p.Key, (JsonNode?)JsonValue.Create(p.Value)))]).ToJsonString();
+        internal string Cursor()
+        {
+            var cursor = new JsonObject();
+            foreach (var (key, value) in _next)
+            {
+                cursor[key] = value;
+            }
+
+            cursor[AtKey] = Now.ToString("O", System.Globalization.CultureInfo.InvariantCulture);
+            return cursor.ToJsonString();
+        }
+
+        private bool IsNew(JsonElement pull) =>
+            _since is { } since && PollJson.Time(PollJson.Text(PollJson.Member(pull, "created_at"))) is { } created && created > since;
     }
 }
