@@ -29,6 +29,20 @@ public abstract class SessionHostContract
         Expect.Equal(new HostRef(host.Kind, "snd-one"), started.Value);
     }
 
+    /// <summary>A session with a window size and remain-on-exit starts like any other and answers the same reference.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_session_with_a_size_and_remain_on_exit_starts()
+    {
+        var host = Create();
+        var sized = Session("sindri-sized001") with { Size = new HostSize(120, 40), RemainOnExit = true, CleanEnvironment = true };
+
+        var started = await host.Start(sized, TimeSpan.FromSeconds(4), CancellationToken.None);
+
+        Expect.True(started.IsSuccess);
+        Expect.Equal(new HostRef(host.Kind, "sindri-sized001"), started.Value);
+    }
+
     /// <summary>A name that is live is not started twice.</summary>
     /// <returns>The test.</returns>
     [Fact]
@@ -54,8 +68,10 @@ public abstract class SessionHostContract
         var second = await host.Stop(started.Value, CancellationToken.None);
         var never = await host.Stop(new HostRef(host.Kind, "snd-never"), CancellationToken.None);
 
-        Expect.True(first.IsSuccess && second.IsSuccess && never.IsSuccess);
+        Expect.True(first.IsSuccess && second.IsSuccess && never.IsSuccess, $"every Stop to succeed; first: {Said(first)}, second: {Said(second)}, never: {Said(never)}");
     }
+
+    private static string Said(Result<Unit> stopped) => stopped.IsSuccess ? "ok" : stopped.Error.Message;
 
     /// <summary>A stopped name can be started again.</summary>
     /// <returns>The test.</returns>

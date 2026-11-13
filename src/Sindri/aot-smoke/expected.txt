@@ -77,7 +77,7 @@ removed: edits apply on save (nothing to approve; `sindri profile set`, `repo ad
 {"running":true,"apiVersion":1}
 ## /sindri/mcp initialize, then tools/list (stateless)
 "sindri"
-["context_query","context_sources","context_lenses","context_concepts","context_pages","context_node","context_neighbors","sindri_status","sindri_queue","sindri_item","sindri_item_timeline","sindri_pending_decisions","sindri_job","sindri_projects","sindri_request","sindri_handoff","sindri_todos","sindri_todo","connection_list","connection_get","connection_add","connection_signin","connection_test","connection_remove","memory_list","memory_create","memory_search","memory_write","memory_forget","workflow_list","workflow_get","workflow_runs","workflow_run_get","workflow_create","workflow_apply_ops","workflow_replace","workflow_validate","workflow_activate","workflow_pause","workflow_delete","workflow_run","workflow_cancel","workflow_docs","workflow_blocks","workflow_answer","resources_list","resources_purge","toolkit_list","toolkit_create","toolkit_build","toolkit_start","toolkit_stop","toolkit_pause","toolkit_resume","toolkit_calls"]
+["context_query","context_sources","context_lenses","context_concepts","context_pages","context_node","context_neighbors","sindri_status","sindri_queue","sindri_item","sindri_item_timeline","sindri_pending_decisions","sindri_job","sindri_projects","sindri_request","sindri_handoff","sindri_todos","sindri_todo","connection_list","connection_get","connection_add","connection_signin","connection_test","connection_remove","memory_list","memory_create","memory_search","memory_write","memory_forget","workflow_list","workflow_get","workflow_runs","workflow_run_get","workflow_create","workflow_apply_ops","workflow_replace","workflow_validate","workflow_activate","workflow_pause","workflow_delete","workflow_run","workflow_cancel","workflow_docs","workflow_blocks","workflow_answer","resources_list","resources_purge","agents_start","agents_worktree_remove","toolkit_list","toolkit_create","toolkit_build","toolkit_start","toolkit_stop","toolkit_pause","toolkit_resume","toolkit_calls"]
 ## /sindri/mcp sindri_queue, sindri_request (files as session:mcp), sindri_item (not an id), sindri_decide (no such tool)
 {"isError":null,"groups":["waitingOnYou","withYou","running","queued"]}
 {"isError":null,"request":"REQ-ID"}
@@ -175,6 +175,7 @@ result: {"idle":false,"summary":null}
 ## sindri jobs --state succeeded
 JOB-ID  succeeded  RunService  heartbeat  TIME  1 line  ok: worked
 JOB-ID  succeeded  RunService  heartbeat  TIME  1 line  ok: worked
+JOB-ID  succeeded  RelinkPinAliases  relink  TIME  1 line  0 of 0 records relinked to pin aliases
 JOB-ID  succeeded  RefreshContextMap  refresh  TIME  4 lines  map v1: 0 kept, 0 removed
 JOB-ID  succeeded  BuildCodeIndex  index:smoke  TIME  2 lines  smoke @ 7039bb4: 0 files, 0 symbols
 ## sindri services pause heartbeat (human, terminal)

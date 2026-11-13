@@ -38,7 +38,7 @@ internal static class ProblemWords
 
         if (building is { FilesDone: { } filesDone, FilesTotal: { } filesTotal })
         {
-            parts.Add(string.Create(CultureInfo.InvariantCulture, $"{filesDone} of {filesTotal} files read"));
+            parts.Add(string.Create(CultureInfo.InvariantCulture, $"{filesDone} of {filesTotal} files of the current repo read"));
         }
 
         if (building.LastSyncAt is { } synced)

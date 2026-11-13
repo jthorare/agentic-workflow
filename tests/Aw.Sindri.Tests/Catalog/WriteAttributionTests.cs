@@ -27,6 +27,8 @@ public sealed class WriteAttributionTests
     private static readonly Dictionary<string, string> _notSwept = new(StringComparer.Ordinal)
     {
         ["POST /sindri/stop"] = "stops the host, so the ledger can't be read after it; its actor is covered by the stop tests",
+        ["POST /sindri/sessions"] = "the person's only (agents spec A7, #3380): a launched session gets SND-AUTH-002 and appends nothing; StartSessionTests covers the person's agent.op",
+        ["DELETE /sindri/sessions/{actId}/worktree"] = "the person's only (agents spec A7, #3380): a launched session gets SND-AUTH-002 and appends nothing; RemoveSessionWorktreeTests covers the person's agent.op",
         ["POST /sindri/linear/connection"] = "a connection setting outside PR 2's list (LinearConnectionRules): the owner's",
         ["DELETE /sindri/linear/connection/write"] = "a connection setting outside PR 2's list (LinearConnectionRules): the owner's",
         ["POST /sindri/views/rebuild"] = "replays the ledger into views.db: it appends no event",

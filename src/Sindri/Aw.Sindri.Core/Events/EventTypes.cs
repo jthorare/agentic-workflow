@@ -170,6 +170,9 @@ public static partial class EventTypes
     /// <summary>A waiting job's signal came (setup-once spec §5.6).</summary>
     public const string JobResumed = "job.resumed";
 
+    /// <summary>An Agents-page op claimed its act id; a one-off start records its stored answer and worktree here (agents spec §5, §15.8).</summary>
+    public const string AgentOp = "agent.op";
+
     /// <summary>A human paused a background service (API P6).</summary>
     public const string ServicePaused = "service.paused";
 

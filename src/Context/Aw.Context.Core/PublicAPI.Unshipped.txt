@@ -12500,5 +12500,6 @@ override Aw.Context.Core.Extract.MapBuildFiles.Equals(object? obj) -> bool
 override Aw.Context.Core.Extract.MapBuildFiles.GetHashCode() -> int
 override Aw.Context.Core.Extract.MapBuildFiles.ToString() -> string!
 static Aw.Context.Core.Extract.MapBuildFiles.From(string! line) -> Aw.Context.Core.Extract.MapBuildFiles?
+static Aw.Context.Core.Extract.MapBuildFiles.Newest(System.Collections.Generic.IEnumerable<string!>! lines) -> Aw.Context.Core.Extract.MapBuildFiles?
 static Aw.Context.Core.Extract.MapBuildFiles.operator !=(Aw.Context.Core.Extract.MapBuildFiles? left, Aw.Context.Core.Extract.MapBuildFiles? right) -> bool
 static Aw.Context.Core.Extract.MapBuildFiles.operator ==(Aw.Context.Core.Extract.MapBuildFiles? left, Aw.Context.Core.Extract.MapBuildFiles? right) -> bool

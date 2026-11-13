@@ -126,9 +126,11 @@ public sealed class ApiGoldenTests
 
     // why: the profile and settings writes stay the owner's until the settings PR (#2374) removes that refusal, and the Linear hub's connection
     // writes are a connection setting outside PR 2's list (LinearConnectionRules); both are named in PR 2's body as follow-ups
+    // why: sessions-start and sessions-worktree are the person's by the agents spec (A7, #3380): a session gets SND-AUTH-002 before validation, so its answer can't match the human's refusal goldens
     private static bool IsStillOwnerOnly(string slug) =>
         slug.StartsWith("profile", StringComparison.Ordinal) || slug.StartsWith("linear-connect", StringComparison.Ordinal) || slug.StartsWith("linear-disconnect", StringComparison.Ordinal)
-        || string.Equals(slug, "workflows-slug-activate", StringComparison.Ordinal) || string.Equals(slug, "workflows-slug-pause", StringComparison.Ordinal);   // a session is refused (#3199)
+        || string.Equals(slug, "workflows-slug-activate", StringComparison.Ordinal) || string.Equals(slug, "workflows-slug-pause", StringComparison.Ordinal)   // a session is refused (#3199)
+        || string.Equals(slug, "sessions-start", StringComparison.Ordinal) || string.Equals(slug, "sessions-worktree", StringComparison.Ordinal);
 
     private static string HumanGolden((string Slug, string Scenario) row) =>
         File.ReadAllText(Golden.SourcePath(typeof(ApiGoldenTests).Assembly, ApiGolden.PathOf(row.Slug, row.Scenario)));
