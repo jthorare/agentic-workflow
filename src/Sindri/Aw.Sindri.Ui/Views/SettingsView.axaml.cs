@@ -1,5 +1,6 @@
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Settings;
@@ -76,13 +77,13 @@ internal sealed partial class SettingsView : UserControl
     private void OnResetMotion(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         _settings?.ResetReduceMotion();
-        _ = ReduceMotionSwitch.Focus();
+        _ = ReduceMotionSwitch.Focus(NavigationMethod.Tab);   // keyboard focus, so :focus-visible draws the ring
     }
 
     private void OnResetTextSize(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         _settings?.ResetTextScale();
-        _ = TextScaleSlider.Focus();
+        _ = TextScaleSlider.Focus(NavigationMethod.Tab);
     }
 
     // "This app" sits above the checklist once setup is finished (or when the page has none), and below the other sections before that.
@@ -110,7 +111,7 @@ internal sealed partial class SettingsView : UserControl
 
         if (wasInside)
         {
-            Dispatcher.UIThread.Post(() => focused?.Focus(), DispatcherPriority.Loaded);
+            Dispatcher.UIThread.Post(() => focused?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
         }
     }
 

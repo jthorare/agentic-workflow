@@ -294,7 +294,9 @@ public sealed class SettingsFilterFramesTests : FrameHost
 
         Assert.Equal(1.0, settings.TextScale);
         Assert.False(Visible(window, "TextSizeReset"));
-        Assert.True(Named<Slider>(window, "TextScaleSlider").IsFocused, "focus did not go to the Text size slider");
+        var slider = Named<Slider>(window, "TextScaleSlider");
+        Assert.True(slider.IsFocused, "focus did not go to the Text size slider");
+        Assert.Contains(":focus-visible", slider.Classes, StringComparer.Ordinal);
         Assert.Equal(1.0, (await prefs.Load(Token)).TextScale);
     });
 
@@ -312,7 +314,9 @@ public sealed class SettingsFilterFramesTests : FrameHost
 
         Assert.False(settings.ReduceMotion);
         Assert.False(Visible(window, "ReduceMotionReset"));
-        Assert.True(Named<ToggleSwitch>(window, "ReduceMotionSwitch").IsFocused, "focus did not go to the Reduce motion switch");
+        var toggle = Named<ToggleSwitch>(window, "ReduceMotionSwitch");
+        Assert.True(toggle.IsFocused, "focus did not go to the Reduce motion switch");
+        Assert.Contains(":focus-visible", toggle.Classes, StringComparer.Ordinal);
         Assert.False((await prefs.Load(Token)).ReduceMotion);
     });
 
