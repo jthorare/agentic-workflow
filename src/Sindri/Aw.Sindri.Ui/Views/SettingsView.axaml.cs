@@ -30,7 +30,6 @@ internal sealed partial class SettingsView : UserControl
         _settings?.PropertyChanged += OnSettingsChanged;
         _setup = _settings?.Setup;
         _setup?.RevealRequested += OnRevealRequested;
-        _filterWasEmpty = true;
         if (Content is StackPanel page)
         {
             ReplaceChecklist(page);
@@ -59,13 +58,7 @@ internal sealed partial class SettingsView : UserControl
     {
         if (_settings is not null && string.Equals(e.PropertyName, nameof(SettingsViewModel.Filter), StringComparison.Ordinal))
         {
-            var empty = _settings.Filter.Trim().Length == 0;
-            if (_filterWasEmpty && !empty)
-            {
-                CollectShownText(_settings);   // before the Shows* changes are read: the filter matches the words on the page
-            }
-
-            _filterWasEmpty = empty;
+            CollectShownText(_settings);   // before the Shows* changes are read: the filter matches the words on the page, read again on every change (#3476)
         }
 
         if (_checklist is not null && _settings is not null && string.Equals(e.PropertyName, nameof(SettingsViewModel.ShowsSetup), StringComparison.Ordinal))
@@ -120,10 +113,6 @@ internal sealed partial class SettingsView : UserControl
             settings.SetShownText(section, string.Join(' ', section == SettingsSection.Setup ? words.Concat(StepWords(settings)) : words));
         }
     }
-
-    // The words are read again each time the box goes from empty to text, and kept while it has text: rows inside a section raise changes on themselves, not on
-    // the section's view model, so no change watcher would see them all (#3453).
-    private bool _filterWasEmpty = true;
 
     // A collapsed step's content may not be in the visual tree, so the steps' own words are read from the view model too.
     private static IEnumerable<string> StepWords(SettingsViewModel settings) =>

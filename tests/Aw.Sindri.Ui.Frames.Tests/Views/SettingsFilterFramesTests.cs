@@ -215,7 +215,7 @@ public sealed class SettingsFilterFramesTests : FrameHost
     });
 
     [Fact]
-    public Task A_filter_after_a_library_row_changed_sees_the_new_words() => OnUi(async () =>
+    public Task A_row_changed_while_the_box_has_text_is_seen_by_the_next_letter() => OnUi(async () =>
     {
         var (window, shell) = await Connected();
         var url = new Uri("http://127.0.0.1:7410/");
@@ -225,14 +225,14 @@ public sealed class SettingsFilterFramesTests : FrameHost
         window.SettingsSlot.Content = new SettingsView { DataContext = settings };
         shell.GoTo(PageId.Settings);
         Settle(window);
-        settings.Filter = "zzzz";   // empty -> text: the words are read
-        settings.Filter = string.Empty;
+        settings.Filter = "p";   // the box has text before the row changes
 
         Server.LibraryAnswer = new RouteAnswer(HttpStatusCode.OK, GoldenFiles.Api("library", "ok").Replace("\"unreadable\": null", "\"unreadable\": \"permission denied\"", StringComparison.Ordinal));
         await card.Refresh(url, Token);
         Settle(window);
-        settings.Filter = "permission";
+        settings.Filter = "pe";   // one more letter: the words are read again
 
+        settings.Filter = "permission";
         Assert.True(settings.ShowsLibrary, "the filter used the words read before the row became unreadable");
     });
 }
