@@ -1,9 +1,10 @@
 using System.Globalization;
+using Aw.Kernel;
 
 namespace Aw.Sindri.Core.Setup;
 
 /// <summary>
-/// The pure decision of each setup step (GET /sindri/setup): one function per step from the fact its source gave, and <see cref="Unreadable"/> for a source that couldn't be read.
+/// The pure decision of each setup step (GET /sindri/setup): one function per step from the fact its source gave, and <see cref="Unreadable(SetupStepId, Error)"/> for a source that couldn't be read.
 /// Titles, reasons and details are plain words; an error code appears only in <see cref="SetupError.Code"/>.
 /// </summary>
 public static class SetupSteps
@@ -197,6 +198,25 @@ public static class SetupSteps
         };
         return Failed(id, title, new SetupError(code, sentence));
     }
+
+    /// <summary>
+    /// The step for a source whose read failed with <paramref name="error"/> (#3437): like <see cref="Unreadable(SetupStepId, string)"/>, and a profile
+    /// the source names as invalid (SND-PROFILE-002) puts its message, written for the owner, on the detail line: the key to fix, or "check its permissions".
+    /// Any other error's message stays off the page.
+    /// </summary>
+    /// <param name="id">Which step.</param>
+    /// <param name="error">The error the read returned.</param>
+    /// <returns>The step.</returns>
+    public static SetupStep Unreadable(SetupStepId id, Error error)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        var step = Unreadable(id, error.Code);
+        return string.Equals(error.Code, SindriErrors.ProfileInvalid.Code, StringComparison.Ordinal) && !string.IsNullOrWhiteSpace(error.Message)
+            ? step with { Detail = Ended(error.Message.Trim()) }
+            : step;
+    }
+
+    private static string Ended(string line) => line.EndsWith('.') ? line : line + ".";
 
     private static SetupStep Failed(SetupStepId id, string title, SetupError error) =>
         new(id, title, SetupState.Failed, error.Sentence, Detail: null, error, Action: null, Progress: null);
