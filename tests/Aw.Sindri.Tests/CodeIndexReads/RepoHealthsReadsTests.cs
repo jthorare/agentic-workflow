@@ -57,6 +57,18 @@ public sealed class RepoHealthsReadsTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_repo_added_3_h_into_serve_and_queued_on_its_first_read_counts_from_that_read_3502()
+    {
+        var healths = new RepoHealths(new FakeRepoHeads().With(_repo, _old, onDefaultBranch: true), new InMemoryJobViews(), new MovingClock(_now.AddHours(3)), new QueuedClock(_now));
+        var missing = new RepoStatus(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null);
+        var scope = new CodeIndexScope([new CodeIndexRepo(_repo, "/work/demo", CodeIndexSettings.Default)], new CodeIndexCaller(CallerKind.Service, Repo: null));
+
+        var first = Assert.Single(await healths.Of(scope, [missing], Token));
+
+        Assert.Equal(("queued", TimeSpan.Zero, false), (first.State, first.QueuedFor, first.NeedsLook));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_repo_queued_past_30_min_needs_a_look_and_one_under_does_not()
     {
         var now = new MovingClock(_now);

@@ -41,13 +41,23 @@ public sealed class QueuedClockTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_repo_queued_on_its_first_read_counts_from_serve_start() =>
-        Assert.Equal(TimeSpan.FromMinutes(31), new QueuedClock(_t0).For("demo", queued: true, _t0.AddMinutes(31)));
+    public void A_repo_there_at_serve_start_and_queued_on_its_first_read_counts_from_serve_start()
+    {
+        var clock = new QueuedClock(_t0);
+        clock.Seed(["demo"]);
+
+        Assert.Equal(TimeSpan.FromMinutes(31), clock.For("demo", queued: true, _t0.AddMinutes(31)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_repo_added_after_serve_start_counts_from_its_first_queued_read() =>
+        Assert.Equal(TimeSpan.Zero, new QueuedClock(_t0).For("added", queued: true, _t0.AddHours(3)));
 
     [Fact, Trait("Lane", "unit")]
     public void A_repo_that_goes_queued_after_its_first_read_counts_from_that_read()
     {
         var clock = new QueuedClock(_t0);
+        clock.Seed(["demo"]);
         _ = clock.For("demo", queued: false, _t0.AddMinutes(5));
 
         Assert.Equal(TimeSpan.Zero, clock.For("demo", queued: true, _t0.AddMinutes(10)));

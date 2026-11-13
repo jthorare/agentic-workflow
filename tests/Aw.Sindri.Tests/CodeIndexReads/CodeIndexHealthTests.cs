@@ -82,7 +82,9 @@ public sealed class CodeIndexHealthTests
         var index = new FakeCodeIndex().WithIndex(other, _old);
         var heads = new FakeRepoHeads().With(demo, _old, onDefaultBranch: true).With(other, _old, onDefaultBranch: true);
         var now = new DateTimeOffset(2026, 11, 13, 12, 0, 0, TimeSpan.Zero);
-        var health = new CodeIndexHealth(index, new RepoHealths(heads, new InMemoryJobViews(), new FixedClock(now), new QueuedClock(now.AddMinutes(-30))), new InMemoryProfiles());
+        var clock = new QueuedClock(now.AddMinutes(-30));
+        clock.Seed(["demo", "other"]);
+        var health = new CodeIndexHealth(index, new RepoHealths(heads, new InMemoryJobViews(), new FixedClock(now), clock), new InMemoryProfiles());
 
         var problems = await health.Problems(Approved(), Token);
 
