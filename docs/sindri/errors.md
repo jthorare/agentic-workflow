@@ -209,3 +209,4 @@ Words from the first-run spec (`docs/superpowers/specs/2026-11-12-sindri-first-r
 | `SND-GRAPH-130` | No question waits at that node |
 | `SND-GRAPH-131` | A reference reads a node that failed and continued |
 | `SND-GRAPH-132` | The setup service ran a workflow other than the hello-sindri one it made, or ran it a second time |
+| `SND-GRAPH-133` | A prompt step's answer said `couldNotAnswer: true`; the message carries the model's `couldNotAnswerWhy` |

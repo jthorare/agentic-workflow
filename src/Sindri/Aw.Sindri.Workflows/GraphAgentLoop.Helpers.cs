@@ -45,10 +45,12 @@ internal sealed partial class GraphAgentLoop
     };
 
     // why: the agent's failure output goes through Fit like a succeeded one, so one over 64 KB stays parseable JSON with 'Truncated' set (#3419)
-    private static GraphBlockOutcome Failed(string? input, string error, string? output = null)
+    // The input is fitted too (#3486): it is the interpolated config, and a big prompt must not reach the store as cut, unparseable text.
+    private static GraphBlockOutcome Failed(string? input, string error, string? output = null, bool inputCut = false)
     {
         var fitted = StoredJson.Fit(output);
-        return new(NodeRunStatus.Failed, input, fitted.Text, [], error, Truncated: fitted.Cut);
+        var fitInput = StoredJson.Fit(input);
+        return new(NodeRunStatus.Failed, fitInput.Text, fitted.Text, [], error, Truncated: fitted.Cut || fitInput.Cut || inputCut);
     }
 
     // What a failed node keeps of the agent's work: the last refused report and the declared output files it wrote. Null when both are empty, so a node that left nothing keeps no output.

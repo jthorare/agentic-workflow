@@ -55,19 +55,13 @@ internal sealed class GraphNodeScope(WorkflowRun run, GraphSpec spec, IReadOnlyL
             return (null, RowAt(node, index, NodeRunStatus.Failed) is null ? null : node);
         }
 
-        if (found.Truncated)
+        if (found.Truncated)   // why: Fit's cut sets 'Truncated' on the row; the output's shape is never read, so a real output shaped like the cut envelope is a value (#3486)
         {
             Cut ??= node;
             return (null, null);
         }
 
         var output = found.Output is null ? null : JsonNode.Parse(found.Output);
-        if (StoredJson.IsCut(output))
-        {
-            Cut ??= node;   // why: Fit stores an output over 64 KB as a small object, so the store never sets 'Truncated' on it (#3419)
-            return (null, null);
-        }
-
         if (StoredJson.IsBlocked(output))
         {
             Blocked ??= node;

@@ -25,6 +25,7 @@ internal sealed class SandboxCardViewModel : ObservableObject
         Check = new SandboxCheckViewModel(api, clock, apiUrl, clipboard);
         RowText = Labels.SandboxRowNeverChecked;
         StateWord = StateWordOf(SandboxHealthState.NeverChecked, waiting: false);
+        Glyph = StateGlyph.Stale;   // the ⌛ mark: no check has run yet (UI spec 11.3 names stale ⌛; every state is a word and a mark)
     }
 
     /// <summary>The card's heading.</summary>
@@ -104,7 +105,7 @@ internal sealed class SandboxCardViewModel : ObservableObject
         }
         else if (status.CheckedAt is null)
         {
-            Show(SandboxHealthState.NeverChecked, Labels.SandboxRowNeverChecked, StateGlyph.None);
+            Show(SandboxHealthState.NeverChecked, Labels.SandboxRowNeverChecked, StateGlyph.Stale);
         }
         else
         {
