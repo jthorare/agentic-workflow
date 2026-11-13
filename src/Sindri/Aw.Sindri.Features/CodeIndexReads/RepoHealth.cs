@@ -12,7 +12,7 @@ namespace Aw.Sindri.Features.CodeIndexReads;
 /// layer's progress as a percent. Counts and words only.
 /// </summary>
 /// <param name="Repo">The repo.</param>
-/// <param name="State">missing, damaged, ok, stale (the head moved past the index), building (a build job runs), waiting (a failed build holds the next one) or queued (no index yet and the head is on the default branch, so code-index-main-move starts the first build on its next tick; #3342). Off the default branch a repo with no index stays missing: no build is coming (#3181).</param>
+/// <param name="State">missing, damaged, ok, stale (the head moved past the index), building (a build job runs), waiting (a failed build holds the next one) or queued (no index yet, the head is on the default branch and code-index-main-move is not paused, so it starts the first build on its next tick; #3342, #3399). Off the default branch a repo with no index stays missing: no build is coming (#3181).</param>
 /// <param name="EmbeddingsPercent">The share of embeddable symbols that have a vector, or null when the layer states no count.</param>
 /// <param name="Waiting">'retrying in N min' while the state is waiting, else null.</param>
 public sealed record RepoHealth(string Repo, string State, int? EmbeddingsPercent, string? Waiting)
@@ -51,6 +51,11 @@ public sealed record RepoHealth(string Repo, string State, int? EmbeddingsPercen
         var (state, waiting) = Overlay(status, live, running, ended, now);
         return new RepoHealth(status.Repo.Value, state, percent, waiting);
     }
+
+    /// <summary>The health with 'queued' read again against code-index-main-move: a paused service starts no first build, so the repo is missing (#3399).</summary>
+    /// <param name="buildServiceActive">Whether code-index-main-move runs.</param>
+    /// <returns>The health.</returns>
+    internal RepoHealth Unqueued(bool buildServiceActive) => buildServiceActive || State != "queued" ? this : this with { State = "missing" };
 
     /// <summary>Whether the repo's health words need its ended builds: the index isn't damaged, no build runs, and the repo is behind or has a pending layer.</summary>
     /// <param name="status">The repo's index status.</param>
