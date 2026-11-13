@@ -67,12 +67,10 @@ public sealed class FailedAgentOutputTests
     [Fact]
     public async Task A_failed_node_whose_input_passes_64_KB_stores_parseable_json_marked_truncated()
     {
-        // why: #3486, the interpolated config of a failed run_agent node is its input; a big prompt must not land as cut, unparseable text
-        var runtime = new FakeAgentNodeRuntime();
+        // why: #3486, the launch reports the interpolated config as the node's input; a big prompt must not land as cut, unparseable text
+        var runtime = new FakeAgentNodeRuntime { Input = new JsonObject { ["repo"] = "web", ["prompt"] = new string('p', 100 * 1024) }.ToJsonString() };
         await using var rig = await GraphRig.StartAsync(runtime);
-        var agent = GraphRig.Node("agent", "run_agent", config: new JsonObject { ["repo"] = "web", ["prompt"] = new string('p', 100 * 1024), ["outputs"] = JsonNode.Parse("""{"drifted":"boolean"}""") });
-        var workflow = await rig.Define(GraphRig.Spec("unlimited", [GraphRig.Node("start", "manual"), agent], [GraphRig.Edge("start", "agent")]));
-        var run = (await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited)).RunId;
+        var run = await AgentNodeRig.Start(rig, """{"drifted":"boolean"}""");
         await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
         runtime.End(new AgentSessionState(AgentSessionEnd.Exit, ExitCode: 1));
