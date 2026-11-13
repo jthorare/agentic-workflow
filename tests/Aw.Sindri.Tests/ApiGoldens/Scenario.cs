@@ -116,7 +116,7 @@ internal sealed class Scenario(GoldenHost host)
             await using var scope = host.App.Services.CreateAsyncScope();
             var jobs = scope.ServiceProvider.GetRequiredService<IJobViews>();
             var waited = System.Diagnostics.Stopwatch.StartNew();
-            do
+            while (true)
             {
                 await ViewScenarios.CatchUp(host, ct);
                 var running = await jobs.Running(ct);
@@ -126,9 +126,14 @@ internal sealed class Scenario(GoldenHost host)
                     break;
                 }
 
+                // A slow box names the wait, not a golden diff with the files fields missing (#3433).
+                if (waited.Elapsed >= Jobs.JobHost.Hang)
+                {
+                    Assert.Fail($"timed out after {Jobs.JobHost.Hang} waiting for the build's 'extracting n/N files' line");
+                }
+
                 await Task.Delay(20, ct);
             }
-            while (waited.Elapsed < Jobs.JobHost.Hang);
         }
         else
         {
