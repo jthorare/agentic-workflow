@@ -456,6 +456,7 @@ static readonly Aw.Forge.Core.ForgeErrors.HostNotAllowed -> Aw.Kernel.ErrorDefin
 static readonly Aw.Forge.Core.ForgeErrors.Invalid -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Forge.Core.ForgeErrors.NotFound -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Forge.Core.ForgeErrors.PushFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Forge.Core.ForgeErrors.Refused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Forge.Core.ForgeErrors.RateLimited -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Forge.Core.ForgeErrors.Rejected -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Forge.Core.ForgeErrors.Unauthorized -> Aw.Kernel.ErrorDefinition!
