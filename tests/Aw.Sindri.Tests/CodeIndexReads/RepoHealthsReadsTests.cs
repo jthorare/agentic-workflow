@@ -81,7 +81,8 @@ public sealed class RepoHealthsReadsTests
         now.Now = _now.AddMinutes(31);
         var health = Assert.Single(await healths.Of(scope, [missing], Token));
 
-        Assert.Equal(("missing", (TimeSpan?)null), (health.State, health.QueuedFor));
+        Assert.Equal("missing", health.State);
+        Assert.Null(health.QueuedFor);
     }
 
     [Fact, Trait("Lane", "unit")]
