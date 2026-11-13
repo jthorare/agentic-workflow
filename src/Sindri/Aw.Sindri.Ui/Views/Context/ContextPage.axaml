@@ -178,12 +178,12 @@
         </Panel>
         <!-- The Building and No map overlays cover the map view only; the Files view has its own states. -->
         <Panel x:Name="ContextOverlays" IsVisible="{Binding ShowMap}">
-          <Border x:Name="ContextBuilding" Classes="overlay" IsVisible="{Binding ShowBuilding}" AutomationProperties.Name="{Binding BuildingTitle}" AutomationProperties.AccessibilityView="Control">
+          <Border x:Name="ContextBuilding" Classes="overlay" IsVisible="{Binding ShowBuilding}" AutomationProperties.Name="{Binding BuildingName}" AutomationProperties.AccessibilityView="Control">
             <StackPanel Spacing="16" VerticalAlignment="Top" Margin="0,96,0,0" HorizontalAlignment="Center" MaxWidth="560">
-              <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+              <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" HorizontalAlignment="Center" MaxWidth="560">
                 <icons:StateIcon Icon="Spinner" Spins="True" VerticalAlignment="Center" />
-                <TextBlock x:Name="ContextBuildingTitle" Classes="detail-title" Text="{Binding BuildingTitle}" VerticalAlignment="Center" />
-              </StackPanel>
+                <TextBlock x:Name="ContextBuildingTitle" Grid.Column="1" Classes="detail-title" Text="{Binding BuildingTitle}" ToolTip.Tip="{Binding BuildingTitle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+              </Grid>
               <TextBlock x:Name="ContextBuildingBody" Classes="body subtle" Text="{Binding BuildingBody}" IsVisible="{Binding HasBuildingBody}" TextWrapping="Wrap" TextAlignment="Center" />
               <Button x:Name="ContextBuildingJob" Classes="row-title" HorizontalAlignment="Center" IsVisible="{Binding HasBuildJob}" Content="{Binding BuildJobText}" Click="OnViewBuildJob"
                       AutomationProperties.Name="{Binding BuildJobText}" />

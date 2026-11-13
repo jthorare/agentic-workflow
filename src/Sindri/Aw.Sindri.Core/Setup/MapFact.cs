@@ -9,6 +9,9 @@ public sealed record MapFact(MapPhase Phase, SetupProgress? Progress = null, str
     /// <summary>One line per repo of the approved profile, in the state the map is in.</summary>
     public SetupItems Items { get; init; } = SetupItems.None;
 
+    /// <summary>Which build a <see cref="MapPhase.Building"/> fact follows, else null.</summary>
+    public MapStage? Stage { get; init; }
+
     /// <summary>The wait and the reason of a build that failed once and will try again, else null.</summary>
     public MapRetry? Retry { get; init; }
 }

@@ -25,4 +25,8 @@ public sealed record SetupStep(SetupStepId Id, string Title, SetupState State, s
     /// <summary>What the profile allows in plain words (the profile step only); null, and left out of the JSON, for every other step and when there is no profile to read.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<SetupPreviewLine>? Preview { get; init; }
+
+    /// <summary>Which build the map step is running (#3112): the first code index or the map itself, with or without a count, or the build that failed; null, and left out of the JSON, for every other step and state.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public MapStage? Stage { get; init; }
 }

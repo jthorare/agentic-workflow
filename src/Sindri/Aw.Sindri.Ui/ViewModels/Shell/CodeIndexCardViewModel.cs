@@ -30,6 +30,15 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
     /// <summary>True when there is a message to show.</summary>
     public bool HasMessage => Message.Length > 0;
 
+    /// <summary>The command that resumes the paused service, once for the whole card; empty when no repo is paused.</summary>
+    public string PausedCommand { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>True when a line is paused, so the card's foot names the command.</summary>
+    public bool HasPausedCommand => PausedCommand.Length > 0;
+
+    /// <summary>The words above the command.</summary>
+    public string PausedNote { get; } = Labels.CodeIndexPausedNote;
+
     /// <summary>The state in a word at the heading's right: "ok" or "needs a look"; empty with no lines.</summary>
     public string Word { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -44,6 +53,7 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
         {
             Lines = [];
             Word = string.Empty;
+            ShowCommand(paused: false);
             Show(Labels.CodeIndexUnreadable);
             return;
         }
@@ -53,7 +63,14 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
         var views = repos.Select(r => (Repo: r, Health: health.GetValueOrDefault(r.Repo))).ToList();
         Lines = [.. views.Select(v => new CodeIndexLine(Line(v.Repo, v.Health)))];
         Word = repos.Count == 0 ? string.Empty : WordOf(views);
+        ShowCommand(views.Exists(static v => IsPaused(StateOf(v.Repo, v.Health), v.Health)));
         Show(repos.Count == 0 ? Labels.CodeIndexNone : string.Empty);
+    }
+
+    private void ShowCommand(bool paused)
+    {
+        PausedCommand = paused ? Labels.CodeIndexResumeCommand : string.Empty;
+        OnChanged(nameof(HasPausedCommand));
     }
 
     private void Show(string message)
@@ -86,6 +103,11 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
 
     private string Line(CodeIndexRepoView repo, CodeIndexHealthView? health)
     {
+        if (health is { NeedsLook: true, Paused: false, LookWords: { Length: > 0 } lookWords } && string.IsNullOrEmpty(repo.Commit))
+        {
+            return lookWords;   // the server says why (#3515): a flagged repo with no build yet never reads as plain "build queued"; a built or paused repo keeps its own line
+        }
+
         var word = StateWords(StateOf(repo, health), health);
         if (repo.Commit is not { Length: > 0 } commit)
         {
@@ -106,9 +128,13 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
 
     private static bool Shown(CodeIndexLayerView layer) => _named.Contains(layer.Layer, StringComparer.Ordinal) || !One(layer.State, "ok", "disabled");
 
+    private static bool IsPaused(string state, CodeIndexHealthView? health) => health?.Paused == true && One(state, "missing", "stale", "waiting", "queued");
+
     // While waiting, the server's own words ("retrying in N min") replace the state's.
-    private static string StateWords(string state, CodeIndexHealthView? health) =>
-        string.Equals(state, "waiting", StringComparison.Ordinal) && health?.Waiting is { Length: > 0 } waiting ? waiting : Labels.CodeIndexState(state);
+    // While paused, no retry or build comes: the line names the pause instead of promising one (#3561).
+    private static string StateWords(string state, CodeIndexHealthView? health) => IsPaused(state, health)
+        ? (One(state, "waiting", "queued") ? string.Empty : Labels.CodeIndexState(state) + " · ") + Labels.CodeIndexPaused
+        : string.Equals(state, "waiting", StringComparison.Ordinal) && health?.Waiting is { Length: > 0 } waiting ? waiting : Labels.CodeIndexState(state);
 
     // The health's percent is the server's figure for the embeddings layer; the layer's own detail is the fallback.
     private static string Words(CodeIndexLayerView layer, CodeIndexHealthView? health) =>
