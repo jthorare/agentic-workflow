@@ -31,12 +31,17 @@ internal sealed class RowActionsStrip : Border
     /// <returns>A strip with no actions.</returns>
     internal static RowActionsStrip Rent() => _pool.Count > 0 ? _pool.Pop() : new RowActionsStrip();
 
-    /// <summary>Gives a strip back to the pool.</summary>
+    /// <summary>Gives a strip back to the pool. Its buttons stay, with no command and no label, so the next row that rents it fills them in place.</summary>
     /// <param name="strip">The strip a row no longer shows.</param>
     internal static void Return(RowActionsStrip strip)
     {
         ArgumentNullException.ThrowIfNull(strip);
-        strip.Fill([]);
+        foreach (var button in strip._buttons.Children.OfType<Button>())
+        {
+            button.Command = null;   // the buttons stay (a hover would otherwise build new templated ones); only what they run and say is dropped
+            button.Content = null;
+        }
+
         _pool.Push(strip);
     }
 
