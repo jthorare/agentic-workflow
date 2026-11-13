@@ -31,9 +31,8 @@
   <!-- hairline-tertiary: nested surfaces. Decorative only (1.9:1 on the canvas): never a control outline, use Color.Outline -->
   <Color x:Key="Color.HairlineTertiary">#3e3e44</Color>
   <SolidColorBrush x:Key="Brush.HairlineTertiary" Color="{StaticResource Color.HairlineTertiary}" />
-  <!-- outline: control outlines, 3:1 non-text contrast (WCAG 1.4.11, #3190) on the canvas, the panel and the pressed fill -->
-  <Color x:Key="Color.Outline">#70757c</Color>
-  <SolidColorBrush x:Key="Brush.Outline" Color="{StaticResource Color.Outline}" />
+  <!-- outline: control boundaries (pressed, focus, selected) at 3:1 on the pressed fill #2c2d30 (WCAG 1.4.11, #3190, #3517); drawn through Brush.Clickable.PressedBorder, so no brush of its own (#3505). Graph connectors are Color.Wire -->
+  <Color x:Key="Color.Outline">#767b82</Color>
   <!-- ink: primary text -->
   <Color x:Key="Color.Ink">#f7f8f8</Color>
   <SolidColorBrush x:Key="Brush.Ink" Color="{StaticResource Color.Ink}" />
@@ -69,7 +68,7 @@
   <SolidColorBrush x:Key="Brush.Clickable.Rest" Color="#001c1d20" />
   <!-- Hover only: not the control's boundary or state, so no 3:1 (WCAG 1.4.11). Pressed, focus and selected use Outline. -->
   <SolidColorBrush x:Key="Brush.Clickable.HoverBorder" Color="{StaticResource Color.HairlineStrong}" />
-  <SolidColorBrush x:Key="Brush.Clickable.Pressed" Color="#222326" />
+  <SolidColorBrush x:Key="Brush.Clickable.Pressed" Color="#2c2d30" />
   <SolidColorBrush x:Key="Brush.Clickable.PressedBorder" Color="{StaticResource Color.Outline}" />
   <!-- on-primary: primary button text -->
   <Color x:Key="Color.OnPrimary">#ffffff</Color>
@@ -134,6 +133,7 @@
   <!-- graph and context map: wire is a connector, an edge, a port and a suggested node's dashed border. It is the only mark
        of which step feeds which, so it meets the 3:1 non-text minimum on Canvas, Surface1 and Surface2 (WCAG 1.4.11, #3138);
        a suggestion is still carried by its dash and its words, never by this colour -->
+  <!-- Wire is for graph connectors; control boundaries are Color.Outline, a separate role on a separate fill (#3505) -->
   <Color x:Key="Color.Wire">#686870</Color>
   <SolidColorBrush x:Key="Brush.Wire" Color="{StaticResource Color.Wire}" />
   <!-- context map: a hovered or selected edge and its neighbours (same value as ink-subtle, kept as its own role) -->
