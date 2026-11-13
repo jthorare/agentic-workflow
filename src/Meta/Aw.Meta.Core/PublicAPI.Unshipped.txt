@@ -2017,6 +2017,7 @@ Aw.Meta.Core.Ports.IClaudeTranscripts.Tail(Aw.Meta.Core.Ids.SessionId session, i
 Aw.Meta.Core.Ports.IDigestFiles
 Aw.Meta.Core.Ports.IDigestFiles.Stat(string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ports.DigestInfo?>!>
 Aw.Meta.Core.Ports.ILaneFiles.RecordSession(string! lane, Aw.Meta.Core.Ids.SessionId session, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Ports.ILanePane.ClearInput(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>!
 Aw.Meta.Core.Ports.ILanePane.Capture(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Meta.Core.Ports.ILanePane.PanePid(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int?>!>
 Aw.Meta.Core.Ports.ILanePane.PressEnter(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
