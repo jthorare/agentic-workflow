@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Templates;
 
 namespace Aw.Sindri.Ui.Views.Controls;
@@ -29,12 +30,12 @@ internal sealed class LabelledField : ContentControl
     /// <summary>Initializes a new instance of the <see cref="LabelledField"/> class.</summary>
     public LabelledField()
     {
-        Template = new FuncControlTemplate<LabelledField>((field, _) =>
+        Template = new FuncControlTemplate<LabelledField>((field, scope) =>
         {
             var caption = new TextBlock { Name = "PART_Caption" };
             caption.Classes.Add("caption");
             _ = caption.Bind(TextBlock.TextProperty, field.GetBindingObservable(CaptionProperty));
-            AutomationProperties.SetAccessibilityView(caption, Avalonia.Automation.Peers.AccessibilityView.Raw);
+            AutomationProperties.SetAccessibilityView(caption, AccessibilityView.Raw);
             var input = new ContentPresenter { Name = "PART_ContentPresenter", Margin = new Thickness(0, 4, 0, 0) };
             _ = input.Bind(ContentPresenter.ContentProperty, field.GetBindingObservable(ContentProperty));
             var line = new FieldError { Name = "PART_Error", Margin = new Thickness(0, 4, 0, 0) };
