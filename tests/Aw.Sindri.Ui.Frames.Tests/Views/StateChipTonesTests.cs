@@ -7,6 +7,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Views.Controls;
 
@@ -90,7 +91,7 @@ public sealed class StateChipTonesTests
     public async Task A_chip_without_a_glyph_draws_none_and_the_served_chip_still_works() => await OnUi(() =>
     {
         var (window, chip) = Show("ok", "Active");
-        var served = new StateChipView { Chip = new Aw.Sindri.Ui.Api.StateChip("PARKED", Aw.Sindri.Ui.Api.ChipTone.Attn) };
+        var served = new StateChipView { Chip = new StateChip("PARKED", ChipTone.Attn) };
 
         _ = Assert.Single(chip.GetVisualDescendants().OfType<TextBlock>());
         Assert.Contains(served.Classes, c => string.Equals(c, "attn", StringComparison.Ordinal));
