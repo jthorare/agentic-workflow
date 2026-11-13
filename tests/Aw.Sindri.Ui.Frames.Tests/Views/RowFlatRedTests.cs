@@ -197,6 +197,22 @@ public sealed class RowFlatRedTests
         window.TryFindResource("Type.Caption.Size", window.ActualThemeVariant, out var found) && found is double size ? size : 0;
 
     [Fact]
+    public async Task A_row_listens_for_render_scaling_while_attached_and_stops_when_detached() => await OnUi(() =>
+    {
+        var (window, list) = Show(RowGallery.Many(1, 20));
+        var row = Rows(list)[0];
+
+        Assert.Same(TopLevel.GetTopLevel(row), row.ScalingSource);
+        Assert.NotNull(row.ScalingSource);
+
+        window.Content = null;
+        Settle(window);
+        Assert.Null(row.ScalingSource);
+        window.Close();
+        return true;
+    });
+
+    [Fact]
     public async Task A_render_scaling_change_rebuilds_the_rows_text_layouts() => await OnUi(() =>
     {
         var (window, list) = Show(RowGallery.Many(1, 20));
