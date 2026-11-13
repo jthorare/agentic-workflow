@@ -58,7 +58,6 @@ using Aw.Sindri.Features.CheckSandbox;
 using Aw.Sindri.Features.CloseItem;
 using Aw.Sindri.Features.CodeIndexJobs;
 using Aw.Sindri.Features.CompleteStep;
-using Aw.Sindri.Features.ConnectAccount;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Features.CreateItem;
 using Aw.Sindri.Features.CreateWorkflow;
@@ -80,7 +79,6 @@ using Aw.Sindri.Features.GetLibraryDoc;
 using Aw.Sindri.Features.GetLinearLookups;
 using Aw.Sindri.Features.GetLinearSince;
 using Aw.Sindri.Features.GetNeedsYou;
-using Aw.Sindri.Features.GetOpenRuns;
 using Aw.Sindri.Features.GetProfile;
 using Aw.Sindri.Features.GetProject;
 using Aw.Sindri.Features.GetQueue;
@@ -125,7 +123,6 @@ using Aw.Sindri.Features.RemoveConnection;
 using Aw.Sindri.Features.RemoveSessionWorktree;
 using Aw.Sindri.Features.RenameConnection;
 using Aw.Sindri.Features.ReplaceWorkflow;
-using Aw.Sindri.Features.RestartProcess;
 using Aw.Sindri.Features.ResumeJob;
 using Aw.Sindri.Features.ResumeService;
 using Aw.Sindri.Features.RunDoctor;
@@ -138,7 +135,6 @@ using Aw.Sindri.Features.SessionExit;
 using Aw.Sindri.Features.SessionHeartbeat;
 using Aw.Sindri.Features.SetProfileKey;
 using Aw.Sindri.Features.SetReviewLogin;
-using Aw.Sindri.Features.SkipSetupStep;
 using Aw.Sindri.Features.StartSession;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Features.TestConnection;
@@ -183,7 +179,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(SetReviewLoginRequest)), JsonSerializable(typeof(SetReviewLoginResponse))]
 [JsonSerializable(typeof(GetLinearConnectionRequest)), JsonSerializable(typeof(LinearConnectionView)), JsonSerializable(typeof(LinearKeyStateView)), JsonSerializable(typeof(LinearConnectionTeamView)), JsonSerializable(typeof(ListLinearTeamsRequest)), JsonSerializable(typeof(ListLinearTeamsResponse)), JsonSerializable(typeof(SaveLinearConnectionRequest)), JsonSerializable(typeof(SaveLinearConnectionResponse)), JsonSerializable(typeof(LinearSavedWriteView)), JsonSerializable(typeof(RemoveLinearWriteKeyRequest)), JsonSerializable(typeof(RemoveLinearWriteKeyResponse))]   // Linear hub 1b: Settings, Connections, Linear
 [JsonSerializable(typeof(SendReviewFixRequest)), JsonSerializable(typeof(SendReviewFixResponse)), JsonSerializable(typeof(ReviewFixBody)), JsonSerializable(typeof(ReviewFixSent))]
-[JsonSerializable(typeof(SkipSetupStepRequest)), JsonSerializable(typeof(SkipSetupStepResponse)), JsonSerializable(typeof(ConnectAccountResponse)), JsonSerializable(typeof(RestartProcessResponse)), JsonSerializable(typeof(GetOpenRunsResponse))]
+[JsonSerializable(typeof(Features.SkipSetupStep.SkipSetupStepRequest)), JsonSerializable(typeof(Features.SkipSetupStep.SkipSetupStepResponse)), JsonSerializable(typeof(Features.ConnectAccount.ConnectAccountResponse)), JsonSerializable(typeof(Features.RestartProcess.RestartProcessResponse)), JsonSerializable(typeof(Features.GetOpenRuns.GetOpenRunsResponse))]
 [JsonSerializable(typeof(GetSetupRequest)), JsonSerializable(typeof(GetSetupResponse)), JsonSerializable(typeof(GetRepoStatusResponse)), JsonSerializable(typeof(RepoStatus))]
 [JsonSerializable(typeof(GetProfileResponse)), JsonSerializable(typeof(ProfileSummary)), JsonSerializable(typeof(RepoPreview)), JsonSerializable(typeof(RebuildViewsRequest)), JsonSerializable(typeof(CreateItemRequest)), JsonSerializable(typeof(ItemCreatedResponse))]
 [JsonSerializable(typeof(Features.AddTodo.AddTodoRequest)), JsonSerializable(typeof(AddTodoBody)), JsonSerializable(typeof(Features.ChangeTodo.ChangeTodoRequest)), JsonSerializable(typeof(ChangeTodoBody)), JsonSerializable(typeof(Features.MarkTodo.MarkTodoRequest)), JsonSerializable(typeof(MarkTodoBody)), JsonSerializable(typeof(Core.Todos.TodoAccepted)), JsonSerializable(typeof(Features.ListTodos.ListTodosRequest)), JsonSerializable(typeof(Features.ListTodos.ListTodosResponse)), JsonSerializable(typeof(Features.GetTodo.GetTodoResponse)), JsonSerializable(typeof(Features.GetTodoNote.GetTodoNoteResponse)), JsonSerializable(typeof(Core.Todos.TodoCounts)), JsonSerializable(typeof(Core.Todos.TodoListState)), JsonSerializable(typeof(Core.Todos.TodoItem)), JsonSerializable(typeof(Core.Todos.TodoLinkItem)), JsonSerializable(typeof(Features.CheckTodoNote.CheckTodoNoteRequest)), JsonSerializable(typeof(Features.CheckTodoNote.CheckTodoNoteResponse)), JsonSerializable(typeof(Features.SetTodoNote.SetTodoNoteRequest)), JsonSerializable(typeof(Features.StopTodoNote.StopTodoNoteRequest)), JsonSerializable(typeof(Core.Todos.TodoNoteWritten)), JsonSerializable(typeof(Core.Todos.TodoNoteEdit)), JsonSerializable(typeof(Core.Todos.Note.NoteCantImport)), JsonSerializable(typeof(CheckTodoNoteBody)), JsonSerializable(typeof(Features.ImportTodoNote.ImportTodoNoteRequest)), JsonSerializable(typeof(Features.ImportTodoNote.ImportTodoNoteResponse)), JsonSerializable(typeof(ImportTodoNoteBody)), JsonSerializable(typeof(SetTodoNoteBody)), JsonSerializable(typeof(StopTodoNoteBody)), JsonSerializable(typeof(Features.KeepTodo.KeepTodoRequest)), JsonSerializable(typeof(KeepTodoWire)), JsonSerializable(typeof(KeepTodoUndoWire)), JsonSerializable(typeof(KeepTodoBody)), JsonSerializable(typeof(Features.KeepTodoUndo.KeepTodoUndoRequest)), JsonSerializable(typeof(Features.PickTodoHold.PickTodoHoldRequest)), JsonSerializable(typeof(Features.PickTodoHold.PickTodoHoldResponse)), JsonSerializable(typeof(HoldPickBody)), JsonSerializable(typeof(Features.UndoTodoHold.UndoTodoHoldRequest)), JsonSerializable(typeof(Features.UndoTodoHold.UndoTodoHoldResponse))]   // the todo writes and reads (todo spec §4.4)
