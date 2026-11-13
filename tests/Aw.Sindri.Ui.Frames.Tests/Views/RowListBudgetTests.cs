@@ -19,20 +19,20 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 [Collection(HeadlessWindows.Name)]
 public sealed class RowListBudgetTests
 {
-    private const int Groups = 5;
-    private const int PerGroup = 1000;
-    private const double WindowHeight = 800;
+    internal const int Groups = 5;
+    internal const int PerGroup = 1000;
+    internal const double WindowHeight = 800;
     private const int Visible = 26;   // 800 px / 32 px rows, plus the partly shown one
 
     // The specs' wall-clock budgets (Home first paint 100 ms, Messages 16 ms a frame) times this, so a loaded box does not flake them (#2946). The counts above stay the tight guard.
-    private const double Loose = 5;
+    internal const double Loose = 5;
     private const int WarmUp = 3;
     private const int Timed = 31;
 
-    private static Task<T> OnUi<T>(Func<T> body) =>
+    internal static Task<T> OnUi<T>(Func<T> body) =>
         HeadlessUnitTestSession.GetOrStartForAssembly(typeof(RowListBudgetTests).Assembly).Dispatch(body, TestContext.Current.CancellationToken);
 
-    private static void Settle(Window window)
+    internal static void Settle(Window window)
     {
         Dispatcher.UIThread.RunJobs();
         window.UpdateLayout();
@@ -91,22 +91,6 @@ public sealed class RowListBudgetTests
         }
 
         Assert.True(list.ContainersCreated <= 4 * Visible, string.Create(CultureInfo.InvariantCulture, $"{list.ContainersCreated} containers made over the scroll, budget {4 * Visible}"));
-        window.Close();
-        return true;
-    });
-
-    [Fact]
-    public async Task The_first_paint_of_5000_rows_fits_Homes_100_ms_budget_with_room_for_a_loaded_box() => await OnUi(() =>
-    {
-        var clock = Stopwatch.StartNew();
-        var list = new RowList { ItemsSource = RowGallery.Many(Groups, PerGroup), Columns = RowGallery.Columns };
-        var window = new Window { Content = list, Width = 1280, Height = WindowHeight };
-        window.Show();
-        Settle(window);
-        clock.Stop();
-
-        Assert.True(list.ContainersCreated > 0);
-        Assert.True(clock.Elapsed.TotalMilliseconds <= 100 * Loose, string.Create(CultureInfo.InvariantCulture, $"first paint took {clock.Elapsed.TotalMilliseconds:0} ms, budget {100 * Loose:0} ms (100 ms x {Loose})"));
         window.Close();
         return true;
     });
