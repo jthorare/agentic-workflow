@@ -40,11 +40,11 @@ public sealed class CodeIndexProblemsTests
         CodeIndexProblems.For(status, RepoHealth.Of(status, head, jobs, _now));
 
     [Fact, Trait("Lane", "unit")]
-    public void A_stale_index_asks_for_a_rebuild_from_the_system_page()
+    public void A_stale_index_names_the_service_that_rebuilds_it()
     {
         var problem = Problem(Built(), Moved());
 
-        Assert.Equal(("SND-CODEIDX-014", "demo: code index is behind main; rebuild it from the System page", "the code index for demo is behind main"), (problem?.Code, problem?.Text, problem?.Clause));
+        Assert.Equal(("SND-CODEIDX-014", "demo: code index is behind main; code-index-main-move rebuilds it on its next tick", "the code index for demo is behind main"), (problem?.Code, problem?.Text, problem?.Clause));
     }
 
     [Fact, Trait("Lane", "unit")]
