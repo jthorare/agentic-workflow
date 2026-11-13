@@ -184,8 +184,8 @@ public sealed class DriftCheckRunAcceptanceTests
             return new ServiceCollection()
                 .AddSingleton(AwJson.CreateOptions(SindriJsonContext.Default))
                 .AddSingleton<ICallerContextAccessor>(_callers)
-                .AddSingleton<IService<CreateWorkflowRequest, CreateWorkflowResponse>>(new CreateWorkflowService(_workflows, checker, _ids, _log))
-                .AddSingleton<IService<ApplyWorkflowOpsRequest, ApplyWorkflowOpsResponse>>(new ApplyWorkflowOpsService(_workflows, checker, _log))
+                .AddSingleton<IService<CreateWorkflowRequest, CreateWorkflowResponse>>(new CreateWorkflowService(_workflows, checker, _ids, _log, new OpenGate()))
+                .AddSingleton<IService<ApplyWorkflowOpsRequest, ApplyWorkflowOpsResponse>>(new ApplyWorkflowOpsService(_workflows, checker, _log, new OpenGate()))
                 .AddSingleton<IService<ValidateWorkflowRequest, ValidateWorkflowResponse>>(new ValidateWorkflowService(_workflows, checker))
                 .AddSingleton<IService<ActivateWorkflowRequest, ActivateWorkflowResponse>>(new ActivateWorkflowService(_workflows, checker, _log, _callers))
                 .BuildServiceProvider();
@@ -255,6 +255,18 @@ public sealed class DriftCheckRunAcceptanceTests
         {
             Posted.Add((node.Value, title, body));
             return ValueTask.FromResult<Result<Unit>>(Unit.Value);
+        }
+    }
+
+    private sealed class OpenGate : Core.Commands.ICommandGate
+    {
+        public ValueTask<IDisposable?> Enter(CancellationToken cancellationToken) => ValueTask.FromResult<IDisposable?>(new Hold());
+
+        private sealed class Hold : IDisposable
+        {
+            public void Dispose()
+            {
+            }
         }
     }
 

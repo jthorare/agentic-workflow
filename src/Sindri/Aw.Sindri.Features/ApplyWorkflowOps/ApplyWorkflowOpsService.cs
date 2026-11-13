@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
@@ -12,11 +13,13 @@ namespace Aw.Sindri.Features.ApplyWorkflowOps;
 /// <summary>
 /// Applies a batch of ops to the newest revision and saves the result as the next one. Nothing is written when the base revision is stale (SND-GRAPH-007 with the current revision), when any op fails
 /// (SND-GRAPH-012, none of the batch applies) or when the edited graph fails the draft checks. An unknown slug is SND-GRAPH-008, an archived workflow SND-GRAPH-011.
+/// The draft check (it compiles every code node) runs before the command gate; inside the gate the workflow is read again, and a revision that moved meanwhile is SND-GRAPH-007 (#3571).
 /// </summary>
 /// <param name="workflows">The workflows.</param>
 /// <param name="checker">Builds the validator.</param>
 /// <param name="log">Writes the lifecycle event.</param>
-internal sealed class ApplyWorkflowOpsService(IWorkflowStore workflows, IWorkflowChecker checker, WorkflowChangeLog log) : IService<ApplyWorkflowOpsRequest, ApplyWorkflowOpsResponse>
+/// <param name="gate">The command gate, taken around the write only.</param>
+internal sealed class ApplyWorkflowOpsService(IWorkflowStore workflows, IWorkflowChecker checker, WorkflowChangeLog log, ICommandGate gate) : IService<ApplyWorkflowOpsRequest, ApplyWorkflowOpsResponse>
 {
     public async ValueTask<Result<ApplyWorkflowOpsResponse>> Handle(ApplyWorkflowOpsRequest request, CancellationToken cancellationToken)
     {
@@ -47,7 +50,26 @@ internal sealed class ApplyWorkflowOpsService(IWorkflowStore workflows, IWorkflo
             return edited.Error;
         }
 
-        return await SaveAndRecord(record, edited.Value, request.By, cancellationToken).ConfigureAwait(false);
+        return await SaveInGate(request, record, edited.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<ApplyWorkflowOpsResponse>> SaveInGate(ApplyWorkflowOpsRequest request, WorkflowRecord record, GraphSpec edited, CancellationToken cancellationToken)
+    {
+        using var hold = await gate.Enter(cancellationToken).ConfigureAwait(false);
+        if (hold is null)
+        {
+            return WorkflowWriteErrors.Busy;
+        }
+
+        var again = await FindActive(request.Slug, cancellationToken).ConfigureAwait(false);   // why: a write may have landed between the check above and the gate
+        if (again.IsError)
+        {
+            return again.Error;
+        }
+
+        return again.Value.LatestRevision != record.LatestRevision
+            ? WorkflowWriteErrors.Stale(again.Value.LatestRevision, request.BaseRevision, "these ops")
+            : await SaveAndRecord(again.Value, edited, request.By, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<WorkflowRecord>> FindActive(WorkflowSlug slug, CancellationToken cancellationToken)

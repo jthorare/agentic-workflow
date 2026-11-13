@@ -139,6 +139,8 @@ An unknown slug is `SND-GRAPH-008` (404), an unknown run `SND-GRAPH-101`, a slug
 
 Seven writes, each one slice (`Features/CreateWorkflow`, `ApplyWorkflowOps`, `ReplaceWorkflow`, `ValidateWorkflow`, `ActivateWorkflow`, `PauseWorkflow`, `DeleteWorkflow`) behind a route, an MCP tool and a `sindri wf` verb. `workflow_run` and `workflow_cancel` are the existing run and cancel slices (PR 6) as tools. Every write is a catalog row (`Host/Catalog/WorkflowRows.cs`) an agent session may run, except activate and pause: those are the owner's, and a session is refused with `SND-AUTH-002` (the check sits in `ActivateWorkflowService` and `PauseWorkflowService`, so the route, the MCP tool and the CLI share it; the rows have `SessionOk: false`). The CLI verbs start the control plane first, like `wf run`.
 
+Create, edit by ops and replace are registered with `AddUngatedCommand` (#3571): the draft check, which compiles every code node (seconds on a cold start), runs before the command gate, and each service takes the gate (`ICommandGate`) only around the write. Inside the gate it reads the workflow again, so a revision that moved meanwhile is `SND-GRAPH-007` with the current revision, and a gate busy for 5 s is `SND-API-009`. The audit row is the same as for a gated command.
+
 | Write | Route | MCP tool | CLI |
 |---|---|---|---|
 | Make a workflow (off, revision 1) from a spec or a starter template | `POST /sindri/workflows` | `workflow_create` | `sindri wf create <slug> (--template <name> \| --file <spec.json>)` |

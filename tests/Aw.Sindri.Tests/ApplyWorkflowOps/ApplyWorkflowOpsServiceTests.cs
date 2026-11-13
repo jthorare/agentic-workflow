@@ -19,7 +19,7 @@ public sealed class ApplyWorkflowOpsServiceTests : IDisposable
 
     public ApplyWorkflowOpsServiceTests()
     {
-        _service = new ApplyWorkflowOpsService(_rig.Workflows, _rig.Checker, _rig.Log);
+        _service = new ApplyWorkflowOpsService(_rig.Workflows, _rig.Checker, _rig.Log, new StartSession.OpenGate());
     }
 
     public void Dispose() => _rig.Dispose();

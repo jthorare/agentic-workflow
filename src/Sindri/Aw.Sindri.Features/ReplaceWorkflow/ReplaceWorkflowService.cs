@@ -1,8 +1,7 @@
-using System.Globalization;
-using System.Text.Json;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
@@ -13,11 +12,13 @@ namespace Aw.Sindri.Features.ReplaceWorkflow;
 /// <summary>
 /// Saves a whole new graph as the next revision. A base revision that is not the latest is SND-GRAPH-007 with the current revision and nothing is written; a graph that fails the draft checks is
 /// findings (SND-GRAPH) and nothing is written. An unknown slug is SND-GRAPH-008, an archived workflow SND-GRAPH-011.
+/// The draft check (it compiles every code node) runs before the command gate; inside the gate the workflow is read again, and a revision that moved meanwhile is SND-GRAPH-007 (#3571).
 /// </summary>
 /// <param name="workflows">The workflows.</param>
 /// <param name="checker">Builds the validator.</param>
 /// <param name="log">Writes the lifecycle event.</param>
-internal sealed class ReplaceWorkflowService(IWorkflowStore workflows, IWorkflowChecker checker, WorkflowChangeLog log) : IService<ReplaceWorkflowRequest, ReplaceWorkflowResponse>
+/// <param name="gate">The command gate, taken around the write only.</param>
+internal sealed class ReplaceWorkflowService(IWorkflowStore workflows, IWorkflowChecker checker, WorkflowChangeLog log, ICommandGate gate) : IService<ReplaceWorkflowRequest, ReplaceWorkflowResponse>
 {
     public async ValueTask<Result<ReplaceWorkflowResponse>> Handle(ReplaceWorkflowRequest request, CancellationToken cancellationToken)
     {
@@ -47,16 +48,29 @@ internal sealed class ReplaceWorkflowService(IWorkflowStore workflows, IWorkflow
             return SindriErrors.GraphFindings.With(string.Join("; ", validation.Blocking.Select(static f => f.ToString())));
         }
 
-        return await SaveAndRecord(record, spec.Value, request, cancellationToken).ConfigureAwait(false);
+        return await SaveInGate(spec.Value, request, cancellationToken).ConfigureAwait(false);
     }
 
-    private static Error StaleRevision(int latest, int baseRevision)
+    private async ValueTask<Result<ReplaceWorkflowResponse>> SaveInGate(GraphSpec spec, ReplaceWorkflowRequest request, CancellationToken cancellationToken)
     {
-        var current = latest.ToString(CultureInfo.InvariantCulture);
-        return SindriErrors.GraphStaleRevision
-            .With($"This workflow is at revision {current}, and this replace was made on revision {baseRevision.ToString(CultureInfo.InvariantCulture)}. Read it again (current revision {current}) and retry.")
-            .WithExtension("currentRevision", JsonDocument.Parse(current).RootElement.Clone());
+        using var hold = await gate.Enter(cancellationToken).ConfigureAwait(false);
+        if (hold is null)
+        {
+            return WorkflowWriteErrors.Busy;
+        }
+
+        var again = await FindActive(request.Slug, cancellationToken).ConfigureAwait(false);   // why: a write may have landed between the draft check and the gate
+        if (again.IsError)
+        {
+            return again.Error;
+        }
+
+        return request.BaseRevision != again.Value.LatestRevision
+            ? StaleRevision(again.Value.LatestRevision, request.BaseRevision)
+            : await SaveAndRecord(again.Value, spec, request, cancellationToken).ConfigureAwait(false);
     }
+
+    private static Error StaleRevision(int latest, int baseRevision) => WorkflowWriteErrors.Stale(latest, baseRevision, "this replace");
 
     private async ValueTask<Result<WorkflowRecord>> FindActive(WorkflowSlug slug, CancellationToken cancellationToken)
     {

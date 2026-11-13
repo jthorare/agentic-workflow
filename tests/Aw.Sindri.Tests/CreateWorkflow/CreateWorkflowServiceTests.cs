@@ -18,7 +18,7 @@ public sealed class CreateWorkflowServiceTests : IDisposable
 
     public CreateWorkflowServiceTests()
     {
-        _service = new CreateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log);
+        _service = new CreateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log, new StartSession.OpenGate());
     }
 
     public void Dispose() => _rig.Dispose();

@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
@@ -12,13 +13,14 @@ namespace Aw.Sindri.Features.CreateWorkflow;
 
 /// <summary>
 /// Makes a workflow, off, at revision 1, from a spec or a template. The spec must pass the draft checks (an activation check comes with 'activate'); a taken slug is SND-GRAPH-009.
-/// The 'workflow.created' event is written after the store accepts the workflow.
+/// The 'workflow.created' event is written after the store accepts the workflow. The draft check (it compiles every code node, seconds on a cold start) runs before the command gate; only the write takes it (#3571).
 /// </summary>
 /// <param name="workflows">The workflows.</param>
 /// <param name="checker">Builds the validator.</param>
 /// <param name="ids">Makes the workflow's id.</param>
 /// <param name="log">Writes the lifecycle event.</param>
-internal sealed class CreateWorkflowService(IWorkflowStore workflows, IWorkflowChecker checker, IIdGenerator ids, WorkflowChangeLog log) : IService<CreateWorkflowRequest, CreateWorkflowResponse>
+/// <param name="gate">The command gate, taken around the write only.</param>
+internal sealed class CreateWorkflowService(IWorkflowStore workflows, IWorkflowChecker checker, IIdGenerator ids, WorkflowChangeLog log, ICommandGate gate) : IService<CreateWorkflowRequest, CreateWorkflowResponse>
 {
     private static readonly HashSet<string> _reserved = new(["docs", "blocks"], StringComparer.Ordinal);
 
@@ -44,13 +46,24 @@ internal sealed class CreateWorkflowService(IWorkflowStore workflows, IWorkflowC
             return SindriErrors.GraphFindings.With(string.Join("; ", checkedSpec.Blocking.Select(static f => f.ToString())));
         }
 
+        return await WriteInGate(request, spec.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<CreateWorkflowResponse>> WriteInGate(CreateWorkflowRequest request, GraphSpec spec, CancellationToken cancellationToken)
+    {
+        using var hold = await gate.Enter(cancellationToken).ConfigureAwait(false);
+        if (hold is null)
+        {
+            return WorkflowWriteErrors.Busy;
+        }
+
         if (log.LeaseProblem() is { } down)
         {
             return down;
         }
 
         var id = WorkflowId.New(ids);
-        var created = await workflows.Create(id, request.Slug, spec.Value, request.By, cancellationToken).ConfigureAwait(false);
+        var created = await workflows.Create(id, request.Slug, spec, request.By, cancellationToken).ConfigureAwait(false);
         if (created.IsError)
         {
             return created.Error;

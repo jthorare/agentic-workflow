@@ -23738,3 +23738,6 @@ static Aw.Sindri.Core.Scheduling.MainMovePause.Active(Aw.Sindri.Core.Scheduling.
 static Aw.Sindri.Core.Scheduling.MainMovePause.Service.get -> Aw.Sindri.Core.Ids.ServiceName
 Aw.Sindri.Core.Doctor.IFirstMapCheck
 Aw.Sindri.Core.Doctor.IFirstMapCheck.Check(Aw.Sindri.Core.Profile.LoadedProfile? approved, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Doctor.DoctorCheck!>
+Aw.Sindri.Core.Graph.WorkflowWriteErrors
+static Aw.Sindri.Core.Graph.WorkflowWriteErrors.Busy.get -> Aw.Kernel.Error!
+static Aw.Sindri.Core.Graph.WorkflowWriteErrors.Stale(int latest, int baseRevision, string! what) -> Aw.Kernel.Error!

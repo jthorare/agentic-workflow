@@ -1,6 +1,6 @@
 using Aw.Kernel.Services;
-using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Validation;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.CreateWorkflow;
@@ -33,7 +33,7 @@ public sealed class CreateWorkflowGateTests
                 .AddSingleton<IWorkflowChecker>(slow)
                 .AddSingleton(new WorkflowChangeLog(h.Store, h.Held, h.Events, h.Callers))
                 .AddScoped<IValidator<CreateWorkflowRequest>, AcceptAllValidator<CreateWorkflowRequest>>()
-                .AddCommand<CreateWorkflowRequest, CreateWorkflowResponse, CreateWorkflowService>(),
+                .AddUngatedCommand<CreateWorkflowRequest, CreateWorkflowResponse, CreateWorkflowService>(),
             rows: WorkflowRows.All);
         _ = await chain.H.HoldLease();
         var create = chain.Run<CreateWorkflowRequest, CreateWorkflowResponse>(new CreateWorkflowRequest(WorkflowWriteRig.Slug, "manual-notify", Spec: null, "owner"), Human);
