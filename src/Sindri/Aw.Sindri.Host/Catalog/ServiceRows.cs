@@ -27,7 +27,7 @@ internal static class ServiceRows
             "POST", "/sindri/jobs/{jobId}/cancel", ShellRows.Form("sindri jobs cancel <jobId>"), "ready"),
         new(ActionId.From("StartSession"), typeof(StartSessionRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
-            "POST", "/sindri/sessions", ShellRows.Form("sindri agents start --repo <r> --agent <a> [--prompt T] [--worktree] [--act-id ID]"), "ready"),   // agents spec §15.8: human only, no SessionOk
+            "POST", "/sindri/sessions", ShellRows.Form("sindri agents start --repo <r> --agent <a> [--prompt <text>] [--worktree] [--act-id <id>]"), "ready"),   // agents spec §15.8: human only, no SessionOk
         new(ActionId.From("RemoveSessionWorktree"), typeof(RemoveSessionWorktreeRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: true, ReadsViews: false, Shortcut: null,
             "DELETE", "/sindri/sessions/{actId}/worktree", ShellRows.Form("sindri agents worktree remove <actId>"), "ready"),

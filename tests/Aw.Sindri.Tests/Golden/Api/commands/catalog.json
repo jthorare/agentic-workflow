@@ -1998,7 +1998,7 @@
       "terminal": false,
       "method": "POST",
       "route": "/sindri/sessions",
-      "cli": "sindri agents start --repo <r> --agent <a> [--prompt T] [--worktree] [--act-id ID]",
+      "cli": "sindri agents start --repo <r> --agent <a> [--prompt <text>] [--worktree] [--act-id <id>]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
