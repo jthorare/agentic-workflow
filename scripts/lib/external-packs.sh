@@ -2,7 +2,8 @@
 # scripts/lib/external-packs.sh — fetch_external_pack, sourced by setup.sh (and by scripts/tests/external-packs.test.sh).
 #
 # fetch_external_pack <owner/repo> <pin> [skills-subdir]
-#   pin           a commit SHA, or HEAD / empty to follow the upstream default branch on every run
+#   pin           a commit SHA, or a literal HEAD / empty to follow the upstream default branch on every run;
+#                 BAD:<KEY> (setup.sh's read_pin for an unparseable pin) keeps the current checkout and warns
 #   skills-subdir optional path inside the clone; when given, only its */SKILL.md dirs are linked.
 #                 Without it the pack's skills/ then .claude/skills/ is used.
 # Reads EXTERNAL_DIR; appends each skill dir to AW_EXTERNAL_SKILL_DIRS (one per line).
@@ -15,7 +16,7 @@ declare -F aw_run >/dev/null 2>&1 || aw_run() { if aw_dry; then echo "  [dry-run
 
 fetch_external_pack() {
   local repo="$1"          # e.g. pbakaus/impeccable
-  local pin="${2:-HEAD}"   # commit SHA, or HEAD to follow upstream
+  local pin="${2:-HEAD}"   # commit SHA, HEAD to follow upstream, or BAD:<KEY> to keep the checkout
   local subdir="${3:-}"    # optional skills dir inside the clone
   local target
   target="$EXTERNAL_DIR/$(basename "$repo")"
@@ -29,7 +30,9 @@ fetch_external_pack() {
         || { echo "  WARN: failed to clone $repo (non-fatal)"; return 0; }
     fi
     (cd "$target" && git fetch origin --quiet) || true
-    if [ -n "$pin" ] && [ "$pin" != "HEAD" ]; then
+    if [[ "$pin" == BAD:* ]]; then
+      echo "  WARN: ${pin#BAD:} in EXTERNAL_PINS.env is not a sha; keeping the current checkout"
+    elif [ -n "$pin" ] && [ "$pin" != "HEAD" ]; then
       (cd "$target" && git checkout "$pin" --quiet) 2>/dev/null \
         || echo "  WARN: pin $pin not found in $repo, using current HEAD"
     else

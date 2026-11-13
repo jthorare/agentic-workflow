@@ -63,6 +63,34 @@ AW_EXTERNAL_SKILL_DIRS=""
 fetch_external_pack "acme/legacy" "HEAD" >/dev/null 2>&1
 contains "no subdir arg finds .claude/skills" "$AW_EXTERNAL_SKILL_DIRS" "$EXTERNAL_DIR/legacy/.claude/skills/two"
 
+# --- 4b. a malformed pin keeps the checkout and warns ---
+G="$WORK/upstream/acme/garbage.git"; mkdir -p "$G/skills/three"; git -C "$G" init -q -b main
+echo "# three" > "$G/skills/three/SKILL.md"; commit_all "$G" first
+OLD="$(head_of "$G")"
+fetch_external_pack "acme/garbage" "$OLD" >/dev/null 2>&1
+echo y >> "$G/log.txt"; commit_all "$G" second
+out="$(fetch_external_pack "acme/garbage" "BAD:GARBAGE_PIN" 2>&1)"
+check "a garbage pin leaves the clone at its old commit" "$(head_of "$EXTERNAL_DIR/garbage")" "$OLD"
+contains "a garbage pin prints the WARN" "$out" "WARN: GARBAGE_PIN in EXTERNAL_PINS.env is not a sha; keeping the current checkout"
+rp="$(sed -n '/^  read_pin() {/,/^  }/p' "$ROOT/setup.sh")"
+contains "setup.sh read_pin returns BAD:<KEY> for a bad pin" "$rp" 'echo "BAD:$key"'
+
+# --- 4c. ui-sdk lands in every provider's skills dir, the contributor skill in none ---
+export TOOLKIT_DIR="$ROOT" AW_DRY_RUN=0
+unset AW_STATE_ROOT AW_STATE_DIR
+export CLAUDE_DIR="$WORK/pc/claude" CODEX_HOME="$WORK/pc/codex" CURSOR_DIR="$WORK/pc/cursor"
+source "$ROOT/providers/lib.sh"
+source "$ROOT/providers/claude/install.sh"; source "$ROOT/providers/codex/install.sh"; source "$ROOT/providers/cursor/install.sh"
+MANAGED_SKILLS=(); DEPRECATED_SKILLS=()
+AW_EXTERNAL_SKILL_DIRS=""
+fetch_external_pack "vercel-labs/ui" "HEAD" "packages/core/skills" >/dev/null 2>&1
+for pv in claude codex cursor; do
+  d="$("${pv}_skills_dir")"
+  aw_install_skills_into "$d" </dev/null >/dev/null 2>&1
+  check "$pv gets a ui-sdk link" "$(readlink "$d/ui-sdk")" "$EXTERNAL_DIR/ui/packages/core/skills/ui-sdk"
+  check "$pv gets no ui-sdk-write-code link" "$([ -e "$d/ui-sdk-write-code" ] || [ -L "$d/ui-sdk-write-code" ] && echo yes || echo no)" "no"
+done
+
 # --- 5. static checks ---
 setup_sh="$ROOT/setup.sh"
 call_line="$(grep -n 'fetch_external_pack "vercel-labs/ui" "HEAD" "packages/core/skills"' "$setup_sh" | head -1 | cut -d: -f1)"

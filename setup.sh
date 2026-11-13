@@ -460,7 +460,7 @@ if [ -f "$SCRIPT_DIR/EXTERNAL_PINS.env" ]; then
     if [[ "$value" =~ ^[0-9a-f]{7,40}$ ]] || [[ "$value" == "HEAD" ]]; then
       echo "$value"
     else
-      echo "HEAD"
+      echo "BAD:$key"   # a typo or a missing row must not unpin the pack: fetch_external_pack keeps the checkout
     fi
   }
   fetch_external_pack "pbakaus/impeccable"   "$(read_pin IMPECCABLE_PIN)"
