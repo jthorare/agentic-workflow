@@ -224,6 +224,20 @@ public sealed class NeedsYouOutlineTests : FrameHost
         await Task.CompletedTask;
     });
 
+    // #3506 round d: the frame draws its own ring, so the app-wide focus adorner (FluentOverrides, 2 px at Margin -4, clip off) must not draw a second one
+    // around it. In the app it did: a ring 4 px out, past the pane edge and into the next row. Queue's item-row nulls it the same way.
+    [Fact]
+    public Task An_inbox_row_has_no_focus_adorner_so_focus_draws_one_ring() => OnUi(async () =>
+    {
+        Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
+        var (window, rows) = FourRows();
+
+        Assert.All(rows, r => Assert.Null(r.Frame.FocusAdorner));
+        window.Close();
+        await Task.CompletedTask;
+    });
+
     // The ring takes 1 px more than the rest border, and the line's padding gives it back, so the content sits at the same place in all four states.
     [Fact]
     public Task An_inbox_rows_content_sits_at_the_same_place_in_all_four_states() => OnUi(async () =>
