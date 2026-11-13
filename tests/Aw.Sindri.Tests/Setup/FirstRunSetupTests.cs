@@ -45,12 +45,15 @@ public sealed class FirstRunSetupTests : IDisposable
         _rig.Harness.Profiles.Live = new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml");
     }
 
+    private ScriptedLaunchSetup _launch = new(SindriErrors.NotRunning.With("not used"), Report());
+
     private FirstRunSetup Setup(InMemoryWorkflowStore? workflows = null)
     {
         var store = workflows ?? _rig.Workflows;
+        _launch = new ScriptedLaunchSetup(SindriErrors.NotRunning.With("not used"), _agents);
         return new FirstRunSetup(
             _rig.Harness.Profiles,
-            new ScriptedLaunchSetup(SindriErrors.NotRunning.With("not used"), _agents),
+            _launch,
             _keys,
             Create(store),
             Activate(store),
@@ -234,6 +237,38 @@ public sealed class FirstRunSetupTests : IDisposable
         await Setup().Run(Token);
 
         Assert.Equal(["plan workflow.agent.target=codex", "save"], _keys.Calls);
+    }
+
+    // #3496 item 1: the launcher resolve is a login-shell call per agent binary. With no agent found, three ticks ask it once (it is asked again after a few more ticks, or when the PATH changes).
+    [Fact]
+    public async Task No_agent_found_is_remembered_so_the_launcher_is_asked_once_in_three_ticks()
+    {
+        _ = await _rig.Harness.HoldLease();
+        Profile(repos: "demo");
+        _agents = Report(("claude-code", null));
+        var setup = Setup();
+
+        await setup.Run(Token);
+        await setup.Run(Token);
+        await setup.Run(Token);
+
+        Assert.Equal(1, _launch.ShowCalls);
+    }
+
+    // #3496 item 3: a store that can't answer is "can't tell", not "not ours": the run is tried on the next tick.
+    [Fact]
+    public async Task A_workflow_list_that_fails_once_does_not_stop_hello_sindri_from_running_on_the_next_tick()
+    {
+        _ = await _rig.Harness.HoldLease();
+        Profile(repos: "demo");
+        var calls = 0;
+        _rig.Workflows.ListFault = () => ++calls == 2 ? SindriErrors.NotRunning.With("db busy") : null;   // call 1 is Activate's slug check, call 2 is the ownership read before the run
+        var setup = Setup();
+
+        await setup.Run(Token);
+        await setup.Run(Token);
+
+        Assert.Equal(["hello-sindri"], _runner.Started);
     }
 
     [Fact]
