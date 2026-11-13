@@ -37,7 +37,7 @@ internal sealed class StartRecord(IStartChoices choices, ILedgerStore ledger, He
         }
 
         var recorded = new AgentOpRecorded(AgentRowId.From("sindri-" + actId), "start", hash, started.Pane.Value, started.Worktree);
-        var entry = events.Entry(EventTypes.AgentOp, recorded, StartedSessions.Key(ActId.From(actId)));
+        var entry = events.Entry(EventTypes.AgentOp, recorded, AgentOpRecorded.KeyFor(ActId.From(actId)));
         _ = await ledger.Append(entry, grant, CancellationToken.None).ConfigureAwait(false);   // the session is running: a ledger that is down loses the durable copy, not the start
     }
 }

@@ -4,25 +4,20 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Ledger;
 
-namespace Aw.Sindri.Features.StartSession;
+namespace Aw.Sindri.Infrastructure.Launch;
 
 /// <summary>
 /// The one-off sessions this process started, by act id (agents spec §15.8): the stored answer of a 2xx start and the worktree it made. The 'agent.op' event keyed by the act id is the durable copy; this
-/// map answers a replay and a worktree remove without reading the ledger, and a miss after a restart reads it back once. It reads the ledger, so it lives here and not in Core.Launch (a Launch -> Ledger edge closes a Core namespace cycle, ARCH-CYCLE-001).
+/// map answers a replay and a worktree remove without reading the ledger, and a miss after a restart reads it back once. It reads the ledger, so the port is Core.Launch's IStartedSessions and this adapter lives here (a Core.Launch -> Ledger edge closes ARCH-CYCLE-001; a Features home would cross slices, AW1003).
 /// </summary>
 /// <param name="ledger">Reads the event back after a restart.</param>
 /// <param name="events">Reads the payload.</param>
-internal sealed class StartedSessions(ILedgerStore ledger, EventFactory events)
+internal sealed class StartedSessions(ILedgerStore ledger, EventFactory events) : IStartedSessions
 {
     private const int Page = 500;
 
     private readonly ConcurrentDictionary<string, StartedEntry> _byAct = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _gates = new(StringComparer.Ordinal);
-
-    /// <summary>The idempotency key of the act id's 'agent.op' event.</summary>
-    /// <param name="actId">The act id.</param>
-    /// <returns>The key.</returns>
-    public static string Key(ActId actId) => $"{EventTypes.AgentOp}:{actId.Value}";
 
     /// <summary>Holds the act id's gate: two calls with one act id run one after the other, so the second sees the first's result. Dispose releases it.</summary>
     public async ValueTask<IDisposable> Enter(ActId actId, CancellationToken cancellationToken)
@@ -48,7 +43,7 @@ internal sealed class StartedSessions(ILedgerStore ledger, EventFactory events)
             return known;
         }
 
-        var key = Key(actId);
+        var key = AgentOpRecorded.KeyFor(actId);
         var after = 0L;
         while (true)
         {

@@ -3,6 +3,7 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Features.RemoveSessionWorktree;
 using Aw.Sindri.Features.StartSession;
+using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Tests.StartSession;
 
 namespace Aw.Sindri.Tests.RemoveSessionWorktree;

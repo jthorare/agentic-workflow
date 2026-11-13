@@ -2,8 +2,8 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Worktrees;
-using Aw.Sindri.Features.StartSession;
 
 namespace Aw.Sindri.Features.RemoveSessionWorktree;
 
@@ -14,7 +14,7 @@ namespace Aw.Sindri.Features.RemoveSessionWorktree;
 /// <param name="book">The stored starts.</param>
 /// <param name="worktrees">Removes the worktree.</param>
 /// <param name="callers">The caller: only the person may remove it.</param>
-internal sealed class RemoveSessionWorktreeService(StartedSessions book, IOneOffWorktrees worktrees, ICallerContextAccessor callers) : IService<RemoveSessionWorktreeRequest, RemovedWorktree>
+internal sealed class RemoveSessionWorktreeService(IStartedSessions book, IOneOffWorktrees worktrees, ICallerContextAccessor callers) : IService<RemoveSessionWorktreeRequest, RemovedWorktree>
 {
     public async ValueTask<Result<RemovedWorktree>> Handle(RemoveSessionWorktreeRequest request, CancellationToken cancellationToken)
     {

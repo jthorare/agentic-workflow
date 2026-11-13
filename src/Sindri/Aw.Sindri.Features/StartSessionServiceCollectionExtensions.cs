@@ -20,7 +20,6 @@ internal static class StartSessionServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         return services
-            .AddSingleton<StartedSessions>()
             .AddScoped<StartPreflight>().AddScoped<StartLaunch>().AddScoped<StartRecord>()
             .AddScoped<IValidator<GetLastStartRequest>, AcceptAllValidator<GetLastStartRequest>>().AddQuery<GetLastStartRequest, LastStartView, GetLastStartService>()
             .AddScoped<IValidator<StartSessionRequest>, AcceptAllValidator<StartSessionRequest>>().AddUngatedCommand<StartSessionRequest, StartedSession, StartSessionService>()

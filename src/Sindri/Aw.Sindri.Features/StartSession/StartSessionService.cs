@@ -19,7 +19,7 @@ namespace Aw.Sindri.Features.StartSession;
 /// <param name="panes">The socket of the started session.</param>
 /// <param name="book">The stored starts.</param>
 /// <param name="callers">The caller: only the person may start an agent (agents spec §15.2).</param>
-internal sealed partial class StartSessionService(StartPreflight preflight, StartLaunch launch, StartRecord record, ISessionPanes panes, StartedSessions book, ICallerContextAccessor callers)
+internal sealed partial class StartSessionService(StartPreflight preflight, StartLaunch launch, StartRecord record, ISessionPanes panes, IStartedSessions book, ICallerContextAccessor callers)
     : IService<StartSessionRequest, StartedSession>
 {
     internal const int MaxPrompt = 8000;
