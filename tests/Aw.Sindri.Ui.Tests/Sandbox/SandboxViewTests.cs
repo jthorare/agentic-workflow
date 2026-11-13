@@ -168,7 +168,7 @@ public sealed class SandboxViewTests
 
         Assert.Equal(("not checked", StateGlyph.Stale, true), (word.Text, mark.Glyph, mark.IsEffectivelyVisible && markBox.Width > 0 && markBox.Height > 0));
         Assert.Equal(8, wordBox.X - markBox.Right, 0.5);
-        Assert.Equal(markBox.Center.Y, wordBox.Center.Y, 1);
+        Assert.Equal(markBox.Center.Y, wordBox.Center.Y, 1.0);   // within 1 px (a tolerance, not decimal places)
     });
 
     [Fact]
