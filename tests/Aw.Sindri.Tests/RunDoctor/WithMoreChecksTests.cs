@@ -64,7 +64,7 @@ public sealed class WithMoreChecksTests
         var seen = new List<string>();
         var doctor = new WithMoreChecks(new Core([_ok], exitCode: 0), [new More(new DoctorCheck("fast", CheckState.Ok, "ok", Fix: null)), new Slow()]);
 
-        await doctor.Handle(new RunDoctorRequest { Cap = TimeSpan.FromMilliseconds(200), OnRow = row => { lock (seen) { seen.Add(row.Name); } } }, TestContext.Current.CancellationToken);
+        _ = await doctor.Handle(new RunDoctorRequest { Cap = TimeSpan.FromMilliseconds(200), OnRow = row => { lock (seen) { seen.Add(row.Name); } } }, TestContext.Current.CancellationToken);
 
         Assert.Equal(["lease", "fast", "Slow"], seen, StringComparer.Ordinal);   // why: the order is stable, and the capped check no longer holds back the row before it
     }

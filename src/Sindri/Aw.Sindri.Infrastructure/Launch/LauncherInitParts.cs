@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 
@@ -21,5 +22,5 @@ internal sealed record LauncherInitParts(ReloadingAgentCatalog Catalog, Detectio
     public Func<string, CancellationToken, ValueTask<string?>> ResolveBin { get; init; } = BinResolver.Resolve;
 
     /// <summary>Takes how long each part of <c lang="text">show</c> ran (#3390); null records nothing.</summary>
-    public Aw.Sindri.Core.Doctor.IPartTimer? Timer { get; init; }
+    public IPartTimer? Timer { get; init; }
 }
