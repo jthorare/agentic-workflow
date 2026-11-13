@@ -72,7 +72,7 @@ public sealed class ContextMcpTests : IDisposable
     {
         // why: the MCP page is also the fetch window (#3370, ContextTools.CallQuery); without it the call read every match and cut the page afterwards
         var ct = TestContext.Current.CancellationToken;
-        PlantMany(_repo, "docs/window", 30, i => $"# Window note {i}\n\nThe pane orientation toggle, window note {i}.\n");
+        PlantMany(_repo, "docs/window", 30, i => string.Create(CultureInfo.InvariantCulture, $"# Window note {i}\n\nThe pane orientation toggle, window note {i}.\n"));
         await using var host = await ContextHosts.Approved(_repo, sessions: true, ct);
         await using var mcp = await McpSession.Open(host, "split-panes", ct);
 
