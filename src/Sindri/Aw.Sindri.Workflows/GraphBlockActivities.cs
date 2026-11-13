@@ -116,7 +116,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         }
 
         var scrubbed = (redactor ?? Redactor.Default).Scrub(text);
-        return scrubbed.IsBlocked ? JsonValue.Create(BlockedMarker)!.ToJsonString() : scrubbed.Text;
+        return scrubbed.IsBlocked ? JsonValue.Create(BlockedMarker).ToJsonString() : scrubbed.Text;
     }
 
     private const string BlockedMarker = "[blocked by the redactor]";
