@@ -2,8 +2,10 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Headless;
 using Avalonia.Threading;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels.Settings;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views;
 using Aw.Sindri.Ui.Views.Shell;
@@ -109,6 +111,54 @@ public sealed class StartupTests : IDisposable
             await instance.DisposeAsync();
         }
     });
+
+    // The real start path: a palette Settings entry run through the app's shell must reach the Settings page's filter (#3362). Deleting the SindriApp line that joins them turns it red.
+    private async Task RunTextSizeEntry(Func<ShellViewModel, SettingsViewModel, Task>? before = null)
+    {
+        var instance = new FakeSingleInstance(_channel);
+        Assert.True(await instance.TryClaim(Token));
+        _ = Start(instance);
+        await Until(() => _desktop.MainWindow is { IsVisible: true } && _tray.Shown is not null);
+
+        try
+        {
+            var window = Assert.IsType<ShellWindow>(_desktop.MainWindow);
+            var shell = Assert.IsType<ShellViewModel>(window.DataContext);
+            var settings = Assert.IsType<SettingsViewModel>(Assert.IsType<SettingsView>(window.SettingsSlot.Content).DataContext);
+            if (before is not null)
+            {
+                await before(shell, settings);
+            }
+
+            shell.Palette.Open();
+            await shell.Palette.Run(shell.Palette.Entries.Single(static e => string.Equals(e.Id, "setting:TextSize", StringComparison.Ordinal)), Token);
+
+            Assert.Equal(PageId.Settings, shell.CurrentPage);
+            Assert.Equal("text size", settings.Filter);
+        }
+        finally
+        {
+            Quit();
+            await instance.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public Task A_palette_Text_size_entry_shows_Settings_filtered_through_the_real_start_up() => OnUi(() => RunTextSizeEntry());
+
+    [Fact]
+    public Task A_palette_Text_size_entry_with_Settings_already_open_still_sets_the_filter() => OnUi(() => RunTextSizeEntry((shell, _) =>
+    {
+        shell.GoTo(PageId.Settings);
+        return Task.CompletedTask;
+    }));
+
+    [Fact]
+    public Task A_palette_Text_size_entry_replaces_a_filter_that_already_has_text() => OnUi(() => RunTextSizeEntry((_, settings) =>
+    {
+        settings.Filter = "linear";
+        return Task.CompletedTask;
+    }));
 
     // A start-up that throws is never silent: the app logs the code and the exception's type (no message, no stack),
     // and ends with exit code 2 instead of lingering without a window or tray.

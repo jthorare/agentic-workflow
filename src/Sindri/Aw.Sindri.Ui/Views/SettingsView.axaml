@@ -10,12 +10,27 @@
              x:DataType="vm:SettingsViewModel">
   <!-- Settings (UI spec §3.3 ⌘,, §11.4, §14.2; setup spec §2.4): the setup checklist first, then this app's own preferences. The shell hosts it as its Settings page, inside
        the page region's own margin and scroll viewer, so it adds neither (its title lines up with every other page's). -->
+  <UserControl.Styles>
+    <!-- Reset beside a changed setting: a quiet caption-size word, not a boxed button; the label brightens under the pointer. -->
+    <Style Selector="Button.reset">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="MinHeight" Value="0" />
+      <Setter Property="Padding" Value="6,2" />
+      <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.InkMuted}" />
+    </Style>
+    <Style Selector="Button.reset:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.reset:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    </Style>
+  </UserControl.Styles>
   <StackPanel Spacing="{StaticResource Space.LG}" MinWidth="480">
     <TextBlock x:Name="TitleText" Classes="page-title" Focusable="True" Text="{Binding Title}"
                AutomationProperties.Name="{Binding Title}" AutomationProperties.HeadingLevel="1" />
 
     <!-- The filter box (#3362): typing keeps the sections whose words match; Ctrl+, lands the cursor here; Esc clears it. -->
-    <TextBox x:Name="SettingsFilterBox" Width="360" HorizontalAlignment="Left" Text="{Binding Filter, Mode=TwoWay}" PlaceholderText="{Binding FilterPlaceholder}" PlaceholderForeground="{DynamicResource Brush.InkMuted}" KeyDown="OnFilterKey"
+    <TextBox x:Name="SettingsFilterBox" Width="360" HorizontalAlignment="Left" Text="{Binding Filter, Mode=TwoWay}" PlaceholderText="{Binding FilterPlaceholder}" PlaceholderForeground="{DynamicResource Brush.Ink}" KeyDown="OnFilterKey"
              AutomationProperties.Name="{Binding FilterPlaceholder}" />
     <StackPanel x:Name="SettingsNoMatch" IsVisible="{Binding HasNoMatch}" Spacing="{StaticResource Space.XXS}" HorizontalAlignment="Left">
       <Border x:Name="SettingsNoMatchName" AutomationProperties.Name="{Binding NoMatchText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
@@ -114,15 +129,22 @@
         <!-- Reduce motion: the switch, and a note while the OS already reduces motion (§11.4). -->
         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.MD}">
           <StackPanel VerticalAlignment="Center" Spacing="{StaticResource Space.XXS}">
-            <TextBlock x:Name="ReduceMotionText" Classes="body-strong" Text="{Binding ReduceMotionLabel}"
-                       AutomationProperties.Name="{Binding ReduceMotionLabel}" />
+            <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}" MinHeight="24" VerticalAlignment="Center">
+              <TextBlock x:Name="ReduceMotionText" Classes="body-strong" VerticalAlignment="Center" Text="{Binding ReduceMotionLabel}"
+                         AutomationProperties.Name="{Binding ReduceMotionLabel}" />
+              <Border x:Name="ReduceMotionChanged" Classes="status-chip" IsVisible="{Binding ReduceMotionChanged}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+                <TextBlock Text="{Binding ChangedMark}" />
+              </Border>
+              <Button x:Name="ReduceMotionReset" Classes="reset" Content="{Binding ResetLabel}" Click="OnResetMotion" IsVisible="{Binding ReduceMotionChanged}" VerticalAlignment="Center"
+                      AutomationProperties.Name="{Binding ResetMotionName}" />
+            </StackPanel>
             <TextBlock x:Name="SystemMotionText" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}"
                        Text="{Binding SystemReducesMotionNote}" IsVisible="{Binding SystemReducesMotion}"
                        AutomationProperties.Name="{Binding SystemReducesMotionNote}" />
           </StackPanel>
           <ToggleSwitch x:Name="ReduceMotionSwitch" Grid.Column="1" VerticalAlignment="Center"
                         IsChecked="{Binding ReduceMotion, Mode=TwoWay}"
-                        AutomationProperties.Name="{Binding ReduceMotionLabel}" />
+                        AutomationProperties.Name="{Binding ReduceMotionName}" />
         </Grid>
 
         <Border Height="1" Background="{DynamicResource Brush.Hairline}" />
@@ -130,15 +152,22 @@
         <!-- Text size: the type ramp's scale, 90–130% (§14.2). -->
         <StackPanel Spacing="{StaticResource Space.XS}">
           <Grid ColumnDefinitions="*,Auto">
-            <TextBlock x:Name="TextSizeText" Classes="body-strong" Text="{Binding TextSizeLabel}"
-                       AutomationProperties.Name="{Binding TextSizeLabel}" />
+            <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}" MinHeight="24" VerticalAlignment="Center">
+              <TextBlock x:Name="TextSizeText" Classes="body-strong" VerticalAlignment="Center" Text="{Binding TextSizeLabel}"
+                         AutomationProperties.Name="{Binding TextSizeName}" />
+              <Border x:Name="TextSizeChanged" Classes="status-chip" IsVisible="{Binding TextScaleChanged}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+                <TextBlock Text="{Binding ChangedMark}" />
+              </Border>
+              <Button x:Name="TextSizeReset" Classes="reset" Content="{Binding ResetLabel}" Click="OnResetTextSize" IsVisible="{Binding TextScaleChanged}" VerticalAlignment="Center"
+                      AutomationProperties.Name="{Binding ResetTextSizeName}" />
+            </StackPanel>
             <TextBlock x:Name="TextScaleValueText" Grid.Column="1" Classes="body" Foreground="{DynamicResource Brush.InkMuted}"
                        Text="{Binding TextScaleText}" AutomationProperties.Name="{Binding TextScaleText}" />
           </Grid>
           <Slider x:Name="TextScaleSlider" Minimum="{Binding MinTextScale}" Maximum="{Binding MaxTextScale}"
                   Value="{Binding TextScale, Mode=TwoWay}" TickFrequency="0.1" TickPlacement="BottomRight" IsSnapToTickEnabled="True"
                   SmallChange="0.1" LargeChange="0.1"
-                  AutomationProperties.Name="{Binding TextSizeLabel}" />
+                  AutomationProperties.Name="{Binding TextSizeName}" />
           <!-- 90%, 100% and 130% under their marks: on the 0.9–1.3 track 1.0 sits a quarter of the way along. -->
           <Grid ColumnDefinitions="*,*,*,*" Margin="0,-4,0,0">
             <TextBlock Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" HorizontalAlignment="Left"

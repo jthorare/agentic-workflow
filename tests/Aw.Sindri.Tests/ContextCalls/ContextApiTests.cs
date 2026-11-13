@@ -73,6 +73,30 @@ public sealed class ContextApiTests : IDisposable
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
+    public async Task A_window_reads_its_page_and_counts_every_match_and_a_bad_window_is_006()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var host = await Approved(sessions: false, ct);
+
+        var page = await host.Http.Ask(Get("/sindri/context/query?q=orientation%20toggle&limit=1", Human(host.Token.Value)));
+        var whole = await host.Http.Ask(Get("/sindri/context/query?q=orientation%20toggle", Human(host.Token.Value)));
+        var zero = await host.Http.Ask(Get("/sindri/context/query?q=orientation&limit=0", Human(host.Token.Value)));
+        var negative = await host.Http.Ask(Get("/sindri/context/query?q=orientation&offset=-1", Human(host.Token.Value)));
+        var word = await host.Http.Ask(Get("/sindri/context/query?q=orientation&limit=ten", Human(host.Token.Value)));
+
+        Assert.Equal(HttpStatusCode.OK, page.Status);
+        using var paged = JsonDocument.Parse(page.Body);
+        var matches = paged.RootElement.GetProperty("matches");
+        Assert.Equal((0, 1), (matches.GetProperty("offset").GetInt32(), matches.GetProperty("read").GetInt32()));
+        Assert.True(matches.GetProperty("matched").GetInt32() >= 1);
+        using var all = JsonDocument.Parse(whole.Body);
+        Assert.False(all.RootElement.TryGetProperty("matches", out _));   // no window: every match is read and nothing is counted apart
+        Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (zero.Status, zero.Code));
+        Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (negative.Status, negative.Code));
+        Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (word.Status, word.Code));
+    }
+
+    [Fact(Timeout = 60_000), Trait("Lane", "integration")]
     public async Task Neither_the_question_nor_record_text_reaches_a_log_line()
     {
         var ct = TestContext.Current.CancellationToken;

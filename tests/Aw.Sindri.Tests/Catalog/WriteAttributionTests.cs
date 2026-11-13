@@ -27,6 +27,8 @@ public sealed class WriteAttributionTests
     private static readonly Dictionary<string, string> _notSwept = new(StringComparer.Ordinal)
     {
         ["POST /sindri/stop"] = "stops the host, so the ledger can't be read after it; its actor is covered by the stop tests",
+        ["POST /sindri/sessions"] = "the person's only (agents spec A7, #3380): a launched session gets SND-AUTH-002 and appends nothing; StartSessionTests covers the person's agent.op",
+        ["DELETE /sindri/sessions/{actId}/worktree"] = "the person's only (agents spec A7, #3380): a launched session gets SND-AUTH-002 and appends nothing; RemoveSessionWorktreeTests covers the person's agent.op",
         ["POST /sindri/linear/connection"] = "a connection setting outside PR 2's list (LinearConnectionRules): the owner's",
         ["DELETE /sindri/linear/connection/write"] = "a connection setting outside PR 2's list (LinearConnectionRules): the owner's",
         ["POST /sindri/views/rebuild"] = "replays the ledger into views.db: it appends no event",
@@ -38,6 +40,9 @@ public sealed class WriteAttributionTests
         ["POST /sindri/workflows/{slug}/test"] = "a Workflows page P0 stub (#3191): refuses SND-GRAPH-119 and writes no event until the test phase builds it",
         ["POST /sindri/workflows/{slug}/pins"] = "a Workflows page P0 stub (#3191): refuses SND-GRAPH-119 and writes no event until the pins phase builds it",
         ["POST /sindri/workflows/validate"] = "checks a stored spec and returns its findings (ValidateWorkflowService): stores nothing and writes no event",
+        ["POST /sindri/setup/skip"] = "edits the live profile file (setup.skipAccounts, setup.skipFirstWorkflow) through the profile key writer, like todos/note/set: writes no ledger event",
+        ["POST /sindri/restart"] = "a stub until the restart commit (first-run spec decision 11): it stops the host, so the ledger can't be read after it, and refuses a caller without the human token",
+        ["POST /sindri/setup/accounts/{provider}"] = "a stub until the accounts commit (first-run spec A8): it refuses a caller without the human token and writes to the secret store and the profile, not the ledger",
     };
 
     // Write routes that do append events but whose caller is proven another way than a launched session's header; not swept here.

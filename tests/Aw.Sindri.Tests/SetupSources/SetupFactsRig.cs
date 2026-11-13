@@ -27,7 +27,7 @@ internal sealed class SetupFactsRig : IAsyncDisposable
         Host = host ?? new FakeProviderHost().WithoutProvider(Core.Mcp.ProviderFile.Codex).WithoutProvider(Core.Mcp.ProviderFile.Cursor);
         Engine = MapEngineProxy.Create();
         Facts = new SetupFacts(
-            new ProfileSetupReader(Profiles, new Core.Setup.RepoGitCache(Inspector, Clock), new NoProfileFile()),
+            new ProfileSetupReader(Profiles, new Core.Setup.RepoGitCache(Inspector, Clock), new NoProfileFile(), new Testing.Workflow.InMemoryWorkflowStore(Clock), new Testing.Workflow.InMemoryWorkflowRunStore(Clock)),
             Sources(new PointerSecrets(name => Env.GetValueOrDefault(name), new FakeToolRunner(ToolRun.Missing))),
             new McpSetupReader(Profiles, Host, Jobs, Queue),
             new MapSetupReader(Profiles, Engine.Proxy, Jobs));
@@ -150,7 +150,7 @@ internal sealed class SetupFactsRig : IAsyncDisposable
     }
 
     // The rig's profile source answers from memory, so there is never a file on disk.
-    private sealed class NoProfileFile : IProfileFile
+    internal sealed class NoProfileFile : IProfileFile
     {
         public bool Exists() => false;
     }
