@@ -19,7 +19,8 @@ namespace Aw.Sindri.Features.RunWorkflow;
 /// <param name="starter">Starts, queues or skips the run.</param>
 /// <param name="launches">Which run launched a session; the loop guard (SND-GRAPH-109) reads it.</param>
 /// <param name="callers">The caller; its launch is the session the guard looks up.</param>
-internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter, IGraphLaunchRuns launches, ICallerContextAccessor callers) : IService<RunWorkflowRequest, RunWorkflowResponse>
+/// <param name="clock">Red stub: taken, not read yet.</param>
+internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter, IGraphLaunchRuns launches, ICallerContextAccessor callers, TimeProvider clock) : IService<RunWorkflowRequest, RunWorkflowResponse>
 {
     private const string TriggerKind = "manual";
     private const int Page = 200;
@@ -63,6 +64,7 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
             return revision.Error;
         }
 
+        _ = clock;   // red stub: the clock is taken, not read yet (#3569 red check only)
         var trigger = new JsonObject { ["kind"] = TriggerKind, ["payload"] = payload.Value, ["by"] = request.By }.ToJsonString();
         return await Start(new Trigger(record, revision.Value, trigger), cancellationToken).ConfigureAwait(false);
     }
