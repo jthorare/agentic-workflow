@@ -226,11 +226,8 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         ? Failed(config, SindriErrors.GraphReferenceToContinuedFailure.With($"'{node}' failed and continued, so '{{{{{reference}}}}}' has no value"))
         : null;
 
-    private static GraphBlockOutcome? Cut(GraphNodeScope scope, JsonObject config) => scope.Cut is { } cut
-        ? Failed(config, SindriErrors.GraphOutputTruncated.With($"the output of '{cut}' was cut at 64 KB; refer to a smaller field"))
-        : scope.Blocked is { } blocked
-            ? Failed(config, SindriErrors.GraphOutputTruncated.With($"the output of '{blocked}' was blocked by the redactor"))
-            : null;
+    private static GraphBlockOutcome? Cut(GraphNodeScope scope, JsonObject config) =>
+        StoredJson.ReadFailure(scope, loopCutNode: null) is { } failure ? Failed(config, failure) : null;
 
     private static GraphBlockOutcome Failed(JsonObject? input, Kernel.Error error) =>
         new(NodeRunStatus.Failed, Fit(input?.ToJsonString()), Output: null, [], NodeRunLimits.Cap($"{error.Code}: {error.Message}", out _));

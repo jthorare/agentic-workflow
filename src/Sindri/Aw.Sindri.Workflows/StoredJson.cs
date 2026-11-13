@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
@@ -49,6 +50,22 @@ internal static class StoredJson
     /// <returns>Whether the redactor blocked it.</returns>
     internal static bool IsBlocked(JsonNode? node) =>
         node is JsonValue v && v.TryGetValue<string>(out var s) && string.Equals(s, BlockedMarker, StringComparison.Ordinal);
+
+    /// <summary>Why a reference read a value that is not there: a node's output was cut at 64 KB or blocked by the redactor. The one place both the block and the run_agent paths ask.</summary>
+    /// <param name="scope">The scope the node's references were read through.</param>
+    /// <param name="loopCutNode">The node whose cut output hid a loop's list, or null.</param>
+    /// <returns>The failure, or null when every reference read a value.</returns>
+    internal static Kernel.Error? ReadFailure(GraphNodeScope scope, string? loopCutNode)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        var cut = loopCutNode ?? scope.Cut;
+        if (cut is not null)
+        {
+            return SindriErrors.GraphOutputTruncated.With($"the output of '{cut}' was cut at 64 KB; refer to a smaller field");
+        }
+
+        return scope.Blocked is { } blocked ? SindriErrors.GraphOutputTruncated.With($"the output of '{blocked}' was blocked by the redactor") : null;
+    }
 
     /// <summary>
     /// Keeps a block's input or output under Temporal's 2 MB payload limit and the store's 64 KB cap. A text over the cap becomes

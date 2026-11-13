@@ -37,16 +37,11 @@ internal sealed class AgentNodeLaunching(AgentNodeReading reading, IWorkflowStor
         ArgumentNullException.ThrowIfNull(node);
         var read = await reading.Read(node, cancellationToken).ConfigureAwait(false);
         var row = read.Run;
-        if (read.CutNode is { } cutNode)
-        {
-            return Failed("{}", SindriErrors.GraphOutputTruncated.With($"the output of '{cutNode}' was cut at 64 KB; refer to a smaller field"));
-        }
-
         var config = read.Config;
         var input = config.ToJsonString();
-        if (read.Scope.Cut is { } cut)
+        if (StoredJson.ReadFailure(read.Scope, read.CutNode) is { } unreadable)
         {
-            return Failed(input, SindriErrors.GraphOutputTruncated.With($"the output of '{cut}' was cut at 64 KB; refer to a smaller field"));
+            return Failed(read.CutNode is null ? input : "{}", unreadable);   // why: a cut or blocked output the references read, or the list a loop needs
         }
 
         var parsed = RunAgentConfig.Parse(config);

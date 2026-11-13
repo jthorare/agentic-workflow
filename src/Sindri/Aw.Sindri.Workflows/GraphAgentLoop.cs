@@ -200,8 +200,8 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
             output[name] = value?.DeepClone();
         }
 
-        // note: a run_agent outcome never goes through StoredJson.Fit; the store's own 64 KB cap applies (it sets 'Truncated', which readers check first), so this output can be cut mid-string (#3419)
-        return new GraphBlockOutcome(NodeRunStatus.Succeeded, input, output.ToJsonString(), result.Taken, Error: null);
+        // why: Fit keeps an output over 64 KB as parseable JSON; the walk then records the node with 'Truncated' set (#3419)
+        return new GraphBlockOutcome(NodeRunStatus.Succeeded, input, StoredJson.Fit(output.ToJsonString()), result.Taken, Error: null);
     }
 
     // Waits for the report, the end of the session or the timeout, whichever comes first. The timeout runs only while nobody holds the node: a takeover stops its clock and a handback
