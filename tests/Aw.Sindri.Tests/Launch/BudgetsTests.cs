@@ -117,4 +117,26 @@ public sealed class BudgetsTests
 
         Expect.Equal((LaunchBudgetState.Soft, SpendBasis.PriceTable, 0.8m), (total.State, total.Basis, total.Fraction));
     }
+
+    [Fact]
+    public void The_total_is_counting_when_a_target_with_a_budget_is_counting()
+    {
+        var agents = Agents(10m);
+
+        var total = Budgets.Total(agents, [Budgets.Counting(agents, _claude), Budgets.For(agents, AgentId.From("codex"), Spent(2m))]);
+
+        Expect.Equal(LaunchBudgetState.Counting, total.State);
+    }
+
+    [Fact]
+    public void A_counting_target_has_no_spend_and_without_a_budget_stays_none()
+    {
+        var withBudget = Budgets.Counting(Agents(10m), _claude);
+        var without = Budgets.Counting(agents: null, _claude);
+
+        Expect.Equal((LaunchBudgetState.Counting, 10m, 0L), (withBudget.State, withBudget.DailyUsd, withBudget.Tokens));
+        Assert.Null(withBudget.SpentUsd);
+        Assert.Null(withBudget.Fraction);
+        Expect.Equal(LaunchBudgetState.None, without.State);
+    }
 }
