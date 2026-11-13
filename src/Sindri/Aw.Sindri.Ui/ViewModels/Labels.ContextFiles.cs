@@ -146,7 +146,7 @@ internal static partial class Labels
     /// <param name="done">Files read.</param>
     /// <param name="total">Files to read.</param>
     /// <returns>"4 of 7 files of the current repo".</returns>
-    internal static string ContextBuildingFiles(int done, int total) => string.Create(CultureInfo.InvariantCulture, $"{done} of {total} {(total == 1 ? "file" : "files")} of the current repo");
+    internal static string ContextBuildingFiles(int done, int total) => string.Create(CultureInfo.InvariantCulture, $"{done:N0} of {total:N0} {(total == 1 ? "file" : "files")} of the current repo");
 
     /// <summary>When a build started.</summary>
     /// <param name="age">How long ago.</param>
