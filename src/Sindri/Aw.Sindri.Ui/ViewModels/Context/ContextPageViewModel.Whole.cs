@@ -75,7 +75,21 @@ internal sealed partial class ContextPageViewModel
         }
 
         _rereadNumber = number;   // a repo whose numbers differ from the answer's is read once per version, never in a loop
+        if (OpenedConceptId is null && !Concepts.HasConcepts)
+        {
+            await ReadConceptsOfNewer(cancellationToken).ConfigureAwait(true);
+            return;
+        }
+
         await ReadWhole(followed: number, cancellationToken).ConfigureAwait(true);
+    }
+
+    // The map drawn had no concepts (#3261): a newer version may have them, so the page starts over like a first open, concepts first, and falls back to the whole map when there are still none.
+    private Task ReadConceptsOfNewer(CancellationToken cancellationToken)
+    {
+        Whole.LeaveConcept();   // clears the drawn map, so the concept layer is not shown beside it
+        ChangedWhole();
+        return OpenFirst(cancellationToken);
     }
 
     /// <summary>The page was shown: the whole map is read once, with no starting point.</summary>
