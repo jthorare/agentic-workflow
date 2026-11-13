@@ -67,6 +67,11 @@ internal sealed partial class ContextPageViewModel
             yield return Labels.ContextBuildingSources(done, total);
         }
 
+        if (_notReady.Building is { FilesDone: { } filesDone, FilesTotal: { } filesTotal })
+        {
+            yield return Labels.ContextBuildingFiles(filesDone, filesTotal);
+        }
+
         if ((_notReady.Building?.StartedAt ?? _notReady.NoMap?.FirstRunStartedAt) is { } started)
         {
             yield return Labels.ContextBuildingStarted(Age(started));

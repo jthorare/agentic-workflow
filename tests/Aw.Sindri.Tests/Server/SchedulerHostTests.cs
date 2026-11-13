@@ -194,6 +194,20 @@ public sealed class SchedulerHostTests
         Assert.Equal(ran.Count, Runs("heartbeat").Select(r => r.CommandId).Distinct().Count());   // each run is its own command
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_run_that_finds_the_command_gate_busy_is_retried_on_the_next_beat_and_never_recorded_failed()
+    {
+        // #3553: on a fresh start a service's first command lost the gate to start-up work (SND-API-009) and the run was recorded failed, so health read Degraded
+        _ = await _h.Profiles.Save(SliceHarness.ProfileOf("thor", ("tidy", "1h"), ("heartbeat", "5s")), Token);
+        _ = await _h.HoldLease();
+        var tidy = new ScriptedService(ScriptedService.Busy, ScriptedService.Worked);
+
+        await Run(new CountingApprovals(_h.Profiles), () => tidy.Runs >= 2 && Runs("tidy").Count >= 1, tidy);   // a 1 h cadence: only a retry runs it twice within 60 s
+
+        Assert.Equal([ServiceOutcome.Ok], Runs("tidy").Select(r => r.Outcome));
+        Assert.DoesNotContain(_log.Lines, l => l.Contains("SND-SCHED-001 service 'tidy'", StringComparison.Ordinal));
+    }
+
     private List<ServiceRan> Runs(string service) => [.. _h.Store.Events
         .Where(e => e.Envelope.Type == EventTypes.ServiceRan)
         .Select(e => _h.Events.Payload<ServiceRan>(e).Value)

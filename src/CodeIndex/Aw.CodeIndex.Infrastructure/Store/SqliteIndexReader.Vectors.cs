@@ -11,7 +11,7 @@ internal sealed partial class SqliteIndexReader
     // Paths per IN list: far under SQLite's bound-parameter limit, so a 2,000-path read is ten statements.
     private const int VectorPathBatch = 200;
 
-    private const string VectorsHead = "SELECT s.ref, s.kind, s.name, s.file, e.vector FROM symbols s JOIN embeddings e ON e.symbol_id = s.id WHERE e.model = $model AND s.file IN (";
+    private const string VectorsHead = "SELECT s.ref, s.kind, s.name, s.file, e.vector FROM symbols s JOIN embeddings e ON e.symbol_id = s.id WHERE e.model = $model AND length(e.vector) > 0 AND s.file IN (";
 
     private const string VectorsTail = ") ORDER BY s.file, s.start_line, s.id";
 

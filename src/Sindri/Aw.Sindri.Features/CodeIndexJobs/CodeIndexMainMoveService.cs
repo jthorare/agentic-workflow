@@ -39,7 +39,7 @@ internal sealed partial class CodeIndexMainMoveService(CodeIndexJobScopes scopes
     // graphify, the sandbox or the model pin are missing: setup can fix them (spec §6.3)
     private static readonly HashSet<string> _fixableCodes = new(StringComparer.Ordinal) { "SND-CODEIDX-007", "SND-CODEIDX-008", "SND-CODEIDX-009" };
 
-    internal static ServiceName ServiceId { get; } = ServiceName.From("code-index-main-move");
+    internal static ServiceName ServiceId { get; } = MainMovePause.Service;
 
     /// <summary>What the service does, as GET /sindri/services says it.</summary>
     public const string Description = "Starts a code-index update for each repo whose main branch moved.";

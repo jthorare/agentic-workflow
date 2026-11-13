@@ -1398,6 +1398,7 @@ static Aw.CodeIndex.Core.Values.SymbolRef.TryParse(string? s, System.IFormatProv
 static Aw.CodeIndex.Core.Values.SymbolRef.operator !=(Aw.CodeIndex.Core.Values.SymbolRef left, Aw.CodeIndex.Core.Values.SymbolRef right) -> bool
 static Aw.CodeIndex.Core.Values.SymbolRef.operator ==(Aw.CodeIndex.Core.Values.SymbolRef left, Aw.CodeIndex.Core.Values.SymbolRef right) -> bool
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.BuildFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.CodeIndex.Core.CodeIndexErrors.EmbeddingInputRejected -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.EmbeddingServerFailed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.EmbeddingTargetRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.GraphUnavailable -> Aw.Kernel.ErrorDefinition!
@@ -1485,6 +1486,8 @@ Aw.CodeIndex.Core.Model.EmbeddingProgress.Carried.get -> int
 Aw.CodeIndex.Core.Model.EmbeddingProgress.Made.get -> int
 Aw.CodeIndex.Core.Model.EmbeddingProgress.Carried.init -> void
 Aw.CodeIndex.Core.Model.EmbeddingProgress.Made.init -> void
+Aw.CodeIndex.Core.Model.EmbeddingProgress.Refused.get -> int
+Aw.CodeIndex.Core.Model.EmbeddingProgress.Refused.init -> void
 Aw.CodeIndex.Core.Ports.IIndexBuild.FilesWithoutBodiesOrVectors(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlySet<string!>!>!>
 Aw.CodeIndex.Core.Facade.RepoFile
 Aw.CodeIndex.Core.Facade.RepoFile.Path.get -> string!
@@ -1504,3 +1507,20 @@ override Aw.CodeIndex.Core.Facade.RepoFile.GetHashCode() -> int
 ~override Aw.CodeIndex.Core.Facade.RepoFile.Equals(object obj) -> bool
 Aw.CodeIndex.Core.Facade.FindSymbolsAnswer.Notes.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.CodeIndex.Core.Facade.FindSymbolsAnswer.Notes.init -> void
+Aw.CodeIndex.Core.Facade.IndexBuildFiles
+Aw.CodeIndex.Core.Facade.IndexBuildFiles.<Clone>$() -> Aw.CodeIndex.Core.Facade.IndexBuildFiles!
+Aw.CodeIndex.Core.Facade.IndexBuildFiles.Deconstruct(out int Done, out int Total) -> void
+Aw.CodeIndex.Core.Facade.IndexBuildFiles.Done.get -> int
+Aw.CodeIndex.Core.Facade.IndexBuildFiles.Done.init -> void
+Aw.CodeIndex.Core.Facade.IndexBuildFiles.Equals(Aw.CodeIndex.Core.Facade.IndexBuildFiles? other) -> bool
+Aw.CodeIndex.Core.Facade.IndexBuildFiles.IndexBuildFiles(int Done, int Total) -> void
+Aw.CodeIndex.Core.Facade.IndexBuildFiles.Line.get -> string!
+Aw.CodeIndex.Core.Facade.IndexBuildFiles.Total.get -> int
+Aw.CodeIndex.Core.Facade.IndexBuildFiles.Total.init -> void
+override Aw.CodeIndex.Core.Facade.IndexBuildFiles.Equals(object? obj) -> bool
+override Aw.CodeIndex.Core.Facade.IndexBuildFiles.GetHashCode() -> int
+override Aw.CodeIndex.Core.Facade.IndexBuildFiles.ToString() -> string!
+static Aw.CodeIndex.Core.Facade.IndexBuildFiles.From(string! line) -> Aw.CodeIndex.Core.Facade.IndexBuildFiles?
+static Aw.CodeIndex.Core.Facade.IndexBuildFiles.Newest(System.Collections.Generic.IEnumerable<string!>! lines) -> Aw.CodeIndex.Core.Facade.IndexBuildFiles?
+static Aw.CodeIndex.Core.Facade.IndexBuildFiles.operator !=(Aw.CodeIndex.Core.Facade.IndexBuildFiles? left, Aw.CodeIndex.Core.Facade.IndexBuildFiles? right) -> bool
+static Aw.CodeIndex.Core.Facade.IndexBuildFiles.operator ==(Aw.CodeIndex.Core.Facade.IndexBuildFiles? left, Aw.CodeIndex.Core.Facade.IndexBuildFiles? right) -> bool
