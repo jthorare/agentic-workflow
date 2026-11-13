@@ -45,7 +45,7 @@ internal sealed class UsageReadCache(string directory)
             ReadMessages(connection, states);
             return states;
         }
-        catch (Exception e) when (e is SqliteException or InvalidDataException or FormatException or OverflowException)
+        catch (Exception e) when (e is SqliteException or InvalidDataException or FormatException or OverflowException or IOException or UnauthorizedAccessException)
         {
             Delete(path);
             return new Dictionary<string, FileState>(StringComparer.Ordinal);
