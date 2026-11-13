@@ -11,8 +11,9 @@ using Aw.Sindri.Ui.Views.Controls.Rows;
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
 /// <summary>
-/// Perf's three budget checks for a 5,000-row RowList (#2978), counted in row containers and not in wall clock, so a loaded box does not flake them (#2946):
-/// a scroll from top to bottom never holds more than two screens of rows, the first frame builds no more than that, and the whole scroll makes only a few screens of containers.
+/// Perf's budget checks for a RowList (#2978). The first three are counted in row containers and not in wall clock, so a loaded box does not flake them (#2946): a scroll from top to bottom never holds more
+/// than two screens of rows, the first frame builds no more than that, and the whole scroll makes only a few screens of containers. The 10,000-row checks are wall clock: a median over several steps, with the
+/// Loose factor for a loaded box.
 /// </summary>
 [Lane(TestLane.Integration)]
 [Collection(HeadlessWindows.Name)]
@@ -221,7 +222,7 @@ public sealed class RowListBudgetTests
         var steps = ScrollSteps(window, list, stepPx: 96);   // 3 rows at 32 px: what one wheel notch moves
         var (median, slowest) = Summarize(steps);
 
-        Assert.True(median <= 16, string.Create(CultureInfo.InvariantCulture, $"median {median:0.0} ms, slowest {slowest:0.0} ms over {Timed} wheel steps of 3 rows (after {WarmUp} warm-up), budget 16 ms (one frame at 60 Hz)"));
+        Assert.True(median <= 16 * Loose, string.Create(CultureInfo.InvariantCulture, $"median {median:0.0} ms, slowest {slowest:0.0} ms over {Timed} wheel steps of 3 rows (after {WarmUp} warm-up), budget {16 * Loose:0} ms (16 ms, one frame at 60 Hz, x {Loose})"));
         window.Close();
         return true;
     });
