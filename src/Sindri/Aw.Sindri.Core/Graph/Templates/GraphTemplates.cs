@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace Aw.Sindri.Core.Graph.Templates;
 
 /// <summary>The starter templates. Each call builds fresh copies, so a caller may edit a spec without changing the next caller's.</summary>
@@ -64,7 +66,7 @@ public static class GraphTemplates
     private static GraphTemplate Build((string Name, string Description, string Json) source, string? repo)
     {
         // why: the JSON is ours and tested to parse; a failure here is a bug in the text above, not an expected error.
-        var parsed = GraphJson.Parse(source.Json.Replace("@machine-timezone@", MachineTimezone(), StringComparison.Ordinal).Replace(RepoMarker, repo, StringComparison.Ordinal));
+        var parsed = GraphJson.Parse(source.Json.Replace("@machine-timezone@", MachineTimezone(), StringComparison.Ordinal).Replace(RepoMarker, JsonEncodedText.Encode(repo ?? string.Empty).ToString(), StringComparison.Ordinal));
         return parsed.IsSuccess
             ? new GraphTemplate(source.Name, source.Description, parsed.Value)
             : throw new InvalidOperationException($"template '{source.Name}' does not parse: {parsed.Error.Message}");

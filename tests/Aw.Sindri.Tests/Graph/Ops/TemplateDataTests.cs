@@ -70,6 +70,16 @@ public sealed class TemplateDataTests
     }
 
     [Fact]
+    public void A_repo_name_with_a_quote_or_backslash_is_kept_as_text()
+    {
+        const string odd = "we\"ird\\repo";
+
+        var agent = Assert.Single(GraphTemplates.Find("weekday-check", odd)!.Spec.Nodes, static n => n.Type == "run_agent");
+
+        Assert.Equal(odd, agent.Config["repo"]!.GetValue<string>());
+    }
+
+    [Fact]
     public void The_templates_that_read_no_data_take_no_repo()
     {
         // hello-sindri and manual-notify have no agent step, so a profile with no repo (a null first repo) still builds them (FirstRunSetup keeps calling Find(name) for hello-sindri and fills create_item's repo itself)
