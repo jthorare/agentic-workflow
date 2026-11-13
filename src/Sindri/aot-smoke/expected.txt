@@ -176,7 +176,6 @@ result: {"idle":false,"summary":null}
 JOB-ID  succeeded  RunService  heartbeat  TIME  1 line  ok: worked
 JOB-ID  succeeded  RunService  heartbeat  TIME  1 line  ok: worked
 JOB-ID  succeeded  RefreshContextMap  refresh  TIME  4 lines  map v1: 0 kept, 0 removed
-JOB-ID  succeeded  RunService  context-map-refresh  TIME  1 line  ok: refresh JOB-ID started
 JOB-ID  succeeded  BuildCodeIndex  index:smoke  TIME  2 lines  smoke @ 7039bb4: 0 files, 0 symbols
 ## sindri services pause heartbeat (human, terminal)
 heartbeat paused (sequence SEQ)
