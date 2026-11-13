@@ -122,7 +122,7 @@ internal sealed class HealthPill : ObservableObject
         var healthy = IsHealthyWord(health);
         return (healthy, health) switch
         {
-            (true, _) when profile.Unreadable => (StateGlyph.Warning, Labels.CodeIndexNeedsLook, false),
+            (true, _) when profile.Unreadable => (StateGlyph.Warning, Labels.PillNeedsLook, false),
             (true, _) when profile.Missing => (StateGlyph.None, Labels.NotSetUp, false),
             (_, not null) => (Glyphs(health.Word), Labels.HealthWord(health.Word), healthy),
             _ => (StateGlyph.Ok, Labels.Running, true),

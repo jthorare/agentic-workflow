@@ -25,6 +25,7 @@ public sealed class UnreadableProfileHeadlineTests
         Assert.Equal("unreadable", system.Vm.ProfileState);
         Assert.False(system.Vm.Pill.IsHealthy);
         Assert.NotEqual("Healthy", system.Vm.Pill.Word, StringComparer.Ordinal);
+        Assert.Equal(Labels.PillNeedsLook, system.Vm.Pill.Word, StringComparer.Ordinal);
     }
 
     [Fact]
