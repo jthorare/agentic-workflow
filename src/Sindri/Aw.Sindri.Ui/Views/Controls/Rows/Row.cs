@@ -31,6 +31,8 @@ internal sealed partial class Row : Control
     internal const double RingCorner = 4;   // the outer corner of the ring, as the grammar says
     private const double RingRadius = RingCorner - (RingStroke / 2);   // the centre line of the stroke
 
+    private static Rect SelBarRect(double height) => new(RingStroke, RingStroke, SelBarWidth, Math.Max(0, height - (2 * RingStroke)));
+
     private IRowItem? _watched;
     private RowGlyph _glyph;
     private RowGlyphPainter.Palette? _palette;
@@ -47,6 +49,7 @@ internal sealed partial class Row : Control
     public Row()
     {
         Classes.Add("aw-drawn-text");
+        FocusAdorner = null;   // the row draws its own ring inside its bounds; the app-wide adorner (Margin -4, clip off) would spill into the rows around it
         Classes.CollectionChanged += (_, _) => InvalidateVisual();   // cursor, sel and the pointer-over pseudo class change what is drawn
         ActualThemeVariantChanged += (_, _) =>
         {
@@ -116,15 +119,16 @@ internal sealed partial class Row : Control
             DrawContent(context, item, size.Height);
         }
 
-        if (Classes.Contains("sel"))
-        {
-            context.FillRectangle(_selBar ??= Brush("Brush.Primary"), new Rect(0, 0, SelBarWidth, size.Height));
-        }
-
         if (Classes.Contains("cursor"))
         {
             _ring ??= new Pen(Brush("Brush.PrimaryHover"), RingStroke);
             context.DrawRectangle(brush: null, _ring, new Rect(RingStroke / 2, RingStroke / 2, size.Width - RingStroke, size.Height - RingStroke), RingRadius, RingRadius);
+        }
+
+        // The bar sits inside the ring's inner edge, in the same place with or without the cursor, so the ring never covers it and nothing moves between states.
+        if (Classes.Contains("sel"))
+        {
+            context.FillRectangle(_selBar ??= Brush("Brush.Primary"), SelBarRect(size.Height));
         }
     }
 

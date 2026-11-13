@@ -36,7 +36,7 @@ internal sealed partial class Row
                 new Rect(titleX, 0, title.Width, size.Height),
                 _titleTrimmed,
                 _titleDesired,
-                Classes.Contains("sel") ? new Rect(0, 0, SelBarWidth, size.Height) : null,
+                Classes.Contains("sel") ? SelBarRect(size.Height) : null,
                 Brush("Brush.Primary"),
                 Classes.Contains("cursor"),
                 Classes.Contains("cursor") ? new Rect(size) : null,

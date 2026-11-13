@@ -35,6 +35,7 @@ internal sealed class RowGroupHeader : Border
     public RowGroupHeader()
     {
         Classes.Add("group-header");
+        FocusAdorner = null;   // no app-wide adorner: it spills 4 px into the neighbour rows and sits over the first row
         AddHandler(PointerPressedEvent, OnHeaderPressed, RoutingStrategies.Bubble, handledEventsToo: true);
         _ = SetValue(BackgroundProperty, Brushes.Transparent, Avalonia.Data.BindingPriority.Style);   // a border with no fill is not hit-testable: the padding left of the chevron would swallow the click. Style priority, so the sticky copy's template fill (Canvas) wins
         Focusable = true;   // the cursor can stand on a header: Left folds, Right unfolds

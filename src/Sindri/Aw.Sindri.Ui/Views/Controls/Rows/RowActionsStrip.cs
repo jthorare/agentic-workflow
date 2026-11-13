@@ -6,7 +6,7 @@ using Aw.Sindri.Ui.ViewModels.Rows;
 namespace Aw.Sindri.Ui.Views.Controls.Rows;
 
 /// <summary>
-/// The action buttons of a hot row (#3189): a Surface2 box with 8 px of padding that covers the age and waits-on text at the right end. A flat row has no child controls until it is hot
+/// The action buttons of a hot row (#3189): a Surface2 box with 8 px of padding and a 168 px minimum width that covers the age and waits-on text at the right end. A flat row has no child controls until it is hot
 /// (pointer over it, or keyboard focus within it); then it takes one strip from this pool, and gives it back when it goes cold or is recycled. The pool grows on demand.
 /// </summary>
 internal sealed class RowActionsStrip : Border
@@ -14,13 +14,17 @@ internal sealed class RowActionsStrip : Border
     private static readonly Stack<RowActionsStrip> _pool = new();
     private static long _made;
 
-    private readonly StackPanel _buttons = new() { Orientation = Orientation.Horizontal };
+    // grammar.css: min-width col-age + col-wait + sp3 (44 + 112 + 12 = 168), so the age and the waits-on text sit under the strip whole.
+    private const double StripMinWidth = 168;
+
+    private readonly StackPanel _buttons = new() { Orientation = Orientation.Horizontal, Spacing = 4 };
 
     public RowActionsStrip()
     {
         _ = Interlocked.Increment(ref _made);
         Padding = new Thickness(8, 0, 0, 0);
         Child = _buttons;
+        MinWidth = StripMinWidth;
         _ = Bind(BackgroundProperty, this.GetResourceObservable("Brush.Surface2"));
     }
 
@@ -59,7 +63,7 @@ internal sealed class RowActionsStrip : Border
         {
             if (i >= _buttons.Children.Count)
             {
-                _buttons.Children.Add(new Button { Margin = new Thickness(4, 0, 0, 0), Padding = new Thickness(8, 0), MinHeight = 22, VerticalAlignment = VerticalAlignment.Center });
+                _buttons.Children.Add(new Button { Padding = new Thickness(8, 0), MinHeight = 22, VerticalAlignment = VerticalAlignment.Center });
             }
 
             var button = (Button)_buttons.Children[i];
