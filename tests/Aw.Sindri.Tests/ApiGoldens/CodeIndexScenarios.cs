@@ -43,7 +43,7 @@ internal static class CodeIndexScenarios
     internal const string StaleRepoScenario = "stale-repo";
 
     /// <summary>Whether the scenario runs with the live head of 'demo' past its index.</summary>
-    internal static bool DemoBehindMain(string scenario) => scenario is StaleScenario or StaleRepoScenario;
+    internal static bool DemoBehindMain(string scenario) => string.Equals(scenario, StaleScenario, StringComparison.Ordinal) || string.Equals(scenario, StaleRepoScenario, StringComparison.Ordinal);
 
     /// <summary>Whether the row belongs to this class.</summary>
     public static bool Handles(string slug, string scenario) => slug.StartsWith("code-index-", StringComparison.Ordinal) || (slug, scenario) is ("status", StaleScenario);
