@@ -25,7 +25,7 @@ internal sealed class GraphTestBlocks
 
     /// <summary>The three blocks.</summary>
     /// <returns>Echo, fail and hold.</returns>
-    public IEnumerable<IGraphBlock> All() => [new Echo(this), new Fail(this), new Hold(this), new Big(), new CommitProbe(this), new Pass()];
+    public IEnumerable<IGraphBlock> All() => [new Echo(this), new Fail(this), new Hold(this), new Big(), new CommitProbe(this), new Pass(), new FailOnTwo()];
 
     /// <summary>An in-memory 'workflow_seen' for the real 'only_new' block.</summary>
     internal sealed class MemorySeen : IGraphSeenStore
@@ -96,6 +96,15 @@ internal sealed class GraphTestBlocks
     {
         public override ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken) =>
             ValueTask.FromResult<Result<BlockResult>>(new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal) { ["value"] = context.Config["value"]?.DeepClone() }));
+    }
+
+    // why: fails only when its interpolated 'value' is 2, so a loop test can fail one item and let the other pass
+    private sealed class FailOnTwo() : Base("fail_on_two")
+    {
+        public override ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken) =>
+            string.Equals(context.Config["value"]?.ToString(), "2", StringComparison.Ordinal)
+                ? ValueTask.FromResult<Result<BlockResult>>(SindriErrors.GraphBlockFailed.With("boom"))
+                : ValueTask.FromResult(Ok(context));
     }
 
     private sealed class Big() : Base("big")
