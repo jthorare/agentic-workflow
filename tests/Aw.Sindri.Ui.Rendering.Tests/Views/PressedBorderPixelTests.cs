@@ -9,9 +9,10 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Frames.Tests.Views;
 using Aw.Sindri.Ui.Tests.Views;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Rendering.Tests.Views;
 
 /// <summary>
 /// The pressed border must reach 3:1 as drawn at 1x, not only as a token (#3190, WCAG 1.4.11). The 0.98 press scale put the 1 px border on a fractional pixel, and
@@ -91,7 +92,9 @@ public sealed class PressedBorderPixelTests : FrameHost
     {
         Motion.Set(reduce: true);
         using var instant = InstantMotion.Start();
-        var sample = new Border { BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(6), Padding = new Thickness(24, 12), HorizontalAlignment = HorizontalAlignment.Left, Child = new TextBlock { Text = "Clickable" } };
+        // 150 wide: a 0.98 scale about the centre moves the left edge 1.5 px, half a pixel, the case that blurred the border in the app.
+        // A narrower sample (about 110 px with its text) moved it 1.1 px, close to a whole pixel, and passed on the scaled code (#3501 red).
+        var sample = new Border { Width = 150, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(6), Padding = new Thickness(24, 12), HorizontalAlignment = HorizontalAlignment.Left, Child = new TextBlock { Text = "Clickable" } };
         sample.Classes.Add("clickable");
         var app = Application.Current!;
         var host = new Border
