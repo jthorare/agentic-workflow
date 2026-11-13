@@ -20,6 +20,9 @@ public sealed record RepoHealth(string Repo, string State, int? EmbeddingsPercen
     /// <summary>How long this serve has read the repo as queued, or null when it isn't queued; set by RepoHealths from its <see cref="QueuedClock"/>. Internal, so it isn't in the API answer (#3440).</summary>
     internal TimeSpan? QueuedFor { get; init; }
 
+    /// <summary>True when doctor has a problem row for the repo (issue #3430): the System card reads this, not the state word, so a new busy state needs no app change.</summary>
+    public bool NeedsLook { get; init; }
+
     /// <summary>Lays the heads and jobs over one repo's status.</summary>
     /// <param name="status">The repo's index status, from the files.</param>
     /// <param name="live">The repo's live head, or null when unread.</param>
