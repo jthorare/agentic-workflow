@@ -48,7 +48,7 @@
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     <Setter Property="VerticalContentAlignment" Value="Stretch" />
   </Style>
-  <Style Selector="Button.hold-part:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.hold-part:pressed /template/ ContentPresenter#PART_ContentPresenter">
+  <Style Selector="Button.hold-part:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
   </Style>
