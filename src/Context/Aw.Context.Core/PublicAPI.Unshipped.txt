@@ -1802,9 +1802,11 @@ Aw.Context.Core.Graph.NodeSource.Title.get -> string?
 Aw.Context.Core.Graph.NodeSource.Title.init -> void
 Aw.Context.Core.Graph.NodeSource.Url.get -> string?
 Aw.Context.Core.Graph.NodeSource.Url.init -> void
-Aw.Context.Core.Graph.NodeSource.Deconstruct(out string! Kind, out string! Ref, out string? Title, out string? Url) -> void
+Aw.Context.Core.Graph.NodeSource.Path.get -> string?
+Aw.Context.Core.Graph.NodeSource.Path.init -> void
+Aw.Context.Core.Graph.NodeSource.Deconstruct(out string! Kind, out string! Ref, out string? Title, out string? Url, out string? Path) -> void
 Aw.Context.Core.Graph.NodeSource.Equals(Aw.Context.Core.Graph.NodeSource? other) -> bool
-Aw.Context.Core.Graph.NodeSource.NodeSource(string! Kind, string! Ref, string? Title = null, string? Url = null) -> void
+Aw.Context.Core.Graph.NodeSource.NodeSource(string! Kind, string! Ref, string? Title = null, string? Url = null, string? Path = null) -> void
 Aw.Context.Core.Graph.NodeView
 Aw.Context.Core.Graph.NodeView.<Clone>$() -> Aw.Context.Core.Graph.NodeView!
 Aw.Context.Core.Graph.NodeView.Aliases.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.NodeKey>!

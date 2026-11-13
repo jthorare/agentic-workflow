@@ -183,4 +183,14 @@ public sealed class NodeSourceLinkTests : IDisposable
         Assert.Null(file.Value.Node.Source!.Url);
         Assert.Equal(LinearUrl, record!.Url);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_human_gets_the_local_path_of_a_code_node_s_file_even_when_the_repo_has_no_github_origin()
+    {
+        _ = await _world.ImportYaml(DetailMap());
+
+        var source = await SourceOf("code:src/a.ts");
+
+        Assert.Equal(new NodeSource("file", "src/a.ts", Title: null, Url: null, Path: Path.Combine("/work/aw-split-panes", "src", "a.ts")), source);
+    }
 }

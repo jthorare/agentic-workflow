@@ -15,6 +15,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     private int _version;
     private Uri? _link;
     private readonly LinkLaunch _launch;
+    private string? _localPath;
 
     internal NodePanelViewModel(Func<string, (string Label, string Kind)?> lookup, Action<string> jump)
     {
@@ -58,6 +59,9 @@ internal sealed partial class NodePanelViewModel : ObservableObject
 
     /// <summary>Gets a value indicating whether the node has a source but nothing to open (said out loud, never hidden).</summary>
     public bool HasNoLink => HasSource && !HasLink;
+
+    /// <summary>Gets a value indicating whether the source is a file on this machine that the panel can open.</summary>
+    public bool HasOpenFile => _localPath?.Length < 0;
 
     /// <summary>Gets the line shown when the source has no link.</summary>
     public string NoLinkText { get; } = Labels.ContextNodePanelNoLink;
@@ -176,7 +180,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
 
     private void Clear()
     {
-        (Kind, Title, SourceText, Description, _link) = (string.Empty, string.Empty, string.Empty, string.Empty, null);
+        (Kind, Title, SourceText, Description, _link, _localPath) = (string.Empty, string.Empty, string.Empty, string.Empty, null, null);
         (Groups, Sections) = ([], []);
         _launch.Reset();
     }
@@ -192,6 +196,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
             var text = string.IsNullOrWhiteSpace(source.Title) ? source.Ref : source.Title;
             SourceText = Labels.ContextNodePanelSource(source.Kind, text);
             _link = LinkOf(source.Url);
+            _localPath = source.Path;
             OpenSourceName = Labels.ContextNodePanelOpenSourceName(source.Kind);
         }
 
