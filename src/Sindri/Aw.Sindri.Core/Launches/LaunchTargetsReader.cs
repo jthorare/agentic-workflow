@@ -36,7 +36,7 @@ public sealed class LaunchTargetsReader(ILedgerReader ledger, EventFactory event
         var agents = approved.Value?.Profile.Agents;
         if (latest.Value is not { } recorded)
         {
-            return LaunchTargetsProjection.Project(probed: null, probedAt: null, agents, new Dictionary<string, AgentSpend>(StringComparer.Ordinal), asOf);
+            return LaunchTargetsProjection.Project(probed: null, probedAt: null, agents, TodaysSpend.None, asOf);
         }
 
         var probed = events.Payload<LaunchProbed>(recorded);
@@ -45,30 +45,27 @@ public sealed class LaunchTargetsReader(ILedgerReader ledger, EventFactory event
             return probed.Error;
         }
 
-        var used = await Spent(probed.Value, cancellationToken).ConfigureAwait(false);
-        return used.IsError ? used.Error : LaunchTargetsProjection.Project(probed.Value, recorded.Envelope.OccurredAt, agents, used.Value, asOf);
+        return LaunchTargetsProjection.Project(probed.Value, recorded.Envelope.OccurredAt, agents, Spent(probed.Value), asOf);
     }
 
-    private async ValueTask<Result<IReadOnlyDictionary<string, AgentSpend>>> Spent(LaunchProbed probed, CancellationToken cancellationToken)
+    /// <summary>What each agent has spent today as far as it is known now: an agent whose first read of the day hasn't landed is counting, and nothing here waits (#3418).</summary>
+    private TodaysSpend Spent(LaunchProbed probed)
     {
         var used = new Dictionary<string, AgentSpend>(StringComparer.Ordinal);
-        // start every read first so they overlap (#3213): the wait is the slowest read, not the sum
-        var reads = probed.Targets.Select(target => spend.Today(target.Id, cancellationToken).AsTask()).ToList();
-        var results = await Task.WhenAll(reads).ConfigureAwait(false);
-        for (var i = 0; i < results.Length; i++)
+        var counting = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var target in probed.Targets)
         {
-            var today = results[i];
-            if (today.IsError)
+            var peek = spend.Peek(target.Id);
+            if (!peek.Landed)
             {
-                return today.Error;
+                _ = counting.Add(target.Id.Value);
             }
-
-            if (today.Value is { } found)
+            else if (peek.Spend is { } found)
             {
-                used[probed.Targets[i].Id.Value] = found;
+                used[target.Id.Value] = found;
             }
         }
 
-        return used;
+        return new TodaysSpend(used, counting);
     }
 }

@@ -141,6 +141,67 @@ public sealed class UsageSpendTests
         Expect.Equal(1, reader.Reads);
     }
 
+    /// <summary>#3213 through #3418: every agent's first walk starts at once, so the slowest agent sets the wait, not the sum.</summary>
+    [Fact]
+    public async Task Peeks_of_several_agents_start_their_reads_together()
+    {
+        var claudeGate = new TaskCompletionSource<IReadOnlyList<ModelTokens>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var codexGate = new TaskCompletionSource<IReadOnlyList<ModelTokens>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var claude = new FirstReadGatedReader(claudeGate.Task);
+        var codex = new FirstReadGatedReader(codexGate.Task);
+        var clock = new FakeTimeProvider(new DateTimeOffset(2026, 10, 17, 20, 0, 0, TimeSpan.Zero));
+        clock.SetLocalTimeZone(TimeZoneInfo.CreateCustomTimeZone("test", _utcMinusSeven, "test", "test"));
+        var readers = new Dictionary<string, IUsageReader>(StringComparer.Ordinal) { ["claude-code"] = claude, ["codex"] = codex };
+        var spend = new UsageSpend(new AgentCatalog([AgentEntries.ClaudeCode, AgentEntries.Codex]), readers, clock);
+
+        var first = spend.Peek(_claude);
+        var second = spend.Peek(AgentId.From("codex"));
+        try
+        {
+            _ = await Task.WhenAll(claude.Started.Task, codex.Started.Task).WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);
+
+            Assert.False(first.Landed);
+            Assert.False(second.Landed);
+            Expect.Equal((1, 1), (claude.Reads, codex.Reads));
+        }
+        finally
+        {
+            _ = claudeGate.TrySetResult([]);
+            _ = codexGate.TrySetResult([]);
+        }
+    }
+
+    /// <summary>#3418: a peek never waits; the first one starts the shared read and says it hasn't landed, a later one returns the spend.</summary>
+    [Fact]
+    public async Task A_peek_on_a_cold_reader_starts_one_read_and_returns_the_spend_once_it_landed()
+    {
+        var gate = new TaskCompletionSource<IReadOnlyList<ModelTokens>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var reader = new FirstReadGatedReader(gate.Task);
+        var clock = new FakeTimeProvider(new DateTimeOffset(2026, 10, 17, 20, 0, 0, TimeSpan.Zero));
+        clock.SetLocalTimeZone(TimeZoneInfo.CreateCustomTimeZone("test", _utcMinusSeven, "test", "test"));
+        var spend = new UsageSpend(new AgentCatalog([AgentEntries.ClaudeCode]), new Dictionary<string, IUsageReader>(StringComparer.Ordinal) { ["claude-code"] = reader }, clock);
+
+        var cold = spend.Peek(_claude);
+        _ = await reader.Started.Task.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);
+        var again = spend.Peek(_claude);
+
+        Assert.False(cold.Landed);
+        Assert.False(again.Landed);
+        Expect.Equal(1, reader.Reads);
+
+        gate.SetResult([new ModelTokens("claude-sonnet-4-5", 1_000_000, 0, 0, 0)]);
+        var landed = spend.Peek(_claude);
+        for (var waited = 0; waited < 500 && !landed.Landed; waited++)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(10), TimeProvider.System, Token);
+            landed = spend.Peek(_claude);
+        }
+
+        Assert.True(landed.Landed);
+        Expect.Equal(new AgentSpend(3m, 1_000_000, SpendBasis.PriceTable), landed.Spend);
+        Expect.Equal(1, reader.Reads);
+    }
+
     /// <summary>#3213: the cached read belongs to one local day; after midnight the next call reads the new day's window.</summary>
     [Fact]
     public async Task A_new_local_day_reads_again()
