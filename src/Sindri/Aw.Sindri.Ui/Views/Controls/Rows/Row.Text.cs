@@ -149,7 +149,17 @@ internal sealed partial class Row
         var titleX = m.Inset + GlyphBox + Gap;
         var ageX = size.Width - m.Inset - m.WaitWidth - Gap - m.AgeWidth;
         var factsX = ageX - Gap - factsWidth;
-        _slots = new Slots(titleX, Math.Max(m.TitleMin, factsX - titleX), factsX, ageX, size.Width - m.Inset - m.WaitWidth);
+
+        // The title minimum never shrinks (grammar.md): facts drop from the end until the title column gets it, as the peek does. Width alone decides, so every row of a list shows the same columns.
+        // When no fact is left and the title still lacks its minimum, it takes what is left before age.
+        while (_shown > 0 && factsX - titleX < m.TitleMin)
+        {
+            _shown--;
+            factsWidth -= Gap + m.Columns[_shown];
+            factsX = ageX - Gap - factsWidth;
+        }
+
+        _slots = new Slots(titleX, Math.Max(0, factsX - titleX), factsX, ageX, size.Width - m.Inset - m.WaitWidth);
         BuildTitleLine(item);
         BuildAgeAndWait(item, m);
         BuildFacts(item, m);
