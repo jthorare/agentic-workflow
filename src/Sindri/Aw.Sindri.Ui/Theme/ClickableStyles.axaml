@@ -13,13 +13,13 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Hover}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.HoverBorder}" />
   </Style>
-  <!-- A calm Needs You row rests on Surface2, close to the hover fill: it lifts to the pressed fill so the pointer still shows. -->
+  <!-- A calm Needs You row rests on Surface2, close to the hover fill: it lifts to the lift fill so the pointer still shows. -->
   <Style Selector="Border.clickable.subtle:pointerover">
-    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Lift}" />
   </Style>
-  <!-- A selected row rests on Surface2 too (QueueStyles item-row.selected): the same lift. -->
+  <!-- A selected row rests on Surface2 too (QueueStyles item-row.selected): the same lift fill. -->
   <Style Selector="Border.clickable.selected:pointerover">
-    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Lift}" />
   </Style>
   <Style Selector="Border.clickable:pressed">
     <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
