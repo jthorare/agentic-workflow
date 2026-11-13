@@ -1,3 +1,4 @@
+using Aw.Kernel;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
@@ -29,5 +30,5 @@ internal sealed class FirstMapDoctorCheck(IJobViews jobs, IServicePauses pauses)
         return FirstMapRow.Of(repos, !paused.IsError && paused.Value.Contains(ContextMapRefreshService.ServiceId), mapJobs, indexed);
     }
 
-    private static IReadOnlyList<JobRow> Rows(Aw.Kernel.Result<IReadOnlyList<JobRow>> read) => read.IsError ? [] : read.Value;
+    private static IReadOnlyList<JobRow> Rows(Result<IReadOnlyList<JobRow>> read) => read.IsError ? [] : read.Value;
 }
