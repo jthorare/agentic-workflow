@@ -62,8 +62,4 @@ internal sealed partial class SettingsViewModel
         OnChanged(nameof(TextSizeName));
         OnChanged(nameof(ReduceMotionName));
     }
-
-    /// <summary>Makes a palette Settings entry set the filter: the shell asks for the words and this page takes them.</summary>
-    /// <param name="subscribe">Subscribes a handler to the shell's setting-filter request.</param>
-    internal void FollowPalette(Action<EventHandler<ValueEventArgs<string>>> subscribe) => subscribe((_, e) => Filter = e.Value);
 }
