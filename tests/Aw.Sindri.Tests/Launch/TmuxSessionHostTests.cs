@@ -254,6 +254,75 @@ public sealed class TmuxSessionHostTests : SessionHostContract, IDisposable
         Expect.True(commands is not null && !commands.Contains(Value, StringComparison.Ordinal));
     }
 
+    [Fact]
+    public async Task PaneId_answers_the_pane_of_a_live_session_and_null_for_a_gone_one()
+    {
+        var host = Create();
+        var started = await host.Start(Session("sindri-pane0001"), _deadline, CancellationToken.None);
+
+        var pane = await ((ISessionPanes)host).PaneId(started.Value, CancellationToken.None);
+        _ = await host.Stop(started.Value, CancellationToken.None);
+        var gone = await ((ISessionPanes)host).PaneId(started.Value, CancellationToken.None);
+
+        Assert.Matches("^%[0-9]+$", pane?.Value ?? string.Empty);
+        Assert.Null(gone);
+        Expect.Equal(_tmux.Socket, ((ISessionPanes)host).Socket);
+    }
+
+    [Fact]
+    public async Task A_session_with_a_size_and_remain_on_exit_keeps_its_pane_after_the_agent_exits()
+    {
+        var session = new HostSession("sindri-stay0001", _tmux.Scratch, ["sh", "-c", "sleep 1"], new Dictionary<string, string>(StringComparer.Ordinal)) { Size = new HostSize(100, 30), RemainOnExit = true };
+
+        var started = await Create().Start(session, _deadline, CancellationToken.None);
+
+        Expect.True(started.IsSuccess);
+        Expect.Equal("1", await PaneDeadWhenSet("sindri-stay0001"));   // the process ended; the pane stays so the view can show Ended
+        Expect.Equal("100x30", _tmux.Run("list-windows", "-t", "=sindri-stay0001", "-F", "#{window_width}x#{window_height}")?.Trim());
+    }
+
+    [Fact]
+    public async Task An_agent_that_dies_at_once_keeps_its_dead_pane()
+    {
+        var session = new HostSession("sindri-dies0001", _tmux.Scratch, ["false"], new Dictionary<string, string>(StringComparer.Ordinal)) { RemainOnExit = true };
+
+        var started = await Create().Start(session, _deadline, CancellationToken.None);
+
+        Expect.True(started.IsSuccess);
+        Expect.Equal("1", await PaneDeadWhenSet("sindri-dies0001"));   // why: remain-on-exit lands in the new-session call, before tmux reaps 'false' (#3466)
+    }
+
+    private async Task<string?> PaneDeadWhenSet(string name)
+    {
+        string? dead = null;
+        var deadline = RealTime.NowOffset + TimeSpan.FromSeconds(10);
+        while (RealTime.NowOffset < deadline && dead != "1")
+        {
+            dead = _tmux.HasSession(name) ? _tmux.Run("list-panes", "-t", "=" + name, "-F", "#{pane_dead}")?.Trim() : null;
+            if (dead != "1")
+            {
+                await Task.Delay(50, TestContext.Current.CancellationToken);
+            }
+        }
+
+        return dead;
+    }
+
+    [Fact]
+    public async Task A_clean_environment_session_gets_only_its_own_variables()
+    {
+        var marker = Path.Combine(_tmux.Scratch, "clean.txt");
+        var env = new Dictionary<string, string>(StringComparer.Ordinal) { ["PATH"] = "/usr/bin:/bin", ["KEPT_VALUE"] = "yes" };
+        var session = new HostSession("sindri-clean001", _tmux.Scratch, ["sh", "-c", $"env | sort > '{marker}'; sleep 60"], env) { CleanEnvironment = true };
+
+        var started = await Create().Start(session, _deadline, CancellationToken.None);
+
+        Expect.True(started.IsSuccess);
+        var seen = await ReadWhenWritten(marker);
+        Expect.True(seen.Contains("KEPT_VALUE=yes", StringComparison.Ordinal) && seen.Contains("TERM=", StringComparison.Ordinal));
+        Expect.True(!seen.Contains("AW_", StringComparison.Ordinal));
+    }
+
     /// <summary>A stand-in 'tmux' that logs its arguments and prints a version banner; every session is new to it.</summary>
     private sealed record FakeTmux(string Path, string Log)
     {
