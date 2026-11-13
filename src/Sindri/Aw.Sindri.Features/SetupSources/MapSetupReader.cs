@@ -105,9 +105,13 @@ internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine 
             return new MapFact(MapPhase.Building, files is { Total: > 0 } ? new SetupProgress(files.Done, files.Total, "files") : null) { Stage = MapStage.Index };
         }
 
-        // A failed index build counts only when no map build ended after it: the index rebuilds on every commit, and its success must not hide a failed map.
-        var map = Ended(maps.Value);
-        var index = Ended(ours);
+        return LastTry(Ended(maps.Value), Ended(ours));
+    }
+
+    // Nothing runs: the newest ended builds say whether the last try failed. A failed index build counts only when no map build ended after it:
+    // the index rebuilds on every commit, and its success must not hide a failed map.
+    private static MapFact LastTry(JobRow? map, JobRow? index)
+    {
         var failed = index is { State: JobState.Failed } && (map is null || index.Sequence > map.Sequence) ? index : map is { State: JobState.Failed } ? map : null;
         return failed is null ? new MapFact(MapPhase.NotBuilt) : new MapFact(MapPhase.Failed, FailureCode: failed.Code) { Stage = ReferenceEquals(failed, index) ? MapStage.Index : MapStage.Map };
     }
