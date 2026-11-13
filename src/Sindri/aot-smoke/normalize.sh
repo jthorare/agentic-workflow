@@ -10,5 +10,5 @@ sed -E -e "s#$work#WORK#g" -e "s#$root#ROOT#g" -e "s#held by $(hostname -s)[^/ ]
   -e 's/pid [0-9]+/pid PID/g' -e 's#HOST/[0-9]+#HOST/PID#g' -e 's/127\.0\.0\.1:[0-9]+/127.0.0.1:PORT/g' \
   -e 's/[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}Z/TIME/g' -e 's/\(last [0-9:]{8}Z\)/(last TIME)/g' \
   -e 's/^(  services  heartbeat every [0-9]+s) \(last TIME\)$/\1/' \
-  -e 's/cursor [0-9]+ of( head)? [0-9]+/cursor N of\1 M/g' -e 's/\(sequence [0-9]+\)/(sequence SEQ)/' -e 's/ITM-[0-9A-Za-z]+/ITM-ID/g' -e 's/REQ-[0-9A-Za-z]+/REQ-ID/g' -e 's/DEC-[0-9A-Za-z]+/DEC-ID/g' -e 's/JOB-[0-9a-f]{32}/JOB-ID/g' \
+  -e 's/cursor [0-9]+ of( head)? [0-9]+/cursor N of\1 M/g' -e 's/, (just built|[0-9]+ min old),/, AGE,/' -e 's/context\.db [0-9.]+ [KMG]?B, its log [0-9.]+ [KMG]?B/context.db SIZE, its log SIZE/' -e 's/\(sequence [0-9]+\)/(sequence SEQ)/' -e 's/ITM-[0-9A-Za-z]+/ITM-ID/g' -e 's/REQ-[0-9A-Za-z]+/REQ-ID/g' -e 's/DEC-[0-9A-Za-z]+/DEC-ID/g' -e 's/JOB-[0-9a-f]{32}/JOB-ID/g' \
   -e '/^(ok|warn) +claude-code /d' -e '/^(ok|warn) +launcher(:agents)? /d' -e '/^(ok|warn|fail) +code-index:ollama /d' -e '/^(ok|warn|fail) +context:models /{/not configured/!d;}' -e '/^(ok|warn|fail) +sandbox(:[a-z]+)? /d'

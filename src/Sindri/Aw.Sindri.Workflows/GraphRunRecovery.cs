@@ -62,9 +62,15 @@ internal sealed partial class GraphRunRecovery(IWorkflowRunStore runs, IGraphRun
         var workflows = new List<WorkflowId>();
         var (ended, failure) = await EndLost(running.Value.Where(r => r.StartedAt < startedBefore), workflows, cancellationToken).ConfigureAwait(false);
         failure ??= pending;
+        // why: a queue head whose hand-over failed (a busy store) has no running row to name its workflow; the store refuses to promote a workflow that has a run in flight (issue 3102)
+        var queued = await _runs.QueuedWorkflows(cancellationToken).ConfigureAwait(false);
+        if (queued.IsSuccess)
+        {
+            workflows.AddRange(queued.Value.Where(w => !workflows.Contains(w)));
+        }
         // why: rows already failed are no longer 'running', so a retry never sees them; their queues advance now, even when the pass stopped on an error
         var advanced = await AdvanceQueues(workflows, cancellationToken).ConfigureAwait(false);
-        return failure ?? advanced ?? (Result<int>)ended;
+        return failure ?? advanced ?? (queued.IsError ? queued.Error : (Result<int>)ended);
     }
 
     private async ValueTask<(int Ended, Error? Failure)> EndLost(IEnumerable<WorkflowRun> candidates, List<WorkflowId> workflows, CancellationToken cancellationToken)
@@ -174,7 +180,7 @@ internal sealed partial class GraphRunRecovery(IWorkflowRunStore runs, IGraphRun
         try
         {
             await _mirror.AppendStarted(failed, cancellationToken).ConfigureAwait(false);
-            await _mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(failed.Id, GraphMirror.Name(WorkflowRunStatus.Failed), _mirror.Clean(Reason), GraphMirror.By),
+            await _mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(failed.Id, GraphMirror.Name(WorkflowRunStatus.Failed), _mirror.Clean(Reason), GraphMirror.By, WorkflowRunMode.Live),
                 $"{EventTypes.WorkflowRunFinished}:{failed.Id.Value}", failed.ItemId?.Value, cancellationToken).ConfigureAwait(false);
             return null;
         }

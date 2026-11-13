@@ -121,10 +121,14 @@ A row is in Needs you while its trigger holds, and leaves when the trigger stops
 | `review-new-commits` | forge | `ReviewWaitingKind.NewCommits`: the owner reviewed and the PR has newer commits | yes |
 | `mention` | Linear, forge, Messages | a comment names the owner and the owner wrote nothing after it in that thread | Linear: `LinearSinceItem` kind `mentioned`; GitHub and Slack: no |
 | `dm` | Messages (#2979) | the last message in a direct message thread is not the owner's and is unanswered | no: waits on Messages |
+| `thread-reply` | Messages (#2979) | a new message in a DM, or a reply in a thread the owner wrote in, after the owner's last message, that asks the owner nothing and names no one (Messages class 1: Pat's "thanks!" in a DM, Kim's "ok, 90 s holds then" in the owner's thread) | no: waits on Messages |
+| `keyword` | Messages (#2979) | a message matches one of the owner's `messages.notify.rules` keywords and the owner wrote nothing after it in that thread (Messages class 1) | no: waits on Messages |
 | `issue-assigned` | Linear | the owner became assignee at or after 00:00 local today and the issue is still unstarted (Linear state type backlog, unstarted or triage) | yes: `LinearSinceItem` kind `assigned`; the "today" cut is new |
 | `todo-due` | Todo | a todo due today or overdue and open | yes: Todo store |
 
-Reason words on the why chip: "asking", "limited", "at 210k", "ready", "review requested", "new commits", "mention", "DM", "failed", "assigned", "due", "setup".
+Reason words on the why chip: "asking", "limited", "at 210k", "ready", "review requested", "new commits", "mention", "DM", "reply", "keyword", "failed", "assigned", "due", "setup".
+
+`thread-reply` and `keyword` are the two non-notifying Messages kinds: they show in Needs you and in the Messages split, but never toast and never count in the tray (§6.3). Until they exist, the Messages collector raises no row for a class 1 thread, so Slack's "thanks!" stays on the Messages page. *(agent default (Messages spec, #3188))*
 
 Not on Home: "idle with work owed" and "slot wait over 30 min" from #3082's Agents ranking. Home shows only facts that have a source and never guesses what is owed, and both of these are guesses. They stay on the Agents page.
 
@@ -229,7 +233,7 @@ Keys follow §7.4. `Ctrl+Enter` opens the row's submit menu with the primary act
 | `lane-recycle` | Copy digest request (copies the standard line and jumps to the lane's terminal, `o`) | Open session | nothing: `aw-meta lane-send` refuses the meta lane and every Claude Code lane (AW-META-017, "use SendMessage"), so Home sends no digest request; the row clears when the lane's verdict is no longer `Recycle` |
 | `review-requested`, `review-new-commits` | Open review (Enter, full) | Approve, Comment, Request changes in the `Ctrl+Enter` menu | GitHub, through `Core/Forge` (`PullReview`) |
 | `pr-ready-merge` | Merge (in a meta team through `aw-meta merge-run`, which runs the same `merge-check` meta runs; otherwise the repo's merge method through the forge; `merge-run` takes no sha, so the adapter compares the PR head with the row's `headSha` just before the call and refuses with 016 on a mismatch, then reads the PR state after, since exit 0 covers both merged and queued) | Open, Hand to agent | GitHub, aw-meta |
-| `mention`, `dm` | Reply (composer in the peek) | Hand to agent (an agent writes a draft into the composer; the owner sends) | the source of the thread |
+| `mention`, `dm`, `thread-reply`, `keyword` | Reply (composer in the peek). For a Slack row, until Messages ships its send route (Messages M2c), the primary is "Open in Slack" and there is no Reply. *(agent default (Messages spec, #3188))* | Hand to agent (an agent writes a draft into the composer; the owner sends) | the source of the thread |
 | `run-failed` | Retry the run | Open run, Hand to agent | Sindri (`workflow_run`) |
 | `issue-assigned` | Start (state to Started) | Change state or priority, Hand to agent, Comment | Linear (`ChangeLinearIssue`, `CommentLinearIssue`) |
 | `todo-due` | Check off | Change due date | Sindri (todo) |
@@ -246,7 +250,7 @@ Hand to agent opens a small picker, as the Context page's Hand to agent does: a 
 Every action that writes to a source of record (a reply, an approval, a merge, a state change) follows one pipeline. This is contract item 2 on #2978.
 
 1. **Key to paint, under 50 ms.** The row changes in place (reply: the composer closes and the message shows as "sending"; merge: the glyph becomes the merged disc, waits-on says "merging"). The app has written nothing yet.
-2. **Request.** `POST /sindri/home/rows/{id}/act` with `{action, version, actId, args}`. `actId` is a client ulid (`act_<ulid>`). A PR row stores the `headSha` the owner saw, and Merge and Approve send it in `args`: the adapter passes it to the forge (merge `sha`, review `commit_id`) and to `aw-meta merge-run`. When the PR head moved, nothing is written, the row refreshes and the code is 016. `args` per action is in S0's JSON schema (§8): `reply` takes `{body}`, `snooze` `{until}` or `{preset}`, `hand` `{target, provider?}`, `merge` `{headSha, method?}`, `approve` and `request-changes` `{headSha, body?}`.
+2. **Request.** `POST /sindri/home/rows/{id}/act` with `{action, version, actId, args}`. `actId` is a client ulid (`act_<ulid>`). A PR row stores the `headSha` the owner saw, and Merge and Approve send it in `args`: the adapter passes it to the forge (merge `sha`, review `commit_id`) and to `aw-meta merge-run`. When the PR head moved, nothing is written, the row refreshes and the code is 016. `args` per action is in S0's JSON schema (§8): `reply` takes `{body}`, `snooze` `{until}` or `{preset}`, with an optional `unlessReplied`, `hand` `{target, provider?}`, `merge` `{headSha, method?}`, `approve` and `request-changes` `{headSha, body?}`.
 3. **Source write.** The server calls the source adapter and records `home.act.sent`. The adapter checks first whether the write already landed (a merge reads the PR state; a reply looks for the owner's last comment with the same body hash), so a replay is safe. It records `home.act.landed` when the source confirms.
 4. **Within 2 s** the row shows the source's answer (D4). After 2 s without one, the row says "still sending" in the waits-on column and stays as it is. It does not roll back.
 5. **Failure** (the source refuses, or 15 s pass): the row returns to its old state and shows "failed: <reason>" in the waits-on column in the attention colour, with **Retry** (`.` then `r`, or the button) and **Discard**. Retry sends the same `actId`. Discard drops the pending change. The reason comes from the adapter ("GitHub refused: required check `build` is red", "Linear: token expired, reconnect") and a Connect button replaces Retry when the connection is stale.
@@ -269,6 +273,7 @@ Rules:
 - **It returns early** when something new is addressed to the owner on that object: a reply in the thread, a review request, CI red on the PR, the session asking again. The row says "back early: new reply" for its first view.
 - The wake is a local timer in the app (within 1 s of due, D9). When the app was not running at the due time, every due row wakes at the next start, and one toast says how many.
 - Snooze works on any kind, including a todo and an agent that is asking. It shares one store with Messages' "follow up if no reply" (#3020).
+- **Follow up if no reply.** A snooze with `unlessReplied: true` (Messages' snooze picker checkbox; Home's own picker does not show it) wakes at its time only when nobody replied in the thread since the snooze. When someone did reply, the row clears at the due time instead of waking, and a `home.row.cleared` event records it. The early return above still applies. *(agent default (Messages spec, #3188))*
 - Longest snooze: 365 days (code 008). Undo lasts 5 s.
 - Taken from the Linear `H` flow (ledger 5, take 3). The presets are #3030's, not the ledger's.
 
@@ -322,9 +327,11 @@ Every group header (New, Needs you, Moving, Since you last looked) has a chevron
 
 What notifies: a row **entering** Needs you with one of these kinds: `agent-asking`, `decision`, `question`, `review-requested`, `run-failed`, `mention`, `dm`. One OS toast per row per episode (an episode ends at Done, a clear by the source, or a snooze that wakes). Clicking the toast opens Home with that row's peek open (as #3026 does for agents).
 
-What never notifies: `pr-ready-merge`, `review-new-commits`, `issue-assigned`, `todo-due`, `lane-recycle`, `agent-limited`, `system` (a stale connection is the one exception: one toast, since every row of that source goes stale), Moving, the brief, a row that comes back from Done (it notifies only if its kind is in the list above), a row inside a muted object.
+What never notifies: `thread-reply`, `keyword`, `pr-ready-merge`, `review-new-commits`, `issue-assigned`, `todo-due`, `lane-recycle`, `agent-limited`, `system` (a stale connection is the one exception: one toast, since every row of that source goes stale), Moving, the brief, a row that comes back from Done (it notifies only if its kind is in the list above), a row inside a muted object.
 
 The tray count is the number of open rows of the notifying kinds. It is the one count in the app: #3026's agent badge is the `agent-asking` part of it, not a second badge. A mute applies to the thread, the PR and the issue about it together (ledger 10) and ends only on a direct ping: a mention naming the owner or a review request to the owner.
+
+A toast shows the row's title (for Messages rows, sender and place only: "Sam, DM"). A row holds no message text, so a toast with a text preview (Messages' `messages.notify.preview: on`, Messages Release 2) needs a body from the kind's owner: the toast function takes an optional body that the owner kind's provider returns in process on the Home host, never from the row or the ledger. Without a provider, or with the setting off, there is no body. *(agent default (Messages spec, #3188))*
 
 Toast and tray run in the Sindri app, from local state, with no push service (ledger 10). When the app is closed to the tray, they work; when it is not running, nothing notifies.
 
@@ -359,7 +366,7 @@ Design's frame on #2978 (comment 6817965291) is the reference; every number is `
 - **Row (32 px compact, 40 comfortable):** `[glyph 16] [mono id] [title, flex, min 200] [why chip 104] [object 104] [from 136] [age 44, right-aligned] [waits on 112]`, 12 px gap. The why chip carries "blocks 3" or the reason word. The mono id sits left of the title, as the #2978 Row rule says (`#3120`, `r-0412`, `ENG-412`). A lane, session or DM row has no id: its title starts in the id column, and the object column names it (`lane meta`, `session qa`, `dm sam.ortiz`). The object fact column says the kind and place only: lane, repo or dm. The from fact is a person or session name. Title is the only 13 px ink text; unread weighs 500, read is ink-muted. The waits-on column shows only where its value varies within a group (Moving). Needs you rows show no waits-on `you`, because the group header says it. The id adds to the fixed part; the title keeps its 200 minimum.
 - **Width check:** the fixed part is 636 px, so the title gets `list width - 636`: 364 px at 1000, 804 at 1440 with the peek closed. Under 840 px of list width the third fact drops; under 688 the second drops. The title minimum of 200 never shrinks (design's rule on #2978: facts end in an ellipsis, never a mid-word clip).
 - **Rows per screen (D3):** body 784 minus 8 padding minus 3 group headers (84) minus the brief's 3 lines (96) leaves 596 px, which is 18 rows at 32 px and 14 at 40. The Todo line (a 28 px non-group line with an empty-circle glyph, "Todo, N open" and "Enter opens the panel" at the right, §12) takes one compact row, so D3 asks for 17 and 14.
-- **Splits** are the saved filters: All; Reviews (`review-requested`, `review-new-commits`, `pr-ready-merge`); Messages (`mention`, `dm`); Work (`issue-assigned`, `todo-due`, `run-failed`, `decision`, `question`); Agents (`agent-asking`, `agent-limited`, `lane-recycle`, plus Moving's agent lines). Each tab shows its open count, computed from row kinds: open rows of its kinds, the New band included (the frame's All 9 is New 1 plus Needs you 8; All = New + Needs you). A split filters New, Needs you and Moving to its kind. The brief ("Since you last looked") and the Todo line show on All only. A tab with no rows says why: Messages reads "Messages arrive with #2979" until that epic ships. There is no "Other" tab: a row that is not a Needs you kind is not on Home (Linear's Priority / Other split is covered by Needs you versus the source pages).
+- **Splits** are the saved filters: All; Reviews (`review-requested`, `review-new-commits`, `pr-ready-merge`); Messages (`mention`, `dm`, `thread-reply`, `keyword`); Work (`issue-assigned`, `todo-due`, `run-failed`, `decision`, `question`); Agents (`agent-asking`, `agent-limited`, `lane-recycle`, plus Moving's agent lines). Each tab shows its open count, computed from row kinds: open rows of its kinds, the New band included (the frame's All 9 is New 1 plus Needs you 8; All = New + Needs you). A split filters New, Needs you and Moving to its kind. The brief ("Since you last looked") and the Todo line show on All only. A tab with no rows says why: Messages reads "Messages arrive with #2979" until that epic ships. There is no "Other" tab: a row that is not a Needs you kind is not on Home (Linear's Priority / Other split is covered by Needs you versus the source pages).
 - **Header right:** the `/` filter box. There is no health chip: the shell's top-bar pill is the one status mark, and a stale or failed source shows as its §7.3 state line.
 - **Footer:** the grammar keys, then Home's. At 1440 the page keys carry their words (`h snooze · t hand to agent · e done · R re-rank`), with "Done list" at the right. At 1000 they shrink to `h snooze · t hand · e done · ? all keys`.
 - **Text scale 1.3** scales text and row heights only (row 40, group header 36). Column widths, insets and the 440 px peek stay in px, so long facts ellipsize. A truncated title shows a plain tooltip with the full title.
@@ -372,7 +379,7 @@ Peek is a 440 px pane on the right (the list narrows to 1000 at 1440). `j/k` mov
 | Kind | Body |
 |---|---|
 | `review-*`, `pr-ready-merge` | the diff summary (files, +/-), CI checks with state, the linked Slack thread's last 3 messages when Messages exists, the closing issues |
-| `mention`, `dm` | the last 5 messages, an inline reply composer |
+| `mention`, `dm`, `thread-reply`, `keyword` | the last 5 messages, an inline reply composer. For a Slack row before Messages M2c: "Open in Slack" in the composer's place. From M2c on, the composer is the Messages composer, with its rule: `Ctrl+Enter` sends, `Enter` is a new line. *(agent default (Messages spec, #3188))* |
 | `agent-asking` | the last ~30 terminal lines, the pending question, a reply box (#3022); a session Sindri cannot write to says why ("started outside Sindri: copy the reply") |
 | `lane-recycle` | context size and threshold, when the last digest was written, what the lane owns (the `item-of` list) |
 | `decision`, `question` | the question and its options |
@@ -415,7 +422,7 @@ The grammar keys are the same on every list (#2978): `j/k` and arrows move, `Hom
 |---|---|---|
 | `h` | opens the snooze picker (§5.3) | no, until a choice is made; then Sindri-local |
 | `t` | opens the hand-to-agent picker ("tell an agent") | no, until Send |
-| `r` | opens the reply composer in the peek (kinds with a thread) | no, until `Ctrl+Enter` sends |
+| `r` | opens the reply composer in the peek (kinds with a thread). Not on a Slack row before Messages M2c: there it does nothing and the footer drops it. From M2c on it opens the Messages composer. *(agent default (Messages spec, #3188))* | no, until `Ctrl+Enter` sends |
 | `e` | Done, with Undo | Sindri-local |
 | `Ctrl+Enter` | opens the submit menu with the primary preselected; `Enter` commits | the source, on commit |
 | `R` | re-rank now (a settle point) | no |
@@ -444,14 +451,14 @@ One accent. Status colour only on status marks (the glyph, the failed reason). E
 
 ## 8. API and engine requirements
 
-Routes, all under `/sindri/home`, named by S0 (§15). The three `GET /sindri/home*` routes apply the §9 session filter too: a session sees only its repos' rows and gets no body for repo-less rows (`dm`, `mention`); a test reads a `dm` row as a session:
+Routes, all under `/sindri/home`, named by S0 (§15). The three `GET /sindri/home*` routes apply the §9 session filter too: a session sees only its repos' rows and gets no body for repo-less rows (`dm`, `mention`, `thread-reply`, `keyword`); a test reads a `dm` row as a session:
 
 | Route | Does |
 |---|---|
 | `GET /sindri/home?split=&after=&limit=&snoozed=` | the rows by group, current ranked order, with `counts`, `cursor`, `degraded[]` and the first page (default 60) |
 | `GET /sindri/home/rows/{id}` | one row with its peek body and `blocksList` |
 | `POST /sindri/home/rows/{id}/act` | `{action, version, actId, args}`; the §5.2 pipeline |
-| `POST /sindri/home/rows/{id}/snooze` | `{until}` or `{preset}` |
+| `POST /sindri/home/rows/{id}/snooze` | `{until}` or `{preset}`, plus an optional `unlessReplied` (bool, default false; §5.3) |
 | `POST /sindri/home/rows/{id}/done`, `/undo`, `/mute` | Sindri-local state |
 | `GET /sindri/home/done` | the Done list |
 | `POST /sindri/home/brief/refresh` | starts the `HomeBrief` job |
@@ -486,7 +493,7 @@ Everything the page does, an agent can do through one verb. `sindri home <verb>`
 | `done-list` | `[--json]` | the Done list | none |
 
 Rules, as for the other Sindri tools:
-- A session reads the rows of the repos its `X-Sindri-Repo` header names. For repo-less rows (`dm`, `mention`, `agent-limited`, `system`) it gets the id, kind and counts, and the body and peek only go to the owner. Repo and source text in every result is fenced as untrusted, over MCP and in `--json`.
+- A session reads the rows of the repos its `X-Sindri-Repo` header names. For repo-less rows (`dm`, `mention`, `thread-reply`, `keyword`, `agent-limited`, `system`) it gets the id, kind and counts, and the body and peek only go to the owner. Repo and source text in every result is fenced as untrusted, over MCP and in `--json`.
 - A session never presses the owner's buttons. `act`, `snooze`, `done`, `undo` and `mute` from a session are refused with SND-AUTH-002, the way profile writes are. A session may `draft`: the owner reads the draft and sends it.
 - Ids print as `<source>:<kind>:<source id>`; `--json` carries keys, text carries words.
 - Exit codes follow the context family: `0` ok, `1` attention (a refusal in the last column, Sindri not running), `2` a tool or usage error.

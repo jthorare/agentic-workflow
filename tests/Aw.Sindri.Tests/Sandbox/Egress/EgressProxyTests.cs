@@ -160,14 +160,12 @@ public sealed class EgressProxyTests
     [Fact, Trait("Lane", "unit")]
     public async Task Connection_lifetime_ends_a_connection()
     {
-        var (proxy, dialer, _) = Make(new EgressCaps(4, 1024, TimeSpan.FromMilliseconds(200), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)));
+        var (proxy, _, _) = Make(new EgressCaps(4, 1024, TimeSpan.FromMilliseconds(200), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)));
         var (client, server) = JoinedStream.Pair();
         var handled = proxy.Handle(server, TestContext.Current.CancellationToken);
         await client.WriteAsync("CONNECT api.anthropic.com:443 HTTP/1.1\r\n\r\n"u8.ToArray(), TestContext.Current.CancellationToken);
-        _ = await ReadHead(client);
-        _ = await dialer.Upstream.Task;
-
-        await handled.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        await handled.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);   // why: under load the 200 ms lifetime can end before the 200 head or the dial; the wait is on the end, not on them (#3457)
+        _ = await ReadHead(client).WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);   // the client is closed, so this ends
     }
 
     [Fact, Trait("Lane", "unit")]

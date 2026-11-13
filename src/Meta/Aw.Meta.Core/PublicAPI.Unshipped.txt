@@ -1284,6 +1284,8 @@ const Aw.Meta.Core.KvKeys.WatchResources = "watch.resources" -> string!
 const Aw.Meta.Core.KvKeys.WorktreesLast = "worktrees.last" -> string!
 const Aw.Meta.Core.KvKeys.WorktreesPending = "worktrees.pending-prs" -> string!
 const Aw.Meta.Core.KvKeys.WorktreesSweepStart = "worktrees.sweep-start" -> string!
+const Aw.Meta.Core.KvKeys.WorktreesSweepStartPrefix = "worktrees.sweep-start." -> string!
+static Aw.Meta.Core.KvKeys.WorktreesPathSweepStart(string! path) -> string!
 const Aw.Meta.Core.Lanes.LaneAgent.ClaudeCode = "claude-code" -> string!
 const Aw.Meta.Core.Obligations.MergeRecord.Unknown = "unknown" -> string!
 override Aw.Meta.Core.Commands.CommandRequest.Equals(object? obj) -> bool
@@ -2743,7 +2745,7 @@ Aw.Meta.Core.Events.MetaEvent.Deconstruct(out long Id, out System.DateTimeOffset
 override Aw.Meta.Core.Events.MetaEvent.Equals(object? obj) -> bool
 Aw.Meta.Core.Events.MetaEvent.Lane.get -> string?
 override Aw.Meta.Core.Events.MetaEvent.GetHashCode() -> int
-Aw.Meta.Core.Ports.IMetaEventStore.Read(long after, string? kind, string? lane, int max, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Events.MetaEvent!>!>!>
+Aw.Meta.Core.Ports.IMetaEventStore.Read(long after, string? kind, string? lane, int max, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Events.MetaEventPage!>!>
 Aw.Meta.Core.Ports.IMetaEventStore.Prune(System.DateTimeOffset olderThan, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Meta.Core.Events.MetaEvent.At.get -> System.DateTimeOffset
 Aw.Meta.Core.Events.MetaEvent
@@ -2760,3 +2762,23 @@ Aw.Meta.Core.Events.MetaEvent.Lane.init -> void
 Aw.Meta.Core.Events.MetaEventRules
 static Aw.Meta.Core.Events.MetaEventRules.Check(Aw.Meta.Core.Events.MetaEvent! metaEvent) -> Aw.Kernel.Result<Aw.Meta.Core.Events.MetaEvent!>!
 static Aw.Meta.Core.Events.MetaEventRules.IsKind(string? kind) -> bool
+Aw.Meta.Core.Events.MetaEventPage
+Aw.Meta.Core.Events.MetaEventPage.MetaEventPage(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Events.MetaEvent!>! Events, long Oldest, long Latest) -> void
+Aw.Meta.Core.Events.MetaEventPage.Events.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Events.MetaEvent!>!
+Aw.Meta.Core.Events.MetaEventPage.Events.init -> void
+Aw.Meta.Core.Events.MetaEventPage.Oldest.get -> long
+Aw.Meta.Core.Events.MetaEventPage.Oldest.init -> void
+Aw.Meta.Core.Events.MetaEventPage.Latest.get -> long
+Aw.Meta.Core.Events.MetaEventPage.Latest.init -> void
+Aw.Meta.Core.Events.MetaEventPage.Equals(Aw.Meta.Core.Events.MetaEventPage? other) -> bool
+override Aw.Meta.Core.Events.MetaEventPage.Equals(object? obj) -> bool
+override Aw.Meta.Core.Events.MetaEventPage.GetHashCode() -> int
+override Aw.Meta.Core.Events.MetaEventPage.ToString() -> string!
+Aw.Meta.Core.Events.MetaEventPage.<Clone>$() -> Aw.Meta.Core.Events.MetaEventPage!
+Aw.Meta.Core.Events.MetaEventPage.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Events.MetaEvent!>! Events, out long Oldest, out long Latest) -> void
+static Aw.Meta.Core.Events.MetaEventPage.operator ==(Aw.Meta.Core.Events.MetaEventPage? left, Aw.Meta.Core.Events.MetaEventPage? right) -> bool
+static Aw.Meta.Core.Events.MetaEventPage.operator !=(Aw.Meta.Core.Events.MetaEventPage? left, Aw.Meta.Core.Events.MetaEventPage? right) -> bool
+Aw.Meta.Core.Commands.CommandRequest.PathPrefix.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Meta.Core.Commands.CommandRequest.PathPrefix.init -> void
+Aw.Meta.Core.Gate.GateTools
+static Aw.Meta.Core.Gate.GateTools.PathPrefix(string! tree) -> System.Collections.Generic.IReadOnlyList<string!>!
