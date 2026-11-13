@@ -94,4 +94,44 @@ public sealed class PeekScaleTests
         window.Close();
         return true;
     });
+
+    [Theory]
+    [InlineData(1.0)]
+    [InlineData(1.3)]
+    public async Task Body_lines_sit_20_px_apart(double scaling) => await OnUi(() =>
+    {
+        var (window, _, body) = Show(scaling);
+        var lines = body.TextLayout.TextLines;
+
+        Assert.True(lines.Count >= 2, "the body wraps to at least two lines");
+        Assert.Equal(20, body.Bounds.Height / lines.Count, Tolerance(scaling));
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task Body_text_is_ink_muted() => await OnUi(() =>
+    {
+        var (window, _, body) = Show(1.0);
+
+        var brush = Assert.IsType<ISolidColorBrush>(body.Foreground, exactMatch: false);
+        Assert.Equal(Color.Parse("#d0d6e0"), brush.Color);
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task A_textblock_nested_in_a_structured_body_keeps_nowrap() => await OnUi(() =>
+    {
+        var nested = new TextBlock { Text = LongSentence };
+        var peek = new PeekPane { Title = "A title", ItemId = "r-1", Body = new StackPanel { Children = { nested } } };
+        var window = new Window { Content = peek, Width = 500, Height = 600 };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+
+        Assert.Equal(TextWrapping.NoWrap, nested.TextWrapping);
+        window.Close();
+        return true;
+    });
 }
