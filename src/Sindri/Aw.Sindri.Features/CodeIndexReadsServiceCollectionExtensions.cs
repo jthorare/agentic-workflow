@@ -17,7 +17,7 @@ internal static class CodeIndexReadsServiceCollectionExtensions
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddCodeIndexReads(this IServiceCollection services)
     {
-        _ = services.AddScoped<CodeIndexScopes>().AddScoped<IPinnedCode, PinnedCodeReader>().AddScoped<RepoHealths>().AddSingleton<QueuedClock>().AddScoped<ICodeIndexHealth, CodeIndexHealth>();
+        _ = services.AddScoped<CodeIndexScopes>().AddScoped<IPinnedCode, PinnedCodeReader>().AddScoped<RepoHealths>().AddSingleton(static sp => new QueuedClock(sp.GetRequiredService<TimeProvider>().GetUtcNow())).AddScoped<ICodeIndexHealth, CodeIndexHealth>();
         _ = services.AddScoped<IValidator<GetCodeIndexStatusRequest>, AcceptAllValidator<GetCodeIndexStatusRequest>>().AddQuery<GetCodeIndexStatusRequest, CodeIndexStatusView, GetCodeIndexStatusService>();
         _ = services.AddScoped<IValidator<FindCodeSymbolsRequest>, AcceptAllValidator<FindCodeSymbolsRequest>>().AddQuery<FindCodeSymbolsRequest, FindSymbolsAnswer, FindCodeSymbolsService>();
         _ = services.AddScoped<IValidator<GetCodeCallersRequest>, AcceptAllValidator<GetCodeCallersRequest>>().AddQuery<GetCodeCallersRequest, CodeCallsView, GetCodeCallersService>();
