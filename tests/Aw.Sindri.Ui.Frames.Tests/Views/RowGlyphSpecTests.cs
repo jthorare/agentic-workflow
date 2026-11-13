@@ -28,10 +28,11 @@ public sealed class RowGlyphSpecTests
     [Fact]
     public Task Failed_is_a_14_px_error_disc_with_a_canvas_x() => Check(RowGlyph.Failed, 14, 14, "Brush.Error", (g, shot) =>
     {
+        Assert.True(shot.AllOpaqueNearEither(g.Colour("Brush.Error"), g.Colour("Brush.Canvas")), "Failed: a solid pixel is neither Brush.Error nor Brush.Canvas");
         Assert.True(shot.Near(8, 3, g.Colour("Brush.Error")), shot.Describe(8, 3));
         Assert.True(shot.Near(3, 8, g.Colour("Brush.Error")), shot.Describe(3, 8));
         Assert.True(shot.Near(8, 8, g.Colour("Brush.Canvas")), shot.Describe(8, 8));
-    });
+    }, oneInk: false);
 
     [Fact]
     public Task NeedsYou_diamond_is_14_px_tip_to_tip_in_attention() => Check(RowGlyph.NeedsYou, 14, 14, "Brush.Attention", (g, shot) => Assert.True(shot.Near(8, 8, g.Colour("Brush.Attention")), shot.Describe(8, 8)));
@@ -45,7 +46,7 @@ public sealed class RowGlyphSpecTests
     [Fact]
     public Task Linked_ring_stays_subtle_ink() => Check(RowGlyph.Linked, 14, 14, "Brush.InkSubtle", more: null);
 
-    private static Task<bool> Check(RowGlyph glyph, double width, double height, string ink, Action<Drawn, Shot>? more) => HeadlessUnitTestSession.GetOrStartForAssembly(typeof(RowGlyphSpecTests).Assembly).Dispatch(() =>
+    private static Task<bool> Check(RowGlyph glyph, double width, double height, string ink, Action<Drawn, Shot>? more, bool oneInk = true) => HeadlessUnitTestSession.GetOrStartForAssembly(typeof(RowGlyphSpecTests).Assembly).Dispatch(() =>
     {
         if (!_draws)
         {
@@ -62,7 +63,7 @@ public sealed class RowGlyphSpecTests
         var (boxW, boxH) = shot.Box();
         Assert.True(Math.Abs(boxW - width) <= 0.5 && Math.Abs(boxH - height) <= 0.5, string.Create(CultureInfo.InvariantCulture, $"{glyph} box is {boxW} x {boxH} px, grammar.css says {width} x {height}"));
         var expected = drawn.Colour(ink);
-        Assert.True(shot.AllOpaqueNear(expected), $"{glyph}: some solid pixel is not {ink} ({expected})");
+        Assert.True(!oneInk || shot.AllOpaqueNear(expected), $"{glyph}: some solid pixel is not {ink} ({expected})");
         more?.Invoke(drawn, shot);
         window.Close();
         return true;
@@ -141,6 +142,26 @@ public sealed class RowGlyphSpecTests
                 {
                     any = true;
                     if (!(Within(bytes[i + 2], want.R) && Within(bytes[i + 1], want.G) && Within(bytes[i], want.B)))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return any;
+        }
+
+        public bool AllOpaqueNearEither(Color a, Color b)
+        {
+            var any = false;
+            for (var i = 0; i < bytes.Length; i += 4)
+            {
+                if (bytes[i + 3] >= 250)
+                {
+                    any = true;
+                    var near = (Within(bytes[i + 2], a.R) && Within(bytes[i + 1], a.G) && Within(bytes[i], a.B))
+                        || (Within(bytes[i + 2], b.R) && Within(bytes[i + 1], b.G) && Within(bytes[i], b.B));
+                    if (!near)
                     {
                         return false;
                     }
