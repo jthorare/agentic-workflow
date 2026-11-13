@@ -51,7 +51,16 @@ internal sealed partial class Row
     [StructLayout(LayoutKind.Auto)]
     private readonly record struct Slots(double TitleX, double TitleWidth, double FactsX, double AgeX, double WaitX);
 
-    // Everything the layouts, fonts and brushes were built from can change: the item, the columns, the theme, the text scale and the render scaling. Each one drops them all.
+    // A new item or a changed one: only its texts are laid out again. The fonts, brushes, glyph palette and metrics do not depend on the item, so a recycle keeps them.
+    private void DropText()
+    {
+        Array.Clear(_text);
+        Array.Clear(_facts);
+        _titleRoom = double.NaN;
+        InvalidateVisual();
+    }
+
+    // The columns, the theme, the text scale and the render scaling change what every layout and brush was built from: each one drops them all.
     private void DropLayouts()
     {
         Array.Clear(_text);

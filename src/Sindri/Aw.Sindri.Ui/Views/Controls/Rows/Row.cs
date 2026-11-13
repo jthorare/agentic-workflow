@@ -195,7 +195,7 @@ internal sealed partial class Row : Control
 
         _glyph = RowGlyphs.For(item.Kind, item.StateClass, item.StateKey);
         AutomationProperties.SetName(this, SpokenName(item, StateWord(item)));
-        DropLayouts();
+        DropText();
         UpdateStrip();
     }
 
