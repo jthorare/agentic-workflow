@@ -12,7 +12,7 @@ internal static class FlowRules
     /// <summary>The deepest 'workflow.callDepth' may be set to.</summary>
     internal const int MaxCallDepth = 10;
 
-    internal static Error? Check(WorkflowSettings? workflow) => CallDepth(workflow?.CallDepth) ?? Hosts(workflow?.Http?.Hosts);
+    internal static Error? Check(WorkflowSettings? workflow) => CallDepth(workflow?.CallDepth) ?? Hosts(workflow?.Http?.Hosts) ?? Editor(workflow?.Editor);
 
     /// <summary>Whether <paramref name="host"/> is a lower-case DNS name with a dot, whose last label has a letter (so no IP address), and is not under 'localhost'.</summary>
     /// <param name="host">The name.</param>
@@ -30,6 +30,20 @@ internal static class FlowRules
 
     private static bool IsLabel(string label) =>
         label.Length is > 0 and <= 63 && label.All(static c => char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c) || c == '-') && label[0] != '-' && label[^1] != '-';
+
+    /// <summary>The values 'workflow.editor' takes; null means <see cref="SheetEditor"/>.</summary>
+    internal static readonly string[] Editors = [SheetEditor, StepsEditor];
+
+    /// <summary>The sheet-first editor, the default.</summary>
+    internal const string SheetEditor = "sheet";
+
+    /// <summary>The steps editor.</summary>
+    internal const string StepsEditor = "steps";
+
+    private static Error? Editor(string? editor) =>
+        editor is null || Editors.Contains(editor, StringComparer.Ordinal)
+            ? null
+            : Invalid("workflow.editor", $"must be 'sheet' or 'steps', not '{editor}'");
 
     private static Error? CallDepth(int? depth) =>
         depth is { } set && set is < 1 or > MaxCallDepth

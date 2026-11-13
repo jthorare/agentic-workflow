@@ -59,6 +59,7 @@ internal static class SindriHostServiceCollectionExtensions
         .AddHostedService<TodoNoteWatch>()
         .AddHostedService<SessionCollectorHost>()
         .AddHostedService<ContextWarmHost>()
+        .AddHostedService<SpendWarmHost>()
         .AddHostedService<LauncherHost>()
         .AddHostedService<LeaseRenewer>();
 }
