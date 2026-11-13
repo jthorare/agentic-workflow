@@ -45,14 +45,16 @@
       "state": "ok",
       "embeddingsPercent": null,
       "waiting": null,
-      "needsLook": false
+      "needsLook": false,
+      "lookWords": null
     },
     {
       "repo": "other",
       "state": "ok",
       "embeddingsPercent": null,
       "waiting": null,
-      "needsLook": false
+      "needsLook": false,
+      "lookWords": null
     }
   ]
 }
