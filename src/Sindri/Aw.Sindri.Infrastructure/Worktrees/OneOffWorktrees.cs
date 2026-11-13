@@ -13,7 +13,8 @@ namespace Aw.Sindri.Infrastructure.Worktrees;
 /// <summary>
 /// The worktree of a one-off session (agents spec §15.4). The folder comes from the toolkit's 'skills/_shared/worktree-path.sh' (one root per repo), the base is the repo's HEAD, and the checkout is made by
 /// <see cref="IWorktrees"/>, which never forces. A name whose folder or branch exists gets '-2', '-3'. Makes in one repo run one at a time (#3472): the lock is keyed by the repo's git common dir,
-/// which git gives as a real path, so two starts with the same name at once, or one through a symlink, can't both pass the name check and share one checkout.
+/// which git gives as a real path, so two starts with the same name at once, through a symlink, or from a linked worktree of the same repo, can't both pass the name check and share one checkout.
+/// 'rev-parse --path-format=absolute' needs git 2.31 or later.
 /// </summary>
 /// <param name="worktrees">Makes and removes the checkout.</param>
 /// <param name="environment">Reads one environment variable (AW_TOOLKIT, HOME).</param>

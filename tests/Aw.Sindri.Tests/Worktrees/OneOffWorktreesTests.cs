@@ -48,6 +48,20 @@ public sealed class OneOffWorktreesTests : IDisposable
         Assert.NotEqual(made[0].Value.Branch, made[1].Value.Branch, StringComparer.Ordinal);
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_start_in_a_linked_worktree_and_one_in_its_main_checkout_get_two_checkouts()
+    {
+        var (sut, repo) = await Rig();
+        var linked = Path.Combine(_home.Path, "linked");
+        _ = await _repo!.Git("worktree", "add", "-q", "-b", "side", linked);   // why: one set of branches, two toplevels; the lock is keyed by the common dir
+
+        var made = await Task.WhenAll(sut.Make(repo, "fix-login", Token).AsTask(), sut.Make(linked, "fix-login", Token).AsTask());
+
+        Assert.All(made, m => Assert.True(m.IsSuccess, m.IsError ? m.Error.ToString() : null));
+        Assert.NotEqual(made[0].Value.Path, made[1].Value.Path, StringComparer.Ordinal);
+        Assert.NotEqual(made[0].Value.Branch, made[1].Value.Branch, StringComparer.Ordinal);
+    }
+
     private async Task<(OneOffWorktrees Sut, string Repo)> Rig()
     {
         _repo = await TempGitRepo.Create();
