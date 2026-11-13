@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Launch;
@@ -45,6 +46,7 @@ public sealed class FirstRunSetupTests : IDisposable
         _rig.Harness.Profiles.Live = new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml");
     }
 
+    private readonly FakePath _environment = new();
     private ScriptedLaunchSetup _launch = new(SindriErrors.NotRunning.With("not used"), Report());
 
     private FirstRunSetup Setup(InMemoryWorkflowStore? workflows = null)
@@ -53,7 +55,7 @@ public sealed class FirstRunSetupTests : IDisposable
         _launch = new ScriptedLaunchSetup(SindriErrors.NotRunning.With("not used"), _agents);
         return new FirstRunSetup(
             _rig.Harness.Profiles,
-            _launch,
+            new AgentTargetSearch(_launch, _environment, new AgentSearchState()),
             _keys,
             Create(store),
             Activate(store),
@@ -255,6 +257,38 @@ public sealed class FirstRunSetupTests : IDisposable
         Assert.Equal(1, _launch.ShowCalls);
     }
 
+    [Fact]
+    public async Task A_PATH_change_resets_the_no_agent_cache()
+    {
+        _ = await _rig.Harness.HoldLease();
+        Profile(repos: "demo");
+        _agents = Report(("claude-code", null));
+        var setup = Setup();
+
+        await setup.Run(Token);
+        await setup.Run(Token);
+        _environment.Path = "/home/thor/.local/bin:/usr/bin";
+        await setup.Run(Token);
+
+        Assert.Equal(2, _launch.ShowCalls);
+    }
+
+    [Fact]
+    public async Task A_no_agent_search_is_repeated_after_the_retry_interval()
+    {
+        _ = await _rig.Harness.HoldLease();
+        Profile(repos: "demo");
+        _agents = Report(("claude-code", null));
+        var setup = Setup();
+
+        for (var tick = 0; tick <= AgentTargetSearch.RetryEvery; tick++)
+        {
+            await setup.Run(Token);
+        }
+
+        Assert.Equal(2, _launch.ShowCalls);
+    }
+
     // #3496 item 3: a store that can't answer is "can't tell", not "not ours": the run is tried on the next tick.
     [Fact]
     public async Task A_workflow_list_that_fails_once_does_not_stop_hello_sindri_from_running_on_the_next_tick()
@@ -283,6 +317,13 @@ public sealed class FirstRunSetupTests : IDisposable
         await Setup().Run(Token);
 
         Assert.Empty(_keys.Calls);
+    }
+
+    private sealed class FakePath : IEnvironmentReader
+    {
+        public string? Path { get; set; } = "/usr/bin";
+
+        public string? Get(string name) => string.Equals(name, "PATH", StringComparison.Ordinal) ? Path : null;
     }
 
     private sealed class RecordingRunner : ISetupWorkflowRunner

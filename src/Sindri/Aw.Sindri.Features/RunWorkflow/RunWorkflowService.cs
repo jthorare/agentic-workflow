@@ -94,7 +94,9 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
         }
 
         // why: the run store has no query by trigger actor, so page through every run of this workflow (a workflow made for one greeting has a handful)
-        for (var offset = 0; ; offset += Page)
+        // The offset advances by the rows a page returned, not by Page: a store may clamp the page size below it. The last page is the empty one.
+        var offset = 0;
+        while (true)
         {
             var recent = await runs.Recent(record.Id, offset, Page, cancellationToken).ConfigureAwait(false);
             if (recent.IsError)
@@ -107,10 +109,12 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
                 return SindriErrors.GraphSetupRunRefused.With("the setup service already ran hello-sindri once (fix: sindri wf run hello-sindri)");
             }
 
-            if (recent.Value.Count < Page)
+            if (recent.Value.Count == 0)
             {
                 return null;
             }
+
+            offset += recent.Value.Count;
         }
     }
 

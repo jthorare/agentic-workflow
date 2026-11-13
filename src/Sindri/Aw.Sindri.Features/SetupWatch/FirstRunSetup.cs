@@ -3,7 +3,6 @@ using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Templates;
 using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
 
@@ -14,13 +13,13 @@ namespace Aw.Sindri.Features.SetupWatch;
 /// then makes, activates and runs hello-sindri once per box (the 'setup.first_workflow.created' event). Neither is a question for the owner.
 /// </summary>
 /// <param name="live">The live profile.</param>
-/// <param name="launch">The launcher's catalog: which agents are installed.</param>
+/// <param name="search">Finds the first installed agent (the launcher's catalog), not asking again on every tick while none is found.</param>
 /// <param name="keys">Edits one key of the profile file in place.</param>
 /// <param name="create">Makes the workflow (the command, run as 'service:setup').</param>
 /// <param name="activate">Turns the workflow on (the command, run as 'service:setup').</param>
 /// <param name="made">The ledger event that says hello-sindri was made once.</param>
 /// <param name="run">The one run of hello-sindri, tried again on later ticks until it starts or can never start.</param>
-internal sealed class FirstRunSetup(IProfileSource live, ILaunchSetup launch, IProfileKeyWriter keys, ISetupWorkflowCreator create, ISetupWorkflowActivator activate, FirstWorkflowEvents made, HelloRun run)
+internal sealed class FirstRunSetup(IProfileSource live, AgentTargetSearch search, IProfileKeyWriter keys, ISetupWorkflowCreator create, ISetupWorkflowActivator activate, FirstWorkflowEvents made, HelloRun run)
 {
     private const string TargetKey = "workflow.agent.target";
     private static readonly WorkflowSlug _hello = WorkflowSlug.From("hello-sindri");
@@ -51,13 +50,12 @@ internal sealed class FirstRunSetup(IProfileSource live, ILaunchSetup launch, IP
             return;
         }
 
-        var shown = await launch.Show(only: null, cancellationToken).ConfigureAwait(false);
-        if (shown.IsError || shown.Value.Entries.FirstOrDefault(static e => e.ResolvedBin is not null) is not { } agent)
+        if (await search.First(cancellationToken).ConfigureAwait(false) is not { } agent)
         {
             return;
         }
 
-        var plan = keys.PlanText(TargetKey, agent.Id.Value);
+        var plan = keys.PlanText(TargetKey, agent);
         if (plan.IsSuccess)
         {
             _ = keys.Save(plan.Value);   // a failed write is tried again on the next tick
@@ -102,11 +100,15 @@ internal sealed class FirstRunSetup(IProfileSource live, ILaunchSetup launch, IP
             return false;
         }
 
-        if (created.IsError && !await run.IsOurs(_hello, cancellationToken).ConfigureAwait(false))
+        if (created.IsError && await run.OwnerOf(_hello, cancellationToken).ConfigureAwait(false) is var owner && owner != HelloOwner.Ours)
         {
-            _ = await made.Made(_hello, repo, cancellationToken).ConfigureAwait(false);
-            run.Settle();
-            return false;
+            if (owner == HelloOwner.NotOurs)
+            {
+                _ = await made.Made(_hello, repo, cancellationToken).ConfigureAwait(false);
+                run.Settle();
+            }
+
+            return false;   // unknown: the store can't say who made it; nothing is recorded, so the next tick looks again
         }
 
         var activated = await activate.Activate(_hello, cancellationToken).ConfigureAwait(false);
