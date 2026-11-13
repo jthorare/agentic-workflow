@@ -6,6 +6,7 @@ using Aw.Kernel.Json;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
@@ -27,7 +28,7 @@ public sealed class LibraryDoctorChecksTests
     }
 
     private async Task<DoctorCheck> RowOf(FakeContextEngine engine) =>
-        Assert.Single(await new LibraryDoctorChecks(_h.Profiles, new ContextScopes(_h.Profiles, _h.Callers), engine).Run(Token));
+        Assert.Single(await new LibraryDoctorChecks(_h.Profiles, new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), engine).Run(Token));
 
     private async Task Approve()
     {

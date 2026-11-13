@@ -129,6 +129,7 @@ bash config/hooks/tests/fleet-state.test.sh   # the aw:fleet hook: every Claude 
 bash scripts/tests/install-fleet.test.sh      # install-fleet.sh install and --uninstall (only # aw:fleet entries), setup.sh --with-fleet --dry-run
 bash scripts/tests/install-headroom.test.sh   # aw-headroom.sh and install-headroom.sh: upstream detection order, no loop, fake headroom/claude/codex, dry run writes nothing, no MCP, token never printed
 bash scripts/tests/install-tldraw.test.sh     # install-tldraw.sh: brew cask on macOS, the pinned AppImage on Linux (sha256 refusal), the agent-skills marker check, fail-open, --no-tldraw
+bash scripts/tests/install-tmux.test.sh       # install-tmux.sh on a temp HOME and private tmux sockets: dry run writes nothing, the config parses (status-style, ~ path, prefix chip, no clock, no 256-color numbers), idempotent re-run, backups never overwritten, no tmux = skip, --restore (plugin block last, stand-in TPM, install_plugins on the server that ran tpm), setup.sh --with-tmux[-restore] --dry-run
 bash scripts/tests/external-packs.test.sh    # scripts/lib/external-packs.sh: fetch_external_pack on local git repos, the unpinned vercel-labs/ui pack follows upstream, a pinned pack stays, the subdir arg links only the user skill, setup.sh and the pin files (#3458)
 bash scripts/tests/result-gate.test.sh   # every skill's Result-block gate prints AW_RESULT and a non-empty AW_DIR, run alone in a fresh shell (#2036)
 bash config/hooks/tests/failopen.test.sh
