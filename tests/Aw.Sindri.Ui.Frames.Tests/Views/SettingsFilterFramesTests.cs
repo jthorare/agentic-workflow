@@ -11,7 +11,6 @@ using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
-using Aw.Sindri.Ui.Tests.Setup;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Reviews;
@@ -328,9 +327,9 @@ public sealed class SettingsFilterFramesTests : FrameHost
         var (window, _, _, _, _) = await WithSetup("all-done");
         var box = Named<TextBox>(window, "SettingsFilterBox");
 
-        var expected = Assert.IsAssignableFrom<ISolidColorBrush>(box.FindResource("Brush.Ink"));
+        var expected = Assert.IsType<ISolidColorBrush>(box.FindResource("Brush.Ink"), exactMatch: false);
 
-        Assert.Equal(expected.Color, Assert.IsAssignableFrom<ISolidColorBrush>(box.PlaceholderForeground).Color);
+        Assert.Equal(expected.Color, Assert.IsType<ISolidColorBrush>(box.PlaceholderForeground, exactMatch: false).Color);
     });
 
     // The name, the Changed chip and Reset share one centre line (within a pixel) while a setting is changed.
