@@ -184,7 +184,8 @@ internal sealed partial class GitCli
         return copy.ToArray();
     }
 
-    private async ValueTask<Result<(int Exit, T Stdout)>> Execute<T>(ProcessStartInfo start, string verb, Func<StreamReader, CancellationToken, Task<T>> readStdout, CancellationToken cancellationToken)
+    private async ValueTask<Result<(int Exit, T Stdout)>> Execute<T>(ProcessStartInfo start, string verb, Func<StreamReader, CancellationToken, Task<T>> readStdout, CancellationToken cancellationToken,
+        Func<StreamWriter, CancellationToken, Task>? writeStdin = null)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(_timeout);
@@ -194,7 +195,9 @@ internal sealed partial class GitCli
             git = Process.Start(start) ?? throw new InvalidOperationException("git didn't start");
             var stdout = readStdout(git.StandardOutput, timeout.Token);
             var stderr = git.StandardError.ReadToEndAsync(timeout.Token);
+            var stdin = writeStdin is null ? Task.CompletedTask : Feed(git.StandardInput, writeStdin, timeout.Token);   // written while stdout is read, so neither pipe fills
             await git.WaitForExitAsync(timeout.Token).ConfigureAwait(false);
+            await stdin.ConfigureAwait(false);
             _ = await stderr.ConfigureAwait(false);   // drained, never logged: it may name repo content
             return (git.ExitCode, await stdout.ConfigureAwait(false));
         }
@@ -215,6 +218,20 @@ internal sealed partial class GitCli
         finally
         {
             git?.Dispose();
+        }
+    }
+
+    private static async Task Feed(StreamWriter stdin, Func<StreamWriter, CancellationToken, Task> write, CancellationToken token)
+    {
+        try
+        {
+            await write(stdin, token).ConfigureAwait(false);
+            await stdin.FlushAsync(token).ConfigureAwait(false);
+            stdin.Close();
+        }
+        catch (IOException)
+        {
+            // git exited before it read everything: its exit code says why
         }
     }
 

@@ -26,11 +26,14 @@ public sealed class InMemoryMetaEventStore : IMetaEventStore
     }
 
     /// <inheritdoc />
-    public ValueTask<Result<IReadOnlyList<MetaEvent>>> Read(long after, string? kind, string? lane, int max, CancellationToken cancellationToken) =>
-        Done.Of<IReadOnlyList<MetaEvent>>([.. _events
-            .Where(e => e.Id > after && (kind is null || e.Kind == kind) && (lane is null || e.Lane == lane))
-            .OrderBy(static e => e.Id)
-            .Take(max)]);
+    public ValueTask<Result<MetaEventPage>> Read(long after, string? kind, string? lane, int max, CancellationToken cancellationToken) =>
+        Done.Of(new MetaEventPage(
+            [.. _events
+                .Where(e => e.Id > after && (kind is null || e.Kind == kind) && (lane is null || e.Lane == lane))
+                .OrderBy(static e => e.Id)
+                .Take(max)],
+            _events.Count == 0 ? _last + 1 : _events.Min(static e => e.Id),
+            _last));
 
     /// <inheritdoc />
     public ValueTask<Result<int>> Prune(DateTimeOffset olderThan, CancellationToken cancellationToken) =>

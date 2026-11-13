@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Runs;
 using Temporalio.Exceptions;
 using Temporalio.Workflows;
 
@@ -40,5 +41,26 @@ internal sealed partial class GraphWorkflow
             await Cancelled().ConfigureAwait(true);
             throw;
         }
+        catch (Exception e) when (GraphFaults.Ends(e))
+        {
+            // why: a write that ran out of retries or an exception in workflow code would otherwise leave the run 'running' for ever (a workflow-task failure is retried without end) and block its workflow's next run (issue 2999)
+            return await Failed(e).ConfigureAwait(true);
+        }
+    }
+
+    private async Task<GraphWorkflowResult> Failed(Exception e)
+    {
+        _current = null;
+        try
+        {
+            await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.FinishAsync(new GraphFinish(_run, WorkflowRunStatus.Failed, GraphFaults.Reason(e))), _detached).ConfigureAwait(true);
+        }
+        catch (Exception finish) when (GraphFaults.Ends(finish))
+        {
+            // why: the end itself could not be written; failing the workflow closes it in Temporal, so the recovery sweep ends the row
+            throw new ApplicationFailureException($"The run could not be ended: {GraphFaults.Reason(finish)}", finish);
+        }
+
+        return new GraphWorkflowResult(WorkflowRunStatus.Failed);
     }
 }

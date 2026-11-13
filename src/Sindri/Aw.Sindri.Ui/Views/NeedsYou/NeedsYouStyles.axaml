@@ -96,18 +96,34 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
     <Setter Property="BorderThickness" Value="0,1" />
   </Style>
+  <!-- An inbox row is two borders (#3506): the frame (InboxRowFrame) draws hover, press and the focus ring, the line inside it
+       (InboxRowSelectLine) draws "selected" while the row has focus. Focus is the 2 px PrimaryHover ring of every focusable row
+       (Queue item-row, FluentOverrides); the line's padding gives the ring's extra 1 px back, so the content sits at 17,9 in every state. -->
   <Style Selector="Border.inbox-row">
+    <!-- The frame draws its own focus ring (below); without this the app-wide adorner (FluentOverrides, 2 px at Margin -4) draws a second one around it. Same as Queue's item-row. -->
+    <Setter Property="FocusAdorner" Value="{x:Null}" />
     <Setter Property="MinHeight" Value="56" />
-    <Setter Property="Padding" Value="16,8" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="BorderBrush" Value="Transparent" />
   </Style>
+  <Style Selector="Border.inbox-row-line">
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="Padding" Value="15,7" />
+  </Style>
   <Style Selector="Border.inbox-row.selected">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.PressedBorder}" />
   </Style>
   <Style Selector="Border.inbox-row:focus-visible">
+    <Setter Property="BorderThickness" Value="2" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+  </Style>
+  <Style Selector="Border.inbox-row:focus-visible > Border.inbox-row-line">
+    <Setter Property="Padding" Value="14,6" />
+  </Style>
+  <Style Selector="Border.inbox-row.selected:focus-visible > Border.inbox-row-line">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.PressedBorder}" />
   </Style>
   <Style Selector="Border.kind-tile">
     <Setter Property="Width" Value="24" />

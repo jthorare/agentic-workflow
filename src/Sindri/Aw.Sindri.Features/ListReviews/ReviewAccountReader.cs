@@ -29,7 +29,7 @@ internal sealed class ReviewAccountReader(IGitHubAccount account, IPullRequests 
 
         var connect = ReviewConnectRules.For(current.Value, HasProfileToken(profile?.Context), lastCode);
         var typed = profile?.Review?.Login;
-        return new ReviewIdentity(connect, string.IsNullOrWhiteSpace(typed) ? current.Value.Login : typed);
+        return new ReviewIdentity(connect, string.IsNullOrWhiteSpace(typed) ? current.Value.Login : typed, current.Value.Connection, current.Value.Miss);
     }
 
     /// <summary>The forge credential's own login, for the login prompt to suggest.</summary>

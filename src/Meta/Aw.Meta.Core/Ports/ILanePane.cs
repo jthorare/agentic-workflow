@@ -31,6 +31,12 @@ public interface ILanePane
     /// <returns>Success, or the failure to run tmux.</returns>
     public ValueTask<Result<Unit>> PressEnter(string session, CancellationToken cancellationToken);
 
+    /// <summary>Clears the input line of the session's pane (Ctrl+U), so typed text that must not be submitted doesn't sit there for the next send (#3521).</summary>
+    /// <param name="session">The session name.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Success, or the failure to run tmux.</returns>
+    public ValueTask<Result<Unit>> ClearInput(string session, CancellationToken cancellationToken);
+
     /// <summary>Reads what the session's pane shows now (tmux capture-pane -p).</summary>
     /// <param name="session">The session name.</param>
     /// <param name="cancellationToken">Cancels the call.</param>

@@ -15,7 +15,8 @@
             "name": "add_note",
             "description": "Adds a note.",
             "inputSchema": "{\"type\":\"object\"}",
-            "outputSchema": "{\"type\":\"object\"}"
+            "outputSchema": "{\"type\":\"object\"}",
+            "readOnly": false
           }
         ]
       },

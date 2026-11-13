@@ -19,4 +19,12 @@ public interface IGraphQueueAdvance
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The runs, oldest first, or the reason the read failed.</returns>
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> RunningBeforeThisProcess(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Every run in 'running' except the ones whose Temporal start this process has not finished yet (issue 2999): the live sweep's candidates, runs of this process included.
+    /// A queued run keeps its old start time when it is promoted, so the start time alone can't tell a launch in flight from a lost run.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The runs, oldest first, or the reason the read failed.</returns>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> RunningNotLaunching(CancellationToken cancellationToken);
 }

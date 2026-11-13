@@ -40,6 +40,9 @@ public static class EvaluationReasons
     /// <summary>Failure row: the provider decided an output that needs reasons without giving any.</summary>
     public const string NoReasons = "no-reasons";
 
+    /// <summary>Failure row and skip code: the agent CLI reported its usage limit (ProviderErrored.UsageLimit), not an error of its own.</summary>
+    public const string UsageLimit = "usage-limit";
+
     /// <summary>Failure row: the decision row couldn't be written (the outcome still stands).</summary>
     public const string DecisionWriteFailed = "decision-write-failed";
 

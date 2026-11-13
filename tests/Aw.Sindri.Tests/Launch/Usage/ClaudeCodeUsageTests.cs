@@ -69,6 +69,59 @@ public sealed class ClaudeCodeUsageTests : IDisposable
         Assert.Equal<ModelTokens>([new ModelTokens("claude-haiku-4-5", 1, 2, 3, 4), new ModelTokens("claude-sonnet-4-5", 11, 1, 1, 6)], used);
     }
 
+    /// <summary>Pins #2777: a reader that keeps its place in each file answers like a fresh full read after lines are appended (a streamed message repeated with a higher count).</summary>
+    [Fact]
+    public async Task A_second_read_after_an_append_equals_a_fresh_full_read()
+    {
+        var path = Path.Combine(_files.Root, "-repo/a.jsonl");
+        _files.Write("-repo/a.jsonl",
+            UsageFixture.Claude("m1", "2026-10-17T08:00:00.000Z", "claude-sonnet-4-5", 10, 0, 0, 5),
+            UsageFixture.Claude("m2", "2026-10-17T09:00:00.000Z", "claude-haiku-4-5", 1, 2, 3, 4));
+        var reader = new ClaudeCodeUsage(_files.Root);
+        _ = await reader.Between(_from, _to, Token);
+
+        await File.AppendAllLinesAsync(path,
+            [UsageFixture.Claude("m3", "2026-10-17T10:00:00.000Z", "claude-sonnet-4-5", 2, 0, 0, 2), UsageFixture.Claude("m1", "2026-10-17T08:00:00.000Z", "claude-sonnet-4-5", 10, 0, 0, 50)],
+            Token);
+
+        var again = await reader.Between(_from, _to, Token);
+
+        Assert.Equal<ModelTokens>(await new ClaudeCodeUsage(_files.Root).Between(_from, _to, Token), again);
+        Expect.Equal(new ModelTokens("claude-sonnet-4-5", 12, 0, 0, 52), again.Single(static m => string.Equals(m.Model, "claude-sonnet-4-5", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public async Task A_line_still_being_written_is_read_once_it_is_complete()
+    {
+        var path = Path.Combine(_files.Root, "-repo/a.jsonl");
+        _files.Write("-repo/a.jsonl", UsageFixture.Claude("m1", "2026-10-17T08:00:00.000Z", "claude-sonnet-4-5", 10, 0, 0, 5));
+        var reader = new ClaudeCodeUsage(_files.Root);
+        var half = UsageFixture.Claude("m2", "2026-10-17T09:00:00.000Z", "claude-sonnet-4-5", 1, 0, 0, 1);
+        await File.AppendAllTextAsync(path, half[..40], Token);
+        Expect.Equal(new ModelTokens("claude-sonnet-4-5", 10, 0, 0, 5), Assert.Single(await reader.Between(_from, _to, Token)));
+
+        await File.AppendAllTextAsync(path, half[40..] + "\n", Token);
+
+        Expect.Equal(new ModelTokens("claude-sonnet-4-5", 11, 0, 0, 6), Assert.Single(await reader.Between(_from, _to, Token)));
+    }
+
+    [Fact]
+    public async Task A_file_rewritten_shorter_is_read_again_from_the_start()
+    {
+        _files.Write("-repo/a.jsonl",
+            UsageFixture.Claude("m1", "2026-10-17T08:00:00.000Z", "claude-sonnet-4-5", 10, 0, 0, 5),
+            UsageFixture.Claude("m2", "2026-10-17T09:00:00.000Z", "claude-sonnet-4-5", 20, 0, 0, 5));
+        var reader = new ClaudeCodeUsage(_files.Root);
+        _ = await reader.Between(_from, _to, Token);
+
+        _files.Write("-repo/a.jsonl", UsageFixture.Claude("m9", "2026-10-17T11:00:00.000Z", "claude-haiku-4-5", 1, 0, 0, 1));
+
+        var again = await reader.Between(_from, _to, Token);
+
+        Assert.Equal<ModelTokens>(await new ClaudeCodeUsage(_files.Root).Between(_from, _to, Token), again);
+        Expect.Equal(new ModelTokens("claude-haiku-4-5", 1, 0, 0, 1), Assert.Single(again));
+    }
+
     [Fact]
     public async Task A_session_is_read_whole_by_its_id()
     {

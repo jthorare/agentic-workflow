@@ -28,7 +28,7 @@ internal static class CodeIndexScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("code-index-status", "all-repos"), ("code-index-status", "one-repo"), ("code-index-status", "unknown-repo-013"), ("code-index-status", "session-own-repo"), ("code-index-status", "session-other-repo"),
+        ("code-index-status", "all-repos"), ("code-index-status", "one-repo"), ("code-index-status", "unknown-repo-013"), ("code-index-status", "session-own-repo"), ("code-index-status", "session-other-repo"), ("code-index-status", StaleRepoScenario),
         ("code-index-symbols", "exact"), ("code-index-symbols", "prefix"), ("code-index-symbols", "empty-012"), ("code-index-symbols", "bad-match-012"), ("code-index-symbols", "session-other-repo-symbols"), ("code-index-symbols", "session-fenced"),
         ("code-index-callers", "csharp-full"), ("code-index-callers", "csharp-partial-row"), ("code-index-callers", "typescript-none-found"), ("code-index-callers", "with-repo"), ("code-index-callers", "depth-9-012"),
         ("code-index-callers", "unknown-ref-011"), ("code-index-callers", "session-other-repo"), ("code-index-callers", "bad-ref-012"),
@@ -38,6 +38,12 @@ internal static class CodeIndexScenarios
 
     /// <summary>GET /status with the 'demo' index a commit behind main: one stale code-index row in health.problems.</summary>
     internal const string StaleScenario = "code-index-stale";
+
+    /// <summary>GET /code-index/status with the 'demo' index a commit behind main: its health row needs a look and carries doctor's words (#3515).</summary>
+    internal const string StaleRepoScenario = "stale-repo";
+
+    /// <summary>Whether the scenario runs with the live head of 'demo' past its index.</summary>
+    internal static bool DemoBehindMain(string scenario) => string.Equals(scenario, StaleScenario, StringComparison.Ordinal) || string.Equals(scenario, StaleRepoScenario, StringComparison.Ordinal);
 
     /// <summary>Whether the row belongs to this class.</summary>
     public static bool Handles(string slug, string scenario) => slug.StartsWith("code-index-", StringComparison.Ordinal) || (slug, scenario) is ("status", StaleScenario);
@@ -99,6 +105,7 @@ internal static class CodeIndexScenarios
         ("code-index-status", "unknown-repo-013") => "/sindri/code-index/status?repo=nope",
         ("code-index-status", "session-own-repo") => "/sindri/code-index/status",
         ("code-index-status", "session-other-repo") => "/sindri/code-index/status?repo=other",
+        ("code-index-status", StaleRepoScenario) => "/sindri/code-index/status",
         ("code-index-symbols", "exact") => "/sindri/code-index/symbols?query=Worker.Run",
         ("code-index-symbols", "prefix") => "/sindri/code-index/symbols?query=Worker.&match=prefix",
         ("code-index-symbols", "empty-012") => "/sindri/code-index/symbols?query=",

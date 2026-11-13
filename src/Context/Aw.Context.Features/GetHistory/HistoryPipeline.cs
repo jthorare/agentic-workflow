@@ -31,7 +31,7 @@ internal sealed class HistoryPipeline(LensBasisReader bases, IIntentStore intent
         }
 
         var layer = await intents.Layer(cancellationToken).ConfigureAwait(false);
-        var repos = ScopeRules.Resolve(settings, scope.Repos, scope.Caller);
+        var repos = ScopeRules.Resolve(settings, scope.Repos, scope.Caller, scope.LeftOut);
         if (layer.IsError || repos.IsError)
         {
             return layer.IsError ? layer.Error : repos.Error;

@@ -1,3 +1,4 @@
+using Aw.Meta.Core;
 using Aw.Meta.Core.Commands;
 using Aw.Meta.Core.Ports;
 
@@ -8,7 +9,8 @@ namespace Aw.Meta.Features.Health;
 /// stops the whole scope, agent included; "continue" kills only the process the kernel picked.
 /// </summary>
 /// <param name="runner">Runs systemctl --user show.</param>
-internal sealed class OomPolicyCheck(ICommandRunner runner)
+/// <param name="paths">Names the user config folder the installer writes the drop-in under.</param>
+internal sealed class OomPolicyCheck(ICommandRunner runner, MetaPaths paths)
 {
     /// <summary>The warning line when the policy is known and is not "continue".</summary>
     /// <returns>The line, or <see langword="null"/> when the policy is "continue" or can't be read (no systemctl, a failed or timed-out call: macOS too).</returns>
@@ -24,6 +26,14 @@ internal sealed class OomPolicyCheck(ICommandRunner runner)
         var policy = run.Value.Stdout.Split('\n', 2)[0].Trim();
         return policy.Length == 0 || policy == "continue"
             ? null
-            : $"systemd's DefaultOOMPolicy is {policy}: one OOM kill in a pane stops the whole pane, agent included. Fix: scripts/install-meta.sh writes ~/.config/systemd/user.conf.d/10-oom-continue.conf, then systemctl --user daemon-reload";
+            : $"systemd's DefaultOOMPolicy is {policy}: one OOM kill in a pane stops the whole pane, agent included. Fix: re-run install-meta.sh from the toolkit checkout (it writes {DropIn()}), then systemctl --user daemon-reload";
+    }
+
+    private string DropIn()
+    {
+        var config = !string.IsNullOrEmpty(paths.UserConfig)
+            ? paths.UserConfig
+            : !string.IsNullOrEmpty(paths.Home) ? Path.Combine(paths.Home, ".config") : "~/.config";
+        return Path.Combine(config, "systemd", "user.conf.d", "10-oom-continue.conf");
     }
 }

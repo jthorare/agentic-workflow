@@ -39,8 +39,27 @@ internal sealed class SqliteMetaEventStore(MetaDatabase database) : IMetaEventSt
             cancellationToken);
     }
 
-    public ValueTask<Result<IReadOnlyList<MetaEvent>>> Read(long after, string? kind, string? lane, int max, CancellationToken cancellationToken) =>
-        database.Query(MetaEventSql.Read(after, kind, lane, max), MetaEventSql.ReadEvent, cancellationToken);
+    public async ValueTask<Result<MetaEventPage>> Read(long after, string? kind, string? lane, int max, CancellationToken cancellationToken)
+    {
+        // One read session (one snapshot) for the page and the bounds, so latest is never below the page's last id.
+        var begun = await database.BeginRead(cancellationToken).ConfigureAwait(false);
+        if (begun.IsError)
+        {
+            return begun.Error;
+        }
+
+        await using (begun.Value.ConfigureAwait(false))
+        {
+            var page = await SqliteQueries.List(begun.Value, MetaEventSql.Read(after, kind, lane, max), new RowMap<MetaEvent>(MetaEventSql.ReadEvent), cancellationToken).ConfigureAwait(false);
+            if (page.IsError)
+            {
+                return page.Error;
+            }
+
+            var bounds = await SqliteQueries.One(begun.Value, MetaEventSql.Bounds, new RowMap<(long Oldest, long Latest)>(MetaEventSql.ReadBounds), cancellationToken).ConfigureAwait(false);
+            return bounds.IsError ? bounds.Error : new MetaEventPage(page.Value, bounds.Value.Oldest, bounds.Value.Latest);
+        }
+    }
 
     public ValueTask<Result<int>> Prune(DateTimeOffset olderThan, CancellationToken cancellationToken) =>
         database.Write(async work => await SqliteQueries.Execute(work, MetaEventSql.Prune(olderThan), cancellationToken).ConfigureAwait(false), cancellationToken);

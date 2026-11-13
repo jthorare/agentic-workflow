@@ -18,13 +18,13 @@ internal sealed class ReadEventsService(IMetaEventStore events) : IService<ReadE
             return read.Error;
         }
 
-        var lines = new List<EventLine>(read.Value.Count);
-        foreach (var e in read.Value)
+        var lines = new List<EventLine>(read.Value.Events.Count);
+        foreach (var e in read.Value.Events)
         {
             using var fields = JsonDocument.Parse(e.Fields);
             lines.Add(new EventLine(e.Id, e.At, e.Kind, e.Lane, fields.RootElement.Clone()));
         }
 
-        return new ReadEventsResponse(lines, lines.Count == 0 ? request.After : lines[^1].Id);
+        return new ReadEventsResponse(lines, lines.Count == 0 ? request.After : lines[^1].Id, read.Value.Oldest, read.Value.Latest, request.After + 1 < read.Value.Oldest);
     }
 }

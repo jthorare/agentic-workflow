@@ -65,15 +65,25 @@ internal sealed partial class GraphIterationWorkflow
         }
         catch (Exception e) when (TemporalException.IsCanceledException(e))
         {
-            // why: the workflow's token is already cancelled, so every write here is detached, or it would never run and the rows would stay 'running'
-            if (_current is { } running)
-            {
-                await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAsync(Row(running, _item, NodeRunStatus.Cancelled)), _detached).ConfigureAwait(true);
-            }
-
-            await SkipUnfinished().ConfigureAwait(true);
+            await Cancelled().ConfigureAwait(true);
             throw;
         }
+        catch (Exception e) when (e is not TemporalException && GraphFaults.Ends(e))
+        {
+            // why: an exception in workflow code is a workflow-task failure that Temporal retries without end; failing the batch lets the parent end the run (issue 2999). A write out of retries already fails the batch.
+            throw new ApplicationFailureException(GraphFaults.Reason(e), e);
+        }
+    }
+
+    private async Task Cancelled()
+    {
+        // why: the workflow's token is already cancelled, so every write here is detached, or it would never run and the rows would stay 'running'
+        if (_current is { } running)
+        {
+            await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAsync(Row(running, _item, NodeRunStatus.Cancelled)), _detached).ConfigureAwait(true);
+        }
+
+        await SkipUnfinished().ConfigureAwait(true);
     }
 
     private async Task<string?> Walk(GraphSpec spec, LoopShape shape, int item)
@@ -96,12 +106,7 @@ internal sealed partial class GraphIterationWorkflow
 
             var outcome = await Execute(node, item).ConfigureAwait(true);
             _ = decided.Add(node.Id);
-            if (outcome.Status == NodeRunStatus.Failed && !string.Equals(node.OnFailure, "continue", StringComparison.Ordinal))
-            {
-                failure = $"node '{node.Id.Value}' failed on item {item.ToString(System.Globalization.CultureInfo.InvariantCulture)}: {outcome.Error}";
-                continue;
-            }
-
+            failure = ItemFailure(spec, node, item, outcome);
             taken[node.Id] = outcome.Status == NodeRunStatus.Succeeded ? outcome.Taken : ["out"];
         }
 
@@ -144,7 +149,7 @@ internal sealed partial class GraphIterationWorkflow
 
         // why: as in the run's walk, once the block has answered the node's result is decided, so the write is not cancelled with the workflow
         _current = null;
-        await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAsync(new NodeRun(_run, node.Id, item, outcome.Status, outcome.Input, outcome.Output, Truncated: false, outcome.Error, Usage: null)), _detached).ConfigureAwait(true);
+        await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAsync(new NodeRun(_run, node.Id, item, outcome.Status, outcome.Input, outcome.Output, outcome.Truncated, outcome.Error, Usage: null, Raw: outcome.Raw)), _detached).ConfigureAwait(true);
         return outcome;
     }
 

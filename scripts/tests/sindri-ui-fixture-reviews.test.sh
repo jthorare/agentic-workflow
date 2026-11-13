@@ -61,14 +61,15 @@ chmod +x "$STUB"
 export STUB_LOG="$WORK/calls"
 : > "$STUB_LOG"
 
-# A stub aw-forge-fake (AW_FORGE_FAKE): records the arguments with the environment the fixture gives it, hands out pull number 7 and keeps the files seed.
+# A stub aw-forge-fake (AW_FORGE_FAKE): records the arguments with the environment the fixture gives it, hands out pull numbers 7, 8, ... (one more per
+# open in the log) and keeps the first files seed.
 FORGE="$WORK/bin/forge-stub"
 cat > "$FORGE" <<'EOF'
 #!/usr/bin/env bash
 echo "$* [state=$AW_STATE_DIR adapter=$AW_FORGE_ADAPTER hosts=$AW_FORGE_HOSTS login=$AW_FORGE_LOGIN]" >> "$FORGE_LOG"
 case "$1 $2" in
-  "open --repo") echo '{"number":7,"link":"https://github.com/acme/api/pull/7"}' ;;
-  "seed files") while [ $# -gt 0 ]; do [ "$1" != --from ] || cp "$2" "$FORGE_LOG.files"; shift; done; echo '{"ok":true}' ;;
+  "open --repo") n=$((6 + $(grep -c '^open ' "$FORGE_LOG"))); echo "{\"number\":$n,\"link\":\"https://github.com/acme/api/pull/$n\"}" ;;
+  "seed files") while [ $# -gt 0 ]; do [ "$1" != --from ] || [ -e "$FORGE_LOG.files" ] || cp "$2" "$FORGE_LOG.files"; shift; done; echo '{"ok":true}' ;;
   *) echo '{"ok":true}' ;;
 esac
 EOF
@@ -116,14 +117,21 @@ check "the seeded file is src/Sync.cs with 3 added lines" "$(jq -r '.[0].file | 
 check "line 42 of the seeded text is an added line (on the new side)" "$(jq -r '.[0].text' "$FORGE_LOG.files" | sed -n 42p)" "    if (delay is null) return Retry.Stop;"
 check "the base text lacks the added lines" "$(jq -r '.[0].baseText' "$FORGE_LOG.files" | grep -c 'budget.Next')" "0"
 
-check "one open GitHub PR record with the forge's number" "$(sqlq "$PJDB" "SELECT key || ' ' || url || ' ' || author || ' ' || state || ' ' || audience_key FROM source_record WHERE source = 'github' AND kind = 'pr'")" \
-  "github:pr/acme/api/7 https://github.com/acme/api/pull/7 fx-viewer open linear:SPL"
+check "the viewer's PR and 3 by other authors, each with the forge's number" "$(sqlq "$PJDB" "SELECT key || ' ' || url || ' ' || author || ' ' || state || ' ' || audience_key FROM source_record WHERE source = 'github' AND kind = 'pr' ORDER BY key")" \
+  "github:pr/acme/api/10 https://github.com/acme/api/pull/10 lee-park open linear:SPL
+github:pr/acme/api/7 https://github.com/acme/api/pull/7 fx-viewer open linear:SPL
+github:pr/acme/api/8 https://github.com/acme/api/pull/8 dana-okafor open linear:SPL
+github:pr/acme/api/9 https://github.com/acme/api/pull/9 kai-reviewer open linear:SPL"
+check "the other authors' PRs request the viewer's review" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM source_record WHERE key IN ('github:pr/acme/api/8', 'github:pr/acme/api/9', 'github:pr/acme/api/10') AND pull_facts LIKE '%\"requestedReviewers\":[\"fx-viewer\"]%'")" "3"
+contains "another author's PR is opened as that author" "$calls" "open --repo github.com/acme/api --head feat/rate-limit-headers --base main --head-sha 2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d --title Add rate limit headers to v3 list endpoints --body A fixture PR by dana-okafor. [state=$STATE adapter=file hosts=github.com login=dana-okafor]"
+contains "lee-park's PR has its test check failing" "$calls" "seed checks https://github.com/acme/api/pull/10 --state failing --failing test"
+check "every other author's PR gets a files seed" "$(ls "$PJ/ui-fixture-forge"/files-*.json | wc -l | tr -d ' ')" "3"
 check "the record carries its pull facts (head sha)" "$(sqlq "$PJDB" "SELECT pull_facts FROM source_record WHERE key = 'github:pr/acme/api/7'")" \
   '{"requestedReviewers":["reviewer-kai"],"headSha":"1f2e3d4c5b6a79880011223344556677889900aa","reviews":[]}'
 # why: source_record.repo is a profile repo name (ContextRepoName) or NULL; the slug 'acme/api' made every read of the row throw (SND-CLI-003 on the page)
 check "the record has no profile repo (repo is NULL, as GitHub sync stores it)" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM source_record WHERE key = 'github:pr/acme/api/7' AND repo IS NULL")" "1"
 check "a github cursor row exists" "$(sqlq "$PJDB" "SELECT phase FROM source_cursor WHERE source = 'github' AND repo = 'records'")" "incremental"
-check "the store epoch moved" "$(sqlq "$PJDB" "SELECT record_stamp FROM store_epoch WHERE id = 1")" "1"
+check "the store epoch moved" "$(sqlq "$PJDB" "SELECT record_stamp FROM store_epoch WHERE id = 1")" "2"
 
 stub_calls="$(cat "$STUB_LOG")"
 contains "serve was restarted" "$stub_calls" "--headless"
@@ -134,7 +142,7 @@ rows="$(sqlq "$PJDB" "SELECT COUNT(*) FROM source_record")"
 : > "$FORGE_LOG"
 rev up >/dev/null 2>&1; check "a second reviews up exits 0" "$?" "0"
 check "a second reviews up adds no record" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM source_record")" "$rows"
-check "a second reviews up opens the PR again (a new world)" "$(grep -c '^open ' "$FORGE_LOG")" "1"
+check "a second reviews up opens the 4 PRs again (a new world)" "$(grep -c '^open ' "$FORGE_LOG")" "4"
 check "a second reviews up leaves one review: and one forge: line" "$(grep -c '^review:' "$PJ/profile/profile.yaml") $(grep -c 'forge:' "$PJ/profile/profile.yaml")" "1 1"
 check "a second reviews up lists each repo once" "$(grep -c 'acme/api' "$PJ/profile/profile.yaml")" "1"
 

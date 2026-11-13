@@ -25,7 +25,10 @@
       "repo": "other",
       "state": "ok",
       "embeddingsPercent": null,
-      "waiting": null
+      "waiting": null,
+      "paused": false,
+      "needsLook": false,
+      "lookWords": null
     }
   ]
 }

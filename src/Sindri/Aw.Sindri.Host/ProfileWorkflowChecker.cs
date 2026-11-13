@@ -1,7 +1,9 @@
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Expressions;
 using Aw.Sindri.Core.Graph.Schedule;
 using Aw.Sindri.Core.Graph.Validation;
+using Aw.Sindri.Core.Memory;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Sandbox.Plan;
@@ -12,11 +14,13 @@ namespace Aw.Sindri.Host;
 /// <param name="profile">The approved profile.</param>
 /// <param name="blocks">The graph block catalog.</param>
 /// <param name="codeCheck">Compiles a 'code' node's body, or null to skip the check.</param>
-internal sealed class ProfileWorkflowChecker(IApprovedProfile profile, IGraphBlockCatalog blocks, ICodeCheck? codeCheck = null) : IWorkflowChecker
+/// <param name="connections">The connection store the trigger names are checked against, or null when there is no ledger.</param>
+/// <param name="memories">The memory store the memory block names are checked against, or null when there is no ledger.</param>
+internal sealed class ProfileWorkflowChecker(IApprovedProfile profile, IGraphBlockCatalog blocks, ICodeCheck? codeCheck = null, IConnectionStore? connections = null, IMemoryStore? memories = null) : IWorkflowChecker
 {
     public async ValueTask<GraphValidator> Validator(CancellationToken cancellationToken)
     {
-        var world = await ProfileGraphWorld.Load(profile, cancellationToken).ConfigureAwait(false);
+        var world = await ProfileGraphWorld.Load(profile, connections, memories, cancellationToken).ConfigureAwait(false);
         var context = new GraphValidationContext(blocks.Types, world, (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem, ParseCondition)
         {
             BoxCap = await BoxCap(cancellationToken).ConfigureAwait(false),

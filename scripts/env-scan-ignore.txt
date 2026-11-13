@@ -77,3 +77,4 @@ EPOCHREALTIME # the shell sets it (bash 5; the aw:fleet hook timestamps with it)
 AW_HOOK_PROVIDER # set by the Codex and Cursor adapters (config/hooks/adapters/common.sh) for the hook they run, never by the user; the aw:fleet hook maps it to the provider directory
 EDITOR # the user's own editor choice; sindri-pod.sh profile edit opens the profile in it (vi when unset)
 ZDOTDIR # zsh's own config dir (set by the user's shell setup); scripts/launcher-lib.sh looks for zsh startup files there
+REVIEWS_AS # set per call inside scripts/sindri-ui-fixture.sh (the PR author the reviews fixture acts as), never by a user
