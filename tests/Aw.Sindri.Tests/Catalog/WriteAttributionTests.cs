@@ -35,6 +35,8 @@ public sealed class WriteAttributionTests
         ["POST /sindri/todos/note/stop"] = "edits the live profile file through TodoNoteProfileEdit (StopTodoNoteService.cs:9): writes no ledger event",
         ["POST /sindri/linear/connection/teams"] = "reads the key's Linear teams (ListLinearTeamsService): stores nothing and writes no event",
         ["POST /sindri/workflow/challenges/app"] = "refuses every text (IssueAppChallengeService.cs:17, no ports) and its endpoint appends nothing: writes no event",
+        ["POST /sindri/workflows/{slug}/test"] = "a Workflows page P0 stub (#3191): refuses SND-GRAPH-119 and writes no event until the test phase builds it",
+        ["POST /sindri/workflows/{slug}/pins"] = "a Workflows page P0 stub (#3191): refuses SND-GRAPH-119 and writes no event until the pins phase builds it",
         ["POST /sindri/workflows/validate"] = "checks a stored spec and returns its findings (ValidateWorkflowService): stores nothing and writes no event",
         ["POST /sindri/setup/skip"] = "edits the live profile file (setup.skipAccounts, setup.skipFirstWorkflow) through the profile key writer, like todos/note/set: writes no ledger event",
         ["POST /sindri/restart"] = "a stub until the restart commit (first-run spec decision 11): it stops the host, so the ledger can't be read after it, and refuses a caller without the human token",

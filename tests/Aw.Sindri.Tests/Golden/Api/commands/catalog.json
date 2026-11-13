@@ -1175,6 +1175,24 @@
       "confirm": null
     },
     {
+      "action": "PinWorkflowOutput",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflows/{slug}/pins",
+      "cli": "sindri wf pin <slug> --node <node> --run <run>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ProbeLaunchTargets",
       "class": "job",
       "allowedCallers": [
@@ -2147,6 +2165,24 @@
       "method": "POST",
       "route": "/sindri/connections/{name}/test",
       "cli": "sindri connection test <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "TestWorkflow",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflows/{slug}/test",
+      "cli": "sindri wf test <slug> [--revision <n>]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,

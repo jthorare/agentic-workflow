@@ -17,7 +17,7 @@ internal sealed class CodeSymbolSearch(ICodeSymbolSource source, IRepoReader rep
     internal async ValueTask<CodeSymbolFindings> Find(CodeView view, VisibleMap map, ContextSettings settings, ContextScope scope, CancellationToken cancellationToken)
     {
         using var band = FillBands.Start(FillBands.CodeSymbols);
-        var inScope = ScopeRules.Resolve(settings, scope.Repos, scope.Caller);
+        var inScope = ScopeRules.Resolve(settings, scope.Repos, scope.Caller, scope.LeftOut);
         var allowed = inScope.IsError ? [] : inScope.Value;
         var version = map.Snapshot.Version;
         // why: the Where keeps only the files whose repo resolved, so Repo is never null in the grouping.

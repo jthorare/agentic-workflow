@@ -41,6 +41,8 @@ internal static partial class Labels
         ["ValidateWorkflow"] = "Check workflow",
         ["ActivateWorkflow"] = "Activate workflow",
         ["PauseWorkflow"] = "Pause workflow",
+        ["TestWorkflow"] = "Test run",
+        ["PinWorkflowOutput"] = "Pin this output",
         ["DeleteWorkflow"] = "Archive workflow",
         ["OnboardRepo"] = "Onboard repo",
         ["InitProfile"] = "Create profile",
