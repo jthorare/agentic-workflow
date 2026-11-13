@@ -4,6 +4,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Reviews;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Features.ListReviews;
 
@@ -16,7 +17,8 @@ namespace Aw.Sindri.Features.ListReviews;
 /// <param name="cache">The stored summaries.</param>
 /// <param name="forge">The forge port.</param>
 /// <param name="clock">The clock.</param>
-internal sealed class ReviewSummaryReader(IReviewSummaries cache, IPullRequests forge, TimeProvider clock)
+/// <param name="logger">Warns once per repo per call when the forge refuses a repo, so a token without pull request access shows up somewhere.</param>
+internal sealed partial class ReviewSummaryReader(IReviewSummaries cache, IPullRequests forge, TimeProvider clock, ILogger<ReviewSummaryReader> logger)
 {
     /// <summary>The most heads read from the forge at once.</summary>
     internal const int MaxHeadsAtOnce = 4;
@@ -69,7 +71,7 @@ internal sealed class ReviewSummaryReader(IReviewSummaries cache, IPullRequests 
         var view = await forge.Get(link, cancellationToken).ConfigureAwait(false);
         if (view.IsError)
         {
-            return pass.Failed(view.Error, pull.Repo);
+            return Failed(pass, view.Error, pull.Repo);
         }
 
         // why: the stored record's head can lag the forge's; the summary is saved under the forge's head, so look there before reading the files
@@ -81,13 +83,27 @@ internal sealed class ReviewSummaryReader(IReviewSummaries cache, IPullRequests 
         var files = await forge.Files(link, cancellationToken).ConfigureAwait(false);
         if (files.IsError)
         {
-            return pass.Failed(files.Error, pull.Repo);
+            return Failed(pass, files.Error, pull.Repo);
         }
 
         var summary = Decide(pull, view.Value, files.Value, pass.Review);
         _ = await cache.Write(reference, summary, cancellationToken).ConfigureAwait(false);
         return summary;
     }
+
+    // why: until the list can show a refused repo (#3100), the log is the only place a token without pull request access is visible
+    private ReviewSummary? Failed(Pass pass, Error error, string repo)
+    {
+        if (pass.Failed(error, repo))
+        {
+            LogRepoRefused(logger, repo, error.Message);
+        }
+
+        return null;
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "SND-FORGE-005 the forge refused {Repo}; its PRs show no CI this pass: {Detail}")]
+    private static partial void LogRepoRefused(ILogger logger, string repo, string detail);
 
     // why: a summary taken while CI was still running would show "running" until the next push, so only a finished one is a hit
     private async ValueTask<ReviewSummary?> Settled(ReviewPullRef reference, string head, CancellationToken cancellationToken)
@@ -134,18 +150,20 @@ internal sealed class ReviewSummaryReader(IReviewSummaries cache, IPullRequests 
         internal bool MayRead(string repo) => Volatile.Read(ref _stopped) == 0 && !_refusedRepos.ContainsKey(repo);
 
         // why: a missing PR is only that PR's problem; a repo the forge turns away is only that repo's; a bad credential, a rate limit or an unreachable forge would hit every later PR too
-        internal ReviewSummary? Failed(Error error, string repo)
+        // returns true only for the first refusal of a repo in this pass
+        internal bool Failed(Error error, string repo)
         {
             if (error.Code == SindriErrors.ForgeRepoRefused.Code)
             {
-                _refusedRepos[repo] = true;
+                return _refusedRepos.TryAdd(repo, true);
             }
-            else if (error.Kind != ErrorKind.NotFound)
+
+            if (error.Kind != ErrorKind.NotFound)
             {
                 Volatile.Write(ref _stopped, 1);
             }
 
-            return null;
+            return false;
         }
     }
 }

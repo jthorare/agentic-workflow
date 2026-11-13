@@ -154,6 +154,16 @@ public sealed class GitHubForgeTests
     }
 
     [Fact]
+    public async Task A_403_with_Retry_After_is_AW_FORGE_006()
+    {
+        var http = new StubHandler().On(HttpMethod.Get, "/repos/acme/widgets", HttpStatusCode.Forbidden, "{\"message\":\"You have exceeded a secondary rate limit\"}", ("Retry-After", "60"));
+
+        var result = await Build(http).Forge.DefaultBranch(_repo, TestContext.Current.CancellationToken);
+
+        Assert.Equal(ForgeErrors.RateLimited.Code, result.Error.Code);   // GitHub's secondary limit: no X-RateLimit-Remaining: 0, only Retry-After
+    }
+
+    [Fact]
     public async Task A_404_is_AW_FORGE_004_and_an_unexpected_4xx_is_AW_FORGE_007()
     {
         var missing = new StubHandler().On(HttpMethod.Get, "/repos/acme/widgets", HttpStatusCode.NotFound, "{\"message\":\"Not Found\"}");

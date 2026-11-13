@@ -9,6 +9,7 @@ using Aw.Sindri.Infrastructure.Reviews;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Forge;
 using Aw.Sindri.Tests.Ledger;
+using Aw.Sindri.Tests.Server;
 using Microsoft.Extensions.Time.Testing;
 using static Aw.Sindri.Tests.Reviews.ReviewPulls;
 
@@ -21,12 +22,13 @@ public sealed class ReviewSummaryReaderTests : IDisposable
     private readonly TempHome _home = new();
     private readonly FakePullRequests _forge = new(["github.com"]);
     private readonly FileReviewSummaries _cache;
+    private readonly ListLogger<ReviewSummaryReader> _log = new();
     private readonly ReviewSummaryReader _reader;
 
     public ReviewSummaryReaderTests()
     {
         _cache = new FileReviewSummaries(new FakeSindriHome(_home.Path));
-        _reader = new ReviewSummaryReader(_cache, _forge, new FakeTimeProvider(KnownInstants.Epoch));
+        _reader = new ReviewSummaryReader(_cache, _forge, new FakeTimeProvider(KnownInstants.Epoch), _log);
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -213,6 +215,18 @@ public sealed class ReviewSummaryReaderTests : IDisposable
         _ = await _reader.Read(pulls, Strict(), Token);
 
         Assert.InRange(_forge.Calls.Count(static c => c == "Get"), 1, ReviewSummaryReader.MaxHeadsAtOnce);   // only the first batch in flight reads; the rest see the repo is refused
+    }
+
+    [Fact]
+    public async Task A_refused_repo_warns_once_per_call_with_SND_FORGE_005()
+    {
+        _forge.GetFailuresByRepo["acme/locked"] = RepoRefused();
+        var pulls = Enumerable.Range(1, 12).Select(n => Pull(repo: "acme/locked", number: n, url: string.Create(System.Globalization.CultureInfo.InvariantCulture, $"https://github.com/acme/locked/pull/{n}"))).ToList();
+
+        _ = await _reader.Read(pulls, Strict(), Token);
+
+        var line = Assert.Single(_log.Lines);
+        Assert.StartsWith("SND-FORGE-005 the forge refused acme/locked", line, StringComparison.Ordinal);
     }
 
     [Fact]
