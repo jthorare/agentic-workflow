@@ -86,7 +86,7 @@ internal sealed class CancelWorkflowRunService(IWorkflowRunStore runs, IGraphRun
                 : false;
         }
 
-        var entry = events.Entry(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(request.Run, QueuedReason, request.By), $"{EventTypes.WorkflowRunCancelled}:{request.Run.Value}", moved.Value.ItemId?.Value);
+        var entry = events.Entry(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(request.Run, QueuedReason, request.By, WorkflowRunMode.Live), $"{EventTypes.WorkflowRunCancelled}:{request.Run.Value}", moved.Value.ItemId?.Value);
         var appended = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
         return appended.IsError ? appended.Error : true;
     }
