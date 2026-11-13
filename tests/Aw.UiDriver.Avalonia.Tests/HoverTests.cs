@@ -20,6 +20,24 @@ public sealed class HoverTests
         Assert.True(hovered.IsSuccess, hovered.IsError ? hovered.Error.Message : string.Empty);
         Assert.Equal((true, 1), state);
         Assert.Equal("hovered", drawn);
+        Assert.Equal(ActedResponse.RealPointer, hovered.Value.Pointer);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task Hover_on_a_covered_element_says_only_the_class_is_set_after_its_ten_polls()
+    {
+        var screen = await HoverScreen.OpenAsync(covered: true);
+        var host = new DriverHost(() => screen.Window, TimeProvider.System);
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+
+        var hovered = await host.Hover(new HoverRequest(_card));
+        var took = clock.Elapsed;
+        var state = await TestScreen.OnUi(() => (screen.Card.IsPointerOver, screen.Entered, screen.Card.Classes.Contains(":pointerover")));
+
+        Assert.True(hovered.IsSuccess, hovered.IsError ? hovered.Error.Message : string.Empty);
+        Assert.Equal(ActedResponse.ClassOnly, hovered.Value.Pointer);
+        Assert.Equal((false, 0, true), state);
+        Assert.InRange(took, TimeSpan.FromMilliseconds(450), TimeSpan.FromSeconds(15));
     }
 
     [Fact, Trait("Lane", "integration")]
@@ -36,6 +54,7 @@ public sealed class HoverTests
         Assert.True(off.IsSuccess, off.IsError ? off.Error.Message : string.Empty);
         Assert.Equal((false, 1, false), state);
         Assert.Equal("idle", drawn);
+        Assert.Null(off.Value.Pointer);
     }
 
     private static async Task<string?> LabelText(DriverHost host)
