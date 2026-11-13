@@ -93,17 +93,42 @@ public sealed class SetupStepsTests
         Assert.Equal("SND-CONTEXT-040", steps[4].Error?.Code);
     }
 
-    // #3112: the step's count carries the stage it belongs to, so the CLI and the app word "indexing" and "mapping" from one place (the words are api's).
+    // #3112: the step carries the stage it is in, with or without a count, so the CLI and the app word "indexing" and "mapping" from one place (the words are api's).
     [Theory, Trait("Lane", "unit")]
     [InlineData(MapStage.Index)]
     [InlineData(MapStage.Map)]
-    public void Map_building_puts_the_stage_on_the_steps_progress(MapStage stage)
+    public void Map_building_puts_the_stage_on_the_step_next_to_its_count(MapStage stage)
     {
         var step = SetupSteps.Map(new MapFact(MapPhase.Building, new SetupProgress(7000, 15223, "files")) { Stage = stage });
 
-        Assert.Equal(SetupState.Running, step.State);
-        Assert.Equal(new SetupProgress(7000, 15223, "files") { Stage = stage }, step.Progress);
+        Assert.Equal((SetupState.Running, stage), (step.State, step.Stage));
+        Assert.Equal(new SetupProgress(7000, 15223, "files"), step.Progress);
     }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(MapStage.Index)]
+    [InlineData(MapStage.Map)]
+    public void Map_building_with_no_count_yet_still_has_the_stage(MapStage stage)
+    {
+        var step = SetupSteps.Map(new MapFact(MapPhase.Building, Progress: null) { Stage = stage });
+
+        Assert.Equal((SetupState.Running, stage, null), (step.State, step.Stage, step.Progress));
+    }
+
+    // #3112: a failed build keeps the stage it failed in, so the step can say which build failed.
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(MapStage.Index)]
+    [InlineData(MapStage.Map)]
+    public void Map_failed_keeps_the_stage_it_failed_in(MapStage stage)
+    {
+        var step = SetupSteps.Map(new MapFact(MapPhase.Failed, FailureCode: "SND-CODEIDX-010") { Stage = stage });
+
+        Assert.Equal((SetupState.Failed, stage), (step.State, step.Stage));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_built_map_has_no_stage()
+        => Assert.Null(SetupSteps.Map(new MapFact(MapPhase.Built, Progress: null)).Stage);
 
     [Fact, Trait("Lane", "unit")]
     public void Sources_with_none_named_is_the_humans_and_says_no_source_is_connected_yet()

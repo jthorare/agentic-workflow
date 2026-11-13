@@ -8644,6 +8644,8 @@ Aw.Sindri.Core.Setup.SetupStep.Id.get -> Aw.Sindri.Core.Setup.SetupStepId
 Aw.Sindri.Core.Setup.SetupStep.Id.init -> void
 Aw.Sindri.Core.Setup.SetupStep.Progress.get -> Aw.Sindri.Core.Setup.SetupProgress?
 Aw.Sindri.Core.Setup.SetupStep.Progress.init -> void
+Aw.Sindri.Core.Setup.SetupStep.Stage.get -> Aw.Sindri.Core.Setup.MapStage?
+Aw.Sindri.Core.Setup.SetupStep.Stage.init -> void
 Aw.Sindri.Core.Setup.SetupStep.State.get -> Aw.Sindri.Core.Setup.SetupState
 Aw.Sindri.Core.Setup.SetupStep.State.init -> void
 Aw.Sindri.Core.Setup.SetupStep.Title.get -> string!
