@@ -12,7 +12,10 @@ public static class SetupSteps
     private const string ProfileTitle = "Save the profile";
     private const string McpTitle = "Connect your agents";
     private const string MapTitle = "Build the map";
-    private const string SourcesTitle = "Connect your sources";
+    private const string SourcesTitle = "Connect your accounts";
+    private const string ServeTitle = "Sindri is current";
+    private const string AgentTitle = "Agent for workflows";
+    private const string FirstWorkflowTitle = "Run hello-sindri";
 
     /// <summary>The repo step: the owner's until the profile names a repo.</summary>
     /// <param name="fact">The repos.</param>
@@ -96,21 +99,81 @@ public static class SetupSteps
         return step with { Items = fact.Items.Lines };
     }
 
-    /// <summary>The sources step: done when every github, slack or linear source the profile names has its token and at least one is named; otherwise the human's, with `sindri index connect`.</summary>
+    /// <summary>
+    /// The accounts step (id `sources`, step 2 of first-run spec §3.1): done when every github, slack or linear source the profile names has its token and at least one is named; skipped when the owner skipped it and nothing is connected;
+    /// otherwise the human's, with `sindri index connect`.
+    /// </summary>
     /// <param name="fact">Where the sources stand.</param>
     /// <returns>The step.</returns>
     public static SetupStep Sources(SourcesFact fact)
     {
         ArgumentNullException.ThrowIfNull(fact);
         var missing = fact.Items.Lines.Where(static i => i.State != SetupState.Done).Select(static i => SourceName(i.Repo)).ToList();
-        if (fact.Items.Lines.Count == 0)
+        if (fact.Items.Lines.Count > 0 && missing.Count == 0)
         {
-            return new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Todo, "No source is connected yet.", "Connect GitHub, Slack or Linear so Sindri can read your issues and chat.", Error: null, SetupActions.ConnectIndexSource, Progress: null);
+            return new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Done, "Every source your profile names is connected.", string.Join(", ", fact.Items.Lines.Select(static i => SourceName(i.Repo))) + ".", Error: null, Action: null, Progress: null) { Items = fact.Items.Lines };
         }
 
-        return missing.Count == 0
-            ? new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Done, "Every source your profile names is connected.", string.Join(", ", fact.Items.Lines.Select(static i => SourceName(i.Repo))) + ".", Error: null, Action: null, Progress: null) { Items = fact.Items.Lines }
-            : new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Todo, string.Join(" and ", missing) + (missing.Count == 1 ? " needs" : " need") + " a token.", Detail: null, Error: null, SetupActions.ConnectIndexSource, Progress: null) { Items = fact.Items.Lines };
+        if (fact.Skipped)
+        {
+            return new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Skipped, "You skipped connecting accounts.", "Connect GitHub, Slack or Linear any time.", Error: null, Action: null, Progress: null) { Items = fact.Items.Lines };
+        }
+
+        return fact.Items.Lines.Count == 0
+            ? new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Todo, "No source is connected yet.", "Connect GitHub, Slack or Linear so Sindri can read your issues and chat.", Error: null, SetupActions.ConnectAccount, Progress: null)
+            : new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Todo, string.Join(" and ", missing) + (missing.Count == 1 ? " needs" : " need") + " a token.", Detail: null, Error: null, SetupActions.ConnectAccount, Progress: null) { Items = fact.Items.Lines };
+    }
+
+    /// <summary>The serve step (step 1): done when the running Sindri is the installed build; otherwise the owner's, with a restart.</summary>
+    /// <param name="fact">Whether serve runs the installed build.</param>
+    /// <returns>The step.</returns>
+    public static SetupStep Serve(ServeFact fact)
+    {
+        ArgumentNullException.ThrowIfNull(fact);
+        return fact.Current
+            ? new SetupStep(SetupStepId.Serve, ServeTitle, SetupState.Done, "Sindri is running the installed build.", Detail: null, Error: null, Action: null, Progress: null)
+            : new SetupStep(SetupStepId.Serve, ServeTitle, SetupState.NeedsYou, "A different Sindri is installed than the one running.", "Restart Sindri to run the installed one.", Error: null, SetupActions.RestartProcess, Progress: null);
+    }
+
+    /// <summary>The agent step (step 5): it waits for a repo, then done once `workflow.agent.target` is set. It has no action: the setup service sets the target from the first agent it finds.</summary>
+    /// <param name="fact">Which agent the workflows use.</param>
+    /// <param name="repos">The repos (the setup service picks an agent once the profile names one).</param>
+    /// <returns>The step.</returns>
+    public static SetupStep Agent(AgentFact fact, RepoFact repos)
+    {
+        ArgumentNullException.ThrowIfNull(fact);
+        ArgumentNullException.ThrowIfNull(repos);
+        if (!string.IsNullOrWhiteSpace(fact.Target))
+        {
+            return new SetupStep(SetupStepId.Agent, AgentTitle, SetupState.Done, "Workflows run on an agent.", "Workflows run on " + fact.Target + ".", Error: null, Action: null, Progress: null);
+        }
+
+        return repos.Count == 0
+            ? new SetupStep(SetupStepId.Agent, AgentTitle, SetupState.Todo, "Waits for your first repo.", Detail: null, Error: null, Action: null, Progress: null)
+            : new SetupStep(SetupStepId.Agent, AgentTitle, SetupState.Todo, "Sindri picks the first agent it finds.", Detail: null, Error: null, Action: null, Progress: null);
+    }
+
+    /// <summary>The hello-sindri step (step 8): done after one successful run, skipped when the owner dismissed it, otherwise waiting. It has no action until the workflow exists (engine lane).</summary>
+    /// <param name="fact">Where the run stands.</param>
+    /// <param name="repos">The repos (hello-sindri is made once the profile names one).</param>
+    /// <returns>The step.</returns>
+    public static SetupStep FirstWorkflow(FirstWorkflowFact fact, RepoFact repos)
+    {
+        ArgumentNullException.ThrowIfNull(fact);
+        ArgumentNullException.ThrowIfNull(repos);
+        if (fact.Succeeded)
+        {
+            return new SetupStep(SetupStepId.FirstWorkflow, FirstWorkflowTitle, SetupState.Done, "hello-sindri ran once.", Detail: null, Error: null, Action: null, Progress: null);
+        }
+
+        if (fact.Dismissed)
+        {
+            return new SetupStep(SetupStepId.FirstWorkflow, FirstWorkflowTitle, SetupState.Skipped, "You dismissed this step.", "Run hello-sindri any time.", Error: null, Action: null, Progress: null);
+        }
+
+        return repos.Count == 0
+            ? new SetupStep(SetupStepId.FirstWorkflow, FirstWorkflowTitle, SetupState.Todo, "Waits for your first repo.", Detail: null, Error: null, Action: null, Progress: null)
+            : new SetupStep(SetupStepId.FirstWorkflow, FirstWorkflowTitle, SetupState.Todo, "hello-sindri has not run yet.", Detail: null, Error: null, Action: null, Progress: null);
     }
 
     /// <summary>The step for a source that couldn't be read: failed, with one plain sentence and the error's code.</summary>
@@ -127,6 +190,9 @@ public static class SetupSteps
             SetupStepId.Mcp => (McpTitle, "Sindri couldn't check whether your agent knows where it is."),
             SetupStepId.Map => (MapTitle, "Sindri couldn't read the state of the map."),
             SetupStepId.Sources => (SourcesTitle, "Sindri couldn't read which sources your profile names."),
+            SetupStepId.Serve => (ServeTitle, "Sindri couldn't tell which build is running."),
+            SetupStepId.Agent => (AgentTitle, "Sindri couldn't read which agent your workflows use."),
+            SetupStepId.FirstWorkflow => (FirstWorkflowTitle, "Sindri couldn't read whether hello-sindri has run."),
             _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not a setup step"),
         };
         return Failed(id, title, new SetupError(code, sentence));

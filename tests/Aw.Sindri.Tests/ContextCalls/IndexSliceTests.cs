@@ -5,6 +5,7 @@ using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
 using Aw.Sindri.Core;
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Workflow.Blocks.Input;
 
 namespace Aw.Sindri.Tests.ContextCalls;
@@ -20,7 +21,7 @@ public sealed class IndexSliceTests
 
     private async Task ApproveProfile() => _ = await _h.Profiles.Save(SliceHarness.Profile("5m"), Ct);
 
-    private ContextScopes Scopes() => new(_h.Profiles, _h.Callers);
+    private ContextScopes Scopes() => new(_h.Profiles, _h.Callers, new FakeRepoCheckouts());
 
     [Fact, Trait("Lane", "unit")]
     public async Task Status_lists_each_feeds_phase_milestones_last_tick_and_last_code()
