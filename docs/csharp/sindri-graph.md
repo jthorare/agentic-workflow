@@ -34,6 +34,7 @@ A workflow is a JSON document Sindri stores as revisions. This page covers what 
 | `GRAPH-NODE-001` / `-002`, `GRAPH-EDGE-001` / `-002` | repeated node id / a node id that is `trigger`, `item`, `itemIndex` or `workflow` (reserved reference roots), edge to a missing node, edge by an output the block lacks (an edge with no `output` leaves by `out`) |
 | `GRAPH-NODE-003` | an `onFailure` value other than `stop` or `continue`; write `stop` (halt the run when the node fails, the default) or `continue` (keep walking) |
 | `GRAPH-NODE-004` | `onFailure: continue` on a node with no single `out` output, such as a condition. A failed node takes no named branch, so the nodes after it never run. Put the condition's work in a step with `onFailure: continue`, or remove `onFailure` |
+| `GRAPH-PROMPT-001` | warning: a `prompt` whose question (`config.prompt`) has no `{{...}}` reference and whose only parents are triggers, so the model answers about no data. Add a step before it and read its output with `{{step.field}}` |
 
 `GRAPH-TRIGGER-001` / `-002`, `GRAPH-CYCLE-001` and `GRAPH-WIRING-001` are node-level findings: they name nodes and have no field.
 
