@@ -26,7 +26,7 @@ internal sealed class CheckMapService(IGraphStore store) : IService<CheckMapRequ
 
         if (current.Value is not { } version)
         {
-            return new MapHealth(Name, MapHealthState.Warn, "no map yet", "sindri context map import <file>");
+            return new MapHealth(Name, MapHealthState.Warn, MapHealth.NoMapDetail, "sindri context map import <file>");
         }
 
         var graph = await store.Read(version.Number, cancellationToken).ConfigureAwait(false);

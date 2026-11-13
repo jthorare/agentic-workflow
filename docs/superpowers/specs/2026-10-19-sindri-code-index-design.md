@@ -577,7 +577,7 @@ and returns `Result<T>` (`Aw.Kernel`). Reads open the repo's file read-only and 
 | Call | Answers | Used by |
 |---|---|---|
 | `Build(scope, repo, commit, progress)` | the build slice (§5.7): the only write; called by Sindri's `BuildCodeIndexService` | the job |
-| `Status(scope)` | per repo, **from the files only**: `state` (`missing`, `ok`, `damaged`; `stale` once Sindri compares the commit with the checkout's head), `building` and `waiting` are overlaid by Sindri from its jobs and service state, `commit`, `builtAt`, `layers[]` (status, code, detail), counts (files, symbols, edges; stored in `meta`, never counted per call) | Health, doctor, the code lens' `searched.code-index` row |
+| `Status(scope)` | per repo, **from the files only**: `state` (`missing`, `ok`, `damaged`; `stale` once Sindri compares the commit with the checkout's head), `building`, `waiting` and `queued` are overlaid by Sindri from its jobs and service state (`queued`: no index yet, the head on the default branch and `code-index-main-move` not paused, so its next tick starts the first build; paused or off the default branch the repo stays `missing`, #3342, #3399), `commit`, `builtAt`, `layers[]` (status, code, detail), counts (files, symbols, edges; stored in `meta`, never counted per call) | Health, doctor, the code lens' `searched.code-index` row |
 | `Heads(scope)` | per repo: the commit the index describes, from stored state only (no git, no live probe), or none when the file is missing or damaged | the service's recorded heads (§6.2); doctor |
 | `ProbeLayers(scope)` | per repo: which unavailable layers can now be built (lock and tool check, no work) | §6.3 |
 | `FindSymbols(scope, SymbolQuery)` | by exact name, `path`, `path#name` or ref; `prefix` search; ordered, 200 by default and any limit from 1 (removed per owner q93 (2026-10-23)); each hit with ref, kind, span, signature, exported | S-9 `symbol` shape; `context query --symbol` |
@@ -606,7 +606,7 @@ index's container stays its own). Context never sees SQLite or a path of the ind
 
 | Situation | What the consumer sees |
 |---|---|
-| no index file yet (new repo) | `unavailable`, reason `index-not-built`, `SND-CODEIDX-013`; Health says "first build queued" or "building" |
+| no index file yet (new repo) | `unavailable`, reason `index-not-built`, `SND-CODEIDX-013`; Health says "no index yet", "build queued" or "building" |
 | index commit is the checkout's head | `ok` |
 | head moved, build not done yet | `stale` (answers still served from the old commit, `commit` and `builtAt` in the answer) |
 | as-of commit (a map version's) differs from the index's | `stale`, with both commits named (`commit` and `asOfCommit` on every row); the lens marks the rows `asOfMismatch` and reads "from abcdef0, not 1234567". This is the state a map published after its wait (§6.4) shows, and it clears itself the moment the index for the map's commit lands, with nothing re-promoted: it is computed at read time |
