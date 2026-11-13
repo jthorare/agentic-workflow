@@ -7,7 +7,7 @@ internal static partial class Labels
     internal const string NotSetUp = "Not set up";
 
     /// <summary>The top-bar pill's word when the profile can't be read: the pill never names a card, the System headline does.</summary>
-    internal const string PillNeedsLook = "needs a look";
+    internal const string PillNeedsLook = "Needs a look";
 
     /// <summary>The profile's state on a home with no profile yet.</summary>
     internal const string ProfileNotSetUp = "not set up";
