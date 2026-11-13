@@ -92,11 +92,12 @@ check "no tmux: nothing written" "$([ -e "$WORK/home2/.tmux.conf" ] && echo yes 
 TPM_SRC="$WORK/tpm-src"; mkdir -p "$TPM_SRC/bin"
 cat > "$TPM_SRC/tpm" <<'SH'
 #!/usr/bin/env bash
-tmux set-environment -g TMUX_PLUGIN_MANAGER_PATH "$HOME/.tmux/plugins/"
+# run-shell on the private -L server sets TMUX to its socket: name it with -S so this never reaches another server (#3541)
+tmux -S "${TMUX%%,*}" set-environment -g TMUX_PLUGIN_MANAGER_PATH "$HOME/.tmux/plugins/"
 SH
 cat > "$TPM_SRC/bin/install_plugins" <<'SH'
 #!/usr/bin/env bash
-v="$(tmux show-environment -g TMUX_PLUGIN_MANAGER_PATH 2>/dev/null | cut -d= -f2-)"
+v="$(tmux -S "${TMUX%%,*}" show-environment -g TMUX_PLUGIN_MANAGER_PATH 2>/dev/null | cut -d= -f2-)"
 echo "${v:-missing}" > "$HOME/install_plugins.ran"
 mkdir -p "$HOME/.tmux/plugins/tmux-resurrect" "$HOME/.tmux/plugins/tmux-continuum"
 SH
