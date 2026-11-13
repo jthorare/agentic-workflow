@@ -120,7 +120,7 @@ public sealed class PressedBorderPixelTests : FrameHost
 
     private static (Window Window, Border Sample) ClickableWindow(double scale)
     {
-        // The sample of the scale 1 fact: 150 wide, host padding 24, so the laid-out top edge is logical y 24 = device y 36 at 1.5x, a whole pixel.
+        // The sample of the scale 1 fact: 150 wide, host padding 24, so the laid-out top edge is logical y 24 = device y 30 at 1.25x and 36 at 1.5x, a whole pixel at both.
         var sample = new Border { Width = 150, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(6), Padding = new Thickness(24, 12), HorizontalAlignment = HorizontalAlignment.Left, Child = new TextBlock { Text = "Clickable" } };
         sample.Classes.Add("clickable");
         var app = Application.Current!;
@@ -269,21 +269,23 @@ public sealed class PressedBorderPixelTests : FrameHost
         await Task.CompletedTask;
     });
 
-    [Fact]
-    public Task A_pressed_clickable_keeps_its_top_border_at_3_to_1_at_scale_1_5() => OnUi(async () =>
+    [Theory]
+    [InlineData(1.25)]
+    [InlineData(1.5)]
+    public Task A_pressed_clickable_keeps_its_top_border_at_3_to_1_at_fractional_scaling(double scale) => OnUi(async () =>
     {
         Motion.Set(reduce: true);
         using var instant = InstantMotion.Start();
-        var (window, sample) = ClickableWindow(scale: 1.5);
+        var (window, sample) = ClickableWindow(scale);
 
         window.MouseMove(Centre(sample, window), RawInputModifiers.None);
         window.MouseDown(Centre(sample, window), MouseButton.Left, RawInputModifiers.None);
         Settle(window);
 
         Assert.Contains(":pressed", sample.Classes, StringComparer.Ordinal);
-        // The press moves nothing (#3190), so the border sits on whole device pixels at 1.5x (logical y 24 = device y 36).
-        var (ratio, detail) = TopBorderContrast(window, sample, scale: 1.5);
-        Assert.True(ratio >= Required, string.Create(CultureInfo.InvariantCulture, $"the pressed top border at 1.5x draws at {ratio:0.00}:1, below {Required}:1 ({detail})"));
+        // The press moves nothing (#3190), so the border sits on whole device pixels at 1.25x and 1.5x (logical y 24 = device y 30 and 36).
+        var (ratio, detail) = TopBorderContrast(window, sample, scale);
+        Assert.True(ratio >= Required, string.Create(CultureInfo.InvariantCulture, $"the pressed top border at {scale}x draws at {ratio:0.00}:1, below {Required}:1 ({detail})"));
         window.MouseUp(Centre(sample, window), MouseButton.Left, RawInputModifiers.None);
         window.Close();
         await Task.CompletedTask;
