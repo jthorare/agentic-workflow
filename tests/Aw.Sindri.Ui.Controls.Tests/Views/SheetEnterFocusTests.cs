@@ -83,17 +83,6 @@ public sealed class SheetEnterFocusTests : IDisposable
         return (window, shell);
     }
 
-    // The border's colour eases over wall-clock time (a transition), so a read right after the focus can land mid-way (#7e8bf7 for #828fff, #2658).
-    // Wait, up to 2 s, until it is the token; on timeout the caller's assertion fails with the colour last seen.
-    private static async Task BorderReaches(Window window, Border frame, Color expected)
-    {
-        for (var i = 0; i < 125 && (frame.BorderBrush as ISolidColorBrush)?.Color != expected; i++)
-        {
-            await Task.Delay(16, Token);
-            Settle(window);
-        }
-    }
-
     private static async Task Until(Window window, Func<bool> condition)
     {
         for (var i = 0; i < 300 && !condition(); i++)
@@ -230,21 +219,24 @@ public sealed class SheetEnterFocusTests : IDisposable
         Assert.True(title.Bounds.Width > 0 && column >= 160, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the title is {title.Bounds.Width} wide in a {column} column"));
     });
 
+    // #3245: the row's ring is one inset 2 px PrimaryHover shadow (Shadow.FocusRing) drawn inside its bounds, so focus changes no border and no layout.
     [Fact]
-    public Task A_row_draws_its_own_focus_border_and_has_no_adorner_so_the_sheet_covers_it() => OnUi(async () =>
+    public Task A_row_draws_its_focus_ring_as_an_inset_shadow_and_has_no_adorner_so_the_sheet_covers_it() => OnUi(async () =>
     {
         var (window, shell) = await OpenSheet(width: 1290);
         var row = OpenRow(window, shell);
         var frame = row.GetVisualDescendants().OfType<Border>().First(b => b.Name == "RowFrame");
+        var restingBorder = (frame.BorderThickness, (frame.BorderBrush as ISolidColorBrush)?.Color);
 
         _ = frame.Focus(NavigationMethod.Tab);
         Settle(window);
-        var expected = (ISolidColorBrush)frame.FindResource("Brush.PrimaryHover")!;
-        await BorderReaches(window, frame, expected.Color);
 
+        var expected = (ISolidColorBrush)frame.FindResource("Brush.PrimaryHover")!;
         var adorners = AdornerLayer.GetAdornerLayer(frame)!.Children.Count(c => AdornerLayer.GetAdornedElement(c) == frame && c.IsEffectivelyVisible);
-        var ring = frame.BorderBrush as ISolidColorBrush;
-        Assert.Equal((0, 2.0, expected.Color), (adorners, frame.BorderThickness.Top, ring?.Color));
+        Assert.Equal(restingBorder, (frame.BorderThickness, (frame.BorderBrush as ISolidColorBrush)?.Color));
+        var ring = Assert.Single(frame.BoxShadow);
+        Assert.Equal((true, 2.0, 0.0, expected.Color), (ring.IsInset, ring.Spread, ring.Blur, ring.Color));
+        Assert.Equal(0, adorners);
         Assert.Null(frame.FocusAdorner);
     });
 
