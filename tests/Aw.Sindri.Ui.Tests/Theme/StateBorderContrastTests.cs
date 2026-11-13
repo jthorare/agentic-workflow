@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
@@ -39,20 +40,85 @@ public sealed class StateBorderContrastTests
 
         private static readonly HashSet<string> _functional = new(StringComparer.Ordinal) { "not", "is", "nth-child", "nth-last-child" };
 
+        // A comma list is classified part by part: Unknown if any part is, else the strongest of Required, Exempt and None.
         internal static SelectorState Classify(string selector)
         {
-            var names = PseudoClasses(selector);
-            if (names.Exists(_required.Contains) || _selectedClass.IsMatch(selector))
+            var parts = TopLevelParts(selector).Select(ClassifyPart).ToList();
+            if (parts.Contains(SelectorState.Unknown))
+            {
+                return SelectorState.Unknown;
+            }
+
+            if (parts.Contains(SelectorState.Required))
             {
                 return SelectorState.Required;
             }
 
-            if (names.Exists(name => !_exempt.Contains(name)))
+            return parts.Contains(SelectorState.Exempt) ? SelectorState.Exempt : SelectorState.None;
+        }
+
+        // A state inside :not(...) never makes a part Required or Exempt (Button:not(:pressed) is a rest border), but an unclassified one is still Unknown.
+        private static SelectorState ClassifyPart(string part)
+        {
+            var outside = WithoutNot(part);
+            var names = PseudoClasses(outside);
+            if (names.Exists(_required.Contains) || _selectedClass.IsMatch(outside))
+            {
+                return SelectorState.Required;
+            }
+
+            if (PseudoClasses(part).Exists(name => !_required.Contains(name) && !_exempt.Contains(name)))
             {
                 return SelectorState.Unknown;
             }
 
             return names.Count > 0 ? SelectorState.Exempt : SelectorState.None;
+        }
+
+        // Splits on commas outside parentheses: "A:is(:x, :y), B" is two parts.
+        private static List<string> TopLevelParts(string selector)
+        {
+            var parts = new List<string>();
+            var depth = 0;
+            var start = 0;
+            for (var i = 0; i < selector.Length; i++)
+            {
+                depth += selector[i] switch { '(' => 1, ')' => -1, _ => 0 };
+                if (selector[i] == ',' && depth == 0)
+                {
+                    parts.Add(selector[start..i]);
+                    start = i + 1;
+                }
+            }
+
+            parts.Add(selector[start..]);
+            return parts;
+        }
+
+        // Drops every :not(...) with its argument, nested parentheses included.
+        private static string WithoutNot(string part)
+        {
+            var text = new StringBuilder(part.Length);
+            var i = 0;
+            while (i < part.Length)
+            {
+                if (string.CompareOrdinal(part, i, ":not(", 0, 5) != 0)
+                {
+                    text.Append(part[i]);
+                    i++;
+                    continue;
+                }
+
+                var depth = 0;
+                do
+                {
+                    depth += part[i] switch { '(' => 1, ')' => -1, _ => 0 };
+                    i++;
+                }
+                while (i < part.Length && (depth > 0 || part[i - 1] != ')'));
+            }
+
+            return text.ToString();
         }
 
         // One failure per style that paints a BorderBrush under a pseudo-class nobody classified: file:line, the selector and the class.
@@ -126,6 +192,8 @@ public sealed class StateBorderContrastTests
     [InlineData("Button.command-control.primary:pointerover:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter", SelectorState.Exempt)]
     [InlineData("Expander:expanded /template/ Border", SelectorState.Unknown)]
     [InlineData("Border.card", SelectorState.None)]
+    [InlineData("A:focus, B:expanded", SelectorState.Unknown)]
+    [InlineData("Button:not(:pressed)", SelectorState.None)]
     public void A_selector_is_required_exempt_unknown_or_no_state(string selector, SelectorState expected) =>
         Assert.Equal(expected, StateSelectors.Classify(selector));
 
