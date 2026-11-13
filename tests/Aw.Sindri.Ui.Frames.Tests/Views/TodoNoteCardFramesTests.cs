@@ -241,6 +241,23 @@ public sealed class TodoNoteCardFramesTests : IDisposable
         Assert.Equal(space, GapBetween(window, above, below), 0.5);
     });
 
+    // The collapse is only for an empty row: once the status has words the row takes its full height again.
+    [Fact]
+    public Task A_status_row_with_words_takes_its_full_height_3454() => OnUi(async () =>
+    {
+        var (window, card) = await Show();
+        _server.TodoNoteCheckGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        Press(window, "TodoNoteCheck");
+        await Until(window, () => card.IsBusy);
+
+        var status = Find<TextBlock>(window, "TodoNoteStatus");
+        Assert.Equal("Checking the note…", status.Text);
+        Assert.True(status.Bounds.Height >= status.FontSize, "the row with words is at least one line high");
+        _server.TodoNoteCheckGate.SetResult();
+        await Until(window, () => !card.IsBusy);
+    });
+
     [Fact]
     public Task A_new_note_says_Sindri_will_create_it_with_Start_syncing() => OnUi(async () =>
     {
