@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Tests.Views;
@@ -24,8 +25,36 @@ public sealed class FieldErrorTests
 {
     private const string Sentence = "Short ids use lowercase letters, numbers and dashes.";
 
+    private static readonly List<Window> _open = [];
+
+    // Each test closes its windows and drains the dispatcher before the session tears the app down: a render queued by the last UpdateLayout otherwise runs during that teardown, when the
+    // Inter collection is already gone, and an empty text line (which has no fallback font) throws "Could not create glyphTypeface".
     private static Task<T> OnUi<T>(Func<T> body) =>
-        HeadlessUnitTestSession.GetOrStartForAssembly(typeof(FieldErrorTests).Assembly).Dispatch(body, TestContext.Current.CancellationToken);
+        HeadlessUnitTestSession.GetOrStartForAssembly(typeof(FieldErrorTests).Assembly).Dispatch(
+            () =>
+            {
+                try
+                {
+                    return body();
+                }
+                finally
+                {
+                    foreach (var window in _open)
+                    {
+                        window.Close();
+                    }
+
+                    _open.Clear();
+                    Dispatcher.UIThread.RunJobs();
+                }
+            },
+            TestContext.Current.CancellationToken);
+
+    private static Window Track(Window window)
+    {
+        _open.Add(window);
+        return window;
+    }
 
     private static double Luminance(Color c)
     {
@@ -54,7 +83,7 @@ public sealed class FieldErrorTests
         var input = new TextBox { Text = "Evening Check" };
         var field = new LabelledField { Caption = "Short id", Content = input, ErrorText = error };
         var panel = new Border { Padding = new Thickness(16), Width = 420, Child = field };
-        var window = new Window { Content = panel, Width = 480, Height = 200 };
+        var window = Track(new Window { Content = panel, Width = 480, Height = 200 });
         panel.Background = new SolidColorBrush(Token(window, "Brush.Surface1"));
         window.Show();
         window.UpdateLayout();
@@ -163,7 +192,7 @@ public sealed class FieldErrorTests
         var (full, empty) = await OnUi(() =>
         {
             var line = new FieldError { Text = "Couldn't save: the workflow changed." };
-            var window = new Window { Content = line, Width = 400, Height = 100 };
+            var window = Track(new Window { Content = line, Width = 400, Height = 100 });
             window.Show();
             window.UpdateLayout();
             var shown = line.IsEffectivelyVisible && line.Bounds.Height > 0;
@@ -183,7 +212,7 @@ public sealed class FieldErrorTests
         {
             var input = new TextBox();
             input.Classes.Add("field-invalid");
-            var window = new Window { Content = input, Width = 300, Height = 100 };
+            var window = Track(new Window { Content = input, Width = 300, Height = 100 });
             window.Show();
             window.UpdateLayout();
             return (Solid(Border(input).BorderBrush), Token(window, "Brush.Error"));
