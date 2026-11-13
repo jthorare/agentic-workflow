@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Ids;
@@ -66,7 +67,7 @@ public sealed class FirstRunSetupTests : IDisposable
     // the same services the slice ports wrap, called directly (no command chain in a unit test)
     private Creator Create(InMemoryWorkflowStore store) => new(new CreateWorkflowService(store, _rig.Checker, _rig.Harness.Ids, _rig.Log));
 
-    private Activator Activate(InMemoryWorkflowStore store) => new(new ActivateWorkflowService(store, _rig.Checker, _rig.Log));
+    private Activator Activate(InMemoryWorkflowStore store) => new(new ActivateWorkflowService(store, _rig.Checker, _rig.Log, _rig.Harness.Callers), _rig.Harness.Callers);
 
     private async Task<IReadOnlyList<Core.Graph.WorkflowRecord>> Made(InMemoryWorkflowStore? workflows = null)
     {
@@ -367,10 +368,12 @@ public sealed class FirstRunSetupTests : IDisposable
         }
     }
 
-    private sealed class Activator(ActivateWorkflowService service) : ISetupWorkflowActivator
+    // the scheduler runs the setup service's tick as 'service:setup' (SchedulerHost.RunOne), so activate sees a Service caller
+    private sealed class Activator(ActivateWorkflowService service, ICallerContextAccessor callers) : ISetupWorkflowActivator
     {
         public async ValueTask<Result<Unit>> Activate(WorkflowSlug slug, CancellationToken cancellationToken)
         {
+            using var caller = callers.EnterService("setup");
             var made = await service.Handle(new ActivateWorkflowRequest(slug, Revision: null, "service:setup"), cancellationToken);
             return made.IsError ? made.Error : Unit.Value;
         }

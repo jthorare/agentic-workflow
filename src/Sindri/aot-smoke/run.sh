@@ -222,6 +222,7 @@ items_in() { # $1 = state, $2 = count, $3 = seconds to wait (default 60): the it
 code_node_run() { # a one-node Code workflow (manual trigger, then code returning {"sum":3}) made, activated and run through the CLI; the node's
   # result is the one line printed. The run is polled to its end by wall time like settle; a failed run (a sandbox that can't confine the
   # runner is SND-CODE-005) prints the status and the node's error in that line, so the diff says why. A verb that fails prints its own code-node line, so the diff fails.
+  # activate is the owner's (workflows page spec §8): this plain call reads the per-start token, so it calls as the human and is not refused; a session is (SND-AUTH-002)
   echo "## sindri wf create, activate and run a one-node Code workflow (code-smoke), then wf run-show --json | jq (the node's result)"
   local spec="$work/code-smoke.json" run_id="" status="" shown="" deadline=$((SECONDS + 60))
   cat >"$spec" <<'JSON'

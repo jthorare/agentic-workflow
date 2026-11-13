@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Palette;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Item;
@@ -96,6 +97,10 @@ internal sealed partial class ShellWindow
     private static bool SwallowedByForm(KeyEventArgs e) =>
         (e.Key is Key.K or Key.OemComma && e.KeyModifiers == _command) || (IsQuestionMark(e) && e.Source is not TextBox);
     private bool _openingSettings;
+
+    // A palette Settings entry shows Settings from the top, as ⌘, does (#3362).
+    private void OnSettingFilter(object? sender, ValueEventArgs<string> e) =>
+        Dispatcher.UIThread.Post(() => this.Get<Control>("SettingsSlot").FindAncestorOfType<ScrollViewer>()?.ScrollToHome(), DispatcherPriority.Loaded);
 
     private bool OpenSettingsByKey(KeyEventArgs e, ShellViewModel shell)
     {

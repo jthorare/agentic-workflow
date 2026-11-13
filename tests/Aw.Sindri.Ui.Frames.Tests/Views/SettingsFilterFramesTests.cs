@@ -5,10 +5,13 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Setup;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Reviews;
@@ -114,7 +117,8 @@ public sealed class SettingsFilterFramesTests : FrameHost
         var (window, shell) = await Connected();
         var (_, settings) = PutSettings(window, shell);
         Settle(window);
-        var labels = Named<Border>(window, "ThisAppCard").GetVisualDescendants().OfType<TextBlock>().Select(static t => t.Text).Where(static s => !string.IsNullOrWhiteSpace(s)).Distinct(StringComparer.Ordinal).ToList();
+        // Only labels on screen: a mark hidden by its own binding (the "Changed" mark while nothing changed) is not a word the filter matches.
+        var labels = Named<Border>(window, "ThisAppCard").GetVisualDescendants().OfType<TextBlock>().Where(static t => t.IsEffectivelyVisible).Select(static t => t.Text).Where(static s => !string.IsNullOrWhiteSpace(s)).Distinct(StringComparer.Ordinal).ToList();
         Assert.NotEmpty(labels);
 
         foreach (var label in labels)
@@ -215,7 +219,7 @@ public sealed class SettingsFilterFramesTests : FrameHost
     });
 
     [Fact]
-    public Task A_filter_after_a_library_row_changed_sees_the_new_words() => OnUi(async () =>
+    public Task A_row_changed_while_the_box_has_text_is_seen_by_the_next_letter() => OnUi(async () =>
     {
         var (window, shell) = await Connected();
         var url = new Uri("http://127.0.0.1:7410/");
@@ -225,14 +229,115 @@ public sealed class SettingsFilterFramesTests : FrameHost
         window.SettingsSlot.Content = new SettingsView { DataContext = settings };
         shell.GoTo(PageId.Settings);
         Settle(window);
-        settings.Filter = "zzzz";   // empty -> text: the words are read
-        settings.Filter = string.Empty;
+        settings.Filter = "p";   // the box has text before the row changes
 
         Server.LibraryAnswer = new RouteAnswer(HttpStatusCode.OK, GoldenFiles.Api("library", "ok").Replace("\"unreadable\": null", "\"unreadable\": \"permission denied\"", StringComparison.Ordinal));
         await card.Refresh(url, Token);
         Settle(window);
-        settings.Filter = "permission";
+        settings.Filter = "pe";   // one more letter: the words are read again
 
+        settings.Filter = "permission";
         Assert.True(settings.ShowsLibrary, "the filter used the words read before the row became unreadable");
     });
+
+    private static readonly string[] _orderedNames = ["TitleText", "SettingsFilterBox", "SettingsNoMatch", "ThisAppName", "ThisAppCard", "SetupChecklist"];
+
+    private async Task<(ShellWindow Window, ShellViewModel Shell, SettingsViewModel Settings, SettingsView View, Preferences Prefs)> WithSetup(string scenario)
+    {
+        Server.SetupAnswer = SetupFixture.Answer(scenario);
+        var (window, shell) = await Connected(static s => s.Setup.Steps.Count > 0);
+        var prefs = new Preferences(new InMemoryPreferencesStore());
+        var settings = new SettingsViewModel(prefs, new FakeMotionPreference(), static _ => { }, shell.Setup);
+        var view = new SettingsView { DataContext = settings };
+        window.SettingsSlot.Content = view;
+        shell.GoTo(PageId.Settings);
+        Settle(window);
+        return (window, shell, settings, view, prefs);
+    }
+
+    private static string[] Order(SettingsView view) =>
+        [.. ((StackPanel)view.Content!).Children.Select(static c => c.Name ?? string.Empty).Where(static n => _orderedNames.Contains(n, StringComparer.Ordinal))];
+
+    [Fact]
+    public Task This_app_is_above_the_checklist_when_setup_is_done_and_below_it_on_a_first_run() => OnUi(async () =>
+    {
+        var done = await WithSetup("all-done");
+        Assert.Equal(_orderedNames, Order(done.View));
+
+        var first = await WithSetup("first-run");
+        Assert.Equal(["TitleText", "SettingsFilterBox", "SettingsNoMatch", "SetupChecklist", "ThisAppName", "ThisAppCard"], Order(first.View));
+    });
+
+    [Fact]
+    public Task This_app_moves_above_the_checklist_when_setup_finishes_while_the_page_is_open() => OnUi(async () =>
+    {
+        var (window, shell, _, view, _) = await WithSetup("first-run");
+        Assert.Equal("SetupChecklist", Order(view)[3]);
+
+        Server.SetupAnswer = SetupFixture.Answer("all-done");
+        await shell.Setup.Refresh(SetupFixture.Url, Token);
+        Settle(window);
+
+        Assert.Equal(_orderedNames, Order(view));
+    });
+
+    [Fact]
+    public Task Reset_puts_Text_size_back_hides_itself_hands_focus_to_the_slider_and_is_stored() => OnUi(async () =>
+    {
+        var (window, _, settings, _, prefs) = await WithSetup("all-done");
+        settings.TextScale = 1.2;
+        Settle(window);
+        Assert.True(Visible(window, "TextSizeReset"));
+        AssertCentred(window, "TextSizeText", "TextSizeChanged", "TextSizeReset");
+
+        Named<Button>(window, "TextSizeReset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+        await prefs.Flush();
+
+        Assert.Equal(1.0, settings.TextScale);
+        Assert.False(Visible(window, "TextSizeReset"));
+        var slider = Named<Slider>(window, "TextScaleSlider");
+        Assert.True(slider.IsFocused, "focus did not go to the Text size slider");
+        Assert.Contains(":focus-visible", slider.Classes, StringComparer.Ordinal);
+        Assert.Equal(1.0, (await prefs.Load(Token)).TextScale);
+    });
+
+    [Fact]
+    public Task Reset_turns_Reduce_motion_off_hides_itself_hands_focus_to_the_switch_and_is_stored() => OnUi(async () =>
+    {
+        var (window, _, settings, _, prefs) = await WithSetup("all-done");
+        settings.ReduceMotion = true;
+        Settle(window);
+        Assert.True(Visible(window, "ReduceMotionReset"));
+        AssertCentred(window, "ReduceMotionText", "ReduceMotionChanged", "ReduceMotionReset");
+
+        Named<Button>(window, "ReduceMotionReset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+        await prefs.Flush();
+
+        Assert.False(settings.ReduceMotion);
+        Assert.False(Visible(window, "ReduceMotionReset"));
+        var toggle = Named<ToggleSwitch>(window, "ReduceMotionSwitch");
+        Assert.True(toggle.IsFocused, "focus did not go to the Reduce motion switch");
+        Assert.Contains(":focus-visible", toggle.Classes, StringComparer.Ordinal);
+        Assert.False((await prefs.Load(Token)).ReduceMotion);
+    });
+
+    [Fact]
+    public Task The_filter_placeholder_is_drawn_in_Ink() => OnUi(async () =>
+    {
+        var (window, _, _, _, _) = await WithSetup("all-done");
+        var box = Named<TextBox>(window, "SettingsFilterBox");
+
+        var expected = Assert.IsType<ISolidColorBrush>(box.FindResource("Brush.Ink"), exactMatch: false);
+
+        Assert.Equal(expected.Color, Assert.IsType<ISolidColorBrush>(box.PlaceholderForeground, exactMatch: false).Color);
+    });
+
+    // The name, the Changed chip and Reset share one centre line (within a pixel) while a setting is changed.
+    private static void AssertCentred(Window window, params string[] names)
+    {
+        var centres = names.Select(n => { var c = Named<Control>(window, n); return c.TranslatePoint(new Point(0, c.Bounds.Height / 2), window)!.Value.Y; }).ToList();
+        Assert.True(centres.Max() - centres.Min() <= 1.0, "centres differ: " + string.Join(", ", centres.Select(static y => y.ToString("F1", CultureInfo.InvariantCulture))));
+    }
 }
