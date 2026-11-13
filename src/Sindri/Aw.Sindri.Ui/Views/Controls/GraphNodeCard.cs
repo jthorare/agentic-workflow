@@ -166,7 +166,7 @@ internal sealed class GraphNodeCard : UserControl
     }
 
     /// <inheritdoc />
-    protected override void OnGotFocus(GotFocusEventArgs e)
+    protected override void OnGotFocus(FocusChangedEventArgs e)
     {
         base.OnGotFocus(e);
         _focusVisible = e.NavigationMethod is NavigationMethod.Tab or NavigationMethod.Directional;
@@ -174,7 +174,7 @@ internal sealed class GraphNodeCard : UserControl
     }
 
     /// <inheritdoc />
-    protected override void OnLostFocus(RoutedEventArgs e)
+    protected override void OnLostFocus(FocusChangedEventArgs e)
     {
         base.OnLostFocus(e);
         _focusVisible = false;
