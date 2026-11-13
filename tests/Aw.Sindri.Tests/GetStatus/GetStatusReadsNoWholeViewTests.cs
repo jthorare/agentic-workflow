@@ -16,6 +16,7 @@ using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.CodeIndexReads;
 using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.Server;
 using Aw.Sindri.Tests.Views;
 using RepoName = Aw.CodeIndex.Core.Values.RepoName;
 
@@ -80,7 +81,7 @@ public sealed class GetStatusReadsNoWholeViewTests
         var jobs = new CountingJobViews(history, calls);
 
         h.Profiles.Live = Approved();
-        var rows = new HealthServiceRows(new CountingViewReader(store, calls), [], new CodeIndexHealth(index, new RepoHealths(heads, jobs, h.Clock), h.Profiles), clock: h.Clock);
+        var rows = new HealthServiceRows(new CountingViewReader(store, calls), [], new CodeIndexHealth(index, new RepoHealths(heads, jobs, new NoPauses(), h.Clock, new QueuedClock(h.Clock.GetUtcNow())), h.Profiles), clock: h.Clock);
         var service = new GetStatusService(h.Held, new ProfileReads(h.Profiles, h.Profiles), h.Store, new ProjectorProgress(h.Clock), rows, new InMemorySessionSnapshot());
 
         calls.Clear();   // seeding is not the status call

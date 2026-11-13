@@ -215,6 +215,7 @@ Aw.Judge.Core.Ports.IBriefStore.FirstUnmappedByDispatchName(string! dispatchName
 Aw.Judge.Core.Ports.IBriefStore.Save(Aw.Judge.Core.Briefs.Brief! brief, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Judge.Core.Ports.IBriefStore.SetAgentId(Aw.Judge.Core.Ids.ToolUseId toolUseId, Aw.Judge.Core.Ids.AgentId agentId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Judge.Core.Ports.IDecisionLog
+Aw.Judge.Core.Ports.IDecisionLog.LatestFailuresSince(System.DateTimeOffset since, int count, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Decisions.FailureRecord!>!>!>
 Aw.Judge.Core.Ports.IDecisionLog.CountFailuresSince(System.DateTimeOffset since, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Judge.Core.Ports.IDecisionLog.Find(Aw.Judge.Core.Ids.DecisionId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Judge.Core.Decisions.DecisionRecord!>!>
 Aw.Judge.Core.Ports.IDecisionLog.LastAttemptOutcomes(int count, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Decisions.DecisionOutcome>!>!>
@@ -332,6 +333,7 @@ const Aw.Judge.Core.Evaluation.EvaluationReasons.FallbackAfterUndecided = "fallb
 const Aw.Judge.Core.Evaluation.EvaluationReasons.InvalidInput = "invalid-input" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.NoProvider = "none" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.NoProviderDecided = "no-provider-decided" -> string!
+const Aw.Judge.Core.Evaluation.EvaluationReasons.UsageLimit = "usage-limit" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.NoReasons = "no-reasons" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.OutOfEnum = "out-of-enum" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.PreRule = "pre-rule" -> string!
@@ -1511,6 +1513,8 @@ static Aw.Judge.Core.PromptSort.SortValues.operator !=(Aw.Judge.Core.PromptSort.
 static Aw.Judge.Core.PromptSort.SortValues.operator ==(Aw.Judge.Core.PromptSort.SortValues? left, Aw.Judge.Core.PromptSort.SortValues? right) -> bool
 Aw.Judge.Core.Providers.QuestionRef.Model.get -> string?
 Aw.Judge.Core.Providers.QuestionRef.Model.init -> void
+Aw.Judge.Core.Providers.QuestionRef.OwnDefaultModel.get -> bool
+Aw.Judge.Core.Providers.QuestionRef.OwnDefaultModel.init -> void
 Aw.Judge.Core.Ids.EvalItemId
 Aw.Judge.Core.Ids.EvalItemId.EvalItemId() -> void
 Aw.Judge.Core.Ids.EvalItemId.Equals(Aw.Judge.Core.Ids.EvalItemId other) -> bool

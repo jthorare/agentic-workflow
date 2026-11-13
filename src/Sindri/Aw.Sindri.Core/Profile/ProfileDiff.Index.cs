@@ -53,9 +53,13 @@ public static partial class ProfileDiff
     private static IEnumerable<(string Key, string Value)> Present(params (string Key, string? Value)[] keys) =>
         keys.Where(static k => k.Value is not null).Select(static k => (k.Key, k.Value!));   // why: the nulls are filtered out just above
 
-    /// <summary>The 'setup:' key and the 'context:' section, whose every leaf has a path (they feed the hash as well).</summary>
+    /// <summary>The 'setup:' keys and the 'context:' section, whose every leaf has a path (they feed the hash as well).</summary>
     private static IEnumerable<(string Key, string Value)> SetupAndContext(SindriProfile p) =>
-        Present(("setup.mcp", p.Setup?.Mcp)).Concat(p.Context is { } context ? Leaves("context", context) : []);
+        SetupKeys(p.Setup).Concat(p.Context is { } context ? Leaves("context", context) : []);
+
+    private static IEnumerable<(string Key, string Value)> SetupKeys(SetupSettings? setup) =>
+        Present(("setup.mcp", setup?.Mcp), ("setup.skipAccounts", setup?.SkipAccounts?.ToString()), ("setup.skipFirstWorkflow", setup?.SkipFirstWorkflow?.ToString()))
+            .Concat(Present(("setup.oauth.github", setup?.Oauth?.Github), ("setup.oauth.linear", setup?.Oauth?.Linear)));
 
     private static IEnumerable<(string Key, string Value)> Leaves(string path, JsonElement element) => element.ValueKind switch
     {

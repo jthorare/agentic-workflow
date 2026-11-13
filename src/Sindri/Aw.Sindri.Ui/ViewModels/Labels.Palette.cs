@@ -24,6 +24,9 @@ internal static partial class Labels
     /// <summary>The palette's section of pages.</summary>
     internal const string PaletteGoTo = "Go to";
 
+    /// <summary>The palette section of Settings entries.</summary>
+    internal const string PaletteSettings = "Settings";
+
     /// <summary>A ready entry's status.</summary>
     internal const string Ready = "ready";
 

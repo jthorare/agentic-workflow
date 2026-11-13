@@ -18,6 +18,9 @@ public static partial class EventTypes
     /// <summary>A graph node finished or was skipped (issue 2258, PR 6).</summary>
     public const string WorkflowNodeFinished = "workflow.node.finished";
 
+    /// <summary>The session a 'run_agent' node launched changed state, waiting-on text or last tool (#3151, Agents page E1).</summary>
+    public const string WorkflowNodeAgentChanged = "workflow.node.agent.changed";
+
     /// <summary>A graph node failed (issue 2258, PR 6).</summary>
     public const string WorkflowNodeFailed = "workflow.node.failed";
 

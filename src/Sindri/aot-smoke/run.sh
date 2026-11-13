@@ -35,6 +35,7 @@ unset CLAUDECODE CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_EXECPATH CLAUDE_CODE_SESSION
 export AW_SINDRI_PROVER=1
 out="$root/artifacts/aot-sindri-smoke"
 mkdir -p "$out"
+rm -f "$out/timings.txt" "$out/serve.log"
 [ ! -d "$out/bin" ] || find "$out/bin" -delete
 alarm=(perl -e 'alarm shift; exec @ARGV or die "exec $ARGV[0]: $!"' 30)   # SIGALRM after 30 s; a command, so with_tty can run it
 bounded() { "${alarm[@]}" "$@"; }
@@ -91,6 +92,7 @@ cleanup() {
   [ "${cleaned:-0}" = 0 ] || return 0
   cleaned=1
   if [ "${AW_SINDRI_HOME:-}" = "$work/home" ]; then
+    [ ! -f "$AW_SINDRI_HOME/logs/serve.log" ] || cp "$AW_SINDRI_HOME/logs/serve.log" "$out/serve.log"   # kept for a failing run (#3456)
     [ ! -f "$AW_SINDRI_HOME/control.json" ] || remember_servers   # a start that was never recorded
     [ -f "$work/servers.pids" ] || { find "$scratch" -delete; return 0; }
     stop_recorded "$work/servers.pids"
@@ -163,17 +165,28 @@ export AW_SINDRI_SKILLS_DIR="$work/no-skills"   # a folder that does not exist: 
 mkdir -p "$AW_SINDRI_HOME/profile"
 : >"$AW_SINDRI_HOME/.prover-scratch"   # the smoke runs as the prover in a home it created (setup-once spec §4 item 6): the marker lets it confirm, as sindri-prove.sh does
 mkdir -p "$work/repo"   # the repo 'smoke' the mcp() helper names in X-Sindri-Repo (sindri_request files against the profile's repo)
-printf 'schemaVersion: 1\nuser: smoke\nrepos:\n  - { name: smoke, path: %s }\nservices:\n  heartbeat: { every: 5s }\n' "$work/repo" >"$AW_SINDRI_HOME/profile/profile.yaml"
+# A real checkout with one empty commit on main, as a fresh repo on day one: context-map-refresh reads each profile repo's head every
+# tick, and a plain folder fails it with SND-CONTEXT-048 (degraded health, #3256). Onboarding builds its code index (0 files, the graph
+# layer "nothing to index yet") and the first map (0 nodes). The fixed dates keep the commit's sha, which the doctor prints, the same every run.
+git -C "$work/repo" init -q -b main
+GIT_AUTHOR_DATE='2026-01-01T00:00:00Z' GIT_COMMITTER_DATE='2026-01-01T00:00:00Z' \
+  git -C "$work/repo" -c core.hooksPath=/dev/null -c user.name=smoke -c user.email=smoke@localhost -c commit.gpgsign=false commit -q --allow-empty -m smoke
+printf 'schemaVersion: 1\nuser: smoke\nrepos:\n  - { name: smoke, path: %s }\nworkflow:\n  agent:\n    target: claude-code\nservices:\n  heartbeat: { every: 5s }\n' "$work/repo" >"$AW_SINDRI_HOME/profile/profile.yaml"
+# Red hook for #3405 (test only): AW_SMOKE_MAP_EVERY=300s names context-map-refresh in the profile with that cadence, so the first tick (before the
+# code index exists, so quiet) is followed by the next one 300 s later. The subgraph read lands ~150 s after serve starts, so the next tick must come later than that to reproduce the race. Unset, the profile is unchanged.
+if [ -n "${AW_SMOKE_MAP_EVERY:-}" ]; then
+  printf '  context-map-refresh: { every: %s }\n' "$AW_SMOKE_MAP_EVERY" >>"$AW_SINDRI_HOME/profile/profile.yaml"
+fi
 
 run() { # the human, no terminal
   echo "## sindri $*"
-  local rc=0
+  local rc=0 t0=$EPOCHREALTIME call="$*"
   bounded "$bin" "$@" </dev/null 2>&1 || rc=$?
   exit_line "$rc"
 }
 human() { # the human at a terminal; stdin passed through (the typed confirmation)
   echo "## sindri $* (human, terminal)"
-  local rc=0
+  local rc=0 t0=$EPOCHREALTIME call="$*"
   with_tty "${alarm[@]}" "$bin" "$@" || rc=$?
   exit_line "$rc"
 }
@@ -197,18 +210,19 @@ settle() { # the projector has caught up and isn't rebuilding (it polls once a s
   done
   echo "## settle: the views were still rebuilding or behind after 60 s"
 }
-items_in() { # $1 = state, $2 = count: the items view lists that many in that state (the projector polls once a second);
+items_in() { # $1 = state, $2 = count, $3 = seconds to wait (default 60): the items view lists that many in that state (the projector polls once a second);
   # bounded by wall time like settle, with a named line on a timeout
-  local deadline=$((SECONDS + 60))
+  local limit="${3:-60}"; local deadline=$((SECONDS + limit))
   while ((SECONDS < deadline)); do
     jq -e --argjson n "$2" '.items | length == $n' <<<"$(bounded "$bin" items --state "$1" --json </dev/null 2>/dev/null)" >/dev/null 2>&1 && return 0
     sleep 0.25
   done
-  echo "## items_in: the items view didn't list $2 '$1' item(s) after 60 s"
+  echo "## items_in: the items view didn't list $2 '$1' item(s) after ${limit} s"
 }
 code_node_run() { # a one-node Code workflow (manual trigger, then code returning {"sum":3}) made, activated and run through the CLI; the node's
   # result is the one line printed. The run is polled to its end by wall time like settle; a failed run (a sandbox that can't confine the
   # runner is SND-CODE-005) prints the status and the node's error in that line, so the diff says why. A verb that fails prints its own code-node line, so the diff fails.
+  # activate is the owner's (workflows page spec §8): this plain call reads the per-start token, so it calls as the human and is not refused; a session is (SND-AUTH-002)
   echo "## sindri wf create, activate and run a one-node Code workflow (code-smoke), then wf run-show --json | jq (the node's result)"
   local spec="$work/code-smoke.json" run_id="" status="" shown="" deadline=$((SECONDS + 60))
   cat >"$spec" <<'JSON'
@@ -240,13 +254,13 @@ JSON
 }
 session_tty() { # a CLI that can't read the token, at a terminal (the server decides)
   echo "## sindri $* (session, terminal)"
-  local rc=0
+  local rc=0 t0=$EPOCHREALTIME call="$*"
   without_token with_tty "${alarm[@]}" "$bin" "$@" || rc=$?
   exit_line "$rc"
 }
 {
   doctor
-  human --headless </dev/null
+  AW_LOG_LEVEL=information human --headless </dev/null   # serve logs at information into logs/serve.log (#3456)
   remember_servers
   run serve
   remember_servers
@@ -269,12 +283,13 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   human views rebuild </dev/null
   settle
   run status
+  items_in new 1 120   # the setup service's one hello-sindri run files "Hello from Sindri" (spec decision 19); wait for it so the lists' order is fixed
   human item add "Smoke item" </dev/null
-  items_in new 1
+  items_in new 2
   run queue
   run items --state new
   session item add "Filed by a session"
-  item="$(bounded "$bin" items --json </dev/null | jq -r '.items[0].id')"
+  item="$(bounded "$bin" items --json </dev/null | jq -r '.items[] | select(.title == "Smoke item") | .id')"
   human item close "$item" </dev/null
   items_in done 1
   run items --state done
@@ -296,6 +311,23 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   echo "## GET /sindri/events/catalog | jq (public types, their invalidates)"
   curl -s -m 30 "$(jq -r '.url' "$AW_SINDRI_HOME/control.json" | sed 's|/$||')/sindri/events/catalog" -H 'X-Sindri-Repo: smoke' \
     | jq -c '{commandHandled: any(.types[]; .type == "command.handled"), itemCreated: (.types[] | select(.type == "item.created") | .invalidates)}'
+  # The smoke runs context-map-refresh itself so the map doesn't wait for the cadence (#3405). If that run comes before the code index exists it is
+  # a quiet tick, and the scheduler's next tick builds the map; the poll below (cap 120 s) covers both. human_run_service retries past SND-JOB-409,
+  # which the scheduler returns when its own context-map-refresh tick is in flight.
+  human_run_service context-map-refresh >/dev/null 2>&1 || true
+  map_deadline=$((SECONDS + 120))
+  until jq -e '[.jobs[] | select(.kind == "RefreshContextMap")] | length > 0' <<<"$(bounded "$bin" jobs --state succeeded --json </dev/null 2>/dev/null)" >/dev/null 2>&1; do
+    if ((SECONDS >= map_deadline)); then echo "## map wait: no RefreshContextMap job had succeeded after 120 s"; break; fi
+    sleep 1
+  done
+  # A new current map makes a later tick queue RelinkPinAliases, once that tick has nothing else to do (#3462). Run one more tick by hand and
+  # wait (cap 120 s) for the relink to succeed, so the jobs list below always holds its row instead of only when a scheduler tick won the race.
+  human_run_service context-map-refresh >/dev/null 2>&1 || true
+  relink_deadline=$((SECONDS + 120))
+  until jq -e '[.jobs[] | select(.kind == "RelinkPinAliases")] | length > 0' <<<"$(bounded "$bin" jobs --state succeeded --json </dev/null 2>/dev/null)" >/dev/null 2>&1; do
+    if ((SECONDS >= relink_deadline)); then echo "## relink wait: no RelinkPinAliases job had succeeded after 120 s"; break; fi
+    sleep 1
+  done
   echo "## QUERY /sindri/context/subgraph with a JSON body on the published host (the HTTP QUERY method; POST is not a route)"
   base="$(jq -r '.url' "$AW_SINDRI_HOME/control.json" | sed 's|/$||')"
   curl -s -m 30 -X QUERY "$base/sindri/context/subgraph" -H 'X-Sindri-Repo: smoke' -H 'Content-Type: application/json' -d '{"nodes":["feature:smoke.none"]}' \
@@ -306,7 +338,13 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   manual_service_runs heartbeat
   job="$(bounded "$bin" jobs --json </dev/null | jq -r '.jobs[0].id')"
   run jobs show "$job"
-  run jobs --state succeeded
+  # The smoke's own context-map-refresh run (#3405) reads differently depending on which tick wins ("refresh JOB started" or a quiet tick's text),
+  # so its row is left out of the list. Same shape as `run`: header, output, exit line.
+  echo "## sindri jobs --state succeeded"
+  jobs_rc=0
+  jobs_out="$(bounded "$bin" jobs --state succeeded </dev/null 2>&1)" || jobs_rc=$?
+  { grep -v 'RunService  context-map-refresh' <<<"$jobs_out" || true; }
+  exit_line "$jobs_rc"
   human services pause heartbeat </dev/null
   session services pause heartbeat
   settle
