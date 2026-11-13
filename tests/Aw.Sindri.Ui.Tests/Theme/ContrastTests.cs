@@ -169,8 +169,9 @@ public sealed partial class ContrastTests
         Assert.True(_tokens.Contrast("HairlineStrong", "Canvas") < NonText);
     }
 
-    // InkTertiary passes nothing, so it may colour only disabled text: a setter in a ':disabled' style, or a palette
-    // entry whose name says Disabled.
+    // InkTertiary passes no text contrast, so in axaml it may colour only disabled text: a setter in a ':disabled' style,
+    // or a palette entry whose name says Disabled. This check reads axaml only. Since #3537 RowGlyphPainter also inks the
+    // Draft and PR draft glyphs with it (graphic contrast 3.37:1 or more on every row fill), which this check does not see.
     [Fact]
     public void Ink_tertiary_is_used_only_for_disabled_text()
     {

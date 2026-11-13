@@ -20,7 +20,8 @@ internal static class RowGlyphPainter
     }));
 
     private static readonly Lazy<StreamGeometry> _diamond = new(() => BuildPolygon(filled: true, [new Point(8, 1), new Point(15, 8), new Point(8, 15), new Point(1, 8)]));
-    private static readonly Lazy<StreamGeometry> _bubble = new(() => BuildPolygon(filled: false, [new Point(3, 4), new Point(13, 4), new Point(13, 10), new Point(8, 10), new Point(5, 13), new Point(5, 10), new Point(3, 10)]));
+    // The tail of the speech bubble: grammar .g.msg::after, a 5 px wide triangle skewed -20 degrees (top edge y 10.5, apex y 14.5).
+    private static readonly Lazy<StreamGeometry> _tail = new(() => BuildPolygon(filled: true, [new Point(5.23, 10.5), new Point(10.23, 10.5), new Point(5.77, 14.5)]));
     private static readonly ConditionalWeakTable<IBrush, Pens> _pens = [];
 
     internal const double Radius = 6.25;   // ring centre line; with the 1.5 stroke the glyph is 14 outside to outside (grammar .g)
@@ -45,7 +46,7 @@ internal static class RowGlyphPainter
         [RowGlyph.PrDraft] = (g, p) => { Ring(g, p.Tertiary); Disc(g, p.Tertiary, radius: 2); },
         [RowGlyph.Merged] = (g, p) => Disc(g, p.Violet, Outer),
         [RowGlyph.CiRunning] = (g, p) => Dashed(g, p.Attention, dash: 1),
-        [RowGlyph.Linked] = (g, p) => { Ring(g, p.Subtle); Disc(g, p.Subtle, radius: 1.5); },
+        [RowGlyph.Linked] = (g, p) => { Ring(g, p.Subtle); Disc(g, p.Subtle, radius: 2.5); },
     };
 
     /// <summary>How many geometries, pens and palettes the glyphs ever built. They are cached, so scrolling past thousands of rows does not move it.</summary>
@@ -157,8 +158,12 @@ internal static class RowGlyphPainter
 
     private static void Diamond(DrawingContext g, IBrush brush) => g.DrawGeometry(brush, pen: null, _diamond.Value);
 
-    // A bubble with a tail, never a box: x selects, so a box reads as a checkbox.
-    private static void Bubble(DrawingContext g, IBrush brush) => g.DrawGeometry(brush: null, PensFor(brush).RoundJoin, _bubble.Value);
+    // A bubble with a tail, never a box: x selects, so a box reads as a checkbox. Outer edge x 2..15, y 2..12, corner radius 5; the stroke centre line is 0.75 in.
+    private static void Bubble(DrawingContext g, IBrush brush)
+    {
+        g.DrawRectangle(brush: null, PensFor(brush).Solid, new Rect(2.75, 2.75, 11.5, 8.5), radiusX: 4.25, radiusY: 4.25);
+        g.DrawGeometry(brush, pen: null, _tail.Value);
+    }
 
     private sealed record Pens(Pen Solid, Pen Round, Pen RoundJoin, Pen DashedLong, Pen DashedShort);
 

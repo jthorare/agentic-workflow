@@ -46,6 +46,28 @@ public sealed class RowGlyphSpecTests
     [Fact]
     public Task Linked_ring_stays_subtle_ink() => Check(RowGlyph.Linked, 14, 14, "Brush.InkSubtle", more: null);
 
+    [Fact]
+    public Task Message_bubble_is_13_wide_with_a_tail_down_to_14_5() => Check(RowGlyph.Message, 13, 12.5, "Brush.InkSubtle", (g, shot) =>
+    {
+        var (bodyW, bodyH) = shot.Box(maxY: 11);
+        Assert.True(Math.Abs(bodyW - 13) <= 0.5 && Math.Abs(bodyH - 9) <= 0.5, string.Create(CultureInfo.InvariantCulture, $"Message bubble body (y < 11) is {bodyW} x {bodyH} px, grammar.css says 13 x 9"));
+        Assert.True(shot.Near(8.5, 2.75, g.Colour("Brush.InkSubtle")), shot.Describe(8.5, 2.75));
+    });
+
+    [Fact]
+    public Task Linked_centre_dot_is_5_px() => Check(RowGlyph.Linked, 14, 14, "Brush.InkSubtle", (g, shot) =>
+    {
+        var (w, h) = shot.Box(centreRadius: 4, ink: g.Colour("Brush.InkSubtle"));
+        Assert.True(Math.Abs(w - 5) <= 0.5 && Math.Abs(h - 5) <= 0.5, string.Create(CultureInfo.InvariantCulture, $"Linked centre dot is {w} x {h} px, grammar.css says 5 x 5"));
+    });
+
+    [Fact]
+    public Task PrDraft_centre_dot_stays_4_px() => Check(RowGlyph.PrDraft, 14, 14, "Brush.InkTertiary", (g, shot) =>
+    {
+        var (w, h) = shot.Box(centreRadius: 4, ink: g.Colour("Brush.InkTertiary"));
+        Assert.True(Math.Abs(w - 4) <= 0.5 && Math.Abs(h - 4) <= 0.5, string.Create(CultureInfo.InvariantCulture, $"PrDraft centre dot is {w} x {h} px, grammar.css says 4 x 4"));
+    });
+
     private static Task<bool> Check(RowGlyph glyph, double width, double height, string ink, Action<Drawn, Shot>? more, bool oneInk = true) => HeadlessUnitTestSession.GetOrStartForAssembly(typeof(RowGlyphSpecTests).Assembly).Dispatch(() =>
     {
         if (!_draws)
@@ -119,6 +141,42 @@ public sealed class RowGlyphSpecTests
             }
 
             return maxX < 0 ? (0, 0) : ((maxX - minX + 1) / (double)Scale, (maxY - minY + 1) / (double)Scale);
+        }
+
+        /// <summary>The box of solid pixels, optionally only those above maxY, within centreRadius px of (8, 8), and near the given ink.</summary>
+        public (double Width, double Height) Box(double maxY = double.MaxValue, double centreRadius = double.MaxValue, Color? ink = null)
+        {
+            int minX = size, minY = size, maxPx = -1, maxPy = -1;
+            for (var y = 0; y < size; y++)
+            {
+                for (var x = 0; x < size; x++)
+                {
+                    if (!Included(x, y, maxY, centreRadius, ink))
+                    {
+                        continue;
+                    }
+
+                    minX = Math.Min(minX, x);
+                    maxPx = Math.Max(maxPx, x);
+                    minY = Math.Min(minY, y);
+                    maxPy = Math.Max(maxPy, y);
+                }
+            }
+
+            return maxPx < 0 ? (0, 0) : ((maxPx - minX + 1) / (double)Scale, (maxPy - minY + 1) / (double)Scale);
+        }
+
+        private bool Included(int x, int y, double maxY, double centreRadius, Color? ink)
+        {
+            var i = ((y * size) + x) * 4;
+            var px = (x + 0.5) / Scale;
+            var py = (y + 0.5) / Scale;
+            if (bytes[i + 3] <= 128 || py >= maxY || Math.Sqrt(Math.Pow(px - 8, 2) + Math.Pow(py - 8, 2)) > centreRadius)
+            {
+                return false;
+            }
+
+            return ink is not { } want || (Within(bytes[i + 2], want.R) && Within(bytes[i + 1], want.G) && Within(bytes[i], want.B));
         }
 
         public bool Near(double x, double y, Color want)
