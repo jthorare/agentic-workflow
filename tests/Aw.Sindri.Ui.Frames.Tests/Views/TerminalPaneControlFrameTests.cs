@@ -64,10 +64,10 @@ public sealed class TerminalPaneControlFrameTests
 
         var cell = pane.CellSize;
         Assert.True(cell.Width > 0 && cell.Height > 0);
-        var inside = Pixel(frame, (int)(cell.Width * 0.5), (int)(cell.Height * 0.5));
-        var below = Pixel(frame, (int)(cell.Width * 0.5), (int)(cell.Height * 1.5));
-        Assert.Equal((0xCD, 0x31, 0x31), (inside.R, inside.G, inside.B));
-        Assert.NotEqual((0xCD, 0x31, 0x31), (below.R, below.G, below.B));
+        var (ir, ig, ib) = Pixel(frame, (int)(cell.Width * 0.5), (int)(cell.Height * 0.5));
+        var (br, bg, bb) = Pixel(frame, (int)(cell.Width * 0.5), (int)(cell.Height * 1.5));
+        Assert.Equal((0xCD, 0x31, 0x31), (ir, ig, ib));
+        Assert.NotEqual((0xCD, 0x31, 0x31), (br, bg, bb));
         Assert.Contains(((int)(200 / cell.Width), (int)(100 / cell.Height)), fits);
     });
 }
