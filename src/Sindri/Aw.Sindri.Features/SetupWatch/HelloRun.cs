@@ -22,16 +22,21 @@ internal sealed class HelloRun(ISetupWorkflowRunner runner, IWorkflowStore workf
     /// <summary>Records that nothing more is to be tried.</summary>
     internal void Settle() => state.Settled = true;
 
-    /// <summary>Gets a value indicating whether the hello-sindri in the store was made by the setup service.</summary>
+    /// <summary>Tells who made the hello-sindri in the store.</summary>
     /// <param name="slug">The workflow.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>True when the store holds it and 'service:setup' made it.</returns>
-    internal async ValueTask<bool> IsOurs(WorkflowSlug slug, CancellationToken cancellationToken)
+    /// <returns>Ours when 'service:setup' made it, not ours when it is missing or someone else made it, unknown when the store could not answer.</returns>
+    internal async ValueTask<HelloOwner> OwnerOf(WorkflowSlug slug, CancellationToken cancellationToken)
     {
         var listed = await workflows.List(includeArchived: true, cancellationToken).ConfigureAwait(false);
-        return listed.IsSuccess
-            && listed.Value.FirstOrDefault(w => w.Slug == slug) is { } record
-            && string.Equals(record.CreatedBy, SetupActor, StringComparison.Ordinal);
+        if (listed.IsError)
+        {
+            return HelloOwner.Unknown;
+        }
+
+        return listed.Value.FirstOrDefault(w => w.Slug == slug) is { } record && string.Equals(record.CreatedBy, SetupActor, StringComparison.Ordinal)
+            ? HelloOwner.Ours
+            : HelloOwner.NotOurs;
     }
 
     /// <summary>Starts the run when hello-sindri is ours; a start that failed is tried again on the next tick.</summary>
@@ -45,7 +50,13 @@ internal sealed class HelloRun(ISetupWorkflowRunner runner, IWorkflowStore workf
             return;
         }
 
-        if (!await IsOurs(slug, cancellationToken).ConfigureAwait(false))
+        var owner = await OwnerOf(slug, cancellationToken).ConfigureAwait(false);
+        if (owner == HelloOwner.Unknown)
+        {
+            return;   // can't tell: asked again on the next tick, never taken for "not ours"
+        }
+
+        if (owner == HelloOwner.NotOurs)
         {
             Settle();
             return;
