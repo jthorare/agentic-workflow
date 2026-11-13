@@ -151,7 +151,12 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
     private static DoctorCheck? Down(string name, string short7, IReadOnlyList<LayerStatus> layers) =>
         layers.FirstOrDefault(static l => l.State == LayerState.Unavailable && l.Code is not null) is { } down
             ? new DoctorCheck(name, CheckState.Warn, $"{short7}: {Word(down.Layer)} unavailable ({down.Code}): {down.Detail}", Fix(down.Code))
-            : null;
+            : layers.FirstOrDefault(IsRefused) is { } refused
+                ? new DoctorCheck(name, CheckState.Warn, $"{short7}: {Word(refused.Layer)} {Word(refused.State)} ({refused.Code}): {refused.Detail}", Fix(refused.Code))
+                : null;
+
+    // An embeddings layer that settled with refused chunks: ok, with code 017 and the count in its detail (#3128).
+    private static bool IsRefused(LayerStatus layer) => layer.State != LayerState.Unavailable && string.Equals(layer.Code, Aw.CodeIndex.Core.CodeIndexErrors.EmbeddingInputRejected.Code, StringComparison.Ordinal);
 
     private static DoctorCheck Layer(string name, string word, List<LayerStatus> layers, LayerName which)
     {
@@ -159,6 +164,11 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
         if (mine.Find(static l => l.State == LayerState.Unavailable) is { } down)
         {
             return new DoctorCheck(name, CheckState.Warn, $"{word} unavailable ({down.Code}): {down.Detail}", Fix(down.Code));
+        }
+
+        if (mine.Find(IsRefused) is { } refused)
+        {
+            return new DoctorCheck(name, CheckState.Warn, $"{word} {Word(refused.State)} ({refused.Code}): {refused.Detail}", Fix(refused.Code));
         }
 
         return new DoctorCheck(name, CheckState.Ok, mine.Count == 0 ? "no index built yet" : $"{word} {Word(mine[0].State)}", Fix: null);
@@ -182,7 +192,7 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
     private static string? Fix(string? code) => code switch
     {
         "SND-CODEIDX-007" => "install bubblewrap (" + Setup + "), or set index.graph.enabled: false",
-        "SND-CODEIDX-017" => "a chunk is too long for the embedding model; it is skipped and the rest embed (rebuild after a model change)",
+        "SND-CODEIDX-017" => "a chunk is too long for the embedding model; it is refused and not asked for again, the rest embed (editing the file embeds it again)",
         "SND-CODEIDX-006" => "start Ollama (the pin is in context/code-index.lock)",
         _ => Setup + " installs the pin",
     };

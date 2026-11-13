@@ -30,7 +30,6 @@ internal sealed class OllamaEmbedder : IEmbedder, IDisposable
 
     private readonly HttpClient _http;
     private readonly ModelPin _pin;
-    private int _skipped;
 
 #pragma warning disable CA2000 // the HttpClient owns the handler and this class disposes the HttpClient
     public OllamaEmbedder()
@@ -79,16 +78,20 @@ internal sealed class OllamaEmbedder : IEmbedder, IDisposable
             return Results.Success<IReadOnlyList<ReadOnlyMemory<float>>>([]);
         }
 
-        var cut = texts.Select(static t => t.Length <= InputMaxCharacters ? t : t[..InputMaxCharacters]).ToList();
+        var cut = texts.Select(static t => Cut(t)).ToList();
         var whole = await EmbedBatch(settings, cut, cancellationToken).ConfigureAwait(false);
         if (!whole.IsError || !IsRejection(whole.Error))
         {
             return whole;
         }
 
-        // The server refused something in the batch: ask for each text alone and skip (and count) the ones it still refuses.
+        // The server refused something in the batch: ask for each text alone; a text it still refuses gets an empty vector, which the embeddings layer stores as a refused marker.
         return await EmbedEach(settings, cut, cancellationToken).ConfigureAwait(false);
     }
+
+    // Cuts at InputMaxCharacters, one character earlier when that would leave half a surrogate pair.
+    private static string Cut(string text)
+        => text.Length <= InputMaxCharacters ? text : text[..(char.IsHighSurrogate(text[InputMaxCharacters - 1]) ? InputMaxCharacters - 1 : InputMaxCharacters)];
 
     private async ValueTask<Result<IReadOnlyList<ReadOnlyMemory<float>>>> EmbedEach(EmbeddingsSettings settings, List<string> texts, CancellationToken cancellationToken)
     {
@@ -99,11 +102,6 @@ internal sealed class OllamaEmbedder : IEmbedder, IDisposable
             if (one.IsError && !IsRejection(one.Error))
             {
                 return one.Error;
-            }
-
-            if (one.IsError)
-            {
-                _ = Interlocked.Increment(ref _skipped);
             }
 
             vectors.Add(one.IsError ? ReadOnlyMemory<float>.Empty : one.Value[0]);
@@ -120,9 +118,6 @@ internal sealed class OllamaEmbedder : IEmbedder, IDisposable
         var answer = await Send<EmbedResponse>(HttpMethod.Post, Endpoint(settings, EmbedPath), request, _embedTimeout, cancellationToken).ConfigureAwait(false);
         return answer.IsError ? answer.Error : Vectors(answer.Value, texts.Count);
     }
-
-    /// <summary>How many inputs the server refused even alone, so <see cref="Embed"/> left an empty vector in their place (#3128).</summary>
-    public int SkippedInputs => Volatile.Read(ref _skipped);
 
     public void Dispose() => _http.Dispose();
 
