@@ -418,6 +418,20 @@ fpout="$(PATH="$WORK/failpack:$PATH" bash "$INSTALL" --publish 2>&1)" && fprc=0 
 check "git ls-files failing on the pack path: the publish exits 1" "$fprc" "1"
 has "git ls-files failing on the pack path: says which step failed" "$fpout" "git ls-files failed while listing the toolkit SDK inputs"
 check "git ls-files failing on the pack path: packs nothing" "$(packs)" "1"
+# Follow-up to #3218: the stamp's own git calls. Its `ls-files` is the only one that names scripts/heavy.sh; `status` decides "-dirty".
+for what in "ls-files:*scripts/heavy.sh*" "status:*"; do
+  verb="${what%%:*}"; pat="${what#*:}"
+  mkdir "$WORK/failstamp-$verb"
+  cat > "$WORK/failstamp-$verb/git" <<STUB
+#!/usr/bin/env bash
+case " \$* " in *" $verb "*$pat) exit 137 ;; esac
+exec "$REALGIT" "\$@"
+STUB
+  chmod +x "$WORK/failstamp-$verb/git"
+  fsout="$(PATH="$WORK/failstamp-$verb:$PATH" bash "$INSTALL" --publish 2>&1)" && fsrc=0 || fsrc=$?
+  check "git $verb failing in the stamp: the publish exits 1" "$fsrc" "1"
+  has "git $verb failing in the stamp: says which step failed" "$fsout" "git $verb failed while stamping the build"
+done
 echo 'class B {}' >> "$REPO/src/Toolkit/Aw.Sindri.Toolkit/A.cs"
 sleep 1
 bash "$INSTALL" --publish > /dev/null 2>&1
