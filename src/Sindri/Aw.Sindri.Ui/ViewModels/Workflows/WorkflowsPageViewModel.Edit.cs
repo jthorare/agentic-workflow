@@ -15,7 +15,7 @@ internal sealed partial class WorkflowsPageViewModel
     public bool IsEditing { get; private set { Set(ref field, value); OnChanged(nameof(ShowsEdit)); } }
 
     /// <summary>True while the step settings sheet is open. It locks the edit bar, so the sheet's typed text is never reloaded under the person.</summary>
-    public bool IsSettingsOpen { get; private set { Set(ref field, value); OnChanged(nameof(StepSummaryText)); OnChanged(nameof(HasStepSummary)); OnChanged(nameof(CanOpenSettings)); } }
+    public bool IsSettingsOpen { get; private set { Set(ref field, value); OnChanged(nameof(StepSummaryText)); OnChanged(nameof(HasStepSummary)); OnChanged(nameof(CanOpenSettings)); OnChanged(nameof(ShowsStepRow)); } }
 
     /// <summary>True when Step settings is offered: a step is selected, the sheet is shut and the workflow can be edited.</summary>
     public bool CanOpenSettings => !IsSettingsOpen && CanEdit && Runs.Graph?.SelectedId is not null;
@@ -27,7 +27,7 @@ internal sealed partial class WorkflowsPageViewModel
     public bool HasStepSummary => StepSummaryText.Length > 0;
 
     /// <summary>True when the row under the graph shows: a step summary or Step settings.</summary>
-    public bool ShowsStepRow => true;   // red stub (#2807)
+    public bool ShowsStepRow => HasStepSummary || CanOpenSettings;
 
     /// <summary>True when the open workflow can be edited: a workflow is open on its runs and it is not archived.</summary>
     public bool CanEdit => IsRuns && Runs.Shown is { ArchivedAt: null };
@@ -153,10 +153,12 @@ internal sealed partial class WorkflowsPageViewModel
                 OnChanged(nameof(DetailStateText));
                 OnChanged(nameof(ShowsDetailState));
                 OnChanged(nameof(CanOpenSettings));
+                OnChanged(nameof(ShowsStepRow));
                 OnChanged(nameof(CanSave));
                 OnChanged(nameof(EditorHeading));
                 OnChanged(nameof(StepSummaryText));
                 OnChanged(nameof(HasStepSummary));
+                OnChanged(nameof(ShowsStepRow));
                 if (string.Equals(e.PropertyName, nameof(RunsViewModel.Graph), StringComparison.Ordinal) && !ReferenceEquals(_watchedGraph, Runs.Graph))
                 {
                     _watchedGraph?.PropertyChanged -= OnGraphChanged;   // the old workflow's graph stops reaching this page
@@ -176,11 +178,13 @@ internal sealed partial class WorkflowsPageViewModel
         {
             OnChanged(nameof(StepSummaryText));
             OnChanged(nameof(HasStepSummary));
+            OnChanged(nameof(ShowsStepRow));
         }
 
         if (string.Equals(e.PropertyName, nameof(WorkflowGraphViewModel.SelectedId), StringComparison.Ordinal))
         {
             OnChanged(nameof(CanOpenSettings));
+            OnChanged(nameof(ShowsStepRow));
         }
     }
 
