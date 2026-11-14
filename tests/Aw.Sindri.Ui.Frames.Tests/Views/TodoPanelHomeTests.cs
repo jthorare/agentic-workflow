@@ -117,9 +117,9 @@ public sealed class TodoPanelHomeTests : IDisposable
 
     private static async Task Until(Window window, Func<bool> condition, string what = "the view never reached the expected state")
     {
-        for (var i = 0; i < 300 && !condition(); i++)
+        for (var i = 0; i < 3000 && !condition(); i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Settle(window);
         }
 

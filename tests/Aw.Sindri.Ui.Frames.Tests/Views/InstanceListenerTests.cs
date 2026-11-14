@@ -47,9 +47,9 @@ public sealed class InstanceListenerTests : IDisposable
         var listening = listener.Listen(stop.Token);
 
         var sending = second.Send("item/ITM-01JC8", Token).AsTask();
-        for (var i = 0; i < 500 && !sending.IsCompleted; i++)
+        for (var i = 0; i < 5000 && !sending.IsCompleted; i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Dispatcher.UIThread.RunJobs();
         }
 

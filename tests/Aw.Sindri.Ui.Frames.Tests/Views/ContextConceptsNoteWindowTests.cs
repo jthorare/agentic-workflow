@@ -38,9 +38,9 @@ public sealed class ContextConceptsNoteWindowTests
             {
                 window.Show();
                 _ = shell.Run(stop.Token);
-                for (var i = 0; i < 200 && shell.State != ShellState.Normal; i++)
+                for (var i = 0; i < 2000 && shell.State != ShellState.Normal; i++)
                 {
-                    await Task.Delay(10, Token);
+                    await Task.Delay(1, Token);
                     Dispatcher.UIThread.RunJobs();
                 }
 
@@ -77,9 +77,9 @@ public sealed class ContextConceptsNoteWindowTests
     private static async Task<TextBlock?> NoteWithWords(ShellWindow window)
     {
         TextBlock? note = null;
-        for (var i = 0; i < 200 && (note is null || note.Text is not { Length: > 0 }); i++)
+        for (var i = 0; i < 2000 && (note is null || note.Text is not { Length: > 0 }); i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Dispatcher.UIThread.RunJobs();
             window.UpdateLayout();
             note = window.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => t.Name == "ConceptsNote");
