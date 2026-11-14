@@ -63,10 +63,12 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
     public bool IsBanner { get; private set => Set(ref field, value); }
 
     /// <summary>True when the quiet "Linear not connected" line shows instead of a red box (#3719).</summary>
-    public bool ShowsLinearNote => IsBanner && false;   // red stub (#3719)
+    public bool ShowsLinearNote { get; private set => Set(ref field, value); }
 
     /// <summary>The quiet line's words.</summary>
-    public string LinearNote => IsBanner ? string.Empty : string.Empty;   // red stub (#3719)
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string LinearNote => Labels.LinearNotConnected;
+#pragma warning restore CA1822, MA0041
 
     /// <summary>True when Context is failing: cards show their name and origin chip only.</summary>
     public bool NamesOnly { get; private set => Set(ref field, value); }
@@ -245,7 +247,9 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
         NamesOnly = list.Freshness.Any(f => string.Equals(f.Source, "context", StringComparison.Ordinal) && string.Equals(f.State, "failing", StringComparison.Ordinal));
         (Sentence, ShowsConnect) = (ProjectsLinear.Sentence(list, _clock.GetUtcNow()), ProjectsLinear.OffersConnect(list));
         IsEmptyBlock = list.Projects.Count == 0 && list.Empty is not null;
-        IsBanner = list.Projects.Count > 0 && list.Empty is not null;
+        // Linear not set up is not a failure: a quiet line with Connect, never the red box (#3719).
+        ShowsLinearNote = list.Projects.Count > 0 && string.Equals(list.EmptyCode, "linear-missing", StringComparison.Ordinal);
+        IsBanner = list.Projects.Count > 0 && list.Empty is not null && !ShowsLinearNote;
 
         var present = new HashSet<string>(list.Projects.Concat(list.Finished).Concat(list.Hidden).Select(c => c.Id), StringComparer.Ordinal);
         foreach (var gone in _cards.Keys.Where(k => !present.Contains(k)).ToList())

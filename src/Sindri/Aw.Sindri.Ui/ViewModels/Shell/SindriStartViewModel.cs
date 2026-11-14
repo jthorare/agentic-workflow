@@ -24,6 +24,7 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
     private int _attempt;
     private int _launch;
     private bool _begun;
+    private string _page = "Home";
 
     /// <summary>Which state shows.</summary>
     public StartStage Stage { get; private set => Set(ref field, value); }
@@ -38,7 +39,11 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
     /// <param name="pageName">The page's name.</param>
     public void ShowPage(string pageName)
     {
-        _ = pageName;   // red stub (#3719)
+        _page = pageName;
+        if (Stage == StartStage.Idle && CanStart)
+        {
+            Message = Sentence();
+        }
     }
 
     /// <summary>True when <see cref="Message"/> has words.</summary>
@@ -139,6 +144,9 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
         _ = Expire(attempt);
     }
 
+    // Home keeps its own sentence (what Home loads); any other page is named.
+    private string Sentence() => string.Equals(_page, "Home", StringComparison.Ordinal) ? Labels.StartSentence : Labels.StartSentenceFor(_page);
+
     /// <summary>Sindri answered or the page left: back to the plain page.</summary>
     public void Reset()
     {
@@ -146,7 +154,7 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
         starter?.Release();
         if (Stage != StartStage.Idle)
         {
-            Show(StartStage.Idle, CanStart ? Labels.StartSentence : string.Empty, string.Empty, CanStart ? Labels.StartSindri : string.Empty);
+            Show(StartStage.Idle, CanStart ? Sentence() : string.Empty, string.Empty, CanStart ? Labels.StartSindri : string.Empty);
         }
     }
 
