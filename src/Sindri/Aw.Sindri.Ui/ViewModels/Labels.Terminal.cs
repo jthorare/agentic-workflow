@@ -49,6 +49,9 @@ internal static partial class Labels
 
     internal const string TerminalInterruptFailed = "Couldn't send Ctrl-C.";
 
+    /// <summary>The line under the header when a paste is over the socket's cap (#3729).</summary>
+    internal const string TerminalPasteTooBig = "Paste too big (max 256 KiB)";
+
     internal const string TerminalJump = "Jump to it";
 
     internal const string TerminalCopyResume = "Copy resume command";

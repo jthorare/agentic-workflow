@@ -101,6 +101,48 @@ public sealed class TerminalSessionTests
     }
 
     [Fact]
+    public async Task A_paste_over_256_KiB_sends_nothing_and_says_so_in_the_panes_line()
+    {
+        var (f, socket, session, _) = Make();
+        socket.Script = ["{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%0\"}}"];
+        f.View.SocketOpening();
+
+        var fate = await session.SendPaste(new string('a', (256 * 1024) + 1), Token);
+        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+
+        Assert.Equal((TerminalKeyFate.Dropped, 0, "Paste too big (max 256 KiB)"), (fate, socket.Sent.Count, f.View.ControlLine));
+    }
+
+    [Fact]
+    public async Task The_cap_counts_UTF_8_bytes_not_characters()
+    {
+        var (f, socket, session, _) = Make();
+        socket.Script = ["{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%0\"}}"];
+        f.View.SocketOpening();
+        var threeBytesEach = new string('\u20ac', 90_000);   // 90,000 characters, 270,000 bytes
+
+        var fate = await session.SendPaste(threeBytesEach, Token);
+        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+
+        Assert.Equal((TerminalKeyFate.Dropped, 0), (fate, socket.Sent.Count));
+    }
+
+    [Fact]
+    public async Task A_paste_of_exactly_256_KiB_goes_out_and_leaves_the_line_empty()
+    {
+        var (f, socket, session, _) = Make();
+        socket.Script = ["{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%0\"}}"];
+        f.View.SocketOpening();
+        var text = new string('a', 256 * 1024);
+
+        _ = await session.SendPaste(text, Token);
+        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+
+        Assert.Equal([TerminalSocketMessages.Paste(text)], socket.Sent);
+        Assert.Equal(string.Empty, f.View.ControlLine);
+    }
+
+    [Fact]
     public async Task An_empty_paste_sends_nothing()
     {
         var (f, socket, session, _) = Make();

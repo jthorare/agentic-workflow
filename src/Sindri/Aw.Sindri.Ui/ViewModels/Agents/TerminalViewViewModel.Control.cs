@@ -35,6 +35,10 @@ internal sealed partial class TerminalViewViewModel
     /// <summary>The line under the header when a stop or an interrupt was refused; empty otherwise.</summary>
     public string ControlLine { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>Shows a notice in the line under the header (a paste that was too big, #3729).</summary>
+    /// <param name="text">The words.</param>
+    internal void Note(string text) => ControlLine = text;
+
     /// <summary>The first press arms Stop; the second, inside 2 s, stops the session.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>True when the session was stopped.</returns>
