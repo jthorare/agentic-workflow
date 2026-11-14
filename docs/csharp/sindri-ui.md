@@ -211,6 +211,14 @@ When no section matches, the page says "Nothing matches" and "Esc clears the fil
 Esc in the box clears it. Ctrl+, (⌘, on macOS) opens Settings with the cursor in the box. With Settings already open, Ctrl+, puts the cursor back in the box.
 The page also scrolls to its top, because the box brings itself into view and would otherwise hide the title under the top bar. The box's placeholder names the shortcut for the OS.
 
+### Leaving graph edit mode on a workflow (#3655)
+
+Done leaves edit mode. With the step settings sheet open and a field changed, Done asks first: "Save your changes?" with Save, Discard and Keep editing.
+Save leaves edit mode only when the save worked. A failed save keeps the sheet and its error. A save already in flight finishes first, and its result decides.
+
+Escape follows the same rules. With the sheet open, Escape closes the sheet, as before. With the question showing, Escape answers Keep editing.
+With the sheet shut in edit mode, Escape does what Done does. The page takes the key first, so the shell's own Escape never sees it.
+
 ### Model choice in Settings (model-pick spec 8)
 
 Below the checklist, `SettingsView` has one read-only section over `ViewModels/Settings/ModelChoiceViewModel` (`SettingsViewModel.ModelChoice`, the shell's `Health.ModelChoice`, fed by every status): the line "Model choice: on", "Model choice: off. Steps use the agent's default, with no Jev call." (the "change waiting for your approval" line is gone with the approval step); the sentence "Jev reads each step's brief and files to pick the cheapest model that works. Change it in the profile; it takes effect on save. Retention is the provider's."; and a Copy button for three lines: the profile file's path (`profile.source`, left out when not known), `sindri profile validate`. The app derives nothing: on or off is `profile.modelPick`, which Sindri computes from the live profile's `workflow.agent.pick`, and there is no edit verb.
