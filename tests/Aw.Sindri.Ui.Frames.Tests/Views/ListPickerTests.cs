@@ -149,6 +149,27 @@ public sealed class ListPickerTests
         return true;
     });
 
+    // A disabled row is unavailable, not unreachable (#3651): the arrow keys land on it so a keyboard user reaches its reason, and Enter on it picks nothing.
+    [Fact]
+    public async Task The_keyboard_lands_on_a_disabled_row_and_Enter_on_it_picks_nothing() => await OnUi(() =>
+    {
+        var (window, picker) = Show();
+        var picked = new List<PickerItem>();
+        picker.Picked += (_, e) => picked.Add(e.Value);
+        _ = picker.FocusFirst();
+
+        window.KeyPressQwerty(PhysicalKey.ArrowDown, RawInputModifiers.None);
+        Dispatcher.UIThread.RunJobs();
+        var focused = window.FocusManager?.GetFocusedElement();
+        window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("When a webhook arrives", Avalonia.Automation.AutomationProperties.GetName((Control)focused!));
+        Assert.Empty(picked);
+        window.Close();
+        return true;
+    });
+
     [Fact]
     public async Task The_chosen_row_is_drawn_selected() => await OnUi(() =>
     {
