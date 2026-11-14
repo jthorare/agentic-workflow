@@ -55,7 +55,7 @@
 .tile .kb i.k-feature { background:var(--ink-muted); opacity:.75; }
 .tile .kb i.k-record { background:var(--ink-3); }
 .tile .kb i.k-other { background:var(--wire-hi); opacity:.6; }
-.tile .kn { font:400 10px/16px var(--mono); color:var(--ink-subtle); white-space:normal; margin-top:4px; }
+.tile .kn { font:400 11px/16px var(--mono); color:var(--ink-subtle); white-space:normal; margin-top:4px; }
 .tile.lit { background:var(--primary-soft); border-color:var(--primary-hi); }
 .tile.lit .tl { color:var(--ink); }
 .tile.lit .tc { color:var(--ink-muted); }
@@ -115,3 +115,26 @@ pre#measure { display:none; }
 .health { display:flex; align-items:center; gap:8px; height:28px; padding:0 12px; border:1px solid #1d5a35; border-radius:var(--r3); font-size:12px; color:var(--ink-subtle); }
 .health .ck { color:var(--ok); }
 .health b { font-weight:600; color:var(--ink); }
+
+/* kind glyph in a list row's glyph column: neutral ink, shape = kind */
+.kgl { width:12px; height:12px; position:relative; display:inline-block; justify-self:center; }
+.kgl.code { border:1.5px solid var(--ink-subtle); border-radius:2px; }
+.kgl.feature { width:9px; height:9px; border:1.5px solid var(--ink-subtle); transform:rotate(45deg); border-radius:1px; }
+.kgl.record { border:1.5px solid var(--ink-subtle); border-radius:2px; border-top-width:3px; }
+.note3 { color:var(--ink-subtle); }
+
+svg.edges .e.sel { stroke:var(--primary-hi); stroke-width:1px; }
+svg.edges .e.hov { stroke:#828fff; stroke-width:2px; }
+svg.edges .e.oth { stroke:var(--ink-3); stroke-width:1px; }
+svg.edges .ar.oth, svg.edges .sd.oth { fill:var(--ink-3); }
+.pill.rel2 { border-color:var(--ink-3); }
+
+/* 1000 px window (the app's minimum): the bar condenses, the list columns narrow */
+body.w1000 .nav2 a { padding:3px 6px; }
+body.w1000 .nav2 { gap:0; }
+body.w1000 .cmdk.srch { width:116px; }
+body.w1000 .cmdk.srch kbd { display:none; }
+body.w1000 .health .up { display:none; }
+body.w1000 .row.dr { grid-template-columns:var(--col-glyph) minmax(0,1fr) 260px 112px 16px; }
+body.w1000 .app { grid-template-rows:40px 48px 1fr 28px; }
+body.w1000 .row.dr { grid-template-columns:var(--col-glyph) minmax(0,1fr) 220px 112px 16px; }
