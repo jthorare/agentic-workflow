@@ -19953,7 +19953,7 @@ override Aw.Sindri.Core.Views.WorkflowRunRow.Equals(object? obj) -> bool
 Aw.Sindri.Core.Views.WorkflowRunRow.Equals(Aw.Sindri.Core.Views.WorkflowRunRow? other) -> bool
 Aw.Sindri.Core.Views.WorkflowRunRow.Trigger.init -> void
 Aw.Sindri.Core.Views.WorkflowRunRow.<Clone>$() -> Aw.Sindri.Core.Views.WorkflowRunRow!
-Aw.Sindri.Core.Views.WorkflowRunRow.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Id, out Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, out int Revision, out string! Trigger, out string! Status, out string? Error, out System.DateTimeOffset StartedAt, out System.DateTimeOffset? EndedAt, out Aw.Sindri.Core.Graph.Ids.NodeId? LastNodeId, out Aw.Sindri.Core.Ids.ItemId? ItemId, out long Sequence) -> void
+Aw.Sindri.Core.Views.WorkflowRunRow.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Id, out Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, out int Revision, out string! Trigger, out string! Status, out string? Error, out System.DateTimeOffset StartedAt, out System.DateTimeOffset? EndedAt, out Aw.Sindri.Core.Graph.Ids.NodeId? LastNodeId, out Aw.Sindri.Core.Ids.ItemId? ItemId, out long Sequence, out string! Mode) -> void
 Aw.Sindri.Core.Views.WorkflowRunRow.Status.get -> string!
 Aw.Sindri.Core.Views.WorkflowRunRow.Error.get -> string?
 Aw.Sindri.Core.Views.WorkflowRunRow.Status.init -> void
@@ -20079,7 +20079,9 @@ Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.RunId.get -> Aw.Sindri.Core.Gra
 Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.RunId.init -> void
 Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
 Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.RunId.init -> void
-Aw.Sindri.Core.Views.WorkflowRunRow.WorkflowRunRow(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Id, Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, int Revision, string! Trigger, string! Status, string? Error, System.DateTimeOffset StartedAt, System.DateTimeOffset? EndedAt, Aw.Sindri.Core.Graph.Ids.NodeId? LastNodeId, Aw.Sindri.Core.Ids.ItemId? ItemId, long Sequence) -> void
+Aw.Sindri.Core.Views.WorkflowRunRow.WorkflowRunRow(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Id, Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, int Revision, string! Trigger, string! Status, string? Error, System.DateTimeOffset StartedAt, System.DateTimeOffset? EndedAt, Aw.Sindri.Core.Graph.Ids.NodeId? LastNodeId, Aw.Sindri.Core.Ids.ItemId? ItemId, long Sequence, string! Mode = "live") -> void
+Aw.Sindri.Core.Views.WorkflowRunRow.Mode.get -> string!
+Aw.Sindri.Core.Views.WorkflowRunRow.Mode.init -> void
 Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.WorkflowNodeStartedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! By) -> void
 Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.WorkflowNodeFinishedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! Status, bool Truncated, string! By) -> void
 Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.WorkflowNodeFailedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! Error, string! By) -> void
@@ -23211,7 +23213,7 @@ Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.RejectLike.get -> bool
 Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.RejectLike.init -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Decision.get -> Aw.Sindri.Core.NeedsYou.NeedsYouDecision?
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Decision.init -> void
-const Aw.Sindri.Core.Views.ViewSchema.Version = 36 -> int
+const Aw.Sindri.Core.Views.ViewSchema.Version = 37 -> int
 override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Equals(object? obj) -> bool
 override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.GetHashCode() -> int
 override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.ToString() -> string!
