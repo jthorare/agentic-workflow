@@ -2,10 +2,16 @@
   <!-- Aw.UiDriver.Avalonia: the in-app half of the UI driver. An Avalonia app adds it and calls UseAwUiDriver() on its AppBuilder; when the run
        asks for it (AW_UI_DRIVER=1 or the ui-driver flag) a loopback HTTP server starts that walks the app's visual tree and acts on it through the
        Avalonia property system and automation peers: no reflection, so an app that publishes NativeAOT stays clean. Off by default, never in a
-       normal launch. It knows no app. -->
+       normal launch. It knows no app.
+       Hover moves a real pointer (#3467): Avalonia 12's reference assemblies hide raw pointer input (MouseDevice, RawPointerEventArgs,
+       ITopLevelImpl.Input), so this project alone compiles against Avalonia's own assemblies (AvaloniaAccessUnstablePrivateApis). That is safe
+       only because Directory.Packages.props pins Avalonia to one exact version. An Avalonia bump has to rerun HoverTests, which fail if those APIs moved.
+       AVA3001 is the warning that says the switch is on. -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Aw.UiDriver.Avalonia</RootNamespace>
+    <AvaloniaAccessUnstablePrivateApis>true</AvaloniaAccessUnstablePrivateApis>
+    <NoWarn>$(NoWarn);AVA3001</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

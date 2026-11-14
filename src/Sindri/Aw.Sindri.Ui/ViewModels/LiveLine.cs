@@ -7,7 +7,7 @@ namespace Aw.Sindri.Ui.ViewModels;
 /// </summary>
 internal sealed class LiveLine : ObservableObject
 {
-    private readonly string _resting;
+    private string _resting;
 
     /// <summary>A region at rest.</summary>
     /// <param name="resting">The text while nothing is being said.</param>
@@ -21,6 +21,17 @@ internal sealed class LiveLine : ObservableObject
 
     /// <summary>The region's text.</summary>
     internal string Text { get; private set => Set(ref field, value); }
+
+    /// <summary>Changes the resting text; the region shows it at once unless it is speaking.</summary>
+    /// <param name="resting">The text while nothing is being said.</param>
+    internal void Rest(string resting)
+    {
+        _resting = resting;
+        if (!IsLive)
+        {
+            Text = resting;
+        }
+    }
 
     /// <summary>Speaks a sentence, again if it is the one just spoken.</summary>
     /// <param name="sentence">What to say.</param>

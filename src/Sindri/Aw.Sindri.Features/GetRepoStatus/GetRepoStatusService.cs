@@ -5,24 +5,21 @@ using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Features.GetRepoStatus;
 
-/// <summary>Reads the approved profile and places the directory in it. The live profile only names a repo waiting for approval, so a live profile that can't be read is no name.</summary>
+/// <summary>Reads the approved profile and places the directory in it. A profile that can't be read counts as no approved profile. The live profile only names a repo waiting for approval, so a live profile that can't be read is no name.</summary>
 internal sealed class GetRepoStatusService(IApprovedProfile approvals, IProfileSource live, IRepoLocator locator) : IService<GetRepoStatusRequest, GetRepoStatusResponse>
 {
     public async ValueTask<Result<GetRepoStatusResponse>> Handle(GetRepoStatusRequest request, CancellationToken cancellationToken)
     {
         var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
-        if (approved.IsError)
-        {
-            return approved.Error;
-        }
-
-        var placed = await locator.Place(request.Directory, approved.Value?.Profile.Repos ?? [], cancellationToken).ConfigureAwait(false);
+        // An invalid live profile is a file the user can fix, not a broken store: answer as for no approved profile (RepoStatus has no field for the problem).
+        var profile = approved.IsSuccess ? approved.Value : null;
+        var placed = await locator.Place(request.Directory, profile?.Profile.Repos ?? [], cancellationToken).ConfigureAwait(false);
         if (placed is null)
         {
             return new GetRepoStatusResponse(new RepoStatus(RepoState.OutsideGit, Path: null, Name: null));
         }
 
-        if (approved.Value is null)
+        if (profile is null)
         {
             return new GetRepoStatusResponse(new RepoStatus(RepoState.NoApprovedProfile, placed.Path, Name: null));
         }

@@ -120,8 +120,11 @@ public sealed class CommandPaletteTests : IDisposable
         Assert.All(shell.Health.Catalog.Controls, c => Assert.Single(names, n => n.StartsWith(c.Label + ", ", StringComparison.Ordinal)));
         Assert.Contains("Run doctor, Copy: sindri doctor", names, StringComparer.Ordinal);
         Assert.Contains("Check launch targets again, " + Labels.CopyCli(shell.Health.Catalog.Row("ProbeLaunchTargets")!.Cli), names, StringComparer.Ordinal);   // why: the catalog serves the row
-        Assert.Equal(["Actions", "Go to", "Sindri"], Named<ItemsControl>(window, "PaletteSections").GetVisualDescendants().OfType<TextBlock>()
+        Assert.Equal(["Actions", "Go to", "Settings", "Sindri"], Named<ItemsControl>(window, "PaletteSections").GetVisualDescendants().OfType<TextBlock>()
             .Where(t => t.Classes.Contains("palette-heading")).Select(t => t.Text ?? string.Empty), StringComparer.Ordinal);
+        Assert.Equal(shell.Palette.Sections.Single(s => s.Heading == "Settings").Entries.Select(e => e.Label), names.Where(n => shell.Palette.Sections.Single(s => s.Heading == "Settings").Entries.Any(e => e.Label == n)), StringComparer.Ordinal);
+        Assert.Contains("Text size", names, StringComparer.Ordinal);
+        Assert.Contains("Reduce motion", names, StringComparer.Ordinal);
         Frame(window, "palette");
     });
 

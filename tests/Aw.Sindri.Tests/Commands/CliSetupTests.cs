@@ -26,7 +26,8 @@ public sealed class CliSetupTests : IDisposable
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static string Body(params SetupStep[] steps) => Encoding.UTF8.GetString(AwJson.Serialize(new GetSetupResponse(steps, _asOf), SliceHarness.Json));
+    // the deriver fills Cli from the action (SetupDeriver.Derive); the raw SetupSteps.* here get the same, so the exit-3 rule sees what a served list carries
+    private static string Body(params SetupStep[] steps) => Encoding.UTF8.GetString(AwJson.Serialize(new GetSetupResponse([.. steps.Select(static s => s with { Cli = SetupActions.CliFor(s.Action) })], _asOf), SliceHarness.Json));
 
     private SetupVerbs Verbs(FakeControlPlaneProbe probe, Api api) =>
         new(new ControlPlaneClient(probe, SliceHarness.Json,
@@ -75,6 +76,30 @@ public sealed class CliSetupTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Setup_exits_3_when_every_open_step_waits_on_the_person_at_the_keyboard()
+    {
+        var api = new Api(HttpStatusCode.OK, Body(
+            SetupSteps.Repo(new RepoFact(1)),
+            new SetupStep(SetupStepId.Sources, "Connect your accounts", SetupState.NeedsYou, "Sign in to GitHub in your browser.", Detail: null, Error: null, "ConnectAccount", Progress: null)));   // Cli is null: the action is the owner's
+
+        var code = await Verbs(_up, api).Run([], Token);
+
+        Assert.Equal(3, code);   // first-run spec decision 9: an agent stops here and tells the owner
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Setup_exits_1_when_an_open_step_has_a_command_an_agent_can_run()
+    {
+        var api = new Api(HttpStatusCode.OK, Body(
+            new SetupStep(SetupStepId.Sources, "Connect your accounts", SetupState.NeedsYou, "Sign in to GitHub in your browser.", Detail: null, Error: null, "ConnectAccount", Progress: null),
+            new SetupStep(SetupStepId.Mcp, "Agents can use Sindri's tools", SetupState.Todo, "Sindri is not registered in every repo yet.", Detail: null, Error: null, "RegisterMcp", Progress: null) { Cli = "sindri mcp register --apply" }));
+
+        var code = await Verbs(_up, api).Run([], Token);
+
+        Assert.Equal(1, code);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Setup_exits_0_when_every_step_is_done()
     {
         var api = new Api(HttpStatusCode.OK, Body(SetupSteps.Repo(new RepoFact(1)), SetupSteps.Profile(new ProfileFact(ProfilePresence.Present), new RepoFact(1))));
@@ -104,17 +129,60 @@ public sealed class CliSetupTests : IDisposable
         Assert.Equal((2, 0), (code, api.Calls));
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("accounts", "sources")]
+    [InlineData("first-workflow", "first-workflow")]
+    public async Task Setup_skip_posts_the_step_and_says_the_undo(string word, string id)
+    {
+        var api = new Api(HttpStatusCode.OK, $$"""{"step":"{{id}}","skipped":true,"changed":true}""");
+
+        var code = await Verbs(_up, api).Run(["skip", word], Token);
+
+        Assert.Equal((0, "POST", "/sindri/setup/skip"), (code, api.Method, api.Path));
+        Assert.Contains($$"""{"step":"{{id}}","skipped":true}""", api.Sent, StringComparison.Ordinal);
+        Assert.Contains($"sindri setup skip {word} --undo", _out.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Setup_skip_with_undo_posts_skipped_false()
+    {
+        var api = new Api(HttpStatusCode.OK, """{"step":"sources","skipped":false,"changed":true}""");
+
+        var code = await Verbs(_up, api).Run(["skip", "accounts", "--undo"], Token);
+
+        Assert.Equal(0, code);
+        Assert.Contains("\"skipped\":false", api.Sent, StringComparison.Ordinal);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("repo")]
+    [InlineData("")]
+    public async Task Setup_skip_of_a_step_that_may_not_be_skipped_is_a_usage_error_and_calls_nothing(string word)
+    {
+        var api = new Api(HttpStatusCode.OK, "{}");
+
+        var code = await Verbs(_up, api).Run(word.Length == 0 ? ["skip"] : ["skip", word], Token);
+
+        Assert.Equal((2, 0), (code, api.Calls));
+    }
+
     private sealed class Api(HttpStatusCode status, string body) : HttpMessageHandler
     {
         public int Calls { get; private set; }
 
         public string? Path { get; private set; }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        public string? Method { get; private set; }
+
+        public string? Sent { get; private set; }
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Calls++;
             Path = request.RequestUri?.AbsolutePath;
-            return Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") });
+            Method = request.Method.Method;
+            Sent = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
+            return new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
         }
     }
 }

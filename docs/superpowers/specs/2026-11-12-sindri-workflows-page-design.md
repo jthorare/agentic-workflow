@@ -345,6 +345,11 @@ Each failure code maps to `{code, sentence template, fixAction}`. The mapping li
 | `SND-GRAPH-107` | "This run already ended." | none |
 | `SND-GRAPH-108` | "The output of {step} was cut at 64 KB, so a later step can't read it." | Open the step |
 | `SND-GRAPH-109` | "A run of this workflow can't start the workflow again." | Open the step that does |
+| `SND-CODE-001` | "{step} doesn't compile: {message}." ({message} lists each error with its line and column) | Open {step} |
+| `SND-CODE-002` | "{step} ran past its time limit." | Open {step} |
+| `SND-CODE-003` | "{step} used more memory than its limit." | Open {step} |
+| `SND-CODE-004` | "{step} stopped: {message}." ({message} is the exception message, or says the result is not JSON) | Open {step} |
+| `SND-CODE-005` | "Sindri can't run code steps: the code runner couldn't start." with the SND message underneath (the runner binary missing, a refused sandbox plan, a run area that can't be made, a process that doesn't start, a runner exit 2) | None |
 | `SND-GRAPH-007` | "Changed elsewhere." | Reload / `wf show S` |
 | `SND-API-001` | "Sindri is not running." | Start Sindri / `sindri serve` |
 

@@ -47,7 +47,7 @@ public static class UsageWatch
             }
         }
 
-        return new UsageStep(look.Lines, new UsageMemory(entries), look.Resume, look.Notes);
+        return new UsageStep(look.Lines, new UsageMemory(entries), look.Resume, look.Notes) { Edges = look.Edges };
     }
 
     // One look's output and the clock it is judged by.
@@ -59,12 +59,15 @@ public static class UsageWatch
 
         internal List<string> Notes { get; } = [];
 
+        internal List<UsageEdge> Edges { get; } = [];
+
         internal void Recovered(string subject, UsageEntry entry)
         {
             if (entry.OkAt is null)
             {
                 Lines.Add($"USAGE OK {subject}");
                 Notes.Add($"usage: {subject} is working again");
+                Edges.Add(new UsageEdge(Limited: false, subject, Until: null));
             }
         }
 
@@ -74,6 +77,12 @@ public static class UsageWatch
             var isMeta = string.Equals(reading.Subject, Meta, StringComparison.Ordinal);
             if (Due(entry, stop))
             {
+                // The line repeats every probe interval while the stop stands; the event is the first one only.
+                if (entry.OkAt is null)
+                {
+                    Edges.Add(new UsageEdge(Limited: false, reading.Subject, stop.ResetsAt));
+                }
+
                 Lines.Add($"USAGE OK {reading.Subject}");
                 if (isMeta)
                 {
@@ -98,6 +107,7 @@ public static class UsageWatch
             var kind = stop.Kind.ToString().ToLowerInvariant();
             Lines.Add($"USAGE LIMITED {subject} {kind} resets {stop.ResetText}");
             Notes.Add($"usage: {subject} hit its {kind} limit, resets {stop.ResetText}");
+            Edges.Add(new UsageEdge(Limited: true, subject, stop.ResetsAt));
             return new UsageEntry(stop.Key, now, OkAt: null, Resumed: false);
         }
 

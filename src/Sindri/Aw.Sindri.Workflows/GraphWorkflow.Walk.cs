@@ -33,9 +33,9 @@ internal sealed partial class GraphWorkflow
 
             var outcome = await Execute(spec, node).ConfigureAwait(true);
             _ = _decided.Add(node.Id);
-            if (outcome.Status == NodeRunStatus.Failed && !string.Equals(node.OnFailure, "continue", StringComparison.Ordinal))
+            if (await AfterFailure(spec, node, outcome).ConfigureAwait(true) is { } failed)
             {
-                return await End(WorkflowRunStatus.Failed, $"node '{node.Id.Value}' failed: {outcome.Error}").ConfigureAwait(true);
+                return failed;
             }
 
             _taken[node.Id] = outcome.Status == NodeRunStatus.Succeeded ? outcome.Taken : ["out"];
@@ -46,6 +46,25 @@ internal sealed partial class GraphWorkflow
         }
 
         return await End(WorkflowRunStatus.Succeeded, error: null).ConfigureAwait(true);
+    }
+
+    /// <summary>After a failed node: 'stop' ends the run, and so does a 'continue' that has no 'out' edge to continue on. Null when the walk goes on.</summary>
+    private async Task<GraphWorkflowResult?> AfterFailure(GraphSpec spec, GraphNode node, GraphBlockOutcome outcome)
+    {
+        if (outcome.Status != NodeRunStatus.Failed)
+        {
+            return null;
+        }
+
+        if (!string.Equals(node.OnFailure, "continue", StringComparison.Ordinal))
+        {
+            return await End(WorkflowRunStatus.Failed, $"node '{node.Id.Value}' failed: {outcome.Error}").ConfigureAwait(true);
+        }
+
+        // why: a failed node takes no named branch, so a condition or ask_owner with 'continue' skipped every node after it and the run ended succeeded (#3003); patched so a run started before replays as it did
+        return Workflow.Patched("graph-continue-nowhere-1") && GraphContinueRule.LeavesNowhere(spec, node)
+            ? await End(WorkflowRunStatus.Failed, $"node '{node.Id.Value}' failed and has onFailure continue, but it has no 'out' edge to continue on: {outcome.Error}").ConfigureAwait(true)
+            : null;
     }
 
     /// <summary>After a for_each node: a succeeded one runs its loop, any other skips its body and collect. Null when the walk goes on.</summary>
@@ -93,7 +112,7 @@ internal sealed partial class GraphWorkflow
 
         // why: once the block has answered, the node's result is decided; clearing _current first and writing detached means a cancel now cannot overwrite 'succeeded' with 'cancelled'
         _current = null;
-        await Record(new NodeRun(_run, node.Id, 0, outcome.Status, outcome.Input, outcome.Output, Truncated: false, outcome.Error, Usage: null), _detached).ConfigureAwait(true);
+        await Record(new NodeRun(_run, node.Id, 0, outcome.Status, outcome.Input, outcome.Output, outcome.Truncated, outcome.Error, Usage: null, Raw: outcome.Raw), _detached).ConfigureAwait(true);
         return outcome;
     }
 

@@ -38,7 +38,7 @@ internal sealed class RecycleRunner(PaneSubmitter pane, ILaneSessions sessions, 
     internal async ValueTask<Result<LaneRecycleResponse>> Run(RecyclePlan plan, CancellationToken cancellationToken)
     {
         var started = clock.GetUtcNow();
-        var cleared = await pane.Submit(plan.Session, ClearLine, cancellationToken).ConfigureAwait(false);
+        var cleared = await pane.Submit(plan.Session, ClearLine, cancellationToken, exact: true).ConfigureAwait(false);
         if (cleared.IsError && !IsInputBoxMisread(cleared.Error))
         {
             // A tmux failure or a vanished pane: nothing was typed, so there is no new id to wait for.

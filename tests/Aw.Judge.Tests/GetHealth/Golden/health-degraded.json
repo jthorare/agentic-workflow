@@ -1,1 +1,1 @@
-{"status":"degraded","failures24h":1}
+{"status":"degraded","failures24h":1,"lastFailure":{"provider":"claude-cli","reasonCode":"timeout","at":"<timestamp>"}}

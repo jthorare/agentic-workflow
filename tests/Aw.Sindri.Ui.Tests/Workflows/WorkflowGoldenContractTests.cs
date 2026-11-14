@@ -100,7 +100,7 @@ public sealed class WorkflowGoldenContractTests
         var activate = Encoding.UTF8.GetString(AwJson.Serialize(new ActivateWorkflowBody(Revision: null), SindriApiClient.Json));
         var ops = Encoding.UTF8.GetString(AwJson.Serialize(new ApplyWorkflowOpsBody(2, JsonDocument.Parse("[{\"op\":\"remove_node\",\"node\":\"a\"}]").RootElement), SindriApiClient.Json));
 
-        Assert.Equal("{\"revision\":null}", activate);
+        Assert.Equal("{\"revision\":null,\"ifLatest\":false,\"untestedOk\":false}", activate);
         Assert.Equal("{\"baseRevision\":2,\"ops\":[{\"op\":\"remove_node\",\"node\":\"a\"}]}", ops);
     }
 

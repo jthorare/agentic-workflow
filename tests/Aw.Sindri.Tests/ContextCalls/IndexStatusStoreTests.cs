@@ -8,6 +8,7 @@ using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Host;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
@@ -25,7 +26,7 @@ public sealed class IndexStatusStoreTests
         _ = await _h.Profiles.Save(SliceHarness.Profile("5m"), Ct);
         _index.Standing = [SourceProgress.From(SourceId.From("linear"), SyncPhase.Incremental, _now, lastCode: null)];
         using var caller = _h.Callers.EnterService("test");
-        return await new GetIndexStatusService(new ContextScopes(_h.Profiles, _h.Callers), IndexStoreEngineProxy.Create(_index, store)).Handle(new GetIndexStatusRequest(), Ct);
+        return await new GetIndexStatusService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), IndexStoreEngineProxy.Create(_index, store)).Handle(new GetIndexStatusRequest(), Ct);
     }
 
     [Fact, Trait("Lane", "unit")]

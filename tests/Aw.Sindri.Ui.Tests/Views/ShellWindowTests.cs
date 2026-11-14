@@ -11,6 +11,7 @@ using Avalonia.Media;
 using Avalonia.Media.TextFormatting;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Navigation;
@@ -67,9 +68,9 @@ public sealed class ShellWindowTests : IDisposable
                 return true;
             }, Token);
 
-    private async Task<(ShellWindow Window, ShellViewModel Shell)> Show(Func<ShellViewModel, bool> ready, bool run = true)
+    private async Task<(ShellWindow Window, ShellViewModel Shell)> Show(Func<ShellViewModel, bool> ready, bool run = true, ISindriStarter? starter = null)
     {
-        var shell = new ShellViewModel(_records, _server, _clock, new Preferences(_preferences), new FakeClipboard());
+        var shell = new ShellViewModel(_records, _server, _clock, new Preferences(_preferences), new FakeClipboard(), window: starter is null ? null : WindowPorts.None with { Starter = starter });
         await shell.Restore(Token);
         var window = new ShellWindow { DataContext = shell };
         _windows.Add(window);
@@ -542,6 +543,33 @@ public sealed class ShellWindowTests : IDisposable
             string.Create(CultureInfo.InvariantCulture, $"insets {word.Left - pill.Left} and {pill.Right - word.Right}"));
         Frame(window, "connecting");
     });
+
+    // First-run spec 4.1: while a start runs, the page's own no-record reason, its path line and "Looks again" would answer a second question.
+    [Fact]
+    public Task While_a_start_runs_the_no_record_reason_and_the_looks_again_line_are_hidden() => OnUi(async () =>
+    {
+        var (window, _) = await Show(s => s.State == ShellState.NotRunning, starter: new StartedStarter());
+
+        Assert.Equal("Starting Sindri…", Text(window, "StartMessageText"));
+        Assert.Equal((false, false, false), (Visible(window, "ReasonText"), Visible(window, "ReasonDetailText"), Visible(window, "LooksAgainText")));
+    });
+
+    private sealed class StartedStarter : ISindriStarter
+    {
+        public event EventHandler<SindriExitedEventArgs>? Exited { add { } remove { } }
+
+        public int Launch => 1;
+
+        public string LogPath => "/logs/serve.log";
+
+        public void Release()
+        {
+        }
+
+        public string? LastError() => null;
+
+        public Result<SindriStartOutcome> Start() => SindriStartOutcome.Started;
+    }
 
     [Fact]
     public Task Not_running_shows_the_reason_the_sindri_fix_and_how_often_it_looks_again() => OnUi(async () =>

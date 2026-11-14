@@ -75,7 +75,7 @@ public sealed class ContextStateFramesTests : FrameHost
 
         Assert.Equal(1, Server.BuildContextMapCalls);
         Assert.False(Visible(window, "ContextEmpty"));
-        Assert.Equal(Labels.ContextStateBuilding, Named<TextBlock>(window, "ContextBuildingTitle").Text);
+        Assert.Equal(Labels.ContextBuildingFor([]), Named<TextBlock>(window, "ContextBuildingTitle").Text);   // why: the bare page names no item, so the title promises no ticket (#3391)
         Frame(window, "context-building-1440", "f3-");
     });
 

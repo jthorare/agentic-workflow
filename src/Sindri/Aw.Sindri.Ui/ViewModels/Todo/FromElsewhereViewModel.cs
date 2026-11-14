@@ -19,6 +19,7 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
     private LinearState _linear = LinearState.Loading;
     private int _assigned;
     private bool _viewsStalled;
+    private bool _profileMissing;
     private Uri? _url;
     private int _reads;
 
@@ -64,6 +65,14 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
         Show();
     }
 
+    /// <summary>Takes whether there is no profile yet: nothing is connected then, so the line offers Connect GitHub and Connect Linear instead of failed reads with Retry.</summary>
+    /// <param name="missing">True on a home with no profile.</param>
+    internal void SetProfileMissing(bool missing)
+    {
+        _profileMissing = missing;
+        Show();
+    }
+
     /// <summary>Takes whether the views are stalled: Reviews and Linear may then never answer, and the line says what is stale instead of checking forever.</summary>
     /// <param name="stalled">True while the views are stalled.</param>
     internal void SetViewsStalled(bool stalled)
@@ -100,7 +109,7 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
     /// <param name="part">Which.</param>
     internal void Open(ElsewherePart part)
     {
-        if (part == ElsewherePart.Linear && _linear == LinearState.NotConnected)
+        if (_profileMissing || (part == ElsewherePart.Linear && _linear == LinearState.NotConnected))
         {
             ConnectRequested?.Invoke(this, EventArgs.Empty);
             return;
@@ -129,6 +138,13 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
     // Nothing is raised when the words and every part are what they were: the view rebuilds its buttons (and loses the arrow-key stop) on every change.
     private void Show()
     {
+        if (_profileMissing)
+        {
+            var connect = new[] { Part(ElsewherePart.Reviews, Labels.ElsewhereReviewsNotConnected, "Connections", isAction: true), Part(ElsewherePart.Linear, Labels.ElsewhereLinearNotConnected, "Connections", isAction: true) };
+            Apply(isLoading: false, string.Join(" · ", connect.Select(p => p.Text)), connect);
+            return;
+        }
+
         if (_reviews.Loading || _linear == LinearState.Loading)
         {
             Apply(isLoading: !_viewsStalled, _viewsStalled ? Labels.ElsewhereStale : Labels.ElsewhereChecking, []);

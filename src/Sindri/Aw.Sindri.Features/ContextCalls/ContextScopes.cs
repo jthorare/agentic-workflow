@@ -3,6 +3,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Setup;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
@@ -15,7 +16,8 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// </summary>
 /// <param name="approvals">The profile.</param>
 /// <param name="callers">The current caller.</param>
-internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAccessor callers)
+/// <param name="checkouts">Which profile repos are git checkouts (#3371). Required: a dropped registration fails at resolve, not by quietly mapping plain folders (#3408).</param>
+internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAccessor callers, IRepoCheckouts checkouts)
 {
     /// <summary>The scope of the call running now.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
@@ -28,7 +30,17 @@ internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAc
             return approved.IsError ? approved.Error : SindriErrors.ProfileMissing.With("no profile yet, so no repo is mapped (fix: sindri repo add <path>)");
         }
 
-        return For(loaded.Profile, Caller(callers.Current));
+        var scope = For(loaded.Profile, Caller(callers.Current));
+        return WithoutPlainFolders(scope, checkouts);
+    }
+
+    // #3371: a profile repo whose path is a plain folder fails every git read (SND-CONTEXT-048). 'sindri repo add' refuses one, so only a hand-written
+    // profile names one: every read leaves it out and names it, so one plain folder never fails the map of the others. A missing folder stays in, so
+    // an unmounted or deleted repo keeps failing loudly and no map publishes without it.
+    private static ContextScope WithoutPlainFolders(ContextScope scope, IRepoCheckouts checkouts)
+    {
+        var plain = scope.Repos.Where(r => checkouts.Of(r.Path) == RepoCheckout.PlainFolder).ToList();
+        return plain.Count == 0 ? scope : scope with { Repos = [.. scope.Repos.Except(plain)], LeftOut = [.. plain.Select(static r => r.Name)] };
     }
 
     /// <summary>

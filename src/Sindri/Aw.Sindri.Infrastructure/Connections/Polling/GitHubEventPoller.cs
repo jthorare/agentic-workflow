@@ -28,13 +28,14 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
     private const int MaxEnriched = 20;   // GET /pulls/{n} calls per poll
 
     private readonly PollerClient _client = new(http, secrets, Host, clock);
+    private readonly GitHubPullStates _states = new(new PollerClient(http, secrets, Host, clock));
 
     public string Preset => "github";
 
     public async ValueTask<Result<PollResult>> Poll(Connection connection, EventKind kind, string? cursor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(connection);
-        if (!PollCatalog.For(Preset).Contains(kind))
+        if (!PollCatalog.For(Preset).Contains(kind) && !GitHubEventMapper.Knows(kind))   // why: the mapper's kinds wait on engine's catalog PR (#3201); validate still refuses a kind the catalog lacks
         {
             return SindriErrors.ConnectionProviderChanged.With($"{kind} is not a GitHub event");
         }
@@ -45,7 +46,9 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
             return SindriErrors.ConnectionProviderChanged.With($"{connection.Name} has no 'repo' setting like owner/name");
         }
 
-        return await ReadPages(new PollTarget(connection, parts[0], parts[1]), kind, cursor, cancellationToken).ConfigureAwait(false);
+        return GitHubEventMapper.FromPullState(kind)
+            ? await _states.Poll(connection, parts, kind, cursor, cancellationToken).ConfigureAwait(false)
+            : await ReadPages(new PollTarget(connection, parts[0], parts[1]), kind, cursor, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<PollResult>> ReadPages(PollTarget target, EventKind kind, string? cursor, CancellationToken cancellationToken)
@@ -85,7 +88,8 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
     {
         var newest = feed.Newest.Later(cursor);
         var events = PollJson.Time(cursor) is null ? [] : feed.Events.DistinctBy(static e => e.DeliveryKey, StringComparer.Ordinal).OrderBy(static e => e.OccurredAt).ThenBy(static e => e.DeliveryKey, StringComparer.Ordinal).ToList();
-        for (var i = 0; i < events.Count && i < MaxEnriched; i++)
+        // Only the newest MaxEnriched get a GET /pulls/{n}: in a burst those are the ones a person acts on next; older ones go out as the feed had them.
+        for (var i = events.Count - 1; i >= 0 && i >= events.Count - MaxEnriched; i--)
         {
             events[i] = await Enrich(target, events[i], cancellationToken).ConfigureAwait(false);
         }
@@ -93,10 +97,10 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
         return new PollResult(events, newest.Text ?? PollCursorText.Now(clock.GetUtcNow()), RateLimited: false, RetryAfter: null, gap);
     }
 
-    // The trimmed pull request in the feed holds no title or author: one GET /pulls/{n} fills them. A failed or odd answer leaves the event as the feed had it.
+    // The trimmed pull request in the feed holds no title, author or draft flag: one GET /pulls/{n} fills them. A failed or odd answer leaves the event as the feed had it.
     private async ValueTask<PolledEvent> Enrich(PollTarget target, PolledEvent polled, CancellationToken cancellationToken)
     {
-        if (!polled.Kind.Key.StartsWith("github.pr.", StringComparison.Ordinal) || polled.Fields.ContainsKey("title") || !polled.Fields.TryGetValue("number", out var number))
+        if (!GitHubEventMapper.NeedsDetail(polled) || !polled.Fields.TryGetValue("number", out var number) || number.Length == 0)
         {
             return polled;
         }
@@ -111,16 +115,7 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
         try
         {
             using var document = JsonDocument.Parse(body);
-            if (document.RootElement.ValueKind != JsonValueKind.Object)
-            {
-                return polled;
-            }
-
-            var fields = new Dictionary<string, string>(polled.Fields, StringComparer.Ordinal);
-            PollJson.Put(fields, "title", PollJson.Text(PollJson.Member(document.RootElement, "title")));
-            PollJson.Put(fields, "author", PollJson.Text(PollJson.Path(document.RootElement, "user", "login")));
-            PollJson.Put(fields, "url", PollJson.Text(PollJson.Member(document.RootElement, "html_url")));
-            return polled with { Fields = fields };
+            return document.RootElement.ValueKind == JsonValueKind.Object ? GitHubEventMapper.Enriched(polled, document.RootElement) : polled;
         }
         catch (JsonException)
         {

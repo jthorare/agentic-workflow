@@ -42,7 +42,7 @@
     </Style>
     <Style Selector="Border.needs-you-row:not(.lead) Button.command-control.primary:pressed:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.PressedBorder}" />
     </Style>
     <Style Selector="Border.needs-you-row ctl|StateChipView.attn">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
@@ -64,7 +64,7 @@
           </StackPanel>
         </Button>
         <!-- F3 home spec §1 Q6: the 120 px meter after the words, done steps of all of them; the words above carry the same count. -->
-        <ProgressBar x:Name="SetupHomeMeter" Grid.Column="1" Classes="map-meter home-meter" Width="120" MinWidth="0" VerticalAlignment="Center" Minimum="0" Maximum="{Binding Setup.MeterMax}" Value="{Binding Setup.MeterDone}" AutomationProperties.AccessibilityView="Raw" />
+        <ProgressBar x:Name="SetupHomeMeter" Grid.Column="1" Classes="map-meter home-meter" Width="120" MinWidth="0" Opacity="{Binding Setup.MeterOpacity}" VerticalAlignment="Center" Minimum="0" Maximum="{Binding Setup.MeterMax}" Value="{Binding Setup.MeterDone}" AutomationProperties.AccessibilityView="Raw" />
         <Button x:Name="SetupHomeContinue" Grid.Column="2" Classes="command-control" Click="OnSetupContinue" VerticalAlignment="Center" Margin="0,0,24,0" AutomationProperties.Name="{Binding Setup.ContinueName}">
           <TextBlock Classes="button" Text="{Binding Setup.ContinueText}" AutomationProperties.AccessibilityView="Raw" />
         </Button>
@@ -134,7 +134,7 @@
               </Border>
               <Button x:Name="NeedsYouRetry" Content="{Binding Text.NeedsYouRetry}" Click="OnRetryNeedsYou" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text.NeedsYouRetry}" />
             </StackPanel>
-            <TextBlock x:Name="NeedsYouEmpty" Classes="caption quiet" Text="{Binding NeedsYou.EmptyLine}" Margin="24,8"
+            <TextBlock x:Name="NeedsYouEmpty" Classes="caption subtle" Text="{Binding NeedsYou.EmptyLine}" Margin="24,8" TextAlignment="Left"
                        IsVisible="{Binding NeedsYou.EmptyLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding NeedsYou.EmptyLine}" />
             <Button x:Name="NeedsYouShowAll" HorizontalAlignment="Left" Classes="copy" Click="OnShowAllNeedsYou" IsVisible="{Binding NeedsYou.HasOverflow}"
                     AutomationProperties.Name="{Binding NeedsYou.OverflowText}" Margin="16,8">

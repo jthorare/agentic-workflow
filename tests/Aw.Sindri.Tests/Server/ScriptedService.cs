@@ -14,6 +14,9 @@ internal sealed class ScriptedService(params Result<ScheduledResult>[] script) :
 
     public static Result<ScheduledResult> Failed { get; } = Failure;
 
+    /// <summary>The command gate stayed busy past its 5 s wait (SND-API-009), as a service's own command answers it.</summary>
+    public static Result<ScheduledResult> Busy { get; } = SindriErrors.CommandBusy.With("another command held the command gate for 5 s; try again in a moment");
+
     public static Result<ScheduledResult> Worked { get; } = ScheduledResult.Worked;
 
     public static Result<ScheduledResult> Quiet { get; } = ScheduledResult.Quiet;

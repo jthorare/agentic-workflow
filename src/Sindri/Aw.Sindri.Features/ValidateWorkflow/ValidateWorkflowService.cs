@@ -28,7 +28,7 @@ internal sealed class ValidateWorkflowService(IWorkflowStore workflows, IWorkflo
         var validator = await checker.Validator(cancellationToken).ConfigureAwait(false);
         var result = validator.Validate(spec.Value, GraphMode.Activate);
         return new ValidateWorkflowResponse(result.Passed, result.Passed ? GraphJson.Hash(spec.Value) : null,
-            [.. result.Findings.Select(static f => new WorkflowFinding(f.Code, f.Severity == GraphSeverity.Error ? "error" : "warning", f.Nodes, f.Field, f.Message, f.Fix))]);
+            [.. result.Findings.Select(static f => WorkflowFinding.Of(f))]);
     }
 
     private async ValueTask<Result<GraphSpec>> Stored(Core.Graph.Ids.WorkflowSlug slug, int? revision, CancellationToken cancellationToken)

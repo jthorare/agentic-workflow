@@ -12,4 +12,5 @@ namespace Aw.Sindri.Features.GetWorkflowRun;
 /// <param name="Truncated">True when Sindri cut the input or the output to fit its size limit.</param>
 /// <param name="Error">Why it failed, or null.</param>
 /// <param name="Agent">Null unless the row is a 'run_agent' node the run waits on; then 'waiting' (a takeover applies) or 'taken_over' (a handback applies).</param>
-internal sealed record NodeRunView(NodeId Node, int ItemIndex, string Status, JsonNode? Input, JsonNode? Output, bool Truncated, string? Error, string? Agent = null);
+/// <param name="Raw">The scrubbed model text of a failed prompt step, cut at 64 KB, or null (P3e, spec §6.2).</param>
+internal sealed record NodeRunView(NodeId Node, int ItemIndex, string Status, JsonNode? Input, JsonNode? Output, bool Truncated, string? Error, string? Agent = null, string? Raw = null);

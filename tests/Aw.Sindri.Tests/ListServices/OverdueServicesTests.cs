@@ -1,4 +1,6 @@
+using Aw.Kernel;
 using Aw.Kernel.Ids;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
@@ -82,4 +84,19 @@ public sealed class OverdueServicesTests
         Assert.Single((await new ListServicesService(_v.Slice.Profiles, _v.Views, _v.Progress, new InMemoryJobViews(), [], _live, _v.Slice.Clock).Handle(new ListServicesRequest(), Token)).Value.Services);
 
     private async Task Approve() => _ = (await _v.Slice.Profiles.Save(SliceHarness.ProfileOf("thor", ("heartbeat", "30s")), Token)).Value;
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_invalid_live_profile_lists_the_services_like_no_profile()
+    {
+        var none = await List();
+        _v.Slice.Profiles.Live = SindriErrors.ProfileInvalid.With("/home/thor/profile.yaml: line 3: unknown key 'tennant'");
+
+        var invalid = await List();
+
+        Assert.True(invalid.IsSuccess, invalid.IsError ? invalid.Error.ToString() : null);
+        Assert.Equal(none.Value.Services.Count, invalid.Value.Services.Count);
+    }
+
+    private ValueTask<Result<ListServicesResponse>> List() =>
+        new ListServicesService(_v.Slice.Profiles, _v.Views, _v.Progress, new InMemoryJobViews(), [], _live, _v.Slice.Clock).Handle(new ListServicesRequest(), Token);
 }

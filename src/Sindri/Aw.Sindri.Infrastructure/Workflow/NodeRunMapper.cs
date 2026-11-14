@@ -19,5 +19,6 @@ internal sealed class NodeRunMapper : IRowMapper<NodeRun>
         reader.IsDBNull(5) ? null : reader.GetString(5),
         reader.GetInt32(6) != 0,
         reader.IsDBNull(7) ? null : reader.GetString(7),
-        reader.IsDBNull(8) ? null : reader.GetString(8));
+        reader.IsDBNull(8) ? null : reader.GetString(8),
+        reader.IsDBNull(9) ? null : reader.GetString(9));
 }

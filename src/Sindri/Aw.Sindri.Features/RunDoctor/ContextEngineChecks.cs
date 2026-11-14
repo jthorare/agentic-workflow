@@ -16,7 +16,8 @@ namespace Aw.Sindri.Features.RunDoctor;
 /// <param name="publish">The map's publish row.</param>
 /// <param name="linear">The linear check.</param>
 /// <param name="codeIndex">The code index checks.</param>
-internal sealed class ContextEngineChecks(IContextEngine context, IMapPublishCheck publish, LinearDoctor linear, ICodeIndexChecks codeIndex)
+/// <param name="firstMap">The 'context:map' row while no map exists (#3216).</param>
+internal sealed class ContextEngineChecks(IContextEngine context, IMapPublishCheck publish, LinearDoctor linear, ICodeIndexChecks codeIndex, IFirstMapCheck firstMap)
 {
     /// <summary>The checks, in the order doctor prints them.</summary>
     /// <param name="approved">The profile, or null.</param>
@@ -27,7 +28,7 @@ internal sealed class ContextEngineChecks(IContextEngine context, IMapPublishChe
         var scope = ScopeOf(approved);
         return
         [
-            Line("context:map", await context.CheckMap(scope, cancellationToken).ConfigureAwait(false)),
+            await Map(approved, scope, cancellationToken).ConfigureAwait(false),
             Line("context:pages", await context.CheckPages(scope, cancellationToken).ConfigureAwait(false)),
             await Roles(scope, cancellationToken).ConfigureAwait(false),
             Line("context:retention", await context.CheckRetention(cancellationToken).ConfigureAwait(false)),
@@ -36,6 +37,15 @@ internal sealed class ContextEngineChecks(IContextEngine context, IMapPublishChe
             await linear.Check(approved, cancellationToken).ConfigureAwait(false),
             .. await codeIndex.Check(approved, cancellationToken).ConfigureAwait(false),
         ];
+    }
+
+    // why: with no map yet the engine only knows there is none; Sindri's jobs say what it waits on, and importing a file is the wrong fix on a first run (#3216)
+    private async ValueTask<DoctorCheck> Map(LoadedProfile? approved, ContextScope? scope, CancellationToken cancellationToken)
+    {
+        var health = await context.CheckMap(scope, cancellationToken).ConfigureAwait(false);
+        return !health.IsError && string.Equals(health.Value.Detail, MapHealth.NoMapDetail, StringComparison.Ordinal)
+            ? await firstMap.Check(approved, cancellationToken).ConfigureAwait(false)
+            : Line("context:map", health);
     }
 
     // 'context:roles' (issue 1105): read from the map status, so it counts what status counts; nothing to say without a profile or a map.

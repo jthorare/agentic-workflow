@@ -34,7 +34,7 @@ public sealed class WaitedBuildPromotedBeforeHoldTests
         var outlooks = new ScriptedOutlooks();
         _ = await _h.HoldLease();
         _ = await _h.Profiles.Save(SliceHarness.Profile(), Ct);
-        var service = new BuildContextMapService(new ContextScopes(_h.Profiles, _h.Callers), PromotingOnHoldEngine.Over(inner), new MapEventSource(_h.Held, _h.Store, _h.Events), outlooks, _jobs, _h.Clock);
+        var service = new BuildContextMapService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), PromotingOnHoldEngine.Over(inner), new MapEventSource(_h.Held, _h.Store, _h.Events), outlooks, _jobs, _h.Clock);
         using var job = _jobs.Enter(new JobContext(JobId.New(_h.Ids), JobKind.From("BuildContextMap"), new Progress<string>()));
         using var caller = _h.Callers.EnterService("context-map-build");
 

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
@@ -9,19 +10,26 @@ namespace Aw.Sindri.Features.Launching;
 /// <param name="launches">The launches projection.</param>
 /// <param name="targets">The last probe of the viewer, host and agents.</param>
 /// <param name="clock">Now.</param>
-internal sealed class LauncherDoctorChecks(ILaunchSetup setup, ILaunchViews launches, LaunchTargetsReader targets, TimeProvider clock) : IDoctorChecks
+/// <param name="timer">Takes each part's elapsed time (#3390), the same sink as the launcher's own parts; null records nothing.</param>
+internal sealed class LauncherDoctorChecks(ILaunchSetup setup, ILaunchViews launches, LaunchTargetsReader targets, TimeProvider clock, IPartTimer? timer = null) : IDoctorChecks
 {
     public async ValueTask<IReadOnlyList<DoctorCheck>> Run(CancellationToken cancellationToken)
     {
+        var watch = Stopwatch.StartNew();
         var shown = await setup.Show(only: null, cancellationToken).ConfigureAwait(false);
+        timer?.Took("Launcher.show", watch.ElapsedMilliseconds);
         if (shown.IsError)
         {
             return [new DoctorCheck("launcher", CheckState.Fail, shown.Error.Message, "sindri launch show")];
         }
 
         var report = shown.Value;
+        watch.Restart();
         var rows = await launches.Since(clock.GetUtcNow() - LaunchAdoption.Window, cancellationToken).ConfigureAwait(false);
+        timer?.Took("Launcher.since", watch.ElapsedMilliseconds);
+        watch.Restart();
         var probed = await targets.Read(cancellationToken).ConfigureAwait(false);
+        timer?.Took("Launcher.targets", watch.ElapsedMilliseconds);
         var now = clock.GetUtcNow();
         var facts = Facts(probed.IsError ? null : probed.Value.ProbedAt, (probed.IsError, rows.IsError), rows.IsError ? [] : rows.Value, now);
         var checks = new List<DoctorCheck>

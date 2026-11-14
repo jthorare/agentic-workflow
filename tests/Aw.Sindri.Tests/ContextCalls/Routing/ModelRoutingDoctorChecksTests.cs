@@ -100,6 +100,36 @@ public sealed class ModelRoutingDoctorChecksTests
     }
 
     [Fact]
+    public async Task A_built_in_codex_name_that_codex_does_not_list_is_ok_and_says_codex_runs_its_own_default()
+    {
+        var row = await Row(Checks(Settings(new ModelEntry()), _both, "claude-sonnet-4-5", "claude-haiku-4-5"));
+
+        Expect.Equal(CheckState.Ok, row.State);
+        Expect.Equal("labeling, conceptNaming, decisionExtraction, adjudication, mapCleanup, rerank, workflowPrompt: claude-code haiku, then codex default; productSurfaces: no model", row.Detail);
+        Assert.Null(row.Fix);
+    }
+
+    [Fact]
+    public async Task A_built_in_codex_name_that_codex_lists_keeps_its_name_on_the_line()
+    {
+        var row = await Row(Checks(Settings(new ModelEntry()), _both, "gpt-6-luna", "gpt-5.5"));
+
+        Expect.Equal(CheckState.Ok, row.State);
+        Assert.Contains("claude-code haiku, then codex gpt-6-luna;", row.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_codex_name_the_profile_wrote_in_names_still_warns_when_codex_does_not_list_it()
+    {
+        var settings = Settings(new ModelEntry()) with { Names = ModelNames.None with { Codex = new CliModels("gpt-9", Strong: null) } };
+
+        var row = await Row(Checks(settings, _both, "claude-sonnet-4-5"));
+
+        Expect.Equal(CheckState.Warn, row.State);
+        Assert.Contains("codex model gpt-9 is not in codex's model list", row.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_codex_list_that_could_not_be_read_checks_nothing_and_Claude_is_never_checked()
     {
         var entry = new ModelEntry(Models: new Dictionary<ModelHarness, string> { [ModelHarness.ClaudeCode] = "whatever", [ModelHarness.Codex] = "gpt-9" });

@@ -58,7 +58,7 @@ internal sealed class SourcesSetupReader(IApprovedProfile approvals, IContextEng
             lines.Add(Line("linear", pointer: null));
         }
 
-        return new SourcesFact(lines.Count) { Items = new SetupItems(lines) };
+        return new SourcesFact(lines.Count) { Items = new SetupItems(lines), Skipped = loaded.Profile.Setup?.SkipAccounts == true };
     }
 
     private SetupItem Line(string source, string? pointer) => credentials.TokenFor(source, profilePointer: null) is not null || SourceTokens.Connected(pointer, secrets)

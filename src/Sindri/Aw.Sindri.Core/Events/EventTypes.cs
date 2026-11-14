@@ -170,6 +170,9 @@ public static partial class EventTypes
     /// <summary>A waiting job's signal came (setup-once spec §5.6).</summary>
     public const string JobResumed = "job.resumed";
 
+    /// <summary>An Agents-page op claimed its act id; a one-off start records its stored answer and worktree here (agents spec §5, §15.8).</summary>
+    public const string AgentOp = "agent.op";
+
     /// <summary>A human paused a background service (API P6).</summary>
     public const string ServicePaused = "service.paused";
 
@@ -259,6 +262,9 @@ public static partial class EventTypes
 
     /// <summary>The owner agreed that Sindri may register itself and build the map on its own (setup-once spec §7.5).</summary>
     public const string SetupConsentGiven = "setup.consent.given";
+
+    /// <summary>The setup service made and activated hello-sindri, once per box (first-run spec decision 19).</summary>
+    public const string SetupFirstWorkflowCreated = "setup.first_workflow.created";
 
     /// <summary>A connection's token could not be refreshed, so the owner has to sign in again (connections PR 10b). Keyed by the connection and the time; no token in it.</summary>
     public const string ConnectionNeedsSignIn = "connection.needs-sign-in";
