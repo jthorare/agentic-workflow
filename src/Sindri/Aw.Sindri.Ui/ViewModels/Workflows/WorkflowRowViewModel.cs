@@ -19,6 +19,39 @@ internal sealed class WorkflowRowViewModel : ObservableObject
         Name = Labels.WfRowName(NameText, word.ToLowerInvariant(), RevisionText.ToLowerInvariant(), ChangedText.ToLowerInvariant());
     }
 
+    /// <summary>The trigger in words.</summary>
+    public string TriggerText => string.Empty;
+
+    /// <summary>"Failed 3m ago", or "Paused" for a paused workflow; empty when there is nothing to say.</summary>
+    public string LastRunText => string.Empty;
+
+    /// <summary>The last run chip's tone: ok, error, attention or neutral.</summary>
+    public string LastRunToneWord => "neutral";
+
+    /// <summary>True when the Last run cell has a chip.</summary>
+    public bool ShowsLastRun => false;
+
+    /// <summary>True for a workflow with a schedule that is held.</summary>
+    public bool IsPaused => false;
+
+    /// <summary>"Active", "Paused" or "Off".</summary>
+    public string StateText => string.Empty;
+
+    /// <summary>"11:00", "Mon 7:00", "-" for a paused one, or empty.</summary>
+    public string NextRunText => string.Empty;
+
+    /// <summary>True when the last run failed or the workflow is paused.</summary>
+    public bool NeedsLook => false;
+
+    /// <summary>True when another workflow has the same name: the short id shows beside it.</summary>
+    public bool ShowsId => false;
+
+    /// <summary>The last 10 runs, oldest first, always 10 slots.</summary>
+    public IReadOnlyList<RunBarViewModel> Strip => [];
+
+    /// <summary>"Needs a look · 3" or "Everything else · 11" on the first row of its group; empty on the others.</summary>
+    public string GroupHeader => string.Empty;
+
     /// <summary>The name commands use.</summary>
     public string Slug { get; }
 
