@@ -47,7 +47,7 @@ internal sealed class ItemLaunchSource(ILaunchViews launches, LaunchTargetsReade
 
     private async ValueTask<Result<ItemLaunch>> Decide(ItemRow item, IReadOnlyList<LaunchRow> own, AgentId? lastUsed, LaunchTargets probe, CancellationToken cancellationToken)
     {
-        var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
+        var approved = await approvals.ForRead(cancellationToken).ConfigureAwait(false);
         if (approved.IsError)
         {
             return approved.Error;

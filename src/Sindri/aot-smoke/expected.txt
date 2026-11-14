@@ -6,7 +6,7 @@ ok    profile           hash HASH6
 fail  api               unreachable: no control plane is recorded (fix: sindri)
 fail  temporal          not running: no dev server on this home's temporal.db (fix: sindri)
 ok    build             not running from an installed build
-warn  context:map       no map yet (fix: sindri context map import <file>)
+ok    context:map       no map yet: the first map builds after the code index of smoke
 ok    context:pages     no pages named
 ok    context:roles     no map yet
 ok    context:retention no expired exports; retained map versions are within the newest 100 and the 90-day eval window
@@ -258,7 +258,7 @@ ok    context:index-linear-projects not configured (the profile names no context
 ok    context:index-slack not configured (the profile names no context.sources.slack)
 ok    context:index-ollama not configured (no record source, so nothing to embed)
 ok    context:index-sync not configured (no record source, so nothing syncs)
-ok    library           the first read of aw hasn't finished yet (sindri library sync reads now)
+ok    library           0 design docs in 1 root (aw 0)
 ok    launcher:adoption no opens in the last 30 days
 ok    todo              note: not set (no todo.obsidian key)
 ok    connections:catchup no capped or gapped read

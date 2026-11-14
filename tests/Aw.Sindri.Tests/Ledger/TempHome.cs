@@ -20,13 +20,24 @@ public sealed class TempHome : IDisposable
 
     public void Dispose()
     {
-        foreach (var server in new TemporalDevServer(ChildEnvironment.Start).Find(Path))
-        {
-            DevServerProcesses.Signal(ChildEnvironment.Start, server.ProcessId, "KILL");
-        }
-
         try
         {
+            foreach (var server in new TemporalDevServer(ChildEnvironment.Start).Find(Path))
+            {
+                DevServerProcesses.Signal(ChildEnvironment.Start, server.ProcessId, "KILL");
+            }
+        }
+        finally
+        {
+            DeleteHomes();
+        }
+    }
+
+    private void DeleteHomes()
+    {
+        try
+        {
+            // why: a failed process scan must not leave the home on disk (#3262)
             if (Directory.Exists(Path))
             {
                 Directory.Delete(Path, recursive: true);

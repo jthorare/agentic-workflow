@@ -1,3 +1,5 @@
+using Aw.CodeIndex.Core;
+using Aw.CodeIndex.Core.Embedding;
 using Aw.CodeIndex.Core.Facade;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Core.Ports;
@@ -6,6 +8,7 @@ using Aw.CodeIndex.Testing;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.CodeIndexJobs;
+using Aw.Sindri.Tests.Server;
 using IndexRepoHead = Aw.CodeIndex.Core.Model.RepoHead;
 using RepoStatus = Aw.CodeIndex.Core.Facade.RepoStatus;
 
@@ -24,7 +27,7 @@ public sealed class CodeIndexDoctorTests
     private static RepoStatus Built(params LayerStatus[] layers) => new(_repo, IndexState.Ok, _old, _now.AddMinutes(-3), layers, new IndexCounts(Files: 1, Symbols: 2, Edges: 3));
 
     private static DoctorCheck RepoRow(RepoStatus status, IndexRepoHead? head = null) =>
-        CodeIndexDoctor.Rows([status], head is null ? [] : [head], [], _now).Single(static c => c.Name == "code-index:demo");
+        CodeIndexDoctor.Rows(new([status], head is null ? [] : [head], []), _now).Single(static c => c.Name == "code-index:demo");
 
     [Fact, Trait("Lane", "unit")]
     public void A_current_index_is_ok_with_its_commit_age_and_layer_words()
@@ -80,6 +83,28 @@ public sealed class CodeIndexDoctorTests
         Assert.Equal((CheckState.Fail, "index damaged, rebuilding (SND-CODEIDX-010)"), (row.State, row.Detail));
     }
 
+    // #3399: while code-index-main-move is paused no build starts, so the row names the pause and the resume, never "queued".
+    [Fact, Trait("Lane", "unit")]
+    public void A_repo_with_no_index_while_code_index_main_move_is_paused_names_the_resume()
+    {
+        var row = PausedRow(new RepoStatus(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null), new IndexRepoHead(_repo, _new, OnDefaultBranch: true));
+
+        Assert.Equal((CheckState.Warn, "no index: code-index-main-move is paused, so no build starts", Resume), (row.State, row.Detail, row.Fix));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_stale_index_while_code_index_main_move_is_paused_names_the_resume()
+    {
+        var row = PausedRow(Built(Ok(LayerName.Structure)), new IndexRepoHead(_repo, _new, OnDefaultBranch: true));
+
+        Assert.Equal((CheckState.Warn, "stale: index at 1111111, head at 2222222; code-index-main-move is paused", Resume), (row.State, row.Detail, row.Fix));
+    }
+
+    private const string Resume = "sindri services resume code-index-main-move";
+
+    private static DoctorCheck PausedRow(RepoStatus status, IndexRepoHead head) =>
+        CodeIndexDoctor.Rows(new([status], [head], [], BuildServiceActive: false), _now).Single(static c => c.Name == "code-index:demo");
+
     [Fact, Trait("Lane", "unit")]
     public void A_repo_with_no_index_is_a_queued_first_build()
     {
@@ -91,7 +116,7 @@ public sealed class CodeIndexDoctorTests
     [Fact, Trait("Lane", "unit")]
     public void An_unavailable_graph_is_a_warning_with_the_codes_fix_and_never_a_failure()
     {
-        var rows = CodeIndexDoctor.Rows([Built(Ok(LayerName.Structure), new LayerStatus(LayerName.Graph, LayerState.Unavailable, "SND-CODEIDX-007", "no sandbox"))], [], [], _now);
+        var rows = CodeIndexDoctor.Rows(new([Built(Ok(LayerName.Structure), new LayerStatus(LayerName.Graph, LayerState.Unavailable, "SND-CODEIDX-007", "no sandbox"))], [], []), _now);
 
         var graph = rows.Single(static c => c.Name == "code-index:graphify");
         Assert.Equal(CheckState.Warn, graph.State);
@@ -102,17 +127,56 @@ public sealed class CodeIndexDoctorTests
     [Fact, Trait("Lane", "unit")]
     public void A_stored_pin_mismatch_on_the_embeddings_layer_warns_on_the_ollama_row()
     {
-        var rows = CodeIndexDoctor.Rows([Built(Ok(LayerName.Structure), new LayerStatus(LayerName.Embeddings, LayerState.Unavailable, "SND-CODEIDX-009", "model digest"))], [], [], _now);
+        var rows = CodeIndexDoctor.Rows(new([Built(Ok(LayerName.Structure), new LayerStatus(LayerName.Embeddings, LayerState.Unavailable, "SND-CODEIDX-009", "model digest"))], [], []), _now);
 
         Assert.Equal(CheckState.Warn, rows.Single(static c => c.Name == "code-index:ollama").State);
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_refused_chunk_on_the_embeddings_layer_names_the_real_cause_not_start_ollama_issue_3128()
+    {
+        var rejected = new LayerStatus(LayerName.Embeddings, LayerState.Unavailable, CodeIndexErrors.EmbeddingInputRejected.Code, "a chunk was refused");
+        var rows = CodeIndexDoctor.Rows(new([Built(Ok(LayerName.Structure), rejected)], [], []), _now);
+
+        var fix = rows.Single(static c => c.Name == "code-index:ollama").Fix;
+
+        Assert.Contains("too long", fix, StringComparison.Ordinal);
+        Assert.DoesNotContain("start Ollama", fix, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_layer_settled_with_a_refused_chunk_shows_the_017_fix_on_the_ollama_row_issue_3128()
+    {
+        var status = await SettledWithOneRefused();
+
+        var row = CodeIndexDoctor.Rows(new([status], [], []), _now).Single(static c => c.Name == "code-index:ollama");
+
+        Assert.Equal(CheckState.Warn, row.State);
+        Assert.Contains("too long", row.Fix, StringComparison.Ordinal);
+        Assert.Contains("SND-CODEIDX-017", row.Detail, StringComparison.Ordinal);
+    }
+
+    // The status of a repo whose embeddings layer ran for real (EmbeddingsLayer over the fake store) with one text the model refused.
+    private static async Task<RepoStatus> SettledWithOneRefused()
+    {
+        var token = TestContext.Current.CancellationToken;
+        var symbol = new SymbolRecord(SymbolRef.From("demo:src/A.cs#A.Run"), "Run", "A.Run", SymbolKind.Method, 0, 1, 5, Exported: true, Utility: false, "void Run()", "shape", TokenCount: 10, Complexity: 1, MinHash: default, [], Body: "REFUSED body", []);
+        var store = new FakeIndexStore();
+        var begun = await store.BeginBuild(_repo, incremental: false, token);
+        await using var build = begun.Value;
+        _ = await build.WriteFiles([new FileRecord("src/A.cs", "file-hash", 10, "csharp", Parsed: true, [symbol])], token);
+        var layer = new EmbeddingsLayer(new FakeEmbedder { SkipTextsContaining = "REFUSED" }, TimeProvider.System);
+        _ = await layer.Run(build, CodeIndexSettings.Default.Embeddings, new Progress<string>(), 100, token);
+        var published = await build.Publish(new IndexMeta(_old, "main", _now, CodeIndexRules.SchemaVersion, "parser-1", LockSha: "lock-1", new IndexCounts(0, 0, 0)), token);
+        return Built([.. published.Value.Layers.Select(static l => new LayerStatus(l.Layer, l.State, l.Code, l.Detail))]);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void No_repos_is_one_ok_row() =>
-        Assert.Equal([("code-index", CheckState.Ok)], CodeIndexDoctor.Rows([], [], [], _now).Select(static c => (c.Name, c.State)));
+        Assert.Equal([("code-index", CheckState.Ok)], CodeIndexDoctor.Rows(new([], [], []), _now).Select(static c => (c.Name, c.State)));
 
     private static DoctorCheck Row(string name, CodeIndexDoctor.Probes probes) =>
-        CodeIndexDoctor.Rows([Built(Ok(LayerName.Structure))], [], [], _now, probes).Single(c => c.Name == name);
+        CodeIndexDoctor.Rows(new([Built(Ok(LayerName.Structure))], [], []), _now, probes).Single(c => c.Name == name);
 
     private static CodeIndexDoctor.Probes Probes(LockState state, Kernel.Result<Kernel.Unit>? model = null, bool enabled = true) =>
         new(new CodeIndexDoctor.ModelProbe(enabled, model ?? Kernel.Unit.Value), state);
@@ -133,7 +197,7 @@ public sealed class CodeIndexDoctorTests
     [Fact, Trait("Lane", "unit")]
     public void An_unreachable_embedding_server_is_a_warning_from_the_live_probe()
     {
-        var row = Row("code-index:ollama", Probes(LockState.Matches, CodeIndex.Core.CodeIndexErrors.EmbeddingServerFailed.With("no answer")));
+        var row = Row("code-index:ollama", Probes(LockState.Matches, CodeIndexErrors.EmbeddingServerFailed.With("no answer")));
 
         Assert.Equal(CheckState.Warn, row.State);
         Assert.Contains("SND-CODEIDX-006", row.Detail, StringComparison.Ordinal);
@@ -154,7 +218,7 @@ public sealed class CodeIndexDoctorTests
         var fresh = new SindriProfile(1, "thor", Repos: [new RepoEntry("demo", "/work/demo"), new RepoEntry("other", "/work/other"), new RepoEntry("fresh", "/work/fresh")]);
         rig.Harness.Profiles.Live = new LoadedProfile(fresh, Core.Ids.ProfileHash.From(new string('a', 64)), "/home/profile.yaml");
         _ = rig.Index.WithIndex(CodeIndexJobsRig.Fresh, CodeIndexJobsRig.Old);
-        var doctor = new CodeIndexDoctor(rig.Index, rig.Heads, rig.Jobs, new FakeEmbedder(), new FakePins(), rig.Harness.Clock, rig.Harness.Profiles);
+        var doctor = new CodeIndexDoctor(rig.Index, rig.Heads, rig.Jobs, new CodeIndexProbes(new FakeEmbedder(), new FakePins()), rig.Harness.Clock, rig.Harness.Profiles, new NoPauses());
         var approved = (await rig.Harness.Profiles.Latest(TestContext.Current.CancellationToken)).Value;
 
         var rows = await doctor.Check(approved, TestContext.Current.CancellationToken);
