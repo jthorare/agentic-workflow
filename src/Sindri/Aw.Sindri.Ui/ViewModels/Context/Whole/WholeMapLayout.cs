@@ -16,7 +16,7 @@ internal static partial class WholeMapLayout
     internal const double NodeHeight = 28;
 
     /// <summary>The space between nodes.</summary>
-    internal const double NodeGap = 6;
+    internal const double NodeGap = 16;
 
     /// <summary>How many nodes sit side by side in a band of one column.</summary>
     internal const int Across = 2;

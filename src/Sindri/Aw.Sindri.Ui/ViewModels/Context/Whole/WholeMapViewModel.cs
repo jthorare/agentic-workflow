@@ -14,7 +14,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
     internal const double DotsBelow = 0.35;
 
     /// <summary>The smallest scale the first open fits to: below it the whole map is too small to read even as dots, so the first open shows less than all of it.</summary>
-    internal const double FirstOpenFloor = 0.25;
+    internal const double FirstOpenFloor = WholeDrillIn.MinZoom;
 
     /// <summary>The largest scale the map is drawn at: a small map is fitted up to twice its size so it fills a large window.</summary>
     internal const double MaxScale = 2.0;
