@@ -135,7 +135,7 @@ public sealed class SetupViewModelTests
 
     private const string UnreadableFix = "The profile file is there but can't be read; check its permissions.";
 
-    private static System.Text.Json.Nodes.JsonNode UnreadableProfile()
+    internal static System.Text.Json.Nodes.JsonNode UnreadableProfile()
     {
         var list = Golden("first-run");
         foreach (var (step, why) in (ReadOnlySpan<(string, string)>)[
@@ -159,6 +159,38 @@ public sealed class SetupViewModelTests
 
         Assert.Equal((true, UnreadableFix), (setup.HasProblem, setup.ProblemText));
         Assert.All(setup.Steps.Where(s => s.IsFailed), s => Assert.Equal((false, string.Empty), (s.HasDetail, s.DetailText)));   // #3610: was on 4 steps
+    }
+
+    [Fact]
+    public async Task A_failed_step_with_nothing_to_show_stays_closed_and_one_with_a_body_opens()
+    {
+        _f.Serve(UnreadableProfile());
+
+        var steps = (await _f.Read(Token)).Steps;
+        var failed = steps.Where(s => s.IsFailed).ToList();
+
+        Assert.Contains(failed, s => !s.HasBody);   // #3616: the profile steps whose fix and band moved to the page
+        Assert.All(failed, s => Assert.Equal(s.HasBody, s.IsOpen));
+        Assert.Equal((true, true), (Step(await _f.Read(Token), "repo").HasBody, Step(await _f.Read(Token), "repo").IsOpen));   // the repo form is its body
+    }
+
+    [Fact]
+    public async Task A_step_updated_to_failed_with_an_empty_body_stays_closed_until_it_gains_one()
+    {
+        var setup = _f.Setup();
+        _f.Serve(Golden("first-run"));
+        await setup.Refresh(Url, Token);
+        var why = "Sindri couldn't read your profile, so it can't run a workflow.";
+        _f.Serve(WithFailure(Golden("first-run"), "first-workflow", why, why, detail: null));
+        await setup.Refresh(Url, Token);
+
+        var step = Step(setup, "first-workflow");
+        Assert.Equal((false, false), (step.HasBody, step.IsOpen));
+
+        _f.Serve(WithFailure(Golden("first-run"), "first-workflow", why, why, "Pick the folder that holds .git."));
+        await setup.Refresh(Url, Token);
+
+        Assert.Equal((true, true), (step.HasBody, step.IsOpen));
     }
 
     [Fact]
