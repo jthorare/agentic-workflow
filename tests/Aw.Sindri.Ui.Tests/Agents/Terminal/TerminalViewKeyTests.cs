@@ -80,7 +80,7 @@ public sealed class TerminalViewKeyTests
         new(width: 10, height: 5, history, Enumerable.Repeat(TerminalCell.Blank, (history + 5) * 10).ToArray());
 
     [Fact]
-    public async Task Ctrl_Shift_V_and_the_platform_paste_send_the_clipboard_text_as_one_paste_and_never_as_keys()
+    public async Task Ctrl_Shift_V_Shift_Insert_and_Cmd_V_send_the_clipboard_text_as_one_paste_and_never_as_keys()
     {
         _ = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(TerminalViewKeyTests).Assembly).Dispatch(() =>
         {
@@ -88,10 +88,35 @@ public sealed class TerminalViewKeyTests
             try
             {
                 window.KeyPress(Key.V, RawInputModifiers.Control | RawInputModifiers.Shift, PhysicalKey.V, keySymbol: null);
+                window.KeyPress(Key.Insert, RawInputModifiers.Shift, PhysicalKey.Insert, keySymbol: null);
+                window.KeyPress(Key.V, RawInputModifiers.Meta, PhysicalKey.V, keySymbol: null);
+
+                Assert.Equal(["echo hi\nls -l", "echo hi\nls -l", "echo hi\nls -l"], pasted);
+                Assert.Empty(sent);
+            }
+            finally
+            {
+                window.Close();
+                Dispatcher.UIThread.RunJobs();
+            }
+
+            return true;
+        }, TestContext.Current.CancellationToken);
+    }
+
+    // Claude Code pastes images on Ctrl+V and vim reads it as literal-next: plain Ctrl+V is a key for the agent, never a paste.
+    [Fact]
+    public async Task Plain_Ctrl_V_goes_to_the_agent_as_a_key_and_pastes_nothing()
+    {
+        _ = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(TerminalViewKeyTests).Assembly).Dispatch(() =>
+        {
+            var (window, _, sent, pasted) = Focused("clipboard text");
+            try
+            {
                 window.KeyPress(Key.V, RawInputModifiers.Control, PhysicalKey.V, keySymbol: null);
 
-                Assert.Equal(["echo hi\nls -l", "echo hi\nls -l"], pasted);
-                Assert.Empty(sent);
+                Assert.Equal(["Ctrl+V"], sent);
+                Assert.Empty(pasted);
             }
             finally
             {
