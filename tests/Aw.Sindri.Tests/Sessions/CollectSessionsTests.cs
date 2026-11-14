@@ -193,6 +193,35 @@ public sealed class CollectSessionsTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_session_adopted_by_its_fleet_file_leaves_no_ended_pid_row()
+    {
+        ClaudeRuns();
+        _ = await _c.Pass();
+        var pidRef = Assert.Single(_c.Snapshot.Current!.Sessions).Ref;
+
+        _ = _c.Fleet.With(Hook(HookState.Running, _c.Now) with { AgentPid = 10, AgentStartTicks = 100 });
+        _ = await _c.After(TimeSpan.FromSeconds(2));
+
+        var live = Assert.Single(_c.Snapshot.Current.Sessions);
+        Assert.Equal(("claude-code/s1", true), (live.Ref.ToString(), live.Ref != pidRef));
+        Assert.Empty(_c.Snapshot.Current.RecentlyEnded);
+        Assert.Empty(_c.Memory.Ended);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_never_adopted_pid_session_still_ends()
+    {
+        ClaudeRuns();
+        _ = await _c.Pass();
+
+        _c.Fake.Exit(10);
+        _ = await _c.After(TimeSpan.FromSeconds(2));
+
+        Assert.Empty(_c.Snapshot.Current!.Sessions);
+        Assert.StartsWith("claude-code/pid-", Assert.Single(_c.Snapshot.Current.RecentlyEnded).Session.Ref.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_good_pass_asks_the_fleet_dir_to_prune_with_the_live_sessions()
     {
         ClaudeRuns();
