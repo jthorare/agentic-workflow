@@ -239,13 +239,32 @@ public sealed class ShellWindowTests : IDisposable
     });
 
     [Fact]
-    public Task Not_running_dims_and_disables_the_navigation() => OnUi(async () =>
+    public Task Not_running_keeps_the_navigation_enabled_and_the_current_tab_selected() => OnUi(async () =>
     {
         var (window, _) = await Show(s => s.State == ShellState.NotRunning);
+        var labels = window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("nav-label") && t.Text is { Length: > 1 }).ToList();
 
-        Assert.False(Named<StackPanel>(window, "NavigationGroup").IsEffectivelyEnabled);
-        Assert.All(window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("nav-label")),
-            t => Assert.Equal(Colour("Color.InkTertiary"), Ink(t)));
+        Assert.True(Named<StackPanel>(window, "NavigationGroup").IsEffectivelyEnabled);
+        Assert.Equal(Colour("Color.PrimaryHover"), Ink(labels.Single(t => t.Text == Labels.Home)));
+        Assert.All(labels.Where(t => t.Text != Labels.Home), t => Assert.Equal(Colour("Color.InkSubtle"), Ink(t)));
+    });
+
+    // #3688: serve stops while Home is open. The Not running card covers the page, and the Home tab keeps its selected look.
+    [Fact]
+    public Task After_a_later_outage_the_Home_tab_keeps_its_selected_look() => OnUi(async () =>
+    {
+        _records.Write(A.Record());
+        var (window, shell) = await Show(s => s.State == ShellState.Normal);
+
+        _records.Remove();
+        _clock.Advance(HealthViewModel.RetryEvery);
+        await Until(() => shell.State == ShellState.NotRunning);
+        Settle(window);
+        var labels = window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("nav-label") && t.Text is { Length: > 1 }).ToList();
+
+        Assert.Equal((PageId.Home, true, true), (shell.CurrentPage, Visible(window, "NotRunningPanel"), Named<StackPanel>(window, "NavigationGroup").IsEffectivelyEnabled));
+        Assert.Equal(Colour("Color.PrimaryHover"), Ink(labels.Single(t => t.Text == Labels.Home)));
+        _ = Assert.Single(window.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Ellipse>(), e => e.Classes.Contains("nav-dot") && e.IsEffectivelyVisible);
     });
 
     // I3 (home.html .phead): each Home panel has a header row (the eyebrow over a hairline) and a body; "not served yet"
