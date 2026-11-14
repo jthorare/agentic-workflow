@@ -205,7 +205,6 @@
     <!-- Level 3: one run, every node with its input, output and error. -->
     <StackPanel x:Name="WorkflowRunLevel" Spacing="{StaticResource Size.PanelGap}" IsVisible="{Binding IsRun}">
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-        <TextBlock x:Name="RunTitle" Classes="body-strong mono" Text="{Binding Run.TitleText}" AutomationProperties.Name="{Binding Run.TitleText}" />
         <Border x:Name="RunChipName" Classes="status-chip" Classes.ok="{Binding Run.IsOk}" Classes.attention="{Binding Run.IsAttention}" Classes.error="{Binding Run.IsError}" AutomationProperties.Name="{Binding Run.ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock x:Name="RunChip" Text="{Binding Run.ChipText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
