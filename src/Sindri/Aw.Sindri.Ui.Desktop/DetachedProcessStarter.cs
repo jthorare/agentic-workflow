@@ -63,14 +63,14 @@ internal sealed class DetachedProcessStarter(Func<ProcessStartInfo, Process?>? s
             RedirectStandardInput = false,
         };
         info.ArgumentList.Add("-c");
-        info.ArgumentList.Add($"umask 077; {detach} \"$0\" \"$@\" </dev/null >>\"$LOG\" 2>&1");
+        info.ArgumentList.Add($"umask 077; {detach} \"$0\" \"$@\" </dev/null >>\"$AW_START_LOG\" 2>&1");
         info.ArgumentList.Add(launch.Executable);
         foreach (var argument in launch.Arguments)
         {
             info.ArgumentList.Add(argument);
         }
 
-        info.Environment["LOG"] = launch.LogPath;
+        info.Environment["AW_START_LOG"] = launch.LogPath;
 
         return Scrub(info);
     }
