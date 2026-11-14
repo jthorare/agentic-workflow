@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Features.StartSession;
 using Aw.Sindri.Features.StopSession;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.StartSession;
 
 namespace Aw.Sindri.Tests.StopSession;
@@ -24,8 +25,9 @@ public sealed class StopSessionTests : IDisposable
 
     private static SessionRef Ref(string id) => new(AgentId.From("claude-code"), SessionId.From(id));
 
-    // why: the red stub takes no constructor parameters; the fix gives it the book, the host and the caller.
-    private static StopSessionService Service() => new();
+    private readonly InMemorySessionSnapshot _snapshot = new();
+
+    private StopSessionService Service() => new(_r.Book, _r.Host, _r.Base.Callers, _snapshot);
 
     private async Task StartOneOff() =>
         _ = (await _r.Service().Handle(new StartSessionRequest(RepoName.From("demo"), AgentId.From("claude-code"), "hi", false, ActId.From(Act)), Token)).Value;
@@ -87,5 +89,24 @@ public sealed class StopSessionTests : IDisposable
 
         Assert.True(stopped.IsSuccess, stopped.IsError ? stopped.Error.ToString() : null);
         Assert.Equal("ended", stopped.Value.State);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Stop_by_the_provider_session_id_of_a_row_on_Sindris_own_socket_ends_that_session()
+    {
+        await StartOneOff();
+        var session = new SessionRef(AgentId.From("claude-code"), SessionId.From("3970893f-aaaa-bbbb"));
+        _snapshot.Publish(new SessionSnapshot(
+            [new ObservedSession(session, 4121, 77, SessionState.Running, StateSource.Hook, DateTimeOffset.UnixEpoch)
+            {
+                Host = HostInfo.Unknown with { Tmux = new TmuxFacts("/tmp/s", "sindri", "sindri-" + Act, "%1") },
+            }],
+            [], [], DateTimeOffset.UnixEpoch));
+
+        var stopped = await Service().Handle(new StopSessionRequest(session), Token);
+
+        Assert.True(stopped.IsSuccess, stopped.IsError ? stopped.Error.ToString() : null);
+        Assert.Equal("sindri-" + Act, stopped.Value.Id.Value);
+        Assert.False(await _r.Host.Exists(new HostRef(HostKind.Tmux, "sindri-" + Act), Token));
     }
 }

@@ -130,7 +130,7 @@ public sealed class ApiGoldenTests
     private static bool IsStillOwnerOnly(string slug) =>
         slug.StartsWith("profile", StringComparison.Ordinal) || slug.StartsWith("linear-connect", StringComparison.Ordinal) || slug.StartsWith("linear-disconnect", StringComparison.Ordinal)
         || string.Equals(slug, "workflows-slug-activate", StringComparison.Ordinal) || string.Equals(slug, "workflows-slug-pause", StringComparison.Ordinal)   // a session is refused (#3199)
-        || string.Equals(slug, "sessions-start", StringComparison.Ordinal) || string.Equals(slug, "sessions-worktree", StringComparison.Ordinal);
+        || string.Equals(slug, "sessions-start", StringComparison.Ordinal) || string.Equals(slug, "sessions-worktree", StringComparison.Ordinal) || string.Equals(slug, "sessions-id-id-stop", StringComparison.Ordinal);
 
     private static string HumanGolden((string Slug, string Scenario) row) =>
         File.ReadAllText(Golden.SourcePath(typeof(ApiGoldenTests).Assembly, ApiGolden.PathOf(row.Slug, row.Scenario)));

@@ -4,14 +4,16 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Features.RemoveSessionWorktree;
 using Aw.Sindri.Features.StartSession;
+using Aw.Sindri.Features.StopSession;
 using ModelContextProtocol.Protocol;
 
 namespace Aw.Sindri.Host.Mcp;
 
 /// <summary>
-/// The agents_* tools of the one-off start (agents spec §15.8, A7): agents_start and agents_worktree_remove. Each is one call to the service its HTTP route calls. Both are listed, and both are desk actions without
+/// The agents_* tools of the one-off start (agents spec §15.8, A7): agents_start, agents_worktree_remove and agents_stop. Each is one call to the service its HTTP route calls. Both are listed, and both are desk actions without
 /// SessionOk, so every MCP caller (an agent session) is refused with SND-AUTH-002 in v1: the owner starts agents from the app or a terminal.
 /// </summary>
 internal static class AgentTools
@@ -21,6 +23,23 @@ internal static class AgentTools
 
     /// <summary>agents_worktree_remove's name.</summary>
     internal const string RemoveWorktree = "agents_worktree_remove";
+
+    /// <summary>agents_stop's name.</summary>
+    internal const string Stop = "agents_stop";
+
+    private static Tool StopTool { get; } = new()
+    {
+        Name = Stop,
+        Description = "End a session Sindri started ('kill-session' on its sindri-<actId> tmux session; one already gone counts as stopped). For the person only: an agent session is refused (SND-AUTH-002). A session Sindri did not start is SND-AGENT-019.",
+        InputSchema = ContextTools.Schema(
+            new JsonObject
+            {
+                ["provider"] = ContextTools.Property("string", "The agent, claude-code or codex"),
+                ["id"] = ContextTools.Property("string", "The tmux name sindri-<actId>, or the provider's session id"),
+            },
+            required: ["provider", "id"]),
+        Annotations = new ToolAnnotations { ReadOnlyHint = false, DestructiveHint = true, IdempotentHint = true, OpenWorldHint = false },
+    };
 
     private static Tool StartTool { get; } = new()
     {
@@ -47,8 +66,8 @@ internal static class AgentTools
         Annotations = new ToolAnnotations { ReadOnlyHint = false, DestructiveHint = true, IdempotentHint = true, OpenWorldHint = false },
     };
 
-    /// <summary>The two tools.</summary>
-    internal static IReadOnlyList<Tool> All { get; } = [StartTool, RemoveWorktreeTool];
+    /// <summary>The three tools.</summary>
+    internal static IReadOnlyList<Tool> All { get; } = [StartTool, RemoveWorktreeTool, StopTool];
 
     /// <summary>Runs the tool named <paramref name="tool"/>.</summary>
     /// <param name="tool">The tool's name.</param>
@@ -57,7 +76,28 @@ internal static class AgentTools
     /// <param name="ct">Cancels the call.</param>
     /// <returns>The tool result.</returns>
     internal static ValueTask<CallToolResult> Call(string tool, IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct) =>
-        string.Equals(tool, Start, StringComparison.Ordinal) ? CallStart(services, arguments, ct) : CallRemove(services, arguments, ct);
+        string.Equals(tool, Start, StringComparison.Ordinal) ? CallStart(services, arguments, ct)
+        : string.Equals(tool, Stop, StringComparison.Ordinal) ? CallStop(services, arguments, ct)
+        : CallRemove(services, arguments, ct);
+
+    private static async ValueTask<CallToolResult> CallStop(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        var refused = McpArguments.Only(Stop, arguments, "provider", "id");
+        var provider = McpArguments.RequiredString(Stop, arguments, "provider", "claude-code");
+        var id = McpArguments.RequiredString(Stop, arguments, "id", "sindri-k3j9x0a1");
+        if ((refused ?? Failed(provider) ?? Failed(id)) is { } error)
+        {
+            return McpResults.Failure(services, error);
+        }
+
+        if (!AgentId.TryFrom(provider.Value, out var agent) || !SessionId.TryFrom(id.Value, out var session))
+        {
+            return McpResults.Failure(services, Core.SindriErrors.InvalidInput.With("provider is an agent id and id a session id or sindri-<actId>"));
+        }
+
+        var answer = await services.GetRequiredService<IService<StopSessionRequest, StoppedSession>>().Handle(new StopSessionRequest(new SessionRef(agent, session)), ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static a => $"stopped {a.Id.Value}");
+    }
 
     private static async ValueTask<CallToolResult> CallStart(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {

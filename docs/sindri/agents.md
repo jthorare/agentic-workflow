@@ -29,3 +29,15 @@ These are in the spec and not built:
 ## Latency rule (D14, keystroke to echo p50 <= 30 ms)
 
 After each `key` message Serve runs one capture right away instead of waiting for the next 30/s tick, and skips that next tick so the 30/s cap holds.
+
+## Stopping a session Sindri started
+
+`POST /sindri/sessions/{provider}/{id}/stop` ends a one-off session (spec §15.2, issue 3147). The CLI is `sindri agents stop <provider>/<id> [--json]`, the MCP tool is `agents_stop`.
+
+1. Only the person may call it. An agent session gets SND-AUTH-002.
+2. `{id}` is the tmux name `sindri-<actId>`, or the provider's session id of a row whose tmux session sits on Sindri's own socket.
+3. A start must have recorded that act id. Any other session gets SND-AGENT-019 (409) and nothing is killed.
+4. Sindri runs `kill-session -t sindri-<actId>`. A session that is already gone counts as stopped.
+5. The answer is `{"id":"sindri-<actId>","actId":"<actId>","state":"ended"}`.
+
+The worktree and branch stay. `sindri agents worktree remove <actId>` removes a clean worktree after the stop.

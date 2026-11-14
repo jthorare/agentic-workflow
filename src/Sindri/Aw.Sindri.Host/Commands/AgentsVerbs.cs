@@ -14,7 +14,7 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="output">Where the verbs write.</param>
 internal sealed class AgentsVerbs(ControlPlaneClient client, Output output)
 {
-    internal const string Usage = "agents [--provider <agent>] [--state <s>] [--repo <r>] [--json] | agents show <provider>/<id> [--json] | " + AgentStartVerbs.StartUsage + " | " + AgentStartVerbs.RemoveUsage;
+    internal const string Usage = "agents [--provider <agent>] [--state <s>] [--repo <r>] [--json] | agents show <provider>/<id> [--json] | " + AgentStartVerbs.StartUsage + " | " + AgentStartVerbs.RemoveUsage + " | " + AgentStartVerbs.StopUsage;
 
     internal async Task<int> Run(string[] args, CancellationToken ct)
     {
@@ -26,6 +26,7 @@ internal sealed class AgentsVerbs(ControlPlaneClient client, Output output)
         {
             ["start", ..] => await starts.Start(rest[1..], json, ct).ConfigureAwait(false),
             ["worktree", "remove", ..] => await starts.RemoveWorktree(rest[2..], json, ct).ConfigureAwait(false),
+            ["stop", ..] => await starts.Stop(rest[1..], json, ct).ConfigureAwait(false),
             ["show", ..] => await Show(rest[1..], json, ct).ConfigureAwait(false),
             _ => await List(rest, json, ct).ConfigureAwait(false),
         };

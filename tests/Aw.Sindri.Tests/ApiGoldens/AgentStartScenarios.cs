@@ -9,7 +9,7 @@ using static Aw.Sindri.Tests.Callers.CallerRequests;
 namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
-/// The goldens of 'POST /sindri/sessions' and 'DELETE /sindri/sessions/{actId}/worktree' (agents spec §15.8, A7): the refusals that need no tmux and no agent: a bad act id (400, no agent code), a prompt over 8,000
+/// The goldens of 'POST /sindri/sessions' 'DELETE /sindri/sessions/{actId}/worktree' and 'POST /sindri/sessions/{provider}/{id}/stop' (agents spec §15.8, A7; issue 3147): the refusals that need no tmux and no agent: a bad act id (400, no agent code), a prompt over 8,000
 /// characters (SND-AGENT-017), an agent session as the caller (SND-AUTH-002) and a worktree no start recorded (SND-AGENT-018). The 2xx start needs a real tmux, so the unit tests cover it on a fake host.
 /// </summary>
 internal static class AgentStartScenarios
@@ -22,7 +22,7 @@ internal static class AgentStartScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("sessions-start", "bad-act-id"), ("sessions-start", "empty-act-id"), ("sessions-start", "prompt-too-long"), ("sessions-start", "session-refused"), ("sessions-worktree", "unrecorded"), ("sessions-last-start", "present"), ("sessions-last-start", "absent"),
+        ("sessions-start", "bad-act-id"), ("sessions-start", "empty-act-id"), ("sessions-start", "prompt-too-long"), ("sessions-start", "session-refused"), ("sessions-worktree", "unrecorded"), ("sessions-id-id-stop", "not-started"), ("sessions-id-id-stop", "session-refused"), ("sessions-last-start", "present"), ("sessions-last-start", "absent"),
         (Terminal, "bad-ref"), (Terminal, "no-pane"), (Terminal, "pane-gone"),
     ];
 
@@ -78,6 +78,14 @@ internal static class AgentStartScenarios
                 return await Ask(host, Get("/sindri/sessions/last-start", owner));
             case ("sessions-worktree", "unrecorded"):
                 return await Ask(host, Delete("/sindri/sessions/never0000/worktree", owner));
+            case ("sessions-id-id-stop", "not-started"):
+                return await Ask(host, Post("/sindri/sessions/claude-code/sindri-zzzzzzzz/stop", null, owner));
+            case ("sessions-id-id-stop", "session-refused"):
+                using (AsSession())
+                {
+                    return await Ask(host, Post("/sindri/sessions/claude-code/sindri-zzzzzzzz/stop", null, Human(host.Token.Value)));
+                }
+
             case (Terminal, _):
                 return await TerminalBody(host, scenario);
             default:

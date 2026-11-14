@@ -7,6 +7,7 @@ using Aw.Sindri.Features.ResumeJob;
 using Aw.Sindri.Features.ResumeService;
 using Aw.Sindri.Features.RunService;
 using Aw.Sindri.Features.StartSession;
+using Aw.Sindri.Features.StopSession;
 
 namespace Aw.Sindri.Host.Catalog;
 
@@ -31,6 +32,9 @@ internal static class ServiceRows
         new(ActionId.From("RemoveSessionWorktree"), typeof(RemoveSessionWorktreeRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: true, ReadsViews: false, Shortcut: null,
             "DELETE", "/sindri/sessions/{actId}/worktree", ShellRows.Form("sindri agents worktree remove <actId>"), "ready"),
+        new(ActionId.From("StopSession"), typeof(StopSessionRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
+            NeedsTerminal: false, SelfAudited: false, Destructive: true, ReadsViews: false, Shortcut: null,
+            "POST", "/sindri/sessions/{provider}/{id}/stop", ShellRows.Form("sindri agents stop <provider>/<id>"), "ready"),   // agents spec §15.2: human only, no SessionOk
         new(ActionId.From("ResumeJob"), typeof(ResumeJobRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/jobs/{jobId}/resume", ShellRows.Form("sindri jobs resume <jobId>"), "ready"),

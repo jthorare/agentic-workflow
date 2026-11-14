@@ -131,6 +131,7 @@ internal static partial class Labels
         ["ResumeService"] = "Resume service",
         ["StartSession"] = "Start agent",
         ["RemoveSessionWorktree"] = "Remove agent worktree",
+        ["StopSession"] = "Stop agent session",
         ["ReviewContextMap:accept"] = "Accept map suggestion",
         ["ReviewContextMap:accept-deterministic"] = "Accept all deterministic links",
         ["ReviewContextMap:add"] = "Add map entry",

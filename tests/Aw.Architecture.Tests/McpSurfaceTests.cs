@@ -56,6 +56,7 @@ public sealed class McpSurfaceTests
         // why: agents spec 15.8 (A7): agents_start and agents_worktree_remove are listed so the surface is complete, and refused for every session caller (desk class, no SessionOk, SND-AUTH-002): the owner starts agents
         "Aw.Sindri.Features.StartSession.StartSessionRequest",   // internal to Features, so named by its full name
         "Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeRequest",
+        "Aw.Sindri.Features.StopSession.StopSessionRequest",   // agents_stop, issue 3147
         // why: todo spec D2 (Ph1b): a todo list can't change anything outside Sindri, so agents get the six todo writes (add, change, done, reopen, remove, restore), all request class; MarkTodoRequest carries the last four
         typeof(AddTodoRequest).FullName!,
         typeof(ChangeTodoRequest).FullName!,
