@@ -2,6 +2,8 @@ using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Layout;
@@ -42,7 +44,7 @@ internal sealed class GraphNodeCard : UserControl
     public static readonly StyledProperty<bool> IsInvalidProperty = AvaloniaProperty.Register<GraphNodeCard, bool>(nameof(IsInvalid));
 
     // A Canvas, not a Panel with negative margins: a ring sits outside the card at an explicit offset and size, so no layout rule can move it.
-    private readonly Canvas _rings = new() { IsHitTestVisible = false };
+    private readonly Canvas _rings = new() { IsHitTestVisible = false, ClipToBounds = false };
     private readonly Border _face = new() { Name = "Card", CornerRadius = new CornerRadius(Radius), Padding = new Thickness(12, 8) };
     private readonly Rectangle _dash = new() { Name = "Dash", RadiusX = Radius, RadiusY = Radius, StrokeThickness = 1, StrokeDashArray = [6, 4], IsVisible = false, IsHitTestVisible = false };
     private readonly TextBlock _title = new() { TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
@@ -69,6 +71,10 @@ internal sealed class GraphNodeCard : UserControl
         Width = WorkflowGraphViewModel.CardWidth;
         Height = WorkflowGraphViewModel.CardHeight;
         Focusable = true;
+        // The rings lie outside the card: nothing from here down to the rings may clip to the card's bounds (a clipped ring showed only the specks where its corners dip inside), and the
+        // app-wide focus adorner (FluentOverrides.axaml, 2 to 4 px out) is off because the card draws its own focus ring.
+        ClipToBounds = false;
+        FocusAdorner = null;
         _title.Classes.Add("body-strong");
         _kind.Classes.Add("caption");
         AutomationProperties.SetAccessibilityView(_title, AccessibilityView.Raw);
@@ -84,7 +90,7 @@ internal sealed class GraphNodeCard : UserControl
         body.Children.Add(_kind);
         _face.Child = body;
 
-        var layers = new Grid();
+        var layers = new Grid { ClipToBounds = false };
         layers.Children.Add(_rings);
         layers.Children.Add(_face);
         layers.Children.Add(_dash);
@@ -139,6 +145,16 @@ internal sealed class GraphNodeCard : UserControl
     {
         get => GetValue(IsInvalidProperty);
         set => SetValue(IsInvalidProperty, value);
+    }
+
+    /// <inheritdoc />
+    protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
+    {
+        base.OnApplyTemplate(e);
+        if (e?.NameScope.Find<ContentPresenter>("PART_ContentPresenter") is { } presenter)
+        {
+            presenter.ClipToBounds = false;
+        }
     }
 
     /// <inheritdoc />
