@@ -76,7 +76,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         (Setup, LibraryRoots, LinearConnection) = (new SetupViewModel(api, Health.Catalog, clock, OpensInApp, window.Folders), InitLibraryRoots(api, window), InitLinearConnection(api));
         InitSetup();
         InitSheetNames();
-        InitAgents(clipboard, window.Launcher);
+        InitAgents(clipboard, window.Launcher, window);
         InitContext(api, clipboard, window.Launcher);
         Queue.PropertyChanged += OnQueueChanged;
         Create.Created += (_, created) => Queue.Reveal(created.ItemId);
