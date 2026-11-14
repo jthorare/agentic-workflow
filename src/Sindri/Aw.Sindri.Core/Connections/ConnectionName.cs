@@ -31,6 +31,17 @@ public readonly partial record struct ConnectionName
         return new ConnectionName { Service = pieces[0], Label = pieces[1] };
     }
 
+    /// <summary>
+    /// Parses a name that the generic add or a rename asks for. slack:messages has no preset on purpose and only sindri messages connect makes it (#3279, #3640),
+    /// so neither may create it, and a rename must not move it away.
+    /// </summary>
+    /// <param name="text">The name as typed, 'service:label'.</param>
+    /// <returns>The name, SND-CONN-017 for slack:messages, or SND-CONN-008.</returns>
+    public static Result<ConnectionName> ParseUnreserved(string text) =>
+        string.Equals(text, "slack:messages", StringComparison.Ordinal)
+            ? SindriErrors.ConnectionNameReserved.With("slack:messages is made by sindri messages connect (fix: run sindri messages connect)")
+            : Parse(text);
+
     /// <summary>The name as typed back: '&lt;service&gt;:&lt;label&gt;'.</summary>
     /// <returns>The name.</returns>
     public override string ToString() => string.Concat(Service, ":", Label);

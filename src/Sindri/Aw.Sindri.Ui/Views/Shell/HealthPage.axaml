@@ -258,14 +258,26 @@
                 <TextBlock x:Name="CodeIndexWord" Grid.Column="1" Classes="body-strong head-word" Text="{Binding Word}" AutomationProperties.Name="{Binding Word}" />
               </Grid>
               <ItemsControl x:Name="CodeIndexLines" ItemsSource="{Binding Lines}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel Spacing="0" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="shell:CodeIndexLine">
-                    <Border MinHeight="{StaticResource Row.Height.Data}">
+                    <!-- qa on #3586: a line's gap is its own padding (Space.XS above and below), no MinHeight and no list spacing, so wrapped or not every gap is the same; a one-row line is 20 + 16 = 36, the Control plane row pitch. -->
+                    <Border Padding="0,8">
                       <TextBlock Classes="body" Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
                     </Border>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
+              <!-- #3576: the pause is one service, so its resume command shows once, tight under its words: mono, no wrapping, selectable so it copies in one piece. -->
+              <StackPanel x:Name="CodeIndexPausedFoot" IsVisible="{Binding HasPausedCommand}">
+                <TextBlock x:Name="CodeIndexPausedNote" Classes="body" Text="{Binding PausedNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding PausedNote}" />
+                <SelectableTextBlock x:Name="CodeIndexCommand" Classes="mono" Text="{Binding PausedCommand}" TextWrapping="NoWrap"
+                                     AutomationProperties.Name="{Binding PausedCommand}" />
+              </StackPanel>
               <TextBlock x:Name="CodeIndexMessage" Classes="body subtle" Text="{Binding Message}" TextWrapping="Wrap" IsVisible="{Binding HasMessage}"
                          AutomationProperties.Name="{Binding Message}" />
             </StackPanel>

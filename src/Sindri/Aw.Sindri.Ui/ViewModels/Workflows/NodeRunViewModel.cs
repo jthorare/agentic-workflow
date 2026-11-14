@@ -13,8 +13,8 @@ internal sealed class NodeRunViewModel : ObservableObject
         _control = control;
         TitleText = count > 1 || run.ItemIndex > 0 ? Labels.WfItemTitle(run.ItemIndex, count) : run.Node;
         var (glyph, word) = Labels.WfChip(run.Status);
-        ChipText = glyph + " " + word;
         Tone = RunStatus.Tone(run.Status);
+        (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, RunStatus.ToneWord(run.Status));
         InputText = WorkflowJson.Pretty(run.Input);
         OutputText = WorkflowJson.Pretty(run.Output);
         IsTruncated = run.Truncated;
@@ -62,17 +62,17 @@ internal sealed class NodeRunViewModel : ObservableObject
     /// <summary>The node's id, or "Item 2 of 3" for one item of a for_each node.</summary>
     public string TitleText { get; }
 
-    /// <summary>The status: glyph and word.</summary>
-    public string ChipText { get; }
-
     /// <summary>The chip's tone; the glyph and word carry the status too.</summary>
     public ChipTone Tone { get; }
 
-    /// <summary>True for a succeeded or running node (the ok colour).</summary>
-    public bool IsOk => Tone == ChipTone.Ok;
+    /// <summary>The chip's word without its glyph.</summary>
+    public string ChipWord { get; }
 
-    /// <summary>True for a waiting node (the attention colour).</summary>
-    public bool IsAttention => Tone == ChipTone.Attn;
+    /// <summary>The chip's glyph.</summary>
+    public string ChipGlyph { get; }
+
+    /// <summary>The chip's StateChipView tone: ok, running, waiting, error or neutral.</summary>
+    public string ChipToneWord { get; }
 
     /// <summary>True for a failed node (the error colour).</summary>
     public bool IsError => Tone == ChipTone.Fail;

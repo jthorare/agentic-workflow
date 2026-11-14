@@ -176,7 +176,10 @@ public static class GhJson
         var entry = Child(pull, "mergeQueueEntry");
         var state = entry is { } found ? Text(found, "state") : string.Empty;
         var reason = RemovedReason(pull);
-        return new MergeQueueView(Flag(pull, "isMergeQueueEnabled"), Flag(pull, "isInMergeQueue"), entry is { } e ? Whole(e, "position") : null, state.Length > 0 ? state : null, reason.Length > 0 ? reason : null);
+        return new MergeQueueView(Flag(pull, "isMergeQueueEnabled"), Flag(pull, "isInMergeQueue"), entry is { } e ? Whole(e, "position") : null, state.Length > 0 ? state : null, reason.Length > 0 ? reason : null)
+        {
+            Stacked = Child(pull, "stack") is not null,
+        };
     }
 
     // The reason of the latest "removed from the merge queue" event; empty when there is none.

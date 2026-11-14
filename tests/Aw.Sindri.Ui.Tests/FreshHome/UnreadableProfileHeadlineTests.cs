@@ -10,11 +10,22 @@ namespace Aw.Sindri.Ui.Tests.FreshHome;
 [Lane(TestLane.Unit)]
 public sealed class UnreadableProfileHeadlineTests
 {
-    private static StatusView Unreadable() => A.Status() with
+    private static StatusView Unreadable(string kind = "unreadable") => A.Status() with
     {
         Health = new HealthView("healthy", []),
-        Profile = new ProfileView(Live: null, Problem: "/home/thor/profile.yaml can't be read: Access to the path is denied.", Source: null, ProblemKind: "invalid"),
+        Profile = new ProfileView(Live: null, Problem: "/home/thor/profile.yaml can't be read: Access to the path is denied.", Source: null, ProblemKind: kind),
     };
+
+    [Fact]
+    public async Task An_invalid_profile_reads_invalid_and_the_pill_is_still_not_Healthy()
+    {
+        var system = new SystemTestHarness();
+        await system.Show(Unreadable("invalid"));
+
+        Assert.Equal("invalid", system.Vm.ProfileState);
+        Assert.False(system.Vm.Pill.IsHealthy);
+        Assert.Equal(Labels.PillNeedsLook, system.Vm.Pill.Word, StringComparer.Ordinal);
+    }
 
     [Fact]
     public async Task The_pill_is_not_Healthy_when_the_profile_is_unreadable()

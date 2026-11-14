@@ -10,6 +10,7 @@ using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.ViewModels.Workflows;
+using Aw.Sindri.Ui.Views.Controls;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
@@ -214,7 +215,7 @@ public sealed class WorkflowsFramesTests : FrameHost
 
         Assert.True(Visible(window, "RunNow"));
         await Until(window, () => window.ActualThemeVariant == ThemeVariant.Light, "the window never took the light theme");
-        var chip = window.GetVisualDescendants().OfType<Border>().First(b => b.IsEffectivelyVisible && b.Classes.Contains("status-chip") && b.Classes.Contains("ok")).GetVisualDescendants().OfType<TextBlock>().First();
+        var chip = window.GetVisualDescendants().OfType<StateChipView>().First(c => c.IsEffectivelyVisible && c.Tone == "ok").GetVisualDescendants().OfType<TextBlock>().First();
         Assert.Equal(ThemeColor(window, "Brush.Success", ThemeVariant.Light), ChipColor(chip));   // the theme token (Success is one colour in both variants, Theme/Tokens.axaml)
         Frame(window, "runs-light-1440", Prefix);
     });
@@ -232,8 +233,8 @@ public sealed class WorkflowsFramesTests : FrameHost
 
         Assert.True(Visible(window, "RunCancel"));
         await Until(window, () => window.ActualThemeVariant == ThemeVariant.Light, "the window never took the light theme");
-        var chip = Named<TextBlock>(window, "RunChip");   // a running run: the ok tone
-        Assert.Equal(ThemeColor(window, "Brush.Success", ThemeVariant.Light), ChipColor(chip));
+        var chip = Named<StateChipView>(window, "RunChipName").GetVisualDescendants().OfType<TextBlock>().First();   // a running run: the running tone (#3233), its own colour and no longer ok's
+        Assert.Equal(ThemeColor(window, "Brush.Status.Running.Fg", ThemeVariant.Light), ChipColor(chip));
         Frame(window, "run-light-1440", Prefix);
     });
 
@@ -280,5 +281,103 @@ public sealed class WorkflowsFramesTests : FrameHost
         var first = Assert.IsType<Border>(Focused(window));   // the row is the focus stop since #2550, not its title button
         Assert.Equal(shell.Workflows.Rows[0], first.DataContext);
         Assert.False(back.IsEffectivelyVisible);
+    });
+
+    // #3233 PR 2: every status chip on the page is a StateChipView in the status-chip tone set, never a hand-drawn Border.status-chip.
+    private static void AssertChip(StateChipView chip, string word, string glyph, string tone, string what)
+    {
+        Assert.Equal(tone, chip.Tone);
+        Assert.Contains("status-" + tone, chip.Classes, StringComparer.Ordinal);
+        Assert.False(string.IsNullOrEmpty(chip.Word), $"{what}: the chip has no word");
+        Assert.Equal(word, chip.Word);
+        Assert.Equal(glyph, chip.Glyph);
+        Assert.False(string.IsNullOrEmpty(word), $"{what}: the view model has no chip word");
+    }
+
+    private static void AssertNoHandDrawnChip(Window window) =>
+        Assert.DoesNotContain(window.GetVisualDescendants().OfType<Border>(), b => b is not StateChipView && b.Classes.Contains("status-chip"));
+
+    [Fact]
+    public Task The_workflow_rows_draw_their_state_as_StateChipViews() => OnUi(async () =>
+    {
+        var (window, shell) = await OnWorkflows(1440);
+
+        AssertNoHandDrawnChip(window);
+        var chips = window.GetVisualDescendants().OfType<StateChipView>().Where(c => c.IsEffectivelyVisible).ToList();
+        Assert.Equal(shell.Workflows.Rows.Count, chips.Count);
+        for (var i = 0; i < chips.Count; i++)
+        {
+            var row = shell.Workflows.Rows[i];
+            AssertChip(chips[i], row.ChipWord, row.ChipGlyph, row.IsActive ? "ok" : "neutral", $"workflow {row.Slug}");
+            Assert.Equal(chips[i].Tone, row.ChipToneWord);
+        }
+    });
+
+    [Fact]
+    public Task The_run_rows_draw_their_status_as_StateChipViews() => OnUi(async () =>
+    {
+        var (window, shell) = await OnWorkflows(1440);
+        await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
+        await Until(window, () => shell.Workflows.Runs.Rows.Count > 0, "the runs never showed");
+
+        AssertNoHandDrawnChip(window);
+        var chips = window.GetVisualDescendants().OfType<StateChipView>().Where(c => c.IsEffectivelyVisible).ToList();
+        Assert.Equal(shell.Workflows.Runs.Rows.Count, chips.Count);
+        for (var i = 0; i < chips.Count; i++)
+        {
+            var row = shell.Workflows.Runs.Rows[i];
+            AssertChip(chips[i], row.ChipWord, row.ChipGlyph, row.ChipToneWord, $"run {row.Id}");
+            Assert.Equal(chips[i].Tone, row.ChipToneWord);
+        }
+
+        Assert.Contains(chips, c => c.Tone == "ok");
+        Assert.Contains(chips, c => c.Tone == "error");   // list-three holds a succeeded and a failed run
+    });
+
+    [Fact]
+    public Task The_run_header_and_the_node_runs_draw_their_status_as_StateChipViews() => OnUi(async () =>
+    {
+        var (window, shell) = await OnWorkflows(1440);
+        await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
+        await shell.Workflows.OpenRun(RunId, CancellationToken.None);
+        await Until(window, () => shell.Workflows.Run.Groups.Count > 0, "the run never showed");
+
+        AssertNoHandDrawnChip(window);
+        var run = shell.Workflows.Run;
+        var header = Assert.IsType<StateChipView>(Named<Control>(window, "RunChipName"));   // #3194 builds on this chip
+        AssertChip(header, run.ChipWord, run.ChipGlyph, run.ChipToneWord, "the run header");
+        Assert.Equal(header.Tone, run.ChipToneWord);
+
+        var nodes = run.Groups.SelectMany(g => g.Runs).ToList();
+        var chips = window.GetVisualDescendants().OfType<StateChipView>().Where(c => c.IsEffectivelyVisible && !ReferenceEquals(c, header)).ToList();
+        Assert.Equal(nodes.Count, chips.Count);
+        for (var i = 0; i < chips.Count; i++)
+        {
+            AssertChip(chips[i], nodes[i].ChipWord, nodes[i].ChipGlyph, nodes[i].ChipToneWord, $"node run {nodes[i].TitleText}");
+            Assert.Equal(chips[i].Tone, nodes[i].ChipToneWord);
+        }
+    });
+
+    // #3233: the issue's own complaint, "a run can't show Running or Waiting". A running run reads "running" and a waiting run "waiting", not ok and attention.
+    [Fact]
+    public Task A_running_and_a_waiting_run_show_their_own_tones() => OnUi(async () =>
+    {
+        var (window, shell) = await OnWorkflows(1440);
+        const string body = "{\"slug\":\"morning-check\",\"more\":false,\"runs\":["
+            + "{\"id\":\"morning-check@1:5\",\"revision\":1,\"status\":\"waiting\",\"trigger\":\"manual\",\"startedAt\":\"2026-01-01T00:05:00.0000000Z\",\"endedAt\":null,\"error\":null},"
+            + "{\"id\":\"morning-check@1:4\",\"revision\":1,\"status\":\"running\",\"trigger\":\"manual\",\"startedAt\":\"2026-01-01T00:04:00.0000000Z\",\"endedAt\":null,\"error\":null}]}";
+        Server.WorkflowRunsAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, body);
+        Server.WorkflowRunAnswers[RunId] = RouteAnswer.Api("workflow-runs-run", "running");
+
+        await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
+        await Until(window, () => shell.Workflows.Runs.Rows.Count == 2, "the two runs never showed");
+        var rows = window.GetVisualDescendants().OfType<StateChipView>().Where(c => c.IsEffectivelyVisible).ToList();
+        Assert.Equal("waiting running", string.Join(' ', rows.Select(c => c.Tone)));
+        Assert.All(rows, c => Assert.Contains("status-" + c.Tone, c.Classes, StringComparer.Ordinal));
+
+        await shell.Workflows.OpenRun(RunId, CancellationToken.None);
+        await Until(window, () => shell.Workflows.Run.Groups.Count > 0, "the run never showed");
+        var header = Assert.IsType<StateChipView>(Named<Control>(window, "RunChipName"));
+        Assert.Equal("running", header.Tone);
     });
 }
