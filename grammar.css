@@ -1,0 +1,282 @@
+/* Sindri list grammar (#2978): row / peek / full. Tokens from src/Sindri/Aw.Sindri.Ui/Theme/Tokens.axaml.
+   Every mockup links this file; a page adds layout only, never new colours, sizes or row shapes. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --canvas:#08090a; --s1:#141517; --s2:#1c1d20; --s3:#222326; --s4:#26272a;
+  --hair:rgba(255,255,255,.06); --hair-strong:#34343a; --hair-3:#3e3e44;
+  --ink:#f7f8f8; --ink-muted:#d0d6e0; --ink-subtle:#8a8f98; --ink-3:#74787f;
+  --primary:#5e6ad2; --primary-hi:#828fff; --primary-soft:#202442;
+  --ok:#2eb75b; --ok-soft:#0d2115; --att:#f2994a; --att-soft:#291d13; --err:#eb5757; --err-soft:#281415; --violet:#a78bfa;
+  --wire:#686870; --wire-hi:#8a8f98;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:24px; --sp6:32px; --sp7:48px;
+  --r1:4px; --r2:6px; --r3:8px; --r4:12px;
+  --font:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+
+  /* The grammar's own numbers */
+  --row-h:32px;          /* compact, the default */
+  --row-h-comfy:40px;    /* comfortable */
+  --group-h:28px;
+  --bar-h:40px;          /* top bar */
+  --header-h:48px;       /* page header row: title, count, filter, view tabs */
+  --keys-h:28px;         /* key hint footer */
+  --peek-w:440px;
+  --col-glyph:16px; --col-fact:104px; --col-fact-wide:136px; --col-age:44px; --col-wait:112px;
+  --inset:24px;          /* page side inset */
+}
+.comfortable { --row-h: var(--row-h-comfy); }
+
+* { box-sizing: border-box; }
+html, body { margin:0; }
+body { width:1440px; height:900px; overflow:hidden; background:var(--canvas); color:var(--ink);
+  font:400 13px/20px var(--font); -webkit-font-smoothing:antialiased; font-feature-settings:'tnum' 1, 'cv11' 1; }
+
+/* ---------- App frame ---------- */
+.app { display:grid; grid-template-rows: var(--bar-h) var(--header-h) 1fr var(--keys-h); height:900px; }
+.topbar { display:flex; align-items:center; gap:var(--sp3); padding:0 var(--sp3) 0 var(--sp4); border-bottom:1px solid var(--hair); }
+.wordmark { display:flex; align-items:center; gap:6px; font-weight:600; font-size:13px; margin-right:var(--sp2); }
+.wordmark::before { content:''; width:9px; height:9px; background:var(--violet); transform:rotate(45deg); border-radius:1px; }
+.nav { display:flex; gap:2px; }
+.nav a { color:var(--ink-subtle); text-decoration:none; padding:4px 10px; border-radius:var(--r2); font-weight:500; }
+.nav a.on { color:var(--ink); background:var(--s2); }
+.nav a .n { color:var(--ink-subtle); margin-left:4px; font-weight:400; }
+.nav a.on .n { color:var(--ink-subtle); }
+.topbar .spacer { flex:1; }
+.cmdk { width:280px; height:28px; border:1px solid var(--hair-strong); border-radius:var(--r2); display:flex; align-items:center; padding:0 8px; color:var(--ink-subtle); gap:8px; }
+.cmdk kbd { margin-left:auto; }
+.status-pill { display:flex; align-items:center; gap:6px; color:var(--ink-subtle); font-size:12px; }
+.status-pill::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--ok); }
+
+.header { display:flex; align-items:center; gap:var(--sp3); padding:0 var(--inset); border-bottom:1px solid var(--hair); }
+.header h1 { font:600 15px/22px var(--font); margin:0; }
+.header .count { color:var(--ink-subtle); }
+.tabs { display:flex; gap:2px; margin-left:var(--sp3); }
+.tabs a { color:var(--ink-subtle); text-decoration:none; padding:3px 10px; border-radius:var(--r2); font-weight:500; font-size:12px; line-height:18px; }
+.tabs a.on { color:var(--ink); background:var(--s2); }
+.tabs a .n { color:var(--ink-subtle); margin-left:4px; }
+.filter { margin-left:auto; width:220px; height:26px; border:1px solid var(--hair-strong); border-radius:var(--r2); display:flex; align-items:center; padding:0 8px; gap:8px; color:var(--ink-subtle); font-size:12px; }
+
+.body { display:grid; grid-template-columns: 1fr; min-height:0; }
+.body.peeking { grid-template-columns: 1fr var(--peek-w); }
+.list { overflow:hidden; padding:var(--sp2) 0; min-width:0; }
+
+.keys { display:flex; align-items:center; gap:var(--sp4); padding:0 var(--inset); border-top:1px solid var(--hair); color:var(--ink-subtle); font-size:11px; line-height:16px; }
+.keys span { display:flex; gap:6px; align-items:center; }
+.keys-div { width:1px; height:12px; background:var(--hair-strong); }  /* page keys go after this */
+kbd { font:500 11px/16px var(--mono); color:var(--ink-subtle); background:var(--s2); border:1px solid var(--hair-strong); border-radius:var(--r1); padding:0 4px; min-width:16px; text-align:center; }
+
+/* ---------- Group header (28 px) ---------- */
+.group { height:var(--group-h); display:flex; align-items:center; gap:var(--sp2); padding:0 var(--inset); color:var(--ink-subtle); font-size:12px; font-weight:500; margin-top:var(--sp2); }
+.group:first-child { margin-top:0; }
+.group .n { color:var(--ink-subtle); font-weight:400; }
+.group .chev { width:10px; color:var(--ink-subtle); }
+.group .right { margin-left:auto; color:var(--ink-subtle); font-weight:400; }
+
+/* ---------- Row (32 px) ----------
+   [glyph 16] [title, flex] [facts: fixed columns] [age 44] [waits on 112]
+   Rest: transparent. Hover: s2. Cursor (keyboard): 1px inset primary-hi ring. Selected (peeked/open): primary-soft + 2px primary bar.
+   Facts are caption size and ink-subtle; the title is the only 13 px ink text. "you" in waits-on is the only bold fact. */
+.row { height:var(--row-h); display:grid; align-items:center; column-gap:var(--sp3);
+  grid-template-columns: var(--col-glyph) minmax(200px,1fr) var(--facts, repeat(3, var(--col-fact))) var(--col-age) var(--col-wait);
+  padding:0 var(--inset); position:relative; white-space:nowrap; cursor:default; }
+.row:hover { background:var(--s2); }
+.row.cursor { box-shadow: inset 0 0 0 1px var(--primary-hi); border-radius:var(--r1); }
+.row.sel { background:var(--primary-soft); }
+.row.sel::before { content:''; position:absolute; left:0; top:0; bottom:0; width:2px; background:var(--primary); }
+.row .title { overflow:hidden; text-overflow:ellipsis; color:var(--ink); display:flex; gap:var(--sp2); align-items:baseline; min-width:0; }
+.row .title .t { overflow:hidden; text-overflow:ellipsis; }
+.row .title .id { font:400 12px/18px var(--mono); color:var(--ink-subtle); flex:none; }
+.row .title .sub { color:var(--ink-subtle); font-size:12px; overflow:hidden; text-overflow:ellipsis; }
+.row.read .title .t { color:var(--ink-muted); }
+.row.unread .title .t { font-weight:500; }
+.fact { font-size:12px; line-height:18px; color:var(--ink-subtle); overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:6px; }
+.fact.mono { font-family:var(--mono); }
+.fact.dim { color:var(--ink-subtle); }
+.fact.att { color:var(--att); } .fact.err { color:var(--err); } .fact.ok { color:var(--ok); }
+.age { font-size:12px; color:var(--ink-subtle); text-align:right; }
+.wait { font-size:12px; color:var(--ink-subtle); display:flex; align-items:center; gap:6px; overflow:hidden; }
+.wait.you { color:var(--ink); font-weight:600; }
+.av { width:16px; height:16px; border-radius:50%; background:var(--s4); color:var(--ink-muted); font:600 9px/16px var(--font); text-align:center; flex:none; }
+.av.agent { border-radius:4px; background:var(--primary-soft); color:var(--primary-hi); }
+.row .actions { position:absolute; right:var(--inset); top:4px; display:none; gap:4px; background:var(--s2); padding-left:8px;
+  min-width:calc(var(--col-age) + var(--col-wait) + var(--sp3)); justify-content:flex-end; } /* covers age + waits on whole */
+.row:hover .actions, .row.cursor .actions { display:flex; }
+
+/* Inline pieces used inside facts */
+.chip { font-size:11px; line-height:16px; padding:0 6px; border-radius:var(--r1); border:1px solid var(--hair-strong); color:var(--ink-subtle); }
+.chip.att { border-color:transparent; background:var(--att-soft); color:var(--att); }
+.chip.err { border-color:transparent; background:var(--err-soft); color:var(--err); }
+.chip.ok { border-color:transparent; background:var(--ok-soft); color:var(--ok); }
+.bar { width:56px; height:4px; border-radius:2px; background:var(--s4); overflow:hidden; flex:none; }
+.bar i { display:block; height:100%; background:var(--ink-subtle); }
+.bar.ok i { background:var(--ok); } .bar.att i { background:var(--att); }
+.diffstat { font:400 11px/16px var(--mono); } .diffstat .a { color:var(--ok); } .diffstat .d { color:var(--err); }
+.btn { height:24px; padding:0 10px; border-radius:var(--r2); border:1px solid var(--hair-strong); background:var(--s2); color:var(--ink-muted); font:500 12px/22px var(--font); display:inline-flex; align-items:center; gap:6px; white-space:nowrap; flex:none; }
+.btn.primary { background:var(--primary); border-color:var(--primary); color:#fff; }
+.btn.ghost { background:transparent; border-color:var(--hair-strong); color:var(--ink-subtle); } /* still a button: keeps its outline (qa 7) */
+
+/* ---------- State glyphs (14 px, drawn; colour = status only) ----------
+   todo: open circle · doing: half circle, primary · done: check disc, ok · draft/backlog: dashed circle
+   needs-you: diamond, attention · failed: x disc, error · parked: pause ring, attention · agent: arc, primary
+   message: speech dot · pr-open/merged/closed: drawn below */
+.g { width:14px; height:14px; display:inline-block; position:relative; flex:none; }
+.g.todo { border:1.5px solid var(--ink-subtle); border-radius:50%; }
+.g.draft { border:1.5px dashed var(--ink-3); border-radius:50%; }
+/* in review: 3/4 ring, so it differs from doing at a glance (qa 5) */
+.g.review { border:1.5px solid var(--primary-hi); border-radius:50%; background:conic-gradient(var(--primary-hi) 0 75%, transparent 75% 100%); background-clip:content-box; padding:2px; }
+.g.doing { border:1.5px solid var(--primary-hi); border-radius:50%; background:linear-gradient(90deg, var(--primary-hi) 50%, transparent 50%); background-clip:content-box; padding:2px; }
+.g.done { border-radius:50%; background:var(--ok); }
+.g.done::after { content:''; position:absolute; left:4px; top:2px; width:3px; height:6px; border:solid var(--canvas); border-width:0 1.5px 1.5px 0; transform:rotate(45deg); }
+/* linked: a confirmed link or a saved thing. Neutral on purpose: "confirmed" is not a status, so no green (#2959). */
+.g.linked { border:1.5px solid var(--ink-subtle); border-radius:50%; }
+.g.linked::after { content:''; position:absolute; left:3px; top:3px; width:5px; height:5px; border-radius:50%; background:var(--ink-subtle); }
+.g.you { width:10px; height:10px; margin:2px; background:var(--att); transform:rotate(45deg); border-radius:1px; }
+.g.fail { border-radius:50%; background:var(--err); }
+.g.fail::before, .g.fail::after { content:''; position:absolute; left:6px; top:3px; width:1.5px; height:8px; background:var(--canvas); transform:rotate(45deg); }
+.g.fail::after { transform:rotate(-45deg); }
+.g.parked { border:1.5px solid var(--att); border-radius:50%; }
+.g.parked::before, .g.parked::after { content:''; position:absolute; top:3px; width:1.5px; height:5px; background:var(--att); left:3.5px; }
+.g.parked::after { left:6px; }
+/* would have (#3109): a ring with an open check, ink-subtle: a step a test recorded and did not run. Not the draft's dashed ring, not the done check disc. */
+.g.would{background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'><circle cx='7' cy='7' r='5.75' fill='none' stroke='%238a8f98' stroke-width='1.5'/><path d='M4.4 7.2L6.3 9L9.7 5.2' fill='none' stroke='%238a8f98' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat center}
+.g.agent { border:1.5px solid var(--s4); border-top-color:var(--primary-hi); border-right-color:var(--primary-hi); border-radius:50%; }
+.g.msg { width:13px; height:10px; margin:1px 0 3px 1px; border:1.5px solid var(--ink-subtle); border-radius:5px; }
+.g.msg::after { content:''; position:absolute; left:1px; bottom:-4px; width:0; height:0; border-left:2px solid transparent; border-right:3px solid transparent; border-top:4px solid var(--ink-subtle); transform:skewX(-20deg); } /* a bubble with a tail, never a box (qa 6) */
+.g.mention { width:8px; height:8px; margin:3px; border-radius:50%; background:var(--primary-hi); }
+.g.pr { border:1.5px solid var(--ok); border-radius:50%; }
+.g.pr::after { content:''; position:absolute; left:3.5px; top:3.5px; width:4px; height:4px; border-radius:50%; background:var(--ok); }
+.g.pr.draftpr { border-color:var(--ink-subtle); } .g.pr.draftpr::after { background:var(--ink-3); }
+.g.merged { border-radius:50%; background:var(--violet); }
+.g.ci-run { border:1.5px dotted var(--att); border-radius:50%; }
+
+/* ---------- Peek pane (Space) ----------
+   440 px, s1, left hairline. Header 48 (title 15/22 + id + close). Fields: 2 columns, 28 px rows. Then the object's body. */
+.peek { background:var(--s1); border-left:1px solid var(--hair); display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+.peek-head { min-height:var(--header-h); display:flex; align-items:center; gap:var(--sp2); padding:var(--sp3) var(--sp4); border-bottom:1px solid var(--hair); }
+.peek-head h2 { font:600 15px/22px var(--font); margin:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.peek-fields { display:grid; grid-template-columns: 96px 1fr; padding:var(--sp2) var(--sp4); border-bottom:1px solid var(--hair); }
+.peek-fields dt, .peek-fields dd { height:28px; display:flex; align-items:center; margin:0; font-size:12px; gap:6px; }
+.peek-fields dt { color:var(--ink-subtle); }
+.peek-fields dd { color:var(--ink-muted); }
+.peek-body { padding:var(--sp3) var(--sp4); overflow:hidden; flex:1; }
+.peek-body p { margin:0 0 var(--sp2); color:var(--ink-muted); }
+.peek-actions { display:flex; gap:var(--sp2); padding:var(--sp3) var(--sp4); border-top:1px solid var(--hair); }
+.eyebrow { font-size:11px; line-height:16px; color:var(--ink-subtle); font-weight:500; margin:var(--sp3) 0 var(--sp1); }
+
+/* Messages inside a peek or full view */
+.msgline { display:grid; grid-template-columns: 20px 1fr; gap:var(--sp2); padding:6px 0; }
+.msgline .who { font-weight:600; font-size:12px; color:var(--ink); }
+.msgline .when { color:var(--ink-subtle); font-size:11px; margin-left:6px; font-weight:400; }
+.msgline .txt { color:var(--ink-muted); font-size:13px; line-height:20px; }
+
+/* Full view (Enter): breadcrumb in the header row; content fills the body. */
+.crumb { display:flex; align-items:center; gap:6px; color:var(--ink-subtle); font-size:13px; }
+.crumb b { color:var(--ink); font-weight:600; }
+
+/* Peek open: a row keeps its first 3 facts. Facts are written most important first; a fact past the third carries .drop-peek
+   (or set --facts-peek on the row when the first fact is wide). Padding and gaps never shrink. */
+.body.peeking .row { grid-template-columns: var(--col-glyph) minmax(200px,1fr) var(--facts-peek, var(--facts, repeat(3, var(--col-fact)))) var(--col-age) var(--col-wait); }
+.body.peeking .row .drop-peek { display:none; }
+.row.hv { background:var(--s2); } .row.hv .actions { display:flex; }  /* static frames: hover */
+/* Facts clip with an ellipsis: text-overflow doesn't apply to flex text, so a fact is a block line and its pieces sit inline. */
+.fact { display:block; } .fact > * { display:inline-block; vertical-align:middle; margin-right:6px; } .fact > *:last-child { margin-right:0; }
+.fact > .g { vertical-align:-2px; }
+
+/* progress fact: bar, 8 px, count */
+.fact .bar { display:inline-block; vertical-align:middle; margin-right:var(--sp2); }
+
+/* selected is always drawn with the cursor ring while the list has focus (qa 4): one look on every page */
+.row.sel { box-shadow: inset 0 0 0 1px var(--primary-hi); border-radius:var(--r1); }
+/* peek head: h2, id, then two icon buttons, always in this order (qa 7) */
+.peek-head .id { font:400 12px/18px var(--mono); color:var(--ink-subtle); }
+.peek-head .icon { width:24px; height:24px; display:grid; place-items:center; border-radius:var(--r1); color:var(--ink-subtle); }
+.peek-head .icon:hover { background:var(--s2); }
+/* every peek action is a .btn with its key as a kbd inside; no plain-text actions, no keys in parentheses */
+.btn kbd { margin-left:0; }
+.peek-actions .spacer { flex:1; }
+
+/* ---------- Empty and error states (#3019) ----------
+   Two shapes. Every state has exactly ONE primary button, labelled with the verb of the fix.
+   1. .empty       page empty state: replaces a list body. Left-aligned at the row inset, never a centred card.
+                   24 px glyph in its status colour · title 15/22 ink · one sentence 13/20 ink-muted saying what the click does
+                   · ONE primary button with its key as a kbd · optional ONE ghost button · optional Details disclosure.
+   2. .state-line  inline state line: one 32 px row inside a list, a group, or under the top bar. Glyph, sentence, and the fix
+                   button at the right end where row actions sit. "Can't be read" (Retry), "a newer Sindri is installed" (Restart Sindri),
+                   "connection expired" (Reconnect Linear), "stalled" (Rebuild).
+   A failed read never shows the empty text ("Nothing running."): failed and empty are different states.
+   The old-serve case ("The X list can't be read from this Sindri") is ONE shared line with Restart Sindri on every page.
+   Raw codes and CLI lines live only behind Details (mono 12). */
+.empty { padding:var(--sp6) var(--inset); max-width:600px; }
+.empty .eg { width:24px; height:24px; display:grid; place-items:center; margin-bottom:var(--sp3); }
+.empty .eg .g { transform:scale(1.7143); }                      /* the 14 px state glyph drawn at 24 px */
+.empty h2 { font:600 15px/22px var(--font); color:var(--ink); margin:0; }
+.empty p { font:400 13px/20px var(--font); color:var(--ink-muted); margin:var(--sp1) 0 var(--sp4); }
+.empty .acts { display:flex; gap:var(--sp2); align-items:center; }
+.btn.busy { opacity:.6; }                                        /* the click is being worked on: same button, label ends in … */
+.details { margin-top:var(--sp4); font:400 12px/18px var(--font); color:var(--ink-subtle); }
+.details summary { list-style:none; cursor:default; }
+.details summary::-webkit-details-marker { display:none; }
+.details summary::before { content:'\25B8  '; }
+.details[open] summary::before { content:'\25BE  '; }
+.details code { display:block; margin-top:var(--sp2); font:400 12px/18px var(--mono); color:var(--ink-subtle); }
+
+.state-line { height:var(--row-h); display:grid; grid-template-columns:var(--col-glyph) minmax(0,1fr) auto; column-gap:var(--sp3); align-items:center;
+  padding:0 var(--inset); background:var(--s1); border-bottom:1px solid var(--hair); color:var(--ink-muted); white-space:nowrap; }
+.state-line.att { background:var(--att-soft); }
+.state-line.err { background:var(--err-soft); }
+.state-line .what { overflow:hidden; text-overflow:ellipsis; }
+.state-line .what .sub { color:var(--ink-subtle); font-size:12px; margin-left:var(--sp2); }
+.state-line .btns { display:flex; gap:var(--sp1); align-items:center; }
+.state-line .det { color:var(--ink-subtle); font-size:12px; margin-right:var(--sp2); }   /* "Details ▸" before the fix button; only on a failed read */
+
+/* Setup pieces (#3019) */
+.status-pill.off::before { background:var(--ink-3); }             /* not running / not connected */
+.g.box { border:1.5px solid var(--hair-3); border-radius:3px; }   /* checkbox, in the glyph column; x selects, so lists with ticks say so in the header */
+.g.box.on { background:var(--primary); border-color:var(--primary); }
+.g.box.on::after { content:''; position:absolute; left:3.5px; top:0.5px; width:3px; height:7px; border:solid #fff; border-width:0 1.5px 1.5px 0; transform:rotate(45deg); }
+/* a row with a fix button that is always visible (a setup step): last column holds the button, right-aligned */
+.row.fix { grid-template-columns:var(--col-glyph) minmax(200px,1fr) var(--facts, var(--col-fact-wide)) var(--col-act, 168px); }
+.row.fix .fixbtn { justify-self:end; display:flex; gap:var(--sp1); }
+.row.skel .title .t { display:block; width:200px; height:8px; border-radius:2px; background:var(--s2); }  /* a repo the scan has not reached yet */
+.field { height:28px; border:1px solid var(--hair-strong); border-radius:var(--r2); display:flex; align-items:center; padding:0 8px; gap:8px;
+  font:400 12px/18px var(--mono); color:var(--ink-subtle); background:var(--canvas); }
+.field.focus { border-color:var(--primary-hi); }
+/* bottom action bar of a first-run screen: count at the left, ghost then primary at the right */
+.actionbar { display:flex; align-items:center; gap:var(--sp2); padding:var(--sp3) var(--inset); border-top:1px solid var(--hair); color:var(--ink-subtle); font-size:12px; }
+.actionbar .spacer { flex:1; }
+.body.col { display:flex; flex-direction:column; }
+.body.col .list { flex:1; }
+/* a guided step list (paste a token): numbered, s1 block under its row, at the title's indent */
+.guide { margin:var(--sp1) var(--inset) var(--sp3) calc(var(--inset) + var(--col-glyph) + var(--sp3)); background:var(--s1); border:1px solid var(--hair); border-radius:var(--r3); padding:var(--sp2) var(--sp4); }
+.guide .step { display:grid; grid-template-columns:20px 1fr auto; column-gap:var(--sp3); align-items:center; min-height:var(--row-h-comfy); }
+.guide .step .no { width:20px; height:20px; border-radius:50%; background:var(--s4); color:var(--ink-muted); font:600 11px/20px var(--font); text-align:center; }
+.guide .step.now .no { background:var(--primary); color:#fff; }
+.guide .step .say { color:var(--ink-muted); }
+
+/* Actions menu (.) and pickers: #3030, #3067 D1. One look for every popup list; ui's control reuses it. */
+.menu { position:absolute; width:240px; background:var(--s3); border:1px solid var(--hair-strong); border-radius:var(--r3);
+  box-shadow:0 8px 24px rgba(0,0,0,.45); padding:var(--sp2) 0; z-index:5; }
+.menu .mfield { margin:0 var(--sp2) var(--sp2); height:28px; border:1px solid var(--hair-strong); border-radius:var(--r2); background:var(--canvas);
+  display:flex; align-items:center; padding:0 var(--sp2); gap:var(--sp2); font:400 12px/18px var(--font); color:var(--ink-subtle); }
+.menu .mfield.focus { border-color:var(--primary-hi); }
+.menu .mfield.typed { color:var(--ink); font-family:var(--mono); }
+.menu .mfield .caret { width:1px; height:14px; background:var(--primary-hi); margin-left:-6px; }
+.menu .ment { height:32px; display:flex; align-items:center; gap:var(--sp3); padding:0 var(--sp3); margin:0 var(--sp1); border-radius:var(--r2); color:var(--ink-muted); font-size:13px; }
+.menu .ment.on { background:var(--s4); color:var(--ink); }
+.menu .ment svg { width:16px; height:16px; flex:none; stroke:currentColor; fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; color:var(--ink-subtle); }
+.menu .ment.on svg { color:var(--ink-muted); }
+.menu .ment .lab { flex:1; white-space:nowrap; }
+.menu .ment kbd { margin-left:auto; }
+.menu .ment .when { margin-left:auto; color:var(--ink-subtle); font-size:12px; }
+.menu .ment.on .when { color:var(--ink-subtle); }
+.menu .mdiv { height:1px; background:var(--hair-strong); margin:var(--sp1) 0; opacity:.6; }
+.menu .parse { margin:-4px var(--sp3) var(--sp2); font-size:12px; line-height:18px; color:var(--ink-muted); display:flex; gap:6px; align-items:center; }
+.menu .parse .ok { color:var(--ok); }
+.menu .mfoot { display:flex; gap:var(--sp3); padding:var(--sp2) var(--sp3) 0; margin-top:var(--sp1); border-top:1px solid var(--hair-strong); color:var(--ink-subtle); font-size:11px; line-height:16px; }
+.menu .mfoot span { display:flex; gap:6px; align-items:center; }
+.menu .mhead { padding:0 var(--sp3); height:20px; color:var(--ink-subtle); font-size:11px; font-weight:500; display:flex; align-items:center; }
+.menu .ment .when{white-space:nowrap}
+.menu .ment.dis{color:var(--ink-subtle)}
+/* #3107 (ideas OK 2026-11-12): limited = left half disc outline, attention; down = bare x, error (failed keeps the x on a disc) */
+.g.lim{background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'><path d='M7 1.25A5.75 5.75 0 0 0 7 12.75Z' fill='none' stroke='%23f2994a' stroke-width='1.5' stroke-linejoin='round'/></svg>") no-repeat center}
+.g.dn{background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'><path d='M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5' stroke='%23eb5757' stroke-width='1.6' stroke-linecap='round'/></svg>") no-repeat center}

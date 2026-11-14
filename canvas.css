@@ -63,9 +63,9 @@ svg.wires .ah { fill:#686870; }
 .mm .vp { position:absolute; border:1.5px solid var(--primary-hi); background:rgba(130,143,255,.12); border-radius:2px; box-sizing:border-box; }
 .mm .cap { position:absolute; left:8px; top:4px; font-size:12px; color:var(--ink-subtle); }
 .sbv { position:absolute; right:3px; width:8px; background:var(--s1); border-radius:4px; z-index:3; }
-.sbv i { display:block; position:absolute; left:1px; right:1px; background:var(--hair-3); border-radius:3px; }
+.sbv i { display:block; position:absolute; left:1px; right:1px; background:#62646a; border-radius:3px; }
 .sbh { position:absolute; bottom:3px; height:8px; background:var(--s1); border-radius:4px; z-index:3; }
-.sbh i { display:block; position:absolute; top:1px; bottom:1px; background:var(--hair-3); border-radius:3px; }
+.sbh i { display:block; position:absolute; top:1px; bottom:1px; background:#62646a; border-radius:3px; }
 .tipz { position:absolute; z-index:6; padding:5px 10px; background:var(--s3); border:1px solid var(--hair-strong); border-radius:var(--r2); box-shadow:0 8px 24px rgba(0,0,0,.45); font:400 13px/18px var(--font); color:var(--ink); white-space:nowrap; }
 .tipz kbd { margin-left:8px; }
 .sheetq { position:absolute; right:0; top:0; bottom:0; width:340px; background:var(--s1); border-left:1px solid var(--hair); z-index:5; }
@@ -94,3 +94,10 @@ kbd { font-size:12px; line-height:16px; }
 
 .cvclip { position:absolute; left:0; top:0; right:0; overflow:hidden; border-bottom:1px solid var(--hair); }
 .cvwrap .zoom { bottom:6px; }
+
+.endw { position:absolute; color:var(--ink-subtle); white-space:nowrap; }
+/* r5: selected = a 2 px accent ring 3 px outside the card, on top of any state */
+.card.sel { background:var(--s1); border-color:var(--hair-strong); box-shadow:none; outline:2px solid var(--primary-hi); outline-offset:3px; }
+.card.sel.running { border-color:var(--primary-hi); }
+.card.sel.failed { background:var(--err-soft); border-color:var(--err); }
+.hchip { display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 8px; border:1px solid var(--hair-strong); border-radius:var(--r1); font-size:12px; color:var(--att); background:var(--att-soft); }
