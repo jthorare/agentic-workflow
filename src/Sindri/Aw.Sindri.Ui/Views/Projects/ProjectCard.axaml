@@ -22,17 +22,6 @@
     <Style Selector="Ellipse.dot.ok"><Setter Property="Fill" Value="{DynamicResource Brush.Success}" /></Style>
     <Style Selector="Ellipse.dot.attn"><Setter Property="Fill" Value="{DynamicResource Brush.Attention}" /></Style>
     <Style Selector="Ellipse.dot.fail"><Setter Property="Fill" Value="{DynamicResource Brush.Error}" /></Style>
-    <!-- Edit notes and Cancel are words, not boxed buttons (mockup B, notes): no fill or border at rest or under the pointer, the label brightens instead. -->
-    <Style Selector="Button.link">
-      <Setter Property="Background" Value="Transparent" />
-      <Setter Property="BorderThickness" Value="0" />
-      <Setter Property="Padding" Value="0,2" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.InkMuted}" />
-    </Style>
-    <Style Selector="Button.link:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.link:pressed /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="Transparent" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-    </Style>
   </UserControl.Styles>
   <Border x:Name="ProjectCardFrame" Classes="card pcard clickable" Classes.gone="{Binding IsGone}" Focusable="True"
           AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
