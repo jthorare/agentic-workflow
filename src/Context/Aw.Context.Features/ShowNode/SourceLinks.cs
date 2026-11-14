@@ -32,6 +32,36 @@ internal sealed class SourceLinks(ContextScope scope, VisibleMap map, IEgressScr
         return target.Record is { } record ? await ForRecord(record, cancellationToken).ConfigureAwait(false) : await ForFile(target, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// The file on the caller's disk, for a human only: a session must not learn where a checkout lives. It is the repo's checkout path joined with the
+    /// file's path, and null when the file is not in a repo of the scope or the path would leave the checkout.
+    /// </summary>
+    /// <param name="scope">The caller's scope.</param>
+    /// <param name="target">The node's source target.</param>
+    /// <returns>The absolute path, or null.</returns>
+    public static string? LocalPath(ContextScope scope, SourceTarget? target)
+    {
+        if (scope.Caller.Kind == ContextCallerKind.Session || target?.Record is not null || target?.Path is not { Length: > 0 } path)
+        {
+            return null;
+        }
+
+        var repo = scope.Repos.FirstOrDefault(r => string.Equals(r.Name.Value, target.Repo, StringComparison.Ordinal));
+        return repo is null ? null : Inside(repo.Path, path);
+    }
+
+    private static string? Inside(string checkout, string path)
+    {
+        if (!Path.IsPathRooted(checkout) || Path.IsPathRooted(path))
+        {
+            return null;
+        }
+
+        var root = Path.GetFullPath(checkout).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        var full = Path.GetFullPath(Path.Combine(root, path));
+        return full.StartsWith(root, StringComparison.Ordinal) && full.Length > root.Length ? full : null;
+    }
+
     private async ValueTask<Uri?> ForRecord(RecordKey key, CancellationToken cancellationToken)
     {
         var stored = await records.Get(key, cancellationToken).ConfigureAwait(false);

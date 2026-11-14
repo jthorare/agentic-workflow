@@ -53,4 +53,16 @@ public sealed class NodeSourceLinkSessionTests : IDisposable
 
         Assert.Null(await UrlFor(SessionOf("OPS")));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_session_never_learns_the_local_path_of_a_file_but_a_human_does()
+    {
+        await Setup();
+
+        var session = (await _world.Engine.ShowNode("code:src/a.ts", SessionOf("ENG"), MapWorld.None)).Value.Node.Source;
+        var human = (await _world.Engine.ShowNode("code:src/a.ts", MapWorld.Human, MapWorld.None)).Value.Node.Source;
+
+        Assert.Null(session!.Path);
+        Assert.Equal(Path.Combine("/work/aw-split-panes", "src", "a.ts"), human!.Path);
+    }
 }
