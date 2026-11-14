@@ -42,9 +42,9 @@
       </StackPanel>
 
       <!-- The segmented navigation (§3.2, home.html): one group on Surface1 with a hairline; unselected labels muted, the
-           selected segment on PrimarySoft with a Primary dot and its label in PrimaryHover. Dimmed and disabled while Sindri isn't running (states.html). -->
+           selected segment on PrimarySoft with a Primary dot and its label in PrimaryHover. The tabs stay enabled while Sindri isn't running: the page you were on keeps its selected look under the Not running card, and each tab shows that card (#3688). -->
       <Border x:Name="NavSegments" Grid.Column="1" Grid.ColumnSpan="2" Classes="seg" HorizontalAlignment="Left">
-        <StackPanel x:Name="NavigationGroup" Orientation="Horizontal" Spacing="2" IsEnabled="{Binding IsNavigationEnabled}">
+        <StackPanel x:Name="NavigationGroup" Orientation="Horizontal" Spacing="2">
           <ListBox x:Name="Navigation" Classes="nav" ItemsSource="{Binding Navigation}"
                    SelectedItem="{Binding SelectedNav}" SelectionMode="Single"
                    AutomationProperties.Name="{Binding Text.Pages}">

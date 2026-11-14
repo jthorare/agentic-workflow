@@ -215,7 +215,7 @@ The drawing says "about 2 seconds"; ux measured 9.9 s to serve up, so the senten
 
 | State | What shows | Primary | Focus |
 |---|---|---|---|
-| Not running (after a failed start, or serve gone mid-session) | as above | Start Sindri (Enter) | the button |
+| Not running (after a failed start, or serve gone mid-session) | as above; the top-bar tab of the page you were on keeps its selected look, and the tabs stay clickable and show this same card (#3688) | Start Sindri (Enter) | the button |
 | Starting (on open, with no click) | Heading "Starting" and the top-bar pill "Starting", both neutral with the busy mark (no red ×); "Starting Sindri…"; Details "Waiting for Sindri · 4 s", moving each second; from 15 s "Still starting · 17 s" | none | the status line |
 | Started | the first question not done, or Home (decision 30); no toast | that page's own | its primary |
 | Didn't start in 30 s | "Sindri didn't start: <first line of serve.log's last error>." Details: the log path and `sindri serve` | Retry (Enter) | Retry |
