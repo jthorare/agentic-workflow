@@ -340,7 +340,7 @@ else fail hook-v3 "$(head -n 5 "$hook" 2> /dev/null | tr '\n' '|')"; fi
 printf 'token %s%s\n' "ghp_" "$(printf 'a%.0s' $(seq 1 36))" > "$REPO/secret.txt"
 git -C "$REPO" add secret.txt
 out="$(git -C "$REPO" commit -q -m "secret" 2>&1)"; crc=$?
-if [ "$crc" != 0 ] && printf '%s' "$out" | grep -q 'SND-SCRUB-002'; then pass hook-refuses-secret; else fail hook-refuses-secret "rc=$crc $out"; fi
+if [ "$crc" != 0 ] && grep -q 'SND-SCRUB-002' <<<"$out"; then pass hook-refuses-secret; else fail hook-refuses-secret "rc=$crc $out"; fi
 git -C "$REPO" reset -q; find "$REPO" -maxdepth 1 -name secret.txt -delete
 printf 'clean\n' > "$REPO/clean.txt"; git -C "$REPO" add clean.txt
 out="$(git -C "$REPO" commit -q -m "clean" 2>&1)"; crc=$?
