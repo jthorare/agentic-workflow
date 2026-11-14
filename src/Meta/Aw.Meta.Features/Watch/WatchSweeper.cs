@@ -16,6 +16,9 @@ namespace Aw.Meta.Features.Watch;
 /// <param name="values">Keeps the pending pull requests.</param>
 internal sealed class WatchSweeper(IMetaConfig config, WorktreeSweeper sweeper, IKeyValueStore values)
 {
+    /// <summary>The same sweeping over a poll's gh and git calls, bound by its limit and the stop signal.</summary>
+    internal WatchSweeper Using(Core.Coordination.RepoCommands github) => new(config, sweeper.Using(github), values);
+
     /// <summary>Sweeps the pull requests that just ended, and any still pending.</summary>
     /// <param name="ended">The pull requests this poll saw end for the first time.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
