@@ -112,7 +112,7 @@ internal sealed partial class WholeMapView : UserControl
 
     private void OnNodePanelClose(object? sender, RoutedEventArgs e) => _ = _map?.Panel.Close();
 
-    private void OnNodePanelOpenFile(object? sender, RoutedEventArgs e) => _ = _map?.Panel.OpenFile();
+    private void OnNodePanelOpenFile(object? sender, RoutedEventArgs e) => _ = _map?.Panel.OpenLocalFile();
 
     private void OnNodePanelOpenSource(object? sender, RoutedEventArgs e) => _ = _map?.Panel.OpenSource();
 

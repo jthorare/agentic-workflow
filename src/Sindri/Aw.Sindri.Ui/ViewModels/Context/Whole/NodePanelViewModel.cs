@@ -174,7 +174,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     /// <summary>Opens the source's file on this machine with the system's default app.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>When the system answered.</returns>
-    internal async Task OpenFile(CancellationToken cancellationToken = default)
+    internal async Task OpenLocalFile(CancellationToken cancellationToken = default)
     {
         if (_localPath is { Length: > 0 } path)
         {
@@ -193,7 +193,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
         }
         else
         {
-            await OpenFile(cancellationToken).ConfigureAwait(true);
+            await OpenLocalFile(cancellationToken).ConfigureAwait(true);
         }
     }
 
