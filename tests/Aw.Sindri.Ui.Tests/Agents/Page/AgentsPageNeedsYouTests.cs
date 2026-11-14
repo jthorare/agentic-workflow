@@ -287,8 +287,9 @@ public sealed class AgentsPageNeedsYouTests
         page.SortBy(AgentSort.Name);
         var second = Titles(Outside(page));
 
-        Assert.Equal((false, [.. first.Order(StringComparer.OrdinalIgnoreCase)]), (firstDescending, first));
-        Assert.Equal([.. first.AsEnumerable().Reverse()], second);
+        Assert.False(firstDescending);
+        Assert.Equal(first.Order(StringComparer.OrdinalIgnoreCase).ToList(), first);
+        Assert.Equal(first.AsEnumerable().Reverse().ToList(), second);
         Assert.True(page.SortDescending);
     }
 
