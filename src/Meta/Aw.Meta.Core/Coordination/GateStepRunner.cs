@@ -23,7 +23,7 @@ public sealed class GateStepRunner(ICommandRunner runner, MetaPaths paths)
     public async ValueTask<Result<GateStep>> Run(StepConfig step, string tree, string log, int heavySlots, CancellationToken cancellationToken)
     {
         var argv = GateCommand.For(step, paths.Heavy);
-        var request = new CommandRequest(argv, _limit) { Cwd = tree, LogFile = log, Env = GatePriority.EnvironmentFor(heavySlots), UnsetEnv = GatePriority.Scrubbed, TermGrace = step.TermGraceSeconds is > 0 and var seconds ? TimeSpan.FromSeconds(seconds) : null };
+        var request = new CommandRequest(argv, _limit) { Cwd = tree, PathPrefix = GateTools.PathPrefix(tree), LogFile = log, Env = GatePriority.EnvironmentFor(heavySlots), UnsetEnv = GatePriority.Scrubbed, TermGrace = step.TermGraceSeconds is > 0 and var seconds ? TimeSpan.FromSeconds(seconds) : null };
         var ran = await runner.Run(request, cancellationToken).ConfigureAwait(false);
         if (ran.IsError)
         {

@@ -254,6 +254,9 @@ public static partial class SindriErrors
     /// <summary>SND-FORGE-004: the forge can't be reached, is rate limiting, or a push failed.</summary>
     public static readonly ErrorDefinition ForgeUnavailable = new("SND-FORGE-004", ErrorKind.Unavailable, "The forge is unavailable");
 
+    /// <summary>SND-FORGE-005: the forge refused this request for one repo (an HTTP 403 that is not a rate limit); the credential is fine and other repos can still be read.</summary>
+    public static readonly ErrorDefinition ForgeRepoRefused = new("SND-FORGE-005", ErrorKind.Forbidden, "The forge refused this request for the repo");
+
     /// <summary>SND-ENGINE-001: the Temporal server, or the SDK call to it, didn't answer (API spec §3.8, E-30).</summary>
     public static readonly ErrorDefinition EngineUnavailable = new("SND-ENGINE-001", ErrorKind.Unavailable, "The Temporal server didn't answer (fix: sindri doctor; sindri serve starts the dev server)");
 
@@ -273,11 +276,11 @@ public static partial class SindriErrors
         LaunchNotFound, LaunchViewerFailed, LaunchNoViewer, LaunchAgentMissing, LaunchRepoMissing, LaunchNoSession, LaunchInterrupted, LaunchInProgress, LaunchTimedOut, LaunchBudgetReached,
         LauncherInvalid, LaunchNotApproved, LaunchFormUnsupported, LaunchPrePushForeign, LaunchPushRefused, LaunchTrustUnavailable, LaunchFactFileTracked, LaunchT3Unavailable, LaunchT3NoProject, LaunchT3NoProvider,
         LaunchSandboxUnavailable, LaunchUnconfinable, LaunchSelfCheckFailed, LaunchLoginUnavailable, LaunchGitHubTokenFailed, LaunchLimitHit, LaunchSessionWait, LaunchPrepareFailed, SandboxAllowRefused, LaunchSessionIdTimedOut, LaunchNoUsableAgent, ModelNoneAllowed, ModelListUnavailable, AuthLaunchSecret, SessionSourceFailed, SessionsUnavailable, SessionsTestOverride, SessionNotFound, SessionConflict,
-        WorktreeInvalid, WorktreeConflict, WorktreeGitFailed, WorktreeDirty, SetupFolderInvalid, SetupRepoExists, SetupConfirmationRefused, SetupRepoNotInProfile,
-        NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable, EngineUnavailable, EngineNotFound, InvalidQuery, RouteRemoved, HandoffTooLarge, HandoffRateLimited,
+        WorktreeInvalid, WorktreeConflict, WorktreeGitFailed, WorktreeDirty, SetupFolderInvalid, SetupRepoExists, SetupConfirmationRefused, SetupRepoNotInProfile, SetupScanRootInvalid, SetupRestartRunsOpen, SetupNoRepoToAdd, SetupInstallUnfinished, SetupServeDidNotStart, SetupOauthBlocked, SetupNoClientId, SetupPassTimedOut, SetupPassFailed,
+        NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable, ForgeRepoRefused, EngineUnavailable, EngineNotFound, InvalidQuery, RouteRemoved, HandoffTooLarge, HandoffRateLimited,
         ScrubStagedSecrets, ScrubForeignHook, ScrubNotARepo, ScrubGitFailed,
         ProjectAlreadyOnPage, ProjectFactsUnavailable, ProjectNotSynced, ProjectInvalid, ProjectNotFound, ProjectConflict,
-        GraphInvalid, GraphFindings, GraphUnknownBlock, GraphBadReference, GraphBadExpression, GraphBadCron, GraphStaleRevision, GraphNotFound, GraphSlugTaken, GraphIdTaken, GraphArchived, GraphRunIdTaken, GraphRunNotFound, GraphBlockFailed, GraphPromptAnswer, GraphPromptFieldEmpty, GraphRunControlsPending, GraphNotActive, GraphBadPayload, GraphRunEnded, GraphOutputTruncated, GraphOpInvalid, GraphRunLoop, GraphResultUnavailable, GraphNodeNotWaiting, GraphNodeNotTakenOver, GraphNotWaiting, GraphReferenceToContinuedFailure,
+        GraphInvalid, GraphFindings, GraphUnknownBlock, GraphBadReference, GraphBadExpression, GraphBadCron, GraphStaleRevision, GraphNotFound, GraphSlugTaken, GraphIdTaken, GraphArchived, GraphRunIdTaken, GraphRunNotFound, GraphBlockFailed, GraphPromptAnswer, GraphPromptFieldEmpty, GraphPromptCouldNotAnswer, GraphRunControlsPending, GraphNotActive, GraphBadPayload, GraphRunEnded, GraphOutputTruncated, GraphOpInvalid, GraphRunLoop, GraphResultUnavailable, GraphNodeNotWaiting, GraphNodeNotTakenOver, GraphNotWaiting, GraphSetupRunRefused, GraphReferenceToContinuedFailure,
         SkillResultUnreadable, SkillResultWrongSkill, SkillVerdictUnmapped, SkillOutputInvalid, SkillRequirementMissing, SkillPrInputInvalid, SkillAgentCopyDiffers, SkillPrFetchFailed,
         ReviewInvalid, ReviewProjectUnknown, ReviewCommandCheck, ReviewNotSynced, ReviewFixNotPosted, ReviewRepoUnsynced, ReviewNoLogin, ReviewNoConnection, ReviewSignInAgain, ReviewPrNotFound, ReviewOfflineUncached,
         LibraryDocNotFound, LinearTeamNotPicked, LinearNothingStored, LinearNoWriteKey, LinearBadValue, LinearNoAnswer, LinearWriteKeySameAsRead, LinearNoKeychain,
@@ -290,5 +293,6 @@ public static partial class SindriErrors
         CodeCompileFailed, CodeTimeout, CodeMemory, CodeFailed, CodeRunnerUnavailable,
         ToolkitNotBuilt, ToolkitTestsFailed, ToolkitManifestInvalid, ToolkitProcessDied, ToolkitPaused, ToolkitCallTimedOut, ToolkitToolUnknown, ToolkitSandboxUnavailable, ToolkitNotFound, ToolkitNameInvalid, ToolkitToolFailed, ToolkitExists, ToolkitCreateFailed,
         .. EveryTodo(),
+        .. EveryAgentStart(),
     ];
 }

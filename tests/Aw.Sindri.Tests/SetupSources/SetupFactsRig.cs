@@ -27,7 +27,7 @@ internal sealed class SetupFactsRig : IAsyncDisposable
         Host = host ?? new FakeProviderHost().WithoutProvider(Core.Mcp.ProviderFile.Codex).WithoutProvider(Core.Mcp.ProviderFile.Cursor);
         Engine = MapEngineProxy.Create();
         Facts = new SetupFacts(
-            new ProfileSetupReader(Profiles, new Core.Setup.RepoGitCache(Inspector, Clock), new NoProfileFile()),
+            new ProfileSetupReader(Profiles, new Core.Setup.RepoGitCache(Inspector, Clock), new NoProfileFile(), new Testing.Workflow.InMemoryWorkflowStore(Clock), new Testing.Workflow.InMemoryWorkflowRunStore(Clock)),
             Sources(new PointerSecrets(name => Env.GetValueOrDefault(name), new FakeToolRunner(ToolRun.Missing))),
             new McpSetupReader(Profiles, Host, Jobs, Queue),
             new MapSetupReader(Profiles, Engine.Proxy, Jobs));
@@ -126,6 +126,31 @@ internal sealed class SetupFactsRig : IAsyncDisposable
             "human:cli", at, state == JobState.Running ? null : at.AddMinutes(1), [.. lines.Select((l, i) => new JobLine(i + 1, l, at))], lines.Length, Summary: null, code, Result: null, CancelledBy: null, Sequence: _jobs));
     }
 
+    /// <summary>Puts a RefreshContextMap job (the built-in context-map-refresh service's, which builds the first map) into the jobs view.</summary>
+    /// <param name="state">Its state.</param>
+    /// <param name="lines">Its progress lines.</param>
+    /// <param name="code">The error code of a failed one.</param>
+    internal void RefreshJob(JobState state, string[] lines, string? code = null)
+    {
+        _jobs++;
+        var at = new DateTimeOffset(2026, 10, 19, 9, _jobs, 0, TimeSpan.Zero);
+        Jobs.Put(new JobRow(JobId.From($"JOB-{_jobs:x32}"), JobKind.From("RefreshContextMap"), JobKey.From("refresh"), Item: null, Repo: null, Service: null, state,
+            "service:context-map-refresh", at, state == JobState.Running ? null : at.AddMinutes(1), [.. lines.Select((l, i) => new JobLine(i + 1, l, at))], lines.Length, Summary: null, code, Result: null, CancelledBy: null, Sequence: _jobs));
+    }
+
+    /// <summary>Puts a code index build job of <paramref name="repo"/> into the jobs view (kind BuildCodeIndex, key 'index:&lt;repo&gt;').</summary>
+    /// <param name="repo">The repo it builds.</param>
+    /// <param name="state">Its state.</param>
+    /// <param name="lines">Its progress lines.</param>
+    /// <param name="code">The error code of a failed one.</param>
+    internal void IndexJob(string repo, JobState state, string[] lines, string? code = null)
+    {
+        _jobs++;
+        var at = new DateTimeOffset(2026, 10, 19, 9, _jobs, 0, TimeSpan.Zero);
+        Jobs.Put(new JobRow(JobId.From($"JOB-{_jobs:x32}"), JobKind.From("BuildCodeIndex"), JobKey.From("index:" + repo), Item: null, RepoName.From(repo), Service: null, state,
+            "service:code-index", at, state == JobState.Running ? null : at.AddMinutes(1), [.. lines.Select((l, i) => new JobLine(i + 1, l, at))], lines.Length, Summary: null, code, Result: null, CancelledBy: null, Sequence: _jobs));
+    }
+
     /// <summary>Puts a RegisterMcp job for <paramref name="repo"/> into the jobs view.</summary>
     /// <param name="repo">The repo it registers.</param>
     /// <param name="state">Its state.</param>
@@ -150,7 +175,7 @@ internal sealed class SetupFactsRig : IAsyncDisposable
     }
 
     // The rig's profile source answers from memory, so there is never a file on disk.
-    private sealed class NoProfileFile : IProfileFile
+    internal sealed class NoProfileFile : IProfileFile
     {
         public bool Exists() => false;
     }

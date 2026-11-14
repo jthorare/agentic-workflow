@@ -1,7 +1,5 @@
-using System.Reflection;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Sandbox.Credentials;
-using Aw.Sindri.Infrastructure.Sandbox;
 
 namespace Aw.Sindri.Tests.Sandbox.Bubblewrap;
 
@@ -16,42 +14,77 @@ public sealed class ContractFixtureCleanupTests
     [Fact]
     public void Owner_copy_contract_leaves_no_temp_home()
     {
-        var left = LeftBehind<OwnerCopyCredentialSourceContractTests>(source =>
-        {
-            var options = typeof(OwnerCopyCredentialSource).GetField("_options", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(source)!;
-            return (string)options.GetType().GetProperty("Home")!.GetValue(options)!;
-        });
+        var contract = new OwnerCopyCredentialSourceContractTests();
+        _ = contract.CreateForTest(LoginState.Ready);
+        var home = contract.HomePaths.Single();
+        Assert.True(Directory.Exists(home), "Create did not make a home to clean up");
 
-        Assert.False(left, "the home is still on disk after the contract class was disposed");
+        contract.Dispose();
+
+        Assert.False(Directory.Exists(home), "the home is still on disk after the contract class was disposed");
     }
 
     /// <summary>The separate-login contract class leaves no /tmp/aw-separate-login-* home once disposed.</summary>
     [Fact]
     public void Separate_login_contract_leaves_no_temp_home()
     {
-        var left = LeftBehind<SeparateLoginCredentialSourceContractTests>(source =>
-            (string)source.GetType().GetField("_sindriHome", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(source)!);
-
-        Assert.False(left, "the home is still on disk after the contract class was disposed");
-    }
-
-    private static bool LeftBehind<T>(Func<IModelCredentialSource, string> homeOf)
-        where T : new()
-    {
-        var contract = new T();
-        var create = typeof(T).GetMethod("Create", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        var source = (IModelCredentialSource)create.Invoke(contract, [LoginState.Ready])!;
-        var home = homeOf(source);
+        var contract = new SeparateLoginCredentialSourceContractTests();
+        _ = contract.CreateForTest(LoginState.Ready);
+        var home = contract.HomePaths.Single();
         Assert.True(Directory.Exists(home), "Create did not make a home to clean up");
 
-        (contract as IDisposable)?.Dispose();
-        var left = Directory.Exists(home);
-        if (left)
-        {
-            // Today's leak: remove it here so the red run does not add to /tmp.
-            Directory.Delete(home, recursive: true);
-        }
+        contract.Dispose();
 
-        return left;
+        Assert.False(Directory.Exists(home), "the home is still on disk after the contract class was disposed");
+    }
+
+    /// <summary>A home already gone does not stop the owner-copy contract class from removing the others.</summary>
+    [Fact]
+    public void Owner_copy_contract_removes_every_home_when_one_is_already_gone()
+    {
+        var contract = new OwnerCopyCredentialSourceContractTests();
+        _ = contract.CreateForTest(LoginState.Ready);
+        _ = contract.CreateForTest(LoginState.Ready);
+        var homes = contract.HomePaths;
+        Directory.Delete(homes[0], recursive: true);
+
+        contract.Dispose();
+
+        Assert.False(Directory.Exists(homes[1]), "the second home leaked after the first was already gone");
+    }
+
+    /// <summary>A home already gone does not stop the separate-login contract class from removing the others.</summary>
+    [Fact]
+    public void Separate_login_contract_removes_every_home_when_one_is_already_gone()
+    {
+        var contract = new SeparateLoginCredentialSourceContractTests();
+        _ = contract.CreateForTest(LoginState.Ready);
+        _ = contract.CreateForTest(LoginState.Ready);
+        var homes = contract.HomePaths;
+        Directory.Delete(homes[0], recursive: true);
+
+        contract.Dispose();
+
+        Assert.False(Directory.Exists(homes[1]), "the second home leaked after the first was already gone");
+    }
+
+    /// <summary>Disposing a fake owner home whose directory is already gone does not throw.</summary>
+    [Fact]
+    public void Fake_owner_home_dispose_is_best_effort()
+    {
+        var home = new FakeOwnerHome(LoginState.Ready);
+        Directory.Delete(home.Root, recursive: true);
+
+        home.Dispose();
+    }
+
+    /// <summary>Disposing a fake separate home whose directory is already gone does not throw.</summary>
+    [Fact]
+    public void Fake_separate_home_dispose_is_best_effort()
+    {
+        var home = new FakeSeparateHome(LoginState.Ready);
+        Directory.Delete(home.SindriHome, recursive: true);
+
+        home.Dispose();
     }
 }

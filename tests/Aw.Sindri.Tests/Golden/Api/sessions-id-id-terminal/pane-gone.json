@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+  "title": "SND-AGENT-016",
+  "status": 404,
+  "detail": "no live session has that ref",
+  "traceId": "<trace>"
+}

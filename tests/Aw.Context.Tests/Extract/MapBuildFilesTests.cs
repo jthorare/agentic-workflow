@@ -23,4 +23,15 @@ public sealed class MapBuildFilesTests
     [InlineData("extracting 1/3 files and more")]
     [InlineData("")]
     public void Any_other_line_carries_no_counts(string line) => Assert.Null(MapBuildFiles.From(line));
+
+    [Fact, Trait("Lane", "unit")]
+    public void Newest_takes_the_last_files_line_past_later_lines_of_other_kinds()
+    {
+        string[] lines = ["starting", "extracting 50/412 files", "extracting 100/412 files", "clusters 3/9", "labeling 12 features"];
+
+        Assert.Equal(new MapBuildFiles(100, 412), MapBuildFiles.Newest(lines));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Newest_is_null_without_a_files_line() => Assert.Null(MapBuildFiles.Newest(["starting", "clusters 3/9"]));
 }
