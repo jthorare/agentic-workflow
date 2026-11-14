@@ -18,8 +18,8 @@ internal sealed class NodeRunViewModel : ObservableObject
         Tone = RunStatus.Tone(run.Status);
         (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, RunStatus.ToneWord(run.Status));
         InputText = WorkflowJson.Pretty(run.Input);
-        var sent = NotificationSent(nodeType, run);
-        (IsNotification, SentTitle, SentBody, SentTarget) = (sent.Title.Length > 0, sent.Title, sent.Body, sent.Title.Length > 0 ? Labels.WfNotifySentTo : string.Empty);
+        var (sentTitle, sentBody) = NotificationSent(nodeType, run);
+        (IsNotification, SentTitle, SentBody, SentTarget) = (sentTitle.Length > 0, sentTitle, sentBody, sentTitle.Length > 0 ? Labels.WfNotifySentTo : string.Empty);
         OutputText = IsNotification ? string.Empty : WorkflowJson.Pretty(run.Output);   // a notification's output is always empty: the card shows what it sent instead
         IsTruncated = run.Truncated;
         ErrorText = run.Error ?? string.Empty;
@@ -46,7 +46,9 @@ internal sealed class NodeRunViewModel : ObservableObject
     public bool CanEditStep => IsError;
 
     /// <summary>The Edit step button's words.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     public string EditStepText => Labels.WfEditStep;
+#pragma warning restore CA1822, MA0041
 
     /// <summary>Opens the workflow with this step selected and its sheet open.</summary>
     /// <param name="cancellationToken">Cancels the reads.</param>

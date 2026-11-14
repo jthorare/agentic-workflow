@@ -51,9 +51,9 @@ public sealed class WorkflowsCodeStepFramesTests : FrameHost
         var box = fields.GetVisualDescendants().OfType<TextBox>().Single(t => t.Name == "EditorFieldCode");
         Assert.True(box.IsEffectivelyVisible, "the code box is hidden");
         Assert.True(box.AcceptsReturn && box.AcceptsTab, "the code box does not take Enter and Tab");
-        Assert.True(box.Bounds.Height >= 200, $"the code box is {box.Bounds.Height}px tall: it needs about 12 rows");
+        Assert.True(box.Bounds.Height >= 200, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the code box is {box.Bounds.Height}px tall: it needs about 12 rows"));
         Assert.Contains("monospace", box.FontFamily.ToString(), StringComparison.OrdinalIgnoreCase);
-        Assert.Contains(fields.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.Text is "return input;");   // the example under the box
+        Assert.Contains(fields.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && string.Equals(t.Text, "return input;", StringComparison.Ordinal));   // the example under the box
 
         var repo = fields.GetVisualDescendants().OfType<TextBox>().Single(t => t.Name == "EditorFieldText" && ((ViewModels.Workflows.ConfigFieldViewModel)t.DataContext!).Name == "repo");
         Assert.False(repo.IsEffectivelyVisible, "Repository shows before Advanced is opened");
