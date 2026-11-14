@@ -64,6 +64,30 @@ allowed "push a feature branch" "git push -u origin feature"
 allowed "bare push on a feature branch" "git push" feature
 allowed "a command that is not a push" "ls -la"
 
+# --- #3679: a quoted target and a push that is not first in its piece stay blocked ---
+blocked "quoted branch" 'git push origin "main"'
+blocked "single-quoted refspec" "git push origin 'HEAD:main'"
+blocked "timeout wrapper" "timeout 30 git push origin main"
+blocked "timeout with an option and a duration" "timeout --preserve-status 30s git push origin main"
+blocked "if / then" "if true; then git push origin main; fi"
+blocked "while / do" "while true; do git push origin master; done"
+blocked "nohup and a trailing &" "nohup git push origin main &"
+blocked "brace group" "{ git push origin main; }"
+blocked "subshell" "( git push origin main )"
+blocked "subshell after a command" "echo hi; (git push origin main)"
+blocked "command substitution" 'x=$(git push origin main)'
+blocked "sudo with an option" "sudo -u bob git push origin main"
+blocked "time" "time git push origin master"
+blocked "env with an assignment" "env GIT_SSH=ssh git push origin main"
+blocked "negated" "! git push origin main"
+blocked "background then a push" "sleep 1 & git push origin main"
+allowed "timeout wrapper, a feature branch" "timeout 30 git push origin feature"
+allowed "nohup, a feature branch" "nohup git push origin feature &"
+allowed "an echo inside then" 'if true; then echo "git push origin main"; fi'
+allowed "separators inside quotes do not split" 'git commit -m "a; git push origin main" && ls'
+allowed "a push option with a space in quotes" 'git push origin feature -o "ci.skip x"'
+allowed "redirect 2>&1 on a feature push" "git push origin feature 2>&1"
+
 # a real push after a heredoc is still judged
 blocked "real push after a heredoc" $'cat <<EOF\nhello\nEOF\ngit push origin main'
 

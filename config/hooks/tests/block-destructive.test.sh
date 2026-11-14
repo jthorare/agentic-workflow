@@ -44,6 +44,17 @@ blocked "restore ." "git restore ."
 blocked "clean -fd" "git clean -fd"
 blocked "bash -c with rm -rf" 'bash -c "rm -rf /tmp/x"'
 
+# --- #3679: wrapped, grouped and quoted forms stay blocked ---
+blocked "timeout wrapper" "timeout 30 rm -rf x"
+blocked "if / then" "if true; then git reset --hard; fi"
+blocked "subshell" "( git clean -fd )"
+blocked "brace group" "{ git checkout .; }"
+blocked "quoted path" 'rm -rf "dir with space"'
+blocked "nohup and a trailing &" "nohup rm -rf x &"
+blocked "command substitution" 'x=$(git reset --hard)'
+allowed "timeout wrapper around a harmless command" "timeout 30 ls -f"
+allowed "echo in then" 'if true; then echo "rm -rf x"; fi'
+
 # --- text that only mentions one is not one ---
 allowed "grep with a quoted rm -rf pattern" 'grep -nE "TMPDIR|sandbox|rm -rf" notes.md'
 allowed "grep with a single-quoted pattern" "grep -n 'git reset --hard' notes.md"
