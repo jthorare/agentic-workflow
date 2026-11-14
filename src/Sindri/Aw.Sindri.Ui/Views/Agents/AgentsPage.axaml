@@ -8,7 +8,8 @@
   <!-- The Agents page (collector spec CU-1, screens spec §4.5): the head with the served counts and the filters, the collector's problems, the
        sessions in their groups, the recently ended under a fold, and the footer. Every named line is a Border wrapper (a TextBlock's peer
        ignores AutomationProperties.Name) and its text is drawn only. -->
-  <StackPanel Spacing="{StaticResource Size.PanelGap}">
+  <Grid x:Name="AgentsSplit" ColumnDefinitions="*,0">
+  <StackPanel x:Name="AgentsListColumn" Spacing="{StaticResource Size.PanelGap}">
     <Grid ColumnDefinitions="Auto,*,Auto">
       <StackPanel x:Name="AgentsHeadRegion" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock Classes="page-title" Text="Agents" AutomationProperties.Name="Agents" />
@@ -110,4 +111,7 @@
       <TextBlock x:Name="AgentsFooter" Classes="caption subtle" Text="{Binding Footer}" AutomationProperties.AccessibilityView="Raw" />
     </Border>
   </StackPanel>
+  <!-- The terminal view (agents spec §15.3): beside the list while a row's pane is open; the list narrows to 360 px (56 px under 1100 px of window width). -->
+  <agv:TerminalView x:Name="TerminalPanel" Grid.Column="1" IsVisible="{Binding IsTerminalOpen}" DataContext="{Binding Terminal}" />
+  </Grid>
 </UserControl>
