@@ -65,6 +65,9 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
     /// <summary>True when the quiet "Linear not connected" line shows instead of a red box (#3719).</summary>
     public bool ShowsLinearNote { get; private set => Set(ref field, value); }
 
+    /// <summary>True when the served list says Linear is not set up.</summary>
+    public bool IsLinearMissing { get; private set; }
+
     /// <summary>The quiet line's words.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     public string LinearNote => Labels.LinearNotConnected;
@@ -248,7 +251,8 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
         (Sentence, ShowsConnect) = (ProjectsLinear.Sentence(list, _clock.GetUtcNow()), ProjectsLinear.OffersConnect(list));
         IsEmptyBlock = list.Projects.Count == 0 && list.Empty is not null;
         // Linear not set up is not a failure: a quiet line with Connect, never the red box (#3719).
-        ShowsLinearNote = list.Projects.Count > 0 && string.Equals(list.EmptyCode, "linear-missing", StringComparison.Ordinal);
+        IsLinearMissing = string.Equals(list.EmptyCode, "linear-missing", StringComparison.Ordinal);
+        ShowsLinearNote = list.Projects.Count > 0 && IsLinearMissing;
         IsBanner = list.Projects.Count > 0 && list.Empty is not null && !ShowsLinearNote;
 
         var present = new HashSet<string>(list.Projects.Concat(list.Finished).Concat(list.Hidden).Select(c => c.Id), StringComparer.Ordinal);

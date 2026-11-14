@@ -18,7 +18,10 @@ internal static partial class Labels
     /// <summary>The From Linear tab while the list is being read.</summary>
     internal const string ProjectAddLinearLoading = "Loading…";
 
-    /// <summary>The From Linear tab when the list is empty.</summary>
+    /// <summary>The From Linear tab when Linear is not set up: not "you have none".</summary>
+    internal const string ProjectAddLinearNotConnected = "Linear is not connected";
+
+    /// <summary>The From Linear list's empty line.</summary>
     internal const string ProjectAddLinearEmpty = "No other Linear projects in your teams.";
 
     /// <summary>The From Linear tab when the search matches no row.</summary>
