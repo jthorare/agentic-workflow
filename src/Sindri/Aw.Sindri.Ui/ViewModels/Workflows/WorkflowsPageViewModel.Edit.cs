@@ -26,6 +26,9 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>True when the line under the graph shows.</summary>
     public bool HasStepSummary => StepSummaryText.Length > 0;
 
+    /// <summary>True when the row under the graph shows: a step summary or Step settings.</summary>
+    public bool ShowsStepRow => true;   // red stub (#2807)
+
     /// <summary>True when the open workflow can be edited: a workflow is open on its runs and it is not archived.</summary>
     public bool CanEdit => IsRuns && Runs.Shown is { ArchivedAt: null };
 

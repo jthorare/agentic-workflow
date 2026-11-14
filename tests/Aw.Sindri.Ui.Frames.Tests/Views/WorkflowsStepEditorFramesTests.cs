@@ -167,6 +167,17 @@ public sealed class WorkflowsStepEditorFramesTests : FrameHost
     });
 
     [Fact]
+    public Task The_step_row_takes_no_space_with_no_step_selected_and_shows_once_one_is() => OnUi(async () =>
+    {
+        var (window, shell) = await OnTheTriggerEditor();
+        Settle(window);
+        Assert.False(Named<StackPanel>(window, "StepRow").IsVisible, "the step row shows with no step selected");
+
+        Assert.True(shell.Workflows.Runs.Graph!.SelectNode("start"));
+        await Until(window, () => Named<StackPanel>(window, "StepRow").IsVisible, "selecting a step never showed the step row");
+    });
+
+    [Fact]
     public Task A_boolean_field_in_the_step_editor_draws_its_caption_once() => OnUi(async () =>
     {
         var workflow = Golden("workflows-slug", "found");

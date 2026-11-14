@@ -149,7 +149,7 @@
           <wv:GraphCanvas x:Name="RunsCanvas" Graph="{Binding Runs.Graph}" />
         </Border>
         <!-- What the selected step is and does, read-only, while Edit is off (#2807). It shows for every workflow, archived too; only Step settings needs edit rights. -->
-        <StackPanel Orientation="Horizontal" Spacing="12">
+        <StackPanel x:Name="StepRow" Orientation="Horizontal" Spacing="12" IsVisible="{Binding ShowsStepRow}">
           <Border x:Name="StepSummary" VerticalAlignment="Center" IsVisible="{Binding HasStepSummary}" AutomationProperties.Name="{Binding StepSummaryText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <TextBlock Classes="caption" Text="{Binding StepSummaryText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
