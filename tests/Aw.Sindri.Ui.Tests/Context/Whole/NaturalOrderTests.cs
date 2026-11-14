@@ -35,4 +35,17 @@ public sealed class NaturalOrderTests
 
         Assert.Equal(_names, order, StringComparer.Ordinal);
     }
+
+    [Fact]
+    public void With_edges_areas_tied_on_their_neighbours_still_run_in_natural_order()
+    {
+        // Area 1, 2 and 10 each join only Area 0, with the same count: every layout pass gives them one place, so the tie-break decides.
+        string[] names = ["Area 10", "Area 2", "Area 1", "Area 0"];
+        var areas = names.Select(n => new WholeArea(n, n, "trusted", 1, new Dictionary<string, int>(StringComparer.Ordinal), Unassigned: false)).ToList();
+        WholeAreaEdge[] edges = [new("Area 1", "Area 0", "depends-on", 3, 0), new("Area 2", "Area 0", "depends-on", 3, 0), new("Area 10", "Area 0", "depends-on", 3, 0)];
+
+        var order = WholeAreaOrder.Of(areas, edges).Where(k => !string.Equals(k, "Area 0", StringComparison.Ordinal)).ToList();
+
+        Assert.Equal(["Area 1", "Area 2", "Area 10"], order, StringComparer.Ordinal);
+    }
 }
