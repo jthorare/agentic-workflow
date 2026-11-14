@@ -112,7 +112,6 @@ internal sealed partial class FakeSindriApi
 
     public async Task<Result<WorkflowView>> WorkflowNewest(Uri api, string slug, CancellationToken cancellationToken)
     {
-        _ = Interlocked.Increment(ref _workflowCalls);
         await WaitFor(WorkflowGates.GetValueOrDefault(slug), cancellationToken).ConfigureAwait(false);
         var answer = WorkflowNewestAnswers.TryGetValue(slug, out var newest) ? newest : WorkflowAnswers.TryGetValue(slug, out var own) ? own : RouteAnswer.Problem("workflows-slug", "not-found");
         return Answer<WorkflowView>(api, WorkflowRoutes.Newest(slug), answer);

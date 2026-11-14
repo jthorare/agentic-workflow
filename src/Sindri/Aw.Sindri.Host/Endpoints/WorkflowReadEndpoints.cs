@@ -79,7 +79,24 @@ internal static class WorkflowReadEndpoints
     internal static Result<GetWorkflowRequest> Show(string slug, string? revision)
     {
         var parsed = Slug(slug);
-        return parsed.IsError ? parsed.Error : new GetWorkflowRequest(parsed.Value);   // red: the revision is not read yet
+        if (parsed.IsError)
+        {
+            return parsed.Error;
+        }
+
+        if (revision is null)
+        {
+            return new GetWorkflowRequest(parsed.Value);
+        }
+
+        if (string.Equals(revision, "latest", StringComparison.Ordinal))
+        {
+            return new GetWorkflowRequest(parsed.Value, Revision: null, Newest: true);
+        }
+
+        return int.TryParse(revision, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var number) && number >= 1
+            ? new GetWorkflowRequest(parsed.Value, number)
+            : SindriErrors.InvalidInput.With($"'{revision}' is not a revision ('latest' or a whole number 1 or more)");
     }
 
     /// <summary>Binds a workflow slug from a route value.</summary>

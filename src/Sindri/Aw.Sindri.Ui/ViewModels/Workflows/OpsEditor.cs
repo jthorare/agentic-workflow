@@ -18,7 +18,6 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     private Uri? _url;
     private int _reads;
     private string? _selected;
-    private readonly Dictionary<(string Node, string Path), JsonNode?> _saved = [];   // set_config values saved on a revision newer than the one the read shows (the live one): the form shows them, not the live text (#3303)
 
     /// <summary>The workflow's slug; empty until loaded.</summary>
     public string Slug { get; private set => Set(ref field, value); } = string.Empty;
@@ -72,12 +71,11 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
             // another workflow: nothing of the old one stays to be saved to this one, even when this read fails
             Fields.Clear();
             (Nodes, BaseRevision, _selected, NodeHeading) = ([], 0, null, string.Empty);
-            _saved.Clear();
         }
 
         (_url, Slug) = (url, slug);
         var read = ++_reads;
-        var workflowRead = api.Workflow(url, slug, cancellationToken);
+        var workflowRead = api.WorkflowNewest(url, slug, cancellationToken);   // the newest revision: after a save on a live workflow that is the saved one, not the live one (#3303)
         var blocksRead = api.WorkflowBlocks(url, cancellationToken);
         await Task.WhenAll(workflowRead, blocksRead).ConfigureAwait(true);
         var (workflow, blocks) = (await workflowRead.ConfigureAwait(true), await blocksRead.ConfigureAwait(true));
@@ -93,13 +91,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
             return;
         }
 
-        var nodes = ReadNodes(workflow.Value.Spec);
-        if (workflow.Value.Revision >= workflow.Value.LatestRevision)
-        {
-            _saved.Clear();   // the read shows the newest revision: what it holds is the saved text
-        }
-
-        (BaseRevision, Nodes, Groups) = (workflow.Value.LatestRevision, WithSaved(nodes), blocks.Value.Groups);
+        (BaseRevision, Nodes, Groups) = (workflow.Value.LatestRevision, ReadNodes(workflow.Value.Spec), blocks.Value.Groups);
         (NeedsReload, ReloadPromptText, FailureText) = (false, string.Empty, string.Empty);
         Select(_selected ?? string.Empty);   // the form stays on its node, with what the new revision holds
     }
@@ -107,49 +99,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     /// <summary>Reads the workflow again (the Reload command): the held edit is dropped, never retried.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that completes when the workflow is read.</returns>
-    internal Task Reload(CancellationToken cancellationToken)
-    {
-        _saved.Clear();
-        return _url is { } url ? Load(url, Slug, cancellationToken) : Task.CompletedTask;
-    }
-
-    // The read shows the live revision; a newer one was saved from this sheet. Its set_config values go over the live text, so the form shows what was saved.
-    private List<EditorNode> WithSaved(List<EditorNode> nodes)
-    {
-        if (_saved.Count == 0)
-        {
-            return nodes;
-        }
-
-        return [.. nodes.Select(node =>
-        {
-            var edits = _saved.Where(s => string.Equals(s.Key.Node, node.Id, StringComparison.Ordinal)).ToList();
-            if (edits.Count == 0)
-            {
-                return node;
-            }
-
-            var config = node.Config.ValueKind == JsonValueKind.Object ? (JsonObject)JsonNode.Parse(node.Config.GetRawText())! : new JsonObject(); // why: an object element parses to an object
-            foreach (var ((_, path), value) in edits)
-            {
-                config[path] = value?.DeepClone();   // null removes the key's value, as the op does
-            }
-
-            using var document = JsonDocument.Parse(config.ToJsonString());
-            return node with { Config = document.RootElement.Clone() };
-        })];
-    }
-
-    private void RememberSaved(JsonArray ops)
-    {
-        foreach (var op in ops.OfType<JsonObject>())
-        {
-            if (string.Equals(op["op"]?.GetValue<string>(), "set_config", StringComparison.Ordinal) && op["node"]?.GetValue<string>() is { } node && op["path"]?.GetValue<string>() is { } path)
-            {
-                _saved[(node, path)] = op["value"]?.DeepClone();
-            }
-        }
-    }
+    internal Task Reload(CancellationToken cancellationToken) => _url is { } url ? Load(url, Slug, cancellationToken) : Task.CompletedTask;
 
     /// <summary>Builds the form of a node from its block's config fields.</summary>
     /// <param name="nodeId">The node.</param>
@@ -302,7 +252,6 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
                 return;
             }
 
-            RememberSaved(ops);
             await Load(url, Slug, afterSave: true, cancellationToken).ConfigureAwait(true);
         }
         finally
