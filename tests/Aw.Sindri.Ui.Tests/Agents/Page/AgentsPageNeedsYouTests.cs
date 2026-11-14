@@ -251,6 +251,48 @@ public sealed class AgentsPageNeedsYouTests
     }
 
     [Fact]
+    public async Task HasAsking_reads_true_inside_its_own_change_event_when_the_first_asking_row_arrives_3726()
+    {
+        _f.Serve(AgentsPageFixture.Edited(l => AgentsPageFixture.Remove(l, Codex)));
+        var page = await _f.Shown(Token);
+        Assert.False(page.HasAsking);
+        var seen = new List<bool>();
+        page.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(AgentsPageViewModel.HasAsking), StringComparison.Ordinal))
+            {
+                seen.Add(page.HasAsking);
+            }
+        };
+        _f.Serve(AgentsPageFixture.Edited(_ => { }));   // the same list with its asking row back
+
+        await page.Refresh(AgentsPageFixture.Url, Token);
+
+        Assert.NotEmpty(seen);
+        Assert.All(seen, Assert.True);   // a head link that read the old groups would be disabled until the next read
+    }
+
+    [Fact]
+    public async Task The_first_click_on_the_Agent_header_sorts_A_to_Z_and_the_second_Z_to_A_3726()
+    {
+        var list = AgentsPageFixture.Edited(_ => { });
+        _ = Add(list, Claude, "000000000011", title: "zeta");
+        _ = Add(list, Claude, "000000000012", title: "alpha");
+        _f.Serve(list);
+        var page = await _f.Shown(Token);
+
+        page.SortBy(AgentSort.Name);
+        var first = Titles(Outside(page));
+        var firstDescending = page.SortDescending;
+        page.SortBy(AgentSort.Name);
+        var second = Titles(Outside(page));
+
+        Assert.Equal((false, [.. first.Order(StringComparer.OrdinalIgnoreCase)]), (firstDescending, first));
+        Assert.Equal([.. first.AsEnumerable().Reverse()], second);
+        Assert.True(page.SortDescending);
+    }
+
+    [Fact]
     public async Task A_header_click_sorts_by_it_and_a_second_click_flips_the_direction_and_the_active_one_is_marked_3082()
     {
         var list = AgentsPageFixture.Edited(_ => { });
