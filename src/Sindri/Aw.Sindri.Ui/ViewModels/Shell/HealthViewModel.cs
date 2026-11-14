@@ -286,7 +286,14 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
 
     /// <summary>The app's start state changed (#3672): while it starts Sindri, the pill reads Starting.</summary>
     /// <param name="starting">True while a start runs.</param>
-    internal void SetStarting(bool starting) => _starting = starting;   // stub (red): the pill is not refreshed yet
+    internal void SetStarting(bool starting)
+    {
+        lock (_gate)
+        {
+            _starting = starting;
+            Word();
+        }
+    }
 
     private bool _starting;
 

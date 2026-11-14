@@ -98,9 +98,10 @@ internal sealed class HealthPill : ObservableObject
     /// <param name="starting">True while the app is starting Sindri.</param>
     internal void Show(ShellState state, TimeSpan age, bool notResponding, HealthView? health = null, PillProfile profile = default, bool starting = false)
     {
-        IsStarting = starting && state == ShellState.NotRunning;
+        var starts = starting && state == ShellState.NotRunning;
+        IsStarting = starts;
         var normal = NormalWord(health, profile);
-        (Glyph, Word, Age) = Words(state, age, normal);
+        (Glyph, Word, Age) = starts ? (StateGlyph.None, Labels.StartingWord, string.Empty) : Words(state, age, normal);
         (ProcessGlyph, ProcessWord, _) = Words(state, age, NormalWord(health, profile with { Unreadable = false }));
         Problems = state == ShellState.Normal && health is not null ? string.Join(" · ", health.Problems.Where(p => !_viewsCodes.Contains(p.Code)).Select(p => p.Clause ?? p.Text)) : string.Empty;
         Text = string.Join(" · ", ((string[])[Word, Age, Problems]).Where(t => t.Length > 0));
@@ -115,7 +116,7 @@ internal sealed class HealthPill : ObservableObject
 
         IsNotResponding = stale && notResponding;
         IsDataStale = state is ShellState.Stale or ShellState.Unreadable;
-        IsDown = state is ShellState.NotRunning or ShellState.Unreadable or ShellState.VersionMismatch;
+        IsDown = !starts && state is ShellState.NotRunning or ShellState.Unreadable or ShellState.VersionMismatch;
     }
 
     /// <summary>What the profile file says beside the server's health word: the server ignores the profile, so the pill must not trust a "healthy" next to a missing or unreadable one.</summary>

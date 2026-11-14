@@ -133,6 +133,8 @@
           <StackPanel Orientation="Horizontal">
             <icons:StateIcon x:Name="PillGlyph" Glyph="{Binding Pill.Glyph}" IsVisible="{Binding Pill.HasGlyph}" Margin="0,0,8,0"
                              VerticalAlignment="Center" />
+            <icons:StateIcon x:Name="PillSpinner" Icon="Spinner" Spins="True" IsVisible="{Binding Pill.IsStarting}" Margin="0,0,8,0"
+                             VerticalAlignment="Center" />
             <TextBlock x:Name="HealthPillText" Classes="body-strong" Text="{Binding Pill.Word}" VerticalAlignment="Center" />
             <Panel x:Name="PillAge" VerticalAlignment="Center">
               <TextBlock x:Name="PillAgeText" Classes="caption subtle" Text="{Binding Pill.Age}" IsVisible="{Binding Pill.HasAge}"

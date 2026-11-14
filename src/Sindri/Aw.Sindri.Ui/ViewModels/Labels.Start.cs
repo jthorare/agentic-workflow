@@ -19,11 +19,11 @@ internal static partial class Labels
 
     /// <summary>The details line while a start runs: "Waiting for Sindri · 4 s" (#3663).</summary>
     /// <param name="seconds">Whole seconds since the start.</param>
-    internal static string WaitingFor(int seconds) => seconds.ToString(CultureInfo.InvariantCulture);   // stub (red)
+    internal static string WaitingFor(int seconds) => string.Create(CultureInfo.InvariantCulture, $"Waiting for Sindri · {seconds} s");
 
     /// <summary>The details line from 15 s on: "Still starting · 17 s" (#3663).</summary>
     /// <param name="seconds">Whole seconds since the start.</param>
-    internal static string StillStarting(int seconds) => seconds.ToString(CultureInfo.InvariantCulture);   // stub (red)
+    internal static string StillStarting(int seconds) => string.Create(CultureInfo.InvariantCulture, $"Still starting · {seconds} s");
 
     /// <summary>The Retry button after a start didn't answer.</summary>
     internal const string Retry = "Retry";

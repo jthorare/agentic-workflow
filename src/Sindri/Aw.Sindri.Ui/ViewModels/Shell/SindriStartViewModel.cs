@@ -49,7 +49,7 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
     public bool IsStarting => Stage is StartStage.Starting or StartStage.AlreadyStarting;
 
     /// <summary>The card's heading.</summary>
-    public string Heading => Labels.NotRunning;   // stub (red)
+    public string Heading => IsStarting ? Labels.StartingWord : Labels.NotRunning;
 
     /// <summary>True when <see cref="Details"/> has words.</summary>
     public bool HasDetails => Details.Length > 0;

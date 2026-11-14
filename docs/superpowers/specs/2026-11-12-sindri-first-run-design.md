@@ -209,12 +209,14 @@ Question 1 and question 2 are centred-column screens, about 640 px wide, not Row
 
 Frame `not-running`. The app starts serve by itself on open (decision 2a), so a person sees this page only after a start failed. The page empty state: glyph, "Sindri isn't running", one sentence "Start it and Home loads your reviews, runs and messages. This takes about 10 seconds.", and **Start Sindri** (Enter), focused. Details holds "Nothing answered on 127.0.0.1:7410. To start it yourself, run: `sindri`".
 
+The heading and the pill say "Not running" with the red × only after a failed start, or when nothing is starting. The Details line has no host:port: a first run has no `control.json` to read it from (#3663, #3672). The failed state has no Open logs action yet, so the slow state offers none either.
+
 The drawing says "about 2 seconds"; ux measured 9.9 s to serve up, so the sentence says 10 until F1 measures less.
 
 | State | What shows | Primary | Focus |
 |---|---|---|---|
 | Not running (after a failed start, or serve gone mid-session) | as above | Start Sindri (Enter) | the button |
-| Starting (on open, with no click) | "Starting Sindri…", Details "Waiting for 127.0.0.1:7410 · 4.2 s" | none | the status line |
+| Starting (on open, with no click) | Heading "Starting" and the top-bar pill "Starting", both neutral with the busy mark (no red ×); "Starting Sindri…"; Details "Waiting for Sindri · 4 s", moving each second; from 15 s "Still starting · 17 s" | none | the status line |
 | Started | the first question not done, or Home (decision 30); no toast | that page's own | its primary |
 | Didn't start in 30 s | "Sindri didn't start: <first line of serve.log's last error>." Details: the log path and `sindri serve` | Retry (Enter) | Retry |
 | A second serve refused | "Sindri is already starting on this machine." It keeps polling | none | the status line |
