@@ -188,7 +188,7 @@ internal sealed partial class ContextPageViewModel
         }
 
         Head = fromQuestion ? Labels.ContextFromQuestion(view.Anchors.Count) : Labels.ContextHead(view.Anchors.Count);
-        Map = new ContextMapViewModel(view, exact: !fromQuestion) { Chosen = key => _ = Select(key) };
+        Map = new ContextMapViewModel(view, exact: true) { Chosen = key => _ = Select(key) };
         Missing = [.. (view.MissingAnchors ?? []).Select(a => new ContextLine($"{a} · {Labels.ContextNotFound}"))];
     }
 
