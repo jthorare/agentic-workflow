@@ -3,15 +3,16 @@
 # scaffolds (a) a small CLI package declared in deps.yaml and (b) a full http package that isn't, each in its own
 # temporary git worktree of HEAD, and lets the generator run its own checks against the real root files
 # (restores, RS0016, build -warnaserror and the unit lane of the package's test project and the architecture tests, format
-# limited to the files it wrote, check-deps; one whole-solution build per tree at the end). Then, by hand:
+# limited to the files it wrote, check-deps; no whole-solution build: the gate already built the solution). Then, by hand:
 # (a) makes its first slice green and adds a second slice with /new-slice (exactly one new red test), then
 # NativeAOT-publishes its App for the runner's RID (no IL2xxx/IL3xxx warning) and runs the native binary (usage exit 2
 # and the AW-TELEMETRY-001 line for an unknown AW_LOG_LEVEL); (b) makes its first slice green, adds a second with a new
 # Guid id and a new port (Core's and Features' PublicAPI lines come from the build's RS0016 diagnostics), makes that
 # green and adds a third reusing the port (which must leave the port, its fake and its contract base alone), makes that
 # green and adds a fourth with --slice-only (only its own files may change; the generator's checks leave exactly its
-# test red), then runs its integration lane (loopback binding, id route binding, Kernel telemetry as the only logger) green. The worktrees
-# are removed afterwards.
+# test red), then runs its integration lane (loopback binding, id route binding, Kernel telemetry as the only logger) green.
+# Each worktree and its build output are deleted as soon as its checks end (cli, then http, then the toolkit), so the peak
+# is one tree (#3700). Each finished step prints `e2e: <step> <N>s`. Target: under 6 GB of /tmp and under 10 minutes.
 #
 # Needs the NativeAOT toolchain for the AOT step: the Xcode command-line tools on macOS, clang and zlib on Linux.
 # Usage: scripts/scaffold/e2e.sh            (from the repo root; needs the .NET SDK from global.json and node)
@@ -39,6 +40,7 @@ fi
 export AW_HEAVY_LOCK_HELD=1
 cleanup() {
   local dir
+  step_end
   for dir in "$TMP/small" "$TMP/http" "$TMP/toolkit"; do
     if [ -d "$dir" ]; then git -C "$ROOT" worktree remove --force "$dir" >/dev/null 2>&1 || true; fi
   done
@@ -48,11 +50,26 @@ cleanup() {
 }
 trap cleanup EXIT
 
-step() { printf '\n== %s\n' "$*"; }
+# step <text> — ends the previous step with its elapsed seconds (`e2e: <step> <N>s`), then starts the next one.
+STEP_LABEL=""; STEP_START=$SECONDS
+step_end() {
+  if [ -n "$STEP_LABEL" ]; then printf 'e2e: %s %ss\n' "$STEP_LABEL" "$((SECONDS - STEP_START))"; fi
+  STEP_LABEL=""
+}
+step() { step_end; STEP_LABEL="$*"; STEP_START=$SECONDS; printf '\n== %s\n' "$*"; }
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 
-# tree <name> — a throwaway worktree of HEAD at $TMP/<name>; cleanup removes it.
+# tree <name> — a throwaway worktree of HEAD at $TMP/<name>; drop (or cleanup) removes it.
 tree() { git worktree add --quiet --detach "$TMP/$1" HEAD; }
+
+# drop <name> [path...] — delete a tree and its build output as soon as its checks end, so the peak holds one tree
+# (#3700: two whole trees with their builds were 14 GB). The extra paths are the tree's publish output.
+drop() {
+  local name="$1"; shift
+  if [ -d "$TMP/$name" ]; then git -C "$ROOT" worktree remove --force "$TMP/$name" >/dev/null 2>&1 || true; fi
+  rm -rf "$TMP/$name" "$@"
+  git -C "$ROOT" worktree prune
+}
 
 # The first package deps.yaml declares (tier 1-3) that has no src/ directory yet, so the declared-node path
 # (NP-DEPS-MISMATCH checks, a planned edge flipping to current) is exercised while unported packages remain. Once every
@@ -108,6 +125,7 @@ bin="$TMP/small-aot/$(printf '%s' "$SMALL" | tr '[:upper:]' '[:lower:]')"
 rc=0; AW_LOG_LEVEL=bogus "$bin" >/dev/null 2>"$TMP/small-aot.err" || rc=$?
 [ "$rc" = 2 ] || fail "(a) native run with no command: exit $rc, expected 2 (usage)"
 grep -q '"eventName":"AW-TELEMETRY-001"' "$TMP/small-aot.err" || fail "(a) native run: no AW-TELEMETRY-001 line for AW_LOG_LEVEL=bogus"
+drop small "$TMP/small-aot"
 
 # ---- (b) full http package, not declared ----
 tree http
@@ -157,6 +175,7 @@ step "(b) integration lane: loopback binding and id route binding (GetShelf's Sh
 (cd "$B" && env -u CI dotnet test --project "tests/Aw.$HTTP.Tests" --filter-trait "Lane=integration") || fail "(b) integration lane"
 step "(b) check-deps with the new node"
 (cd "$B" && node scripts/check-deps.mjs) || fail "(b) check-deps"
+drop http
 
 # ---- (c) a toolkit, outside the repo ----
 # /new-toolkit (docs/csharp/scaffolds/new-toolkit.md): a toolkit lives outside the repo and gets the SDK from a folder feed,
@@ -190,12 +209,8 @@ grep -q 'cache' "$TMP/toolkit-manifest.json" || fail "(c) the manifest does not 
   >"$TMP/toolkit-aot.log" 2>&1) || { tail -20 "$TMP/toolkit-aot.log" >&2; fail "(c) AOT publish"; }
 if grep -E 'IL[23][0-9]{3}' "$TMP/toolkit-aot.log" >&2; then fail "(c) AOT publish raised trim or AOT warnings"; fi
 
-# The generators check only what they wrote (the package's test project and the architecture tests build and run,
-# format is limited to the files written); this is the one whole-solution build, so a generator change that breaks
-# some other project is still caught.
-step "(a) whole-solution build -warnaserror"
-(cd "$A" && env -u CI dotnet build AgenticWorkflow.slnx -warnaserror) || fail "(a) whole-solution build"
-step "(b) whole-solution build -warnaserror"
-(cd "$B" && env -u CI dotnet build AgenticWorkflow.slnx -warnaserror) || fail "(b) whole-solution build"
+# No whole-solution build here: the generators build what they wrote (the package's projects, its test project and the
+# architecture tests), and the gate that runs this script already built the whole solution on the same commit.
+drop toolkit "$TMP/toolkit-out" "$TMP/toolkit-aot" "$TMP/sdk-feed"
 
-step "both packages and the toolkit scaffolded, built and tested; the worktrees are removed on exit"
+step "both packages and the toolkit scaffolded, built and tested; each tree was deleted as its checks ended"
