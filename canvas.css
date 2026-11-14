@@ -58,7 +58,7 @@ svg.wires .ah { fill:#686870; }
 .zoom .zp { min-width:46px; text-align:center; color:var(--ink); font-weight:500; }
 .zoom .zsep { width:1px; height:16px; background:var(--hair-strong); }
 .zoom kbd { margin:0; }
-.mm { position:absolute; right:24px; bottom:20px; width:200px; height:128px; background:var(--s1); border:1px solid var(--hair-strong); border-radius:var(--r3); z-index:4; overflow:hidden; }
+.mm { position:absolute; right:16px; bottom:72px; width:200px; height:128px; background:var(--s1); border:1px solid var(--hair-strong); border-radius:var(--r3); z-index:4; overflow:hidden; }
 .mm i { position:absolute; background:var(--s4); border-radius:1px; }
 .mm .vp { position:absolute; border:1.5px solid var(--primary-hi); background:rgba(130,143,255,.12); border-radius:2px; box-sizing:border-box; }
 .mm .cap { position:absolute; left:8px; top:4px; font-size:12px; color:var(--ink-subtle); }

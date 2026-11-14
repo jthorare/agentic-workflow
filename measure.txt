@@ -1,7 +1,7 @@
-canvas-16: nodes=16 cardsFullyInView=16 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=14.00 ("Ctrl+K") font=Inter
-canvas-4: nodes=4 cardsFullyInView=4 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=14.00 ("Ctrl+K") font=Inter
-canvas-40: nodes=40 cardsFullyInView=18 cut=["card:post","card:t_1","card:t_2","card:t_3"] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=12.04 thumbContrast=3.37 ("Ctrl+K") font=Inter
-canvas-16-1000: nodes=16 cardsFullyInView=16 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=12.74 ("✓") font=Inter
-canvas-16-130: nodes=16 cardsFullyInView=16 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=15.47 ("Ctrl+K") font=Inter
+canvas-16: nodes=16 cardsFullyInView=16 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=13.72 hScroll=0 clipH=728 doneGapMin=28.0 ("Ctrl+K") font=Inter
+canvas-4: nodes=4 cardsFullyInView=4 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=14.00 hScroll=0 clipH=728 doneGapMin=306.0 ("Ctrl+K") font=Inter
+canvas-40: nodes=40 cardsFullyInView=18 cut=["card:post","card:t_1","card:t_2","card:t_3"] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=12.04 hScroll=0 clipH=728 doneGapMin=24.6 thumbContrast=3.37 ("Ctrl+K") font=Inter
+canvas-16-1000: nodes=16 cardsFullyInView=16 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=12.46 hScroll=0 clipH=628 doneGapMin=28.4 ("✓") font=Inter
+canvas-16-130: nodes=16 cardsFullyInView=16 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=15.11 hScroll=0 clipH=728 doneGapMin=34.5 ("Ctrl+K") font=Inter
 cards: nodes=61 cardsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=5.24 minFontPx=12.00 minCardFontPx=28.00 ("Paused") font=Inter
-canvas-zoomed: nodes=16 cardsFullyInView=8 cut=["card:step_1","card:step_5","card:step_7","card:step_11"] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=17.50 thumbContrast=3.37 ("Ctrl+K") font=Inter
+canvas-zoomed: nodes=16 cardsFullyInView=12 cut=["card:start","card:step_4","card:step_6","card:step_10"] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=15.40 hScroll=1 clipH=728 doneGapMin=31.5 thumbContrast=3.37 ("Ctrl+K") font=Inter
