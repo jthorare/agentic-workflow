@@ -33,6 +33,9 @@ internal sealed class RealIndex : IDisposable
         Embed = new EmbedCodeIndexService(Store, layers.Embeddings, TimeProvider.System);
     }
 
+    /// <summary>The directory that holds the repo index files (the .db files and the .current pointers).</summary>
+    public string IndexDirectory => Path.Combine(_directory, "index");
+
     public IEmbedder Embedder { get; }
 
     public IIndexStore Store { get; }

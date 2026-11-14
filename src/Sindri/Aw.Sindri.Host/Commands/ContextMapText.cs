@@ -23,9 +23,13 @@ internal static class ContextMapText
     internal static string Status(MapStatusView s) => string.Create(CultureInfo.InvariantCulture,
         $"map v{s.Version.Number} {Word(s.Version.Status)} · {s.Version.Repo.Value} · created {s.Version.Created:O}{(s.ScopedTo is { } repo ? $" · scoped to {repo.Value}" : string.Empty)}\n"
         + $"{Counts(s.Counts)}{Scope(s.ScopedTo)}; {s.Orphaned} orphaned overrides; {s.Retained} retained versions\n")
+        + (s.Heads is { } heads ? "repos: " + string.Join(", ", heads.Select(Head)) + "\n" : string.Empty)
         + (s.Checks is { } checks ? $"structure: {checks}\n" : string.Empty)
         + (s.RulesOlder ? "built under older map rules; a refresh will rebuild it (sindri context map refresh)\n" : string.Empty)
         + (s.Coverage is { } coverage ? ContextLensText.Coverage(coverage) : string.Empty);
+
+    // One mapped repo and the commit the map was built at (issue 3308): 'web-app @84c0e62', with a note when that commit was off the default branch.
+    private static string Head(MapHead h) => $"{h.Repo.Value} @{h.Commit[..Math.Min(7, h.Commit.Length)]}{(h.OnDefault ? string.Empty : " (not on its default branch)")}";
 
     /// <summary>'context map checks': per measure the value, both limits and the verdict, then the largest offenders (feature keys, so only here).</summary>
     internal static string Checks(MapChecksView view)

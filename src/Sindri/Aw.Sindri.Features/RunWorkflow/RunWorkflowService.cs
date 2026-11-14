@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Graph.Schedule;
 
 namespace Aw.Sindri.Features.RunWorkflow;
 
@@ -19,7 +20,8 @@ namespace Aw.Sindri.Features.RunWorkflow;
 /// <param name="starter">Starts, queues or skips the run.</param>
 /// <param name="launches">Which run launched a session; the loop guard (SND-GRAPH-109) reads it.</param>
 /// <param name="callers">The caller; its launch is the session the guard looks up.</param>
-internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter, IGraphLaunchRuns launches, ICallerContextAccessor callers) : IService<RunWorkflowRequest, RunWorkflowResponse>
+/// <param name="clock">The start time a schedule trigger's fields are read from on a hand start.</param>
+internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter, IGraphLaunchRuns launches, ICallerContextAccessor callers, TimeProvider clock) : IService<RunWorkflowRequest, RunWorkflowResponse>
 {
     private const string TriggerKind = "manual";
     private const int Page = 200;
@@ -63,8 +65,19 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
             return revision.Error;
         }
 
-        var trigger = new JsonObject { ["kind"] = TriggerKind, ["payload"] = payload.Value, ["by"] = request.By }.ToJsonString();
-        return await Start(new Trigger(record, revision.Value, trigger), cancellationToken).ConfigureAwait(false);
+        var trigger = HandTrigger(revision.Value, payload.Value, request.By);
+        return await Start(new Trigger(record, revision.Value, trigger.ToJsonString()), cancellationToken).ConfigureAwait(false);
+    }
+
+    private JsonObject HandTrigger(WorkflowRevision revision, JsonObject? payload, string by)
+    {
+        var trigger = new JsonObject { ["kind"] = TriggerKind, ["payload"] = payload, ["by"] = by };
+        if (revision.Spec.Nodes.FirstOrDefault(static n => string.Equals(n.Type, "schedule", StringComparison.Ordinal)) is { } schedule)
+        {
+            ScheduleStamp.Add(trigger, clock.GetUtcNow(), ScheduleStamp.ZoneOf(schedule));   // why: a hand start has no tick; the schedule node's outputs read the start time in the node's zone (#3569)
+        }
+
+        return trigger;
     }
 
     private async ValueTask<Result<WorkflowRecord>> Find(WorkflowSlug slug, CancellationToken cancellationToken)

@@ -31,15 +31,15 @@ internal static class TerminalSocketEndpoint
             return Refused(session.Error);
         }
 
-        if (!context.WebSockets.IsWebSocketRequest)
-        {
-            return Refused(SindriErrors.InvalidInput.With("This route is a WebSocket: connect with ws://"));
-        }
-
         var pane = await find.Handle(new FindTerminalPaneRequest(session.Value), context.RequestAborted).ConfigureAwait(false);
         if (pane.IsError)
         {
             return Refused(pane.Error);
+        }
+
+        if (!context.WebSockets.IsWebSocketRequest)
+        {
+            return Refused(SindriErrors.InvalidInput.With("This route is a WebSocket: connect with ws://"));
         }
 
         // The pane source and the clock come from the container like the event stream's opener does, to stay inside AW1006's five parameters.

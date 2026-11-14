@@ -22,15 +22,18 @@ internal sealed class SetupFactsRig : IAsyncDisposable
 
     private int _jobs;
 
-    internal SetupFactsRig(FakeProviderHost? host = null)
+    private DateTimeOffset _indexEnded;
+
+    internal SetupFactsRig(FakeProviderHost? host = null, Core.Scheduling.IServicePauses? pauses = null)
     {
+        Pauses = pauses ?? new Server.NoPauses();
         Host = host ?? new FakeProviderHost().WithoutProvider(Core.Mcp.ProviderFile.Codex).WithoutProvider(Core.Mcp.ProviderFile.Cursor);
         Engine = MapEngineProxy.Create();
         Facts = new SetupFacts(
             new ProfileSetupReader(Profiles, new Core.Setup.RepoGitCache(Inspector, Clock), new NoProfileFile(), new Testing.Workflow.InMemoryWorkflowStore(Clock), new Testing.Workflow.InMemoryWorkflowRunStore(Clock)),
             Sources(new PointerSecrets(name => Env.GetValueOrDefault(name), new FakeToolRunner(ToolRun.Missing))),
             new McpSetupReader(Profiles, Host, Jobs, Queue),
-            new MapSetupReader(Profiles, Engine.Proxy, Jobs));
+            new MapSetupReader(Profiles, Engine.Proxy, Jobs, Pauses, Clock));
     }
 
     /// <summary>The Connections page's rows the sources step asks first (#2508).</summary>
@@ -56,6 +59,9 @@ internal sealed class SetupFactsRig : IAsyncDisposable
     }
 
     private SourcesSetupReader Sources(PointerSecrets secrets) => new(Profiles, FakeContextEngine.Instance, secrets, new Core.Connections.ConnectionCredentials(Connections, ConnectionSecrets, secrets));
+
+    /// <summary>The services a human paused (none unless the test names them).</summary>
+    internal Core.Scheduling.IServicePauses Pauses { get; }
 
     internal InMemoryProfiles Profiles { get; } = new();
 
@@ -147,9 +153,14 @@ internal sealed class SetupFactsRig : IAsyncDisposable
     {
         _jobs++;
         var at = new DateTimeOffset(2026, 10, 19, 9, _jobs, 0, TimeSpan.Zero);
+        _indexEnded = state == JobState.Running ? _indexEnded : at.AddMinutes(1);
         Jobs.Put(new JobRow(JobId.From($"JOB-{_jobs:x32}"), JobKind.From("BuildCodeIndex"), JobKey.From("index:" + repo), Item: null, RepoName.From(repo), Service: null, state,
             "service:code-index", at, state == JobState.Running ? null : at.AddMinutes(1), [.. lines.Select((l, i) => new JobLine(i + 1, l, at))], lines.Length, Summary: null, code, Result: null, CancelledBy: null, Sequence: _jobs));
     }
+
+    /// <summary>Sets the clock to <paramref name="after"/> past the end of the newest ended code index build put in.</summary>
+    /// <param name="after">How long after that build ended.</param>
+    internal void ClockAfterIndexBuild(TimeSpan after) => Clock.SetUtcNow(_indexEnded + after);
 
     /// <summary>Puts a RegisterMcp job for <paramref name="repo"/> into the jobs view.</summary>
     /// <param name="repo">The repo it registers.</param>
