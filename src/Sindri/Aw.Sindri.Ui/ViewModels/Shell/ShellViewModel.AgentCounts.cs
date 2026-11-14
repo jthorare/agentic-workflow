@@ -10,12 +10,12 @@ internal sealed partial class ShellViewModel
     partial void InitAgentCounts()
     {
         // #3710: not running means no figure; the tab would say "Agents 25" under the Not running card.
+        // Coming back refills it: Health.Sessions skips an equal value, so OnSessionsChanged alone never fires again.
         PropertyChanged += (_, e) =>
         {
-            if (string.Equals(e.PropertyName, nameof(State), StringComparison.Ordinal) && IsNotRunning)
+            if (string.Equals(e.PropertyName, nameof(State), StringComparison.Ordinal))
             {
-                Agents.ShowNavCount("");
-                Navigation.First(n => n.Page == PageId.Agents).Count = "";
+                ShowTabCount(IsNotRunning ? "" : LiveText());
             }
         };
         Health.PropertyChanged += OnSessionsChanged;
@@ -25,9 +25,7 @@ internal sealed partial class ShellViewModel
     {
         if (string.Equals(e.PropertyName, nameof(HealthViewModel.Sessions), StringComparison.Ordinal))
         {
-            var live = Health.Sessions is { } sessions ? sessions.Live.ToString(CultureInfo.InvariantCulture) : "";
-            Agents.ShowNavCount(live);
-            Navigation.First(n => n.Page == PageId.Agents).Count = live;
+            ShowTabCount(LiveText());
             if (Health.Sessions is { } counts)
             {
                 Agents.ObserveCounts(counts.Live, counts.Asking);
@@ -35,5 +33,13 @@ internal sealed partial class ShellViewModel
 
             Reattend();
         }
+    }
+
+    private string LiveText() => Health.Sessions is { } sessions ? sessions.Live.ToString(CultureInfo.InvariantCulture) : "";
+
+    private void ShowTabCount(string live)
+    {
+        Agents.ShowNavCount(live);
+        Navigation.First(n => n.Page == PageId.Agents).Count = live;
     }
 }
