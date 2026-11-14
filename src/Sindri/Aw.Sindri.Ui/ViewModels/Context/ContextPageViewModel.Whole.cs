@@ -34,6 +34,7 @@ internal sealed partial class ContextPageViewModel
     private void InitWhole()
     {
         Whole.AreaOpenRequested += (_, e) => _ = OpenWholeArea(e.Value, CancellationToken.None);
+        Whole.AreaPageRequested += (_, e) => _ = OpenWholeAreaPage(Whole.AreaKey, e.Value, CancellationToken.None);
         Whole.HomeRequested += (_, _) => MapHome();
         Whole.Panel.Launcher = Ports.Launcher ?? NullLauncher.Instance;
         Whole.Panel.Loader = async (key, cancellationToken) => Ports.ApiUrl() is { } api ? await Ports.Api.Node(api, key, cancellationToken).ConfigureAwait(true) : null;
@@ -180,14 +181,21 @@ internal sealed partial class ContextPageViewModel
     /// <param name="area">The area's key.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>When the answer is drawn.</returns>
-    internal async Task OpenWholeArea(string area, CancellationToken cancellationToken = default)
+    internal Task OpenWholeArea(string area, CancellationToken cancellationToken = default) => OpenWholeAreaPage(area, 1, cancellationToken);
+
+    /// <summary>Opens one page of a feature's ranked nodes (area= and page=, 50 a page).</summary>
+    /// <param name="area">The area's key.</param>
+    /// <param name="page">Which page, 1-based.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>When the answer is drawn.</returns>
+    internal async Task OpenWholeAreaPage(string area, int page, CancellationToken cancellationToken)
     {
         if (Ports.ApiUrl() is not { } api)
         {
             return;
         }
 
-        var read = await Ports.Api.WholeMap(api, new WholeMapQuery("nodes", area, [], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId), cancellationToken).ConfigureAwait(true);
+        var read = await Ports.Api.WholeMap(api, new WholeMapQuery("nodes", area, [], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId, Page: page), cancellationToken).ConfigureAwait(true);
         if (read.IsSuccess)
         {
             Whole.ShowArea(read.Value);

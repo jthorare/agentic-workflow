@@ -122,6 +122,15 @@ internal sealed partial class WholeMapViewModel : ObservableObject
     /// <summary>Completes when the layout of the opened area is done (#3674: it runs off the UI thread, after the list is drawn from the answer).</summary>
     internal Task AreaLaidOut { get; private set; } = Task.CompletedTask;
 
+    /// <summary>The key of the area that is open; empty when none is.</summary>
+    internal string AreaKey { get; private set; } = string.Empty;
+
+    /// <summary>The page of the open area on screen (1-based).</summary>
+    internal int AreaPage { get; private set; } = 1;
+
+    /// <summary>How many pages the open area has.</summary>
+    internal int AreaPages { get; private set; } = 1;
+
     /// <summary>The features, in the order the map shows them.</summary>
     public IReadOnlyList<WholeAreaTileViewModel> Areas { get; private set; } = [];
 
@@ -203,15 +212,18 @@ internal sealed partial class WholeMapViewModel : ObservableObject
 
         _overview ??= (Answer, Geometry, Areas);
         Answer = answer;
-        Geometry = WholeMapLayout.Place(answer);
+        Geometry = null;   // the list draws from the answer now; the canvas follows once its layout is done, off the UI thread
+        Stage = WholeDrillIn.StageFor(answer.Nodes?.Count ?? 0);
+        (AreaKey, AreaPage, AreaPages) = (opened.Key, opened.Page, opened.Pages);
         ForgetHighlight();
         var label = answer.Areas.FirstOrDefault(a => string.Equals(a.Key, opened.Key, StringComparison.Ordinal))?.Label ?? opened.Key;
         AreaTitle = label;
-        ByAreaNote = opened.Truncated ? Labels.ContextWholeAreaTruncated(answer.Nodes?.Count ?? 0, opened.Counts.Nodes) : string.Empty;
+        ByAreaNote = string.Empty;   // a page is not a cut: the paging line says where you are
         Areas = [];
         IsAreaOpen = true;
         (IsLoading, IsFailed) = (false, false);
         Changed();
+        AreaLaidOut = Stage == WholeStage.Canvas ? LayOutArea(answer) : Task.CompletedTask;   // last: the layout's continuation reads IsAreaOpen
     }
 
     /// <summary>Goes back from one feature to all of them.</summary>
@@ -222,7 +234,9 @@ internal sealed partial class WholeMapViewModel : ObservableObject
             return;
         }
 
+        _layoutRun++;   // a layout still running is for the area that was closed
         (Answer, Geometry, Areas) = overview;
+        (Stage, AreaKey, AreaPage, AreaPages, AreaLaidOut) = (WholeStage.Canvas, string.Empty, 1, 1, Task.CompletedTask);
         ForgetHighlight();
         _overview = null;
         IsAreaOpen = false;
@@ -241,7 +255,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(ShowCrumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(Items), nameof(SelectedItem), nameof(CanvasName), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled), nameof(ShowPages)])
+        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(ShowCrumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(Items), nameof(SelectedItem), nameof(CanvasName), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled), nameof(ShowPages), nameof(ShowAreaList), nameof(HasAreaPages), nameof(AreaPageText), nameof(CanPreviousPage), nameof(CanNextPage)])
         {
             OnChanged(name);
         }

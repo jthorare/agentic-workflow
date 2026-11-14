@@ -23,6 +23,24 @@ internal static partial class Labels
     internal static string ContextWholeAreaTruncated(int shown, int total) =>
         string.Create(CultureInfo.InvariantCulture, $"Showing {shown} of {total} items; the rest are not shown.");
 
+    /// <summary>The paging line over an open area's list.</summary>
+    /// <param name="page">The page on screen.</param>
+    /// <param name="pages">How many pages there are.</param>
+    /// <param name="shown">How many items the page holds.</param>
+    /// <param name="total">How many the area holds.</param>
+    /// <returns>"Page 2 of 3 · 50 of 121 items".</returns>
+    internal static string ContextWholeAreaPage(int page, int pages, int shown, int total) =>
+        string.Create(CultureInfo.InvariantCulture, $"Page {page} of {pages} · {shown} of {total} items");
+
+    /// <summary>The button to the previous page of an open area.</summary>
+    internal const string ContextWholePreviousPage = "Previous page";
+
+    /// <summary>The button to the next page of an open area.</summary>
+    internal const string ContextWholeNextPage = "Next page";
+
+    /// <summary>The accessible name of an open area's ranked list.</summary>
+    internal const string ContextWholeAreaList = "Items of this feature, most linked first";
+
     /// <summary>The note by the search box when nothing on the map matches.</summary>
     internal const string ContextSearchNoMatches = "No matches";
 

@@ -4084,6 +4084,8 @@ static Aw.Sindri.Features.PinConcepts.PinWritten.operator !=(Aw.Sindri.Features.
 static Aw.Sindri.Features.PinConcepts.PinWritten.operator ==(Aw.Sindri.Features.PinConcepts.PinWritten? left, Aw.Sindri.Features.PinConcepts.PinWritten? right) -> bool
 Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.PagesInNoConcept.get -> bool
 Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.PagesInNoConcept.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Page.get -> int
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Page.init -> void
 Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult
 Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.<Clone>$() -> Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult!
 Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.AliasesHash.get -> string!

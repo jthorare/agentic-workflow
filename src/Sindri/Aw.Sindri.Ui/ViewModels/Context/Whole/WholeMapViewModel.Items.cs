@@ -1,9 +1,11 @@
+using Aw.Sindri.Ui.Api.Context;
 namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 /// <summary>The map's accessible list (<see cref="WholeMapViewModel"/>, continued; UX pass C-3): what the canvas draws, as items a keyboard and a screen reader reach. Enter on one does what a click on the map does.</summary>
 internal sealed partial class WholeMapViewModel
 {
     private (WholeMapGeometry Source, IReadOnlyList<MapItemViewModel> Items)? _items;
+    private (WholeMapView? Source, IReadOnlyList<MapItemViewModel> Items)? _listed;
 
     /// <summary>The list's name.</summary>
     public string ItemsName { get; } = Labels.ContextMapItems;
@@ -13,6 +15,17 @@ internal sealed partial class WholeMapViewModel
     {
         get
         {
+            if (ShowAreaList)
+            {
+                if (_listed is not { } have || !ReferenceEquals(have.Source, Answer))
+                {
+                    IReadOnlyList<MapItemViewModel> rows = [.. (Answer?.Nodes ?? []).Select(n => new MapItemViewModel(n.Key, n.Label, Labels.ContextMapItemName(n.Label, n.Kind), IsTile: false))];
+                    _listed = have = (Answer, rows);
+                }
+
+                return have.Items;
+            }
+
             if (Shown is not { } shown)
             {
                 return [];
@@ -43,6 +56,10 @@ internal sealed partial class WholeMapViewModel
             Pinned = item.Key;
             Refocus();
             OpenArea(item.Key);
+        }
+        else if (Geometry is null)
+        {
+            ChooseNode(item.Key);   // the list stage has no canvas to centre on: the click is the node's panel
         }
         else
         {

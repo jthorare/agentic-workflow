@@ -64,6 +64,24 @@
         <wv:WholeMapCanvas x:Name="WholeWorld" />
       </ctl:ZoomBorder>
 
+      <!-- An opened area with more nodes than the canvas draws (#3674): the ranked list, 50 a page, never edges. -->
+      <Border x:Name="WholeAreaListHost" IsVisible="{Binding ShowAreaList}" Background="{DynamicResource Brush.Surface1}" Padding="12">
+        <Grid RowDefinitions="*,Auto" RowSpacing="8">
+          <ListBox x:Name="WholeAreaList" ItemsSource="{Binding Items}" AutomationProperties.Name="{x:Static vm:WholeMapViewModel.AreaListName}" Tapped="OnAreaListTapped">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:MapItemViewModel">
+                <TextBlock Classes="body" Text="{Binding Label}" TextTrimming="CharacterEllipsis" AutomationProperties.Name="{Binding Name}" />
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasAreaPages}">
+            <Button x:Name="WholeAreaPrevious" Content="{x:Static vm:WholeMapViewModel.PreviousPageText}" IsEnabled="{Binding CanPreviousPage}" Click="OnAreaPrevious" />
+            <TextBlock x:Name="WholeAreaPageText" Classes="caption subtle" Text="{Binding AreaPageText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding AreaPageText}" />
+            <Button x:Name="WholeAreaNext" Content="{x:Static vm:WholeMapViewModel.NextPageText}" IsEnabled="{Binding CanNextPage}" Click="OnAreaNext" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
       <!-- The Pages and actions section (pages spec §3.4, mockup section A): a concept's Why drill lists its pages on the right; the node panel opens over it. -->
       <Panel IsVisible="{Binding ShowPages}" HorizontalAlignment="Right">
         <wv:PagesSectionView x:Name="WholePages" DataContext="{Binding Pages}" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="14,14,14,56" />

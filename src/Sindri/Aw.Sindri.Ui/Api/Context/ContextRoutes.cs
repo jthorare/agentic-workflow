@@ -37,6 +37,11 @@ internal static class ContextRoutes
             parts.Add("draft=true");
         }
 
+        if (query.Page > 1)
+        {
+            parts.Add("page=" + query.Page.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+
         if (query.PagesInNoConcept)
         {
             parts.Add("pagesInNoConcept=true");

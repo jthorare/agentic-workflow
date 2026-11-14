@@ -100,7 +100,7 @@ public sealed class WholeMapViewModelTests
     }
 
     [Fact]
-    public void An_open_feature_draws_its_items_alone_with_the_way_back_and_back_restores_the_overview()
+    public async Task An_open_feature_draws_its_items_alone_with_the_way_back_and_back_restores_the_overview()
     {
         var map = new WholeMapViewModel(() => _utc);
         map.Show(WholeMapLayoutTests.Draft("areas-over-budget"));
@@ -108,6 +108,7 @@ public sealed class WholeMapViewModelTests
         var opened = WholeMapLayoutTests.Draft("area-open");
 
         map.ShowArea(opened);
+        await map.AreaLaidOut;
 
         Assert.Equal((true, "Tab groups", string.Empty), (map.IsAreaOpen, map.AreaTitle, map.ByAreaNote));
         Assert.Equal((false, 6, 1), (map.ByArea, map.Geometry!.Nodes.Count, map.Geometry.Columns.Count));

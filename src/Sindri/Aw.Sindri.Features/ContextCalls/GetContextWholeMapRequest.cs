@@ -15,4 +15,7 @@ public sealed record GetContextWholeMapRequest(string? Detail = null, IReadOnlyL
 {
     /// <summary>True to answer with the pages that relate to no concept and their actions (nodes and edges), up to 200 pages; every answer carries their count.</summary>
     public bool PagesInNoConcept { get; init; }
+
+    /// <summary>Which page (1-based) of an opened area to answer, 50 nodes a page ranked by links; 1 when not asked, and a page past the last is the last.</summary>
+    public int Page { get; init; } = 1;
 }

@@ -29,6 +29,7 @@ internal sealed partial class WholeMapView : UserControl
         WholePages.ActionChosen += (_, e) => _map?.OpenAction(e.Key);   // an action's name opens its node panel
         WholePages.RetryRequested += (_, _) => _map?.RetryPages();
         WholeCanvas.FitBottomInset = MiniMapBand;
+        WholeAreaList.AddHandler(KeyDownEvent, OnItemsKey, RoutingStrategies.Tunnel);
         WholeItems.AddHandler(KeyDownEvent, OnItemsKey, RoutingStrategies.Tunnel);   // a bubbling handler never sees Enter: the focused row has handled it by then
         AutomationProperties.SetName(WholeZoomOut, Labels.ContextMapZoomOut);
         AutomationProperties.SetName(WholeZoomIn, Labels.ContextMapZoomIn);
@@ -252,6 +253,18 @@ internal sealed partial class WholeMapView : UserControl
             _map?.ChooseItem(item);
         }
     }
+
+    private void OnAreaListTapped(object? sender, TappedEventArgs e)
+    {
+        if (WholeAreaList.SelectedItem is MapItemViewModel item)
+        {
+            _map?.ChooseItem(item);
+        }
+    }
+
+    private void OnAreaPrevious(object? sender, RoutedEventArgs e) => _map?.PreviousPage();
+
+    private void OnAreaNext(object? sender, RoutedEventArgs e) => _map?.NextPage();
 
     private void OnCrumb(object? sender, ValueEventArgs<Crumb> e) => _map?.Navigate(e.Value);
 
