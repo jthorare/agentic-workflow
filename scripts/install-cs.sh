@@ -131,12 +131,17 @@ hash_list() {
 }
 inputs="$(mktemp "${TMPDIR:-/tmp}/install-cs-inputs.XXXXXX")"
 # a tracked file deleted in the working tree is left out: it isn't part of the build, and tar would fail on it
-git -C "$root" ls-files -z --cached --others --exclude-standard -- "${PATHSPECS[@]}" \
-  | while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done | LC_ALL=C sort -u > "$inputs"
+# A git that dies in the stamp (ls-files, status) stops the script with a message, never silently or as a wrong "clean" (#3218).
+git -C "$root" ls-files -z --cached --others --exclude-standard -- "${PATHSPECS[@]}" > "$inputs.z" \
+  || { rm -f "$inputs" "$inputs.z"; die "git ls-files failed while stamping the build (git ended with an error; run it again)"; }
+while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done < "$inputs.z" | LC_ALL=C sort -u > "$inputs"
+rm -f "$inputs.z"
 [ -s "$inputs" ] || die "no build inputs found under $root"
 stamp="$(hash_list "$inputs" "$sdk" "$platform" "$commit")"
 dirty=""
-if [ -n "$(git -C "$root" status --porcelain -- "${PATHSPECS[@]}" 2> /dev/null)" ]; then dirty="-dirty"; fi
+status="$(git -C "$root" status --porcelain -- "${PATHSPECS[@]}" 2> /dev/null)" \
+  || { rm -f "$inputs"; die "git status failed while stamping the build (git ended with an error; run it again)"; }
+if [ -n "$status" ]; then dirty="-dirty"; fi
 revision="$commit$dirty"
 
 lock="" stage="" tree=""
