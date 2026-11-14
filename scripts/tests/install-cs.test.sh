@@ -411,6 +411,33 @@ check "the pack copy did not touch the checkout" "$(git -C "$REPO" status --porc
 out="$(bash "$INSTALL" --publish 2>&1)"
 has "second run says the SDK package is current" "$out" "toolkit SDK package is current"
 check "second run packs nothing" "$(packs)" "1"
+# Follow-up to #3218: a git that dies on the pack path's own `ls-files` (the only call that names src/Toolkit) must stop with a message.
+REALGIT="$(command -v git)"
+mkdir "$WORK/failpack"
+cat > "$WORK/failpack/git" <<STUB
+#!/usr/bin/env bash
+case " \$* " in *" ls-files "*src/Toolkit*) exit 137 ;; esac
+exec "$REALGIT" "\$@"
+STUB
+chmod +x "$WORK/failpack/git"
+fpout="$(PATH="$WORK/failpack:$PATH" bash "$INSTALL" --publish 2>&1)" && fprc=0 || fprc=$?
+check "git ls-files failing on the pack path: the publish exits 1" "$fprc" "1"
+has "git ls-files failing on the pack path: says which step failed" "$fpout" "git ls-files failed while listing the toolkit SDK inputs"
+check "git ls-files failing on the pack path: packs nothing" "$(packs)" "1"
+# Follow-up to #3218: the stamp's own git calls. Its `ls-files` is the only one that names scripts/heavy.sh; `status` decides "-dirty".
+for what in "ls-files:*scripts/heavy.sh*" "status:*"; do
+  verb="${what%%:*}"; pat="${what#*:}"
+  mkdir "$WORK/failstamp-$verb"
+  cat > "$WORK/failstamp-$verb/git" <<STUB
+#!/usr/bin/env bash
+case " \$* " in *" $verb "*$pat) exit 137 ;; esac
+exec "$REALGIT" "\$@"
+STUB
+  chmod +x "$WORK/failstamp-$verb/git"
+  fsout="$(PATH="$WORK/failstamp-$verb:$PATH" bash "$INSTALL" --publish 2>&1)" && fsrc=0 || fsrc=$?
+  check "git $verb failing in the stamp: the publish exits 1" "$fsrc" "1"
+  has "git $verb failing in the stamp: says which step failed" "$fsout" "git $verb failed while stamping the build"
+done
 echo 'class B {}' >> "$REPO/src/Toolkit/Aw.Sindri.Toolkit/A.cs"
 sleep 1
 bash "$INSTALL" --publish > /dev/null 2>&1
@@ -493,6 +520,19 @@ fgout="$(PATH="$WORK/failgit:$PATH" bash "$INSTALL" --publish 2>&1)" && fgrc=0 |
 mv "$WORK/J.cs.before" "$REPO/src/Judge/Aw.Judge.Host/J.cs"  # copy back, not an in-place sed edit: BSD sed differs (#3575)
 check "git failing in the per-binary hashes: the publish exits 1" "$fgrc" "1"
 has "git failing in the per-binary hashes: says which step failed" "$fgout" "git ls-files failed"
+
+# (a3) Follow-up to #3218: the same for `git hash-object`, which the stamp and every per-binary hash pipe into sha256. A hash-object that dies
+# (137, killed) under pipefail ended the script silently. The stub fails every hash-object, so the stamp's own call fails first.
+mkdir "$WORK/failhash"
+cat > "$WORK/failhash/git" <<STUB
+#!/usr/bin/env bash
+case " \$* " in *" hash-object "*) exit 137 ;; esac
+exec "$REALGIT" "\$@"
+STUB
+chmod +x "$WORK/failhash/git"
+fhout="$(PATH="$WORK/failhash:$PATH" bash "$INSTALL" --publish 2>&1)" && fhrc=0 || fhrc=$?
+check "git hash-object failing: the publish exits 1" "$fhrc" "1"
+has "git hash-object failing: says which step failed" "$fhout" "git hash-object failed"
 
 # (b) scripts/heavy.sh only: nothing is published, the new build has the new heavy
 echo "# a comment" >> "$REPO/scripts/heavy.sh"
