@@ -23,6 +23,9 @@ namespace Aw.Meta.Features.Watch;
 internal sealed class GithubQueueWatch(RepoCommands repo, IKeyValueStore values, IGateStore gates, IRunningLog log, TimeProvider clock)
 {
     /// <summary>The lines this poll yields for the queued pull requests.</summary>
+    /// <summary>The same settling over other gh and git calls (a poll's, bound by its limit and the stop signal).</summary>
+    internal GithubQueueWatch Using(RepoCommands github) => new(github, values, gates, log, clock);
+
     internal async ValueTask<IReadOnlyList<string>> Settle(TeamConfig team, WatchSnapshot snapshot, CancellationToken cancellationToken)
     {
         var stored = await values.Get(KvKeys.MergeQueued, cancellationToken).ConfigureAwait(false);

@@ -2803,3 +2803,6 @@ Aw.Meta.Core.Coordination.ObligationEventWriter.Closed(string! obligationKey, st
 Aw.Meta.Core.Coordination.ObligationEventWriter.IsOwed(string! obligationKey, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
 Aw.Meta.Core.Coordination.ObligationEventWriter.ObligationEventWriter(Aw.Meta.Core.Coordination.MetaEventSink! events, Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Coordination.ObligationReader! reader, System.TimeProvider! clock) -> void
 Aw.Meta.Core.Coordination.ObligationEventWriter.Opened(System.DateTimeOffset at, string! obligationKey, string! sender, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Meta.Core.Coordination.HeavyReservation.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Coordination.HeavyReservation!
+Aw.Meta.Core.Coordination.MergeQueueReader.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Coordination.MergeQueueReader!
+Aw.Meta.Core.Coordination.RepoCommands.Limited(System.TimeSpan limit) -> Aw.Meta.Core.Coordination.RepoCommands!

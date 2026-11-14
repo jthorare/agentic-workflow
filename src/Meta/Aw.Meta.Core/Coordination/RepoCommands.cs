@@ -14,13 +14,18 @@ public sealed class RepoCommands(ICommandRunner runner, MetaPaths paths)
 {
     private const string QueueQuery = "query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){pullRequest(number:$number){isMergeQueueEnabled isInMergeQueue mergeQueueEntry{position state} timelineItems(last:1,itemTypes:[REMOVED_FROM_MERGE_QUEUE_EVENT]){nodes{... on RemovedFromMergeQueueEvent{reason}}}}}}";
 
-    private static readonly TimeSpan _limit = TimeSpan.FromMinutes(15);
+    private TimeSpan _limit = TimeSpan.FromMinutes(15);
     private CancellationToken _cancellation;
 
     /// <summary>The same calls, each stopped (its process tree killed, the cancellation thrown) when the token fires.</summary>
     /// <param name="cancellationToken">The token.</param>
     /// <returns>A copy bound to the token.</returns>
-    public RepoCommands Cancelling(CancellationToken cancellationToken) => new(runner, paths) { _cancellation = cancellationToken };
+    public RepoCommands Cancelling(CancellationToken cancellationToken) => new(runner, paths) { _cancellation = cancellationToken, _limit = _limit };
+
+    /// <summary>The same calls, each given at most <paramref name="limit"/> (the default is 15 minutes, which suits a gate step and not a poll of GitHub). A call that runs past it is killed and fails with AW-META-012 "timed out".</summary>
+    /// <param name="limit">The longest one call may run.</param>
+    /// <returns>A copy with the limit.</returns>
+    public RepoCommands Limited(TimeSpan limit) => new(runner, paths) { _cancellation = _cancellation, _limit = limit };
 
     /// <summary>Runs git in a directory.</summary>
     /// <param name="cwd">The working directory.</param>

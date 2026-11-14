@@ -10,6 +10,9 @@ namespace Aw.Meta.Features.Watch;
 /// <param name="owners">Reads what decides which pull requests the team owns; null keeps every pull request.</param>
 internal sealed class PollFollowUps(WatchSweeper sweeper, GithubQueueWatch queue, TeamPrInputs? owners = null)
 {
+    /// <summary>The same follow-ups over a poll's gh and git calls, bound by its limit and the stop signal.</summary>
+    internal PollFollowUps Using(Core.Coordination.RepoCommands github) => new(sweeper, queue.Using(github), owners?.Using(github));
+
     // Only the pull requests the team owns (#2771): the watch's lines, the board and the ended-PR sweep all read this one set.
     internal async ValueTask<Result<IReadOnlyList<PrView>>> Owned(TeamConfig team, IReadOnlyList<PrView> prs, CancellationToken cancellationToken)
     {
