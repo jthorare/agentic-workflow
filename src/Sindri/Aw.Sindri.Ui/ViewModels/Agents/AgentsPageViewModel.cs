@@ -231,7 +231,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
     private void Apply(IReadOnlyList<string> before, SessionList list)
     {
         var shownSessions = list.Sessions.Where(Matches).ToList();
-        var kept = shownSessions.Select(Row).ToList();
+        var kept = shownSessions.Select(Held).Select(Row).ToList();
         Head = IsFiltered
             ? Labels.AgentsFilteredHead(shownSessions.Count, list.Counts.Live, shownSessions.Count(s => string.Equals(s.State, "asking", StringComparison.Ordinal)))
             : Labels.AgentsHead(list.Counts.Live, list.Counts.Asking);
@@ -243,20 +243,9 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
             _ = _rows.Remove(gone);
         }
 
-        var outside = kept.Where(r => !r.IsLaunched).ToList();
-        var launched = kept.Where(r => r.IsLaunched).ToList();
-        var shown = new List<SessionGroupViewModel>();
-        if (launched.Count > 0)
-        {
-            shown.Add(Group(Labels.StartedBySindri, launched));
-        }
-
-        if (outside.Count > 0)
-        {
-            shown.Add(Group(Labels.OutsideWorkflow, outside));
-        }
-
+        var shown = ShownGroups(kept);
         Patch.To(Groups, shown);
+        OnChanged(nameof(HasAsking));   // after the patch: HasAsking reads Groups[0]
         RefreshColumns(kept);
         OnChanged(nameof(HasColumns));
         ShowEnded(list);

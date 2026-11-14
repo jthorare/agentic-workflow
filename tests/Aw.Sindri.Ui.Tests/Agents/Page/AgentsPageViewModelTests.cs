@@ -139,15 +139,15 @@ public sealed class AgentsPageViewModelTests
         var page = await _f.Shown(Token);
 
         Assert.Equal("private title", RowOf(page, Claude).TitleText);
-        Assert.Equal("web/bbbbbbbb", RowOf(page, Codex).TitleText);
+        Assert.Equal("web", RowOf(page, Codex).TitleText);   // #3082: repo, no id
     }
 
     [Fact]
-    public async Task No_repo_and_no_title_reads_id8()
+    public async Task No_repo_and_no_title_reads_the_provider_not_the_id()
     {
         var page = await _f.Shown(Token);
 
-        Assert.Equal("pid-333", RowOf(page, Cursor).TitleText);
+        Assert.Equal("Cursor", RowOf(page, Cursor).TitleText);
     }
 
     [Fact]

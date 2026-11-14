@@ -155,6 +155,16 @@ internal sealed partial class ShellWindow
             return "/";
         }
 
+        if (e is { Key: Key.OemCloseBrackets, KeyModifiers: KeyModifiers.None })
+        {
+            return "]";   // #3082: the next asking row on the Agents page
+        }
+
+        if (e is { Key: Key.OemOpenBrackets, KeyModifiers: KeyModifiers.None })
+        {
+            return "[";
+        }
+
         return e.Key is >= Key.A and <= Key.Z && e.KeyModifiers == KeyModifiers.None ? e.Key.ToString() : null;
     }
 
