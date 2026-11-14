@@ -49,11 +49,11 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
-    private void OnCompare(object? sender, RoutedEventArgs e)
+    private async void OnCompare(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)
         {
-            page.OpenCompare();
+            await page.OpenCompare(CancellationToken.None).ConfigureAwait(true);
         }
     }
 

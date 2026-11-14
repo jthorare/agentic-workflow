@@ -81,6 +81,9 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     /// <summary>True when exactly two runs are ticked.</summary>
     public bool CanCompare => SelectedCount == 2;
 
+    /// <summary>What to do when the ticks do not make two: "Tick one more run to compare" or "Compare takes two runs: untick one"; empty otherwise.</summary>
+    public string CompareHint => string.Empty;
+
     /// <summary>"Compare 2".</summary>
     public string CompareText => Labels.WfCompare(2);
 
