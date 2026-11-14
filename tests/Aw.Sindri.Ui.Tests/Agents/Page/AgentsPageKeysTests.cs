@@ -43,6 +43,17 @@ public sealed class AgentsPageKeysTests
     }
 
     [Fact]
+    public async Task SelectWhenDrawn_selects_a_drawn_row_at_once_3384()
+    {
+        var page = await _f.Shown(Token);
+        var target = page.Groups.SelectMany(g => g.Rows).Select(r => r.Ref).Last();
+
+        page.SelectWhenDrawn(target);
+
+        Assert.Equal(target, page.SelectedKey);
+    }
+
+    [Fact]
     public async Task K_from_no_row_goes_to_the_last()
     {
         var page = await _f.Shown(Token);

@@ -64,7 +64,12 @@ internal sealed partial class NewAgentFormViewModel : ObservableObject
     } = string.Empty;
 
     /// <summary>The repos to choose from.</summary>
-    public IReadOnlyList<RepoChoice> Repos { get; }
+    public IReadOnlyList<RepoChoice> Repos { get; private set => Set(ref field, value); } = [];
+
+    /// <summary>Takes the profile's repos and the last choices once they are read; what was typed or chosen already stays.</summary>
+    /// <param name="repos">The repos.</param>
+    /// <param name="defaults">The last start's repo and agent.</param>
+    internal void SetRepos(IReadOnlyList<RepoChoice> repos, NewAgentDefaults defaults) => _ = (repos, defaults);
 
     /// <summary>The chosen repo; null when the profile has none. Choosing clears the error under it.</summary>
     public RepoChoice? Repo

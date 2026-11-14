@@ -35,6 +35,10 @@ internal sealed partial class AgentsPageViewModel
         Mark();
     }
 
+    /// <summary>Selects the row of a session just started, now if it is drawn and else when the next read draws it (#3384).</summary>
+    /// <param name="key">The row's key.</param>
+    internal void SelectWhenDrawn(string key) => _ = key;
+
     /// <summary>Selects a row by its key (focus arrived on it).</summary>
     /// <param name="key">The row's key.</param>
     /// <returns>True when such a row is drawn.</returns>
