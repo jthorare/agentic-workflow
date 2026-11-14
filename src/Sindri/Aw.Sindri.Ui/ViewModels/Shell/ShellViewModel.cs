@@ -183,8 +183,8 @@ internal sealed partial class ShellViewModel : ObservableObject
     /// <summary>The top bar shows in every state but a version mismatch.</summary>
     public bool IsChromeVisible => !IsVersionMismatch;
 
-    /// <summary>The top bar's navigation takes input (dimmed and disabled while not running).</summary>
-    public bool IsNavigationEnabled => !IsNotRunning;
+    /// <summary>The top bar's navigation, the G chords and the health pill take input whenever the top bar shows: while Sindri isn't running each shows the Not running card (#3688).</summary>
+    public bool IsNavigationEnabled => IsChromeVisible;
 
     /// <summary>Not running: S1b's panel in place of the page.</summary>
     public bool IsNotRunning => State == ShellState.NotRunning;

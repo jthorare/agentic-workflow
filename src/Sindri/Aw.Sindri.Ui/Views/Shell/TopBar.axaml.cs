@@ -255,8 +255,7 @@ internal sealed partial class TopBar : UserControl
         }
     }
 
-    // The pill opens Health, except while Sindri isn't running: the pill is disabled then (the Not running card is the
-    // health state), and a click that still arrives opens nothing and remembers nothing.
+    // The pill opens Health. While Sindri isn't running it still does: the Not running card covers the page, and the selected tab moves to System (#3688).
     private void OnHealthPill(object? sender, RoutedEventArgs e)
     {
         if (DataContext is ShellViewModel { IsNavigationEnabled: true } shell)
