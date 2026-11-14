@@ -450,12 +450,52 @@ run_pl() { : > "$FAKE_LOG"; out="$(bash "$INSTALL" --publish "$@" 2>&1)"; rc=$?;
 have_all() { local n r=yes; for n in $ALL8; do [ -x "$B/$NB/$n" ] || r=no; done; echo "$r"; }
 differs() { if [ "$1" != "$2" ]; then echo yes; else echo no; fi; }
 
+# The rows below publish through a fake heavy, not the real scripts/heavy.sh copied in above (a real one waits for a free slot and
+# memory, so a loaded box held a publish there for ~12 min after its suite was SIGKILLed, #3668). The fake runs the command at once.
+# FAKE_HEAVY_HOLD=<file> makes it wait like a busy heavy while that file exists, after it records its pid in FAKE_HEAVY_PIDFILE.
+cat > "$REPO/scripts/heavy.sh" <<'FH'
+#!/usr/bin/env bash
+[ "${1:-}" = --expensive ] && shift
+if [ -n "${FAKE_HEAVY_HOLD:-}" ] && [ -e "$FAKE_HEAVY_HOLD" ]; then
+  echo $$ > "$FAKE_HEAVY_PIDFILE"
+  while [ -e "$FAKE_HEAVY_HOLD" ]; do sleep 1; done
+fi
+export PATH="${AW_HEAVY_TEST_PATH:+$AW_HEAVY_TEST_PATH:}$PATH"
+exec "$@"
+FH
+chmod +x "$REPO/scripts/heavy.sh"; g add -A; ccommit -m "fake heavy for the per-binary rows"
+
 run_pl; S0="$NB"
 check "per-binary: the first publish builds all eight" "$(pubs)" "$ALL8"
 check "per-binary: the build records a hash per binary" "$(ls "$B/$S0/inputs"/*.sha256 2> /dev/null | wc -l | tr -d ' ')" "8"
 check "per-binary: the build records the file list per binary" "$(ls "$B/$S0/inputs"/*.files 2> /dev/null | wc -l | tr -d ' ')" "8"
 check "per-binary: the judge file list names its libe_sqlite3.so" "$(grep -cx 'libe_sqlite3.so' "$B/$S0/inputs/judge.files" 2> /dev/null)" "1"
 check "per-binary: the ui-evidence file list names its dot folder" "$(grep -cx '.playwright' "$B/$S0/inputs/ui-evidence.files" 2> /dev/null)" "1"
+
+# A suite that is SIGKILLed can't clean up, and the publish it started waits on in heavy (#3668). The fake heavy gives up when the
+# suite's pid is gone or $WORK is removed. Each case starts a publish held in the fake heavy, ends the suite stand-in (a recorded
+# pid) or removes the work dir, and expects the held heavy gone within 6 s. The held publish is released at the end either way.
+orphan_case() { # orphan_case <name> <suite|workdir>
+  local what="$2" standin="" probe="$WORK" hold="$WORK/hold" hpid_f="$WORK/held.pid" hpid="" ipid i alive
+  if [ "$what" = suite ]; then bash -c 'exec sleep 120' & standin=$!; else bash -c 'exec sleep 120' & standin=$!; probe="$WORK/probe-dir"; mkdir -p "$probe"; fi
+  echo "orphan probe $1" >> "$REPO/src/Judge/Aw.Judge.Host/J.cs"   # new inputs, so the publish has work to do
+  : > "$hold"; rm -f "$hpid_f"
+  FAKE_HEAVY_HOLD="$hold" FAKE_HEAVY_PIDFILE="$hpid_f" FAKE_HEAVY_SUITE_PID="$standin" FAKE_HEAVY_WORK="$probe" \
+    bash "$INSTALL" --publish > "$WORK/held.log" 2>&1 &
+  ipid=$!
+  for i in $(seq 1 100); do [ -s "$hpid_f" ] && break; sleep 0.1; done
+  check "orphan ($1): the publish reached the held heavy" "$([ -s "$hpid_f" ] && echo yes || echo no)" "yes"
+  hpid="$(cat "$hpid_f" 2> /dev/null)"
+  if [ "$what" = suite ]; then kill -9 "$standin"; else find "$probe" -delete; fi
+  wait "$standin" 2> /dev/null
+  alive=no
+  for i in $(seq 1 60); do if [ -n "$hpid" ] && kill -0 "$hpid" 2> /dev/null; then alive=yes; sleep 0.1; else alive=no; break; fi; done
+  check "orphan ($1): the held heavy exits within 6 s" "$alive" "no"
+  rm -f "$hold"; wait "$ipid" 2> /dev/null   # release a heavy that stayed; no pid is signalled
+  [ "$what" = suite ] || kill "$standin" 2> /dev/null
+}
+orphan_case "its suite was SIGKILLed" suite
+orphan_case "its work dir was removed" workdir
 
 # (a) a change under the judge project: judge only
 echo "judge change" >> "$REPO/src/Judge/Aw.Judge.Host/J.cs"
