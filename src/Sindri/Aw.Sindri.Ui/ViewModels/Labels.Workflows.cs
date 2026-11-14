@@ -33,8 +33,8 @@ internal static partial class Labels
     /// <param name="total">Workflows listed.</param>
     /// <param name="active">Workflows with an active revision.</param>
     /// <returns>The words.</returns>
-    internal static string WfHead(int total, int active) =>
-        string.Create(CultureInfo.InvariantCulture, $"{total} {(total == 1 ? "workflow" : "workflows")} · {active} active");
+    internal static string WfHead(int total, int active, int paused = 0) =>
+        string.Create(CultureInfo.InvariantCulture, $"{total} {(total == 1 ? "workflow" : "workflows")} · {active} active") + (paused > 0 ? string.Create(CultureInfo.InvariantCulture, $" · {paused} paused") : string.Empty);
 
     /// <summary>A workflow's state: a glyph and a word, never colour alone.</summary>
     /// <param name="active">True when triggers run a revision.</param>
