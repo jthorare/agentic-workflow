@@ -36,6 +36,16 @@ internal static partial class Labels
 
     internal const string TerminalTakeItBack = "Take it back";
 
+    internal const string TerminalStop = "Stop…";
+
+    internal const string TerminalStopAgain = "Stop? Press again";
+
+    internal const string TerminalInterrupt = "Interrupt";
+
+    internal const string TerminalStopFailed = "Couldn't stop it.";
+
+    internal const string TerminalInterruptFailed = "Couldn't send Ctrl-C.";
+
     internal const string TerminalJump = "Jump to it";
 
     internal const string TerminalCopyResume = "Copy resume command";

@@ -177,6 +177,7 @@ internal sealed partial class TerminalViewViewModel
     private void Begin(TerminalTarget target)
     {
         Target = target;
+        (_armedUntil, ControlLine) = (null, string.Empty);
         State = target.CanAttach ? TerminalState.Connecting : TerminalState.CantAttach;
         Side = TerminalSide.List;
         Rows = [];

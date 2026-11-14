@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Aw.Sindri.Ui.Terminal;
 using Aw.Sindri.Ui.ViewModels.Agents;
 
@@ -15,10 +16,13 @@ internal sealed partial class TerminalView : UserControl
 {
     private const double NarrowBelow = 1100;
 
+    private TerminalViewViewModel? _asking;
+
     public TerminalView()
     {
         InitializeComponent();
         AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
+        DataContextChanged += (_, _) => FollowStopAsk();
         Pane.FitChanged += (_, e) => PaneFitChanged?.Invoke(this, e);
     }
 
@@ -30,9 +34,6 @@ internal sealed partial class TerminalView : UserControl
 
     /// <summary>Raised by the Transcript button.</summary>
     internal event EventHandler? TranscriptRequested;
-
-    /// <summary>Raised by the Stop… button.</summary>
-    internal event EventHandler? StopRequested;
 
     /// <summary>The pane the socket's frames are drawn into.</summary>
     internal ITerminalPane PaneDrawing => Pane;
@@ -97,5 +98,30 @@ internal sealed partial class TerminalView : UserControl
 
     private void OnTranscript(object? sender, RoutedEventArgs e) => TranscriptRequested?.Invoke(this, EventArgs.Empty);
 
-    private void OnStop(object? sender, RoutedEventArgs e) => StopRequested?.Invoke(this, EventArgs.Empty);
+    private async void OnStop(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is TerminalViewViewModel vm)
+        {
+            _ = await vm.PressStop(CancellationToken.None);
+        }
+    }
+
+    private async void OnInterrupt(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is TerminalViewViewModel vm)
+        {
+            _ = await vm.PressInterrupt(CancellationToken.None);
+        }
+    }
+
+    // The first Stop press asks for 2 s; the view ticks the view model once the window is over so the label goes back.
+    private void FollowStopAsk()
+    {
+        _asking?.StopArmed -= OnStopArmed;
+        _asking = DataContext as TerminalViewViewModel;
+        _asking?.StopArmed += OnStopArmed;
+    }
+
+    private void OnStopArmed(object? sender, EventArgs e) =>
+        DispatcherTimer.RunOnce(() => (DataContext as TerminalViewViewModel)?.Tick(), TerminalViewViewModel.StopWindow + TimeSpan.FromMilliseconds(100));
 }

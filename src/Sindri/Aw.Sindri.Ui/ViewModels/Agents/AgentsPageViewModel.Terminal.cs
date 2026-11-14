@@ -74,7 +74,7 @@ internal sealed partial class AgentsPageViewModel
 
     private TerminalViewViewModel NewTerminal()
     {
-        var view = new TerminalViewViewModel(_clock, OperatingSystem.IsMacOS());
+        var view = new TerminalViewViewModel(_clock, OperatingSystem.IsMacOS(), control);
         if (!_terminalWired)
         {
             _terminalWired = true;
@@ -93,6 +93,7 @@ internal sealed partial class AgentsPageViewModel
             Key = row.Ref,
             Name = row.LaneText.Length > 0 ? row.LaneText : row.TitleText,
             Kind = row.Row.Lane is null ? TerminalKind.Listed : TerminalKind.Lane,
+            StartedBySindri = row.IsLaunched,
             SocketKind = host.SocketKind ?? string.Empty,
             CanAttach = canAttach,
             CantAttachReason = canAttach ? string.Empty : host.Label + ": " + Labels.TerminalNoPane,

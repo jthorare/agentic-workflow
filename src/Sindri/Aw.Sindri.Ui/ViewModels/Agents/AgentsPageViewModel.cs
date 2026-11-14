@@ -16,7 +16,8 @@ namespace Aw.Sindri.Ui.ViewModels.Agents;
 /// <param name="clipboard">Where Copy puts text.</param>
 /// <param name="clock">The clock the poll and the ages run on.</param>
 /// <param name="catalog">The command catalog, for the Focus row.</param>
-internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard clipboard, TimeProvider clock, CatalogViewModel catalog) : ObservableObject
+/// <param name="control">Stop and Interrupt for the terminal view's header; null until Serve's routes are wired (the buttons then answer "Couldn't stop it.").</param>
+internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard clipboard, TimeProvider clock, CatalogViewModel catalog, Aw.Sindri.Ui.Terminal.ISessionControl? control = null) : ObservableObject
 {
     private readonly Dictionary<string, SessionRowViewModel> _rows = new(StringComparer.Ordinal);
     private readonly Dictionary<string, EndedSessionViewModel> _ended = new(StringComparer.Ordinal);

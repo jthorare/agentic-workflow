@@ -17,7 +17,7 @@ internal sealed partial class TerminalViewViewModel : ObservableObject
         nameof(IsDimmed), nameof(Rows), nameof(CachedScreenCount), nameof(FlashCount), nameof(RetryIn), nameof(ShowRetryNow),
         nameof(ShowTakeItBack), nameof(HintText), nameof(EndedText), nameof(CanRemoveWorktree), nameof(CanDiscardSession),
         nameof(CanCopyResume), nameof(CanJump), nameof(CardReason), nameof(CardTail), nameof(IsCardAccented), nameof(CardButtons),
-        nameof(FocusedButton), nameof(ShowStop), nameof(CardButtonItems), nameof(HasCard), nameof(HasBanner), nameof(CardTitle), nameof(CardBody),
+        nameof(FocusedButton), nameof(ShowStop), nameof(CardButtonItems), nameof(HasCard), nameof(HasBanner), nameof(CardTitle), nameof(CardBody), nameof(CanStop), nameof(CanInterrupt), nameof(IsStopArmed), nameof(StopLabel), nameof(StopAutomationId),
         nameof(HeaderStateWord), nameof(IsStateAttention), nameof(IsStateError), nameof(IsStateEnded), nameof(HasCardTail), nameof(FooterParts),
     ];
 

@@ -94,8 +94,10 @@
         </StackPanel>
         <TextBlock Grid.Column="5" x:Name="HostText" Classes="subtle mono" Text="{Binding HostText}" Margin="0,0,12,0" VerticalAlignment="Center" />
         <StackPanel Grid.Column="6" Orientation="Horizontal" Spacing="12">
+          <TextBlock x:Name="ControlLine" Classes="caption attention" Text="{Binding ControlLine}" VerticalAlignment="Center" />
           <Button x:Name="CloseButton" Content="Close" Click="OnClose" />
-          <Button x:Name="StopButton" Content="Stop…" IsVisible="{Binding ShowStop}" Click="OnStop" />
+          <Button x:Name="InterruptButton" Content="Interrupt" IsVisible="{Binding CanInterrupt}" Click="OnInterrupt" AutomationProperties.AutomationId="TerminalInterrupt" />
+          <Button x:Name="StopButton" Content="{Binding StopLabel}" IsVisible="{Binding CanStop}" Click="OnStop" AutomationProperties.AutomationId="{Binding StopAutomationId}" />
         </StackPanel>
       </Grid>
     </Border>
