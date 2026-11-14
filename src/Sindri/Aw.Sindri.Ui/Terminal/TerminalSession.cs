@@ -58,10 +58,8 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
     /// <param name="text">The characters it typed, or null.</param>
     /// <param name="cancellationToken">Cancels the send.</param>
     /// <returns>What became of the key.</returns>
-    internal async Task<TerminalKeyFate> SendKey(string name, string? text, CancellationToken cancellationToken)
-    {
-        return TerminalSocketMessages.FromKey(name, text) is { } message ? await Deliver(message, cancellationToken).ConfigureAwait(true) : TerminalKeyFate.Dropped;
-    }
+    internal async Task<TerminalKeyFate> SendKey(string name, string? text, CancellationToken cancellationToken) =>
+        TerminalSocketMessages.FromKey(name, text) is { } message ? await Deliver(message, cancellationToken).ConfigureAwait(true) : TerminalKeyFate.Dropped;
 
     // One message out: queued until ready, dropped when the socket is down.
     private async Task<TerminalKeyFate> Deliver(string message, CancellationToken cancellationToken)
