@@ -33,7 +33,7 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
     public async ValueTask<Result<AddConnectionResponse>> Handle(AddConnectionRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var name = Named(request.Name);
+        var name = ConnectionName.ParseUnreserved(request.Name);
         if (name.IsError)
         {
             return name.Error;
@@ -70,12 +70,6 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
             _ => SindriErrors.InvalidInput.With($"cannot add a connection of kind {ConnectionWire.Name(kind.Value)} (fix: use oauth, mcp, rest or cli)"),
         };
     }
-
-    // slack:messages has no preset on purpose and is made only by sindri messages connect, so the generic add refuses the name (#3279).
-    private static Result<ConnectionName> Named(string text) =>
-        string.Equals(text, "slack:messages", StringComparison.Ordinal)
-            ? SindriErrors.ConnectionNameReserved.With("slack:messages is made by sindri messages connect (fix: run sindri messages connect)")
-            : ConnectionName.Parse(text);
 
     private Result<ConnectionPreset?> Preset(string? key)
     {

@@ -10,7 +10,6 @@ internal sealed class RunRowViewModel : ObservableObject
     {
         Id = row.Id;
         var (glyph, word) = Labels.WfChip(row.Status);
-        ChipText = glyph + " " + word;
         Tone = RunStatus.Tone(row.Status);
         (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, RunStatus.ToneWord(row.Status));
         TriggerText = Labels.WfTriggerWord(row.Trigger);
@@ -26,17 +25,8 @@ internal sealed class RunRowViewModel : ObservableObject
     /// <summary>The run's id.</summary>
     public string Id { get; }
 
-    /// <summary>The status: glyph and word.</summary>
-    public string ChipText { get; }
-
     /// <summary>The chip's tone; the glyph and word carry the status too.</summary>
     public ChipTone Tone { get; }
-
-    /// <summary>True for a succeeded or running run (the ok colour).</summary>
-    public bool IsOk => Tone == ChipTone.Ok;
-
-    /// <summary>True for a waiting run (the attention colour).</summary>
-    public bool IsAttention => Tone == ChipTone.Attn;
 
     /// <summary>True for a failed run (the error colour).</summary>
     public bool IsError => Tone == ChipTone.Fail;
