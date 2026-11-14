@@ -408,6 +408,10 @@
       </ControlTemplate>
     </Setter>
   </Style>
+  <!-- The card grows to fit its words: they wrap, the chrome has a minimum height and no fixed one, nothing is cut or ellipsised (#3648). -->
+  <Style Selector="controls|StartCard TextBlock">
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
   <Style Selector="controls|StartCard:pointerover /template/ Border#PART_Chrome">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
   </Style>
