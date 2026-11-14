@@ -75,13 +75,15 @@ public sealed class OverdueServicesTests
         await Approve();
         _live.Publish([new ServiceSchedule(ServiceName.From("digest"), Cadence.Parse("30s").Value, _v.Slice.Clock.GetUtcNow().AddMinutes(-5))]);
 
-        Assert.Null((await Listed()).OverdueSince);
+        Assert.Null(Assert.Single(await ListedAll(), s => s.Name == _heartbeat).OverdueSince);
     }
 
     private void Publish(DateTimeOffset slot) => _live.Publish([new ServiceSchedule(_heartbeat, Cadence.Parse("30s").Value, slot)]);
 
-    private async Task<ServiceView> Listed() =>
-        Assert.Single((await new ListServicesService(_v.Slice.Profiles, _v.Views, _v.Progress, new InMemoryJobViews(), [], _live, _v.Slice.Clock).Handle(new ListServicesRequest(), Token)).Value.Services);
+    private async Task<ServiceView> Listed() => Assert.Single(await ListedAll());
+
+    private async Task<IReadOnlyList<ServiceView>> ListedAll() =>
+        (await new ListServicesService(_v.Slice.Profiles, _v.Views, _v.Progress, new InMemoryJobViews(), [], _live, _v.Slice.Clock).Handle(new ListServicesRequest(), Token)).Value.Services;
 
     private async Task Approve() => _ = (await _v.Slice.Profiles.Save(SliceHarness.ProfileOf("thor", ("heartbeat", "30s")), Token)).Value;
 

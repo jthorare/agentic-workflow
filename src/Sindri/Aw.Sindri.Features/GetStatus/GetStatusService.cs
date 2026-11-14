@@ -14,7 +14,7 @@ using Aw.Sindri.Core.Views;
 namespace Aw.Sindri.Features.GetStatus;
 
 internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, ILedgerReader ledger,
-    IProjectorStatus projector, HealthServiceRows healthRows, ISessionSnapshot sessions)
+    IProjectorStatus projector, HealthServiceRows healthRows, ISessionSnapshot sessions, LiveSchedule? live = null)
     : IService<GetStatusRequest, GetStatusResponse>
 {
     public async ValueTask<Result<GetStatusResponse>> Handle(GetStatusRequest request, CancellationToken cancellationToken)
@@ -73,7 +73,7 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
     private async ValueTask<IReadOnlyList<ServiceStatus>> Services(LoadedProfile? approved, CancellationToken cancellationToken)
     {
         var services = new List<ServiceStatus>();
-        foreach (var schedule in approved is null ? [] : ServiceSchedule.From(approved.Profile, DateTimeOffset.MinValue))
+        foreach (var schedule in live?.Schedules ?? (approved is null ? [] : ServiceSchedule.From(approved.Profile, DateTimeOffset.MinValue)))   // what the scheduler runs, built-ins too, so the count agrees with the services list (#3623)
         {
             var last = await ledger.Latest(EventTypes.ServiceRun(schedule.Name), cancellationToken).ConfigureAwait(false);
             services.Add(new ServiceStatus(schedule.Name, schedule.Cadence.ToString(), last.IsSuccess ? last.Value?.Envelope.OccurredAt : null));
