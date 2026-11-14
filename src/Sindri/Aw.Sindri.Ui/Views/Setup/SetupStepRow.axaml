@@ -8,7 +8,7 @@
   <!-- One step of the checklist (setup spec §2.4): the header is the row (a number or a tick, the title, the line under it, the state word) and opens its body, which holds what the
        step is doing, its error in words, and its one action. A step that needs the person or failed opens by itself. Every named line is a Border wrapper (a TextBlock's peer ignores
        AutomationProperties.Name). -->
-  <Expander x:Name="SetupStepExpander" Classes="setup-step" IsExpanded="{Binding IsOpen, Mode=TwoWay}" AutomationProperties.Name="{Binding Name}">
+  <Expander x:Name="SetupStepExpander" Classes="setup-step" Classes.no-body="{Binding !HasBody}" IsExpanded="{Binding IsOpen, Mode=TwoWay}" AutomationProperties.Name="{Binding Name}">
     <Expander.Header>
       <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="64" ColumnSpacing="12">
         <Border Classes="step-number" AutomationProperties.AccessibilityView="Raw">
