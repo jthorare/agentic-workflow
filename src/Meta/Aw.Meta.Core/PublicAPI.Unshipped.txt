@@ -2803,3 +2803,11 @@ Aw.Meta.Core.Coordination.ObligationEventWriter.Closed(string! obligationKey, st
 Aw.Meta.Core.Coordination.ObligationEventWriter.IsOwed(string! obligationKey, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
 Aw.Meta.Core.Coordination.ObligationEventWriter.ObligationEventWriter(Aw.Meta.Core.Coordination.MetaEventSink! events, Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Coordination.ObligationReader! reader, System.TimeProvider! clock) -> void
 Aw.Meta.Core.Coordination.ObligationEventWriter.Opened(System.DateTimeOffset at, string! obligationKey, string! sender, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Meta.Core.Github.MergeQueueView.Stacked.get -> bool
+Aw.Meta.Core.Github.MergeQueueView.Stacked.init -> void
+Aw.Meta.Core.Merge.MergeFacts.BaseHasMergeQueue.get -> bool
+Aw.Meta.Core.Merge.MergeFacts.BaseHasMergeQueue.init -> void
+static readonly Aw.Meta.Core.MetaErrors.StackExtensionMissing -> Aw.Kernel.ErrorDefinition!
+const Aw.Meta.Core.Github.GhExtensions.StackInstall = "gh extension install github/gh-stack" -> string!
+static Aw.Meta.Core.Github.GhExtensions.HasStack(string! list) -> bool
+Aw.Meta.Core.Github.GhExtensions
