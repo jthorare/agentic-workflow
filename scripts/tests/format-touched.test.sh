@@ -97,20 +97,20 @@ run() {
 
 # broken file, three forms
 run "$TMP" "$R/A/Broken.cs"
-{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -q 'Broken.cs(1,1): error'; } && ok "broken file, absolute form: exit 1 with the error line" || bad "broken abs rc=$rc out=$out"
+{ [ "$rc" = 1 ] && grep -q 'Broken.cs(1,1): error' <<<"$out"; } && ok "broken file, absolute form: exit 1 with the error line" || bad "broken abs rc=$rc out=$out"
 run "$R/sub" ../A/Broken.cs
-{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -q 'Broken.cs(1,1): error'; } && ok "broken file, cwd-relative form from a subdir: exit 1" || bad "broken cwd-rel rc=$rc out=$out"
+{ [ "$rc" = 1 ] && grep -q 'Broken.cs(1,1): error' <<<"$out"; } && ok "broken file, cwd-relative form from a subdir: exit 1" || bad "broken cwd-rel rc=$rc out=$out"
 run "$R/sub" A/Broken.cs
-{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -q 'Broken.cs(1,1): error'; } && ok "broken file, repo-relative form from a subdir: exit 1" || bad "broken repo-rel rc=$rc out=$out"
+{ [ "$rc" = 1 ] && grep -q 'Broken.cs(1,1): error' <<<"$out"; } && ok "broken file, repo-relative form from a subdir: exit 1" || bad "broken repo-rel rc=$rc out=$out"
 run "$R" A/Broken.cs
-{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -q 'format A/A.csproj: 1 files checked, 1 errors'; } && ok "summary line names the csproj, files and errors" || bad "summary rc=$rc out=$out"
+{ [ "$rc" = 1 ] && grep -q 'format A/A.csproj: 1 files checked, 1 errors' <<<"$out"; } && ok "summary line names the csproj, files and errors" || bad "summary rc=$rc out=$out"
 
 # clean file, three forms
 for form in "$TMP|$R/A/Clean.cs" "$R/sub|../A/Clean.cs" "$R/sub|A/Clean.cs"; do
   cwd="${form%%|*}"; arg="${form#*|}"
   run "$cwd" "$arg"
   if [ "$rc" = 0 ] && grep -qx "cwd=$R argv=format A/A.csproj --verify-no-changes --include A/Clean.cs" "$LOG" \
-     && printf '%s' "$out" | grep -q 'format A/A.csproj: 1 files checked, 0 errors'; then
+     && grep -q 'format A/A.csproj: 1 files checked, 0 errors' <<<"$out"; then
     ok "clean file ($arg from $(basename "$cwd")): exit 0, cwd is the repo root, include is repo-relative"
   else
     bad "clean $arg rc=$rc log=$(cat "$LOG") out=$out"
@@ -125,29 +125,29 @@ n="$(grep -c 'argv=format' "$LOG")"
 
 # not checked
 run "$R" C/Skip/S.cs
-{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -q 'not checked: C/Skip/S.cs'; } && ok "file under a Compile Remove: exit 1 not checked" || bad "compile remove rc=$rc out=$out"
+{ [ "$rc" = 1 ] && grep -q 'not checked: C/Skip/S.cs' <<<"$out"; } && ok "file under a Compile Remove: exit 1 not checked" || bad "compile remove rc=$rc out=$out"
 run "$R" C/C1.cs
 [ "$rc" = 0 ] && ok "file in a project with Compile Remove, not matched: checked" || bad "C1 rc=$rc out=$out"
 run "$R" Loose.cs
-{ [ "$rc" = 2 ] && printf '%s' "$out" | grep -q 'Loose.cs'; } && ok "file outside any project: exit 2 naming it" || bad "loose rc=$rc out=$out"
+{ [ "$rc" = 2 ] && grep -q 'Loose.cs' <<<"$out"; } && ok "file outside any project: exit 2 naming it" || bad "loose rc=$rc out=$out"
 run "$R" D/Two.cs
-{ [ "$rc" = 2 ] && printf '%s' "$out" | grep -q 'Two.cs'; } && ok "dir with two csproj: exit 2 naming the file" || bad "two csproj rc=$rc out=$out"
+{ [ "$rc" = 2 ] && grep -q 'Two.cs' <<<"$out"; } && ok "dir with two csproj: exit 2 naming the file" || bad "two csproj rc=$rc out=$out"
 
 # usage
 run "$R" A/Missing.cs
-{ [ "$rc" = 2 ] && printf '%s' "$out" | grep -q 'Missing.cs'; } && ok "missing file: exit 2 naming it" || bad "missing rc=$rc out=$out"
+{ [ "$rc" = 2 ] && grep -q 'Missing.cs' <<<"$out"; } && ok "missing file: exit 2 naming it" || bad "missing rc=$rc out=$out"
 run "$R" A/notes.txt
-{ [ "$rc" = 2 ] && printf '%s' "$out" | grep -q 'notes.txt'; } && ok "non-.cs file: exit 2" || bad "txt rc=$rc out=$out"
+{ [ "$rc" = 2 ] && grep -q 'notes.txt' <<<"$out"; } && ok "non-.cs file: exit 2" || bad "txt rc=$rc out=$out"
 echo 'class Out { }' > "$TMP/Outside.cs"
 run "$TMP" "$TMP/Outside.cs"
-{ [ "$rc" = 2 ] && printf '%s' "$out" | grep -q 'Outside.cs'; } && ok "file outside a git repo: exit 2" || bad "outside rc=$rc out=$out"
+{ [ "$rc" = 2 ] && grep -q 'Outside.cs' <<<"$out"; } && ok "file outside a git repo: exit 2" || bad "outside rc=$rc out=$out"
 run "$R"
 [ "$rc" = 2 ] && ok "no arguments: exit 2" || bad "no args rc=$rc"
 
 # an error line with exit 0
 : > "$LOG"
 out="$(cd "$R" && PATH="$TMP/bin:$PATH" AW_HEAVY="$TMP/none" FAKE_LOG="$LOG" FAKE_REPO="$R" FAKE_ERRLINE='A/Clean.cs(2,1): error IMPORTS: Fix imports ordering.' bash "$SCRIPT" A/Clean.cs 2>&1)"; rc=$?
-{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -q '1 errors'; } && ok "dotnet exit 0 with an ' error ' line: exit 1" || bad "error line rc=$rc out=$out"
+{ [ "$rc" = 1 ] && grep -q '1 errors' <<<"$out"; } && ok "dotnet exit 0 with an ' error ' line: exit 1" || bad "error line rc=$rc out=$out"
 
 # --fix: no --verify-no-changes
 run "$R" --fix A/Broken.cs

@@ -79,7 +79,7 @@ set +e
 doc="$(docker exec "$name" /opt/sindri/sindri doctor --json 2>&1)"; rc=$?
 set -e
 if [ "$rc" -le 1 ]; then ok "doctor has no failing check (exit $rc)"; else bad "doctor failed (exit $rc)"; printf '%s\n' "$doc" | tail -20; fi
-if printf '%s' "$doc" | grep -q 'deploy:mode'; then ok "doctor echoes pod mode"; else bad "doctor does not echo pod mode"; fi
+if grep -q 'deploy:mode' <<<"$doc"; then ok "doctor echoes pod mode"; else bad "doctor does not echo pod mode"; fi
 
 # 4. a normal restart (SIGTERM, a clean stop) takes the lease at once
 e1="$(epoch)"
