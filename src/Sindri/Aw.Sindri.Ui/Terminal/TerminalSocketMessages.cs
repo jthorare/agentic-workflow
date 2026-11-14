@@ -16,6 +16,9 @@ internal static class TerminalSocketMessages
     /// <summary>The most UTF-8 bytes one paste may hold: the cap Serve closes the socket over (1009).</summary>
     internal const int MaxPasteBytes = 256 * 1024;
 
+    /// <summary>The most bytes one encoded message may hold: Serve closes the socket (1009) over a larger one, before it decodes the text.</summary>
+    internal const int MaxMessageBytes = 512 * 1024;
+
     /// <summary>The first message: the human token, never in the URL.</summary>
     internal static string Hello(string token, int cols, int rows) => Write(w =>
     {

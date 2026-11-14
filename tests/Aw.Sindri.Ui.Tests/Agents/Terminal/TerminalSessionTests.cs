@@ -113,6 +113,34 @@ public sealed class TerminalSessionTests
         Assert.Equal((TerminalKeyFate.Dropped, 0, "Paste too big (max 256 KiB)"), (fate, socket.Sent.Count, f.View.ControlLine));
     }
 
+    // The writer escapes < > & ' + and non-ASCII as \uXXXX (6 bytes each): 150 KiB of '<' passes the 256 KiB text cap and encodes to about 900 KB.
+    [Fact]
+    public async Task A_paste_whose_encoded_message_is_over_512_KiB_sends_nothing_and_says_so()
+    {
+        var (f, socket, session, _) = Make();
+        socket.Script = ["{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%0\"}}"];
+        f.View.SocketOpening();
+
+        var fate = await session.SendPaste(new string('<', 150 * 1024), Token);
+        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+
+        Assert.Equal((TerminalKeyFate.Dropped, 0, "Paste too big (max 256 KiB)"), (fate, socket.Sent.Count, f.View.ControlLine));
+    }
+
+    [Fact]
+    public async Task A_150_KiB_paste_of_plain_text_still_goes_out()
+    {
+        var (f, socket, session, _) = Make();
+        socket.Script = ["{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%0\"}}"];
+        f.View.SocketOpening();
+        var text = new string('a', 150 * 1024);
+
+        _ = await session.SendPaste(text, Token);
+        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+
+        Assert.Equal([TerminalSocketMessages.Paste(text)], socket.Sent);
+    }
+
     [Fact]
     public async Task The_cap_counts_UTF_8_bytes_not_characters()
     {
