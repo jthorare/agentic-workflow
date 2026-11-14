@@ -63,6 +63,24 @@ public sealed class GraphEdgeStatesTests
         return true;
     });
 
+    // #3650: Render built every head geometry and every label text again on each call. With the routes and labels unchanged, a second Render builds none.
+    [Fact]
+    public async Task A_second_render_with_unchanged_routes_and_labels_builds_no_head_and_no_label_text() => await OnUi(() =>
+    {
+        var edges = Show(out var window, Line("a", arrow: true, label: "if ok"), Line("b", arrow: true, label: "else"));
+        _ = window.CaptureRenderedFrame();
+        var (heads, labels) = (edges.HeadGeometryBuilds, edges.LabelTextBuilds);
+        Assert.True(heads > 0 && labels > 0, "the first render builds them");
+
+        edges.Highlighted = new HashSet<string>(["a"], StringComparer.Ordinal);   // invalidates the visual; the routes and labels stay
+        _ = window.CaptureRenderedFrame();
+
+        Assert.Equal(heads, edges.HeadGeometryBuilds);
+        Assert.Equal(labels, edges.LabelTextBuilds);
+        window.Close();
+        return true;
+    });
+
     [Fact]
     public async Task A_label_is_a_pill_centred_on_the_edge_midpoint_and_padded_around_its_text() => await OnUi(() =>
     {

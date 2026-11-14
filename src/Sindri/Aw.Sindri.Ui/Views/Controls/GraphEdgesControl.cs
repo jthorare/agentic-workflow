@@ -47,6 +47,12 @@ internal sealed class GraphEdgesControl : Control, ICustomHitTest
 
     private IReadOnlyList<(MapEdge Edge, StreamGeometry Geometry)> _built = [];
 
+    /// <summary>Gets how many arrow head geometries this control has built (#3650: a Render with unchanged routes builds none).</summary>
+    internal int HeadGeometryBuilds { get; private set; }
+
+    /// <summary>Gets how many label texts this control has formatted for drawing (#3650: a Render with unchanged labels formats none).</summary>
+    internal int LabelTextBuilds { get; private set; }
+
     static GraphEdgesControl()
     {
         AffectsRender<GraphEdgesControl>(HighlightedProperty, DimmedProperty, HoveredProperty);
@@ -178,6 +184,7 @@ internal sealed class GraphEdgesControl : Control, ICustomHitTest
             {
                 if (edge.Arrow)
                 {
+                    HeadGeometryBuilds++;
                     var corners = HeadFor(edge);
                     var head = new StreamGeometry();
                     using (var ctx = head.Open())
@@ -193,6 +200,7 @@ internal sealed class GraphEdgesControl : Control, ICustomHitTest
 
                 if (edge.Label is { } label)
                 {
+                    LabelTextBuilds++;
                     var text = LabelText(label, ink);
                     var pill = PillFor(edge, text);
                     context.DrawRectangle(card, new Pen(hairline, 1), pill, 4, 4);
