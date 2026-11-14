@@ -62,14 +62,20 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
     /// <param name="state">The shell's new state.</param>
     public void Observe(ShellState state)
     {
-        // stub (red): today's behaviour
-        if (state == ShellState.NotRunning)
+        switch (state)
         {
-            Begin();
-        }
-        else
-        {
-            Reset();
+            case ShellState.Connecting:
+                break;   // nothing is known yet: not the app's first answer, and not a boot's end
+            case ShellState.NotRunning:
+                Begin();   // starts only when this is the first answer the app got
+                break;
+            case ShellState.Normal:
+                _begun = true;
+                Reset();
+                break;
+            default:
+                _begun = true;   // Sindri answered once (stale, unreadable, another version): a later outage is not the app's to start
+                break;
         }
     }
 

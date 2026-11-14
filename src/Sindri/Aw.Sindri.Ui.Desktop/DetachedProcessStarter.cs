@@ -46,7 +46,7 @@ internal sealed class DetachedProcessStarter(Func<ProcessStartInfo, Process?>? s
             Watch(process, launch);
             return Unit.Value;
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidOperationException or System.ComponentModel.Win32Exception)
         {
             return Fail(e.Message);
         }
@@ -78,7 +78,16 @@ internal sealed class DetachedProcessStarter(Func<ProcessStartInfo, Process?>? s
     /// <summary>Takes out of the child's environment what the app's own driver left (#3643): serve must not see AW_UI_DRIVER*.</summary>
     /// <param name="info">The start info.</param>
     /// <returns>The same start info.</returns>
-    internal static ProcessStartInfo Scrub(ProcessStartInfo info) => info;   // stub (red)
+    internal static ProcessStartInfo Scrub(ProcessStartInfo info)
+    {
+        ArgumentNullException.ThrowIfNull(info);
+        foreach (var key in info.Environment.Keys.Where(static k => k.StartsWith("AW_UI_DRIVER", StringComparison.Ordinal)).ToList())
+        {
+            _ = info.Environment.Remove(key);
+        }
+
+        return info;
+    }
 
     // The shell execs the program, so the pid is the program's own: its exit is the program's. The handler is set before
     // EnableRaisingEvents, which raises it at once for a process that already ended.
