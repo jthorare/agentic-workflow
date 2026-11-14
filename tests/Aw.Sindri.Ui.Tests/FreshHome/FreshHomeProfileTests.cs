@@ -31,8 +31,16 @@ public sealed class FreshHomeProfileTests
     }
 
     [Fact]
-    public void A_profile_the_server_calls_invalid_still_reads_unreadable() =>
-        Assert.Equal("unreadable", StatusText.ProfileState(new ProfileView(Live: null, Problem: "SND-PROFILE-002 bad key", Source: null, ProblemKind: "invalid")));
+    public void A_profile_the_server_calls_invalid_reads_invalid() =>
+        Assert.Equal("invalid", StatusText.ProfileState(new ProfileView(Live: null, Problem: "SND-PROFILE-002 bad key", Source: null, ProblemKind: "invalid")));
+
+    [Fact]
+    public void A_profile_the_server_calls_unreadable_reads_unreadable() =>
+        Assert.Equal("unreadable", StatusText.ProfileState(new ProfileView(Live: null, Problem: "can't be read", Source: null, ProblemKind: "unreadable")));
+
+    [Fact]
+    public void A_profile_that_loads_reads_live() =>
+        Assert.Equal("live", StatusText.ProfileState(new ProfileView(Live: "abc", Problem: null, Source: "x")));
 
     [Fact]
     public void A_problem_with_no_kind_reads_unreadable_so_a_broken_file_never_hides_behind_setup() =>
