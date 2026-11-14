@@ -15,6 +15,10 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     /// <summary>The refusal code for a workflow with no active revision.</summary>
     internal const string NotActive = "SND-GRAPH-105";
     private int _reads;
+    private List<RunRowViewModel> _all = [];
+    private readonly HashSet<string> _ticked = new(StringComparer.Ordinal);   // ticked run ids survive a re-read
+    private string _status = string.Empty;
+    private string _range = string.Empty;
 
     /// <summary>The workflow's slug.</summary>
     public string Slug { get; private set => Set(ref field, value); } = string.Empty;
@@ -58,37 +62,76 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     public bool CanPressRunNow => CanRun && !IsStarting;
 
     /// <summary>"23 of 500 runs" with a filter on, "500 runs" without.</summary>
-    public string CountText => string.Empty;
+    public string CountText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when a status or date filter is on.</summary>
-    public bool HasFilter => false;
+    public bool HasFilter => !string.IsNullOrEmpty(_status) || !string.IsNullOrEmpty(_range);
 
     /// <summary>True when a filter leaves no run.</summary>
-    public bool HasNoMatch => false;
+    public bool HasNoMatch => HasFilter && _all.Count > 0 && Rows.Count == 0;
 
     /// <summary>The line when a filter leaves no run.</summary>
-    public string NoMatchText => string.Empty;
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string NoMatchText => Labels.WfRunsNoMatch;
+#pragma warning restore CA1822, MA0041
 
     /// <summary>How many runs are ticked.</summary>
-    public int SelectedCount => 0;
+    public int SelectedCount => _all.Count(r => r.IsSelected);
 
     /// <summary>True when exactly two runs are ticked.</summary>
-    public bool CanCompare => false;
+    public bool CanCompare => SelectedCount == 2;
 
     /// <summary>"Compare 2".</summary>
-    public string CompareText => string.Empty;
+    public string CompareText => Labels.WfCompare(2);
+
+    /// <summary>The status filter: "failed", "succeeded", "running", "cancelled", or empty for every status.</summary>
+    public string StatusFilter => _status;
+
+    /// <summary>The date filter: "24h", "7d", "30d", or empty for every date.</summary>
+    public string DateFilter => _range;
 
     /// <summary>Filters by status ("failed", "succeeded", "running", "cancelled"); null or empty shows every status.</summary>
     /// <param name="status">The status.</param>
-    internal void SetStatusFilter(string? status) => _ = status;
+    internal void SetStatusFilter(string? status)
+    {
+        _status = status ?? string.Empty;
+        Apply();
+    }
 
     /// <summary>Filters by date ("24h", "7d", "30d"); null or empty shows every date.</summary>
     /// <param name="range">The range.</param>
-    internal void SetDateFilter(string? range) => _ = range;
+    internal void SetDateFilter(string? range)
+    {
+        _range = range ?? string.Empty;
+        Apply();
+    }
 
     /// <summary>Clears both filters.</summary>
     internal void ClearFilters()
     {
+        (_status, _range) = (string.Empty, string.Empty);
+        Apply();
+    }
+
+    // The rows the filters keep, newest first as served; the count says how many of all.
+    private void Apply()
+    {
+        var since = _range switch { "24h" => TimeSpan.FromHours(24), "7d" => TimeSpan.FromDays(7), "30d" => TimeSpan.FromDays(30), _ => TimeSpan.Zero };
+        var now = clock.GetUtcNow();
+        var kept = _all.Where(r => (_status.Length == 0 || string.Equals(r.Status, _status, StringComparison.Ordinal)) && (since == TimeSpan.Zero || now - r.StartedAt <= since)).ToList();
+        Patch.To(Rows, kept);
+        CountText = HasFilter ? Labels.WfRunsCountOf(kept.Count, _all.Count) : Labels.WfRunsCount(_all.Count);
+        OnChanged(nameof(HasFilter));
+        OnChanged(nameof(HasNoMatch));
+        OnChanged(nameof(StatusFilter));
+        OnChanged(nameof(DateFilter));
+        OnSelectionChanged();
+    }
+
+    private void OnSelectionChanged()
+    {
+        OnChanged(nameof(SelectedCount));
+        OnChanged(nameof(CanCompare));
     }
 
     /// <summary>What the last Run now said (queued, skipped or refused), in words; empty otherwise.</summary>
@@ -123,6 +166,8 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         var read = ++_reads;
         if (!string.Equals(Slug, slug, StringComparison.Ordinal))
         {
+            (_all, _status, _range) = ([], string.Empty, string.Empty);
+            _ticked.Clear();
             Rows.Clear();   // another workflow: none of the old runs stay
             (Head, DetailText) = (string.Empty, string.Empty);
             (IsFailed, FailedText, IsEmpty, EmptyText) = (false, string.Empty, false, string.Empty);   // nor does the old one's failure or "off" line
@@ -186,11 +231,20 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     private void Show(WorkflowRunList list)
     {
         (IsFailed, FailedText, CanRun) = (false, string.Empty, true);
-        Rows.Clear();
-        foreach (var run in list.Runs)
+        _all = [.. list.Runs.Select(run => new RunRowViewModel(run, clock) { IsSelected = _ticked.Contains(run.Id) })];
+        foreach (var row in _all)
         {
-            Rows.Add(new RunRowViewModel(run, clock));
+            row.PropertyChanged += (_, e) =>
+            {
+                if (string.Equals(e.PropertyName, nameof(RunRowViewModel.IsSelected), StringComparison.Ordinal))
+                {
+                    _ = row.IsSelected ? _ticked.Add(row.Id) : _ticked.Remove(row.Id);
+                    OnSelectionChanged();
+                }
+            };
         }
+
+        Apply();
 
         var running = list.Runs.Count(r => string.Equals(r.Status, "running", StringComparison.Ordinal));
         Head = list.Runs.Count == 0 ? Labels.WfRunsHeadNone : Labels.WfRunsHead(running, list.Runs.Count);

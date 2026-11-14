@@ -19,6 +19,16 @@ internal sealed class RunRowViewModel : ObservableObject
             ? Labels.JobWhen(running: true, clock.GetUtcNow() - row.StartedAt)
             : Labels.JobWhen(running: false, clock.GetUtcNow() - (row.EndedAt ?? row.StartedAt));
         ErrorText = row.Error ?? string.Empty;
+        var (now, local) = (clock.GetUtcNow(), TimeZoneInfo.ConvertTime(row.StartedAt, clock.LocalTimeZone));
+        var culture = System.Globalization.CultureInfo.InvariantCulture;
+        StartedAt = row.StartedAt;
+        TimeText = Labels.AgoWords(now - row.StartedAt);
+        TimeTip = local.ToString("ddd d MMM yyyy", culture) + " \u00b7 " + local.ToString("HH:mm:ss", culture) + "\n" + Labels.WfExactAge(now - row.StartedAt);
+        TriggerWords = Labels.WfRunTriggerWords(row.Trigger);
+        RevisionShort = string.Create(culture, $"r{row.Revision}");
+        var seconds = row.Seconds ?? (row.EndedAt is { } ended && !live ? (ended - row.StartedAt).TotalSeconds : (double?)null);
+        DurationText = seconds is { } s and >= 0 ? Labels.WfDuration(s) : string.Empty;
+        ResultText = row.Result ?? row.Error ?? string.Empty;
         Name = Labels.WfRunRowName(Id, word.ToLowerInvariant(), TriggerText.ToLowerInvariant(), WhenText, ErrorText);
     }
 
@@ -44,25 +54,28 @@ internal sealed class RunRowViewModel : ObservableObject
     public string ChipToneWord { get; }
 
     /// <summary>The time cell: "22m ago".</summary>
-    public string TimeText => string.Empty;
+    public string TimeText { get; }
 
     /// <summary>The time cell's tip, two lines: the date and time, then "7h 42m ago".</summary>
-    public string TimeTip => string.Empty;
+    public string TimeTip { get; }
 
     /// <summary>The trigger in words: "By hand", "On schedule", "From the CLI", "By an agent".</summary>
-    public string TriggerWords => string.Empty;
+    public string TriggerWords { get; }
 
     /// <summary>"r2".</summary>
-    public string RevisionShort => string.Empty;
+    public string RevisionShort { get; }
 
     /// <summary>"10 s", or empty while it runs.</summary>
-    public string DurationText => string.Empty;
+    public string DurationText { get; }
 
     /// <summary>The one-line result.</summary>
-    public string ResultText => string.Empty;
+    public string ResultText { get; }
+
+    /// <summary>When it started; the date filter reads it.</summary>
+    internal DateTimeOffset StartedAt { get; }
 
     /// <summary>True when the run's tick box is on (Compare takes two).</summary>
-    public bool IsSelected { get; set; }
+    public bool IsSelected { get; set => Set(ref field, value); }
 
     /// <summary>"Manual", "Schedule".</summary>
     public string TriggerText { get; }
