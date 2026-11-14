@@ -73,12 +73,13 @@ public sealed class TemplateCiTests
     [Theory]
     [InlineData("weekday-check")]
     [InlineData("daily-digest")]
-    public void An_empty_run_list_is_counted_as_passed_and_named_with_the_branch(string name)
+    public void An_empty_run_list_is_named_with_the_branch_and_never_called_passed(string name)
     {
         var question = Assert.Single(WithCi(name).Nodes, static n => n.Type == "prompt").Config["prompt"]!.GetValue<string>();
 
         Assert.Contains("When there are no runs", question, StringComparison.Ordinal);
         Assert.Contains("no CI runs on main", question, StringComparison.Ordinal);
+        Assert.Contains("don't say CI passed", question, StringComparison.Ordinal);
     }
 
     [Fact]

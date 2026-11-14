@@ -51,7 +51,7 @@ public static partial class GraphTemplates
     private static string CiPrompt(string name, string scheduleId, string branch)
     {
         var runs = $"These are the latest CI runs on the branch, newest first: {{{{{CiNode}.result}}}}.";
-        var none = $"When there are no runs, count the run as passed and mention: no CI runs on {branch}.";
+        var none = $"When there are no runs, don't flag it for CI and don't say CI passed; say: no CI runs on {branch}.";
         return string.Equals(name, "weekday-check", StringComparison.Ordinal)
             ? $"Today is {{{{{scheduleId}.scheduledFor}}}}. {runs} Look at the newest run. Set flagged to true when it did not succeed or when today is a Friday. Set summary to one line: when the run did not succeed, name the failing workflow; when today is a Friday, add: Friday: review your open pull requests before the weekend. {none} When neither applies, set flagged to false and summary to: CI is green."
             : $"Today is {{{{{scheduleId}.scheduledFor}}}}. {runs} Write one short line for the start of the day: the weekday, one thing worth doing on that day of the week, and whether the newest run passed (name the workflow when it did not). {none}";
