@@ -81,19 +81,11 @@ internal sealed partial class SchedulerHost(
 
         if (approved.IsError)
         {
-            if (!string.Equals(_problem, approved.Error.Message, StringComparison.Ordinal))
-            {
-                _problem = approved.Error.Message;
-                LogRefreshFailed(log, approved.Error.Code, approved.Error.Message);
-            }
+            NoteProblem(approved.Error);
 
             if (!_loaded)
             {
-                _loaded = true;   // a first read that fails still schedules the built-ins (#3624); a later good read replaces this
-                _approved = null;
-                _schedules = ServiceSchedule.From(null, inputs.BuiltIns, clock.GetUtcNow(), await LastRuns(ct).ConfigureAwait(false));
-                inputs.Live.Publish(_schedules);
-                LogSchedule(log, "none", _schedules.Count);
+                await Load(profile: null, ct).ConfigureAwait(false);   // a first read that fails still schedules the built-ins (#3624); a later good read replaces this
             }
 
             return;
@@ -103,11 +95,7 @@ internal sealed partial class SchedulerHost(
         var profile = approved.Value;
         if (!_loaded || profile?.Hash != _approved?.Hash)
         {
-            _loaded = true;   // the first read loads the built-ins even with no approved profile (S1-D8)
-            _approved = profile;
-            _schedules = ServiceSchedule.From(profile?.Profile, inputs.BuiltIns, clock.GetUtcNow(), await LastRuns(ct).ConfigureAwait(false));
-            inputs.Live.Publish(_schedules);
-            LogSchedule(log, _approved?.Hash.Abbreviated ?? "none", _schedules.Count);
+            await Load(profile, ct).ConfigureAwait(false);   // the first read loads the built-ins even with no approved profile (S1-D8)
         }
     }
 
