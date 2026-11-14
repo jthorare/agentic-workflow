@@ -30,9 +30,9 @@ public sealed class MapStatusHeadsTests : IDisposable
     {
         _ = await _world.Store.SaveCurrent(Maps.Checked(Maps.Fixture()) with { Heads = _twoRepos }, _world.Clock.GetUtcNow(), MapWorld.None);
 
-        var status = (await _world.Map.MapStatus(anchor: null, MapWorld.Session("other"), MapWorld.None)).Value;
+        var status = (await _world.Map.MapStatus(anchor: null, MapWorld.Session(FixtureMap.Repo), MapWorld.None)).Value;
 
-        MapHead[] own = [_twoRepos[1]];
+        MapHead[] own = [_twoRepos[0]];
         Assert.Equal(own, status.Heads);
     }
 
