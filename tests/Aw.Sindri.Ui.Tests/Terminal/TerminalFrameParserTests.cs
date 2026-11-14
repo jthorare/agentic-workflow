@@ -289,4 +289,30 @@ public sealed class TerminalFrameParserTests
 
         Assert.Equal((b.RowText(0), b.RowText(1)), (a.RowText(0), a.RowText(1)));
     }
+
+    [Fact]
+    public void A_huge_or_corrupt_size_is_clamped_to_the_socket_limits()
+    {
+        var grid = TerminalFrameParser.Parse("ab\n", "0 0 2000000000 2000000000 0 0 0 \n");
+
+        Assert.Equal((TerminalStatus.MaxColumns, TerminalStatus.MaxRows), (grid.Width, grid.Height));
+    }
+
+    [Fact]
+    public void An_escape_with_an_intermediate_byte_skips_all_three_bytes()
+    {
+        var grid = Parse($"a{Esc}(Bb\n\n");
+
+        Assert.Equal("ab", grid.RowText(0));
+    }
+
+    [Fact]
+    public void A_private_prefix_sequence_ending_in_m_is_not_a_colour()
+    {
+        var grid = Parse($"{Esc}[?31mx{Esc}[>1mydz\n\n");
+
+        Assert.Equal("xydz", grid.RowText(0));
+        Assert.Equal(TerminalColor.Default, grid.Cell(0, 0).Fg);
+        Assert.False(grid.Cell(0, 1).Bold);
+    }
 }

@@ -15,6 +15,12 @@ namespace Aw.Sindri.Ui.Terminal;
 [StructLayout(LayoutKind.Auto)]
 internal readonly record struct TerminalStatus(int? Width, int? Height, int CursorX, int CursorY, bool InMode, bool Alternate, bool Dead, int? DeadStatus)
 {
+    /// <summary>The widest pane the grid will allocate (the terminal WebSocket's size limit): a corrupt width of 2 billion must not allocate 2 billion cells.</summary>
+    internal const int MaxColumns = 400;
+
+    /// <summary>The tallest pane the grid will allocate (the terminal WebSocket's size limit).</summary>
+    internal const int MaxRows = 200;
+
     /// <summary>What a line that doesn't parse reads as: no size, the cursor at 0,0, nothing set.</summary>
     internal static TerminalStatus Unknown => new(Width: null, Height: null, CursorX: 0, CursorY: 0, InMode: false, Alternate: false, Dead: false, DeadStatus: null);
 
@@ -39,6 +45,6 @@ internal readonly record struct TerminalStatus(int? Width, int? Height, int Curs
         }
 
         int? deadStatus = parts.Length > 7 && int.TryParse(parts[7], NumberStyles.None, CultureInfo.InvariantCulture, out var s) ? s : null;
-        return new TerminalStatus(Math.Max(1, n[2]), Math.Max(1, n[3]), n[0], n[1], n[4] != 0, n[5] != 0, n[6] != 0, deadStatus);
+        return new TerminalStatus(Math.Clamp(n[2], 1, MaxColumns), Math.Clamp(n[3], 1, MaxRows), n[0], n[1], n[4] != 0, n[5] != 0, n[6] != 0, deadStatus);
     }
 }

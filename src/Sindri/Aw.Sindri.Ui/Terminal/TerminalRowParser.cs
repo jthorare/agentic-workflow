@@ -81,12 +81,30 @@ internal static class TerminalRowParser
             return SkipCsi(s, i, pen);
         }
 
-        return s[i + 1] is ']' or 'P' or '_' or '^' or 'X' ? SkipString(s, i + 2) : i + 2;
+        if (s[i + 1] is ']' or 'P' or '_' or '^' or 'X')
+        {
+            return SkipString(s, i + 2);
+        }
+
+        return s[i + 1] is >= (char)0x20 and <= (char)0x2F ? SkipIntermediates(s, i + 2) : i + 2;
+    }
+
+    // ESC, intermediate byte(s) 0x20-0x2F, then one final byte (a character-set select such as ESC ( B): the whole sequence is skipped.
+    private static int SkipIntermediates(string s, int start)
+    {
+        var j = start;
+        while (j < s.Length && s[j] is >= (char)0x20 and <= (char)0x2F)
+        {
+            j++;
+        }
+
+        return Math.Min(j + 1, s.Length);
     }
 
     private static int SkipCsi(string s, int i, TerminalPen pen)
     {
         var j = i + 2;
+        var privatePrefix = j < s.Length && s[j] is '<' or '=' or '>' or '?';   // a private-mode sequence such as ESC [ ? 25 m is not SGR
         while (j < s.Length && s[j] is >= (char)0x30 and <= (char)0x3F)
         {
             j++;
@@ -103,7 +121,7 @@ internal static class TerminalRowParser
             return s.Length;
         }
 
-        if (s[j] == 'm' && j == end)
+        if (s[j] == 'm' && j == end && !privatePrefix)
         {
             pen.Apply(s.AsSpan(i + 2, end - i - 2));
         }
