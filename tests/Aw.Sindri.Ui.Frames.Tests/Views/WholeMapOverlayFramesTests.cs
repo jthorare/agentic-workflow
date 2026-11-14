@@ -33,8 +33,9 @@ public sealed class WholeMapOverlayFramesTests : FrameHost
         Assert.True(Visible(window, "ContextBuilding"));
         Assert.False(Visible(window, "ContextEmpty"));
         Assert.Equal(shell.Context.BuildingTitle, Named<TextBlock>(window, "ContextBuildingTitle").Text);
-        Assert.StartsWith("Building the map · 1 of 1 source · started ", Named<TextBlock>(window, "ContextBuildingTitle").Text, StringComparison.Ordinal);
-        Assert.StartsWith("last map ", Named<TextBlock>(window, "ContextBuildingBody").Text, StringComparison.Ordinal);
+        Assert.StartsWith("Building the map", Named<TextBlock>(window, "ContextBuildingTitle").Text, StringComparison.Ordinal);
+        Assert.StartsWith("1 of 1 source · 4 of 4 files of the current repo · started ", Named<TextBlock>(window, "ContextBuildingBody").Text, StringComparison.Ordinal);
+        Assert.Contains(" · last map ", Named<TextBlock>(window, "ContextBuildingBody").Text, StringComparison.Ordinal);   // why: the fixture's last map is a fixed date, so its age moves with the clock
         Assert.True(Visible(window, "ContextBuildingJob"));
         Frame(window, "building-1440", "overlay-");
 
@@ -63,8 +64,31 @@ public sealed class WholeMapOverlayFramesTests : FrameHost
 
         Assert.True(Visible(window, "ContextBuilding"));
         Assert.False(Visible(window, "ContextEmpty"));
-        Assert.StartsWith("Building the map · started ", Named<TextBlock>(window, "ContextBuildingTitle").Text, StringComparison.Ordinal);
+        Assert.StartsWith("Building the map", Named<TextBlock>(window, "ContextBuildingTitle").Text, StringComparison.Ordinal);
+        Assert.StartsWith("started ", Named<TextBlock>(window, "ContextBuildingBody").Text, StringComparison.Ordinal);
         Assert.False(Visible(window, "ContextBuildingJob"));
         Frame(window, "first-build-1440", "overlay-");
+    });
+
+    [Fact]
+    public Task At_1000_px_a_long_repository_name_keeps_the_progress_whole_in_the_body_and_the_title_has_a_tooltip() => OnUi(async () =>
+    {
+        var repo = new string('r', 60);
+        var started = Clock.GetUtcNow().AddMinutes(-4).ToString("O", System.Globalization.CultureInfo.InvariantCulture);
+        Server.WholeMapAnswer = _ => new RouteAnswer(System.Net.HttpStatusCode.NotFound,
+            "{\"type\":\"about:blank\",\"title\":\"SND-CONTEXT-030\",\"status\":404,\"detail\":\"there is no map yet\",\"building\":{\"sourcesDone\":3,\"sourcesTotal\":7,\"startedAt\":\"" + started
+            + "\"},\"noMap\":{\"repos\":[\"" + repo + "\"]},\"traceId\":\"<trace>\"}");
+        var (window, shell) = await Connected(width: 1000, height: 900);
+        shell.GoTo(PageId.Context);
+        await Until(window, () => shell.Context.ShowBuilding);
+        Settle(window);
+
+        var title = Named<TextBlock>(window, "ContextBuildingTitle");
+        var body = Named<TextBlock>(window, "ContextBuildingBody");
+
+        Assert.Equal(shell.Context.BuildingBody, body.Text);
+        Assert.StartsWith("3 of 7 sources · started ", body.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain(body.TextLayout.TextLines, static line => line.HasCollapsed);
+        Assert.Equal(shell.Context.BuildingTitle, ToolTip.GetTip(title));
     });
 }

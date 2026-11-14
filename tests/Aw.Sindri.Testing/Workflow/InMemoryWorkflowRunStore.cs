@@ -115,6 +115,9 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
         }
     }
 
+    /// <summary>Gets or sets the most rows <see cref="Recent"/> returns per call, as a store that clamps the page size would (null = no clamp).</summary>
+    public int? RecentPageClamp { get; set; }
+
     /// <inheritdoc/>
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Recent(WorkflowId workflow, int offset, int limit, CancellationToken cancellationToken)
     {
@@ -125,7 +128,7 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
                 .OrderByDescending(static r => r.StartedAt)
                 .ThenByDescending(static r => r.Id.Occurrence)
                 .Skip(Math.Max(offset, 0))
-                .Take(Math.Max(limit, 1))];
+                .Take(Math.Min(Math.Max(limit, 1), RecentPageClamp ?? int.MaxValue))];
             return Ok(recent);
         }
     }

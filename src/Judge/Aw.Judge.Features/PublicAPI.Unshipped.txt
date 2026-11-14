@@ -18,10 +18,12 @@ static Aw.Judge.Features.GetHealth.GetHealthRequest.operator ==(Aw.Judge.Feature
 static Aw.Judge.Features.GetHealth.GetHealthResponse.operator !=(Aw.Judge.Features.GetHealth.GetHealthResponse? left, Aw.Judge.Features.GetHealth.GetHealthResponse? right) -> bool
 static Aw.Judge.Features.GetHealth.GetHealthResponse.operator ==(Aw.Judge.Features.GetHealth.GetHealthResponse? left, Aw.Judge.Features.GetHealth.GetHealthResponse? right) -> bool
 static Aw.Judge.Features.JudgeFeaturesServiceCollectionExtensions.AddJudgeFeatures(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-Aw.Judge.Features.GetHealth.GetHealthResponse.Deconstruct(out Aw.Judge.Core.Health.HealthStatus Status, out int Failures24h) -> void
+Aw.Judge.Features.GetHealth.GetHealthResponse.Deconstruct(out Aw.Judge.Core.Health.HealthStatus Status, out int Failures24h, out Aw.Judge.Core.Decisions.FailureRecord? LastFailure) -> void
+Aw.Judge.Features.GetHealth.GetHealthResponse.LastFailure.get -> Aw.Judge.Core.Decisions.FailureRecord?
+Aw.Judge.Features.GetHealth.GetHealthResponse.LastFailure.init -> void
 Aw.Judge.Features.GetHealth.GetHealthResponse.Failures24h.get -> int
 Aw.Judge.Features.GetHealth.GetHealthResponse.Failures24h.init -> void
-Aw.Judge.Features.GetHealth.GetHealthResponse.GetHealthResponse(Aw.Judge.Core.Health.HealthStatus Status, int Failures24h) -> void
+Aw.Judge.Features.GetHealth.GetHealthResponse.GetHealthResponse(Aw.Judge.Core.Health.HealthStatus Status, int Failures24h, Aw.Judge.Core.Decisions.FailureRecord? LastFailure = null) -> void
 Aw.Judge.Features.GetHealth.GetHealthResponse.Status.get -> Aw.Judge.Core.Health.HealthStatus
 Aw.Judge.Features.GetHealth.GetHealthResponse.Status.init -> void
 Aw.Judge.Features.SaveBrief.SaveBriefRequest

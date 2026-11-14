@@ -50,10 +50,14 @@ public static class CodeIndexErrors
     /// <summary>SND-CODEIDX-016: the repo's index stayed locked by another build or embed run past the wait; the caller tries again later.</summary>
     public static readonly ErrorDefinition IndexBusy = new("SND-CODEIDX-016", ErrorKind.Unavailable, "The repo's index is locked by another build or embed run");
 
+    /// <summary>SND-CODEIDX-017: the embedding server refused a chunk (a 4xx, such as a text past the model's context); a layer code (#3128).</summary>
+    public static readonly ErrorDefinition EmbeddingInputRejected = new("SND-CODEIDX-017", ErrorKind.Unavailable, "The embedding server refused a chunk");
+
     /// <summary>Every code-index error, for ErrorCatalogue.Validate.</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
     [
         SettingsInvalid, RepoNotFound, InputTooLarge, EmbeddingTargetRefused, EmbeddingServerFailed, NoSandbox,
         GraphUnavailable, PinMismatch, IndexDamaged, SymbolNotFound, QueryInvalid, IndexNotBuilt, IndexBehind, BuildFailed, IndexBusy,
+        EmbeddingInputRejected,
     ];
 }

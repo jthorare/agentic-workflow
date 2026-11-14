@@ -44,7 +44,7 @@ public static class LaunchBudgets
     {
         LaunchBudgetState.Hard => SindriErrors.LaunchBudgetReached.With($"{target.Value} has reached its daily budget (fix: wait for tomorrow, raise agents.{target.Value}.dailyBudget, or pick another agent)"),
         LaunchBudgetState.NoUsageReader => SindriErrors.LaunchBudgetReached.With($"{target.Value} has a daily budget but no usage reader, so its spend can't be known (no usage reader; fix: remove agents.{target.Value}.dailyBudget or pick another agent)"),
-        LaunchBudgetState.None or LaunchBudgetState.Ok or LaunchBudgetState.Soft => null,
+        LaunchBudgetState.None or LaunchBudgetState.Ok or LaunchBudgetState.Soft or LaunchBudgetState.Counting => null,
         _ => throw new ArgumentOutOfRangeException(nameof(state), state, "not a budget state"),
     };
 }

@@ -64,6 +64,12 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-103: a prompt node's answer did not fit its 'output' schema.</summary>
     public static readonly ErrorDefinition GraphPromptAnswer = new("SND-GRAPH-103", ErrorKind.Invalid, "The model's answer does not fit the prompt's output schema");
 
+    /// <summary>SND-GRAPH-113: a prompt step's field came out empty because a reference in it had no value (Workflows page spec §6.1).</summary>
+    public static readonly ErrorDefinition GraphPromptFieldEmpty = new("SND-GRAPH-113", ErrorKind.Invalid, "A prompt field came out empty");
+
+    /// <summary>SND-GRAPH-133: a prompt step's answer said couldNotAnswer: true, so the step fails with the model's reason instead of passing a default (#3224).</summary>
+    public static readonly ErrorDefinition GraphPromptCouldNotAnswer = new("SND-GRAPH-133", ErrorKind.Invalid, "The model said it couldn't answer");
+
     /// <summary>SND-GRAPH-104: run controls (complete a Step, take over, hand back) are not available until the graph engine runs agents.</summary>
     public static readonly ErrorDefinition GraphRunControlsPending = new("SND-GRAPH-104", ErrorKind.Unavailable, "This run control returns with the graph engine's agent blocks");
 
@@ -91,6 +97,17 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-130: no 'ask_owner' node of the run waits for an answer now.</summary>
     public static readonly ErrorDefinition GraphNotWaiting = new("SND-GRAPH-130", ErrorKind.Conflict, "No question waits at that node");
 
+    /// <summary>SND-GRAPH-132: the setup service may run only the hello-sindri workflow it made, and only once.</summary>
+    public static readonly ErrorDefinition GraphSetupRunRefused = new("SND-GRAPH-132", ErrorKind.Forbidden, "The setup service runs only the hello-sindri workflow it made, once");
+
     /// <summary>SND-GRAPH-124: a 'workflow_result' node found no result: the run is not that workflow's, is not finished, or the workflow has no succeeded run.</summary>
     public static readonly ErrorDefinition GraphResultUnavailable = new("SND-GRAPH-124", ErrorKind.Invalid, "No finished run to read a result from");
+
+    /// <summary>SND-GRAPH-112: a 'replace_node' op named a node that is not the trigger; only the trigger can be replaced (Workflows page spec decision 5).</summary>
+    public static readonly ErrorDefinition GraphOnlyTriggerReplaceable = new("SND-GRAPH-112", ErrorKind.Invalid, "Only the trigger can be replaced.");
+
+    /// <summary>SND-GRAPH-119: the contract exists, the behaviour does not yet (Workflows page P0 stubs: the test, pin, trigger-events and templates routes, and the replace_node op).</summary>
+    public static readonly ErrorDefinition GraphNotBuilt = new("SND-GRAPH-119", ErrorKind.Unavailable, "That part of workflows is not built yet");
+    /// <summary>SND-GRAPH-131: a node reads a field of a node that failed and continued (onFailure 'continue'); the reader fails instead of reading nothing.</summary>
+    public static readonly ErrorDefinition GraphReferenceToContinuedFailure = new("SND-GRAPH-131", ErrorKind.Invalid, "A reference reads a node that failed and continued");
 }

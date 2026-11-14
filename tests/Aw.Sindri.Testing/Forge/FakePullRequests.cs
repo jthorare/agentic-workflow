@@ -24,6 +24,9 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     /// <summary>Gets or sets an error that <see cref="Get"/> answers when set (the forge is unreachable).</summary>
     public Error? GetFailure { get; set; }
 
+    /// <summary>Gets the errors <see cref="Get"/> answers for a pull request of the repo named by the key ("owner/name"), whatever its number (the forge turns that repo away).</summary>
+    public IDictionary<string, Error> GetFailuresByRepo { get; } = new Dictionary<string, Error>(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Gets the head commits successive <see cref="Get"/> calls move the pull request to, one per call, until the queue is empty (a pull request that moves while it is read).</summary>
     public Queue<string> HeadScript { get; } = new();
 
@@ -135,6 +138,12 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
         if (GetFailure is { } failure)
         {
             return ValueTask.FromResult<Result<PullView>>(failure);
+        }
+
+        if (Uri.TryCreate(link, UriKind.Absolute, out var uri) && uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries) is [var owner, var name, ..]
+            && GetFailuresByRepo.TryGetValue($"{owner}/{name}", out var repoFailure))
+        {
+            return ValueTask.FromResult<Result<PullView>>(repoFailure);
         }
 
         if (HeadScript.Count > 0 && Locate(link) is { IsSuccess: true } located)

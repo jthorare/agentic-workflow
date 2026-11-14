@@ -120,6 +120,9 @@ internal static partial class Labels
     /// <summary>The Check again button, and the live region's resting text.</summary>
     internal const string SandboxCheckAgain = "Check again";
 
+    /// <summary>The Check button before any check ran.</summary>
+    internal const string SandboxCheckNow = "Check now";
+
     /// <summary>The Resume button.</summary>
     internal const string SandboxResume = "Resume";
 

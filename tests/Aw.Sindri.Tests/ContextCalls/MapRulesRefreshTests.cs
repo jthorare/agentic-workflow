@@ -49,7 +49,7 @@ public sealed class MapRulesRefreshTests
         _ = await _h.Profiles.Save(loaded, Ct);
         _engine.Heads = [new RepoHead(ContextRepoName.From("a"), "1", OnDefault: true)];
         _engine.State = new MapPublishState(Hold: null, LatestDraft: null, Current: 1, [new MapHead(ContextRepoName.From("a"), "1", OnDefault: true)]) { CurrentRuleset = builtUnder };
-        var service = new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, Relinked(), new ScriptedOutlooks(), new MapJobStarts(_start, new PublishStarter(_h), new RelinkStarter(_h)), _h.Clock, new QuietLogger()) { RunningRuleset = running };
+        var service = new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), _engine.Proxy, Relinked(), new ScriptedOutlooks(), new MapJobStarts(_start, new PublishStarter(_h), new RelinkStarter(_h)), _h.Clock, new QuietLogger()) { RunningRuleset = running };
         _grant ??= await _h.HoldLease();
         using var caller = _h.Callers.EnterService("context-map-refresh");
         return await service.Run(new ScheduledRun(_grant, _now), Ct);
@@ -69,7 +69,7 @@ public sealed class MapRulesRefreshTests
         _ = await _h.Profiles.Save(loaded, Ct);
         _engine.Heads = [new RepoHead(ContextRepoName.From("a"), "1", OnDefault: true)];
         _engine.State = new MapPublishState(Hold: null, LatestDraft: null, Current: 1, [new MapHead(ContextRepoName.From("a"), importedAt, OnDefault: true)]) { CurrentRuleset = recorded };
-        var service = new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, Relinked(), new ScriptedOutlooks(), new MapJobStarts(_start, new PublishStarter(_h), new RelinkStarter(_h)), _h.Clock, new QuietLogger()) { RulesFromScope = true };
+        var service = new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), _engine.Proxy, Relinked(), new ScriptedOutlooks(), new MapJobStarts(_start, new PublishStarter(_h), new RelinkStarter(_h)), _h.Clock, new QuietLogger()) { RulesFromScope = true };
         _grant ??= await _h.HoldLease();
         using var caller = _h.Callers.EnterService("context-map-refresh");
         return await service.Run(new ScheduledRun(_grant, _now), Ct);

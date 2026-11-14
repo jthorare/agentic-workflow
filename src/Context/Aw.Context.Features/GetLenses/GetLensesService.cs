@@ -78,7 +78,7 @@ internal sealed class GetLensesService(MapReader reader, LensBasisReader bases, 
     // Phase 9: the code band's symbols for a scope of one repo (a file's repo is not on the lens row, so a wider scope stays file-level). The links come from the files' file-level 'implements'.
     private async Task<Result<LensesView>> WithSymbols(LensesView view, ContextSettings settings, ContextScope scope, MapVersion version, CancellationToken cancellationToken)
     {
-        var repos = ScopeRules.Resolve(settings, scope.Repos, scope.Caller);
+        var repos = ScopeRules.Resolve(settings, scope.Repos, scope.Caller, scope.LeftOut);
         var code = view.Bands.Code;
         if (repos.IsError || repos.Value.Count != 1 || code.Files.Count == 0)
         {

@@ -13,5 +13,6 @@ namespace Aw.Sindri.Features.GetProfile;
 /// <param name="ChangedPaths">The key paths that differ.</param>
 /// <param name="AsOf">How fresh the answer is.</param>
 /// <param name="Summary">What approving the live profile would let Sindri do, in plain words; null when the profile is approved and unchanged, or the live one asks for nothing new.</param>
+/// <param name="WorkflowEditor">The live profile's 'workflow.editor' ('sheet' or 'steps'); null when the key is not set or the file does not load, which means 'sheet'.</param>
 public sealed record GetProfileResponse(ProfileHash? Approved, DateTimeOffset? ApprovedAt, ProfileHash? Live, ProfileHash? FileHash, DateTimeOffset? CheckedAt,
-    bool Changed, IReadOnlyList<string> ChangedPaths, AsOf AsOf, ProfileSummary? Summary = null);
+    bool Changed, IReadOnlyList<string> ChangedPaths, AsOf AsOf, ProfileSummary? Summary = null, string? WorkflowEditor = null);

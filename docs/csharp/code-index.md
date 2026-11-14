@@ -14,7 +14,7 @@
 ## Sindri services and jobs
 
 - `code-index-main-move` (built-in, every 1 minute) starts the `BuildCodeIndex` job (key `index:<repo>`, **no heavy slot**: the build takes the repo's index lock only, `IRepoIndexLock`, so two builds of one repo never overlap; owner 2026-10-24) when a repo's trunk moved.
-- `code-index-embed` (built-in, every 1 minute) starts the `EmbedCodeIndex` job (key `embed:<repo>`, **no heavy slot**) for each repo whose embeddings layer is `pending`, and again after each job until the layer is `ok`, so a repo is fully embedded without a HEAD move. The job's result and detail line (`sindri jobs show`) say how many vectors the run **made** and how many it **carried** over from the previous index (`embedded 312, carried 41,228 of 41,540`), so a full re-embed after a main move is visible; `of` counts only symbols that can have a vector (a stored text or a vector), so a symbol whose file could not be read does not keep the layer pending. `EmbedDecision` (`Aw.Sindri.Core/Scheduling`) decides per repo: a running job, then a layer that is not pending, then the wait after the newest ended job (failures in a row: 5, 10, 20, 40, 60 minutes; a busy or unbuilt index, `SND-CODEIDX-016` or `013`: 2 minutes, not a failure; a pending layer with no more vectors than the job before: 10 minutes).
+- `code-index-embed` (built-in, every 1 minute) starts the `EmbedCodeIndex` job (key `embed:<repo>`, **no heavy slot**) for each repo whose embeddings layer is `pending`, and again after each job until the layer is `ok`, so a repo is fully embedded without a HEAD move. The job's result and detail line (`sindri jobs show`) say how many vectors the run **made** and how many it **carried** over from the previous index (`embedded 312, carried 41,228 of 41,540`), so a full re-embed after a main move is visible; `of` counts only symbols that can have a vector (a stored text or a vector), so a symbol whose file could not be read does not keep the layer pending; a symbol the model refused even alone (`SND-CODEIDX-017`) is stored as a marker and does not keep it pending either, and an edit to its file embeds it again. `EmbedDecision` (`Aw.Sindri.Core/Scheduling`) decides per repo: a running job, then a layer that is not pending, then the wait after the newest ended job (failures in a row: 5, 10, 20, 40, 60 minutes; a busy or unbuilt index, `SND-CODEIDX-016` or `013`: 2 minutes, not a failure; a pending layer with no more vectors than the job before: 10 minutes).
 
 ## Errors
 
@@ -34,7 +34,8 @@ Area `SND-CODEIDX` (`CodeIndexErrors` in `Aw.CodeIndex.Core`); 017 to 029 are re
 | `SND-CODEIDX-010` | Unavailable | the index file is damaged; it is deleted and rebuilt on the next tick |
 | `SND-CODEIDX-011` | NotFound | the symbol ref names no symbol in this index (also a repo outside the caller's scope) |
 | `SND-CODEIDX-012` | Invalid | a query is empty, too broad, or over a limit |
-| `SND-CODEIDX-013` | NotFound | no index for this repo yet (also a repo outside the caller's scope) |
+| `SND-CODEIDX-013` | NotFound | no index for this repo yet (also a repo outside the caller's scope); as a health row, a first build still queued 30 min after serve first read it queued (#3440) |
+| `SND-CODEIDX-017` | Unavailable | the embedding server refused a text even alone (a 400, 413 or 422, such as a text past the model's context). Each text is cut at 2,500 characters first. The refused symbol gets a marker row (an empty vector): no later run asks for it again, it is not in `embedded`, and it counts in `of`. The layer is then `ok` with this code and the detail `N of M embedded, K refused`; doctor shows a warning with the fix (#3128) |
 
 ## Contracts (CI-1)
 

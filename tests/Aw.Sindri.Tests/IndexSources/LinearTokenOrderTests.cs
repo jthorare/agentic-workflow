@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Sockets;
 using System.Text.Json;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Sync;
@@ -22,19 +21,15 @@ public sealed class LinearTokenOrderTests : IDisposable
     private readonly InMemoryConnectionStore _connections = new();
     private readonly FakeConnectionSecrets _connectionSecrets = new();
     private readonly List<string> _authorizations = [];
-    private readonly HttpListener _listener = new();
+    private readonly HttpListener _listener;
     private readonly string _url;
     private readonly CancellationTokenSource _stop = new();
 
     public LinearTokenOrderTests()
     {
-        var probe = new TcpListener(IPAddress.Loopback, 0);
-        probe.Start();
-        var port = ((IPEndPoint)probe.LocalEndpoint).Port.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        probe.Stop();
-        _url = $"http://127.0.0.1:{port}/graphql";
-        _listener.Prefixes.Add($"http://127.0.0.1:{port}/");
-        _listener.Start();
+        var (listener, port) = ChosenPortListener.Start();
+        _listener = listener;
+        _url = $"http://127.0.0.1:{port.ToString(System.Globalization.CultureInfo.InvariantCulture)}/graphql";
         _ = Task.Run(Serve, _stop.Token);
     }
 

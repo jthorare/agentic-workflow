@@ -32,4 +32,19 @@ public interface ISetupFacts
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The fact, or the error that stopped the read.</returns>
     public ValueTask<Result<SourcesFact>> Sources(CancellationToken cancellationToken);
+
+    /// <summary>Whether the running Sindri is the installed build.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The fact, or the error that stopped the read.</returns>
+    public ValueTask<Result<ServeFact>> Serve(CancellationToken cancellationToken);
+
+    /// <summary>Which agent the profile's workflows run on.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The fact, or the error that stopped the read.</returns>
+    public ValueTask<Result<AgentFact>> Agent(CancellationToken cancellationToken);
+
+    /// <summary>Where the first hello-sindri run stands.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The fact, or the error that stopped the read.</returns>
+    public ValueTask<Result<FirstWorkflowFact>> FirstWorkflow(CancellationToken cancellationToken);
 }

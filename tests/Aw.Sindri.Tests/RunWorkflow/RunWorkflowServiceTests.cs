@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Kernel.Ids;
@@ -5,12 +6,15 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Interpolation;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Features.RunWorkflow;
 using Aw.Sindri.Testing.Workflow;
+using Aw.Sindri.Tests.Graph.Blocks;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.RunWorkflow;
@@ -37,7 +41,7 @@ public sealed class RunWorkflowServiceTests
         _runs = new InMemoryWorkflowRunStore(_clock);
         _starter = new FakeStarter(_runs, _clock);
         _callers = new AsyncLocalCallerContextAccessor(_ids);
-        _service = new RunWorkflowService(_workflows, _runs, _starter, _launches, _callers);
+        _service = new RunWorkflowService(_workflows, _runs, _starter, _launches, _callers, _clock);
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -60,6 +64,51 @@ public sealed class RunWorkflowServiceTests
         Assert.Equal("api", trigger["payload"]!["repo"]!.GetValue<string>());
         Assert.Equal("session:s1", trigger["by"]!.GetValue<string>());
         Assert.Equal(WorkflowRunId.Of(_slug, 1, request.Occurrence), result.Value.Run);
+    }
+
+    [Fact]
+    public async Task A_hand_start_of_a_schedule_node_gives_the_start_time_local_date_and_weekday_in_its_zone()
+    {
+        // Tokyo is UTC+9: Thu 12 Nov 22:00 UTC is Fri 13 Nov 07:00 there.
+        _clock.SetUtcNow(DateTimeOffset.Parse("2026-11-12T22:00:00Z", CultureInfo.InvariantCulture));
+        await CreateSchedule();
+
+        var result = await _service.Handle(new RunWorkflowRequest(_slug, Payload: null, "owner"), Token);
+
+        Assert.True(result.IsSuccess);
+        var trigger = JsonNode.Parse(Assert.Single(_starter.Requests).Trigger)!;
+        Assert.Equal("2026-11-12T22:00:00.0000000Z", trigger["scheduledFor"]?.GetValue<string>());
+        Assert.Equal("2026-11-13", trigger["localDate"]?.GetValue<string>());
+        Assert.Equal("Friday", trigger["weekday"]?.GetValue<string>());
+    }
+
+    [Fact]
+    public async Task A_prompt_reading_the_weekday_of_a_hand_started_schedule_node_gets_the_day_name()
+    {
+        _clock.SetUtcNow(DateTimeOffset.Parse("2026-11-12T22:00:00Z", CultureInfo.InvariantCulture));
+        await CreateSchedule();
+        _ = await _service.Handle(new RunWorkflowRequest(_slug, Payload: null, "owner"), Token);
+        var trigger = JsonNode.Parse(Assert.Single(_starter.Requests).Trigger)!.AsObject();
+        var values = trigger.ToDictionary(static p => "trigger." + p.Key, static p => p.Value, StringComparer.Ordinal);
+        var daily = await new ScheduleBlock().Execute(BlockFakes.Context(new JsonObject { ["cron"] = "0 7 * * 1-5" }, values), Token);
+
+        var prompt = Template.Render("Today is {{daily.weekday}} ({{daily.localDate}})", reference => daily.Value.Outputs.GetValueOrDefault(reference.Replace("daily.", string.Empty, StringComparison.Ordinal)));
+
+        Assert.Equal("Today is Friday (2026-11-13)", prompt?.GetValue<string>());
+    }
+
+    [Fact]
+    public async Task A_hand_start_on_a_Wednesday_in_the_node_zone_gives_Wednesday_while_UTC_is_still_Tuesday()
+    {
+        // why: a Run now on a non-Friday must not read as Friday (ideas on #3533: an empty date let the model guess the day)
+        _clock.SetUtcNow(DateTimeOffset.Parse("2026-11-10T20:00:00Z", CultureInfo.InvariantCulture));
+        await CreateSchedule();
+
+        _ = await _service.Handle(new RunWorkflowRequest(_slug, Payload: null, "owner"), Token);
+
+        var trigger = JsonNode.Parse(Assert.Single(_starter.Requests).Trigger)!.AsObject();
+        Assert.Equal("Wednesday", trigger["weekday"]?.GetValue<string>());
+        Assert.Equal("2026-11-11", trigger["localDate"]?.GetValue<string>());
     }
 
     [Fact]
@@ -162,15 +211,63 @@ public sealed class RunWorkflowServiceTests
         Assert.Empty(_starter.Requests);
     }
 
-    private async Task Create(string? concurrency, bool activate)
+    [Fact]
+    public async Task Setup_service_is_refused_for_another_workflow_slug()
+    {
+        await Create(concurrency: null, activate: true);
+        using var caller = _callers.EnterService("setup");
+
+        var result = await _service.Handle(new RunWorkflowRequest(_slug, Payload: null, "service:setup"), Token);
+
+        Assert.Equal(SindriErrors.GraphSetupRunRefused.Code, result.Error.Code);
+        Assert.Empty(_starter.Requests);
+    }
+
+    [Fact]
+    public async Task Setup_service_is_refused_a_second_run_of_hello_sindri()
+    {
+        await Create(concurrency: "unlimited", activate: true, WorkflowSlug.From("hello-sindri"), "service:setup");
+        using var caller = _callers.EnterService("setup");
+        var first = await _service.Handle(new RunWorkflowRequest(WorkflowSlug.From("hello-sindri"), Payload: null, "service:setup"), Token);
+
+        var second = await _service.Handle(new RunWorkflowRequest(WorkflowSlug.From("hello-sindri"), Payload: null, "service:setup"), Token);
+
+        Assert.True(first.IsSuccess);
+        Assert.Equal(SindriErrors.GraphSetupRunRefused.Code, second.Error.Code);
+        _ = Assert.Single(_starter.Requests);
+    }
+
+    [Fact]
+    public async Task Another_caller_may_run_hello_sindri_again()
+    {
+        await Create(concurrency: "unlimited", activate: true, WorkflowSlug.From("hello-sindri"), "service:setup");
+        using (var caller = _callers.EnterService("setup"))
+        {
+            _ = await _service.Handle(new RunWorkflowRequest(WorkflowSlug.From("hello-sindri"), Payload: null, "service:setup"), Token);
+        }
+
+        var again = await _service.Handle(new RunWorkflowRequest(WorkflowSlug.From("hello-sindri"), Payload: null, "owner"), Token);
+
+        Assert.True(again.IsSuccess);
+    }
+
+    private async Task Create(string? concurrency, bool activate, WorkflowSlug? slug = null, string createdBy = "owner")
     {
         var spec = new GraphSpec(Version: 1, Name: "Morning check", Description: null, Concurrency: concurrency, Resources: null,
             Nodes: [new GraphNode(NodeId.From("start"), "manual", Title: null, [])], Edges: []);
-        _ = (await _workflows.Create(_id, _slug, spec, "owner", Token)).Value;
+        _ = (await _workflows.Create(_id, slug ?? _slug, spec, createdBy, Token)).Value;
         if (activate)
         {
             _ = (await _workflows.Activate(_id, 1, Token)).Value;
         }
+    }
+
+    private async Task CreateSchedule()
+    {
+        var spec = new GraphSpec(Version: 1, Name: "Morning check", Description: null, Concurrency: null, Resources: null,
+            Nodes: [new GraphNode(NodeId.From("daily"), "schedule", Title: null, new JsonObject { ["cron"] = "0 7 * * 1-5", ["timezone"] = "Asia/Tokyo" })], Edges: []);
+        _ = (await _workflows.Create(_id, _slug, spec, "owner", Token)).Value;
+        _ = (await _workflows.Activate(_id, 1, Token)).Value;
     }
 
     /// <summary>Maps a launch to the run that launched it.</summary>

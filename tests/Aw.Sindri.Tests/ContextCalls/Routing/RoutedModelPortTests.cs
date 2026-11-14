@@ -91,6 +91,80 @@ public sealed class RoutedModelPortTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_built_in_codex_name_that_codex_does_not_list_runs_codex_own_default_with_no_model_flag()
+    {
+        var codex = Codex(Said("ok"));
+        var rig = new RouterRig(settings: null, codexModels: ["claude-sonnet-4-5", "claude-haiku-4-5"], codex);
+        using var job = rig.EnterJob();   // a call outside a job that answered writes no event
+
+        var answer = (await rig.Ask(RouterRig.Request())).Value;
+
+        var asked = Assert.Single(codex.Asked);
+        Assert.Equal((null, true), (asked.Model, asked.OwnDefaultModel));
+        Assert.Equal("default", answer.Model);
+        Assert.Equal(("codex", "default"), (Assert.Single(rig.Calls.Calls).Tries[0].Harness, rig.Calls.Calls[0].Tries[0].Model));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_built_in_codex_name_that_codex_lists_or_a_list_that_could_not_be_read_keeps_the_name()
+    {
+        foreach (var list in new[] { new[] { "gpt-6-luna" }, [] })
+        {
+            var codex = Codex(Said("ok"));
+            var rig = new RouterRig(settings: null, codexModels: list, codex);
+
+            _ = (await rig.Ask(RouterRig.Request())).Value;
+
+            var asked = Assert.Single(codex.Asked);
+            Assert.Equal(("gpt-6-luna", false), (asked.Model, asked.OwnDefaultModel));
+        }
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_codex_name_the_profile_wrote_is_passed_even_when_codex_does_not_list_it()
+    {
+        var codex = Codex(Said("ok"));
+        var settings = RouterRig.Settings("""{"default":{"harnesses":["codex","claude-code"],"models":{"codex":"gpt-9"}}}""");
+        var rig = new RouterRig(settings, codexModels: ["claude-sonnet-4-5"], codex);
+
+        _ = (await rig.Ask(RouterRig.Request())).Value;
+
+        Assert.Equal(("gpt-9", false), (Assert.Single(codex.Asked).Model, codex.Asked[0].OwnDefaultModel));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Codex_list_is_read_once_for_many_calls()
+    {
+        var codex = Codex(Said("a"), Said("b"), Said("c"));
+        var rig = new RouterRig(settings: null, codexModels: ["claude-sonnet-4-5"], codex);
+
+        for (var i = 0; i < 3; i++)
+        {
+            _ = (await rig.Ask(RouterRig.Request())).Value;
+        }
+
+        Assert.Equal(1, rig.CodexList!.Reads);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(new[] { "claude-sonnet-4-5" }, 9 * 60, 2 * 60)]   // a list that was read is kept 10 minutes
+    [InlineData(new string[0], 50, 11)]   // a list that could not be read is kept 60 seconds only
+    public async Task Codex_list_is_read_again_once_it_is_older_than_it_is_kept(string[] list, int stillKeptSeconds, int thenSeconds)
+    {
+        var codex = Codex(Said("a"), Said("b"), Said("c"));
+        var rig = new RouterRig(settings: null, codexModels: list, codex);
+
+        _ = (await rig.Ask(RouterRig.Request())).Value;
+        rig.Clock.Advance(TimeSpan.FromSeconds(stillKeptSeconds));
+        _ = (await rig.Ask(RouterRig.Request())).Value;
+        var keptReads = rig.CodexList!.Reads;
+        rig.Clock.Advance(TimeSpan.FromSeconds(thenSeconds));
+        _ = (await rig.Ask(RouterRig.Request())).Value;
+
+        Assert.Equal((1, 2), (keptReads, rig.CodexList.Reads));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task The_profile_orders_the_harnesses_and_names_the_model_of_a_kind()
     {
         var claude = Claude(Said("never asked"));

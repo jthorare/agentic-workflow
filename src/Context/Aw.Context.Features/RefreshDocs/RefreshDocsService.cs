@@ -17,7 +17,7 @@ internal sealed class RefreshDocsService(IDocIndex index, IScrubberFactory scrub
     {
         var settings = SettingsReader.Read(request.Scope.Settings);
         var scrubbers = settings.Bind(s => scrubberFactory.For(s.ExtraPatterns));
-        var repos = scrubbers.Bind(_ => ScopeRules.Resolve(settings.Value, request.Scope.Repos, request.Scope.Caller));
+        var repos = scrubbers.Bind(_ => ScopeRules.Resolve(settings.Value, request.Scope.Repos, request.Scope.Caller, request.Scope.LeftOut));
         if (repos.IsError)
         {
             return repos.Error;

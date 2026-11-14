@@ -1,7 +1,6 @@
 using System.Globalization;
 using Aw.Kernel;
 using Aw.Meta.Core.Config;
-using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Watch;
 
 namespace Aw.Meta.Features.Watch;
@@ -14,7 +13,7 @@ namespace Aw.Meta.Features.Watch;
 /// <param name="remember">Keeps the reported states whenever they change.</param>
 /// <param name="context">The lanes an earlier watch reported CONTEXT HIGH for (a re-armed watch does not announce them again), and how to keep them.</param>
 /// <param name="usage">Looks at the lanes and the meta for usage limits and returns the lines to print (USAGE LIMITED / USAGE OK).</param>
-internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string, ValueTask> emit, WatchResources reported, Func<WatchResources, ValueTask> remember, ContextReported context, Func<ValueTask<IReadOnlyList<string>>> usage)
+internal sealed partial class WatchLoop(TeamConfig team, WatchPoller poller, Func<string, ValueTask> emit, WatchResources reported, Func<WatchResources, ValueTask> remember, ContextReported context, Func<ValueTask<IReadOnlyList<string>>> usage)
 {
     /// <summary>Called with main's new sha and the pull requests that went MERGED in the same poll, when a poll reports "MAIN moved".</summary>
     internal Func<string, IReadOnlyList<int>, ValueTask<Result<Unit>>> MainMoved { get; init; } = static (_, _) => ValueTask.FromResult<Result<Unit>>(Unit.Value);
@@ -39,6 +38,12 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     /// Returns the pid of the newer watch when another watch wrote the flag meanwhile, and null when it kept it.
     /// </summary>
     internal Func<bool, ValueTask<string?>> KeepFailing { get; init; } = static _ => ValueTask.FromResult<string?>(null);
+
+    /// <summary>Receives context.high and context.ok; null writes none.</summary>
+    internal Core.Coordination.MetaEventSink? EventSink { get; init; }
+
+    /// <summary>Dates the events.</summary>
+    internal TimeProvider Clock { get; init; } = TimeProvider.System;
 
     /// <summary>The lanes' live sessions for LANE DOWN / LANE UP (#2856); null leaves them out.</summary>
     internal LaneSessions? Sessions { get; init; }
@@ -179,47 +184,6 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
 
         _failing = false;
         return await Supersede(await KeepFailing(false).ConfigureAwait(false)).ConfigureAwait(false);
-    }
-
-    // The lanes' standing: live sessions, context sizes, then usage limits. None can fail the poll.
-    private async ValueTask ReportLanes(IReadOnlyList<LaneContext>? contexts)
-    {
-        await ReportSessions().ConfigureAwait(false);
-        await ReportContext(contexts).ConfigureAwait(false);
-        foreach (var line in await usage().ConfigureAwait(false))
-        {
-            await Say(line).ConfigureAwait(false);
-        }
-    }
-
-    // LANE DOWN once when a lane that had a session has none for two polls, LANE UP when it is back (LaneSessions).
-    private async ValueTask ReportSessions()
-    {
-        foreach (var line in Sessions is null ? [] : await Sessions.Poll().ConfigureAwait(false))
-        {
-            await Say(line).ConfigureAwait(false);
-        }
-    }
-
-    // CONTEXT HIGH (META RECYCLE for the meta lane) once per crossing, CONTEXT OK after a recycle; the lanes reported high are kept for a re-armed watch.
-    private async ValueTask ReportContext(IReadOnlyList<LaneContext>? contexts)
-    {
-        if (contexts is null)
-        {
-            return;
-        }
-
-        var (lines, high) = ContextWatch.Step(_high, contexts, team.MetaLane);
-        foreach (var line in lines)
-        {
-            await Say(line).ConfigureAwait(false);
-        }
-
-        if (!high.SetEquals(_high))
-        {
-            _high = high;
-            await context.Keep(high).ConfigureAwait(false);
-        }
     }
 
     // Keeps the disk and memory states reported so far, whenever they change.

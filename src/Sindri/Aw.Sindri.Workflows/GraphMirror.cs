@@ -69,7 +69,7 @@ internal sealed class GraphMirror(ILedgerStore ledger, HeldLease lease, EventFac
     public async Task AppendStarted(WorkflowRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
-        var payload = new WorkflowRunStartedPayload(run.Id, run.WorkflowId, run.Revision, Clean(run.Trigger) ?? string.Empty, By);
+        var payload = new WorkflowRunStartedPayload(run.Id, run.WorkflowId, run.Revision, Clean(run.Trigger) ?? string.Empty, By, WorkflowRunMode.Live);
         await Append(EventTypes.WorkflowRunStarted, payload, $"{EventTypes.WorkflowRunStarted}:{run.Id.Value}", run.ItemId?.Value, cancellationToken).ConfigureAwait(false);
         if (run.ItemId is { } item)
         {

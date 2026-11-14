@@ -166,6 +166,7 @@ public static class MetaFeaturesServiceCollectionExtensions
         .AddScoped<IValidator<CheckMergeRequest>, CheckMergeValidator>()
         .Validated<CheckMergeService, CheckMergeRequest, CheckMergeResponse>()
         .AddScoped<MergeRecorder>()
+        .AddScoped<MergeEventWriter>()
         .AddScoped<MergeRunService>()
         .AddScoped<IValidator<MergeRunRequest>, MergeRunValidator>()
         .AddScoped<IService<MergeRunRequest, MergeRunResponse>>(static sp => new ValidatingService<MergeRunRequest, MergeRunResponse>(

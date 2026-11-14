@@ -28,7 +28,7 @@ public sealed class SyncIndexSourceServiceTests
         loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse(LinearTeams).RootElement.Clone() : null } };
         _ = await _h.Profiles.Save(loaded, Ct);
         using var caller = _h.Callers.EnterService("index-sync");
-        return await new SyncIndexSourceService(new ContextScopes(_h.Profiles, _h.Callers), EngineProxy.Of(_index), new FakeJobContextAccessor()).Handle(new SyncIndexSourceRequest(source), Ct);
+        return await new SyncIndexSourceService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), EngineProxy.Of(_index), new FakeJobContextAccessor()).Handle(new SyncIndexSourceRequest(source), Ct);
     }
 
     [Fact, Trait("Lane", "unit")]

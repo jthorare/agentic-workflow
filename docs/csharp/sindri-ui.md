@@ -168,7 +168,7 @@ the palette's Go to, a pointer click on a nav tab) always lands focus on the new
 beside the page), and `ShellWindow.KeepFocusOrReannounce` does it: Avalonia 12.1.3 has no `ClearFocus`, so when the region
 already has focus it pulses `Page.IsEnabled` false and true (focus drops) and focuses it again, which raises the fresh event
 the screen reader speaks. From the palette, opened from the region, it raises two (the palette's close hands focus back, then the re-announce); the page changes before the palette closes, so both carry the new page's name. Over a
-covering sheet the page is disabled and the usual keep-focus rule applies. ⌘, keeps its own rule (Settings' first control,
+covering sheet the page is disabled and the usual keep-focus rule applies. ⌘, keeps its own rule (Settings' filter box,
 once, via `_openingSettings`). The nav tabs are a tabs pattern with automatic activation: Right, Left, Home and End on a focused tab select the neighbouring
 tab and focus stays on that tab (`ShellWindow.WatchNavigationKeys`; only a pointer click on a tab moves focus to the region).
 Other page changes that are not a navigation command (`LeaveSettings`, the Home health strip, the pill's `GoTo(System)`) take the
@@ -194,6 +194,22 @@ unreadable preferences file leaves the defaults), puts `new SettingsView { DataC
 own transitions don't read the `Motion.*` tokens: `SettingsTheme.Follow(window, settings)` keeps the window's
 `reduce-motion` class in step with `IsMotionReduced`, and `Theme/FluentOverrides.axaml` turns those transitions off
 under it (today the ToggleSwitch knob); another stock control with its own transitions gets its line there.
+
+### The Settings filter (#3362)
+
+A filter box sits under the Settings title, up to 480 px wide and on the left. Typing keeps the sections whose text holds every word typed, and hides the others.
+It matches whole sections, not single rows: "reset" keeps the section that has a Reset button.
+
+The sections are the setup checklist, the model, label and product-surface
+choices, Sandbox, Library, Connections, and This app. A section matches on the text it shows: headings, row labels, buttons and descriptions. The view reads that text from the page when the
+filter changes. A few synonyms (zoom, font and animation for This app) match too.
+
+`ViewModels/Settings/SettingsFilter` holds the rule and `SettingsViewModel.Filter` the text.
+
+When no section matches, the page says "Nothing matches" and "Esc clears the filter."
+
+Esc in the box clears it. Ctrl+, (⌘, on macOS) opens Settings with the cursor in the box. With Settings already open, Ctrl+, puts the cursor back in the box.
+The page also scrolls to its top, because the box brings itself into view and would otherwise hide the title under the top bar. The box's placeholder names the shortcut for the OS.
 
 ### Model choice in Settings (model-pick spec 8)
 
@@ -601,7 +617,7 @@ message, which names the full path; the path shows shortened (`~/…`) on its ow
 | Profile | `profile.live`, `problem`, `source`, `modelPick`, `labelPick`, `surfacePick` | the live hash and file, or `unreadable` with the problem; the three picks (`off` when unset). Status sends no approval fields since #2258, so the app shows no profile fix |
 | Services | `services[]` | `heartbeat · every 5s · last run 12:00:05Z` (`not run yet`) |
 | Last event | the newest stream event | `service.heartbeat · 12:00:05Z · #42` |
-| Code index (CI-10b) | `GET /sindri/code-index/status` (`repos[]`: `state`, `commit`, `builtAt`, `layers[]`) | One wrapped line per repo, read on connect and after each event: `repo @ abcdef0, 3 min old, structure ok · graph ok · embeddings pending 31%` (its accessible name starts "Code index: "), and a word at the heading, `ok` or `needs a look`. By state: `missing` "first build queued", `damaged` "damaged, rebuilding on the next check", `stale` "(behind main)", `building`, `waiting` "waiting for a free build slot"; a state the app doesn't know shows as served. A layer reads `ok`, `off`, `pending N%` (from "N of M embedded") or `unavailable (SND-CODEIDX-…)`; clones and deps show only when they need a look. A failed read says "The code index can't be read just now." |
+| Code index (CI-10b) | `GET /sindri/code-index/status` (`repos[]`: `state`, `commit`, `builtAt`, `layers[]`) | One wrapped line per repo, read on connect and after each event: `repo @ abcdef0, 3 min old, structure ok · graph ok · embeddings pending 31%` (its accessible name starts "Code index: "), and a word at the heading, `ok` or `needs a look`. By state: `missing` "no index yet" (paused or off the default branch, no build is coming), `damaged` "damaged, rebuilding on the next check", `stale` "(behind main)", `building`, `queued` "build queued" (no index yet, the head on the default branch and `code-index-main-move` not paused, so the build starts within about a minute; #3342, #3399; the heading reads `build queued` unless another repo needs a look), `waiting` "waiting to retry"; while `code-index-main-move` is paused the server sets `health[].paused` (no index, behind main or in backoff; `queued` and `waiting` arrive as `missing` or `stale`) and the line ends "paused" (e.g. "no index yet · paused"), and the card's foot shows once, for every repo, "Index builds are paused for every repo:" with the doctor row's fix, `sindri services resume code-index-main-move`, under it (mono, selectable, no wrapping; #3561, #3576); the repo lines have Space.XS between them (#3577); a state the app doesn't know shows as served. A layer reads `ok`, `off`, `pending N%` (from "N of M embedded") or `unavailable (SND-CODEIDX-…)`; clones and deps show only when they need a look. A failed read says "The code index can't be read just now." |
 | Sandbox (SB-6) | `GET /sindri/sandbox/status` (`checkedAt`, `ready`, `blockers[]`, `mechanism`, `groups`, `limits`, `learn[]`) | One row, `Sandbox: ready`, `Sandbox: <the first blocker's sentence>`, `Sandbox: learning, network open for <repo>, ends in <days> days` (a warning), `Sandbox: not checked yet` (`checkedAt` null) or, with Sindri down, a dimmed `Sandbox: unknown`. Read on connect and after each event; the route never probes, Check again does. States in `Golden/Sandbox/states.json` `healthRow` |
 
 **The Context map card (F1P-c, code index spec 6.4).** Up front under the actions, above Details: the section title `Context map`, the state as a glyph and a word at its right, and Sindri's sentences under it. It reads `GET /sindri/context/map/publish` (`ISindriApi.MapPublish`) with the other followed views, on connect and after every event, and shows nothing while the read is refused (no map yet, `SND-CONTEXT-030`).

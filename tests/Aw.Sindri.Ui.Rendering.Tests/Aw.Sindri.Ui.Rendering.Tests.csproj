@@ -35,6 +35,7 @@
     <Compile Include="../Aw.Sindri.Ui.Tests/Theme/TokenFile.cs" Link="Shared/TokenFile.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/Theme/UiSource.cs" Link="Shared/UiSource.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/Theme/Wcag.cs" Link="Shared/Wcag.cs" />
+    <Compile Include="../Aw.Sindri.Ui.Frames.Tests/Views/InstantMotion.cs" Link="Shared/InstantMotion.cs" />
   </ItemGroup>
 
   <!-- The API goldens the fake serves (Aw.Sindri.Ui.Testing reads them from the output folder): the same files as Aw.Sindri.Ui.Tests. -->

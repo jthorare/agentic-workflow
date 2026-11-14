@@ -49,7 +49,7 @@ internal sealed class LinearScopes(IApprovedProfile approvals, ICallerContextAcc
                 return settings.Error;
             }
 
-            var resolved = ScopeRules.Resolve(settings.Value, caller.Value.Repos, caller.Value.Caller);
+            var resolved = ScopeRules.Resolve(settings.Value, caller.Value.Repos, caller.Value.Caller, caller.Value.LeftOut);
             if (resolved.IsError)
             {
                 return resolved.Error;

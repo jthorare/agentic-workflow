@@ -3,7 +3,9 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Templates;
 using Aw.Sindri.Features.CreateWorkflow;
+using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.WorkflowWrites;
 using static Aw.Sindri.Tests.WorkflowWrites.WorkflowWriteRig;
 
@@ -14,11 +16,12 @@ namespace Aw.Sindri.Tests.CreateWorkflow;
 public sealed class CreateWorkflowServiceTests : IDisposable
 {
     private readonly WorkflowWriteRig _rig = new(realBlocks: true);
+    private readonly FakeCiSourceLookup _ci = new(new GitHubCiSource("github:work", "acme", "app", "main"));
     private readonly CreateWorkflowService _service;
 
     public CreateWorkflowServiceTests()
     {
-        _service = new CreateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log);
+        _service = new CreateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log, _ci);
     }
 
     public void Dispose() => _rig.Dispose();
@@ -63,6 +66,59 @@ public sealed class CreateWorkflowServiceTests : IDisposable
 
         Assert.True(result.IsSuccess);
         Assert.Equal(GraphJson.Hash(spec), result.Value.SpecHash);
+    }
+
+    [Fact]
+    public async Task A_starter_template_made_with_a_ci_source_has_the_ci_step()
+    {
+        _ = await _rig.Harness.HoldLease();
+
+        var result = await _service.Handle(new CreateWorkflowRequest(Slug, "weekday-check", Spec: null, "owner"), Token);
+
+        Assert.True(result.IsSuccess);
+        var stored = (await _rig.Workflows.Get(result.Value.Id, Token)).Value;
+        var spec = (await _rig.Workflows.GetRevision(result.Value.Id, 1, Token)).Value.Spec;
+        Assert.Contains(spec.Nodes, static n => n.Type == "call_tool" && n.Id.Value == "ci");
+        Assert.Equal(1, _ci.Calls);
+        Assert.Null(stored.ActiveRevision);
+    }
+
+    [Fact]
+    public async Task A_starter_template_made_with_no_ci_source_is_the_plain_template()
+    {
+        _ = await _rig.Harness.HoldLease();
+        var none = new FakeCiSourceLookup();
+        var service = new CreateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log, none);
+
+        var result = await service.Handle(new CreateWorkflowRequest(Slug, "weekday-check", Spec: null, "owner"), Token);
+
+        Assert.True(result.IsSuccess);
+        var spec = (await _rig.Workflows.GetRevision(result.Value.Id, 1, Token)).Value.Spec;
+        Assert.DoesNotContain(spec.Nodes, static n => n.Type == "call_tool");
+        Assert.Equal(1, none.Calls);
+    }
+
+    [Fact]
+    public async Task A_template_that_reads_no_ci_never_asks_for_a_ci_source()
+    {
+        _ = await _rig.Harness.HoldLease();
+
+        var result = await _service.Handle(new CreateWorkflowRequest(Slug, "manual-notify", Spec: null, "owner"), Token);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, _ci.Calls);
+    }
+
+    [Fact]
+    public async Task A_spec_never_asks_for_a_ci_source()
+    {
+        _ = await _rig.Harness.HoldLease();
+        var spec = GraphTemplates.Find("daily-digest")!.Spec;
+
+        var result = await _service.Handle(new CreateWorkflowRequest(Slug, Template: null, GraphJson.Write(spec), "owner"), Token);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, _ci.Calls);
     }
 
     [Theory]
@@ -121,5 +177,5 @@ public sealed class CreateWorkflowServiceTests : IDisposable
         _ = Assert.Single(_rig.Recorded(EventTypes.WorkflowCreated));
     }
 
-    private static GraphSpec GraphTemplates_Find(string name) => Core.Graph.Templates.GraphTemplates.Find(name)!.Spec;   // why: the test names a template that exists
+    private static GraphSpec GraphTemplates_Find(string name) => GraphTemplates.Find(name)!.Spec;   // why: the test names a template that exists
 }

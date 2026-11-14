@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
@@ -16,12 +17,18 @@ namespace Aw.Sindri.Features.ActivateWorkflow;
 /// <param name="workflows">The workflows.</param>
 /// <param name="checker">Builds the validator.</param>
 /// <param name="log">Writes the lifecycle event.</param>
+/// <param name="callers">The current caller.</param>
 /// <param name="provisioner">Makes the revision's declared resources exist (agent-first PR 14); null on a build with no resources.</param>
-internal sealed class ActivateWorkflowService(IWorkflowStore workflows, IWorkflowChecker checker, WorkflowChangeLog log, IResourceProvisioner? provisioner = null) : IService<ActivateWorkflowRequest, ActivateWorkflowResponse>
+internal sealed class ActivateWorkflowService(IWorkflowStore workflows, IWorkflowChecker checker, WorkflowChangeLog log, ICallerContextAccessor callers, IResourceProvisioner? provisioner = null) : IService<ActivateWorkflowRequest, ActivateWorkflowResponse>
 {
     public async ValueTask<Result<ActivateWorkflowResponse>> Handle(ActivateWorkflowRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        if (callers.Current?.Class is not (CallerClass.Human or CallerClass.Service))
+        {
+            return SindriErrors.AuthRefused.With("Turning a workflow on is the owner's to do; a session can't (fix: ask the owner to press Activate)");
+        }
+
         var found = await FindActive(request.Slug, cancellationToken).ConfigureAwait(false);
         if (found.IsError)
         {

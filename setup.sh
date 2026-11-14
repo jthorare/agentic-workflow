@@ -9,6 +9,8 @@
 #   ./setup.sh [--providers ...] --with-meta     # also install the /meta harness: aw-meta CLI, hooks, launcher (opt-in)
 #   ./setup.sh [--providers ...] --with-fleet    # also install the aw:fleet session-state hook for Sindri's session collector (opt-in)
 #   ./setup.sh [--providers ...] --no-tldraw     # skip the tldraw offline app (the canvas agents draw diagrams on)
+#   ./setup.sh [--providers ...] --with-tmux     # also install the toolkit's tmux config to ~/.tmux.conf (opt-in; old file backed up)
+#   ./setup.sh [--providers ...] --with-tmux-restore  # --with-tmux plus session restore (TPM, tmux-resurrect, tmux-continuum)
 #   ./setup.sh --profile <web-app|ios|personal> --target <dir> [--dry-run]
 #
 # --providers defaults to every provider whose CLI is installed
@@ -28,7 +30,7 @@ CLAUDE_DIR="$HOME/.claude"
 ALL_PROVIDERS="claude codex cursor"
 
 usage() {
-  sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'
 }
 
 # System packages are installed when missing (config/lib/sys-pkg.sh: Homebrew on macOS, sudo + the distro's package
@@ -141,6 +143,8 @@ WITH_SINDRI=0
 WITH_META=0
 WITH_FLEET=0
 WITH_TLDRAW=1
+WITH_TMUX=0
+WITH_TMUX_RESTORE=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --providers) PROVIDERS_ARG="${2:-}"; shift 2 || { echo "--providers needs a value"; exit 1; } ;;
@@ -152,6 +156,8 @@ while [ $# -gt 0 ]; do
     --no-onyx) shift ;;
     --with-fleet) WITH_FLEET=1; shift ;;
     --no-tldraw) WITH_TLDRAW=0; shift ;;
+    --with-tmux) WITH_TMUX=1; shift ;;
+    --with-tmux-restore) WITH_TMUX=1; WITH_TMUX_RESTORE=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown option: $1"; echo ""; usage; exit 1 ;;
   esac
@@ -445,47 +451,7 @@ EXTERNAL_DIR="$AW_STATE_ROOT/external-skills"
 aw_run mkdir -p "$EXTERNAL_DIR"
 AW_EXTERNAL_SKILL_DIRS=""
 
-fetch_external_pack() {
-  local repo="$1"   # e.g. pbakaus/impeccable
-  local pin="$2"    # commit SHA
-  local target
-  target="$EXTERNAL_DIR/$(basename "$repo")"
-
-  if aw_dry; then
-    echo "  [dry-run] would clone/fetch $repo into $target and check out ${pin}"
-  else
-    if [ ! -d "$target/.git" ]; then
-      echo "  $repo: cloning..."
-      git clone "https://github.com/$repo.git" "$target" 2>&1 \
-        || { echo "  WARN: failed to clone $repo (non-fatal)"; return 0; }
-    fi
-    (cd "$target" && git fetch origin --quiet) || true
-    if [ -n "$pin" ] && [ "$pin" != "HEAD" ]; then
-      (cd "$target" && git checkout "$pin" --quiet) 2>/dev/null \
-        || echo "  WARN: pin $pin not found in $repo, using current HEAD"
-    fi
-  fi
-
-  # Find the skill source directory — tries both layouts
-  local skills_dir=""
-  if [ -d "$target/skills" ]; then
-    skills_dir="$target/skills"
-  elif [ -d "$target/.claude/skills" ]; then
-    skills_dir="$target/.claude/skills"
-  fi
-  if [ -z "$skills_dir" ]; then
-    aw_dry || echo "  WARN: no skills directory found in $(basename "$repo")"
-    return 0
-  fi
-
-  local skill_dir
-  for skill_dir in "$skills_dir"/*/; do
-    [ -f "$skill_dir/SKILL.md" ] || continue
-    AW_EXTERNAL_SKILL_DIRS="$AW_EXTERNAL_SKILL_DIRS${skill_dir%/}
-"
-  done
-  echo "  $repo: ready ($(basename "$skills_dir") in $target)"
-}
+source "$SCRIPT_DIR/scripts/lib/external-packs.sh"
 
 if [ -f "$SCRIPT_DIR/EXTERNAL_PINS.env" ]; then
   # Safe parser: read only well-formed KEY=value lines and validate SHA format.
@@ -500,7 +466,7 @@ if [ -f "$SCRIPT_DIR/EXTERNAL_PINS.env" ]; then
     if [[ "$value" =~ ^[0-9a-f]{7,40}$ ]] || [[ "$value" == "HEAD" ]]; then
       echo "$value"
     else
-      echo "HEAD"
+      echo "BAD:$key"   # a typo or a missing row must not unpin the pack: fetch_external_pack keeps the checkout
     fi
   }
   fetch_external_pack "pbakaus/impeccable"   "$(read_pin IMPECCABLE_PIN)"
@@ -510,6 +476,10 @@ if [ -f "$SCRIPT_DIR/EXTERNAL_PINS.env" ]; then
 else
   echo "  WARN: EXTERNAL_PINS.env missing at $SCRIPT_DIR; skipping external pack install"
 fi
+# vercel-labs/ui (ui-sdk): unpinned by the owner's decision (2026-11-13). It follows the upstream default branch on every run.
+# The repo has no license file, so it is fetched at setup time only and nothing of it is committed here.
+# Only packages/core/skills is linked: .agents/skills holds the repo's contributor skills.
+fetch_external_pack "vercel-labs/ui" "HEAD" "packages/core/skills"
 export AW_EXTERNAL_SKILL_DIRS
 
 # --- rtk ---
@@ -627,6 +597,19 @@ if [ "$WITH_TLDRAW" = "1" ]; then
   echo ""
   echo "=== tldraw offline ==="
   bash "$SCRIPT_DIR/scripts/install-tldraw.sh" || echo "  WARN: tldraw: install-tldraw.sh failed (non-fatal)"
+fi
+
+# --- tmux config (opt-in: ./setup.sh --with-tmux; --with-tmux-restore adds TPM, tmux-resurrect and tmux-continuum): writes
+# config/tmux/tmux.conf to ~/.tmux.conf, backing up a different file to ~/.tmux.conf.aw-bak first. Once, not per provider.
+# It never starts tmux or edits a shell rc. Fail-open: a failure warns and setup goes on. ---
+if [ "$WITH_TMUX" = "1" ]; then
+  echo ""
+  echo "=== tmux config ==="
+  if [ "$WITH_TMUX_RESTORE" = "1" ]; then
+    bash "$SCRIPT_DIR/scripts/install-tmux.sh" --restore || echo "  WARN: tmux: install-tmux.sh failed (non-fatal)"
+  else
+    bash "$SCRIPT_DIR/scripts/install-tmux.sh" || echo "  WARN: tmux: install-tmux.sh failed (non-fatal)"
+  fi
 fi
 
 # --- Provider registry (read by the skill preamble) ---

@@ -29,7 +29,7 @@ namespace Aw.Sindri.Core.Profile;
 /// <param name="Scoping">The 'scoping:' section (#399): the scoping recipe's history window (<see cref="ScopingSettings"/>).</param>
 /// <param name="Poll">The 'poll:' section (#2258, PR 11): the poll interval and the catch-up page cap (<see cref="PollSettings"/>).</param>
 /// <param name="ForEach">The 'forEach:' section (PR 9): the item cap a 'for_each' node may lower but never raise, and its default batch size (<see cref="ForEachSettings"/>).</param>
-/// <remarks>'Http' and 'CallDepth' (agent-first PR 9) are init properties, not constructor parameters, so a later block's keys don't each rewrite the constructor.</remarks>
+/// <remarks>'Http' and 'CallDepth' (agent-first PR 9) ('Editor' too, Workflows page P0) are init properties, not constructor parameters, so a later block's keys don't each rewrite the constructor.</remarks>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record WorkflowSettings(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? DeskTimeout = null,
@@ -62,4 +62,8 @@ public sealed record WorkflowSettings(
     /// <summary>How many calls deep one workflow may start another through 'run_workflow' (1 to 10; default <see cref="Graph.Guards.CallDepth.DefaultMax"/>, 3).</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? CallDepth { get; init; }
+
+    /// <summary>Which workflow editor the app opens (Workflows page spec decision 14): 'sheet' or 'steps'. Null means 'sheet'. Any other value is a profile error.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Editor { get; init; }
 }

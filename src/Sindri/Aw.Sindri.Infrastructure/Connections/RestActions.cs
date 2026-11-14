@@ -10,6 +10,7 @@ internal static class RestActions
             new("create_issue", "Open an issue: owner, repo, title, body.", HttpMethod.Post, "api.github.com", "/repos/{owner}/{repo}/issues"),
             new("get_issue", "Read one issue: owner, repo, number.", HttpMethod.Get, "api.github.com", "/repos/{owner}/{repo}/issues/{number}"),
             new("list_issues", "List a repo's issues: owner, repo, optional state.", HttpMethod.Get, "api.github.com", "/repos/{owner}/{repo}/issues"),
+            new("list_runs", "List a repo's workflow runs: owner, repo, optional branch, optional per_page.", HttpMethod.Get, "api.github.com", "/repos/{owner}/{repo}/actions/runs"),
             new("add_comment", "Comment on an issue or pull request: owner, repo, number, body.", HttpMethod.Post, "api.github.com", "/repos/{owner}/{repo}/issues/{number}/comments"),
         ],
         ["slack"] =

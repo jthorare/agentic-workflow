@@ -5,6 +5,7 @@ using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
 using Aw.Sindri.Core;
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Workflow.Blocks.Input;
 
 namespace Aw.Sindri.Tests.ContextCalls;
@@ -20,7 +21,7 @@ public sealed class IndexSliceTests
 
     private async Task ApproveProfile() => _ = await _h.Profiles.Save(SliceHarness.Profile("5m"), Ct);
 
-    private ContextScopes Scopes() => new(_h.Profiles, _h.Callers);
+    private ContextScopes Scopes() => new(_h.Profiles, _h.Callers, new FakeRepoCheckouts());
 
     [Fact, Trait("Lane", "unit")]
     public async Task Status_lists_each_feeds_phase_milestones_last_tick_and_last_code()
@@ -40,7 +41,7 @@ public sealed class IndexSliceTests
         Assert.Equal(
             [
                 new IndexSourceRow("linear", "incremental", Usable: true, Complete: true, _now, LastCode: null),
-                new IndexSourceRow("github", "recent", Usable: false, Complete: false, LastSync: null, "SND-CONTEXT-010"),
+                new IndexSourceRow("github", "recent", Usable: false, Complete: false, LastSync: null, "SND-CONTEXT-010") { NeedsLook = true },
                 new IndexSourceRow("slack", Phase: null, Usable: false, Complete: false, LastSync: null, LastCode: null),
             ],
             view.Value.Sources);
@@ -84,7 +85,7 @@ public sealed class IndexSliceTests
         var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
 
         Assert.Equal(
-            [new IndexSourceRow("github", "recent", Usable: false, Complete: false, _now, "SND-CONTEXT-010", Pull: "backoff", Records: 12, LastCommit: _now.AddHours(-1), LastError: "SND-CONTEXT-010", LastErrorText: "the source is down", Failures: 3, NextTry: _now.AddMinutes(20))],
+            [new IndexSourceRow("github", "recent", Usable: false, Complete: false, _now, "SND-CONTEXT-010", Pull: "backoff", Records: 12, LastCommit: _now.AddHours(-1), LastError: "SND-CONTEXT-010", LastErrorText: "the source is down", Failures: 3, NextTry: _now.AddMinutes(20)) { NeedsLook = true }],
             view.Value.Sources);
     }
 

@@ -5,6 +5,7 @@ using Aw.Context.Testing.Engine;
 using Aw.Kernel;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
@@ -18,7 +19,7 @@ public sealed class IndexEmbedServiceTests
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private async Task<Result<ScheduledResult>> Run(bool context, Func<EmbedRecordsRequest, Result<EmbedRecordsReport>> answer)
+    private async Task<Result<ScheduledResult>> Run(bool context, Func<EmbedRecordsRequest, Result<EmbedRecordsReport>> answer, int? records = null)
     {
         _h.Clock.SetUtcNow(_now);
         var loaded = SliceHarness.Profile("1m");
@@ -26,12 +27,21 @@ public sealed class IndexEmbedServiceTests
         _ = await _h.Profiles.Save(loaded, Ct);
         var grant = await _h.HoldLease();
         using var caller = _h.Callers.EnterService("index-embed");
-        var engine = FakeContextEngine.WithEmbed(request =>
+        Result<EmbedRecordsReport> Ask(EmbedRecordsRequest request)
         {
             _asked.Add(request);
             return answer(request);
-        });
-        return await new IndexEmbedService(new ContextScopes(_h.Profiles, _h.Callers), engine).Run(new ScheduledRun(grant, _now), Ct);
+        }
+
+        var stub = EmbedEngineProxy.Create();
+        stub.Records = records;
+        var engine = records is null ? FakeContextEngine.WithEmbed(Ask) : stub.Proxy;
+        if (records is not null)
+        {
+            stub.Report = Ask(new EmbedRecordsRequest());
+        }
+
+        return await new IndexEmbedService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), engine).Run(new ScheduledRun(grant, _now), Ct);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -90,12 +100,23 @@ public sealed class IndexEmbedServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Without_a_context_section_the_engine_is_not_asked()
+    public async Task Without_a_context_section_the_engine_is_asked_and_an_empty_index_says_nothing_indexed_yet()
     {
-        var result = await Run(context: false, _ => new EmbedRecordsReport(1, 1, Done: true));
+        var result = await Run(context: false, _ => new EmbedRecordsReport(0, 0, Done: true), records: 0);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal([new EmbedRecordsRequest()], _asked);
+        Assert.True(result.Value.Idle);
+        Assert.Equal("nothing indexed yet", result.Value.Summary);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_caught_up_index_with_nothing_newly_embedded_stays_quiet()
+    {
+        var result = await Run(context: true, _ => new EmbedRecordsReport(0, 0, Done: true), records: 120);
 
         Assert.True(result.IsSuccess);
         Assert.True(result.Value.Idle);
-        Assert.Empty(_asked);
+        Assert.Null(result.Value.Summary);
     }
 }

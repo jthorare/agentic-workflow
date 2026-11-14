@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-AGENT-015",
+  "status": 409,
+  "detail": "the session runs in Warp (warp), not in a tmux pane",
+  "traceId": "<trace>"
+}

@@ -20,6 +20,9 @@ public sealed class FixedLaunchSpend : ILaunchSpend
     public void TokensOnly(AgentId target, long tokens) => _spent[target] = new AgentSpend(0m, tokens, SpendBasis.TokensOnly);
 
     /// <inheritdoc/>
+    public SpendPeek Peek(AgentId target) => new(Landed: true, _spent.TryGetValue(target, out var spend) ? spend : null);
+
+    /// <inheritdoc/>
     public ValueTask<Result<AgentSpend?>> Today(AgentId target, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success(_spent.TryGetValue(target, out var spend) ? spend : null));
 }
