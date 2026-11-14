@@ -21,7 +21,12 @@ internal sealed partial class AgentsPageViewModel
     /// <summary>Text pasted into the pane goes to the session's socket as one paste.</summary>
     /// <param name="text">The clipboard's text.</param>
     /// <returns>What became of the paste.</returns>
-    internal Task<TerminalKeyFate> SendPanePaste(string text) => _session?.SendPaste(text, CancellationToken.None) ?? Task.FromResult(TerminalKeyFate.Dropped);
+    internal async Task<TerminalKeyFate> SendPanePaste(string text)
+    {
+        var fate = _session is null ? TerminalKeyFate.Dropped : await _session.SendPaste(text, CancellationToken.None).ConfigureAwait(true);
+        Terminal.NoteFate(fate);
+        return fate;
+    }
 
     /// <summary>The terminal view's state.</summary>
     internal TerminalViewViewModel Terminal => field ??= NewTerminal();

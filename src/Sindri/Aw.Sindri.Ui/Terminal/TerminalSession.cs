@@ -99,16 +99,14 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
 
         if (System.Text.Encoding.UTF8.GetByteCount(text) > TerminalSocketMessages.MaxPasteBytes)
         {
-            view.Note(Aw.Sindri.Ui.ViewModels.Labels.TerminalPasteTooBig);   // Serve would close the socket with 1009
-            return Task.FromResult(TerminalKeyFate.Dropped);
+            return Task.FromResult(TerminalKeyFate.TooBig);   // Serve would close the socket with 1009
         }
 
         // The writer escapes < > & ' + and non-ASCII as six bytes each, and Serve closes the socket over a message above its own cap before it decodes it.
         var message = TerminalSocketMessages.Paste(text);
         if (System.Text.Encoding.UTF8.GetByteCount(message) > TerminalSocketMessages.MaxMessageBytes)
         {
-            view.Note(Aw.Sindri.Ui.ViewModels.Labels.TerminalPasteTooBig);
-            return Task.FromResult(TerminalKeyFate.Dropped);
+            return Task.FromResult(TerminalKeyFate.TooBig);
         }
 
         return Deliver(message, cancellationToken);
