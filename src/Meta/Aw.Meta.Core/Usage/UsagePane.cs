@@ -31,7 +31,7 @@ internal static class UsagePane
 
         var current = !lines.Skip(at + 1).Any(Output);
         var busy = lines.TakeLast(BusyWindow).Any(static l => l.Contains("to interrupt", StringComparison.Ordinal));
-        var prompt = Array.FindLastIndex(lines, static l => l.StartsWith('❯'));
+        var prompt = Coordination.PromptRow.Find(lines);
         var empty = prompt > at && Empty(lines[prompt]);
         return new PaneUsage(stop, current, current && !busy && empty);
     }

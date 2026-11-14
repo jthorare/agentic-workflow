@@ -37,7 +37,7 @@
               </ComboBox>
               <ToggleButton Name="EditorFieldAdvanced" IsVisible="{Binding HasAdvanced}" IsChecked="{Binding ShowAdvanced, Mode=TwoWay}" Content="{Binding AdvancedText}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding AdvancedText}" />
               <TextBox Name="EditorFieldText" IsVisible="{Binding IsRawVisible}" Text="{Binding Text, Mode=TwoWay}" AutomationProperties.Name="{Binding Caption}" />
-              <CheckBox Name="EditorFieldCheck" IsVisible="{Binding IsBoolean}" IsChecked="{Binding IsOn, Mode=TwoWay}" AutomationProperties.Name="{Binding Caption}" />
+              <CheckBox Name="EditorFieldCheck" AutomationProperties.AutomationId="{Binding CheckAutomationId}" IsVisible="{Binding IsBoolean}" IsChecked="{Binding IsOn, Mode=TwoWay}" AutomationProperties.Name="{Binding Caption}" />
               <TextBox Name="EditorFieldLines" IsVisible="{Binding IsMultiline}" Text="{Binding Text, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding Caption}" />
               <Border Name="EditorFieldError" IsVisible="{Binding HasError}" AutomationProperties.Name="{Binding ErrorText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                 <TextBlock Classes="caption" Text="{Binding ErrorText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />

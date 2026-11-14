@@ -69,6 +69,32 @@ public sealed class RenameConnectionServiceTests
     }
 
     [Fact]
+    public async Task Rename_refuses_a_new_label_that_makes_slack_messages()
+    {
+        var world = new ConnectionHarness();
+        _ = await world.Store.Upsert(ConnectionSamples.Oauth(ConnectionSamples.Name("slack", "x")), Token);
+
+        var renamed = await world.Rename().Handle(new RenameConnectionRequest("slack:x", "messages"), Token);
+
+        Assert.True(renamed.IsError);
+        Assert.Equal(SindriErrors.ConnectionNameReserved.Code, renamed.Error.Code);
+        Assert.Equal("slack:x", Assert.Single(world.Store.Rows).Name.ToString());
+    }
+
+    [Fact]
+    public async Task Rename_refuses_to_rename_slack_messages_away()
+    {
+        var world = new ConnectionHarness();
+        _ = await world.Store.Upsert(ConnectionSamples.Oauth(ConnectionSamples.Name("slack", "messages")), Token);
+
+        var renamed = await world.Rename().Handle(new RenameConnectionRequest("slack:messages", "other"), Token);
+
+        Assert.True(renamed.IsError);
+        Assert.Equal(SindriErrors.ConnectionNameReserved.Code, renamed.Error.Code);
+        Assert.Equal("slack:messages", Assert.Single(world.Store.Rows).Name.ToString());
+    }
+
+    [Fact]
     public async Task An_unknown_name_is_SND_CONN_001()
     {
         var world = new ConnectionHarness();
