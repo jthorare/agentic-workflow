@@ -35,7 +35,7 @@ public sealed class ConnectionPickerTests
         var page = await _f.Shown(Token);
         await page.OpenWorkflow(Slug, Token);
         _ = page.Runs.Graph!.SelectNode("start");
-        await page.Edit(Token);
+        await page.OpenSettings(Token);
         return page;
     }
 
@@ -77,11 +77,11 @@ public sealed class ConnectionPickerTests
         Assert.Equal("github", asked);
 
         page.Back();   // the owner is on Connections now: the page left its runs
-        Assert.False(page.IsEditing);
+        Assert.False(page.IsSettingsOpen);
         _ = _f.Server.SeedConnection(FakeSindriApi.ConnectionRow("github:work"));
         await page.ReturnFromConnect(Token);
 
-        Assert.Equal((true, true, "start"), (page.IsRuns, page.IsEditing, page.Runs.Graph!.SelectedId));
+        Assert.Equal((true, true, "start"), (page.IsRuns, page.IsSettingsOpen, page.Runs.Graph!.SelectedId));
         var field = page.Editor.Fields.Single(f => f.Name == "connection");
         Assert.Equal(("github:work", true), (field.Text, field.IsChanged));
     }
@@ -93,6 +93,6 @@ public sealed class ConnectionPickerTests
 
         await page.ReturnFromConnect(Token);
 
-        Assert.False(page.IsEditing);
+        Assert.False(page.IsSettingsOpen);
     }
 }

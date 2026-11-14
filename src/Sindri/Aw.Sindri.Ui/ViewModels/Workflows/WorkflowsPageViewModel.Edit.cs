@@ -131,7 +131,7 @@ internal sealed partial class WorkflowsPageViewModel
         _pendingConnect = null;
         await OpenWorkflow(pending.Slug, cancellationToken).ConfigureAwait(true);
         _ = Runs.Graph?.SelectNode(pending.Node);
-        await Edit(cancellationToken).ConfigureAwait(true);
+        await OpenSettings(cancellationToken).ConfigureAwait(true);
         if (Editor.Fields.FirstOrDefault(f => f.IsConnection) is { } field)
         {
             field.Text = field.ConnectionChoices.FirstOrDefault(n => !pending.Known.Contains(n, StringComparer.Ordinal)) ?? field.ConnectionChoices.FirstOrDefault() ?? field.Text;   // the new connection, else the one there is
