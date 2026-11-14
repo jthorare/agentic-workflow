@@ -23,6 +23,8 @@ internal sealed partial class NewAgentFormViewModel : ObservableObject
     private readonly Func<string> _newActId;
     private bool _lastBackground;
     private bool _defaultsTaken;
+    private bool _agentPicked;
+    private bool _applyingDefault;
     private bool _serverPromptRefusal;
     private AgentStartedViewRef? _lastStarted;
 
@@ -32,8 +34,10 @@ internal sealed partial class NewAgentFormViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(defaults);
         (_url, _route, _clipboard, _newActId) = (url, route, clipboard, newActId);
         Repos = repos;
+        _applyingDefault = true;   // the defaults below are not the person's pick
         Repo = repos.FirstOrDefault(r => string.Equals(r.Name, defaults.Repo, StringComparison.Ordinal)) ?? (repos.Count > 0 ? repos[0] : null);
         Agent = AgentChoice.All.FirstOrDefault(a => string.Equals(a.Id, defaults.Agent, StringComparison.Ordinal)) ?? AgentChoice.ClaudeCode;
+        _applyingDefault = false;
         ActId = newActId();
     }
 
@@ -75,14 +79,20 @@ internal sealed partial class NewAgentFormViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(repos);
         ArgumentNullException.ThrowIfNull(defaults);
         Repos = repos;
+        _applyingDefault = true;
         Repo = repos.FirstOrDefault(r => string.Equals(r.Name, Repo?.Name, StringComparison.Ordinal))
             ?? repos.FirstOrDefault(r => string.Equals(r.Name, defaults.Repo, StringComparison.Ordinal))
             ?? (repos.Count > 0 ? repos[0] : null);
         if (!_defaultsTaken)
         {
             _defaultsTaken = true;
-            Agent = AgentChoice.All.FirstOrDefault(a => string.Equals(a.Id, defaults.Agent, StringComparison.Ordinal)) ?? Agent;
+            if (!_agentPicked)
+            {
+                Agent = AgentChoice.All.FirstOrDefault(a => string.Equals(a.Id, defaults.Agent, StringComparison.Ordinal)) ?? Agent;
+            }
         }
+
+        _applyingDefault = false;
     }
 
     /// <summary>The chosen repo; null when the profile has none. Choosing clears the error under it.</summary>
@@ -91,8 +101,13 @@ internal sealed partial class NewAgentFormViewModel : ObservableObject
         get;
         set
         {
+            var changed = !string.Equals(field?.Name, value?.Name, StringComparison.Ordinal);
             Set(ref field, value);
-            RepoError = string.Empty;
+            if (changed)
+            {
+                RepoError = string.Empty;
+            }
+
             Changed();
         }
     }
@@ -103,8 +118,14 @@ internal sealed partial class NewAgentFormViewModel : ObservableObject
         get;
         set
         {
+            var changed = !string.Equals(field?.Id, value.Id, StringComparison.Ordinal);
             Set(ref field, value);
-            (AgentError, SignInCommand) = (string.Empty, string.Empty);
+            if (changed)
+            {
+                (AgentError, SignInCommand) = (string.Empty, string.Empty);
+                _agentPicked |= !_applyingDefault;
+            }
+
             Changed();
         }
     }
