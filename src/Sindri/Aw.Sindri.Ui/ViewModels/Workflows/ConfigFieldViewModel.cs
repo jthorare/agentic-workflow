@@ -57,6 +57,18 @@ internal sealed class ConfigFieldViewModel : ObservableObject
         }
     }
 
+    /// <summary>True for the Code step's program: a monospace multi-line box.</summary>
+    public bool IsCode => false;
+
+    /// <summary>The block's example for this field, shown under it; empty when it has none.</summary>
+    public string Example => string.Empty;
+
+    /// <summary>True when the field sits in the closed Advanced group.</summary>
+    public bool InAdvanced => false;
+
+    /// <summary>True when the field is drawn: it is not in the Advanced group, or the group is open.</summary>
+    public bool IsShown => true;
+
     /// <summary>The config key.</summary>
     public string Name { get; }
 

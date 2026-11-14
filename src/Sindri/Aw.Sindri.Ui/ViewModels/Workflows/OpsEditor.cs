@@ -34,6 +34,12 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     /// <summary>The form of the selected node.</summary>
     public ObservableCollection<ConfigFieldViewModel> Fields { get; } = [];
 
+    /// <summary>True when the selected step has settings in an Advanced group.</summary>
+    public bool HasAdvancedFields => false;
+
+    /// <summary>True when the Advanced group is open.</summary>
+    public bool AdvancedOpen { get; set; }
+
     /// <summary>The selected step as the sheet names it ("Every weekday at 7:00 \u00b7 trigger"), never its id; empty when none is selected.</summary>
     public string NodeHeading { get; private set => Set(ref field, value); } = string.Empty;
 
