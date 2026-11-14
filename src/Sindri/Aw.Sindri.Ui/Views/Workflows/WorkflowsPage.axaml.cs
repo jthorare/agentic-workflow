@@ -87,12 +87,34 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
+    // Escape in edit mode with the sheet shut does what Done does, the question included (#3655); with the sheet open the sheet takes Escape first.
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && e.KeyModifiers == KeyModifiers.None && DataContext is WorkflowsPageViewModel { IsEditing: true, IsSettingsOpen: false } page)
+        {
+            page.RequestDone();
+            if (!page.IsEditing)
+            {
+                FocusEdit();
+            }
+
+            e.Handled = true;
+            return;
+        }
+
+        base.OnKeyDown(e);
+    }
+
     private void OnDone(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)
         {
-            page.CloseEditor();
-            FocusEdit();
+            page.RequestDone();
+            if (!page.IsEditing)
+            {
+                FocusEdit();
+            }
         }
     }
 

@@ -51,6 +51,17 @@
         <TextBlock Classes="caption" Text="{Binding Editor.FailureText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
 
+      <StackPanel x:Name="EditorAsksSave" Spacing="8" IsVisible="{Binding AsksSaveFirst}">
+        <Border x:Name="EditorAskName" AutomationProperties.Name="{Binding AskSaveText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body-strong" Text="{Binding AskSaveText}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Button x:Name="EditorAskSave" Classes="accent" Content="{Binding SaveText}" Click="OnAskSave" AutomationProperties.Name="{Binding SaveText}" />
+          <Button x:Name="EditorAskDiscard" Content="{Binding AskDiscardText}" Click="OnAskDiscard" AutomationProperties.Name="{Binding AskDiscardText}" />
+          <Button x:Name="EditorAskKeep" Content="{Binding AskKeepText}" Click="OnAskKeep" AutomationProperties.Name="{Binding AskKeepText}" />
+        </StackPanel>
+      </StackPanel>
+
       <StackPanel Orientation="Horizontal" Spacing="8">
         <Button x:Name="EditorSave" Content="{Binding SaveText}" Click="OnSave" IsEnabled="{Binding CanSave}" AutomationProperties.Name="{Binding SaveText}" />
         <Button x:Name="EditorClose" Content="{Binding CloseEditorText}" Click="OnClose" AutomationProperties.Name="{Binding CloseEditorText}" />

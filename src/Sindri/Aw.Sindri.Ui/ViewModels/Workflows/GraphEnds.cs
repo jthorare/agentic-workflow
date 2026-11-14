@@ -10,14 +10,13 @@ internal static class GraphEnds
     /// <returns>One end per missing branch.</returns>
     internal static List<GraphEnd> Build(List<GraphNodeViewModel> nodes, IReadOnlyList<GraphEdgeViewModel> edges, IReadOnlySet<(string From, string Branch)> specBranches)
     {
-        _ = specBranches;   // red stub (#3655): the fix skips a branch the spec has even when its target is not drawn
         var ends = new List<GraphEnd>();
         var cards = nodes.Select(n => new GraphBox(n.X, n.Y, WorkflowGraphViewModel.CardWidth, WorkflowGraphViewModel.CardHeight)).ToList();
         foreach (var node in nodes.Where(n => string.Equals(n.Type, "condition", StringComparison.Ordinal)))
         {
             foreach (var (branch, across) in new[] { ("true", 50.0), ("false", WorkflowGraphViewModel.CardWidth - 50) })
             {
-                if (!edges.Any(e => string.Equals(e.From, node.Id, StringComparison.Ordinal) && string.Equals(e.Label, branch, StringComparison.Ordinal)))
+                if (!specBranches.Contains((node.Id, branch)) && !edges.Any(e => string.Equals(e.From, node.Id, StringComparison.Ordinal) && string.Equals(e.Label, branch, StringComparison.Ordinal)))
                 {
                     ends.Add(PlaceEnd(node, branch + " \u2192 done", across, cards));
                 }

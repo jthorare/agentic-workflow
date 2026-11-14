@@ -37,6 +37,13 @@ internal sealed partial class WorkflowEditorSheet : UserControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         // Escape closes the sheet; handled here, in the page, so the shell's own Escape (it closes the shell sheet) never sees it
+        if (e.Key == Key.Escape && e.KeyModifiers == KeyModifiers.None && DataContext is WorkflowsPageViewModel { AsksSaveFirst: true } asking)
+        {
+            asking.KeepEditing();   // Escape answers the question with Keep editing
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key == Key.Escape && e.KeyModifiers == KeyModifiers.None && DataContext is WorkflowsPageViewModel { IsSettingsOpen: true })
         {
             Close();
@@ -46,6 +53,26 @@ internal sealed partial class WorkflowEditorSheet : UserControl
 
         base.OnKeyDown(e);
     }
+
+    private async void OnAskSave(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            await page.SaveAndLeave(CancellationToken.None).ConfigureAwait(true);
+            this.FindAncestorOfType<WorkflowsPage>()?.FocusEdit();
+        }
+    }
+
+    private void OnAskDiscard(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            page.DiscardAndLeave();
+            this.FindAncestorOfType<WorkflowsPage>()?.FocusEdit();
+        }
+    }
+
+    private void OnAskKeep(object? sender, RoutedEventArgs e) => (DataContext as WorkflowsPageViewModel)?.KeepEditing();
 
     private void OnClose(object? sender, RoutedEventArgs e) => Close();
 

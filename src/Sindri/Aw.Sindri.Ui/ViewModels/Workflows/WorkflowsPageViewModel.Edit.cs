@@ -133,23 +133,65 @@ internal sealed partial class WorkflowsPageViewModel
     internal void CloseSettings() => (IsSettingsOpen, GraphEdit.SheetOpen) = (false, false);
 
     /// <summary>True while Done asks "Save your changes?" because a field of the open sheet changed.</summary>
-    public bool AsksSaveFirst => false;   // red stub (#3655)
+    public bool AsksSaveFirst { get; private set => Set(ref field, value); }
 
-    /// <summary>Done: leaves edit mode, or asks first when a field of the open sheet changed.</summary>
-    internal void RequestDone() => CloseEditor();   // red stub (#3655): the fix asks before it throws typed fields away
+    /// <summary>The question's words.</summary>
+    public string AskSaveText => Labels.WfAskSave;
 
-    /// <summary>The question's Discard: leaves edit mode and drops the typed fields.</summary>
-    internal void DiscardAndLeave() => CloseEditor();
+    /// <summary>The question's Discard button.</summary>
+    public string AskDiscardText => Labels.WfAskDiscard;
 
-    /// <summary>The question's Keep editing: back to the sheet.</summary>
-    internal void KeepEditing()
+    /// <summary>The question's Keep editing button.</summary>
+    public string AskKeepText => Labels.WfAskKeep;
+
+    private bool _leaveWhenSaved;
+
+    /// <summary>Done (and Escape in edit mode with the sheet shut): leaves edit mode, or asks first when a field of the open sheet changed. A save in flight is waited for, and its result decides.</summary>
+    internal void RequestDone()
     {
+        if (Editor.IsSending)
+        {
+            _leaveWhenSaved = true;
+            return;
+        }
+
+        if (IsSettingsOpen && Editor.Fields.Any(static f => f.IsChanged))
+        {
+            AsksSaveFirst = true;
+            return;
+        }
+
+        CloseEditor();
     }
 
-    /// <summary>The question's Save: saves, and leaves edit mode only when the save worked.</summary>
+    /// <summary>The question's Discard: leaves edit mode and drops the typed fields.</summary>
+    internal void DiscardAndLeave()
+    {
+        AsksSaveFirst = false;
+        CloseEditor();
+    }
+
+    /// <summary>The question's Keep editing: back to the sheet, text kept.</summary>
+    internal void KeepEditing() => AsksSaveFirst = false;
+
+    /// <summary>The question's Save: saves, and leaves edit mode only when the save worked; a failed save keeps the sheet and its error.</summary>
     /// <param name="cancellationToken">Cancels the save.</param>
     /// <returns>A task that completes when the save is answered.</returns>
-    internal Task SaveAndLeave(CancellationToken cancellationToken) => Task.CompletedTask;   // red stub (#3655)
+    internal async Task SaveAndLeave(CancellationToken cancellationToken)
+    {
+        AsksSaveFirst = false;
+        await Save(cancellationToken).ConfigureAwait(true);
+        LeaveIfSaved();
+    }
+
+    // The save worked when the sheet shows no failure and no reload prompt.
+    private void LeaveIfSaved()
+    {
+        if (Editor.FailureText.Length == 0 && !Editor.NeedsReload)
+        {
+            CloseEditor();
+        }
+    }
 
     /// <summary>Closes the sheet and leaves edit mode (Done, or leaving the workflow).</summary>
     internal void CloseEditor()
@@ -172,7 +214,6 @@ internal sealed partial class WorkflowsPageViewModel
                 OnChanged(nameof(DetailStateText));
                 OnChanged(nameof(ShowsDetailState));
                 OnChanged(nameof(CanOpenSettings));
-                OnChanged(nameof(ShowsStepRow));
                 OnChanged(nameof(CanSave));
                 OnChanged(nameof(EditorHeading));
                 OnChanged(nameof(StepSummaryText));
@@ -225,6 +266,11 @@ internal sealed partial class WorkflowsPageViewModel
         {
             OnChanged(nameof(SaveText));
             OnChanged(nameof(CanSave));
+            if (!Editor.IsSending && _leaveWhenSaved)
+            {
+                _leaveWhenSaved = false;   // Done was pressed during the save: its result decides
+                LeaveIfSaved();
+            }
         }
         else if (string.Equals(e.PropertyName, nameof(OpsEditor.NeedsReload), StringComparison.Ordinal))
         {
