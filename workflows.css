@@ -50,8 +50,8 @@ body.w1000 .wr .nx { display:none; }
 .strip i { width:6px; display:block; border-radius:1px; }
 .strip i.ok { height:8px; background:var(--ok); }
 .strip i.f { height:16px; background:var(--err); }
-.strip i.c { height:8px; background:var(--ink-subtle); }
-.strip i.e { height:8px; border:1px solid var(--hair-strong); background:transparent; }
+.strip i.c { height:8px; border:1px solid var(--ink-subtle); background:transparent; }  /* cancelled: a hollow bar, so it differs from succeeded by shape */
+.strip i.e { height:2px; background:var(--hair-strong); }  /* no run in this slot yet: a thin dash */
 .strip i.ph { height:8px; background:var(--s3); }
 .skelbar { display:block; height:8px; border-radius:2px; background:var(--s3); }
 .gph { width:12px; height:12px; border-radius:50%; background:var(--s3); display:block; margin:1px; }
@@ -108,3 +108,5 @@ body.w1000 .wr .nx { display:none; }
 .body.stack { display:block; overflow:hidden; }
 .sectionlab { padding:var(--sp5) var(--inset) var(--sp2); color:var(--ink-subtle); font-size:12px; font-weight:500; }
 .peek .state-line { padding:0 var(--sp4); }
+
+.wr .state.att { color:var(--att); }
