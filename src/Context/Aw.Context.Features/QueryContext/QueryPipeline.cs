@@ -84,13 +84,17 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
 
     // The page of ranked records the caller reads (#3370): no window reads every match (#938). An item question whose key no sync
     // linked reads every match too, because the record that carries the key may rank past the page and the answer would wrongly say unknown.
-    private static (List<FusedItem> ToRead, RecordMatches? Matches) Windowed(List<FusedItem> ranked, QueryWindow? window, ItemMiss? miss)
+    // #3673: no window = the first 10 records (the default answer stays under 50 KB); the code files get their own default page in CodePaging.
+    private const int DefaultRecordLimit = 10;
+
+    private static (List<FusedItem> ToRead, RecordMatches? Matches) Windowed(List<FusedItem> ranked, QueryWindow? asked, ItemMiss? miss)
     {
-        if (window is null || miss is not null)
+        if (miss is not null)
         {
             return (ranked, null);
         }
 
+        var window = asked ?? new QueryWindow(0, DefaultRecordLimit);
         var page = ranked.Skip(window.Offset).Take(window.Limit).ToList();
         return (page, new RecordMatches(ranked.Count, window.Offset, page.Count));
     }

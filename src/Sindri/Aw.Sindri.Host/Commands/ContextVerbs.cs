@@ -82,6 +82,7 @@ internal sealed class ContextVerbs(ControlPlaneClient client, Output output)
             ["--map-version"] = "mapVersion",
             ["--limit"] = "limit",
             ["--offset"] = "offset",
+            ["--after"] = "after",
         };
 
         internal static Kernel.Result<QueryArguments> Parse(string[] args)
