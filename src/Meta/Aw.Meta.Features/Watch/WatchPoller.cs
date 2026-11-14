@@ -18,11 +18,18 @@ namespace Aw.Meta.Features.Watch;
 /// <param name="reservation">Keeps the heavy-slot reservation in step with the merge queue on every poll.</param>
 internal sealed class WatchPoller(RepoCommands repo, IHostResources resources, InboxCounts inbox, IKeyValueStore values, PollFollowUps followUps, HeavyReservation reservation, LaneContextReader contexts)
 {
+    /// <summary>The longest one gh or git call of a poll may run.</summary>
+    internal static readonly TimeSpan CallLimit = TimeSpan.FromMinutes(2);
+
     internal async ValueTask<Result<Polled>> Poll(TeamConfig team, bool allPrs, CancellationToken cancellationToken)
     {
         var repoDirectory = team.Repo;
-        var prs = await repo.List(repoDirectory).ConfigureAwait(false);
-        var main = prs.IsError ? Results.Failure<string>(prs.Error) : await repo.RemoteMain(repoDirectory).ConfigureAwait(false);
+        // Every call of the poll stops on the stop signal and gives up after CallLimit: a GitHub that never answers fails the poll (AW-META-012) instead of hanging the watch (#3603).
+        var github = repo.Cancelling(cancellationToken).Limited(CallLimit);
+        var follow = followUps.Using(github);
+        var reserved = reservation.Using(github);
+        var prs = await github.List(repoDirectory).ConfigureAwait(false);
+        var main = prs.IsError ? Results.Failure<string>(prs.Error) : await github.RemoteMain(repoDirectory).ConfigureAwait(false);
         var disk = await resources.Read(cancellationToken).ConfigureAwait(false);
         var counts = await inbox.Read(cancellationToken).ConfigureAwait(false);
         if (FirstError(prs, main, disk, counts) is { } failed)
@@ -30,7 +37,7 @@ internal sealed class WatchPoller(RepoCommands repo, IHostResources resources, I
             return failed;
         }
 
-        var kept = allPrs ? Results.Success(prs.Value) : await followUps.Owned(team, prs.Value, cancellationToken).ConfigureAwait(false);
+        var kept = allPrs ? Results.Success(prs.Value) : await follow.Owned(team, prs.Value, cancellationToken).ConfigureAwait(false);
         if (kept.IsError)
         {
             return kept.Error;
@@ -43,9 +50,9 @@ internal sealed class WatchPoller(RepoCommands repo, IHostResources resources, I
         }
 
         // Advisory: the queue changes with ready messages, drops and pull requests that end, so every poll follows it (and renews the time).
-        _ = await reservation.Apply(team, cancellationToken).ConfigureAwait(false);
+        _ = await reserved.Apply(team, cancellationToken).ConfigureAwait(false);
         var snapshot = new WatchSnapshot(kept.Value, main.Value, ResourceRules.DiskLow(disk.Value, team.Resources), ResourceRules.MemoryLow(disk.Value, team.Resources));
-        var (worktrees, queue) = await followUps.Run(team, remembered.Value, snapshot, cancellationToken).ConfigureAwait(false);
+        var (worktrees, queue) = await follow.Run(team, remembered.Value, snapshot, cancellationToken).ConfigureAwait(false);
         // Advisory: a transcript that can't be read leaves the poll's context out instead of failing it.
         return new Polled(snapshot, counts.Value.Total, worktrees, await contexts.ReadOrNull(team, cancellationToken).ConfigureAwait(false)) { Open = counts.Value.Open, Status = counts.Value.Status, Queue = queue };
     }
