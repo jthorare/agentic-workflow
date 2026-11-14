@@ -61,6 +61,8 @@ internal static partial class Labels
     /// <summary>The copy chip of the session's ref.</summary>
     internal const string SheetCopyRef = "Copy reference";
 
+    internal const string SheetCopyAttach = "Copy attach command";
+
     /// <summary>How long the session has been in its status.</summary>
     /// <param name="span">The time, as <see cref="Duration(long)"/> says it.</param>
     /// <returns>"In this status for 4m".</returns>

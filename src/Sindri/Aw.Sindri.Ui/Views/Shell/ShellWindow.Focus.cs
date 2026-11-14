@@ -263,7 +263,8 @@ internal sealed partial class ShellWindow
 
         if (Shell is { IsSheetShown: true } && (Covering || !HasRealFocus))
         {
-            _ = this.Get<Border>("SheetTitle").Focus(Method());
+            // #3710: a session sheet takes focus on its body, not the title (the title drew a focus underline).
+            _ = this.Get<Border>(Shell is { IsSessionSheet: true } ? "Sheet" : "SheetTitle").Focus(Method());
         }
     }
 

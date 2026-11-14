@@ -185,6 +185,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         OnChanged(nameof(HeadName));
         ObserveCounts(list.Counts.Live, list.Counts.Asking);
         Patch.To(ProblemLines, [.. list.Problems.Select(p => p.Text)]);
+        HasProblems = ProblemLines.Count > 0;
         ReplaceChoices(list);
         Apply(before, list);
     }
@@ -199,6 +200,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         OnChanged(nameof(HeadName));
         UnavailableText = Labels.SessionsUnavailable(detail);
         ProblemLines.Clear();
+        HasProblems = false;
         Groups.Clear();
         _groups.Clear();
         _rows.Clear();

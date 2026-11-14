@@ -222,9 +222,11 @@ public sealed class SessionSheetViewModelTests
     {
         var sheet = await Opened(ClaudeRef);
 
+        var before = sheet.AttachCopy?.Label;
+
         await sheet.CopyAttach(Token);
 
-        Assert.Equal(("Copy attach command", "tmux -S /tmp/tmux-1000/default attach -t main"), (sheet.AttachCopy?.Label, _clipboard.Text));
+        Assert.Equal(("Copy attach command", "tmux -S /tmp/tmux-1000/default attach -t main"), (before, _clipboard.Text));
     }
 
     [Fact]
