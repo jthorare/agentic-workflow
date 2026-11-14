@@ -6,10 +6,11 @@ using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Context;
+using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.Tests.Context;
 
-/// <summary>The coverage words (#3260): one plain sentence that names what was searched and why the rest was not, read from the map-tabs golden.</summary>
+/// <summary>The coverage words (#3260, #3680): one plain sentence that names what was searched and why the rest was not, read from the map-tabs golden.</summary>
 [Lane(TestLane.Unit)]
 public sealed class CoverageWordsTests
 {
@@ -43,7 +44,7 @@ public sealed class CoverageWordsTests
     {
         var words = CoverageWords.Sentence(View(OneSearchedThreeNot), exact: false);
 
-        Assert.Equal("Searched code. No intent or product records. Function names not indexed.", words);
+        Assert.Equal("Searched Code. No Why or Product records. Function names aren't indexed.", words);
     }
 
     [Fact]
@@ -57,7 +58,7 @@ public sealed class CoverageWordsTests
             node["searched"]!["bands"]!["code"]!["empty"] = true;
         }), exact: false);
 
-        Assert.StartsWith("Searched function names. No intent, product or code records.", words, StringComparison.Ordinal);
+        Assert.StartsWith("Searched function names. No Why, Product or Code records.", words, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -69,7 +70,65 @@ public sealed class CoverageWordsTests
             node["coverage"]!["intent"]!["covered"] = 0;
         }), exact: false);
 
-        Assert.Equal("Searched product, code and function names. Intent is only partly searched.", words);
+        Assert.Equal("Searched Product, Code and function names. Why is only partly searched.", words);
+    }
+
+    [Fact]
+    public void Function_names_alone_partly_searched_take_a_plural_verb()
+    {
+        var words = CoverageWords.Sentence(View(node =>
+        {
+            EverythingSearched(node);
+            node["bands"]!["code"]!["symbols"]!["state"] = "stale";
+        }), exact: false);
+
+        Assert.Equal("Searched Why, Product and Code. Function names are only partly searched.", words);
+    }
+
+    [Fact]
+    public void Nothing_searched_in_full_but_something_in_part_does_not_open_with_nothing_searched()
+    {
+        var words = CoverageWords.Sentence(View(node =>
+        {
+            EverythingSearched(node);
+            node["searched"]!["bands"]!["intent"]!["empty"] = true;
+            node["searched"]!["bands"]!["product"]!["empty"] = true;
+            node["searched"]!["bands"]!["code"]!["empty"] = true;
+            node["bands"]!["code"]!["symbols"]!["state"] = "stale";
+        }), exact: false);
+
+        Assert.Equal("No Why, Product or Code records. Function names are only partly searched.", words);
+    }
+
+    [Fact]
+    public void Nothing_searched_at_all_opens_with_nothing_searched()
+    {
+        var words = CoverageWords.Sentence(View(node =>
+        {
+            node["searched"]!["bands"]!["intent"]!["empty"] = true;
+            node["searched"]!["bands"]!["product"]!["empty"] = true;
+            node["searched"]!["bands"]!["code"]!["empty"] = true;
+            node["bands"]!["code"]!["symbols"]!["state"] = "unavailable";
+        }), exact: false);
+
+        Assert.Equal("Nothing searched. No Why, Product or Code records. Function names aren't indexed.", words);
+    }
+
+    [Fact]
+    public void The_line_names_the_bands_with_the_map_band_labels_only()
+    {
+        var words = CoverageWords.Sentence(View(node =>
+        {
+            node["searched"]!["bands"]!["intent"]!["empty"] = true;
+            node["searched"]!["bands"]!["product"]!["empty"] = true;
+            node["searched"]!["bands"]!["code"]!["empty"] = true;
+            node["bands"]!["code"]!["symbols"]!["state"] = "unavailable";
+        }), exact: false);
+        var bands = string.Join(", ", NodeBands.Title(WholeBand.Intent), NodeBands.Title(WholeBand.Product)) + " or " + NodeBands.Title(WholeBand.Code);
+
+        Assert.Contains("No " + bands + " records.", words, StringComparison.Ordinal);
+        Assert.DoesNotContain("intent", words, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Tickets and decisions", words, StringComparison.Ordinal);
     }
 
     [Fact]
