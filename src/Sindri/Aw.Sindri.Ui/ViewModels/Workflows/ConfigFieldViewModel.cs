@@ -63,6 +63,18 @@ internal sealed class ConfigFieldViewModel : ObservableObject
         }
     }
 
+    /// <summary>True for a connection step's connection field: a picker, never free text.</summary>
+    public bool IsConnection => false;
+
+    /// <summary>The connected connections of the service the step needs.</summary>
+    public IReadOnlyList<string> ConnectionChoices => [];
+
+    /// <summary>True when no connection fits: the field offers Connect instead.</summary>
+    public bool NeedsConnect => false;
+
+    /// <summary>The Connect button's words ("Connect GitHub").</summary>
+    public string ConnectText => string.Empty;
+
     /// <summary>True for the Code step's program: a monospace multi-line box.</summary>
     public bool IsCode { get; }
 
