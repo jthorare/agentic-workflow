@@ -27,6 +27,9 @@ internal sealed record TerminalTarget
     /// <summary>True for a one-off whose agent has not yet written a hook state: the header says Starting.</summary>
     public bool IsStarting { get; init; }
 
+    /// <summary>True when Sindri started the session (a one-off, or a launched session): only then do Stop and Interrupt show (#3023).</summary>
+    public bool StartedBySindri { get; init; }
+
     /// <summary>The act id of a one-off session; empty for the others.</summary>
     public string ActId { get; init; } = string.Empty;
 

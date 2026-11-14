@@ -1,3 +1,4 @@
+using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Agents;
 using Microsoft.Extensions.Time.Testing;
 
@@ -8,13 +9,16 @@ internal sealed class TerminalFixture
 {
     internal TerminalFixture(bool isMac = false)
     {
+        Control = new FakeSessionControl();
         Clock = new FakeTimeProvider(new DateTimeOffset(2026, 11, 12, 14, 0, 0, TimeSpan.Zero));
-        View = new TerminalViewViewModel(Clock, isMac);
+        View = new TerminalViewViewModel(Clock, isMac, Control);
         View.SocketRequested += (_, _) => Requests++;
         View.CloseRequested += (_, _) => Closes++;
         View.RemoveWorktreeRequested += (_, e) => RemovedWorktrees.Add(e.ActId);
         View.DiscardRequested += (_, e) => Discarded.Add(e.ActId);
     }
+
+    internal FakeSessionControl Control { get; }
 
     internal FakeTimeProvider Clock { get; }
 
@@ -36,6 +40,9 @@ internal sealed class TerminalFixture
 
     internal static TerminalTarget OneOff(string actId = "abcd1234", string worktree = "") =>
         new() { Key = "sindri-" + actId, Name = "claude in sindri", Kind = TerminalKind.OneOff, SocketKind = "sindri", ActId = actId, WorktreePath = worktree, IsStarting = true, ResumeCommand = "claude --resume x" };
+
+    internal static TerminalTarget Started(string name = "ideas") =>
+        new() { Key = "session:claude-code/" + name, Name = name, Kind = TerminalKind.Listed, SocketKind = "sindri", StartedBySindri = true };
 
     internal static TerminalTarget Warp() =>
         new()

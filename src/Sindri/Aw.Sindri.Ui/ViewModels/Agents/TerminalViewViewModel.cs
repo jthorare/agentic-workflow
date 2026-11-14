@@ -1,4 +1,6 @@
 #pragma warning disable MA0182 // the Agents page wires the view in the U1 page PR; until then only tests construct it
+using Aw.Sindri.Ui.Terminal;
+
 namespace Aw.Sindri.Ui.ViewModels.Agents;
 
 /// <summary>
@@ -19,10 +21,12 @@ internal sealed partial class TerminalViewViewModel : ObservableObject
         nameof(HeaderStateWord), nameof(IsStateAttention), nameof(IsStateError), nameof(IsStateEnded), nameof(HasCardTail), nameof(FooterParts),
     ];
 
+    private readonly ISessionControl? _control;
     private int _otherClients;
 
-    internal TerminalViewViewModel(TimeProvider clock, bool isMac)
+    internal TerminalViewViewModel(TimeProvider clock, bool isMac, ISessionControl? control = null)
     {
+        _control = control;
         Clock = clock;
         IsMac = isMac;
     }
