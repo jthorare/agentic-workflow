@@ -52,6 +52,35 @@ public sealed class ServicesOneCountTests
         Assert.Equal(list.Services.Select(s => s.Name.Value), status.Services.Select(s => s.Name.Value), StringComparer.Ordinal);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task Before_the_first_publish_the_status_counts_the_built_ins_like_the_list_for_an_ok_profile()
+    {
+        var live = new LiveSchedule();   // the scheduler has not published yet: live.Schedules is null
+
+        var (status, list) = await Both(live);
+
+        Assert.Equal(list.Services.Select(s => s.Name.Value), status.Services.Select(s => s.Name.Value), StringComparer.Ordinal);
+        Assert.Contains(status.Services, s => s.Name.Value == "sync-gaps");
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Before_the_first_publish_the_status_counts_the_built_ins_like_the_list_for_a_bad_profile()
+    {
+        _v.Slice.Profiles.Live = SindriErrors.ProfileInvalid.With("line 3: unknown key");
+
+        var (status, list) = await Both(new LiveSchedule());
+
+        Assert.Equal(list.Services.Select(s => s.Name.Value), status.Services.Select(s => s.Name.Value), StringComparer.Ordinal);
+        Assert.Contains(status.Services, s => s.Name.Value == "sync-gaps");
+    }
+
+    private async Task<(GetStatusResponse Status, ListServicesResponse List)> Both(LiveSchedule live)
+    {
+        var status = new GetStatusService(_v.Slice.Held, new ProfileReads(_v.Slice.Profiles, _v.Slice.Profiles), _v.Slice.Store, _v.Progress, new HealthServiceRows(_v.Views, _builtIns), new InMemorySessionSnapshot(), live);
+        var list = new ListServicesService(_v.Slice.Profiles, _v.Views, _v.Progress, new InMemoryJobViews(), _builtIns, live, _v.Slice.Clock);
+        return ((await status.Handle(new GetStatusRequest(), Token)).Value, (await list.Handle(new ListServicesRequest(), Token)).Value);
+    }
+
     private IReadOnlyList<ServiceSchedule> Running()
     {
         var now = _v.Slice.Clock.GetUtcNow();
