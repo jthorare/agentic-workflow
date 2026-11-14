@@ -80,6 +80,9 @@ internal sealed partial class HealthViewModel
         }
     } = [];
 
+    /// <summary>The line that says why only the built-in services run. Stub: never set yet.</summary>
+    public string ServicesNote => ProfileDetail is { Length: > 1_000_000 } ? ProfileDetail : string.Empty;
+
     /// <summary>True when any service is scheduled.</summary>
     public bool HasServices => Services.Count > 0;
 }

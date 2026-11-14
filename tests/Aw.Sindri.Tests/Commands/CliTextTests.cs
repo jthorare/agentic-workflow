@@ -45,6 +45,16 @@ public sealed class CliTextTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void An_empty_services_list_says_only_none_scheduled()
+    {
+        var status = new GetStatusResponse(Running: true, 42, 3, LeaseExpiresAt: null, new ProfileStatus(_hash, Problem: null, "/p.yaml"), []);
+
+        var text = SummaryText.Render(status, _endpoint, ui: null).ReplaceLineEndings("\n");
+
+        Assert.Contains("  services  none scheduled\n", text, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Status_when_nothing_runs_is_attention_with_the_fix()
     {
         var stderr = new StringWriter();

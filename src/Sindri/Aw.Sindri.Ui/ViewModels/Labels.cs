@@ -103,6 +103,9 @@ internal static partial class Labels
     /// <summary>The services card with none scheduled.</summary>
     internal const string NoServices = "none scheduled (the profile names no services)";
 
+    /// <summary>The services card's line when the live profile won't load.</summary>
+    internal const string ServicesProfileWontLoad = "The profile won't load, so only the built-in services run.";
+
     /// <summary>The not-running panel's fix prompt.</summary>
     internal const string StartIt = "Start it:";
 
