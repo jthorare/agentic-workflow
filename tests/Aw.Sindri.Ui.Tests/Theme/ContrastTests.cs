@@ -151,6 +151,20 @@ public sealed partial class ContrastTests
         Assert.Equal("{DynamicResource Brush.Clickable.Lift}", background);
     }
 
+    // On a press the selected row's bar is the only selection sign (the fill is the pressed fill), so it holds 3:1 on that fill: Primary is 2.93:1 on it, PrimaryHover 4.80:1 (#3517).
+    [Fact]
+    public void A_selected_row_pressed_border_holds_3_to_1_on_the_pressed_fill()
+    {
+        var style = XDocument.Load(Path.Combine(UiSource.Theme, "ClickableStyles.axaml")).Descendants()
+            .Single(e => string.Equals(e.Name.LocalName, "Style", StringComparison.Ordinal)
+                && (e.Attribute("Selector")?.Value.Split(',').Select(part => part.Trim()).Contains("Border.clickable.selected:pressed", StringComparer.Ordinal) ?? false));
+        var border = style.Elements().Single(e => string.Equals(e.Attribute("Property")?.Value, "BorderBrush", StringComparison.Ordinal)).Attribute("Value")?.Value;
+
+        Assert.Equal("{DynamicResource Brush.PrimaryHover}", border);
+        var ratio = Wcag.Contrast(BrushColor("PrimaryHover"), BrushColor("Clickable.Pressed"));
+        Assert.True(ratio >= NonText, string.Create(CultureInfo.InvariantCulture, $"a selected row's pressed border is {ratio:F2}:1 on the pressed fill, below {NonText}"));
+    }
+
     // Brush.Clickable.Pressed stays out on purpose: a press is momentary, and its 1.2:1 step over hover cannot also hold 4.5:1 for InkSubtle.
     [Theory]
     [InlineData("Surface2")]
