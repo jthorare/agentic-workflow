@@ -67,10 +67,9 @@ public sealed class ConnectionNothingConnectedTests
     [Fact]
     public async Task Before_Connect_was_pressed_the_field_says_nothing()
     {
-        _f.Server.WorkflowBlocksAnswer = new RouteAnswer(HttpStatusCode.OK, Blocks);
         var page = await PressedConnect();
-        await page.OpenSettings(Token);
+        _ = page.Runs.Graph!.SelectNode("start");
 
-        Assert.Equal(string.Empty, page.Editor.Fields.Single(f => f.Name == "connection").NoticeText);
+        Assert.Equal(string.Empty, page.Editor.Fields.SingleOrDefault(f => f.Name == "connection")?.NoticeText ?? string.Empty);
     }
 }

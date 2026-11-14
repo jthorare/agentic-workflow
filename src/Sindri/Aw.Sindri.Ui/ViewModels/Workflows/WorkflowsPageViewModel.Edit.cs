@@ -134,7 +134,8 @@ internal sealed partial class WorkflowsPageViewModel
         await OpenSettings(cancellationToken).ConfigureAwait(true);
         if (Editor.Fields.FirstOrDefault(f => f.IsConnection) is { } field)
         {
-            field.Text = field.ConnectionChoices.FirstOrDefault(n => !pending.Known.Contains(n, StringComparer.Ordinal)) ?? field.ConnectionChoices.FirstOrDefault() ?? field.Text;   // the new connection, else the one there is
+            field.Text = field.ConnectionChoices.FirstOrDefault(n => !pending.Known.Contains(n, StringComparer.Ordinal)) ?? field.ConnectionChoices.FirstOrDefault() ?? field.Text;
+            field.NoticeText = field.NeedsConnect ? Labels.WfNothingConnected : string.Empty;   // back with nothing to pick: say so, and the Connect button stays
         }
     }
 
