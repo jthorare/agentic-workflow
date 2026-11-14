@@ -12,7 +12,8 @@ internal sealed partial class GraphRig
     /// <summary>Asks the starter for a test run of revision 1.</summary>
     /// <param name="workflow">The workflow.</param>
     /// <param name="occurrence">The run's number.</param>
+    /// <param name="trigger">The trigger payload as JSON.</param>
     /// <returns>The start.</returns>
-    public async Task<GraphStart> TriggerTest((WorkflowId Id, WorkflowSlug Slug) workflow, int occurrence) =>
-        (await _starter.Start(new GraphStartRequest(workflow.Id, workflow.Slug, Revision: 1, occurrence, """{"kind":"manual"}""", GraphConcurrency.Unlimited, WorkflowRunMode.Test), TestContext.Current.CancellationToken)).Value;
+    public async Task<GraphStart> TriggerTest((WorkflowId Id, WorkflowSlug Slug) workflow, int occurrence, string trigger = """{"kind":"manual"}""") =>
+        (await _starter.Start(new GraphStartRequest(workflow.Id, workflow.Slug, Revision: 1, occurrence, trigger, GraphConcurrency.Unlimited, WorkflowRunMode.Test), TestContext.Current.CancellationToken)).Value;
 }

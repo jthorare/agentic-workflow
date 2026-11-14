@@ -85,4 +85,26 @@ public sealed class GraphTestModeTests
         var rows = (await rig.Runs.NodeRuns(started.RunId, TestContext.Current.CancellationToken)).Value;
         Assert.Contains("would have: create item 'Fix the drift'", rows.Single(static r => string.Equals(r.NodeId.Value, "make", StringComparison.Ordinal)).Output, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task A_test_run_of_only_new_remembers_nothing_so_a_live_run_still_sees_the_keys_as_new()
+    {
+        await using var rig = await GraphRig.StartAsync();
+        var workflow = await rig.Define(GraphRig.Spec("unlimited",
+            [
+                GraphRig.Node("start", "manual"),
+                GraphRig.Node("fresh", "only_new", config: new JsonObject { ["items"] = "{{trigger.issues}}", ["key"] = "id" }),
+                GraphRig.Node("tell", "notify", config: Config("title", "New issues")),
+            ],
+            [GraphRig.Edge("start", "fresh"), GraphRig.Edge("fresh", "tell")]));
+        const string issues = """{"kind":"manual","issues":[{"id":1},{"id":2}]}""";
+
+        var test = await rig.Final((await rig.TriggerTest(workflow, occurrence: 1, issues)).RunId, _fast);
+        var seenAfterTest = rig.Seen.Count;
+        var live = await rig.Final((await rig.Trigger(workflow, occurrence: 2, GraphConcurrency.Unlimited, issues)).RunId);
+
+        Assert.Equal(WorkflowRunStatus.Succeeded, test.Status);
+        Assert.Equal(0, seenAfterTest);
+        Assert.Equal(2, (await rig.NodeOutput(live.Id, "fresh"))!["count"]!.GetValue<int>());
+    }
 }
