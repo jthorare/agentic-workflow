@@ -197,7 +197,7 @@ public sealed class ShellChordTests
     }
 
     [Fact]
-    public async Task Chords_do_not_navigate_while_Sindri_is_not_running()
+    public async Task Chords_navigate_while_Sindri_is_not_running()
     {
         var shell = await Shell();
         shell.GoTo(PageId.Context);
@@ -208,10 +208,9 @@ public sealed class ShellChordTests
         }
 
         Assert.Equal(ShellState.NotRunning, shell.State);
-        Assert.False(shell.PressKey("G"));
-        Assert.False(shell.IsChordPending);
-        Assert.False(shell.PressKey("A"));
-        Assert.Equal(PageId.Context, shell.CurrentPage);
-        Assert.Equal("Context", (await new Preferences(_preferences).Load(Token)).LastPage);
+        Assert.True(shell.PressKey("G"));
+        Assert.True(shell.IsChordPending);
+        Assert.True(shell.PressKey("A"));
+        Assert.Equal(PageId.Agents, shell.CurrentPage);
     }
 }

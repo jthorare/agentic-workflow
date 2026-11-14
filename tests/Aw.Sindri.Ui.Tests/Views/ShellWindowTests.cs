@@ -1320,6 +1320,19 @@ public sealed class ShellWindowTests : IDisposable
         Frame(window, "health-stale");
     });
 
+    // #3688: the pill and the tabs work under the Not running card; the pill moves the selected tab to System.
+    [Fact]
+    public Task The_health_pill_works_while_not_running() => OnUi(async () =>
+    {
+        var (window, shell) = await Show(s => s.State == ShellState.NotRunning);
+        var pill = window.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "HealthPill");
+
+        pill.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        Assert.Equal((true, PageId.System, true), (pill.IsEffectivelyEnabled, shell.CurrentPage, Visible(window, "NotRunningPanel")));
+    });
+
     [Fact]
     public Task The_health_pill_opens_Health_with_S1bs_status_card() => OnUi(async () =>
     {

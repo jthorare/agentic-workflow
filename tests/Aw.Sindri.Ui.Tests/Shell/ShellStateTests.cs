@@ -502,13 +502,13 @@ public sealed class ShellStateTests : IDisposable
         Assert.True(healthy.Pill.HasGlyph);
     }
 
-    // I7 (states.html Not running): the navigation is dimmed and disabled while nothing runs; it comes back when it does.
+    // #3688: the tabs, the G chords and the health pill keep working while nothing runs; each shows the Not running card.
     [Fact]
-    public async Task The_navigation_is_disabled_only_while_not_running()
+    public async Task The_navigation_stays_enabled_while_not_running()
     {
         Assert.True(new ShellViewModel(_records, _server, _clock, new Preferences(_preferences), new FakeClipboard()).IsNavigationEnabled);
         var shell = await Running(ShellState.NotRunning);
-        Assert.False(shell.IsNavigationEnabled);
+        Assert.True(shell.IsNavigationEnabled);
 
         _records.Write(A.Record());
         await Eventually(() =>
