@@ -88,6 +88,32 @@ public sealed class TerminalSessionTests
     }
 
     [Fact]
+    public async Task A_paste_goes_out_as_one_paste_message_with_the_literal_text()
+    {
+        var (f, socket, session, _) = Make();
+        socket.Script = ["{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%0\"}}"];
+        f.View.SocketOpening();
+
+        _ = await session.SendPaste("echo hi\nls -l", Token);
+        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+
+        Assert.Equal([TerminalSocketMessages.Paste("echo hi\nls -l")], socket.Sent);
+    }
+
+    [Fact]
+    public async Task An_empty_paste_sends_nothing()
+    {
+        var (f, socket, session, _) = Make();
+        socket.Script = ["{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%0\"}}"];
+        f.View.SocketOpening();
+
+        var fate = await session.SendPaste(string.Empty, Token);
+        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+
+        Assert.Equal((TerminalKeyFate.Dropped, 0), (fate, socket.Sent.Count));
+    }
+
+    [Fact]
     public async Task Interrupt_sends_C_c_through_the_open_socket()
     {
         var (_, socket, session, _) = Make();

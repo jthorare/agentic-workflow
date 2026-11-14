@@ -29,6 +29,19 @@ internal sealed partial class TerminalView : UserControl
     /// <summary>Raised for a key that goes to the agent (the pane has focus and the key is not a chord).</summary>
     internal event EventHandler<TerminalKeyEventArgs>? PaneKeyPressed;
 
+    /// <summary>Raised when the person pastes into the pane and the clipboard holds text.</summary>
+    internal event EventHandler<TerminalPasteEventArgs>? PanePasted;
+
+    /// <summary>Reads the clipboard's text; the window's clipboard unless a test swaps it.</summary>
+    internal Func<Task<string?>> ReadClipboard
+    {
+        get => field ??= ReadWindowClipboard;
+        set;
+    }
+
+    /// <summary>How many rows the pane is scrolled back from the live screen (0 at the bottom).</summary>
+    internal int PaneScrollOffset => Pane.ScrollOffset;
+
     /// <summary>Raised when the drawing area changes the columns and rows it fits.</summary>
     internal event EventHandler<TerminalSizeEventArgs>? PaneFitChanged;
 
@@ -85,6 +98,9 @@ internal sealed partial class TerminalView : UserControl
                 break;
         }
     }
+
+    private async Task<string?> ReadWindowClipboard() =>
+        TopLevel.GetTopLevel(this)?.Clipboard is { } clipboard ? await clipboard.TryGetTextAsync().ConfigureAwait(true) : null;
 
     private void OnCardButton(object? sender, RoutedEventArgs e)
     {

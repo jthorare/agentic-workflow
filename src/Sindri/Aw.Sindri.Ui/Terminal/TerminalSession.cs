@@ -74,6 +74,12 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
         return fate == TerminalKeyFate.Sent ? TerminalKeyFate.Dropped : fate;
     }
 
+    /// <summary>Sends pasted text as one paste message (spec 15.8: literal text, at most 256 KiB); nothing for an empty paste.</summary>
+    /// <param name="text">The clipboard's text.</param>
+    /// <param name="cancellationToken">Cancels the send.</param>
+    /// <returns>What became of the paste.</returns>
+    internal Task<TerminalKeyFate> SendPaste(string text, CancellationToken cancellationToken) => SendKey("Paste", text, cancellationToken);   // stub (red): goes out as typed text
+
     /// <summary>Ctrl-C through the socket.</summary>
     /// <param name="cancellationToken">Cancels the send.</param>
     /// <returns>True when the key was sent.</returns>
