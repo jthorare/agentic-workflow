@@ -285,7 +285,7 @@ public static partial class SindriErrors
         ReviewInvalid, ReviewProjectUnknown, ReviewCommandCheck, ReviewNotSynced, ReviewFixNotPosted, ReviewRepoUnsynced, ReviewNoLogin, ReviewNoConnection, ReviewSignInAgain, ReviewPrNotFound, ReviewOfflineUncached,
         LibraryDocNotFound, LinearTeamNotPicked, LinearNothingStored, LinearNoWriteKey, LinearBadValue, LinearNoAnswer, LinearWriteKeySameAsRead, LinearNoKeychain,
         ConnectionNotFound, ConnectionNeedsSignIn, ConnectionSignInTimeout, ConnectionStateMismatch, ConnectionRefreshFailed, ConnectionSecretUnavailable, ConnectionNeedsClientId, ConnectionNameInvalid, ConnectionConsentDenied, ConnectionExists, ConnectionKindNoSignIn,
-        ConnectionRateLimited, ConnectionProviderChanged, ConnectionCursorRejected, ConnectionRunIdsHeld, ConnectionWatched,
+        ConnectionRateLimited, ConnectionProviderChanged, ConnectionCursorRejected, ConnectionRunIdsHeld, ConnectionWatched, ConnectionPresetMissing, ConnectionNameReserved,
         InboxContractViolation, InboxClaimLost, InboxOfferGone, InboxSubmitFailed, InboxUnavailable, InboxHostNotAllowed,
         MemoryNotFound, MemoryNameTaken, MemoryFactInvalid, MemoryEmbedUnavailable, MemoryMatchLevelInvalid, MemoryNameInvalid, MemoryExpiryPast,
         ResourceDiskOverSize, ResourceNameClash, ResourcePurgeRefused, ResourcePathEscapes, ResourceSandboxOverCap, ResourceInvalid, ResourceDiskUnmeasured, ResourcePurgeFailed,

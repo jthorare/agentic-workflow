@@ -13,6 +13,17 @@ public sealed class UsagePaneTests
     private static string Screen(string before, string prompt = "❯ ", string between = "") =>
         $"{before}\n{between}\n{_rule}\n{prompt}\n{_rule}\n  ⏵⏵ bypass permissions on (shift+tab to cycle)\n";
 
+    // A lead with background agents has a list under its input box; the selector row starts with the prompt mark too (#3661).
+    private const string AgentList = "\n  ● main\n❯ ◯ agent-one\n  ◯ agent-two\n  ◯ 1 idle agent\n";
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_empty_box_with_an_agent_list_under_it_is_idle() =>
+        Assert.True(Read(Screen("⏺ Working on it.\n" + Stop) + AgentList).Idle);
+
+    [Fact, Trait("Lane", "unit")]
+    public void Text_typed_in_the_box_with_an_agent_list_under_it_is_not_idle() =>
+        Assert.False(Read(Screen(Stop, "❯ half a sentence the owner is typing") + AgentList).Idle);
+
     [Fact, Trait("Lane", "unit")]
     public void A_stop_followed_by_an_empty_prompt_is_current_and_idle()
     {

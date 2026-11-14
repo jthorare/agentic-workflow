@@ -68,6 +68,33 @@ public sealed class LiveProfileCacheTests : IDisposable
         Assert.NotEqual(before, after);
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_chmod_is_seen_on_the_next_read()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return;   // no Unix file mode to change
+        }
+
+        var path = _files.Settings.ProfilePath;
+        var counting = new CountingSource(_files.Source);
+        var live = new LiveApprovedProfile(counting, path);
+        var mode = File.GetUnixFileMode(path);
+        _ = await live.Latest(Token);
+
+        File.SetUnixFileMode(path, UnixFileMode.None);   // #3429: chmod 000 changes neither the last write time nor the length
+        try
+        {
+            _ = await live.Latest(Token);
+        }
+        finally
+        {
+            File.SetUnixFileMode(path, mode);
+        }
+
+        Assert.Equal(2, counting.Loads);
+    }
+
     private sealed class CountingSource(IProfileSource inner) : IProfileSource
     {
         public int Loads { get; private set; }
