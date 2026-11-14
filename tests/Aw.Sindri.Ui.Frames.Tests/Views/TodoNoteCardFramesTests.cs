@@ -241,6 +241,29 @@ public sealed class TodoNoteCardFramesTests : IDisposable
         Assert.Equal(space, GapBetween(window, above, below), 0.5);
     });
 
+    // A Linear error takes its row at full height with one normal gap above it (from the name row) and one below it (to the read-key block): not zero, not two.
+    [Fact]
+    public Task A_Linear_error_row_has_height_and_one_normal_gap_on_each_side_3454() => OnUi(async () =>
+    {
+        _server.LinearConnectionAnswer = RouteAnswer.Problem(HttpStatusCode.InternalServerError, "SND-API-500", "boom");
+        var linear = new LinearConnectionViewModel(() => _api, _server);
+        await linear.Refresh(_api, Token);
+        Assert.NotEqual(string.Empty, linear.ErrorText);
+        var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), _ => { }) { LinearConnection = linear };
+        var window = new Window { Width = 900, Height = 1200, Content = new SettingsView { DataContext = settings } };
+        _windows.Add(window);
+        window.Show();
+        Settle(window);
+
+        var error = Find<TextBlock>(window, "LinearError");
+        var space = Assert.IsType<double>(Application.Current!.FindResource("Space.MD"));
+        var name = Find<TextBlock>(window, "LinearName").GetVisualParent<Control>()!;
+        var below = Find<StackPanel>(window, "LinearReadPaste").GetVisualParent<Control>()!;
+        Assert.True(error.Bounds.Height >= error.FontSize, "the error row with words is at least one line high");
+        Assert.Equal(space, GapBetween(window, name, error), 0.5);
+        Assert.Equal(space, GapBetween(window, error, below), 0.5);
+    });
+
     // The collapse is only for an empty row: once the status has words the row takes its full height again.
     [Fact]
     public Task A_status_row_with_words_takes_its_full_height_3454() => OnUi(async () =>
