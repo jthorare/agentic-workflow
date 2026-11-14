@@ -18,7 +18,7 @@ public sealed class ListWorkflowsServiceTests
     public ListWorkflowsServiceTests()
     {
         _workflows = new InMemoryWorkflowStore(_clock);
-        _service = new ListWorkflowsService(_workflows);
+        _service = new ListWorkflowsService(_workflows, new InMemoryWorkflowRunStore(_clock), _clock);
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
