@@ -4,7 +4,6 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Infrastructure.Workflows;
-using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Workflow;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
