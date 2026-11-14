@@ -67,7 +67,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     public string NoLinkText { get; } = Labels.ContextNodePanelNoLink;
 
     /// <summary>Gets the open-source button's accessible name, by the source's kind.</summary>
-    public string OpenSourceName { get; private set; } = Labels.ContextNodePanelOpenSourceName(null, string.Empty);
+    public string OpenSourceName { get; private set; } = Labels.ContextNodePanelOpenSourceName(place: null, string.Empty);
 
     /// <summary>Gets the short description; empty when none is served.</summary>
     public string Description { get; private set; } = string.Empty;
