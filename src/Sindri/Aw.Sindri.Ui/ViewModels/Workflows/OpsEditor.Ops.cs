@@ -2,7 +2,7 @@ using System.Text.Json.Nodes;
 
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
-/// <summary>The workflow editor's graph ops (<see cref="OpsEditor"/>, continued): add a step, connect two, remove one. Each is one call through <c>Send</c>, on the revision read.</summary>
+/// <summary>The workflow editor's graph ops (<see cref="OpsEditor"/>, continued): add a step, connect two, remove one. Each is one call through <c language="text">Send</c>, on the revision read.</summary>
 internal sealed partial class OpsEditor
 {
     /// <summary>Sends an add_node.</summary>
