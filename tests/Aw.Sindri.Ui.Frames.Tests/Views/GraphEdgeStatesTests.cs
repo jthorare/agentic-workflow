@@ -38,8 +38,8 @@ public sealed class GraphEdgeStatesTests
 
         Assert.NotNull(head);
         Assert.Equal(3, head.Length);
-        Assert.Equal(new Point(220, 100), head[0]);   // the tip sits on the edge's end
-        Assert.All(head.Skip(1), wing => Assert.True(wing.X < 220 && Math.Abs(Math.Sqrt(Math.Pow(wing.X - 220, 2) + Math.Pow(wing.Y - 100, 2)) - 9) < 0.01, $"wing {wing}"));
+        Assert.Equal(new Point(215, 100), head[0]);   // the tip sits on the port square's outer edge (#3650)
+        Assert.All(head.Skip(1), wing => Assert.True(wing.X < 215 && Math.Abs(Math.Sqrt(Math.Pow(wing.X - 215, 2) + Math.Pow(wing.Y - 100, 2)) - 9) < 0.01, $"wing {wing}"));
         Assert.True(head[1].Y < 100 && head[2].Y > 100, "the wings sit either side of the line");
         Assert.Null(edges.ArrowHead("plain"));
         window.Close();

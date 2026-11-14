@@ -109,15 +109,17 @@ internal sealed class GraphEdgesControl : Control, ICustomHitTest
     internal Point[]? ArrowHead(string key) =>
         Edges.FirstOrDefault(e => string.Equals(e.Key, key, StringComparison.Ordinal)) is { Arrow: true } edge ? HeadFor(edge) : null;
 
-    // The tip is the route's end; the wings trail back along its last stretch, 0.45 rad either side, ArrowSize long.
+    // The tip is on the port square's outer edge (PortSize / 2 back from the route's end, #3650), so the 10 px port drawn over the arrow covers none of
+    // the head; the wings trail back along the route's last stretch, 0.45 rad either side, ArrowSize long.
     private static Point[] HeadFor(MapEdge edge)
     {
         var line = edge.Route.Flatten();
         var end = edge.Route.End.ToAvalonia();
         var before = line.Count > 1 ? line[^2].ToAvalonia() : edge.Route.Start.ToAvalonia();
         var angle = Math.Atan2(end.Y - before.Y, end.X - before.X);
-        Point Wing(double turn) => new(end.X - (ArrowSize * Math.Cos(angle + turn)), end.Y - (ArrowSize * Math.Sin(angle + turn)));
-        return [end, Wing(0.45), Wing(-0.45)];
+        var tip = new Point(end.X - (PortSize / 2 * Math.Cos(angle)), end.Y - (PortSize / 2 * Math.Sin(angle)));
+        Point Wing(double turn) => new(tip.X - (ArrowSize * Math.Cos(angle + turn)), tip.Y - (ArrowSize * Math.Sin(angle + turn)));
+        return [tip, Wing(0.45), Wing(-0.45)];
     }
 
     private static FormattedText LabelText(string label, IBrush brush) =>
