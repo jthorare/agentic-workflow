@@ -10,11 +10,13 @@ namespace Aw.Sindri.Ui.Desktop;
 /// session (perl's POSIX::setsid before the exec) so closing the app doesn't signal it; without /usr/bin/perl it is a plain exec.
 /// </summary>
 /// <param name="spawn">Starts the process (Process.Start unless a test swaps it).</param>
-internal sealed class DetachedProcessStarter(Func<ProcessStartInfo, Process?>? spawn = null) : IProcessStarter
+/// <param name="perl">Where perl is looked for (the system's /usr/bin/perl unless a test points elsewhere).</param>
+internal sealed class DetachedProcessStarter(Func<ProcessStartInfo, Process?>? spawn = null, string perl = DetachedProcessStarter.SystemPerl) : IProcessStarter
 {
+    internal const string SystemPerl = "/usr/bin/perl";
+
     private readonly Func<ProcessStartInfo, Process?> _spawn = spawn ?? (static info => Process.Start(info));
 
-    private const string Perl = "/usr/bin/perl";
     private const string FailureCode = "SND-CLI-002";
 
     public event EventHandler<SindriExitedEventArgs>? Exited;
@@ -34,7 +36,7 @@ internal sealed class DetachedProcessStarter(Func<ProcessStartInfo, Process?>? s
                 _ = Directory.CreateDirectory(logs);
             }
 
-            var info = Info(launch);
+            var info = Info(launch, perl);
 #pragma warning disable CA2000 // the Exited handler disposes the process once it has ended
             var process = _spawn(info);
 #pragma warning restore CA2000
@@ -52,10 +54,10 @@ internal sealed class DetachedProcessStarter(Func<ProcessStartInfo, Process?>? s
         }
     }
 
-    internal static ProcessStartInfo Info(ProcessLaunch launch)
+    internal static ProcessStartInfo Info(ProcessLaunch launch, string perl = SystemPerl)
     {
-        var detach = File.Exists(Perl)
-            ? $"exec {Perl} -MPOSIX -e 'POSIX::setsid() == -1 and die \"{FailureCode} setsid: $!\\n\"; exec @ARGV or die \"{FailureCode} exec $ARGV[0]: $!\\n\"'"
+        var detach = File.Exists(perl)
+            ? $"exec {perl} -MPOSIX -e 'POSIX::setsid() == -1 and die \"{FailureCode} setsid: $!\\n\"; exec @ARGV or die \"{FailureCode} exec $ARGV[0]: $!\\n\"'"
             : "exec";
         var info = new ProcessStartInfo("/bin/sh")
         {
