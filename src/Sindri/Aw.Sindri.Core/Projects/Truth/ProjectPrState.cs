@@ -18,6 +18,10 @@ public enum ProjectPrState
     [JsonStringEnumMemberName("ciRed")]
     CiRed,
 
+    /// <summary>Open, and no CI summary of its current head exists yet (never counted as green).</summary>
+    [JsonStringEnumMemberName("unknown")]
+    Unknown,
+
     /// <summary>A review is requested, or commits landed after a review.</summary>
     [JsonStringEnumMemberName("waiting")]
     Waiting,

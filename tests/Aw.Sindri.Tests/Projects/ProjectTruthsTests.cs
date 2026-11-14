@@ -20,13 +20,31 @@ public sealed class ProjectTruthsTests
 
     private static string Key(int number, string repo = Api) => $"{repo}#{number}";
 
+    // every pull gets a passing summary of its head unless 'summaries' overrides it or 'unchecked' leaves it out
     private static ProjectTruthInputs Inputs(
         ProjectSources? sources = null,
         IReadOnlyList<ReviewPull>? pulls = null,
         IReadOnlyDictionary<string, ReviewSummary>? summaries = null,
         IReadOnlyList<ProjectTruthItem>? items = null,
-        IReadOnlyList<ProjectTruthAgent>? agents = null) =>
-        new(sources ?? _apiOnly, pulls ?? [], summaries ?? new Dictionary<string, ReviewSummary>(), items ?? [], agents ?? []);
+        IReadOnlyList<ProjectTruthAgent>? agents = null,
+        bool noSummaries = false)
+    {
+        var all = new Dictionary<string, ReviewSummary>();
+        foreach (var pull in pulls ?? [])
+        {
+            if (!noSummaries)
+            {
+                all[Key(pull.Number, pull.Repo)] = new ReviewSummary(pull.HeadSha!, ReviewCi.Pass, RequiredOpen: null, _now.AddDays(-1));
+            }
+        }
+
+        foreach (var (key, summary) in summaries ?? new Dictionary<string, ReviewSummary>())
+        {
+            all[key] = summary;
+        }
+
+        return new(sources ?? _apiOnly, new ProjectTruthFacts(pulls ?? [], all, items ?? [], agents ?? []));
+    }
 
     private static ReviewSummary Red(DateTimeOffset at) => new("abc", ReviewCi.Fail, RequiredOpen: null, at);
 
@@ -85,17 +103,26 @@ public sealed class ProjectTruthsTests
         var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1)], summaries: new Dictionary<string, ReviewSummary> { [Key(1)] = Red(at) }));
 
         var pr = truth.OpenPrs.Single();
-        Assert.Equal((ProjectPrState.CiRed, (DateTimeOffset?)at), (pr.State, pr.Since));
+        Assert.Equal((ProjectPrState.CiRed, (DateTimeOffset?)at), (pr.State, pr.DecidedAt));
     }
 
     [Fact]
-    public void A_summary_of_an_older_head_does_not_make_a_pr_red()
+    public void A_summary_of_an_older_head_is_not_a_check_of_this_head_so_the_pr_is_unknown()
     {
         var stale = new ReviewSummary("old", ReviewCi.Fail, RequiredOpen: null, _now.AddDays(-9));
 
         var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1, sha: "new")], summaries: new Dictionary<string, ReviewSummary> { [Key(1)] = stale }));
 
-        Assert.Equal(ProjectPrState.Ready, truth.OpenPrs.Single().State);
+        Assert.Equal(ProjectPrState.Unknown, truth.OpenPrs.Single().State);
+    }
+
+    [Fact]
+    public void A_pr_with_no_summary_at_all_is_unknown_never_ready_and_has_no_decided_at()
+    {
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1)], noSummaries: true));
+
+        var pr = truth.OpenPrs.Single();
+        Assert.Equal((ProjectPrState.Unknown, (DateTimeOffset?)null), (pr.State, pr.DecidedAt));
     }
 
     [Fact]
@@ -168,6 +195,27 @@ public sealed class ProjectTruthsTests
         var truth = ProjectTruths.Build(Inputs(pulls: pulls, summaries: summaries));
 
         Assert.Equal((ProjectHealth.AtRisk, "At risk: 3 of 9 PRs red"), (truth.Health!.Level, truth.Health.Reason));
+    }
+
+    [Fact]
+    public void Health_names_the_prs_not_checked_yet_in_words()
+    {
+        ReviewPull[] pulls = [.. Enumerable.Range(1, 9).Select(static n => Pull(n))];
+        var summaries = Enumerable.Range(1, 3).ToDictionary(static n => Key(n), _ => Red(_now.AddDays(-2)));
+        var open = Inputs(pulls: pulls, summaries: summaries);
+        var facts = open.Facts with { Summaries = open.Facts.Summaries.Where(static e => e.Key != Key(8) && e.Key != Key(9)).ToDictionary(static e => e.Key, static e => e.Value) };
+
+        var truth = ProjectTruths.Build(open with { Facts = facts });
+
+        Assert.Equal((ProjectHealth.AtRisk, "At risk: 3 of 9 PRs red, 2 not checked yet"), (truth.Health!.Level, truth.Health.Reason));
+    }
+
+    [Fact]
+    public void Health_is_never_on_track_while_a_pr_is_not_checked_yet()
+    {
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1), Pull(2)], noSummaries: true));
+
+        Assert.Equal((ProjectHealth.AtRisk, "At risk: 2 PRs not checked yet"), (truth.Health!.Level, truth.Health.Reason));
     }
 
     [Fact]

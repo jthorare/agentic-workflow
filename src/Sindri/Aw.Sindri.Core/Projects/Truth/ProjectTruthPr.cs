@@ -6,6 +6,6 @@ namespace Aw.Sindri.Core.Projects.Truth;
 /// <param name="Number">The PR number.</param>
 /// <param name="Title">The title; text from the forge, untrusted.</param>
 /// <param name="State">What it waits on.</param>
-/// <param name="Since">For ciRed, when the summary of the failing head was decided; for waiting, when the PR last changed; else null.</param>
+/// <param name="DecidedAt">For ciRed, when Reviews decided the CI roll-up of the failing head (not when CI went red); else null.</param>
 /// <param name="WaitingOn">The reviewers it waits on, comma separated; null unless waiting.</param>
-public sealed record ProjectTruthPr(string Url, string Repo, int Number, string Title, ProjectPrState State, DateTimeOffset? Since, string? WaitingOn);
+public sealed record ProjectTruthPr(string Url, string Repo, int Number, string Title, ProjectPrState State, DateTimeOffset? DecidedAt, string? WaitingOn);
