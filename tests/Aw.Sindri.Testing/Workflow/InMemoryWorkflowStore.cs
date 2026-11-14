@@ -119,6 +119,7 @@ public sealed class InMemoryWorkflowStore(TimeProvider clock) : IWorkflowStore
             }
 
             entry.Active = revision;
+            entry.WasActivated = true;
             return Ok(entry.Record(id));
         }
     }
@@ -172,6 +173,8 @@ public sealed class InMemoryWorkflowStore(TimeProvider clock) : IWorkflowStore
 
         public int? Active { get; set; }
 
+        public bool WasActivated { get; set; }
+
         public DateTimeOffset? ArchivedAt { get; set; }
 
         public List<WorkflowRevision> Revisions { get; } = [];
@@ -183,6 +186,6 @@ public sealed class InMemoryWorkflowStore(TimeProvider clock) : IWorkflowStore
             return revision;
         }
 
-        public WorkflowRecord Record(WorkflowId id) => new(id, Slug, Name, Active, Revisions.Count, ArchivedAt, createdBy);
+        public WorkflowRecord Record(WorkflowId id) => new(id, Slug, Name, Active, Revisions.Count, ArchivedAt, createdBy, WasActivated);
     }
 }

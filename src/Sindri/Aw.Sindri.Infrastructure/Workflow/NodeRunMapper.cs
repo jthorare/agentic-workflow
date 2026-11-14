@@ -20,5 +20,7 @@ internal sealed class NodeRunMapper : IRowMapper<NodeRun>
         reader.GetInt32(6) != 0,
         reader.IsDBNull(7) ? null : reader.GetString(7),
         reader.IsDBNull(8) ? null : reader.GetString(8),
-        reader.IsDBNull(9) ? null : reader.GetString(9));
+        reader.IsDBNull(9) ? null : reader.GetString(9),
+        reader.IsDBNull(10) ? null : SqliteRead.GetTimestamp(reader, 10),
+        reader.IsDBNull(11) ? null : SqliteRead.GetTimestamp(reader, 11));
 }

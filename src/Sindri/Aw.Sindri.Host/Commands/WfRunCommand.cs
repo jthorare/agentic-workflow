@@ -28,7 +28,7 @@ internal static class WfRunCommand
             return await output.Error(down).ConfigureAwait(false);
         }
 
-        var started = await desk.Client.Post<RunWorkflowBody, RunWorkflowResponse>("/sindri/workflows/" + Uri.EscapeDataString(slug) + "/runs", new RunWorkflowBody(payload), ct).ConfigureAwait(false);
+        var started = await desk.Client.Post<RunWorkflowBody, RunWorkflowResponse>("/sindri/workflows/" + Uri.EscapeDataString(slug) + "/runs", new RunWorkflowBody(payload, Source: "cli"), ct).ConfigureAwait(false);
         if (started.IsError)
         {
             return await output.Error(started.Error).ConfigureAwait(false);

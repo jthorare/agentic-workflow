@@ -20,6 +20,11 @@ internal static class RunWorkflowEndpoint
             }
 
             var by = callers.Current?.Actor ?? "owner";
+            if (by == "owner" && string.Equals(body?.Source, "cli", StringComparison.Ordinal))
+            {
+                by = "cli";   // why: the run list tells a CLI start from a button press (#3683); a session never takes the name
+            }
+
             return (await service.Handle(new RunWorkflowRequest(parsed, body?.Payload, by), ct).ConfigureAwait(false)).ToHttpResult();
         });
         return group;

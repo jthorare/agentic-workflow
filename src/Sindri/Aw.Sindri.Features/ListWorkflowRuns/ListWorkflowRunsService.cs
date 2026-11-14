@@ -36,6 +36,6 @@ internal sealed class ListWorkflowRunsService(IWorkflowStore workflows, IWorkflo
             return recent.Error;
         }
 
-        return new ListWorkflowRunsResponse(record.Slug, [.. recent.Value.Take(limit).Select(static r => new WorkflowRunSummary(r.Id, r.Revision, RunWords.Of(r.Status), RunWords.Kind(r.Trigger), r.StartedAt, r.EndedAt, r.Error))], More: recent.Value.Count > limit);
+        return new ListWorkflowRunsResponse(record.Slug, [.. recent.Value.Take(limit).Select(static r => new WorkflowRunSummary(r.Id, r.Revision, RunWords.Of(r.Status), RunWords.TriggerWord(r.Trigger), r.StartedAt, r.EndedAt, r.Error) { Seconds = RunWords.Seconds(r.StartedAt, r.EndedAt), Result = RunWords.Result(r) })], More: recent.Value.Count > limit);
     }
 }

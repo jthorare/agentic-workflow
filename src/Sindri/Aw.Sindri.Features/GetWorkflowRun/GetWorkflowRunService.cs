@@ -33,7 +33,10 @@ internal sealed class GetWorkflowRunService(IWorkflowRunStore runs, IWorkflowSto
         var agentNodes = await AgentNodes(found, nodes.Value, cancellationToken).ConfigureAwait(false);
         var slug = WorkflowSlug.From(found.Id.Value[..found.Id.Value.IndexOf('@', StringComparison.Ordinal)]);
         return new GetWorkflowRunResponse(found.Id, slug, found.Revision, RunText.Of(found.Status), RunText.Json(found.Trigger), RunText.Json(found.Outputs), found.Error, found.ItemId, found.StartedAt, found.EndedAt,
-            [.. nodes.Value.Select(n => new NodeRunView(n.NodeId, n.ItemIndex, RunText.Of(n.Status), RunText.Json(n.Input), RunText.Json(n.Output), n.Truncated, n.Error, agentNodes.Of(n), n.Raw))]);
+            [.. nodes.Value.Select(n => new NodeRunView(n.NodeId, n.ItemIndex, RunText.Of(n.Status), RunText.Json(n.Input), RunText.Json(n.Output), n.Truncated, n.Error, agentNodes.Of(n), n.Raw) { Seconds = n.StartedAt is { } begun && n.EndedAt is { } end ? (end - begun).TotalSeconds : null })])
+        {
+            TriggerKind = RunWords.TriggerWord(found.Trigger),
+        };
     }
 
     // The agent state of the run's rows. The candidates are the 'run_agent' nodes of the revision the run walked whose row runs now (item 0: a run_agent node runs once). The run's workflow says which

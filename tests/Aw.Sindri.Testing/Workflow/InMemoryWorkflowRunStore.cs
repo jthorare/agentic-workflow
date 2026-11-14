@@ -240,7 +240,7 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
         ArgumentNullException.ThrowIfNull(nodeRun);
         var input = NodeRunLimits.Cap(nodeRun.Input, out var inputCut);
         var output = NodeRunLimits.Cap(nodeRun.Output, out var outputCut);
-        var stored = nodeRun with { Input = input, Output = output, Truncated = nodeRun.Truncated || inputCut || outputCut };
+        var stored = NodeRunTimes.Stamp(nodeRun with { Input = input, Output = output, Truncated = nodeRun.Truncated || inputCut || outputCut }, clock.GetUtcNow());
         lock (_gate)
         {
             if (!_runs.Exists(r => r.Id == stored.RunId))
@@ -248,7 +248,13 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
                 return Done<NodeRun>(NotFound(stored.RunId));
             }
 
-            _nodeRuns[(stored.RunId, stored.NodeId, stored.ItemIndex)] = stored;
+            var key = (stored.RunId, stored.NodeId, stored.ItemIndex);
+            if (stored.StartedAt is null && _nodeRuns.TryGetValue(key, out var before))
+            {
+                stored = stored with { StartedAt = before.StartedAt };   // as the store keeps the first start
+            }
+
+            _nodeRuns[key] = stored;
             return Done<NodeRun>(stored);
         }
     }

@@ -17824,7 +17824,7 @@ Aw.Sindri.Core.Graph.WorkflowRecord.ArchivedAt.get -> System.DateTimeOffset?
 Aw.Sindri.Core.Graph.WorkflowRecord.ArchivedAt.init -> void
 Aw.Sindri.Core.Graph.WorkflowRecord.CreatedBy.get -> string!
 Aw.Sindri.Core.Graph.WorkflowRecord.CreatedBy.init -> void
-Aw.Sindri.Core.Graph.WorkflowRecord.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowId Id, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, out string! Name, out int? ActiveRevision, out int LatestRevision, out System.DateTimeOffset? ArchivedAt, out string! CreatedBy) -> void
+Aw.Sindri.Core.Graph.WorkflowRecord.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowId Id, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, out string! Name, out int? ActiveRevision, out int LatestRevision, out System.DateTimeOffset? ArchivedAt, out string! CreatedBy, out bool WasActivated) -> void
 Aw.Sindri.Core.Graph.WorkflowRecord.Equals(Aw.Sindri.Core.Graph.WorkflowRecord? other) -> bool
 Aw.Sindri.Core.Graph.WorkflowRecord.Id.get -> Aw.Sindri.Core.Graph.Ids.WorkflowId
 Aw.Sindri.Core.Graph.WorkflowRecord.Id.init -> void
@@ -17834,7 +17834,9 @@ Aw.Sindri.Core.Graph.WorkflowRecord.Name.get -> string!
 Aw.Sindri.Core.Graph.WorkflowRecord.Name.init -> void
 Aw.Sindri.Core.Graph.WorkflowRecord.Slug.get -> Aw.Sindri.Core.Graph.Ids.WorkflowSlug
 Aw.Sindri.Core.Graph.WorkflowRecord.Slug.init -> void
-Aw.Sindri.Core.Graph.WorkflowRecord.WorkflowRecord(Aw.Sindri.Core.Graph.Ids.WorkflowId Id, Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, string! Name, int? ActiveRevision, int LatestRevision, System.DateTimeOffset? ArchivedAt, string! CreatedBy) -> void
+Aw.Sindri.Core.Graph.WorkflowRecord.WorkflowRecord(Aw.Sindri.Core.Graph.Ids.WorkflowId Id, Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, string! Name, int? ActiveRevision, int LatestRevision, System.DateTimeOffset? ArchivedAt, string! CreatedBy, bool WasActivated = false) -> void
+Aw.Sindri.Core.Graph.WorkflowRecord.WasActivated.get -> bool
+Aw.Sindri.Core.Graph.WorkflowRecord.WasActivated.init -> void
 Aw.Sindri.Core.Graph.WorkflowRevision
 Aw.Sindri.Core.Graph.WorkflowRevision.<Clone>$() -> Aw.Sindri.Core.Graph.WorkflowRevision!
 Aw.Sindri.Core.Graph.WorkflowRevision.CreatedAt.get -> System.DateTimeOffset
@@ -23837,3 +23839,12 @@ Aw.Sindri.Core.Graph.Templates.ICiSourceLookup
 Aw.Sindri.Core.Graph.Templates.ICiSourceLookup.Find(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Graph.Templates.GitHubCiSource?>
 static Aw.Sindri.Core.Health.HealthSummary.WithProfileProblem(Aw.Sindri.Core.Health.HealthReport! report, bool wontLoad, string? fix) -> Aw.Sindri.Core.Health.HealthReport!
 static Aw.Sindri.Core.Connections.ConnectionName.ParseUnreserved(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!
+
+Aw.Sindri.Core.Graph.Runs.NodeRunTimes
+static Aw.Sindri.Core.Graph.Runs.NodeRunTimes.Stamp(Aw.Sindri.Core.Graph.Runs.NodeRun! row, System.DateTimeOffset now) -> Aw.Sindri.Core.Graph.Runs.NodeRun!
+Aw.Sindri.Core.Graph.Runs.RunWords
+static Aw.Sindri.Core.Graph.Runs.RunWords.Kind(string! trigger) -> string!
+static Aw.Sindri.Core.Graph.Runs.RunWords.Of(Aw.Sindri.Core.Graph.Runs.WorkflowRunStatus status) -> string!
+static Aw.Sindri.Core.Graph.Runs.RunWords.Result(Aw.Sindri.Core.Graph.Runs.WorkflowRun! run) -> string?
+static Aw.Sindri.Core.Graph.Runs.RunWords.Seconds(System.DateTimeOffset started, System.DateTimeOffset? ended) -> double?
+static Aw.Sindri.Core.Graph.Runs.RunWords.TriggerWord(string! trigger) -> string!

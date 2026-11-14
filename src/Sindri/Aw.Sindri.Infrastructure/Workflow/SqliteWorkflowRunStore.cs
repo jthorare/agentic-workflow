@@ -217,7 +217,7 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
         ArgumentNullException.ThrowIfNull(nodeRun);
         var input = NodeRunLimits.Cap(nodeRun.Input, out var inputCut);
         var output = NodeRunLimits.Cap(nodeRun.Output, out var outputCut);
-        var stored = nodeRun with { Input = input, Output = output, Truncated = nodeRun.Truncated || inputCut || outputCut };
+        var stored = NodeRunTimes.Stamp(nodeRun with { Input = input, Output = output, Truncated = nodeRun.Truncated || inputCut || outputCut }, clock.GetUtcNow());
         return RecipeSessions.Write(database, async ValueTask<Result<NodeRun>> (session, token) =>
         {
             var existing = await FindRun(session, stored.RunId, token).ConfigureAwait(false);
@@ -228,7 +228,7 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
 
             var written = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.UpsertNodeRun,
                 c => c.Bind("$run", stored.RunId.Value).Bind("$node", stored.NodeId.Value).Bind("$item", stored.ItemIndex).Bind("$status", RunStatusText.Of(stored.Status))
-                    .Bind("$input", stored.Input).Bind("$output", stored.Output).Bind("$truncated", stored.Truncated ? 1 : 0).Bind("$error", stored.Error).Bind("$usage", stored.Usage).Bind("$raw", stored.Raw),
+                    .Bind("$input", stored.Input).Bind("$output", stored.Output).Bind("$truncated", stored.Truncated ? 1 : 0).Bind("$error", stored.Error).Bind("$usage", stored.Usage).Bind("$raw", stored.Raw).Bind("$started", Iso(stored.StartedAt)).Bind("$ended", Iso(stored.EndedAt)),
                 $"node {stored.NodeId.Value}"), token).ConfigureAwait(false);
             return written.IsError ? written.Error : stored;
         }, cancellationToken);
@@ -272,6 +272,8 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
 
     private static ValueTask<Result<WorkflowRun?>> FindRun(ISqliteSession session, WorkflowRunId id, CancellationToken token) =>
         RecipeSessions.First(session, new SqlStatement(WorkflowRunSql.ById, c => c.Bind("$id", id.Value)), WorkflowRunMapper.Instance, token);
+
+    private static string? Iso(DateTimeOffset? at) => at?.UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
 
     private static Error NotFound(WorkflowRunId id) => SindriErrors.GraphRunNotFound.With($"no run '{id.Value}'; list the workflow's runs to see what exists");
 }
