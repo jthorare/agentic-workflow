@@ -134,6 +134,7 @@ bash scripts/tests/install-tmux.test.sh       # install-tmux.sh on a temp HOME a
 bash scripts/tests/external-packs.test.sh    # scripts/lib/external-packs.sh: fetch_external_pack on local git repos, the unpinned vercel-labs/ui pack follows upstream, a pinned pack stays, the subdir arg links only the user skill, setup.sh and the pin files (#3458)
 bash scripts/tests/result-gate.test.sh   # every skill's Result-block gate prints AW_RESULT and a non-empty AW_DIR, run alone in a fresh shell (#2036)
 bash config/hooks/tests/failopen.test.sh
+bash config/hooks/tests/block-push-main.test.sh   # config/hooks/block-push-main.sh (#3621) in a temp git repo: a real push to main or master is blocked with the reason on stderr and none on stdout; a heredoc body, quoted text, an echo or a later checkout of main is not a push
 bash config/hooks/tests/meta-hooks.test.sh
 for t in config/lib/tests/*.test.sh; do bash "$t" || echo "FAILED: $t"; done  # merge-hook, levers, installers, judge-cs-hook-surface (the hook contract: real hooks vs the C# judge; needs dotnet) and sindri-cs-hook-surface (the sindri-nudge SessionStart hook vs the C# `sindri repo status --nudge`: one line, silence, exit 0, read-only, bounded; builds the Sindri host, needs dotnet)
 ```
