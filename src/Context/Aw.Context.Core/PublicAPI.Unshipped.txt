@@ -12540,3 +12540,7 @@ Aw.Context.Core.Engine.ContextQuery.Window.get -> Aw.Context.Core.Engine.QueryWi
 Aw.Context.Core.Engine.ContextQuery.Window.init -> void
 Aw.Context.Core.Results.ContextResult.Matches.get -> Aw.Context.Core.Results.RecordMatches?
 Aw.Context.Core.Results.ContextResult.Matches.init -> void
+Aw.Context.Core.Results.ContextResult.CodeMatched.get -> int?
+Aw.Context.Core.Results.ContextResult.CodeMatched.init -> void
+Aw.Context.Core.Results.ContextResult.NextCursor.get -> string?
+Aw.Context.Core.Results.ContextResult.NextCursor.init -> void

@@ -79,7 +79,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         var versions = await Versions(fetched, sources, deadline, degraded, cancellationToken).ConfigureAwait(false);
         var built = new ResultAssembly(scrubbers.Value.Egress, QueryId.From("q_" + ids.NewId().ToString("N", CultureInfo.InvariantCulture)), clock.GetUtcNow())
             .Build(request.Query, new RecordPart(fetched, versions, degraded), DemotedLast(graph, request.Scope.Repos));
-        return built with { Filtered = DemotedFiles.Counts(CodeKeys(graph), request.Scope.Repos), Notes = notes, Matches = matches };
+        return (built with { Filtered = DemotedFiles.Counts(CodeKeys(graph), request.Scope.Repos), Notes = notes, Matches = matches }).WithCodePage(request.Query);
     }
 
     // The page of ranked records the caller reads (#3370): no window reads every match (#938). An item question whose key no sync
