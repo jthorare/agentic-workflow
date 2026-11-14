@@ -18,4 +18,7 @@ internal enum TerminalStyle
 
     /// <summary>SGR 7: foreground and background swap.</summary>
     Inverse = 8,
+
+    /// <summary>SGR 2: drawn at lower opacity (Claude's placeholder text).</summary>
+    Dim = 16,
 }

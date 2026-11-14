@@ -18,8 +18,8 @@ internal static class WholeAreaOrder
     {
         ArgumentNullException.ThrowIfNull(areas);
         ArgumentNullException.ThrowIfNull(edges);
-        var assigned = areas.Where(a => !a.Unassigned).Select(a => a.Key).Order(StringComparer.Ordinal).ToList();
-        var unassigned = areas.Where(a => a.Unassigned).Select(a => a.Key).Order(StringComparer.Ordinal).ToList();
+        var assigned = areas.Where(a => !a.Unassigned).Select(a => a.Key).Order(NaturalOrder.Instance).ToList();
+        var unassigned = areas.Where(a => a.Unassigned).Select(a => a.Key).Order(NaturalOrder.Instance).ToList();
         var neighbours = Neighbours(edges, assigned);
         for (var pass = 0; pass < Passes; pass++)
         {
@@ -30,7 +30,7 @@ internal static class WholeAreaOrder
                 place[key] = Barycenter(key, neighbours, place);
             }
 
-            assigned = [.. assigned.OrderBy(key => place[key]).ThenBy(key => key, StringComparer.Ordinal)];
+            assigned = [.. assigned.OrderBy(key => place[key]).ThenBy(key => key, NaturalOrder.Instance)];
         }
 
         return [.. assigned, .. unassigned];

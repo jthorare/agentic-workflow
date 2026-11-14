@@ -16,7 +16,8 @@ internal static class TerminalFrameParser
     /// <returns>The grid.</returns>
     internal static TerminalGrid Parse(IReadOnlyList<string> lines, TerminalStatus info)
     {
-        var rows = lines.Select(TerminalRowParser.Parse).ToList();
+        var pen = new TerminalPen();
+        var rows = lines.Select(line => TerminalRowParser.Parse(line, pen)).ToList();
         var width = info.Width ?? Math.Max(1, rows.Count == 0 ? 1 : rows.Max(r => r.Count));
         var height = info.Height ?? Math.Max(1, rows.Count);
         while (rows.Count < height)

@@ -16,7 +16,7 @@ fail() { FAIL=$((FAIL + 1)); echo "  FAIL $1"; }
 run() { set +e; OUT="$(bash "$SCRIPT" "$@" 2>&1)"; RC=$?; set -e; }
 expect() {   # <label> <rc> [<regex>]
   if [ "$RC" -ne "$2" ]; then fail "$1: exit $RC, want $2"; printf '%s\n' "$OUT" | sed 's/^/      | /'; return; fi
-  if [ -n "${3:-}" ] && ! printf '%s\n' "$OUT" | grep -qE -- "$3"; then fail "$1: output lacks /$3/"; printf '%s\n' "$OUT" | sed 's/^/      | /'; return; fi
+  if [ -n "${3:-}" ] && ! grep -qE -- "$3" <<<"$OUT"; then fail "$1: output lacks /$3/"; printf '%s\n' "$OUT" | sed 's/^/      | /'; return; fi
   ok "$1"
 }
 

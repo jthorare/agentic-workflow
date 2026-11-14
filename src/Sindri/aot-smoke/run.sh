@@ -9,7 +9,7 @@
 # brings up the pinned Temporal dev server, so the temporal CLI must be installed: scripts/binaries-lock.sh fetch
 # temporal): doctor with nothing running, start headless with a live profile, a second serve refused by the lease,
 # the removed `profile approve` (a human's and a session's both print the removal line, exit 0), status (text and --json's apiVersion), /sindri/mcp's initialize and tools/list as a stateless MCP client, then the 12 tools' calls (sindri_queue, sindri_request filed as session:mcp, sindri_item refused, sindri_decide absent),
-# the views rebuild requested by a session and by the human, status's views and health lines, the item verbs (API P3: a human's item add, the queue and the item list, a session's item add, the human's item close, the done list and the queue again), the request verbs (API P4: a session's request, the needs-you list, a session's decide, the list again and the accepted requests), the ledger read (API P5: the human's lists command.handled, a session's doesn't, one item's events, and GET /events/catalog), QUERY /context/subgraph with a JSON body on the published host (POST is 405), the service and job verbs (API P6: the services list as JSON, a manual run of heartbeat followed to its end, a session's run, jobs show and the jobs list, pause and resume with a session's pause, and the services list after each), a session's stop, status and doctor again (doctor with HOME on an empty scratch dir, so its
+# the views rebuild requested by a session and by the human, status's views and health lines, the item verbs (API P3: a human's item add, the queue and the item list, a session's item add, the human's item close, the done list and the queue again), the request verbs (API P4: a session's request, the needs-you list, a session's decide, the list again and the accepted requests), the ledger read (API P5: the human's lists command.handled, a session's doesn't, one item's events, and GET /events/catalog), QUERY /context/subgraph with a JSON body on the published host (POST is 405), the service and job verbs (API P6: the services list as JSON, a manual run of heartbeat followed to its end, a session's run, jobs show and the jobs list, pause and resume with a session's pause, and the services list after each; a manual run of index-sync so the last doctor's library row never depends on its 5-minute slot, #3628), a session's stop, status and doctor again (doctor with HOME on an empty scratch dir, so its
 # context:mcp-scope row never reads the real provider files), and a one-node Code workflow (wf create, activate, run, run-show) whose node returns {"sum":3}, run by sindri-code-runner published into the same folder as the host (the sandbox must be able to confine it: a box that can't prints the failed run's error in the 'code-node:' line and the diff fails);
 # The normalized output (pids, ports, hashes, times, the host name and the temp path
 # masked) must equal expected.txt.
@@ -333,18 +333,27 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   curl -s -m 30 -X QUERY "$base/sindri/context/subgraph" -H 'X-Sindri-Repo: smoke' -H 'Content-Type: application/json' -d '{"nodes":["feature:smoke.none"]}' \
     -w '\nhttp=%{http_code}\n' | jq -R -c 'if startswith("http=") then . else (try (fromjson | {title, status}) catch .) end'
   curl -s -m 30 -o /dev/null -w 'post http=%{http_code}\n' -X POST "$base/sindri/context/subgraph" -H 'X-Sindri-Repo: smoke' -H 'Content-Type: application/json' -d '{"nodes":["feature:smoke.none"]}'
+  # Red hook for #3628 (test only): AW_SMOKE_WAIT_TICKS=1 waits 330 s here, past the first slot of context-sync-gaps (1 m) and index-sync (5 m), so both built-ins
+  # have ticked on the profile's default context settings before the jobs list and the last doctor. Unset, the smoke runs as before.
+  if [ -n "${AW_SMOKE_WAIT_TICKS:-}" ]; then sleep 330; fi
   echo "## sindri services --json | jq (name, every, paused, job)"
   bounded "$bin" services --json </dev/null | jq -c '[.services[] | {name, every, paused, job}]'
   manual_service_runs heartbeat
-  job="$(bounded "$bin" jobs --json </dev/null | jq -r '.jobs[0].id')"
+  # The newest heartbeat run, not jobs[0]: a SyncSources job from context-sync-gaps can land after the manual runs (#3628).
+  job="$(bounded "$bin" jobs --json </dev/null | jq -r '[.jobs[] | select(.kind == "RunService" and .service == "heartbeat")][0].id')"
   run jobs show "$job"
   # The smoke's own context-map-refresh run (#3405) reads differently depending on which tick wins ("refresh JOB started" or a quiet tick's text),
-  # so its row is left out of the list. Same shape as `run`: header, output, exit line.
+  # so its row is left out of the list. So is the SyncSources row (#3628): the profile has no context section, so context-sync-gaps runs on the
+  # default settings and starts that sync on whichever of its 1-minute ticks sees a feed that has not read yet. So is the ScanContextConcepts row: context-concept-scan
+  # starts it on the first 1-minute tick after the smoke's map v1 exists. Same shape as `run`: header, output, exit line.
   echo "## sindri jobs --state succeeded"
   jobs_rc=0
   jobs_out="$(bounded "$bin" jobs --state succeeded </dev/null 2>&1)" || jobs_rc=$?
-  { grep -v 'RunService  context-map-refresh' <<<"$jobs_out" || true; }
+  { grep -v -e 'RunService  context-map-refresh' -e 'SyncSources  sync' -e 'ScanContextConcepts  concept-scan' <<<"$jobs_out" || true; }
   exit_line "$jobs_rc"
+  # The library's first read is on index-sync's 5-minute slot, so the last doctor's library row says "first read hasn't finished" or "0 design docs"
+  # by timing (#3628). Run the tick by hand, after the jobs list so its RunService row is not in it, so the row always reads "after". Before the stop: doctor reads the stored state.
+  human_run_service index-sync >/dev/null 2>&1 || true
   human services pause heartbeat </dev/null
   session services pause heartbeat
   settle

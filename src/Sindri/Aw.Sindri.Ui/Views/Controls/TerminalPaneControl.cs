@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Aw.Sindri.Ui.Terminal;
@@ -29,6 +30,7 @@ internal sealed class TerminalPaneControl : Control, ITerminalPane
     internal static readonly StyledProperty<int> ScrollOffsetProperty =
         AvaloniaProperty.Register<TerminalPaneControl, int>(nameof(ScrollOffset));
 
+    private readonly TerminalBrushCache _brushes = new();
     private TerminalGrid? _grid;
     private (int Columns, int Rows) _fit;
 
@@ -37,6 +39,9 @@ internal sealed class TerminalPaneControl : Control, ITerminalPane
         AffectsRender<TerminalPaneControl>(TerminalFontSizeProperty, HasPaneFocusProperty, DimmedProperty, ScrollOffsetProperty);
         _ = TerminalFontSizeProperty.Changed.AddClassHandler<TerminalPaneControl>((s, _) => s.Remeasure());
     }
+
+    /// <summary>Initializes a new instance of the <see cref="TerminalPaneControl"/> class; its default name for assistive technology is "Terminal".</summary>
+    public TerminalPaneControl() => AutomationProperties.SetName(this, "Terminal");
 
     /// <summary>Raised when the drawing area fits another number of columns or rows.</summary>
     public event EventHandler<TerminalSizeEventArgs>? FitChanged;
@@ -79,6 +84,9 @@ internal sealed class TerminalPaneControl : Control, ITerminalPane
     /// <param name="rows">Rows to move: positive back, negative towards the live screen.</param>
     internal void ScrollBy(int rows) => ScrollOffset = Math.Clamp(ScrollOffset + rows, 0, History);
 
+    /// <summary>Gets how many colour brushes this control has made (a test seam: painting the same frame again must make none).</summary>
+    internal int BrushesCreated => _brushes.Created;
+
     /// <summary>Gets the size of one cell in px (0 before the first measure).</summary>
     internal Size CellSize { get; private set; }
 
@@ -99,7 +107,7 @@ internal sealed class TerminalPaneControl : Control, ITerminalPane
 
         EnsureCell();
         using var opacity = context.PushOpacity(Dimmed ? 0.5 : 1);
-        var painter = new TerminalPainter(context, CellSize, Typeface(), TerminalFontSize, Brush);
+        var painter = new TerminalPainter(context, CellSize, Typeface(), TerminalFontSize, Brush("Brush.Ink"), Brush("Brush.Canvas"), _brushes);
         painter.Paint(_grid, ScrollOffset, HasPaneFocus);
     }
 

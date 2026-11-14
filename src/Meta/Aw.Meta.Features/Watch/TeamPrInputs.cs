@@ -18,6 +18,9 @@ namespace Aw.Meta.Features.Watch;
 /// <param name="files">Reads the configured worktree root.</param>
 internal sealed class TeamPrInputs(RepoCommands repo, IKeyValueStore values, IMessageStore messages, MetaPaths paths, IWorktreeFiles files)
 {
+    /// <summary>The same reads over other git calls (a poll's, bound by its limit and the stop signal).</summary>
+    internal TeamPrInputs Using(RepoCommands github) => new(github, values, messages, paths, files);
+
     /// <summary>Reads the facts.</summary>
     /// <param name="team">The team config (the repo and the worktree roots).</param>
     /// <param name="cancellationToken">Cancels the call.</param>

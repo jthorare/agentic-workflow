@@ -64,7 +64,7 @@ internal sealed class TerminalPen
                 Bg = TerminalColor.Default;
                 Style = TerminalStyle.None;
                 break;
-            case 1 or 3 or 4 or 7:
+            case 1 or 2 or 3 or 4 or 7:
                 Style |= StyleOf(code);
                 break;
             case 22 or 23 or 24 or 27:
@@ -84,7 +84,7 @@ internal sealed class TerminalPen
 
     private static TerminalStyle StyleCleared(int off) => off switch
     {
-        22 => TerminalStyle.Bold,
+        22 => TerminalStyle.Bold | TerminalStyle.Dim,   // 22 is "normal intensity": it ends both
         23 => TerminalStyle.Italic,
         24 => TerminalStyle.Underline,
         _ => TerminalStyle.Inverse,
@@ -93,6 +93,7 @@ internal sealed class TerminalPen
     private static TerminalStyle StyleOf(int on) => on switch
     {
         1 => TerminalStyle.Bold,
+        2 => TerminalStyle.Dim,
         3 => TerminalStyle.Italic,
         4 => TerminalStyle.Underline,
         _ => TerminalStyle.Inverse,

@@ -18,16 +18,16 @@ SK="$TMP/skills/planted"
 mkdir -p "$SK" "$TMP/bootstrap"
 printf '# planted\n\n```bash\ngit worktree add -b x "$HOME/wt/x" main\n```\n' > "$SK/SKILL.md"
 out="$(bash "$CHECK" "$TMP" 2>&1)"; rc=$?
-{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -q "planted/SKILL.md:4"; } && ok "a fenced bare git worktree add fails naming file:line" || bad "fenced rc=$rc out=$out"
+{ [ "$rc" = 1 ] && grep -q "planted/SKILL.md:4" <<<"$out"; } && ok "a fenced bare git worktree add fails naming file:line" || bad "fenced rc=$rc out=$out"
 
 printf '# planted\n\nRun `git -C "$MAIN" worktree add -b x "$WT" main`.\n' > "$SK/SKILL.md"
 out="$(bash "$CHECK" "$TMP" 2>&1)"; rc=$?
-{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -q "planted/SKILL.md:3"; } && ok "an inline git -C worktree add fails" || bad "inline rc=$rc out=$out"
+{ [ "$rc" = 1 ] && grep -q "planted/SKILL.md:3" <<<"$out"; } && ok "an inline git -C worktree add fails" || bad "inline rc=$rc out=$out"
 
 printf '#!/usr/bin/env bash\n# git worktree add is described here\ngit -C "$repo" worktree add -q "$path" main\n' > "$SK/make.sh"
 printf '# planted\n' > "$SK/SKILL.md"
 out="$(bash "$CHECK" "$TMP" 2>&1)"; rc=$?
-{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -q "make.sh:3" && ! printf '%s' "$out" | grep -q "make.sh:2"; } && ok "a .sh command fails, its comment does not" || bad "sh rc=$rc out=$out"
+{ [ "$rc" = 1 ] && grep -q "make.sh:3" <<<"$out" && ! grep -q "make.sh:2" <<<"$out"; } && ok "a .sh command fails, its comment does not" || bad "sh rc=$rc out=$out"
 
 printf '#!/usr/bin/env bash\npath="$(bash "$HERE/../../_shared/worktree-path.sh" x)"\ngit -C "$repo" worktree add -q "$path" main\n' > "$SK/make.sh"
 bash "$CHECK" "$TMP" >/dev/null 2>&1 && ok "naming worktree-path.sh in the file makes it pass" || bad "helper did not fix the .sh"
@@ -42,7 +42,7 @@ out="$(bash "$CHECK" "$TMP" 2>&1)"; rc=$?
 
 printf '# b\n\n```\ngit worktree add x y\n```\n' > "$TMP/bootstrap/SKILL.md"
 out="$(bash "$CHECK" "$TMP" 2>&1)"; rc=$?
-{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -q "bootstrap/SKILL.md:4"; } && ok "bootstrap/ is scanned" || bad "bootstrap rc=$rc out=$out"
+{ [ "$rc" = 1 ] && grep -q "bootstrap/SKILL.md:4" <<<"$out"; } && ok "bootstrap/ is scanned" || bad "bootstrap rc=$rc out=$out"
 
 bash "$CHECK" "$TMP/missing" >/dev/null 2>&1; rc=$?
 [ "$rc" = 2 ] && ok "a missing dir exits 2" || bad "missing dir rc=$rc"

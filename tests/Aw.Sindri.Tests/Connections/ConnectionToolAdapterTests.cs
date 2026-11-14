@@ -106,6 +106,20 @@ public sealed class ConnectionToolAdapterTests
         Assert.Empty(provider.Requests);
     }
 
+    [Fact(Timeout = 60_000)]
+    public async Task Post_message_refuses_the_messages_connection()
+    {
+        var provider = new Recording("{}");
+        using var http = new HttpClient(provider, disposeHandler: false);
+        var world = new World(http);
+        world.AddRest("slack:messages", preset: null, RestCredential);
+
+        var called = await world.Adapter.Call("slack:messages", "post_message", """{"channel":"C123","text":"hi"}""", TestContext.Current.CancellationToken);
+
+        Assert.True(called.IsError);
+        Assert.Empty(provider.Requests);
+    }
+
     private sealed record Sent(HttpMethod Method, string Uri, string? Authorization, string? Body);
 
     private sealed class Recording(string answer) : HttpMessageHandler
@@ -134,7 +148,7 @@ public sealed class ConnectionToolAdapterTests
 
         public void AddMcp(string name, Uri server, string key) => Add(name, ConnectionKind.Mcp, preset: null, new Dictionary<string, string>(StringComparer.Ordinal) { ["serverUrl"] = server.ToString() }, key);
 
-        public void AddRest(string name, string preset, string token) => Add(name, ConnectionKind.OAuth, preset, new Dictionary<string, string>(StringComparer.Ordinal), token);
+        public void AddRest(string name, string? preset, string token) => Add(name, ConnectionKind.OAuth, preset, new Dictionary<string, string>(StringComparer.Ordinal), token);
 
         private void Add(string name, ConnectionKind kind, string? preset, Dictionary<string, string> config, string token)
         {

@@ -114,11 +114,30 @@ public sealed class TerminalFrameParserTests
     }
 
     [Fact]
-    public void Style_at_the_end_of_a_row_does_not_leak_into_the_next_row()
+    public void A_colour_left_open_at_a_row_end_carries_into_the_next_row_as_capture_pane_writes_it()
     {
-        var grid = Parse($"{Esc}[1;31mred\nplain\n", Status(w: 6));
+        var grid = Parse($"{Esc}[41mab\ncd\n", Status(w: 4));
 
-        Assert.Equal(TerminalCell.Blank with { Text = "p" }, grid.Cell(1, 0));
+        Assert.Equal(TerminalColor.Indexed(1), grid.Cell(1, 0).Bg);
+        Assert.Equal(TerminalColor.Indexed(1), grid.Cell(1, 1).Bg);
+    }
+
+    [Fact]
+    public void A_reset_on_a_row_stops_the_carry_into_the_next_row()
+    {
+        var grid = Parse($"{Esc}[41mab{Esc}[0m\ncd\n", Status(w: 4));
+
+        Assert.Equal(TerminalCell.Blank with { Text = "c" }, grid.Cell(1, 0));
+    }
+
+    [Fact]
+    public void Dim_sets_on_SGR_2_and_clears_with_22_together_with_bold()
+    {
+        var grid = Parse($"{Esc}[2ma{Esc}[1mb{Esc}[22mc\n\n", Status(w: 4));
+
+        Assert.True(grid.Cell(0, 0).Dim);
+        Assert.Equal(TerminalStyle.Bold | TerminalStyle.Dim, grid.Cell(0, 1).Style);
+        Assert.Equal(TerminalStyle.None, grid.Cell(0, 2).Style);
     }
 
     [Fact]
@@ -269,5 +288,31 @@ public sealed class TerminalFrameParserTests
         var b = Parse("ab\ncd\n", Status(w: 3));
 
         Assert.Equal((b.RowText(0), b.RowText(1)), (a.RowText(0), a.RowText(1)));
+    }
+
+    [Fact]
+    public void A_huge_or_corrupt_size_is_clamped_to_the_socket_limits()
+    {
+        var grid = TerminalFrameParser.Parse("ab\n", "0 0 2000000000 2000000000 0 0 0 \n");
+
+        Assert.Equal((TerminalStatus.MaxColumns, TerminalStatus.MaxRows), (grid.Width, grid.Height));
+    }
+
+    [Fact]
+    public void An_escape_with_an_intermediate_byte_skips_all_three_bytes()
+    {
+        var grid = Parse($"a{Esc}(Bb\n\n");
+
+        Assert.Equal("ab", grid.RowText(0));
+    }
+
+    [Fact]
+    public void A_private_prefix_sequence_ending_in_m_is_not_a_colour()
+    {
+        var grid = Parse($"{Esc}[?31mx{Esc}[>1mydz\n\n");
+
+        Assert.Equal("xydz", grid.RowText(0));
+        Assert.Equal(TerminalColor.Default, grid.Cell(0, 0).Fg);
+        Assert.False(grid.Cell(0, 1).Bold);
     }
 }

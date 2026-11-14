@@ -32,10 +32,12 @@ internal sealed partial class ZoomBorder : Border
     /// <summary>The largest scale.</summary>
     internal static readonly StyledProperty<double> MaxZoomProperty = AvaloniaProperty.Register<ZoomBorder, double>(nameof(MaxZoom), ZoomRange.Default.Max);
 
+    /// <summary>Whether the stage takes keyboard focus (a Tab stop that draws a 2 px ring); false for the context map, whose nodes are the stops.</summary>
+    internal static readonly StyledProperty<bool> IsKeyboardFocusableProperty = AvaloniaProperty.Register<ZoomBorder, bool>(nameof(IsKeyboardFocusable));
+
     private const double WheelStep = 40;
     private const double ZoomStep = 1.2;
     private const double ClickSlop = 3;
-    private const double DotPitch = 22;
 
     private (ZoomView From, ZoomView To, TimeSpan? Start, TimeSpan Length, int Id)? _move;
     private DrawingBrush? _dots;
@@ -46,6 +48,7 @@ internal sealed partial class ZoomBorder : Border
         _ = WorldBoundsProperty.Changed.AddClassHandler<ZoomBorder>((z, _) => z.Keep());
         _ = MinZoomProperty.Changed.AddClassHandler<ZoomBorder>((z, _) => z.Keep());
         _ = MaxZoomProperty.Changed.AddClassHandler<ZoomBorder>((z, _) => z.Keep());
+        _ = IsKeyboardFocusableProperty.Changed.AddClassHandler<ZoomBorder>((z, e) => z.Focusable = e.NewValue is true);
     }
 
     /// <summary>Initializes a new instance of the <see cref="ZoomBorder"/> class.</summary>
@@ -104,6 +107,13 @@ internal sealed partial class ZoomBorder : Border
     {
         get => GetValue(MaxZoomProperty);
         set => SetValue(MaxZoomProperty, value);
+    }
+
+    /// <summary>Gets or sets a value indicating whether the stage takes keyboard focus (default false).</summary>
+    internal bool IsKeyboardFocusable
+    {
+        get => GetValue(IsKeyboardFocusableProperty);
+        set => SetValue(IsKeyboardFocusableProperty, value);
     }
 
     /// <summary>Gets a value indicating whether a zoom transition is running.</summary>
@@ -264,27 +274,5 @@ internal sealed partial class ZoomBorder : Border
         {
             RaisePropertyChanged(ViewProperty, old, view);
         }
-    }
-
-    // The 22 px dot grid in HairlineStrong (each dot centred on the pixel at 11,11 so it paints that pixel whole, not a quarter of it), in a tile that scales and moves with the view, over a transparent base so the pointer still lands here.
-    private DrawingBrush Dots()
-    {
-        var dot = this.TryFindResource("Brush.HairlineStrong", ActualThemeVariant, out var found) && found is IBrush brush ? brush : Brushes.Gray;
-        var tile = new Rect(0, 0, DotPitch, DotPitch);
-        var drawing = new DrawingGroup
-        {
-            Children =
-            {
-                new GeometryDrawing { Brush = Brushes.Transparent, Geometry = new RectangleGeometry(tile) },
-                new GeometryDrawing { Brush = dot, Geometry = new EllipseGeometry(new Rect((DotPitch / 2) - 0.5, (DotPitch / 2) - 0.5, 2, 2)) },
-            },
-        };
-        return new DrawingBrush(drawing)
-        {
-            TileMode = TileMode.Tile,
-            Stretch = Stretch.None,
-            SourceRect = new RelativeRect(tile, RelativeUnit.Absolute),
-            DestinationRect = new RelativeRect(tile, RelativeUnit.Absolute),
-        };
     }
 }

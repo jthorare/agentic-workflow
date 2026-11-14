@@ -15,6 +15,7 @@ internal sealed partial class TerminalViewViewModel
     private DateTimeOffset? _lostAt;
     private DateTimeOffset? _retryAt;
     private int _attempt;
+    private bool _refused;
 
     /// <summary>How many times the header word flashed because a key was dropped.</summary>
     public int FlashCount { get; private set; }
@@ -51,6 +52,7 @@ internal sealed partial class TerminalViewViewModel
         }
 
         _queued.Clear();
+        _refused = false;
         (_lostAt, _retryAt, _attempt) = (null, null, 0);
         State = Target is { IsStarting: true } && !_agentReported ? TerminalState.Starting : TerminalState.Attached;
         Refresh();
@@ -86,11 +88,19 @@ internal sealed partial class TerminalViewViewModel
     /// <param name="code">4001 replaced, 4015 no pane, 4016 gone; any other code retries like a drop.</param>
     public void SocketClosed(int code)
     {
+        _refused = false;
         switch (code)
         {
             case 4001:
                 (State, Side, _retryAt, _lostAt) = (TerminalState.TakenOver, TerminalSide.List, null, null);
                 IsDimmed = true;
+                _queued.Clear();
+                Refresh();
+                break;
+            case 1008:
+                (State, Side, _retryAt, _lostAt) = (TerminalState.CantReachSindri, TerminalSide.List, null, null);
+                IsDimmed = true;
+                _refused = true;
                 _queued.Clear();
                 Refresh();
                 break;
@@ -157,6 +167,7 @@ internal sealed partial class TerminalViewViewModel
     /// <summary>Retry now: asks for a socket at once.</summary>
     public void RetryNow()
     {
+        _refused = false;
         _attempt++;
         _retryAt = null;
         State = TerminalState.Connecting;

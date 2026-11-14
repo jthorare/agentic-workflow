@@ -11,6 +11,9 @@ internal static partial class Labels
 
     internal const string TerminalCantReach = "Can't reach Sindri";
 
+    /// <summary>Close code 1008: Serve refused the window's token; retrying can't help.</summary>
+    internal const string TerminalTokenRefused = "Sindri didn't accept this window's token.";
+
     internal const string TerminalTakenOver = "This pane is open in another Sindri window";
 
     internal const string TerminalStarting = "Starting";

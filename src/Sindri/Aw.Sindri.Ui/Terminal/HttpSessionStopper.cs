@@ -20,7 +20,7 @@ internal sealed class HttpSessionStopper(HttpClient http, IHumanTokenSource toke
             using var response = await http.SendAsync(request, cancellationToken).ConfigureAwait(false);
             return (int)response.StatusCode;
         }
-        catch (Exception e) when (e is HttpRequestException or IOException or UnauthorizedAccessException)
+        catch (Exception e) when (e is HttpRequestException or IOException or UnauthorizedAccessException || (e is TaskCanceledException && !cancellationToken.IsCancellationRequested))
         {
             return 0;
         }

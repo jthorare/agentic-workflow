@@ -112,7 +112,7 @@ internal static class TerminalSocketMessages
                 _ => unknown,
             };
         }
-        catch (JsonException)
+        catch (Exception e) when (e is JsonException or KeyNotFoundException or InvalidOperationException or FormatException or OverflowException)
         {
             return unknown;
         }

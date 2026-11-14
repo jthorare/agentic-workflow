@@ -36,6 +36,7 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
         }
 
         _link = link;
+        var broke = false;
         try
         {
             await Pump(link, cancellationToken).ConfigureAwait(true);
@@ -44,10 +45,22 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
         {
             return;
         }
+#pragma warning disable CA1031 // why: a socket that dies without a close frame, or a frame that breaks the reader, must end in a drop (retry, 30 s rule, focus to the list), never leave the pane Attached
+        catch (Exception)
+        {
+            broke = true;
+        }
+#pragma warning restore CA1031
         finally
         {
             _link = null;
             await link.DisposeAsync().ConfigureAwait(true);
+        }
+
+        if (broke)
+        {
+            view.SocketDropped();
+            return;
         }
 
         view.SocketClosed(link.CloseCode ?? 1006);
@@ -90,6 +103,7 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
     {
         await foreach (var message in link.Read(cancellationToken).ConfigureAwait(true))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             switch (message.Kind)
             {
                 case TerminalServerKind.Ready:
