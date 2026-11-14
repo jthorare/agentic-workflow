@@ -1,9 +1,11 @@
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -147,6 +149,78 @@ public sealed class GraphNodeCardTests
         Assert.True(dashed.IsVisible);
         Assert.Equal(rest, Colour(Face(card).BorderBrush));
         window.Close();
+        return true;
+    });
+
+    // What is DRAWN, not what the ring Border says (#3234): the card sits 16 px inside a panel, rendered at 4x, and a pixel on each ring's straight top edge is read back. The selected ring's
+    // outer edge is 5 px above the card (gap 3 + 2 px stroke), its band 3 to 5 px above; the focus ring's outer edge is 8 px above (gap 6 + 2), its band 6 to 8 px above. Real drawing
+    // needs AW_UI_FRAMES=1, as in RowGlyphSpecTests.
+    private static readonly bool _draws = string.Equals(Environment.GetEnvironmentVariable("AW_UI_FRAMES"), "1", StringComparison.Ordinal);
+
+    private static (byte R, byte G, byte B) DrawnAboveCard(Action<GraphNodeCard> set, double above, bool focus)
+    {
+        const int Scale = 4;
+        const double Pad = 16;
+        var card = new GraphNodeCard { Title = "Ask the agent", Kind = "run_agent", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top };
+        set(card);
+        var host = new Border { Background = Brushes.Black, Padding = new Thickness(Pad), Child = card };
+        var window = new Window { Content = host, Width = 232, Height = 96 };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+        if (focus)
+        {
+            _ = card.Focus(NavigationMethod.Tab);
+            Dispatcher.UIThread.RunJobs();
+            window.UpdateLayout();
+        }
+
+        using var bitmap = new RenderTargetBitmap(new PixelSize(232 * Scale, 96 * Scale), new Vector(96 * Scale, 96 * Scale));
+        bitmap.Render(host);
+        using var stream = new MemoryStream();
+        bitmap.Save(stream, PngBitmapEncoderOptions.Default);
+        stream.Position = 0;
+        using var read = WriteableBitmap.Decode(stream);
+        using var frame = read.Lock();
+        var bytes = new byte[232 * Scale * 4];
+        var row = (int)((Pad - above) * Scale);
+        Marshal.Copy(frame.Address + (row * frame.RowBytes), bytes, 0, bytes.Length);
+        var at = (int)((Pad + 100) * Scale) * 4;   // the middle of the card's top edge
+        window.Close();
+        return (bytes[at + 2], bytes[at + 1], bytes[at]);
+    }
+
+    private static bool Near((byte R, byte G, byte B) got, string hex)
+    {
+        var want = Color.Parse(hex);
+        return Math.Abs(got.R - want.R) <= 8 && Math.Abs(got.G - want.G) <= 8 && Math.Abs(got.B - want.B) <= 8;
+    }
+
+    [Fact]
+    public async Task The_selected_ring_is_drawn_3_to_5_px_above_the_card_in_Primary() => await OnUi(() =>
+    {
+        if (!_draws)
+        {
+            return true;
+        }
+
+        var got = DrawnAboveCard(c => c.IsSelected = true, above: 4, focus: false);
+
+        Assert.True(Near(got, "#5e6ad2"), $"the pixel 4 px above the card's top edge is ({got.R};{got.G};{got.B}), the selected ring is #5e6ad2");
+        return true;
+    });
+
+    [Fact]
+    public async Task The_focus_ring_is_drawn_6_to_8_px_above_the_card_in_PrimaryHover() => await OnUi(() =>
+    {
+        if (!_draws)
+        {
+            return true;
+        }
+
+        var got = DrawnAboveCard(_ => { }, above: 7, focus: true);
+
+        Assert.True(Near(got, "#828fff"), $"the pixel 7 px above the card's top edge is ({got.R};{got.G};{got.B}), the focus ring is #828fff");
         return true;
     });
 }
