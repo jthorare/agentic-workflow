@@ -303,7 +303,7 @@ public sealed class GetWholeMapTests : IDisposable
 
         Assert.Equal(WholeMapDetail.Nodes, view.Detail);
         Assert.Null(view.Fallback);
-        Assert.Equal("feature:billing feature:billing.invoices surface:screen/invoices", string.Join(' ', view.Nodes!.Select(n => n.Key.Value)));
+        Assert.Equal("feature:billing.invoices feature:billing surface:screen/invoices", string.Join(' ', view.Nodes!.Select(n => n.Key.Value)));
         Assert.Equal(2, view.Edges!.Count);
         Assert.Equal(("feature:billing", false, 3, 2), (view.Area!.Key, view.Area.Truncated, view.Area.Counts.Nodes, view.Area.Counts.Edges));
         Assert.Equal((6, 4), (view.Counts.Nodes, view.Areas.Count));
