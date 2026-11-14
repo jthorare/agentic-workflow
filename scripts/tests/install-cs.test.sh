@@ -488,6 +488,19 @@ mv "$WORK/J.cs.before" "$REPO/src/Judge/Aw.Judge.Host/J.cs"  # copy back, not an
 check "git failing in the per-binary hashes: the publish exits 1" "$fgrc" "1"
 has "git failing in the per-binary hashes: says which step failed" "$fgout" "git ls-files failed"
 
+# (a3) Follow-up to #3218: the same for `git hash-object`, which the stamp and every per-binary hash pipe into sha256. A hash-object that dies
+# (137, killed) under pipefail ended the script silently. The stub fails every hash-object, so the stamp's own call fails first.
+mkdir "$WORK/failhash"
+cat > "$WORK/failhash/git" <<STUB
+#!/usr/bin/env bash
+case " \$* " in *" hash-object "*) exit 137 ;; esac
+exec "$REALGIT" "\$@"
+STUB
+chmod +x "$WORK/failhash/git"
+fhout="$(PATH="$WORK/failhash:$PATH" bash "$INSTALL" --publish 2>&1)" && fhrc=0 || fhrc=$?
+check "git hash-object failing: the publish exits 1" "$fhrc" "1"
+has "git hash-object failing: says which step failed" "$fhout" "git hash-object failed"
+
 # (b) scripts/heavy.sh only: nothing is published, the new build has the new heavy
 echo "# a comment" >> "$REPO/scripts/heavy.sh"
 run_pl; S2="$NB"
