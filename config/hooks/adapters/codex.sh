@@ -7,7 +7,7 @@
 #
 # Codex's hook protocol is Claude Code's with a few differences this adapter
 # absorbs (see README.md in this directory for sources):
-#   - exit 2 reads the reason from STDERR (our safety hooks print it on stdout)
+#   - exit 2 reads the reason from STDERR (our safety hooks print it there; older ones used stdout, so the adapter joins both)
 #   - Stop / SubagentStop reject plain-text stdout (JSON or nothing)
 #   - shell may arrive as exec_command/shell with tool_input.cmd or an argv array
 #   - spawn_agent (matched as Agent) carries message/agent_type/task_name, not
