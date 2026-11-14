@@ -405,6 +405,19 @@ check "the pack copy did not touch the checkout" "$(git -C "$REPO" status --porc
 out="$(bash "$INSTALL" --publish 2>&1)"
 has "second run says the SDK package is current" "$out" "toolkit SDK package is current"
 check "second run packs nothing" "$(packs)" "1"
+# Follow-up to #3218: a git that dies on the pack path's own `ls-files` (the only call that names src/Toolkit) must stop with a message.
+REALGIT="$(command -v git)"
+mkdir "$WORK/failpack"
+cat > "$WORK/failpack/git" <<STUB
+#!/usr/bin/env bash
+case " \$* " in *" ls-files "*src/Toolkit*) exit 137 ;; esac
+exec "$REALGIT" "\$@"
+STUB
+chmod +x "$WORK/failpack/git"
+fpout="$(PATH="$WORK/failpack:$PATH" bash "$INSTALL" --publish 2>&1)" && fprc=0 || fprc=$?
+check "git ls-files failing on the pack path: the publish exits 1" "$fprc" "1"
+has "git ls-files failing on the pack path: says which step failed" "$fpout" "git ls-files failed while listing the toolkit SDK inputs"
+check "git ls-files failing on the pack path: packs nothing" "$(packs)" "1"
 echo 'class B {}' >> "$REPO/src/Toolkit/Aw.Sindri.Toolkit/A.cs"
 sleep 1
 bash "$INSTALL" --publish > /dev/null 2>&1
