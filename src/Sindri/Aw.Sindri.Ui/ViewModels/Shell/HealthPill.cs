@@ -62,6 +62,9 @@ internal sealed class HealthPill : ObservableObject
     /// <summary>True when the state has a glyph; while connecting it has none, and the pill drops the glyph's slot (S1).</summary>
     public bool HasGlyph => Glyph != StateGlyph.None;
 
+    /// <summary>True while the shell is down and the app is starting Sindri: the pill reads Starting, neutral, with the busy mark (#3672).</summary>
+    public bool IsStarting { get; private set => Set(ref field, value); }
+
     /// <summary>True when the pill shows an age after its word.</summary>
     public bool HasAge => Age.Length > 0;
 
@@ -92,8 +95,10 @@ internal sealed class HealthPill : ObservableObject
     /// <param name="notResponding">True after three failed refreshes while stale.</param>
     /// <param name="health">The status's health (E-14), or null before API P2.</param>
     /// <param name="profile">What the profile file says beside the server's word: missing or unreadable.</param>
-    internal void Show(ShellState state, TimeSpan age, bool notResponding, HealthView? health = null, PillProfile profile = default)
+    /// <param name="starting">True while the app is starting Sindri.</param>
+    internal void Show(ShellState state, TimeSpan age, bool notResponding, HealthView? health = null, PillProfile profile = default, bool starting = false)
     {
+        IsStarting = starting && state == ShellState.NotRunning;
         var normal = NormalWord(health, profile);
         (Glyph, Word, Age) = Words(state, age, normal);
         (ProcessGlyph, ProcessWord, _) = Words(state, age, NormalWord(health, profile with { Unreadable = false }));

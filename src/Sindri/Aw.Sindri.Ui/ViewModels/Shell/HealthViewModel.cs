@@ -284,10 +284,16 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
         }
     }
 
+    /// <summary>The app's start state changed (#3672): while it starts Sindri, the pill reads Starting.</summary>
+    /// <param name="starting">True while a start runs.</param>
+    internal void SetStarting(bool starting) => _starting = starting;   // stub (red): the pill is not refreshed yet
+
+    private bool _starting;
+
     // The pill for the state now (under the gate): its age counts from the last event, status or answered ping.
     private void Word()
     {
-        Pill.Show(State, clock.GetUtcNow() - (_projectedAt ?? _heard), _failedRefreshes >= NotRespondingAfter, _health, new HealthPill.PillProfile(IsProfileMissing, IsProfileUnreadable));
+        Pill.Show(State, clock.GetUtcNow() - (_projectedAt ?? _heard), _failedRefreshes >= NotRespondingAfter, _health, new HealthPill.PillProfile(IsProfileMissing, IsProfileUnreadable), _starting);
         StripName = Pill.IsDataStale ? HealthLine + " · " + Labels.Stale : HealthLine;
         ShowSystemState();
     }

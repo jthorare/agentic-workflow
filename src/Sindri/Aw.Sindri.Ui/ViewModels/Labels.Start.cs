@@ -14,6 +14,17 @@ internal static partial class Labels
     /// <summary>The state while the app waits for Sindri.</summary>
     internal const string StartingSindri = "Starting Sindri…";
 
+    /// <summary>The heading and the pill's word while a start runs (#3672).</summary>
+    internal const string StartingWord = "Starting";
+
+    /// <summary>The details line while a start runs: "Waiting for Sindri · 4 s" (#3663).</summary>
+    /// <param name="seconds">Whole seconds since the start.</param>
+    internal static string WaitingFor(int seconds) => seconds.ToString(CultureInfo.InvariantCulture);   // stub (red)
+
+    /// <summary>The details line from 15 s on: "Still starting · 17 s" (#3663).</summary>
+    /// <param name="seconds">Whole seconds since the start.</param>
+    internal static string StillStarting(int seconds) => seconds.ToString(CultureInfo.InvariantCulture);   // stub (red)
+
     /// <summary>The Retry button after a start didn't answer.</summary>
     internal const string Retry = "Retry";
 

@@ -52,6 +52,7 @@ internal sealed partial class ShellViewModel : ObservableObject
     internal ShellViewModel(IEndpointRecordSource records, ISindriApi api, TimeProvider clock, Preferences preferences, IClipboard clipboard, IMotionPreference? motion = null, WindowPorts? window = null)
     {
         Start = new SindriStartViewModel((window ?? WindowPorts.None).Starter, clock, (window ?? WindowPorts.None).Log);
+        Start.PropertyChanged += OnStartChanged;
         _store = preferences;
         _clock = clock;
         Health = new HealthViewModel(records, api, clock, clipboard);

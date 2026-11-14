@@ -552,6 +552,9 @@ public sealed class ShellWindowTests : IDisposable
 
         Assert.Equal("Starting Sindri…", Text(window, "StartMessageText"));
         Assert.Equal((false, false, false), (Visible(window, "ReasonText"), Visible(window, "ReasonDetailText"), Visible(window, "LooksAgainText")));
+        Assert.Equal(("Starting", false, true), (Text(window, "NotRunningText"), Visible(window, "NotRunningMark"), Visible(window, "StartingSpinner")));
+        Assert.Equal(("Starting", false, true), (Text(window, "HealthPillText"), Visible(window, "PillGlyph"), Visible(window, "PillSpinner")));
+        Assert.Equal("Waiting for Sindri · 0 s", Text(window, "StartDetailsText"));
     });
 
     private sealed class StartedStarter : ISindriStarter

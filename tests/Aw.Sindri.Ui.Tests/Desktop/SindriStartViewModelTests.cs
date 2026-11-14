@@ -183,6 +183,79 @@ public sealed class SindriStartViewModelTests : IDisposable
     }
 
     [Fact]
+    public void The_details_line_counts_up_each_second_while_starting()
+    {
+        var clock = new FakeTimeProvider();
+        var model = new SindriStartViewModel(new FakeStarter(), clock);
+        model.Begin();
+        var first = model.Details;
+
+        clock.Advance(TimeSpan.FromSeconds(1));
+        var one = model.Details;
+        clock.Advance(TimeSpan.FromSeconds(3));
+
+        Assert.Equal(("Waiting for Sindri · 0 s", "Waiting for Sindri · 1 s", "Waiting for Sindri · 4 s"), (first, one, model.Details));
+    }
+
+    [Fact]
+    public void After_15_s_it_says_still_starting()
+    {
+        var clock = new FakeTimeProvider();
+        var model = new SindriStartViewModel(new FakeStarter(), clock);
+        model.Begin();
+
+        clock.Advance(TimeSpan.FromSeconds(14));
+        var before = model.Details;
+        clock.Advance(TimeSpan.FromSeconds(1));
+        var at15 = model.Details;
+        clock.Advance(TimeSpan.FromSeconds(2));
+
+        Assert.Equal(("Waiting for Sindri · 14 s", "Still starting · 15 s", "Still starting · 17 s"), (before, at15, model.Details));
+    }
+
+    [Fact]
+    public void The_timer_stops_when_the_start_ends()
+    {
+        var clock = new FakeTimeProvider();
+        var failed = new SindriStartViewModel(new FakeStarter { Error = "SND-CLI-002 exec: x" }, clock);
+        failed.Begin();
+        clock.Advance(TimeSpan.FromSeconds(30));
+        var ended = failed.Details;
+        clock.Advance(TimeSpan.FromSeconds(5));
+
+        var answered = new SindriStartViewModel(new FakeStarter(), clock);
+        answered.Begin();
+        answered.Observe(ShellState.Normal);
+        clock.Advance(TimeSpan.FromSeconds(5));
+
+        Assert.Equal((ended, string.Empty), (failed.Details, answered.Details));
+    }
+
+    [Fact]
+    public void The_heading_says_Starting_while_a_start_runs()
+    {
+        var clock = new FakeTimeProvider();
+        var idle = new SindriStartViewModel(new FakeStarter(), clock).Heading;
+        var model = new SindriStartViewModel(new FakeStarter(), clock);
+        model.Begin();
+
+        Assert.Equal((Labels.NotRunning, "Starting", true), (idle, model.Heading, model.IsStarting));
+    }
+
+    [Fact]
+    public void Not_running_with_the_red_mark_shows_only_after_a_failed_start()
+    {
+        var clock = new FakeTimeProvider();
+        var model = new SindriStartViewModel(new FakeStarter { Error = "SND-CLI-002 exec: x" }, clock);
+        model.Begin();
+        clock.Advance(TimeSpan.FromSeconds(30));
+        var broken = new SindriStartViewModel(new FakeStarter { Outcome = SindriStartOutcome.NotInstalled }, clock);
+        broken.Begin();
+
+        Assert.Equal((StartStage.DidntStart, Labels.NotRunning, false, Labels.NotRunning, false), (model.Stage, model.Heading, model.IsStarting, broken.Heading, broken.IsStarting));
+    }
+
+    [Fact]
     public void A_later_outage_shows_the_button_and_starts_nothing()
     {
         var starter = new FakeStarter();

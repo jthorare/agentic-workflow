@@ -17,6 +17,9 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
     /// <summary>How long the app waits for Sindri to answer after a start.</summary>
     internal static readonly TimeSpan Wait = TimeSpan.FromSeconds(30);
 
+    /// <summary>From this long on, the details line says the start is slow.</summary>
+    internal static readonly TimeSpan SlowAfter = TimeSpan.FromSeconds(15);
+
     private const string AlreadyRunningCode = "SND-LEASE-001";
     private readonly ILogger _log = log ?? NullLogger.Instance;
     private SynchronizationContext? _ui;
@@ -24,6 +27,8 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
     private int _attempt;
     private int _launch;
     private bool _begun;
+    private ITimer? _timer;
+    private DateTimeOffset _startedAt;
 
     /// <summary>Which state shows.</summary>
     public StartStage Stage { get; private set => Set(ref field, value); }
@@ -39,6 +44,12 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
 
     /// <summary>True whenever a start state shows (Starting, Didn't start, Already starting, not installed): the page's own Not running reason (no endpoint record), its path and the Looks again line would answer the same question a second time. Only the plain page keeps them.</summary>
     public bool HidesNotRunningReason => Stage != StartStage.Idle;
+
+    /// <summary>True while a start runs or was refused as already running: the card and the pill read Starting in the neutral colour, not Not running with the red mark (#3672).</summary>
+    public bool IsStarting => Stage is StartStage.Starting or StartStage.AlreadyStarting;
+
+    /// <summary>The card's heading.</summary>
+    public string Heading => Labels.NotRunning;   // stub (red)
 
     /// <summary>True when <see cref="Details"/> has words.</summary>
     public bool HasDetails => Details.Length > 0;
@@ -128,7 +139,10 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
             return;
         }
 
-        Show(StartStage.Starting, Labels.StartingSindri, string.Empty, string.Empty);
+        _startedAt = clock.GetUtcNow();
+        Show(StartStage.Starting, Labels.StartingSindri, Labels.WaitingFor(0), string.Empty);
+        _timer?.Dispose();
+        _timer = clock.CreateTimer(OnTick, state: null, dueTime: TimeSpan.FromSeconds(1), period: TimeSpan.FromSeconds(1));
         _ = Expire(attempt);
     }
 
@@ -141,6 +155,33 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
         {
             Show(StartStage.Idle, CanStart ? Labels.StartSentence : string.Empty, string.Empty, CanStart ? Labels.StartSindri : string.Empty);
         }
+    }
+
+    // The 1 s timer fires on a pool thread: the line changes on the UI context.
+    private void OnTick(object? state)
+    {
+        if (_ui is { } ui)
+        {
+            ui.Post(static self => ((SindriStartViewModel)self!).Tick(), this);   // why: Post's state is the object it was handed
+        }
+        else
+        {
+            Tick();
+        }
+    }
+
+    // The details line follows the clock while Starting; from SlowAfter it says the start is slow.
+    private void Tick()
+    {
+        if (Stage != StartStage.Starting)
+        {
+            return;
+        }
+
+        var elapsed = clock.GetUtcNow() - _startedAt;
+        var seconds = (int)elapsed.TotalSeconds;
+        Details = elapsed >= SlowAfter ? Labels.StillStarting(seconds) : Labels.WaitingFor(seconds);
+        OnChanged(nameof(HasDetails));
     }
 
     // The started program ended while the page waits: say why now, not after the 30 s.
@@ -204,12 +245,20 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
 
     private void Show(StartStage stage, string message, string details, string primary)
     {
+        if (stage != StartStage.Starting)
+        {
+            _timer?.Dispose();
+            _timer = null;
+        }
+
         Stage = stage;
         Message = message;
         Details = details;
         Primary = primary;
         OnChanged(nameof(HasPrimary));
         OnChanged(nameof(HidesNotRunningReason));
+        OnChanged(nameof(IsStarting));
+        OnChanged(nameof(Heading));
         OnChanged(nameof(HasMessage));
         OnChanged(nameof(HasDetails));
         OnChanged(nameof(IsIdle));
