@@ -1,0 +1,39 @@
+repo: agentic-workflow
+commit: b78ba8ae3fcf13b9c912b6c1afe1f2a963fc4461
+source: https://github.com/jthorare/agentic-workflow.git
+# Paths are relative to the repo root of a clone at `commit`. `touch` = a correct change edits it (or, for a "where is X" question, the file that does X).
+# The three questions come from meta's real-app pass of 2026-11-14 (#3673): today's answer to each is 120+ files in directory order.
+questions:
+  - id: rq-01
+    issue: 3673
+    question: "Where does a heavy job wait for a slot? Find the code that queues a dotnet job until one of the heavy slots is free."
+    plain: "Where does a heavy job wait for a slot?"
+    touch:
+      - path: scripts/heavy.sh
+        why: "the heavy wrapper: takes a slot under the lock, waits in the queue when the slots are taken and releases it when the job exits"
+    read: []
+    decoys: []
+  - id: rq-02
+    issue: 3673
+    question: "Add a field to the payload of a Sindri ledger event: declare it in the event catalog and carry it through the ledger event."
+    plain: "Add a field to the Sindri ledger events"
+    touch:
+      - path: src/Sindri/Aw.Sindri.Core/Events/EventCatalog.cs
+        why: "the catalog of every event type with its public payload fields; a new field is declared here"
+      - path: src/Sindri/Aw.Sindri.Core/Ledger/LedgerEvent.cs
+        why: "the ledger event record every event is written as; the field travels in it"
+    read:
+      - path: src/Sindri/Aw.Sindri.Infrastructure/Ledger/LedgerEventMapper.cs
+        why: "maps a ledger row to and from the event; shows how a payload field is read back"
+    decoys: []
+  - id: rq-03
+    issue: 3673
+    question: "How does aw-meta lane-recycle send keys into a lane's tmux pane: the command that runs it and the pane adapter that types."
+    plain: "How does aw-meta lane-recycle type into a pane?"
+    touch:
+      - path: src/Meta/Aw.Meta.Host/Commands/LaneRecycleCommand.cs
+        why: "the lane-recycle command: builds the steps (clear, restart) and sends each to the lane's pane"
+      - path: src/Meta/Aw.Meta.Infrastructure/Processes/TmuxLanePane.cs
+        why: "the tmux adapter that types text and keys into the pane"
+    read: []
+    decoys: []
