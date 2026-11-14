@@ -181,4 +181,27 @@ public sealed class StartCardTests
         Assert.True(Contrast(Brush("Brush.Primary"), canvas) >= 3, "selected border on canvas");
         return true;
     });
+
+    // Owner call (#3648): the card grows to fit its words (wrap, a minimum height, no ellipsis).
+    [Fact]
+    public async Task A_long_description_wraps_to_a_second_line_and_the_card_gets_taller() => await OnUi(() =>
+    {
+        static StartCard Make(string description) => new()
+        {
+            Content = new StackPanel { Children = { new TextBlock { Text = "From a template" }, new TextBlock { Text = description } } },
+        };
+        var shortCard = Make("Pick one.");
+        var longCard = Make("Pick a ready-made graph and change it to fit the way your team works, then run it on a schedule.");
+        var window = new Window { Content = new StackPanel { Margin = new Thickness(20), Spacing = 12, Children = { shortCard, longCard } }, Width = 300, Height = 400 };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+        var words = longCard.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Text!.StartsWith("Pick a ready", StringComparison.Ordinal));
+        var oneLine = shortCard.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Text == "Pick one.").Bounds.Height;
+
+        Assert.True(words.Bounds.Height >= (2 * oneLine) - 1, string.Create(CultureInfo.InvariantCulture, $"the description is {words.Bounds.Height} px tall, one line is {oneLine}"));
+        Assert.True(longCard.Bounds.Height > shortCard.Bounds.Height, string.Create(CultureInfo.InvariantCulture, $"the long card is {longCard.Bounds.Height} px tall, the short one {shortCard.Bounds.Height}"));
+        window.Close();
+        return true;
+    });
 }
