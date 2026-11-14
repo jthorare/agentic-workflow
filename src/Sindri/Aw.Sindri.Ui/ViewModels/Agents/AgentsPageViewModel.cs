@@ -33,6 +33,9 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
     /// <summary>Raised when the page should put focus on a row or its Focus line.</summary>
     internal event EventHandler<AgentFocusEventArgs>? FocusRequested;
 
+    /// <summary>Raised when N asks for the New agent form.</summary>
+    internal event EventHandler? NewAgentRequested;
+
     /// <summary>The API the page reads.</summary>
     internal ISindriApi Api { get; } = api;
 
@@ -184,6 +187,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         Patch.To(ProblemLines, [.. list.Problems.Select(p => p.Text)]);
         ReplaceChoices(list);
         Apply(before, list);
+        SelectPending();
     }
 
     private void Unavailable(string detail)

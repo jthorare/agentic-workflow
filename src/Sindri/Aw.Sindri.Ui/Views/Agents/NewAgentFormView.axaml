@@ -1,0 +1,103 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ag="using:Aw.Sindri.Ui.ViewModels.Agents"
+             x:Class="Aw.Sindri.Ui.Views.Agents.NewAgentFormView"
+             x:DataType="ag:NewAgentFormViewModel">
+  <!-- The New agent form (agents spec §15.4, DG2 frames f1 to f10): Prompt, Repo, Agent and the New worktree switch, then Start. An error sits under the field it belongs to,
+       in words; the foot error has Retry; the line after a background start has Show it. Esc closes and keeps the text; there is no Cancel button. -->
+  <Grid RowDefinitions="Auto,*,Auto" x:Name="NewAgentForm">
+    <Grid ColumnDefinitions="*,Auto" Margin="16,14">
+      <Border AutomationProperties.Name="{Binding HeadingText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body-strong" Text="{Binding HeadingText}" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <Border Grid.Column="1" Classes="kbd" AutomationProperties.AccessibilityView="Raw">
+        <TextBlock Classes="kbd" Text="{Binding EscText}" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+    </Grid>
+
+    <ScrollViewer Grid.Row="1">
+      <StackPanel Spacing="{StaticResource Space.MD}" Margin="16,0" IsEnabled="{Binding !IsStarting}">
+        <StackPanel Spacing="4">
+          <TextBlock Classes="caption muted" Text="{Binding PromptLabel}" AutomationProperties.AccessibilityView="Raw" />
+          <TextBox x:Name="NewAgentPrompt" Text="{Binding Prompt, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="112" MaxHeight="240"
+                   AutomationProperties.Name="{Binding PromptLabel}" />
+          <Border HorizontalAlignment="Right" AutomationProperties.Name="{Binding PromptCount}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+            <TextBlock Classes="caption subtle" Text="{Binding PromptCount}" AutomationProperties.AccessibilityView="Raw" />
+          </Border>
+          <Border x:Name="NewAgentPromptError" Classes="error-panel" IsVisible="{Binding HasPromptError}" AutomationProperties.Name="{Binding PromptError}"
+                  AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+            <TextBlock Classes="caption" Text="{Binding PromptError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          </Border>
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+          <TextBlock Classes="caption muted" Text="{Binding RepoLabel}" AutomationProperties.AccessibilityView="Raw" />
+          <ComboBox x:Name="NewAgentRepo" ItemsSource="{Binding Repos}" SelectedItem="{Binding Repo, Mode=TwoWay}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding RepoLabel}">
+            <ComboBox.ItemTemplate>
+              <DataTemplate x:DataType="ag:RepoChoice">
+                <TextBlock Classes="body" Text="{Binding Name}" AutomationProperties.AccessibilityView="Raw" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+          <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasRepoNote}">
+            <Border AutomationProperties.Name="{Binding RepoNote}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+              <TextBlock Classes="caption subtle" Text="{Binding RepoNote}" AutomationProperties.AccessibilityView="Raw" />
+            </Border>
+          </StackPanel>
+          <Border x:Name="NewAgentRepoError" Classes="error-panel" IsVisible="{Binding HasRepoError}" AutomationProperties.Name="{Binding RepoError}"
+                  AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+            <TextBlock Classes="caption" Text="{Binding RepoError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          </Border>
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+          <TextBlock Classes="caption muted" Text="{Binding AgentLabel}" AutomationProperties.AccessibilityView="Raw" />
+          <ComboBox x:Name="NewAgentAgent" ItemsSource="{Binding Agents}" SelectedItem="{Binding Agent, Mode=TwoWay}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding AgentLabel}">
+            <ComboBox.ItemTemplate>
+              <DataTemplate x:DataType="ag:AgentChoice">
+                <TextBlock Classes="body" Text="{Binding Label}" AutomationProperties.AccessibilityView="Raw" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding HasAgentError}">
+            <Border x:Name="NewAgentAgentError" Classes="error-panel" AutomationProperties.Name="{Binding AgentError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+              <TextBlock Classes="caption" Text="{Binding AgentError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            </Border>
+            <Button x:Name="NewAgentCopyCommand" Grid.Column="1" VerticalAlignment="Top" IsVisible="{Binding HasSignInCommand}" Click="OnCopyCommand" AutomationProperties.Name="{Binding CopyCommandText}">
+              <TextBlock Classes="button" Text="{Binding CopyCommandText}" AutomationProperties.AccessibilityView="Raw" />
+            </Button>
+          </Grid>
+        </StackPanel>
+
+        <ToggleSwitch x:Name="NewAgentWorktree" IsChecked="{Binding NewWorktree, Mode=TwoWay}" OnContent="{Binding WorktreeLabel}" OffContent="{Binding WorktreeLabel}"
+                      AutomationProperties.Name="{Binding WorktreeLabel}" />
+      </StackPanel>
+    </ScrollViewer>
+
+    <StackPanel Grid.Row="2" Spacing="8" Margin="16,12">
+      <Border x:Name="NewAgentStatus" IsVisible="{Binding StatusText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding StatusText}"
+              AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption muted" Text="{Binding StatusText}" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <Border x:Name="NewAgentFootLine" IsVisible="{Binding HasFootLine}" AutomationProperties.Name="{Binding FootLine}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <StackPanel Orientation="Horizontal" Spacing="8" AutomationProperties.AccessibilityView="Raw">
+          <TextBlock Classes="caption" Text="{Binding FootLine}" AutomationProperties.AccessibilityView="Raw" />
+          <Button x:Name="NewAgentShowIt" Classes="link" Click="OnShowIt" AutomationProperties.Name="{Binding ShowItText}">
+            <TextBlock Classes="caption" Text="{Binding ShowItText}" AutomationProperties.AccessibilityView="Raw" />
+          </Button>
+        </StackPanel>
+      </Border>
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding HasFootError}">
+        <Border x:Name="NewAgentFootError" Classes="error-panel" AutomationProperties.Name="{Binding FootError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption" Text="{Binding FootError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Button x:Name="NewAgentRetry" Grid.Column="1" VerticalAlignment="Top" Click="OnRetry" AutomationProperties.Name="{Binding RetryText}">
+          <TextBlock Classes="button" Text="{Binding RetryText}" AutomationProperties.AccessibilityView="Raw" />
+        </Button>
+      </Grid>
+      <Button x:Name="NewAgentStart" Classes="command-control primary" HorizontalAlignment="Right" IsEnabled="{Binding CanStart}" Click="OnStart" AutomationProperties.Name="{Binding StartText}">
+        <TextBlock Classes="button" Text="{Binding StartText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+      </Button>
+    </StackPanel>
+  </Grid>
+</UserControl>

@@ -327,6 +327,12 @@
           </LayoutTransformControl>
         </Button>
 
+        <!-- The New agent form (agents spec §15.4): a 440 px sheet at the right; Esc closes it and keeps the text. -->
+        <Border x:Name="NewAgentSheet" Classes="sheet" IsVisible="{Binding NewAgent.IsOpen}" HorizontalAlignment="Right" Width="440"
+                AutomationProperties.Name="New agent" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+          <agv:NewAgentFormView DataContext="{Binding NewAgent}" />
+        </Border>
+
         <!-- The detail sheet (§3.2): over the page at the right, 420–760 px wide; below 1100 px it covers the page. -->
         <Border x:Name="Sheet" Classes="sheet focus-region" IsVisible="{Binding IsSheetShown}" Focusable="True"
                 AutomationProperties.Name="{Binding SheetName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
