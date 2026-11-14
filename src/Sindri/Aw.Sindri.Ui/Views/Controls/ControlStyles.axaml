@@ -537,16 +537,12 @@
        never a keyboard stop (the nodes are); the coverage strip is a quiet button that lifts to Surface2 under the pointer, its
        words in InkMuted with the lead in Ink. -->
   <!-- ZoomBorder as the Workflows graph's stage (#3234): the hand at rest and over it, a four-way move cursor while a drag pans (Avalonia has no grab cursor); an opt-in Tab stop
-       (IsKeyboardFocusable) shows the 2 px PrimaryHover ring for the keyboard only, the SelectableTile recipe. -->
+       (IsKeyboardFocusable) shows the app-wide focus ring for the keyboard only (no border of its own: it would draw a second ring and move the content), like SelectableTile. -->
   <Style Selector="controls|ZoomBorder">
     <Setter Property="Cursor" Value="Hand" />
   </Style>
   <Style Selector="controls|ZoomBorder:panning">
     <Setter Property="Cursor" Value="SizeAll" />
-  </Style>
-  <Style Selector="controls|ZoomBorder:focus-visible">
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
-    <Setter Property="BorderThickness" Value="2" />
   </Style>
   <Style Selector="controls|GraphEdgesControl">
     <Setter Property="Focusable" Value="False" />
