@@ -17,6 +17,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         List,
         Runs,
         Run,
+        Compare,
     }
 
     private const string RunAlreadyEnded = "SND-GRAPH-107";
@@ -201,7 +202,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     }
 
     /// <summary>Goes up one level: a run to its workflow's runs, runs to the list.</summary>
-    internal void Back() => SetLevel(_level == Level.Run ? Level.Runs : Level.List);
+    internal void Back() => SetLevel(_level is Level.Run or Level.Compare ? Level.Runs : Level.List);
 
     private void SetLevel(Level level)
     {
@@ -215,6 +216,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         OnChanged(nameof(IsList));
         OnChanged(nameof(IsRuns));
         OnChanged(nameof(IsRun));
+        OnChanged(nameof(IsCompare));
         NotifyStateButtons();
     }
 

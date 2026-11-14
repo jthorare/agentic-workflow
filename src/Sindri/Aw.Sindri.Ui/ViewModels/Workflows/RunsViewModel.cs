@@ -82,7 +82,34 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     public bool CanCompare => SelectedCount == 2;
 
     /// <summary>What to do when the ticks do not make two: "Tick one more run to compare" or "Compare takes two runs: untick one"; empty otherwise.</summary>
-    public string CompareHint => string.Empty;
+    public string CompareHint => SelectedCount switch { 1 => "Tick one more run to compare", >= 3 => "Compare takes two runs: untick one", _ => string.Empty };
+
+    /// <summary>True when there is a hint.</summary>
+    public bool HasCompareHint => CompareHint.Length > 0;
+
+    /// <summary>The block type of each step of the revision shown ("sum" to "code"), for the compare view's step kinds.</summary>
+    internal IReadOnlyDictionary<string, string> NodeKinds
+    {
+        get
+        {
+            var kinds = new Dictionary<string, string>(StringComparer.Ordinal);
+            if (Shown?.Spec is { ValueKind: JsonValueKind.Object } spec && spec.TryGetProperty("nodes", out var nodes) && nodes.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var node in nodes.EnumerateArray())
+                {
+                    if (node.TryGetProperty("id", out var id) && node.TryGetProperty("type", out var type) && id.GetString() is { } key && type.GetString() is { } kind)
+                    {
+                        kinds[key] = kind;
+                    }
+                }
+            }
+
+            return kinds;
+        }
+    }
+
+    /// <summary>The ticked runs, newest first, whether or not a filter hides them.</summary>
+    internal IReadOnlyList<RunRowViewModel> Ticked => [.. _all.Where(r => r.IsSelected)];
 
     /// <summary>"Compare 2".</summary>
     public string CompareText => Labels.WfCompare(2);
@@ -149,6 +176,8 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     {
         OnChanged(nameof(SelectedCount));
         OnChanged(nameof(CanCompare));
+        OnChanged(nameof(CompareHint));
+        OnChanged(nameof(HasCompareHint));
     }
 
     /// <summary>What the last Run now said (queued, skipped or refused), in words; empty otherwise.</summary>
