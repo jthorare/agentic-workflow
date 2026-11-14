@@ -117,7 +117,7 @@ internal sealed class GraphEdgesControl : Control, ICustomHitTest
         var before = line.Count > 1 ? line[^2].ToAvalonia() : edge.Route.Start.ToAvalonia();
         var angle = Math.Atan2(end.Y - before.Y, end.X - before.X);
         Point Wing(double turn) => new(end.X - (ArrowSize * Math.Cos(angle + turn)), end.Y - (ArrowSize * Math.Sin(angle + turn)));
-        return [end, Wing(-0.45), Wing(0.45)];
+        return [end, Wing(0.45), Wing(-0.45)];
     }
 
     private static FormattedText LabelText(string label, IBrush brush) =>
