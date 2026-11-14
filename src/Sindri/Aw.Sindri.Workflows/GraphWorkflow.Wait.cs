@@ -81,9 +81,9 @@ internal sealed partial class GraphWorkflow
     // why: the node's block ran as an activity and succeeded; what is left is the waiting, which only the workflow may do
     private async Task<GraphBlockOutcome> Park(GraphNode node, GraphBlockOutcome outcome)
     {
-        if (outcome.Status != NodeRunStatus.Succeeded)
+        if (outcome.Status != NodeRunStatus.Succeeded || outcome.Fenced)
         {
-            return outcome;
+            return outcome;   // why: a test run's block activity already answered the wait or the question (GraphTestWalk), so nothing parks
         }
 
         return node.Type switch

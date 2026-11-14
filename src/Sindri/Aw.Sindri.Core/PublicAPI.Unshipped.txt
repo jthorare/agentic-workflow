@@ -23839,3 +23839,19 @@ static Aw.Sindri.Core.Health.HealthSummary.WithProfileProblem(Aw.Sindri.Core.Hea
 Aw.Sindri.Core.Graph.Blocks.GraphTestBindings
 static Aw.Sindri.Core.Graph.Blocks.GraphTestBindings.Bound.get -> System.Collections.Generic.IReadOnlySet<System.Type!>!
 static Aw.Sindri.Core.Graph.Blocks.GraphTestBindings.ReadOnly.get -> System.Collections.Generic.IReadOnlySet<System.Type!>!
+Aw.Sindri.Core.Graph.Blocks.GraphTestRecorder
+static Aw.Sindri.Core.Graph.Blocks.GraphTestRecorder.Active.get -> bool
+static Aw.Sindri.Core.Graph.Blocks.GraphTestRecorder.Begin() -> System.Collections.Generic.IList<string!>!
+static Aw.Sindri.Core.Graph.Blocks.GraphTestRecorder.End() -> void
+static Aw.Sindri.Core.Graph.Blocks.GraphTestRecorder.Record(string! line) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphFence
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.Notify(Aw.Sindri.Core.Graph.Blocks.INotifyPort! live) -> Aw.Sindri.Core.Graph.Blocks.INotifyPort!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.CreateItem(Aw.Sindri.Core.Graph.Blocks.ICreateItemPort! live) -> Aw.Sindri.Core.Graph.Blocks.ICreateItemPort!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.Question(Aw.Sindri.Core.Graph.Blocks.IQuestionPort! live) -> Aw.Sindri.Core.Graph.Blocks.IQuestionPort!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.Http(Aw.Sindri.Core.Graph.Blocks.IGraphHttpPort! live) -> Aw.Sindri.Core.Graph.Blocks.IGraphHttpPort!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.Memory(Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort! live) -> Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.Seen(Aw.Sindri.Core.Graph.Blocks.IGraphSeenStore! live) -> Aw.Sindri.Core.Graph.Blocks.IGraphSeenStore!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.Model(Aw.Sindri.Core.Graph.Blocks.IGraphModelPort! live) -> Aw.Sindri.Core.Graph.Blocks.IGraphModelPort!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.Calls(Aw.Sindri.Core.Graph.Blocks.IGraphCallPort! live) -> Aw.Sindri.Core.Graph.Blocks.IGraphCallPort!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.ConnectionTools(Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort! live) -> Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.Toolkits(Aw.Sindri.Core.Toolkits.IRunningToolkits! live) -> Aw.Sindri.Core.Toolkits.IRunningToolkits!

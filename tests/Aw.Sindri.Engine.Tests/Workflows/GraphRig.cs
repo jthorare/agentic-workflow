@@ -65,7 +65,7 @@ internal sealed partial class GraphRig : IAsyncDisposable
         // why: the real wait polls on a clock; the fake one never moves while a node waits, so the caller gets the system clock
         var caller = new GraphWorkflowCaller(Workflows, Runs, starter, new InMemoryProfiles(), TimeProvider.System);
         Seen = new GraphTestBlocks.MemorySeen();
-        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), new ForEachBlock(forEachLimits is { } limits ? new FixedForEachLimits(limits) : new DefaultForEachLimits()), new CollectBlock(), new OnlyNewBlock(Seen), new RunWorkflowBlock(caller), new WorkflowCallTrigger(), new WaitBlock(clock), new AskOwnerBlock(Questions, clock), new NotifyBlock(Ports), new CreateItemBlock(Ports), .. Blocks.All()]);
+        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), new ForEachBlock(forEachLimits is { } limits ? new FixedForEachLimits(limits) : new DefaultForEachLimits()), new CollectBlock(), new OnlyNewBlock(Seen), new RunWorkflowBlock(caller), new WorkflowCallTrigger(), new WaitBlock(clock), new AskOwnerBlock(GraphFence.Question(Questions), clock), new NotifyBlock(GraphFence.Notify(Ports)), new CreateItemBlock(GraphFence.CreateItem(Ports)), .. Blocks.All()]);
         var options = new TemporalWorkerOptions(_taskQueue) { LoggerFactory = _log }
             .AddWorkflow<GraphWorkflow>()
             .AddWorkflow<GraphIterationWorkflow>()

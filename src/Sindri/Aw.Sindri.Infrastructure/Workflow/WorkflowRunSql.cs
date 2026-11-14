@@ -4,20 +4,23 @@ namespace Aw.Sindri.Infrastructure.Workflow;
 internal static class WorkflowRunSql
 {
     /// <summary>A run row (columns in <see cref="WorkflowRunMapper"/> order).</summary>
-    internal const string SelectRun = "SELECT id, workflow_id, revision, trigger, status, outputs, error, item_id, started_at, ended_at FROM workflow_run";
+    internal const string SelectRun = "SELECT id, workflow_id, revision, trigger, status, outputs, error, item_id, started_at, ended_at, mode, test_options FROM workflow_run";
 
     internal const string ById = SelectRun + " WHERE id = $id";
 
     internal const string InFlight = SelectRun + " WHERE workflow_id = $workflow AND status IN ('queued', 'running', 'waiting') ORDER BY started_at, id";
 
+    // why: the admit path counts live runs only, so a test run never takes a one-per-workflow slot or queues a live run (spec §3.2); InFlight keeps both for purge.
+    internal const string LiveInFlight = SelectRun + " WHERE workflow_id = $workflow AND mode = 'live' AND status IN ('queued', 'running', 'waiting') ORDER BY started_at, id";
+
     internal const string Recent = SelectRun + " WHERE workflow_id = $workflow ORDER BY started_at DESC, CAST(substr(id, instr(id, ':') + 1) AS INTEGER) DESC LIMIT $limit OFFSET $offset";
     internal const string Running = SelectRun + " WHERE status = 'running' ORDER BY started_at, id";
     internal const string QueuedWorkflows = "SELECT DISTINCT workflow_id FROM workflow_run WHERE status = 'queued' ORDER BY workflow_id";
 
-    internal const string LatestOfKind = SelectRun + " WHERE workflow_id = $workflow AND json_extract(trigger, '$.kind') = $kind ORDER BY CAST(substr(id, instr(id, ':') + 1) AS INTEGER) DESC LIMIT 1";
+    internal const string LatestOfKind = SelectRun + " WHERE workflow_id = $workflow AND json_extract(trigger, '$.kind') = $kind AND mode = 'live' ORDER BY CAST(substr(id, instr(id, ':') + 1) AS INTEGER) DESC LIMIT 1";
 
     internal const string InsertRun =
-        "INSERT INTO workflow_run (id, workflow_id, revision, trigger, status, outputs, error, item_id, started_at) VALUES ($id, $workflow, $revision, $trigger, $status, $outputs, $error, $item, $at)";
+        "INSERT INTO workflow_run (id, workflow_id, revision, trigger, status, outputs, error, item_id, started_at, mode, test_options) VALUES ($id, $workflow, $revision, $trigger, $status, $outputs, $error, $item, $at, $mode, $options)";
 
     internal const string SetItem = "UPDATE workflow_run SET item_id = $item WHERE id = $id AND item_id IS NULL";
 

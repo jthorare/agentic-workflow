@@ -15,5 +15,6 @@ namespace Aw.Sindri.Core.Views;
 /// <param name="LastNodeId">The node of the newest node event, or null before any.</param>
 /// <param name="ItemId">The item the run works for, or null.</param>
 /// <param name="Sequence">The ledger sequence of the newest event folded into the row.</param>
+/// <param name="Mode">'live' or 'test' (<see cref="Graph.Runs.WorkflowRunMode"/>), from 'workflow.run.started'; a row folded before the field existed reads live.</param>
 public sealed record WorkflowRunRow(WorkflowRunId Id, WorkflowId WorkflowId, int Revision, string Trigger, string Status, string? Error, DateTimeOffset StartedAt, DateTimeOffset? EndedAt,
-    NodeId? LastNodeId, ItemId? ItemId, long Sequence);
+    NodeId? LastNodeId, ItemId? ItemId, long Sequence, string Mode = Graph.Runs.WorkflowRunMode.Live);

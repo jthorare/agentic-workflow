@@ -1,5 +1,5 @@
 --------------------------- MODULE GraphWorkflow ---------------------------
-(* Graph run starts, the three concurrency modes, the end-of-run drain and cancel (issue 2258, PR 6).
+(* Graph run starts, the three concurrency modes, the end-of-run drain and cancel (issue 2258, PR 6), and a test run (mode = test, P4a): it takes no slot, queues behind nothing, blocks nothing and writes nothing outside.
    Triggers (some re-delivered with an already used run id) hit up to two workflows, each in one mode:
    "one" (one-per-workflow), "queue" or "unlimited".
    Code: GraphRunStarter.Start / Launch, SqliteWorkflowRunStore.Admit / InFlight / SetStatus, and the end-of-run drain the
@@ -14,9 +14,13 @@ CONSTANTS
     StartAtomic,       \* TRUE: the in-flight read and the insert are one step; FALSE (gap): two separate transactions
     InsertChecksId,    \* TRUE: Insert refuses a used id (SND-GRAPH-100); FALSE (gap): a blind insert
     DrainOldest,       \* TRUE: the end path starts the oldest Queued run; FALSE (gap): the newest
-    LaunchFailDrains   \* TRUE: a failed launch also starts the next Queued run; FALSE (gap): it does not
+    LaunchFailDrains,  \* TRUE: a failed launch also starts the next Queued run; FALSE (gap): it does not
+    TestTrig,          \* the one trigger that asks for a test run (mode = test, P4a, spec 2026-11-12 §3.2); 0 for none
+    TestCounts,        \* FALSE: Admit counts live runs only; TRUE (gap): a test run counts, so it blocks and queues live triggers
+    TestFenced         \* TRUE: a test run's write ports record and write nothing; FALSE (gap): a test run writes outside
 
 Triggers == 1..NTrig
+IsTest(t) == t = TestTrig
 Wf(t) == IF t <= NW1 THEN "w1" ELSE "w2"
 Id(t) == IF Redeliver /\ t = 2 THEN 1 ELSE t
 Mode(w) == IF w = "w1" THEN ModeW1 ELSE ModeW2
@@ -25,7 +29,7 @@ Open == {"queued", "running", "waiting"}
 Live == {"running", "waiting"}
 
 VARIABLES
-    rows,       \* workflow_run rows in insertion order: [id, wf, st, started, launched]
+    rows,       \* workflow_run rows in insertion order: [id, wf, st, started, launched, mode, wrote]
     pc,         \* per trigger: "idle", "insert" (read done, insert pending) or "done"
     bz,         \* per trigger: what its in-flight read saw (another run in flight)
     skipped, refused, drained   \* ghosts for the reachability witnesses
@@ -38,9 +42,10 @@ QueuedOf(rs, w) == {i \in 1..Len(rs) : rs[i].wf = w /\ rs[i].st = "queued"}
 Pick(S) == IF DrainOldest THEN CHOOSE i \in S : \A j \in S : i <= j
            ELSE CHOOSE i \in S : \A j \in S : i >= j
 
-\* The end path: in queue mode the oldest Queued run of the workflow starts (Running, not yet launched).
+\* The end path: in queue mode the oldest Queued run of the workflow starts (Running, not yet launched) once no live run of it runs.
 AfterEnd(rs, w) ==
     IF Mode(w) = "queue" /\ QueuedOf(rs, w) # {}
+       /\ ~(\E i \in 1..Len(rs) : rs[i].wf = w /\ rs[i].mode = "live" /\ rs[i].st \in Live)   \* PromoteOldestQueued: only when no live run is running or waiting (a test run ending frees nothing)
     THEN LET j == Pick(QueuedOf(rs, w))
          IN [rs EXCEPT ![j].st = "running", ![j].started = TRUE]
     ELSE rs
@@ -48,6 +53,7 @@ AfterEnd(rs, w) ==
 TypeOK ==
     /\ Len(rows) <= NTrig
     /\ \A i \in Rows : rows[i].st \in Open \cup Final /\ rows[i].started \in BOOLEAN /\ rows[i].launched \in BOOLEAN
+                      /\ rows[i].mode \in {"live", "test"} /\ rows[i].wrote \in BOOLEAN
     /\ pc \in [Triggers -> {"idle", "insert", "done"}]
     /\ bz \in [Triggers -> BOOLEAN]
 
@@ -59,7 +65,10 @@ Init ==
 
 \* What GraphRunStarter.Start reads: another run of the workflow in flight (queued, running or waiting; SqliteWorkflowRunStore.Admit,
 \* WorkflowRunSql.InFlight). The same id in flight is a re-delivery, so it is not "another run" (line 45). Unlimited never reads.
-Busy(t) == Mode(Wf(t)) # "unlimited" /\ \E i \in OpenOf(rows, Wf(t)) : rows[i].id # Id(t)
+\* A test run takes no slot and queues behind nothing, and a live trigger counts live rows only (WorkflowRunSql: the admit path filters mode = live).
+Busy(t) == /\ Mode(Wf(t)) # "unlimited"
+           /\ TestCounts \/ ~IsTest(t)
+           /\ \E i \in OpenOf(rows, Wf(t)) : rows[i].id # Id(t) /\ (TestCounts \/ rows[i].mode = "live")
 
 \* SqliteWorkflowRunStore.Decide: one-per-workflow skips while a run is in flight.
 Skips(t, b) == Mode(Wf(t)) = "one" /\ b
@@ -70,7 +79,8 @@ Insert(t, b) ==
     IF InsertChecksId /\ \E i \in Rows : rows[i].id = Id(t)
     THEN /\ rows' = rows /\ refused' = TRUE
     ELSE /\ rows' = Append(rows, [id |-> Id(t), wf |-> Wf(t), st |-> IF b THEN "queued" ELSE "running",
-                                  started |-> ~b, launched |-> FALSE])
+                                  started |-> ~b, launched |-> FALSE,
+                                  mode |-> IF IsTest(t) THEN "test" ELSE "live", wrote |-> FALSE])
          /\ refused' = refused
 
 \* The whole Start in one step (StartAtomic): read InFlight and Insert together.
@@ -118,6 +128,12 @@ End(i, f) ==
           /\ drained' = (drained \/ (Mode(w) = "queue" /\ QueuedOf(ended, w) # {}))
     /\ UNCHANGED <<pc, bz, skipped, refused>>
 
+\* A run writes outside (notify, create_item, http POST, ...). A test run's ports are fenced: they record and write nothing.
+Write(i) ==
+    /\ i \in Rows /\ rows[i].st = "running" /\ rows[i].launched
+    /\ rows' = [rows EXCEPT ![i].wrote = (rows[i].mode = "live" \/ ~TestFenced)]
+    /\ UNCHANGED <<pc, bz, skipped, refused, drained>>
+
 WaitFor(i) ==
     /\ i \in Rows /\ rows[i].st = "running" /\ rows[i].launched
     /\ rows' = [rows EXCEPT ![i].st = "waiting"]
@@ -140,7 +156,7 @@ Done == /\ \A t \in Triggers : pc[t] = "done"
 
 Next ==
     \/ \E t \in Triggers : StartAtomic1(t) \/ ReadInFlight(t) \/ InsertAfterRead(t)
-    \/ \E i \in 1..NTrig : Launch(i) \/ WaitFor(i) \/ Resume(i) \/ CancelQueued(i)
+    \/ \E i \in 1..NTrig : Launch(i) \/ Write(i) \/ WaitFor(i) \/ Resume(i) \/ CancelQueued(i)
     \/ \E i \in 1..NTrig, f \in Final : End(i, f)
     \/ Done
 
@@ -154,7 +170,7 @@ NoDuplicateRunIds == \A i, j \in Rows : i # j => rows[i].id # rows[j].id
 \* In flight = running or waiting (a Queued run waits for its turn).
 AtMostOneInFlight ==
     \A w \in {"w1", "w2"} : Mode(w) # "unlimited" =>
-        Cardinality({i \in Rows : rows[i].wf = w /\ rows[i].st \in Live}) <= 1
+        Cardinality({i \in Rows : rows[i].wf = w /\ rows[i].mode = "live" /\ rows[i].st \in Live}) <= 1
 
 \* No run starts while an older one of its workflow is still Queued.
 QueuedStartFIFO ==
@@ -163,6 +179,14 @@ QueuedStartFIFO ==
 
 QueuedLeavesQueued ==
     \A i \in 1..NTrig : (i <= Len(rows) /\ rows[i].st = "queued") ~> (i > Len(rows) \/ rows[i].st # "queued")
+
+\* A test run makes no outside effect (gaps/TestWrites.cfg).
+TestRunWritesNothing == \A i \in Rows : rows[i].mode = "test" => ~rows[i].wrote
+
+\* A live run is never Queued behind a test run: something live is in flight in its workflow (gaps/TestBlocksLive.cfg).
+LiveNeverWaitsOnTest ==
+    \A i \in Rows : (rows[i].mode = "live" /\ rows[i].st = "queued") =>
+        \E j \in Rows : j # i /\ rows[j].wf = rows[i].wf /\ rows[j].mode = "live" /\ rows[j].st \in Open
 
 \* Reachability witnesses (gaps/Reach*.cfg): each must fail, or the model never reaches the case it protects.
 NeverDrains == ~drained
