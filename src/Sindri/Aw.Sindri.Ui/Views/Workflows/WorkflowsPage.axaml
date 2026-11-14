@@ -115,7 +115,9 @@
                     <StackPanel Orientation="Horizontal" Spacing="16" Margin="16,0" Height="{StaticResource Row.Height.Default}" VerticalAlignment="Center">
                       <Panel Width="24" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
                         <TextBlock Text="{Binding LeadGlyph}" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.Error}" IsVisible="{Binding LeadIsError}" />
-                        <TextBlock Text="{Binding LeadGlyph}" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.Attention}" IsVisible="{Binding LeadIsPaused}" />
+                        <Border Name="RowPausedGlyph" IsVisible="{Binding LeadIsPaused}" AutomationProperties.Name="Paused" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                          <TextBlock Text="{Binding LeadGlyph}" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.Attention}" AutomationProperties.AccessibilityView="Raw" />
+                        </Border>
                         <TextBlock Text="{Binding LeadGlyph}" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.Success}" IsVisible="{Binding LeadIsOk}" />
                         <TextBlock Text="{Binding LeadGlyph}" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.InkSubtle}" IsVisible="{Binding LeadIsQuiet}" />
                       </Panel>
@@ -216,6 +218,7 @@
               <ComboBox.ItemTemplate><DataTemplate x:DataType="wf:RunFilterChoice"><TextBlock Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate>
             </ComboBox>
             <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8">
+              <TextBlock x:Name="RunsCompareHint" Classes="caption subtle" Text="{Binding Runs.CompareHint}" IsVisible="{Binding Runs.HasCompareHint}" VerticalAlignment="Center" />
               <Button x:Name="RunsClearFilters" Content="Clear filters" Click="OnClearRunFilters" IsVisible="{Binding Runs.HasFilter}" AutomationProperties.Name="Clear filters" />
             </StackPanel>
             <TextBlock x:Name="RunsCount" Grid.Column="5" Classes="caption subtle" Text="{Binding Runs.CountText}" VerticalAlignment="Center" />
