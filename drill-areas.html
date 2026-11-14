@@ -13,7 +13,7 @@
 <script>
 function R(e){return e.getBoundingClientRect();}
 function run(){
-  var kseen={}, dupKeys=[]; [].slice.call(document.querySelectorAll('.keys span')).forEach(function(s){var ks=[].slice.call(s.querySelectorAll('kbd')).map(function(x){return x.textContent.trim();}).join('+'); if(!ks)return; if(kseen[ks]){dupKeys.push(ks+' : '+kseen[ks]+' / '+s.textContent.trim());} else {kseen[ks]=s.textContent.trim();}});
+  var kseen={}, dupKeys=[]; [].slice.call(document.querySelectorAll('.keys span')).forEach(function(s){var ks=[]; [].slice.call(s.querySelectorAll('kbd')).forEach(function(x){var t=x.textContent.trim(); var m=t.match(/^(\d)-(\d)$/); if(m){for(var i=+m[1];i<=+m[2];i++){ks.push(String(i));}} else {ks.push(t);}}); ks.forEach(function(k){ if(kseen[k]){dupKeys.push(k+' : '+kseen[k]+' / '+s.textContent.trim());} else {kseen[k]=s.textContent.trim();}});});
   var hiddenKn=[], partialKn=[]; [].slice.call(document.querySelectorAll('.tile')).forEach(function(t){var k=t.querySelector('.kn'); if(!k)return; function over(){return t.scrollHeight>t.clientHeight+0.5||t.scrollWidth>t.clientWidth+0.5;}
     var name=t.querySelector('.tl').textContent.trim(); var dropped=0; var more=null; var all=[].slice.call(k.querySelectorAll('.kc'));
     function setMore(){if(!more){more=document.createElement('span'); more.className='kc km'; more.style.cssText='white-space:nowrap;margin-right:8px;display:inline-block'; k.appendChild(more);} more.textContent='+'+dropped+' more kind'+(dropped>1?'s':'');}
