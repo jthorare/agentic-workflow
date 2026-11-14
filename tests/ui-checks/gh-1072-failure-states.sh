@@ -104,7 +104,7 @@ fail_row="$(find_name Border "failure:service:broken" 180)"
 "$DRIVER" screenshot --out "$OUT/part2.png" >/dev/null 2>&1
 # The name is "<tone>, <CHIP>, <title>, <id>": the title is everything between the second ", " and the last one.
 row_title="$(printf '%s' "$fail_row" | jq -r '(.name // "") | sub("^[^,]*, [^,]*, "; "") | sub(", failure:service:broken$"; "")')"
-if ! printf '%s' "$row_title" | grep -qiE "isn't in this build|not in this build|no service"; then
+if ! grep -qiE "isn't in this build|not in this build|no service" <<<"$row_title"; then
   fail "the failure row's title doesn't name the problem: '$row_title' (screenshot in $OUT)"
 fi
 
