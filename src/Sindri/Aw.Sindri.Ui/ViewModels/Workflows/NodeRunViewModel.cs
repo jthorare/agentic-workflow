@@ -24,6 +24,18 @@ internal sealed class NodeRunViewModel : ObservableObject
         (Node, ItemIndex, Agent) = (run.Node, run.ItemIndex, run.Agent);
     }
 
+    /// <summary>True on a notification step that sent: its card shows what was sent.</summary>
+    public bool IsNotification => false;
+
+    /// <summary>The title the notification sent.</summary>
+    public string SentTitle => string.Empty;
+
+    /// <summary>The message the notification sent; empty when it had none.</summary>
+    public string SentBody => string.Empty;
+
+    /// <summary>Where it went.</summary>
+    public string SentTarget => string.Empty;
+
     /// <summary>True on a failed step: Edit step shows.</summary>
     public bool CanEditStep => IsError;
 
