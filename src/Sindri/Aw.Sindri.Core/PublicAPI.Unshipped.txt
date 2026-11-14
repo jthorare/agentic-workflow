@@ -23832,3 +23832,4 @@ static Aw.Sindri.Core.Graph.Templates.GitHubCiSource.operator ==(Aw.Sindri.Core.
 Aw.Sindri.Core.Graph.Templates.ICiSourceLookup
 Aw.Sindri.Core.Graph.Templates.ICiSourceLookup.Find(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Graph.Templates.GitHubCiSource?>
 static Aw.Sindri.Core.Health.HealthSummary.WithProfileProblem(Aw.Sindri.Core.Health.HealthReport! report, bool wontLoad, string? fix) -> Aw.Sindri.Core.Health.HealthReport!
+static Aw.Sindri.Core.Connections.ConnectionName.ParseUnreserved(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!

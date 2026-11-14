@@ -5,7 +5,6 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Secrets;
-using Aw.Sindri.Features.AddConnection;
 
 namespace Aw.Sindri.Features.RenameConnection;
 
@@ -73,13 +72,13 @@ internal sealed class RenameConnectionService(IConnectionStore store, IConnectio
     // The two names and the stored row, or the refusal: a bad name, the same label, an unknown connection, a new name that is taken.
     private async ValueTask<Result<(ConnectionName From, ConnectionName To, Connection Found)>> Plan(RenameConnectionRequest request, CancellationToken cancellationToken)
     {
-        var from = ReservedConnectionNames.Parse(request.Name);
+        var from = ConnectionName.ParseUnreserved(request.Name);
         if (from.IsError)
         {
             return from.Error;
         }
 
-        var to = ReservedConnectionNames.Parse(string.Concat(from.Value.Service, ":", request.Label));
+        var to = ConnectionName.ParseUnreserved(string.Concat(from.Value.Service, ":", request.Label));
         if (to.IsError)
         {
             return to.Error;

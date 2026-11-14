@@ -33,7 +33,7 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
     public async ValueTask<Result<AddConnectionResponse>> Handle(AddConnectionRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var name = ReservedConnectionNames.Parse(request.Name);
+        var name = ConnectionName.ParseUnreserved(request.Name);
         if (name.IsError)
         {
             return name.Error;
