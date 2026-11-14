@@ -14,20 +14,20 @@ namespace Aw.Sindri.Tests.Graph.Blocks;
 [Lane(TestLane.Unit)]
 public sealed class BlockExamplesAcceptedTests
 {
-    private static readonly GraphBlockRegistry Registry = GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"));
+    private static readonly GraphBlockRegistry _registry = GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"));
 
-    public static TheoryData<string> Kinds() => [.. Registry.Types.Keys.Order(StringComparer.Ordinal)];
+    public static TheoryData<string> Kinds() => [.. _registry.Types.Keys.Order(StringComparer.Ordinal)];
 
     [Theory]
     [MemberData(nameof(Kinds))]
     public void The_example_of_every_menu_block_passes_the_required_settings_check(string type)
     {
-        var block = Registry.Types[type];
+        var block = _registry.Types[type];
         var config = JsonNode.Parse(block.Example) as JsonObject;
         Assert.True(config is not null, $"the '{type}' block's example is not a JSON object: {block.Example}");
         var spec = GraphFixtures.Spec([new GraphNode(NodeId.From("added_1"), type, Title: null, config)], []);
 
-        var result = GraphFixtures.Validator(blocks: Registry.Types).Validate(spec, GraphMode.Draft);
+        var result = GraphFixtures.Validator(blocks: _registry.Types).Validate(spec, GraphMode.Draft);
 
         Assert.True(
             result.Findings.All(static f => f.Code != "GRAPH-CONFIG-001"),
