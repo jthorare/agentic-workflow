@@ -75,16 +75,23 @@ public sealed class SelectableTileTests
         return true;
     });
 
+    // The one focus ring is the app-wide adorner (FluentOverrides.axaml, 2 to 4 px outside); the chrome keeps its own border, so a focused selected one still shows its Primary border inside the ring.
     [Fact]
-    public async Task Keyboard_focus_draws_a_2_px_PrimaryHover_ring() => await OnUi(() =>
+    public async Task Keyboard_focus_keeps_the_chrome_border_and_leaves_the_ring_to_the_app_adorner() => await OnUi(() =>
     {
         var (window, tile, chrome) = Show();
+        var rest = Edge(chrome);
 
         Assert.True(tile.Focus(NavigationMethod.Tab));
         Dispatcher.UIThread.RunJobs();
+        Assert.Equal(rest, Edge(chrome));
+        Assert.Equal(Brush("Brush.Hairline"), Edge(chrome));
+        Assert.Equal(1, chrome.BorderThickness.Left);
 
-        Assert.Equal(Brush("Brush.PrimaryHover"), Edge(chrome));
-        Assert.Equal(2, chrome.BorderThickness.Left);
+        tile.IsSelected = true;
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(Brush("Brush.Primary"), Edge(chrome));
+        Assert.Equal(1, chrome.BorderThickness.Left);
         window.Close();
         return true;
     });
