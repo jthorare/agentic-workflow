@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.ViewModels;
 
@@ -139,4 +140,53 @@ internal static partial class Labels
     /// <param name="what">The kind, or how many items a feature holds.</param>
     /// <returns>"Tab groups, feature".</returns>
     internal static string ContextMapItemName(string label, string what) => $"{label}, {what}";
+
+    /// <summary>The heading of the entry band of an opened area.</summary>
+    internal const string ContextAreaEntry = "Entry points";
+
+    /// <summary>What the entry band holds.</summary>
+    internal const string ContextAreaEntryWhat = "routes, jobs, middleware";
+
+    /// <summary>The heading of the core band.</summary>
+    internal const string ContextAreaCore = "Core";
+
+    /// <summary>What the core band holds.</summary>
+    internal const string ContextAreaCoreWhat = "services and domain logic";
+
+    /// <summary>The heading of the data band.</summary>
+    internal const string ContextAreaData = "Data and effects";
+
+    /// <summary>What the data band holds.</summary>
+    internal const string ContextAreaDataWhat = "tables, events";
+
+    /// <summary>What an empty band says.</summary>
+    internal const string ContextAreaNone = "none in this area";
+
+    /// <summary>The words of a Core sub-group.</summary>
+    /// <param name="group">The sub-group.</param>
+    /// <returns>"Requests", "Services and rules" or "Responses".</returns>
+    internal static string ContextAreaGroup(CoreGroup group) => group switch
+    {
+        CoreGroup.Requests => "Requests",
+        CoreGroup.Responses => "Responses",
+        CoreGroup.Services => "Services and rules",
+        _ => "Services and rules",
+    };
+
+    /// <summary>The bar over an area's canvas.</summary>
+    /// <param name="nodes">How many nodes the area draws.</param>
+    /// <param name="inView">How many of them are on screen.</param>
+    /// <returns>"40 nodes · 38 in view".</returns>
+    internal static string ContextAreaBar(int nodes, int inView) => string.Create(CultureInfo.InvariantCulture, $"{nodes} nodes · {inView} in view");
+
+    /// <summary>The fade at the foot of an area's canvas.</summary>
+    /// <param name="count">How many nodes lie below the screen.</param>
+    /// <returns>"2 more below".</returns>
+    internal static string ContextAreaMoreBelow(int count) => string.Create(CultureInfo.InvariantCulture, $"{count} more below");
+
+    /// <summary>The tooltip of a link.</summary>
+    /// <param name="from">The first node's label.</param>
+    /// <param name="to">The second node's label.</param>
+    /// <returns>"A → B".</returns>
+    internal static string ContextLinkTip(string from, string to) => $"{from} → {to}";
 }

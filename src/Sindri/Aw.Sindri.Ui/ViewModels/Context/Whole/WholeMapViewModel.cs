@@ -255,7 +255,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(ShowCrumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(Items), nameof(SelectedItem), nameof(CanvasName), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled), nameof(ShowPages), nameof(ShowAreaList), nameof(HasAreaPages), nameof(AreaPageText), nameof(CanPreviousPage), nameof(CanNextPage)])
+        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(ShowCrumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(Items), nameof(SelectedItem), nameof(CanvasName), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled), nameof(ShowPages), nameof(ShowAreaList), nameof(HasAreaPages), nameof(AreaPageText), nameof(CanPreviousPage), nameof(CanNextPage), nameof(ShowAreaBar), nameof(AreaBarText), nameof(ShowMoreBelow), nameof(MoreBelowText)])
         {
             OnChanged(name);
         }

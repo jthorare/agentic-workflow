@@ -41,7 +41,12 @@ internal sealed partial class WholeMapView : UserControl
                 ViewChanged();
             }
         };
-        WholeCanvas.SizeChanged += (_, _) => Arrange();
+        WholeCanvas.SizeChanged += (_, _) =>
+        {
+            _map?.ViewWidth = TopLevel.GetTopLevel(this)?.ClientSize.Width ?? Bounds.Width;   // the window's width decides how Core draws
+
+            Arrange();
+        };
         WholeMiniMap.Centred += (_, e) => Centre(e.Value);
         WholeCanvas.Clicked += (_, e) => WholeWorld.Click(e.GetPosition(WholeWorld));
         ViewChanged();
@@ -182,6 +187,7 @@ internal sealed partial class WholeMapView : UserControl
         var viewport = view.Scale > 0 ? new Rect(-view.X / view.Scale, -view.Y / view.Scale, size.Width / view.Scale, size.Height / view.Scale) : default;
         WholeWorld.Scale = view.Scale;
         WholeWorld.Viewport = viewport;
+        _map?.ViewportChanged(new WholeRect(viewport.X, viewport.Y, viewport.Width, viewport.Height));
         WholeMiniMap.Viewport = MiniMapControl.VisiblePart(viewport, WholeCanvas.WorldBounds);   // the part of the world on the stage, never the empty stage past it
         WholeZoomValue.Text = Labels.ContextMapZoomPct(view.Scale);
         WholeZoomIn.IsEnabled = WholeMapViewModel.CanZoomIn(view.Scale, WholeCanvas.MaxZoom);

@@ -54,6 +54,7 @@
       </Border>
       <TextBlock x:Name="WholeDrillEmpty" Classes="body" Text="{Binding DrillEmptyText}" IsVisible="{Binding ShowDrillEmpty}" TextWrapping="Wrap" AutomationProperties.Name="{Binding DrillEmptyText}" />
       <TextBlock x:Name="WholeSize" Classes="caption subtle" Text="{Binding SizeText}" AutomationProperties.Name="{Binding SizeText}" />
+      <TextBlock x:Name="WholeAreaBar" Classes="caption subtle" Text="{Binding AreaBarText}" IsVisible="{Binding ShowAreaBar}" AutomationProperties.Name="{Binding AreaBarText}" />
       <TextBlock x:Name="WholeNote" Classes="body" Text="{Binding ByAreaNote}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ByAreaNote}" />
       <TextBlock x:Name="WholeMoreTouched" Classes="caption" Text="{Binding MoreTouchedText}" IsVisible="{Binding HasMoreTouched}" AutomationProperties.Name="{Binding MoreTouchedText}" />
     </StackPanel>
@@ -63,6 +64,12 @@
       <ctl:ZoomBorder x:Name="WholeCanvas" AutomationProperties.Name="{Binding CanvasName}">
         <wv:WholeMapCanvas x:Name="WholeWorld" />
       </ctl:ZoomBorder>
+
+      <!-- An opened area's canvas with nodes below the screen (#3674): a pill at the foot says how many. -->
+      <Border x:Name="WholeMoreBelow" IsVisible="{Binding ShowMoreBelow}" IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,14" Padding="12,4"
+              Background="{DynamicResource Brush.Surface3}" CornerRadius="{StaticResource Radius.MD}">
+        <TextBlock x:Name="WholeMoreBelowText" Classes="caption" Text="{Binding MoreBelowText}" AutomationProperties.Name="{Binding MoreBelowText}" />
+      </Border>
 
       <!-- An opened area with more nodes than the canvas draws (#3674): the ranked list, 50 a page, never edges. -->
       <Border x:Name="WholeAreaListHost" IsVisible="{Binding ShowAreaList}" Background="{DynamicResource Brush.Surface1}" Padding="12">

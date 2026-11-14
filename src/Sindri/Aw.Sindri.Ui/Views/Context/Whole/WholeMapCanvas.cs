@@ -61,6 +61,7 @@ internal sealed partial class WholeMapCanvas : Control
         {
             var at = e.GetPosition(this);
             map.PointerMoved(at.X, at.Y, Slop);
+            HoverLink(at);
         }
     }
 
@@ -69,6 +70,7 @@ internal sealed partial class WholeMapCanvas : Control
     {
         base.OnPointerExited(e);
         Map?.Hover(key: null);
+        HoverLink(new Point(double.NaN, double.NaN));
     }
 
     /// <summary>The key under a point of the world, with the slop that keeps a dot easy to hit.</summary>
@@ -78,7 +80,13 @@ internal sealed partial class WholeMapCanvas : Control
 
     /// <summary>A click on the world, as the stage delivers it (a press here starts a pan, so the release never lands on this control).</summary>
     /// <param name="at">The point of the world.</param>
-    internal void Click(Point at) => Map?.PointerClicked(at.X, at.Y, Slop);
+    internal void Click(Point at)
+    {
+        if (!SelectLink(at))
+        {
+            Map?.PointerClicked(at.X, at.Y, Slop);
+        }
+    }
 
     // A dot is 10 px on screen whatever the zoom, so what counts as on it grows as the world shrinks.
     private double Slop => WholeMapViewModel.UsesDots(Scale) ? 6 / Math.Max(Scale, 0.05) : 0;

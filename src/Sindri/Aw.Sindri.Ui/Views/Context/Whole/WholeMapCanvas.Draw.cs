@@ -32,6 +32,11 @@ internal sealed partial class WholeMapCanvas
             DrawTiles(context, geometry, view);
         }
 
+        if (geometry.IsAreaCanvas)
+        {
+            DrawAreaBands(context, geometry, view);
+        }
+
         if (geometry.Nodes.Count > 0 || geometry.Columns.Count > 0)
         {
             DrawNodeEdges(context, geometry, view);

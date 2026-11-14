@@ -7,8 +7,47 @@ internal sealed partial class WholeMapViewModel
 {
     private int _layoutRun;
 
+    /// <summary>Gets or sets the window width in px, which decides whether Core draws its three groups side by side (the view sets it).</summary>
+    internal double ViewWidth { get; set; } = WholeMapLayout.DefaultWidth;
+
     /// <summary>Raised when another page of the open area is wanted (the new page, 1-based).</summary>
     internal event EventHandler<ValueEventArgs<int>>? AreaPageRequested;
+
+    private int _inView;
+    private int _below;
+
+    /// <summary>Gets whether the bar over an opened area's canvas shows.</summary>
+    public bool ShowAreaBar => IsAreaOpen && Geometry is { IsAreaCanvas: true };
+
+    /// <summary>Gets the bar's words: "40 nodes · 38 in view".</summary>
+    public string AreaBarText => Geometry is { IsAreaCanvas: true } g ? Labels.ContextAreaBar(g.Nodes.Count, _inView) : string.Empty;
+
+    /// <summary>Gets whether nodes lie below the screen, so the fade at the foot shows.</summary>
+    public bool ShowMoreBelow => ShowAreaBar && _below > 0;
+
+    /// <summary>Gets the fade's words: "2 more below".</summary>
+    public string MoreBelowText => Labels.ContextAreaMoreBelow(_below);
+
+    /// <summary>The part of the world on screen changed: counts the nodes in it and below it.</summary>
+    /// <param name="view">The part of the world on screen.</param>
+    internal void ViewportChanged(WholeRect view)
+    {
+        if (Geometry is not { IsAreaCanvas: true } geometry)
+        {
+            return;
+        }
+
+        var (inView, below) = (geometry.Nodes.Count(n => n.Rect.Intersects(view)), geometry.Nodes.Count(n => n.Rect.Y >= view.Bottom));
+        if (inView == _inView && below == _below)
+        {
+            return;
+        }
+
+        (_inView, _below) = (inView, below);
+        OnChanged(nameof(AreaBarText));
+        OnChanged(nameof(ShowMoreBelow));
+        OnChanged(nameof(MoreBelowText));
+    }
 
     /// <summary>Gets the accessible name of the ranked list.</summary>
     public static string AreaListName => Labels.ContextWholeAreaList;
@@ -56,10 +95,12 @@ internal sealed partial class WholeMapViewModel
     private async Task LayOutArea(WholeMapView answer)
     {
         var run = ++_layoutRun;
-        var placed = await Task.Run(() => WholeMapLayout.Place(answer)).ConfigureAwait(true);
+        var placed = await Task.Run(() => WholeMapLayout.Place(answer, ViewWidth)).ConfigureAwait(true);
         if (run == _layoutRun && IsAreaOpen)
         {
             Geometry = placed;
+            _inView = placed.Nodes.Count;   // until the view reports what is on screen
+            _below = 0;
             Changed();
         }
     }

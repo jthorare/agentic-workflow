@@ -20,6 +20,7 @@ internal sealed partial class WholeMapCanvas
             using (context.PushOpacity(EdgeOpacity(edge)))
             {
                 context.DrawLine(EdgePen(WholeEdgeStyle.Of(edge).Dashed, lit), new Point(edge.X1, edge.Y1), new Point(edge.X2, edge.Y2));
+                DrawLinkEmphasis(context, edge);
             }
         }
 
