@@ -70,7 +70,7 @@ BEGIN { sq = sprintf("%c", 39); dquote = sprintf("%c", 34); st = "n"; hd = ""; h
   print out
   if (pend != "") { hd = pend; st = "h" }
 }')
-PUSHES=$(printf '%s\n' "$SANITIZED" | sed -e 's/&&/\n/g' -e 's/||/\n/g' -e 's/;/\n/g' -e 's/|/\n/g' \
+PUSHES=$(printf '%s\n' "$SANITIZED" | awk '{ gsub(/&&|\|\||;|\|/, "\n"); print }' \
   | grep -E '^[[:space:]]*((env|command)[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*git[[:space:]]+push\b' || true)
 [ -n "$PUSHES" ] || exit 0
 
