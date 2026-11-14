@@ -344,11 +344,12 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   run jobs show "$job"
   # The smoke's own context-map-refresh run (#3405) reads differently depending on which tick wins ("refresh JOB started" or a quiet tick's text),
   # so its row is left out of the list. So is the SyncSources row (#3628): the profile has no context section, so context-sync-gaps runs on the
-  # default settings and starts that sync on whichever of its 1-minute ticks sees a feed that has not read yet. Same shape as `run`: header, output, exit line.
+  # default settings and starts that sync on whichever of its 1-minute ticks sees a feed that has not read yet. So is the ScanContextConcepts row: context-concept-scan
+  # starts it on the first 1-minute tick after the smoke's map v1 exists. Same shape as `run`: header, output, exit line.
   echo "## sindri jobs --state succeeded"
   jobs_rc=0
   jobs_out="$(bounded "$bin" jobs --state succeeded </dev/null 2>&1)" || jobs_rc=$?
-  { grep -v -e 'RunService  context-map-refresh' -e 'SyncSources  sync' <<<"$jobs_out" || true; }
+  { grep -v -e 'RunService  context-map-refresh' -e 'SyncSources  sync' -e 'ScanContextConcepts  concept-scan' <<<"$jobs_out" || true; }
   exit_line "$jobs_rc"
   # The library's first read is on index-sync's 5-minute slot, so the last doctor's library row says "first read hasn't finished" or "0 design docs"
   # by timing (#3628). Run the tick by hand, after the jobs list so its RunService row is not in it, so the row always reads "after". Before the stop: doctor reads the stored state.
