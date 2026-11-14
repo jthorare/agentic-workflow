@@ -22,6 +22,7 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
     private SynchronizationContext? _ui;
     private bool _watching;
     private int _attempt;
+    private int _launch;
     private bool _begun;
 
     /// <summary>Which state shows.</summary>
@@ -86,6 +87,7 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
         var attempt = ++_attempt;
         SindriStartLog.Began(_log, attempt);
         var result = starter.Start();
+        _launch = starter.Launch;
         if (result.IsError)
         {
             starter.Release();
@@ -127,8 +129,15 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
         }
     }
 
-    // Stub (red, #3630): the exit is logged and answers nothing yet.
-    private void ProgramExited(SindriExitedEventArgs e) => SindriStartLog.ProgramExited(_log, e.Launch, e.ExitCode, _attempt, Stage);
+    // The current start's program ended while the page waits: say why now, with its exit code. An older launch's exit changes nothing.
+    private void ProgramExited(SindriExitedEventArgs e)
+    {
+        SindriStartLog.ProgramExited(_log, e.Launch, e.ExitCode, _attempt, Stage);
+        if (Stage == StartStage.Starting && e.Launch == _launch)
+        {
+            Ended(_attempt, e.ExitCode);
+        }
+    }
 
     // Waits Wait; if no Reset or newer start came, says why nothing answered.
     private async Task Expire(int attempt)
