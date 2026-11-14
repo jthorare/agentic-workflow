@@ -9,6 +9,12 @@
   <!-- The Workflows page, read-only (#2258 PR 17 part 1), three levels in one place: the workflow list, one workflow's runs, one run's detail. Back goes up a level.
        Every status is a glyph and a word. Every named line is a Border wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
   <UserControl.Styles>
+    <Style Selector="TextBlock.state-ok"><Setter Property="Foreground" Value="{DynamicResource Brush.Success}" /></Style>
+    <Style Selector="TextBlock.state-paused"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
+    <Style Selector="Border.bar.ok"><Setter Property="Background" Value="{DynamicResource Brush.Success}" /></Style>
+    <Style Selector="Border.bar.failed"><Setter Property="Background" Value="{DynamicResource Brush.Error}" /></Style>
+    <Style Selector="Border.bar.hollow"><Setter Property="BorderThickness" Value="1" /><Setter Property="BorderBrush" Value="{DynamicResource Brush.InkSubtle}" /></Style>
+    <Style Selector="Border.bar.empty"><Setter Property="Background" Value="{DynamicResource Brush.HairlineStrong}" /></Style>
     <Style Selector="TextBlock.invalid"><Setter Property="Foreground" Value="{DynamicResource Brush.Error}" /></Style>
     <Style Selector="TextBox.invalid /template/ Border#PART_BorderElement"><Setter Property="BorderBrush" Value="{DynamicResource Brush.Error}" /></Style>
   </UserControl.Styles>
@@ -86,24 +92,62 @@
               <TextBlock x:Name="WorkflowsAgentCommand" Classes="caption mono" Text="{Binding AgentRouteCommand}" VerticalAlignment="Center" />
             </StackPanel>
           </StackPanel>
+          <!-- The column heads (frame wf-list): the same cell widths as a row's, so a dropped column leaves no gap. -->
+          <StackPanel x:Name="WorkflowColumns" Orientation="Horizontal" Spacing="16" Margin="16,0" Height="28" IsVisible="{Binding !IsReading}">
+            <TextBlock Width="24" />
+            <TextBlock Name="ColumnHead" Classes="caption subtle" Text="Name" Width="{Binding Columns.Name}" VerticalAlignment="Center" />
+            <TextBlock Name="ColumnHead" Classes="caption subtle" Text="Trigger" Width="{Binding Columns.Trigger}" IsVisible="{Binding Columns.ShowsTrigger}" VerticalAlignment="Center" />
+            <TextBlock Name="ColumnHead" Classes="caption subtle" Text="Last run" Width="{Binding Columns.LastRun}" VerticalAlignment="Center" />
+            <TextBlock Name="ColumnHead" Classes="caption subtle" Text="Next run" Width="{Binding Columns.NextRun}" IsVisible="{Binding Columns.ShowsNextRun}" VerticalAlignment="Center" />
+            <TextBlock Name="ColumnHead" Classes="caption subtle" Text="Last 10 runs" Width="140" VerticalAlignment="Center" />
+            <TextBlock Name="ColumnHead" Classes="caption subtle" Text="State" Width="72" VerticalAlignment="Center" />
+          </StackPanel>
           <ItemsControl x:Name="WorkflowRows" ItemsSource="{Binding Rows}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="wf:WorkflowRowViewModel">
-                <Border Classes="item-row clickable" Focusable="True" KeyDown="OnWorkflowRowKey" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-                  <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" MinHeight="{StaticResource Row.Height.Default}" Margin="0,8" VerticalAlignment="Center">
-                    <!-- The row is the one focus stop and draws the ring; the title is a click target only, so it draws none of its own (Enter or Space on the row opens it).
-                         Margin="-2,0": the shared row-title style pulls the button up 2 px for a ring this one never draws (QueueStyles.axaml:40-42), which put the title under 8 px from the row's top; keep the sideways -2 so the text lines up. -->
-                    <Button Classes="row-title" Focusable="False" Margin="-2,0" Click="OnOpenWorkflow" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
-                      <TextBlock Classes="body-strong" Text="{Binding NameText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
-                    </Button>
-                    <controls:StateChipView Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Word="{Binding ChipWord}" Tone="{Binding ChipToneWord}" Glyph="{Binding ChipGlyph}" />
-                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
-                      <TextBlock Classes="caption subtle mono" Text="{Binding IdText}" IsVisible="{Binding HasIdText}" />
-                      <TextBlock Classes="caption subtle" Text="{Binding RevisionText}" IsVisible="{Binding HasRevisionText}" />
-                      <TextBlock Classes="caption subtle" Text="{Binding ChangedText}" TextTrimming="CharacterEllipsis" />
-                    </StackPanel>
+                <StackPanel>
+                  <Grid ColumnDefinitions="*,Auto" Margin="16,12,16,4" IsVisible="{Binding HasGroupHeader}">
+                    <TextBlock Name="RowGroupHeader" Classes="caption subtle" Text="{Binding GroupHeader}" />
+                    <TextBlock Grid.Column="1" Classes="caption quiet" Text="{Binding GroupHint}" />
                   </Grid>
-                </Border>
+                  <Border Name="WorkflowRow" Classes="item-row clickable" Focusable="True" KeyDown="OnWorkflowRowKey" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                    <StackPanel Orientation="Horizontal" Spacing="16" Margin="16,0" Height="{StaticResource Row.Height.Default}" VerticalAlignment="Center">
+                      <Panel Width="24" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+                        <TextBlock Text="{Binding LeadGlyph}" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.Error}" IsVisible="{Binding LeadIsError}" />
+                        <TextBlock Text="{Binding LeadGlyph}" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.Attention}" IsVisible="{Binding LeadIsPaused}" />
+                        <TextBlock Text="{Binding LeadGlyph}" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.Success}" IsVisible="{Binding LeadIsOk}" />
+                        <TextBlock Text="{Binding LeadGlyph}" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.InkSubtle}" IsVisible="{Binding LeadIsQuiet}" />
+                      </Panel>
+                      <StackPanel Orientation="Horizontal" Spacing="8" Width="{Binding Columns.Name}" VerticalAlignment="Center">
+                        <!-- The row is the one focus stop and draws the ring; the title is a click target only (Enter or Space on the row opens it). -->
+                        <Button Classes="row-title" Focusable="False" Margin="-2,0" Click="OnOpenWorkflow" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
+                          <TextBlock Classes="body-strong" Text="{Binding NameText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+                        </Button>
+                        <TextBlock Name="RowId" Classes="caption subtle mono" Text="{Binding Slug}" IsVisible="{Binding ShowsId}" VerticalAlignment="Center" />
+                      </StackPanel>
+                      <TextBlock Classes="body muted" Text="{Binding TriggerText}" Width="{Binding Columns.Trigger}" IsVisible="{Binding Columns.ShowsTrigger}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                      <Panel Width="{Binding Columns.LastRun}" VerticalAlignment="Center">
+                        <controls:StateChipView Name="RowLastRun" HorizontalAlignment="Left" Word="{Binding LastRunText}" Tone="{Binding LastRunToneWord}" IsVisible="{Binding ShowsLastRun}" />
+                      </Panel>
+                      <TextBlock Classes="body muted" Text="{Binding NextRunText}" Width="{Binding Columns.NextRun}" IsVisible="{Binding Columns.ShowsNextRun}" VerticalAlignment="Center" />
+                      <ItemsControl Name="RowStrip" ItemsSource="{Binding StripShown}" Width="140" Height="16" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Bottom" />
+                          </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="wf:RunBarViewModel">
+                            <!-- A failed run is the tall bar, a cancelled one hollow, an empty slot a dash: colour is never the only cue. The tooltip sits on the bar it describes. -->
+                            <Border Name="RunBar" Classes="bar" Classes.ok="{Binding IsOk}" Classes.failed="{Binding IsTall}" Classes.hollow="{Binding IsHollow}" Classes.empty="{Binding IsEmpty}"
+                                    Width="6" Height="{Binding BarHeight}" VerticalAlignment="Bottom" CornerRadius="1" ToolTip.Tip="{Binding TipText}" ToolTip.Placement="Top" />
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                      <TextBlock Name="RowState" Classes="caption subtle" Classes.state-ok="{Binding StateIsOk}" Classes.state-paused="{Binding IsPaused}" Text="{Binding StateText}" Width="72" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>

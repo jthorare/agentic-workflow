@@ -37,6 +37,18 @@ internal sealed class RunBarViewModel
     /// <summary>True for a cancelled run: a hollow bar.</summary>
     public bool IsHollow => string.Equals(Kind, "cancelled", StringComparison.Ordinal);
 
+    /// <summary>True for an empty slot.</summary>
+    public bool IsEmpty => string.Equals(Kind, "empty", StringComparison.Ordinal);
+
+    /// <summary>True for a bar drawn in the success colour (succeeded, or still running).</summary>
+    public bool IsOk => Kind is "succeeded" or "running";
+
+    /// <summary>The bar's height: tall for a failed run, short for the others, a dash for an empty slot.</summary>
+    public double BarHeight => IsTall ? 16 : IsEmpty ? 2 : 8;
+
+    /// <summary>The tooltip: the two lines joined, or null for an empty slot (no tooltip).</summary>
+    public string? TipText => IsEmpty ? null : TitleLine + "\n" + DetailLine;
+
     /// <summary>"Run 499 \u00b7 failed \u00b7 22m ago"; empty for an empty slot.</summary>
     public string TitleLine { get; }
 

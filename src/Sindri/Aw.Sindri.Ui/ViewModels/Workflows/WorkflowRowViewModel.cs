@@ -9,7 +9,6 @@ internal sealed class WorkflowRowViewModel : ObservableObject
     {
         Slug = row.Slug;
         NameText = row.Name;
-        IdText = string.Equals(row.Slug, row.Name, StringComparison.Ordinal) ? string.Empty : row.Slug;
         IsActive = row.ActiveRevision is not null;
         HasNewerRevision = row.ActiveRevision is { } active && active < row.LatestRevision;
         var (glyph, word) = Labels.WfState(IsActive);
@@ -54,11 +53,41 @@ internal sealed class WorkflowRowViewModel : ObservableObject
     /// <summary>True when another workflow has the same name: the short id shows beside it.</summary>
     public bool ShowsId { get; internal set; }
 
+    /// <summary>The columns at the list's width: each cell binds its width and visibility to it.</summary>
+    public ColumnPlan Columns { get; internal set { Set(ref field, value); OnChanged(nameof(StripShown)); } } = ColumnPlan.Wide;
+
+    /// <summary>The strip's slots as drawn: the newest ones when the width allows fewer than 10.</summary>
+    public IReadOnlyList<RunBarViewModel> StripShown => [.. Strip.Skip(Strip.Count - Columns.StripSlots)];
+
+    /// <summary>The mark in front of the name: a failed run, paused, succeeded, cancelled or off.</summary>
+    public string LeadGlyph => IsPaused ? "\u23f8" : LastRunToneWord switch { "error" => "\u2715", "ok" => "\u2713", _ => IsActive ? (LastRunText.StartsWith("Cancelled", StringComparison.Ordinal) ? "\u2298" : "\u25cf") : "\u25cb" };
+
+    /// <summary>True when the mark is the failed one.</summary>
+    public bool LeadIsError => !IsPaused && string.Equals(LastRunToneWord, "error", StringComparison.Ordinal);
+
+    /// <summary>True when the mark is the paused one.</summary>
+    public bool LeadIsPaused => IsPaused;
+
+    /// <summary>True when the mark is a success.</summary>
+    public bool LeadIsOk => !IsPaused && string.Equals(LastRunToneWord, "ok", StringComparison.Ordinal);
+
+    /// <summary>True when the mark is the quiet one (off, cancelled, never ran).</summary>
+    public bool LeadIsQuiet => !LeadIsError && !LeadIsPaused && !LeadIsOk;
+
+    /// <summary>True when State reads Active.</summary>
+    public bool StateIsOk => IsActive && !IsPaused;
+
+    /// <summary>True when the group's header shows above this row.</summary>
+    public bool HasGroupHeader => GroupHeader.Length > 0;
+
+    /// <summary>The right-hand line of a group header: why the group is first, or how it is ordered; empty on a row that does not start a group.</summary>
+    public string GroupHint => GroupHeader.StartsWith("Needs", StringComparison.Ordinal) ? "last run failed, or paused with a schedule" : HasGroupHeader ? "latest activity first" : string.Empty;
+
     /// <summary>The last 10 runs, oldest first, always 10 slots.</summary>
     public IReadOnlyList<RunBarViewModel> Strip { get; }
 
     /// <summary>"Needs a look \u00b7 3" or "Everything else \u00b7 11" on the first row of its group; empty on the others.</summary>
-    public string GroupHeader { get; internal set; } = string.Empty;
+    public string GroupHeader { get; internal set { Set(ref field, value); OnChanged(nameof(HasGroupHeader)); OnChanged(nameof(GroupHint)); } } = string.Empty;
 
     /// <summary>When the workflow last did something: its last run, else its last change. The list sorts on it.</summary>
     internal DateTimeOffset Activity { get; }
@@ -68,12 +97,6 @@ internal sealed class WorkflowRowViewModel : ObservableObject
 
     /// <summary>The name for people.</summary>
     public string NameText { get; }
-
-    /// <summary>The short id, shown first on the second line; empty when it is the title already.</summary>
-    public string IdText { get; }
-
-    /// <summary>True when the second line leads with the short id.</summary>
-    public bool HasIdText => IdText.Length > 0;
 
     /// <summary>True when there is a revision to say (from the second revision on).</summary>
     public bool HasRevisionText => RevisionText.Length > 0;

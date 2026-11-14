@@ -115,6 +115,21 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>The open run.</summary>
     public RunDetailViewModel Run { get; }
 
+    /// <summary>The list's columns at its width.</summary>
+    public ColumnPlan Columns { get; private set; } = ColumnPlan.Wide;
+
+    /// <summary>The list was laid out at this width: rows drop or keep their columns.</summary>
+    /// <param name="width">The list's width.</param>
+    internal void SetListWidth(double width)
+    {
+        Columns = ColumnPlan.For(width);
+        OnChanged(nameof(Columns));
+        foreach (var row in Rows)
+        {
+            row.Columns = Columns;
+        }
+    }
+
     /// <summary>The page was shown: reads the list, and the level open under it again.</summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
@@ -256,6 +271,11 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     {
         (IsReading, IsUnreadable, IsFailed, FailedText) = (false, false, false, string.Empty);
         var rows = Sorted([.. list.Workflows.Select(w => new WorkflowRowViewModel(w, _clock))]);
+        foreach (var row in rows)
+        {
+            row.Columns = Columns;
+        }
+
         Patch.To(Rows, rows);
         (HasHead, Head) = rows.Count == 0 ? (false, string.Empty) : (true, Labels.WfHead(rows.Count, rows.Count(r => r.IsActive)));
         (IsEmpty, EmptyText) = rows.Count == 0 ? (true, Labels.WfNone) : (false, string.Empty);
