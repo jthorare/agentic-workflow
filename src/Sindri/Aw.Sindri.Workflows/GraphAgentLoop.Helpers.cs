@@ -10,6 +10,19 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <summary>The static helpers of <see cref="GraphAgentLoop"/>: how a session's end reads, the watch and the hold activity.</summary>
 internal sealed partial class GraphAgentLoop
 {
+    // The failure of a session that ended with no report and no outputs: how it ended, then what recovery found, then what the sandbox refused (#3565).
+    private static string NoReport(AgentSessionState state, AgentNodeRecovered recovered)
+    {
+        var why = state.EndedAs switch
+        {
+            AgentSessionEnd.Lost => "lost: the session stopped heartbeating",
+            AgentSessionEnd.Idle => "idle: the agent sat idle at its prompt with no report",
+            AgentSessionEnd.Exit or AgentSessionEnd.Limit or null or _ => $"exit: the agent exited (code {state.ExitCode?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}) without reporting",
+        };
+        var text = recovered.Reason is { } detail ? $"{why}; {detail}" : why;
+        return recovered.Denials is { } refused ? $"{text}; {refused}" : text;
+    }
+
     // Why a session that ended can't have finished the node: a report the engine refused it for, or a sandbox limit. Null when its output folder may still prove it did.
     private static string? Unrecoverable(AgentSessionState state) =>
         state.Refused ? $"exit: {state.Detail}"

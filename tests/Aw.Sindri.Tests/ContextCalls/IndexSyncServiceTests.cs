@@ -103,13 +103,16 @@ public sealed class IndexSyncServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Tick_without_a_context_section_does_not_call_the_sync()
+    public async Task Tick_without_a_context_section_runs_the_feeds_on_the_default_settings()
     {
+        _index.Rows = [Row("repo-docs", 5)];
+
         var result = await Run(context: false);
 
         Assert.True(result.IsSuccess);
-        Assert.True(result.Value.Idle);
-        Assert.Equal(0, _index.Ticks);
+        Assert.Equal(1, _index.Ticks);
+        Assert.False(result.Value.Idle);
+        Assert.Equal("ok: repo-docs 5 fetched", result.Value.Summary);
     }
 
     [Theory, Trait("Lane", "unit")]

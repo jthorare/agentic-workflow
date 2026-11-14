@@ -36,6 +36,9 @@ public sealed record MergeFacts
     /// <summary>The tree merging the gated head onto the current main gives ("git merge-tree --write-tree"); null when not computed, or when it conflicts.</summary>
     public string? MergedTree { get; init; }
 
+    /// <summary>Whether the pull request's base branch has a GitHub merge queue, which re-tests the merged tree itself; read only when main moved past the gate.</summary>
+    public bool BaseHasMergeQueue { get; init; }
+
     /// <summary>Whether the pull request is a draft.</summary>
     public bool IsDraft { get; init; }
 

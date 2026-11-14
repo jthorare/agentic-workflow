@@ -18,7 +18,8 @@ namespace Aw.Sindri.Features.CreateWorkflow;
 /// <param name="checker">Builds the validator.</param>
 /// <param name="ids">Makes the workflow's id.</param>
 /// <param name="log">Writes the lifecycle event.</param>
-internal sealed class CreateWorkflowService(IWorkflowStore workflows, IWorkflowChecker checker, IIdGenerator ids, WorkflowChangeLog log) : IService<CreateWorkflowRequest, CreateWorkflowResponse>
+/// <param name="ci">Finds the CI a starter template can read; asked only when the request names a template.</param>
+internal sealed class CreateWorkflowService(IWorkflowStore workflows, IWorkflowChecker checker, IIdGenerator ids, WorkflowChangeLog log, ICiSourceLookup ci) : IService<CreateWorkflowRequest, CreateWorkflowResponse>
 {
     private static readonly HashSet<string> _reserved = new(["docs", "blocks", "trigger-events"], StringComparer.Ordinal);
 
@@ -31,7 +32,7 @@ internal sealed class CreateWorkflowService(IWorkflowStore workflows, IWorkflowC
             return SindriErrors.InvalidInput.With($"'{request.Slug.Value}' is reserved for the workflow docs, blocks and trigger-events routes; pick another slug");
         }
 
-        var spec = Source(request);
+        var spec = await Source(request, cancellationToken).ConfigureAwait(false);
         if (spec.IsError)
         {
             return spec.Error;
@@ -60,7 +61,7 @@ internal sealed class CreateWorkflowService(IWorkflowStore workflows, IWorkflowC
         return recorded.IsError ? recorded.Error : new CreateWorkflowResponse(id, request.Slug, created.Value.Revision, created.Value.SpecHash);
     }
 
-    private static Result<GraphSpec> Source(CreateWorkflowRequest request)
+    private async ValueTask<Result<GraphSpec>> Source(CreateWorkflowRequest request, CancellationToken cancellationToken)
     {
         if ((request.Template is null) == (request.Spec is null))
         {
@@ -72,7 +73,9 @@ internal sealed class CreateWorkflowService(IWorkflowStore workflows, IWorkflowC
             return GraphJson.Parse(text);
         }
 
-        var template = GraphTemplates.Find(request.Template!);   // why: the check above leaves Template set when Spec is null
+        var name = request.Template!;   // why: the check above leaves Template set when Spec is null
+        var source = GraphTemplates.ReadsCi(name) ? await ci.Find(cancellationToken).ConfigureAwait(false) : null;
+        var template = GraphTemplates.Find(name, source);
         return template is null
             ? SindriErrors.InvalidInput.With($"no template '{request.Template}'; the templates are {string.Join(", ", GraphTemplates.All.Select(static t => t.Name))}")
             : template.Spec;

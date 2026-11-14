@@ -184,7 +184,7 @@ public sealed class DriftCheckRunAcceptanceTests
             return new ServiceCollection()
                 .AddSingleton(AwJson.CreateOptions(SindriJsonContext.Default))
                 .AddSingleton<ICallerContextAccessor>(_callers)
-                .AddSingleton<IService<CreateWorkflowRequest, CreateWorkflowResponse>>(new CreateWorkflowService(_workflows, checker, _ids, _log))
+                .AddSingleton<IService<CreateWorkflowRequest, CreateWorkflowResponse>>(new CreateWorkflowService(_workflows, checker, _ids, _log, new FakeCiSourceLookup()))
                 .AddSingleton<IService<ApplyWorkflowOpsRequest, ApplyWorkflowOpsResponse>>(new ApplyWorkflowOpsService(_workflows, checker, _log))
                 .AddSingleton<IService<ValidateWorkflowRequest, ValidateWorkflowResponse>>(new ValidateWorkflowService(_workflows, checker))
                 .AddSingleton<IService<ActivateWorkflowRequest, ActivateWorkflowResponse>>(new ActivateWorkflowService(_workflows, checker, _log, _callers))

@@ -93,7 +93,7 @@ internal sealed partial class WorkflowScheduleService(IWorkflowStore workflows, 
         }
 
         var tick = LatestTick(node, floor.Value, now);
-        return tick is null ? false : await Start(record, revision.Value, tick.Value, cancellationToken).ConfigureAwait(false);
+        return tick is null ? false : await Start(record, revision.Value, tick.Value, ScheduleStamp.ZoneOf(node), cancellationToken).ConfigureAwait(false);
     }
 
     // why: ticks at or before this are handled: the revision's save time (no activation time is stored without a ledger migration, so a tick between saving and
@@ -116,9 +116,10 @@ internal sealed partial class WorkflowScheduleService(IWorkflowStore workflows, 
         return marked.Value is { } handled && handled > floor ? handled : floor;
     }
 
-    private async ValueTask<Result<bool>> Start(WorkflowRecord record, WorkflowRevision revision, DateTimeOffset tick, CancellationToken cancellationToken)
+    private async ValueTask<Result<bool>> Start(WorkflowRecord record, WorkflowRevision revision, DateTimeOffset tick, string? zone, CancellationToken cancellationToken)
     {
-        var trigger = new JsonObject { ["kind"] = TriggerKind, ["scheduledFor"] = tick.UtcDateTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture) };
+        var trigger = new JsonObject { ["kind"] = TriggerKind };
+        ScheduleStamp.Add(trigger, tick, zone);
         var occurrence = checked((int)(tick.ToUnixTimeSeconds() / 60));   // why: minutes since the epoch fit an int until the year 6000; checked turns a wrong clock into an error, not a wrapped run id
         var request = new GraphStartRequest(record.Id, record.Slug, revision.Revision, occurrence, trigger.ToJsonString(), Concurrency(revision.Spec.Concurrency));
         var started = await starter.Start(request, cancellationToken).ConfigureAwait(false);

@@ -98,6 +98,12 @@ internal static class ApiScenarios
             ? await LaunchScenarios.Start(scenario, ct)
             : AppChallengeScenarios.Handles(slug, scenario)
             ? await GoldenHost.Start(temporary: true, ct)
+            : await StartSessionOrPlain(slug, scenario, ct);
+
+    /// <summary>The host of a terminal-route, wrapped-session or cgroup scenario, else the plain golden host.</summary>
+    private static async Task<GoldenHost> StartSessionOrPlain(string slug, string scenario, CancellationToken ct) =>
+        AgentStartScenarios.NeedsLocator(slug, scenario)
+            ? await AgentStartScenarios.StartHost(scenario, ct)
             : WrapSessionScenarios.Handles(slug, scenario)
             ? await GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml)
             : SessionScenarios.NeedsCgroup(slug, scenario)

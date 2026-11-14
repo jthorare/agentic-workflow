@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
@@ -284,12 +283,6 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
             return new AgentNodeEnding(recovered.Outputs, Failure: null);
         }
 
-        var why = state.EndedAs switch
-        {
-            AgentSessionEnd.Lost => "lost: the session stopped heartbeating",
-            AgentSessionEnd.Idle => "idle: the agent sat idle at its prompt with no report",
-            AgentSessionEnd.Exit or AgentSessionEnd.Limit or null or _ => $"exit: the agent exited (code {state.ExitCode?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}) without reporting",
-        };
-        return new AgentNodeEnding(Outputs: null, recovered.Reason is { } detail ? $"{why}; {detail}" : why, FailureOutputOf(refusedReport: null, recovered.Files));
+        return new AgentNodeEnding(Outputs: null, NoReport(state, recovered), FailureOutputOf(refusedReport: null, recovered.Files));
     }
 }

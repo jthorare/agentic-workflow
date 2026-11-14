@@ -29,6 +29,9 @@ internal static partial class Labels
     /// <summary>The card's state word while the only repos not ok are queued for their first build.</summary>
     internal const string CodeIndexQueued = "build queued";
 
+    /// <summary>A repo line's state word for a repo queued for its first build: it has no commit yet (#3602).</summary>
+    internal const string CodeIndexFirstBuildQueued = "first build queued";
+
     /// <summary>What an index state reads as when the line has no commit to name (§7.3).</summary>
     /// <param name="state">The served state.</param>
     /// <returns>The words; a state this app doesn't know is shown as served.</returns>
@@ -44,8 +47,14 @@ internal static partial class Labels
         _ => state,
     };
 
-    /// <summary>What a repo's line adds while code-index-main-move is paused: no build or retry comes, and doctor gives the same fix (#3561).</summary>
-    internal const string CodeIndexPaused = "index builds paused: run sindri services resume code-index-main-move";
+    /// <summary>What a repo's line adds while code-index-main-move is paused: no build or retry comes (#3561). The fix is CodeIndexResumeCommand, once at the card's foot (#3576).</summary>
+    internal const string CodeIndexPaused = "paused";
+
+    /// <summary>The words above the resume command at the card's foot: the pause is one service, so it holds for every repo.</summary>
+    internal const string CodeIndexPausedNote = "Index builds are paused for every repo:";
+
+    /// <summary>The command that resumes the paused service, shown once in the mono style; the service's name is MainMovePause.Service in Core, which this project does not reference, and doctor gives the same words.</summary>
+    internal const string CodeIndexResumeCommand = "sindri services resume code-index-main-move";
 
     /// <summary>How old an index is.</summary>
     /// <param name="age">Since it was built.</param>

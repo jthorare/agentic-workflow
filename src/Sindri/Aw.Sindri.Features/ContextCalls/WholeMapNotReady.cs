@@ -25,6 +25,9 @@ internal sealed class WholeMapNotReady(IJobViews jobs, IViewReader views, IConte
 {
     private static readonly JobKind _build = JobKind.From("BuildContextMap");
 
+    // The first map is built by the context-map-refresh service's job, not a BuildContextMap job (#3595).
+    private static readonly JobKind _refresh = JobKind.From("RefreshContextMap");
+
     /// <summary>The refusal with its extension members.</summary>
     /// <param name="refusal">The engine's SND-CONTEXT-030.</param>
     /// <param name="scope">The caller's scope.</param>
@@ -33,7 +36,8 @@ internal sealed class WholeMapNotReady(IJobViews jobs, IViewReader views, IConte
     internal async ValueTask<Error> Explain(Error refusal, ContextScope scope, CancellationToken cancellationToken)
     {
         var builds = await jobs.List(state: null, _build, cancellationToken).ConfigureAwait(false);
-        var ran = builds.IsSuccess ? builds.Value : [];
+        var refreshes = await jobs.List(state: null, _refresh, cancellationToken).ConfigureAwait(false);
+        var ran = (builds.IsSuccess ? builds.Value : []).Concat(refreshes.IsSuccess ? refreshes.Value : []).ToList();
         var running = ran.FirstOrDefault(static j => j.State == JobState.Running);
         var profile = await views.Get<ProfileRow>(ViewNames.Profile, ViewNames.Profile, cancellationToken).ConfigureAwait(false);
         var explained = refusal;
@@ -48,7 +52,7 @@ internal sealed class WholeMapNotReady(IJobViews jobs, IViewReader views, IConte
     }
 
     /// <summary>The 'building' member for the running build <paramref name="job"/>.</summary>
-    /// <param name="job">The running BuildContextMap job.</param>
+    /// <param name="job">The running map build job (a BuildContextMap or a RefreshContextMap job).</param>
     /// <param name="sources">The engine's sources, or null when they could not be read.</param>
     /// <returns>The member: only what is known.</returns>
     internal static JsonElement Building(JobRow job, IReadOnlyList<SourceStatusRow>? sources) => Write(w =>

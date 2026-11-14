@@ -47,7 +47,7 @@
       "waiting": null,
       "paused": false,
       "needsLook": true,
-      "lookWords": "demo: code index is behind main; rebuild it from the System page"
+      "lookWords": "demo: code index is behind main; code-index-main-move rebuilds it on its next tick"
     },
     {
       "repo": "other",

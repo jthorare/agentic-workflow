@@ -2,6 +2,7 @@ using Aw.CodeIndex.Core;
 using Aw.CodeIndex.Core.Facade;
 using Aw.CodeIndex.Core.Model;
 using Aw.Sindri.Core.Health;
+using Aw.Sindri.Core.Scheduling;
 
 namespace Aw.Sindri.Features.CodeIndexReads;
 
@@ -47,7 +48,16 @@ internal static class CodeIndexProblems
         }
 
         return health.State == "stale"
-            ? new(CodeIndexErrors.IndexBehind.Code, $"{repo}: code index is behind main; rebuild it from the System page", $"the code index for {repo} is behind main")
+            ? new(CodeIndexErrors.IndexBehind.Code, $"{repo}: code index is behind main; {StaleCause(health.Paused)}", $"the code index for {repo} is behind main")
             : null;
+    }
+
+    // why: the System page has no rebuild control (#3601); the service rebuilds a stale index on its next tick, and while it is paused only the resume does.
+    private static string StaleCause(bool paused)
+    {
+        var service = MainMovePause.Service.Value;
+        return paused
+            ? $"{service} is paused, so nothing rebuilds it: sindri services resume {service}"
+            : $"{service} rebuilds it on its next tick";
     }
 }
