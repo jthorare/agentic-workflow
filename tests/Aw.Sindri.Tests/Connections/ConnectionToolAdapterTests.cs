@@ -57,6 +57,22 @@ public sealed class ConnectionToolAdapterTests
     }
 
     [Fact(Timeout = 60_000)]
+    public async Task The_github_list_runs_action_reads_a_branchs_latest_runs_with_a_get_and_the_rest_as_the_query()
+    {
+        var provider = new Recording("""{"total_count":0,"workflow_runs":[]}""");
+        using var http = new HttpClient(provider, disposeHandler: false);
+        var world = new World(http);
+        world.AddRest("github:work", "github", RestCredential);
+
+        var called = await world.Adapter.Call("github:work", "list_runs", """{"owner":"o","repo":"r","branch":"main","per_page":"5"}""", TestContext.Current.CancellationToken);
+
+        Assert.True(called.IsSuccess);
+        var sent = Assert.Single(provider.Requests);
+        Assert.Equal(HttpMethod.Get, sent.Method);
+        Assert.Equal("https://api.github.com/repos/o/r/actions/runs?branch=main&per_page=5", sent.Uri);
+    }
+
+    [Fact(Timeout = 60_000)]
     public async Task A_path_argument_with_a_quote_is_url_escaped_as_the_value_it_is_not_as_json_text()
     {
         var provider = new Recording("{}");
