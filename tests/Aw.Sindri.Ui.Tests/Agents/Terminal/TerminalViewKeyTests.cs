@@ -90,7 +90,8 @@ public sealed class TerminalViewKeyTests
                 window.KeyPress(Key.V, RawInputModifiers.Control | RawInputModifiers.Shift, PhysicalKey.V, keySymbol: null);
                 window.KeyPress(Key.V, RawInputModifiers.Control, PhysicalKey.V, keySymbol: null);
 
-                Assert.Equal((["echo hi\nls -l", "echo hi\nls -l"], 0), (pasted, sent.Count));
+                Assert.Equal(["echo hi\nls -l", "echo hi\nls -l"], pasted);
+                Assert.Empty(sent);
             }
             finally
             {
@@ -147,7 +148,8 @@ public sealed class TerminalViewKeyTests
                 window.KeyPress(Key.PageDown, RawInputModifiers.Shift, PhysicalKey.PageDown, keySymbol: null);
                 offsets.Add(view.PaneScrollOffset);
 
-                Assert.Equal(([5, 10, 12, 7], 0), (offsets, sent.Count));
+                Assert.Equal([5, 10, 12, 7], offsets);
+                Assert.Empty(sent);
             }
             finally
             {
@@ -174,7 +176,8 @@ public sealed class TerminalViewKeyTests
 
                 window.KeyPress(Key.A, RawInputModifiers.None, PhysicalKey.A, keySymbol: "a");
 
-                Assert.Equal((5, 0, ["A"]), (scrolled, view.PaneScrollOffset, sent));
+                Assert.Equal((5, 0), (scrolled, view.PaneScrollOffset));
+                Assert.Equal(["A"], sent);
             }
             finally
             {
