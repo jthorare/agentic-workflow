@@ -1,16 +1,17 @@
 using Aw.Kernel;
+using Aw.Kernel.Json;
 using Aw.Sindri.Ui.Api.Sessions;
 
 namespace Aw.Sindri.Ui.Api;
 
-/// <summary>The New agent form's calls (<see cref="SindriApiClient"/>, continued).</summary>
+/// <summary>The New agent form's calls (<see cref="SindriApiClient"/>, continued; agents spec §15.4, A7).</summary>
 internal sealed partial class SindriApiClient
 {
     /// <inheritdoc />
     public Task<Result<AgentStartedView>> Start(Uri api, StartAgentRequest request, CancellationToken cancellationToken) =>
-        Task.FromResult<Result<AgentStartedView>>(SindriUiErrors.BadStatus.With("the start is not wired yet"));
+        Call<AgentStartedView>(api, HttpMethod.Post, SessionRoutes.Start, cancellationToken, new CallOptions(Content: AwJson.Serialize(request, Json)));
 
     /// <inheritdoc />
     public Task<Result<AgentLastStartView>> LastStart(Uri api, CancellationToken cancellationToken) =>
-        Task.FromResult<Result<AgentLastStartView>>(SindriUiErrors.BadStatus.With("the last start is not wired yet"));
+        Get<AgentLastStartView>(api, SessionRoutes.LastStart, cancellationToken);
 }

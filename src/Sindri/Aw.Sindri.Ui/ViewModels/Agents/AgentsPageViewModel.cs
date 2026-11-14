@@ -187,6 +187,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         Patch.To(ProblemLines, [.. list.Problems.Select(p => p.Text)]);
         ReplaceChoices(list);
         Apply(before, list);
+        SelectPending();
     }
 
     private void Unavailable(string detail)

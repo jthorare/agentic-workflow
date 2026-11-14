@@ -18,6 +18,13 @@ internal sealed partial class NewAgentFormView : UserControl
             if (DataContext is NewAgentFormViewModel form)
             {
                 form.FocusRequested += (_, e) => FocusField(e.Field);
+                form.PropertyChanged += (_, e) =>
+                {
+                    if (string.Equals(e.PropertyName, nameof(NewAgentFormViewModel.IsOpen), StringComparison.Ordinal) && form.IsOpen)
+                    {
+                        Avalonia.Threading.Dispatcher.UIThread.Post(() => FocusField(NewAgentField.Prompt), Avalonia.Threading.DispatcherPriority.Loaded);
+                    }
+                };
             }
         };
     }

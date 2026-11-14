@@ -22,6 +22,7 @@ internal sealed partial class NewAgentFormViewModel : ObservableObject
     private readonly IClipboard _clipboard;
     private readonly Func<string> _newActId;
     private bool _lastBackground;
+    private bool _defaultsTaken;
     private bool _serverPromptRefusal;
     private AgentStartedViewRef? _lastStarted;
 
@@ -69,7 +70,20 @@ internal sealed partial class NewAgentFormViewModel : ObservableObject
     /// <summary>Takes the profile's repos and the last choices once they are read; what was typed or chosen already stays.</summary>
     /// <param name="repos">The repos.</param>
     /// <param name="defaults">The last start's repo and agent.</param>
-    internal void SetRepos(IReadOnlyList<RepoChoice> repos, NewAgentDefaults defaults) => _ = (repos, defaults);
+    internal void SetRepos(IReadOnlyList<RepoChoice> repos, NewAgentDefaults defaults)
+    {
+        ArgumentNullException.ThrowIfNull(repos);
+        ArgumentNullException.ThrowIfNull(defaults);
+        Repos = repos;
+        Repo = repos.FirstOrDefault(r => string.Equals(r.Name, Repo?.Name, StringComparison.Ordinal))
+            ?? repos.FirstOrDefault(r => string.Equals(r.Name, defaults.Repo, StringComparison.Ordinal))
+            ?? (repos.Count > 0 ? repos[0] : null);
+        if (!_defaultsTaken)
+        {
+            _defaultsTaken = true;
+            Agent = AgentChoice.All.FirstOrDefault(a => string.Equals(a.Id, defaults.Agent, StringComparison.Ordinal)) ?? Agent;
+        }
+    }
 
     /// <summary>The chosen repo; null when the profile has none. Choosing clears the error under it.</summary>
     public RepoChoice? Repo

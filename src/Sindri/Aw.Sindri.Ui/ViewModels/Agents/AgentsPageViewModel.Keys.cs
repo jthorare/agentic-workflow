@@ -37,7 +37,21 @@ internal sealed partial class AgentsPageViewModel
 
     /// <summary>Selects the row of a session just started, now if it is drawn and else when the next read draws it (#3384).</summary>
     /// <param name="key">The row's key.</param>
-    internal void SelectWhenDrawn(string key) => _ = key;
+    internal void SelectWhenDrawn(string key)
+    {
+        _pendingSelect = Select(key) ? null : key;
+    }
+
+    private string? _pendingSelect;
+
+    // After a read drew its rows: the row of a session just started, if it is there now, takes the selection.
+    private void SelectPending()
+    {
+        if (_pendingSelect is { } key && Select(key))
+        {
+            _pendingSelect = null;
+        }
+    }
 
     /// <summary>Selects a row by its key (focus arrived on it).</summary>
     /// <param name="key">The row's key.</param>
