@@ -5,11 +5,13 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.ViewModels.Workflows;
+using Aw.Sindri.Ui.Views.Controls;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
@@ -280,5 +282,89 @@ public sealed class WorkflowsFramesTests : FrameHost
         var first = Assert.IsType<Border>(Focused(window));   // the row is the focus stop since #2550, not its title button
         Assert.Equal(shell.Workflows.Rows[0], first.DataContext);
         Assert.False(back.IsEffectivelyVisible);
+    });
+
+    // #3233 PR 2: every status chip on the page is a StateChipView in the status-chip tone set, never a hand-drawn Border.status-chip.
+    private static string ToneWord(ChipTone tone) => tone switch
+    {
+        ChipTone.Ok => "ok",
+        ChipTone.Attn => "attention",
+        ChipTone.Fail => "error",
+        ChipTone.Neutral => "neutral",
+        _ => "neutral",
+    };
+
+    private static void AssertChip(StateChipView chip, string word, string glyph, string tone, string what)
+    {
+        Assert.Equal(tone, chip.Tone);
+        Assert.Contains("status-" + tone, chip.Classes, StringComparer.Ordinal);
+        Assert.False(string.IsNullOrEmpty(chip.Word), $"{what}: the chip has no word");
+        Assert.Equal(word, chip.Word);
+        Assert.Equal(glyph, chip.Glyph);
+        Assert.False(string.IsNullOrEmpty(word), $"{what}: the view model has no chip word");
+    }
+
+    private static void AssertNoHandDrawnChip(Window window) =>
+        Assert.DoesNotContain(window.GetVisualDescendants().OfType<Border>(), b => b is not StateChipView && b.Classes.Contains("status-chip"));
+
+    [Fact]
+    public Task The_workflow_rows_draw_their_state_as_StateChipViews() => OnUi(async () =>
+    {
+        var (window, shell) = await OnWorkflows(1440);
+
+        AssertNoHandDrawnChip(window);
+        var chips = window.GetVisualDescendants().OfType<StateChipView>().Where(c => c.IsEffectivelyVisible).ToList();
+        Assert.Equal(shell.Workflows.Rows.Count, chips.Count);
+        for (var i = 0; i < chips.Count; i++)
+        {
+            var row = shell.Workflows.Rows[i];
+            AssertChip(chips[i], row.ChipWord, row.ChipGlyph, row.IsActive ? "ok" : "neutral", $"workflow {row.Slug}");
+            Assert.Equal(chips[i].Tone, row.ChipTone);
+        }
+    });
+
+    [Fact]
+    public Task The_run_rows_draw_their_status_as_StateChipViews() => OnUi(async () =>
+    {
+        var (window, shell) = await OnWorkflows(1440);
+        await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
+        await Until(window, () => shell.Workflows.Runs.Rows.Count > 0, "the runs never showed");
+
+        AssertNoHandDrawnChip(window);
+        var chips = window.GetVisualDescendants().OfType<StateChipView>().Where(c => c.IsEffectivelyVisible).ToList();
+        Assert.Equal(shell.Workflows.Runs.Rows.Count, chips.Count);
+        for (var i = 0; i < chips.Count; i++)
+        {
+            var row = shell.Workflows.Runs.Rows[i];
+            AssertChip(chips[i], row.ChipWord, row.ChipGlyph, ToneWord(row.Tone), $"run {row.Id}");
+            Assert.Equal(chips[i].Tone, row.ChipTone);
+        }
+
+        Assert.Contains(chips, c => c.Tone == "ok");
+        Assert.Contains(chips, c => c.Tone == "error");   // list-three holds a succeeded and a failed run
+    });
+
+    [Fact]
+    public Task The_run_header_and_the_node_runs_draw_their_status_as_StateChipViews() => OnUi(async () =>
+    {
+        var (window, shell) = await OnWorkflows(1440);
+        await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
+        await shell.Workflows.OpenRun(RunId, CancellationToken.None);
+        await Until(window, () => shell.Workflows.Run.Groups.Count > 0, "the run never showed");
+
+        AssertNoHandDrawnChip(window);
+        var run = shell.Workflows.Run;
+        var header = Assert.IsType<StateChipView>(Named<Control>(window, "RunChipName"));   // #3194 builds on this chip
+        AssertChip(header, run.ChipWord, run.ChipGlyph, ToneWord(run.Tone), "the run header");
+        Assert.Equal(header.Tone, run.ChipTone);
+
+        var nodes = run.Groups.SelectMany(g => g.Runs).ToList();
+        var chips = window.GetVisualDescendants().OfType<StateChipView>().Where(c => c.IsEffectivelyVisible && !ReferenceEquals(c, header)).ToList();
+        Assert.Equal(nodes.Count, chips.Count);
+        for (var i = 0; i < chips.Count; i++)
+        {
+            AssertChip(chips[i], nodes[i].ChipWord, nodes[i].ChipGlyph, ToneWord(nodes[i].Tone), $"node run {nodes[i].TitleText}");
+            Assert.Equal(chips[i].Tone, nodes[i].ChipTone);
+        }
     });
 }

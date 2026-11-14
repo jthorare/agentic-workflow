@@ -32,13 +32,24 @@ internal sealed class RunRowViewModel : ObservableObject
     public ChipTone Tone { get; }
 
     /// <summary>True for a succeeded or running run (the ok colour).</summary>
-    public bool IsOk => Tone == ChipTone.Ok;
+    public bool IsOk => Tone == Api.ChipTone.Ok;
 
     /// <summary>True for a waiting run (the attention colour).</summary>
-    public bool IsAttention => Tone == ChipTone.Attn;
+    public bool IsAttention => Tone == Api.ChipTone.Attn;
 
     /// <summary>True for a failed run (the error colour).</summary>
-    public bool IsError => Tone == ChipTone.Fail;
+    public bool IsError => Tone == Api.ChipTone.Fail;
+
+#pragma warning disable CA1822, MA0041 // stubs until the swap (#3233): they read nothing yet
+    /// <summary>The chip's word without its glyph (#3233, stub until the swap).</summary>
+    public string ChipWord => string.Empty;
+
+    /// <summary>The chip's glyph (#3233, stub until the swap).</summary>
+    public string ChipGlyph => string.Empty;
+
+    /// <summary>The chip's StateChipView tone: ok, running, waiting, attention, error, neutral (#3233, stub until the swap).</summary>
+    public string ChipTone => string.Empty;
+#pragma warning restore CA1822, MA0041
 
     /// <summary>"Manual", "Schedule".</summary>
     public string TriggerText { get; }

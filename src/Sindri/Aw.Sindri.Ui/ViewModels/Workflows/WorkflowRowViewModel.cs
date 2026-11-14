@@ -37,6 +37,17 @@ internal sealed class WorkflowRowViewModel : ObservableObject
     /// <summary>The state: glyph and word.</summary>
     public string StateText { get; }
 
+#pragma warning disable CA1822, MA0041 // stubs until the swap (#3233): they read nothing yet
+    /// <summary>The chip's word without its glyph (#3233, stub until the swap).</summary>
+    public string ChipWord => string.Empty;
+
+    /// <summary>The chip's glyph (#3233, stub until the swap).</summary>
+    public string ChipGlyph => string.Empty;
+
+    /// <summary>The chip's StateChipView tone: ok, running, waiting, attention, error, neutral (#3233, stub until the swap).</summary>
+    public string ChipTone => string.Empty;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>"Revision 2" or "Revision 1 active, 3 newest"; empty for a first revision and for a workflow with no active revision.</summary>
     public string RevisionText { get; }
 
