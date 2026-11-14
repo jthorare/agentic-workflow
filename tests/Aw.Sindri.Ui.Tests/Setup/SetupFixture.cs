@@ -130,6 +130,18 @@ internal sealed class SetupFixture
         return list;
     }
 
+    /// <summary>The list with one step failed as the API serves it: the line under its title, its error sentence and the fix in its detail.</summary>
+    internal static JsonNode WithFailure(JsonNode list, string step, string why, string sentence, string? detail)
+    {
+        var served = list["steps"]!.AsArray().Single(s => (string)s!["id"]! == step)!;
+        served["state"] = "failed";
+        served["why"] = why;
+        served["detail"] = detail;
+        served["error"] = new JsonObject { ["code"] = "SND-PROFILE-002", ["sentence"] = sentence };
+        served["action"] = null;
+        return list;
+    }
+
     /// <summary>The golden with one step's error and progress set (a failed step that also counts).</summary>
     internal static JsonNode WithProgress(JsonNode list, string step, int done, int total, string? unit = null)
     {
