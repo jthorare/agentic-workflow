@@ -316,6 +316,36 @@ public sealed class SetupFactsTests
         await using var rig = new SetupFactsRig();
         await rig.Approve(SetupFactsRig.ProfileWithRepos());
         rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+        rig.ClockAfterIndexBuild(TimeSpan.FromSeconds(30));
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Building, MapStage.Map, null), (map.Phase, map.Stage, map.Progress));
+    }
+
+    // #3593: the gap is bounded. Two ticks after the index build, a tick decided not to start the map (a backoff, say), so the step reads the last try, not building with no job behind it.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_reads_to_do_when_the_index_build_ended_five_minutes_ago_and_no_map_started()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+        rig.ClockAfterIndexBuild(TimeSpan.FromMinutes(5));
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.NotBuilt, null), (map.Phase, map.Stage));
+    }
+
+    // #3593: the running-service twin of the paused case below: a succeeded index build after a failed one reads building at the map stage.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_reads_building_after_a_failed_then_succeeded_index_build_with_the_refresh_service_running()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Failed, ["structure 3 of 10 files"], "SND-CODEIDX-010");
+        rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+        rig.ClockAfterIndexBuild(TimeSpan.FromSeconds(30));
 
         var map = (await rig.Facts.Map(Token)).Value;
 

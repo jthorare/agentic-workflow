@@ -22,8 +22,12 @@ namespace Aw.Sindri.Features.SetupSources;
 /// <param name="engine">The context engine.</param>
 /// <param name="jobs">The 'jobs' view.</param>
 /// <param name="pauses">The paused services: the first map waits on the context-map-refresh service's next tick, which a pause stops (#3593).</param>
-internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine engine, IJobViews jobs, IServicePauses pauses)
+/// <param name="time">The clock: the gap before that tick reads building only while the index build ended recently (#3593).</param>
+internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine engine, IJobViews jobs, IServicePauses pauses, TimeProvider time)
 {
+    // Two of the context-map-refresh service's one-minute ticks: past that, a tick decided not to start the map (a backoff after a failed map, say), so the step shows the last try again.
+    private static readonly TimeSpan _tickGap = TimeSpan.FromMinutes(2);
+
     private static readonly JobKind _build = JobKind.From("BuildContextMap");
 
     // The first map is built by the context-map-refresh service's job, not a BuildContextMap job (#3322); both read as a map build.
@@ -123,10 +127,11 @@ internal sealed class MapSetupReader(IApprovedProfile approvals, IContextEngine 
     }
 
     // #3593: the first map starts on the context-map-refresh service's next tick (it runs every minute), not chained off the index build. In that gap nothing runs; the step reads
-    // building while the newest index build of a mapped repo succeeded after the newest ended map job and the service is not paused. A pause read that fails counts as paused: show today's answer.
+    // building while the newest index build of a mapped repo succeeded after the newest ended map job, it ended less than two ticks ago and the service is not paused.
+    // A pause read that fails counts as paused: show today's answer.
     private async ValueTask<bool> FirstTickDue(JobRow? map, JobRow? index, CancellationToken cancellationToken)
     {
-        if (index is not { State: JobState.Succeeded } || (map is not null && map.Sequence > index.Sequence))
+        if (index is not { State: JobState.Succeeded, EndedAt: { } ended } || (map is not null && map.Sequence > index.Sequence) || time.GetUtcNow() - ended >= _tickGap)
         {
             return false;
         }
