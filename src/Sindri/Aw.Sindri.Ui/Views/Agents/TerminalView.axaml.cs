@@ -44,10 +44,22 @@ internal sealed partial class TerminalView : UserControl
         set => ListHost.Content = value;
     }
 
+    /// <summary>False when the page keeps the list beside this view: the view then draws only the pane, its header and its footer.</summary>
+    internal bool ShowsList
+    {
+        get;
+        set
+        {
+            field = value;
+            ListFrame.IsVisible = value;
+            Body.ColumnDefinitions[0].Width = value ? new GridLength(Bounds.Width < NarrowBelow ? 56 : 360) : new GridLength(0);
+        }
+    } = true;
+
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);
-        Body.ColumnDefinitions[0].Width = new GridLength(e.NewSize.Width < NarrowBelow ? 56 : 360);
+        Body.ColumnDefinitions[0].Width = ShowsList ? new GridLength(e.NewSize.Width < NarrowBelow ? 56 : 360) : new GridLength(0);
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
