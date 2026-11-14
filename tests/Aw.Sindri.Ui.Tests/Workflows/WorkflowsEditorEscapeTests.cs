@@ -14,7 +14,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Workflows;
 
-/// <summary>Escape in the workflow editor sheet (#2258 PR 17 part 3a), through the real shell window: with the editor open it closes the editor and focus goes to the Edit button, and the shell's own sheet stays open; with the editor closed Escape reaches the shell as before.</summary>
+/// <summary>Escape in the workflow editor sheet (#2258 PR 17 part 3a), through the real shell window: with the editor open it closes the editor and focus goes to Step settings (Edit is hidden while edit mode is on, #2807), and the shell's own sheet stays open; with the editor closed Escape reaches the shell as before.</summary>
 [Lane(TestLane.Integration)]
 public sealed class WorkflowsEditorEscapeTests : IDisposable
 {
@@ -110,26 +110,27 @@ public sealed class WorkflowsEditorEscapeTests : IDisposable
     }
 
     [Fact]
-    public Task Escape_in_the_editor_closes_it_and_focuses_Edit_without_the_shell_closing_its_sheet() => OnUi(async () =>
+    public Task Escape_in_the_editor_closes_it_and_focuses_Step_settings_without_the_shell_closing_its_sheet() => OnUi(async () =>
     {
         var (window, shell) = await WithSheet();
-        await shell.Workflows.Edit(Token);
+        await shell.Workflows.OpenSettings(Token);
         Settle(window);
-        Assert.True(shell.Workflows.IsEditing);
+        Assert.True(shell.Workflows.IsSettingsOpen);
         Assert.True(Named<TextBox>(window, "EditorFieldText").Focus(NavigationMethod.Tab));
 
         PressEscape(window);
 
-        Assert.False(shell.Workflows.IsEditing);
+        Assert.False(shell.Workflows.IsSettingsOpen);
         Assert.True(shell.IsSheetOpen, "the shell's Escape acted too");
-        Assert.Same(Named<Button>(window, "WorkflowEdit"), window.FocusManager?.GetFocusedElement());
+        Assert.False(shell.Workflows.ShowsEdit);   // edit mode stays on after the sheet closes, so Edit stays hidden: focus goes to Step settings
+        Assert.Same(Named<Button>(window, "StepSettings"), window.FocusManager?.GetFocusedElement());
     });
 
     [Fact]
     public Task Escape_with_the_editor_closed_still_reaches_the_shell() => OnUi(async () =>
     {
         var (window, shell) = await WithSheet();
-        Assert.False(shell.Workflows.IsEditing);
+        Assert.False(shell.Workflows.IsSettingsOpen);
         Assert.True(Named<Button>(window, "WorkflowEdit").Focus(NavigationMethod.Tab));
 
         PressEscape(window);

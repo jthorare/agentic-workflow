@@ -163,3 +163,20 @@ override Aw.Sindri.Ui.Platform.PickedFile.GetHashCode() -> int
 override Aw.Sindri.Ui.Platform.PickedFile.ToString() -> string!
 static Aw.Sindri.Ui.Platform.PickedFile.operator !=(Aw.Sindri.Ui.Platform.PickedFile? left, Aw.Sindri.Ui.Platform.PickedFile? right) -> bool
 static Aw.Sindri.Ui.Platform.PickedFile.operator ==(Aw.Sindri.Ui.Platform.PickedFile? left, Aw.Sindri.Ui.Platform.PickedFile? right) -> bool
+Aw.Sindri.Ui.Platform.ISindriStarter
+Aw.Sindri.Ui.Platform.ISindriStarter.Exited -> System.EventHandler<Aw.Sindri.Ui.Platform.SindriExitedEventArgs!>?
+Aw.Sindri.Ui.Platform.SindriExitedEventArgs
+Aw.Sindri.Ui.Platform.SindriExitedEventArgs.ExitCode.get -> int
+Aw.Sindri.Ui.Platform.SindriExitedEventArgs.Launch.get -> int
+Aw.Sindri.Ui.Platform.SindriExitedEventArgs.SindriExitedEventArgs(int launch, int exitCode) -> void
+Aw.Sindri.Ui.Platform.ISindriStarter.Launch.get -> int
+Aw.Sindri.Ui.Platform.ISindriStarter.LastError() -> string?
+Aw.Sindri.Ui.Platform.ISindriStarter.LogPath.get -> string!
+Aw.Sindri.Ui.Platform.ISindriStarter.Start() -> Aw.Kernel.Result<Aw.Sindri.Ui.Platform.SindriStartOutcome>!
+Aw.Sindri.Ui.Platform.SindriPlatform.Starter.get -> Aw.Sindri.Ui.Platform.ISindriStarter?
+Aw.Sindri.Ui.Platform.SindriPlatform.Starter.init -> void
+Aw.Sindri.Ui.Platform.SindriStartOutcome
+Aw.Sindri.Ui.Platform.SindriStartOutcome.AlreadyStarted = 1 -> Aw.Sindri.Ui.Platform.SindriStartOutcome
+Aw.Sindri.Ui.Platform.SindriStartOutcome.NotInstalled = 2 -> Aw.Sindri.Ui.Platform.SindriStartOutcome
+Aw.Sindri.Ui.Platform.SindriStartOutcome.Started = 0 -> Aw.Sindri.Ui.Platform.SindriStartOutcome
+Aw.Sindri.Ui.Platform.ISindriStarter.Release() -> void
