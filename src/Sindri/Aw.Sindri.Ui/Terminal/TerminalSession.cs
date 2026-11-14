@@ -90,8 +90,21 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
     /// <param name="text">The clipboard's text.</param>
     /// <param name="cancellationToken">Cancels the send.</param>
     /// <returns>What became of the paste.</returns>
-    internal Task<TerminalKeyFate> SendPaste(string text, CancellationToken cancellationToken) =>
-        string.IsNullOrEmpty(text) ? Task.FromResult(TerminalKeyFate.Dropped) : Deliver(TerminalSocketMessages.Paste(text), cancellationToken);
+    internal Task<TerminalKeyFate> SendPaste(string text, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return Task.FromResult(TerminalKeyFate.Dropped);
+        }
+
+        if (System.Text.Encoding.UTF8.GetByteCount(text) > TerminalSocketMessages.MaxPasteBytes)
+        {
+            view.Note(Aw.Sindri.Ui.ViewModels.Labels.TerminalPasteTooBig);   // Serve would close the socket with 1009
+            return Task.FromResult(TerminalKeyFate.Dropped);
+        }
+
+        return Deliver(TerminalSocketMessages.Paste(text), cancellationToken);
+    }
 
     /// <summary>Ctrl-C through the socket.</summary>
     /// <param name="cancellationToken">Cancels the send.</param>
