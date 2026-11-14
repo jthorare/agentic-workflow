@@ -102,7 +102,7 @@ internal sealed class HealthPill : ObservableObject
         IsStarting = starts;
         var normal = NormalWord(health, profile);
         (Glyph, Word, Age) = starts ? (StateGlyph.None, Labels.StartingWord, string.Empty) : Words(state, age, normal);
-        (ProcessGlyph, ProcessWord, _) = Words(state, age, NormalWord(health, profile with { Unreadable = false }));
+        (ProcessGlyph, ProcessWord, _) = starts ? (StateGlyph.None, Labels.StartingSindri, string.Empty) : Words(state, age, NormalWord(health, profile with { Unreadable = false }));   // the Control plane card says what the Home card says (#3703)
         Problems = state == ShellState.Normal && health is not null ? string.Join(" · ", health.Problems.Where(p => !_viewsCodes.Contains(p.Code)).Select(p => p.Clause ?? p.Text)) : string.Empty;
         Text = string.Join(" · ", ((string[])[Word, Age, Problems]).Where(t => t.Length > 0));
         ProcessText = string.Join(" · ", ((string[])[ProcessWord, Age, Problems]).Where(t => t.Length > 0));
