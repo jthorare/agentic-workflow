@@ -8,7 +8,7 @@ internal sealed class RunRowViewModel : ObservableObject
 {
     internal RunRowViewModel(WorkflowRunRowView row, TimeProvider clock)
     {
-        Id = row.Id;
+        (Id, Status) = (row.Id, row.Status);
         var (glyph, word) = Labels.WfChip(row.Status);
         Tone = RunStatus.Tone(row.Status);
         (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, RunStatus.ToneWord(row.Status));
@@ -24,6 +24,9 @@ internal sealed class RunRowViewModel : ObservableObject
 
     /// <summary>The run's id.</summary>
     public string Id { get; }
+
+    /// <summary>The served status: running, waiting, queued, succeeded, failed, skipped or cancelled.</summary>
+    public string Status { get; }
 
     /// <summary>The chip's tone; the glyph and word carry the status too.</summary>
     public ChipTone Tone { get; }

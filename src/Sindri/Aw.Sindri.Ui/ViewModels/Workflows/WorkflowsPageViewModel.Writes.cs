@@ -81,9 +81,23 @@ internal sealed partial class WorkflowsPageViewModel
                 Runs.Note(Labels.WfRunQueued(started.Reason));
                 break;
             default:
-                Runs.Note(Labels.WfRunSkipped(started.Reason));
+                await ShowRunInFlight(started.Reason, cancellationToken).ConfigureAwait(true);
                 break;
         }
+    }
+
+    // A skipped run means another run of the workflow is live: say so in one line and open that run (the newest live one on the list just read). With none on the list, the skip says why.
+    private async Task ShowRunInFlight(string? reason, CancellationToken cancellationToken)
+    {
+        var live = _level == Level.Runs ? Runs.Rows.FirstOrDefault(r => RunStatus.IsLive(r.Status)) : null;
+        if (live is null)
+        {
+            Runs.Note(Labels.WfRunSkipped(reason));
+            return;
+        }
+
+        await OpenRun(live.Id, cancellationToken).ConfigureAwait(true);
+        Run.Note(Labels.WfRunInFlight);
     }
 
     /// <summary>
