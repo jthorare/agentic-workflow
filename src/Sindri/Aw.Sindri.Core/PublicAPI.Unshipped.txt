@@ -23249,10 +23249,14 @@ Aw.Sindri.Core.Graph.Failures.FailureSentence.SecondaryLabel.init -> void
 Aw.Sindri.Core.Graph.Failures.FailureSentence.Template.get -> string!
 Aw.Sindri.Core.Graph.Failures.FailureSentence.Template.init -> void
 Aw.Sindri.Core.Graph.Failures.FailureSentences
-Aw.Sindri.Core.Graph.Runs.NodeRun.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out Aw.Sindri.Core.Graph.Ids.NodeId NodeId, out int ItemIndex, out Aw.Sindri.Core.Graph.Runs.NodeRunStatus Status, out string? Input, out string? Output, out bool Truncated, out string? Error, out string? Usage, out string? Raw) -> void
-Aw.Sindri.Core.Graph.Runs.NodeRun.NodeRun(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, Aw.Sindri.Core.Graph.Runs.NodeRunStatus Status, string? Input, string? Output, bool Truncated, string? Error, string? Usage, string? Raw = null) -> void
+Aw.Sindri.Core.Graph.Runs.NodeRun.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out Aw.Sindri.Core.Graph.Ids.NodeId NodeId, out int ItemIndex, out Aw.Sindri.Core.Graph.Runs.NodeRunStatus Status, out string? Input, out string? Output, out bool Truncated, out string? Error, out string? Usage, out string? Raw, out System.DateTimeOffset? StartedAt, out System.DateTimeOffset? EndedAt) -> void
+Aw.Sindri.Core.Graph.Runs.NodeRun.NodeRun(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, Aw.Sindri.Core.Graph.Runs.NodeRunStatus Status, string? Input, string? Output, bool Truncated, string? Error, string? Usage, string? Raw = null, System.DateTimeOffset? StartedAt = null, System.DateTimeOffset? EndedAt = null) -> void
 Aw.Sindri.Core.Graph.Runs.NodeRun.Raw.get -> string?
 Aw.Sindri.Core.Graph.Runs.NodeRun.Raw.init -> void
+Aw.Sindri.Core.Graph.Runs.NodeRun.StartedAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Graph.Runs.NodeRun.StartedAt.init -> void
+Aw.Sindri.Core.Graph.Runs.NodeRun.EndedAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Graph.Runs.NodeRun.EndedAt.init -> void
 override Aw.Sindri.Core.Graph.Blocks.ModelAnswer.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Graph.Blocks.ModelAnswer.GetHashCode() -> int
 override Aw.Sindri.Core.Graph.Blocks.ModelAnswer.ToString() -> string!

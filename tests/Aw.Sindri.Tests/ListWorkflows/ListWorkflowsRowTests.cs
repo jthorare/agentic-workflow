@@ -50,8 +50,7 @@ public sealed class ListWorkflowsRowTests
         var row = (await _service.Handle(new ListWorkflowsRequest(), Token)).Value.Workflows.Single();
 
         Assert.Null(row.LastRun);
-        Assert.Empty(row.RecentRuns);
-        Assert.False(row.NeedsLook);
+        Assert.Empty(row.Recent);
     }
 
     [Fact]
@@ -63,8 +62,7 @@ public sealed class ListWorkflowsRowTests
 
         var row = (await _service.Handle(new ListWorkflowsRequest(), Token)).Value.Workflows.Single();
 
-        Assert.Equal(new WorkflowLastRun("failed", _now.AddMinutes(-3)), row.LastRun);
-        Assert.True(row.NeedsLook);
+        Assert.Equal(new WorkflowLastRun(WorkflowRunId.Of(WorkflowSlug.From("w"), 1, 2), "failed", _now.AddMinutes(-3)), row.LastRun);
     }
 
     [Fact]
@@ -78,9 +76,9 @@ public sealed class ListWorkflowsRowTests
 
         var row = (await _service.Handle(new ListWorkflowsRequest(), Token)).Value.Workflows.Single();
 
-        Assert.Equal(10, row.RecentRuns.Count);
-        Assert.Equal("failed", row.RecentRuns[0]);
-        Assert.All(row.RecentRuns.Skip(1), static s => Assert.Equal("succeeded", s));
+        Assert.Equal(10, row.Recent.Count);
+        Assert.Equal(("failed", WorkflowRunId.Of(WorkflowSlug.From("w"), 1, 12), 5.0), (row.Recent[0].Status, row.Recent[0].Run, row.Recent[0].Seconds));   // Insert ends each run 5 s after it started
+        Assert.All(row.Recent.Skip(1), static r => Assert.Equal("succeeded", r.Status));
     }
 
     [Fact]
@@ -96,54 +94,26 @@ public sealed class ListWorkflowsRowTests
 
         var rows = (await _service.Handle(new ListWorkflowsRequest(), Token)).Value.Workflows.ToDictionary(static w => w.Slug.Value, StringComparer.Ordinal);
 
-        Assert.Equal(new DateTimeOffset(2026, 11, 14, 11, 0, 0, TimeSpan.Zero), rows["sum"].NextRun);
-        Assert.Equal(new DateTimeOffset(2026, 11, 16, 7, 0, 0, TimeSpan.Zero), rows["weekday-check"].NextRun);   // Sat -> Mon
-        Assert.Null(rows["by-hand"].NextRun);
+        Assert.Equal(new DateTimeOffset(2026, 11, 14, 11, 0, 0, TimeSpan.Zero), rows["sum"].NextRunAt);
+        Assert.Equal(new DateTimeOffset(2026, 11, 16, 7, 0, 0, TimeSpan.Zero), rows["weekday-check"].NextRunAt);   // Sat -> Mon
+        Assert.Null(rows["by-hand"].NextRunAt);
     }
 
     [Fact]
-    public async Task A_paused_schedule_has_no_next_run_and_needs_a_look_but_an_off_one_does_not()
+    public async Task A_workflow_turned_off_after_it_was_on_is_paused_and_one_never_turned_on_is_not()
     {
         var nightly = await Create(1, "nightly", "schedule", "0 2 * * *");
         _ = await Create(2, "digest", "schedule", "0 8 * * *");   // never turned on: off, not paused
+        var hand = await Create(3, "hand", "manual", cron: null);
         _ = (await _workflows.Activate(nightly, 1, Token)).Value;
         _ = (await _workflows.Pause(nightly, Token)).Value;
+        _ = (await _workflows.Activate(hand, 1, Token)).Value;
 
         var rows = (await _service.Handle(new ListWorkflowsRequest(), Token)).Value.Workflows.ToDictionary(static w => w.Slug.Value, StringComparer.Ordinal);
 
-        Assert.Equal(("paused", true, null), (rows["nightly"].State, rows["nightly"].NeedsLook, rows["nightly"].NextRun));
-        Assert.Equal(("off", false, null), (rows["digest"].State, rows["digest"].NeedsLook, rows["digest"].NextRun));
-    }
-
-    [Fact]
-    public async Task A_paused_by_hand_workflow_does_not_need_a_look_because_it_has_no_schedule()
-    {
-        var id = await Create(1, "hand", "manual", cron: null);
-        _ = (await _workflows.Activate(id, 1, Token)).Value;
-        _ = (await _workflows.Pause(id, Token)).Value;
-
-        var row = (await _service.Handle(new ListWorkflowsRequest(), Token)).Value.Workflows.Single();
-
-        Assert.False(row.NeedsLook);
-    }
-
-    [Fact]
-    public async Task The_header_counts_split_total_into_active_paused_and_off()
-    {
-        var a = await Create(1, "a", "manual", cron: null);
-        var b = await Create(2, "b", "manual", cron: null);
-        var c = await Create(3, "c", "schedule", "0 2 * * *");
-        _ = await Create(4, "d", "manual", cron: null);
-        var gone = await Create(5, "gone", "manual", cron: null);
-        _ = (await _workflows.Activate(a, 1, Token)).Value;
-        _ = (await _workflows.Activate(b, 1, Token)).Value;
-        _ = (await _workflows.Activate(c, 1, Token)).Value;
-        _ = (await _workflows.Pause(c, Token)).Value;
-        _ = (await _workflows.Archive(gone, Token)).Value;
-
-        var counts = (await _service.Handle(new ListWorkflowsRequest(), Token)).Value.Counts;
-
-        Assert.Equal(new WorkflowCounts(Total: 4, Active: 2, Paused: 1, Off: 1), counts);
+        Assert.Equal((true, null), (rows["nightly"].Paused, rows["nightly"].NextRunAt));
+        Assert.False(rows["digest"].Paused);
+        Assert.False(rows["hand"].Paused);   // active
     }
 
     private static GraphSpec Spec(string name, string type, string? cron) =>

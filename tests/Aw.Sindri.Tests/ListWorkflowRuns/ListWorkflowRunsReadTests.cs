@@ -1,5 +1,4 @@
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
@@ -9,9 +8,9 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.ListWorkflowRuns;
 
-/// <summary>Issue 3683, the runs read: duration, a one-line result, and the status and date filters with their counts ("23 of 500").</summary>
+/// <summary>Issue 3683, the runs read: seconds, a one-line result and the trigger words. (The status and date filters are the client's, per ui.)</summary>
 [Lane(TestLane.Unit)]
-public sealed class ListWorkflowRunsFilterTests
+public sealed class ListWorkflowRunsReadTests
 {
     private static readonly WorkflowId _id = WorkflowId.From("WF-00000000000000000000000000000001");
     private static readonly WorkflowSlug _slug = WorkflowSlug.From("sum");
@@ -22,7 +21,7 @@ public sealed class ListWorkflowRunsFilterTests
     private readonly InMemoryWorkflowRunStore _runs;
     private readonly ListWorkflowRunsService _service;
 
-    public ListWorkflowRunsFilterTests()
+    public ListWorkflowRunsReadTests()
     {
         _workflows = new InMemoryWorkflowStore(_clock);
         _runs = new InMemoryWorkflowRunStore(_clock);
@@ -40,8 +39,8 @@ public sealed class ListWorkflowRunsFilterTests
 
         var runs = (await _service.Handle(new ListWorkflowRunsRequest(_slug), Token)).Value.Runs;
 
-        Assert.Null(runs[0].DurationMs);
-        Assert.Equal(16_000, runs[1].DurationMs);
+        Assert.Null(runs[0].Seconds);
+        Assert.Equal(16.0, runs[1].Seconds);
     }
 
     [Fact]
@@ -71,85 +70,20 @@ public sealed class ListWorkflowRunsFilterTests
         Assert.Equal("{\"sum\":{\"total\":3}}", runs[2].Result);
     }
 
-    [Fact]
-    public async Task The_status_filter_keeps_that_status_and_counts_matching_against_total()
+    [Theory]
+    [InlineData("{\"kind\":\"manual\",\"by\":\"owner\"}", "manual")]
+    [InlineData("{\"kind\":\"manual\",\"by\":\"session:s1\"}", "agent")]
+    [InlineData("{\"kind\":\"manual\",\"by\":\"cli\"}", "cli")]
+    [InlineData("{\"kind\":\"schedule\",\"scheduledFor\":\"2026-11-14T10:40:00Z\"}", "schedule")]
+    public async Task The_trigger_is_one_of_manual_schedule_cli_or_agent(string stored, string served)
     {
         await Create();
-        for (var n = 1; n <= 10; n++)
-        {
-            _ = await Insert(n, n % 4 == 0 ? WorkflowRunStatus.Failed : WorkflowRunStatus.Succeeded, _now.AddMinutes(-100 + n), ended: null, outputs: null, error: null);
-        }
+        var run = new WorkflowRun(WorkflowRunId.Of(_slug, 1, 1), _id, 1, stored, WorkflowRunStatus.Succeeded, Outputs: null, Error: null, ItemId: null, _now.AddMinutes(-5), _now.AddMinutes(-4));
+        _ = (await _runs.Insert(run, Token)).Value;
 
-        var result = (await _service.Handle(new ListWorkflowRunsRequest(_slug) { Status = "failed" }, Token)).Value;
+        var row = (await _service.Handle(new ListWorkflowRunsRequest(_slug), Token)).Value.Runs.Single();
 
-        Assert.Equal(2, result.Runs.Count);
-        Assert.All(result.Runs, static r => Assert.Equal("failed", r.Status));
-        Assert.Equal((2, 10), (result.Matching, result.Total));
-    }
-
-    [Fact]
-    public async Task The_date_range_is_inclusive_at_from_and_exclusive_at_to()
-    {
-        await Create();
-        for (var n = 1; n <= 6; n++)
-        {
-            _ = await Insert(n, WorkflowRunStatus.Succeeded, _now.AddHours(-n), ended: null, outputs: null, error: null);
-        }
-
-        var result = (await _service.Handle(new ListWorkflowRunsRequest(_slug) { From = _now.AddHours(-4), To = _now.AddHours(-1) }, Token)).Value;
-
-        Assert.Equal([2, 3, 4], result.Runs.Select(static r => r.Id.Occurrence).Order());   // -2h, -3h, -4h; -1h is excluded by To
-        Assert.Equal((3, 6), (result.Matching, result.Total));
-    }
-
-    [Fact]
-    public async Task Filters_apply_before_paging_so_an_offset_walks_the_matching_runs()
-    {
-        await Create();
-        for (var n = 1; n <= 120; n++)
-        {
-            _ = await Insert(n, n % 2 == 0 ? WorkflowRunStatus.Failed : WorkflowRunStatus.Succeeded, _now.AddMinutes(-200 + n), ended: null, outputs: null, error: null);
-        }
-
-        var page = (await _service.Handle(new ListWorkflowRunsRequest(_slug, Offset: 50, Limit: 10) { Status = "failed" }, Token)).Value;
-
-        Assert.Equal(10, page.Runs.Count);
-        Assert.Equal(20, page.Runs[0].Id.Occurrence);   // 60 failed runs, newest 120; offset 50 starts at the 51st: occurrence 20
-        Assert.False(page.More);
-        Assert.Equal((60, 120), (page.Matching, page.Total));
-    }
-
-    [Fact]
-    public async Task A_filter_with_no_match_is_an_empty_page_not_an_error()
-    {
-        await Create();
-        _ = await Insert(1, WorkflowRunStatus.Succeeded, _now.AddMinutes(-5), ended: null, outputs: null, error: null);
-
-        var result = await _service.Handle(new ListWorkflowRunsRequest(_slug) { Status = "failed" }, Token);
-
-        Assert.True(result.IsSuccess);
-        Assert.Empty(result.Value.Runs);
-        Assert.Equal((0, 1), (result.Value.Matching, result.Value.Total));
-    }
-
-    [Fact]
-    public async Task A_status_that_is_not_a_status_word_is_invalid_input()
-    {
-        await Create();
-
-        var result = await _service.Handle(new ListWorkflowRunsRequest(_slug) { Status = "exploded" }, Token);
-
-        Assert.Equal(SindriErrors.InvalidInput.Code, result.Error.Code);
-    }
-
-    [Fact]
-    public async Task A_range_that_ends_before_it_starts_is_invalid_input()
-    {
-        await Create();
-
-        var result = await _service.Handle(new ListWorkflowRunsRequest(_slug) { From = _now, To = _now.AddDays(-1) }, Token);
-
-        Assert.Equal(SindriErrors.InvalidInput.Code, result.Error.Code);
+        Assert.Equal(served, row.Trigger);
     }
 
     private async Task Create()
