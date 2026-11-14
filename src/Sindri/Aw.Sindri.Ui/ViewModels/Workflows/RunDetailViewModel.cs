@@ -154,13 +154,16 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
             : Labels.JobWhen(running: false, clock.GetUtcNow() - (run.EndedAt ?? run.StartedAt));
         ErrorText = run.Error ?? string.Empty;
         OutputsText = WorkflowJson.Pretty(run.Outputs);
-        Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode))];
+        Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode, (node, token) => EditStep?.Invoke(node, token) ?? Task.CompletedTask))];
         Graph = Shape is { } shape && shape.Revision == run.Revision ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(shape, Statuses(run))) : null;
         Changed();
     }
 
     /// <summary>The run's graph with each node's status, or null when the run walked another revision than the one read (positions belong to a revision).</summary>
     public WorkflowGraphViewModel? Graph { get; private set => Set(ref field, value); }
+
+    /// <summary>What a failed step's Edit step button calls with the step's id: the page opens the workflow on it.</summary>
+    internal Func<string, CancellationToken, Task>? EditStep { get; set; }
 
     /// <summary>The workflow revision the page read, set before <see cref="Read"/>; null draws no graph.</summary>
     internal WorkflowView? Shape { get; set; }

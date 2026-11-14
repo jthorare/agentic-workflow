@@ -68,6 +68,17 @@ internal sealed partial class WorkflowsPageViewModel
         Editor.Select(node);
     }
 
+    /// <summary>Edit step on a failed step of a run: goes up to the workflow, selects the step on its graph and opens its sheet. A step the current revision no longer has opens the sheet on the workflow.</summary>
+    /// <param name="nodeId">The failed step's id.</param>
+    /// <param name="cancellationToken">Cancels the reads.</param>
+    /// <returns>A task that completes when the form is made.</returns>
+    internal Task EditFailedStep(string nodeId, CancellationToken cancellationToken)
+    {
+        Back();
+        _ = Runs.Graph?.SelectNode(nodeId);
+        return Edit(cancellationToken);
+    }
+
     /// <summary>Sends every changed field in ONE call on the revision read: all are saved or none, and a refusal or a stale answer keeps every edit in the form. A field with a problem stops the save before anything is sent.</summary>
     /// <param name="cancellationToken">Cancels the calls.</param>
     /// <returns>A task that completes when the answers are shown.</returns>

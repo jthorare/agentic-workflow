@@ -32,7 +32,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     {
         (Api, _clock) = (api, clock);
         Runs = new RunsViewModel(api, clock);
-        Run = new RunDetailViewModel(api, clock);
+        Run = new RunDetailViewModel(api, clock) { EditStep = EditFailedStep };
         Editor = new OpsEditor(api);
         GraphEdit = new GraphEditViewModel(Editor, Runs, () => _url);   // made with the page, not on first read: the canvas's Delete key raises on the graph, and the edit bar must already be listening
         WatchEditor();

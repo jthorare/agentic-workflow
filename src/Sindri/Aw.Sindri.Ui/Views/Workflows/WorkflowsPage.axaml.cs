@@ -162,6 +162,14 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
+    private async void OnEditFailedStep(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: NodeRunViewModel node })
+        {
+            await node.EditStep(CancellationToken.None).ConfigureAwait(true);
+        }
+    }
+
     private async void OnHandBackNode(object? sender, RoutedEventArgs e)
     {
         if (sender is Control { DataContext: NodeRunViewModel node })

@@ -243,6 +243,7 @@
                           <Button HorizontalAlignment="Left" Content="{Binding TakeOverText}" Click="OnTakeOverNode" IsVisible="{Binding CanTakeOver}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding TakeOverText}" />
                           <Button HorizontalAlignment="Left" Content="{Binding HandBackText}" Click="OnHandBackNode" IsVisible="{Binding CanHandBack}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding HandBackText}" />
                           <TextBlock Classes="caption" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" />
+                          <Button x:Name="EditFailedStep" HorizontalAlignment="Left" Content="{Binding EditStepText}" Click="OnEditFailedStep" IsVisible="{Binding CanEditStep}" AutomationProperties.Name="{Binding EditStepText}" />
                           <TextBlock Classes="caption subtle" Text="{Binding TruncatedText}" IsVisible="{Binding IsTruncated}" TextWrapping="Wrap" />
                           <StackPanel Spacing="2" IsVisible="{Binding HasInput}">
                             <TextBlock Classes="caption subtle" Text="{Binding InputHeading}" />

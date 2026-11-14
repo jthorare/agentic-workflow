@@ -7,10 +7,11 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 internal sealed class NodeRunViewModel : ObservableObject
 {
     private readonly Func<NodeRunViewModel, bool, CancellationToken, Task>? _control;
+    private readonly Func<string, CancellationToken, Task>? _edit;
 
-    internal NodeRunViewModel(NodeRunView run, int count, Func<NodeRunViewModel, bool, CancellationToken, Task>? control = null)
+    internal NodeRunViewModel(NodeRunView run, int count, Func<NodeRunViewModel, bool, CancellationToken, Task>? control = null, Func<string, CancellationToken, Task>? edit = null)
     {
-        _control = control;
+        (_control, _edit) = (control, edit);
         TitleText = count > 1 || run.ItemIndex > 0 ? Labels.WfItemTitle(run.ItemIndex, count) : run.Node;
         var (glyph, word) = Labels.WfChip(run.Status);
         Tone = RunStatus.Tone(run.Status);
@@ -24,15 +25,15 @@ internal sealed class NodeRunViewModel : ObservableObject
     }
 
     /// <summary>True on a failed step: Edit step shows.</summary>
-    public bool CanEditStep => false;
+    public bool CanEditStep => IsError;
 
     /// <summary>The Edit step button's words.</summary>
-    public string EditStepText => string.Empty;
+    public string EditStepText => Labels.WfEditStep;
 
     /// <summary>Opens the workflow with this step selected and its sheet open.</summary>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>A task that completes when the sheet is open.</returns>
-    internal Task EditStep(CancellationToken cancellationToken) => Task.CompletedTask;
+    internal Task EditStep(CancellationToken cancellationToken) => _edit?.Invoke(Node, cancellationToken) ?? Task.CompletedTask;
 
     /// <summary>The node's id (the take over call names it).</summary>
     public string Node { get; }
