@@ -105,6 +105,6 @@ public sealed class ContextPlainWordsTests
     }
 
     [Fact]
-    public void The_search_box_label_is_Search() =>
-        Assert.Equal("Search", Labels.ContextMapStartsAt);
+    public void The_search_box_label_is_Ask_a_question() =>
+        Assert.Equal("Ask a question", Labels.ContextMapStartsAt);
 }

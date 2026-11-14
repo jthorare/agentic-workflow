@@ -35,6 +35,9 @@ internal sealed partial class ContextPageViewModel : ObservableObject
     /// <summary>The head line: what map the page shows. Empty until something has been read; "no map" is for the served no-map case (U9a).</summary>
     public string Head { get; private set; } = string.Empty;
 
+    /// <summary>The head without the page's own name: "the whole map · v1" (the title already says Context); not built yet (#3677).</summary>
+    public string HeadDetail => Head;
+
     /// <summary>Whether the head has words to show.</summary>
     public bool HasHead => Head.Length > 0;
 
