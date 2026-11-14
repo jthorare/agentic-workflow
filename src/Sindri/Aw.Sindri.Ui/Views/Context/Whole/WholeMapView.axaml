@@ -167,7 +167,10 @@
                  ContainerPrepared="OnItemPrepared" Tapped="OnItemsTapped">
           <ListBox.ItemTemplate>
             <DataTemplate x:DataType="vm:MapItemViewModel">
-              <TextBlock Classes="body" Text="{Binding Label}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+              <!-- The whole path, the directory dimmed; it wraps at a slash and is never cut with an ellipsis (#3677). -->
+              <TextBlock Classes="body" TextWrapping="Wrap" TextTrimming="None" AutomationProperties.AccessibilityView="Raw">
+                <Run Text="{Binding Directory}" Foreground="{DynamicResource Brush.InkSubtle}" /><Run Text="{Binding FileName}" />
+              </TextBlock>
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>

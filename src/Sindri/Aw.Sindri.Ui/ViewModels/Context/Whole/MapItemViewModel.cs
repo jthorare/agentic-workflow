@@ -10,9 +10,9 @@ internal sealed record MapItemViewModel(string Key, string Label, string Name, b
     /// <summary>The file's full path ("src/ledger/Events.cs"); empty for a node that is not a file (#3677).</summary>
     internal string Path { get; init; } = string.Empty;
 
-    /// <summary>The directory part of the path with its slash, drawn dimmed: "src/ledger/"; not built yet.</summary>
-    public string Directory => IsTile && Path.Length == int.MaxValue ? Path : string.Empty;
+    /// <summary>The directory part of the path with its slash, drawn dimmed: "src/ledger/"; empty when the item is not a file.</summary>
+    public string Directory => Path.LastIndexOf('/') is var slash and >= 0 ? Path[..(slash + 1)] : string.Empty;
 
-    /// <summary>The file name, or the label when the node is not a file; not built yet.</summary>
-    public string FileName => Label;
+    /// <summary>The file name; the label when the item is not a file.</summary>
+    public string FileName => Path.LastIndexOf('/') is var slash and >= 0 ? Path[(slash + 1)..] : Label;
 }
