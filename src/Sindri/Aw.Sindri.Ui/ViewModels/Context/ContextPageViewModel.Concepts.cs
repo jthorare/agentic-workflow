@@ -47,6 +47,11 @@ internal sealed partial class ContextPageViewModel
         }
 
         var generation = ++_openGeneration;
+        if (Whole.IsLoading)
+        {
+            Whole.Quiet();   // an older whole-map read still in flight is dropped when it ends, so it must not leave "Reading the map" behind
+        }
+
         Concepts.Loading();
         ChangedConcepts();
         var read = await ReadConcepts(api, cancellationToken).ConfigureAwait(true);
@@ -79,9 +84,10 @@ internal sealed partial class ContextPageViewModel
         ChangedConcepts();
         ChangedWhole();
         _conceptsVersion = read.Value.MapVersion;
-        await ReadGlossary(api, read.Value.MapVersion, cancellationToken).ConfigureAwait(true);
+        var glossary = await AskGlossary(api, read.Value.MapVersion, cancellationToken).ConfigureAwait(true);
         if (generation == _openGeneration)
         {
+            ShowGlossary(glossary);
             await ReadPins(api, cancellationToken).ConfigureAwait(true);
         }
     }
@@ -129,9 +135,14 @@ internal sealed partial class ContextPageViewModel
 
     // The concept cards' terms. No map (the 030 refusal, or a 200 "unavailable") and a server without the route leave the cards as the concepts read left them;
     // any other refusal is said in one line with its code and message.
-    private async Task ReadGlossary(Uri api, string? mapVersion, CancellationToken cancellationToken)
+    private async Task ReadGlossary(Uri api, string? mapVersion, CancellationToken cancellationToken) =>
+        ShowGlossary(await AskGlossary(api, mapVersion, cancellationToken).ConfigureAwait(true));
+
+    private Task<Result<ConceptGlossaryView>> AskGlossary(Uri api, string? mapVersion, CancellationToken cancellationToken) =>
+        Ports.Api.ContextConceptGlossary(api, new ConceptGlossaryQuery(_repo ?? string.Empty, mapVersion), cancellationToken);
+
+    private void ShowGlossary(Result<ConceptGlossaryView> read)
     {
-        var read = await Ports.Api.ContextConceptGlossary(api, new ConceptGlossaryQuery(_repo ?? string.Empty, mapVersion), cancellationToken).ConfigureAwait(true);
         if (read.IsSuccess)
         {
             if (!string.Equals(read.Value.State, "unavailable", StringComparison.Ordinal))

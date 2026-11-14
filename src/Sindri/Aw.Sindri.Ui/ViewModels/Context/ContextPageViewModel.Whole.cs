@@ -172,28 +172,38 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
+        var generation = _openGeneration;   // a first read or a repo switch that begins while this one is in flight makes its answer stale (#3697)
         Whole.Loading();
         ChangedWhole();
         try
         {
             var read = await Ports.Api.WholeMap(api, new WholeMapQuery("auto", Area: null, [], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId), cancellationToken).ConfigureAwait(true);
-            if (followed is { } version && OpenedConceptId is { } gone && !read.IsSuccess && string.Equals(read.Error.Code, GoneConceptCode, StringComparison.Ordinal))
+            if (generation == _openGeneration)
             {
-                await LeaveGoneConcept(gone, version, cancellationToken).ConfigureAwait(true);
-                return;
+                await DrawRead(api, read, followed, cancellationToken).ConfigureAwait(true);
             }
-
-            await DrawWhole(api, read, cancellationToken).ConfigureAwait(true);
         }
         finally
         {
-            if (Whole.IsLoading)
+            if (generation == _openGeneration && Whole.IsLoading)
             {
                 Whole.Failed();   // a read or a draw that threw is the failure row (Retry, Back), never "Reading the map" for good; the exception still goes to the caller
             }
 
             ChangedWhole();
         }
+    }
+
+    // The read's answer: an open concept the followed version lacks goes back to the list, anything else is drawn.
+    private async Task DrawRead(Uri api, Result<WholeMapView> read, int? followed, CancellationToken cancellationToken)
+    {
+        if (followed is { } version && OpenedConceptId is { } gone && !read.IsSuccess && string.Equals(read.Error.Code, GoneConceptCode, StringComparison.Ordinal))
+        {
+            await LeaveGoneConcept(gone, version, cancellationToken).ConfigureAwait(true);
+            return;
+        }
+
+        await DrawWhole(api, read, cancellationToken).ConfigureAwait(true);
     }
 
     // A Retry would ask for the same missing concept forever: the page goes back to the concepts, read again, with a line that says why.
