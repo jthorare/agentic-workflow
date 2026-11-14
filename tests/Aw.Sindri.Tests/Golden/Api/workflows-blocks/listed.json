@@ -301,7 +301,9 @@
             }
           ],
           "outputs": {
-            "scheduledFor": "string"
+            "scheduledFor": "string",
+            "localDate": "string",
+            "weekday": "string"
           },
           "branches": [
             "out"

@@ -35,7 +35,7 @@
     "problems": [
       {
         "code": "SND-CODEIDX-014",
-        "text": "demo: code index is behind main; rebuild it from the System page",
+        "text": "demo: code index is behind main; code-index-main-move rebuilds it on its next tick",
         "clause": "the code index for demo is behind main"
       }
     ],

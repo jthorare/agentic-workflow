@@ -85,6 +85,7 @@ internal sealed class FakeIndexReader(FakeIndexData data) : IIndexReader
 
     public ValueTask<Result<IReadOnlyList<Neighbor>>> Nearest(ReadOnlyMemory<float> vector, int k, CancellationToken cancellationToken)
         => Ok<IReadOnlyList<Neighbor>>([.. data.Embeddings.Values
+            .Where(static e => e.Vector.Length > 0)
             .Select(e => (e, Score: Cosine(vector.Span, e.Vector.Span)))
             .OrderByDescending(x => x.Score)
             .Take(k)
@@ -96,7 +97,7 @@ internal sealed class FakeIndexReader(FakeIndexData data) : IIndexReader
             .Distinct(StringComparer.Ordinal)
             .Order(StringComparer.Ordinal)
             .SelectMany(p => data.Files.TryGetValue(p, out var file) ? file.Symbols.OrderBy(s => s.StartLine).Select(s => (file, s)) : [])
-            .Where(x => data.Embeddings.TryGetValue(x.s.Ref, out var e) && string.Equals(e.Model, model, StringComparison.Ordinal))
+            .Where(x => data.Embeddings.TryGetValue(x.s.Ref, out var e) && e.Vector.Length > 0 && string.Equals(e.Model, model, StringComparison.Ordinal))
             .Select(x => new SymbolVector(x.s.Ref, x.file.Path, x.s.Name, x.s.Kind, data.Embeddings[x.s.Ref].Vector))]);
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;

@@ -122,7 +122,10 @@
   <SolidColorBrush x:Key="Brush.Status.Attention.Fg" Color="{StaticResource Color.Attention}" />
   <SolidColorBrush x:Key="Brush.Status.Attention.Bg" Color="{StaticResource Color.Attention}" Opacity="0.14" />
   <SolidColorBrush x:Key="Brush.Status.Attention.Border" Color="{StaticResource Color.Attention}" Opacity="0.3" />
-  <SolidColorBrush x:Key="Brush.Status.Error.Fg" Color="{StaticResource Color.Error}" />
+  <!-- #eb5757 on its 0.14 tint over Surface1 is 4.485:1, under 4.5; the chip word is the lighter #ee6060 (4.82:1). Fill and border keep Color.Error. -->
+  <Color x:Key="Color.ErrorChipText">#ee6060</Color>
+  <SolidColorBrush x:Key="Brush.ErrorChipText" Color="{StaticResource Color.ErrorChipText}" />
+  <SolidColorBrush x:Key="Brush.Status.Error.Fg" Color="{StaticResource Color.ErrorChipText}" />
   <SolidColorBrush x:Key="Brush.Status.Error.Bg" Color="{StaticResource Color.Error}" Opacity="0.14" />
   <SolidColorBrush x:Key="Brush.Status.Error.Border" Color="{StaticResource Color.Error}" Opacity="0.3" />
   <SolidColorBrush x:Key="Brush.Status.Neutral.Fg" Color="{StaticResource Color.InkMuted}" />
@@ -236,6 +239,20 @@
   <x:Double x:Key="Row.Height.Default">32</x:Double>
   <x:Double x:Key="Row.Height.Data">36</x:Double>
   <x:Double x:Key="Row.Height.Comfortable">40</x:Double>
+  <!-- RowList / Row / PeekPane (#2978, grammar v2). The cursor ring is PrimaryHover (the grammar's primary-hi) 1 px inset; the selected row is PrimarySoft with a 2 px Primary bar; age, id and counts are InkSubtle. -->
+  <x:Double x:Key="Row.GroupHeader">28</x:Double>
+  <x:Double x:Key="Row.Col.Glyph">16</x:Double>
+  <x:Double x:Key="Row.Col.Fact">104</x:Double>
+  <x:Double x:Key="Row.Col.FactWide">136</x:Double>
+  <x:Double x:Key="Row.Col.Age">44</x:Double>
+  <x:Double x:Key="Row.Col.Wait">112</x:Double>
+  <x:Double x:Key="Row.Col.TitleMin">200</x:Double>
+  <x:Double x:Key="Row.Gap">12</x:Double>
+  <x:Double x:Key="Row.Inset">24</x:Double>
+  <Thickness x:Key="Row.Inset.Thickness">24,0</Thickness>
+  <x:Double x:Key="Peek.Width">440</x:Double>
+  <x:Double x:Key="Peek.Header">48</x:Double>
+  <x:Double x:Key="Peek.FieldRow">28</x:Double>
   <!-- Inspora pass: a chart sits on a Surface2 inset inside its card; only a floating layer (menu, palette, dialog) casts a shadow. -->
   <SolidColorBrush x:Key="Brush.Chart.Inset" Color="{StaticResource Color.Surface2}" />
   <!-- The tick bar (a backlog as one tick per record, or per ceil(total / Max) records): lit ticks Success, the rest Surface3. -->

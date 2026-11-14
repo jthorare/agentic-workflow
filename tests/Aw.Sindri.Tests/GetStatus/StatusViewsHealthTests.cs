@@ -1,5 +1,6 @@
 using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Health;
 using Aw.Sindri.Core.Ids;
@@ -102,7 +103,7 @@ public sealed class StatusViewsHealthTests
     public async Task The_code_indexs_problems_for_the_approved_profile_are_health_problems()
     {
         await RunningAndApproved();
-        var codeIndex = new FixedCodeIndexHealth(new HealthProblem("SND-CODEIDX-014", "demo: code index is behind main; rebuild it from the System page", "the code index for demo is behind main"));
+        var codeIndex = new FixedCodeIndexHealth(new HealthProblem("SND-CODEIDX-014", "demo: code index is behind main; code-index-main-move rebuilds it on its next tick", "the code index for demo is behind main"));
         var service = new GetStatusService(H.Held, new ProfileReads(H.Profiles, H.Profiles), H.Store, _v.Progress, new HealthServiceRows(_v.Views, [], codeIndex), new InMemorySessionSnapshot());
 
         var status = (await service.Handle(new GetStatusRequest(), Token)).Value;
@@ -121,6 +122,20 @@ public sealed class StatusViewsHealthTests
             AskedWith = approved;
             return ValueTask.FromResult<IReadOnlyList<HealthProblem>>(problems);
         }
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_fresh_home_with_no_profile_file_stays_healthy()
+    {
+        H.Profiles.Live = SindriErrors.ProfileMissing.With("No profile yet");   // #3436: no file at all is a fresh home, not a profile that won't load
+        _ = await H.HoldLease();
+        _v.Publish(stalledAt: null);
+
+        var status = (await Service().Handle(new GetStatusRequest(), Token)).Value;
+
+        Assert.Equal("missing", status.Profile.ProblemKind);
+        Assert.Equal(HealthWord.Healthy, status.Health!.Word);
+        Assert.DoesNotContain(status.Health.Problems, static p => p.Code == SindriErrors.ProfileInvalid.Code);
     }
 
     [Fact, Trait("Lane", "unit")]

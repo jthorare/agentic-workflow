@@ -6,6 +6,7 @@ using Aw.Sindri.Core.Graph.Schedule;
 using Aw.Sindri.Core.Graph.Templates;
 using Aw.Sindri.Core.Graph.Validation;
 using Aw.Sindri.Features.CreateWorkflow;
+using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Graph.Blocks;
 using Aw.Sindri.Tests.WorkflowWrites;
 using static Aw.Sindri.Tests.WorkflowWrites.WorkflowWriteRig;
@@ -32,13 +33,13 @@ public sealed class TemplateDataTests
     [Theory]
     [InlineData("weekday-check")]
     [InlineData("daily-digest")]
-    public void The_prompt_reads_the_schedule_date_and_the_spec_validates_without_a_prompt_warning(string name)
+    public void The_prompt_reads_the_schedule_weekday_and_local_date_and_the_spec_validates_without_a_prompt_warning(string name)
     {
         var spec = Built(name);
 
         var trigger = Assert.Single(spec.Nodes, static n => n.Type == "schedule");
         var question = Assert.Single(spec.Nodes, static n => n.Type == "prompt").Config["prompt"]!.GetValue<string>();
-        Assert.Contains("{{" + trigger.Id.Value + ".scheduledFor}}", question, StringComparison.Ordinal);
+        Assert.Contains("{{" + trigger.Id.Value + ".weekday}} ({{" + trigger.Id.Value + ".localDate}})", question, StringComparison.Ordinal);   // why: the zone's day, never the UTC instant (#3569)
         var result = RealValidator().Validate(spec, GraphMode.Activate);
         Assert.True(result.Passed, string.Join("; ", result.Blocking));
         Assert.DoesNotContain(result.Findings, static f => f.ToString().Contains("GRAPH-PROMPT-001", StringComparison.Ordinal));
@@ -50,7 +51,7 @@ public sealed class TemplateDataTests
     public async Task Creating_the_template_needs_no_repo_in_the_profile(string name)
     {
         using var rig = new WorkflowWriteRig(realBlocks: true);
-        var service = new CreateWorkflowService(rig.Workflows, rig.Checker, rig.Harness.Ids, rig.Log);
+        var service = new CreateWorkflowService(rig.Workflows, rig.Checker, rig.Harness.Ids, rig.Log, new FakeCiSourceLookup());
         _ = await rig.Harness.HoldLease();
 
         var result = await service.Handle(new CreateWorkflowRequest(Slug, name, Spec: null, "session:s1"), Token);
