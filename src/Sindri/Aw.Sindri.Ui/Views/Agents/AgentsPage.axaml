@@ -12,9 +12,12 @@
     <Grid ColumnDefinitions="Auto,*,Auto">
       <StackPanel x:Name="AgentsHeadRegion" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock Classes="page-title" Text="Agents" AutomationProperties.Name="Agents" />
-        <Border x:Name="AgentsHeadName" AutomationProperties.Name="{Binding HeadName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" VerticalAlignment="Center">
-          <TextBlock x:Name="AgentsHead" Classes="caption subtle" Text="{Binding Head}" AutomationProperties.AccessibilityView="Raw" />
-        </Border>
+        <!-- #3082: while someone is asking, the head is a link (Tab, Enter) to the first row of Needs you. -->
+        <Button x:Name="AgentsHeadLink" Classes="link" Padding="0" VerticalAlignment="Center" IsEnabled="{Binding HasAsking}" Click="OnHeadLink" AutomationProperties.Name="{Binding HeadName}">
+          <Border x:Name="AgentsHeadName" AutomationProperties.Name="{Binding HeadName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" VerticalAlignment="Center">
+            <TextBlock x:Name="AgentsHead" Classes="caption subtle" Text="{Binding Head}" AutomationProperties.AccessibilityView="Raw" />
+          </Border>
+        </Button>
       </StackPanel>
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" IsVisible="{Binding ShowsFilters}">
         <TextBox x:Name="AgentsSearch" Text="{Binding SearchText, Mode=TwoWay}" MinWidth="180" Watermark="Search (/)" KeyDown="OnSearchKey" AutomationProperties.Name="Search agents" />
@@ -79,12 +82,12 @@
               <ColumnDefinition Width="Auto" SharedSizeGroup="AgDoing" />
               <ColumnDefinition Width="Auto" MinWidth="56" SharedSizeGroup="AgFor" />
             </Grid.ColumnDefinitions>
-            <TextBlock Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Status}" />
-            <TextBlock Grid.Column="1" Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Agent}" />
-            <TextBlock Grid.Column="2" Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Repo}" IsVisible="{Binding ShowsRepo}" />
+            <Button x:Name="AgentsSortStatus" Classes="link" Padding="0" Margin="0,0,8,0" HorizontalAlignment="Left" Tag="State" Click="OnSortHeader" AutomationProperties.Name="{Binding StatusHeader}"><TextBlock Classes="caption subtle" Text="{Binding StatusHeader}" /></Button>
+            <Button x:Name="AgentsSortName" Grid.Column="1" Classes="link" Padding="0" Margin="0,0,8,0" HorizontalAlignment="Left" Tag="Name" Click="OnSortHeader" AutomationProperties.Name="{Binding AgentHeader}"><TextBlock Classes="caption subtle" Text="{Binding AgentHeader}" /></Button>
+            <Button x:Name="AgentsSortRepo" Grid.Column="2" Classes="link" Padding="0" Margin="0,0,8,0" HorizontalAlignment="Left" Tag="Repo" Click="OnSortHeader" IsVisible="{Binding ShowsRepo}" AutomationProperties.Name="{Binding RepoHeader}"><TextBlock Classes="caption subtle" Text="{Binding RepoHeader}" /></Button>
             <TextBlock Grid.Column="3" Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Where}" IsVisible="{Binding ShowsWhere}" />
             <TextBlock Grid.Column="4" Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Doing}" IsVisible="{Binding ShowsDoing}" />
-            <TextBlock Grid.Column="5" Classes="caption subtle" Text="{Binding Columns.For}" HorizontalAlignment="Right" />
+            <Button x:Name="AgentsSortAge" Grid.Column="5" Classes="link" Padding="0" HorizontalAlignment="Right" Tag="Age" Click="OnSortHeader" AutomationProperties.Name="{Binding ForHeader}"><TextBlock Classes="caption subtle" Text="{Binding ForHeader}" /></Button>
           </Grid>
         </Border>
         <ItemsControl x:Name="AgentGroups" ItemsSource="{Binding Groups}">

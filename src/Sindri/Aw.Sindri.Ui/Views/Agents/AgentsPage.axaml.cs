@@ -42,6 +42,16 @@ internal sealed partial class AgentsPage : UserControl
     }
 
 
+    private void OnHeadLink(object? sender, RoutedEventArgs e) => Page?.FocusNeedsYou();
+
+    private void OnSortHeader(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string tag } && Enum.TryParse<AgentSort>(tag, out var sort))
+        {
+            Page?.SortBy(sort);
+        }
+    }
+
     private void OnSearchRequested(object? sender, EventArgs e) => this.FindControl<TextBox>("AgentsSearch")?.Focus();
 
     // Esc in the box clears it.

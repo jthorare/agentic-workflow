@@ -36,8 +36,8 @@ internal sealed partial class AgentsPageViewModel
     /// <param name="sort">The order.</param>
     internal void SetSort(AgentSort sort)
     {
-        Sort = sort;
-        Redraw();
+        (Sort, SortDescending) = (sort, false);
+        SortChanged();
     }
 
     /// <summary>True when the second click on the same header flipped the order.</summary>
@@ -47,24 +47,52 @@ internal sealed partial class AgentsPageViewModel
     public bool HasAsking => Groups.Count > 0 && string.Equals(Groups[0].Name, Labels.NeedsYouGroup, StringComparison.Ordinal);
 
     /// <summary>The Status header, with the mark of the active sort.</summary>
-    public string StatusHeader => Columns.Status;
+    public string StatusHeader => Marked(AgentSort.State, Columns.Status);
 
     /// <summary>The Agent (name) header, with the mark of the active sort.</summary>
-    public string AgentHeader => Columns.Agent;
+    public string AgentHeader => Marked(AgentSort.Name, Columns.Agent);
 
     /// <summary>The Repository header, with the mark of the active sort.</summary>
-    public string RepoHeader => Columns.Repo;
+    public string RepoHeader => Marked(AgentSort.Repo, Columns.Repo);
 
     /// <summary>The For (age) header, with the mark of the active sort.</summary>
-    public string ForHeader => Columns.For;
+    public string ForHeader => Marked(AgentSort.Age, Columns.For);
 
     /// <summary>A header was clicked: sort by it, and a second click on the same one flips the direction.</summary>
     /// <param name="sort">The column's order.</param>
-    internal void SortBy(AgentSort sort) => Sort = Sort;
+    internal void SortBy(AgentSort sort)
+    {
+        SortDescending = sort == Sort && !SortDescending;
+        Sort = sort;
+        SortChanged();
+    }
 
     /// <summary>The head's link: selects the first row of the pinned Needs you group and asks for focus on it.</summary>
     /// <returns>True when someone is asking.</returns>
-    internal bool FocusNeedsYou() => Groups.Count < 0;
+    internal bool FocusNeedsYou()
+    {
+        if (!HasAsking || Groups[0].Rows.Count == 0)
+        {
+            return false;
+        }
+
+        var key = Groups[0].Rows[0].Ref;
+        _ = Select(key);
+        RequestFocus(new AgentFocusEventArgs(key, toFocusLine: false, onlyIfLost: false));
+        return true;
+    }
+
+    private string Marked(AgentSort column, string header) => Sort == column ? header + (SortDescending ? " ▼" : " ▲") : header;
+
+    private void SortChanged()
+    {
+        foreach (var name in (string[])[nameof(StatusHeader), nameof(AgentHeader), nameof(RepoHeader), nameof(ForHeader)])
+        {
+            OnChanged(name);
+        }
+
+        Redraw();
+    }
 
     private List<SessionGroupViewModel> ShownGroups(List<SessionRowViewModel> kept)
     {
@@ -88,6 +116,7 @@ internal sealed partial class AgentsPageViewModel
             shown.Add(Group(Labels.OutsideWorkflow, outside));
         }
 
+        OnChanged(nameof(HasAsking));
         return shown;
     }
 
@@ -102,7 +131,13 @@ internal sealed partial class AgentsPageViewModel
             AgentSort.Name => rows.OrderBy(r => r.TitleText, byName),
             _ => rows.OrderBy(r => r.TitleText, byName),
         };
-        return [.. ordered.ThenBy(r => r.Ref, StringComparer.Ordinal)];
+        var sorted = ordered.ThenBy(r => r.Ref, StringComparer.Ordinal).ToList();
+        if (SortDescending)
+        {
+            sorted.Reverse();
+        }
+
+        return sorted;
     }
 
     private static int StateRank(string state) => state switch
