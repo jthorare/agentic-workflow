@@ -150,7 +150,7 @@ public sealed class WorkflowsPageViewModelTests
 
         await page.OpenWorkflow(Slug, Token);
 
-        Assert.Equal("Revision 1 of 2 · 2 nodes · created by owner", page.Runs.DetailText);
+        Assert.Equal("Revision 1 of 2 · 2 steps · created by owner", page.Runs.DetailText);
     }
 
     [Fact]

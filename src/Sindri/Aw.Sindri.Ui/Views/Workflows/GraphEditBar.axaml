@@ -14,7 +14,7 @@
     </StackPanel>
 
     <Border x:Name="EditSheetOpenName" IsVisible="{Binding SheetOpen}" AutomationProperties.Name="{Binding SheetOpenText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-      <TextBlock Classes="caption" Text="{Binding SheetOpenText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      <TextBlock Classes="caption subtle" Margin="0,8,0,0" Text="{Binding SheetOpenText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
     </Border>
 
     <StackPanel x:Name="EditReloadPrompt" Orientation="Horizontal" Spacing="12" IsVisible="{Binding HasReloadPrompt}">
