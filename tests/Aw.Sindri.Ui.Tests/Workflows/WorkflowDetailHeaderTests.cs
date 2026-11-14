@@ -33,7 +33,7 @@ public sealed class WorkflowDetailHeaderTests
         await page.OpenWorkflow(Slug, Token);
 
         Assert.True(page.ShowsDetailState);
-        Assert.Equal(page.Rows[0].StateText, page.DetailStateText);
+        Assert.Equal(page.Rows[0].ChipGlyph + " " + page.Rows[0].ChipWord, page.DetailStateText);
         page.Back();
         Assert.False(page.ShowsDetailState);
     }

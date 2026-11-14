@@ -91,7 +91,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>The open workflow's state, as its list row says it ("● Active", "○ Off"): from the workflow read, else from the list row; empty when neither is known.</summary>
     public string DetailStateText => Runs.Shown is { } shown
         ? StateOf(shown.ActiveRevision is not null)
-        : Rows.FirstOrDefault(r => string.Equals(r.Slug, Runs.Slug, StringComparison.Ordinal))?.StateText ?? string.Empty;
+        : Rows.FirstOrDefault(r => string.Equals(r.Slug, Runs.Slug, StringComparison.Ordinal)) is { } row ? StateOf(row.IsActive) : string.Empty;
 
     private static string StateOf(bool active)
     {
