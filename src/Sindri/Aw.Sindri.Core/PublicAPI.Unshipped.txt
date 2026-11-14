@@ -4984,6 +4984,7 @@ static readonly Aw.Sindri.Core.SindriErrors.OriginRefused -> Aw.Kernel.ErrorDefi
 static readonly Aw.Sindri.Core.SindriErrors.PortInUse -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ProfileHashMismatch -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ProfileInvalid -> Aw.Kernel.ErrorDefinition!
+const Aw.Sindri.Core.SindriErrors.ProfileUnreadableFix = "The profile file is there but can't be read; check its permissions." -> string!
 static readonly Aw.Sindri.Core.SindriErrors.ProfileMissing -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.RequestInvalid -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.RequestsRateLimited -> Aw.Kernel.ErrorDefinition!
@@ -23805,3 +23806,4 @@ static Aw.Sindri.Core.Graph.Schedule.ScheduleStamp.Add(System.Text.Json.Nodes.Js
 static Aw.Sindri.Core.Graph.Schedule.ScheduleStamp.ZoneOf(Aw.Sindri.Core.Graph.GraphNode! node) -> string?
 Aw.Sindri.Core.Profile.ApprovedProfileReads
 static Aw.Sindri.Core.Profile.ApprovedProfileReads.ForRead(this Aw.Sindri.Core.Profile.IApprovedProfile! approvals, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Profile.LoadedProfile?>!>
+static Aw.Sindri.Core.Health.HealthSummary.WithProfileProblem(Aw.Sindri.Core.Health.HealthReport! report, bool wontLoad, string? fix) -> Aw.Sindri.Core.Health.HealthReport!
