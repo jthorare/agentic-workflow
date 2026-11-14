@@ -87,12 +87,15 @@ public sealed class IndexDecisionsServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Run_without_a_context_section_does_not_call_the_pass()
+    public async Task Run_without_a_context_section_runs_the_pass_and_says_when_nothing_is_indexed_yet()
     {
+        _index.Decided = [];
+
         var result = await Run(context: false);
 
         Assert.True(result.IsSuccess);
+        Assert.Equal(1, _index.Decides);
         Assert.True(result.Value.Idle);
-        Assert.Equal(0, _index.Decides);
+        Assert.Equal("nothing indexed yet", result.Value.Summary);
     }
 }

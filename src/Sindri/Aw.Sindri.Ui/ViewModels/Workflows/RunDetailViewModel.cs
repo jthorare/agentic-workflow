@@ -16,20 +16,20 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     /// <summary>"Run morning-check@1:1".</summary>
     public string TitleText { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>The status: glyph and word.</summary>
-    public string ChipText { get; private set => Set(ref field, value); } = string.Empty;
-
     /// <summary>The served status word; empty before the first answer.</summary>
     public string Status { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>The chip's tone; the glyph and word carry the status too.</summary>
     public ChipTone Tone { get; private set => Set(ref field, value); } = ChipTone.Neutral;
 
-    /// <summary>True for a succeeded or running run (the ok colour).</summary>
-    public bool IsOk => Tone == ChipTone.Ok;
+    /// <summary>The chip's word without its glyph.</summary>
+    public string ChipWord { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>True for a waiting run (the attention colour).</summary>
-    public bool IsAttention => Tone == ChipTone.Attn;
+    /// <summary>The chip's glyph.</summary>
+    public string ChipGlyph { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The chip's StateChipView tone: ok, running, waiting, error or neutral.</summary>
+    public string ChipToneWord { get; private set => Set(ref field, value); } = "neutral";
 
     /// <summary>True for a failed run (the error colour).</summary>
     public bool IsError => Tone == ChipTone.Fail;
@@ -110,8 +110,9 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
             Groups = [];   // another run: nothing of the old one stays
             Graph = null;
             (Status, Tone, NoticeText) = (string.Empty, ChipTone.Neutral, string.Empty);
+            (ChipWord, ChipGlyph, ChipToneWord) = (string.Empty, string.Empty, "neutral");
             (IsFailed, FailedText) = (false, string.Empty);
-            (TitleText, ChipText, TriggerText, RevisionText, WhenText, ErrorText, OutputsText) = (Labels.WfRunTitle(runId), string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+            (TitleText, TriggerText, RevisionText, WhenText, ErrorText, OutputsText) = (Labels.WfRunTitle(runId), string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
             Changed();
         }
 
@@ -142,8 +143,9 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     {
         var (glyph, word) = Labels.WfChip(run.Status);
         TitleText = Labels.WfRunTitle(run.Id);
-        ChipText = glyph + " " + word;
+        (ChipWord, ChipGlyph) = (word, glyph);
         (Status, Tone) = (run.Status, RunStatus.Tone(run.Status));
+        ChipToneWord = RunStatus.ToneWord(run.Status);
         TriggerText = Labels.WfStartedBy(KindOf(run.Trigger));
         RevisionText = Labels.WfRunRevision(run.Revision);
         var live = RunStatus.IsLive(run.Status);
@@ -250,8 +252,6 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     {
         OnChanged(nameof(HasError));
         OnChanged(nameof(HasOutputs));
-        OnChanged(nameof(IsOk));
-        OnChanged(nameof(IsAttention));
         OnChanged(nameof(IsError));
         OnChanged(nameof(CanCancel));
         OnChanged(nameof(CanPressCancel));

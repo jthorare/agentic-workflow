@@ -1,5 +1,7 @@
 using System.Globalization;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
@@ -98,5 +100,36 @@ public sealed class SetupFormsFramesTests : FrameHost
 
         Assert.Equal(["Claude Code, connected", "Codex, not started", "Cursor, not started"], lines);
         Frame(window, "setup-agents-1440", prefix: "f3-");
+    });
+
+    [Fact]
+    public Task No_open_step_of_an_unreadable_profile_has_an_empty_body() => OnUi(async () =>
+    {
+        var (window, shell) = await OnSettings(SetupViewModelTests.UnreadableProfile(), 1280);
+
+        var open = shell.Setup.Steps.Where(s => s.IsOpen).ToList();
+        Assert.NotEmpty(open);
+        foreach (var step in open)
+        {
+            var body = Named<StackPanel>(Row(window, step.Id), "SetupStepBody");
+            Assert.True(body.GetVisualDescendants().OfType<Control>().Any(c => c.IsEffectivelyVisible && c.Bounds.Height > 1), $"step {step.Id} is open with an empty body");   // #3616
+        }
+    });
+
+    [Fact]
+    public Task The_status_chips_of_all_steps_share_one_right_edge_and_a_step_with_no_body_is_not_a_tab_stop() => OnUi(async () =>
+    {
+        var (window, shell) = await OnSettings(SetupViewModelTests.UnreadableProfile(), 1280);
+
+        var edges = shell.Setup.Steps.Select(s => Named<Control>(Row(window, s.Id), "SetupStepChip")).Select(c => (c.TranslatePoint(default, window) ?? default).X + c.Bounds.Width).ToList();
+        Assert.All(edges, e => Assert.InRange(e, edges[0] - 0.5, edges[0] + 0.5));   // #3616: the hidden chevron keeps its slot
+
+        var bare = shell.Setup.Steps.Where(s => !s.HasBody).ToList();
+        Assert.NotEmpty(bare);
+        foreach (var step in bare)
+        {
+            var toggle = Row(window, step.Id).GetVisualDescendants().OfType<ToggleButton>().First(b => b.Name == "ExpanderHeader");
+            Assert.Equal((false, false, false), (toggle.Focusable, toggle.IsTabStop, toggle.IsHitTestVisible));
+        }
     });
 }
