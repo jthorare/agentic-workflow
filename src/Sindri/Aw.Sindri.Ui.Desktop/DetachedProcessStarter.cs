@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Aw.Kernel;
+using Aw.Sindri.Ui.Platform;
 
 namespace Aw.Sindri.Ui.Desktop;
 
@@ -12,6 +13,8 @@ internal sealed class DetachedProcessStarter : IProcessStarter
 {
     private const string Perl = "/usr/bin/perl";
     private const string FailureCode = "SND-CLI-002";
+
+    public event EventHandler<SindriExitedEventArgs>? Exited;
 
     public Result<Unit> Start(ProcessLaunch launch)
     {
@@ -28,30 +31,58 @@ internal sealed class DetachedProcessStarter : IProcessStarter
                 _ = Directory.CreateDirectory(logs);
             }
 
-            var detach = File.Exists(Perl)
-                ? $"exec {Perl} -MPOSIX -e 'POSIX::setsid() == -1 and die \"{FailureCode} setsid: $!\\n\"; exec @ARGV or die \"{FailureCode} exec $ARGV[0]: $!\\n\"'"
-                : "exec";
-            var info = new ProcessStartInfo("/bin/sh")
+            var info = Info(launch);
+#pragma warning disable CA2000 // the Exited handler disposes the process once it has ended
+            var process = Process.Start(info);
+#pragma warning restore CA2000
+            if (process is null)
             {
-                UseShellExecute = false,
-                RedirectStandardInput = false,
-            };
-            info.ArgumentList.Add("-c");
-            info.ArgumentList.Add($"umask 077; {detach} \"$0\" \"$@\" </dev/null >>\"$LOG\" 2>&1");
-            info.ArgumentList.Add(launch.Executable);
-            foreach (var argument in launch.Arguments)
-            {
-                info.ArgumentList.Add(argument);
+                return Fail("/bin/sh didn't start");
             }
 
-            info.Environment["LOG"] = launch.LogPath;
-            using var process = Process.Start(info);
-            return process is null ? Fail("/bin/sh didn't start") : Unit.Value;
+            Watch(process, launch);
+            return Unit.Value;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
         {
             return Fail(e.Message);
         }
+    }
+
+    private static ProcessStartInfo Info(ProcessLaunch launch)
+    {
+        var detach = File.Exists(Perl)
+            ? $"exec {Perl} -MPOSIX -e 'POSIX::setsid() == -1 and die \"{FailureCode} setsid: $!\\n\"; exec @ARGV or die \"{FailureCode} exec $ARGV[0]: $!\\n\"'"
+            : "exec";
+        var info = new ProcessStartInfo("/bin/sh")
+        {
+            UseShellExecute = false,
+            RedirectStandardInput = false,
+        };
+        info.ArgumentList.Add("-c");
+        info.ArgumentList.Add($"umask 077; {detach} \"$0\" \"$@\" </dev/null >>\"$LOG\" 2>&1");
+        info.ArgumentList.Add(launch.Executable);
+        foreach (var argument in launch.Arguments)
+        {
+            info.ArgumentList.Add(argument);
+        }
+
+        info.Environment["LOG"] = launch.LogPath;
+
+        return info;
+    }
+
+    // The shell execs the program, so the pid is the program's own: its exit is the program's. The handler is set before
+    // EnableRaisingEvents, which raises it at once for a process that already ended.
+    private void Watch(Process process, ProcessLaunch launch)
+    {
+        process.Exited += (_, _) =>
+        {
+            var code = process.ExitCode;
+            process.Dispose();
+            Exited?.Invoke(this, new SindriExitedEventArgs(launch.Number, code));
+        };
+        process.EnableRaisingEvents = true;
     }
 
     private static Error Fail(string reason) => new(FailureCode, ErrorKind.Unavailable, reason);

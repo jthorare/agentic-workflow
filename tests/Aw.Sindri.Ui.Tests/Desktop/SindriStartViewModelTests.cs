@@ -122,8 +122,57 @@ public sealed class SindriStartViewModelTests : IDisposable
         Assert.Equal((StartStage.Idle, true, false), (model.Stage, model.ShowsTerminalCommand, model.HasPrimary));
     }
 
+    [Fact]
+    public void A_serve_that_exits_while_starting_shows_Didnt_start_at_once()
+    {
+        var starter = new FakeStarter { Error = "SND-CLI-002 'sindri serve' exited: SND-API-003 address already in use" };
+        var model = new SindriStartViewModel(starter, new FakeTimeProvider());
+        model.Begin();
+
+        starter.Exit();
+
+        Assert.Equal((StartStage.DidntStart, "Sindri didn't start: SND-CLI-002 'sindri serve' exited: SND-API-003 address already in use (exit code 1).", "Retry"), (model.Stage, model.Message, model.Primary));
+    }
+
+    [Fact]
+    public void A_serve_refused_as_already_running_that_exits_shows_Already_starting_at_once()
+    {
+        var starter = new FakeStarter { Error = "SND-LEASE-001 serve is already running" };
+        var model = new SindriStartViewModel(starter, new FakeTimeProvider());
+        model.Begin();
+
+        starter.Exit();
+
+        Assert.Equal((StartStage.AlreadyStarting, false), (model.Stage, model.HasPrimary));
+    }
+
+    [Fact]
+    public void An_exit_of_an_older_launch_changes_nothing()
+    {
+        var clock = new FakeTimeProvider();
+        var starter = new FakeStarter { Error = "SND-CLI-002 exec: x" };
+        var model = new SindriStartViewModel(starter, clock);
+        model.Begin();
+        clock.Advance(TimeSpan.FromSeconds(30));
+        model.Start();   // Retry: launch 2
+
+        starter.Exit(launch: 1, code: 1);
+
+        Assert.Equal((StartStage.Starting, 2), (model.Stage, starter.Launch));
+
+        starter.Exit(launch: 2, code: 1);
+
+        Assert.Equal(StartStage.DidntStart, model.Stage);
+    }
+
     private sealed class FakeStarter : ISindriStarter
     {
+        public event EventHandler<SindriExitedEventArgs>? Exited;
+
+        public int Launch { get; private set; }
+
+        public void Exit(int? launch = null, int code = 1) => Exited?.Invoke(this, new SindriExitedEventArgs(launch ?? Launch, code));
+
         public int Starts { get; private set; }
 
         public string? Error { get; init; }
@@ -143,6 +192,7 @@ public sealed class SindriStartViewModelTests : IDisposable
         public Result<SindriStartOutcome> Start()
         {
             Starts++;
+            Launch++;
             return Failure is null ? Outcome : new Error("SND-CLI-002", ErrorKind.Unavailable, Failure);
         }
     }

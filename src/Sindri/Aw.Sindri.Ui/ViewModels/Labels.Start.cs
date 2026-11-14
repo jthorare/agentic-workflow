@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Aw.Sindri.Ui.ViewModels;
 
 /// <summary>The Not running page's start states (first-run spec §4.1).</summary>
@@ -29,6 +31,9 @@ internal static partial class Labels
 
     /// <summary>Sindri didn't answer: the log's last error line follows.</summary>
     internal static string DidntStart(string error) => "Sindri didn't start: " + error + ".";
+
+    /// <summary>The started program ended: the log's last error line and its exit code.</summary>
+    internal static string DidntStartExit(string error, int code) => string.Create(CultureInfo.InvariantCulture, $"Sindri didn't start: {error} (exit code {code}).");
 
     /// <summary>The details of a start that didn't answer: the log and the manual command.</summary>
     internal static string StartDetails(string log) => log + " · sindri serve";

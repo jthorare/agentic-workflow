@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Desktop;
+using Aw.Sindri.Ui.Platform;
 
 namespace Aw.Sindri.Ui.Tests.Desktop;
 
@@ -64,6 +65,8 @@ public sealed class SindriStarterTests
 
     private sealed class FakeProcessStarter : IProcessStarter
     {
+        public event EventHandler<SindriExitedEventArgs>? Exited { add { } remove { } }
+
         public List<ProcessLaunch> Launches { get; } = [];
 
         public Result<Unit> Start(ProcessLaunch launch)

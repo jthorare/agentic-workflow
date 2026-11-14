@@ -9,6 +9,14 @@ internal sealed class SindriStarterPort(SindriStarter starter) : ISindriStarter
 {
     private long _logStart;
 
+    public event EventHandler<SindriExitedEventArgs>? Exited
+    {
+        add => starter.Starter.Exited += value;
+        remove => starter.Starter.Exited -= value;
+    }
+
+    public int Launch => starter.Launch;
+
     public string LogPath { get; } = Path.Combine(starter.Home, "logs", "serve.log");
 
     public Result<SindriStartOutcome> Start()

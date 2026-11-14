@@ -23,6 +23,9 @@ internal sealed class SindriStarter(IProcessStarter starter, Func<string, bool> 
     /// <summary>Ends the start in flight (serve answered, the wait ran out, or the start failed), so the next <see cref="Start"/> launches again.</summary>
     public void Release() => _started = false;
 
+    /// <summary>The number of the last launch (0 before the first).</summary>
+    public int Launch { get; private set; }
+
     /// <summary>Starts 'sindri --headless' from beside the app, unless this run already did.</summary>
     /// <returns>What happened, or why the program didn't start.</returns>
     public Result<StartOutcome> Start()
@@ -41,7 +44,7 @@ internal sealed class SindriStarter(IProcessStarter starter, Func<string, bool> 
             return StartOutcome.NotInstalled;
         }
 
-        var started = Starter.Start(new ProcessLaunch(executable, ["--headless"], Path.Combine(Home, "logs", "serve.log")));
+        var started = Starter.Start(new ProcessLaunch(executable, ["--headless"], Path.Combine(Home, "logs", "serve.log"), ++Launch));
         if (started.IsError)
         {
             return started.Error;

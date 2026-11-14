@@ -16,6 +16,12 @@ public interface ISindriStarter
     /// <returns>The line, or null.</returns>
     public string? LastError();
 
+    /// <summary>Raised when a program this starter started has ended (#3630): its launch number (see <see cref="Launch"/>) and exit code. The app then says why at once instead of waiting out the 30 s.</summary>
+    public event EventHandler<SindriExitedEventArgs>? Exited;
+
+    /// <summary>The number of the last launch (0 before the first); an exit of an older number is not the current start's.</summary>
+    public int Launch { get; }
+
     /// <summary>The log the started program writes to.</summary>
     public string LogPath { get; }
 }

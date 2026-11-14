@@ -51,7 +51,7 @@ internal sealed partial class ShellViewModel : ObservableObject
     /// <param name="window">The window's adapters (opening links and files, choosing a file); none opens and chooses nothing.</param>
     internal ShellViewModel(IEndpointRecordSource records, ISindriApi api, TimeProvider clock, Preferences preferences, IClipboard clipboard, IMotionPreference? motion = null, WindowPorts? window = null)
     {
-        Start = new SindriStartViewModel((window ?? WindowPorts.None).Starter, clock);
+        Start = new SindriStartViewModel((window ?? WindowPorts.None).Starter, clock, (window ?? WindowPorts.None).Log);
         _store = preferences;
         _clock = clock;
         Health = new HealthViewModel(records, api, clock, clipboard);

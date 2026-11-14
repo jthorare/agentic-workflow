@@ -1,4 +1,6 @@
 using Aw.Sindri.Ui.Platform;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
 
@@ -9,12 +11,16 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 /// </summary>
 /// <param name="starter">Starts the program; null when the head has none.</param>
 /// <param name="clock">The clock for the wait.</param>
-internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider clock) : ObservableObject
+/// <param name="log">The app's log; none when null.</param>
+internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider clock, ILogger? log = null) : ObservableObject
 {
     /// <summary>How long the app waits for Sindri to answer after a start.</summary>
     internal static readonly TimeSpan Wait = TimeSpan.FromSeconds(30);
 
     private const string AlreadyRunningCode = "SND-LEASE-001";
+    private readonly ILogger _log = log ?? NullLogger.Instance;
+    private SynchronizationContext? _ui;
+    private bool _watching;
     private int _attempt;
     private bool _begun;
 
@@ -69,7 +75,16 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
         }
 
         _begun = true;
+        if (!_watching)
+        {
+            // The program's exit arrives on a pool thread: take the UI context now, on the UI thread, to answer on it.
+            _ui = SynchronizationContext.Current;
+            starter.Exited += OnProgramExited;
+            _watching = true;
+        }
+
         var attempt = ++_attempt;
+        SindriStartLog.Began(_log, attempt);
         var result = starter.Start();
         if (result.IsError)
         {
@@ -99,6 +114,22 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
         }
     }
 
+    // The started program ended while the page waits: say why now, not after the 30 s.
+    private void OnProgramExited(object? sender, SindriExitedEventArgs e)
+    {
+        if (_ui is { } ui)
+        {
+            ui.Post(static state => { var (model, args) = ((SindriStartViewModel, SindriExitedEventArgs))state!; model.ProgramExited(args); }, (this, e));   // why: Post's state is the object it was handed
+        }
+        else
+        {
+            ProgramExited(e);
+        }
+    }
+
+    // Stub (red, #3630): the exit is logged and answers nothing yet.
+    private void ProgramExited(SindriExitedEventArgs e) => SindriStartLog.ProgramExited(_log, e.Launch, e.ExitCode, _attempt, Stage);
+
     // Waits Wait; if no Reset or newer start came, says why nothing answered.
     private async Task Expire(int attempt)
     {
@@ -111,7 +142,14 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
             return;
         }
 
-        if (attempt != _attempt || starter is null)
+        SindriStartLog.WaitEnded(_log, attempt, _attempt, Stage);
+        Ended(attempt);
+    }
+
+    // The wait is over for this attempt (the 30 s ran out or the program ended): nothing answered, so say why. A later call for a start that already ended does nothing.
+    private void Ended(int attempt, int? exitCode = null)
+    {
+        if (attempt != _attempt || starter is null || Stage != StartStage.Starting)
         {
             return;
         }
@@ -124,7 +162,8 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
             return;
         }
 
-        Show(StartStage.DidntStart, Labels.DidntStart(error ?? Labels.NoErrorLine), Labels.StartDetails(starter.LogPath), Labels.Retry);
+        var said = error ?? Labels.NoErrorLine;
+        Show(StartStage.DidntStart, exitCode is { } code ? Labels.DidntStartExit(said, code) : Labels.DidntStart(said), Labels.StartDetails(starter.LogPath), Labels.Retry);
     }
 
     private void Show(StartStage stage, string message, string details, string primary)
