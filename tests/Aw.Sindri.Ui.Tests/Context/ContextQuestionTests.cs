@@ -39,6 +39,24 @@ public sealed class ContextQuestionTests
     }
 
     [Fact]
+    public async Task A_phrase_answer_with_one_area_searched_shows_the_coverage_sentence_on_the_page()
+    {
+        var golden = GoldenFiles.Node("context-lenses", "map-tabs");
+        CoverageWordsTests.OneSearchedThreeNot(golden);
+        var server = new FakeSindriApi
+        {
+            QueryAnswer = _ => FakeSindriApi.QueryAnchorsBody([Tabs], []),
+            LensesAnswer = _ => new RouteAnswer(HttpStatusCode.OK, golden.ToJsonString()),
+        };
+        var page = Page(server);
+        page.AnchorText = Phrase;
+
+        await page.Submit(Token);
+
+        Assert.Equal("Searched code. No intent or product records. Function names not indexed.", page.Coverage);
+    }
+
+    [Fact]
     public async Task Anchor_shaped_text_skips_the_query()
     {
         var server = new FakeSindriApi();

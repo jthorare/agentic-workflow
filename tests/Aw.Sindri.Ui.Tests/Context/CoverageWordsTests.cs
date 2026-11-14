@@ -23,7 +23,7 @@ public sealed class CoverageWordsTests
     }
 
     // Code searched in full; intent and product have no records; the function names are not indexed.
-    private static void OneSearchedThreeNot(JsonNode node)
+    internal static void OneSearchedThreeNot(JsonNode node)
     {
         node["searched"]!["bands"]!["intent"]!["empty"] = true;
         node["searched"]!["bands"]!["product"]!["empty"] = true;
