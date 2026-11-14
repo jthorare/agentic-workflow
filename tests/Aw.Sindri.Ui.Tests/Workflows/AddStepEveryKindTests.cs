@@ -1,4 +1,3 @@
-using System.Net;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
@@ -35,7 +34,7 @@ public sealed class AddStepEveryKindTests
 
         var sent = JsonNode.Parse(Assert.Single(f.Server.AppliedWorkflowOps).Ops)!.AsArray()[0]!;
         Assert.Equal(type, sent["type"]!.GetValue<string>());
-        var example = JsonNode.Parse(block.ExampleConfig!.Value.GetRawText()) as JsonObject ?? [];
+        var example = block.ExampleConfig is { } raw ? JsonNode.Parse(raw.GetRawText()) as JsonObject ?? [] : [];
         Assert.True(JsonNode.DeepEquals(example, sent["config"] ?? new JsonObject()), $"'{type}': sent {sent["config"]} but the example is {example}");
     }
 }

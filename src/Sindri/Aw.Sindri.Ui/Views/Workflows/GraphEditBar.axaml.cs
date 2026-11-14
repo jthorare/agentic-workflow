@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using Aw.Sindri.Ui.Api.Workflows;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 
@@ -28,6 +29,7 @@ internal sealed partial class GraphEditBar : UserControl
         if (DataContext is GraphEditViewModel edit && sender is Control { DataContext: WorkflowBlock block })
         {
             await edit.AddStep(block, CancellationToken.None).ConfigureAwait(true);
+            this.FindAncestorOfType<WorkflowsPage>()?.FocusEditorField();   // a new step's sheet opens on its first required field
         }
     }
 

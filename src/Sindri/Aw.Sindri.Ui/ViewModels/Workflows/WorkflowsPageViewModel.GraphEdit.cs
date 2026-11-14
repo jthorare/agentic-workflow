@@ -12,7 +12,7 @@ internal sealed partial class WorkflowsPageViewModel
     public bool IsNewStep => Editor.HasPendingStep;
 
     /// <summary>The name of the field the sheet focuses when it opens: the first required field, else the first field, else empty.</summary>
-    public string FocusFieldName => throw new NotSupportedException();
+    public string FocusFieldName => (Editor.Fields.FirstOrDefault(static f => f.IsRequired) ?? Editor.Fields.FirstOrDefault())?.Name ?? string.Empty;
 
     // Add step picked a kind: the sheet opens on that kind's settings, nothing is sent.
     private void BeginNewStep(WorkflowBlock block, string id, string? after)

@@ -42,8 +42,19 @@ internal sealed partial class WorkflowsPage : UserControl
         if (DataContext is WorkflowsPageViewModel page)
         {
             await page.Edit(CancellationToken.None).ConfigureAwait(true);   // the fields exist only once the form is read: focus the first one after
-            Dispatcher.UIThread.Post(() => _ = (FirstTarget(WorkflowEditor, static c => c is TextBox or CheckBox or Button) ?? WorkflowEditor).Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
+            FocusEditorField();
         }
+    }
+
+    /// <summary>Focuses the control of the sheet's first required field (else its first field, else the first control), once the form is laid out.</summary>
+    internal void FocusEditorField()
+    {
+        var name = (DataContext as WorkflowsPageViewModel)?.FocusFieldName ?? string.Empty;
+        Dispatcher.UIThread.Post(
+            () => _ = (FirstTarget(WorkflowEditor, c => name.Length > 0 && c is TextBox or CheckBox or ComboBox && c.DataContext is ConfigFieldViewModel f && string.Equals(f.Name, name, StringComparison.Ordinal))
+                ?? FirstTarget(WorkflowEditor, static c => c is TextBox or CheckBox or Button)
+                ?? WorkflowEditor).Focus(NavigationMethod.Tab),
+            DispatcherPriority.Loaded);
     }
 
     private void OnNewWorkflow(object? sender, RoutedEventArgs e)
