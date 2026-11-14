@@ -85,7 +85,7 @@
 .pill.seed .nm { flex:none; }
 .pill.seed .pa { font:400 12px/18px var(--mono); color:var(--ink-subtle); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .pill.seed .sd { display:flex; align-items:center; gap:8px; min-width:0; }
-.edge-label { z-index:2; max-width:142px; }
+.edge-label { z-index:2; max-width:none; }
 .nbar .chips { display:flex; gap:var(--sp1); margin-left:var(--sp2); }
 .nbar .chips .chip { font-size:12px; line-height:18px; padding:0 8px; color:var(--ink-muted); }
 .nbar .chips .chip.on { color:var(--ink); background:var(--s2); border-color:var(--hair-3); }
@@ -103,3 +103,15 @@ pre#measure { display:none; }
 .tip span { display:block; color:var(--ink-subtle); }
 
 .edge-label { padding:0 6px; }
+
+/* the real app's top bar (06-concept-drill-loaded shot) */
+.nav2 { padding:3px; border:1px solid var(--hair-strong); border-radius:var(--r3); gap:2px; }
+.nav2 a { display:flex; align-items:center; gap:0; padding:3px 10px; }
+.nav2 a .n { color:var(--ink-subtle); margin-left:6px; }
+.nav2 a.on { background:var(--primary-soft); color:var(--ink); }
+.nav2 .ndot { width:6px; height:6px; border-radius:50%; background:var(--primary-hi); margin-right:8px; display:inline-block; }
+.cmdk.srch { width:300px; height:28px; }
+.cmdk.srch .mg { width:10px; height:10px; border:1.5px solid var(--ink-subtle); border-radius:50%; display:inline-block; position:relative; margin-right:2px; }
+.health { display:flex; align-items:center; gap:8px; height:28px; padding:0 12px; border:1px solid #1d5a35; border-radius:var(--r3); font-size:12px; color:var(--ink-subtle); }
+.health .ck { color:var(--ok); }
+.health b { font-weight:600; color:var(--ink); }
