@@ -7,7 +7,8 @@ namespace Aw.Sindri.Infrastructure.Profile;
 /// <summary>
 /// The profile runtime reads once approval is gone (#2258 PR 1): the live file, validated on each read (<see cref="IProfileSource.Load"/> checks it). A missing file is "no profile" (null), as an
 /// absent approval was; an invalid one is its SND-PROFILE error, so nothing runs on a profile that wouldn't pass validation. With a <paramref name="path"/>, the answer is kept while the file's
-/// last write time and length stay the same (writes go by atomic rename, so an edit changes one of them); without one, every read parses.
+/// last write time, length and file mode stay the same (writes go by atomic rename, so an edit changes one of them; a chmod changes only the mode, #3429); without one,
+/// every read parses.
 /// </summary>
 /// <param name="source">The live profile.</param>
 /// <param name="path">The profile file <paramref name="source"/> reads, for the change check; null turns the cache off.</param>
@@ -63,7 +64,7 @@ internal sealed class LiveApprovedProfile(IProfileSource source, string? path = 
         try
         {
             var info = new FileInfo(path);
-            return info.Exists ? new FileStamp(info.LastWriteTimeUtc, info.Length) : null;
+            return info.Exists ? new FileStamp(info.LastWriteTimeUtc, info.Length, OperatingSystem.IsWindows() ? UnixFileMode.None : info.UnixFileMode) : null;
         }
         catch (IOException)
         {
@@ -75,7 +76,7 @@ internal sealed class LiveApprovedProfile(IProfileSource source, string? path = 
         }
     }
 
-    private sealed record FileStamp(DateTime LastWriteUtc, long Length);
+    private sealed record FileStamp(DateTime LastWriteUtc, long Length, UnixFileMode Mode);
 
     private sealed record Cached(FileStamp Stamp, int Generation, Result<LoadedProfile?> Answer);
 }
