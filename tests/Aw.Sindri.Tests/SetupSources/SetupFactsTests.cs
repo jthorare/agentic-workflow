@@ -356,7 +356,7 @@ public sealed class SetupFactsTests
     [Fact, Trait("Lane", "unit")]
     public async Task Map_step_stays_to_do_after_the_index_build_when_the_refresh_service_is_paused()
     {
-        await using var rig = new SetupFactsRig(pauses: new Server.PausedServices(Core.Ids.ServiceName.From("context-map-refresh")));
+        await using var rig = new SetupFactsRig(pauses: new Server.PausedServices(ServiceName.From("context-map-refresh")));
         await rig.Approve(SetupFactsRig.ProfileWithRepos());
         rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
 
@@ -381,7 +381,7 @@ public sealed class SetupFactsTests
     [Fact, Trait("Lane", "unit")]
     public async Task Map_step_fails_when_the_newest_ended_build_is_a_failed_code_index_build()
     {
-        await using var rig = new SetupFactsRig(pauses: new Server.PausedServices(Core.Ids.ServiceName.From("context-map-refresh"))); // paused: no first-map tick is due (#3593)
+        await using var rig = new SetupFactsRig(pauses: new Server.PausedServices(ServiceName.From("context-map-refresh"))); // paused: no first-map tick is due (#3593)
         await rig.Approve(SetupFactsRig.ProfileWithRepos());
         rig.IndexJob("demo", JobState.Failed, ["structure 3 of 10 files"], "SND-CODEIDX-010");
 
