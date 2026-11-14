@@ -42,6 +42,6 @@ public sealed class WorkflowsRunStepCardsFramesTests : FrameHost
         Assert.True(edit.IsEffectivelyVisible);
         Assert.Equal("Edit step", edit.Content);
         await shell.Workflows.Run.Groups.Single(g => g.Node == "agent").Runs[0].EditStep(CancellationToken.None);
-        await Until(window, () => shell.Workflows.IsEditing && Visible(window, "EditorSheet"), "Edit step never opened the sheet");
+        await Until(window, () => shell.Workflows.IsSettingsOpen && Visible(window, "EditorSheet"), "Edit step never opened the sheet");
     });
 }

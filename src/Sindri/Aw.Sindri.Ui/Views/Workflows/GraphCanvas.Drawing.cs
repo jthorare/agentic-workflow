@@ -38,6 +38,11 @@ internal sealed partial class GraphCanvas
                 DrawEdge(context, edge);
             }
 
+            foreach (var end in graph.Ends)
+            {
+                DrawEnd(context, end);
+            }
+
             foreach (var node in graph.Nodes)
             {
                 DrawNode(context, node);
@@ -81,6 +86,14 @@ internal sealed partial class GraphCanvas
             context.DrawRectangle(Brush("Brush.Surface1"), new Pen(Brush("Brush.Hairline"), 1), pill, 4, 4);
             context.DrawText(text, new Point(pill.X + 6, pill.Y + 2));
         }
+    }
+
+    private void DrawEnd(DrawingContext context, GraphEnd end)
+    {
+        var faint = Brush("Brush.InkSubtle");
+        context.DrawLine(new Pen(faint, 1, DashStyle.Dash), new Point(end.At.X, end.At.Y), new Point(end.To.X, end.To.Y));
+        var text = Text(end.Text, 11, faint, end.Label.Width, semiBold: false);
+        context.DrawText(text, new Point(end.Label.X, end.Label.Y + ((end.Label.Height - text.Height) / 2)));
     }
 
     private void DrawNode(DrawingContext context, GraphNodeViewModel node)

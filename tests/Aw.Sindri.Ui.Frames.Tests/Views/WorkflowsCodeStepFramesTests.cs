@@ -43,7 +43,7 @@ public sealed class WorkflowsCodeStepFramesTests : FrameHost
         await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
         await Until(window, () => shell.Workflows.Runs.Graph is not null, "the graph never showed");
         Assert.True(shell.Workflows.Runs.Graph!.SelectNode("start"));
-        await shell.Workflows.Edit(CancellationToken.None);
+        await shell.Workflows.OpenSettings(CancellationToken.None);
         await Until(window, () => shell.Workflows.Editor.Fields.Count > 0 && Visible(window, "EditorFields"), "the editor never showed the code step's fields");
         Settle(window);
 
