@@ -26,6 +26,18 @@ internal static partial class Labels
     internal static string ContextFromQuestion(int topics) =>
         string.Create(CultureInfo.InvariantCulture, $"From your question: {topics} {(topics == 1 ? "topic" : "topics")}");
 
+    /// <summary>The name of the list of files the engine returned for a question (#2974).</summary>
+    internal const string ContextAnswerFiles = "Files the answer names";
+
+    /// <summary>What a stage that draws no nodes says when the question named files.</summary>
+    /// <param name="files">How many files the answer named.</param>
+    /// <returns>The sentence.</returns>
+    internal static string ContextStageEmptyWithFiles(int files) =>
+        string.Create(CultureInfo.InvariantCulture, $"The map draws nothing for this question, but the answer names {files} {(files == 1 ? "file" : "files")}. They are listed below.");
+
+    /// <summary>What a stage that draws no nodes says when the question named no files either.</summary>
+    internal const string ContextStageEmpty = "The map draws nothing for this question.";
+
     /// <summary>The word for an anchor the map does not hold.</summary>
     internal const string ContextNotFound = "not found";
 

@@ -13,6 +13,7 @@ internal sealed partial class ContextPageViewModel
     // Null when a newer Submit took over, or when the control plane is down (its problem is drawn here).
     private async Task<(List<string> Anchors, bool FromQuestion, List<string> Suggested)?> Resolve(Uri api, List<string> words, int generation, CancellationToken cancellationToken)
     {
+        _askedFiles = [];
         if (AnchorShaped(words))
         {
             return (words, false, []);
@@ -39,6 +40,7 @@ internal sealed partial class ContextPageViewModel
         }
 
         KeepTitles(asked.Value.Suggestions);
+        _askedFiles = FilesOf(asked.Value);
         return asked.Value.Anchors.Count > 0
             ? ([.. asked.Value.Anchors.Distinct(StringComparer.Ordinal)], true, [])
             : ([AnchorText.Trim()], false, [.. asked.Value.SuggestedAnchors.Distinct(StringComparer.Ordinal)]);
