@@ -9,6 +9,7 @@ using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Views.Controls;
+using Aw.Sindri.Ui.Views.Workflows;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 

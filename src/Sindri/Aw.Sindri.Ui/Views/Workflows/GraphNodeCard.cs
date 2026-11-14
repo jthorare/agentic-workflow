@@ -7,9 +7,9 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Aw.Sindri.Ui.ViewModels.Workflows;
-using Aw.Sindri.Ui.Views.Workflows;
+using Aw.Sindri.Ui.Views.Controls;
 
-namespace Aw.Sindri.Ui.Views.Controls;
+namespace Aw.Sindri.Ui.Views.Workflows;
 
 /// <summary>
 /// One workflow step as a card (#3234): the title, the block type, and the run's status as a <see cref="StateChipView"/> (glyph, word, tone), 200 by 64. Its look in every state
