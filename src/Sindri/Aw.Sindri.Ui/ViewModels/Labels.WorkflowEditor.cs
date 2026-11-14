@@ -30,7 +30,7 @@ internal static partial class Labels
     /// <param name="title">The step's own title, or its block's title when it has none.</param>
     /// <param name="kind">"trigger", or the block's title.</param>
     /// <returns>The words.</returns>
-    internal static string WfEditorStep(string title, string kind) => title + " \u00b7 " + kind;
+    internal static string WfEditorStep(string title, string kind) => string.Equals(title, kind, StringComparison.Ordinal) ? title : title + " \u00b7 " + kind;
 
     /// <summary>The Advanced toggle under a field whose presets hide its raw text.</summary>
     internal const string WfFieldAdvanced = "Advanced";

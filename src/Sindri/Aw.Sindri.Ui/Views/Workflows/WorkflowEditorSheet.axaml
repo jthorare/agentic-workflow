@@ -26,7 +26,7 @@
       <ItemsControl x:Name="EditorFields" ItemsSource="{Binding Editor.Fields}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="wf:ConfigFieldViewModel">
-            <StackPanel Spacing="2" Margin="0,0,0,8">
+            <StackPanel Spacing="2" Margin="0,0,0,8" IsVisible="{Binding IsShown}">
               <TextBlock Classes="caption subtle" Text="{Binding Caption}" AutomationProperties.AccessibilityView="Raw" />
               <ComboBox Name="EditorFieldPresets" IsVisible="{Binding HasPresets}" ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset, Mode=TwoWay}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Caption}">
                 <ComboBox.ItemTemplate>
@@ -38,7 +38,11 @@
               <ToggleButton Name="EditorFieldAdvanced" IsVisible="{Binding HasAdvanced}" IsChecked="{Binding ShowAdvanced, Mode=TwoWay}" Content="{Binding AdvancedText}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding AdvancedText}" />
               <TextBox Name="EditorFieldText" IsVisible="{Binding IsRawVisible}" Text="{Binding Text, Mode=TwoWay}" AutomationProperties.Name="{Binding Caption}" />
               <CheckBox Name="EditorFieldCheck" IsVisible="{Binding IsBoolean}" IsChecked="{Binding IsOn, Mode=TwoWay}" AutomationProperties.Name="{Binding Caption}" />
-              <TextBox Name="EditorFieldLines" IsVisible="{Binding IsMultiline}" Text="{Binding Text, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding Caption}" />
+              <TextBox Name="EditorFieldLines" IsVisible="{Binding IsPlainLines}" Text="{Binding Text, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding Caption}" />
+              <TextBox Name="EditorFieldCode" IsVisible="{Binding IsCode}" Text="{Binding Text, Mode=TwoWay}" AcceptsReturn="True" AcceptsTab="True" TextWrapping="NoWrap" FontFamily="{DynamicResource Font.Mono}" MinHeight="240" MaxHeight="600" VerticalContentAlignment="Top" AutomationProperties.Name="{Binding Caption}" />
+              <Border Name="EditorFieldExample" IsVisible="{Binding HasExample}" AutomationProperties.Name="{Binding Example}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                <TextBlock Classes="caption quiet" Text="{Binding Example}" FontFamily="{DynamicResource Font.Mono}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+              </Border>
               <Border Name="EditorFieldError" IsVisible="{Binding HasError}" AutomationProperties.Name="{Binding ErrorText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                 <TextBlock Classes="caption" Text="{Binding ErrorText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
               </Border>
@@ -46,6 +50,8 @@
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
+
+      <ToggleButton x:Name="EditorAdvancedGroup" IsVisible="{Binding Editor.HasAdvancedFields}" IsChecked="{Binding Editor.AdvancedOpen, Mode=TwoWay}" Content="{Binding Editor.AdvancedText}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Editor.AdvancedText}" />
 
       <Border x:Name="EditorFailure" IsVisible="{Binding Editor.FailureText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Editor.FailureText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption" Text="{Binding Editor.FailureText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />

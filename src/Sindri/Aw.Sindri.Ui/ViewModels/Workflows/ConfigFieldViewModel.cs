@@ -5,8 +5,14 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// <summary>One config field of the selected node's form: its name, its type in words, the text being edited, and the line under it when the text can't be sent.</summary>
 internal sealed class ConfigFieldViewModel : ObservableObject
 {
-    internal ConfigFieldViewModel(WorkflowBlockField field, string text)
+    private static readonly string[] CodeAdvanced = ["repo", "branch", "timeout", "memoryMb"];
+
+    internal ConfigFieldViewModel(WorkflowBlockField field, string text, string blockType = "", string example = "")
     {
+        var isCodeBlock = string.Equals(blockType, "code", StringComparison.Ordinal);
+        IsCode = isCodeBlock && string.Equals(field.Name, "code", StringComparison.Ordinal);
+        InAdvanced = isCodeBlock && CodeAdvanced.Contains(field.Name, StringComparer.Ordinal);
+        Example = example;
         Name = field.Name;
         Type = field.Type;
         IsRequired = field.Required;
@@ -58,16 +64,22 @@ internal sealed class ConfigFieldViewModel : ObservableObject
     }
 
     /// <summary>True for the Code step's program: a monospace multi-line box.</summary>
-    public bool IsCode => false;
+    public bool IsCode { get; }
 
     /// <summary>The block's example for this field, shown under it; empty when it has none.</summary>
-    public string Example => string.Empty;
+    public string Example { get; }
+
+    /// <summary>True when there is an example under the field.</summary>
+    public bool HasExample => Example.Length > 0;
 
     /// <summary>True when the field sits in the closed Advanced group.</summary>
-    public bool InAdvanced => false;
+    public bool InAdvanced { get; }
 
     /// <summary>True when the field is drawn: it is not in the Advanced group, or the group is open.</summary>
-    public bool IsShown => true;
+    public bool IsShown => !InAdvanced || GroupOpen;
+
+    /// <summary>True when the Advanced group this field may sit in is open; the editor sets it.</summary>
+    public bool GroupOpen { get; internal set { Set(ref field, value); OnChanged(nameof(IsShown)); OnChanged(nameof(IsRawVisible)); } }
 
     /// <summary>The config key.</summary>
     public string Name { get; }
@@ -94,7 +106,10 @@ internal sealed class ConfigFieldViewModel : ObservableObject
     public bool IsBoolean => string.Equals(Type, "boolean", StringComparison.Ordinal);
 
     /// <summary>True for a field edited with several lines (a text list or an object).</summary>
-    public bool IsMultiline => string.Equals(Type, "text list", StringComparison.Ordinal) || string.Equals(Type, "object", StringComparison.Ordinal);
+    public bool IsMultiline => IsCode || string.Equals(Type, "text list", StringComparison.Ordinal) || string.Equals(Type, "object", StringComparison.Ordinal);
+
+    /// <summary>True for a multi-line field that is not the code box: it keeps the small proportional box.</summary>
+    public bool IsPlainLines => IsMultiline && !IsCode;
 
     /// <summary>True for a field edited with one line (text and number).</summary>
     public bool IsSingleLine => !IsBoolean && !IsMultiline;

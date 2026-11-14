@@ -35,10 +35,26 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     public ObservableCollection<ConfigFieldViewModel> Fields { get; } = [];
 
     /// <summary>True when the selected step has settings in an Advanced group.</summary>
-    public bool HasAdvancedFields => false;
+    public bool HasAdvancedFields => Fields.Any(f => f.InAdvanced);
 
     /// <summary>True when the Advanced group is open.</summary>
-    public bool AdvancedOpen { get; set; }
+    public bool AdvancedOpen
+    {
+        get;
+        set
+        {
+            Set(ref field, value);
+            foreach (var f in Fields)
+            {
+                f.GroupOpen = value;
+            }
+        }
+    }
+
+    /// <summary>The Advanced toggle's words.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string AdvancedText => Labels.WfFieldAdvanced;
+#pragma warning restore CA1822, MA0041
 
     /// <summary>The selected step as the sheet names it ("Every weekday at 7:00 \u00b7 trigger"), never its id; empty when none is selected.</summary>
     public string NodeHeading { get; private set => Set(ref field, value); } = string.Empty;
@@ -118,9 +134,17 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         NodeHeading = HeadingOf(node, block);
         foreach (var field in block?.Config ?? [])
         {
-            Fields.Add(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field)));   // why: a block was found, so node is not null
+            Fields.Add(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field), block!.Type, ExampleOf(block, field.Name)));   // why: a block was found, so node and block are not null
         }
+
+        AdvancedOpen = false;
+        OnChanged(nameof(HasAdvancedFields));
     }
+
+    private static string ExampleOf(WorkflowBlock block, string field) =>
+        block.ExampleConfig is { ValueKind: JsonValueKind.Object } example && example.TryGetProperty(field, out var value) && value.ValueKind == JsonValueKind.String && string.Equals(field, "code", StringComparison.Ordinal)
+            ? value.GetString() ?? string.Empty
+            : string.Empty;
 
     private static string HeadingOf(EditorNode? node, WorkflowBlock? block)
     {
