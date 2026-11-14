@@ -82,10 +82,14 @@ internal sealed partial class AgentsPageViewModel
         return true;
     }
 
-    private string Marked(AgentSort column, string header) => Sort == column ? header + (SortDescending ? " ▼" : " ▲") : header;
+    private bool _picked;
+
+    // The default order (name) is unmarked; a header is marked once the user has picked a sort.
+    private string Marked(AgentSort column, string header) => _picked && Sort == column ? header + (SortDescending ? " ▼" : " ▲") : header;
 
     private void SortChanged()
     {
+        _picked = true;
         foreach (var name in (string[])[nameof(StatusHeader), nameof(AgentHeader), nameof(RepoHeader), nameof(ForHeader)])
         {
             OnChanged(name);
