@@ -1,5 +1,6 @@
 using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Health;
 using Aw.Sindri.Core.Ids;
@@ -121,6 +122,20 @@ public sealed class StatusViewsHealthTests
             AskedWith = approved;
             return ValueTask.FromResult<IReadOnlyList<HealthProblem>>(problems);
         }
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_fresh_home_with_no_profile_file_stays_healthy()
+    {
+        H.Profiles.Live = SindriErrors.ProfileMissing.With("No profile yet");   // #3436: no file at all is a fresh home, not a profile that won't load
+        _ = await H.HoldLease();
+        _v.Publish(stalledAt: null);
+
+        var status = (await Service().Handle(new GetStatusRequest(), Token)).Value;
+
+        Assert.Equal("missing", status.Profile.ProblemKind);
+        Assert.Equal(HealthWord.Healthy, status.Health!.Word);
+        Assert.DoesNotContain(status.Health.Problems, static p => p.Code == SindriErrors.ProfileInvalid.Code);
     }
 
     [Fact, Trait("Lane", "unit")]
