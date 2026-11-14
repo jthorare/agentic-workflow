@@ -150,7 +150,7 @@ public sealed class ContextMapViewModelTests
     public void Coverage_is_the_sentence_built_on_the_client_and_an_exact_hit_has_none()
     {
         Assert.Equal(CoverageWords.Sentence(Read(_ => { }), exact: false), Map().Coverage);
-        Assert.NotEqual(string.Empty, Map().Coverage);
+        Assert.NotEqual(string.Empty, Map().Coverage, StringComparer.Ordinal);
         Assert.Equal(string.Empty, new ContextMapViewModel(Read(_ => { }), exact: true).Coverage);
     }
 
