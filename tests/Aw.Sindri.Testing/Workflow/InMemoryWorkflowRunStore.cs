@@ -52,8 +52,7 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
                 return Done<GraphStartKind>(SindriErrors.GraphRunIdTaken.With($"the run '{run.Id.Value}' already exists; a trigger that fires twice is one run"));
             }
 
-            var busy = mode != GraphConcurrency.Unlimited && run.Mode != WorkflowRunMode.Test
-                && _runs.Exists(r => r.WorkflowId == run.WorkflowId && r.Mode == WorkflowRunMode.Live && r.Status is WorkflowRunStatus.Queued or WorkflowRunStatus.Running or WorkflowRunStatus.Waiting);
+            var busy = mode != GraphConcurrency.Unlimited && run.Mode != WorkflowRunMode.Test && _runs.Exists(r => IsLiveInFlight(r, run.WorkflowId));
             if (busy && mode == GraphConcurrency.OnePerWorkflow)
             {
                 return Done<GraphStartKind>(GraphStartKind.Skipped);
@@ -64,12 +63,15 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
         }
     }
 
+    private static bool IsLiveInFlight(WorkflowRun run, WorkflowId workflow) =>
+        run.WorkflowId == workflow && run.Mode == WorkflowRunMode.Live && run.Status is WorkflowRunStatus.Queued or WorkflowRunStatus.Running or WorkflowRunStatus.Waiting;
+
     /// <inheritdoc/>
     public ValueTask<Result<WorkflowRun?>> PromoteOldestQueued(WorkflowId workflow, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
-            var inFlight = _runs.Where(r => r.WorkflowId == workflow && r.Mode == WorkflowRunMode.Live && r.Status is WorkflowRunStatus.Queued or WorkflowRunStatus.Running or WorkflowRunStatus.Waiting).ToList();
+            var inFlight = _runs.Where(r => IsLiveInFlight(r, workflow)).ToList();
             if (inFlight.Count == 0 || inFlight.Exists(static r => r.Status != WorkflowRunStatus.Queued))
             {
                 return Ok<WorkflowRun?>(value: null);

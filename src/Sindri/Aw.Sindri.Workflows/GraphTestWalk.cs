@@ -48,7 +48,7 @@ internal static class GraphTestWalk
     private static BlockResult Apply(string type, JsonObject config, BlockResult result, IList<string> recorded)
     {
         var outputs = result.Outputs.ToDictionary(static p => p.Key, static p => p.Value?.DeepClone(), StringComparer.Ordinal);
-        IReadOnlyList<string>? branches = result.Branches;
+        var branches = result.Branches;
         if (string.Equals(type, "wait", StringComparison.Ordinal))
         {
             outputs["waitedSeconds"] = 0;
@@ -56,7 +56,8 @@ internal static class GraphTestWalk
         }
         else if (string.Equals(type, "ask_owner", StringComparison.Ordinal))
         {
-            var answer = Text(config["default"]) ?? AskOwnerBlock.ChoicesOf(config).FirstOrDefault() ?? "ok";
+            var choices = AskOwnerBlock.ChoicesOf(config);
+            var answer = Text(config["default"]) ?? (choices.Count > 0 ? choices[0] : "ok");
             var resolved = AskOwnerBlock.Resolve(config, answer, "test");
             foreach (var (name, value) in resolved.Outputs)
             {
