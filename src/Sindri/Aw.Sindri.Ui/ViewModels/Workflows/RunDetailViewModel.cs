@@ -154,7 +154,8 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
             : Labels.JobWhen(running: false, clock.GetUtcNow() - (run.EndedAt ?? run.StartedAt));
         ErrorText = run.Error ?? string.Empty;
         OutputsText = WorkflowJson.Pretty(run.Outputs);
-        Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode, (node, token) => EditStep?.Invoke(node, token) ?? Task.CompletedTask))];
+        var types = NodeTypes(Shape);
+        Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode, (node, token) => EditStep?.Invoke(node, token) ?? Task.CompletedTask, types.GetValueOrDefault(g.Key, string.Empty)))];
         Graph = Shape is { } shape && shape.Revision == run.Revision ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(shape, Statuses(run))) : null;
         Changed();
     }
@@ -238,6 +239,24 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     /// <summary>Shows what Cancel said, in words.</summary>
     /// <param name="text">The note; empty clears it.</param>
     internal void Note(string text) => NoticeText = text;
+
+    // The block type of each node of the revision the page read; a run of another revision may name a node by another type, so only the read revision's types are used.
+    private static Dictionary<string, string> NodeTypes(WorkflowView? shape)
+    {
+        var types = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (shape?.Spec is { ValueKind: JsonValueKind.Object } spec && spec.TryGetProperty("nodes", out var nodes) && nodes.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var node in nodes.EnumerateArray())
+            {
+                if (node.TryGetProperty("id", out var id) && node.TryGetProperty("type", out var type) && id.GetString() is { } key && type.GetString() is { } kind)
+                {
+                    types[key] = kind;
+                }
+            }
+        }
+
+        return types;
+    }
 
     // a node run per item of a for_each: the last one served speaks for the node
     private static Dictionary<string, string> Statuses(WorkflowRunView run)

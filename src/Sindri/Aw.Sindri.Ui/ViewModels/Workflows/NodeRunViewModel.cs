@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflows;
 
@@ -9,7 +10,7 @@ internal sealed class NodeRunViewModel : ObservableObject
     private readonly Func<NodeRunViewModel, bool, CancellationToken, Task>? _control;
     private readonly Func<string, CancellationToken, Task>? _edit;
 
-    internal NodeRunViewModel(NodeRunView run, int count, Func<NodeRunViewModel, bool, CancellationToken, Task>? control = null, Func<string, CancellationToken, Task>? edit = null)
+    internal NodeRunViewModel(NodeRunView run, int count, Func<NodeRunViewModel, bool, CancellationToken, Task>? control = null, Func<string, CancellationToken, Task>? edit = null, string nodeType = "")
     {
         (_control, _edit) = (control, edit);
         TitleText = count > 1 || run.ItemIndex > 0 ? Labels.WfItemTitle(run.ItemIndex, count) : run.Node;
@@ -17,7 +18,9 @@ internal sealed class NodeRunViewModel : ObservableObject
         Tone = RunStatus.Tone(run.Status);
         (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, RunStatus.ToneWord(run.Status));
         InputText = WorkflowJson.Pretty(run.Input);
-        OutputText = WorkflowJson.Pretty(run.Output);
+        var sent = NotificationSent(nodeType, run);
+        (IsNotification, SentTitle, SentBody, SentTarget) = (sent.Title.Length > 0, sent.Title, sent.Body, sent.Title.Length > 0 ? Labels.WfNotifySentTo : string.Empty);
+        OutputText = IsNotification ? string.Empty : WorkflowJson.Pretty(run.Output);   // a notification's output is always empty: the card shows what it sent instead
         IsTruncated = run.Truncated;
         ErrorText = run.Error ?? string.Empty;
         Name = Labels.WfNodeRunName(TitleText, word.ToLowerInvariant(), ErrorText);
@@ -25,16 +28,19 @@ internal sealed class NodeRunViewModel : ObservableObject
     }
 
     /// <summary>True on a notification step that sent: its card shows what was sent.</summary>
-    public bool IsNotification => false;
+    public bool IsNotification { get; }
 
     /// <summary>The title the notification sent.</summary>
-    public string SentTitle => string.Empty;
+    public string SentTitle { get; }
 
     /// <summary>The message the notification sent; empty when it had none.</summary>
-    public string SentBody => string.Empty;
+    public string SentBody { get; }
+
+    /// <summary>True when the message line shows.</summary>
+    public bool HasSentBody => SentBody.Length > 0;
 
     /// <summary>Where it went.</summary>
-    public string SentTarget => string.Empty;
+    public string SentTarget { get; }
 
     /// <summary>True on a failed step: Edit step shows.</summary>
     public bool CanEditStep => IsError;
@@ -46,6 +52,20 @@ internal sealed class NodeRunViewModel : ObservableObject
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>A task that completes when the sheet is open.</returns>
     internal Task EditStep(CancellationToken cancellationToken) => _edit?.Invoke(Node, cancellationToken) ?? Task.CompletedTask;
+
+    // The notify block's input is its interpolated title and message; the card shows them only when it sent (a failed one sent nothing).
+    private static (string Title, string Body) NotificationSent(string nodeType, NodeRunView run)
+    {
+        if (!string.Equals(nodeType, "notify", StringComparison.Ordinal) || !string.Equals(run.Status, "succeeded", StringComparison.Ordinal) || run.Input is not { ValueKind: JsonValueKind.Object } input)
+        {
+            return (string.Empty, string.Empty);
+        }
+
+        return (Text(input, "title"), Text(input, "body"));
+    }
+
+    private static string Text(JsonElement input, string name) =>
+        input.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() ?? string.Empty : string.Empty;
 
     /// <summary>The node's id (the take over call names it).</summary>
     public string Node { get; }
@@ -105,7 +125,7 @@ internal sealed class NodeRunViewModel : ObservableObject
     public string InputText { get; }
 
     /// <summary>True when the node has an input.</summary>
-    public bool HasInput => InputText.Length > 0;
+    public bool HasInput => InputText.Length > 0 && !IsNotification;
 
     /// <summary>What the block produced, as indented JSON; empty for none.</summary>
     public string OutputText { get; }

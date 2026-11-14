@@ -18,7 +18,7 @@ public sealed class RunNotificationCardTests
     {
         var workflow = Golden("workflows-slug", "found");
         workflow["spec"]!["nodes"]![1]!["type"] = "notify";   // the node "agent" is a notification now
-        _f.Server.WorkflowAnswers[Slug] = new Aw.Sindri.Ui.Testing.RouteAnswer(System.Net.HttpStatusCode.OK, workflow.ToJsonString());
+        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, workflow.ToJsonString());
         var served = Golden("workflow-runs-run", "finished");
         var node = served["nodes"]![0]!;
         node["status"] = status;

@@ -265,6 +265,9 @@ internal static partial class Labels
     /// <summary>The editor's prompt when the workflow changed elsewhere: the edit was not saved and nothing is retried.</summary>
     internal const string WfEditChangedElsewhere = "This workflow changed elsewhere, so your edit was not saved. Reload to see the new version, then make the edit again.";
 
+    /// <summary>Under a notification step's title and message on the run page: where it went.</summary>
+    internal const string WfNotifySentTo = "Sent to the Sindri inbox";
+
     /// <summary>The button on a failed step's card on the run page.</summary>
     internal const string WfEditStep = "Edit step";
 

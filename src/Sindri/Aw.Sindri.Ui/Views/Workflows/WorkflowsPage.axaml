@@ -245,6 +245,11 @@
                           <TextBlock Classes="caption" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" />
                           <Button x:Name="EditFailedStep" HorizontalAlignment="Left" Content="{Binding EditStepText}" Click="OnEditFailedStep" IsVisible="{Binding CanEditStep}" AutomationProperties.Name="{Binding EditStepText}" />
                           <TextBlock Classes="caption subtle" Text="{Binding TruncatedText}" IsVisible="{Binding IsTruncated}" TextWrapping="Wrap" />
+                          <StackPanel Name="NotificationSent" Spacing="2" IsVisible="{Binding IsNotification}">
+                            <TextBlock Classes="body-strong" Text="{Binding SentTitle}" TextWrapping="Wrap" />
+                            <TextBlock Classes="body" Text="{Binding SentBody}" IsVisible="{Binding HasSentBody}" TextWrapping="Wrap" />
+                            <TextBlock Classes="caption subtle" Text="{Binding SentTarget}" />
+                          </StackPanel>
                           <StackPanel Spacing="2" IsVisible="{Binding HasInput}">
                             <TextBlock Classes="caption subtle" Text="{Binding InputHeading}" />
                             <SelectableTextBlock Classes="mono" Text="{Binding InputText}" TextWrapping="Wrap" />
