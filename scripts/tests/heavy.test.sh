@@ -367,6 +367,28 @@ for sig in INT TERM; do
   rm -f "$WORK/job.pid"
 done
 
+# --- the reason file (heavy-reason.*) is gone on every way out (#3699) ---
+# A private TMPDIR, so only this wrapper's files count. Passing, failing and watchdog-killed jobs, then INT and TERM.
+RTMP="$WORK/rtmp"; mkdir -p "$RTMP"
+left() { find "$RTMP" -name 'heavy-reason.*' | wc -l | tr -d ' '; }
+reset; TMPDIR="$RTMP" H --light echo hi > /dev/null 2>&1
+check "reason file: none left after a passing job" "$(left)" "0"
+reset; TMPDIR="$RTMP" H --light sh -c 'exit 7' > /dev/null 2>&1
+check "reason file: none left after a failing job" "$(left)" "0"
+reset; TMPDIR="$RTMP" AW_HEAVY_SESSION_PID="$DEAD" H --light sleep 30 > /dev/null 2>&1; rc=$?
+check "reason file: the watchdog kill still exits 124" "$rc" "124"
+check "reason file: none left after the watchdog kill" "$(left)" "0"
+for sig in INT TERM; do
+  reset; rm -f "$WORK/job.pid"
+  TMPDIR="$RTMP" perl -e '$SIG{INT}="DEFAULT"; $SIG{TERM}="DEFAULT"; exec @ARGV' bash "$HEAVY" --expensive bash "$WORK/job.sh" "$WORK/job.pid" > /dev/null 2>&1 &
+  hp=$!; bgpids+=("$hp")
+  wait_file "$WORK/job.pid" || echo "  (job did not start)"
+  check "reason file: one exists while the job runs ($sig)" "$(left)" "1"
+  kill -"$sig" "$hp"; wait "$hp" 2> /dev/null
+  check "reason file: none left after $sig" "$(left)" "0"
+  find "$RTMP" -name 'heavy-reason.*' -delete
+done
+
 # --- the job runs in its own systemd scope (#2931) ---
 # An OOM kill inside the pane's cgroup scope makes systemd stop the whole pane (the agent session). With a working
 # systemd-run the job goes through `systemd-run --user --scope -p OOMPolicy=continue`; without one, the direct launch stays.
