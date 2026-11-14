@@ -38,7 +38,7 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
     public bool HasMessage => Message.Length > 0;
 
     /// <summary>True while the card says why the start failed: the Not running line (no endpoint record) would answer the same question a second time.</summary>
-    public bool HidesNotRunningReason => false;   // stub (red)
+    public bool HidesNotRunningReason => Stage == StartStage.DidntStart;
 
     /// <summary>True when <see cref="Details"/> has words.</summary>
     public bool HasDetails => Details.Length > 0;
@@ -185,6 +185,7 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
         Details = details;
         Primary = primary;
         OnChanged(nameof(HasPrimary));
+        OnChanged(nameof(HidesNotRunningReason));
         OnChanged(nameof(HasMessage));
         OnChanged(nameof(HasDetails));
         OnChanged(nameof(IsIdle));
