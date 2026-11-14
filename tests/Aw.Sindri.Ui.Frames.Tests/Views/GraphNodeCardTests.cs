@@ -221,6 +221,24 @@ public sealed class GraphNodeCardTests
         var got = DrawnAboveCard(_ => { }, above: 7, focus: true);
 
         Assert.True(Near(got, "#828fff"), $"the pixel 7 px above the card's top edge is ({got.R};{got.G};{got.B}), the focus ring is #828fff");
+
+        // The app-wide focus adorner (FluentOverrides.axaml) is a 2 px PrimaryHover band 2 to 4 px out; the card draws its own ring, so the adorner must be off or a focused card shows two.
+        var adorner = DrawnAboveCard(_ => { }, above: 3, focus: true);
+        Assert.False(Near(adorner, "#828fff"), $"the pixel 3 px above the card's top edge is ({adorner.R};{adorner.G};{adorner.B}): the focus adorner draws a second ring");
+        return true;
+    });
+
+    [Fact]
+    public async Task Nothing_from_a_ring_up_to_the_card_clips_to_its_bounds() => await OnUi(() =>
+    {
+        var (window, card) = Show(c => c.IsSelected = true);
+        var ring = Rings(card).Single();
+
+        var chain = ring.GetVisualAncestors().TakeWhile(a => !ReferenceEquals(a, card)).Append(card).ToList();
+        var clipping = chain.Where(a => a.ClipToBounds).Select(a => $"{a.GetType().Name} '{(a as Control)?.Name}' bounds {a.Bounds}").ToList();
+
+        Assert.True(clipping.Count == 0, "the ring is clipped by: " + string.Join("; ", clipping));
+        window.Close();
         return true;
     });
 }
