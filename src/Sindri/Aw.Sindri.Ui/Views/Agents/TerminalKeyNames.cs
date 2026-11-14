@@ -5,10 +5,10 @@ namespace Aw.Sindri.Ui.Views.Agents;
 /// <summary>Names a key the way TerminalViewViewModel.Route reads it: "F6", "Shift+F6", "Ctrl+Shift+L", "Cmd+Shift+L", "Esc", "Tab", "Shift+Tab", "Enter", else the key's own name.</summary>
 internal static class TerminalKeyNames
 {
-    /// <summary>True for a paste: Ctrl+Shift+V, the platform paste (Ctrl+V, Cmd+V) and Shift+Insert.</summary>
+    /// <summary>True for a paste: Ctrl+Shift+V, Shift+Insert and Cmd+V. Plain Ctrl+V is not one: Claude Code pastes images on it and vim reads it as literal-next, so it goes to the agent as a key.</summary>
     /// <param name="name">A route name from <see cref="From"/>.</param>
     /// <returns>True when the key pastes.</returns>
-    internal static bool IsPaste(string name) => name is "Ctrl+Shift+V" or "Ctrl+V" or "Cmd+V" or "Shift+Insert";
+    internal static bool IsPaste(string name) => name is "Ctrl+Shift+V" or "Cmd+V" or "Shift+Insert";
 
     /// <summary>Names one key press.</summary>
     /// <param name="key">The key.</param>
