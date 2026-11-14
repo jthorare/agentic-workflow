@@ -56,7 +56,7 @@ internal sealed partial class TerminalViewViewModel
 
         _armedUntil = null;
         var stopped = _control is not null && await _control.Stop(target.Key, cancellationToken).ConfigureAwait(false);
-        ControlLine = stopped ? string.Empty : Labels.TerminalStopFailed;
+        ControlLine = stopped ? string.Empty : _control is PaneControl { Failure.Length: > 0 } pane ? Labels.TerminalStopFailed[..^1] + " (" + pane.Failure + ")." : Labels.TerminalStopFailed;
         Refresh();
         return stopped;
     }

@@ -29,7 +29,8 @@ internal sealed partial class AgentsPageViewModel
 
     /// <summary>Opens the terminal view on a row, or moves focus into the pane when it already shows that row.</summary>
     /// <param name="row">The row.</param>
-    internal void OpenTerminal(SessionRowViewModel row)
+    /// <param name="intent">Look: focus starts in the list; Type: in the pane.</param>
+    internal void OpenTerminal(SessionRowViewModel row, TerminalOpenIntent intent = TerminalOpenIntent.Look)
     {
         ArgumentNullException.ThrowIfNull(row);
         if (IsTerminalOpen && string.Equals(TerminalKey, row.Ref, StringComparison.Ordinal))
@@ -45,11 +46,25 @@ internal sealed partial class AgentsPageViewModel
         }
         else
         {
-            Terminal.Open(target, TerminalOpenIntent.Look);
+            Terminal.Open(target, intent);
         }
 
         (TerminalKey, IsTerminalOpen) = (row.Ref, true);
         StartSession(row);
+    }
+
+    /// <summary>Opens the pane on the row with this key and puts focus in the pane (the cursor in the agent's prompt): the shell's AgentPaneRequested (New agent form, #3384) calls it after the new row is drawn.</summary>
+    /// <param name="key">The row's key (a ref, or "sindri-&lt;actId&gt;" for a one-off).</param>
+    /// <returns>True when such a row is drawn.</returns>
+    internal bool OpenTerminalByKey(string key)
+    {
+        if (Walk().Find(w => string.Equals(w.Key, key, StringComparison.Ordinal)).Live is not { } row || !Select(key))
+        {
+            return false;
+        }
+
+        OpenTerminal(row, TerminalOpenIntent.Type);
+        return true;
     }
 
     /// <summary>Closes the view: the list returns to full width on the same row and the session keeps running.</summary>

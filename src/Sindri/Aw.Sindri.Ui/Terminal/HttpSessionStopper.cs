@@ -6,7 +6,7 @@ namespace Aw.Sindri.Ui.Terminal;
 internal sealed class HttpSessionStopper(HttpClient http, IHumanTokenSource token) : ISessionStopper
 {
     /// <inheritdoc />
-    public async Task<bool> Stop(Uri api, string provider, string id, CancellationToken cancellationToken)
+    public async Task<int> Stop(Uri api, string provider, string id, CancellationToken cancellationToken)
     {
         try
         {
@@ -18,11 +18,11 @@ internal sealed class HttpSessionStopper(HttpClient http, IHumanTokenSource toke
             }
 
             using var response = await http.SendAsync(request, cancellationToken).ConfigureAwait(false);
-            return response.IsSuccessStatusCode;
+            return (int)response.StatusCode;
         }
         catch (Exception e) when (e is HttpRequestException or IOException or UnauthorizedAccessException)
         {
-            return false;
+            return 0;
         }
     }
 }

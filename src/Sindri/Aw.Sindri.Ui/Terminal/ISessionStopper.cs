@@ -8,6 +8,6 @@ internal interface ISessionStopper
     /// <param name="provider">The session's provider.</param>
     /// <param name="id">The session's id.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>True when Serve accepted the stop (2xx).</returns>
-    public Task<bool> Stop(Uri api, string provider, string id, CancellationToken cancellationToken);
+    /// <returns>The HTTP status Serve answered; 0 when Sindri could not be reached. 2xx is accepted; 404 means this Sindri has no stop route yet.</returns>
+    public Task<int> Stop(Uri api, string provider, string id, CancellationToken cancellationToken);
 }

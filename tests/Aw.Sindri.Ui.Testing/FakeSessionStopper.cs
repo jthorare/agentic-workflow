@@ -13,13 +13,13 @@ internal sealed class FakeSessionStopper : ISessionStopper
     /// <summary>When true, every stop is refused.</summary>
     public bool Refuse { get; set; }
 
-    public Task<bool> Stop(Uri api, string provider, string id, CancellationToken cancellationToken)
+    public Task<int> Stop(Uri api, string provider, string id, CancellationToken cancellationToken)
     {
         if (!Refuse)
         {
             _stopped.Add(provider + "/" + id);
         }
 
-        return Task.FromResult(!Refuse);
+        return Task.FromResult(Refuse ? 404 : 200);
     }
 }

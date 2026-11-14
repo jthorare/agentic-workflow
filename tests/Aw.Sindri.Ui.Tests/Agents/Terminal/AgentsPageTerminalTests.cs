@@ -117,4 +117,18 @@ public sealed class AgentsPageTerminalTests
 
         Assert.Equal(new DeepLink(DeepLinkKind.Session, page.TerminalKey), opened?.Link);
     }
+
+    [Fact]
+    public async Task Opening_by_key_puts_focus_in_the_pane_for_a_row_that_is_drawn_and_refuses_one_that_is_not()
+    {
+        var page = await _f.Shown(Token);
+        var key = page.Groups.SelectMany(g => g.Rows).Select(r => r.Ref).First();
+
+        var opened = page.OpenTerminalByKey(key);
+        var ghost = page.OpenTerminalByKey("sindri-nothere");
+
+        Assert.True(opened);
+        Assert.False(ghost);
+        Assert.Equal((key, TerminalSide.Pane, key), (page.TerminalKey, page.Terminal.Side, page.SelectedKey));
+    }
 }
