@@ -145,8 +145,11 @@ public sealed partial class ContrastTests
     [InlineData("Border.clickable.selected:pointerover")]
     public void Subtle_and_selected_rows_lift_to_the_lift_fill_on_hover(string selector)
     {
-        var style = XDocument.Load(Path.Combine(UiSource.Theme, "ClickableStyles.axaml")).Descendants().Single(e => string.Equals(e.Attribute("Selector")?.Value, selector, StringComparison.Ordinal));
-        var background = style.Elements().Single(e => string.Equals(e.Attribute("Property")?.Value, "Background", StringComparison.Ordinal)).Attribute("Value")?.Value;
+        // The selected row has a second style on the same selector for its bar colour (declared after the focus rule); the fill is the one that sets Background.
+        var background = XDocument.Load(Path.Combine(UiSource.Theme, "ClickableStyles.axaml")).Descendants()
+            .Where(e => string.Equals(e.Attribute("Selector")?.Value, selector, StringComparison.Ordinal))
+            .SelectMany(style => style.Elements())
+            .Single(e => string.Equals(e.Attribute("Property")?.Value, "Background", StringComparison.Ordinal)).Attribute("Value")?.Value;
 
         Assert.Equal("{DynamicResource Brush.Clickable.Lift}", background);
     }
