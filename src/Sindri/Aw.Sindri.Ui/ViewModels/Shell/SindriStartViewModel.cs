@@ -76,6 +76,7 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
             case ShellState.VersionMismatch:
             case ShellState.Stale:
             case ShellState.Unreadable:
+            default:
                 _begun = true;   // Sindri answered once (stale, unreadable, another version): a later outage is not the app's to start
                 break;
         }
