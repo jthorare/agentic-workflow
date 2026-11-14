@@ -157,6 +157,20 @@ public sealed class CheckMergeTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Main_moved_with_a_merge_queue_still_refuses_when_the_head_conflicts_with_main()
+    {
+        await _world.ReadyWithGate();
+        await SaveTreeGate("oldmain", "tree1");
+        Script(main: "newmain", queue: QueueAnswers.OnNotQueued);
+        _ = _world.Runner.When("merge-tree --write-tree newmain headsha", "tree2\n", 1);   // exit 1: a conflict
+
+        var response = await Check();
+
+        Assert.Equal(["main"], Failed(response));
+        Assert.Contains("conflicts", response.Checks.Single(c => c.Name == "main").Detail, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Main_moved_still_refuses_without_a_merge_queue()
     {
         await _world.ReadyWithGate();

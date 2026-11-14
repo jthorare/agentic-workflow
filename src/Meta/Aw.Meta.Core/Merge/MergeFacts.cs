@@ -39,6 +39,9 @@ public sealed record MergeFacts
     /// <summary>Whether the pull request's base branch has a GitHub merge queue, which re-tests the merged tree itself; read only when main moved past the gate.</summary>
     public bool BaseHasMergeQueue { get; init; }
 
+    /// <summary>Whether merging the gated head onto the current main conflicts; read only with a merge queue on the base branch, where a conflict still refuses (the queue would drop it).</summary>
+    public bool MergeConflicts { get; init; }
+
     /// <summary>Whether the pull request is a draft.</summary>
     public bool IsDraft { get; init; }
 

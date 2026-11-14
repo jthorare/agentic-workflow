@@ -2811,3 +2811,5 @@ static readonly Aw.Meta.Core.MetaErrors.StackExtensionMissing -> Aw.Kernel.Error
 const Aw.Meta.Core.Github.GhExtensions.StackInstall = "gh extension install github/gh-stack" -> string!
 static Aw.Meta.Core.Github.GhExtensions.HasStack(string! list) -> bool
 Aw.Meta.Core.Github.GhExtensions
+Aw.Meta.Core.Merge.MergeFacts.MergeConflicts.get -> bool
+Aw.Meta.Core.Merge.MergeFacts.MergeConflicts.init -> void
