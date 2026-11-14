@@ -50,7 +50,7 @@ internal static class GraphAnswer
         candidates.AddRange(own.Select(o => Fact(nodes[o.Key.Value], graph, text, o.Key.Value == o.Anchor.Value ? "anchor" : "own-scope of " + o.Anchor.Value)));
         candidates.AddRange(affected.Values.OrderBy(a => a.Depth).ThenBy(a => a.Node.Value, StringComparer.Ordinal).Select(a => Affects(a, nodes, text)));
         candidates.AddRange(Decisions(graph, reached, text));
-        candidates.AddRange(Code(graph, reached, text));
+        candidates.AddRange(Code(graph, reached, text, Depths(own, affected)));
         var cites = new Dictionary<string, Citation>(StringComparer.Ordinal);
         if (candidates.Count > 0)
         {
@@ -142,7 +142,7 @@ internal static class GraphAnswer
                 return new PackCandidate("decisions", item with { Tokens = TokenEstimate.Of(item.Title) + TokenEstimate.Of(item.Text) }, MapMarker);
             });
 
-    private static IEnumerable<PackCandidate> Code(GraphSnapshot graph, HashSet<string> reached, MapText text) =>
+    private static IEnumerable<PackCandidate> Code(GraphSnapshot graph, HashSet<string> reached, MapText text, Dictionary<string, int> depths) =>
         graph.Edges.Where(e => e.Type is EdgeType.Implements or EdgeType.Tags && reached.Contains(e.To.Value))
             .GroupBy(e => e.From.Value, StringComparer.Ordinal).OrderBy(g => g.Key, StringComparer.Ordinal)
             .Select(g =>
@@ -153,7 +153,7 @@ internal static class GraphAnswer
                 var targets = g.Select(e => e.To.Value).Order(StringComparer.Ordinal).ToList();
                 var item = new ResultItem("code", g.Key, text.Line(g.Key["code:".Length..]), text.Line("implements " + string.Join(", ", targets)), Score: null,
                     [.. targets.Select(t => "implements→" + t)], provenance, confirmed, trust, [MapMarker]);
-                return new PackCandidate("code", item with { Tokens = TokenEstimate.Of(item.Title) + TokenEstimate.Of(item.Text) }, MapMarker);
+                return new PackCandidate("code", item with { Depth = targets.Min(t => depths.GetValueOrDefault(t, 3)), Tokens = TokenEstimate.Of(item.Title) + TokenEstimate.Of(item.Text) }, MapMarker);
             });
 
     private static ResultItem Item(NodeFact fact, string? text, (Provenance Provenance, bool Confirmed, Trust Trust) facts, string why)

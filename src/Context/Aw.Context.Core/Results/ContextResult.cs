@@ -52,4 +52,12 @@ public sealed record ContextResult(
     /// <summary>The <see cref="SuggestedAnchors"/> with each node's label and kind, in the same order (#2809); left out when none.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<AnchorChoice>? Suggestions { get; init; }
+
+    /// <summary>How many code files matched before paging (#3673); left out when the answer has no code section.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? CodeMatched { get; init; }
+
+    /// <summary>The cursor ('after') of the next page of ranked files (#3673), or null on the last page.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? NextCursor { get; init; }
 }
