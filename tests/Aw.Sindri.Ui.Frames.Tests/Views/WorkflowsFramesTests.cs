@@ -367,4 +367,27 @@ public sealed class WorkflowsFramesTests : FrameHost
             Assert.Equal(chips[i].Tone, nodes[i].ChipToneWord);
         }
     });
+
+    // #3233: the issue's own complaint, "a run can't show Running or Waiting". A running run reads "running" and a waiting run "waiting", not ok and attention.
+    [Fact]
+    public Task A_running_and_a_waiting_run_show_their_own_tones() => OnUi(async () =>
+    {
+        var (window, shell) = await OnWorkflows(1440);
+        const string body = "{\"slug\":\"morning-check\",\"more\":false,\"runs\":["
+            + "{\"id\":\"morning-check@1:5\",\"revision\":1,\"status\":\"waiting\",\"trigger\":\"manual\",\"startedAt\":\"2026-01-01T00:05:00.0000000Z\",\"endedAt\":null,\"error\":null},"
+            + "{\"id\":\"morning-check@1:4\",\"revision\":1,\"status\":\"running\",\"trigger\":\"manual\",\"startedAt\":\"2026-01-01T00:04:00.0000000Z\",\"endedAt\":null,\"error\":null}]}";
+        Server.WorkflowRunsAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, body);
+        Server.WorkflowRunAnswers[RunId] = RouteAnswer.Api("workflow-runs-run", "running");
+
+        await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
+        await Until(window, () => shell.Workflows.Runs.Rows.Count == 2, "the two runs never showed");
+        var rows = window.GetVisualDescendants().OfType<StateChipView>().Where(c => c.IsEffectivelyVisible).ToList();
+        Assert.Equal("waiting running", string.Join(' ', rows.Select(c => c.Tone)));
+        Assert.All(rows, c => Assert.Contains("status-" + c.Tone, c.Classes, StringComparer.Ordinal));
+
+        await shell.Workflows.OpenRun(RunId, CancellationToken.None);
+        await Until(window, () => shell.Workflows.Run.Groups.Count > 0, "the run never showed");
+        var header = Assert.IsType<StateChipView>(Named<Control>(window, "RunChipName"));
+        Assert.Equal("running", header.Tone);
+    });
 }
