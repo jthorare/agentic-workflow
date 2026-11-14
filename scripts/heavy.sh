@@ -108,8 +108,8 @@ write_wait() {
   { printf '{"pid":%s,"session":%s,"lock":"%s","since":"%s","argv":[%s],"cwd":%s}\n' \
       "$$" "$session" "$label" "$WAIT_SINCE" "$argv" "$(json_str "$PWD")" > "$WAITFILE.tmp.$$" && mv -f "$WAITFILE.tmp.$$" "$WAITFILE"; } 2>/dev/null || true
 }
-HELD=()
-release() { rm_wait; rm -f "$WAITFILE.tmp.$$" 2>/dev/null; local d; for d in "${HELD[@]+"${HELD[@]}"}"; do unlink "$d/owner" 2>/dev/null; rmdir "$d" 2>/dev/null || true; done; }
+HELD=(); reason=""
+release() { [ -z "$reason" ] || rm -f "$reason" 2>/dev/null; rm_wait; rm -f "$WAITFILE.tmp.$$" 2>/dev/null; local d; for d in "${HELD[@]+"${HELD[@]}"}"; do unlink "$d/owner" 2>/dev/null; rmdir "$d" 2>/dev/null || true; done; }
 trap release EXIT
 job=""; dog=""
 # signal_job <SIG>: the job's process group, or its pid while the group doesn't exist yet (setsid or perl hasn't made it, #2799).
