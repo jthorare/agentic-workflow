@@ -42,4 +42,8 @@ public sealed record HealthResponse(
     /// <summary>The warning when systemd's DefaultOOMPolicy is known and is not continue (issue #2931); null otherwise. Never raises attention.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? OomPolicy { get; init; }
+
+    /// <summary>The warning when the installed heavy or meta-gate-reserve differs from the toolkit checkout's (issue #3698); null otherwise. Never raises attention.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? StaleScripts { get; init; }
 }

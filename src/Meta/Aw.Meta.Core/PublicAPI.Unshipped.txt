@@ -872,7 +872,7 @@ Aw.Meta.Core.Messages.TranscriptRecordParser
 Aw.Meta.Core.MetaErrors
 Aw.Meta.Core.MetaPaths
 Aw.Meta.Core.MetaPaths.<Clone>$() -> Aw.Meta.Core.MetaPaths!
-Aw.Meta.Core.MetaPaths.Deconstruct(out string! StateDirectory, out string! GatesDirectory, out string? Heavy, out string! Gh, out string! Home, out string! UserConfig) -> void
+Aw.Meta.Core.MetaPaths.Deconstruct(out string! StateDirectory, out string! GatesDirectory, out string? Heavy, out string! Gh, out string! Home, out string! UserConfig, out string? Reserve, out string? Toolkit) -> void
 Aw.Meta.Core.MetaPaths.Equals(Aw.Meta.Core.MetaPaths? other) -> bool
 Aw.Meta.Core.MetaPaths.GateDirectory(int pr) -> string!
 Aw.Meta.Core.MetaPaths.GatesDirectory.get -> string!
@@ -883,11 +883,15 @@ Aw.Meta.Core.MetaPaths.Heavy.get -> string?
 Aw.Meta.Core.MetaPaths.Heavy.init -> void
 Aw.Meta.Core.MetaPaths.Home.get -> string!
 Aw.Meta.Core.MetaPaths.Home.init -> void
-Aw.Meta.Core.MetaPaths.MetaPaths(string! StateDirectory, string! GatesDirectory, string? Heavy, string! Gh, string! Home = "", string! UserConfig = "") -> void
+Aw.Meta.Core.MetaPaths.MetaPaths(string! StateDirectory, string! GatesDirectory, string? Heavy, string! Gh, string! Home = "", string! UserConfig = "", string? Reserve = null, string? Toolkit = null) -> void
 Aw.Meta.Core.MetaPaths.StateDirectory.get -> string!
 Aw.Meta.Core.MetaPaths.UserConfig.get -> string!
 Aw.Meta.Core.MetaPaths.UserConfig.init -> void
 Aw.Meta.Core.MetaPaths.StateDirectory.init -> void
+Aw.Meta.Core.MetaPaths.Reserve.get -> string?
+Aw.Meta.Core.MetaPaths.Reserve.init -> void
+Aw.Meta.Core.MetaPaths.Toolkit.get -> string?
+Aw.Meta.Core.MetaPaths.Toolkit.init -> void
 Aw.Meta.Core.Obligations.MergeRecord
 Aw.Meta.Core.Obligations.MergeRecord.<Clone>$() -> Aw.Meta.Core.Obligations.MergeRecord!
 Aw.Meta.Core.Obligations.MergeRecord.At.get -> System.DateTimeOffset
