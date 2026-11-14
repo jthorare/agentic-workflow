@@ -14,16 +14,26 @@ internal sealed class SessionQuestions(PaneCaptures captures, IProcessTable proc
     /// <param name="session">The session.</param>
     /// <param name="cancellationToken">Cancels the wait.</param>
     /// <returns>The text, or null.</returns>
-    internal ValueTask<string?> Of(ObservedSession session, CancellationToken cancellationToken)
+    internal async ValueTask<string?> Of(ObservedSession session, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(session);
-        if (session.State != SessionState.Asking || session.Host is not { Kind: "tmux", Tmux: { Socket: not null, Pane: not null } })
+        if (session.State != SessionState.Asking || session.Host is not { Kind: "tmux", Tmux: { Socket: { } socket, Pane: { } pane } })
         {
-            return ValueTask.FromResult<string?>(null);
+            return null;
         }
 
-        _ = captures;
-        _ = processes;
-        throw new NotSupportedException();
+        var read = await captures.Share(socket, pane).WaitAsync(cancellationToken).ConfigureAwait(false);
+        if (read.Kind != PaneReadKind.Captured || !InPane(session, read.PanePid, cancellationToken))
+        {
+            return null;   // timed out, gone or another process's pane: no question, never an error
+        }
+
+        return PaneQuestion.Of(PreviewRules.Of(read.Capture.Span).Lines);
+    }
+
+    private bool InPane(ObservedSession session, int panePid, CancellationToken cancellationToken)
+    {
+        var table = processes.Read(cancellationToken);
+        return table.IsSuccess && PreviewRules.InPane(session.Pid, session.StartTicks, panePid, table.Value);
     }
 }

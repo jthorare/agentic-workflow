@@ -98,6 +98,7 @@ public static class EventCatalog
         new(EventTypes.ServiceResumed, Public: true, typeof(ServiceResumed), "service.resumed:<name>:<commandId>") { Invalidates = [ApiViews.Services, ApiViews.Status] },
         new(EventTypes.ProfileChecked, Public: true, typeof(ProfileChecked), "profile.checked:<previousCheckSequence>") { Invalidates = [ApiViews.Status, ApiViews.Profile, ApiViews.NeedsYou] },
         new(EventTypes.FleetChanged, Public: true, typeof(FleetChanged), "fleet.changed:<provider>:<id>:<change>:<observedAtMs>") { Invalidates = [ApiViews.Status] },
+        new(EventTypes.SessionChanged, Public: true, typeof(SessionChanged), "session.changed:<provider>:<id>:<state>:<observedAtMs>") { Invalidates = [ApiViews.Status] },
         new(EventTypes.ItemOpenRequested, Public: true, typeof(ItemOpenRequested), "item.open-requested:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.Item, ApiViews.Items, ApiViews.Timeline] },
         new(EventTypes.LaunchStarted, Public: true, typeof(LaunchStartedPublic), "launch.outcome:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.LaunchPicks, ApiViews.Item, ApiViews.Items, ApiViews.Timeline, ApiViews.NeedsYou] },
         new(EventTypes.LaunchWaiting, Public: true, typeof(LaunchWaiting), "launch.waiting:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.Item] },

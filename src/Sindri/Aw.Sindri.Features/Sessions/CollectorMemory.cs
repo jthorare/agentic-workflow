@@ -20,6 +20,9 @@ internal sealed class CollectorMemory
     /// <summary>Changes found but not yet appended to the ledger, oldest first: an append that fails leaves them here for the next pass. Past <see cref="PendingCap"/> the oldest are dropped, which can orphan a 'gone' whose 'appeared' went first.</summary>
     internal IReadOnlyList<FleetChange> Pending { get; set; } = [];
 
+    /// <summary>State changes found but not yet appended as 'session.changed', oldest first (the same wait as <see cref="Pending"/>).</summary>
+    internal IReadOnlyList<SessionStateChange> PendingStates { get; set; } = [];
+
     internal bool Restored { get; set; }
 
     internal IReadOnlyDictionary<SessionRef, ObservedSession> Previous { get; set; } = new Dictionary<SessionRef, ObservedSession>();

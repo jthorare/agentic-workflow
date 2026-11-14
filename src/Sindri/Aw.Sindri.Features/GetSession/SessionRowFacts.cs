@@ -12,14 +12,22 @@ namespace Aw.Sindri.Features.GetSession;
 /// <param name="started">The starts of this process, by act id.</param>
 internal sealed class SessionRowFacts(IBranchReader branches, IStartedSessions started)
 {
+    private const string Prefix = "sindri-";
+
     /// <summary>The row with its branch and title set.</summary>
     /// <param name="row">The row.</param>
     /// <param name="session">The session it came from.</param>
     /// <returns>The row.</returns>
     internal SessionRow With(SessionRow row, ObservedSession session)
     {
-        _ = branches;
-        _ = started;
-        return row;
+        ArgumentNullException.ThrowIfNull(row);
+        ArgumentNullException.ThrowIfNull(session);
+        return row with { Branch = session.Cwd is { Length: > 0 } cwd ? branches.Branch(cwd) : null, Title = row.Title ?? StartedTitle(session) };
     }
+
+    /// <summary>The tmux session of a start is 'sindri-&lt;actId&gt;'; the entry this process kept for that act id holds the title.</summary>
+    private string? StartedTitle(ObservedSession session) =>
+        session.Host.Tmux?.Session is { } name && name.StartsWith(Prefix, StringComparison.Ordinal) && ActId.TryFrom(name[Prefix.Length..], out var act)
+            ? started.InMemory(act)?.Title
+            : null;
 }

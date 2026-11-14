@@ -20,14 +20,14 @@ internal sealed partial class CollectSessionsService(SessionDiscovery discovery,
         {
             memory.History = new Dictionary<SessionRef, IReadOnlyList<SessionStateEntry>>();
             Publish([], [], [SessionProblems.Disabled], now);
-            return new CollectSessionsResponse(memory.Pending, Good: false, Sessions: 0, Pruned: 0);
+            return new CollectSessionsResponse(memory.Pending, Good: false, Sessions: 0, Pruned: 0) { StateChanges = memory.PendingStates };
         }
 
         var found = await Discover(request.Budget, cancellationToken).ConfigureAwait(false);
         if (found is null || !found.Good)
         {
             KeepPrevious([.. found?.Problems ?? [SessionProblems.Overrun]], now);
-            return new CollectSessionsResponse(memory.Pending, Good: false, Sessions: 0, Pruned: 0) { Overran = found is null };
+            return new CollectSessionsResponse(memory.Pending, Good: false, Sessions: 0, Pruned: 0) { Overran = found is null, StateChanges = memory.PendingStates };
         }
 
         var sessions = Observe(found.Candidates, now);
@@ -35,13 +35,14 @@ internal sealed partial class CollectSessionsService(SessionDiscovery discovery,
         var diff = FleetChangeRules.Diff(memory.Tracker, sessions, now, goodPass: true);
         var ended = memory.Ending(sessions, now);
         memory.Tracker = diff.State;
+        memory.PendingStates = CappedStates([.. memory.PendingStates, .. SessionStateChanges.Diff(memory.Previous, sessions, now)]);
         memory.Pending = Capped([.. memory.Pending, .. diff.Changes]);   // kept until the ledger has them (RecordFleetChangesService clears what it appended)
         LogHostChanges(sessions);
         memory.Previous = sessions.ToDictionary(static s => s.Ref);
         memory.Ended = ended;
         memory.History = StateHistoryRules.Next(memory.History, sessions);
         Publish(sessions, ended, found.Problems, now);
-        return new CollectSessionsResponse(memory.Pending, Good: true, sessions.Count, discovery.Prune([.. sessions.Select(static s => s.Ref)], now));
+        return new CollectSessionsResponse(memory.Pending, Good: true, sessions.Count, discovery.Prune([.. sessions.Select(static s => s.Ref)], now)) { StateChanges = memory.PendingStates };
     }
 
     /// <summary>A ledger that stays unwritable can't grow the queue without bound: past the cap the oldest changes are dropped, and the first drop is logged.</summary>
@@ -61,6 +62,9 @@ internal sealed partial class CollectSessionsService(SessionDiscovery discovery,
 
         return pending[^CollectorMemory.PendingCap..];
     }
+
+    /// <summary>The state changes wait the same way and are capped the same way as the fleet changes; the oldest go first.</summary>
+    private static List<SessionStateChange> CappedStates(List<SessionStateChange> pending) => pending.Count <= CollectorMemory.PendingCap ? pending : pending[^CollectorMemory.PendingCap..];
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "The session collector holds {Cap} fleet changes the ledger hasn't taken; the oldest are dropped from here on")]
     private static partial void LogOverflow(ILogger logger, int cap);

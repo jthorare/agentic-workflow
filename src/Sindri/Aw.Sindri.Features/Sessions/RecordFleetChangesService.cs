@@ -33,6 +33,22 @@ internal sealed class RecordFleetChangesService(ILedgerStore ledger, EventFactor
         }
 
         memory.Pending = [.. memory.Pending.Skip(done)];   // the loop is the only writer, so what it passed in is the head of the queue
+        var states = 0;
+        foreach (var change in request.StateChanges)
+        {
+            var key = string.Create(CultureInfo.InvariantCulture, $"{EventTypes.SessionChanged}:{change.Ref.Provider.Value}:{change.Ref.Id.Value}:{change.State.ToString().ToLowerInvariant()}:{change.ObservedAt.ToUnixTimeMilliseconds()}");
+            var appended = await ledger.Append(events.Entry(EventTypes.SessionChanged, new SessionChanged(change.Ref.Provider, change.Ref.Id, change.State), key), request.Grant, cancellationToken).ConfigureAwait(false);
+            if (appended.IsError)
+            {
+                memory.PendingStates = [.. memory.PendingStates.Skip(states)];
+                return appended.Error;
+            }
+
+            states++;
+            recorded += appended.Value.AlreadyRecorded ? 0 : 1;
+        }
+
+        memory.PendingStates = [.. memory.PendingStates.Skip(states)];
         return new RecordFleetChangesResponse(recorded);
     }
 

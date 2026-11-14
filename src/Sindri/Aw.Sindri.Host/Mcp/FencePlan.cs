@@ -66,6 +66,12 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
     /// <summary>GET /sindri/projects/linear for a session: each row's Linear name and lead's name.</summary>
     internal static FencePlan LinearProjects { get; } = new("sindri:project", [new("projects[].name"), new("projects[].lead")]);
 
+    /// <summary>GET /sindri/sessions for a session: each row's pane question (the last 3 lines of an asking session's tmux pane) and title (the agent's, or the first line of a start prompt).</summary>
+    internal static FencePlan Sessions { get; } = new("sindri:session", [new("sessions[].question"), new("sessions[].title"), new("recentlyEnded[].session.question"), new("recentlyEnded[].session.title")]);
+
+    /// <summary>GET /sindri/sessions/{provider}/{id} for a session: the row's pane question and title.</summary>
+    internal static FencePlan OneSession { get; } = new("sindri:session", [new("session.question"), new("session.title")]);
+
     /// <summary>GET /sindri/reviews for a session: each PR's forge-sourced title and author, and each unreadable library folder with its reason.</summary>
     internal static FencePlan Reviews { get; } = new("sindri:review",
     [

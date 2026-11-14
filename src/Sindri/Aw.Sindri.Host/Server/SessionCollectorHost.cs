@@ -98,7 +98,7 @@ internal sealed partial class SessionCollectorHost(
         }
 
         var recorded = await services.GetRequiredService<IService<RecordFleetChangesRequest, RecordFleetChangesResponse>>()
-            .Handle(new RecordFleetChangesRequest(grant, pass.Value.Changes), ct).ConfigureAwait(false);
+            .Handle(new RecordFleetChangesRequest(grant, pass.Value.Changes) { StateChanges = pass.Value.StateChanges }, ct).ConfigureAwait(false);
         Report(recorded.IsError ? recorded.Error : null);
     }
 

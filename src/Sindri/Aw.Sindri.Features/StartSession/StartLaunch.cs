@@ -51,7 +51,7 @@ internal sealed class StartLaunch(IOneOffWorktrees worktrees, ISessionHost host,
             return SindriErrors.AgentStartFailed.With("tmux started the session but did not return its pane");
         }
 
-        return new StartedEntry(pane, made.Value?.Path);
+        return new StartedEntry(pane, made.Value?.Path) { Title = StartTitle.Of(request.Prompt) };
     }
 
     private async ValueTask<Result<OneOffWorktree?>> Worktree(StartSessionRequest request, string repoPath, CancellationToken cancellationToken)

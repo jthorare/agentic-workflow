@@ -8,5 +8,33 @@ internal static class StartTitle
     /// <summary>The title of <paramref name="prompt"/>, or null when it has no text.</summary>
     /// <param name="prompt">The start prompt.</param>
     /// <returns>The title, or null.</returns>
-    internal static string? Of(string? prompt) => throw new NotSupportedException();
+    internal static string? Of(string? prompt)
+    {
+        if (prompt is null)
+        {
+            return null;
+        }
+
+        foreach (var raw in prompt.Split('\n'))
+        {
+            var line = raw.Trim();
+            if (line.Length > 0)
+            {
+                return Cut(line);
+            }
+        }
+
+        return null;
+    }
+
+    private static string Cut(string line)
+    {
+        if (line.Length <= MaxLength)
+        {
+            return line;
+        }
+
+        var length = char.IsHighSurrogate(line[MaxLength - 1]) && char.IsLowSurrogate(line[MaxLength]) ? MaxLength - 1 : MaxLength;
+        return line[..length];
+    }
 }

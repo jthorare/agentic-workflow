@@ -8,6 +8,12 @@ public static class SessionStateChanges
     /// <param name="now">This pass's sessions.</param>
     /// <param name="at">The time of the pass.</param>
     /// <returns>The changes, by ref.</returns>
-    public static IReadOnlyList<SessionStateChange> Diff(IReadOnlyDictionary<SessionRef, ObservedSession> previous, IReadOnlyList<ObservedSession> now, DateTimeOffset at) =>
-        throw new NotSupportedException();
+    public static IReadOnlyList<SessionStateChange> Diff(IReadOnlyDictionary<SessionRef, ObservedSession> previous, IReadOnlyList<ObservedSession> now, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(previous);
+        ArgumentNullException.ThrowIfNull(now);
+        return [.. now.Where(s => previous.TryGetValue(s.Ref, out var before) && before.State != s.State)
+            .OrderBy(static s => s.Ref.ToString(), StringComparer.Ordinal)
+            .Select(s => new SessionStateChange(s.Ref, s.State, at))];
+    }
 }

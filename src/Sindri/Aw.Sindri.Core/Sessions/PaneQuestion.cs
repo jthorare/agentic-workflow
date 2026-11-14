@@ -9,5 +9,10 @@ public static class PaneQuestion
     /// <summary>The last <see cref="MaxLines"/> non-empty lines, joined with a line feed; null when there are none.</summary>
     /// <param name="lines">The pane's lines, already stripped of escapes and control characters.</param>
     /// <returns>The question text, or null.</returns>
-    public static string? Of(IReadOnlyList<string> lines) => throw new NotSupportedException();
+    public static string? Of(IReadOnlyList<string> lines)
+    {
+        ArgumentNullException.ThrowIfNull(lines);
+        var kept = lines.Where(static l => !string.IsNullOrWhiteSpace(l)).TakeLast(MaxLines).ToList();
+        return kept.Count == 0 ? null : string.Join('\n', kept);
+    }
 }

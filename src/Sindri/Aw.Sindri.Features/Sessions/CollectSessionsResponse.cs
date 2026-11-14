@@ -13,5 +13,5 @@ public sealed record CollectSessionsResponse(IReadOnlyList<FleetChange> Changes,
     public bool Overran { get; init; }
 
     /// <summary>The state changes worth a 'session.changed' row, oldest first.</summary>
-    public IReadOnlyList<SessionStateChange> StateChanges { get => throw new NotSupportedException(); init { } }
+    public IReadOnlyList<SessionStateChange> StateChanges { get; init; } = [];
 }

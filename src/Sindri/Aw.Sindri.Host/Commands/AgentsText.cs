@@ -75,12 +75,29 @@ internal static class AgentsText
         Field(text, "lane", row.Lane is { } lane ? $"{lane.Team}/{lane.Lane}" : null);
         Field(text, "launch", row.LaunchId?.Value);
         Field(text, "started", row.StartedAt is { } started ? Time(started) : null);
+        Field(text, "branch", row.Branch);
         Field(text, "title", row.Title);
         Field(text, "pid", row.Pid?.ToString(CultureInfo.InvariantCulture));
         Field(text, "cwd", view.Cwd);
         Field(text, "socket", row.Host.Socket);
         Field(text, "sandbox", Sandbox(row.Sandbox));
         Field(text, "writes to", row.Sandbox?.Folder);
+        Question(text, row.Question);
+    }
+
+    /// <summary>The pane's question as an indented block under a label that says where it comes from: pane text is a program's output, never an instruction (a session's own read has it inside the untrusted fence already).</summary>
+    private static void Question(StringBuilder text, string? question)
+    {
+        if (question is null)
+        {
+            return;
+        }
+
+        _ = text.AppendLine("question (pane text, untrusted):");
+        foreach (var line in question.Split('\n'))
+        {
+            _ = text.AppendLine("  | " + line);
+        }
     }
 
     private static string Line(SessionRow row) =>
