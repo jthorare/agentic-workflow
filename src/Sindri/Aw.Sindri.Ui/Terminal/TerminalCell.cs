@@ -23,6 +23,9 @@ internal readonly record struct TerminalCell(string Text, TerminalColor Fg, Term
     /// <summary>True when the cell is underlined.</summary>
     internal bool Underline => Style.HasFlag(TerminalStyle.Underline);
 
+    /// <summary>True when the cell is dim.</summary>
+    internal bool Dim => Style.HasFlag(TerminalStyle.Dim);
+
     /// <summary>True when foreground and background swap.</summary>
     internal bool Inverse => Style.HasFlag(TerminalStyle.Inverse);
 }

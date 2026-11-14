@@ -110,4 +110,24 @@ public sealed class TerminalFixtureTests
 
         Assert.Equal((a.CursorX + 1, a.CursorY), (b.CursorX, b.CursorY));
     }
+
+    [Fact]
+    public void The_input_placeholder_Try_is_dim()
+    {
+        var grid = Frames().Single(f => f.Seq == 5).Grid;
+        var found = false;
+        for (var r = 0; r < grid.Rows && !found; r++)
+        {
+            for (var c = 0; c + 2 < grid.Width && !found; c++)
+            {
+                if (grid.Cell(r, c).Text == "T" && grid.Cell(r, c + 1).Text == "r" && grid.Cell(r, c + 2).Text == "y")
+                {
+                    found = true;
+                    Assert.True(grid.Cell(r, c).Dim);
+                }
+            }
+        }
+
+        Assert.True(found, "no 'Try' in frame 5");
+    }
 }
