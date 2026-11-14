@@ -33,6 +33,9 @@ internal static partial class WorkflowTools
     /// <summary>workflow_run's name.</summary>
     internal const string Run = "workflow_run";
 
+    /// <summary>workflow_rerun's name.</summary>
+    internal const string Rerun = "workflow_rerun";
+
     /// <summary>workflow_cancel's name.</summary>
     internal const string Cancel = "workflow_cancel";
 
@@ -140,6 +143,19 @@ internal static partial class WorkflowTools
         Annotations = Write(),
     };
 
+    private static Tool RerunTool { get; } = new()
+    {
+        Name = Rerun,
+        Description = "Re-run an ended run from one step: a new run of that run's revision. The steps before 'from' keep their stored output, 'from' and the steps after it run again. Refused while the run is in flight (SND-GRAPH-125), when an earlier step did not succeed (SND-GRAPH-126), or for a step inside a for_each body (re-run from the for_each step). Answers started, queued or skipped like workflow_run.",
+        InputSchema = ContextTools.Schema(new JsonObject
+        {
+            ["run"] = ContextTools.Property("string", "The ended run to start from, '<slug>@<revision>:<occurrence>'"),
+            ["from"] = ContextTools.Property("string", "The node id of the step to run first again"),
+            ["input"] = ContextTools.Property("object", "A JSON object that replaces the step's stored input (the engine does not read it yet)"),
+        }, required: ["run", "from"]),
+        Annotations = Write(),
+    };
+
     private static Tool CancelTool { get; } = new()
     {
         Name = Cancel,
@@ -168,6 +184,6 @@ internal static partial class WorkflowTools
         Annotations = new ToolAnnotations { ReadOnlyHint = true, OpenWorldHint = false },
     };
 
-    /// <summary>The eleven tools.</summary>
-    internal static IReadOnlyList<Tool> All { get; } = [CreateTool, ApplyOpsTool, ReplaceTool, ValidateTool, ActivateTool, PauseTool, DeleteTool, RunTool, CancelTool, DocsTool, BlocksTool];
+    /// <summary>The twelve tools.</summary>
+    internal static IReadOnlyList<Tool> All { get; } = [CreateTool, ApplyOpsTool, ReplaceTool, ValidateTool, ActivateTool, PauseTool, DeleteTool, RunTool, RerunTool, CancelTool, DocsTool, BlocksTool];
 }

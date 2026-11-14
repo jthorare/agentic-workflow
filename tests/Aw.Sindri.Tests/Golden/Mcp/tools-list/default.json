@@ -1414,6 +1414,38 @@
     }
   },
   {
+    "name": "workflow_rerun",
+    "description": "Re-run an ended run from one step: a new run of that run's revision. The steps before 'from' keep their stored output, 'from' and the steps after it run again. Refused while the run is in flight (SND-GRAPH-125), when an earlier step did not succeed (SND-GRAPH-126), or for a step inside a for_each body (re-run from the for_each step). Answers started, queued or skipped like workflow_run.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "run": {
+          "type": "string",
+          "description": "The ended run to start from, '<slug>@<revision>:<occurrence>'"
+        },
+        "from": {
+          "type": "string",
+          "description": "The node id of the step to run first again"
+        },
+        "input": {
+          "type": "object",
+          "description": "A JSON object that replaces the step's stored input (the engine does not read it yet)"
+        }
+      },
+      "required": [
+        "run",
+        "from"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
     "name": "workflow_cancel",
     "description": "Ask a run in flight to stop. A run that already ended is refused.",
     "inputSchema": {
