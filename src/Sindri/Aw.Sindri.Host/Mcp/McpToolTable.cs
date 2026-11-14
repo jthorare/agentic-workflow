@@ -86,7 +86,7 @@ internal static class McpToolTable
             SindriTools.Todo => SindriTools.CallTodo(services, call.Arguments, cancellationToken),
             ConnectionTools.List or ConnectionTools.Get or ConnectionTools.Add or ConnectionTools.SignIn or ConnectionTools.Test or ConnectionTools.Remove => ConnectionTools.Call(call.Name, services, call.Arguments, cancellationToken),
             WorkflowAnswerTool.Name => WorkflowAnswerTool.Call(services, call.Arguments, cancellationToken),
-            WorkflowTools.Create or WorkflowTools.ApplyOps or WorkflowTools.Replace or WorkflowTools.Validate or WorkflowTools.Activate or WorkflowTools.Pause or WorkflowTools.Delete or WorkflowTools.Run or WorkflowTools.Cancel or WorkflowTools.Docs or WorkflowTools.Blocks
+            WorkflowTools.Create or WorkflowTools.ApplyOps or WorkflowTools.Replace or WorkflowTools.Validate or WorkflowTools.Activate or WorkflowTools.Pause or WorkflowTools.Delete or WorkflowTools.Run or WorkflowTools.Rerun or WorkflowTools.Cancel or WorkflowTools.Docs or WorkflowTools.Blocks
                 => WorkflowTools.Call(call.Name, services, call.Arguments, cancellationToken),
             WorkflowReadTools.List or WorkflowReadTools.Get or WorkflowReadTools.Runs or WorkflowReadTools.RunGet => WorkflowReadTools.Call(call.Name, services, call.Arguments, cancellationToken),
             ToolkitTools.List or ToolkitTools.Create or ToolkitTools.Build or ToolkitTools.Start or ToolkitTools.Stop or ToolkitTools.Pause or ToolkitTools.Resume or ToolkitTools.Calls => ToolkitTools.CallManagement(call.Name, services, call.Arguments, cancellationToken),
