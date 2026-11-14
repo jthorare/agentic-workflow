@@ -138,7 +138,7 @@ public sealed class PaneSubmitter(ILanePane pane, IDelay delay)
         return lines.Length == 0 ? "(empty)" : string.Join(" | ", lines[^Math.Min(LastLineCount, lines.Length)..]);
     }
 
-    /// <summary>Whether the input box (from the last line starting with the prompt mark to the next rule) still holds the start of the line. A pane with no prompt reads as submitted.</summary>
+    /// <summary>Whether the input box (the framed prompt row, down to the next rule) still holds the start of the line. A pane with no prompt reads as submitted.</summary>
     /// <param name="capture">The captured pane text.</param>
     /// <param name="line">The line that was typed.</param>
     /// <returns>True when the text is still being typed.</returns>
@@ -155,11 +155,21 @@ public sealed class PaneSubmitter(ILanePane pane, IDelay delay)
         return Squeeze(box).Contains(probe[..Math.Min(ProbeLength, probe.Length)], StringComparison.Ordinal);
     }
 
-    // The input box's text: from the last line starting with the prompt mark to the next rule, without the mark. Null when no line starts with it.
+    // The input box's text: from the last prompt-mark line right under a rule (the box's frame; else the last prompt-mark line) to the next rule, without the mark. Null when no line starts with it.
     private static string? InputBox(string capture)
     {
         var lines = capture.Split('\n');
+        // The box is framed: a rule above its prompt row and a rule below. An agent list under the box has a selector row starting with the mark too, with no rule above it.
         var start = Array.FindLastIndex(lines, static l => l.StartsWith('❯'));
+        for (var i = lines.Length - 1; i > 0; i--)
+        {
+            if (lines[i].StartsWith('❯') && lines[i - 1].StartsWith('─'))
+            {
+                start = i;
+                break;
+            }
+        }
+
         if (start < 0)
         {
             return null;
