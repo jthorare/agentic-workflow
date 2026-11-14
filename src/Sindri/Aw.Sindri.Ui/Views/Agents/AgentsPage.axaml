@@ -26,15 +26,14 @@
       </StackPanel>
 
       <!-- One polite region: "N agents · M asking", said when those counts change and never on a read that changes nothing. -->
-    <TextBlock x:Name="AgentsCountsAnnouncement" Grid.Column="1" Classes="caption live-region" Classes.live="{Binding Voice.IsAnnouncing}" Width="0" Opacity="0"
-               IsHitTestVisible="False" Text="{Binding Voice.Announcement}" />
+      <TextBlock x:Name="AgentsCountsAnnouncement" Grid.Column="1" Classes="caption live-region" Classes.live="{Binding Voice.IsAnnouncing}" Width="0" Opacity="0"
+                 IsHitTestVisible="False" Text="{Binding Voice.Announcement}" />
     </Grid>
 
     <StackPanel x:Name="AgentsStale" Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsStale}">
       <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
       <TextBlock x:Name="AgentsStaleText" Classes="caption attention" Text="{Binding StaleText}" VerticalAlignment="Center" />
     </StackPanel>
-
 
     <ItemsControl x:Name="AgentsProblems" ItemsSource="{Binding ProblemLines}" IsVisible="{Binding HasProblems}">
       <ItemsControl.ItemTemplate>
