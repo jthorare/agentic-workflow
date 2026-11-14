@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -186,6 +187,23 @@ public sealed class ListPickerTests
         Assert.Contains("subtle", reason.Classes, StringComparer.Ordinal);
         Assert.Equal(Token("Brush.InkSubtle"), Assert.IsType<ISolidColorBrush>(reason.Foreground, exactMatch: false).Color);
         Assert.DoesNotContain(Tiles(picker).Where(t => !ReferenceEquals(t, off)), t => t.GetVisualDescendants().OfType<TextBlock>().Any(b => b.IsEffectivelyVisible && b.Text == "Needs a connection"));
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task A_disabled_row_reads_as_label_unavailable_and_its_reason() => await OnUi(() =>
+    {
+        var (window, picker) = Show();
+        var off = Tiles(picker).Single(t => (string?)t.Content == "When a webhook arrives");
+        var on = Tiles(picker).Single(t => (string?)t.Content == "Run code");
+        var peer = ControlAutomationPeer.CreatePeerForElement(off);
+
+        Assert.Equal("When a webhook arrives", peer.GetName());
+        Assert.False(peer.IsEnabled());
+        Assert.Equal("Needs a connection", peer.GetHelpText());
+        Assert.True(ControlAutomationPeer.CreatePeerForElement(on).IsEnabled());
+        Assert.True(string.IsNullOrEmpty(ControlAutomationPeer.CreatePeerForElement(on).GetHelpText()));
         window.Close();
         return true;
     });

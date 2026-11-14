@@ -198,6 +198,7 @@ internal sealed class ListPicker : UserControl
                 if (!item.IsEnabled)
                 {
                     tile.Reason = item.Reason;
+                    AutomationProperties.SetHelpText(tile, item.Reason);   // "label, unavailable, reason"
                 }
 
                 tile.Click += (_, _) =>

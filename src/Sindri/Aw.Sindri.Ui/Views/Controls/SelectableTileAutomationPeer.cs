@@ -40,6 +40,9 @@ internal sealed class SelectableTileAutomationPeer(SelectableTile owner) : Butto
     }
 
     /// <inheritdoc />
+    protected override bool IsEnabledCore() => base.IsEnabledCore() && !_owner.IsUnavailable;   // a screen reader says "unavailable" for a tile that still takes focus (#3651)
+
+    /// <inheritdoc />
     protected override AutomationControlType GetAutomationControlTypeCore() =>
         _owner.Classes.Contains("row") ? AutomationControlType.ListItem : AutomationControlType.Button;
 }
