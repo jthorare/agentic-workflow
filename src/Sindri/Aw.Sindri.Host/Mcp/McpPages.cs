@@ -46,12 +46,12 @@ internal static class McpPages
         // note: an answer that already has a top-level "page" loses it here; none does today
         var read = DetachReadPages(root);
         Slice(root, window, "", lists, ref more);
-        foreach (var page in read)
+        foreach (var (name, section, items, matched) in read)
         {
-            page.Section["items"] = page.Items;
-            var listMore = (long)window.Offset + page.Items.Count < page.Matched;
+            section["items"] = items;
+            var listMore = (long)window.Offset + items.Count < matched;
             more |= listMore;
-            lists["sections." + page.Name + ".items"] = new JsonObject { ["total"] = page.Matched, ["more"] = listMore };
+            lists["sections." + name + ".items"] = new JsonObject { ["total"] = matched, ["more"] = listMore };
         }
 
         KeepPageCites(root);
