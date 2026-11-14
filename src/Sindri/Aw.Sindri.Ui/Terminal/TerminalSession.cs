@@ -103,7 +103,15 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
             return Task.FromResult(TerminalKeyFate.Dropped);
         }
 
-        return Deliver(TerminalSocketMessages.Paste(text), cancellationToken);
+        // The writer escapes < > & ' + and non-ASCII as six bytes each, and Serve closes the socket over a message above its own cap before it decodes it.
+        var message = TerminalSocketMessages.Paste(text);
+        if (System.Text.Encoding.UTF8.GetByteCount(message) > TerminalSocketMessages.MaxMessageBytes)
+        {
+            view.Note(Aw.Sindri.Ui.ViewModels.Labels.TerminalPasteTooBig);
+            return Task.FromResult(TerminalKeyFate.Dropped);
+        }
+
+        return Deliver(message, cancellationToken);
     }
 
     /// <summary>Ctrl-C through the socket.</summary>
