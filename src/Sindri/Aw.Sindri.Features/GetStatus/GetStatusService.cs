@@ -28,7 +28,7 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         var views = await Views(cancellationToken).ConfigureAwait(false);
         var health = await Health(grant is not null, views, approvedProfile, cancellationToken).ConfigureAwait(false);
         health = healthRows.WithStaleBuild(health);
-        health = HealthSummary.WithProfileProblem(health, profile.ProblemKind is "invalid" or "unreadable", ProfileFix(loaded));   // #3436: a profile that won't load is not healthy
+        health = HealthSummary.WithProfileProblem(health, string.Equals(profile.ProblemKind, "invalid", StringComparison.Ordinal) || string.Equals(profile.ProblemKind, "unreadable", StringComparison.Ordinal), ProfileFix(loaded));   // #3436: a profile that won't load is not healthy
         var status = new GetStatusResponse(grant is not null, grant?.Holder.Pid ?? 0, grant?.Epoch ?? 0, grant?.ExpiresAt, profile, services);
         return status with { ApiVersion = SindriApi.Version, Views = views, Health = health, Sessions = SessionCounts() };
     }
