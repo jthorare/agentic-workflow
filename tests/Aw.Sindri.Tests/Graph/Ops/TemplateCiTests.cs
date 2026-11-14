@@ -70,6 +70,37 @@ public sealed class TemplateCiTests
         Assert.Contains("workflow", question, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Theory]
+    [InlineData("weekday-check")]
+    [InlineData("daily-digest")]
+    public void An_empty_run_list_is_counted_as_passed_and_named_with_the_branch(string name)
+    {
+        var question = Assert.Single(WithCi(name).Nodes, static n => n.Type == "prompt").Config["prompt"]!.GetValue<string>();
+
+        Assert.Contains("When there are no runs", question, StringComparison.Ordinal);
+        Assert.Contains("no CI runs on main", question, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_branch_with_braces_is_left_out_of_the_prompt_so_the_template_still_validates()
+    {
+        var odd = new GitHubCiSource("github:work", "acme", "app", "x{{y}}");
+
+        var spec = GraphTemplates.Find("weekday-check", odd)!.Spec;
+
+        Assert.DoesNotContain("x{{y}}", Assert.Single(spec.Nodes, static n => n.Type == "prompt").Config["prompt"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.True(RealValidator().Validate(spec, GraphMode.Activate).Passed);
+    }
+
+    [Fact]
+    public void The_weekday_check_still_flags_a_friday_with_the_plain_templates_reminder()
+    {
+        var question = Assert.Single(WithCi("weekday-check").Nodes, static n => n.Type == "prompt").Config["prompt"]!.GetValue<string>();
+
+        Assert.Contains("when today is a Friday", question, StringComparison.Ordinal);
+        Assert.Contains("Friday: review your open pull requests before the weekend.", question, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void The_daily_digest_says_whether_the_newest_run_passed()
     {

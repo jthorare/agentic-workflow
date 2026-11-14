@@ -83,9 +83,22 @@ public sealed class GitHubCiSourceLookupFindTests : IDisposable
         Assert.Equal("develop", source?.Branch);
     }
 
+    [Fact]
+    public async Task A_profile_read_that_throws_gives_no_source_instead_of_an_error()
+    {
+        _ = await _connections.Upsert(ConnectionSamples.Oauth(ConnectionSamples.Name("github", "work")), Token);
+
+        Assert.Null(await new GitHubCiSourceLookup(_connections, new Throwing()).Find(Token));
+    }
+
     private GitHubCiSourceLookup Lookup(bool withRepo) => new(_connections, new Approved(withRepo ? [new RepoEntry("app", _repo.FullName)] : []));
 
     private async Task Git(params string[] args) => Assert.Equal(0, (await GitProcess.Run(_repo.FullName, args, Token)).Exit);
+
+    private sealed class Throwing : IApprovedProfile
+    {
+        public ValueTask<Result<LoadedProfile?>> Latest(CancellationToken cancellationToken) => throw new InvalidOperationException("the profile file is unreadable");
+    }
 
     private sealed class Approved(IReadOnlyList<RepoEntry> repos) : IApprovedProfile
     {

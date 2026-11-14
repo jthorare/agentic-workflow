@@ -33,7 +33,7 @@ public static partial class GraphTemplates
             ["arguments"] = new JsonObject { ["owner"] = ci.Owner, ["repo"] = ci.Repo, ["branch"] = ci.Branch, ["per_page"] = "5" },
         });
         var config = (JsonObject)prompt.Config.DeepClone();
-        config["prompt"] = CiPrompt(name, schedule.Id.Value);
+        config["prompt"] = CiPrompt(name, schedule.Id.Value, ci.Branch);
         var nodes = new List<GraphNode>();
         foreach (var node in plain.Spec.Nodes)
         {
@@ -47,11 +47,15 @@ public static partial class GraphTemplates
         return plain with { Spec = plain.Spec with { Nodes = nodes, Edges = CiEdges(plain.Spec.Edges, schedule.Id, step.Id, prompt.Id) } };
     }
 
-    private static string CiPrompt(string name, string scheduleId)
+    // why: a branch name may hold braces, and '{{' in a prompt is an expression; such a name is left out of the text rather than failing the create
+    private static string CiPrompt(string name, string scheduleId, string branch)
     {
+        var label = branch.Contains('{', StringComparison.Ordinal) || branch.Contains('}', StringComparison.Ordinal) ? "the branch" : branch;
+        var runs = $"These are the latest CI runs on the branch, newest first: {{{{{CiNode}.result}}}}.";
+        var none = $"When there are no runs, count the run as passed and mention: no CI runs on {label}.";
         return string.Equals(name, "weekday-check", StringComparison.Ordinal)
-            ? $"Today is {{{{{scheduleId}.scheduledFor}}}}. These are the latest CI runs on the branch, newest first: {{{{{CiNode}.result}}}}. Look at the newest run. Set flagged to true when it did not succeed, and set summary to one line that names the failing workflow. When it succeeded, set flagged to false and summary to: CI is green."
-            : $"Today is {{{{{scheduleId}.scheduledFor}}}}. These are the latest CI runs on the branch, newest first: {{{{{CiNode}.result}}}}. Write one short line for the start of the day: the weekday, one thing worth doing on that day of the week, and whether the newest run passed (name the workflow when it did not).";
+            ? $"Today is {{{{{scheduleId}.scheduledFor}}}}. {runs} Look at the newest run. Set flagged to true when it did not succeed or when today is a Friday. Set summary to one line: when the run did not succeed, name the failing workflow; when today is a Friday, add: Friday: review your open pull requests before the weekend. {none} When neither applies, set flagged to false and summary to: CI is green."
+            : $"Today is {{{{{scheduleId}.scheduledFor}}}}. {runs} Write one short line for the start of the day: the weekday, one thing worth doing on that day of the week, and whether the newest run passed (name the workflow when it did not). {none}";
     }
 
     private static List<GraphEdge> CiEdges(IReadOnlyList<GraphEdge> plainEdges, NodeId scheduleId, NodeId stepId, NodeId promptId)

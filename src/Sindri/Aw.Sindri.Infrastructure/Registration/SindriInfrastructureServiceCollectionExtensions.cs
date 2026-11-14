@@ -232,7 +232,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
     private static IServiceCollection AddConnections(this IServiceCollection services)
         => services
             .AddSingleton<IConnectionStore, SqliteConnectionStore>()
-            .AddSingleton<ICiSourceLookup, GitHubCiSourceLookup>()   // #3534: the starter templates' CI step (red stage: a stub)
+            .AddSingleton<ICiSourceLookup, GitHubCiSourceLookup>()   // #3534: the starter templates' CI step
             .AddSingleton<IConnectionSecrets>(static sp => new KeychainConnectionSecrets(sp.GetRequiredService<ISecretWriter>(), sp.GetRequiredService<ISecretPointers>(), new ProcessToolRunner()))
             .AddSingleton<IConnectionPresetCatalog, EmbeddedConnectionPresets>()
             .AddSingleton<IEnvironmentReader, ProcessEnvironmentReader>()
