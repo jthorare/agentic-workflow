@@ -73,13 +73,13 @@ public sealed class ListPickerTests
     });
 
     [Fact]
-    public async Task Down_and_Up_move_across_groups_skip_a_disabled_row_and_stop_at_the_ends() => await OnUi(() =>
+    public async Task Down_and_Up_move_across_groups_through_a_disabled_row_and_stop_at_the_ends() => await OnUi(() =>
     {
         var (window, picker) = Show();
         _ = picker.FocusFirst();
         var seen = new List<string?> { Name(window.FocusManager?.GetFocusedElement()) };
 
-        foreach (var _ in Enumerable.Range(0, 4))
+        foreach (var _ in Enumerable.Range(0, 5))
         {
             window.KeyPressQwerty(PhysicalKey.ArrowDown, RawInputModifiers.None);
             Dispatcher.UIThread.RunJobs();
@@ -89,7 +89,7 @@ public sealed class ListPickerTests
         window.KeyPressQwerty(PhysicalKey.ArrowUp, RawInputModifiers.None);
         var back = Name(window.FocusManager?.GetFocusedElement());
 
-        Assert.Equal(["On a schedule", "Run an agent", "Run code", "Ask me", "Ask me"], seen);
+        Assert.Equal(["On a schedule", "When a webhook arrives", "Run an agent", "Run code", "Ask me", "Ask me"], seen);
         Assert.Equal("Run code", back);
         window.Close();
         return true;
@@ -133,7 +133,7 @@ public sealed class ListPickerTests
     });
 
     [Fact]
-    public async Task A_disabled_row_is_off_shows_its_reason_and_is_never_picked() => await OnUi(() =>
+    public async Task A_disabled_row_is_unavailable_shows_its_reason_and_is_never_picked() => await OnUi(() =>
     {
         var (window, picker) = Show();
         var picked = 0;
@@ -142,7 +142,8 @@ public sealed class ListPickerTests
 
         off.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
-        Assert.False(off.IsEnabled);
+        Assert.True(off.IsEnabled);   // enabled and focusable (#3651): unavailable is the row's own state
+        Assert.True(off.IsUnavailable);
         Assert.Equal("Needs a connection", ToolTip.GetTip(off));
         Assert.Equal(0, picked);
         window.Close();

@@ -15,8 +15,8 @@ namespace Aw.Sindri.Ui.Views.Controls;
 
 /// <summary>
 /// The list picker (#3234): a heading, grouped selectable rows, an error line with its code under Details, and a Cancel button. It is the content of the shell's
-/// sheet, so first focus and the focus trap come from that host; the picker gives the host <see cref="FocusFirst"/>. Up and Down move between the enabled rows
-/// across groups, Home and End jump, Enter picks, Esc closes. The block picker and the Connect target list of the Workflows editor are both this part.
+/// sheet, so first focus and the focus trap come from that host; the picker gives the host <see cref="FocusFirst"/>. Up and Down move between the rows
+/// across groups (a disabled row takes focus too, so its reason can be reached, but it is never picked), Home and End jump, Enter picks, Esc closes. The block picker and the Connect target list of the Workflows editor are both this part.
 /// </summary>
 [SuppressMessage("Design", "MA0182", Justification = "The Workflows editor adopts it in its own PR (#3234).")]
 internal sealed class ListPicker : UserControl
@@ -192,7 +192,7 @@ internal sealed class ListPicker : UserControl
 
             foreach (var item in group.Items)
             {
-                var tile = new SelectableTile { Content = item.Text, IsEnabled = item.IsEnabled, IsSelected = string.Equals(item.Id, SelectedId, StringComparison.Ordinal) };
+                var tile = new SelectableTile { Content = item.Text, IsUnavailable = !item.IsEnabled, IsSelected = string.Equals(item.Id, SelectedId, StringComparison.Ordinal) };
                 tile.Classes.Add("row");
                 AutomationProperties.SetName(tile, item.Text);
                 if (!item.IsEnabled && item.Reason is { Length: > 0 } reason)
@@ -229,7 +229,7 @@ internal sealed class ListPicker : UserControl
             return;
         }
 
-        var rows = Enabled().ToList();
+        var rows = _tiles.Select(t => t.Tile).ToList();   // a disabled row takes focus too (#3651)
         var at = rows.FindIndex(t => t.IsFocused);
         SelectableTile? target = null;
         if (rows.Count > 0)

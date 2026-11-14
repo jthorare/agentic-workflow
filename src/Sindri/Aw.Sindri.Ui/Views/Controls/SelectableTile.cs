@@ -16,6 +16,9 @@ internal sealed class SelectableTile : Button
     /// <summary>True when this is the chosen one: a soft primary fill and a primary border.</summary>
     public static readonly StyledProperty<bool> IsSelectedProperty = AvaloniaProperty.Register<SelectableTile, bool>(nameof(IsSelected));
 
+    /// <summary>True when the choice can't be taken right now (#3651): the tile still takes keyboard focus, so its reason can be reached, but pressing it does nothing. IsEnabled stays true.</summary>
+    public static readonly StyledProperty<bool> IsUnavailableProperty = AvaloniaProperty.Register<SelectableTile, bool>(nameof(IsUnavailable));
+
     /// <summary>Gets or sets a value indicating whether this is the chosen one.</summary>
     public bool IsSelected
     {
@@ -23,13 +26,30 @@ internal sealed class SelectableTile : Button
         set => SetValue(IsSelectedProperty, value);
     }
 
+    /// <summary>Gets or sets a value indicating whether the choice can't be taken right now.</summary>
+    public bool IsUnavailable
+    {
+        get => GetValue(IsUnavailableProperty);
+        set => SetValue(IsUnavailableProperty, value);
+    }
+
     static SelectableTile()
     {
+        _ = IsUnavailableProperty.Changed.AddClassHandler<SelectableTile>((tile, e) => tile.PseudoClasses.Set(":unavailable", e.NewValue is true));
         _ = IsSelectedProperty.Changed.AddClassHandler<SelectableTile>((tile, e) =>
         {
             tile.PseudoClasses.Set(":selected", e.NewValue is true);
             (ControlAutomationPeer.FromElement(tile) as SelectableTileAutomationPeer)?.RaiseSelectedChanged(e.NewValue is true);
         });
+    }
+
+    /// <inheritdoc />
+    protected override void OnClick()
+    {
+        if (!IsUnavailable)
+        {
+            base.OnClick();
+        }
     }
 
     /// <inheritdoc />

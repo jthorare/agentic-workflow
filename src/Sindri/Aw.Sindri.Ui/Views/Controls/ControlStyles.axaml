@@ -463,13 +463,15 @@
     <Setter Property="Background" Value="{DynamicResource Brush.PrimarySoft}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
   </Style>
-  <Style Selector="controls|SelectableTile:disabled /template/ Border#PART_Chrome">
+  <!-- :unavailable (#3651) is the picker's disabled row: it stays enabled and focusable, so it looks like :disabled and takes no hover or press. -->
+  <Style Selector="controls|SelectableTile:disabled /template/ Border#PART_Chrome, controls|SelectableTile:unavailable /template/ Border#PART_Chrome">
     <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
   </Style>
-  <Style Selector="controls|SelectableTile:disabled">
+  <Style Selector="controls|SelectableTile:disabled, controls|SelectableTile:unavailable">
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
   </Style>
-  <Style Selector="controls|SelectableTile:disabled TextBlock">
+  <Style Selector="controls|SelectableTile:disabled TextBlock, controls|SelectableTile:unavailable TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
   </Style>
   <!-- The picker's error box (#3234): its own class, because QueueStyles' amber Border.callout loads after this file and wins over Border.callout.fail. Error on ErrorSoft, Radius.MD, padding 12.
