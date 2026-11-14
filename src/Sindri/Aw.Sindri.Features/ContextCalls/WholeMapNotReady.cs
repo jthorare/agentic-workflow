@@ -2,6 +2,7 @@ using System.Buffers;
 using System.Globalization;
 using System.Text.Json;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Extract;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Results;
 using Aw.Kernel;
@@ -13,7 +14,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 
 /// <summary>
 /// What the whole map's "no map yet" answer adds to the refusal (UI contract of the empty and building states): the 'building' member while a map build job runs
-/// (its job, when it started, how many of the engine's sources have synced since it started, and when the context sources last synced) and the 'noMap' member (the repos, when the profile was approved,
+/// (its job, when it started, how many of the engine's sources have synced since it started, how many files of the current repo it has read (its newest "extracting n/N files" line, <see cref="MapBuildFiles"/>), and when the context sources last synced) and the 'noMap' member (the repos, when the profile was approved,
 /// when the first build started). Every value is read from state the control plane already keeps (the jobs and profile views, the engine's source state); one that is not
 /// known is left out, never written as null. The map builder keeps no node count while it runs, so 'nodesSoFar' is not offered.
 /// </summary>
@@ -24,6 +25,9 @@ internal sealed class WholeMapNotReady(IJobViews jobs, IViewReader views, IConte
 {
     private static readonly JobKind _build = JobKind.From("BuildContextMap");
 
+    // The first map is built by the context-map-refresh service's job, not a BuildContextMap job (#3595).
+    private static readonly JobKind _refresh = JobKind.From("RefreshContextMap");
+
     /// <summary>The refusal with its extension members.</summary>
     /// <param name="refusal">The engine's SND-CONTEXT-030.</param>
     /// <param name="scope">The caller's scope.</param>
@@ -32,7 +36,8 @@ internal sealed class WholeMapNotReady(IJobViews jobs, IViewReader views, IConte
     internal async ValueTask<Error> Explain(Error refusal, ContextScope scope, CancellationToken cancellationToken)
     {
         var builds = await jobs.List(state: null, _build, cancellationToken).ConfigureAwait(false);
-        var ran = builds.IsSuccess ? builds.Value : [];
+        var refreshes = await jobs.List(state: null, _refresh, cancellationToken).ConfigureAwait(false);
+        var ran = (builds.IsSuccess ? builds.Value : []).Concat(refreshes.IsSuccess ? refreshes.Value : []).ToList();
         var running = ran.FirstOrDefault(static j => j.State == JobState.Running);
         var profile = await views.Get<ProfileRow>(ViewNames.Profile, ViewNames.Profile, cancellationToken).ConfigureAwait(false);
         var explained = refusal;
@@ -46,7 +51,11 @@ internal sealed class WholeMapNotReady(IJobViews jobs, IViewReader views, IConte
         return explained.WithExtension("noMap", NoMap(scope, profile.IsSuccess ? profile.Value?.ApprovedAt : null, first));
     }
 
-    private static JsonElement Building(JobRow job, IReadOnlyList<SourceStatusRow>? sources) => Write(w =>
+    /// <summary>The 'building' member for the running build <paramref name="job"/>.</summary>
+    /// <param name="job">The running map build job (a BuildContextMap or a RefreshContextMap job).</param>
+    /// <param name="sources">The engine's sources, or null when they could not be read.</param>
+    /// <returns>The member: only what is known.</returns>
+    internal static JsonElement Building(JobRow job, IReadOnlyList<SourceStatusRow>? sources) => Write(w =>
     {
         w.WriteStartObject();
         var lastSync = sources?.Max(static s => s.LastSync);
@@ -55,6 +64,12 @@ internal sealed class WholeMapNotReady(IJobViews jobs, IViewReader views, IConte
             // A source counts as read once it synced after this build started.
             w.WriteNumber("sourcesDone", sources.Count(s => s.LastSync >= job.StartedAt));
             w.WriteNumber("sourcesTotal", sources.Count);
+        }
+
+        if (MapBuildFiles.Newest(job.Progress.Select(static l => l.Line)) is { } files)
+        {
+            w.WriteNumber("filesDone", files.Done);
+            w.WriteNumber("filesTotal", files.Total);
         }
 
         w.WriteString("startedAt", Time(job.StartedAt));

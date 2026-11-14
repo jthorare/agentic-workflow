@@ -182,9 +182,9 @@ internal sealed partial class ShellWindow
         _ = FocusTarget(page).Focus(RestMethod());
     }
 
-    // Arriving on Settings lands on its title, not on a control of the setup checklist or the bare region.
+    // Arriving on Settings lands in its filter box (#3362), not on a control of the setup checklist or the bare region.
     private InputElement FocusTarget(Border page) =>
-        Shell is { IsSettings: true } && this.Get<Control>("SettingsSlot").GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => string.Equals(t.Name, "TitleText", StringComparison.Ordinal) && t.IsEffectivelyVisible) is { } title ? title : page;
+        Shell is { IsSettings: true } && this.Get<Control>("SettingsSlot").GetVisualDescendants().OfType<Control>().FirstOrDefault(t => string.Equals(t.Name, "SettingsFilterBox", StringComparison.Ordinal) && t.IsEffectivelyVisible) is InputElement filter ? filter : page;
 
     // After a state change, a closed sheet or a change in its covering: if the focused control is gone (hidden, disabled,
     // or nothing has focus after something had it), focus its region's neighbour.

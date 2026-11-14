@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Workflows;
 
@@ -19,14 +20,46 @@ public sealed class TempHome : IDisposable
 
     public void Dispose()
     {
-        foreach (var server in new TemporalDevServer(ChildEnvironment.Start).Find(Path))
+        try
         {
-            DevServerProcesses.Signal(ChildEnvironment.Start, server.ProcessId, "KILL");
+            foreach (var server in new TemporalDevServer(ChildEnvironment.Start).Find(Path))
+            {
+                DevServerProcesses.Signal(ChildEnvironment.Start, server.ProcessId, "KILL");
+            }
         }
-
-        if (Directory.Exists(Path))
+        finally
         {
-            Directory.Delete(Path, recursive: true);
+            DeleteHomes();
+        }
+    }
+
+    private void DeleteHomes()
+    {
+        try
+        {
+            // why: a failed process scan must not leave the home on disk (#3262)
+            if (Directory.Exists(Path))
+            {
+                Directory.Delete(Path, recursive: true);
+            }
+        }
+        finally
+        {
+            // A launch's session home is a sibling of the home (<home>-sessions/<launch>), so deleting the home leaves it.
+            var sessions = SessionHomePaths.Sessions(Path);
+            if (Directory.Exists(sessions))
+            {
+                try
+                {
+                    Directory.Delete(sessions, recursive: true);
+                }
+                catch (IOException)
+                {
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
+            }
         }
     }
 }

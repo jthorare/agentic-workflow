@@ -70,14 +70,14 @@ public sealed class ApplyOpsTests
     [Fact]
     public void Add_node_appends_the_node_and_refuses_a_used_id()
     {
-        var added = Apply(Base(), new AddNodeOp(Id("gate"), "condition", Title: "Is it new?", new JsonObject { ["when"] = "a.facts" }, OnFailure: "continue"));
+        var added = Apply(Base(), new AddNodeOp(Id("gate"), "condition", Title: "Is it new?", new JsonObject { ["when"] = "a.facts" }, OnFailure: "stop"));
         var again = Apply(Base(), new AddNodeOp(Id("a"), "memory_search", Title: null, new JsonObject { ["memory"] = "drift", ["query"] = "q" }));
 
         var node = added.Value.Nodes[^1];
         Assert.Equal("gate", node.Id.Value);
         Assert.Equal("condition", node.Type);
         Assert.Equal("Is it new?", node.Title);
-        Assert.Equal("continue", node.OnFailure);
+        Assert.Equal("stop", node.OnFailure);
         Assert.Equal("a.facts", node.Config["when"]!.GetValue<string>());
         Assert.Equal("SND-GRAPH-012", again.Error.Code);
         Assert.Contains("'a'", again.Error.Message, StringComparison.Ordinal);

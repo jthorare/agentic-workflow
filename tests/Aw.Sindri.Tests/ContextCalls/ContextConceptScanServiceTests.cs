@@ -44,7 +44,7 @@ public sealed class ContextConceptScanServiceTests
             _ = await _h.Profiles.Save(loaded, Ct);
         }
 
-        return new ContextConceptScanService(new ContextScopes(harness.Profiles, _h.Callers), _engine.Proxy, _jobs, _start, _h.Clock, NullLogger<ContextConceptScanService>.Instance);
+        return new ContextConceptScanService(new ContextScopes(harness.Profiles, _h.Callers, new FakeRepoCheckouts()), _engine.Proxy, _jobs, _start, _h.Clock, NullLogger<ContextConceptScanService>.Instance);
     }
 
     private void Scan(JobState state, TimeSpan endedAgo, int version = 7)
@@ -74,6 +74,17 @@ public sealed class ContextConceptScanServiceTests
         Assert.Contains("map v7", result.Value.Summary, StringComparison.Ordinal);
         _ = Assert.Single(_start.Requests);
         Assert.Equal("service:context-concept-scan", _start.Actors.Single());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_profile_with_no_context_section_scans_a_new_draft_too()
+    {
+        _engine.State = new MapPublishState(Hold: null, LatestDraft: 7, Current: 6, CurrentHeads: []);
+
+        var result = await Run(await Service(context: false));
+
+        Assert.False(result.Value.Idle);
+        _ = Assert.Single(_start.Requests);
     }
 
     [Fact, Trait("Lane", "unit")]

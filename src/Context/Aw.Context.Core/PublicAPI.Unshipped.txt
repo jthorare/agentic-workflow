@@ -5893,7 +5893,7 @@ static Aw.Context.Core.Engine.QueryRules.Words(string! text, int max) -> System.
 static Aw.Context.Core.Engine.RepoHead.operator !=(Aw.Context.Core.Engine.RepoHead? left, Aw.Context.Core.Engine.RepoHead? right) -> bool
 static Aw.Context.Core.Engine.RepoHead.operator ==(Aw.Context.Core.Engine.RepoHead? left, Aw.Context.Core.Engine.RepoHead? right) -> bool
 static Aw.Context.Core.Engine.ScopeRules.Mapped(Aw.Context.Core.Engine.ContextSettings! settings, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>!
-static Aw.Context.Core.Engine.ScopeRules.Resolve(Aw.Context.Core.Engine.ContextSettings! settings, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos, Aw.Context.Core.Engine.ContextCaller! caller) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>!>!
+static Aw.Context.Core.Engine.ScopeRules.Resolve(Aw.Context.Core.Engine.ContextSettings! settings, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos, Aw.Context.Core.Engine.ContextCaller! caller, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepoName>? leftOut = null) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>!>!
 static Aw.Context.Core.Engine.ScopeRules.Usable(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ProfileRepoEntry!>! repos) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>!
 static Aw.Context.Core.Engine.SettingsReader.Check(System.Text.Json.JsonElement? section, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ProfileRepoEntry!>! repos) -> Aw.Kernel.Result<Aw.Context.Core.Engine.ContextSettings!>!
 static Aw.Context.Core.Engine.SettingsReader.Read(System.Text.Json.JsonElement? section) -> Aw.Kernel.Result<Aw.Context.Core.Engine.ContextSettings!>!
@@ -10579,6 +10579,8 @@ static Aw.Context.Core.Map.PageOverlay.Apply(Aw.Context.Core.Graph.GraphSnapshot
 static Aw.Context.Core.Map.PageOverlay.Without(Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Graph.GraphSnapshot!
 Aw.Context.Core.Engine.ContextScope.OmitPages.get -> bool
 Aw.Context.Core.Engine.ContextScope.OmitPages.init -> void
+Aw.Context.Core.Engine.ContextScope.LeftOut.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepoName>!
+Aw.Context.Core.Engine.ContextScope.LeftOut.init -> void
 Aw.Context.Core.Concepts.ConceptRow.Pages.get -> int?
 Aw.Context.Core.Concepts.ConceptRow.Pages.init -> void
 Aw.Context.Core.Facade.IContextConcepts.CheckPages(Aw.Context.Core.Engine.ContextScope? scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Map.MapHealth!>!>
@@ -12484,3 +12486,57 @@ Aw.Context.Core.Results.ContextResult.Suggestions.init -> void
 static Aw.Context.Core.Graph.AnchorMatch.Choices(System.Collections.Generic.IEnumerable<Aw.Context.Core.Graph.GraphNode!>! nodes) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.AnchorChoice!>!
 static Aw.Context.Core.ContextErrors.IsMissedDeadline(Aw.Kernel.Error! error) -> bool
 static Aw.Context.Core.ContextErrors.MissedDeadline(string! source) -> Aw.Kernel.Error!
+Aw.Context.Core.Extract.MapBuildFiles
+Aw.Context.Core.Extract.MapBuildFiles.<Clone>$() -> Aw.Context.Core.Extract.MapBuildFiles!
+Aw.Context.Core.Extract.MapBuildFiles.Deconstruct(out int Done, out int Total) -> void
+Aw.Context.Core.Extract.MapBuildFiles.Done.get -> int
+Aw.Context.Core.Extract.MapBuildFiles.Done.init -> void
+Aw.Context.Core.Extract.MapBuildFiles.Equals(Aw.Context.Core.Extract.MapBuildFiles? other) -> bool
+Aw.Context.Core.Extract.MapBuildFiles.Line.get -> string!
+Aw.Context.Core.Extract.MapBuildFiles.MapBuildFiles(int Done, int Total) -> void
+Aw.Context.Core.Extract.MapBuildFiles.Total.get -> int
+Aw.Context.Core.Extract.MapBuildFiles.Total.init -> void
+override Aw.Context.Core.Extract.MapBuildFiles.Equals(object? obj) -> bool
+override Aw.Context.Core.Extract.MapBuildFiles.GetHashCode() -> int
+override Aw.Context.Core.Extract.MapBuildFiles.ToString() -> string!
+static Aw.Context.Core.Extract.MapBuildFiles.From(string! line) -> Aw.Context.Core.Extract.MapBuildFiles?
+static Aw.Context.Core.Extract.MapBuildFiles.Newest(System.Collections.Generic.IEnumerable<string!>! lines) -> Aw.Context.Core.Extract.MapBuildFiles?
+static Aw.Context.Core.Extract.MapBuildFiles.operator !=(Aw.Context.Core.Extract.MapBuildFiles? left, Aw.Context.Core.Extract.MapBuildFiles? right) -> bool
+static Aw.Context.Core.Extract.MapBuildFiles.operator ==(Aw.Context.Core.Extract.MapBuildFiles? left, Aw.Context.Core.Extract.MapBuildFiles? right) -> bool
+Aw.Context.Core.Map.MapStatusView.Heads.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Map.MapHead!>?
+Aw.Context.Core.Map.MapStatusView.Heads.init -> void
+static Aw.Context.Core.Map.MapHealth.NoMapDetail.get -> string!
+Aw.Context.Core.Engine.QueryWindow
+Aw.Context.Core.Engine.QueryWindow.<Clone>$() -> Aw.Context.Core.Engine.QueryWindow!
+Aw.Context.Core.Engine.QueryWindow.Deconstruct(out int Offset, out int Limit) -> void
+Aw.Context.Core.Engine.QueryWindow.Offset.get -> int
+Aw.Context.Core.Engine.QueryWindow.Offset.init -> void
+Aw.Context.Core.Engine.QueryWindow.Limit.get -> int
+Aw.Context.Core.Engine.QueryWindow.Limit.init -> void
+Aw.Context.Core.Engine.QueryWindow.Equals(Aw.Context.Core.Engine.QueryWindow? other) -> bool
+Aw.Context.Core.Engine.QueryWindow.QueryWindow(int Offset, int Limit) -> void
+override Aw.Context.Core.Engine.QueryWindow.Equals(object? obj) -> bool
+override Aw.Context.Core.Engine.QueryWindow.GetHashCode() -> int
+override Aw.Context.Core.Engine.QueryWindow.ToString() -> string!
+static Aw.Context.Core.Engine.QueryWindow.operator !=(Aw.Context.Core.Engine.QueryWindow? left, Aw.Context.Core.Engine.QueryWindow? right) -> bool
+static Aw.Context.Core.Engine.QueryWindow.operator ==(Aw.Context.Core.Engine.QueryWindow? left, Aw.Context.Core.Engine.QueryWindow? right) -> bool
+Aw.Context.Core.Results.RecordMatches
+Aw.Context.Core.Results.RecordMatches.<Clone>$() -> Aw.Context.Core.Results.RecordMatches!
+Aw.Context.Core.Results.RecordMatches.Deconstruct(out int Matched, out int Offset, out int Read) -> void
+Aw.Context.Core.Results.RecordMatches.Matched.get -> int
+Aw.Context.Core.Results.RecordMatches.Matched.init -> void
+Aw.Context.Core.Results.RecordMatches.Offset.get -> int
+Aw.Context.Core.Results.RecordMatches.Offset.init -> void
+Aw.Context.Core.Results.RecordMatches.Read.get -> int
+Aw.Context.Core.Results.RecordMatches.Read.init -> void
+Aw.Context.Core.Results.RecordMatches.Equals(Aw.Context.Core.Results.RecordMatches? other) -> bool
+Aw.Context.Core.Results.RecordMatches.RecordMatches(int Matched, int Offset, int Read) -> void
+override Aw.Context.Core.Results.RecordMatches.Equals(object? obj) -> bool
+override Aw.Context.Core.Results.RecordMatches.GetHashCode() -> int
+override Aw.Context.Core.Results.RecordMatches.ToString() -> string!
+static Aw.Context.Core.Results.RecordMatches.operator !=(Aw.Context.Core.Results.RecordMatches? left, Aw.Context.Core.Results.RecordMatches? right) -> bool
+static Aw.Context.Core.Results.RecordMatches.operator ==(Aw.Context.Core.Results.RecordMatches? left, Aw.Context.Core.Results.RecordMatches? right) -> bool
+Aw.Context.Core.Engine.ContextQuery.Window.get -> Aw.Context.Core.Engine.QueryWindow?
+Aw.Context.Core.Engine.ContextQuery.Window.init -> void
+Aw.Context.Core.Results.ContextResult.Matches.get -> Aw.Context.Core.Results.RecordMatches?
+Aw.Context.Core.Results.ContextResult.Matches.init -> void

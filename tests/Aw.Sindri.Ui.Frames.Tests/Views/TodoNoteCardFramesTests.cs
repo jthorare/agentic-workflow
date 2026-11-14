@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json.Nodes;
+using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -9,6 +10,7 @@ using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
+using Aw.Sindri.Ui.ViewModels.Linear;
 using Aw.Sindri.Ui.ViewModels.Settings;
 using Aw.Sindri.Ui.ViewModels.Todo;
 using Aw.Sindri.Ui.Views;
@@ -152,6 +154,129 @@ public sealed class TodoNoteCardFramesTests : IDisposable
 
         Assert.Equal(AutomationLiveSetting.Polite, AutomationProperties.GetLiveSetting(Find<TextBlock>(window, "TodoNoteStatus")));
         Assert.Equal("Checking the note…", Said(window, "TodoNoteStatus"));
+        _server.TodoNoteCheckGate.SetResult();
+        await Until(window, () => !card.IsBusy);
+    });
+
+    private static readonly string[] _settingsStatusRows = ["TodoNoteStatus", "TodoNoteError", "LinearStatus", "LinearError"];
+    private static readonly string[] _linearStatusRows = ["LinearStatus", "LinearError"];
+
+    [Fact]
+    public Task An_empty_status_or_error_row_takes_no_height_on_Settings_3454() => OnUi(async () =>
+    {
+        var (window, card) = await Show();
+        Assert.True(card.StatusText.Length == 0 && card.ErrorText.Length == 0);
+
+        var heights = _settingsStatusRows.SelectMany(n => window.GetVisualDescendants().OfType<Control>().Where(c => string.Equals(c.Name, n, StringComparison.Ordinal)))
+            .Where(c => c.Bounds.Height > 0)
+            .Select(c => c.Name)
+            .ToList();
+
+        Assert.Empty(heights);
+    });
+
+    [Fact]
+    public Task An_empty_Linear_status_or_error_row_takes_no_height_on_Settings_3454() => OnUi(async () =>
+    {
+        _server.LinearConnectionAnswer = RouteAnswer.Api("linear-connection", "not-connected");
+        var linear = new LinearConnectionViewModel(() => _api, _server);
+        await linear.Refresh(_api, Token);
+        var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), _ => { }) { LinearConnection = linear };
+        var window = new Window { Width = 900, Height = 1200, Content = new SettingsView { DataContext = settings } };
+        _windows.Add(window);
+        window.Show();
+        Settle(window);
+
+        var rows = _linearStatusRows
+            .Select(n => window.GetVisualDescendants().OfType<Control>().SingleOrDefault(c => string.Equals(c.Name, n, StringComparison.Ordinal)))
+            .ToList();
+
+        Assert.All(rows, r => Assert.NotNull(r));
+        Assert.DoesNotContain(rows, r => r!.Bounds.Height > 0);
+    });
+
+    // The empty rows must stay in the tree (an empty polite live region is how a screen reader hears the first status), take no height and leave no band:
+    // the gap from the row above to the row below is the card's one normal spacing, not that plus one more for each empty row.
+    private static double GapBetween(Window window, Control above, Control below) =>
+        below.TranslatePoint(new Point(0, 0), window)!.Value.Y - above.TranslatePoint(new Point(0, above.Bounds.Height), window)!.Value.Y;
+
+    private static void AssertLiveRowsStayAndTakeNoHeight(Window window, IEnumerable<string> names)
+    {
+        foreach (var name in names)
+        {
+            var row = Find<TextBlock>(window, name);
+            Assert.True(row.IsEffectivelyVisible, name + " stays in the tree");
+            Assert.Equal(AutomationLiveSetting.Polite, AutomationProperties.GetLiveSetting(row));
+            Assert.Equal(0, row.Bounds.Height);
+        }
+    }
+
+    [Fact]
+    public Task Empty_Obsidian_status_and_error_rows_stay_polite_and_leave_one_normal_gap_3454() => OnUi(async () =>
+    {
+        var (window, _) = await Show();
+
+        AssertLiveRowsStayAndTakeNoHeight(window, ["TodoNoteStatus", "TodoNoteError"]);
+        var space = Assert.IsType<double>(Application.Current!.FindResource("Space.MD"));
+        var above = Find<TextBlock>(window, "TodoNoteName").GetVisualParent<Control>()!;
+        Assert.Equal(space, GapBetween(window, above, Find<StackPanel>(window, "TodoNoteFields")), 0.5);
+    });
+
+    [Fact]
+    public Task Empty_Linear_status_and_error_rows_stay_polite_and_leave_one_normal_gap_3454() => OnUi(async () =>
+    {
+        _server.LinearConnectionAnswer = RouteAnswer.Api("linear-connection", "not-connected");
+        var linear = new LinearConnectionViewModel(() => _api, _server);
+        await linear.Refresh(_api, Token);
+        var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), _ => { }) { LinearConnection = linear };
+        var window = new Window { Width = 900, Height = 1200, Content = new SettingsView { DataContext = settings } };
+        _windows.Add(window);
+        window.Show();
+        Settle(window);
+
+        AssertLiveRowsStayAndTakeNoHeight(window, _linearStatusRows);
+        var space = Assert.IsType<double>(Application.Current!.FindResource("Space.MD"));
+        var above = Find<TextBlock>(window, "LinearName").GetVisualParent<Control>()!;
+        var below = Find<StackPanel>(window, "LinearReadPaste").GetVisualParent<Control>()!;
+        Assert.Equal(space, GapBetween(window, above, below), 0.5);
+    });
+
+    // A Linear error takes its row at full height with one normal gap above it (from the name row) and one below it (to the read-key block): not zero, not two.
+    [Fact]
+    public Task A_Linear_error_row_has_height_and_one_normal_gap_on_each_side_3454() => OnUi(async () =>
+    {
+        _server.LinearConnectionAnswer = RouteAnswer.Problem(HttpStatusCode.InternalServerError, "SND-API-500", "boom");
+        var linear = new LinearConnectionViewModel(() => _api, _server);
+        await linear.Refresh(_api, Token);
+        Assert.False(string.IsNullOrEmpty(linear.ErrorText));
+        var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), _ => { }) { LinearConnection = linear };
+        var window = new Window { Width = 900, Height = 1200, Content = new SettingsView { DataContext = settings } };
+        _windows.Add(window);
+        window.Show();
+        Settle(window);
+
+        var error = Find<TextBlock>(window, "LinearError");
+        var space = Assert.IsType<double>(Application.Current!.FindResource("Space.MD"));
+        var name = Find<TextBlock>(window, "LinearName").GetVisualParent<Control>()!;
+        var below = Find<StackPanel>(window, "LinearReadPaste").GetVisualParent<Control>()!;
+        Assert.True(error.Bounds.Height >= error.FontSize, "the error row with words is at least one line high");
+        Assert.Equal(space, GapBetween(window, name, error), 0.5);
+        Assert.Equal(space, GapBetween(window, error, below), 0.5);
+    });
+
+    // The collapse is only for an empty row: once the status has words the row takes its full height again.
+    [Fact]
+    public Task A_status_row_with_words_takes_its_full_height_3454() => OnUi(async () =>
+    {
+        var (window, card) = await Show();
+        _server.TodoNoteCheckGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        Press(window, "TodoNoteCheck");
+        await Until(window, () => card.IsBusy);
+
+        var status = Find<TextBlock>(window, "TodoNoteStatus");
+        Assert.Equal("Checking the note…", status.Text);
+        Assert.True(status.Bounds.Height >= status.FontSize, "the row with words is at least one line high");
         _server.TodoNoteCheckGate.SetResult();
         await Until(window, () => !card.IsBusy);
     });

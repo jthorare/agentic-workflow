@@ -47,10 +47,10 @@ internal sealed partial class ContextConceptScanService(ContextScopes scopes, IC
     {
         ArgumentNullException.ThrowIfNull(run);
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
-        if (scope.IsError || scope.Value.Settings is null)
+        if (scope.IsError)
         {
             // no profile is nothing to scan, not a failed run (a failed run would land in needs-you every tick)
-            return scope.IsError && scope.Error.Code != SindriErrors.ProfileMissing.Code ? scope.Error : ScheduledResult.Quiet;
+            return ContextScopes.NoProfile(scope) ? ScheduledResult.Quiet : scope.Error;
         }
 
         return await Tick(scope.Value, cancellationToken).ConfigureAwait(false);

@@ -43,7 +43,7 @@ internal sealed class DiffAnswer(MapReader graphs, IRepoReader repos)
 
     private static Result<ContextRepo> Addressed(ContextSettings settings, ContextScope scope, ContextRepoName? name)
     {
-        var inScope = ScopeRules.Resolve(settings, scope.Repos, scope.Caller);
+        var inScope = ScopeRules.Resolve(settings, scope.Repos, scope.Caller, scope.LeftOut);
         if (inScope.IsError)
         {
             return inScope.Error;

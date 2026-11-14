@@ -40,6 +40,9 @@ internal sealed class FakeAgentNodeRuntime : IAgentNodeRuntime
     /// <summary>How many times the workflow asked about the permission prompt (#3151).</summary>
     public int AskCalls => Volatile.Read(ref _asked);
 
+    /// <summary>The interpolated config the launch reports as the node's input.</summary>
+    public string Input { get; init; } = """{"repo":"web"}""";
+
     /// <summary>Why the launch fails, or null for a launch that starts.</summary>
     public AgentLaunchFailure? Failure { get; init; }
 
@@ -97,7 +100,7 @@ internal sealed class FakeAgentNodeRuntime : IAgentNodeRuntime
         var launched = Failure is { } failure
             ? new AgentLaunched(Worktree: null, StartHead: null, failure)
             : new AgentLaunched("/work/web/.claude/worktrees/wf-test", "0123abc", Failure: null, Agent: "claude-code", RunDirectory: "/home/nodes/run");
-        return new AgentNodeLaunched(launched, """{"repo":"web"}""", Timeout, AskEvery, AskCap);
+        return new AgentNodeLaunched(launched, Input, Timeout, AskEvery, AskCap);
     }
 
     public async Task<AgentSessionState> Watch(LaunchId launch, Action heartbeat, CancellationToken cancellationToken)

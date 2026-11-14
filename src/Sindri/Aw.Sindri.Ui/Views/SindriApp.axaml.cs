@@ -63,7 +63,7 @@ public sealed partial class SindriApp : Application, IDisposable
 #pragma warning restore CA2000
         var folders = new AvaloniaFolderPicker(static () => (Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
         var files = new AvaloniaFilePicker(static () => (Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
-        return new(new ShellViewModel(platform.Records, api, clock, preferences, clipboard, platform.Motion, new WindowPorts(launcher, files, folders)), preferences, platform, clock);
+        return new(new ShellViewModel(platform.Records, api, clock, preferences, clipboard, platform.Motion, new WindowPorts(launcher, files, folders) { Starter = platform.Starter, Log = platform.Log }), preferences, platform, clock);
     }
 
     /// <summary>Stops reading the single instance's messages (the app's exit does; a test that starts the app calls it).</summary>
@@ -165,6 +165,7 @@ public sealed partial class SindriApp : Application, IDisposable
             LinearConnection = shell.LinearConnection,
             TodoNoteCard = shell.TodoNoteCard,
         };
+        shell.SettingFilterRequested += (_, e) => settings.Filter = e.Value;   // a palette Settings entry (#3362)
         try
         {
             await settings.Load(CancellationToken.None).ConfigureAwait(true);

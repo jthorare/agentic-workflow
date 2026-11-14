@@ -33,6 +33,19 @@ public sealed class CodexCliProviderTests
     }
 
     [Fact]
+    public async Task A_question_that_asks_for_codex_own_default_passes_no_model_flag()
+    {
+        Install(Message("""{"decision":"no-good-candidate","chosenIndex":null}"""));
+
+        _ = await Decide(Questions.WithIndex with { OwnDefaultModel = true, Model = "ignored" });
+
+        var arguments = Assert.Single(_runner.Calls).Request.Arguments;
+        Assert.DoesNotContain("--model", arguments, StringComparer.Ordinal);
+        Assert.DoesNotContain("-m", arguments, StringComparer.Ordinal);
+        Assert.Equal("exec", arguments[0]);
+    }
+
+    [Fact]
     public async Task It_passes_a_strict_schema_file_in_the_workspace_and_the_prompt_after_the_separator()
     {
         string? schemaText = null;

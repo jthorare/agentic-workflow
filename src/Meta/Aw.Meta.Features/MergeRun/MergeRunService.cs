@@ -1,6 +1,7 @@
 using System.Globalization;
 using Aw.Kernel;
 using Aw.Kernel.Services;
+using Aw.Meta.Core;
 using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Github;
 using Aw.Meta.Core.Ports;
@@ -18,7 +19,8 @@ namespace Aw.Meta.Features.MergeRun;
 /// <param name="repo">The git and gh calls.</param>
 /// <param name="gates">Finds the merge of a pull request that was merged already.</param>
 /// <param name="recorder">Records the merge, or the hand-over to GitHub's merge queue.</param>
-internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands repo, IGateStore gates, MergeRecorder recorder)
+/// <param name="events">Writes merge.recorded once a merge is recorded; null writes none.</param>
+internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands repo, IGateStore gates, MergeRecorder recorder, MergeEventWriter? events = null)
     : IService<MergeRunRequest, MergeRunResponse>
 {
     public async ValueTask<Result<MergeRunResponse>> Handle(MergeRunRequest request, CancellationToken cancellationToken)
@@ -39,7 +41,7 @@ internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands rep
         if (!assessed.Value.Ready)
         {
             return await Unrecorded(pull, request.Pr, cancellationToken).ConfigureAwait(false)
-                ? await recorder.Record(request, assessed.Value, pull, await repo.MergeCommit(repoDirectory, request.Pr).ConfigureAwait(false), cancellationToken).ConfigureAwait(false)
+                ? await Recorded(await recorder.Record(request, assessed.Value, pull, await repo.MergeCommit(repoDirectory, request.Pr).ConfigureAwait(false), cancellationToken).ConfigureAwait(false), assessed.Value, cancellationToken).ConfigureAwait(false)
                 : Refused(request, assessed.Value);
         }
 
@@ -62,7 +64,16 @@ internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands rep
             return await recorder.Enqueue(request.Pr, assessed, pull, cancellationToken).ConfigureAwait(false);
         }
 
-        var merged = await repo.Gh(repoDirectory, "pr", "merge", request.Pr.ToString(CultureInfo.InvariantCulture), "--merge").ConfigureAwait(false);
+        var number = request.Pr.ToString(CultureInfo.InvariantCulture);
+        if (view.Value.Stacked && await StackExtensionMissing(repoDirectory).ConfigureAwait(false) is { } missing)
+        {
+            return missing;
+        }
+
+        // GitHub refuses a stacked pull request on the plain merge call: "gh stack merge" merges the stack up to it (or enqueues it behind a merge queue).
+        var merged = view.Value.Stacked
+            ? await repo.Gh(repoDirectory, "stack", "merge", number, "--yes").ConfigureAwait(false)
+            : await repo.Gh(repoDirectory, "pr", "merge", number, "--merge").ConfigureAwait(false);
         if (merged.IsError)
         {
             return merged.Error;
@@ -70,7 +81,32 @@ internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands rep
 
         return view.Value.Enabled
             ? await recorder.Enqueue(request.Pr, assessed, pull, cancellationToken).ConfigureAwait(false)
-            : await recorder.Record(request, assessed, pull, await MainSha(repoDirectory, request.Pr).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+            : await Recorded(await recorder.Record(request, assessed, pull, await MainSha(repoDirectory, request.Pr).ConfigureAwait(false), cancellationToken).ConfigureAwait(false), assessed, cancellationToken).ConfigureAwait(false);
+    }
+
+    // Null when the gh stack extension is installed; otherwise the refusal that names the install command (a failed listing is gh's own error).
+    private async ValueTask<Error?> StackExtensionMissing(string repoDirectory)
+    {
+        var list = await repo.Gh(repoDirectory, "extension", "list").ConfigureAwait(false);
+        if (list.IsError)
+        {
+            return list.Error;
+        }
+
+        return GhExtensions.HasStack(list.Value)
+            ? null
+            : MetaErrors.StackExtensionMissing.With($"the pull request is part of a stack and gh stack merges it, but the extension is not installed; run: {GhExtensions.StackInstall}");
+    }
+
+    // A recorded merge is an event; a failed write of it never changes the answer.
+    private async ValueTask<Result<MergeRunResponse>> Recorded(Result<MergeRunResponse> result, MergeAssessment assessed, CancellationToken cancellationToken)
+    {
+        if (events is not null && result is { IsSuccess: true, Value.Merged: true })
+        {
+            await events.Write(result.Value, assessed.Team, cancellationToken).ConfigureAwait(false);
+        }
+
+        return result;
     }
 
     private async ValueTask<bool> Unrecorded(PrDetails pull, int pr, CancellationToken cancellationToken) =>

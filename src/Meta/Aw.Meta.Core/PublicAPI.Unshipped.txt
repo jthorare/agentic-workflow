@@ -1284,6 +1284,8 @@ const Aw.Meta.Core.KvKeys.WatchResources = "watch.resources" -> string!
 const Aw.Meta.Core.KvKeys.WorktreesLast = "worktrees.last" -> string!
 const Aw.Meta.Core.KvKeys.WorktreesPending = "worktrees.pending-prs" -> string!
 const Aw.Meta.Core.KvKeys.WorktreesSweepStart = "worktrees.sweep-start" -> string!
+const Aw.Meta.Core.KvKeys.WorktreesSweepStartPrefix = "worktrees.sweep-start." -> string!
+static Aw.Meta.Core.KvKeys.WorktreesPathSweepStart(string! path) -> string!
 const Aw.Meta.Core.Lanes.LaneAgent.ClaudeCode = "claude-code" -> string!
 const Aw.Meta.Core.Obligations.MergeRecord.Unknown = "unknown" -> string!
 override Aw.Meta.Core.Commands.CommandRequest.Equals(object? obj) -> bool
@@ -1973,7 +1975,7 @@ Aw.Meta.Core.Coordination.LaneContextReader.Read(Aw.Meta.Core.Config.TeamConfig!
 Aw.Meta.Core.Coordination.LaneContextReader.ReadLane(string! team, string! lane, int threshold, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Lanes.LaneContext!>!>
 Aw.Meta.Core.Coordination.PaneSubmitter
 Aw.Meta.Core.Coordination.PaneSubmitter.PaneSubmitter(Aw.Meta.Core.Ports.ILanePane! pane, Aw.Meta.Core.Ports.IDelay! delay) -> void
-Aw.Meta.Core.Coordination.PaneSubmitter.Submit(string! session, string! line, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Coordination.PaneSubmitter.Submit(string! session, string! line, System.Threading.CancellationToken cancellationToken, bool exact = false) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Lanes.ContextVerdict
 Aw.Meta.Core.Lanes.ContextVerdict.Ok = 1 -> Aw.Meta.Core.Lanes.ContextVerdict
 Aw.Meta.Core.Lanes.ContextVerdict.Recycle = 2 -> Aw.Meta.Core.Lanes.ContextVerdict
@@ -2015,6 +2017,7 @@ Aw.Meta.Core.Ports.IClaudeTranscripts.Tail(Aw.Meta.Core.Ids.SessionId session, i
 Aw.Meta.Core.Ports.IDigestFiles
 Aw.Meta.Core.Ports.IDigestFiles.Stat(string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ports.DigestInfo?>!>
 Aw.Meta.Core.Ports.ILaneFiles.RecordSession(string! lane, Aw.Meta.Core.Ids.SessionId session, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Ports.ILanePane.ClearInput(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.ILanePane.Capture(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Meta.Core.Ports.ILanePane.PanePid(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int?>!>
 Aw.Meta.Core.Ports.ILanePane.PressEnter(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
@@ -2136,7 +2139,6 @@ Aw.Meta.Core.Usage.UsageStop.UsageStop(Aw.Meta.Core.Usage.UsageKind Kind, System
 Aw.Meta.Core.Usage.UsageWatch
 Aw.Meta.Core.Usage.UsageWatcher
 Aw.Meta.Core.Usage.UsageWatcher.Tick(Aw.Meta.Core.Config.TeamConfig! team, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Usage.UsageReading!>! readings, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string!>!>
-Aw.Meta.Core.Usage.UsageWatcher.UsageWatcher(Aw.Meta.Core.Coordination.PaneSubmitter! pane, Aw.Meta.Core.Ports.IRunningLog! log, Aw.Meta.Core.Ports.IKeyValueStore! values, System.TimeProvider! clock) -> void
 const Aw.Meta.Core.Usage.UsageReader.TailBytes = 262144 -> int
 const Aw.Meta.Core.Usage.UsageWatch.Meta = "meta" -> string!
 const Aw.Meta.Core.Usage.UsageWatch.MetaWake = "USAGE OK meta: resume your subagents (SendMessage them) and re-arm the watch" -> string!
@@ -2640,7 +2642,6 @@ static Aw.Meta.Core.Defects.DefectText.Title(string! code, string! title) -> str
 static Aw.Meta.Core.Github.GhIssues.List(string! json) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.IssueRef!>?
 static Aw.Meta.Core.Github.IssueRef.operator !=(Aw.Meta.Core.Github.IssueRef? left, Aw.Meta.Core.Github.IssueRef? right) -> bool
 static Aw.Meta.Core.Github.IssueRef.operator ==(Aw.Meta.Core.Github.IssueRef? left, Aw.Meta.Core.Github.IssueRef? right) -> bool
-Aw.Meta.Core.Coordination.InboxSync.InboxSync(Aw.Meta.Core.Ports.ITranscriptReader! transcripts, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.IOwnerStore! owner, System.TimeProvider! clock, Aw.Meta.Core.Coordination.MetaTranscriptResolver? meta) -> void
 Aw.Meta.Core.Coordination.InboxSync.RunMeta(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
 Aw.Meta.Core.Coordination.MetaTranscriptResolver
 Aw.Meta.Core.Coordination.MetaTranscriptResolver.Find(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
@@ -2776,3 +2777,37 @@ Aw.Meta.Core.Events.MetaEventPage.<Clone>$() -> Aw.Meta.Core.Events.MetaEventPag
 Aw.Meta.Core.Events.MetaEventPage.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Events.MetaEvent!>! Events, out long Oldest, out long Latest) -> void
 static Aw.Meta.Core.Events.MetaEventPage.operator ==(Aw.Meta.Core.Events.MetaEventPage? left, Aw.Meta.Core.Events.MetaEventPage? right) -> bool
 static Aw.Meta.Core.Events.MetaEventPage.operator !=(Aw.Meta.Core.Events.MetaEventPage? left, Aw.Meta.Core.Events.MetaEventPage? right) -> bool
+Aw.Meta.Core.Coordination.MetaEventSink
+Aw.Meta.Core.Coordination.MetaEventSink.Emit(Aw.Meta.Core.Events.MetaEvent! metaEvent, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Meta.Core.Coordination.MetaEventSink.MetaEventSink(Aw.Meta.Core.Ports.IMetaEventStore! store) -> void
+Aw.Meta.Core.Events.MetaEvents
+Aw.Meta.Core.Usage.UsageWatcher.UsageWatcher(Aw.Meta.Core.Coordination.PaneSubmitter! pane, Aw.Meta.Core.Ports.IRunningLog! log, Aw.Meta.Core.Ports.IKeyValueStore! values, System.TimeProvider! clock, Aw.Meta.Core.Coordination.MetaEventSink? events = null) -> void
+static Aw.Meta.Core.Events.MetaEvents.ContextHigh(System.DateTimeOffset at, string! lane, long tokens) -> Aw.Meta.Core.Events.MetaEvent!
+static Aw.Meta.Core.Events.MetaEvents.ContextOk(System.DateTimeOffset at, string! lane, long tokens) -> Aw.Meta.Core.Events.MetaEvent!
+static Aw.Meta.Core.Events.MetaEvents.LaneDown(System.DateTimeOffset at, string! lane, string! reason) -> Aw.Meta.Core.Events.MetaEvent!
+static Aw.Meta.Core.Events.MetaEvents.LaneUp(System.DateTimeOffset at, string! lane, string! reason) -> Aw.Meta.Core.Events.MetaEvent!
+static Aw.Meta.Core.Events.MetaEvents.MergeRecorded(System.DateTimeOffset at, int pr, string! sha, string! lane) -> Aw.Meta.Core.Events.MetaEvent!
+static Aw.Meta.Core.Events.MetaEvents.ObligationClosed(System.DateTimeOffset at, string! obligationKey, string! from, string! lane) -> Aw.Meta.Core.Events.MetaEvent!
+static Aw.Meta.Core.Events.MetaEvents.ObligationOpened(System.DateTimeOffset at, string! obligationKey, string! from, string! lane) -> Aw.Meta.Core.Events.MetaEvent!
+static Aw.Meta.Core.Events.MetaEvents.UsageLimited(System.DateTimeOffset at, string! lane, string! provider, System.DateTimeOffset? until) -> Aw.Meta.Core.Events.MetaEvent!
+static Aw.Meta.Core.Events.MetaEvents.UsageOk(System.DateTimeOffset at, string! lane, string! provider, System.DateTimeOffset? until) -> Aw.Meta.Core.Events.MetaEvent!
+Aw.Meta.Core.Coordination.InboxSync.InboxSync(Aw.Meta.Core.Ports.ITranscriptReader! transcripts, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.IOwnerStore! owner, System.TimeProvider! clock, Aw.Meta.Core.Coordination.MetaTranscriptResolver? meta, Aw.Meta.Core.Coordination.ObligationEventWriter? obligations = null) -> void
+Aw.Meta.Core.Commands.CommandRequest.PathPrefix.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Meta.Core.Commands.CommandRequest.PathPrefix.init -> void
+Aw.Meta.Core.Gate.GateTools
+static Aw.Meta.Core.Gate.GateTools.PathPrefix(string! tree) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Meta.Core.Coordination.LaneNames
+static Aw.Meta.Core.Coordination.LaneNames.WithoutTeam(string! sender, string! team) -> string!
+Aw.Meta.Core.Coordination.ObligationEventWriter
+Aw.Meta.Core.Coordination.ObligationEventWriter.Closed(string! obligationKey, string! sender, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Meta.Core.Coordination.ObligationEventWriter.IsOwed(string! obligationKey, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Meta.Core.Coordination.ObligationEventWriter.ObligationEventWriter(Aw.Meta.Core.Coordination.MetaEventSink! events, Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Coordination.ObligationReader! reader, System.TimeProvider! clock) -> void
+Aw.Meta.Core.Coordination.ObligationEventWriter.Opened(System.DateTimeOffset at, string! obligationKey, string! sender, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Meta.Core.Github.MergeQueueView.Stacked.get -> bool
+Aw.Meta.Core.Github.MergeQueueView.Stacked.init -> void
+Aw.Meta.Core.Merge.MergeFacts.BaseHasMergeQueue.get -> bool
+Aw.Meta.Core.Merge.MergeFacts.BaseHasMergeQueue.init -> void
+static readonly Aw.Meta.Core.MetaErrors.StackExtensionMissing -> Aw.Kernel.ErrorDefinition!
+const Aw.Meta.Core.Github.GhExtensions.StackInstall = "gh extension install github/gh-stack" -> string!
+static Aw.Meta.Core.Github.GhExtensions.HasStack(string! list) -> bool
+Aw.Meta.Core.Github.GhExtensions

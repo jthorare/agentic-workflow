@@ -15,6 +15,15 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <summary>A node card's height in the world.</summary>
     internal const double CardHeight = 64;
 
+    /// <summary>The length of a missing branch's dotted stub.</summary>
+    internal const double EndStub = 22;
+
+    /// <summary>The width of the box a missing branch's words are drawn in.</summary>
+    internal const double EndLabelWidth = 84;
+
+    /// <summary>The height of the box a missing branch's words are drawn in.</summary>
+    internal const double EndLabelHeight = 16;
+
     /// <summary>Builds the graph.</summary>
     /// <param name="workflow">The workflow as served.</param>
     /// <param name="statuses">The latest run's status word (as served) per node id, or null when no run is shown.</param>
@@ -45,12 +54,13 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         Nodes = nodes;
         Unplaced = unplaced;
         Edges = BuildEdges(workflow.Spec, nodes);
+        Ends = GraphEnds.Build(nodes, Edges);
         Order = [.. nodes.OrderBy(n => n.X).ThenBy(n => n.Y).ThenBy(n => n.Id, StringComparer.Ordinal)];
     }
 
     private readonly Dictionary<string, NodeSummaryView> _summaries;
 
-    /// <summary>The selected step's title and what it does ("Every weekday at 7:00: ..."), from the lines the API serves; empty when no step is selected or the API sent none for it.</summary>
+    /// <summary>The selected step's title and what it does ("Every weekday at 7:00 · ..."), from the lines the API serves; empty when no step is selected or the API sent none for it.</summary>
     public string StepLine => SelectedId is { } id && _summaries.TryGetValue(id, out var line) && Nodes.FirstOrDefault(n => string.Equals(n.Id, id, StringComparison.Ordinal)) is { } node
         ? Labels.WfStepLine(node.Title, line.Summary, line.SummaryProblem)
         : string.Empty;
@@ -73,6 +83,9 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <summary>The nodes with a position, in the order the spec lists them.</summary>
     public IReadOnlyList<GraphNodeViewModel> Nodes { get; }
 
+    /// <summary>The branches of condition steps that have no edge, each drawn as "false → done".</summary>
+    public IReadOnlyList<GraphEnd> Ends { get; }
+
     /// <summary>The arrows; an edge naming a node the spec lacks is left out.</summary>
     public IReadOnlyList<GraphEdgeViewModel> Edges { get; }
 
@@ -93,8 +106,8 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <summary>The nodes in position order: left to right, then top to bottom.</summary>
     internal IReadOnlyList<GraphNodeViewModel> Order { get; }
 
-    /// <summary>The world's size: the far corner of the farthest card.</summary>
-    internal GraphPoint Extent => Nodes.Count == 0 ? default : new GraphPoint(Nodes.Max(n => n.X) + CardWidth, Nodes.Max(n => n.Y) + CardHeight);
+    /// <summary>The world's size: the far corner of the farthest card or missing branch's words.</summary>
+    internal GraphPoint Extent => Nodes.Count == 0 ? default : new GraphPoint(Math.Max(Nodes.Max(n => n.X) + CardWidth, Ends.Select(e => e.Label.Right).DefaultIfEmpty().Max()), Math.Max(Nodes.Max(n => n.Y) + CardHeight, Ends.Select(e => e.Label.Bottom).DefaultIfEmpty().Max()));
 
     /// <summary>A graph read again keeps the node that was selected (by id), so a live refresh doesn't drop the keyboard's place.</summary>
     /// <param name="before">The graph shown until now, or null.</param>
