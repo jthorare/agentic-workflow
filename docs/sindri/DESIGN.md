@@ -29,6 +29,7 @@ colors:
   brand-secure: "#7a7fad"
   semantic-success: "#27a644"
   semantic-error: "#eb5757"
+  semantic-error-chip-text: "#ee6060"
   semantic-overlay: "#000000"
 
 typography:
@@ -310,6 +311,7 @@ The page rhythm is **dense product screenshots** — Linear's marketing leads wi
 - **Success Green** ({colors.semantic-success}): Status pills, success indicators. The only semantic color on marketing.
 - **Overlay** ({colors.semantic-overlay}): Pure black overlay scrim for modals.
 - **Error** ({colors.semantic-error}): Error text, destructive confirmations and form validation, always with a word and a ✕ glyph (6.0:1 on canvas, 5.5:1 on surface-1). Linear's in-product red; with the attention orange it is one of the two documented in-product exceptions to the single accent (UI spec §11.1, §14.1, X22), never used on marketing.
+- **Error chip text** ({colors.semantic-error-chip-text}): The word of an error status chip only, a lighter red so it holds 4.8:1 on the 0.14 error tint over surface-1. Everything else keeps semantic-error.
 
 ## Typography
 
