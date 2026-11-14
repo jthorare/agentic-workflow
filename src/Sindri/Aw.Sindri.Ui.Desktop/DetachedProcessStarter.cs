@@ -7,7 +7,7 @@ namespace Aw.Sindri.Ui.Desktop;
 /// <summary>
 /// Starts a program detached from the app, its output appended to the log (first-run spec decision 2). On Linux and macOS it
 /// runs through /bin/sh with exec under umask 077, stdin from /dev/null and stdout and stderr appended to the log, in its own
-/// session (perl's POSIX::setsid before the exec) so closing the app doesn't signal it; without /usr/bin/perl it is a plain exec.
+/// session so closing the app doesn't signal it: the setsid program when it is on the PATH, else perl's POSIX::setsid, else a start that ignores SIGHUP.
 /// </summary>
 /// <param name="spawn">Starts the process (Process.Start unless a test swaps it).</param>
 /// <param name="perl">Where perl is looked for (the system's /usr/bin/perl unless a test points elsewhere).</param>
@@ -56,16 +56,18 @@ internal sealed class DetachedProcessStarter(Func<ProcessStartInfo, Process?>? s
 
     internal static ProcessStartInfo Info(ProcessLaunch launch, string perl = SystemPerl)
     {
-        var detach = File.Exists(perl)
-            ? $"exec {perl} -MPOSIX -e 'POSIX::setsid() == -1 and die \"{FailureCode} setsid: $!\\n\"; exec @ARGV or die \"{FailureCode} exec $ARGV[0]: $!\\n\"'"
-            : "exec";
+        // One start line per way to detach, tried in order: the setsid program (Linux), perl's setsid (macOS has no setsid program but has perl), else the child is started ignoring SIGHUP
+        // (an ignored signal stays ignored through exec), which is what a closing terminal sends. No new dependency: each is a tool the system already has, and the last needs none.
+        var io = "\"$0\" \"$@\" </dev/null >>\"$AW_START_LOG\" 2>&1";
+        var perlStart = $"exec {perl} -MPOSIX -e 'POSIX::setsid() == -1 and die \"{FailureCode} setsid: $!\\n\"; exec @ARGV or die \"{FailureCode} exec $ARGV[0]: $!\\n\"' {io}";
+        var script = $"umask 077; if command -v setsid >/dev/null 2>&1; then exec setsid {io}; elif [ -x '{perl}' ]; then {perlStart}; else trap '' HUP; exec {io}; fi";
         var info = new ProcessStartInfo("/bin/sh")
         {
             UseShellExecute = false,
             RedirectStandardInput = false,
         };
         info.ArgumentList.Add("-c");
-        info.ArgumentList.Add($"umask 077; {detach} \"$0\" \"$@\" </dev/null >>\"$AW_START_LOG\" 2>&1");
+        info.ArgumentList.Add(script);
         info.ArgumentList.Add(launch.Executable);
         foreach (var argument in launch.Arguments)
         {
