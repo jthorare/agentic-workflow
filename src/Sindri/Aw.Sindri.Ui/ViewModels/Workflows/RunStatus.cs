@@ -25,4 +25,16 @@ internal static class RunStatus
         "failed" => Api.ChipTone.Fail,
         _ => Api.ChipTone.Neutral,
     };
+
+    /// <summary>The StateChipView tone word of a chip tone.</summary>
+    /// <param name="tone">The chip tone.</param>
+    /// <returns>ok, attention or error; neutral for the rest (a running run is ok, a waiting run attention).</returns>
+    internal static string ToneWord(Api.ChipTone tone) => tone switch
+    {
+        Api.ChipTone.Ok => "ok",
+        Api.ChipTone.Attn => "attention",
+        Api.ChipTone.Fail => "error",
+        Api.ChipTone.Neutral => "neutral",
+        _ => "neutral",
+    };
 }

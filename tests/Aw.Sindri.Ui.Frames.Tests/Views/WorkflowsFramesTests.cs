@@ -216,7 +216,7 @@ public sealed class WorkflowsFramesTests : FrameHost
 
         Assert.True(Visible(window, "RunNow"));
         await Until(window, () => window.ActualThemeVariant == ThemeVariant.Light, "the window never took the light theme");
-        var chip = window.GetVisualDescendants().OfType<Border>().First(b => b.IsEffectivelyVisible && b.Classes.Contains("status-chip") && b.Classes.Contains("ok")).GetVisualDescendants().OfType<TextBlock>().First();
+        var chip = window.GetVisualDescendants().OfType<StateChipView>().First(c => c.IsEffectivelyVisible && c.Tone == "ok").GetVisualDescendants().OfType<TextBlock>().First();
         Assert.Equal(ThemeColor(window, "Brush.Success", ThemeVariant.Light), ChipColor(chip));   // the theme token (Success is one colour in both variants, Theme/Tokens.axaml)
         Frame(window, "runs-light-1440", Prefix);
     });
@@ -234,7 +234,7 @@ public sealed class WorkflowsFramesTests : FrameHost
 
         Assert.True(Visible(window, "RunCancel"));
         await Until(window, () => window.ActualThemeVariant == ThemeVariant.Light, "the window never took the light theme");
-        var chip = Named<TextBlock>(window, "RunChip");   // a running run: the ok tone
+        var chip = Named<StateChipView>(window, "RunChipName").GetVisualDescendants().OfType<TextBlock>().First();   // a running run: the ok tone
         Assert.Equal(ThemeColor(window, "Brush.Success", ThemeVariant.Light), ChipColor(chip));
         Frame(window, "run-light-1440", Prefix);
     });
@@ -319,7 +319,7 @@ public sealed class WorkflowsFramesTests : FrameHost
         {
             var row = shell.Workflows.Rows[i];
             AssertChip(chips[i], row.ChipWord, row.ChipGlyph, row.IsActive ? "ok" : "neutral", $"workflow {row.Slug}");
-            Assert.Equal(chips[i].Tone, row.ChipTone);
+            Assert.Equal(chips[i].Tone, row.ChipToneWord);
         }
     });
 
@@ -337,7 +337,7 @@ public sealed class WorkflowsFramesTests : FrameHost
         {
             var row = shell.Workflows.Runs.Rows[i];
             AssertChip(chips[i], row.ChipWord, row.ChipGlyph, ToneWord(row.Tone), $"run {row.Id}");
-            Assert.Equal(chips[i].Tone, row.ChipTone);
+            Assert.Equal(chips[i].Tone, row.ChipToneWord);
         }
 
         Assert.Contains(chips, c => c.Tone == "ok");
@@ -356,7 +356,7 @@ public sealed class WorkflowsFramesTests : FrameHost
         var run = shell.Workflows.Run;
         var header = Assert.IsType<StateChipView>(Named<Control>(window, "RunChipName"));   // #3194 builds on this chip
         AssertChip(header, run.ChipWord, run.ChipGlyph, ToneWord(run.Tone), "the run header");
-        Assert.Equal(header.Tone, run.ChipTone);
+        Assert.Equal(header.Tone, run.ChipToneWord);
 
         var nodes = run.Groups.SelectMany(g => g.Runs).ToList();
         var chips = window.GetVisualDescendants().OfType<StateChipView>().Where(c => c.IsEffectivelyVisible && !ReferenceEquals(c, header)).ToList();
@@ -364,7 +364,7 @@ public sealed class WorkflowsFramesTests : FrameHost
         for (var i = 0; i < chips.Count; i++)
         {
             AssertChip(chips[i], nodes[i].ChipWord, nodes[i].ChipGlyph, ToneWord(nodes[i].Tone), $"node run {nodes[i].TitleText}");
-            Assert.Equal(chips[i].Tone, nodes[i].ChipTone);
+            Assert.Equal(chips[i].Tone, nodes[i].ChipToneWord);
         }
     });
 }

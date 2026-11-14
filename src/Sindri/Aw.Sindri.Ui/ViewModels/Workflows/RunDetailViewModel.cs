@@ -23,27 +23,25 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     public string Status { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>The chip's tone; the glyph and word carry the status too.</summary>
-    public ChipTone Tone { get; private set => Set(ref field, value); } = Api.ChipTone.Neutral;
+    public ChipTone Tone { get; private set => Set(ref field, value); } = ChipTone.Neutral;
 
-#pragma warning disable CA1822, MA0041 // stubs until the swap (#3233): they read nothing yet
-    /// <summary>The chip's word without its glyph (#3233, stub until the swap).</summary>
-    public string ChipWord => string.Empty;
+    /// <summary>The chip's word without its glyph.</summary>
+    public string ChipWord { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>The chip's glyph (#3233, stub until the swap).</summary>
-    public string ChipGlyph => string.Empty;
+    /// <summary>The chip's glyph.</summary>
+    public string ChipGlyph { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>The chip's StateChipView tone: ok, running, waiting, attention, error, neutral (#3233, stub until the swap).</summary>
-    public string ChipTone => string.Empty;
-#pragma warning restore CA1822, MA0041
+    /// <summary>The chip's StateChipView tone: ok, attention, error or neutral.</summary>
+    public string ChipToneWord { get; private set => Set(ref field, value); } = "neutral";
 
     /// <summary>True for a succeeded or running run (the ok colour).</summary>
-    public bool IsOk => Tone == Api.ChipTone.Ok;
+    public bool IsOk => Tone == ChipTone.Ok;
 
     /// <summary>True for a waiting run (the attention colour).</summary>
-    public bool IsAttention => Tone == Api.ChipTone.Attn;
+    public bool IsAttention => Tone == ChipTone.Attn;
 
     /// <summary>True for a failed run (the error colour).</summary>
-    public bool IsError => Tone == Api.ChipTone.Fail;
+    public bool IsError => Tone == ChipTone.Fail;
 
     /// <summary>True while the run is running or waiting: Cancel run shows only then.</summary>
     public bool CanCancel => RunStatus.CanCancel(Status);
@@ -120,7 +118,8 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
             Id = runId;
             Groups = [];   // another run: nothing of the old one stays
             Graph = null;
-            (Status, Tone, NoticeText) = (string.Empty, Api.ChipTone.Neutral, string.Empty);
+            (Status, Tone, NoticeText) = (string.Empty, ChipTone.Neutral, string.Empty);
+            (ChipWord, ChipGlyph, ChipToneWord) = (string.Empty, string.Empty, "neutral");
             (IsFailed, FailedText) = (false, string.Empty);
             (TitleText, ChipText, TriggerText, RevisionText, WhenText, ErrorText, OutputsText) = (Labels.WfRunTitle(runId), string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
             Changed();
@@ -154,7 +153,9 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         var (glyph, word) = Labels.WfChip(run.Status);
         TitleText = Labels.WfRunTitle(run.Id);
         ChipText = glyph + " " + word;
+        (ChipWord, ChipGlyph) = (word, glyph);
         (Status, Tone) = (run.Status, RunStatus.Tone(run.Status));
+        ChipToneWord = RunStatus.ToneWord(Tone);
         TriggerText = Labels.WfStartedBy(KindOf(run.Trigger));
         RevisionText = Labels.WfRunRevision(run.Revision);
         var live = RunStatus.IsLive(run.Status);

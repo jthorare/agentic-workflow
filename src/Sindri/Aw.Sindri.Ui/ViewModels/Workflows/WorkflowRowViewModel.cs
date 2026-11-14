@@ -14,6 +14,7 @@ internal sealed class WorkflowRowViewModel : ObservableObject
         HasNewerRevision = row.ActiveRevision is { } active && active < row.LatestRevision;
         var (glyph, word) = Labels.WfState(IsActive);
         StateText = glyph + " " + word;
+        (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, IsActive ? "ok" : "neutral");
         RevisionText = Labels.WfRevision(row.ActiveRevision, row.LatestRevision);
         ChangedText = Labels.WfChangedBy(row.ChangedBy, clock.GetUtcNow() - row.ChangedAt);
         Name = Labels.WfRowName(NameText, word.ToLowerInvariant(), RevisionText.ToLowerInvariant(), ChangedText.ToLowerInvariant());
@@ -37,16 +38,14 @@ internal sealed class WorkflowRowViewModel : ObservableObject
     /// <summary>The state: glyph and word.</summary>
     public string StateText { get; }
 
-#pragma warning disable CA1822, MA0041 // stubs until the swap (#3233): they read nothing yet
-    /// <summary>The chip's word without its glyph (#3233, stub until the swap).</summary>
-    public string ChipWord => string.Empty;
+    /// <summary>The chip's word without its glyph.</summary>
+    public string ChipWord { get; }
 
-    /// <summary>The chip's glyph (#3233, stub until the swap).</summary>
-    public string ChipGlyph => string.Empty;
+    /// <summary>The chip's glyph.</summary>
+    public string ChipGlyph { get; }
 
-    /// <summary>The chip's StateChipView tone: ok, running, waiting, attention, error, neutral (#3233, stub until the swap).</summary>
-    public string ChipTone => string.Empty;
-#pragma warning restore CA1822, MA0041
+    /// <summary>The chip's StateChipView tone: ok, attention, error or neutral.</summary>
+    public string ChipToneWord { get; }
 
     /// <summary>"Revision 2" or "Revision 1 active, 3 newest"; empty for a first revision and for a workflow with no active revision.</summary>
     public string RevisionText { get; }
