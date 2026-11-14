@@ -212,6 +212,7 @@ internal sealed partial class WorkflowsPageViewModel
                 OnChanged(nameof(CanEdit));
                 OnChanged(nameof(ShowsEdit));
                 OnChanged(nameof(DetailStateText));
+                OnChanged(nameof(DetailStateIsActive));
                 OnChanged(nameof(ShowsDetailState));
                 OnChanged(nameof(CanOpenSettings));
                 OnChanged(nameof(CanSave));

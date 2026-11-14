@@ -35,8 +35,8 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         Run = new RunDetailViewModel(api, clock);
         Editor = new OpsEditor(api);
         GraphEdit = new GraphEditViewModel(Editor, Runs, () => _url);   // made with the page, not on first read: the canvas's Delete key raises on the graph, and the edit bar must already be listening
-        Runs.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Runs.Title)) { NotifyCrumb(); } };
-        Run.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Run.Id)) { NotifyCrumb(); } };
+        Runs.PropertyChanged += (_, e) => { if (string.Equals(e.PropertyName, nameof(Runs.Title), StringComparison.Ordinal)) { NotifyCrumb(); } };
+        Run.PropertyChanged += (_, e) => { if (string.Equals(e.PropertyName, nameof(Run.Id), StringComparison.Ordinal)) { NotifyCrumb(); } };
         WatchEditor();
     }
 
@@ -63,12 +63,16 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     public string PageTitle => _level switch { Level.Runs => Runs.Title, Level.Run => Run.Id, Level.List => Labels.Workflows, _ => Labels.Workflows };
 
     /// <summary>The crumb above the title: "Workflows" from a workflow's runs, the workflow's name from a run.</summary>
+    /// <summary>The crumb's accessible name: where it goes ("Back to Workflows").</summary>
+    public string CrumbName => Labels.WfBackTo(CrumbText);
+
     public string CrumbText => _level == Level.Run ? Runs.Title : Labels.Workflows;
 
     private void NotifyCrumb()
     {
         OnChanged(nameof(PageTitle));
         OnChanged(nameof(CrumbText));
+        OnChanged(nameof(CrumbName));
     }
 
 #pragma warning restore CA1822, MA0041
@@ -90,12 +94,17 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
 
     /// <summary>The open workflow's state, as its list row says it ("● Active", "○ Off"): from the workflow read, else from the list row; empty when neither is known.</summary>
     public string DetailStateText => Runs.Shown is { } shown
-        ? StateOf(shown.ActiveRevision is not null)
-        : Rows.FirstOrDefault(r => string.Equals(r.Slug, Runs.Slug, StringComparison.Ordinal)) is { } row ? StateOf(row.IsActive) : string.Empty;
+        ? StateOf(shown.ActiveRevision is not null, shown.ArchivedAt is not null)
+        : Rows.FirstOrDefault(r => string.Equals(r.Slug, Runs.Slug, StringComparison.Ordinal)) is { } row ? StateOf(row.IsActive, row.IsArchived) : string.Empty;
 
-    private static string StateOf(bool active)
+    /// <summary>True when the open workflow is on (and not archived): the state word draws in the ok tone, as the list row's chip does.</summary>
+    public bool DetailStateIsActive => Runs.Shown is { } shown
+        ? shown.ActiveRevision is not null && shown.ArchivedAt is null
+        : Rows.FirstOrDefault(r => string.Equals(r.Slug, Runs.Slug, StringComparison.Ordinal)) is { IsActive: true, IsArchived: false };
+
+    private static string StateOf(bool active, bool archived)
     {
-        var (glyph, word) = Labels.WfState(active);
+        var (glyph, word) = Labels.WfState(active, archived);
         return glyph + " " + word;
     }
 
@@ -233,6 +242,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         OnChanged(nameof(ShowsListHead));
         OnChanged(nameof(ShowsDetailState));
         OnChanged(nameof(DetailStateText));
+        OnChanged(nameof(DetailStateIsActive));
         NotifyStateButtons();
     }
 

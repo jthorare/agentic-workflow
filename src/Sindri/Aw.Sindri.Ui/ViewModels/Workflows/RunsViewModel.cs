@@ -32,7 +32,13 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     public WorkflowGraphViewModel? Graph { get; private set => Set(ref field, value); }
 
     /// <summary>The workflow as last read, or null: run detail draws its graph when the run walked this revision.</summary>
-    internal WorkflowView? Shown { get; private set => Set(ref field, value); }
+    internal WorkflowView? Shown { get; private set { Set(ref field, value); OnChanged(nameof(IsArchived)); OnChanged(nameof(ShowsRunNow)); } }
+
+    /// <summary>True when the open workflow is archived.</summary>
+    public bool IsArchived => Shown?.ArchivedAt is not null;
+
+    /// <summary>True when Run now is offered: not on an archived workflow.</summary>
+    public bool ShowsRunNow => !IsArchived;
 
     /// <summary>The runs, newest first.</summary>
     public ObservableCollection<RunRowViewModel> Rows { get; } = [];

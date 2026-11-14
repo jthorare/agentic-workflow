@@ -17,7 +17,7 @@ public sealed class RunDetailViewModelTests
     {
         var run = await _f.OpenedRun(Token);
 
-        Assert.Equal(("Run morning-check@1:1", "✓ Succeeded", "Started by manual", "Revision 1"), (run.TitleText, run.ChipGlyph + " " + run.ChipWord, run.TriggerText, run.RevisionText));
+        Assert.Equal(("✓ Succeeded", "Started by manual", "Revision 1"), (run.ChipGlyph + " " + run.ChipWord, run.TriggerText, run.RevisionText));
         Assert.Contains("\"summary\": \"no drift\"", run.OutputsText, StringComparison.Ordinal);
         Assert.Equal((true, false), (run.HasOutputs, run.HasError));
     }

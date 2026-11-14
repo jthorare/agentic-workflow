@@ -11,13 +11,17 @@ internal sealed class WorkflowRowViewModel : ObservableObject
         NameText = row.Name;
         IdText = string.Equals(row.Slug, row.Name, StringComparison.Ordinal) ? string.Empty : row.Slug;
         IsActive = row.ActiveRevision is not null;
+        IsArchived = row.Archived == true;
         HasNewerRevision = row.ActiveRevision is { } active && active < row.LatestRevision;
-        var (glyph, word) = Labels.WfState(IsActive);
-        (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, IsActive ? "ok" : "neutral");
+        var (glyph, word) = Labels.WfState(IsActive, IsArchived);
+        (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, IsActive && !IsArchived ? "ok" : "neutral");
         RevisionText = Labels.WfRevision(row.ActiveRevision, row.LatestRevision);
         ChangedText = Labels.WfChangedBy(row.ChangedBy, clock.GetUtcNow() - row.ChangedAt);
         Name = Labels.WfRowName(NameText, word.ToLowerInvariant(), RevisionText.ToLowerInvariant(), ChangedText.ToLowerInvariant());
     }
+
+    /// <summary>True for an archived workflow: its chip says "Archived", never "Off".</summary>
+    public bool IsArchived { get; }
 
     /// <summary>The name commands use.</summary>
     public string Slug { get; }

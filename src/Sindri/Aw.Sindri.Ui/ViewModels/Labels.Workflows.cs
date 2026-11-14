@@ -36,7 +36,7 @@ internal static partial class Labels
     /// <summary>A workflow's state: a glyph and a word, never colour alone.</summary>
     /// <param name="active">True when triggers run a revision.</param>
     /// <returns>The glyph and the word.</returns>
-    internal static (string Glyph, string Word) WfState(bool active) => active ? ("●", "Active") : ("○", "Off");
+    internal static (string Glyph, string Word) WfState(bool active, bool archived = false) => archived ? ("○", "Archived") : active ? ("●", "Active") : ("○", "Off");
 
     /// <summary>The revision a row names.</summary>
     /// <param name="active">The active revision, or null when the workflow is off.</param>
@@ -142,10 +142,10 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string WfRunFailed(Error error) => "Couldn't read the run just now. " + InstanceRefused(error);
 
-    /// <summary>The run's title.</summary>
-    /// <param name="id">The run.</param>
-    /// <returns>The words.</returns>
-    internal static string WfRunTitle(string id) => "Run " + id;
+    /// <summary>The crumb's accessible name: where it goes.</summary>
+    /// <param name="place">Where it goes ("Workflows", or a workflow's name).</param>
+    /// <returns>"Back to Workflows".</returns>
+    internal static string WfBackTo(string place) => "Back to " + place;
 
     /// <summary>What started a run.</summary>
     /// <param name="kind">The trigger's kind, as served.</param>

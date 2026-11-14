@@ -9,6 +9,8 @@
   <!-- The Workflows page, read-only (#2258 PR 17 part 1), three levels in one place: the workflow list, one workflow's runs, one run's detail. Back goes up a level.
        Every status is a glyph and a word. Every named line is a Border wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
   <UserControl.Styles>
+    <!-- The detail page's state word is ok-green while the workflow is on, like the list row's chip (#3655). -->
+    <Style Selector="TextBlock.detail-state.ok"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Ok.Fg}" /></Style>
     <Style Selector="TextBlock.invalid"><Setter Property="Foreground" Value="{DynamicResource Brush.Error}" /></Style>
     <Style Selector="TextBox.invalid /template/ Border#PART_BorderElement"><Setter Property="BorderBrush" Value="{DynamicResource Brush.Error}" /></Style>
   </UserControl.Styles>
@@ -18,12 +20,12 @@
       <Grid x:Name="WorkflowsHeadRegion" ColumnDefinitions="Auto,Auto,*,Auto" VerticalAlignment="Center">
         <!-- The crumb and the slash are top-aligned and WorkflowsPage.AlignCrumb sets their top margin from the measured baselines: Avalonia has no baseline
              alignment, and 13 px text centred beside the 24 px title sits 4 px above its baseline (6 px at text scale 1.3), too far for the equal line box trick below. -->
-        <Button x:Name="WorkflowsBack" Classes="link" Content="{Binding CrumbText}" Click="OnBack" IsVisible="{Binding !IsList}" VerticalAlignment="Top" Margin="0,0,12,0" AutomationProperties.Name="{Binding CrumbText}" />
+        <Button x:Name="WorkflowsBack" Classes="link" Content="{Binding CrumbText}" Click="OnBack" IsVisible="{Binding !IsList}" VerticalAlignment="Top" Margin="0,0,12,0" AutomationProperties.Name="{Binding CrumbName}" />
         <TextBlock x:Name="WorkflowsCrumbSep" Grid.Column="1" Classes="caption subtle" Text="›" IsVisible="{Binding !IsList}" VerticalAlignment="Top" Margin="0,0,12,0" AutomationProperties.AccessibilityView="Raw" />
         <!-- The state sits right after the title, not at the far edge; the title column is a star, so the title trims to what the state leaves. -->
         <Grid Grid.Column="2" ColumnDefinitions="*,Auto" HorizontalAlignment="Left">
           <TextBlock x:Name="WorkflowsTitle" HorizontalAlignment="Left" Classes="page-title" Text="{Binding PageTitle}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding PageTitle}" VerticalAlignment="Top" AutomationProperties.Name="{Binding PageTitle}" />
-          <TextBlock x:Name="WorkflowsState" Grid.Column="1" Margin="12,0,0,0" Classes="caption subtle" Text="{Binding DetailStateText}" IsVisible="{Binding ShowsDetailState}" VerticalAlignment="Center" />
+          <TextBlock x:Name="WorkflowsState" Grid.Column="1" Margin="12,0,0,0" Classes="caption subtle detail-state" Classes.ok="{Binding DetailStateIsActive}" Text="{Binding DetailStateText}" IsVisible="{Binding ShowsDetailState}" VerticalAlignment="Center" />
         </Grid>
         <TextBlock x:Name="WorkflowsHead" Grid.Column="3" Margin="12,0,0,0" Classes="caption subtle" Text="{Binding Head}" IsVisible="{Binding ShowsListHead}" VerticalAlignment="Center" />
       </Grid>
@@ -126,7 +128,7 @@
            its baseline lands within a pixel of the title's and the buttons' text, at any text scale. -->
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock x:Name="RunsHead" Classes="caption subtle" LineHeight="{DynamicResource Type.BodyStrong.LineHeight}" Text="{Binding Runs.Head}" VerticalAlignment="Center" />
-        <Button x:Name="RunNow" VerticalAlignment="Center" Content="{Binding Runs.RunNowText}" Click="OnRunNow" IsEnabled="{Binding Runs.CanPressRunNow}" AutomationProperties.Name="{Binding Runs.RunNowText}" />
+        <Button x:Name="RunNow" VerticalAlignment="Center" IsVisible="{Binding Runs.ShowsRunNow}" Content="{Binding Runs.RunNowText}" Click="OnRunNow" IsEnabled="{Binding Runs.CanPressRunNow}" AutomationProperties.Name="{Binding Runs.RunNowText}" />
         <Button x:Name="WorkflowEdit" VerticalAlignment="Center" IsVisible="{Binding ShowsEdit}" Content="{Binding EditText}" Click="OnEdit" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding EditText}" />
         <Button x:Name="WorkflowActivate" VerticalAlignment="Center" IsVisible="{Binding CanActivate}" Content="{Binding ActivateText}" Click="OnActivate" AutomationProperties.AutomationId="WorkflowActivate" AutomationProperties.Name="{Binding ActivateText}" />
         <Button x:Name="WorkflowPause" VerticalAlignment="Center" IsVisible="{Binding CanPause}" Content="{Binding PauseText}" Click="OnPause" AutomationProperties.AutomationId="WorkflowPause" AutomationProperties.Name="{Binding PauseText}" />
