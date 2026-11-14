@@ -17,7 +17,7 @@ public sealed class RunDetailViewModelTests
     {
         var run = await _f.OpenedRun(Token);
 
-        Assert.Equal(("Run morning-check@1:1", "✓ Succeeded", "Started by manual", "Revision 1"), (run.TitleText, run.ChipText, run.TriggerText, run.RevisionText));
+        Assert.Equal(("Run morning-check@1:1", "✓ Succeeded", "Started by manual", "Revision 1"), (run.TitleText, run.ChipGlyph + " " + run.ChipWord, run.TriggerText, run.RevisionText));
         Assert.Contains("\"summary\": \"no drift\"", run.OutputsText, StringComparison.Ordinal);
         Assert.Equal((true, false), (run.HasOutputs, run.HasError));
     }
@@ -29,7 +29,7 @@ public sealed class RunDetailViewModelTests
 
         Assert.Equal(["agent", "start"], run.Groups.Select(g => g.Node), StringComparer.Ordinal);
         var agent = Assert.Single(run.Groups[0].Runs);
-        Assert.Equal(("agent", "✓ Succeeded", true, true), (agent.TitleText, agent.ChipText, agent.HasInput, agent.HasOutput));
+        Assert.Equal(("agent", "✓ Succeeded", true, true), (agent.TitleText, agent.ChipGlyph + " " + agent.ChipWord, agent.HasInput, agent.HasOutput));
         Assert.Contains("\"prompt\": \"Look for drift\"", agent.InputText, StringComparison.Ordinal);
         Assert.Contains("\"text\": \"no drift\"", agent.OutputText, StringComparison.Ordinal);
         Assert.False(run.Groups[0].IsForEach);
@@ -52,7 +52,7 @@ public sealed class RunDetailViewModelTests
         var run = await _f.OpenedRun(Token);
 
         var agent = Assert.Single(run.Groups[0].Runs);
-        Assert.Equal(("● Running", "● Running", false, false), (run.ChipText, agent.ChipText, agent.HasOutput, run.HasOutputs));
+        Assert.Equal(("● Running", "● Running", false, false), (run.ChipGlyph + " " + run.ChipWord, agent.ChipGlyph + " " + agent.ChipWord, agent.HasOutput, run.HasOutputs));
         Assert.Equal("Started 4m ago", run.WhenText);
     }
 
@@ -105,8 +105,8 @@ public sealed class RunDetailViewModelTests
         var run = await _f.OpenedRun(Token);
 
         var agent = run.Groups[0].Runs[0];
-        Assert.Equal(("✕ Failed", "boom", true), (agent.ChipText, agent.ErrorText, agent.HasError));
-        Assert.Equal(("✕ Failed", "node 'agent' failed", true), (run.ChipText, run.ErrorText, run.HasError));
+        Assert.Equal(("✕ Failed", "boom", true), (agent.ChipGlyph + " " + agent.ChipWord, agent.ErrorText, agent.HasError));
+        Assert.Equal(("✕ Failed", "node 'agent' failed", true), (run.ChipGlyph + " " + run.ChipWord, run.ErrorText, run.HasError));
         Assert.Equal("agent, failed, boom", agent.Name);
     }
 
@@ -124,7 +124,7 @@ public sealed class RunDetailViewModelTests
 
         var run = await _f.OpenedRun(Token);
 
-        Assert.Equal(expected, run.Groups[0].Runs[0].ChipText);
+        Assert.Equal(expected, run.Groups[0].Runs[0].ChipGlyph + " " + run.Groups[0].Runs[0].ChipWord);
     }
 
     [Fact]
@@ -155,6 +155,6 @@ public sealed class RunDetailViewModelTests
         Assert.Equal((false, string.Empty, true), (page.Run.IsFailed, page.Run.FailedText, page.Run.IsReading));
         gate.SetResult();
         await opening;
-        Assert.Equal((false, "✓ Succeeded"), (page.Run.IsFailed, page.Run.ChipText));
+        Assert.Equal((false, "✓ Succeeded"), (page.Run.IsFailed, page.Run.ChipGlyph + " " + page.Run.ChipWord));
     }
 }

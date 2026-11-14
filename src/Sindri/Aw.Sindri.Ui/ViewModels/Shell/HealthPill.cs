@@ -25,6 +25,15 @@ internal sealed class HealthPill : ObservableObject
     /// <summary>The state's word. After three failed refreshes it stays "stale"; the shell's banner says Sindri isn't responding.</summary>
     public string Word { get; private set => Set(ref field, value); } = Labels.Connecting;
 
+    /// <summary>The Control plane card's glyph: the pill's, but without the profile override, since the profile is not a control-plane row.</summary>
+    public StateGlyph ProcessGlyph { get; private set => Set(ref field, value); } = StateGlyph.None;
+
+    /// <summary>The Control plane card's word: the pill's, but without the unreadable-profile override (a missing profile still reads Not set up).</summary>
+    public string ProcessWord { get; private set => Set(ref field, value); } = Labels.Connecting;
+
+    /// <summary>The Control plane card's accessible name: <see cref="Text"/> with <see cref="ProcessWord"/> in place of the word.</summary>
+    public string ProcessText { get; private set => Set(ref field, value); } = Labels.Connecting;
+
     /// <summary>"updated Ns ago" once connected, "stale" when unreadable, or empty.</summary>
     public string Age
     {
@@ -82,25 +91,16 @@ internal sealed class HealthPill : ObservableObject
     /// <param name="age">How long since the views were last heard from.</param>
     /// <param name="notResponding">True after three failed refreshes while stale.</param>
     /// <param name="health">The status's health (E-14), or null before API P2.</param>
-    /// <param name="profileMissing">True on a home with no profile yet: the pill then says Not set up instead of Healthy.</param>
-    internal void Show(ShellState state, TimeSpan age, bool notResponding, HealthView? health = null, bool profileMissing = false)
+    /// <param name="profile">What the profile file says beside the server's word: missing or unreadable.</param>
+    internal void Show(ShellState state, TimeSpan age, bool notResponding, HealthView? health = null, PillProfile profile = default)
     {
-        var unset = profileMissing && IsHealthyWord(health);   // a missing profile is not a fault, but the pill must not say Healthy beside it
-        (Glyph, Word, Age) = state switch
-        {
-            ShellState.Normal when unset => (StateGlyph.None, Labels.NotSetUp, Labels.UpdatedAgo(age)),
-            ShellState.Normal when health is not null => (Glyphs(health.Word), Labels.HealthWord(health.Word), Labels.UpdatedAgo(age)),
-            ShellState.Normal => (StateGlyph.Ok, Labels.Running, Labels.UpdatedAgo(age)),
-            ShellState.Stale => (StateGlyph.Stale, Labels.Stale, Labels.UpdatedAgo(age)),
-            ShellState.NotRunning => (StateGlyph.Down, Labels.NotRunning, string.Empty),
-            ShellState.Unreadable => (StateGlyph.Down, Labels.Unreadable, Labels.Stale),
-            ShellState.VersionMismatch => (StateGlyph.Down, Labels.VersionMismatch, string.Empty),
-            ShellState.Connecting => (StateGlyph.None, Labels.Connecting, string.Empty),
-            _ => throw new ArgumentOutOfRangeException(nameof(state), state, message: null),
-        };
+        var normal = NormalWord(health, profile);
+        (Glyph, Word, Age) = Words(state, age, normal);
+        (ProcessGlyph, ProcessWord, _) = Words(state, age, NormalWord(health, profile with { Unreadable = false }));
         Problems = state == ShellState.Normal && health is not null ? string.Join(" · ", health.Problems.Where(p => !_viewsCodes.Contains(p.Code)).Select(p => p.Clause ?? p.Text)) : string.Empty;
         Text = string.Join(" · ", ((string[])[Word, Age, Problems]).Where(t => t.Length > 0));
-        IsHealthy = state == ShellState.Normal && !unset && IsHealthyWord(health);
+        ProcessText = string.Join(" · ", ((string[])[ProcessWord, Age, Problems]).Where(t => t.Length > 0));
+        IsHealthy = state == ShellState.Normal && normal.Healthy;
         var stale = state == ShellState.Stale;
         if (stale != IsStale)
         {
@@ -111,6 +111,35 @@ internal sealed class HealthPill : ObservableObject
         IsNotResponding = stale && notResponding;
         IsDataStale = state is ShellState.Stale or ShellState.Unreadable;
         IsDown = state is ShellState.NotRunning or ShellState.Unreadable or ShellState.VersionMismatch;
+    }
+
+    /// <summary>What the profile file says beside the server's health word: the server ignores the profile, so the pill must not trust a "healthy" next to a missing or unreadable one.</summary>
+    /// <param name="Missing">True on a home with no profile yet: the pill says Not set up instead of Healthy.</param>
+    /// <param name="Unreadable">True when the profile file can't be read: the pill says needs a look instead of Healthy.</param>
+    internal readonly record struct PillProfile(bool Missing = false, bool Unreadable = false);
+
+    private static (StateGlyph Glyph, string Word, string Age) Words(ShellState state, TimeSpan age, (StateGlyph Glyph, string Word, bool Healthy) normal) => state switch
+    {
+        ShellState.Normal => (normal.Glyph, normal.Word, Labels.UpdatedAgo(age)),
+        ShellState.Stale => (StateGlyph.Stale, Labels.Stale, Labels.UpdatedAgo(age)),
+        ShellState.NotRunning => (StateGlyph.Down, Labels.NotRunning, string.Empty),
+        ShellState.Unreadable => (StateGlyph.Down, Labels.Unreadable, Labels.Stale),
+        ShellState.VersionMismatch => (StateGlyph.Down, Labels.VersionMismatch, string.Empty),
+        ShellState.Connecting => (StateGlyph.None, Labels.Connecting, string.Empty),
+        _ => throw new ArgumentOutOfRangeException(nameof(state), state, message: null),
+    };
+
+    // The word, glyph and healthy flag for a running shell: the profile overrides a "healthy" word only.
+    private static (StateGlyph Glyph, string Word, bool Healthy) NormalWord(HealthView? health, PillProfile profile)
+    {
+        var healthy = IsHealthyWord(health);
+        return (healthy, health) switch
+        {
+            (true, _) when profile.Unreadable => (StateGlyph.Warning, Labels.PillNeedsLook, false),
+            (true, _) when profile.Missing => (StateGlyph.None, Labels.NotSetUp, false),
+            (_, not null) => (Glyphs(health.Word), Labels.HealthWord(health.Word), healthy),
+            _ => (StateGlyph.Ok, Labels.Running, true),
+        };
     }
 
     private static bool IsHealthyWord(HealthView? health) => health is null || string.Equals(health.Word, "healthy", StringComparison.Ordinal);

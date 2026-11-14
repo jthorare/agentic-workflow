@@ -27,7 +27,7 @@ public sealed class LaunchTargetsReader(ILedgerReader ledger, EventFactory event
             return latest.Error;
         }
 
-        var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
+        var approved = await approvals.ForRead(cancellationToken).ConfigureAwait(false);
         if (approved.IsError)
         {
             return approved.Error;

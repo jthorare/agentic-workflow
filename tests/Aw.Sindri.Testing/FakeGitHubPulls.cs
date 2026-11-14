@@ -27,7 +27,7 @@ public sealed class FakeGitHubPulls
 
     /// <summary>Answers a GET of one pull request.</summary>
     /// <param name="uri">The request URI.</param>
-    /// <returns>The answer, or null when the URI is not /repos/{owner}/{name}/pulls/{n}.</returns>
+    /// <returns>The answer, or null when the URI is not /repos/{owner}/{name}/pulls/{n} or the pull was never added (FakeProvider then answers it).</returns>
     internal HttpResponseMessage? Answer(Uri uri)
     {
         var segments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
@@ -40,7 +40,7 @@ public sealed class FakeGitHubPulls
         {
             return _pulls.TryGetValue(number, out var pull)
                 ? new HttpResponseMessage(pull.Status) { Content = new StringContent(pull.Body, Encoding.UTF8, "application/json") }
-                : new HttpResponseMessage(HttpStatusCode.NotFound);
+                : null;
         }
     }
 }

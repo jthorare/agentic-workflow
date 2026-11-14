@@ -72,6 +72,24 @@ public sealed class QueryFetchWindowTests
         Assert.Null(result.Value.Matches);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_item_no_sync_linked_reads_every_match_so_a_record_ranked_2nd_still_answers_through_a_window_of_1()
+    {
+        // why: the record that carries the tracker key may rank past the page; a windowed fetch would read rank 1 only and wrongly say unknown
+        var docs = new FakeContextSource(new SourceDescriptor(RepoDocs.Id, SourceKind.Doc, SourceFreshness.Snapshot, SupportsAsOf: false),
+        [
+            FakeContextSource.Chunk("docs/notes/001.md", 1, "zeta 77 is mentioned here with the key words.", "v001"),
+            FakeContextSource.Chunk("docs/notes/002.md", 2, "zeta carries the key.", "v002") with { Aliases = ["ZETA-77"] },
+        ]);
+
+        var result = await Engines.Over(docs).Query(new ContextQuery(Text: null, Item: "ZETA-77") { Window = new QueryWindow(0, 1) }, Engines.Human(), Token);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, docs.BatchedReads);   // the window is ignored for an unlinked key
+        Assert.Contains(Records(result.Value), static i => i.Text != null && i.Text.Contains("zeta carries the key", StringComparison.Ordinal));
+        Assert.Null(result.Value.Matches);
+    }
+
     private static List<ResultItem> Records(ContextResult result) =>
         [.. result.Sections.Where(static s => s.Name == "records").SelectMany(static s => s.Items)];
 

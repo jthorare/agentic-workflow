@@ -18,8 +18,14 @@ check() {
   fi
 }
 has() { # has <name> <text> <fixed string>
-  if printf '%s' "$2" | grep -qF -- "$3"; then echo "ok - $1"; else echo "not ok - $1"; echo "  missing: $3"; echo "  in: $2"; fail=1; fi
+  # No `printf | grep -q`: under pipefail grep's early exit kills printf with SIGPIPE and a present needle reads as missing (#3551).
+  case "$2" in *"$3"*) echo "ok - $1" ;; *) echo "not ok - $1"; echo "  missing: $3"; echo "  in: $2"; fail=1 ;; esac
 }
+# #3551: `has` was `printf | grep -q` under pipefail. printf writes one line per write(), and grep -q exits at the first match, so
+# a later write hit a closed pipe, printf died of SIGPIPE and pipefail made `has` say "missing" for text that was there. It fired when
+# the box was slow enough for grep to exit between two writes. 100 KB of lines after the needle makes it happen every time.
+needle_first="$(printf 'AW_SINDRI_STOP_OK=1: going on\n'; head -c 100000 /dev/zero | tr '\0' x | fold -w 80)"
+has "has finds a needle on the first line of a 100 KB output" "$needle_first" "AW_SINDRI_STOP_OK=1: going on"
 WORK="$(cd "$(mktemp -d)" && pwd -P)"
 serve_pid=""
 cleanup() { if [ -n "$serve_pid" ]; then kill "$serve_pid" 2> /dev/null; fi; find "$WORK" -delete 2> /dev/null; }   # by recorded pid only
@@ -481,9 +487,10 @@ case " \$* " in *" ls-files "*) n="\$(cat "$WORK/failgit/n" 2> /dev/null || echo
 exec "$REALGIT" "\$@"
 STUB
 chmod +x "$WORK/failgit/git"
+cp "$REPO/src/Judge/Aw.Judge.Host/J.cs" "$WORK/J.cs.before"
 echo "git fails" >> "$REPO/src/Judge/Aw.Judge.Host/J.cs"
 fgout="$(PATH="$WORK/failgit:$PATH" bash "$INSTALL" --publish 2>&1)" && fgrc=0 || fgrc=$?
-sed -i '$d' "$REPO/src/Judge/Aw.Judge.Host/J.cs"
+mv "$WORK/J.cs.before" "$REPO/src/Judge/Aw.Judge.Host/J.cs"  # copy back, not an in-place sed edit: BSD sed differs (#3575)
 check "git failing in the per-binary hashes: the publish exits 1" "$fgrc" "1"
 has "git failing in the per-binary hashes: says which step failed" "$fgout" "git ls-files failed"
 

@@ -36,6 +36,7 @@ internal sealed class RepoHealths(IRepoHeads heads, IJobViews jobs, IServicePaus
     // why: a failed running-jobs read can't tell queued from building, so it neither starts nor forgets the count (#3481)
     private RepoHealth Timed(RepoHealth health, DateTimeOffset now, bool blind) => blind ? health with { QueuedFor = null } : health with { QueuedFor = queued.For(health.Repo, health.State == "queued", now) };
 
-    // why: doctor's rule is the one rule, so the System card and `sindri doctor` can't disagree (#3430)
-    private static RepoHealth Looked(RepoStatus status, RepoHealth health) => health with { NeedsLook = CodeIndexProblems.For(status, health) is not null };
+    // why: doctor's rule is the one rule, so the System card and `sindri doctor` can't disagree (#3430); its words go with it, so the card's line says why (#3515)
+    private static RepoHealth Looked(RepoStatus status, RepoHealth health) =>
+        CodeIndexProblems.For(status, health) is { } problem ? health with { NeedsLook = true, LookWords = problem.Text } : health with { NeedsLook = false, LookWords = null };
 }

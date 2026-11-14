@@ -104,8 +104,9 @@ public sealed class NeedsYouOutlineTests : FrameHost
         Settle(window);
         Assert.Contains(":pressed", frame.Classes, StringComparer.Ordinal);
         // A press selects the row, and a selected outlined row draws the selection bar (A_selected_outlined_row_keeps_the_selection_bar_colour).
+        // While pressed the bar is PrimaryHover: Primary is 2.93:1 on the pressed fill, PrimaryHover 4.80:1 (#3517).
         Assert.Contains("selected", frame.Classes, StringComparer.Ordinal);
-        Assert.Equal((Brush("Brush.Clickable.Pressed"), Brush("Brush.Primary")), (((ISolidColorBrush)frame.Background!).Color, ((ISolidColorBrush)frame.BorderBrush!).Color));
+        Assert.Equal((Brush("Brush.Clickable.Pressed"), Brush("Brush.PrimaryHover")), (((ISolidColorBrush)frame.Background!).Color, ((ISolidColorBrush)frame.BorderBrush!).Color));
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
     });
 

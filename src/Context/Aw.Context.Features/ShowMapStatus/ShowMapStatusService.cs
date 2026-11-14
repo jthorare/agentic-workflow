@@ -41,12 +41,27 @@ internal sealed class ShowMapStatusService(IGraphStore store) : IService<ShowMap
             return coverage.Error;
         }
 
-        var orphaned = OverrideApplier.Apply(shown, layer).Orphaned.Count;
-        return new MapStatusView(version, MapCounts.Of(shown, layer.Count), orphaned, versions.Value.Count(v => v.Status == MapVersionStatus.Retained), ScopedTo(request.Scope.Caller), coverage.Value)
+        var retained = versions.Value.Count(v => v.Status == MapVersionStatus.Retained);
+        return await Status(new StatusParts(version, retained, shown, layer, coverage.Value), request.Scope, cancellationToken).ConfigureAwait(false);
+    }
+
+    // The view of the current version as the caller reads it, with the commit of every repo it maps (issue 3308).
+    private async ValueTask<Result<MapStatusView>> Status(StatusParts parts, ContextScope scope, CancellationToken cancellationToken)
+    {
+        var (version, retained, shown, layer, coverage) = parts;
+        var heads = await store.Heads(version.Number, cancellationToken).ConfigureAwait(false);
+        if (heads.IsError)
         {
-            RulesOlder = RulesOlder(version, request.Scope),
+            return heads.Error;
+        }
+
+        var orphaned = OverrideApplier.Apply(shown, layer).Orphaned.Count;
+        return new MapStatusView(version, MapCounts.Of(shown, layer.Count), orphaned, retained, ScopedTo(scope.Caller), coverage)
+        {
+            RulesOlder = RulesOlder(version, scope),
             Checks = version.Checks,
-            Roles = Roles(shown, version, request.Scope),
+            Roles = Roles(shown, version, scope),
+            Heads = Heads(heads.Value, ScopedTo(scope.Caller)),
         };
     }
 
@@ -62,6 +77,13 @@ internal sealed class ShowMapStatusService(IGraphStore store) : IService<ShowMap
         return counted.Count == 0 ? null : counted;
     }
 
+    // Every mapped repo with its commit (issue 3308), a session's own only; null (left out) when the version recorded none.
+    private static IReadOnlyList<MapHead>? Heads(IReadOnlyList<MapHead> heads, ContextRepoName? own)
+    {
+        var shown = own is null ? heads : [.. heads.Where(h => h.Repo == own)];
+        return shown.Count == 0 ? null : shown;
+    }
+
     private static ContextRepoName? ScopedTo(ContextCaller caller) => caller.Kind == ContextCallerKind.Session ? caller.Repo : null;
 
     // The coverage of the anchor's own scope over the map as a caller reads it (overrides applied, a pending proposal not part of the current map): the lenses' record.
@@ -70,4 +92,7 @@ internal sealed class ShowMapStatusService(IGraphStore store) : IService<ShowMap
         var node = AnchorMatch.Resolve(applied, anchor, repos);
         return node.IsError ? node.Error : Results.Success<LensCoverage?>(LensCoverageBuilder.ForAnchor(applied, node.Value.Key));
     }
+
+    // What Handle has read and checked, handed to Status in one piece (AW1006: at most 5 parameters).
+    private sealed record StatusParts(MapVersion Version, int Retained, GraphSnapshot Shown, IReadOnlyList<MapOverride> Layer, LensCoverage? Coverage);
 }

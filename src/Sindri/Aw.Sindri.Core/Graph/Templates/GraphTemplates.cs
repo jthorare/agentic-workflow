@@ -1,18 +1,18 @@
 namespace Aw.Sindri.Core.Graph.Templates;
 
 /// <summary>The starter templates. Each call builds fresh copies, so a caller may edit a spec without changing the next caller's.</summary>
-public static class GraphTemplates
+public static partial class GraphTemplates
 {
     private static readonly (string Name, string Description, string Json)[] _sources =
     [
         (
             "weekday-check",
             "Every weekday at 7:00 ask the model a question and send a notification only when its answer is flagged.",
-            """{"version":1,"name":"Weekday check","nodes":[ {"id":"weekdays","type":"schedule","title":"Every weekday at 7:00","config":{"cron":"0 7 * * 1-5","timezone":"@machine-timezone@"}}, {"id":"check","type":"prompt","title":"Check","config":{"prompt":"Check whether anything needs attention today. Set flagged to true when it does, and summarize why.","output":{"type":"object","required":["flagged","summary"],"properties":{"flagged":{"type":"boolean"},"summary":{"type":"string"}}}}}, {"id":"gate","type":"condition","title":"Flagged?","config":{"when":"check.flagged"}}, {"id":"tell","type":"notify","title":"Tell me","config":{"title":"Needs attention","body":"{{check.summary}}"}} ],"edges":[ {"from":"weekdays","to":"check"}, {"from":"check","to":"gate"}, {"from":"gate","output":"true","to":"tell"} ]}"""),
+            """{"version":1,"name":"Weekday check","nodes":[ {"id":"weekdays","type":"schedule","title":"Every weekday at 7:00","config":{"cron":"0 7 * * 1-5","timezone":"@machine-timezone@"}}, {"id":"check","type":"prompt","title":"Check","config":{"prompt":"Today is {{weekdays.weekday}} ({{weekdays.localDate}}). Is today a Friday? Set flagged to true when it is, and set summary to: Friday: review your open pull requests before the weekend.","output":{"type":"object","required":["flagged","summary"],"properties":{"flagged":{"type":"boolean"},"summary":{"type":"string"}}}}}, {"id":"gate","type":"condition","title":"Flagged?","config":{"when":"check.flagged"}}, {"id":"tell","type":"notify","title":"Tell me","config":{"title":"Needs attention","body":"{{check.summary}}"}} ],"edges":[ {"from":"weekdays","to":"check"}, {"from":"check","to":"gate"}, {"from":"gate","output":"true","to":"tell"} ]}"""),
         (
             "daily-digest",
             "Every day at 9:00 ask the model for a summary and send it as a notification.",
-            """{"version":1,"name":"Daily digest","nodes":[ {"id":"daily","type":"schedule","title":"Every day at 9:00","config":{"cron":"0 9 * * *","timezone":"@machine-timezone@"}}, {"id":"digest","type":"prompt","title":"Write the digest","config":{"prompt":"Write a short summary of what to look at today.","output":{"type":"object","required":["summary"],"properties":{"summary":{"type":"string"}}}}}, {"id":"tell","type":"notify","title":"Send it","config":{"title":"Daily digest","body":"{{digest.summary}}"}} ],"edges":[ {"from":"daily","to":"digest"}, {"from":"digest","to":"tell"} ]}"""),
+            """{"version":1,"name":"Daily digest","nodes":[ {"id":"daily","type":"schedule","title":"Every day at 9:00","config":{"cron":"0 9 * * *","timezone":"@machine-timezone@"}}, {"id":"digest","type":"prompt","title":"Write the digest","config":{"prompt":"Today is {{daily.weekday}} ({{daily.localDate}}). Write one short line for the start of the day: the weekday, and one thing worth doing on that day of the week (for example Monday: plan the week, Friday: close open reviews).","output":{"type":"object","required":["summary"],"properties":{"summary":{"type":"string"}}}}}, {"id":"tell","type":"notify","title":"Send it","config":{"title":"Daily digest","body":"{{digest.summary}}"}} ],"edges":[ {"from":"daily","to":"digest"}, {"from":"digest","to":"tell"} ]}"""),
         (
             "manual-notify",
             "A button you press: it sends one notification. The smallest workflow to start from.",
@@ -28,10 +28,16 @@ public static class GraphTemplates
 
     /// <summary>Finds a template by name.</summary>
     /// <param name="name">The name.</param>
+    /// <param name="ci">The repo's CI to read, or null for the plain template. Only weekday-check and daily-digest use it.</param>
     /// <returns>The template, or null.</returns>
-    public static GraphTemplate? Find(string name)
+    public static GraphTemplate? Find(string name, GitHubCiSource? ci = null)
     {
         ArgumentNullException.ThrowIfNull(name);
+        if (ci is not null && CiTemplate(name, ci) is { } withCi)
+        {
+            return withCi;
+        }
+
         var source = _sources.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.Ordinal));
         return source.Name is null ? null : Build(source);
     }

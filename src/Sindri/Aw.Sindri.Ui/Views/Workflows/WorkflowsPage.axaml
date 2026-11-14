@@ -96,9 +96,7 @@
                     <Button Classes="row-title" Focusable="False" Margin="-2,0" Click="OnOpenWorkflow" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
                       <TextBlock Classes="body-strong" Text="{Binding NameText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
-                    <Border Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Classes="status-chip" Classes.ok="{Binding IsOk}" Classes.attention="{Binding IsAttention}" Classes.error="{Binding IsError}" AutomationProperties.Name="{Binding StateText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-                      <TextBlock Text="{Binding StateText}" AutomationProperties.AccessibilityView="Raw" />
-                    </Border>
+                    <controls:StateChipView Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Word="{Binding ChipWord}" Tone="{Binding ChipToneWord}" Glyph="{Binding ChipGlyph}" />
                     <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
                       <TextBlock Classes="caption subtle mono" Text="{Binding IdText}" IsVisible="{Binding HasIdText}" />
                       <TextBlock Classes="caption subtle" Text="{Binding RevisionText}" IsVisible="{Binding HasRevisionText}" />
@@ -171,9 +169,7 @@
                     <Button Classes="row-title" Margin="-2,0" Click="OnOpenRun" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
                       <TextBlock Classes="body-strong mono" Text="{Binding Id}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
-                    <Border Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Classes="status-chip" Classes.ok="{Binding IsOk}" Classes.attention="{Binding IsAttention}" Classes.error="{Binding IsError}" AutomationProperties.Name="{Binding ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-                      <TextBlock Text="{Binding ChipText}" AutomationProperties.AccessibilityView="Raw" />
-                    </Border>
+                    <controls:StateChipView Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Word="{Binding ChipWord}" Tone="{Binding ChipToneWord}" Glyph="{Binding ChipGlyph}" />
                     <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
                       <TextBlock Classes="caption subtle" Text="{Binding TriggerText}" />
                       <TextBlock Classes="caption subtle" Text="{Binding RevisionText}" />
@@ -193,9 +189,7 @@
     <StackPanel x:Name="WorkflowRunLevel" Spacing="{StaticResource Size.PanelGap}" IsVisible="{Binding IsRun}">
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock x:Name="RunTitle" Classes="body-strong mono" Text="{Binding Run.TitleText}" AutomationProperties.Name="{Binding Run.TitleText}" />
-        <Border x:Name="RunChipName" Classes="status-chip" Classes.ok="{Binding Run.IsOk}" Classes.attention="{Binding Run.IsAttention}" Classes.error="{Binding Run.IsError}" AutomationProperties.Name="{Binding Run.ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-          <TextBlock x:Name="RunChip" Text="{Binding Run.ChipText}" AutomationProperties.AccessibilityView="Raw" />
-        </Border>
+        <controls:StateChipView x:Name="RunChipName" Word="{Binding Run.ChipWord}" Tone="{Binding Run.ChipToneWord}" Glyph="{Binding Run.ChipGlyph}" />
         <Button x:Name="RunCancel" Content="{Binding Run.CancelText}" Click="OnCancelRun" IsVisible="{Binding Run.CanCancel}" IsEnabled="{Binding Run.CanPressCancel}" AutomationProperties.Name="{Binding Run.CancelText}" />
       </StackPanel>
       <Border x:Name="RunNoticeName" IsVisible="{Binding Run.HasNotice}" AutomationProperties.Name="{Binding Run.NoticeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
@@ -244,7 +238,7 @@
                         <StackPanel Spacing="4" Margin="0,4">
                           <StackPanel Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
                             <TextBlock Classes="body-strong" Text="{Binding TitleText}" />
-                            <Border Classes="status-chip" Classes.ok="{Binding IsOk}" Classes.attention="{Binding IsAttention}" Classes.error="{Binding IsError}"><TextBlock Text="{Binding ChipText}" /></Border>
+                            <controls:StateChipView Word="{Binding ChipWord}" Tone="{Binding ChipToneWord}" Glyph="{Binding ChipGlyph}" />
                           </StackPanel>
                           <Button HorizontalAlignment="Left" Content="{Binding TakeOverText}" Click="OnTakeOverNode" IsVisible="{Binding CanTakeOver}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding TakeOverText}" />
                           <Button HorizontalAlignment="Left" Content="{Binding HandBackText}" Click="OnHandBackNode" IsVisible="{Binding CanHandBack}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding HandBackText}" />

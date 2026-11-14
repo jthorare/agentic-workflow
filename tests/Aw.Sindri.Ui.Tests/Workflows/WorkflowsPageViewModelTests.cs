@@ -19,8 +19,8 @@ public sealed class WorkflowsPageViewModelTests
 
         Assert.Equal(2, page.Rows.Count);
         var (active, off) = (page.Rows[0], page.Rows[1]);
-        Assert.Equal(("Morning check", "● Active", string.Empty, "Changed by owner, 5m ago"), (active.NameText, active.StateText, active.RevisionText, active.ChangedText));
-        Assert.Equal(("Weekly report", "○ Off", string.Empty), (off.NameText, off.StateText, off.RevisionText));
+        Assert.Equal(("Morning check", "● Active", string.Empty, "Changed by owner, 5m ago"), (active.NameText, active.ChipGlyph + " " + active.ChipWord, active.RevisionText, active.ChangedText));
+        Assert.Equal(("Weekly report", "○ Off", string.Empty), (off.NameText, off.ChipGlyph + " " + off.ChipWord, off.RevisionText));
         Assert.Equal("Morning check, active, changed by owner, 5m ago", active.Name);
         Assert.Equal("2 workflows · 1 active", page.Head);
         Assert.Equal((false, true, false, false), (page.IsReading, page.IsList, page.IsRuns, page.IsRun));
@@ -105,7 +105,7 @@ public sealed class WorkflowsPageViewModelTests
         Assert.Equal((false, true, false), (page.IsList, page.IsRuns, page.IsRun));
         Assert.Equal(("Morning check", "1 running · 3 runs"), (page.Runs.Title, page.Runs.Head));
         Assert.Equal(["morning-check@1:3", "morning-check@1:2", "morning-check@1:1"], page.Runs.Rows.Select(r => r.Id), StringComparer.Ordinal);
-        Assert.Equal(["● Running", "✕ Failed", "✓ Succeeded"], page.Runs.Rows.Select(r => r.ChipText), StringComparer.Ordinal);
+        Assert.Equal(["● Running", "✕ Failed", "✓ Succeeded"], page.Runs.Rows.Select(r => r.ChipGlyph + " " + r.ChipWord), StringComparer.Ordinal);
         Assert.Equal(["Manual", "Schedule", "Manual"], page.Runs.Rows.Select(r => r.TriggerText), StringComparer.Ordinal);
     }
 

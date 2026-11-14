@@ -133,6 +133,103 @@ public sealed class SetupViewModelTests
         Assert.Equal(("Run hello-sindri", "Done"), (Step(setup, "first-workflow").Title, Step(setup, "first-workflow").ChipWord));
     }
 
+    private const string UnreadableFix = "The profile file is there but can't be read; check its permissions.";
+
+    internal static System.Text.Json.Nodes.JsonNode UnreadableProfile()
+    {
+        var list = Golden("first-run");
+        foreach (var (step, why) in (ReadOnlySpan<(string, string)>)[
+            ("repo", "Sindri couldn't read your profile, so it can't tell which repositories are added."),
+            ("profile", "Sindri couldn't read your profile."),
+            ("agent", "Sindri couldn't read your profile, so it can't tell which agent runs workflows."),
+            ("first-workflow", "Sindri couldn't read your profile, so it can't run a workflow.")])
+        {
+            list = WithFailure(list, step, why, why, UnreadableFix);
+        }
+
+        return list;
+    }
+
+    [Fact]
+    public async Task An_unreadable_profile_says_its_fix_once_for_the_page_and_on_no_step()
+    {
+        _f.Serve(UnreadableProfile());
+
+        var setup = await _f.Read(Token);
+
+        Assert.Equal((true, UnreadableFix), (setup.HasProblem, setup.ProblemText));
+        Assert.All(setup.Steps.Where(s => s.IsFailed), s => Assert.Equal((false, string.Empty), (s.HasDetail, s.DetailText)));   // #3610: was on 4 steps
+    }
+
+    [Fact]
+    public async Task A_failed_step_with_nothing_to_show_stays_closed_and_one_with_a_body_opens()
+    {
+        _f.Serve(UnreadableProfile());
+
+        var steps = (await _f.Read(Token)).Steps;
+        var failed = steps.Where(s => s.IsFailed).ToList();
+
+        Assert.Contains(failed, s => !s.HasBody);   // #3616: the profile steps whose fix and band moved to the page
+        Assert.All(failed, s => Assert.Equal(s.HasBody, s.IsOpen));
+        Assert.Equal((true, true), (Step(await _f.Read(Token), "repo").HasBody, Step(await _f.Read(Token), "repo").IsOpen));   // the repo form is its body
+    }
+
+    [Fact]
+    public async Task A_step_updated_to_failed_with_an_empty_body_stays_closed_until_it_gains_one()
+    {
+        var setup = _f.Setup();
+        _f.Serve(Golden("first-run"));
+        await setup.Refresh(Url, Token);
+        var why = "Sindri couldn't read your profile, so it can't run a workflow.";
+        _f.Serve(WithFailure(Golden("first-run"), "first-workflow", why, why, detail: null));
+        await setup.Refresh(Url, Token);
+
+        var step = Step(setup, "first-workflow");
+        Assert.Equal((false, false), (step.HasBody, step.IsOpen));
+
+        _f.Serve(WithFailure(Golden("first-run"), "first-workflow", why, why, "Pick the folder that holds .git."));
+        await setup.Refresh(Url, Token);
+
+        Assert.Equal((true, true), (step.HasBody, step.IsOpen));
+    }
+
+    [Fact]
+    public async Task A_failed_steps_band_does_not_repeat_the_line_under_its_title()
+    {
+        _f.Serve(UnreadableProfile());
+
+        var repo = Step(await _f.Read(Token), "repo");
+
+        Assert.Equal("Sindri couldn't read your profile, so it can't tell which repositories are added.", repo.Sub);
+        Assert.Equal((false, string.Empty), (repo.HasError, repo.ErrorText));   // the chip says Failed and the line under the title says why
+    }
+
+    [Fact]
+    public async Task A_fix_on_one_failed_step_stays_on_that_step_and_the_page_has_no_line()
+    {
+        _f.Serve(WithFailure(Golden("first-run"), "repo", "Sindri couldn't add the repository.", "The folder is not a git repository.", "Pick the folder that holds .git."));
+
+        var setup = await _f.Read(Token);
+        var repo = Step(setup, "repo");
+
+        Assert.Equal((false, string.Empty), (setup.HasProblem, setup.ProblemText));
+        Assert.Equal(("Pick the folder that holds .git.", "The folder is not a git repository."), (repo.DetailText, repo.ErrorText));
+    }
+
+    [Fact]
+    public async Task A_steps_fix_sits_under_the_band_only_when_it_failed_and_above_the_meter_otherwise()
+    {
+        var list = WithFailure(Golden("first-run"), "repo", "Sindri couldn't add the repository.", "The folder is not a git repository.", "Pick the folder that holds .git.");
+        list = WithProgress(With(list, "map", "running"), "map", 3, 10);
+        list["steps"]!.AsArray().Single(s => (string)s!["id"]! == "map")!["detail"] = "Reading the code.";
+        _f.Serve(list);
+
+        var setup = await _f.Read(Token);
+
+        Assert.Equal((false, true), (Step(setup, "repo").HasDetailAbove, Step(setup, "repo").HasDetailBelow));
+        Assert.Equal((true, false), (Step(setup, "map").HasDetailAbove, Step(setup, "map").HasDetailBelow));   // qa on #3615: a building map keeps its fix above the meter
+    }
+
     private async Task<SetupViewModel> ReadWith(string scenario)
     {
         _f.Serve(scenario);

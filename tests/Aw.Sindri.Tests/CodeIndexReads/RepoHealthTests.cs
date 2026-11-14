@@ -108,6 +108,35 @@ public sealed class RepoHealthTests
     public void A_damaged_index_on_the_default_branch_stays_damaged_not_queued(bool buildServiceActive)
         => Assert.Equal("damaged", Of(new RepoStatus(_repo, IndexState.Damaged, Commit: null, BuiltAt: null, [], Counts: null), new IndexRepoHead(_repo, _new, OnDefaultBranch: true)).Unqueued(buildServiceActive).State);
 
+    // #3561: paused, a repo in backoff gets no retry, so it must not read as waiting; the flag lets the card name the pause and the doctor's resume.
+    [Fact, Trait("Lane", "unit")]
+    public void A_repo_in_backoff_is_not_waiting_to_retry_while_code_index_main_move_is_paused()
+    {
+        var health = Of(Built(), new IndexRepoHead(_repo, _new, OnDefaultBranch: true), Job(JobState.Failed, TimeSpan.FromSeconds(10))).Unqueued(buildServiceActive: false);
+
+        Assert.Equal((true, null), (health.Paused, health.Waiting));
+        Assert.NotEqual("waiting", health.State, StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_repo_with_no_index_carries_the_pause_while_code_index_main_move_is_paused()
+        => Assert.True(Of(Missing(), new IndexRepoHead(_repo, _new, OnDefaultBranch: true)).Unqueued(buildServiceActive: false).Paused);
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_stale_repo_carries_the_pause_while_code_index_main_move_is_paused()
+        => Assert.True(Of(Built(), new IndexRepoHead(_repo, _new, OnDefaultBranch: true)).Unqueued(buildServiceActive: false).Paused);
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_current_index_and_a_running_build_do_not_carry_the_pause()
+    {
+        Assert.False(Of(Built(), new IndexRepoHead(_repo, _old, OnDefaultBranch: true)).Unqueued(buildServiceActive: false).Paused);
+        Assert.False(Of(Built(), new IndexRepoHead(_repo, _new, OnDefaultBranch: true), Job(JobState.Running, TimeSpan.Zero)).Unqueued(buildServiceActive: false).Paused);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void No_repo_carries_the_pause_while_code_index_main_move_runs()
+        => Assert.False(Of(Missing(), new IndexRepoHead(_repo, _new, OnDefaultBranch: true)).Unqueued(buildServiceActive: true).Paused);
+
     private static RepoStatus Missing() => new(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null);
 
     [Fact, Trait("Lane", "unit")]

@@ -19,5 +19,11 @@ public static partial class SindriErrors
     /// <summary>SND-AGENT-018: the one-off worktree was not removed: it has changes, or it is not a worktree a start made (agents spec §15.8); the message carries the git status summary.</summary>
     public static readonly ErrorDefinition AgentWorktreeKept = new("SND-AGENT-018", ErrorKind.Conflict, "The worktree was not removed");
 
-    private static ErrorDefinition[] EveryAgentStart() => [AgentRepoUnusable, AgentNotReady, AgentStartFailed, AgentPromptTooLong, AgentWorktreeKept];
+    /// <summary>SND-AGENT-015: the session has no tmux pane to attach (Warp, IDE, plain terminal; agents spec §15.8); the message carries the host kind.</summary>
+    public static readonly ErrorDefinition AgentNoPane = new("SND-AGENT-015", ErrorKind.Conflict, "The session has no tmux pane to attach");
+
+    /// <summary>SND-AGENT-016: the tmux server or the session is gone (agents spec §15.8). The spec says HTTP 410; ErrorKind has no gone kind, so it answers 404 until one is added.</summary>
+    public static readonly ErrorDefinition AgentPaneGone = new("SND-AGENT-016", ErrorKind.NotFound, "The tmux server or session is gone");
+
+    private static ErrorDefinition[] EveryAgentStart() => [AgentRepoUnusable, AgentNoPane, AgentPaneGone, AgentNotReady, AgentStartFailed, AgentPromptTooLong, AgentWorktreeKept];
 }

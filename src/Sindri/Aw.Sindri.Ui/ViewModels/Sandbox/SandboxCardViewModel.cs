@@ -78,7 +78,7 @@ internal sealed class SandboxCardViewModel : ObservableObject
             Learning = [];
             Blockers = [];
             Check.Seen(checkedAt: null);
-            Show(unreadable ? SandboxHealthState.Unreadable : SandboxHealthState.ServeDown, unreadable ? Labels.SandboxDetailsUnavailable : Labels.SandboxRowUnknown, StateGlyph.None);
+            Show(unreadable ? SandboxHealthState.Unreadable : SandboxHealthState.ServeDown, unreadable ? Labels.SandboxDetailsUnavailable : Labels.SandboxRowUnknown, StateGlyph.Down);
             return;
         }
 
