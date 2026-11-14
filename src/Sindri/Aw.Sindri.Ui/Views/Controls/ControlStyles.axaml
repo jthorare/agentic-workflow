@@ -469,6 +469,9 @@
   <Style Selector="controls|SelectableTile:disabled">
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
   </Style>
+  <Style Selector="controls|SelectableTile:disabled TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+  </Style>
   <!-- A quiet full-width group toggle (the Agents page's group heads): a hairline above, no radius. -->
   <Style Selector="Border.group-row Button.group-toggle">
     <Setter Property="BorderThickness" Value="0" />
