@@ -14,7 +14,7 @@ internal sealed partial class SetupStepViewModel : ObservableObject
     [
         nameof(Title), nameof(NumberText), nameof(Chip), nameof(ChipWord), nameof(Sub), nameof(DetailText), nameof(ProgressText), nameof(ProgressFraction), nameof(ErrorText), nameof(Items), nameof(Preview), nameof(HasPreview), nameof(Action), nameof(Fields),
         nameof(IsMeterFailed), nameof(HintText), nameof(HasHint), nameof(Agents), nameof(HasAgents), nameof(TrustOnceText), nameof(AgentsNoteText),
-        nameof(Name), nameof(Note), nameof(HasNote), nameof(HasDetail), nameof(HasProgress), nameof(HasError), nameof(HasItems), nameof(HasAction), nameof(LinkUri), nameof(LinkText), nameof(HasLink),
+        nameof(Name), nameof(Note), nameof(HasNote), nameof(HasDetail), nameof(HasDetailAbove), nameof(HasDetailBelow), nameof(HasProgress), nameof(HasError), nameof(HasItems), nameof(HasAction), nameof(LinkUri), nameof(LinkText), nameof(HasLink),
     ];
 
     private readonly Func<SetupStepView, SetupActionViewModel?, SetupActionViewModel?> _action;

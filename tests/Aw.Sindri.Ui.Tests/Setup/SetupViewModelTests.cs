@@ -184,6 +184,20 @@ public sealed class SetupViewModelTests
         Assert.Equal(("Pick the folder that holds .git.", "The folder is not a git repository."), (repo.DetailText, repo.ErrorText));
     }
 
+    [Fact]
+    public async Task A_steps_fix_sits_under_the_band_only_when_it_failed_and_above_the_meter_otherwise()
+    {
+        var list = WithFailure(Golden("first-run"), "repo", "Sindri couldn't add the repository.", "The folder is not a git repository.", "Pick the folder that holds .git.");
+        list = WithProgress(With(list, "map", "running"), "map", 3, 10);
+        list["steps"]!.AsArray().Single(s => (string)s!["id"]! == "map")!["detail"] = "Reading the code.";
+        _f.Serve(list);
+
+        var setup = await _f.Read(Token);
+
+        Assert.Equal((false, true), (Step(setup, "repo").HasDetailAbove, Step(setup, "repo").HasDetailBelow));
+        Assert.Equal((true, false), (Step(setup, "map").HasDetailAbove, Step(setup, "map").HasDetailBelow));   // qa on #3615: a building map keeps its fix above the meter
+    }
+
     private async Task<SetupViewModel> ReadWith(string scenario)
     {
         _f.Serve(scenario);
