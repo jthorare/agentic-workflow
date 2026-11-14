@@ -12,6 +12,7 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 internal sealed partial class ContextPageViewModel
 {
     private bool _conceptsRead;
+    private int _openGeneration;
     private string? _conceptsVersion;
 
     /// <summary>The first layer of the map: the product's concepts.</summary>
@@ -37,6 +38,7 @@ internal sealed partial class ContextPageViewModel
     }
 
     // The page's first read: the concepts; with some, the layer is the page, else the whole map is read as before.
+    // The read started last wins (#3697): each await's continuation drops its result when another first read or a repo switch began meanwhile.
     private async Task OpenFirst(CancellationToken cancellationToken)
     {
         if (Ports.ApiUrl() is not { } api)
@@ -44,27 +46,51 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
+        var generation = ++_openGeneration;
         Concepts.Loading();
         ChangedConcepts();
         var read = await ReadConcepts(api, cancellationToken).ConfigureAwait(true);
-        _conceptsRead = read.IsSuccess || !string.Equals(read.Error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
-        var fresh = read.IsSuccess && string.Equals(read.Value.State, "ok", StringComparison.Ordinal) ? await ReadSuggestedSeen(read.Value, cancellationToken).ConfigureAwait(true) : null;
-        NoteConcepts(read, fresh);
-        CountNoConcept(read.IsSuccess ? read.Value : null);
-        if (Concepts.HasConcepts)
+        if (generation == _openGeneration)
         {
-            Head = Labels.ContextConceptsHead;
-            ChangedConcepts();
-            ChangedWhole();
-            _conceptsVersion = read.Value.MapVersion;
-            await ReadGlossary(api, read.Value.MapVersion, cancellationToken).ConfigureAwait(true);
-            await ReadPins(api, cancellationToken).ConfigureAwait(true);
+            await DrawFirst(api, read, generation, cancellationToken).ConfigureAwait(true);
+        }
+    }
+
+    // The concepts' answer onto the page, then the glossary and pins, or the whole map when there are no concepts.
+    private async Task DrawFirst(Uri api, Result<ContextConceptsView> read, int generation, CancellationToken cancellationToken)
+    {
+        _conceptsRead = ConceptsReached(read);
+        var fresh = await ReadNewSuggested(read, cancellationToken).ConfigureAwait(true);
+        if (generation != _openGeneration)
+        {
             return;
         }
 
+        NoteConcepts(read, fresh);
+        CountNoConcept(read.IsSuccess ? read.Value : null);
+        if (!Concepts.HasConcepts)
+        {
+            ChangedConcepts();
+            await ReadWhole(cancellationToken).ConfigureAwait(true);
+            return;
+        }
+
+        Head = Labels.ContextConceptsHead;
         ChangedConcepts();
-        await ReadWhole(cancellationToken).ConfigureAwait(true);
+        ChangedWhole();
+        _conceptsVersion = read.Value.MapVersion;
+        await ReadGlossary(api, read.Value.MapVersion, cancellationToken).ConfigureAwait(true);
+        if (generation == _openGeneration)
+        {
+            await ReadPins(api, cancellationToken).ConfigureAwait(true);
+        }
     }
+
+    // Whether the server answered the concepts read at all (an unreachable one is read again later).
+    private static bool ConceptsReached(Result<ContextConceptsView> read) => read.IsSuccess || !string.Equals(read.Error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
+
+    private async Task<IReadOnlyDictionary<string, int>?> ReadNewSuggested(Result<ContextConceptsView> read, CancellationToken cancellationToken) =>
+        read.IsSuccess && string.Equals(read.Value.State, "ok", StringComparison.Ordinal) ? await ReadSuggestedSeen(read.Value, cancellationToken).ConfigureAwait(true) : null;
 
     // Every page of the concepts, joined: the first page's state and Other, the concepts and links of all. A later page that fails keeps what was read.
     private async Task<Result<ContextConceptsView>> ReadConcepts(Uri api, CancellationToken cancellationToken)
