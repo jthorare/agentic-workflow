@@ -29,7 +29,7 @@ public sealed class NaturalOrderTests
     [Fact]
     public void Areas_run_in_natural_order_so_map_items_and_cards_follow()
     {
-        var areas = _names.Reverse().Select(n => new WholeArea(n, n, "trusted", 1, new Dictionary<string, int>(StringComparer.Ordinal), false)).ToList();
+        var areas = _names.Reverse().Select(n => new WholeArea(n, n, "trusted", 1, new Dictionary<string, int>(StringComparer.Ordinal), Unassigned: false)).ToList();
 
         var order = WholeAreaOrder.Of(areas, []);
 
