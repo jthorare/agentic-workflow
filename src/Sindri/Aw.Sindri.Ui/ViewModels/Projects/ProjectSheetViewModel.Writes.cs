@@ -49,6 +49,16 @@ internal sealed partial class ProjectSheetViewModel
         }
     }
 
+    /// <summary>A state chip was picked: the state is saved at once (#3719).</summary>
+    /// <param name="choice">The chip.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>A task that ends when the answer is drawn.</returns>
+    internal Task PickState(ProjectStateChoice choice, CancellationToken cancellationToken)
+    {
+        _ = (choice, cancellationToken);
+        throw new NotSupportedException();   // red stub (#3719)
+    }
+
     /// <summary>Gives the state back to Linear's.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>A task that ends when the answer is drawn.</returns>

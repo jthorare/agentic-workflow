@@ -236,6 +236,9 @@ internal sealed partial class ProjectSheetViewModel(ISindriApi api, ILauncher la
         (SaveError, IsConflict, IsEditing) = (string.Empty, false, true);
     }
 
+    /// <summary>The note in the edit form (#3719: one Save for every field).</summary>
+    public string EditNotes { get; set => Set(ref field, value); } = string.Empty;
+
     /// <summary>Closes the form without saving.</summary>
     internal void CancelEdit() => (IsEditing, SaveError, IsConflict) = (false, string.Empty, false);
 

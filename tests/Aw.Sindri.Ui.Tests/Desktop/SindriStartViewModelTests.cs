@@ -27,6 +27,16 @@ public sealed class SindriStartViewModelTests : IDisposable
     }
 
     [Fact]
+    public void The_plain_page_names_the_page_the_window_is_on()
+    {
+        var model = new SindriStartViewModel(new FakeStarter(), new FakeTimeProvider());
+
+        model.ShowPage("Projects");
+
+        Assert.Equal("Start it and Projects loads. This takes about 10 seconds.", model.Message);
+    }
+
+    [Fact]
     public void Nothing_answering_for_30_s_shows_the_last_error_with_Retry()
     {
         var clock = new FakeTimeProvider();

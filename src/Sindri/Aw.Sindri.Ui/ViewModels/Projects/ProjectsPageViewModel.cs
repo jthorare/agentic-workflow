@@ -62,6 +62,12 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
     /// <summary>True when there are cards and a sentence: the banner.</summary>
     public bool IsBanner { get; private set => Set(ref field, value); }
 
+    /// <summary>True when the quiet "Linear not connected" line shows instead of a red box (#3719).</summary>
+    public bool ShowsLinearNote => IsBanner && false;   // red stub (#3719)
+
+    /// <summary>The quiet line's words.</summary>
+    public string LinearNote => IsBanner ? string.Empty : string.Empty;   // red stub (#3719)
+
     /// <summary>True when Context is failing: cards show their name and origin chip only.</summary>
     public bool NamesOnly { get; private set => Set(ref field, value); }
 

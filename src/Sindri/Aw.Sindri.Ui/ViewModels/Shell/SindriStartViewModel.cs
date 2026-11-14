@@ -34,6 +34,13 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
     /// <summary>The line under the title, or empty when the page's own reason shows.</summary>
     public string Message { get; private set => Set(ref field, value); } = starter is null ? string.Empty : Labels.StartSentence;
 
+    /// <summary>The window moved to another page: the plain page's sentence names it (#3719).</summary>
+    /// <param name="pageName">The page's name.</param>
+    public void ShowPage(string pageName)
+    {
+        _ = pageName;   // red stub (#3719)
+    }
+
     /// <summary>True when <see cref="Message"/> has words.</summary>
     public bool HasMessage => Message.Length > 0;
 

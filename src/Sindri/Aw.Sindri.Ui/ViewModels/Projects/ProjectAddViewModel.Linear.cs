@@ -36,6 +36,19 @@ internal sealed partial class ProjectAddViewModel
     /// <summary>Why the list could not be read, or why the last Attach was refused; empty otherwise.</summary>
     public string LinearError { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>Tells the sheet whether Linear is connected (the page knows); false makes it open on By hand (#3719).</summary>
+    /// <param name="connected">False when Linear is not set up.</param>
+    internal void SetLinearConnected(bool connected)
+    {
+        _ = connected;   // red stub (#3719)
+    }
+
+    /// <summary>The From Linear tab's line when Linear is not connected.</summary>
+    public string LinearNotConnectedText => _linearReading ? string.Empty : string.Empty;   // red stub (#3719)
+
+    /// <summary>True when the tab offers Connect.</summary>
+    public bool ShowsLinearConnect => _linearReading && false;   // red stub (#3719)
+
     /// <summary>The latest read of the From Linear list, so a test can wait for it.</summary>
     internal Task LinearLoad { get; private set; } = Task.CompletedTask;
 
