@@ -1,137 +1,39 @@
 repo: agentic-workflow
-commit: b75fb46b5605c159331f09e86193d7d0935099ea
-source: this repository
-# Paths are relative to the repo root at `commit`. `touch` = a correct change edits it, or, for a "where is X" question, the files that
-# do X (source, or a test that has to change or gain a case). `read` = needed to understand the change, not edited. `decoys` = files whose
-# words match the question but which a correct change leaves alone. A file a change would CREATE is never a key: list the file it is
-# modelled on as `read`.
+commit: b78ba8ae3fcf13b9c912b6c1afe1f2a963fc4461
+source: https://github.com/jthorare/agentic-workflow.git
+# Paths are relative to the repo root of a clone at `commit`. `touch` = a correct change edits it (or, for a "where is X" question, the file that does X).
+# The three questions come from meta's real-app pass of 2026-11-14 (#3673): today's answer to each is 120+ files in directory order.
 questions:
   - id: aw-01
-    question: "Where is the heavy-job slot lock taken and released? Name the shell wrapper, the shared lock library and Sindri's own C# taker of the same lock directories."
-    plain: "where is the heavy job slot lock taken and released"
-    issue: 3047
+    issue: 3673
+    question: "Where does a heavy job wait for a slot? Find the code that queues a dotnet job until one of the heavy slots is free."
+    plain: "Where does a heavy job wait for a slot?"
     touch:
       - path: scripts/heavy.sh
-        why: "the heavy wrapper: takes a slot in its wait loop (heavy_cap / heavy_reserve re-read each pass, l.156-160) and frees it in release() (l.95) on the EXIT trap"
-      - path: config/lib/locks.sh
-        why: "acquire_any_lock (l.115) takes slot 1 = <base_dir> or <base_dir>.k with mkdir; release_lock (l.109) removes it; dead-holder reclaim in _lock_reclaim_dead (l.77)"
-      - path: src/Sindri/Aw.Sindri.Infrastructure/Locks/DirectoryHeavySlots.cs
-        why: "Sindri's IHeavySlots over the same directories (interoperable with locks.sh and heavy.sh, its summary l.9): mkdir to take, writes <slot>/owner, gives a slot back over the cap"
-    read:
-      - path: config/lib/heavy-config.sh
-        why: "heavy_cap and heavy_reserve: the slot count (heavy-slots-cap) and the meta reserve both takers read"
-      - path: src/Sindri/Aw.Sindri.Core/Locks/IHeavySlots.cs
-        why: "the port the context engine and Sindri's builds take a slot through ('the box-wide heavy-job lock')"
-      - path: scripts/tests/heavy.test.sh
-        why: "the wrapper's lock files, owner line, cap and reserve cases: what taking and freeing a slot must keep doing"
-    decoys:
-      - path: src/Sindri/Aw.Sindri.Core/Locks/HeavySlotTaken.cs
-        why: "an event that records a slot was taken; nothing is taken or freed there"
-      - path: skills/_shared/skill-lock.sh
-        why: "a different lock (one skill at a time, LOCK_NAME), with its own acquire_lock / release_lock names"
-    links_followed:
-      - "rg -n 'acquire_any_lock|release_lock' config/lib scripts   # locks.sh:109/115, heavy.sh"
-      - "rg -ln 'IHeavySlots' src   # DirectoryHeavySlots.cs is the implementation"
-
+        why: "the heavy wrapper: takes a slot under the lock, waits in the queue when the slots are taken and releases it when the job exits"
+    read: []
+    decoys: []
   - id: aw-02
-    question: "While the first context map build runs, the Context page shows 'No map yet / Build map' instead of Building. The readers that decide 'a build is running' look only at BuildContextMap jobs, but the first run builds through RefreshContextMap jobs. Make a running RefreshContextMap job count as building."
-    plain: "I just set up Sindri and the first map is being built, but the Context page still says there's no map and offers a Build map button. It should say it's building."
-    issue: 3015
+    issue: 3673
+    question: "Add a field to the payload of a Sindri ledger event: declare it in the event catalog and carry it through the ledger event."
+    plain: "Add a field to the Sindri ledger events"
     touch:
-      - path: src/Sindri/Aw.Sindri.Features/ContextCalls/WholeMapNotReady.cs
-        why: "_build = JobKind.From(\"BuildContextMap\") (l.25) is the only kind Explain() checks; the 'building' member the Context page reads is added only for it"
-      - path: src/Sindri/Aw.Sindri.Features/SetupSources/MapSetupReader.cs
-        why: "Builds() lists only BuildContextMap jobs, so a running RefreshContextMap never gives MapPhase.Building in the setup list"
-      - path: src/Sindri/Aw.Sindri.Features/ContextCalls/ConceptsNotReady.cs
-        why: "Explain() computes `running` from BuildContextMap only, so the concepts view says unavailable during a refresh-built first map"
-      - path: tests/Aw.Sindri.Tests/SetupSources/SetupFactsTests.cs
-        why: "Map_without_a_map_follows_the_build_jobs asserts Building only for a BuildContextMap job; gains a RefreshContextMap case"
+      - path: src/Sindri/Aw.Sindri.Core/Events/EventCatalog.cs
+        why: "the catalog of every event type with its public payload fields; a new field is declared here"
+      - path: src/Sindri/Aw.Sindri.Core/Ledger/LedgerEvent.cs
+        why: "the ledger event record every event is written as; the field travels in it"
     read:
-      - path: src/Sindri/Aw.Sindri.Features/ContextCalls/ContextMapRefreshService.cs
-        why: "RefreshKind = JobKind.From(\"RefreshContextMap\"), the constant to reuse; the scheduled service starts the first build"
-      - path: src/Sindri/Aw.Sindri.Features/ContextCalls/MapRebuildState.cs
-        why: "already lists RefreshKind jobs: how another reader treats refresh jobs"
-      - path: tests/Aw.Sindri.Tests/SetupSources/SetupFactsRig.cs
-        why: "BuildJob(state, lines, code) seeds only a BuildContextMap job; the new case needs a kind"
-      - path: src/Sindri/Aw.Sindri.Ui/ViewModels/Context/ContextPageViewModel.States.cs
-        why: "renders the served Building state; no change once the server sends it"
-    decoys:
-      - path: src/Sindri/Aw.Sindri.Host/ApiProblemBuilding.cs
-        why: "the shape of the 'building' payload; the bug is in who decides to send it"
-      - path: src/Sindri/Aw.Sindri.Ui/Api/Context/MapNotReadyView.cs
-        why: "the client's parse of 'building' / 'noMap'; correct as it is"
-      - path: src/Sindri/Aw.Sindri.Ui/ViewModels/Labels.Actions.cs
-        why: "holds the 'Build map' label, not the state decision"
-
+      - path: src/Sindri/Aw.Sindri.Infrastructure/Ledger/LedgerEventMapper.cs
+        why: "maps a ledger row to and from the event; shows how a payload field is read back"
+    decoys: []
   - id: aw-03
-    question: "Add a new health check row to `sindri doctor`: a new IDoctorChecks implementation, registered, tested, with the AOT smoke golden and the doctor row docs updated."
-    plain: "I want sindri doctor to report one more thing, with its own ok/warn/fail line and a fix hint."
+    issue: 3673
+    question: "How does aw-meta lane-recycle send keys into a lane's tmux pane: the command that runs it and the pane adapter that types."
+    plain: "How does aw-meta lane-recycle type into a pane?"
     touch:
-      - path: src/Sindri/Aw.Sindri.Features/SindriFeaturesServiceCollectionExtensions.cs
-        why: "extra rows are registered as AddScoped<IDoctorChecks, ...>() and appended by WithMoreChecks"
-      - path: src/Sindri/aot-smoke/expected.txt
-        why: "the '## sindri doctor' blocks list every row; any doctor row change updates this golden"
-      - path: docs/csharp/sindri.md
-        why: "the `sindri doctor [--json]` row of the command table lists every doctor row in order"
-    read:
-      - path: src/Sindri/Aw.Sindri.Features/RunDoctor/AgentTargetDoctor.cs
-        why: "an existing IDoctorChecks to model the new class on: Run() returns DoctorCheck rows (name, state, detail, fix)"
-      - path: src/Sindri/Aw.Sindri.Core/Doctor/IDoctorChecks.cs
-        why: "the interface: ValueTask<IReadOnlyList<DoctorCheck>> Run(CancellationToken)"
-      - path: src/Sindri/Aw.Sindri.Core/Doctor/DoctorCheck.cs
-        why: "the row record a check returns"
-      - path: src/Sindri/Aw.Sindri.Features/RunDoctor/WithMoreChecks.cs
-        why: "appends every registered IDoctorChecks after the core rows: sets the row's place in the golden"
-      - path: tests/Aw.Sindri.Tests/RunDoctor/WithMoreChecksTests.cs
-        why: "how extra rows are tested; the new check's own test file goes beside it"
-    decoys:
-      - path: src/Sindri/Aw.Sindri.Core/Doctor/DoctorRules.cs
-        why: "the fixed core rows only (lease, ledger, views, profile, api, temporal)"
-      - path: src/Sindri/Aw.Sindri.Features/RunDoctor/RunDoctorService.cs
-        why: "builds the core rows; extra rows reach it through WithMoreChecks"
-
-  - id: aw-04
-    question: "Add a new Sindri ledger schema migration (the next numbered .sql after 0019), keeping the migration list test and the AOT smoke 'ledger schema N/N' line in step."
-    plain: "I need to change the ledger database (add a table or a column) the proper way, so existing installs upgrade safely."
-    touch:
-      - path: tests/Aw.Sindri.Tests/Ledger/LedgerFileTests.cs
-        why: "asserts the full ordered list of '<version> <name>' migrations ending at '19 events_item_seq'; gains the new one"
-      - path: src/Sindri/aot-smoke/expected.txt
-        why: "'ok    ledger            schema 19/19' becomes 20/20"
-      - path: src/Sindri/Aw.Sindri.Infrastructure/Ledger/LedgerDatabase.cs
-        why: "one `internal const int <Name>Version = N` per migration (EventsItemSeqVersion = 19); the new one gets its const"
-    read:
-      - path: src/Sindri/Aw.Sindri.Infrastructure/Ledger/Migrations/0019_events_item_seq.sql
-        why: "the latest migration: the new file is the next number beside it; a shipped file is never edited (checksum, AW-DATA-006)"
-      - path: src/Aw.Kernel.Data/MigrationRunner.cs
-        why: "applies migrations in order and checks history and checksums (AW-DATA-006/007)"
-      - path: src/Aw.Kernel.Data/EmbeddedMigrations.cs
-        why: "loads the numbered .sql resources; the no-gaps rule (AW-DATA-005) lives here"
-    decoys:
-      - path: tests/Aw.Context.Tests/Infrastructure/ContextDatabaseTests.cs
-        why: "migration counts of the context engine's own database, not the ledger"
-      - path: src/Aw.Kernel.Data/Migration.cs
-        why: "the migration record type; unchanged by adding a migration"
-
-  - id: aw-05
-    question: "Where does the skill lock (skills/_shared/skill-lock.sh) decide that its holder died and take the lock over, and which suites pin that takeover?"
-    plain: "when a session holding a skill lock crashes, where does the next skill decide the holder is dead and grab the lock"
-    touch:
-      - path: skills/_shared/skill-lock.sh
-        why: "_lock_is_stale (l.59, kill -0 on the holder pid) and _lock_reclaim (l.114, the guarded removal) are the takeover; acquire_lock calls them"
-      - path: scripts/tests/skill-lock-recovery.test.sh
-        why: "an abandoned lock is taken over; a failed acquire leaves the holder's pid (#1989); the reclaim guard cases (#2569)"
-    read:
-      - path: scripts/tests/skill-lock-reclaim-race.test.sh
-        why: "two waiters reclaiming one dead holder never both hold it (#2569)"
-      - path: scripts/tests/skill-lock-sessions.test.sh
-        why: "a session that ends while holding the lock is taken over (#1991)"
-      - path: scripts/tests/skill-lock-release-guard.test.sh
-        why: "a non-owner release and a dead-guard cleanup never destroy another waiter's lock (#2581)"
-    decoys:
-      - path: config/lib/locks.sh
-        why: "the heavy-slot lock, with its own dead-holder reclaim; a different lock"
-      - path: scripts/heavy.sh
-        why: "the heavy-job wrapper that takes those slots, not the skill lock"
-      - path: scripts/tests/heavy-dead-holder.test.sh
-        why: "dead-holder reclaim of heavy.sh and locks.sh, not skill-lock.sh"
+      - path: src/Meta/Aw.Meta.Host/Commands/LaneRecycleCommand.cs
+        why: "the lane-recycle command: builds the steps (clear, restart) and sends each to the lane's pane"
+      - path: src/Meta/Aw.Meta.Infrastructure/Processes/TmuxLanePane.cs
+        why: "the tmux adapter that types text and keys into the pane"
+    read: []
+    decoys: []
