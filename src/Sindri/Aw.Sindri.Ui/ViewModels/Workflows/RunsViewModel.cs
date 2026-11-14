@@ -32,7 +32,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     public WorkflowGraphViewModel? Graph { get; private set => Set(ref field, value); }
 
     /// <summary>The workflow as last read, or null: run detail draws its graph when the run walked this revision.</summary>
-    internal WorkflowView? Shown { get; private set => Set(ref field, value); }
+    internal WorkflowView? Shown { get; private set { Set(ref field, value); OnChanged(nameof(RunNowText)); } }
 
     /// <summary>The runs, newest first.</summary>
     public ObservableCollection<RunRowViewModel> Rows { get; } = [];
@@ -45,8 +45,8 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     public string RetryText => Labels.WfTryAgain;
 #pragma warning restore CA1822, MA0041
 
-    /// <summary>The Run now button's words: "Run now", or "Starting…" while its call is on the way.</summary>
-    public string RunNowText => IsStarting ? Labels.WfRunNowBusy : Labels.WfRunNow;
+    /// <summary>The Run now button's words: "Run now", "Run revision 1 (live)" while a newer revision is saved but not live, or "Starting…" while its call is on the way.</summary>
+    public string RunNowText => IsStarting ? Labels.WfRunNowBusy : Shown is { ActiveRevision: { } active } shown && active < shown.LatestRevision ? Labels.WfRunNowLive(active) : Labels.WfRunNow;
 
     /// <summary>True while Run now's call is on the way; a second press does nothing.</summary>
     public bool IsStarting { get; private set { Set(ref field, value); OnChanged(nameof(RunNowText)); OnChanged(nameof(CanPressRunNow)); } }

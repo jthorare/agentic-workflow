@@ -121,7 +121,7 @@
         <TextBlock x:Name="RunsHead" Classes="caption subtle" LineHeight="{DynamicResource Type.BodyStrong.LineHeight}" Text="{Binding Runs.Head}" VerticalAlignment="Center" />
         <Button x:Name="RunNow" VerticalAlignment="Center" Content="{Binding Runs.RunNowText}" Click="OnRunNow" IsEnabled="{Binding Runs.CanPressRunNow}" AutomationProperties.Name="{Binding Runs.RunNowText}" />
         <Button x:Name="WorkflowEdit" VerticalAlignment="Center" Content="{Binding EditText}" Click="OnEdit" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding EditText}" />
-        <Button x:Name="WorkflowActivate" VerticalAlignment="Center" IsVisible="{Binding CanActivate}" Content="{Binding ActivateText}" Click="OnActivate" AutomationProperties.AutomationId="WorkflowActivate" AutomationProperties.Name="{Binding ActivateText}" />
+        <Button x:Name="WorkflowActivate" VerticalAlignment="Center" IsVisible="{Binding ShowActivateButton}" Content="{Binding ActivateText}" Click="OnActivate" AutomationProperties.AutomationId="WorkflowActivate" AutomationProperties.Name="{Binding ActivateText}" />
         <Button x:Name="WorkflowPause" VerticalAlignment="Center" IsVisible="{Binding CanPause}" Content="{Binding PauseText}" Click="OnPause" AutomationProperties.AutomationId="WorkflowPause" AutomationProperties.Name="{Binding PauseText}" />
       </StackPanel>
       <Border x:Name="RunsNoticeName" IsVisible="{Binding Runs.HasNotice}" AutomationProperties.Name="{Binding Runs.NoticeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
@@ -130,6 +130,13 @@
       <Border x:Name="StateNotice" IsVisible="{Binding HasStateNotice}" AutomationProperties.Name="{Binding StateNoticeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption" Text="{Binding StateNoticeText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
+      <!-- After a save (#3303): the new revision is saved and the live one is unchanged, or the workflow is off. -->
+      <StackPanel x:Name="SavedLine" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center" IsVisible="{Binding HasSavedLine}">
+        <Border x:Name="SavedLineName" VerticalAlignment="Center" AutomationProperties.Name="{Binding SavedLineText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption" Text="{Binding SavedLineText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Button x:Name="WorkflowMakeLive" VerticalAlignment="Center" IsVisible="{Binding CanMakeLive}" Content="{Binding MakeLiveText}" Click="OnMakeLive" AutomationProperties.AutomationId="WorkflowMakeLive" AutomationProperties.Name="{Binding MakeLiveText}" />
+      </StackPanel>
       <wv:WorkflowEditorSheet x:Name="WorkflowEditor" IsVisible="{Binding IsEditing}" />
       <TextBlock x:Name="RunsDetail" Classes="caption subtle" Text="{Binding Runs.DetailText}" TextWrapping="Wrap" />
       <!-- The graph at the positions Sindri served (the app lays nothing out); a node with no position is named, not drawn. -->

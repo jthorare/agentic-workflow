@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 
@@ -20,9 +21,19 @@ internal sealed partial class WorkflowEditorSheet : UserControl
     {
         if (DataContext is WorkflowsPageViewModel page)
         {
+            var field = (TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Control)?.DataContext as ConfigFieldViewModel;
             await page.Save(CancellationToken.None).ConfigureAwait(true);
+            if (field is not null)
+            {
+                FocusField(field.Name);   // the form is built again from the saved revision: focus goes back to the field it was on (#3303)
+            }
         }
     }
+
+    private void FocusField(string name) =>
+        Dispatcher.UIThread.Post(
+            () => _ = this.GetVisualDescendants().OfType<Control>().FirstOrDefault(c => c is TextBox or CheckBox or ComboBox && c.DataContext is ConfigFieldViewModel f && string.Equals(f.Name, name, StringComparison.Ordinal) && c.Focusable && c.IsEffectivelyVisible)?.Focus(NavigationMethod.Tab),
+            DispatcherPriority.Loaded);
 
     private async void OnReload(object? sender, RoutedEventArgs e)
     {

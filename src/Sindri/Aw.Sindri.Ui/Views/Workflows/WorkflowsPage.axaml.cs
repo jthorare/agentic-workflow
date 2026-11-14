@@ -143,6 +143,16 @@ internal sealed partial class WorkflowsPage : UserControl
         if (DataContext is WorkflowsPageViewModel page)
         {
             await page.Activate(CancellationToken.None).ConfigureAwait(true);
+            FocusLater(WorkflowPause);   // Pause replaced the button that was pressed
+        }
+    }
+
+    private async void OnMakeLive(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            await page.MakeLive(CancellationToken.None).ConfigureAwait(true);
+            FocusLater(RunNow);   // the button went with the line; Run now is what it changed (it runs the new revision now)
         }
     }
 

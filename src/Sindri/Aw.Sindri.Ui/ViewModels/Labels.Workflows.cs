@@ -195,6 +195,27 @@ internal static partial class Labels
     /// <summary>The same button while its call is on the way.</summary>
     internal const string WfRunNowBusy = "Starting…";
 
+    /// <summary>Run now's words while a newer revision is saved but not live: it runs the live one.</summary>
+    /// <param name="revision">The live revision.</param>
+    /// <returns>The words.</returns>
+    internal static string WfRunNowLive(int revision) => string.Create(CultureInfo.InvariantCulture, $"Run revision {revision} (live)");
+
+    /// <summary>The line after a save on a workflow that is on: the new revision is saved, triggers still run the old one.</summary>
+    /// <param name="revision">The saved revision.</param>
+    /// <returns>The words.</returns>
+    internal static string WfSavedNotLive(int revision) => string.Create(CultureInfo.InvariantCulture, $"Saved as revision {revision}. Not live yet.");
+
+    /// <summary>The line after a save on a workflow that is off.</summary>
+    /// <param name="revision">The saved revision.</param>
+    /// <returns>The words.</returns>
+    internal static string WfSaved(int revision) => string.Create(CultureInfo.InvariantCulture, $"Saved as revision {revision}.");
+
+    /// <summary>The button that turns the newest saved revision on.</summary>
+    internal const string WfMakeLive = "Make live";
+
+    /// <summary>The same button while its call is on the way.</summary>
+    internal const string WfMakeLiveBusy = "Making live…";
+
     /// <summary>The runs level's note when Run now was refused or failed: the reason follows.</summary>
     /// <param name="error">The failure.</param>
     /// <returns>The words.</returns>

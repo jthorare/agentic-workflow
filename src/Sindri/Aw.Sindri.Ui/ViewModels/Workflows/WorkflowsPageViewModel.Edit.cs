@@ -79,9 +79,13 @@ internal sealed partial class WorkflowsPageViewModel
         }
 
         var changed = Editor.Fields.Where(f => f.IsChanged).Select(f => (f.Name, f.Text)).ToList();
-        var slug = Runs.Slug;
+        var (slug, before) = (Runs.Slug, Editor.BaseRevision);
         await Editor.EditFields(changed, cancellationToken).ConfigureAwait(true);
         await RereadRuns(slug, cancellationToken).ConfigureAwait(true);   // the page shows the revision Sindri holds now, so a graph edit next is not held as "never showed"
+        if (string.Equals(Runs.Slug, slug, StringComparison.Ordinal) && Editor.BaseRevision > before && Runs.Shown is { } shown && shown.LatestRevision == Editor.BaseRevision)
+        {
+            NoteSaved();
+        }
     }
 
     /// <summary>Reads the workflow again from the sheet's Reload button.</summary>
@@ -118,6 +122,7 @@ internal sealed partial class WorkflowsPageViewModel
                 OnChanged(nameof(EditorHeading));
                 OnChanged(nameof(StepSummaryText));
                 OnChanged(nameof(HasStepSummary));
+                NotifySaved();
                 if (string.Equals(e.PropertyName, nameof(RunsViewModel.Graph), StringComparison.Ordinal) && Runs.Graph is { } graph)
                 {
                     graph.PropertyChanged += OnGraphChanged;
