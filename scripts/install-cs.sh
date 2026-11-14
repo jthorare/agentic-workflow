@@ -559,8 +559,10 @@ pack_sdk() {
   fi
   local list want have
   list="$(mktemp "${TMPDIR:-/tmp}/install-cs-sdk.XXXXXX")"
-  git -C "$root" ls-files -z --cached --others --exclude-standard -- "${SDK_PATHSPECS[@]}" \
-    | while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done | LC_ALL=C sort -u > "$list"
+  git -C "$root" ls-files -z --cached --others --exclude-standard -- "${SDK_PATHSPECS[@]}" > "$list.z" \
+    || { rm -f "$list" "$list.z"; die "git ls-files failed while listing the toolkit SDK inputs (git ended with an error; run it again)"; }
+  while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done < "$list.z" | LC_ALL=C sort -u > "$list"
+  rm -f "$list.z"
   want="$(hash_list "$list" "$sdk")"
   have="$(cat "$sdk_feed/.sdk-stamp" 2> /dev/null || true)"
   if [ "$rebuild" = 0 ] && [ "$want" = "$have" ] && ls "$sdk_feed"/Aw.Sindri.Toolkit.*.nupkg > /dev/null 2>&1; then
