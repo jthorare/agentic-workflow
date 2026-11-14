@@ -4,8 +4,13 @@ namespace Aw.Sindri.Ui.ViewModels.Setup;
 internal sealed partial class SetupStepViewModel
 {
     /// <summary>True when the open row would show something: any part of the body in SetupStepRow.axaml (link, detail, meter, repo lines, preview, red band, hint, agents, repo form, note, button).</summary>
-    public bool HasBody =>
-        HasLink || HasDetail || HasProgress || HasItems || HasPreview || HasError || HasHint || HasAgents || Repo is not null || HasNote || HasAction;
+    public bool HasBody => HasTextBody || HasControlBody;
+
+    // The text parts of the body: link, detail, hint, red band, note (split from HasBody to stay under CA1502).
+    private bool HasTextBody => HasLink || HasDetail || HasHint || HasError || HasNote;
+
+    // The control parts of the body: meter, repo lines, preview, agents, repo form, button.
+    private bool HasControlBody => HasProgress || HasItems || HasPreview || HasAgents || Repo is not null || HasAction;
 
     /// <summary>True when the row opens by itself: a step that needs the person, or a failed step that has a body.</summary>
     private bool Opens => NeedsYou || (IsFailed && HasBody);
