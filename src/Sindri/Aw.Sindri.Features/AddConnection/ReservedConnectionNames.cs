@@ -2,7 +2,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
 
-namespace Aw.Sindri.Features;
+namespace Aw.Sindri.Features.AddConnection;
 
 /// <summary>
 /// The connection names the generic add and rename refuse. slack:messages has no preset on purpose and is made only by sindri messages connect (#3279, #3640),

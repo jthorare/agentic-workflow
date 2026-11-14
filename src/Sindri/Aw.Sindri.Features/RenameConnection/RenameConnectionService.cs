@@ -5,6 +5,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Secrets;
+using Aw.Sindri.Features.AddConnection;
 
 namespace Aw.Sindri.Features.RenameConnection;
 
