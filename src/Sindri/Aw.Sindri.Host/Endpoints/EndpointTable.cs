@@ -123,7 +123,7 @@ internal static class EndpointTable
     {
         // ---- commands: one line per slice, sorted ----
         _ = commands.MapApproveProfile();
-        _ = commands.MapCancelJob().MapRunWorkflow().MapCancelWorkflowRun().MapWorkflowWrites().MapAgentNodeControl().MapAnswerQuestion();
+        _ = commands.MapCancelJob().MapRunWorkflow().MapCancelWorkflowRun().MapRerunWorkflowRun().MapWorkflowWrites().MapAgentNodeControl().MapAnswerQuestion();
         _ = commands.MapResumeJob();
         _ = commands.MapCloseItem().MapProjectWrites().MapConnectionWrites().MapMemoryWrites().MapResourceWrites().MapToolkitWrites().MapChangeLinearIssue().MapTodoWrites();
         _ = commands.MapEndLearnMode().MapAllowDenial();

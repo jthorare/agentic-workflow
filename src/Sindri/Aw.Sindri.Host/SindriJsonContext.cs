@@ -54,6 +54,7 @@ using Aw.Sindri.Features.ApplyWorkflowOps;
 using Aw.Sindri.Features.AttachProject;
 using Aw.Sindri.Features.CancelJob;
 using Aw.Sindri.Features.CancelWorkflowRun;
+using Aw.Sindri.Features.RerunWorkflowRun;
 using Aw.Sindri.Features.CheckSandbox;
 using Aw.Sindri.Features.CloseItem;
 using Aw.Sindri.Features.CodeIndexJobs;
@@ -226,7 +227,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(CreateWorkflowBody)), JsonSerializable(typeof(ApplyWorkflowOpsBody)), JsonSerializable(typeof(ReplaceWorkflowBody)), JsonSerializable(typeof(ValidateWorkflowBody)), JsonSerializable(typeof(ActivateWorkflowBody))]   // #2258 PR 8b: the workflow write bodies
 [JsonSerializable(typeof(CreateWorkflowResponse)), JsonSerializable(typeof(ApplyWorkflowOpsResponse)), JsonSerializable(typeof(ReplaceWorkflowResponse)), JsonSerializable(typeof(ValidateWorkflowResponse)), JsonSerializable(typeof(ActivateWorkflowResponse)), JsonSerializable(typeof(PauseWorkflowResponse)), JsonSerializable(typeof(DeleteWorkflowResponse))]
 [JsonSerializable(typeof(ListWorkflowsResponse)), JsonSerializable(typeof(GetWorkflowResponse)), JsonSerializable(typeof(ListWorkflowRunsResponse)), JsonSerializable(typeof(GetWorkflowRunResponse))]   // #2258 PR 8a: the workflow reads; GraphSpec and the node positions come with GetWorkflowResponse
-[JsonSerializable(typeof(WorkflowNotifyPayload)), JsonSerializable(typeof(RunWorkflowBody)), JsonSerializable(typeof(RunWorkflowResponse)), JsonSerializable(typeof(CancelWorkflowRunResponse)), JsonSerializable(typeof(AgentNodeBody)), JsonSerializable(typeof(AgentNodeControlled))]
+[JsonSerializable(typeof(WorkflowNotifyPayload)), JsonSerializable(typeof(RunWorkflowBody)), JsonSerializable(typeof(RerunWorkflowRunBody)), JsonSerializable(typeof(RerunWorkflowRunResponse)), JsonSerializable(typeof(RunWorkflowResponse)), JsonSerializable(typeof(CancelWorkflowRunResponse)), JsonSerializable(typeof(AgentNodeBody)), JsonSerializable(typeof(AgentNodeControlled))]
 [JsonSerializable(typeof(TestWorkflowBody)), JsonSerializable(typeof(PinWorkflowOutputBody)), JsonSerializable(typeof(Features.TestWorkflow.TestWorkflowResponse)), JsonSerializable(typeof(Features.PinWorkflowOutput.PinWorkflowOutputResponse)), JsonSerializable(typeof(Features.PollConnections.ListTriggerEventsResponse)), JsonSerializable(typeof(Features.ListWorkflowTemplates.ListWorkflowTemplatesResponse))]   // Workflows page P0 (#3191): the test, pin, trigger-events and templates contracts
 [JsonSerializable(typeof(WorkflowChangedPublic)), JsonSerializable(typeof(WorkflowRunPublic)), JsonSerializable(typeof(WorkflowNodePublic))]   // issue 2823: the public forms of the workflow lifecycle, run and node events
 [JsonSerializable(typeof(WorkflowQuestionPayload)), JsonSerializable(typeof(WorkflowAnsweredPayload)), JsonSerializable(typeof(WorkflowQuestionPublic)), JsonSerializable(typeof(WorkflowAnsweredPublic)), JsonSerializable(typeof(AnswerQuestionBody)), JsonSerializable(typeof(AnswerQuestionResponse))]   // agent-first PR 9: ask_owner and 'sindri answer'
