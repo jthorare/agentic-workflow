@@ -245,6 +245,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
 
         var shown = ShownGroups(kept);
         Patch.To(Groups, shown);
+        OnChanged(nameof(HasAsking));   // after the patch: HasAsking reads Groups[0]
         RefreshColumns(kept);
         OnChanged(nameof(HasColumns));
         ShowEnded(list);

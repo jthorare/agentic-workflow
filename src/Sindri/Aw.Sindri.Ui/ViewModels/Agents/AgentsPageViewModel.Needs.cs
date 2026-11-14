@@ -62,7 +62,7 @@ internal sealed partial class AgentsPageViewModel
     /// <param name="sort">The column's order.</param>
     internal void SortBy(AgentSort sort)
     {
-        SortDescending = sort == Sort && !SortDescending;
+        SortDescending = _picked && sort == Sort && !SortDescending;   // the default order (name) is not a click: the first one on its header sorts A to Z
         Sort = sort;
         SortChanged();
     }
@@ -120,7 +120,6 @@ internal sealed partial class AgentsPageViewModel
             shown.Add(Group(Labels.OutsideWorkflow, outside));
         }
 
-        OnChanged(nameof(HasAsking));
         return shown;
     }
 
