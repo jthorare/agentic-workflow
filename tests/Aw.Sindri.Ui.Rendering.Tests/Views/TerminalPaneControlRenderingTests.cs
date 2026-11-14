@@ -72,4 +72,30 @@ public sealed class TerminalPaneControlRenderingTests
         Assert.NotEqual((0xCD, 0x31, 0x31), (br, bg, bb));
         Assert.Contains(((int)(200 / cell.Width), (int)(100 / cell.Height)), fits);
     });
+
+    [Fact]
+    public Task Painting_the_same_frame_again_makes_no_new_brush_and_a_dim_cell_is_fainter_than_a_plain_one() => OnUi(() =>
+    {
+        const string Esc = "\u001b";
+        var grid = TerminalFrameParser.Parse($"{Esc}[38;2;255;255;255m\u2588{Esc}[2m\u2588{Esc}[0m\n\n", "0 0 8 2 0 0 0 \n");
+        var pane = new TerminalPaneControl { Width = 200, Height = 100, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top };
+        var window = new Window { Width = 200, Height = 100, Content = pane };
+        window.Show();
+        Settle(window);
+
+        pane.Draw(grid);
+        Settle(window);
+        window.CaptureRenderedFrame()?.Dispose();
+        var made = pane.BrushesCreated;
+        pane.Draw(grid);
+        Settle(window);
+        using var second = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("no frame: this project draws with Skia");
+
+        var cell = pane.CellSize;
+        var (pr, _, _) = Pixel(second, (int)(cell.Width * 0.5), (int)(cell.Height * 0.5));
+        var (dr, _, _) = Pixel(second, (int)(cell.Width * 1.5), (int)(cell.Height * 0.5));
+        Assert.True(made > 0);
+        Assert.Equal(made, pane.BrushesCreated);
+        Assert.True(dr < pr, "the dim block is not fainter than the plain one");
+    });
 }

@@ -1,19 +1,24 @@
 using System.Globalization;
+using System.Text;
 using Avalonia;
 using Avalonia.Media;
-using Avalonia.Media.Immutable;
 using Aw.Sindri.Ui.Terminal;
 
 namespace Aw.Sindri.Ui.Views.Controls;
 
-/// <summary>Draws one frame of a <see cref="TerminalGrid"/> onto a drawing context.</summary>
+/// <summary>Draws one frame of a <see cref="TerminalGrid"/> onto a drawing context. The theme brushes arrive resolved and the colour brushes come from a cache that outlives the paint, so a paint makes no brush.</summary>
 /// <param name="context">Where to draw.</param>
 /// <param name="cell">The size of one cell.</param>
 /// <param name="face">The mono face.</param>
 /// <param name="fontSize">The font size in px.</param>
-/// <param name="theme">Looks a theme brush up by key (the default text and background come from it).</param>
-internal sealed class TerminalPainter(DrawingContext context, Size cell, Typeface face, double fontSize, Func<string, IBrush> theme)
+/// <param name="ink">The theme's default text colour.</param>
+/// <param name="canvas">The theme's page colour (the background of an inverse cell on the default background).</param>
+/// <param name="brushes">The colour brushes, kept between paints.</param>
+internal sealed class TerminalPainter(DrawingContext context, Size cell, Typeface face, double fontSize, IBrush ink, IBrush canvas, TerminalBrushCache brushes)
 {
+    private const double DimOpacity = 0.55;
+    private readonly Typeface[] _faces = new Typeface[4];
+
     /// <summary>Draws the visible rows and the cursor.</summary>
     /// <param name="grid">The frame.</param>
     /// <param name="scrollOffset">Rows back from the live screen; 0 is live.</param>
@@ -32,32 +37,26 @@ internal sealed class TerminalPainter(DrawingContext context, Size cell, Typefac
             PaintCursor(grid, focused);
         }
 
+        var run = new StringBuilder(grid.Width);
         for (var y = 0; y < grid.Height; y++)
         {
-            PaintText(grid, top + y, y);
+            PaintText(grid, top + y, y, run);
         }
     }
 
-    private (IBrush? Bg, IBrush Fg) Colours(TerminalCell c)
-    {
-        var fg = Solid(c.Fg);
-        var bg = Solid(c.Bg);
-        return c.Inverse
-            ? (fg ?? theme("Brush.Ink"), bg ?? theme("Brush.Canvas"))
-            : (bg, fg ?? theme("Brush.Ink"));
-    }
+    // The background brush of a cell, null for the default background.
+    private IBrush? Background(TerminalCell c) => c.Inverse ? brushes.Get(c.Fg) ?? ink : brushes.Get(c.Bg);
 
-    private static ImmutableSolidColorBrush? Solid(TerminalColor color) =>
-        TerminalPalette.Resolve(color) is { } c ? new ImmutableSolidColorBrush(c) : null;
+    private IBrush Foreground(TerminalCell c) => c.Inverse ? brushes.Get(c.Bg) ?? canvas : brushes.Get(c.Fg) ?? ink;
 
     private void PaintBackgrounds(TerminalGrid grid, int row, int y)
     {
         var start = 0;
         while (start < grid.Width)
         {
-            var bg = Colours(grid.Cell(row, start)).Bg;
+            var bg = Background(grid.Cell(row, start));
             var end = start + 1;
-            while (end < grid.Width && SameBrush(Colours(grid.Cell(row, end)).Bg, bg))
+            while (end < grid.Width && ReferenceEquals(Background(grid.Cell(row, end)), bg))
             {
                 end++;
             }
@@ -71,24 +70,39 @@ internal sealed class TerminalPainter(DrawingContext context, Size cell, Typefac
         }
     }
 
-    private static bool SameBrush(IBrush? a, IBrush? b) =>
-        a is ImmutableSolidColorBrush x && b is ImmutableSolidColorBrush y ? x.Color == y.Color : ReferenceEquals(a, b);
-
-    private void PaintText(TerminalGrid grid, int row, int y)
+    private void PaintText(TerminalGrid grid, int row, int y, StringBuilder run)
     {
         var start = 0;
         while (start < grid.Width)
         {
             var first = grid.Cell(row, start);
             var end = RunEnd(grid, row, start);
-            var text = string.Concat(Enumerable.Range(start, end - start).Select(x => grid.Cell(row, x).Text));
-            if (text.Trim().Length > 0)
+            _ = run.Clear();
+            for (var x = start; x < end; x++)
             {
-                DrawRun(text, first, new Point(start * cell.Width, y * cell.Height));
+                _ = run.Append(grid.Cell(row, x).Text);
+            }
+
+            if (HasInk(run))
+            {
+                DrawRun(run.ToString(), first, new Point(start * cell.Width, y * cell.Height));
             }
 
             start = end;
         }
+    }
+
+    private static bool HasInk(StringBuilder run)
+    {
+        for (var i = 0; i < run.Length; i++)
+        {
+            if (!char.IsWhiteSpace(run[i]))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // A run ends where colour or attributes change, and after a wide character (its glyph may not match the cell width).
@@ -115,13 +129,33 @@ internal sealed class TerminalPainter(DrawingContext context, Size cell, Typefac
         return end;
     }
 
+    private Typeface FaceOf(TerminalCell style)
+    {
+        var index = (style.Italic ? 2 : 0) + (style.Bold ? 1 : 0);
+        if (_faces[index].FontFamily is null)
+        {
+            _faces[index] = new Typeface(face.FontFamily, style.Italic ? FontStyle.Italic : FontStyle.Normal, style.Bold ? FontWeight.Bold : FontWeight.Normal);
+        }
+
+        return _faces[index];
+    }
+
     private void DrawRun(string text, TerminalCell style, Point at)
     {
-        var typeface = new Typeface(face.FontFamily, style.Italic ? FontStyle.Italic : FontStyle.Normal, style.Bold ? FontWeight.Bold : FontWeight.Normal);
-        var formatted = new FormattedText(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, typeface, fontSize, Colours(style).Fg);
+        var formatted = new FormattedText(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, FaceOf(style), fontSize, Foreground(style));
         if (style.Underline)
         {
             formatted.SetTextDecorations(TextDecorations.Underline);
+        }
+
+        if (style.Dim)
+        {
+            using (context.PushOpacity(DimOpacity))
+            {
+                context.DrawText(formatted, at);
+            }
+
+            return;
         }
 
         context.DrawText(formatted, at);
@@ -135,7 +169,6 @@ internal sealed class TerminalPainter(DrawingContext context, Size cell, Typefac
         }
 
         var rect = new Rect(grid.CursorX * cell.Width, grid.CursorY * cell.Height, cell.Width, cell.Height);
-        var ink = theme("Brush.Ink");
         if (focused)
         {
             using (context.PushOpacity(0.55))

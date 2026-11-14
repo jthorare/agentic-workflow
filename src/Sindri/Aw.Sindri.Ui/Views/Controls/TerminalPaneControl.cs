@@ -29,6 +29,7 @@ internal sealed class TerminalPaneControl : Control, ITerminalPane
     internal static readonly StyledProperty<int> ScrollOffsetProperty =
         AvaloniaProperty.Register<TerminalPaneControl, int>(nameof(ScrollOffset));
 
+    private readonly TerminalBrushCache _brushes = new();
     private TerminalGrid? _grid;
     private (int Columns, int Rows) _fit;
 
@@ -69,6 +70,9 @@ internal sealed class TerminalPaneControl : Control, ITerminalPane
         set => SetValue(ScrollOffsetProperty, value);
     }
 
+    /// <summary>Gets how many colour brushes this control has made (a test seam: painting the same frame again must make none).</summary>
+    internal int BrushesCreated => _brushes.Created;
+
     /// <summary>Gets the size of one cell in px (0 before the first measure).</summary>
     internal Size CellSize { get; private set; }
 
@@ -89,7 +93,7 @@ internal sealed class TerminalPaneControl : Control, ITerminalPane
 
         EnsureCell();
         using var opacity = context.PushOpacity(Dimmed ? 0.5 : 1);
-        var painter = new TerminalPainter(context, CellSize, Typeface(), TerminalFontSize, Brush);
+        var painter = new TerminalPainter(context, CellSize, Typeface(), TerminalFontSize, Brush("Brush.Ink"), Brush("Brush.Canvas"), _brushes);
         painter.Paint(_grid, ScrollOffset, HasPaneFocus);
     }
 
