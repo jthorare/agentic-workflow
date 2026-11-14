@@ -82,13 +82,14 @@ public sealed class TemplateCiTests
     }
 
     [Fact]
-    public void A_branch_with_braces_is_left_out_of_the_prompt_so_the_template_still_validates()
+    public void A_branch_with_braces_gets_the_plain_template_so_the_create_still_validates()
     {
         var odd = new GitHubCiSource("github:work", "acme", "app", "x{{y}}");
 
         var spec = GraphTemplates.Find("weekday-check", odd)!.Spec;
 
-        Assert.DoesNotContain("x{{y}}", Assert.Single(spec.Nodes, static n => n.Type == "prompt").Config["prompt"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.DoesNotContain(spec.Nodes, static n => n.Type == "call_tool");
+        Assert.Equal(GraphTemplates.Find("weekday-check")!.Spec.Nodes.Select(static n => n.Id), spec.Nodes.Select(static n => n.Id));
         Assert.True(RealValidator().Validate(spec, GraphMode.Activate).Passed);
     }
 
