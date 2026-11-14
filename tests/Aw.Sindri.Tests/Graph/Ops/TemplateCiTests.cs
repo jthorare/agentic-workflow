@@ -104,6 +104,15 @@ public sealed class TemplateCiTests
     }
 
     [Fact]
+    public void The_weekday_check_calls_ci_green_only_when_the_newest_run_succeeded()
+    {
+        var question = Assert.Single(WithCi("weekday-check").Nodes, static n => n.Type == "prompt").Config["prompt"]!.GetValue<string>();
+
+        Assert.Contains("When the newest run succeeded and today is not a Friday, set flagged to false and summary to: CI is green.", question, StringComparison.Ordinal);
+        Assert.DoesNotContain("When neither applies", question, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void The_daily_digest_says_whether_the_newest_run_passed()
     {
         var question = Assert.Single(WithCi("daily-digest").Nodes, static n => n.Type == "prompt").Config["prompt"]!.GetValue<string>();
