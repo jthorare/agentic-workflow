@@ -123,7 +123,7 @@ public sealed class SindriStartViewModelTests : IDisposable
     }
 
     [Fact]
-    public void The_Not_running_line_is_hidden_only_while_Didnt_start_shows()
+    public void The_Not_running_line_is_hidden_in_every_start_stage_and_shown_only_when_idle()
     {
         var clock = new FakeTimeProvider();
         var model = new SindriStartViewModel(new FakeStarter { Error = "SND-CLI-002 exec: x" }, clock);
@@ -135,7 +135,7 @@ public sealed class SindriStartViewModelTests : IDisposable
         model.Start();
         var retrying = model.HidesNotRunningReason;
 
-        Assert.Equal((false, false, true, false), (idle, starting, didntStart, retrying));
+        Assert.Equal((false, true, true, true), (idle, starting, didntStart, retrying));
     }
 
     [Fact]
@@ -160,6 +160,26 @@ public sealed class SindriStartViewModelTests : IDisposable
         starter.Exit();
 
         Assert.Equal((StartStage.AlreadyStarting, false), (model.Stage, model.HasPrimary));
+    }
+
+    [Fact]
+    public void The_Not_running_line_is_hidden_when_a_second_serve_was_refused()
+    {
+        var clock = new FakeTimeProvider();
+        var model = new SindriStartViewModel(new FakeStarter { Error = "SND-LEASE-001 serve is already running" }, clock);
+        model.Begin();
+        clock.Advance(TimeSpan.FromSeconds(30));
+
+        Assert.Equal((StartStage.AlreadyStarting, true), (model.Stage, model.HidesNotRunningReason));
+    }
+
+    [Fact]
+    public void The_Not_running_line_is_hidden_on_a_broken_install()
+    {
+        var model = new SindriStartViewModel(new FakeStarter { Outcome = SindriStartOutcome.NotInstalled }, new FakeTimeProvider());
+        model.Begin();
+
+        Assert.Equal((StartStage.NotInstalled, true), (model.Stage, model.HidesNotRunningReason));
     }
 
     [Fact]
