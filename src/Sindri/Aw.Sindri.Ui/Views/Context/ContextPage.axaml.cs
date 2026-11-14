@@ -238,18 +238,11 @@ internal sealed partial class ContextPage : UserControl
         }, Avalonia.Threading.DispatcherPriority.Loaded);
     }
 
-    // The parts of the control row that take lists or controls the view model does not bind: the coverage strip.
+    // The parts of the control row the view model does not bind.
     private void Sync(ContextPageViewModel page)
     {
         ContextStack.DataContext = page.Map;
         ShowClear(page.AnchorText.Length > 0);
-        if (page.Map is { } map)
-        {
-            ContextCoverageStrip.Areas = map.CoverageAreas;
-            ContextCoverageStrip.Lead = map.CoverageLead;
-            ContextCoverageStrip.Rest = map.CoverageRest;
-        }
-
         Dispatch(FitStage);
     }
 

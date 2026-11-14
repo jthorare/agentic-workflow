@@ -113,7 +113,8 @@
           </StackPanel>
         </Border>
       </WrapPanel>
-      <ctl:CoverageStrip x:Name="ContextCoverageStrip" Grid.Column="1" IsVisible="{Binding HasStack}" VerticalAlignment="Center" Margin="0,0,0,8" />
+      <TextBlock x:Name="ContextCoverage" Grid.Column="1" Classes="caption subtle" Text="{Binding Coverage}" IsVisible="{Binding HasCoverage}" TextWrapping="Wrap" MaxWidth="420"
+                 VerticalAlignment="Center" Margin="0,0,0,8" AutomationProperties.Name="{Binding Coverage}" />
     </Grid>
 
     <Grid Grid.Row="2" RowDefinitions="Auto,*" RowSpacing="8">

@@ -16,7 +16,7 @@ namespace Aw.Sindri.Ui.Rendering.Tests.Views;
 
 /// <summary>
 /// The context map's own controls as drawn (F3 spec 1 §2): the edges in Wire, WireHi and dashed, the ports, the dimmed edge,
-/// the dot grid that moves with the view, and the coverage strip's bars. Frames are saved under the test output's frames/ as
+/// the dot grid that moves with the view. Frames are saved under the test output's frames/ as
 /// context-*.png.
 /// </summary>
 [Lane(TestLane.Integration)]
@@ -228,40 +228,6 @@ public sealed class ContextControlsRenderingTests
         window.Close();
         return true;
     });
-
-    [Fact]
-    public async Task The_coverage_strip_draws_full_hatched_and_empty_bars() => await OnUi(() =>
-    {
-        var strip = new CoverageStrip
-        {
-            Areas = [new("A", CoverageLevel.Searched, "searched"), new("B", CoverageLevel.Limited, "limited"), new("C", CoverageLevel.NotAvailable, "not available")],
-            Lead = "2 of 3 areas searched.",
-            Rest = "B is limited.",
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
-        };
-        var window = Stage(strip, 400, 60);
-        var frame = Capture(window, "coverage-strip");
-
-        var rects = Descend(strip).Where(b => b.Width == 34).Select(b => b.TranslatePoint(new Point(0, 0), window)!.Value).ToList();
-        Assert.Equal(3, rects.Count);
-
-        var full = rects[0];
-        Assert.True(frame.Near((int)full.X + 17, (int)full.Y + 3, Token("Ink"), 10), frame.Describe((int)full.X + 17, (int)full.Y + 3));
-
-        var hatched = rects[1];
-        var samples = Enumerable.Range(0, 30).Select(i => frame.At((int)hatched.X + 2 + i, (int)hatched.Y + 3)).ToList();
-        Assert.Contains(samples, p => Math.Abs(p.R - Token("InkSubtle").R) < 14);
-        Assert.Contains(samples, p => Math.Abs(p.R - Token("Surface3").R) < 14);
-
-        var empty = rects[2];
-        Assert.True(frame.Near((int)empty.X + 17, (int)empty.Y + 3, Token("Surface3"), 10), frame.Describe((int)empty.X + 17, (int)empty.Y + 3));
-        window.Close();
-        return true;
-    });
-
-    private static IEnumerable<Border> Descend(Visual root) =>
-        Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(root).OfType<Border>();
 
     private static List<(bool Lit, int Length)> Runs(IReadOnlyList<bool> samples)
     {

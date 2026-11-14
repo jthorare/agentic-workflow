@@ -152,35 +152,49 @@ internal static partial class Labels
     /// <summary>The coverage area for the code.</summary>
     internal const string ContextMapAreaCode = "Code";
 
-    /// <summary>The coverage area for function names.</summary>
-    internal const string ContextMapAreaNames = "Function names";
-
-    /// <summary>An area that was searched in full.</summary>
-    internal const string ContextMapSearched = "searched";
-
-    /// <summary>An area that was searched in part.</summary>
-    internal const string ContextMapLimited = "limited";
-
-    /// <summary>An area that could not be searched.</summary>
-    internal const string ContextMapNotAvailable = "not available";
-
     /// <summary>The detail under the function names area when the code index is not built.</summary>
     internal const string ContextMapNamesDetail = "Function names are not available yet: the code index isn't built.";
 
-    /// <summary>The coverage sentence's lead.</summary>
-    /// <param name="searched">How many areas were searched in full.</param>
-    /// <param name="of">How many areas there are.</param>
-    /// <returns>"3 of 4 areas searched.".</returns>
-    internal static string ContextMapCoverageLead(int searched, int of) => string.Create(CultureInfo.InvariantCulture, $"{searched} of {of} areas searched.");
+    /// <summary>The function names area, in the coverage sentence.</summary>
+    internal const string ContextMapWordNames = "function names";
 
-    /// <summary>The coverage sentence's rest, naming the areas searched in part.</summary>
-    /// <param name="limited">The names of those areas (at least one).</param>
-    /// <returns>"Code is limited." or "Product and Code are limited.".</returns>
-    internal static string ContextMapCoverageRest(IReadOnlyList<string> limited) => limited.Count switch
+    /// <summary>The coverage sentence when no area was searched.</summary>
+    internal const string ContextMapSearchedNothing = "Nothing searched.";
+
+    /// <summary>The coverage sentence's reason when the function names are not indexed.</summary>
+    internal const string ContextMapNamesNotIndexed = "Function names aren't indexed.";
+
+    /// <summary>The coverage sentence's first part.</summary>
+    /// <param name="areas">The areas searched in full (at least one).</param>
+    /// <returns>"Searched Code." or "Searched Product and Code.".</returns>
+    internal static string ContextMapSearchedSentence(IReadOnlyList<string> areas) => "Searched " + AreaList(areas) + ".";
+
+    /// <summary>The coverage sentence's reason for areas with no records.</summary>
+    /// <param name="areas">The areas with no records (at least one).</param>
+    /// <returns>"No Why or Product records." or "No Why, Product or Code records.".</returns>
+    internal static string ContextMapNoRecords(IReadOnlyList<string> areas) => "No " + OrList(areas) + " records.";
+
+    /// <summary>The coverage sentence's reason for areas searched in part.</summary>
+    /// <param name="areas">The areas searched in part (at least one).</param>
+    /// <returns>"Why is only partly searched.", "Function names are only partly searched." or "Why and Code are only partly searched.".</returns>
+    internal static string ContextMapPartlySearched(IReadOnlyList<string> areas)
     {
-        0 => string.Empty,
-        1 => limited[0] + " is limited.",
-        _ => string.Join(", ", limited.Take(limited.Count - 1)) + " and " + limited[^1] + " are limited.",
+        // The verb follows the noun: "function names" is plural even alone.
+        var plural = areas.Count > 1 || string.Equals(areas[0], ContextMapWordNames, StringComparison.Ordinal);
+        var list = AreaList(areas);
+        return char.ToUpperInvariant(list[0]) + list[1..] + (plural ? " are" : " is") + " only partly searched.";
+    }
+
+    private static string OrList(IReadOnlyList<string> areas) => areas.Count switch
+    {
+        1 => areas[0],
+        _ => string.Join(", ", areas.Take(areas.Count - 1)) + " or " + areas[^1],
+    };
+
+    private static string AreaList(IReadOnlyList<string> areas) => areas.Count switch
+    {
+        1 => areas[0],
+        _ => string.Join(", ", areas.Take(areas.Count - 1)) + " and " + areas[^1],
     };
 
     /// <summary>The zoom in button.</summary>

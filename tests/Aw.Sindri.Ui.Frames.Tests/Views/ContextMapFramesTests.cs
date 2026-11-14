@@ -67,15 +67,15 @@ public sealed class ContextMapFramesTests : FrameHost
     });
 
     [Fact]
-    public Task The_control_row_holds_the_anchor_box_the_view_switch_and_the_coverage_strip() => OnUi(async () =>
+    public Task The_control_row_holds_the_anchor_box_the_view_switch_and_the_coverage_sentence() => OnUi(async () =>
     {
         var (window, shell) = await Open(1440, 900);
 
         Assert.True(Visible(window, "AnchorBox"));
         Assert.False(Visible(window, "StartingPoints"));
-        var strip = Named<CoverageStrip>(window, "ContextCoverageStrip");
-        Assert.Equal(shell.Context.Map!.CoverageLead, strip.Lead);
-        Assert.Equal(4, strip.Areas.Count);
+        var coverage = Named<TextBlock>(window, "ContextCoverage");
+        Assert.Equal(shell.Context.Coverage, coverage.Text);
+        Assert.Equal(shell.Context.HasCoverage, coverage.IsVisible);
         Assert.False(Visible(window, "ContextAsOf"));
         Assert.False(Visible(window, "WholeMapBack"));
         Assert.True(Named<RadioButton>(window, "ViewMapButton").IsChecked);
