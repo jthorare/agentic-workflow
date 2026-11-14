@@ -57,6 +57,40 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     /// <summary>True when Run now can be pressed: the workflow is on and no call is on the way.</summary>
     public bool CanPressRunNow => CanRun && !IsStarting;
 
+    /// <summary>"23 of 500 runs" with a filter on, "500 runs" without.</summary>
+    public string CountText => string.Empty;
+
+    /// <summary>True when a status or date filter is on.</summary>
+    public bool HasFilter => false;
+
+    /// <summary>True when a filter leaves no run.</summary>
+    public bool HasNoMatch => false;
+
+    /// <summary>The line when a filter leaves no run.</summary>
+    public string NoMatchText => string.Empty;
+
+    /// <summary>How many runs are ticked.</summary>
+    public int SelectedCount => 0;
+
+    /// <summary>True when exactly two runs are ticked.</summary>
+    public bool CanCompare => false;
+
+    /// <summary>"Compare 2".</summary>
+    public string CompareText => string.Empty;
+
+    /// <summary>Filters by status ("failed", "succeeded", "running", "cancelled"); null or empty shows every status.</summary>
+    /// <param name="status">The status.</param>
+    internal void SetStatusFilter(string? status) => _ = status;
+
+    /// <summary>Filters by date ("24h", "7d", "30d"); null or empty shows every date.</summary>
+    /// <param name="range">The range.</param>
+    internal void SetDateFilter(string? range) => _ = range;
+
+    /// <summary>Clears both filters.</summary>
+    internal void ClearFilters()
+    {
+    }
+
     /// <summary>What the last Run now said (queued, skipped or refused), in words; empty otherwise.</summary>
     public string NoticeText { get; private set { Set(ref field, value); OnChanged(nameof(HasNotice)); } } = string.Empty;
 

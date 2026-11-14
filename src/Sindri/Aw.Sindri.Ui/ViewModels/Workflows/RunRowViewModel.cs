@@ -43,6 +43,27 @@ internal sealed class RunRowViewModel : ObservableObject
     /// <summary>The chip's StateChipView tone: ok, running, waiting, error or neutral.</summary>
     public string ChipToneWord { get; }
 
+    /// <summary>The time cell: "22m ago".</summary>
+    public string TimeText => string.Empty;
+
+    /// <summary>The time cell's tip, two lines: the date and time, then "7h 42m ago".</summary>
+    public string TimeTip => string.Empty;
+
+    /// <summary>The trigger in words: "By hand", "On schedule", "From the CLI", "By an agent".</summary>
+    public string TriggerWords => string.Empty;
+
+    /// <summary>"r2".</summary>
+    public string RevisionShort => string.Empty;
+
+    /// <summary>"10 s", or empty while it runs.</summary>
+    public string DurationText => string.Empty;
+
+    /// <summary>The one-line result.</summary>
+    public string ResultText => string.Empty;
+
+    /// <summary>True when the run's tick box is on (Compare takes two).</summary>
+    public bool IsSelected { get; set; }
+
     /// <summary>"Manual", "Schedule".</summary>
     public string TriggerText { get; }
 
