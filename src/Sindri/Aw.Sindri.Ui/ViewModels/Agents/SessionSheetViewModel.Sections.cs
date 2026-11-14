@@ -45,6 +45,14 @@ internal sealed partial class SessionSheetViewModel
     /// <returns>A task that completes once the clipboard answered.</returns>
     internal Task CopyRef(CancellationToken cancellationToken) => RefCopy?.Run(Ref, cancellationToken) ?? Task.CompletedTask;
 
+    /// <summary>The copy chip of the attach command, "tmux -S &lt;socket&gt; attach -t &lt;session&gt;"; null when the session is not in tmux (#3710).</summary>
+    public CopyAction? AttachCopy { get; private set => Set(ref field, value); }
+
+    /// <summary>Copies the attach command.</summary>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>A task that completes once the clipboard answered.</returns>
+    internal Task CopyAttach(CancellationToken cancellationToken) => AttachCopy?.Run(string.Empty, cancellationToken) ?? Task.CompletedTask;
+
     // A session that ended: the page knows its resume command (or that it has none) from the row that opened the sheet.
     private void DrawEndedResume() =>
         EndedResumeText = EndedResumeOf?.Invoke(Ref) switch

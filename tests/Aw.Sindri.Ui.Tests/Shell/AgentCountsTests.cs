@@ -60,6 +60,19 @@ public sealed class AgentCountsTests
     }, Token);
 
     [Fact]
+    public Task Tab_count_is_blank_while_the_control_plane_is_not_running_3710() => UiThread.Run(async () =>
+    {
+        _server.Current = A.Status() with { Sessions = new SessionCountsView(Live: 3, Asking: 1, Problems: 0) };
+        var shell = await Running();
+        await ShellWait.Until(shell, () => TabCount(shell) == "3", Token);
+
+        _records.Remove();
+        await ShellWait.Until(shell, () => shell.State == ShellState.NotRunning, Token);
+
+        Assert.Equal(("", ""), (TabCount(shell), shell.Agents.NavCount));
+    }, Token);
+
+    [Fact]
     public Task A_status_that_changes_the_figures_is_said_while_the_page_is_shown_and_not_otherwise() => UiThread.Run(async () =>
     {
         _server.Current = A.Status() with { Sessions = new SessionCountsView(Live: 3, Asking: 1, Problems: 0) };

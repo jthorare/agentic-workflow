@@ -29,6 +29,21 @@ public sealed class AgentsPageKeysTests
     }
 
     [Fact]
+    public async Task Down_and_Up_walk_the_rows_like_J_and_K_3710()
+    {
+        var page = await _f.Shown(Token);
+        var refs = page.Groups.SelectMany(g => g.Rows).Select(r => r.Ref).ToList();
+
+        var down = page.Press("Down");
+        var first = page.SelectedKey;
+        _ = page.Press("Down");
+        var second = page.SelectedKey;
+        var up = page.Press("Up");
+
+        Assert.Equal((true, true, refs[0], refs[1], refs[0]), (down, up, first, second, page.SelectedKey));
+    }
+
+    [Fact]
     public async Task K_from_no_row_goes_to_the_last()
     {
         var page = await _f.Shown(Token);

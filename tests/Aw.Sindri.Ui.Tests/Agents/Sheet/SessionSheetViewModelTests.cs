@@ -216,4 +216,22 @@ public sealed class SessionSheetViewModelTests
 
         Assert.StartsWith("Started ", sheet.StartedText, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task A_tmux_session_offers_Copy_attach_command_with_its_socket_and_session_3710()
+    {
+        var sheet = await Opened(ClaudeRef);
+
+        await sheet.CopyAttach(Token);
+
+        Assert.Equal(("Copy attach command", "tmux -S /tmp/tmux-1000/default attach -t main"), (sheet.AttachCopy?.Label, _clipboard.Text));
+    }
+
+    [Fact]
+    public async Task A_session_that_is_not_in_tmux_has_no_attach_command_3710()
+    {
+        var sheet = await Opened(CodexRef);
+
+        Assert.Null(sheet.AttachCopy);
+    }
 }
