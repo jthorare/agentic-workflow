@@ -9,7 +9,7 @@ set -euo pipefail
 # Temp-dir cleanup (#3262): every mktemp this suite makes is recorded and removed when it exits.
 __aw_tmp_reg="$(command mktemp)"
 mktemp() { local p; p="$(command mktemp "$@")" || return; printf '%s\n' "$p" >>"$__aw_tmp_reg"; printf '%s\n' "$p"; }
-__aw_tmp_clean() { local p; while IFS= read -r p; do [ -z "$p" ] || { chmod -R u+rwX "$p" 2>/dev/null || true; rm -rf "$p" || true; }; done <"$__aw_tmp_reg"; rm -f "$__aw_tmp_reg"; return 0; }
+__aw_tmp_clean() { local rc=$? p; while IFS= read -r p; do [ -z "$p" ] || { chmod -R u+rwX "$p" 2>/dev/null || true; rm -rf "$p" || true; }; done <"$__aw_tmp_reg"; rm -f "$__aw_tmp_reg"; exit "$rc"; }
 trap __aw_tmp_clean EXIT
 . "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib/test-grep.sh"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -178,7 +178,8 @@ test_a_suites_temp_files_and_nuget_cache_stay_in_its_sandbox() {
   printf '%s\n' 'echo "${NUGET_PACKAGES:-unset}" >> "$MARK/nuget"' > "$d/t/b.test.sh"
   git -C "$d" add t
   out="$(MARK="$m" TMPDIR="$m" NUGET_PACKAGES=/shared/nuget BASH_TESTS_ROOT="$d" BASH_TESTS_JOBS=1 BASH_TESTS_SERIAL="" BASH_TESTS_EXCLUDED="" bash "$RUNNER" 2>&1)" || rc=$?
-  [ "$rc" -eq 0 ] || fail "the run failed (exit $rc): $out"
+  # a.test.sh leaves its temp dir on purpose, so the run fails as a leak (next test); the sandbox must still be gone afterwards.
+  [ "$rc" -eq 1 ] || fail "the run should fail on the left temp dir (exit $rc): $out"
   [ "$(cat "$m/nuget")" = /shared/nuget ] || fail "NUGET_PACKAGES not kept: $(cat "$m/nuget")"
   [ "$(cat "$m/tmpdir")" != "$m" ] || fail "the suite's TMPDIR is the caller's"
   while IFS= read -r t; do [ ! -e "$t" ] || fail "a suite's temp dir outlived it: $t"; done < "$m/tmpdirs"
@@ -189,6 +190,22 @@ test_a_suites_temp_files_and_nuget_cache_stay_in_its_sandbox() {
   printf '%s\n' "$out" | has 'private NuGet cache' || fail "the failure does not say why: $out"
   rm -r "$d" "$m"
   echo "PASS: test_a_suites_temp_files_and_nuget_cache_stay_in_its_sandbox"
+}
+
+test_a_suite_that_leaves_a_temp_dir_in_its_tmpdir_fails_with_the_names() {
+  local d m out rc=0
+  d="$(mktemp -d)"; m="$(mktemp -d)"
+  git -C "$d" init -q; mkdir -p "$d/t"
+  printf '%s\n' 'mkdir "${TMPDIR:-/tmp}/leaked-by-a"' > "$d/t/a.test.sh"
+  printf '%s\n' 'd="$(mktemp -d "${TMPDIR:-/tmp}/tmp.XXXXXXXX")"; rmdir "$d"' > "$d/t/b.test.sh"
+  git -C "$d" add t
+  out="$(TMPDIR="$m" BASH_TESTS_ROOT="$d" BASH_TESTS_JOBS=1 BASH_TESTS_SERIAL="" BASH_TESTS_EXCLUDED="" bash "$RUNNER" 2>&1)" || rc=$?
+  [ "$rc" -eq 1 ] || fail "a suite that leaks a TMPDIR entry must fail the run (exit $rc): $out"
+  printf '%s\n' "$out" | has 'bash-tests: t/a.test.sh left in TMPDIR: leaked-by-a' || fail "the log line does not name the suite and the entry: $out"
+  printf '%s\n' "$out" | has 'FAIL  par  t/a.test.sh .*left files in TMPDIR' || fail "the summary does not mark it as a leak: $out"
+  printf '%s\n' "$out" | has 'PASS  par  t/b.test.sh' || fail "a suite that cleans up must still pass: $out"
+  rm -r "$d" "$m"
+  echo "PASS: test_a_suite_that_leaves_a_temp_dir_in_its_tmpdir_fails_with_the_names"
 }
 
 test_a_suite_whose_sandbox_cannot_be_made_fails_instead_of_running() {
@@ -259,6 +276,7 @@ test_pool_runs_in_parallel_and_serial_suites_run_alone
 test_a_failing_suite_fails_the_run_and_shows_its_log
 test_every_suite_gets_its_own_fresh_home_and_state_dir_whatever_the_caller_exported
 test_a_suites_temp_files_and_nuget_cache_stay_in_its_sandbox
+test_a_suite_that_leaves_a_temp_dir_in_its_tmpdir_fails_with_the_names
 test_a_suite_whose_sandbox_cannot_be_made_fails_instead_of_running
 test_the_sindri_home_and_local_bin_overrides_are_scrubbed_per_suite
 test_the_lane_environment_is_stripped_per_suite

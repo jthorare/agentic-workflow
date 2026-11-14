@@ -6,9 +6,12 @@ Each suite runs with its own fresh temp HOME and AW_STATE_DIR and without the la
 
 ## Temp dirs
 
-A suite removes every temp dir it makes. Each suite that called `mktemp` with no cleanup of its own now wraps `mktemp` in a function that records each path, and an `EXIT` trap removes them all. The runner also gives each suite its own `TMPDIR` inside the suite's sandbox.
+A suite removes every temp dir it makes. Each suite that called `mktemp` with no cleanup of its own wraps `mktemp` in a function that records each path. An `EXIT` trap removes them all and exits with the suite's own exit code.
 
-CI's "Bash tests" job runs `bash scripts/ci/tmp-leak-check.sh -- bash scripts/ci/bash-tests.sh`. The check lists the `aw-*` and `tmp.*` entries in `${TMPDIR:-/tmp}` before and after the command. It exits 1 and names each new entry still there. When the command fails, its own exit code wins. It deletes nothing. `scripts/tests/tmp-leak-check.test.sh` tests it.
+Two checks guard this. Each guards a different place.
+
+1. The runner's per-suite check (`scripts/ci/bash-tests.sh`). Each suite gets its own `TMPDIR` inside its sandbox, and the runner deletes the sandbox afterwards. Before the delete, the runner lists what the suite left at the top of that `TMPDIR`. A leftover appends `bash-tests: <suite> left in TMPDIR: <names>` to the suite's log, fails the suite and marks its `FAIL` line `(left files in TMPDIR)`. `scripts/tests/ci-bash-tests.test.sh` tests it.
+2. `scripts/ci/tmp-leak-check.sh` (outer `TMPDIR`). CI's "Bash tests" job runs `bash scripts/ci/tmp-leak-check.sh -- bash scripts/ci/bash-tests.sh`. The check lists the `aw-*` and `tmp.*` entries in `${TMPDIR:-/tmp}` before and after the command. It exits 1 and names each new entry still there. When the command fails, its own exit code wins. It deletes nothing. It catches what escapes a suite's sandbox: the runner itself, or a suite that writes to an explicit `/tmp` path. `scripts/tests/tmp-leak-check.test.sh` tests it.
 
 To check a run on your own box, give it a private `TMPDIR` so other runs do not show up as leaks:
 

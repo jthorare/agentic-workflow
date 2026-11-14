@@ -5,7 +5,7 @@ set -u
 # Temp-dir cleanup (#3262): every mktemp this suite makes is recorded and removed when it exits.
 __aw_tmp_reg="$(command mktemp)"
 mktemp() { local p; p="$(command mktemp "$@")" || return; printf '%s\n' "$p" >>"$__aw_tmp_reg"; printf '%s\n' "$p"; }
-__aw_tmp_clean() { local p; while IFS= read -r p; do [ -z "$p" ] || { chmod -R u+rwX "$p" 2>/dev/null || true; rm -rf "$p" || true; }; done <"$__aw_tmp_reg"; rm -f "$__aw_tmp_reg"; return 0; }
+__aw_tmp_clean() { local rc=$? p; while IFS= read -r p; do [ -z "$p" ] || { chmod -R u+rwX "$p" 2>/dev/null || true; rm -rf "$p" || true; }; done <"$__aw_tmp_reg"; rm -f "$__aw_tmp_reg"; exit "$rc"; }
 trap __aw_tmp_clean EXIT
 
 SCRIPT="$(cd "$(dirname "$0")" && pwd)/main-worktree.sh"
