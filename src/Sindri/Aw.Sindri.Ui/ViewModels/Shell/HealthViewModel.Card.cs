@@ -108,7 +108,13 @@ internal sealed partial class HealthViewModel
 
     private void ShowServicesNote()
     {
-        ServicesNote = HasServices ? _profileNote : string.Empty;
+        ServicesNote = HasServices ? NoteFor(_profileNote) : string.Empty;
         OnChanged(nameof(HasServicesNote));
     }
+
+    // The scheduler keeps a profile service from the last profile that loaded: only a profile service allows pause or resume (a built-in allows run only), so such a row means the built-ins-only line would be false.
+    private string NoteFor(string note) =>
+        string.Equals(note, Labels.ServicesProfileWontLoad, StringComparison.Ordinal) && (_serviceList?.Services ?? []).Any(r => r.Actions?.Any(a => string.Equals(a, "pause", StringComparison.Ordinal) || string.Equals(a, "resume", StringComparison.Ordinal)) == true)
+            ? Labels.ServicesProfileWontLoadKeepsLast
+            : note;
 }

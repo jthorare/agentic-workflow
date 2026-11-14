@@ -20,7 +20,7 @@ public sealed class ServicesOneCountTests
         await system.Show(A.Status(profile: Invalid));
 
         Assert.Equal(("17 scheduled", 17, true), (system.Vm.ServicesScheduled, system.Vm.ServiceCard.Count, system.Vm.HasServices));
-        Assert.Equal(Labels.ServicesProfileWontLoad, system.Vm.ServicesNote);
+        Assert.Equal(Labels.ServicesProfileWontLoadKeepsLast, system.Vm.ServicesNote);   // the fixture's 17 rows hold profile services
     }
 
     [Fact]
