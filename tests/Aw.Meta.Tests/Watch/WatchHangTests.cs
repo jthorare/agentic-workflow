@@ -61,4 +61,47 @@ public sealed class WatchHangTests
         Assert.Same(handled, first);
         _ = await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await handled);
     }
+
+    // The first poll sees pull request 191 merged, so the watch sweeps its worktrees: that fetches origin (WorktreeInspector) before anything else.
+    private void ScriptEndedPr(Func<CommandRequest, Task<CommandResult>> fetch) =>
+        _ = _world.Runner
+            .When("gh pr list", """[{"number":191,"state":"MERGED","isDraft":false,"headRefOid":"bbb2222","mergeable":"UNKNOWN","title":"t191"}]""")
+            .When("git ls-remote origin main", "aaaaaaa1111111\trefs/heads/main\n")
+            .When("git fetch", fetch);
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_worktree_sweep_of_an_ended_pr_gives_its_git_calls_a_short_limit()
+    {
+        using var stop = new CancellationTokenSource();
+        ScriptEndedPr(async _ =>
+        {
+            await stop.CancelAsync();   // one poll is enough
+            return new CommandResult(-1, string.Empty, string.Empty, TimedOut: true);
+        });
+        await _world.Ready();
+
+        _ = await Record.ExceptionAsync(async () => await Service().Handle(Request(), stop.Token));
+
+        var call = Assert.Single(_world.Runner.Requests, r => string.Join(' ', r.Argv).Contains("git fetch", StringComparison.Ordinal));
+        Assert.True(call.Timeout <= _pollLimit, $"git fetch got {call.Timeout}");
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_stop_signal_ends_the_watch_while_the_worktree_sweep_fetch_is_hung()
+    {
+        using var stop = new CancellationTokenSource();
+        var hung = new TaskCompletionSource<CommandResult>();
+        ScriptEndedPr(_ =>
+        {
+            stop.CancelAfter(TimeSpan.FromMilliseconds(100));   // the signal arrives while git is stuck
+            return hung.Task;
+        });
+        await _world.Ready();
+
+        var handled = Service().Handle(Request(), stop.Token).AsTask();
+        var first = await Task.WhenAny(handled, Task.Delay(TimeSpan.FromSeconds(10), TimeProvider.System, TestContext.Current.CancellationToken));
+
+        Assert.Same(handled, first);
+        _ = await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await handled);
+    }
 }
