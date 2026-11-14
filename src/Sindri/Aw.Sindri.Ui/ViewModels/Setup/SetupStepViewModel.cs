@@ -196,6 +196,7 @@ internal sealed partial class SetupStepViewModel : ObservableObject
         {
             _shared = line;
             Derive();
+            CloseIfBodyless();
         }
     }
 

@@ -25,6 +25,15 @@ internal sealed partial class SetupStepViewModel
         }
     }
 
+    // Called by Share: closes a failed row that was opened before the page took its fix as the shared line and has nothing left to show.
+    private void CloseIfBodyless()
+    {
+        if (IsOpen && IsFailed && !NeedsYou && !HasBody)
+        {
+            IsOpen = false;
+        }
+    }
+
     // Called by Update: opens a row that moved into needs-you or failed, or a failed row that gained a body.
     private void OpenOnUpdate(bool stateChanged, bool hadBody)
     {
