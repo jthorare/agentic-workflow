@@ -37,8 +37,8 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
     /// <summary>True when <see cref="Message"/> has words.</summary>
     public bool HasMessage => Message.Length > 0;
 
-    /// <summary>True while the card says why the start failed: the Not running line (no endpoint record) would answer the same question a second time.</summary>
-    public bool HidesNotRunningReason => Stage == StartStage.DidntStart;
+    /// <summary>True whenever a start state shows (Starting, Didn't start, Already starting, not installed): the page's own Not running reason (no endpoint record), its path and the Looks again line would answer the same question a second time. Only the plain page keeps them.</summary>
+    public bool HidesNotRunningReason => Stage != StartStage.Idle;
 
     /// <summary>True when <see cref="Details"/> has words.</summary>
     public bool HasDetails => Details.Length > 0;

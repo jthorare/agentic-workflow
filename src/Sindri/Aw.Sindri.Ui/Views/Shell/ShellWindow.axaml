@@ -203,7 +203,7 @@
                   </Border>
                 </StackPanel>
                 <!-- §12.4, states.html's help line: the follower's retry wait (HealthViewModel.RetryEvery), in caption type. -->
-                <TextBlock x:Name="LooksAgainText" Classes="caption subtle" Text="{Binding Text.LooksAgain}"
+                <TextBlock x:Name="LooksAgainText" Classes="caption subtle" Text="{Binding Text.LooksAgain}" IsVisible="{Binding !Start.HidesNotRunningReason}"
                            AutomationProperties.Name="{Binding Text.LooksAgain}" />
               </StackPanel>
             </Border>
