@@ -72,7 +72,7 @@
     <Grid ColumnDefinitions="Auto,*,Auto">
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock x:Name="ContextTitle" Classes="page-title" Text="{Binding Title}" />
-        <TextBlock x:Name="ContextHead" Classes="caption subtle" Text="{Binding Head}" IsVisible="{Binding HasHead}" VerticalAlignment="Center" />
+        <TextBlock x:Name="ContextHead" Classes="caption subtle" Text="{Binding HeadDetail}" IsVisible="{Binding HasHead}" VerticalAlignment="Center" />
         <!-- The pages no concept takes (pages spec §3.4): counted by the concepts read, read only when pressed. -->
         <Button x:Name="ContextNoConceptLink" IsVisible="{Binding ShowNoConceptLink}" Click="OnNoConcept" Padding="0,1" Background="Transparent" BorderThickness="0" VerticalAlignment="Center"
                 AutomationProperties.Name="{Binding NoConceptLinkText}">
@@ -93,27 +93,25 @@
       </Border>
     </Grid>
 
-    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" MinHeight="{StaticResource Size.TopBar}">
-      <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
-        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,16,8">
-          <TextBlock Classes="eyebrow" Text="{Binding StartsAtLabel}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-          <TextBox x:Name="AnchorBox" KeyDown="OnAnchorKey" MinWidth="220" Text="{Binding AnchorText, Mode=TwoWay}" PlaceholderText="{Binding AnchorHint}"
-                   AutomationProperties.Name="{Binding AnchorLabel}" />
-          <Button x:Name="AnchorClear" IsVisible="False" Click="OnClearSearch" VerticalAlignment="Center" Content="{Binding SearchClearText}" AutomationProperties.Name="{Binding SearchClearText}" />
-          <TextBlock x:Name="SearchNoteText" Classes="caption subtle" Text="{Binding SearchNote}" IsVisible="{Binding HasSearchNote}" VerticalAlignment="Center"
-                     AutomationProperties.Name="{Binding SearchNote}" />
+    <!-- The control row (#3677): the question box takes the row, with the repo and the Map or Files switch to its right and the coverage strip after them. No label: the box's placeholder and name say Ask a question. -->
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="16" MinHeight="{StaticResource Size.TopBar}">
+      <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" VerticalAlignment="Center" Margin="0,0,0,8">
+        <TextBox x:Name="AnchorBox" KeyDown="OnAnchorKey" MinWidth="220" Text="{Binding AnchorText, Mode=TwoWay}" PlaceholderText="{Binding AnchorHint}"
+                 AutomationProperties.Name="{Binding AnchorLabel}" />
+        <Button x:Name="AnchorClear" Grid.Column="1" IsVisible="False" Click="OnClearSearch" VerticalAlignment="Center" Content="{Binding SearchClearText}" AutomationProperties.Name="{Binding SearchClearText}" />
+        <TextBlock x:Name="SearchNoteText" Grid.Column="2" Classes="caption subtle" Text="{Binding SearchNote}" IsVisible="{Binding HasSearchNote}" VerticalAlignment="Center"
+                   AutomationProperties.Name="{Binding SearchNote}" />
+      </Grid>
+      <ComboBox x:Name="ContextRepo" Grid.Column="1" ItemsSource="{Binding Repos}" SelectedItem="{Binding SelectedRepo, Mode=TwoWay}" IsVisible="{Binding HasRepoPicker}" MinWidth="140" Height="28" Margin="0,0,0,8"
+                VerticalAlignment="Center" AutomationProperties.Name="{Binding RepoName}" />
+      <Border x:Name="ContextViewSwitch" Grid.Column="2" Background="{DynamicResource Brush.Surface2}" CornerRadius="{StaticResource Radius.MD}" Padding="2" Margin="0,0,0,8" VerticalAlignment="Center"
+              AutomationProperties.Name="{Binding ViewName}">
+        <StackPanel Orientation="Horizontal">
+          <RadioButton x:Name="ViewMapButton" GroupName="ContextView" Classes="segment" IsChecked="{Binding ShowMap, Mode=TwoWay}" Content="{Binding ViewMapWord}" AutomationProperties.Name="{Binding ViewMapWord}" />
+          <RadioButton x:Name="ViewFilesButton" GroupName="ContextView" Classes="segment" IsChecked="{Binding ShowFiles, Mode=TwoWay}" Content="{Binding ViewFilesWord}" AutomationProperties.Name="{Binding ViewFilesWord}" />
         </StackPanel>
-        <ComboBox x:Name="ContextRepo" ItemsSource="{Binding Repos}" SelectedItem="{Binding SelectedRepo, Mode=TwoWay}" IsVisible="{Binding HasRepoPicker}" MinWidth="140" Height="28" Margin="0,0,16,8"
-                  VerticalAlignment="Center" AutomationProperties.Name="{Binding RepoName}" />
-        <Border x:Name="ContextViewSwitch" Background="{DynamicResource Brush.Surface2}" CornerRadius="{StaticResource Radius.MD}" Padding="2" Margin="0,0,16,8" VerticalAlignment="Center"
-                AutomationProperties.Name="{Binding ViewName}">
-          <StackPanel Orientation="Horizontal">
-            <RadioButton x:Name="ViewMapButton" GroupName="ContextView" Classes="segment" IsChecked="{Binding ShowMap, Mode=TwoWay}" Content="{Binding ViewMapWord}" AutomationProperties.Name="{Binding ViewMapWord}" />
-            <RadioButton x:Name="ViewFilesButton" GroupName="ContextView" Classes="segment" IsChecked="{Binding ShowFiles, Mode=TwoWay}" Content="{Binding ViewFilesWord}" AutomationProperties.Name="{Binding ViewFilesWord}" />
-          </StackPanel>
-        </Border>
-      </WrapPanel>
-      <ctl:CoverageStrip x:Name="ContextCoverageStrip" Grid.Column="1" IsVisible="{Binding HasStack}" VerticalAlignment="Center" Margin="0,0,0,8" />
+      </Border>
+      <ctl:CoverageStrip x:Name="ContextCoverageStrip" Grid.Column="3" IsVisible="{Binding HasStack}" VerticalAlignment="Center" Margin="0,0,0,8" />
     </Grid>
 
     <Grid Grid.Row="2" RowDefinitions="Auto,*" RowSpacing="8">

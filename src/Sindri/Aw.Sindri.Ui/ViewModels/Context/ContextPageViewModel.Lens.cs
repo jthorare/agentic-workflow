@@ -191,6 +191,7 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(Map));
         OnChanged(nameof(Head));
         OnChanged(nameof(HasHead));
+        OnChanged(nameof(HeadDetail));
         OnChanged(nameof(Missing));
         OnChanged(nameof(Choices));
         OnChanged(nameof(ChoiceRows));

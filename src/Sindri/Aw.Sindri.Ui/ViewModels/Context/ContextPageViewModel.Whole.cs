@@ -217,6 +217,7 @@ internal sealed partial class ContextPageViewModel
     {
         OnChanged(nameof(Head));
         OnChanged(nameof(HasHead));
+        OnChanged(nameof(HeadDetail));
         OnChanged(nameof(ShowWhole));
         OnChanged(nameof(ShowWholeStatus));
         OnChanged(nameof(ShowRulesOlder));

@@ -274,6 +274,7 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(OpenedConceptId));
         OnChanged(nameof(Head));
         OnChanged(nameof(HasHead));
+        OnChanged(nameof(HeadDetail));
         OnChanged(nameof(SearchNote));
         OnChanged(nameof(HasSearchNote));
         ChangedNoConcept();

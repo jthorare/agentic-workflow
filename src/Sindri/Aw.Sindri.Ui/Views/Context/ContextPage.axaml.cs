@@ -70,17 +70,25 @@ internal sealed partial class ContextPage : UserControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-        if (!e.Handled && e.Source is not TextBox && _page is { } page)
+        if (!e.Handled && e.Source is not TextBox)
         {
-            if (e.KeyModifiers == KeyModifiers.None)
-            {
-                e.Handled = Handle(page, e.Key);
-            }
-            else if (e.KeyModifiers == KeyModifiers.Alt && e.Key == Key.Left)
-            {
-                e.Handled = page.Up();   // Alt+Left goes up a layer, as Backspace does
-            }
+            e.Handled = HandleKey(e);
         }
+    }
+
+    private bool HandleKey(KeyEventArgs e)
+    {
+        if (e.Key == Key.Oem2 && e.KeyModifiers == KeyModifiers.None)
+        {
+            return AnchorBox.Focus(NavigationMethod.Tab);   // / goes to the question box from anywhere on the page
+        }
+
+        if (_page is not { } page)
+        {
+            return false;
+        }
+
+        return e.KeyModifiers == KeyModifiers.None ? Handle(page, e.Key) : e.KeyModifiers == KeyModifiers.Alt && e.Key == Key.Left && page.Up();   // Alt+Left goes up a layer, as Backspace does
     }
 
     // Esc closes the inspector; J and K walk the nodes; F and M choose the view (F3 spec 1 §5).
