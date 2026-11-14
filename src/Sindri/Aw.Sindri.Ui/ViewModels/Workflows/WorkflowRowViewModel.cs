@@ -44,7 +44,7 @@ internal sealed class WorkflowRowViewModel : ObservableObject
     /// <summary>The chip's glyph.</summary>
     public string ChipGlyph { get; }
 
-    /// <summary>The chip's StateChipView tone: ok, attention, error or neutral.</summary>
+    /// <summary>The chip's StateChipView tone: ok (active) or neutral.</summary>
     public string ChipToneWord { get; }
 
     /// <summary>"Revision 2" or "Revision 1 active, 3 newest"; empty for a first revision and for a workflow with no active revision.</summary>

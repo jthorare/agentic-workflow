@@ -47,7 +47,7 @@ internal sealed class RunRowViewModel : ObservableObject
     /// <summary>The chip's glyph.</summary>
     public string ChipGlyph { get; }
 
-    /// <summary>The chip's StateChipView tone: ok, attention, error or neutral.</summary>
+    /// <summary>The chip's StateChipView tone: ok, running, waiting, error or neutral.</summary>
     public string ChipToneWord { get; }
 
     /// <summary>"Manual", "Schedule".</summary>

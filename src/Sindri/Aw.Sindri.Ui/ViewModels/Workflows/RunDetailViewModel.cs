@@ -31,7 +31,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     /// <summary>The chip's glyph.</summary>
     public string ChipGlyph { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>The chip's StateChipView tone: ok, attention, error or neutral.</summary>
+    /// <summary>The chip's StateChipView tone: ok, running, waiting, error or neutral.</summary>
     public string ChipToneWord { get; private set => Set(ref field, value); } = "neutral";
 
     /// <summary>True for a succeeded or running run (the ok colour).</summary>
