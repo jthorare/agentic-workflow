@@ -20,6 +20,11 @@ namespace Aw.Meta.Core.Coordination;
 /// <param name="clock">Dates the computation and the log line.</param>
 public sealed class HeavyReservation(IHeavyReserve reserve, MergeQueueReader queue, IRunningLog log, IMetaConfig config, TimeProvider clock)
 {
+    /// <summary>The same reservation over other gh calls (a poll's, bound by its limit and the stop signal).</summary>
+    /// <param name="github">The calls to use.</param>
+    /// <returns>A reservation over them.</returns>
+    public HeavyReservation Using(RepoCommands github) => new(reserve, queue.Using(github), log, config, clock);
+
     /// <summary>A computation older than this is stale: the queue may have changed with nobody recomputing.</summary>
     public static readonly TimeSpan StaleAfter = TimeSpan.FromMinutes(30);
 

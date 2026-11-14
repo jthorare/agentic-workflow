@@ -72,7 +72,7 @@ pause=(--type Button --text "Pause service")
 sent=0
 for _ in $(seq 1 10); do
   after="$("$PROVE" human ledger --json --type service.paused --max 1000 2>&1 | tr -d '\r')"
-  if printf '%s' "$after" | grep -q 'human:ui'; then sent=1; break; fi
+  if grep -q 'human:ui' <<<"$after"; then sent=1; break; fi
   sleep 0.5
 done
 "$DRIVER" screenshot --out "$OUT/after-click.png" >/dev/null 2>&1
