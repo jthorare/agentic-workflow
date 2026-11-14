@@ -33,7 +33,7 @@ public sealed class RerunWorkflowRunServiceTests
         _workflows = new InMemoryWorkflowStore(_clock);
         _runs = new InMemoryWorkflowRunStore(_clock);
         _starter = new RecordingStarter(_runs, _clock);
-        _service = new RerunWorkflowRunService()   // red stub: step 2 adds the ports (workflows, runs, starter);
+        _service = new RerunWorkflowRunService(_workflows, _runs, _starter)
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
