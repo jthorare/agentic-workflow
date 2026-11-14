@@ -173,7 +173,7 @@ public sealed class ShowNodeTests : IDisposable
 
         var node = (await Show("code:src/a.ts")).Node;
 
-        Assert.Equal(new NodeSource("file", "src/a.ts"), node.Source);
+        Assert.Equal(new NodeSource("file", "src/a.ts", Path: Path.Combine("/work/aw-split-panes", "src", "a.ts")), node.Source);
         Assert.Null(node.Description);
     }
 
@@ -222,7 +222,7 @@ public sealed class ShowNodeTests : IDisposable
         var withEvidence = (await Show("feature:a")).Node;
         var without = (await Show("feature:plain")).Node;
 
-        Assert.Equal(new NodeSource("doc", "repo:aw-split-panes/docs/a.md"), withEvidence.Source);
+        Assert.Equal(new NodeSource("doc", "repo:aw-split-panes/docs/a.md", Path: Path.Combine("/work/aw-split-panes", "docs", "a.md")), withEvidence.Source);
         Assert.Null(withEvidence.Description);
         Assert.Null(without.Source);
         Assert.Null(without.Description);
