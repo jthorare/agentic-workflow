@@ -148,12 +148,12 @@
         <Border Classes="panel" Height="320">
           <wv:GraphCanvas x:Name="RunsCanvas" Graph="{Binding Runs.Graph}" />
         </Border>
-        <!-- What the selected step is and does, read-only, while Edit is off (#2807). -->
-        <StackPanel Orientation="Horizontal" Spacing="12" IsVisible="{Binding CanOpenSettings}">
+        <!-- What the selected step is and does, read-only, while Edit is off (#2807). It shows for every workflow, archived too; only Step settings needs edit rights. -->
+        <StackPanel Orientation="Horizontal" Spacing="12">
           <Border x:Name="StepSummary" VerticalAlignment="Center" IsVisible="{Binding HasStepSummary}" AutomationProperties.Name="{Binding StepSummaryText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <TextBlock Classes="caption" Text="{Binding StepSummaryText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
-          <Button x:Name="StepSettings" VerticalAlignment="Center" Content="{Binding StepSettingsText}" Click="OnStepSettings" AutomationProperties.Name="{Binding StepSettingsText}" />
+          <Button x:Name="StepSettings" VerticalAlignment="Center" IsVisible="{Binding CanOpenSettings}" Content="{Binding StepSettingsText}" Click="OnStepSettings" AutomationProperties.Name="{Binding StepSettingsText}" />
         </StackPanel>
         <Border x:Name="RunsUnplacedName" IsVisible="{Binding Runs.Graph.HasUnplaced}" AutomationProperties.Name="{Binding Runs.Graph.UnplacedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption subtle" Text="{Binding Runs.Graph.UnplacedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
