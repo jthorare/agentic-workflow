@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -88,8 +89,8 @@ public sealed class WorkflowsConnectionPickerFramesTests : FrameHost
         Settle(window);
 
         var fields = Named<ItemsControl>(window, "EditorFields");
-        var notice = fields.GetVisualDescendants().OfType<TextBlock>().Single(t => t.IsEffectivelyVisible && t.Text == "Nothing connected yet.");
-        Assert.NotNull(notice);
+        var notice = fields.GetVisualDescendants().OfType<Border>().Single(b => b.IsEffectivelyVisible && AutomationProperties.GetAutomationId(b) == "WfConnectNotice");
+        Assert.Equal("Nothing connected yet.", AutomationProperties.GetName(notice));
         var connect = fields.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "EditorFieldConnect" && b.IsEffectivelyVisible);
         Assert.True(connect.IsEnabled);
         Assert.Equal("Connect GitHub", connect.Content);

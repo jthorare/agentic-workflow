@@ -65,7 +65,7 @@ public sealed class ConnectionNothingConnectedTests
     }
 
     [Fact]
-    public async Task Before_Connect_was_pressed_the_field_says_nothing()
+    public async Task Reopening_the_sheet_clears_the_nothing_connected_notice()
     {
         var page = await PressedConnect();   // pressed once, then back on the list: the sheet is shut
         page.CloseEditor();

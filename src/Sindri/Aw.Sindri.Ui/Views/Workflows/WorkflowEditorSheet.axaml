@@ -36,7 +36,7 @@
                 </ComboBox.ItemTemplate>
               </ComboBox>
               <Button Name="EditorFieldConnect" IsVisible="{Binding NeedsConnect}" Content="{Binding ConnectText}" Click="OnConnect" HorizontalAlignment="Left" AutomationProperties.Name="{Binding ConnectText}" />
-              <Border Name="EditorFieldNotice" IsVisible="{Binding HasNotice}" AutomationProperties.Name="{Binding NoticeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+              <Border Name="EditorFieldNotice" AutomationProperties.AutomationId="WfConnectNotice" IsVisible="{Binding HasNotice}" AutomationProperties.Name="{Binding NoticeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                 <TextBlock Classes="caption subtle" Text="{Binding NoticeText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
               </Border>
               <ToggleButton Name="EditorFieldAdvanced" IsVisible="{Binding HasAdvanced}" IsChecked="{Binding ShowAdvanced, Mode=TwoWay}" Content="{Binding AdvancedText}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding AdvancedText}" />
