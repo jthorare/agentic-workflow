@@ -1,4 +1,3 @@
-#pragma warning disable MA0182 // the area canvas (next commit) draws its labels with this
 namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 /// <summary>Where a link's label goes (#3678): whole on a free stretch between the two nodes, or not at all, never under a node.</summary>

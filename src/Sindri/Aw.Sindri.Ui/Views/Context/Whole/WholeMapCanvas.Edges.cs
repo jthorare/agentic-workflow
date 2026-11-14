@@ -28,12 +28,48 @@ internal sealed partial class WholeMapCanvas
             return;
         }
 
-        var pills = drawn.Where(e => WholeEdgeSelection.ShowsPill(e, drawn.Count, _focus)).Select(e => new WholePill(WholeEdgeStyle.Of(e), (e.X1 + e.X2) / 2, (e.Y1 + e.Y2) / 2)).ToList();
+        var pills = LabelledPills(geometry, drawn.Where(e => WholeEdgeSelection.ShowsPill(e, drawn.Count, _focus)));
         foreach (var pill in WholePillPlacer.Place(pills, Scale))
         {
             DrawPill(context, pill.Style, pill.X, pill.Y);   // no label lies on another
         }
     }
+
+    // #3678: a label is drawn whole on the free stretch between its two nodes, never under a node; an edge with no free stretch has none (its tooltip names it).
+    private List<WholePill> LabelledPills(WholeMapGeometry geometry, IEnumerable<PlacedEdge> edges)
+    {
+        var rects = geometry.Nodes.Select(n => n.Rect).ToList();
+        var byKey = new Dictionary<string, WholeRect>(StringComparer.Ordinal);
+        foreach (var node in geometry.Nodes)
+        {
+            _ = byKey.TryAdd(node.Key, node.Rect);
+        }
+
+        var pills = new List<WholePill>();
+        foreach (var edge in edges)
+        {
+            var style = WholeEdgeStyle.Of(edge);
+            var (width, height) = PillBox(style.Pill);
+            if (byKey.TryGetValue(edge.From, out var from) && byKey.TryGetValue(edge.To, out var to) && LinkLabelPlacer.Place(from, to, width, height, rects) is { } at)
+            {
+                pills.Add(new WholePill(style, at.CenterX, at.CenterY));
+            }
+        }
+
+        return pills;
+    }
+
+    private (double Width, double Height) PillBox(string pill)
+    {
+        var text = PillText(pill);
+        var pad = PillPad;
+        return (text.Width + (2 * pad), text.Height + pad);
+    }
+
+    private double PillPad => 5 / Math.Max(Scale, 0.5);
+
+    private FormattedText PillText(string pill) =>
+        new(pill, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface(FontFamily.Default, FontStyle.Normal, FontWeight.Medium), PillSize / Math.Max(Scale, 0.5), Brush("Brush.InkSubtle"));
 
     // One line per pair of areas with its count, never one per node edge.
     private void DrawAreaBundles(DrawingContext context, WholeMapGeometry geometry)
@@ -63,9 +99,8 @@ internal sealed partial class WholeMapCanvas
     // The mockup's pill: a small card on the edge, its border dashed for a suggestion.
     private void DrawPill(DrawingContext context, WholeEdgeStyle style, double x, double y)
     {
-        var size = PillSize / Math.Max(Scale, 0.5);
-        var text = new FormattedText(style.Pill, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface(FontFamily.Default, FontStyle.Normal, FontWeight.Medium), size, Brush("Brush.InkSubtle"));
-        var pad = 5 / Math.Max(Scale, 0.5);
+        var text = PillText(style.Pill);
+        var pad = PillPad;
         var rect = new Rect(x - (text.Width / 2) - pad, y - (text.Height / 2) - (pad / 2), text.Width + (2 * pad), text.Height + pad);
         context.DrawRectangle(Brush("Brush.Surface1"), new Pen(Brush("Brush.Hairline"), 1 / Math.Max(Scale, 0.5), style.Dashed ? new DashStyle([3, 2], 0) : null), rect, radiusX: 6, radiusY: 6);
         context.DrawText(text, new Point(rect.X + pad, rect.Y + (pad / 2)));
