@@ -36,7 +36,7 @@ public sealed class SindriStartViewModelTests : IDisposable
 
         clock.Advance(TimeSpan.FromSeconds(30));
 
-        Assert.Equal((StartStage.DidntStart, "Sindri didn't start: SND-CLI-002 exec /x/sindri: denied.", "Retry", "/logs/serve.log · sindri serve"), (model.Stage, model.Message, model.Primary, model.Details));
+        Assert.Equal((StartStage.DidntStart, "Sindri didn't start: exec /x/sindri: denied.", "Retry", "/logs/serve.log · sindri serve"), (model.Stage, model.Message, model.Primary, model.Details));
     }
 
     [Fact]
@@ -123,6 +123,22 @@ public sealed class SindriStartViewModelTests : IDisposable
     }
 
     [Fact]
+    public void The_Not_running_line_is_hidden_only_while_Didnt_start_shows()
+    {
+        var clock = new FakeTimeProvider();
+        var model = new SindriStartViewModel(new FakeStarter { Error = "SND-CLI-002 exec: x" }, clock);
+        var idle = model.HidesNotRunningReason;
+        model.Begin();
+        var starting = model.HidesNotRunningReason;
+        clock.Advance(TimeSpan.FromSeconds(30));
+        var didntStart = model.HidesNotRunningReason;
+        model.Start();
+        var retrying = model.HidesNotRunningReason;
+
+        Assert.Equal((false, false, true, false), (idle, starting, didntStart, retrying));
+    }
+
+    [Fact]
     public void A_serve_that_exits_while_starting_shows_Didnt_start_at_once()
     {
         var starter = new FakeStarter { Error = "SND-CLI-002 'sindri serve' exited: SND-API-003 address already in use" };
@@ -131,7 +147,7 @@ public sealed class SindriStartViewModelTests : IDisposable
 
         starter.Exit();
 
-        Assert.Equal((StartStage.DidntStart, "Sindri didn't start: SND-CLI-002 'sindri serve' exited: SND-API-003 address already in use (exit code 1).", "Retry"), (model.Stage, model.Message, model.Primary));
+        Assert.Equal((StartStage.DidntStart, "Sindri didn't start: address already in use (exit code 1).", "Retry"), (model.Stage, model.Message, model.Primary));
     }
 
     [Fact]

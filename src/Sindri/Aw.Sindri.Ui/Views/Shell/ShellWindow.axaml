@@ -180,6 +180,7 @@
                   <TextBlock x:Name="NotRunningText" Classes="detail-title" Text="{Binding Text.NotRunning}"
                              AutomationProperties.Name="{Binding Text.NotRunning}" />
                 </StackPanel>
+                <StackPanel Spacing="{StaticResource Space.SM}" IsVisible="{Binding !Start.HidesNotRunningReason}">
                 <TextBlock x:Name="ReasonText" Classes="body muted" Text="{Binding Reason}" TextWrapping="Wrap"
                            AutomationProperties.Name="{Binding Reason}" />
                 <!-- I7: the reason's detail on its own mono line: the record's path shortened (~, a middle ellipsis), the address, or
@@ -187,6 +188,7 @@
                 <TextBlock x:Name="ReasonDetailText" Classes="mono subtle" Text="{Binding ReasonDetail}" TextWrapping="NoWrap"
                            TextTrimming="PrefixCharacterEllipsis" IsVisible="{Binding ReasonDetail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                            AutomationProperties.Name="{Binding ReasonDetail}" />
+                </StackPanel>
                 <TextBlock x:Name="StartMessageText" Classes="body" Text="{Binding Start.Message}" TextWrapping="Wrap"
                            IsVisible="{Binding Start.HasMessage}" AutomationProperties.Name="{Binding Start.Message}" />
                 <TextBlock x:Name="StartDetailsText" Classes="mono subtle" Text="{Binding Start.Details}" TextWrapping="Wrap"

@@ -37,6 +37,9 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
     /// <summary>True when <see cref="Message"/> has words.</summary>
     public bool HasMessage => Message.Length > 0;
 
+    /// <summary>True while the card says why the start failed: the Not running line (no endpoint record) would answer the same question a second time.</summary>
+    public bool HidesNotRunningReason => false;   // stub (red)
+
     /// <summary>True when <see cref="Details"/> has words.</summary>
     public bool HasDetails => Details.Length > 0;
 
@@ -171,7 +174,7 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
             return;
         }
 
-        var said = error ?? Labels.NoErrorLine;
+        var said = StartError.Reason(error);
         Show(StartStage.DidntStart, exitCode is { } code ? Labels.DidntStartExit(said, code) : Labels.DidntStart(said), Labels.StartDetails(starter.LogPath), Labels.Retry);
     }
 
