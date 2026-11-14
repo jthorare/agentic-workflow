@@ -23,6 +23,12 @@ internal sealed class NaturalOrder : IComparer<string>
             return x is null ? -1 : 1;
         }
 
+        return CompareText(x, y);
+    }
+
+    // Walks both strings: digit runs against digit runs as numbers, any other pair of characters ignoring case.
+    private static int CompareText(string x, string y)
+    {
         var i = 0;
         var j = 0;
         while (i < x.Length && j < y.Length)
