@@ -248,7 +248,7 @@ public sealed class TodoNoteCardFramesTests : IDisposable
         _server.LinearConnectionAnswer = RouteAnswer.Problem(HttpStatusCode.InternalServerError, "SND-API-500", "boom");
         var linear = new LinearConnectionViewModel(() => _api, _server);
         await linear.Refresh(_api, Token);
-        Assert.NotEqual(string.Empty, linear.ErrorText);
+        Assert.False(string.IsNullOrEmpty(linear.ErrorText));
         var settings = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), _ => { }) { LinearConnection = linear };
         var window = new Window { Width = 900, Height = 1200, Content = new SettingsView { DataContext = settings } };
         _windows.Add(window);
