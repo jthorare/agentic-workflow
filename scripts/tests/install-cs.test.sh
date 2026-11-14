@@ -458,7 +458,12 @@ cat > "$REPO/scripts/heavy.sh" <<'FH'
 [ "${1:-}" = --expensive ] && shift
 if [ -n "${FAKE_HEAVY_HOLD:-}" ] && [ -e "$FAKE_HEAVY_HOLD" ]; then
   echo $$ > "$FAKE_HEAVY_PIDFILE"
-  while [ -e "$FAKE_HEAVY_HOLD" ]; do sleep 1; done
+  # A SIGKILLed suite can't clean up: give up when it is gone or its work dir was removed (#3668).
+  while [ -e "$FAKE_HEAVY_HOLD" ]; do
+    kill -0 "${FAKE_HEAVY_SUITE_PID:-$PPID}" 2> /dev/null || exit 75
+    [ -d "${FAKE_HEAVY_WORK:-/}" ] || exit 75
+    sleep 1
+  done
 fi
 export PATH="${AW_HEAVY_TEST_PATH:+$AW_HEAVY_TEST_PATH:}$PATH"
 exec "$@"
