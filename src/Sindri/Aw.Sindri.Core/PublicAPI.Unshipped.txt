@@ -23865,15 +23865,15 @@ Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.WaitingOn.get -> string?
 Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.WaitingOn.init -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth
 Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.<Clone>$() -> Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth!
-Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Deconstruct(out Aw.Sindri.Core.Projects.Cards.ProjectHealth Level, out string! Reason) -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Deconstruct(out Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel Level, out string! Reason) -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Equals(Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? other) -> bool
-Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.ProjectTruthHealth(Aw.Sindri.Core.Projects.Cards.ProjectHealth Level, string! Reason) -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.ProjectTruthHealth(Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel Level, string! Reason) -> void
 override Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.GetHashCode() -> int
 override Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.ToString() -> string!
 static Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.operator !=(Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? left, Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? right) -> bool
 static Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.operator ==(Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? left, Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? right) -> bool
-Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Level.get -> Aw.Sindri.Core.Projects.Cards.ProjectHealth
+Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Level.get -> Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel
 Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Level.init -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Reason.get -> string!
 Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Reason.init -> void
@@ -23966,3 +23966,8 @@ Aw.Sindri.Core.Projects.Truth.IProjectTruthFacts
 Aw.Sindri.Core.Projects.Truth.IProjectTruthFacts.Read(Aw.Sindri.Core.Projects.Truth.ProjectSources! union, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts!>!>
 Aw.Sindri.Core.Projects.Cards.ProjectCard.Truth.get -> Aw.Sindri.Core.Projects.Truth.ProjectTruth!
 Aw.Sindri.Core.Projects.Cards.ProjectCard.Truth.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel
+Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel.OnTrack = 0 -> Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel
+Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel.AtRisk = 1 -> Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel
+Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel.OffTrack = 2 -> Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel
+Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel.Unknown = 3 -> Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel

@@ -183,7 +183,7 @@ public sealed class ProjectTruthsTests
     {
         var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1), Pull(2)]));
 
-        Assert.Equal(ProjectHealth.OnTrack, truth.Health!.Level);
+        Assert.Equal(ProjectTruthLevel.OnTrack, truth.Health!.Level);
     }
 
     [Fact]
@@ -194,11 +194,11 @@ public sealed class ProjectTruthsTests
 
         var truth = ProjectTruths.Build(Inputs(pulls: pulls, summaries: summaries));
 
-        Assert.Equal((ProjectHealth.AtRisk, "At risk: 3 of 9 PRs red"), (truth.Health!.Level, truth.Health.Reason));
+        Assert.Equal((ProjectTruthLevel.AtRisk, "At risk: 3 of 9 PRs red"), (truth.Health!.Level, truth.Health.Reason));
     }
 
     [Fact]
-    public void Health_names_the_prs_not_checked_yet_in_words()
+    public void Health_at_risk_adds_the_unknown_prs_to_its_reason()
     {
         ReviewPull[] pulls = [.. Enumerable.Range(1, 9).Select(static n => Pull(n))];
         var summaries = Enumerable.Range(1, 3).ToDictionary(static n => Key(n), _ => Red(_now.AddDays(-2)));
@@ -207,15 +207,40 @@ public sealed class ProjectTruthsTests
 
         var truth = ProjectTruths.Build(open with { Facts = facts });
 
-        Assert.Equal((ProjectHealth.AtRisk, "At risk: 3 of 9 PRs red, 2 not checked yet"), (truth.Health!.Level, truth.Health.Reason));
+        Assert.Equal((ProjectTruthLevel.AtRisk, "At risk: 3 of 9 PRs red, 2 unknown"), (truth.Health!.Level, truth.Health.Reason));
     }
 
     [Fact]
-    public void Health_is_never_on_track_while_a_pr_is_not_checked_yet()
+    public void Health_is_unknown_when_no_pr_is_red_but_some_have_no_ci_summary()
     {
         var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1), Pull(2)], noSummaries: true));
 
-        Assert.Equal((ProjectHealth.AtRisk, "At risk: 2 PRs not checked yet"), (truth.Health!.Level, truth.Health.Reason));
+        Assert.Equal((ProjectTruthLevel.Unknown, "CI unknown for 2 of 2 PRs"), (truth.Health!.Level, truth.Health.Reason));
+    }
+
+    [Fact]
+    public void Health_unknown_counts_only_the_unchecked_prs()
+    {
+        var open = Inputs(pulls: [.. Enumerable.Range(1, 5).Select(static n => Pull(n))]);
+        var facts = open.Facts with { Summaries = open.Facts.Summaries.Where(static e => e.Key != Key(4) && e.Key != Key(5)).ToDictionary(static e => e.Key, static e => e.Value) };
+
+        var truth = ProjectTruths.Build(open with { Facts = facts });
+
+        Assert.Equal((ProjectTruthLevel.Unknown, "CI unknown for 2 of 5 PRs"), (truth.Health!.Level, truth.Health.Reason));
+    }
+
+    [Fact]
+    public void Precedence_is_draft_over_ci_red_over_waiting_over_unknown_over_ready()
+    {
+        var pulls = new[] { Pull(1, draft: true), Pull(2, requested: ["joi"]), Pull(3), Pull(4), Pull(5, draft: true, requested: ["joi"]) };
+        var open = Inputs(pulls: pulls, summaries: new Dictionary<string, ReviewSummary> { [Key(1)] = Red(_now), [Key(2)] = Red(_now), [Key(5)] = Red(_now) });
+        var facts = open.Facts with { Summaries = open.Facts.Summaries.Where(static e => e.Key != Key(3)).ToDictionary(static e => e.Key, static e => e.Value) };
+
+        var truth = ProjectTruths.Build(open with { Facts = facts });
+
+        Assert.Equal(
+            new[] { ProjectPrState.Draft, ProjectPrState.CiRed, ProjectPrState.Unknown, ProjectPrState.Ready, ProjectPrState.Draft },
+            truth.OpenPrs.OrderBy(static p => p.Number).Select(static p => p.State).ToArray());
     }
 
     [Fact]
@@ -225,6 +250,6 @@ public sealed class ProjectTruthsTests
 
         var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1), Pull(2), Pull(3)], summaries: summaries));
 
-        Assert.Equal((ProjectHealth.OffTrack, "Off track: 2 of 3 PRs red"), (truth.Health!.Level, truth.Health.Reason));
+        Assert.Equal((ProjectTruthLevel.OffTrack, "Off track: 2 of 3 PRs red"), (truth.Health!.Level, truth.Health.Reason));
     }
 }

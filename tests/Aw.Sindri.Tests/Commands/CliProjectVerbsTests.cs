@@ -314,7 +314,7 @@ public sealed class CliProjectVerbsTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Cli_projects_prints_the_pr_and_agent_counts_and_the_health_of_a_hand_made_project()
     {
-        var truth = new ProjectTruth([Pr(1, ProjectPrState.CiRed), Pr(2, ProjectPrState.Ready)], OpenItems: 3, DoneItems: 1, TotalItems: 4, RunningAgents: 2, new ProjectTruthHealth(ProjectHealth.AtRisk, "At risk: 1 of 2 PRs red"));
+        var truth = new ProjectTruth([Pr(1, ProjectPrState.CiRed), Pr(2, ProjectPrState.Ready)], OpenItems: 3, DoneItems: 1, TotalItems: 4, RunningAgents: 2, new ProjectTruthHealth(ProjectTruthLevel.AtRisk, "At risk: 1 of 2 PRs red"));
         var api = new RoutedApi().On("/sindri/projects", HttpStatusCode.OK, new ListProjectsResponse(_fine, Empty: null, Viewer: null, [], [Card(Id, "Kitchen") with { Truth = truth }], [], []));
 
         var code = await Verbs(api).Run(["projects"], Token);
@@ -326,7 +326,7 @@ public sealed class CliProjectVerbsTests : IDisposable
     public async Task Cli_project_show_lists_each_open_pr_with_its_state_since_and_who_it_waits_on()
     {
         var at = new DateTimeOffset(2026, 11, 12, 8, 0, 0, TimeSpan.Zero);
-        var truth = new ProjectTruth([Pr(1, ProjectPrState.CiRed, at), Pr(2, ProjectPrState.Waiting, waitingOn: "joi")], OpenItems: 0, DoneItems: 0, TotalItems: 0, RunningAgents: 0, Health: null);
+        var truth = new ProjectTruth([Pr(1, ProjectPrState.CiRed, at), Pr(2, ProjectPrState.Waiting, waitingOn: "joi"), Pr(3, ProjectPrState.Unknown)], OpenItems: 0, DoneItems: 0, TotalItems: 0, RunningAgents: 0, Health: null);
         var api = new RoutedApi().On($"/sindri/projects/{Id}", HttpStatusCode.OK, Shown(Card(Id, "Kitchen") with { Truth = truth }, hidden: false));
 
         var code = await Verbs(api).Run(["project", "show", Id], Token);
@@ -334,6 +334,7 @@ public sealed class CliProjectVerbsTests : IDisposable
         var text = _out.ToString().ReplaceLineEndings("\n");
         Assert.Equal(0, code);
         Assert.Contains("  PR acme/api#1  ciRed  2026-11-12T08:00:00Z  -  https://github.com/acme/api/pull/1\n", text, StringComparison.Ordinal);
+        Assert.Contains("  PR acme/api#3  unknown  -  -  https://github.com/acme/api/pull/3\n", text, StringComparison.Ordinal);
         Assert.Contains("  PR acme/api#2  waiting  -  joi  https://github.com/acme/api/pull/2\n", text, StringComparison.Ordinal);
     }
 
