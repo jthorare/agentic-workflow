@@ -12,7 +12,7 @@ using Aw.Sindri.Ui.Views.Controls;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
-/// <summary>ZoomBorder fit to host the Workflows graph (#3234): opt-in keyboard focus with a 2 px PrimaryHover ring, the hand cursor and a panning cursor, a 0.5 to 2 range that holds end to end, and the automation name.</summary>
+/// <summary>ZoomBorder fit to host the Workflows graph (#3234): opt-in keyboard focus (the ring is the app-wide adorner), the hand cursor and a panning cursor, a 0.5 to 2 range that holds end to end, and the automation name.</summary>
 [Lane(TestLane.Integration)]
 [Collection(HeadlessWindows.Name)]
 public sealed class ZoomBorderStatesTests
@@ -41,10 +41,6 @@ public sealed class ZoomBorderStatesTests
         return (window, zoom);
     }
 
-    private static Color Brush(string key) => Application.Current!.FindResource(key) is ISolidColorBrush b ? b.Color : default;
-
-    private static Color Edge(Border b) => b.BorderBrush is ISolidColorBrush s ? s.Color : default;
-
     [Fact]
     public async Task Keyboard_focus_is_off_by_default_so_the_context_map_is_unchanged() => await OnUi(() =>
     {
@@ -70,16 +66,21 @@ public sealed class ZoomBorderStatesTests
         return true;
     });
 
+    // The one focus ring is the app-wide adorner (FluentOverrides.axaml, 2 to 4 px outside). A 2 px border on the stage drew a second ring and shifted the content by 2 px on focus.
     [Fact]
-    public async Task Keyboard_focus_draws_a_2_px_PrimaryHover_ring() => await OnUi(() =>
+    public async Task Keyboard_focus_leaves_the_ring_to_the_app_adorner_and_does_not_move_the_content() => await OnUi(() =>
     {
         var (window, zoom) = Show(focusable: true);
+        var child = Assert.IsType<Visual>(zoom.Child, exactMatch: false);
+        var before = child.TranslatePoint(default, window);
 
         Assert.True(zoom.Focus(NavigationMethod.Tab));
         Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
 
-        Assert.Equal(Brush("Brush.PrimaryHover"), Edge(zoom));
-        Assert.Equal(2, zoom.BorderThickness.Left);
+        Assert.Equal(0, zoom.BorderThickness.Left);
+        Assert.Equal(before, child.TranslatePoint(default, window));
+        Assert.NotNull(zoom.FocusAdorner);
         window.Close();
         return true;
     });
