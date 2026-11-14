@@ -3,19 +3,34 @@
              xmlns:lvm="using:Aw.Sindri.Ui.ViewModels.Linear"
              x:Class="Aw.Sindri.Ui.Views.Linear.LinearConnectionSection"
              x:DataType="lvm:LinearConnectionViewModel">
+  <UserControl.Styles>
+    <!-- #3454: a TextBlock with no text still measures one line (18 px). The live-region rows stay visible and in the tree, so they are held to no height unless they are filled. The rule is
+         "collapsed unless filled", not "collapsed when empty": with no data context (the card is not set up) the binding is unset, and the row must still be flat. -->
+    <Style Selector="TextBlock.live-row">
+      <Setter Property="MaxHeight" Value="0" />
+    </Style>
+    <Style Selector="TextBlock.live-row.filled">
+      <Setter Property="MaxHeight" Value="Infinity" />
+    </Style>
+  </UserControl.Styles>
   <!-- Settings → Connections → Linear (Linear hub spec §3, §5.1; owner's mockup Settings.dc.html): one card with the summary after its name, a progress line that is always in the tree (a polite
        live region, its flag set before any text), the refusals, then the read key with the teams to tick, then the write key once read access is set. Both key boxes are masked. -->
   <Border x:Name="LinearConnectionCard" AutomationProperties.Name="{Binding Text.Name}" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}"
           BorderThickness="1" CornerRadius="{StaticResource Radius.LG}" Padding="{StaticResource Space.MD.Thickness}">
     <StackPanel Spacing="{StaticResource Space.MD}">
-      <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
-        <TextBlock x:Name="LinearName" Classes="body-strong" Text="{Binding Text.Name}" AutomationProperties.AccessibilityView="Raw" />
-        <TextBlock x:Name="LinearSummary" Classes="caption subtle" Text="{Binding Summary}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Summary}" />
+      <!-- #3454: the status and error rows are polite live regions, so they stay in the tree even when empty. A visible empty child still takes one Spacing of the card's StackPanel (a blank band), so they sit
+           in this head block with Spacing 0 and bring their own gap as a spacer that shows only while the row has text. Empty, the head is just the name row and the card spaces it once. -->
+      <StackPanel x:Name="LinearHead">
+        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
+          <TextBlock x:Name="LinearName" Classes="body-strong" Text="{Binding Text.Name}" AutomationProperties.AccessibilityView="Raw" />
+          <TextBlock x:Name="LinearSummary" Classes="caption subtle" Text="{Binding Summary}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Summary}" />
+        </StackPanel>
+        <Border Height="{StaticResource Space.MD}" IsVisible="{Binding StatusText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        <TextBlock x:Name="LinearStatus" Classes="caption live-row" Classes.filled="{Binding StatusText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.LiveSetting="Polite" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StatusText}" />
+        <Border Height="{StaticResource Space.MD}" IsVisible="{Binding ErrorText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        <TextBlock x:Name="LinearError" Classes="caption live-row" Classes.filled="{Binding ErrorText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.LiveSetting="Polite" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" TextWrapping="Wrap"
+                   AutomationProperties.Name="{Binding ErrorText}" />
       </StackPanel>
-
-      <TextBlock x:Name="LinearStatus" Classes="caption" AutomationProperties.LiveSetting="Polite" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StatusText}" />
-      <TextBlock x:Name="LinearError" Classes="caption" AutomationProperties.LiveSetting="Polite" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" TextWrapping="Wrap"
-                 AutomationProperties.Name="{Binding ErrorText}" />
       <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}" IsVisible="{Binding HasAttention}">
         <TextBlock x:Name="LinearAttention" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding AttentionText}" TextWrapping="Wrap" VerticalAlignment="Center"
                    AutomationProperties.Name="{Binding AttentionText}" />

@@ -57,7 +57,7 @@ public sealed class RepoHealthNeedsLookTests
     {
         var health = await Read(Status(IndexState.Ok, _old), live: _new);
 
-        Assert.Equal("demo: code index is behind main; rebuild it from the System page", health.LookWords);
+        Assert.Equal("demo: code index is behind main; code-index-main-move rebuilds it on its next tick", health.LookWords);
     }
 
     [Fact, Trait("Lane", "unit")]
