@@ -432,4 +432,29 @@ public sealed class NewAgentFormTests
 
         Assert.Equal(["claude-code", "codex"], form.Agents.Select(a => a.Id), StringComparer.Ordinal);
     }
+
+    [Fact]
+    public async Task The_repos_landing_after_a_reopen_keep_the_refusal_under_Repo()
+    {
+        var form = Form();
+        _route.Refuse("SND-AGENT-012", "sindri: the folder is gone");
+        await form.Start(background: false, Token);
+        form.Close();
+        form.Open();
+
+        form.SetRepos([new RepoChoice("sindri", Onboarded: true), new RepoChoice("ledgerly", Onboarded: false)], new NewAgentDefaults("sindri", "claude-code"));
+
+        Assert.Equal(("sindri: the folder is gone", "sindri"), (form.RepoError, form.Repo?.Name));
+    }
+
+    [Fact]
+    public void An_agent_picked_before_the_reads_land_is_not_overwritten_by_the_last_start()
+    {
+        var form = Form();
+        form.Agent = AgentChoice.Codex;
+
+        form.SetRepos([new RepoChoice("sindri", Onboarded: true)], new NewAgentDefaults("sindri", "claude-code"));
+
+        Assert.Equal("codex", form.Agent.Id);
+    }
 }
