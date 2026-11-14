@@ -252,6 +252,27 @@ public sealed class RerunWorkflowRunServiceTests
         Assert.Equal("queued", result.Value.Status);
     }
 
+    [Theory]
+    [InlineData("body")]
+    [InlineData("gather")]
+    public async Task A_step_inside_a_for_each_body_is_refused_and_the_message_names_the_for_each_step(string step)
+    {
+        var spec = new GraphSpec(Version: 1, Name: "Loop", Description: null, Concurrency: null, Resources: null,
+            Nodes: [new GraphNode(N("t"), "manual", Title: null, []), new GraphNode(N("each"), "for_each", Title: null, []), new GraphNode(N("body"), "http", Title: null, []),
+                new GraphNode(N("gather"), "collect", Title: null, []), new GraphNode(N("after"), "http", Title: null, [])],
+            Edges: [new GraphEdge(N("t"), Output: null, N("each")), new GraphEdge(N("each"), Output: null, N("body")), new GraphEdge(N("body"), Output: null, N("gather")), new GraphEdge(N("gather"), Output: null, N("after"))]);
+        _ = (await _workflows.Create(_id, _slug, spec, "owner", Token)).Value;
+        _ = (await _workflows.Activate(_id, 1, Token)).Value;
+        _ = (await _runs.Insert(new WorkflowRun(_source, _id, 1, "{\"kind\":\"manual\"}", WorkflowRunStatus.Succeeded, Outputs: null, Error: null, ItemId: null, _clock.GetUtcNow(), _clock.GetUtcNow()), Token)).Value;
+
+        var result = await _service.Handle(new RerunWorkflowRunRequest(_source, step, Input: null, "owner"), Token);
+
+        Assert.True(result.IsError);
+        Assert.Equal(SindriErrors.GraphInvalid.Code, result.Error.Code);
+        Assert.Contains("re-run from 'each' instead", result.Error.Message, StringComparison.Ordinal);
+        Assert.Empty(_starter.Requests);
+    }
+
     private static GraphSpec Spec() => new(Version: 1, Name: "Nightly check", Description: null, Concurrency: null, Resources: null,
         Nodes: [new GraphNode(N("t"), "manual", Title: null, []), new GraphNode(N("a"), "http", Title: null, []), new GraphNode(N("b"), "http", Title: null, []),
             new GraphNode(N("c"), "http", Title: null, []), new GraphNode(N("d"), "http", Title: null, [])],
