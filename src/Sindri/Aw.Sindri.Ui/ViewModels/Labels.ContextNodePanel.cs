@@ -25,7 +25,7 @@ internal static partial class Labels
     internal const string ContextNodePanelOpenFile = "Open file";
 
     /// <summary>The open-file button's accessible name (#3258).</summary>
-    internal const string ContextNodePanelOpenFileName = "Open the file in your editor";
+    internal const string ContextNodePanelOpenFileName = "Open the file on this machine";
 
     /// <summary>The muted line when the node has a source but no link to open (#1702).</summary>
     internal const string ContextNodePanelNoLink = "No link to the source";
