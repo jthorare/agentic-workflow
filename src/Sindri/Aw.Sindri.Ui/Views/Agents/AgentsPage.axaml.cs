@@ -42,6 +42,18 @@ internal sealed partial class AgentsPage : UserControl
     }
 
 
+    private void OnSearchRequested(object? sender, EventArgs e) => this.FindControl<TextBox>("AgentsSearch")?.Focus();
+
+    // Esc in the box clears it.
+    private void OnSearchKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && Page is { } page)
+        {
+            page.SearchText = string.Empty;
+            e.Handled = true;
+        }
+    }
+
     private AgentsPageViewModel? Page => DataContext as AgentsPageViewModel;
 
     /// <inheritdoc />
@@ -93,8 +105,10 @@ internal sealed partial class AgentsPage : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         Page?.FocusRequested -= OnFocusRequested;
+        Page?.SearchRequested -= OnSearchRequested;
         base.OnDataContextChanged(e);
         Page?.FocusRequested += OnFocusRequested;
+        Page?.SearchRequested += OnSearchRequested;
     }
 
     private void OnFocusRequested(object? sender, AgentFocusEventArgs request) =>
