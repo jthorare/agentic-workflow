@@ -13,7 +13,8 @@ internal static class WorkflowRunSql
     // why: the admit path counts live runs only, so a test run never takes a one-per-workflow slot or queues a live run (spec §3.2); InFlight keeps both for purge.
     internal const string LiveInFlight = SelectRun + " WHERE workflow_id = $workflow AND mode = 'live' AND status IN ('queued', 'running', 'waiting') ORDER BY started_at, id";
 
-    internal const string Recent = SelectRun + " WHERE workflow_id = $workflow ORDER BY started_at DESC, CAST(substr(id, instr(id, ':') + 1) AS INTEGER) DESC LIMIT $limit OFFSET $offset";
+    // why: the recent list is live runs only, filtered in the query so a test row takes no room in a page (spec §3.2: LatestSucceeded and the repair pass read pages of it)
+    internal const string Recent = SelectRun + " WHERE workflow_id = $workflow AND mode = 'live' ORDER BY started_at DESC, CAST(substr(id, instr(id, ':') + 1) AS INTEGER) DESC LIMIT $limit OFFSET $offset";
     internal const string Running = SelectRun + " WHERE status = 'running' ORDER BY started_at, id";
     internal const string QueuedWorkflows = "SELECT DISTINCT workflow_id FROM workflow_run WHERE status = 'queued' ORDER BY workflow_id";
 
