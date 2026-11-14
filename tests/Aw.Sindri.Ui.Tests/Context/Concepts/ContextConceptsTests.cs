@@ -18,7 +18,7 @@ public sealed class ContextConceptsTests
         var page = await ConceptPage.Shown(ConceptPage.Serving(AConcepts.Three()));
 
         var first = page.Concepts.Tiles[0];
-        Expect.Equal(("Self scheduling", "People book their own slots.", "4 features · 3 records · 2 decisions · 40 code files"), (first.Name, first.Summary, first.SizeText));
+        Expect.Equal(("Self scheduling", "People book their own slots.", "40 files"), (first.Name, first.Summary, first.SizeText));
         Expect.Sequence(["Self scheduling", "Billing", "Sync", "Other"], page.Concepts.Tiles.Select(t => t.Name));
     }
 
@@ -81,7 +81,7 @@ public sealed class ContextConceptsTests
 
         await page.OpenConcept(other.Id, Token);
 
-        Expect.Equal(("concept:other", "1 feature · 3 code files"), (api.WholeMapAsked[^1].Concept, other.SizeText));
+        Expect.Equal(("concept:other", "3 files"), (api.WholeMapAsked[^1].Concept, other.SizeText));
     }
 
     [Fact]

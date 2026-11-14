@@ -17,6 +17,18 @@ internal sealed partial class ConceptLayerView : UserControl
     {
         InitializeComponent();
         DataContextChanged += (_, _) => Watch();
+        AddHandler(KeyDownEvent, OnKey, RoutingStrategies.Bubble);
+    }
+
+    // p on a focused row opens its pin sheet, as the hover button does (#3677).
+    private void OnKey(object? sender, KeyEventArgs e)
+    {
+        if (!e.Handled && e.Key == Key.P && e.KeyModifiers == KeyModifiers.None
+            && e.Source is Control and not TextBox and { DataContext: ConceptTileViewModel { ShowPinThis: true } tile } && DataContext is ConceptLayerViewModel layer)
+        {
+            e.Handled = true;
+            layer.PinThis(tile);
+        }
     }
 
     private void Watch()

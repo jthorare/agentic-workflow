@@ -14,17 +14,29 @@ internal sealed class ConceptTileViewModel
         (Id, Name, Summary, _open) = (id, name, summary, open);
         Size = size;
         IsSetByPerson = setByPerson;
-        SizeText = Labels.ContextConceptSize(size.Features, size.Records, size.Decisions, size.Code);
+        SizeText = Labels.ContextConceptFiles(size.Code);
         Terms = terms ?? [];
         TermsText = Terms.Count == 0 ? string.Empty : Labels.ContextConceptTerms([.. Terms.Take(TermsShown)], Terms.Count - Math.Min(Terms.Count, TermsShown));
         AccessibleName = Labels.ContextConceptTileName(name, SizeText);
     }
 
-    /// <summary>"40 files": the one unit a concept row counts in (#3677); not built yet.</summary>
-    public string FilesText => Size.Code < 0 ? Name : string.Empty;
+    /// <summary>"40 files": the one unit a concept row counts in (#3677).</summary>
+    public string FilesText => SizeText;
 
-    /// <summary>"changed 13 Nov"; empty when the server gave no date (#3677); not built yet.</summary>
-    public string ChangedText => Size.Code < 0 ? Name : string.Empty;
+    /// <summary>When the concept's newest file changed; null when the server gave no date.</summary>
+    internal DateTimeOffset? LastChanged { get; init; }
+
+    /// <summary>The zone the change date is read in.</summary>
+    internal TimeZoneInfo Zone { get; init; } = TimeZoneInfo.Utc;
+
+    /// <summary>"changed 13 Nov"; empty when the server gave no date.</summary>
+    public string ChangedText => LastChanged is { } at ? Labels.ContextConceptChanged(at, Zone) : string.Empty;
+
+    /// <summary>Whether the row shows a change date.</summary>
+    public bool HasChanged => LastChanged is not null;
+
+    /// <summary>What the row's tooltip says: the summary, the terms and the new suggested pages, so the row itself stays one line.</summary>
+    public string Tip => string.Join(Environment.NewLine, new[] { Summary, TermsText, NewSuggestedText }.Where(l => l.Length > 0));
 
     /// <summary>The concept's id: the value of the map read's concept parameter.</summary>
     public string Id { get; }
@@ -49,7 +61,7 @@ internal sealed class ConceptTileViewModel
 
     /// <summary>The same card with its new suggested pages line gone (the owner opened the concept's Pages section).</summary>
     /// <returns>The new card.</returns>
-    internal ConceptTileViewModel WithoutNewSuggested() => new(Id, Name, Summary, Size, IsSetByPerson, Terms, _open) { Card = Card, Pages = Pages, SuggestedPages = SuggestedPages };
+    internal ConceptTileViewModel WithoutNewSuggested() => new(Id, Name, Summary, Size, IsSetByPerson, Terms, _open) { Card = Card, Pages = Pages, SuggestedPages = SuggestedPages, LastChanged = LastChanged, Zone = Zone };
 
     /// <summary>The summary; empty when the server gave none.</summary>
     public string Summary { get; }
@@ -60,7 +72,7 @@ internal sealed class ConceptTileViewModel
     /// <summary>What the concept holds.</summary>
     internal ConceptSize Size { get; }
 
-    /// <summary>"4 features · 3 records · 2 decisions · 40 code files".</summary>
+    /// <summary>"40 files".</summary>
     public string SizeText { get; }
 
     /// <summary>Whether a person set this concept, not the model.</summary>
@@ -84,7 +96,7 @@ internal sealed class ConceptTileViewModel
     /// <summary>The same card with the terms the glossary gave it.</summary>
     /// <param name="terms">The terms, best first.</param>
     /// <returns>The new card.</returns>
-    internal ConceptTileViewModel WithTerms(IReadOnlyList<string> terms) => new(Id, Name, Summary, Size, IsSetByPerson, terms, _open) { Card = Card, Pages = Pages, SuggestedPages = SuggestedPages, NewSuggested = NewSuggested };
+    internal ConceptTileViewModel WithTerms(IReadOnlyList<string> terms) => new(Id, Name, Summary, Size, IsSetByPerson, terms, _open) { Card = Card, Pages = Pages, SuggestedPages = SuggestedPages, NewSuggested = NewSuggested, LastChanged = LastChanged, Zone = Zone };
 
     /// <summary>The pin side of the card: its mark, footer and buttons.</summary>
     internal PinCardState Card { get; private init; } = PinCardState.None;
@@ -134,7 +146,7 @@ internal sealed class ConceptTileViewModel
     /// <summary>The same card with the pin side the layer worked out.</summary>
     /// <param name="card">The pin side.</param>
     /// <returns>The new card.</returns>
-    internal ConceptTileViewModel WithCard(PinCardState card) => new(Id, Name, Summary, Size, IsSetByPerson, Terms, _open) { Card = card, Pages = Pages, SuggestedPages = SuggestedPages, NewSuggested = NewSuggested };
+    internal ConceptTileViewModel WithCard(PinCardState card) => new(Id, Name, Summary, Size, IsSetByPerson, Terms, _open) { Card = card, Pages = Pages, SuggestedPages = SuggestedPages, NewSuggested = NewSuggested, LastChanged = LastChanged, Zone = Zone };
 
     /// <summary>Opens the concept (click, Enter).</summary>
     public void Open() => _open(Id);

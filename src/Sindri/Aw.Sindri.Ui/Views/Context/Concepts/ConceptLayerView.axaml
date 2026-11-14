@@ -7,6 +7,12 @@
     <Style Selector="Border.needs-you">
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
     </Style>
+    <Style Selector="Border.concept-row StackPanel.pin-slot">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
+    <Style Selector="Border.concept-row:pointerover StackPanel.pin-slot, Border.concept-row:focus-within StackPanel.pin-slot">
+      <Setter Property="IsVisible" Value="True" />
+    </Style>
   </UserControl.Styles>
   <!-- The concept band: the first layer of the context map. One card per concept with its name, its summary and its size; a click opens the bands scoped to it. -->
   <Panel>
@@ -24,30 +30,31 @@
       </Grid>
       <!-- The layer's one status line: a polite live region, so a screen reader hears "Rebuilding the map" and "The map is ready" (pattern: CommandControl's announcer). -->
       <TextBlock x:Name="RebuildLine" Classes="caption" Text="{Binding RebuildText}" IsVisible="{Binding HasRebuildText}" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite" />
+      <!-- One line per concept (#3677): the name, its file count and when it last changed. Pin shows under the pointer or the keyboard focus; the p key does the same. The summary and terms are the row's tooltip. -->
       <ItemsControl x:Name="ConceptList" ItemsSource="{Binding Tiles}" AutomationProperties.Name="{Binding ListName}">
-        <ItemsControl.ItemsPanel>
-          <ItemsPanelTemplate>
-            <WrapPanel Orientation="Horizontal" />
-          </ItemsPanelTemplate>
-        </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:ConceptTileViewModel">
-            <!-- A card is its open button, a footer for a pinned card's state (tinted; a card that needs you has an accent edge) and its pin button. -->
-            <Border Width="300" Margin="0,0,12,12" AutomationProperties.AutomationId="{Binding AutomationId}"
-                    Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.LG}"
+            <Border Classes="concept-row" Margin="0,0,0,4" AutomationProperties.AutomationId="{Binding AutomationId}"
+                    Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.MD}"
                     Classes.needs-you="{Binding NeedsYou}" ClipToBounds="True">
               <StackPanel>
-                <Button Click="OnOpen" Padding="14,12" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" Background="Transparent" BorderThickness="0"
-                        AutomationProperties.Name="{Binding AccessibleName}">
-                  <StackPanel Spacing="8">
-                    <TextBlock Classes="body-strong" Text="{Binding Name}" TextWrapping="Wrap" />
-                    <TextBlock Classes="body" Text="{Binding Summary}" IsVisible="{Binding HasSummary}" TextWrapping="Wrap" />
-                    <TextBlock Classes="caption subtle" Text="{Binding SizeText}" TextWrapping="Wrap" />
-                    <TextBlock Classes="caption" Text="{Binding NewSuggestedText}" IsVisible="{Binding HasNewSuggested}" TextWrapping="Wrap" />
-                    <TextBlock Classes="caption subtle" Text="{Binding TermsText}" IsVisible="{Binding HasTerms}" TextWrapping="Wrap" />
-                    <TextBlock Classes="caption subtle" Text="{Binding MarkText}" IsVisible="{Binding HasMark}" />
+                <Grid ColumnDefinitions="*,Auto">
+                  <Button Click="OnOpen" Padding="14,8" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" Background="Transparent" BorderThickness="0"
+                          ToolTip.Tip="{Binding Tip}" AutomationProperties.Name="{Binding AccessibleName}">
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="16">
+                      <TextBlock Classes="body-strong" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding MarkText}" IsVisible="{Binding HasMark}" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="2" Classes="caption" Text="{Binding NewSuggestedText}" IsVisible="{Binding HasNewSuggested}" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="3" Classes="caption subtle" Text="{Binding FilesText}" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="4" Classes="caption subtle" Text="{Binding ChangedText}" IsVisible="{Binding HasChanged}" MinWidth="88" VerticalAlignment="Center" />
+                    </Grid>
+                  </Button>
+                  <!-- The pin buttons: out of sight until the pointer or the keyboard is on the row. -->
+                  <StackPanel Grid.Column="1" Classes="pin-slot" Orientation="Horizontal" Margin="0,0,8,0" VerticalAlignment="Center">
+                    <Button Content="{Binding PinThisText}" IsVisible="{Binding ShowPinThis}" Click="OnPinThis" AutomationProperties.AutomationId="PinThis" />
+                    <Button Content="{Binding EditPinText}" IsVisible="{Binding ShowEditPin}" Click="OnEditPin" AutomationProperties.AutomationId="EditPin" />
                   </StackPanel>
-                </Button>
+                </Grid>
                 <Border IsVisible="{Binding HasFooter}" Padding="14,8" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0">
                   <StackPanel Spacing="4">
                     <ItemsControl ItemsSource="{Binding Lines}">
@@ -60,8 +67,6 @@
                     <Button Content="{Binding ActionText}" IsVisible="{Binding HasAction}" Click="OnAction" HorizontalAlignment="Left" />
                   </StackPanel>
                 </Border>
-                <Button Content="{Binding PinThisText}" IsVisible="{Binding ShowPinThis}" Click="OnPinThis" Margin="14,0,14,10" HorizontalAlignment="Left" AutomationProperties.AutomationId="PinThis" />
-                <Button Content="{Binding EditPinText}" IsVisible="{Binding ShowEditPin}" Click="OnEditPin" Margin="14,0,14,10" HorizontalAlignment="Left" AutomationProperties.AutomationId="EditPin" />
               </StackPanel>
             </Border>
           </DataTemplate>

@@ -89,6 +89,8 @@ internal sealed partial class ConceptLayerViewModel : ObservableObject
             Pages = c.Pages ?? 0,
             SuggestedPages = c.SuggestedPages ?? [],
             NewSuggested = newSuggested is not null && newSuggested.TryGetValue(c.Id, out var count) ? count : 0,
+            LastChanged = c.LastChanged,
+            Zone = _zone,
         }).ToList();
         if (view.Other is { } other && other.Size.Total > 0)
         {
