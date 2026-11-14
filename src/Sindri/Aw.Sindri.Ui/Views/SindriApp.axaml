@@ -65,6 +65,19 @@
     <Style Selector="TextBlock.subtle">
       <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
     </Style>
+    <!-- #3454, #3620: the Settings cards' status and error rows are polite live regions, so they stay in the tree. A TextBlock with no text still measures one line (18 px), so a live-row is held to no
+         height unless it is "filled". The rule is "collapsed unless filled", not "collapsed when empty": with no data context (the card is not set up) the binding is unset and the row must still be flat.
+         The live-gap spacer above each row takes the card's one normal gap (Space.MD) and shows only while that row has text, so an empty row leaves no band. -->
+    <!-- An empty live-row stays 0 tall but remains a polite live region in the tree. Do not swap this for IsVisible=false: a hidden control drops out of the accessibility tree, so a screen reader would miss the first status. -->
+    <Style Selector="TextBlock.live-row">
+      <Setter Property="MaxHeight" Value="0" />
+    </Style>
+    <Style Selector="TextBlock.live-row.filled">
+      <Setter Property="MaxHeight" Value="Infinity" />
+    </Style>
+    <Style Selector="Border.live-gap">
+      <Setter Property="Height" Value="{StaticResource Space.MD}" />
+    </Style>
     <Style Selector="Border.command">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />

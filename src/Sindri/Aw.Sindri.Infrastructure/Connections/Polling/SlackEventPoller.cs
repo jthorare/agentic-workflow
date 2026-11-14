@@ -29,6 +29,12 @@ internal sealed class SlackEventPoller(HttpClient http, IConnectionSecrets secre
     public async ValueTask<Result<PollResult>> Poll(Connection connection, EventKind kind, string? cursor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(connection);
+        // slack:messages has no preset on purpose, so generic tools can't read it (#3279).
+        if (connection.Preset is null)
+        {
+            return SindriErrors.ConnectionPresetMissing.With($"{connection.Name} has no preset");
+        }
+
         if (!PollCatalog.For(Preset).Contains(kind))
         {
             return SindriErrors.ConnectionProviderChanged.With($"{kind} is not a Slack event");
