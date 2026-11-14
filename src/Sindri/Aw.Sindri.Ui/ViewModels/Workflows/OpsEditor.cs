@@ -18,6 +18,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
     private Uri? _url;
     private int _reads;
     private string? _selected;
+    private bool _failureIsRefusal;   // a refused save belongs to its step and ends when the selection moves; a failed read does not
 
     /// <summary>The workflow's slug; empty until loaded.</summary>
     public string Slug { get; private set => Set(ref field, value); } = string.Empty;
@@ -112,7 +113,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         if (workflow.IsError || blocks.IsError)
         {
             var error = workflow.IsError ? workflow.Error : blocks.Error;
-            FailureText = afterSave ? Labels.WfEditSavedReloadFailed(error) : Labels.WfEditLoadFailed(error);
+            (FailureText, _failureIsRefusal) = (afterSave ? Labels.WfEditSavedReloadFailed(error) : Labels.WfEditLoadFailed(error), false);
             return;
         }
 
@@ -131,7 +132,10 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
     internal void Select(string nodeId)
     {
         _selected = nodeId.Length == 0 ? null : nodeId;
-        FailureText = string.Empty;   // a refusal belongs to the step it came from
+        if (_failureIsRefusal)
+        {
+            FailureText = string.Empty;   // a refusal belongs to the step it came from
+        }
         Fields.Clear();
         var node = Nodes.FirstOrDefault(n => string.Equals(n.Id, nodeId, StringComparison.Ordinal));
         var block = node is null ? null : Groups.SelectMany(g => g.Blocks).FirstOrDefault(b => string.Equals(b.Type, node.Type, StringComparison.Ordinal));
@@ -246,7 +250,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         }
 
         var unsure = string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
-        FailureText = unsure ? Labels.WfEditUnsure(error) : Labels.WfEditRefused(error);
+        (FailureText, _failureIsRefusal) = (unsure ? Labels.WfEditUnsure(error) : Labels.WfEditRefused(error), true);
     }
 
     private static List<EditorNode> ReadNodes(JsonElement spec)
