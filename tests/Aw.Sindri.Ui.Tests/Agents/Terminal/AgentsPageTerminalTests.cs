@@ -1,6 +1,8 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.Terminal;
 using Aw.Sindri.Ui.Tests.Agents.Page;
+using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Agents;
 
 namespace Aw.Sindri.Ui.Tests.Agents.Terminal;
@@ -130,5 +132,45 @@ public sealed class AgentsPageTerminalTests
         Assert.True(opened);
         Assert.False(ghost);
         Assert.Equal((key, TerminalSide.Pane, key), (page.TerminalKey, page.Terminal.Side, page.SelectedKey));
+    }
+
+    private const string Ready = "{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%0\"}}";
+
+    // A page with a pane open on a row that has one, its socket the in-memory connector.
+    private async Task<(AgentsPageViewModel Page, FakeTerminalConnector Socket)> WithOpenPane()
+    {
+        var socket = new FakeTerminalConnector { Script = [Ready] };
+        var page = new AgentsPageViewModel(_f.Server, _f.Clipboard, _f.Clock, _f.Catalog, connector: socket);
+        page.SetShown(shown: true);
+        await page.Refresh(AgentsPageFixture.Url, Token);
+        var key = page.Groups.SelectMany(g => g.Rows).First(r => r.Row.Host.Pane is { Length: > 0 }).Ref;
+        Assert.True(page.OpenTerminalByKey(key));
+        return (page, socket);
+    }
+
+    [Fact]
+    public async Task A_300_KiB_paste_through_the_page_reaches_no_socket_and_the_pane_says_it_was_too_big()
+    {
+        var (page, socket) = await WithOpenPane();
+
+        var fate = await page.SendPanePaste(new string('a', 300 * 1024));
+        await Task.Delay(200, Token);   // the pump has run its script by now
+
+        Assert.Equal((TerminalKeyFate.TooBig, 0, "Paste too big (max 256 KiB)"), (fate, socket.Sent.Count, page.Terminal.ControlLine));
+    }
+
+    [Fact]
+    public async Task A_short_paste_through_the_page_goes_out_as_one_paste_message_and_leaves_the_line_empty()
+    {
+        var (page, socket) = await WithOpenPane();
+
+        _ = await page.SendPanePaste("echo hi");
+        for (var i = 0; i < 200 && socket.Sent.Count == 0; i++)
+        {
+            await Task.Delay(10, Token);
+        }
+
+        Assert.Equal([TerminalSocketMessages.Paste("echo hi")], socket.Sent);
+        Assert.Equal(string.Empty, page.Terminal.ControlLine);
     }
 }
