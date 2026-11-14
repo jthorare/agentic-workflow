@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.ViewModels.Controls;
 
@@ -117,6 +118,27 @@ internal sealed class StateChipView : Border
         {
             Classes.Add(toneClass);
         }
+    }
+
+    /// <summary>Paints the chip with a host's own brushes instead of its tone's (a disabled graph card dims its chip with itself). The word, the tone and the glyph stay as set.</summary>
+    /// <param name="fill">The chip's fill.</param>
+    /// <param name="border">The chip's border.</param>
+    /// <param name="ink">The word's colour.</param>
+    internal void Dim(IBrush fill, IBrush border, IBrush ink)
+    {
+        Background = fill;
+        BorderBrush = border;
+        _word.Foreground = ink;
+        _glyph.Foreground = ink;
+    }
+
+    /// <summary>Gives the chip its tone's paint back.</summary>
+    internal void ClearDim()
+    {
+        ClearValue(BackgroundProperty);
+        ClearValue(BorderBrushProperty);
+        _word.ClearValue(TextBlock.ForegroundProperty);
+        _glyph.ClearValue(TextBlock.ForegroundProperty);
     }
 
     private void ApplyStatus()

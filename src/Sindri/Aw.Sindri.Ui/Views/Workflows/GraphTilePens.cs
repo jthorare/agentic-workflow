@@ -13,7 +13,7 @@ internal static class GraphTilePens
     private static readonly GraphTilePaint _rest = new("Brush.Surface2", "Brush.Hairline", 1, Dashed: false, "Brush.Ink", "Brush.InkMuted");
     private static readonly GraphTilePaint _hover = new("Brush.Surface3", "Brush.WireHi", 1, Dashed: false, "Brush.Ink", "Brush.InkMuted");
     private static readonly GraphTilePaint _error = new("Brush.ErrorSoft", "Brush.Error", 2, Dashed: false, "Brush.Ink", "Brush.InkMuted");
-    private static readonly GraphTilePaint _disabled = new("Brush.Surface1", "Brush.Wire", 1, Dashed: true, "Brush.InkTertiary", "Brush.InkTertiary");
+    private static readonly GraphTilePaint _disabled = new("Brush.Surface1", "Brush.Wire", 1, Dashed: true, "Brush.InkTertiary", "Brush.InkTertiary", ChipFill: "Brush.Surface1", ChipBorder: "Brush.Wire", ChipInk: "Brush.InkMuted");   // the chip dims with the card: the card's own fill and border, its word in the muted ink
 
     private static readonly GraphRing _selected = new("Brush.Primary", 2, 3);
     private static readonly GraphRing _focus = new("Brush.PrimaryHover", 2, 6);

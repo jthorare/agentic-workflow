@@ -218,6 +218,15 @@ internal sealed class GraphNodeCard : UserControl
         _face.BorderBrush = paint.Dashed ? Brushes.Transparent : Resolve(paint.Border);
         _dash.IsVisible = paint.Dashed;
         _dash.Stroke = Resolve(paint.Border);
+        if (paint.ChipFill is { } chipFill && paint.ChipBorder is { } chipBorder && paint.ChipInk is { } chipInk)
+        {
+            _chip.Dim(Resolve(chipFill), Resolve(chipBorder), Resolve(chipInk));
+        }
+        else
+        {
+            _chip.ClearDim();
+        }
+
         _title.Foreground = Resolve(paint.Title);
         _kind.Foreground = Resolve(paint.Kind);
         PaintRings(states);
