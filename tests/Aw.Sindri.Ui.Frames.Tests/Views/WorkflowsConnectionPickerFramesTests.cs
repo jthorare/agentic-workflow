@@ -74,4 +74,24 @@ public sealed class WorkflowsConnectionPickerFramesTests : FrameHost
         Assert.Equal(1, picker.ItemCount);
         Assert.DoesNotContain(fields.GetVisualDescendants().OfType<Button>(), b => b.Name == "EditorFieldConnect" && b.DataContext == field && b.IsEffectivelyVisible);
     });
+
+    [Fact]
+    public Task Back_from_Connections_with_nothing_connected_the_sheet_says_so_and_Connect_stays() => OnUi(async () =>
+    {
+        var (window, shell) = await OnTheSheet();
+        var field = shell.Workflows.Editor.Fields.Single(f => f.Name == "connection");
+        shell.Workflows.ConnectService(field);
+        shell.Workflows.Back();
+
+        await shell.Workflows.ReturnFromConnect(CancellationToken.None);
+        await Until(window, () => shell.Workflows.IsSettingsOpen && Visible(window, "EditorFieldNotice"), "the sheet never showed the notice");
+        Settle(window);
+
+        var fields = Named<ItemsControl>(window, "EditorFields");
+        var notice = fields.GetVisualDescendants().OfType<TextBlock>().Single(t => t.IsEffectivelyVisible && t.Text == "Nothing connected yet.");
+        Assert.NotNull(notice);
+        var connect = fields.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "EditorFieldConnect" && b.IsEffectivelyVisible);
+        Assert.True(connect.IsEnabled);
+        Assert.Equal("Connect GitHub", connect.Content);
+    });
 }

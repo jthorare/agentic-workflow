@@ -67,9 +67,14 @@ public sealed class ConnectionNothingConnectedTests
     [Fact]
     public async Task Before_Connect_was_pressed_the_field_says_nothing()
     {
-        var page = await PressedConnect();
+        var page = await PressedConnect();   // pressed once, then back on the list: the sheet is shut
+        page.CloseEditor();
+        await page.OpenWorkflow(Slug, Token);
         _ = page.Runs.Graph!.SelectNode("start");
 
-        Assert.Equal(string.Empty, page.Editor.Fields.SingleOrDefault(f => f.Name == "connection")?.NoticeText ?? string.Empty);
+        await page.OpenSettings(Token);   // the sheet reopened by hand, not through ReturnFromConnect
+
+        var field = page.Editor.Fields.Single(f => f.Name == "connection");
+        Assert.Equal((string.Empty, true), (field.NoticeText, field.NeedsConnect));
     }
 }
