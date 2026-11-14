@@ -15,6 +15,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     /// <summary>The refusal code for a workflow with no active revision.</summary>
     internal const string NotActive = "SND-GRAPH-105";
     private int _reads;
+    private readonly List<string> _starting = [];   // runs Run now started whose views row the server has not shown yet: each is drawn as a Starting placeholder until its real row arrives
 
     /// <summary>The workflow's slug.</summary>
     public string Slug { get; private set => Set(ref field, value); } = string.Empty;
@@ -90,6 +91,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         if (!string.Equals(Slug, slug, StringComparison.Ordinal))
         {
             Rows.Clear();   // another workflow: none of the old runs stay
+            _starting.Clear();
             (Head, DetailText) = (string.Empty, string.Empty);
             (IsFailed, FailedText, IsEmpty, EmptyText) = (false, string.Empty, false, string.Empty);   // nor does the old one's failure or "off" line
             (CanRun, NoticeText) = (false, string.Empty);   // until this one's runs read says it is on
@@ -138,6 +140,23 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         }
     }
 
+    /// <summary>Shows a run Run now just started as Starting at the top of the list, from the start call's reply, before the server's row exists. Reads keep it until the real row arrives, which replaces it.</summary>
+    /// <param name="runId">The new run's id.</param>
+    internal void AddStarting(string runId)
+    {
+        if (_starting.Contains(runId, StringComparer.Ordinal) || Rows.Any(r => string.Equals(r.Id, runId, StringComparison.Ordinal)))
+        {
+            return;
+        }
+
+        _starting.Add(runId);
+        Rows.Insert(0, Placeholder(runId));
+        (IsEmpty, EmptyText) = (false, string.Empty);
+    }
+
+    private RunRowViewModel Placeholder(string runId) =>
+        new(new WorkflowRunRowView(runId, Shown?.Revision ?? 0, "starting", "manual", clock.GetUtcNow(), EndedAt: null, Error: null), clock);
+
     /// <summary>Turns Run now off: Sindri said the workflow has no active revision.</summary>
     internal void TurnOff() => CanRun = false;
 
@@ -153,6 +172,16 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     {
         (IsFailed, FailedText, CanRun) = (false, string.Empty, true);
         Rows.Clear();
+        foreach (var id in _starting.Where(id => list.Runs.Any(r => string.Equals(r.Id, id, StringComparison.Ordinal))).ToList())
+        {
+            _ = _starting.Remove(id);   // the real row is here: it replaces the placeholder
+        }
+
+        foreach (var id in _starting)
+        {
+            Rows.Add(Placeholder(id));   // still not shown by the server: keep the placeholder, newest first
+        }
+
         foreach (var run in list.Runs)
         {
             Rows.Add(new RunRowViewModel(run, clock));
@@ -160,7 +189,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
 
         var running = list.Runs.Count(r => string.Equals(r.Status, "running", StringComparison.Ordinal));
         Head = list.Runs.Count == 0 ? Labels.WfRunsHeadNone : Labels.WfRunsHead(running, list.Runs.Count);
-        (IsEmpty, EmptyText) = list.Runs.Count == 0 ? (true, Labels.WfRunsNone) : (false, string.Empty);
+        (IsEmpty, EmptyText) = list.Runs.Count == 0 && _starting.Count == 0 ? (true, Labels.WfRunsNone) : (false, string.Empty);
     }
 
     private static string Detail(WorkflowView workflow)

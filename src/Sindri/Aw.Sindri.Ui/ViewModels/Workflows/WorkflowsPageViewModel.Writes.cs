@@ -37,6 +37,12 @@ internal sealed partial class WorkflowsPageViewModel
                 return;
             }
 
+            if (string.Equals(started.Value.Status, "started", StringComparison.Ordinal))
+            {
+                Runs.AddStarting(started.Value.Run);   // at once, from the reply: the server's views row comes later
+                Run.ExpectStarting(started.Value.Run);
+            }
+
             await Runs.Read(url, slug, Runs.Title, cancellationToken).ConfigureAwait(true);
             await AfterStart(started.Value, cancellationToken).ConfigureAwait(true);
         }

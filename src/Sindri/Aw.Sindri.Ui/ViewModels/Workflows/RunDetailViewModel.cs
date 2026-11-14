@@ -8,6 +8,7 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : ObservableObject
 {
     private int _reads;
+    private string? _startingId;   // the run Run now just started: until the server shows it, the page says Starting instead of failing
     private Uri? _url;
 
     /// <summary>The run's id.</summary>
@@ -131,10 +132,17 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         IsReading = false;
         if (run.IsError)
         {
+            if (string.Equals(_startingId, runId, StringComparison.Ordinal))
+            {
+                ShowStarting(runId);   // the views row is not there yet: not a failure
+                return;
+            }
+
             (IsFailed, FailedText) = (true, Labels.WfRunFailed(run.Error));
             return;
         }
 
+        _startingId = null;
         (IsFailed, FailedText) = (false, string.Empty);
         Show(run.Value);
     }
@@ -157,6 +165,19 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         var types = NodeTypes(Shape);
         Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode, (node, token) => EditStep?.Invoke(node, token) ?? Task.CompletedTask, types.GetValueOrDefault(g.Key, string.Empty)))];
         Graph = Shape is { } shape && shape.Revision == run.Revision ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(shape, Statuses(run))) : null;
+        Changed();
+    }
+
+    /// <summary>Marks a run Run now just started: until the server shows it, its page reads Starting, not "couldn't read the run".</summary>
+    /// <param name="runId">The new run's id.</param>
+    internal void ExpectStarting(string runId) => _startingId = runId;
+
+    private void ShowStarting(string runId)
+    {
+        var (glyph, word) = Labels.WfChip("starting");
+        (Id, TitleText, Status, Tone) = (runId, Labels.WfRunTitle(runId), "starting", ChipTone.Neutral);
+        (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, "neutral");
+        (IsFailed, FailedText) = (false, string.Empty);
         Changed();
     }
 

@@ -117,6 +117,7 @@ internal static partial class Labels
     /// <returns>The glyph and the word.</returns>
     internal static (string Glyph, string Word) WfChip(string status) => status switch
     {
+        "starting" => ("◌", "Starting"),
         "queued" => ("◌", "Queued"),
         "running" => ("●", "Running"),
         "waiting" => ("◐", "Waiting"),
