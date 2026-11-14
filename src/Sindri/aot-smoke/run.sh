@@ -333,6 +333,9 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   curl -s -m 30 -X QUERY "$base/sindri/context/subgraph" -H 'X-Sindri-Repo: smoke' -H 'Content-Type: application/json' -d '{"nodes":["feature:smoke.none"]}' \
     -w '\nhttp=%{http_code}\n' | jq -R -c 'if startswith("http=") then . else (try (fromjson | {title, status}) catch .) end'
   curl -s -m 30 -o /dev/null -w 'post http=%{http_code}\n' -X POST "$base/sindri/context/subgraph" -H 'X-Sindri-Repo: smoke' -H 'Content-Type: application/json' -d '{"nodes":["feature:smoke.none"]}'
+  # Red hook for #3628 (test only): AW_SMOKE_WAIT_TICKS=1 waits 330 s here, past the first slot of context-sync-gaps (1 m) and index-sync (5 m), so both built-ins
+  # have ticked on the profile's default context settings before the jobs list and the last doctor. Unset, the smoke runs as before.
+  if [ -n "${AW_SMOKE_WAIT_TICKS:-}" ]; then sleep 330; fi
   echo "## sindri services --json | jq (name, every, paused, job)"
   bounded "$bin" services --json </dev/null | jq -c '[.services[] | {name, every, paused, job}]'
   manual_service_runs heartbeat
