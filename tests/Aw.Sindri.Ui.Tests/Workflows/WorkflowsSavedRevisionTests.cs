@@ -58,7 +58,7 @@ public sealed class WorkflowsSavedRevisionTests
         var page = await _f.Shown(Token);
         await page.OpenWorkflow(Slug, Token);
         _ = page.Runs.Graph!.SelectNode("agent");
-        await page.Edit(Token);
+        await page.OpenSettings(Token);
         return page;
     }
 
@@ -88,7 +88,7 @@ public sealed class WorkflowsSavedRevisionTests
         var again = await _f.Shown(Token);   // a fresh page, as after a restart: nothing is remembered from the save
         await again.OpenWorkflow(Slug, Token);
         _ = again.Runs.Graph!.SelectNode("agent");
-        await again.Edit(Token);
+        await again.OpenSettings(Token);
 
         Assert.Equal("Check twice", again.Editor.Fields[0].Text);
         Assert.Contains("Run agent twice", again.Runs.Graph.StepLine, StringComparison.Ordinal);   // the canvas draws the saved revision too
