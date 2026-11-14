@@ -22,7 +22,7 @@ public sealed class WorkflowsStepEditorFramesTests : FrameHost
     private const string OddZone = "Mars/Olympus_Mons";
 
     // The found golden with its first node ("start") turned into a schedule trigger, and the summaries the API serves for it.
-    private static string ScheduleWorkflow(string zone)
+    private static string ScheduleWorkflow(string zone, bool archived = false)
     {
         var workflow = Golden("workflows-slug", "found");
         var node = workflow["spec"]!["nodes"]![0]!;
@@ -30,12 +30,17 @@ public sealed class WorkflowsStepEditorFramesTests : FrameHost
         node["title"] = Title;
         node["config"] = new JsonObject { ["cron"] = "0 7 * * 1-5", ["timezone"] = zone };
         workflow["summaries"]![0]!["summary"] = Summary;
+        if (archived)
+        {
+            workflow["archivedAt"] = "2026-01-01T00:00:00.0000000Z";
+        }
+
         return workflow.ToJsonString();
     }
 
-    private async Task<(Window Window, ShellViewModel Shell)> OnTheTriggerEditor(string zone = "America/Los_Angeles")
+    private async Task<(Window Window, ShellViewModel Shell)> OnTheTriggerEditor(string zone = "America/Los_Angeles", bool archived = false)
     {
-        Server.WorkflowAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, ScheduleWorkflow(zone));
+        Server.WorkflowAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, ScheduleWorkflow(zone, archived));
         Server.WorkflowRunsAnswers[Slug] = RouteAnswer.Api("workflows-slug-runs", "list-three");
         Server.WorkflowBlocksAnswer = RouteAnswer.Api("workflows-blocks", "listed");
         var (window, shell) = await Connected(width: 1280, height: 1000);
@@ -148,6 +153,17 @@ public sealed class WorkflowsStepEditorFramesTests : FrameHost
 
         await shell.Workflows.OpenSettings(CancellationToken.None);
         await Until(window, () => !Visible(window, "StepSummary"), "the summary stayed while step settings are open");
+    });
+
+    [Fact]
+    public Task An_archived_workflows_selected_step_still_shows_its_summary_but_no_Step_settings() => OnUi(async () =>
+    {
+        var (window, shell) = await OnTheTriggerEditor(archived: true);
+
+        Assert.True(shell.Workflows.Runs.Graph!.SelectNode("start"));
+        await Until(window, () => Visible(window, "StepSummary"), "an archived workflow's selected step never showed its summary");
+
+        Assert.False(Visible(window, "StepSettings"), "an archived workflow offers Step settings");
     });
 
     [Fact]
