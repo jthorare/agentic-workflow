@@ -155,7 +155,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         ChipText = glyph + " " + word;
         (ChipWord, ChipGlyph) = (word, glyph);
         (Status, Tone) = (run.Status, RunStatus.Tone(run.Status));
-        ChipToneWord = RunStatus.ToneWord(Tone);
+        ChipToneWord = RunStatus.ToneWord(run.Status);
         TriggerText = Labels.WfStartedBy(KindOf(run.Trigger));
         RevisionText = Labels.WfRunRevision(run.Revision);
         var live = RunStatus.IsLive(run.Status);

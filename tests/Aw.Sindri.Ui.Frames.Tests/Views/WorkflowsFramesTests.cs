@@ -5,7 +5,6 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
@@ -234,8 +233,8 @@ public sealed class WorkflowsFramesTests : FrameHost
 
         Assert.True(Visible(window, "RunCancel"));
         await Until(window, () => window.ActualThemeVariant == ThemeVariant.Light, "the window never took the light theme");
-        var chip = Named<StateChipView>(window, "RunChipName").GetVisualDescendants().OfType<TextBlock>().First();   // a running run: the ok tone
-        Assert.Equal(ThemeColor(window, "Brush.Success", ThemeVariant.Light), ChipColor(chip));
+        var chip = Named<StateChipView>(window, "RunChipName").GetVisualDescendants().OfType<TextBlock>().First();   // a running run: the running tone (#3233), its own colour and no longer ok's
+        Assert.Equal(ThemeColor(window, "Brush.Status.Running.Fg", ThemeVariant.Light), ChipColor(chip));
         Frame(window, "run-light-1440", Prefix);
     });
 
@@ -285,15 +284,6 @@ public sealed class WorkflowsFramesTests : FrameHost
     });
 
     // #3233 PR 2: every status chip on the page is a StateChipView in the status-chip tone set, never a hand-drawn Border.status-chip.
-    private static string ToneWord(ChipTone tone) => tone switch
-    {
-        ChipTone.Ok => "ok",
-        ChipTone.Attn => "attention",
-        ChipTone.Fail => "error",
-        ChipTone.Neutral => "neutral",
-        _ => "neutral",
-    };
-
     private static void AssertChip(StateChipView chip, string word, string glyph, string tone, string what)
     {
         Assert.Equal(tone, chip.Tone);
@@ -336,7 +326,7 @@ public sealed class WorkflowsFramesTests : FrameHost
         for (var i = 0; i < chips.Count; i++)
         {
             var row = shell.Workflows.Runs.Rows[i];
-            AssertChip(chips[i], row.ChipWord, row.ChipGlyph, ToneWord(row.Tone), $"run {row.Id}");
+            AssertChip(chips[i], row.ChipWord, row.ChipGlyph, row.ChipToneWord, $"run {row.Id}");
             Assert.Equal(chips[i].Tone, row.ChipToneWord);
         }
 
@@ -355,7 +345,7 @@ public sealed class WorkflowsFramesTests : FrameHost
         AssertNoHandDrawnChip(window);
         var run = shell.Workflows.Run;
         var header = Assert.IsType<StateChipView>(Named<Control>(window, "RunChipName"));   // #3194 builds on this chip
-        AssertChip(header, run.ChipWord, run.ChipGlyph, ToneWord(run.Tone), "the run header");
+        AssertChip(header, run.ChipWord, run.ChipGlyph, run.ChipToneWord, "the run header");
         Assert.Equal(header.Tone, run.ChipToneWord);
 
         var nodes = run.Groups.SelectMany(g => g.Runs).ToList();
@@ -363,7 +353,7 @@ public sealed class WorkflowsFramesTests : FrameHost
         Assert.Equal(nodes.Count, chips.Count);
         for (var i = 0; i < chips.Count; i++)
         {
-            AssertChip(chips[i], nodes[i].ChipWord, nodes[i].ChipGlyph, ToneWord(nodes[i].Tone), $"node run {nodes[i].TitleText}");
+            AssertChip(chips[i], nodes[i].ChipWord, nodes[i].ChipGlyph, nodes[i].ChipToneWord, $"node run {nodes[i].TitleText}");
             Assert.Equal(chips[i].Tone, nodes[i].ChipToneWord);
         }
     });

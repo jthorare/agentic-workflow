@@ -15,7 +15,7 @@ internal sealed class NodeRunViewModel : ObservableObject
         var (glyph, word) = Labels.WfChip(run.Status);
         ChipText = glyph + " " + word;
         Tone = RunStatus.Tone(run.Status);
-        (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, RunStatus.ToneWord(Tone));
+        (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, RunStatus.ToneWord(run.Status));
         InputText = WorkflowJson.Pretty(run.Input);
         OutputText = WorkflowJson.Pretty(run.Output);
         IsTruncated = run.Truncated;

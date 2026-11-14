@@ -12,7 +12,7 @@ internal sealed class RunRowViewModel : ObservableObject
         var (glyph, word) = Labels.WfChip(row.Status);
         ChipText = glyph + " " + word;
         Tone = RunStatus.Tone(row.Status);
-        (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, RunStatus.ToneWord(Tone));
+        (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, RunStatus.ToneWord(row.Status));
         TriggerText = Labels.WfTriggerWord(row.Trigger);
         RevisionText = Labels.WfRunRevision(row.Revision);
         var live = RunStatus.IsLive(row.Status);
