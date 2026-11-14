@@ -36,21 +36,58 @@ public sealed class SessionChangedTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_running_asking_running_sequence_gives_one_change_per_transition_and_an_unchanged_pass_none()
+    public async Task A_running_asking_running_sequence_gives_one_change_per_state_that_held_5_s_and_an_unchanged_pass_none()
     {
         _ = _c.Fake.With(Proc(10, 1, "claude", argv0: "claude", ticks: 100), cwd: "/w/api");
         _ = _c.Records.With(Busy());
         var first = await _c.Pass();   // the session is new
         _ = _c.Fleet.With(Hook(HookState.Asking, _c.Now.AddSeconds(2), AskingReason.Approval, "Bash") with { Session = SessionId.From(Id) });
-        var asking = await _c.After(TimeSpan.FromSeconds(2));
+        var seen = await _c.After(TimeSpan.FromSeconds(2));
+        var asking = await _c.After(TimeSpan.FromSeconds(5));
         var still = await _c.After(TimeSpan.FromSeconds(2));
         _ = _c.Records.With(Busy(_c.Now.AddSeconds(2)));   // a newer record status than the hook: running again
-        var running = await _c.After(TimeSpan.FromSeconds(2));
+        var back = await _c.After(TimeSpan.FromSeconds(2));
+        var running = await _c.After(TimeSpan.FromSeconds(5));
 
         Assert.Empty(first.StateChanges);
+        Assert.Empty(seen.StateChanges);
         Assert.Equal([SessionState.Asking], Changes(asking));
         Assert.Empty(still.StateChanges);
+        Assert.Empty(back.StateChanges);
         Assert.Equal([SessionState.Running], Changes(running));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_state_that_flips_back_inside_5_s_writes_no_row()
+    {
+        _ = _c.Fake.With(Proc(10, 1, "claude", argv0: "claude", ticks: 100), cwd: "/w/api");
+        _ = _c.Records.With(Busy());
+        var passes = new List<CollectSessionsResponse> { await _c.Pass() };
+        _ = _c.Records.With(Busy(_c.Now.AddSeconds(1), status: "idle"));
+        passes.Add(await _c.After(TimeSpan.FromSeconds(1)));   // running -> idle
+        _ = _c.Records.With(Busy(_c.Now.AddSeconds(1)));
+        passes.Add(await _c.After(TimeSpan.FromSeconds(1)));   // idle -> running, 1 s later
+        passes.Add(await _c.After(TimeSpan.FromSeconds(10)));
+        passes.Add(await _c.After(TimeSpan.FromSeconds(10)));
+
+        Assert.All(passes, static p => Assert.Empty(p.StateChanges));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_state_that_holds_5_s_writes_exactly_one_row()
+    {
+        _ = _c.Fake.With(Proc(10, 1, "claude", argv0: "claude", ticks: 100), cwd: "/w/api");
+        _ = _c.Records.With(Busy());
+        var passes = new List<CollectSessionsResponse> { await _c.Pass() };
+        _ = _c.Records.With(Busy(_c.Now.AddSeconds(1), status: "idle"));
+        passes.Add(await _c.After(TimeSpan.FromSeconds(1)));   // running -> idle seen
+        passes.Add(await _c.After(TimeSpan.FromSeconds(3)));   // 3 s: not yet
+        passes.Add(await _c.After(TimeSpan.FromSeconds(2)));   // 5 s: it held
+        passes.Add(await _c.After(TimeSpan.FromSeconds(10)));
+        passes.Add(await _c.After(TimeSpan.FromSeconds(10)));
+
+        Assert.Equal([SessionState.Idle], passes.SelectMany(Changes));
+        Assert.Equal(3, passes.FindIndex(static p => p.StateChanges.Count > 0));   // pass 1 sees it, pass 2 is at 3 s, pass 3 is at 5 s
     }
 
     [Fact, Trait("Lane", "unit")]
