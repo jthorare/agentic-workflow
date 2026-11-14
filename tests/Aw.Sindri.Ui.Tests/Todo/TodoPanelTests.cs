@@ -162,13 +162,13 @@ public sealed class TodoPanelTests
     }
 
     [Fact]
-    public async Task An_empty_list_collapses_to_one_line_and_a_list_with_todos_keeps_its_six_slots()
+    public async Task An_empty_list_collapses_to_one_line_and_a_list_with_todos_keeps_its_five_slots()
     {
         _f.ServeTodos(Of(0), Of(6));
         var empty = await _f.Read(Token);
 
         Assert.Equal(1, empty.CollapsedSlots);
-        Assert.Equal(6, _f.Panel().CollapsedSlots);   // before the first read the panel is loading: full height
+        Assert.Equal(5, _f.Panel().CollapsedSlots);   // before the first read the panel is loading: full height
     }
 
     [Fact]

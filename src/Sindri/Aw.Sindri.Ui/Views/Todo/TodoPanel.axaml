@@ -23,6 +23,10 @@
       <Setter Property="BorderThickness" Value="2" />
       <Setter Property="Padding" Value="5,1" />
     </Style>
+    <!-- The live sync text takes its gap only while it has text, so count -> error is one gap when it is empty. -->
+    <Style Selector="TextBlock.sync-gap">
+      <Setter Property="Margin" Value="0,0,12,0" />
+    </Style>
     <Style Selector="TextBlock.caption.warning">
       <Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" />
     </Style>
@@ -43,15 +47,17 @@
           <TextBlock x:Name="TodoTitle" Classes="body-strong" Classes.region-focus="{Binding HasFocus}" Text="{Binding Title}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Title}" />
           <!-- The count line, then the sync line (todo spec §3.1, §3.4): the quiet "Synced with Obsidian 10:05" is not a live region; the warnings and a pick's countdown share the polite one, which is always
                in the tree (its flag is set before any text). A warning draws in the warning text colour. -->
-          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-            <TextBlock x:Name="TodoCount" Classes="caption subtle" Text="{Binding CountLine}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+          <Grid Grid.Column="1" ColumnDefinitions="Auto,Auto,Auto,*" VerticalAlignment="Center">
+            <TextBlock x:Name="TodoCount" Margin="0,0,12,0" Classes="caption subtle" Text="{Binding CountLine}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                        ToolTip.Tip="{Binding CountLine}" AutomationProperties.Name="{Binding CountLine}" />
-            <TextBlock x:Name="TodoSyncQuiet" Classes="caption subtle" Text="{Binding SyncQuiet}" IsVisible="{Binding SyncQuiet, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" VerticalAlignment="Center"
+            <TextBlock x:Name="TodoSyncQuiet" Grid.Column="1" Margin="0,0,12,0" Classes="caption subtle" Text="{Binding SyncQuiet}" IsVisible="{Binding SyncQuiet, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" VerticalAlignment="Center"
                        TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SyncQuiet}" AutomationProperties.Name="{Binding SyncQuiet}" />
-            <TextBlock x:Name="TodoSyncLive" Classes="caption subtle" Classes.warning="{Binding SyncIsWarning}" AutomationProperties.LiveSetting="Polite" Text="{Binding SyncLive}"
+            <TextBlock x:Name="TodoSyncLive" Grid.Column="2" Classes="caption subtle" Classes.sync-gap="{Binding SyncLive, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Classes.warning="{Binding SyncIsWarning}" AutomationProperties.LiveSetting="Polite" Text="{Binding SyncLive}"
                        VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SyncLive}"
                        AutomationProperties.Name="{Binding SyncLive}" />
-          </StackPanel>
+            <TextBlock x:Name="TodoError" Grid.Column="3" HorizontalAlignment="Left" Classes="caption warning" Text="{Binding Error}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Error}"
+                       IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Error}" />
+          </Grid>
           <!-- The quick-add hint (Home only): a keycap and its words. The key itself is the quick-add slice's. -->
           <StackPanel x:Name="TodoNewHint" Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" AutomationProperties.Name="{Binding NewName}"
                       AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
@@ -63,10 +69,10 @@
         </Grid>
       </Border>
 
-      <!-- Collapsed: one body of a fixed height in every state (spec D13, §3.4): five row slots on top, the Show all slot below
-           (Show all on the left, the error line on the right). The rows, the skeleton and the empty sentence draw in the slots;
+      <!-- Collapsed: one body of a fixed height in every state (spec D13, §3.4): five row slots (Show all shares the From elsewhere row below,
+           the read error sits in the header). The rows, the skeleton and the empty sentence draw in the slots;
            none of them changes the height, so Needs you below never moves. TodoPanel.axaml.cs sets the height from Row.Height.Default. -->
-      <Grid x:Name="TodoCollapsed" Grid.Row="1" RowDefinitions="*,Auto" ClipToBounds="True" IsVisible="{Binding !IsExpanded}">
+      <Grid x:Name="TodoCollapsed" Grid.Row="1" ClipToBounds="True" IsVisible="{Binding !IsExpanded}">
         <StackPanel>
           <!-- The attention rows (a conflict or the hold, todo spec §3.1, D13) take the first slots, inside the five. -->
           <tv:AttentionArea x:Name="TodoAttentionCollapsed" />
@@ -106,15 +112,6 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </StackPanel>
-        <Grid x:Name="TodoShowAllSlot" Grid.Row="1" ColumnDefinitions="Auto,*" Height="{StaticResource Row.Height.Default}" IsVisible="{Binding HasFootSlot}">
-          <Button x:Name="TodoShowAll" HorizontalAlignment="Left" VerticalAlignment="Center" Classes="copy" Click="OnShowAll" IsVisible="{Binding ShowsShowAll}" Margin="16,0"
-                  AutomationProperties.Name="{Binding ShowAllText}">
-            <TextBlock x:Name="TodoShowAllText" Classes="caption" Text="{Binding ShowAllText}" AutomationProperties.AccessibilityView="Raw" />
-          </Button>
-          <TextBlock x:Name="TodoError" Grid.Column="1" Classes="caption" Text="{Binding Error}" Margin="24,0" HorizontalAlignment="Right" VerticalAlignment="Center"
-                     TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.Attention}" ToolTip.Tip="{Binding Error}"
-                     IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Error}" />
-        </Grid>
       </Grid>
 
       <!-- Expanded: the groups in their own scroll, then the foot. -->
@@ -154,9 +151,6 @@
                           AutomationProperties.Name="{Binding DoneToggleName}">
               <TextBlock x:Name="TodoDoneToggleText" Classes="caption" Text="{Binding DoneToggleText}" AutomationProperties.AccessibilityView="Raw" />
             </ToggleButton>
-            <TextBlock x:Name="TodoErrorExpanded" Grid.Column="1" Classes="caption" Text="{Binding Error}" Margin="12,0" HorizontalAlignment="Right" VerticalAlignment="Center"
-                       TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.Attention}" ToolTip.Tip="{Binding Error}"
-                       IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Error}" />
             <Button x:Name="TodoShowLess" Grid.Column="2" Classes="copy" Click="OnShowLess" AutomationProperties.Name="{Binding ShowLessText}">
               <StackPanel Orientation="Horizontal" Spacing="8">
                 <TextBlock Classes="caption" Text="{Binding ShowLessText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
@@ -193,7 +187,13 @@
            rows, in a slot one row tall in every state (D13), so the collapsed panel's height never follows the line's words. Its view model
            is the shell's, not the panel's. -->
       <Border x:Name="TodoElsewhereSlot" Grid.Row="2" Height="{StaticResource Row.Height.Default}" ClipToBounds="True" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0">
-        <tv:FromElsewhereLine x:Name="TodoElsewhere" VerticalAlignment="Center" DataContext="{Binding $parent[Window].((shell:ShellViewModel)DataContext).Elsewhere}" />
+        <Grid ColumnDefinitions="Auto,*">
+          <Button x:Name="TodoShowAll" HorizontalAlignment="Left" VerticalAlignment="Center" Classes="copy" Click="OnShowAll" IsVisible="{Binding ShowsShowAll}" Margin="16,0,0,0"
+                  AutomationProperties.Name="{Binding ShowAllText}">
+            <TextBlock x:Name="TodoShowAllText" Classes="caption" Text="{Binding ShowAllText}" AutomationProperties.AccessibilityView="Raw" />
+          </Button>
+          <tv:FromElsewhereLine x:Name="TodoElsewhere" Grid.Column="1" VerticalAlignment="Center" DataContext="{Binding $parent[Window].((shell:ShellViewModel)DataContext).Elsewhere}" />
+        </Grid>
       </Border>
     </Grid>
   </Border>

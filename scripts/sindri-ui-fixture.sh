@@ -25,6 +25,9 @@
 #                                  real routes): one overdue, two due today, three upcoming (tomorrow twice, a weekday, a MM-dd), three with no
 #                                  date, links on four (one with a PR and a Linear issue), and the last one marked done. Each add carries a fixed
 #                                  --client-id (ui-fixture-todo-NN), so a repeat adds nothing and marks nothing done twice
+#   sindri-ui-fixture.sh todos read-error | read-ok     (after 'todos', serve up)
+#                                  read-error makes only GET /sindri/todos fail (view_todo is renamed in views.db; serve and every other page work),
+#                                  so the panel shows its read error; read-ok renames it back (#2908)
 #   sindri-ui-fixture.sh decide <DEC-id> <choice>
 #                                  decide at the CLI (sindri decide, as the owner): with the app open on the same
 #                                  decision, the app's own Decide is then refused (SND-ITEM-409)
@@ -413,8 +416,28 @@ todo_add() { # $1 client id, $2 text, $3 due, $4 links
   "$PROVE" human "${args[@]}" | jq -r '.id'
 }
 
+# The todo read fails and nothing else does (#2908): view_todo, the table GET /sindri/todos reads, is renamed away in views.db, so serve
+# and every other page keep working. 'todos read-ok' renames it back. Run these after 'todos', with serve up.
+TODO_SQL_BAK="view_todo_fixture_off"
+todos_read() {
+  need_sql
+  local db="$AW_SINDRI_HOME/views.db" have
+  [ -f "$db" ] || die "todos: no views at $db: run 'up' first"
+  case "$1" in
+    read-error)
+      have="$(sql_on "$db" "SELECT COUNT(*) FROM sqlite_master WHERE name = 'view_todo'")"
+      [ "$have" = 0 ] || sql_on "$db" "ALTER TABLE view_todo RENAME TO $TODO_SQL_BAK" >/dev/null || die "todos: can't break the todo read"
+      printf 'todos read-error: GET /sindri/todos now fails; the app re-reads on the next ledger event, so add one (items) to see it. Undo: todos read-ok\n' ;;
+    read-ok)
+      have="$(sql_on "$db" "SELECT COUNT(*) FROM sqlite_master WHERE name = '$TODO_SQL_BAK'")"
+      [ "$have" = 0 ] || sql_on "$db" "ALTER TABLE $TODO_SQL_BAK RENAME TO view_todo" >/dev/null || die "todos: can't restore the todo read"
+      printf 'todos read-ok: GET /sindri/todos reads view_todo again\n' ;;
+  esac
+}
+
 todos() {
   local row id cid text due links done_id=""
+  case "${1:-}" in read-error | read-ok) todos_read "$1"; return ;; esac
   for row in "${TODOS[@]}"; do
     IFS='|' read -r cid text due links <<< "$row"
     id="$(todo_add "$cid" "$text" "$due" "$links")" || return
@@ -1517,7 +1540,7 @@ case "$verb" in
   close) [ "$#" -eq 2 ] || { [ "$#" -eq 3 ] && [ "$3" = "--cancelled" ]; } || die "usage: close <item> [--cancelled]" ;;
   projects) [ "$#" -eq 1 ] || die "'projects' takes no arguments" ;;
   linear-catchup) { [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && case "$2" in empty | typical | error | read-error) true ;; *) false ;; esac; }; } || die "usage: linear-catchup [empty|typical|error|read-error]" ;;
-  todos) [ "$#" -eq 1 ] || die "'todos' takes no arguments" ;;
+  todos) { [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && case "$2" in read-error | read-ok) true ;; *) false ;; esac; }; } || die "usage: todos [read-error|read-ok]" ;;
   resources) [ "$#" -eq 1 ] || die "'resources' takes no arguments" ;;
   connections) { [ "$#" -eq 2 ] && case "$2" in empty | typical | error | down) true ;; *) false ;; esac; } || die "usage: connections empty|typical|error|down" ;;
   reviews) { [ "$#" -eq 2 ] && { [ "$2" = up ] || [ "$2" = down ]; }; } || die "usage: reviews up|down" ;;
