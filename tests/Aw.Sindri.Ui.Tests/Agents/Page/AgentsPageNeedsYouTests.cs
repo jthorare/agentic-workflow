@@ -273,6 +273,19 @@ public sealed class AgentsPageNeedsYouTests
     }
 
     [Fact]
+    public async Task A_row_that_is_asking_with_no_asking_payload_draws_no_blank_reason_line_3726()
+    {
+        _f.Serve(AgentsPageFixture.Edited(l => AgentsPageFixture.Row(l, Codex)["asking"] = null));
+
+        var page = await _f.Shown(Token);
+
+        var row = page.Groups[0].Rows.Single();
+        Assert.Equal((true, string.Empty, false), (row.IsAsking, row.AskingText, row.HasAsking));   // the reason line binds HasAsking, so it stays hidden
+        Assert.DoesNotContain(", ,", row.Name, StringComparison.Ordinal);
+        Assert.False(row.Name.EndsWith(", ", StringComparison.Ordinal) || row.Name.EndsWith(','));
+    }
+
+    [Fact]
     public async Task The_first_click_on_the_Agent_header_sorts_A_to_Z_and_the_second_Z_to_A_3726()
     {
         var list = AgentsPageFixture.Edited(_ => { });
