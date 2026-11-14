@@ -77,6 +77,17 @@ public sealed class ContextConceptScanServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_profile_with_no_context_section_scans_a_new_draft_too()
+    {
+        _engine.State = new MapPublishState(Hold: null, LatestDraft: 7, Current: 6, CurrentHeads: []);
+
+        var result = await Run(await Service(context: false));
+
+        Assert.False(result.Value.Idle);
+        _ = Assert.Single(_start.Requests);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task With_no_draft_the_current_version_is_scanned()
     {
         _engine.State = new MapPublishState(Hold: null, LatestDraft: null, Current: 6, CurrentHeads: []);

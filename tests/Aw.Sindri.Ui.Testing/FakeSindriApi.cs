@@ -76,7 +76,7 @@ internal sealed partial class FakeSindriApi : ISindriApi
     private int _pingCalls;
 
     /// <summary>The cursor each event stream was opened with.</summary>
-    public IReadOnlyList<long> StreamCursors => [.. _cursors];
+    public IReadOnlyList<long> StreamCursors { get { lock (_gate) { return [.. _cursors]; } } }
 
     private readonly List<long> _cursors = [];
 

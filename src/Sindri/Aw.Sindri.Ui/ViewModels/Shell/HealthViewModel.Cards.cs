@@ -42,6 +42,8 @@ internal sealed partial class HealthViewModel
         return card;
     }
 
+    private bool IsProfileUnreadable => string.Equals(ProfileState, "unreadable", StringComparison.Ordinal);
+
     // What the cards say needs a look that the server's one health word does not: the Code index, the Context index and the services the scheduler missed; empty when it is fine.
     private string NeedsLook()
     {
@@ -54,6 +56,11 @@ internal sealed partial class HealthViewModel
         if (string.Equals(ContextIndex.Word, Labels.CodeIndexNeedsLook, StringComparison.Ordinal))
         {
             parts.Add(Labels.ContextIndexLookName);
+        }
+
+        if (IsProfileUnreadable)
+        {
+            parts.Add(Labels.ProfileLookName);
         }
 
         var overdue = _serviceRows.Values.Where(r => r.IsOverdue).Select(r => r.Name).Order(StringComparer.Ordinal).ToList();

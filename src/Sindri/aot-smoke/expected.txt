@@ -6,7 +6,7 @@ ok    profile           hash HASH6
 fail  api               unreachable: no control plane is recorded (fix: sindri)
 fail  temporal          not running: no dev server on this home's temporal.db (fix: sindri)
 ok    build             not running from an installed build
-warn  context:map       no map yet (fix: sindri context map import <file>)
+ok    context:map       no map yet: the first map builds after the code index of smoke
 ok    context:pages     no pages named
 ok    context:roles     no map yet
 ok    context:retention no expired exports; retained map versions are within the newest 100 and the 90-day eval window
