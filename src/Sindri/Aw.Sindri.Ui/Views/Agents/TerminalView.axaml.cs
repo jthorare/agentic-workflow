@@ -91,11 +91,44 @@ internal sealed partial class TerminalView : UserControl
                 break;
             case TerminalKeyRoute.Pane:
                 e.Handled = true;
-                PaneKeyPressed?.Invoke(this, new TerminalKeyEventArgs(name, e.KeySymbol));
+                PaneKey(name, e.KeySymbol);
                 break;
             case TerminalKeyRoute.Page:
             default:
                 break;
+        }
+    }
+
+    // A key in the pane: Shift+PageUp and Shift+PageDown scroll its own scrollback one screen and send nothing; a paste sends the clipboard's text
+    // as one paste; any other key snaps the pane back to the bottom and goes to the agent.
+    private void PaneKey(string name, string? symbol)
+    {
+        if (string.Equals(name, "Shift+PageUp", StringComparison.Ordinal))
+        {
+            Pane.ScrollBy(Pane.PageRows);
+        }
+        else if (string.Equals(name, "Shift+PageDown", StringComparison.Ordinal))
+        {
+            Pane.ScrollBy(-Pane.PageRows);
+        }
+        else if (TerminalKeyNames.IsPaste(name))
+        {
+            _ = PasteClipboard();
+        }
+        else
+        {
+            Pane.ScrollOffset = 0;
+            PaneKeyPressed?.Invoke(this, new TerminalKeyEventArgs(name, symbol));
+        }
+    }
+
+    private async Task PasteClipboard()
+    {
+        var text = await ReadClipboard().ConfigureAwait(true);
+        if (!string.IsNullOrEmpty(text))
+        {
+            Pane.ScrollOffset = 0;
+            PanePasted?.Invoke(this, new TerminalPasteEventArgs(text));
         }
     }
 

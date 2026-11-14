@@ -60,11 +60,12 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
     /// <returns>What became of the key.</returns>
     internal async Task<TerminalKeyFate> SendKey(string name, string? text, CancellationToken cancellationToken)
     {
-        if (TerminalSocketMessages.FromKey(name, text) is not { } message)
-        {
-            return TerminalKeyFate.Dropped;
-        }
+        return TerminalSocketMessages.FromKey(name, text) is { } message ? await Deliver(message, cancellationToken).ConfigureAwait(true) : TerminalKeyFate.Dropped;
+    }
 
+    // One message out: queued until ready, dropped when the socket is down.
+    private async Task<TerminalKeyFate> Deliver(string message, CancellationToken cancellationToken)
+    {
         var fate = view.SendKey(message);
         if (fate == TerminalKeyFate.Sent && _link is { } link)
         {
@@ -78,7 +79,8 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
     /// <param name="text">The clipboard's text.</param>
     /// <param name="cancellationToken">Cancels the send.</param>
     /// <returns>What became of the paste.</returns>
-    internal Task<TerminalKeyFate> SendPaste(string text, CancellationToken cancellationToken) => SendKey("Paste", text, cancellationToken);   // stub (red): goes out as typed text
+    internal Task<TerminalKeyFate> SendPaste(string text, CancellationToken cancellationToken) =>
+        string.IsNullOrEmpty(text) ? Task.FromResult(TerminalKeyFate.Dropped) : Deliver(TerminalSocketMessages.Paste(text), cancellationToken);
 
     /// <summary>Ctrl-C through the socket.</summary>
     /// <param name="cancellationToken">Cancels the send.</param>

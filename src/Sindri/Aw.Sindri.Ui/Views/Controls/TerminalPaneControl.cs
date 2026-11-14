@@ -77,7 +77,7 @@ internal sealed class TerminalPaneControl : Control, ITerminalPane
 
     /// <summary>Scrolls the pane's own scrollback, clamped to the history drawn: a positive number reads further back.</summary>
     /// <param name="rows">Rows to move: positive back, negative towards the live screen.</param>
-    internal void ScrollBy(int rows) => _ = rows;   // stub (red)
+    internal void ScrollBy(int rows) => ScrollOffset = Math.Clamp(ScrollOffset + rows, 0, History);
 
     /// <summary>Gets the size of one cell in px (0 before the first measure).</summary>
     internal Size CellSize { get; private set; }
