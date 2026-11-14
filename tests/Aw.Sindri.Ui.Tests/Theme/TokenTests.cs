@@ -39,8 +39,9 @@ public sealed class TokenTests
         ("AttentionFill", "#67482f"),   // the hold button's fill: Attention at 35 % over Surface2
         ("PrimarySoft", "#202442"),
         ("ErrorSoft", "#281415"),
+        ("ErrorChipText", "#ee6060"),
         ("SuccessSoft", "#0d2115"),
-        ("Wire", "#4a4a52"),
+        ("Wire", "#686870"),
         ("WireHi", "#8a8f98"),
         ("LaneFill", "#05ffffff"),
         ("RingAnchor", "#d0d6e0"),
@@ -53,6 +54,9 @@ public sealed class TokenTests
         ("Area5", "#5fd4e0"),
         ("Area6", "#ff9e8f"),
     ];
+
+    // A colour that only feeds role brushes (Brush.Clickable.PressedBorder), so it has no Brush.<name> (#3505).
+    private static readonly string[] _brushlessColours = ["Outline"];
 
     public static TheoryData<string, string> Colours
     {
@@ -68,6 +72,14 @@ public sealed class TokenTests
         }
     }
 
+    // Control boundaries (pressed, focus, selected) at 3:1 on the pressed fill (#3190, #3517). Colour only: nothing draws Brush.Outline, the controls use Brush.Clickable.PressedBorder (#3505).
+    [Fact]
+    public void Outline_is_a_colour_with_no_brush_of_its_own()
+    {
+        Assert.Equal("#767b82", _tokens.Color("Outline"));
+        Assert.False(_tokens.Resources.ContainsKey("Brush.Outline"));
+    }
+
     [Theory]
     [MemberData(nameof(Colours))]
     public void Each_colour_has_its_value_and_a_brush_over_it(string name, string value)
@@ -81,12 +93,12 @@ public sealed class TokenTests
     [Fact]
     public void Every_colour_is_one_of_the_spec_tokens_and_every_brush_has_its_colour()
     {
-        var spec = Colours.Select(row => row.Data.Item1).ToHashSet(StringComparer.Ordinal);
+        var spec = Colours.Select(row => row.Data.Item1).Concat(_brushlessColours).ToHashSet(StringComparer.Ordinal);
         var colours = Names("Color.");
         var brushes = Names("Brush.");
 
         Assert.Empty(colours.Except(spec, StringComparer.Ordinal));
-        Assert.Equal(colours.Order(StringComparer.Ordinal), brushes.Order(StringComparer.Ordinal));
+        Assert.Equal(colours.Except(_brushlessColours, StringComparer.Ordinal).Order(StringComparer.Ordinal), brushes.Order(StringComparer.Ordinal));
     }
 
     [Fact]

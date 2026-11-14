@@ -6,6 +6,8 @@
   "building": {
     "sourcesDone": 1,
     "sourcesTotal": 1,
+    "filesDone": 4,
+    "filesTotal": 4,
     "startedAt": "2026-01-01T00:00:00.0000000Z",
     "lastSyncAt": "2026-01-01T00:00:00.0000000Z",
     "jobId": "JOB-00000000000000000000000000000008"

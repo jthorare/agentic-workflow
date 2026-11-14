@@ -1,6 +1,8 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections.Polling;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Testing.Connections;
 
 namespace Aw.Sindri.Tests.Connections;
 
@@ -42,6 +44,19 @@ public sealed class SlackEventPollerTests
         Assert.Empty(caughtUp.Value.Events);
         Assert.Equal("1731060000.000300", caughtUp.Value.NextCursor);
         Assert.All(provider.Requests, static r => Assert.Contains("channel=C123", r.Uri.Query, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Poller_refuses_the_messages_connection()
+    {
+        var provider = new FakeProvider();
+        using var h = PollerHarness.For("slack", provider);
+        var messages = h.Connection with { Name = ConnectionSamples.Name("slack", "messages"), Preset = null };
+
+        var polled = await h.Poller.Poll(messages, EventKind.SlackMessage, Before, TestContext.Current.CancellationToken);
+
+        Assert.Equal(SindriErrors.ConnectionPresetMissing.Code, polled.Error.Code);
+        Assert.Empty(provider.Requests);
     }
 
     [Fact]

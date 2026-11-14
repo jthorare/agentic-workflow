@@ -28,10 +28,13 @@ public sealed partial class ContrastTests
         ("InkSubtle", "Canvas", 6.1, TextAa),
         ("InkSubtle", "Surface1", 5.6, TextAa),
         ("InkSubtle", "Surface2", 5.2, TextAa),
+        ("InkSubtle", "PrimarySoft", 4.6, TextAa),   // a row's sub-line and id, and a peek label, on the selected row (#2978)
+        ("InkMuted", "PrimarySoft", 10.3, TextAa),   // the title and facts on the selected row
         ("InkTertiary", "Canvas", 4.5, 0),
         ("InkTertiary", "Surface1", 4.1, 0),
         ("PrimaryHover", "Canvas", 7.0, TextAa),
         ("PrimaryHover", "Surface1", 6.4, NonText),
+        ("PrimaryHover", "Surface2", 5.9, NonText),   // the flat row's cursor ring on a hovered row (#3189)
         ("PrimaryHover", "Surface3", 5.5, NonText),   // the palette's selected-row bar on its card (U1 run 1, a11y-4)
         ("OnPrimary", "Primary", 4.70, TextAa),
         ("OnPrimary", "PrimaryHoverFill", 5.5, TextAa),
@@ -51,10 +54,12 @@ public sealed partial class ContrastTests
         ("AttentionFill", "Surface2", 2.05, 0),   // decoration: the fill against the button's own background
         ("Hairline", "Canvas", 1.1, 0),
         ("HairlineStrong", "Canvas", 1.6, 0),
-        // The context map (F3 spec 1 §2 "Tokens"): the wire and its ports are decoration, 1.3+ like the hairline; the
+        // The wire (#3138): a workflow graph's connectors and the context map's edges, ports and suggested borders. It is
+        // the only mark of what feeds what, so it needs the non-text 3.0 on every surface a graph or map draws on. The
         // highlighted wire and the anchor ring are the same values as InkSubtle and InkMuted, so they pass as non-text.
-        ("Wire", "Canvas", 2.3, 1.3),
-        ("Wire", "Surface1", 2.1, 1.3),
+        ("Wire", "Canvas", 3.6, NonText),
+        ("Wire", "Surface1", 3.3, NonText),
+        ("Wire", "Surface2", 3.05, NonText),
         ("WireHi", "Canvas", 6.1, NonText),
         ("WireHi", "Surface1", 5.6, NonText),
         ("RingAnchor", "Canvas", 13.6, NonText),
@@ -101,6 +106,96 @@ public sealed partial class ContrastTests
         { "InkSubtle", "Surface3", 4.8, TextAa },   // not started
     };
 
+    // Control outlines are UI parts: 3:1 (WCAG 1.4.11, #3190). The rows name the brush the control draws (Brush.<name>), so the fix may
+    // repoint it at any colour. The recorded ratios are the ones #767b82 has on the canvas, the panel and the pressed fill (#2c2d30, #3517);
+    // #70757c measured 2.97 on that fill.
+    public static TheoryData<string, string, double, double> OutlinePairs => new()
+    {
+        { "Clickable.PressedBorder", "Canvas", 4.67, NonText },
+        { "Clickable.PressedBorder", "Surface1", 4.29, NonText },
+        { "Clickable.PressedBorder", "Brush.Clickable.Pressed", 3.23, NonText },
+        // Pressed and selected borders (inbox-row.selected, Button.segment.selected, the pressed hold part and primary) draw Brush.Clickable.PressedBorder on the other surfaces a clickable sits on (#3504).
+        { "Clickable.PressedBorder", "Surface2", 3.95, NonText },
+        { "Clickable.PressedBorder", "Surface3", 3.69, NonText },
+        { "Clickable.PressedBorder", "Surface4", 3.50, NonText },
+    };
+
+    [Theory]
+    [MemberData(nameof(OutlinePairs))]
+    public void Each_control_outline_has_the_recorded_ratio_and_meets_the_non_text_minimum(string brush, string background, double recorded, double minimum)
+    {
+        var ratio = Wcag.Contrast(BrushColor(brush), Background(background));
+
+        Assert.True(Math.Abs(ratio - recorded) <= 0.1, string.Create(CultureInfo.InvariantCulture, $"Brush.{brush} on {background} is {ratio:F2}, #3190 records {recorded}"));
+        Assert.True(ratio >= minimum, string.Create(CultureInfo.InvariantCulture, $"Brush.{brush} on {background} is {ratio:F2}, below {minimum}"));
+    }
+
+    // A press shows in the fill as well as the border (#3517): the pressed fill is at least 1.2:1 off the hover fill, and the pressed border holds 3:1 on it.
+    [Fact]
+    public void Pressed_fill_steps_at_least_1_2_to_1_over_hover()
+    {
+        var ratio = Wcag.Contrast(BrushColor("Clickable.Pressed"), BrushColor("Clickable.Hover"));
+
+        Assert.True(ratio >= 1.2, string.Create(CultureInfo.InvariantCulture, $"Brush.Clickable.Pressed is {ratio:F2}:1 off Brush.Clickable.Hover, below 1.2"));
+    }
+
+    // A subtle (calm Needs You) or selected row rests on Surface2, so its hover is the lift fill, not the pressed fill (#3517, #3611): InkSubtle text on a hovered row stays at 4.5:1.
+    [Theory]
+    [InlineData("Border.clickable.subtle:pointerover")]
+    [InlineData("Border.clickable.selected:pointerover")]
+    public void Subtle_and_selected_rows_lift_to_the_lift_fill_on_hover(string selector)
+    {
+        // The selected row has a second style on the same selector for its bar colour (declared after the focus rule); the fill is the one that sets Background.
+        var background = XDocument.Load(Path.Combine(UiSource.Theme, "ClickableStyles.axaml")).Descendants()
+            .Where(e => string.Equals(e.Attribute("Selector")?.Value, selector, StringComparison.Ordinal))
+            .SelectMany(style => style.Elements())
+            .Single(e => string.Equals(e.Attribute("Property")?.Value, "Background", StringComparison.Ordinal)).Attribute("Value")?.Value;
+
+        Assert.Equal("{DynamicResource Brush.Clickable.Lift}", background);
+    }
+
+    // On a press the selected row's bar is the only selection sign (the fill is the pressed fill), so it holds 3:1 on that fill: Primary is 2.93:1 on it, PrimaryHover 4.80:1 (#3517).
+    [Fact]
+    public void A_selected_row_pressed_border_holds_3_to_1_on_the_pressed_fill()
+    {
+        var style = XDocument.Load(Path.Combine(UiSource.Theme, "ClickableStyles.axaml")).Descendants()
+            .Single(e => string.Equals(e.Name.LocalName, "Style", StringComparison.Ordinal)
+                && (e.Attribute("Selector")?.Value.Split(',').Select(part => part.Trim()).Contains("Border.clickable.selected:pressed", StringComparer.Ordinal) ?? false));
+        var border = style.Elements().Single(e => string.Equals(e.Attribute("Property")?.Value, "BorderBrush", StringComparison.Ordinal)).Attribute("Value")?.Value;
+
+        Assert.Equal("{DynamicResource Brush.PrimaryHover}", border);
+        var ratio = Wcag.Contrast(BrushColor("PrimaryHover"), BrushColor("Clickable.Pressed"));
+        Assert.True(ratio >= NonText, string.Create(CultureInfo.InvariantCulture, $"a selected row's pressed border is {ratio:F2}:1 on the pressed fill, below {NonText}"));
+    }
+
+    // Brush.Clickable.Pressed stays out on purpose: a press is momentary, and its 1.2:1 step over hover cannot also hold 4.5:1 for InkSubtle.
+    [Theory]
+    [InlineData("Surface2")]
+    [InlineData("Brush.Clickable.Hover")]
+    [InlineData("Brush.Clickable.Lift")]
+    public void InkSubtle_holds_4_5_to_1_on_every_rest_and_hover_row_fill(string fill)
+    {
+        var ratio = Wcag.Contrast(_tokens.Color("InkSubtle"), Background(fill));
+
+        Assert.True(ratio >= TextAa, string.Create(CultureInfo.InvariantCulture, $"InkSubtle on {fill} is {ratio:F2}:1, below {TextAa}"));
+    }
+
+    [Fact]
+    public void Pressed_steps_over_the_lift()
+    {
+        var ratio = Wcag.Contrast(BrushColor("Clickable.Pressed"), BrushColor("Clickable.Lift"));
+
+        Assert.True(ratio >= 1.1, string.Create(CultureInfo.InvariantCulture, $"Brush.Clickable.Pressed is {ratio:F2}:1 off Brush.Clickable.Lift, below 1.1"));
+    }
+
+    [Fact]
+    public void Pressed_border_holds_3_to_1_on_the_pressed_fill()
+    {
+        var ratio = Wcag.Contrast(BrushColor("Clickable.PressedBorder"), BrushColor("Clickable.Pressed"));
+
+        Assert.True(ratio >= NonText, string.Create(CultureInfo.InvariantCulture, $"Brush.Clickable.PressedBorder is {ratio:F2}:1 on Brush.Clickable.Pressed, below {NonText}"));
+    }
+
     [Theory]
     [MemberData(nameof(Pairs))]
     [MemberData(nameof(StatusPairs))]
@@ -140,8 +235,9 @@ public sealed partial class ContrastTests
         Assert.True(_tokens.Contrast("HairlineStrong", "Canvas") < NonText);
     }
 
-    // InkTertiary passes nothing, so it may colour only disabled text: a setter in a ':disabled' style, or a palette
-    // entry whose name says Disabled.
+    // InkTertiary passes no text contrast, so in axaml it may colour only disabled text: a setter in a ':disabled' style,
+    // or a palette entry whose name says Disabled. This check reads axaml only. Since #3537 RowGlyphPainter also inks the
+    // Draft and PR draft glyphs with it (graphic contrast 3.37:1 or more on every row fill), which this check does not see.
     [Fact]
     public void Ink_tertiary_is_used_only_for_disabled_text()
     {
@@ -168,6 +264,19 @@ public sealed partial class ContrastTests
 
         Assert.True(found.Count == 0, "hex colours outside Theme/ (use a Brush.* token):\n" + string.Join('\n', found));
     }
+
+    // The #rrggbb a Brush.<name> resource paints: its Color is a {StaticResource Color.X} reference or a literal.
+    private static string BrushColor(string name)
+    {
+        var value = _tokens.Resources["Brush." + name].Attribute("Color")?.Value.Trim() ?? string.Empty;
+        const string Reference = "{StaticResource Color.";
+
+        return value.StartsWith(Reference, StringComparison.Ordinal) ? _tokens.Color(value[Reference.Length..^1]) : value.ToLowerInvariant();
+    }
+
+    // A background row names a Color.* key, or a Brush.* resource when the fill has no colour key (Clickable.Pressed).
+    private static string Background(string name) =>
+        name.StartsWith("Brush.", StringComparison.Ordinal) ? BrushColor(name["Brush.".Length..]) : _tokens.Color(name);
 
     private static bool Disabled(XElement element, XAttribute attribute) =>
         attribute.Name.LocalName.Contains("Disabled", StringComparison.Ordinal)

@@ -79,4 +79,24 @@ public sealed class FlowSettingsTests
         Assert.NotEqual(none, depth);
         Assert.NotEqual(hosts, depth);
     }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(null)]
+    [InlineData("sheet")]
+    [InlineData("steps")]
+    public void The_workflow_editor_takes_sheet_steps_or_nothing(string? editor) =>
+        Assert.True(ProfileRules.Check(_valid with { Workflow = new WorkflowSettings { Editor = editor } }).IsSuccess);
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("grid")]
+    [InlineData("Sheet")]
+    [InlineData("")]
+    public void Another_workflow_editor_is_refused_naming_the_key_and_both_values(string editor)
+    {
+        var error = ProfileRules.Check(_valid with { Workflow = new WorkflowSettings { Editor = editor } }).Error;
+
+        Assert.Contains("workflow.editor", error.Message, StringComparison.Ordinal);
+        Assert.Contains("'sheet'", error.Message, StringComparison.Ordinal);
+        Assert.Contains("'steps'", error.Message, StringComparison.Ordinal);
+    }
 }

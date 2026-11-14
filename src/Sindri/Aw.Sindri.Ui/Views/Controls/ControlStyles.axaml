@@ -4,6 +4,11 @@
         xmlns:icons="using:Aw.Sindri.Ui.Views.Icons">
   <!-- The control renderer's looks (UI spec §7, §11.1): secondary buttons on Surface1 with a hairline; disabled ink only
        for the disabled label; the pending line in InkSubtle; errors in the Error token, always with a word and ✕. -->
+  <!-- #3190: a press changes only the fill and the border; nothing moves. The Fluent theme scales a pressed Button and ToggleButton to 0.98, which put a bordered
+       button's 1 px edge on a fractional pixel (about 2.4:1 at 1x); a 1 px shift got clipped at a tight clip instead. Not :is(Button): a ScrollBar's RepeatButtons keep theirs. -->
+  <Style Selector="Button:pressed, ToggleButton:pressed">
+    <Setter Property="RenderTransform" Value="none" />
+  </Style>
   <Style Selector="Button.command-control, Button.copy">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
@@ -37,6 +42,7 @@
   </Style>
   <!-- The shared confirmations (setup spec §2.1, §2.2). The hold button: 36 high, Surface2 with a strong hairline, the fill a clipped border in the
        AttentionFill token that grows with the hold. The typed box: a matching phrase turns the field's border to Success (the tick glyph says it too). -->
+  <!-- At rest the hold part is marked by its label, not by its HairlineStrong edge (which is under 3:1 and need not be: WCAG 1.4.11 asks the part to be identifiable, #3503; HoldPartRestMarkerTests pins the label). -->
   <Style Selector="Button.hold-part">
     <Setter Property="MinWidth" Value="260" />
     <Setter Property="Height" Value="36" />
@@ -48,9 +54,13 @@
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     <Setter Property="VerticalContentAlignment" Value="Stretch" />
   </Style>
-  <Style Selector="Button.hold-part:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.hold-part:pressed /template/ ContentPresenter#PART_ContentPresenter">
+  <Style Selector="Button.hold-part:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
+  </Style>
+  <!-- Pressed is a required state, so its border holds 3:1 (#3190, StateBorderContrastTests); hover keeps the hairline. -->
+  <Style Selector="Button.hold-part:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.PressedBorder}" />
   </Style>
   <Style Selector="Border.hold-fill">
     <Setter Property="Background" Value="{DynamicResource Brush.AttentionFill}" />
@@ -122,6 +132,53 @@
   <Style Selector="controls|StateChipView.ok > TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
   </Style>
+  <!-- A chip a view names itself (Word and Tone, #3233): the status-chip set of Theme/StatusChip.axaml on this control, with an optional glyph before the word. -->
+  <Style Selector="controls|StateChipView.status">
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="6,0" />
+    <Setter Property="MinHeight" Value="20" />
+  </Style>
+  <Style Selector="controls|StateChipView.status TextBlock">
+    <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
+    <Setter Property="LineHeight" Value="{DynamicResource Type.Caption.LineHeight}" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="controls|StateChipView.status-ok">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Ok.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Ok.Border}" />
+  </Style>
+  <Style Selector="controls|StateChipView.status-ok TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Ok.Fg}" /></Style>
+  <Style Selector="controls|StateChipView.status-running">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Running.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Running.Border}" />
+  </Style>
+  <Style Selector="controls|StateChipView.status-running TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Running.Fg}" /></Style>
+  <Style Selector="controls|StateChipView.status-waiting">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Waiting.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Waiting.Border}" />
+  </Style>
+  <Style Selector="controls|StateChipView.status-waiting TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Waiting.Fg}" /></Style>
+  <Style Selector="controls|StateChipView.status-attention">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Attention.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Attention.Border}" />
+  </Style>
+  <Style Selector="controls|StateChipView.status-attention TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Attention.Fg}" /></Style>
+  <Style Selector="controls|StateChipView.status-error">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Error.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Error.Border}" />
+  </Style>
+  <Style Selector="controls|StateChipView.status-error TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Error.Fg}" /></Style>
+  <Style Selector="controls|StateChipView.status-neutral">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Neutral.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Neutral.Border}" />
+  </Style>
+  <Style Selector="controls|StateChipView.status-neutral TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Neutral.Fg}" /></Style>
+  <Style Selector="controls|StateChipView.status-draft">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Draft.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Draft.Border}" />
+  </Style>
+  <Style Selector="controls|StateChipView.status-draft TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Draft.Fg}" /></Style>
   <!-- A quiet full-width group toggle (the Agents page's group heads): a hairline above, no radius. -->
   <Style Selector="Border.group-row Button.group-toggle">
     <Setter Property="BorderThickness" Value="0" />

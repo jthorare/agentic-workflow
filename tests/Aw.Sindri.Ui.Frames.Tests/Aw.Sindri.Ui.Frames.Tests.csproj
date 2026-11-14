@@ -40,6 +40,7 @@
     <Compile Include="../Aw.Sindri.Ui.Tests/OffThreadTimers.cs" Link="Shared/OffThreadTimers.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/Jobs/JobsFixture.cs" Link="Shared/JobsFixture.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/Workflows/WorkflowsFixture.cs" Link="Shared/WorkflowsFixture.cs" />
+    <Compile Include="../Aw.Sindri.Ui.Tests/Setup/SetupFixture.cs" Link="Shared/SetupFixture.cs" />
   </ItemGroup>
 
   <!-- The API goldens the fake serves (Aw.Sindri.Ui.Testing reads them from the output folder): the same files as Aw.Sindri.Ui.Tests. -->

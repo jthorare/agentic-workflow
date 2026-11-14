@@ -1,6 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.NeedsYou;
@@ -117,8 +118,8 @@ public sealed class WorkflowQuestionRowsTests
     public async Task The_row_clears_when_its_run_ends(string how)
     {
         var end = how == "finished"
-            ? Event(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "failed", Error: "boom", "service:workflow"))
-            : Event(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(_run, "owner stopped it", "human"));
+            ? Event(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "failed", Error: "boom", "service:workflow", WorkflowRunMode.Live))
+            : Event(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(_run, "owner stopped it", "human", WorkflowRunMode.Live));
         await _v.Apply([Question(_run), Question(_other), end]);
 
         var row = Assert.Single(await Rows());

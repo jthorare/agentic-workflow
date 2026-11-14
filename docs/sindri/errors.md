@@ -94,6 +94,8 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-CONN-012` | The provider's answer is not the shape Sindri expects, or a redirect left the preset's host. | run `sindri doctor`; if it repeats, the provider changed its API |
 | `SND-CONN-013` | The provider rejected the saved poll cursor. | ask for a full re-read (the owner's call); Sindri does not re-read on its own |
 | `SND-CONN-014` | The provider is rate limiting this connection (429 or 5xx on a poll). | nothing: the next poll waits for Retry-After, then doubles the wait on each repeat |
+| `SND-CONN-016` | The poller was given a connection with no preset (`slack:messages` has none on purpose), so it made no call. | none; the Messages page reads that connection, not the poller |
+| `SND-CONN-017` | A generic add used the name `slack:messages`. | run `sindri messages connect` |
 | `SND-CONN-015` | A rename was refused: an active workflow's `connection_event` trigger watches the connection, and the old name would stop it firing. The message names the workflows. | pause those workflows (`sindri wf pause <slug>`), rename, point their triggers at the new name, then activate them again |
 | `SND-CONN-101` | A polled event found its run ids, five in a row, held by runs of other events. | nothing: the cursor stays and the next poll tries again; the event is never dropped |
 | `SND-CONN-201` | The handoff inbox's answer breaks the inbox contract; the message names the field. | fix the inbox so it answers as `schemas/handoff/inbox.openapi.yaml` says (docs/sindri/handoff.md) |
@@ -154,8 +156,22 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-ONYX-010` | Docker points at another machine |
 | `SND-ONYX-011` | A docker compose command failed |
 | `SND-ONYX-012` | Sindri can't use its Onyx directory |
-| `SND-SETUP-005` | The Onyx admin email and password were both needed |
-| `SND-SETUP-006` | No Onyx setup was waiting for the login |
+
+## SND-SETUP (first run)
+
+Words from the first-run spec (`docs/superpowers/specs/2026-11-12-sindri-first-run-design.md` §6). The app shows the sentence and puts the code in Details.
+
+| Code | Meaning | Fix |
+|---|---|---|
+| `SND-SETUP-008` | The scan root is missing, unreadable or outside the home folder. | `sindri setup scan --root DIR` |
+| `SND-SETUP-009` | Restart refused: agent sessions, workflow runs or jobs are open. | `sindri restart --wait`; `sindri wf run-show <run>` for each run |
+| `SND-SETUP-010` | `sindri setup --apply` named no repo and none here is one you worked on in GitHub lately. | `sindri setup --apply --repo <path>` |
+| `SND-SETUP-011` | The installed Sindri has no `build-info`, so it isn't finished installing. | `scripts/install-cs.sh --link` |
+| `SND-SETUP-012` | Sindri didn't answer 30 seconds after a start or restart. | `sindri serve` |
+| `SND-SETUP-013` | GitHub or Linear refused Sindri's OAuth app (an org policy). | Paste a token: `sindri setup connect <provider> --token-env NAME` |
+| `SND-SETUP-014` | This build ships no client id for the provider and the profile sets none (`setup.oauth.github`, `setup.oauth.linear`). | Paste a token: `sindri setup connect <provider> --token-env NAME` |
+| `SND-SETUP-015` | The setup pass of `sindri setup --apply` didn't finish within `--timeout`; it keeps running. | `sindri jobs show <id>`, then `sindri setup` |
+| `SND-SETUP-016` | The setup pass of `sindri setup --apply` failed. | `sindri jobs show <id>` |
 
 ## SND-GRAPH (workflow graphs)
 
@@ -185,9 +201,14 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-109` | A run of this workflow can't start the workflow again |
 | `SND-GRAPH-110` | The run is not waiting on an agent at that node, so there is nothing to take over |
 | `SND-GRAPH-111` | That agent node is not taken over, so there is nothing to hand back |
+| `SND-GRAPH-113` | A prompt field came out empty |
+| `SND-GRAPH-119` | That part of workflows is not built yet: the Workflows page contract routes (`POST .../test`, `POST .../pins`, `GET .../trigger-events`, `GET .../templates`) and the `replace_node` op answer this until their phase lands |
 | `SND-GRAPH-120` | A workflow call is nested too deep: the call would be past `workflow.callDepth` (default 3) |
 | `SND-GRAPH-121` | A run can't start its own workflow, or the workflow that called it |
 | `SND-GRAPH-122` | An `http` node's request was refused before it was sent: host not on `workflow.http.hosts`, an address that is this machine, plain http, or a credential header |
 | `SND-GRAPH-123` | An `http` node's request got no acceptable answer: status outside `expect`, a redirect loop, an answer over 1 MB, or a network failure |
 | `SND-GRAPH-124` | A `workflow_result` node found no result: the run is not that workflow's, is not finished, or the workflow has no succeeded run |
 | `SND-GRAPH-130` | No question waits at that node |
+| `SND-GRAPH-131` | A reference reads a node that failed and continued |
+| `SND-GRAPH-132` | The setup service ran a workflow other than the hello-sindri one it made, or ran it a second time |
+| `SND-GRAPH-133` | A prompt step's answer said `couldNotAnswer: true`; the message carries the model's `couldNotAnswerWhy` |

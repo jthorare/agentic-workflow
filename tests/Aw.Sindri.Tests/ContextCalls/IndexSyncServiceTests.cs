@@ -7,6 +7,7 @@ using Aw.Context.Core.Sync;
 using Aw.Kernel;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Workflow.Blocks.Input;
 
 namespace Aw.Sindri.Tests.ContextCalls;
@@ -29,7 +30,7 @@ public sealed class IndexSyncServiceTests
         _ = await _h.Profiles.Save(loaded, Ct);
         var grant = await _h.HoldLease();
         using var caller = _h.Callers.EnterService("index-sync");
-        return await new IndexSyncService(new ContextScopes(_h.Profiles, _h.Callers), EngineProxy.Of(_index)).Run(new ScheduledRun(grant, _now), Ct);
+        return await new IndexSyncService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), EngineProxy.Of(_index)).Run(new ScheduledRun(grant, _now), Ct);
     }
 
     private static SourceSync Row(string source, int fetched, string? code = null) =>
@@ -102,13 +103,16 @@ public sealed class IndexSyncServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Tick_without_a_context_section_does_not_call_the_sync()
+    public async Task Tick_without_a_context_section_runs_the_feeds_on_the_default_settings()
     {
+        _index.Rows = [Row("repo-docs", 5)];
+
         var result = await Run(context: false);
 
         Assert.True(result.IsSuccess);
-        Assert.True(result.Value.Idle);
-        Assert.Equal(0, _index.Ticks);
+        Assert.Equal(1, _index.Ticks);
+        Assert.False(result.Value.Idle);
+        Assert.Equal("ok: repo-docs 5 fetched", result.Value.Summary);
     }
 
     [Theory, Trait("Lane", "unit")]

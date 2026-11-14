@@ -23,21 +23,21 @@ internal sealed class EgressProxy(EgressPolicy policy, IEgressDialer dialer, Egr
     /// <summary>Serves one client connection.</summary>
     /// <param name="client">The client's stream.</param>
     /// <param name="cancellationToken">Ends the connection.</param>
-    /// <returns>A task that ends with the connection.</returns>
+    /// <returns>A task that ends with the connection; the client is closed when it ends.</returns>
     public async Task Handle(Stream client, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(client);
-        if (Interlocked.Increment(ref _active) > caps.MaxConnections || Interlocked.Read(ref _bytes) >= caps.MaxBytes)
-        {
-            log.Record("(cap)", 0, EgressVerdict.Refused);
-            Denials?.Record(new DenialObservation(DenialKind.Network, "(cap)", DenialRules.Cap));
-            await Reply(client, 503, "Service Unavailable", cancellationToken).ConfigureAwait(false);
-            _ = Interlocked.Decrement(ref _active);
-            return;
-        }
-
+        var overCap = Interlocked.Increment(ref _active) > caps.MaxConnections || Interlocked.Read(ref _bytes) >= caps.MaxBytes;
         try
         {
+            if (overCap)
+            {
+                log.Record("(cap)", 0, EgressVerdict.Refused);
+                Denials?.Record(new DenialObservation(DenialKind.Network, "(cap)", DenialRules.Cap));
+                await Reply(client, 503, "Service Unavailable", cancellationToken).ConfigureAwait(false);   // why: a client gone during the 503 must still give its slot back (#3484)
+                return;
+            }
+
             using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             limit.CancelAfter(caps.ConnectionLifetime);
             await Serve(client, limit.Token).ConfigureAwait(false);
@@ -49,6 +49,7 @@ internal sealed class EgressProxy(EgressPolicy policy, IEgressDialer dialer, Egr
         finally
         {
             _ = Interlocked.Decrement(ref _active);
+            await client.DisposeAsync().ConfigureAwait(false);   // why: a lifetime or head timeout that ends Serve mid-step must not leave the client waiting on a reply (#3457)
         }
     }
 

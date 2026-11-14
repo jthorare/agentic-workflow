@@ -144,6 +144,34 @@ public sealed class EmbeddingsLayerTests
     }
 
     [Fact]
+    public async Task A_refused_input_settles_the_layer_ok_with_code_017_and_the_refused_count_issue_3128()
+    {
+        var embedder = new FakeEmbedder { SkipTextsContaining = "M0001" };
+        var harness = Arranged(3, embedder);
+
+        var report = await harness.BuildAndEmbed(BuildHarness.First, cancellationToken: Token);
+
+        Assert.Equal((3, 4), (report.Embedded, report.Embeddable));
+        Assert.Equal(LayerState.Ok, report.Embeddings);
+        var layer = await Layer(harness);
+        Assert.Equal(LayerState.Ok, layer.State);
+        Assert.Equal(CodeIndexErrors.EmbeddingInputRejected.Code, layer.Code);
+        Assert.Equal("3 of 4 embedded, 1 refused", layer.Detail);
+    }
+
+    [Fact]
+    public async Task A_second_embed_run_sends_no_request_for_a_symbol_the_model_refused_issue_3128()
+    {
+        var embedder = new FakeEmbedder { SkipTextsContaining = "M0001" };
+        var harness = Arranged(3, embedder);
+        _ = await harness.BuildAndEmbed(BuildHarness.First, cancellationToken: Token);
+
+        _ = await harness.Embed.Handle(new EmbedCodeIndexRequest(harness.Repo, new Progress<string>()), Token);
+
+        Assert.Equal(1, embedder.Batches.SelectMany(static b => b).Count(static t => t.Contains("M0001", StringComparison.Ordinal)));
+    }
+
+    [Fact]
     public async Task A_layer_the_profile_turned_off_is_disabled_and_nothing_is_sent_or_kept()
     {
         var embedder = new FakeEmbedder();

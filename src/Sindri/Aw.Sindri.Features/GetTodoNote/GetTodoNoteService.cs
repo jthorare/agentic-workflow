@@ -31,9 +31,9 @@ internal sealed class GetTodoNoteService(IProjectorStatus status, ICallerContext
         var located = await locator.Locate(cancellationToken).ConfigureAwait(false);
         var asOf = status.Current.AsOf;
         var current = note.Status;
-        if (located.IsSuccess && located.Value is null)
+        if (Unready(asOf, located, current) is { } early)
         {
-            return new GetTodoNoteResponse(asOf, TodoNoteWords.Of(TodoNoteState.NotSet), Vault: null, Note: null, current.LastCheckAt, LastSyncAt: null, LastError: null, [], Hold: null, [], []);
+            return early;
         }
 
         var rows = await views.List<TodoRow>(ViewNames.Todo, cancellationToken).ConfigureAwait(false);
@@ -53,6 +53,22 @@ internal sealed class GetTodoNoteService(IProjectorStatus status, ICallerContext
         var cantSync = await reads.CantSync(cancellationToken).ConfigureAwait(false);
         var answer = Answer(asOf, located, current, synced.IsSuccess ? synced.Value?.Envelope.OccurredAt : null, conflicts);
         return answer with { Hold = hold.Value, Picks = reads.Picks(), CantSync = cantSync };
+    }
+
+    // The two answers that need no read of the todos: no profile file yet, and a profile with no note set.
+    private GetTodoNoteResponse? Unready(AsOf asOf, Result<NotePlace?> located, TodoNoteStatus current)
+    {
+        if (located.IsError && string.Equals(located.Error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal) && !reads.ProfileFileExists())
+        {
+            return new GetTodoNoteResponse(asOf, TodoNoteWords.Of(TodoNoteState.NotSetUp), Vault: null, Note: null, current.LastCheckAt, LastSyncAt: null, LastError: null, [], Hold: null, [], []);   // no profile yet (#3113): not a failed read
+        }
+
+        if (located.IsSuccess && located.Value is null)
+        {
+            return new GetTodoNoteResponse(asOf, TodoNoteWords.Of(TodoNoteState.NotSet), Vault: null, Note: null, current.LastCheckAt, LastSyncAt: null, LastError: null, [], Hold: null, [], []);
+        }
+
+        return null;
     }
 
     private static GetTodoNoteResponse Answer(AsOf asOf, Result<NotePlace?> located, TodoNoteStatus current, DateTimeOffset? lastSync, List<string> conflicts)

@@ -15,6 +15,7 @@ using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Docs;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Graph.Templates;
 using Aw.Sindri.Core.Judge;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
@@ -169,6 +170,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IModelHistory, SqliteModelHistory>().AddSingleton<IModelPickSettings, ProfileModelPickSettings>().AddSingleton<IModelPickHistory, ModelPickHistoryAdapter>()   // the pick's ports read the approved profile and the model-history view
             .AddSingleton<IJobViews, SqliteJobViews>().AddSingleton<IServicePauses, ViewServicePauses>()
             .AddSingleton<IProfileSource>(sp => new YamlProfileSource(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory)))
+            .AddSingleton<IProfileFile>(static sp => new SettingsProfileFile(sp.GetRequiredService<SindriSettings>()))   // #3113: a profile file the source can't read is not a missing one
             .AddSingleton<IOldApprovalsCleanup, ApprovalsDirectoryCleanup>()   // #2258 PR 1: run once at start by serve
             .AddSingleton<IBoxLimitsSource>(sp => new HeavyCapSource(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))
             .AddSingleton(static sp => new LiveApprovedProfile(sp.GetRequiredService<IProfileSource>(), sp.GetRequiredService<SindriSettings>().ProfilePath)).AddSingleton<IApprovedProfile>(static sp => sp.GetRequiredService<LiveApprovedProfile>()).AddSingleton<IProfileCache>(static sp => sp.GetRequiredService<LiveApprovedProfile>())
@@ -181,7 +183,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IPreCommitGit, GitPreCommit>()   // cutover §6.2: the scrub verb, the onboarding hook slot and the doctor read the hook through it
             .AddSingleton<IBuildStamps>(static _ => new InstalledBuildStamps(AppContext.BaseDirectory))   // #1032: status and doctor compare the running build with bin/cs/current
             .AddSingleton<IProcessAncestry, PosixProcessAncestry>()
-            .AddSingleton<IRepoLocator, GitRepoLocator>().AddSingleton<IRepoInspector, GitRepoInspector>().AddSingleton<IProfileRepoWriter, YamlProfileRepoWriter>().AddSingleton<IProfileIndexWriter>(sp => new YamlProfileIndexWriter(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>(), sp.GetRequiredService<IProfileCache>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))).AddSingleton<IProfileSandboxWriter, YamlProfileSandboxWriter>().AddSingleton<IProfileInitializer, FileProfileInitializer>()   // setup-once §5.1: AddRepo's folder checks and the profile's repos[] appender
+            .AddSingleton<IRepoLocator, GitRepoLocator>().AddSingleton<IRepoInspector, GitRepoInspector>().AddSingleton<IRepoCheckouts, FileRepoCheckouts>().AddSingleton<IProfileRepoWriter, YamlProfileRepoWriter>().AddSingleton<IProfileIndexWriter>(sp => new YamlProfileIndexWriter(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>(), sp.GetRequiredService<IProfileCache>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))).AddSingleton<IProfileSandboxWriter, YamlProfileSandboxWriter>().AddSingleton<IProfileInitializer, FileProfileInitializer>()   // setup-once §5.1: AddRepo's folder checks and the profile's repos[] appender
             .AddSingleton<ICommandOrigins, LedgerCommandOrigins>()   // engine P4 unit (d): the bridge's causation route
             .AddRecipeAdapters(environment)
             .AddSingleton<IChallenges, ProcessChallenges>()
@@ -230,6 +232,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
     private static IServiceCollection AddConnections(this IServiceCollection services)
         => services
             .AddSingleton<IConnectionStore, SqliteConnectionStore>()
+            .AddSingleton<ICiSourceLookup, GitHubCiSourceLookup>()   // #3534: the starter templates' CI step
             .AddSingleton<IConnectionSecrets>(static sp => new KeychainConnectionSecrets(sp.GetRequiredService<ISecretWriter>(), sp.GetRequiredService<ISecretPointers>(), new ProcessToolRunner()))
             .AddSingleton<IConnectionPresetCatalog, EmbeddedConnectionPresets>()
             .AddSingleton<IEnvironmentReader, ProcessEnvironmentReader>()

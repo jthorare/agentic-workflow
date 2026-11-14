@@ -309,7 +309,7 @@ An interactive agent asks to approve the five `mcp__sindri__context_*` tools onc
 | Tools return nothing / MCP "failed to connect" | The control plane restarted on another port | `sindri status` for the port; remove and re-add the MCP entry; start a new agent session |
 | `context_sources` says `degraded, never refreshed` | `context-docs-refresh` is not in the profile | Add it, validate, owner re-approves |
 | `SND-CLI-001` on `context lenses` | Used `--anchor` | Pass anchors positionally |
-| `sindri doctor` exits 1 on a clean box | Warnings such as `context:map` "no map yet" or a harness-probe version note | Read each row; a warning is not a stop. Fail rows are |
+| `sindri doctor` exits 1 on a clean box | Warnings such as a harness-probe version note | Read each row; a warning is not a stop. Fail rows are |
 
 ## Plan B
 

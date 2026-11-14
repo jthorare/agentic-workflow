@@ -22,7 +22,7 @@ public sealed class GraphLayer(IRepoSnapshot snapshot, TimeProvider clock, IBody
 
     /// <summary>
     /// The graph layer (spec §5.5, §5.7): graphify on the whole snapshot, its nodes in files no parser covers stored as graph symbols and its call edges merged
-    /// as 'graphify' edges. A tool that is missing, unsandboxed, off the pin or failed leaves the layer unavailable with its code and no stale edge; one that timed out leaves the last good graph in place; only a
+    /// as 'graphify' edges. A snapshot with no code file is ok with nothing to index, and the tool never runs. A tool that is missing, unsandboxed, off the pin or failed leaves the layer unavailable with its code and no stale edge; one that timed out leaves the last good graph in place; only a
     /// failure of the index file itself fails the build.
     /// </summary>
     /// <param name="build">The build file.</param>
@@ -45,6 +45,13 @@ public sealed class GraphLayer(IRepoSnapshot snapshot, TimeProvider clock, IBody
         if (graph is null)
         {
             return new LayerRecord(LayerName.Graph, "none", LayerState.Unavailable, Code: null, "not built by this version", now);
+        }
+
+        // A fresh repo with no code file (#3256): the tool would only say its graph is empty, which is no failure; SND-CODEIDX-008 stays for a repo with code.
+        if (code.Count == 0)
+        {
+            var nothing = await StoreGraph(build, EmptyGraph(request, code), cancellationToken).ConfigureAwait(false);
+            return nothing.IsError ? nothing.Error : new LayerRecord(LayerName.Graph, request.Commit.Value, LayerState.Ok, Code: null, "nothing to index yet", now);
         }
 
         request.Progress.Report("graph");
