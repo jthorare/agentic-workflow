@@ -63,8 +63,7 @@ internal sealed class ListPicker : UserControl
     {
         _heading.Classes.Add("body-strong");
         _heading.TextWrapping = TextWrapping.Wrap;
-        _error.Classes.Add("callout");
-        _error.Classes.Add("fail");
+        _error.Classes.Add("picker-error");
         _error.Margin = new Thickness(0);
         _errorText.Classes.Add("body");
         AutomationProperties.SetAccessibilityView(_errorText, AccessibilityView.Raw);

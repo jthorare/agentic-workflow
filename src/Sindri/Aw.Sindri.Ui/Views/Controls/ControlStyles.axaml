@@ -464,6 +464,40 @@
   <Style Selector="controls|SelectableTile:disabled TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
   </Style>
+  <!-- The picker's error box (#3234): its own class, because QueueStyles' amber Border.callout loads after this file and wins over Border.callout.fail. Error on ErrorSoft, Radius.MD, padding 12.
+       The icon sizes itself (the shell's StateIcon rule is not loaded outside the shell window, which left the mark 0 x 0). The Details Expander sits on the box's fill: transparent, no border, a compact header. -->
+  <Style Selector="Border.picker-error">
+    <Setter Property="Background" Value="{DynamicResource Brush.ErrorSoft}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Error}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.MD}" />
+    <Setter Property="Padding" Value="12" />
+  </Style>
+  <Style Selector="Border.picker-error icons|StateIcon">
+    <Setter Property="Width" Value="{DynamicResource Size.Icon}" />
+    <Setter Property="Height" Value="{DynamicResource Size.Icon}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Error}" />
+  </Style>
+  <Style Selector="Border.picker-error Expander">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+  </Style>
+  <Style Selector="Border.picker-error Expander /template/ ToggleButton#ExpanderHeader">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0,2" />
+    <Setter Property="MinHeight" Value="0" />
+  </Style>
+  <Style Selector="Border.picker-error Expander:pointerover /template/ ToggleButton#ExpanderHeader, Border.picker-error Expander /template/ ToggleButton#ExpanderHeader:pointerover, Border.picker-error Expander /template/ ToggleButton#ExpanderHeader:pressed">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="Border.picker-error Expander /template/ Border#ExpanderContent">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0,4,0,0" />
+  </Style>
   <!-- A quiet full-width group toggle (the Agents page's group heads): a hairline above, no radius. -->
   <Style Selector="Border.group-row Button.group-toggle">
     <Setter Property="BorderThickness" Value="0" />
