@@ -35,17 +35,17 @@ internal sealed partial class TerminalViewViewModel
     /// <summary>The line under the header when a stop or an interrupt was refused; empty otherwise.</summary>
     public string ControlLine { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>Shows a notice in the line under the header (a paste that was too big, #3729).</summary>
-    /// <param name="text">The words.</param>
-    internal void Note(string text) => ControlLine = text;
-
-    /// <summary>Says what became of a paste or key in the line under the header: only a paste that was too big has words.</summary>
+    /// <summary>Says what became of a paste in the line under the header: a paste that was too big has words; one that goes out clears them.</summary>
     /// <param name="fate">What became of it.</param>
     internal void NoteFate(TerminalKeyFate fate)
     {
         if (fate == TerminalKeyFate.TooBig)
         {
             ControlLine = Labels.TerminalPasteTooBig;
+        }
+        else if (fate is TerminalKeyFate.Sent or TerminalKeyFate.Queued && string.Equals(ControlLine, Labels.TerminalPasteTooBig, StringComparison.Ordinal))
+        {
+            ControlLine = string.Empty;
         }
     }
 
