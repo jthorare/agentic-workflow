@@ -13,7 +13,7 @@ public sealed class ListSessionsTests
 {
     private readonly SessionsRig _r = new();
 
-    private ListSessionsService Service() => new(_r.Snapshot, _r.Catalog, _r.Base.Profiles, _r.Base.Callers, _r.Base.Clock, _r.LaunchViews, _r.Sandboxes);
+    private ListSessionsService Service() => new(_r.Snapshot, _r.Catalog, _r.Base.Profiles, _r.Base.Callers, _r.Base.Clock, _r.LaunchViews, _r.Sandboxes, _r.Questions(), _r.Facts());
 
     private async Task<SessionList> List(ListSessionsRequest? request = null) => (await Service().Handle(request ?? new ListSessionsRequest(), SessionsRig.Token)).Value;
 

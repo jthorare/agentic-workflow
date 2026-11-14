@@ -11,4 +11,7 @@ public sealed record CollectSessionsResponse(IReadOnlyList<FleetChange> Changes,
 {
     /// <summary>True when the sources took longer than the budget.</summary>
     public bool Overran { get; init; }
+
+    /// <summary>The state changes worth a 'session.changed' row, oldest first.</summary>
+    public IReadOnlyList<SessionStateChange> StateChanges { get => throw new NotSupportedException(); init { } }
 }

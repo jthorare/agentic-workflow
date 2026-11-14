@@ -5713,3 +5713,7 @@ override Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.GetHashCode(
 override Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.ToString() -> string!
 static Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.operator !=(Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? left, Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? right) -> bool
 static Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.operator ==(Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? left, Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? right) -> bool
+Aw.Sindri.Features.Sessions.CollectSessionsResponse.StateChanges.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.SessionStateChange!>!
+Aw.Sindri.Features.Sessions.CollectSessionsResponse.StateChanges.init -> void
+Aw.Sindri.Features.Sessions.RecordFleetChangesRequest.StateChanges.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.SessionStateChange!>!
+Aw.Sindri.Features.Sessions.RecordFleetChangesRequest.StateChanges.init -> void

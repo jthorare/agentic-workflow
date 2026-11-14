@@ -23833,3 +23833,49 @@ Aw.Sindri.Core.Graph.Templates.ICiSourceLookup
 Aw.Sindri.Core.Graph.Templates.ICiSourceLookup.Find(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Graph.Templates.GitHubCiSource?>
 static Aw.Sindri.Core.Health.HealthSummary.WithProfileProblem(Aw.Sindri.Core.Health.HealthReport! report, bool wontLoad, string? fix) -> Aw.Sindri.Core.Health.HealthReport!
 static Aw.Sindri.Core.Connections.ConnectionName.ParseUnreserved(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!
+Aw.Sindri.Core.Events.SessionChanged
+Aw.Sindri.Core.Events.SessionChanged.<Clone>$() -> Aw.Sindri.Core.Events.SessionChanged!
+Aw.Sindri.Core.Events.SessionChanged.Deconstruct(out Aw.Sindri.Core.Launch.AgentId Provider, out Aw.Sindri.Core.Ids.SessionId SessionId, out Aw.Sindri.Core.Sessions.SessionState State) -> void
+Aw.Sindri.Core.Events.SessionChanged.Equals(Aw.Sindri.Core.Events.SessionChanged? other) -> bool
+Aw.Sindri.Core.Events.SessionChanged.SessionChanged(Aw.Sindri.Core.Launch.AgentId Provider, Aw.Sindri.Core.Ids.SessionId SessionId, Aw.Sindri.Core.Sessions.SessionState State) -> void
+override Aw.Sindri.Core.Events.SessionChanged.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.SessionChanged.GetHashCode() -> int
+override Aw.Sindri.Core.Events.SessionChanged.ToString() -> string!
+static Aw.Sindri.Core.Events.SessionChanged.operator !=(Aw.Sindri.Core.Events.SessionChanged? left, Aw.Sindri.Core.Events.SessionChanged? right) -> bool
+static Aw.Sindri.Core.Events.SessionChanged.operator ==(Aw.Sindri.Core.Events.SessionChanged? left, Aw.Sindri.Core.Events.SessionChanged? right) -> bool
+Aw.Sindri.Core.Events.SessionChanged.Provider.get -> Aw.Sindri.Core.Launch.AgentId
+Aw.Sindri.Core.Events.SessionChanged.Provider.init -> void
+Aw.Sindri.Core.Events.SessionChanged.SessionId.get -> Aw.Sindri.Core.Ids.SessionId
+Aw.Sindri.Core.Events.SessionChanged.SessionId.init -> void
+Aw.Sindri.Core.Events.SessionChanged.State.get -> Aw.Sindri.Core.Sessions.SessionState
+Aw.Sindri.Core.Events.SessionChanged.State.init -> void
+Aw.Sindri.Core.Sessions.SessionStateChange
+Aw.Sindri.Core.Sessions.SessionStateChange.<Clone>$() -> Aw.Sindri.Core.Sessions.SessionStateChange!
+Aw.Sindri.Core.Sessions.SessionStateChange.Deconstruct(out Aw.Sindri.Core.Sessions.SessionRef Ref, out Aw.Sindri.Core.Sessions.SessionState State, out System.DateTimeOffset ObservedAt) -> void
+Aw.Sindri.Core.Sessions.SessionStateChange.Equals(Aw.Sindri.Core.Sessions.SessionStateChange? other) -> bool
+Aw.Sindri.Core.Sessions.SessionStateChange.SessionStateChange(Aw.Sindri.Core.Sessions.SessionRef Ref, Aw.Sindri.Core.Sessions.SessionState State, System.DateTimeOffset ObservedAt) -> void
+override Aw.Sindri.Core.Sessions.SessionStateChange.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Sessions.SessionStateChange.GetHashCode() -> int
+override Aw.Sindri.Core.Sessions.SessionStateChange.ToString() -> string!
+static Aw.Sindri.Core.Sessions.SessionStateChange.operator !=(Aw.Sindri.Core.Sessions.SessionStateChange? left, Aw.Sindri.Core.Sessions.SessionStateChange? right) -> bool
+static Aw.Sindri.Core.Sessions.SessionStateChange.operator ==(Aw.Sindri.Core.Sessions.SessionStateChange? left, Aw.Sindri.Core.Sessions.SessionStateChange? right) -> bool
+Aw.Sindri.Core.Sessions.SessionStateChange.Ref.get -> Aw.Sindri.Core.Sessions.SessionRef
+Aw.Sindri.Core.Sessions.SessionStateChange.Ref.init -> void
+Aw.Sindri.Core.Sessions.SessionStateChange.State.get -> Aw.Sindri.Core.Sessions.SessionState
+Aw.Sindri.Core.Sessions.SessionStateChange.State.init -> void
+Aw.Sindri.Core.Sessions.SessionStateChange.ObservedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Sessions.SessionStateChange.ObservedAt.init -> void
+const Aw.Sindri.Core.Events.EventTypes.SessionChanged = "session.changed" -> string!
+Aw.Sindri.Core.Sessions.SessionStateChanges
+static Aw.Sindri.Core.Sessions.SessionStateChanges.Diff(System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Sessions.SessionRef, Aw.Sindri.Core.Sessions.ObservedSession!>! previous, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.ObservedSession!>! now, System.DateTimeOffset at) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.SessionStateChange!>!
+Aw.Sindri.Core.Sessions.PaneQuestion
+const Aw.Sindri.Core.Sessions.PaneQuestion.MaxLines = 3 -> int
+static Aw.Sindri.Core.Sessions.PaneQuestion.Of(System.Collections.Generic.IReadOnlyList<string!>! lines) -> string?
+Aw.Sindri.Core.Sessions.SessionRow.Question.get -> string?
+Aw.Sindri.Core.Sessions.SessionRow.Question.init -> void
+Aw.Sindri.Core.Sessions.SessionRow.Branch.get -> string?
+Aw.Sindri.Core.Sessions.SessionRow.Branch.init -> void
+Aw.Sindri.Core.Sessions.IBranchReader
+Aw.Sindri.Core.Sessions.IBranchReader.Branch(string! directory) -> string?
+Aw.Sindri.Core.Launch.StartedEntry.Title.get -> string?
+Aw.Sindri.Core.Launch.StartedEntry.Title.init -> void

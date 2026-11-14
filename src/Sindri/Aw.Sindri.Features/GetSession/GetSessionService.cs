@@ -6,13 +6,14 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sessions;
+using Aw.Sindri.Features.GetSessionPreview;
 
 namespace Aw.Sindri.Features.GetSession;
 
 /// <summary>
 /// One live session (collector spec CA-2). A ref that is unknown or ended answers SND-SESSION-404. Every caller gets the directory, the socket and the state history.
 /// </summary>
-internal sealed class GetSessionService(ISessionSnapshot snapshot, IAgentCatalog catalog, IApprovedProfile approvals, ICallerContextAccessor callers, ILaunchViews launches, ISessionSandboxes sandboxes)
+internal sealed class GetSessionService(ISessionSnapshot snapshot, IAgentCatalog catalog, IApprovedProfile approvals, ICallerContextAccessor callers, ILaunchViews launches, ISessionSandboxes sandboxes, SessionQuestions questions, SessionRowFacts facts)
     : IService<GetSessionRequest, SessionView>
 {
     public async ValueTask<Result<SessionView>> Handle(GetSessionRequest request, CancellationToken cancellationToken)
@@ -36,7 +37,7 @@ internal sealed class GetSessionService(ISessionSnapshot snapshot, IAgentCatalog
         }
 
         var path = await RepoPath(found, cancellationToken).ConfigureAwait(false);
-        var row = await Row(found, path, cancellationToken).ConfigureAwait(false);
+        var row = facts.With(await Row(found, path, cancellationToken).ConfigureAwait(false), found) with { Question = await questions.Of(found, cancellationToken).ConfigureAwait(false) };
         return new SessionView(SessionRows.WithSocket(row, found), found.Cwd, now.History.GetValueOrDefault(found.Ref) ?? [], now.ObservedAt);
     }
 

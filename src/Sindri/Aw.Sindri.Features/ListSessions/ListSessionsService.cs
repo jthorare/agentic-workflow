@@ -7,6 +7,8 @@ using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sessions;
+using Aw.Sindri.Features.GetSession;
+using Aw.Sindri.Features.GetSessionPreview;
 
 namespace Aw.Sindri.Features.ListSessions;
 
@@ -14,7 +16,7 @@ namespace Aw.Sindri.Features.ListSessions;
 /// The live sessions (collector spec CA-1): the collector's snapshot, trimmed to the caller. A session caller sees only its repo's rows and none of the human-only fields;
 /// the head counts cover what the caller may see, before the request's filters. SND-SESSION-002 replaces the list.
 /// </summary>
-internal sealed class ListSessionsService(ISessionSnapshot snapshot, IAgentCatalog catalog, IApprovedProfile approvals, ICallerContextAccessor callers, TimeProvider clock, ILaunchViews launches, ISessionSandboxes sandboxes)
+internal sealed class ListSessionsService(ISessionSnapshot snapshot, IAgentCatalog catalog, IApprovedProfile approvals, ICallerContextAccessor callers, TimeProvider clock, ILaunchViews launches, ISessionSandboxes sandboxes, SessionQuestions questions, SessionRowFacts facts)
     : IService<ListSessionsRequest, SessionList>
 {
     internal const string EmptyText = "No agent sessions are running.";
@@ -43,7 +45,8 @@ internal sealed class ListSessionsService(ISessionSnapshot snapshot, IAgentCatal
         var endedVisible = current.RecentlyEnded;
         var steps = await LaunchSteps.Of(launches, matching.Concat(endedVisible.Select(static e => e.Session)).Select(static s => s.LaunchId).OfType<LaunchId>(), cancellationToken).ConfigureAwait(false);
         var sandboxed = await LaunchSandboxes.Of(launches, sandboxes, matching.Concat(endedVisible.Select(static e => e.Session)).Select(static s => s.LaunchId).OfType<LaunchId>(), cancellationToken).ConfigureAwait(false);
-        var shown = matching.Select(s => Row(s, paths, steps, sandboxed)).ToList();
+        var asked = await Task.WhenAll(matching.Select(s => questions.Of(s, cancellationToken).AsTask())).ConfigureAwait(false);   // pane reads run side by side, each inside the reader's own 1 s deadline
+        var shown = matching.Select((s, i) => facts.With(Row(s, paths, steps, sandboxed), s) with { Question = asked[i] }).ToList();
         var ended = endedVisible.Select(e => Ended(e, paths, steps, sandboxed)).ToList();
         var counts = new SessionCounts(visible.Count, visible.Count(static s => s.State == SessionState.Asking), visible.Count(static s => s.LaunchId is null));
         return new SessionList(shown, ended, current.Problems, counts, shown.Count == 0 ? EmptyText : null, current.ObservedAt);

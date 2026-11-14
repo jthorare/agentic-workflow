@@ -31,6 +31,12 @@ public sealed record SessionRow(
     /// <summary>The session's title, scrubbed and capped (human callers only).</summary>
     public string? Title { get; init; }
 
+    /// <summary>The last 3 non-empty lines of the pane, only while the session is asking and sits in a readable tmux pane; null otherwise. Read per request, never stored or put in an event; pane text can hold secrets, so MCP and CLI show it as untrusted.</summary>
+    public string? Question { get; init; }
+
+    /// <summary>The branch the session's worktree has checked out; null when detached or unknown. Read per request from the worktree's '.git' files.</summary>
+    public string? Branch { get; init; }
+
     /// <summary>The workflow instance, Step and attempt of the Sindri launch this session belongs to; null when no launch of Sindri's is known for it.</summary>
     public LaunchStep? Launch { get; init; }
 

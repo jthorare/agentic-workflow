@@ -110,6 +110,9 @@ public static partial class EventTypes
     /// <summary>A session appeared, started asking for approval, or went (the session collector; collector spec CO3).</summary>
     public const string FleetChanged = "fleet.changed";
 
+    /// <summary>A live session's state changed (the session collector; Agents page spec §7.2).</summary>
+    public const string SessionChanged = "session.changed";
+
     /// <summary>A human created a work item.</summary>
     public const string ItemCreated = "item.created";
 

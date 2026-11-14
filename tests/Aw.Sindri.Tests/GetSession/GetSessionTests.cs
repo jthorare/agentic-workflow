@@ -15,7 +15,7 @@ public sealed class GetSessionTests
 
     private readonly SessionsRig _r = new();
 
-    private GetSessionService Service() => new(_r.Snapshot, _r.Catalog, _r.Base.Profiles, _r.Base.Callers, _r.LaunchViews, _r.Sandboxes);
+    private GetSessionService Service() => new(_r.Snapshot, _r.Catalog, _r.Base.Profiles, _r.Base.Callers, _r.LaunchViews, _r.Sandboxes, _r.Questions(), _r.Facts());
 
     private static SessionStateEntry Entry(SessionState state, int minute, AskingReason? reason = null) => new(state, reason, SessionData.T0.AddMinutes(minute), StateSource.Hook);
 

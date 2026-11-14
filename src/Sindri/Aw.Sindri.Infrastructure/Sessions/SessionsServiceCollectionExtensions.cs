@@ -41,6 +41,7 @@ internal static class SessionsServiceCollectionExtensions
                 ["~/.claude"] = AgentHomes.For(settings.Home, AgentId.From("claude-code")),
                 ["~/.codex"] = AgentHomes.For(settings.Home, AgentId.From("codex")),
             }))
+            .AddSingleton<IBranchReader, GitHeadBranches>()
             .AddSingleton<ISessionSnapshot, SessionSnapshotStore>();
     }
 }

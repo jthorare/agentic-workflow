@@ -3,6 +3,8 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sessions;
+using Aw.Sindri.Features.GetSession;
+using Aw.Sindri.Features.GetSessionPreview;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Sessions;
@@ -53,6 +55,32 @@ internal sealed class SessionsRig
     }
 
     public InMemorySessionSnapshot Snapshot { get; } = new();
+
+    /// <summary>The tmux panes the question read looks at.</summary>
+    public FakePaneReader Panes { get; } = new();
+
+    /// <summary>The process table the question read's liveness check walks.</summary>
+    public FakeProcessTable Table { get; } = new();
+
+    /// <summary>The worktree branches the row facts read.</summary>
+    public FakeBranchReader Branches { get; } = new();
+
+    /// <summary>The starts of this process the row facts look titles up in.</summary>
+    public FakeStartedSessions Starts { get; } = new();
+
+    /// <summary>The branch and title facts over <see cref="Branches"/> and <see cref="Starts"/>.</summary>
+    internal SessionRowFacts Facts() => new(Branches, Starts);
+
+    /// <summary>The question read over <see cref="Panes"/> and <see cref="Table"/>.</summary>
+    internal SessionQuestions Questions() => new(new PaneCaptures(Panes), Table);
+
+    /// <summary>The Claude session (pid 111) asking in tmux pane %3 on the default socket, below a shell (pid 50) that is the pane's first process, with the pane showing <paramref name="paneText"/>.</summary>
+    public SessionsRig ClaudeAsking(string paneText)
+    {
+        _ = Table.With(SessionData.Proc(1, 0, "init")).With(SessionData.Proc(50, 1, "bash")).With(SessionData.Proc(60, 50, "node")).With(SessionData.Proc(111, 60, "claude"));
+        _ = Panes.With("/tmp/tmux-1000/default", "%3", 50, paneText);
+        return Publish([Claude() with { State = SessionState.Asking, Reason = AskingReason.Approval, Tool = "Bash" }, Codex(), Cursor()]);
+    }
 
     public IAgentCatalog Catalog { get; } = new AgentCatalog(SessionData.Agents);
 
