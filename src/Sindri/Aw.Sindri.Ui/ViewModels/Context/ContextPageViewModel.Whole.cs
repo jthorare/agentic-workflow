@@ -57,7 +57,7 @@ internal sealed partial class ContextPageViewModel
     // The cheap status says which version is current; the map is read again only when that is not the one drawn. A person's own answer (a query, an open feature) is left alone until they are back on the whole map.
     private async Task ReadIfNewer(CancellationToken cancellationToken)
     {
-        if (HasStack || Whole.IsZoomed || Whole.IsAreaOpen || Whole.Answer is not { } drawn || Ports.ApiUrl() is not { } api)
+        if (!OnWholeAtRest || Whole.Answer is not { } drawn || Ports.ApiUrl() is not { } api)
         {
             return;
         }
@@ -83,6 +83,9 @@ internal sealed partial class ContextPageViewModel
 
         await ReadWhole(followed: number, cancellationToken).ConfigureAwait(true);
     }
+
+    // True when the person is on the whole map with nothing of their own open: no stack, no zoom, no area.
+    private bool OnWholeAtRest => !HasStack && !Whole.IsZoomed && !Whole.IsAreaOpen;
 
     // The map drawn had no concepts (#3261): a newer version may have them, so the page starts over like a first open, concepts first, and falls back to the whole map when there are still none.
     private Task ReadConceptsOfNewer(CancellationToken cancellationToken)
