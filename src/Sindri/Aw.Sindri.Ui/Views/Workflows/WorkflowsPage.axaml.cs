@@ -181,6 +181,14 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
+    private async void OnRetryStartRunPage(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            await page.RetryStart(page.Run.Id, CancellationToken.None).ConfigureAwait(true);
+        }
+    }
+
     private async void OnRetryRuns(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)

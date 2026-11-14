@@ -19,8 +19,7 @@ public sealed class WorkflowsRunStartFailedFramesTests : FrameHost
         where T : Control =>
         window.GetVisualDescendants().OfType<T>().First(c => AutomationProperties.GetAutomationId(c) == id);
 
-    [Fact]
-    public Task A_run_that_never_landed_shows_the_did_not_start_text_and_an_enabled_Retry_button() => OnUi(async () =>
+    private async Task<(Window Window, Aw.Sindri.Ui.ViewModels.Shell.ShellViewModel Shell)> AfterRunNow()
     {
         Server.WorkflowsAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, Golden("workflows", "list-two").ToJsonString());
         Server.WorkflowAnswers[Slug] = RouteAnswer.Api("workflows-slug", "found");
@@ -31,12 +30,34 @@ public sealed class WorkflowsRunStartFailedFramesTests : FrameHost
         await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
         await Until(window, () => shell.Workflows.Runs.Rows.Count > 0, "the runs never showed");
         await shell.Workflows.RunNow(CancellationToken.None);
+        return (window, shell);
+    }
+
+    [Fact]
+    public Task A_run_that_never_landed_shows_the_did_not_start_text_and_an_enabled_Retry_button() => OnUi(async () =>
+    {
+        var (window, shell) = await AfterRunNow();
         shell.Workflows.Back();   // the runs list, where the placeholder row is
         Clock.Advance(TimeSpan.FromSeconds(10));
         await Until(window, () => shell.Workflows.Runs.Rows.Any(r => r.DidNotStart), "the placeholder never timed out");
 
         var text = ById<TextBlock>(window, "RunDidNotStart");
         var retry = ById<Button>(window, "RunStartRetry");
+
+        Assert.Equal("The run didn't start.", text.Text);
+        Assert.True(text.IsEffectivelyVisible && retry.IsEffectivelyVisible && retry.IsEnabled);
+        Assert.Equal("Retry", retry.Content);
+    });
+
+    [Fact]
+    public Task The_run_page_of_a_run_that_never_landed_shows_the_did_not_start_text_and_an_enabled_Retry_button() => OnUi(async () =>
+    {
+        var (window, shell) = await AfterRunNow();   // Run now opened the run page, which still says Starting
+        Clock.Advance(TimeSpan.FromSeconds(10));
+        await Until(window, () => shell.Workflows.Run.DidNotStart, "the run page never timed out");
+
+        var text = ById<TextBlock>(window, "RunPageDidNotStart");
+        var retry = ById<Button>(window, "RunPageStartRetry");
 
         Assert.Equal("The run didn't start.", text.Text);
         Assert.True(text.IsEffectivelyVisible && retry.IsEffectivelyVisible && retry.IsEnabled);

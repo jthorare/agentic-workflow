@@ -35,6 +35,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         Run = new RunDetailViewModel(api, clock) { EditStep = EditFailedStep };
         Editor = new OpsEditor(api);
         GraphEdit = new GraphEditViewModel(Editor, Runs, () => _url);   // made with the page, not on first read: the canvas's Delete key raises on the graph, and the edit bar must already be listening
+        Runs.StartTimedOut += Run.MarkDidNotStart;   // one start deadline, owned by the runs model: the run page reads it, it starts no timer of its own
         Runs.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Runs.Title)) { NotifyCrumb(); } };
         Run.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Run.Id)) { NotifyCrumb(); } };
         WatchEditor();

@@ -205,7 +205,9 @@
     <!-- Level 3: one run, every node with its input, output and error. -->
     <StackPanel x:Name="WorkflowRunLevel" Spacing="{StaticResource Size.PanelGap}" IsVisible="{Binding IsRun}">
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-        <controls:StateChipView x:Name="RunChipName" Word="{Binding Run.ChipWord}" Tone="{Binding Run.ChipToneWord}" Glyph="{Binding Run.ChipGlyph}" />
+        <controls:StateChipView x:Name="RunChipName" Word="{Binding Run.ChipWord}" Tone="{Binding Run.ChipToneWord}" Glyph="{Binding Run.ChipGlyph}" IsVisible="{Binding !Run.DidNotStart}" />
+        <TextBlock Classes="caption" Text="{Binding Run.DidNotStartText}" IsVisible="{Binding Run.DidNotStart}" VerticalAlignment="Center" AutomationProperties.AutomationId="RunPageDidNotStart" />
+        <Button Content="{Binding Run.StartRetryText}" Click="OnRetryStartRunPage" IsVisible="{Binding Run.DidNotStart}" AutomationProperties.AutomationId="RunPageStartRetry" AutomationProperties.Name="{Binding Run.StartRetryText}" />
         <Button x:Name="RunCancel" Content="{Binding Run.CancelText}" Click="OnCancelRun" IsVisible="{Binding Run.CanCancel}" IsEnabled="{Binding Run.CanPressCancel}" AutomationProperties.Name="{Binding Run.CancelText}" />
       </StackPanel>
       <Border x:Name="RunNoticeName" IsVisible="{Binding Run.HasNotice}" AutomationProperties.Name="{Binding Run.NoticeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
