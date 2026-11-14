@@ -31,9 +31,8 @@
   <!-- hairline-tertiary: nested surfaces. Decorative only (1.9:1 on the canvas): never a control outline, use Color.Outline -->
   <Color x:Key="Color.HairlineTertiary">#3e3e44</Color>
   <SolidColorBrush x:Key="Brush.HairlineTertiary" Color="{StaticResource Color.HairlineTertiary}" />
-  <!-- outline: control outlines, 3:1 non-text contrast (WCAG 1.4.11, #3190) on the canvas, the panel and the pressed fill -->
-  <Color x:Key="Color.Outline">#70757c</Color>
-  <SolidColorBrush x:Key="Brush.Outline" Color="{StaticResource Color.Outline}" />
+  <!-- outline: control boundaries (pressed, focus, selected) at 3:1 on the pressed fill #2c2d30 (WCAG 1.4.11, #3190, #3517); drawn through Brush.Clickable.PressedBorder, so no brush of its own (#3505). Graph connectors are Color.Wire -->
+  <Color x:Key="Color.Outline">#767b82</Color>
   <!-- ink: primary text -->
   <Color x:Key="Color.Ink">#f7f8f8</Color>
   <SolidColorBrush x:Key="Brush.Ink" Color="{StaticResource Color.Ink}" />
@@ -60,8 +59,8 @@
   <SolidColorBrush x:Key="Brush.PrimaryPressed" Color="{StaticResource Color.PrimaryPressed}" />
   <!-- Clickable surfaces (#2535, Theme/ClickableStyles.axaml): the lift under the pointer and the press. The surface ladder steps 4-5 per channel,
        which nobody sees as a hover, so these sit above it: hover #1c1d20 (+13 over Surface1; Raycast's filled control measures #1b1c1e,
-       design/measured-linear-raycast-2026-11-10.md) with the strong hairline, pressed #222326 with the tertiary one. A row that rests on
-       Surface2 (selected, calm) lifts to the pressed fill under the pointer, so it still moves by a visible step. -->
+       design/measured-linear-raycast-2026-11-10.md) with the strong hairline, pressed #2c2d30 with the Outline border. A row that rests on
+       Surface2 (selected, calm) lifts to Brush.Clickable.Lift under the pointer, so it still moves by a visible step. -->
   <SolidColorBrush x:Key="Brush.Clickable.Hover" Color="#1c1d20" />
   <!-- A clickable surface's rest fill: the hover colour at zero alpha (TokenTests pins the match). A Border with no background is not hit-tested,
        and the colour ease blends each channel straight, so a rest of Transparent (#00FFFFFF) would pass through grey on the way to the hover;
@@ -69,11 +68,21 @@
   <SolidColorBrush x:Key="Brush.Clickable.Rest" Color="#001c1d20" />
   <!-- Hover only: not the control's boundary or state, so no 3:1 (WCAG 1.4.11). Pressed, focus and selected use Outline. -->
   <SolidColorBrush x:Key="Brush.Clickable.HoverBorder" Color="{StaticResource Color.HairlineStrong}" />
-  <SolidColorBrush x:Key="Brush.Clickable.Pressed" Color="#222326" />
+  <!-- Hover fill of a row that rests on Surface2 (.subtle, .selected): InkSubtle is 4.84:1 on it and Outline 3.69:1; a press then steps 1.14:1 to Pressed. No new colour: it is Surface3. -->
+  <SolidColorBrush x:Key="Brush.Clickable.Lift" Color="{StaticResource Color.Surface3}" />
+  <!-- Pressed only. InkSubtle on it is 4.24:1, under 4.5, and that is accepted: a press is momentary, and the 1.2:1 step over hover cannot also hold 4.5 (ideas + qa, #3611). Never use it as a hover fill; that is Brush.Clickable.Lift. -->
+  <SolidColorBrush x:Key="Brush.Clickable.Pressed" Color="#2c2d30" />
   <SolidColorBrush x:Key="Brush.Clickable.PressedBorder" Color="{StaticResource Color.Outline}" />
   <!-- on-primary: primary button text -->
   <Color x:Key="Color.OnPrimary">#ffffff</Color>
   <SolidColorBrush x:Key="Brush.OnPrimary" Color="{StaticResource Color.OnPrimary}" />
+  <!-- error-fill: the danger primary button (the sheet's Remove). Error itself is 3.5:1 under white, so the fill is darker: white on it is 5.0:1, hover 5.9:1, pressed 6.9:1 -->
+  <Color x:Key="Color.ErrorFill">#c93c3c</Color>
+  <SolidColorBrush x:Key="Brush.ErrorFill" Color="{StaticResource Color.ErrorFill}" />
+  <Color x:Key="Color.ErrorFillHover">#b83232</Color>
+  <SolidColorBrush x:Key="Brush.ErrorFillHover" Color="{StaticResource Color.ErrorFillHover}" />
+  <Color x:Key="Color.ErrorFillPressed">#a82c2c</Color>
+  <SolidColorBrush x:Key="Brush.ErrorFillPressed" Color="{StaticResource Color.ErrorFillPressed}" />
   <!-- semantic-success: ok glyphs, always with the word -->
   <Color x:Key="Color.Success">#2eb75b</Color>
   <SolidColorBrush x:Key="Brush.Success" Color="{StaticResource Color.Success}" />
@@ -122,7 +131,10 @@
   <SolidColorBrush x:Key="Brush.Status.Attention.Fg" Color="{StaticResource Color.Attention}" />
   <SolidColorBrush x:Key="Brush.Status.Attention.Bg" Color="{StaticResource Color.Attention}" Opacity="0.14" />
   <SolidColorBrush x:Key="Brush.Status.Attention.Border" Color="{StaticResource Color.Attention}" Opacity="0.3" />
-  <SolidColorBrush x:Key="Brush.Status.Error.Fg" Color="{StaticResource Color.Error}" />
+  <!-- #eb5757 on its 0.14 tint over Surface1 is 4.485:1, under 4.5; the chip word is the lighter #ee6060 (4.82:1). Fill and border keep Color.Error. -->
+  <Color x:Key="Color.ErrorChipText">#ee6060</Color>
+  <SolidColorBrush x:Key="Brush.ErrorChipText" Color="{StaticResource Color.ErrorChipText}" />
+  <SolidColorBrush x:Key="Brush.Status.Error.Fg" Color="{StaticResource Color.ErrorChipText}" />
   <SolidColorBrush x:Key="Brush.Status.Error.Bg" Color="{StaticResource Color.Error}" Opacity="0.14" />
   <SolidColorBrush x:Key="Brush.Status.Error.Border" Color="{StaticResource Color.Error}" Opacity="0.3" />
   <SolidColorBrush x:Key="Brush.Status.Neutral.Fg" Color="{StaticResource Color.InkMuted}" />
@@ -131,9 +143,32 @@
   <SolidColorBrush x:Key="Brush.Status.Draft.Fg" Color="{StaticResource Color.InkSubtle}" />
   <SolidColorBrush x:Key="Brush.Status.Draft.Bg" Color="Transparent" />
   <SolidColorBrush x:Key="Brush.Status.Draft.Border" Color="{StaticResource Color.HairlineStrong}" />
+  <!-- toggle chip, ON (#3234): the state colour at 25 % (rest), 30 % (pointer) and 35 % (pressed) over the panel, under Ink (a chip that is on reads as the coloured one). Dark only, like the set above. -->
+  <SolidColorBrush x:Key="Brush.Status.Ok.On" Color="{StaticResource Color.Success}" Opacity="0.25" />
+  <SolidColorBrush x:Key="Brush.Status.Ok.OnHover" Color="{StaticResource Color.Success}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Ok.OnPressed" Color="{StaticResource Color.Success}" Opacity="0.35" />
+  <SolidColorBrush x:Key="Brush.Status.Running.On" Color="{StaticResource Color.Area1}" Opacity="0.25" />
+  <SolidColorBrush x:Key="Brush.Status.Running.OnHover" Color="{StaticResource Color.Area1}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Running.OnPressed" Color="{StaticResource Color.Area1}" Opacity="0.35" />
+  <SolidColorBrush x:Key="Brush.Status.Waiting.On" Color="{StaticResource Color.Attention}" Opacity="0.25" />
+  <SolidColorBrush x:Key="Brush.Status.Waiting.OnHover" Color="{StaticResource Color.Attention}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Waiting.OnPressed" Color="{StaticResource Color.Attention}" Opacity="0.35" />
+  <SolidColorBrush x:Key="Brush.Status.Attention.On" Color="{StaticResource Color.Attention}" Opacity="0.25" />
+  <SolidColorBrush x:Key="Brush.Status.Attention.OnHover" Color="{StaticResource Color.Attention}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Attention.OnPressed" Color="{StaticResource Color.Attention}" Opacity="0.35" />
+  <SolidColorBrush x:Key="Brush.Status.Error.On" Color="{StaticResource Color.Error}" Opacity="0.25" />
+  <SolidColorBrush x:Key="Brush.Status.Error.OnHover" Color="{StaticResource Color.Error}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Error.OnPressed" Color="{StaticResource Color.Error}" Opacity="0.35" />
+  <SolidColorBrush x:Key="Brush.Status.Neutral.On" Color="{StaticResource Color.InkMuted}" Opacity="0.25" />
+  <SolidColorBrush x:Key="Brush.Status.Neutral.OnHover" Color="{StaticResource Color.InkMuted}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Neutral.OnPressed" Color="{StaticResource Color.InkMuted}" Opacity="0.35" />
+  <SolidColorBrush x:Key="Brush.Status.Draft.On" Color="{StaticResource Color.InkSubtle}" Opacity="0.25" />
+  <SolidColorBrush x:Key="Brush.Status.Draft.OnHover" Color="{StaticResource Color.InkSubtle}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Draft.OnPressed" Color="{StaticResource Color.InkSubtle}" Opacity="0.35" />
   <!-- graph and context map: wire is a connector, an edge, a port and a suggested node's dashed border. It is the only mark
        of which step feeds which, so it meets the 3:1 non-text minimum on Canvas, Surface1 and Surface2 (WCAG 1.4.11, #3138);
        a suggestion is still carried by its dash and its words, never by this colour -->
+  <!-- Wire is for graph connectors; control boundaries are Color.Outline, a separate role on a separate fill (#3505) -->
   <Color x:Key="Color.Wire">#686870</Color>
   <SolidColorBrush x:Key="Brush.Wire" Color="{StaticResource Color.Wire}" />
   <!-- context map: a hovered or selected edge and its neighbours (same value as ink-subtle, kept as its own role) -->

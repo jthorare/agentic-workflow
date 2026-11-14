@@ -34,6 +34,20 @@
     <Setter Property="Background" Value="{DynamicResource Brush.PrimaryPressed}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryPressed}" />
   </Style>
+  <!-- The danger primary button (the sheet's Remove): the ErrorFill, white text; hover and pressed use the darker fills. -->
+  <Style Selector="Button.command-control.destructive.primary:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.ErrorFill}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.ErrorFill}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.OnPrimary}" />
+  </Style>
+  <Style Selector="Button.command-control.destructive.primary:pointerover:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.ErrorFillHover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.ErrorFillHover}" />
+  </Style>
+  <Style Selector="Button.command-control.destructive.primary:pressed:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.ErrorFillPressed}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.ErrorFillPressed}" />
+  </Style>
   <Style Selector="Button.command-control:disabled TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkTertiary}" />
   </Style>
@@ -74,6 +88,10 @@
   </Style>
   <Style Selector="TextBox.typed-field.match /template/ Border#PART_BorderElement">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Success}" />
+  </Style>
+  <!-- A failed field (#3234, LabelledField): the TextBox border is Error (3:1 on the panel and the input) at rest, under the pointer and while focused, so the stock hover and focus borders never hide it. -->
+  <Style Selector="TextBox.field-invalid /template/ Border#PART_BorderElement, TextBox.field-invalid:pointerover /template/ Border#PART_BorderElement, TextBox.field-invalid:focus /template/ Border#PART_BorderElement, TextBox.field-invalid:focus:pointerover /template/ Border#PART_BorderElement">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Error}" />
   </Style>
   <Style Selector="Border.phrase-chip">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
@@ -132,6 +150,368 @@
   <Style Selector="controls|StateChipView.ok > TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
   </Style>
+  <!-- The toggle chip (#3234, Views/Controls/ToggleChip.cs): a ToggleButton that reads at a glance. OFF is the neutral grey pill with Ink and a hollow dot in its state colour; ON is
+       the state colour at 25 % under a border in that colour, Ink, and a filled dot (the fill is the cue that is not colour alone, WCAG 1.4.1). Weight, border and dot size are the same in
+       both states, so the chip keeps its width. A clickable one is 24 px tall; hover and pressed lift the fill (grey off, the tint on); the keyboard ring is the 2 px PrimaryHover border that
+       takes the place of the 1 px border and 1 px of padding, so the chip does not grow. A status chip (not Interactive) is the same part without pointer or focus.
+       Declaration order matters: off, off hover and pressed, on, on hover, on pressed, dot, focus (a tie in specificity goes to the later rule). -->
+  <Style Selector="ToggleButton.toggle-chip">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="MinHeight" Value="20" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="FocusAdorner" Value="{x:Null}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.interactive">
+    <Setter Property="MinHeight" Value="24" />
+    <Setter Property="MinWidth" Value="24" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip TextBlock">
+    <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
+    <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
+    <Setter Property="LineHeight" Value="{DynamicResource Type.Caption.LineHeight}" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
+    <Setter Property="Padding" Value="6,0" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Neutral.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Neutral.Border}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Hover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.HoverBorder}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip:pointerover:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.PressedBorder}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-ok:checked /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Ok.On}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Ok.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-running:checked /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Running.On}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Running.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-waiting:checked /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Waiting.On}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Waiting.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-attention:checked /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Attention.On}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Attention.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-error:checked /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Error.On}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Error.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-neutral:checked /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Neutral.On}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Neutral.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-draft:checked /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Draft.On}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Draft.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-ok:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Ok.OnHover}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-running:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Running.OnHover}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-waiting:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Waiting.OnHover}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-attention:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Attention.OnHover}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-error:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Error.OnHover}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-neutral:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Neutral.OnHover}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-draft:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Draft.OnHover}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-ok:checked:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-ok:checked:pointerover:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Ok.OnPressed}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-running:checked:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-running:checked:pointerover:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Running.OnPressed}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-waiting:checked:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-waiting:checked:pointerover:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Waiting.OnPressed}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-attention:checked:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-attention:checked:pointerover:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Attention.OnPressed}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-error:checked:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-error:checked:pointerover:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Error.OnPressed}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-neutral:checked:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-neutral:checked:pointerover:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Neutral.OnPressed}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-draft:checked:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-draft:checked:pointerover:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Draft.OnPressed}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip Ellipse#PART_Dot">
+    <Setter Property="Fill" Value="Transparent" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-ok Ellipse#PART_Dot">
+    <Setter Property="Stroke" Value="{DynamicResource Brush.Status.Ok.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-ok:checked Ellipse#PART_Dot">
+    <Setter Property="Fill" Value="{DynamicResource Brush.Status.Ok.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-running Ellipse#PART_Dot">
+    <Setter Property="Stroke" Value="{DynamicResource Brush.Status.Running.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-running:checked Ellipse#PART_Dot">
+    <Setter Property="Fill" Value="{DynamicResource Brush.Status.Running.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-waiting Ellipse#PART_Dot">
+    <Setter Property="Stroke" Value="{DynamicResource Brush.Status.Waiting.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-waiting:checked Ellipse#PART_Dot">
+    <Setter Property="Fill" Value="{DynamicResource Brush.Status.Waiting.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-attention Ellipse#PART_Dot">
+    <Setter Property="Stroke" Value="{DynamicResource Brush.Status.Attention.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-attention:checked Ellipse#PART_Dot">
+    <Setter Property="Fill" Value="{DynamicResource Brush.Status.Attention.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-error Ellipse#PART_Dot">
+    <Setter Property="Stroke" Value="{DynamicResource Brush.Status.Error.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-error:checked Ellipse#PART_Dot">
+    <Setter Property="Fill" Value="{DynamicResource Brush.Status.Error.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-neutral Ellipse#PART_Dot">
+    <Setter Property="Stroke" Value="{DynamicResource Brush.Status.Neutral.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-neutral:checked Ellipse#PART_Dot">
+    <Setter Property="Fill" Value="{DynamicResource Brush.Status.Neutral.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-draft Ellipse#PART_Dot">
+    <Setter Property="Stroke" Value="{DynamicResource Brush.Status.Draft.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-draft:checked Ellipse#PART_Dot">
+    <Setter Property="Fill" Value="{DynamicResource Brush.Status.Draft.Fg}" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-ok:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-ok:checked:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-ok:pointerover:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-ok:checked:pointerover:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-ok:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-ok:checked:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-ok:pointerover:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-ok:checked:pointerover:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Padding" Value="5,0" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-running:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-running:checked:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-running:pointerover:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-running:checked:pointerover:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-running:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-running:checked:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-running:pointerover:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-running:checked:pointerover:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Padding" Value="5,0" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-waiting:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-waiting:checked:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-waiting:pointerover:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-waiting:checked:pointerover:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-waiting:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-waiting:checked:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-waiting:pointerover:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-waiting:checked:pointerover:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Padding" Value="5,0" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-attention:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-attention:checked:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-attention:pointerover:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-attention:checked:pointerover:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-attention:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-attention:checked:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-attention:pointerover:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-attention:checked:pointerover:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Padding" Value="5,0" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-error:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-error:checked:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-error:pointerover:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-error:checked:pointerover:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-error:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-error:checked:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-error:pointerover:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-error:checked:pointerover:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Padding" Value="5,0" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-neutral:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-neutral:checked:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-neutral:pointerover:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-neutral:checked:pointerover:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-neutral:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-neutral:checked:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-neutral:pointerover:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-neutral:checked:pointerover:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Padding" Value="5,0" />
+  </Style>
+  <Style Selector="ToggleButton.toggle-chip.status-draft:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-draft:checked:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-draft:pointerover:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-draft:checked:pointerover:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-draft:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-draft:checked:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-draft:pointerover:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.toggle-chip.status-draft:checked:pointerover:pressed:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Padding" Value="5,0" />
+  </Style>
+  <!-- A chip a view names itself (Word and Tone, #3233): the status-chip set of Theme/StatusChip.axaml on this control, with an optional glyph before the word. -->
+  <Style Selector="controls|StateChipView.status">
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="6,0" />
+    <Setter Property="MinHeight" Value="20" />
+  </Style>
+  <Style Selector="controls|StateChipView.status TextBlock">
+    <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
+    <Setter Property="LineHeight" Value="{DynamicResource Type.Caption.LineHeight}" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="controls|StateChipView.status-ok">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Ok.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Ok.Border}" />
+  </Style>
+  <Style Selector="controls|StateChipView.status-ok TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Ok.Fg}" /></Style>
+  <Style Selector="controls|StateChipView.status-running">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Running.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Running.Border}" />
+  </Style>
+  <Style Selector="controls|StateChipView.status-running TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Running.Fg}" /></Style>
+  <Style Selector="controls|StateChipView.status-waiting">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Waiting.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Waiting.Border}" />
+  </Style>
+  <Style Selector="controls|StateChipView.status-waiting TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Waiting.Fg}" /></Style>
+  <Style Selector="controls|StateChipView.status-attention">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Attention.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Attention.Border}" />
+  </Style>
+  <Style Selector="controls|StateChipView.status-attention TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Attention.Fg}" /></Style>
+  <Style Selector="controls|StateChipView.status-error">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Error.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Error.Border}" />
+  </Style>
+  <Style Selector="controls|StateChipView.status-error TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Error.Fg}" /></Style>
+  <Style Selector="controls|StateChipView.status-neutral">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Neutral.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Neutral.Border}" />
+  </Style>
+  <Style Selector="controls|StateChipView.status-neutral TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Neutral.Fg}" /></Style>
+  <Style Selector="controls|StateChipView.status-draft">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Draft.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Draft.Border}" />
+  </Style>
+  <Style Selector="controls|StateChipView.status-draft TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Draft.Fg}" /></Style>
+  <!-- StartCard (#3234): the Workflows start card, the tile's tokens on a roomier card. Rest is transparent with a hairline; hover and pressed take the Clickable tokens (Theme/ClickableStyles.axaml); keyboard focus the app-wide focus ring outside it (the chrome keeps its own border);
+       selected PrimarySoft with a Primary border (it keeps its fill under the pointer); disabled dims every word and takes no hover. It fills its column and left-aligns its content. -->
+  <Style Selector="controls|StartCard">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    <Setter Property="Focusable" Value="True" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="PART_Chrome" Background="Transparent" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.MD}" MinHeight="56" Padding="16,12">
+          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <!-- The card grows to fit its words: they wrap, the chrome has a minimum height and no fixed one, nothing is cut or ellipsised (#3648). -->
+  <Style Selector="controls|StartCard TextBlock">
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+  <Style Selector="controls|StartCard:pointerover /template/ Border#PART_Chrome">
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Hover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.HoverBorder}" />
+  </Style>
+  <Style Selector="controls|StartCard:pressed /template/ Border#PART_Chrome">
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.PressedBorder}" />
+  </Style>
+  <Style Selector="controls|StartCard:selected /template/ Border#PART_Chrome">
+    <Setter Property="Background" Value="{DynamicResource Brush.PrimarySoft}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
+  </Style>
+  <Style Selector="controls|StartCard:disabled /template/ Border#PART_Chrome">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="controls|StartCard:disabled TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+  </Style>
+  <!-- SelectableTile (#3234): one choice of several. Rest is transparent with a hairline; hover and pressed take the Clickable tokens (Theme/ClickableStyles.axaml); keyboard focus the app-wide focus ring outside it (the chrome keeps its own border);
+       selected PrimarySoft with a Primary border (it keeps its fill under the pointer); disabled dims the word and takes no hover. Class row: full width, content on the left. -->
+  <Style Selector="controls|SelectableTile">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    <Setter Property="Focusable" Value="True" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="PART_Chrome" Background="Transparent" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.SM}" MinHeight="28" Padding="12,4">
+          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="controls|SelectableTile.row">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+  </Style>
+  <Style Selector="controls|SelectableTile:pointerover /template/ Border#PART_Chrome">
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Hover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.HoverBorder}" />
+  </Style>
+  <Style Selector="controls|SelectableTile:pressed /template/ Border#PART_Chrome">
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.PressedBorder}" />
+  </Style>
+  <Style Selector="controls|SelectableTile:selected /template/ Border#PART_Chrome">
+    <Setter Property="Background" Value="{DynamicResource Brush.PrimarySoft}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
+  </Style>
+  <Style Selector="controls|SelectableTile:disabled /template/ Border#PART_Chrome">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="controls|SelectableTile:disabled">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+  </Style>
+  <Style Selector="controls|SelectableTile:disabled TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+  </Style>
+  <!-- The picker's error box (#3234): its own class, because QueueStyles' amber Border.callout loads after this file and wins over Border.callout.fail. Error on ErrorSoft, Radius.MD, padding 12.
+       The icon sizes itself (the shell's StateIcon rule is not loaded outside the shell window, which left the mark 0 x 0). The Details Expander sits on the box's fill: transparent, no border, a compact header. -->
+  <Style Selector="Border.picker-error">
+    <Setter Property="Background" Value="{DynamicResource Brush.ErrorSoft}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Error}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.MD}" />
+    <Setter Property="Padding" Value="12" />
+  </Style>
+  <Style Selector="Border.picker-error icons|StateIcon">
+    <Setter Property="Width" Value="{DynamicResource Size.Icon}" />
+    <Setter Property="Height" Value="{DynamicResource Size.Icon}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Error}" />
+  </Style>
+  <Style Selector="Border.picker-error Expander">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+  </Style>
+  <Style Selector="Border.picker-error Expander /template/ ToggleButton#ExpanderHeader">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0,2" />
+    <Setter Property="MinHeight" Value="0" />
+  </Style>
+  <Style Selector="Border.picker-error Expander:pointerover /template/ ToggleButton#ExpanderHeader, Border.picker-error Expander /template/ ToggleButton#ExpanderHeader:pointerover, Border.picker-error Expander /template/ ToggleButton#ExpanderHeader:pressed">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <!-- Fluent sizes the header's chevron box at ExpanderChevronButtonSize (32), which sets the header's height: shrink it so the header is one compact line. -->
+  <Style Selector="Border.picker-error Expander /template/ ToggleButton#ExpanderHeader /template/ Border#ExpandCollapseChevronBorder">
+    <Setter Property="Width" Value="20" />
+    <Setter Property="Height" Value="20" />
+    <Setter Property="Margin" Value="0" />
+  </Style>
+  <Style Selector="Border.picker-error Expander /template/ Border#ExpanderContent">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0,4,0,0" />
+  </Style>
   <!-- A quiet full-width group toggle (the Agents page's group heads): a hairline above, no radius. -->
   <Style Selector="Border.group-row Button.group-toggle">
     <Setter Property="BorderThickness" Value="0" />
@@ -170,8 +550,13 @@
   <!-- The context map's own controls (F3 spec 1 §2). The stage shows the hand cursor, since a drag pans it; the edges layer is
        never a keyboard stop (the nodes are); the coverage strip is a quiet button that lifts to Surface2 under the pointer, its
        words in InkMuted with the lead in Ink. -->
+  <!-- ZoomBorder as the Workflows graph's stage (#3234): the hand at rest and over it, a four-way move cursor while a drag pans (Avalonia has no grab cursor); an opt-in Tab stop
+       (IsKeyboardFocusable) shows the app-wide focus ring for the keyboard only (no border of its own: it would draw a second ring and move the content), like SelectableTile. -->
   <Style Selector="controls|ZoomBorder">
     <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="controls|ZoomBorder:panning">
+    <Setter Property="Cursor" Value="SizeAll" />
   </Style>
   <Style Selector="controls|GraphEdgesControl">
     <Setter Property="Focusable" Value="False" />

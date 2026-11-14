@@ -13,7 +13,8 @@
     <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#1c1d20" />
     <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#34343a" />
     <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#f7f8f8" />
-    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#222326" />
+    <!-- Pressed: the hex of Brush.Clickable.Pressed (FluentOverrideTests holds them equal); a token reference does not resolve inside this style include. -->
+    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#2c2d30" />
     <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#f7f8f8" />
     <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#74787f" />
     <SolidColorBrush x:Key="AccentButtonBackground" Color="#5e6ad2" />
@@ -26,7 +27,7 @@
          focus ring is the cue. -->
     <SolidColorBrush x:Key="ComboBoxBackground" Color="#141517" />
     <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#1c1d20" />
-    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#222326" />
+    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#2c2d30" />
     <SolidColorBrush x:Key="ComboBoxBackgroundUnfocused" Color="#141517" />
     <SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushFocused" Color="#34343a" />
     <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="#f7f8f8" />
