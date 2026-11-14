@@ -57,7 +57,7 @@ public sealed class WorkflowsConnectionPickerFramesTests : FrameHost
         var text = fields.GetVisualDescendants().OfType<TextBox>().Single(t => t.Name == "EditorFieldText" && t.DataContext == field);
         Assert.False(text.IsEffectivelyVisible, "the connection is still a free text box");
 
-        shell.Workflows.ConnectService(field);   // what the button's click calls
+        connect.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));   // the real click: the sheet's handler calls ConnectService
         await Until(window, () => shell.CurrentPage == PageId.Connections, "Connect GitHub never opened Connections");
     });
 
