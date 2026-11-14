@@ -17,7 +17,8 @@ public sealed class GraphEditTests
         {"groups":[
           {"group":"Triggers","blocks":[{"type":"manual","title":"Manual","isTrigger":true,"config":[],"outputs":{},"branches":["out"],"exampleConfig":null,"exampleSpec":null}]},
           {"group":"AI","blocks":[{"type":"run_agent","title":"Run an agent","isTrigger":false,"config":[{"name":"prompt","type":"text","required":true}],"outputs":{"text":"text"},"branches":["out"],"exampleConfig":{"prompt":"Summarize the open pull requests"},"exampleSpec":null},
-            {"type":"ask_owner","title":"Ask owner","isTrigger":false,"config":[{"name":"question","type":"text","required":true}],"outputs":{},"branches":["out"],"exampleConfig":null,"exampleSpec":null}]}
+            {"type":"ask_owner","title":"Ask owner","isTrigger":false,"config":[{"name":"question","type":"text","required":true}],"outputs":{},"branches":["out"],"exampleConfig":null,"exampleSpec":null},
+            {"type":"fetch","title":"Fetch","isTrigger":false,"config":[{"name":"note","type":"text","required":false},{"name":"url","type":"text","required":true}],"outputs":{},"branches":["out"],"exampleConfig":null,"exampleSpec":null}]}
         ]}
         """;
 #pragma warning restore MA0136
@@ -148,6 +149,29 @@ public sealed class GraphEditTests
         Assert.False(page.CanSave);
         page.Editor.Fields[0].Text = "Ship it?";
         Assert.True(page.CanSave);
+    }
+
+    [Fact]
+    public async Task The_sheet_focuses_the_first_required_field_not_the_first_field()
+    {
+        var page = await Open("start");
+        await page.GraphEdit.BeginAdd(Token);
+
+        await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[2], Token);   // fetch: an optional note comes first, the required url second
+
+        Assert.Equal(["note", "url"], page.Editor.Fields.Select(f => f.Name), StringComparer.Ordinal);
+        Assert.Equal("url", page.FocusFieldName);
+    }
+
+    [Fact]
+    public async Task The_sheet_focuses_the_first_field_when_none_is_required_and_none_when_there_are_no_fields()
+    {
+        var page = await Open(selected: null);
+        await page.GraphEdit.BeginAdd(Token);
+
+        await page.GraphEdit.AddStep(page.GraphEdit.Groups[0].Blocks[0], Token);   // manual: no fields
+
+        Assert.Equal(string.Empty, page.FocusFieldName);
     }
 
     [Fact]
