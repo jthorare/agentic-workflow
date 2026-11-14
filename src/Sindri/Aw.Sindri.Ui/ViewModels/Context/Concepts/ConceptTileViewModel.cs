@@ -20,6 +20,12 @@ internal sealed class ConceptTileViewModel
         AccessibleName = Labels.ContextConceptTileName(name, SizeText);
     }
 
+    /// <summary>"40 files": the one unit a concept row counts in (#3677); not built yet.</summary>
+    public string FilesText => Size.Code < 0 ? Name : string.Empty;
+
+    /// <summary>"changed 13 Nov"; empty when the server gave no date (#3677); not built yet.</summary>
+    public string ChangedText => Size.Code < 0 ? Name : string.Empty;
+
     /// <summary>The concept's id: the value of the map read's concept parameter.</summary>
     public string Id { get; }
 
