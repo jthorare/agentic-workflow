@@ -249,7 +249,7 @@ public sealed class SetupFactsTests
         var running = (await rig.Facts.Map(Token)).Value;
 
         Assert.Equal(MapPhase.NotBuilt, notBuilt.Phase);
-        Assert.Equal((MapPhase.Failed, "SND-CONTEXT-040", null), (failed.Phase, failed.FailureCode, failed.Progress));
+        Assert.Equal((MapPhase.Failed, "SND-CONTEXT-040", null, MapStage.Map), (failed.Phase, failed.FailureCode, failed.Progress, failed.Stage));
         Assert.Equal((MapPhase.Building, new SetupProgress(40, 100, "files")), (running.Phase, running.Progress));
     }
 
@@ -266,6 +266,187 @@ public sealed class SetupFactsTests
         var running = (await rig.Facts.Map(Token)).Value;
 
         Assert.Equal((MapPhase.Building, new SetupProgress(done, total, "files")), (running.Phase, running.Progress));
+    }
+
+    // #3112: the first build after Add repo is the repo's code index; the map builds after it, so the step is running from the moment the index build starts.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_is_running_while_the_first_code_index_builds()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Running, ["structure 7,000 of 15,223 files"]);
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Building, MapStage.Index), (map.Phase, map.Stage));
+        Assert.Equal(new SetupProgress(7000, 15223, "files"), map.Progress);
+        Assert.Equal(SetupState.Running, Assert.Single(map.Items.Lines).State);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_indexing_with_no_structure_line_yet_has_the_stage_and_no_count()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Running, ["snapshot"]);
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Building, MapStage.Index, null), (map.Phase, map.Stage, map.Progress));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_building_the_map_after_the_index_says_stage_map()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+        rig.BuildJob(JobState.Running, ["extracting 40/100 files"]);
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Building, MapStage.Map), (map.Phase, map.Stage));
+        Assert.Equal(new SetupProgress(40, 100, "files"), map.Progress);
+    }
+
+    // #3593: the first map starts on the context-map-refresh service's next tick (up to a minute after the index build ends); the step must not blink back to To do in that gap.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_reads_building_between_the_index_build_and_the_first_map_tick()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+        rig.ClockAfterIndexBuild(TimeSpan.FromSeconds(30));
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Building, MapStage.Map, null), (map.Phase, map.Stage, map.Progress));
+    }
+
+    // #3593: the gap is bounded. Two ticks after the index build, a tick decided not to start the map (a backoff, say), so the step reads the last try, not building with no job behind it.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_reads_to_do_when_the_index_build_ended_five_minutes_ago_and_no_map_started()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+        rig.ClockAfterIndexBuild(TimeSpan.FromMinutes(5));
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.NotBuilt, null), (map.Phase, map.Stage));
+    }
+
+    // #3593: the running-service twin of the paused case below: a succeeded index build after a failed one reads building at the map stage.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_reads_building_after_a_failed_then_succeeded_index_build_with_the_refresh_service_running()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Failed, ["structure 3 of 10 files"], "SND-CODEIDX-010");
+        rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+        rig.ClockAfterIndexBuild(TimeSpan.FromSeconds(30));
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Building, MapStage.Map, null), (map.Phase, map.Stage, map.Progress));
+    }
+
+    // Guard: a paused context-map-refresh service never starts the map, so the step stays what it is without the fix.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_stays_to_do_after_the_index_build_when_the_refresh_service_is_paused()
+    {
+        await using var rig = new SetupFactsRig(pauses: new Server.PausedServices(ServiceName.From("context-map-refresh")));
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal(MapPhase.NotBuilt, map.Phase);
+    }
+
+    // Guard: a failed index build shows as failed, as before.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_still_fails_after_a_failed_index_build_with_the_refresh_service_running()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Failed, ["structure 3 of 10 files"], "SND-CODEIDX-010");
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Failed, "SND-CODEIDX-010", MapStage.Index), (map.Phase, map.FailureCode, map.Stage));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_fails_when_the_newest_ended_build_is_a_failed_code_index_build()
+    {
+        await using var rig = new SetupFactsRig(pauses: new Server.PausedServices(ServiceName.From("context-map-refresh"))); // paused: no first-map tick is due (#3593)
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Failed, ["structure 3 of 10 files"], "SND-CODEIDX-010");
+
+        var failed = (await rig.Facts.Map(Token)).Value;
+        rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+        var after = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Failed, "SND-CODEIDX-010", MapStage.Index), (failed.Phase, failed.FailureCode, failed.Stage));
+        Assert.Equal(MapPhase.NotBuilt, after.Phase);
+    }
+
+    // #3322: the first map is a RefreshContextMap job of the context-map-refresh service, not a BuildContextMap job.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_is_building_with_stage_map_while_the_first_map_refreshes()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+        rig.RefreshJob(JobState.Running, ["building", "extracting 40/100 files"]);
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Building, MapStage.Map), (map.Phase, map.Stage));
+        Assert.Equal(new SetupProgress(40, 100, "files"), map.Progress);
+        Assert.Equal(SetupState.Running, Assert.Single(map.Items.Lines).State);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_fails_when_the_first_map_refresh_failed()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("demo", JobState.Succeeded, ["structure 10 of 10 files"]);
+        rig.RefreshJob(JobState.Failed, ["building"], "SND-CONTEXT-001");
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.Failed, "SND-CONTEXT-001", MapStage.Map), (map.Phase, map.FailureCode, map.Stage));
+    }
+
+    // Guard: once the map is built, a failed refresh of a later tick leaves the step done.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_stays_done_when_a_later_refresh_fails()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.RefreshJob(JobState.Failed, ["building"], "SND-CONTEXT-001");
+        rig.Engine.Answer = SetupFactsRig.CurrentMap();
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal(MapPhase.Built, map.Phase);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Map_step_ignores_a_code_index_build_of_a_repo_the_profile_does_not_map()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.IndexJob("other", JobState.Running, ["structure 1 of 9 files"]);
+        rig.IndexJob("other2", JobState.Failed, [], "SND-CODEIDX-010");
+
+        var map = (await rig.Facts.Map(Token)).Value;
+
+        Assert.Equal((MapPhase.NotBuilt, null), (map.Phase, map.Stage));
     }
 
     [Fact, Trait("Lane", "unit")]
