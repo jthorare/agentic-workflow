@@ -46,6 +46,23 @@ public sealed class GraphEdgeStatesTests
         return true;
     });
 
+    // #3650: the 10 px port square is drawn over the arrow, so a tip on the route end hides the front 5 px of the 9 px head (by the head's geometry:
+    // 12 of its 31.7 px2, 38 %). The tip belongs on the port square's outer edge, so the whole head shows.
+    [Fact]
+    public async Task The_arrow_head_ends_at_the_port_squares_outer_edge_and_no_corner_sits_under_the_port() => await OnUi(() =>
+    {
+        var edges = Show(out var window, Line("a", arrow: true));
+        var head = edges.ArrowHead("a");
+        var port = new Rect(215, 95, 10, 10);   // the route ends at (220, 100): the 10 px port square is centred there
+
+        Assert.NotNull(head);
+        Assert.Equal(new Point(215, 100), head[0]);   // the tip is on the square's outer edge, on the incoming side
+        Assert.All(head, corner => Assert.False(corner.X > port.Left && corner.X < port.Right && corner.Y > port.Top && corner.Y < port.Bottom, $"{corner} is under the port"));
+        Assert.All(head.Skip(1), wing => Assert.True(wing.X < 215 && Math.Abs(Math.Sqrt(Math.Pow(wing.X - 215, 2) + Math.Pow(wing.Y - 100, 2)) - 9) < 0.01, $"wing {wing}"));
+        window.Close();
+        return true;
+    });
+
     [Fact]
     public async Task A_label_is_a_pill_centred_on_the_edge_midpoint_and_padded_around_its_text() => await OnUi(() =>
     {
