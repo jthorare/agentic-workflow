@@ -156,7 +156,7 @@ public sealed class AgentsPageTerminalTests
         var fate = await page.SendPanePaste(new string('a', 300 * 1024));
         await Task.Delay(200, Token);   // the pump has run its script by now
 
-        Assert.Equal((TerminalKeyFate.TooBig, 0, "Paste too big (max 256 KiB)"), (fate, socket.Sent.Count, page.Terminal.ControlLine));
+        Assert.Equal((TerminalKeyFate.TooBig, 0, "Paste too big to send"), (fate, socket.Sent.Count, page.Terminal.ControlLine));
     }
 
     [Fact]
@@ -172,5 +172,21 @@ public sealed class AgentsPageTerminalTests
 
         Assert.Equal([TerminalSocketMessages.Paste("echo hi")], socket.Sent);
         Assert.Equal(string.Empty, page.Terminal.ControlLine);
+    }
+
+    [Fact]
+    public async Task A_short_paste_after_a_too_big_one_clears_the_notice()
+    {
+        var (page, socket) = await WithOpenPane();
+        _ = await page.SendPanePaste(new string('a', 300 * 1024));
+        var notice = page.Terminal.ControlLine;
+
+        _ = await page.SendPanePaste("echo hi");
+        for (var i = 0; i < 200 && socket.Sent.Count == 0; i++)
+        {
+            await Task.Delay(10, Token);
+        }
+
+        Assert.Equal(("Paste too big to send", string.Empty, 1), (notice, page.Terminal.ControlLine, socket.Sent.Count));
     }
 }

@@ -28,7 +28,10 @@ public sealed class TerminalControlTests
 
         f.View.NoteFate(TerminalKeyFate.TooBig);
 
-        Assert.Equal((string.Empty, "Paste too big (max 256 KiB)"), (quiet, f.View.ControlLine));
+        var shown = f.View.ControlLine;
+        f.View.NoteFate(TerminalKeyFate.Sent);
+
+        Assert.Equal((string.Empty, "Paste too big to send", string.Empty), (quiet, shown, f.View.ControlLine));
     }
 
     [Fact]

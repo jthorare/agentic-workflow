@@ -101,7 +101,7 @@ public sealed class TerminalSessionTests
     }
 
     [Fact]
-    public async Task A_paste_over_256_KiB_sends_nothing_and_says_so_in_the_panes_line()
+    public async Task A_paste_over_256_KiB_sends_nothing()
     {
         var (f, socket, session, _) = Make();
         socket.Script = ["{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%0\"}}"];
@@ -115,7 +115,7 @@ public sealed class TerminalSessionTests
 
     // The writer escapes < > & ' + and non-ASCII as \uXXXX (6 bytes each): 150 KiB of '<' passes the 256 KiB text cap and encodes to about 900 KB.
     [Fact]
-    public async Task A_paste_whose_encoded_message_is_over_512_KiB_sends_nothing_and_says_so()
+    public async Task A_paste_whose_encoded_message_is_over_512_KiB_sends_nothing()
     {
         var (f, socket, session, _) = Make();
         socket.Script = ["{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%0\"}}"];
