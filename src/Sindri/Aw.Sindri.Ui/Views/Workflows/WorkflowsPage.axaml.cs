@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -14,6 +15,46 @@ internal sealed partial class WorkflowsPage : UserControl
     public WorkflowsPage()
     {
         InitializeComponent();
+    }
+
+    /// <inheritdoc/>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        LayoutUpdated += OnLayoutUpdated;   // the title's text, its scale or the crumb's text changed: the crumb follows the title's baseline
+    }
+
+    /// <inheritdoc/>
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        LayoutUpdated -= OnLayoutUpdated;
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    private void OnLayoutUpdated(object? sender, EventArgs e)
+    {
+        if (WorkflowsBack.IsVisible)
+        {
+            AlignCrumb(WorkflowsBack, WorkflowsBack.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault());
+            AlignCrumb(WorkflowsCrumbSep, WorkflowsCrumbSep);
+        }
+    }
+
+    // Moves a top-aligned crumb part down by the gap between its text's baseline and the page title's (#2807).
+    // Under half a pixel is left alone, so the layout it causes settles on the next pass.
+    private void AlignCrumb(Control part, TextBlock? text)
+    {
+        if (text is null || text.TranslatePoint(default, this) is not { } at || WorkflowsTitle.TranslatePoint(default, this) is not { } title)
+        {
+            return;
+        }
+
+        var gap = title.Y + WorkflowsTitle.TextLayout.Baseline - (at.Y + text.TextLayout.Baseline);
+        if (Math.Abs(gap) >= 0.5)
+        {
+            var m = part.Margin;
+            part.Margin = new Thickness(m.Left, m.Top + gap, m.Right, m.Bottom);
+        }
     }
 
 #pragma warning disable MA0155 // why: an Avalonia RoutedEvent handler returns void, so it can only be async void
@@ -37,11 +78,29 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
-    private async void OnEdit(object? sender, RoutedEventArgs e)
+    private void OnEdit(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)
         {
-            await page.Edit(CancellationToken.None).ConfigureAwait(true);   // the fields exist only once the form is read: focus the first one after
+            page.Edit();
+            FocusLater(WorkflowEditDone);   // Edit hides itself in edit mode: focus moves to its neighbour, Done, not the breadcrumb
+        }
+    }
+
+    private void OnDone(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            page.CloseEditor();
+            FocusEdit();
+        }
+    }
+
+    private async void OnStepSettings(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            await page.OpenSettings(CancellationToken.None).ConfigureAwait(true);   // the fields exist only once the form is read: focus the first one after
             Dispatcher.UIThread.Post(() => _ = (FirstTarget(WorkflowEditor, static c => c is TextBox or CheckBox or Button) ?? WorkflowEditor).Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
         }
     }
@@ -204,8 +263,9 @@ internal sealed partial class WorkflowsPage : UserControl
             DispatcherPriority.Loaded);
     }
 
-    /// <summary>Returns focus to the Edit button (the sheet was closed).</summary>
-    internal void FocusEdit() => FocusLater(WorkflowEdit);
+    /// <summary>Returns focus to the Edit button (Done), or to Step settings while edit mode stays on (the sheet was closed).</summary>
+    internal void FocusEdit() =>
+        Dispatcher.UIThread.Post(() => _ = (WorkflowEdit.IsEffectivelyVisible ? WorkflowEdit : StepSettings).Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);   // Edit is hidden while edit mode is on: Step settings is the neighbour then
 
     private static Control? FirstTarget(Control within, Func<Control, bool> wanted) =>
         within.GetVisualDescendants().OfType<Control>().FirstOrDefault(c => wanted(c) && c.Focusable && c.IsEffectivelyVisible && c.IsEffectivelyEnabled);

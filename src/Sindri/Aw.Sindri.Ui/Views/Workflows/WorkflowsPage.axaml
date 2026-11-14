@@ -14,14 +14,22 @@
   </UserControl.Styles>
   <StackPanel x:Name="WorkflowsRoot" Spacing="{StaticResource Size.PanelGap}">
     <Grid ColumnDefinitions="*,Auto">
-      <StackPanel x:Name="WorkflowsHeadRegion" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-        <TextBlock Classes="page-title" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" />
-        <TextBlock x:Name="WorkflowsHead" Classes="caption subtle" Text="{Binding Head}" IsVisible="{Binding HasHead}" VerticalAlignment="Center" />
-      </StackPanel>
-      <Button x:Name="WorkflowsNewHeader" Grid.Column="1" Content="{Binding NewWorkflowText}" Click="OnNewWorkflow" IsVisible="{Binding IsList}" IsEnabled="{Binding CanOpenCreate}"
+      <!-- Auto / Auto / * / Auto: the crumb and slash never shrink, the title takes what is left and ends in an ellipsis (its full text is the tooltip); the counts or state sit in the last column. -->
+      <Grid x:Name="WorkflowsHeadRegion" ColumnDefinitions="Auto,Auto,*,Auto" VerticalAlignment="Center">
+        <!-- The crumb and the slash are top-aligned and WorkflowsPage.AlignCrumb sets their top margin from the measured baselines: Avalonia has no baseline
+             alignment, and 13 px text centred beside the 24 px title sits 4 px above its baseline (6 px at text scale 1.3), too far for the equal line box trick below. -->
+        <Button x:Name="WorkflowsBack" Classes="link" Content="{Binding CrumbText}" Click="OnBack" IsVisible="{Binding !IsList}" VerticalAlignment="Top" Margin="0,0,12,0" AutomationProperties.Name="{Binding CrumbText}" />
+        <TextBlock x:Name="WorkflowsCrumbSep" Grid.Column="1" Classes="caption subtle" Text="›" IsVisible="{Binding !IsList}" VerticalAlignment="Top" Margin="0,0,12,0" AutomationProperties.AccessibilityView="Raw" />
+        <!-- The state sits right after the title, not at the far edge; the title column is a star, so the title trims to what the state leaves. -->
+        <Grid Grid.Column="2" ColumnDefinitions="*,Auto" HorizontalAlignment="Left">
+          <TextBlock x:Name="WorkflowsTitle" HorizontalAlignment="Left" Classes="page-title" Text="{Binding PageTitle}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding PageTitle}" VerticalAlignment="Top" AutomationProperties.Name="{Binding PageTitle}" />
+          <TextBlock x:Name="WorkflowsState" Grid.Column="1" Margin="12,0,0,0" Classes="caption subtle" Text="{Binding DetailStateText}" IsVisible="{Binding ShowsDetailState}" VerticalAlignment="Center" />
+        </Grid>
+        <TextBlock x:Name="WorkflowsHead" Grid.Column="3" Margin="12,0,0,0" Classes="caption subtle" Text="{Binding Head}" IsVisible="{Binding ShowsListHead}" VerticalAlignment="Center" />
+      </Grid>
+      <Button x:Name="WorkflowsNewHeader" Grid.Column="1" Content="{Binding NewWorkflowText}" Click="OnNewWorkflow" Margin="12,0,0,0" IsVisible="{Binding ShowsHeaderNew}" IsEnabled="{Binding CanOpenCreate}"
               ToolTip.Tip="{Binding NewWorkflowTip}" VerticalAlignment="Top" AutomationProperties.Name="{Binding NewWorkflowText}" />
     </Grid>
-    <Button x:Name="WorkflowsBack" Content="{Binding BackText}" Click="OnBack" IsVisible="{Binding !IsList}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding BackText}" />
 
     <!-- Level 1: the workflows. -->
     <StackPanel x:Name="WorkflowsListLevel" Spacing="{StaticResource Size.PanelGap}" IsVisible="{Binding IsList}">
@@ -117,10 +125,9 @@
            Avalonia has no baseline alignment, so the smaller status text takes the title's line height (as Health's labels do, R12): centred on equal line boxes
            its baseline lands within a pixel of the title's and the buttons' text, at any text scale. -->
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-        <TextBlock x:Name="RunsTitle" Classes="body-strong" VerticalAlignment="Center" Text="{Binding Runs.Title}" AutomationProperties.Name="{Binding Runs.Title}" />
         <TextBlock x:Name="RunsHead" Classes="caption subtle" LineHeight="{DynamicResource Type.BodyStrong.LineHeight}" Text="{Binding Runs.Head}" VerticalAlignment="Center" />
         <Button x:Name="RunNow" VerticalAlignment="Center" Content="{Binding Runs.RunNowText}" Click="OnRunNow" IsEnabled="{Binding Runs.CanPressRunNow}" AutomationProperties.Name="{Binding Runs.RunNowText}" />
-        <Button x:Name="WorkflowEdit" VerticalAlignment="Center" Content="{Binding EditText}" Click="OnEdit" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding EditText}" />
+        <Button x:Name="WorkflowEdit" VerticalAlignment="Center" IsVisible="{Binding ShowsEdit}" Content="{Binding EditText}" Click="OnEdit" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding EditText}" />
         <Button x:Name="WorkflowActivate" VerticalAlignment="Center" IsVisible="{Binding CanActivate}" Content="{Binding ActivateText}" Click="OnActivate" AutomationProperties.AutomationId="WorkflowActivate" AutomationProperties.Name="{Binding ActivateText}" />
         <Button x:Name="WorkflowPause" VerticalAlignment="Center" IsVisible="{Binding CanPause}" Content="{Binding PauseText}" Click="OnPause" AutomationProperties.AutomationId="WorkflowPause" AutomationProperties.Name="{Binding PauseText}" />
       </StackPanel>
@@ -130,18 +137,24 @@
       <Border x:Name="StateNotice" IsVisible="{Binding HasStateNotice}" AutomationProperties.Name="{Binding StateNoticeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption" Text="{Binding StateNoticeText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <wv:WorkflowEditorSheet x:Name="WorkflowEditor" IsVisible="{Binding IsEditing}" />
+      <wv:WorkflowEditorSheet x:Name="WorkflowEditor" IsVisible="{Binding IsSettingsOpen}" />
       <TextBlock x:Name="RunsDetail" Classes="caption subtle" Text="{Binding Runs.DetailText}" TextWrapping="Wrap" />
       <!-- The graph at the positions Sindri served (the app lays nothing out); a node with no position is named, not drawn. -->
       <StackPanel x:Name="RunsGraph" Spacing="4" IsVisible="{Binding Runs.Graph, Converter={x:Static ObjectConverters.IsNotNull}}">
-        <wv:GraphEditBar x:Name="RunsEdit" DataContext="{Binding GraphEdit}" />
+        <Grid x:Name="RunsEditPanel" ColumnDefinitions="*,Auto" IsVisible="{Binding IsEditing}">
+          <wv:GraphEditBar x:Name="RunsEdit" DataContext="{Binding GraphEdit}" />
+          <Button x:Name="WorkflowEditDone" Grid.Column="1" VerticalAlignment="Top" Content="{Binding DoneText}" Click="OnDone" AutomationProperties.Name="{Binding DoneText}" />
+        </Grid>
         <Border Classes="panel" Height="320">
           <wv:GraphCanvas x:Name="RunsCanvas" Graph="{Binding Runs.Graph}" />
         </Border>
-        <!-- What the selected step is and does, read-only, while Edit is off (#2807). -->
-        <Border x:Name="StepSummary" IsVisible="{Binding HasStepSummary}" AutomationProperties.Name="{Binding StepSummaryText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-          <TextBlock Classes="caption" Text="{Binding StepSummaryText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-        </Border>
+        <!-- What the selected step is and does, read-only, while Edit is off (#2807). It shows for every workflow, archived too; only Step settings needs edit rights. -->
+        <StackPanel x:Name="StepRow" Orientation="Horizontal" Spacing="12" IsVisible="{Binding ShowsStepRow}">
+          <Border x:Name="StepSummary" VerticalAlignment="Center" IsVisible="{Binding HasStepSummary}" AutomationProperties.Name="{Binding StepSummaryText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+            <TextBlock Classes="caption" Text="{Binding StepSummaryText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          </Border>
+          <Button x:Name="StepSettings" VerticalAlignment="Center" IsVisible="{Binding CanOpenSettings}" Content="{Binding StepSettingsText}" Click="OnStepSettings" AutomationProperties.Name="{Binding StepSettingsText}" />
+        </StackPanel>
         <Border x:Name="RunsUnplacedName" IsVisible="{Binding Runs.Graph.HasUnplaced}" AutomationProperties.Name="{Binding Runs.Graph.UnplacedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption subtle" Text="{Binding Runs.Graph.UnplacedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
@@ -188,7 +201,6 @@
     <!-- Level 3: one run, every node with its input, output and error. -->
     <StackPanel x:Name="WorkflowRunLevel" Spacing="{StaticResource Size.PanelGap}" IsVisible="{Binding IsRun}">
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-        <TextBlock x:Name="RunTitle" Classes="body-strong mono" Text="{Binding Run.TitleText}" AutomationProperties.Name="{Binding Run.TitleText}" />
         <controls:StateChipView x:Name="RunChipName" Word="{Binding Run.ChipWord}" Tone="{Binding Run.ChipToneWord}" Glyph="{Binding Run.ChipGlyph}" />
         <Button x:Name="RunCancel" Content="{Binding Run.CancelText}" Click="OnCancelRun" IsVisible="{Binding Run.CanCancel}" IsEnabled="{Binding Run.CanPressCancel}" AutomationProperties.Name="{Binding Run.CancelText}" />
       </StackPanel>

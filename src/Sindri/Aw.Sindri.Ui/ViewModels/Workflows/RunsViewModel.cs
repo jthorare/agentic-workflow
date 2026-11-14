@@ -23,7 +23,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     /// <summary>The workflow's name.</summary>
     public string Title { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>"Revision 1 of 2 · 2 nodes · created by owner" ("2 nodes · created by you" with no active revision); empty when the workflow could not be read.</summary>
+    /// <summary>"Revision 1 of 2 · 2 steps · created by owner" ("2 steps · created by you" with no active revision); empty when the workflow could not be read.</summary>
     public string DetailText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>"1 running · 3 runs"; empty until the first answer.</summary>
