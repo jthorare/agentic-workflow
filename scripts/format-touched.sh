@@ -22,8 +22,15 @@
 # "The file is in the run" is proved structurally, before the run, because the output can't show it: the file sits under
 # the csproj's directory (SDK default globbing), is not under obj/ or bin/, and matches no `<Compile Remove="...">` in the
 # csproj or in a Directory.Build.props / .targets above it; when the csproj sets EnableDefaultCompileItems=false, a
-# `<Compile Include=>` must match it. Globs are matched with bash patterns (`**` and `*` both cross `/`, a slight
-# over-match that errs toward "not checked"). Not read from MSBuild: `dotnet msbuild -getItem:Compile` needs a restore.
+# `<Compile Include=>` must match it. What is read, and what is not:
+#   - A pattern is relative to the dir of the file that holds it (a props file's own dir, not the project's), as in MSBuild.
+#   - Globs follow MSBuild: `**/` matches zero or more dirs, `**` anything, `*` and `?` stay inside one dir; `\` is `/`.
+#   - `$(MSBuildProjectDirectory)` and `$(MSBuildThisFileDirectory)` at the start of a pattern are resolved. Any other `$(Var)`
+#     can't be read: the file is reported "not checked" rather than guessed.
+#   - A Compile item written over several lines is read. Single or double quotes both work.
+#   - Not read: `Exclude=` on a Compile Include, `Update=`, items from imports other than the Directory.Build.* files above,
+#     conditions on items, and lists built from properties. Not read from MSBuild itself: `dotnet msbuild -getItem:Compile`
+#     needs a restore.
 #
 # Exit: 0 every named file checked and clean; 1 a format finding, a failed dotnet run, or a file not checked
 # ("not checked: <file> (<reason>)"); 2 usage (no files, a missing or non-.cs file, a file outside a git repo or outside
@@ -69,6 +76,52 @@ for f in "${files[@]}"; do
   rels+=("${abs#"$root"/}")
 done
 
+# glob_to_re <msbuild glob>: an ERE without anchors. `**/` matches zero or more dirs, `**` anything, `*` and `?` stay inside one dir.
+glob_to_re() {
+  local g="$1" re="" i=0 n c
+  n=${#g}
+  while [ "$i" -lt "$n" ]; do
+    c="${g:$i:1}"
+    case "$c" in
+      '*')
+        if [ "${g:$i:3}" = '**/' ]; then re="$re(.*/)?"; i=$((i + 3)); continue
+        elif [ "${g:$i:2}" = '**' ]; then re="$re.*"; i=$((i + 2)); continue
+        else re="$re[^/]*"; fi ;;
+      '?') re="$re[^/]" ;;
+      '.'|'['|']'|'('|')'|'{'|'}'|'+'|'^'|'$'|'|'|'\') re="$re\\$c" ;;
+      *) re="$re$c" ;;
+    esac
+    i=$((i + 1))
+  done
+  printf '%s' "$re"
+}
+
+# item_patterns <file> <Remove|Include>: the values of every <Compile Remove|Include="..."> in the file, one per line,
+# `;` split, `\` turned into `/`. The file is flattened first, so an item written over several lines is read.
+item_patterns() {
+  tr '\n\r\t' '   ' < "$1" 2>/dev/null \
+    | grep -oE "Compile[[:space:]]+$2[[:space:]]*=[[:space:]]*(\"[^\"]*\"|'[^']*')" \
+    | sed -E -e "s/^Compile[[:space:]]+$2[[:space:]]*=[[:space:]]*//" -e "s/^[\"']//" -e "s/[\"']\$//" \
+    | tr ';' '\n' | tr '\\' '/'
+}
+
+# pattern_matches <pattern> <defining dir> <project dir> <file>: all repo-root-relative ("." is the root).
+# 0 matches, 1 doesn't, 2 the pattern holds a $(Var) that isn't read. A pattern is relative to the dir of the file that holds
+# it; $(MSBuildProjectDirectory)/ is the project dir and $(MSBuildThisFileDirectory) the defining dir.
+pattern_matches() {
+  local pat="$1" base="$2" pdir="$3" file="$4" sub re full
+  case "$pat" in
+    '$(MSBuildProjectDirectory)'*) base="$pdir"; pat="${pat#'$(MSBuildProjectDirectory)'}"; pat="${pat#/}" ;;
+    '$(MSBuildThisFileDirectory)'*) pat="${pat#'$(MSBuildThisFileDirectory)'}"; pat="${pat#/}" ;;
+  esac
+  case "$pat" in *'$('*) return 2 ;; esac
+  pat="${pat#./}"
+  if [ "$base" = "." ]; then sub="$file"; else sub="${file#"$base"/}"; fi
+  re="$(glob_to_re "$pat")"
+  full="^${re}\$"
+  [[ "$sub" =~ $full ]]
+}
+
 # Pass 2: csproj per file, and the "is it in the run" proof.
 not_checked=0
 pairs=""
@@ -94,36 +147,39 @@ for rel in "${rels[@]}"; do
   reason=""
   case "$inproj" in obj/*|bin/*) reason="under obj/ or bin/, excluded from default compile items" ;; esac
 
-  # The csproj plus every Directory.Build.props / .targets from its dir up to the root.
-  defs=("$repo_root/$csproj")
+  # The csproj plus every Directory.Build.props / .targets from its dir up to the root (repo-root-relative paths).
+  defs=("$csproj")
   up="$pdir"
   while :; do
     for n in Directory.Build.props Directory.Build.targets; do
-      [ -f "$repo_root/$up/$n" ] && defs+=("$repo_root/$up/$n")
+      if [ "$up" = "." ]; then cand="$n"; else cand="$up/$n"; fi
+      [ -f "$repo_root/$cand" ] && defs+=("$cand")
     done
     [ "$up" = "." ] && break
     up="$(dirname "$up")"
   done
   if [ -z "$reason" ]; then
     for df in "${defs[@]}"; do
-      # Remove patterns are relative to the project dir only for the csproj itself; props above it are matched the same way.
-      pats="$(grep -o 'Compile Remove="[^"]*"' "$df" 2>/dev/null | sed -e 's/^Compile Remove="//' -e 's/"$//' | tr ';' '\n' | tr '\\' '/')"
+      ddir="$(dirname "$df")"
+      pats="$(item_patterns "$repo_root/$df" Remove)"
       while IFS= read -r pat; do
         [ -n "$pat" ] || continue
-        # shellcheck disable=SC2053
-        if [[ "$inproj" == $pat ]]; then reason="matches <Compile Remove=\"$pat\"> in ${df#"$repo_root"/}"; break 2; fi
+        pattern_matches "$pat" "$ddir" "$pdir" "$rel"; m=$?
+        if [ "$m" = 0 ]; then reason="matches <Compile Remove=\"$pat\"> in $df"; break 2; fi
+        if [ "$m" = 2 ]; then reason="<Compile Remove=\"$pat\"> in $df holds a \$(Var) this script doesn't read"; break 2; fi
       done <<EOF
 $pats
 EOF
     done
   fi
-  if [ -z "$reason" ] && grep -q 'EnableDefaultCompileItems[^>]*>[[:space:]]*false' "$repo_root/$csproj"; then
+  if [ -z "$reason" ] && tr '\n\r\t' '   ' < "$repo_root/$csproj" | grep -qE 'EnableDefaultCompileItems[^>]*>[[:space:]]*false'; then
     reason="EnableDefaultCompileItems is false and no <Compile Include> matches"
-    incs="$(grep -o 'Compile Include="[^"]*"' "$repo_root/$csproj" | sed -e 's/^Compile Include="//' -e 's/"$//' | tr ';' '\n' | tr '\\' '/')"
+    incs="$(item_patterns "$repo_root/$csproj" Include)"
     while IFS= read -r pat; do
       [ -n "$pat" ] || continue
-      # shellcheck disable=SC2053
-      if [[ "$inproj" == $pat ]]; then reason=""; break; fi
+      pattern_matches "$pat" "$pdir" "$pdir" "$rel"; m=$?
+      if [ "$m" = 0 ]; then reason=""; break; fi
+      if [ "$m" = 2 ]; then reason="EnableDefaultCompileItems is false and <Compile Include=\"$pat\"> holds a \$(Var) this script doesn't read"; break; fi
     done <<EOF
 $incs
 EOF
@@ -147,7 +203,9 @@ status=0
 cd "$repo_root" || exit 2
 out_file="$(mktemp)"
 trap 'rm -f "$out_file"' EXIT
-for csproj in $(printf '%s' "$pairs" | cut -f1 | sort -u); do
+csprojs="$(printf '%s' "$pairs" | cut -f1 | sort -u)"
+while IFS= read -r csproj; do
+  [ -n "$csproj" ] || continue
   inc=()
   while IFS="$tab" read -r c r; do
     [ "$c" = "$csproj" ] && inc+=("$r")
@@ -156,11 +214,13 @@ $pairs
 EOF
   mode=(--verify-no-changes)
   [ "$fix" = 1 ] && mode=()
-  "${runner[@]}" format "$csproj" ${mode[@]+"${mode[@]}"} --include "${inc[@]}" > "$out_file" 2>&1
+  "${runner[@]}" format "$csproj" ${mode[@]+"${mode[@]}"} --include "${inc[@]}" > "$out_file" 2>&1 < /dev/null
   rc=$?
   cat "$out_file"
   errs="$(grep -c ' error ' "$out_file" || true)"
   echo "format $csproj: ${#inc[@]} files checked, $errs errors"
   if [ "$rc" != 0 ] || [ "$errs" != 0 ]; then status=1; fi
-done
+done <<EOF
+$csprojs
+EOF
 exit "$status"
