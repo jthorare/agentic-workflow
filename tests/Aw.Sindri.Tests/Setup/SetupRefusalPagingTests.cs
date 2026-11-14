@@ -28,7 +28,7 @@ public sealed class SetupRefusalPagingTests
         var workflows = new InMemoryWorkflowStore(clock);
         var runs = new InMemoryWorkflowRunStore(clock) { RecentPageClamp = 50 };   // the store returns at most 50 rows, however many are asked for
         var callers = new AsyncLocalCallerContextAccessor(new SequentialIdGenerator());
-        var service = new RunWorkflowService(workflows, runs, new NeverStarts(), new NoLaunches(), callers);
+        var service = new RunWorkflowService(workflows, runs, new NeverStarts(), new NoLaunches(), callers, clock);
         var spec = new GraphSpec(Version: 1, Name: "Hello", Description: null, Concurrency: "unlimited", Resources: null,
             Nodes: [new GraphNode(NodeId.From("start"), "manual", Title: null, [])], Edges: []);
         _ = (await workflows.Create(_id, _hello, spec, "service:setup", Token)).Value;

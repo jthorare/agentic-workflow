@@ -18,13 +18,13 @@ public sealed partial class PromptBlock
         // why: set before the parse, so a JSON answer the schema check then refuses also shows on the failed step; the engine reads it only when the block returns an error
         context.LeaveFailureOutput(new JsonObject { ["answer"] = asked.Value });
         var read = Parse(asked.Value);
-        if (read.IsSuccess)
+        if (read.IsSuccess && !IsSchemaEcho(read.Value, schema))
         {
             return read;
         }
 
-        // why: one repair ask is cheap and most prose answers turn into JSON when told; a second miss is the model's, so it fails in words
-        var again = await AskChecked(context, instructed + RepairLine, cancellationToken).ConfigureAwait(false);
+        // why: one repair ask is cheap and most prose answers (and schema copies, #3588) turn into a real answer when told; a second miss is the model's, so it fails in words
+        var again = await AskChecked(context, instructed + (read.IsSuccess ? EchoRepairLine : RepairLine), cancellationToken).ConfigureAwait(false);
         if (again.IsError)
         {
             return again.Error;
@@ -33,14 +33,16 @@ public sealed partial class PromptBlock
         // why: the run page shows the failed step's output, so the raw answer stays there for the owner to read; the engine cuts it to the stored-output cap
         context.LeaveFailureOutput(new JsonObject { ["answer"] = again.Value });
         read = Parse(again.Value);
-        if (read.IsSuccess)
+        if (read.IsSuccess && !IsSchemaEcho(read.Value, schema))
         {
             return read;
         }
 
         context.LeaveRaw(again.Value);
 
-        return SindriErrors.GraphPromptAnswer.With($"The model answered with text, not the JSON this step asks for: \"{Shown(again.Value)}\"");
+        return read.IsSuccess
+            ? SindriErrors.GraphPromptAnswer.With($"The model answered with the schema itself, not an answer that fills it: \"{Shown(again.Value)}\"")
+            : SindriErrors.GraphPromptAnswer.With($"The model answered with text, not the JSON this step asks for: \"{Shown(again.Value)}\"");
     }
 
     // why: the CLI's exit code is checked before the text is read: a non-zero exit (a usage limit, a crash) is the model call failing, so there is nothing to repair and no second ask

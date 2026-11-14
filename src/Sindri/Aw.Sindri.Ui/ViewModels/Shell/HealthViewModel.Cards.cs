@@ -42,7 +42,8 @@ internal sealed partial class HealthViewModel
         return card;
     }
 
-    private bool IsProfileUnreadable => string.Equals(ProfileState, "unreadable", StringComparison.Ordinal);
+    // Either word: the file is there and the profile is not in force (#3622 split the card word; the pill and headline treat both alike).
+    private bool IsProfileUnreadable => string.Equals(ProfileState, "unreadable", StringComparison.Ordinal) || string.Equals(ProfileState, "invalid", StringComparison.Ordinal);
 
     // What the cards say needs a look that the server's one health word does not: the Code index, the Context index and the services the scheduler missed; empty when it is fine.
     private string NeedsLook()

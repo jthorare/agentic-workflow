@@ -20,7 +20,7 @@ internal sealed partial class WorkflowsPageViewModel
     private bool _slugEdited;   // once the person types in the short id, the name no longer overwrites it
 
     /// <summary>True while the New workflow form is open.</summary>
-    public bool IsCreating { get; private set { Set(ref field, value); OnChanged(nameof(ShowsCreateForm)); OnChanged(nameof(ShowsEmpty)); } }
+    public bool IsCreating { get; private set { Set(ref field, value); OnChanged(nameof(ShowsCreateForm)); OnChanged(nameof(ShowsEmpty)); OnChanged(nameof(ShowsHeaderNew)); } }
 
     /// <summary>The starter templates the form offers.</summary>
     public ObservableCollection<TemplateChoice> Templates { get; } = [];

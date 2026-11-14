@@ -43,7 +43,7 @@ internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git, 
     // The source answers SND-PROFILE-001 for a file it can't read as well as for one that isn't there; only the file probe tells them apart (#3341).
     private bool IsAbsent(Error error) => error.Code == SindriErrors.ProfileMissing.Code && !profileFile.Exists();
 
-    private static Error Unreadable(Error error) => error.Code == SindriErrors.ProfileMissing.Code ? SindriErrors.ProfileInvalid.With("The profile file is there but can't be read; check its permissions.") : error;
+    private static Error Unreadable(Error error) => error.Code == SindriErrors.ProfileMissing.Code ? SindriErrors.ProfileInvalid.With(SindriErrors.ProfileUnreadableFix) : error;
 
     // "On main at 1a2b3c4": what git said when it was last asked (at most 30 seconds ago); null when git can't read the folder.
     private static string? GitLine(RepoGit? facts) => facts switch

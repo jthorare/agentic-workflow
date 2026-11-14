@@ -1398,6 +1398,7 @@ static Aw.CodeIndex.Core.Values.SymbolRef.TryParse(string? s, System.IFormatProv
 static Aw.CodeIndex.Core.Values.SymbolRef.operator !=(Aw.CodeIndex.Core.Values.SymbolRef left, Aw.CodeIndex.Core.Values.SymbolRef right) -> bool
 static Aw.CodeIndex.Core.Values.SymbolRef.operator ==(Aw.CodeIndex.Core.Values.SymbolRef left, Aw.CodeIndex.Core.Values.SymbolRef right) -> bool
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.BuildFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.CodeIndex.Core.CodeIndexErrors.EmbeddingInputRejected -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.EmbeddingServerFailed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.EmbeddingTargetRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.GraphUnavailable -> Aw.Kernel.ErrorDefinition!
@@ -1485,6 +1486,8 @@ Aw.CodeIndex.Core.Model.EmbeddingProgress.Carried.get -> int
 Aw.CodeIndex.Core.Model.EmbeddingProgress.Made.get -> int
 Aw.CodeIndex.Core.Model.EmbeddingProgress.Carried.init -> void
 Aw.CodeIndex.Core.Model.EmbeddingProgress.Made.init -> void
+Aw.CodeIndex.Core.Model.EmbeddingProgress.Refused.get -> int
+Aw.CodeIndex.Core.Model.EmbeddingProgress.Refused.init -> void
 Aw.CodeIndex.Core.Ports.IIndexBuild.FilesWithoutBodiesOrVectors(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlySet<string!>!>!>
 Aw.CodeIndex.Core.Facade.RepoFile
 Aw.CodeIndex.Core.Facade.RepoFile.Path.get -> string!

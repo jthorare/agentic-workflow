@@ -3,6 +3,7 @@ using System.Text.Json;
 using Aw.CodeIndex.Core;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Infrastructure.Embedding;
+using Aw.CodeIndex.Testing;
 
 namespace Aw.CodeIndex.Tests.Embedding;
 
@@ -163,6 +164,59 @@ public sealed class OllamaEmbedderTests
         var embed = await Over(server).Embed(_settings, ["a", "b"], Token);
 
         Assert.Equal(CodeIndexErrors.EmbeddingServerFailed.Code, embed.Error.Code);
+    }
+
+    [Fact]
+    public async Task A_body_past_the_models_context_is_cut_so_the_server_does_not_answer_400_issue_3128()
+    {
+        var server = new FakeOllamaServer { MaxInputCharacters = 3_000 };
+
+        var embedded = await Over(server).Embed(_settings, ["short", new string('x', 6_000)], Token);
+
+        Assert.False(embedded.IsError);
+        Assert.Equal(2, embedded.Value.Count);
+    }
+
+    [Fact]
+    public async Task A_cut_never_leaves_half_a_surrogate_pair_issue_3128()
+    {
+        var server = new FakeOllamaServer();
+        var text = new string('x', OllamaEmbedder.InputMaxCharacters - 1) + "\U0001F600tail";
+
+        _ = await Over(server).Embed(_settings, [text], Token);
+
+        using var body = JsonDocument.Parse(server.Requests[^1].Body);
+        var sent = body.RootElement.GetProperty("input")[0].GetString()!;
+        Assert.Equal(OllamaEmbedder.InputMaxCharacters - 1, sent.Length);
+        Assert.DoesNotContain('\uFFFD', sent);
+    }
+
+    [Fact]
+    public async Task One_input_the_server_refuses_is_retried_alone_then_skipped_and_counted_issue_3128()
+    {
+        var server = new FakeOllamaServer { RejectInputContaining = "POISON" };
+        using var embedder = Over(server);
+
+        var embedded = await embedder.Embed(_settings, ["one", "POISON", "three"], Token);
+
+        Assert.False(embedded.IsError);
+        Assert.Equal(3, embedded.Value.Count);
+        Assert.Equal(FakeEmbedder.VectorOf("one"), embedded.Value[0].ToArray());
+        Assert.Equal(0, embedded.Value[1].Length);
+        Assert.Equal(FakeEmbedder.VectorOf("three"), embedded.Value[2].ToArray());
+        Assert.Contains(server.Requests, r => r.Body.Contains("POISON", StringComparison.Ordinal) && !r.Body.Contains("three", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_batch_of_good_inputs_is_one_request_and_skips_none_issue_3128()
+    {
+        var server = new FakeOllamaServer { RejectInputContaining = "POISON" };
+        using var embedder = Over(server);
+
+        var embedded = await embedder.Embed(_settings, ["one", "two"], Token);
+
+        Assert.False(embedded.IsError);
+        _ = Assert.Single(server.Requests);
     }
 
     [Fact]
