@@ -234,7 +234,7 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
             try
             {
                 await _mirror.AppendStarted(ended.Value, cancellationToken).ConfigureAwait(false);
-                await _mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(run.Id, GraphMirror.Name(WorkflowRunStatus.Failed), _mirror.Clean(launched.Error.Message), GraphMirror.By, WorkflowRunMode.Live),
+                await _mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(run.Id, GraphMirror.Name(WorkflowRunStatus.Failed), _mirror.Clean(launched.Error.Message), GraphMirror.By, run.Mode),
                     $"{EventTypes.WorkflowRunFinished}:{run.Id.Value}", ended.Value.ItemId?.Value, cancellationToken).ConfigureAwait(false);
             }
             catch (InvalidOperationException e)   // boundary: GraphMirror throws when the lease is gone or the append fails; the run is already Failed, so say so in the log
