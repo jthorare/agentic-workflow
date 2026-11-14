@@ -8,6 +8,9 @@ namespace Aw.Context.Core.WholeMap;
 /// <param name="AreaCap">How many nodes an area may hold before the area assigner replaces its feature by its children (a split, never a cut: every node is still listed).</param>
 public sealed record WholeMapRules(int NodeBudget = 500, int AreaCap = 5_000)
 {
+    /// <summary>How many nodes one page of an opened area (or concept) holds: ranked, 50 a page (#3674).</summary>
+    public const int AreaPageSize = 50;
+
     /// <summary>The most keys one question may ask to place.</summary>
     public const int MaxLocate = 1_000;
 

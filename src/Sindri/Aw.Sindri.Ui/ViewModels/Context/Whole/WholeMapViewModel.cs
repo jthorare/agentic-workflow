@@ -116,6 +116,12 @@ internal sealed partial class WholeMapViewModel : ObservableObject
         ? Labels.ContextWholeCanvasBands(geometry.Bands.OrderBy(b => b.Top).Select(b => (NodeBands.Title(b.Band), b.Meta)))
         : Labels.ContextWholeCanvasName;
 
+    /// <summary>What the stage of an opened area shows (#3674): the canvas up to <see cref="WholeDrillIn.CanvasNodeCap"/> nodes, the ranked list above.</summary>
+    internal WholeStage Stage { get; private set; } = WholeStage.Canvas;
+
+    /// <summary>Completes when the layout of the opened area is done (#3674: it runs off the UI thread, after the list is drawn from the answer).</summary>
+    internal Task AreaLaidOut { get; private set; } = Task.CompletedTask;
+
     /// <summary>The features, in the order the map shows them.</summary>
     public IReadOnlyList<WholeAreaTileViewModel> Areas { get; private set; } = [];
 

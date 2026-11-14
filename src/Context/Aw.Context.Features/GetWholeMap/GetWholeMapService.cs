@@ -51,12 +51,12 @@ internal sealed class GetWholeMapService(MapReader reader, IScrubberFactory scru
         var commit = snapshot.Version.Commit is { Length: > 0 } c ? c[..Math.Min(7, c.Length)] : null;
         var basis = new WholeMapBasis(snapshot.Tag, commit, asked.Query.Read.Draft, snapshot.Version.Created, repo.Name);
         var repoOf = NodeRepos.Index(map.Graph, snapshot.Version.Repo.Value);
-        var ask = new WholeMapAsk(basis, asked.Detail, asked.Query.Locate, asked.Query.Area) { Concept = asked.Query.Concept, PagesInNoConcept = asked.Query.PagesInNoConcept, Repos = WholeMapBuilder.Repos(repoOf), RepoOf = repoOf, PageRank = pageRank };
+        var ask = new WholeMapAsk(basis, asked.Detail, asked.Query.Locate, asked.Query.Area) { Concept = asked.Query.Concept, PagesInNoConcept = asked.Query.PagesInNoConcept, Page = asked.Query.Page, Repos = WholeMapBuilder.Repos(repoOf), RepoOf = repoOf, PageRank = pageRank };
         return WholeMapBuilder.Build(ask, graph, MapAreas.Assign(graph, rules.AreaCap), rules, text);
     }
 
     private static string CacheKey(int version, WholeMapDetail detail, WholeMapQuery query, RepoChoice repo, ContextScope scope) =>
-        string.Join('\n', version, query.Read.Draft, detail, string.Join('\u001f', query.Locate), query.Area, query.Concept, query.PagesInNoConcept, repo.Name, repo.Cut?.Value, FencePolicies.For(scope.Caller), scope.Caller.Kind, scope.Caller.Repo?.Value, scope.Settings?.GetRawText(), string.Join(',', PageRank(scope).OrderBy(p => p.Value).Select(p => p.Key)));
+        string.Join('\n', version, query.Read.Draft, detail, string.Join('\u001f', query.Locate), query.Area, query.Concept, query.PagesInNoConcept, query.Page, repo.Name, repo.Cut?.Value, FencePolicies.For(scope.Caller), scope.Caller.Kind, scope.Caller.Repo?.Value, scope.Settings?.GetRawText(), string.Join(',', PageRank(scope).OrderBy(p => p.Value).Select(p => p.Key)));
 
     // The profile's pages by id with their index in the order PageOverlay.Apply lays them in.
     private static Dictionary<string, int> PageRank(ContextScope scope) =>

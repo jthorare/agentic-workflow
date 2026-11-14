@@ -10,6 +10,9 @@ public sealed record WholeMapAsk(WholeMapBasis Basis, WholeMapDetail Detail, IRe
     /// <summary>The key of one concept to open on its own (its members and what lies two levels below them), or null; 'concept:other' opens the members no concept takes. Together with an area, the area's nodes that scope holds.</summary>
     public string? Concept { get; init; }
 
+    /// <summary>Which page (1-based) of an opened area's ranked nodes to answer, <see cref="WholeMapRules.AreaPageSize"/> a page.</summary>
+    public int Page { get; init; } = 1;
+
     /// <summary>True to answer with the pages that relate to no concept (<see cref="PagesInNoConcept"/>) and their actions, up to the section's cap, in place of the whole map.</summary>
     public bool PagesInNoConcept { get; init; }
 

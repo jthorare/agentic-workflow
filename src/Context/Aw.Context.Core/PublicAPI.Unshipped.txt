@@ -12540,3 +12540,12 @@ Aw.Context.Core.Engine.ContextQuery.Window.get -> Aw.Context.Core.Engine.QueryWi
 Aw.Context.Core.Engine.ContextQuery.Window.init -> void
 Aw.Context.Core.Results.ContextResult.Matches.get -> Aw.Context.Core.Results.RecordMatches?
 Aw.Context.Core.Results.ContextResult.Matches.init -> void
+const Aw.Context.Core.WholeMap.WholeMapRules.AreaPageSize = 50 -> int
+Aw.Context.Core.WholeMap.WholeMapAsk.Page.get -> int
+Aw.Context.Core.WholeMap.WholeMapAsk.Page.init -> void
+Aw.Context.Core.WholeMap.WholeMapAreaInfo.Page.get -> int
+Aw.Context.Core.WholeMap.WholeMapAreaInfo.Page.init -> void
+Aw.Context.Core.WholeMap.WholeMapAreaInfo.Pages.get -> int
+Aw.Context.Core.WholeMap.WholeMapAreaInfo.Pages.init -> void
+Aw.Context.Core.WholeMap.WholeMapQuery.Page.get -> int
+Aw.Context.Core.WholeMap.WholeMapQuery.Page.init -> void
