@@ -118,4 +118,25 @@ public abstract partial class WorkflowRunStoreContract
 
         Expect.Equal(expected: null, (await store.LatestOccurrence(_workflow, "schedule", Token)).Value);
     }
+
+    /// <summary>The recent list is live runs only, and test rows take no place in a page (the filter is in the query, not after it).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Recent_lists_live_runs_only_and_test_rows_use_no_page_room()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        for (var n = 1; n <= 3; n++)
+        {
+            _ = (await store.Insert(Run(n, WorkflowRunStatus.Succeeded) with { StartedAt = KnownInstants.Epoch + TimeSpan.FromMinutes(n) }, Token)).Value;
+        }
+
+        for (var n = 500; n <= 502; n++)
+        {
+            _ = (await store.Insert(TestRun(n, WorkflowRunStatus.Succeeded) with { StartedAt = KnownInstants.Epoch + TimeSpan.FromMinutes(n) }, Token)).Value;
+        }
+
+        var page = (await store.Recent(_workflow, 0, 3, Token)).Value;
+
+        Expect.Sequence([Run(3).Id, Run(2).Id, Run(1).Id], page.Select(static r => r.Id));
+    }
 }
