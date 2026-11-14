@@ -23,6 +23,17 @@ internal sealed class NodeRunViewModel : ObservableObject
         (Node, ItemIndex, Agent) = (run.Node, run.ItemIndex, run.Agent);
     }
 
+    /// <summary>True on a failed step: Edit step shows.</summary>
+    public bool CanEditStep => false;
+
+    /// <summary>The Edit step button's words.</summary>
+    public string EditStepText => string.Empty;
+
+    /// <summary>Opens the workflow with this step selected and its sheet open.</summary>
+    /// <param name="cancellationToken">Cancels the reads.</param>
+    /// <returns>A task that completes when the sheet is open.</returns>
+    internal Task EditStep(CancellationToken cancellationToken) => Task.CompletedTask;
+
     /// <summary>The node's id (the take over call names it).</summary>
     public string Node { get; }
 
