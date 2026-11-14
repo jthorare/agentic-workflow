@@ -17,6 +17,12 @@ internal sealed partial class ShellViewModel
     /// <summary>True on Workflows.</summary>
     public bool IsWorkflows => CurrentPage == PageId.Workflows;
 
+    private async Task ShowWorkflowsAndReturn(Uri url)
+    {
+        await Workflows.Show(url, CancellationToken.None).ConfigureAwait(true);
+        await Workflows.ReturnFromConnect(CancellationToken.None).ConfigureAwait(true);   // does nothing unless the owner left through a Connect button
+    }
+
     [MemberNotNull(nameof(Workflows))]
     private void InitWorkflows()
     {
@@ -29,6 +35,7 @@ internal sealed partial class ShellViewModel
             }
         };
         Workflows.SetViewsStalled(Health.Banner.IsStalled, Health.Banner.Rebuild);
+        Workflows.ConnectRequested += _ => GoTo(PageId.Connections);   // "Connect GitHub" on a step's sheet: Connections now, the sheet again on return
         var seen = 0L;
         Health.Follow((url, token) =>
         {
@@ -50,7 +57,7 @@ internal sealed partial class ShellViewModel
             }
             else if (Health.ApiUrl() is { } url)
             {
-                _ = Workflows.Show(url, CancellationToken.None);
+                _ = ShowWorkflowsAndReturn(url);
             }
         };
     }

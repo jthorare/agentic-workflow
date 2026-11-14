@@ -35,6 +35,7 @@
                   </DataTemplate>
                 </ComboBox.ItemTemplate>
               </ComboBox>
+              <Button Name="EditorFieldConnect" IsVisible="{Binding NeedsConnect}" Content="{Binding ConnectText}" Click="OnConnect" HorizontalAlignment="Left" AutomationProperties.Name="{Binding ConnectText}" />
               <ToggleButton Name="EditorFieldAdvanced" IsVisible="{Binding HasAdvanced}" IsChecked="{Binding ShowAdvanced, Mode=TwoWay}" Content="{Binding AdvancedText}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding AdvancedText}" />
               <TextBox Name="EditorFieldText" IsVisible="{Binding IsRawVisible}" Text="{Binding Text, Mode=TwoWay}" AutomationProperties.Name="{Binding Caption}" />
               <CheckBox Name="EditorFieldCheck" IsVisible="{Binding IsBoolean}" IsChecked="{Binding IsOn, Mode=TwoWay}" AutomationProperties.Name="{Binding Caption}" />

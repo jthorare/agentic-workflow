@@ -6,6 +6,7 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// <summary>The Workflows page (<see cref="WorkflowsPageViewModel"/>, continued): the editor sheet (#2258 PR 17 part 3a). The sheet shows the form of the node selected on the graph; Save sends every changed field in one call on the revision read.</summary>
 internal sealed partial class WorkflowsPageViewModel
 {
+    private PendingConnect? _pendingConnect;   // set by Connect, kept across Leave: the way back to the sheet
     private int _edits;   // counts Edit calls: only the newest one selects its node
 
     /// <summary>The editor over the page's API.</summary>
@@ -86,14 +87,31 @@ internal sealed partial class WorkflowsPageViewModel
     /// <param name="field">The connection field.</param>
     internal void ConnectService(ConfigFieldViewModel field)
     {
-        _ = field;
-        ConnectRequested?.Invoke(string.Empty);
+        _pendingConnect = new PendingConnect(Runs.Slug, Editor.SelectedNode, [.. Editor.Connected]);
+        ConnectRequested?.Invoke(field.ConnectService);
     }
 
     /// <summary>Coming back from Connections: reopens the remembered sheet and picks the connection that is new.</summary>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>A task that completes when the sheet is open.</returns>
-    internal Task ReturnFromConnect(CancellationToken cancellationToken) => Task.CompletedTask;
+    internal async Task ReturnFromConnect(CancellationToken cancellationToken)
+    {
+        if (_pendingConnect is not { } pending)
+        {
+            return;
+        }
+
+        _pendingConnect = null;
+        await OpenWorkflow(pending.Slug, cancellationToken).ConfigureAwait(true);
+        _ = Runs.Graph?.SelectNode(pending.Node);
+        await Edit(cancellationToken).ConfigureAwait(true);
+        if (Editor.Fields.FirstOrDefault(f => f.IsConnection) is { } field)
+        {
+            field.Text = field.ConnectionChoices.FirstOrDefault(n => !pending.Known.Contains(n, StringComparer.Ordinal)) ?? field.ConnectionChoices.FirstOrDefault() ?? field.Text;   // the new connection, else the one there is
+        }
+    }
+
+    private sealed record PendingConnect(string Slug, string Node, IReadOnlyList<string> Known);
 
     /// <summary>Sends every changed field in ONE call on the revision read: all are saved or none, and a refusal or a stale answer keeps every edit in the form. A field with a problem stops the save before anything is sent.</summary>
     /// <param name="cancellationToken">Cancels the calls.</param>

@@ -265,6 +265,11 @@ internal static partial class Labels
     /// <summary>The editor's prompt when the workflow changed elsewhere: the edit was not saved and nothing is retried.</summary>
     internal const string WfEditChangedElsewhere = "This workflow changed elsewhere, so your edit was not saved. Reload to see the new version, then make the edit again.";
 
+    /// <summary>The Connect button of a connection field.</summary>
+    /// <param name="service">The service's wire name ("github").</param>
+    /// <returns>"Connect GitHub".</returns>
+    internal static string WfConnectService(string service) => "Connect " + (string.Equals(service, "github", StringComparison.Ordinal) ? "GitHub" : char.ToUpperInvariant(service[0]) + service[1..]);
+
     /// <summary>The note on the run Run now opened instead of starting a second one.</summary>
     internal const string WfRunInFlight = "A run is already in flight.";
 

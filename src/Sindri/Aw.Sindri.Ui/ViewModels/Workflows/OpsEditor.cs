@@ -18,6 +18,10 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     private Uri? _url;
     private int _reads;
     private string? _selected;
+    private IReadOnlyList<string> _connected = [];
+
+    /// <summary>The id of the selected step; empty when none is selected.</summary>
+    internal string SelectedNode => _selected ?? string.Empty;
 
     /// <summary>The workflow's slug; empty until loaded.</summary>
     public string Slug { get; private set => Set(ref field, value); } = string.Empty;
@@ -50,6 +54,9 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
             }
         }
     }
+
+    /// <summary>The connected connections the picker may offer, as last read.</summary>
+    internal IReadOnlyList<string> Connected => _connected;
 
     /// <summary>The Advanced toggle's words.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
@@ -102,7 +109,8 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         var read = ++_reads;
         var workflowRead = api.Workflow(url, slug, cancellationToken);
         var blocksRead = api.WorkflowBlocks(url, cancellationToken);
-        await Task.WhenAll(workflowRead, blocksRead).ConfigureAwait(true);
+        var connectionsRead = api.ListConnections(url, cancellationToken);
+        await Task.WhenAll(workflowRead, blocksRead, connectionsRead).ConfigureAwait(true);
         var (workflow, blocks) = (await workflowRead.ConfigureAwait(true), await blocksRead.ConfigureAwait(true));
         if (read != _reads)
         {
@@ -116,6 +124,8 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
             return;
         }
 
+        var connections = await connectionsRead.ConfigureAwait(true);
+        _connected = connections.IsError ? [] : [.. connections.Value.Connections.Where(c => string.Equals(c.Status, "connected", StringComparison.Ordinal)).Select(c => c.Name)];   // a failed read leaves the picker with Connect, never an error on the sheet
         (BaseRevision, Nodes, Groups) = (workflow.Value.LatestRevision, ReadNodes(workflow.Value.Spec), blocks.Value.Groups);
         (NeedsReload, ReloadPromptText, FailureText) = (false, string.Empty, string.Empty);
         Select(_selected ?? string.Empty);   // the form stays on its node, with what the new revision holds
@@ -138,7 +148,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         NodeHeading = HeadingOf(node, block);
         foreach (var field in block?.Config ?? [])
         {
-            Fields.Add(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field), block!.Type, ExampleOf(block, field.Name)));   // why: a block was found, so node and block are not null
+            Fields.Add(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field), block!.Type, ExampleOf(block, field.Name), _connected));   // why: a block was found, so node and block are not null
         }
 
         AdvancedOpen = false;

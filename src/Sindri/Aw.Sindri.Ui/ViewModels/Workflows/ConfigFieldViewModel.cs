@@ -7,8 +7,10 @@ internal sealed class ConfigFieldViewModel : ObservableObject
 {
     private static readonly string[] CodeAdvanced = ["repo", "branch", "timeout", "memoryMb"];
 
-    internal ConfigFieldViewModel(WorkflowBlockField field, string text, string blockType = "", string example = "")
+    internal ConfigFieldViewModel(WorkflowBlockField field, string text, string blockType = "", string example = "", IReadOnlyList<string>? connections = null)
     {
+        ConnectService = ServiceOf(blockType, field.Name);
+        ConnectionChoices = ConnectService.Length == 0 ? [] : [.. (connections ?? []).Where(n => n.StartsWith(ConnectService + ":", StringComparison.Ordinal))];
         var isCodeBlock = string.Equals(blockType, "code", StringComparison.Ordinal);
         IsCode = isCodeBlock && string.Equals(field.Name, "code", StringComparison.Ordinal);
         InAdvanced = isCodeBlock && CodeAdvanced.Contains(field.Name, StringComparer.Ordinal);
@@ -17,8 +19,9 @@ internal sealed class ConfigFieldViewModel : ObservableObject
         Type = field.Type;
         IsRequired = field.Required;
         Caption = Labels.WfFieldCaption(field.Caption.Length > 0 ? field.Caption : field.Name, field.Required);
-        IsClosedList = field.Choices is { Count: > 0 };
-        Presets = (IsClosedList ? field.Choices : field.Presets) ?? [];
+        IsClosedList = IsConnection || field.Choices is { Count: > 0 };
+        IReadOnlyList<WorkflowBlockChoice>? listed = IsConnection ? ConnectionChoices.Select(n => new WorkflowBlockChoice(n, n)).ToList() : IsClosedList ? field.Choices : field.Presets;
+        Presets = listed ?? [];
         HidesRawText = !IsClosedList && Presets.Any(p => !string.Equals(p.Label, p.Value, StringComparison.Ordinal));
         (Text, Original) = (text, text);
         ShowAdvanced = text.Length > 0 && SelectedPreset is null;   // a value no preset names must be seen, not hidden
@@ -64,16 +67,23 @@ internal sealed class ConfigFieldViewModel : ObservableObject
     }
 
     /// <summary>True for a connection step's connection field: a picker, never free text.</summary>
-    public bool IsConnection => false;
+    public bool IsConnection => ConnectService.Length > 0;
+
+    /// <summary>The service the step needs ("github"); empty on any other field.</summary>
+    public string ConnectService { get; }
+
+    // A step names its service by block type and field name for now: connection_event watches GitHub's events.
+    private static string ServiceOf(string blockType, string field) =>
+        string.Equals(blockType, "connection_event", StringComparison.Ordinal) && string.Equals(field, "connection", StringComparison.Ordinal) ? "github" : string.Empty;
 
     /// <summary>The connected connections of the service the step needs.</summary>
-    public IReadOnlyList<string> ConnectionChoices => [];
+    public IReadOnlyList<string> ConnectionChoices { get; }
 
     /// <summary>True when no connection fits: the field offers Connect instead.</summary>
-    public bool NeedsConnect => false;
+    public bool NeedsConnect => IsConnection && ConnectionChoices.Count == 0;
 
     /// <summary>The Connect button's words ("Connect GitHub").</summary>
-    public string ConnectText => string.Empty;
+    public string ConnectText => IsConnection ? Labels.WfConnectService(ConnectService) : string.Empty;
 
     /// <summary>True for the Code step's program: a monospace multi-line box.</summary>
     public bool IsCode { get; }

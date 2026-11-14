@@ -24,6 +24,14 @@ internal sealed partial class WorkflowEditorSheet : UserControl
         }
     }
 
+    private void OnConnect(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page && sender is Control { DataContext: ConfigFieldViewModel field })
+        {
+            page.ConnectService(field);
+        }
+    }
+
     private async void OnReload(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)
