@@ -16,6 +16,12 @@ internal sealed class FakeTerminalConnector : ITerminalConnector
     /// <summary>The close code the link ends with after the script; null for 1001.</summary>
     public int? EndsWith { get; set; }
 
+    /// <summary>When true, the link throws a WebSocketException after the script (a socket that died without a close frame).</summary>
+    public bool ThrowsAfterScript { get; set; }
+
+    /// <summary>When true, the link keeps yielding after its token is cancelled (a frame already read when the view switched).</summary>
+    public bool IgnoresCancellation { get; set; }
+
     /// <summary>When true, Connect answers null (the socket could not open).</summary>
     public bool Refuse { get; set; }
 
@@ -61,9 +67,18 @@ internal sealed class FakeTerminalConnector : ITerminalConnector
         {
             foreach (var json in owner.Script ?? FixtureOut())
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                if (!owner.IgnoresCancellation)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+
                 yield return TerminalSocketMessages.Parse(json);
                 await Task.Yield();
+            }
+
+            if (owner.ThrowsAfterScript)
+            {
+                throw new System.Net.WebSockets.WebSocketException("The remote party closed the WebSocket connection without completing the close handshake.");
             }
 
             CloseCode = owner.EndsWith ?? 1001;

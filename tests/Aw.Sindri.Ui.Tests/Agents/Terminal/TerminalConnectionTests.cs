@@ -172,4 +172,17 @@ public sealed class TerminalConnectionTests
 
         Assert.Equal(("tmux default · 1 other client", "tmux default"), (one, f.View.HostText));
     }
+
+    [Fact]
+    public void Close_code_1008_is_final_with_its_reason_and_does_not_retry()
+    {
+        var f = new TerminalFixture().Attached(TerminalFixture.Lane(), TerminalOpenIntent.Type);
+
+        f.View.SocketClosed(1008);
+        f.Clock.Advance(TimeSpan.FromMinutes(1));
+        f.View.Tick();
+
+        Assert.Equal((null, 0, TerminalSide.List), (f.View.RetryIn, f.Requests, f.View.Side));
+        Assert.Contains("token", f.View.CardBody, StringComparison.OrdinalIgnoreCase);
+    }
 }

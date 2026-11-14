@@ -100,4 +100,52 @@ public sealed class TerminalSessionTests
         Assert.False(sentWhileClosed);
         Assert.DoesNotContain(TerminalSocketMessages.Interrupt(), socket.Sent);
     }
+
+    private const string ReadyJson = "{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%0\"}}";
+
+    [Fact]
+    public async Task A_socket_that_dies_without_a_close_frame_is_a_drop_that_retries_after_1_s_with_focus_on_the_list()
+    {
+        var (f, socket, session, _) = Make();
+        socket.Script = [ReadyJson];
+        socket.ThrowsAfterScript = true;
+
+        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+        f.Clock.Advance(TimeSpan.FromMilliseconds(1100));
+        f.View.Tick();
+
+        Assert.Equal((TerminalState.Connecting, TerminalSide.List, 1), (f.View.State, f.View.Side, f.Requests));
+    }
+
+    [Fact]
+    public async Task A_socket_that_dies_without_a_close_frame_reads_Reconnecting_at_once()
+    {
+        var (f, socket, session, _) = Make();
+        socket.Script = [ReadyJson];
+        socket.ThrowsAfterScript = true;
+
+        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+
+        Assert.Equal(TerminalState.Reconnecting, f.View.State);
+    }
+
+    [Fact]
+    public async Task A_frame_read_after_the_session_was_cancelled_is_not_drawn()
+    {
+        var (f, socket, _, _) = Make();
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        var drawn = 0;
+        var session = new TerminalSession(socket, f.View, _ =>
+        {
+            drawn++;
+            cts.Cancel();
+        });
+        var frame = FakeTerminalConnector.FixtureOut().First(m => TerminalSocketMessages.Parse(m).Kind == TerminalServerKind.Frame);
+        socket.Script = [ReadyJson, frame, frame, frame];
+        socket.IgnoresCancellation = true;
+
+        await session.Run(_api, "claude-code", "ideas", 120, 36, cts.Token);
+
+        Assert.Equal(1, drawn);
+    }
 }

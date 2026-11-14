@@ -80,4 +80,12 @@ public sealed class TerminalSocketMessagesTests
         Assert.Equal(Enumerable.Range(1, frames.Count), frames.Select(f => f.Seq));
         Assert.Equal(36, frames[0].Rows.Count);
     }
+
+    [Theory]
+    [InlineData("""{"t":"frame"}""")]
+    [InlineData("""{"t":"frame","rows":["a"],"w":1,"h":1}""")]
+    [InlineData("""{"t":"frame","rows":"x","cursor":{"x":0,"y":0},"w":1,"h":1,"inMode":0,"alt":0,"dead":0,"seq":1}""")]
+    [InlineData("""{"t":"frame","rows":[],"cursor":{"x":"a","y":0},"w":1,"h":1,"inMode":0,"alt":0,"dead":0,"seq":1}""")]
+    public void A_frame_with_a_missing_or_wrong_property_is_Unknown_not_a_throw(string json) =>
+        Assert.Equal(TerminalServerKind.Unknown, TerminalSocketMessages.Parse(json).Kind);
 }
