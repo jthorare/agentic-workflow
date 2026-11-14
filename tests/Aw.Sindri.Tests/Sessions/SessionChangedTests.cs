@@ -23,16 +23,32 @@ public sealed class SessionChangedTests
     private static List<SessionState> Changes(CollectSessionsResponse pass) => [.. pass.StateChanges.Select(static c => c.State)];
 
     [Fact, Trait("Lane", "unit")]
-    public void Diff_names_each_session_whose_state_differs_from_the_last_pass_and_nothing_else()
+    public void Settle_names_a_changed_state_only_after_it_held_5_s_and_takes_a_new_session_as_the_baseline()
     {
+        var debounce = new SessionStateDebounce();
         var running = Session("claude-code", "a1", SessionState.Running);
         var other = Session("codex", "b2", SessionState.Idle);
-        var previous = new[] { running, other }.ToDictionary(static s => s.Ref);
 
-        var changes = SessionStateChanges.Diff(previous, [running with { State = SessionState.Asking }, other, Session("cursor", "c3", SessionState.Running)], T0);
+        Assert.Empty(debounce.Settle([running, other], T0));   // both new: no change
+        Assert.Empty(debounce.Settle([running with { State = SessionState.Asking }, other], T0.AddSeconds(1)));
+        Assert.Empty(debounce.Settle([running with { State = SessionState.Asking }, other], T0.AddSeconds(5)));   // 4 s
+        var change = Assert.Single(debounce.Settle([running with { State = SessionState.Asking }, other], T0.AddSeconds(6)));
+        Assert.Equal((running.Ref, SessionState.Asking, T0.AddSeconds(6)), (change.Ref, change.State, change.ObservedAt));
+        Assert.Empty(debounce.Settle([running with { State = SessionState.Asking }, other], T0.AddSeconds(30)));   // said once
+    }
 
-        var change = Assert.Single(changes);   // c3 is new: that is fleet.changed appeared
-        Assert.Equal((running.Ref, SessionState.Asking, T0), (change.Ref, change.State, change.ObservedAt));
+    [Fact, Trait("Lane", "unit")]
+    public void Settle_restarts_the_wait_when_the_waiting_state_changes_and_forgets_a_gone_session()
+    {
+        var debounce = new SessionStateDebounce();
+        var s = Session("claude-code", "a1", SessionState.Running);
+        _ = debounce.Settle([s], T0);
+        _ = debounce.Settle([s with { State = SessionState.Idle }], T0.AddSeconds(1));
+        _ = debounce.Settle([s with { State = SessionState.Asking }], T0.AddSeconds(4));   // another new state: the clock starts again
+
+        Assert.Empty(debounce.Settle([s with { State = SessionState.Asking }], T0.AddSeconds(8)));   // 4 s of asking
+        Assert.Empty(debounce.Settle([], T0.AddSeconds(9)));   // gone
+        Assert.Empty(debounce.Settle([s with { State = SessionState.Idle }], T0.AddSeconds(20)));   // back as a new session: baseline
     }
 
     [Fact, Trait("Lane", "unit")]

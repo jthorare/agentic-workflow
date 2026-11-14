@@ -23,6 +23,9 @@ internal sealed class CollectorMemory
     /// <summary>State changes found but not yet appended as 'session.changed', oldest first (the same wait as <see cref="Pending"/>).</summary>
     internal IReadOnlyList<SessionStateChange> PendingStates { get; set; } = [];
 
+    /// <summary>Holds each session's last emitted state and the new one waiting to hold 5 s, so 'session.changed' skips a flip that does not last.</summary>
+    internal SessionStateDebounce States { get; } = new();
+
     internal bool Restored { get; set; }
 
     internal IReadOnlyDictionary<SessionRef, ObservedSession> Previous { get; set; } = new Dictionary<SessionRef, ObservedSession>();

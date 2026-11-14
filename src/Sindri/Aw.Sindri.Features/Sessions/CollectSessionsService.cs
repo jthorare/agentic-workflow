@@ -35,7 +35,7 @@ internal sealed partial class CollectSessionsService(SessionDiscovery discovery,
         var diff = FleetChangeRules.Diff(memory.Tracker, sessions, now, goodPass: true);
         var ended = memory.Ending(sessions, now);
         memory.Tracker = diff.State;
-        memory.PendingStates = CappedStates([.. memory.PendingStates, .. SessionStateChanges.Diff(memory.Previous, sessions, now)]);
+        memory.PendingStates = CappedStates([.. memory.PendingStates, .. memory.States.Settle(sessions, now)]);
         memory.Pending = Capped([.. memory.Pending, .. diff.Changes]);   // kept until the ledger has them (RecordFleetChangesService clears what it appended)
         LogHostChanges(sessions);
         memory.Previous = sessions.ToDictionary(static s => s.Ref);

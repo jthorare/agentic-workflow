@@ -23866,8 +23866,6 @@ Aw.Sindri.Core.Sessions.SessionStateChange.State.init -> void
 Aw.Sindri.Core.Sessions.SessionStateChange.ObservedAt.get -> System.DateTimeOffset
 Aw.Sindri.Core.Sessions.SessionStateChange.ObservedAt.init -> void
 const Aw.Sindri.Core.Events.EventTypes.SessionChanged = "session.changed" -> string!
-Aw.Sindri.Core.Sessions.SessionStateChanges
-static Aw.Sindri.Core.Sessions.SessionStateChanges.Diff(System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Sessions.SessionRef, Aw.Sindri.Core.Sessions.ObservedSession!>! previous, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.ObservedSession!>! now, System.DateTimeOffset at) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.SessionStateChange!>!
 Aw.Sindri.Core.Sessions.PaneQuestion
 const Aw.Sindri.Core.Sessions.PaneQuestion.MaxLines = 3 -> int
 static Aw.Sindri.Core.Sessions.PaneQuestion.Of(System.Collections.Generic.IReadOnlyList<string!>! lines) -> string?
@@ -23879,3 +23877,7 @@ Aw.Sindri.Core.Sessions.IBranchReader
 Aw.Sindri.Core.Sessions.IBranchReader.Branch(string! directory) -> string?
 Aw.Sindri.Core.Launch.StartedEntry.Title.get -> string?
 Aw.Sindri.Core.Launch.StartedEntry.Title.init -> void
+Aw.Sindri.Core.Sessions.SessionStateDebounce
+Aw.Sindri.Core.Sessions.SessionStateDebounce.SessionStateDebounce() -> void
+Aw.Sindri.Core.Sessions.SessionStateDebounce.Settle(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.ObservedSession!>! now, System.DateTimeOffset at) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.SessionStateChange!>!
+static readonly Aw.Sindri.Core.Sessions.SessionStateDebounce.HoldFor -> System.TimeSpan
