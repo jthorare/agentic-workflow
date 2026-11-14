@@ -203,4 +203,22 @@ public abstract class WorkflowStoreContract
 
         Expect.Equal(SindriErrors.GraphNotFound.Code, (await store.Get(_id, Token)).Error.Code);
     }
+
+    /// <summary>Activate sets WasActivated, Pause keeps it with no active revision, and a never-activated workflow has it false (#3683).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Was_activated_is_set_by_activate_and_kept_by_pause()
+    {
+        var store = Create();
+        _ = (await store.Create(_id, _slug, Spec("one"), "owner", Token)).Value;
+        Expect.Equal(false, (await store.Get(_id, Token)).Value.WasActivated);
+
+        var active = (await store.Activate(_id, 1, Token)).Value;
+        var paused = (await store.Pause(_id, Token)).Value;
+
+        Expect.Equal(true, active.WasActivated);
+        Expect.Equal(true, paused.WasActivated);
+        Expect.Equal(null, paused.ActiveRevision);
+        Expect.Equal(true, (await store.Get(_id, Token)).Value.WasActivated);
+    }
 }

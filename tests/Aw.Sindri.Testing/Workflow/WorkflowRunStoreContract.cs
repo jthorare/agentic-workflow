@@ -591,4 +591,39 @@ public abstract class WorkflowRunStoreContract
         Expect.Equal(0, (await store.InFlight(_workflow, Token)).Value.Count);
         Expect.Equal(expected: null, (await store.LatestOccurrence(_workflow, "manual", Token)).Value);
     }
+
+    /// <summary>A running node row begins now, a final row ends now and keeps the first start (#3683).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_node_row_gets_its_start_on_running_and_its_end_on_the_final_write()
+    {
+        var clock = new FakeTimeProvider(KnownInstants.Epoch);
+        var store = Create(clock);
+        _ = (await store.Insert(Run(1), Token)).Value;
+        var running = new NodeRun(Run(1).Id, NodeId.From("fetch"), 0, NodeRunStatus.Running, "{}", Output: null, Truncated: false, Error: null, Usage: null);
+
+        var first = (await store.RecordNodeRun(running, Token)).Value;
+        clock.Advance(TimeSpan.FromSeconds(5));
+        _ = (await store.RecordNodeRun(running with { Status = NodeRunStatus.Succeeded, Output = "{}" }, Token)).Value;
+
+        var row = (await store.NodeRuns(Run(1).Id, Token)).Value.Single();
+        Expect.Equal(KnownInstants.Epoch, first.StartedAt);
+        Expect.Equal(KnownInstants.Epoch, row.StartedAt);
+        Expect.Equal(KnownInstants.Epoch.AddSeconds(5), row.EndedAt);
+    }
+
+    /// <summary>A row written once, at its end, has an end and no start, so no seconds (#3683).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_node_row_written_once_at_its_end_has_no_start()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(1), Token)).Value;
+
+        _ = (await store.RecordNodeRun(new NodeRun(Run(1).Id, NodeId.From("skip"), 0, NodeRunStatus.Skipped, Input: null, Output: null, Truncated: false, Error: null, Usage: null), Token)).Value;
+
+        var row = (await store.NodeRuns(Run(1).Id, Token)).Value.Single();
+        Expect.Equal(null, row.StartedAt);
+        Expect.Equal(KnownInstants.Epoch, row.EndedAt);
+    }
 }
