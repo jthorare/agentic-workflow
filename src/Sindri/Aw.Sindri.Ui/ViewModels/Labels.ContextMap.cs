@@ -155,15 +155,6 @@ internal static partial class Labels
     /// <summary>The detail under the function names area when the code index is not built.</summary>
     internal const string ContextMapNamesDetail = "Function names are not available yet: the code index isn't built.";
 
-    /// <summary>The intent area, in the coverage sentence.</summary>
-    internal const string ContextMapWordIntent = "intent";
-
-    /// <summary>The product area, in the coverage sentence.</summary>
-    internal const string ContextMapWordProduct = "product";
-
-    /// <summary>The code area, in the coverage sentence.</summary>
-    internal const string ContextMapWordCode = "code";
-
     /// <summary>The function names area, in the coverage sentence.</summary>
     internal const string ContextMapWordNames = "function names";
 
@@ -171,23 +162,28 @@ internal static partial class Labels
     internal const string ContextMapSearchedNothing = "Nothing searched.";
 
     /// <summary>The coverage sentence's reason when the function names are not indexed.</summary>
-    internal const string ContextMapNamesNotIndexed = "Function names not indexed.";
+    internal const string ContextMapNamesNotIndexed = "Function names aren't indexed.";
 
     /// <summary>The coverage sentence's first part.</summary>
     /// <param name="areas">The areas searched in full (at least one).</param>
-    /// <returns>"Searched code." or "Searched product and code.".</returns>
+    /// <returns>"Searched Code." or "Searched Product and Code.".</returns>
     internal static string ContextMapSearchedSentence(IReadOnlyList<string> areas) => "Searched " + AreaList(areas) + ".";
 
     /// <summary>The coverage sentence's reason for areas with no records.</summary>
     /// <param name="areas">The areas with no records (at least one).</param>
-    /// <returns>"No intent or product records." or "No intent, product or code records.".</returns>
+    /// <returns>"No Why or Product records." or "No Why, Product or Code records.".</returns>
     internal static string ContextMapNoRecords(IReadOnlyList<string> areas) => "No " + OrList(areas) + " records.";
 
     /// <summary>The coverage sentence's reason for areas searched in part.</summary>
     /// <param name="areas">The areas searched in part (at least one).</param>
-    /// <returns>"Intent is only partly searched." or "Intent and code are only partly searched.".</returns>
-    internal static string ContextMapPartlySearched(IReadOnlyList<string> areas) =>
-        char.ToUpperInvariant(AreaList(areas)[0]) + AreaList(areas)[1..] + (areas.Count == 1 ? " is" : " are") + " only partly searched.";
+    /// <returns>"Why is only partly searched.", "Function names are only partly searched." or "Why and Code are only partly searched.".</returns>
+    internal static string ContextMapPartlySearched(IReadOnlyList<string> areas)
+    {
+        // The verb follows the noun: "function names" is plural even alone.
+        var plural = areas.Count > 1 || string.Equals(areas[0], ContextMapWordNames, StringComparison.Ordinal);
+        var list = AreaList(areas);
+        return char.ToUpperInvariant(list[0]) + list[1..] + (plural ? " are" : " is") + " only partly searched.";
+    }
 
     private static string OrList(IReadOnlyList<string> areas) => areas.Count switch
     {
