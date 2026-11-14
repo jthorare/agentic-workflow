@@ -154,9 +154,12 @@ public sealed class AgentsPageTerminalTests
         var (page, socket) = await WithOpenPane();
 
         var fate = await page.SendPanePaste(new string('a', 300 * 1024));
-        await Task.Delay(200, Token);   // the pump has run its script by now
+        for (var i = 0; i < 200 && page.Terminal.State != TerminalState.Reconnecting; i++)   // the script ended and the socket closed: the pump is done
+        {
+            await Task.Delay(10, Token);
+        }
 
-        Assert.Equal((TerminalKeyFate.TooBig, 0, "Paste too big to send"), (fate, socket.Sent.Count, page.Terminal.ControlLine));
+        Assert.Equal((TerminalKeyFate.TooBig, TerminalState.Reconnecting, 0, "Paste too big to send"), (fate, page.Terminal.State, socket.Sent.Count, page.Terminal.ControlLine));
     }
 
     [Fact]
