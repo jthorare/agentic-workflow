@@ -144,7 +144,7 @@ public sealed class ListPickerTests
 
         Assert.True(off.IsEnabled);   // enabled and focusable (#3651): unavailable is the row's own state
         Assert.True(off.IsUnavailable);
-        Assert.Equal("Needs a connection", ToolTip.GetTip(off));
+        Assert.Null(ToolTip.GetTip(off));   // the reason is inline, not a tooltip
         Assert.Equal(0, picked);
         window.Close();
         return true;
@@ -167,6 +167,25 @@ public sealed class ListPickerTests
 
         Assert.Equal("When a webhook arrives", Avalonia.Automation.AutomationProperties.GetName((Control)focused!));
         Assert.Empty(picked);
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task A_disabled_rows_reason_shows_under_its_label_in_the_secondary_style() => await OnUi(() =>
+    {
+        var (window, picker) = Show();
+        window.UpdateLayout();
+        var off = Tiles(picker).Single(t => (string?)t.Content == "When a webhook arrives");
+        var label = off.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Text == "When a webhook arrives");
+        var reason = off.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Text == "Needs a connection");
+
+        Assert.True(reason.IsEffectivelyVisible);
+        Assert.True(reason.TranslatePoint(default, off)!.Value.Y >= label.TranslatePoint(new Point(0, label.Bounds.Height), off)!.Value.Y - 0.5, "the reason sits under the label");
+        Assert.Contains("caption", reason.Classes, StringComparer.Ordinal);
+        Assert.Contains("subtle", reason.Classes, StringComparer.Ordinal);
+        Assert.Equal(Token("Brush.InkSubtle"), Assert.IsType<ISolidColorBrush>(reason.Foreground, exactMatch: false).Color);
+        Assert.DoesNotContain(Tiles(picker).Where(t => !ReferenceEquals(t, off)), t => t.GetVisualDescendants().OfType<TextBlock>().Any(b => b.IsEffectivelyVisible && b.Text == "Needs a connection"));
         window.Close();
         return true;
     });

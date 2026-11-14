@@ -195,9 +195,9 @@ internal sealed class ListPicker : UserControl
                 var tile = new SelectableTile { Content = item.Text, IsUnavailable = !item.IsEnabled, IsSelected = string.Equals(item.Id, SelectedId, StringComparison.Ordinal) };
                 tile.Classes.Add("row");
                 AutomationProperties.SetName(tile, item.Text);
-                if (!item.IsEnabled && item.Reason is { Length: > 0 } reason)
+                if (!item.IsEnabled)
                 {
-                    ToolTip.SetTip(tile, reason);
+                    tile.Reason = item.Reason;
                 }
 
                 tile.Click += (_, _) =>
