@@ -97,7 +97,7 @@ public sealed class GraphEditTests
         await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
 
         Assert.Empty(_f.Server.AppliedWorkflowOps);
-        Assert.True(page.IsEditing);
+        Assert.True(page.IsSettingsOpen);
         Assert.True(page.IsNewStep);
         Assert.Equal([("prompt", "Summarize the open pull requests")], page.Editor.Fields.Select(f => (f.Name, f.Text)));
         Assert.True(page.CanSave);   // the example is complete, so Save works untouched
@@ -117,7 +117,7 @@ public sealed class GraphEditTests
         _ = Assert.Single(_f.Server.AppliedWorkflowOps);
         AssertSent(0, """[{"op":"add_node","id":"run_agent_1","type":"run_agent","config":{"prompt":"Check the repos"}},{"op":"connect","from":"start","to":"run_agent_1"}]""");
         Assert.False(page.IsNewStep);
-        Assert.False(page.IsEditing);
+        Assert.False(page.IsSettingsOpen);
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public sealed class GraphEditTests
 
         Assert.Empty(_f.Server.AppliedWorkflowOps);
         Assert.False(page.IsNewStep);
-        Assert.False(page.IsEditing);
+        Assert.False(page.IsSettingsOpen);
         Assert.Equal(nodes, page.Runs.Graph.Nodes.Count);
     }
 

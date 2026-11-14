@@ -19,7 +19,7 @@ internal sealed partial class WorkflowsPageViewModel
     {
         _edits++;   // an Edit read still on the way must not select a node over this form
         Editor.BeginNewStep(block, id, after);
-        (IsEditing, GraphEdit.SheetOpen) = (true, true);
+        (IsEditing, IsSettingsOpen, GraphEdit.SheetOpen) = (true, true, true);
         OnChanged(nameof(IsNewStep));
         OnChanged(nameof(NoFieldsText));
         OnChanged(nameof(CanSave));
