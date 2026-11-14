@@ -14,6 +14,12 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
 {
     /// <summary>The refusal code for a workflow with no active revision.</summary>
     internal const string NotActive = "SND-GRAPH-105";
+    /// <summary>How long a Starting placeholder waits for the server's run row before it says the run did not start.</summary>
+    internal static readonly TimeSpan StartWait = TimeSpan.FromSeconds(10);
+
+    private readonly UiContext _ui = new();
+    private readonly Dictionary<string, ITimer> _startTimers = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _didNotStart = new(StringComparer.Ordinal);
     private int _reads;
     private readonly List<string> _starting = [];   // runs Run now started whose views row the server has not shown yet: each is drawn as a Starting placeholder until its real row arrives
 
@@ -91,7 +97,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         if (!string.Equals(Slug, slug, StringComparison.Ordinal))
         {
             Rows.Clear();   // another workflow: none of the old runs stay
-            _starting.Clear();
+            ClearStarting();
             (Head, DetailText) = (string.Empty, string.Empty);
             (IsFailed, FailedText, IsEmpty, EmptyText) = (false, string.Empty, false, string.Empty);   // nor does the old one's failure or "off" line
             (CanRun, NoticeText) = (false, string.Empty);   // until this one's runs read says it is on
@@ -150,12 +156,68 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         }
 
         _starting.Add(runId);
+        _startTimers[runId] = clock.CreateTimer(_ => _ui.PostOrInline(() => StartTimedOut(runId)), state: null, StartWait, Timeout.InfiniteTimeSpan);   // no run row by then: the placeholder says so
         Rows.Insert(0, Placeholder(runId));
         (IsEmpty, EmptyText) = (false, string.Empty);
     }
 
-    private RunRowViewModel Placeholder(string runId) =>
-        new(new WorkflowRunRowView(runId, Shown?.Revision ?? 0, "starting", "manual", clock.GetUtcNow(), EndedAt: null, Error: null), clock);
+    private RunRowViewModel Placeholder(string runId)
+    {
+        var row = new RunRowViewModel(new WorkflowRunRowView(runId, Shown?.Revision ?? 0, "starting", "manual", clock.GetUtcNow(), EndedAt: null, Error: null), clock);
+        if (_didNotStart.Contains(runId))
+        {
+            row.MarkDidNotStart();
+        }
+
+        return row;
+    }
+
+    // The timer ran out: the placeholder stays in the list (a late row still replaces it) and says the run did not start.
+    private void StartTimedOut(string runId)
+    {
+        StopStartTimer(runId);
+        if (!_starting.Contains(runId, StringComparer.Ordinal))
+        {
+            return;
+        }
+
+        _ = _didNotStart.Add(runId);
+        Rows.FirstOrDefault(r => string.Equals(r.Id, runId, StringComparison.Ordinal) && string.Equals(r.Status, "starting", StringComparison.Ordinal))?.MarkDidNotStart();
+    }
+
+    private void StopStartTimer(string runId)
+    {
+        if (_startTimers.Remove(runId, out var timer))
+        {
+            timer.Dispose();
+        }
+    }
+
+    private void ClearStarting()
+    {
+        foreach (var timer in _startTimers.Values)
+        {
+            timer.Dispose();
+        }
+
+        _starting.Clear();
+        _startTimers.Clear();
+        _didNotStart.Clear();
+    }
+
+    /// <summary>Drops a Starting placeholder (Retry on a run that did not start): its row goes and its timer stops.</summary>
+    /// <param name="runId">The placeholder's run id.</param>
+    internal void DropStarting(string runId)
+    {
+        _ = _starting.Remove(runId);
+        _ = _didNotStart.Remove(runId);
+        StopStartTimer(runId);
+        var row = Rows.FirstOrDefault(r => string.Equals(r.Id, runId, StringComparison.Ordinal) && string.Equals(r.Status, "starting", StringComparison.Ordinal));
+        if (row is not null)
+        {
+            _ = Rows.Remove(row);
+        }
+    }
 
     /// <summary>Turns Run now off: Sindri said the workflow has no active revision.</summary>
     internal void TurnOff() => CanRun = false;
@@ -175,6 +237,8 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         foreach (var id in _starting.Where(id => list.Runs.Any(r => string.Equals(r.Id, id, StringComparison.Ordinal))).ToList())
         {
             _ = _starting.Remove(id);   // the real row is here: it replaces the placeholder
+            _ = _didNotStart.Remove(id);
+            StopStartTimer(id);
         }
 
         foreach (var id in _starting)
