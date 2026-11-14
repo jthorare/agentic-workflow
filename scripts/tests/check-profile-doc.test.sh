@@ -30,6 +30,23 @@ if has -F 'string? Drift = null)' "$d/src/Sindri/Aw.Sindri.Core/Profile/SindriPr
 run "$d"; expect_rc "a new profile key the doc lacks fails" 1
 expect_out "names the key and the fix" "add drift to docs/csharp/sindri-profile.md"
 
+echo "dotted rows"
+d="$TMPROOT/dotted"
+mkdir -p "$d/src/Sindri/Aw.Sindri.Core/Profile" "$d/docs/csharp"
+cat > "$d/src/Sindri/Aw.Sindri.Core/Profile/P.cs" <<'CS'
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed record SindriProfile(int Version, SetupOauth? Oauth = null);
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed record SetupOauth(string? Linear = null, string? Github = null);
+CS
+printf '| `version` |\n| `oauth.linear` |\n| `oauth.github` |\n' > "$d/docs/csharp/sindri-profile.md"
+run "$d"; expect_rc "both parts of a dotted row count (oauth.linear names oauth and linear)" 0
+printf '| `version` |\n| `oauth.linear` |\n' > "$d/docs/csharp/sindri-profile.md"
+run "$d"; expect_rc "a nested key with no row still fails" 1
+expect_out "names the missing nested key" "SetupOauth.github is not in docs/csharp/sindri-profile.md"
+printf '| `version` |\n| `oauth.linearish` |\n| `oauth.github` |\n' > "$d/docs/csharp/sindri-profile.md"
+run "$d"; expect_rc "a longer name that starts with the key does not count" 1
+
 echo
 echo "check-profile-doc.test.sh: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

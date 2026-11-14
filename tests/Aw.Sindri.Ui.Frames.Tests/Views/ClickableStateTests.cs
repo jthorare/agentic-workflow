@@ -208,12 +208,13 @@ public sealed class ClickableStateTests : FrameHost
 
         var at = await PointAt(window, () => Corner(window, row), row);
         Frame(window, "selected-hover", "gh2535-");
-        Assert.Equal(TokenColor("Brush.Clickable.Pressed"), ((ISolidColorBrush)row.Background!).Color);
+        Assert.Equal(TokenColor("Brush.Clickable.Lift"), ((ISolidColorBrush)row.Background!).Color);
         Assert.Equal(TokenColor("Brush.Primary"), ((ISolidColorBrush)row.BorderBrush!).Color);
 
-        // The selected hover already sits on the pressed fill, so the press adds nothing visible here (the border is Primary either way); the row must still not move.
+        // The selected hover sits on the lift fill (#3611), so the press steps it to the pressed fill (the border is Primary either way); the row must still not move.
         window.MouseDown(at, MouseButton.Left, RawInputModifiers.None);
         Settle(window);
+        Assert.Equal(TokenColor("Brush.Clickable.Pressed"), ((ISolidColorBrush)row.Background!).Color);
         Frame(window, "selected-pressed", "gh2535-");
         AssertNothingMoves(row);
         window.MouseUp(at, MouseButton.Left, RawInputModifiers.None);
@@ -280,7 +281,7 @@ public sealed class ClickableStateTests : FrameHost
         Frame(window, $"tint-{tint}-hover", "gh2535-");
 
         Assert.True(row.IsPointerOver, $"at {at}, row bounds {row.Bounds}, hit {Describe(window.InputHitTest(at))}, chain {Chain(row)}, at now {row.TranslatePoint(new Point(4, 4), window)}");
-        Assert.Equal(TokenColor(tint == "subtle" ? "Brush.Clickable.Pressed" : "Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color); // a calm row rests on Surface2, so it lifts to the pressed fill
+        Assert.Equal(TokenColor(tint == "subtle" ? "Brush.Clickable.Lift" : "Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color); // a calm row rests on Surface2, so it lifts to the lift fill (Surface3, #3611)
         Assert.NotEqual(rest, ((ISolidColorBrush)row.Background!).Color);
     });
 

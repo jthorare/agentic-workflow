@@ -14,17 +14,18 @@ internal sealed partial class SetupStepViewModel : ObservableObject
     [
         nameof(Title), nameof(NumberText), nameof(Chip), nameof(ChipWord), nameof(Sub), nameof(DetailText), nameof(ProgressText), nameof(ProgressFraction), nameof(ErrorText), nameof(Items), nameof(Preview), nameof(HasPreview), nameof(Action), nameof(Fields),
         nameof(IsMeterFailed), nameof(HintText), nameof(HasHint), nameof(Agents), nameof(HasAgents), nameof(TrustOnceText), nameof(AgentsNoteText),
-        nameof(Name), nameof(Note), nameof(HasNote), nameof(HasDetail), nameof(HasProgress), nameof(HasError), nameof(HasItems), nameof(HasAction), nameof(LinkUri), nameof(LinkText), nameof(HasLink),
+        nameof(Name), nameof(Note), nameof(HasNote), nameof(HasDetail), nameof(HasDetailAbove), nameof(HasDetailBelow), nameof(HasProgress), nameof(HasError), nameof(HasItems), nameof(HasAction), nameof(LinkUri), nameof(LinkText), nameof(HasLink), nameof(HasBody),
     ];
 
     private readonly Func<SetupStepView, SetupActionViewModel?, SetupActionViewModel?> _action;
     private string? _overrideNote;
+    private string _shared = string.Empty;
 
     internal SetupStepViewModel(SetupStepView step, int number, Func<SetupStepView, SetupActionViewModel?, SetupActionViewModel?> action)
     {
         (Step, Number, _action) = (step, number, action);
         Derive();
-        IsOpen = NeedsYou || IsFailed;
+        IsOpen = Opens;
     }
 
     /// <summary>The step as last served.</summary>
@@ -157,7 +158,7 @@ internal sealed partial class SetupStepViewModel : ObservableObject
     /// <returns>True when its state changed.</returns>
     internal bool Update(SetupStepView step, bool keepWorking = false)
     {
-        var changed = !string.Equals(Step.State, step.State, StringComparison.Ordinal);
+        var (changed, hadBody) = (!string.Equals(Step.State, step.State, StringComparison.Ordinal), HasBody);
         Step = step;
         if (!keepWorking)
         {
@@ -165,10 +166,7 @@ internal sealed partial class SetupStepViewModel : ObservableObject
         }
 
         Derive();
-        if (changed && (NeedsYou || IsFailed))
-        {
-            IsOpen = true;
-        }
+        OpenOnUpdate(changed, hadBody);
 
         return changed;
     }
@@ -189,6 +187,34 @@ internal sealed partial class SetupStepViewModel : ObservableObject
         OnChanged(nameof(Note));
         OnChanged(nameof(HasNote));
     }
+
+    /// <summary>Takes the line the page shows once for several failed steps; a step whose fix is that line leaves it off its own body.</summary>
+    /// <param name="line">The page's line, or empty.</param>
+    internal void Share(string line)
+    {
+        if (!string.Equals(_shared, line, StringComparison.Ordinal))
+        {
+            _shared = line;
+            Derive();
+            CloseIfBodyless();
+        }
+    }
+
+    // The step's own fix; empty once finished, while a retry runs, or when the page says it once for several steps (#3610).
+    private string Detail(bool running)
+    {
+        var detail = IsFinished || running ? string.Empty : Step.Detail ?? string.Empty;
+        return SaysOnPage(detail) ? string.Empty : TakeLink(detail, reset: false);
+    }
+
+    // The red band's sentence; empty while a retry runs, or when the line under the title already says it (#3610).
+    private string Band(bool running, string sub)
+    {
+        var sentence = running ? string.Empty : Step.Error?.Sentence ?? string.Empty;
+        return string.Equals(sentence, sub, StringComparison.Ordinal) ? string.Empty : sentence;
+    }
+
+    private bool SaysOnPage(string detail) => detail.Length > 0 && string.Equals(detail, _shared, StringComparison.Ordinal);
 
     /// <summary>Asks again whether the app can do its action now (the catalog or the Needs-you list changed).</summary>
     internal void Rederive()
@@ -216,10 +242,11 @@ internal sealed partial class SetupStepViewModel : ObservableObject
         var state = running ? "running" : Step.State;
         var (word, said, tone) = Labels.SetupChip(state);
         (Title, Chip, ChipWord) = (Labels.SetupTitle(Step.Id, Step.Title), new StateChip(word, tone), said);
-        Sub = TakeLink(SubFor(state), reset: true);
+        var sub = SubFor(state);
+        Sub = TakeLink(sub, reset: true);
         Note = _overrideNote ?? string.Empty;
-        DetailText = IsFinished || running ? string.Empty : TakeLink(Step.Detail ?? string.Empty, reset: false);
-        ErrorText = running ? string.Empty : Step.Error?.Sentence ?? string.Empty;
+        DetailText = Detail(running);
+        ErrorText = Band(running, sub);
         Name = Labels.SetupStepName(Title, said, Sub);
         Preview = PreviewLines();
         DeriveProgress();

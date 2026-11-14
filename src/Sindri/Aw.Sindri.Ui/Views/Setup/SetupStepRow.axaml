@@ -8,7 +8,7 @@
   <!-- One step of the checklist (setup spec §2.4): the header is the row (a number or a tick, the title, the line under it, the state word) and opens its body, which holds what the
        step is doing, its error in words, and its one action. A step that needs the person or failed opens by itself. Every named line is a Border wrapper (a TextBlock's peer ignores
        AutomationProperties.Name). -->
-  <Expander x:Name="SetupStepExpander" Classes="setup-step" IsExpanded="{Binding IsOpen, Mode=TwoWay}" AutomationProperties.Name="{Binding Name}">
+  <Expander x:Name="SetupStepExpander" Classes="setup-step" Classes.no-body="{Binding !HasBody}" IsExpanded="{Binding IsOpen, Mode=TwoWay}" AutomationProperties.Name="{Binding Name}">
     <Expander.Header>
       <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="64" ColumnSpacing="12">
         <Border Classes="step-number" AutomationProperties.AccessibilityView="Raw">
@@ -25,7 +25,7 @@
       <HyperlinkButton x:Name="SetupStepLink" IsVisible="{Binding HasLink}" NavigateUri="{Binding LinkUri}" Padding="0" AutomationProperties.Name="{Binding LinkText}">
         <TextBlock Classes="caption" Text="{Binding LinkText}" AutomationProperties.AccessibilityView="Raw" />
       </HyperlinkButton>
-      <Border IsVisible="{Binding HasDetail}" AutomationProperties.Name="{Binding DetailText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <Border x:Name="SetupStepDetailAbove" IsVisible="{Binding HasDetailAbove}" AutomationProperties.Name="{Binding DetailText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption" Text="{Binding DetailText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
       <StackPanel IsVisible="{Binding HasProgress}" Spacing="4">
@@ -58,6 +58,10 @@
       </ItemsControl>
       <Border x:Name="SetupStepError" Classes="error-panel" IsVisible="{Binding HasError}" AutomationProperties.Name="{Binding ErrorText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption" Text="{Binding ErrorText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <!-- A failed step: what broke (the band) comes before what to do (the detail), #3610. Every other step keeps its detail above. -->
+      <Border x:Name="SetupStepDetail" IsVisible="{Binding HasDetailBelow}" AutomationProperties.Name="{Binding DetailText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption" Text="{Binding DetailText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
       <Border x:Name="SetupStepHint" IsVisible="{Binding HasHint}" AutomationProperties.Name="{Binding HintText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption subtle" Text="{Binding HintText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
