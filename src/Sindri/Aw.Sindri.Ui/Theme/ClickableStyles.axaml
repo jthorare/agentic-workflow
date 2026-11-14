@@ -49,8 +49,12 @@
   <Style Selector="Border.clickable:focus-visible:pointerover, Border.clickable:focus-visible:pressed">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
   </Style>
-  <Style Selector="Border.clickable.selected:pointerover, Border.clickable.selected:pressed">
+  <Style Selector="Border.clickable.selected:pointerover">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
+  </Style>
+  <!-- On the pressed fill Primary is 2.93:1; PrimaryHover is 4.80:1 (#3517). A press keeps the bar as the only selection sign, so it must hold 3:1. -->
+  <Style Selector="Border.clickable.selected:pressed">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
   </Style>
   <!-- A selected row with focus keeps the focus ring's colour too: the rule above comes later than the focus one and would turn it Primary (#3506). -->
   <Style Selector="Border.clickable.selected:focus-visible:pointerover, Border.clickable.selected:focus-visible:pressed">
