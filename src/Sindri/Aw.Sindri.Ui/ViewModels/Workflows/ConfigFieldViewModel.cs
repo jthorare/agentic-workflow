@@ -84,6 +84,9 @@ internal sealed class ConfigFieldViewModel : ObservableObject
     /// <summary>The config key.</summary>
     public string Name { get; }
 
+    /// <summary>The automation id of this field's checkbox: "EditorFieldCheck." and the config key, so a driver can target one field's checkbox (#3111).</summary>
+    public string CheckAutomationId => "EditorFieldCheck." + Name;
+
     /// <summary>"text", "boolean", "number", "text list" or "object", as the block list serves it.</summary>
     public string Type { get; }
 

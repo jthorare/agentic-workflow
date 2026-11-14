@@ -158,7 +158,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         }
 
         var title = node.Title is { Length: > 0 } own ? own : block?.Title ?? node.Type;
-        return Labels.WfEditorStep(title, block is null ? node.Type : block.IsTrigger ? "trigger" : block.Title);
+        return Labels.WfEditorStep(title, block is null ? node.Type : block.IsTrigger ? Labels.WfEditorTriggerKind : block.Title);
     }
 
     /// <summary>Sends a set_config for one field of the selected node.</summary>

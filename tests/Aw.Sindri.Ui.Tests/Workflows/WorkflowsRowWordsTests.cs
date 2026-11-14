@@ -83,7 +83,7 @@ public sealed class WorkflowsRowWordsTests
 
         await page.OpenWorkflow(Slug, Token);
 
-        Assert.Equal("2 nodes · created by owner", page.Runs.DetailText);
+        Assert.Equal("2 steps · created by owner", page.Runs.DetailText);
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public sealed class WorkflowsRowWordsTests
 
         await page.OpenWorkflow(Slug, Token);
 
-        Assert.Equal("Revision 1 of 2 · 2 nodes · created by you", page.Runs.DetailText);
+        Assert.Equal("Revision 1 of 2 · 2 steps · created by you", page.Runs.DetailText);
     }
 
     [Fact]
@@ -111,7 +111,7 @@ public sealed class WorkflowsRowWordsTests
 
         await page.OpenWorkflow(Slug, Token);
 
-        Assert.Equal("2 nodes · created by owner", page.Runs.DetailText);   // #2845: like the list row, a first revision is not news
+        Assert.Equal("2 steps · created by owner", page.Runs.DetailText);   // #2845: like the list row, a first revision is not news
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public sealed class WorkflowsRowWordsTests
 
         await page.OpenWorkflow(Slug, Token);
 
-        Assert.Equal("Revision 2 · 2 nodes · created by owner", page.Runs.DetailText);
+        Assert.Equal("Revision 2 · 2 steps · created by owner", page.Runs.DetailText);
     }
 
     [Fact]

@@ -26,9 +26,6 @@ internal static partial class Labels
     /// <summary>The action beside a failed read.</summary>
     internal const string WfTryAgain = "Try again";
 
-    /// <summary>The action that goes up one level.</summary>
-    internal const string WfBack = "Back";
-
     /// <summary>The list's head: "2 workflows · 1 active".</summary>
     /// <param name="total">Workflows listed.</param>
     /// <param name="active">Workflows with an active revision that are not paused.</param>
@@ -58,7 +55,7 @@ internal static partial class Labels
     /// <param name="by">"owner" or "session:&lt;id&gt;".</param>
     /// <param name="age">How long since.</param>
     /// <returns>The words.</returns>
-    internal static string WfChangedBy(string by, TimeSpan age) => "Changed by " + WfActor(by) + ", " + Age(age) + " ago";
+    internal static string WfChangedBy(string by, TimeSpan age) => "Changed by " + WfActor(by) + ", " + (age.TotalSeconds < 10 ? "just now" : Age(age) + " ago");
 
     /// <summary>A workflow row's accessible name.</summary>
     /// <param name="name">The workflow's name.</param>
@@ -95,13 +92,13 @@ internal static partial class Labels
     /// <summary>The line under a workflow's name: which revision, how big, who made it.</summary>
     /// <param name="shown">The revision shown.</param>
     /// <param name="latest">The newest revision.</param>
-    /// <param name="nodes">How many nodes the graph has.</param>
+    /// <param name="nodes">How many steps the graph has.</param>
     /// <param name="createdBy">Who made the workflow, as served: the person's own actor reads "you".</param>
     /// <param name="hasActive">True when a revision is active; without one, or while the workflow has only its first revision (like the list row, #2845), the line says no revision.</param>
     /// <returns>The words.</returns>
     internal static string WfDetail(int shown, int latest, int nodes, string createdBy, bool hasActive) => string.Create(
         CultureInfo.InvariantCulture,
-        $"{(hasActive && latest >= 2 ? (shown == latest ? $"Revision {shown} · " : $"Revision {shown} of {latest} · ") : string.Empty)}{nodes} {(nodes == 1 ? "node" : "nodes")} · created by {WfActor(createdBy)}");
+        $"{(hasActive && latest >= 2 ? (shown == latest ? $"Revision {shown} · " : $"Revision {shown} of {latest} · ") : string.Empty)}{nodes} {(nodes == 1 ? "step" : "steps")} · created by {WfActor(createdBy)}");
 
     /// <summary>A trigger kind as a word ("manual" is "Manual").</summary>
     /// <param name="kind">The kind as served.</param>
