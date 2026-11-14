@@ -61,6 +61,9 @@ internal sealed class TmuxLanePane(ICommandRunner runner, string tmux, string? s
     public async ValueTask<Result<Unit>> PressEnter(string session, CancellationToken cancellationToken) =>
         await Keys(session, ["send-keys", "-t", Target(session), "Enter"], cancellationToken).ConfigureAwait(false);
 
+    public async ValueTask<Result<Unit>> ClearInput(string session, CancellationToken cancellationToken) =>
+        await Keys(session, ["send-keys", "-t", Target(session), "C-u"], cancellationToken).ConfigureAwait(false);
+
     public async ValueTask<Result<string>> Capture(string session, CancellationToken cancellationToken)
     {
         var name = await SocketName(cancellationToken).ConfigureAwait(false);

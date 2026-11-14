@@ -30,6 +30,7 @@ public sealed partial class GraphValidator(GraphValidationContext context)
         Triggers(spec, structure, found);
         Cycles(structure, found);
         Loops(spec, found);
+        PromptReads(spec, structure, found);
         var loops = spec.Nodes
             .Where(static n => string.Equals(n.Type, LoopBody.ForEachType, StringComparison.Ordinal))
             .Select(n => LoopBody.Find(spec, n.Id))
@@ -43,6 +44,8 @@ public sealed partial class GraphValidator(GraphValidationContext context)
 
         return new GraphValidation(mode, found);
     }
+
+    internal bool IsTriggerType(string type) => context.Blocks.TryGetValue(type, out var block) && block.IsTrigger;
 
     private static void Duplicates(GraphSpec spec, List<GraphFinding> found)
     {

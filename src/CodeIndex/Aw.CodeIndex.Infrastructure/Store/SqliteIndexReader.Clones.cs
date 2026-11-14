@@ -19,7 +19,7 @@ internal sealed partial class SqliteIndexReader
     private const string SharedBand = "SELECT " + HitColumns + ", s.minhash FROM symbols s WHERE s.minhash IS NOT NULL AND s.id <> $id AND s.id IN ("
         + "SELECT b2.symbol_id FROM bands b1 JOIN bands b2 ON b2.key = b1.key WHERE b1.symbol_id = $id) ORDER BY s.ref LIMIT $limit";
 
-    private const string Vectors = "SELECT symbol_id, vector FROM embeddings";
+    private const string Vectors = "SELECT symbol_id, vector FROM embeddings WHERE length(vector) > 0";
 
     private const string HitOf = "SELECT " + HitColumns + " FROM symbols s WHERE s.id = $id";
 

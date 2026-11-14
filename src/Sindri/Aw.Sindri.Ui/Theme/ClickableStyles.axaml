@@ -2,31 +2,30 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:theme="using:Aw.Sindri.Ui.Theme">
   <!-- The one look of a clickable surface (#2535): put Classes="clickable" on a Border that opens something or runs a command. Hand cursor; under the
-       pointer the background and border lift to Brush.Clickable.Hover / Brush.Clickable.HoverBorder, while a button is down they take Brush.Clickable.Pressed / Brush.Clickable.PressedBorder and the surface scales to 0.98 about its centre (Linear and Raycast press the same way).
+       pointer the background and border lift to Brush.Clickable.Hover / Brush.Clickable.HoverBorder, while a button is down they take Brush.Clickable.Pressed / Brush.Clickable.PressedBorder and nothing moves (a scale blurs the 1 px border, a shift gets clipped).
        The colours ease over Motion.Hover (theme:Clickable gives the control its Transitions; zero under reduced motion). A keyboard focus ring stays
        each surface's own (:focus-visible), and a surface that draws one keeps it over the hover. A surface that is not clickable gets none of this. -->
   <Style Selector="Border.clickable">
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="theme:Clickable.Track" Value="True" />
-    <Setter Property="RenderTransformOrigin" Value="50%,50%" />
-    <Setter Property="RenderTransform" Value="none" />
   </Style>
   <Style Selector="Border.clickable:pointerover">
     <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Hover}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.HoverBorder}" />
   </Style>
-  <!-- A calm Needs You row rests on Surface2, close to the hover fill: it lifts to the pressed fill so the pointer still shows. -->
+  <!-- A calm Needs You row rests on Surface2, close to the hover fill: it lifts to the lift fill so the pointer still shows. -->
   <Style Selector="Border.clickable.subtle:pointerover">
-    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Lift}" />
   </Style>
-  <!-- A selected row rests on Surface2 too (QueueStyles item-row.selected): the same lift. -->
+  <!-- A selected row rests on Surface2 too (QueueStyles item-row.selected): the same lift fill. -->
   <Style Selector="Border.clickable.selected:pointerover">
-    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Lift}" />
   </Style>
   <Style Selector="Border.clickable:pressed">
     <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.PressedBorder}" />
-    <Setter Property="RenderTransform" Value="scale(0.98)" />
+    <!-- #3190: a press changes only the fill and the border; nothing moves. A scale blurred the 1 px border (it read 2.5-2.8:1 at 1x) and a 1 px shift got clipped
+         at the bottom of a tight clip, which hid the bottom border row. -->
   </Style>
   <!-- A steady or outlined Needs You row rests like any clickable row (#2780: one accent, so no amber tint); under the pointer it takes the hover fill and the pressed fill on a press,
        and an outlined row keeps its neutral border. Declared after the grey hover and press above so they win, and before the focus and selection borders below. -->
@@ -50,7 +49,15 @@
   <Style Selector="Border.clickable:focus-visible:pointerover, Border.clickable:focus-visible:pressed">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
   </Style>
-  <Style Selector="Border.clickable.selected:pointerover, Border.clickable.selected:pressed">
+  <Style Selector="Border.clickable.selected:pointerover">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
+  </Style>
+  <!-- On the pressed fill Primary is 2.93:1; PrimaryHover is 4.80:1 (#3517). A press keeps the bar as the only selection sign, so it must hold 3:1. -->
+  <Style Selector="Border.clickable.selected:pressed">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+  </Style>
+  <!-- A selected row with focus keeps the focus ring's colour too: the rule above comes later than the focus one and would turn it Primary (#3506). -->
+  <Style Selector="Border.clickable.selected:focus-visible:pointerover, Border.clickable.selected:focus-visible:pressed">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
   </Style>
 </Styles>

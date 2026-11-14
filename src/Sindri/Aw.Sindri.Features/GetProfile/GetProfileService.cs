@@ -31,10 +31,14 @@ internal sealed class GetProfileService(IViewReader views, IProjectorStatus stat
         var loaded = await live.Load(cancellationToken).ConfigureAwait(false);   // the file as it is now: one load serves the file hash and the summary
         var fileHash = loaded.IsSuccess ? loaded.Value.Hash : (ProfileHash?)null;
         var summary = latest.IsSuccess && (changed || latest.Value is null) ? await Summarise(latest.Value?.Profile, loaded, cancellationToken).ConfigureAwait(false) : null;
+        var editor = EditorOf(loaded);
         return row.Value is { } r
-            ? new GetProfileResponse(r.Approved, r.ApprovedAt, r.Live, fileHash, r.CheckedAt, r.Changed, r.ChangedPaths, asOf, summary)
-            : new GetProfileResponse(Approved: null, ApprovedAt: null, Live: null, fileHash, CheckedAt: null, Changed: false, ChangedPaths: [], asOf, summary);
+            ? new GetProfileResponse(r.Approved, r.ApprovedAt, r.Live, fileHash, r.CheckedAt, r.Changed, r.ChangedPaths, asOf, summary, editor)
+            : new GetProfileResponse(Approved: null, ApprovedAt: null, Live: null, fileHash, CheckedAt: null, Changed: false, ChangedPaths: [], asOf, summary, editor);
     }
+
+    // The workflow.editor key of the live file; null when it is unset or the file does not load.
+    private static string? EditorOf(Result<LoadedProfile> loaded) => loaded.IsSuccess ? loaded.Value.Profile.Workflow?.Editor : null;
 
     // Null when the live profile does not load (the problem shows elsewhere) or asks for nothing new.
     private async ValueTask<ProfileSummary?> Summarise(SindriProfile? approvedProfile, Result<LoadedProfile> loaded, CancellationToken cancellationToken)

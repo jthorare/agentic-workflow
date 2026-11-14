@@ -16,7 +16,7 @@ fail() { FAIL=$((FAIL + 1)); echo "  FAIL $1"; }
 run() { set +e; OUT="$(bash "$SCRIPT" "$@" 2>&1)"; RC=$?; set -e; }
 expect() {   # <label> <rc> [<regex>]
   if [ "$RC" -ne "$2" ]; then fail "$1: exit $RC, want $2"; printf '%s\n' "$OUT" | sed 's/^/      | /'; return; fi
-  if [ -n "${3:-}" ] && ! printf '%s\n' "$OUT" | grep -qE -- "$3"; then fail "$1: output lacks /$3/"; printf '%s\n' "$OUT" | sed 's/^/      | /'; return; fi
+  if [ -n "${3:-}" ] && ! grep -qE -- "$3" <<<"$OUT"; then fail "$1: output lacks /$3/"; printf '%s\n' "$OUT" | sed 's/^/      | /'; return; fi
   ok "$1"
 }
 
@@ -121,6 +121,21 @@ run check --file "$f" --requirements "$TMPROOT/code-index-requirements.txt" --pi
 expect "a graphify.pin with no row fails" 1 'CODEIDX-LOCK-007 .*absent'
 run check --file "$f" --requirements "$TMPROOT/code-index-requirements.txt" --pin "$TMPROOT/absent.pin"
 expect "a missing graphify.pin is a usage or I/O error" 2 'cannot read'
+
+# #3217: under memory pressure the kernel killed the checker's awk. The script took any awk failure for "findings", skipped the
+# row messages and still exited 1 (only the graphify.pin lines were left), so the suite saw exit 1 with no CODEIDX-LOCK-002 line.
+# A killed awk is a tool error (exit 2), never findings. The stub awk kills itself on the check program and runs the real awk otherwise.
+REALAWK="$(command -v awk)"
+mkdir "$TMPROOT/killawk"
+cat >"$TMPROOT/killawk/awk" <<STUB
+#!/usr/bin/env bash
+case "\$*" in *CODEIDX-LOCK-001*) kill -9 \$\$ ;; esac
+exec "$REALAWK" "\$@"
+STUB
+chmod +x "$TMPROOT/killawk/awk"
+f="$(good_body | sed 's/2026-01-02T00:00:00Z/2026-01-02/' | lock killed)"
+OUT="$(PATH="$TMPROOT/killawk:$PATH" bash "$SCRIPT" check --file "$f" --requirements "$TMPROOT/code-index-requirements.txt" --pin "$TMPROOT/graphify.pin" 2>&1)" && RC=0 || RC=$?
+expect "an awk killed mid-check is a tool error, not findings" 2 'awk'
 
 # The shipped lock and graphify.pin agree (graphify.pin is the one pin source).
 want="$(awk '$1 == "graphify" { print $2 }' "$REPO/context/graphify.pin")"

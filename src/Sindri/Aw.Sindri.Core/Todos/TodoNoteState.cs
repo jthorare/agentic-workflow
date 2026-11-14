@@ -20,4 +20,7 @@ public enum TodoNoteState
 
     /// <summary>Three swaps in one pass each found a new edit; the next 60 s check tries again.</summary>
     Busy,
+
+    /// <summary>There is no profile yet, so there is no note to sync (#3113): not a failure, and no error to show.</summary>
+    NotSetUp,
 }

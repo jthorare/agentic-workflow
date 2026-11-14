@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Aw.Kernel;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Events;
@@ -194,6 +195,77 @@ public sealed class SchedulerHostTests
         Assert.Equal(ran.Count, Runs("heartbeat").Select(r => r.CommandId).Distinct().Count());   // each run is its own command
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_run_that_finds_the_command_gate_busy_is_retried_on_the_next_beat_and_never_recorded_failed()
+    {
+        // #3553: on a fresh start a service's first command lost the gate to start-up work (SND-API-009) and the run was recorded failed, so health read Degraded
+        _ = await _h.Profiles.Save(SliceHarness.ProfileOf("thor", ("tidy", "1h"), ("heartbeat", "5s")), Token);
+        _ = await _h.HoldLease();
+        var tidy = new ScriptedService(ScriptedService.Busy, ScriptedService.Worked);
+
+        await Run(new CountingApprovals(_h.Profiles), () => tidy.Runs >= 2 && Runs("tidy").Count >= 1, tidy);   // a 1 h cadence: only a retry runs it twice within 60 s
+
+        Assert.Equal([ServiceOutcome.Ok], Runs("tidy").Select(r => r.Outcome));
+        Assert.DoesNotContain(_log.Lines, l => l.Contains("SND-SCHED-001 service 'tidy'", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_built_ins_are_scheduled_when_the_first_profile_read_fails()
+    {
+        // #3624: a first read that failed left the schedule empty, so not even the built-ins ran
+        _ = await _h.Profiles.Save(SliceHarness.Profile("5s"), Token);
+        _ = await _h.HoldLease();
+        var counted = new CountingService();
+        var live = new LiveSchedule();
+
+        await Run(new CountingApprovals(_h.Profiles, throwFirst: int.MaxValue), () => counted.Runs >= 2, counted, builtIns: [BuiltIn], live: live);
+
+        Assert.Equal([CountingService.Name], live.Current!.Keys);
+        Assert.Equal(0, Heartbeats());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_failed_read_after_a_loaded_profile_keeps_the_built_ins_and_that_profiles_services()
+    {
+        _ = await _h.Profiles.Save(SliceHarness.Profile("5s"), Token);
+        _ = await _h.HoldLease();
+        var counted = new CountingService();
+        var live = new LiveSchedule();
+        var approvals = new SwitchableApprovals(_h.Profiles);
+
+        await Run(approvals, () =>
+        {
+            approvals.Failing = Heartbeats() >= 1;
+            return Heartbeats() >= 3 && counted.Runs >= 3;
+        }, counted, builtIns: [BuiltIn], live: live);
+
+        Assert.Equal(2, live.Current!.Count);
+        Assert.Contains(CountingService.Name, live.Current.Keys);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_good_read_after_a_failed_first_read_schedules_the_built_ins_and_the_profiles_services()
+    {
+        _ = await _h.Profiles.Save(SliceHarness.Profile("5s"), Token);
+        _ = await _h.HoldLease();
+        var counted = new CountingService();
+        var live = new LiveSchedule();
+
+        await Run(new CountingApprovals(_h.Profiles, throwFirst: 3), () => Heartbeats() >= 1 && counted.Runs >= 1, counted, builtIns: [BuiltIn], live: live);
+
+        Assert.Equal(2, live.Current!.Count);
+    }
+
+    private static BuiltInService BuiltIn => new(CountingService.Name, new Cadence(TimeSpan.FromSeconds(5)));
+
+    private sealed class SwitchableApprovals(IApprovedProfile inner) : IApprovedProfile
+    {
+        public bool Failing { get; set; }
+
+        public ValueTask<Result<LoadedProfile?>> Latest(CancellationToken cancellationToken) =>
+            Failing ? throw new IOException("Permission denied") : inner.Latest(cancellationToken);
+    }
+
     private List<ServiceRan> Runs(string service) => [.. _h.Store.Events
         .Where(e => e.Envelope.Type == EventTypes.ServiceRan)
         .Select(e => _h.Events.Payload<ServiceRan>(e).Value)
@@ -204,7 +276,7 @@ public sealed class SchedulerHostTests
     private int Heartbeats() => _h.Store.Events.Count(e => e.Envelope.Type == HeartbeatType);
 
     /// <summary>Starts the scheduler, steps the clock until <paramref name="done"/> holds (at most 60 fake seconds), and stops it.</summary>
-    private async Task Run(CountingApprovals approvals, Func<bool> done, IScheduledService? extra = null, IReadOnlyList<BuiltInService>? builtIns = null, Action? release = null)
+    private async Task Run(IApprovedProfile approvals, Func<bool> done, IScheduledService? extra = null, IReadOnlyList<BuiltInService>? builtIns = null, Action? release = null, LiveSchedule? live = null)
     {
         var services = new ServiceCollection();
         if (extra is not null)
@@ -227,7 +299,7 @@ public sealed class SchedulerHostTests
             .AddScoped<IScheduledService, FailingService>()
             .BuildServiceProvider();
         var clock = new SteppedClock(_h.Clock);
-        using var scheduler = new SchedulerHost(provider.GetRequiredService<IServiceScopeFactory>(), new ScheduleInputs(approvals, builtIns ?? [], new NoPauses(), new LiveSchedule()), new ServiceRunGuard(), _h.Held, _h.Callers, clock, _log);
+        using var scheduler = new SchedulerHost(provider.GetRequiredService<IServiceScopeFactory>(), new ScheduleInputs(approvals, builtIns ?? [], new NoPauses(), live ?? new LiveSchedule()), new ServiceRunGuard(), _h.Held, _h.Callers, clock, _log);
         await scheduler.StartAsync(Token);
         for (var step = 0; !done(); step++)
         {

@@ -22,6 +22,9 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>True when the empty sentence and its actions show: the list is empty, the views are not stalled and the New workflow form is not open.</summary>
     public bool ShowsEmpty => IsEmpty && !ViewsStalled && !IsCreating;
 
+    /// <summary>True when the header carries New workflow: on the list, and not when the empty state offers its own.</summary>
+    public bool ShowsHeaderNew => IsList && !ShowsEmpty;
+
     /// <summary>True when the New workflow form shows.</summary>
     public bool ShowsCreateForm => IsCreating && !ViewsStalled;
 
@@ -43,7 +46,7 @@ internal sealed partial class WorkflowsPageViewModel
 
     private void NotifyStalled()
     {
-        foreach (var name in new[] { nameof(ShowsEmpty), nameof(ShowsCreateForm), nameof(CanOpenCreate), nameof(NewWorkflowTip) })
+        foreach (var name in new[] { nameof(ShowsEmpty), nameof(ShowsHeaderNew), nameof(ShowsCreateForm), nameof(CanOpenCreate), nameof(NewWorkflowTip) })
         {
             OnChanged(name);
         }

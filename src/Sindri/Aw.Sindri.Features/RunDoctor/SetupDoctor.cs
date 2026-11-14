@@ -66,7 +66,10 @@ internal sealed class SetupDoctor(ISetupFacts facts, IRepoHookStates? hooks = nu
         SetupStepId.Profile => "sindri repo add <path>",
         SetupStepId.Mcp => "sindri mcp register --apply",
         SetupStepId.Map => "sindri context map refresh",
-        SetupStepId.Sources => "sindri index connect <source>",
+        SetupStepId.Sources => "sindri setup",
+        SetupStepId.Serve => "sindri stop && sindri",
+        SetupStepId.Agent => "sindri profile set workflow.agent.target <agent>",
+        SetupStepId.FirstWorkflow => "sindri wf run hello-sindri",
         _ => throw new ArgumentOutOfRangeException(nameof(id)),
     };
 }

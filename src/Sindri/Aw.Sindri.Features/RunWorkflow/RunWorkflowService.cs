@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Graph.Schedule;
 
 namespace Aw.Sindri.Features.RunWorkflow;
 
@@ -19,9 +20,13 @@ namespace Aw.Sindri.Features.RunWorkflow;
 /// <param name="starter">Starts, queues or skips the run.</param>
 /// <param name="launches">Which run launched a session; the loop guard (SND-GRAPH-109) reads it.</param>
 /// <param name="callers">The caller; its launch is the session the guard looks up.</param>
-internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter, IGraphLaunchRuns launches, ICallerContextAccessor callers) : IService<RunWorkflowRequest, RunWorkflowResponse>
+/// <param name="clock">The start time a schedule trigger's fields are read from on a hand start.</param>
+internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter, IGraphLaunchRuns launches, ICallerContextAccessor callers, TimeProvider clock) : IService<RunWorkflowRequest, RunWorkflowResponse>
 {
     private const string TriggerKind = "manual";
+    private const int Page = 200;
+    private const string SetupActor = "service:setup";
+    private static readonly WorkflowSlug _helloSindri = WorkflowSlug.From("hello-sindri");
 
     public async ValueTask<Result<RunWorkflowResponse>> Handle(RunWorkflowRequest request, CancellationToken cancellationToken)
     {
@@ -37,21 +42,21 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
             return loop;
         }
 
-        var listed = await workflows.List(includeArchived: false, cancellationToken).ConfigureAwait(false);
-        if (listed.IsError)
+        var found = await Find(request.Slug, cancellationToken).ConfigureAwait(false);
+        if (found.IsError)
         {
-            return listed.Error;
+            return found.Error;
         }
 
-        var record = listed.Value.FirstOrDefault(r => r.Slug == request.Slug);
-        if (record is null)
-        {
-            return SindriErrors.GraphNotFound.With($"no workflow '{request.Slug.Value}'; list the workflows to see what exists");
-        }
-
+        var record = found.Value;
         if (record.ActiveRevision is not { } active)
         {
             return SindriErrors.GraphNotActive.With($"'{request.Slug.Value}' has no active revision; activate one first");
+        }
+
+        if (await SetupRefusal(record, cancellationToken).ConfigureAwait(false) is { } refused)
+        {
+            return refused;
         }
 
         var revision = await workflows.GetRevision(record.Id, active, cancellationToken).ConfigureAwait(false);
@@ -60,8 +65,82 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
             return revision.Error;
         }
 
-        var trigger = new JsonObject { ["kind"] = TriggerKind, ["payload"] = payload.Value, ["by"] = request.By }.ToJsonString();
-        return await Start(new Trigger(record, revision.Value, trigger), cancellationToken).ConfigureAwait(false);
+        var trigger = HandTrigger(revision.Value, payload.Value, request.By);
+        return await Start(new Trigger(record, revision.Value, trigger.ToJsonString()), cancellationToken).ConfigureAwait(false);
+    }
+
+    private JsonObject HandTrigger(WorkflowRevision revision, JsonObject? payload, string by)
+    {
+        var trigger = new JsonObject { ["kind"] = TriggerKind, ["payload"] = payload, ["by"] = by };
+        if (revision.Spec.Nodes.FirstOrDefault(static n => string.Equals(n.Type, "schedule", StringComparison.Ordinal)) is { } schedule)
+        {
+            ScheduleStamp.Add(trigger, clock.GetUtcNow(), ScheduleStamp.ZoneOf(schedule));   // why: a hand start has no tick; the schedule node's outputs read the start time in the node's zone (#3569)
+        }
+
+        return trigger;
+    }
+
+    private async ValueTask<Result<WorkflowRecord>> Find(WorkflowSlug slug, CancellationToken cancellationToken)
+    {
+        var listed = await workflows.List(includeArchived: false, cancellationToken).ConfigureAwait(false);
+        if (listed.IsError)
+        {
+            return listed.Error;
+        }
+
+        return listed.Value.FirstOrDefault(r => r.Slug == slug) is { } record
+            ? record
+            : SindriErrors.GraphNotFound.With($"no workflow '{slug.Value}'; list the workflows to see what exists");
+    }
+
+    // The 'setup' grant on RunWorkflow is narrow (first-run spec decision 19): 'service:setup' may run only the hello-sindri workflow it made itself, and once. Every other caller is unchanged.
+    private async ValueTask<Error?> SetupRefusal(WorkflowRecord record, CancellationToken cancellationToken)
+    {
+        if (callers.Current is not { Class: CallerClass.Service, Actor: SetupActor })
+        {
+            return null;
+        }
+
+        if (record.Slug != _helloSindri || !string.Equals(record.CreatedBy, SetupActor, StringComparison.Ordinal))
+        {
+            return SindriErrors.GraphSetupRunRefused.With($"'{record.Slug.Value}' is not the hello-sindri workflow the setup service made");
+        }
+
+        // why: the run store has no query by trigger actor, so page through every run of this workflow (a workflow made for one greeting has a handful)
+        // The offset advances by the rows a page returned, not by Page: a store may clamp the page size below it. The last page is the empty one.
+        var offset = 0;
+        while (true)
+        {
+            var recent = await runs.Recent(record.Id, offset, Page, cancellationToken).ConfigureAwait(false);
+            if (recent.IsError)
+            {
+                return recent.Error;
+            }
+
+            if (recent.Value.Any(static r => StartedBySetup(r.Trigger)))
+            {
+                return SindriErrors.GraphSetupRunRefused.With("the setup service already ran hello-sindri once (fix: sindri wf run hello-sindri)");
+            }
+
+            if (recent.Value.Count == 0)
+            {
+                return null;
+            }
+
+            offset += recent.Value.Count;
+        }
+    }
+
+    private static bool StartedBySetup(string trigger)
+    {
+        try
+        {
+            return string.Equals(JsonNode.Parse(trigger)?["by"]?.GetValue<string>(), SetupActor, StringComparison.Ordinal);
+        }
+        catch (Exception e) when (e is JsonException or InvalidOperationException or FormatException)   // boundary: a stored trigger that is not the shape we write
+        {
+            return false;
+        }
     }
 
     private async ValueTask<Error?> LoopRefusal(WorkflowSlug slug, CancellationToken cancellationToken)

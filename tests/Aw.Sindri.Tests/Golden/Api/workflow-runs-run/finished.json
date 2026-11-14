@@ -26,7 +26,8 @@
       },
       "truncated": false,
       "error": null,
-      "agent": null
+      "agent": null,
+      "raw": null
     },
     {
       "node": "start",
@@ -38,7 +39,8 @@
       },
       "truncated": false,
       "error": null,
-      "agent": null
+      "agent": null,
+      "raw": null
     }
   ]
 }

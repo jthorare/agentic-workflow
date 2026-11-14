@@ -15,6 +15,7 @@ using Aw.Sindri.Features.ApplyWorkflowOps;
 using Aw.Sindri.Features.CreateWorkflow;
 using Aw.Sindri.Features.ValidateWorkflow;
 using Aw.Sindri.Host;
+using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.WorkflowWrites;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
@@ -50,8 +51,11 @@ public sealed class DriftCheckAcceptanceTests : IDisposable
         var edited = await Call(services, HostWorkflowTools.ApplyOps, ("slug", Slug.Value), ("baseRevision", 1), ("ops", new object[] { new { op = "set_config", node = "check", path = "prompt", value = Prompt } }));
         var checkedOk = await Call(services, HostWorkflowTools.Validate, ("slug", Slug.Value));
         var checkedBad = await Call(services, HostWorkflowTools.Validate, ("spec", BrokenSpec()));
+        var refused = await Call(services, HostWorkflowTools.Activate, ("slug", Slug.Value));   // why: turning it on is the owner's (spec §8), so the session asks and the owner presses Activate
+        using var owner = _rig.Harness.Callers.Enter(new CallerContext(CallerClass.Human, Terminal: true, "human:cli", _rig.Harness.Ids.New<CommandId>(), _rig.Harness.Ids.New<CorrelationId>(), Repo: null));
         var on = await Call(services, HostWorkflowTools.Activate, ("slug", Slug.Value));
 
+        Assert.True(refused.IsError);
         Assert.All([made, edited, checkedOk, checkedBad, on], static r => Assert.True(r.IsError != true, r.Content.OfType<TextContentBlock>().FirstOrDefault()?.Text));
         Assert.Equal(2, Structured(edited)["revision"]!.GetValue<int>());
         Assert.True(Structured(checkedOk)["passed"]!.GetValue<bool>());
@@ -63,7 +67,7 @@ public sealed class DriftCheckAcceptanceTests : IDisposable
 
         var changes = _rig.Harness.Store.Events.Where(static e => e.Envelope.Type.StartsWith("workflow.", StringComparison.Ordinal)).ToList();
         Assert.Equal([EventTypes.WorkflowCreated, EventTypes.WorkflowRevised, EventTypes.WorkflowActivated], changes.Select(static e => e.Envelope.Type), StringComparer.Ordinal);
-        Assert.All(changes, e => Assert.Equal(actor, JsonNode.Parse(e.Envelope.Payload)!.AsObject().Single(static p => string.Equals(p.Key, "by", StringComparison.OrdinalIgnoreCase)).Value!.GetValue<string>()));
+        Assert.All(changes.Where(static e => e.Envelope.Type != EventTypes.WorkflowActivated), e => Assert.Equal(actor, JsonNode.Parse(e.Envelope.Payload)!.AsObject().Single(static p => string.Equals(p.Key, "by", StringComparison.OrdinalIgnoreCase)).Value!.GetValue<string>()));
 
         var findings = Structured(checkedBad)["findings"]!.AsArray();
         Assert.NotEmpty(findings);
@@ -85,9 +89,9 @@ public sealed class DriftCheckAcceptanceTests : IDisposable
     private ServiceProvider Services() => new ServiceCollection()
         .AddSingleton(AwJson.CreateOptions(SindriJsonContext.Default))
         .AddSingleton(_rig.Harness.Callers)
-        .AddSingleton<IService<CreateWorkflowRequest, CreateWorkflowResponse>>(new CreateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log))
+        .AddSingleton<IService<CreateWorkflowRequest, CreateWorkflowResponse>>(new CreateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log, new FakeCiSourceLookup()))
         .AddSingleton<IService<ApplyWorkflowOpsRequest, ApplyWorkflowOpsResponse>>(new ApplyWorkflowOpsService(_rig.Workflows, _rig.Checker, _rig.Log))
         .AddSingleton<IService<ValidateWorkflowRequest, ValidateWorkflowResponse>>(new ValidateWorkflowService(_rig.Workflows, _rig.Checker))
-        .AddSingleton<IService<ActivateWorkflowRequest, ActivateWorkflowResponse>>(new ActivateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Log))
+        .AddSingleton<IService<ActivateWorkflowRequest, ActivateWorkflowResponse>>(new ActivateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Log, _rig.Harness.Callers))
         .BuildServiceProvider();
 }

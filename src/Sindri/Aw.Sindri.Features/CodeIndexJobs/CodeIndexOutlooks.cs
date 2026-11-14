@@ -40,7 +40,7 @@ internal sealed class CodeIndexOutlooks(CodeIndexJobScopes scopes, ICodeIndex in
             return recorded.IsError ? recorded.Error : live.IsError ? live.Error : builds.Error;
         }
 
-        var active = await ServiceActive(cancellationToken).ConfigureAwait(false);
+        var active = await MainMovePause.Active(pauses, cancellationToken).ConfigureAwait(false);
         var now = clock.GetUtcNow();
         IReadOnlyDictionary<string, IndexOutlookDetail> all = hold.Heads.ToDictionary(
             static h => h.Key,
@@ -68,13 +68,6 @@ internal sealed class CodeIndexOutlooks(CodeIndexJobScopes scopes, ICodeIndex in
             .Where(h => h.Commit is not null && repos.Contains(h.Repo.Value, StringComparer.Ordinal))
             .ToDictionary(static h => h.Repo.Value, static h => h.Commit?.Value ?? string.Empty, StringComparer.Ordinal);
         return Results.Success(commits);
-    }
-
-    // A pause read that fails (the views are rebuilding) must not freeze a map, so the service counts as active then.
-    private async ValueTask<bool> ServiceActive(CancellationToken cancellationToken)
-    {
-        var paused = await pauses.Paused(cancellationToken).ConfigureAwait(false);
-        return paused.IsError || !paused.Value.Contains(CodeIndexMainMoveService.ServiceId);
     }
 
     private static IndexOutlookInput Input(string repo, MapRepoHead hold, Facts facts)

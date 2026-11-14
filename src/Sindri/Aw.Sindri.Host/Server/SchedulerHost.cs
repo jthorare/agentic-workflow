@@ -81,10 +81,11 @@ internal sealed partial class SchedulerHost(
 
         if (approved.IsError)
         {
-            if (!string.Equals(_problem, approved.Error.Message, StringComparison.Ordinal))
+            NoteProblem(approved.Error);
+
+            if (!_loaded)
             {
-                _problem = approved.Error.Message;
-                LogRefreshFailed(log, approved.Error.Code, approved.Error.Message);
+                await Load(profile: null, ct).ConfigureAwait(false);   // a first read that fails still schedules the built-ins (#3624); a later good read replaces this
             }
 
             return;
@@ -94,11 +95,7 @@ internal sealed partial class SchedulerHost(
         var profile = approved.Value;
         if (!_loaded || profile?.Hash != _approved?.Hash)
         {
-            _loaded = true;   // the first read loads the built-ins even with no approved profile (S1-D8)
-            _approved = profile;
-            _schedules = ServiceSchedule.From(profile?.Profile, inputs.BuiltIns, clock.GetUtcNow(), await LastRuns(ct).ConfigureAwait(false));
-            inputs.Live.Publish(_schedules);
-            LogSchedule(log, _approved?.Hash.Abbreviated ?? "none", _schedules.Count);
+            await Load(profile, ct).ConfigureAwait(false);   // the first read loads the built-ins even with no approved profile (S1-D8)
         }
     }
 
@@ -109,7 +106,7 @@ internal sealed partial class SchedulerHost(
         var advanced = new List<ServiceSchedule>(_schedules.Count);
         foreach (var schedule in _schedules)
         {
-            if (schedule.NextSlot > now)
+            if (!Due(schedule, now))
             {
                 advanced.Add(schedule);
                 continue;
@@ -121,7 +118,7 @@ internal sealed partial class SchedulerHost(
             {
                 if ((_pausesKnown || IsBuiltIn(schedule.Name)) && !_paused.Contains(schedule.Name) && guard.TryClaim(schedule.Name, out claim))
                 {
-                    var run = RunOne(schedule, new ScheduledRun(grant, schedule.NextSlot), claim, ct);   // its own loop: not awaited here; it owns the claim now
+                    var run = RunOne(schedule, new ScheduledRun(grant, SlotOf(schedule)), claim, ct);   // its own loop: not awaited here; it owns the claim now
                     claim = null;
                     if (run.IsCompleted)
                     {
@@ -139,7 +136,7 @@ internal sealed partial class SchedulerHost(
                 claim?.Dispose();
             }
 
-            advanced.Add(schedule.Advance(now));
+            advanced.Add(Next(schedule, now));
         }
 
         inputs.Live.Publish(_schedules = advanced);   // the services listing reads these: without the lease nothing advances, so a slot left in the past was missed
@@ -179,7 +176,7 @@ internal sealed partial class SchedulerHost(
         await using (scope.ConfigureAwait(false))
         {
             var outcome = await Outcome(scope.ServiceProvider, schedule.Name, run, ct).ConfigureAwait(false);
-            if (await Skip(scope.ServiceProvider, schedule.Name, outcome, ct).ConfigureAwait(false))
+            if (Busy(schedule.Name, run.Slot, outcome) || await Skip(scope.ServiceProvider, schedule.Name, outcome, ct).ConfigureAwait(false))
             {
                 return;
             }
@@ -209,7 +206,7 @@ internal sealed partial class SchedulerHost(
         try
         {
             var result = await service.Run(run, ct).ConfigureAwait(false);
-            if (result.IsError)
+            if (result.IsError && !IsBusy(result.Error))
             {
                 LogServiceFailed(log, name.Value, result.Error.Code, result.Error.Message);
             }

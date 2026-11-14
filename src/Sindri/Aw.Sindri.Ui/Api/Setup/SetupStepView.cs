@@ -4,7 +4,7 @@ namespace Aw.Sindri.Ui.Api.Setup;
 /// One step of the setup list. Id and State are read as strings, so a step or state this build doesn't know renders as itself instead of failing the read. Every
 /// text but <see cref="Id"/>, <see cref="State"/> and <see cref="Action"/> is the API's plain words.
 /// </summary>
-/// <param name="Id">repo, profile, recipes, mcp, map or a step this build has no form for (drawn as a plain row).</param>
+/// <param name="Id">serve, sources, repo, profile, agent, mcp, map, first-workflow or a step this build has no form for (drawn as a plain row by its title).</param>
 /// <param name="Title">What the step is, in a few words ("Add your repo").</param>
 /// <param name="State">todo, running, done, failed, needs-you or skipped.</param>
 /// <param name="Why">One sentence on why the step is in this state.</param>
@@ -14,6 +14,7 @@ namespace Aw.Sindri.Ui.Api.Setup;
 /// <param name="Progress">How far a counted step is, or null.</param>
 /// <param name="Items">One line per repo for a step that counts repos; null or empty otherwise (an older Sindri sends none).</param>
 /// <param name="Preview">What the profile allows in plain words (the profile step only); null otherwise, and for an older Sindri.</param>
+/// <param name="Cli">The exact command an agent runs for <paramref name="Action"/>; null for an owner-only action and for an older Sindri. The app shows it only under Details.</param>
 internal sealed record SetupStepView(
     string Id,
     string Title,
@@ -24,4 +25,5 @@ internal sealed record SetupStepView(
     string? Action,
     SetupProgressView? Progress,
     IReadOnlyList<SetupItemView>? Items = null,
-    IReadOnlyList<SetupPreviewLineView>? Preview = null);
+    IReadOnlyList<SetupPreviewLineView>? Preview = null,
+    string? Cli = null);

@@ -74,7 +74,8 @@ public sealed class DriftCheckRunAcceptanceTests
         var all = await WaitFor(rig.Ledger, EventTypes.WorkflowRunFinished);
         var writes = all.Where(static e => e.Envelope.Type.StartsWith("workflow.", StringComparison.Ordinal) && !e.Envelope.Type.StartsWith("workflow.run.", StringComparison.Ordinal) && !e.Envelope.Type.StartsWith("workflow.node.", StringComparison.Ordinal)).ToList();
         Assert.Equal([EventTypes.WorkflowCreated, EventTypes.WorkflowRevised, EventTypes.WorkflowActivated], writes.Select(static e => e.Envelope.Type), StringComparer.Ordinal);
-        Assert.All(writes, e => Assert.Equal((actor, actor), (e.Envelope.Actor, By(e))));
+        Assert.All(writes.Where(static e => e.Envelope.Type != EventTypes.WorkflowActivated), e => Assert.Equal((actor, actor), (e.Envelope.Actor, By(e))));
+        Assert.Equal("human:cli", By(writes.Single(static e => e.Envelope.Type == EventTypes.WorkflowActivated)));
 
         var runEvents = all.Where(static e => e.Envelope.Type.StartsWith("workflow.run.", StringComparison.Ordinal) || e.Envelope.Type.StartsWith("workflow.node.", StringComparison.Ordinal)).ToList();
         Assert.Equal(EventTypes.WorkflowRunStarted, runEvents[0].Envelope.Type);
@@ -142,6 +143,8 @@ public sealed class DriftCheckRunAcceptanceTests
                 new { op = "set_config", node = "check", path = "prompt", value = "Compare the API contract with the client's types. Set flagged to true when a field is missing or wrong, and summarize why." },
             }));
             var valid = await Call(services, HostWorkflowTools.Validate, ("slug", _slug.Value));
+            // why: turning it on is the owner's (workflows page spec §8): the session asks and the owner presses Activate
+            using var owner = _callers.Enter(new CallerContext(CallerClass.Human, Terminal: true, "human:cli", _ids.New<CommandId>(), _ids.New<CorrelationId>(), Repo: null));
             var on = await Call(services, HostWorkflowTools.Activate, ("slug", _slug.Value));
             Assert.All([made, edited, valid, on], static r => Assert.True(r.IsError != true, r.Content.OfType<ModelContextProtocol.Protocol.TextContentBlock>().FirstOrDefault()?.Text));
             return actor;
@@ -181,10 +184,10 @@ public sealed class DriftCheckRunAcceptanceTests
             return new ServiceCollection()
                 .AddSingleton(AwJson.CreateOptions(SindriJsonContext.Default))
                 .AddSingleton<ICallerContextAccessor>(_callers)
-                .AddSingleton<IService<CreateWorkflowRequest, CreateWorkflowResponse>>(new CreateWorkflowService(_workflows, checker, _ids, _log))
+                .AddSingleton<IService<CreateWorkflowRequest, CreateWorkflowResponse>>(new CreateWorkflowService(_workflows, checker, _ids, _log, new FakeCiSourceLookup()))
                 .AddSingleton<IService<ApplyWorkflowOpsRequest, ApplyWorkflowOpsResponse>>(new ApplyWorkflowOpsService(_workflows, checker, _log))
                 .AddSingleton<IService<ValidateWorkflowRequest, ValidateWorkflowResponse>>(new ValidateWorkflowService(_workflows, checker))
-                .AddSingleton<IService<ActivateWorkflowRequest, ActivateWorkflowResponse>>(new ActivateWorkflowService(_workflows, checker, _log))
+                .AddSingleton<IService<ActivateWorkflowRequest, ActivateWorkflowResponse>>(new ActivateWorkflowService(_workflows, checker, _log, _callers))
                 .BuildServiceProvider();
         }
     }

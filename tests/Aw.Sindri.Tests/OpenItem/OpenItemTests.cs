@@ -1,3 +1,4 @@
+using Aw.Kernel;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
@@ -29,6 +30,7 @@ public sealed class OpenItemTests : IDisposable
 
     private readonly ViewsHarness _h = new();
     private readonly FixedLaunchSpend _spend = new();
+    private ILaunchSpend? _gatedSpend;
     private readonly OpenRequests _requests;
 
     public OpenItemTests()
@@ -44,7 +46,7 @@ public sealed class OpenItemTests : IDisposable
     {
         var launches = new LaunchViews(_h.Views);
         return new(new OpenChecks(new ViewItemResolver(_h.Views), launches, _requests, _h.Slice.Clock),
-            new OpenTarget(_h.Slice.Profiles, launches, new AgentCatalog(catalog.Length == 0 ? [AgentEntries.ClaudeCode, AgentEntries.Codex] : catalog), _spend),
+            new OpenTarget(_h.Slice.Profiles, launches, new AgentCatalog(catalog.Length == 0 ? [AgentEntries.ClaudeCode, AgentEntries.Codex] : catalog), _gatedSpend ?? _spend),
             _h.Slice.Held, _h.Slice.Store, _h.Slice.Events, _h.Slice.Ids, _h.Slice.Callers);
     }
 
@@ -183,6 +185,45 @@ public sealed class OpenItemTests : IDisposable
         var result = await Service(AgentEntries.Aider).Handle(A.OpenItemRequest().Build(), Token);   // claude-code, the last rule, is absent too
 
         Expect.Equal(SindriErrors.LaunchAgentMissing.Code, result.Error.Code);
+        Assert.Empty(_h.Slice.Store.Events);
+    }
+
+    /// <summary>A spend reader whose first read of the day is still running: <see cref="Today"/> waits on the gate, <see cref="Peek"/> says it hasn't landed.</summary>
+    private sealed class GatedFirstRead : ILaunchSpend
+    {
+        private readonly TaskCompletionSource<AgentSpend> _gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource<bool> Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public void Land(AgentSpend spend) => _ = _gate.TrySetResult(spend);
+
+        public SpendPeek Peek(AgentId target) => new(Landed: _gate.Task.IsCompleted, _gate.Task.IsCompleted ? _gate.Task.Result : null);
+
+        public async ValueTask<Result<AgentSpend?>> Today(AgentId target, CancellationToken cancellationToken)
+        {
+            _ = Started.TrySetResult(true);
+            return Results.Success<AgentSpend?>(await _gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false));
+        }
+    }
+
+    /// <summary>#3418: the list may say counting, but an open still waits on the real first read and is judged on it.</summary>
+    [Fact]
+    public async Task An_open_waits_on_a_first_spend_read_and_is_refused_once_it_lands_over_budget()
+    {
+        await Seed();
+        await Approve(agents: Budget(10m));
+        var gated = new GatedFirstRead();
+        _gatedSpend = gated;
+        using var entered = Human();
+
+        var open = Service().Handle(A.OpenItemRequest().Build(), Token).AsTask();
+        _ = await gated.Started.Task.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);
+        Assert.False(open.IsCompleted);
+
+        gated.Land(new AgentSpend(12m, Tokens: 1, SpendBasis.PriceTable));
+        var result = await open.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);
+
+        Expect.Equal(SindriErrors.LaunchBudgetReached.Code, result.Error.Code);
         Assert.Empty(_h.Slice.Store.Events);
     }
 

@@ -5,6 +5,7 @@ using Aw.Context.Core.Sources;
 using Aw.Kernel;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Workflow.Blocks.Input;
 
 namespace Aw.Sindri.Tests.ContextCalls;
@@ -27,7 +28,7 @@ public sealed class IndexDecisionsServiceTests
         _ = await _h.Profiles.Save(loaded, Ct);
         var grant = await _h.HoldLease();
         using var caller = _h.Callers.EnterService("index-decisions");
-        return await new IndexDecisionsService(new ContextScopes(_h.Profiles, _h.Callers), EngineProxy.Of(_index)).Run(new ScheduledRun(grant, _now), Ct);
+        return await new IndexDecisionsService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), EngineProxy.Of(_index)).Run(new ScheduledRun(grant, _now), Ct);
     }
 
     private static SourceDecisions Row(string source, int looked, int decisions, string? code = null) => new(SourceId.From(source), looked, decisions, code);
@@ -86,12 +87,15 @@ public sealed class IndexDecisionsServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Run_without_a_context_section_does_not_call_the_pass()
+    public async Task Run_without_a_context_section_runs_the_pass_and_says_when_nothing_is_indexed_yet()
     {
+        _index.Decided = [];
+
         var result = await Run(context: false);
 
         Assert.True(result.IsSuccess);
+        Assert.Equal(1, _index.Decides);
         Assert.True(result.Value.Idle);
-        Assert.Equal(0, _index.Decides);
+        Assert.Equal("nothing indexed yet", result.Value.Summary);
     }
 }

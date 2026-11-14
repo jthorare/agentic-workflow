@@ -51,7 +51,7 @@ public sealed class HealthSummaryTests
     [Fact, Trait("Lane", "unit")]
     public void Code_index_problems_follow_the_services()
     {
-        HealthProblem[] index = [new("SND-CODEIDX-014", "demo: code index is behind main; rebuild it from the System page", "the code index for demo is behind main"), new("SND-CODEIDX-010", "other: code index is damaged; it rebuilds on the next check", "the code index for other is damaged")];
+        HealthProblem[] index = [new("SND-CODEIDX-014", "demo: code index is behind main; code-index-main-move rebuilds it on its next tick", "the code index for demo is behind main"), new("SND-CODEIDX-010", "other: code index is damaged; it rebuilds on the next check", "the code index for other is damaged")];
 
         var health = For(services: [Row("heartbeat", ServiceOutcome.Failed, "SND-SCHED-001")], codeIndex: index);
 
@@ -62,7 +62,7 @@ public sealed class HealthSummaryTests
     [Fact, Trait("Lane", "unit")]
     public void A_code_index_problem_alone_degrades_health_and_reads_in_the_sentence()
     {
-        var health = For(codeIndex: [new("SND-CODEIDX-014", "demo: code index is behind main; rebuild it from the System page", "the code index for demo is behind main")]);
+        var health = For(codeIndex: [new("SND-CODEIDX-014", "demo: code index is behind main; code-index-main-move rebuilds it on its next tick", "the code index for demo is behind main")]);
 
         Assert.Equal("Sindri is degraded: the code index for demo is behind main.", health.Sentence);
     }

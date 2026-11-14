@@ -1,5 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:rows="using:Aw.Sindri.Ui.Views.Controls.Rows"
              x:Class="Aw.Sindri.Ui.Views.SindriApp"
              Name="Sindri"
              RequestedThemeVariant="Dark">
@@ -24,6 +25,7 @@
     <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/Typography.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/StatusChip.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Views/Controls/ControlStyles.axaml" />
+    <StyleInclude Source="avares://Aw.Sindri.Ui/Views/Controls/Rows/RowStyles.axaml" />
     <!-- First of the surface looks: every clickable surface rests on a clear fill, not none. A Border with no background is not hit-tested, so the
          pointer over its empty space would reach the panel behind and the surface would never be under the pointer (#2535). Each surface's own
          fill declared below (Border.card, item-row.selected, inbox-row.selected, the Needs You tints) replaces it; ClickableStyles, last, lifts it. -->
@@ -42,6 +44,13 @@
     <Style Selector="TextBlock">
       <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
     </Style>
+    <!-- The peek body (#3538, #3584). Avalonia has no selector specificity, the later style wins: this sits after the
+         catch-all TextBlock Foreground above, so ink-muted is not overwritten by Ink. -->
+    <Style Selector="rows|PeekPane /template/ ContentPresenter#PART_Body > TextBlock">
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="LineHeight" Value="{DynamicResource Type.Body.LineHeight}" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.InkMuted}" />
+    </Style>
 
     <!-- S1b's status card (the window until U0's shell replaces it; its content becomes the Health page). -->
     <Style Selector="Border.card">
@@ -55,6 +64,19 @@
     </Style>
     <Style Selector="TextBlock.subtle">
       <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+    </Style>
+    <!-- #3454, #3620: the Settings cards' status and error rows are polite live regions, so they stay in the tree. A TextBlock with no text still measures one line (18 px), so a live-row is held to no
+         height unless it is "filled". The rule is "collapsed unless filled", not "collapsed when empty": with no data context (the card is not set up) the binding is unset and the row must still be flat.
+         The live-gap spacer above each row takes the card's one normal gap (Space.MD) and shows only while that row has text, so an empty row leaves no band. -->
+    <!-- An empty live-row stays 0 tall but remains a polite live region in the tree. Do not swap this for IsVisible=false: a hidden control drops out of the accessibility tree, so a screen reader would miss the first status. -->
+    <Style Selector="TextBlock.live-row">
+      <Setter Property="MaxHeight" Value="0" />
+    </Style>
+    <Style Selector="TextBlock.live-row.filled">
+      <Setter Property="MaxHeight" Value="Infinity" />
+    </Style>
+    <Style Selector="Border.live-gap">
+      <Setter Property="Height" Value="{StaticResource Space.MD}" />
     </Style>
     <Style Selector="Border.command">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />

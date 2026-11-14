@@ -26,6 +26,34 @@ internal sealed class UsageSpend(IAgentCatalog catalog, IReadOnlyDictionary<stri
         catalog.Resolve(target)?.Usage is { } name && readers.TryGetValue(name, out var reader) ? await reader.OfSession(session, cancellationToken).ConfigureAwait(false) : null;
 
     /// <inheritdoc/>
+    public SpendPeek Peek(AgentId target)
+    {
+        if (catalog.Resolve(target)?.Usage is not { } name || !readers.TryGetValue(name, out var reader))
+        {
+            return new SpendPeek(Landed: true, Spend: null);
+        }
+
+        var now = clock.GetUtcNow();
+        var window = LocalDay(now, clock.LocalTimeZone);
+        if (_read.TryGetValue(target, out var cached) && cached.Day == window.Day)
+        {
+            if (now - cached.At >= _fresh)
+            {
+                Background(Flight(target, reader, window));
+            }
+
+            return new SpendPeek(Landed: true, cached.Spend);
+        }
+
+        // the day's first read: start (or join) the shared one and answer at once; the caller is not told its value
+        Background(Flight(target, reader, window));
+        return new SpendPeek(Landed: false, Spend: null);
+    }
+
+    private static void Background(Task<AgentSpend> read) =>
+        _ = read.ContinueWith(static t => _ = t.Exception, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+
+    /// <inheritdoc/>
     public async ValueTask<Result<AgentSpend?>> Today(AgentId target, CancellationToken cancellationToken)
     {
         if (catalog.Resolve(target)?.Usage is not { } name || !readers.TryGetValue(name, out var reader))
