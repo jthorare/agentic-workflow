@@ -14,4 +14,7 @@ public sealed record ContextScope(JsonElement? Settings, IReadOnlyList<ContextRe
 
     /// <summary>True to read the map without the owner's named pages laid over it (<see cref="Map.PageOverlay"/>): an export writes the map, never the overlay.</summary>
     public bool OmitPages { get; init; }
+
+    /// <summary>The profile repos left out because their path is not a git checkout (#3371), in profile order: every read names them, none reads them.</summary>
+    public IReadOnlyList<ContextRepoName> LeftOut { get; init; } = [];
 }

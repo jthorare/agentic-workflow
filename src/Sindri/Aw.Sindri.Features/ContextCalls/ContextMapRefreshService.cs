@@ -93,7 +93,8 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
             return indexed.Error;
         }
 
-        return new Tick(heads.Value, state.Value, refreshes.Value, publishes.Value, [.. heads.Value.Where(static h => !h.OnDefault).Select(static h => h.Repo.Value).Order(StringComparer.Ordinal)])
+        var offTrunk = heads.Value.Where(static h => !h.OnDefault).Select(static h => h.Repo.Value).Order(StringComparer.Ordinal).ToArray();
+        return new Tick(heads.Value, state.Value, refreshes.Value, publishes.Value, new LeftOutRepos(offTrunk, [.. scope.LeftOut.Select(static r => r.Value)]))
         {
             Ruleset = RunningRuleset ?? (RulesFromScope ? RulesOf(scope) : null),
             IndexWait = indexed.Value,
@@ -244,7 +245,7 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
         [.. finished.Select(static j => new SyncAttempt(j.State == JobState.Failed, j.EndedAt ?? default))];
 
     // The alarm stays up until a job succeeds or nothing is left to do, and the backoff still retries under it.
-    private async ValueTask<Result<ScheduledResult>> Alarm(MainMoveAction action, int failures, string? code, string[] elsewhere, CancellationToken cancellationToken)
+    private async ValueTask<Result<ScheduledResult>> Alarm(MainMoveAction action, int failures, string? code, LeftOutRepos elsewhere, CancellationToken cancellationToken)
     {
         var alarm = string.Create(CultureInfo.InvariantCulture, $"{ServiceId.Value}: the last {failures} map refreshes or publishes failed ({code ?? "no code"})");
         if (action != MainMoveAction.Start)
@@ -260,7 +261,7 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
     private static string? Why(JobRow job) =>
         string.IsNullOrWhiteSpace(job.Summary) ? job.Code : job.Code is null ? job.Summary : job.Code + ": " + job.Summary;
 
-    private async ValueTask<Result<ScheduledResult>> Start(string[] elsewhere, CancellationToken cancellationToken)
+    private async ValueTask<Result<ScheduledResult>> Start(LeftOutRepos elsewhere, CancellationToken cancellationToken)
     {
         var started = await starts.Refresh(cancellationToken).ConfigureAwait(false);
         if (started.IsError)
@@ -286,7 +287,7 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
     [LoggerMessage(Level = LogLevel.Warning, Message = "context-map-refresh: the refresh was refused with {Code} and is not retried this tick: {Detail}")]
     private static partial void LogConflict(ILogger logger, string code, string? detail);
 
-    private sealed record Tick(IReadOnlyList<RepoHead> Heads, MapPublishState State, IReadOnlyList<JobRow> Refreshes, IReadOnlyList<JobRow> Publishes, string[] Elsewhere)
+    private sealed record Tick(IReadOnlyList<RepoHead> Heads, MapPublishState State, IReadOnlyList<JobRow> Refreshes, IReadOnlyList<JobRow> Publishes, LeftOutRepos Elsewhere)
     {
         public string? Ruleset { get; init; }
 

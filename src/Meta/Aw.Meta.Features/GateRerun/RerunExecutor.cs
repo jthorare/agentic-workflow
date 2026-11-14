@@ -68,6 +68,7 @@ internal sealed class RerunExecutor(ICommandRunner runner, MetaPaths paths)
     private CommandRequest Request(IReadOnlyList<string> argv, string tree, string log) => new(argv, _limit)
     {
         Cwd = tree,
+        PathPrefix = GateTools.PathPrefix(tree),
         Env = GatePriority.Environment,
         UnsetEnv = GatePriority.Scrubbed,
         Isolated = !argv.Contains("dotnet", StringComparer.Ordinal),

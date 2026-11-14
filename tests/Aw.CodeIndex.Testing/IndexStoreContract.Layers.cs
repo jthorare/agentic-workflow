@@ -82,6 +82,51 @@ public abstract partial class IndexStoreContract
         }
     }
 
+    /// <summary>A refused symbol is stored as a marker (an empty vector): no longer a candidate, counted as refused and not as embedded, and it survives into the next build (#3128).</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_marker_vector_is_no_candidate_counts_as_refused_and_is_carried_to_the_next_build()
+    {
+        var store = Create();
+        var refused = SymbolOf("src/A.cs", "A.Huge") with { Body = "huge body" };
+        var fine = SymbolOf("src/A.cs", "A.Fine", line: 10) with { Body = "fine body" };
+        var build = await Begin(store, incremental: false);
+        await using (build)
+        {
+            Succeeds(await build.WriteFiles([FileOf("src/A.cs", refused, fine)], _none), "writing");
+            Succeeds(await build.WriteEmbeddings([new EmbeddingRecord(refused.Ref, "m", ReadOnlyMemory<float>.Empty), new EmbeddingRecord(fine.Ref, "m", new float[] { 1, 0 })], _none), "writing a marker and a vector");
+
+            Expect.That(Ok(await build.EmbedCandidates(10, _none), "candidates").Count == 0, "a refused symbol is not picked up again");
+            Expect.That(Ok(await build.CountEmbeddings(_none), "counting") == new EmbeddingProgress(1, 2) { Refused = 1 }, "one embedded, one refused, both embeddable");
+            Succeeds(await build.Publish(Meta(), _none), "publishing");
+        }
+
+        var next = await Begin(store, incremental: true);
+        await using (next)
+        {
+            Expect.That(Ok(await next.EmbedCandidates(10, _none), "candidates").Count == 0, "the marker is carried into the next build");
+            Expect.That(Ok(await next.CountEmbeddings(_none), "counting") == new EmbeddingProgress(1, 2) { Refused = 1 }, "and still counted as refused");
+        }
+    }
+
+    /// <summary>A marker never reaches a read: not a nearest neighbour and not a symbol vector (#3128).</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_marker_vector_is_never_returned_by_nearest_or_symbol_vectors()
+    {
+        var refused = SymbolOf("src/A.cs", "A.Huge");
+        var fine = SymbolOf("src/A.cs", "A.Fine", line: 10);
+        var reader = await PublishVectors(Create(), [FileOf("src/A.cs", refused, fine)], new EmbeddingRecord(refused.Ref, "m", ReadOnlyMemory<float>.Empty), new EmbeddingRecord(fine.Ref, "m", new float[] { 1, 0 }));
+        await using (reader)
+        {
+            var nearest = Ok(await reader.Nearest(new float[] { 1, 0 }, 10, _none), "nearest");
+            var vectors = Ok(await reader.SymbolVectors(["src/A.cs"], "m", _none), "symbol vectors");
+
+            Expect.That(Refs(nearest.Select(n => n.Symbol)).SequenceEqual([fine.Ref.Value]), "the marker is no neighbour");
+            Expect.That(vectors.Select(v => v.Symbol.Value).SequenceEqual([fine.Ref.Value], StringComparer.Ordinal), "the marker is no symbol vector");
+        }
+    }
+
     /// <summary>The nearest vectors come back best first, with their symbols, and at most k of them.</summary>
     /// <returns>A task.</returns>
     [Fact]

@@ -80,14 +80,17 @@ public sealed class EmbeddingsLayer(IEmbedder embedder, TimeProvider clock)
                 return Tally(await Settle(build, model, vectors.Error, cancellationToken).ConfigureAwait(false), carried, made);
             }
 
-            var written = await build.WriteEmbeddings([.. batch.Select((c, i) => new EmbeddingRecord(c.Symbol, model, vectors.Value[i]))], cancellationToken).ConfigureAwait(false);
+            // An empty vector marks a text the model refused even alone. It is stored as a marker row, so the symbol is no candidate in the
+            // next run; the store counts it as refused, not as embedded.
+            var records = batch.Select((c, i) => new EmbeddingRecord(c.Symbol, model, vectors.Value[i])).ToList();
+            var written = await build.WriteEmbeddings(records, cancellationToken).ConfigureAwait(false);
             if (written.IsError)
             {
                 return written.Error;
             }
 
-            done += batch.Length;
-            made += batch.Length;
+            done += records.Count;
+            made += records.Count(static r => r.Vector.Length > 0);
             progress.Report(string.Create(CultureInfo.InvariantCulture, $"embeddings {done:N0} of {before.Value.Embeddable:N0}"));
         }
 
@@ -95,7 +98,7 @@ public sealed class EmbeddingsLayer(IEmbedder embedder, TimeProvider clock)
     }
 
     // Records what the layer ended as: unavailable with the failure's code when the model failed (the vectors made so far stay),
-    // otherwise ok when every symbol has a vector and pending when the cap left some for the next build.
+    // otherwise ok when every symbol has a vector or was refused (the code is then 017) and pending when the cap left some for the next build.
     private async ValueTask<Result<EmbeddingProgress>> Settle(IIndexBuild build, string model, Error? failure, CancellationToken cancellationToken)
     {
         var counted = await build.CountEmbeddings(cancellationToken).ConfigureAwait(false);
@@ -104,10 +107,13 @@ public sealed class EmbeddingsLayer(IEmbedder embedder, TimeProvider clock)
             return counted.Error;
         }
 
-        var (embedded, embeddable) = (counted.Value.Embedded, counted.Value.Embeddable);
-        var state = failure is not null ? LayerState.Unavailable : embedded >= embeddable ? LayerState.Ok : LayerState.Pending;
-        var detail = string.Create(CultureInfo.InvariantCulture, $"{embedded} of {embeddable} embedded");
-        var recorded = await Record(build, new LayerRecord(LayerName.Embeddings, model, state, failure?.Code, detail, clock.GetUtcNow()), cancellationToken).ConfigureAwait(false);
+        var (embedded, embeddable, refused) = (counted.Value.Embedded, counted.Value.Embeddable, counted.Value.Refused);
+
+        // A refused symbol is settled: the layer is ok once every other symbol has a vector, and the code names the refusals (SND-CODEIDX-017).
+        var state = failure is not null ? LayerState.Unavailable : embedded + refused >= embeddable ? LayerState.Ok : LayerState.Pending;
+        var code = failure?.Code ?? (refused > 0 ? CodeIndexErrors.EmbeddingInputRejected.Code : null);
+        var detail = string.Create(CultureInfo.InvariantCulture, $"{embedded} of {embeddable} embedded") + (refused > 0 ? string.Create(CultureInfo.InvariantCulture, $", {refused} refused") : string.Empty);
+        var recorded = await Record(build, new LayerRecord(LayerName.Embeddings, model, state, code, detail, clock.GetUtcNow()), cancellationToken).ConfigureAwait(false);
         return recorded.IsError ? recorded.Error : counted.Value;
     }
 

@@ -25,6 +25,15 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     /// <summary>The chip's tone; the glyph and word carry the status too.</summary>
     public ChipTone Tone { get; private set => Set(ref field, value); } = ChipTone.Neutral;
 
+    /// <summary>The chip's word without its glyph.</summary>
+    public string ChipWord { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The chip's glyph.</summary>
+    public string ChipGlyph { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The chip's StateChipView tone: ok, running, waiting, error or neutral.</summary>
+    public string ChipToneWord { get; private set => Set(ref field, value); } = "neutral";
+
     /// <summary>True for a succeeded or running run (the ok colour).</summary>
     public bool IsOk => Tone == ChipTone.Ok;
 
@@ -110,6 +119,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
             Groups = [];   // another run: nothing of the old one stays
             Graph = null;
             (Status, Tone, NoticeText) = (string.Empty, ChipTone.Neutral, string.Empty);
+            (ChipWord, ChipGlyph, ChipToneWord) = (string.Empty, string.Empty, "neutral");
             (IsFailed, FailedText) = (false, string.Empty);
             (TitleText, ChipText, TriggerText, RevisionText, WhenText, ErrorText, OutputsText) = (Labels.WfRunTitle(runId), string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
             Changed();
@@ -143,7 +153,9 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         var (glyph, word) = Labels.WfChip(run.Status);
         TitleText = Labels.WfRunTitle(run.Id);
         ChipText = glyph + " " + word;
+        (ChipWord, ChipGlyph) = (word, glyph);
         (Status, Tone) = (run.Status, RunStatus.Tone(run.Status));
+        ChipToneWord = RunStatus.ToneWord(run.Status);
         TriggerText = Labels.WfStartedBy(KindOf(run.Trigger));
         RevisionText = Labels.WfRunRevision(run.Revision);
         var live = RunStatus.IsLive(run.Status);

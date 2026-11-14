@@ -121,7 +121,7 @@ internal sealed class FakeIndexBuild(FakeIndexData data, IndexHeader? previous, 
     }
 
     public ValueTask<Result<EmbeddingProgress>> CountEmbeddings(CancellationToken cancellationToken)
-        => Ok(new EmbeddingProgress(data.Embeddings.Count, data.Symbols.Count(x => x.Symbol.Body is not null || data.Embeddings.ContainsKey(x.Symbol.Ref))));
+        => Ok(new EmbeddingProgress(data.Embeddings.Values.Count(static e => e.Vector.Length > 0), data.Symbols.Count(x => x.Symbol.Body is not null || data.Embeddings.ContainsKey(x.Symbol.Ref))) { Refused = data.Embeddings.Values.Count(static e => e.Vector.Length == 0) });
 
     public ValueTask<Result<Unit>> SetLayer(LayerRecord layer, CancellationToken cancellationToken)
     {

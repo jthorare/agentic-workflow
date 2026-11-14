@@ -25,7 +25,7 @@ public sealed class BuildContextMapHoldTests
         _engine.Queue = new ReviewQueueView("v2@abc123", ReviewVersion.None, [], 0, 0, new QueueCounts(undecided, 0, 0), new Dictionary<string, int>(StringComparer.Ordinal), ReviewTruncated.None);
         _ = await _h.HoldLease();
         _ = await _h.Profiles.Save(SliceHarness.Profile(), Ct);
-        var service = new BuildContextMapService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, new MapEventSource(_h.Held, _h.Store, _h.Events), new ScriptedOutlooks(), _jobs, _h.Clock);
+        var service = new BuildContextMapService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), _engine.Proxy, new MapEventSource(_h.Held, _h.Store, _h.Events), new ScriptedOutlooks(), _jobs, _h.Clock);
         using var job = _jobs.Enter(new JobContext(JobId.New(_h.Ids), JobKind.From("BuildContextMap"), new Progress<string>()));
         using var caller = _h.Callers.EnterService("context-map-refresh");
         return await service.Handle(new BuildContextMapRequest(), Ct);

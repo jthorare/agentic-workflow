@@ -26,6 +26,26 @@ public abstract partial class DecisionLogContract
         Expect.That(count.IsSuccess && count.Value == 2, "the failure at the start and the later one count; the one a tick before doesn't");
     }
 
+    /// <summary>The newest failures come back newest first, inside the window, up to the count asked for.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Latest_failures_are_newest_first_inside_the_window()
+    {
+        var log = await Create(_none);
+        var since = KnownInstants.Epoch;
+        foreach (var (ts, reason) in new[] { (since.AddTicks(-1), "old"), (since.AddHours(1), "first"), (since.AddHours(3), "newest"), (since.AddHours(2), "middle") })
+        {
+            Expect.That((await log.RecordFailure(new FailureRecord(ts, "wake-gate", "claude-cli", reason), _none)).IsSuccess, "a failure is recorded");
+        }
+
+        var one = await log.LatestFailuresSince(since, 1, _none);
+        var all = await log.LatestFailuresSince(since, 10, _none);
+
+        Expect.That(one.IsSuccess && one.Value.Select(f => f.ReasonCode).SequenceEqual(["newest"], StringComparer.Ordinal), "the newest failure alone");
+        Expect.That(all.IsSuccess && all.Value.Select(f => f.ReasonCode).SequenceEqual(["newest", "middle", "first"], StringComparer.Ordinal), "newest first; the one before the window is left out");
+        Expect.That(all.Value[0] == new FailureRecord(since.AddHours(3), "wake-gate", "claude-cli", "newest"), "the whole failure comes back");
+    }
+
     /// <summary>The last attempts are newest first, skip escalated rows and stop at the count asked for.</summary>
     /// <returns>A task.</returns>
     [Fact]
@@ -138,5 +158,6 @@ public abstract partial class DecisionLogContract
         Expect.That((await log.Find(decision.Id, _none)).IsError, "Find returns an error");
         Expect.That((await log.CountFailuresSince(KnownInstants.Epoch, _none)).IsError, "CountFailuresSince returns an error");
         Expect.That((await log.LastAttemptOutcomes(5, _none)).IsError, "LastAttemptOutcomes returns an error");
+        Expect.That((await log.LatestFailuresSince(KnownInstants.Epoch, 1, _none)).IsError, "LatestFailuresSince returns an error");
     }
 }

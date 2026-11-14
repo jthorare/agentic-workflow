@@ -10,4 +10,7 @@ public sealed record EmbeddingProgress(int Embedded, int Embeddable)
 
     /// <summary>The vectors this run wrote (nought outside a run).</summary>
     public int Made { get; init; }
+
+    /// <summary>Symbols the model refused even alone (#3128): each has a marker row (an empty vector), so it is no candidate again, it is not in <see cref="Embedded"/> and it still counts in <see cref="Embeddable"/>.</summary>
+    public int Refused { get; init; }
 }

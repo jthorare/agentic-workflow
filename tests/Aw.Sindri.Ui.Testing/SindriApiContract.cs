@@ -117,7 +117,7 @@ public abstract partial class SindriApiContract
     {
         var catalog = (await Reach(new FakeSindriApi()).Commands(_api, Token)).Value;
 
-        Expect.Equal(120, catalog.Rows.Count);
+        Expect.Equal(127, catalog.Rows.Count);
         Expect.Equal("ready", catalog.Rows.Single(r => r.Action == "RebuildViews").Ui);
         Expect.True(catalog.Rows.All(r => r.Action != "ApproveProfile"));
     }

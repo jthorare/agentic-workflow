@@ -92,6 +92,25 @@ public sealed class WorkflowScheduleServiceTests
     }
 
     [Fact]
+    public async Task Schedule_fire_gives_local_date_and_weekday_in_its_zone()
+    {
+        // Tokyo is UTC+9: Fri 13 Nov 07:00 there is Thu 12 Nov 22:00 UTC, so the UTC instant names the wrong day.
+        _clock.SetUtcNow(At("2026-11-12T12:00:00Z"));
+        await GoLive(Spec("schedule", new JsonObject { ["cron"] = "0 7 * * 1-5", ["timezone"] = "Asia/Tokyo" }));
+        _clock.SetUtcNow(At("2026-11-12T22:00:30Z"));
+
+        var ran = await Tick();
+
+        Assert.True(ran.IsSuccess);
+        var trigger = JsonNode.Parse(Assert.Single(_starter.Requests).Trigger)!;
+        Assert.Equal("2026-11-13", trigger["localDate"]?.GetValue<string>());
+        Assert.Equal("Friday", trigger["weekday"]?.GetValue<string>());
+        var scheduledFor = trigger["scheduledFor"]!.GetValue<string>();
+        Assert.EndsWith("Z", scheduledFor, StringComparison.Ordinal);
+        Assert.Equal(At("2026-11-12T22:00:00Z"), DateTimeOffset.Parse(scheduledFor, CultureInfo.InvariantCulture));
+    }
+
+    [Fact]
     public async Task A_workflow_without_a_schedule_node_is_ignored()
     {
         _clock.SetUtcNow(At("2026-11-04T09:00:00Z"));
