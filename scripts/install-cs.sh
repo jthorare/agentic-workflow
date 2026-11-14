@@ -440,7 +440,7 @@ verify() { # verify <dir> <revision> <heavy source> <meta-gate-reserve source>
   # a ui-evidence copied from an earlier build names the commit that build was made at (inputs/ui-evidence.rev)
   if [ -s "$d/inputs/ui-evidence.rev" ]; then rev="$(cat "$d/inputs/ui-evidence.rev")"; fi
   rc=0; out="$(run "$d/ui-evidence" version)" || rc=$?
-  { [ "$rc" = 0 ] && printf '%s' "$out" | grep -qF "${rev:0:7}"; } \
+  { [ "$rc" = 0 ] && grep -qF "${rev:0:7}" <<<"$out"; } \
     || { rm -rf "$scratch"; die "install didn't take: ui-evidence version (exit $rc) does not name commit ${rev:0:7}: $out"; }
   for b in aw-packets bugfix-state aw-readiness; do
     rc=0; out="$(run "$d/$b")" || rc=$?

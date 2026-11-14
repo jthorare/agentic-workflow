@@ -51,7 +51,7 @@ lock_row() {
   local row
   row="$(awk '!/^[[:space:]]*(#|$)/ { print $1, $2, $3; exit }' "$LOCK")"
   set -- $row
-  if [ $# -ne 3 ] || ! printf '%s' "$2" | grep -qE '^[0-9a-f]{64}$'; then
+  if [ $# -ne 3 ] || ! grep -qE '^[0-9a-f]{64}$' <<<"$2"; then
     echo "tlc: $LOCK wants one row 'version sha256 url'" >&2; exit 2
   fi
   echo "$row"

@@ -25,8 +25,10 @@ internal sealed class ShowNodeService(MapReader reader, IScrubberFactory scrubbe
         var key = node.Value.Key.Value;
         var graph = map.Graph;
         var details = new NodeDetails(graph, text, map.Snapshot.Version.Repo.Value);
-        var url = await SourceUrl(request.Scope, map, details.TargetOf(node.Value), cancellationToken).ConfigureAwait(false);
-        return new NodeView(map.Snapshot.Label, details.Node(node.Value, url),
+        var target = details.TargetOf(node.Value);
+        var url = await SourceUrl(request.Scope, map, target, cancellationToken).ConfigureAwait(false);
+        var detail = details.Node(node.Value, url);
+        return new NodeView(map.Snapshot.Label, detail.Source is { } source && SourceLinks.LocalPath(request.Scope, target) is { } path ? detail with { Source = source with { Path = path } } : detail,
             [.. graph.Aliases.Where(a => a.Target.Value == key).Select(a => a.Alias).OrderBy(a => a.Value, StringComparer.Ordinal)],
             [.. graph.Edges.Where(e => e.From.Value == key).OrderBy(e => e.To.Value, StringComparer.Ordinal).ThenBy(e => e.Type).Select(e => details.Edge(EdgeFact.Of(e), e.To))],
             [.. graph.Edges.Where(e => e.To.Value == key).OrderBy(e => e.From.Value, StringComparer.Ordinal).ThenBy(e => e.Type).Select(e => details.Edge(EdgeFact.Of(e), e.From))]);
