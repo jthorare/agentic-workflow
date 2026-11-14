@@ -84,6 +84,18 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     /// <summary>"Compare 2".</summary>
     public string CompareText => Labels.WfCompare(2);
 
+    /// <summary>The status filter's choices.</summary>
+    public IReadOnlyList<RunFilterChoice> StatusChoices { get; } = [new("", "All statuses"), new("failed", "Failed"), new("succeeded", "Succeeded"), new("running", "Running"), new("cancelled", "Cancelled")];
+
+    /// <summary>The date filter's choices.</summary>
+    public IReadOnlyList<RunFilterChoice> DateChoices { get; } = [new("", "Any time"), new("24h", "Last 24 hours"), new("7d", "Last 7 days"), new("30d", "Last 30 days")];
+
+    /// <summary>The picked status choice; picking one filters.</summary>
+    public RunFilterChoice SelectedStatus { get => StatusChoices.First(c => string.Equals(c.Key, _status, StringComparison.Ordinal)); set => SetStatusFilter(value?.Key); }
+
+    /// <summary>The picked date choice; picking one filters.</summary>
+    public RunFilterChoice SelectedDate { get => DateChoices.First(c => string.Equals(c.Key, _range, StringComparison.Ordinal)); set => SetDateFilter(value?.Key); }
+
     /// <summary>The status filter: "failed", "succeeded", "running", "cancelled", or empty for every status.</summary>
     public string StatusFilter => _status;
 
@@ -125,6 +137,8 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         OnChanged(nameof(HasNoMatch));
         OnChanged(nameof(StatusFilter));
         OnChanged(nameof(DateFilter));
+        OnChanged(nameof(SelectedStatus));
+        OnChanged(nameof(SelectedDate));
         OnSelectionChanged();
     }
 

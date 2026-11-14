@@ -204,22 +204,50 @@
           <Border x:Name="RunsEmptyName" Margin="16,8" IsVisible="{Binding Runs.IsEmpty}" AutomationProperties.Name="{Binding Runs.EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <TextBlock Classes="caption quiet" Text="{Binding Runs.EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
+          <!-- The runs table (frame wf-runs): filters and the count, then Time, Trigger, Revision, Duration and Result. The run id is not shown (#3360). -->
+          <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto" Margin="16,8" ColumnSpacing="8" IsVisible="{Binding !Runs.IsReading}">
+            <TextBlock Classes="caption subtle" Text="Status" VerticalAlignment="Center" />
+            <ComboBox x:Name="RunsStatusFilter" Grid.Column="1" ItemsSource="{Binding Runs.StatusChoices}" SelectedItem="{Binding Runs.SelectedStatus, Mode=TwoWay}" AutomationProperties.Name="Status">
+              <ComboBox.ItemTemplate><DataTemplate x:DataType="wf:RunFilterChoice"><TextBlock Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate>
+            </ComboBox>
+            <TextBlock Grid.Column="2" Classes="caption subtle" Text="Date" VerticalAlignment="Center" />
+            <ComboBox x:Name="RunsDateFilter" Grid.Column="3" ItemsSource="{Binding Runs.DateChoices}" SelectedItem="{Binding Runs.SelectedDate, Mode=TwoWay}" AutomationProperties.Name="Date">
+              <ComboBox.ItemTemplate><DataTemplate x:DataType="wf:RunFilterChoice"><TextBlock Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate>
+            </ComboBox>
+            <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8">
+              <Button x:Name="RunsClearFilters" Content="Clear filters" Click="OnClearRunFilters" IsVisible="{Binding Runs.HasFilter}" AutomationProperties.Name="Clear filters" />
+            </StackPanel>
+            <TextBlock x:Name="RunsCount" Grid.Column="5" Classes="caption subtle" Text="{Binding Runs.CountText}" VerticalAlignment="Center" />
+            <Button x:Name="RunsCompare" Grid.Column="6" Content="{Binding Runs.CompareText}" Click="OnCompare" IsVisible="{Binding Runs.CanCompare}" AutomationProperties.Name="{Binding Runs.CompareText}" />
+          </Grid>
+          <Border x:Name="RunsNoMatchName" Margin="16,8" IsVisible="{Binding Runs.HasNoMatch}" AutomationProperties.Name="{Binding Runs.NoMatchText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+            <TextBlock Classes="caption quiet" Text="{Binding Runs.NoMatchText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          </Border>
+          <Grid ColumnDefinitions="24,136,168,64,80,*" ColumnSpacing="16" Margin="16,0" Height="28" IsVisible="{Binding !Runs.IsReading}">
+            <TextBlock Grid.Column="1" Name="RunColumnHead" Classes="caption subtle" Text="Time" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="2" Name="RunColumnHead" Classes="caption subtle" Text="Trigger" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="3" Name="RunColumnHead" Classes="caption subtle" Text="Revision" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="4" Name="RunColumnHead" Classes="caption subtle" Text="Duration" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="5" Name="RunColumnHead" Classes="caption subtle" Text="Result" VerticalAlignment="Center" />
+          </Grid>
           <ItemsControl x:Name="RunRows" ItemsSource="{Binding Runs.Rows}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="wf:RunRowViewModel">
-                <Border Classes="item-row clickable" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-                  <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" MinHeight="{StaticResource Row.Height.Default}" Margin="0,8" VerticalAlignment="Center">
-                    <!-- The same vertical padding and title margin as a workflow list row (#2700): the shared row-title style's -2 would otherwise pull the title up out of the row's padding. -->
-                    <Button Classes="row-title" Margin="-2,0" Click="OnOpenRun" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
-                      <TextBlock Classes="body-strong mono" Text="{Binding Id}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+                <Border Name="RunRow" Classes="item-row clickable" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                  <Grid ColumnDefinitions="24,136,168,64,80,*" ColumnSpacing="16" Margin="16,0" Height="{StaticResource Row.Height.Default}">
+                    <CheckBox Name="RunTick" IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center" MinWidth="0" AutomationProperties.Name="Select this run to compare" />
+                    <!-- The time opens the run; the tip gives the date and time on one line and the exact age on the next, and stays inside the column. -->
+                    <Button Grid.Column="1" Classes="row-title" Margin="-2,0" Click="OnOpenRun" HorizontalAlignment="Left" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding TimeTip}" ToolTip.Placement="Bottom">
+                      <TextBlock Name="RunTime" Classes="body-strong" Text="{Binding TimeText}" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
-                    <controls:StateChipView Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Word="{Binding ChipWord}" Tone="{Binding ChipToneWord}" Glyph="{Binding ChipGlyph}" />
-                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
-                      <TextBlock Classes="caption subtle" Text="{Binding TriggerText}" />
-                      <TextBlock Classes="caption subtle" Text="{Binding RevisionText}" />
-                      <TextBlock Classes="caption subtle" Text="{Binding WhenText}" />
+                    <TextBlock Grid.Column="2" Name="RunTrigger" Classes="body muted" Text="{Binding TriggerWords}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="3" Name="RunRevision" Classes="body muted" Text="{Binding RevisionShort}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="4" Name="RunDuration" Classes="body muted" Text="{Binding DurationText}" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding ChipGlyph}" Foreground="{DynamicResource Brush.Error}" IsVisible="{Binding IsError}" AutomationProperties.AccessibilityView="Raw" />
+                      <TextBlock Text="{Binding ChipGlyph}" Foreground="{DynamicResource Brush.InkSubtle}" IsVisible="{Binding !IsError}" AutomationProperties.AccessibilityView="Raw" />
+                      <TextBlock Name="RunResult" Classes="caption muted" Text="{Binding ResultText}" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
-                    <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Classes="caption" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" Margin="0,0,0,8" />
                   </Grid>
                 </Border>
               </DataTemplate>

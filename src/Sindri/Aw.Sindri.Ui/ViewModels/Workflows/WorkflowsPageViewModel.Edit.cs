@@ -79,6 +79,11 @@ internal sealed partial class WorkflowsPageViewModel
         return Edit(cancellationToken);
     }
 
+    /// <summary>Compare on two ticked runs: opens them side by side (the Compare view, built next).</summary>
+    internal void OpenCompare()
+    {
+    }
+
     /// <summary>Sends every changed field in ONE call on the revision read: all are saved or none, and a refusal or a stale answer keeps every edit in the form. A field with a problem stops the save before anything is sent.</summary>
     /// <param name="cancellationToken">Cancels the calls.</param>
     /// <returns>A task that completes when the answers are shown.</returns>

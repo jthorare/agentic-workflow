@@ -41,6 +41,22 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
+    private void OnClearRunFilters(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            page.Runs.ClearFilters();
+        }
+    }
+
+    private void OnCompare(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            page.OpenCompare();
+        }
+    }
+
     private async void OnOpenRun(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page && sender is Control { DataContext: RunRowViewModel row })
