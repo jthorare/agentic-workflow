@@ -118,14 +118,30 @@ commit="$(git -C "$root" rev-parse --verify -q HEAD 2> /dev/null || true)"
 source "$here/lib/sindri-build-inputs.sh"
 PATHSPECS=("${SINDRI_BUILD_PATHSPECS[@]}" src/Evidence src/BugFix src/Readiness scripts/heavy.sh scripts/meta-gate-reserve.sh config/lib/heavy-config.sh)
 sha256() { shasum -a 256 2> /dev/null || sha256sum; }
+# hash_list <list> <header line>...: sha256 (16 hex) of the header lines, the file list and git's hash of each listed file. A git that
+# dies (killed under memory pressure) stops the script with a message; piped into sha256 it ended the script silently (#3218).
+hash_list() {
+  local list="$1" hashes
+  shift
+  hashes="$(mktemp "${TMPDIR:-/tmp}/install-cs-hash.XXXXXX")"
+  (cd "$root" && git hash-object --stdin-paths < "$list") > "$hashes" \
+    || { rm -f "$hashes"; die "git hash-object failed while hashing the build inputs (git ended with an error; run it again)"; }
+  { printf '%s\n' "$@"; cat "$list" "$hashes"; } | sha256 | cut -c1-16
+  rm -f "$hashes"
+}
 inputs="$(mktemp "${TMPDIR:-/tmp}/install-cs-inputs.XXXXXX")"
 # a tracked file deleted in the working tree is left out: it isn't part of the build, and tar would fail on it
-git -C "$root" ls-files -z --cached --others --exclude-standard -- "${PATHSPECS[@]}" \
-  | while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done | LC_ALL=C sort -u > "$inputs"
+# A git that dies in the stamp (ls-files, status) stops the script with a message, never silently or as a wrong "clean" (#3218).
+git -C "$root" ls-files -z --cached --others --exclude-standard -- "${PATHSPECS[@]}" > "$inputs.z" \
+  || { rm -f "$inputs" "$inputs.z"; die "git ls-files failed while stamping the build (git ended with an error; run it again)"; }
+while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done < "$inputs.z" | LC_ALL=C sort -u > "$inputs"
+rm -f "$inputs.z"
 [ -s "$inputs" ] || die "no build inputs found under $root"
-stamp="$( { printf '%s\n' "$sdk" "$platform" "$commit"; cat "$inputs"; (cd "$root" && git hash-object --stdin-paths < "$inputs"); } | sha256 | cut -c1-16)"
+stamp="$(hash_list "$inputs" "$sdk" "$platform" "$commit")"
 dirty=""
-if [ -n "$(git -C "$root" status --porcelain -- "${PATHSPECS[@]}" 2> /dev/null)" ]; then dirty="-dirty"; fi
+status="$(git -C "$root" status --porcelain -- "${PATHSPECS[@]}" 2> /dev/null)" \
+  || { rm -f "$inputs"; die "git status failed while stamping the build (git ended with an error; run it again)"; }
+if [ -n "$status" ]; then dirty="-dirty"; fi
 revision="$commit$dirty"
 
 lock="" stage="" tree=""
@@ -233,7 +249,7 @@ input_hash() { # input_hash <csproj>: the hash of one binary's inputs, made as t
     || { rm -f "$list" "$list.z"; die "git ls-files failed while hashing the inputs of $1 (git ended with an error; run it again)"; }
   while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done < "$list.z" | LC_ALL=C sort -u > "$list"
   rm -f "$list.z"
-  { printf '%s\n' "$sdk" "$platform"; cat "$list"; (cd "$root" && git hash-object --stdin-paths < "$list"); } | sha256 | cut -c1-16
+  hash_list "$list" "$sdk" "$platform"
   rm -f "$list"
 }
 
@@ -548,9 +564,11 @@ pack_sdk() {
   fi
   local list want have
   list="$(mktemp "${TMPDIR:-/tmp}/install-cs-sdk.XXXXXX")"
-  git -C "$root" ls-files -z --cached --others --exclude-standard -- "${SDK_PATHSPECS[@]}" \
-    | while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done | LC_ALL=C sort -u > "$list"
-  want="$( { printf '%s\n' "$sdk"; cat "$list"; (cd "$root" && git hash-object --stdin-paths < "$list"); } | sha256 | cut -c1-16)"
+  git -C "$root" ls-files -z --cached --others --exclude-standard -- "${SDK_PATHSPECS[@]}" > "$list.z" \
+    || { rm -f "$list" "$list.z"; die "git ls-files failed while listing the toolkit SDK inputs (git ended with an error; run it again)"; }
+  while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done < "$list.z" | LC_ALL=C sort -u > "$list"
+  rm -f "$list.z"
+  want="$(hash_list "$list" "$sdk")"
   have="$(cat "$sdk_feed/.sdk-stamp" 2> /dev/null || true)"
   if [ "$rebuild" = 0 ] && [ "$want" = "$have" ] && ls "$sdk_feed"/Aw.Sindri.Toolkit.*.nupkg > /dev/null 2>&1; then
     say "toolkit SDK package is current ($sdk_feed)"
