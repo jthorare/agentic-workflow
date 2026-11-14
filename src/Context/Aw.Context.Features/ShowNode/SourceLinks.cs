@@ -52,13 +52,13 @@ internal sealed class SourceLinks(ContextScope scope, VisibleMap map, IEgressScr
 
     private static string? Inside(string checkout, string path)
     {
-        if (!System.IO.Path.IsPathRooted(checkout) || System.IO.Path.IsPathRooted(path))
+        if (!Path.IsPathRooted(checkout) || Path.IsPathRooted(path))
         {
             return null;
         }
 
-        var root = System.IO.Path.GetFullPath(checkout).TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar) + System.IO.Path.DirectorySeparatorChar;
-        var full = System.IO.Path.GetFullPath(System.IO.Path.Combine(root, path));
+        var root = Path.GetFullPath(checkout).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        var full = Path.GetFullPath(Path.Combine(root, path));
         return full.StartsWith(root, StringComparison.Ordinal) && full.Length > root.Length ? full : null;
     }
 
