@@ -34,7 +34,7 @@ public sealed class WorkflowsEditErrorScopeTests
         var page = await _f.Shown(Token);
         await page.OpenWorkflow(Slug, Token);
         _ = page.Runs.Graph!.SelectNode("agent");
-        await page.Edit(Token);
+        await page.OpenSettings(Token);
         _f.Server.ApplyWorkflowOpsAnswer = RouteAnswer.Problem(HttpStatusCode.BadRequest, "SND-GRAPH-001", "Node schedule_1 has no schedule.");
         page.Editor.Fields[0].Text = "Check twice";
         await page.Save(Token);
@@ -79,6 +79,6 @@ public sealed class WorkflowsEditErrorScopeTests
 
         page.Editor.Select("start");
 
-        Assert.Equal((string.Empty, true), (page.Editor.FailureText, page.IsEditing));
+        Assert.Equal((string.Empty, true), (page.Editor.FailureText, page.IsSettingsOpen));
     }
 }

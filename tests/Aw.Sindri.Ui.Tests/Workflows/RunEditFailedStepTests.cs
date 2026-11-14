@@ -58,7 +58,7 @@ public sealed class RunEditFailedStepTests
         await page.Run.Groups[0].Runs[0].EditStep(Token);
 
         Assert.True(page.IsRuns, "the page did not go back up to the workflow");
-        Assert.Equal(("agent", true), (page.Runs.Graph!.SelectedId, page.IsEditing));
+        Assert.Equal(("agent", true), (page.Runs.Graph!.SelectedId, page.IsSettingsOpen));
         Assert.Equal(["prompt"], page.Editor.Fields.Select(f => f.Name), StringComparer.Ordinal);
     }
 }

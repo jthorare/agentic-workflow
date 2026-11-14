@@ -12,21 +12,39 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>The editor over the page's API.</summary>
     internal OpsEditor Editor { get; }
 
-    /// <summary>True while the editor sheet is open.</summary>
-    public bool IsEditing { get; private set { Set(ref field, value); OnChanged(nameof(StepSummaryText)); OnChanged(nameof(HasStepSummary)); } }
+    /// <summary>True in graph edit mode (Edit pressed, Done not yet): the edit bar shows and works. The step settings sheet is separate, see <see cref="IsSettingsOpen"/>.</summary>
+    public bool IsEditing { get; private set { Set(ref field, value); OnChanged(nameof(ShowsEdit)); } }
 
-    /// <summary>The selected step's title and summary, shown under the graph while Edit is off; empty otherwise.</summary>
-    public string StepSummaryText => IsEditing ? string.Empty : Runs.Graph?.StepLine ?? string.Empty;
+    /// <summary>True while the step settings sheet is open. It locks the edit bar, so the sheet's typed text is never reloaded under the person.</summary>
+    public bool IsSettingsOpen { get; private set { Set(ref field, value); OnChanged(nameof(StepSummaryText)); OnChanged(nameof(HasStepSummary)); OnChanged(nameof(CanOpenSettings)); OnChanged(nameof(ShowsStepRow)); } }
+
+    /// <summary>True when Step settings is offered: a step is selected, the sheet is shut and the workflow can be edited.</summary>
+    public bool CanOpenSettings => !IsSettingsOpen && CanEdit && Runs.Graph?.SelectedId is not null;
+
+    /// <summary>The selected step's title and summary, shown under the graph while the sheet is shut; empty otherwise.</summary>
+    public string StepSummaryText => IsSettingsOpen ? string.Empty : Runs.Graph?.StepLine ?? string.Empty;
 
     /// <summary>True when the line under the graph shows.</summary>
     public bool HasStepSummary => StepSummaryText.Length > 0;
 
+    /// <summary>True when the row under the graph shows: a step summary or Step settings.</summary>
+    public bool ShowsStepRow => HasStepSummary || CanOpenSettings;
+
     /// <summary>True when the open workflow can be edited: a workflow is open on its runs and it is not archived.</summary>
     public bool CanEdit => IsRuns && Runs.Shown is { ArchivedAt: null };
+
+    /// <summary>True when the Edit button shows: the workflow can be edited and edit mode is off (Done is the way out while it is on).</summary>
+    public bool ShowsEdit => CanEdit && !IsEditing;
 
     /// <summary>The Edit button's words.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     public string EditText => Labels.WfEdit;
+
+    /// <summary>The Done button's words.</summary>
+    public string DoneText => Labels.WfEditDone;
+
+    /// <summary>The Step settings button's words.</summary>
+    public string StepSettingsText => Labels.WfStepSettings;
 
     /// <summary>The Close button's words.</summary>
     public string CloseEditorText => Labels.WfEditClose;
@@ -47,21 +65,30 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>True when Save does something: the form has fields read for the workflow the page shows (and it is not archived), no edit is on the way and no reload is due.</summary>
     public bool CanSave => Editor.Fields.Count > 0 && !Editor.IsSending && !Editor.NeedsReload && CanEdit && Editor.BaseRevision > 0 && string.Equals(Editor.Slug, Runs.Slug, StringComparison.Ordinal);
 
-    /// <summary>Opens the sheet on the selected graph node's fields.</summary>
+    /// <summary>Turns graph edit mode on: the edit bar shows and works, the sheet stays shut.</summary>
+    internal void Edit()
+    {
+        if (CanEdit)
+        {
+            IsEditing = true;
+        }
+    }
+
+    /// <summary>Opens the step settings sheet on the selected graph node's fields (and turns edit mode on).</summary>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>A task that completes when the form is made.</returns>
-    internal async Task Edit(CancellationToken cancellationToken)
+    internal async Task OpenSettings(CancellationToken cancellationToken)
     {
         if (_url is not { } url || !CanEdit)
         {
             return;
         }
 
-        (IsEditing, GraphEdit.SheetOpen) = (true, true);
+        (IsEditing, IsSettingsOpen, GraphEdit.SheetOpen) = (true, true, true);
         var (edit, slug) = (++_edits, Runs.Slug);
         var node = Runs.Graph?.SelectedId ?? string.Empty;
         await Editor.Load(url, slug, cancellationToken).ConfigureAwait(true);
-        if (edit != _edits || !IsEditing || !string.Equals(Editor.Slug, slug, StringComparison.Ordinal))
+        if (edit != _edits || !IsSettingsOpen || !string.Equals(Editor.Slug, slug, StringComparison.Ordinal))
         {
             return;   // a newer Edit started or the sheet closed while this one read: its node belongs to an older sheet
         }
@@ -77,7 +104,7 @@ internal sealed partial class WorkflowsPageViewModel
     {
         Back();
         _ = Runs.Graph?.SelectNode(nodeId);
-        return Edit(cancellationToken);
+        return OpenSettings(cancellationToken);
     }
 
     /// <summary>Raised with the service name ("github") when a Connect button is pressed: the shell opens Connections.</summary>
@@ -118,7 +145,7 @@ internal sealed partial class WorkflowsPageViewModel
     /// <returns>A task that completes when the answers are shown.</returns>
     internal async Task Save(CancellationToken cancellationToken)
     {
-        if (!IsEditing || !CanSave)
+        if (!IsSettingsOpen || !CanSave)
         {
             return;
         }
@@ -147,11 +174,19 @@ internal sealed partial class WorkflowsPageViewModel
         }
     }
 
-    /// <summary>Closes the sheet.</summary>
+    /// <summary>Closes the sheet; edit mode stays on.</summary>
+    internal void CloseSettings()
+    {
+        (IsSettingsOpen, GraphEdit.SheetOpen) = (false, false);
+        Editor.ClearFailure();   // an edit error is drawn in its own sheet and ends with it
+    }
+
+    /// <summary>Closes the sheet and leaves edit mode (Done, or leaving the workflow).</summary>
     internal void CloseEditor()
     {
-        (IsEditing, GraphEdit.SheetOpen) = (false, false);
-        Editor.ClearFailure();   // an edit error is drawn in its own sheet and ends with it
+        CloseSettings();
+        IsEditing = false;
+        GraphEdit.Cancel();   // a half-made Add or Connect does not wait for the next Edit
     }
 
     private void WatchEditor()
@@ -163,17 +198,28 @@ internal sealed partial class WorkflowsPageViewModel
             if (string.Equals(e.PropertyName, nameof(RunsViewModel.Graph), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(RunsViewModel.IsReading), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(RunsViewModel.Shown), StringComparison.Ordinal))
             {
                 OnChanged(nameof(CanEdit));
+                OnChanged(nameof(ShowsEdit));
+                OnChanged(nameof(DetailStateText));
+                OnChanged(nameof(ShowsDetailState));
+                OnChanged(nameof(CanOpenSettings));
+                OnChanged(nameof(ShowsStepRow));
                 OnChanged(nameof(CanSave));
                 OnChanged(nameof(EditorHeading));
                 OnChanged(nameof(StepSummaryText));
                 OnChanged(nameof(HasStepSummary));
-                if (string.Equals(e.PropertyName, nameof(RunsViewModel.Graph), StringComparison.Ordinal) && Runs.Graph is { } graph)
+                OnChanged(nameof(ShowsStepRow));
+                if (string.Equals(e.PropertyName, nameof(RunsViewModel.Graph), StringComparison.Ordinal) && !ReferenceEquals(_watchedGraph, Runs.Graph))
                 {
-                    graph.PropertyChanged += OnGraphChanged;
+                    _watchedGraph?.PropertyChanged -= OnGraphChanged;   // the old workflow's graph stops reaching this page
+                    _watchedGraph = Runs.Graph;
+                    _watchedGraph?.PropertyChanged += OnGraphChanged;
                 }
             }
         };
     }
+
+    // The graph whose StepLine and SelectedId this page follows; swapped, never stacked, when another workflow opens.
+    private WorkflowGraphViewModel? _watchedGraph;
 
     private void OnGraphChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -181,6 +227,13 @@ internal sealed partial class WorkflowsPageViewModel
         {
             OnChanged(nameof(StepSummaryText));
             OnChanged(nameof(HasStepSummary));
+            OnChanged(nameof(ShowsStepRow));
+        }
+
+        if (string.Equals(e.PropertyName, nameof(WorkflowGraphViewModel.SelectedId), StringComparison.Ordinal))
+        {
+            OnChanged(nameof(CanOpenSettings));
+            OnChanged(nameof(ShowsStepRow));
         }
     }
 
