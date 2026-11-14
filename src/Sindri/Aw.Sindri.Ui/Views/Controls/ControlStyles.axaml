@@ -499,6 +499,8 @@
     <Setter Property="MinHeight" Value="0" />
   </Style>
   <Style Selector="Border.picker-error Expander /template/ ToggleButton#ExpanderHeader">
+    <!-- #3651: the header is as wide as "Details" plus the chevron box (Fluent stretches it across the box, which left the chevron about 35 px from the word). -->
+    <Setter Property="HorizontalAlignment" Value="Left" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="0,2" />

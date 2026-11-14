@@ -282,6 +282,21 @@ public sealed class ListPickerTests
     });
 
     [Fact]
+    public async Task The_Details_chevron_sits_next_to_the_word() => await OnUi(() =>
+    {
+        var (window, box) = ShowError();
+        var details = box.GetVisualDescendants().OfType<Expander>().Single();
+        var word = details.GetVisualDescendants().OfType<TextBlock>().First(t => t.Text == "Details");
+        var chevron = details.GetVisualDescendants().OfType<Border>().First(b => b.Name == "ExpandCollapseChevronBorder");
+
+        var gap = chevron.TranslatePoint(default, window)!.Value.X - (word.TranslatePoint(default, window)!.Value.X + word.Bounds.Width);
+
+        Assert.True(gap is >= 0 and <= 12, string.Create(CultureInfo.InvariantCulture, $"the chevron box starts {gap} px after the word Details"));
+        window.Close();
+        return true;
+    });
+
+    [Fact]
     public async Task The_Details_header_sits_on_the_callout_fill_not_the_stock_expander_background() => await OnUi(() =>
     {
         var (window, box) = ShowError();
