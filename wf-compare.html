@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Compare two runs</title>
+<link rel="stylesheet" href="../grammar-2978/grammar.css">
+<link rel="stylesheet" href="workflows.css">
+</head>
+<body>
+<div class="app"><div class="topbar"><div class="wordmark">Sindri</div><div class="nav nav2"><a>Home</a><a>Projects</a><a class=on><i class=ndot></i>Workflows</a><a>Work<span class=n>0</span></a><a>Context</a><a>Agents<span class=n>11</span></a><a>System</a><a>Reviews</a><a>Connections</a></div><div class="spacer"></div><div class="cmdk srch"><span class="mg"></span>Search...<kbd>Ctrl+K</kbd></div><div class="health"><span class="ck">✓</span><b>Healthy</b><span class="up">updated 59s ago</span></div></div>
+<div class="header"><div class="crumb">Workflows <span>/</span> <b>Sum numbers</b> <span>/</span> Runs <span>/</span> Compare 2</div><span class="count">differs in 3 of 3 steps</span><span class="sp" style="flex:1"></span><span class="btn">Back to runs <kbd>Esc</kbd></span></div>
+<div class="body"><div class="list" style="padding:0;overflow:hidden"><div class="cmp"><div></div><div class="runh"><span class="l1">Run A · Sat 14 Nov, 08:40</span><span class="l2"><span>r2</span><span>·</span><span>10 s</span><span>·</span><span>From the CLI</span></span><span class="l3"><span class="chip err">Failed</span><span>tell failed: the notification was not delivered</span></span></div><div class="runh"><span class="l1">Run B · Fri 13 Nov, 01:40</span><span class="l2"><span>r1</span><span>·</span><span>10 s</span><span>·</span><span>By hand</span></span><span class="l3"><span class="chip err">Failed</span><span>sum failed: code runner not found (SND-CODE-005)</span></span></div><div class="sname"><b>start</b><span>manual</span></div><div class="cell"><div class="st"><span class="g done"></span><span>Succeeded</span><span class="dur">0.4 s</span></div><div class="lab">Output</div><div class="ln"><span>{</span></div><div class="ln"><span>  &quot;payload&quot;: {</span></div><div class="ln"><span>    &quot;kind&quot;: &quot;manual&quot;,</span></div><div class="ln"><span>    &quot;payload&quot;: null,</span></div><div class="ln df"><span>    &quot;by&quot;: &quot;human:cli&quot;</span><span class=tag>differs</span></div><div class="ln"><span>  }</span></div><div class="ln"><span>}</span></div></div><div class="cell"><div class="st"><span class="g done"></span><span>Succeeded</span><span class="dur">0.4 s</span></div><div class="lab">Output</div><div class="ln"><span>{</span></div><div class="ln"><span>  &quot;payload&quot;: {</span></div><div class="ln"><span>    &quot;kind&quot;: &quot;manual&quot;,</span></div><div class="ln"><span>    &quot;payload&quot;: null,</span></div><div class="ln df"><span>    &quot;by&quot;: &quot;human:ui&quot;</span><span class=tag>differs</span></div><div class="ln"><span>  }</span></div><div class="ln"><span>}</span></div></div><div class="sname"><b>sum</b><span>code</span></div><div class="cell"><div class="st"><span class="g done"></span><span>Succeeded</span><span class="dur">5.2 s</span></div><div class="lab">Output</div><div class="ln df"><span>{</span></div><div class="ln df"><span>  &quot;result&quot;: {</span><span class=tag>differs</span></div><div class="ln df"><span>    &quot;sum&quot;: 3</span></div><div class="ln df"><span>  }</span></div><div class="ln df"><span>}</span></div></div><div class="cell"><div class="st"><span class="g fail"></span><span>Failed</span><span class="dur">9.6 s</span></div><div class="plain df"><span>SND-CODE-005: code runner not found</span><span class="tag">differs</span></div></div><div class="sname"><b>tell</b><span>notify</span></div><div class="cell"><div class="st"><span class="g fail"></span><span>Failed</span><span class="dur">4.4 s</span></div><div class="lab">Input</div><div class="ln"><span>{</span></div><div class="ln"><span>  &quot;title&quot;: &quot;Sum is 3&quot;</span></div><div class="ln"><span>}</span></div><div class="plain df"><span>The notification was not delivered: the Sindri inbox refused it</span><span class="tag">differs</span></div></div><div class="cell"><div class="st"><span class="g would"></span><span>Skipped</span><span class="dur">0 s</span></div><div class="plain df"><span>Did not run: sum failed</span><span class="tag">differs</span></div></div></div></div></div>
+<div class="keys"><span><kbd>j/k</kbd>move</span><span><kbd>Space</kbd>peek</span><span><kbd>Enter</kbd>open</span><span><kbd>Esc</kbd>back</span><span><kbd>/</kbd>filter</span><span><kbd>Ctrl+K</kbd>palette</span><span class="keys-div"></span><span><kbd>Esc</kbd>back to runs</span></div></div>
+<pre id="measure"></pre>
+<script>
+function R(e){return e.getBoundingClientRect();}
+function run(){
+  var rows=document.querySelectorAll('.row,.cmp .cell').length;
+  var cut=[];
+  [].slice.call(document.querySelectorAll('body *')).forEach(function(e){
+    if(e.closest('pre,script,style'))return;
+    var cs=getComputedStyle(e);
+    if(cs.overflowX==='hidden'&&e.textContent.trim()&&e.scrollWidth>e.clientWidth+0.5){cut.push(e.textContent.trim().slice(0,50));}
+  });
+  var W=document.body.getBoundingClientRect().width,H=document.body.getBoundingClientRect().height;
+  var outside=[].slice.call(document.querySelectorAll('.row,.thead,.fbar,.cmp .cell,.cmp .runh,.empty,.inset,.state-line,.peek,.tip,.keys')).filter(function(e){var r=R(e);return r.right>W+0.5||r.bottom>H+0.5;}).map(function(e){return e.className.toString().slice(0,30);});
+  function rgba(c){var m=c.match(/rgba?\(([^)]+)\)/); if(!m)return[0,0,0,0]; var p=m[1].split(/[ ,\/]+/).filter(Boolean).map(parseFloat); return [p[0],p[1],p[2],p.length>3?p[3]:1];}
+  function comp(top,bot){var a=top[3]; return [top[0]*a+bot[0]*(1-a),top[1]*a+bot[1]*(1-a),top[2]*a+bot[2]*(1-a),1];}
+  function bgOf(el){var chain=[]; for(var e=el;e;e=e.parentElement){chain.push(e);} var bg=[8,9,10,1]; for(var i=chain.length-1;i>=0;i--){var c=rgba(getComputedStyle(chain[i]).backgroundColor); if(c[3]>0){bg=comp(c,bg);}} return bg;}
+  function lum(c){function f(v){v/=255; return v<=0.04045?v/12.92:Math.pow((v+0.055)/1.055,2.4);} return 0.2126*f(c[0])+0.7152*f(c[1])+0.0722*f(c[2]);}
+  var low=[]; var minRatio=99; var all=[];
+  var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+  var seen={};
+  while(walker.nextNode()){var tn=walker.currentNode; var t=tn.nodeValue.trim(); if(!t)continue; var el=tn.parentElement; if(!el||el.closest('pre,script,style'))continue; var cs=getComputedStyle(el); if(cs.display==='none'||cs.visibility==='hidden')continue;
+    var bg=bgOf(el); var op=1; for(var q=el;q;q=q.parentElement){op*=parseFloat(getComputedStyle(q).opacity);} var fc=rgba(cs.color); fc[3]*=op; var fg=comp(fc,bg); var L1=lum(fg),L2=lum(bg); var ratio=(Math.max(L1,L2)+0.05)/(Math.min(L1,L2)+0.05); var key=t+'|'+ratio.toFixed(2); if(seen[key])continue; seen[key]=1;
+    if(ratio<4.5){low.push(t.slice(0,40)+' '+ratio.toFixed(2)+' '+cs.fontSize);} if(ratio<minRatio)minRatio=ratio; all.push([ratio,t.slice(0,24),el.className.toString().slice(0,18),'bg('+bg.map(function(v){return Math.round(v);}).join(',')+')']);}
+  document.getElementById('measure').textContent='rows='+rows+' cut='+JSON.stringify(cut)+' contrastUnder4_5='+JSON.stringify(low)+' minContrast='+minRatio.toFixed(2)+' lowest3='+JSON.stringify(all.sort(function(a,b){return a[0]-b[0];}).slice(0,3).map(function(x){return [x[0].toFixed(2)].concat(x.slice(1));}))+' outside='+JSON.stringify(outside)+' font='+(document.fonts&&document.fonts.check('13px Inter')?'Inter':'fallback');
+}
+(document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(run,50);});
+</script>
+</body></html>
