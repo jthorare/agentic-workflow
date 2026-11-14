@@ -29,8 +29,6 @@ internal static partial class Labels
 
     internal const string NewAgentWorktreeLabel = "New worktree";
 
-    internal const string NewAgentOnboard = "Onboard it";
-
     internal const string NewAgentEsc = "Esc";
 
     /// <summary>The longest prompt the route takes.</summary>

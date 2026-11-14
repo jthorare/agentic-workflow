@@ -16,6 +16,7 @@ internal sealed partial class NewAgentFormViewModel
         if (background)
         {
             FootLine = Labels.NewAgentStarted(Agent.Short, repo.Name);
+            Focus(NewAgentField.Prompt);   // the next Ctrl+Enter starts the next one from here
             return;
         }
 

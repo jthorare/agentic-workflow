@@ -179,8 +179,7 @@ internal sealed partial class NewAgentFormViewModel : ObservableObject
     /// <summary>Shows the sheet with focus on Prompt, keeping what was typed.</summary>
     internal void Open()
     {
-        IsOpen = true;
-        (RepoError, AgentError, SignInCommand, FootError) = (string.Empty, string.Empty, string.Empty, string.Empty);
+        IsOpen = true;   // an error of a finished start stays until the person changes a field or starts again
         Focus(NewAgentField.Prompt);
         Changed();
     }
@@ -188,6 +187,11 @@ internal sealed partial class NewAgentFormViewModel : ObservableObject
     /// <summary>Closes the sheet and keeps what was typed.</summary>
     internal void Close()
     {
+        if (IsStarting)
+        {
+            return;   // a start is on its way: its answer lands in this form, so Esc waits (the button reads Starting...)
+        }
+
         IsOpen = false;
         Changed();
     }

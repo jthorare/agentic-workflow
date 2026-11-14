@@ -21,9 +21,6 @@ internal sealed partial class NewAgentFormViewModel
     /// <summary>The switch's label.</summary>
     public string WorktreeLabel => Labels.NewAgentWorktreeLabel;
 
-    /// <summary>The link under a repo that is not onboarded.</summary>
-    public string OnboardText => Labels.NewAgentOnboard;
-
     /// <summary>The Esc hint's key cap.</summary>
     public string EscText => Labels.NewAgentEsc;
 

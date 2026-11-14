@@ -35,16 +35,17 @@ internal sealed partial class ShellViewModel
     /// <returns>A task that completes once the form is shown.</returns>
     internal async Task OpenNewAgent(CancellationToken cancellationToken)
     {
+        NewAgent.Open();   // at once: a slow API must not hold the form back, its fields fill when the reads land
         if (Health.ApiUrl() is { } url)
         {
-            var setup = await _api.Setup(url, cancellationToken).ConfigureAwait(true);
-            var last = await _api.LastStart(url, cancellationToken).ConfigureAwait(true);
+            var setupRead = _api.Setup(url, cancellationToken);
+            var lastRead = _api.LastStart(url, cancellationToken);
+            var setup = await setupRead.ConfigureAwait(true);
+            var last = await lastRead.ConfigureAwait(true);
             var repos = setup.IsSuccess
                 ? setup.Value.Steps.Where(s => string.Equals(s.Id, "repo", StringComparison.Ordinal)).SelectMany(s => s.Items ?? []).Select(i => new RepoChoice(i.Repo, string.Equals(i.State, "done", StringComparison.Ordinal))).ToList()
                 : [];
             NewAgent.SetRepos(repos, last.IsSuccess ? new NewAgentDefaults(last.Value.Repo, last.Value.Agent) : new NewAgentDefaults(Repo: null, Agent: null));
         }
-
-        NewAgent.Open();
     }
 }

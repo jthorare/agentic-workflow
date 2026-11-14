@@ -36,10 +36,10 @@ public sealed class NewAgentShellTests
         var shell = await OnAgents();
 
         var used = shell.Press("N");
-        await ShellWait.Until(shell, () => shell.NewAgent.IsOpen, Token);
+        await ShellWait.Until(shell, () => shell.NewAgent.Repos.Count > 0, Token);   // the form is open at once; the repos land after
 
         Assert.True(used);
-        Assert.NotEmpty(shell.NewAgent.Repos);
+        Assert.True(shell.NewAgent.IsOpen);
         Assert.Equal("codex", shell.NewAgent.Agent.Id);
     }, Token);
 

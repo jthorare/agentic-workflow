@@ -8,14 +8,14 @@ using Aw.Sindri.Ui.Views.Agents;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
-/// <summary>The New agent form hosted alone at 1000 wide (DG2 frame f1-form-default-1000): it shows, the counter reads "0 / 8,000" and the three agents are listed.</summary>
+/// <summary>The New agent form hosted alone at 1000 wide (DG2 frame f1-form-default-1000): it shows, the counter reads "0 / 8,000" and the two agents are listed.</summary>
 [Lane(TestLane.Integration)]
 public sealed class NewAgentFormFrameTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task The_form_at_1000_wide_shows_the_empty_counter_and_lists_three_agents()
+    public async Task The_form_at_1000_wide_shows_the_empty_counter_and_lists_two_agents()
     {
         var result = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(NewAgentFormFrameTests).Assembly).Dispatch(() =>
         {
@@ -43,6 +43,6 @@ public sealed class NewAgentFormFrameTests
             }
         }, Token);
 
-        Assert.Equal((true, "0 / 8,000", 3, true), result);
+        Assert.Equal((true, "0 / 8,000", 2, true), result);
     }
 }

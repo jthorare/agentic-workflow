@@ -43,9 +43,6 @@
             <Border AutomationProperties.Name="{Binding RepoNote}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
               <TextBlock Classes="caption subtle" Text="{Binding RepoNote}" AutomationProperties.AccessibilityView="Raw" />
             </Border>
-            <Border AutomationProperties.Name="{Binding OnboardText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-              <TextBlock Classes="caption" Text="{Binding OnboardText}" AutomationProperties.AccessibilityView="Raw" />
-            </Border>
           </StackPanel>
           <Border x:Name="NewAgentRepoError" Classes="error-panel" IsVisible="{Binding HasRepoError}" AutomationProperties.Name="{Binding RepoError}"
                   AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">

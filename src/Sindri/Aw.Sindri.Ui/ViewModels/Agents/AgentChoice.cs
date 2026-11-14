@@ -12,9 +12,6 @@ internal sealed record AgentChoice(string Id, string Label, string Short)
     /// <summary>Codex.</summary>
     internal static AgentChoice Codex { get; } = new("codex", "Codex", "codex");
 
-    /// <summary>Cursor: in the agent catalog, so the form offers it (api, #3380).</summary>
-    internal static AgentChoice Cursor { get; } = new("cursor", "Cursor", "cursor");
-
     /// <summary>The choices, in order.</summary>
-    internal static IReadOnlyList<AgentChoice> All { get; } = [ClaudeCode, Codex, Cursor];
+    internal static IReadOnlyList<AgentChoice> All { get; } = [ClaudeCode, Codex];
 }
