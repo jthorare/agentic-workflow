@@ -2814,3 +2814,5 @@ static readonly Aw.Meta.Core.MetaErrors.StackExtensionMissing -> Aw.Kernel.Error
 const Aw.Meta.Core.Github.GhExtensions.StackInstall = "gh extension install github/gh-stack" -> string!
 static Aw.Meta.Core.Github.GhExtensions.HasStack(string! list) -> bool
 Aw.Meta.Core.Github.GhExtensions
+Aw.Meta.Core.Worktrees.WorktreeInspector.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Worktrees.WorktreeInspector!
+Aw.Meta.Core.Worktrees.WorktreeSweeper.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Worktrees.WorktreeSweeper!
