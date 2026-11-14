@@ -112,7 +112,10 @@ internal sealed partial class ProjectSheetViewModel(ISindriApi api, ILauncher la
     public IReadOnlyList<ProjectStateChoice> StateChoices { get; } = ProjectStateChoice.All;
 
     /// <summary>The state the picker holds.</summary>
-    public ProjectStateChoice? SelectedState { get; set => Set(ref field, value); }
+    public ProjectStateChoice? SelectedState { get; set { Set(ref field, value); OnChanged(nameof(StateChips)); } }
+
+    /// <summary>The state chips: a row, the picked one marked; a press saves the state at once.</summary>
+    public IReadOnlyList<ProjectStateChip> StateChips => [.. StateChoices.Select(c => new ProjectStateChip(c, c == SelectedState))];
 
     /// <summary>True when the card takes edits (attached or hand-made, not hidden).</summary>
     public bool CanEdit { get; private set => Set(ref field, value); }
@@ -232,7 +235,7 @@ internal sealed partial class ProjectSheetViewModel(ISindriApi api, ILauncher la
             return;
         }
 
-        (EditName, EditTarget, EditLinks) = (one.Project.Name, one.Project.Target ?? string.Empty, string.Join('\n', OwnerLinks(one.Project)));
+        (EditName, EditTarget, EditLinks, EditNotes) = (one.Project.Name, one.Project.Target ?? string.Empty, string.Join('\n', OwnerLinks(one.Project)), one.Project.Notes ?? string.Empty);
         (SaveError, IsConflict, IsEditing) = (string.Empty, false, true);
     }
 

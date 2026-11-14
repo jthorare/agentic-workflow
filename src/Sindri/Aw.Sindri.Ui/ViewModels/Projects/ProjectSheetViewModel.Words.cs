@@ -13,6 +13,9 @@ internal sealed partial class ProjectSheetViewModel
     /// <summary>The Set state button.</summary>
     public string SetStateText => Labels.ProjectSetState;
 
+    /// <summary>The notes field's label in the edit form.</summary>
+    public string EditNotesLabel => Labels.ProjectAddNotesField;
+
     /// <summary>The button that gives the state back to Linear's.</summary>
     public string UseLinearStateText => Labels.ProjectUseLinearState;
 
