@@ -32,15 +32,15 @@ internal sealed class TerminalPainter(DrawingContext context, Size cell, Typefac
             PaintBackgrounds(grid, top + y, y);
         }
 
-        if (back == 0 && !grid.Dead)
-        {
-            PaintCursor(grid, focused);
-        }
-
         var run = new StringBuilder(grid.Width);
         for (var y = 0; y < grid.Height; y++)
         {
             PaintText(grid, top + y, y, run);
+        }
+
+        if (back == 0 && !grid.Dead)
+        {
+            PaintCursor(grid, top, focused);
         }
     }
 
@@ -161,24 +161,27 @@ internal sealed class TerminalPainter(DrawingContext context, Size cell, Typefac
         context.DrawText(formatted, at);
     }
 
-    private void PaintCursor(TerminalGrid grid, bool focused)
+    // The cursor goes over the text: a filled block in Ink with the glyph under it redrawn in Canvas (ink on ink would hide it), or a hollow box that leaves the glyph as drawn.
+    private void PaintCursor(TerminalGrid grid, int top, bool focused)
     {
         if (grid.CursorX >= grid.Width || grid.CursorY >= grid.Height)
         {
             return;
         }
 
-        var rect = new Rect(grid.CursorX * cell.Width, grid.CursorY * cell.Height, cell.Width, cell.Height);
-        if (focused)
-        {
-            using (context.PushOpacity(0.55))
-            {
-                context.DrawRectangle(brush: ink, pen: null, rect: rect);
-            }
-        }
-        else
+        var at = new Point(grid.CursorX * cell.Width, grid.CursorY * cell.Height);
+        var rect = new Rect(at, cell);
+        if (!focused)
         {
             context.DrawRectangle(brush: null, pen: new Pen(ink, 1), rect: rect.Deflate(0.5));
+            return;
+        }
+
+        context.DrawRectangle(brush: ink, pen: null, rect: rect);
+        var under = grid.Cell(top + grid.CursorY, grid.CursorX);
+        if (!string.IsNullOrWhiteSpace(under.Text))
+        {
+            context.DrawText(new FormattedText(under.Text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, FaceOf(under), fontSize, canvas), at);
         }
     }
 }
