@@ -162,6 +162,28 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
         var nodeRuns = GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false));
         var outer = new GraphNodeScope(row, spec, nodeRuns, loop: null);
+        // why: a test run's commit writes go to the recorder, never to a live store (spec §5.1: the run-end Commit writes nothing); the recorder is held across the awaits below
+        var test = string.Equals(row.Mode, WorkflowRunMode.Test, StringComparison.Ordinal);
+        if (test)
+        {
+            _ = GraphTestRecorder.Begin();
+        }
+
+        try
+        {
+            return await CommitNodes(spec, outer, row, nodeRuns, cancel).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (test)
+            {
+                GraphTestRecorder.End();
+            }
+        }
+    }
+
+    private async Task<string?> CommitNodes(GraphSpec spec, GraphNodeScope outer, WorkflowRun row, IReadOnlyList<NodeRun> nodeRuns, CancellationToken cancel)
+    {
         foreach (var graphNode in spec.Nodes)
         {
             if (blocks.Find(graphNode.Type) is not { } block)
