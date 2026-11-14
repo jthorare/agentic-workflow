@@ -102,7 +102,14 @@ internal sealed partial class TerminalView : UserControl
     {
         if (DataContext is TerminalViewViewModel vm)
         {
-            _ = await vm.PressStop(CancellationToken.None);
+            try
+            {
+                _ = await vm.PressStop(CancellationToken.None);
+            }
+            catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidOperationException or OperationCanceledException)
+            {
+                // the stop failed after the stopper's own handling: the view model's line says so; an async void must not throw on the UI thread
+            }
         }
     }
 

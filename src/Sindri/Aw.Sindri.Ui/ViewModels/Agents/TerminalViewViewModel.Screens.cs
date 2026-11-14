@@ -62,7 +62,7 @@ internal sealed partial class TerminalViewViewModel
     public string CardTitle => HasCard ? StateWord : string.Empty;
 
     /// <summary>The card's sentence under the heading.</summary>
-    public string CardBody => State == TerminalState.CantReachSindri ? Labels.TerminalEscCloses + "." : CardReason;
+    public string CardBody => State == TerminalState.CantReachSindri ? (_refused ? Labels.TerminalTokenRefused + " " : string.Empty) + Labels.TerminalEscCloses + "." : CardReason;
 
     /// <summary>The index in <see cref="CardButtons"/> that has focus while <see cref="TerminalSide.Card"/> does.</summary>
     public int FocusedButton { get; private set; }
@@ -182,6 +182,7 @@ internal sealed partial class TerminalViewViewModel
         Side = TerminalSide.List;
         Rows = [];
         IsDimmed = false;
+        _refused = false;
         _queued.Clear();
         (_agentReported, _lostAt, _retryAt, _attempt, _endedAt, _otherClients) = (false, null, null, 0, null, 0);
     }

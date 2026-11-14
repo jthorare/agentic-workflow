@@ -26,6 +26,11 @@ internal sealed class WebSocketTerminalConnector(IHumanTokenSource token) : ITer
             await socket.SendAsync(Encoding.UTF8.GetBytes(hello), WebSocketMessageType.Text, endOfMessage: true, cancellationToken).ConfigureAwait(false);
             return new Link(socket);
         }
+        catch (OperationCanceledException)
+        {
+            socket.Dispose();
+            throw;
+        }
         catch (WebSocketException)
         {
             var status = socket.HttpStatusCode;
