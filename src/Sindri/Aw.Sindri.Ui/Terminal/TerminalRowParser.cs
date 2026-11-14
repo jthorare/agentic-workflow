@@ -2,7 +2,7 @@ using System.Text;
 
 namespace Aw.Sindri.Ui.Terminal;
 
-/// <summary>Turns one line of capture-pane -e text into cells. The pen starts fresh on every line, so a colour left open at a line's end never colours the next line.</summary>
+/// <summary>Turns one line of capture-pane -e text into cells. The pen belongs to the frame: tmux writes a colour left open at a line's end into the next line too, so the caller passes the same pen for every line of a frame.</summary>
 internal static class TerminalRowParser
 {
     private const char Esc = '\u001b';
@@ -10,11 +10,11 @@ internal static class TerminalRowParser
 
     /// <summary>Parses one line.</summary>
     /// <param name="line">The line, SGR codes inline.</param>
+    /// <param name="pen">The frame's pen: read for each cell and changed by each colour sequence.</param>
     /// <returns>The cells, as many as the line fills (wide characters take two). Not padded to the width.</returns>
-    internal static List<TerminalCell> Parse(string line)
+    internal static List<TerminalCell> Parse(string line, TerminalPen pen)
     {
         var row = new List<TerminalCell>(line.Length);
-        var pen = new TerminalPen();
         var i = 0;
         while (i < line.Length)
         {
