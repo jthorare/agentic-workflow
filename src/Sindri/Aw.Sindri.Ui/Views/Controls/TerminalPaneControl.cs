@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Aw.Sindri.Ui.Terminal;
@@ -38,6 +39,9 @@ internal sealed class TerminalPaneControl : Control, ITerminalPane
         AffectsRender<TerminalPaneControl>(TerminalFontSizeProperty, HasPaneFocusProperty, DimmedProperty, ScrollOffsetProperty);
         _ = TerminalFontSizeProperty.Changed.AddClassHandler<TerminalPaneControl>((s, _) => s.Remeasure());
     }
+
+    /// <summary>Initializes a new instance of the <see cref="TerminalPaneControl"/> class; its default name for assistive technology is "Terminal".</summary>
+    public TerminalPaneControl() => AutomationProperties.SetName(this, "Terminal");
 
     /// <summary>Raised when the drawing area fits another number of columns or rows.</summary>
     public event EventHandler<TerminalSizeEventArgs>? FitChanged;

@@ -98,4 +98,8 @@ public sealed class TerminalPaneControlRenderingTests
         Assert.Equal(made, pane.BrushesCreated);
         Assert.True(dr < pr, "the dim block is not fainter than the plain one");
     });
+
+    [Fact]
+    public Task The_control_is_named_Terminal_for_assistive_technology() => OnUi(() =>
+        Assert.Equal("Terminal", Avalonia.Automation.AutomationProperties.GetName(new TerminalPaneControl())));
 }
