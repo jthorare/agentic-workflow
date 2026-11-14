@@ -300,8 +300,10 @@ and measured it (comment 6818215657). The reference frame, drawn on the real `To
 - **The bands** (centre and right) draw the same files as cards in three columns: Entry points -> Core -> Data and effects. They need
   room: three 170 px columns, two 150 px gaps and a 24 px inset on each side are 858 px, plus the 280 px rail, so the bands draw from a
   window 1138 px wide. The gaps are a fixed 150 px; the columns take all extra width (at 1440: 1440 - 280 - 48 = 1112 px, minus 300 for
-  the gaps, about 270 px per column). An edge label is at most 142 px (4 px clear of each column). A longer label shortens the symbol
-  from the middle and keeps the verb whole ("calls RateLimit…check"). Under that, the page is the rail and the in-place open
+  the gaps, about 270 px per column). An edge label is whole or not drawn (#3674, #3678): it sits on the
+  edge's free stretch between the two boxes, never under a box, and it is drawn only when that stretch is at least the label plus 8 px
+  on each side. A shorter stretch drops the label; the edge's tooltip and the selected edge's side panel carry the text. A symbol is
+  never cut in the middle ("CallerCo…Http" can't be searched for). Under that, the page is the rail and the in-place open
   only, and the bands are not drawn (the edges are what that gives up; §6.2 has the same rule for peek). A file's band
   comes from its strongest node kind: route, job, middleware or CLI command -> Entry points; service, layer, domain type -> Core; table,
   schema, event, migration -> Data and effects; tests fold into one Tests card there. Anything else goes to Core. The bands draw at most
