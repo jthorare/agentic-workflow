@@ -1,12 +1,17 @@
+using System.Globalization;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.Controls;
 using Aw.Sindri.Ui.Views.Controls;
+using Aw.Sindri.Ui.Views.Icons;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
@@ -174,6 +179,59 @@ public sealed class ListPickerTests
         Assert.Contains(sentence, texts, StringComparer.Ordinal);
         Assert.False(details.IsExpanded);
         Assert.DoesNotContain("SND-GRAPH-014", texts, StringComparer.Ordinal);
+        window.Close();
+        return true;
+    });
+
+    // The real app styles are loaded (TestAppBuilder starts SindriApp), so these read what the user sees: QueueStyles' amber Border.callout loads after ControlStyles' red one.
+    private const string Sentence = "Couldn't add the step. The graph is unchanged.";
+
+    private static Color Token(string key) => Application.Current!.FindResource(key) is ISolidColorBrush b ? b.Color : default;
+
+    private static (Window Window, Border Box) ShowError()
+    {
+        var (window, picker) = Show();
+        picker.ErrorText = Sentence;
+        picker.ErrorCode = "SND-GRAPH-014";
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+        var text = picker.GetVisualDescendants().OfType<TextBlock>().First(t => t.IsEffectivelyVisible && string.Equals(t.Text, Sentence, StringComparison.Ordinal));
+        return (window, text.GetVisualAncestors().OfType<Border>().First());
+    }
+
+    [Fact]
+    public async Task The_error_box_is_red_not_the_amber_callout() => await OnUi(() =>
+    {
+        var (window, box) = ShowError();
+
+        Assert.Equal(Token("Brush.Error"), Assert.IsType<ISolidColorBrush>(box.BorderBrush, exactMatch: false).Color);
+        Assert.Equal(Token("Brush.ErrorSoft"), Assert.IsType<ISolidColorBrush>(box.Background, exactMatch: false).Color);
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task The_error_icon_has_a_size_and_the_Error_colour() => await OnUi(() =>
+    {
+        var (window, box) = ShowError();
+        var icon = box.GetVisualDescendants().OfType<StateIcon>().Single();
+
+        Assert.True(icon.Bounds.Width > 0 && icon.Bounds.Height > 0, string.Create(CultureInfo.InvariantCulture, $"the error icon is {icon.Bounds.Width} x {icon.Bounds.Height}"));
+        Assert.Equal(Token("Brush.Error"), Assert.IsType<ISolidColorBrush>(icon.Foreground, exactMatch: false).Color);
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task The_Details_header_sits_on_the_callout_fill_not_the_stock_expander_background() => await OnUi(() =>
+    {
+        var (window, box) = ShowError();
+        var details = box.GetVisualDescendants().OfType<Expander>().Single();
+        var header = details.GetVisualDescendants().OfType<ToggleButton>().First();
+
+        Assert.True(details.Background is null or ISolidColorBrush { Color.A: 0 }, $"the Expander background is {details.Background}");
+        Assert.True(header.Background is null or ISolidColorBrush { Color.A: 0 }, $"the Details header background is {header.Background}");
+        Assert.True(header.Bounds.Height <= 28, string.Create(CultureInfo.InvariantCulture, $"the Details header is {header.Bounds.Height} px tall"));
         window.Close();
         return true;
     });
