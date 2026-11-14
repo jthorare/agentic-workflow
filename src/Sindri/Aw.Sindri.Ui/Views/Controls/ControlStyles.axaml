@@ -497,6 +497,12 @@
   <Style Selector="Border.picker-error Expander:pointerover /template/ ToggleButton#ExpanderHeader, Border.picker-error Expander /template/ ToggleButton#ExpanderHeader:pointerover, Border.picker-error Expander /template/ ToggleButton#ExpanderHeader:pressed">
     <Setter Property="Background" Value="Transparent" />
   </Style>
+  <!-- Fluent sizes the header's chevron box at ExpanderChevronButtonSize (32), which sets the header's height: shrink it so the header is one compact line. -->
+  <Style Selector="Border.picker-error Expander /template/ ToggleButton#ExpanderHeader /template/ Border#ExpandCollapseChevronBorder">
+    <Setter Property="Width" Value="20" />
+    <Setter Property="Height" Value="20" />
+    <Setter Property="Margin" Value="0" />
+  </Style>
   <Style Selector="Border.picker-error Expander /template/ Border#ExpanderContent">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
