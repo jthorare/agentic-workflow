@@ -11,14 +11,7 @@ internal sealed partial class ShellViewModel
         {
             case nameof(HealthViewModel.State):
                 Changed(_stateProperties);
-                if (IsNotRunning)
-                {
-                    Start.Begin();
-                }
-                else
-                {
-                    Start.Reset();
-                }
+                Start.Observe(State);
 
                 Reattend();
                 Announce();

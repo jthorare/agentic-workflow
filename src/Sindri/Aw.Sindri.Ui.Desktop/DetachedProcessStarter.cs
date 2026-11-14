@@ -9,8 +9,11 @@ namespace Aw.Sindri.Ui.Desktop;
 /// runs through /bin/sh with exec under umask 077, stdin from /dev/null and stdout and stderr appended to the log, in its own
 /// session (perl's POSIX::setsid before the exec) so closing the app doesn't signal it; without /usr/bin/perl it is a plain exec.
 /// </summary>
-internal sealed class DetachedProcessStarter : IProcessStarter
+/// <param name="spawn">Starts the process (Process.Start unless a test swaps it).</param>
+internal sealed class DetachedProcessStarter(Func<ProcessStartInfo, Process?>? spawn = null) : IProcessStarter
 {
+    private readonly Func<ProcessStartInfo, Process?> _spawn = spawn ?? (static info => Process.Start(info));
+
     private const string Perl = "/usr/bin/perl";
     private const string FailureCode = "SND-CLI-002";
 
@@ -33,7 +36,7 @@ internal sealed class DetachedProcessStarter : IProcessStarter
 
             var info = Info(launch);
 #pragma warning disable CA2000 // the Exited handler disposes the process once it has ended
-            var process = Process.Start(info);
+            var process = _spawn(info);
 #pragma warning restore CA2000
             if (process is null)
             {
@@ -49,7 +52,7 @@ internal sealed class DetachedProcessStarter : IProcessStarter
         }
     }
 
-    private static ProcessStartInfo Info(ProcessLaunch launch)
+    internal static ProcessStartInfo Info(ProcessLaunch launch)
     {
         var detach = File.Exists(Perl)
             ? $"exec {Perl} -MPOSIX -e 'POSIX::setsid() == -1 and die \"{FailureCode} setsid: $!\\n\"; exec @ARGV or die \"{FailureCode} exec $ARGV[0]: $!\\n\"'"
@@ -69,8 +72,13 @@ internal sealed class DetachedProcessStarter : IProcessStarter
 
         info.Environment["LOG"] = launch.LogPath;
 
-        return info;
+        return Scrub(info);
     }
+
+    /// <summary>Takes out of the child's environment what the app's own driver left (#3643): serve must not see AW_UI_DRIVER*.</summary>
+    /// <param name="info">The start info.</param>
+    /// <returns>The same start info.</returns>
+    internal static ProcessStartInfo Scrub(ProcessStartInfo info) => info;   // stub (red)
 
     // The shell execs the program, so the pid is the program's own: its exit is the program's. The handler is set before
     // EnableRaisingEvents, which raises it at once for a process that already ended.

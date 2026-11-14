@@ -163,6 +163,48 @@ public sealed class SindriStartViewModelTests : IDisposable
     }
 
     [Fact]
+    public void A_later_outage_shows_the_button_and_starts_nothing()
+    {
+        var starter = new FakeStarter();
+        var model = new SindriStartViewModel(starter, new FakeTimeProvider());
+        model.Observe(ShellState.Connecting);
+        model.Observe(ShellState.Normal);
+
+        model.Observe(ShellState.NotRunning);
+
+        Assert.Equal((0, StartStage.Idle, "Start Sindri"), (starter.Starts, model.Stage, model.Primary));
+    }
+
+    [Fact]
+    public void The_first_resolved_state_being_Not_running_starts_Sindri_once()
+    {
+        var starter = new FakeStarter();
+        var model = new SindriStartViewModel(starter, new FakeTimeProvider());
+        model.Observe(ShellState.Connecting);
+
+        model.Observe(ShellState.NotRunning);
+        model.Observe(ShellState.NotRunning);
+
+        Assert.Equal((1, StartStage.Starting), (starter.Starts, model.Stage));
+    }
+
+    [Fact]
+    public void Only_a_connected_state_releases_the_start()
+    {
+        var starter = new FakeStarter();
+        var model = new SindriStartViewModel(starter, new FakeTimeProvider());
+        model.Observe(ShellState.NotRunning);
+
+        model.Observe(ShellState.Connecting);
+        model.Observe(ShellState.Stale);
+        model.Observe(ShellState.Unreadable);
+        var before = (starter.Releases, model.Stage);
+        model.Observe(ShellState.Normal);
+
+        Assert.Equal(((0, StartStage.Starting), 1), (before, starter.Releases));
+    }
+
+    [Fact]
     public void An_exit_of_an_older_launch_changes_nothing()
     {
         var clock = new FakeTimeProvider();

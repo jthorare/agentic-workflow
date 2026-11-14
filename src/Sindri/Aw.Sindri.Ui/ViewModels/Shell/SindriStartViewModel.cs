@@ -58,6 +58,21 @@ internal sealed class SindriStartViewModel(ISindriStarter? starter, TimeProvider
     /// <summary>True when the primary button shows.</summary>
     public bool HasPrimary => Primary.Length > 0;
 
+    /// <summary>The shell's state changed (first-run decision 2a, #3643): the first resolved state decides whether the app starts Sindri on its own; a connecting state changes nothing; only a connected one releases the start.</summary>
+    /// <param name="state">The shell's new state.</param>
+    public void Observe(ShellState state)
+    {
+        // stub (red): today's behaviour
+        if (state == ShellState.NotRunning)
+        {
+            Begin();
+        }
+        else
+        {
+            Reset();
+        }
+    }
+
     /// <summary>Starts Sindri once, when the app first finds it down. Later outages show the page with its button.</summary>
     public void Begin()
     {
