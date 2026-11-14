@@ -58,7 +58,7 @@ Put provider-specific parsing in the adapter, not the canonical hook. The one ex
 **PreToolUse protocol:**
 - Scripts read JSON from stdin: `{"tool_name": "...", "tool_input": {...}}`
 - Exit 0 = allow the tool call to proceed
-- Exit 2 = deny with a message on stdout explaining why
+- Exit 2 = deny with the reason on stderr (Claude Code shows only stderr on a deny; the Codex and Cursor adapters join stdout and stderr)
 
 **SessionStart protocol:**
 - No stdin input — scripts receive no data from the host (adapters discard any provider payload)
@@ -166,7 +166,7 @@ The steps below apply to **PreToolUse hooks**. SessionStart hooks have different
 
 1. Create the script in `config/hooks/<name>.sh` — make it executable (`chmod +x`)
 2. Read JSON from stdin: `input=$(cat)` then parse with `jq`
-3. Exit 0 to allow the action, exit 2 to block with a message on stdout
+3. Exit 0 to allow the action, exit 2 to block with the reason on stderr
 4. Register it in each `providers/<name>/install-hooks.sh` (or a `scripts/install-*.sh --provider` lever installer) via `aw_hook_set`; skip providers whose hook system lacks the event and record it in the `config/hooks/adapters/README.md` mapping table
 5. Document it in this file and in AGENTS.md's `config/` directory comment
 

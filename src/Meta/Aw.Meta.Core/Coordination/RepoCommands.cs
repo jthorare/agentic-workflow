@@ -12,15 +12,24 @@ namespace Aw.Meta.Core.Coordination;
 /// <param name="paths">Names the gh program.</param>
 public sealed class RepoCommands(ICommandRunner runner, MetaPaths paths)
 {
-    private const string QueueQuery = "query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){pullRequest(number:$number){isMergeQueueEnabled isInMergeQueue mergeQueueEntry{position state} timelineItems(last:1,itemTypes:[REMOVED_FROM_MERGE_QUEUE_EVENT]){nodes{... on RemovedFromMergeQueueEvent{reason}}}}}}";
+    // `stack{number}` is non-null for a pull request in a stack (gh stack); it is the only stack fact the merge needs.
+    private const string QueueQuery = "query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){pullRequest(number:$number){isMergeQueueEnabled isInMergeQueue mergeQueueEntry{position state} stack{number} timelineItems(last:1,itemTypes:[REMOVED_FROM_MERGE_QUEUE_EVENT]){nodes{... on RemovedFromMergeQueueEvent{reason}}}}}}";
 
-    private static readonly TimeSpan _limit = TimeSpan.FromMinutes(15);
+    // The same query for a GitHub host whose schema has no `stack` field yet: such a host has no stacked pull requests.
+    private const string QueueQueryWithoutStack = "query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){pullRequest(number:$number){isMergeQueueEnabled isInMergeQueue mergeQueueEntry{position state} timelineItems(last:1,itemTypes:[REMOVED_FROM_MERGE_QUEUE_EVENT]){nodes{... on RemovedFromMergeQueueEvent{reason}}}}}}";
+
+    private TimeSpan _limit = TimeSpan.FromMinutes(15);
     private CancellationToken _cancellation;
 
     /// <summary>The same calls, each stopped (its process tree killed, the cancellation thrown) when the token fires.</summary>
     /// <param name="cancellationToken">The token.</param>
     /// <returns>A copy bound to the token.</returns>
-    public RepoCommands Cancelling(CancellationToken cancellationToken) => new(runner, paths) { _cancellation = cancellationToken };
+    public RepoCommands Cancelling(CancellationToken cancellationToken) => new(runner, paths) { _cancellation = cancellationToken, _limit = _limit };
+
+    /// <summary>The same calls, each given at most <paramref name="limit"/> (the default is 15 minutes, which suits a gate step and not a poll of GitHub). A call that runs past it is killed and fails with AW-META-012 "timed out".</summary>
+    /// <param name="limit">The longest one call may run.</param>
+    /// <returns>A copy with the limit.</returns>
+    public RepoCommands Limited(TimeSpan limit) => new(runner, paths) { _cancellation = _cancellation, _limit = limit };
 
     /// <summary>Runs git in a directory.</summary>
     /// <param name="cwd">The working directory.</param>
@@ -55,13 +64,18 @@ public sealed class RepoCommands(ICommandRunner runner, MetaPaths paths)
         return json.IsError ? json.Error : GhJson.CiView(json.Value) is { } view ? view : Unexpected("gh pr view");
     }
 
-    /// <summary>Reads whether the base branch has a merge queue and where a pull request stands in it. gh 2.45 has no JSON field for it, so this asks GraphQL; gh fills the owner and repo from the repo in the directory.</summary>
+    /// <summary>Reads whether the base branch has a merge queue, where a pull request stands in it and whether it is part of a stack. gh 2.45 has no JSON field for it, so this asks GraphQL; gh fills the owner and repo from the repo in the directory. A host that answers "Field 'stack' doesn't exist" is asked again without that field and reads as not stacked.</summary>
     /// <param name="repo">The repo directory.</param>
     /// <param name="pr">The pull request number.</param>
     /// <returns>The queue facts, or an error.</returns>
     public async ValueTask<Result<MergeQueueView>> QueueView(string repo, int pr)
     {
         var json = await Gh(repo, "api", "graphql", "-F", "owner={owner}", "-F", "name={repo}", "-F", "number=" + Number(pr), "-f", "query=" + QueueQuery).ConfigureAwait(false);
+        if (json.IsError && json.Error.Message.Contains("'stack'", StringComparison.Ordinal) && json.Error.Message.Contains("exist", StringComparison.Ordinal))
+        {
+            json = await Gh(repo, "api", "graphql", "-F", "owner={owner}", "-F", "name={repo}", "-F", "number=" + Number(pr), "-f", "query=" + QueueQueryWithoutStack).ConfigureAwait(false);
+        }
+
         return json.IsError ? json.Error : GhJson.QueueView(json.Value) is { } view ? view : Unexpected("gh api graphql");
     }
 

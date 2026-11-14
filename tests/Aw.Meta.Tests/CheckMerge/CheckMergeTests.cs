@@ -4,6 +4,7 @@ using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Gate;
 using Aw.Meta.Features.CheckMerge;
 using Aw.Meta.Testing;
+using Aw.Meta.Tests.MergeRun;
 
 namespace Aw.Meta.Tests.CheckMerge;
 
@@ -20,7 +21,7 @@ public sealed class CheckMergeTests
     }
 
     // GitHub says: the pull request is at `head`, open, ready; origin/main is at `main`.
-    private void Script(int pr = 190, string head = "headsha", string main = "mainsha", bool draft = false, string state = "OPEN", bool diffFails = false)
+    private void Script(int pr = 190, string head = "headsha", string main = "mainsha", bool draft = false, string state = "OPEN", bool diffFails = false, string queue = QueueAnswers.Off, bool queueFails = false)
     {
         var view = """{"headRefOid":"HEAD","isDraft":DRAFT,"title":"Add x","state":"STATE"}"""
             .Replace("HEAD", head, StringComparison.Ordinal).Replace("DRAFT", draft ? "true" : "false", StringComparison.Ordinal).Replace("STATE", state, StringComparison.Ordinal);
@@ -29,6 +30,7 @@ public sealed class CheckMergeTests
             .When("rev-parse --verify --quiet origin/main", main + "\n")
             .When("mainsha...", diffFails ? string.Empty : "src/a.cs\n", diffFails ? 128 : 0)   // the gated diff: code, so repo and dotnet
             .When("oldmain...", "src/a.cs\n")
+            .When("gh api graphql", queueFails ? string.Empty : queue, queueFails ? 1 : 0)
             .When("git fetch");
     }
 
@@ -138,6 +140,57 @@ public sealed class CheckMergeTests
         Script(main: "newmain");
 
         Assert.Equal(["main"], Failed(await Check()));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Main_moved_passes_when_the_base_branch_has_a_merge_queue()
+    {
+        await _world.ReadyWithGate();
+        await SaveTreeGate("oldmain", "tree1");
+        Script(main: "newmain", queue: QueueAnswers.OnNotQueued);
+        _ = _world.Runner.When("merge-tree --write-tree newmain headsha", "tree2\n");
+
+        var response = await Check();
+
+        Assert.Empty(Failed(response));
+        Assert.Contains("merge queue re-tests on the merged tree", response.Checks.Single(c => c.Name == "main").Detail, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Main_moved_still_refuses_without_a_merge_queue()
+    {
+        await _world.ReadyWithGate();
+        await SaveTreeGate("oldmain", "tree1");
+        Script(main: "newmain", queue: QueueAnswers.Off);
+        _ = _world.Runner.When("merge-tree --write-tree newmain headsha", "tree2\n");
+
+        Assert.Equal(["main"], Failed(await Check()));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_failed_queue_read_refuses_instead_of_guessing_when_main_moved()
+    {
+        await _world.ReadyWithGate();
+        await SaveTreeGate("oldmain", "tree1");
+        Script(main: "newmain", queueFails: true);
+        _ = _world.Runner.When("merge-tree --write-tree newmain headsha", "tree2\n");
+
+        var result = await Service().Handle(new CheckMergeRequest(190), CancellationToken.None);
+
+        Assert.True(result.IsError);
+        Assert.Equal("AW-META-012", result.Error.Code);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_queue_is_not_read_while_main_is_unchanged()
+    {
+        await _world.ReadyWithGate();
+        await SaveTreeGate("mainsha", "tree1");
+        Script();
+
+        _ = await Check();
+
+        Assert.DoesNotContain(_world.Runner.Lines, l => l.StartsWith("gh api graphql", StringComparison.Ordinal));
     }
 
     private async Task SaveTreeGate(string main, string tree, params StackedPr[] stack) =>

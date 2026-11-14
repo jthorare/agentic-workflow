@@ -147,6 +147,23 @@ public sealed class MergeGateTests
         Assert.Empty(Failed(moved with { DeltaPaths = ["README.md", "docs/a/b.png"], RepoGatePassedOnHead = true }));
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(null)]     // a gate recorded without its tree
+    [InlineData("t1")]     // merge-tree not computed or different
+    public void Main_moved_passes_when_the_base_branch_has_a_merge_queue(string? tree)
+    {
+        var gate = Gate() with { Tree = tree };
+
+        var check = MergeGate.Evaluate(Facts(gate) with { CurrentMain = "main2", BaseHasMergeQueue = true }).Single(c => c.Name == "main");
+
+        Assert.True(check.Ok, check.Detail);
+        Assert.Contains("merge queue re-tests on the merged tree", check.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Main_moved_still_refuses_without_a_merge_queue() =>
+        Assert.Equal(["main"], Failed(Facts(Gate() with { Tree = "t1" }) with { CurrentMain = "main2", BaseHasMergeQueue = false }), StringComparer.Ordinal);
+
     [Fact, Trait("Lane", "unit")]
     public void A_moved_main_fails() =>
         Assert.Equal(["main"], Failed(Facts(Gate()) with { CurrentMain = "main2" }), StringComparer.Ordinal);

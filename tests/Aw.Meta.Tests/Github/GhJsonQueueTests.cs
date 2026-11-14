@@ -17,6 +17,14 @@ public sealed class GhJsonQueueTests
     public void A_base_branch_without_a_merge_queue_reads_as_not_enabled() =>
         Assert.Equal(new MergeQueueView(Enabled: false, InQueue: false, Position: null, EntryState: null, RemovedReason: null), GhJson.QueueView(QueueAnswers.Off));
 
+    [Fact, Trait("Lane", "unit")]
+    public void A_pull_request_in_a_stack_reads_as_stacked() =>
+        Assert.Equal(new MergeQueueView(Enabled: false, InQueue: false, Position: null, EntryState: null, RemovedReason: null) { Stacked = true }, GhJson.QueueView(QueueAnswers.Stacked()));
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_pull_request_with_no_stack_reads_as_not_stacked() =>
+        Assert.False(GhJson.QueueView(QueueAnswers.Off)!.Stacked);
+
     [Theory, Trait("Lane", "unit")]
     [InlineData("")]
     [InlineData("not json")]
