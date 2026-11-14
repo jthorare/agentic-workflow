@@ -90,7 +90,7 @@ public sealed class GraphNodeCardTests
 
         Assert.Equal(new[] { Color.Parse("#5e6ad2") }, selectedOnly);
         Assert.Equal(new[] { Color.Parse("#5e6ad2"), Color.Parse("#828fff") }, both.Select(r => Colour(r.BorderBrush)).ToList());
-        Assert.True(both[1].Margin.Left < both[0].Margin.Left, "the focus ring sits outside the selected ring");
+        Assert.True(Canvas.GetLeft(both[1]) < Canvas.GetLeft(both[0]), "the focus ring sits outside the selected ring");
         window.Close();
         return true;
     });

@@ -41,7 +41,8 @@ internal sealed class GraphNodeCard : UserControl
     /// <summary>Whether the step failed or is invalid (the error fill and border).</summary>
     public static readonly StyledProperty<bool> IsInvalidProperty = AvaloniaProperty.Register<GraphNodeCard, bool>(nameof(IsInvalid));
 
-    private readonly Panel _rings = new() { IsHitTestVisible = false };
+    // A Canvas, not a Panel with negative margins: a ring sits outside the card at an explicit offset and size, so no layout rule can move it.
+    private readonly Canvas _rings = new() { IsHitTestVisible = false };
     private readonly Border _face = new() { Name = "Card", CornerRadius = new CornerRadius(Radius), Padding = new Thickness(12, 8) };
     private readonly Rectangle _dash = new() { Name = "Dash", RadiusX = Radius, RadiusY = Radius, StrokeThickness = 1, StrokeDashArray = [6, 4], IsVisible = false, IsHitTestVisible = false };
     private readonly TextBlock _title = new() { TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
@@ -243,15 +244,19 @@ internal sealed class GraphNodeCard : UserControl
         foreach (var ring in GraphTilePens.Rings(states))
         {
             var reach = ring.Gap + ring.Thickness;
-            _rings.Children.Add(new Border
+            var band = new Border
             {
                 Name = "Ring",
                 BorderBrush = Resolve(ring.Key),
                 BorderThickness = new Thickness(ring.Thickness),
                 CornerRadius = new CornerRadius(Radius + reach),
-                Margin = new Thickness(-reach),
+                Width = WorkflowGraphViewModel.CardWidth + (2 * reach),
+                Height = WorkflowGraphViewModel.CardHeight + (2 * reach),
                 IsHitTestVisible = false,
-            });
+            };
+            Canvas.SetLeft(band, -reach);
+            Canvas.SetTop(band, -reach);
+            _rings.Children.Add(band);
         }
     }
 
