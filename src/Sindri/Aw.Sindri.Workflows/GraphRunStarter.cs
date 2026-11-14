@@ -57,6 +57,11 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
             Skipped(_logger, id.Value, request.Slug.Value);
         }
 
+        if (admitted.Value != GraphStartKind.Skipped && request.Restored is { Count: > 0 } restored && await Restore(id, restored, cancellationToken).ConfigureAwait(false) is { } unrestored)
+        {
+            return unrestored;
+        }
+
         if (admitted.Value != GraphStartKind.Started)
         {
             return new GraphStart(admitted.Value, id);
@@ -75,6 +80,23 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
         }
 
         return new GraphStart(GraphStartKind.Started, id);
+    }
+
+    // A re-run from a step (spec §7.3): the node runs taken from the source run are stored under the new run before its walk starts (or before it leaves the queue), so the walk finds them.
+    // If one can't be stored the run is failed, not left half-restored, and the caller sees why.
+    private async ValueTask<Error?> Restore(WorkflowRunId id, IReadOnlyList<NodeRun> restored, CancellationToken cancellationToken)
+    {
+        foreach (var row in restored)
+        {
+            var stored = await _runs.RecordNodeRun(row, cancellationToken).ConfigureAwait(false);
+            if (stored.IsError)
+            {
+                _ = await _runs.SetStatus(id, WorkflowRunStatus.Failed, outputs: null, $"{stored.Error.Code}: could not restore '{row.NodeId.Value}'", cancellationToken).ConfigureAwait(false);
+                return stored.Error;
+            }
+        }
+
+        return null;
     }
 
     /// <inheritdoc />

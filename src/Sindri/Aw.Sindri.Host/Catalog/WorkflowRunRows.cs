@@ -3,6 +3,7 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Features.AgentNodeControl;
 using Aw.Sindri.Features.AnswerQuestion;
 using Aw.Sindri.Features.CancelWorkflowRun;
+using Aw.Sindri.Features.RerunWorkflowRun;
 using Aw.Sindri.Features.RunWorkflow;
 
 namespace Aw.Sindri.Host.Catalog;
@@ -18,6 +19,9 @@ internal static class WorkflowRunRows
         new(ActionId.From("CancelWorkflowRun"), typeof(CancelWorkflowRunRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/workflow-runs/{run}/cancel", ShellRows.Form("sindri wf cancel <run>"), "ready", SessionOk: true),
+        new(ActionId.From("RerunWorkflowRun"), typeof(RerunWorkflowRunRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
+            NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
+            "POST", "/sindri/workflow-runs/{run}/rerun", ShellRows.Form("sindri wf rerun <run> --from <node> [--input <json>]"), "ready", SessionOk: true),
         new(ActionId.From("AnswerQuestion"), typeof(AnswerQuestionRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/workflow-runs/{run}/nodes/{node}/answer", ShellRows.Form("sindri answer <question> [--text <text>] [--choice <choice>] [--item <index>]"), "ready", SessionOk: true),

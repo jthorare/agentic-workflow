@@ -150,6 +150,7 @@ internal static class Usage
         "       sindri wf pause <slug> [--json]   turn the workflow's triggers off; revisions stay and runs in flight keep going",
         "       sindri wf delete <slug> [--json]   archive the workflow: it leaves the list and turns off for good; revisions and runs stay readable",
         "       sindri wf cancel <run> [--json]   ask a run in flight to stop (exit 0 ok, 1 not running, 2 refused)",
+        "       sindri wf rerun <run> --from <node> [--input <json>] [--json]   start a new run of that run's revision: steps before <node> keep their stored output, <node> and the steps after it run again (exit 0 ok, 1 not running, 2 refused)",
         "       sindri wf takeover <run> <node> [--item <index>] [--json]   take the run_agent node the run waits on over: its timeout pauses and only you report it (exit 0 ok, 1 not running, 2 refused)",
         "       sindri wf handback <run> <node> [--item <index>] [--json]   hand a taken-over run_agent node back: its timeout resumes with what was left (exit 0 ok, 1 not running, 2 refused)",
         "       sindri answer <run>/<node> (--text T | --choice C) [--item N] [--json]   answer the question an ask_owner node waits on, as yourself (the timeline shows your actor: human:<client>, session:launch:<launch id> or session:<client>); the node must be waiting and a choice must be one it offers (exit 0 answered, 1 not running, 2 refused)",
