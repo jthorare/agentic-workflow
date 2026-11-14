@@ -373,8 +373,10 @@ path).
 
 ### 6.3 Neighbourhood (n)
 
-A full view opened from a row (the #2978 grammar: row, peek, full; meta's call). It is a node-link view of one file and what touches it, one hop out, two on request: at most 40 nodes, every label whole, laid out in the three
-bands entry points -> core -> data / effects. Services are nodes; every edge carries its verb and is routed orthogonally, as in the bands (§6.1, fixes 1 and 2). One accent marks the
+A full view opened from a row (the #2978 grammar: row, peek, full; meta's call). It is a node-link view of one file and what touches it, one hop out, two on request: at most 40 nodes (the seed counts), every label whole, laid out in four
+bands: entry points -> core -> data / effects -> tests. Unlike §6.1, tests are not folded into Data and effects here: each test file is its
+own node in a fourth band, "Tests · test files and fakes", drawn only when a test is in reach (#3674). The other three glosses are §6.1's,
+except that Data and effects reads "tables, events" here. Nodes in a band keep at least 16 px clear on both axes (#3678). Services are nodes; every edge carries its verb and is routed orthogonally, as in the bands (§6.1, fixes 1 and 2). One accent marks the
 seed and the rows already in the scope. When more than 40 nodes are in reach, a line says "Showing 40 of 112 nearest · narrow by kind",
 with kind chips. Arrows walk edges; Enter adds the focused node to the scope; Esc goes back to the list with the same row selected.
 
