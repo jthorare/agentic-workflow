@@ -391,7 +391,7 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Draft.Border}" />
   </Style>
   <Style Selector="controls|StateChipView.status-draft TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Draft.Fg}" /></Style>
-  <!-- StartCard (#3234): the Workflows start card, the tile's tokens on a roomier card. Rest is transparent with a hairline; hover Surface2; pressed Surface3; keyboard focus a 2 px PrimaryHover ring;
+  <!-- StartCard (#3234): the Workflows start card, the tile's tokens on a roomier card. Rest is transparent with a hairline; hover Surface2; pressed Surface3; keyboard focus the app-wide focus ring outside it (the chrome keeps its own border);
        selected PrimarySoft with a Primary border (it keeps its fill under the pointer); disabled dims every word and takes no hover. It fills its column and left-aligns its content. -->
   <Style Selector="controls|StartCard">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
@@ -418,17 +418,13 @@
     <Setter Property="Background" Value="{DynamicResource Brush.PrimarySoft}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
   </Style>
-  <Style Selector="controls|StartCard:focus-visible /template/ Border#PART_Chrome">
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
-    <Setter Property="BorderThickness" Value="2" />
-  </Style>
   <Style Selector="controls|StartCard:disabled /template/ Border#PART_Chrome">
     <Setter Property="Background" Value="Transparent" />
   </Style>
   <Style Selector="controls|StartCard:disabled TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
   </Style>
-  <!-- SelectableTile (#3234): one choice of several. Rest is transparent with a hairline; hover Surface2; pressed Surface3; keyboard focus a 2 px PrimaryHover ring;
+  <!-- SelectableTile (#3234): one choice of several. Rest is transparent with a hairline; hover Surface2; pressed Surface3; keyboard focus the app-wide focus ring outside it (the chrome keeps its own border);
        selected PrimarySoft with a Primary border (it keeps its fill under the pointer); disabled dims the word and takes no hover. Class row: full width, content on the left. -->
   <Style Selector="controls|SelectableTile">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
@@ -458,10 +454,6 @@
   <Style Selector="controls|SelectableTile:selected /template/ Border#PART_Chrome">
     <Setter Property="Background" Value="{DynamicResource Brush.PrimarySoft}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
-  </Style>
-  <Style Selector="controls|SelectableTile:focus-visible /template/ Border#PART_Chrome">
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
-    <Setter Property="BorderThickness" Value="2" />
   </Style>
   <Style Selector="controls|SelectableTile:disabled /template/ Border#PART_Chrome">
     <Setter Property="Background" Value="Transparent" />
