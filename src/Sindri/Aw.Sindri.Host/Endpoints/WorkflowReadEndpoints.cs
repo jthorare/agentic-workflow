@@ -35,10 +35,10 @@ internal static class WorkflowReadEndpoints
             => (await service.Handle(new ListWorkflowTemplatesRequest(), ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapGet("/workflows/docs", static async (string? question, string? page, IService<SearchWorkflowDocsRequest, SearchWorkflowDocsResponse> service, CancellationToken ct)
             => (await service.Handle(new SearchWorkflowDocsRequest(question, page), ct).ConfigureAwait(false)).ToHttpResult());
-        _ = group.MapGet("/workflows/{slug}", static async (string slug, IService<GetWorkflowRequest, GetWorkflowResponse> service, CancellationToken ct) =>
+        _ = group.MapGet("/workflows/{slug}", static async (string slug, string? revision, IService<GetWorkflowRequest, GetWorkflowResponse> service, CancellationToken ct) =>
         {
-            var parsed = Slug(slug);
-            return parsed.IsError ? ((Result<GetWorkflowResponse>)parsed.Error).ToHttpResult() : (await service.Handle(new GetWorkflowRequest(parsed.Value), ct).ConfigureAwait(false)).ToHttpResult();
+            var parsed = Show(slug, revision);
+            return parsed.IsError ? ((Result<GetWorkflowResponse>)parsed.Error).ToHttpResult() : (await service.Handle(parsed.Value, ct).ConfigureAwait(false)).ToHttpResult();
         });
         _ = group.MapGet("/workflows/{slug}/runs", static async (string slug, IService<ListWorkflowRunsRequest, ListWorkflowRunsResponse> service, CancellationToken ct) =>
         {
@@ -71,6 +71,16 @@ internal static class WorkflowReadEndpoints
     }
 
     private static string? Text(IQueryCollection query, string name) => query.TryGetValue(name, out var values) && values.Count > 0 ? values[0] : null;
+
+    /// <summary>Binds a workflow read: the slug and the optional ?revision=N|latest.</summary>
+    /// <param name="slug">The route value.</param>
+    /// <param name="revision">The query value, or null.</param>
+    /// <returns>The request, or SND-API invalid input.</returns>
+    internal static Result<GetWorkflowRequest> Show(string slug, string? revision)
+    {
+        var parsed = Slug(slug);
+        return parsed.IsError ? parsed.Error : new GetWorkflowRequest(parsed.Value);   // red: the revision is not read yet
+    }
 
     /// <summary>Binds a workflow slug from a route value.</summary>
     /// <param name="slug">The route value.</param>

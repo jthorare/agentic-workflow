@@ -107,6 +107,17 @@ internal sealed partial class FakeSindriApi
         return Answer<WorkflowView>(api, WorkflowRoutes.One(slug), answer);
     }
 
+    /// <summary>What GET /workflows/{slug}?revision=latest answers per slug; the plain answer when none is set.</summary>
+    public Dictionary<string, RouteAnswer> WorkflowNewestAnswers { get; } = new(StringComparer.Ordinal);
+
+    public async Task<Result<WorkflowView>> WorkflowNewest(Uri api, string slug, CancellationToken cancellationToken)
+    {
+        _ = Interlocked.Increment(ref _workflowCalls);
+        await WaitFor(WorkflowGates.GetValueOrDefault(slug), cancellationToken).ConfigureAwait(false);
+        var answer = WorkflowNewestAnswers.TryGetValue(slug, out var newest) ? newest : WorkflowAnswers.TryGetValue(slug, out var own) ? own : RouteAnswer.Problem("workflows-slug", "not-found");
+        return Answer<WorkflowView>(api, WorkflowRoutes.Newest(slug), answer);
+    }
+
     public async Task<Result<WorkflowRunList>> WorkflowRuns(Uri api, string slug, CancellationToken cancellationToken)
     {
         _ = Interlocked.Increment(ref _workflowRunsCalls);

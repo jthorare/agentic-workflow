@@ -26,13 +26,29 @@ public sealed class WorkflowsSavedRevisionTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
+    // What Sindri holds: the plain read shows the live revision (the newest when off), ?revision=latest the newest. Revision 3 is the one with the text saved from the sheet.
     private void Serve(int? active, int latest)
     {
-        var view = Golden("workflows-slug", "found");
-        view["activeRevision"] = active;
-        view["revision"] = active ?? latest;   // the revision shown: the live one, else the newest
-        view["latestRevision"] = latest;
-        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, view.ToJsonString());
+        var live = Golden("workflows-slug", "found");
+        live["activeRevision"] = active;
+        live["revision"] = active ?? latest;
+        live["latestRevision"] = latest;
+        var newest = Golden("workflows-slug", "found");
+        newest["activeRevision"] = active;
+        newest["revision"] = latest;
+        newest["latestRevision"] = latest;
+        if (latest == 3)
+        {
+            newest["spec"]!["nodes"]![1]!["config"]!["prompt"] = "Check twice";
+            newest["summaries"]![1]!["summary"] = "Run agent twice";   // the newest revision's own summary line
+            if (active is null)
+            {
+                live["spec"] = newest["spec"]!.DeepClone();
+            }
+        }
+
+        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, live.ToJsonString());
+        _f.Server.WorkflowNewestAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, newest.ToJsonString());
     }
 
     private async Task<WorkflowsPageViewModel> EditingNode(int? active)
@@ -62,6 +78,21 @@ public sealed class WorkflowsSavedRevisionTests
 
         Assert.Equal("Check twice", page.Editor.Fields[0].Text);   // not the live revision's "Look for drift"
         Assert.Equal(3, page.Editor.BaseRevision);
+    }
+
+    [Fact]
+    public async Task Opening_the_workflow_again_shows_the_saved_text_in_the_sheet_and_the_graph()
+    {
+        _ = await Saved(active: 1);
+
+        var again = await _f.Shown(Token);   // a fresh page, as after a restart: nothing is remembered from the save
+        await again.OpenWorkflow(Slug, Token);
+        _ = again.Runs.Graph!.SelectNode("agent");
+        await again.Edit(Token);
+
+        Assert.Equal("Check twice", again.Editor.Fields[0].Text);
+        Assert.Contains("Run agent twice", again.Runs.Graph.StepLine, StringComparison.Ordinal);   // the canvas draws the saved revision too
+        Assert.Equal("Saved as revision 3. Not live yet.", again.SavedLineText);
     }
 
     [Fact]

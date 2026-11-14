@@ -25,6 +25,7 @@ internal static class WorkflowReadScenarios
     [
         ("workflows", "list-empty"), ("workflows", "list-two"), ("workflows", "list-include-archived"),
         ("workflows-slug", "found"), ("workflows-slug", "not-found"),
+        ("workflows-slug", "found-latest"), ("workflows-slug", "revision-not-found"), ("workflows-slug", "revision-invalid"),
         ("workflows-slug-runs", "list-empty"), ("workflows-slug-runs", "list-three"),
         ("workflow-runs-run", "running"), ("workflow-runs-run", "finished"), ("workflow-runs-run", "not-found"),
         ("workflow-runs-run", "agent-waiting"), ("workflow-runs-run", "agent-taken-over"),
@@ -63,6 +64,18 @@ internal static class WorkflowReadScenarios
                 await Create(host, _morning, _morningSlug, "Morning check", activate: true, ct);
                 await Save(host, ct);
                 return await Ask(host, Get($"/sindri/workflows/{_morningSlug.Value}", human));
+            case ("workflows-slug", "found-latest"):
+                // ?revision=latest: the same workflow as "found" (active at 1, newest 2) with the newest revision shown (#3303)
+                await Create(host, _morning, _morningSlug, "Morning check", activate: true, ct);
+                await Save(host, ct);
+                return await Ask(host, Get($"/sindri/workflows/{_morningSlug.Value}?revision=latest", human));
+            case ("workflows-slug", "revision-not-found"):
+                await Create(host, _morning, _morningSlug, "Morning check", activate: true, ct);
+                await Save(host, ct);
+                return await Ask(host, Get($"/sindri/workflows/{_morningSlug.Value}?revision=9", human));
+            case ("workflows-slug", "revision-invalid"):
+                await Create(host, _morning, _morningSlug, "Morning check", activate: true, ct);
+                return await Ask(host, Get($"/sindri/workflows/{_morningSlug.Value}?revision=soon", human));
             case ("workflows-slug", "not-found"):
                 return await Ask(host, Get("/sindri/workflows/nope", human));
             case ("workflows-slug-runs", "list-empty"):
