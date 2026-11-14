@@ -23833,3 +23833,71 @@ Aw.Sindri.Core.Graph.Templates.ICiSourceLookup
 Aw.Sindri.Core.Graph.Templates.ICiSourceLookup.Find(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Graph.Templates.GitHubCiSource?>
 static Aw.Sindri.Core.Health.HealthSummary.WithProfileProblem(Aw.Sindri.Core.Health.HealthReport! report, bool wontLoad, string? fix) -> Aw.Sindri.Core.Health.HealthReport!
 static Aw.Sindri.Core.Connections.ConnectionName.ParseUnreserved(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!
+Aw.Sindri.Core.Projects.Truth.ProjectPrState
+Aw.Sindri.Core.Projects.Truth.ProjectPrState.Draft = 0 -> Aw.Sindri.Core.Projects.Truth.ProjectPrState
+Aw.Sindri.Core.Projects.Truth.ProjectPrState.Ready = 1 -> Aw.Sindri.Core.Projects.Truth.ProjectPrState
+Aw.Sindri.Core.Projects.Truth.ProjectPrState.CiRed = 2 -> Aw.Sindri.Core.Projects.Truth.ProjectPrState
+Aw.Sindri.Core.Projects.Truth.ProjectPrState.Waiting = 3 -> Aw.Sindri.Core.Projects.Truth.ProjectPrState
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.<Clone>$() -> Aw.Sindri.Core.Projects.Truth.ProjectTruthPr!
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Deconstruct(out string! Url, out string! Repo, out int Number, out string! Title, out Aw.Sindri.Core.Projects.Truth.ProjectPrState State, out System.DateTimeOffset? Since, out string? WaitingOn) -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Equals(Aw.Sindri.Core.Projects.Truth.ProjectTruthPr? other) -> bool
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.ProjectTruthPr(string! Url, string! Repo, int Number, string! Title, Aw.Sindri.Core.Projects.Truth.ProjectPrState State, System.DateTimeOffset? Since, string? WaitingOn) -> void
+override Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.GetHashCode() -> int
+override Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.ToString() -> string!
+static Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.operator !=(Aw.Sindri.Core.Projects.Truth.ProjectTruthPr? left, Aw.Sindri.Core.Projects.Truth.ProjectTruthPr? right) -> bool
+static Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.operator ==(Aw.Sindri.Core.Projects.Truth.ProjectTruthPr? left, Aw.Sindri.Core.Projects.Truth.ProjectTruthPr? right) -> bool
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Url.get -> string!
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Url.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Repo.get -> string!
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Repo.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Number.get -> int
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Number.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Title.get -> string!
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Title.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.State.get -> Aw.Sindri.Core.Projects.Truth.ProjectPrState
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.State.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Since.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Since.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.WaitingOn.get -> string?
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.WaitingOn.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth
+Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.<Clone>$() -> Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth!
+Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Deconstruct(out Aw.Sindri.Core.Projects.Cards.ProjectHealth Level, out string! Reason) -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Equals(Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? other) -> bool
+Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.ProjectTruthHealth(Aw.Sindri.Core.Projects.Cards.ProjectHealth Level, string! Reason) -> void
+override Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.GetHashCode() -> int
+override Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.ToString() -> string!
+static Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.operator !=(Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? left, Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? right) -> bool
+static Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.operator ==(Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? left, Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? right) -> bool
+Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Level.get -> Aw.Sindri.Core.Projects.Cards.ProjectHealth
+Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Level.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Reason.get -> string!
+Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Reason.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruth
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.<Clone>$() -> Aw.Sindri.Core.Projects.Truth.ProjectTruth!
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthPr!>! OpenPrs, out int OpenItems, out int DoneItems, out int TotalItems, out int RunningAgents, out Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? Health) -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.Equals(Aw.Sindri.Core.Projects.Truth.ProjectTruth? other) -> bool
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.ProjectTruth(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthPr!>! OpenPrs, int OpenItems, int DoneItems, int TotalItems, int RunningAgents, Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? Health) -> void
+override Aw.Sindri.Core.Projects.Truth.ProjectTruth.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Projects.Truth.ProjectTruth.GetHashCode() -> int
+override Aw.Sindri.Core.Projects.Truth.ProjectTruth.ToString() -> string!
+static Aw.Sindri.Core.Projects.Truth.ProjectTruth.operator !=(Aw.Sindri.Core.Projects.Truth.ProjectTruth? left, Aw.Sindri.Core.Projects.Truth.ProjectTruth? right) -> bool
+static Aw.Sindri.Core.Projects.Truth.ProjectTruth.operator ==(Aw.Sindri.Core.Projects.Truth.ProjectTruth? left, Aw.Sindri.Core.Projects.Truth.ProjectTruth? right) -> bool
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.OpenPrs.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthPr!>!
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.OpenPrs.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.OpenItems.get -> int
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.OpenItems.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.DoneItems.get -> int
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.DoneItems.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.TotalItems.get -> int
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.TotalItems.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.RunningAgents.get -> int
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.RunningAgents.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.Health.get -> Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth?
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.Health.init -> void
+static Aw.Sindri.Core.Projects.Truth.ProjectTruth.Empty.get -> Aw.Sindri.Core.Projects.Truth.ProjectTruth!
+Aw.Sindri.Core.Projects.Cards.ProjectCard.Truth.get -> Aw.Sindri.Core.Projects.Truth.ProjectTruth!
+Aw.Sindri.Core.Projects.Cards.ProjectCard.Truth.init -> void
