@@ -145,7 +145,7 @@ internal sealed partial class GraphWorkflow
     // why: the row carries no payload (input, output, usage), so Truncated is false here; the store sets it when it cuts a real payload
     private NodeRun Row(GraphNode node, NodeRunStatus status) => new(_run, node.Id, 0, status, Input: null, Output: null, Truncated: false, Error: null, Usage: null);
 
-    private static Task Record(NodeRun row, ActivityOptions options) => Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAsync(row), options);
+    private Task Record(NodeRun row, ActivityOptions options) => Call((GraphRunActivities a) => a.RecordNodeAsync(row), ReferenceEquals(options, _detached));
 
     private async Task<GraphWorkflowResult> End(WorkflowRunStatus status, string? error)
     {
@@ -154,14 +154,14 @@ internal sealed partial class GraphWorkflow
         if (status == WorkflowRunStatus.Succeeded && Workflow.Patched("graph-commit-run-end"))
         {
             // why: a block remembers what it passed on (only_new) only when the whole run worked; a failed commit fails the run, and the items come back on the next one
-            if (await Workflow.ExecuteActivityAsync((GraphBlockActivities a) => a.CommitRunAsync(_run), _detached).ConfigureAwait(true) is { } why)
+            if (await Call((GraphBlockActivities a) => a.CommitRunAsync(_run), detached: true).ConfigureAwait(true) is { } why)
             {
                 status = WorkflowRunStatus.Failed;
                 error = why;
             }
         }
 
-        await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.FinishAsync(new GraphFinish(_run, status, error)), _detached).ConfigureAwait(true);
+        await Call((GraphRunActivities a) => a.FinishAsync(new GraphFinish(_run, status, error)), detached: true).ConfigureAwait(true);
         return new GraphWorkflowResult(status);
     }
 

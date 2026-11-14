@@ -14,6 +14,6 @@ internal sealed partial class GraphWorkflow
         }
 
         await SkipRest(_detached).ConfigureAwait(true);
-        await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.FinishAsync(new GraphFinish(_run, WorkflowRunStatus.Cancelled, "cancelled")), _detached).ConfigureAwait(true);
+        await Call((GraphRunActivities a) => a.FinishAsync(new GraphFinish(_run, WorkflowRunStatus.Cancelled, "cancelled")), detached: true).ConfigureAwait(true);
     }
 }
