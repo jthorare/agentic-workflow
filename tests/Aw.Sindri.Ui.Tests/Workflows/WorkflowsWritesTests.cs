@@ -103,17 +103,38 @@ public sealed class WorkflowsWritesTests
         Assert.Equal((true, false), (page.IsRuns, page.Runs.IsStarting));
     }
 
-    [Theory]
-    [InlineData("queued", "The run was queued: another run of this workflow is still going")]
-    [InlineData("skipped", "The run was skipped: another run of this workflow is still going")]
-    public async Task A_queued_or_skipped_run_says_so_and_is_not_opened(string scenario, string note)
+    [Fact]
+    public async Task A_queued_run_says_so_and_is_not_opened()
     {
         var page = await OnRuns();
-        _f.Server.StartWorkflowRunAnswer = RouteAnswer.SpecShaped("workflows-slug-runs", scenario);
+        _f.Server.StartWorkflowRunAnswer = RouteAnswer.SpecShaped("workflows-slug-runs", "queued");
 
         await page.RunNow(Token);
 
-        Assert.Equal((true, note), (page.IsRuns, page.Runs.NoticeText));
+        Assert.Equal((true, "The run was queued: another run of this workflow is still going"), (page.IsRuns, page.Runs.NoticeText));
+    }
+
+    [Fact]
+    public async Task A_second_Run_now_while_a_run_is_in_flight_says_so_in_one_line_and_opens_that_run()
+    {
+        var page = await OnRuns();   // the runs list has morning-check@1:3 running
+        _f.Server.StartWorkflowRunAnswer = RouteAnswer.SpecShaped("workflows-slug-runs", "skipped");
+
+        await page.RunNow(Token);
+
+        Assert.Equal((true, "morning-check@1:3", "A run is already in flight."), (page.IsRun, page.Run.Id, page.Run.NoticeText));
+    }
+
+    [Fact]
+    public async Task A_skipped_run_with_no_run_in_flight_to_open_keeps_the_skipped_note()
+    {
+        var page = await OnRuns();
+        _f.ServeRuns("list-empty");
+        _f.Server.StartWorkflowRunAnswer = RouteAnswer.SpecShaped("workflows-slug-runs", "skipped");
+
+        await page.RunNow(Token);
+
+        Assert.Equal((true, "The run was skipped: another run of this workflow is still going"), (page.IsRuns, page.Runs.NoticeText));
     }
 
     [Fact]
