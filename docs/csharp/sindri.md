@@ -802,6 +802,7 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `SND-AGENT-014` | The worktree could not be made, tmux is not installed, or tmux did not start the session in 4 s; the half-made session and worktree were removed (503) |
 | `SND-AGENT-017` | The prompt is over 8,000 characters (400) |
 | `SND-AGENT-018` | The one-off worktree was not removed: it has changes, no start recorded it, or its session still runs (409) |
+| `SND-AGENT-019` | Sindri did not start this session, so it is not stopped (409; issue 3147) |
 | `SND-SESSION-409` | The session at that ref is a different process than the caller looked at (`expectStartedAt` differs; collector CA-5; the preview read, CO-7a, answers it, and `FocusSession` will, CO-4a) |
 | `SND-WT-001` | A worktree request isn't valid (400): `BaseCommit` isn't a full 40-character lower-case hex sha (a ref or a short sha), `RepoRoot` or `Path` isn't absolute, the branch is empty, has a space or starts with `-`, or the path is inside another linked worktree |
 | `SND-WT-002` | The worktree path is already a worktree of another branch or at another commit, the branch is checked out in another worktree, or the branch exists at a commit other than the base: nothing is reset or moved, and the engine parks on this (409) |

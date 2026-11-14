@@ -23554,6 +23554,7 @@ static readonly Aw.Sindri.Core.SindriErrors.AgentNotReady -> Aw.Kernel.ErrorDefi
 static readonly Aw.Sindri.Core.SindriErrors.AgentStartFailed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.AgentPromptTooLong -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.AgentWorktreeKept -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentNotStartedHere -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.AgentNoPane -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.AgentPaneGone -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Launch.TerminalHost

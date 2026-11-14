@@ -25,5 +25,8 @@ public static partial class SindriErrors
     /// <summary>SND-AGENT-016: the tmux server or the session is gone (agents spec §15.8). The spec says HTTP 410; ErrorKind has no gone kind, so it answers 404 until one is added.</summary>
     public static readonly ErrorDefinition AgentPaneGone = new("SND-AGENT-016", ErrorKind.NotFound, "The tmux server or session is gone");
 
-    private static ErrorDefinition[] EveryAgentStart() => [AgentRepoUnusable, AgentNoPane, AgentPaneGone, AgentNotReady, AgentStartFailed, AgentPromptTooLong, AgentWorktreeKept];
+    /// <summary>SND-AGENT-019: a stop of a session Sindri did not start (agents spec §15.2, issue 3147): only a one-off session of a 'sindri-&lt;actId&gt;' start ends this way.</summary>
+    public static readonly ErrorDefinition AgentNotStartedHere = new("SND-AGENT-019", ErrorKind.Conflict, "Sindri did not start this session");
+
+    private static ErrorDefinition[] EveryAgentStart() => [AgentRepoUnusable, AgentNoPane, AgentPaneGone, AgentNotReady, AgentStartFailed, AgentPromptTooLong, AgentWorktreeKept, AgentNotStartedHere];
 }

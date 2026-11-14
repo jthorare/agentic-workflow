@@ -5713,3 +5713,31 @@ override Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.GetHashCode(
 override Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.ToString() -> string!
 static Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.operator !=(Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? left, Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? right) -> bool
 static Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.operator ==(Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? left, Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? right) -> bool
+Aw.Sindri.Features.StopSession.StopSessionRequest
+Aw.Sindri.Features.StopSession.StopSessionRequest.<Clone>$() -> Aw.Sindri.Features.StopSession.StopSessionRequest!
+Aw.Sindri.Features.StopSession.StopSessionRequest.StopSessionRequest(Aw.Sindri.Core.Sessions.SessionRef Ref) -> void
+Aw.Sindri.Features.StopSession.StopSessionRequest.Deconstruct(out Aw.Sindri.Core.Sessions.SessionRef Ref) -> void
+Aw.Sindri.Features.StopSession.StopSessionRequest.Equals(Aw.Sindri.Features.StopSession.StopSessionRequest? other) -> bool
+Aw.Sindri.Features.StopSession.StopSessionRequest.Ref.get -> Aw.Sindri.Core.Sessions.SessionRef
+Aw.Sindri.Features.StopSession.StopSessionRequest.Ref.init -> void
+override Aw.Sindri.Features.StopSession.StopSessionRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.StopSession.StopSessionRequest.GetHashCode() -> int
+override Aw.Sindri.Features.StopSession.StopSessionRequest.ToString() -> string!
+static Aw.Sindri.Features.StopSession.StopSessionRequest.operator !=(Aw.Sindri.Features.StopSession.StopSessionRequest? left, Aw.Sindri.Features.StopSession.StopSessionRequest? right) -> bool
+static Aw.Sindri.Features.StopSession.StopSessionRequest.operator ==(Aw.Sindri.Features.StopSession.StopSessionRequest? left, Aw.Sindri.Features.StopSession.StopSessionRequest? right) -> bool
+Aw.Sindri.Features.StopSession.StoppedSession
+Aw.Sindri.Features.StopSession.StoppedSession.<Clone>$() -> Aw.Sindri.Features.StopSession.StoppedSession!
+Aw.Sindri.Features.StopSession.StoppedSession.StoppedSession(Aw.Sindri.Core.Ids.SessionId Id, Aw.Sindri.Core.Ids.ActId ActId, string! State) -> void
+Aw.Sindri.Features.StopSession.StoppedSession.Deconstruct(out Aw.Sindri.Core.Ids.SessionId Id, out Aw.Sindri.Core.Ids.ActId ActId, out string! State) -> void
+Aw.Sindri.Features.StopSession.StoppedSession.Equals(Aw.Sindri.Features.StopSession.StoppedSession? other) -> bool
+Aw.Sindri.Features.StopSession.StoppedSession.Id.get -> Aw.Sindri.Core.Ids.SessionId
+Aw.Sindri.Features.StopSession.StoppedSession.Id.init -> void
+Aw.Sindri.Features.StopSession.StoppedSession.ActId.get -> Aw.Sindri.Core.Ids.ActId
+Aw.Sindri.Features.StopSession.StoppedSession.ActId.init -> void
+Aw.Sindri.Features.StopSession.StoppedSession.State.get -> string!
+Aw.Sindri.Features.StopSession.StoppedSession.State.init -> void
+override Aw.Sindri.Features.StopSession.StoppedSession.Equals(object? obj) -> bool
+override Aw.Sindri.Features.StopSession.StoppedSession.GetHashCode() -> int
+override Aw.Sindri.Features.StopSession.StoppedSession.ToString() -> string!
+static Aw.Sindri.Features.StopSession.StoppedSession.operator !=(Aw.Sindri.Features.StopSession.StoppedSession? left, Aw.Sindri.Features.StopSession.StoppedSession? right) -> bool
+static Aw.Sindri.Features.StopSession.StoppedSession.operator ==(Aw.Sindri.Features.StopSession.StoppedSession? left, Aw.Sindri.Features.StopSession.StoppedSession? right) -> bool
