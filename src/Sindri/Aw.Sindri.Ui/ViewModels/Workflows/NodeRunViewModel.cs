@@ -15,6 +15,7 @@ internal sealed class NodeRunViewModel : ObservableObject
         var (glyph, word) = Labels.WfChip(run.Status);
         ChipText = glyph + " " + word;
         Tone = RunStatus.Tone(run.Status);
+        (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, RunStatus.ToneWord(run.Status));
         InputText = WorkflowJson.Pretty(run.Input);
         OutputText = WorkflowJson.Pretty(run.Output);
         IsTruncated = run.Truncated;
@@ -67,6 +68,15 @@ internal sealed class NodeRunViewModel : ObservableObject
 
     /// <summary>The chip's tone; the glyph and word carry the status too.</summary>
     public ChipTone Tone { get; }
+
+    /// <summary>The chip's word without its glyph.</summary>
+    public string ChipWord { get; }
+
+    /// <summary>The chip's glyph.</summary>
+    public string ChipGlyph { get; }
+
+    /// <summary>The chip's StateChipView tone: ok, running, waiting, error or neutral.</summary>
+    public string ChipToneWord { get; }
 
     /// <summary>True for a succeeded or running node (the ok colour).</summary>
     public bool IsOk => Tone == ChipTone.Ok;

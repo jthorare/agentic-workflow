@@ -13053,6 +13053,7 @@ Aw.Sindri.Core.Sandbox.Denials.DenialOverflow.DenialOverflow(Aw.Sindri.Core.Even
 Aw.Sindri.Core.Sandbox.Denials.DenialOverflow.Equals(Aw.Sindri.Core.Sandbox.Denials.DenialOverflow? other) -> bool
 Aw.Sindri.Core.Sandbox.Denials.DenialOverflow.Kind.get -> Aw.Sindri.Core.Events.DenialKind
 Aw.Sindri.Core.Sandbox.Denials.DenialOverflow.Kind.init -> void
+Aw.Sindri.Core.Sandbox.Denials.DenialSummary
 Aw.Sindri.Core.Sandbox.Denials.DenialRules
 const Aw.Sindri.Core.Sandbox.Denials.DenialRules.Cap = "cap" -> string!
 const Aw.Sindri.Core.Sandbox.Denials.DenialRules.DenyList = "deny-list" -> string!
@@ -13427,6 +13428,7 @@ static Aw.Sindri.Core.Profile.SandboxAllowances.Holds(Aw.Sindri.Core.Profile.Sin
 static Aw.Sindri.Core.Profile.SandboxAllowances.HomeRelative(string! path, string! home) -> string?
 static Aw.Sindri.Core.Profile.SandboxAllowances.Problem(Aw.Sindri.Core.Events.DenialKind kind, string! value) -> string?
 static Aw.Sindri.Core.Sandbox.Denials.DenialFixes.Decide(Aw.Sindri.Core.Sandbox.Denials.DenialEntry! entry) -> Aw.Sindri.Core.Sandbox.Denials.DenialEntry!
+static Aw.Sindri.Core.Sandbox.Denials.DenialSummary.Line(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Denials.DenialFile!>! files) -> string?
 static Aw.Sindri.Core.Sandbox.Denials.LaunchOwner.operator !=(Aw.Sindri.Core.Sandbox.Denials.LaunchOwner? left, Aw.Sindri.Core.Sandbox.Denials.LaunchOwner? right) -> bool
 static Aw.Sindri.Core.Sandbox.Denials.LaunchOwner.operator ==(Aw.Sindri.Core.Sandbox.Denials.LaunchOwner? left, Aw.Sindri.Core.Sandbox.Denials.LaunchOwner? right) -> bool
 static Aw.Sindri.Core.Setup.SandboxAllowed.operator !=(Aw.Sindri.Core.Setup.SandboxAllowed? left, Aw.Sindri.Core.Setup.SandboxAllowed? right) -> bool

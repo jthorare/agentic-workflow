@@ -12,6 +12,7 @@ internal sealed class RunRowViewModel : ObservableObject
         var (glyph, word) = Labels.WfChip(row.Status);
         ChipText = glyph + " " + word;
         Tone = RunStatus.Tone(row.Status);
+        (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, RunStatus.ToneWord(row.Status));
         TriggerText = Labels.WfTriggerWord(row.Trigger);
         RevisionText = Labels.WfRunRevision(row.Revision);
         var live = RunStatus.IsLive(row.Status);
@@ -39,6 +40,15 @@ internal sealed class RunRowViewModel : ObservableObject
 
     /// <summary>True for a failed run (the error colour).</summary>
     public bool IsError => Tone == ChipTone.Fail;
+
+    /// <summary>The chip's word without its glyph.</summary>
+    public string ChipWord { get; }
+
+    /// <summary>The chip's glyph.</summary>
+    public string ChipGlyph { get; }
+
+    /// <summary>The chip's StateChipView tone: ok, running, waiting, error or neutral.</summary>
+    public string ChipToneWord { get; }
 
     /// <summary>"Manual", "Schedule".</summary>
     public string TriggerText { get; }
