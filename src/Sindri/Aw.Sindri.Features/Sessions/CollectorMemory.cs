@@ -29,11 +29,12 @@ internal sealed class CollectorMemory
     /// <summary>Each live session's last state changes in this run (collector spec CA-2).</summary>
     internal IReadOnlyDictionary<SessionRef, IReadOnlyList<SessionStateEntry>> History { get; set; } = new Dictionary<SessionRef, IReadOnlyList<SessionStateEntry>>();
 
-    /// <summary>The sessions that left this good pass join the ended list; the ones that returned leave it; the ones older than ten minutes are dropped.</summary>
+    /// <summary>The sessions that left this good pass join the ended list; the ones that returned leave it; a session whose process lives on under a new id is renamed, not ended; the ones older than ten minutes are dropped.</summary>
     internal IReadOnlyList<EndedSession> Ending(IReadOnlyList<ObservedSession> now, DateTimeOffset at)
     {
         var live = now.Select(static s => s.Ref).ToHashSet();
-        var gone = Previous.Values.Where(s => !live.Contains(s.Ref)).Select(s => new EndedSession(s, at));
+        var processes = now.Select(static s => (s.Pid, s.StartTicks)).ToHashSet();
+        var gone = Previous.Values.Where(s => !live.Contains(s.Ref) && !processes.Contains((s.Pid, s.StartTicks))).Select(s => new EndedSession(s, at));   // the same process under a better id (adopted by its fleet file or record) did not end
         return [.. Ended.Where(e => !live.Contains(e.Session.Ref)).Concat(gone).Where(e => at - e.EndedAt <= EndedFor).OrderByDescending(static e => e.EndedAt)];
     }
 }
