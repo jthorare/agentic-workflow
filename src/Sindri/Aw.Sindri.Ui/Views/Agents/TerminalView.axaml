@@ -1,0 +1,147 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ag="using:Aw.Sindri.Ui.ViewModels.Agents"
+             xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
+             x:Class="Aw.Sindri.Ui.Views.Agents.TerminalView"
+             x:DataType="ag:TerminalViewViewModel" Focusable="True">
+  <!-- The terminal view (agents spec §15.3, DG2 frames): header 32, list 360 (56 under 1100 wide) beside the live pane, footer 28. The focused side has the accent border; card states put the ring on a button. -->
+  <UserControl.Resources>
+    <DataTemplate x:Key="CardButtonTemplate" x:DataType="ag:TerminalCardButtonItem">
+      <Border Classes="button-ring" Classes.focused="{Binding IsFocused}" Margin="-2,-2,6,-2">
+        <Button Classes="card-button" Content="{Binding Label}" Click="OnCardButton" />
+      </Border>
+    </DataTemplate>
+    <DataTemplate x:Key="FooterRunTemplate" x:DataType="ag:TerminalFooterRun">
+      <Panel>
+        <Border IsVisible="{Binding IsKey}" Classes="kbd" VerticalAlignment="Center">
+          <TextBlock Classes="kbd" Text="{Binding Text}" />
+        </Border>
+        <TextBlock IsVisible="{Binding !IsKey}" Classes="caption" Text="{Binding Text}" VerticalAlignment="Center" />
+      </Panel>
+    </DataTemplate>
+    <DataTemplate x:Key="FooterPartTemplate" x:DataType="ag:TerminalFooterPart">
+      <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,0,12,0">
+        <ItemsControl ItemsSource="{Binding Runs}" ItemTemplate="{StaticResource FooterRunTemplate}" Classes="footer-runs" Classes.first="{Binding IsFirst}">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+        </ItemsControl>
+        <Border Width="1" Height="12" Background="{StaticResource Brush.Hairline}" IsVisible="{Binding !IsLast}" />
+      </StackPanel>
+    </DataTemplate>
+  </UserControl.Resources>
+  <UserControl.Styles>
+    <Style Selector="Border.frame">
+      <Setter Property="BorderBrush" Value="{StaticResource Brush.HairlineStrong}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="6" />
+    </Style>
+    <Style Selector="Border.frame.accent">
+      <Setter Property="BorderBrush" Value="{StaticResource Brush.PrimaryHover}" />
+    </Style>
+    <Style Selector="Border.frame.list">
+      <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Border.frame.list.accent">
+      <Setter Property="BorderBrush" Value="{StaticResource Brush.PrimaryHover}" />
+    </Style>
+    <!-- DG2 buttons: 24 high, 12 px medium, Surface2 face, HairlineStrong border. -->
+    <Style Selector="Button">
+      <Setter Property="Height" Value="24" />
+      <Setter Property="MinHeight" Value="24" />
+      <Setter Property="Padding" Value="10,0" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="FontSize" Value="{StaticResource Type.Caption.Size}" />
+      <Setter Property="FontWeight" Value="{StaticResource Type.Button.Weight}" />
+      <Setter Property="Background" Value="{StaticResource Brush.Surface2}" />
+      <Setter Property="BorderBrush" Value="{StaticResource Brush.HairlineStrong}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
+    </Style>
+    <Style Selector="Button.card-button">
+      <Setter Property="Foreground" Value="{StaticResource Brush.InkMuted}" />
+    </Style>
+    <!-- The card's focus ring: 2 px PrimaryHover outside the button, so focus moves no layout. -->
+    <Style Selector="Border.button-ring">
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="2" />
+      <Setter Property="CornerRadius" Value="8" />
+    </Style>
+    <Style Selector="Border.button-ring.focused">
+      <Setter Property="BorderBrush" Value="{StaticResource Brush.PrimaryHover}" />
+    </Style>
+    <Style Selector="ItemsControl.footer-runs TextBlock.caption"><Setter Property="Foreground" Value="{StaticResource Brush.InkSubtle}" /></Style>
+    <Style Selector="ItemsControl.footer-runs.first TextBlock.caption"><Setter Property="Foreground" Value="{StaticResource Brush.InkMuted}" /></Style>
+    <Style Selector="Ellipse.state-dot">
+      <Setter Property="Width" Value="6" />
+      <Setter Property="Height" Value="6" />
+      <Setter Property="Fill" Value="{StaticResource Brush.Success}" />
+    </Style>
+    <Style Selector="Ellipse.state-dot.attention"><Setter Property="Fill" Value="{StaticResource Brush.Attention}" /></Style>
+    <Style Selector="Ellipse.state-dot.error"><Setter Property="Fill" Value="{StaticResource Brush.Error}" /></Style>
+    <Style Selector="Ellipse.state-dot.ended"><Setter Property="Fill" Value="{StaticResource Brush.InkSubtle}" /></Style>
+    <Style Selector="TextBlock.state-word"><Setter Property="Foreground" Value="{StaticResource Brush.InkMuted}" /></Style>
+    <Style Selector="TextBlock.state-word.attention"><Setter Property="Foreground" Value="{StaticResource Brush.Attention}" /></Style>
+    <Style Selector="TextBlock.state-word.error"><Setter Property="Foreground" Value="{StaticResource Brush.Error}" /></Style>
+  </UserControl.Styles>
+  <Grid RowDefinitions="32,*,28">
+    <Border Grid.Row="0" BorderBrush="{StaticResource Brush.Hairline}" BorderThickness="0,0,0,1" Padding="16,0">
+      <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto" VerticalAlignment="Center">
+        <TextBlock Classes="body subtle" Text="Agents ›" Margin="0,0,12,0" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="1" x:Name="HeaderName" FontSize="16" LineHeight="24" FontWeight="SemiBold" Text="{Binding HeaderName}" Margin="0,0,12,0" VerticalAlignment="Center" />
+        <Button Grid.Column="2" x:Name="TranscriptButton" Content="Transcript" Click="OnTranscript" Margin="0,0,12,0" />
+        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" IsVisible="{Binding HeaderStateWord, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+          <Ellipse x:Name="StateDot" Classes="state-dot" Classes.attention="{Binding IsStateAttention}" Classes.error="{Binding IsStateError}" Classes.ended="{Binding IsStateEnded}" VerticalAlignment="Center" />
+          <TextBlock x:Name="StateWord" Classes="caption state-word" Classes.attention="{Binding IsStateAttention}" Classes.error="{Binding IsStateError}" Text="{Binding HeaderStateWord}" VerticalAlignment="Center" />
+        </StackPanel>
+        <TextBlock Grid.Column="5" x:Name="HostText" Classes="subtle mono" Text="{Binding HostText}" Margin="0,0,12,0" VerticalAlignment="Center" />
+        <StackPanel Grid.Column="6" Orientation="Horizontal" Spacing="12">
+          <TextBlock x:Name="ControlLine" Classes="caption attention" Text="{Binding ControlLine}" VerticalAlignment="Center" />
+          <Button x:Name="CloseButton" Content="Close" Click="OnClose" />
+          <Button x:Name="InterruptButton" Content="Interrupt" IsVisible="{Binding CanInterrupt}" Click="OnInterrupt" AutomationProperties.AutomationId="TerminalInterrupt" />
+          <Button x:Name="StopButton" Content="{Binding StopLabel}" IsVisible="{Binding CanStop}" Click="OnStop" AutomationProperties.AutomationId="{Binding StopAutomationId}" />
+        </StackPanel>
+      </Grid>
+    </Border>
+    <Grid Grid.Row="1" x:Name="Body">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="360" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <Border x:Name="ListFrame" Classes="frame list" Classes.accent="{Binding IsListAccented}" Margin="2,2,0,2" Padding="0,8">
+        <ContentControl x:Name="ListHost" />
+      </Border>
+      <Border Grid.Column="1" x:Name="PaneFrame" Classes="frame" Classes.accent="{Binding IsPaneAccented}" Margin="12,8,12,12" Background="{StaticResource Brush.Canvas}" ClipToBounds="True">
+        <Grid>
+          <ctl:TerminalPaneControl x:Name="Pane" Margin="12" HasPaneFocus="{Binding IsPaneAccented}" Dimmed="{Binding IsDimmed}" />
+          <Border x:Name="Card" IsVisible="{Binding HasCard}" Width="420" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,304,0,0" Padding="16"
+                  Background="{StaticResource Brush.Surface3}" BorderBrush="{StaticResource Brush.HairlineStrong}" BorderThickness="1" CornerRadius="8">
+            <StackPanel Spacing="4">
+              <TextBlock x:Name="CardTitle" FontSize="15" LineHeight="22" FontWeight="SemiBold" Text="{Binding CardTitle}" />
+              <TextBlock x:Name="CardBody" Classes="body" Foreground="{StaticResource Brush.InkMuted}" TextWrapping="Wrap" Text="{Binding CardBody}" Margin="0,0,0,8" />
+              <Border IsVisible="{Binding HasCardTail}" Background="{StaticResource Brush.Canvas}" BorderBrush="{StaticResource Brush.Hairline}" BorderThickness="1"
+                      CornerRadius="6" Padding="12,8" Margin="0,4,0,8">
+                <TextBlock x:Name="CardTail" Classes="caption mono" TextWrapping="Wrap" Text="{Binding CardTail}" />
+              </Border>
+              <ItemsControl x:Name="CardButtons" ItemsSource="{Binding CardButtonItems}" ItemTemplate="{StaticResource CardButtonTemplate}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+          <Border x:Name="Banner" IsVisible="{Binding HasBanner}" VerticalAlignment="Bottom" Padding="16,12"
+                  Background="{StaticResource Brush.Surface3}" BorderBrush="{StaticResource Brush.HairlineStrong}" BorderThickness="0,1,0,0">
+            <StackPanel Spacing="8">
+              <TextBlock x:Name="BannerText" Classes="body" Foreground="{StaticResource Brush.InkMuted}" Text="{Binding EndedText}" />
+              <ItemsControl x:Name="BannerButtons" ItemsSource="{Binding CardButtonItems}" ItemTemplate="{StaticResource CardButtonTemplate}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Border>
+    </Grid>
+    <Border Grid.Row="2" BorderBrush="{StaticResource Brush.Hairline}" BorderThickness="0,1,0,0" Padding="16,0">
+      <ItemsControl x:Name="Footer" ItemsSource="{Binding FooterParts}" ItemTemplate="{StaticResource FooterPartTemplate}" AutomationProperties.Name="{Binding FooterText}" VerticalAlignment="Center">
+        <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+      </ItemsControl>
+    </Border>
+  </Grid>
+</UserControl>
