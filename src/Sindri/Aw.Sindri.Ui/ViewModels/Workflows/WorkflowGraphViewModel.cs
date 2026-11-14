@@ -54,7 +54,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         Nodes = nodes;
         Unplaced = unplaced;
         Edges = BuildEdges(workflow.Spec, nodes);
-        Ends = GraphEnds.Build(nodes, Edges);
+        Ends = GraphEnds.Build(nodes, Edges, SpecBranches(workflow.Spec));
         Order = [.. nodes.OrderBy(n => n.X).ThenBy(n => n.Y).ThenBy(n => n.Id, StringComparer.Ordinal)];
     }
 
@@ -214,6 +214,21 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         }
 
         return found;
+    }
+
+    // Every (from, output) the spec has an edge for, whether or not its target has a served position.
+    private static HashSet<(string From, string Branch)> SpecBranches(JsonElement spec)
+    {
+        HashSet<(string, string)> branches = [];
+        if (spec.ValueKind == JsonValueKind.Object && spec.TryGetProperty("edges", out var list) && list.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var edge in list.EnumerateArray())
+            {
+                _ = branches.Add((Text(edge, "from"), Text(edge, "output")));
+            }
+        }
+
+        return branches;
     }
 
     private static List<GraphEdgeViewModel> BuildEdges(JsonElement spec, List<GraphNodeViewModel> nodes)

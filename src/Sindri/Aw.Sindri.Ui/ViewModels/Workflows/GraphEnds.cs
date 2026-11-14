@@ -5,10 +5,12 @@ internal static class GraphEnds
 {
     /// <summary>Builds the ends of every condition branch that has no edge.</summary>
     /// <param name="nodes">The step cards.</param>
-    /// <param name="edges">The edges.</param>
+    /// <param name="edges">The edges that are drawn.</param>
+    /// <param name="specBranches">Every (from, output) the spec has an edge for, drawn or not.</param>
     /// <returns>One end per missing branch.</returns>
-    internal static List<GraphEnd> Build(List<GraphNodeViewModel> nodes, IReadOnlyList<GraphEdgeViewModel> edges)
+    internal static List<GraphEnd> Build(List<GraphNodeViewModel> nodes, IReadOnlyList<GraphEdgeViewModel> edges, IReadOnlySet<(string From, string Branch)> specBranches)
     {
+        _ = specBranches;   // red stub (#3655): the fix skips a branch the spec has even when its target is not drawn
         var ends = new List<GraphEnd>();
         var cards = nodes.Select(n => new GraphBox(n.X, n.Y, WorkflowGraphViewModel.CardWidth, WorkflowGraphViewModel.CardHeight)).ToList();
         foreach (var node in nodes.Where(n => string.Equals(n.Type, "condition", StringComparison.Ordinal)))

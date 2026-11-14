@@ -132,6 +132,25 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>Closes the sheet; edit mode stays on.</summary>
     internal void CloseSettings() => (IsSettingsOpen, GraphEdit.SheetOpen) = (false, false);
 
+    /// <summary>True while Done asks "Save your changes?" because a field of the open sheet changed.</summary>
+    public bool AsksSaveFirst => false;   // red stub (#3655)
+
+    /// <summary>Done: leaves edit mode, or asks first when a field of the open sheet changed.</summary>
+    internal void RequestDone() => CloseEditor();   // red stub (#3655): the fix asks before it throws typed fields away
+
+    /// <summary>The question's Discard: leaves edit mode and drops the typed fields.</summary>
+    internal void DiscardAndLeave() => CloseEditor();
+
+    /// <summary>The question's Keep editing: back to the sheet.</summary>
+    internal void KeepEditing()
+    {
+    }
+
+    /// <summary>The question's Save: saves, and leaves edit mode only when the save worked.</summary>
+    /// <param name="cancellationToken">Cancels the save.</param>
+    /// <returns>A task that completes when the save is answered.</returns>
+    internal Task SaveAndLeave(CancellationToken cancellationToken) => Task.CompletedTask;   // red stub (#3655)
+
     /// <summary>Closes the sheet and leaves edit mode (Done, or leaving the workflow).</summary>
     internal void CloseEditor()
     {
