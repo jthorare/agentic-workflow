@@ -12,7 +12,7 @@ namespace Aw.Sindri.Features.RenameConnection;
 /// Changes a connection's label: 'slack:old' becomes 'slack:new', the service part stays. The keychain entry is keyed by the name, so the tokens are read and stored again
 /// under the new name first, then the new row is inserted (a plain INSERT: a name taken meanwhile is refused) and the old row and its entry are removed. A step that fails before
 /// the old row is gone undoes what it did, so the old connection keeps working. An unknown name is SND-CONN-001, a taken new name SND-CONN-010 naming that connection, a bad
-/// label SND-CONN-008, the same label SND-CLI-003, and a connection an active workflow's connection_event trigger watches SND-CONN-015 naming those workflows (the
+/// label SND-CONN-008, a source or target name of slack:messages SND-CONN-017, the same label SND-CLI-003, and a connection an active workflow's connection_event trigger watches SND-CONN-015 naming those workflows (the
 /// trigger holds the name as text, so after a rename it would watch nothing and the workflow would look active and never fire). A connection that needs a sign-in keeps its Needs-you row, moved to the new name. An error shows its code and fixed title
 /// only (<see cref="ConnectionFailures"/>).
 /// </summary>
@@ -72,13 +72,13 @@ internal sealed class RenameConnectionService(IConnectionStore store, IConnectio
     // The two names and the stored row, or the refusal: a bad name, the same label, an unknown connection, a new name that is taken.
     private async ValueTask<Result<(ConnectionName From, ConnectionName To, Connection Found)>> Plan(RenameConnectionRequest request, CancellationToken cancellationToken)
     {
-        var from = ConnectionName.Parse(request.Name);
+        var from = ReservedConnectionNames.Parse(request.Name);
         if (from.IsError)
         {
             return from.Error;
         }
 
-        var to = ConnectionName.Parse(string.Concat(from.Value.Service, ":", request.Label));
+        var to = ReservedConnectionNames.Parse(string.Concat(from.Value.Service, ":", request.Label));
         if (to.IsError)
         {
             return to.Error;
