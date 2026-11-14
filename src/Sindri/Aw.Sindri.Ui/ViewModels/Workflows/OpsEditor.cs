@@ -79,6 +79,9 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     /// <summary>Why the last edit or read failed (not a stale base), in words; empty otherwise.</summary>
     public string FailureText { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>Drops the refusal on screen: it belongs to the sheet it came from, which is closing or moving on.</summary>
+    internal void ClearFailure() => FailureText = string.Empty;
+
     /// <summary>Reads a workflow and the block list. Both must be read: the form is made from the two.</summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="slug">The workflow.</param>
@@ -128,6 +131,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     internal void Select(string nodeId)
     {
         _selected = nodeId.Length == 0 ? null : nodeId;
+        FailureText = string.Empty;   // a refusal belongs to the step it came from
         Fields.Clear();
         var node = Nodes.FirstOrDefault(n => string.Equals(n.Id, nodeId, StringComparison.Ordinal));
         var block = node is null ? null : Groups.SelectMany(g => g.Blocks).FirstOrDefault(b => string.Equals(b.Type, node.Type, StringComparison.Ordinal));

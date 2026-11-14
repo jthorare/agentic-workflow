@@ -103,7 +103,11 @@ internal sealed partial class WorkflowsPageViewModel
     }
 
     /// <summary>Closes the sheet.</summary>
-    internal void CloseEditor() => (IsEditing, GraphEdit.SheetOpen) = (false, false);
+    internal void CloseEditor()
+    {
+        (IsEditing, GraphEdit.SheetOpen) = (false, false);
+        Editor.ClearFailure();   // an edit error is drawn in its own sheet and ends with it
+    }
 
     private void WatchEditor()
     {
