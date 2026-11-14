@@ -32,6 +32,14 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string WfEditorStep(string title, string kind) => title + " \u00b7 " + kind;
 
+    /// <summary>The editor sheet's heading for a step that does not exist yet.</summary>
+    /// <param name="kind">The block's title.</param>
+    /// <returns>The words.</returns>
+    internal static string WfEditorNewStep(string kind) => $"New step: {kind}";
+
+    /// <summary>The line shown in place of the form when a new step has no settings.</summary>
+    internal const string WfEditorNewStepNoFields = "This step has no settings. Save adds it.";
+
     /// <summary>The Advanced toggle under a field whose presets hide its raw text.</summary>
     internal const string WfFieldAdvanced = "Advanced";
 
