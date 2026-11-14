@@ -36,7 +36,7 @@ public sealed class SystemStartingCardTests : IDisposable
         _clock.Advance(SindriStartViewModel.Wait);
         await Eventually(() => shell.Start.Stage == StartStage.DidntStart && !shell.Pill.IsStarting);
 
-        Assert.Equal(((Labels.StartingSindri, Labels.StartingSindri), Labels.NotRunning), (during, shell.Pill.ProcessWord));
+        Assert.Equal(((Labels.StartingWord, Labels.StartingSindri), Labels.NotRunning), (during, shell.Pill.ProcessWord));
     }
 
     private static async Task Eventually(Func<bool> condition)
