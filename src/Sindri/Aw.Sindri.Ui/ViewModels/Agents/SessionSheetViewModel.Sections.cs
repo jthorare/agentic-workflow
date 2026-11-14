@@ -45,6 +45,16 @@ internal sealed partial class SessionSheetViewModel
     /// <returns>A task that completes once the clipboard answered.</returns>
     internal Task CopyRef(CancellationToken cancellationToken) => RefCopy?.Run(Ref, cancellationToken) ?? Task.CompletedTask;
 
+    /// <summary>The copy chip of the attach command, "tmux -S &lt;socket&gt; attach -t &lt;session&gt;"; null when the session is not in tmux (#3710).</summary>
+    public CopyAction? AttachCopy { get; private set => Set(ref field, value); }
+
+    /// <summary>Copies the attach command.</summary>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>A task that completes once the clipboard answered.</returns>
+    internal Task CopyAttach(CancellationToken cancellationToken) => AttachCopy?.Run(_attachCommand, cancellationToken) ?? Task.CompletedTask;
+
+    private string _attachCommand = string.Empty;
+
     // A session that ended: the page knows its resume command (or that it has none) from the row that opened the sheet.
     private void DrawEndedResume() =>
         EndedResumeText = EndedResumeOf?.Invoke(Ref) switch
@@ -60,6 +70,7 @@ internal sealed partial class SessionSheetViewModel
         IsAsking = string.Equals(session.State, "asking", StringComparison.Ordinal);
         InStatusText = _catalog is null ? string.Empty : Labels.SheetInStatusFor(Labels.Duration((long)Math.Max(0, (_clock.GetUtcNow() - session.Since).TotalSeconds)));
         StartedText = session.StartedAt is { } started ? Labels.SheetStarted + " " + Labels.SheetTime(started) : string.Empty;
+        DrawAttach(session.Host);
         RefCopy = _catalog is { } catalog ? new CopyAction(catalog.Clipboard, _clock, Labels.SheetCopyRef + " " + session.Ref, Labels.SheetCopyRef) : null;
     }
 
@@ -67,4 +78,14 @@ internal sealed partial class SessionSheetViewModel
         [.. groups
             .Select(g => new SessionSectionViewModel(g.Heading, [.. Fields.Where(f => g.Names.Contains(f.Label, StringComparer.Ordinal))]))
             .Where(s => s.Fields.Count > 0)];
+
+    // Only a session in tmux has a socket and a session name; the command is what a person types in a terminal to look at it.
+    private void DrawAttach(SessionHostView host)
+    {
+        var inTmux = _catalog is not null && !string.IsNullOrEmpty(host.Socket) && !string.IsNullOrEmpty(host.Session);
+        _attachCommand = inTmux ? $"tmux -S {Quoted(host.Socket!)} attach -t {Quoted(host.Session!)}" : string.Empty;
+        AttachCopy = inTmux ? new CopyAction(_catalog!.Clipboard, _clock, Labels.SheetCopyAttach + " " + Ref, Labels.SheetCopyAttach) : null;
+    }
+
+    private static string Quoted(string value) => value.Any(c => char.IsWhiteSpace(c) || c == '\'') ? "'" + value.Replace("'", "'\\''", StringComparison.Ordinal) + "'" : value;
 }

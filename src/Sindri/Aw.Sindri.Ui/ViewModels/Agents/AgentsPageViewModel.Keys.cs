@@ -55,8 +55,8 @@ internal sealed partial class AgentsPageViewModel
     /// <returns>True when the key was used.</returns>
     internal bool Press(string key) => key switch
     {
-        "J" => Move(1),
-        "K" => Move(-1),
+        "J" or "Down" => Move(1),
+        "K" or "Up" => Move(-1),
         "E" => HasEnded && Toggled(),
         "Enter" or "O" => PressOnLive(key, SelectedLive),
         "Y" => Copied(),

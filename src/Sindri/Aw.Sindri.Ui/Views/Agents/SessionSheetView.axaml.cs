@@ -22,6 +22,14 @@ internal sealed partial class SessionSheetView : UserControl
         }
     }
 
+    private void OnCopyAttach(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is SessionSheetViewModel sheet)
+        {
+            _ = sheet.CopyAttach(CancellationToken.None);
+        }
+    }
+
     private void OnCopyFocus(object? sender, RoutedEventArgs e)
     {
         if (DataContext is SessionSheetViewModel sheet)
