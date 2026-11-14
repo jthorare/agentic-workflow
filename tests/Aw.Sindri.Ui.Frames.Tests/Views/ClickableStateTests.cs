@@ -214,6 +214,7 @@ public sealed class ClickableStateTests : FrameHost
         // The selected hover sits on the lift fill (#3611), so the press steps it to the pressed fill (the border is Primary either way); the row must still not move.
         window.MouseDown(at, MouseButton.Left, RawInputModifiers.None);
         Settle(window);
+        Assert.Equal(TokenColor("Brush.Clickable.Pressed"), ((ISolidColorBrush)row.Background!).Color);
         Frame(window, "selected-pressed", "gh2535-");
         AssertNothingMoves(row);
         window.MouseUp(at, MouseButton.Left, RawInputModifiers.None);
