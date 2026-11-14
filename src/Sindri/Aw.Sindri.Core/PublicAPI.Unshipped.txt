@@ -22066,6 +22066,8 @@ Aw.Sindri.Core.Connections.ConnectionEvents.TriggerSkipped(Aw.Sindri.Core.Connec
 Aw.Sindri.Core.Connections.ConnectionEvents.CatchUpStopped(Aw.Sindri.Core.Connections.ConnectionName name, string! kind, string! reason, Aw.Sindri.Core.Lease.LeaseGrant? grant, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionRunIdsHeld -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionWatched -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionPresetMissing -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionNameReserved -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Connections.SignInFailure
 Aw.Sindri.Core.Connections.SignInFailure.<Clone>$() -> Aw.Sindri.Core.Connections.SignInFailure!
 Aw.Sindri.Core.Connections.SignInFailure.At.get -> System.DateTimeOffset
