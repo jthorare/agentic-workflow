@@ -17,9 +17,9 @@ public sealed class DisabledChipPensTests
         var paint = GraphTilePens.Paint(GraphTileStates.Disabled);
 
         Assert.Equal((paint.Fill, paint.Border), (paint.ChipFill, paint.ChipBorder));
-        Assert.NotNull(paint.ChipInk);
-        Assert.True(_tokens.Resources.ContainsKey(paint.ChipInk), $"{paint.ChipInk} is not a token");
-        var ratio = _tokens.Contrast(Token(paint.ChipInk), Token(paint.Fill));
+        var ink = Assert.IsType<string>(paint.ChipInk);
+        Assert.True(_tokens.Resources.ContainsKey(ink), $"{ink} is not a token");
+        var ratio = _tokens.Contrast(Token(ink), Token(paint.Fill));
         Assert.True(ratio >= 3.0, $"the dimmed chip's text is {ratio:F2}:1 on the card, below 3:1");
     }
 
@@ -32,6 +32,8 @@ public sealed class DisabledChipPensTests
     {
         var paint = GraphTilePens.Paint(states);
 
-        Assert.Equal((null, null, null), (paint.ChipFill, paint.ChipBorder, paint.ChipInk));
+        Assert.Null(paint.ChipFill);
+        Assert.Null(paint.ChipBorder);
+        Assert.Null(paint.ChipInk);
     }
 }
