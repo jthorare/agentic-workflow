@@ -159,6 +159,20 @@ public sealed class WholeNodePanelTests
     }
 
     [Fact]
+    public async Task A_file_source_with_a_local_path_and_no_url_opens_the_file_and_has_no_no_link_line()
+    {
+        var (page, launcher, _) = await Open(Served(""", "source": { "kind": "file", "ref": "src/a/File17.ts", "path": "/work/r/src/a/File17.ts" }"""));
+        launcher.AddFile("/work/r/src/a/File17.ts");
+
+        await Click(page, Node);
+        await page.Whole.Panel.OpenSource(Token);
+
+        var panel = page.Whole.Panel;
+        Assert.Equal((false, false, true), (panel.HasLink, panel.HasNoLink, panel.HasOpenFile));
+        Assert.Equal(["/work/r/src/a/File17.ts"], launcher.Opened, StringComparer.Ordinal);
+    }
+
+    [Fact]
     public async Task A_node_without_a_source_shows_neither_a_link_nor_the_no_link_line()
     {
         var (page, _, _) = await Open(Served());
