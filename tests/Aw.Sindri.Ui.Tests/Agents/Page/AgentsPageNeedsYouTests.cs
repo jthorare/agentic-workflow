@@ -227,4 +227,52 @@ public sealed class AgentsPageNeedsYouTests
         row["estimated"] = estimated;
         row["stateSource"] = "transcript";
     }
+
+    [Fact]
+    public async Task The_head_link_selects_the_first_Needs_you_row_and_asks_for_its_focus_3082()
+    {
+        var page = await _f.Shown(Token);
+        AgentFocusEventArgs? asked = null;
+        page.FocusRequested += (_, e) => asked = e;
+        var first = page.Groups[0].Rows[0].Ref;
+
+        var used = page.FocusNeedsYou();
+
+        Assert.Equal((true, true, first, first), (used, page.HasAsking, page.SelectedKey, asked?.Key));
+    }
+
+    [Fact]
+    public async Task The_head_link_does_nothing_when_nobody_asks_3082()
+    {
+        _f.Serve(AgentsPageFixture.Edited(l => AgentsPageFixture.Remove(l, Codex)));
+        var page = await _f.Shown(Token);
+
+        Assert.Equal((false, false, null), (page.FocusNeedsYou(), page.HasAsking, page.SelectedKey));
+    }
+
+    [Fact]
+    public async Task A_header_click_sorts_by_it_and_a_second_click_flips_the_direction_and_the_active_one_is_marked_3082()
+    {
+        var list = AgentsPageFixture.Edited(_ => { });
+        _ = Add(list, Claude, "000000000011", title: "zeta", since: "2026-10-16T10:00:00.0000000Z");
+        _ = Add(list, Claude, "000000000012", title: "alpha", since: "2026-10-16T11:00:00.0000000Z");
+        _f.Serve(list);
+        var page = await _f.Shown(Token);
+
+        page.SortBy(AgentSort.Age);
+        var up = Titles(Outside(page));
+        var upMark = page.ForHeader;
+        page.SortBy(AgentSort.Age);
+        var down = Titles(Outside(page));
+        var downMark = page.ForHeader;
+        await page.Refresh(AgentsPageFixture.Url, Token);
+        var afterRead = Titles(Outside(page));
+        page.SortBy(AgentSort.Repo);
+
+        Assert.Equal((["zeta", "alpha", "private title"], ["private title", "alpha", "zeta"], ["private title", "alpha", "zeta"]), (up, down, afterRead));
+        Assert.Equal((true, false), (upMark.Contains('▲', StringComparison.Ordinal), page.ForHeader.Contains('▲', StringComparison.Ordinal) || page.ForHeader.Contains('▼', StringComparison.Ordinal)));
+        Assert.True(downMark.Contains('▼', StringComparison.Ordinal));
+        Assert.Equal((AgentSort.Repo, false), (page.Sort, page.SortDescending));
+        Assert.Contains('▲', page.RepoHeader, StringComparison.Ordinal);
+    }
 }

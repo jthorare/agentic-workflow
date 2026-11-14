@@ -40,6 +40,32 @@ internal sealed partial class AgentsPageViewModel
         Redraw();
     }
 
+    /// <summary>True when the second click on the same header flipped the order.</summary>
+    public bool SortDescending { get; private set => Set(ref field, value); }
+
+    /// <summary>True while someone is asking: the head's "N asking you" is a link then.</summary>
+    public bool HasAsking => Groups.Count > 0 && string.Equals(Groups[0].Name, Labels.NeedsYouGroup, StringComparison.Ordinal);
+
+    /// <summary>The Status header, with the mark of the active sort.</summary>
+    public string StatusHeader => Columns.Status;
+
+    /// <summary>The Agent (name) header, with the mark of the active sort.</summary>
+    public string AgentHeader => Columns.Agent;
+
+    /// <summary>The Repository header, with the mark of the active sort.</summary>
+    public string RepoHeader => Columns.Repo;
+
+    /// <summary>The For (age) header, with the mark of the active sort.</summary>
+    public string ForHeader => Columns.For;
+
+    /// <summary>A header was clicked: sort by it, and a second click on the same one flips the direction.</summary>
+    /// <param name="sort">The column's order.</param>
+    internal void SortBy(AgentSort sort) => Sort = Sort;
+
+    /// <summary>The head's link: selects the first row of the pinned Needs you group and asks for focus on it.</summary>
+    /// <returns>True when someone is asking.</returns>
+    internal bool FocusNeedsYou() => Groups.Count < 0;
+
     private List<SessionGroupViewModel> ShownGroups(List<SessionRowViewModel> kept)
     {
         var shown = new List<SessionGroupViewModel>();
