@@ -8,7 +8,7 @@ using Aw.Sindri.Tests.Profile;
 
 namespace Aw.Sindri.Tests.GetStatus;
 
-/// <summary>The status says why the live profile doesn't load: 'missing' (a new home) or 'invalid' (a file that won't parse or validate), so the app never matches on text (#3113).</summary>
+/// <summary>The status says why the live profile doesn't load: 'missing' (a new home), 'unreadable' (a file the source can't read) or 'invalid' (a file that reads but won't parse or validate), so the app never matches on text (#3113).</summary>
 public sealed class StatusProblemKindTests
 {
     private readonly SliceHarness _h = new();
@@ -72,13 +72,13 @@ public sealed class StatusProblemKindTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_profile_file_on_disk_that_the_source_cant_read_says_invalid_not_missing()
+    public async Task A_profile_file_on_disk_that_the_source_cant_read_says_unreadable_not_invalid_or_missing()
     {
         _h.Profiles.Live = SindriErrors.ProfileMissing.With("/home/thor/profile.yaml can't be read: Access to the path is denied.");
 
         var status = (await Service(_h.Profiles, _h.Profiles, new FileProbe(exists: true)).Handle(new GetStatusRequest(), Token)).Value;
 
-        Assert.Equal("invalid", status.Profile.ProblemKind);
+        Assert.Equal("unreadable", status.Profile.ProblemKind);   // #3622
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -93,7 +93,7 @@ public sealed class StatusProblemKindTests
 
     [Fact, Trait("Lane", "integration")]
     [System.Runtime.Versioning.UnsupportedOSPlatform("windows")]
-    public async Task A_real_profile_file_with_no_read_permission_says_invalid_not_missing()
+    public async Task A_real_profile_file_with_no_read_permission_says_unreadable_not_missing()
     {
         Assert.SkipWhen(OperatingSystem.IsWindows() || Environment.IsPrivilegedProcess, "needs file permissions and a user they apply to");
         using var files = new ProfileFiles();
@@ -104,7 +104,7 @@ public sealed class StatusProblemKindTests
         {
             var status = (await Service(files.Source, new NoApproval(), new FileProbe(File.Exists(path))).Handle(new GetStatusRequest(), Token)).Value;
 
-            Assert.Equal("invalid", status.Profile.ProblemKind);
+            Assert.Equal("unreadable", status.Profile.ProblemKind);
         }
         finally
         {

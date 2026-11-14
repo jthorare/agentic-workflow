@@ -36,7 +36,7 @@ public sealed class GraphBlockListingTests
 
         Assert.True(schedule.IsTrigger);
         Assert.Equal(["cron", "timezone"], schedule.Config.Fields.Select(static f => f.Name), StringComparer.Ordinal);
-        Assert.Equal(["scheduledFor"], schedule.Outputs.Fields.Keys, StringComparer.Ordinal);
+        Assert.Equal(["scheduledFor", "localDate", "weekday"], schedule.Outputs.Fields.Keys, StringComparer.Ordinal);
         Assert.Contains("\"schedule\"", schedule.ExampleSpec, StringComparison.Ordinal);
     }
 

@@ -30,4 +30,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-SETUP-016: `sindri setup --apply`'s setup pass failed.</summary>
     public static readonly ErrorDefinition SetupPassFailed = new("SND-SETUP-016", ErrorKind.Unavailable, "The setup pass failed (fix: sindri jobs show <id>)");
+
+    /// <summary>The fix for a profile file that is there but can't be read: Setup's steps and the status's health row say it (#3437, #3607).</summary>
+    public const string ProfileUnreadableFix = "The profile file is there but can't be read; check its permissions.";
 }

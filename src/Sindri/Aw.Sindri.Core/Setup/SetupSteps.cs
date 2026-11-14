@@ -1,9 +1,10 @@
 using System.Globalization;
+using Aw.Kernel;
 
 namespace Aw.Sindri.Core.Setup;
 
 /// <summary>
-/// The pure decision of each setup step (GET /sindri/setup): one function per step from the fact its source gave, and <see cref="Unreadable"/> for a source that couldn't be read.
+/// The pure decision of each setup step (GET /sindri/setup): one function per step from the fact its source gave, and <see cref="Unreadable(SetupStepId, Error)"/> for a source that couldn't be read.
 /// Titles, reasons and details are plain words; an error code appears only in <see cref="SetupError.Code"/>.
 /// </summary>
 public static class SetupSteps
@@ -87,11 +88,13 @@ public static class SetupSteps
         var step = fact.Phase switch
         {
             MapPhase.Built => new SetupStep(SetupStepId.Map, MapTitle, SetupState.Done, "Every repo has a current map.", "The map is built.", Error: null, Action: null, Progress: null),
-            MapPhase.Building when fact.Retry is { } retry => new SetupStep(SetupStepId.Map, MapTitle, SetupState.Running, "Sindri is mapping " + repos + ".", RetryDetail(retry), Error: null, SetupActions.RefreshContextMap, fact.Progress),
+            MapPhase.Building when fact.Retry is { } retry => new SetupStep(SetupStepId.Map, MapTitle, SetupState.Running, "Sindri is mapping " + repos + ".", RetryDetail(retry), Error: null, SetupActions.RefreshContextMap, fact.Progress) { Stage = fact.Stage },
             MapPhase.Building => new SetupStep(SetupStepId.Map, MapTitle, SetupState.Running, "Sindri is mapping " + repos + ".",
-                fact.Progress is { } p ? string.Create(CultureInfo.InvariantCulture, $"{p.Done} of {p.Total} done.") : "Reading the code.", Error: null, Action: null, fact.Progress),
+                fact.Progress is { } p ? string.Create(CultureInfo.InvariantCulture, $"{p.Done} of {p.Total} done.") : "Reading the code.", Error: null, Action: null, fact.Progress)
+            { Stage = fact.Stage },
             MapPhase.Failed => new SetupStep(SetupStepId.Map, MapTitle, SetupState.Failed, "The last try at building the map didn't finish.", Detail: null,
-                new SetupError(fact.FailureCode ?? "SND-CONTEXT-042", "The last try at building the map didn't finish."), Action: null, Progress: null),
+                new SetupError(fact.FailureCode ?? "SND-CONTEXT-042", "The last try at building the map didn't finish."), Action: null, Progress: null)
+            { Stage = fact.Stage },
             MapPhase.NotBuilt => new SetupStep(SetupStepId.Map, MapTitle, SetupState.Todo, "The map isn't built yet. Sindri builds it on its own.", Detail: null, Error: null, Action: null, Progress: null),
             MapPhase.Waiting => new SetupStep(SetupStepId.Map, MapTitle, SetupState.Todo, "Waits for a profile with a repo.", Detail: null, Error: null, Action: null, Progress: null),
             _ => throw new ArgumentOutOfRangeException(nameof(fact), fact.Phase, "Not a map phase"),
@@ -197,6 +200,25 @@ public static class SetupSteps
         };
         return Failed(id, title, new SetupError(code, sentence));
     }
+
+    /// <summary>
+    /// The step for a source whose read failed with <paramref name="error"/> (#3437): like <see cref="Unreadable(SetupStepId, string)"/>, and a profile
+    /// the source names as invalid (SND-PROFILE-002) puts its message, written for the owner, on the detail line: the key to fix, or "check its permissions".
+    /// Any other error's message stays off the page.
+    /// </summary>
+    /// <param name="id">Which step.</param>
+    /// <param name="error">The error the read returned.</param>
+    /// <returns>The step.</returns>
+    public static SetupStep Unreadable(SetupStepId id, Error error)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        var step = Unreadable(id, error.Code);
+        return string.Equals(error.Code, SindriErrors.ProfileInvalid.Code, StringComparison.Ordinal) && !string.IsNullOrWhiteSpace(error.Message)
+            ? step with { Detail = Ended(error.Message.Trim()) }
+            : step;
+    }
+
+    private static string Ended(string line) => line.EndsWith('.') ? line : line + ".";
 
     private static SetupStep Failed(SetupStepId id, string title, SetupError error) =>
         new(id, title, SetupState.Failed, error.Sentence, Detail: null, error, Action: null, Progress: null);
