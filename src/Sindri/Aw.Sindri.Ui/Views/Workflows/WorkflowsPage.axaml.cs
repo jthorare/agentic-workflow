@@ -14,6 +14,20 @@ internal sealed partial class WorkflowsPage : UserControl
     public WorkflowsPage()
     {
         InitializeComponent();
+        WorkflowsListLevel.SizeChanged += (_, e) =>
+        {
+            if (DataContext is WorkflowsPageViewModel page)
+            {
+                page.SetListWidth(e.NewSize.Width);   // the columns that fit: Next run drops first, then the strip shortens and Trigger drops
+            }
+        };
+        DataContextChanged += (_, _) =>
+        {
+            if (DataContext is WorkflowsPageViewModel page && WorkflowsListLevel.Bounds.Width > 0)
+            {
+                page.SetListWidth(WorkflowsListLevel.Bounds.Width);
+            }
+        };
     }
 
 #pragma warning disable MA0155 // why: an Avalonia RoutedEvent handler returns void, so it can only be async void

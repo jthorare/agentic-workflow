@@ -99,7 +99,7 @@
             <TextBlock Name="ColumnHead" Classes="caption subtle" Text="Trigger" Width="{Binding Columns.Trigger}" IsVisible="{Binding Columns.ShowsTrigger}" VerticalAlignment="Center" />
             <TextBlock Name="ColumnHead" Classes="caption subtle" Text="Last run" Width="{Binding Columns.LastRun}" VerticalAlignment="Center" />
             <TextBlock Name="ColumnHead" Classes="caption subtle" Text="Next run" Width="{Binding Columns.NextRun}" IsVisible="{Binding Columns.ShowsNextRun}" VerticalAlignment="Center" />
-            <TextBlock Name="ColumnHead" Classes="caption subtle" Text="Last 10 runs" Width="140" VerticalAlignment="Center" />
+            <TextBlock Name="ColumnHead" Classes="caption subtle" Text="Last 10 runs" Width="{Binding Columns.Strip}" VerticalAlignment="Center" />
             <TextBlock Name="ColumnHead" Classes="caption subtle" Text="State" Width="72" VerticalAlignment="Center" />
           </StackPanel>
           <ItemsControl x:Name="WorkflowRows" ItemsSource="{Binding Rows}">
@@ -130,7 +130,7 @@
                         <controls:StateChipView Name="RowLastRun" HorizontalAlignment="Left" Word="{Binding LastRunText}" Tone="{Binding LastRunToneWord}" IsVisible="{Binding ShowsLastRun}" />
                       </Panel>
                       <TextBlock Classes="body muted" Text="{Binding NextRunText}" Width="{Binding Columns.NextRun}" IsVisible="{Binding Columns.ShowsNextRun}" VerticalAlignment="Center" />
-                      <ItemsControl Name="RowStrip" ItemsSource="{Binding StripShown}" Width="140" Height="16" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+                      <ItemsControl Name="RowStrip" ItemsSource="{Binding StripShown}" Width="{Binding Columns.Strip}" Height="16" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
                         <ItemsControl.ItemsPanel>
                           <ItemsPanelTemplate>
                             <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Bottom" />
