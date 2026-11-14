@@ -32,10 +32,13 @@ internal static partial class Labels
     /// <summary>A group collapsed to its count, in words.</summary>
     internal const string GroupCollapsed = "collapsed";
 
-    /// <summary>What Open found when it could not open a file.</summary>
-    /// <param name="path">The file.</param>
+    /// <summary>What Open says when the file is not on this machine (#3714).</summary>
+    internal const string FileNotOnMachine = "This file isn't on this machine.";
+
+    /// <summary>What Open says when the file is there but the system has no app to open it (#3714).</summary>
+    /// <param name="extension">The file's extension with its dot, or empty for none.</param>
     /// <returns>The words.</returns>
-    internal static string FileNotOpened(string path) => $"{path} can't be opened from here. Open it from the repository.";
+    internal static string NoAppOpens(string extension) => $"No app on this machine opens {(extension.Length > 0 ? extension + " files" : "this file")}.";
 
     /// <summary>A refused approval as the app shows it: the code, the words, and the row's served command to run instead; never a silent failure.</summary>
     /// <param name="code">The error code; empty for none.</param>

@@ -19,7 +19,7 @@ internal static partial class Labels
     internal const string ContextNodePanelLinks = "Linked to";
 
     /// <summary>Opens the source's link.</summary>
-    internal const string ContextNodePanelOpenSource = "Open source ↗";
+    internal const string ContextNodePanelOpenSource = "Open on GitHub ↗";
 
     /// <summary>Opens the source's file on this machine (#3258).</summary>
     internal const string ContextNodePanelOpenFile = "Open file";

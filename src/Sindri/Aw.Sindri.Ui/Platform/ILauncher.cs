@@ -14,4 +14,9 @@ public interface ILauncher
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>True when the system opened it; false when the file is not there, or the system refused.</returns>
     public Task<bool> OpenFile(string path, CancellationToken cancellationToken);
+
+    /// <summary>Tells whether a file is on this machine, so a refused <see cref="OpenFile"/> can say why (#3714).</summary>
+    /// <param name="path">An absolute path.</param>
+    /// <returns>True when the path is absolute and a file is there; false for a relative path or no file.</returns>
+    public bool FileExists(string path);
 }

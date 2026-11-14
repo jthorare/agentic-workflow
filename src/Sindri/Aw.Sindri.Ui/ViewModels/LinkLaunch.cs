@@ -38,8 +38,9 @@ internal sealed class LinkLaunch(Func<ILauncher> launcher) : ObservableObject
     /// <returns>True when the system opened it.</returns>
     public async Task<bool> OpenPath(string path, CancellationToken cancellationToken)
     {
-        var opened = await launcher().OpenFile(path, cancellationToken).ConfigureAwait(true);
-        Record(opened, Labels.FileNotOpened(path));
+        var system = launcher();
+        var opened = await system.OpenFile(path, cancellationToken).ConfigureAwait(true);
+        Record(opened, system.FileExists(path) ? Labels.NoAppOpens(Path.GetExtension(path)) : Labels.FileNotOnMachine);
         return opened;
     }
 
