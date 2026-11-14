@@ -110,7 +110,7 @@ public sealed class TerminalSessionTests
         var fate = await session.SendPaste(new string('a', (256 * 1024) + 1), Token);
         await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
 
-        Assert.Equal((TerminalKeyFate.Dropped, 0, "Paste too big (max 256 KiB)"), (fate, socket.Sent.Count, f.View.ControlLine));
+        Assert.Equal((TerminalKeyFate.TooBig, 0, string.Empty), (fate, socket.Sent.Count, f.View.ControlLine));
     }
 
     // The writer escapes < > & ' + and non-ASCII as \uXXXX (6 bytes each): 150 KiB of '<' passes the 256 KiB text cap and encodes to about 900 KB.
@@ -124,7 +124,7 @@ public sealed class TerminalSessionTests
         var fate = await session.SendPaste(new string('<', 150 * 1024), Token);
         await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
 
-        Assert.Equal((TerminalKeyFate.Dropped, 0, "Paste too big (max 256 KiB)"), (fate, socket.Sent.Count, f.View.ControlLine));
+        Assert.Equal((TerminalKeyFate.TooBig, 0, string.Empty), (fate, socket.Sent.Count, f.View.ControlLine));
     }
 
     [Fact]
@@ -152,7 +152,7 @@ public sealed class TerminalSessionTests
         var fate = await session.SendPaste(threeBytesEach, Token);
         await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
 
-        Assert.Equal((TerminalKeyFate.Dropped, 0), (fate, socket.Sent.Count));
+        Assert.Equal((TerminalKeyFate.TooBig, 0), (fate, socket.Sent.Count));
     }
 
     [Fact]

@@ -39,6 +39,10 @@ internal sealed partial class TerminalViewViewModel
     /// <param name="text">The words.</param>
     internal void Note(string text) => ControlLine = text;
 
+    /// <summary>Says what became of a paste or key in the line under the header: only a paste that was too big has words.</summary>
+    /// <param name="fate">What became of it.</param>
+    internal void NoteFate(TerminalKeyFate fate) => _ = fate;   // stub (red)
+
     /// <summary>The first press arms Stop; the second, inside 2 s, stops the session.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>True when the session was stopped.</returns>

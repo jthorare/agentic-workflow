@@ -11,4 +11,7 @@ internal enum TerminalKeyFate
 
     /// <summary>The socket is gone or the wait ran out: nothing is sent and the header word flashes.</summary>
     Dropped,
+
+    /// <summary>A paste over the socket's size cap: nothing is sent; the page says so (#3729).</summary>
+    TooBig,
 }

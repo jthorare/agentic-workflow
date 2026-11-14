@@ -19,6 +19,19 @@ public sealed class TerminalControlTests
     }
 
     [Fact]
+    public void A_too_big_paste_shows_its_notice_and_the_other_fates_leave_the_line_alone()
+    {
+        var f = new TerminalFixture().Attached(TerminalFixture.Started());
+        f.View.NoteFate(TerminalKeyFate.Sent);
+        f.View.NoteFate(TerminalKeyFate.Dropped);
+        var quiet = f.View.ControlLine;
+
+        f.View.NoteFate(TerminalKeyFate.TooBig);
+
+        Assert.Equal((string.Empty, "Paste too big (max 256 KiB)"), (quiet, f.View.ControlLine));
+    }
+
+    [Fact]
     public void A_session_Sindri_started_shows_both_while_the_pane_is_live()
     {
         var f = new TerminalFixture().Attached(TerminalFixture.Started());
