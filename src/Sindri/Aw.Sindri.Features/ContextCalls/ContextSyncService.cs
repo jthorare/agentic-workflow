@@ -27,15 +27,21 @@ internal sealed class ContextSyncService(ContextScopes scopes, IContextEngine en
     {
         ArgumentNullException.ThrowIfNull(run);
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
-        if (scope.IsError || scope.Value.Settings is null)
+        if (scope.IsError)
         {
-            return scope.IsError ? scope.Error : ScheduledResult.Quiet;
+            return scope.Error;
         }
 
+        // a profile with no 'context:' section is the default settings, as the engine reads it (#3131)
         var view = await engine.Sources(scope.Value, cancellationToken).ConfigureAwait(false);
         if (view.IsError)
         {
             return view.Error;
+        }
+
+        if (view.Value.Sources.Count == 0)
+        {
+            return new ScheduledResult(Idle: true, "no context source configured");
         }
 
         var worked = false;

@@ -40,6 +40,12 @@ public static partial class SindriErrors
     /// <summary>SND-CONN-015: an active workflow's connection_event trigger names the connection, so a rename would stop it firing.</summary>
     public static readonly ErrorDefinition ConnectionWatched = new("SND-CONN-015", ErrorKind.Conflict, "An active workflow's trigger watches this connection");
 
+    /// <summary>SND-CONN-016: the connection has no preset, so the poller can't read it.</summary>
+    public static readonly ErrorDefinition ConnectionPresetMissing = new("SND-CONN-016", ErrorKind.Invalid, "This connection has no preset, so the poller can't read it");
+
+    /// <summary>SND-CONN-017: the name slack:messages is made by sindri messages connect, not by a generic add.</summary>
+    public static readonly ErrorDefinition ConnectionNameReserved = new("SND-CONN-017", ErrorKind.Invalid, "slack:messages is made by sindri messages connect");
+
     /// <summary>SND-CONN-014: the provider answered 429 or 5xx to a poll; the next poll waits.</summary>
     public static readonly ErrorDefinition ConnectionRateLimited = new("SND-CONN-014", ErrorKind.RateLimited, "The provider is rate limiting this connection");
 

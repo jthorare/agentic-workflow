@@ -44,10 +44,10 @@ internal sealed partial class ContextSyncGapsService(ContextScopes scopes, ICont
     {
         ArgumentNullException.ThrowIfNull(run);
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
-        if (scope.IsError || scope.Value.Settings is null)
+        if (scope.IsError)
         {
             // no profile is nothing to sync, not a failed run (a failed run would land in needs-you every tick)
-            return scope.IsError && scope.Error.Code != SindriErrors.ProfileMissing.Code ? scope.Error : ScheduledResult.Quiet;
+            return ContextScopes.NoProfile(scope) ? ScheduledResult.Quiet : scope.Error;
         }
 
         var gap = await engine.HasSyncGap(scope.Value, cancellationToken).ConfigureAwait(false);

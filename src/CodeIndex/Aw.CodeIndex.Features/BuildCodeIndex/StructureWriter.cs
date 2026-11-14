@@ -89,7 +89,7 @@ public sealed class StructureWriter
                 }
 
                 done += batch.Length;
-                request.Progress.Report($"structure {Counts.Format(done)} of {Counts.Format(plan.ToParse.Count)} files");
+                request.Progress.Report(new IndexBuildFiles(done, plan.ToParse.Count).Line);
             }
         }
 

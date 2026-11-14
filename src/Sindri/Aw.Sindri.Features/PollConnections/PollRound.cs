@@ -20,8 +20,9 @@ namespace Aw.Sindri.Features.PollConnections;
 /// <param name="events">Records the skipped triggers.</param>
 /// <param name="clock">The time.</param>
 /// <param name="runs">Reads an existing run, to tell an exact repeat of a delivery from another delivery that hashed to the same occurrence.</param>
+/// <param name="recent">Keeps every event a poll returned, for the trigger step's recent events (#3201).</param>
 /// <param name="occurrenceOf">The delivery id to occurrence function; <see cref="DeliveryOccurrence.Of"/> when null (a test forces a collision).</param>
-internal sealed class PollRound(IGraphRunStarter starter, IPollCursors cursors, ConnectionEvents events, TimeProvider clock, IWorkflowRunStore runs, Func<string, int>? occurrenceOf = null)
+internal sealed class PollRound(IGraphRunStarter starter, IPollCursors cursors, ConnectionEvents events, TimeProvider clock, IWorkflowRunStore runs, RecentEvents recent, Func<string, int>? occurrenceOf = null)
 {
     private const string Concurrency = "concurrency";
     private const string Duplicate = "duplicate";
@@ -45,6 +46,11 @@ internal sealed class PollRound(IGraphRunStarter starter, IPollCursors cursors, 
         if (poll.RateLimited)
         {
             return await SaveRateLimit(cursor, poll, now, cancellationToken).ConfigureAwait(false);
+        }
+
+        foreach (var polled in poll.Events)
+        {
+            recent.Record(group.Connection, polled);   // why: seen is seen, whether or not a trigger's filter takes it or its start fails (the trigger step lists it)
         }
 
         var fanned = await FanOut(group, poll, grant, cancellationToken).ConfigureAwait(false);

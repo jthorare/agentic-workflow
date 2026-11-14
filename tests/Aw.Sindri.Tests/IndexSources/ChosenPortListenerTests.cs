@@ -25,6 +25,9 @@ public sealed class ChosenPortListenerTests
             listener.Close();
 
             Assert.True(port > 0);
+
+            // why: with no thief, the other process may let the port go before HttpListener binds, and the listener rightly takes it (#3546)
+            Assert.SkipWhen(thief is null, "another process took the chosen port first, and nothing here holds it");
             Assert.NotEqual(heldPort, port);
         }
         finally

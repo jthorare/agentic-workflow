@@ -80,9 +80,17 @@ public sealed class ContextSyncGapsServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Nothing_to_do_without_a_context_section_a_synced_source_or_a_failed_attempt()
+    public async Task Without_a_context_section_the_first_sync_of_the_default_sources_starts()
     {
-        Assert.True((await Run(await Service(context: false))).Value.Idle);
+        var result = await Run(await Service(context: false));
+
+        Assert.False(result.Value.Idle);
+        Assert.Null(Assert.Single(_start.Requests).Source);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Nothing_to_do_for_a_synced_source()
+    {
         Synced();
         Assert.True((await Run(await Service(context: true))).Value.Idle);
         Assert.Empty(_start.Requests);

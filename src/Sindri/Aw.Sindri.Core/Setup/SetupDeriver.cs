@@ -28,17 +28,17 @@ public sealed class SetupDeriver(ISetupFacts facts, Action<string, Exception>? s
             Step(SetupStepId.Serve, serve, SetupSteps.Serve),
             Step(SetupStepId.Sources, sources, SetupSteps.Sources),
             Step(SetupStepId.Repo, repo, SetupSteps.Repo),
-            repo.IsError ? SetupSteps.Unreadable(SetupStepId.Profile, repo.Error.Code) : Step(SetupStepId.Profile, profile, p => SetupSteps.Profile(p, repo.Value)),
-            repo.IsError ? SetupSteps.Unreadable(SetupStepId.Agent, repo.Error.Code) : Step(SetupStepId.Agent, agent, a => SetupSteps.Agent(a, repo.Value)),
+            repo.IsError ? SetupSteps.Unreadable(SetupStepId.Profile, repo.Error) : Step(SetupStepId.Profile, profile, p => SetupSteps.Profile(p, repo.Value)),
+            repo.IsError ? SetupSteps.Unreadable(SetupStepId.Agent, repo.Error) : Step(SetupStepId.Agent, agent, a => SetupSteps.Agent(a, repo.Value)),
             Step(SetupStepId.Mcp, mcp, SetupSteps.Mcp),
             Step(SetupStepId.Map, map, SetupSteps.Map),
-            repo.IsError ? SetupSteps.Unreadable(SetupStepId.FirstWorkflow, repo.Error.Code) : Step(SetupStepId.FirstWorkflow, first, f => SetupSteps.FirstWorkflow(f, repo.Value)),
+            repo.IsError ? SetupSteps.Unreadable(SetupStepId.FirstWorkflow, repo.Error) : Step(SetupStepId.FirstWorkflow, first, f => SetupSteps.FirstWorkflow(f, repo.Value)),
         ];
         return [.. steps.Select(static s => s with { Cli = SetupActions.CliFor(s.Action) })];   // the command an agent runs for the step's action; null for an owner-only one
     }
 
     private static SetupStep Step<T>(SetupStepId id, Result<T> read, Func<T, SetupStep> decide) =>
-        read.IsError ? SetupSteps.Unreadable(id, read.Error.Code) : decide(read.Value);
+        read.IsError ? SetupSteps.Unreadable(id, read.Error) : decide(read.Value);
 
     // Boundary: a source that throws fails only its own step, like one that returns an error: the answer is never a 500.
     // Only the request's own cancellation passes; a source's inner timeout (a TaskCanceledException on a live token) fails its step.

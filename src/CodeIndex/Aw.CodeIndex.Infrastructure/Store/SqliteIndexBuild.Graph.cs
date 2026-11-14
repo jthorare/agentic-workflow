@@ -32,8 +32,12 @@ internal sealed partial class SqliteIndexBuild
 
     public ValueTask<Result<EmbeddingProgress>> CountEmbeddings(CancellationToken cancellationToken)
         => SqliteFailure.Guard<EmbeddingProgress>("Counting embeddings", async () => new EmbeddingProgress(
-            (int)await Sql.Count(connection, "SELECT COUNT(*) FROM embeddings", cancellationToken).ConfigureAwait(false),
-            (int)await Sql.Count(connection, "SELECT COUNT(*) FROM symbols s WHERE EXISTS (SELECT 1 FROM bodies b WHERE b.symbol_id = s.id) OR EXISTS (SELECT 1 FROM embeddings e WHERE e.symbol_id = s.id)", cancellationToken).ConfigureAwait(false)));
+            (int)await Sql.Count(connection, "SELECT COUNT(*) FROM embeddings WHERE length(vector) > 0", cancellationToken).ConfigureAwait(false),
+            (int)await Sql.Count(connection, "SELECT COUNT(*) FROM symbols s WHERE EXISTS (SELECT 1 FROM bodies b WHERE b.symbol_id = s.id) OR EXISTS (SELECT 1 FROM embeddings e WHERE e.symbol_id = s.id)", cancellationToken).ConfigureAwait(false))
+        {
+            // a marker row (an empty vector) is a symbol the model refused even alone (#3128)
+            Refused = (int)await Sql.Count(connection, "SELECT COUNT(*) FROM embeddings WHERE length(vector) = 0", cancellationToken).ConfigureAwait(false),
+        });
 
     private async Task<Result<Unit>> WriteGraph(GraphSnapshot graph, CancellationToken cancellationToken)
     {

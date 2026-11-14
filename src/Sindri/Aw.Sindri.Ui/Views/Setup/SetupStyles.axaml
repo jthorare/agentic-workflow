@@ -61,6 +61,15 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="Padding" Value="0" />
   </Style>
+  <!-- A failed step with nothing to show (#3616): its header is the whole step, so an invisible chevron that keeps its slot (the chip stays in line), and a header that is no tab stop and does nothing. -->
+  <Style Selector="Expander.setup-step.no-body /template/ ToggleButton#ExpanderHeader">
+    <Setter Property="IsHitTestVisible" Value="False" />
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="IsTabStop" Value="False" />
+  </Style>
+  <Style Selector="Expander.setup-step.no-body /template/ ToggleButton#ExpanderHeader /template/ Path#ExpandCollapseChevron">
+    <Setter Property="Opacity" Value="0" />
+  </Style>
   <Style Selector="ProgressBar.map-meter">
     <Setter Property="Height" Value="6" />
     <Setter Property="MinHeight" Value="6" />
