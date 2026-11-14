@@ -5,4 +5,5 @@ namespace Aw.Context.Core.Graph;
 /// <param name="Ref">Its id or path ('linear:issue/…', 'repo:aw-split-panes/docs/architecture.md', 'src/layout/SplitPane.ts'), scrubbed.</param>
 /// <param name="Title">The record's title when the map holds the record (untrusted, so fenced for a caller that gets fences), else null.</param>
 /// <param name="Url">A link to it when the map stores an allowed one, else null.</param>
-public sealed record NodeSource(string Kind, string Ref, string? Title = null, string? Url = null);
+/// <param name="Path">The file on the caller's disk (the checkout path and the file's path) for a file source and a human caller, else null. A session never gets one.</param>
+public sealed record NodeSource(string Kind, string Ref, string? Title = null, string? Url = null, string? Path = null);

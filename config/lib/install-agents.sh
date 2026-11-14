@@ -45,7 +45,7 @@ _agent_is_readonly() {
   local tools
   tools="$(_agent_field "$1" tools)"
   [ -n "$tools" ] || return 1
-  ! printf '%s' "$tools" | grep -qE '(^|[ ,])(Edit|Write|MultiEdit|NotebookEdit)([ ,]|$)'
+  ! grep -qE '(^|[ ,])(Edit|Write|MultiEdit|NotebookEdit)([ ,]|$)' <<<"$tools"
 }
 
 # TOML basic-string escape (backslash and double quote).
