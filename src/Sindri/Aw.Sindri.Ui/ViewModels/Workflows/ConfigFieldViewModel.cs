@@ -82,6 +82,9 @@ internal sealed class ConfigFieldViewModel : ObservableObject
     /// <summary>True when no connection fits: the field offers Connect instead.</summary>
     public bool NeedsConnect => IsConnection && ConnectionChoices.Count == 0;
 
+    /// <summary>The line under the Connect button after a return from Connections that left nothing to pick; empty otherwise.</summary>
+    public string NoticeText => string.Empty;
+
     /// <summary>The Connect button's words ("Connect GitHub").</summary>
     public string ConnectText => IsConnection ? Labels.WfConnectService(ConnectService) : string.Empty;
 

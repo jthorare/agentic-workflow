@@ -262,6 +262,9 @@ internal static partial class Labels
     /// <summary>The editor's prompt when the workflow changed elsewhere: the edit was not saved and nothing is retried.</summary>
     internal const string WfEditChangedElsewhere = "This workflow changed elsewhere, so your edit was not saved. Reload to see the new version, then make the edit again.";
 
+    /// <summary>Under a connection field's Connect button after a return from Connections with nothing connected (#3705).</summary>
+    internal const string WfNothingConnected = "Nothing connected yet.";
+
     /// <summary>The Connect button of a connection field.</summary>
     /// <param name="service">The service's wire name ("github").</param>
     /// <returns>"Connect GitHub".</returns>
