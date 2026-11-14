@@ -34,6 +34,19 @@ public sealed class SindriApiClientSandboxTests
     }
 
     [Fact]
+    public async Task SandboxStatus_before_the_first_check_leaves_checkedAt_and_ready_out_and_still_reads()
+    {
+        var (client, server, _) = Reach();
+        server.SandboxStatusAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK,
+            """{"blockers":[],"mechanism":"bubblewrap","groups":["github"],"limits":{"memoryMax":"12GiB","cpuQuota":"400%","tasksMax":512,"wall":"40m"},"login":"owner-copy","learn":[]}""");
+
+        var status = await client.SandboxStatus(_api, Token);
+
+        Assert.True(status.IsSuccess);
+        Assert.Equal((null, null), (status.Value.CheckedAt, status.Value.Ready));
+    }
+
+    [Fact]
     public async Task SandboxCheck_reads_the_check_route()
     {
         var (client, _, handler) = Reach();

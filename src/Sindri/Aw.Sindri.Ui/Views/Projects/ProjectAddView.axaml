@@ -33,6 +33,7 @@
               AutomationProperties.Name="{Binding LinearStatus}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body muted" Text="{Binding LinearStatus}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
+      <Button x:Name="ProjectAddConnect" Content="{Binding ConnectText}" IsVisible="{Binding ShowsLinearConnect}" Click="OnConnect" HorizontalAlignment="Left" AutomationProperties.Name="{Binding ConnectText}" />
       <ItemsControl x:Name="ProjectAddLinearRows" ItemsSource="{Binding LinearRows}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="pvm:ProjectLinearRowViewModel">

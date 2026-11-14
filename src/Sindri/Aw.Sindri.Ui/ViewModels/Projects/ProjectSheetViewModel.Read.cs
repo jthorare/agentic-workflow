@@ -125,6 +125,13 @@ internal sealed partial class ProjectSheetViewModel
 
     private void Failed(Error error)
     {
+        if (IsShown && error.Kind == ErrorKind.NotFound)
+        {
+            // Removed elsewhere while the sheet was open: close it, never print the id or the code (#3719).
+            Done?.Invoke(this, new ProjectDoneEventArgs(ProjectDone.Removed, Id, Labels.ProjectRemovedElsewhere, wentToFinished: false));
+            return;
+        }
+
         if (IsShown)
         {
             Note = Labels.ProjectSheetStale(error);

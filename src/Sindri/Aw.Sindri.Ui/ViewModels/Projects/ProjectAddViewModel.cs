@@ -132,7 +132,7 @@ internal sealed partial class ProjectAddViewModel(ISindriApi api, Func<Uri?> api
     /// <summary>Starts the sheet over: From Linear, every field empty, no error, and the Linear list read again.</summary>
     internal void Reset()
     {
-        (IsByHand, SelectedState, Name, Links, Notes, Target, SaveError) = (false, Planned, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+        (IsByHand, SelectedState, Name, Links, Notes, Target, SaveError) = (!_linearConnected, Planned, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
         (_linearLoaded, _linearAll, _linearReading, _attaching) = (false, [], false, false);
         _linearGeneration++;   // why: a read still in flight belongs to the last opening
         (LinearError, LinearSearch) = (string.Empty, string.Empty);

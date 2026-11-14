@@ -22,6 +22,8 @@ internal sealed partial class ProjectAddView : UserControl
         Keep(sender);
     }
 
+    private void OnConnect(object? sender, RoutedEventArgs e) => (DataContext as ProjectAddViewModel)?.RequestConnect();
+
     private void OnByHand(object? sender, RoutedEventArgs e)
     {
         Sheet?.SelectByHand();
