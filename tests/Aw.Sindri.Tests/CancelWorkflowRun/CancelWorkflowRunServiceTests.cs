@@ -62,6 +62,19 @@ public sealed class CancelWorkflowRunServiceTests
     }
 
     [Fact]
+    public async Task Cancelling_a_queued_test_run_appends_workflow_run_cancelled_with_mode_test()
+    {
+        _ = await _h.HoldLease();
+        var test = new WorkflowRun(WorkflowRunId.Of(_slug, 1, 9), _workflow, 1, """{"kind":"manual"}""", WorkflowRunStatus.Queued, Outputs: null, Error: null, ItemId: null, _clock.GetUtcNow(), EndedAt: null, WorkflowRunMode.Test);
+        _ = (await _runs.Insert(test, Token)).Value;
+
+        _ = (await _service.Handle(new CancelWorkflowRunRequest(test.Id, "owner"), Token)).Value;
+
+        var recorded = Assert.Single(_h.Store.Events);
+        Assert.Equal(WorkflowRunMode.Test, _h.Events.Payload<WorkflowRunCancelledPayload>(recorded).Value.Mode);
+    }
+
+    [Fact]
     public async Task A_queued_cancel_whose_event_was_lost_is_finished_by_the_retry_once()
     {
         var run = await Insert(6, WorkflowRunStatus.Queued);
