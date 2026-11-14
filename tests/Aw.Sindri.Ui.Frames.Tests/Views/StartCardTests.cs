@@ -73,18 +73,20 @@ public sealed class StartCardTests
     });
 
     [Fact]
-    public async Task Hover_fills_Surface2_and_pressed_fills_Surface3() => await OnUi(() =>
+    public async Task Hover_and_pressed_take_the_Clickable_tokens_fill_and_border() => await OnUi(() =>
     {
         var (window, card, chrome) = Show();
         var point = Centre(card, window);
 
         window.MouseMove(point, RawInputModifiers.None);
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal(Brush("Brush.Surface2"), Fill(chrome));
+        Assert.Equal(Brush("Brush.Clickable.Hover"), Fill(chrome));
+        Assert.Equal(Brush("Brush.Clickable.HoverBorder"), Edge(chrome));
 
         window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal(Brush("Brush.Surface3"), Fill(chrome));
+        Assert.Equal(Brush("Brush.Clickable.Pressed"), Fill(chrome));
+        Assert.Equal(Brush("Brush.Clickable.PressedBorder"), Edge(chrome));
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
         window.Close();
         return true;
@@ -173,7 +175,7 @@ public sealed class StartCardTests
     public async Task Every_state_keeps_4_5_to_1_for_text_and_3_to_1_for_the_ring_and_the_selected_border() => await OnUi(() =>
     {
         var canvas = Brush("Brush.Canvas");
-        var states = new[] { canvas, Brush("Brush.Surface2"), Brush("Brush.Surface3"), Brush("Brush.PrimarySoft") };
+        var states = new[] { canvas, Brush("Brush.Clickable.Hover"), Brush("Brush.Clickable.Pressed"), Brush("Brush.PrimarySoft") };
 
         Assert.All(states, fill => Assert.True(Contrast(Brush("Brush.Ink"), fill) >= 4.5, "Ink on " + fill));
         Assert.True(Contrast(Brush("Brush.PrimaryHover"), canvas) >= 3, "focus ring on canvas");

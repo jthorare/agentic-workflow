@@ -58,18 +58,20 @@ public sealed class SelectableTileTests
     });
 
     [Fact]
-    public async Task Hover_fills_Surface2_and_pressed_fills_Surface3() => await OnUi(() =>
+    public async Task Hover_and_pressed_take_the_Clickable_tokens_fill_and_border() => await OnUi(() =>
     {
         var (window, tile, chrome) = Show();
         var point = Centre(tile, window);
 
         window.MouseMove(point, RawInputModifiers.None);
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal(Brush("Brush.Surface2"), Fill(chrome));
+        Assert.Equal(Brush("Brush.Clickable.Hover"), Fill(chrome));
+        Assert.Equal(Brush("Brush.Clickable.HoverBorder"), Edge(chrome));
 
         window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal(Brush("Brush.Surface3"), Fill(chrome));
+        Assert.Equal(Brush("Brush.Clickable.Pressed"), Fill(chrome));
+        Assert.Equal(Brush("Brush.Clickable.PressedBorder"), Edge(chrome));
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
         window.Close();
         return true;
