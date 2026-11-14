@@ -63,6 +63,6 @@ public sealed class NodeSourceLinkSessionTests : IDisposable
         var human = (await _world.Engine.ShowNode("code:src/a.ts", MapWorld.Human, MapWorld.None)).Value.Node.Source;
 
         Assert.Null(session!.Path);
-        Assert.Equal(System.IO.Path.Combine("/work/aw-split-panes", "src", "a.ts"), human!.Path);
+        Assert.Equal(Path.Combine("/work/aw-split-panes", "src", "a.ts"), human!.Path);
     }
 }
