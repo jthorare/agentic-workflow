@@ -18,8 +18,28 @@ internal static partial class Labels
     /// <summary>The heading over the links.</summary>
     internal const string ContextNodePanelLinks = "Linked to";
 
-    /// <summary>Opens the source's link.</summary>
-    internal const string ContextNodePanelOpenSource = "Open on GitHub ↗";
+    /// <summary>Opens the source's link when its place is not known.</summary>
+    internal const string ContextNodePanelOpenSource = "Open source ↗";
+
+    /// <summary>The place a source link goes to, by its host.</summary>
+    /// <param name="link">The link, or null.</param>
+    /// <returns>"GitHub" or "Linear", else null.</returns>
+    internal static string? ContextNodePanelPlace(Uri? link) => link?.Host switch
+    {
+        "github.com" or "www.github.com" => "GitHub",
+        "linear.app" => "Linear",
+        _ => null,
+    };
+
+    /// <summary>The panel's link button by the place the link goes to (#3714).</summary>
+    /// <param name="place">The place, or null when unknown.</param>
+    /// <returns>"Open on GitHub ↗", "Open in Linear ↗", else "Open source ↗".</returns>
+    internal static string ContextNodePanelOpenSourceText(string? place) => place switch
+    {
+        null => ContextNodePanelOpenSource,
+        "GitHub" => "Open on GitHub ↗",
+        _ => "Open in " + place + " ↗",
+    };
 
     /// <summary>Opens the source's file on this machine (#3258).</summary>
     internal const string ContextNodePanelOpenFile = "Open file";
@@ -30,15 +50,13 @@ internal static partial class Labels
     /// <summary>The muted line when the node has a source but no link to open (#1702).</summary>
     internal const string ContextNodePanelNoLink = "No link to the source";
 
-    /// <summary>The open-source button's accessible name: what it opens, by the source's kind (#1702).</summary>
+    /// <summary>The open-source button's accessible name: the visible words, then what it opens by the source's kind (#1702, #3714).</summary>
+    /// <param name="place">The place the link goes to, or null.</param>
     /// <param name="kind">The source kind.</param>
-    /// <returns>"Open the ticket in the browser".</returns>
-    internal static string ContextNodePanelOpenSourceName(string kind) => kind switch
-    {
-        "ticket" => "Open the ticket in the browser",
-        "doc" or "file" => "Open the file on GitHub in the browser",
-        _ => "Open the source in the browser",
-    };
+    /// <returns>"Open in Linear (the ticket in the browser)".</returns>
+    internal static string ContextNodePanelOpenSourceName(string? place, string kind) =>
+        ContextNodePanelOpenSourceText(place).Replace(" ↗", string.Empty, StringComparison.Ordinal) + " (the "
+        + (kind switch { "ticket" => "ticket", "doc" or "file" => "file", _ => "source" }) + " in the browser)";
 
     /// <summary>One link row: the other node, the way it links and which way.</summary>
     /// <param name="label">The other node's label (or key).</param>

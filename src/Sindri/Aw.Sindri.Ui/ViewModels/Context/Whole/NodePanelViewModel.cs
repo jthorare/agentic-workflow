@@ -67,7 +67,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     public string NoLinkText { get; } = Labels.ContextNodePanelNoLink;
 
     /// <summary>Gets the open-source button's accessible name, by the source's kind.</summary>
-    public string OpenSourceName { get; private set; } = Labels.ContextNodePanelOpenSourceName(string.Empty);
+    public string OpenSourceName { get; private set; } = Labels.ContextNodePanelOpenSourceName(null, string.Empty);
 
     /// <summary>Gets the short description; empty when none is served.</summary>
     public string Description { get; private set; } = string.Empty;
@@ -97,7 +97,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     public string LinksText { get; } = Labels.ContextNodePanelLinks;
 
     /// <summary>Gets the open-source button's words.</summary>
-    public string OpenSourceText { get; } = Labels.ContextNodePanelOpenSource;
+    public string OpenSourceText { get; private set; } = Labels.ContextNodePanelOpenSource;
 
     /// <summary>Opens the panel on a node and reads it.</summary>
     /// <param name="key">The node's key.</param>
@@ -218,7 +218,8 @@ internal sealed partial class NodePanelViewModel : ObservableObject
             SourceText = Labels.ContextNodePanelSource(source.Kind, text);
             _link = LinkOf(source.Url);
             _localPath = source.Path;
-            OpenSourceName = Labels.ContextNodePanelOpenSourceName(source.Kind);
+            var place = Labels.ContextNodePanelPlace(_link);
+            (OpenSourceText, OpenSourceName) = (Labels.ContextNodePanelOpenSourceText(place), Labels.ContextNodePanelOpenSourceName(place, source.Kind));
         }
 
         var covered = IsAction(node.Kind) || NodePageKinds.IsPage(view);   // the sections already list these edges: the groups keep the rest
@@ -246,7 +247,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsOpen), nameof(IsLoading), nameof(IsFailed), nameof(Kind), nameof(Title), nameof(SourceText), nameof(HasSource), nameof(HasLink), nameof(HasNoLink), nameof(HasOpenFile), nameof(OpenSourceName), nameof(LaunchFailed), nameof(LaunchFailedText), nameof(Description), nameof(HasDescription), nameof(Groups), nameof(HasGroups), nameof(Sections), nameof(HasSections)])
+        foreach (var name in (string[])[nameof(IsOpen), nameof(IsLoading), nameof(IsFailed), nameof(Kind), nameof(Title), nameof(SourceText), nameof(HasSource), nameof(HasLink), nameof(HasNoLink), nameof(HasOpenFile), nameof(OpenSourceName), nameof(OpenSourceText), nameof(LaunchFailed), nameof(LaunchFailedText), nameof(Description), nameof(HasDescription), nameof(Groups), nameof(HasGroups), nameof(Sections), nameof(HasSections)])
         {
             OnChanged(name);
         }
