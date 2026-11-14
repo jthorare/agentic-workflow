@@ -377,4 +377,59 @@ public sealed class NewAgentFormTests
     [Fact]
     public void An_onboarded_repo_has_no_note() =>
         Assert.Equal(string.Empty, Form().RepoNote);
+
+    [Fact]
+    public async Task Esc_during_a_start_is_ignored_and_the_refusal_that_follows_shows_in_the_open_form()
+    {
+        var form = Form();
+        form.NewWorktree = true;
+        _route.Hold();
+        _route.Refuse("SND-AGENT-014", "git could not make the worktree");
+
+        var start = form.Start(background: false, Token);
+        var used = await form.Press("Escape", ctrl: false, shift: false, Token);
+        var whileStarting = form.IsOpen;
+        _route.Release();
+        await start;
+
+        Assert.Equal((true, true, true, "git could not make the worktree"), (used, whileStarting, form.IsOpen, form.FootError));
+    }
+
+    [Fact]
+    public async Task Opening_the_form_again_after_a_refused_start_still_shows_the_error()
+    {
+        var form = Form();
+        _route.Refuse("SND-AGENT-012", "sindri: the folder is gone");
+        await form.Start(background: false, Token);
+        form.Close();
+
+        form.Open();
+
+        Assert.Equal(("sindri: the folder is gone", true), (form.RepoError, form.IsOpen));
+    }
+
+    [Fact]
+    public async Task A_background_start_puts_focus_back_on_Prompt_and_the_next_Ctrl_Enter_reaches_the_form()
+    {
+        var form = Form();
+        for (var i = 0; i < 4; i++)
+        {
+            form.MoveFocus(back: false);
+        }
+
+        _ = await form.Press("Enter", ctrl: true, shift: true, Token);
+        var focused = form.Focused;
+        form.Prompt = "second";
+        _ = await form.Press("Enter", ctrl: true, shift: false, Token);
+
+        Assert.Equal((NewAgentField.Prompt, 2, false), (focused, _route.Sent.Count, form.IsOpen));
+    }
+
+    [Fact]
+    public void The_form_offers_Claude_Code_and_Codex_only_in_v1()
+    {
+        var form = Form();
+
+        Assert.Equal(["claude-code", "codex"], form.Agents.Select(a => a.Id), StringComparer.Ordinal);
+    }
 }
