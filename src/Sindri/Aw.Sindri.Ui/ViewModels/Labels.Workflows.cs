@@ -31,7 +31,8 @@ internal static partial class Labels
 
     /// <summary>The list's head: "2 workflows · 1 active".</summary>
     /// <param name="total">Workflows listed.</param>
-    /// <param name="active">Workflows with an active revision.</param>
+    /// <param name="active">Workflows with an active revision that are not paused.</param>
+    /// <param name="paused">Workflows with a schedule that are held; named only when there are some.</param>
     /// <returns>The words.</returns>
     internal static string WfHead(int total, int active, int paused = 0) =>
         string.Create(CultureInfo.InvariantCulture, $"{total} {(total == 1 ? "workflow" : "workflows")} · {active} active") + (paused > 0 ? string.Create(CultureInfo.InvariantCulture, $" · {paused} paused") : string.Empty);
