@@ -15,15 +15,15 @@ internal static partial class StartError
             return Labels.NoErrorLine;
         }
 
-        var said = Prefix().Replace(LogSuffix().Replace(raw, string.Empty), string.Empty).Trim();
+        var said = Prefix.Replace(LogSuffix.Replace(raw, string.Empty), string.Empty).Trim();
         return said.Length == 0 ? Labels.NoErrorLine : said;
     }
 
     // " (log: <path>)" at the end: the mono line under the card already names the log.
     [GeneratedRegex(@"\s*\(log:[^)]*\)\s*$", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex LogSuffix();
+    private static partial Regex LogSuffix { get; }
 
     // The leading chain of "SND-XXX-NNN " codes and "'sindri serve' exited: " prefixes.
     [GeneratedRegex(@"^(?:SND-[A-Z]+-[0-9]+\s+|'[^']*'\s+exited:\s*)+", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex Prefix();
+    private static partial Regex Prefix { get; }
 }
