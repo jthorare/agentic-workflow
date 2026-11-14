@@ -180,14 +180,20 @@ internal static partial class Labels
 
     /// <summary>The coverage sentence's reason for areas with no records.</summary>
     /// <param name="areas">The areas with no records (at least one).</param>
-    /// <returns>"No intent or product records.".</returns>
-    internal static string ContextMapNoRecords(IReadOnlyList<string> areas) => "No " + string.Join(" or ", areas) + " records.";
+    /// <returns>"No intent or product records." or "No intent, product or code records.".</returns>
+    internal static string ContextMapNoRecords(IReadOnlyList<string> areas) => "No " + OrList(areas) + " records.";
 
     /// <summary>The coverage sentence's reason for areas searched in part.</summary>
     /// <param name="areas">The areas searched in part (at least one).</param>
     /// <returns>"Intent is only partly searched." or "Intent and code are only partly searched.".</returns>
     internal static string ContextMapPartlySearched(IReadOnlyList<string> areas) =>
         char.ToUpperInvariant(AreaList(areas)[0]) + AreaList(areas)[1..] + (areas.Count == 1 ? " is" : " are") + " only partly searched.";
+
+    private static string OrList(IReadOnlyList<string> areas) => areas.Count switch
+    {
+        1 => areas[0],
+        _ => string.Join(", ", areas.Take(areas.Count - 1)) + " or " + areas[^1],
+    };
 
     private static string AreaList(IReadOnlyList<string> areas) => areas.Count switch
     {

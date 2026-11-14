@@ -47,6 +47,20 @@ public sealed class CoverageWordsTests
     }
 
     [Fact]
+    public void Three_areas_without_records_are_joined_with_commas_and_a_last_or()
+    {
+        var words = CoverageWords.Sentence(View(node =>
+        {
+            EverythingSearched(node);
+            node["searched"]!["bands"]!["intent"]!["empty"] = true;
+            node["searched"]!["bands"]!["product"]!["empty"] = true;
+            node["searched"]!["bands"]!["code"]!["empty"] = true;
+        }), exact: false);
+
+        Assert.StartsWith("Searched function names. No intent, product or code records.", words, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void An_area_searched_in_part_is_named_as_partly_searched()
     {
         var words = CoverageWords.Sentence(View(node =>
