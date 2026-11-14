@@ -11,6 +11,7 @@
   <UserControl.Styles>
     <Style Selector="TextBlock.state-ok"><Setter Property="Foreground" Value="{DynamicResource Brush.Success}" /></Style>
     <Style Selector="TextBlock.state-paused"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
+    <Style Selector="Border.cmpline.differs"><Setter Property="Background" Value="{DynamicResource Brush.PrimarySoft}" /><Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" /><Setter Property="BorderThickness" Value="2,0,0,0" /></Style>
     <Style Selector="Border.bar.ok"><Setter Property="Background" Value="{DynamicResource Brush.Success}" /></Style>
     <Style Selector="Border.bar.failed"><Setter Property="Background" Value="{DynamicResource Brush.Error}" /></Style>
     <Style Selector="Border.bar.hollow"><Setter Property="BorderThickness" Value="1" /><Setter Property="BorderBrush" Value="{DynamicResource Brush.InkSubtle}" /></Style>
@@ -255,6 +256,102 @@
           </ItemsControl>
         </StackPanel>
       </Border>
+    </StackPanel>
+
+    <!-- Level 4: two runs side by side, step by step (frame wf-compare). Esc goes back to the runs. -->
+    <StackPanel x:Name="WorkflowCompareLevel" Spacing="{StaticResource Size.PanelGap}" IsVisible="{Binding IsCompare}">
+      <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+        <TextBlock Classes="body-strong" Text="Compare 2" />
+        <TextBlock x:Name="CompareSummary" Classes="caption subtle" Text="{Binding Compare.SummaryText}" VerticalAlignment="Center" />
+        <TextBlock Classes="caption subtle" Text="Esc back to runs" VerticalAlignment="Center" />
+      </StackPanel>
+      <TextBlock Classes="caption" Text="{Binding Compare.RunningNote}" IsVisible="{Binding Compare.HasRunningNote}" TextWrapping="Wrap" />
+      <Grid ColumnDefinitions="168,*,*" ColumnSpacing="16">
+        <Border Grid.Column="1" Classes="panel" Padding="12,10">
+          <StackPanel Spacing="2">
+            <TextBlock Name="CompareRunTitle" Classes="body-strong" Text="{Binding Compare.A.Title}" />
+            <TextBlock Classes="caption subtle" Text="{Binding Compare.A.Facts}" />
+            <StackPanel Orientation="Horizontal" Spacing="8"><controls:StateChipView Word="{Binding Compare.A.ChipWord}" Tone="{Binding Compare.A.ToneWord}" Glyph="{Binding Compare.A.ChipGlyph}" /><TextBlock Classes="caption muted" Text="{Binding Compare.A.Result}" VerticalAlignment="Center" /></StackPanel>
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="2" Classes="panel" Padding="12,10">
+          <StackPanel Spacing="2">
+            <TextBlock Name="CompareRunTitle" Classes="body-strong" Text="{Binding Compare.B.Title}" />
+            <TextBlock Classes="caption subtle" Text="{Binding Compare.B.Facts}" />
+            <StackPanel Orientation="Horizontal" Spacing="8"><controls:StateChipView Word="{Binding Compare.B.ChipWord}" Tone="{Binding Compare.B.ToneWord}" Glyph="{Binding Compare.B.ChipGlyph}" /><TextBlock Classes="caption muted" Text="{Binding Compare.B.Result}" VerticalAlignment="Center" /></StackPanel>
+          </StackPanel>
+        </Border>
+      </Grid>
+      <ItemsControl x:Name="CompareSteps" ItemsSource="{Binding Compare.Steps}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="wf:CompareStepViewModel">
+            <Grid ColumnDefinitions="168,*,*" ColumnSpacing="16" Margin="0,0,0,12">
+              <StackPanel Margin="0,10,0,0">
+                <TextBlock Name="CompareStepName" Classes="body-strong" Text="{Binding Name}" />
+                <TextBlock Classes="caption subtle" Text="{Binding Kind}" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" DataContext="{Binding}">
+                <Border Classes="panel" Margin="0,0,0,4">
+                        <StackPanel>
+                          <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,6" IsVisible="{Binding A.HasStatus}">
+                            <controls:StateChipView Word="{Binding A.StatusWord}" Tone="{Binding A.ToneWord}" Glyph="{Binding A.StatusGlyph}" />
+                            <TextBlock Classes="caption subtle" Text="{Binding A.DurationText}" VerticalAlignment="Center" />
+                          </StackPanel>
+                          <TextBlock Classes="caption subtle" Text="{Binding A.BodyLabel}" Margin="12,4,12,0" IsVisible="{Binding A.HasLines}" />
+                          <ItemsControl ItemsSource="{Binding A.Lines}" IsVisible="{Binding A.HasLines}">
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate x:DataType="wf:CompareLineViewModel">
+                                <Border Classes="cmpline" Classes.differs="{Binding Differs}" Padding="12,0">
+                                  <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Classes="caption mono" Text="{Binding Text}" />
+                                    <TextBlock Name="CompareDiffers" Grid.Column="1" Classes="caption" Text="&#9670; differs" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding Differs}" />
+                                  </Grid>
+                                </Border>
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+                          <Border Classes="cmpline" Classes.differs="{Binding A.MessageDiffers}" Padding="12,6" IsVisible="{Binding A.HasMessage}">
+                            <Grid ColumnDefinitions="*,Auto">
+                              <TextBlock Classes="caption" Text="{Binding A.Message}" TextWrapping="Wrap" />
+                              <TextBlock Name="CompareDiffers" Grid.Column="1" Classes="caption" Text="&#9670; differs" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding A.MessageDiffers}" />
+                            </Grid>
+                          </Border>
+                        </StackPanel>
+                      </Border>
+              </StackPanel>
+              <StackPanel Grid.Column="2">
+                <Border Classes="panel" Margin="0,0,0,4">
+                        <StackPanel>
+                          <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,6" IsVisible="{Binding B.HasStatus}">
+                            <controls:StateChipView Word="{Binding B.StatusWord}" Tone="{Binding B.ToneWord}" Glyph="{Binding B.StatusGlyph}" />
+                            <TextBlock Classes="caption subtle" Text="{Binding B.DurationText}" VerticalAlignment="Center" />
+                          </StackPanel>
+                          <TextBlock Classes="caption subtle" Text="{Binding B.BodyLabel}" Margin="12,4,12,0" IsVisible="{Binding B.HasLines}" />
+                          <ItemsControl ItemsSource="{Binding B.Lines}" IsVisible="{Binding B.HasLines}">
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate x:DataType="wf:CompareLineViewModel">
+                                <Border Classes="cmpline" Classes.differs="{Binding Differs}" Padding="12,0">
+                                  <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Classes="caption mono" Text="{Binding Text}" />
+                                    <TextBlock Name="CompareDiffers" Grid.Column="1" Classes="caption" Text="&#9670; differs" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding Differs}" />
+                                  </Grid>
+                                </Border>
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+                          <Border Classes="cmpline" Classes.differs="{Binding B.MessageDiffers}" Padding="12,6" IsVisible="{Binding B.HasMessage}">
+                            <Grid ColumnDefinitions="*,Auto">
+                              <TextBlock Classes="caption" Text="{Binding B.Message}" TextWrapping="Wrap" />
+                              <TextBlock Name="CompareDiffers" Grid.Column="1" Classes="caption" Text="&#9670; differs" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding B.MessageDiffers}" />
+                            </Grid>
+                          </Border>
+                        </StackPanel>
+                      </Border>
+              </StackPanel>
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
     </StackPanel>
 
     <!-- Level 3: one run, every node with its input, output and error. -->

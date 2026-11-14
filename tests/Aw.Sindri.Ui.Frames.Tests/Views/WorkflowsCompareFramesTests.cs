@@ -76,6 +76,7 @@ public sealed class WorkflowsCompareFramesTests : FrameHost
     {
         var (window, shell) = await Compared(1440);
 
+        _ = Named<Button>(window, "WorkflowsBack").Focus();   // a level opens with focus on its Back button
         window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
 
         await Until(window, () => shell.Workflows.IsRuns, "Esc never went back to the runs");

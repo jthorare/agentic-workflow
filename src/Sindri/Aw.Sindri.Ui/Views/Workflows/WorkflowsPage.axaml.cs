@@ -41,6 +41,19 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && DataContext is WorkflowsPageViewModel { IsCompare: true } page)
+        {
+            page.Back();   // Compare goes back to the runs with its two ticks kept
+            e.Handled = true;
+            return;
+        }
+
+        base.OnKeyDown(e);
+    }
+
     private void OnClearRunFilters(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)
@@ -54,6 +67,7 @@ internal sealed partial class WorkflowsPage : UserControl
         if (DataContext is WorkflowsPageViewModel page)
         {
             await page.OpenCompare(CancellationToken.None).ConfigureAwait(true);
+            FocusLater(WorkflowsBack);   // Esc then goes back to the runs
         }
     }
 
