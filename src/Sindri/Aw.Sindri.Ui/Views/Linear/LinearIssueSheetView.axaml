@@ -209,7 +209,7 @@
         </ItemsControl>
       </StackPanel>
 
-      <SelectableTextBlock x:Name="IssueLinkLaunchFailed" Classes="caption" Text="{Binding LinkLaunch.FailedText}" IsVisible="{Binding LinkLaunch.Failed}" TextWrapping="Wrap" AutomationProperties.Name="{Binding LinkLaunch.FailedText}" />
+      <SelectableTextBlock x:Name="IssueLinkLaunchFailed" Classes="caption error" Text="{Binding LinkLaunch.FailedText}" IsVisible="{Binding LinkLaunch.Failed}" TextWrapping="Wrap" AutomationProperties.Name="{Binding LinkLaunch.FailedText}" />
     </StackPanel>
     </StackPanel>
    </ScrollViewer>
