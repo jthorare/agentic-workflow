@@ -174,9 +174,9 @@ internal sealed partial class GraphIterationWorkflow
     // why: a 'wait' or an 'ask_owner' parks after its block answered, while the node is still 'running', so a cancel ends it 'cancelled'; the patches keep the commands of a body without one as before (#2490, #2543)
     private async Task<GraphBlockOutcome> Park(GraphNode node, GraphBlockOutcome outcome)
     {
-        if (outcome.Status != NodeRunStatus.Succeeded)
+        if (outcome.Status != NodeRunStatus.Succeeded || outcome.Fenced)
         {
-            return outcome;
+            return outcome;   // why: a test run's block activity already answered the wait or the question (GraphTestWalk)
         }
 
         if (string.Equals(node.Type, "wait", StringComparison.Ordinal) && Workflow.Patched("graph-iteration-wait"))

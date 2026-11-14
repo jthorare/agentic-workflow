@@ -34,7 +34,7 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
             var inserted = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.InsertRun,
                 c => c.Bind("$id", run.Id.Value).Bind("$workflow", run.WorkflowId.Value).Bind("$revision", run.Revision).Bind("$trigger", run.Trigger)
                     .Bind("$status", RunStatusText.Of(run.Status)).Bind("$outputs", run.Outputs).Bind("$error", run.Error)
-                    .Bind("$item", run.ItemId?.Value).Bind("$at", run.StartedAt), $"run {run.Id.Value}"), token).ConfigureAwait(false);
+                    .Bind("$item", run.ItemId?.Value).Bind("$at", run.StartedAt).Bind("$mode", run.Mode).Bind("$options", run.TestOptions), $"run {run.Id.Value}"), token).ConfigureAwait(false);
             if (inserted.IsError)
             {
                 return inserted.Error;
@@ -78,7 +78,7 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
         // why: the in-flight read and the status change share one write transaction, so two runs ending together cannot both promote one.
         RecipeSessions.Write(database, async ValueTask<Result<WorkflowRun?>> (session, token) =>
         {
-            var inFlight = await RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.InFlight, c => c.Bind("$workflow", workflow.Value)), WorkflowRunMapper.Instance, token).ConfigureAwait(false);
+            var inFlight = await RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.LiveInFlight, c => c.Bind("$workflow", workflow.Value)), WorkflowRunMapper.Instance, token).ConfigureAwait(false);
             if (inFlight.IsError)
             {
                 return inFlight.Error;
@@ -244,7 +244,8 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
 
     private static async ValueTask<Result<GraphStartKind>> Decide(ISqliteSession session, WorkflowRun run, GraphConcurrency mode, CancellationToken token)
     {
-        var inFlight = mode == GraphConcurrency.Unlimited ? 0 : await CountInFlight(session, run.WorkflowId, token).ConfigureAwait(false);
+        // why: a test run neither waits for a live run nor makes one wait (spec §3.2), so it is never counted against and never queued.
+        var inFlight = mode == GraphConcurrency.Unlimited || run.Mode == WorkflowRunMode.Test ? 0 : await CountInFlight(session, run.WorkflowId, token).ConfigureAwait(false);
         if (inFlight < 0)
         {
             return SindriErrors.LedgerUnavailable.With("could not read the runs in flight");
@@ -260,13 +261,13 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
         var inserted = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.InsertRun,
             c => c.Bind("$id", run.Id.Value).Bind("$workflow", run.WorkflowId.Value).Bind("$revision", run.Revision).Bind("$trigger", run.Trigger)
                 .Bind("$status", RunStatusText.Of(status)).Bind("$outputs", run.Outputs).Bind("$error", run.Error)
-                .Bind("$item", run.ItemId?.Value).Bind("$at", run.StartedAt), $"run {run.Id.Value}"), token).ConfigureAwait(false);
+                .Bind("$item", run.ItemId?.Value).Bind("$at", run.StartedAt).Bind("$mode", run.Mode).Bind("$options", run.TestOptions), $"run {run.Id.Value}"), token).ConfigureAwait(false);
         return inserted.IsError ? inserted.Error : busy ? GraphStartKind.Queued : GraphStartKind.Started;
     }
 
     private static async ValueTask<int> CountInFlight(ISqliteSession session, WorkflowId workflow, CancellationToken token)
     {
-        var inFlight = await RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.InFlight, c => c.Bind("$workflow", workflow.Value)), WorkflowRunMapper.Instance, token).ConfigureAwait(false);
+        var inFlight = await RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.LiveInFlight, c => c.Bind("$workflow", workflow.Value)), WorkflowRunMapper.Instance, token).ConfigureAwait(false);
         return inFlight.IsError ? -1 : inFlight.Value.Count;
     }
 

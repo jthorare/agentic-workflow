@@ -160,11 +160,11 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
             await mirror.AppendStarted(ended, cancel).ConfigureAwait(false);
             if (finish.Status == WorkflowRunStatus.Cancelled)
             {
-                await mirror.Append(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(finish.Run, mirror.Clean(finish.Error), GraphMirror.By, WorkflowRunMode.Live), $"{EventTypes.WorkflowRunCancelled}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
+                await mirror.Append(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(finish.Run, mirror.Clean(finish.Error), GraphMirror.By, ended.Mode), $"{EventTypes.WorkflowRunCancelled}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
             }
             else
             {
-                await mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(finish.Run, GraphMirror.Name(finish.Status), mirror.Clean(finish.Error), GraphMirror.By, WorkflowRunMode.Live), $"{EventTypes.WorkflowRunFinished}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
+                await mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(finish.Run, GraphMirror.Name(finish.Status), mirror.Clean(finish.Error), GraphMirror.By, ended.Mode), $"{EventTypes.WorkflowRunFinished}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
             }
         }
 

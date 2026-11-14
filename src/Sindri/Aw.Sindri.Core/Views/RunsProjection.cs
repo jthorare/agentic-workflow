@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Ledger;
 
@@ -51,7 +52,7 @@ internal sealed class RunsProjection(EventFactory events) : IProjection
         return recorded.Envelope.Type switch
         {
             EventTypes.WorkflowRunStarted => events.Payload<WorkflowRunStartedPayload>(recorded).Map(p => new Step(p.RunId, row => row is not null ? null
-                : new WorkflowRunRow(p.RunId, p.WorkflowId, p.Revision, p.Trigger, Running, Error: null, at, EndedAt: null, LastNodeId: null, ItemOf(recorded), sequence))),
+                : new WorkflowRunRow(p.RunId, p.WorkflowId, p.Revision, p.Trigger, Running, Error: null, at, EndedAt: null, LastNodeId: null, ItemOf(recorded), sequence, string.IsNullOrEmpty(p.Mode) ? WorkflowRunMode.Live : p.Mode))),
             EventTypes.WorkflowRunFinished => events.Payload<WorkflowRunFinishedPayload>(recorded).Map(p => new Step(p.RunId, row => End(row, r => r with { Status = p.Status, Error = p.Error, EndedAt = at, Sequence = sequence }))),
             EventTypes.WorkflowRunCancelled => events.Payload<WorkflowRunCancelledPayload>(recorded).Map(p => new Step(p.RunId, row => End(row, r => r with { Status = Cancelled, Error = p.Reason, EndedAt = at, Sequence = sequence }))),
             EventTypes.WorkflowNodeStarted => events.Payload<WorkflowNodeStartedPayload>(recorded).Map(p => new Step(p.RunId, row => OnNode(row, p.NodeId, sequence))),

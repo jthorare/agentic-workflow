@@ -13,7 +13,7 @@ namespace Aw.Sindri.Testing.Workflow;
 /// and waiting runs are in flight, a final status sets the end time, and a node run is replaced by the next write for the same
 /// node and item.
 /// </summary>
-public abstract class WorkflowRunStoreContract
+public abstract partial class WorkflowRunStoreContract
 {
     private static readonly WorkflowId _workflow = WorkflowId.From("WF-00000000000000000000000000000001");
     private static readonly WorkflowSlug _slug = WorkflowSlug.From("contract-drift");
