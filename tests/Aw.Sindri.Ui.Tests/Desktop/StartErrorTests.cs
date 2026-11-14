@@ -27,25 +27,17 @@ public sealed class StartErrorTests
 
     [Fact]
     public void A_plain_exception_line_comes_back_unchanged()
-    {
-        Assert.Equal("System.IO.IOException: disk full", StartError.Reason("System.IO.IOException: disk full"));
-    }
+        => Assert.Equal("System.IO.IOException: disk full", StartError.Reason("System.IO.IOException: disk full"));
 
     [Fact]
     public void A_line_with_no_codes_only_loses_its_log_path()
-    {
-        Assert.Equal("disk is full", StartError.Reason("disk is full (log: /x/serve.log)"));
-    }
+        => Assert.Equal("disk is full", StartError.Reason("disk is full (log: /x/serve.log)"));
 
     [Fact]
     public void A_line_with_no_log_part_only_loses_its_codes()
-    {
-        Assert.Equal("address already in use", StartError.Reason("SND-API-003 address already in use"));
-    }
+        => Assert.Equal("address already in use", StartError.Reason("SND-API-003 address already in use"));
 
     [Fact]
     public void No_line_reads_as_no_error_line()
-    {
-        Assert.Equal(Labels.NoErrorLine, StartError.Reason(null));
-    }
+        => Assert.Equal(Labels.NoErrorLine, StartError.Reason(raw: null));
 }

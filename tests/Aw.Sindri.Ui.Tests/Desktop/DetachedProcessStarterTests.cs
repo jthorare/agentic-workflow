@@ -25,7 +25,7 @@ public sealed class DetachedProcessStarterTests
     [Fact]
     public void The_log_path_goes_to_the_child_as_AW_START_LOG()
     {
-        var info = DetachedProcessStarter.Info(new ProcessLaunch("/x/sindri", ["--headless"], "/h/logs/serve.log", 1));
+        var info = DetachedProcessStarter.Info(new ProcessLaunch("/x/sindri", ["--headless"], "/h/logs/serve.log", Number: 1));
 
         Assert.Equal("/h/logs/serve.log", info.Environment["AW_START_LOG"]);
         Assert.Contains("\"$AW_START_LOG\"", info.ArgumentList[1], StringComparison.Ordinal);
