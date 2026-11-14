@@ -1,0 +1,65 @@
+{
+  "id": "WF-00000000000000000000000000000001",
+  "slug": "morning-check",
+  "name": "Morning check",
+  "revision": 2,
+  "activeRevision": 1,
+  "latestRevision": 2,
+  "archivedAt": null,
+  "createdBy": "owner",
+  "changedBy": "session:golden",
+  "changedAt": "2026-01-01T00:00:00.0000000Z",
+  "specHash": "sha256:2980bc3c32d3702aea35ad31d73b4b56c5b7d9e88fb45864e7c0d79ca1837e1e",
+  "spec": {
+    "version": 1,
+    "name": "Morning check",
+    "description": "Checks the repos every morning",
+    "nodes": [
+      {
+        "id": "start",
+        "type": "manual",
+        "config": {}
+      },
+      {
+        "id": "agent",
+        "type": "run_agent",
+        "title": "Check the repos",
+        "config": {
+          "prompt": "Look for drift"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "start",
+        "to": "agent"
+      }
+    ]
+  },
+  "positions": [
+    {
+      "node": "start",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "node": "agent",
+      "x": 280,
+      "y": 0
+    }
+  ],
+  "summaries": [
+    {
+      "node": "start",
+      "summary": "When called",
+      "summaryProblem": null,
+      "kindTitle": "When called"
+    },
+    {
+      "node": "agent",
+      "summary": "Run agent",
+      "summaryProblem": null,
+      "kindTitle": "Run agent"
+    }
+  ]
+}

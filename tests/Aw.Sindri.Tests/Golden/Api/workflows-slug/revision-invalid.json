@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-CLI-003",
+  "status": 400,
+  "detail": "'soon' is not a revision ('latest' or a whole number 1 or more)",
+  "traceId": "<trace>"
+}
