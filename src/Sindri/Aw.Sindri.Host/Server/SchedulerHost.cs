@@ -87,6 +87,15 @@ internal sealed partial class SchedulerHost(
                 LogRefreshFailed(log, approved.Error.Code, approved.Error.Message);
             }
 
+            if (!_loaded)
+            {
+                _loaded = true;   // a first read that fails still schedules the built-ins (#3624); a later good read replaces this
+                _approved = null;
+                _schedules = ServiceSchedule.From(null, inputs.BuiltIns, clock.GetUtcNow(), await LastRuns(ct).ConfigureAwait(false));
+                inputs.Live.Publish(_schedules);
+                LogSchedule(log, "none", _schedules.Count);
+            }
+
             return;
         }
 
