@@ -1,0 +1,7 @@
+canvas-16: nodes=16 cardsFullyInView=16 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=14.00 ("Ctrl+K") font=Inter
+canvas-4: nodes=4 cardsFullyInView=4 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=14.00 ("Ctrl+K") font=Inter
+canvas-40: nodes=40 cardsFullyInView=26 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=12.04 ("Ctrl+K") font=Inter
+canvas-16-1000: nodes=16 cardsFullyInView=13 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=12.04 ("✓") font=Inter
+canvas-16-130: nodes=16 cardsFullyInView=16 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=15.47 ("Ctrl+K") font=Inter
+cards: nodes=48 cardsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=4.64 minFontPx=13.00 minCardFontPx=28.00 ("icon: pointer") font=Inter
+canvas-zoomed: nodes=16 cardsFullyInView=12 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 minCardFontPx=17.50 ("Ctrl+K") font=Inter
