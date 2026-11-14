@@ -359,6 +359,8 @@
               </ItemsControl>
               <TextBlock Classes="body subtle" Text="{Binding Text.NoServices}" IsVisible="{Binding !HasServices}"
                          AutomationProperties.Name="{Binding Text.NoServices}" />
+              <TextBlock x:Name="ServicesNoteText" Classes="body subtle" TextWrapping="Wrap" Text="{Binding ServicesNote}" IsVisible="{Binding HasServicesNote}"
+                         AutomationProperties.Name="{Binding ServicesNote}" />
             </StackPanel>
           </Border>
         </Border>

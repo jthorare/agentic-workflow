@@ -12,7 +12,7 @@ public sealed class LiveSchedule
     private IReadOnlyDictionary<ServiceName, DateTimeOffset>? _slots;
     private IReadOnlyList<ServiceSchedule>? _schedules;
 
-    /// <summary>The services the scheduler runs now, with their cadence; null before the scheduler has loaded a schedule. Stub: not published yet.</summary>
+    /// <summary>The services the scheduler runs now (the profile's and the built-ins), with their cadence; null before the scheduler has loaded a schedule. The status and the services listing read this one list (#3623).</summary>
     public IReadOnlyList<ServiceSchedule>? Schedules => Volatile.Read(ref _schedules);
 
     /// <summary>The next slot of each scheduled service, or null before the scheduler has loaded a schedule.</summary>
@@ -23,7 +23,7 @@ public sealed class LiveSchedule
     public void Publish(IReadOnlyList<ServiceSchedule> schedules)
     {
         ArgumentNullException.ThrowIfNull(schedules);
-        Volatile.Write(ref _schedules, []);   // stub: the real list comes with the fix
+        Volatile.Write(ref _schedules, schedules);
         Volatile.Write(ref _slots, schedules.ToDictionary(s => s.Name, s => s.NextSlot));
     }
 }
