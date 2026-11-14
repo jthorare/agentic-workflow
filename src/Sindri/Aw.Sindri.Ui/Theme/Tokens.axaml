@@ -122,7 +122,10 @@
   <SolidColorBrush x:Key="Brush.Status.Attention.Fg" Color="{StaticResource Color.Attention}" />
   <SolidColorBrush x:Key="Brush.Status.Attention.Bg" Color="{StaticResource Color.Attention}" Opacity="0.14" />
   <SolidColorBrush x:Key="Brush.Status.Attention.Border" Color="{StaticResource Color.Attention}" Opacity="0.3" />
-  <SolidColorBrush x:Key="Brush.Status.Error.Fg" Color="{StaticResource Color.Error}" />
+  <!-- #eb5757 on its 0.14 tint over Surface1 is 4.485:1, under 4.5; the chip word is the lighter #ee6060 (4.82:1). Fill and border keep Color.Error. -->
+  <Color x:Key="Color.ErrorChipText">#ee6060</Color>
+  <SolidColorBrush x:Key="Brush.ErrorChipText" Color="{StaticResource Color.ErrorChipText}" />
+  <SolidColorBrush x:Key="Brush.Status.Error.Fg" Color="{StaticResource Color.ErrorChipText}" />
   <SolidColorBrush x:Key="Brush.Status.Error.Bg" Color="{StaticResource Color.Error}" Opacity="0.14" />
   <SolidColorBrush x:Key="Brush.Status.Error.Border" Color="{StaticResource Color.Error}" Opacity="0.3" />
   <SolidColorBrush x:Key="Brush.Status.Neutral.Fg" Color="{StaticResource Color.InkMuted}" />
