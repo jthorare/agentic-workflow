@@ -20,6 +20,11 @@ public sealed class WorktreeSweeper(WorktreeInspector inspector, RepoCommands re
 {
     private const int ListedPaths = 3;
 
+    /// <summary>The same sweeps over other gh and git calls (a poll's, bound by its limit and the stop signal): the fetch, the branch and pull request reads, the removal and the prune.</summary>
+    /// <param name="github">The calls to use.</param>
+    /// <returns>A sweeper over them.</returns>
+    public WorktreeSweeper Using(RepoCommands github) => new(inspector.Using(github), github, log, values, clock);
+
     /// <summary>Sweeps a scope.</summary>
     /// <param name="team">The team config.</param>
     /// <param name="scope">Which worktrees to consider.</param>
