@@ -26,4 +26,7 @@ public sealed record QueryContextRequest(string? Q, string? Node = null, string?
 
     /// <summary>How many ranked records to skip before reading (#3370), as sent: a whole number of 0 or more, or null for 0.</summary>
     public string? Offset { get; init; }
+
+    /// <summary>The previous answer's nextCursor (#3673), as sent: the same as <see cref="Offset"/>, which wins when both are given.</summary>
+    public string? After { get; init; }
 }

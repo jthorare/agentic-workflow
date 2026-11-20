@@ -28,6 +28,7 @@ internal static class McpPages
     // why: a context answer asked with a window (#3370) read only this page of its ranked records, so that list is already the page;
     // 'matches.matched' is the list's total
     private const string ReadSection = "records";
+    private const string CodeSection = "code";
 
     /// <summary>The answer with one page of each top-level list, and a page object.</summary>
     /// <param name="answer">The whole answer.</param>
@@ -43,14 +44,14 @@ internal static class McpPages
         var more = false;
         var lists = new JsonObject();
         // note: an answer that already has a top-level "page" loses it here; none does today
-        var read = DetachReadPage(root);
+        var read = DetachReadPages(root);
         Slice(root, window, "", lists, ref more);
-        if (read is { } page)
+        foreach (var (name, section, items, matched) in read)
         {
-            page.Section["items"] = page.Items;
-            var listMore = (long)window.Offset + page.Items.Count < page.Matched;
+            section["items"] = items;
+            var listMore = (long)window.Offset + items.Count < matched;
             more |= listMore;
-            lists["sections." + ReadSection + ".items"] = new JsonObject { ["total"] = page.Matched, ["more"] = listMore };
+            lists["sections." + name + ".items"] = new JsonObject { ["total"] = matched, ["more"] = listMore };
         }
 
         KeepPageCites(root);
@@ -92,23 +93,29 @@ internal static class McpPages
     }
 
     // The records section's items of an answer that says how many matched: taken out so the window doesn't cut the page a second time.
-    private static (JsonObject Section, JsonArray Items, int Matched)? DetachReadPage(JsonObject root)
+    // why: the code section is read as a ranked page too (#3673): 'codeMatched' is its total.
+    private static List<(string Name, JsonObject Section, JsonArray Items, int Matched)> DetachReadPages(JsonObject root)
     {
-        if (root["matches"] is not JsonObject matches || matches["matched"] is not JsonValue value || !value.TryGetValue<int>(out var matched)
-            || root["sections"] is not JsonArray sections)
+        var found = new List<(string Name, JsonObject Section, JsonArray Items, int Matched)>();
+        if (root["sections"] is not JsonArray sections)
         {
-            return null;
+            return found;
         }
 
-        var section = sections.OfType<JsonObject>().FirstOrDefault(s => BucketName(s) == ReadSection);
-        if (section?["items"] is not JsonArray items)
+        foreach (var (name, total) in new[] { (ReadSection, Total(root["matches"] is JsonObject m ? m["matched"] : null)), (CodeSection, Total(root["codeMatched"])) })
         {
-            return null;
+            var section = sections.OfType<JsonObject>().FirstOrDefault(s => BucketName(s) == name);
+            if (total is { } matched && section?["items"] is JsonArray items)
+            {
+                _ = section.Remove("items");
+                found.Add((name, section, items, matched));
+            }
         }
 
-        _ = section.Remove("items");
-        return (section, items, matched);
+        return found;
     }
+
+    private static int? Total(JsonNode? node) => node is JsonValue value && value.TryGetValue<int>(out var total) ? total : null;
 
     // Drops the citations no kept item or conflict names (a marker is any string value in the page outside 'cites' and 'page').
     private static void KeepPageCites(JsonObject root)

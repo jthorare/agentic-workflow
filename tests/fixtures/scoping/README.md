@@ -3,7 +3,7 @@
 The scoping benchmark of the context scope spec (§7, epic #2959): plain questions about a real repo, each with the files a right answer
 names. `scripts/scoping-bench.mjs` asks each question of a running Sindri and scores the files its answer names.
 
-One folder per repo, one `questions.yaml` in it:
+One folder per repo, with `questions.yaml` in it. A folder may hold more key files for one issue's questions, each with its own `commit` (`agentic-workflow/ranked-query.yaml`: the three ranked-query questions of #3673, ids `rq-01` to `rq-03`). Every file has the same fields:
 
 | Field | Meaning |
 |---|---|

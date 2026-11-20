@@ -30,15 +30,15 @@ public sealed class QueryFetchBoundTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Every_matching_hit_is_still_asked_for_and_read_with_no_page_limit()
+    public async Task Every_matching_hit_is_asked_for_and_a_window_of_all_reads_them_all()
     {
         var docs = SourceOf([.. Enumerable.Range(1, Matching).Select(i => Chunk(i, i))]);   // 500 documents, one chunk each
 
-        var result = await Engines.Over(docs).Query(new ContextQuery("orientation"), Engines.Human(), TestContext.Current.CancellationToken);
+        var result = await Engines.Over(docs).Query(new ContextQuery("orientation") { Window = new QueryWindow(0, Matching) }, Engines.Human(), TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(SourceQuery.DefaultLimit, Assert.Single(docs.Searches).Limit);   // no page limit
-        Assert.Equal(Matching, docs.BatchedReads);   // all 500 matches read, through the batched call
+        Assert.Equal(SourceQuery.DefaultLimit, Assert.Single(docs.Searches).Limit);   // the search itself has no page limit
+        Assert.Equal(Matching, docs.BatchedReads);   // the window of all 500 reads every match, through the batched call
         Assert.Equal(Matching, result.Value.Sections.Sum(static s => s.Items.Count));   // and all 500 answered (a section is a named group; the records are its items)
     }
 
@@ -67,7 +67,7 @@ public sealed class QueryFetchBoundTests
         inner.OnFetch = () => clock.Advance(TimeSpan.FromSeconds(1));   // 10 s deadline: it fires after about ten reads
         var engine = Engines.Over(new FixedSourceCatalog(new DefaultBatchSource(inner)), time: clock);
 
-        var result = await engine.Query(new ContextQuery("orientation"), Engines.Human(), TestContext.Current.CancellationToken);
+        var result = await engine.Query(new ContextQuery("orientation") { Window = new QueryWindow(0, total) }, Engines.Human(), TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         var read = inner.DocReads;
@@ -87,7 +87,7 @@ public sealed class QueryFetchBoundTests
         docs.FetchHangs = true;
         var engine = Engines.Over(new FixedSourceCatalog(docs), time: clock);
 
-        var result = await engine.Query(new ContextQuery("orientation"), Engines.Human(), TestContext.Current.CancellationToken);
+        var result = await engine.Query(new ContextQuery("orientation") { Window = new QueryWindow(0, total) }, Engines.Human(), TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         var note = Assert.Single(result.Value.Degraded, d => d.Source == RepoDocs.Id);
