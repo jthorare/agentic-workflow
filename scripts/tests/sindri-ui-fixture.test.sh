@@ -721,6 +721,21 @@ check "todos marks exactly one done" "$(grep -c '^todo done' "$STUB_LOG")" "1"
 tds >/dev/null 2>&1; check "a second todos exits 0" "$?" "0"
 check "a second todos leaves 11 todos (same client ids)" "$(wc -l < "$STUB_LOG.todos" | tr -d ' ')" "11"
 absent "a second todos marks nothing done again" "$(cat "$STUB_LOG")" "todo done"
+# todos read-error / read-ok (#2908): only the todo read fails
+tds nope >/dev/null 2>&1; check "todos refuses an unknown state (exit 2)" "$?" "2"
+tds read-error >/dev/null 2>&1; check "todos read-error with no views exits 2" "$?" "2"
+TDDB="$TD/views.db"
+# one statement per call: sqlq's python fallback (no sqlite3 CLI) runs a single statement
+sqlq "$TDDB" "CREATE TABLE view_todo (key TEXT)" >/dev/null
+sqlq "$TDDB" "INSERT INTO view_todo VALUES ('a')" >/dev/null
+sqlq "$TDDB" "CREATE TABLE view_items (key TEXT)" >/dev/null
+tds read-error >/dev/null 2>&1; check "todos read-error exits 0" "$?" "0"
+check "read-error: view_todo is gone for the route's read" "$(sqlq "$TDDB" "SELECT COUNT(*) FROM sqlite_master WHERE name = 'view_todo'")" "0"
+check "read-error: the other views stay" "$(sqlq "$TDDB" "SELECT COUNT(*) FROM sqlite_master WHERE name = 'view_items'")" "1"
+tds read-error >/dev/null 2>&1; check "a second read-error exits 0" "$?" "0"
+tds read-ok >/dev/null 2>&1; check "todos read-ok exits 0" "$?" "0"
+check "read-ok: view_todo is back with its row" "$(sqlq "$TDDB" "SELECT COUNT(*) FROM view_todo")" "1"
+tds read-ok >/dev/null 2>&1; check "a second read-ok exits 0" "$?" "0"
 
 # --- resources: the Resources page's data (#2258 PR18b, #2494), files under <home>/resources ---
 contains "the usage lists resources" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh resources"
