@@ -11,6 +11,7 @@ using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Features.ActivateWorkflow;
 using Aw.Sindri.Features.ApplyWorkflowOps;
 using Aw.Sindri.Features.CancelWorkflowRun;
+using Aw.Sindri.Features.RerunWorkflowRun;
 using Aw.Sindri.Features.CreateWorkflow;
 using Aw.Sindri.Features.DeleteWorkflow;
 using Aw.Sindri.Features.ListWorkflowBlocks;
@@ -42,6 +43,7 @@ internal static partial class WorkflowTools
         Pause => CallPause(services, arguments, ct),
         Delete => CallDelete(services, arguments, ct),
         Run => CallRun(services, arguments, ct),
+        Rerun => CallRerun(services, arguments, ct),
         Cancel => CallCancel(services, arguments, ct),
         Docs => CallDocs(services, arguments, ct),
         Blocks => CallBlocks(services, arguments, ct),
@@ -179,6 +181,22 @@ internal static partial class WorkflowTools
         var caller = services.GetRequiredService<ICallerContextAccessor>().Current;
         var answer = await services.GetRequiredService<IService<RunWorkflowRequest, RunWorkflowResponse>>().Handle(new RunWorkflowRequest(slug.Value, payload.Value, caller?.Actor ?? "owner"), ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static started => $"{started.Status} {started.Run.Value}{(started.Reason is null ? string.Empty : ": " + started.Reason)}");
+    }
+
+    private static async ValueTask<CallToolResult> CallRerun(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        var run = McpArguments.Only(Rerun, arguments, ["run", "from", "input"]) is { } refused
+            ? refused
+            : McpArguments.RequiredString(Rerun, arguments, "run", "morning-check@3:12").Bind(WorkflowReadEndpoints.Run);
+        var from = McpArguments.RequiredString(Rerun, arguments, "from", "send-digest");
+        var input = Json(Rerun, arguments, "input", JsonValueKind.Object);
+        if (run.IsError || from.IsError || input.IsError)
+        {
+            return McpResults.Failure(services, run.IsError ? run.Error : from.IsError ? from.Error : input.Error);
+        }
+
+        var answer = await services.GetRequiredService<IService<RerunWorkflowRunRequest, RerunWorkflowRunResponse>>().Handle(new RerunWorkflowRunRequest(run.Value, from.Value, input.Value, By(services)), ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static started => $"{started.Status} {started.Run.Value} from {started.Source.Value}");
     }
 
     private static async ValueTask<CallToolResult> CallCancel(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)

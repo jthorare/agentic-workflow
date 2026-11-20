@@ -13,6 +13,7 @@ using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Features.ListWorkflowBlocks;
+using Aw.Sindri.Features.RerunWorkflowRun;
 using Aw.Sindri.Features.RunWorkflow;
 using Aw.Sindri.Features.SearchWorkflowDocs;
 using Aw.Sindri.Host;
@@ -37,7 +38,7 @@ public sealed class WorkflowToolsTests
     [Fact]
     public void tools_list_includes_every_workflow_tool_with_an_object_schema()
     {
-        var names = new[] { "workflow_list", "workflow_get", "workflow_runs", "workflow_run_get", "workflow_create", "workflow_apply_ops", "workflow_replace", "workflow_validate", "workflow_activate", "workflow_pause", "workflow_delete", "workflow_run", "workflow_cancel", "workflow_docs", "workflow_blocks" };
+        var names = new[] { "workflow_list", "workflow_get", "workflow_runs", "workflow_run_get", "workflow_create", "workflow_apply_ops", "workflow_replace", "workflow_validate", "workflow_activate", "workflow_pause", "workflow_delete", "workflow_run", "workflow_rerun", "workflow_cancel", "workflow_docs", "workflow_blocks" };
 
         Tool[] tools = [.. WorkflowReadTools.All, .. Host.Mcp.WorkflowTools.All];
 
@@ -95,6 +96,49 @@ public sealed class WorkflowToolsTests
         Assert.True(result.IsError);
         Assert.Equal("SND-GRAPH-109", Structured(result)["code"]!.GetValue<string>());
         Assert.Contains(run.Value, Structured(result)["message"]!.GetValue<string>(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task workflow_rerun_passes_run_from_and_input_to_the_service_and_answers_the_new_run()
+    {
+        var service = new RecordingRerun();
+        var callers = new AsyncLocalCallerContextAccessor(new SequentialIdGenerator());
+        await using var services = Services(s => s.AddSingleton<ICallerContextAccessor>(callers).AddSingleton<IService<RerunWorkflowRunRequest, RerunWorkflowRunResponse>>(service));
+
+        var result = await Host.Mcp.WorkflowTools.Call(Host.Mcp.WorkflowTools.Rerun, services, Arguments(("run", "drift-check@3:12"), ("from", "send"), ("input", new { repo = "web" })), Token);
+
+        Assert.True(result.IsError != true);
+        var request = Assert.Single(service.Requests);
+        Assert.Equal(WorkflowRunId.Of(WorkflowSlug.From("drift-check"), 3, 12), request.Run);
+        Assert.Equal("send", request.FromNode);
+        Assert.Equal("web", JsonNode.Parse(request.Input!)!["repo"]!.GetValue<string>());
+        Assert.Equal("drift-check@3:13", Structured(result)["run"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public async Task workflow_rerun_without_from_or_with_an_array_input_is_refused_before_the_service()
+    {
+        var service = new RecordingRerun();
+        await using var services = Services(s => s.AddSingleton<IService<RerunWorkflowRunRequest, RerunWorkflowRunResponse>>(service));
+
+        var noFrom = await Host.Mcp.WorkflowTools.Call(Host.Mcp.WorkflowTools.Rerun, services, Arguments(("run", "drift-check@3:12")), Token);
+        var badInput = await Host.Mcp.WorkflowTools.Call(Host.Mcp.WorkflowTools.Rerun, services, Arguments(("run", "drift-check@3:12"), ("from", "send"), ("input", new[] { 1 })), Token);
+
+        Assert.True(noFrom.IsError);
+        Assert.True(badInput.IsError);
+        Assert.Empty(service.Requests);
+    }
+
+    private sealed class RecordingRerun : IService<RerunWorkflowRunRequest, RerunWorkflowRunResponse>
+    {
+        public List<RerunWorkflowRunRequest> Requests { get; } = [];
+
+        public ValueTask<Result<RerunWorkflowRunResponse>> Handle(RerunWorkflowRunRequest request, CancellationToken cancellationToken)
+        {
+            Requests.Add(request);
+            var next = WorkflowRunId.Of(WorkflowSlug.From("drift-check"), 3, 13);
+            return ValueTask.FromResult<Result<RerunWorkflowRunResponse>>(new RerunWorkflowRunResponse(next, "started", request.Run, ["a"], ["send"]));
+        }
     }
 
     private static ServiceProvider Services(Action<IServiceCollection> add)

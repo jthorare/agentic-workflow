@@ -19,6 +19,7 @@ using Aw.Sindri.Features.AnswerQuestion;
 using Aw.Sindri.Features.ApplyWorkflowOps;
 using Aw.Sindri.Features.CancelJob;
 using Aw.Sindri.Features.CancelWorkflowRun;
+using Aw.Sindri.Features.RerunWorkflowRun;
 using Aw.Sindri.Features.CheckProfile;
 using Aw.Sindri.Features.CloseItem;
 using Aw.Sindri.Features.Commands;
@@ -160,6 +161,7 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IScheduledService, WorkflowScheduleService>().AddSingleton(WorkflowScheduleService.BuiltIn)   // the built-in 'workflow-schedule' service (#2258, PR 6): runs without a profile entry, every minute
             .AddScoped<IValidator<RunWorkflowRequest>, AcceptAllValidator<RunWorkflowRequest>>().AddCommand<RunWorkflowRequest, RunWorkflowResponse, RunWorkflowService>().AddScoped<ISetupWorkflowRunner, SetupWorkflowRunner>()   // 'sindri wf run' and 'wf cancel' (#2258, PR 6): behind the command chain; the slug and payload are checked by the service
             .AddScoped<IValidator<CancelWorkflowRunRequest>, AcceptAllValidator<CancelWorkflowRunRequest>>().AddCommand<CancelWorkflowRunRequest, CancelWorkflowRunResponse, CancelWorkflowRunService>()
+            .AddScoped<IValidator<RerunWorkflowRunRequest>, AcceptAllValidator<RerunWorkflowRunRequest>>().AddCommand<RerunWorkflowRunRequest, RerunWorkflowRunResponse, RerunWorkflowRunService>()   // 'sindri wf rerun' (#3204, spec §7.3): the service checks the run, the step and the input
             .AddScoped<IValidator<TakeOverAgentNodeRequest>, AcceptAllValidator<TakeOverAgentNodeRequest>>().AddCommand<TakeOverAgentNodeRequest, AgentNodeControlled, TakeOverAgentNodeService>()   // the human takes a run_agent node over and hands it back (#2472): behind the command chain; the services check the caller, the run and the node
             .AddScoped<IValidator<HandBackAgentNodeRequest>, AcceptAllValidator<HandBackAgentNodeRequest>>().AddCommand<HandBackAgentNodeRequest, AgentNodeControlled, HandBackAgentNodeService>()
             .AddScoped<IValidator<ListWorkflowsRequest>, AcceptAllValidator<ListWorkflowsRequest>>().AddQuery<ListWorkflowsRequest, ListWorkflowsResponse, ListWorkflowsService>()   // the workflow reads (#2258, PR 8a): 'sindri wf list|show|runs|run-show'; the slug and the run id are typed, the services say what is missing

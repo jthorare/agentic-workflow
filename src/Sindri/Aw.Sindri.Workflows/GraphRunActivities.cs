@@ -30,6 +30,25 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         return GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
     }
 
+    /// <summary>The steps a re-run from a step (spec §7.3) took from its source run: the nodes that already have a succeeded or skipped row when the walk starts, and for a succeeded one the branches it took. Empty for every other run.</summary>
+    /// <param name="run">The run.</param>
+    /// <returns>The restored steps.</returns>
+    [Activity("GraphRestored")]
+    public async Task<IReadOnlyList<GraphRestoredNode>> RestoredAsync(WorkflowRunId run)
+    {
+        var cancel = ActivityExecutionContext.Current.CancellationToken;
+        var rows = GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false));
+        if (rows.Count == 0)
+        {
+            return [];
+        }
+
+        var row = GraphFailures.Value(await runs.Get(run, cancel).ConfigureAwait(false));
+        var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
+        var skipped = rows.Where(static r => r.Status == NodeRunStatus.Skipped).Select(static r => r.NodeId).ToHashSet();
+        return [.. rows.GroupBy(static r => r.NodeId).Select(g => new GraphRestoredNode(g.Key.Value, g.All(static r => r.Status == NodeRunStatus.Skipped) ? [] : [.. RerunPlan.Taken(spec, g.Key, skipped)]))];
+    }
+
     /// <summary>Marks the run running and mirrors it as started.</summary>
     /// <param name="run">The run.</param>
     /// <returns>Completes when both are written.</returns>

@@ -1489,6 +1489,24 @@
       "confirm": null
     },
     {
+      "action": "RerunWorkflowRun",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflow-runs/{run}/rerun",
+      "cli": "sindri wf rerun <run> --from <node> [--input <json>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "RestartProcess",
       "class": "desk",
       "allowedCallers": [

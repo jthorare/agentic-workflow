@@ -15,9 +15,23 @@ internal sealed partial class GraphWorkflow
     private List<GraphNode> _pending = [];
     private GraphNode? _current;
 
+    // A re-run from a step starts with the earlier steps decided: they leave the pending list, and a succeeded one has taken the branches it took in the source run.
+    private void Restore(IReadOnlyList<GraphRestoredNode> restored)
+    {
+        foreach (var step in restored)
+        {
+            var id = NodeId.From(step.Node);
+            _ = _decided.Add(id);
+            if (step.Taken.Count > 0)
+            {
+                _taken[id] = step.Taken;
+            }
+        }
+    }
+
     private async Task<GraphWorkflowResult> Walk(GraphSpec spec)
     {
-        _pending = [.. spec.Nodes];
+        _pending = [.. spec.Nodes.Where(n => !_decided.Contains(n.Id))];
         // why: a ready node on a branch nobody took is recorded 'skipped' before a live one runs, so a dead branch shows skipped while its sibling parks (a wait or ask_owner can hold the walk for hours).
         // The patch keeps a run started on the old walk order replaying it: its history has the live node's activity next.
         var deadFirst = Workflow.Patched("graph-walk-dead-first");
