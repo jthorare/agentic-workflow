@@ -60,7 +60,7 @@ internal sealed partial class AgentsPageViewModel
         "E" => HasEnded && Toggled(),
         "Enter" or "O" => PressOnLive(key, SelectedLive),
         "Y" => Copied(),
-        _ => false,
+        _ => NeedsKey(key),
     };
 
     private bool Toggled()
