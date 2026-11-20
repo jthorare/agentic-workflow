@@ -39,19 +39,6 @@ public sealed class AgentsPageKeysTests
     }
 
     [Fact]
-    public async Task Enter_asks_to_open_the_selected_sessions_sheet()
-    {
-        var page = await _f.Shown(Token);
-        SessionOpenRequestedEventArgs? opened = null;
-        page.OpenRequested += (_, e) => opened = e;
-        _ = page.Press("J");
-
-        Assert.True(page.Press("Enter"));
-
-        Assert.Equal(new DeepLink(DeepLinkKind.Session, page.SelectedKey), opened!.Link);
-    }
-
-    [Fact]
     public async Task Enter_with_no_selection_does_nothing()
     {
         var page = await _f.Shown(Token);

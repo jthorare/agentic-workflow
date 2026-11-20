@@ -20,6 +20,60 @@ internal sealed partial class AgentsPage : UserControl
         AddHandler(EndedSessionRow.SelectEvent, OnSelectEnded);
         AddHandler(SessionGroup.ToggleEvent, OnToggle);
         SizeChanged += OnSized;
+        TerminalPanel.ShowsList = false;
+        TerminalPanel.PaneKeyPressed += (_, e) => _ = Page?.SendPaneKey(e.Name, e.Text);
+        _tick.Tick += (_, _) => Page?.Terminal.Tick();
+        TerminalPanel.TranscriptRequested += (_, _) => Page?.OpenTranscript();
+        AddHandler(KeyDownEvent, OnEscape, RoutingStrategies.Bubble);
+        DataContextChanged += (_, _) => FollowTerminal();
+    }
+
+    private const double NarrowBelow = 1100;
+
+    private AgentsPageViewModel? _followed;
+
+    // The terminal view's clock rules (retries, the 30 s rule, a key's wait) move while the view is open.
+    private readonly DispatcherTimer _tick = new() { Interval = TimeSpan.FromMilliseconds(500) };
+
+    // Esc with focus in the list closes the terminal view; focus in the pane never reaches here (the pane sends Esc to the agent).
+    private void OnEscape(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && e.KeyModifiers == KeyModifiers.None && Page is { } page && page.Press("Esc"))
+        {
+            e.Handled = true;
+        }
+    }
+
+    private void FollowTerminal()
+    {
+        _followed?.PropertyChanged -= OnPageChanged;
+        _followed = Page;
+        if (Page is { } drawn)
+        {
+            drawn.DrawFrame = grid => TerminalPanel.PaneDrawing.Draw(grid);
+        }
+
+        _followed?.PropertyChanged += OnPageChanged;
+        Split();
+    }
+
+    private void OnPageChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(AgentsPageViewModel.IsTerminalOpen), StringComparison.Ordinal))
+        {
+            Split();
+        }
+    }
+
+    // Open: the list is the 360 px column (56 px under 1100 px of window width) and the pane takes the rest; closed: the list has the page.
+    private void Split()
+    {
+        var open = Page?.IsTerminalOpen == true;
+        _tick.IsEnabled = open;
+        var narrow = Bounds.Width < NarrowBelow;
+        AgentsSplit.ColumnDefinitions[0].Width = open ? new GridLength(narrow ? 56 : 360) : new GridLength(1, GridUnitType.Star);
+        AgentsSplit.ColumnDefinitions[1].Width = open ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+        Page?.Resize(open ? (narrow ? 56 : 360) : Bounds.Width);
     }
 
     private bool _focusWasHere;
@@ -27,10 +81,7 @@ internal sealed partial class AgentsPage : UserControl
     // Under 640 px only Status, Agent and For stay: the page tells the rows, and the head's columns follow.
     private void OnSized(object? sender, SizeChangedEventArgs e)
     {
-        if (Page is { } page)
-        {
-            page.Resize(e.NewSize.Width);
-        }
+        Split();
     }
 
     private void OnClearFilters(object? sender, RoutedEventArgs e)

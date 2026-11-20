@@ -47,6 +47,7 @@ internal sealed partial class AgentsPageViewModel
 
         SelectedKey = key;
         Mark();
+        FollowSelection();
         return true;
     }
 
@@ -59,6 +60,7 @@ internal sealed partial class AgentsPageViewModel
         "K" => Move(-1),
         "E" => HasEnded && Toggled(),
         "Enter" or "O" => PressOnLive(key, SelectedLive),
+        "Esc" => IsTerminalOpen && Terminal.Route("Esc") == TerminalKeyRoute.Handled,
         "Y" => Copied(),
         _ => false,
     };
@@ -69,7 +71,7 @@ internal sealed partial class AgentsPageViewModel
         return true;
     }
 
-    // Enter opens the selected session's sheet; O opens the frame of the Step it works on, else puts keyboard focus on its Focus line (the send itself arrives in U11a-f).
+    // Enter opens the selected session's terminal view (its Transcript button opens the sheet); O opens the frame of the Step it works on, else puts keyboard focus on its Focus line (the send itself arrives in U11a-f).
     private bool PressOnLive(string key, SessionRowViewModel? row)
     {
         if (row is null)
@@ -79,7 +81,7 @@ internal sealed partial class AgentsPageViewModel
 
         if (key == "Enter")
         {
-            RequestOpen(new SessionOpenRequestedEventArgs(row.Link));
+            OpenTerminal(row);
         }
         else
         {
@@ -120,6 +122,7 @@ internal sealed partial class AgentsPageViewModel
         var to = at >= 0 ? Math.Clamp(at + step, 0, keys.Count - 1) : (step > 0 ? 0 : keys.Count - 1);
         SelectedKey = keys[to];
         Mark();
+        FollowSelection();
         RequestFocus(new AgentFocusEventArgs(keys[to], toFocusLine: false, onlyIfLost: false));
         return true;
     }
