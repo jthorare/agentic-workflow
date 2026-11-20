@@ -29,6 +29,31 @@ public sealed class AgentsPageKeysTests
     }
 
     [Fact]
+    public async Task N_asks_for_the_New_agent_form_with_or_without_a_selected_row()
+    {
+        var page = await _f.Shown(Token);
+        var asked = 0;
+        page.NewAgentRequested += (_, _) => asked++;
+
+        var bare = page.Press("N");
+        _ = page.Press("J");
+        var onRow = page.Press("N");
+
+        Assert.Equal((true, true, 2), (bare, onRow, asked));
+    }
+
+    [Fact]
+    public async Task SelectWhenDrawn_selects_a_drawn_row_at_once_3384()
+    {
+        var page = await _f.Shown(Token);
+        var target = page.Groups.SelectMany(g => g.Rows).Select(r => r.Ref).Last();
+
+        page.SelectWhenDrawn(target);
+
+        Assert.Equal(target, page.SelectedKey);
+    }
+
+    [Fact]
     public async Task K_from_no_row_goes_to_the_last()
     {
         var page = await _f.Shown(Token);

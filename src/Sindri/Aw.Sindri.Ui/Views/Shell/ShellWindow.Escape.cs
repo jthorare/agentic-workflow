@@ -21,6 +21,12 @@ internal sealed partial class ShellWindow
             return true;
         }
 
+        if (shell.NewAgent.IsOpen)
+        {
+            shell.NewAgent.Close();   // keeps what was typed (agents spec §15.4)
+            return true;
+        }
+
         if (EscapeItemLayer(shell))
         {
             return true;
