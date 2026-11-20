@@ -95,7 +95,8 @@ jobs:
           echo "AW_SINDRI_CS_BIN=$RUNNER_TEMP/cs-bin/sindri/sindri" >> "$GITHUB_ENV"
       - name: Run every tracked bash test suite
         if: env.CHANGED == 'true'
-        run: bash scripts/ci/bash-tests.sh
+        # The leak check fails the step when the run leaves a new aw-* or tmp.* entry in $TMPDIR (#3262); it deletes nothing.
+        run: bash scripts/ci/tmp-leak-check.sh -- bash scripts/ci/bash-tests.sh
       - name: setup.sh dry run on macOS (every provider)
         if: env.CHANGED == 'true'
         run: ./setup.sh --providers claude,codex,cursor --dry-run
