@@ -145,6 +145,23 @@
         </StackPanel>
         <TextBlock x:Name="ConceptsNote" Classes="caption subtle" Text="{Binding Concepts.Note}" ToolTip.Tip="{Binding Concepts.NoteTip}" IsVisible="{Binding Concepts.HasNote}" TextWrapping="Wrap"
                    AutomationProperties.Name="{Binding Concepts.Note}" />
+        <StackPanel x:Name="ContextAnswerFiles" IsVisible="{Binding HasAnswerFiles}" Spacing="4">
+          <TextBlock Classes="caption subtle" Text="{Binding AnswerFilesName}" />
+          <ScrollViewer MaxHeight="280">
+            <ItemsControl ItemsSource="{Binding AnswerFiles}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="ctx:AnswerFile">
+                  <StackPanel Margin="0,0,0,6" ToolTip.Tip="{Binding Path}" AutomationProperties.Name="{Binding Path}">
+                    <TextBlock TextTrimming="CharacterEllipsis">
+                      <Run Classes="subtle" Text="{Binding Directory}" /><Run Text="{Binding Name}" FontWeight="SemiBold" />
+                    </TextBlock>
+                    <TextBlock Classes="caption subtle" Text="{Binding Reason}" TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </StackPanel>
         <ItemsControl x:Name="ContextMissing" ItemsSource="{Binding Missing}" ItemTemplate="{StaticResource LineTemplate}" />
       </StackPanel>
 
@@ -172,6 +189,8 @@
             <Button x:Name="WholeBackToConcepts" Content="{Binding BackText}" IsVisible="{Binding HasConcept}" Click="OnUp" AutomationProperties.Name="{Binding BackText}" />
           </StackPanel>
         </Border>
+        <TextBlock x:Name="ContextStageMessage" IsVisible="{Binding HasStageMessage}" Classes="body subtle" Text="{Binding StageMessage}" TextWrapping="Wrap" TextAlignment="Center"
+                   HorizontalAlignment="Center" VerticalAlignment="Top" MaxWidth="560" Margin="0,96,0,0" AutomationProperties.Name="{Binding StageMessage}" />
         <Panel x:Name="LensStackHost" IsVisible="{Binding MapVisible}">
           <mv:ContextMapView x:Name="ContextStack" />
         </Panel>
