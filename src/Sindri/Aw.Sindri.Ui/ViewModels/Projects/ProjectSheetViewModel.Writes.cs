@@ -19,13 +19,16 @@ internal sealed partial class ProjectSheetViewModel
 
         var card = one.Project;
         var target = EditTarget.Trim();
+        var notes = EditNotes.Trim();
         var links = EditLinks.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var change = new ProjectChange(
             card.Version,
             Name: CanEditName && !string.Equals(EditName.Trim(), card.Name, StringComparison.Ordinal) ? EditName.Trim() : null,
             Links: links.SequenceEqual(OwnerLinks(card), StringComparer.Ordinal) ? null : links,
             Target: target.Length > 0 && !string.Equals(target, card.Target, StringComparison.Ordinal) ? target : null,
-            ClearTarget: target.Length == 0 && card.Target is not null);
+            ClearTarget: target.Length == 0 && card.Target is not null,
+            Notes: notes.Length > 0 && !string.Equals(notes, card.Notes, StringComparison.Ordinal) ? notes : null,
+            ClearNotes: notes.Length == 0 && !string.IsNullOrEmpty(card.Notes));
         if (await Send((url, ct) => Api.ChangeProject(url, card.Id, change, ct), cancellationToken).ConfigureAwait(true))
         {
             await Saved(cancellationToken).ConfigureAwait(true);
@@ -47,6 +50,16 @@ internal sealed partial class ProjectSheetViewModel
         {
             await Saved(cancellationToken).ConfigureAwait(true);
         }
+    }
+
+    /// <summary>A state chip was picked: the state is saved at once (#3719).</summary>
+    /// <param name="choice">The chip.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>A task that ends when the answer is drawn.</returns>
+    internal Task PickState(ProjectStateChoice choice, CancellationToken cancellationToken)
+    {
+        SelectedState = choice;
+        return SetState(cancellationToken);
     }
 
     /// <summary>Gives the state back to Linear's.</summary>

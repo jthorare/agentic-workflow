@@ -49,6 +49,7 @@ internal sealed partial class ShellViewModel
 
         await Linear.Restore(cancellationToken).ConfigureAwait(true);   // before the page is entered: a catch-up read asks since with the stored marker
         CurrentPage = Enum.TryParse<PageId>(_preferences.LastPage, out var page) ? page : PageId.Home;
+        Start.ShowPage(PageName);
         Queue.PageShown(RowScopeOf(CurrentPage));
         OpenPage(CurrentPage);   // a restored page was not navigated to, but it is entered all the same
         await NeedsYou.Restore(cancellationToken).ConfigureAwait(true);
