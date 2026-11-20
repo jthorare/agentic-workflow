@@ -1,3 +1,5 @@
+using Aw.Sindri.Ui.Api;
+
 namespace Aw.Sindri.Ui.ViewModels.Shell;
 
 /// <summary>The Health page's status card (<see cref="HealthViewModel"/>, continued): the lease, the API, the profile, the services.</summary>
@@ -73,13 +75,40 @@ internal sealed partial class HealthViewModel
     public IReadOnlyList<ServiceRow> Services
     {
         get;
-        private set
-        {
-            Set(ref field, value);
-            OnChanged(nameof(HasServices));
-        }
+        private set => Set(ref field, value);
     } = [];
 
-    /// <summary>True when any service is scheduled.</summary>
-    public bool HasServices => Services.Count > 0;
+    /// <summary>True when the card lists any service: the rows shown, not the status' own count, so the header, the rows and this agree (#3623).</summary>
+    public bool HasServices => ServiceCard.Count > 0;
+
+    /// <summary>The line that says why only the built-in services run (a profile that won't load); empty when the profile loads or no service is listed.</summary>
+    public string ServicesNote { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>True when <see cref="ServicesNote"/> has a line.</summary>
+    public bool HasServicesNote => ServicesNote.Length > 0;
+
+    private string _profileNote = string.Empty;
+
+    /// <summary>The status named the profile's state: remembers the note it asks for and shows it when the card lists services.</summary>
+    /// <param name="profile">The status' profile.</param>
+    private void ShowProfileNote(ProfileView profile)
+    {
+        _profileNote = StatusText.ServicesNote(profile);
+        ShowServicesNote();
+    }
+
+    private void ShowProfile(ProfileView profile)
+    {
+        (ProfileState, ProfileDetail, LiveProfile) = (StatusText.ProfileState(profile), StatusText.ProfileDetail(profile), profile.Live);
+        ModelChoice.Show(profile);
+        LabelChoice.Show(profile);
+        SurfaceChoice.Show(profile);
+        ShowProfileNote(profile);
+    }
+
+    private void ShowServicesNote()
+    {
+        ServicesNote = HasServices ? _profileNote : string.Empty;
+        OnChanged(nameof(HasServicesNote));
+    }
 }
