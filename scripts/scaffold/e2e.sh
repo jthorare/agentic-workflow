@@ -98,6 +98,10 @@ HTTP="Scaffoldprobe"
 
 gen() { env -u CI node "$@"; }
 
+# The runner's RID, once, for both NativeAOT publishes ((a) and (c)); PublishAot under a RID adds the host's ILCompiler
+# packs to the lock files, which only the throwaway trees see.
+rid="$(dotnet --info | awk '/^ *RID:/ {print $2; exit}')"
+
 # green <tree> <features dir> <tests dir> <Slice> <behavior> — make a scaffolded red slice pass, as its implementer would.
 green() {
   perl -0pi -e "s/=> throw new NotSupportedException\\(\"$4: make $4Tests pass\"\\);/=> ValueTask.FromResult<Result<$4Response>>(new $4Response());/" "$1/$2/$4/$4Service.cs"
@@ -118,8 +122,6 @@ green "$A" "src/$SMALL/Aw.$SMALL.App/Features" "tests/Aw.$SMALL.Tests" CheckThin
   --surface cli --command list --ids ThingId:string --ports IThingStore) || fail "(a) new-slice"
 
 step "(a) NativeAOT publish of the generated cli App (telemetry included): no trim or AOT warning, native run"
-# PublishAot under a RID adds the host's ILCompiler packs to the lock files, which only this throwaway worktree sees.
-rid="$(dotnet --info | awk '/^ *RID:/ {print $2; exit}')"
 (cd "$A" && env -u CI dotnet publish "src/$SMALL/Aw.$SMALL.App/Aw.$SMALL.App.csproj" -c Release -r "$rid" \
   -p:RestoreLockedMode=false -o "$TMP/small-aot" >"$TMP/small-aot.log" 2>&1) || { tail -20 "$TMP/small-aot.log" >&2; fail "(a) AOT publish"; }
 if grep -E 'IL[23][0-9]{3}' "$TMP/small-aot.log" >&2; then fail "(a) AOT publish raised trim or AOT warnings"; fi
@@ -221,4 +223,5 @@ if grep -E 'IL[23][0-9]{3}' "$TMP/toolkit-aot.log" >&2; then fail "(c) AOT publi
 # architecture tests), and the gate that runs this script already built the whole solution on the same commit.
 drop toolkit "$TMP/toolkit-out" "$TMP/toolkit-aot" "$TMP/sdk-feed"
 
-step "both packages and the toolkit scaffolded, built and tested; each tree was deleted as its checks ended"
+step_end
+printf '\n== both packages and the toolkit scaffolded, built and tested; each tree was deleted as its checks ended\n'
