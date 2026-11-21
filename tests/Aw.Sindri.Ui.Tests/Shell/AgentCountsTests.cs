@@ -28,6 +28,18 @@ public sealed class AgentCountsTests
         return shell;
     }
 
+    // The follower waits and re-reads the endpoint record on the fake clock (RetryEvery), so a record that changes is only seen once the clock moves.
+    private async Task AdvanceUntil(Func<bool> condition)
+    {
+        for (var i = 0; i < 400 && !condition(); i++)
+        {
+            _clock.Advance(HealthViewModel.RetryEvery);
+            await Task.Delay(10, Token);
+        }
+
+        Assert.True(condition(), "the shell never reached the state");
+    }
+
     private static string TabCount(ShellViewModel shell) => shell.Navigation.First(n => n.Page == PageId.Agents).Count;
 
     [Fact]
@@ -67,7 +79,7 @@ public sealed class AgentCountsTests
         await ShellWait.Until(shell, () => TabCount(shell) == "3", Token);
 
         _records.Remove();
-        await ShellWait.Until(shell, () => shell.State == ShellState.NotRunning, Token);
+        await AdvanceUntil(() => shell.State == ShellState.NotRunning);
 
         Assert.Equal(("", ""), (TabCount(shell), shell.Agents.NavCount));
     }, Token);
@@ -79,10 +91,10 @@ public sealed class AgentCountsTests
         var shell = await Running();
         await ShellWait.Until(shell, () => TabCount(shell) == "25", Token);
         _records.Remove();
-        await ShellWait.Until(shell, () => shell.State == ShellState.NotRunning, Token);
+        await AdvanceUntil(() => shell.State == ShellState.NotRunning);
 
         _records.Write(A.Record());
-        await ShellWait.Until(shell, () => shell.State == ShellState.Normal, Token);
+        await AdvanceUntil(() => shell.State == ShellState.Normal);
 
         Assert.Equal(("25", "25"), (TabCount(shell), shell.Agents.NavCount));
     }, Token);
