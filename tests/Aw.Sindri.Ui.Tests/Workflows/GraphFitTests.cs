@@ -129,8 +129,8 @@ public sealed class GraphFitTests
         var fit = GraphFit.Compute(Release(21), CanvasWidth, CanvasHeight, 1.0);
         var map = MapAt(fit, 1.0);
 
-        Assert.Empty(fit.Cards.Values.Where(card => card.Overlaps(map)));
-        Assert.Empty(fit.ReturnLanes.Where(lane => lane.Overlaps(map)));
+        Assert.DoesNotContain(fit.Cards.Values, card => card.Overlaps(map));
+        Assert.DoesNotContain(fit.ReturnLanes, lane => lane.Overlaps(map));
     }
 
     [Theory]
