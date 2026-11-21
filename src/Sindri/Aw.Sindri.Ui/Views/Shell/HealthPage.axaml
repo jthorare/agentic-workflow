@@ -342,12 +342,17 @@
                 <TextBlock x:Name="ServicesScheduledText" Grid.Column="1" Classes="body subtle head-word" Text="{Binding ServicesScheduled}"
                            AutomationProperties.Name="{Binding ServicesScheduled}" />
               </Grid>
-              <ItemsControl x:Name="ServicesList" ItemsSource="{Binding ServiceCard}" AutomationProperties.Name="{Binding Text.Services}">
+              <ItemsControl x:Name="ServicesList" Grid.IsSharedSizeScope="True" ItemsSource="{Binding ServiceCard}" AutomationProperties.Name="{Binding Text.Services}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="shell:ServiceRowViewModel">
                     <StackPanel>
-                      <Grid Classes="row data-row" ColumnDefinitions="190,*,Auto" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding What}">
-                        <TextBlock Classes="body-strong" Text="{Binding Name}" AutomationProperties.Name="{Binding Name}" />
+                      <Grid Classes="row data-row" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding What}">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="Auto" SharedSizeGroup="SvcName" />
+                          <ColumnDefinition Width="*" />
+                          <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Classes="body-strong" Margin="0,0,16,0" Text="{Binding Name}" AutomationProperties.Name="{Binding Name}" />
                         <TextBlock Grid.Column="1" Classes="body muted" Text="{Binding Every}" AutomationProperties.Name="{Binding Every}" />
                         <TextBlock Grid.Column="2" Classes="body subtle" Text="{Binding LastRun}" AutomationProperties.Name="{Binding LastRun}" />
                       </Grid>
