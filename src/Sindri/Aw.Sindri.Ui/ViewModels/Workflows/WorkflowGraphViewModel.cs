@@ -130,6 +130,17 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <summary>The world's size: the far corner of the farthest card or missing branch's words.</summary>
     internal GraphPoint Extent => Nodes.Count == 0 ? default : new GraphPoint(Math.Max(Nodes.Max(n => n.X) + CardWidth, Ends.Select(e => e.Label.Right).DefaultIfEmpty().Max()), Math.Max(Nodes.Max(n => n.Y) + CardHeight, Ends.Select(e => e.Label.Bottom).DefaultIfEmpty().Max()));
 
+    /// <summary>Puts every card where <see cref="GraphFit"/> wraps it for this canvas; the served positions then only give the layer order. Edges and missing-branch words follow the cards.</summary>
+    /// <param name="canvasWidth">The canvas clip's width in pixels.</param>
+    /// <param name="canvasHeight">The canvas clip's height in pixels.</param>
+    /// <param name="textScale">The text size setting as a factor.</param>
+    /// <returns>The Fit zoom for the new layout.</returns>
+    internal double Relayout(double canvasWidth, double canvasHeight, double textScale)
+    {
+        ArgumentNullException.ThrowIfNull(Nodes);
+        throw new NotSupportedException();
+    }
+
     /// <summary>A graph read again keeps the node that was selected (by id), so a live refresh doesn't drop the keyboard's place.</summary>
     /// <param name="before">The graph shown until now, or null.</param>
     /// <param name="after">The graph just built.</param>

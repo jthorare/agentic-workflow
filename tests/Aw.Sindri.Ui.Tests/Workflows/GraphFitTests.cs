@@ -132,4 +132,25 @@ public sealed class GraphFitTests
 
         Assert.Empty(fit.ReturnLanes.Where(lane => lane.Overlaps(map)));
     }
+
+    // The server lays out 280 px apart; the cards are 290 wide, so served x would overlap by 10 px. The canvas places the cards itself.
+    [Theory]
+    [InlineData(4)]
+    [InlineData(16)]
+    [InlineData(40)]
+    public async Task No_two_cards_overlap_after_the_canvas_lays_the_graph_out(int count)
+    {
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        var ids = Enumerable.Range(0, count).Select(i => string.Create(inv, $"s{i}")).ToList();
+        var nodes = "[" + string.Join(",", ids.Select(id => "{\"id\":\"" + id + "\",\"type\":\"code\",\"title\":\"" + id + "\",\"config\":{}}")) + "]";
+        var edges = "[" + string.Join(",", ids.Skip(1).Select((id, i) => "{\"from\":\"" + ids[i] + "\",\"to\":\"" + id + "\"}")) + "]";
+        var positions = "[" + string.Join(",", ids.Select((id, i) => "{\"node\":\"" + id + "\",\"x\":" + (i * 280).ToString(inv) + ",\"y\":0}")) + "]";
+        var graph = await WorkflowGraphViewModelTests.GraphOf(new WorkflowsFixture(), nodes, edges, positions);
+
+        _ = graph.Relayout(CanvasWidth, CanvasHeight, 1.0);
+
+        var boxes = graph.Nodes.Select(n => new GraphBox(n.X, n.Y, WorkflowGraphViewModel.CardWidth, WorkflowGraphViewModel.CardHeight)).ToList();
+        Assert.Equal(count, boxes.Count);
+        Assert.DoesNotContain(boxes.SelectMany((a, i) => boxes.Skip(i + 1).Select(b => a.Overlaps(b))), overlap => overlap);
+    }
 }
