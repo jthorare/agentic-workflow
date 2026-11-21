@@ -39,7 +39,7 @@ public sealed class GraphFitTests
     {
         List<IReadOnlyList<string>> layers = [["start"], ["step_1"], ["step_2"], ["step_3"], ["step_4"], ["step_5"], ["gate"], ["big_path", "small_path"]];
         List<(string, string)> edges = [("start", "step_1"), ("step_1", "step_2"), ("step_2", "step_3"), ("step_3", "step_4"), ("step_4", "step_5"), ("step_5", "gate"), ("gate", "big_path"), ("gate", "small_path")];
-        var steps = tail == 0 ? new[] { "step_6", "step_7", "step_8", "step_9", "step_10", "step_11", "step_12" } : new[] { "step_6", "step_7", "step_8", "step_9", "step_10", "step_12" };
+        string[] steps = tail == 0 ? ["step_6", "step_7", "step_8", "step_9", "step_10", "step_11", "step_12"] : ["step_6", "step_7", "step_8", "step_9", "step_10", "step_12"];
         var previous = "big_path";
         foreach (var id in steps)
         {
@@ -100,10 +100,8 @@ public sealed class GraphFitTests
     }
 
     [Fact]
-    public void Fit_of_the_16_step_release_at_130_percent_text_is_83_percent()
-    {
+    public void Fit_of_the_16_step_release_at_130_percent_text_is_83_percent() =>
         Assert.Equal(0.83, GraphFit.Compute(Release(0), CanvasWidth, CanvasHeight, 1.3).Zoom, 3);
-    }
 
     [Fact]
     public void Fit_never_scrolls_sideways_when_the_floor_binds()
@@ -155,12 +153,7 @@ public sealed class GraphFitTests
     [InlineData(40)]
     public async Task No_two_cards_overlap_after_the_canvas_lays_the_graph_out(int count)
     {
-        var inv = System.Globalization.CultureInfo.InvariantCulture;
-        var ids = Enumerable.Range(0, count).Select(i => string.Create(inv, $"s{i}")).ToList();
-        var nodes = "[" + string.Join(",", ids.Select(id => "{\"id\":\"" + id + "\",\"type\":\"code\",\"title\":\"" + id + "\",\"config\":{}}")) + "]";
-        var edges = "[" + string.Join(",", ids.Skip(1).Select((id, i) => "{\"from\":\"" + ids[i] + "\",\"to\":\"" + id + "\"}")) + "]";
-        var positions = "[" + string.Join(",", ids.Select((id, i) => "{\"node\":\"" + id + "\",\"x\":" + (i * 280).ToString(inv) + ",\"y\":0}")) + "]";
-        var graph = await WorkflowGraphViewModelTests.GraphOf(new WorkflowsFixture(), nodes, edges, positions);
+        var graph = await ChainGraph.Of(count);
 
         _ = graph.Relayout(CanvasWidth, CanvasHeight, 1.0);
 

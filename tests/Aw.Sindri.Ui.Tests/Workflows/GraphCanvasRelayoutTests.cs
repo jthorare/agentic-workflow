@@ -17,15 +17,7 @@ public sealed class GraphCanvasRelayoutTests
     private static Task<T> OnUi<T>(Func<T> body) =>
         HeadlessUnitTestSession.GetOrStartForAssembly(typeof(GraphCanvasRelayoutTests).Assembly).Dispatch(body, TestContext.Current.CancellationToken);
 
-    private static Task<WorkflowGraphViewModel> Release()
-    {
-        var inv = System.Globalization.CultureInfo.InvariantCulture;
-        var ids = Enumerable.Range(0, 16).Select(i => string.Create(inv, $"s{i}")).ToList();
-        var nodes = "[" + string.Join(",", ids.Select(id => "{\"id\":\"" + id + "\",\"type\":\"code\",\"title\":\"" + id + "\",\"config\":{}}")) + "]";
-        var edges = "[" + string.Join(",", ids.Skip(1).Select((id, i) => "{\"from\":\"" + ids[i] + "\",\"to\":\"" + id + "\"}")) + "]";
-        var positions = "[" + string.Join(",", ids.Select((id, i) => "{\"node\":\"" + id + "\",\"x\":" + (i * 280).ToString(inv) + ",\"y\":0}")) + "]";
-        return WorkflowGraphViewModelTests.GraphOf(new WorkflowsFixture(), nodes, edges, positions);
-    }
+    private static Task<WorkflowGraphViewModel> Release() => ChainGraph.Of(16);
 
     private static void Settle(Window window)
     {

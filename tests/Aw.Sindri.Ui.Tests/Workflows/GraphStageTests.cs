@@ -14,15 +14,7 @@ public sealed class GraphStageTests
     private static Task<T> OnUi<T>(Func<T> body) =>
         HeadlessUnitTestSession.GetOrStartForAssembly(typeof(GraphStageTests).Assembly).Dispatch(body, TestContext.Current.CancellationToken);
 
-    private static async Task<WorkflowGraphViewModel> Chain(int count)
-    {
-        var inv = System.Globalization.CultureInfo.InvariantCulture;
-        var ids = Enumerable.Range(0, count).Select(i => string.Create(inv, $"s{i}")).ToList();
-        var nodes = "[" + string.Join(",", ids.Select(id => "{\"id\":\"" + id + "\",\"type\":\"code\",\"title\":\"" + id + "\",\"config\":{}}")) + "]";
-        var edges = "[" + string.Join(",", ids.Skip(1).Select((id, i) => "{\"from\":\"" + ids[i] + "\",\"to\":\"" + id + "\"}")) + "]";
-        var positions = "[" + string.Join(",", ids.Select((id, i) => "{\"node\":\"" + id + "\",\"x\":" + (i * 280).ToString(inv) + ",\"y\":0}")) + "]";
-        return await WorkflowGraphViewModelTests.GraphOf(new WorkflowsFixture(), nodes, edges, positions);
-    }
+    private static Task<WorkflowGraphViewModel> Chain(int count) => ChainGraph.Of(count);
 
     private static void Settle(Window window)
     {
@@ -52,7 +44,7 @@ public sealed class GraphStageTests
                 Settle(window);
                 _ = graph.SelectNode("s3");
                 Settle(window);
-                return (atFit, MapAfterZoom: stage.Map.IsVisible, Same: relayouts == graph.RelayoutCount, Outlined: stage.Map.Nodes.Where(n => n.Selected).Count());
+                return (atFit, MapAfterZoom: stage.Map.IsVisible, Same: relayouts == graph.RelayoutCount, Outlined: stage.Map.Nodes.Count(n => n.Selected));
             }
             finally
             {

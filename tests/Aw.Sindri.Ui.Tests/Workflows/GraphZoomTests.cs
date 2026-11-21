@@ -28,7 +28,7 @@ public sealed class GraphZoomTests
 
         Assert.False(GraphZoom.Scrolls(fit.Width, fit.Height, fit.Zoom, clip));   // hidden at Fit with no overflow
 
-        var twice = GraphZoom.Next(GraphZoom.Next((int)Math.Round(fit.Zoom * 100))) / 100.0;   // 98 -> 100 -> 110
+        var twice = GraphZoom.Next(GraphZoom.Next((int)Math.Round(fit.Zoom * 100, MidpointRounding.AwayFromZero))) / 100.0;   // 98 -> 100 -> 110
 
         Assert.True(GraphZoom.Scrolls(fit.Width, fit.Height, twice, clip));   // shown after two + clicks
     }
@@ -65,10 +65,8 @@ public sealed class GraphZoomTests
     }
 
     [Fact]
-    public void Pan_cannot_leave_the_top_left()
-    {
+    public void Pan_cannot_leave_the_top_left() =>
         Assert.Equal((0, 0), GraphZoom.ClampPan((30, 40), (3000, 3000), 1.0, _clip));
-    }
 
     [Theory]
     [InlineData(900, 140, 16, 744)]

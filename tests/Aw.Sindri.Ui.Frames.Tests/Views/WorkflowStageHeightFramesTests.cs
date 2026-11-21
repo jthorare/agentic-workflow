@@ -1,4 +1,6 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
@@ -22,7 +24,7 @@ public sealed class WorkflowStageHeightFramesTests : FrameHost
         await Until(window, () => Visible(window, "RunsPanel"), "the graph never showed");
         Settle(window);
         var panel = Named<Border>(window, "RunsPanel");
-        return (panel.Bounds.Height, panel.TranslatePoint(new Avalonia.Point(0, panel.Bounds.Height), window)!.Value.Y, window.Bounds.Height);
+        return (panel.Bounds.Height, panel.TranslatePoint(new Point(0, panel.Bounds.Height), window)!.Value.Y, window.Bounds.Height);
     }
 
     private const string WorkflowsSlug = "waiting-on-review";
