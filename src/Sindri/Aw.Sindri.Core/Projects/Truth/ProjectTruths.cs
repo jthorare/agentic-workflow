@@ -99,25 +99,27 @@ public static class ProjectTruths
         return new ProjectTruthPr(url, pull.Repo, pull.Number, pull.Title, state, decidedAt, waitingOn);
     }
 
-    // null when there is no open PR to judge by; offTrack at half red or more, atRisk at any red, unknown when none is red but some were never checked
+    // null when no PR is open (drafts are not open); every count and the sentence read the same open set; offTrack at half red or more, atRisk at any red,
+    // unknown when none is red but some have no CI summary on their current head
     private static ProjectTruthHealth? HealthOf(List<ProjectTruthPr> prs)
     {
         var open = prs.Where(static p => p.State != ProjectPrState.Draft).ToList();
-        if (prs.Count == 0)
+        if (open.Count == 0)
         {
             return null;
         }
 
         var red = open.Count(static p => p.State == ProjectPrState.CiRed);
         var unknown = open.Count(static p => p.State == ProjectPrState.Unknown);
-        var total = prs.Count;
-        var tail = unknown > 0 ? string.Create(CultureInfo.InvariantCulture, $", {unknown} unknown") : string.Empty;
+        var total = open.Count;
+        var noun = total == 1 ? "PR" : "PRs";
+        var tail = unknown > 0 ? string.Create(CultureInfo.InvariantCulture, $", {unknown} not checked yet") : string.Empty;
         return red > 0 && red * 2 >= total
-            ? new ProjectTruthHealth(ProjectTruthLevel.OffTrack, string.Create(CultureInfo.InvariantCulture, $"Off track: {red} of {total} PRs red{tail}"))
+            ? new ProjectTruthHealth(ProjectTruthLevel.OffTrack, string.Create(CultureInfo.InvariantCulture, $"Off track: {red} of {total} {noun} red{tail}"))
             : red > 0
-                ? new ProjectTruthHealth(ProjectTruthLevel.AtRisk, string.Create(CultureInfo.InvariantCulture, $"At risk: {red} of {total} PRs red{tail}"))
+                ? new ProjectTruthHealth(ProjectTruthLevel.AtRisk, string.Create(CultureInfo.InvariantCulture, $"At risk: {red} of {total} {noun} red{tail}"))
                 : unknown > 0
-                    ? new ProjectTruthHealth(ProjectTruthLevel.Unknown, string.Create(CultureInfo.InvariantCulture, $"CI unknown for {unknown} of {total} PRs"))
-                    : new ProjectTruthHealth(ProjectTruthLevel.OnTrack, string.Create(CultureInfo.InvariantCulture, $"On track: {total} open {(total == 1 ? "PR" : "PRs")}, none red"));
+                    ? new ProjectTruthHealth(ProjectTruthLevel.Unknown, string.Create(CultureInfo.InvariantCulture, $"CI not checked yet for {unknown} of {total} {noun}"))
+                    : new ProjectTruthHealth(ProjectTruthLevel.OnTrack, string.Create(CultureInfo.InvariantCulture, $"On track: {total} open {noun}, none red"));
     }
 }
