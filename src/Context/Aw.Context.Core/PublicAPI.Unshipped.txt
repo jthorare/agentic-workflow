@@ -12542,3 +12542,5 @@ Aw.Context.Core.Engine.ContextQuery.Window.get -> Aw.Context.Core.Engine.QueryWi
 Aw.Context.Core.Engine.ContextQuery.Window.init -> void
 Aw.Context.Core.Results.ContextResult.Matches.get -> Aw.Context.Core.Results.RecordMatches?
 Aw.Context.Core.Results.ContextResult.Matches.init -> void
+Aw.Context.Core.Symbols.CodeIndexHead.GraphOff.get -> bool
+Aw.Context.Core.Symbols.CodeIndexHead.GraphOff.init -> void
