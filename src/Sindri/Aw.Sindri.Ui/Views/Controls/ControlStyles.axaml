@@ -402,12 +402,8 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Border Name="PART_Chrome" Background="Transparent" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.MD}" MinHeight="56" Padding="16,12">
-          <StackPanel>
-            <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}"
-                              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
-            <!-- #3651: why the choice is unavailable, under the label. A screen reader gets it as the tile's help text, so this line is raw for it. -->
-            <TextBlock Name="PART_Reason" Classes="caption subtle" IsVisible="False" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-          </StackPanel>
+          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
         </Border>
       </ControlTemplate>
     </Setter>
@@ -445,8 +441,12 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Border Name="PART_Chrome" Background="Transparent" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.SM}" MinHeight="28" Padding="12,4">
-          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}"
-                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+          <StackPanel>
+            <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}"
+                              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+            <!-- #3651: why the choice is unavailable, under the label. A screen reader gets it as the tile's help text, so this line is raw for it. -->
+            <TextBlock Name="PART_Reason" Classes="caption subtle" Text="" IsVisible="False" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          </StackPanel>
         </Border>
       </ControlTemplate>
     </Setter>

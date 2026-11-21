@@ -122,6 +122,7 @@ public sealed class ListPickerTests
         picker.Picked += (_, e) => picked.Add(e.Value);
         picker.Closed += (_, _) => closed++;
         _ = picker.FocusFirst();
+        window.KeyPressQwerty(PhysicalKey.ArrowDown, RawInputModifiers.None);   // the disabled webhook row takes focus too (#3651)
         window.KeyPressQwerty(PhysicalKey.ArrowDown, RawInputModifiers.None);
 
         window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
