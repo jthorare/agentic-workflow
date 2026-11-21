@@ -100,6 +100,22 @@ public sealed class ListWorkflowsRowTests
     }
 
     [Fact]
+    public async Task A_schedule_with_a_timezone_that_is_not_a_string_lists_with_no_next_run_and_the_other_rows_are_unchanged()
+    {
+        var odd = await Create(1, "odd-zone", "schedule", "0 7 * * *", JsonValue.Create(5));
+        var sum = await Create(2, "sum", "schedule", "*/20 * * * *");
+        foreach (var id in new[] { odd, sum })
+        {
+            _ = (await _workflows.Activate(id, 1, Token)).Value;
+        }
+
+        var rows = (await _service.Handle(new ListWorkflowsRequest(), Token)).Value.Workflows.ToDictionary(static w => w.Slug.Value, StringComparer.Ordinal);
+
+        Assert.Null(rows["odd-zone"].NextRunAt);
+        Assert.Equal(new DateTimeOffset(2026, 11, 14, 11, 0, 0, TimeSpan.Zero), rows["sum"].NextRunAt);
+    }
+
+    [Fact]
     public async Task A_workflow_turned_off_after_it_was_on_is_paused_and_one_never_turned_on_is_not()
     {
         var nightly = await Create(1, "nightly", "schedule", "0 2 * * *");
@@ -116,14 +132,14 @@ public sealed class ListWorkflowsRowTests
         Assert.False(rows["hand"].Paused);   // active
     }
 
-    private static GraphSpec Spec(string name, string type, string? cron) =>
+    private static GraphSpec Spec(string name, string type, string? cron, JsonNode? timezone = null) =>
         new(Version: 1, name, Description: null, Concurrency: null, Resources: null,
-            Nodes: [new GraphNode(NodeId.From("start"), type, Title: null, cron is null ? [] : new JsonObject { ["cron"] = cron, ["timezone"] = "UTC" })], Edges: []);
+            Nodes: [new GraphNode(NodeId.From("start"), type, Title: null, cron is null ? [] : new JsonObject { ["cron"] = cron, ["timezone"] = timezone ?? "UTC" })], Edges: []);
 
-    private async Task<WorkflowId> Create(int number, string slug, string type, string? cron)
+    private async Task<WorkflowId> Create(int number, string slug, string type, string? cron, JsonNode? timezone = null)
     {
         var id = WorkflowId.From("WF-" + number.ToString("D32", System.Globalization.CultureInfo.InvariantCulture));
-        _ = (await _workflows.Create(id, WorkflowSlug.From(slug), Spec(slug, type, cron), "owner", Token)).Value;
+        _ = (await _workflows.Create(id, WorkflowSlug.From(slug), Spec(slug, type, cron, timezone), "owner", Token)).Value;
         return id;
     }
 
