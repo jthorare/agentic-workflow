@@ -22,6 +22,7 @@ bash scripts/tests/check-library-schemas.test.sh # schemas/library/design-doc.sc
 bash scripts/tests/check-library-fixtures.test.sh # tests/fixtures/library/ (made-up design docs) against its expected.json, the contract the C# parser's tests share: every .md listed, every SND-LIB-010..019 has a fixture, good front matter passes $defs/frontMatter, broken fails, generated shas match (node scripts/check-library-fixtures.mjs; Ajv as above)
 bash scripts/tests/check-profile-doc.test.sh # docs/csharp/sindri-profile.md names every SindriProfile key (node scripts/check-profile-doc.mjs)
 bash scripts/tests/scaffold.test.sh
+bash scripts/tests/scaffold-e2e.test.sh   # scripts/scaffold/e2e.sh with stub node and dotnet in a throwaway repo: the cli tree holds no build output when the http step starts, no whole-solution build, one `e2e: <step> <N>s` line per step, TMPDIR left empty (#3700)
 bash scripts/tests/check-env-example.test.sh
 bash scripts/tests/check-skills-toolkit.test.sh   # scripts/check-skills-toolkit.sh and scripts/skills-toolkit-rewrite.sh on fixture trees: a bare toolkit path or a hand-spelled per-repo path fails with file:line, the rewrite is idempotent
 bash scripts/tests/check-skill-requires.test.sh   # scripts/check-skill-requires.sh on fixture skills: good, missing sidecar, empty file, unknown key, unknown agent, unknown mcp, unknown bin (and a stub), missing or misplaced gate line, two Result blocks, an opening that never runs the gate or runs it after the first heading, the unswept list (skipped, stale and unknown entries), usage errors, then the real tree
@@ -134,6 +135,8 @@ bash scripts/tests/install-tmux.test.sh       # install-tmux.sh on a temp HOME a
 bash scripts/tests/external-packs.test.sh    # scripts/lib/external-packs.sh: fetch_external_pack on local git repos, the unpinned vercel-labs/ui pack follows upstream, a pinned pack stays, the subdir arg links only the user skill, setup.sh and the pin files (#3458)
 bash scripts/tests/result-gate.test.sh   # every skill's Result-block gate prints AW_RESULT and a non-empty AW_DIR, run alone in a fresh shell (#2036)
 bash config/hooks/tests/failopen.test.sh
+bash config/hooks/tests/block-destructive.test.sh   # config/hooks/block-destructive.sh (#3621): each destructive rule blocks with the reason on stderr and none on stdout; quoted text, a heredoc body or a grep pattern that names one is not a command; a shell -c string is still judged
+bash config/hooks/tests/block-push-main.test.sh   # config/hooks/block-push-main.sh (#3621) in a temp git repo: a real push to main or master is blocked with the reason on stderr and none on stdout; a heredoc body, quoted text, an echo or a later checkout of main is not a push
 bash config/hooks/tests/meta-hooks.test.sh
 for t in config/lib/tests/*.test.sh; do bash "$t" || echo "FAILED: $t"; done  # merge-hook, levers, installers, judge-cs-hook-surface (the hook contract: real hooks vs the C# judge; needs dotnet) and sindri-cs-hook-surface (the sindri-nudge SessionStart hook vs the C# `sindri repo status --nudge`: one line, silence, exit 0, read-only, bounded; builds the Sindri host, needs dotnet)
 ```

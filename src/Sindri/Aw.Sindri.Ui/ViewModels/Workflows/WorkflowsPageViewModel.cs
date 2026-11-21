@@ -35,6 +35,8 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         Run = new RunDetailViewModel(api, clock);
         Editor = new OpsEditor(api);
         GraphEdit = new GraphEditViewModel(Editor, Runs, () => _url);   // made with the page, not on first read: the canvas's Delete key raises on the graph, and the edit bar must already be listening
+        Runs.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Runs.Title)) { NotifyCrumb(); } };
+        Run.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Run.Id)) { NotifyCrumb(); } };
         WatchEditor();
     }
 
@@ -57,8 +59,18 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>The retry action's words.</summary>
     public string RetryText => Labels.WfTryAgain;
 
-    /// <summary>The way back up a level.</summary>
-    public string BackText => Labels.WfBack;
+    /// <summary>The header's big title: the page on the list, the workflow's name on its runs, the run's id on a run.</summary>
+    public string PageTitle => _level switch { Level.Runs => Runs.Title, Level.Run => Run.Id, Level.List => Labels.Workflows, _ => Labels.Workflows };
+
+    /// <summary>The crumb above the title: "Workflows" from a workflow's runs, the workflow's name from a run.</summary>
+    public string CrumbText => _level == Level.Run ? Runs.Title : Labels.Workflows;
+
+    private void NotifyCrumb()
+    {
+        OnChanged(nameof(PageTitle));
+        OnChanged(nameof(CrumbText));
+    }
+
 #pragma warning restore CA1822, MA0041
 
     /// <summary>The workflows, by slug as the API serves them.</summary>
@@ -68,7 +80,24 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     public string Head { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when the head has a count to show (at least one workflow).</summary>
-    public bool HasHead { get; private set => Set(ref field, value); }
+    public bool HasHead { get; private set { Set(ref field, value); OnChanged(nameof(ShowsListHead)); } }
+
+    /// <summary>True when the list's counts show beside the title: on the list only, never beside one workflow's or run's title.</summary>
+    public bool ShowsListHead => IsList && HasHead;
+
+    /// <summary>True when the open workflow's own state shows beside its title (on its runs level).</summary>
+    public bool ShowsDetailState => IsRuns && DetailStateText.Length > 0;
+
+    /// <summary>The open workflow's state, as its list row says it ("● Active", "○ Off"): from the workflow read, else from the list row; empty when neither is known.</summary>
+    public string DetailStateText => Runs.Shown is { } shown
+        ? StateOf(shown.ActiveRevision is not null)
+        : Rows.FirstOrDefault(r => string.Equals(r.Slug, Runs.Slug, StringComparison.Ordinal)) is { } row ? StateOf(row.IsActive) : string.Empty;
+
+    private static string StateOf(bool active)
+    {
+        var (glyph, word) = Labels.WfState(active);
+        return glyph + " " + word;
+    }
 
 #pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
     /// <summary>The empty state's create action: "New workflow".</summary>
@@ -197,8 +226,13 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         _level = level;
         CloseEditor();   // the sheet edits the workflow it was opened on: leaving the runs level ends it, so Save never writes to the wrong one
         OnChanged(nameof(IsList));
+        OnChanged(nameof(ShowsHeaderNew));
+        NotifyCrumb();
         OnChanged(nameof(IsRuns));
         OnChanged(nameof(IsRun));
+        OnChanged(nameof(ShowsListHead));
+        OnChanged(nameof(ShowsDetailState));
+        OnChanged(nameof(DetailStateText));
         NotifyStateButtons();
     }
 
@@ -235,6 +269,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         (HasHead, Head) = rows.Count == 0 ? (false, string.Empty) : (true, Labels.WfHead(rows.Count, rows.Count(r => r.IsActive)));
         (IsEmpty, EmptyText) = rows.Count == 0 ? (true, Labels.WfNone) : (false, string.Empty);
         OnChanged(nameof(ShowsEmpty));
+        OnChanged(nameof(ShowsHeaderNew));
         NotifyCreate();   // a short id the list now holds is taken
         NotifyStateButtons();
     }
