@@ -352,7 +352,7 @@
                           <ColumnDefinition Width="*" />
                           <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Classes="body-strong" Margin="0,0,16,0" Text="{Binding Name}" AutomationProperties.Name="{Binding Name}" />
+                        <TextBlock Classes="body-strong" Margin="0,8,16,8" Text="{Binding Name}" AutomationProperties.Name="{Binding Name}" />
                         <TextBlock Grid.Column="1" Classes="body muted" Text="{Binding Every}" AutomationProperties.Name="{Binding Every}" />
                         <TextBlock Grid.Column="2" Classes="body subtle" Text="{Binding LastRun}" AutomationProperties.Name="{Binding LastRun}" />
                       </Grid>
