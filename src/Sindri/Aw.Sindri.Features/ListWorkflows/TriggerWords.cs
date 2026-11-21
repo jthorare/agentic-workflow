@@ -57,7 +57,13 @@ internal static class TriggerWords
             return null;
         }
 
-        var timezone = node.Config["timezone"]?.GetValue<string>();
+        // why: validate does not check the type of a timezone, so a stored number or list reaches here; GetValue<string>() would throw and 500 the whole list for one row, so that row shows no next run
+        string? timezone = null;
+        if (node.Config["timezone"] is { } zone && !(zone is JsonValue value && value.TryGetValue(out timezone)))
+        {
+            return null;
+        }
+
         DateTimeOffset? soonest = null;
         foreach (var text in Crons(node))
         {
