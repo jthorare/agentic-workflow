@@ -146,4 +146,52 @@ public sealed class WholeMapAreaTilesTests
 
         Assert.Equal(["code:src/F001.cs"], picked);
     }
+
+    [Fact]
+    public void A_list_read_shows_the_skeleton_then_the_rows_and_a_failed_one_keeps_the_rows_with_one_retry()
+    {
+        var map = Shown(Repo(200, _three));
+        map.ShowSearchList(Hits(3));
+        var retried = 0;
+
+        map.ListReading();
+        Assert.Equal((true, false, 8), (map.ListLoading, map.IsListFailed, map.SkeletonRows.Count));
+
+        map.ListReadFailed(() => retried++);
+        Assert.Equal((false, true, 3), (map.ListLoading, map.IsListFailed, map.Items.Count));
+
+        map.RetryList();
+        Assert.Equal(1, retried);
+    }
+
+    [Fact]
+    public void The_bracket_keys_turn_the_pages_of_a_list_stop_at_the_ends_and_belong_to_no_one_when_no_list_shows()
+    {
+        var map = Shown(Repo(200, _three));
+        Assert.False(map.PageKey(next: true));
+
+        map.ShowSearchList(Hits(120));
+        Assert.True(map.PageKey(next: false));
+        Assert.Equal(1, map.AreaPage);
+
+        _ = map.PageKey(next: true);
+        _ = map.PageKey(next: true);
+        _ = map.PageKey(next: true);
+        Assert.Equal(3, map.AreaPage);
+    }
+
+    [Fact]
+    public void Closing_an_area_returns_focus_to_the_tile_it_was_opened_from()
+    {
+        var map = Shown(Repo(200, _three));
+        var returned = new List<string>();
+        map.FocusReturned += (_, e) => returned.Add(e.Value);
+        map.OpenTile("feature:billing");
+        map.ShowArea(WholeMapLayoutTests.Draft("area-open"));
+        var key = WholeMapLayoutTests.Draft("area-open").Area!.Key;
+
+        map.CloseArea();
+
+        Assert.Equal([key], returned);
+    }
 }

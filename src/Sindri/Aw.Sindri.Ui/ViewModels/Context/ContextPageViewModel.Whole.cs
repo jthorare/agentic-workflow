@@ -196,7 +196,17 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
+        if (page > 1)
+        {
+            Whole.ListReading();   // a page turn: skeleton rows; the first read of an area has no list on screen yet
+        }
+
         var read = await Ports.Api.WholeMap(api, new WholeMapQuery("nodes", area, [], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId, Page: page), cancellationToken).ConfigureAwait(true);
+        if (!read.IsSuccess && page > 1)
+        {
+            Whole.ListReadFailed(() => _ = OpenWholeAreaPage(area, page, CancellationToken.None));
+        }
+
         if (read.IsSuccess)
         {
             Whole.ShowArea(read.Value);
@@ -224,7 +234,13 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
+        Whole.ListReading();
         var read = await Ports.Api.WholeMap(api, new WholeMapQuery("nodes", Area: null, [], MapVersion: null, Draft: false, Repo: _repo, Concept: concept, Page: page, ConceptTab: tab), cancellationToken).ConfigureAwait(true);
+        if (!read.IsSuccess)
+        {
+            Whole.ListReadFailed(() => _ = OpenConceptList(tab, page, CancellationToken.None));
+        }
+
         if (read.IsSuccess && string.Equals(OpenedConceptId, concept, StringComparison.Ordinal))
         {
             Whole.Show(read.Value);

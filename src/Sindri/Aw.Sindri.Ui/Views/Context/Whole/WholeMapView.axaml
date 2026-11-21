@@ -26,6 +26,10 @@
     <Style Selector="Button.tab">
       <Setter Property="Background" Value="Transparent" />
     </Style>
+    <Style Selector="Button.tab:focus-visible, Button.tile:focus-visible">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+      <Setter Property="BorderThickness" Value="2" />
+    </Style>
     <Style Selector="Button.tab.selected">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
     </Style>
@@ -90,7 +94,7 @@
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:AreaCard">
-                  <Button Width="220" Margin="0,0,8,8" Padding="12,10" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" Click="OnAreaCard" AutomationProperties.Name="{Binding Name}">
+                  <Button Classes="tile" Width="220" Margin="0,0,8,8" Padding="12,10" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" Click="OnAreaCard" AutomationProperties.Name="{Binding Name}">
                     <StackPanel Spacing="4">
                       <TextBlock Classes="body-strong" Text="{Binding Label}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
                       <TextBlock Classes="caption subtle" Text="{Binding Counts}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
@@ -119,6 +123,10 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
+          <StackPanel x:Name="WholeListFailed" Grid.Row="1" Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsListFailed}">
+            <TextBlock Classes="body" Text="{Binding ListFailedText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding ListFailedText}" />
+            <Button x:Name="WholeListRetry" Content="{Binding RetryText}" Click="OnListRetry" AutomationProperties.Name="{Binding RetryText}" />
+          </StackPanel>
           <TextBlock x:Name="WholeConceptEmpty" Grid.Row="1" Classes="body" Text="{x:Static vm:WholeMapViewModel.ConceptEmptyText}" IsVisible="{Binding ShowConceptEmpty}" AutomationProperties.Name="{x:Static vm:WholeMapViewModel.ConceptEmptyText}" />
           <ListBox x:Name="WholeAreaList" Grid.Row="2" ItemsSource="{Binding Items}" AutomationProperties.Name="{x:Static vm:WholeMapViewModel.AreaListName}" Tapped="OnAreaListTapped">
             <ListBox.ItemTemplate>
@@ -127,6 +135,13 @@
               </DataTemplate>
             </ListBox.ItemTemplate>
           </ListBox>
+          <ItemsControl x:Name="WholeListSkeleton" Grid.Row="2" ItemsSource="{Binding SkeletonRows}" IsVisible="{Binding ListLoading}" IsHitTestVisible="False" Background="{DynamicResource Brush.Surface1}" AutomationProperties.Name="{Binding ListLoadingText}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="x:Int32">
+                <Border Height="20" Margin="0,0,0,10" CornerRadius="{StaticResource Radius.SM}" Background="{DynamicResource Brush.Surface3}" Opacity="0.6" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
           <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasAreaPages}">
             <Button x:Name="WholeAreaPrevious" Content="{x:Static vm:WholeMapViewModel.PreviousPageText}" IsEnabled="{Binding CanPreviousPage}" Click="OnAreaPrevious" />
             <TextBlock x:Name="WholeAreaPageText" Classes="caption subtle" Text="{Binding AreaPageText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding AreaPageText}" />

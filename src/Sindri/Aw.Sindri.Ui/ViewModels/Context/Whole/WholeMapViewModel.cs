@@ -27,6 +27,11 @@ internal sealed partial class WholeMapViewModel : ObservableObject
         Panel = new NodePanelViewModel(LookUp, Jump);
         Panel.PropertyChanged += (_, e) =>
         {
+            if (string.Equals(e.PropertyName, nameof(Panel.IsOpen), StringComparison.Ordinal) && !Panel.IsOpen && ShowAreaList)
+            {
+                ReturnFocus(_lastChosen);   // Esc shut the node's panel: back to the row it came from
+            }
+
             if (HasConcept && (string.Equals(e.PropertyName, nameof(Panel.IsOpen), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(Panel.Title), StringComparison.Ordinal)))
             {
                 OnChanged(nameof(Crumbs));   // the node you are on is the last step
@@ -182,6 +187,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
         (HitKeys, IsZoomed, MoreTouchedText, _zoomSet) = (new HashSet<string>(StringComparer.Ordinal), false, string.Empty, null);
         (SearchActive, NoMatches, _searchSet) = (false, false, null);
         Answer = answer;
+        (ListLoading, IsListFailed) = (false, false);
         Geometry = WholeMapLayout.Place(answer);
         ForgetHighlight();
         Head = Labels.ContextWholeHead(answer.MapVersion);
@@ -218,6 +224,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
 
         _overview ??= (Answer, Geometry, Areas);
         Answer = answer;
+        (ListLoading, IsListFailed) = (false, false);
         Geometry = null;   // the list draws from the answer now; the canvas follows once its layout is done, off the UI thread
         Stage = WholeDrillIn.StageFor(answer.Nodes?.Count ?? 0);
         (AreaKey, AreaPage, AreaPages) = (opened.Key, opened.Page, opened.Pages);
@@ -241,6 +248,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
         }
 
         _layoutRun++;   // a layout still running is for the area that was closed
+        var came = AreaKey;
         (Answer, Geometry, Areas) = overview;
         (Stage, AreaKey, AreaPage, AreaPages, AreaLaidOut) = (WholeStage.Canvas, string.Empty, 1, 1, Task.CompletedTask);
         ForgetHighlight();
@@ -249,6 +257,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
         AreaTitle = string.Empty;
         ByAreaNote = string.Empty;
         Changed();
+        ReturnFocus(came);   // Esc lands on the tile the area was opened from
     }
 
     /// <summary>A node was clicked.</summary>
@@ -261,7 +270,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(ShowCrumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(Items), nameof(SelectedItem), nameof(CanvasName), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled), nameof(ShowPages), nameof(ShowAreaList), nameof(IsSearchList), nameof(ShowAreaTiles), nameof(ShowStageTools), nameof(AreaTiles), nameof(AreaTilesHead), nameof(IsConceptList), nameof(ConceptTabs), nameof(ShowConceptEmpty), nameof(HasAreaPages), nameof(AreaPageText), nameof(CanPreviousPage), nameof(CanNextPage), nameof(ShowAreaBar), nameof(AreaBarText), nameof(ShowMoreBelow), nameof(MoreBelowText)])
+        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(ShowCrumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(Items), nameof(SelectedItem), nameof(CanvasName), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled), nameof(ShowPages), nameof(ShowAreaList), nameof(ListLoading), nameof(IsListFailed), nameof(IsSearchList), nameof(ShowAreaTiles), nameof(ShowStageTools), nameof(AreaTiles), nameof(AreaTilesHead), nameof(IsConceptList), nameof(ConceptTabs), nameof(ShowConceptEmpty), nameof(HasAreaPages), nameof(AreaPageText), nameof(CanPreviousPage), nameof(CanNextPage), nameof(ShowAreaBar), nameof(AreaBarText), nameof(ShowMoreBelow), nameof(MoreBelowText)])
         {
             OnChanged(name);
         }

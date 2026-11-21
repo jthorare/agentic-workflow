@@ -66,6 +66,12 @@ internal static partial class Labels
     /// <summary>The accessible name of the overview's tiles.</summary>
     internal const string ContextWholeTilesName = "Areas of the repo, largest first";
 
+    /// <summary>The accessible name of the skeleton rows while a list is read.</summary>
+    internal const string ContextWholeListLoading = "Reading the list…";
+
+    /// <summary>The line when a list could not be read.</summary>
+    internal const string ContextWholeListFailed = "Couldn't read this list";
+
     /// <summary>The accessible name of an opened concept's list.</summary>
     internal const string ContextWholeConceptList = "Files, features and records of this concept, most linked first";
 

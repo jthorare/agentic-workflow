@@ -56,6 +56,7 @@ internal sealed partial class WholeMapViewModel
     internal void ChooseItem(MapItemViewModel item)
     {
         ArgumentNullException.ThrowIfNull(item);
+        Chose(item.Key);
         if (item.IsTile)
         {
             Pinned = item.Key;

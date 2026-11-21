@@ -61,6 +61,7 @@ internal sealed partial class WholeMapViewModel
         (SearchActive, NoMatches, _searchSet) = (false, false, null);
         _layoutRun++;   // a layout still running is for an area that is gone
         Answer = answer;
+        (ListLoading, IsListFailed) = (false, false);
         Geometry = null;
         (ConceptTab, ConceptPage) = (list.Tab, list.Page);
         (AreaKey, AreaPage, AreaPages, AreaLaidOut) = (string.Empty, list.Page, list.Pages, Task.CompletedTask);

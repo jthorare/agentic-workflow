@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 using Aw.Sindri.Ui.ViewModels.Controls;
@@ -69,6 +70,7 @@ internal sealed partial class WholeMapView : UserControl
             old.PropertyChanged -= OnMapChanged;
             old.EmphasisChanged -= OnEmphasisChanged;
             old.CentreRequested -= OnCentreRequested;
+            old.FocusReturned -= OnFocusReturned;
         }
 
         _map = DataContext as WholeMapViewModel;
@@ -80,6 +82,7 @@ internal sealed partial class WholeMapView : UserControl
             _map.PropertyChanged += OnMapChanged;
             _map.EmphasisChanged += OnEmphasisChanged;
             _map.CentreRequested += OnCentreRequested;
+            _map.FocusReturned += OnFocusReturned;
             _fitted = false;
             Arrange();
         }
@@ -89,7 +92,11 @@ internal sealed partial class WholeMapView : UserControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-        if (!e.Handled && e.Source is not TextBox && WholeCanvas.HandleZoomKey(e.Key))
+        if (!e.Handled && e.Source is not TextBox && (e.Key == Key.OemOpenBrackets || e.Key == Key.OemCloseBrackets) && _map?.PageKey(next: e.Key == Key.OemCloseBrackets) == true)
+        {
+            e.Handled = true;   // [ and ] turn the pages of a list
+        }
+        else if (!e.Handled && e.Source is not TextBox && WholeCanvas.HandleZoomKey(e.Key))
         {
             e.Handled = true;
         }
@@ -267,6 +274,21 @@ internal sealed partial class WholeMapView : UserControl
             _map?.ChooseItem(item);
         }
     }
+
+    private void OnListRetry(object? sender, RoutedEventArgs e) => _map?.RetryList();
+
+    // Esc came back to a list or the tiles: focus goes to the tile or row the person left from.
+    private void OnFocusReturned(object? sender, ValueEventArgs<string> e) =>
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            Control? target = this.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.DataContext is AreaCard card && string.Equals(card.Key, e.Value, StringComparison.Ordinal));
+            if (target is null && WholeAreaList.Items.OfType<MapItemViewModel>().FirstOrDefault(i => string.Equals(i.Key, e.Value, StringComparison.Ordinal)) is { } row)
+            {
+                target = WholeAreaList.ContainerFromItem(row);
+            }
+
+            _ = target?.Focus(NavigationMethod.Tab);
+        });
 
     private void OnAreaCard(object? sender, RoutedEventArgs e)
     {

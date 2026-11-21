@@ -43,6 +43,7 @@ internal sealed partial class WholeMapViewModel
     internal void OpenTile(string key)
     {
         ArgumentNullException.ThrowIfNull(key);
+        Chose(key);
         AreaOpenRequested?.Invoke(this, new ValueEventArgs<string>(key));
     }
 
