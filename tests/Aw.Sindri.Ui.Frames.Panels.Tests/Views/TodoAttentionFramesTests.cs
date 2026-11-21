@@ -15,7 +15,7 @@ using Aw.Sindri.Ui.ViewModels.Todo;
 using Aw.Sindri.Ui.Views.Shell;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>The attention rows of the Todo panel on Home under the headless platform (todo spec §3.1, §3.3, §3.4, D11, D13): one frame test per state, from the folded line to the pick's countdown toast.</summary>
 [Lane(TestLane.Integration)]

@@ -17,7 +17,7 @@ using Aw.Sindri.Ui.ViewModels.Todo;
 using Aw.Sindri.Ui.Views.Shell;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>Edit in place and the link list on Home under the headless platform (todo spec §3.3, §3.4): Enter opens the edit, Enter saves, Esc cancels, a typed X is text, O opens the links.</summary>
 [Lane(TestLane.Integration)]

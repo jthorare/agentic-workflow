@@ -16,7 +16,7 @@ using Aw.Sindri.Ui.ViewModels.Todo;
 using Aw.Sindri.Ui.Views;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>Settings' Obsidian todo note card under the headless platform (todo spec §3.4 "Settings card", §3.5): one frame test per state, with the words, the buttons that are drawn and the live region.</summary>
 [Lane(TestLane.Integration)]

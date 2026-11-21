@@ -17,7 +17,7 @@ using Aw.Sindri.Ui.Views.NeedsYou;
 using Aw.Sindri.Ui.Views.Shell;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>The Todo panel's keys on Home under the headless platform (todo spec §3.3, §3.4, D6): the two focus regions, J and K, X, Space and Delete on a row, the toast's Undo and Esc.</summary>
 [Lane(TestLane.Integration)]
