@@ -18,6 +18,7 @@ namespace Aw.Sindri.Testing;
 public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<TerminalFrame> script) : ITerminalPaneSource
 {
     private readonly List<TerminalFrame> _script = [.. script];
+    private readonly List<Stream> _streams = [];
 
     /// <summary>The pane the streams report.</summary>
     public TerminalHost Host { get; } = host;
@@ -42,10 +43,23 @@ public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<Termin
 
     /// <summary>Adds rows to the end of <see cref="History"/> while a stream is open: new output scrolls the screen up (the anchoring check).</summary>
     /// <param name="rows">How many rows.</param>
-    public void AppendHistory(int rows) => throw new NotSupportedException("scrollback is not built yet (#3730)");
+    public void AppendHistory(int rows)
+    {
+        History = [.. History, .. Enumerable.Range(1, rows).Select(n => "new output " + (History.Count + n).ToString(CultureInfo.InvariantCulture))];
+        foreach (var stream in _streams.ToArray())
+        {
+            stream.HistoryGrew(rows);
+        }
+    }
 
     /// <summary>Switches the pane to the alternate screen while a stream is open: its next frame has Alt set.</summary>
-    public void EnterAlternateScreen() => throw new NotSupportedException("scrollback is not built yet (#3730)");
+    public void EnterAlternateScreen()
+    {
+        foreach (var stream in _streams.ToArray())
+        {
+            stream.EnteredAlternateScreen();
+        }
+    }
 
     /// <summary>What the streams were sent, in order: 'key:Enter', 'text:hi', 'paste:…', 'size:120x36', 'scroll:5' (the offset after the clamp).</summary>
     public IList<string> Sent { get; } = [];
@@ -102,10 +116,14 @@ public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<Termin
         private int _next;
         private TerminalFrame? _last;
         private string _typed = string.Empty;
+        private int _back;
+        private bool _alt;
+        private long _seq;
 
         public Stream(FakeTerminalPaneSource owner)
         {
             _owner = owner;
+            _owner._streams.Add(this);
             Capture();
         }
 
@@ -168,8 +186,9 @@ public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<Termin
             _owner.Sent.Add($"text:{text}");
             var rows = _last.Rows.ToList();
             rows[0] += _typed;
-            _last = _last with { Seq = _last.Seq + 1, Rows = rows };
-            _ = _frames.Writer.TryWrite(_last);
+            _last = _last with { Rows = rows };
+            _back = 0;
+            Emit();
             return ValueTask.FromResult<Result<Unit>>(Unit.Value);
         }
 
@@ -187,11 +206,42 @@ public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<Termin
             return ValueTask.FromResult<Result<Unit>>(Unit.Value);
         }
 
-        public ValueTask<Result<Unit>> Scroll(int back, CancellationToken cancellationToken) =>
-            throw new NotSupportedException("scrollback is not built yet (#3730)");
+        public ValueTask<Result<Unit>> Scroll(int back, CancellationToken cancellationToken)
+        {
+            if (_alt || _last is { Alt: true })
+            {
+                return ValueTask.FromResult<Result<Unit>>(Unit.Value);   // the alternate screen has no scrollback
+            }
+
+            _back = Math.Clamp(back, 0, _owner.History.Count);
+            _owner.Sent.Add(string.Create(CultureInfo.InvariantCulture, $"scroll:{_back}"));
+            Emit();
+            return ValueTask.FromResult<Result<Unit>>(Unit.Value);
+        }
+
+        /// <summary>New output scrolled the screen up by <paramref name="rows"/>: a scrolled view moves with it and keeps its lines.</summary>
+        /// <param name="rows">How many rows.</param>
+        public void HistoryGrew(int rows)
+        {
+            if (!_alt && _back > 0)
+            {
+                _back += rows;
+            }
+
+            Emit();
+        }
+
+        /// <summary>The app switched to the alternate screen: the scroll offset is dropped.</summary>
+        public void EnteredAlternateScreen()
+        {
+            _alt = true;
+            _back = 0;
+            Emit();
+        }
 
         public ValueTask DisposeAsync()
         {
+            _ = _owner._streams.Remove(this);
             _owner.Detached++;
             _ = _frames.Writer.TryComplete();
             return ValueTask.CompletedTask;
@@ -203,7 +253,16 @@ public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<Termin
         private ValueTask<Result<Unit>> Sent(string what)
         {
             _owner.Sent.Add(what);
-            Capture();
+            if (_back > 0)
+            {
+                _back = 0;
+                Emit();   // back to the live screen; the script does not advance
+            }
+            else
+            {
+                Capture();
+            }
+
             return ValueTask.FromResult<Result<Unit>>(Unit.Value);
         }
 
@@ -212,8 +271,24 @@ public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<Termin
             if (_next < _owner._script.Count)
             {
                 _last = _owner._script[_next++];
-                _ = _frames.Writer.TryWrite(_last);
+                Emit();
             }
+        }
+
+        /// <summary>Writes the current frame: the live one, or the window of history and screen rows at the scroll offset.</summary>
+        private void Emit()
+        {
+            if (_last is null)
+            {
+                return;
+            }
+
+            var alt = _alt || _last.Alt;
+            var hist = alt ? 0 : _owner.History.Count;
+            var back = alt ? 0 : Math.Clamp(_back, 0, hist);
+            _back = back;
+            var rows = back == 0 ? _last.Rows : [.. _owner.History.Concat(_last.Rows).Skip(hist - back).Take(_last.Height)];
+            _ = _frames.Writer.TryWrite(_last with { Seq = ++_seq, Rows = rows, Alt = alt, Back = back, Hist = hist });
         }
     }
 }

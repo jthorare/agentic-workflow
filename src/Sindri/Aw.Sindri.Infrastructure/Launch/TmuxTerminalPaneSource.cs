@@ -58,6 +58,10 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
     private sealed class PaneStream(TmuxHostOptions options, TerminalTarget target) : IOpenTerminalPane
     {
         private readonly SemaphoreSlim _kick = new(0);
+        private readonly object _view = new();   // guards _back, _hist and _alt: the pump reads them, the receive loop sets them
+        private int _back;   // rows above the live screen the view shows; 0 is live
+        private int _hist;   // the history size of the last capture, 0 on the alternate screen
+        private bool _alt;
         private long _seq;   // per stream, not per enumeration: a reader that comes back gets the next number, so frames always count up
 
         public TerminalHost Host { get; } = new(target.SocketIsPath ? "path" : target.Socket, target.Session, target.Pane);
@@ -73,18 +77,26 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
                     yield break;   // tmux or the session went away: the socket closes with 4016
                 }
 
-                var captured = await Call(["capture-pane", "-e", "-p", "-t", target.Pane], stdin: null, cancellationToken).ConfigureAwait(false);
+                var (back, hist) = View(facts);
+                string[] captureArgs = back == 0
+                    ? ["capture-pane", "-e", "-p", "-t", target.Pane]
+                    : [
+                        "capture-pane", "-e", "-p", "-t", target.Pane,
+                        "-S", (-back).ToString(CultureInfo.InvariantCulture),
+                        "-E", (facts.Height - 1 - back).ToString(CultureInfo.InvariantCulture),
+                    ];
+                var captured = await Call(captureArgs, stdin: null, cancellationToken).ConfigureAwait(false);
                 if (captured.ExitCode != 0)
                 {
                     yield break;
                 }
 
                 var rows = Rows(captured.Output, facts.Height);
-                var signature = string.Join('\n', rows) + facts.Signature;
+                var signature = string.Join('\n', rows) + facts.Signature + "|" + back.ToString(CultureInfo.InvariantCulture) + "," + hist.ToString(CultureInfo.InvariantCulture);
                 if (!string.Equals(signature, last, StringComparison.Ordinal))
                 {
                     last = signature;
-                    yield return new TerminalFrame(Interlocked.Increment(ref _seq), rows, facts.CursorX, facts.CursorY, facts.Width, facts.Height, facts.Alt, facts.InMode, facts.Dead);
+                    yield return new TerminalFrame(Interlocked.Increment(ref _seq), rows, facts.CursorX, facts.CursorY, facts.Width, facts.Height, facts.Alt, facts.InMode, facts.Dead) { Back = back, Hist = hist };
                     if (facts.Dead)
                     {
                         yield break;
@@ -104,7 +116,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
                 return named;
             }
 
-            return await Typed(["send-keys", "-t", target.Pane, key], stdin: null, cancellationToken).ConfigureAwait(false);
+            return Live(await Typed(["send-keys", "-t", target.Pane, key], stdin: null, cancellationToken).ConfigureAwait(false));
         }
 
         public async ValueTask<Result<Unit>> SendText(string text, CancellationToken cancellationToken)
@@ -116,7 +128,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
 
             return text.Length == 0
                 ? Unit.Value
-                : await Typed(["send-keys", "-t", target.Pane, "-l", "--", EscapeTrailingSemicolon(text)], stdin: null, cancellationToken).ConfigureAwait(false);
+                : Live(await Typed(["send-keys", "-t", target.Pane, "-l", "--", EscapeTrailingSemicolon(text)], stdin: null, cancellationToken).ConfigureAwait(false));
         }
 
         /// <summary>
@@ -135,7 +147,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
             var loaded = await Typed(["load-buffer", "-b", PasteBuffer, "-"], text, cancellationToken).ConfigureAwait(false);
             return loaded.IsError
                 ? loaded
-                : await Typed(["paste-buffer", "-p", "-d", "-b", PasteBuffer, "-t", target.Pane], stdin: null, cancellationToken).ConfigureAwait(false);
+                : Live(await Typed(["paste-buffer", "-p", "-d", "-b", PasteBuffer, "-t", target.Pane], stdin: null, cancellationToken).ConfigureAwait(false));
         }
 
         public async ValueTask<Result<Unit>> Resize(HostSize newSize, CancellationToken cancellationToken)
@@ -156,8 +168,55 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
                 cancellationToken).ConfigureAwait(false);
         }
 
-        public ValueTask<Result<Unit>> Scroll(int back, CancellationToken cancellationToken) =>
-            throw new NotSupportedException("scrollback is not built yet (#3730)");
+        public ValueTask<Result<Unit>> Scroll(int back, CancellationToken cancellationToken)
+        {
+            lock (_view)
+            {
+                _back = _alt ? 0 : Math.Clamp(back, 0, _hist);   // clamped to the history of the last capture; the next capture clamps again
+            }
+
+            _ = _kick.Release();   // capture right away, like a key
+            return ValueTask.FromResult<Result<Unit>>(Unit.Value);
+        }
+
+        /// <summary>A key, text or paste that went through returns the view to the live screen.</summary>
+        private Result<Unit> Live(Result<Unit> sent)
+        {
+            if (sent.IsSuccess)
+            {
+                lock (_view)
+                {
+                    _back = 0;
+                }
+            }
+
+            return sent;
+        }
+
+        /// <summary>
+        /// The offset and history size this capture shows. The alternate screen has no scrollback, so entering it drops the offset (leaving it lands live). While
+        /// scrolled, rows that arrived since the last capture move the offset with them, so the view stays on the same lines; then it is clamped to the history.
+        /// </summary>
+        private (int Back, int Hist) View(PaneFacts facts)
+        {
+            lock (_view)
+            {
+                _alt = facts.Alt;
+                var hist = facts.Alt ? 0 : facts.Hist;
+                if (facts.Alt)
+                {
+                    _back = 0;
+                }
+                else if (_back > 0 && hist > _hist)
+                {
+                    _back += hist - _hist;
+                }
+
+                _back = Math.Clamp(_back, 0, hist);
+                _hist = hist;
+                return (_back, hist);
+            }
+        }
 
         public ValueTask DisposeAsync()
         {
@@ -168,7 +227,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
         /// <summary>The cursor, size and mode facts of the pane, or null when tmux or the pane is gone.</summary>
         internal async ValueTask<PaneFacts?> Facts(CancellationToken cancellationToken)
         {
-            const string format = "#{cursor_x} #{cursor_y} #{pane_width} #{pane_height} #{pane_in_mode} #{alternate_on} #{pane_dead}";
+            const string format = "#{cursor_x} #{cursor_y} #{pane_width} #{pane_height} #{pane_in_mode} #{alternate_on} #{pane_dead} #{history_size}";
             var run = await Call(["display-message", "-p", "-t", target.Pane, format], stdin: null, cancellationToken).ConfigureAwait(false);
             if (run.ExitCode != 0)
             {
@@ -176,13 +235,13 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
             }
 
             var parts = run.Output.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length < 7 || !parts.All(p => int.TryParse(p, NumberStyles.None, CultureInfo.InvariantCulture, out _)))
+            if (parts.Length < 8 || !parts.All(p => int.TryParse(p, NumberStyles.None, CultureInfo.InvariantCulture, out _)))
             {
                 return null;
             }
 
             var n = parts.Select(p => int.Parse(p, CultureInfo.InvariantCulture)).ToArray();
-            return new PaneFacts(n[0], n[1], n[2], n[3], n[4] == 1, n[5] == 1, n[6] == 1);
+            return new PaneFacts(n[0], n[1], n[2], n[3], n[4] == 1, n[5] == 1, n[6] == 1, n[7]);
         }
 
         private static List<string> Rows(string output, int height)
@@ -286,7 +345,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
         }
     }
 
-    private sealed record PaneFacts(int CursorX, int CursorY, int Width, int Height, bool InMode, bool Alt, bool Dead)
+    private sealed record PaneFacts(int CursorX, int CursorY, int Width, int Height, bool InMode, bool Alt, bool Dead, int Hist)
     {
         public string Signature => string.Create(CultureInfo.InvariantCulture, $"|{CursorX},{CursorY},{Width},{Height},{InMode},{Alt},{Dead}");
     }
