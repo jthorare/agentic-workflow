@@ -11,8 +11,11 @@ internal static partial class Labels
 
     internal const string ContextSymbolsColumn = "symbols";
 
-    /// <summary>The caption when the index answers but has no symbols for any listed file.</summary>
-    internal const string ContextSymbolsNoneIndexed = "none indexed for these files";
+    /// <summary>The caption when the code graph is off and no listed file has symbols.</summary>
+    internal const string ContextSymbolsGraphOff = "only C# files get names: the code graph is off for this repo";
+
+    /// <summary>The caption when the code graph is on and no listed file has symbols.</summary>
+    internal const string ContextSymbolsNoneIndexed = "none in these files";
 
     /// <summary>A file's symbols cell when the index has no row for it.</summary>
     internal const string ContextSymbolsNoRow = "—";

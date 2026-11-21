@@ -17,7 +17,8 @@ internal sealed class SymbolsColumnViewModel
         (Caption, Dimmed) = SymbolsCaption.Of(symbols);
         if (string.Equals(symbols.State, "ok", StringComparison.Ordinal) && symbols.Files is { Count: 0 })
         {
-            Caption = Labels.ContextSymbolsNoneIndexed;   // an index that answers but knows none of these files (e.g. .ts without graphify): say so, not just the commit
+            // An index that answers with no rows: say why. Graph off = only C# files get names (the real app's .ts names come from the graph layer); graph on = the files have no functions.
+            Caption = string.Equals(symbols.Reason, "graph-off", StringComparison.Ordinal) ? Labels.ContextSymbolsGraphOff : Labels.ContextSymbolsNoneIndexed;
         }
 
         Unavailable = string.Equals(symbols.State, "unavailable", StringComparison.Ordinal);

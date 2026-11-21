@@ -12544,3 +12544,4 @@ Aw.Context.Core.Results.ContextResult.Matches.get -> Aw.Context.Core.Results.Rec
 Aw.Context.Core.Results.ContextResult.Matches.init -> void
 Aw.Context.Core.Symbols.CodeIndexHead.GraphOff.get -> bool
 Aw.Context.Core.Symbols.CodeIndexHead.GraphOff.init -> void
+const Aw.Context.Core.Code.CodeIndexReading.GraphOffReason = "graph-off" -> string!

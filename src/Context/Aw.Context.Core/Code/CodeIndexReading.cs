@@ -153,6 +153,9 @@ public static class CodeIndexReading
         };
     }
 
+    /// <summary>The file map's reason when the graph layer is disabled or down: only C# files have symbols (#3740).</summary>
+    public const string GraphOffReason = "graph-off";
+
     /// <summary>The file map's 'symbols' object for a head and the files read under it.</summary>
     /// <param name="head">The head.</param>
     /// <param name="files">The rows of the files listed.</param>
@@ -168,7 +171,7 @@ public static class CodeIndexReading
         }
 
         var state = head.State == CodeIndexState.CatchingUp ? (files.Any(static f => f.State == SymbolsState.Stale) ? SymbolsState.Stale : SymbolsState.Ok) : Stamp(head).State;
-        return new LensSymbols(state, Reason(head, calls: false), [])
+        return new LensSymbols(state, Reason(head, calls: false) ?? (head.GraphOff || head.Layer == "graph" ? GraphOffReason : null), [])
         {
             Files = files,
             Commit = head.Commit,
