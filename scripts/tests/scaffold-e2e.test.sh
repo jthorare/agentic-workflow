@@ -79,5 +79,29 @@ if grep -Eq 'dotnet build AgenticWorkflow\.slnx' "$E2E"; then bad "e2e.sh still 
 grep -Eq '^e2e: .+ [0-9]+s$' "$out" && ok || bad "no 'e2e: <step> <N>s' line in the output"
 [ -z "$(ls -A "$tmproot" 2>/dev/null)" ] && ok || bad "the run left files in its TMPDIR: $(ls "$tmproot")"
 
+# --- one Aw.Architecture.Tests build per tree, not per generator call (#3700) ---
+# (i) every new-package / new-slice call in e2e.sh passes --skip-arch (continuation lines joined first).
+calls="$(sed -e ':a' -e '/\\$/N; s/\\\n//; ta' "$E2E" | grep -E 'gen scripts/scaffold/new-(package|slice)\.mjs')"
+ncalls="$(printf '%s\n' "$calls" | grep -c .)"
+nskip="$(printf '%s\n' "$calls" | grep -c -- '--skip-arch')"
+{ [ "$ncalls" -gt 0 ] && [ "$ncalls" = "$nskip" ]; } && ok || bad "$nskip of $ncalls generator calls in e2e.sh pass --skip-arch"
+# (ii) exactly one arch step per solution tree (a and b; the toolkit tree is outside the solution).
+for t in a b; do
+  n="$(grep -cF "step \"($t) Aw.Architecture.Tests once for the tree\"" "$E2E")"
+  [ "$n" = 1 ] && ok || bad "e2e.sh has $n arch steps for tree ($t), expected 1"
+done
+[ "$(grep -c 'dotnet build tests/Aw.Architecture.Tests' "$E2E")" = 2 ] && ok || bad "e2e.sh should build tests/Aw.Architecture.Tests exactly twice"
+# (iii) the generators' scope keeps the arch project by default and drops it with skipArch.
+scope="$(cd "$HERE/../.." && node --input-type=module -e '
+  import { checkScope } from "./scripts/scaffold/lib/checks.mjs";
+  const j = { touched: () => [] };
+  const has = (o) => checkScope(j, "X", o).testProjects.some((p) => p.includes("Aw.Architecture.Tests"));
+  console.log(`${has()} ${has({ skipArch: true })}`);
+' 2>&1)"
+[ "$scope" = "true false" ] && ok || bad "checkScope default/skipArch arch membership: '$scope', expected 'true false'"
+for g in new-package new-slice; do
+  grep -q 'skipArch' "$HERE/../scaffold/$g.mjs" && ok || bad "$g.mjs has no skipArch option"
+done
+
 echo "scaffold-e2e: $pass passed, 0 skipped, $fail failed"
 [ "$fail" = 0 ]
