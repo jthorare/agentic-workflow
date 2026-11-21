@@ -194,9 +194,11 @@ internal sealed partial class GraphCanvas : Control
         {
             // the wheel scrolls up and down, Shift+wheel left and right; nothing happens when the canvas does not scroll
             _fitPending = false;
+            // the canvas takes the wheel only while it can move that way; at its end, or when it fits, the page scrolls
             var step = e.Delta.Y * WheelStep;
+            var before = Pan;
             Pan = e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? new Point(Pan.X + step, Pan.Y) : new Point(Pan.X, Pan.Y + step);
-            e.Handled = Scrolls;
+            e.Handled = Pan != before;
             return;
         }
 

@@ -68,5 +68,5 @@ internal static class GraphZoom
     /// <param name="top">The panel's top inside the page.</param>
     /// <param name="gap">The space left under the panel.</param>
     /// <returns>The panel's height.</returns>
-    internal static double StageHeight(double viewportHeight, double top, double gap) => throw new NotSupportedException();
+    internal static double StageHeight(double viewportHeight, double top, double gap) => Math.Max(MinStageHeight, viewportHeight - top - gap);
 }

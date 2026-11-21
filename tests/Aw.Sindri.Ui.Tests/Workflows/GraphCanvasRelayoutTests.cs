@@ -1,4 +1,7 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Headless;
 using Avalonia.Threading;
 using Aw.Kernel.Testing;
@@ -85,5 +88,40 @@ public sealed class GraphCanvasRelayoutTests
         });
 
         Assert.True(rect.Left >= 0 && rect.Top >= 0 && rect.Right <= size.Width && rect.Bottom <= size.Height, "the selected card left the canvas after the resize");
+    }
+
+    [Fact]
+    public async Task The_wheel_goes_to_the_page_when_the_canvas_fits_and_to_the_canvas_when_it_scrolls()
+    {
+        var graph = await Release();
+
+        var (fits, scrolls) = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = graph };
+            var window = new Window { Content = canvas, Width = 1440, Height = 728 };
+            var handled = new List<bool>();
+            window.AddHandler(InputElement.PointerWheelChangedEvent, (_, e) => handled.Add(e.Handled), RoutingStrategies.Bubble, handledEventsToo: true);
+            window.Show();
+            Settle(window);
+            try
+            {
+                window.MouseWheel(new Point(200, 200), new Vector(0, -1));
+                var atFit = handled[^1];
+                canvas.ZoomIn();
+                canvas.ZoomIn();
+                canvas.ZoomIn();
+                canvas.ZoomIn();
+                Settle(window);
+                window.MouseWheel(new Point(200, 200), new Vector(0, -1));
+                return (atFit, handled[^1]);
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.False(fits, "the canvas took the wheel while the whole graph fits");
+        Assert.True(scrolls, "the canvas left the wheel to the page while it can scroll");
     }
 }

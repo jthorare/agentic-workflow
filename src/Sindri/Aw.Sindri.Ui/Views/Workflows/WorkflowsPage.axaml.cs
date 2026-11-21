@@ -21,6 +21,8 @@ internal sealed partial class WorkflowsPage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _pages = this.FindAncestorOfType<ScrollViewer>();
+        _pages?.PropertyChanged += OnPagesProperty;
         LayoutUpdated += OnLayoutUpdated;   // the title's text, its scale or the crumb's text changed: the crumb follows the title's baseline
     }
 
@@ -28,11 +30,45 @@ internal sealed partial class WorkflowsPage : UserControl
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         LayoutUpdated -= OnLayoutUpdated;
+        _pages?.PropertyChanged -= OnPagesProperty;
+        _pages = null;
         base.OnDetachedFromVisualTree(e);
+    }
+
+    private ScrollViewer? _pages;
+
+    // The page scrolls, so the stages are sized from the scroll viewer's viewport: they fill the window under the header and the step details sit below (#3684).
+    private void OnPagesProperty(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property == ScrollViewer.ViewportProperty || e.Property == BoundsProperty)
+        {
+            SizeStages();
+        }
+    }
+
+    private void SizeStages()
+    {
+        if (_pages is null)
+        {
+            return;
+        }
+
+        foreach (var panel in new[] { RunsPanel, RunPanel })
+        {
+            if (panel.IsVisible && panel.TranslatePoint(default, this) is { } at)
+            {
+                var wanted = GraphZoom.StageHeight(_pages.Viewport.Height, at.Y, 16);
+                if (Math.Abs(panel.Height - wanted) > 0.5)
+                {
+                    panel.Height = wanted;
+                }
+            }
+        }
     }
 
     private void OnLayoutUpdated(object? sender, EventArgs e)
     {
+        SizeStages();
         if (WorkflowsBack.IsVisible)
         {
             AlignCrumb(WorkflowsBack, WorkflowsBack.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault());
