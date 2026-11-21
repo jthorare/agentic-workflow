@@ -134,6 +134,9 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <summary>The world's size: the far corner of the farthest card or missing branch's words.</summary>
     internal GraphPoint Extent => Nodes.Count == 0 ? default : new GraphPoint(Math.Max(Nodes.Max(n => n.X) + CardWidth, Ends.Select(e => e.Label.Right).DefaultIfEmpty().Max()), Math.Max(Nodes.Max(n => n.Y) + CardHeight, Ends.Select(e => e.Label.Bottom).DefaultIfEmpty().Max()));
 
+    /// <summary>How many times the cards were laid out: zoom buttons must never raise it, only open, a size change and a text-size change.</summary>
+    internal int RelayoutCount { get; private set; }
+
     /// <summary>Puts every card where <see cref="GraphFit"/> wraps it for this canvas; the served positions then only give the layer order. Edges and missing-branch words follow the cards.</summary>
     /// <param name="canvasWidth">The canvas clip's width in pixels.</param>
     /// <param name="canvasHeight">The canvas clip's height in pixels.</param>
@@ -141,6 +144,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <returns>The Fit zoom for the new layout.</returns>
     internal double Relayout(double canvasWidth, double canvasHeight, double textScale)
     {
+        RelayoutCount++;
         var fit = GraphFit.Compute(new GraphFitInput(_layers, [.. Edges.Select(e => (e.From, e.To))]), canvasWidth, canvasHeight, textScale);
         foreach (var node in Nodes)
         {

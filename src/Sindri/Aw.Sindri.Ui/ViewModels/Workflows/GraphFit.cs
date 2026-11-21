@@ -82,6 +82,7 @@ internal static class GraphFit
         var cards = new Dictionary<string, GraphBox>(StringComparer.Ordinal);
         var y = WorkflowGraphViewModel.EdgeMargin * u;
         var right = 0.0;
+        List<(double Top, double Height, double Right)> bands = [];
         foreach (var row in rows)
         {
             double Stack(IReadOnlyList<string> l) => (l.Count * cardH) + ((l.Count - 1) * vGap);
@@ -98,9 +99,30 @@ internal static class GraphFit
                 right = Math.Max(right, lx + cardW);
             }
 
+            bands.Add((y, rowHeight, row.Max(c => c.X) + cardW));
             y += rowHeight + rowGap;
         }
 
-        return new GraphFitResult(zoom, cards, rows.Max(r => r.Count), rows.Count, right + padRight, y - rowGap + (WorkflowGraphViewModel.EdgeMargin * u));
+        return new GraphFitResult(zoom, cards, rows.Max(r => r.Count), rows.Count, right + padRight, y - rowGap + (WorkflowGraphViewModel.EdgeMargin * u), Lanes(bands, u));
+    }
+
+    // The line that runs back from the end of a row to the start of the next: down the right pad, left along the row gap, down the left pad. Each part is a thin box.
+    private static List<GraphBox> Lanes(List<(double Top, double Height, double Right)> bands, double u)
+    {
+        const double thick = 2;
+        List<GraphBox> lanes = [];
+        for (var r = 0; r + 1 < bands.Count; r++)
+        {
+            var (top, height, right) = bands[r];
+            var gapY = top + height + (WorkflowGraphViewModel.RowGap * u / 2);
+            var outX = right + (WorkflowGraphViewModel.RightPad * u / 2);
+            var inX = WorkflowGraphViewModel.LeftPad * u / 2;
+            var nextMid = bands[r + 1].Top + (bands[r + 1].Height / 2);
+            lanes.Add(new GraphBox(outX, top + (height / 2), thick, gapY - top - (height / 2)));
+            lanes.Add(new GraphBox(inX, gapY, outX - inX, thick));
+            lanes.Add(new GraphBox(inX, gapY, thick, nextMid - gapY));
+        }
+
+        return lanes;
     }
 }

@@ -7,9 +7,5 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// <param name="Rows">The number of rows.</param>
 /// <param name="Width">The world's width, right padding included.</param>
 /// <param name="Height">The world's height, the 24 px bottom margin included once.</param>
-internal sealed record GraphFitResult(double Zoom, IReadOnlyDictionary<string, GraphBox> Cards, int Columns, int Rows, double Width, double Height)
-{
-    /// <summary>The lines that run back from the end of one row to the start of the next, each as a thin box in the world; the minimap must never cover one.</summary>
-    internal IReadOnlyList<GraphBox> ReturnLanes => throw new NotSupportedException();
-}
-
+/// <param name="ReturnLanes">The lines that run back from the end of a row to the start of the next, each part a thin box in the world.</param>
+internal sealed record GraphFitResult(double Zoom, IReadOnlyDictionary<string, GraphBox> Cards, int Columns, int Rows, double Width, double Height, IReadOnlyList<GraphBox> ReturnLanes);

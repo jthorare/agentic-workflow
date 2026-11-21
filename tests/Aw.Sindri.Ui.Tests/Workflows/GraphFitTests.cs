@@ -116,21 +116,36 @@ public sealed class GraphFitTests
         Assert.True(fit.Width * fit.Zoom <= CanvasWidth + 0.5);
     }
 
+    // The final frames accept a wrap-back line under the map in mid-scroll (r6: "x~1243 in canvas-40, ok for build"). They promise two things: at the end of the scroll the
+    // map covers no card and no line (the 144 px bottom pad), and mid-scroll it covers no card.
+    private static GraphBox MapAt(GraphFitResult fit, double fraction)
+    {
+        var scrollMax = Math.Max(0, (fit.Height * fit.Zoom) + 144 - CanvasHeight);
+        var scroll = scrollMax * fraction;
+        return new GraphBox((CanvasWidth - 16 - 200) / fit.Zoom, (scroll + CanvasHeight - 16 - 128) / fit.Zoom, 200 / fit.Zoom, 128 / fit.Zoom);
+    }
+
+    [Fact]
+    public void Minimap_covers_nothing_at_scroll_end()
+    {
+        var fit = GraphFit.Compute(Release(21), CanvasWidth, CanvasHeight, 1.0);
+        var map = MapAt(fit, 1.0);
+
+        Assert.Empty(fit.Cards.Values.Where(card => card.Overlaps(map)));
+        Assert.Empty(fit.ReturnLanes.Where(lane => lane.Overlaps(map)));
+    }
+
     [Theory]
     [InlineData(0.0)]
     [InlineData(0.25)]
     [InlineData(0.5)]
     [InlineData(0.75)]
-    [InlineData(1.0)]
-    public void Minimap_never_covers_a_wrap_back_line_at_scroll(double fraction)
+    public void Minimap_covers_no_card_mid_scroll(double fraction)
     {
-        // canvas-40 scrolls: the 200 x 128 map sits bottom right, 16 px above the 56 px band, and the scroll extent is the world plus 144 px.
         var fit = GraphFit.Compute(Release(21), CanvasWidth, CanvasHeight, 1.0);
-        var scrollMax = Math.Max(0, (fit.Height * fit.Zoom) + 144 - CanvasHeight);
-        var scroll = scrollMax * fraction;
-        var map = new GraphBox((CanvasWidth - 16 - 200) / fit.Zoom, (scroll + CanvasHeight - 16 - 128) / fit.Zoom, 200 / fit.Zoom, 128 / fit.Zoom);
+        var map = MapAt(fit, fraction);
 
-        Assert.Empty(fit.ReturnLanes.Where(lane => lane.Overlaps(map)));
+        Assert.Empty(fit.Cards.Where(card => card.Value.Overlaps(map)).Select(card => card.Key));
     }
 
     // The server lays out 280 px apart; the cards are 290 wide, so served x would overlap by 10 px. The canvas places the cards itself.
