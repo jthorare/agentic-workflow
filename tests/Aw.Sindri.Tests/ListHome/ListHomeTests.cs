@@ -17,7 +17,7 @@ public sealed class ListHomeTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private ListHomeService Service() => new();
+    private ListHomeService Service() => new(_view, _views.Progress, _slice.Callers);
 
     [Fact, Trait("Lane", "unit")]
     public async Task The_page_holds_the_rows_in_rank_order_with_the_counts_of_every_bucket()

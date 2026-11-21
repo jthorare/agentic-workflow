@@ -16,7 +16,7 @@ public sealed class GetHomeRowTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private GetHomeRowService Service() => new();
+    private GetHomeRowService Service() => new(_view, _views.Progress, _slice.Callers);
 
     [Fact, Trait("Lane", "unit")]
     public async Task The_row_comes_back_with_its_blocks_list()

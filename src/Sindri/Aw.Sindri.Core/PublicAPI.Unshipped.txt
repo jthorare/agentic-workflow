@@ -24112,3 +24112,4 @@ Aw.Sindri.Core.Home.HomePaging
 const Aw.Sindri.Core.Home.HomePaging.DefaultLimit = 60 -> int
 const Aw.Sindri.Core.Home.HomePaging.MaxLimit = 200 -> int
 static Aw.Sindri.Core.Home.HomePaging.Page(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeRow!>! rows, Aw.Sindri.Core.Home.HomeQuery! query) -> Aw.Sindri.Core.Home.HomePage!
+static readonly Aw.Sindri.Core.SindriErrors.HomeNotFound -> Aw.Kernel.ErrorDefinition!
