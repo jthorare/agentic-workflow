@@ -64,5 +64,5 @@ public static class ViewNames
     public const string HomeLinks = "home-links";
 
     /// <summary>Every view that has a table.</summary>
-    public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, ModelHistory, ModelRuns, ProjectAttached, ProjectHidden, WorkflowRuns, ItemLinks, Todo];
+    public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, ModelHistory, ModelRuns, ProjectAttached, ProjectHidden, WorkflowRuns, ItemLinks, Todo, HomeRows, HomeLinks];
 }
