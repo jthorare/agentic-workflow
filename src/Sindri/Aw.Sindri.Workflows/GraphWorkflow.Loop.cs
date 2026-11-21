@@ -37,10 +37,12 @@ internal sealed partial class GraphWorkflow
             return null;
         }
 
-        await Record(new NodeRun(_run, shape.Collect.Id, 0, NodeRunStatus.Failed, Input: null, Output: null, Truncated: false, failure, Usage: null), _detached).ConfigureAwait(true);
+        // why: an item's failure already names its node and item ("node 'bad' failed on item 1: ..."); the collect's row holds the bare error and the run keeps the named text, so the prefix is never nested (#3304)
+        var (named, bare) = NodeFailureText.Split(failure);
+        await Record(new NodeRun(_run, shape.Collect.Id, 0, NodeRunStatus.Failed, Input: null, Output: null, Truncated: false, bare, Usage: null), _detached).ConfigureAwait(true);
         return string.Equals(shape.Collect.OnFailure, "continue", StringComparison.Ordinal)
             ? null
-            : await End(WorkflowRunStatus.Failed, $"node '{shape.Collect.Id.Value}' failed: {failure}").ConfigureAwait(true);
+            : await End(WorkflowRunStatus.Failed, named ?? $"node '{shape.Collect.Id.Value}' failed: {bare}").ConfigureAwait(true);
     }
 
     private static (int Count, int Batch) Sizes(GraphBlockOutcome opened)
