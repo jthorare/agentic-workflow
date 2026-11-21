@@ -135,7 +135,7 @@ internal sealed partial class GraphCanvas
     /// <summary>The path the selected card's ring is stroked along: the pen is centred on it, so its inner edge is 3 px outside the card's border.</summary>
     /// <param name="card">The card's rectangle.</param>
     /// <returns>The rectangle to stroke.</returns>
-    internal static Rect SelectedRing(Rect card) => card.Inflate(RingGap);
+    internal static Rect SelectedRing(Rect card) => card.Inflate(RingGap + 1);
 
     private static Rect WorldRect(GraphNodeViewModel node) => new(node.X, node.Y, node.Width, node.Height);
 
