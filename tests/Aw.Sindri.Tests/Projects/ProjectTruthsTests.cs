@@ -209,7 +209,7 @@ public sealed class ProjectTruthsTests
 
         var truth = ProjectTruths.Build(open with { Facts = facts });
 
-        Assert.Equal((ProjectTruthLevel.AtRisk, "At risk: 3 of 9 PRs red, 2 unknown"), (truth.Health!.Level, truth.Health.Reason));
+        Assert.Equal((ProjectTruthLevel.AtRisk, "At risk: 3 of 9 PRs red, 2 not checked yet"), (truth.Health!.Level, truth.Health.Reason));
     }
 
     [Fact]
@@ -217,7 +217,7 @@ public sealed class ProjectTruthsTests
     {
         var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1), Pull(2)], noSummaries: true));
 
-        Assert.Equal((ProjectTruthLevel.Unknown, "CI unknown for 2 of 2 PRs"), (truth.Health!.Level, truth.Health.Reason));
+        Assert.Equal((ProjectTruthLevel.Unknown, "CI not checked yet for 2 of 2 PRs"), (truth.Health!.Level, truth.Health.Reason));
     }
 
     [Fact]
@@ -228,7 +228,7 @@ public sealed class ProjectTruthsTests
 
         var truth = ProjectTruths.Build(open with { Facts = facts });
 
-        Assert.Equal((ProjectTruthLevel.Unknown, "CI unknown for 2 of 5 PRs"), (truth.Health!.Level, truth.Health.Reason));
+        Assert.Equal((ProjectTruthLevel.Unknown, "CI not checked yet for 2 of 5 PRs"), (truth.Health!.Level, truth.Health.Reason));
     }
 
     [Fact]
@@ -252,5 +252,76 @@ public sealed class ProjectTruthsTests
         var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1), Pull(2), Pull(3)], summaries: summaries));
 
         Assert.Equal((ProjectTruthLevel.OffTrack, "Off track: 2 of 3 PRs red"), (truth.Health!.Level, truth.Health.Reason));
+    }
+
+    [Fact]
+    public void A_project_with_only_draft_prs_has_no_health()
+    {
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1, draft: true), Pull(2, draft: true)]));
+
+        Assert.Null(truth.Health);
+    }
+
+    [Fact]
+    public void Drafts_are_not_open_prs_in_the_on_track_sentence()
+    {
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1), Pull(2, draft: true)]));
+
+        Assert.Equal((ProjectTruthLevel.OnTrack, "On track: 1 open PR, none red"), (truth.Health!.Level, truth.Health.Reason));
+    }
+
+    [Fact]
+    public void Drafts_are_left_out_of_the_red_ratio_and_the_red_count_reads_the_same_set()
+    {
+        // 1 red of 3 open (the draft is not open): a third is at risk. Counting the draft would make it 1 of 4.
+        var summaries = new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = Red(_now) };
+
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1), Pull(2), Pull(3), Pull(4, draft: true)], summaries: summaries));
+
+        Assert.Equal((ProjectTruthLevel.AtRisk, "At risk: 1 of 3 PRs red"), (truth.Health!.Level, truth.Health.Reason));
+    }
+
+    [Fact]
+    public void One_red_pr_and_a_draft_is_one_of_one_red_not_one_of_two()
+    {
+        var summaries = new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = Red(_now) };
+
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1), Pull(2, draft: true)], summaries: summaries));
+
+        Assert.Equal((ProjectTruthLevel.OffTrack, "Off track: 1 of 1 PR red"), (truth.Health!.Level, truth.Health.Reason));
+    }
+
+    [Fact]
+    public void Health_text_says_PR_for_one_on_every_branch()
+    {
+        var red = new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = Red(_now) };
+
+        var reasons = (
+            ProjectTruths.Build(Inputs(pulls: [Pull(1)], noSummaries: true)).Health!.Reason,
+            ProjectTruths.Build(Inputs(pulls: [Pull(1)])).Health!.Reason,
+            ProjectTruths.Build(Inputs(pulls: [Pull(1)], summaries: red)).Health!.Reason);
+
+        Assert.Equal(("CI not checked yet for 1 of 1 PR", "On track: 1 open PR, none red", "Off track: 1 of 1 PR red"), reasons);
+    }
+
+    [Fact]
+    public void A_force_pushed_green_pr_reads_not_checked_yet_not_unknown()
+    {
+        var stale = new ReviewSummary("old", ReviewCi.Pass, RequiredOpen: null, _now.AddDays(-1));
+
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1, sha: "new")], summaries: new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = stale }));
+
+        Assert.Equal((ProjectTruthLevel.Unknown, "CI not checked yet for 1 of 1 PR"), (truth.Health!.Level, truth.Health.Reason));
+    }
+
+    [Fact]
+    public void Health_unknown_tail_counts_one_unchecked_pr_in_the_singular_form()
+    {
+        var open = Inputs(pulls: [Pull(1), Pull(2), Pull(3)], summaries: new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = Red(_now) });
+        var facts = open.Facts with { Summaries = open.Facts.Summaries.Where(static e => e.Key != Key(3)).ToDictionary(static e => e.Key, static e => e.Value, StringComparer.Ordinal) };
+
+        var truth = ProjectTruths.Build(open with { Facts = facts });
+
+        Assert.Equal("At risk: 1 of 3 PRs red, 1 not checked yet", truth.Health!.Reason);
     }
 }
