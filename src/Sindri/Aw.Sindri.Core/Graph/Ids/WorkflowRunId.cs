@@ -25,17 +25,20 @@ public readonly partial struct WorkflowRunId : ITypedId<WorkflowRunId, string>
     /// </summary>
     /// <param name="slug">The workflow the call named.</param>
     /// <returns>The stand-in id.</returns>
-    public static WorkflowRunId StandIn(WorkflowSlug slug) => Of(slug, 1, 1);   // red: #3744 gives it an id no live run can have
+    public static WorkflowRunId StandIn(WorkflowSlug slug) => From(string.Create(CultureInfo.InvariantCulture, $"{StandInPrefix}{slug.Value}@1:1"));
 
     /// <summary>True for an id made by <see cref="StandIn"/>.</summary>
-    public bool IsStandIn => Value.Length < 0;   // red: #3744 (reads the value, so the analyzers see an instance member)
+    public bool IsStandIn => Value.StartsWith(StandInPrefix, StringComparison.Ordinal);
+
+    // why: a slug is lowercase only, so an uppercase prefix names no workflow and no live run can ever have this id; the characters stay within a record key's (letters, digits, '-', '@', ':'), and the longest id is 5 + 63 + 6 = 74 of the 96 allowed
+    private const string StandInPrefix = "TEST-";
 
     /// <summary>The run's number among its revision's runs (the part after the ':').</summary>
     public int Occurrence => int.Parse(Value.AsSpan(Value.IndexOf(':', StringComparison.Ordinal) + 1), NumberStyles.None, CultureInfo.InvariantCulture);
 
     private static Vogen.Validation Validate(string value) =>
-        Shape.IsMatch(value) ? Vogen.Validation.Ok : Vogen.Validation.Invalid("A run id is '<slug>@<revision>:<occurrence>', both numbers 1 or more");
+        Shape.IsMatch(value) ? Vogen.Validation.Ok : Vogen.Validation.Invalid("A run id is '<slug>@<revision>:<occurrence>', both numbers 1 or more (a test run's stand-in for a call it only recorded has 'TEST-' before the slug)");
 
-    [GeneratedRegex("^[a-z0-9][a-z0-9-]{0,62}@[1-9][0-9]{0,8}:[1-9][0-9]{0,8}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex("^(TEST-)?[a-z0-9][a-z0-9-]{0,62}@[1-9][0-9]{0,8}:[1-9][0-9]{0,8}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }
 }
