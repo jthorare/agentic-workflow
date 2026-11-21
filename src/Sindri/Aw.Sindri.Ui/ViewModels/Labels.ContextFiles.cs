@@ -30,6 +30,14 @@ internal static partial class Labels
     internal static string ContextFilesFilterPartial(int loaded, int total) =>
         string.Create(CultureInfo.InvariantCulture, $"Still reading this folder: the filter covers {loaded} of {total} so far.");
 
+    /// <summary>The note when the function names come from an index at another commit than the checkout's.</summary>
+    /// <param name="commit">The index's commit, when the server names it.</param>
+    /// <returns>"Function names come from an older index build (7c3e1a2), so they may be out of date."</returns>
+    internal static string ContextFilesNamesStale(string? commit) =>
+        commit is { Length: > 0 }
+            ? $"Function names come from an older index build ({(commit.Length > 7 ? commit[..7] : commit)}), so they may be out of date."
+            : "Function names come from an older index build, so they may be out of date.";
+
     /// <summary>The word while a folder is read.</summary>
     internal const string ContextFilesLoading = "Reading the files...";
 
