@@ -28,7 +28,7 @@ for mode in readonly full; do
   out="$(AW_GIT_MODE=$mode wrapped -C "$REPO" status --short 2>&1)"; rc=$?
   [ "$rc" = 0 ] && ok "status passes through ($mode)" || bad "status ($mode) rc=$rc: $out"
   out="$(AW_GIT_MODE=$mode wrapped -C "$REPO" log --oneline 2>&1)"; rc=$?
-  { [ "$rc" = 0 ] && printf '%s' "$out" | grep -q first; } && ok "log passes through ($mode)" || bad "log ($mode): $out"
+  { [ "$rc" = 0 ] && grep -q first <<<"$out"; } && ok "log passes through ($mode)" || bad "log ($mode): $out"
 done
 out="$(AW_GIT_MODE=readonly wrapped -C "$REPO" branch --show-current 2>&1)"; rc=$?
 [ "$rc" = 0 ] && ok "branch --show-current is allowed in readonly" || bad "branch --show-current rc=$rc: $out"
@@ -101,13 +101,13 @@ out="$(env -u AW_GIT_MODE PATH="$STUB_DIR:$PATH" git -C "$REPO" checkout -q -b o
 
 # The wrapper must not exec itself when it is the only git on PATH.
 out="$(PATH="$STUB_DIR" AW_GIT_MODE=full "$(command -v bash)" "$STUB_DIR/git" --version 2>&1)"; rc=$?
-{ [ "$rc" = 127 ] && printf '%s' "$out" | grep -q "no real git"; } && ok "no real git on PATH fails clearly" || bad "no real git: rc=$rc out=$out"
+{ [ "$rc" = 127 ] && grep -q "no real git" <<<"$out"; } && ok "no real git on PATH fails clearly" || bad "no real git: rc=$rc out=$out"
 
 # claude plugin eval runs a case's scaffold in the run's environment: the stub first on PATH, AW_GIT_MODE=readonly.
 # The fixture's own commit must still land, and the agent that runs after it still sees readonly.
 FIX="$TMP/fixture"; mkdir -p "$FIX"; echo c > "$FIX/c.txt"
 out="$(cd "$FIX" && export AW_GIT_MODE=readonly PATH="$STUB_DIR:$PATH" && . "$ROOT/evals/_lib/fixture-lib.sh" && aw_fixture_repo init 2>&1 && printf 'mode=%s' "$AW_GIT_MODE")"; rc=$?
-{ [ "$rc" = 0 ] && [ "$("$REAL_GIT" -C "$FIX" rev-list --count HEAD 2>/dev/null)" = 1 ] && printf '%s' "$out" | grep -q 'mode=readonly$'; } \
+{ [ "$rc" = 0 ] && [ "$("$REAL_GIT" -C "$FIX" rev-list --count HEAD 2>/dev/null)" = 1 ] && grep -q 'mode=readonly$' <<<"$out"; } \
   && ok "aw_fixture_repo commits under the eval's readonly stub and leaves the mode readonly" || bad "aw_fixture_repo under readonly: rc=$rc out=$out"
 
 # Every fixture in the tree scaffolds the same way, so each one must finish under the stub too (ui-evidence and

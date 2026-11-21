@@ -17,7 +17,15 @@ internal sealed partial class FileMapViewModel
     private string NoteText() =>
         _next is not null && FilterText.Length > 0
             ? Labels.ContextFilesFilterPartial(_entries.Length, _total ?? _entries.Length)
-            : string.Equals(_symbolsServed?.State, "available", StringComparison.Ordinal) ? string.Empty : Labels.ContextMapNamesDetail;
+            : SymbolsNote();
+
+    // The server sends ok, stale or unavailable: only an index that does not exist gets the "not built" note.
+    private string SymbolsNote() => _symbolsServed?.State switch
+    {
+        "ok" => string.Empty,
+        "stale" => Labels.ContextFilesNamesStale(_symbolsServed.Commit),
+        _ => Labels.ContextMapNamesDetail,
+    };
 
     // The list asked for a row: near the end of what is read, the next page is read ahead of the scroll.
     private void Touched(int index)
