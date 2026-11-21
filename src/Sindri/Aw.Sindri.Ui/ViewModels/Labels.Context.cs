@@ -109,6 +109,11 @@ internal static partial class Labels
             return "There is no draft map yet.";
         }
 
+        if (string.Equals(code, "SND-CONTEXT-030", StringComparison.Ordinal))
+        {
+            return "There is no map yet.";
+        }
+
         var hint = message.IndexOf(" (fix:", StringComparison.Ordinal);
         return hint < 0 ? message : message[..hint];
     }
