@@ -12,7 +12,7 @@ public sealed class GraphFitTests
 
     /// <summary>A chain of single-step layers: step_0 to step_{count-1}.</summary>
     internal static GraphFitInput Chain(int count) =>
-        new([.. Enumerable.Range(0, count).Select(i => (IReadOnlyList<string>)[string.Create(System.Globalization.CultureInfo.InvariantCulture, $"step_{i}")])], new HashSet<string>(StringComparer.Ordinal));
+        new([.. Enumerable.Range(0, count).Select(i => (IReadOnlyList<string>)[string.Create(System.Globalization.CultureInfo.InvariantCulture, $"step_{i}")])], []);
 
     [Theory]
     [InlineData(1.0, 0.86)]
@@ -38,19 +38,45 @@ public sealed class GraphFitTests
     private static GraphFitInput Release(int tail)
     {
         List<IReadOnlyList<string>> layers = [["start"], ["step_1"], ["step_2"], ["step_3"], ["step_4"], ["step_5"], ["gate"], ["big_path", "small_path"]];
+        List<(string, string)> edges = [("start", "step_1"), ("step_1", "step_2"), ("step_2", "step_3"), ("step_3", "step_4"), ("step_4", "step_5"), ("step_5", "gate"), ("gate", "big_path"), ("gate", "small_path")];
         var steps = tail == 0 ? new[] { "step_6", "step_7", "step_8", "step_9", "step_10", "step_11", "step_12" } : new[] { "step_6", "step_7", "step_8", "step_9", "step_10", "step_12" };
-        layers.AddRange(steps.Select(i => (IReadOnlyList<string>)[i]));
-        HashSet<string> forks = new(["gate"], StringComparer.Ordinal);
+        var previous = "big_path";
+        foreach (var id in steps)
+        {
+            layers.Add([id]);
+            edges.Add((previous, id));
+            previous = id;
+        }
+
         if (tail > 0)
         {
             layers.Add(["gate_2"]);
             layers.Add(["diff", "same"]);
             layers.Add(["post"]);
-            layers.AddRange(Enumerable.Range(1, tail).Select(n => (IReadOnlyList<string>)[string.Create(System.Globalization.CultureInfo.InvariantCulture, $"t_{n}")]));
-            _ = forks.Add("gate_2");
+            edges.AddRange([(previous, "gate_2"), ("gate_2", "diff"), ("gate_2", "same"), ("diff", "post")]);
+            previous = "post";
+            foreach (var n in Enumerable.Range(1, tail))
+            {
+                var id = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"t_{n}");
+                layers.Add([id]);
+                edges.Add((previous, id));
+                previous = id;
+            }
         }
 
-        return new GraphFitInput(layers, forks);
+        return new GraphFitInput(layers, edges);
+    }
+
+    [Fact]
+    public void Fit_keeps_a_forks_arms_in_the_forks_row_at_every_width()
+    {
+        for (var width = 900; width <= 1500; width += 20)
+        {
+            var fit = GraphFit.Compute(Release(0), width, CanvasHeight, 1.0);
+            var gate = fit.Cards["gate"];
+
+            Assert.True(fit.Cards["big_path"].X > gate.X && fit.Cards["small_path"].X > gate.X, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"width {width}: an arm of the gate wrapped to the next row"));
+        }
     }
 
     [Fact]
