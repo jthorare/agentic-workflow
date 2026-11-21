@@ -45,4 +45,12 @@ internal static class GraphZoom
     /// <returns>The scroll extent's height.</returns>
     internal static double ExtentHeight(double worldHeight, double zoom, bool mapShown) =>
         (worldHeight * zoom) + (mapShown ? MapHeight + MapMargin : 0);
+
+    /// <summary>Holds a pan inside the scroll extent: the world at this zoom, plus the map's height and margin at the bottom while the map shows; no pan past it, and none at all along an axis that fits.</summary>
+    /// <param name="pan">Where the world's origin sits in the canvas.</param>
+    /// <param name="world">The world's size.</param>
+    /// <param name="zoom">The zoom as a factor.</param>
+    /// <param name="clip">The canvas clip's size.</param>
+    /// <returns>The pan, no further than the extent allows.</returns>
+    internal static (double X, double Y) ClampPan((double X, double Y) pan, (double Width, double Height) world, double zoom, (double Width, double Height) clip) => throw new NotSupportedException();
 }
