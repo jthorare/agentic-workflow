@@ -66,4 +66,14 @@ public sealed class CodeRankerTests
             Assert.DoesNotContain("implements→", i.Why[0], StringComparison.Ordinal);
         });
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_word_most_candidates_share_does_not_lift_one_file_over_a_file_that_matches_a_rarer_word()
+    {
+        var items = new[] { "src/SplitAlpha.ts", "src/SplitBeta.ts", "src/SplitGamma.ts", "src/ZoomResize.ts", "src/Other.ts" }.Select(p => Code(p, depth: 2)).ToList();
+
+        var page = CodeRanker.Rank(items, "split resize", symbol: null, offset: 0, CodeRanker.DefaultLimit);
+
+        Assert.Equal("code:src/ZoomResize.ts", page.Items[0].Node);
+    }
 }

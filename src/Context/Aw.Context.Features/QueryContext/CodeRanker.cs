@@ -6,7 +6,7 @@ namespace Aw.Context.Features.QueryContext;
 
 /// <summary>
 /// Scores the answer's code items and returns one page of them (#3673). A file's score adds three parts: how many words of the
-/// question its path holds (a hit in the file name counts three times a hit in a folder), how near the file sits to the anchor
+/// question its path holds, each weighted by how rare the word is among the candidates (a hit in the file name counts three times a hit in a folder), how near the file sits to the anchor
 /// in the graph (its cascade depth: 0 is the anchor's own scope), and a big bonus when the path is the file the caller named.
 /// The sum is scaled by where the file lives: code and scripts keep it, tests lose a little, docs and specs lose most.
 /// A file the repo demotes comes after every other file, whatever its score.
@@ -29,14 +29,15 @@ internal static partial class CodeRanker
     {
         var (offset, limit) = window;
         var words = Words(text);
-        var ranked = items.Select(i => Score(i, words, symbol)).OrderBy(s => demoted?.Invoke(s.Item) ?? false).ThenByDescending(s => s.Item.Score).ThenBy(s => s.Item.Node, StringComparer.Ordinal).Select(s => s.Item).ToList();
+        var rarity = Rarity(items, words);
+        var ranked = items.Select(i => Score(i, words, rarity, symbol)).OrderBy(s => demoted?.Invoke(s.Item) ?? false).ThenByDescending(s => s.Item.Score).ThenBy(s => s.Item.Node, StringComparer.Ordinal).Select(s => s.Item).ToList();
         var start = Math.Clamp(offset, 0, ranked.Count);
         var page = ranked.Skip(start).Take(Math.Max(limit, 1)).ToList();
         var next = start + page.Count;
         return new RankedPage(page, ranked.Count, next < ranked.Count ? next.ToString(CultureInfo.InvariantCulture) : null);
     }
 
-    private static (ResultItem Item, double Value) Score(ResultItem item, IReadOnlyList<string> words, string? symbol)
+    private static (ResultItem Item, double Value) Score(ResultItem item, IReadOnlyList<string> words, IReadOnlyDictionary<string, double> rarity, string? symbol)
     {
         var path = (item.Node ?? item.Title ?? string.Empty).Replace("code:", string.Empty, StringComparison.Ordinal);
         var slash = path.LastIndexOf('/');
@@ -46,11 +47,26 @@ internal static partial class CodeRanker
         var folderHits = words.Where(w => !nameHits.Contains(w) && folders.Exists(p => Matches(p, w))).ToList();
         var named = !string.IsNullOrWhiteSpace(symbol) && (path.Equals(symbol, StringComparison.Ordinal) || path.EndsWith("/" + symbol, StringComparison.Ordinal));
         var near = item.Depth is { } depth ? GraphNear / (1 + depth) : GraphNear / 3;
-        var raw = (nameHits.Count * NameHit) + (folderHits.Count * FolderHit) + near + (named ? NamedFile : 0);
+        var raw = (nameHits.Sum(w => rarity[w]) * NameHit) + (folderHits.Sum(w => rarity[w]) * FolderHit) + near + (named ? NamedFile : 0);
         var score = Math.Round(raw * Weight(path), 6, MidpointRounding.ToEven);
         var ranked = item with { Score = score, Why = [Reason(path, item, nameHits, folderHits, named)] };
         return (ranked, score);
     }
+
+    // How rare each question word is among the candidate paths: ln(candidates / candidates that hold the word). A word that every
+    // candidate holds ("split" in a split-panes repo) is worth 0, so it can't lift one file over the rest; a word one file holds is worth most.
+    private static Dictionary<string, double> Rarity(IReadOnlyList<ResultItem> items, IReadOnlyList<string> words)
+    {
+        var pieces = items.Select(PathPieces).ToList();
+        return words.ToDictionary(w => w, w =>
+        {
+            var held = pieces.Count(p => p.Exists(x => Matches(x, w)));
+            return held == 0 ? 0 : Math.Log((double)items.Count / held);
+        }, StringComparer.Ordinal);
+    }
+
+    private static List<string> PathPieces(ResultItem item) =>
+        Pieces((item.Node ?? item.Title ?? string.Empty).Replace("code:", string.Empty, StringComparison.Ordinal));
 
     // Where the file lives: docs and specs say about the code, they are not the code.
     private static double Weight(string path) =>
