@@ -147,6 +147,8 @@ adds both; a slice without a new id adds only `A.cs`.
 Without `--files-only` it runs the same checks as the normal mode, under the heavy-job lock. With it, it writes the
 files only (the unit tests).
 
+`--skip-arch` leaves the `Aw.Architecture.Tests` build and unit run out of those checks (`scripts/scaffold/e2e.sh` runs them once per tree); without it they run as before.
+
 For example, once the phase's contract unit has added Sindri's `A.cs` and `IdsJsonContext.cs` (until then this is
 refused with `NS-SLICE-ONLY`):
 

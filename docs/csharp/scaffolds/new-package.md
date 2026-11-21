@@ -484,6 +484,8 @@ for p in src/<Name>/*/*.csproj tests/Aw.<Name>.*/*.csproj tests/Aw.Architecture.
 dotnet restore --locked-mode                            # whole solution; must pass — no other lock file changes here
 dotnet build <each new library project>                # in order Core, Features, Infrastructure (not hosts or App): its RS0016 symbols go into PublicAPI.Unshipped.txt (new-slice.md)
 for p in tests/Aw.<Name>.Tests/Aw.<Name>.Tests.csproj tests/Aw.Architecture.Tests/Aw.Architecture.Tests.csproj; do dotnet build "$p" -warnaserror; done   # 0 warnings, 0 errors; the test project references the new src projects. The whole solution is not built per call (e2e.sh does not build it either: the gate already did)
+
+`--skip-arch` leaves out the `Aw.Architecture.Tests` build and unit run and the whole-solution locked restore; without it the checks above run exactly as listed. `scripts/scaffold/e2e.sh` passes it on every call and runs those architecture tests once per solution tree instead.
 for p in <the same two projects>; do dotnet test --project "$p" --filter-trait "Lane=unit" --ignore-exit-code 8; done   # HostTests pass; the slice test fails (expected); exit 8 = empty lane
 dotnet format <each project holding a written .cs file> --verify-no-changes --include <the .cs files written or edited>   # one run per project, only the generator's own files
 node scripts/check-deps.mjs                             # the package and edges are declared

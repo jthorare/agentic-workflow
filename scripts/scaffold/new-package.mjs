@@ -4,13 +4,15 @@
 //   node scripts/scaffold/new-package.mjs --name <Name> --tier <1-3> --error-prefix <PREFIX> --shape small|full
 //        --host cli|http|none --first-slice <Slice> --behavior <snake_case> [--note "<one line>"] [--depends A,B]
 //        [--binary <exe name>] [--command <name>] [--route "<METHOD> /path"] [--ids Name:prim,...] [--ports I...]
-//        [--root DIR] [--files-only]
+//        [--root DIR] [--files-only] [--skip-arch]
 //
 // Creates a package that passes every check on its first commit, with one red test: the projects, their public API
 // files, the error catalogue, the registrations, the composition root and DI validation test, the deps.yaml node and
 // edges, the solution entries and the architecture-test registration; then /new-slice's first slice. Runs the
 // checks in the spec's order under the heavy-job lock and reverts every file it wrote if one fails. --files-only
 // writes the files and skips the checks (the generator's own unit tests use it; never on a real package).
+// --skip-arch leaves out the Aw.Architecture.Tests build and unit run and the solution-wide locked restore, for
+// scripts/scaffold/e2e.sh, which runs them once per tree.
 // Exit codes: 0 done (only the first slice's test is red), 1 refused or a check failed, 2 usage error.
 
 import path from "node:path";
@@ -192,7 +194,7 @@ export function writePackage(journal, p) {
 }
 
 /** The spec's command list, in order. Each lock file a restore writes is journalled first, so revert restores it. */
-export async function checkPackage(journal, p, s, log) {
+export async function checkPackage(journal, p, s, log, { skipArch = false } = {}) {
   const root = journal.root;
   const { prod, tests } = projectsOf(p);
   const restored = [...prod, ...tests, { path: R.ARCH_CSPROJ }];
@@ -202,10 +204,10 @@ export async function checkPackage(journal, p, s, log) {
     // --force: a restore no-op cache left by an earlier, reverted run would otherwise skip rewriting the lock file.
     await mustPass(root, "SCAFFOLD-RESTORE", "dotnet", ["restore", proj.path, "--force"], "a package the templates reference must be pinned in Directory.Packages.props", log);
   }
-  await mustPass(root, "SCAFFOLD-RESTORE", "dotnet", ["restore", R.SLNX, "--locked-mode"], "no existing lock file may change here: a new pin belongs in its own commit (NP-PINS)", log);
+  if (!skipArch) await mustPass(root, "SCAFFOLD-RESTORE", "dotnet", ["restore", R.SLNX, "--locked-mode"], "no existing lock file may change here: a new pin belongs in its own commit (NP-PINS)", log);
   // Every library layer's public API, the first slice's included, in reference order (Core before Features).
   for (const proj of prod.filter((x) => ["Core", "Features", "Infrastructure"].includes(x.layer))) await declarePublicApi(journal, proj.path, log);
-  const scope = checkScope(journal, p.name);
+  const scope = checkScope(journal, p.name, { skipArch });
   await build(root, scope, log);
   const lane = await expectOnlyRed(root, scope, `${s.slice}Tests.${s.slice}_${s.behavior}`, log);
   await formatClean(root, scope, log);
@@ -216,7 +218,7 @@ export async function checkPackage(journal, p, s, log) {
 export async function main(argv, { log = (line) => console.error(line), out = (line) => console.log(line) } = {}) {
   let input;
   try {
-    input = parseArgs(argv, KNOWN, ["filesOnly"]);
+    input = parseArgs(argv, KNOWN, ["filesOnly", "skipArch"]);
   } catch (e) {
     if (e instanceof UsageError) {
       log(`new-package: ${e.message}`);
@@ -236,7 +238,7 @@ export async function main(argv, { log = (line) => console.error(line), out = (l
     const s = resolveSlice(journal, { package: p.name, slice: input.firstSlice, behavior: input.behavior, surface: p.host, command: input.command, route: input.route, ids: input.ids, ports: input.ports });
     writeSlice(journal, s);
     if (!input.filesOnly) {
-      await withHeavyLock(async () => checkPackage(journal, p, s, log));
+      await withHeavyLock(async () => checkPackage(journal, p, s, log, { skipArch: input.skipArch === true }));
       await noStrayChanges(journal, before);
     }
     out(`new-package: ${p.name} (${p.shape}, host ${p.host}, tier ${p.tier}) — ${journal.touched().length} files`);

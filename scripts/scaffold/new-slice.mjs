@@ -3,13 +3,14 @@
 //
 //   node scripts/scaffold/new-slice.mjs --package <Pkg> --slice <Slice> --behavior <snake_case> --surface cli|http|none
 //        [--command <name>] [--route "<METHOD> /path/{id}"] [--ids Name:string,Other:Guid] [--ports IItemStore,...]
-//        [--root DIR] [--slice-only] [--files-only]
+//        [--root DIR] [--slice-only] [--files-only] [--skip-arch]
 //
 // Adds one use case to an existing package, red: the failing test that names the behavior, the request and response
 // records, a parameterless service stub that throws NotSupportedException, the validator, the registration, the CLI
 // command or endpoint, ids and ports with their fakes and contract bases. Then runs the checks (under the heavy-job
 // lock) and reverts every file it wrote if one fails. --files-only writes the files and skips the checks (the
 // generator's own unit tests use it; never use it on a real package).
+// --skip-arch leaves out the Aw.Architecture.Tests build and unit run (scripts/scaffold/e2e.sh runs them once per tree).
 // --slice-only is for slices scaffolded into one package in parallel branches: it writes the slice's own files, ids
 // and ports, and edits only its own lines in A.cs, IdsJsonContext and PublicAPI.Unshipped.txt. It leaves out the
 // registration, the command-table arm or endpoint-table call, the JSON context lines and the command or endpoint file,
@@ -296,7 +297,7 @@ export const nextSteps = (s) =>
 async function main(argv) {
   let input;
   try {
-    input = parseArgs(argv, KNOWN, ["filesOnly", "sliceOnly"]);
+    input = parseArgs(argv, KNOWN, ["filesOnly", "sliceOnly", "skipArch"]);
   } catch (e) {
     if (e instanceof UsageError) {
       console.error(`new-slice: ${e.message}`);
@@ -315,7 +316,7 @@ async function main(argv) {
     if (!input.filesOnly) {
       await withHeavyLock(async () => {
         await sliceApi(journal, s, log);
-        const scope = checkScope(journal, s.pkg);
+        const scope = checkScope(journal, s.pkg, { skipArch: input.skipArch === true });
         await build(root, scope, log);
         await expectOnlyRed(root, scope, `${s.slice}Tests.${s.slice}_${s.behavior}`, log);
         await formatClean(root, scope, log);

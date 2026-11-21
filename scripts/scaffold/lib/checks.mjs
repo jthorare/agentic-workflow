@@ -50,9 +50,10 @@ export async function declarePublicApi(journal, project, log) {
  * What the post-write checks cover: the package's test project (it references the generated src projects) and the
  * architecture tests (the generators edit them and deps.yaml), and for format the projects holding a .cs file the
  * generator wrote or edited, limited to those files. The whole solution is not built, tested or format-checked per
- * generator call: scripts/scaffold/e2e.sh builds it once at the end.
+ * generator call. With skipArch (the generators' --skip-arch) the architecture tests are left out too: the caller
+ * (scripts/scaffold/e2e.sh) builds and runs them once per tree instead of once per call.
  */
-export function checkScope(journal, pkg) {
+export function checkScope(journal, pkg, { skipArch = false } = {}) {
   const files = journal.touched().filter((f) => f.endsWith(".cs"));
   const owner = (file) => {
     for (let dir = path.posix.dirname(file); dir !== "."; dir = path.posix.dirname(dir)) {
@@ -62,7 +63,7 @@ export function checkScope(journal, pkg) {
     return null;
   };
   const formatProjects = [...new Set(files.map(owner).filter(Boolean))].sort();
-  return { testProjects: [`tests/Aw.${pkg}.Tests/Aw.${pkg}.Tests.csproj`, ARCH_CSPROJ], formatProjects, files };
+  return { testProjects: skipArch ? [`tests/Aw.${pkg}.Tests/Aw.${pkg}.Tests.csproj`] : [`tests/Aw.${pkg}.Tests/Aw.${pkg}.Tests.csproj`, ARCH_CSPROJ], formatProjects, files };
 }
 
 export async function build(root, scope, log) {

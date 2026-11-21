@@ -11,6 +11,8 @@
 # green and adds a third reusing the port (which must leave the port, its fake and its contract base alone), makes that
 # green and adds a fourth with --slice-only (only its own files may change; the generator's checks leave exactly its
 # test red), then runs its integration lane (loopback binding, id route binding, Kernel telemetry as the only logger) green.
+# The generators run with --skip-arch; Aw.Architecture.Tests (50 of the 95 projects) is built and run once per solution tree
+# instead of once per generator call (#3700).
 # Each worktree and its build output are deleted as soon as its checks end (cli, then http, then the toolkit), so the peak
 # is one tree (#3700). Each finished step prints `e2e: <step> <N>s`. Target: under 6 GB of /tmp and under 10 minutes.
 #
@@ -106,13 +108,13 @@ green() {
 tree small
 A="$TMP/small"
 step "(a) /new-package: $SMALL, small, cli, tier $SMALL_TIER ($SMALL_KIND)"
-(cd "$A" && gen scripts/scaffold/new-package.mjs --name "$SMALL" --tier "$SMALL_TIER" --error-prefix E2ESMALL ${SMALL_NOTE[@]+"${SMALL_NOTE[@]}"} \
+(cd "$A" && gen scripts/scaffold/new-package.mjs --skip-arch --name "$SMALL" --tier "$SMALL_TIER" --error-prefix E2ESMALL ${SMALL_NOTE[@]+"${SMALL_NOTE[@]}"} \
   --shape small --host cli --first-slice CheckThing --behavior reports_nothing_for_an_empty_tree) || fail "(a) new-package"
 (cd "$A" && git status --porcelain --untracked-files=all | grep -q "src/$SMALL/") || fail "(a) wrote no src/$SMALL"
 
 step "(a) make CheckThing green by hand, then /new-slice ListThings with a typed id and a new port"
 green "$A" "src/$SMALL/Aw.$SMALL.App/Features" "tests/Aw.$SMALL.Tests" CheckThing reports_nothing_for_an_empty_tree
-(cd "$A" && gen scripts/scaffold/new-slice.mjs --package "$SMALL" --slice ListThings --behavior lists_nothing_for_an_empty_tree \
+(cd "$A" && gen scripts/scaffold/new-slice.mjs --skip-arch --package "$SMALL" --slice ListThings --behavior lists_nothing_for_an_empty_tree \
   --surface cli --command list --ids ThingId:string --ports IThingStore) || fail "(a) new-slice"
 
 step "(a) NativeAOT publish of the generated cli App (telemetry included): no trim or AOT warning, native run"
@@ -125,32 +127,35 @@ bin="$TMP/small-aot/$(printf '%s' "$SMALL" | tr '[:upper:]' '[:lower:]')"
 rc=0; AW_LOG_LEVEL=bogus "$bin" >/dev/null 2>"$TMP/small-aot.err" || rc=$?
 [ "$rc" = 2 ] || fail "(a) native run with no command: exit $rc, expected 2 (usage)"
 grep -q '"eventName":"AW-TELEMETRY-001"' "$TMP/small-aot.err" || fail "(a) native run: no AW-TELEMETRY-001 line for AW_LOG_LEVEL=bogus"
+step "(a) Aw.Architecture.Tests once for the tree"
+(cd "$A" && env -u CI dotnet build tests/Aw.Architecture.Tests -warnaserror) || fail "(a) Aw.Architecture.Tests build"
+(cd "$A" && env -u CI dotnet test --project tests/Aw.Architecture.Tests --filter-trait "Lane=unit" --ignore-exit-code 8) || fail "(a) Aw.Architecture.Tests unit lane"
 drop small "$TMP/small-aot"
 
 # ---- (b) full http package, not declared ----
 tree http
 B="$TMP/http"
 step "(b) /new-package: $HTTP, full, http, tier 1 (not in deps.yaml)"
-(cd "$B" && gen scripts/scaffold/new-package.mjs --name "$HTTP" --tier 1 --error-prefix E2EHTTP --note "scaffold e2e probe" \
+(cd "$B" && gen scripts/scaffold/new-package.mjs --skip-arch --name "$HTTP" --tier 1 --error-prefix E2EHTTP --note "scaffold e2e probe" \
   --shape full --host http --first-slice StartItem --behavior starts_an_item --route "POST /items/{itemId}/start" \
   --ids ItemId:string,OwnerId:Guid) || fail "(b) new-package"
 step "(b) make StartItem green, then /new-slice ListItems with a new Guid id and a new port (Core and Features PublicAPI)"
 green "$B" "src/$HTTP/Aw.$HTTP.Features" "tests/Aw.$HTTP.Tests" StartItem starts_an_item
-(cd "$B" && gen scripts/scaffold/new-slice.mjs --package "$HTTP" --slice ListItems --behavior lists_nothing_for_an_owner \
+(cd "$B" && gen scripts/scaffold/new-slice.mjs --skip-arch --package "$HTTP" --slice ListItems --behavior lists_nothing_for_an_owner \
   --surface http --route "POST /items/{itemId}/list" --ids BatchId:Guid --ports IItemStore) || fail "(b) new-slice ListItems"
 grep -qx "Aw.$HTTP.Core.Ports.IItemStore" "$B/src/$HTTP/Aw.$HTTP.Core/PublicAPI.Unshipped.txt" || fail "(b) IItemStore not declared in Core's PublicAPI"
 grep -qx "Aw.$HTTP.Features.ListItems.ListItemsRequest" "$B/src/$HTTP/Aw.$HTTP.Features/PublicAPI.Unshipped.txt" || fail "(b) ListItemsRequest not declared in Features' PublicAPI"
 step "(b) make ListItems green, then /new-slice CountItems reusing IItemStore: its port, fake and contract stay as they are"
 green "$B" "src/$HTTP/Aw.$HTTP.Features" "tests/Aw.$HTTP.Tests" ListItems lists_nothing_for_an_owner
 (cd "$B" && git add -A && git -c user.name=e2e -c user.email=e2e@localhost commit --quiet -m "e2e: ListItems green") || fail "(b) commit"
-(cd "$B" && gen scripts/scaffold/new-slice.mjs --package "$HTTP" --slice CountItems --behavior counts_nothing \
+(cd "$B" && gen scripts/scaffold/new-slice.mjs --skip-arch --package "$HTTP" --slice CountItems --behavior counts_nothing \
   --surface http --route "POST /items/{itemId}/count" --ports IItemStore) || fail "(b) new-slice CountItems"
 reused="$(cd "$B" && git status --porcelain -- "src/$HTTP/Aw.$HTTP.Core/Ports" "tests/Aw.$HTTP.Testing/InMemoryItemStore.cs" "tests/Aw.$HTTP.Testing/ItemStoreContract.cs")"
 [ -z "$reused" ] || fail "(b) CountItems rewrote the existing port or its fake: $reused"
 step "(b) make CountItems green, then /new-slice --slice-only GetShelf with a new string route id: only its own files change"
 green "$B" "src/$HTTP/Aw.$HTTP.Features" "tests/Aw.$HTTP.Tests" CountItems counts_nothing
 (cd "$B" && git add -A && git -c user.name=e2e -c user.email=e2e@localhost commit --quiet -m "e2e: CountItems green") || fail "(b) commit"
-(cd "$B" && gen scripts/scaffold/new-slice.mjs --slice-only --package "$HTTP" --slice GetShelf --behavior gets_a_shelf \
+(cd "$B" && gen scripts/scaffold/new-slice.mjs --skip-arch --slice-only --package "$HTTP" --slice GetShelf --behavior gets_a_shelf \
   --surface http --route "GET /shelves/{shelfId}" --ids ShelfId:string) || fail "(b) new-slice --slice-only GetShelf"
 changed="$(cd "$B" && git status --porcelain --untracked-files=all | cut -c4- | sort)"
 expected="$(sort <<EOF
@@ -175,6 +180,9 @@ step "(b) integration lane: loopback binding and id route binding (GetShelf's Sh
 (cd "$B" && env -u CI dotnet test --project "tests/Aw.$HTTP.Tests" --filter-trait "Lane=integration") || fail "(b) integration lane"
 step "(b) check-deps with the new node"
 (cd "$B" && node scripts/check-deps.mjs) || fail "(b) check-deps"
+step "(b) Aw.Architecture.Tests once for the tree"
+(cd "$B" && env -u CI dotnet build tests/Aw.Architecture.Tests -warnaserror) || fail "(b) Aw.Architecture.Tests build"
+(cd "$B" && env -u CI dotnet test --project tests/Aw.Architecture.Tests --filter-trait "Lane=unit" --ignore-exit-code 8) || fail "(b) Aw.Architecture.Tests unit lane"
 drop http
 
 # ---- (c) a toolkit, outside the repo ----
