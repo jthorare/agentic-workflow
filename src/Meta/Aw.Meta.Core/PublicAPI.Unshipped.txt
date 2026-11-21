@@ -2816,3 +2816,7 @@ static Aw.Meta.Core.Github.GhExtensions.HasStack(string! list) -> bool
 Aw.Meta.Core.Github.GhExtensions
 Aw.Meta.Core.Worktrees.WorktreeInspector.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Worktrees.WorktreeInspector!
 Aw.Meta.Core.Worktrees.WorktreeSweeper.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Worktrees.WorktreeSweeper!
+Aw.Meta.Core.Watch.TransientGhError
+const Aw.Meta.Core.Watch.TransientGhError.Retries = 3 -> int
+static Aw.Meta.Core.Watch.TransientGhError.Backoff(int attempt) -> System.TimeSpan
+static Aw.Meta.Core.Watch.TransientGhError.IsTransient(string! message) -> bool
