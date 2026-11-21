@@ -82,9 +82,16 @@ internal sealed partial class SessionSheetViewModel
     // Only a session in tmux has a socket and a session name; the command is what a person types in a terminal to look at it.
     private void DrawAttach(SessionHostView host)
     {
-        var inTmux = _catalog is not null && !string.IsNullOrEmpty(host.Socket) && !string.IsNullOrEmpty(host.Session);
-        _attachCommand = inTmux ? $"tmux -S {Quoted(host.Socket!)} attach -t {Quoted(host.Session!)}" : string.Empty;
-        AttachCopy = inTmux ? new CopyAction(_catalog!.Clipboard, _clock, Labels.SheetCopyAttach + " " + Ref, Labels.SheetCopyAttach) : null;
+        if (_catalog is { } catalog && host.Socket is { Length: > 0 } socket && host.Session is { Length: > 0 } session)
+        {
+            _attachCommand = $"tmux -S {Quoted(socket)} attach -t {Quoted(session)}";
+            AttachCopy = new CopyAction(catalog.Clipboard, _clock, Labels.SheetCopyAttach + " " + Ref, Labels.SheetCopyAttach);
+        }
+        else
+        {
+            _attachCommand = string.Empty;
+            AttachCopy = null;
+        }
     }
 
     private static string Quoted(string value) => value.Any(c => char.IsWhiteSpace(c) || c == '\'') ? "'" + value.Replace("'", "'\\''", StringComparison.Ordinal) + "'" : value;

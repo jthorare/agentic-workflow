@@ -18,6 +18,7 @@ public sealed class AgentsPolishFramesTests : FrameHost
 {
     private const string Claude = "claude-code/aaaaaaaa-0000-4000-8000-000000000001";
     private const string Codex = "codex/bbbbbbbb-0000-4000-8000-000000000002";
+    private static readonly string[] WaysBack = ["SheetBack", "SheetClose"];
 
     private async Task<(ShellWindow Window, ShellViewModel Shell)> Opened(string reference, double width = 1600)
     {
@@ -73,10 +74,10 @@ public sealed class AgentsPolishFramesTests : FrameHost
     {
         var (window, _) = await Opened(Claude, width: 1000);
 
-        Assert.Equal(1, new[] { "SheetBack", "SheetClose" }.Count(n => Visible(window, n)));
+        Assert.Equal(1, WaysBack.Count(n => Visible(window, n)));
         var focused = window.FocusManager?.GetFocusedElement() as Control;
         var chain = new List<Control>();
-        for (Control? at = focused; at is not null; at = at.GetVisualParent() as Control)
+        for (var at = focused; at is not null; at = at.GetVisualParent() as Control)
         {
             chain.Add(at);
         }
