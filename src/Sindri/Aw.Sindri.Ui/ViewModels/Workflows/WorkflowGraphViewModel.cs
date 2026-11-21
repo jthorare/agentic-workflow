@@ -15,6 +15,12 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <summary>A node card's height in the world.</summary>
     internal const double CardHeight = 60;
 
+    /// <summary>A card's height when its settings line is longer than <see cref="SettingsWrapAt"/> characters and wraps to a second line.</summary>
+    internal const double CardTallHeight = 80;
+
+    /// <summary>The settings line length above which a card is <see cref="CardTallHeight"/> tall.</summary>
+    internal const int SettingsWrapAt = 32;
+
     /// <summary>The gap between two columns of cards in a wrapped row.</summary>
     internal const double ColumnGap = 56;
 
@@ -132,7 +138,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     internal IReadOnlyList<GraphNodeViewModel> Order { get; }
 
     /// <summary>The world's size: the far corner of the farthest card or missing branch's words.</summary>
-    internal GraphPoint Extent => Nodes.Count == 0 ? default : new GraphPoint(Math.Max(Nodes.Max(n => n.X) + CardWidth, Ends.Select(e => e.Label.Right).DefaultIfEmpty().Max()), Math.Max(Nodes.Max(n => n.Y) + CardHeight, Ends.Select(e => e.Label.Bottom).DefaultIfEmpty().Max()));
+    internal GraphPoint Extent => Nodes.Count == 0 ? default : new GraphPoint(Math.Max(Nodes.Max(n => n.X + n.Width), Ends.Select(e => e.Label.Right).DefaultIfEmpty().Max()), Math.Max(Nodes.Max(n => n.Y + n.Height), Ends.Select(e => e.Label.Bottom).DefaultIfEmpty().Max()));
 
     /// <summary>How many times the cards were laid out: zoom buttons must never raise it, only open, a size change and a text-size change.</summary>
     internal int RelayoutCount { get; private set; }
@@ -145,13 +151,16 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     internal double Relayout(double canvasWidth, double canvasHeight, double textScale)
     {
         RelayoutCount++;
-        var fit = GraphFit.Compute(new GraphFitInput(_layers, [.. Edges.Select(e => (e.From, e.To))]), canvasWidth, canvasHeight, textScale);
+        var fit = GraphFit.Compute(new GraphFitInput(_layers, [.. Edges.Select(e => (e.From, e.To))], Heights()), canvasWidth, canvasHeight, textScale);
         foreach (var node in Nodes)
         {
             if (fit.Cards.TryGetValue(node.Id, out var card))
             {
                 node.X = card.X;
                 node.Y = card.Y;
+                node.Width = card.Width;
+                node.Height = card.Height;
+                node.Scale = textScale;
             }
         }
 
@@ -159,6 +168,10 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         Ends = GraphEnds.Build([.. Nodes], Edges);
         return fit.Zoom;
     }
+
+    // A card whose settings line is longer than SettingsWrapAt wraps it to a second line, so it is taller; the line is the summary the card draws.
+    private Dictionary<string, double> Heights() =>
+        Nodes.ToDictionary(n => n.Id, n => _summaries.TryGetValue(n.Id, out var line) && line.Summary.Length > SettingsWrapAt ? CardTallHeight : CardHeight, StringComparer.Ordinal);
 
     /// <summary>A graph read again keeps the node that was selected (by id), so a live refresh doesn't drop the keyboard's place.</summary>
     /// <param name="before">The graph shown until now, or null.</param>
@@ -288,8 +301,8 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
                 from.Id,
                 to.Id,
                 output.Length == 0 ? null : output,
-                new GraphPoint(from.X + CardWidth, from.Y + (CardHeight / 2)),
-                new GraphPoint(to.X, to.Y + (CardHeight / 2))));
+                new GraphPoint(from.X + from.Width, from.Y + (from.Height / 2)),
+                new GraphPoint(to.X, to.Y + (to.Height / 2))));
         }
 
         return edges;

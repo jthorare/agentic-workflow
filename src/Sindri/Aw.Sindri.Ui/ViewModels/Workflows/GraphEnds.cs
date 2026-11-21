@@ -10,10 +10,10 @@ internal static class GraphEnds
     internal static List<GraphEnd> Build(List<GraphNodeViewModel> nodes, IReadOnlyList<GraphEdgeViewModel> edges)
     {
         var ends = new List<GraphEnd>();
-        var cards = nodes.Select(n => new GraphBox(n.X, n.Y, WorkflowGraphViewModel.CardWidth, WorkflowGraphViewModel.CardHeight)).ToList();
+        var cards = nodes.Select(n => new GraphBox(n.X, n.Y, n.Width, n.Height)).ToList();
         foreach (var node in nodes.Where(n => string.Equals(n.Type, "condition", StringComparison.Ordinal)))
         {
-            foreach (var (branch, across) in new[] { ("true", 50.0), ("false", WorkflowGraphViewModel.CardWidth - 50) })
+            foreach (var (branch, across) in new[] { ("true", 50.0), ("false", node.Width - 50) })
             {
                 if (!edges.Any(e => string.Equals(e.From, node.Id, StringComparison.Ordinal) && string.Equals(e.Label, branch, StringComparison.Ordinal)))
                 {
@@ -34,9 +34,9 @@ internal static class GraphEnds
     private static GraphEnd PlaceEnd(GraphNodeViewModel node, string text, double across, List<GraphBox> cards)
     {
         var x = node.X + across;
-        var below = new GraphPoint(x, node.Y + WorkflowGraphViewModel.CardHeight);
+        var below = new GraphPoint(x, node.Y + node.Height);
         var above = new GraphPoint(x, node.Y);
-        var right = new GraphPoint(node.X + WorkflowGraphViewModel.CardWidth, node.Y + (WorkflowGraphViewModel.CardHeight / 2));
+        var right = new GraphPoint(node.X + node.Width, node.Y + (node.Height / 2));
         GraphEnd[] places =
         [
             new(node.Id, text, below, below with { Y = below.Y + WorkflowGraphViewModel.EndStub }, new GraphBox(x - (WorkflowGraphViewModel.EndLabelWidth / 2), below.Y + WorkflowGraphViewModel.EndStub + 2, WorkflowGraphViewModel.EndLabelWidth, WorkflowGraphViewModel.EndLabelHeight)),

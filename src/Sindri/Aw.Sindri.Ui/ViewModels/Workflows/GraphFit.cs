@@ -77,7 +77,7 @@ internal static class GraphFit
     // Packs the layers into rows: a layer wraps when it would reach past the right pad. Laid out at the text scale; the zoom only scales the whole.
     private static GraphFitResult Lay(GraphFitInput input, double width, double u, double zoom)
     {
-        double cardW = WorkflowGraphViewModel.CardWidth * u, cardH = WorkflowGraphViewModel.CardHeight * u, vGap = WorkflowGraphViewModel.StackGap * u, rowGap = WorkflowGraphViewModel.RowGap * u, padRight = WorkflowGraphViewModel.RightPad * u;
+        double cardW = WorkflowGraphViewModel.CardWidth * u, vGap = WorkflowGraphViewModel.StackGap * u, rowGap = WorkflowGraphViewModel.RowGap * u, padRight = WorkflowGraphViewModel.RightPad * u;
         var rows = Pack(input, width, u);
         var cards = new Dictionary<string, GraphBox>(StringComparer.Ordinal);
         var y = WorkflowGraphViewModel.EdgeMargin * u;
@@ -85,13 +85,14 @@ internal static class GraphFit
         List<(double Top, double Height, double Right)> bands = [];
         foreach (var row in rows)
         {
-            double Stack(IReadOnlyList<string> l) => (l.Count * cardH) + ((l.Count - 1) * vGap);
+            double Stack(IReadOnlyList<string> l) => l.Sum(id => HeightOf(input, id, u)) + ((l.Count - 1) * vGap);
             var rowHeight = row.Max(c => Stack(c.Layer));
             foreach (var (layer, lx) in row)
             {
                 var top = y + ((rowHeight - Stack(layer)) / 2);
                 foreach (var id in layer)
                 {
+                    var cardH = HeightOf(input, id, u);
                     cards[id] = new GraphBox(lx, top, cardW, cardH);
                     top += cardH + vGap;
                 }
@@ -105,6 +106,8 @@ internal static class GraphFit
 
         return new GraphFitResult(zoom, cards, rows.Max(r => r.Count), rows.Count, right + padRight, y - rowGap + (WorkflowGraphViewModel.EdgeMargin * u), Lanes(bands, u));
     }
+
+    private static double HeightOf(GraphFitInput input, string id, double u) => (input.Heights is not null && input.Heights.TryGetValue(id, out var h) ? h : WorkflowGraphViewModel.CardHeight) * u;
 
     // The line that runs back from the end of a row to the start of the next: down the right pad, left along the row gap, down the left pad. Each part is a thin box.
     private static List<GraphBox> Lanes(List<(double Top, double Height, double Right)> bands, double u)

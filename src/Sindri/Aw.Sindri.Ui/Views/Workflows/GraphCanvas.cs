@@ -32,6 +32,9 @@ internal sealed partial class GraphCanvas : Control
     /// <summary>Where the world's origin sits in this control.</summary>
     internal static readonly StyledProperty<Point> PanProperty = AvaloniaProperty.Register<GraphCanvas, Point>(nameof(Pan), _defaultPan);
 
+    /// <summary>The text size setting as a factor (1 = 100 %): cards are laid out at it, and a change wraps them again.</summary>
+    internal static readonly StyledProperty<double> TextScaleProperty = AvaloniaProperty.Register<GraphCanvas, double>(nameof(TextScale), 1);
+
     private const double ViewMargin = 24;
     private const double MinHandle = 40;
     private const double ZoomStep = 1.1;
@@ -40,6 +43,7 @@ internal sealed partial class GraphCanvas : Control
     private Point? _panFrom;
     private Point _panStart;
     private double _laidOutWidth;
+    private double _laidOutScale = 1;
     private WorkflowGraphViewModel? _laidOut;
     private bool _fitPending;   // a workflow just opened and the person has not moved the view: fit it to the canvas
 
@@ -48,6 +52,7 @@ internal sealed partial class GraphCanvas : Control
         AffectsRender<GraphCanvas>(GraphProperty, ZoomProperty, PanProperty);
         FocusableProperty.OverrideDefaultValue<GraphCanvas>(defaultValue: true);
         ClipToBoundsProperty.OverrideDefaultValue<GraphCanvas>(defaultValue: true);
+        _ = TextScaleProperty.Changed.AddClassHandler<GraphCanvas>((canvas, _) => canvas.FitIfPending());
         _ = GraphProperty.Changed.AddClassHandler<GraphCanvas>((c, e) => c.OnGraphChanged(e.OldValue as WorkflowGraphViewModel, e.NewValue as WorkflowGraphViewModel));
     }
 
@@ -63,6 +68,13 @@ internal sealed partial class GraphCanvas : Control
     {
         get => GetValue(ZoomProperty);
         set => SetValue(ZoomProperty, value);
+    }
+
+    /// <summary>Gets or sets the text size setting as a factor.</summary>
+    internal double TextScale
+    {
+        get => GetValue(TextScaleProperty);
+        set => SetValue(TextScaleProperty, value);
     }
 
     /// <summary>Gets or sets where the world's origin sits in this control.</summary>
@@ -251,20 +263,25 @@ internal sealed partial class GraphCanvas : Control
             return;
         }
 
-        var wrapWidthChanged = Math.Abs(Bounds.Width - _laidOutWidth) > 0.5;
-        if (!_fitPending && !wrapWidthChanged && ReferenceEquals(graph, _laidOut))
+        var wrapChanged = Math.Abs(Bounds.Width - _laidOutWidth) > 0.5 || Math.Abs(TextScale - _laidOutScale) > 0.001;
+        if (!_fitPending && !wrapChanged && ReferenceEquals(graph, _laidOut))
         {
             return;
         }
 
-        var fitZoom = graph.Relayout(Bounds.Width, Bounds.Height, 1.0);
+        var fitZoom = graph.Relayout(Bounds.Width, Bounds.Height, TextScale);
         _laidOutWidth = Bounds.Width;
+        _laidOutScale = TextScale;
         _laidOut = graph;
-        if (_fitPending || wrapWidthChanged)
+        if (_fitPending || wrapChanged)
         {
             Zoom = fitZoom;
             Pan = default;
             _fitPending = true;
+            if (graph.SelectedId is { } selected)
+            {
+                ScrollIntoView(selected);
+            }
         }
 
         InvalidateVisual();

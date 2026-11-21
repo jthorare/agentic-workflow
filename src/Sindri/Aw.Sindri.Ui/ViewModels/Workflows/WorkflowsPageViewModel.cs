@@ -11,6 +11,9 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// </summary>
 internal sealed partial class WorkflowsPageViewModel : ObservableObject
 {
+    /// <summary>The text size setting as a factor (Settings sets it): the graph canvases lay their cards out at it.</summary>
+    public double TextScale { get; internal set => Set(ref field, value); } = 1;
+
     private enum Level
     {
         List,

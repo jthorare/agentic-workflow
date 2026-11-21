@@ -168,4 +168,19 @@ public sealed class GraphFitTests
         Assert.Equal(count, boxes.Count);
         Assert.DoesNotContain(boxes.SelectMany((a, i) => boxes.Skip(i + 1).Select(b => a.Overlaps(b))), overlap => overlap);
     }
+
+    [Fact]
+    public void A_card_with_a_settings_line_over_32_characters_is_80_tall_and_the_stack_below_it_moves_down_by_20()
+    {
+        // Two cards in one layer: the 40-character schedule setting makes the first one 80 px, so the second sits 20 px lower than with two 60 px cards.
+        var plain = new GraphFitInput([["a", "b"]], []);
+        var tall = new GraphFitInput([["a", "b"]], [], new Dictionary<string, double>(StringComparer.Ordinal) { ["a"] = WorkflowGraphViewModel.CardTallHeight });
+
+        var before = GraphFit.Compute(plain, CanvasWidth, CanvasHeight, 1.0).Cards;
+        var after = GraphFit.Compute(tall, CanvasWidth, CanvasHeight, 1.0).Cards;
+
+        Assert.Equal(80, after["a"].Height);
+        Assert.Equal(60, after["b"].Height);
+        Assert.Equal(before["b"].Y + 20, after["b"].Y, 3);
+    }
 }
