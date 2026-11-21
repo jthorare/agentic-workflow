@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Graph.Runs;
 
@@ -14,12 +15,27 @@ namespace Aw.Sindri.Features.MarkWorkflowRunSeen;
 /// <param name="clock">The clock the mark's time comes from.</param>
 internal sealed class MarkWorkflowRunSeenService(IWorkflowRunStore runs, ICallerContextAccessor callers, TimeProvider clock) : IService<MarkWorkflowRunSeenRequest, MarkWorkflowRunSeenResponse>
 {
-    public ValueTask<Result<MarkWorkflowRunSeenResponse>> Handle(MarkWorkflowRunSeenRequest request, CancellationToken cancellationToken)
+    public async ValueTask<Result<MarkWorkflowRunSeenResponse>> Handle(MarkWorkflowRunSeenRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(runs);
-        ArgumentNullException.ThrowIfNull(callers);
-        ArgumentNullException.ThrowIfNull(clock);
-        return ValueTask.FromResult<Result<MarkWorkflowRunSeenResponse>>(new MarkWorkflowRunSeenResponse(request.Run, Marked: false));   // red: E1 marks the run here
+        if (callers.Current?.Class is not (CallerClass.Human or CallerClass.Service))
+        {
+            return SindriErrors.AuthRefused.With("Marking a failed run seen is the owner's to do; a session can't (fix: ask the owner to open the run)");
+        }
+
+        var run = await runs.Get(request.Run, cancellationToken).ConfigureAwait(false);
+        if (run.IsError)
+        {
+            return run.Error;
+        }
+
+        // why: only a failed live run is on Home, so any other run (a succeeded one, a test run) has nothing to mark
+        if (run.Value is not { Status: WorkflowRunStatus.Failed } failed || !string.Equals(failed.Mode, WorkflowRunMode.Live, StringComparison.Ordinal))
+        {
+            return new MarkWorkflowRunSeenResponse(request.Run, Marked: false);
+        }
+
+        var marked = await runs.MarkSeen(request.Run, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+        return marked.IsError ? marked.Error : new MarkWorkflowRunSeenResponse(request.Run, Marked: true);
     }
 }
