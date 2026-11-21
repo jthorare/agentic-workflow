@@ -118,7 +118,7 @@ internal static class GraphFit
         {
             var (top, height, right) = bands[r];
             var gapY = top + height + (WorkflowGraphViewModel.RowGap * u / 2);
-            var outX = right + (WorkflowGraphViewModel.RightPad * u / 2);
+            var outX = right + (WorkflowGraphViewModel.ReturnLaneOffset * u);
             var inX = WorkflowGraphViewModel.LeftPad * u / 2;
             var nextMid = bands[r + 1].Top + (bands[r + 1].Height / 2);
             lanes.Add(new GraphBox(outX, top + (height / 2), thick, gapY - top - (height / 2)));

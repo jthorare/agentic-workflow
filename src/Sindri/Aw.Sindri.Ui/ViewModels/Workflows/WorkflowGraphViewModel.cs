@@ -48,6 +48,15 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <summary>The width of the box a missing branch's words are drawn in.</summary>
     internal const double EndLabelWidth = 84;
 
+    /// <summary>The gap between a card and its "done" word.</summary>
+    internal const double DoneGap = 10;
+
+    /// <summary>The width of the box a "done" word is drawn in.</summary>
+    internal const double DoneLabelWidth = 32;
+
+    /// <summary>How far right of a row's last card its return line runs: clear of the "done" word, inside the right pad.</summary>
+    internal const double ReturnLaneOffset = 72;
+
     /// <summary>The height of the box a missing branch's words are drawn in.</summary>
     internal const double EndLabelHeight = 16;
 
