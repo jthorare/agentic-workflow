@@ -45,7 +45,7 @@ public sealed class GraphStageTests
             try
             {
                 var relayouts = graph.RelayoutCount;
-                var atFit = (stage.Strip.Bounds.Height, stage.Canvas.Bounds.Height, stage.Map.IsVisible);
+                var atFit = (Strip: stage.Strip.Bounds.Height, Canvas: stage.Canvas.Bounds.Height, MapShown: stage.Map.IsVisible);
                 stage.Canvas.ZoomIn();
                 stage.Canvas.ZoomIn();
                 stage.Canvas.ZoomIn();
@@ -58,9 +58,9 @@ public sealed class GraphStageTests
             }
         });
 
-        Assert.Equal(56, result.atFit.Height);
-        Assert.Equal(728, result.atFit.Item2);
-        Assert.False(result.atFit.IsVisible);
+        Assert.Equal(56, result.atFit.Strip);
+        Assert.Equal(728, result.atFit.Canvas);
+        Assert.False(result.atFit.MapShown);
         Assert.True(result.MapAfterZoom);
         Assert.True(result.Same);
     }
