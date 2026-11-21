@@ -22,7 +22,16 @@ public sealed class SymbolsColumnTests
 
         Assert.Equal(("from 7c3e1a2", false), (column.Caption, column.Dimmed));
         Assert.Equal("setOrientation · resize · +3", column.Cell("src/layout/SplitPane.ts"));
-        Assert.Equal(string.Empty, column.Cell("src/unknown.ts"));
+        Assert.Equal("—", column.Cell("src/unknown.ts"));
+    }
+
+    [Fact]
+    public void An_ok_index_with_no_rows_for_the_listed_files_says_none_are_indexed()
+    {
+        var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false));
+
+        Assert.Equal(("none indexed for these files", false), (column.Caption, column.Dimmed));
+        Assert.Equal("—", column.Cell("src/tabs/TabManager.ts"));
     }
 
     [Fact]
