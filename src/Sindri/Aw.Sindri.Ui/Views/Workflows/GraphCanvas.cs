@@ -39,6 +39,8 @@ internal sealed partial class GraphCanvas : Control
     private WorkflowGraphViewModel? _watched;
     private Point? _panFrom;
     private Point _panStart;
+    private double _laidOutWidth;
+    private WorkflowGraphViewModel? _laidOut;
     private bool _fitPending;   // a workflow just opened and the person has not moved the view: fit it to the canvas
 
     static GraphCanvas()
@@ -241,26 +243,31 @@ internal sealed partial class GraphCanvas : Control
         InvalidateVisual();
     }
 
-    // A graph wider or taller than the canvas is shrunk (never below the minimum zoom) so every card shows; one that fits keeps the default view (#2668).
+    // The canvas lays the cards out itself (#3684): GraphFit wraps the server's layers at this width. Fit is the state on open: the largest zoom at which the whole graph fits.
     private void FitIfPending()
     {
-        if (!_fitPending || Graph is not { Nodes.Count: > 0 } graph || Bounds.Width <= 0 || Bounds.Height <= 0)
+        if (Graph is not { Nodes.Count: > 0 } graph || Bounds.Width <= 0 || Bounds.Height <= 0)
         {
             return;
         }
 
-        var world = graph.Nodes.Select(WorldRect).Aggregate(static (a, b) => a.Union(b));
-        var room = new Size(Math.Max(1, Bounds.Width - (2 * ViewMargin)), Math.Max(1, Bounds.Height - (2 * ViewMargin)));
-        var zoom = Math.Min(1, Math.Min(room.Width / world.Width, room.Height / world.Height));
-        if (zoom >= 1)
+        var wrapWidthChanged = Math.Abs(Bounds.Width - _laidOutWidth) > 0.5;
+        if (!_fitPending && !wrapWidthChanged && ReferenceEquals(graph, _laidOut))
         {
-            Zoom = 1;
-            Pan = _defaultPan;
             return;
         }
 
-        Zoom = zoom;
-        Pan = new Point(ViewMargin - (world.X * Zoom), ViewMargin - (world.Y * Zoom));
+        var fitZoom = graph.Relayout(Bounds.Width, Bounds.Height, 1.0);
+        _laidOutWidth = Bounds.Width;
+        _laidOut = graph;
+        if (_fitPending || wrapWidthChanged)
+        {
+            Zoom = fitZoom;
+            Pan = default;
+            _fitPending = true;
+        }
+
+        InvalidateVisual();
     }
 
     private void OnGraphProperty(object? sender, PropertyChangedEventArgs e)

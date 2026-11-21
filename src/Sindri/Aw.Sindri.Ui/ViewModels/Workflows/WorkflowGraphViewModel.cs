@@ -72,6 +72,8 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
             nodes.Add(new GraphNodeViewModel(id, title.Length > 0 ? title : id, type, at.X, at.Y, status));
         }
 
+        _spec = workflow.Spec;
+        _layers = [.. nodes.GroupBy(n => n.X).OrderBy(g => g.Key).Select(g => (IReadOnlyList<string>)[.. g.OrderBy(n => n.Y).Select(n => n.Id)])];
         Nodes = nodes;
         Unplaced = unplaced;
         Edges = BuildEdges(workflow.Spec, nodes);
@@ -80,6 +82,8 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     }
 
     private readonly Dictionary<string, NodeSummaryView> _summaries;
+    private readonly JsonElement _spec;
+    private readonly List<IReadOnlyList<string>> _layers;   // the node ids of each layer, as the server served them: the order the canvas wraps
 
     /// <summary>The selected step's title and what it does ("Every weekday at 7:00 · ..."), from the lines the API serves; empty when no step is selected or the API sent none for it.</summary>
     public string StepLine => SelectedId is { } id && _summaries.TryGetValue(id, out var line) && Nodes.FirstOrDefault(n => string.Equals(n.Id, id, StringComparison.Ordinal)) is { } node
@@ -105,10 +109,10 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     public IReadOnlyList<GraphNodeViewModel> Nodes { get; }
 
     /// <summary>The branches of condition steps that have no edge, each drawn as "false → done".</summary>
-    public IReadOnlyList<GraphEnd> Ends { get; }
+    public IReadOnlyList<GraphEnd> Ends { get; private set; }
 
     /// <summary>The arrows; an edge naming a node the spec lacks is left out.</summary>
-    public IReadOnlyList<GraphEdgeViewModel> Edges { get; }
+    public IReadOnlyList<GraphEdgeViewModel> Edges { get; private set; }
 
     /// <summary>Gets the id of the selected node, or null.</summary>
     public string? SelectedId { get; private set { Set(ref field, value); OnChanged(nameof(StepLine)); } }
@@ -137,8 +141,19 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <returns>The Fit zoom for the new layout.</returns>
     internal double Relayout(double canvasWidth, double canvasHeight, double textScale)
     {
-        ArgumentNullException.ThrowIfNull(Nodes);
-        throw new NotSupportedException();
+        var fit = GraphFit.Compute(new GraphFitInput(_layers, [.. Edges.Select(e => (e.From, e.To))]), canvasWidth, canvasHeight, textScale);
+        foreach (var node in Nodes)
+        {
+            if (fit.Cards.TryGetValue(node.Id, out var card))
+            {
+                node.X = card.X;
+                node.Y = card.Y;
+            }
+        }
+
+        Edges = BuildEdges(_spec, [.. Nodes]);
+        Ends = GraphEnds.Build([.. Nodes], Edges);
+        return fit.Zoom;
     }
 
     /// <summary>A graph read again keeps the node that was selected (by id), so a live refresh doesn't drop the keyboard's place.</summary>

@@ -1,6 +1,5 @@
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
-#pragma warning disable MA0182 // the canvas takes it in the next commits of #3684
 /// <summary>
 /// Places the server's layers into rows that wrap at the window's width and finds the zoom that fits the whole graph (#3684). A pure function: no Avalonia,
 /// no server positions changed. Fit never goes above 100 % and never below the zoom where card text is 12 px.
@@ -50,10 +49,16 @@ internal static class GraphFit
         List<(IReadOnlyList<string> Layer, double X)> current = [];
         var x = padLeft;
         var previousGap = hGap;
-        foreach (var layer in input.Layers)
+        var forks = input.Forks;
+        var limit = width - padRight + 0.5;
+        for (var k = 0; k < input.Layers.Count; k++)
         {
+            var layer = input.Layers[k];
+            var isFork = layer.Any(forks.Contains);
             var next = current.Count == 0 ? padLeft : x + cardW + previousGap;
-            if (current.Count > 0 && next + cardW > width - padRight + 0.5)
+            // a fork's arms are the next layer: they stay in the fork's row, so a fork whose arms would not fit beside it starts the next row
+            var armsEnd = next + cardW + wide + cardW;
+            if (current.Count > 0 && (next + cardW > limit || (isFork && k + 1 < input.Layers.Count && armsEnd > limit)))
             {
                 rows.Add(current);
                 current = [];
@@ -62,7 +67,7 @@ internal static class GraphFit
 
             current.Add((layer, next));
             x = next;
-            previousGap = layer.Any(input.Forks.Contains) ? wide : hGap;
+            previousGap = isFork ? wide : hGap;
         }
 
         rows.Add(current);

@@ -35,10 +35,10 @@ internal sealed class GraphNodeViewModel : ObservableObject
     public string Type { get; }
 
     /// <summary>Left edge in the graph's world.</summary>
-    public double X { get; }
+    public double X { get; internal set; }
 
     /// <summary>Top edge in the graph's world.</summary>
-    public double Y { get; }
+    public double Y { get; internal set; }
 
     /// <summary>The status glyph of the run shown, or empty.</summary>
     public string Glyph { get; }
