@@ -58,10 +58,15 @@ public static class ProfileRules
             ? SindriErrors.IndexOnyxInProfile.With("context.sources.onyx: Sindri no longer runs or reads Onyx. Remove the 'onyx' entry under context.sources in profile.yaml. Edits apply on save; there is no approve step")
             : null;
 
-    /// <summary>The 'setup:' block (setup-once spec §7.1): 'setup.mcp' is auto or off.</summary>
+    /// <summary>The 'setup:' block (setup-once spec §7.1): 'setup.mcp' is auto or off; the OAuth client ids (first-run spec decision 15a) are one word each.</summary>
     private static Error? SetupKeys(SetupSettings? setup) =>
         setup?.Mcp is { } mcp && mcp is not (SetupSettings.Auto or SetupSettings.Off)
             ? Invalid("setup.mcp", $"'{mcp}' is not auto or off")
+            : OauthClientId("setup.oauth.github", setup?.Oauth?.Github) ?? OauthClientId("setup.oauth.linear", setup?.Oauth?.Linear);
+
+    private static Error? OauthClientId(string keyPath, string? clientId) =>
+        clientId is not null && (string.IsNullOrWhiteSpace(clientId) || clientId.Any(static c => char.IsWhiteSpace(c) || char.IsControl(c)))
+            ? Invalid(keyPath, "must be the OAuth app's client id: one word, no spaces")
             : null;
 
     /// <summary>The 'launch:' keys: the confirm window is a duration, and a repo has a name. Agent ids are checked by pattern when read, never against the catalog.</summary>

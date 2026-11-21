@@ -75,7 +75,10 @@ internal sealed partial class TodoHarness
 
     internal GetTodoService Get() => new(Views.Views, Views.Progress, Slice.Callers);
 
-    internal GetTodoNoteService Note() => new(Views.Progress, Slice.Callers, NoteSync, NoteLocator, Slice.Store, Views.Views, new TodoNoteReads(Picks, new TodoHolds(Slice.Store, Slice.Events), NoteFile, Slice.Store, Slice.Clock));
+    internal GetTodoNoteService Note() => new(Views.Progress, Slice.Callers, NoteSync, NoteLocator, Slice.Store, Views.Views, new TodoNoteReads(Picks, new TodoHolds(Slice.Store, Slice.Events), NoteFile, Slice.Store, Slice.Clock, ProfileFile));
+
+    /// <summary>Whether the profile file is on disk, for the note read; none by default.</summary>
+    internal Core.Profile.IProfileFile? ProfileFile { get; set; }
 
     internal TodoNoteSyncStub NoteSync { get; } = new();
 

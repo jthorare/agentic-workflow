@@ -55,7 +55,7 @@ public sealed class WorkflowsRaceTests
         first.SetResult();
         await openingFirst;
 
-        Assert.Equal((OtherRun, "● Running"), (page.Run.Id, page.Run.ChipText));
+        Assert.Equal((OtherRun, "● Running"), (page.Run.Id, page.Run.ChipGlyph + " " + page.Run.ChipWord));
         Assert.False(page.Run.IsReading);
     }
 

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aw.Context.Core.Results;
@@ -119,7 +120,9 @@ internal static partial class ContextTools
             return McpResults.Failure(services, request.Error);
         }
 
-        var answer = await services.GetRequiredService<IService<QueryContextRequest, ContextResult>>().Handle(request.Value, ct).ConfigureAwait(false);
+        // why: the page's window is also the fetch window (#3370), so a page reads only its own ranked records
+        var windowed = request.Value with { Limit = page.Value.Limit.ToString(CultureInfo.InvariantCulture), Offset = page.Value.Offset.ToString(CultureInfo.InvariantCulture) };
+        var answer = await services.GetRequiredService<IService<QueryContextRequest, ContextResult>>().Handle(windowed, ct).ConfigureAwait(false);
 
         // why: 'node' may be a name or an alias, so the graph check uses the anchor the query resolved it to
         return answer.IsSuccess && request.Value.Node is { } node

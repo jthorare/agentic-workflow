@@ -229,16 +229,24 @@ public static class MergeGate
             return new MergeCheck("main", Ok: true, $"gate ran on main {gate.Main}");
         }
 
-        if (gate.Tree is null)
-        {
-            return new MergeCheck("main", Ok: false, $"gate ran on main {gate.Main}, main is {facts.CurrentMain}");
-        }
-
-        if (facts.MergedTree == gate.Tree)
+        if (gate.Tree is not null && facts.MergedTree == gate.Tree)
         {
             return new MergeCheck("main", Ok: true, gate.Stack.Count == 0
                 ? $"main moved from {gate.Main} to {facts.CurrentMain}, and the gated head merges onto it to the tested tree"
                 : $"the gated head merges onto main {facts.CurrentMain} to the tested tree (the gate stacked {string.Join(", ", gate.Stack.Select(s => "#" + s.Pr.ToString(CultureInfo.InvariantCulture)))})");
+        }
+
+        // A merge queue re-tests the merged tree before it lands, so a main that moved past the gate is the queue's to settle.
+        if (facts.BaseHasMergeQueue)
+        {
+            return new MergeCheck("main", Ok: true, gate.Main == facts.CurrentMain
+                ? $"the gated head does not merge to the tested tree on main {facts.CurrentMain}; GitHub's merge queue re-tests on the merged tree"
+                : $"main moved from {gate.Main} to {facts.CurrentMain}; GitHub's merge queue re-tests on the merged tree");
+        }
+
+        if (gate.Tree is null)
+        {
+            return new MergeCheck("main", Ok: false, $"gate ran on main {gate.Main}, main is {facts.CurrentMain}");
         }
 
         return new MergeCheck("main", Ok: false, gate.Stack.Count == 0

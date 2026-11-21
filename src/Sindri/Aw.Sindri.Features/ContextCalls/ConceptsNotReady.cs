@@ -17,6 +17,9 @@ internal sealed class ConceptsNotReady(IJobViews jobs)
 {
     private static readonly JobKind _build = JobKind.From("BuildContextMap");
 
+    // The first map is built by the context-map-refresh service's job, not a BuildContextMap job (#3595).
+    private static readonly JobKind _refresh = JobKind.From("RefreshContextMap");
+
     /// <summary>The view for "no map yet".</summary>
     /// <param name="refusal">The engine's SND-CONTEXT-030.</param>
     /// <param name="scope">The caller's scope (its repo, or the profile's only one, names the answer).</param>
@@ -25,7 +28,9 @@ internal sealed class ConceptsNotReady(IJobViews jobs)
     internal async ValueTask<ConceptsView> Explain(Error refusal, ContextScope scope, CancellationToken cancellationToken)
     {
         var builds = await jobs.List(state: null, _build, cancellationToken).ConfigureAwait(false);
-        var running = builds.IsSuccess && builds.Value.Any(static j => j.State == JobState.Running);
+        var refreshes = await jobs.List(state: null, _refresh, cancellationToken).ConfigureAwait(false);
+        var running = (builds.IsSuccess && builds.Value.Any(static j => j.State == JobState.Running))
+            || (refreshes.IsSuccess && refreshes.Value.Any(static j => j.State == JobState.Running));
         var repo = scope.Repos.Count == 1 ? scope.Repos[0].Name.Value : scope.Caller.Repo?.Value;
         return new ConceptsView(1, repo, string.Empty, running ? ConceptStates.Building : ConceptStates.Unavailable, running ? null : refusal.Code, [],
             new ConceptOther(NodeKey.From(ConceptKeys.Other), "Other", new ConceptSize(0, 0, 0, 0)), [], Next: null);

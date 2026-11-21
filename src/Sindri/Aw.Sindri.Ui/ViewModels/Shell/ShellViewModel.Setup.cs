@@ -25,6 +25,7 @@ internal sealed partial class ShellViewModel
     private void InitSetup()
     {
         Health.Follow(Setup.Refresh);
+        Health.SetupRequested += (_, _) => GoTo(PageId.Settings);
         Setup.ChecklistRequested += (_, _) => GoTo(PageId.Settings);
         Setup.PropertyChanged += (_, e) =>
         {

@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using System.Text;
 using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Infrastructure.Launch;
 
@@ -52,19 +54,42 @@ internal sealed class LauncherInit(LauncherInitParts parts) : ILaunchSetup
             return KernelErrors.NotFound.With($"{only.Value.Value} is not in the catalog (fix: sindri launch show lists the entries)");
         }
 
+        var timer = Stopwatch.StartNew();
         var approved = await parts.Approved(cancellationToken).ConfigureAwait(false);
+        parts.Timer?.Took("Launcher.approved", timer.ElapsedMilliseconds);
         var entries = new List<LaunchShowEntry>();
         foreach (var entry in chosen)
         {
-            var resolved = await parts.ResolveBin(entry.Bin, cancellationToken).ConfigureAwait(false);
-            var check = StepApproval.Check(entry, parts.BuiltinHash(entry.Id), approved?.StepArgvHashes(entry.Id) ?? []);
-            var park = check.IsSuccess ? null : $"Steps on `{entry.Id.Value}` will park: approve `agents.{entry.Id.Value}.stepArgvHash: {entry.ArgvHash}`";
-            var models = parts.Models is { } catalog && resolved is not null ? ModelBands.Rank(await catalog.ModelsOf(entry.Id, cancellationToken).ConfigureAwait(false)) : null;
-            entries.Add(new LaunchShowEntry(entry.Id, entry.Source, entry.Bin, resolved, entry.ArgvHash, check.IsSuccess, park) { Models = models });
+            entries.Add(await ShowEntry(entry, approved, timer, cancellationToken).ConfigureAwait(false));
         }
 
+        timer.Restart();
         var (terminal, source) = await Terminal(config, cancellationToken).ConfigureAwait(false);
+        parts.Timer?.Took("Launcher.terminal", timer.ElapsedMilliseconds);
         return new LaunchShowReport(terminal, source, parts.Catalog.Path, entries, Problems(config, parts.Catalog.Path));
+    }
+
+    private async ValueTask<LaunchShowEntry> ShowEntry(AgentEntry entry, AgentSettings? approved, Stopwatch timer, CancellationToken cancellationToken)
+    {
+        timer.Restart();
+        var resolved = await parts.ResolveBin(entry.Bin, cancellationToken).ConfigureAwait(false);
+        parts.Timer?.Took("Launcher.resolve:" + entry.Id.Value, timer.ElapsedMilliseconds);
+        var check = StepApproval.Check(entry, parts.BuiltinHash(entry.Id), approved?.StepArgvHashes(entry.Id) ?? []);
+        var park = check.IsSuccess ? null : $"Steps on `{entry.Id.Value}` will park: approve `agents.{entry.Id.Value}.stepArgvHash: {entry.ArgvHash}`";
+        timer.Restart();
+        var models = await RankedModels(entry, resolved, cancellationToken).ConfigureAwait(false);
+        parts.Timer?.Took("Launcher.models:" + entry.Id.Value, timer.ElapsedMilliseconds);
+        return new LaunchShowEntry(entry.Id, entry.Source, entry.Bin, resolved, entry.ArgvHash, check.IsSuccess, park) { Models = models };
+    }
+
+    private async ValueTask<IReadOnlyList<RankedModel>?> RankedModels(AgentEntry entry, string? resolved, CancellationToken cancellationToken)
+    {
+        if (parts.Models is not { } catalog || resolved is null)
+        {
+            return null;
+        }
+
+        return ModelBands.Rank(await catalog.ModelsOf(entry.Id, cancellationToken).ConfigureAwait(false));
     }
 
     private async ValueTask<(string Terminal, string Source)> Terminal(LauncherConfig config, CancellationToken cancellationToken)

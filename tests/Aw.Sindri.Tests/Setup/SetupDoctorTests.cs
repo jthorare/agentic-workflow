@@ -33,17 +33,17 @@ public sealed class SetupDoctorTests
 
         Assert.Equal(CheckState.Warn, check.State);
         Assert.Contains("sources (todo)", check.Detail, StringComparison.Ordinal);
-        Assert.Equal("sindri index connect <source>", check.Fix);
+        Assert.Equal("sindri setup", check.Fix);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_fresh_box_warns_and_names_the_first_open_step_and_its_move()
+    public async Task A_fresh_box_warns_names_every_open_step_and_the_move_of_the_first()
     {
         var check = await Run(new InMemorySetupFacts());
 
         Assert.Equal(CheckState.Warn, check.State);
-        Assert.Contains("repo", check.Detail, StringComparison.Ordinal);
-        Assert.Equal("sindri repo add <path>", check.Fix);
+        Assert.Contains("repo (needs-you)", check.Detail, StringComparison.Ordinal);
+        Assert.Equal("sindri setup", check.Fix);   // the accounts step is step 2 now, so it is the first open one on a fresh box
     }
 
     [Fact, Trait("Lane", "unit")]

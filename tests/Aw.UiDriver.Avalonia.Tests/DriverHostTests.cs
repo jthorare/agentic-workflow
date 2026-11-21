@@ -125,6 +125,7 @@ public sealed class DriverHostTests
         var read = AwJson.Deserialize<ActedResponse>(reply.Body.Span, UiDriverJson.Options);
         Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : string.Empty);
         Assert.Equal("save", read.Value.Node.AutomationId);
+        Assert.Contains("\"pointer\":", System.Text.Encoding.UTF8.GetString(reply.Body.Span), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]

@@ -25,4 +25,16 @@ internal static class RunStatus
         "failed" => Api.ChipTone.Fail,
         _ => Api.ChipTone.Neutral,
     };
+
+    /// <summary>The StateChipView tone word of a served status: each live state shows as itself, so a run can read Running or Waiting.</summary>
+    /// <param name="status">The served status.</param>
+    /// <returns>ok for succeeded, running, waiting, error for failed, else neutral (queued, cancelled, skipped, and a status this build does not know).</returns>
+    internal static string ToneWord(string status) => status switch
+    {
+        "succeeded" => "ok",
+        "running" => "running",
+        "waiting" => "waiting",
+        "failed" => "error",
+        _ => "neutral",
+    };
 }

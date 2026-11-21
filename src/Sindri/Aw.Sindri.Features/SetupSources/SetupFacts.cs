@@ -22,4 +22,11 @@ internal sealed class SetupFacts(ProfileSetupReader profile, SourcesSetupReader 
     public ValueTask<Result<MapFact>> Map(CancellationToken cancellationToken) => map.Read(cancellationToken);
 
     public ValueTask<Result<SourcesFact>> Sources(CancellationToken cancellationToken) => sources.Read(cancellationToken);
+
+    // Until the build-info compare (first-run spec A5) there is no stamp to differ on, so serve counts as current.
+    public ValueTask<Result<ServeFact>> Serve(CancellationToken cancellationToken) => ValueTask.FromResult<Result<ServeFact>>(new ServeFact(Current: true));
+
+    public ValueTask<Result<AgentFact>> Agent(CancellationToken cancellationToken) => profile.Agent(cancellationToken);
+
+    public ValueTask<Result<FirstWorkflowFact>> FirstWorkflow(CancellationToken cancellationToken) => profile.FirstWorkflow(cancellationToken);
 }

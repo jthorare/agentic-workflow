@@ -18,8 +18,14 @@ check() {
   fi
 }
 has() { # has <name> <text> <fixed string>
-  if printf '%s' "$2" | grep -qF -- "$3"; then echo "ok - $1"; else echo "not ok - $1"; echo "  missing: $3"; echo "  in: $2"; fail=1; fi
+  # No `printf | grep -q`: under pipefail grep's early exit kills printf with SIGPIPE and a present needle reads as missing (#3551).
+  case "$2" in *"$3"*) echo "ok - $1" ;; *) echo "not ok - $1"; echo "  missing: $3"; echo "  in: $2"; fail=1 ;; esac
 }
+# #3551: `has` was `printf | grep -q` under pipefail. printf writes one line per write(), and grep -q exits at the first match, so
+# a later write hit a closed pipe, printf died of SIGPIPE and pipefail made `has` say "missing" for text that was there. It fired when
+# the box was slow enough for grep to exit between two writes. 100 KB of lines after the needle makes it happen every time.
+needle_first="$(printf 'AW_SINDRI_STOP_OK=1: going on\n'; head -c 100000 /dev/zero | tr '\0' x | fold -w 80)"
+has "has finds a needle on the first line of a 100 KB output" "$needle_first" "AW_SINDRI_STOP_OK=1: going on"
 WORK="$(cd "$(mktemp -d)" && pwd -P)"
 serve_pid=""
 cleanup() { if [ -n "$serve_pid" ]; then kill "$serve_pid" 2> /dev/null; fi; find "$WORK" -delete 2> /dev/null; }   # by recorded pid only
@@ -405,6 +411,33 @@ check "the pack copy did not touch the checkout" "$(git -C "$REPO" status --porc
 out="$(bash "$INSTALL" --publish 2>&1)"
 has "second run says the SDK package is current" "$out" "toolkit SDK package is current"
 check "second run packs nothing" "$(packs)" "1"
+# Follow-up to #3218: a git that dies on the pack path's own `ls-files` (the only call that names src/Toolkit) must stop with a message.
+REALGIT="$(command -v git)"
+mkdir "$WORK/failpack"
+cat > "$WORK/failpack/git" <<STUB
+#!/usr/bin/env bash
+case " \$* " in *" ls-files "*src/Toolkit*) exit 137 ;; esac
+exec "$REALGIT" "\$@"
+STUB
+chmod +x "$WORK/failpack/git"
+fpout="$(PATH="$WORK/failpack:$PATH" bash "$INSTALL" --publish 2>&1)" && fprc=0 || fprc=$?
+check "git ls-files failing on the pack path: the publish exits 1" "$fprc" "1"
+has "git ls-files failing on the pack path: says which step failed" "$fpout" "git ls-files failed while listing the toolkit SDK inputs"
+check "git ls-files failing on the pack path: packs nothing" "$(packs)" "1"
+# Follow-up to #3218: the stamp's own git calls. Its `ls-files` is the only one that names scripts/heavy.sh; `status` decides "-dirty".
+for what in "ls-files:*scripts/heavy.sh*" "status:*"; do
+  verb="${what%%:*}"; pat="${what#*:}"
+  mkdir "$WORK/failstamp-$verb"
+  cat > "$WORK/failstamp-$verb/git" <<STUB
+#!/usr/bin/env bash
+case " \$* " in *" $verb "*$pat) exit 137 ;; esac
+exec "$REALGIT" "\$@"
+STUB
+  chmod +x "$WORK/failstamp-$verb/git"
+  fsout="$(PATH="$WORK/failstamp-$verb:$PATH" bash "$INSTALL" --publish 2>&1)" && fsrc=0 || fsrc=$?
+  check "git $verb failing in the stamp: the publish exits 1" "$fsrc" "1"
+  has "git $verb failing in the stamp: says which step failed" "$fsout" "git $verb failed while stamping the build"
+done
 echo 'class B {}' >> "$REPO/src/Toolkit/Aw.Sindri.Toolkit/A.cs"
 sleep 1
 bash "$INSTALL" --publish > /dev/null 2>&1
@@ -469,6 +502,37 @@ check "judge change: the copied binaries carry their hash and file list" "$(cmp 
 check "judge change: judge's hash changed" "$(differs "$(cat "$B/$S0/inputs/judge.sha256")" "$(cat "$B/$S1/inputs/judge.sha256")")" "yes"
 check "judge change: no stage left" "$(find "$B" -mindepth 1 -maxdepth 1 -name '.stage*' | wc -l | tr -d ' ')" "0"
 check "judge change: current points at the new build" "$S1" "$(readlink "$B/current")"
+
+# (a2) #3218: a git that fails while the per-binary hashes are made (killed under memory pressure) must stop the publish with a message.
+# It used to end the script silently after the "uncommitted changes" line (set -e), which looked like a dirty tree that would not reuse sindri.
+# The stub fails every `git ls-files` after the first (the stamp's own call), like a git killed mid-publish.
+REALGIT="$(command -v git)"
+mkdir "$WORK/failgit"
+cat > "$WORK/failgit/git" <<STUB
+#!/usr/bin/env bash
+case " \$* " in *" ls-files "*) n="\$(cat "$WORK/failgit/n" 2> /dev/null || echo 0)"; echo \$((n + 1)) > "$WORK/failgit/n"; [ "\$n" -lt 1 ] || exit 137 ;; esac
+exec "$REALGIT" "\$@"
+STUB
+chmod +x "$WORK/failgit/git"
+cp "$REPO/src/Judge/Aw.Judge.Host/J.cs" "$WORK/J.cs.before"
+echo "git fails" >> "$REPO/src/Judge/Aw.Judge.Host/J.cs"
+fgout="$(PATH="$WORK/failgit:$PATH" bash "$INSTALL" --publish 2>&1)" && fgrc=0 || fgrc=$?
+mv "$WORK/J.cs.before" "$REPO/src/Judge/Aw.Judge.Host/J.cs"  # copy back, not an in-place sed edit: BSD sed differs (#3575)
+check "git failing in the per-binary hashes: the publish exits 1" "$fgrc" "1"
+has "git failing in the per-binary hashes: says which step failed" "$fgout" "git ls-files failed"
+
+# (a3) Follow-up to #3218: the same for `git hash-object`, which the stamp and every per-binary hash pipe into sha256. A hash-object that dies
+# (137, killed) under pipefail ended the script silently. The stub fails every hash-object, so the stamp's own call fails first.
+mkdir "$WORK/failhash"
+cat > "$WORK/failhash/git" <<STUB
+#!/usr/bin/env bash
+case " \$* " in *" hash-object "*) exit 137 ;; esac
+exec "$REALGIT" "\$@"
+STUB
+chmod +x "$WORK/failhash/git"
+fhout="$(PATH="$WORK/failhash:$PATH" bash "$INSTALL" --publish 2>&1)" && fhrc=0 || fhrc=$?
+check "git hash-object failing: the publish exits 1" "$fhrc" "1"
+has "git hash-object failing: says which step failed" "$fhout" "git hash-object failed"
 
 # (b) scripts/heavy.sh only: nothing is published, the new build has the new heavy
 echo "# a comment" >> "$REPO/scripts/heavy.sh"

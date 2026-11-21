@@ -29,6 +29,8 @@ internal sealed class CallerHeaders
 
     private const string NoToken = "the per-start human token isn't readable";
 
+    private const string OneOffReason = "a one-off session Sindri started (AW_SINDRI_ONEOFF is set)";
+
     /// <summary>Why this CLI calls as a session, or null for a human (or for <see cref="None"/>); as of the last <see cref="Resolve"/> (each call makes one).</summary>
     internal string? SessionReason => _session is null ? null : _reason;
 
@@ -41,13 +43,13 @@ internal sealed class CallerHeaders
     internal async ValueTask<string?> Resolve(CancellationToken cancellationToken)
     {
         _token = await ReadToken(cancellationToken).ConfigureAwait(false);
-        _reason = _session is null || _token is not null ? null : _session.Launch is null ? NoToken : LaunchedReason;
+        _reason = _session is null || _token is not null ? null : _session.Launch is not null ? LaunchedReason : _session.OneOff ? OneOffReason : NoToken;
         return _reason;
     }
 
     private async ValueTask<HumanToken?> ReadToken(CancellationToken cancellationToken)
     {
-        if (_tokens is null || _session?.Launch is not null)   // a session Sindri launched never calls as a human, whatever it can read
+        if (_tokens is null || _session?.Launch is not null || _session?.OneOff == true)   // a session Sindri launched or started never calls as a human, whatever it can read (#3466: same Unix user, same token file)
         {
             return null;
         }

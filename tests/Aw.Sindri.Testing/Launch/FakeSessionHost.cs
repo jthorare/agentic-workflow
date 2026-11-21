@@ -1,11 +1,14 @@
 using Aw.Kernel;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 
 namespace Aw.Sindri.Testing.Launch;
 
 /// <summary>An <see cref="ISessionHost"/> that keeps sessions in memory: a name is live from Start until Stop, and the test attaches clients to it.</summary>
-public sealed class FakeSessionHost : ISessionHost
+public sealed class FakeSessionHost : ISessionHost, ISessionPanes
 {
+    private readonly Dictionary<string, string> _panes = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _ended = new(StringComparer.Ordinal);
     private readonly Dictionary<string, int> _clients = new(StringComparer.Ordinal);
     private readonly List<HostSession> _started = [];
     private Error? _nextStartFailure;
@@ -15,6 +18,15 @@ public sealed class FakeSessionHost : ISessionHost
 
     /// <summary>Every session Start accepted, in order (a Stop does not remove it).</summary>
     public IReadOnlyList<HostSession> Started => _started;
+
+    /// <inheritdoc/>
+    public string Socket => "sindri-launch";
+
+    /// <summary>When true, <see cref="PaneId"/> answers null, as tmux does when it can't be asked.</summary>
+    public bool PaneLookupFails { get; set; }
+
+    /// <summary>When true, <see cref="Probe"/> reports tmux as not installed.</summary>
+    public bool TmuxMissing { get; set; }
 
     /// <summary>How many sessions are live now.</summary>
     public int LiveCount => _clients.Count;
@@ -53,6 +65,7 @@ public sealed class FakeSessionHost : ISessionHost
         }
 
         _clients[session.Name] = 0;
+        _panes[session.Name] = "%" + _started.Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
         _started.Add(session);
         return ValueTask.FromResult<Result<HostRef>>(new HostRef(HostKind.Tmux, session.Name));
     }
@@ -62,6 +75,7 @@ public sealed class FakeSessionHost : ISessionHost
     {
         ArgumentNullException.ThrowIfNull(host);
         _ = _clients.Remove(host.Name);
+        _ = _panes.Remove(host.Name);
         return ValueTask.FromResult<Result<Unit>>(Unit.Value);
     }
 
@@ -88,5 +102,23 @@ public sealed class FakeSessionHost : ISessionHost
 
     /// <inheritdoc/>
     public ValueTask<HostFacts> Probe(CancellationToken cancellationToken) =>
-        ValueTask.FromResult(new HostFacts(HostKind.Tmux, Present: true, "3.4", Problem: null));
+        ValueTask.FromResult(TmuxMissing ? new HostFacts(HostKind.Tmux, Present: false, Version: null, "not-installed") : new HostFacts(HostKind.Tmux, Present: true, "3.4", Problem: null));
+
+    /// <inheritdoc/>
+    public ValueTask<TmuxPaneId?> PaneId(HostRef host, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(host);
+        return ValueTask.FromResult(PaneLookupFails || !_panes.TryGetValue(host.Name, out var pane) ? (TmuxPaneId?)null : TmuxPaneId.From(pane));
+    }
+
+    /// <summary>Ends a session's agent: <see cref="Running"/> answers false for it from now on (null while <see cref="PaneLookupFails"/>).</summary>
+    /// <param name="name">The session name.</param>
+    public void End(string name) => _ended.Add(name);
+
+    /// <inheritdoc/>
+    public ValueTask<bool?> Running(HostRef host, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(host);
+        return ValueTask.FromResult<bool?>(PaneLookupFails ? null : _panes.ContainsKey(host.Name) && !_ended.Contains(host.Name));
+    }
 }

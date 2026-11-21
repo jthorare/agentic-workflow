@@ -192,8 +192,8 @@ ok    context:sync      sources sync: 1 intent source(s) synced
 ok    context:mcp-scope no user-wide 'sindri' MCP entry for Claude Code, Codex or Cursor
 ok    launcher          no launcher.json at …; this box's viewer is Warp (warp) (sindri launch init writes it); …
 ok    launcher:agents   claude-code (builtin): …/claude; codex (builtin): …/codex; cursor (builtin): …/agent
-warn  claude-code       re-probed: claude 2.1.303 differs from the pinned probe (2.1.299) (fix: …)
-warn  codex:read-only   pending: owner probe (fix: …)
+ok    claude-code       claude 2.1.303 (probe pinned at 2.1.299; the markers are all set)
+ok    codex:read-only   pending owner probe: provisional markers
 ```
 
 | Line | `ok` means | When it isn't |
@@ -209,7 +209,7 @@ warn  codex:read-only   pending: owner probe (fix: …)
 | `context:sync` | Each intent source synced at least once | `warn` `sources sync: …` never synced or last run failed: [OPERATIONS.md](OPERATIONS.md). This row is the older sources sync (queries no longer search Linear live); the record index has its own `context:index-*` rows, whose sync row reads `record index: …` |
 | `context:mcp-scope` | No user-wide `sindri` MCP entry | `warn` `SND-CONTEXT-026`: remove the user-wide entry it names |
 | `index:onyx-leftover` | Nothing an old `onyx up` left on this box (no row when clean) | `fail` containers, volumes, a keychain entry or the `onyx/` directory are left: `sindri onyx down --purge`; `warn` once `context.index.acknowledgeOnyxLeftover` is true |
-| harness probes (`claude-code`, `codex:*`, `cursor-*`) | The installed agent CLI matches the probe pinned in the build | `warn` "differs" or "pending: owner probe" is normal on a dev box and doesn't block a run |
+| harness probes (`claude-code`, `codex:*`, `cursor-*`) | The installed agent CLI matches the probe pinned in the build | `ok` also for a differing version with every marker set, or a pending owner probe. `warn` only when a marker is no longer set: update the toolkit with `./setup.sh`, or report it. `sindri doctor --dev` is for the toolkit's developers: it also warns on a differing version or a pending probe |
 
 **After a new build.** A control plane keeps running the build it started with. When `install-cs.sh` publishes a new
 one it says `a control plane from an earlier build is running (pid N); 'sindri stop', then 'sindri', runs this

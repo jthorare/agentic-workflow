@@ -1,9 +1,11 @@
+using System.Net;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
+using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Threading;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
@@ -11,6 +13,7 @@ using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Sandbox;
 using Aw.Sindri.Ui.ViewModels.Settings;
 using Aw.Sindri.Ui.Views;
+using Aw.Sindri.Ui.Views.Icons;
 using Aw.Sindri.Ui.Views.Sandbox;
 
 namespace Aw.Sindri.Ui.Tests.Sandbox;
@@ -146,6 +149,74 @@ public sealed class SandboxViewTests
         await _bed.Card.Refresh(SandboxTestBed.Api, Token);
         Settle(window);
         Assert.Equal(("Sandbox: ready", false), (row.Text, Find<Control>(window, "SandboxCheckSlot").IsEffectivelyVisible));
+    });
+
+    // #3494: every state is a word and a mark (sandbox spec 8; UI spec 11.3). The never-checked card had the word and no mark.
+    [Fact]
+    public Task The_never_checked_card_has_a_state_mark_before_its_word_on_the_same_centre_line_8_px_apart() => OnUi(async () =>
+    {
+        _bed.Server.SandboxStatusAnswer = RouteAnswer.SpecShaped("sandbox-status", "never-checked");
+        await _bed.Card.Refresh(SandboxTestBed.Api, Token);
+        // The card lives in the shell window, whose ShellStyles give a StateIcon its Size.Icon; a bare Window would leave the mark 0 x 0.
+        var card = new SandboxHealthCard { DataContext = _bed.Card };
+        card.Styles.Add(new StyleInclude(new Uri("avares://Aw.Sindri.Ui/")) { Source = new Uri("avares://Aw.Sindri.Ui/Views/Shell/ShellStyles.axaml") });
+        var window = Show(card);
+
+        var mark = Find<StateIcon>(window, "SandboxGlyph");
+        var word = Find<TextBlock>(window, "SandboxWord");
+        var markBox = new Rect(mark.TranslatePoint(default, window) ?? default, mark.Bounds.Size);
+        var wordBox = new Rect(word.TranslatePoint(default, window) ?? default, word.Bounds.Size);
+
+        Assert.Equal(("not checked", StateGlyph.Stale, true), (word.Text, mark.Glyph, mark.IsEffectivelyVisible && markBox.Width > 0 && markBox.Height > 0));
+        Assert.Equal(8, wordBox.X - markBox.Right, 0.5);
+        Assert.Equal(markBox.Center.Y, wordBox.Center.Y, 1.0);   // within 1 px (a tolerance, not decimal places)
+    });
+
+    // #3528: the serve-down and unreadable cards are a word with no mark today; every state is a word and a mark.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public Task The_error_card_has_a_down_mark_before_its_word_on_the_same_centre_line_8_px_apart(bool unreadable) => OnUi(async () =>
+    {
+        if (unreadable)
+        {
+            _bed.Server.SandboxStatusAnswer = new RouteAnswer(HttpStatusCode.OK, "not json");
+        }
+        else
+        {
+            _bed.Server.GoDown();
+        }
+
+        await _bed.Card.Refresh(SandboxTestBed.Api, Token);
+        var card = new SandboxHealthCard { DataContext = _bed.Card };
+        card.Styles.Add(new StyleInclude(new Uri("avares://Aw.Sindri.Ui/")) { Source = new Uri("avares://Aw.Sindri.Ui/Views/Shell/ShellStyles.axaml") });
+        var window = Show(card);
+
+        var mark = Find<StateIcon>(window, "SandboxGlyph");
+        var word = Find<TextBlock>(window, "SandboxWord");
+        var markBox = new Rect(mark.TranslatePoint(default, window) ?? default, mark.Bounds.Size);
+        var wordBox = new Rect(word.TranslatePoint(default, window) ?? default, word.Bounds.Size);
+
+        Assert.Equal((StateGlyph.Down, true), (mark.Glyph, mark.IsEffectivelyVisible && markBox.Width > 0 && markBox.Height > 0));
+        Assert.Equal(8, wordBox.X - markBox.Right, 0.5);
+        Assert.Equal(markBox.Center.Y, wordBox.Center.Y, 1.0);
+    });
+
+    // #3529: "Check again" before any check ran reads as a repeat of nothing.
+    [Fact]
+    public Task The_check_button_says_check_now_before_any_check_and_check_again_after_one() => OnUi(async () =>
+    {
+        _bed.Server.SandboxStatusAnswer = RouteAnswer.SpecShaped("sandbox-status", "never-checked");
+        await _bed.Card.Refresh(SandboxTestBed.Api, Token);
+        var window = Show(new SandboxHealthCard { DataContext = _bed.Card });
+        var never = AutomationProperties.GetName(Find<Button>(window, "SandboxCheckButton"));
+
+        _bed.Server.SandboxStatusAnswer = RouteAnswer.SpecShaped("sandbox-status", "blocked");
+        await _bed.Card.Refresh(SandboxTestBed.Api, Token);
+        Settle(window);
+        var blocked = AutomationProperties.GetName(Find<Button>(window, "SandboxCheckButton"));
+
+        Assert.Equal(("Check now", "Check again"), (never, blocked));
     });
 
     [Fact]

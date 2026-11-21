@@ -11,6 +11,9 @@ public sealed record CommandRequest(IReadOnlyList<string> Argv, TimeSpan Timeout
     /// <summary>Environment variables to add or override.</summary>
     public IReadOnlyDictionary<string, string> Env { get; init; } = new Dictionary<string, string>(StringComparer.Ordinal);
 
+    /// <summary>Directories put in front of the inherited PATH, in order; a bare program name is looked up in them first.</summary>
+    public IReadOnlyList<string> PathPrefix { get; init; } = [];
+
     /// <summary>Variables removed from the inherited environment before <see cref="Env"/> is applied.</summary>
     public IReadOnlyList<string> UnsetEnv { get; init; } = [];
 

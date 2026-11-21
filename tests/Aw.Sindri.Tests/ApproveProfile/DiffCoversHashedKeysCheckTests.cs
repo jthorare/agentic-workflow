@@ -52,6 +52,10 @@ public sealed class DiffCoversHashedKeysCheckTests
             ("index.concepts owns", _approved with { Index = new IndexSettings(Concepts: [new ConceptSettings(Name: "Billing", Owns: ["invoices"])]) }),
             ("index.pages action concepts", _approved with { Index = new IndexSettings(Pages: [new PageSettings(Name: "Schedule week", Actions: [new PageActionSettings(Name: "Submit", Concepts: ["scheduling"])])]) }),
             ("setup.mcp", _approved with { Setup = new SetupSettings(SetupSettings.Off) }),
+            ("setup.skipAccounts", _approved with { Setup = new SetupSettings { SkipAccounts = true } }),
+            ("setup.skipFirstWorkflow", _approved with { Setup = new SetupSettings { SkipFirstWorkflow = true } }),
+            ("setup.oauth.github", _approved with { Setup = new SetupSettings { Oauth = new SetupOauthSettings(Github: "Iv1.abc") } }),
+            ("setup.oauth.linear", _approved with { Setup = new SetupSettings { Oauth = new SetupOauthSettings(Linear: "lin_abc") } }),
             ("review.login", _approved with { Review = new PrReviewSettings(Login: "octocat") }),
             ("review.settings checks need", _approved with { Review = new PrReviewSettings(Settings: new Dictionary<string, PrReviewSettingsEntry>(StringComparer.Ordinal) { ["api"] = new(Checks: [new PrReviewCheck("tests", "Tests", Need: new PrReviewNeed(Ci: "build"))]) }) }),
             ("review.projects", _approved with { Review = new PrReviewSettings(Projects: [new PrReviewProject("prj_1", Repos: ["acme/api"])]) }),
@@ -68,10 +72,12 @@ public sealed class DiffCoversHashedKeysCheckTests
             ("context", _approved with { Context = context.RootElement.Clone() }),
         };
 
-        foreach (var (key, live) in changed)
-        {
-            Assert.True(Hash(live) != Hash(_approved), $"{key}: the premise is that the hash changes");
-            Assert.True(ProfileDiff.Between(_approved, live).Count > 0, $"{key} changes the hash and the diff says nothing");
-        }
+        Array.ForEach(changed, c => AssertDiffSees(c.Key, c.Live));
+    }
+
+    private static void AssertDiffSees(string key, SindriProfile live)
+    {
+        Assert.True(Hash(live) != Hash(_approved), $"{key}: the premise is that the hash changes");
+        Assert.True(ProfileDiff.Between(_approved, live).Count > 0, $"{key} changes the hash and the diff says nothing");
     }
 }

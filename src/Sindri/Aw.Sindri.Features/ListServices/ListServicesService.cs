@@ -23,7 +23,7 @@ internal sealed class ListServicesService(IApprovedProfile approvals, IViewReade
     {
         var current = status.Current;
         var asOf = current.AsOf;
-        var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
+        var approved = await approvals.ForRead(cancellationToken).ConfigureAwait(false);
         if (approved.IsError)
         {
             return approved.Error;

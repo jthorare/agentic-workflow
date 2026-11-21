@@ -1,3 +1,4 @@
+using Aw.Evidence.Core.Stack;
 using Aw.Evidence.Infrastructure.Settings;
 using Aw.Kernel.Testing;
 
@@ -16,7 +17,7 @@ public sealed class EnvironmentEvidenceSettingsTests : IDisposable
 
         Assert.Null(settings.UserAgent);
         Assert.Equal("judge-default", settings.VisualModel);
-        Assert.Equal(["example.com"], settings.SeedPolicy.Domains);
+        Assert.Equal(SeedPolicy.Default, settings.SeedPolicy);
         Assert.Null(settings.PreviewHostPattern);
         Assert.Null(settings.ApiPort);
         Assert.Null(await settings.AppTitleAsync(TestContext.Current.CancellationToken));
@@ -43,11 +44,10 @@ public sealed class EnvironmentEvidenceSettingsTests : IDisposable
     public async Task Each_setting_comes_from_its_variable()
     {
         var settings = new EnvironmentEvidenceSettings(Env(
-            ("UI_EVIDENCE_USER_AGENT", "Agent/1"), ("AW_VISUAL_MODEL", "haiku"), ("UI_EVIDENCE_SEED_DOMAINS", "seed.test, qa.test"),
+            ("UI_EVIDENCE_USER_AGENT", "Agent/1"), ("AW_VISUAL_MODEL", "haiku"),
             ("UI_EVIDENCE_SEED_EMAIL_PATTERN", "seed-%@seed.test"), ("UI_EVIDENCE_APP_TITLE", "App")));
 
         Assert.Equal(("Agent/1", "haiku"), (settings.UserAgent, settings.VisualModel));
-        Assert.Equal(["seed.test", "qa.test"], settings.SeedPolicy.Domains);
         Assert.Equal("seed-%@seed.test", settings.SeedPolicy.EmailPattern);
         Assert.Equal("App", await settings.AppTitleAsync(TestContext.Current.CancellationToken));
     }

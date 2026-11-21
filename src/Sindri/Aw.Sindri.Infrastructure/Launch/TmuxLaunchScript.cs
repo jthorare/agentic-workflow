@@ -64,6 +64,19 @@ internal static class TmuxLaunchScript
         ArgumentNullException.ThrowIfNull(session);
         var script = new StringBuilder("{\n");
         _ = script.Append("rm -rf -- ").Append(Quote(dir)).Append('\n');
+        if (session.CleanEnvironment)
+        {
+            // 'env -i' drops everything the tmux server handed down; TERM is the pane's own, so the agent still finds a terminal type
+            _ = script.Append("exec env -i \"TERM=$TERM\" ");
+            foreach (var (key, value) in session.Env)
+            {
+                _ = script.Append(Quote(key + "=" + value)).Append(' ');
+            }
+
+            _ = script.AppendJoin(' ', session.Argv.Select(Quote)).Append("\n}\n");
+            return script.ToString();
+        }
+
         foreach (var (key, value) in session.Env)
         {
             _ = script.Append("export ").Append(key).Append('=').Append(Quote(value)).Append('\n');

@@ -19,6 +19,11 @@ namespace Aw.Meta.Core.Coordination;
 /// <param name="config">The team config, for the repo.</param>
 public sealed class MergeQueueReader(IMessageStore messages, IGateStore gates, IKeyValueStore values, RepoCommands repo, IMetaConfig config)
 {
+    /// <summary>The same reads over other gh calls (a poll's, bound by its limit and the stop signal).</summary>
+    /// <param name="github">The calls to use.</param>
+    /// <returns>A reader over them.</returns>
+    public MergeQueueReader Using(RepoCommands github) => new(messages, gates, values, github, config);
+
     /// <summary>The queue as it stands, lowest pull request number first.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <param name="withGithub">Whether to ask GitHub where each pull request in its merge queue stands (one gh call each); false leaves QueuedPr.Github empty.</param>

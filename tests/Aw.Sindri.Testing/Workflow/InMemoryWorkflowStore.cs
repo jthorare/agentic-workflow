@@ -86,9 +86,17 @@ public sealed class InMemoryWorkflowStore(TimeProvider clock) : IWorkflowStore
         }
     }
 
+    /// <summary>Gets or sets a hook run on every <see cref="List"/> call: a returned error fails that call (a store that can't answer right now), null lets it through.</summary>
+    public Func<Error?>? ListFault { get; set; }
+
     /// <inheritdoc/>
     public ValueTask<Result<IReadOnlyList<WorkflowRecord>>> List(bool includeArchived, CancellationToken cancellationToken)
     {
+        if (ListFault?.Invoke() is { } fault)
+        {
+            return ValueTask.FromResult<Result<IReadOnlyList<WorkflowRecord>>>(fault);
+        }
+
         lock (_gate)
         {
             return Ok<IReadOnlyList<WorkflowRecord>>([.. _workflows.Where(p => includeArchived || p.Value.ArchivedAt is null).OrderBy(p => p.Value.Slug.Value, StringComparer.Ordinal).Select(p => p.Value.Record(p.Key))]);

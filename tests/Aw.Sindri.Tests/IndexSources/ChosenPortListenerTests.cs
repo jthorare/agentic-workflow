@@ -1,5 +1,5 @@
-using System.Net;
 using System.Net.Sockets;
+using Aw.Kernel.Testing;
 
 namespace Aw.Sindri.Tests.IndexSources;
 
@@ -20,12 +20,14 @@ public sealed class ChosenPortListenerTests
                 }
 
                 heldPort = chosen;
-                thief = new TcpListener(IPAddress.Loopback, chosen);
-                thief.Start();
+                thief = PortThief.TryTake(chosen);   // null: another process took it first, still the case under test (#3451)
             });
             listener.Close();
 
             Assert.True(port > 0);
+
+            // why: with no thief, the other process may let the port go before HttpListener binds, and the listener rightly takes it (#3546)
+            Assert.SkipWhen(thief is null, "another process took the chosen port first, and nothing here holds it");
             Assert.NotEqual(heldPort, port);
         }
         finally

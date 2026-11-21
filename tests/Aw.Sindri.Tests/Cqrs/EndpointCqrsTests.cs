@@ -55,7 +55,7 @@ public sealed class EndpointCqrsTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public async Task Cqrs_rule_allows_a_query_on_QUERY_and_flags_a_command_on_QUERY()
     {
-        await using var app = WebApplication.CreateSlimBuilder().Build();
+        await using var app = WebApplication.CreateSlimBuilder([LoopbackBinding.NoConfigReload]).Build();
         _ = app.MapMethods("/sindri/fixture/query-ok", ["QUERY"], ([FromServices] IService<FixtureQuery, string> _) => Results.Ok());
         _ = app.MapMethods("/sindri/fixture/query-command", ["QUERY"], ([FromServices] IService<FixtureApply, CommandAccepted> _) => Results.Ok());
         _ = app.MapPost("/sindri/fixture/post-query", ([FromServices] IService<FixtureQuery, string> _) => Results.Ok());
@@ -85,7 +85,7 @@ public sealed class EndpointCqrsTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public async Task Cqrs_rule_flags_a_get_command_a_post_query_and_an_issue_route_outside_the_carve_outs()
     {
-        await using var app = WebApplication.CreateSlimBuilder().Build();
+        await using var app = WebApplication.CreateSlimBuilder([LoopbackBinding.NoConfigReload]).Build();
         _ = app.MapGet("/sindri/fixture/get-command", ([FromServices] IService<FixtureApply, CommandAccepted> _) => Results.Ok());
         _ = app.MapPost("/sindri/fixture/post-query", ([FromServices] IService<FixtureQuery, string> _) => Results.Ok());
         _ = app.MapPost("/sindri/fixture/issue", ([FromServices] IService<FixtureIssue, string> _) => Results.Ok());
@@ -113,7 +113,7 @@ public sealed class EndpointCqrsTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public async Task Cqrs_rule_allows_a_command_on_DELETE_and_flags_a_query_on_DELETE()
     {
-        await using var app = WebApplication.CreateSlimBuilder().Build();
+        await using var app = WebApplication.CreateSlimBuilder([LoopbackBinding.NoConfigReload]).Build();
         _ = app.MapDelete("/sindri/fixture/delete-ok", ([FromServices] IService<FixtureApply, CommandAccepted> _) => Results.Ok());
         _ = app.MapDelete("/sindri/fixture/delete-query", ([FromServices] IService<FixtureQuery, string> _) => Results.Ok());
 
