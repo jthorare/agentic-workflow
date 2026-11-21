@@ -141,7 +141,7 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
         {
             var id = WorkflowRunId.Of(plan.Record.Slug, source.Revision, occurrence);
             var restored = plan.Rows.Select(r => r with { RunId = id }).ToList();
-            var started = await starter.Start(new GraphStartRequest(source.WorkflowId, plan.Record.Slug, source.Revision, occurrence, trigger, concurrency, restored), cancellationToken).ConfigureAwait(false);
+            var started = await starter.Start(new GraphStartRequest(source.WorkflowId, plan.Record.Slug, source.Revision, occurrence, trigger, concurrency, Restored: restored), cancellationToken).ConfigureAwait(false);
             if (started.IsSuccess)
             {
                 return Answer(started.Value, request.Run, plan);
