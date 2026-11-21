@@ -48,7 +48,7 @@ public sealed class WorkflowsCodeStepFramesTests : FrameHost
         Settle(window);
 
         var fields = Named<ItemsControl>(window, "EditorFields");
-        var box = fields.GetVisualDescendants().OfType<TextBox>().Single(t => t.Name == "EditorFieldCode");
+        var box = fields.GetVisualDescendants().OfType<TextBox>().Single(t => t.Name == "EditorFieldCode" && ((ViewModels.Workflows.ConfigFieldViewModel)t.DataContext!).Name == "code");   // every field's template has a code box; only the code field's shows
         Assert.True(box.IsEffectivelyVisible, "the code box is hidden");
         Assert.True(box.AcceptsReturn && box.AcceptsTab, "the code box does not take Enter and Tab");
         Assert.True(box.Bounds.Height >= 200, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the code box is {box.Bounds.Height}px tall: it needs about 12 rows"));

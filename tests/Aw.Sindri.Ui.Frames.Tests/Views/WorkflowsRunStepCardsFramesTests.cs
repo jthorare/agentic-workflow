@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Avalonia.Controls;
+using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
@@ -36,7 +37,8 @@ public sealed class WorkflowsRunStepCardsFramesTests : FrameHost
         await Until(window, () => Visible(window, "RunGroups") && shell.Workflows.Run.Groups.Count > 0, "the run never showed");
         Settle(window);
 
-        Assert.True(Visible(window, "NotificationSent"), "the notification card shows nothing it sent");
+        // every step card has a NotificationSent panel (hidden unless it is a notification): one of them must show
+        Assert.Contains(window.GetVisualDescendants().OfType<Control>(), c => c.Name == "NotificationSent" && c.IsEffectivelyVisible);
         var edit = Named<Button>(window, "EditFailedStep");
         Assert.True(edit.IsEffectivelyVisible);
         Assert.Equal("Edit step", edit.Content);
