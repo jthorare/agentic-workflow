@@ -5,26 +5,28 @@ using Aw.Sindri.Core.Text;
 namespace Aw.Sindri.Features.GetNeedsYou;
 
 /// <summary>The human's rows that are read at request time and not folded from events: the setup rows (the repo step's failure and the MCP need). Every caller gets them, a session too.</summary>
+/// <param name="runs">The run store: failed runs the owner has not opened.</param>
+/// <param name="scrubber">Scrubs the text a failed run's row shows.</param>
 /// <param name="setup">The setup rows that are computed (the repo step's failure, the 'setup:mcp' need).</param>
-internal sealed class NeedsYouLiveRows(SetupNotices setup)
+internal sealed class NeedsYouLiveRows(SetupNotices setup, IWorkflowRunStore runs, ITextScrubber scrubber)
 {
     /// <summary>The setup rows.</summary>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>The rows; empty when a source can't be read.</returns>
     public async ValueTask<IReadOnlyList<NeedsYouRow>> Read(CancellationToken cancellationToken) =>
-        [.. await SetupRows(cancellationToken).ConfigureAwait(false)];
+        [.. await SetupRows(cancellationToken).ConfigureAwait(false), .. await FailedRunRows(runs, scrubber, cancellationToken).ConfigureAwait(false)];
 
     /// <summary>The rows of the live runs that ended failed and are unseen (Home spec 2026-11-12 §3.2, E1).</summary>
     /// <param name="runs">The run store.</param>
     /// <param name="scrubber">Scrubs the text a row shows.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>One row per failed unseen run; empty when the store can't be read.</returns>
-    internal static ValueTask<IReadOnlyList<NeedsYouRow>> FailedRunRows(IWorkflowRunStore runs, ITextScrubber scrubber, CancellationToken cancellationToken)
+    internal static async ValueTask<IReadOnlyList<NeedsYouRow>> FailedRunRows(IWorkflowRunStore runs, ITextScrubber scrubber, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(runs);
         ArgumentNullException.ThrowIfNull(scrubber);
-        cancellationToken.ThrowIfCancellationRequested();
-        return ValueTask.FromResult<IReadOnlyList<NeedsYouRow>>([]);   // red: E1 reads the store here
+        var failed = await runs.FailedUnseen(cancellationToken).ConfigureAwait(false);
+        return failed.IsError ? [] : [.. failed.Value.Select(run => NeedsYouRows.ForRunFailed(run, scrubber)).Where(static r => r.IsSuccess).Select(static r => r.Value)];
     }
 
     // The setup rows that are computed, not folded.

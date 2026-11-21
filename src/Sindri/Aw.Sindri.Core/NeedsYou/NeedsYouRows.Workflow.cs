@@ -49,7 +49,36 @@ public static partial class NeedsYouRows
     /// <param name="run">The failed run.</param>
     /// <param name="scrubber">Scrubs the text.</param>
     /// <returns>The row.</returns>
-    public static Result<NeedsYouRow> ForRunFailed(Graph.Runs.WorkflowRun run, ITextScrubber scrubber) => throw new NotSupportedException("red: P-E1 failed-run row");
+    public static Result<NeedsYouRow> ForRunFailed(Graph.Runs.WorkflowRun run, ITextScrubber scrubber)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        ArgumentNullException.ThrowIfNull(scrubber);
+        var cli = CliForm.Parse("sindri wf run-show <run>").Bind(form => form.Fill("run", run.Id));
+        if (cli.IsError)
+        {
+            return cli.Error;
+        }
+
+        var slug = run.Id.Value[..run.Id.Value.IndexOf('@', StringComparison.Ordinal)];
+        return new NeedsYouRow(
+            NeedsYouRowIds.RunFailed(run.Id),
+            NeedsYouKind.RunFailed,
+            "workflow · run failed",
+            new NeedsYouSubject(SubjectKind.WorkflowRun, RunSubject(run.Id)),
+            run.ItemId,
+            SafeText.Clean(scrubber, $"Run of {slug} failed", TitleMax),
+            SafeText.Clean(scrubber, run.Error ?? "The run failed.", ReasonMax),
+            Repo: null,
+            Urgency.Colour,
+            run.EndedAt ?? run.StartedAt,
+            RecordedOnly: false,
+            Notice: null,
+            AnswerKind: null,
+            PrimaryAction: null,
+            [],
+            cli.Value.Text,
+            new NeedsYouOpen(NeedsYouRoutes.WorkflowRun(run.Id), "Open the run"));
+    }
 
     /// <summary>The subject id of a run's rows: the run id with its '@' written as '.', because a subject id holds no '@'. A slug holds no '.', so the result stays unique and the mapping reverses.</summary>
     /// <param name="run">The run.</param>
