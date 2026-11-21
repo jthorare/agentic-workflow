@@ -1,5 +1,4 @@
 using Aw.Sindri.Core.Graph.Runs;
-using Temporalio.Workflows;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
 
