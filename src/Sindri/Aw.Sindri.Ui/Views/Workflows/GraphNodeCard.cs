@@ -14,7 +14,7 @@ using Aw.Sindri.Ui.Views.Controls;
 namespace Aw.Sindri.Ui.Views.Workflows;
 
 /// <summary>
-/// One workflow step as a card (#3234): the title, the block type, and the run's status as a <see cref="StateChipView"/> (glyph, word, tone), 200 by 64. Its look in every state
+/// One workflow step as a card (#3234): the title, the block type, and the run's status as a <see cref="StateChipView"/> (glyph, word, tone), 290 by 60. Its look in every state
 /// comes from <see cref="GraphTilePens"/>: hover, a focus ring outside the selected ring (keyboard focus only), disabled (dashed), error. A screen reader reads "title, type, status".
 /// </summary>
 [SuppressMessage("Design", "MA0182", Justification = "The editor canvas adopts it in its own PR (#3234).")]
@@ -65,7 +65,7 @@ internal sealed class GraphNodeCard : UserControl
         _ = IsEnabledProperty.Changed.AddClassHandler<GraphNodeCard>((c, _) => c.Paint());
     }
 
-    /// <summary>Initializes a new instance of the <see cref="GraphNodeCard"/> class, 200 by 64.</summary>
+    /// <summary>Initializes a new instance of the <see cref="GraphNodeCard"/> class, 290 by 60.</summary>
     public GraphNodeCard()
     {
         Width = WorkflowGraphViewModel.CardWidth;

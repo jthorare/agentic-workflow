@@ -10,10 +10,31 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 internal sealed class WorkflowGraphViewModel : ObservableObject
 {
     /// <summary>A node card's width in the world.</summary>
-    internal const double CardWidth = 200;
+    internal const double CardWidth = 290;
 
     /// <summary>A node card's height in the world.</summary>
-    internal const double CardHeight = 64;
+    internal const double CardHeight = 60;
+
+    /// <summary>The gap between two columns of cards in a wrapped row.</summary>
+    internal const double ColumnGap = 56;
+
+    /// <summary>The gap between two cards stacked in one layer.</summary>
+    internal const double StackGap = 24;
+
+    /// <summary>The gap between two rows of a wrapped graph.</summary>
+    internal const double RowGap = 56;
+
+    /// <summary>The gap after a layer that holds a fork, wide enough for the branch words clear of the ports.</summary>
+    internal const double ForkGap = 72;
+
+    /// <summary>The space left of the first column.</summary>
+    internal const double LeftPad = 32;
+
+    /// <summary>The space right of the last column, where a return line runs.</summary>
+    internal const double RightPad = 80;
+
+    /// <summary>The margin above the first row and below the last.</summary>
+    internal const double EdgeMargin = 24;
 
     /// <summary>The length of a missing branch's dotted stub.</summary>
     internal const double EndStub = 22;

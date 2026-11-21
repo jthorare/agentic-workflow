@@ -13,15 +13,6 @@ internal static class GraphFit
     /// <summary>The card text's size at 100 % zoom and 100 % text size, in pixels.</summary>
     internal const double CardTextPx = 14;
 
-    private const double CardWidth = 290;
-    private const double CardHeight = 60;
-    private const double HGap = 56;
-    private const double VGap = 24;
-    private const double RowGap = 56;
-    private const double ForkGap = 72;
-    private const double PadLeft = 32;
-    private const double PadRight = 80;
-    private const double Margin = 24;
 
     /// <summary>The lowest Fit zoom: the zoom at which card text is <see cref="MinTextPx"/>.</summary>
     /// <param name="textScale">The text size setting as a factor (1 = 100 %, 1.3 = 130 %).</param>
@@ -54,7 +45,7 @@ internal static class GraphFit
 
     private static List<List<(IReadOnlyList<string> Layer, double X)>> Pack(GraphFitInput input, double width, double u)
     {
-        double cardW = CardWidth * u, hGap = HGap * u, wide = ForkGap * u, padLeft = PadLeft * u, padRight = PadRight * u;
+        double cardW = WorkflowGraphViewModel.CardWidth * u, hGap = WorkflowGraphViewModel.ColumnGap * u, wide = WorkflowGraphViewModel.ForkGap * u, padLeft = WorkflowGraphViewModel.LeftPad * u, padRight = WorkflowGraphViewModel.RightPad * u;
         var rows = new List<List<(IReadOnlyList<string> Layer, double X)>>();
         List<(IReadOnlyList<string> Layer, double X)> current = [];
         var x = padLeft;
@@ -81,10 +72,10 @@ internal static class GraphFit
     // Packs the layers into rows: a layer wraps when it would reach past the right pad. Laid out at the text scale; the zoom only scales the whole.
     private static GraphFitResult Lay(GraphFitInput input, double width, double u, double zoom)
     {
-        double cardW = CardWidth * u, cardH = CardHeight * u, vGap = VGap * u, rowGap = RowGap * u, padRight = PadRight * u;
+        double cardW = WorkflowGraphViewModel.CardWidth * u, cardH = WorkflowGraphViewModel.CardHeight * u, vGap = WorkflowGraphViewModel.StackGap * u, rowGap = WorkflowGraphViewModel.RowGap * u, padRight = WorkflowGraphViewModel.RightPad * u;
         var rows = Pack(input, width, u);
         var cards = new Dictionary<string, GraphBox>(StringComparer.Ordinal);
-        var y = Margin * u;
+        var y = WorkflowGraphViewModel.EdgeMargin * u;
         var right = 0.0;
         foreach (var row in rows)
         {
@@ -105,6 +96,6 @@ internal static class GraphFit
             y += rowHeight + rowGap;
         }
 
-        return new GraphFitResult(zoom, cards, rows.Max(r => r.Count), rows.Count, right + padRight, y - rowGap + (Margin * u));
+        return new GraphFitResult(zoom, cards, rows.Max(r => r.Count), rows.Count, right + padRight, y - rowGap + (WorkflowGraphViewModel.EdgeMargin * u));
     }
 }
