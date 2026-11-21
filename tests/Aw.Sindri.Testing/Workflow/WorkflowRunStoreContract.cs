@@ -623,7 +623,7 @@ public abstract class WorkflowRunStoreContract
         _ = (await store.RecordNodeRun(new NodeRun(Run(1).Id, NodeId.From("skip"), 0, NodeRunStatus.Skipped, Input: null, Output: null, Truncated: false, Error: null, Usage: null), Token)).Value;
 
         var row = (await store.NodeRuns(Run(1).Id, Token)).Value.Single();
-        Expect.Equal(null, row.StartedAt);
+        Expect.Equal(expected: null, row.StartedAt);
         Expect.Equal(KnownInstants.Epoch, row.EndedAt);
     }
 }

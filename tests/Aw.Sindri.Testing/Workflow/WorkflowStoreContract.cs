@@ -211,14 +211,14 @@ public abstract class WorkflowStoreContract
     {
         var store = Create();
         _ = (await store.Create(_id, _slug, Spec("one"), "owner", Token)).Value;
-        Expect.Equal(false, (await store.Get(_id, Token)).Value.WasActivated);
+        Expect.Equal(expected: false, (await store.Get(_id, Token)).Value.WasActivated);
 
         var active = (await store.Activate(_id, 1, Token)).Value;
         var paused = (await store.Pause(_id, Token)).Value;
 
-        Expect.Equal(true, active.WasActivated);
-        Expect.Equal(true, paused.WasActivated);
-        Expect.Equal(null, paused.ActiveRevision);
-        Expect.Equal(true, (await store.Get(_id, Token)).Value.WasActivated);
+        Expect.Equal(expected: true, active.WasActivated);
+        Expect.Equal(expected: true, paused.WasActivated);
+        Expect.Equal(expected: null, paused.ActiveRevision);
+        Expect.Equal(expected: true, (await store.Get(_id, Token)).Value.WasActivated);
     }
 }
