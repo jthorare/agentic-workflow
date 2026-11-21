@@ -17,6 +17,11 @@ namespace Aw.Meta.Core.Worktrees;
 /// <param name="bugfix">The bugfix runs' records: --discarded, and the trees of runs whose issue a merged pull request closed.</param>
 public sealed partial class WorktreeInspector(RepoCommands repo, IProcessLocations processes, MetaPaths paths, IKeyValueStore values, IWorktreeFiles files, IBugfixRecords bugfix)
 {
+    /// <summary>The same inspection over other gh and git calls (a poll's, bound by its limit and the stop signal).</summary>
+    /// <param name="github">The calls to use.</param>
+    /// <returns>An inspector over them.</returns>
+    public WorktreeInspector Using(RepoCommands github) => new(github, processes, paths, values, files, bugfix);
+
     private const string GateCommitter = "aw-meta@localhost";
     private static readonly string[] _gateCommands = ["gate-run", "gate-rerun", "merge-run"];
     private const string GateHost = "aw-meta";

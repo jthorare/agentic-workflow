@@ -19646,7 +19646,7 @@ Aw.Sindri.Core.Graph.Runs.NodeRun.Usage.get -> string?
 Aw.Sindri.Core.Graph.Runs.NodeRun.Usage.init -> void
 Aw.Sindri.Core.Graph.Runs.WorkflowRun
 Aw.Sindri.Core.Graph.Runs.WorkflowRun.<Clone>$() -> Aw.Sindri.Core.Graph.Runs.WorkflowRun!
-Aw.Sindri.Core.Graph.Runs.WorkflowRun.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Id, out Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, out int Revision, out string! Trigger, out Aw.Sindri.Core.Graph.Runs.WorkflowRunStatus Status, out string? Outputs, out string? Error, out Aw.Sindri.Core.Ids.ItemId? ItemId, out System.DateTimeOffset StartedAt, out System.DateTimeOffset? EndedAt) -> void
+Aw.Sindri.Core.Graph.Runs.WorkflowRun.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Id, out Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, out int Revision, out string! Trigger, out Aw.Sindri.Core.Graph.Runs.WorkflowRunStatus Status, out string? Outputs, out string? Error, out Aw.Sindri.Core.Ids.ItemId? ItemId, out System.DateTimeOffset StartedAt, out System.DateTimeOffset? EndedAt, out string! Mode, out string? TestOptions) -> void
 Aw.Sindri.Core.Graph.Runs.WorkflowRun.EndedAt.get -> System.DateTimeOffset?
 Aw.Sindri.Core.Graph.Runs.WorkflowRun.EndedAt.init -> void
 Aw.Sindri.Core.Graph.Runs.WorkflowRun.Equals(Aw.Sindri.Core.Graph.Runs.WorkflowRun? other) -> bool
@@ -19656,6 +19656,10 @@ Aw.Sindri.Core.Graph.Runs.WorkflowRun.Id.get -> Aw.Sindri.Core.Graph.Ids.Workflo
 Aw.Sindri.Core.Graph.Runs.WorkflowRun.Id.init -> void
 Aw.Sindri.Core.Graph.Runs.WorkflowRun.ItemId.get -> Aw.Sindri.Core.Ids.ItemId?
 Aw.Sindri.Core.Graph.Runs.WorkflowRun.ItemId.init -> void
+Aw.Sindri.Core.Graph.Runs.WorkflowRun.Mode.get -> string!
+Aw.Sindri.Core.Graph.Runs.WorkflowRun.Mode.init -> void
+Aw.Sindri.Core.Graph.Runs.WorkflowRun.TestOptions.get -> string?
+Aw.Sindri.Core.Graph.Runs.WorkflowRun.TestOptions.init -> void
 Aw.Sindri.Core.Graph.Runs.WorkflowRun.Outputs.get -> string?
 Aw.Sindri.Core.Graph.Runs.WorkflowRun.Outputs.init -> void
 Aw.Sindri.Core.Graph.Runs.WorkflowRun.Revision.get -> int
@@ -19675,7 +19679,7 @@ Aw.Sindri.Core.Graph.Runs.WorkflowRun.Trigger.get -> string!
 Aw.Sindri.Core.Graph.Runs.WorkflowRun.Trigger.init -> void
 Aw.Sindri.Core.Graph.Runs.WorkflowRun.WorkflowId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowId
 Aw.Sindri.Core.Graph.Runs.WorkflowRun.WorkflowId.init -> void
-Aw.Sindri.Core.Graph.Runs.WorkflowRun.WorkflowRun(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Id, Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, int Revision, string! Trigger, Aw.Sindri.Core.Graph.Runs.WorkflowRunStatus Status, string? Outputs, string? Error, Aw.Sindri.Core.Ids.ItemId? ItemId, System.DateTimeOffset StartedAt, System.DateTimeOffset? EndedAt) -> void
+Aw.Sindri.Core.Graph.Runs.WorkflowRun.WorkflowRun(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Id, Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, int Revision, string! Trigger, Aw.Sindri.Core.Graph.Runs.WorkflowRunStatus Status, string? Outputs, string? Error, Aw.Sindri.Core.Ids.ItemId? ItemId, System.DateTimeOffset StartedAt, System.DateTimeOffset? EndedAt, string! Mode = "live", string? TestOptions = null) -> void
 const Aw.Sindri.Core.Graph.Runs.NodeRunLimits.PayloadBytes = 65536 -> int
 override Aw.Sindri.Core.Graph.Runs.GraphStart.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Graph.Runs.GraphStart.GetHashCode() -> int
@@ -19696,11 +19700,13 @@ static readonly Aw.Sindri.Core.SindriErrors.GraphRunIdTaken -> Aw.Kernel.ErrorDe
 static readonly Aw.Sindri.Core.SindriErrors.GraphRunNotFound -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Graph.Runs.GraphStartRequest
 Aw.Sindri.Core.Graph.Runs.GraphStartRequest.<Clone>$() -> Aw.Sindri.Core.Graph.Runs.GraphStartRequest!
+Aw.Sindri.Core.Graph.Runs.GraphStartRequest.Mode.get -> string!
+Aw.Sindri.Core.Graph.Runs.GraphStartRequest.Mode.init -> void
 Aw.Sindri.Core.Graph.Runs.GraphStartRequest.Concurrency.get -> Aw.Sindri.Core.Graph.Runs.GraphConcurrency
 Aw.Sindri.Core.Graph.Runs.GraphStartRequest.Concurrency.init -> void
-Aw.Sindri.Core.Graph.Runs.GraphStartRequest.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowId Workflow, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, out int Revision, out int Occurrence, out string! Trigger, out Aw.Sindri.Core.Graph.Runs.GraphConcurrency Concurrency) -> void
+Aw.Sindri.Core.Graph.Runs.GraphStartRequest.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowId Workflow, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, out int Revision, out int Occurrence, out string! Trigger, out Aw.Sindri.Core.Graph.Runs.GraphConcurrency Concurrency, out string! Mode) -> void
 Aw.Sindri.Core.Graph.Runs.GraphStartRequest.Equals(Aw.Sindri.Core.Graph.Runs.GraphStartRequest? other) -> bool
-Aw.Sindri.Core.Graph.Runs.GraphStartRequest.GraphStartRequest(Aw.Sindri.Core.Graph.Ids.WorkflowId Workflow, Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, int Revision, int Occurrence, string! Trigger, Aw.Sindri.Core.Graph.Runs.GraphConcurrency Concurrency) -> void
+Aw.Sindri.Core.Graph.Runs.GraphStartRequest.GraphStartRequest(Aw.Sindri.Core.Graph.Ids.WorkflowId Workflow, Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, int Revision, int Occurrence, string! Trigger, Aw.Sindri.Core.Graph.Runs.GraphConcurrency Concurrency, string! Mode = "live") -> void
 Aw.Sindri.Core.Graph.Runs.GraphStartRequest.Occurrence.get -> int
 Aw.Sindri.Core.Graph.Runs.GraphStartRequest.Occurrence.init -> void
 Aw.Sindri.Core.Graph.Runs.GraphStartRequest.Revision.get -> int
@@ -19947,7 +19953,7 @@ override Aw.Sindri.Core.Views.WorkflowRunRow.Equals(object? obj) -> bool
 Aw.Sindri.Core.Views.WorkflowRunRow.Equals(Aw.Sindri.Core.Views.WorkflowRunRow? other) -> bool
 Aw.Sindri.Core.Views.WorkflowRunRow.Trigger.init -> void
 Aw.Sindri.Core.Views.WorkflowRunRow.<Clone>$() -> Aw.Sindri.Core.Views.WorkflowRunRow!
-Aw.Sindri.Core.Views.WorkflowRunRow.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Id, out Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, out int Revision, out string! Trigger, out string! Status, out string? Error, out System.DateTimeOffset StartedAt, out System.DateTimeOffset? EndedAt, out Aw.Sindri.Core.Graph.Ids.NodeId? LastNodeId, out Aw.Sindri.Core.Ids.ItemId? ItemId, out long Sequence) -> void
+Aw.Sindri.Core.Views.WorkflowRunRow.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Id, out Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, out int Revision, out string! Trigger, out string! Status, out string? Error, out System.DateTimeOffset StartedAt, out System.DateTimeOffset? EndedAt, out Aw.Sindri.Core.Graph.Ids.NodeId? LastNodeId, out Aw.Sindri.Core.Ids.ItemId? ItemId, out long Sequence, out string! Mode) -> void
 Aw.Sindri.Core.Views.WorkflowRunRow.Status.get -> string!
 Aw.Sindri.Core.Views.WorkflowRunRow.Error.get -> string?
 Aw.Sindri.Core.Views.WorkflowRunRow.Status.init -> void
@@ -20073,7 +20079,9 @@ Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.RunId.get -> Aw.Sindri.Core.Gra
 Aw.Sindri.Core.Events.WorkflowRunFinishedPayload.RunId.init -> void
 Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
 Aw.Sindri.Core.Events.WorkflowRunCancelledPayload.RunId.init -> void
-Aw.Sindri.Core.Views.WorkflowRunRow.WorkflowRunRow(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Id, Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, int Revision, string! Trigger, string! Status, string? Error, System.DateTimeOffset StartedAt, System.DateTimeOffset? EndedAt, Aw.Sindri.Core.Graph.Ids.NodeId? LastNodeId, Aw.Sindri.Core.Ids.ItemId? ItemId, long Sequence) -> void
+Aw.Sindri.Core.Views.WorkflowRunRow.WorkflowRunRow(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Id, Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, int Revision, string! Trigger, string! Status, string? Error, System.DateTimeOffset StartedAt, System.DateTimeOffset? EndedAt, Aw.Sindri.Core.Graph.Ids.NodeId? LastNodeId, Aw.Sindri.Core.Ids.ItemId? ItemId, long Sequence, string! Mode = "live") -> void
+Aw.Sindri.Core.Views.WorkflowRunRow.Mode.get -> string!
+Aw.Sindri.Core.Views.WorkflowRunRow.Mode.init -> void
 Aw.Sindri.Core.Events.WorkflowNodeStartedPayload.WorkflowNodeStartedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! By) -> void
 Aw.Sindri.Core.Events.WorkflowNodeFinishedPayload.WorkflowNodeFinishedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! Status, bool Truncated, string! By) -> void
 Aw.Sindri.Core.Events.WorkflowNodeFailedPayload.WorkflowNodeFailedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! Error, string! By) -> void
@@ -23207,7 +23215,7 @@ Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.RejectLike.get -> bool
 Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.RejectLike.init -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Decision.get -> Aw.Sindri.Core.NeedsYou.NeedsYouDecision?
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Decision.init -> void
-const Aw.Sindri.Core.Views.ViewSchema.Version = 36 -> int
+const Aw.Sindri.Core.Views.ViewSchema.Version = 37 -> int
 override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Equals(object? obj) -> bool
 override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.GetHashCode() -> int
 override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.ToString() -> string!
@@ -23832,4 +23840,23 @@ static Aw.Sindri.Core.Graph.Templates.GitHubCiSource.operator ==(Aw.Sindri.Core.
 Aw.Sindri.Core.Graph.Templates.ICiSourceLookup
 Aw.Sindri.Core.Graph.Templates.ICiSourceLookup.Find(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Graph.Templates.GitHubCiSource?>
 static Aw.Sindri.Core.Health.HealthSummary.WithProfileProblem(Aw.Sindri.Core.Health.HealthReport! report, bool wontLoad, string? fix) -> Aw.Sindri.Core.Health.HealthReport!
+Aw.Sindri.Core.Graph.Blocks.GraphTestBindings
+static Aw.Sindri.Core.Graph.Blocks.GraphTestBindings.Bound.get -> System.Collections.Generic.IReadOnlySet<System.Type!>!
+static Aw.Sindri.Core.Graph.Blocks.GraphTestBindings.ReadOnly.get -> System.Collections.Generic.IReadOnlySet<System.Type!>!
+Aw.Sindri.Core.Graph.Blocks.GraphTestRecorder
+static Aw.Sindri.Core.Graph.Blocks.GraphTestRecorder.Active.get -> bool
+static Aw.Sindri.Core.Graph.Blocks.GraphTestRecorder.Begin() -> System.Collections.Generic.IList<string!>!
+static Aw.Sindri.Core.Graph.Blocks.GraphTestRecorder.End() -> void
+static Aw.Sindri.Core.Graph.Blocks.GraphTestRecorder.Record(string! line) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphFence
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.Notify(Aw.Sindri.Core.Graph.Blocks.INotifyPort! live) -> Aw.Sindri.Core.Graph.Blocks.INotifyPort!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.CreateItem(Aw.Sindri.Core.Graph.Blocks.ICreateItemPort! live) -> Aw.Sindri.Core.Graph.Blocks.ICreateItemPort!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.Question(Aw.Sindri.Core.Graph.Blocks.IQuestionPort! live) -> Aw.Sindri.Core.Graph.Blocks.IQuestionPort!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.Http(Aw.Sindri.Core.Graph.Blocks.IGraphHttpPort! live) -> Aw.Sindri.Core.Graph.Blocks.IGraphHttpPort!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.Memory(Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort! live) -> Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.Seen(Aw.Sindri.Core.Graph.Blocks.IGraphSeenStore! live) -> Aw.Sindri.Core.Graph.Blocks.IGraphSeenStore!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.Model(Aw.Sindri.Core.Graph.Blocks.IGraphModelPort! live) -> Aw.Sindri.Core.Graph.Blocks.IGraphModelPort!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.Calls(Aw.Sindri.Core.Graph.Blocks.IGraphCallPort! live) -> Aw.Sindri.Core.Graph.Blocks.IGraphCallPort!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.ConnectionTools(Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort! live) -> Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort!
+static Aw.Sindri.Core.Graph.Blocks.GraphFence.Toolkits(Aw.Sindri.Core.Toolkits.IRunningToolkits! live) -> Aw.Sindri.Core.Toolkits.IRunningToolkits!
 static Aw.Sindri.Core.Connections.ConnectionName.ParseUnreserved(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!
