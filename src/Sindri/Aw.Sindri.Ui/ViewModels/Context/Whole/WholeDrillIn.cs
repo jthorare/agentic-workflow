@@ -6,6 +6,9 @@ internal static class WholeDrillIn
     /// <summary>The most nodes the canvas draws.</summary>
     internal const int CanvasNodeCap = 40;
 
+    /// <summary>The most nodes the whole-repo overview draws as nodes: a map with more than this many shows one tile per area instead (#3674).</summary>
+    internal const int TileOverviewAbove = 60;
+
     /// <summary>The smallest zoom: 50%.</summary>
     internal const double MinZoom = 0.5;
 

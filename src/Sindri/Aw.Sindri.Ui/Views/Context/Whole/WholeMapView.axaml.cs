@@ -268,6 +268,14 @@ internal sealed partial class WholeMapView : UserControl
         }
     }
 
+    private void OnAreaCard(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: AreaCard card })
+        {
+            _map?.OpenTile(card.Key);
+        }
+    }
+
     private void OnConceptTab(object? sender, RoutedEventArgs e)
     {
         if (sender is Control { DataContext: ConceptTabItem tab })

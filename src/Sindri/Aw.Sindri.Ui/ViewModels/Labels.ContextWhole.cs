@@ -42,6 +42,30 @@ internal static partial class Labels
     /// <summary>The accessible name of an open area's ranked list.</summary>
     internal const string ContextWholeAreaList = "Items of this feature, most linked first";
 
+    /// <summary>The counts on an area tile of the whole-repo overview.</summary>
+    /// <param name="code">How many code files.</param>
+    /// <param name="features">How many features.</param>
+    /// <param name="records">How many records and decisions.</param>
+    /// <returns>"1980 code files · 71 features · 96 records".</returns>
+    internal static string ContextWholeTileCounts(int code, int features, int records) => string.Create(
+        CultureInfo.InvariantCulture,
+        $"{code} {(code == 1 ? "code file" : "code files")} · {features} {(features == 1 ? "feature" : "features")} · {records} {(records == 1 ? "record" : "records")}");
+
+    /// <summary>The accessible name of one area tile of the overview.</summary>
+    /// <param name="label">The area's name.</param>
+    /// <param name="counts">The tile's counts line.</param>
+    /// <returns>"Billing, 12 code files · 2 features · 1 record. Press Enter to open."</returns>
+    internal static string ContextWholeAreaCardName(string label, string counts) => $"{label}, {counts}. Press Enter to open.";
+
+    /// <summary>The line over the overview's tiles.</summary>
+    /// <param name="areas">How many areas.</param>
+    /// <param name="items">How many items they hold in all.</param>
+    /// <returns>"57 areas · 12171 items".</returns>
+    internal static string ContextWholeTilesHead(int areas, int items) => string.Create(CultureInfo.InvariantCulture, $"{areas} {(areas == 1 ? "area" : "areas")} · {items} {(items == 1 ? "item" : "items")}");
+
+    /// <summary>The accessible name of the overview's tiles.</summary>
+    internal const string ContextWholeTilesName = "Areas of the repo, largest first";
+
     /// <summary>The accessible name of an opened concept's list.</summary>
     internal const string ContextWholeConceptList = "Files, features and records of this concept, most linked first";
 
