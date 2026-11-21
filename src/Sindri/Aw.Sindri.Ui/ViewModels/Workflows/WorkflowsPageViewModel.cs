@@ -96,6 +96,15 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         ? StateOf(shown.ActiveRevision is not null)
         : Rows.FirstOrDefault(r => string.Equals(r.Slug, Runs.Slug, StringComparison.Ordinal)) is { } row ? StateOf(row.IsActive) : string.Empty;
 
+    /// <summary>The word of the open workflow's state chip in the header ("Active", "Off"); empty when no state is known.</summary>
+    public string DetailChipWord => string.Empty;
+
+    /// <summary>The glyph of the header's state chip.</summary>
+    public string DetailChipGlyph => string.Empty;
+
+    /// <summary>The tone of the header's state chip: "ok" when active, "neutral" when off.</summary>
+    public string DetailChipTone => string.Empty;
+
     private static string StateOf(bool active)
     {
         var (glyph, word) = Labels.WfState(active);

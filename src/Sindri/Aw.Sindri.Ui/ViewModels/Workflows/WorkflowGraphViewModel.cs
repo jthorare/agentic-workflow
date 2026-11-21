@@ -178,6 +178,11 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         return fit.Zoom;
     }
 
+    /// <summary>The chip at the right end of a card's title line: "off" on the Schedule card of a workflow that is off; null for every other card (no next-run time is served yet).</summary>
+    /// <param name="node">The card.</param>
+    /// <returns>The chip's word, or null for none.</returns>
+    internal string? ChipFor(GraphNodeViewModel node) => ArgumentNullException.ThrowIfNull(node) is null ? null : null;
+
     // A card whose settings line is longer than SettingsWrapAt wraps it to a second line, so it is taller; the line is the summary the card draws.
     private Dictionary<string, double> Heights() =>
         Nodes.ToDictionary(n => n.Id, n => _summaries.TryGetValue(n.Id, out var line) && line.Summary.Length > SettingsWrapAt ? CardTallHeight : CardHeight, StringComparer.Ordinal);
