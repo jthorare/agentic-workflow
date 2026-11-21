@@ -777,7 +777,7 @@ At 1440x900 the list column is 360 px (below 1100 px of window width it collapse
   - **Ended**: the agent exited and tmux is still there (below).
 
   Beside the state word the header always shows the socket kind (`sindri`, `default`, `team`) and the other clients from `ISessionHost.AttachedClients`: "1 other client" when he also has the session open in Warp. A read-only state is out of v1.
-- **Scrollback.** `Shift+PageUp` and `Shift+PageDown` read back without leaving the pane, as in T3. The depth is tmux's own `history-limit` for that pane. The pane does not keep a second copy.
+- **Scrollback.** `Shift+PageUp` and `Shift+PageDown` read back without leaving the pane, as in T3. The depth is tmux's own history for that pane, up to its `history-limit` (the frame's `hist` says how many rows it holds). The pane does not keep a second copy.
 - **A row whose session ends** while the pane shows it: the pane freezes on the last screen, dims it, and shows "Ended 14:02 · Copy resume command". For a one-off session started with a worktree, the banner also shows the worktree path and a **Remove worktree** button (§15.4). A one-off banner always has **Discard session** (Leaving). It never shows a dead cursor. Serve reads `dead` from every frame; when it is 1, Serve ends the row (it moves to Recently ended) and the view shows Ended. Without this a crashed one-off session would stay "no state" forever.
 
 ### 15.4 The New agent form
@@ -835,7 +835,7 @@ What the live pane can't do in v1, in the owner's words:
 |---|---|
 | Refresh | the screen repaints up to 30 times a second, not on every byte; a fast build log can skip frames |
 | Mouse | clicks and the scroll wheel inside Claude Code do nothing; the wheel scrolls Sindri's copy of the history instead |
-| Scrollback | `Shift+PageUp` reads tmux's history with `capture-pane -S -E`, one screen per press, with a short pause on each; the pane never enters `copy-mode` |
+| Scrollback | `Shift+PageUp` sends `scroll` with `back + h`, and Serve reads tmux's history with `capture-pane -S -E`, one screen per press, with a short pause on each; the pane never enters `copy-mode` |
 | Select and copy | he can select and copy from the screen, but not past the screen's edge in one drag |
 | Paste and Ctrl keys | paste works as one bracketed paste (`load-buffer -b sindri-paste -` then `paste-buffer -p -d`); `Ctrl` and `Alt` combinations reach the agent through `send-keys`; a few rare keys (`Ctrl+Shift` chords) don't |
 | Size | when another client (a Warp tab) shares the window, the pane draws at that window's size and scrolls sideways if it is wider; Sindri never resizes a window it did not start |
@@ -867,9 +867,10 @@ CLI and MCP (§8.1): `sindri agents start --repo R --agent claude-code|codex [--
 |---|---|---|---|
 | `hello` | in, first message | `{t, v: 1, token, cols, rows}` | must arrive 3 s after open, else close 1008. A bad token closes 1008 with SND-AUTH-002 |
 | `ready` | out | `{t, v, host: {socket, session, pane}}` | one, after a good hello |
-| `frame` | out | `{t, seq, rows: [ansi lines], cursor: {x, y}, w, h, alt, inMode, dead}` whole screen each time (`dead` is 1 when the pane's process has exited) | at most 30 a second; none when the screen is unchanged; if 1 MiB is unsent, older frames are dropped and the latest is kept |
+| `frame` | out | `{t, seq, rows: [ansi lines], cursor: {x, y}, w, h, alt, inMode, dead, back, hist}` whole screen each time (`dead` is 1 when the pane's process has exited; `rows` is always `h` lines; `back` is the history offset the rows show, 0 live; `hist` is `#{history_size}`, 0 on the alternate screen) | at most 30 a second; none when the screen is unchanged; if 1 MiB is unsent, older frames are dropped and the latest is kept |
 | `key` | in | `{t, key}` with a name from the foreign list, or `{t, text}` for literal text | `text` at most 4 KiB; at most 200 messages a second |
 | `paste` | in | `{t, text}` | at most 256 KiB, else close 1009 |
+| `scroll` | in | `{t, back}`: rows above the live screen's top, 0 is live; Serve clamps to 0..`hist`, reads `capture-pane -S -back -E -back+h-1`, and answers with a frame carrying the clamped `back`. The view stays anchored when `hist` grows; a `key`, `text` or `paste` returns it to live; `size` keeps it. A message with an unknown `t` is ignored, so a newer client never drops an older Serve | counts against the 200 messages a second of `key`; stays 0 on the alternate screen and a `scroll` there is ignored; entering it while scrolled drops the scroll state (first alt frame `back` 0, leaving it lands live) |
 | `size` | in | `{t, cols, rows}`, 20 to 400 columns and 5 to 200 rows | on a foreign socket it only sets how Sindri draws; it never resizes the window |
 | `ping` / `pong` | out / in | `{t}` | Serve pings every 15 s; no pong in 10 s closes the socket (view: Reconnecting) |
 | `close` | out | WebSocket close code and reason | 4015 "SND-AGENT-015" (no pane), 4016 "SND-AGENT-016" (tmux or session gone), 4001 "replaced" (a second socket opened on the same pane; the older view shows "This pane is open in another Sindri window" with **Take it back**, and does not reconnect on its own), 1001 (Serve stopping), 1008 (token), 1009 (message too big) |

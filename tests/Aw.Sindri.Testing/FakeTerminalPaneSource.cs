@@ -37,7 +37,17 @@ public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<Termin
     /// <summary>When true, typing text or a key throws <see cref="OperationCanceledException"/> without any cancel: a slow send that hit the source's call budget.</summary>
     public bool SendTimesOut { get; set; }
 
-    /// <summary>What the streams were sent, in order: 'key:Enter', 'text:hi', 'paste:…', 'size:120x36'.</summary>
+    /// <summary>The rows of history above the live screen, oldest first: what 'scroll' reads (spec §15.8). Empty by default.</summary>
+    public IReadOnlyList<string> History { get; set; } = [];
+
+    /// <summary>Adds rows to the end of <see cref="History"/> while a stream is open: new output scrolls the screen up (the anchoring check).</summary>
+    /// <param name="rows">How many rows.</param>
+    public void AppendHistory(int rows) => throw new NotSupportedException("scrollback is not built yet (#3730)");
+
+    /// <summary>Switches the pane to the alternate screen while a stream is open: its next frame has Alt set.</summary>
+    public void EnterAlternateScreen() => throw new NotSupportedException("scrollback is not built yet (#3730)");
+
+    /// <summary>What the streams were sent, in order: 'key:Enter', 'text:hi', 'paste:…', 'size:120x36', 'scroll:5' (the offset after the clamp).</summary>
     public IList<string> Sent { get; } = [];
 
     /// <summary>The number of streams disposed (a dispose detaches only).</summary>
@@ -67,7 +77,11 @@ public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<Termin
                         [.. msg.GetProperty("rows").EnumerateArray().Select(r => r.GetString()!)],
                         cursor.GetProperty("x").GetInt32(), cursor.GetProperty("y").GetInt32(),
                         msg.GetProperty("w").GetInt32(), msg.GetProperty("h").GetInt32(),
-                        msg.GetProperty("alt").GetInt32() == 1, msg.GetProperty("inMode").GetInt32() == 1, msg.GetProperty("dead").GetInt32() == 1));
+                        msg.GetProperty("alt").GetInt32() == 1, msg.GetProperty("inMode").GetInt32() == 1, msg.GetProperty("dead").GetInt32() == 1)
+                    {
+                        Back = msg.GetProperty("back").GetInt32(),
+                        Hist = msg.GetProperty("hist").GetInt32(),
+                    });
                     break;
                 default:
                     break;
@@ -172,6 +186,9 @@ public sealed class FakeTerminalPaneSource(TerminalHost host, IEnumerable<Termin
             _owner.Sent.Add(string.Create(CultureInfo.InvariantCulture, $"size:{size.Cols}x{size.Rows}"));
             return ValueTask.FromResult<Result<Unit>>(Unit.Value);
         }
+
+        public ValueTask<Result<Unit>> Scroll(int back, CancellationToken cancellationToken) =>
+            throw new NotSupportedException("scrollback is not built yet (#3730)");
 
         public ValueTask DisposeAsync()
         {

@@ -156,6 +156,9 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
                 cancellationToken).ConfigureAwait(false);
         }
 
+        public ValueTask<Result<Unit>> Scroll(int back, CancellationToken cancellationToken) =>
+            throw new NotSupportedException("scrollback is not built yet (#3730)");
+
         public ValueTask DisposeAsync()
         {
             _kick.Dispose();
