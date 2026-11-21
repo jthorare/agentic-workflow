@@ -100,9 +100,28 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
             return oldest with { Status = WorkflowRunStatus.Running };
         }, cancellationToken);
 
-    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(CancellationToken cancellationToken) => throw new NotSupportedException("red: E1 failed-unseen query");
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(CancellationToken cancellationToken) =>
+        RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, [],
+            (session, token) => RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.FailedUnseen, static _ => { }), WorkflowRunMapper.Instance, token), cancellationToken);
 
-    public ValueTask<Result<WorkflowRun>> MarkSeen(WorkflowRunId id, DateTimeOffset at, CancellationToken cancellationToken) => throw new NotSupportedException("red: E1 seen mark");
+    public ValueTask<Result<WorkflowRun>> MarkSeen(WorkflowRunId id, DateTimeOffset at, CancellationToken cancellationToken) =>
+        RecipeSessions.Write(database, async ValueTask<Result<WorkflowRun>> (session, token) =>
+        {
+            var existing = await FindRun(session, id, token).ConfigureAwait(false);
+            if (existing.IsError || existing.Value is null)
+            {
+                return existing.IsError ? existing.Error : NotFound(id);
+            }
+
+            var marked = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.MarkSeen, c => c.Bind("$id", id.Value).Bind("$at", at)), token).ConfigureAwait(false);
+            if (marked.IsError)
+            {
+                return marked.Error;
+            }
+
+            var after = await FindRun(session, id, token).ConfigureAwait(false);
+            return after.IsError ? after.Error : after.Value ?? (Result<WorkflowRun>)NotFound(id);
+        }, cancellationToken);
 
     public async ValueTask<Result<WorkflowRun>> Get(WorkflowRunId id, CancellationToken cancellationToken)
     {
