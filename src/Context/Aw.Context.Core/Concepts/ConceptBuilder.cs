@@ -18,8 +18,9 @@ public static class ConceptBuilder
     /// <param name="graph">The graph the caller may see.</param>
     /// <param name="text">The caller's text policy.</param>
     /// <param name="pins">The pins the caller sees; a pin's definition and aliases are read from them over the map's. Null reads none.</param>
+    /// <param name="changed">The newest change time of code files by repo-relative path (see <see cref="CodePaths"/>); a concept's last change is the newest of its files'. Null knows none.</param>
     /// <returns>The view, or SND-CONTEXT-006 for a bad page.</returns>
-    public static Result<ConceptsView> Build(ConceptsBasis basis, ConceptsQuery query, GraphSnapshot graph, MapText text, PinSet? pins = null)
+    public static Result<ConceptsView> Build(ConceptsBasis basis, ConceptsQuery query, GraphSnapshot graph, MapText text, PinSet? pins = null, IReadOnlyDictionary<string, DateTimeOffset>? changed = null)
     {
         ArgumentNullException.ThrowIfNull(basis);
         ArgumentNullException.ThrowIfNull(query);
@@ -41,6 +42,16 @@ public static class ConceptBuilder
         var pages = PageReader.ByConcept(graph);
         var rows = page.Select(n => Row(index, n, text, pins, pages.GetValueOrDefault(n.Key.Value))).ToList();
         return new ConceptsView(1, basis.Repo, basis.MapVersion, index.Concepts.Count == 0 ? ConceptStates.Empty : ConceptStates.Ok, Code: null, rows, other, Links(index, edges, page), ConceptPages.Next(basis.MapVersion, end, matching.Count)) { PagesInNoConcept = PagesInNoConcept.Of(graph).Count };
+    }
+
+    /// <summary>The repo-relative paths of the code files behind the concepts of one page: what the caller asks git for before <see cref="Build"/>.</summary>
+    /// <param name="basis">The map version and repo the answer is for.</param>
+    /// <param name="query">The filter and the page.</param>
+    /// <param name="graph">The graph the caller may see.</param>
+    /// <returns>The distinct paths in ordinal order; none for a bad page.</returns>
+    public static IReadOnlyList<string> CodePaths(ConceptsBasis basis, ConceptsQuery query, GraphSnapshot graph)
+    {
+        throw new NotSupportedException();
     }
 
     /// <summary>One page of one concept's members.</summary>
