@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Context;
 using Aw.Sindri.Ui.ViewModels.Controls;
@@ -37,7 +38,7 @@ public sealed class ContextQuestionFilesTests
         new() { ["kind"] = kind, ["node"] = node, ["title"] = title, ["text"] = text, ["why"] = new JsonArray(why) };
 
     // A map that holds the anchor but draws no node: the golden answer with every band emptied.
-    private static RouteAnswer EmptyMap(Aw.Sindri.Ui.Api.Context.LensesQuery _)
+    private static RouteAnswer EmptyMap(LensesQuery _)
     {
         var map = GoldenFiles.Node("context-lenses", "map-tabs");
         var bands = map["bands"]!;
@@ -48,7 +49,6 @@ public sealed class ContextQuestionFilesTests
         bands["product"]!["affects"] = new JsonArray();
         bands["product"]!["edges"] = new JsonArray();
         bands["code"]!["files"] = new JsonArray();
-        bands["code"]!["symbols"] = new JsonObject();
         map["edges"] = new JsonArray();
         return new RouteAnswer(HttpStatusCode.OK, map.ToJsonString());
     }
