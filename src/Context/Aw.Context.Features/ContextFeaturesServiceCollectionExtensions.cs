@@ -257,6 +257,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IService<GetConceptMembersRequest, ConceptMembersView>, GetConceptMembersService>()
         .AddScoped<IService<GetConceptGlossaryRequest, ConceptGlossaryView>, GetConceptGlossaryService>()
         .AddScoped<IService<GetPinSuggestRequest, PinSuggestView>, GetPinSuggestService>()
+        .AddSingleton<ConceptChangeTimes>()
         .AddScoped<ConceptReader>()
         .AddSingleton<WholeMapCache>()
         .AddScoped<IService<SearchMapRequest, MapSearchView>, SearchMapService>()
