@@ -4,7 +4,6 @@ using Avalonia.Controls;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
-using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Theme;
 using Aw.Sindri.Ui.ViewModels.Shell;
@@ -38,7 +37,7 @@ public sealed class ServicesCardNameFitTests : FrameHost
         }
     });
 
-    private async Task Check(ShellWindow window, ShellViewModel shell)
+    private static async Task Check(ShellWindow window, ShellViewModel shell)
     {
         shell.GoTo(PageId.System);
         Settle(window);
