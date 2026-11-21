@@ -23860,3 +23860,5 @@ static Aw.Sindri.Core.Graph.Blocks.GraphFence.Calls(Aw.Sindri.Core.Graph.Blocks.
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.ConnectionTools(Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort! live) -> Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort!
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.Toolkits(Aw.Sindri.Core.Toolkits.IRunningToolkits! live) -> Aw.Sindri.Core.Toolkits.IRunningToolkits!
 static Aw.Sindri.Core.Connections.ConnectionName.ParseUnreserved(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!
+static Aw.Sindri.Core.Graph.Ids.WorkflowRunId.StandIn(Aw.Sindri.Core.Graph.Ids.WorkflowSlug slug) -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Graph.Ids.WorkflowRunId.IsStandIn.get -> bool

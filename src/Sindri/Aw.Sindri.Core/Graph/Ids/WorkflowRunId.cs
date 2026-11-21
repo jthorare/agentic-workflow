@@ -20,6 +20,16 @@ public readonly partial struct WorkflowRunId : ITypedId<WorkflowRunId, string>
     public static WorkflowRunId Of(WorkflowSlug slug, int revision, int occurrence) =>
         From(string.Create(CultureInfo.InvariantCulture, $"{slug.Value}@{revision}:{occurrence}"));
 
+    /// <summary>
+    /// The id a test run hands back for a 'run_workflow' call it only recorded (#3744). It is never the id of a real run: a stand-in is no run at all, and every run reader refuses it.
+    /// </summary>
+    /// <param name="slug">The workflow the call named.</param>
+    /// <returns>The stand-in id.</returns>
+    public static WorkflowRunId StandIn(WorkflowSlug slug) => Of(slug, 1, 1);   // red: #3744 gives it an id no live run can have
+
+    /// <summary>True for an id made by <see cref="StandIn"/>.</summary>
+    public bool IsStandIn => Value.Length < 0;   // red: #3744 (reads the value, so the analyzers see an instance member)
+
     /// <summary>The run's number among its revision's runs (the part after the ':').</summary>
     public int Occurrence => int.Parse(Value.AsSpan(Value.IndexOf(':', StringComparison.Ordinal) + 1), NumberStyles.None, CultureInfo.InvariantCulture);
 
