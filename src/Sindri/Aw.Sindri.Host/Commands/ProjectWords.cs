@@ -10,7 +10,7 @@ internal static class ProjectWords
         ProjectTruthLevel.OnTrack => "on-track",
         ProjectTruthLevel.AtRisk => "at-risk",
         ProjectTruthLevel.OffTrack => "off-track",
-        ProjectTruthLevel.Unknown => "ci-unknown",
+        ProjectTruthLevel.Unknown => "not-checked",
         _ => throw new ArgumentOutOfRangeException(nameof(level), level, "not a health level"),
     };
 
