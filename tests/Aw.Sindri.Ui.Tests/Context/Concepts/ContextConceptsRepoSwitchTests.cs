@@ -40,10 +40,13 @@ public sealed class ContextConceptsRepoSwitchTests
     [Fact]
     public async Task An_older_whole_map_read_that_finishes_last_does_not_draw_the_old_repo()
     {
-        var api = new FakeSindriApi { ContextConceptsAnswer = _ => AConcepts.Served(AConcepts.Without("empty")) };
-        api.WholeMapAnswer = query => string.Equals(query.Repo, "other-repo", StringComparison.Ordinal)
-            ? new RouteAnswer(HttpStatusCode.OK, GoldenFiles.Api("context-whole", "nodes-small").Replace("\"mapVersion\": \"v1\"", "\"mapVersion\": \"v2\"", StringComparison.Ordinal))
-            : ContextAnswers.WholeMap(query);
+        var api = new FakeSindriApi
+        {
+            ContextConceptsAnswer = _ => AConcepts.Served(AConcepts.Without("empty")),
+            WholeMapAnswer = query => string.Equals(query.Repo, "other-repo", StringComparison.Ordinal)
+                ? new RouteAnswer(HttpStatusCode.OK, GoldenFiles.Api("context-whole", "nodes-small").Replace("\"mapVersion\": \"v1\"", "\"mapVersion\": \"v2\"", StringComparison.Ordinal))
+                : ContextAnswers.WholeMap(query),
+        };
         var page = await ConceptPage.Made(api);
         var firstGate = NewGate();
         api.WholeMapGate = firstGate;

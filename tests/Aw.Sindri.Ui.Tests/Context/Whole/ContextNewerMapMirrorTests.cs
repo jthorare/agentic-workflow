@@ -95,8 +95,11 @@ public sealed class ContextNewerMapMirrorTests
     public async Task A_newer_map_whose_reads_both_fail_keeps_the_map_drawn_and_is_not_tried_again()
     {
         var failing = false;
-        var api = new FakeSindriApi { ContextConceptsAnswer = _ => failing ? new RouteAnswer(HttpStatusCode.InternalServerError, "{}") : AConcepts.Served(AConcepts.Without("empty")) };
-        api.WholeMapAnswer = query => failing ? new RouteAnswer(HttpStatusCode.InternalServerError, "{}") : ContextAnswers.WholeMap(query);
+        var api = new FakeSindriApi
+        {
+            ContextConceptsAnswer = _ => failing ? new RouteAnswer(HttpStatusCode.InternalServerError, "{}") : AConcepts.Served(AConcepts.Without("empty")),
+            WholeMapAnswer = query => failing ? new RouteAnswer(HttpStatusCode.InternalServerError, "{}") : ContextAnswers.WholeMap(query),
+        };
         var (page, follows, url) = await Shown(api);
         Expect.Equal((true, 1, 1), (page.ShowWhole, api.WholeMapAsked.Count, api.ContextConceptsAsked.Count));
 
