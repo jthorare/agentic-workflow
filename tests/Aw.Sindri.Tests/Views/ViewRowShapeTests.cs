@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using Aw.Sindri.Core.Home;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.ModelHistory;
@@ -25,7 +26,7 @@ public sealed class ViewRowShapeTests
     [
         typeof(ServiceRow), typeof(ProfileRow), typeof(ItemRow), typeof(AliasRow), typeof(TimelineRow), typeof(RequestRow),
         typeof(HumanDecisionRow), typeof(NeedsYouRowRecord), typeof(JobRow), typeof(LaunchRow), typeof(CodeIndexRow),
-        typeof(ModelHistoryRow), typeof(RunScope), typeof(RunModel), typeof(StateOrder), typeof(ProjectAttachedRow), typeof(ProjectHiddenRow), typeof(WorkflowRunRow), typeof(ItemLinkRow), typeof(TodoRow),
+        typeof(ModelHistoryRow), typeof(RunScope), typeof(RunModel), typeof(StateOrder), typeof(ProjectAttachedRow), typeof(ProjectHiddenRow), typeof(WorkflowRunRow), typeof(ItemLinkRow), typeof(TodoRow), typeof(HomeRow),
     ];
 
     [Fact, Trait("Lane", "unit")]

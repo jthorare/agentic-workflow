@@ -169,7 +169,6 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IViewStore, SqliteViewStore>()
             .AddSingleton<IViewReader, SqliteViewReader>()
             .AddSingleton<IHomeViewReader, SqliteHomeView>()
-            .AddSingleton<IHomeViewReader, SqliteHomeView>()
             .AddSingleton<IModelHistory, SqliteModelHistory>().AddSingleton<IModelPickSettings, ProfileModelPickSettings>().AddSingleton<IModelPickHistory, ModelPickHistoryAdapter>()   // the pick's ports read the approved profile and the model-history view
             .AddSingleton<IJobViews, SqliteJobViews>().AddSingleton<IServicePauses, ViewServicePauses>()
             .AddSingleton<IProfileSource>(sp => new YamlProfileSource(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory)))
