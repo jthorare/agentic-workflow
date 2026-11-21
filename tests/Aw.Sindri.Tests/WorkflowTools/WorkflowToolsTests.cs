@@ -28,6 +28,8 @@ namespace Aw.Sindri.Tests.WorkflowTools;
 [Lane(TestLane.Unit)]
 public sealed class WorkflowToolsTests
 {
+    private static readonly int[] _arrayInput = [1];
+
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private static Dictionary<string, JsonElement> Arguments(params (string Name, object Value)[] pairs) =>
@@ -122,7 +124,7 @@ public sealed class WorkflowToolsTests
         await using var services = Services(s => s.AddSingleton<IService<RerunWorkflowRunRequest, RerunWorkflowRunResponse>>(service));
 
         var noFrom = await Host.Mcp.WorkflowTools.Call(Host.Mcp.WorkflowTools.Rerun, services, Arguments(("run", "drift-check@3:12")), Token);
-        var badInput = await Host.Mcp.WorkflowTools.Call(Host.Mcp.WorkflowTools.Rerun, services, Arguments(("run", "drift-check@3:12"), ("from", "send"), ("input", new[] { 1 })), Token);
+        var badInput = await Host.Mcp.WorkflowTools.Call(Host.Mcp.WorkflowTools.Rerun, services, Arguments(("run", "drift-check@3:12"), ("from", "send"), ("input", _arrayInput)), Token);
 
         Assert.True(noFrom.IsError);
         Assert.True(badInput.IsError);

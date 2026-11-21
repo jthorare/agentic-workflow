@@ -33,7 +33,7 @@ public sealed class RerunWorkflowRunServiceTests
         _workflows = new InMemoryWorkflowStore(_clock);
         _runs = new InMemoryWorkflowRunStore(_clock);
         _starter = new RecordingStarter(_runs, _clock);
-        _service = new RerunWorkflowRunService(_workflows, _runs, _starter)
+        _service = new RerunWorkflowRunService(_workflows, _runs, _starter);
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -278,7 +278,7 @@ public sealed class RerunWorkflowRunServiceTests
             new GraphNode(N("c"), "http", Title: null, []), new GraphNode(N("d"), "http", Title: null, [])],
         Edges: [new GraphEdge(N("t"), Output: null, N("a")), new GraphEdge(N("a"), Output: null, N("b")), new GraphEdge(N("b"), Output: null, N("c")), new GraphEdge(N("a"), Output: null, N("d"))]);
 
-    private NodeRun Row(string node, int item, string output, bool truncated = false, NodeRunStatus status = NodeRunStatus.Succeeded) =>
+    private static NodeRun Row(string node, int item, string output, bool truncated = false, NodeRunStatus status = NodeRunStatus.Succeeded) =>
         new(_source, N(node), item, status, Input: "{\"cfg\":\"" + node + "\"}", output, truncated, Error: null, Usage: null);
 
     // A run of revision 1 that ended (or not), with one row per step: t, a, d succeeded; b and c per the arguments.
@@ -295,7 +295,7 @@ public sealed class RerunWorkflowRunServiceTests
             Row("b", 0, "{\"b\":1}", status: failedNode == "b" ? NodeRunStatus.Failed : NodeRunStatus.Succeeded),
             Row("c", 0, "{\"c\":1}", status: NodeRunStatus.Succeeded),
         };
-        if (failedNode is "a")
+        if (string.Equals(failedNode, "a", StringComparison.Ordinal))
         {
             rows[1] = Row("a", 0, output: "null", status: NodeRunStatus.Failed);
         }

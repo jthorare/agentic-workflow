@@ -39,11 +39,11 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
             return SindriErrors.GraphRerunNotEnded.With($"'{request.Run.Value}' is {source.Value.Status}; wait for it to end or cancel it first");
         }
 
-        var plan = await Plan(source.Value, request.FromNode, cancellationToken).ConfigureAwait(false);
+        var plan = await Prepare(source.Value, request.FromNode, cancellationToken).ConfigureAwait(false);
         return plan.IsError ? plan.Error : await Start(request, source.Value, plan.Value, input.Value, cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask<Result<Plan>> Plan(WorkflowRun source, string fromNode, CancellationToken cancellationToken)
+    private async ValueTask<Result<Plan>> Prepare(WorkflowRun source, string fromNode, CancellationToken cancellationToken)
     {
         var listed = await workflows.List(includeArchived: false, cancellationToken).ConfigureAwait(false);
         if (listed.IsError)
@@ -71,7 +71,7 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
         var spec = revision.Value.Spec;
         if (!NodeId.TryFrom(fromNode, out var from) || spec.Nodes.All(n => n.Id != from))
         {
-            return SindriErrors.GraphInvalid.With($"revision {source.Revision} has no step '{fromNode}'");
+            return SindriErrors.GraphInvalid.With($"revision {source.Revision.ToString(System.Globalization.CultureInfo.InvariantCulture)} has no step '{fromNode}'");
         }
 
         var refused = LoopRefusal(spec, from) ?? UpstreamRefusal(spec, from, rows.Value);
@@ -161,7 +161,7 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
         var original = Parse(source.Trigger);
         var trigger = new JsonObject();
         // why: the source trigger's fields stay at the top, so '{{trigger.payload.repo}}' in a step that runs again reads what it read the first time.
-        foreach (var (key, value) in original ?? new JsonObject())
+        foreach (var (key, value) in original ?? [])
         {
             trigger[key] = value?.DeepClone();
         }
