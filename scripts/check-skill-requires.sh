@@ -125,7 +125,7 @@ for skill_md in skills/*/SKILL.md bootstrap/SKILL.md; do
   if [ -f "$dir/block.yaml" ]; then
     block_text="$(awk '/^## Result block[[:space:]]*$/ { in_block = 1; next } in_block && /^## / { in_block = 0 } in_block { print }' "$skill_md")"
     for word in AW_RESULT_FILE waiting; do
-      printf '%s\n' "$block_text" | grep -qF -- "$word" || finding "$skill_md" "has a block.yaml but its Result block never mentions $word (under AW_RESULT_SKILL it writes AW_RESULT_FILE and hands a question back as waiting)"
+      grep -qF -- "$word" <<<"$block_text" || finding "$skill_md" "has a block.yaml but its Result block never mentions $word (under AW_RESULT_SKILL it writes AW_RESULT_FILE and hands a question back as waiting)"
     done
   fi
   case "$UNSWEPT" in

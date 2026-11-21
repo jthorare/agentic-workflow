@@ -12,7 +12,7 @@ using Aw.Kernel.Services;
 namespace Aw.Evidence.Features.GhPublish;
 
 /// <summary>
-/// Reads the run, refuses unless its data is seeded and every image was reviewed, commits the images to the PR's evidence branch
+/// Reads the run, refuses unless its data is seeded or scrubbed and every image was reviewed, commits the images to the PR's evidence branch
 /// through gh and writes pr-comment.md.
 /// </summary>
 internal sealed class GhPublishService(IRunFiles files, IGhRunner gh, JsonSerializerOptions json) : IService<GhPublishRequest, GhPublishResponse>
@@ -26,10 +26,10 @@ internal sealed class GhPublishService(IRunFiles files, IGhRunner gh, JsonSerial
         }
 
         var (provenance, images, comment) = run.Value;
-        if (provenance != Provenance.Seeded)
+        if (!PublishPolicy.CanEmbedImagesInPr(provenance, hasApprovedUploader: true))
         {
             return EvidenceErrors.PublishRefused.With(
-                $"the run's data is {Name(provenance)}: only seeded data goes to GitHub (a script run needs --provenance seeded on a local host; a parity run carries its own)");
+                $"the run's data is {Name(provenance)}: only seeded or scrubbed data goes to GitHub (a local script run needs --provenance seeded; a preview run is scrubbed; a parity run carries its own)");
         }
 
         var contents = new List<(string Local, byte[] Content)>();
@@ -55,11 +55,11 @@ internal sealed class GhPublishService(IRunFiles files, IGhRunner gh, JsonSerial
             return new GhPublishResponse(provenance, ReviewBlocked: true, unreviewed, Branch: null, Commit: null, new Dictionary<string, string>(StringComparer.Ordinal), CommentFile: null, []);
         }
 
-        return await PushAsync(request, contents, comment, cancellationToken).ConfigureAwait(false);
+        return await PushAsync(request, provenance, contents, comment, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<GhPublishResponse>> PushAsync(
-        GhPublishRequest request, List<(string Local, byte[] Content)> contents, Func<IReadOnlyDictionary<string, string>, string> comment, CancellationToken cancellationToken)
+        GhPublishRequest request, Provenance provenance, List<(string Local, byte[] Content)> contents, Func<IReadOnlyDictionary<string, string>, string> comment, CancellationToken cancellationToken)
     {
         var runId = RunPath.NameOf(request.RunDirectory);
         var branch = $"ui-evidence/pr-{request.Pr.ToString(CultureInfo.InvariantCulture)}";
@@ -84,7 +84,7 @@ internal sealed class GhPublishService(IRunFiles files, IGhRunner gh, JsonSerial
         }
 
         string[] post = ["gh", "pr", "comment", request.Pr.ToString(CultureInfo.InvariantCulture), "--repo", request.Repo, "--body-file", commentFile];
-        return new GhPublishResponse(Provenance.Seeded, ReviewBlocked: false, [], branch, commit, urls, commentFile, post);
+        return new GhPublishResponse(provenance, ReviewBlocked: false, [], branch, commit, urls, commentFile, post);
     }
 
     // The run's provenance, its images in order (each once), and the comment that embeds them.
@@ -112,9 +112,10 @@ internal sealed class GhPublishService(IRunFiles files, IGhRunner gh, JsonSerial
             (Func<IReadOnlyDictionary<string, string>, string>)(urls => Embed(EvidenceComment.Render(s, note: null, urls), urls))));
     }
 
-    // A run on a host other than this machine is never seeded, whatever the caller says.
+    // A local run is seeded only on the caller's word; a run on any other host passed the host guard, so it ran on a
+    // preview (a scrubbed extract) unless the caller said unknown.
     private static Provenance ClaimedProvenance(RunSummary summary, DbProvenance? claimed) =>
-        ProvenanceRules.Effective(summary.Host, claimed ?? DbProvenance.Unknown) == DbProvenance.Seeded ? Provenance.Seeded : Provenance.Unknown;
+        ProvenanceRules.For(HostGuard.IsLocal(summary.Host) ? HostKind.Local : HostKind.Preview, claimed);
 
     private static string Embed(string body, IReadOnlyDictionary<string, string> urls) =>
         string.Join('\n', [body, string.Empty, .. urls.Select(static u => $"![{RunPath.NameOf(u.Key)}]({u.Value})")]) + "\n";

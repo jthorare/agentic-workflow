@@ -337,7 +337,7 @@ pre_link() {
           fi
           if hook_out="$("$sindri_bin" scrub --install-pre-commit --repo "$path" --bin "$BIN/sindri" 2>&1 < /dev/null)"; then
             say "installed hook v3 in $name ($path)"; L "hook v3 $name $path"
-          elif printf '%s' "$hook_out" | grep -q 'SND-SCRUB-003'; then
+          elif grep -q 'SND-SCRUB-003' <<<"$hook_out"; then
             # The repo has its own pre-commit hook (husky, core.hooksPath, ...): Sindri never replaces it, so this is a
             # skip with the manual line to add (the same answer `sindri doctor` gives), not a step-2 failure (#1029).
             say "hook v3 skipped in $name ($path): it has its own pre-commit hook; add 'sindri scrub --staged || exit 1' to it by hand"
