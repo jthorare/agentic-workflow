@@ -16,6 +16,8 @@ public static class WholeMapBuilder
 
     private const string OverBudget = "over-budget";
 
+    private static readonly string[] _tabs = ["code", "feature", "record"];
+
     /// <summary>The answer for one graph.</summary>
     /// <param name="ask">The map version, the detail, the area to open and the keys to place.</param>
     /// <param name="graph">The graph the caller may see.</param>
@@ -40,20 +42,9 @@ public static class WholeMapBuilder
             return OpenedPages(pagesOut, overview, (known, edges), (areas, text, ask.RepoOf));
         }
 
-        if (ask.Area is not null)
+        if (ask.Area is not null || ask.Concept is not null)
         {
-            if (ask.Concept is not null && !concepts.Has(ask.Concept))
-            {
-                return UnknownConcept();
-            }
-
-            var scope = ask.Concept is null ? null : ConceptScope.Nodes(concepts, edges, ask.Concept, ask.PageRank);
-            return Opened(ask.Area, scope, overview, (known, edges), (areas, rules, text, ask.RepoOf, ask.Page));
-        }
-
-        if (ask.Concept is not null)
-        {
-            return OpenedConcept((ask.Concept, ask.PageRank), overview, (concepts, edges), (areas, rules, text, ask.RepoOf));
+            return OpenedByAsk(ask, overview, (known, edges), (areas, concepts, rules, text));
         }
 
         if (ask.Detail == WholeMapDetail.Areas)
@@ -64,6 +55,25 @@ public static class WholeMapBuilder
         return known.Count > rules.NodeBudget
             ? overview with { Fallback = OverBudget }
             : overview with { Detail = WholeMapDetail.Nodes, Nodes = Nodes(known.Values, areas, text, ask.RepoOf), Edges = Edges(edges) };
+    }
+
+    // An area, a concept, or a concept's member list, whichever the ask names.
+    private static Result<WholeMapView> OpenedByAsk(WholeMapAsk ask, WholeMapView overview, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, ConceptIndex Concepts, WholeMapRules Rules, MapText Text) map)
+    {
+        if (ask.Area is not null)
+        {
+            if (ask.Concept is not null && !map.Concepts.Has(ask.Concept))
+            {
+                return UnknownConcept();
+            }
+
+            var scope = ask.Concept is null ? null : ConceptScope.Nodes(map.Concepts, graph.Edges, ask.Concept, ask.PageRank);
+            return Opened(ask.Area, scope, overview, graph, (map.Areas, map.Rules, map.Text, ask.RepoOf, ask.Page));
+        }
+
+        return ask.ConceptTab is not null
+            ? OpenedConceptList(ask, overview, (map.Concepts, graph.Edges), (map.Areas, map.Text))
+            : OpenedConcept((ask.Concept ?? string.Empty, ask.PageRank), overview, (map.Concepts, graph.Edges), (map.Areas, map.Rules, map.Text, ask.RepoOf));
     }
 
     private static WholeMapView Overview(WholeMapAsk ask, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, ConceptIndex Concepts) map, (WholeMapRules Rules, MapText Text) how)
@@ -146,6 +156,43 @@ public static class WholeMapBuilder
             Pages = ConceptScope.Pages(graph.Concepts, graph.Edges, key, concept.Rank),
         };
     }
+
+    // One tab of a concept's member list (#3674): the members and the code their features are implemented by, ranked (most links among the list first, then kind and key), one page of 50.
+    // The tab counts always cover the whole concept, so the card's count and the list agree.
+    private static Result<WholeMapView> OpenedConceptList(WholeMapAsk ask, WholeMapView overview, (ConceptIndex Concepts, List<GraphEdge> Edges) graph, (AreaIndex Areas, MapText Text) how)
+    {
+        var key = ask.Concept ?? string.Empty;
+        if (!graph.Concepts.Has(key))
+        {
+            return UnknownConcept();
+        }
+
+        var members = graph.Concepts.MembersOf(key);
+        var items = members.Concat(graph.Concepts.CodeKeysOf(members)).Distinct(StringComparer.Ordinal).Select(k => graph.Concepts.Known[k]).ToList();
+        var tab = TabName(ask.ConceptTab);
+        var mine = items.Where(n => TabOf(n.Key.Kind) == tab || tab == "all").ToList();
+        var mineKeys = mine.Select(n => n.Key.Value).ToHashSet(StringComparer.Ordinal);
+        var inside = graph.Edges.Where(e => mineKeys.Contains(e.From.Value) && mineKeys.Contains(e.To.Value)).ToList();
+        var (shown, page, pages) = Paged(mine, inside, ask.Page);
+        var shownKeys = shown.Select(n => n.Key.Value).ToHashSet(StringComparer.Ordinal);
+        var list = ConceptListOf(items, (tab, page, pages), mine.Count);
+        return overview with
+        {
+            Detail = WholeMapDetail.Nodes,
+            Nodes = Nodes(shown, how.Areas, how.Text, ask.RepoOf),
+            Edges = Edges([.. inside.Where(e => shownKeys.Contains(e.From.Value) && shownKeys.Contains(e.To.Value))]),
+            Counts = Counts(mine, inside.Count),
+            ConceptList = list,
+        };
+    }
+
+    private static WholeMapConceptList ConceptListOf(List<GraphNode> items, (string Tab, int Page, int Pages) at, int inTab) =>
+        new(at.Tab, at.Page, at.Pages, inTab, items.Count(n => n.Key.Kind == NodeKind.Code), items.Count(n => n.Key.Kind == NodeKind.Feature), items.Count(n => TabOf(n.Key.Kind) == "record"));
+
+    private static string TabName(string? asked) =>
+        _tabs.FirstOrDefault(t => string.Equals(t, asked, StringComparison.Ordinal)) ?? "all";
+
+    private static string TabOf(NodeKind kind) => kind == NodeKind.Code ? "code" : kind == NodeKind.Feature ? "feature" : "record";
 
     // The pages that relate to no concept (the first 200 in the section's order) with their actions, and the edges among them.
     private static WholeMapView OpenedPages(IReadOnlyList<string> pages, WholeMapView overview, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf) how)

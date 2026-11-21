@@ -12549,3 +12549,31 @@ Aw.Context.Core.WholeMap.WholeMapAreaInfo.Pages.get -> int
 Aw.Context.Core.WholeMap.WholeMapAreaInfo.Pages.init -> void
 Aw.Context.Core.WholeMap.WholeMapQuery.Page.get -> int
 Aw.Context.Core.WholeMap.WholeMapQuery.Page.init -> void
+Aw.Context.Core.WholeMap.WholeMapConceptList
+Aw.Context.Core.WholeMap.WholeMapConceptList.<Clone>$() -> Aw.Context.Core.WholeMap.WholeMapConceptList!
+Aw.Context.Core.WholeMap.WholeMapConceptList.Code.get -> int
+Aw.Context.Core.WholeMap.WholeMapConceptList.Code.init -> void
+Aw.Context.Core.WholeMap.WholeMapConceptList.Deconstruct(out string! Tab, out int Page, out int Pages, out int Items, out int Code, out int Features, out int Records) -> void
+Aw.Context.Core.WholeMap.WholeMapConceptList.Equals(Aw.Context.Core.WholeMap.WholeMapConceptList? other) -> bool
+Aw.Context.Core.WholeMap.WholeMapConceptList.Features.get -> int
+Aw.Context.Core.WholeMap.WholeMapConceptList.Features.init -> void
+Aw.Context.Core.WholeMap.WholeMapConceptList.Items.get -> int
+Aw.Context.Core.WholeMap.WholeMapConceptList.Items.init -> void
+Aw.Context.Core.WholeMap.WholeMapConceptList.Page.get -> int
+Aw.Context.Core.WholeMap.WholeMapConceptList.Page.init -> void
+Aw.Context.Core.WholeMap.WholeMapConceptList.Pages.get -> int
+Aw.Context.Core.WholeMap.WholeMapConceptList.Pages.init -> void
+Aw.Context.Core.WholeMap.WholeMapConceptList.Records.get -> int
+Aw.Context.Core.WholeMap.WholeMapConceptList.Records.init -> void
+Aw.Context.Core.WholeMap.WholeMapConceptList.Tab.get -> string!
+Aw.Context.Core.WholeMap.WholeMapConceptList.Tab.init -> void
+Aw.Context.Core.WholeMap.WholeMapConceptList.WholeMapConceptList(string! Tab, int Page, int Pages, int Items, int Code, int Features, int Records) -> void
+override Aw.Context.Core.WholeMap.WholeMapConceptList.Equals(object? obj) -> bool
+override Aw.Context.Core.WholeMap.WholeMapConceptList.GetHashCode() -> int
+override Aw.Context.Core.WholeMap.WholeMapConceptList.ToString() -> string!
+static Aw.Context.Core.WholeMap.WholeMapConceptList.operator !=(Aw.Context.Core.WholeMap.WholeMapConceptList? left, Aw.Context.Core.WholeMap.WholeMapConceptList? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapConceptList.operator ==(Aw.Context.Core.WholeMap.WholeMapConceptList? left, Aw.Context.Core.WholeMap.WholeMapConceptList? right) -> bool
+Aw.Context.Core.WholeMap.WholeMapAsk.ConceptTab.get -> string?
+Aw.Context.Core.WholeMap.WholeMapAsk.ConceptTab.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.ConceptList.get -> Aw.Context.Core.WholeMap.WholeMapConceptList?
+Aw.Context.Core.WholeMap.WholeMapView.ConceptList.init -> void
