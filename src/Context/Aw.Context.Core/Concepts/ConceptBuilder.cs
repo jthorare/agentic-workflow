@@ -11,6 +11,7 @@ namespace Aw.Context.Core.Concepts;
 public static class ConceptBuilder
 {
     private const string OtherName = "Other";
+    private const string CodeKeyPrefix = "code:";
 
     /// <summary>One page of the concepts of a graph.</summary>
     /// <param name="basis">The map version and repo the answer is for.</param>
@@ -40,7 +41,7 @@ public static class ConceptBuilder
         var end = offset + page.Count;
         var other = new ConceptOther(NodeKey.From(ConceptKeys.Other), OtherName, Size(index, index.MembersOf(ConceptKeys.Other)));
         var pages = PageReader.ByConcept(graph);
-        var rows = page.Select(n => Row(index, n, text, pins, pages.GetValueOrDefault(n.Key.Value))).ToList();
+        var rows = page.Select(n => Row(index, n, text, pins, pages.GetValueOrDefault(n.Key.Value), changed)).ToList();
         return new ConceptsView(1, basis.Repo, basis.MapVersion, index.Concepts.Count == 0 ? ConceptStates.Empty : ConceptStates.Ok, Code: null, rows, other, Links(index, edges, page), ConceptPages.Next(basis.MapVersion, end, matching.Count)) { PagesInNoConcept = PagesInNoConcept.Of(graph).Count };
     }
 
@@ -51,7 +52,42 @@ public static class ConceptBuilder
     /// <returns>The distinct paths in ordinal order; none for a bad page.</returns>
     public static IReadOnlyList<string> CodePaths(ConceptsBasis basis, ConceptsQuery query, GraphSnapshot graph)
     {
-        throw new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(basis);
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(graph);
+        var slice = ConceptPages.Slice(basis.MapVersion, query.Page);
+        if (slice.IsError)
+        {
+            return [];
+        }
+
+        var (known, edges) = Known(graph);
+        var index = ConceptIndex.Of(known, edges);
+        var (offset, size) = slice.Value;
+        var page = index.Concepts.Where(n => Matches(index, n, query.Q)).Skip(offset).Take(size);
+        return [.. page.SelectMany(n => index.CodeKeysOf(index.MembersOf(n.Key.Value))).Select(CodePath).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+    }
+
+    private static string CodePath(string codeKey) => codeKey[CodeKeyPrefix.Length..];
+
+    // The newest known change time of the concept's code files, or null when git knew none of them.
+    private static DateTimeOffset? LastChanged(ConceptIndex index, GraphNode node, IReadOnlyDictionary<string, DateTimeOffset>? changed)
+    {
+        DateTimeOffset? newest = null;
+        if (changed is null)
+        {
+            return newest;
+        }
+
+        foreach (var path in index.CodeKeysOf(index.MembersOf(node.Key.Value)).Select(CodePath))
+        {
+            if (changed.TryGetValue(path, out var at) && (newest is null || at > newest))
+            {
+                newest = at;
+            }
+        }
+
+        return newest;
     }
 
     /// <summary>One page of one concept's members.</summary>
@@ -107,7 +143,7 @@ public static class ConceptBuilder
 
     private static IReadOnlyList<string>? Suggested(ConceptPageSet? pages) => pages is { Suggested.Count: > 0 } ? pages.Suggested : null;
 
-    private static ConceptRow Row(ConceptIndex index, GraphNode node, MapText text, PinSet? pins, ConceptPageSet? pages)
+    private static ConceptRow Row(ConceptIndex index, GraphNode node, MapText text, PinSet? pins, ConceptPageSet? pages, IReadOnlyDictionary<string, DateTimeOffset>? changed)
     {
         var trust = TrustPolicy.ForNode(node, node.Provenance == Provenance.Human);
         var pinned = pins?.IsPinned(node.Key) == true;
@@ -117,7 +153,7 @@ public static class ConceptBuilder
         var citations = node.EvidenceOrEmpty.Select(e => new ConceptCitation(text.Line(e.Key.Value), e.Span)).ToList();
         var terms = ConceptTermsAttribute.Of(node).Select(t => text.Label(t, trust)).ToList();
         var aliases = own?.AliasesOf(node.Key).Select(a => text.Label(a, trust)).ToList() ?? [];
-        return new ConceptRow(node.Key, text.Label(node.Label, trust), summary, source, Size(index, index.MembersOf(node.Key.Value)), citations) { Terms = terms.Count == 0 ? null : terms, Pinned = pinned, Aliases = aliases.Count == 0 ? null : aliases, Pages = pages?.Count ?? 0, SuggestedPages = Suggested(pages) };
+        return new ConceptRow(node.Key, text.Label(node.Label, trust), summary, source, Size(index, index.MembersOf(node.Key.Value)), citations) { Terms = terms.Count == 0 ? null : terms, Pinned = pinned, Aliases = aliases.Count == 0 ? null : aliases, Pages = pages?.Count ?? 0, SuggestedPages = Suggested(pages), LastChanged = LastChanged(index, node, changed) };
     }
 
     // A pin's definition is the approved profile's, over the node's from the last build.
