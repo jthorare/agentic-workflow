@@ -14,7 +14,7 @@ using Aw.Sindri.Ui.Views.NeedsYou;
 using Aw.Sindri.Ui.Views.Shell;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>Home's Needs you panel under the headless platform (U3' T9): rows with the one chip, the summary line, the overflow, the sheets.</summary>
 [Lane(TestLane.Integration)]
