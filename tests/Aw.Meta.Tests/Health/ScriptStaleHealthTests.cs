@@ -1,3 +1,4 @@
+using Aw.Meta.Core;
 using Aw.Meta.Features.Health;
 using Aw.Meta.Testing;
 using Aw.Meta.Tests.Reserve;
@@ -8,7 +9,7 @@ public sealed class ScriptStaleHealthTests
 {
     private readonly MetaWorld _world = new();
 
-    private Aw.Meta.Core.MetaPaths Paths => _world.Paths with { Heavy = "/state/bin-r1b/heavy", Reserve = "/state/bin-r1b/meta-gate-reserve", Toolkit = "/kit" };
+    private MetaPaths Paths => _world.Paths with { Heavy = "/state/bin-r1b/heavy", Reserve = "/state/bin-r1b/meta-gate-reserve", Toolkit = "/kit" };
 
     private Task<string?> Warning() => new ScriptStaleCheck(_world.Runner, Paths).Warning(CancellationToken.None).AsTask();
 
