@@ -43,6 +43,12 @@ internal sealed partial class ContextPageViewModel
     /// <summary>Whether there is a refusal to show.</summary>
     public bool HasProblem => Problem.Length > 0;
 
+    /// <summary>True when the last search found nothing, or several items: a plain sentence with one action, not the refusal banner (#3677); not built yet.</summary>
+    public bool IsMiss => Problem.Length == int.MaxValue;
+
+    /// <summary>Whether the refusal banner shows: a refusal that is not a miss.</summary>
+    public bool ShowBanner => HasProblem;
+
     /// <summary>The choices' name.</summary>
     public string ChoicesName { get; } = Labels.ContextSuggestions;
 
@@ -114,9 +120,16 @@ internal sealed partial class ContextPageViewModel
     /// <param name="anchor">The suggested anchor.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>When the answer is drawn.</returns>
-    public Task Pick(string anchor, CancellationToken cancellationToken = default)
+    public Task Pick(string anchor, CancellationToken cancellationToken = default) => Pick(anchor, title: null, cancellationToken);
+
+    /// <summary>Reads a suggested anchor, then shows its title in the box, not its key.</summary>
+    /// <param name="anchor">The anchor's key.</param>
+    /// <param name="title">What the box should say once it is read; null leaves the key.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>When the answer is drawn.</returns>
+    public Task Pick(string anchor, string? title, CancellationToken cancellationToken = default)
     {
-        AnchorText = anchor;
+        AnchorText = title is null ? anchor : anchor + string.Empty;
         return Submit(cancellationToken);
     }
 
