@@ -95,6 +95,12 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     }
 
     /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(CancellationToken cancellationToken) => throw new NotSupportedException("red: E1 failed-unseen query");
+
+    /// <inheritdoc/>
+    public ValueTask<Result<WorkflowRun>> MarkSeen(WorkflowRunId id, DateTimeOffset at, CancellationToken cancellationToken) => throw new NotSupportedException("red: E1 seen mark");
+
+    /// <inheritdoc/>
     public ValueTask<Result<WorkflowRun>> Get(WorkflowRunId id, CancellationToken cancellationToken)
     {
         lock (_gate)

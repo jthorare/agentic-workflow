@@ -100,6 +100,10 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
             return oldest with { Status = WorkflowRunStatus.Running };
         }, cancellationToken);
 
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(CancellationToken cancellationToken) => throw new NotSupportedException("red: E1 failed-unseen query");
+
+    public ValueTask<Result<WorkflowRun>> MarkSeen(WorkflowRunId id, DateTimeOffset at, CancellationToken cancellationToken) => throw new NotSupportedException("red: E1 seen mark");
+
     public async ValueTask<Result<WorkflowRun>> Get(WorkflowRunId id, CancellationToken cancellationToken)
     {
         var found = await RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, empty: null, (session, token) => FindRun(session, id, token), cancellationToken).ConfigureAwait(false);

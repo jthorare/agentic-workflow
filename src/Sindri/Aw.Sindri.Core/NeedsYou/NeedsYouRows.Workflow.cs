@@ -45,6 +45,12 @@ public static partial class NeedsYouRows
             new NeedsYouOpen(NeedsYouRoutes.WorkflowRun(note.Run), "Open the run"));
     }
 
+    /// <summary>The row for a live run that ended failed and is unseen: the run's id and the reason it failed, with a link that opens the run.</summary>
+    /// <param name="run">The failed run.</param>
+    /// <param name="scrubber">Scrubs the text.</param>
+    /// <returns>The row.</returns>
+    public static Result<NeedsYouRow> ForRunFailed(Graph.Runs.WorkflowRun run, ITextScrubber scrubber) => throw new NotSupportedException("red: P-E1 failed-run row");
+
     /// <summary>The subject id of a run's rows: the run id with its '@' written as '.', because a subject id holds no '@'. A slug holds no '.', so the result stays unique and the mapping reverses.</summary>
     /// <param name="run">The run.</param>
     /// <returns>The subject id, for example 'nightly.3:12'.</returns>
