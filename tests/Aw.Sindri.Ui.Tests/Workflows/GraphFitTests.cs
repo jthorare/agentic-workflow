@@ -35,7 +35,7 @@ public sealed class GraphFitTests
     }
 
     // The frames of #3684 (measure.txt at 3337c10a18): the release pipeline of 16 steps and its 40-step long form. Layers follow the server's longest-path rule.
-    private static GraphFitInput Release(int tail)
+    internal static GraphFitInput Release(int tail)
     {
         List<IReadOnlyList<string>> layers = [["start"], ["step_1"], ["step_2"], ["step_3"], ["step_4"], ["step_5"], ["gate"], ["big_path", "small_path"]];
         List<(string, string)> edges = [("start", "step_1"), ("step_1", "step_2"), ("step_2", "step_3"), ("step_3", "step_4"), ("step_4", "step_5"), ("step_5", "gate"), ("gate", "big_path"), ("gate", "small_path")];
