@@ -24365,3 +24365,4 @@ const Aw.Sindri.Core.Events.EventTypes.HomeCursorMoved = "home.cursor.moved" -> 
 const Aw.Sindri.Core.Events.ApiViews.Home = "home" -> string!
 const Aw.Sindri.Core.Views.ViewNames.HomeRows = "home-rows" -> string!
 const Aw.Sindri.Core.Views.ViewNames.HomeLinks = "home-links" -> string!
+static readonly Aw.Sindri.Core.SindriErrors.HomeNotFound -> Aw.Kernel.ErrorDefinition!

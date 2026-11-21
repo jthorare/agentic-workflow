@@ -8,6 +8,7 @@ using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.CodeIndex;
 using Aw.Sindri.Ui.Api.Connections;
 using Aw.Sindri.Ui.Api.Context;
+using Aw.Sindri.Ui.Api.Home;
 using Aw.Sindri.Ui.Api.Jobs;
 using Aw.Sindri.Ui.Api.Linear;
 using Aw.Sindri.Ui.Api.Memory;
@@ -140,6 +141,8 @@ public sealed class GoldenContractTests
         ["connections-id-test"] = As<ConnectionTested>,   // POST /sindri/connections/{name}/test
         ["connections-id-rename"] = As<ConnectionRenamed>,   // POST /sindri/connections/{name}/rename (the Rename action)
         ["connections-id-signin"] = As<ConnectionAdded>,   // POST /sindri/connections/{name}/signin (the Sign in again action)
+        ["home"] = As<HomeView>,   // GET /sindri/home: the Home page's first read (home spec §8, S0)
+        ["home-rows-id"] = As<HomeRowOne>,   // GET /sindri/home/rows/{id}: the peek; unknown-row-404 is a ProblemDetails
         ["memories"] = As<MemoryList>,   // GET /sindri/memories; created is POST's MemoryCreated (_readByScenario)
         ["memories-id-search"] = As<MemorySearchView>,   // GET /sindri/memories/{name}/search
         ["memories-id-facts"] = As<MemoryFactWritten>,   // POST /sindri/memories/{name}/facts; the forgot* scenarios are DELETE's MemoryForgotten (_readByScenario)
