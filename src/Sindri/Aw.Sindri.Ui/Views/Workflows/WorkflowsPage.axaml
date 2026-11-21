@@ -146,7 +146,7 @@
           <Button x:Name="WorkflowEditDone" Grid.Column="1" VerticalAlignment="Top" Content="{Binding DoneText}" Click="OnDone" AutomationProperties.Name="{Binding DoneText}" />
         </Grid>
         <Border Classes="panel" Height="320">
-          <wv:GraphCanvas x:Name="RunsCanvas" Graph="{Binding Runs.Graph}" TextScale="{Binding TextScale}" />
+          <wv:GraphStage x:Name="RunsCanvas" Graph="{Binding Runs.Graph}" TextScale="{Binding TextScale}" />
         </Border>
         <!-- What the selected step is and does, read-only, while Edit is off (#2807). It shows for every workflow, archived too; only Step settings needs edit rights. -->
         <StackPanel x:Name="StepRow" Orientation="Horizontal" Spacing="12" IsVisible="{Binding ShowsStepRow}">
@@ -231,7 +231,7 @@
       <!-- The graph at the positions Sindri served (the app lays nothing out); a node with no position is named, not drawn. -->
       <StackPanel x:Name="RunGraph" Spacing="4" IsVisible="{Binding Run.Graph, Converter={x:Static ObjectConverters.IsNotNull}}">
         <Border Classes="panel" Height="320">
-          <wv:GraphCanvas x:Name="RunCanvas" Graph="{Binding Run.Graph}" TextScale="{Binding TextScale}" />
+          <wv:GraphStage x:Name="RunCanvas" Graph="{Binding Run.Graph}" TextScale="{Binding TextScale}" />
         </Border>
         <Border x:Name="RunUnplacedName" IsVisible="{Binding Run.Graph.HasUnplaced}" AutomationProperties.Name="{Binding Run.Graph.UnplacedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption subtle" Text="{Binding Run.Graph.UnplacedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />

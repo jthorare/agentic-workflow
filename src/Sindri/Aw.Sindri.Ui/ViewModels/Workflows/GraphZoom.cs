@@ -1,6 +1,5 @@
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
-#pragma warning disable MA0182 // the stage takes it in the next commit of #3684
 
 /// <summary>The zoom strip's steps and the canvas's scroll rules (#3684): a pure model, no Avalonia.</summary>
 internal static class GraphZoom

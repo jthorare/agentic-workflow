@@ -52,6 +52,8 @@ internal sealed partial class GraphCanvas : Control
         AffectsRender<GraphCanvas>(GraphProperty, ZoomProperty, PanProperty);
         FocusableProperty.OverrideDefaultValue<GraphCanvas>(defaultValue: true);
         ClipToBoundsProperty.OverrideDefaultValue<GraphCanvas>(defaultValue: true);
+        _ = ZoomProperty.Changed.AddClassHandler<GraphCanvas>((canvas, _) => canvas.ViewChanged?.Invoke(canvas, EventArgs.Empty));
+        _ = PanProperty.Changed.AddClassHandler<GraphCanvas>((canvas, _) => canvas.ViewChanged?.Invoke(canvas, EventArgs.Empty));
         _ = TextScaleProperty.Changed.AddClassHandler<GraphCanvas>((canvas, _) => canvas.FitIfPending());
         _ = GraphProperty.Changed.AddClassHandler<GraphCanvas>((c, e) => c.OnGraphChanged(e.OldValue as WorkflowGraphViewModel, e.NewValue as WorkflowGraphViewModel));
     }
@@ -117,7 +119,11 @@ internal sealed partial class GraphCanvas : Control
     public GraphCanvas()
     {
         ActualThemeVariantChanged += (_, _) => InvalidateVisual();   // the brushes are looked up while drawing, so a theme switch needs a new pass
-        SizeChanged += (_, _) => FitIfPending();
+        SizeChanged += (_, _) =>
+        {
+            FitIfPending();
+            ViewChanged?.Invoke(this, EventArgs.Empty);
+        };
     }
 
     /// <inheritdoc/>
@@ -285,6 +291,7 @@ internal sealed partial class GraphCanvas : Control
         }
 
         InvalidateVisual();
+        ViewChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnGraphProperty(object? sender, PropertyChangedEventArgs e)
