@@ -13,13 +13,4 @@ internal sealed record WholeEdgeStyle(bool Dashed, string Pill)
         ArgumentNullException.ThrowIfNull(edge);
         return new WholeEdgeStyle(!edge.Confirmed, Labels.ContextWholeEdgePill(edge.Type, edge.Confirmed, edge.Confidence));
     }
-
-    /// <summary>The look of a bundled line between two areas: dashed unless every edge in it is confirmed.</summary>
-    /// <param name="bundle">The bundle.</param>
-    /// <returns>Its style.</returns>
-    internal static WholeEdgeStyle Of(WholeAreaBundle bundle)
-    {
-        ArgumentNullException.ThrowIfNull(bundle);
-        return new WholeEdgeStyle(bundle.Confirmed < bundle.Count, Labels.ContextWholeBundle(bundle.Count));
-    }
 }

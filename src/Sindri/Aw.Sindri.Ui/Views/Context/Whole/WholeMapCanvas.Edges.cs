@@ -72,28 +72,6 @@ internal sealed partial class WholeMapCanvas
     private FormattedText PillText(string pill) =>
         new(pill, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface(FontFamily.Default, FontStyle.Normal, FontWeight.Medium), PillSize / Math.Max(Scale, 0.5), Brush("Brush.InkSubtle"));
 
-    // One line per pair of areas with its count, never one per node edge.
-    private void DrawAreaBundles(DrawingContext context, WholeMapGeometry geometry)
-    {
-        foreach (var bundle in WholeAreaBundle.Of(geometry.AreaEdges))
-        {
-            using var _ = context.PushOpacity(Touches(bundle.From, bundle.To) ? 1 : Faded(EdgeFade));
-            var width = (1 + Math.Min(4, Math.Log2(bundle.Count + 1))) / Math.Max(Scale, 0.2);
-            var pen = new Pen(Brush(WholeEdgeStyle.Of(bundle).Dashed ? "Brush.Wire" : "Brush.WireHi"), width, WholeEdgeStyle.Of(bundle).Dashed ? new DashStyle([6, 4], 0) : null);
-            context.DrawLine(pen, new Point(bundle.X1, bundle.Y1), new Point(bundle.X2, bundle.Y2));
-        }
-    }
-
-    // Drawn after the tiles, so a tile never covers its line's count.
-    private void DrawBundlePills(DrawingContext context, WholeMapGeometry geometry)
-    {
-        var pills = WholeAreaBundle.Of(geometry.AreaEdges).Select(b => new WholePill(WholeEdgeStyle.Of(b), (b.X1 + b.X2) / 2, (b.Y1 + b.Y2) / 2)).ToList();
-        foreach (var pill in WholePillPlacer.Place(pills, Scale))
-        {
-            DrawPill(context, pill.Style, pill.X, pill.Y);
-        }
-    }
-
     private Pen EdgePen(bool dashed, bool lit) =>
         new(Brush(lit ? "Brush.WireHi" : dashed ? "Brush.Wire" : "Brush.WireHi"), (lit ? 2 * Stroke : Stroke) / Math.Max(Scale, 0.2), dashed ? new DashStyle([6, 4], 0) : null);
 
