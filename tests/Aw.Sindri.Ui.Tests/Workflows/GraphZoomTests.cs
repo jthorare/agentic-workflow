@@ -69,4 +69,11 @@ public sealed class GraphZoomTests
     {
         Assert.Equal((0, 0), GraphZoom.ClampPan((30, 40), (3000, 3000), 1.0, _clip));
     }
+
+    [Theory]
+    [InlineData(900, 140, 16, 744)]
+    [InlineData(500, 140, 16, 344)]
+    [InlineData(400, 140, 16, 320)]
+    public void The_stage_fills_the_viewport_under_its_top_and_never_goes_under_320(double viewport, double top, double gap, double expected) =>
+        Assert.Equal(expected, GraphZoom.StageHeight(viewport, top, gap), 3);
 }

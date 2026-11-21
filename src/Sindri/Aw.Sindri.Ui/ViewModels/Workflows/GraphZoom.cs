@@ -59,4 +59,14 @@ internal static class GraphZoom
         static double Axis(double value, double extent, double clip) => extent <= clip + 0.5 ? 0 : Math.Clamp(value, clip - extent, 0);
         return (Axis(pan.X, extent.Width, clip.Width), Axis(pan.Y, extent.Height, clip.Height));
     }
+
+    /// <summary>The smallest height of the canvas panel.</summary>
+    internal const double MinStageHeight = 320;
+
+    /// <summary>The canvas panel's height on a page that scrolls: what is left of the page's viewport under the panel's top and above a gap, never under <see cref="MinStageHeight"/>.</summary>
+    /// <param name="viewportHeight">The scroll viewer's visible height.</param>
+    /// <param name="top">The panel's top inside the page.</param>
+    /// <param name="gap">The space left under the panel.</param>
+    /// <returns>The panel's height.</returns>
+    internal static double StageHeight(double viewportHeight, double top, double gap) => throw new NotSupportedException();
 }
