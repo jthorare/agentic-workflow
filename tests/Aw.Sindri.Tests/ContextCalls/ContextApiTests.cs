@@ -92,7 +92,9 @@ public sealed class ContextApiTests : IDisposable
         Assert.Equal((0, 1), (matches.GetProperty("offset").GetInt32(), matches.GetProperty("read").GetInt32()));
         Assert.True(matches.GetProperty("matched").GetInt32() >= 1);
         using var all = JsonDocument.Parse(whole.Body);
-        Assert.False(all.RootElement.TryGetProperty("matches", out _));   // no window: every match is read and nothing is counted apart
+        var firstPage = all.RootElement.GetProperty("matches");   // no limit: the default first page is read and the answer says so
+        Assert.Equal(0, firstPage.GetProperty("offset").GetInt32());
+        Assert.Equal(Math.Min(10, firstPage.GetProperty("matched").GetInt32()), firstPage.GetProperty("read").GetInt32());   // 10 records is the default page
         Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (zero.Status, zero.Code));
         Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (negative.Status, negative.Code));
         Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (word.Status, word.Code));

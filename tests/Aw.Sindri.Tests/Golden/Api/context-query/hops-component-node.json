@@ -49,9 +49,9 @@
           "node": "code:src/util/format.ts",
           "title": "src/util/format.ts",
           "text": "implements feature:util.u0",
-          "score": null,
+          "score": 4,
           "why": [
-            "implements→feature:util.u0"
+            "in the anchor's own scope"
           ],
           "provenance": "human",
           "confirmed": true,
@@ -59,7 +59,7 @@
           "cites": [
             "C1"
           ],
-          "depth": null,
+          "depth": 0,
           "path": null,
           "tokens": 12
         }
@@ -92,5 +92,11 @@
       "unit": "code:src/util/format.ts",
       "features": 51
     }
-  ]
+  ],
+  "matches": {
+    "matched": 0,
+    "offset": 0,
+    "read": 0
+  },
+  "codeMatched": 1
 }
