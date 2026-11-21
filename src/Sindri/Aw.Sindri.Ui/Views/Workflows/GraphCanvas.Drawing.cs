@@ -48,6 +48,8 @@ internal sealed partial class GraphCanvas
                 DrawNode(context, node);
             }
         }
+
+        DrawScrollbars(context);
     }
 
     private void DrawEdge(DrawingContext context, GraphEdgeViewModel edge)
@@ -85,6 +87,33 @@ internal sealed partial class GraphCanvas
             var pill = new Rect(mid.X - (text.Width / 2) - 6, mid.Y - (text.Height / 2) - 2, text.Width + 12, text.Height + 4);
             context.DrawRectangle(Brush("Brush.Surface1"), new Pen(Brush("Brush.Hairline"), 1), pill, 4, 4);
             context.DrawText(text, new Point(pill.X + 6, pill.Y + 2));
+        }
+    }
+
+    // Thin scrollbars, only on an axis that overflows: a thumb showing where the viewport is in the scroll extent.
+    private void DrawScrollbars(DrawingContext context)
+    {
+        if (!Scrolls)
+        {
+            return;
+        }
+
+        var world = World;
+        var extentW = world.Right * Zoom;
+        var extentH = GraphZoom.ExtentHeight(world.Bottom, Zoom, mapShown: true);
+        var thumb = Brush("Brush.InkSubtle");
+        if (extentH > Bounds.Height + 0.5)
+        {
+            var h = Math.Max(MinHandle, Bounds.Height * Bounds.Height / extentH);
+            var y = -Pan.Y / (extentH - Bounds.Height) * (Bounds.Height - h);
+            context.DrawRectangle(thumb, pen: null, new Rect(Bounds.Width - 8, y, 4, h), 2, 2);
+        }
+
+        if (extentW > Bounds.Width + 0.5)
+        {
+            var w = Math.Max(MinHandle, Bounds.Width * Bounds.Width / extentW);
+            var x = -Pan.X / (extentW - Bounds.Width) * (Bounds.Width - w);
+            context.DrawRectangle(thumb, pen: null, new Rect(x, Bounds.Height - 8, w, 4), 2, 2);
         }
     }
 

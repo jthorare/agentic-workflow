@@ -42,6 +42,19 @@ internal sealed partial class GraphCanvas
         Pan = new Point((Bounds.Width / 2) - (world.X * Zoom), (Bounds.Height / 2) - (world.Y * Zoom));
     }
 
+    // The pan held inside the scroll extent (the world plus the map's 144 px at the bottom): no pan past it, none along an axis that fits.
+    private Point HeldPan(Point pan)
+    {
+        if (Graph is not { Nodes.Count: > 0 } || Bounds.Width <= 0 || Bounds.Height <= 0 || Zoom <= 0)
+        {
+            return pan;
+        }
+
+        var world = World;
+        var (x, y) = GraphZoom.ClampPan((pan.X, pan.Y), (world.Right, world.Bottom), Zoom, (Bounds.Width, Bounds.Height));
+        return new Point(x, y);
+    }
+
     private void StepTo(int percent)
     {
         _fitPending = false;

@@ -30,7 +30,7 @@ internal sealed partial class GraphCanvas : Control
     internal static readonly StyledProperty<double> ZoomProperty = AvaloniaProperty.Register<GraphCanvas, double>(nameof(Zoom), 1, coerce: (_, v) => Math.Clamp(v, MinZoom, MaxZoom));
 
     /// <summary>Where the world's origin sits in this control.</summary>
-    internal static readonly StyledProperty<Point> PanProperty = AvaloniaProperty.Register<GraphCanvas, Point>(nameof(Pan), _defaultPan);
+    internal static readonly StyledProperty<Point> PanProperty = AvaloniaProperty.Register<GraphCanvas, Point>(nameof(Pan), _defaultPan, coerce: static (o, v) => o is GraphCanvas canvas ? canvas.HeldPan(v) : v);
 
     /// <summary>The text size setting as a factor (1 = 100 %): cards are laid out at it, and a change wraps them again.</summary>
     internal static readonly StyledProperty<double> TextScaleProperty = AvaloniaProperty.Register<GraphCanvas, double>(nameof(TextScale), 1);
@@ -38,6 +38,7 @@ internal sealed partial class GraphCanvas : Control
     private const double ViewMargin = 24;
     private const double MinHandle = 40;
     private const double ZoomStep = 1.1;
+    private const double WheelStep = 48;
 
     private WorkflowGraphViewModel? _watched;
     private Point? _panFrom;
@@ -52,7 +53,11 @@ internal sealed partial class GraphCanvas : Control
         AffectsRender<GraphCanvas>(GraphProperty, ZoomProperty, PanProperty);
         FocusableProperty.OverrideDefaultValue<GraphCanvas>(defaultValue: true);
         ClipToBoundsProperty.OverrideDefaultValue<GraphCanvas>(defaultValue: true);
-        _ = ZoomProperty.Changed.AddClassHandler<GraphCanvas>((canvas, _) => canvas.ViewChanged?.Invoke(canvas, EventArgs.Empty));
+        _ = ZoomProperty.Changed.AddClassHandler<GraphCanvas>((canvas, _) =>
+        {
+            canvas.CoerceValue(PanProperty);   // a new zoom changes the scroll extent
+            canvas.ViewChanged?.Invoke(canvas, EventArgs.Empty);
+        });
         _ = PanProperty.Changed.AddClassHandler<GraphCanvas>((canvas, _) => canvas.ViewChanged?.Invoke(canvas, EventArgs.Empty));
         _ = TextScaleProperty.Changed.AddClassHandler<GraphCanvas>((canvas, _) => canvas.FitIfPending());
         _ = GraphProperty.Changed.AddClassHandler<GraphCanvas>((c, e) => c.OnGraphChanged(e.OldValue as WorkflowGraphViewModel, e.NewValue as WorkflowGraphViewModel));
@@ -187,6 +192,11 @@ internal sealed partial class GraphCanvas : Control
         base.OnPointerWheelChanged(e);
         if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
+            // the wheel scrolls up and down, Shift+wheel left and right; nothing happens when the canvas does not scroll
+            _fitPending = false;
+            var step = e.Delta.Y * WheelStep;
+            Pan = e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? new Point(Pan.X + step, Pan.Y) : new Point(Pan.X, Pan.Y + step);
+            e.Handled = Scrolls;
             return;
         }
 
@@ -211,6 +221,7 @@ internal sealed partial class GraphCanvas : Control
 #pragma warning disable IDE0072 // every other key is not the canvas's
         e.Handled = e.Key switch
         {
+            Key.F when e.KeyModifiers == KeyModifiers.None => FitKey(),
             Key.Right or Key.Down => graph.SelectNext(),
             Key.Left or Key.Up => graph.SelectPrevious(),
             Key.Tab => e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? graph.SelectPrevious() : graph.SelectNext(),   // at either end Tab is not handled, so focus moves on
@@ -223,6 +234,12 @@ internal sealed partial class GraphCanvas : Control
         {
             ScrollIntoView(id);
         }
+    }
+
+    private bool FitKey()
+    {
+        FitNow();
+        return true;
     }
 
     /// <summary>Pans the least that brings a node's card fully into view, with a margin; does nothing when it is already inside.</summary>
