@@ -36,8 +36,8 @@ internal sealed partial class ContextPageViewModel
     /// <summary>Whether the Building state's body has words.</summary>
     public bool HasBuildingBody => BuildingBody.Length > 0;
 
-    /// <summary>The No map state's title: "No map yet for 2 repositories" when the answer names them.</summary>
-    public string EmptyTitle => _notReady.NoMap?.Repos is { Count: > 0 } repos ? Labels.ContextNoMapRepos(repos.Count) : _itemOpened is null ? Labels.ContextStateEmptyTitle : Labels.ContextStateEmptyItemTitle;
+    /// <summary>The No map state's title: "No map yet for aw" or "No map yet for 2 repositories" when the answer names them.</summary>
+    public string EmptyTitle => _notReady.NoMap?.Repos is { Count: > 0 } repos ? Labels.ContextNoMapRepos(repos) : _itemOpened is null ? Labels.ContextStateEmptyTitle : Labels.ContextStateEmptyItemTitle;
 
     /// <summary>The button's text that opens the build's job.</summary>
     public string BuildJobText { get; } = Labels.ContextBuildingJob;

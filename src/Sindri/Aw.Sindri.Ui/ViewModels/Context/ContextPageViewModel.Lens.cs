@@ -96,7 +96,7 @@ internal sealed partial class ContextPageViewModel
         else if (string.Equals(result.Error.Code, NoMapCode, StringComparison.Ordinal))
         {
             Show(view: null, choices: []);
-            Problem = result.Error.Message;
+            Problem = Labels.ContextProblem(result.Error.Code, result.Error.Message);
             await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
         }
         else

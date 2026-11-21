@@ -195,7 +195,7 @@ internal sealed partial class ContextPageViewModel
         }
         else
         {
-            Problem = read.Error.Message;
+            Problem = Labels.ContextProblem(read.Error.Code, read.Error.Message);
         }
 
         OnChanged(nameof(Problem));
