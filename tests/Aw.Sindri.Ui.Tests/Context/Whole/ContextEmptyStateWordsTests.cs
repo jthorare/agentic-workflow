@@ -65,4 +65,38 @@ public sealed class ContextEmptyStateWordsTests
 
         Assert.Equal("the map can't be read", page.Problem);
     }
+
+    [Fact]
+    public async Task A_refused_area_read_with_no_map_offers_one_build_button_that_starts_the_build()
+    {
+        var api = new FakeSindriApi
+        {
+            WholeMapAnswer = q => q.Area is null
+                ? RouteAnswer.Api("context-whole", "areas-over-budget")
+                : RouteAnswer.Problem(HttpStatusCode.NotFound, "SND-CONTEXT-030", "there is no map yet (fix: sindri context map import <file>)"),
+        };
+        var page = await Page(api);
+
+        await page.OpenWholeArea("feature:nope", Token);
+
+        Assert.Equal(("There is no map yet.", "BuildContextMap"), (page.Problem, page.ProblemFix?.Action));
+        await page.ProblemFix!.Press(Token);
+        Assert.Equal(1, api.BuildContextMapCalls);
+    }
+
+    [Fact]
+    public async Task A_refusal_that_the_app_cannot_fix_has_no_button()
+    {
+        var api = new FakeSindriApi
+        {
+            WholeMapAnswer = q => q.Area is null
+                ? RouteAnswer.Api("context-whole", "areas-over-budget")
+                : RouteAnswer.Problem(HttpStatusCode.NotFound, "SND-CONTEXT-200", "feature:nope isn't in this map"),
+        };
+        var page = await Page(api);
+
+        await page.OpenWholeArea("feature:nope", Token);
+
+        Assert.Null(page.ProblemFix);
+    }
 }

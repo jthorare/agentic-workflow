@@ -84,6 +84,9 @@ internal sealed partial class ContextPageViewModel
     /// <summary>The build button (the catalog's BuildContextMap), or null before the first no-map answer.</summary>
     public ControlViewModel? BuildControl { get; private set; }
 
+    /// <summary>The banner's one button (STUB, red): the build, when the refusal is "no map yet".</summary>
+    public ControlViewModel? ProblemFix => null;
+
     /// <summary>Whether the last read was answered "no map yet".</summary>
     internal bool NoMap { get; private set; }
 
