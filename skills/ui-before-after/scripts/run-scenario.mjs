@@ -69,7 +69,7 @@ const waitForReady = async (page, ready = {}, storybook = false) => {
       ? page.getByText(ready.text, { exact: false }).first()
       : storybook
         ? null
-        : page.getByTestId("sidebar");
+        : page.getByTestId("sidebar").or(page.getByTestId("navbar")).first();
   await target?.waitFor({ timeout: READY_TIMEOUT_MS });
 };
 
@@ -81,7 +81,7 @@ const storyFigmaLink = (page) =>
 const signIn = async (page, base, side, flags) => {
   await page.goto(new URL("/login", base).toString());
   const signedIn = await page
-    .getByTestId("sidebar")
+    .getByTestId("sidebar").or(page.getByTestId("navbar")).first()
     .waitFor({ timeout: SIGN_IN_TIMEOUT_MS })
     .then(() => true)
     .catch(() => false);
