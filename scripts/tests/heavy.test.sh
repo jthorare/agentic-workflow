@@ -23,11 +23,14 @@ check() {
 }
 shown() { printf '%s\n' "$1" | sed 's/^/  in: /'; }   # every line prefixed: the CI runner keeps only "  in:" lines of a failing suite
 has() { # has <name> <text> <fixed string>
-  if printf '%s' "$2" | grep -qF -- "$3"; then echo "ok - $1"; else echo "not ok - $1"; echo "  missing: $3"; shown "$2"; fail=1; fi
+  if grep -qF -- "$3" <<<"$2"; then echo "ok - $1"; else echo "not ok - $1"; echo "  missing: $3"; shown "$2"; fail=1; fi
 }
 lacks() {
-  if printf '%s' "$2" | grep -qF -- "$3"; then echo "not ok - $1"; echo "  unexpected: $3"; shown "$2"; fail=1; else echo "ok - $1"; fi
+  if grep -qF -- "$3" <<<"$2"; then echo "not ok - $1"; echo "  unexpected: $3"; shown "$2"; fail=1; else echo "ok - $1"; fi
 }
+# #3660: `has` was `printf | grep -qF` under pipefail: a needle on the first line of a long text read as missing (SIGPIPE, 141).
+needle_first="$(printf 'AW_HEAVY_NEEDLE: on line one\n'; head -c 100000 /dev/zero | tr '\0' x | fold -w 80)"
+for _i in 1 2 3 4 5; do has "has finds a needle on the first line of a 100 KB text ($_i)" "$needle_first" "AW_HEAVY_NEEDLE: on line one"; done
 WORK="$(mktemp -d)"
 bgpids=()
 cleanup() { for p in ${bgpids[@]+"${bgpids[@]}"}; do kill "$p" 2> /dev/null; done; find "$WORK" -delete 2> /dev/null; }   # by recorded pid only

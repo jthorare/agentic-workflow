@@ -14,8 +14,8 @@ public sealed class CheckProvenanceTests
     {
         var query = new FakeProvenanceQuery();
         query.Emails.Add("seed-1@seed.test");
-        query.Emails.Add("staff@seed.test");
-        var settings = new FakeEvidenceSettings { SeedPolicy = new SeedPolicy(["seed.test"], "seed-%@seed.test") };
+        query.Emails.Add("staff@yahoo.com");
+        var settings = new FakeEvidenceSettings { SeedPolicy = new SeedPolicy("seed-%@seed.test") };
 
         var result = await new CheckProvenanceService(query, settings, new InMemoryRunFiles()).Handle(new CheckProvenanceRequest(), CancellationToken.None);
 
@@ -41,7 +41,7 @@ public sealed class CheckProvenanceTests
         _ = await new CheckProvenanceService(query, settings, files).Handle(new CheckProvenanceRequest("/work/wt/"), CancellationToken.None);
         _ = await new CheckProvenanceService(query, settings, files).Handle(new CheckProvenanceRequest(), CancellationToken.None);
 
-        Assert.Equal(["app_2", "app_2", null, null], query.Databases);
+        Assert.Equal(["app_2", null], query.Databases);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -72,7 +72,7 @@ public sealed class CheckProvenanceTests
         query.Emails.Add("seed-1@seed.test");
         var settings = new FakeEvidenceSettings
         {
-            SeedPolicy = new SeedPolicy(["seed.test"], "seed-%@seed.test"),
+            SeedPolicy = new SeedPolicy("seed-%@seed.test"),
             Slots = new SlotSettings(".stack-slot.env", "STACK_SLOT", Count: 3, PortStep: 10, Database: database),
         };
         var files = new InMemoryRunFiles().With("/work/wt/.stack-slot.env", Encoding.UTF8.GetBytes(slotFile));
