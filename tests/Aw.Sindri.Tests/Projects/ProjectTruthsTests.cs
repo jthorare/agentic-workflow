@@ -1,8 +1,8 @@
+using System.Globalization;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Projects.Cards;
 using Aw.Sindri.Core.Projects.Truth;
 using Aw.Sindri.Core.Reviews;
-using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.Projects;
 
@@ -14,11 +14,15 @@ public sealed class ProjectTruthsTests
     private const string Web = "acme/web";
     private static readonly DateTimeOffset _now = new(2026, 11, 14, 12, 0, 0, TimeSpan.Zero);
     private static readonly ProjectSources _apiOnly = new([Api], []);
+    private static readonly string[] _webPull = ["https://github.com/acme/web/pull/7"];
+    private static readonly string[] _apiAndInfra = ["acme/api", "acme/infra"];
+    private static readonly int[] _seven = [7];
+    private static readonly ProjectPrState[] _precedence = [ProjectPrState.Draft, ProjectPrState.CiRed, ProjectPrState.Unknown, ProjectPrState.Ready, ProjectPrState.Draft];
 
     private static ReviewPull Pull(int number, string repo = Api, bool draft = false, string[]? requested = null, string sha = "abc", ReviewedAt[]? reviews = null) =>
-        new(repo, number, $"PR {number}", "sam", draft, _now.AddDays(-5), _now.AddDays(-1), sha, requested ?? [], reviews ?? [], ReviewersRead: true, [], $"https://github.com/{repo}/pull/{number}");
+        new(repo, number, $"PR {number.ToString(CultureInfo.InvariantCulture)}", "sam", draft, _now.AddDays(-5), _now.AddDays(-1), sha, requested ?? [], reviews ?? [], ReviewersRead: true, [], $"https://github.com/{repo}/pull/{number.ToString(CultureInfo.InvariantCulture)}");
 
-    private static string Key(int number, string repo = Api) => $"{repo}#{number}";
+    private static string Key(int number, string repo = Api) => $"{repo}#{number.ToString(CultureInfo.InvariantCulture)}";
 
     // every pull gets a passing summary of its head unless 'summaries' overrides it or 'unchecked' leaves it out
     private static ProjectTruthInputs Inputs(
@@ -29,7 +33,7 @@ public sealed class ProjectTruthsTests
         IReadOnlyList<ProjectTruthAgent>? agents = null,
         bool noSummaries = false)
     {
-        var all = new Dictionary<string, ReviewSummary>();
+        var all = new Dictionary<string, ReviewSummary>(StringComparer.Ordinal);
         foreach (var pull in pulls ?? [])
         {
             if (!noSummaries)
@@ -38,7 +42,7 @@ public sealed class ProjectTruthsTests
             }
         }
 
-        foreach (var (key, summary) in summaries ?? new Dictionary<string, ReviewSummary>())
+        foreach (var (key, summary) in summaries ?? new Dictionary<string, ReviewSummary>(StringComparer.Ordinal))
         {
             all[key] = summary;
         }
@@ -56,8 +60,8 @@ public sealed class ProjectTruthsTests
             linearRepos: ["acme/infra"],
             profileRepos: ["acme/api"]);
 
-        Assert.Equal(new[] { "https://github.com/acme/web/pull/7" }, sources.PullUrls.ToArray());
-        Assert.Equal(new[] { "acme/api", "acme/infra" }, sources.Repos.OrderBy(static r => r, StringComparer.Ordinal).ToArray());
+        Assert.Equal(_webPull, sources.PullUrls.ToArray());
+        Assert.Equal(_apiAndInfra, sources.Repos.Order(StringComparer.Ordinal).ToArray());
     }
 
     [Fact]
@@ -84,7 +88,7 @@ public sealed class ProjectTruthsTests
 
         var truth = ProjectTruths.Build(Inputs(sources, pulls: [Pull(7, Web), Pull(8, Web)]));
 
-        Assert.Equal(new[] { 7 }, truth.OpenPrs.Select(static p => p.Number).ToArray());
+        Assert.Equal(_seven, truth.OpenPrs.Select(static p => p.Number).ToArray());
     }
 
     [Fact]
@@ -100,7 +104,7 @@ public sealed class ProjectTruthsTests
     {
         var at = _now.AddDays(-2);
 
-        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1)], summaries: new Dictionary<string, ReviewSummary> { [Key(1)] = Red(at) }));
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1)], summaries: new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = Red(at) }));
 
         var pr = truth.OpenPrs.Single();
         Assert.Equal((ProjectPrState.CiRed, (DateTimeOffset?)at), (pr.State, pr.DecidedAt));
@@ -111,7 +115,7 @@ public sealed class ProjectTruthsTests
     {
         var stale = new ReviewSummary("old", ReviewCi.Fail, RequiredOpen: null, _now.AddDays(-9));
 
-        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1, sha: "new")], summaries: new Dictionary<string, ReviewSummary> { [Key(1)] = stale }));
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1, sha: "new")], summaries: new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = stale }));
 
         Assert.Equal(ProjectPrState.Unknown, truth.OpenPrs.Single().State);
     }
@@ -122,7 +126,8 @@ public sealed class ProjectTruthsTests
         var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1)], noSummaries: true));
 
         var pr = truth.OpenPrs.Single();
-        Assert.Equal((ProjectPrState.Unknown, (DateTimeOffset?)null), (pr.State, pr.DecidedAt));
+        Assert.Equal(ProjectPrState.Unknown, pr.State);
+        Assert.Null(pr.DecidedAt);
     }
 
     [Fact]
@@ -146,7 +151,7 @@ public sealed class ProjectTruthsTests
     [Fact]
     public void Ci_red_wins_over_waiting()
     {
-        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1, requested: ["joi"])], summaries: new Dictionary<string, ReviewSummary> { [Key(1)] = Red(_now) }));
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1, requested: ["joi"])], summaries: new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = Red(_now) }));
 
         Assert.Equal(ProjectPrState.CiRed, truth.OpenPrs.Single().State);
     }
@@ -165,7 +170,7 @@ public sealed class ProjectTruthsTests
     [Fact]
     public void Agents_count_when_running_in_a_source_repo()
     {
-        var agents = new[] { new ProjectTruthAgent(Api, Running: true), new ProjectTruthAgent(Api, Running: false), new ProjectTruthAgent(Web, Running: true), new ProjectTruthAgent(null, Running: true) };
+        var agents = new[] { new ProjectTruthAgent(Api, Running: true), new ProjectTruthAgent(Api, Running: false), new ProjectTruthAgent(Web, Running: true), new ProjectTruthAgent(Repo: null, Running: true) };
 
         var truth = ProjectTruths.Build(Inputs(agents: agents));
 
@@ -173,10 +178,7 @@ public sealed class ProjectTruthsTests
     }
 
     [Fact]
-    public void A_project_with_no_prs_and_no_items_has_no_health()
-    {
-        Assert.Null(ProjectTruths.Build(Inputs()).Health);
-    }
+    public void A_project_with_no_prs_and_no_items_has_no_health() => Assert.Null(ProjectTruths.Build(Inputs()).Health);
 
     [Fact]
     public void Health_is_on_track_when_no_pr_is_red_or_stuck()
@@ -190,7 +192,7 @@ public sealed class ProjectTruthsTests
     public void Health_is_at_risk_and_says_how_many_prs_are_red_out_of_how_many()
     {
         ReviewPull[] pulls = [.. Enumerable.Range(1, 9).Select(static n => Pull(n))];
-        var summaries = Enumerable.Range(1, 3).ToDictionary(static n => Key(n), _ => Red(_now.AddDays(-2)));
+        var summaries = Enumerable.Range(1, 3).ToDictionary(static n => Key(n), _ => Red(_now.AddDays(-2)), StringComparer.Ordinal);
 
         var truth = ProjectTruths.Build(Inputs(pulls: pulls, summaries: summaries));
 
@@ -201,9 +203,9 @@ public sealed class ProjectTruthsTests
     public void Health_at_risk_adds_the_unknown_prs_to_its_reason()
     {
         ReviewPull[] pulls = [.. Enumerable.Range(1, 9).Select(static n => Pull(n))];
-        var summaries = Enumerable.Range(1, 3).ToDictionary(static n => Key(n), _ => Red(_now.AddDays(-2)));
+        var summaries = Enumerable.Range(1, 3).ToDictionary(static n => Key(n), _ => Red(_now.AddDays(-2)), StringComparer.Ordinal);
         var open = Inputs(pulls: pulls, summaries: summaries);
-        var facts = open.Facts with { Summaries = open.Facts.Summaries.Where(static e => e.Key != Key(8) && e.Key != Key(9)).ToDictionary(static e => e.Key, static e => e.Value) };
+        var facts = open.Facts with { Summaries = open.Facts.Summaries.Where(static e => e.Key != Key(8) && e.Key != Key(9)).ToDictionary(static e => e.Key, static e => e.Value, StringComparer.Ordinal) };
 
         var truth = ProjectTruths.Build(open with { Facts = facts });
 
@@ -222,7 +224,7 @@ public sealed class ProjectTruthsTests
     public void Health_unknown_counts_only_the_unchecked_prs()
     {
         var open = Inputs(pulls: [.. Enumerable.Range(1, 5).Select(static n => Pull(n))]);
-        var facts = open.Facts with { Summaries = open.Facts.Summaries.Where(static e => e.Key != Key(4) && e.Key != Key(5)).ToDictionary(static e => e.Key, static e => e.Value) };
+        var facts = open.Facts with { Summaries = open.Facts.Summaries.Where(static e => e.Key != Key(4) && e.Key != Key(5)).ToDictionary(static e => e.Key, static e => e.Value, StringComparer.Ordinal) };
 
         var truth = ProjectTruths.Build(open with { Facts = facts });
 
@@ -233,20 +235,19 @@ public sealed class ProjectTruthsTests
     public void Precedence_is_draft_over_ci_red_over_waiting_over_unknown_over_ready()
     {
         var pulls = new[] { Pull(1, draft: true), Pull(2, requested: ["joi"]), Pull(3), Pull(4), Pull(5, draft: true, requested: ["joi"]) };
-        var open = Inputs(pulls: pulls, summaries: new Dictionary<string, ReviewSummary> { [Key(1)] = Red(_now), [Key(2)] = Red(_now), [Key(5)] = Red(_now) });
-        var facts = open.Facts with { Summaries = open.Facts.Summaries.Where(static e => e.Key != Key(3)).ToDictionary(static e => e.Key, static e => e.Value) };
+        var open = Inputs(pulls: pulls, summaries: new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = Red(_now), [Key(2)] = Red(_now), [Key(5)] = Red(_now) });
+        var facts = open.Facts with { Summaries = open.Facts.Summaries.Where(static e => e.Key != Key(3)).ToDictionary(static e => e.Key, static e => e.Value, StringComparer.Ordinal) };
 
         var truth = ProjectTruths.Build(open with { Facts = facts });
 
-        Assert.Equal(
-            new[] { ProjectPrState.Draft, ProjectPrState.CiRed, ProjectPrState.Unknown, ProjectPrState.Ready, ProjectPrState.Draft },
-            truth.OpenPrs.OrderBy(static p => p.Number).Select(static p => p.State).ToArray());
+        ProjectPrState[] states = [.. truth.OpenPrs.OrderBy(static p => p.Number).Select(static p => p.State)];
+        Assert.Equal(_precedence, states);
     }
 
     [Fact]
     public void Health_is_off_track_when_half_the_prs_or_more_are_red()
     {
-        var summaries = new Dictionary<string, ReviewSummary> { [Key(1)] = Red(_now), [Key(2)] = Red(_now) };
+        var summaries = new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = Red(_now), [Key(2)] = Red(_now) };
 
         var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1), Pull(2), Pull(3)], summaries: summaries));
 

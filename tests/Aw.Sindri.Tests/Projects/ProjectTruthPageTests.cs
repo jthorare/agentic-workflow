@@ -12,6 +12,8 @@ namespace Aw.Sindri.Tests.Projects;
 [Lane(TestLane.Unit)]
 public sealed class ProjectTruthPageTests
 {
+    private static readonly string[] _repos = ["acme/api", "acme/infra", "acme/web"];
+
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private static ProjectCard Card(string key, params string[] links) =>
@@ -26,7 +28,7 @@ public sealed class ProjectTruthPageTests
         {
             Asked.Add(union);
             ReviewPull pull = new("acme/api", 1, "PR 1", "sam", Draft: false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, "abc", [], [], ReviewersRead: true, [], "https://github.com/acme/api/pull/1");
-            Result<ProjectTruthFacts> facts = new ProjectTruthFacts([pull], new Dictionary<string, ReviewSummary>(), [], []);
+            Result<ProjectTruthFacts> facts = new ProjectTruthFacts([pull], new Dictionary<string, ReviewSummary>(StringComparer.Ordinal), [], []);
             return ValueTask.FromResult(facts);
         }
     }
@@ -36,12 +38,12 @@ public sealed class ProjectTruthPageTests
     {
         var page = new ProjectsPage(Empty: null, Viewer: null, [], [Card("prj_a", "https://github.com/acme/api"), Card("prj_b", "https://github.com/acme/web"), Card("prj_c")], [], []);
         var facts = new CountingFacts();
-        IReadOnlyDictionary<string, IReadOnlyList<string>> profile = new Dictionary<string, IReadOnlyList<string>> { ["prj_c"] = ["acme/infra"] };
+        IReadOnlyDictionary<string, IReadOnlyList<string>> profile = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal) { ["prj_c"] = ["acme/infra"] };
 
         var attached = await ProjectTruthPage.Attach(page, profile, facts, Token);
 
         var asked = Assert.Single(facts.Asked);
-        Assert.Equal(new[] { "acme/api", "acme/infra", "acme/web" }, asked.Repos.OrderBy(static r => r, StringComparer.Ordinal).ToArray());
+        Assert.Equal(_repos, asked.Repos.Order(StringComparer.Ordinal).ToArray());
         Assert.Equal(1, attached.Projects.Single(static c => c.Key == "prj_a").Truth.OpenPrs.Count);
         Assert.Equal(0, attached.Projects.Single(static c => c.Key == "prj_b").Truth.OpenPrs.Count);
     }

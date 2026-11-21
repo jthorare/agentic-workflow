@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Testing;
@@ -339,7 +340,7 @@ public sealed class CliProjectVerbsTests : IDisposable
     }
 
     private static ProjectTruthPr Pr(int number, ProjectPrState state, DateTimeOffset? since = null, string? waitingOn = null) =>
-        new($"https://github.com/acme/api/pull/{number}", "acme/api", number, $"PR {number}", state, since, waitingOn);
+        new($"https://github.com/acme/api/pull/{number.ToString(CultureInfo.InvariantCulture)}", "acme/api", number, $"PR {number.ToString(CultureInfo.InvariantCulture)}", state, since, waitingOn);
 
     [Fact, Trait("Lane", "unit")]
     public void Usage_names_the_project_verbs() => Assert.All(_forms, form => Assert.Contains(form, Usage.Text, StringComparison.Ordinal));
