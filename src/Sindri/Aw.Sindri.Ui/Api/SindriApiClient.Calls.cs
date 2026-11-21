@@ -74,6 +74,19 @@ internal sealed partial class SindriApiClient
         }
     }
 
+    // #3734: an event may come from a write that isn't the app's own (a CLI `todo add`), and the views can lag the ledger.
+    // The first view read after it waits for its sequence like the read after the app's own command; never lowers a
+    // sequence already pending.
+    private void Await(long sequence)
+    {
+        long seen;
+        do
+        {
+            seen = Volatile.Read(ref _after);
+        }
+        while (sequence > seen && Interlocked.CompareExchange(ref _after, sequence, seen) != seen);
+    }
+
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _unreadable = new(StringComparer.Ordinal);
 
     private Result<T> Read<T>(string path, byte[] body)
