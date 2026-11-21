@@ -43,8 +43,9 @@ internal static partial class CodeRanker
         var slash = path.LastIndexOf('/');
         var name = Pieces(path[(slash + 1)..]);
         var folders = Pieces(slash < 0 ? string.Empty : path[..slash]);
-        var nameHits = words.Where(w => name.Exists(p => Matches(p, w))).ToList();
-        var folderHits = words.Where(w => !nameHits.Contains(w) && folders.Exists(p => Matches(p, w))).ToList();
+        var scored = words.Where(w => rarity[w] > 0).ToList();   // a word worth 0 scores nothing, so the why never cites it
+        var nameHits = scored.Where(w => name.Exists(p => Matches(p, w))).ToList();
+        var folderHits = scored.Where(w => !nameHits.Contains(w) && folders.Exists(p => Matches(p, w))).ToList();
         var named = !string.IsNullOrWhiteSpace(symbol) && (path.Equals(symbol, StringComparison.Ordinal) || path.EndsWith("/" + symbol, StringComparison.Ordinal));
         var near = item.Depth is { } depth ? GraphNear / (1 + depth) : GraphNear / 3;
         var raw = (nameHits.Sum(w => rarity[w]) * NameHit) + (folderHits.Sum(w => rarity[w]) * FolderHit) + near + (named ? NamedFile : 0);

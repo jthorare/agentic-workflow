@@ -76,4 +76,16 @@ public sealed class CodeRankerTests
 
         Assert.Equal("code:src/ZoomResize.ts", page.Items[0].Node);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_why_never_cites_a_word_that_scores_zero()
+    {
+        var items = new[] { "src/SplitAlpha.ts", "src/SplitBeta.ts", "src/SplitGamma.ts", "src/ZoomResize.ts", "src/Other.ts" }.Select(p => Code(p, depth: 2)).ToList();
+
+        var page = CodeRanker.Rank(items, "split resize", symbol: null, offset: 0, CodeRanker.DefaultLimit);
+
+        var alpha = page.Items.Single(i => i.Node == "code:src/SplitAlpha.ts");
+        Assert.DoesNotContain("split", string.Join(' ', alpha.Why), StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("resize", string.Join(' ', page.Items[0].Why), StringComparison.Ordinal);
+    }
 }
