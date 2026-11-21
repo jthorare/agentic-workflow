@@ -43,11 +43,11 @@ internal sealed partial class ContextPageViewModel
     /// <summary>Whether there is a refusal to show.</summary>
     public bool HasProblem => Problem.Length > 0;
 
-    /// <summary>True when the last search found nothing, or several items: a plain sentence with one action, not the refusal banner (#3677); not built yet.</summary>
-    public bool IsMiss => Problem.Length == int.MaxValue;
+    /// <summary>True when the last search found nothing, or several items: a plain sentence with one action, not the refusal banner (#3677).</summary>
+    public bool IsMiss { get; private set; }
 
     /// <summary>Whether the refusal banner shows: a refusal that is not a miss.</summary>
-    public bool ShowBanner => HasProblem;
+    public bool ShowBanner => HasProblem && !IsMiss;
 
     /// <summary>The choices' name.</summary>
     public string ChoicesName { get; } = Labels.ContextSuggestions;
@@ -110,6 +110,7 @@ internal sealed partial class ContextPageViewModel
             // A miss is said in plain words and the map that was on the page stays: nothing is cleared or dimmed for it.
             Choices = Suggestions(result.Error) is { Count: > 0 } own ? own : suggested;
             Problem = Labels.ContextRefusal(result.Error.Code, result.Error.Message, AnchorText.Trim());
+            IsMiss = string.Equals(result.Error.Code, "SND-CONTEXT-003", StringComparison.Ordinal) || string.Equals(result.Error.Code, "SND-CONTEXT-037", StringComparison.Ordinal);
             await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
         }
 
@@ -129,8 +130,16 @@ internal sealed partial class ContextPageViewModel
     /// <returns>When the answer is drawn.</returns>
     public Task Pick(string anchor, string? title, CancellationToken cancellationToken = default)
     {
-        AnchorText = title is null ? anchor : anchor + string.Empty;
-        return Submit(cancellationToken);
+        AnchorText = anchor;
+        var read = Submit(cancellationToken);
+        return title is null ? read : ShowTitleAfter(read, title);
+    }
+
+    // The key is what is read; the box then says what a person would have typed (#3677).
+    private async Task ShowTitleAfter(Task read, string title)
+    {
+        await read.ConfigureAwait(true);
+        AnchorText = title;
     }
 
     private List<string> Suggestions(Error error)
@@ -185,6 +194,7 @@ internal sealed partial class ContextPageViewModel
     {
         ForgetSelection();
         Problem = string.Empty;
+        IsMiss = false;
         Choices = choices;
         if (view is null)
         {
@@ -217,5 +227,7 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(IsDraft));
         OnChanged(nameof(HasChoices));
         OnChanged(nameof(HasProblem));
+        OnChanged(nameof(IsMiss));
+        OnChanged(nameof(ShowBanner));
     }
 }

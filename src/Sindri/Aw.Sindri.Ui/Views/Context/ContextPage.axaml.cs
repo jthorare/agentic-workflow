@@ -202,9 +202,9 @@ internal sealed partial class ContextPage : UserControl
 
     private void OnPick(object? sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: string anchor } && DataContext is ContextPageViewModel page)
+        if (sender is Button { Tag: string anchor } button && DataContext is ContextPageViewModel page)
         {
-            _ = page.Pick(anchor);
+            _ = page.Pick(anchor, (button.DataContext as ContextChoice)?.Title);
         }
     }
 

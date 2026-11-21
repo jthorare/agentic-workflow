@@ -78,9 +78,9 @@ internal static partial class Labels
 
     /// <summary>The line when a question or a name is not on the map.</summary>
     /// <param name="asked">What was typed.</param>
-    /// <returns>"Nothing on the map matches 'Tab groups'. Try a topic such as feature:name."</returns>
+    /// <returns>"Nothing matches 'Tab groups'."</returns>
     internal static string ContextNothingMatches(string asked) =>
-        $"Nothing on the map matches '{asked}'. Try a topic such as feature:name.";
+        $"Nothing matches '{asked}'.";
 
     /// <summary>The line when a name is the name of several items.</summary>
     /// <param name="asked">What was typed.</param>
