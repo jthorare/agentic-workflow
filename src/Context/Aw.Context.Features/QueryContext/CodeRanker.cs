@@ -9,6 +9,7 @@ namespace Aw.Context.Features.QueryContext;
 /// question its path holds (a hit in the file name counts three times a hit in a folder), how near the file sits to the anchor
 /// in the graph (its cascade depth: 0 is the anchor's own scope), and a big bonus when the path is the file the caller named.
 /// The sum is scaled by where the file lives: code and scripts keep it, tests lose a little, docs and specs lose most.
+/// A file the repo demotes comes after every other file, whatever its score.
 /// </summary>
 internal static partial class CodeRanker
 {
@@ -21,10 +22,14 @@ internal static partial class CodeRanker
 
     private static readonly HashSet<string> _stop = new(["the", "and", "for", "how", "does", "into", "what", "where", "who", "when", "with", "from", "that", "this", "add", "type", "wait", "slot"], StringComparer.Ordinal);
 
-    internal static RankedPage Rank(IReadOnlyList<ResultItem> items, string? text, string? symbol, int offset, int limit)
+    internal static RankedPage Rank(IReadOnlyList<ResultItem> items, string? text, string? symbol, int offset, int limit) =>
+        Rank(items, text, symbol, (offset, limit), demoted: null);
+
+    internal static RankedPage Rank(IReadOnlyList<ResultItem> items, string? text, string? symbol, (int Offset, int Limit) window, Func<ResultItem, bool>? demoted)
     {
+        var (offset, limit) = window;
         var words = Words(text);
-        var ranked = items.Select(i => Score(i, words, symbol)).OrderByDescending(s => s.Item.Score).ThenBy(s => s.Item.Node, StringComparer.Ordinal).Select(s => s.Item).ToList();
+        var ranked = items.Select(i => Score(i, words, symbol)).OrderBy(s => demoted?.Invoke(s.Item) ?? false).ThenByDescending(s => s.Item.Score).ThenBy(s => s.Item.Node, StringComparer.Ordinal).Select(s => s.Item).ToList();
         var start = Math.Clamp(offset, 0, ranked.Count);
         var page = ranked.Skip(start).Take(Math.Max(limit, 1)).ToList();
         var next = start + page.Count;
