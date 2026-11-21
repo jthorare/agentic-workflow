@@ -1,4 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
+using Aw.Sindri.Core;
+using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core.Lanes;
 using Aw.Sindri.Infrastructure.Processes;
@@ -11,7 +12,6 @@ namespace Aw.Sindri.Infrastructure.Lanes;
 /// </summary>
 /// <param name="runner">Runs the tool.</param>
 /// <param name="timeout">How long one command may run.</param>
-[SuppressMessage("Design", "MA0182:Avoid unused internal types", Justification = "Registered in DI by the fix commit of #3733; the red stub has no caller yet.")]
 internal sealed class AwMetaLaneSource(IToolRunner runner, TimeSpan timeout) : ILaneSource
 {
     internal const string Tool = "aw-meta";
@@ -24,7 +24,16 @@ internal sealed class AwMetaLaneSource(IToolRunner runner, TimeSpan timeout) : I
 
     private ValueTask<Result<string>> Read(string command, CancellationToken cancellationToken)
     {
-        _ = (runner, timeout, command, cancellationToken);   // red stub
-        throw new NotSupportedException();
+        var run = runner.Run(Tool, [command, "--json"], timeout, options: null, cancellationToken);
+        Result<string> answer = run switch
+        {
+            { Outcome: ToolOutcome.Missing } => SindriErrors.LanesUnavailable.With("aw-meta is not on PATH"),
+            { Outcome: ToolOutcome.TimedOut } => SindriErrors.LanesUnavailable.With(string.Create(CultureInfo.InvariantCulture, $"aw-meta {command} did not finish in {timeout.TotalSeconds:0} s")),
+            { Outcome: ToolOutcome.Cancelled } => SindriErrors.LanesUnavailable.With($"aw-meta {command} was cancelled"),
+            { ExitCode: > 1 } => SindriErrors.LanesUnavailable.With(string.Create(CultureInfo.InvariantCulture, $"aw-meta {command} exited {run.ExitCode}")),
+            { Output: var output } when string.IsNullOrWhiteSpace(output) => SindriErrors.LanesUnavailable.With($"aw-meta {command} printed nothing"),
+            _ => run.Output,
+        };
+        return ValueTask.FromResult(answer);
     }
 }

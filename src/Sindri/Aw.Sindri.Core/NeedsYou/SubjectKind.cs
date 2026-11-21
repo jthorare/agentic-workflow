@@ -46,4 +46,12 @@ public enum SubjectKind
     /// <summary>A graph run, named by its run id.</summary>
     [JsonStringEnumMemberName("workflow-run")]
     WorkflowRun,
+
+    /// <summary>A lane of the meta team, or an agent of one (Home lane rows).</summary>
+    [JsonStringEnumMemberName("lane")]
+    Lane,
+
+    /// <summary>A pull request (Home's pr-ready-merge row).</summary>
+    [JsonStringEnumMemberName("pull-request")]
+    PullRequest,
 }

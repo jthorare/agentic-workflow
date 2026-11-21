@@ -28,7 +28,7 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
     private static readonly HashSet<string> _handled = new(StringComparer.Ordinal)
     {
         EventTypes.RequestFiled, EventTypes.DecisionRecorded, EventTypes.ItemStateChanged, EventTypes.ServiceRan, EventTypes.ProfileChecked,
-        EventTypes.ConnectionNeedsSignIn, EventTypes.ConnectionSignedIn,
+        EventTypes.ConnectionNeedsSignIn, EventTypes.ConnectionSignedIn, EventTypes.HomeLaneRowRaised, EventTypes.HomeLaneRowCleared,
         EventTypes.WorkflowNotify, EventTypes.WorkflowRunFinished, EventTypes.WorkflowRunCancelled,
         EventTypes.WorkflowQuestion, EventTypes.WorkflowAnswered, EventTypes.WorkflowNodeFinished, EventTypes.WorkflowNodeFailed,
     };
@@ -48,6 +48,7 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
             EventTypes.ServiceRan => await Ran(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProfileChecked => await Checked(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ConnectionNeedsSignIn or EventTypes.ConnectionSignedIn => await ConnectionRow(recorded, rows, cancellationToken).ConfigureAwait(false),
+            EventTypes.HomeLaneRowRaised or EventTypes.HomeLaneRowCleared => await LaneRow(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.WorkflowNotify => await Notified(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.WorkflowQuestion => await Asked(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.WorkflowAnswered => await Answered(recorded, rows, cancellationToken).ConfigureAwait(false),

@@ -127,6 +127,8 @@ public static class EventCatalog
         new(EventTypes.McpRegistered, Public: true, typeof(McpRegistered), "mcp.registered:<commandId>") { Invalidates = [ApiViews.Setup] },
         new(EventTypes.SetupConsentGiven, Public: true, typeof(SetupConsentGiven), "setup.consent.given:<profileHash>") { Invalidates = [ApiViews.Setup] },
         new(EventTypes.SetupFirstWorkflowCreated, Public: true, typeof(SetupFirstWorkflowCreated), "setup.first_workflow.created") { Invalidates = [ApiViews.Setup] },
+        new(EventTypes.HomeLaneRowRaised, Public: true, typeof(HomeLaneRowRaised), "home.lane-row.raised:<kind>:<key>:<atTicks>") { Invalidates = [ApiViews.NeedsYou] },
+        new(EventTypes.HomeLaneRowCleared, Public: true, typeof(HomeLaneRowCleared), "home.lane-row.cleared:<kind>:<key>:<atTicks>") { Invalidates = [ApiViews.NeedsYou] },
         new(EventTypes.ConnectionNeedsSignIn, Public: true, typeof(ConnectionNeedsSignIn), "connection.needs-sign-in:<name>:<atTicks>") { Invalidates = [ApiViews.NeedsYou] },
         new(EventTypes.ConnectionSignedIn, Public: true, typeof(ConnectionSignedIn), "connection.signed-in:<name>:<atTicks>") { Invalidates = [ApiViews.NeedsYou] },
         new(EventTypes.ConnectionRemoved, Public: false, PublicPayload: null, "connection.removed:<name>:<atTicks>"),

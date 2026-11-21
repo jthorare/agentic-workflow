@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.GetConnection;
+using Aw.Sindri.Features.HomeLanes;
 using Aw.Sindri.Features.ListConnections;
 using Aw.Sindri.Features.PollConnections;
 using Aw.Sindri.Features.RefreshConnections;
@@ -25,6 +26,7 @@ internal static class ConnectionServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         return services
+            .AddHomeLanes()   // the home-lanes collector (Home spec E1): it reads aw-meta, not connections, but this is the one registration chain with room
             .AddScoped<IScheduledService, RefreshConnectionsService>()
             .AddSingleton(RefreshConnectionsService.BuiltIn)
             .AddScoped<IScheduledService, PollConnectionsService>()   // the built-in 'workflow-poll' service (#2258, PR 11): connection_event triggers, every 30 s

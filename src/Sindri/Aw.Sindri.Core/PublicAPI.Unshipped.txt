@@ -23872,3 +23872,44 @@ Aw.Sindri.Core.Lanes.ILaneRows
 Aw.Sindri.Core.Lanes.ILaneRows.Open(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.NeedsYouRowId>!>!>
 Aw.Sindri.Core.Lanes.ILaneRows.Raise(Aw.Sindri.Core.NeedsYou.NeedsYouKind kind, string! key, string! title, string! reason, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Lanes.ILaneRows.Clear(Aw.Sindri.Core.Ids.NeedsYouRowId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Events.HomeLaneRowRaised
+Aw.Sindri.Core.Events.HomeLaneRowRaised.<Clone>$() -> Aw.Sindri.Core.Events.HomeLaneRowRaised!
+Aw.Sindri.Core.Events.HomeLaneRowRaised.Kind.get -> string!
+Aw.Sindri.Core.Events.HomeLaneRowRaised.Kind.init -> void
+Aw.Sindri.Core.Events.HomeLaneRowRaised.Key.get -> string!
+Aw.Sindri.Core.Events.HomeLaneRowRaised.Key.init -> void
+Aw.Sindri.Core.Events.HomeLaneRowRaised.Title.get -> string!
+Aw.Sindri.Core.Events.HomeLaneRowRaised.Title.init -> void
+Aw.Sindri.Core.Events.HomeLaneRowRaised.Reason.get -> string!
+Aw.Sindri.Core.Events.HomeLaneRowRaised.Reason.init -> void
+Aw.Sindri.Core.Events.HomeLaneRowRaised.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Events.HomeLaneRowRaised.At.init -> void
+Aw.Sindri.Core.Events.HomeLaneRowRaised.HomeLaneRowRaised(string! Kind, string! Key, string! Title, string! Reason, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.HomeLaneRowRaised.Deconstruct(out string! Kind, out string! Key, out string! Title, out string! Reason, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.HomeLaneRowRaised.Equals(Aw.Sindri.Core.Events.HomeLaneRowRaised? other) -> bool
+override Aw.Sindri.Core.Events.HomeLaneRowRaised.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeLaneRowRaised.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeLaneRowRaised.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeLaneRowRaised.operator !=(Aw.Sindri.Core.Events.HomeLaneRowRaised? left, Aw.Sindri.Core.Events.HomeLaneRowRaised? right) -> bool
+static Aw.Sindri.Core.Events.HomeLaneRowRaised.operator ==(Aw.Sindri.Core.Events.HomeLaneRowRaised? left, Aw.Sindri.Core.Events.HomeLaneRowRaised? right) -> bool
+Aw.Sindri.Core.Events.HomeLaneRowCleared
+Aw.Sindri.Core.Events.HomeLaneRowCleared.<Clone>$() -> Aw.Sindri.Core.Events.HomeLaneRowCleared!
+Aw.Sindri.Core.Events.HomeLaneRowCleared.Kind.get -> string!
+Aw.Sindri.Core.Events.HomeLaneRowCleared.Kind.init -> void
+Aw.Sindri.Core.Events.HomeLaneRowCleared.Key.get -> string!
+Aw.Sindri.Core.Events.HomeLaneRowCleared.Key.init -> void
+Aw.Sindri.Core.Events.HomeLaneRowCleared.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Events.HomeLaneRowCleared.At.init -> void
+Aw.Sindri.Core.Events.HomeLaneRowCleared.HomeLaneRowCleared(string! Kind, string! Key, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.HomeLaneRowCleared.Deconstruct(out string! Kind, out string! Key, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.HomeLaneRowCleared.Equals(Aw.Sindri.Core.Events.HomeLaneRowCleared? other) -> bool
+override Aw.Sindri.Core.Events.HomeLaneRowCleared.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeLaneRowCleared.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeLaneRowCleared.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeLaneRowCleared.operator !=(Aw.Sindri.Core.Events.HomeLaneRowCleared? left, Aw.Sindri.Core.Events.HomeLaneRowCleared? right) -> bool
+static Aw.Sindri.Core.Events.HomeLaneRowCleared.operator ==(Aw.Sindri.Core.Events.HomeLaneRowCleared? left, Aw.Sindri.Core.Events.HomeLaneRowCleared? right) -> bool
+const Aw.Sindri.Core.Events.EventTypes.HomeLaneRowRaised = "home.lane-row.raised" -> string!
+const Aw.Sindri.Core.Events.EventTypes.HomeLaneRowCleared = "home.lane-row.cleared" -> string!
+Aw.Sindri.Core.NeedsYou.SubjectKind.Lane = 10 -> Aw.Sindri.Core.NeedsYou.SubjectKind
+Aw.Sindri.Core.NeedsYou.SubjectKind.PullRequest = 11 -> Aw.Sindri.Core.NeedsYou.SubjectKind
+static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForLane(Aw.Sindri.Core.Events.HomeLaneRowRaised! raised, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!

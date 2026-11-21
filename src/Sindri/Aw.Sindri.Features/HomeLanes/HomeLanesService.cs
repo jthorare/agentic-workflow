@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lanes;
@@ -14,7 +14,6 @@ namespace Aw.Sindri.Features.HomeLanes;
 /// </summary>
 /// <param name="source">Reads aw-meta.</param>
 /// <param name="rows">Opens and clears the rows.</param>
-[SuppressMessage("Design", "MA0182:Avoid unused internal types", Justification = "Red stub of #3733: only the tests use it until the fix commit registers it.")]
 internal sealed class HomeLanesService(ILaneSource source, ILaneRows rows) : IScheduledService
 {
     internal static ServiceName ServiceId { get; } = ServiceName.From("home-lanes");
@@ -27,9 +26,54 @@ internal sealed class HomeLanesService(ILaneSource source, ILaneRows rows) : ISc
 
     public ServiceName Identity() => ServiceId;
 
-    public ValueTask<Result<ScheduledResult>> Run(ScheduledRun run, CancellationToken cancellationToken)
+    public async ValueTask<Result<ScheduledResult>> Run(ScheduledRun run, CancellationToken cancellationToken)
     {
-        _ = (source, rows);   // red stub: the real run reads aw-meta and diffs the rows
-        throw new NotSupportedException();
+        var snapshot = await Read(cancellationToken).ConfigureAwait(false);
+        if (snapshot.IsError)
+        {
+            return new ScheduledResult(Idle: true, "lanes-unavailable: " + snapshot.Error.Message);   // rows stay as they are: an unanswered aw-meta says nothing about them
+        }
+
+        var open = await rows.Open(cancellationToken).ConfigureAwait(false);
+        if (open.IsError)
+        {
+            return open.Error;
+        }
+
+        var wanted = LaneTriggers.Rows(snapshot.Value);
+        var wantedIds = wanted.Select(static r => LaneTriggers.Id(r.Kind, r.Key)).ToHashSet();
+        var raised = 0;
+        foreach (var row in wanted.Where(r => !open.Value.Contains(LaneTriggers.Id(r.Kind, r.Key))))
+        {
+            var done = await rows.Raise(row.Kind, row.Key, row.Title, row.Reason, cancellationToken).ConfigureAwait(false);
+            if (done.IsError)
+            {
+                return done.Error;
+            }
+
+            raised++;
+        }
+
+        var cleared = 0;
+        foreach (var id in open.Value.Where(id => !wantedIds.Contains(id)))
+        {
+            var done = await rows.Clear(id, cancellationToken).ConfigureAwait(false);
+            if (done.IsError)
+            {
+                return done.Error;
+            }
+
+            cleared++;
+        }
+
+        return raised + cleared == 0 ? ScheduledResult.Quiet : new ScheduledResult(Idle: false, string.Create(CultureInfo.InvariantCulture, $"opened {raised}, cleared {cleared}"));
+    }
+
+    private async ValueTask<Result<LaneSnapshot>> Read(CancellationToken cancellationToken)
+    {
+        var status = await source.Status(cancellationToken).ConfigureAwait(false);
+        var context = status.IsError ? status : await source.Context(cancellationToken).ConfigureAwait(false);
+        var usage = context.IsError ? context : await source.Usage(cancellationToken).ConfigureAwait(false);
+        return usage.IsError ? usage.Error : LaneParser.Parse(status.Value, context.Value, usage.Value);
     }
 }

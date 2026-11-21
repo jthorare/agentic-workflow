@@ -118,7 +118,8 @@ public static class SindriInfrastructureServiceCollectionExtensions
         services.AddSingleton<IRunDiff, GitRunDiff>().AddSingleton<IRunBranches, GitRunBranches>().AddSingleton<IWorkspaceRebase, GitWorkspaceRebase>().AddSingleton<IDiffContent, GitDiffContent>().AddSingleton<IBranchChanges, GitBranchChanges>().AddSingleton<IAgentSessions, LedgerAgentSessions>().AddSingleton<IRunSuspensions, LedgerRunSuspensions>().AddSingleton<ILearnHistory, LedgerLearnHistory>().AddSingleton<ILaunchOwners, LedgerLaunchOwners>()
             .AddSingleton<IPrepareSource, GitPrepareSource>()
             .AddSingleton<IPrepareCache>(sp => new FilePrepareCache(Path.Combine(sp.GetRequiredService<ISindriHome>().Path, "cache", "prepare"), new ProcessToolRunner()))   // <real home>/cache/prepare/<key>/ (sandbox spec 3.8)
-            .AddSingleton<ICheckCommands>(sp => new ToolCheckCommands(new ProcessToolRunner(), sp.GetRequiredService<ITextScrubber>(), sp.GetRequiredService<TimeProvider>()));
+            .AddSingleton<ICheckCommands>(sp => new ToolCheckCommands(new ProcessToolRunner(), sp.GetRequiredService<ITextScrubber>(), sp.GetRequiredService<TimeProvider>()))
+            .AddSingleton<Core.Lanes.ILaneSource>(_ => new Lanes.AwMetaLaneSource(new ProcessToolRunner(), TimeSpan.FromSeconds(20)));   // read-only aw-meta commands for the home-lanes service
 
     /// <summary>The judge Steps' port over the judge program (deps.yaml Sindri to Judge, kind cli); the judge's store is Sindri's own, under its home.</summary>
     private static IServiceCollection AddJudgeInfrastructure(this IServiceCollection services, Func<string, string?> environment) =>
