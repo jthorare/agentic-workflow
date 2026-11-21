@@ -346,8 +346,8 @@
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="shell:ServiceRowViewModel">
                     <StackPanel>
-                      <Grid Classes="row data-row" ColumnDefinitions="140,*,Auto" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding What}">
-                        <TextBlock Classes="body-strong" Text="{Binding Name}" AutomationProperties.Name="{Binding Name}" />
+                      <Grid Classes="row data-row" ColumnDefinitions="190,*,Auto" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding What}">
+                        <TextBlock Classes="body-strong" Text="{Binding Name}" TextTrimming="CharacterEllipsis" Margin="0,0,12,0" AutomationProperties.Name="{Binding Name}" />
                         <TextBlock Grid.Column="1" Classes="body muted" Text="{Binding Every}" AutomationProperties.Name="{Binding Every}" />
                         <TextBlock Grid.Column="2" Classes="body subtle" Text="{Binding LastRun}" AutomationProperties.Name="{Binding LastRun}" />
                       </Grid>
