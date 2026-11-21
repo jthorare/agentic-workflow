@@ -3,6 +3,7 @@ using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 using Aw.Sindri.Ui.Views.Controls;
 
@@ -27,7 +28,12 @@ internal sealed class GraphStage : Grid
 
     static GraphStage()
     {
-        _ = GraphProperty.Changed.AddClassHandler<GraphStage>((s, e) => s._canvas.Graph = e.NewValue as WorkflowGraphViewModel);
+        _ = GraphProperty.Changed.AddClassHandler<GraphStage>((s, e) =>
+        {
+            (e.OldValue as WorkflowGraphViewModel)?.PropertyChanged -= s.OnGraphProperty;
+            (e.NewValue as WorkflowGraphViewModel)?.PropertyChanged += s.OnGraphProperty;
+            s._canvas.Graph = e.NewValue as WorkflowGraphViewModel;
+        });
         _ = TextScaleProperty.Changed.AddClassHandler<GraphStage>((s, e) => s._canvas.TextScale = e.NewValue is double d ? d : 1);
     }
 
@@ -42,10 +48,10 @@ internal sealed class GraphStage : Grid
         top.ClipToBounds = true;
         Children.Add(top);
 
-        var fit = MakeButton("Fit", "Fit", () => _canvas.FitNow());
-        var minus = MakeButton("−", "Zoom out", () => _canvas.ZoomOut());
-        var plus = MakeButton("+", "Zoom in", () => _canvas.ZoomIn());
-        ToolTip.SetTip(fit, "Fit  F");
+        var fit = MakeButton(Labels.WfZoomFit, Labels.WfZoomFit, () => _canvas.FitNow());
+        var minus = MakeButton(Labels.WfZoomMinus, Labels.WfZoomOutName, () => _canvas.ZoomOut());
+        var plus = MakeButton(Labels.WfZoomPlus, Labels.WfZoomInName, () => _canvas.ZoomIn());
+        ToolTip.SetTip(fit, Labels.WfZoomFitTip);
         _strip.Child = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(24, 0), VerticalAlignment = VerticalAlignment.Center, Children = { fit, minus, _percent, plus } };
         SetRow(_strip, 1);
         Children.Add(_strip);
@@ -86,6 +92,15 @@ internal sealed class GraphStage : Grid
         AutomationProperties.SetName(button, name);
         button.Click += (_, _) => click();
         return button;
+    }
+
+    // The minimap outlines the selected card, so a selection change redraws it.
+    private void OnGraphProperty(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(WorkflowGraphViewModel.SelectedId), StringComparison.Ordinal))
+        {
+            Refresh();
+        }
     }
 
     private void Refresh()

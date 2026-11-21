@@ -50,7 +50,9 @@ public sealed class GraphStageTests
                 stage.Canvas.ZoomIn();
                 stage.Canvas.ZoomIn();
                 Settle(window);
-                return (atFit, MapAfterZoom: stage.Map.IsVisible, Same: relayouts == graph.RelayoutCount);
+                _ = graph.SelectNode("s3");
+                Settle(window);
+                return (atFit, MapAfterZoom: stage.Map.IsVisible, Same: relayouts == graph.RelayoutCount, Outlined: stage.Map.Nodes.Where(n => n.Selected).Count());
             }
             finally
             {
@@ -63,5 +65,6 @@ public sealed class GraphStageTests
         Assert.False(result.atFit.MapShown);
         Assert.True(result.MapAfterZoom);
         Assert.True(result.Same);
+        Assert.Equal(1, result.Outlined);   // the minimap outlines the selected card
     }
 }

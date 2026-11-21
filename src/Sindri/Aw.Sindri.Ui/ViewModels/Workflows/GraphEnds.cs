@@ -26,7 +26,7 @@ internal static class GraphEnds
         {
             // a step with no out port ends the path: the word sits right of the card, clear of it, with no stub
             var at = new GraphPoint(node.X + node.Width, node.Y + (node.Height / 2));
-            ends.Add(new GraphEnd(node.Id, "done", at, at, new GraphBox(at.X + WorkflowGraphViewModel.DoneGap, at.Y - (WorkflowGraphViewModel.EndLabelHeight / 2), WorkflowGraphViewModel.DoneLabelWidth, WorkflowGraphViewModel.EndLabelHeight)));
+            ends.Add(new GraphEnd(node.Id, Labels.WfEndDone, at, at, new GraphBox(at.X + WorkflowGraphViewModel.DoneGap, at.Y - (WorkflowGraphViewModel.EndLabelHeight / 2), WorkflowGraphViewModel.DoneLabelWidth, WorkflowGraphViewModel.EndLabelHeight)));
         }
 
         return ends;
