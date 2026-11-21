@@ -130,4 +130,39 @@ public sealed class ConceptRowViewTests
             return true;
         }, TestContext.Current.CancellationToken);
     }
+
+    [Fact]
+    public async Task Down_and_Up_move_between_concept_rows_and_Enter_opens_the_focused_one()
+    {
+        _ = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(ConceptRowViewTests).Assembly).Dispatch(() =>
+        {
+            List<string> opened = [];
+            var layer = new ConceptLayerViewModel(opened.Add);
+            layer.Show(AConcepts.Ok([AConcepts.Concept("concept:auth", "Auth"), AConcepts.Concept("concept:billing", "Billing")]));
+            var view = new ConceptLayerView { DataContext = layer };
+            var window = new Window { Content = view, Width = 1280, Height = 700 };
+            try
+            {
+                window.Show();
+                Settle(window);
+                var rows = view.GetVisualDescendants().OfType<Button>().Where(IsOpenButton).ToList();
+                _ = rows[0].Focus(NavigationMethod.Tab);
+
+                window.KeyPress(Key.Down, RawInputModifiers.None, PhysicalKey.ArrowDown, keySymbol: null);
+                Settle(window);
+                Assert.Same(rows[1], window.FocusManager?.GetFocusedElement());
+
+                window.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, keySymbol: null);
+                Settle(window);
+                Assert.Equal(["concept:billing"], opened);
+            }
+            finally
+            {
+                window.Close();
+                Dispatcher.UIThread.RunJobs();
+            }
+
+            return true;
+        }, TestContext.Current.CancellationToken);
+    }
 }
