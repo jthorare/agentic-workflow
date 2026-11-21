@@ -114,7 +114,7 @@
       <ctl:CoverageStrip x:Name="ContextCoverageStrip" Grid.Column="3" IsVisible="{Binding HasStack}" VerticalAlignment="Center" Margin="0,0,0,8" />
     </Grid>
 
-    <Grid Grid.Row="2" RowDefinitions="Auto,*" RowSpacing="8">
+    <Grid Grid.Row="2" RowDefinitions="Auto,*,Auto" RowSpacing="8">
       <StackPanel Spacing="8">
         <Border x:Name="ContextProblem" Classes="refusal" IsVisible="{Binding HasProblem}" AutomationProperties.Name="{Binding Problem}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <StackPanel Orientation="Horizontal" Spacing="10">
@@ -214,6 +214,8 @@
           </StackPanel>
         </Border>
       </Panel>
+      <!-- The one key-hint row under the list (#3677). -->
+      <TextBlock x:Name="ContextKeyHints" Grid.Row="2" Classes="caption subtle" Text="{Binding KeyHints}" AutomationProperties.AccessibilityView="Raw" />
     </Grid>
   </Grid>
 </UserControl>

@@ -8,6 +8,15 @@ internal static partial class Labels
     /// <summary>The page head before any map has been read.</summary>
     internal const string ContextNoMap = "No context map yet";
 
+    /// <summary>The key hints under the concepts list.</summary>
+    internal const string ContextKeysConcepts = "↑ ↓ move · Enter open · p pin · / ask · Esc back";
+
+    /// <summary>The key hints under the Files list.</summary>
+    internal const string ContextKeysFiles = "↑ ↓ move · Enter open · / ask · Esc back";
+
+    /// <summary>The key hints under the map and its item list.</summary>
+    internal const string ContextKeysMap = "↑ ↓ move · Enter open · / ask · Esc up a layer";
+
     /// <summary>The anchor box's name.</summary>
     internal const string ContextAnchor = "Ask a question";
 

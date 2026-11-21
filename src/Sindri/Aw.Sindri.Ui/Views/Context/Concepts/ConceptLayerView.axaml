@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Aw.Sindri.Ui.ViewModels.Context.Concepts"
+             xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
              x:Class="Aw.Sindri.Ui.Views.Context.Concepts.ConceptLayerView"
              x:DataType="vm:ConceptLayerViewModel">
   <UserControl.Styles>
@@ -31,7 +32,7 @@
       <!-- The layer's one status line: a polite live region, so a screen reader hears "Rebuilding the map" and "The map is ready" (pattern: CommandControl's announcer). -->
       <TextBlock x:Name="RebuildLine" Classes="caption" Text="{Binding RebuildText}" IsVisible="{Binding HasRebuildText}" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite" />
       <!-- One line per concept (#3677): the name, its file count and when it last changed. Pin shows under the pointer or the keyboard focus; the p key does the same. The summary and terms are the row's tooltip. -->
-      <ItemsControl x:Name="ConceptList" ItemsSource="{Binding Tiles}" AutomationProperties.Name="{Binding ListName}">
+      <ItemsControl x:Name="ConceptList" ctl:ResultListKeys.Arrows="True" ItemsSource="{Binding Tiles}" AutomationProperties.Name="{Binding ListName}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:ConceptTileViewModel">
             <Border Classes="concept-row" Margin="0,0,0,4" AutomationProperties.AutomationId="{Binding AutomationId}"
@@ -39,7 +40,7 @@
                     Classes.needs-you="{Binding NeedsYou}" ClipToBounds="True">
               <StackPanel>
                 <Grid ColumnDefinitions="*,Auto">
-                  <Button Click="OnOpen" Padding="14,8" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" Background="Transparent" BorderThickness="0"
+                  <Button Classes="result-open" Click="OnOpen" Padding="14,8" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" Background="Transparent" BorderThickness="0"
                           ToolTip.Tip="{Binding Tip}" AutomationProperties.Name="{Binding AccessibleName}">
                     <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="16">
                       <TextBlock Classes="body-strong" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />

@@ -269,6 +269,7 @@ internal sealed partial class ContextPageViewModel
     private void ChangedConcepts()
     {
         OnChanged(nameof(ShowConcepts));
+        OnChanged(nameof(KeyHints));
         OnChanged(nameof(ShowWhole));
         OnChanged(nameof(ShowWholeStatus));
         OnChanged(nameof(OpenedConceptId));

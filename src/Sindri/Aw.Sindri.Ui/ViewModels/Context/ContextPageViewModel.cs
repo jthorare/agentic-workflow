@@ -38,8 +38,8 @@ internal sealed partial class ContextPageViewModel : ObservableObject
     /// <summary>The head without the page's own name: "the whole map · v1" (the title already says Context).</summary>
     public string HeadDetail => Head.StartsWith(Title + " · ", StringComparison.Ordinal) ? Head[(Title.Length + 3)..] : Head;
 
-    /// <summary>The one line of keys under the list: "↑ ↓ move · Enter open · p pin · / ask · Esc back"; not built yet (#3677).</summary>
-    public string KeyHints => Head.Length == int.MaxValue ? Head : string.Empty;
+    /// <summary>The one line of keys under the list: "↑ ↓ move · Enter open · p pin · / ask · Esc back" (the concepts list); the Files and map lists leave out p.</summary>
+    public string KeyHints => ShowFiles ? Labels.ContextKeysFiles : ShowConcepts ? Labels.ContextKeysConcepts : Labels.ContextKeysMap;
 
     /// <summary>Whether the head has words to show.</summary>
     public bool HasHead => Head.Length > 0;

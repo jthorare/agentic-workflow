@@ -51,7 +51,7 @@
     <Panel Grid.Row="3">
       <!-- Rows are 36 px and built as they scroll into view; a plain StackPanel would build every row of a big folder. -->
       <ScrollViewer x:Name="FileScroll" IsVisible="{Binding HasRows}" HorizontalScrollBarVisibility="Disabled">
-      <ItemsControl x:Name="FileRows" ItemsSource="{Binding Rows}">
+      <ItemsControl x:Name="FileRows" ctl:ResultListKeys.Arrows="True" ItemsSource="{Binding Rows}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
             <VirtualizingStackPanel />
@@ -62,10 +62,12 @@
             <Border Classes="file-row" Classes.suggested="{Binding IsSuggested}" AutomationProperties.Name="{Binding AutomationName}" AutomationProperties.AccessibilityView="Control">
               <Grid ColumnDefinitions="2*,3*,2*,2*" Margin="8,0">
                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                  <Button Classes="file-open" IsVisible="{Binding IsDirectory}" Click="OnOpen" AutomationProperties.Name="{Binding Name}">
+                  <Button Classes="file-open result-open" IsVisible="{Binding IsDirectory}" Click="OnOpen" AutomationProperties.Name="{Binding Name}">
                     <TextBlock Classes="body-strong" Text="{Binding Name}" />
                   </Button>
-                  <TextBlock Classes="body" Text="{Binding Name}" IsVisible="{Binding IsFile}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+                  <Button Classes="file-open result-open" IsVisible="{Binding IsFile}" Click="OnOpen" AutomationProperties.Name="{Binding Name}">
+                    <TextBlock Classes="body" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                  </Button>
                   <TextBlock Classes="caption subtle" Text="{Binding FilesText}" IsVisible="{Binding IsDirectory}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
                   <TextBlock Classes="caption subtle" Text="{Binding StatusWord}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
                 </StackPanel>
