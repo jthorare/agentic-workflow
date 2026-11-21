@@ -101,7 +101,7 @@ internal sealed partial class GraphCanvas
         var rect = WorldRect(node);
         if (node.IsSelected)
         {
-            context.DrawRectangle(brush: null, new Pen(Brush("Brush.Primary"), 2), rect.Inflate(RingGap), Radius + RingGap, Radius + RingGap);
+            context.DrawRectangle(brush: null, new Pen(Brush("Brush.Primary"), 2), SelectedRing(rect), Radius + RingGap, Radius + RingGap);
         }
 
         context.DrawRectangle(Brush("Brush.Surface2"), new Pen(Brush("Brush.Hairline"), 1), rect, Radius, Radius);
@@ -131,6 +131,11 @@ internal sealed partial class GraphCanvas
         var reach = Math.Max(MinHandle, Math.Abs(end.X - start.X) / 2);
         return (start, new Point(start.X + reach, start.Y), new Point(end.X - reach, end.Y), end);
     }
+
+    /// <summary>The path the selected card's ring is stroked along: the pen is centred on it, so its inner edge is 3 px outside the card's border.</summary>
+    /// <param name="card">The card's rectangle.</param>
+    /// <returns>The rectangle to stroke.</returns>
+    internal static Rect SelectedRing(Rect card) => card.Inflate(RingGap);
 
     private static Rect WorldRect(GraphNodeViewModel node) => new(node.X, node.Y, node.Width, node.Height);
 
