@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Projects.Cards;
 using Aw.Sindri.Core.Projects.Facts;
+using Aw.Sindri.Core.Projects.Truth;
 using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Features.ProjectFacts;
@@ -19,7 +20,8 @@ namespace Aw.Sindri.Features.ProjectFacts;
 /// <param name="approvals">The approved profile.</param>
 /// <param name="engine">The context engine, which checks the profile's context section.</param>
 /// <param name="clock">The clock.</param>
-internal sealed class ProjectPageReader(IViewReader views, IProjectFacts facts, IApprovedProfile approvals, IContextEngine engine, TimeProvider clock) : IProjectPages
+/// <param name="truth">Sindri's own PR, CI, item and agent data, read once per page.</param>
+internal sealed class ProjectPageReader(IViewReader views, IProjectFacts facts, IApprovedProfile approvals, IContextEngine engine, TimeProvider clock, IProjectTruthFacts truth) : IProjectPages
 {
     public async ValueTask<Result<ProjectsPage>> Read(bool all, CancellationToken cancellationToken)
     {
@@ -39,7 +41,22 @@ internal sealed class ProjectPageReader(IViewReader views, IProjectFacts facts, 
         var snapshot = await facts.Read(keys, cancellationToken).ConfigureAwait(false);
         var freshness = await facts.Freshness(cancellationToken).ConfigureAwait(false);
         var (linear, tokenMissing) = await LinearState(cancellationToken).ConfigureAwait(false);
-        return ProjectCards.Build(new ProjectPageInputs(attached.Value, hidden.Value, snapshot, freshness, linear, tokenMissing), clock.GetUtcNow(), all);
+        var page = ProjectCards.Build(new ProjectPageInputs(attached.Value, hidden.Value, snapshot, freshness, linear, tokenMissing), clock.GetUtcNow(), all);
+        return await ProjectTruthPage.Attach(page, await ProfileRepos(cancellationToken).ConfigureAwait(false), truth, cancellationToken).ConfigureAwait(false);
+    }
+
+    // why: 'review.projects[].repos' says which repos a project's PRs live in; a profile that can't be read just adds none
+    private async ValueTask<IReadOnlyDictionary<string, IReadOnlyList<string>>> ProfileRepos(CancellationToken cancellationToken)
+    {
+        var latest = await approvals.Latest(cancellationToken).ConfigureAwait(false);
+        if (latest.IsError || latest.Value is not { } loaded)
+        {
+            return new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+        }
+
+        return (loaded.Profile.Review?.Projects ?? [])
+            .GroupBy(static p => p.Project, StringComparer.Ordinal)
+            .ToDictionary(static g => g.Key, static g => (IReadOnlyList<string>)[.. g.SelectMany(static p => p.Repos ?? []).Distinct(StringComparer.OrdinalIgnoreCase)], StringComparer.Ordinal);
     }
 
     // why: a profile that can't be read or checked reads as "no Linear" here; doctor and setup report that problem, the page only picks its sentence

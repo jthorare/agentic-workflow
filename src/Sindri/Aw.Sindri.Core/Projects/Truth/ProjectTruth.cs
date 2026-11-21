@@ -10,5 +10,5 @@ namespace Aw.Sindri.Core.Projects.Truth;
 public sealed record ProjectTruth(IReadOnlyList<ProjectTruthPr> OpenPrs, int OpenItems, int DoneItems, int TotalItems, int RunningAgents, ProjectTruthHealth? Health)
 {
     /// <summary>No PRs, no items, no agents, no health: what a card carries until the truth is read.</summary>
-    public static ProjectTruth Empty { get; } = new([], 0, 0, 0, 0, null);
+    public static ProjectTruth Empty { get; } = new(OpenPrs: [], OpenItems: 0, DoneItems: 0, TotalItems: 0, RunningAgents: 0, Health: null);
 }

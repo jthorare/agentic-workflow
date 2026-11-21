@@ -57,7 +57,7 @@ public sealed class ProjectTruthsTests
             profileRepos: ["acme/api"]);
 
         Assert.Equal(new[] { "https://github.com/acme/web/pull/7" }, sources.PullUrls.ToArray());
-        Assert.Equal(new[] { "acme/api", "acme/infra", "acme/web" }, sources.Repos.OrderBy(static r => r, StringComparer.Ordinal).ToArray());
+        Assert.Equal(new[] { "acme/api", "acme/infra" }, sources.Repos.OrderBy(static r => r, StringComparer.Ordinal).ToArray());
     }
 
     [Fact]

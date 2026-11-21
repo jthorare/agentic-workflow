@@ -2,6 +2,7 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Projects.Cards;
 using Aw.Sindri.Core.Projects.Facts;
+using Aw.Sindri.Core.Projects.Truth;
 using Aw.Sindri.Features.AttachProject;
 using Aw.Sindri.Features.ChangeProject;
 using Aw.Sindri.Features.Commands;
@@ -34,6 +35,7 @@ internal static class ProjectServiceCollectionExtensions
             .AddScoped<IValidator<ListLinearProjectsRequest>, AcceptAllValidator<ListLinearProjectsRequest>>().AddQuery<ListLinearProjectsRequest, ListLinearProjectsResponse, ListLinearProjectsService>()
             .AddScoped<IValidator<GetProjectRequest>, AcceptAllValidator<GetProjectRequest>>().AddQuery<GetProjectRequest, GetProjectResponse, GetProjectService>()
             .AddScoped<IProjectPages, ProjectPageReader>()
-            .AddScoped<IProjectFacts, ContextProjectFacts>();
+            .AddScoped<IProjectFacts, ContextProjectFacts>()
+            .AddScoped<IProjectTruthFacts, SindriProjectTruthFacts>();
     }
 }

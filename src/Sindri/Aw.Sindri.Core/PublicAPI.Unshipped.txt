@@ -23971,3 +23971,20 @@ Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel.OnTrack = 0 -> Aw.Sindri.Core.Pr
 Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel.AtRisk = 1 -> Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel
 Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel.OffTrack = 2 -> Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel
 Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel.Unknown = 3 -> Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel
+Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs
+Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs.<Clone>$() -> Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs!
+Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs.Deconstruct(out Aw.Sindri.Core.Projects.Truth.ProjectSources! Sources, out Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts! Facts) -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs.Equals(Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs? other) -> bool
+Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs.ProjectTruthInputs(Aw.Sindri.Core.Projects.Truth.ProjectSources! Sources, Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts! Facts) -> void
+override Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs.GetHashCode() -> int
+override Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs.ToString() -> string!
+static Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs.operator !=(Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs? left, Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs? right) -> bool
+static Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs.operator ==(Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs? left, Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs? right) -> bool
+Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs.Sources.get -> Aw.Sindri.Core.Projects.Truth.ProjectSources!
+Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs.Sources.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs.Facts.get -> Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts!
+Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs.Facts.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruths
+static Aw.Sindri.Core.Projects.Truth.ProjectTruths.Build(Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs! inputs) -> Aw.Sindri.Core.Projects.Truth.ProjectTruth!
+static Aw.Sindri.Core.Projects.Truth.ProjectTruths.SourcesOf(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectLink!>! links, System.Collections.Generic.IReadOnlyList<string!>! linearRepos, System.Collections.Generic.IReadOnlyList<string!>! profileRepos) -> Aw.Sindri.Core.Projects.Truth.ProjectSources!
