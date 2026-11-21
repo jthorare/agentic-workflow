@@ -131,7 +131,7 @@ public sealed class SelectableTileTests
 
         Assert.Equal(Colors.Transparent, Fill(chrome));
         Assert.Equal(0, clicks);
-        Assert.Equal(Brush("Brush.InkSubtle"), Assert.IsType<ISolidColorBrush>(tile.GetVisualDescendants().OfType<TextBlock>().Single().Foreground, exactMatch: false).Color);
+        Assert.Equal(Brush("Brush.InkSubtle"), Assert.IsType<ISolidColorBrush>(tile.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name != "PART_Reason").Foreground, exactMatch: false).Color);
         window.Close();
         return true;
     });
