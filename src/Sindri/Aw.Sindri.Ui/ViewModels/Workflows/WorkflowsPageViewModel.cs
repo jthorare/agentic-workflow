@@ -97,13 +97,17 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         : Rows.FirstOrDefault(r => string.Equals(r.Slug, Runs.Slug, StringComparison.Ordinal)) is { } row ? StateOf(row.IsActive) : string.Empty;
 
     /// <summary>The word of the open workflow's state chip in the header ("Active", "Off"); empty when no state is known.</summary>
-    public string DetailChipWord => string.Empty;
+    public string DetailChipWord => DetailActive is { } active ? Labels.WfState(active).Word : string.Empty;
 
     /// <summary>The glyph of the header's state chip.</summary>
-    public string DetailChipGlyph => string.Empty;
+    public string DetailChipGlyph => DetailActive is { } active ? Labels.WfState(active).Glyph : string.Empty;
 
     /// <summary>The tone of the header's state chip: "ok" when active, "neutral" when off.</summary>
-    public string DetailChipTone => string.Empty;
+    public string DetailChipTone => DetailActive is { } active ? (active ? "ok" : "neutral") : string.Empty;
+
+    private bool? DetailActive => Runs.Shown is { } shown
+        ? shown.ActiveRevision is not null
+        : Rows.FirstOrDefault(r => string.Equals(r.Slug, Runs.Slug, StringComparison.Ordinal)) is { } row ? row.IsActive : null;
 
     private static string StateOf(bool active)
     {
@@ -245,6 +249,9 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         OnChanged(nameof(ShowsListHead));
         OnChanged(nameof(ShowsDetailState));
         OnChanged(nameof(DetailStateText));
+        OnChanged(nameof(DetailChipWord));
+        OnChanged(nameof(DetailChipGlyph));
+        OnChanged(nameof(DetailChipTone));
         NotifyStateButtons();
     }
 

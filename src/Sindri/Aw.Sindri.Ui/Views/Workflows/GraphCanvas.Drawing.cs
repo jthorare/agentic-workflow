@@ -130,13 +130,23 @@ internal sealed partial class GraphCanvas
         var rect = WorldRect(node);
         if (node.IsSelected)
         {
-            context.DrawRectangle(brush: null, new Pen(Brush("Brush.Primary"), 2), SelectedRing(rect), Radius + RingGap, Radius + RingGap);
+            context.DrawRectangle(brush: null, new Pen(Brush("Brush.Primary"), 2), SelectedRing(rect), Radius + RingGap + 1, Radius + RingGap + 1);
         }
 
         context.DrawRectangle(Brush("Brush.Surface2"), new Pen(Brush("Brush.Hairline"), 1), rect, Radius, Radius);
         var k = node.Scale;
-        var width = rect.Width - (24 * k);
+        var chip = Graph?.ChipFor(node);
+        var chipText = chip is null ? null : Text(chip, 11 * k, Brush("Brush.InkMuted"), rect.Width / 3, semiBold: false);
+        var chipWidth = chipText is null ? 0 : chipText.Width + (16 * k);
+        var width = rect.Width - (24 * k) - (chipWidth > 0 ? chipWidth + (8 * k) : 0);
         context.DrawText(Text(node.Title, 13 * k, Brush("Brush.Ink"), width, semiBold: true), new Point(rect.X + (12 * k), rect.Y + (8 * k)));
+        if (chipText is not null)
+        {
+            var box = new Rect(rect.Right - (12 * k) - chipWidth, rect.Y + (6 * k), chipWidth, chipText.Height + (4 * k));
+            context.DrawRectangle(brush: null, new Pen(Brush("Brush.Hairline"), 1), box, box.Height / 2, box.Height / 2);
+            context.DrawText(chipText, new Point(box.X + (8 * k), box.Y + (2 * k)));
+        }
+
         context.DrawText(Text(node.Type, 11 * k, Brush("Brush.InkMuted"), width, semiBold: false), new Point(rect.X + (12 * k), rect.Y + (27 * k)));
         if (node.StatusWord.Length > 0)
         {

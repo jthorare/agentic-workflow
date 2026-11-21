@@ -88,6 +88,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         }
 
         _spec = workflow.Spec;
+        _isOff = workflow.ActiveRevision is null;
         _layers = [.. nodes.GroupBy(n => n.X).OrderBy(g => g.Key).Select(g => (IReadOnlyList<string>)[.. g.OrderBy(n => n.Y).Select(n => n.Id)])];
         Nodes = nodes;
         Unplaced = unplaced;
@@ -98,6 +99,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
 
     private readonly Dictionary<string, NodeSummaryView> _summaries;
     private readonly JsonElement _spec;
+    private readonly bool _isOff;   // the workflow has no active revision: its Schedule card says so
     private readonly List<IReadOnlyList<string>> _layers;   // the node ids of each layer, as the server served them: the order the canvas wraps
 
     /// <summary>The selected step's title and what it does ("Every weekday at 7:00 · ..."), from the lines the API serves; empty when no step is selected or the API sent none for it.</summary>
@@ -181,7 +183,11 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <summary>The chip at the right end of a card's title line: "off" on the Schedule card of a workflow that is off; null for every other card (no next-run time is served yet).</summary>
     /// <param name="node">The card.</param>
     /// <returns>The chip's word, or null for none.</returns>
-    internal string? ChipFor(GraphNodeViewModel node) => ArgumentNullException.ThrowIfNull(node) is null ? null : null;
+    internal string? ChipFor(GraphNodeViewModel node)
+    {
+        ArgumentNullException.ThrowIfNull(node);
+        return _isOff && string.Equals(node.Type, "schedule", StringComparison.Ordinal) ? Labels.WfState(active: false).Word.ToLowerInvariant() : null;
+    }
 
     // A card whose settings line is longer than SettingsWrapAt wraps it to a second line, so it is taller; the line is the summary the card draws.
     private Dictionary<string, double> Heights() =>

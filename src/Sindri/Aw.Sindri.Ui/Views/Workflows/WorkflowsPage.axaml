@@ -23,7 +23,7 @@
         <!-- The state sits right after the title, not at the far edge; the title column is a star, so the title trims to what the state leaves. -->
         <Grid Grid.Column="2" ColumnDefinitions="*,Auto" HorizontalAlignment="Left">
           <TextBlock x:Name="WorkflowsTitle" HorizontalAlignment="Left" Classes="page-title" Text="{Binding PageTitle}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding PageTitle}" VerticalAlignment="Top" AutomationProperties.Name="{Binding PageTitle}" />
-          <TextBlock x:Name="WorkflowsState" Grid.Column="1" Margin="12,0,0,0" Classes="caption subtle" Text="{Binding DetailStateText}" IsVisible="{Binding ShowsDetailState}" VerticalAlignment="Center" />
+          <controls:StateChipView x:Name="WorkflowsState" Grid.Column="1" Margin="12,0,0,0" Word="{Binding DetailChipWord}" Tone="{Binding DetailChipTone}" Glyph="{Binding DetailChipGlyph}" IsVisible="{Binding ShowsDetailState}" VerticalAlignment="Center" />
         </Grid>
         <TextBlock x:Name="WorkflowsHead" Grid.Column="3" Margin="12,0,0,0" Classes="caption subtle" Text="{Binding Head}" IsVisible="{Binding ShowsListHead}" VerticalAlignment="Center" />
       </Grid>
