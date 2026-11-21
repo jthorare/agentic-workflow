@@ -36,11 +36,11 @@ public sealed class WorkflowHeaderBaselineTests : FrameHost
         try
         {
             await shell.Workflows.OpenWorkflow(Slug, TestContext.Current.CancellationToken);
-            await Until(window, () => Visible(window, "RunsTitle") && Visible(window, "RunNow") && Visible(window, "WorkflowEdit"), "the runs header never showed");
+            await Until(window, () => Visible(window, "RunsHead") && Visible(window, "RunNow") && Visible(window, "WorkflowEdit"), "the runs header never showed");
             Settle(window);
 
-            var title = Baseline(Named<TextBlock>(window, "RunsTitle"), window);
-            Assert.Equal(title, Baseline(Named<TextBlock>(window, "RunsHead"), window), 1.0);
+            var title = Baseline(Named<TextBlock>(window, "RunsHead"), window);   // the workflow's name moved up to the page title (#2807), so the status text is the row's reference
+            Assert.Equal(Baseline(Named<TextBlock>(window, "WorkflowsTitle"), window), Baseline(TextOf(Named<Button>(window, "WorkflowsBack")), window), 1.0);   // the crumb and the page title share a baseline
             Assert.Equal(title, Baseline(TextOf(Named<Button>(window, "RunNow")), window), 1.0);
             Assert.Equal(title, Baseline(TextOf(Named<Button>(window, "WorkflowEdit")), window), 1.0);
         }

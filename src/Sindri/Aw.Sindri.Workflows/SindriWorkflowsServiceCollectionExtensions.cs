@@ -56,13 +56,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<IForEachLimitSource, ProfileForEachLimits>()
             .AddSingleton<IGraphCallPort, GraphWorkflowCaller>()   // 'run_workflow' starts the other workflow's active revision (agent-first PR 9)
             .AddSingleton<IGraphResultPort, GraphRunResults>()   // 'workflow_result' reads a finished run (agent-first PR 9)
-            .AddSingleton(static provider => GraphBlockRegistry.Standard(provider.GetRequiredService<INotifyPort>(), provider.GetRequiredService<IGraphModelPort>(), provider.GetRequiredService<IForEachLimitSource>(),
-                [.. GraphBlockRegistry.FlowBlocks(provider.GetRequiredService<IGraphSeenStore>(), provider.GetRequiredService<ICreateItemPort>(), provider.GetRequiredService<IGraphCallPort>(), provider.GetRequiredService<IGraphHttpPort>()),
-                 .. GraphBlockRegistry.ResultBlocks(provider.GetRequiredService<IGraphResultPort>()),
-                 .. GraphBlockRegistry.ParkingBlocks(provider.GetRequiredService<IQuestionPort>(), provider.GetRequiredService<TimeProvider>()),
-                 .. GraphBlockRegistry.MemoryBlocks(provider.GetRequiredService<IGraphMemoryPort>()),
-                 new CallToolBlock(provider.GetService<IRunningToolkits>() ?? NoToolkits.Instance, provider.GetRequiredService<IConnectionToolPort>()),   // 'call_tool' (PR 16b); with no toolkit runtime registered yet it reaches connections only
-                 .. GraphBlockRegistry.CodeBlocks(provider.GetRequiredService<ICodeRunPort>())]))   // 'code' (PR 9c): C# in the sandboxed sindri-code-runner
+            .AddSingleton(static provider => FencedRegistry(provider))   // every write port is wrapped by its test version: it records instead of writing only while a test run's block runs (GraphFence)
             .AddSingleton(static provider => new TemporalGraphRunLauncher(provider.GetRequiredService<TemporalFrontend>(), provider.GetRequiredService<TemporalSettings>()))
             .AddSingleton<IGraphBlockCatalog>(static provider => provider.GetRequiredService<GraphBlockRegistry>())   // the validator reads what the engine runs, replacing the empty catalog
             .AddSingleton<IGraphRunLauncher>(static provider => provider.GetRequiredService<TemporalGraphRunLauncher>())
@@ -78,6 +72,16 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton(static provider => new GraphRunItemRepair(provider.GetService<IRunItemRepair>(), provider.GetRequiredService<ILogger<GraphRunItemRepair>>()))
             .AddSingleton<GraphRunActivities>().AddSingleton<GraphBlockActivities>().AddSingleton<GraphActivities>();
     }
+
+    // why: a test run walks these same blocks through ports that record their writes (spec 2026-11-12 §5.1), so the live registry is never a second copy; a read-only port (the clock, the code runner, the result reader, the loop limits) is passed as it is
+    private static GraphBlockRegistry FencedRegistry(IServiceProvider provider) =>
+        GraphBlockRegistry.Standard(GraphFence.Notify(provider.GetRequiredService<INotifyPort>()), GraphFence.Model(provider.GetRequiredService<IGraphModelPort>()), provider.GetRequiredService<IForEachLimitSource>(),
+            [.. GraphBlockRegistry.FlowBlocks(GraphFence.Seen(provider.GetRequiredService<IGraphSeenStore>()), GraphFence.CreateItem(provider.GetRequiredService<ICreateItemPort>()), GraphFence.Calls(provider.GetRequiredService<IGraphCallPort>()), GraphFence.Http(provider.GetRequiredService<IGraphHttpPort>())),
+             .. GraphBlockRegistry.ResultBlocks(provider.GetRequiredService<IGraphResultPort>()),
+             .. GraphBlockRegistry.ParkingBlocks(GraphFence.Question(provider.GetRequiredService<IQuestionPort>()), provider.GetRequiredService<TimeProvider>()),
+             .. GraphBlockRegistry.MemoryBlocks(GraphFence.Memory(provider.GetRequiredService<IGraphMemoryPort>())),
+             new CallToolBlock(GraphFence.Toolkits(provider.GetService<IRunningToolkits>() ?? NoToolkits.Instance), GraphFence.ConnectionTools(provider.GetRequiredService<IConnectionToolPort>())),   // 'call_tool' (PR 16b); with no toolkit runtime registered yet it reaches connections only
+             .. GraphBlockRegistry.CodeBlocks(provider.GetRequiredService<ICodeRunPort>())]);   // 'code' (PR 9c): C# in the sandboxed sindri-code-runner
 
     // Engine P8 U3: LaunchAgentStep, WatchAgentStep, CloseAgentStep and what they use, and the worker's set of activity classes.
     private static IServiceCollection AddAgentRuntime(this IServiceCollection services)
