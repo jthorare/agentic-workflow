@@ -81,7 +81,7 @@ internal sealed partial class HealthViewModel
     /// <summary>True when the card lists any service: the rows shown, not the status' own count, so the header, the rows and this agree (#3623).</summary>
     public bool HasServices => ServiceCard.Count > 0;
 
-    /// <summary>The line that says why only the built-in services run (a profile that won't load); empty when the profile loads or no service is listed.</summary>
+    /// <summary>The line that says why the profile's services are not current when it won't load: only the built-ins run, or, when the scheduler kept the last loaded profile's services, that it keeps them; empty when the profile loads or no service is listed.</summary>
     public string ServicesNote { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when <see cref="ServicesNote"/> has a line.</summary>
