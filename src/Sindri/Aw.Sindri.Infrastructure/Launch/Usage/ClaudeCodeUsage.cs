@@ -87,7 +87,7 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
                 state.Dirty = false;
             }
         }
-        catch (Exception e) when (e is Microsoft.Data.Sqlite.SqliteException or InvalidDataException or IOException or UnauthorizedAccessException)
+        catch (Exception e) when (e is InvalidDataException or IOException or UnauthorizedAccessException)
         {
             foreach (var state in _files.Values)
             {
