@@ -80,15 +80,7 @@ internal sealed class UsageReadCache(string directory)
 
             foreach (var (file, state) in dirty)
             {
-                if (state.Rewrite || !saved.Contains(file))
-                {
-                    Forget(connection, transaction, file);
-                    Write(connection, transaction, file, state);
-                }
-                else
-                {
-                    Append(connection, transaction, file, state);
-                }
+                SaveOne(connection, transaction, file, state, whole: state.Rewrite || !saved.Contains(file));
             }
 
             transaction.Commit();
@@ -98,6 +90,20 @@ internal sealed class UsageReadCache(string directory)
         {
             Delete(path);
             throw new InvalidDataException($"The usage read cache {path} could not be written", e);
+        }
+    }
+
+    // A transcript new to the cache, or read again from byte 0, is written whole; any other only gets its new rows.
+    private static void SaveOne(SqliteConnection connection, SqliteTransaction transaction, string file, FileState state, bool whole)
+    {
+        if (whole)
+        {
+            Forget(connection, transaction, file);
+            Write(connection, transaction, file, state);
+        }
+        else
+        {
+            Append(connection, transaction, file, state);
         }
     }
 
