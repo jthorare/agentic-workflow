@@ -7,5 +7,5 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 internal sealed record GraphFitInput(IReadOnlyList<IReadOnlyList<string>> Layers, IReadOnlyList<(string From, string To)> Edges, IReadOnlyDictionary<string, double>? Heights = null)
 {
     /// <summary>The ids of steps with more than one outgoing edge: the gap after a layer holding one is wider, and its arms stay in its row.</summary>
-    internal IReadOnlySet<string> Forks => Edges.GroupBy(e => e.From, StringComparer.Ordinal).Where(g => g.Count() > 1).Select(g => g.Key).ToHashSet(StringComparer.Ordinal);
+    internal IReadOnlySet<string> Forks => Edges.GroupBy(e => e.From, StringComparer.Ordinal).Where(g => g.Skip(1).Any()).Select(g => g.Key).ToHashSet(StringComparer.Ordinal);
 }

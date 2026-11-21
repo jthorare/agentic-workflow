@@ -55,9 +55,9 @@ internal static class GraphZoom
     internal static (double X, double Y) ClampPan((double X, double Y) pan, (double Width, double Height) world, double zoom, (double Width, double Height) clip)
     {
         var scrolls = Scrolls(world.Width, world.Height, zoom, clip);
-        var extent = (Width: world.Width * zoom, Height: ExtentHeight(world.Height, zoom, scrolls));
+        var (extentWidth, extentHeight) = (world.Width * zoom, ExtentHeight(world.Height, zoom, scrolls));
         static double Axis(double value, double extent, double clip) => extent <= clip + 0.5 ? 0 : Math.Clamp(value, clip - extent, 0);
-        return (Axis(pan.X, extent.Width, clip.Width), Axis(pan.Y, extent.Height, clip.Height));
+        return (Axis(pan.X, extentWidth, clip.Width), Axis(pan.Y, extentHeight, clip.Height));
     }
 
     /// <summary>The smallest height of the canvas panel.</summary>

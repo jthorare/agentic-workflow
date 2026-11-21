@@ -244,21 +244,6 @@ internal sealed partial class GraphCanvas : Control
         return true;
     }
 
-    /// <summary>Pans the least that brings a node's card fully into view, with a margin; does nothing when it is already inside.</summary>
-    /// <param name="id">The node's id.</param>
-    internal void ScrollIntoView(string id)
-    {
-        if (NodeRect(id) is not { } card || (new Rect(Bounds.Size).Contains(card.TopLeft) && new Rect(Bounds.Size).Contains(card.BottomRight)))
-        {
-            return;
-        }
-
-        static double Shift(double near, double far, double size) =>
-            near < 0 || far - near > size ? ViewMargin - near : far > size ? size - ViewMargin - far : 0;
-
-        Pan = new Point(Pan.X + Shift(card.Left, card.Right, Bounds.Width), Pan.Y + Shift(card.Top, card.Bottom, Bounds.Height));
-    }
-
     private void OnGraphChanged(WorkflowGraphViewModel? old, WorkflowGraphViewModel? graph)
     {
         old?.PropertyChanged -= OnGraphProperty;
@@ -278,39 +263,6 @@ internal sealed partial class GraphCanvas : Control
         (ControlAutomationPeer.FromElement(this) as GraphCanvasAutomationPeer)?.Refresh();
         FitIfPending();
         InvalidateVisual();
-    }
-
-    // The canvas lays the cards out itself (#3684): GraphFit wraps the server's layers at this width. Fit is the state on open: the largest zoom at which the whole graph fits.
-    private void FitIfPending()
-    {
-        if (Graph is not { Nodes.Count: > 0 } graph || Bounds.Width <= 0 || Bounds.Height <= 0)
-        {
-            return;
-        }
-
-        var wrapChanged = Math.Abs(Bounds.Width - _laidOutWidth) > 0.5 || Math.Abs(TextScale - _laidOutScale) > 0.001;
-        if (!_fitPending && !wrapChanged && ReferenceEquals(graph, _laidOut))
-        {
-            return;
-        }
-
-        var fitZoom = graph.Relayout(Bounds.Width, Bounds.Height, TextScale);
-        _laidOutWidth = Bounds.Width;
-        _laidOutScale = TextScale;
-        _laidOut = graph;
-        if (_fitPending || wrapChanged)
-        {
-            Zoom = fitZoom;
-            Pan = default;
-            _fitPending = true;
-            if (graph.SelectedId is { } selected)
-            {
-                ScrollIntoView(selected);
-            }
-        }
-
-        InvalidateVisual();
-        ViewChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnGraphProperty(object? sender, PropertyChangedEventArgs e)

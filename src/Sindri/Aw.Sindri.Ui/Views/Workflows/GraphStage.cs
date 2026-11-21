@@ -21,10 +21,7 @@ internal sealed class GraphStage : Grid
     /// <summary>The text size setting as a factor.</summary>
     internal static readonly StyledProperty<double> TextScaleProperty = AvaloniaProperty.Register<GraphStage, double>(nameof(TextScale), 1);
 
-    private readonly GraphCanvas _canvas = new();
-    private readonly MiniMapControl _map = new() { Width = GraphZoom.MapWidth, Height = GraphZoom.MapHeight, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, GraphZoom.MapMargin, GraphZoom.MapMargin), IsVisible = false };
     private readonly TextBlock _percent = new() { VerticalAlignment = VerticalAlignment.Center, MinWidth = 48, TextAlignment = TextAlignment.Center };
-    private readonly Border _strip = new() { Height = GraphZoom.StripHeight };
 
     static GraphStage()
     {
@@ -32,9 +29,9 @@ internal sealed class GraphStage : Grid
         {
             (e.OldValue as WorkflowGraphViewModel)?.PropertyChanged -= s.OnGraphProperty;
             (e.NewValue as WorkflowGraphViewModel)?.PropertyChanged += s.OnGraphProperty;
-            s._canvas.Graph = e.NewValue as WorkflowGraphViewModel;
+            s.Canvas.Graph = e.NewValue as WorkflowGraphViewModel;
         });
-        _ = TextScaleProperty.Changed.AddClassHandler<GraphStage>((s, e) => s._canvas.TextScale = e.NewValue is double d ? d : 1);
+        _ = TextScaleProperty.Changed.AddClassHandler<GraphStage>((s, e) => s.Canvas.TextScale = e.NewValue is double d ? d : 1);
     }
 
     /// <summary>Initializes a new instance of the <see cref="GraphStage"/> class.</summary>
@@ -42,22 +39,22 @@ internal sealed class GraphStage : Grid
     {
         RowDefinitions = [new RowDefinition(GridLength.Star), new RowDefinition(new GridLength(GraphZoom.StripHeight))];
         var top = new Grid();
-        top.Children.Add(_canvas);
-        top.Children.Add(_map);
+        top.Children.Add(Canvas);
+        top.Children.Add(Map);
         SetRow(top, 0);
         top.ClipToBounds = true;
         Children.Add(top);
 
-        var fit = MakeButton(Labels.WfZoomFit, Labels.WfZoomFit, () => _canvas.FitNow());
-        var minus = MakeButton(Labels.WfZoomMinus, Labels.WfZoomOutName, () => _canvas.ZoomOut());
-        var plus = MakeButton(Labels.WfZoomPlus, Labels.WfZoomInName, () => _canvas.ZoomIn());
+        var fit = MakeButton(Labels.WfZoomFit, Labels.WfZoomFit, Canvas.FitNow);
+        var minus = MakeButton(Labels.WfZoomMinus, Labels.WfZoomOutName, Canvas.ZoomOut);
+        var plus = MakeButton(Labels.WfZoomPlus, Labels.WfZoomInName, Canvas.ZoomIn);
         ToolTip.SetTip(fit, Labels.WfZoomFitTip);
-        _strip.Child = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(24, 0), VerticalAlignment = VerticalAlignment.Center, Children = { fit, minus, _percent, plus } };
-        SetRow(_strip, 1);
-        Children.Add(_strip);
+        Strip.Child = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(24, 0), VerticalAlignment = VerticalAlignment.Center, Children = { fit, minus, _percent, plus } };
+        SetRow(Strip, 1);
+        Children.Add(Strip);
 
-        _canvas.ViewChanged += (_, _) => Refresh();
-        _map.Centred += (_, e) => _canvas.CentreOn(e.Value);
+        Canvas.ViewChanged += (_, _) => Refresh();
+        Map.Centred += (_, e) => Canvas.CentreOn(e.Value);
     }
 
     /// <summary>Gets or sets the graph drawn.</summary>
@@ -75,13 +72,13 @@ internal sealed class GraphStage : Grid
     }
 
     /// <summary>Gets the canvas.</summary>
-    internal GraphCanvas Canvas => _canvas;
+    internal GraphCanvas Canvas { get; } = new();
 
     /// <summary>Gets the minimap.</summary>
-    internal MiniMapControl Map => _map;
+    internal MiniMapControl Map { get; } = new() { Width = GraphZoom.MapWidth, Height = GraphZoom.MapHeight, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, GraphZoom.MapMargin, GraphZoom.MapMargin), IsVisible = false };
 
     /// <summary>Gets the band under the canvas.</summary>
-    internal Border Strip => _strip;
+    internal Border Strip { get; } = new() { Height = GraphZoom.StripHeight };
 
     /// <summary>Gets the zoom percent's words.</summary>
     internal string PercentText => _percent.Text ?? string.Empty;
@@ -105,15 +102,15 @@ internal sealed class GraphStage : Grid
 
     private void Refresh()
     {
-        _percent.Text = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{_canvas.ZoomPercent}%");
-        var scrolls = _canvas.Scrolls;
-        _map.IsVisible = scrolls;
+        _percent.Text = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{Canvas.ZoomPercent}%");
+        var scrolls = Canvas.Scrolls;
+        Map.IsVisible = scrolls;
         if (scrolls && Graph is { } graph)
         {
             var fill = this.TryFindResource("Brush.InkSubtle", ActualThemeVariant, out var value) && value is IBrush brush ? brush : Brushes.Gray;
-            _map.Nodes = [.. graph.Nodes.Select(n => new MiniMapNode(new Rect(n.X, n.Y, n.Width, n.Height), fill, n.IsSelected))];
-            _map.World = _canvas.World;
-            _map.Viewport = MiniMapControl.VisiblePart(_canvas.Viewport, _canvas.World);
+            Map.Nodes = [.. graph.Nodes.Select(n => new MiniMapNode(new Rect(n.X, n.Y, n.Width, n.Height), fill, n.IsSelected))];
+            Map.World = Canvas.World;
+            Map.Viewport = MiniMapControl.VisiblePart(Canvas.Viewport, Canvas.World);
         }
     }
 }

@@ -16,7 +16,7 @@ internal sealed partial class GraphCanvas
     internal Rect Viewport => new(-Pan.X / Zoom, -Pan.Y / Zoom, Bounds.Width / Zoom, Bounds.Height / Zoom);
 
     /// <summary>The zoom in whole percent.</summary>
-    internal int ZoomPercent => (int)Math.Round(Zoom * 100);
+    internal int ZoomPercent => (int)Math.Round(Zoom * 100, MidpointRounding.AwayFromZero);
 
     /// <summary>True when the world at this zoom is larger than the canvas, so the canvas scrolls.</summary>
     internal bool Scrolls => Graph is { Nodes.Count: > 0 } && GraphZoom.Scrolls(World.Right, World.Bottom, Zoom, (Bounds.Width, Bounds.Height));
