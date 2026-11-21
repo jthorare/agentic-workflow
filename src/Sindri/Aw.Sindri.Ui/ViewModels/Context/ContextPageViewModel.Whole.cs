@@ -35,6 +35,7 @@ internal sealed partial class ContextPageViewModel
     {
         Whole.AreaOpenRequested += (_, e) => _ = OpenWholeArea(e.Value, CancellationToken.None);
         Whole.AreaPageRequested += (_, e) => _ = OpenWholeAreaPage(Whole.AreaKey, e.Value, CancellationToken.None);
+        Whole.ConceptListRequested += (_, e) => _ = OpenConceptList(e.Value.Tab, e.Value.Page, CancellationToken.None);
         Whole.HomeRequested += (_, _) => MapHome();
         Whole.Panel.Launcher = Ports.Launcher ?? NullLauncher.Instance;
         Whole.Panel.Loader = async (key, cancellationToken) => Ports.ApiUrl() is { } api ? await Ports.Api.Node(api, key, cancellationToken).ConfigureAwait(true) : null;
@@ -112,7 +113,7 @@ internal sealed partial class ContextPageViewModel
         ChangedWhole();
         try
         {
-            var read = await Ports.Api.WholeMap(api, new WholeMapQuery("auto", Area: null, [], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId), cancellationToken).ConfigureAwait(true);
+            var read = await Ports.Api.WholeMap(api, new WholeMapQuery("auto", Area: null, [], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId, Page: OpenedConceptId is null ? 1 : Whole.ConceptPage, ConceptTab: OpenedConceptId is null ? null : Whole.ConceptTab), cancellationToken).ConfigureAwait(true);
             if (followed is { } version && OpenedConceptId is { } gone && !read.IsSuccess && string.Equals(read.Error.Code, GoneConceptCode, StringComparison.Ordinal))
             {
                 await LeaveGoneConcept(gone, version, cancellationToken).ConfigureAwait(true);
@@ -202,6 +203,34 @@ internal sealed partial class ContextPageViewModel
             Problem = string.Empty;
         }
         else
+        {
+            Problem = read.Error.Message;
+        }
+
+        OnChanged(nameof(Problem));
+        OnChanged(nameof(HasProblem));
+        ChangedWhole();
+    }
+
+    /// <summary>Opens one tab and page of the open concept's member list (tab=, page=, 50 a page).</summary>
+    /// <param name="tab">all, code, feature or record.</param>
+    /// <param name="page">Which page, 1-based.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>When the answer is drawn.</returns>
+    internal async Task OpenConceptList(string tab, int page, CancellationToken cancellationToken)
+    {
+        if (Ports.ApiUrl() is not { } api || OpenedConceptId is not { } concept)
+        {
+            return;
+        }
+
+        var read = await Ports.Api.WholeMap(api, new WholeMapQuery("nodes", Area: null, [], MapVersion: null, Draft: false, Repo: _repo, Concept: concept, Page: page, ConceptTab: tab), cancellationToken).ConfigureAwait(true);
+        if (read.IsSuccess && string.Equals(OpenedConceptId, concept, StringComparison.Ordinal))
+        {
+            Whole.Show(read.Value);
+            Problem = string.Empty;
+        }
+        else if (!read.IsSuccess)
         {
             Problem = read.Error.Message;
         }

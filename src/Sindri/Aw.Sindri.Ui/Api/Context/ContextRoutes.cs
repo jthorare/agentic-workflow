@@ -31,6 +31,7 @@ internal static class ContextRoutes
         Add(parts, "area", query.Area);
         Add(parts, "repo", query.Repo);
         Add(parts, "concept", query.Concept);
+        Add(parts, "tab", query.ConceptTab);
         parts.AddRange(query.Locate.Select(k => "locate=" + Uri.EscapeDataString(k)));
         if (query.Draft)
         {

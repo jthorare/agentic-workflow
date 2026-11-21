@@ -172,6 +172,12 @@ internal sealed partial class WholeMapViewModel : ObservableObject
     internal void Show(WholeMapView answer)
     {
         ArgumentNullException.ThrowIfNull(answer);
+        if (answer.ConceptList is { } list && HasConcept)
+        {
+            ShowConceptList(answer, list);
+            return;
+        }
+
         (_overview, _beforeZoom, IsAreaOpen, AreaTitle) = (null, null, false, string.Empty);
         (HitKeys, IsZoomed, MoreTouchedText, _zoomSet) = (new HashSet<string>(StringComparer.Ordinal), false, string.Empty, null);
         (SearchActive, NoMatches, _searchSet) = (false, false, null);
@@ -255,7 +261,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(ShowCrumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(Items), nameof(SelectedItem), nameof(CanvasName), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled), nameof(ShowPages), nameof(ShowAreaList), nameof(HasAreaPages), nameof(AreaPageText), nameof(CanPreviousPage), nameof(CanNextPage), nameof(ShowAreaBar), nameof(AreaBarText), nameof(ShowMoreBelow), nameof(MoreBelowText)])
+        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(ShowCrumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(Items), nameof(SelectedItem), nameof(CanvasName), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled), nameof(ShowPages), nameof(ShowAreaList), nameof(IsConceptList), nameof(ConceptTabs), nameof(ShowConceptEmpty), nameof(HasAreaPages), nameof(AreaPageText), nameof(CanPreviousPage), nameof(CanNextPage), nameof(ShowAreaBar), nameof(AreaBarText), nameof(ShowMoreBelow), nameof(MoreBelowText)])
         {
             OnChanged(name);
         }

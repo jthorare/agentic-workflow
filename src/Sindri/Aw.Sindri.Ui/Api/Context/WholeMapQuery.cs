@@ -9,5 +9,6 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// <param name="Repo">One repo to read; null for every repo.</param>
 /// <param name="Concept">One concept's id to scope the map to ("other" for the unassigned nodes); null for today's whole map.</param>
 /// <param name="PagesInNoConcept">Ask for the pages that relate to no concept, with their actions (pages spec §3.4).</param>
-/// <param name="Page">Which page (1-based) of an opened area, 50 nodes a page.</param>
-internal sealed record WholeMapQuery(string? Detail, string? Area, IReadOnlyList<string> Locate, string? MapVersion, bool Draft, string? Repo = null, string? Concept = null, bool PagesInNoConcept = false, int Page = 1);
+/// <param name="Page">Which page (1-based) of an opened area or of a concept's member list, 50 a page.</param>
+/// <param name="ConceptTab">With a concept and no area: the tab of its member list (all, code, feature or record); null for the concept's whole map (#3674).</param>
+internal sealed record WholeMapQuery(string? Detail, string? Area, IReadOnlyList<string> Locate, string? MapVersion, bool Draft, string? Repo = null, string? Concept = null, bool PagesInNoConcept = false, int Page = 1, string? ConceptTab = null);

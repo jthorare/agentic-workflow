@@ -42,6 +42,22 @@ internal static partial class Labels
     /// <summary>The accessible name of an open area's ranked list.</summary>
     internal const string ContextWholeAreaList = "Items of this feature, most linked first";
 
+    /// <summary>The accessible name of an opened concept's list.</summary>
+    internal const string ContextWholeConceptList = "Files, features and records of this concept, most linked first";
+
+    /// <summary>The accessible name of the row of tabs over a concept's list.</summary>
+    internal const string ContextWholeConceptTabs = "Kinds in this concept";
+
+    /// <summary>The line when a concept holds nothing.</summary>
+    internal const string ContextWholeConceptEmpty = "No files in this concept yet.";
+
+    /// <summary>One tab over a concept's list.</summary>
+    /// <param name="tab">all, code, feature or record.</param>
+    /// <param name="count">How many items the tab holds.</param>
+    /// <returns>"Code 1980".</returns>
+    internal static string ContextWholeConceptTab(string tab, int count) =>
+        string.Create(CultureInfo.InvariantCulture, $"{(tab switch { "code" => "Code", "feature" => "Features", "record" => "Records", _ => "All" })} {count}");
+
     /// <summary>The note by the search box when nothing on the map matches.</summary>
     internal const string ContextSearchNoMatches = "No matches";
 

@@ -23,6 +23,12 @@
         </ControlTemplate>
       </Setter>
     </Style>
+    <Style Selector="Button.tab">
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.tab.selected">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+    </Style>
     <Style Selector="RadioButton.segment:checked /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
     </Style>
@@ -73,15 +79,28 @@
 
       <!-- An opened area with more nodes than the canvas draws (#3674): the ranked list, 50 a page, never edges. -->
       <Border x:Name="WholeAreaListHost" IsVisible="{Binding ShowAreaList}" Background="{DynamicResource Brush.Surface1}" Padding="12">
-        <Grid RowDefinitions="*,Auto" RowSpacing="8">
-          <ListBox x:Name="WholeAreaList" ItemsSource="{Binding Items}" AutomationProperties.Name="{x:Static vm:WholeMapViewModel.AreaListName}" Tapped="OnAreaListTapped">
+        <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
+          <ItemsControl x:Name="WholeConceptTabs" ItemsSource="{Binding ConceptTabs}" IsVisible="{Binding IsConceptList}" AutomationProperties.Name="{x:Static vm:WholeMapViewModel.ConceptTabsName}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal" Spacing="4" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:ConceptTabItem">
+                <Button Classes="tab" Classes.selected="{Binding IsSelected}" Content="{Binding Text}" IsEnabled="{Binding CanChoose}" Click="OnConceptTab" AutomationProperties.Name="{Binding Text}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock x:Name="WholeConceptEmpty" Grid.Row="1" Classes="body" Text="{x:Static vm:WholeMapViewModel.ConceptEmptyText}" IsVisible="{Binding ShowConceptEmpty}" AutomationProperties.Name="{x:Static vm:WholeMapViewModel.ConceptEmptyText}" />
+          <ListBox x:Name="WholeAreaList" Grid.Row="2" ItemsSource="{Binding Items}" AutomationProperties.Name="{x:Static vm:WholeMapViewModel.AreaListName}" Tapped="OnAreaListTapped">
             <ListBox.ItemTemplate>
               <DataTemplate x:DataType="vm:MapItemViewModel">
                 <TextBlock Classes="body" Text="{Binding Label}" TextTrimming="CharacterEllipsis" AutomationProperties.Name="{Binding Name}" />
               </DataTemplate>
             </ListBox.ItemTemplate>
           </ListBox>
-          <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasAreaPages}">
+          <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasAreaPages}">
             <Button x:Name="WholeAreaPrevious" Content="{x:Static vm:WholeMapViewModel.PreviousPageText}" IsEnabled="{Binding CanPreviousPage}" Click="OnAreaPrevious" />
             <TextBlock x:Name="WholeAreaPageText" Classes="caption subtle" Text="{Binding AreaPageText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding AreaPageText}" />
             <Button x:Name="WholeAreaNext" Content="{x:Static vm:WholeMapViewModel.NextPageText}" IsEnabled="{Binding CanNextPage}" Click="OnAreaNext" />

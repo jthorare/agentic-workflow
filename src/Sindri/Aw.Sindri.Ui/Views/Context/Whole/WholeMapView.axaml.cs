@@ -268,6 +268,14 @@ internal sealed partial class WholeMapView : UserControl
         }
     }
 
+    private void OnConceptTab(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: ConceptTabItem tab })
+        {
+            _map?.ChooseTab(tab.Key);
+        }
+    }
+
     private void OnAreaPrevious(object? sender, RoutedEventArgs e) => _map?.PreviousPage();
 
     private void OnAreaNext(object? sender, RoutedEventArgs e) => _map?.NextPage();

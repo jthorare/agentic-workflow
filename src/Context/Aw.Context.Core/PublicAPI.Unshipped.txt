@@ -12547,6 +12547,8 @@ Aw.Context.Core.WholeMap.WholeMapAreaInfo.Page.get -> int
 Aw.Context.Core.WholeMap.WholeMapAreaInfo.Page.init -> void
 Aw.Context.Core.WholeMap.WholeMapAreaInfo.Pages.get -> int
 Aw.Context.Core.WholeMap.WholeMapAreaInfo.Pages.init -> void
+Aw.Context.Core.WholeMap.WholeMapQuery.ConceptTab.get -> string?
+Aw.Context.Core.WholeMap.WholeMapQuery.ConceptTab.init -> void
 Aw.Context.Core.WholeMap.WholeMapQuery.Page.get -> int
 Aw.Context.Core.WholeMap.WholeMapQuery.Page.init -> void
 Aw.Context.Core.WholeMap.WholeMapConceptList
