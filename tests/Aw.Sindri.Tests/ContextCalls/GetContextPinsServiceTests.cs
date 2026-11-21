@@ -519,7 +519,7 @@ public sealed class GetContextPinsServiceTests
         var scopes = new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts());
         var service = new GetContextPinsService(scopes, _engine.Proxy, _h.Profiles, _h.Profiles, new MapRebuildState(scopes, () => _engine.Proxy, _jobs, _h.Clock), _jobs);
 
-        var read = await service.Handle(new GetContextPinsRequest(null), Ct);
+        var read = await service.Handle(new GetContextPinsRequest(), Ct);
 
         Assert.True(read.IsSuccess, read.IsError ? read.Error.ToString() : null);
         Assert.Empty(read.Value.Pins);
