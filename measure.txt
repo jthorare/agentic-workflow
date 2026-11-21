@@ -1,0 +1,12 @@
+== needs-me: rows=6 rowsFullyInView=6 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
+== projects: rows=22 rowsFullyInView=15 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
+== my-work: rows=6 rowsFullyInView=6 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
+== triage-empty: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=0 hScroll=0 font=Inter
+== peek: rows=22 rowsFullyInView=15 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
+== search: rows=2 rowsFullyInView=2 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
+== menus: rows=22 rowsFullyInView=15 cut=[] contrastUnder4_5=[] minContrast=4.60 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
+== menus-group: rows=22 rowsFullyInView=15 cut=[] contrastUnder4_5=[] minContrast=4.60 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
+== not-connected: rows=9 rowsFullyInView=9 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
+== needs-me-1000: rows=6 rowsFullyInView=6 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
+== peek-1000: rows=6 rowsFullyInView=6 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
+== no-linear-row: rows=22 rowsFullyInView=15 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=40 hScroll=0 font=Inter

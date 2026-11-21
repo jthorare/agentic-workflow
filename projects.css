@@ -1,0 +1,106 @@
+/* #3717 layout only. Sizes and colours come from ../grammar-2978/grammar.css. Base: ../projects-2961-r4/projects.css (peek rows). */
+:root { --peek-w:420px; }
+pre#measure { display:none; }
+.header .sp { flex:1; }
+.mini{display:grid;grid-template-columns:14px 76px minmax(0,1fr) auto;column-gap:8px;align-items:center;height:28px;font-size:12px;color:var(--ink-muted);white-space:nowrap}
+.mini .id{font:400 12px/18px var(--mono);color:var(--ink-subtle)}
+.mini .t{overflow:hidden;text-overflow:ellipsis}
+.mini .r{display:flex;gap:6px;align-items:center;color:var(--ink-subtle)}
+.mini.done .t{color:var(--ink-subtle)}
+.sect{display:flex;align-items:center;gap:8px;height:28px;font-size:12px;font-weight:500;color:var(--ink-subtle);margin-top:var(--sp2)}
+.sect .n{font-weight:400}
+.sect .chev{width:10px;color:var(--ink-subtle)}
+.bar{background:#5e6268}
+.g.box{border-color:#70757c}
+.row.cursor,.row.sel{box-shadow:none}
+.row.cursor::after,.row.sel::after{content:'';position:absolute;left:calc(var(--inset) - 8px);right:calc(var(--inset) - 8px);top:0;bottom:0;border:1px solid var(--primary-hi);border-radius:var(--r1);pointer-events:none}
+.row.sel{background:linear-gradient(var(--primary-soft),var(--primary-soft)) 16px 0/calc(100% - 32px) 100% no-repeat}
+.row.sel::before{left:calc(var(--inset) - 8px)}
+.row.colhead{height:28px;font:500 12px/18px var(--font);color:var(--ink-subtle);background:none}
+.row.colhead:hover{background:none}
+.list.nopad{padding-top:0}
+.peek-head .id{font:400 12px/18px var(--mono);color:var(--ink-subtle)}
+
+/* top bar at 1000: the bar condenses */
+body.w1000 { width:1000px; height:700px; }
+body.w1000 .app { height:700px; }
+body.w1000 .cmdk { width:150px; }
+body.w1000 .cmdk kbd { display:none; }
+body.w1000 .nav a { padding:4px 7px; }
+body.w1000 .topbar { gap:8px; }
+
+/* the Projects header: title, segments, one bar (search, sort, group). It never scrolls away. */
+.app.pjapp { --row-h:var(--row-h-comfy); }
+.header.pjh { gap:var(--sp3); }
+.tabs a .n { margin-left:6px; }
+.bar1 { display:flex; align-items:center; gap:var(--sp2); margin-left:auto; }
+.fld { width:280px; height:28px; border:1px solid var(--hair-strong); border-radius:var(--r2); display:flex; align-items:center; padding:0 8px; gap:8px; color:var(--ink-subtle); font-size:12px; white-space:nowrap; overflow:hidden; }
+.fld .ph { flex:1; overflow:hidden; text-overflow:ellipsis; }
+.fld.focus { border-color:var(--primary-hi); }
+.fld .typed { color:var(--ink); font-size:13px; flex:none; }
+.fld .caret { width:1px; height:16px; background:var(--primary-hi); margin-left:-6px; flex:none; }
+.fld .cnt { margin-left:auto; color:var(--ink-subtle); font-size:12px; flex:none; }
+.fld .mg { width:10px; height:10px; border:1.5px solid var(--ink-subtle); border-radius:50%; flex:none; }
+.ddb { height:28px; padding:0 10px; border:1px solid var(--hair-strong); border-radius:var(--r2); background:var(--s2); color:var(--ink-muted); font:500 12px/26px var(--font); display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+.ddb .k { color:var(--ink-subtle); font-weight:400; }
+.ddb.open { border-color:var(--primary-hi); color:var(--ink); }
+.dd { position:relative; display:inline-block; }
+.dd .menu { top:34px; right:0; width:272px; }
+.dd .menu .ment .chk { width:14px; color:var(--primary-hi); font-size:13px; }
+body.w1000 .fld { width:170px; }
+.qline { height:28px; display:flex; align-items:center; gap:8px; padding:0 var(--inset); border-bottom:1px solid var(--hair); color:var(--ink-subtle); font-size:12px; }
+.qline a { color:var(--primary-hi); text-decoration:none; font-weight:500; }
+.app.q { grid-template-rows: var(--bar-h) var(--header-h) 28px 1fr var(--keys-h); }
+body.w1000 .app.q { grid-template-rows: 40px 48px 28px 1fr 28px; }
+body.w1000 .app { grid-template-rows: 40px 48px 1fr 28px; }
+
+/* the row (40 px): state dot | name + one-line health reason | PRs | CI | review | agent | blocked on | target | active */
+.row.pj .title .t { flex:none; max-width:60%; }
+.row.pj .title .sub { flex:1 1 auto; min-width:0; }
+.row.pj .fact { display:block; }
+.row.pj .fact > * { vertical-align:middle; }
+.row.pj .fact .g { margin-right:6px; }
+.row.pj .age { text-align:right; }
+.row.pj.read .title .t { color:var(--ink-muted); }
+.fact.err { color:var(--err); } .fact.att { color:var(--att); }
+.bl { font-size:12px; color:var(--ink-subtle); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bl.you { color:var(--ink); font-weight:600; }
+.row.colhead.pj .age { text-align:right; }
+/* 1000 wide with the peek open: the list is 580 px; it keeps name, PRs, CI, blocked on and active, and the reason moves to the peek */
+/* glyphs for the row's PR / CI / review / agent cells (shape differs, so colour is never the only cue) */
+.g.ci-run { border:1.5px dotted var(--att); border-radius:50%; }
+mark { background:var(--primary-soft); color:var(--ink); border-radius:2px; padding:0 1px; box-shadow:0 0 0 1px var(--primary); }
+.chip.nm { margin-left:8px; }
+.empty .acts kbd { margin-left:2px; }
+.src { display:grid; grid-template-columns:96px 1fr; padding:2px 0; }
+.src dt, .src dd { height:24px; display:flex; align-items:center; margin:0; font-size:12px; }
+.src dt { color:var(--ink-subtle); } .src dd { color:var(--ink-muted); }
+.note-box { border-left:2px solid var(--hair-strong); padding:4px 12px; color:var(--ink-muted); font-size:13px; line-height:20px; margin:2px 0 4px; }
+
+.av { font:600 11px/16px var(--font); }
+/* 1000 wide: Agents and Target drop first so the one-line reason fits */
+/* peek open at 1440: the list is 1020; Agents and Target drop (they are in the peek) */
+body.w1000 .fld { width:200px; }
+
+/* #3718 truth: the row is  dot | name + health reason | PRs by state | items | agents | blocked on | target | active  */
+.row.pj, .row.colhead.pj { grid-template-columns: var(--col-glyph) minmax(260px,1fr) 144px 56px 48px 112px 96px 44px; column-gap:12px; }
+.fact.prs { display:flex; gap:10px; align-items:center; overflow:hidden; }
+.fact.prs .pc { display:inline-flex; align-items:center; gap:5px; color:var(--ink-muted); font-size:12px; }
+.fact.prs .pc .g { margin:0; }
+.row.pj .fact.it { color:var(--ink-subtle); }
+/* unknown CI: a dashed ring with a question mark, never green */
+.g.unk { background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'><circle cx='7' cy='7' r='5.75' fill='none' stroke='%238a8f98' stroke-width='1.5'/><path d='M5.4 5.6c0-1 .7-1.6 1.6-1.6s1.6.6 1.6 1.4c0 1.1-1.6 1.2-1.6 2.4' fill='none' stroke='%238a8f98' stroke-width='1.3' stroke-linecap='round'/><circle cx='7' cy='10' r='.8' fill='%238a8f98'/></svg>") no-repeat center; }
+/* peek open (list 1020 px) keeps every column; at 1000 wide the peek leaves 580 px: name, PRs, blocked on, active (the reason moves to the peek) */
+body.w1000 .body.peeking .row.pj, body.w1000 .body.peeking .row.colhead.pj { grid-template-columns: var(--col-glyph) minmax(120px,1fr) 144px 112px 44px; }
+body.w1000 .body.peeking .it, body.w1000 .body.peeking .ag, body.w1000 .body.peeking .tg, body.w1000 .body.peeking .sub { display:none; }
+
+body.w1000 .body.peeking .row.pj .title .t { max-width:none; }
+
+.body.peeking .row.pj, .body.peeking .row.colhead.pj { grid-template-columns: var(--col-glyph) minmax(220px,1fr) 144px 56px 48px 112px 96px 44px; }
+body.w1000 .body.peeking .row.pj, body.w1000 .body.peeking .row.colhead.pj { grid-template-columns: var(--col-glyph) minmax(120px,1fr) 144px 112px 44px; }
+
+.fact.tg.past { color:var(--err); }
+.saved { margin:6px 0 4px; padding:4px 10px; border-left:2px solid var(--primary-hi); color:var(--ink-muted); font-size:12px; line-height:18px; background:var(--primary-soft); border-radius:0 var(--r1) var(--r1) 0; }
+
+.ddb { box-sizing:border-box; width:112px; justify-content:space-between; }
+body.w1000 .ddb { width:112px; }
