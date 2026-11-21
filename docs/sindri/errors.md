@@ -97,6 +97,7 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-CONN-015` | A rename was refused: an active workflow's `connection_event` trigger watches the connection, and the old name would stop it firing. The message names the workflows. | pause those workflows (`sindri wf pause <slug>`), rename, point their triggers at the new name, then activate them again |
 | `SND-CONN-016` | The poller was given a connection with no preset (`slack:messages` has none on purpose), so it made no call. | none; the Messages page reads that connection, not the poller |
 | `SND-CONN-017` | A generic add or a rename used the name `slack:messages` (a rename counts when `slack:messages` is the old name or the new one). | run `sindri messages connect` |
+| `SND-LANES-001` | Home has no lane rows: aw-meta is not on PATH, timed out, exited 2 or more, or printed JSON that does not parse. The rows already open stay as they are. | install aw-meta (`./setup.sh --with-meta`) and check `sindri services` for `home-lanes` |
 | `SND-CONN-101` | A polled event found its run ids, five in a row, held by runs of other events. | nothing: the cursor stays and the next poll tries again; the event is never dropped |
 | `SND-CONN-201` | The handoff inbox's answer breaks the inbox contract; the message names the field. | fix the inbox so it answers as `schemas/handoff/inbox.openapi.yaml` says (docs/sindri/handoff.md) |
 | `SND-CONN-202` | Another caller claimed the offer first. Informational: nothing starts. | none; the next poll lists what is still open |

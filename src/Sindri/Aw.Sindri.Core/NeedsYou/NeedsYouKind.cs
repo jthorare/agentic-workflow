@@ -42,4 +42,16 @@ public enum NeedsYouKind
     /// <summary>A question a graph 'ask_owner' node asked; it clears when it is answered or its run ends.</summary>
     [JsonStringEnumMemberName("question")]
     Question,
+
+    /// <summary>A lane whose context is at or over the recycle mark (Home spec §3.2).</summary>
+    [JsonStringEnumMemberName("lane-recycle")]
+    LaneRecycle,
+
+    /// <summary>A lane or agent that hit a usage limit (Home spec §3.2).</summary>
+    [JsonStringEnumMemberName("agent-limited")]
+    AgentLimited,
+
+    /// <summary>A PR in the merge queue that waits for the owner to merge it (Home spec §3.2).</summary>
+    [JsonStringEnumMemberName("pr-ready-merge")]
+    PrReadyMerge,
 }

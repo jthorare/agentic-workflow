@@ -23860,3 +23860,15 @@ static Aw.Sindri.Core.Graph.Blocks.GraphFence.Calls(Aw.Sindri.Core.Graph.Blocks.
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.ConnectionTools(Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort! live) -> Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort!
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.Toolkits(Aw.Sindri.Core.Toolkits.IRunningToolkits! live) -> Aw.Sindri.Core.Toolkits.IRunningToolkits!
 static Aw.Sindri.Core.Connections.ConnectionName.ParseUnreserved(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!
+Aw.Sindri.Core.NeedsYou.NeedsYouKind.LaneRecycle = 9 -> Aw.Sindri.Core.NeedsYou.NeedsYouKind
+Aw.Sindri.Core.NeedsYou.NeedsYouKind.AgentLimited = 10 -> Aw.Sindri.Core.NeedsYou.NeedsYouKind
+Aw.Sindri.Core.NeedsYou.NeedsYouKind.PrReadyMerge = 11 -> Aw.Sindri.Core.NeedsYou.NeedsYouKind
+static readonly Aw.Sindri.Core.SindriErrors.LanesUnavailable -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Lanes.ILaneSource
+Aw.Sindri.Core.Lanes.ILaneSource.Status(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Lanes.ILaneSource.Context(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Lanes.ILaneSource.Usage(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Lanes.ILaneRows
+Aw.Sindri.Core.Lanes.ILaneRows.Open(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.NeedsYouRowId>!>!>
+Aw.Sindri.Core.Lanes.ILaneRows.Raise(Aw.Sindri.Core.NeedsYou.NeedsYouKind kind, string! key, string! title, string! reason, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Lanes.ILaneRows.Clear(Aw.Sindri.Core.Ids.NeedsYouRowId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
