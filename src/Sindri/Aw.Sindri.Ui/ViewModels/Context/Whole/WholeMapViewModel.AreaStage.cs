@@ -59,13 +59,13 @@ internal sealed partial class WholeMapViewModel
     public static string NextPageText => Labels.ContextWholeNextPage;
 
     /// <summary>Gets whether the stage is the ranked list: an area is open and its page holds more nodes than the canvas draws.</summary>
-    public bool ShowAreaList => (IsAreaOpen && Stage == WholeStage.List) || IsConceptList;
+    public bool ShowAreaList => (IsAreaOpen && Stage == WholeStage.List) || IsConceptList || IsSearchList;
 
     /// <summary>Gets whether the open area has more than one page.</summary>
-    public bool HasAreaPages => (IsAreaOpen || IsConceptList) && AreaPages > 1;
+    public bool HasAreaPages => (IsAreaOpen || IsConceptList || IsSearchList) && AreaPages > 1;
 
     /// <summary>Gets the paging line: "Page 2 of 3 · 50 of 121 items".</summary>
-    public string AreaPageText => HasAreaPages ? Labels.ContextWholeAreaPage(AreaPage, AreaPages, Answer?.Nodes?.Count ?? 0, Answer?.ConceptList?.Items ?? Answer?.Area?.Counts.Nodes ?? 0) : string.Empty;
+    public string AreaPageText => HasAreaPages ? Labels.ContextWholeAreaPage(AreaPage, AreaPages, _hits is { } h ? SearchRows(h).Count : Answer?.Nodes?.Count ?? 0, _hits?.Count ?? Answer?.ConceptList?.Items ?? Answer?.Area?.Counts.Nodes ?? 0) : string.Empty;
 
     /// <summary>Gets whether a page comes before this one.</summary>
     public bool CanPreviousPage => AreaPage > 1;
@@ -76,7 +76,11 @@ internal sealed partial class WholeMapViewModel
     /// <summary>The previous page was asked for.</summary>
     internal void PreviousPage()
     {
-        if (CanPreviousPage && IsConceptList)
+        if (CanPreviousPage && IsSearchList)
+        {
+            TurnSearchPage(AreaPage - 1);
+        }
+        else if (CanPreviousPage && IsConceptList)
         {
             ConceptListRequested?.Invoke(this, new ValueEventArgs<(string, int)>((ConceptTab, AreaPage - 1)));
         }
@@ -89,7 +93,11 @@ internal sealed partial class WholeMapViewModel
     /// <summary>The next page was asked for.</summary>
     internal void NextPage()
     {
-        if (CanNextPage && IsConceptList)
+        if (CanNextPage && IsSearchList)
+        {
+            TurnSearchPage(AreaPage + 1);
+        }
+        else if (CanNextPage && IsConceptList)
         {
             ConceptListRequested?.Invoke(this, new ValueEventArgs<(string, int)>((ConceptTab, AreaPage + 1)));
         }

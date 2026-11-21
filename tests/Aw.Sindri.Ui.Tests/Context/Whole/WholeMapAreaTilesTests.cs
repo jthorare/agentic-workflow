@@ -96,4 +96,54 @@ public sealed class WholeMapAreaTilesTests
 
         Assert.False(map.ShowAreaTiles);
     }
+
+    private static List<MapSearchHit> Hits(int count) =>
+        [.. Enumerable.Range(0, count).Select(i => new MapSearchHit(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"code:src/F{i:000}.cs"), "code", string.Create(System.Globalization.CultureInfo.InvariantCulture, $"F{i:000}.cs"), "feature:billing"))];
+
+    [Fact]
+    public void A_search_on_the_tiles_is_the_ranked_list_fifty_a_page_with_the_area_lists_pager()
+    {
+        var map = Shown(Repo(200, _three));
+
+        map.ShowSearchList(Hits(120));
+
+        Assert.Equal((false, true, true), (map.ShowAreaTiles, map.ShowAreaList, map.IsSearchList));
+        Assert.Equal(50, map.Items.Count);
+        Assert.Equal("Page 1 of 3 · 50 of 120 items", map.AreaPageText);
+
+        map.NextPage();
+        map.NextPage();
+
+        Assert.Equal(20, map.Items.Count);
+        Assert.Equal("F100.cs", map.Items[0].Label);
+        Assert.False(map.CanNextPage);
+    }
+
+    [Fact]
+    public void Ending_the_search_goes_back_to_the_tiles_and_a_search_with_no_match_keeps_them_with_the_note()
+    {
+        var map = Shown(Repo(200, _three));
+        map.ShowSearchList(Hits(3));
+
+        map.EndSearch();
+
+        Assert.Equal((true, false, false, 1), (map.ShowAreaTiles, map.ShowAreaList, map.SearchActive, map.AreaPage));
+
+        map.ShowSearchList([]);
+
+        Assert.Equal((true, true), (map.ShowAreaTiles, map.NoMatches));
+    }
+
+    [Fact]
+    public void A_click_on_a_match_picks_that_node()
+    {
+        var map = Shown(Repo(200, _three));
+        map.ShowSearchList(Hits(3));
+        var picked = new List<string>();
+        map.NodeChosen += (_, e) => picked.Add(e.Value);
+
+        map.ChooseItem(map.Items[1]);
+
+        Assert.Equal(["code:src/F001.cs"], picked);
+    }
 }

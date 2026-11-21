@@ -8,7 +8,7 @@ internal sealed partial class WholeMapViewModel
     private (WholeMapView Source, IReadOnlyList<AreaCard> Cards)? _cards;
 
     /// <summary>Gets whether the stage is the overview's area tiles.</summary>
-    public bool ShowAreaTiles => IsReady && !IsAreaOpen && !HasConcept && !IsZoomed && Answer is { ConceptList: null, Areas.Count: > 0 } answer && answer.Counts.Nodes > WholeDrillIn.TileOverviewAbove;
+    public bool ShowAreaTiles => IsReady && !IsAreaOpen && !HasConcept && !IsZoomed && _hits is null && Answer is { ConceptList: null, Areas.Count: > 0 } answer && answer.Counts.Nodes > WholeDrillIn.TileOverviewAbove;
 
     /// <summary>Gets whether the canvas tools (zoom, mini-map, legend) show: a list or tiles are not zoomed.</summary>
     public bool ShowStageTools => !ShowAreaTiles && !ShowAreaList;

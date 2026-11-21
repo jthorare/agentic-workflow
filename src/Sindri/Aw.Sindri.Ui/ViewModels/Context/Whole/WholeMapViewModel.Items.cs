@@ -15,6 +15,11 @@ internal sealed partial class WholeMapViewModel
     {
         get
         {
+            if (_hits is { } hits)
+            {
+                return SearchRows(hits);
+            }
+
             if (ShowAreaList)
             {
                 if (_listed is not { } have || !ReferenceEquals(have.Source, Answer))
@@ -57,7 +62,7 @@ internal sealed partial class WholeMapViewModel
             Refocus();
             OpenArea(item.Key);
         }
-        else if (Geometry is null)
+        else if (Geometry is null || IsSearchList)
         {
             ChooseNode(item.Key);   // the list stage has no canvas to centre on: the click is the node's panel
         }
