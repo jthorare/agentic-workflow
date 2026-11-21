@@ -5,7 +5,7 @@
 # Containers or databases the stack started stay as the project leaves them unless STOP_CMD removes them.
 set -uo pipefail
 
-if [ $# -ne 4 ] || ! printf %s "$1" | grep -Eq '^[a-z0-9][a-z0-9-]*$'; then
+if [ $# -ne 4 ] || ! grep -Eq '^[a-z0-9][a-z0-9-]*$' <<<"$1"; then
   echo "usage: $0 <slug> <main-checkout> <worktree> <scratch-root>   (slug: lowercase letters, digits, dashes)" >&2
   exit 1
 fi

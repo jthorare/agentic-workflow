@@ -100,7 +100,7 @@ confirm=(--type Button --contains "Confirm")
 sent=0
 for _ in $(seq 1 10); do
   after="$("$PROVE" human ledger --json --item "$item" --max 1000 2>&1 | tr -d '\r')"
-  if [ "$(printf '%s' "$after" | grep -o 'item.state-changed' | wc -l)" -gt "$before" ] && printf '%s' "$after" | grep -q 'human:ui'; then sent=1; break; fi
+  if [ "$(printf '%s' "$after" | grep -o 'item.state-changed' | wc -l)" -gt "$before" ] && grep -q 'human:ui' <<<"$after"; then sent=1; break; fi
   sleep 0.5
 done
 "$DRIVER" screenshot --out "$OUT/after-confirm.png" >/dev/null 2>&1
