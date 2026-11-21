@@ -76,7 +76,7 @@ public sealed class CliReviewVerbsTests : IDisposable
 
         Assert.Equal(0, code);
         Assert.Contains("\"waitingCount\":1", _out.ToString(), StringComparison.Ordinal);
-        Assert.Contains("untrusted source=\\u0022sindri:review\\u0022", _out.ToString().Replace("\"sindri:review\"", "\\u0022sindri:review\\u0022", StringComparison.Ordinal), StringComparison.Ordinal);
+        Assert.Contains("untrusted source=\\\"sindri:review\\\"", _out.ToString(), StringComparison.Ordinal);   // as it sits inside a JSON string
     }
 
     [Fact, Trait("Lane", "unit")]
