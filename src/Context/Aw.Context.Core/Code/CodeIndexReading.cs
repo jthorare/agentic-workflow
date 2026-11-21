@@ -217,7 +217,7 @@ public static class CodeIndexReading
         _ => "index not built",
     };
 
-    // 'stale' for an index that is behind the map or the head; the code lens also notes a layer that is down, the file map does not (a file's symbols come from the structure layer, which is always on).
+    // 'stale' for an index that is behind the map or the head; the code lens notes a layer that is down; the file map says 'graph-off' (#3740) when the graph layer is down or turned off, because only the graph layer gives non-C# files their symbols.
     private static string? Reason(CodeIndexHead head, bool calls) => head.State switch
     {
         CodeIndexState.Stale => "stale",

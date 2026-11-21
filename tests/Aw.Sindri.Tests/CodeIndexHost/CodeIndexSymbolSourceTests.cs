@@ -118,6 +118,16 @@ public sealed class CodeIndexSymbolSourceTests
     }
 
     [Fact]
+    public async Task A_graph_layer_the_profile_turned_off_sets_graph_off_on_an_ok_head()
+    {
+        var source = Source(Index().WithGraphDisabled(_name));
+
+        var head = (await source.Heads(_repo, Indexed, Ct)).Value;
+
+        Assert.Equal((CodeIndexState.Ok, null, true), (head.State, head.Layer, head.GraphOff));
+    }
+
+    [Fact]
     public async Task A_repo_outside_the_scope_is_not_configured_and_the_index_is_never_asked_for_rows()
     {
         var source = Source(Index(), scopeRepo: "elsewhere");
