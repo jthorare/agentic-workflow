@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Theme;
 using Aw.Sindri.Ui.ViewModels.Shell;
@@ -24,6 +25,8 @@ public sealed class ServicesCardNameFitTests : FrameHost
     [InlineData(1280, 1.3)]
     public Task The_widest_service_name_is_not_clipped_and_does_not_touch_its_cadence(double width, double scale) => OnUi(async () =>
     {
+        // The default fixture lists only "heartbeat"; serve the built-in names (longest: 20 characters) so the widest name is on screen.
+        Server.ServiceView = RouteAnswer.Api("services", "ran-ok");
         var (window, shell) = await Connected(width: width);
         var resources = Application.Current!.Resources;
         TextScale.Apply(resources, scale);
