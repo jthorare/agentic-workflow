@@ -72,6 +72,9 @@ public static class ApiViews
     /// <summary>GET /sindri/projects and GET /sindri/projects/{id}: the Projects page.</summary>
     public const string Projects = "projects";
 
+    /// <summary>GET /sindri/home and GET /sindri/home/rows/{id}: the Home page (home spec §8).</summary>
+    public const string Home = "home";
+
     /// <summary>Every view name.</summary>
-    public static IReadOnlyList<string> All { get; } = [Status, Services, Profile, Commands, Queue, Items, Item, Timeline, NeedsYou, Requests, Decisions, Job, Jobs, ContextLenses, ContextHistory, Launch, LaunchPicks, LaunchTargets, Setup, Recipes, CodeIndex, Projects];
+    public static IReadOnlyList<string> All { get; } = [Status, Services, Profile, Commands, Queue, Items, Item, Timeline, NeedsYou, Requests, Decisions, Job, Jobs, ContextLenses, ContextHistory, Launch, LaunchPicks, LaunchTargets, Setup, Recipes, CodeIndex, Projects, Home];
 }
