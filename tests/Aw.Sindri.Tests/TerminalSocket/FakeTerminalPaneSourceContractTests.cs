@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
@@ -20,7 +21,7 @@ public sealed class FakeTerminalPaneSourceContractTests : TerminalPaneSourceCont
     {
         var fake = FakeTerminalPaneSource.FromFixture();
         fake.EchoText = true;
-        fake.History = [.. Enumerable.Range(1, lines).Select(n => $"history {n}")];
+        fake.History = [.. Enumerable.Range(1, lines).Select(n => $"history {n.ToString(CultureInfo.InvariantCulture)}")];
         return ValueTask.FromResult<ITerminalPaneSource>(fake);
     }
 
@@ -39,7 +40,7 @@ public sealed class FakeTerminalPaneSourceContractTests : TerminalPaneSourceCont
     protected override ValueTask<ITerminalPaneSource> CreateOnAlternateScreen()
     {
         var screen = new TerminalFrame(1, [.. Enumerable.Repeat(string.Empty, 36)], 0, 0, 120, 36, Alt: true, InMode: false, Dead: false);
-        var fake = new FakeTerminalPaneSource(new TerminalHost("sindri-launch", "fx", "%0"), [screen]) { History = [.. Enumerable.Range(1, 50).Select(n => $"normal screen {n}")] };
+        var fake = new FakeTerminalPaneSource(new TerminalHost("sindri-launch", "fx", "%0"), [screen]) { History = [.. Enumerable.Range(1, 50).Select(n => $"normal screen {n.ToString(CultureInfo.InvariantCulture)}")] };
         return ValueTask.FromResult<ITerminalPaneSource>(fake);
     }
 

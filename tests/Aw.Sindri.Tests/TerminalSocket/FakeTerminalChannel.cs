@@ -33,7 +33,7 @@ internal sealed class FakeTerminalChannel : ITerminalChannel
     /// <summary>The client sends one more message.</summary>
     /// <param name="message">The message.</param>
     /// <returns>A completed task.</returns>
-    public ValueTask Feed(string message) => _incoming.Writer.WriteAsync(message);
+    public ValueTask Feed(string message) => _incoming.Writer.WriteAsync(message, TestContext.Current.CancellationToken);
 
     /// <summary>The client closes its side.</summary>
     public void End() => _incoming.Writer.TryComplete();

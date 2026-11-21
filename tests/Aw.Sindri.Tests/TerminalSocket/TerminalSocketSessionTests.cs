@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
@@ -133,7 +134,7 @@ public sealed class TerminalSocketSessionTests
     public async Task A_scroll_message_reaches_the_pane_and_is_answered_by_a_frame_with_back()
     {
         var source = FakeTerminalPaneSource.FromFixture();
-        source.History = [.. Enumerable.Range(1, 100).Select(n => $"history {n}")];
+        source.History = [.. Enumerable.Range(1, 100).Select(n => $"history {n.ToString(CultureInfo.InvariantCulture)}")];
         var (session, _, _) = Build(source);
         var channel = new FakeTerminalChannel(Hello(), """{"t":"scroll","back":5}""");
 
@@ -153,7 +154,7 @@ public sealed class TerminalSocketSessionTests
     public async Task A_scroll_past_the_history_is_clamped_in_the_frame()
     {
         var source = FakeTerminalPaneSource.FromFixture();
-        source.History = [.. Enumerable.Range(1, 20).Select(n => $"history {n}")];
+        source.History = [.. Enumerable.Range(1, 20).Select(n => $"history {n.ToString(CultureInfo.InvariantCulture)}")];
         var (session, _, _) = Build(source);
         var channel = new FakeTerminalChannel(Hello(), """{"t":"scroll","back":999}""");
 
@@ -170,7 +171,7 @@ public sealed class TerminalSocketSessionTests
     public async Task A_key_after_a_scroll_sends_a_live_frame()
     {
         var source = FakeTerminalPaneSource.FromFixture();
-        source.History = [.. Enumerable.Range(1, 100).Select(n => $"history {n}")];
+        source.History = [.. Enumerable.Range(1, 100).Select(n => $"history {n.ToString(CultureInfo.InvariantCulture)}")];
         var (session, _, _) = Build(source);
         var channel = new FakeTerminalChannel(Hello(), """{"t":"scroll","back":5}""");
 
