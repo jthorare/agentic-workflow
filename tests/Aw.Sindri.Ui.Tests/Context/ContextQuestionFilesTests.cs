@@ -76,4 +76,19 @@ public sealed class ContextQuestionFilesTests
         Assert.Empty(page.Map!.Nodes);
         Assert.True(page.HasStageMessage);
     }
+
+    [Fact]
+    public async Task With_the_whole_map_on_the_stage_a_question_whose_lens_draws_nothing_lists_its_files_and_never_says_the_map_draws_nothing()
+    {
+        var server = new FakeSindriApi { QueryAnswer = _ => LaneRecycleAnswer(), LensesAnswer = EmptyMap };
+        var page = Page(server);
+        await page.Opened(Token);   // the page's normal state: the whole map is read and on the stage
+        page.AnchorText = Question;
+
+        await page.Submit(Token);
+
+        Assert.True(page.ShowWhole);
+        Assert.Equal([Recycle, Pane], page.AnswerFiles.Select(f => f.Path).ToList());
+        Assert.False(page.HasStageMessage, page.StageMessage);   // the stage draws the whole map, so "draws nothing" would be false
+    }
 }
