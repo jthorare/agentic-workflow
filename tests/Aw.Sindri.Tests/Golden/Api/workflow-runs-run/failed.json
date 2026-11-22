@@ -1,0 +1,51 @@
+{
+  "id": "morning-check@1:1",
+  "slug": "morning-check",
+  "revision": 1,
+  "status": "failed",
+  "trigger": {
+    "kind": "manual"
+  },
+  "outputs": null,
+  "error": "node 'agent' failed: SND-LAUNCH-003: the agent target 'claude-code' is not installed",
+  "itemId": null,
+  "startedAt": "2026-01-01T00:01:00.0000000Z",
+  "endedAt": "2026-01-01T00:00:00.0000000Z",
+  "nodes": [
+    {
+      "node": "agent",
+      "itemIndex": 0,
+      "status": "failed",
+      "input": {
+        "prompt": "Look for drift"
+      },
+      "output": null,
+      "truncated": false,
+      "error": "SND-LAUNCH-003: the agent target 'claude-code' is not installed",
+      "agent": null,
+      "raw": null,
+      "failure": {
+        "code": "SND-LAUNCH-003",
+        "step": "Check the repos",
+        "sentence": "The agent for step Check the repos isn't available: its CLI is not installed or the target is not in the catalog.",
+        "fixLabel": "Choose an agent",
+        "fixCommand": "sindri profile set workflow.agent.target <id>",
+        "secondaryLabel": null,
+        "detail": "SND-LAUNCH-003: the agent target 'claude-code' is not installed"
+      }
+    },
+    {
+      "node": "start",
+      "itemIndex": 0,
+      "status": "succeeded",
+      "input": null,
+      "output": {
+        "kind": "manual"
+      },
+      "truncated": false,
+      "error": null,
+      "agent": null,
+      "raw": null
+    }
+  ]
+}
