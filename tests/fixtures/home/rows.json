@@ -63,7 +63,8 @@
         "name": "home-lanes",
         "readAt": "2026-11-12T09:10:00Z",
         "connection": null
-      }
+      },
+      "repo": "demo"
     },
     {
       "id": "gh:review:jthorare/agentic-workflow#3120",
@@ -130,7 +131,8 @@
         "name": "github",
         "readAt": "2026-11-12T09:10:00Z",
         "connection": "jthorare"
-      }
+      },
+      "repo": "demo"
     },
     {
       "id": "gh:ready:jthorare/agentic-workflow#3099",
@@ -190,7 +192,8 @@
         "name": "home-lanes",
         "readAt": "2026-11-12T09:10:00Z",
         "connection": null
-      }
+      },
+      "repo": "demo"
     },
     {
       "id": "lane:recycle:ideas",
@@ -250,7 +253,8 @@
         "name": "home-lanes",
         "readAt": "2026-11-12T09:10:00Z",
         "connection": null
-      }
+      },
+      "repo": "demo"
     },
     {
       "id": "gh:ready:jthorare/agentic-workflow#3101",
@@ -305,7 +309,8 @@
         "name": "home-lanes",
         "readAt": "2026-11-12T09:10:00Z",
         "connection": null
-      }
+      },
+      "repo": "demo"
     },
     {
       "id": "slack:dm:sam-0902",
@@ -348,7 +353,8 @@
         "name": "slack",
         "readAt": "2026-11-12T09:10:00Z",
         "connection": "work-slack"
-      }
+      },
+      "repo": null
     }
   ]
 }

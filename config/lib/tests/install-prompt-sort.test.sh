@@ -37,6 +37,7 @@ test_installs_image_paths_next_to_the_hook() {
   local d; d="$(fresh)"
   install "$d"
   [ -f "$d/hooks/lib/image-paths.sh" ] || { echo "FAIL: prompt-sort attaches images through lib/image-paths.sh, which must sit next to it"; exit 1; }
+  [ -f "$d/hooks/lib/kill-tree.sh" ] || { echo "FAIL: prompt-sort kills a timed-out script through lib/kill-tree.sh, which must sit next to it"; exit 1; }
   echo "PASS: test_installs_image_paths_next_to_the_hook"
 }
 test_installs_image_paths_next_to_the_hook

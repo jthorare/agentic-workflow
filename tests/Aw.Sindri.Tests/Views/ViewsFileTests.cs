@@ -99,10 +99,8 @@ public sealed class ViewsFileTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Every_view_name_has_a_table()
-    {
+    public void Every_view_name_has_a_table() =>
         Assert.Equal(["code-index", "decisions", "home-links", "home-rows", "item-aliases", "item-links", "item-timeline", "items", "jobs", "launches", "model-history", "model-runs", "needs_you", "profile", "project-attached", "project-hidden", "requests", "services", "todo", "workflow-runs"], ViewNames.All.Order(StringComparer.Ordinal).ToList());
-    }
 
     [Fact, Trait("Lane", "integration")]
     public async Task A_views_db_at_schema_version_2_gains_the_request_tables_and_is_rebuilt()

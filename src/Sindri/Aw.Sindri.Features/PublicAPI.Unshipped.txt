@@ -5793,3 +5793,62 @@ override Aw.Sindri.Features.GetHomeRow.GetHomeRowResponse.GetHashCode() -> int
 override Aw.Sindri.Features.GetHomeRow.GetHomeRowResponse.ToString() -> string!
 static Aw.Sindri.Features.GetHomeRow.GetHomeRowResponse.operator !=(Aw.Sindri.Features.GetHomeRow.GetHomeRowResponse? left, Aw.Sindri.Features.GetHomeRow.GetHomeRowResponse? right) -> bool
 static Aw.Sindri.Features.GetHomeRow.GetHomeRowResponse.operator ==(Aw.Sindri.Features.GetHomeRow.GetHomeRowResponse? left, Aw.Sindri.Features.GetHomeRow.GetHomeRowResponse? right) -> bool
+Aw.Sindri.Features.ListHomeDone.ListHomeDoneRequest
+Aw.Sindri.Features.ListHomeDone.ListHomeDoneRequest.<Clone>$() -> Aw.Sindri.Features.ListHomeDone.ListHomeDoneRequest!
+Aw.Sindri.Features.ListHomeDone.ListHomeDoneRequest.Equals(Aw.Sindri.Features.ListHomeDone.ListHomeDoneRequest? other) -> bool
+Aw.Sindri.Features.ListHomeDone.ListHomeDoneRequest.ListHomeDoneRequest() -> void
+override Aw.Sindri.Features.ListHomeDone.ListHomeDoneRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListHomeDone.ListHomeDoneRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ListHomeDone.ListHomeDoneRequest.ToString() -> string!
+static Aw.Sindri.Features.ListHomeDone.ListHomeDoneRequest.operator !=(Aw.Sindri.Features.ListHomeDone.ListHomeDoneRequest? left, Aw.Sindri.Features.ListHomeDone.ListHomeDoneRequest? right) -> bool
+static Aw.Sindri.Features.ListHomeDone.ListHomeDoneRequest.operator ==(Aw.Sindri.Features.ListHomeDone.ListHomeDoneRequest? left, Aw.Sindri.Features.ListHomeDone.ListHomeDoneRequest? right) -> bool
+Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse
+Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse.<Clone>$() -> Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse!
+Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse.Deconstruct(out Aw.Sindri.Core.Views.AsOf! AsOf, out int KeepDays, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeRow!>! Rows) -> void
+Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse.Equals(Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse? other) -> bool
+Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse.ListHomeDoneResponse(Aw.Sindri.Core.Views.AsOf! AsOf, int KeepDays, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeRow!>! Rows) -> void
+Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
+Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse.AsOf.init -> void
+Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse.KeepDays.get -> int
+Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse.KeepDays.init -> void
+Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse.Rows.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeRow!>!
+Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse.Rows.init -> void
+override Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse.GetHashCode() -> int
+override Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse.ToString() -> string!
+static Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse.operator !=(Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse? left, Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse? right) -> bool
+static Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse.operator ==(Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse? left, Aw.Sindri.Features.ListHomeDone.ListHomeDoneResponse? right) -> bool
+Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest
+Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest.<Clone>$() -> Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest!
+Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest.Deconstruct(out Aw.Sindri.Core.Ids.HomeRowId Id) -> void
+Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest.Equals(Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest? other) -> bool
+Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest.GetHomeRankRequest(Aw.Sindri.Core.Ids.HomeRowId Id) -> void
+Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest.Id.init -> void
+override Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest.ToString() -> string!
+static Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest.operator !=(Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest? left, Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest? right) -> bool
+static Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest.operator ==(Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest? left, Aw.Sindri.Features.GetHomeRank.GetHomeRankRequest? right) -> bool
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.<Clone>$() -> Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse!
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.Deconstruct(out Aw.Sindri.Core.Views.AsOf! AsOf, out Aw.Sindri.Core.Ids.HomeRowId Id, out Aw.Sindri.Core.Home.HomeKind Kind, out System.DateTimeOffset Since, out Aw.Sindri.Core.Home.HomeRank! Rank, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeBlocked!>! BlocksList) -> void
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.Equals(Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse? other) -> bool
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.GetHomeRankResponse(Aw.Sindri.Core.Views.AsOf! AsOf, Aw.Sindri.Core.Ids.HomeRowId Id, Aw.Sindri.Core.Home.HomeKind Kind, System.DateTimeOffset Since, Aw.Sindri.Core.Home.HomeRank! Rank, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeBlocked!>! BlocksList) -> void
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.AsOf.init -> void
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.Id.init -> void
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.Kind.get -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.Kind.init -> void
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.Since.get -> System.DateTimeOffset
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.Since.init -> void
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.Rank.get -> Aw.Sindri.Core.Home.HomeRank!
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.Rank.init -> void
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.BlocksList.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeBlocked!>!
+Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.BlocksList.init -> void
+override Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.GetHashCode() -> int
+override Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.ToString() -> string!
+static Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.operator !=(Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse? left, Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse? right) -> bool
+static Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse.operator ==(Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse? left, Aw.Sindri.Features.GetHomeRank.GetHomeRankResponse? right) -> bool

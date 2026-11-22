@@ -17,6 +17,7 @@ namespace Aw.Sindri.Ui.Api.Home;
 /// <param name="DoneAt">When a done row was marked done, or null.</param>
 /// <param name="Actions">Action ids that apply; the first is the primary.</param>
 /// <param name="Source">Where the facts came from.</param>
+/// <param name="Repo">The profile repo the row is about, or null for a row of no repo.</param>
 internal sealed record HomeRowView(
     string Id,
     long Version,
@@ -33,4 +34,5 @@ internal sealed record HomeRowView(
     DateTimeOffset? SnoozeUntil,
     DateTimeOffset? DoneAt,
     IReadOnlyList<string> Actions,
-    HomeSourceView Source);
+    HomeSourceView Source,
+    string? Repo = null);
