@@ -160,4 +160,21 @@ public sealed class ContextMapViewModelTests
         edit(node);
         return AwJson.Deserialize<LensesView>(Encoding.UTF8.GetBytes(node.ToJsonString()), SindriApiClient.Json).Value;
     }
+
+    [Theory]
+    [InlineData("index not built", Labels.ContextMapNamesNotIndexed)]
+    [InlineData("index-not-built", Labels.ContextMapNamesNotIndexed)]
+    [InlineData("index building", Labels.ContextMapNamesBuilding)]
+    [InlineData("index damaged", Labels.ContextMapNamesDamaged)]
+    [InlineData("not configured", Labels.ContextMapNamesNotConfigured)]
+    [InlineData("files are in no single repo", Labels.ContextMapNamesSeveralRepos)]
+    [InlineData("something new", Labels.ContextMapNamesUnknown)]
+    [InlineData(null, Labels.ContextMapNamesNotIndexed)]
+    public void The_coverage_sentence_says_why_the_function_names_were_not_searched(string? reason, string why)
+    {
+        var map = Map(node => node["bands"]!["code"]!["symbols"]!["reason"] = reason);   // the golden's symbols are unavailable
+
+        Assert.EndsWith(" " + why, map.Coverage, StringComparison.Ordinal);
+        Assert.Equal(string.Equals(why, Labels.ContextMapNamesNotIndexed, StringComparison.Ordinal) ? Labels.ContextMapNamesDetail : why, NamesDetail.For(new SymbolsView("unavailable", reason, [])));
+    }
 }
