@@ -76,9 +76,10 @@ public sealed class RunDetailViewModelTests
     {
         var served = Golden("workflow-runs-run", "finished");
         var nodes = served["nodes"]!.AsArray();
+        var agent = Node(served, "agent").ToJsonString();   // read once: after the first Add there are two "agent" rows and Single would throw
         foreach (var index in new[] { 1, 2 })
         {
-            var next = JsonNode.Parse(Node(served, "agent").ToJsonString())!;
+            var next = JsonNode.Parse(agent)!;
             next["itemIndex"] = index;
             nodes.Add(next);
         }
