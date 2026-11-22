@@ -4987,6 +4987,8 @@ static readonly Aw.Sindri.Core.SindriErrors.ProfileHashMismatch -> Aw.Kernel.Err
 static readonly Aw.Sindri.Core.SindriErrors.ProfileInvalid -> Aw.Kernel.ErrorDefinition!
 const Aw.Sindri.Core.SindriErrors.ProfileUnreadableFix = "The profile file is there but can't be read; check its permissions." -> string!
 static readonly Aw.Sindri.Core.SindriErrors.ProfileMissing -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ProfileUnreadable -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ProfileUnwritable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.RequestInvalid -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.RequestsRateLimited -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.SecretFileUnsafe -> Aw.Kernel.ErrorDefinition!
@@ -24118,3 +24120,23 @@ static readonly Aw.Sindri.Core.SindriErrors.MessagesNotUserToken -> Aw.Kernel.Er
 static readonly Aw.Sindri.Core.SindriErrors.MessagesSlackUnreachable -> Aw.Kernel.ErrorDefinition!
 static Aw.Sindri.Core.Messages.SlackUserToken.Prefix.get -> string!
 static Aw.Sindri.Core.Messages.SlackBaseUrlRule.FixtureTokenPrefix.get -> string!
+Aw.Sindri.Core.Setup.GitMarker
+Aw.Sindri.Core.Setup.GitMarker.File = 2 -> Aw.Sindri.Core.Setup.GitMarker
+Aw.Sindri.Core.Setup.GitMarker.Folder = 1 -> Aw.Sindri.Core.Setup.GitMarker
+Aw.Sindri.Core.Setup.GitMarker.None = 0 -> Aw.Sindri.Core.Setup.GitMarker
+Aw.Sindri.Core.Setup.IKnownRepos
+Aw.Sindri.Core.Setup.IKnownRepos.Slugs(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlySet<string!>!>!>
+Aw.Sindri.Core.Setup.IRepoScanTree
+Aw.Sindri.Core.Setup.IRepoScanTree.Folders(string! folder) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Setup.IRepoScanTree.Home.get -> string!
+Aw.Sindri.Core.Setup.IRepoScanTree.Marker(string! folder) -> Aw.Sindri.Core.Setup.GitMarker
+Aw.Sindri.Core.Setup.IRepoScanTree.Origin(string! checkout, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
+Aw.Sindri.Core.Setup.IRepoScanTree.Real(string! path) -> string?
+Aw.Sindri.Core.Setup.IRepoScanTree.Worktrees(string! checkout) -> int
+Aw.Sindri.Core.Setup.RepoScanRules
+const Aw.Sindri.Core.Setup.RepoScanRules.Cap = 500 -> int
+const Aw.Sindri.Core.Setup.RepoScanRules.DefaultDepth = 3 -> int
+const Aw.Sindri.Core.Setup.RepoScanRules.MaxDepth = 6 -> int
+static Aw.Sindri.Core.Setup.RepoScanRules.InsideHome(string! path, string! home) -> bool
+static Aw.Sindri.Core.Setup.RepoScanRules.Origin(string? url) -> (string! Host, string! Slug)?
+static Aw.Sindri.Core.Setup.RepoScanRules.Skips(string! name) -> bool

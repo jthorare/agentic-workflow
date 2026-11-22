@@ -34,14 +34,36 @@ internal sealed partial class HealthViewModel
         Follow((url, token) => shown() ? ContextIndex.Refresh(url, token) : Task.CompletedTask);
     }
 
-    /// <summary>Reads both cards once now (the page they are on was opened, so they are never stale on open); nothing while not connected.</summary>
+    // Cancels and frees the cards' read in flight; an Action so the view model owns no disposable field.
+    private Action? _stopCards;
+
+    /// <summary>Reads both cards once now (the page they are on was opened, so they are never stale on open); nothing while not connected or Not running.</summary>
     internal void ReadCards()
     {
-        if (_url is { } url)
+        StopCards();
+        if (_url is not { } url || IsNotRunning)
         {
-            _ = CodeIndex.Refresh(url, CancellationToken.None);
-            _ = ContextIndex.Refresh(url, CancellationToken.None);
+            return;
         }
+
+#pragma warning disable CA2000 // disposed by _stopCards
+        var read = new CancellationTokenSource();
+#pragma warning restore CA2000
+        _stopCards = () =>
+        {
+            read.Cancel();
+            read.Dispose();
+        };
+        _ = CodeIndex.Refresh(url, read.Token);
+        _ = ContextIndex.Refresh(url, read.Token);
+    }
+
+    /// <summary>Cancels the cards' read in flight (the page they are on was left, or a newer read starts).</summary>
+    internal void StopCards()
+    {
+        var stop = _stopCards;
+        _stopCards = null;
+        stop?.Invoke();
     }
 
     private CodeIndexCardViewModel WatchCodeIndex(CodeIndexCardViewModel card)
