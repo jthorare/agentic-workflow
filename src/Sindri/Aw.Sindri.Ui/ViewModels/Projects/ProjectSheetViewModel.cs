@@ -99,8 +99,16 @@ internal sealed partial class ProjectSheetViewModel(ISindriApi api, ILauncher la
     /// <summary>Linear's description, or null.</summary>
     public string? Description { get; private set => Set(ref field, value); }
 
-    /// <summary>The owner's notes, read-only here, or null.</summary>
-    public string? Notes { get; private set => Set(ref field, value); }
+    /// <summary>The owner's notes as the sheet read them, or null; drawn read-only only when the page has no row to edit them through (<see cref="NotesCard"/>).</summary>
+    public string? Notes
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            NotesPlaceChanged();
+        }
+    }
 
     /// <summary>The card's links: Open in Linear, then the owner's.</summary>
     public IReadOnlyList<ProjectLinkItem> Links { get; private set => Set(ref field, value); } = [];

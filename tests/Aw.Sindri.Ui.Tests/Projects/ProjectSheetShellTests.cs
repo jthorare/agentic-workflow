@@ -166,4 +166,32 @@ public sealed class ProjectSheetShellTests
         Assert.False(DeepLink.TryParse("project/%2E%2E", out _));
         Assert.False(DeepLink.TryParse("project/" + new string('a', 129), out _));
     }
+
+    // Issue 3717: the rows have no notes area, so the sheet edits the notes through the page's row of the project.
+    [Fact]
+    public Task A_rows_sheet_edits_its_notes_through_that_row() => UiThread.Run(async () =>
+    {
+        var shell = await Shell();
+        shell.GoTo(PageId.Projects);
+        await Until(() => !shell.Projects.IsLoading);
+        var row = shell.Projects.Groups.SelectMany(g => g.Cards).First(c => c.Id == "prj_00000000000000000000000008");
+
+        shell.Projects.RequestOpen(row.Link);
+        await Until(() => shell.ProjectSheet.IsShown);
+
+        Assert.Same(row, shell.ProjectSheet.NotesCard);
+        Assert.Equal((true, false), (shell.ProjectSheet.HasNotesCard, shell.ProjectSheet.ShowsReadOnlyNotes));
+    }, Token);
+
+    [Fact]
+    public Task A_sheet_opened_by_link_before_the_page_read_gets_its_row_once_the_page_reads() => UiThread.Run(async () =>
+    {
+        var shell = await Shell();
+
+        shell.Navigate(Link("prj_00000000000000000000000008"));
+        await Until(() => shell.ProjectSheet.IsShown && !shell.Projects.IsLoading);
+        await Until(() => shell.ProjectSheet.NotesCard is not null);
+
+        Assert.Equal("prj_00000000000000000000000008", shell.ProjectSheet.NotesCard!.Id);
+    }, Token);
 }

@@ -12,6 +12,9 @@ internal sealed partial class ProjectsPageViewModel
 {
     private ProjectList? _list;
 
+    /// <summary>The rows were laid out again (a read, a new view, sort or grouping): the shell hands the open sheet its project's row for the notes.</summary>
+    internal event EventHandler? Laid;
+
     /// <summary>The views' tabs, keys 1 to 4.</summary>
     public IReadOnlyList<ProjectViewTab> Tabs { get; } =
     [
@@ -220,6 +223,7 @@ internal sealed partial class ProjectsPageViewModel
         ShowsFactsMissing = FactsMissing && HasRows;
         ShowEmptyView(empty: !IsEmptyBlock && (View == ProjectView.Triage || (View != ProjectView.All && rows.Count == 0)));
         Reselect();
+        Laid?.Invoke(this, EventArgs.Empty);
     }
 
     private void CountTabs(ProjectList list)

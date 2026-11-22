@@ -137,6 +137,11 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
             ? new ProjectFocusEventArgs(finished ? ProjectFocus.FinishedFold : ProjectFocus.HiddenFold, cardId: null)
             : new ProjectFocusEventArgs(ProjectFocus.Add, cardId: null);
 
+    /// <summary>The page's row of a project, by id, for the sheet's notes; null when the page holds none.</summary>
+    /// <param name="id">The project's id.</param>
+    /// <returns>The row, or null.</returns>
+    internal ProjectCardViewModel? CardOf(string id) => _cards.GetValueOrDefault(id);
+
     /// <summary>The catch-up read started by the last show.</summary>
     internal Task CatchUp { get; private set; } = Task.CompletedTask;
 

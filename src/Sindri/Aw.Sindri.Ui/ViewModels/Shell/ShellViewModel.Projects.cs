@@ -59,6 +59,13 @@ internal sealed partial class ShellViewModel
             OpenerProject = Uri.UnescapeDataString(e.Link.Subject ?? string.Empty);   // Esc comes back to this card, after the sheet's own opening cleared it
         };
         ProjectSheet.Done += OnProjectDone;
+        Projects.Laid += (_, _) =>
+        {
+            if (IsProjectSheet && SheetLink?.Subject is { } subject)
+            {
+                ProjectSheet.EditNotesWith(Projects.CardOf(Uri.UnescapeDataString(subject)));   // a sheet opened before the page read gets its row now
+            }
+        };
         WireProjectAdd();
         ProjectSheet.PropertyChanged += (_, e) =>
         {
@@ -107,6 +114,7 @@ internal sealed partial class ShellViewModel
         }
 
         ProjectSheet.Show(subject);
+        ProjectSheet.EditNotesWith(Projects.CardOf(Uri.UnescapeDataString(subject)));   // the rows have no notes area: the sheet edits the notes through the project's row
         if (Health.ApiUrl() is { } url)
         {
             _ = ProjectSheet.Open(url, subject, CancellationToken.None);

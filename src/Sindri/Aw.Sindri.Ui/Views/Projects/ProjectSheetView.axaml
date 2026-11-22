@@ -7,7 +7,7 @@
              x:DataType="pvm:ProjectSheetViewModel">
   <!-- A project card's sheet (projects page spec §3.2) inside the shell's sheet: every field of the card, its links, then the actions its origin allows. Remove asks inline
        and puts focus on Keep; a save shows "Saving…" and its error under the button; a stale version says so with Reload. Every named line is a Border the screen reader
-       reads as one text (a TextBlock's peer ignores a Name). Notes are read-only here. -->
+       reads as one text (a TextBlock's peer ignores a Name). Notes are edited through the page's row of the project (ProjectNotesEditor), read-only when the page has none. -->
   <StackPanel x:Name="ProjectSheet" Spacing="{StaticResource Space.MD}">
     <TextBlock x:Name="ProjectLoading" Classes="body muted" Text="{Binding LoadingText}" IsVisible="{Binding IsLoading}" AutomationProperties.Name="{Binding LoadingText}" />
     <TextBlock x:Name="ProjectProblem" Classes="body" Text="{Binding ProblemText}" IsVisible="{Binding IsProblem}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ProblemText}" />
@@ -57,10 +57,14 @@
         <TextBlock Classes="body" Text="{Binding Description}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
 
-      <StackPanel Spacing="4" IsVisible="{Binding Notes, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+      <StackPanel Spacing="4" IsVisible="{Binding HasNotesPlace}">
         <TextBlock Classes="eyebrow" Text="{Binding NotesHeading}" AutomationProperties.AccessibilityView="Raw" />
-        <Border x:Name="ProjectNotes" AutomationProperties.Name="{Binding Notes}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <Border x:Name="ProjectNotes" IsVisible="{Binding ShowsReadOnlyNotes}" AutomationProperties.Name="{Binding Notes}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body" Text="{Binding Notes}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <!-- Issue 3717: the notes are edited here, through the page's row of the project (the rows have no notes area). -->
+        <Border x:Name="ProjectNotesPlace" IsVisible="{Binding HasNotesCard}">
+          <views:ProjectNotesEditor x:Name="ProjectNotesEditorView" DataContext="{Binding NotesCard}" />
         </Border>
       </StackPanel>
 
