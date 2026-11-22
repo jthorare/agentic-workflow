@@ -18,7 +18,7 @@ internal sealed class NodeRunViewModel : ObservableObject
         InputText = WorkflowJson.Pretty(run.Input);
         OutputText = WorkflowJson.Pretty(run.Output);
         IsTruncated = run.Truncated;
-        ErrorText = run.Error ?? string.Empty;
+        ErrorText = run.Failure?.Sentence ?? run.Error ?? string.Empty;   // why: the engine's text stays under the run's Details (#3304)
         Name = Labels.WfNodeRunName(TitleText, word.ToLowerInvariant(), ErrorText);
         (Node, ItemIndex, Agent) = (run.Node, run.ItemIndex, run.Agent);
     }
@@ -103,7 +103,7 @@ internal sealed class NodeRunViewModel : ObservableObject
     public string OutputHeading => Labels.WfOutputHeading;
 #pragma warning restore CA1822, MA0041
 
-    /// <summary>Why it failed, as served; empty otherwise.</summary>
+    /// <summary>Why it failed: Sindri's sentence, else the error as served; empty otherwise.</summary>
     public string ErrorText { get; }
 
     /// <summary>True when the node failed with a reason.</summary>

@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
@@ -18,9 +19,9 @@ internal sealed partial class ShellViewModel
     public bool IsWorkflows => CurrentPage == PageId.Workflows;
 
     [MemberNotNull(nameof(Workflows))]
-    private void InitWorkflows()
+    private void InitWorkflows(IClipboard clipboard)
     {
-        Workflows = new WorkflowsPageViewModel(_api, _clock);
+        Workflows = new WorkflowsPageViewModel(_api, _clock, clipboard);
         Health.Banner.PropertyChanged += (_, e) =>
         {
             if (string.Equals(e.PropertyName, nameof(ViewsBanner.IsStalled), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(ViewsBanner.Rebuild), StringComparison.Ordinal))

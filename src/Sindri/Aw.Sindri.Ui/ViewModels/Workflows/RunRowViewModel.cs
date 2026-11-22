@@ -18,7 +18,7 @@ internal sealed class RunRowViewModel : ObservableObject
         WhenText = live
             ? Labels.JobWhen(running: true, clock.GetUtcNow() - row.StartedAt)
             : Labels.JobWhen(running: false, clock.GetUtcNow() - (row.EndedAt ?? row.StartedAt));
-        ErrorText = row.Error ?? string.Empty;
+        ErrorText = row.FailureSentence ?? row.Error ?? string.Empty;   // why: Sindri's sentence when it has one, never "node 'check' failed: SND-..." (#3304)
         Name = Labels.WfRunRowName(Id, word.ToLowerInvariant(), TriggerText.ToLowerInvariant(), WhenText, ErrorText);
     }
 
@@ -49,7 +49,7 @@ internal sealed class RunRowViewModel : ObservableObject
     /// <summary>"Started 2m ago" while it is live, "Ended 5m ago" after.</summary>
     public string WhenText { get; }
 
-    /// <summary>Why it failed, as served; empty otherwise.</summary>
+    /// <summary>Why it failed: Sindri's sentence, else the error as served; empty otherwise.</summary>
     public string ErrorText { get; }
 
     /// <summary>True when the run has an error.</summary>

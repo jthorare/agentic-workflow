@@ -120,6 +120,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock, ICl
             (ChipWord, ChipGlyph, ChipToneWord) = (string.Empty, string.Empty, "neutral");
             (IsFailed, FailedText) = (false, string.Empty);
             (TitleText, TriggerText, RevisionText, WhenText, ErrorText, OutputsText) = (Labels.WfRunTitle(runId), string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+            Failure = null;
             Changed();
         }
 
@@ -160,6 +161,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock, ICl
             ? Labels.JobWhen(running: true, clock.GetUtcNow() - run.StartedAt)
             : Labels.JobWhen(running: false, clock.GetUtcNow() - (run.EndedAt ?? run.StartedAt));
         ErrorText = run.Error ?? string.Empty;
+        Failure = run.Nodes.LastOrDefault(static n => n.Failure is not null)?.Failure is { } failed ? new RunFailureViewModel(failed, run.Error ?? failed.Detail, clipboard, clock) : null;
         OutputsText = WorkflowJson.Pretty(run.Outputs);
         Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode))];
         Graph = Shape is { } shape && shape.Revision == run.Revision ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(shape, Statuses(run))) : null;
@@ -258,6 +260,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock, ICl
     private void Changed()
     {
         OnChanged(nameof(HasError));
+        OnChanged(nameof(HasFailure));
         OnChanged(nameof(HasOutputs));
         OnChanged(nameof(IsError));
         OnChanged(nameof(CanCancel));
