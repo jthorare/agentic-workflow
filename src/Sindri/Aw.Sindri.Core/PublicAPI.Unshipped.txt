@@ -24060,7 +24060,7 @@ static Aw.Sindri.Core.Messages.MessageTriage.ReturnsAfterDone(Aw.Sindri.Core.Mes
 static Aw.Sindri.Core.Messages.MessageTs.Compare(Aw.Sindri.Core.Messages.MessageTs left, Aw.Sindri.Core.Messages.MessageTs right) -> int
 static Aw.Sindri.Core.Messages.MessageTs.operator !=(Aw.Sindri.Core.Messages.MessageTs left, Aw.Sindri.Core.Messages.MessageTs right) -> bool
 static Aw.Sindri.Core.Messages.MessageTs.operator ==(Aw.Sindri.Core.Messages.MessageTs left, Aw.Sindri.Core.Messages.MessageTs right) -> bool
-static Aw.Sindri.Core.Messages.MessageTs.Parse(string! text) -> Aw.Sindri.Core.Messages.MessageTs
+static Aw.Sindri.Core.Messages.MessageTs.Parse(string? text) -> Aw.Kernel.Result<Aw.Sindri.Core.Messages.MessageTs>!
 static Aw.Sindri.Core.Messages.MessageTs.TryParse(string? text, out Aw.Sindri.Core.Messages.MessageTs ts) -> bool
 static Aw.Sindri.Core.Messages.Mrkdwn.operator !=(Aw.Sindri.Core.Messages.Mrkdwn? left, Aw.Sindri.Core.Messages.Mrkdwn? right) -> bool
 static Aw.Sindri.Core.Messages.Mrkdwn.operator ==(Aw.Sindri.Core.Messages.Mrkdwn? left, Aw.Sindri.Core.Messages.Mrkdwn? right) -> bool
@@ -24089,3 +24089,4 @@ Aw.Sindri.Core.Messages.MessageTsJsonConverter
 Aw.Sindri.Core.Messages.MessageTsJsonConverter.MessageTsJsonConverter() -> void
 override Aw.Sindri.Core.Messages.MessageTsJsonConverter.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> Aw.Sindri.Core.Messages.MessageTs
 override Aw.Sindri.Core.Messages.MessageTsJsonConverter.Write(System.Text.Json.Utf8JsonWriter! writer, Aw.Sindri.Core.Messages.MessageTs value, System.Text.Json.JsonSerializerOptions! options) -> void
+static readonly Aw.Sindri.Core.SindriErrors.MessagesTsInvalid -> Aw.Kernel.ErrorDefinition!

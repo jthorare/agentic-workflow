@@ -12,7 +12,8 @@ public sealed class MessagesCoreTests
     private const string RuleId = "ARCH-MESSAGES-001";
     private const string Namespace = "Aw.Sindri.Core.Messages";
 
-    private static readonly string[] _allowed = ["System.", "Microsoft.CodeAnalysis.", "Aw.Kernel.", Namespace + "."];
+    // SindriErrors: the error catalogue only (its Messages codes, SND-MSG-*), so a bad ts is a Result, never a throw (M1b review)
+    private static readonly string[] _allowed = ["System.", "Microsoft.CodeAnalysis.", "Aw.Kernel.", "Aw.Sindri.Core.SindriErrors", Namespace + "."];
 
     [Fact]
     public void Core_messages_uses_only_the_bcl_the_kernel_and_itself()

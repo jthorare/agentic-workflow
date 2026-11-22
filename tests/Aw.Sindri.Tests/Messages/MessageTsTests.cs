@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Messages;
 
 namespace Aw.Sindri.Tests.Messages;
@@ -9,7 +10,7 @@ public sealed class MessageTsTests
 {
     [Fact]
     public void Parse_reads_seconds_a_dot_and_six_digits() =>
-        Assert.Equal("1767776100.000100", MessageTs.Parse("1767776100.000100").Value);
+        Assert.Equal("1767776100.000100", MessageTs.Parse("1767776100.000100").Value.Value);
 
     [Theory]
     [InlineData("")]
@@ -28,12 +29,19 @@ public sealed class MessageTsTests
         Assert.False(MessageTs.TryParse(text, out var ts));
         Assert.Equal(default, ts);
 
-        // the refusal names the shape, never the text it was given
-        Assert.Equal("A Slack ts is seconds, a dot and six digits.", Assert.Throws<FormatException>(() => MessageTs.Parse(text)).Message);
+        // SND-MSG-034, and the refusal names the shape, never the text it was given
+        var refused = MessageTs.Parse(text);
+        Assert.True(refused.IsError);
+        Assert.Equal(SindriErrors.MessagesTsInvalid.Code, refused.Error.Code);
+        Assert.DoesNotContain("17677", refused.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void TryParse_refuses_null() => Assert.False(MessageTs.TryParse(null, out _));
+    public void A_null_ts_is_refused()
+    {
+        Assert.False(MessageTs.TryParse(null, out _));
+        Assert.Equal(SindriErrors.MessagesTsInvalid.Code, MessageTs.Parse(null).Error.Code);
+    }
 
     [Fact]
     public void Compare_orders_by_the_seconds_as_a_number_not_as_text()
