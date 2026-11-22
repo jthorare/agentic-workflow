@@ -2,7 +2,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using Aw.Context.Core.Graph;
-using Aw.Context.Core.Linear;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
 
@@ -33,21 +32,38 @@ public static partial class RulesLinker
     /// <param name="tracker">Every intent record the sync knows, for the issue-key and URL rules, and the profile's tracker teams: only their keys link.</param>
     /// <param name="pins">The approved pins' ids and aliases, for the alias rule (see <see cref="Aliases"/>); none runs no alias rule.</param>
     /// <returns>The links, ordered by target then rule.</returns>
-    public static IReadOnlyList<IntentLink> Link(RecordKey record, string text, GraphSnapshot graph, (IReadOnlyList<IntentRecord> Known, IReadOnlySet<string> Teams) tracker, IReadOnlyList<PinAliases> pins)
+    public static IReadOnlyList<IntentLink> Link(RecordKey record, string text, GraphSnapshot graph, (IReadOnlyList<IntentRecord> Known, IReadOnlySet<string> Teams) tracker, IReadOnlyList<PinAliases> pins) =>
+        LinkWith(record, text, (graph, tracker.Known, tracker.Teams, pins), (null, null));
+
+    // Link, told each rule whose match ran out of time (that rule links nothing and the others still run). rules.Before runs as each rule starts: the seam a test uses to time a rule out without a clock.
+    internal static IReadOnlyList<IntentLink> LinkWith(RecordKey record, string text, (GraphSnapshot Graph, IReadOnlyList<IntentRecord> Known, IReadOnlySet<string> Teams, IReadOnlyList<PinAliases> Pins) map, (Action<LinkRule>? TimedOut, Action<LinkRule>? Before) rules)
     {
         ArgumentNullException.ThrowIfNull(text);
-        ArgumentNullException.ThrowIfNull(graph);
-        ArgumentNullException.ThrowIfNull(tracker.Known);
-        ArgumentNullException.ThrowIfNull(tracker.Teams);
-        ArgumentNullException.ThrowIfNull(pins);
-        var run = new Run(record, Bounded(text), graph, tracker.Known, tracker.Teams);
-        run.Urls();
-        run.Paths();
-        run.QuotedTitles();
-        run.IssueKeys();
-        run.IdentifierTokens();
-        run.Names();
-        run.Aliases(pins);
+        ArgumentNullException.ThrowIfNull(map.Graph);
+        ArgumentNullException.ThrowIfNull(map.Known);
+        ArgumentNullException.ThrowIfNull(map.Teams);
+        ArgumentNullException.ThrowIfNull(map.Pins);
+        var run = new Run(record, Bounded(text), map.Graph, map.Known, map.Teams);
+        void Step(LinkRule rule, Action step)
+        {
+            try
+            {
+                rules.Before?.Invoke(rule);
+                step();
+            }
+            catch (RegexMatchTimeoutException)   // boundary: a rule matches its whole text before it links, so a timeout leaves that rule's links out and nothing half-added (#3816)
+            {
+                rules.TimedOut?.Invoke(rule);
+            }
+        }
+
+        Step(LinkRule.Url, run.Urls);
+        Step(LinkRule.Path, run.Paths);
+        Step(LinkRule.QuotedTitle, run.QuotedTitles);
+        Step(LinkRule.IssueKey, run.IssueKeys);
+        Step(LinkRule.Identifier, run.IdentifierTokens);
+        Step(LinkRule.Name, run.Names);
+        Step(LinkRule.Alias, () => run.Aliases(map.Pins));
         return run.Result();
     }
 
@@ -70,13 +86,15 @@ public static partial class RulesLinker
 
         public void Paths()
         {
-            foreach (var match in RepoPath.Matches(_rest.ToString()).ToList())
+            var rest = _rest.ToString();
+            foreach (var (index, length) in RepoPaths(rest))
             {
-                if (graph.Nodes.FirstOrDefault(n => n.Key.Value == "code:" + match.Value) is { } code)
+                var path = rest.Substring(index, length);
+                if (graph.Nodes.FirstOrDefault(n => n.Key.Value == "code:" + path) is { } code)
                 {
-                    Add(code.Key.Value, LinkRule.Path, ByPath, match.Value);
-                    LinkImplemented(code, match.Value);
-                    Mask(match);
+                    Add(code.Key.Value, LinkRule.Path, ByPath, path);
+                    LinkImplemented(code, path);
+                    Mask(index, length);
                 }
             }
         }
@@ -173,7 +191,9 @@ public static partial class RulesLinker
             }
         }
 
-        private void Mask(Match match) => _ = _rest.Remove(match.Index, match.Length).Insert(match.Index, new string(' ', match.Length));
+        private void Mask(Match match) => Mask(match.Index, match.Length);
+
+        private void Mask(int index, int length) => _ = _rest.Remove(index, length).Insert(index, new string(' ', length));
     }
 
     private static bool IsTeamKey(string issueKey, IReadOnlySet<string> teams) => teams.Contains(issueKey[..issueKey.IndexOf('-', StringComparison.Ordinal)]);
@@ -265,22 +285,4 @@ public static partial class RulesLinker
     }
 
     private static string Hash(string span) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(span)));
-
-    [GeneratedRegex(@"[\p{L}\p{N}]+", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex Word { get; }
-
-    [GeneratedRegex(@"https://linear\.app/[^/\s]+/issue/(?<key>" + LinearRecordKeys.TeamKeyPattern + @"-[0-9]+)(?:/[^\s]*)?", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex LinearUrl { get; }
-
-    [GeneratedRegex(@"(?<![A-Za-z0-9-])" + LinearRecordKeys.TeamKeyPattern + @"-[0-9]+(?![A-Za-z0-9-])", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex IssueKey { get; }
-
-    [GeneratedRegex(@"(?<![\w/.\-])(?:[\w.\-]+/)+[\w\-]+(?:\.[A-Za-z0-9]+)+(?![\w/\-])", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex RepoPath { get; }
-
-    [GeneratedRegex("(?<![\\w])[\"'`“‘](?<title>[^\"'`“”‘’\\n]{2,120})[\"'`”’](?![\\w])", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex Quoted { get; }
-
-    [GeneratedRegex(@"(?<![A-Za-z0-9_\-.])[A-Za-z_][A-Za-z0-9_\-.]*[A-Za-z0-9_](?![A-Za-z0-9_\-]|\.[A-Za-z0-9_])", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex Token { get; }
 }
