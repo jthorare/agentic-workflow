@@ -107,20 +107,32 @@ public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCom
         var queue = await BaseMergeQueue(team.Repo, pr, gate, tree, main).ConfigureAwait(false);
         return queue.IsError
             ? queue.Error
-            : new MergeAssessment(team, [.. MergeGate.Evaluate(facts with { MergedTree = tree, BaseHasMergeQueue = queue.Value }), State(view)], view);
+            : new MergeAssessment(team, [.. MergeGate.Evaluate(facts with { MergedTree = tree, BaseHasMergeQueue = queue.Value.Queue, MergeConflicts = queue.Value.Conflicts }), State(view)], view);
     }
 
     // Asked only when the main check would otherwise refuse (main moved, or a stacked gate's tree differs): the same GraphQL read merge-run
-    // makes before it merges. A failed read refuses the check (AW-META-012) instead of guessing that no queue exists.
-    private async ValueTask<Result<bool>> BaseMergeQueue(string repoDirectory, int pr, GateRecord gate, string? mergedTree, string main)
+    // makes before it merges. A failed read refuses the check (AW-META-012) instead of guessing that no queue exists. With a queue it also asks
+    // git whether the head conflicts with main: a conflict still refuses (the queue would drop the pull request), and git failing refuses too.
+    private async ValueTask<Result<(bool Queue, bool Conflicts)>> BaseMergeQueue(string repoDirectory, int pr, GateRecord gate, string? mergedTree, string main)
     {
         if ((gate.Stack.Count == 0 && gate.Main == main) || (gate.Tree is not null && mergedTree == gate.Tree))
         {
-            return Results.Success(value: false);
+            return Results.Success((Queue: false, Conflicts: false));
         }
 
         var view = await repo.QueueView(repoDirectory, pr).ConfigureAwait(false);
-        return view.IsError ? view.Error : Results.Success(view.Value.Enabled);
+        if (view.IsError)
+        {
+            return view.Error;
+        }
+
+        if (!view.Value.Enabled)
+        {
+            return Results.Success((Queue: false, Conflicts: false));
+        }
+
+        var conflicts = await repo.Conflicts(repoDirectory, main, gate.Head).ConfigureAwait(false);
+        return conflicts.IsError ? conflicts.Error : Results.Success((Queue: true, Conflicts: conflicts.Value));
     }
 
     // gate.mode ci: the newest record is the read of the required checks; the merge state and review decision are read live. The scopes, main, merged-tree and test-log facts are not gathered.
