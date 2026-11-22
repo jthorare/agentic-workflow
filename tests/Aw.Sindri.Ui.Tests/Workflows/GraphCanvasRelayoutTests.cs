@@ -118,4 +118,36 @@ public sealed class GraphCanvasRelayoutTests
         Assert.False(fits, "the canvas took the wheel while the whole graph fits");
         Assert.True(scrolls, "the canvas left the wheel to the page while it can scroll");
     }
+
+    [Fact]
+    public async Task Fit_after_the_canvas_got_shorter_fits_the_new_height()
+    {
+        var graph = await Release();
+
+        var (before, after, scrolls) = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = graph };
+            var window = new Window { Content = canvas, Width = 1440, Height = 728 };
+            window.Show();
+            Settle(window);
+            try
+            {
+                var atFit = canvas.ZoomPercent;   // 100 %: the 16 steps are 456 px tall
+                canvas.ZoomIn();                  // the person moved the view, so the resize below does not refit by itself
+                window.Height = 420;
+                Settle(window);
+                canvas.FitNow();
+                Settle(window);
+                return (atFit, canvas.ZoomPercent, canvas.Scrolls);
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.Equal(100, before);
+        Assert.True(after < 100, "Fit kept the zoom it found for the taller canvas");
+        Assert.False(scrolls, "after Fit the graph does not fit the shorter canvas");
+    }
 }

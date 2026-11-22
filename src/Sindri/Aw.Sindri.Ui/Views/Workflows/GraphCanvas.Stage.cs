@@ -59,8 +59,9 @@ internal sealed partial class GraphCanvas
     /// <summary>Goes back to Fit: the largest zoom at which the whole graph fits. Like + and -, it never wraps the cards again unless the width, the text size or the graph changed since they were laid out.</summary>
     internal void FitNow()
     {
-        // same width, same text size, same graph: the cards stay where they are, only the zoom and pan go back to Fit
-        if (CanFit && Graph is { } graph && ReferenceEquals(graph, _laidOut) && !WrapChanged)
+        // same size, same text size, same graph: the cards stay where they are, only the zoom and pan go back to Fit. A height change after the person moved the view
+        // (nothing refits then) makes the stored zoom stale, so Fit computes it again.
+        if (CanFit && Graph is { } graph && ReferenceEquals(graph, _laidOut) && !WrapChanged && Math.Abs(Bounds.Height - _laidOutHeight) <= 0.5)
         {
             ShowFit(graph, _fitZoom);
             InvalidateVisual();
