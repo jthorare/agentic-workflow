@@ -23875,3 +23875,23 @@ static Aw.Sindri.Core.Graph.Blocks.GraphFence.Calls(Aw.Sindri.Core.Graph.Blocks.
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.ConnectionTools(Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort! live) -> Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort!
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.Toolkits(Aw.Sindri.Core.Toolkits.IRunningToolkits! live) -> Aw.Sindri.Core.Toolkits.IRunningToolkits!
 static Aw.Sindri.Core.Connections.ConnectionName.ParseUnreserved(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!
+Aw.Sindri.Core.Setup.GitMarker
+Aw.Sindri.Core.Setup.GitMarker.File = 2 -> Aw.Sindri.Core.Setup.GitMarker
+Aw.Sindri.Core.Setup.GitMarker.Folder = 1 -> Aw.Sindri.Core.Setup.GitMarker
+Aw.Sindri.Core.Setup.GitMarker.None = 0 -> Aw.Sindri.Core.Setup.GitMarker
+Aw.Sindri.Core.Setup.IKnownRepos
+Aw.Sindri.Core.Setup.IKnownRepos.Slugs(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlySet<string!>!>!>
+Aw.Sindri.Core.Setup.IRepoScanTree
+Aw.Sindri.Core.Setup.IRepoScanTree.Folders(string! folder) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Setup.IRepoScanTree.Home.get -> string!
+Aw.Sindri.Core.Setup.IRepoScanTree.Marker(string! folder) -> Aw.Sindri.Core.Setup.GitMarker
+Aw.Sindri.Core.Setup.IRepoScanTree.Origin(string! checkout, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
+Aw.Sindri.Core.Setup.IRepoScanTree.Real(string! path) -> string?
+Aw.Sindri.Core.Setup.IRepoScanTree.Worktrees(string! checkout) -> int
+Aw.Sindri.Core.Setup.RepoScanRules
+const Aw.Sindri.Core.Setup.RepoScanRules.Cap = 500 -> int
+const Aw.Sindri.Core.Setup.RepoScanRules.DefaultDepth = 3 -> int
+const Aw.Sindri.Core.Setup.RepoScanRules.MaxDepth = 6 -> int
+static Aw.Sindri.Core.Setup.RepoScanRules.InsideHome(string! path, string! home) -> bool
+static Aw.Sindri.Core.Setup.RepoScanRules.Origin(string? url) -> (string! Host, string! Slug)?
+static Aw.Sindri.Core.Setup.RepoScanRules.Skips(string! name) -> bool
