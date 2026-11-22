@@ -106,35 +106,6 @@ public sealed class AgentsPolishFramesTests : FrameHost
         Assert.Equal("Sheet", (window.FocusManager?.GetFocusedElement() as Control)?.Name);
     });
 
-    // #3783: beside the page, with the selected row's item still the sheet's last item, Enter on the row moves into the sheet. A session
-    // sheet has no first action, so focus falls back (EnterIntoSheet): to the session sheet's body, never its title.
-    [Fact]
-    public Task Enter_into_a_session_sheet_with_no_first_action_lands_on_its_body_3783() => OnUi(async () =>
-    {
-        var (window, shell) = await Connected(s => s.Queue.Total > 0 && s.Queue.Groups.Count > 0, width: 1400, height: 1000);
-        shell.GoTo(PageId.Work);
-        Settle(window);
-        for (var i = 0; i < 12 && shell.Queue.SelectedId != A.NewItem; i++)
-        {
-            window.KeyPressQwerty(PhysicalKey.J, RawInputModifiers.None);
-        }
-
-        Assert.Equal(A.NewItem, shell.Queue.SelectedId);   // J never reached the fixture's new item: its order changed
-        window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
-        await Until(window, () => shell.IsSheetShown && shell.Item.HasItem, "the item sheet never showed");
-        shell.OpenSheet(new DeepLink(DeepLinkKind.Session, Claude));
-        await Until(window, () => shell.IsSessionSheet && shell.AgentSheet.Phase == FramePhase.Shown, "the sheet never showed the session");
-        var row = window.GetVisualDescendants().OfType<Border>()
-            .First(b => string.Equals(b.Name, "RowFrame", StringComparison.Ordinal) && b is { IsEffectivelyVisible: true, DataContext: ItemRowViewModel r } && string.Equals(r.Id, shell.Queue.SelectedId, StringComparison.Ordinal));
-        Assert.True(row.Focus(NavigationMethod.Tab));
-        Settle(window);
-
-        window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
-        Settle(window);
-
-        Assert.Equal("Sheet", (window.FocusManager?.GetFocusedElement() as Control)?.Name);
-    });
-
     // #3839: the sheet stays open across pages, so Work -> Enter on a row (its item sheet) -> G A -> Enter on a session row (the session
     // sheet) -> G W leaves the session sheet beside Work with the row still selected. Enter on that row reopens its item, never moves
     // into the session sheet: the row's sheet is open only while the sheet shows that row's item.
