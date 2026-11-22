@@ -62,7 +62,7 @@ public sealed class TurnOnMcpTagTests
         Assert.NotEqual(t0, back.Since);
     }
 
-    private static string Tag(NeedsYouRow row) => GetNeedsYouService.TagOf([row], empty: null, _current, SliceHarness.Json);
+    private static string Tag(NeedsYouRow row) => GetNeedsYouService.TagOf(marks: string.Empty, [row], _current, SliceHarness.Json);
 
     private async Task<SetupNotices> Notices()
     {
