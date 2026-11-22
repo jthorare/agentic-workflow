@@ -11,7 +11,7 @@
 #   A job is expensive when it builds or tests the whole solution, publishes or smoke-tests a NativeAOT/framework
 #   binary, or opens a browser (Playwright, ui-evidence, Aw.Evidence); `heavy --expensive <cmd>` forces it,
 #   `heavy --light <cmd>` forces light (no box-wide slot).
-#   3. Box-wide, for light jobs that compile (#3796): a `--light` command with ` dotnet build `, publish, format, pack,
+#   3. Box-wide, for light jobs that compile (#3796): a `--light` command with ` dotnet build `, msbuild, publish, format, pack,
 #      restore, run, or `dotnet test` without --no-build (dotnet matched by its basename, so `~/.dotnet/dotnet build` counts,
 #      #3810), takes one of N light slots of <locks>/heavy-light.lock (slot 1 the bare path, slot k .k, the same mkdir mutexes
 #      and dead-holder reclaim as rule 2). N is $AW_STATE_DIR/heavy-light-cap, else AW_HEAVY_LIGHT_SLOTS, else 4, read again on
@@ -105,12 +105,12 @@ if [ "${AW_HEAVY_LOCK_HELD:-}" = 1 ]; then exec "$@"; fi
 # compiles: the command runs a dotnet step that compiles. In auto mode that makes the job expensive; under --light it takes
 # a light slot (rule 3). The words are matched in CMDLINE, the args joined by spaces with every "/dotnet " turned into
 # " dotnet ": a path-qualified dotnet (`~/.dotnet/dotnet build`) is matched by its basename, also inside a `bash -c` string,
-# and every other word is left as it was. `dotnet msbuild` is not in the row yet: Sindri's sandbox shim table
-# (SandboxShims.cs) must list the same dotnet subcommands (SandboxShimsTests), and it gets msbuild in its own change (#3810).
+# and every other word is left as it was. `dotnet msbuild` compiles like `dotnet build` (#3810). Sindri's sandbox shim table
+# (SandboxShims.cs) lists the same dotnet subcommands, in the same order; SandboxShimsTests checks this row against it.
 CMDLINE=" $* "; CMDLINE="${CMDLINE//\/dotnet / dotnet }"
 compiles=""
 case $CMDLINE in
-  *" dotnet build "*|*" dotnet publish "*|*" dotnet format "*|*" dotnet pack "*|*" dotnet restore "*|*" dotnet run "*) compiles=1 ;;
+  *" dotnet build "*|*" dotnet msbuild "*|*" dotnet publish "*|*" dotnet format "*|*" dotnet pack "*|*" dotnet restore "*|*" dotnet run "*) compiles=1 ;;
   *" dotnet test "*) case $CMDLINE in *" --no-build "*) ;; *) compiles=1 ;; esac ;;
 esac
 if [ "$mode" = auto ]; then
