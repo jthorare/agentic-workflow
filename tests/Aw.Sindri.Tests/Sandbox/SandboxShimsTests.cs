@@ -66,6 +66,7 @@ public sealed class SandboxShimsTests : IDisposable
     [InlineData("dotnet", "exec ui-evidence.dll", "expensive")]
     [InlineData("dotnet", "exec Aw.Evidence.dll", "expensive")]
     [InlineData("dotnet", "msbuild e2e.sh x", "expensive")]
+    [InlineData("dotnet", "msbuild X.csproj", "expensive")]
     public void Shim_routes_each_row(string tool, string args, string route)
     {
         var (output, code) = Run(tool, args, slotHeld: false);
