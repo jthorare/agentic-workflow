@@ -45,12 +45,14 @@ internal sealed partial class WorkflowsPageViewModel
         DeleteForm.Off => Labels.WfDeleteConfirm(Runs.Title),
         DeleteForm.Active => Labels.WfDeleteActive(Runs.Title),
         DeleteForm.InFlight => Labels.WfDeleteInFlight(Runs.Title),
+        DeleteForm.Closed => string.Empty,
         _ => string.Empty,
     };
 
     /// <summary>The red button's words: "Delete", or "Deleting…" while its call is on the way.</summary>
     public string DeleteYesText => IsDeleting ? Labels.WfDeleteBusy : Labels.WfDeleteYes;
 
+#pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
     /// <summary>The ⋯ menu item's words.</summary>
     public string DeleteMenuText => Labels.WfDelete;
 
@@ -68,6 +70,7 @@ internal sealed partial class WorkflowsPageViewModel
 
     /// <summary>The in-flight form's Open the run.</summary>
     public string DeleteOpenRunText => Labels.WfDeleteOpenRun;
+#pragma warning restore CA1822, MA0041
 
     /// <summary>True while Delete's call is on the way: the red button shows "Deleting…" and is off, and a second press does nothing.</summary>
     public bool IsDeleting { get; private set { Set(ref field, value); OnChanged(nameof(DeleteYesText)); OnChanged(nameof(CanConfirmDelete)); } }
@@ -209,10 +212,10 @@ internal sealed partial class WorkflowsPageViewModel
     }
 
     // the 115 message names the run as 'slug@revision:occurrence'
-    private static string RunIdIn(string message) => RunIdPattern().Match(message) is { Success: true } found ? found.Groups[1].Value : string.Empty;
+    private static string RunIdIn(string message) => RunIdPattern.Match(message) is { Success: true } found ? found.Groups["run"].Value : string.Empty;
 
-    [GeneratedRegex("'([a-z0-9-]+@[0-9]+:[0-9]+)'", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex RunIdPattern();
+    [GeneratedRegex("'(?<run>[a-z0-9-]+@[0-9]+:[0-9]+)'", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex RunIdPattern { get; }
 
     private void SetDeleteForm(DeleteForm form)
     {

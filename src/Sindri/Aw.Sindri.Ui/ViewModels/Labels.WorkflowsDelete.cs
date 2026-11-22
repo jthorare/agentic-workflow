@@ -34,17 +34,17 @@ internal static partial class Labels
     /// <param name="name">The workflow's name.</param>
     /// <returns>The words.</returns>
     internal static string WfDeleteConfirm(string name) =>
-        string.Create(CultureInfo.InvariantCulture, $"Delete {name}? Its runs stay readable on the Runs page. Its resources are deleted. You can't undo this.");
+        $"Delete {name}? Its runs stay readable on the Runs page. Its resources are deleted. You can't undo this.";
 
     /// <summary>The confirm on an active workflow (SND-GRAPH-114): it must be paused first.</summary>
     /// <param name="name">The workflow's name.</param>
     /// <returns>The words.</returns>
-    internal static string WfDeleteActive(string name) => string.Create(CultureInfo.InvariantCulture, $"{name} is active. Pause it, then delete it.");
+    internal static string WfDeleteActive(string name) => $"{name} is active. Pause it, then delete it.";
 
     /// <summary>The confirm while a run is going (SND-GRAPH-115).</summary>
     /// <param name="name">The workflow's name.</param>
     /// <returns>The words.</returns>
-    internal static string WfDeleteInFlight(string name) => string.Create(CultureInfo.InvariantCulture, $"A run of {name} is still going. Delete it after the run ends.");
+    internal static string WfDeleteInFlight(string name) => $"A run of {name} is still going. Delete it after the run ends.";
 
     /// <summary>The notice after a delete: "Deleted nightly-size. 12 runs kept, 1.2 MB freed" (1 MB is 1,000,000 bytes), then the owners whose resources stayed.</summary>
     /// <param name="slug">The workflow's slug, as the server answered.</param>
