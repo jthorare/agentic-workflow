@@ -18,7 +18,7 @@ public sealed class RunDetailSeenTests
     {
         ServeFailed();
 
-        await _f.OpenedRun(Token);
+        _ = await _f.OpenedRun(Token);
 
         Assert.Equal([RunId], _f.Server.SeenWorkflowRuns, StringComparer.Ordinal);
     }
