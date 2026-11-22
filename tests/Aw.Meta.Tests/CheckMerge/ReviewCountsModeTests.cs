@@ -273,19 +273,69 @@ public sealed class ReviewCountsModeTests
         Assert.Equal(["counts"], Failed(response));
     }
 
-    private const string BuildOnly = "build -warnaserror 0 warnings, 0 errors (Build Only)";
+    // #3840: the build-only marker is a count line of its own shape, alone on its line (trimmed, any case).
+    private const string BuildOnly = "  0 passed, 0 skipped, 0 failed (build only)  ";
 
-    [Fact, Trait("Lane", "unit")]
-    public async Task A_build_only_line_with_no_count_line_is_ready_in_counts_mode()
+    // The old prose form: "(build only)" next to other words is not the marker.
+    private const string BuildOnlyProse = "build -warnaserror 0 warnings, 0 errors (build only)";
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(BuildOnly)]
+    [InlineData("0 Passed, 0 Skipped, 0 Failed (Build Only)\r")]
+    public async Task A_build_only_line_with_no_other_count_line_is_ready_in_counts_mode(string line)
     {
         await Team();
-        await Inbox("t1-api", $"ready #190 {Head}\n{BuildOnly}");
+        await Inbox("t1-api", $"ready #190 {Head}\n{line}");
         Script();
 
         var response = await Check();
 
         Assert.True(response.Ready);
         Assert.Equal("build only, no test counts", Detail(response, "counts"));
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(BuildOnlyProse)]
+    [InlineData("Gate: built only, so no tests ran (build only)")]
+    [InlineData("Aw.Meta.Tests unit 0 passed, 0 skipped, 0 failed (build only)")]
+    [InlineData("0 passed, 0 skipped, 0 failed (build only), tests next")]
+    public async Task Build_only_outside_its_own_line_does_not_count_in_counts_mode(string line)
+    {
+        await Team();
+        await Inbox("t1-api", $"ready #190 {Head}\n{line}");
+        Script();
+
+        var response = await Check();
+
+        Assert.False(response.Ready);
+        Assert.Equal(["counts"], Failed(response));
+    }
+
+    // A filtered run that matched no test counts zero; without the marker that proves nothing.
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("0 passed, 0 skipped, 0 failed")]
+    [InlineData("0 passed, 12 skipped, 0 failed")]
+    public async Task Counts_that_total_zero_passed_refuse_in_counts_mode(string counts)
+    {
+        await Team();
+        await Inbox("t1-api", ReadyBody(counts: counts));
+        Script();
+
+        var response = await Check();
+
+        Assert.False(response.Ready);
+        Assert.Equal(["counts"], Failed(response));
+        Assert.Contains("0 passed", Detail(response, "counts"), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_zero_count_line_next_to_a_green_one_is_ready_in_counts_mode()
+    {
+        await Team();
+        await Inbox("t1-api", ReadyBody(counts: "0 passed, 0 skipped, 0 failed\nAw.Meta.Tests integration 40 passed, 0 skipped, 0 failed"));
+        Script();
+
+        Assert.True((await Check()).Ready);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -302,11 +352,11 @@ public sealed class ReviewCountsModeTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_build_only_line_is_not_a_count_line_in_ok_mode()
+    public async Task A_build_only_note_is_not_a_count_line_in_ok_mode()
     {
         await Team(ReviewConfig.OkMode);
         await Inbox("t1-ideas", $"OK #190 at {Head}");
-        await Inbox("t1-api", $"ready #190 {Head}\n{BuildOnly}");
+        await Inbox("t1-api", $"ready #190 {Head}\n{BuildOnlyProse}");
         Script();
 
         var response = await Check();
