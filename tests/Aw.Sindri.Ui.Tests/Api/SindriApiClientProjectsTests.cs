@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Projects;
@@ -7,7 +8,7 @@ using Aw.Sindri.Ui.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Api;
 
-/// <summary>The client's project calls (projects page spec §6.2): the routes, the id escaping and the cards the goldens carry.</summary>
+/// <summary>The client's project calls (projects page spec §6.2): the routes, the id escaping, the cards the goldens carry and each card's truth (issue 3718).</summary>
 [Lane(TestLane.Unit)]
 public sealed class SindriApiClientProjectsTests
 {
@@ -79,6 +80,83 @@ public sealed class SindriApiClientProjectsTests
 
         Assert.Equal(("Mobile app", "Waiting on the vendor", false), (one.Project.Name, one.Project.Notes, one.Hidden));
     }
+
+    [Fact]
+    public async Task A_card_with_truth_reads_every_pr_state_the_counts_the_agents_and_the_health()
+    {
+        var served = Mixed();
+        served["projects"]![0]!["truth"] = JsonNode.Parse(Truth("ciRed", "atRisk"));
+
+        var truth = (await Read(served)).Projects[0].Truth!;
+
+        Assert.Equal(["draft", "ready", "ciRed", "unknown", "waiting"], truth.OpenPrs.Select(p => p.State), StringComparer.Ordinal);
+        var red = truth.OpenPrs[2];
+        Assert.Equal(("https://github.com/acme/shop/pull/3", "acme/shop", 3, "Fix the checkout tests", new DateTimeOffset(2026, 1, 1, 8, 0, 0, TimeSpan.Zero), null), (red.Url, red.Repo, red.Number, red.Title, red.DecidedAt, red.WaitingOn));
+        var waiting = truth.OpenPrs[4];
+        Assert.Equal((null, "ana, sam"), (waiting.DecidedAt, waiting.WaitingOn));
+        Assert.Equal((2, 3, 5, 1), (truth.OpenItems, truth.DoneItems, truth.TotalItems, truth.RunningAgents));
+        var health = truth.Health!;
+        Assert.Equal(("atRisk", "At risk: 1 of 4 PRs red, 1 not checked yet"), (health.Level, health.Reason));
+    }
+
+    [Fact]
+    public async Task A_card_without_truth_still_reads_and_its_truth_is_null()
+    {
+        var served = Mixed();
+        foreach (var card in served["projects"]!.AsArray().Concat(served["finished"]!.AsArray()).Concat(served["hidden"]!.AsArray()))
+        {
+            _ = card!.AsObject().Remove("truth");
+        }
+
+        var list = await Read(served);
+
+        Assert.Equal(3, list.Projects.Count);
+        Assert.All(list.Projects.Concat(list.Finished).Concat(list.Hidden), c => Assert.Null(c.Truth));
+    }
+
+    [Fact]
+    public async Task A_pr_state_or_health_level_this_build_does_not_know_is_kept_as_served()
+    {
+        var served = Mixed();
+        served["projects"]![0]!["truth"] = JsonNode.Parse(Truth("conflict", "stalled"));
+
+        var truth = (await Read(served)).Projects[0].Truth!;
+
+        Assert.Equal(("conflict", "stalled"), (truth.OpenPrs[2].State, truth.Health!.Level));
+    }
+
+    [Fact]
+    public async Task A_truth_with_no_open_pr_has_no_health()
+    {
+        var served = Mixed();
+        served["projects"]![0]!["truth"] = JsonNode.Parse("""{"openPrs":[],"openItems":0,"doneItems":0,"totalItems":0,"runningAgents":0,"health":null}""");
+
+        var truth = (await Read(served)).Projects[0].Truth!;
+
+        Assert.Equal((0, null), (truth.OpenPrs.Count, truth.Health));
+    }
+
+    private static JsonNode Mixed() => JsonNode.Parse(GoldenFiles.Api("projects", "mixed"))!; // why: the golden is a JSON document
+
+    private static async Task<ProjectList> Read(JsonNode served) => (await Client(new Canned(HttpStatusCode.OK, served.ToJsonString())).Projects(_api, all: true, Token)).Value;
+
+    // One open PR per state, the third in redState; two open items, three done, one running agent.
+    private static string Truth(string redState, string level) => $$"""
+        {
+          "openPrs": [
+            { "url": "https://github.com/acme/shop/pull/1", "repo": "acme/shop", "number": 1, "title": "Try the new cart", "state": "draft", "decidedAt": null, "waitingOn": null },
+            { "url": "https://github.com/acme/shop/pull/2", "repo": "acme/shop", "number": 2, "title": "Bump the payments SDK", "state": "ready", "decidedAt": null, "waitingOn": null },
+            { "url": "https://github.com/acme/shop/pull/3", "repo": "acme/shop", "number": 3, "title": "Fix the checkout tests", "state": "{{redState}}", "decidedAt": "2026-01-01T08:00:00.0000000Z", "waitingOn": null },
+            { "url": "https://github.com/acme/shop/pull/4", "repo": "acme/shop", "number": 4, "title": "Log refunds", "state": "unknown", "decidedAt": null, "waitingOn": null },
+            { "url": "https://github.com/acme/api/pull/5", "repo": "acme/api", "number": 5, "title": "Add the refund route", "state": "waiting", "decidedAt": null, "waitingOn": "ana, sam" }
+          ],
+          "openItems": 2,
+          "doneItems": 3,
+          "totalItems": 5,
+          "runningAgents": 1,
+          "health": { "level": "{{level}}", "reason": "At risk: 1 of 4 PRs red, 1 not checked yet" }
+        }
+        """;
 
     private sealed class Canned(HttpStatusCode code, string body) : HttpMessageHandler
     {

@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Projects;
@@ -123,6 +124,21 @@ public sealed class ProjectsPageTests
 
         Assert.True(page.FreshnessFailing);
         Assert.Contains("Linear issues needs attention (SND-INDEX-401)", page.Freshness, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_failing_sindri_row_says_what_could_not_be_read_without_the_raw_error()
+    {
+        var list = Golden("mixed");
+        list["freshness"]!.AsArray().Add(new JsonObject { ["source"] = "sindri", ["state"] = "failing", ["text"] = "SND-REVIEWS-012: reviews.db is locked", ["at"] = null });
+        _f.Serve(list);
+
+        var page = await _f.Shown(Token);
+
+        Assert.True(page.FreshnessFailing);
+        Assert.Contains("GitHub synced 14 min ago · PRs, checks and agents couldn't be read just now · Linear says you're Jo Smith", page.Freshness, StringComparison.Ordinal);
+        Assert.DoesNotContain("SND-", page.Freshness, StringComparison.Ordinal);
+        Assert.DoesNotContain("sindri", page.Freshness, StringComparison.Ordinal);
     }
 
     [Fact]
