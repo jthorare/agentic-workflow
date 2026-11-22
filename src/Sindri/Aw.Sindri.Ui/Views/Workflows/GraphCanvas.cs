@@ -50,7 +50,7 @@ internal sealed partial class GraphCanvas : Control
 
     static GraphCanvas()
     {
-        AffectsRender<GraphCanvas>(GraphProperty, ZoomProperty, PanProperty);
+        AffectsRender<GraphCanvas>(GraphProperty, ZoomProperty, PanProperty, TextScaleProperty);
         FocusableProperty.OverrideDefaultValue<GraphCanvas>(defaultValue: true);
         ClipToBoundsProperty.OverrideDefaultValue<GraphCanvas>(defaultValue: true);
         _ = ZoomProperty.Changed.AddClassHandler<GraphCanvas>((canvas, _) =>
