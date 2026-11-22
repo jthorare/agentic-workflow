@@ -28,9 +28,9 @@ internal sealed class DelegateWorld
         new LaneDelivery(World.LaneFiles, World.LaneMail, World.Messages, beatValues is null ? World.Beats : new LaneBeats(beatValues, World.Delay), World.Panes, World.Clock),
         World.Clock);
 
-    internal DelegateDropService Dropping() => new();
+    internal DelegateDropService Dropping() => new(Ledger, World.Log, World.Clock);
 
-    internal DelegatedService Listing() => new(Ledger, World.Messages);
+    internal DelegatedService Listing() => new(Ledger, World.Messages, World.Lanes);
 
     internal async Task Ready(DelegationConfig? delegation = null)
     {
