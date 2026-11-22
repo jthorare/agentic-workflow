@@ -3,7 +3,8 @@
 # (<locks>/heavy-light.lock, N from $AW_STATE_DIR/heavy-light-cap, else AW_HEAVY_LIGHT_SLOTS, else 4), and doesn't start
 # while a live job waits for a box-wide slot and MemAvailable is under that slot's floor. Covers: N run and the N+1th waits
 # until one ends; the cap file is read again while a job waits; the env fallback and the default 4; the hold, and its end
-# when the waiter goes or memory is enough; the hold counts heavy-meta-reserve and the slots the waiter can take (#3810); its
+# when the waiter goes or memory is enough; the hold counts heavy-meta-reserve and the slots the waiter can take (#3810);
+# the reserve is a slot count whatever memory is free, in the box-wide pool and the hold (#3885); its
 # note repeats (on a copy with HOLD_NOTE_EVERY=1), comes at once for a new hold or another waiter, and names the waiter and
 # the memory figure; no MemAvailable read without a box-wide waiter; slot 1 free and a dead waiter
 # hold nothing; a path-qualified dotnet build and a dotnet msbuild take a light slot; a job that compiles nothing never
