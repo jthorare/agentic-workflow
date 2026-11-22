@@ -51,7 +51,7 @@ internal sealed partial class SpendWarmHost(IAgentCatalog catalog, ILaunchSpend 
                 }
                 catch (Exception e) when (e is not OperationCanceledException || !stoppingToken.IsCancellationRequested)   // boundary: a pass that throws (a catalog read) must not stop serve; the next pass tries again
                 {
-                    LogPassFailed(log, e.GetType().Name, e.Message);
+                    LogPassFailed(log, e, e.GetType().Name, e.Message);
                 }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -73,19 +73,19 @@ internal sealed partial class SpendWarmHost(IAgentCatalog catalog, ILaunchSpend 
         }
         catch (Exception e)   // boundary: a failed warm read must not stop the loop; the next pass tries again
         {
-            LogFailed(log, id.Value, e.GetType().Name, e.Message);
+            LogFailed(log, e, id.Value, e.GetType().Name, e.Message);
         }
     }
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Spend warm pass started for {Agents} agents")]
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Spend warm pass started for {Agents} agents")]
     private static partial void LogStarted(ILogger logger, int agents);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Spend warm pass ended for {Agents} agents in {ElapsedMs} ms")]
     private static partial void LogEnded(ILogger logger, int agents, long elapsedMs);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "The spend warm pass threw {Type}: {Detail}; trying on the next pass")]
-    private static partial void LogPassFailed(ILogger logger, string type, string detail);
+    private static partial void LogPassFailed(ILogger logger, Exception exception, string type, string detail);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "The spend warm read for {Agent} threw {Type}: {Detail}; trying again")]
-    private static partial void LogFailed(ILogger logger, string agent, string type, string detail);
+    private static partial void LogFailed(ILogger logger, Exception exception, string agent, string type, string detail);
 }

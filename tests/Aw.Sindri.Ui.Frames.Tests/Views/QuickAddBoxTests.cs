@@ -55,9 +55,9 @@ public sealed class QuickAddBoxTests : IDisposable
         _windows.Add(window);
         window.Show();
         _ = shell.Run(_stop.Token);
-        for (var i = 0; i < 300 && shell.State != ShellState.Normal; i++)
+        for (var i = 0; i < 3000 && shell.State != ShellState.Normal; i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Settle(window);
         }
 
