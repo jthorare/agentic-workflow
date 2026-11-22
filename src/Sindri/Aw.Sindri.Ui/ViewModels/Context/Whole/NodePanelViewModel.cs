@@ -39,19 +39,24 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     /// <summary>Copies the source's file path (#3715).</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>When the clipboard answered.</returns>
-    internal Task CopyPath(CancellationToken cancellationToken = default)
+    internal async Task CopyPath(CancellationToken cancellationToken = default)
     {
-        _ = cancellationToken;
-        throw new NotSupportedException();
+        if (_localPath is { Length: > 0 } path && Clipboard is { } clipboard)
+        {
+            var copied = await clipboard.SetText(path, cancellationToken).ConfigureAwait(true);
+            _launch.Record(copied, Labels.ContextNodePanelCopyPathFailed(path));
+        }
     }
 
     /// <summary>Opens the source's web link only (the "Open source" button).</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>When the system answered.</returns>
-    internal Task OpenLink(CancellationToken cancellationToken = default)
+    internal async Task OpenLink(CancellationToken cancellationToken = default)
     {
-        _ = cancellationToken;
-        throw new NotSupportedException();
+        if (_link is { } link)
+        {
+            _ = await _launch.Open(link, cancellationToken).ConfigureAwait(true);
+        }
     }
 
     /// <summary>Gets a value indicating whether the panel shows.</summary>
@@ -206,18 +211,18 @@ internal sealed partial class NodePanelViewModel : ObservableObject
         }
     }
 
-    /// <summary>Opens the source: the link in the system's browser, else the file on this machine (the "Open file" button always opens the file).</summary>
+    /// <summary>Opens the source (Enter): the file on this machine when the node has one, else the link in the system's browser. The "Open source" button opens the link only (<see cref="OpenLink"/>).</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>When the system answered.</returns>
     internal async Task OpenSource(CancellationToken cancellationToken = default)
     {
-        if (_link is { } link)
+        if (HasOpenFile)
         {
-            _ = await _launch.Open(link, cancellationToken).ConfigureAwait(true);
+            await OpenLocalFile(cancellationToken).ConfigureAwait(true);
         }
         else
         {
-            await OpenLocalFile(cancellationToken).ConfigureAwait(true);
+            await OpenLink(cancellationToken).ConfigureAwait(true);
         }
     }
 
@@ -270,7 +275,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsOpen), nameof(IsLoading), nameof(IsFailed), nameof(Kind), nameof(Title), nameof(SourceText), nameof(HasSource), nameof(HasLink), nameof(HasNoLink), nameof(HasOpenFile), nameof(OpenSourceName), nameof(LaunchFailed), nameof(LaunchFailedText), nameof(Description), nameof(HasDescription), nameof(Groups), nameof(HasGroups), nameof(Sections), nameof(HasSections)])
+        foreach (var name in (string[])[nameof(IsOpen), nameof(IsLoading), nameof(IsFailed), nameof(Kind), nameof(Title), nameof(SourceText), nameof(HasSource), nameof(HasLink), nameof(HasNoLink), nameof(HasOpenFile), nameof(CopyPathText), nameof(OpenSourceName), nameof(LaunchFailed), nameof(LaunchFailedText), nameof(Description), nameof(HasDescription), nameof(Groups), nameof(HasGroups), nameof(Sections), nameof(HasSections)])
         {
             OnChanged(name);
         }
