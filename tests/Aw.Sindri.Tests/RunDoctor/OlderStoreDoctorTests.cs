@@ -99,7 +99,7 @@ public sealed class OlderStoreDoctorTests : IDisposable
         using var ledger = new LedgerDatabase(Settings, _h.Clock);
         using var views = new SqliteViews(_home.Path);
         var store = new SqliteLedger(ledger, new RecordingLedgerSignal());
-        var service = new RunDoctorService(new SqliteLease(ledger, _h.Probe, _h.Clock), _h.Probe, new LedgerFacts(store, views.Reader), new ProfileFacts(_h.Profiles,
+        var service = new RunDoctorService(new SqliteLease(ledger, _h.Probe, _h.Clock), _h.Probe, new LedgerFacts(store, views.Reader, new SqliteDoctorStores(views.Database)), new ProfileFacts(_h.Profiles,
             new ContextEngineChecks(FakeContextEngine.Instance, new MapPublishDoctorCheck(new MapPublishStatusReader(FakeContextEngine.Instance, new NoIndexOutlooks(), _h.Store, _h.Clock), _h.Clock), new LinearDoctor(FakeContextEngine.Instance, new PointerSecrets(_ => null, new FakeToolRunner(ToolRun.Missing))), new Features.CodeIndexJobs.CodeIndexDoctor(new CodeIndex.Testing.FakeCodeIndex(), new CodeIndex.Testing.FakeRepoHeads(), new InMemoryJobViews(), new Features.CodeIndexJobs.CodeIndexProbes(new CodeIndex.Testing.FakeEmbedder(), new CodeIndex.Testing.FakePins()), _h.Clock, _h.Profiles, new Server.NoPauses()), new FirstMapDoctorCheck(new InMemoryJobViews(), new Server.NoPauses()))),
             new RuntimeFacts(new FakeControlPlaneProbe(), new FakeTemporalServer()), _h.Clock);
         return (await service.Handle(new RunDoctorRequest(), Token)).Value;

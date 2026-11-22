@@ -320,6 +320,9 @@ Aw.Sindri.Core.Doctor.DoctorCheck.State.init -> void
 Aw.Sindri.Core.Doctor.DoctorRules
 Aw.Sindri.Core.Doctor.IDoctorChecks
 Aw.Sindri.Core.Doctor.IDoctorChecks.Run(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Doctor.DoctorCheck!>!>
+Aw.Sindri.Core.Doctor.IDoctorStores
+Aw.Sindri.Core.Doctor.IDoctorStores.Guard<T>(string! file, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<Aw.Kernel.Result<T>!>>! read, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<T>!>
+Aw.Sindri.Core.Doctor.IDoctorStores.ViewsSchema(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ledger.SchemaStatus!>!>
 Aw.Sindri.Core.Doctor.IPartTimer
 Aw.Sindri.Core.Doctor.IPartTimer.Took(string! part, long elapsedMilliseconds) -> void
 Aw.Sindri.Core.Events.ApiViews
@@ -4249,6 +4252,7 @@ static Aw.Sindri.Core.Doctor.DoctorRules.Lease(Aw.Sindri.Core.Lease.LeaseRow? ro
 static Aw.Sindri.Core.Doctor.DoctorRules.Ledger(Aw.Kernel.Result<Aw.Sindri.Core.Ledger.SchemaStatus!>! schema) -> Aw.Sindri.Core.Doctor.DoctorCheck!
 static Aw.Sindri.Core.Doctor.DoctorRules.Temporal(Aw.Sindri.Core.Control.TemporalFacts! facts) -> Aw.Sindri.Core.Doctor.DoctorCheck!
 static Aw.Sindri.Core.Doctor.DoctorRules.Views(Aw.Kernel.Result<Aw.Sindri.Core.Views.ProjectorState?>! state, Aw.Kernel.Result<long>! head) -> Aw.Sindri.Core.Doctor.DoctorCheck!
+static Aw.Sindri.Core.Doctor.DoctorRules.Views(Aw.Kernel.Result<Aw.Sindri.Core.Ledger.SchemaStatus!>! schema, Aw.Kernel.Result<Aw.Sindri.Core.Views.ProjectorState?>! state, Aw.Kernel.Result<long>! head) -> Aw.Sindri.Core.Doctor.DoctorCheck!
 static Aw.Sindri.Core.Events.ApiViews.All.get -> System.Collections.Generic.IReadOnlyList<string!>!
 static Aw.Sindri.Core.Events.CommandHandled.operator !=(Aw.Sindri.Core.Events.CommandHandled? left, Aw.Sindri.Core.Events.CommandHandled? right) -> bool
 static Aw.Sindri.Core.Events.CommandHandled.operator ==(Aw.Sindri.Core.Events.CommandHandled? left, Aw.Sindri.Core.Events.CommandHandled? right) -> bool
