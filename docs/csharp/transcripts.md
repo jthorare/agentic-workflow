@@ -128,7 +128,8 @@ A line that is not a JSON object of the provider's shape is skipped and counted 
 of a known kind whose fields have an unexpected type, a line with no type (Claude Code, Codex) or no payload (Codex), a
 user or assistant line whose content is no string or block array, and a Cursor line with neither a user or assistant
 role nor a type. A known bookkeeping line (a Claude Code `permission-mode`, a Cursor `turn_ended`) is not counted. A list leaves out a file it can't read (deleted or locked
-mid-scan) and lists the rest.
+mid-scan) and lists the rest. A bad field never fails a list: a cwd that is no valid path (a NUL byte) gives the
+session no repo, and a line whose pattern match runs out of time (Cursor's prompt and timestamp patterns) is skipped.
 
 ## Not verified
 
