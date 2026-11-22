@@ -67,7 +67,7 @@ internal sealed partial class ShellViewModel
 #pragma warning restore IDE0072
 
     /// <summary>The edge tab shows when the sheet is closed and has a subject, over a visible page, on the page it was closed on.</summary>
-    public bool IsEdgeTabShown => !IsSheetOpen && HasEdgeTab && IsConnected && _edgeTabPage == CurrentPage;
+    public bool IsEdgeTabShown => !IsSheetOpen && HasEdgeTab && !IsSessionSheet && IsConnected && _edgeTabPage == CurrentPage;
 
     // The page the sheet was closed on: the edge tab belongs to it and goes when the page is left.
     private PageId? _edgeTabPage;

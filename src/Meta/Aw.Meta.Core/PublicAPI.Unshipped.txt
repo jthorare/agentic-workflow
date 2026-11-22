@@ -872,7 +872,7 @@ Aw.Meta.Core.Messages.TranscriptRecordParser
 Aw.Meta.Core.MetaErrors
 Aw.Meta.Core.MetaPaths
 Aw.Meta.Core.MetaPaths.<Clone>$() -> Aw.Meta.Core.MetaPaths!
-Aw.Meta.Core.MetaPaths.Deconstruct(out string! StateDirectory, out string! GatesDirectory, out string? Heavy, out string! Gh, out string! Home, out string! UserConfig) -> void
+Aw.Meta.Core.MetaPaths.Deconstruct(out string! StateDirectory, out string! GatesDirectory, out string? Heavy, out string! Gh, out string! Home, out string! UserConfig, out string? Reserve, out string? Toolkit) -> void
 Aw.Meta.Core.MetaPaths.Equals(Aw.Meta.Core.MetaPaths? other) -> bool
 Aw.Meta.Core.MetaPaths.GateDirectory(int pr) -> string!
 Aw.Meta.Core.MetaPaths.GatesDirectory.get -> string!
@@ -883,11 +883,15 @@ Aw.Meta.Core.MetaPaths.Heavy.get -> string?
 Aw.Meta.Core.MetaPaths.Heavy.init -> void
 Aw.Meta.Core.MetaPaths.Home.get -> string!
 Aw.Meta.Core.MetaPaths.Home.init -> void
-Aw.Meta.Core.MetaPaths.MetaPaths(string! StateDirectory, string! GatesDirectory, string? Heavy, string! Gh, string! Home = "", string! UserConfig = "") -> void
+Aw.Meta.Core.MetaPaths.MetaPaths(string! StateDirectory, string! GatesDirectory, string? Heavy, string! Gh, string! Home = "", string! UserConfig = "", string? Reserve = null, string? Toolkit = null) -> void
 Aw.Meta.Core.MetaPaths.StateDirectory.get -> string!
 Aw.Meta.Core.MetaPaths.UserConfig.get -> string!
 Aw.Meta.Core.MetaPaths.UserConfig.init -> void
 Aw.Meta.Core.MetaPaths.StateDirectory.init -> void
+Aw.Meta.Core.MetaPaths.Reserve.get -> string?
+Aw.Meta.Core.MetaPaths.Reserve.init -> void
+Aw.Meta.Core.MetaPaths.Toolkit.get -> string?
+Aw.Meta.Core.MetaPaths.Toolkit.init -> void
 Aw.Meta.Core.Obligations.MergeRecord
 Aw.Meta.Core.Obligations.MergeRecord.<Clone>$() -> Aw.Meta.Core.Obligations.MergeRecord!
 Aw.Meta.Core.Obligations.MergeRecord.At.get -> System.DateTimeOffset
@@ -2475,11 +2479,22 @@ static Aw.Meta.Core.Watch.WatchMemory.Format(string! repo, Aw.Meta.Core.Watch.Wa
 static Aw.Meta.Core.Watch.WatchMemory.Parse(string? text, string! repo, Aw.Meta.Core.Watch.WatchResources! resources) -> Aw.Meta.Core.Watch.WatchState!
 Aw.Meta.Core.Config.ReviewConfig
 Aw.Meta.Core.Config.ReviewConfig.<Clone>$() -> Aw.Meta.Core.Config.ReviewConfig!
-Aw.Meta.Core.Config.ReviewConfig.Deconstruct(out string! Lane) -> void
+Aw.Meta.Core.Config.ReviewConfig.Deconstruct(out string! Lane, out string! Mode) -> void
 Aw.Meta.Core.Config.ReviewConfig.Equals(Aw.Meta.Core.Config.ReviewConfig? other) -> bool
 Aw.Meta.Core.Config.ReviewConfig.Lane.get -> string!
 Aw.Meta.Core.Config.ReviewConfig.Lane.init -> void
-Aw.Meta.Core.Config.ReviewConfig.ReviewConfig(string! Lane) -> void
+Aw.Meta.Core.Config.ReviewConfig.ReviewConfig(string! Lane, string! Mode = "ok") -> void
+Aw.Meta.Core.Config.ReviewConfig.Mode.get -> string!
+Aw.Meta.Core.Config.ReviewConfig.Mode.init -> void
+Aw.Meta.Core.Config.ReviewConfig.IsCounts.get -> bool
+const Aw.Meta.Core.Config.ReviewConfig.OkMode = "ok" -> string!
+const Aw.Meta.Core.Config.ReviewConfig.CountsMode = "counts" -> string!
+Aw.Meta.Core.Merge.ReviewFacts.Hold.get -> string?
+Aw.Meta.Core.Merge.ReviewFacts.Hold.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.CountsMode.get -> bool
+Aw.Meta.Core.Merge.ReviewFacts.CountsMode.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.BuildOnly.get -> bool
+Aw.Meta.Core.Merge.ReviewFacts.BuildOnly.init -> void
 Aw.Meta.Core.Config.TeamConfig.Review.get -> Aw.Meta.Core.Config.ReviewConfig?
 Aw.Meta.Core.Config.TeamConfig.Review.init -> void
 Aw.Meta.Core.Config.TeamConfig.TeamConfig(string! team, string! repo, System.Collections.Generic.IReadOnlyList<string!>! lanes, string! metaLane = "meta", string? log = null, string? prompts = null, Aw.Meta.Core.Config.GateConfig? gate = null, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Config.MergeOrderRule!>? mergeOrder = null, System.Collections.Generic.IReadOnlyList<string!>? knownFlakes = null, Aw.Meta.Core.Config.WorktreeConfig? worktrees = null, Aw.Meta.Core.Config.ResourcesConfig? resources = null, Aw.Meta.Core.Config.BuildersConfig? builders = null, Aw.Meta.Core.Config.HeavyConfig? heavy = null, Aw.Meta.Core.Config.ContextConfig? context = null, Aw.Meta.Core.Config.UsageConfig? usage = null, string? agent = null, Aw.Meta.Core.Config.ReviewConfig? review = null) -> void
@@ -2814,5 +2829,7 @@ static readonly Aw.Meta.Core.MetaErrors.StackExtensionMissing -> Aw.Kernel.Error
 const Aw.Meta.Core.Github.GhExtensions.StackInstall = "gh extension install github/gh-stack" -> string!
 static Aw.Meta.Core.Github.GhExtensions.HasStack(string! list) -> bool
 Aw.Meta.Core.Github.GhExtensions
+Aw.Meta.Core.Merge.MergeFacts.MergeConflicts.get -> bool
+Aw.Meta.Core.Merge.MergeFacts.MergeConflicts.init -> void
 Aw.Meta.Core.Worktrees.WorktreeInspector.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Worktrees.WorktreeInspector!
 Aw.Meta.Core.Worktrees.WorktreeSweeper.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Worktrees.WorktreeSweeper!

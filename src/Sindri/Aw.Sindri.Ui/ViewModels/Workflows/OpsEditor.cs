@@ -131,6 +131,11 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
     /// <param name="nodeId">The node.</param>
     internal void Select(string nodeId)
     {
+        if (_pending is not null)
+        {
+            return;   // a new step is being filled in: a read must not replace its form
+        }
+
         _selected = nodeId.Length == 0 ? null : nodeId;
         if (_failureIsRefusal)
         {
@@ -181,7 +186,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         field.ErrorText = problem;
         if (problem.Length == 0)
         {
-            await Send(new JsonArray((JsonNode)new JsonObject { ["op"] = "set_config", ["node"] = node, ["path"] = name, ["value"] = value }), cancellationToken).ConfigureAwait(true);
+            _ = await Send(new JsonArray((JsonNode)new JsonObject { ["op"] = "set_config", ["node"] = node, ["path"] = name, ["value"] = value }), cancellationToken).ConfigureAwait(true);
         }
     }
 
@@ -215,11 +220,11 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
     }
 
     // One call, on the revision read, never retried. A saved edit reads the workflow again; a stale base asks for a reload and holds further edits.
-    private async Task Send(JsonArray ops, CancellationToken cancellationToken)
+    private async Task<bool> Send(JsonArray ops, CancellationToken cancellationToken)
     {
         if (IsSending || NeedsReload || _url is not { } url || Slug.Length == 0)
         {
-            return;
+            return false;
         }
 
         FailureText = string.Empty;
@@ -230,10 +235,11 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
             if (applied.IsError)
             {
                 Refused(applied.Error);
-                return;
+                return false;
             }
 
             await Load(url, Slug, afterSave: true, cancellationToken).ConfigureAwait(true);
+            return true;
         }
         finally
         {
