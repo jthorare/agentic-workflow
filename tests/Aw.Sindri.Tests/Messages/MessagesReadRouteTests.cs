@@ -157,7 +157,7 @@ public sealed class MessagesReadRouteTests
         Assert.Equal(1, (int)body["lines"]![0]!["replies"]!);
         Assert.Equal(12, (int)Assert.Single(body["gaps"]!.AsArray())!["missing"]!);
         Assert.Equal([AdaRoot], Ts(JsonNode.Parse(older.Body)!["lines"]!), StringComparer.Ordinal);
-        Assert.Single(JsonNode.Parse(older.Body)!["gaps"]!.AsArray());   // the hole starts right after the window's newest line, so its marker shows
+        _ = Assert.Single(JsonNode.Parse(older.Body)!["gaps"]!.AsArray());   // the hole starts right after the window's newest line, so its marker shows
         Assert.Equal((HttpStatusCode.NotFound, "SND-MSG-011"), (unknown.Status, unknown.Code));
     }
 
