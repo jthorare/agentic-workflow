@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Aw.Redaction.Tests;
@@ -21,6 +22,8 @@ public sealed partial class RuleGateTests
     public void A_caseless_rule_compares_letters_only_in_any_case()
     {
         // An exact clause in an IgnoreCase rule would miss "BEARER" for "bearer": only letterless literals may be exact.
+        // An inline (?i) turns IgnoreCase on where Options never shows it, so no built-in pattern may hold one.
+        Assert.All(BuiltinRules.All, r => Assert.DoesNotContain("(?i", r.Pattern, StringComparison.Ordinal));
         foreach (var rule in BuiltinRules.All.Where(r => r.Options.HasFlag(RegexOptions.IgnoreCase)))
         {
             var exact = rule.Gate!.Clauses.Where(c => !c.Caseless).SelectMany(c => c.Literals);
@@ -79,6 +82,74 @@ public sealed partial class RuleGateTests
 
         Assert.True(clause.MayHold(text, ascii: false));
         Assert.Matches(CaselessToken, text);
+    }
+
+    [Fact]
+    public void Every_builtin_rule_has_samples_its_regex_matches()
+    {
+        var unknown = _samples.Keys.Except(BuiltinRules.All.Select(r => r.Id), StringComparer.Ordinal).ToArray();
+        Assert.True(unknown.Length == 0, "samples name unknown rule ids: " + string.Join(", ", unknown));
+        foreach (var (rule, samples) in RulesWithSamples())
+        {
+            var regex = RegexFor(rule);
+            Assert.All(samples, sample => Assert.True(regex.IsMatch(sample), $"rule {rule.Id} /{rule.Pattern}/ misses its sample: {sample}"));
+        }
+    }
+
+    [Fact]
+    public void Each_gate_clause_is_required_by_its_rule()
+    {
+        // Pins every clause to its pattern: a sample with all of a clause's literals stripped no longer matches. A clause
+        // the pattern doesn't need (a stale gate after a pattern edit, a literal from one branch only) leaves a sample
+        // that still matches, and this fails. Lookarounds hold too: the literal is stripped from the whole text.
+        foreach (var (rule, samples) in RulesWithSamples())
+        {
+            var regex = RegexFor(rule);
+            foreach (var clause in rule.Gate!.Clauses)
+            {
+                foreach (var sample in samples)
+                {
+                    var stripped = Strip(sample, clause);
+                    Assert.False(regex.IsMatch(stripped),
+                        $"rule {rule.Id} /{rule.Pattern}/ still matches without [{string.Join(' ', clause.Literals)}]: {stripped}");
+                }
+            }
+        }
+    }
+
+    // Each built-in rule with its samples: the rules of one id take that id's groups in order. A rule without a group
+    // fails with its own id.
+    private static IEnumerable<(RedactionRule Rule, string[] Samples)> RulesWithSamples()
+    {
+        var seen = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var rule in BuiltinRules.All)
+        {
+            var nth = seen.GetValueOrDefault(rule.Id);
+            seen[rule.Id] = nth + 1;
+            var groups = _samples.GetValueOrDefault(rule.Id) ?? [];
+            Assert.True(nth < groups.Length, $"rule {rule.Id} (#{(nth + 1).ToString(CultureInfo.InvariantCulture)} with that id) has no samples");
+            Assert.NotEmpty(groups[nth]);
+            yield return (rule, groups[nth]);
+        }
+    }
+
+    private static Regex RegexFor(RedactionRule rule) =>
+        new(rule.Pattern, rule.Options | CompiledRules.Always, TimeSpan.FromSeconds(10));
+
+    // Removes every literal of the clause, again until none is left (a removal can glue a new one together).
+    private static string Strip(string sample, RuleGateClause clause)
+    {
+        var comparison = clause.Caseless ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        var text = sample;
+        for (var pass = 0; pass < 100 && clause.MayHold(text, ascii: true); pass++)
+        {
+            foreach (var literal in clause.Literals)
+            {
+                text = text.Replace(literal, string.Empty, comparison);
+            }
+        }
+
+        return text;
     }
 
     [GeneratedRegex("token", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]

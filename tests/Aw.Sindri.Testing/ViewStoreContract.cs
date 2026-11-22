@@ -113,6 +113,22 @@ public abstract class ViewStoreContract
         Expect.True((await reader.State(Token)).Value is { Rebuilding: false, Cursor: 0 });
     }
 
+    /// <summary>A view's mark ends with ':' and its row count (#3883): a reader learns the view is empty without reading a row.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Mark_ends_with_the_row_count()
+    {
+        var (store, reader) = Create();
+        _ = await store.Open(ViewSchema.Version, Token);
+        var empty = (await reader.Mark(ViewNames.Services, Token)).Value;
+
+        _ = await store.Apply([Event(1, Put, "alpha"), Event(2, Put, "beta")], Projections(), Clock.GetUtcNow(), Token);
+        var two = (await reader.Mark(ViewNames.Services, Token)).Value;
+
+        Expect.True(empty.EndsWith(":0", StringComparison.Ordinal));
+        Expect.True(two.EndsWith(":2", StringComparison.Ordinal));
+    }
+
     /// <summary>A view's mark moves when a row is written or the view is emptied, and holds when an event writes nothing to it (#2852).</summary>
     /// <returns>The test.</returns>
     [Fact]

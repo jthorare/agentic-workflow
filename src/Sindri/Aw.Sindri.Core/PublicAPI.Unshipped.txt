@@ -4987,6 +4987,8 @@ static readonly Aw.Sindri.Core.SindriErrors.ProfileHashMismatch -> Aw.Kernel.Err
 static readonly Aw.Sindri.Core.SindriErrors.ProfileInvalid -> Aw.Kernel.ErrorDefinition!
 const Aw.Sindri.Core.SindriErrors.ProfileUnreadableFix = "The profile file is there but can't be read; check its permissions." -> string!
 static readonly Aw.Sindri.Core.SindriErrors.ProfileMissing -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ProfileUnreadable -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ProfileUnwritable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.RequestInvalid -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.RequestsRateLimited -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.SecretFileUnsafe -> Aw.Kernel.ErrorDefinition!
