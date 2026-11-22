@@ -65,7 +65,7 @@ internal sealed class ClaudeLineReader(bool subagent, DateTimeOffset clock, Func
         }
 
         return IsHuman(row, text)
-            ? new TranscriptEntry(number, _now, EntryKind.Human, scrub(text.Trim()), [])
+            ? new TranscriptEntry(number, _now, EntryKind.Human, scrub(PromptText.WithoutIdeBlocks(text).Trim()), [])
             : new TranscriptEntry(number, _now, EntryKind.MachinePrompt, "", []);
     }
 

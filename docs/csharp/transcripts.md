@@ -63,7 +63,8 @@ machine prompt (below) ends it.
 A human turn is a prompt a person typed. These are machine text, never human turns:
 
 - Tool results.
-- Tag-led text: `<system-reminder>`, `<command-name>` and the other slash-command wrappers, `<local-command-stdout>`,
+- Tag-led text (after the leading `<ide_opened_file>` and `<ide_selection>` blocks an IDE extension adds, which are
+  stripped; what follows them is judged by these rules, and the stored prompt leaves them out): `<system-reminder>`, `<command-name>` and the other slash-command wrappers, `<local-command-stdout>`,
   `<teammate-message>`, `<task-notification>`, `<environment_context>`. A lone `<pasted_content>` block is still typed.
 - Compaction summaries ("This session is being continued…"), skill preambles ("Base directory for this skill"),
   "Caveat:" notes, peer-session deliveries ("Another Claude session sent a message"), interrupt markers, AGENTS.md text.

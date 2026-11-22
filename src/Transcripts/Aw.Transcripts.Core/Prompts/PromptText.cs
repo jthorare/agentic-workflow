@@ -20,16 +20,20 @@ public static class PromptText
         "# AGENTS.md instructions",
     ];
 
+    // The blocks an IDE extension puts in front of what the person typed; only these are stripped before judging, because a
+    // wrong "human" feeds the steering miner a false correction, while a wrong "machine" only loses one turn.
+    private static readonly string[] _ideTags = ["ide_opened_file", "ide_selection"];
+
     // A tag-led prompt a person still typed: a paste the harness wrapped.
     private const string PastedContent = "<pasted_content";
 
     /// <summary>Whether a user line's text is what a person typed.</summary>
     /// <param name="text">The text of the line's text blocks.</param>
-    /// <returns>False for empty text, tag-led harness text and the known machine prefixes.</returns>
+    /// <returns>False for empty text, tag-led harness text and the known machine prefixes; leading IDE file and selection blocks are skipped first.</returns>
     public static bool IsTyped(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
-        var trimmed = text.TrimStart();
+        var trimmed = WithoutIdeBlocks(text);
         if (trimmed.Length == 0)
         {
             return false;
@@ -46,7 +50,24 @@ public static class PromptText
     /// <summary>The text after the leading '&lt;ide_opened_file&gt;' and '&lt;ide_selection&gt;' blocks an IDE extension puts in front of a typed prompt.</summary>
     /// <param name="text">The text of the line's text blocks.</param>
     /// <returns>The text without those blocks, start-trimmed.</returns>
-    public static string WithoutIdeBlocks(string text) => throw new NotSupportedException("red: strip the IDE blocks");
+    public static string WithoutIdeBlocks(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        var rest = text.TrimStart();
+        while (TagName(rest) is { } name && Array.Exists(_ideTags, tag => string.Equals(tag, name, StringComparison.Ordinal)))
+        {
+            var close = $"</{name}>";
+            var end = rest.IndexOf(close, StringComparison.Ordinal);
+            if (end < 0)
+            {
+                return rest;
+            }
+
+            rest = rest[(end + close.Length)..].TrimStart();
+        }
+
+        return rest;
+    }
 
     /// <summary>Strips the leading '&lt;tag …&gt;…&lt;/tag&gt;' blocks a host wraps around a prompt; a block that never closes stays.</summary>
     /// <param name="text">The text.</param>

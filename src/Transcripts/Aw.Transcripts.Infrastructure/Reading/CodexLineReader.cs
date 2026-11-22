@@ -87,7 +87,7 @@ internal sealed class CodexLineReader(DateTimeOffset clock, Func<string, string>
         }
 
         return !file.IsSubagent && !file.NonInteractive && PromptText.IsTyped(text)
-            ? new TranscriptEntry(number, _now, EntryKind.Human, scrub(text.Trim()), [])
+            ? new TranscriptEntry(number, _now, EntryKind.Human, scrub(PromptText.WithoutIdeBlocks(text).Trim()), [])
             : new TranscriptEntry(number, _now, EntryKind.MachinePrompt, "", []);
     }
 

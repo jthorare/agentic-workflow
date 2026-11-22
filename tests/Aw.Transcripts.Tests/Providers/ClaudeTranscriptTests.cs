@@ -29,10 +29,12 @@ public sealed class ClaudeTranscriptTests : IDisposable
             ClaudeLines.User("a scripted prompt", _t.AddSeconds(9), l => l["entrypoint"] = "sdk-cli"),
             ClaudeLines.User("Caveat: local command output follows", _t.AddSeconds(10)),
             ClaudeLines.User("a typed prompt with an origin", _t.AddSeconds(11), l => l["origin"] = new JsonObject { ["kind"] = "human" }),
-            ClaudeLines.UserBlocks(_t.AddSeconds(12), "a prompt in", "text blocks"));
+            ClaudeLines.UserBlocks(_t.AddSeconds(12), "a prompt in", "text blocks"),
+            ClaudeLines.User("<ide_opened_file>The user opened a.cs</ide_opened_file> fix the null check", _t.AddSeconds(13)),
+            ClaudeLines.User("<ide_selection>lines 1-4</ide_selection>", _t.AddSeconds(14)));
 
-        Assert.Equal<string>(["the one real prompt", "a typed prompt with an origin", "a prompt in\ntext blocks"], read.Turns.Where(t => t.Role == TurnRole.Human).Select(t => t.Text), StringComparer.Ordinal);
-        Assert.Equal(3, read.Session.HumanTurns);
+        Assert.Equal<string>(["the one real prompt", "a typed prompt with an origin", "a prompt in\ntext blocks", "fix the null check"], read.Turns.Where(t => t.Role == TurnRole.Human).Select(t => t.Text), StringComparer.Ordinal);
+        Assert.Equal(4, read.Session.HumanTurns);
     }
 
     [Fact]
