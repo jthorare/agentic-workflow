@@ -1,22 +1,12 @@
 using System.Globalization;
-using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Schedule;
 
 namespace Aw.Sindri.Features.ListWorkflows;
 
-/// <summary>A workflow's trigger in words for the list row (#3683), and the next tick of its schedule.</summary>
+/// <summary>A workflow's trigger in words for the list row (#3683); the next tick of its schedule is <see cref="WorkflowNextRun"/>.</summary>
 internal static class TriggerWords
 {
-    /// <summary>The trigger node of a graph: the first node nothing leads into (a graph has exactly one trigger), or the first node.</summary>
-    /// <param name="spec">The graph.</param>
-    /// <returns>The node, or null for an empty graph.</returns>
-    internal static GraphNode? Trigger(GraphSpec spec)
-    {
-        ArgumentNullException.ThrowIfNull(spec);
-        return spec.Nodes.FirstOrDefault(n => spec.Edges.All(e => e.To != n.Id)) ?? (spec.Nodes.Count > 0 ? spec.Nodes[0] : null);
-    }
-
     /// <summary>The trigger in words: 'By hand', 'Every 20 min', 'Every weekday 7:00', 'Every day 7:00'; a schedule it has no words for shows its cron text, any other trigger its node type.</summary>
     /// <param name="node">The trigger node, or null.</param>
     /// <returns>The words.</returns>
@@ -37,7 +27,7 @@ internal static class TriggerWords
             return node.Type;
         }
 
-        var crons = Crons(node);
+        var crons = WorkflowNextRun.Crons(node);
         return crons.Count switch
         {
             0 => "On a schedule",
@@ -45,43 +35,6 @@ internal static class TriggerWords
             _ => string.Create(CultureInfo.InvariantCulture, $"{crons.Count} schedules"),
         };
     }
-
-    /// <summary>The soonest tick of the node's cron lines after <paramref name="now"/>.</summary>
-    /// <param name="node">The trigger node, or null.</param>
-    /// <param name="now">The instant to start after.</param>
-    /// <returns>The tick, or null when the node is no schedule or has no valid cron.</returns>
-    internal static DateTimeOffset? Next(GraphNode? node, DateTimeOffset now)
-    {
-        if (node is null || !string.Equals(node.Type, "schedule", StringComparison.Ordinal))
-        {
-            return null;
-        }
-
-        // why: validate does not check the type of a timezone, so a stored number or list reaches here; GetValue<string>() would throw and 500 the whole list for one row, so that row shows no next run
-        string? timezone = null;
-        if (node.Config["timezone"] is { } zone && !(zone is JsonValue value && value.TryGetValue(out timezone)))
-        {
-            return null;
-        }
-
-        DateTimeOffset? soonest = null;
-        foreach (var text in Crons(node))
-        {
-            if (CronExpression.TryParse(text, timezone, out var cron, out _) && cron.Next(now) is var tick && (soonest is null || tick < soonest))
-            {
-                soonest = tick;
-            }
-        }
-
-        return soonest;
-    }
-
-    private static List<string> Crons(GraphNode node) => node.Config["cron"] switch
-    {
-        JsonValue v when v.TryGetValue<string>(out var text) => [text],
-        JsonArray list => [.. list.OfType<JsonValue>().Select(static v => v.TryGetValue<string>(out var s) ? s : null).OfType<string>()],
-        _ => [],
-    };
 
     private static string Words(string cron)
     {
