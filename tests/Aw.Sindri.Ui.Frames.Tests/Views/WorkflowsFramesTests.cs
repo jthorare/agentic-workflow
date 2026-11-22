@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -215,8 +216,8 @@ public sealed class WorkflowsFramesTests : FrameHost
 
         Assert.True(Visible(window, "RunNow"));
         await Until(window, () => window.ActualThemeVariant == ThemeVariant.Light, "the window never took the light theme");
-        var chip = window.GetVisualDescendants().OfType<StateChipView>().First(c => c.IsEffectivelyVisible && c.Tone == "ok").GetVisualDescendants().OfType<TextBlock>().First();
-        Assert.Equal(ThemeColor(window, "Brush.Success", ThemeVariant.Light), ChipColor(chip));   // the theme token (Success is one colour in both variants, Theme/Tokens.axaml)
+        var glyph = window.GetVisualDescendants().OfType<TextBlock>().First(t => t.Name == "RunErrorGlyph" && t.IsEffectivelyVisible);   // run rows mark their status with a glyph since #3683; list-three holds a failed run
+        Assert.Equal(ThemeColor(window, "Brush.Error", ThemeVariant.Light), ChipColor(glyph));   // the theme token, resolved in the light variant
         Frame(window, "runs-light-1440", Prefix);
     });
 
@@ -294,48 +295,61 @@ public sealed class WorkflowsFramesTests : FrameHost
         Assert.False(string.IsNullOrEmpty(word), $"{what}: the view model has no chip word");
     }
 
-    /// <summary>A visible status chip of a run row: the header's workflow state chip (WorkflowsState) is not a run's status.</summary>
-    private static bool IsRunRowChip(StateChipView chip) => chip.IsEffectivelyVisible && !string.Equals(chip.Name, "WorkflowsState", StringComparison.Ordinal);
-
     private static void AssertNoHandDrawnChip(Window window) =>
         Assert.DoesNotContain(window.GetVisualDescendants().OfType<Border>(), b => b is not StateChipView && b.Classes.Contains("status-chip"));
 
+    // #3683: a workflow row says its state in the State column ("Active", "Paused", "Off"), and its last run as a StateChipView only when it ran.
     [Fact]
-    public Task The_workflow_rows_draw_their_state_as_StateChipViews() => OnUi(async () =>
+    public Task The_workflow_rows_draw_their_state_in_words_and_their_last_run_as_a_StateChipView() => OnUi(async () =>
     {
         var (window, shell) = await OnWorkflows(1440);
 
         AssertNoHandDrawnChip(window);
-        var chips = window.GetVisualDescendants().OfType<StateChipView>().Where(IsRunRowChip).ToList();
-        Assert.Equal(shell.Workflows.Rows.Count, chips.Count);
-        for (var i = 0; i < chips.Count; i++)
+        var rows = window.GetVisualDescendants().OfType<Border>().Where(b => b.Name == "WorkflowRow" && b.IsEffectivelyVisible).ToList();
+        Assert.Equal(shell.Workflows.Rows.Count, rows.Count);
+        foreach (var border in rows)
         {
-            var row = shell.Workflows.Rows[i];
-            AssertChip(chips[i], row.ChipWord, row.ChipGlyph, row.IsActive ? "ok" : "neutral", $"workflow {row.Slug}");
-            Assert.Equal(chips[i].Tone, row.ChipToneWord);
+            var row = Assert.IsType<WorkflowRowViewModel>(border.DataContext);
+            var state = border.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "RowState");
+            Assert.Equal(row.StateText, state.Text);
+            Assert.Equal(row.StateIsOk, state.Classes.Contains("state-ok"));
+            var lastRun = border.GetVisualDescendants().OfType<StateChipView>().Single(c => c.Name == "RowLastRun");
+            Assert.Equal(row.ShowsLastRun, lastRun.IsEffectivelyVisible);
+            if (row.ShowsLastRun)
+            {
+                Assert.Equal((row.LastRunText, row.LastRunToneWord), (lastRun.Word, lastRun.Tone));
+                Assert.Contains("status-" + lastRun.Tone, lastRun.Classes, StringComparer.Ordinal);
+            }
         }
     });
 
+    // #3683: a run row of the runs table marks its status with a glyph in front of its one-line result (a failed one in the error colour), and its row name says the status in words.
     [Fact]
-    public Task The_run_rows_draw_their_status_as_StateChipViews() => OnUi(async () =>
+    public Task The_run_rows_draw_their_status_as_a_glyph_and_say_it_in_their_name() => OnUi(async () =>
     {
         var (window, shell) = await OnWorkflows(1440);
         await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
         await Until(window, () => shell.Workflows.Runs.Rows.Count > 0, "the runs never showed");
 
         AssertNoHandDrawnChip(window);
-        var chips = window.GetVisualDescendants().OfType<StateChipView>().Where(IsRunRowChip).ToList();
-        Assert.Equal(shell.Workflows.Runs.Rows.Count, chips.Count);
-        for (var i = 0; i < chips.Count; i++)
+        var rows = window.GetVisualDescendants().OfType<Border>().Where(b => b.Name == "RunRow" && b.IsEffectivelyVisible).ToList();
+        Assert.Equal(shell.Workflows.Runs.Rows.Count, rows.Count);
+        foreach (var border in rows)
         {
-            var row = shell.Workflows.Runs.Rows[i];
-            AssertChip(chips[i], row.ChipWord, row.ChipGlyph, row.ChipToneWord, $"run {row.Id}");
-            Assert.Equal(chips[i].Tone, row.ChipToneWord);
+            var row = Assert.IsType<RunRowViewModel>(border.DataContext);
+            var glyph = RunGlyph(border);
+            Assert.Equal(row.ChipGlyph, glyph.Text);
+            Assert.Equal(row.IsError ? "RunErrorGlyph" : "RunGlyph", glyph.Name);
+            Assert.Equal(row.Name, AutomationProperties.GetName(border));
+            Assert.Contains(row.ChipWord, row.Name, StringComparison.OrdinalIgnoreCase);
         }
 
-        Assert.Contains(chips, c => c.Tone == "ok");
-        Assert.Contains(chips, c => c.Tone == "error");   // list-three holds a succeeded and a failed run
+        Assert.Contains(rows, b => RunGlyph(b).Name == "RunErrorGlyph");
+        Assert.Contains(rows, b => RunGlyph(b).Name == "RunGlyph");   // list-three holds a succeeded and a failed run
     });
+
+    private static TextBlock RunGlyph(Border row) =>
+        row.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name is "RunErrorGlyph" or "RunGlyph" && t.IsEffectivelyVisible);
 
     [Fact]
     public Task The_run_header_and_the_node_runs_draw_their_status_as_StateChipViews() => OnUi(async () =>
@@ -374,9 +388,10 @@ public sealed class WorkflowsFramesTests : FrameHost
 
         await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
         await Until(window, () => shell.Workflows.Runs.Rows.Count == 2, "the two runs never showed");
-        var rows = window.GetVisualDescendants().OfType<StateChipView>().Where(IsRunRowChip).ToList();
-        Assert.Equal("waiting running", string.Join(' ', rows.Select(c => c.Tone)));
-        Assert.All(rows, c => Assert.Contains("status-" + c.Tone, c.Classes, StringComparer.Ordinal));
+        Assert.Equal("waiting running", string.Join(' ', shell.Workflows.Runs.Rows.Select(r => r.ChipToneWord)));
+        var glyphs = window.GetVisualDescendants().OfType<Border>().Where(b => b.Name == "RunRow" && b.IsEffectivelyVisible).Select(RunGlyph).ToList();
+        Assert.Equal(shell.Workflows.Runs.Rows.Select(r => r.ChipGlyph), glyphs.Select(g => g.Text ?? string.Empty));   // each live run's own glyph, in the quiet colour (#3683: no chip on a run row)
+        Assert.All(glyphs, g => Assert.Equal("RunGlyph", g.Name));
 
         await shell.Workflows.OpenRun(RunId, CancellationToken.None);
         await Until(window, () => shell.Workflows.Run.Groups.Count > 0, "the run never showed");

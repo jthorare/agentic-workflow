@@ -261,8 +261,8 @@
                     <TextBlock Grid.Column="3" Name="RunRevision" Classes="body muted" Text="{Binding RevisionShort}" VerticalAlignment="Center" />
                     <TextBlock Grid.Column="4" Name="RunDuration" Classes="body muted" Text="{Binding DurationText}" VerticalAlignment="Center" />
                     <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                      <TextBlock Text="{Binding ChipGlyph}" Foreground="{DynamicResource Brush.Error}" IsVisible="{Binding IsError}" AutomationProperties.AccessibilityView="Raw" />
-                      <TextBlock Text="{Binding ChipGlyph}" Foreground="{DynamicResource Brush.InkSubtle}" IsVisible="{Binding !IsError}" AutomationProperties.AccessibilityView="Raw" />
+                      <TextBlock Name="RunErrorGlyph" Text="{Binding ChipGlyph}" Foreground="{DynamicResource Brush.Error}" IsVisible="{Binding IsError}" AutomationProperties.AccessibilityView="Raw" />
+                      <TextBlock Name="RunGlyph" Text="{Binding ChipGlyph}" Foreground="{DynamicResource Brush.InkSubtle}" IsVisible="{Binding !IsError}" AutomationProperties.AccessibilityView="Raw" />
                       <TextBlock Name="RunResult" Classes="caption muted" Text="{Binding ResultText}" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                   </Grid>
