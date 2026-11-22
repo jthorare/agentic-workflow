@@ -23,11 +23,14 @@ check() {
 }
 shown() { printf '%s\n' "$1" | sed 's/^/  in: /'; }   # every line prefixed: the CI runner keeps only "  in:" lines of a failing suite
 has() { # has <name> <text> <fixed string>
-  if printf '%s' "$2" | grep -qF -- "$3"; then echo "ok - $1"; else echo "not ok - $1"; echo "  missing: $3"; shown "$2"; fail=1; fi
+  if grep -qF -- "$3" <<<"$2"; then echo "ok - $1"; else echo "not ok - $1"; echo "  missing: $3"; shown "$2"; fail=1; fi
 }
 lacks() {
-  if printf '%s' "$2" | grep -qF -- "$3"; then echo "not ok - $1"; echo "  unexpected: $3"; shown "$2"; fail=1; else echo "ok - $1"; fi
+  if grep -qF -- "$3" <<<"$2"; then echo "not ok - $1"; echo "  unexpected: $3"; shown "$2"; fail=1; else echo "ok - $1"; fi
 }
+# #3660: `has` was `printf | grep -qF` under pipefail: a needle on the first line of a long text read as missing (SIGPIPE, 141).
+needle_first="$(printf 'AW_HEAVY_NEEDLE: on line one\n'; head -c 100000 /dev/zero | tr '\0' x | fold -w 80)"
+for _i in 1 2 3 4 5; do has "has finds a needle on the first line of a 100 KB text ($_i)" "$needle_first" "AW_HEAVY_NEEDLE: on line one"; done
 WORK="$(mktemp -d)"
 bgpids=()
 cleanup() { for p in ${bgpids[@]+"${bgpids[@]}"}; do kill "$p" 2> /dev/null; done; find "$WORK" -delete 2> /dev/null; }   # by recorded pid only
@@ -365,6 +368,28 @@ for sig in INT TERM; do
   check "$sig: the job is gone" "$(gone "${jp:-0}" && echo gone || echo alive)" "gone"
   check "$sig: locks released" "$(find "$LOCKS" -name '*.lock*' -type d | wc -l | tr -d ' ')" "0"
   rm -f "$WORK/job.pid"
+done
+
+# --- the reason file (heavy-reason.*) is gone on every way out (#3699) ---
+# A private TMPDIR, so only this wrapper's files count. Passing, failing and watchdog-killed jobs, then INT and TERM.
+RTMP="$WORK/rtmp"; mkdir -p "$RTMP"
+left() { find "$RTMP" -name 'heavy-reason.*' | wc -l | tr -d ' '; }
+reset; TMPDIR="$RTMP" H --light echo hi > /dev/null 2>&1
+check "reason file: none left after a passing job" "$(left)" "0"
+reset; TMPDIR="$RTMP" H --light sh -c 'exit 7' > /dev/null 2>&1
+check "reason file: none left after a failing job" "$(left)" "0"
+reset; TMPDIR="$RTMP" AW_HEAVY_SESSION_PID="$DEAD" H --light sleep 30 > /dev/null 2>&1; rc=$?
+check "reason file: the watchdog kill still exits 124" "$rc" "124"
+check "reason file: none left after the watchdog kill" "$(left)" "0"
+for sig in INT TERM; do
+  reset; rm -f "$WORK/job.pid"
+  TMPDIR="$RTMP" perl -e '$SIG{INT}="DEFAULT"; $SIG{TERM}="DEFAULT"; exec @ARGV' bash "$HEAVY" --expensive bash "$WORK/job.sh" "$WORK/job.pid" > /dev/null 2>&1 &
+  hp=$!; bgpids+=("$hp")
+  wait_file "$WORK/job.pid" || echo "  (job did not start)"
+  check "reason file: one exists while the job runs ($sig)" "$(left)" "1"
+  kill -"$sig" "$hp"; wait "$hp" 2> /dev/null
+  check "reason file: none left after $sig" "$(left)" "0"
+  find "$RTMP" -name 'heavy-reason.*' -delete
 done
 
 # --- the job runs in its own systemd scope (#2931) ---

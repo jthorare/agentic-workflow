@@ -161,6 +161,15 @@ public sealed class MergeGateTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void Main_moved_refuses_on_a_conflict_even_with_a_merge_queue()
+    {
+        var check = MergeGate.Evaluate(Facts(Gate() with { Tree = "t1" }) with { CurrentMain = "main2", BaseHasMergeQueue = true, MergeConflicts = true }).Single(c => c.Name == "main");
+
+        Assert.False(check.Ok);
+        Assert.Contains("conflicts", check.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void Main_moved_still_refuses_without_a_merge_queue() =>
         Assert.Equal(["main"], Failed(Facts(Gate() with { Tree = "t1" }) with { CurrentMain = "main2", BaseHasMergeQueue = false }), StringComparer.Ordinal);
 
