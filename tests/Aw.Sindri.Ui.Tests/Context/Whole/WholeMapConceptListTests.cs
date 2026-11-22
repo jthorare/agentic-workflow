@@ -7,6 +7,7 @@ using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Context.Concepts;
 using Aw.Sindri.Ui.ViewModels.Context;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
+using Aw.Sindri.Ui.ViewModels.Controls;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Context.Whole;
@@ -42,8 +43,8 @@ public sealed class WholeMapConceptListTests
     {
         var map = Concept(List());
 
-        Assert.Equal(["All 2147", "Code 1980", "Features 71", "Records 96"], map.ConceptTabs.Select(t => t.Text));
-        Assert.Equal(["all"], map.ConceptTabs.Where(t => t.IsSelected).Select(t => t.Key));
+        Assert.Equal(["All 2147", "Code 1980", "Features 71", "Records 96"], map.ConceptTabs.Select(t => t.Text), StringComparer.Ordinal);
+        Assert.Equal(["all"], map.ConceptTabs.Where(t => t.IsSelected).Select(t => t.Key), StringComparer.Ordinal);
         Assert.True(map.IsConceptList);
         Assert.True(map.ShowAreaList);
         Assert.Null(map.Geometry);

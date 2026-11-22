@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Net;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
@@ -52,11 +51,11 @@ public sealed class ContextWholeTilesSearchTests
         page.MapSearch = new Searches(["Billing.cs", "Invoice.cs"], ["Ledger.cs"]);
         page.AnchorText = Anchor;
         await page.Submit(Token);
-        Assert.Equal(["Billing.cs", "Invoice.cs"], page.Whole.Items.Select(i => i.Label));
+        Assert.Equal(["Billing.cs", "Invoice.cs"], page.Whole.Items.Select(i => i.Label), StringComparer.Ordinal);
 
         await page.Submit(Token);
 
-        Assert.Equal(["Ledger.cs"], page.Whole.Items.Select(i => i.Label));
+        Assert.Equal(["Ledger.cs"], page.Whole.Items.Select(i => i.Label), StringComparer.Ordinal);
         Assert.True(page.Whole.IsSearchList);
         Assert.DoesNotContain(api.WholeMapAsked, q => q.Area is not null || q.Locate.Count > 0);
     }
@@ -69,7 +68,7 @@ public sealed class ContextWholeTilesSearchTests
         public Task<IReadOnlyList<MapSearchHit>> Search(string query, CancellationToken cancellationToken)
         {
             var labels = answers[Math.Min(_next++, answers.Length - 1)];
-            return Task.FromResult<IReadOnlyList<MapSearchHit>>([.. labels.Select(l => new MapSearchHit(string.Create(CultureInfo.InvariantCulture, $"code:src/{l}"), "code", l, "feature:billing"))]);
+            return Task.FromResult<IReadOnlyList<MapSearchHit>>([.. labels.Select(l => new MapSearchHit($"code:src/{l}", "code", l, "feature:billing"))]);
         }
     }
 }

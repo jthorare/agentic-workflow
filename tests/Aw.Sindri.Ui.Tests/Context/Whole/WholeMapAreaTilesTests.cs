@@ -11,7 +11,7 @@ public sealed class WholeMapAreaTilesTests
     private static readonly TimeZoneInfo _utc = TimeZoneInfo.Utc;
 
     private static WholeArea Area(string key, string label, int code, int features, int records, int decisions = 0) =>
-        new(key, label, "trusted", code + features + records + decisions, new Dictionary<string, int> { ["code"] = code, ["feature"] = features, ["record"] = records, ["decision"] = decisions }, Unassigned: false);
+        new(key, label, "trusted", code + features + records + decisions, new Dictionary<string, int>(StringComparer.Ordinal) { ["code"] = code, ["feature"] = features, ["record"] = records, ["decision"] = decisions }, Unassigned: false);
 
     private static WholeMapView Repo(int nodes, params WholeArea[] areas)
     {
@@ -50,7 +50,7 @@ public sealed class WholeMapAreaTilesTests
     {
         var map = Shown(Repo(200, _three));
 
-        Assert.Equal(["Control plane and authentication", "Billing", "Tab groups"], map.AreaTiles.Select(t => t.Label));
+        Assert.Equal(["Control plane and authentication", "Billing", "Tab groups"], map.AreaTiles.Select(t => t.Label), StringComparer.Ordinal);
         Assert.Equal("1980 code files · 71 features · 96 records", map.AreaTiles[0].Counts);   // why: the records are the records and the decisions
         Assert.Equal("1 code file · 1 feature · 0 records", map.AreaTiles[2].Counts);
         Assert.Equal("Billing, 12 code files · 2 features · 1 record. Press Enter to open.", map.AreaTiles[1].Name);
