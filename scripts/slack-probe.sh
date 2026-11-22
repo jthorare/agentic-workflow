@@ -16,9 +16,11 @@
 # Keys: AW_SLACK_PROBE_KEY, the probe app's User OAuth Token (xoxp-). AW_SLACK_PROBE_APP_KEY, optional, its app-level token (xapp-)
 #   for line 5. Keys reach curl through 0600 config files, never an argument, and are never printed. The token goes only to the
 #   --url host and to *.slack.com file urls over https (loopback ones when --url is loopback); an upload url never gets it.
+#   A key outside Slack's token alphabet is refused; the key variables are unset once read; a loopback run ignores proxy variables.
 # Output: counts, yes/no, error codes, header numbers and host names. Never a channel name, user name, id, topic or message text.
 # Write part guards: the channel must be private, made by the token's user, with 1 member. Every message, scheduled message and
 #   file it makes is deleted at the end, from the EXIT trap too (a SIGINT included), and the channel is read again to count what is left.
+#   A post or schedule call cut off by a SIGINT or a lost answer is still deleted (a lost post is found by its metadata act id).
 # Exit 0 ok, 1 a probe call failed or the cleanup left something (the "failed:" lines say which), 2 usage, no key or a guard refused.
 set -uo pipefail
 
@@ -76,11 +78,11 @@ is_loopback() { case "$1" in 127.0.0.1|localhost|'[::1]') return 0 ;; esac; retu
 
 base="${base%/}"
 base_host="$(url_host "$base")"
-loopback=0
+loopback=0 noproxy=()   # a loopback run never goes through a proxy from the environment: it would see the Authorization header
 case "$base" in
   https://slack.com/api) ;;
   http://*|https://*)
-    if [ -n "$base_host" ] && is_loopback "$base_host"; then loopback=1
+    if [ -n "$base_host" ] && is_loopback "$base_host"; then loopback=1 noproxy=(--noproxy '*')
     else echo "probe: --url must be https://slack.com/api or a loopback address" >&2; exit 2; fi ;;
   *) echo "probe: --url must be an http(s) url" >&2; exit 2 ;;
 esac
@@ -96,10 +98,14 @@ file_url_ok() {
 # --- keys ---
 key="${AW_SLACK_PROBE_KEY:-}"
 app_key="${AW_SLACK_PROBE_APP_KEY:-}"
+unset AW_SLACK_PROBE_KEY AW_SLACK_PROBE_APP_KEY   # curl and every other child run without them
 if [ -z "$key" ]; then
   echo "probe: no Slack key. Read the probe app's User OAuth Token into AW_SLACK_PROBE_KEY (docs/sindri/slack-probe-manifest.yaml, step 6)." >&2
   exit 2
 fi
+# Slack's token alphabet (letters, digits, "-", and "." for rotating xoxe. tokens): anything else would break the curl config line.
+case "$key" in *[!A-Za-z0-9.-]*) echo "probe: AW_SLACK_PROBE_KEY holds a character no Slack token has (a quote, space or newline?)" >&2; exit 2 ;; esac
+case "$app_key" in *[!A-Za-z0-9.-]*) echo "probe: AW_SLACK_PROBE_APP_KEY holds a character no Slack token has (a quote, space or newline?)" >&2; exit 2 ;; esac
 if [ -n "$app_key" ]; then case "$app_key" in xapp-*) ;; *) echo "probe: AW_SLACK_PROBE_APP_KEY must be an app-level token (xapp-)" >&2; exit 2 ;; esac; fi
 case "$key" in
   xoxp-*) token_kind=user ;; xoxe.xoxp-*) token_kind=user-rotating ;; xoxb-*) token_kind=bot ;; xapp-*) token_kind=app ;;
@@ -132,7 +138,7 @@ api() {
   local cfg="$1" name="$2" method="$3" code kv args=()
   shift 3
   for kv in "$@"; do args+=(--data-urlencode "$kv"); done
-  code="$(curl -sS -K "$work/$cfg.cfg" -X POST --max-time 30 -D "$work/$name.h" -o "$work/$name.json" -w '%{http_code}' \
+  code="$(curl ${noproxy[@]+"${noproxy[@]}"} -sS -K "$work/$cfg.cfg" -X POST --max-time 30 -D "$work/$name.h" -o "$work/$name.json" -w '%{http_code}' \
     ${args[@]+"${args[@]}"} "$base/$method" 2>/dev/null)" || return 1
   [ "$code" = 429 ] && return 4
   jq -e type "$work/$name.json" >/dev/null 2>&1 || return 1
@@ -195,8 +201,9 @@ fi
 # The write guard comes before any other call: a refused channel ends the run with nothing written.
 if [ "$auth_ok" -eq 1 ] && [ "$want_write" -eq 1 ]; then
   api user Scratch conversations.info "channel=$channel" include_num_members=true; rc=$?
-  if [ "$rc" -ne 0 ] || ! jq -e --arg u "$user_id" '.channel | (.is_private == true) and (.is_im != true) and (.is_mpim != true)
-      and (.creator == $u) and (.num_members == 1)' "$work/Scratch.json" >/dev/null 2>&1; then
+  # An empty user_id (auth.test without one) or creator must never match: "" == "" is not "made by you".
+  if [ "$rc" -ne 0 ] || [ -z "$user_id" ] || ! jq -e --arg u "$user_id" '.channel | (.is_private == true) and (.is_im != true) and (.is_mpim != true)
+      and ((.creator | type) == "string") and (.creator != "") and (.creator == $u) and (.num_members == 1)' "$work/Scratch.json" >/dev/null 2>&1; then
     echo "refused: --channel must be a private channel you made, with no other member (conversations.info: $(result Scratch "$rc" conversations.info))" >&2
     exit 2
   fi
@@ -299,13 +306,33 @@ if [ "$rc" -eq 0 ]; then
   emit emoji.hosts "${hosts:-none}"
 else emit emoji "$(result Emoji "$rc" emoji.list)"; fi
 
-posted=() sched=() file_id=""
+posted=() sched=() file_id="" probe_act="" inflight=""
+# inflight: the api name of a post or schedule call whose answer is not recorded yet. A SIGINT runs the EXIT trap once that curl
+# returns, so the answer file is there; when the answer was lost, cleanup finds the post by its act id in the channel instead.
+# recover_inflight: add the in-flight call's message or scheduled message to the lists cleanup deletes, once (a SIGINT can land after
+# the list was updated and before inflight moved on).
+recover_inflight() {
+  local ts id
+  case "$inflight" in
+    Post)
+      ts="$(jq -r 'select(.ok == true) | .ts // empty' "$work/Post.json" 2>/dev/null)"
+      if [ -z "$ts" ] && api user Find conversations.history "channel=$channel" limit=100 include_all_metadata=true; then
+        ts="$(jq -r --arg a "$probe_act" '[.messages[]? | select(.metadata.event_payload.act_id == $a) | .ts] | first // empty' "$work/Find.json")"
+      fi
+      [ -n "$ts" ] && ! printf '%s\n' ${posted[@]+"${posted[@]}"} | grep -qxF -- "$ts" && posted+=("$ts") ;;
+    Sched|Sched121)
+      id="$(jq -r 'select(.ok == true) | .scheduled_message_id // empty' "$work/$inflight.json" 2>/dev/null)"
+      [ -n "$id" ] && ! printf '%s\n' ${sched[@]+"${sched[@]}"} | grep -qxF -- "$id" && sched+=("$id") ;;
+  esac
+  inflight=""
+}
 # cleanup: delete every message, scheduled message and file this run made, then read the channel again. Runs once, from the main
 # flow or the EXIT trap.
 cleanup() {
   [ "$cleanup_armed" -eq 1 ] && [ "$cleanup_done" -eq 0 ] || return 0
   cleanup_done=1
   local ts id n=0 m=0 left
+  recover_inflight
   for ts in ${posted[@]+"${posted[@]}"}; do
     m=$((m + 1)); api user Del chat.delete "channel=$channel" "ts=$ts" && n=$((n + 1)) || failed "cleanup chat.delete"
   done
@@ -330,15 +357,15 @@ cleanup() {
 write_part() {
   local rc act ts r now body url
   emit write.channel "private, mine, 1 member"
-  act="$(od -An -N8 -tx1 /dev/urandom | tr -d ' \n')"
-  cleanup_armed=1
+  act="$(od -An -N8 -tx1 /dev/urandom | tr -d ' \n')"; probe_act="$act"
+  cleanup_armed=1 inflight=Post
   api user Post chat.postMessage "channel=$channel" "text=sindri-probe ${act:0:8}" \
     "metadata=$(jq -nc --arg a "$act" '{event_type:"sindri_probe",event_payload:{act_id:$a}}')"; rc=$?
   emit post.ok "$(result Post "$rc" chat.postMessage)"
   [ "$rc" -eq 0 ] || return
   ts="$(jq -r '.ts // empty' "$work/Post.json")"
   [ -n "$ts" ] || { failed "chat.postMessage (no ts)"; return; }
-  posted+=("$ts")
+  posted+=("$ts") inflight=""
   api user Back conversations.history "channel=$channel" "latest=$ts" inclusive=true limit=1 include_all_metadata=true; rc=$?
   if [ "$rc" -eq 0 ]; then
     emit post.metadata_kept "$(if [ "$(jq -r '.messages[0].metadata.event_payload.act_id // ""' "$work/Back.json")" = "$act" ]; then echo yes; else echo no; fi)"
@@ -355,12 +382,15 @@ write_part() {
   api user Mark conversations.mark "channel=$channel" "ts=$ts"; rc=$?
   emit mark.ok "$(result Mark "$rc" conversations.mark)"
   now="$(date +%s)"
+  inflight=Sched
   api user Sched chat.scheduleMessage "channel=$channel" "text=sindri-probe ${act:0:8} scheduled" "post_at=$((now + 3600))"; rc=$?
   emit schedule.ok "$(result Sched "$rc" chat.scheduleMessage)"
   if [ "$rc" -eq 0 ]; then sched+=("$(jq -r '.scheduled_message_id' "$work/Sched.json")"); fi
+  inflight=Sched121
   api user Sched121 chat.scheduleMessage "channel=$channel" "text=sindri-probe ${act:0:8} far" "post_at=$((now + 121 * 86400))"; rc=$?
   r="$(result Sched121 "$rc" "chat.scheduleMessage (121 days)")"
   if [ "$rc" -eq 0 ]; then sched+=("$(jq -r '.scheduled_message_id' "$work/Sched121.json")"); r=accepted; fi
+  inflight=""
   case "$r" in "no ("*) r="${r#no (}"; r="${r%)}" ;; esac
   emit schedule.121_days "$r"
 
@@ -371,7 +401,7 @@ write_part() {
   url="$(jq -r '.upload_url // ""' "$work/UpUrl.json")"; file_id="$(jq -r '.file_id // ""' "$work/UpUrl.json")"
   if ! file_url_ok "$url"; then emit upload.url_host_ok no; file_id=""; return; fi
   emit upload.url_host_ok yes
-  r="$(curl -sS -X POST --max-time 30 -o "$work/Up.out" -w '%{http_code}' --data-binary @"$body" "$url" 2>/dev/null)" || { failed "upload post"; file_id=""; return; }
+  r="$(curl ${noproxy[@]+"${noproxy[@]}"} -sS -X POST --max-time 30 -o "$work/Up.out" -w '%{http_code}' --data-binary @"$body" "$url" 2>/dev/null)" || { failed "upload post"; file_id=""; return; }
   case "$r" in 2*) ;; *) emit upload.ok "no (http $(tr -cd '0-9' <<<"$r"))"; file_id=""; return ;; esac
   api user UpDone files.completeUploadExternal "files=$(jq -nc --arg id "$file_id" '[{id:$id,title:"sindri-probe"}]')" "channel_id=$channel"; rc=$?
   emit upload.ok "$(result UpDone "$rc" files.completeUploadExternal)"
@@ -381,9 +411,9 @@ write_part() {
   url="$(jq -r '.file.url_private // ""' "$work/FileInfo.json")"
   if ! file_url_ok "$url"; then emit file.url_private_host_ok no; return; fi
   emit file.url_private_host_ok yes
-  r="$(curl -sS -K "$work/user.cfg" --max-time 30 -o /dev/null -w '%{http_code}' "$url" 2>/dev/null)" || r=000
+  r="$(curl ${noproxy[@]+"${noproxy[@]}"} -sS -K "$work/user.cfg" --max-time 30 -o /dev/null -w '%{http_code}' "$url" 2>/dev/null)" || r=000
   emit file.fetch_with_token "$(tr -cd '0-9' <<<"$r")"
-  r="$(curl -sS --max-time 30 -o /dev/null -w '%{http_code}' "$url" 2>/dev/null)" || r=000
+  r="$(curl ${noproxy[@]+"${noproxy[@]}"} -sS --max-time 30 -o /dev/null -w '%{http_code}' "$url" 2>/dev/null)" || r=000
   emit file.fetch_without_token "$(tr -cd '0-9' <<<"$r")"
 }
 if [ "$want_write" -eq 1 ]; then write_part; cleanup; else emit write "skipped (no --write)"; fi
