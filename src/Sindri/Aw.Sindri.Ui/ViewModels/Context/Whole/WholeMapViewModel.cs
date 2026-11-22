@@ -251,6 +251,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
         var came = AreaKey;
         (Answer, Geometry, Areas) = overview;
         (Stage, AreaKey, AreaPage, AreaPages, AreaLaidOut) = (WholeStage.Canvas, string.Empty, 1, 1, Task.CompletedTask);
+        (ListLoading, IsListFailed) = (false, false);   // a page turn still being read is dropped, so its skeleton rows or failure line go with the area
         ForgetHighlight();
         _overview = null;
         IsAreaOpen = false;

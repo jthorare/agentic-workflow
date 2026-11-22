@@ -18,6 +18,7 @@ internal sealed partial class WholeMapViewModel
         NoMatches = hits.Count == 0;
         _hits = hits.Count == 0 ? null : hits;
         (AreaPage, AreaPages) = (1, Math.Max(1, (hits.Count + WholeDrillIn.ListPageSize - 1) / WholeDrillIn.ListPageSize));
+        (ListLoading, IsListFailed) = (false, false);   // the matches are in memory: no read is pending for this list
         Changed();
         OnChanged(nameof(NoMatches));
     }
