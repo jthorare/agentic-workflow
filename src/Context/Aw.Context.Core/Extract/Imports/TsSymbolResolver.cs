@@ -59,7 +59,12 @@ internal sealed class TsSymbolResolver
             return null;
         }
 
-        return binding.Kind == ImportKind.Namespace ? file : Exported(file, binding.Imported, [], 0) is { Name: WholeModule } whole ? whole.File : null;
+        if (binding.Kind == ImportKind.Namespace)
+        {
+            return file;
+        }
+
+        return Exported(file, binding.Imported, [], 0) is { } symbol && string.Equals(symbol.Name, WholeModule, StringComparison.Ordinal) ? symbol.File : null;
     }
 
     private ResolvedSymbol? Exported(string file, string name, HashSet<(string, string)> seen, int depth)

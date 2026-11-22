@@ -61,6 +61,7 @@ internal static class TsWorkspace
         JsonValueKind.String => value.GetString() is { Length: > 0 } target ? [target] : [],
         JsonValueKind.Object => value.EnumerateObject().SelectMany(p => Leaves(p.Value)),
         JsonValueKind.Array => value.EnumerateArray().SelectMany(Leaves),
+        JsonValueKind.Undefined or JsonValueKind.Null or JsonValueKind.True or JsonValueKind.False or JsonValueKind.Number => [],   // why: a null target blocks the subpath, so it adds nothing
         _ => [],
     };
 
