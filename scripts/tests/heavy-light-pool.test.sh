@@ -77,7 +77,7 @@ started() { [ -e "$RUN/started.$1" ]; }
 waiting() { [ -s "$LOCKS/heavy-wait/$(pid_of "$1")" ]; }
 go() { touch "$RUN/go.$1"; }
 rc_of() { wait "$(pid_of "$1")" 2> /dev/null; RC=$?; }   # in this shell: a $(...) subshell can't wait for our jobs
-# reset: end every job, empty the locks, the run dir and the cap files; memory back to plenty.
+# reset: end every job, empty the locks and the run dir, no light cap or reserve file, box-wide cap 4; memory back to plenty.
 reset() {
   touch "$RUN/go.all"
   local f id; for f in "$RUN"/pid.*; do
@@ -86,10 +86,11 @@ reset() {
     wait "$(cat "$f")" 2> /dev/null
   done
   find "$RUN" "$LOCKS" -mindepth 1 -delete 2> /dev/null
-  rm -f "$STATE/heavy-light-cap"; mem_mb 64000; JOB_ENV=""; SCRIPT=""
+  rm -f "$STATE/heavy-light-cap" "$STATE/heavy-meta-reserve"; echo 4 > "$STATE/heavy-slots-cap"; mem_mb 64000; JOB_ENV=""; SCRIPT=""
 }
 hold_box() { mkdir -p "$BOX"; echo "$live 2026-01-01T00:00:00Z session=x held" > "$BOX/owner"; }
-box_waiter() { mkdir -p "$LOCKS/heavy-wait"; printf '{"pid":%s,"session":1,"lock":"box-wide","since":"2026-01-01T00:00:00Z","argv":["x"],"cwd":"/"}\n' "$1" > "$LOCKS/heavy-wait/$1"; }
+# box_waiter <pid> [<extra fields>]
+box_waiter() { mkdir -p "$LOCKS/heavy-wait"; printf '{"pid":%s,"session":1,"lock":"box-wide","since":"2026-01-01T00:00:00Z","argv":["x"],"cwd":"/"%s}\n' "$1" "${2:-}" > "$LOCKS/heavy-wait/$1"; }
 fill_light() { mkdir -p "$LIGHT"; echo "$live 2026-01-01T00:00:00Z session=x held" > "$LIGHT/owner"; }
 
 # --- the pool: N run, the N+1th waits and starts when one ends ---
@@ -142,6 +143,27 @@ check "held: slots 1 and 2 held, 12000 MB under slot 3's 14336" "$(yn 'started j
 reset; box_waiter "$live"; mem_mb 5000
 job j1; wait_for 'started j1'
 check "not held: box-wide slot 1 is free (no floor), low memory" "$(yn 'started j1')" "yes"
+
+# --- the hold counts the meta reserve as the box-wide pool does (#3810) ---
+# Cap 3, reserve 1, slot 1 free, slot 2 held, 12000 MB: the pool keeps the reserve at 1 (slot 2's floor is met), so a lane
+# waiter can't take slot 1 and slot 3 needs 14336 MB. A meta waiter takes slot 1.
+reset; echo 3 > "$STATE/heavy-slots-cap"; echo 1 > "$STATE/heavy-meta-reserve"
+mkdir -p "$BOX.2"; echo "$live x" > "$BOX.2/owner"; box_waiter "$live"; mem_mb 12000
+job j1; wait_for 'waiting j1'
+check "held: slot 1 free but reserved, a lane waiter needs slot 3 (12000 MB under 14336)" "$(yn 'started j1')" "no"
+reset; echo 3 > "$STATE/heavy-slots-cap"; echo 1 > "$STATE/heavy-meta-reserve"
+mkdir -p "$BOX.2"; echo "$live x" > "$BOX.2/owner"; box_waiter "$live" ',"meta":1'; mem_mb 12000
+job j1; wait_for 'started j1'
+check "not held: the same, but the waiter is meta and may take reserved slot 1" "$(yn 'started j1')" "yes"
+# Memory too low for slot 2 (the pool then drops the reserve to 0): a lane waiter takes slot 1.
+reset; echo 3 > "$STATE/heavy-slots-cap"; echo 1 > "$STATE/heavy-meta-reserve"
+mkdir -p "$BOX.2"; echo "$live x" > "$BOX.2/owner"; box_waiter "$live"; mem_mb 5000
+job j1; wait_for 'started j1'
+check "not held: 5000 MB, the reserve drops to 0, so a lane waiter may take slot 1" "$(yn 'started j1')" "yes"
+# Slot 2 free but short of memory while slot 3's lower floor is met: the waiter takes slot 3, so nothing holds.
+reset; hold_box; box_waiter "$live"; mem_mb 5000; JOB_ENV="AW_HEAVY_MIN_FREE_HIGH_MB=3072"
+job j1; wait_for 'started j1'
+check "not held: slot 2 under its floor, but free slot 3 (floor 3072) is one the waiter can take" "$(yn 'started j1')" "yes"
 
 reset; hold_box; box_waiter "$dead"; mem_mb 5000
 job j1; wait_for 'started j1'
