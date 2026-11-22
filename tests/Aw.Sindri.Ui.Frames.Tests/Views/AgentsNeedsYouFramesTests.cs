@@ -7,7 +7,7 @@ using Aw.Sindri.Ui.Tests.Views;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
-/// <summary>The Agents list in a window (#3082): the pinned Needs you group on top of the list and the search box in the head; <c>/</c> puts focus in it.</summary>
+/// <summary>The Agents list in a window (#3082): the pinned Needs you group on top of the list and the search box in the head; the / key puts focus in it.</summary>
 [Lane(TestLane.Integration)]
 [Collection(HeadlessWindows.Name)]
 public sealed class AgentsNeedsYouFramesTests : FrameHost
@@ -28,6 +28,6 @@ public sealed class AgentsNeedsYouFramesTests : FrameHost
         Assert.Equal("Needs you (1)", shell.Agents.Groups[0].Header);
         Assert.True(search.IsEffectivelyVisible);
         Assert.Same(search, window.FocusManager?.GetFocusedElement());
-        Assert.NotNull(window.GetVisualDescendants().OfType<Control>().FirstOrDefault(c => c.IsEffectivelyVisible && c.DataContext is Aw.Sindri.Ui.ViewModels.Agents.SessionGroupViewModel { Name: "Needs you" }));
+        Assert.NotNull(window.GetVisualDescendants().OfType<Control>().FirstOrDefault(c => c.IsEffectivelyVisible && c.DataContext is Aw.Sindri.Ui.ViewModels.Agents.SessionGroupViewModel g && string.Equals(g.Name, "Needs you", StringComparison.Ordinal)));
     });
 }
