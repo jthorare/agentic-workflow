@@ -32,6 +32,18 @@ public interface IWorkflowRunStore
     /// <returns>The run, now running; null when none is queued or another run is running or waiting.</returns>
     public ValueTask<Result<WorkflowRun?>> PromoteOldestQueued(WorkflowId workflow, CancellationToken cancellationToken);
 
+    /// <summary>The live runs of every workflow that ended 'failed' and have not been marked seen, newest first (a test run never counts; the Home failed-run row reads it).</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The runs; none when every failed run was seen.</returns>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(CancellationToken cancellationToken);
+
+    /// <summary>Marks a run seen. The first mark wins: a run that is already seen keeps its time.</summary>
+    /// <param name="id">The run.</param>
+    /// <param name="at">When the owner saw it.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>The run after the call, or SND-GRAPH-101.</returns>
+    public ValueTask<Result<WorkflowRun>> MarkSeen(WorkflowRunId id, DateTimeOffset at, CancellationToken cancellationToken);
+
     /// <summary>One run.</summary>
     /// <param name="id">The run.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
