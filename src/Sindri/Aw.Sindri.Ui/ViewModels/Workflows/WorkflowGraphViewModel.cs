@@ -42,15 +42,15 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
 
         var nodes = new List<GraphNodeViewModel>();
         var unplaced = new List<string>();
-        foreach (var (id, type, title, config) in ReadNodes(workflow.Spec))
+        foreach (var node in ReadNodes(workflow.Spec))
         {
-            if (!positions.TryGetValue(id, out var at))
+            if (!positions.TryGetValue(node.Id, out var at))
             {
-                unplaced.Add(id);
+                unplaced.Add(node.Id);
                 continue;
             }
 
-            nodes.Add(NodeOf(id, type, title, config, at, statuses));
+            nodes.Add(NodeOf(node, at, statuses));
         }
 
         _spec = workflow.Spec;
@@ -64,13 +64,13 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
     }
 
     // One card: line 1 and line 2 from GraphCardLine (#3684), the run's status word when a run is shown.
-    private GraphNodeViewModel NodeOf(string id, string type, string title, JsonElement config, GraphPoint at, IReadOnlyDictionary<string, string>? statuses)
+    private GraphNodeViewModel NodeOf((string Id, string Type, string Title, JsonElement Config) node, GraphPoint at, IReadOnlyDictionary<string, string>? statuses)
     {
-        var status = statuses is not null && statuses.TryGetValue(id, out var word) ? word : null;
-        var served = _summaries.TryGetValue(id, out var summary) ? summary : null;
-        return new GraphNodeViewModel(id, GraphCardLine.Title(title, type, served?.KindTitle), type, at.X, at.Y, status)
+        var status = statuses is not null && statuses.TryGetValue(node.Id, out var word) ? word : null;
+        var served = _summaries.TryGetValue(node.Id, out var summary) ? summary : null;
+        return new GraphNodeViewModel(node.Id, GraphCardLine.Title(node.Title, node.Type, served?.KindTitle), node.Type, at.X, at.Y, status)
         {
-            Line = GraphCardLine.Settings(type, config, served?.Summary, served?.KindTitle),
+            Line = GraphCardLine.Settings(node.Type, node.Config, served?.Summary, served?.KindTitle),
         };
     }
 
