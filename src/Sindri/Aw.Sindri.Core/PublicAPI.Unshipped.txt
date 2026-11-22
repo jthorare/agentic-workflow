@@ -24067,3 +24067,30 @@ static Aw.Sindri.Core.Messages.MessagesConnection.Config(string! workspace, stri
 static Aw.Sindri.Core.Messages.SlackBaseUrlRule.Resolve(string? overrideUrl, string? marker, string! token) -> System.Uri!
 static Aw.Sindri.Core.Messages.SlackBaseUrlRule.Slack.get -> System.Uri!
 const Aw.Sindri.Core.Events.EventTypes.MessagesSynced = "messages.synced" -> string!
+Aw.Sindri.Core.Messages.ILinkRows
+Aw.Sindri.Core.Messages.ILinkRows.Find(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Messages.LinkRow!>!>!>
+Aw.Sindri.Core.Messages.LinkRow
+Aw.Sindri.Core.Messages.LinkRow.<Clone>$() -> Aw.Sindri.Core.Messages.LinkRow!
+Aw.Sindri.Core.Messages.LinkRow.Ci.get -> string?
+Aw.Sindri.Core.Messages.LinkRow.Ci.init -> void
+Aw.Sindri.Core.Messages.LinkRow.Deconstruct(out string! Key, out string! Title, out string! State) -> void
+Aw.Sindri.Core.Messages.LinkRow.Equals(Aw.Sindri.Core.Messages.LinkRow? other) -> bool
+Aw.Sindri.Core.Messages.LinkRow.Key.get -> string!
+Aw.Sindri.Core.Messages.LinkRow.Key.init -> void
+Aw.Sindri.Core.Messages.LinkRow.LinkRow(string! Key, string! Title, string! State) -> void
+Aw.Sindri.Core.Messages.LinkRow.Since.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Messages.LinkRow.Since.init -> void
+Aw.Sindri.Core.Messages.LinkRow.State.get -> string!
+Aw.Sindri.Core.Messages.LinkRow.State.init -> void
+Aw.Sindri.Core.Messages.LinkRow.Title.get -> string!
+Aw.Sindri.Core.Messages.LinkRow.Title.init -> void
+Aw.Sindri.Core.Messages.LinkRow.WaitsOn.get -> string?
+Aw.Sindri.Core.Messages.LinkRow.WaitsOn.init -> void
+Aw.Sindri.Core.Messages.LinkShapes
+const Aw.Sindri.Core.Messages.LinkShapes.MaxUrls = 20 -> int
+override Aw.Sindri.Core.Messages.LinkRow.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Messages.LinkRow.GetHashCode() -> int
+override Aw.Sindri.Core.Messages.LinkRow.ToString() -> string!
+static Aw.Sindri.Core.Messages.LinkRow.operator !=(Aw.Sindri.Core.Messages.LinkRow? left, Aw.Sindri.Core.Messages.LinkRow? right) -> bool
+static Aw.Sindri.Core.Messages.LinkRow.operator ==(Aw.Sindri.Core.Messages.LinkRow? left, Aw.Sindri.Core.Messages.LinkRow? right) -> bool
+static Aw.Sindri.Core.Messages.LinkShapes.RowKey(System.Uri! url) -> string?
