@@ -52,8 +52,8 @@
                   </Button>
                   <!-- The pin buttons: out of sight until the pointer or the keyboard is on the row. -->
                   <StackPanel Grid.Column="1" Classes="pin-slot" Orientation="Horizontal" Margin="0,0,8,0" VerticalAlignment="Center">
-                    <Button Content="{Binding PinThisText}" IsVisible="{Binding ShowPinThis}" Click="OnPinThis" AutomationProperties.AutomationId="PinThis" />
-                    <Button Content="{Binding EditPinText}" IsVisible="{Binding ShowEditPin}" Click="OnEditPin" AutomationProperties.AutomationId="EditPin" />
+                    <Button Content="{Binding PinThisText}" IsVisible="{Binding ShowPinThis}" Click="OnPinThis" AutomationProperties.AutomationId="{Binding PinAutomationId}" />
+                    <Button Content="{Binding EditPinText}" IsVisible="{Binding ShowEditPin}" Click="OnEditPin" AutomationProperties.AutomationId="{Binding EditPinAutomationId}" />
                   </StackPanel>
                 </Grid>
                 <Border IsVisible="{Binding HasFooter}" Padding="14,8" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0">

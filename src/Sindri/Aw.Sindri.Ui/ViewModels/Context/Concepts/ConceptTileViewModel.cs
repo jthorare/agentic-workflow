@@ -107,6 +107,12 @@ internal sealed class ConceptTileViewModel
     /// <summary>The automation id of the row's open button ("ConceptOpen.concept:billing"), so a check can focus one row by its concept.</summary>
     public string OpenAutomationId => "ConceptOpen." + Id;
 
+    /// <summary>The automation id of the row's Pin this button ("ConceptPin.concept:billing").</summary>
+    public string PinAutomationId => "ConceptPin." + Id;
+
+    /// <summary>The automation id of the row's Edit pin button ("ConceptEditPin.concept:billing").</summary>
+    public string EditPinAutomationId => "ConceptEditPin." + Id;
+
     /// <summary>"Set by a person" or "Suggested"; empty when the server has no pins.</summary>
     public string MarkText => Card.Mark;
 

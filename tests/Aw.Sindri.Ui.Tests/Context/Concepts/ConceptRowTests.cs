@@ -33,6 +33,15 @@ public sealed class ConceptRowTests
     }
 
     [Fact]
+    public void A_rows_pin_buttons_have_an_automation_id_per_concept()
+    {
+        var layer = Layer([AConcepts.Concept("concept:self-scheduling", "Self scheduling")]);
+        var tile = layer.Tiles[0];
+
+        Assert.Equal(("ConceptPin.concept:self-scheduling", "ConceptEditPin.concept:self-scheduling"), (tile.PinAutomationId, tile.EditPinAutomationId));
+    }
+
+    [Fact]
     public void A_row_counts_files_only_and_says_when_it_last_changed()
     {
         var concept = AConcepts.Concept("concept:self-scheduling", "Self scheduling", features: 4, records: 3, decisions: 2, code: 40) with { LastChanged = new DateTimeOffset(2026, 11, 13, 9, 0, 0, TimeSpan.Zero) };
