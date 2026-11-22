@@ -54,6 +54,9 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>The ⋯ menu item's words.</summary>
     public string DeleteMenuText => Labels.WfDelete;
 
+    /// <summary>The off form's footer naming its keys.</summary>
+    public string DeleteKeysText => Labels.WfDeleteKeys;
+
     /// <summary>The ⋯ button's accessible name.</summary>
     public string MoreText => Labels.WfMore;
 

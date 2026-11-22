@@ -27,6 +27,9 @@ internal static partial class Labels
     /// <summary>The in-flight form's button: opens the run that is still going.</summary>
     internal const string WfDeleteOpenRun = "Open the run";
 
+    /// <summary>The off form's footer: the two keys.</summary>
+    internal const string WfDeleteKeys = "Ctrl+Enter deletes · Esc closes";
+
     /// <summary>The confirm on an off workflow with no run going.</summary>
     /// <param name="name">The workflow's name.</param>
     /// <returns>The words.</returns>
