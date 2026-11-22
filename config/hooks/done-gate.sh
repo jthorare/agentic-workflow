@@ -22,10 +22,13 @@ failopen() {
 # The output is printed only at the very end, so a kill never leaves a half answer. A normal run ends the watchdog.
 if [ -z "${AW_HOOK_WD_INNER:-}" ] && [ -z "${AW_JUDGE_CHILD:-}" ]; then
   _aw_ms="${AW_DONE_GATE_BUDGET_MS:-10000}"; case "$_aw_ms" in '' | *[!0-9]*) _aw_ms=10000 ;; esac
-  # Kill a process and everything under it, by pid only (`pgrep -P`, never a name match). Each process is frozen (STOP)
-  # before its children are listed, so it can't fork again or print "Terminated"; it dies before its children, so the
-  # script (the top) dies first and the hook returns at once, and its children are then killed by the pids listed.
-  _aw_kill_tree() { local _c _k; kill -STOP "$1" 2> /dev/null; _k="$(pgrep -P "$1" 2> /dev/null)"; kill -9 "$1" 2> /dev/null; for _c in $_k; do _aw_kill_tree "$_c"; done; }
+  # Kill a process and everything under it, by pid only: _aw_kill_tree from config/lib/kill-tree.sh, installed beside
+  # failopen.sh. Without the lib (an older install) the fallback below is the lib's line word for word
+  # (config/lib/tests/kill-tree.test.sh), so a timed-out script still leaves no judge running.
+  for _aw_f in "$(cd "$(dirname "${BASH_SOURCE[0]}")" 2> /dev/null && pwd)/lib/kill-tree.sh" "$(cd "$(dirname "${BASH_SOURCE[0]}")" 2> /dev/null && pwd)/../lib/kill-tree.sh"; do
+    if [ -f "$_aw_f" ]; then . "$_aw_f" 2> /dev/null && break; fi
+  done
+  type _aw_kill_tree > /dev/null 2>&1 || _aw_kill_tree() { local _c _k; kill -STOP "$1" 2> /dev/null; _k="$(pgrep -P "$1" 2> /dev/null)"; kill -9 "$1" 2> /dev/null; for _c in $_k; do _aw_kill_tree "$_c"; done; return 0; }
   # The script's temp files go in a dir this bash owns and removes on every path: a killed script runs no EXIT trap.
   _aw_tmp="$(mktemp -d 2> /dev/null)" || _aw_tmp=""
   AW_HOOK_WD_INNER=1 AW_HOOK_WD_TMP="$_aw_tmp" "$BASH" "${BASH_SOURCE[0]}" "$@" 0<&0 &
