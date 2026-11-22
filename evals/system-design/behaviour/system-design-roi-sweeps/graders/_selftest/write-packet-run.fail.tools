@@ -1,0 +1,2 @@
+Bash	{"command": "cat skills/system-design/scripts/write_packet.py"}
+Bash	{"command": "head -30 skills/system-design/scripts/write_packet.py | grep -n slug"}

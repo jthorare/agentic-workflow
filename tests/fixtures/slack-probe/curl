@@ -5,13 +5,18 @@
 # Knobs: STUB_ERR=method:code (that method answers ok:false with the code), STUB_FAIL=method (transport failure, exit 7),
 # STUB_429=method:N (calls after the Nth answer HTTP 429 with Retry-After: 30), STUB_SCOPES_DROP=scope (left out of x-oauth-scopes),
 # STUB_SCRATCH=public|not-mine|members (the scratch channel's conversations.info), STUB_NO_METADATA=1 (history drops metadata),
-# STUB_KEEP=1 (chat.delete answers ok and deletes nothing), STUB_SLEEP=method (that method sleeps 3 s, once).
-fix="$STUB_FIX"; st="$STUB_STATE"; hdr="" out="" cfg="" url="" binary=""
+# STUB_KEEP=1 (chat.delete answers ok and deletes nothing), STUB_SLEEP=method (that method sleeps 3 s, once),
+# STUB_AUTH_NO_USER=1 (auth.test answers without user_id), STUB_SCRATCH=no-creator|im|mpim|missing|null (more scratch answers),
+# STUB_POST_SLOW=1 (chat.postMessage keeps the post, then sleeps 3 s before it answers), STUB_POST_LOST=1 (chat.postMessage keeps
+# the post, then fails with no answer, exit 7). It logs "PROXY IN USE" when a proxy variable is set and the call has no --noproxy, and
+# "KEY IN ENV" when a probe key variable reached its environment.
+fix="$STUB_FIX"; st="$STUB_STATE"; hdr="" out="" cfg="" url="" binary="" noproxy=""
 params="$(mktemp)"; trap 'rm -f "$params"' EXIT
 all="$*"
 while [ $# -gt 0 ]; do
   case "$1" in
     -D) hdr="$2"; shift 2 ;; -o) out="$2"; shift 2 ;; -K) cfg="$2"; shift 2 ;; -w|-X|--max-time) shift 2 ;;
+    --noproxy) noproxy="$2"; shift 2 ;;
     --data-urlencode) printf '%s\n' "$2" >> "$params"; shift 2 ;;
     --data-binary) binary="${2#@}"; shift 2 ;;
     -*) shift ;;
@@ -26,6 +31,10 @@ if [ -n "$cfg" ]; then
 fi
 case "$path" in /upload/*) method=UPLOAD ;; /files-pri/*) method=FILEGET ;; esac
 echo "curl ran method=$method cfg=$(basename "${cfg:-none}") args=$all" >> "$STUB_LOG"
+if [ -n "${http_proxy:-}${HTTP_PROXY:-}${https_proxy:-}${HTTPS_PROXY:-}${ALL_PROXY:-}${all_proxy:-}" ] && [ "$noproxy" != '*' ]; then
+  echo "PROXY IN USE method=$method" >> "$STUB_LOG"
+fi
+if [ -n "${AW_SLACK_PROBE_KEY+x}${AW_SLACK_PROBE_APP_KEY+x}" ]; then echo "KEY IN ENV method=$method" >> "$STUB_LOG"; fi
 p() { sed -n "s/^$1=//p" "$params" | head -n1; }   # p NAME: that form field's value
 
 [ "${STUB_FAIL:-}" = "$method" ] && exit 7
@@ -54,7 +63,7 @@ if [ "$kind" = app ] && [ "$method" != apps.connections.open ]; then err not_all
 write_guard() { [ "$(p channel)" = G0PROBE ] || [ "$(p channel_id)" = G0PROBE ] || { echo "WRITE OUTSIDE $method" >> "$STUB_LOG"; err channel_not_found; }; }
 
 case "$method" in
-  auth.test) answer auth.test.json ;;
+  auth.test) if [ "${STUB_AUTH_NO_USER:-}" = 1 ]; then reply "$(jq -c 'del(.user_id)' "$fix/auth.test.json")"; fi; answer auth.test.json ;;
   users.conversations) answer users.conversations.json ;;
   conversations.replies) answer conversations.replies.json ;;
   search.messages) answer search.messages.json ;;
@@ -70,6 +79,11 @@ case "$method" in
           public) reply "$(jq -c '.channel.is_private = false' "$fix/conversations.info.scratch.json")" ;;
           not-mine) reply "$(jq -c '.channel.creator = "U0ALICE"' "$fix/conversations.info.scratch.json")" ;;
           members) reply "$(jq -c '.channel.num_members = 3' "$fix/conversations.info.scratch.json")" ;;
+          no-creator) reply "$(jq -c '.channel.creator = ""' "$fix/conversations.info.scratch.json")" ;;
+          im) reply "$(jq -c '.channel.is_im = true' "$fix/conversations.info.scratch.json")" ;;
+          mpim) reply "$(jq -c '.channel.is_mpim = true' "$fix/conversations.info.scratch.json")" ;;
+          missing) reply "$(jq -c 'del(.channel.is_private)' "$fix/conversations.info.scratch.json")" ;;
+          null) reply "$(jq -c '.channel.num_members = null' "$fix/conversations.info.scratch.json")" ;;
           *) answer conversations.info.scratch.json ;;
         esac ;;
       D*) answer conversations.info.im.json ;;
@@ -83,7 +97,11 @@ case "$method" in
         if [ "${STUB_NO_METADATA:-}" = 1 ]; then reply "{\"ok\":true,\"messages\":[{\"ts\":\"${line%% *}\",\"text\":\"SECRET-TEXT\"}]}"; fi
         reply "$(jq -nc --arg ts "${line%% *}" --arg a "${line#* }" '{ok:true,messages:[{ts:$ts,text:"SECRET-TEXT",metadata:{event_type:"sindri_probe",event_payload:{act_id:$a}}}]}')"
       fi
-      reply "$(cut -d' ' -f1 "$st/posted" | jq -R . | jq -sc '{ok:true,messages:[.[] | {ts:., text:"SECRET-TEXT"}],has_more:false}')"
+      if [ "${STUB_NO_METADATA:-}" = 1 ] || [ -z "$(p include_all_metadata)" ]; then
+        reply "$(cut -d' ' -f1 "$st/posted" | jq -R . | jq -sc '{ok:true,messages:[.[] | {ts:., text:"SECRET-TEXT"}],has_more:false}')"
+      fi
+      reply "$(jq -R 'split(" ") | {ts:.[0], text:"SECRET-TEXT", metadata:{event_type:"sindri_probe",event_payload:{act_id:.[1]}}}' "$st/posted" \
+        | jq -sc '{ok:true,messages:.,has_more:false}')"
     fi
     answer conversations.history.json ;;
   chat.postMessage)
@@ -91,6 +109,8 @@ case "$method" in
     k=$(( $(wc -l < "$st/posted") + 1 )); ts="1800000000.00000$k"
     act="$(p metadata | jq -r '.event_payload.act_id // "none"' 2>/dev/null)"
     echo "$ts $act" >> "$st/posted"
+    [ "${STUB_POST_LOST:-}" = 1 ] && exit 7
+    [ "${STUB_POST_SLOW:-}" = 1 ] && sleep 3
     reply "{\"ok\":true,\"channel\":\"G0PROBE\",\"ts\":\"$ts\",\"message\":{\"text\":\"SECRET-TEXT\"}}" ;;
   chat.update) write_guard; grep -q "^$(p ts) " "$st/posted" && reply '{"ok":true}'; err message_not_found ;;
   chat.delete)
