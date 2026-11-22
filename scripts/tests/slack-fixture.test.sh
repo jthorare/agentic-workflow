@@ -115,6 +115,24 @@ check "the new host is running" "$(pid_alive "$pid2" && echo alive)" "alive"
 check "one slack:messages row" "$(sql "$S/ledger.db" "SELECT COUNT(*) FROM connection WHERE name = 'slack:messages';")" "1"
 check "the marker follows the new port" "$(sed -n 2p "$S/.slack-fixture-home")" "$(sed -n 's/^port: //p' <<<"$out")"
 
+# --- the storm and the gap reach the host's argv; bad shapes are refused before any host starts ---
+starts="$(wc -l <"$WORK/host-args.log")"
+out="$(bash "$FIXTURE" up --rate-limit search 2>&1)"; check "a bad --rate-limit exits 2" "$?" "2"
+contains "a bad --rate-limit is named" "$out" "--rate-limit needs"
+out="$(bash "$FIXTURE" up --gap general=3 2>&1)"; check "a bad --gap exits 2" "$?" "2"
+out="$(bash "$FIXTURE" up --rate-limit 2>&1)"; check "--rate-limit without a value exits 2" "$?" "2"
+check "no host starts for a refused storm" "$(wc -l <"$WORK/host-args.log")" "$starts"
+out="$(bash "$FIXTURE" up --storm --rate-limit search.messages=2:7 --gap D0001PAT=3 2>&1)"; check "up with a storm exits 0" "$?" "0"
+check "the host gets the storm, the gap and the extra ones in order" "$(tail -1 "$WORK/host-args.log")" \
+  "--port 0 --rate-limit conversations.history=20 --gap C0001GEN=12 --rate-limit search.messages=2:7 --gap D0001PAT=3"
+contains "up prints what it scripted" "$out" "scripted: --rate-limit conversations.history=20"
+pid2="$(cat "$H/fake.pid")"
+out="$(bash "$FIXTURE" up --port 0 2>&1)"; check "a plain up after a storm exits 0" "$?" "0"
+check "a plain up passes only the port" "$(tail -1 "$WORK/host-args.log")" "--port 0"
+lacks "a plain up prints no script" "$out" "scripted:"
+check "the storm's host is gone" "$(pid_alive "$pid2" && echo alive || echo gone)" "gone"
+pid2="$(cat "$H/fake.pid")"
+
 # --- down removes the host, the marker, the token file and the row, and nothing else ---
 echo keep >"$H/notes.txt"
 out="$(bash "$FIXTURE" down 2>&1)"; check "down exits 0" "$?" "0"

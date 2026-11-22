@@ -5,8 +5,11 @@
 # slack:messages connection row. No keychain tool is ever called, so the owner's real slack:messages token is never read, written
 # or deleted.
 #
-#   slack-fixture.sh up [--port N]  build the host into <home>/bin when a source is newer, start it on 127.0.0.1 (port N, default a
-#                                  free one), write <home>/sindri/.slack-fixture-home ("slack-fixture v1", then the port), the
+#   slack-fixture.sh up [--port N] [--rate-limit <method>=<times>[:<seconds>]]... [--gap <conversation>=<count>]... [--storm]
+#                                  build the host into <home>/bin when a source is newer, start it on 127.0.0.1 (port N, default a
+#                                  free one; --rate-limit queues that many 429s for one method at start, Retry-After 30 s unless given;
+#                                  --gap adds that many older messages to a seeded conversation; --storm is
+#                                  --rate-limit conversations.history=20 --gap C0001GEN=12, the spec's "a gap and a 429 storm"), write <home>/sindri/.slack-fixture-home ("slack-fixture v1", then the port), the
 #                                  fixture token as an owner-only file under <home>/sindri/secrets, and the connection row when
 #                                  <home>/sindri/ledger.db has its connection table. Prints the answer key: url, port, the Sindri
 #                                  home, the env to start Sindri with, and the seeded ids. A repeat up stops the old host first.
@@ -99,10 +102,11 @@ stop_host() {
   rm -f "$HOME_DIR/fake.pid" "$HOME_DIR/fake.url"
 }
 
-start_host() { # <port>
+start_host() { # <port> [host arguments…]
   local port="$1" url="" i
+  shift
   : >"$HOME_DIR/fake.log"
-  nohup "${HOST_CMD[@]}" --port "$port" </dev/null >"$HOME_DIR/fake.log" 2>&1 &
+  nohup "${HOST_CMD[@]}" --port "$port" "$@" </dev/null >"$HOME_DIR/fake.log" 2>&1 &
   echo "$!" >"$HOME_DIR/fake.pid"
   for i in $(seq 1 600); do
     url="$(sed -n 's/^listening \(http:\/\/127\.0\.0\.1:[0-9][0-9]*\/\)$/\1/p' "$HOME_DIR/fake.log" | head -1)"
@@ -182,15 +186,23 @@ shift
 case "$verb" in
   up)
     port=0
+    SCRIPTED=()
     while [ $# -gt 0 ]; do
       case "$1" in
         --port) [[ "${2:-}" =~ ^[0-9]+$ ]] && [ "$2" -le 65535 ] || die "--port needs a number from 0 to 65535"; port="$2"; shift 2 ;;
-        *) die "up takes --port N, got '$1'" ;;
+        --rate-limit)
+          [[ "${2:-}" =~ ^[a-z]+\.[A-Za-z.]+=[1-9][0-9]*(:[1-9][0-9]*)?$ ]] || die "--rate-limit needs <method>=<times>[:<seconds>], got '${2:-}'"
+          SCRIPTED+=(--rate-limit "$2"); shift 2 ;;
+        --gap)
+          [[ "${2:-}" =~ ^[A-Z][A-Z0-9]+=[1-9][0-9]*$ ]] || die "--gap needs <conversation>=<count>, got '${2:-}'"
+          SCRIPTED+=(--gap "$2"); shift 2 ;;
+        --storm) SCRIPTED+=(--rate-limit conversations.history=20 --gap C0001GEN=12); shift ;;
+        *) die "up takes --port N, --rate-limit, --gap or --storm, got '$1'" ;;
       esac
     done
     guard; mkdir -p "$HOME_DIR"; ensure_bin
     stop_host
-    start_host "$port"
+    start_host "$port" ${SCRIPTED[@]+"${SCRIPTED[@]}"}
     url="$(cat "$HOME_DIR/fake.url")"
     write_marker "$(sed -n 's/.*:\([0-9][0-9]*\)\/$/\1/p' <<<"$url")"
     write_secret
@@ -198,6 +210,7 @@ case "$verb" in
       echo "row: no ledger yet; start Sindri with the env below, then run: slack-fixture.sh seed"
     fi
     print_key
+    [ ${#SCRIPTED[@]} -eq 0 ] || echo "scripted: ${SCRIPTED[*]}"
     ;;
   seed)
     [ $# -eq 0 ] || die "seed takes no arguments"
