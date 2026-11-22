@@ -175,7 +175,15 @@ for sub in build publish format run; do check "dotnet $sub is expensive" "$(mode
 check "dotnet test is expensive" "$(mode_of dotnet test x)" "expensive"
 check "dotnet test --no-build is light" "$(mode_of dotnet test x --no-build)" "light"
 check "dotnet --version is light" "$(mode_of dotnet --version)" "light"
-check "a path-qualified dotnet is not matched (pinned as is): light" "$(mode_of "$STUB/dotnet" build x)" "light"
+check "a path-qualified dotnet build is matched by its basename: expensive" "$(mode_of "$STUB/dotnet" build x)" "expensive"
+check "a path-qualified dotnet build inside a bash -c string: expensive" "$(mode_of bash -c "$STUB/dotnet build x")" "expensive"
+check "dotnet msbuild is expensive, like dotnet build" "$(mode_of dotnet msbuild x)" "expensive"
+check "a path-qualified dotnet msbuild is expensive" "$(mode_of "$STUB/dotnet" msbuild x)" "expensive"
+check "a path-qualified dotnet --version stays light" "$(mode_of "$STUB/dotnet" --version)" "light"
+check "dotnet clean stays light" "$(mode_of dotnet clean)" "light"
+check "a path-qualified dotnet clean stays light" "$(mode_of "$STUB/dotnet" clean)" "light"
+check "a path-qualified dotnet test --no-build stays light" "$(mode_of "$STUB/dotnet" test x --no-build)" "light"
+check "a word that only ends in dotnet is not dotnet: light" "$(mode_of sh -c "$sh_mode" x mydotnet build)" "light"
 for w in "npm ci" "npx vitest"; do
   # shellcheck disable=SC2086
   check "$w anywhere in the args is expensive" "$(mode_of sh -c "$sh_mode" x $w)" "expensive"
@@ -202,7 +210,7 @@ check "AW_HEAVY_RUN_MAX=abc: the default 45" "$(AW_HEAVY_RUN_MAX=abc args_of dot
 check "the caller's --timeout stays alone" "$(args_of dotnet test --timeout 10m)" "test --timeout 10m"
 check "the caller's --timeout=... stays alone" "$(args_of dotnet test --timeout=10m)" "test --timeout=10m"
 check "dotnet build gets no --timeout" "$(args_of dotnet build x)" "build x"
-check "a path-qualified dotnet test gets it, though it is classified light (pinned as is)" "$(args_of "$STUB/dotnet" test x)" "test x --timeout 40m"
+check "a path-qualified dotnet test gets it" "$(args_of "$STUB/dotnet" test x)" "test x --timeout 40m"
 
 # --- the lock timeout (75), on the TIMEOUT=0 copy ---
 reset

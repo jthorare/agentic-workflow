@@ -154,6 +154,12 @@ wait_for 'started t1 && started c1 && started s1'
 check "pool full and held: test --no-build, clean and a script run" "$(yn 'started t1 && started c1 && started s1')" "yes"
 rc_of t1; rcs="$RC"; rc_of c1; rcs="$rcs $RC"; rc_of s1; check "they exit 0" "$rcs $RC" "0 0 0"
 
+# --- a path-qualified dotnet build and a dotnet msbuild compile too: they take a light slot (#3810) ---
+reset; echo 1 > "$STATE/heavy-light-cap"; fill_light
+job p1 --light "$STUB/dotnet" build p1; job q1 --light dotnet msbuild q1; wait_for 'waiting p1 && waiting q1'
+check "pool full: a path-qualified dotnet build waits for a light slot" "$(yn '! started p1')" "yes"
+check "pool full: a dotnet msbuild waits for a light slot" "$(yn '! started q1')" "yes"
+
 # --- AW_HEAVY_PRIORITY=meta skips the hold, not the pool ---
 reset; hold_box; box_waiter "$live"; mem_mb 5000; JOB_ENV="AW_HEAVY_PRIORITY=meta"
 job m1; wait_for 'started m1'
