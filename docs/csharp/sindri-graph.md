@@ -128,10 +128,12 @@ Four reads, each one slice (`Features/ListWorkflows`, `GetWorkflow`, `ListWorkfl
 
 | Read | Route | MCP tool | CLI |
 |---|---|---|---|
-| The workflows that are not archived | `GET /sindri/workflows` | `workflow_list` | `sindri wf list [--json]` |
-| One workflow: the revision it runs (the newest when off), the spec, the spec hash, who saved the newest revision, node positions | `GET /sindri/workflows/{slug}` | `workflow_get` (`slug`) | `sindri wf show <slug> [--json]` |
+| The workflows that are not archived, each with its trigger in words and `nextRunAt` | `GET /sindri/workflows` | `workflow_list` | `sindri wf list [--json]` |
+| One workflow: the revision it runs (the newest when off), the spec, the spec hash, who saved the newest revision, node positions, the next run time of an active schedule (`nextRunAt`) | `GET /sindri/workflows/{slug}` | `workflow_get` (`slug`) | `sindri wf show <slug> [--json]` |
 | A workflow's newest 50 runs, newest first, any status | `GET /sindri/workflows/{slug}/runs` | `workflow_runs` (`slug`) | `sindri wf runs <slug> [--json]` |
 | One run with its trigger, outputs and node runs | `GET /sindri/workflow-runs/{run}` | `workflow_run_get` (`run`) | `sindri wf run-show <run> [--json]` |
+
+`nextRunAt` is the soonest tick of the active revision's schedule trigger after now, computed by one Core helper (`Core/Graph/Schedule/WorkflowNextRun.cs`), so the list row and the single read always agree. It is null when the workflow is off, archived, run by hand or by an event, or when its schedule has no tick (#3756); `sindri wf show` prints a `next run` line only when it is set.
 
 An unknown slug is `SND-GRAPH-008` (404), an unknown run `SND-GRAPH-101`, a slug or run id of the wrong shape invalid input. "Who changed it last" is the `createdBy` of the newest revision (`owner` or `session:<id>`). Node payloads the store cut at its size limit come back as a string with `truncated: true` on the node run. Over MCP, names, descriptions, node titles and every string of a node config (prompts), failure text, trigger payloads, outputs and node inputs and outputs are fenced as untrusted. `IWorkflowRunStore.Recent` is the new store read behind the run list.
 
