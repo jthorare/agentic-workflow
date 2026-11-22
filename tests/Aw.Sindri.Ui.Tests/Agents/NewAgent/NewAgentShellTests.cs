@@ -49,14 +49,14 @@ public sealed class NewAgentShellTests
     {
         var shell = await OnAgents();
         await shell.OpenNewAgent(Token);
-        var before = (shell.NewAgent.Repos.Count, shell.NewAgent.Repo?.Name);
-        Assert.True(before.Count > 0);
+        var (count, name) = (shell.NewAgent.Repos.Count, shell.NewAgent.Repo?.Name);
+        Assert.True(count > 0);
         _server.SetupAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.InternalServerError, "SND-SETUP-001", "the setup read failed");
 
         shell.NewAgent.Close();
         await shell.OpenNewAgent(Token);
 
-        Assert.Equal((before.Count, before.Name, true), (shell.NewAgent.Repos.Count, shell.NewAgent.Repo?.Name, shell.NewAgent.CanStart));
+        Assert.Equal((count, name, true), (shell.NewAgent.Repos.Count, shell.NewAgent.Repo?.Name, shell.NewAgent.CanStart));
     }, Token);
 
     [Fact]
