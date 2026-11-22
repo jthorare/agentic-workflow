@@ -1,7 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Infrastructure.Workflows;
 
-namespace Aw.Sindri.Engine.Tests.Workflows;
+namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>#3304: the loop item's failure text and its split into the named text and the bare "code: message", tested directly (a review nit from #3774).</summary>
 [Lane(TestLane.Unit)]
