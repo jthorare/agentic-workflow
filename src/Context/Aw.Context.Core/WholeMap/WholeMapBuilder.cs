@@ -168,7 +168,7 @@ public static class WholeMapBuilder
         }
 
         var members = graph.Concepts.MembersOf(key);
-        var items = members.Concat(graph.Concepts.CodeKeysOf(members)).Distinct(StringComparer.Ordinal).Select(k => graph.Concepts.Known[k]).ToList();
+        var items = members.Concat(graph.Concepts.SortedCodeKeysOf(members)).Distinct(StringComparer.Ordinal).Select(k => graph.Concepts.Known[k]).ToList();
         var tab = TabName(ask.ConceptTab);
         var mine = items.Where(n => TabOf(n.Key.Kind) == tab || tab == "all").ToList();
         var mineKeys = mine.Select(n => n.Key.Value).ToHashSet(StringComparer.Ordinal);

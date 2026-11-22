@@ -56,7 +56,7 @@ internal sealed class ConceptIndex
         members.Where(m => Known[m].Key.Kind == NodeKind.Feature).SelectMany(m => _implementedBy.TryGetValue(m, out var code) ? code : []).Distinct(StringComparer.Ordinal);
 
     /// <summary>The distinct code keys (ordinal) the member features of <paramref name="members"/> are implemented by.</summary>
-    internal IReadOnlyList<string> CodeKeysOf(IEnumerable<string> members) =>
+    internal IReadOnlyList<string> SortedCodeKeysOf(IEnumerable<string> members) =>
         [.. members.Where(m => Known[m].Key.Kind == NodeKind.Feature).SelectMany(m => _implementedBy.TryGetValue(m, out var code) ? code : []).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
 
     private static List<GraphNode> SortedConcepts(IReadOnlyDictionary<string, GraphNode> known) =>
