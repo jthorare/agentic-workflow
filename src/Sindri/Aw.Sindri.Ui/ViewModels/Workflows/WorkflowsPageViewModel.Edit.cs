@@ -180,6 +180,9 @@ internal sealed partial class WorkflowsPageViewModel
                 OnChanged(nameof(CanEdit));
                 OnChanged(nameof(ShowsEdit));
                 OnChanged(nameof(DetailStateText));
+                OnChanged(nameof(DetailChipWord));
+                OnChanged(nameof(DetailChipGlyph));
+                OnChanged(nameof(DetailChipTone));
                 OnChanged(nameof(ShowsDetailState));
                 OnChanged(nameof(CanOpenSettings));
                 OnChanged(nameof(ShowsStepRow));

@@ -21,6 +21,8 @@ internal sealed partial class WorkflowsPage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _pages = this.FindAncestorOfType<ScrollViewer>();
+        _pages?.PropertyChanged += OnPagesProperty;
         LayoutUpdated += OnLayoutUpdated;   // the title's text, its scale or the crumb's text changed: the crumb follows the title's baseline
     }
 
@@ -28,11 +30,14 @@ internal sealed partial class WorkflowsPage : UserControl
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         LayoutUpdated -= OnLayoutUpdated;
+        _pages?.PropertyChanged -= OnPagesProperty;
+        _pages = null;
         base.OnDetachedFromVisualTree(e);
     }
 
     private void OnLayoutUpdated(object? sender, EventArgs e)
     {
+        SizeStages();
         if (WorkflowsBack.IsVisible)
         {
             AlignCrumb(WorkflowsBack, WorkflowsBack.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault());

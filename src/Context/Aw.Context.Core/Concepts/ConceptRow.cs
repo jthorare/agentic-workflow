@@ -31,4 +31,8 @@ public sealed record ConceptRow(NodeKey Id, string Name, string Summary, string 
     /// <summary>The owner's other words for a pin; null (left out of the answer) when it has none.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<string>? Aliases { get; init; }
+
+    /// <summary>The newest change time among the code files of the concept's features (from git); null (left out of the answer) when none is known.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DateTimeOffset? LastChanged { get; init; }
 }

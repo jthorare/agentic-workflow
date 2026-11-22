@@ -48,9 +48,10 @@ internal static class LedgerSql
     internal static SqlStatement ScanAfter(long sequence, int max, LedgerFilter filter)
     {
         var globs = filter.Types?.Globs ?? [];
+        var column = TypeColumn(filter);
         var types = globs.Count == 0
             ? string.Empty
-            : " AND (" + string.Join(" OR ", globs.Select(static (g, i) => IsPrefix(g) ? "type LIKE " + TypeParam(i) + " ESCAPE '\\'" : "type = " + TypeParam(i))) + ")";
+            : " AND (" + string.Join(" OR ", globs.Select((g, i) => IsPrefix(g) ? column + " LIKE " + TypeParam(i) + " ESCAPE '\\'" : column + " = " + TypeParam(i))) + ")";
         var sql = "SELECT " + EventColumns + " FROM events WHERE " + Window(filter) + types +
             (filter.Item is null ? string.Empty : " AND item = $item") + " ORDER BY seq LIMIT $max";
         return new SqlStatement(sql, c =>
@@ -74,6 +75,9 @@ internal static class LedgerSql
     private static string Window(LedgerFilter filter) => filter.Instance is null
         ? "seq > $seq AND seq <= $upper"
         : "+seq > $seq AND idempotency_key >= $keyFrom AND idempotency_key < $keyTo";
+
+    // why: with an instance a bare 'type' term lets the planner pick 'events_type_seq', walk every row of those types in the whole ledger and sort them in a temp B-tree (#2774: 74-94 ms vs 0.13 ms at 200k rows); unary plus keeps it on the key range. Without an instance the type index is the right plan
+    private static string TypeColumn(LedgerFilter filter) => filter.Instance is null ? "type" : "+type";
 
     private static void BindInstance(SqliteCommand command, InstanceAddress? instance)
     {
