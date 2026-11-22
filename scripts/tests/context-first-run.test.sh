@@ -271,9 +271,11 @@ STUB
   # The stub driver: `ready` succeeds; `tree --name L` shows one text row under L when $STUB_ROWS_FILE names L.
   cat > "$T/stub-driver" <<'STUB'
 #!/usr/bin/env bash
-echo "dir=${AW_UI_DRIVER_DIR:-unset} $*" >> "$STUB_LOG.drv"
+echo "dir=${AW_UI_DRIVER_DIR:-unset} home=$([ -e "$STUB_HOME" ] && echo exists || echo absent) $*" >> "$STUB_LOG.drv"
+if [ -n "${STUB_DRV_PUBLISH_FAILS:-}" ]; then echo "aw-ui-driver.sh: publishing aw-ui-driver failed" >&2; exit 1; fi
+if [ -n "${STUB_DRV_SLOW:-}" ] && [ ! -e "$STUB_DRV_SLOW" ]; then touch "$STUB_DRV_SLOW"; sleep 3; fi
 case "$1" in
-  ready) exit 0 ;;
+  ready) [ "$2" = --wait-ms ] && [ "$3" = 1 ] && [ -n "${STUB_DRV_NOAPP:-}" ] && { echo "no app running" >&2; exit 4; }; exit 0 ;;
   tree)
     list=""; while [ "$#" -gt 0 ]; do [ "$1" = --name ] && list="$2"; shift; done
     if [ -s "$STUB_ROWS_FILE" ] && [ "$(cat "$STUB_ROWS_FILE")" = "$list" ]; then
@@ -305,6 +307,19 @@ STUB
 
   : > "$STUB_LOG"; rm -f "$STUB_LOG.ui" "$STUB_LOG.drv"
   echo QueuedRows > "$STUB_ROWS_FILE"
+  export STUB_HOME="$HOME_T"
+  trun STUB_DRV_NOAPP=1 STUB_DRV_SLOW="$T/drv-slow" -- up --time
+  if [ "$(head -1 "$STUB_LOG.drv")" = "dir=$HOME_T/first-run/driver home=absent ready --wait-ms 1" ]; then ok "the warm-up driver call comes first, before the home exists"; else fail "the warm-up driver call comes first, before the home exists"; head -2 "$STUB_LOG.drv" | sed 's/^/       | /'; fi
+  case "$OUT" in *"driver ready (not on the clock)"*) ok "a no-app exit from the warm-up does not stop the run" ;; *) fail "a no-app exit from the warm-up does not stop the run" ;; esac
+  app_s="$(printf '%s\n' "$OUT" | awk '$1=="first-run" && $2=="app"{print $3}')"; tot_s="$(printf '%s\n' "$OUT" | awk '$1=="first-run" && $2=="total"{print $3}')"
+  if awk -v a="$app_s" -v t="$tot_s" 'BEGIN{exit !(a<2 && t<3)}'; then ok "a slow first driver call does not raise the app time or the total"; else fail "a slow first driver call does not raise the app time or the total (app $app_s, total $tot_s)"; fi
+  run down
+  : > "$STUB_LOG"; rm -f "$STUB_LOG.ui" "$STUB_LOG.drv"
+  trun STUB_DRV_PUBLISH_FAILS=1 -- up --time
+  expect "a failing driver publish stops the run (exit 1)" 1 "driver warm-up failed" "publishing aw-ui-driver failed"
+  case "$OUT" in *"first-run home "*) fail "a failed publish prints no first-run line" ;; *) ok "a failed publish prints no first-run line" ;; esac
+  [ ! -e "$HOME_T" ] && ok "a failed publish made no home" || fail "a failed publish made no home"
+  : > "$STUB_LOG"; rm -f "$STUB_LOG.ui" "$STUB_LOG.drv"
   trun -- up --time
   expect "--time prints the six steps and the total (exit 0)" 0 "first-run home " "first-run profile " "first-run serve " "first-run workflow " "first-run app " "first-run rows " "first-run total "
   order="$(printf '%s\n' "$OUT" | grep -E '^first-run ' | awk '{print $2}' | tr '\n' ' ')"
@@ -316,7 +331,7 @@ STUB
     && [ "$(grep -E ' wf (create|activate|run) ' "$STUB_LOG" | sed -E 's/.* wf ([a-z]+) .*/\1/' | tr '\n' ' ')" = "create activate run " ]; then ok "the workflow step makes, activates and runs hello-sindri in that order"; else fail "the workflow step makes, activates and runs hello-sindri in that order"; sed 's/^/       | /' "$STUB_LOG"; fi
   if ! logged 'services run' && ! logged 'context map' && ! logged 'code-index'; then ok "--time never builds the index or the map"; else fail "--time never builds the index or the map"; sed 's/^/       | /' "$STUB_LOG"; fi
   if grep -q 'driver=1 dir=.*first-run/driver' "$STUB_LOG.ui" 2>/dev/null && grep -q 'home=sindri-app-firstrun' "$STUB_LOG.ui"; then ok "the app starts with AW_UI_DRIVER=1 on the scratch home"; else fail "the app starts with AW_UI_DRIVER=1 on the scratch home"; cat "$STUB_LOG.ui" 2>/dev/null | sed 's/^/       | /'; fi
-  if grep -q '^dir=.*first-run/driver ready' "$STUB_LOG.drv" && grep -q -- 'tree --name NeedsYouRows' "$STUB_LOG.drv" && grep -q -- 'tree --name QueuedRows' "$STUB_LOG.drv"; then ok "the driver is asked ready, then each list"; else fail "the driver is asked ready, then each list"; sed 's/^/       | /' "$STUB_LOG.drv"; fi
+  if grep -q '^dir=.*first-run/driver home=.* ready --wait-ms 60000' "$STUB_LOG.drv" && grep -q -- 'tree --name NeedsYouRows' "$STUB_LOG.drv" && grep -q -- 'tree --name QueuedRows' "$STUB_LOG.drv"; then ok "the driver is asked ready, then each list"; else fail "the driver is asked ready, then each list"; sed 's/^/       | /' "$STUB_LOG.drv"; fi
   uipid="$(cat "$HOME_T/first-run/ui.pid" 2>/dev/null)"
   if [ -n "$uipid" ] && ! kill -0 "$uipid" 2>/dev/null; then ok "the app is stopped at the end"; else fail "the app is stopped at the end"; [ -z "$uipid" ] || kill "$uipid" 2>/dev/null; fi
   run down; expect "down after --time deletes the home" 0 "deleted"
@@ -349,11 +364,11 @@ STUB
   if [ -z "$(ls -A "$T/xlock" 2>/dev/null)" ]; then ok "the Xvfb is stopped when the script ends"; else fail "the Xvfb is stopped when the script ends"; ls -A "$T/xlock"; fi
   run down
 
-  # dry run: the plan, no writes, no calls
+  : > "$STUB_LOG"; : > "$STUB_LOG.ui"; : > "$STUB_LOG.drv"
   : > "$STUB_LOG"; : > "$STUB_LOG.ui"
   trun -- up --time --dry-run
-  expect "--time --dry-run prints the steps and the clock lines (exit 0)" 0 "== time:" "clock: home ends" "clock: rows ends" "first-run.json" "skip: ollama and graphify"
-  if [ ! -e "$HOME_T" ] && [ ! -s "$STUB_LOG" ] && [ ! -s "$STUB_LOG.ui" ]; then ok "--time --dry-run writes nothing and calls nothing"; else fail "--time --dry-run writes nothing and calls nothing"; fi
+  expect "--time --dry-run prints the steps and the clock lines (exit 0)" 0 "== time:" "driver ready (not on the clock)" "ready --wait-ms 1" "clock: home ends" "clock: rows ends" "first-run.json" "skip: ollama and graphify"
+  if [ ! -e "$HOME_T" ] && [ ! -s "$STUB_LOG" ] && [ ! -s "$STUB_LOG.ui" ] && [ ! -s "$STUB_LOG.drv" ]; then ok "--time --dry-run writes nothing and calls nothing"; else fail "--time --dry-run writes nothing and calls nothing"; fi
   trun -- up --time --stop-after 3
   expect "--time with --stop-after is refused" 2 "--stop-after"
   trun -- up --time --no-ui
