@@ -91,4 +91,24 @@ public sealed class ContextQuestionFilesTests
         Assert.Equal([Recycle, Pane], page.AnswerFiles.Select(f => f.Path).ToList());
         Assert.False(page.HasStageMessage, page.StageMessage);   // the stage draws the whole map, so "draws nothing" would be false
     }
+
+    [Fact]
+    public async Task A_long_answer_lists_its_first_25_files_and_says_how_many_more_in_words()
+    {
+        var files = Enumerable.Range(1, 30).Select(n => $"src/Many/File{n:D2}.cs").ToList();
+        var answer = new JsonObject
+        {
+            ["anchors"] = new JsonArray("thing:lanes"),
+            ["suggestedAnchors"] = new JsonArray(),
+            ["sections"] = new JsonArray(Section("code", [.. files.Select(f => Item("code", "code:" + f, f, text: null, "implements"))])),
+        };
+        var page = Page(new FakeSindriApi { QueryAnswer = _ => new RouteAnswer(HttpStatusCode.OK, answer.ToJsonString()), LensesAnswer = EmptyMap });
+        page.AnchorText = Question;
+
+        await page.Submit(Token);
+
+        Assert.Equal(files.Take(25), page.AnswerFiles.Select(f => f.Path));
+        Assert.Equal((true, "and 5 more files"), (page.HasAnswerFilesMore, page.AnswerFilesMore));
+        Assert.Equal("The map draws nothing for this question, but the answer names 30 files. They are listed above.", page.StageMessage);
+    }
 }

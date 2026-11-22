@@ -177,6 +177,7 @@ internal sealed partial class ContextPageViewModel
         Problem = string.Empty;
         Choices = choices;
         AnswerFiles = [];
+        _answerFilesHidden = 0;
         StageMessage = string.Empty;
         if (view is null)
         {
@@ -197,6 +198,8 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(Head));
         OnChanged(nameof(AnswerFiles));
         OnChanged(nameof(HasAnswerFiles));
+        OnChanged(nameof(AnswerFilesMore));
+        OnChanged(nameof(HasAnswerFilesMore));
         OnChanged(nameof(StageMessage));
         OnChanged(nameof(HasStageMessage));
         OnChanged(nameof(HasHead));

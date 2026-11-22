@@ -29,11 +29,17 @@ internal static partial class Labels
     /// <summary>The name of the list of files the engine returned for a question (#2974).</summary>
     internal const string ContextAnswerFiles = "Files the answer names";
 
+    /// <summary>The line under the files list when the answer named more files than it shows.</summary>
+    /// <param name="more">How many files the list leaves off.</param>
+    /// <returns>The line.</returns>
+    internal static string ContextAnswerFilesMore(int more) =>
+        string.Create(CultureInfo.InvariantCulture, $"and {more} more {(more == 1 ? "file" : "files")}");
+
     /// <summary>What a stage that draws no nodes says when the question named files.</summary>
     /// <param name="files">How many files the answer named.</param>
     /// <returns>The sentence.</returns>
     internal static string ContextStageEmptyWithFiles(int files) =>
-        string.Create(CultureInfo.InvariantCulture, $"The map draws nothing for this question, but the answer names {files} {(files == 1 ? "file" : "files")}. They are listed below.");
+        string.Create(CultureInfo.InvariantCulture, $"The map draws nothing for this question, but the answer names {files} {(files == 1 ? "file" : "files")}. They are listed above.");
 
     /// <summary>What a stage that draws no nodes says when the question named no files either.</summary>
     internal const string ContextStageEmpty = "The map draws nothing for this question.";

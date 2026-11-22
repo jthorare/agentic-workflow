@@ -145,7 +145,7 @@
         </StackPanel>
         <TextBlock x:Name="ConceptsNote" Classes="caption subtle" Text="{Binding Concepts.Note}" ToolTip.Tip="{Binding Concepts.NoteTip}" IsVisible="{Binding Concepts.HasNote}" TextWrapping="Wrap"
                    AutomationProperties.Name="{Binding Concepts.Note}" />
-        <StackPanel x:Name="ContextAnswerFiles" IsVisible="{Binding HasAnswerFiles}" Spacing="4">
+        <StackPanel x:Name="ContextAnswerFiles" IsVisible="{Binding HasAnswerFiles}" Spacing="4" AutomationProperties.Name="{Binding AnswerFilesName}">
           <TextBlock Classes="caption subtle" Text="{Binding AnswerFilesName}" />
           <ScrollViewer MaxHeight="280">
             <ItemsControl ItemsSource="{Binding AnswerFiles}">
@@ -161,6 +161,7 @@
               </ItemsControl.ItemTemplate>
             </ItemsControl>
           </ScrollViewer>
+          <TextBlock x:Name="ContextAnswerFilesMore" Classes="caption subtle" Text="{Binding AnswerFilesMore}" IsVisible="{Binding HasAnswerFilesMore}" AutomationProperties.Name="{Binding AnswerFilesMore}" />
         </StackPanel>
         <ItemsControl x:Name="ContextMissing" ItemsSource="{Binding Missing}" ItemTemplate="{StaticResource LineTemplate}" />
       </StackPanel>
