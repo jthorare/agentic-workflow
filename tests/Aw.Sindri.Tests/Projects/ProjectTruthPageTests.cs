@@ -44,7 +44,7 @@ public sealed class ProjectTruthPageTests
 
         var asked = Assert.Single(facts.Asked);
         Assert.Equal(_repos, asked.Repos.Order(StringComparer.Ordinal).ToArray());
-        Assert.Single(attached.Projects.Single(static c => c.Key == "prj_a").Truth.OpenPrs);
+        _ = Assert.Single(attached.Projects.Single(static c => c.Key == "prj_a").Truth.OpenPrs);
         Assert.Empty(attached.Projects.Single(static c => c.Key == "prj_b").Truth.OpenPrs);
     }
 }
