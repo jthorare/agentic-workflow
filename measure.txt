@@ -1,0 +1,1506 @@
+== agent-asking-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+agent-asking-1440, topbar, 40, pass
+agent-asking-1440, header, 48, pass
+agent-asking-1440, window, 1440x900, info
+agent-asking-1440, body, 784, pass
+agent-asking-1440, footer, 28, pass
+agent-asking-1440, group header, 28, pass
+agent-asking-1440, side inset, 24, pass
+agent-asking-1440, row height, 32, pass
+agent-asking-1440, column gap, 12, pass
+agent-asking-1440, col glyph, 16, pass
+agent-asking-1440, col why chip, 104, pass
+agent-asking-1440, col object, 104, pass
+agent-asking-1440, col from, 136, pass
+agent-asking-1440, col age, 44, pass
+agent-asking-1440, col waits-on, 112, pass
+agent-asking-1440, title width (list 1440 minus fixed 636), 804, pass
+agent-asking-1440, title min 200, 804, pass
+agent-asking-1440, first row y max 130, 124, pass
+agent-asking-1440, text left edges, 52, pass
+agent-asking-1440, glyph centres, 31, pass
+agent-asking-1440, count group needs, 7 vs 7, pass
+agent-asking-1440, count group brief, 2 vs 2, pass
+agent-asking-1440, count moving n, 6 vs 6, pass
+agent-asking-1440, count moving label, true vs true, pass
+agent-asking-1440, count todo line, 8 vs 8, pass
+agent-asking-1440, count todo text, true vs true, pass
+agent-asking-1440, count tab All, 7 vs 7, pass
+agent-asking-1440, count tab Reviews, 0 vs 0, pass
+agent-asking-1440, count tab Messages, 0 vs 0, pass
+agent-asking-1440, count tab Work, 5 vs 5, pass
+agent-asking-1440, count tab Agents, 1 vs 1, pass
+agent-asking-1440, count snoozed toggle, 0 vs 0, pass
+agent-asking-1440, count open rows drawn, 7 vs 7, pass
+agent-asking-1440, brief ref r-0412 (row), resolves, pass
+agent-asking-1440, brief ref r-0409, resolves, pass
+agent-asking-1440, count new rows, 0 vs 0, pass
+agent-asking-1440, count window title, 0 vs 0, pass
+agent-asking-1440, hScroll, 0, pass
+agent-asking-1440, minFontPx, 12.00, pass
+agent-asking-1440, minContrast, 4.70, pass
+== brief-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+brief-1440, topbar, 40, pass
+brief-1440, header, 48, pass
+brief-1440, window, 1440x900, info
+brief-1440, body, 784, pass
+brief-1440, footer, 28, pass
+brief-1440, group header, 28, pass
+brief-1440, side inset, 24, pass
+brief-1440, row height, 32, pass
+brief-1440, column gap, 12, pass
+brief-1440, col glyph, 16, pass
+brief-1440, col why chip, 104, pass
+brief-1440, col object, 104, pass
+brief-1440, col from, 136, pass
+brief-1440, col age, 44, pass
+brief-1440, col waits-on, 112, pass
+brief-1440, title width (list 1440 minus fixed 636), 804, pass
+brief-1440, title min 200, 804, pass
+brief-1440, first row y max 130, 124, pass
+brief-1440, text left edges, 52, pass
+brief-1440, glyph centres, 31, pass
+brief-1440, count group needs, 7 vs 7, pass
+brief-1440, count group brief, 6 vs 6, pass
+brief-1440, count moving n, 6 vs 6, pass
+brief-1440, count moving label, true vs true, pass
+brief-1440, count todo line, 8 vs 8, pass
+brief-1440, count todo text, true vs true, pass
+brief-1440, count tab All, 7 vs 7, pass
+brief-1440, count tab Reviews, 0 vs 0, pass
+brief-1440, count tab Messages, 0 vs 0, pass
+brief-1440, count tab Work, 5 vs 5, pass
+brief-1440, count tab Agents, 1 vs 1, pass
+brief-1440, count snoozed toggle, 0 vs 0, pass
+brief-1440, count open rows drawn, 7 vs 7, pass
+brief-1440, brief ref r-0412 (row), resolves, pass
+brief-1440, brief ref r-0412 (row), resolves, pass
+brief-1440, brief ref r-0409, resolves, pass
+brief-1440, count new rows, 0 vs 0, pass
+brief-1440, count window title, 0 vs 0, pass
+brief-1440, hScroll, 0, pass
+brief-1440, minFontPx, 12.00, pass
+brief-1440, minContrast, 5.19, pass
+== brief-states-1440: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=0 small=[] hScroll=0 font=Inter
+brief-states-1440, topbar, 40, pass
+brief-states-1440, header, 48, pass
+brief-states-1440, window, 1440x900, info
+brief-states-1440, body, 784, pass
+brief-states-1440, footer, 28, pass
+brief-states-1440, group header, 28, pass
+brief-states-1440, count group brief, 2 vs 2, pass
+brief-states-1440, count group brief, 2 vs 2, pass
+brief-states-1440, count group brief, 2 vs 2, pass
+brief-states-1440, count group brief, 0 vs 0, pass
+brief-states-1440, count tab All, 0 vs 0, pass
+brief-states-1440, count tab Reviews, 0 vs 0, pass
+brief-states-1440, count tab Messages, 0 vs 0, pass
+brief-states-1440, count tab Work, 0 vs 0, pass
+brief-states-1440, count tab Agents, 0 vs 0, pass
+brief-states-1440, count snoozed toggle, 0 vs 0, pass
+brief-states-1440, count open rows drawn, 0 vs 0, pass
+brief-states-1440, brief ref r-0412 (row), resolves, pass
+brief-states-1440, brief ref r-0409, resolves, pass
+brief-states-1440, brief ref r-0412 (row), resolves, pass
+brief-states-1440, brief ref r-0409, resolves, pass
+brief-states-1440, brief ref r-0412 (row), resolves, pass
+brief-states-1440, brief ref r-0409, resolves, pass
+brief-states-1440, count new rows, 0 vs 0, pass
+brief-states-1440, count window title, 0 vs 0, pass
+brief-states-1440, hScroll, 0, pass
+brief-states-1440, minFontPx, 12.00, pass
+brief-states-1440, minContrast, 5.19, pass
+== changed-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+changed-1440, topbar, 40, pass
+changed-1440, header, 48, pass
+changed-1440, window, 1440x900, info
+changed-1440, body, 784, pass
+changed-1440, footer, 28, pass
+changed-1440, group header, 28, pass
+changed-1440, side inset, 24, pass
+changed-1440, row height, 32, pass
+changed-1440, column gap, 12, pass
+changed-1440, col glyph, 16, pass
+changed-1440, col why chip, 104, pass
+changed-1440, col object, 104, pass
+changed-1440, col from, 136, pass
+changed-1440, col age, 44, pass
+changed-1440, col waits-on, 112, pass
+changed-1440, title width (list 1440 minus fixed 636), 804, pass
+changed-1440, title min 200, 804, pass
+changed-1440, first row y max 130, 124, pass
+changed-1440, text left edges, 52, pass
+changed-1440, glyph centres, 31, pass
+changed-1440, count group needs, 7 vs 7, pass
+changed-1440, count group brief, 2 vs 2, pass
+changed-1440, count moving n, 6 vs 6, pass
+changed-1440, count moving label, true vs true, pass
+changed-1440, count todo line, 8 vs 8, pass
+changed-1440, count todo text, true vs true, pass
+changed-1440, count tab All, 7 vs 7, pass
+changed-1440, count tab Reviews, 0 vs 0, pass
+changed-1440, count tab Messages, 0 vs 0, pass
+changed-1440, count tab Work, 5 vs 5, pass
+changed-1440, count tab Agents, 1 vs 1, pass
+changed-1440, count snoozed toggle, 0 vs 0, pass
+changed-1440, count open rows drawn, 7 vs 7, pass
+changed-1440, brief ref r-0412 (row), resolves, pass
+changed-1440, brief ref r-0409, resolves, pass
+changed-1440, count new rows, 0 vs 0, pass
+changed-1440, count window title, 0 vs 0, pass
+changed-1440, hScroll, 0, pass
+changed-1440, minFontPx, 12.00, pass
+changed-1440, minContrast, 4.70, pass
+== connect-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+connect-1440, topbar, 40, pass
+connect-1440, header, 48, pass
+connect-1440, window, 1440x900, info
+connect-1440, body, 784, pass
+connect-1440, footer, 28, pass
+connect-1440, group header, 28, pass
+connect-1440, side inset, 24, pass
+connect-1440, row height, 32, pass
+connect-1440, column gap, 12, pass
+connect-1440, col glyph, 16, pass
+connect-1440, col why chip, 104, pass
+connect-1440, col object, 104, pass
+connect-1440, col from, 136, pass
+connect-1440, col age, 44, pass
+connect-1440, col waits-on, 112, pass
+connect-1440, title width (list 1440 minus fixed 636), 804, pass
+connect-1440, title min 200, 804, pass
+connect-1440, first row y max 130, 124, pass
+connect-1440, text left edges, 52, pass
+connect-1440, glyph centres, 31, pass
+connect-1440, count group needs, 7 vs 7, pass
+connect-1440, count group brief, 2 vs 2, pass
+connect-1440, count moving n, 6 vs 6, pass
+connect-1440, count moving label, true vs true, pass
+connect-1440, count todo line, 8 vs 8, pass
+connect-1440, count todo text, true vs true, pass
+connect-1440, count tab All, 7 vs 7, pass
+connect-1440, count tab Reviews, 0 vs 0, pass
+connect-1440, count tab Messages, 0 vs 0, pass
+connect-1440, count tab Work, 5 vs 5, pass
+connect-1440, count tab Agents, 1 vs 1, pass
+connect-1440, count snoozed toggle, 0 vs 0, pass
+connect-1440, count open rows drawn, 7 vs 7, pass
+connect-1440, brief ref r-0412 (row), resolves, pass
+connect-1440, brief ref r-0409, resolves, pass
+connect-1440, count new rows, 0 vs 0, pass
+connect-1440, count window title, 0 vs 0, pass
+connect-1440, hScroll, 0, pass
+connect-1440, minFontPx, 12.00, pass
+connect-1440, minContrast, 4.70, pass
+== connect-stale-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+connect-stale-1440, topbar, 40, pass
+connect-stale-1440, header, 48, pass
+connect-stale-1440, window, 1440x900, info
+connect-stale-1440, body, 784, pass
+connect-stale-1440, footer, 28, pass
+connect-stale-1440, group header, 28, pass
+connect-stale-1440, side inset, 24, pass
+connect-stale-1440, row height, 32, pass
+connect-stale-1440, column gap, 12, pass
+connect-stale-1440, col glyph, 16, pass
+connect-stale-1440, col why chip, 104, pass
+connect-stale-1440, col object, 104, pass
+connect-stale-1440, col from, 136, pass
+connect-stale-1440, col age, 44, pass
+connect-stale-1440, col waits-on, 112, pass
+connect-stale-1440, title width (list 1440 minus fixed 636), 804, pass
+connect-stale-1440, title min 200, 804, pass
+connect-stale-1440, first row y max 130, 124, pass
+connect-stale-1440, text left edges, 52, pass
+connect-stale-1440, glyph centres, 31, pass
+connect-stale-1440, count group needs, 7 vs 7, pass
+connect-stale-1440, count group brief, 2 vs 2, pass
+connect-stale-1440, count moving n, 6 vs 6, pass
+connect-stale-1440, count moving label, true vs true, pass
+connect-stale-1440, count todo line, 8 vs 8, pass
+connect-stale-1440, count todo text, true vs true, pass
+connect-stale-1440, count tab All, 7 vs 7, pass
+connect-stale-1440, count tab Reviews, 1 vs 1, pass
+connect-stale-1440, count tab Messages, 0 vs 0, pass
+connect-stale-1440, count tab Work, 5 vs 5, pass
+connect-stale-1440, count tab Agents, 1 vs 1, pass
+connect-stale-1440, count snoozed toggle, 0 vs 0, pass
+connect-stale-1440, count open rows drawn, 7 vs 7, pass
+connect-stale-1440, brief ref r-0412 (row), resolves, pass
+connect-stale-1440, brief ref r-0409, resolves, pass
+connect-stale-1440, count new rows, 0 vs 0, pass
+connect-stale-1440, count window title, 0 vs 0, pass
+connect-stale-1440, hScroll, 0, pass
+connect-stale-1440, minFontPx, 12.00, pass
+connect-stale-1440, minContrast, 4.70, pass
+== d3-17-1440: rows=17 rowsFullyInView=17 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+d3-17-1440, topbar, 40, pass
+d3-17-1440, header, 48, pass
+d3-17-1440, window, 1440x900, info
+d3-17-1440, body, 784, pass
+d3-17-1440, footer, 28, pass
+d3-17-1440, group header, 28, pass
+d3-17-1440, side inset, 24, pass
+d3-17-1440, row height, 32, pass
+d3-17-1440, column gap, 12, pass
+d3-17-1440, col glyph, 16, pass
+d3-17-1440, col why chip, 104, pass
+d3-17-1440, col object, 104, pass
+d3-17-1440, col from, 136, pass
+d3-17-1440, col age, 44, pass
+d3-17-1440, col waits-on, 112, pass
+d3-17-1440, title width (list 1440 minus fixed 636), 804, pass
+d3-17-1440, title min 200, 804, pass
+d3-17-1440, first row y max 130, 124, pass
+d3-17-1440, text left edges, 52, pass
+d3-17-1440, glyph centres, 31 32, pass
+d3-17-1440, count group needs, 17 vs 17, pass
+d3-17-1440, count group brief, 6 vs 6, pass
+d3-17-1440, count moving n, 6 vs 6, pass
+d3-17-1440, count moving label, true vs true, pass
+d3-17-1440, count todo line, 8 vs 8, pass
+d3-17-1440, count todo text, true vs true, pass
+d3-17-1440, count tab All, 17 vs 17, pass
+d3-17-1440, count tab Reviews, 5 vs 5, pass
+d3-17-1440, count tab Messages, 4 vs 4, pass
+d3-17-1440, count tab Work, 4 vs 4, pass
+d3-17-1440, count tab Agents, 4 vs 4, pass
+d3-17-1440, count snoozed toggle, 0 vs 0, pass
+d3-17-1440, count open rows drawn, 17 vs 17, pass
+d3-17-1440, brief ref r-0412 (row), resolves, pass
+d3-17-1440, brief ref r-0412 (row), resolves, pass
+d3-17-1440, brief ref r-0409, resolves, pass
+d3-17-1440, count new rows, 0 vs 0, pass
+d3-17-1440, count window title, 0 vs 0, pass
+d3-17-1440, count d3 rows in view, 17 vs 17, pass
+d3-17-1440, d3 todo line bottom max 872, 872, pass
+d3-17-1440, hScroll, 0, pass
+d3-17-1440, minFontPx, 12.00, pass
+d3-17-1440, minContrast, 5.19, pass
+== default-1000: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+default-1000, topbar, 40, pass
+default-1000, header, 48, pass
+default-1000, window, 1000x700, info
+default-1000, body, 584, pass
+default-1000, footer, 28, pass
+default-1000, group header, 28, pass
+default-1000, side inset, 24, pass
+default-1000, row height, 32, pass
+default-1000, column gap, 12, pass
+default-1000, col glyph, 16, pass
+default-1000, col why chip, 104, pass
+default-1000, col object, 104, pass
+default-1000, col from, 136, pass
+default-1000, col age, 44, pass
+default-1000, col waits-on, 112, pass
+default-1000, title width (list 1000 minus fixed 636), 364, pass
+default-1000, title min 200, 364, pass
+default-1000, first row y max 130, 124, pass
+default-1000, text left edges, 52, pass
+default-1000, glyph centres, 31, pass
+default-1000, count group needs, 7 vs 7, pass
+default-1000, count group brief, 2 vs 2, pass
+default-1000, count moving n, 6 vs 6, pass
+default-1000, count moving label, true vs true, pass
+default-1000, count todo line, 8 vs 8, pass
+default-1000, count todo text, true vs true, pass
+default-1000, count tab All, 7 vs 7, pass
+default-1000, count tab Reviews, 0 vs 0, pass
+default-1000, count tab Messages, 0 vs 0, pass
+default-1000, count tab Work, 5 vs 5, pass
+default-1000, count tab Agents, 1 vs 1, pass
+default-1000, count snoozed toggle, 0 vs 0, pass
+default-1000, count open rows drawn, 7 vs 7, pass
+default-1000, brief ref r-0412 (row), resolves, pass
+default-1000, brief ref r-0409, resolves, pass
+default-1000, count new rows, 0 vs 0, pass
+default-1000, count window title, 0 vs 0, pass
+default-1000, hScroll, 0, pass
+default-1000, minFontPx, 12.00, pass
+default-1000, minContrast, 5.19, pass
+== default-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+default-1440, topbar, 40, pass
+default-1440, header, 48, pass
+default-1440, window, 1440x900, info
+default-1440, body, 784, pass
+default-1440, footer, 28, pass
+default-1440, group header, 28, pass
+default-1440, side inset, 24, pass
+default-1440, row height, 32, pass
+default-1440, column gap, 12, pass
+default-1440, col glyph, 16, pass
+default-1440, col why chip, 104, pass
+default-1440, col object, 104, pass
+default-1440, col from, 136, pass
+default-1440, col age, 44, pass
+default-1440, col waits-on, 112, pass
+default-1440, title width (list 1440 minus fixed 636), 804, pass
+default-1440, title min 200, 804, pass
+default-1440, first row y max 130, 124, pass
+default-1440, text left edges, 52, pass
+default-1440, glyph centres, 31, pass
+default-1440, count group needs, 7 vs 7, pass
+default-1440, count group brief, 2 vs 2, pass
+default-1440, count moving n, 6 vs 6, pass
+default-1440, count moving label, true vs true, pass
+default-1440, count todo line, 8 vs 8, pass
+default-1440, count todo text, true vs true, pass
+default-1440, count tab All, 7 vs 7, pass
+default-1440, count tab Reviews, 0 vs 0, pass
+default-1440, count tab Messages, 0 vs 0, pass
+default-1440, count tab Work, 5 vs 5, pass
+default-1440, count tab Agents, 1 vs 1, pass
+default-1440, count snoozed toggle, 0 vs 0, pass
+default-1440, count open rows drawn, 7 vs 7, pass
+default-1440, brief ref r-0412 (row), resolves, pass
+default-1440, brief ref r-0409, resolves, pass
+default-1440, count new rows, 0 vs 0, pass
+default-1440, count window title, 0 vs 0, pass
+default-1440, hScroll, 0, pass
+default-1440, minFontPx, 12.00, pass
+default-1440, minContrast, 5.19, pass
+== default-full-1440: rows=22 rowsFullyInView=22 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+default-full-1440, topbar, 40, pass
+default-full-1440, header, 48, pass
+default-full-1440, window, 1440x900, info
+default-full-1440, body, 784, pass
+default-full-1440, footer, 28, pass
+default-full-1440, group header, 28, pass
+default-full-1440, side inset, 24, pass
+default-full-1440, row height, 32, pass
+default-full-1440, column gap, 12, pass
+default-full-1440, col glyph, 16, pass
+default-full-1440, col why chip, 104, pass
+default-full-1440, col object, 104, pass
+default-full-1440, col from, 136, pass
+default-full-1440, col age, 44, pass
+default-full-1440, col waits-on, 112, pass
+default-full-1440, title width (list 1440 minus fixed 636), 804, pass
+default-full-1440, title min 200, 804, pass
+default-full-1440, first row y max 130, 124, pass
+default-full-1440, text left edges, 52, pass
+default-full-1440, glyph centres, 31 32, pass
+default-full-1440, count group needs, 22 vs 22, pass
+default-full-1440, count group brief, 6 vs 6, pass
+default-full-1440, count moving n, 6 vs 6, pass
+default-full-1440, count moving label, true vs true, pass
+default-full-1440, count todo line, 8 vs 8, pass
+default-full-1440, count todo text, true vs true, pass
+default-full-1440, count tab All, 22 vs 22, pass
+default-full-1440, count tab Reviews, 5 vs 5, pass
+default-full-1440, count tab Messages, 4 vs 4, pass
+default-full-1440, count tab Work, 8 vs 8, pass
+default-full-1440, count tab Agents, 4 vs 4, pass
+default-full-1440, count snoozed toggle, 0 vs 0, pass
+default-full-1440, count open rows drawn, 22 vs 22, pass
+default-full-1440, brief ref r-0412 (row), resolves, pass
+default-full-1440, brief ref r-0412 (row), resolves, pass
+default-full-1440, brief ref r-0409, resolves, pass
+default-full-1440, count new rows, 0 vs 0, pass
+default-full-1440, count window title, 0 vs 0, pass
+default-full-1440, hScroll, 0, pass
+default-full-1440, minFontPx, 12.00, pass
+default-full-1440, minContrast, 5.19, pass
+== density-comfortable-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=40 small=[] hScroll=0 font=Inter
+density-comfortable-1440, topbar, 40, pass
+density-comfortable-1440, header, 48, pass
+density-comfortable-1440, window, 1440x900, info
+density-comfortable-1440, body, 784, pass
+density-comfortable-1440, footer, 28, pass
+density-comfortable-1440, group header, 28, pass
+density-comfortable-1440, side inset, 24, pass
+density-comfortable-1440, row height, 40, pass
+density-comfortable-1440, column gap, 12, pass
+density-comfortable-1440, col glyph, 16, pass
+density-comfortable-1440, col why chip, 104, pass
+density-comfortable-1440, col object, 104, pass
+density-comfortable-1440, col from, 136, pass
+density-comfortable-1440, col age, 44, pass
+density-comfortable-1440, col waits-on, 112, pass
+density-comfortable-1440, title width (list 1440 minus fixed 636), 804, pass
+density-comfortable-1440, title min 200, 804, pass
+density-comfortable-1440, first row y max 130, 124, pass
+density-comfortable-1440, text left edges, 52, pass
+density-comfortable-1440, glyph centres, 31, pass
+density-comfortable-1440, count group needs, 7 vs 7, pass
+density-comfortable-1440, count group brief, 2 vs 2, pass
+density-comfortable-1440, count moving n, 6 vs 6, pass
+density-comfortable-1440, count moving label, true vs true, pass
+density-comfortable-1440, count todo line, 8 vs 8, pass
+density-comfortable-1440, count todo text, true vs true, pass
+density-comfortable-1440, count tab All, 7 vs 7, pass
+density-comfortable-1440, count tab Reviews, 0 vs 0, pass
+density-comfortable-1440, count tab Messages, 0 vs 0, pass
+density-comfortable-1440, count tab Work, 5 vs 5, pass
+density-comfortable-1440, count tab Agents, 1 vs 1, pass
+density-comfortable-1440, count snoozed toggle, 0 vs 0, pass
+density-comfortable-1440, count open rows drawn, 7 vs 7, pass
+density-comfortable-1440, brief ref r-0412 (row), resolves, pass
+density-comfortable-1440, brief ref r-0409, resolves, pass
+density-comfortable-1440, count new rows, 0 vs 0, pass
+density-comfortable-1440, count window title, 0 vs 0, pass
+density-comfortable-1440, hScroll, 0, pass
+density-comfortable-1440, minFontPx, 12.00, pass
+density-comfortable-1440, minContrast, 5.19, pass
+== done-list-1440: rows=2 rowsFullyInView=2 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+done-list-1440, topbar, 40, pass
+done-list-1440, header, 48, pass
+done-list-1440, window, 1440x900, info
+done-list-1440, body, 784, pass
+done-list-1440, footer, 28, pass
+done-list-1440, group header, 28, pass
+done-list-1440, side inset, 24, pass
+done-list-1440, row height, 32, pass
+done-list-1440, column gap, 12, pass
+done-list-1440, col glyph, 16, pass
+done-list-1440, col why chip, 104, pass
+done-list-1440, col object, 104, pass
+done-list-1440, col from, 136, pass
+done-list-1440, col age, 44, pass
+done-list-1440, col waits-on, 112, pass
+done-list-1440, title width (list 1440 minus fixed 636), 804, pass
+done-list-1440, title min 200, 804, pass
+done-list-1440, first row y max 130, 124, pass
+done-list-1440, text left edges, 52, pass
+done-list-1440, glyph centres, 31, pass
+done-list-1440, count group done, 2 vs 2, pass
+done-list-1440, count new rows, 0 vs 0, pass
+done-list-1440, count window title, 0 vs 0, pass
+done-list-1440, hScroll, 0, pass
+done-list-1440, minFontPx, 12.00, pass
+done-list-1440, minContrast, 5.19, pass
+== done-list-empty-1440: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=0 small=[] hScroll=0 font=Inter
+done-list-empty-1440, topbar, 40, pass
+done-list-empty-1440, header, 48, pass
+done-list-empty-1440, window, 1440x900, info
+done-list-empty-1440, body, 784, pass
+done-list-empty-1440, footer, 28, pass
+done-list-empty-1440, group header, 28, pass
+done-list-empty-1440, count group done, 0 vs 0, pass
+done-list-empty-1440, count new rows, 0 vs 0, pass
+done-list-empty-1440, count window title, 0 vs 0, pass
+done-list-empty-1440, hScroll, 0, pass
+done-list-empty-1440, minFontPx, 12.00, pass
+done-list-empty-1440, minContrast, 5.19, pass
+== empty-1440: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=0 small=[] hScroll=0 font=Inter
+empty-1440, topbar, 40, pass
+empty-1440, header, 48, pass
+empty-1440, window, 1440x900, info
+empty-1440, body, 784, pass
+empty-1440, footer, 28, pass
+empty-1440, group header, 28, pass
+empty-1440, count group brief, 2 vs 2, pass
+empty-1440, count tab All, 0 vs 0, pass
+empty-1440, count tab Reviews, 0 vs 0, pass
+empty-1440, count tab Messages, 0 vs 0, pass
+empty-1440, count tab Work, 0 vs 0, pass
+empty-1440, count tab Agents, 0 vs 0, pass
+empty-1440, count snoozed toggle, 3 vs 3, pass
+empty-1440, count open rows drawn, 0 vs 0, pass
+empty-1440, brief ref r-0412, resolves, pass
+empty-1440, brief ref r-0409, resolves, pass
+empty-1440, count new rows, 0 vs 0, pass
+empty-1440, count window title, 0 vs 0, pass
+empty-1440, hScroll, 0, pass
+empty-1440, minFontPx, 12.00, pass
+empty-1440, minContrast, 5.19, pass
+== empty-stale-1440: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=0 small=[] hScroll=0 font=Inter
+empty-stale-1440, topbar, 40, pass
+empty-stale-1440, header, 48, pass
+empty-stale-1440, window, 1440x900, info
+empty-stale-1440, body, 784, pass
+empty-stale-1440, footer, 28, pass
+empty-stale-1440, count tab All, 0 vs 0, pass
+empty-stale-1440, count tab Reviews, 0 vs 0, pass
+empty-stale-1440, count tab Messages, 0 vs 0, pass
+empty-stale-1440, count tab Work, 0 vs 0, pass
+empty-stale-1440, count tab Agents, 0 vs 0, pass
+empty-stale-1440, count snoozed toggle, 0 vs 0, pass
+empty-stale-1440, count open rows drawn, 0 vs 0, pass
+empty-stale-1440, count new rows, 0 vs 0, pass
+empty-stale-1440, count window title, 0 vs 0, pass
+empty-stale-1440, hScroll, 0, pass
+empty-stale-1440, minFontPx, 12.00, pass
+empty-stale-1440, minContrast, 5.19, pass
+== first-paint-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+first-paint-1440, topbar, 40, pass
+first-paint-1440, header, 48, pass
+first-paint-1440, window, 1440x900, info
+first-paint-1440, body, 784, pass
+first-paint-1440, footer, 28, pass
+first-paint-1440, group header, 28, pass
+first-paint-1440, side inset, 24, pass
+first-paint-1440, row height, 32, pass
+first-paint-1440, column gap, 12, pass
+first-paint-1440, col glyph, 16, pass
+first-paint-1440, col why chip, 104, pass
+first-paint-1440, col object, 104, pass
+first-paint-1440, col from, 136, pass
+first-paint-1440, col age, 44, pass
+first-paint-1440, col waits-on, 112, pass
+first-paint-1440, title width (list 1440 minus fixed 636), 804, pass
+first-paint-1440, title min 200, 804, pass
+first-paint-1440, first row y max 130, 124, pass
+first-paint-1440, text left edges, 52, pass
+first-paint-1440, glyph centres, 31, pass
+first-paint-1440, count group needs, 7 vs 7, pass
+first-paint-1440, count group brief, 2 vs 2, pass
+first-paint-1440, count moving n, 6 vs 6, pass
+first-paint-1440, count moving label, true vs true, pass
+first-paint-1440, count todo line, 8 vs 8, pass
+first-paint-1440, count todo text, true vs true, pass
+first-paint-1440, count tab All, 7 vs 7, pass
+first-paint-1440, count tab Reviews, 0 vs 0, pass
+first-paint-1440, count tab Messages, 0 vs 0, pass
+first-paint-1440, count tab Work, 5 vs 5, pass
+first-paint-1440, count tab Agents, 1 vs 1, pass
+first-paint-1440, count snoozed toggle, 0 vs 0, pass
+first-paint-1440, count open rows drawn, 7 vs 7, pass
+first-paint-1440, brief ref r-0412 (row), resolves, pass
+first-paint-1440, brief ref r-0409, resolves, pass
+first-paint-1440, count new rows, 0 vs 0, pass
+first-paint-1440, count window title, 0 vs 0, pass
+first-paint-1440, hScroll, 0, pass
+first-paint-1440, minFontPx, 12.00, pass
+first-paint-1440, minContrast, 5.19, pass
+== hand-picker-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=4.84 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+hand-picker-1440, topbar, 40, pass
+hand-picker-1440, header, 48, pass
+hand-picker-1440, window, 1440x900, info
+hand-picker-1440, body, 784, pass
+hand-picker-1440, footer, 28, pass
+hand-picker-1440, group header, 28, pass
+hand-picker-1440, side inset, 24, pass
+hand-picker-1440, row height, 32, pass
+hand-picker-1440, column gap, 12, pass
+hand-picker-1440, col glyph, 16, pass
+hand-picker-1440, col why chip, 104, pass
+hand-picker-1440, col object, 104, pass
+hand-picker-1440, col from, 136, pass
+hand-picker-1440, col age, 44, pass
+hand-picker-1440, col waits-on, 112, pass
+hand-picker-1440, title width (list 1440 minus fixed 636), 804, pass
+hand-picker-1440, title min 200, 804, pass
+hand-picker-1440, first row y max 130, 124, pass
+hand-picker-1440, text left edges, 52, pass
+hand-picker-1440, glyph centres, 31, pass
+hand-picker-1440, count group needs, 7 vs 7, pass
+hand-picker-1440, count group brief, 2 vs 2, pass
+hand-picker-1440, count moving n, 6 vs 6, pass
+hand-picker-1440, count moving label, true vs true, pass
+hand-picker-1440, count todo line, 8 vs 8, pass
+hand-picker-1440, count todo text, true vs true, pass
+hand-picker-1440, count tab All, 7 vs 7, pass
+hand-picker-1440, count tab Reviews, 0 vs 0, pass
+hand-picker-1440, count tab Messages, 0 vs 0, pass
+hand-picker-1440, count tab Work, 5 vs 5, pass
+hand-picker-1440, count tab Agents, 1 vs 1, pass
+hand-picker-1440, count snoozed toggle, 0 vs 0, pass
+hand-picker-1440, count open rows drawn, 7 vs 7, pass
+hand-picker-1440, brief ref r-0412 (row), resolves, pass
+hand-picker-1440, brief ref r-0409, resolves, pass
+hand-picker-1440, count new rows, 0 vs 0, pass
+hand-picker-1440, count window title, 0 vs 0, pass
+hand-picker-1440, hScroll, 0, pass
+hand-picker-1440, minFontPx, 12.00, pass
+hand-picker-1440, minContrast, 4.84, pass
+== hand-picker-empty-1440: rows=6 rowsFullyInView=6 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+hand-picker-empty-1440, topbar, 40, pass
+hand-picker-empty-1440, header, 48, pass
+hand-picker-empty-1440, window, 1440x900, info
+hand-picker-empty-1440, body, 784, pass
+hand-picker-empty-1440, footer, 28, pass
+hand-picker-empty-1440, group header, 28, pass
+hand-picker-empty-1440, side inset, 24, pass
+hand-picker-empty-1440, row height, 32, pass
+hand-picker-empty-1440, column gap, 12, pass
+hand-picker-empty-1440, col glyph, 16, pass
+hand-picker-empty-1440, col why chip, 104, pass
+hand-picker-empty-1440, col object, 104, pass
+hand-picker-empty-1440, col from, 136, pass
+hand-picker-empty-1440, col age, 44, pass
+hand-picker-empty-1440, col waits-on, 112, pass
+hand-picker-empty-1440, title width (list 1440 minus fixed 636), 804, pass
+hand-picker-empty-1440, title min 200, 804, pass
+hand-picker-empty-1440, first row y max 130, 124, pass
+hand-picker-empty-1440, text left edges, 52, pass
+hand-picker-empty-1440, glyph centres, 31, pass
+hand-picker-empty-1440, count group needs, 6 vs 6, pass
+hand-picker-empty-1440, count group brief, 2 vs 2, pass
+hand-picker-empty-1440, count moving n, 0 vs 0, pass
+hand-picker-empty-1440, count moving label, true vs true, pass
+hand-picker-empty-1440, count moving lines, 0 vs 0, pass
+hand-picker-empty-1440, count todo line, 8 vs 8, pass
+hand-picker-empty-1440, count todo text, true vs true, pass
+hand-picker-empty-1440, count tab All, 6 vs 6, pass
+hand-picker-empty-1440, count tab Reviews, 0 vs 0, pass
+hand-picker-empty-1440, count tab Messages, 0 vs 0, pass
+hand-picker-empty-1440, count tab Work, 5 vs 5, pass
+hand-picker-empty-1440, count tab Agents, 0 vs 0, pass
+hand-picker-empty-1440, count snoozed toggle, 0 vs 0, pass
+hand-picker-empty-1440, count open rows drawn, 6 vs 6, pass
+hand-picker-empty-1440, brief ref r-0412 (row), resolves, pass
+hand-picker-empty-1440, brief ref r-0409, resolves, pass
+hand-picker-empty-1440, count new rows, 0 vs 0, pass
+hand-picker-empty-1440, count window title, 0 vs 0, pass
+hand-picker-empty-1440, hScroll, 0, pass
+hand-picker-empty-1440, minFontPx, 12.00, pass
+hand-picker-empty-1440, minContrast, 4.70, pass
+== lanes-glyphs-1440: rows=4 rowsFullyInView=4 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+lanes-glyphs-1440, topbar, 40, pass
+lanes-glyphs-1440, header, 48, pass
+lanes-glyphs-1440, window, 1440x900, info
+lanes-glyphs-1440, body, 784, pass
+lanes-glyphs-1440, footer, 28, pass
+lanes-glyphs-1440, group header, 28, pass
+lanes-glyphs-1440, side inset, 24, pass
+lanes-glyphs-1440, row height, 32, pass
+lanes-glyphs-1440, column gap, 12, pass
+lanes-glyphs-1440, col glyph, 16, pass
+lanes-glyphs-1440, col why chip, 104, pass
+lanes-glyphs-1440, col object, 104, pass
+lanes-glyphs-1440, col from, 136, pass
+lanes-glyphs-1440, col age, 44, pass
+lanes-glyphs-1440, col waits-on, 112, pass
+lanes-glyphs-1440, title width (list 1440 minus fixed 636), 804, pass
+lanes-glyphs-1440, title min 200, 804, pass
+lanes-glyphs-1440, first row y max 130, 124, pass
+lanes-glyphs-1440, text left edges, 52, pass
+lanes-glyphs-1440, glyph centres, 31, pass
+lanes-glyphs-1440, count group needs, 4 vs 4, pass
+lanes-glyphs-1440, count group brief, 2 vs 2, pass
+lanes-glyphs-1440, count moving n, 6 vs 6, pass
+lanes-glyphs-1440, count moving label, true vs true, pass
+lanes-glyphs-1440, count todo line, 8 vs 8, pass
+lanes-glyphs-1440, count todo text, true vs true, pass
+lanes-glyphs-1440, count tab All, 4 vs 4, pass
+lanes-glyphs-1440, count tab Reviews, 2 vs 2, pass
+lanes-glyphs-1440, count tab Messages, 0 vs 0, pass
+lanes-glyphs-1440, count tab Work, 0 vs 0, pass
+lanes-glyphs-1440, count tab Agents, 2 vs 2, pass
+lanes-glyphs-1440, count snoozed toggle, 0 vs 0, pass
+lanes-glyphs-1440, count open rows drawn, 4 vs 4, pass
+lanes-glyphs-1440, brief ref r-0409, resolves, pass
+lanes-glyphs-1440, brief ref r-0408, resolves, pass
+lanes-glyphs-1440, count new rows, 0 vs 0, pass
+lanes-glyphs-1440, count window title, 0 vs 0, pass
+lanes-glyphs-1440, hScroll, 0, pass
+lanes-glyphs-1440, minFontPx, 12.00, pass
+lanes-glyphs-1440, minContrast, 5.19, pass
+== loading-1440: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=0 small=[] hScroll=0 font=Inter
+loading-1440, topbar, 40, pass
+loading-1440, header, 48, pass
+loading-1440, window, 1440x900, info
+loading-1440, body, 784, pass
+loading-1440, footer, 28, pass
+loading-1440, group header, 28, pass
+loading-1440, count new rows, 0 vs 0, pass
+loading-1440, count window title, 0 vs 0, pass
+loading-1440, hScroll, 0, pass
+loading-1440, minFontPx, 12.00, pass
+loading-1440, minContrast, 5.19, pass
+== moving-empty-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+moving-empty-1440, topbar, 40, pass
+moving-empty-1440, header, 48, pass
+moving-empty-1440, window, 1440x900, info
+moving-empty-1440, body, 784, pass
+moving-empty-1440, footer, 28, pass
+moving-empty-1440, group header, 28, pass
+moving-empty-1440, side inset, 24, pass
+moving-empty-1440, row height, 32, pass
+moving-empty-1440, column gap, 12, pass
+moving-empty-1440, col glyph, 16, pass
+moving-empty-1440, col why chip, 104, pass
+moving-empty-1440, col object, 104, pass
+moving-empty-1440, col from, 136, pass
+moving-empty-1440, col age, 44, pass
+moving-empty-1440, col waits-on, 112, pass
+moving-empty-1440, title width (list 1440 minus fixed 636), 804, pass
+moving-empty-1440, title min 200, 804, pass
+moving-empty-1440, first row y max 130, 124, pass
+moving-empty-1440, text left edges, 52, pass
+moving-empty-1440, glyph centres, 31, pass
+moving-empty-1440, count group needs, 7 vs 7, pass
+moving-empty-1440, count group brief, 2 vs 2, pass
+moving-empty-1440, count moving n, 0 vs 0, pass
+moving-empty-1440, count moving label, true vs true, pass
+moving-empty-1440, count moving lines, 0 vs 0, pass
+moving-empty-1440, count todo line, 8 vs 8, pass
+moving-empty-1440, count todo text, true vs true, pass
+moving-empty-1440, count tab All, 7 vs 7, pass
+moving-empty-1440, count tab Reviews, 0 vs 0, pass
+moving-empty-1440, count tab Messages, 0 vs 0, pass
+moving-empty-1440, count tab Work, 5 vs 5, pass
+moving-empty-1440, count tab Agents, 1 vs 1, pass
+moving-empty-1440, count snoozed toggle, 0 vs 0, pass
+moving-empty-1440, count open rows drawn, 7 vs 7, pass
+moving-empty-1440, brief ref r-0412 (row), resolves, pass
+moving-empty-1440, brief ref r-0409, resolves, pass
+moving-empty-1440, count new rows, 0 vs 0, pass
+moving-empty-1440, count window title, 0 vs 0, pass
+moving-empty-1440, hScroll, 0, pass
+moving-empty-1440, minFontPx, 12.00, pass
+moving-empty-1440, minContrast, 5.19, pass
+== moving-open-1440: rows=13 rowsFullyInView=13 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+moving-open-1440, topbar, 40, pass
+moving-open-1440, header, 48, pass
+moving-open-1440, window, 1440x900, info
+moving-open-1440, body, 784, pass
+moving-open-1440, footer, 28, pass
+moving-open-1440, group header, 28, pass
+moving-open-1440, side inset, 24, pass
+moving-open-1440, row height, 32, pass
+moving-open-1440, column gap, 12, pass
+moving-open-1440, col glyph, 16, pass
+moving-open-1440, col why chip, 104, pass
+moving-open-1440, col object, 104, pass
+moving-open-1440, col from, 136, pass
+moving-open-1440, col age, 44, pass
+moving-open-1440, col waits-on, 112, pass
+moving-open-1440, title width (list 1440 minus fixed 636), 804, pass
+moving-open-1440, title min 200, 804, pass
+moving-open-1440, first row y max 130, 124, pass
+moving-open-1440, text left edges, 52, pass
+moving-open-1440, glyph centres, 31, pass
+moving-open-1440, count group needs, 7 vs 7, pass
+moving-open-1440, count group brief, 2 vs 2, pass
+moving-open-1440, count moving n, 6 vs 6, pass
+moving-open-1440, count moving label, true vs true, pass
+moving-open-1440, count moving lines, 6 vs 6, pass
+moving-open-1440, count todo line, 8 vs 8, pass
+moving-open-1440, count todo text, true vs true, pass
+moving-open-1440, count tab All, 7 vs 7, pass
+moving-open-1440, count tab Reviews, 0 vs 0, pass
+moving-open-1440, count tab Messages, 0 vs 0, pass
+moving-open-1440, count tab Work, 5 vs 5, pass
+moving-open-1440, count tab Agents, 1 vs 1, pass
+moving-open-1440, count snoozed toggle, 0 vs 0, pass
+moving-open-1440, count open rows drawn, 7 vs 7, pass
+moving-open-1440, brief ref r-0412 (row), resolves, pass
+moving-open-1440, brief ref r-0409, resolves, pass
+moving-open-1440, count new rows, 0 vs 0, pass
+moving-open-1440, count window title, 0 vs 0, pass
+moving-open-1440, hScroll, 0, pass
+moving-open-1440, minFontPx, 12.00, pass
+moving-open-1440, minContrast, 5.19, pass
+== new-band-1440: rows=7 rowsFullyInView=5 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+new-band-1440, topbar, 40, pass
+new-band-1440, header, 48, pass
+new-band-1440, window, 1440x900, info
+new-band-1440, body, 784, pass
+new-band-1440, footer, 28, pass
+new-band-1440, group header, 28, pass
+new-band-1440, side inset, 24, pass
+new-band-1440, row height, 32, pass
+new-band-1440, column gap, 12, pass
+new-band-1440, col glyph, 16, pass
+new-band-1440, col why chip, 104, pass
+new-band-1440, col object, 104, pass
+new-band-1440, col from, 136, pass
+new-band-1440, col age, 44, pass
+new-band-1440, col waits-on, 112, pass
+new-band-1440, title width (list 1440 minus fixed 636), 804, pass
+new-band-1440, title min 200, 804, pass
+new-band-1440, first row y max 130, 24, pass
+new-band-1440, text left edges, 52, pass
+new-band-1440, glyph centres, 31, pass
+new-band-1440, count group new, 2 vs 2, pass
+new-band-1440, count group needs, 5 vs 5, pass
+new-band-1440, count group brief, 2 vs 2, pass
+new-band-1440, count moving n, 6 vs 6, pass
+new-band-1440, count moving label, true vs true, pass
+new-band-1440, count todo line, 8 vs 8, pass
+new-band-1440, count todo text, true vs true, pass
+new-band-1440, count tab All, 7 vs 7, pass
+new-band-1440, count tab Reviews, 0 vs 0, pass
+new-band-1440, count tab Messages, 0 vs 0, pass
+new-band-1440, count tab Work, 5 vs 5, pass
+new-band-1440, count tab Agents, 1 vs 1, pass
+new-band-1440, count snoozed toggle, 0 vs 0, pass
+new-band-1440, count open rows drawn, 7 vs 7, pass
+new-band-1440, brief ref r-0412 (row), resolves, pass
+new-band-1440, brief ref r-0409, resolves, pass
+new-band-1440, count new rows, 2 vs 2, pass
+new-band-1440, count window title, 2 vs 2, pass
+new-band-1440, hScroll, 0, pass
+new-band-1440, minFontPx, 12.00, pass
+new-band-1440, minContrast, 5.19, pass
+== new-band-top-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+new-band-top-1440, topbar, 40, pass
+new-band-top-1440, header, 48, pass
+new-band-top-1440, window, 1440x900, info
+new-band-top-1440, body, 784, pass
+new-band-top-1440, footer, 28, pass
+new-band-top-1440, group header, 28, pass
+new-band-top-1440, side inset, 24, pass
+new-band-top-1440, row height, 32, pass
+new-band-top-1440, column gap, 12, pass
+new-band-top-1440, col glyph, 16, pass
+new-band-top-1440, col why chip, 104, pass
+new-band-top-1440, col object, 104, pass
+new-band-top-1440, col from, 136, pass
+new-band-top-1440, col age, 44, pass
+new-band-top-1440, col waits-on, 112, pass
+new-band-top-1440, title width (list 1440 minus fixed 636), 804, pass
+new-band-top-1440, title min 200, 804, pass
+new-band-top-1440, first row y max 130, 124, pass
+new-band-top-1440, text left edges, 52, pass
+new-band-top-1440, glyph centres, 31, pass
+new-band-top-1440, count group new, 2 vs 2, pass
+new-band-top-1440, count group needs, 5 vs 5, pass
+new-band-top-1440, count group brief, 2 vs 2, pass
+new-band-top-1440, count moving n, 6 vs 6, pass
+new-band-top-1440, count moving label, true vs true, pass
+new-band-top-1440, count todo line, 8 vs 8, pass
+new-band-top-1440, count todo text, true vs true, pass
+new-band-top-1440, count tab All, 7 vs 7, pass
+new-band-top-1440, count tab Reviews, 0 vs 0, pass
+new-band-top-1440, count tab Messages, 0 vs 0, pass
+new-band-top-1440, count tab Work, 5 vs 5, pass
+new-band-top-1440, count tab Agents, 1 vs 1, pass
+new-band-top-1440, count snoozed toggle, 0 vs 0, pass
+new-band-top-1440, count open rows drawn, 7 vs 7, pass
+new-band-top-1440, brief ref r-0412 (row), resolves, pass
+new-band-top-1440, brief ref r-0409, resolves, pass
+new-band-top-1440, count new rows, 2 vs 2, pass
+new-band-top-1440, count window title, 2 vs 2, pass
+new-band-top-1440, hScroll, 0, pass
+new-band-top-1440, minFontPx, 12.00, pass
+new-band-top-1440, minContrast, 5.19, pass
+== peek-1000: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+peek-1000, topbar, 40, pass
+peek-1000, header, 48, pass
+peek-1000, window, 1000x700, info
+peek-1000, body, 584, pass
+peek-1000, footer, 28, pass
+peek-1000, group header, 28, pass
+peek-1000, side inset, 24, pass
+peek-1000, row height, 32, pass
+peek-1000, column gap, 12, pass
+peek-1000, col glyph, 16, pass
+peek-1000, col why chip, 104, pass
+peek-1000, col age, 44, pass
+peek-1000, title width (list 560 minus fixed 248), 312, pass
+peek-1000, title min 200, 312, pass
+peek-1000, first row y max 130, 124, pass
+peek-1000, text left edges, 52, pass
+peek-1000, glyph centres, 31, pass
+peek-1000, peek width, 440, pass
+peek-1000, peek header, 48, pass
+peek-1000, list width with peek, 560, pass
+peek-1000, count group needs, 7 vs 7, pass
+peek-1000, count group brief, 2 vs 2, pass
+peek-1000, count moving n, 6 vs 6, pass
+peek-1000, count moving label, true vs true, pass
+peek-1000, count todo line, 8 vs 8, pass
+peek-1000, count todo text, true vs true, pass
+peek-1000, count tab All, 7 vs 7, pass
+peek-1000, count tab Reviews, 0 vs 0, pass
+peek-1000, count tab Messages, 0 vs 0, pass
+peek-1000, count tab Work, 5 vs 5, pass
+peek-1000, count tab Agents, 1 vs 1, pass
+peek-1000, count snoozed toggle, 0 vs 0, pass
+peek-1000, count open rows drawn, 7 vs 7, pass
+peek-1000, brief ref r-0412 (row), resolves, pass
+peek-1000, brief ref r-0409, resolves, pass
+peek-1000, count new rows, 0 vs 0, pass
+peek-1000, count window title, 0 vs 0, pass
+peek-1000, hScroll, 0, pass
+peek-1000, minFontPx, 12.00, pass
+peek-1000, minContrast, 4.70, pass
+== peek-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+peek-1440, topbar, 40, pass
+peek-1440, header, 48, pass
+peek-1440, window, 1440x900, info
+peek-1440, body, 784, pass
+peek-1440, footer, 28, pass
+peek-1440, group header, 28, pass
+peek-1440, side inset, 24, pass
+peek-1440, row height, 32, pass
+peek-1440, column gap, 12, pass
+peek-1440, col glyph, 16, pass
+peek-1440, col why chip, 104, pass
+peek-1440, col object, 104, pass
+peek-1440, col from, 136, pass
+peek-1440, col age, 44, pass
+peek-1440, col waits-on, 112, pass
+peek-1440, title width (list 1000 minus fixed 636), 364, pass
+peek-1440, title min 200, 364, pass
+peek-1440, first row y max 130, 124, pass
+peek-1440, text left edges, 52, pass
+peek-1440, glyph centres, 31, pass
+peek-1440, peek width, 440, pass
+peek-1440, peek header, 48, pass
+peek-1440, list width with peek, 1000, pass
+peek-1440, count group needs, 7 vs 7, pass
+peek-1440, count group brief, 2 vs 2, pass
+peek-1440, count moving n, 6 vs 6, pass
+peek-1440, count moving label, true vs true, pass
+peek-1440, count todo line, 8 vs 8, pass
+peek-1440, count todo text, true vs true, pass
+peek-1440, count tab All, 7 vs 7, pass
+peek-1440, count tab Reviews, 0 vs 0, pass
+peek-1440, count tab Messages, 0 vs 0, pass
+peek-1440, count tab Work, 5 vs 5, pass
+peek-1440, count tab Agents, 1 vs 1, pass
+peek-1440, count snoozed toggle, 0 vs 0, pass
+peek-1440, count open rows drawn, 7 vs 7, pass
+peek-1440, brief ref r-0412 (row), resolves, pass
+peek-1440, brief ref r-0409, resolves, pass
+peek-1440, count new rows, 0 vs 0, pass
+peek-1440, count window title, 0 vs 0, pass
+peek-1440, hScroll, 0, pass
+peek-1440, minFontPx, 12.00, pass
+peek-1440, minContrast, 4.70, pass
+== peek-decision-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+peek-decision-1440, topbar, 40, pass
+peek-decision-1440, header, 48, pass
+peek-decision-1440, window, 1440x900, info
+peek-decision-1440, body, 784, pass
+peek-decision-1440, footer, 28, pass
+peek-decision-1440, group header, 28, pass
+peek-decision-1440, side inset, 24, pass
+peek-decision-1440, row height, 32, pass
+peek-decision-1440, column gap, 12, pass
+peek-decision-1440, col glyph, 16, pass
+peek-decision-1440, col why chip, 104, pass
+peek-decision-1440, col object, 104, pass
+peek-decision-1440, col from, 136, pass
+peek-decision-1440, col age, 44, pass
+peek-decision-1440, col waits-on, 112, pass
+peek-decision-1440, title width (list 1000 minus fixed 636), 364, pass
+peek-decision-1440, title min 200, 364, pass
+peek-decision-1440, first row y max 130, 124, pass
+peek-decision-1440, text left edges, 52, pass
+peek-decision-1440, glyph centres, 31, pass
+peek-decision-1440, peek width, 440, pass
+peek-decision-1440, peek header, 48, pass
+peek-decision-1440, list width with peek, 1000, pass
+peek-decision-1440, count group needs, 7 vs 7, pass
+peek-decision-1440, count group brief, 2 vs 2, pass
+peek-decision-1440, count moving n, 6 vs 6, pass
+peek-decision-1440, count moving label, true vs true, pass
+peek-decision-1440, count todo line, 8 vs 8, pass
+peek-decision-1440, count todo text, true vs true, pass
+peek-decision-1440, count tab All, 7 vs 7, pass
+peek-decision-1440, count tab Reviews, 0 vs 0, pass
+peek-decision-1440, count tab Messages, 0 vs 0, pass
+peek-decision-1440, count tab Work, 5 vs 5, pass
+peek-decision-1440, count tab Agents, 1 vs 1, pass
+peek-decision-1440, count snoozed toggle, 0 vs 0, pass
+peek-decision-1440, count open rows drawn, 7 vs 7, pass
+peek-decision-1440, brief ref r-0412 (row), resolves, pass
+peek-decision-1440, brief ref r-0409, resolves, pass
+peek-decision-1440, count new rows, 0 vs 0, pass
+peek-decision-1440, count window title, 0 vs 0, pass
+peek-decision-1440, hScroll, 0, pass
+peek-decision-1440, minFontPx, 12.00, pass
+peek-decision-1440, minContrast, 5.19, pass
+== peek-failed-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+peek-failed-1440, topbar, 40, pass
+peek-failed-1440, header, 48, pass
+peek-failed-1440, window, 1440x900, info
+peek-failed-1440, body, 784, pass
+peek-failed-1440, footer, 28, pass
+peek-failed-1440, group header, 28, pass
+peek-failed-1440, side inset, 24, pass
+peek-failed-1440, row height, 32, pass
+peek-failed-1440, column gap, 12, pass
+peek-failed-1440, col glyph, 16, pass
+peek-failed-1440, col why chip, 104, pass
+peek-failed-1440, col object, 104, pass
+peek-failed-1440, col from, 136, pass
+peek-failed-1440, col age, 44, pass
+peek-failed-1440, col waits-on, 112, pass
+peek-failed-1440, title width (list 1000 minus fixed 636), 364, pass
+peek-failed-1440, title min 200, 364, pass
+peek-failed-1440, first row y max 130, 124, pass
+peek-failed-1440, text left edges, 52, pass
+peek-failed-1440, glyph centres, 31, pass
+peek-failed-1440, peek width, 440, pass
+peek-failed-1440, peek header, 48, pass
+peek-failed-1440, list width with peek, 1000, pass
+peek-failed-1440, count group needs, 7 vs 7, pass
+peek-failed-1440, count group brief, 2 vs 2, pass
+peek-failed-1440, count moving n, 6 vs 6, pass
+peek-failed-1440, count moving label, true vs true, pass
+peek-failed-1440, count todo line, 8 vs 8, pass
+peek-failed-1440, count todo text, true vs true, pass
+peek-failed-1440, count tab All, 7 vs 7, pass
+peek-failed-1440, count tab Reviews, 0 vs 0, pass
+peek-failed-1440, count tab Messages, 0 vs 0, pass
+peek-failed-1440, count tab Work, 5 vs 5, pass
+peek-failed-1440, count tab Agents, 1 vs 1, pass
+peek-failed-1440, count snoozed toggle, 0 vs 0, pass
+peek-failed-1440, count open rows drawn, 7 vs 7, pass
+peek-failed-1440, brief ref r-0412 (row), resolves, pass
+peek-failed-1440, brief ref r-0409, resolves, pass
+peek-failed-1440, count new rows, 0 vs 0, pass
+peek-failed-1440, count window title, 0 vs 0, pass
+peek-failed-1440, hScroll, 0, pass
+peek-failed-1440, minFontPx, 12.00, pass
+peek-failed-1440, minContrast, 4.70, pass
+== read-failed-1440: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=0 small=[] hScroll=0 font=Inter
+read-failed-1440, topbar, 40, pass
+read-failed-1440, header, 48, pass
+read-failed-1440, window, 1440x900, info
+read-failed-1440, body, 784, pass
+read-failed-1440, footer, 28, pass
+read-failed-1440, count new rows, 0 vs 0, pass
+read-failed-1440, count window title, 0 vs 0, pass
+read-failed-1440, hScroll, 0, pass
+read-failed-1440, minFontPx, 12.00, pass
+read-failed-1440, minContrast, 5.19, pass
+== row-failed-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+row-failed-1440, topbar, 40, pass
+row-failed-1440, header, 48, pass
+row-failed-1440, window, 1440x900, info
+row-failed-1440, body, 784, pass
+row-failed-1440, footer, 28, pass
+row-failed-1440, group header, 28, pass
+row-failed-1440, side inset, 24, pass
+row-failed-1440, row height, 32, pass
+row-failed-1440, column gap, 12, pass
+row-failed-1440, col glyph, 16, pass
+row-failed-1440, col why chip, 104, pass
+row-failed-1440, col object, 104, pass
+row-failed-1440, col from, 136, pass
+row-failed-1440, col age, 44, pass
+row-failed-1440, col waits-on, 112, pass
+row-failed-1440, title width (list 1440 minus fixed 636), 804, pass
+row-failed-1440, title min 200, 804, pass
+row-failed-1440, first row y max 130, 124, pass
+row-failed-1440, text left edges, 52, pass
+row-failed-1440, glyph centres, 31, pass
+row-failed-1440, count group needs, 7 vs 7, pass
+row-failed-1440, count group brief, 2 vs 2, pass
+row-failed-1440, count moving n, 6 vs 6, pass
+row-failed-1440, count moving label, true vs true, pass
+row-failed-1440, count todo line, 8 vs 8, pass
+row-failed-1440, count todo text, true vs true, pass
+row-failed-1440, count tab All, 7 vs 7, pass
+row-failed-1440, count tab Reviews, 0 vs 0, pass
+row-failed-1440, count tab Messages, 0 vs 0, pass
+row-failed-1440, count tab Work, 5 vs 5, pass
+row-failed-1440, count tab Agents, 1 vs 1, pass
+row-failed-1440, count snoozed toggle, 0 vs 0, pass
+row-failed-1440, count open rows drawn, 7 vs 7, pass
+row-failed-1440, brief ref r-0412 (row), resolves, pass
+row-failed-1440, brief ref r-0409, resolves, pass
+row-failed-1440, count new rows, 0 vs 0, pass
+row-failed-1440, count window title, 0 vs 0, pass
+row-failed-1440, hScroll, 0, pass
+row-failed-1440, minFontPx, 12.00, pass
+row-failed-1440, minContrast, 4.70, pass
+== run-failed-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+run-failed-1440, topbar, 40, pass
+run-failed-1440, header, 48, pass
+run-failed-1440, window, 1440x900, info
+run-failed-1440, body, 784, pass
+run-failed-1440, footer, 28, pass
+run-failed-1440, group header, 28, pass
+run-failed-1440, side inset, 24, pass
+run-failed-1440, row height, 32, pass
+run-failed-1440, column gap, 12, pass
+run-failed-1440, col glyph, 16, pass
+run-failed-1440, col why chip, 104, pass
+run-failed-1440, col object, 104, pass
+run-failed-1440, col from, 136, pass
+run-failed-1440, col age, 44, pass
+run-failed-1440, col waits-on, 112, pass
+run-failed-1440, title width (list 1440 minus fixed 636), 804, pass
+run-failed-1440, title min 200, 804, pass
+run-failed-1440, first row y max 130, 124, pass
+run-failed-1440, text left edges, 52, pass
+run-failed-1440, glyph centres, 31, pass
+run-failed-1440, count group needs, 7 vs 7, pass
+run-failed-1440, count group brief, 2 vs 2, pass
+run-failed-1440, count moving n, 6 vs 6, pass
+run-failed-1440, count moving label, true vs true, pass
+run-failed-1440, count todo line, 8 vs 8, pass
+run-failed-1440, count todo text, true vs true, pass
+run-failed-1440, count tab All, 7 vs 7, pass
+run-failed-1440, count tab Reviews, 0 vs 0, pass
+run-failed-1440, count tab Messages, 0 vs 0, pass
+run-failed-1440, count tab Work, 5 vs 5, pass
+run-failed-1440, count tab Agents, 1 vs 1, pass
+run-failed-1440, count snoozed toggle, 0 vs 0, pass
+run-failed-1440, count open rows drawn, 7 vs 7, pass
+run-failed-1440, brief ref r-0412 (row), resolves, pass
+run-failed-1440, brief ref r-0409, resolves, pass
+run-failed-1440, count new rows, 0 vs 0, pass
+run-failed-1440, count window title, 0 vs 0, pass
+run-failed-1440, hScroll, 0, pass
+run-failed-1440, minFontPx, 12.00, pass
+run-failed-1440, minContrast, 4.70, pass
+== scale13-1440: rows=7 rowsFullyInView=7 cut=["repo billing"] contrastUnder4_5=[] minContrast=5.19 minFontPx=14.00 rowH=40 small=[] hScroll=0 font=Inter
+scale13-1440, topbar, 40, pass
+scale13-1440, header, 48, pass
+scale13-1440, window, 1440x900, info
+scale13-1440, body, 784, pass
+scale13-1440, footer, 28, pass
+scale13-1440, group header, 36, pass
+scale13-1440, side inset, 24, pass
+scale13-1440, row height, 40, pass
+scale13-1440, column gap, 12, pass
+scale13-1440, col glyph, 16, pass
+scale13-1440, col why chip, 104, pass
+scale13-1440, col object, 104, pass
+scale13-1440, col from, 136, pass
+scale13-1440, col age, 44, pass
+scale13-1440, col waits-on, 112, pass
+scale13-1440, title width (list 1440 minus fixed 636), 804, pass
+scale13-1440, title min 200, 804, pass
+scale13-1440, first row y max 138, 132, pass
+scale13-1440, text left edges, 52, pass
+scale13-1440, glyph centres, 31, pass
+scale13-1440, count group needs, 7 vs 7, pass
+scale13-1440, count group brief, 2 vs 2, pass
+scale13-1440, count moving n, 6 vs 6, pass
+scale13-1440, count moving label, true vs true, pass
+scale13-1440, count todo line, 8 vs 8, pass
+scale13-1440, count todo text, true vs true, pass
+scale13-1440, count tab All, 7 vs 7, pass
+scale13-1440, count tab Reviews, 0 vs 0, pass
+scale13-1440, count tab Messages, 0 vs 0, pass
+scale13-1440, count tab Work, 5 vs 5, pass
+scale13-1440, count tab Agents, 1 vs 1, pass
+scale13-1440, count snoozed toggle, 0 vs 0, pass
+scale13-1440, count open rows drawn, 7 vs 7, pass
+scale13-1440, brief ref r-0412 (row), resolves, pass
+scale13-1440, brief ref r-0409, resolves, pass
+scale13-1440, count new rows, 0 vs 0, pass
+scale13-1440, count window title, 0 vs 0, pass
+scale13-1440, hScroll, 0, pass
+scale13-1440, minFontPx, 14.00, pass
+scale13-1440, minContrast, 5.19, pass
+== snoozed-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+snoozed-1440, topbar, 40, pass
+snoozed-1440, header, 48, pass
+snoozed-1440, window, 1440x900, info
+snoozed-1440, body, 784, pass
+snoozed-1440, footer, 28, pass
+snoozed-1440, group header, 28, pass
+snoozed-1440, side inset, 24, pass
+snoozed-1440, row height, 32, pass
+snoozed-1440, column gap, 12, pass
+snoozed-1440, col glyph, 16, pass
+snoozed-1440, col why chip, 104, pass
+snoozed-1440, col object, 104, pass
+snoozed-1440, col from, 136, pass
+snoozed-1440, col age, 44, pass
+snoozed-1440, col waits-on, 112, pass
+snoozed-1440, title width (list 1440 minus fixed 636), 804, pass
+snoozed-1440, title min 200, 804, pass
+snoozed-1440, first row y max 130, 124, pass
+snoozed-1440, text left edges, 52, pass
+snoozed-1440, glyph centres, 31, pass
+snoozed-1440, count group needs, 4 vs 4, pass
+snoozed-1440, count group snoozed, 3 vs 3, pass
+snoozed-1440, count group brief, 2 vs 2, pass
+snoozed-1440, count moving n, 6 vs 6, pass
+snoozed-1440, count moving label, true vs true, pass
+snoozed-1440, count todo line, 8 vs 8, pass
+snoozed-1440, count todo text, true vs true, pass
+snoozed-1440, count tab All, 4 vs 4, pass
+snoozed-1440, count tab Reviews, 0 vs 0, pass
+snoozed-1440, count tab Messages, 0 vs 0, pass
+snoozed-1440, count tab Work, 2 vs 2, pass
+snoozed-1440, count tab Agents, 1 vs 1, pass
+snoozed-1440, count snoozed toggle, 3 vs 3, pass
+snoozed-1440, count snoozed rows, 3 vs 3, pass
+snoozed-1440, count open rows drawn, 4 vs 4, pass
+snoozed-1440, brief ref r-0412 (row), resolves, pass
+snoozed-1440, brief ref r-0409, resolves, pass
+snoozed-1440, count new rows, 0 vs 0, pass
+snoozed-1440, count window title, 0 vs 0, pass
+snoozed-1440, hScroll, 0, pass
+snoozed-1440, minFontPx, 12.00, pass
+snoozed-1440, minContrast, 5.19, pass
+== snooze-picker-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=4.60 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+snooze-picker-1440, topbar, 40, pass
+snooze-picker-1440, header, 48, pass
+snooze-picker-1440, window, 1440x900, info
+snooze-picker-1440, body, 784, pass
+snooze-picker-1440, footer, 28, pass
+snooze-picker-1440, group header, 28, pass
+snooze-picker-1440, side inset, 24, pass
+snooze-picker-1440, row height, 32, pass
+snooze-picker-1440, column gap, 12, pass
+snooze-picker-1440, col glyph, 16, pass
+snooze-picker-1440, col why chip, 104, pass
+snooze-picker-1440, col object, 104, pass
+snooze-picker-1440, col from, 136, pass
+snooze-picker-1440, col age, 44, pass
+snooze-picker-1440, col waits-on, 112, pass
+snooze-picker-1440, title width (list 1440 minus fixed 636), 804, pass
+snooze-picker-1440, title min 200, 804, pass
+snooze-picker-1440, first row y max 130, 124, pass
+snooze-picker-1440, text left edges, 52, pass
+snooze-picker-1440, glyph centres, 31, pass
+snooze-picker-1440, count group needs, 7 vs 7, pass
+snooze-picker-1440, count group brief, 2 vs 2, pass
+snooze-picker-1440, count moving n, 6 vs 6, pass
+snooze-picker-1440, count moving label, true vs true, pass
+snooze-picker-1440, count todo line, 8 vs 8, pass
+snooze-picker-1440, count todo text, true vs true, pass
+snooze-picker-1440, count tab All, 7 vs 7, pass
+snooze-picker-1440, count tab Reviews, 0 vs 0, pass
+snooze-picker-1440, count tab Messages, 0 vs 0, pass
+snooze-picker-1440, count tab Work, 5 vs 5, pass
+snooze-picker-1440, count tab Agents, 1 vs 1, pass
+snooze-picker-1440, count snoozed toggle, 0 vs 0, pass
+snooze-picker-1440, count open rows drawn, 7 vs 7, pass
+snooze-picker-1440, brief ref r-0412 (row), resolves, pass
+snooze-picker-1440, brief ref r-0409, resolves, pass
+snooze-picker-1440, count new rows, 0 vs 0, pass
+snooze-picker-1440, count window title, 0 vs 0, pass
+snooze-picker-1440, hScroll, 0, pass
+snooze-picker-1440, minFontPx, 12.00, pass
+snooze-picker-1440, minContrast, 4.60, pass
+== snooze-woken-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+snooze-woken-1440, topbar, 40, pass
+snooze-woken-1440, header, 48, pass
+snooze-woken-1440, window, 1440x900, info
+snooze-woken-1440, body, 784, pass
+snooze-woken-1440, footer, 28, pass
+snooze-woken-1440, group header, 28, pass
+snooze-woken-1440, side inset, 24, pass
+snooze-woken-1440, row height, 32, pass
+snooze-woken-1440, column gap, 12, pass
+snooze-woken-1440, col glyph, 16, pass
+snooze-woken-1440, col why chip, 104, pass
+snooze-woken-1440, col object, 104, pass
+snooze-woken-1440, col from, 136, pass
+snooze-woken-1440, col age, 44, pass
+snooze-woken-1440, col waits-on, 112, pass
+snooze-woken-1440, title width (list 1440 minus fixed 636), 804, pass
+snooze-woken-1440, title min 200, 804, pass
+snooze-woken-1440, first row y max 130, 124, pass
+snooze-woken-1440, text left edges, 52, pass
+snooze-woken-1440, glyph centres, 31, pass
+snooze-woken-1440, count group new, 1 vs 1, pass
+snooze-woken-1440, count group needs, 6 vs 6, pass
+snooze-woken-1440, count group brief, 2 vs 2, pass
+snooze-woken-1440, count moving n, 6 vs 6, pass
+snooze-woken-1440, count moving label, true vs true, pass
+snooze-woken-1440, count todo line, 8 vs 8, pass
+snooze-woken-1440, count todo text, true vs true, pass
+snooze-woken-1440, count tab All, 7 vs 7, pass
+snooze-woken-1440, count tab Reviews, 0 vs 0, pass
+snooze-woken-1440, count tab Messages, 0 vs 0, pass
+snooze-woken-1440, count tab Work, 5 vs 5, pass
+snooze-woken-1440, count tab Agents, 1 vs 1, pass
+snooze-woken-1440, count snoozed toggle, 0 vs 0, pass
+snooze-woken-1440, count open rows drawn, 7 vs 7, pass
+snooze-woken-1440, brief ref r-0412 (row), resolves, pass
+snooze-woken-1440, brief ref r-0409, resolves, pass
+snooze-woken-1440, count new rows, 1 vs 1, pass
+snooze-woken-1440, count window title, 1 vs 1, pass
+snooze-woken-1440, hScroll, 0, pass
+snooze-woken-1440, minFontPx, 12.00, pass
+snooze-woken-1440, minContrast, 5.19, pass
+== stale-source-1440: rows=9 rowsFullyInView=9 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+stale-source-1440, topbar, 40, pass
+stale-source-1440, header, 48, pass
+stale-source-1440, window, 1440x900, info
+stale-source-1440, body, 784, pass
+stale-source-1440, footer, 28, pass
+stale-source-1440, group header, 28, pass
+stale-source-1440, side inset, 24, pass
+stale-source-1440, row height, 32, pass
+stale-source-1440, column gap, 12, pass
+stale-source-1440, col glyph, 16, pass
+stale-source-1440, col why chip, 104, pass
+stale-source-1440, col object, 104, pass
+stale-source-1440, col from, 136, pass
+stale-source-1440, col age, 44, pass
+stale-source-1440, col waits-on, 112, pass
+stale-source-1440, title width (list 1440 minus fixed 636), 804, pass
+stale-source-1440, title min 200, 804, pass
+stale-source-1440, first row y max 162, 156, pass
+stale-source-1440, text left edges, 52, pass
+stale-source-1440, glyph centres, 31, pass
+stale-source-1440, count group needs, 9 vs 9, pass
+stale-source-1440, count group brief, 2 vs 2, pass
+stale-source-1440, count moving n, 6 vs 6, pass
+stale-source-1440, count moving label, true vs true, pass
+stale-source-1440, count todo line, 8 vs 8, pass
+stale-source-1440, count todo text, true vs true, pass
+stale-source-1440, count tab All, 9 vs 9, pass
+stale-source-1440, count tab Reviews, 3 vs 3, pass
+stale-source-1440, count tab Messages, 0 vs 0, pass
+stale-source-1440, count tab Work, 5 vs 5, pass
+stale-source-1440, count tab Agents, 1 vs 1, pass
+stale-source-1440, count snoozed toggle, 0 vs 0, pass
+stale-source-1440, count open rows drawn, 9 vs 9, pass
+stale-source-1440, brief ref r-0412 (row), resolves, pass
+stale-source-1440, brief ref r-0409, resolves, pass
+stale-source-1440, count new rows, 0 vs 0, pass
+stale-source-1440, count window title, 0 vs 0, pass
+stale-source-1440, hScroll, 0, pass
+stale-source-1440, minFontPx, 12.00, pass
+stale-source-1440, minContrast, 5.19, pass
+== still-sending-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+still-sending-1440, topbar, 40, pass
+still-sending-1440, header, 48, pass
+still-sending-1440, window, 1440x900, info
+still-sending-1440, body, 784, pass
+still-sending-1440, footer, 28, pass
+still-sending-1440, group header, 28, pass
+still-sending-1440, side inset, 24, pass
+still-sending-1440, row height, 32, pass
+still-sending-1440, column gap, 12, pass
+still-sending-1440, col glyph, 16, pass
+still-sending-1440, col why chip, 104, pass
+still-sending-1440, col object, 104, pass
+still-sending-1440, col from, 136, pass
+still-sending-1440, col age, 44, pass
+still-sending-1440, col waits-on, 112, pass
+still-sending-1440, title width (list 1440 minus fixed 636), 804, pass
+still-sending-1440, title min 200, 804, pass
+still-sending-1440, first row y max 130, 124, pass
+still-sending-1440, text left edges, 52, pass
+still-sending-1440, glyph centres, 31, pass
+still-sending-1440, count group needs, 7 vs 7, pass
+still-sending-1440, count group brief, 2 vs 2, pass
+still-sending-1440, count moving n, 6 vs 6, pass
+still-sending-1440, count moving label, true vs true, pass
+still-sending-1440, count todo line, 8 vs 8, pass
+still-sending-1440, count todo text, true vs true, pass
+still-sending-1440, count tab All, 7 vs 7, pass
+still-sending-1440, count tab Reviews, 0 vs 0, pass
+still-sending-1440, count tab Messages, 0 vs 0, pass
+still-sending-1440, count tab Work, 5 vs 5, pass
+still-sending-1440, count tab Agents, 1 vs 1, pass
+still-sending-1440, count snoozed toggle, 0 vs 0, pass
+still-sending-1440, count open rows drawn, 7 vs 7, pass
+still-sending-1440, brief ref r-0412 (row), resolves, pass
+still-sending-1440, brief ref r-0409, resolves, pass
+still-sending-1440, count new rows, 0 vs 0, pass
+still-sending-1440, count window title, 0 vs 0, pass
+still-sending-1440, hScroll, 0, pass
+still-sending-1440, minFontPx, 12.00, pass
+still-sending-1440, minContrast, 5.19, pass
+== stopped-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+stopped-1440, topbar, 40, pass
+stopped-1440, header, 48, pass
+stopped-1440, window, 1440x900, info
+stopped-1440, body, 784, pass
+stopped-1440, footer, 28, pass
+stopped-1440, group header, 28, pass
+stopped-1440, side inset, 24, pass
+stopped-1440, row height, 32, pass
+stopped-1440, column gap, 12, pass
+stopped-1440, col glyph, 16, pass
+stopped-1440, col why chip, 104, pass
+stopped-1440, col object, 104, pass
+stopped-1440, col from, 136, pass
+stopped-1440, col age, 44, pass
+stopped-1440, col waits-on, 112, pass
+stopped-1440, title width (list 1440 minus fixed 636), 804, pass
+stopped-1440, title min 200, 804, pass
+stopped-1440, first row y max 130, 124, pass
+stopped-1440, text left edges, 52, pass
+stopped-1440, glyph centres, 31, pass
+stopped-1440, count group needs, 7 vs 7, pass
+stopped-1440, count group brief, 2 vs 2, pass
+stopped-1440, count moving n, 6 vs 6, pass
+stopped-1440, count moving label, true vs true, pass
+stopped-1440, count todo line, 8 vs 8, pass
+stopped-1440, count todo text, true vs true, pass
+stopped-1440, count tab All, 7 vs 7, pass
+stopped-1440, count tab Reviews, 0 vs 0, pass
+stopped-1440, count tab Messages, 0 vs 0, pass
+stopped-1440, count tab Work, 5 vs 5, pass
+stopped-1440, count tab Agents, 1 vs 1, pass
+stopped-1440, count snoozed toggle, 0 vs 0, pass
+stopped-1440, count open rows drawn, 7 vs 7, pass
+stopped-1440, brief ref r-0412 (row), resolves, pass
+stopped-1440, brief ref r-0409, resolves, pass
+stopped-1440, count new rows, 0 vs 0, pass
+stopped-1440, count window title, 0 vs 0, pass
+stopped-1440, hScroll, 0, pass
+stopped-1440, minFontPx, 12.00, pass
+stopped-1440, minContrast, 4.70, pass
+== tab-messages-empty-1440: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=0 small=[] hScroll=0 font=Inter
+tab-messages-empty-1440, topbar, 40, pass
+tab-messages-empty-1440, header, 48, pass
+tab-messages-empty-1440, window, 1440x900, info
+tab-messages-empty-1440, body, 784, pass
+tab-messages-empty-1440, footer, 28, pass
+tab-messages-empty-1440, group header, 28, pass
+tab-messages-empty-1440, count group needs, 0 vs 0, pass
+tab-messages-empty-1440, count tab All, 7 vs 7, pass
+tab-messages-empty-1440, count tab Reviews, 0 vs 0, pass
+tab-messages-empty-1440, count tab Messages, 0 vs 0, pass
+tab-messages-empty-1440, count tab Work, 5 vs 5, pass
+tab-messages-empty-1440, count tab Agents, 1 vs 1, pass
+tab-messages-empty-1440, count snoozed toggle, 0 vs 0, pass
+tab-messages-empty-1440, count open rows drawn, 0 vs 0, pass
+tab-messages-empty-1440, count new rows, 0 vs 0, pass
+tab-messages-empty-1440, count window title, 0 vs 0, pass
+tab-messages-empty-1440, hScroll, 0, pass
+tab-messages-empty-1440, minFontPx, 12.00, pass
+tab-messages-empty-1440, minContrast, 5.19, pass
+== tab-reviews-empty-1440: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=0 small=[] hScroll=0 font=Inter
+tab-reviews-empty-1440, topbar, 40, pass
+tab-reviews-empty-1440, header, 48, pass
+tab-reviews-empty-1440, window, 1440x900, info
+tab-reviews-empty-1440, body, 784, pass
+tab-reviews-empty-1440, footer, 28, pass
+tab-reviews-empty-1440, group header, 28, pass
+tab-reviews-empty-1440, count group needs, 0 vs 0, pass
+tab-reviews-empty-1440, count tab All, 7 vs 7, pass
+tab-reviews-empty-1440, count tab Reviews, 0 vs 0, pass
+tab-reviews-empty-1440, count tab Messages, 0 vs 0, pass
+tab-reviews-empty-1440, count tab Work, 5 vs 5, pass
+tab-reviews-empty-1440, count tab Agents, 1 vs 1, pass
+tab-reviews-empty-1440, count snoozed toggle, 0 vs 0, pass
+tab-reviews-empty-1440, count open rows drawn, 0 vs 0, pass
+tab-reviews-empty-1440, count new rows, 0 vs 0, pass
+tab-reviews-empty-1440, count window title, 0 vs 0, pass
+tab-reviews-empty-1440, hScroll, 0, pass
+tab-reviews-empty-1440, minFontPx, 12.00, pass
+tab-reviews-empty-1440, minContrast, 5.19, pass
+== updating-1440: rows=7 rowsFullyInView=7 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=32 small=[] hScroll=0 font=Inter
+updating-1440, topbar, 40, pass
+updating-1440, header, 48, pass
+updating-1440, window, 1440x900, info
+updating-1440, body, 784, pass
+updating-1440, footer, 28, pass
+updating-1440, group header, 28, pass
+updating-1440, side inset, 24, pass
+updating-1440, row height, 32, pass
+updating-1440, column gap, 12, pass
+updating-1440, col glyph, 16, pass
+updating-1440, col why chip, 104, pass
+updating-1440, col object, 104, pass
+updating-1440, col from, 136, pass
+updating-1440, col age, 44, pass
+updating-1440, col waits-on, 112, pass
+updating-1440, title width (list 1440 minus fixed 636), 804, pass
+updating-1440, title min 200, 804, pass
+updating-1440, first row y max 130, 124, pass
+updating-1440, text left edges, 52, pass
+updating-1440, glyph centres, 31, pass
+updating-1440, count group needs, 7 vs 7, pass
+updating-1440, count group brief, 2 vs 2, pass
+updating-1440, count moving n, 6 vs 6, pass
+updating-1440, count moving label, true vs true, pass
+updating-1440, count todo line, 8 vs 8, pass
+updating-1440, count todo text, true vs true, pass
+updating-1440, count tab All, 7 vs 7, pass
+updating-1440, count tab Reviews, 0 vs 0, pass
+updating-1440, count tab Messages, 0 vs 0, pass
+updating-1440, count tab Work, 5 vs 5, pass
+updating-1440, count tab Agents, 1 vs 1, pass
+updating-1440, count snoozed toggle, 0 vs 0, pass
+updating-1440, count open rows drawn, 7 vs 7, pass
+updating-1440, brief ref r-0412 (row), resolves, pass
+updating-1440, brief ref r-0409, resolves, pass
+updating-1440, count new rows, 0 vs 0, pass
+updating-1440, count window title, 0 vs 0, pass
+updating-1440, hScroll, 0, pass
+updating-1440, minFontPx, 12.00, pass
+updating-1440, minContrast, 5.19, pass

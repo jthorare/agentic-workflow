@@ -1,0 +1,222 @@
+/* #3091 Home inbox: layout only. Sizes and colours come from ../grammar-2978/grammar.css.
+   Everything marked "grammar candidate" in the report could move there. */
+.app{position:relative}
+.w1000{width:1000px}
+.w1000 .filter{width:150px}
+.keys{overflow:hidden;white-space:nowrap}
+.keys span{flex:none}
+.keys .keys-div{flex:none}
+.keys .right{margin-left:auto}
+.keys .more{color:var(--ink-3)}
+
+/* header: snoozed toggle, health chip, quiet "Updating..." line (grammar candidate: .hchip, .htoggle) */
+.header .htoggle{margin-left:auto;font-size:12px;color:var(--ink-subtle);display:flex;gap:6px;align-items:center;white-space:nowrap}
+.header .htoggle .sw{width:22px;height:12px;border-radius:6px;background:var(--s4);position:relative}
+.header .htoggle .sw::after{content:'';position:absolute;left:2px;top:2px;width:8px;height:8px;border-radius:50%;background:var(--ink-subtle)}
+.header .htoggle + .filter{margin-left:0}
+.header .hchip{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--ink-subtle);white-space:nowrap}
+.header .hchip::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.header .hchip.att{color:var(--att)}
+.header .hchip.att::before{background:var(--att)}
+.header .upd{font-size:12px;color:var(--ink-3);white-space:nowrap}
+.header .upd + .htoggle{margin-left:12px}
+.header .crumb + .count{margin-left:0}
+
+/* group headers: chevron hit area 28x28, cursor ring on a header (grammar candidate) */
+.group .chev{width:28px;height:28px;display:grid;place-items:center;margin-left:-9px;margin-right:-9px}
+.group.cursor{box-shadow:inset 0 0 0 1px var(--primary-hi);border-radius:var(--r1)}
+.group .n.blk{margin-left:2px}
+.group .right.ink{color:var(--ink-subtle)}
+
+/* New band and age marks */
+.age.mark{color:var(--ink);font-weight:500}
+.age.wide{white-space:nowrap}
+.row .title .sub{margin-left:var(--sp1)}
+.row .fact.blk{color:var(--ink-muted);font-weight:500}
+.row.stale .fact,.row.stale .age,.row.stale .title .t{color:var(--ink-3)}
+.row.stale .age{font-style:normal}
+.row .actions .btn{height:24px}
+
+/* brief lines + Todo line + "more" line */
+.row.brief.sum .title .t{color:var(--ink)}
+.row.brief .fact.lk{font-family:var(--mono)}
+.more-line{height:var(--group-h);display:flex;align-items:center;padding:0 var(--inset) 0 calc(var(--inset) + var(--col-glyph) + var(--sp3));color:var(--ink-3);font-size:12px;gap:6px}
+.todoline{height:var(--group-h);margin-top:var(--sp2);display:flex;align-items:center;gap:var(--sp3);padding:0 var(--inset);color:var(--ink-subtle);font-size:12px;font-weight:500}
+.todoline .right{margin-left:auto;color:var(--ink-subtle);font-weight:400}
+
+/* big empty body */
+.bigdone{padding:var(--sp6) var(--inset) var(--sp4)}
+.bigdone h2{font:600 20px/28px var(--font);margin:0;color:var(--ink)}
+.bigdone p{margin:var(--sp1) 0 0;color:var(--ink-muted);font-size:13px;line-height:20px}
+
+/* menus: chip after a time (snooze), agent avatar entries */
+.menu .ment .when + kbd{margin-left:var(--sp3)}
+.menu .ment .when{margin-left:auto}
+.menu .ment .av{width:16px;height:16px}
+.menu .parse{white-space:normal;align-items:flex-start}
+.menu .mfield .ph{color:var(--ink-3)}
+.menu.wide{width:320px}
+
+/* peek bits */
+.peek .checks>div{display:flex;align-items:center;gap:8px;height:24px;font-size:12px;color:var(--ink-muted)}
+.peek .checks .r{margin-left:auto;color:var(--ink-subtle)}
+.peek .linkid{font:400 12px/18px var(--mono);color:var(--ink-muted)}
+.peek .note{font-size:12px;line-height:18px;color:var(--ink-muted);margin:0 0 var(--sp2)}
+.peek .note code{font:400 12px/18px var(--mono);color:var(--ink)}
+.peek .sha{font:400 12px/18px var(--mono);color:var(--ink)}
+.mono-files>div{display:flex;justify-content:space-between;align-items:center;height:24px;gap:8px}
+.mono-files .fact{min-width:0}
+
+/* scale 1.3: text only; columns, paddings and the 440 peek stay in px (guess) */
+.s13{font-size:17px;line-height:26px;--row-h:40px;--group-h:36px}
+.s13 .fact,.s13 .age,.s13 .wait,.s13 .group,.s13 .tabs a,.s13 .filter,.s13 .htoggle,.s13 .hchip,.s13 .more-line,.s13 .todoline,.s13 .row .title .id,.s13 .row .title .sub{font-size:15.6px;line-height:22px}
+.s13 .keys{font-size:14px;line-height:20px;--keys-h:28px}
+.s13 kbd{font-size:14px;line-height:20px}
+.s13 .nav a,.s13 .cmdk,.s13 .status-pill{font-size:16px}
+.s13 .header h1{font-size:19px}
+.s13 .btn{font-size:15.6px;height:30px}
+.s13 .row .actions{top:5px}
+.s13 .chip{font-size:14px;line-height:20px}
+.s13 .group .chev{height:36px}
+.tip{position:absolute;background:var(--s3);border:1px solid var(--hair-strong);border-radius:var(--r2);box-shadow:0 8px 24px rgba(0,0,0,.45);
+  padding:var(--sp2) var(--sp3);max-width:560px;font-size:15px;line-height:22px;color:var(--ink);z-index:6}
+.row.skbar .sk{display:block;height:8px;border-radius:2px;background:var(--s2)}
+.row.skbar .title .t{display:block;height:8px;border-radius:2px;background:var(--s2)}
+.state-line .what b{font-weight:600;color:var(--ink)}
+.state-line .btns .btn{height:24px}
+.state-line .det{cursor:default}
+.dimlist{opacity:1}
+
+/* review round 1 fixes */
+.fact .av{margin-right:6px !important}
+.g.done.muted{background:var(--ok);opacity:.5}
+.w1000 .keys{gap:10px}
+.s13 .cmdk{width:300px;white-space:nowrap;font-size:14px}
+.s13 .wordmark{font-size:14px}
+
+/* the action strip replaces the age and waits-on cells (168 px) on the cursor/hover row; the person (from) stays */
+.row:has(> .actions):is(.cursor,.hv,:hover) > :nth-child(6),
+.row:has(> .actions):is(.cursor,.hv,:hover) > :nth-child(7){visibility:hidden}
+.row .actions{right:var(--inset)}
+
+/* #3733 D1: the spec's row. glyph 16 | title (flex, min 200) | why 104 | object 104 | from 136 | age 44 | waits-on 112; gap 12; inset 24 (fixed part 636). */
+.row.hr { grid-template-columns:16px minmax(200px,1fr) 104px 104px 136px 44px 112px; column-gap:12px; }
+.hr.d3 .row.hr, .row.hr.d3 { grid-template-columns:16px minmax(200px,1fr) 104px 104px 44px 112px; }          /* list < 840: the third fact (from) drops */
+.row.hr.d2 { grid-template-columns:16px minmax(200px,1fr) 104px 44px 112px; }                                  /* list < 688: the second fact (object) drops too */
+.row.hr .fact.why { color:var(--ink-muted); }
+.row.hr .fact.why.fail { color:var(--err); }
+.row.hr .title .id { margin-right:0; }
+.row.hr .fact.mono { font-family:var(--mono); font-size:12px; }
+.row.hr .age.mark { color:var(--ink); font-weight:500; }
+.row.hr .wait.you { color:var(--ink); font-weight:600; }
+.row.hr .wait.att { color:var(--att); font-weight:500; }
+.row.hr .fact.lk { font-family:var(--mono); font-size:12px; }
+.d3 .fact.from, .d2 .fact.from, .d2 .fact.obj { display:none; }
+.keys { font-size:12px; }
+kbd { font-size:12px; }
+.row.hr .actions { right:var(--inset); top:4px; padding-left:8px; min-width:calc(var(--col-age) + var(--col-wait) + var(--sp3)); }
+.row.hr .actions .btn kbd { margin-left:0; }
+.g.diamond { width:10px; height:10px; margin:2px; background:var(--att); transform:rotate(45deg); border-radius:1px; }
+.body { position:relative; }
+.header .tabs a { white-space:nowrap; }
+.skel .g { background:var(--s3); border:0; }
+.cap { position:absolute; left:50%; transform:translateX(-50%); top:8px; height:24px; display:flex; align-items:center; padding:0 10px; border:1px dashed var(--hair-3); border-radius:var(--r2); font-size:12px; color:var(--ink-subtle); white-space:nowrap; z-index:9; }
+
+.av{font:600 12px/16px var(--font)}
+.more-line,.keys .more{color:var(--ink-subtle)}
+
+/* review r1 + frames batch 2 */
+.app.w1000{height:700px}
+.list{position:relative}
+.stick{position:absolute;left:0;right:0;top:0;height:36px;padding-top:0;z-index:3;background:var(--canvas);border-bottom:1px solid var(--hair)}
+.row.hr .actions{width:168px;justify-content:flex-end;padding-left:0;background:transparent;min-width:0}
+.row.hr .actions .btn{padding:0 8px}
+.row.hr.cursor,.row.hr.sel{box-shadow:none}
+.row.hr.cursor::after,.row.hr.sel::after{content:'';position:absolute;left:16px;right:16px;top:0;bottom:0;border:2px solid var(--primary-hi);border-radius:var(--r1);pointer-events:none}
+.row.hr.sel{background:linear-gradient(var(--primary-soft),var(--primary-soft)) 16px 0/calc(100% - 32px) 100% no-repeat}
+.row.hr .fact.why.strong{color:var(--ink);font-weight:600}
+.row .title .sub.att,.row.hr .wait.att{color:var(--att)}
+.todoline{display:grid;grid-template-columns:16px 1fr auto;column-gap:12px}
+.todoline .right{margin-left:0}
+.btn.dis{color:var(--ink-subtle);background:transparent;border-style:dashed}
+.btn.out{background:transparent;border-color:var(--primary-hi);color:var(--primary-hi)}
+.header .htoggle .sw.on{background:var(--primary)}
+.header .htoggle .sw.on::after{left:12px;background:#fff}
+.hline{margin-left:12px;font-size:12px;color:var(--ink-muted);white-space:nowrap}
+.hline + .btn{margin-left:8px}
+.bline{height:28px;display:flex;align-items:center;gap:12px;padding:0 var(--inset) 0 calc(var(--inset) + 28px);color:var(--ink-muted);font-size:12px}
+.bline .btn{height:24px}
+.state-line .btns{margin-left:auto}
+.state-line .what b{font-weight:600}
+.menu.snz{position:absolute;top:70px;right:200px;width:372px}
+.menu.snz .ment kbd{margin-left:0}
+.menu.snz .ment .when{margin-left:auto}
+.menu.snz .mfield{display:flex;align-items:center;gap:var(--sp3);padding:0 var(--sp3);margin:var(--sp1) var(--sp2) 0;color:var(--ink-subtle);font-size:12px}
+.skbar .g.skg{background:var(--s3);border:0;border-radius:3px}
+.skbar .title .t{display:block;height:8px;border-radius:2px;background:var(--s2)}
+.row.hr.skbar .fact,.row.hr.skbar .age{display:flex;align-items:center}
+/* peeking list: the grammar's peeking row rule is stronger, so restate the Home columns */
+.body.peeking .row.hr{grid-template-columns:16px minmax(200px,1fr) 104px 104px 136px 44px 112px}
+.body.peeking .row.hr.d2e{grid-template-columns:16px minmax(200px,1fr) 104px 44px}
+.row.hr.d2e .fact.from,.row.hr.d2e .fact.obj,.row.hr.d2e .wait{display:none}
+.peek-fields.two{grid-template-columns:84px 1fr 84px 1fr;padding:var(--sp1) var(--sp4)}
+.peek-fields.two dd.w{grid-column:span 3}
+.peek .term{font:400 12px/14px var(--mono);color:var(--ink-muted);height:392px;overflow:hidden;background:var(--canvas);border:1px solid var(--hair);border-radius:var(--r2);padding:6px 8px}
+.peek .term div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.peek .q{font-size:13px;line-height:20px;color:var(--ink);margin:0 0 var(--sp2)}
+.peek .reply{height:32px;display:flex;align-items:center;gap:8px;border:1px solid var(--hair-strong);border-radius:var(--r2);padding:0 var(--sp2) 0 var(--sp3);color:var(--ink-subtle);font-size:12px;background:var(--canvas)}
+.peek .reply .ph{flex:1}
+.peek .opt{display:grid;grid-template-columns:20px 1fr;gap:var(--sp2);padding:var(--sp2);border-radius:var(--r2);align-items:start}
+.peek .opt .g{margin-top:3px}
+.peek .opt b{display:block;font-weight:600;color:var(--ink);font-size:13px;line-height:20px}
+.peek .opt span:not(.g){display:block;color:var(--ink-muted);font-size:12px;line-height:18px;white-space:normal}
+.peek .opt.on{background:var(--primary-soft)}
+.peek-actions .btn kbd{margin-left:6px}
+
+/* r2 fixes */
+.body:has(> .state-line){grid-template-rows:auto 1fr}
+.row.hr.sel::before{display:none}
+.row.stale .fact,.row.stale .age,.row.stale .title .t{color:var(--ink-subtle)}
+.row.stale .title .t{font-weight:400}
+.eyebrow,.menu .mhead{font-size:12px}
+.menu .mfield .ph,.menu.snz .mfield{color:var(--ink-subtle)}
+.peek-head{height:48px;min-height:0;padding-top:0;padding-bottom:0}
+.peek .term{height:auto}
+.row .title .sub.att{color:var(--att)}
+.status-pill.off::before{background:var(--att)}
+.status-pill.off{color:var(--ink-muted)}
+.keys .off{color:var(--ink-muted)}
+.row.brief.none .title .t{color:var(--ink-muted)}
+.s13 .row.hr .fact.mono,.s13 .row.hr .fact.lk,.s13 .row .title .id{font-size:15.6px}
+.stick{padding-top:8px}
+.cap{left:600px;transform:none}
+.s13 .av{width:21px;height:21px;font-size:15.6px;line-height:21px}
+
+/* round 3 */
+.row.hr .fact.why.blk{color:var(--ink);font-weight:500}
+.plain-line{height:32px;display:flex;align-items:center;padding:0 var(--inset) 0 52px;color:var(--ink-muted);font-size:13px}
+.more-line.link{color:var(--primary-hi)}
+.row.hr.mv .title .t{color:var(--ink-muted);font-weight:400}
+/* a failed act: Retry / Discard take the from and age cells, the waits-on cell keeps "failed: <reason>" (spec 5.2) */
+.row.hr.failrow .actions{right:calc(var(--inset) + 124px)}
+.row.failrow:has(> .actions):is(.cursor,.hv,:hover) > :nth-child(7){visibility:visible}
+.row.failrow:has(> .actions):is(.cursor,.hv,:hover) > :nth-child(5),.row.failrow:has(> .actions):is(.cursor,.hv,:hover) > :nth-child(6){visibility:hidden}
+.btn.primary.dis{background:transparent;border:1px dashed var(--primary-hi);color:var(--primary-hi)}
+.peek .opt.cur{box-shadow:inset 0 0 0 2px var(--primary-hi)}
+.peekfail{display:flex;align-items:center;gap:12px;height:32px;margin-top:var(--sp3);color:var(--ink-muted);font-size:13px}
+.peekfail .btn{margin-left:auto}
+.menu.hand{position:absolute;top:168px;right:24px;width:400px;padding-top:var(--sp2)}
+.menu.hand .mfield{display:flex;align-items:center;padding:0 var(--sp3);color:var(--ink-subtle);font-size:12px}
+.menu.hand .ment .av{width:16px;height:16px}
+.menu.hand .parse{margin:var(--sp2) var(--sp3) var(--sp2);color:var(--ink-muted)}
+.menu .mempty{display:flex;align-items:center;gap:12px;height:40px;padding:0 var(--sp3) var(--sp2);color:var(--ink-muted);font-size:13px}
+.menu .mempty .btn{margin-left:auto}
+.header h1{white-space:nowrap}
+.hline.quiet{color:var(--ink-subtle)}
+.group.cursor{box-shadow:none;position:relative}
+.group.cursor::after{content:'';position:absolute;left:16px;right:16px;top:0;bottom:0;border:2px solid var(--primary-hi);border-radius:var(--r1);pointer-events:none}
+.row.hr.donerow .title .t{color:var(--ink-muted);font-weight:400}
+/* round 4 */
+.group .bmore{display:inline-flex;align-items:center;gap:6px;color:var(--ink-subtle);font-weight:400}
+.group.sticky .sep{width:1px;height:12px;background:var(--hair-strong);margin:0 4px}
+.body.pfocus .row.hr.sel::after{display:none}
