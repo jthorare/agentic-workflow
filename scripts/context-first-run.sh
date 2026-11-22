@@ -26,9 +26,11 @@
 # down    `sindri stop`, closes the app this script opened, and deletes the scratch home. Nothing else is touched.
 #
 # --stop-after N ends `up` with exit 0 once step N (0 to 7) is done; scripts/model-limit-check.sh stops after the index build (5).
-# --time (up only) times five steps with a wall clock and stops after the fifth: home (folder and marker exist), profile (init, repo,
-#   `profile validate` exit 0), serve (control.json written and `status --json` answers), app (sindri-ui with AW_UI_DRIVER=1 under
-#   Xvfb, `aw-ui-driver ready`) and rows (at least one row under NeedsYouRows, RunningRows or QueuedRows on Home). It prints
+# --time (up only) times six steps with a wall clock and stops after the sixth: home (folder and marker exist), profile (init, repo,
+#   `profile validate` exit 0), serve (control.json written and `status --json` answers), workflow (`wf create hello-sindri
+#   --template hello-sindri` unless `wf show` answers, `wf activate`, `wf run`), app (sindri-ui with AW_UI_DRIVER=1 under Xvfb,
+#   `aw-ui-driver ready`) and rows (at least one row under NeedsYouRows, RunningRows or QueuedRows on Home: the item "Hello from
+#   Sindri" that hello-sindri's last node adds). It prints
 #   `first-run <step> <seconds>` per step and `first-run total <seconds>`, and writes the same to <home>/first-run.json
 #   ({"steps":{...},"total":N}). The preflight skips ollama and graphify, and the index and the map are never waited on. A rows wait
 #   that passes FIRST_RUN_ROWS_TIMEOUT prints `first-run rows timeout`, still prints the steps that finished and exits 1. Not with
@@ -166,6 +168,8 @@ sx_out() {
   if [ "$dry" = 1 ]; then echo "+ $(shown) $(words "$@")"; OUT=""; RC=0; return 0; fi
   OUT="$(AW_SINDRI_HOME="$home" AW_SINDRI_PORT="$port" "${SX[@]}" "$@")"; RC=$?
 }
+# sx_quiet <args>: sindri like sx, for a read whose failure is an answer (never printed in a dry run).
+sx_quiet() { AW_SINDRI_HOME="$home" AW_SINDRI_PORT="$port" "${SX[@]}" "$@"; }
 # plain <command…>: any other command, printed in a dry run.
 plain() {
   if [ "$dry" = 1 ]; then echo "+ $*"; return 0; fi
@@ -491,6 +495,19 @@ time_serve_files() {
   broke "step 4 (serve): the control plane answers but $home/control.json was never written"
 }
 
+# time_workflow: make (unless it exists), activate and run hello-sindri, so Home gets an item. A failed verb ends the run with its stderr.
+time_workflow() {
+  step "workflow: run hello-sindri so Home has a row"
+  local err="$home/.first-run-wf.err" verb
+  if sx_quiet wf show hello-sindri >/dev/null 2>&1; then
+    note "hello-sindri already exists; not created"
+  else
+    sx wf create hello-sindri --template hello-sindri 2>"$err" || broke "workflow: 'wf create hello-sindri' failed: $(cat "$err")"
+  fi
+  sx wf activate hello-sindri 2>"$err" || broke "workflow: 'wf activate hello-sindri' failed: $(cat "$err")"
+  sx wf run hello-sindri 2>"$err" || broke "workflow: 'wf run hello-sindri' failed: $(cat "$err")"
+}
+
 time_start_app() {
   step "app: sindri-ui with the UI driver on the scratch home"
   if [ "$FIRST_RUN_XVFB_ON" = 1 ]; then
@@ -545,13 +562,19 @@ do_up_time() {
   if [ "$dry" = 1 ]; then
     preflight
     echo
-    echo "== time: five steps on a wall clock (nothing waits on the index or the map)"
+    echo "== time: six steps on a wall clock (nothing waits on the index or the map)"
     make_home
     echo "  clock: home ends when the folder and marker exist"
     write_profile
     echo "  clock: profile ends when 'profile validate' exits 0"
     start_serve
     echo "  clock: serve ends when $home/control.json exists and 'status --json' answers"
+    sx wf show hello-sindri
+    check "skip the create when that answers"
+    sx wf create hello-sindri --template hello-sindri
+    sx wf activate hello-sindri
+    sx wf run hello-sindri
+    echo "  clock: workflow ends when 'wf run' exits 0"
     [ "$FIRST_RUN_XVFB_ON" != 1 ] || echo "+ Xvfb through tests/ui-checks/xvfb-lib.sh"
     echo "+ AW_UI_DRIVER=1 AW_UI_DRIVER_DIR=$home/first-run/driver AW_SINDRI_HOME=$home AW_SINDRI_PORT=$port <sindri-ui> &"
     echo "+ ${UIDRV[*]} ready --wait-ms 60000"
@@ -567,6 +590,7 @@ do_up_time() {
   write_profile; lap profile
   approval_gate
   start_serve; time_serve_files; lap serve
+  time_workflow; lap workflow
   time_start_app; lap app
   time_wait_rows; lap rows
   stop_app_pid

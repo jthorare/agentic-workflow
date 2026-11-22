@@ -81,6 +81,10 @@ case "$*" in
     if [ -s "$f" ]; then st="$(head -1 "$f")"; [ "$(wc -l < "$f")" -le 1 ] || sed -i.bak 1d "$f"; fi
     [ "$st" != succeeded ] || touch "$AW_SINDRI_HOME/stub/mapped"
     printf '{"id":"JOB-0123abcd","kind":"RefreshContextMap","state":"%s"}\n' "$st"; exit 0 ;;
+  "wf show hello-sindri") [ -e "$AW_SINDRI_HOME/stub/wf-exists" ] || { echo "SND-WF-404 no such workflow" >&2; exit 2; } ;;
+  "wf create hello-sindri --template hello-sindri") touch "$AW_SINDRI_HOME/stub/wf-exists" ;;
+  "wf activate hello-sindri") ;;
+  "wf run hello-sindri") [ -e "$AW_SINDRI_HOME/stub/wf-run-fails" ] && { echo "SND-WF-500 the engine is down" >&2; exit 1; }; echo '{"run":"RUN-1"}' ;;
   "stop") rm -f "$AW_SINDRI_HOME/stub/serving" ;;
   *) echo "stub: unexpected: $*" >&2; exit 2 ;;
 esac
@@ -302,12 +306,14 @@ STUB
   : > "$STUB_LOG"; rm -f "$STUB_LOG.ui" "$STUB_LOG.drv"
   echo QueuedRows > "$STUB_ROWS_FILE"
   trun -- up --time
-  expect "--time prints the five steps and the total (exit 0)" 0 "first-run home " "first-run profile " "first-run serve " "first-run app " "first-run rows " "first-run total "
+  expect "--time prints the six steps and the total (exit 0)" 0 "first-run home " "first-run profile " "first-run serve " "first-run workflow " "first-run app " "first-run rows " "first-run total "
   order="$(printf '%s\n' "$OUT" | grep -E '^first-run ' | awk '{print $2}' | tr '\n' ' ')"
-  if [ "$order" = "home profile serve app rows total " ]; then ok "the lines come in order: home profile serve app rows total"; else fail "the lines come in order (got: $order)"; fi
-  if printf '%s\n' "$OUT" | grep -qE '^first-run (home|profile|serve|app|rows|total) [0-9]+\.[0-9]$'; then ok "each number has one decimal"; else fail "each number has one decimal"; fi
+  if [ "$order" = "home profile serve workflow app rows total " ]; then ok "the lines come in order: home profile serve workflow app rows total"; else fail "the lines come in order (got: $order)"; fi
+  if printf '%s\n' "$OUT" | grep -qE '^first-run (home|profile|serve|workflow|app|rows|total) [0-9]+\.[0-9]$'; then ok "each number has one decimal"; else fail "each number has one decimal"; fi
   J="$HOME_T/first-run.json"
-  if jq -e '(.ok == true) and ((.steps | keys | sort) == ["app","home","profile","rows","serve"]) and (.total | type == "number") and ([.steps[]] | all(type == "number"))' "$J" >/dev/null 2>&1; then ok "first-run.json holds ok, the five steps and the total"; else fail "first-run.json holds ok, the five steps and the total"; cat "$J" 2>/dev/null | sed 's/^/       | /'; fi
+  if jq -e '(.ok == true) and ((.steps | keys | sort) == ["app","home","profile","rows","serve","workflow"]) and (.total | type == "number") and ([.steps[]] | all(type == "number"))' "$J" >/dev/null 2>&1; then ok "first-run.json holds ok, the six steps and the total"; else fail "first-run.json holds ok, the six steps and the total"; cat "$J" 2>/dev/null | sed 's/^/       | /'; fi
+  if logged 'wf show hello-sindri' && logged 'wf create hello-sindri --template hello-sindri' && logged 'wf activate hello-sindri' && logged 'wf run hello-sindri' \
+    && [ "$(grep -E ' wf (create|activate|run) ' "$STUB_LOG" | sed -E 's/.* wf ([a-z]+) .*/\1/' | tr '\n' ' ')" = "create activate run " ]; then ok "the workflow step makes, activates and runs hello-sindri in that order"; else fail "the workflow step makes, activates and runs hello-sindri in that order"; sed 's/^/       | /' "$STUB_LOG"; fi
   if ! logged 'services run' && ! logged 'context map' && ! logged 'code-index'; then ok "--time never builds the index or the map"; else fail "--time never builds the index or the map"; sed 's/^/       | /' "$STUB_LOG"; fi
   if grep -q 'driver=1 dir=.*first-run/driver' "$STUB_LOG.ui" 2>/dev/null && grep -q 'home=sindri-app-firstrun' "$STUB_LOG.ui"; then ok "the app starts with AW_UI_DRIVER=1 on the scratch home"; else fail "the app starts with AW_UI_DRIVER=1 on the scratch home"; cat "$STUB_LOG.ui" 2>/dev/null | sed 's/^/       | /'; fi
   if grep -q '^dir=.*first-run/driver ready' "$STUB_LOG.drv" && grep -q -- 'tree --name NeedsYouRows' "$STUB_LOG.drv" && grep -q -- 'tree --name QueuedRows' "$STUB_LOG.drv"; then ok "the driver is asked ready, then each list"; else fail "the driver is asked ready, then each list"; sed 's/^/       | /' "$STUB_LOG.drv"; fi
@@ -315,10 +321,22 @@ STUB
   if [ -n "$uipid" ] && ! kill -0 "$uipid" 2>/dev/null; then ok "the app is stopped at the end"; else fail "the app is stopped at the end"; [ -z "$uipid" ] || kill "$uipid" 2>/dev/null; fi
   run down; expect "down after --time deletes the home" 0 "deleted"
 
+  # hello-sindri already made (the setup service may have): no create. A failing run ends the run and names the step.
+  mkdir -p "$HOME_T/stub" "$HOME_T/profile" "$HOME_T/first-run" "$HOME_T/logs"; touch "$HOME_T/.first-run-scratch" "$HOME_T/stub/wf-exists"
+  : > "$STUB_LOG"; echo QueuedRows > "$STUB_ROWS_FILE"
+  trun -- up --time
+  expect "an existing hello-sindri is not created again (exit 0)" 0 "first-run workflow "
+  if logged 'wf activate hello-sindri' && logged 'wf run hello-sindri' && ! logged 'wf create'; then ok "show answered: activate and run, no create"; else fail "show answered: activate and run, no create"; sed 's/^/       | /' "$STUB_LOG"; fi
+  touch "$HOME_T/stub/wf-run-fails"
+  trun -- up --time
+  expect "a failing 'wf run' ends the run and names the step with the verb's stderr" 1 "workflow: 'wf run hello-sindri' failed" "the engine is down"
+  case "$OUT" in *"first-run app "*|*"first-run total "*) fail "a failed workflow step prints no later step" ;; *) ok "a failed workflow step prints no later step" ;; esac
+  run down
+
   # a fresh home with no rows: the wait times out, the finished steps still print
   : > "$STUB_ROWS_FILE"
   trun FIRST_RUN_ROWS_TIMEOUT=2 -- up --time
-  expect "no row before the timeout: exit 1, the timeout line, the steps that finished" 1 "first-run home " "first-run profile " "first-run serve " "first-run app " "first-run total " "first-run rows timeout"
+  expect "no row before the timeout: exit 1, the timeout line, the steps that finished" 1 "first-run home " "first-run profile " "first-run serve " "first-run workflow " "first-run app " "first-run total " "first-run rows timeout"
   case "$OUT" in *"first-run rows "[0-9]*) fail "a timed-out rows step has no number" ;; *) ok "a timed-out rows step has no number" ;; esac
   if jq -e '(.ok == false) and (.steps | has("rows") | not) and (.steps | has("app"))' "$HOME_T/first-run.json" >/dev/null 2>&1; then ok "first-run.json says ok false and omits rows"; else fail "first-run.json says ok false and omits rows"; fi
   run down

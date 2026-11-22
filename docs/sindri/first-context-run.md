@@ -94,16 +94,22 @@ should see the map and, on Health, a Code index card for `agentic-workflow`. Ski
 ## Timing the first run (`up --time`)
 
 `up --time` measures how long a fresh home takes to show its first row on Home. It never waits for the code index or the
-map, and its preflight skips ollama and graphify (it turns both layers off in the profile). It times five steps and stops
-after the fifth:
+map. Its preflight skips ollama and graphify, and it turns both layers off in the profile. It times six steps and stops
+after the sixth:
 
 | step | ends when |
 |---|---|
 | `home` | the scratch folder and its marker exist |
 | `profile` | `sindri profile init`, the repo entry, and `sindri profile validate` exits 0 |
 | `serve` | `control.json` exists and `sindri status --json` says running |
+| `workflow` | `wf create hello-sindri --template hello-sindri` (skipped when `wf show hello-sindri` answers), `wf activate` and `wf run` all exit 0 |
 | `app` | `sindri-ui` runs with `AW_UI_DRIVER=1` under Xvfb and `aw-ui-driver ready` succeeds |
 | `rows` | `NeedsYouRows`, `RunningRows` or `QueuedRows` on Home shows at least one row |
+
+A fresh home has no items, decisions or requests, so nothing would show on Home by itself. The `workflow` step fixes that:
+the row the timer waits for is hello-sindri's own item, "Hello from Sindri", which the last node of that template adds. It
+is a real row from a real run, not a seeded one. The first-run spec (issue 3328, phase P12) later swaps the `profile` step
+for `sindri setup --apply`; the flag stays `--time`.
 
 The clock starts after the preflight. Output is one line per step, then the total, and the same numbers in
 `<home>/first-run.json`:
@@ -112,23 +118,26 @@ The clock starts after the preflight. Output is one line per step, then the tota
 first-run home 0.0
 first-run profile 1.4
 first-run serve 38.2
+first-run workflow 3.5
 first-run app 6.1
 first-run rows 2.0
-first-run total 47.7
+first-run total 51.2
 ```
 
 ```
-{"ok":true,"steps":{"home":0.0,"profile":1.4,"serve":38.2,"app":6.1,"rows":2.0},"total":47.7}
+{"ok":true,"steps":{"home":0.0,"profile":1.4,"serve":38.2,"workflow":3.5,"app":6.1,"rows":2.0},"total":51.2}
 ```
 
-If no list shows a row within `FIRST_RUN_ROWS_TIMEOUT` seconds (default 180), the script prints the steps that finished, the
-total so far and `first-run rows timeout`, writes `first-run.json` with `"ok":false` and no `rows` key, and exits 1. The
-app is stopped at the end; the plane stays up until `down`. The app runs on its own Xvfb display through
-`tests/ui-checks/xvfb-lib.sh` (the script stops that exact Xvfb on exit); set `FIRST_RUN_XVFB=0` to use the `DISPLAY` you
+A failed `wf` verb ends the run at once. The message names the step and carries the verb's stderr. If no list shows a row
+within `FIRST_RUN_ROWS_TIMEOUT` seconds (default 180), the script prints the steps that finished and the total so far. Then
+it prints `first-run rows timeout`, writes `first-run.json` with `"ok":false` and no `rows` key, and exits 1.
+
+The script stops the app at the end. The plane stays up until `down`. The app runs on its own Xvfb display through
+`tests/ui-checks/xvfb-lib.sh`, and the script stops that exact Xvfb on exit. Set `FIRST_RUN_XVFB=0` to use the `DISPLAY` you
 have. `--time` takes no `--stop-after` and no `--no-ui`. `FIRST_RUN_UI_DRIVER` replaces the `aw-ui-driver` command line.
 
-A row is counted as a node that shows text under one of the three lists (`aw-ui-driver tree --name <list>`), because
-`wait-for` takes one selector and cannot count children. This has not been run against the real app yet.
+The script counts a row as a node that shows text under one of the three lists (`aw-ui-driver tree --name <list>`). It
+cannot use `wait-for`, because that takes one selector and cannot count children. Nobody has run this against the real app yet.
 
 ## Looking around and stopping
 
