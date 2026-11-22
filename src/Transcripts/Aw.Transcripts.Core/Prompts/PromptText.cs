@@ -43,6 +43,11 @@ public static class PromptText
         return !Array.Exists(_machinePrefixes, prefix => trimmed.StartsWith(prefix, StringComparison.Ordinal));
     }
 
+    /// <summary>The text after the leading '&lt;ide_opened_file&gt;' and '&lt;ide_selection&gt;' blocks an IDE extension puts in front of a typed prompt.</summary>
+    /// <param name="text">The text of the line's text blocks.</param>
+    /// <returns>The text without those blocks, start-trimmed.</returns>
+    public static string WithoutIdeBlocks(string text) => throw new NotSupportedException("red: strip the IDE blocks");
+
     /// <summary>Strips the leading '&lt;tag …&gt;…&lt;/tag&gt;' blocks a host wraps around a prompt; a block that never closes stays.</summary>
     /// <param name="text">The text.</param>
     /// <returns>What follows the blocks, start-trimmed.</returns>
