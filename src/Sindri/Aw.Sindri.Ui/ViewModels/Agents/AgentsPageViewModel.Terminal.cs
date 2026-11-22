@@ -28,6 +28,11 @@ internal sealed partial class AgentsPageViewModel
         return fate;
     }
 
+    /// <summary>Shift+PageUp or Shift+PageDown in the pane: one screen of tmux history further back or towards live, through the session's socket (#3730).</summary>
+    /// <param name="pages">Screens to move: positive back, negative towards live.</param>
+    /// <returns>True when a scroll message went out.</returns>
+    internal Task<bool> ScrollPane(int pages) => _session?.ScrollPage(pages, CancellationToken.None) ?? Task.FromResult(false);
+
     /// <summary>The terminal view's state.</summary>
     internal TerminalViewViewModel Terminal => field ??= NewTerminal();
 

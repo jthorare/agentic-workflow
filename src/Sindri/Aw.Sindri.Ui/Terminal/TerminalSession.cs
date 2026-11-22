@@ -7,6 +7,11 @@ namespace Aw.Sindri.Ui.Terminal;
 internal sealed class TerminalSession(ITerminalConnector connector, TerminalViewViewModel view, Action<TerminalGrid> draw)
 {
     private ITerminalLink? _link;
+    private int _height;
+    private int _hist;
+
+    /// <summary>The rows above the live screen's top the pane shows or asked for (the socket's `scroll`, #3730); 0 is live. A frame sets it to the `back` it was drawn for.</summary>
+    internal int Back { get; private set; }
 
     /// <summary>Connects and pumps until the socket ends or the token cancels; reports each state to the view.</summary>
     /// <param name="open">The session and the size the view fits.</param>
@@ -15,6 +20,8 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
     internal async Task Run(TerminalOpen open, CancellationToken cancellationToken)
     {
         view.SocketOpening();
+        (_height, _hist) = (0, 0);
+        SetBack(0);
         if (await Open(open, cancellationToken).ConfigureAwait(true) is not { } link)
         {
             return;
@@ -80,10 +87,35 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
     internal async Task<TerminalKeyFate> SendKey(string name, string? text, CancellationToken cancellationToken) =>
         TerminalSocketMessages.FromKey(name, text) is { } message ? await Deliver(message, cancellationToken).ConfigureAwait(true) : TerminalKeyFate.Dropped;
 
-    // One message out: queued until ready, dropped when the socket is down.
+    /// <summary>
+    /// Shift+PageUp (pages 1) or Shift+PageDown (pages -1): one screen further back or towards live, as one `scroll` message. The offset is clamped to
+    /// 0..the history the last frame named, so PageDown stops at live and PageUp past the oldest row sends nothing.
+    /// </summary>
+    /// <param name="pages">Screens to move: positive back, negative towards live.</param>
+    /// <param name="cancellationToken">Cancels the send.</param>
+    /// <returns>True when a scroll message went out; false when the offset would not change or the socket is down.</returns>
+    internal async Task<bool> ScrollPage(int pages, CancellationToken cancellationToken)
+    {
+        var back = Math.Clamp(Back + (pages * _height), 0, _hist);   // the socket table: the client maps Shift+PageUp to back + h
+        if (back == Back || _link is not { } link)
+        {
+            return false;
+        }
+
+        SetBack(back);
+        return await link.Send(TerminalSocketMessages.Scroll(back), cancellationToken).ConfigureAwait(true);
+    }
+
+    // One message out: queued until ready, dropped when the socket is down. A key, text or paste that goes out puts the pane back on live: Serve
+    // sets its offset to 0 on the same message, so no scroll message is sent.
     private async Task<TerminalKeyFate> Deliver(string message, CancellationToken cancellationToken)
     {
         var fate = view.SendKey(message);
+        if (fate is TerminalKeyFate.Sent or TerminalKeyFate.Queued)
+        {
+            SetBack(0);
+        }
+
         if (fate == TerminalKeyFate.Sent && _link is { } link)
         {
             return await link.Send(message, cancellationToken).ConfigureAwait(true) ? TerminalKeyFate.Sent : TerminalKeyFate.Dropped;
@@ -121,8 +153,23 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
     /// <summary>Ctrl-C through the socket.</summary>
     /// <param name="cancellationToken">Cancels the send.</param>
     /// <returns>True when the key was sent.</returns>
-    internal async Task<bool> Interrupt(CancellationToken cancellationToken) =>
-        _link is { } link && await link.Send(TerminalSocketMessages.Interrupt(), cancellationToken).ConfigureAwait(true);
+    internal async Task<bool> Interrupt(CancellationToken cancellationToken)
+    {
+        if (_link is not { } link)
+        {
+            return false;
+        }
+
+        SetBack(0);   // a key: Serve goes back to live
+        return await link.Send(TerminalSocketMessages.Interrupt(), cancellationToken).ConfigureAwait(true);
+    }
+
+    // The offset the pane shows; the view's "Scrolled back" line follows it.
+    private void SetBack(int back)
+    {
+        Back = back;
+        view.ScrolledBack(back);
+    }
 
     private async Task Pump(ITerminalLink link, CancellationToken cancellationToken)
     {
@@ -139,6 +186,8 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
 
                     break;
                 case TerminalServerKind.Frame:
+                    (_height, _hist) = (message.Status.Height ?? message.Rows.Count, message.Status.Hist);
+                    SetBack(message.Status.Back);   // the frame's own offset: one drawn for an older scroll may land after a key
                     view.FrameReceived(message.Rows, message.Status.Dead);
                     draw(TerminalFrameParser.Parse(message.Rows, message.Status));
                     break;

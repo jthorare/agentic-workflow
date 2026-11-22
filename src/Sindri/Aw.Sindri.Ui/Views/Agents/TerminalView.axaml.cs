@@ -40,8 +40,8 @@ internal sealed partial class TerminalView : UserControl
         set;
     }
 
-    /// <summary>How many rows the pane is scrolled back from the live screen (0 at the bottom).</summary>
-    internal int PaneScrollOffset => Pane.ScrollOffset;
+    /// <summary>Raised by Shift+PageUp (1) and Shift+PageDown (-1): the page asks Serve for the screen further back or towards live (#3730).</summary>
+    internal event EventHandler<TerminalScrollEventArgs>? PaneScrollRequested;
 
     /// <summary>Raised when the drawing area changes the columns and rows it fits.</summary>
     internal event EventHandler<TerminalSizeEventArgs>? PaneFitChanged;
@@ -100,17 +100,17 @@ internal sealed partial class TerminalView : UserControl
         }
     }
 
-    // A key in the pane: Shift+PageUp and Shift+PageDown scroll its own scrollback one screen and send nothing; a paste sends the clipboard's text
-    // as one paste; any other key snaps the pane back to the bottom and goes to the agent.
+    // A key in the pane: Shift+PageUp and Shift+PageDown ask for one screen of tmux history further back or towards live and send no key; a paste
+    // sends the clipboard's text as one paste; any other key goes to the agent (Serve puts the pane back on live for it).
     private void PaneKey(string name, string? symbol)
     {
         if (string.Equals(name, "Shift+PageUp", StringComparison.Ordinal))
         {
-            Pane.ScrollBy(Pane.PageRows);
+            PaneScrollRequested?.Invoke(this, new TerminalScrollEventArgs(1));
         }
         else if (string.Equals(name, "Shift+PageDown", StringComparison.Ordinal))
         {
-            Pane.ScrollBy(-Pane.PageRows);
+            PaneScrollRequested?.Invoke(this, new TerminalScrollEventArgs(-1));
         }
         else if (TerminalKeyNames.IsPaste(name))
         {
@@ -118,7 +118,6 @@ internal sealed partial class TerminalView : UserControl
         }
         else
         {
-            Pane.ScrollOffset = 0;
             PaneKeyPressed?.Invoke(this, new TerminalKeyEventArgs(name, symbol));
         }
     }
@@ -128,7 +127,6 @@ internal sealed partial class TerminalView : UserControl
         var text = await ReadClipboard().ConfigureAwait(true);
         if (!string.IsNullOrEmpty(text))
         {
-            Pane.ScrollOffset = 0;
             PanePasted?.Invoke(this, new TerminalPasteEventArgs(text));
         }
     }

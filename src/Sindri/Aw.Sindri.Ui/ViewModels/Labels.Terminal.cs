@@ -103,6 +103,11 @@ internal static partial class Labels
             _ => " · " + others.ToString(CultureInfo.InvariantCulture) + " other clients",
         });
 
+    /// <summary>The header line while the pane shows history (#3730): "Scrolled back 35 rows · any key returns to live".</summary>
+    /// <param name="rows">Rows above the live screen's top, above 0.</param>
+    internal static string TerminalScrolledBack(int rows) =>
+        "Scrolled back " + (rows == 1 ? "1 row" : rows.ToString(CultureInfo.InvariantCulture) + " rows") + " · any key returns to live";
+
     /// <summary>"Ended 14:02".</summary>
     /// <param name="at">The local time the session ended.</param>
     internal static string TerminalEndedAt(DateTimeOffset at) => TerminalEnded + " " + at.ToString("HH:mm", CultureInfo.InvariantCulture);
