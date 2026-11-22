@@ -20,5 +20,14 @@ public sealed partial class GraphValidator
         {
             found.Add(Found.Error("GRAPH-LOOP-002", [node.Id.Value], $"collect '{node.Id.Value}' ends no loop: no for_each reaches it", "put a for_each before it, or remove it"));
         }
+
+        // why: skip-item drops one item of a loop, so only a body node has an item to drop; the collect ends the loop and a node outside it runs once (#3806)
+        foreach (var node in spec.Nodes.Where(static n => string.Equals(n.OnFailure, "skip-item", StringComparison.Ordinal)))
+        {
+            if (LoopBody.Enclosing(spec, node.Id) is not { } shape || !shape.Body.Any(b => b.Id == node.Id))
+            {
+                found.Add(Found.At("GRAPH-NODE-005", node.Id.Value, "onFailure", $"'{node.Id.Value}' is not in a for_each body, so onFailure skip-item has no item to drop", "put skip-item on a node between a for_each and its collect, or write 'stop' or 'continue'"));
+            }
+        }
     }
 }
