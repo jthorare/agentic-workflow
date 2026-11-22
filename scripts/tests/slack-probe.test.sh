@@ -68,7 +68,7 @@ check "Probe_prints_counts_and_never_a_name: the key is never a curl argument" "
 check "Probe_prints_counts_and_never_a_name: the app key is never a curl argument" "$(count "APPSECRETKEY" "$STUB_LOG")" 0
 check "Probe_prints_counts_and_never_a_name: no write call" "$(writes)" 0
 check "Probe_prints_counts_and_never_a_name: no conversations.mark" "$(count 'method=conversations.mark' "$STUB_LOG")" 0
-check "Probe_prints_counts_and_never_a_name: every line has a header" "$(countin '^# line [1-8]:' "$out")" 8
+check "Probe_prints_counts_and_never_a_name: every line has a header" "$(printf '%s\n' "$out" | grep '^# line [1-8]:' | sort -u | wc -l | tr -d ' ')" 8
 
 # --- a missing scope and no app key ---
 run AW_SLACK_PROBE_KEY="$KEY" STUB_SCOPES_DROP=im:history -- --url "$LOOP" --burst 2
@@ -145,6 +145,24 @@ run AW_SLACK_PROBE_KEY="$KEY" STUB_FAIL=chat.update -- --url "$LOOP" --burst 1 -
 check "write: a failure mid-write: exit 1" "$rc" 1
 has "write: a failure mid-write: names it" "$out" "failed: chat.update"
 has "write: a failure mid-write: cleanup still ran" "$out" "cleanup.left: 0"
+# SIGINT in the middle of a write run still cleans up (a python launcher: a bash `&` job ignores SIGINT)
+rm -rf "$STUB_STATE"; : > "$STUB_LOG"
+sig="$(AW_SLACK_PROBE_KEY="$KEY" STUB_SLEEP=reactions.add python3 -I - "$SCRIPT" "$STUB_LOG" "$LOOP" <<'PY'
+import os, signal, subprocess, sys, time
+script, log, url = sys.argv[1:4]
+p = subprocess.Popen(["bash", script, "--url", url, "--burst", "1", "--write", "--channel", "G0PROBE"], stdout=subprocess.PIPE,
+                     stderr=subprocess.STDOUT, text=True, preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_DFL))
+end = time.time() + 30
+while time.time() < end and "method=reactions.add" not in open(log).read():
+    time.sleep(0.05)
+os.kill(p.pid, signal.SIGINT)
+out, _ = p.communicate(timeout=60)
+print(out, end=""); print("RC=%d" % p.returncode)
+PY
+)"
+has "SIGINT: exit 130" "$sig" "RC=130"
+has "SIGINT: cleanup deleted the message" "$sig" "cleanup.messages: deleted 1 of 1"
+has "SIGINT: nothing left" "$sig" "cleanup.left: 0"
 for s in public not-mine members; do
   run AW_SLACK_PROBE_KEY="$KEY" STUB_SCRATCH="$s" -- --url "$LOOP" --write --channel G0PROBE
   check "write guard ($s): exit 2" "$rc" 2

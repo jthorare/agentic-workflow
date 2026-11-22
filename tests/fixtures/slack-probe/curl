@@ -5,7 +5,7 @@
 # Knobs: STUB_ERR=method:code (that method answers ok:false with the code), STUB_FAIL=method (transport failure, exit 7),
 # STUB_429=method:N (calls after the Nth answer HTTP 429 with Retry-After: 30), STUB_SCOPES_DROP=scope (left out of x-oauth-scopes),
 # STUB_SCRATCH=public|not-mine|members (the scratch channel's conversations.info), STUB_NO_METADATA=1 (history drops metadata),
-# STUB_KEEP=1 (chat.delete answers ok and deletes nothing).
+# STUB_KEEP=1 (chat.delete answers ok and deletes nothing), STUB_SLEEP=method (that method sleeps 3 s, once).
 fix="$STUB_FIX"; st="$STUB_STATE"; hdr="" out="" cfg="" url="" binary=""
 params="$(mktemp)"; trap 'rm -f "$params"' EXIT
 all="$*"
@@ -29,6 +29,7 @@ echo "curl ran method=$method cfg=$(basename "${cfg:-none}") args=$all" >> "$STU
 p() { sed -n "s/^$1=//p" "$params" | head -n1; }   # p NAME: that form field's value
 
 [ "${STUB_FAIL:-}" = "$method" ] && exit 7
+if [ "${STUB_SLEEP:-}" = "$method" ] && [ ! -f "$st/slept" ]; then touch "$st/slept"; sleep 3; fi
 n=$(( $(cat "$st/n.$method" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$st/n.$method"
 
 headers='HTTP/2 200\r\ncontent-type: application/json\r\n'
