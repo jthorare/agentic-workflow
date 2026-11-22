@@ -272,6 +272,22 @@ public sealed class SessionSheetViewModelTests
     }
 
     [Fact]
+    public async Task The_state_text_has_no_dot_because_the_toned_dot_draws_it_3872()
+    {
+        var working = await Opened(ClaudeRef);
+        _server.SessionOneBody = (provider, id) =>
+        {
+            var body = JsonNode.Parse(SessionAnswers.One(provider, id).Body)!; // why: the golden is a JSON document
+            body["session"]!["state"] = "idle";
+            return new RouteAnswer(HttpStatusCode.OK, body.ToJsonString());
+        };
+        var idle = await Opened(ClaudeRef);
+
+        Assert.Equal(("Working", "Idle"), (working.StateLine, idle.StateLine));
+        Assert.DoesNotContain("●", working.StateLine + idle.StateLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_session_that_is_not_in_tmux_has_no_attach_command_3710()
     {
         var sheet = await Opened(CodexRef);
