@@ -1,0 +1,5 @@
+Phases, first to last:
+- Ph1 Booking history API
+- Ph2 Performance sweep. Exit check: every surface is at or under its budget.
+- Ph3 Bug sweep. Exit check: every finding is an issue in the repo's tracker.
+- Ph4 History panel on the lookup page
