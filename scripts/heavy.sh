@@ -11,8 +11,9 @@
 #   A job is expensive when it builds or tests the whole solution, publishes or smoke-tests a NativeAOT/framework
 #   binary, or opens a browser (Playwright, ui-evidence, Aw.Evidence); `heavy --expensive <cmd>` forces it,
 #   `heavy --light <cmd>` forces light (no box-wide slot).
-#   3. Box-wide, for light jobs that compile (#3796): a `--light` command with ` dotnet build `, publish, format, pack,
-#      restore, run, or `dotnet test` without --no-build, takes one of N light slots of <locks>/heavy-light.lock (slot 1 the
+#   3. Box-wide, for light jobs that compile (#3796): a `--light` command with ` dotnet build `, msbuild, publish, format, pack,
+#      restore, run, or `dotnet test` without --no-build (dotnet matched by its basename, so `~/.dotnet/dotnet build` counts,
+#      #3810), takes one of N light slots of <locks>/heavy-light.lock (slot 1 the
 #      bare path, slot k .k, the same mkdir mutexes and dead-holder reclaim as rule 2). N is $AW_STATE_DIR/heavy-light-cap,
 #      else AW_HEAVY_LIGHT_SLOTS, else 4, read again on every pass. Such a build also doesn't START while a live job waits for
 #      a box-wide slot and MemAvailable is under the floor of the lowest free box-wide slot (slot 1 has no floor), so builders
@@ -94,11 +95,14 @@ case "${1:-}" in --expensive) mode=expensive; shift ;; --light) mode=light; shif
 if [ "${AW_HEAVY_LOCK_HELD:-}" = 1 ]; then exec "$@"; fi
 
 # compiles: the command runs a dotnet step that compiles. In auto mode that makes the job expensive; under --light it takes
-# a light slot (rule 3).
+# a light slot (rule 3). The words are matched in CMDLINE, the args joined by spaces with every "/dotnet " turned into
+# " dotnet ": a path-qualified dotnet (`~/.dotnet/dotnet build`) is matched by its basename, also inside a `bash -c` string,
+# and every other word is left as it was. `dotnet msbuild` compiles like `dotnet build` (#3810).
+CMDLINE=" $* "; CMDLINE="${CMDLINE//\/dotnet / dotnet }"
 compiles=""
-case " $* " in
-  *" dotnet build "*|*" dotnet publish "*|*" dotnet format "*|*" dotnet pack "*|*" dotnet restore "*|*" dotnet run "*) compiles=1 ;;
-  *" dotnet test "*) case " $* " in *" --no-build "*) ;; *) compiles=1 ;; esac ;;
+case $CMDLINE in
+  *" dotnet build "*|*" dotnet msbuild "*|*" dotnet publish "*|*" dotnet format "*|*" dotnet pack "*|*" dotnet restore "*|*" dotnet run "*) compiles=1 ;;
+  *" dotnet test "*) case $CMDLINE in *" --no-build "*) ;; *) compiles=1 ;; esac ;;
 esac
 if [ "$mode" = auto ]; then
   # Owner, 2026-10-14 (second tightening, swap full at load 128): every build is expensive. Light is only what
@@ -107,7 +111,7 @@ if [ "$mode" = auto ]; then
   mode=light
   if [ -n "$compiles" ]; then mode=expensive
   else
-    case " $* " in
+    case $CMDLINE in
       *" dotnet test "*) ;;   # a --no-build test stays light, whatever else the line names
       *" npm ci "*|*" npm install "*|*" npm test "*|*" npx vitest "*|*" npx tsc "*|*vitest*) mode=expensive ;;
       *AgenticWorkflow.slnx*|*aot-smoke*|*playwright*|*ui-evidence*|*Aw.Evidence*|*" e2e.sh "*) mode=expensive ;;
