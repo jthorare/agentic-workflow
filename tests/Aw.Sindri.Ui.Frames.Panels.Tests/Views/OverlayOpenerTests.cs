@@ -1,7 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Views.Shell;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>An overlay gives focus back to the control that opened it, not to the page region that held focus (ux-pass C-10).</summary>
 [Lane(TestLane.Unit)]
