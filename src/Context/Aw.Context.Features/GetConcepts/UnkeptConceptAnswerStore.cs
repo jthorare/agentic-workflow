@@ -9,11 +9,11 @@ internal sealed class UnkeptConceptAnswerStore : IConceptAnswerStore
 {
     public ValueTask<Result<ConceptAnswerBasis?>> Basis(MapRead read, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success<ConceptAnswerBasis?>(value: null));
 
-    public ValueTask<Result<ConceptsView?>> Concepts(string key, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success<ConceptsView?>(value: null));
+    public ValueTask<Result<KeptConcepts?>> Concepts(string key, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success<KeptConcepts?>(value: null));
 
     public ValueTask<Result<ConceptGlossaryView?>> Glossary(string key, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success<ConceptGlossaryView?>(value: null));
 
-    public ValueTask<Result<Unit>> Keep(string key, ConceptAnswerBasis basis, ConceptsView view, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success(Unit.Value));
+    public ValueTask<Result<Unit>> Keep(string key, ConceptAnswerBasis basis, KeptConcepts view, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success(Unit.Value));
 
     public ValueTask<Result<Unit>> Keep(string key, ConceptAnswerBasis basis, ConceptGlossaryView view, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success(Unit.Value));
 }

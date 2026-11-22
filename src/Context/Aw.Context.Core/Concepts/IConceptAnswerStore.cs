@@ -19,7 +19,7 @@ public interface IConceptAnswerStore
     /// <param name="key">The answer's key.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The answer, null when none is kept, or the store's error.</returns>
-    public ValueTask<Result<ConceptsView?>> Concepts(string key, CancellationToken cancellationToken);
+    public ValueTask<Result<KeptConcepts?>> Concepts(string key, CancellationToken cancellationToken);
 
     /// <summary>The glossary answer kept under <paramref name="key"/>.</summary>
     /// <param name="key">The answer's key.</param>
@@ -33,9 +33,9 @@ public interface IConceptAnswerStore
     /// <param name="view">The answer.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
     /// <returns>Unit, or the store's error.</returns>
-    public ValueTask<Result<Unit>> Keep(string key, ConceptAnswerBasis basis, ConceptsView view, CancellationToken cancellationToken);
+    public ValueTask<Result<Unit>> Keep(string key, ConceptAnswerBasis basis, KeptConcepts view, CancellationToken cancellationToken);
 
-    /// <summary>Keeps a glossary answer, dropping stale rows like the concepts' <see cref="Keep(string, ConceptAnswerBasis, ConceptsView, CancellationToken)"/>.</summary>
+    /// <summary>Keeps a glossary answer, dropping stale rows like the concepts' <see cref="Keep(string, ConceptAnswerBasis, KeptConcepts, CancellationToken)"/>.</summary>
     /// <param name="key">The answer's key.</param>
     /// <param name="basis">The basis the answer was built on.</param>
     /// <param name="view">The answer.</param>

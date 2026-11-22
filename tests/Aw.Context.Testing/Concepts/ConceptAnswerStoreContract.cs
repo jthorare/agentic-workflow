@@ -37,12 +37,13 @@ public abstract class ConceptAnswerStoreContract
         Expect.That(basis?.Version == saved.Number, test, "the basis doesn't name the current version");
         _ = Expect.Ok(await answers.Keep("k1", basis!, Concepts("v1"), None), test);
         _ = Expect.Ok(await answers.Keep("k2", basis!, Glossary("v1"), None), test);
-        var concepts = Expect.Ok(await answers.Concepts("k1", None), test);
+        var kept = Expect.Ok(await answers.Concepts("k1", None), test);
+        var concepts = kept?.View;
         var glossary = Expect.Ok(await answers.Glossary("k2", None), test);
 
         Expect.That(concepts is not null && Same(concepts.MapVersion, "v1") && Same(concepts.State, ConceptStates.Ok) && concepts.Concepts.Count == 1 && Same(concepts.Concepts[0].Name, "Billing")
             && concepts.Concepts[0].Pinned && concepts.Concepts[0].Terms?.SequenceEqual(["invoice"], StringComparer.Ordinal) == true && Same(concepts.Other.Name, "Other") && Same(concepts.Next, "c2")
-            && concepts.PagesInNoConcept == 3, test, "the concepts answer changed on the way back");
+            && concepts.PagesInNoConcept == 3 && kept?.Paths.SequenceEqual(["src/a.cs", "src/b.cs"], StringComparer.Ordinal) == true, test, "the concepts answer changed on the way back");
         Expect.That(glossary is not null && Same(glossary.MapVersion, "v1") && glossary.Concepts.Count == 1 && glossary.Concepts[0].Terms.SequenceEqual(["invoice", "refund"], StringComparer.Ordinal)
             && glossary.Concepts[0].OwnerTerms?.SequenceEqual(["invoice"], StringComparer.Ordinal) == true && Same(glossary.Terms[0].Term, "invoice"), test, "the glossary answer changed on the way back");
         Expect.That(Expect.Ok(await answers.Concepts("k3", None), test) is null, test, "a key nobody kept read an answer");
@@ -86,12 +87,12 @@ public abstract class ConceptAnswerStoreContract
         _ = Expect.Ok(await answers.Keep("new", now!, Concepts("v2"), None), test);
 
         Expect.That(Expect.Ok(await answers.Concepts("old", None), test) is null, test, "a deleted version's answer is still kept");
-        Expect.That(Expect.Ok(await answers.Concepts("new", None), test)?.MapVersion == "v2", test, "the new version's answer isn't kept");
+        Expect.That(Same(Expect.Ok(await answers.Concepts("new", None), test)?.View.MapVersion, "v2"), test, "the new version's answer isn't kept");
     }
 
     private static bool Same(string? a, string b) => string.Equals(a, b, StringComparison.Ordinal);
 
-    private static ConceptsView Concepts(string version)
+    private static KeptConcepts Concepts(string version)
     {
         var row = new ConceptRow(NodeKey.From("concept:billing"), "Billing", "Charges and refunds.", "derived", new ConceptSize(2, 1, 0, 4), [new ConceptCitation("repo:web/docs/billing.md")])
         {
@@ -100,7 +101,8 @@ public abstract class ConceptAnswerStoreContract
             Pages = 0,
         };
         var other = new ConceptOther(NodeKey.From("concept:other"), "Other", new ConceptSize(1, 0, 0, 0));
-        return new ConceptsView(1, Repo: null, version, ConceptStates.Ok, Code: null, [row], other, [new ConceptLink(NodeKey.From("concept:billing"), NodeKey.From("concept:other"), 2)], Next: "c2") { PagesInNoConcept = 3 };
+        var view = new ConceptsView(1, Repo: null, version, ConceptStates.Ok, Code: null, [row], other, [new ConceptLink(NodeKey.From("concept:billing"), NodeKey.From("concept:other"), 2)], Next: "c2") { PagesInNoConcept = 3 };
+        return new KeptConcepts(view, new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal) { ["concept:billing"] = ["src/a.cs", "src/b.cs"] });
     }
 
     private static ConceptGlossaryView Glossary(string version) =>

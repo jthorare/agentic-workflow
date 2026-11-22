@@ -65,10 +65,10 @@ internal sealed class SqliteConceptAnswerStore(ContextDatabase database, TimePro
     private static SqlStatement Version(MapRead read) =>
         read.Version is { } asked ? new SqlStatement(HeldVersion, c => c.Bind("$v", asked.Number)) : new SqlStatement(read.Draft ? DraftVersion : CurrentVersion);
 
-    public async ValueTask<Result<ConceptsView?>> Concepts(string key, CancellationToken cancellationToken)
+    public async ValueTask<Result<KeptConcepts?>> Concepts(string key, CancellationToken cancellationToken)
     {
         var body = await Body(key, "concepts", cancellationToken).ConfigureAwait(false);
-        return body.IsError ? body.Error : body.Value is { } text ? AwJson.Deserialize<ConceptsView>(Encoding.UTF8.GetBytes(text), _json).Map<ConceptsView?>(v => v) : Results.Success<ConceptsView?>(value: null);
+        return body.IsError ? body.Error : body.Value is { } text ? AwJson.Deserialize<KeptConcepts>(Encoding.UTF8.GetBytes(text), _json).Map<KeptConcepts?>(v => v) : Results.Success<KeptConcepts?>(value: null);
     }
 
     public async ValueTask<Result<ConceptGlossaryView?>> Glossary(string key, CancellationToken cancellationToken)
@@ -77,7 +77,7 @@ internal sealed class SqliteConceptAnswerStore(ContextDatabase database, TimePro
         return body.IsError ? body.Error : body.Value is { } text ? AwJson.Deserialize<ConceptGlossaryView>(Encoding.UTF8.GetBytes(text), _json).Map<ConceptGlossaryView?>(v => v) : Results.Success<ConceptGlossaryView?>(value: null);
     }
 
-    public ValueTask<Result<Unit>> Keep(string key, ConceptAnswerBasis basis, ConceptsView view, CancellationToken cancellationToken) =>
+    public ValueTask<Result<Unit>> Keep(string key, ConceptAnswerBasis basis, KeptConcepts view, CancellationToken cancellationToken) =>
         Write(key, "concepts", basis, Encoding.UTF8.GetString(AwJson.Serialize(view, _json)), cancellationToken);
 
     public ValueTask<Result<Unit>> Keep(string key, ConceptAnswerBasis basis, ConceptGlossaryView view, CancellationToken cancellationToken) =>

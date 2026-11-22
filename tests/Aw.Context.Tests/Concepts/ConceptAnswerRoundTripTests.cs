@@ -54,13 +54,16 @@ public sealed class ConceptAnswerRoundTripTests : IDisposable
     [Fact]
     public async Task A_kept_concepts_answer_reads_back_as_the_same_json()
     {
-        var built = ConceptBuilder.Build(ConceptGraph.Basis, new ConceptsQuery(MapRead.Current, new ConceptPage(Limit: 1)), ConceptGraph.Product().Build(), ConceptGraph.Text, Pins()).Value;
+        var graph = ConceptGraph.Product().Build();
+        var view = ConceptBuilder.Build(ConceptGraph.Basis, new ConceptsQuery(MapRead.Current, new ConceptPage(Limit: 1)), graph, ConceptGraph.Text, Pins()).Value;
+        var built = new KeptConcepts(view, ConceptBuilder.CodePathsOf(view.Concepts.Select(c => c.Id), graph));
 
         _ = await _answers.Keep("k", await Basis(), built, MapWorld.None);
         var read = await _answers.Concepts("k", MapWorld.None);
 
         Assert.NotNull(read.Value);
-        Assert.NotNull(built.Next);
+        Assert.NotNull(view.Next);
+        Assert.NotEmpty(built.Paths);
         Assert.Equal(AwJson.Serialize(built, _json), AwJson.Serialize(read.Value, _json));
     }
 

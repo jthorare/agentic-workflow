@@ -60,4 +60,20 @@ public sealed class ConceptAnswerOverlayTests : IDisposable
         Assert.Null(cold);
         Assert.Equal(_changed, warm);
     }
+
+    [Fact]
+    public void The_overlay_gives_each_row_the_time_a_build_with_the_times_gives_it()
+    {
+        var graph = ConceptGraph.Product().Build();
+        var query = new ConceptsQuery(MapRead.Current, new ConceptPage());
+        var changed = new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal) { ["src/Shifts.cs"] = _changed, ["src/Invoices.cs"] = _changed.AddDays(-3) };
+        var view = ConceptBuilder.Build(ConceptGraph.Basis, query, graph, ConceptGraph.Text).Value;
+
+        var laid = new KeptConcepts(view, ConceptBuilder.CodePathsOf(view.Concepts.Select(c => c.Id), graph)).With(changed);
+        var built = ConceptBuilder.Build(ConceptGraph.Basis with { Changed = changed }, query, graph, ConceptGraph.Text).Value;
+
+        Assert.All(view.Concepts, c => Assert.Null(c.LastChanged));
+        Assert.Equal(built.Concepts.Select(c => (c.Id.Value, c.LastChanged)), laid.Concepts.Select(c => (c.Id.Value, c.LastChanged)));
+        Assert.Contains(laid.Concepts, c => c.LastChanged is not null);
+    }
 }

@@ -37,15 +37,15 @@ public sealed class FakeConceptAnswerStore(FakeGraphStore graphs, FakeIntentStor
     }
 
     /// <inheritdoc/>
-    public ValueTask<Result<ConceptsView?>> Concepts(string key, CancellationToken cancellationToken) =>
-        ValueTask.FromResult(Results.Success(_rows.TryGetValue(key, out var row) ? row.View as ConceptsView : null));
+    public ValueTask<Result<KeptConcepts?>> Concepts(string key, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success(_rows.TryGetValue(key, out var row) ? row.View as KeptConcepts : null));
 
     /// <inheritdoc/>
     public ValueTask<Result<ConceptGlossaryView?>> Glossary(string key, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success(_rows.TryGetValue(key, out var row) ? row.View as ConceptGlossaryView : null));
 
     /// <inheritdoc/>
-    public ValueTask<Result<Unit>> Keep(string key, ConceptAnswerBasis basis, ConceptsView view, CancellationToken cancellationToken) => Put(key, basis, view, cancellationToken);
+    public ValueTask<Result<Unit>> Keep(string key, ConceptAnswerBasis basis, KeptConcepts view, CancellationToken cancellationToken) => Put(key, basis, view, cancellationToken);
 
     /// <inheritdoc/>
     public ValueTask<Result<Unit>> Keep(string key, ConceptAnswerBasis basis, ConceptGlossaryView view, CancellationToken cancellationToken) => Put(key, basis, view, cancellationToken);

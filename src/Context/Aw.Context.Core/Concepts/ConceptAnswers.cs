@@ -13,12 +13,12 @@ namespace Aw.Context.Core.Concepts;
 /// <param name="store">The kept answers.</param>
 public sealed class ConceptAnswers(ConceptReader reader, IConceptAnswerStore store)
 {
-    /// <summary>One page of the concepts of the map the caller may read.</summary>
+    /// <summary>One page of the concepts of the map the caller may read, as kept: no row has a last change yet (the read lays it over with <see cref="KeptConcepts.With"/>).</summary>
     /// <param name="scope">The profile's context section and repos, and the caller.</param>
     /// <param name="query">Which map, whose repo, the filter and the page.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>The view, or the read's refusal.</returns>
-    public async ValueTask<Result<ConceptsView>> Concepts(ContextScope scope, ConceptsQuery query, CancellationToken cancellationToken)
+    /// <returns>The kept answer, or the read's refusal.</returns>
+    public async ValueTask<Result<KeptConcepts>> Concepts(ContextScope scope, ConceptsQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(query);
@@ -30,7 +30,7 @@ public sealed class ConceptAnswers(ConceptReader reader, IConceptAnswerStore sto
         }
 
         var read = await reader.Read(scope, query.Read, query.Repo, cancellationToken).ConfigureAwait(false);
-        var built = read.IsError ? read.Error : ConceptBuilder.Build(read.Value.Basis, query, read.Value.Graph, read.Value.Text, read.Value.Pins);
+        var built = read.IsError ? read.Error : Kept(read.Value, query);
         if (built.IsSuccess && basis is not null && key is not null)
         {
             _ = await store.Keep(key, basis, built.Value, cancellationToken).ConfigureAwait(false);   // a row not kept is built again next time
@@ -95,6 +95,13 @@ public sealed class ConceptAnswers(ConceptReader reader, IConceptAnswerStore sto
         {
             // the version is published; the reads build what the fill didn't keep
         }
+    }
+
+    // The map-derived answer and its rows' code paths; the read's basis carries no change times, so no kept row holds one.
+    private static Result<KeptConcepts> Kept(ConceptRead read, ConceptsQuery query)
+    {
+        var view = ConceptBuilder.Build(read.Basis, query, read.Graph, read.Text, read.Pins);
+        return view.IsError ? view.Error : new KeptConcepts(view.Value, ConceptBuilder.CodePathsOf(view.Value.Concepts.Select(c => c.Id), read.Graph));
     }
 
     // The stored map the read names, when the caller may read it at all: a refused caller is refused by the read, never answered from a kept row.
