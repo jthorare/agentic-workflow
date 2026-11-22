@@ -168,6 +168,11 @@ internal sealed partial class CommandPaletteViewModel
                 CreateItem?.Invoke();
                 Close();
                 return true;
+            case { Control.Action: "AttachProject" }:
+                // The Add project sheet opens the way the Projects page's button opens it, then the palette closes, like Create item.
+                AddProject?.Invoke();
+                Close();
+                return true;
             case { Id: PaletteEntry.NewTodoId }:
                 NewTodo?.Invoke();
                 Close();

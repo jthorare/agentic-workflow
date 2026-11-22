@@ -91,4 +91,14 @@ public sealed class ShellProjectsTests
 
         Assert.Equal(ViewModels.Projects.ProjectView.All, shell.Projects.View);
     }, Token);
+
+    [Fact]
+    public Task The_palettes_Add_project_opens_the_Add_project_sheet() => UiThread.Run(async () =>
+    {
+        var shell = await Shell();
+
+        shell.Palette.AddProject!.Invoke();
+
+        Assert.True(shell.IsProjectAddSheet);
+    }, Token);
 }

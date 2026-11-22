@@ -47,6 +47,9 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
     /// <summary>Opens the Create item form, or null.</summary>
     internal Action? CreateItem { get; }
 
+    /// <summary>Opens the Add project sheet (the AttachProject entry, "Add project", runs it; issue 3717); null leaves that entry unrunnable.</summary>
+    internal Action? AddProject { get; init; }
+
     /// <summary>Shows Settings filtered to the words it is given (a Settings entry runs it); null leaves the Settings section out (#3362).</summary>
     internal Action<string>? OpenSetting { get; init; }
 
@@ -226,13 +229,14 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
         (control.IsSendable && !control.IsDestructive) || control.Action == "StopProcess"
         || OpensForm(control) || (control.IsCopyOnly && control.CanCopy && !NeedsForm(control) && !ItemSheetViewModel.IsSheetAction(control.Action));
 
-    // Create item and Start workflow are done in a form or dialog of the app: with none to open (no shell) they are not a command to copy here, and not runnable.
+    // Create item, Add project and Start workflow are done in a form, sheet or dialog of the app: with none to open (no shell) they are not a command to copy here, and not runnable.
     private static bool NeedsForm(ControlViewModel control) => string.Equals(control.Action, "CreateItem", StringComparison.Ordinal)
+        || string.Equals(control.Action, "AttachProject", StringComparison.Ordinal)
         || string.Equals(control.Action, "StartInstance", StringComparison.Ordinal);
 
-    // Create item opens its form (when the shell has one).
+    // Create item opens its form and Add project its sheet (when the shell has them).
     private bool OpensForm(ControlViewModel control) =>
-        control.Action == "CreateItem" && CreateItem is not null;
+        (control.Action == "CreateItem" && CreateItem is not null) || (control.Action == "AttachProject" && AddProject is not null);
 
     // What a sendable row that Enter skips says instead of "ready": where it lives, or that the app has no sender for it.
     private static string NotRun(ControlViewModel control) =>
