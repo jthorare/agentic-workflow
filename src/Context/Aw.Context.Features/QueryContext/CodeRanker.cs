@@ -37,7 +37,7 @@ internal static partial class CodeRanker
         return new RankedPage(page, ranked.Count, next < ranked.Count ? next.ToString(CultureInfo.InvariantCulture) : null);
     }
 
-    private static (ResultItem Item, double Value) Score(ResultItem item, IReadOnlyList<string> words, IReadOnlyDictionary<string, double> rarity, string? symbol)
+    private static (ResultItem Item, double Value) Score(ResultItem item, IReadOnlyList<string> words, Dictionary<string, double> rarity, string? symbol)
     {
         var path = (item.Node ?? item.Title ?? string.Empty).Replace("code:", string.Empty, StringComparison.Ordinal);
         var slash = path.LastIndexOf('/');
