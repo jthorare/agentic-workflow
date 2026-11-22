@@ -1,0 +1,21 @@
+#nullable enable
+Aw.Transcripts.Features.ListSessions.ListSessionsRequest
+Aw.Transcripts.Features.ListSessions.ListSessionsRequest.<Clone>$() -> Aw.Transcripts.Features.ListSessions.ListSessionsRequest!
+Aw.Transcripts.Features.ListSessions.ListSessionsRequest.Equals(Aw.Transcripts.Features.ListSessions.ListSessionsRequest? other) -> bool
+Aw.Transcripts.Features.ListSessions.ListSessionsRequest.ListSessionsRequest() -> void
+Aw.Transcripts.Features.ListSessions.ListSessionsResponse
+Aw.Transcripts.Features.ListSessions.ListSessionsResponse.<Clone>$() -> Aw.Transcripts.Features.ListSessions.ListSessionsResponse!
+Aw.Transcripts.Features.ListSessions.ListSessionsResponse.Equals(Aw.Transcripts.Features.ListSessions.ListSessionsResponse? other) -> bool
+Aw.Transcripts.Features.ListSessions.ListSessionsResponse.ListSessionsResponse() -> void
+Aw.Transcripts.Features.TranscriptsFeaturesServiceCollectionExtensions
+override Aw.Transcripts.Features.ListSessions.ListSessionsRequest.Equals(object? obj) -> bool
+override Aw.Transcripts.Features.ListSessions.ListSessionsRequest.GetHashCode() -> int
+override Aw.Transcripts.Features.ListSessions.ListSessionsRequest.ToString() -> string!
+override Aw.Transcripts.Features.ListSessions.ListSessionsResponse.Equals(object? obj) -> bool
+override Aw.Transcripts.Features.ListSessions.ListSessionsResponse.GetHashCode() -> int
+override Aw.Transcripts.Features.ListSessions.ListSessionsResponse.ToString() -> string!
+static Aw.Transcripts.Features.ListSessions.ListSessionsRequest.operator !=(Aw.Transcripts.Features.ListSessions.ListSessionsRequest? left, Aw.Transcripts.Features.ListSessions.ListSessionsRequest? right) -> bool
+static Aw.Transcripts.Features.ListSessions.ListSessionsRequest.operator ==(Aw.Transcripts.Features.ListSessions.ListSessionsRequest? left, Aw.Transcripts.Features.ListSessions.ListSessionsRequest? right) -> bool
+static Aw.Transcripts.Features.ListSessions.ListSessionsResponse.operator !=(Aw.Transcripts.Features.ListSessions.ListSessionsResponse? left, Aw.Transcripts.Features.ListSessions.ListSessionsResponse? right) -> bool
+static Aw.Transcripts.Features.ListSessions.ListSessionsResponse.operator ==(Aw.Transcripts.Features.ListSessions.ListSessionsResponse? left, Aw.Transcripts.Features.ListSessions.ListSessionsResponse? right) -> bool
+static Aw.Transcripts.Features.TranscriptsFeaturesServiceCollectionExtensions.AddTranscriptsFeatures(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

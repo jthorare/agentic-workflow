@@ -1,0 +1,3 @@
+#nullable enable
+Aw.Transcripts.Infrastructure.TranscriptsInfrastructureServiceCollectionExtensions
+static Aw.Transcripts.Infrastructure.TranscriptsInfrastructureServiceCollectionExtensions.AddTranscriptsInfrastructure(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
