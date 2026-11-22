@@ -292,10 +292,11 @@ if [ "$have_meminfo" = 1 ]; then
   # from outside, since a job blocked only by the reserve never times out
   out="$(AW_HEAVY_PRIORITY=other AW_HEAVY_MIN_FREE_MB=0 timeout 5 bash "$HEAVY" --expensive bash -c 'echo slot=$AW_HEAVY_SLOT' 2>&1 | sed -n 's/^slot=//p')"
   check "reserve 2 of 2 is capped to 1: a lane job (AW_HEAVY_PRIORITY=other is not meta) takes slot 2" "$out" "$LOCKS/heavy-job.lock.2"
-  # the reserve is also capped at the slots free memory allows minus one: memory for slot 1 only means no reserve
+  # the reserve is a slot count whatever memory is free (#3885): memory for slot 1 only leaves a lane job waiting (bounded from
+  # outside), not on meta's slot 1
   echo 1 > "$STATE/heavy-meta-reserve"
   out="$(AW_HEAVY_MIN_FREE_MB=999999999 timeout 5 bash "$HEAVY" --expensive bash -c 'echo slot=$AW_HEAVY_SLOT' 2>&1 | sed -n 's/^slot=//p')"
-  check "reserve 1 of 2, memory for slot 1 only: a lane job takes slot 1" "$out" "$LOCKS/heavy-job.lock"
+  check "reserve 1 of 2, memory for slot 1 only: a lane job waits, it does not take reserved slot 1 (#3885)" "$out" ""
   out="$(AW_HEAVY_MIN_FREE_MB=0 timeout 5 bash "$HEAVY" --expensive bash -c 'echo slot=$AW_HEAVY_SLOT' 2>&1 | sed -n 's/^slot=//p')"
   check "reserve 1 of 2, memory for both: a lane job still takes slot 2" "$out" "$LOCKS/heavy-job.lock.2"
   # blocked only by the reserve (slot 1 free, slot 2 busy): the wait is not counted; the file is re-read each second

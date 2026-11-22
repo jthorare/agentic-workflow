@@ -181,11 +181,11 @@ reset; echo 3 > "$STATE/heavy-slots-cap"; echo 1 > "$STATE/heavy-meta-reserve"
 mkdir -p "$BOX.2"; echo "$live x" > "$BOX.2/owner"; box_waiter "$live" ',"meta":1'; mem_mb 12000
 job j1; wait_for 'started j1'
 check "not held: the same, but the waiter is meta and may take reserved slot 1" "$(yn 'started j1')" "yes"
-# Memory too low for slot 2 (the pool then drops the reserve to 0): a lane waiter takes slot 1.
+# Memory too low for slot 2: the reserve is still a slot count (#3885), so a lane waiter can't take slot 1 either.
 reset; echo 3 > "$STATE/heavy-slots-cap"; echo 1 > "$STATE/heavy-meta-reserve"
 mkdir -p "$BOX.2"; echo "$live x" > "$BOX.2/owner"; box_waiter "$live"; mem_mb 5000
-job j1; wait_for 'started j1'
-check "not held: 5000 MB, the reserve drops to 0, so a lane waiter may take slot 1" "$(yn 'started j1')" "yes"
+job j1; wait_for 'waiting j1'
+check "held: 5000 MB, reserve 1 stays a slot count (#3885): slot 1 is meta's and slot 3 needs 14336" "$(yn 'started j1')" "no"
 # Slot 2 free but short of memory while slot 3's lower floor is met: the waiter takes slot 3, so nothing holds.
 reset; hold_box; box_waiter "$live"; mem_mb 5000; JOB_ENV="AW_HEAVY_MIN_FREE_HIGH_MB=3072"
 job j1; wait_for 'started j1'
@@ -215,6 +215,30 @@ check "meta: a held light build starts" "$(yn 'started m1')" "yes"
 reset; echo 1 > "$STATE/heavy-light-cap"; fill_light; JOB_ENV="AW_HEAVY_PRIORITY=meta"
 job m2; wait_for 'waiting m2'
 check "meta: the light pool still binds it" "$(yn 'started m2')" "no"
+
+# --- the meta reserve is a slot count, whatever memory is free (#3885) ---
+# Cap 3, reserve 1, 6000 MB with the default high floor 3072: slot 2 (10240) is short, slot 3 is not. The reserve stays 1.
+reset; echo 3 > "$STATE/heavy-slots-cap"; echo 1 > "$STATE/heavy-meta-reserve"; mem_mb 6000; JOB_ENV="AW_HEAVY_MIN_FREE_HIGH_MB=3072"
+job b1 --expensive dotnet build b1; wait_for 'started b1'
+check "6000 MB, reserve 1: a lane job does not start in reserved slot 1" "$(yn '[ ! -d "$BOX" ]')" "yes"
+check "6000 MB, reserve 1: the lane job starts in slot 3, whose floor is met" "$(cut -d' ' -f1 "$BOX.3/owner" 2> /dev/null)" "$(pid_of b1)"
+reset; echo 3 > "$STATE/heavy-slots-cap"; echo 1 > "$STATE/heavy-meta-reserve"; mem_mb 6000; JOB_ENV="AW_HEAVY_MIN_FREE_HIGH_MB=3072"
+mkdir -p "$BOX.3"; echo "$live x" > "$BOX.3/owner"
+job b2 --expensive dotnet build b2; wait_for 'waiting b2'; sleep 1.5
+check "6000 MB, reserve 1, slot 3 held: the lane job waits, slot 1 stays free" "$(yn '! started b2 && [ ! -d "$BOX" ]')" "yes"
+reset; echo 3 > "$STATE/heavy-slots-cap"; echo 1 > "$STATE/heavy-meta-reserve"; mem_mb 6000; JOB_ENV="AW_HEAVY_MIN_FREE_HIGH_MB=3072 AW_HEAVY_PRIORITY=meta"
+mkdir -p "$BOX.3"; echo "$live x" > "$BOX.3/owner"
+job b3 --expensive dotnet build b3; wait_for 'started b3'
+check "6000 MB, reserve 1, slot 3 held: a meta job starts in slot 1 (no floor)" "$(cut -d' ' -f1 "$BOX/owner" 2> /dev/null)" "$(pid_of b3)"
+# The light hold agrees: a lane waiter in that state can't start anywhere, so a light build is held.
+reset; echo 3 > "$STATE/heavy-slots-cap"; echo 1 > "$STATE/heavy-meta-reserve"; mem_mb 6000; JOB_ENV="AW_HEAVY_MIN_FREE_HIGH_MB=3072"
+mkdir -p "$BOX.3"; echo "$live x" > "$BOX.3/owner"; box_waiter "$live"
+job j1; wait_for 'waiting j1'
+check "6000 MB, reserve 1, slot 3 held: the hold agrees with the pool, a light build waits" "$(yn 'started j1')" "no"
+reset; echo 3 > "$STATE/heavy-slots-cap"; echo 1 > "$STATE/heavy-meta-reserve"; mem_mb 6000; JOB_ENV="AW_HEAVY_MIN_FREE_HIGH_MB=3072"
+mkdir -p "$BOX.3"; echo "$live x" > "$BOX.3/owner"; box_waiter "$live" ',"meta":1'
+job j1; wait_for 'started j1'
+check "the same with a meta waiter (it can take slot 1): not held" "$(yn 'started j1')" "yes"
 
 # --- no box-wide waiter: the hold check reads no memory (review of #3882: no fork per pass without a waiter) ---
 reset; rm -f "$FAKE_MEM.reads"; job f1; wait_for 'started f1'
