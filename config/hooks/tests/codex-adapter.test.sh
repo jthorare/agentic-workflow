@@ -20,6 +20,7 @@ trap 'rm -rf "$WORK"' EXIT
 export HOME="$WORK/home"; mkdir -p "$HOME"
 export AW_STATE_DIR="$WORK/state"
 unset AW_JUDGE_CHILD
+for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done   # a meta lane caller's AW_META_* would steer the adapters' lane hooks; CI has none (#3818)
 
 # Stubs on PATH: rtk (so rtk-rewrite fires) and judge (no briefs, ask-check = "ask").
 BIN="$WORK/bin"; mkdir -p "$BIN"

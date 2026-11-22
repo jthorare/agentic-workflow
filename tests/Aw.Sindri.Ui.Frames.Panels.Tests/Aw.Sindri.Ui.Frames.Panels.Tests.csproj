@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Aw.Sindri.Ui.Frames.Panels.Tests: the system panel, todo panel, clickable-state and Needs you outline views, under Avalonia's headless platform.
+  <!-- Aw.Sindri.Ui.Frames.Panels.Tests: the system panel, todo panel, clickable-state, overlay opener, Needs you,
+       Linear-since card, whole map and context map suites, under Avalonia's headless platform.
        Split out of Aw.Sindri.Ui.Frames.Tests (#3692) when its integration lane passed its 90 s budget.
        Split out of Aw.Sindri.Ui.Tests (#1546): every Avalonia test in a process runs on that process's one headless UI thread, so
-       each project is a UI thread of its own and the three run side by side. Its own lane-budget row (lane-budgets.mjs PROJECT_BUDGETS). -->
+       each project is a UI thread of its own and the projects run side by side. Its own lane-budget row (lane-budgets.mjs PROJECT_BUDGETS). -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <OutputType>Exe</OutputType>
