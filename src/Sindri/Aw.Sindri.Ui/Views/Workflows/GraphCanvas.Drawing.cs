@@ -12,6 +12,7 @@ internal sealed partial class GraphCanvas
     private const double ArrowSize = 9;
     private const double Radius = 8;
     private const double RingGap = 3;
+    private const double MarkWidth = 48;
 
     /// <inheritdoc/>
     public override void Render(DrawingContext context)
@@ -106,7 +107,16 @@ internal sealed partial class GraphCanvas
 
         context.DrawRectangle(Brush("Brush.Surface2"), new Pen(Brush("Brush.Hairline"), 1), rect, Radius, Radius);
         var width = rect.Width - 24;
-        context.DrawText(Text(node.Title, 13, Brush("Brush.Ink"), width, semiBold: true), new Point(rect.X + 12, rect.Y + 8));
+        var titleWidth = width;
+        if (node.FindingMark.Length > 0)
+        {
+            // The server's findings on this step (#3803): "⚠ 1" or "✕ 2" on the top right, in the attention or error tone; the title gives way to it
+            var mark = Text(node.FindingMark, 11, Brush(node.IsFindingError ? "Brush.Error" : "Brush.Attention"), MarkWidth, semiBold: true);
+            context.DrawText(mark, new Point(rect.Right - 12 - mark.Width, rect.Y + 9));
+            titleWidth = Math.Max(0, width - mark.Width - 8);
+        }
+
+        context.DrawText(Text(node.Title, 13, Brush("Brush.Ink"), titleWidth, semiBold: true), new Point(rect.X + 12, rect.Y + 8));
         context.DrawText(Text(node.Type, 11, Brush("Brush.InkMuted"), width, semiBold: false), new Point(rect.X + 12, rect.Y + 27));
         if (node.StatusWord.Length > 0)
         {

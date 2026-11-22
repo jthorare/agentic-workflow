@@ -38,6 +38,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         Runs.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Runs.Title)) { NotifyCrumb(); } };
         Run.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Run.Id)) { NotifyCrumb(); } };
         WatchEditor();
+        WatchFindings();
     }
 
     /// <summary>The API the page reads.</summary>
