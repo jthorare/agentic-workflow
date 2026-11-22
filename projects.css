@@ -170,3 +170,7 @@ body.w1000 .hbtn { width:28px; padding:0; justify-content:center; font-size:15px
 /* at 1000 the header keeps the four tabs on one line next to the + button: the search field gives up 50 px */
 .tabs a { white-space:nowrap; }
 body.w1000 .fld { width:150px; }
+
+/* ---------- round 12 ---------- */
+/* the draft divider: ink-3 (#74787f, about 4.4:1 on the canvas) with a 2 px gap each side, so the mark is visible (>= 3:1 for a non-text mark) */
+.fact.prs .pc + .pc.dr { border-left:1px solid var(--ink-3); padding-left:8px; margin-left:2px; }

@@ -13,17 +13,25 @@ Checked by the projects lane against origin/main and `feat/gh-3718-project-truth
 - Drafts don't count; "PR" for 1, "PRs" otherwise; a drafts-only project has no health. (lane 20)
 - Focus is one control at a time; focus-controls draws four rings only to show the look. (lane 24)
 
-## Open questions (need a spec line or the server)
-1. The spec's group list has no group for the server's Unknown level; frames draw 'CI not checked'. The spec needs one line. (Lead's decision, round 9: groups Off track 3, At risk 3, CI not checked 3, On track 5, No open PRs 8.)
-2. CONFIRMED and drawn: on a mismatch the row appends "· Linear says on track" as its own span that never shrinks; the server's reason ellipsizes first. (lane 2, review-r8 H6, review-r9 H2)
-3. "Blocked on you" stays in the frames (lead's call). Two gaps on the server: the projects answer has no GitHub login, and a red PR never carries `waitingOn`. A by-hand project has no lead, so "you lead it and its CI is red" never fires for one: Checkout rewrite's ask is now "review", not "fix CI". If a by-hand project's maker should count as its lead for that rule, the server needs to say so. (lane 5, review-r8 H5)
-4. "Nov 12 passed": no past-target flag or wording exists. It needs the server or an app rule. (lane 19)
-5. The stale line's "as of 10:31": the served text is "synced N min ago". The app would format each freshness row's `at` to get "as of". (lane 21)
-6. The top-bar pill reads "Sindri running" in the frames; the pill is app-wide, so ui should confirm the wording.
-7. Create project has no bare key (lead's decision): `n` is the app-wide quick-add and `p` is #2996's priority. Button + palette entry only. `b` for group is free in the app, #2996 and the §14 sheet. ui should confirm.
-8. My work = projects you lead, attached (spec §0: "a Linear project the owner drives but doesn't lead") or made by hand. No spec or server rule defines any view's membership; spec §14 needs one line for the four views.
-9. stale keeps every column (truth is served from Sindri's store since #3718); spec §3.1 state 3 says "names only". The spec needs a line. (review-r8 small 4)
-10. linear-expired shows Linear-led rows as last read 3d ago; the per-row data is not marked stale beyond the line under the title.
+## Answered by the projects lane (issue 3717, 2026-11-22)
+1. CONFIRMED: "CI not checked" is its own health group (server level `unknown`). Note: On track doesn't mean every PR was checked; a waiting PR with no CI counts as checked.
+2. CONFIRMED: on a Linear mismatch the row appends "· Linear says <word>"; the app joins the two fields.
+3. CONFIRMED: "Blocked on you" comes from the server flag `blockedOnYou` (#3797). By-hand projects have no lead, so "you lead it and CI is red" never fires for them.
+4. CONFIRMED: "passed" is an app rule (compare the target with today); no server flag.
+5. CONFIRMED: the app formats each freshness row's `at` for "as of"; failing context and sindri rows have no `at`.
+6. CONFIRMED (decision): My work = projects you lead + projects made by hand; attached ones are left out.
+7. CONFIRMED (decision): no bare key for Add project; button + the palette's "Add project" row; `b` groups, `o` sorts. `p` is free on main, kept free for #2996.
+8. CORRECTED and drawn: on a Context error only attached and hand-made cards show (stale frame: 2 rows).
+9. CONFIRMED in code: no card has a stale field, so linear-expired marks the last read only in the line under the title. Still open: spec §3.1's per-card "as of 13:52" mark is a spec call (see 15).
+10. CONFIRMED: the Projects tab counts grouped rows + Finished, never Hidden.
+11. CONFIRMED: Group by Repo uses each open non-draft PR's repo; a project with no open PR sits in "No open PRs".
+12. NEW (decision) and drawn: a failed truth read shows no health groups and one line (truth-failed frame).
+
+## Still open
+13. The top-bar pill reads "Sindri running"; the pill is app-wide, so ui should confirm the wording.
+14. truth-failed falls back to grouping by State while the Group button keeps Health; the decision only says "no health groups".
+15. Spec §3.1 card mark "counts show 'as of 13:52'": no frame draws it; the code has no stale field; spec call.
+16. Finished split under stale: 7 of 10 are attached or hand-made (invented).
 
 ## Design picks (app only; nothing in the code to check)
 11. Row layout counts: 14 rows in view on Projects (five group heads), 11 in linear-expired. (lane 12)
@@ -36,7 +44,7 @@ Checked by the projects lane against origin/main and `feat/gh-3718-project-truth
 18. Menu hint ink #a4a9b2 is not a token; the nearest tokens are InkSubtle #8a8f98 and InkMuted #d0d6e0. Pick one at build. (lane 28)
 19. A list cut by height draws the cut group's head when it fits (▾, open: its rows are below the fold), then stops. No Finished after a cut. (lane 29)
 20. Under about 120 px the reason column shows the level dot only. (lane 30)
-21. first-run hides the bar like Triage and has no state line: the empty state already offers Connect Linear. The primary is Create project (no key), per the §14 sheet.
+21. first-run hides the bar like Triage and has no state line: the empty state already offers Connect Linear. The primary is Add project (no key).
 22. The kept-place cue: a 1 px left edge on the row plus the `<1m` age (projects frame, Import wizard, by hand).
 23. Invented data: Checkout rewrite and Import wizard are by hand (no lead). In the server tests Checkout rewrite is Linear-led, which doesn't matter for the frames. (lane 9)
 24. Group by Repo shows a two-repo project in both groups; the group counts then add up to more than the projects. Spec gives no rule.
