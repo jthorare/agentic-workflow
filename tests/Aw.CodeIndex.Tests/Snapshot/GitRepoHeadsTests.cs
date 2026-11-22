@@ -1,5 +1,6 @@
 using Aw.CodeIndex.Core;
 using Aw.CodeIndex.Core.Facade;
+using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Core.Values;
 using Aw.CodeIndex.Infrastructure.Snapshot;
 using Aw.CodeIndex.Testing;
@@ -66,6 +67,23 @@ public sealed class GitRepoHeadsTests
         var heads = await _heads.Heads([repo.AsRepo()], TestContext.Current.CancellationToken);
 
         Assert.Equal(onMain, Assert.Single(heads.Value).DefaultTip);
+    }
+
+    [Fact]
+    public async Task A_checkout_with_only_origin_main_is_on_the_default_branch_at_its_tip_gh3181()
+    {
+        using var repo = new GitRepoBuilder().WithFile("a.cs", "class A {}").Build();
+        var onMain = repo.Head;
+        _ = repo.Git("update-ref", "refs/remotes/origin/main", onMain.Value);
+        _ = repo.Git("checkout", "-q", "--detach");
+        _ = repo.Git("branch", "-q", "-D", "main");
+
+        var heads = await _heads.Heads([repo.AsRepo()], TestContext.Current.CancellationToken);
+        var check = await _heads.OnDefaultBranch(repo.AsRepo(), onMain, TestContext.Current.CancellationToken);
+
+        var head = Assert.Single(heads.Value);
+        Assert.Equal((onMain, true, onMain), (head.Head, head.OnDefaultBranch, head.DefaultTip));
+        Assert.Equal(new DefaultBranchCheck("refs/remotes/origin/main", Contains: true), check.Value);
     }
 
     [Fact]

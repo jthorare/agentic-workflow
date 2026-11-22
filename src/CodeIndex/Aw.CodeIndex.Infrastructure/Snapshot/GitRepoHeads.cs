@@ -11,8 +11,8 @@ namespace Aw.CodeIndex.Infrastructure.Snapshot;
 
 /// <summary>
 /// Where each checkout is (spec §6.1), read with git only: 'git rev-parse HEAD', then 'git merge-base --is-ancestor' against
-/// the first of origin/HEAD, main, master, origin/main, origin/master that exists, local refs only and never a fetch. That ref's commit is the default tip, the commit the first index of a repo
-/// that is off its default branch builds from (#3181).
+/// the first of origin/HEAD, main, master, origin/main, origin/master that exists, local refs only and never a fetch. That
+/// ref's commit is the default tip: the first index of a repo that is off its default branch builds from it (#3181).
 /// </summary>
 internal sealed class GitRepoHeads : IRepoHeads
 {
