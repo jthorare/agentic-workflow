@@ -13,12 +13,12 @@ public sealed class ConnectMessagesTests
     [InlineData("xo", "xc-")]
     public Task Wrong_token_prefix_is_refused_before_any_call(string head, string tail) => RedUntil.Phase("M1d", async () =>
     {
-            // why: the prefix is split so no token-shaped literal sits in the source
-            var token = head + tail + "0000000000-A0B1C2D3E4";
+        // why: the prefix is split so no token-shaped literal sits in the source
+        var token = head + tail + "0000000000-A0B1C2D3E4";
 
-            var answer = await new ConnectMessagesService().Handle(new ConnectMessagesRequest(token, Manifest: false), TestContext.Current.CancellationToken);
+        var answer = await new ConnectMessagesService().Handle(new ConnectMessagesRequest(token, Manifest: false), TestContext.Current.CancellationToken);
 
-            Assert.True(answer.IsError);
-            Assert.Equal("SND-MSG-030", answer.Error.Code);
+        Assert.True(answer.IsError);
+        Assert.Equal("SND-MSG-030", answer.Error.Code);
     });
 }

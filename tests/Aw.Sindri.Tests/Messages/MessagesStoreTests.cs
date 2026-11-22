@@ -13,12 +13,12 @@ public sealed class MessagesStoreTests
     [Fact]
     public Task Needs_reply_rebuild_touches_only_the_changed_thread() => RedUntil.Phase("M1c", async () =>
     {
-            // M1c seeds two threads of one channel in a temp messages.db and changes the first; the second thread's row must not be rewritten
-            IMessagesStore store = new SqliteMessagesStore();
+        // M1c seeds two threads of one channel in a temp messages.db and changes the first; the second thread's row must not be rewritten
+        var store = new SqliteMessagesStore();
 
-            var touched = await store.RebuildNeedsReply("C0HARBOR", new MessageTs("1767771000.000100"), Cancel);
+        var touched = await store.RebuildNeedsReply("C0HARBOR", new MessageTs("1767771000.000100"), Cancel);
 
-            Assert.True(touched.IsSuccess);
-            Assert.Equal(["slack:thread:T0HARBOR/C0HARBOR/1767771000.000100"], touched.Value);
+        Assert.True(touched.IsSuccess);
+        Assert.Equal(["slack:thread:T0HARBOR/C0HARBOR/1767771000.000100"], touched.Value);
     });
 }

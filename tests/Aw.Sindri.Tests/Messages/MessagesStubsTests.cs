@@ -66,7 +66,7 @@ public sealed partial class MessagesStubsTests
             var type = typeof(MessagesStubsTests).Assembly.GetType($"{typeof(MessagesStubsTests).Namespace}.{owner}");
             var method = type?.GetMethod(test, BindingFlags.Public | BindingFlags.Instance);
             Assert.True(method is not null, $"{phase}: {owner}.{test} is missing");
-            Assert.True(method.GetCustomAttributes<FactAttribute>().Any(), $"{phase}: {owner}.{test} is not a [Fact] or [Theory]");
+            Assert.True(Attribute.IsDefined(method, typeof(FactAttribute)), $"{phase}: {owner}.{test} is not a [Fact] or [Theory]");
             Assert.True(string.Equals(lane, LaneOf(method), StringComparison.Ordinal), $"{phase}: {owner}.{test} runs in lane '{LaneOf(method)}', not '{lane}'");
         }
     }
@@ -75,7 +75,7 @@ public sealed partial class MessagesStubsTests
     private static IEnumerable<(string Phase, string Test)> SpecNames(IEnumerable<string> lines) =>
         lines.Select(static l => l.Split('|'))
             .Where(static cells => cells.Length > 6 && _phases.Contains(cells[1].Trim(), StringComparer.Ordinal))
-            .SelectMany(static cells => TestName().Matches(cells[5]).Select(m => (cells[1].Trim(), m.Groups[1].Value)));
+            .SelectMany(static cells => TestName.Matches(cells[5]).Select(m => (cells[1].Trim(), m.Groups["name"].Value)));
 
     private static string? LaneOf(MethodInfo method) =>
         LaneIn(method.CustomAttributes) ?? LaneIn(method.DeclaringType!.CustomAttributes);
@@ -91,6 +91,6 @@ public sealed partial class MessagesStubsTests
     private static string RepoRoot() =>
         Path.GetFullPath(Path.Combine(Golden.SourcePath(typeof(MessagesStubsTests).Assembly, "Messages"), "..", "..", ".."));
 
-    [GeneratedRegex("`([A-Za-z][A-Za-z0-9_]*)`", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex TestName();
+    [GeneratedRegex("`(?<name>[A-Za-z][A-Za-z0-9_]*)`", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex TestName { get; }
 }
