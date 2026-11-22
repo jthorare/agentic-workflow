@@ -26,10 +26,43 @@ internal static class TsWorkspace
 
         var dir = RepoPath.Dir(file.Path);
         var root = doc.RootElement;
-        var entries = new[] { root.TryGetProperty("exports", out var exports) ? Target(exports) : null, Text(root, "types"), Text(root, "main") }
+        var hasExports = root.TryGetProperty("exports", out var exports);
+        var entries = new[] { hasExports ? Target(exports) : null, Text(root, "types"), Text(root, "main") }
             .OfType<string>().Select(e => RepoPath.Join(dir, e)).OfType<string>().ToList();
-        return new PackageRoot(name, dir, entries);
+        return new PackageRoot(name, dir, entries, hasExports ? Subpaths(dir, exports) : []);
     }
+
+    // "./sql": "./src/sql/index.ts", "./*": "./src/*.ts" or a conditions object: exact keys first, then patterns by longest prefix, as Node matches them
+    private static IReadOnlyList<PackageSubpath> Subpaths(string dir, JsonElement exports)
+    {
+        if (exports.ValueKind != JsonValueKind.Object)
+        {
+            return [];
+        }
+
+        return [.. exports.EnumerateObject()
+            .Where(p => p.Name.StartsWith("./", StringComparison.Ordinal))
+            .Select(p => Subpath(dir, p))
+            .OrderBy(s => s.Wild).ThenByDescending(s => s.Prefix.Length)];
+    }
+
+    private static PackageSubpath Subpath(string dir, JsonProperty key)
+    {
+        var targets = Leaves(key.Value).OrderBy(t => t.EndsWith(".d.ts", StringComparison.Ordinal)).Select(t => RepoPath.Join(dir, t)).OfType<string>().ToList();
+        var star = key.Name.IndexOf('*', StringComparison.Ordinal);
+        return star < 0
+            ? new PackageSubpath(key.Name, Suffix: "", Wild: false, targets)
+            : new PackageSubpath(key.Name[..star], key.Name[(star + 1)..], Wild: true, targets);
+    }
+
+    // every target string of an exports value, conditions objects and fallback arrays included, in the order written
+    private static IEnumerable<string> Leaves(JsonElement value) => value.ValueKind switch
+    {
+        JsonValueKind.String => value.GetString() is { Length: > 0 } target ? [target] : [],
+        JsonValueKind.Object => value.EnumerateObject().SelectMany(p => Leaves(p.Value)),
+        JsonValueKind.Array => value.EnumerateArray().SelectMany(Leaves),
+        _ => [],
+    };
 
     private static string? Target(JsonElement element)
     {
