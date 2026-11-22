@@ -90,8 +90,9 @@ public sealed class ContextKeyHintsFramesTests
                 }
 
                 // The stage takes the height the window leaves, so the hint row has to be left room under it: the real app drew it below the fold.
-                var (bottom, viewport) = HintBottomAndViewport(window);
-                Assert.True(bottom <= viewport + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the hint row ends at {bottom}, below the viewport's {viewport}"));
+                var (bottom, viewport, extent) = HintBottomAndViewport(window);
+                Assert.True(bottom <= viewport - PageEdge + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the hint row ends at {bottom}, not {PageEdge} above the viewport's {viewport}"));
+                Assert.True(extent <= viewport + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the page is {extent} tall in a viewport of {viewport}: it scrolls"));
             }
             finally
             {
@@ -105,12 +106,14 @@ public sealed class ContextKeyHintsFramesTests
     }
 
     // Where the key hint row ends inside the page's scroller, and how tall the scroller's viewport is.
-    private static (double Bottom, double Viewport) HintBottomAndViewport(ShellWindow window)
+    private const double PageEdge = 24;   // the room the page keeps under the stage (ContextPage.axaml.cs)
+
+    private static (double Bottom, double Viewport, double Extent) HintBottomAndViewport(ShellWindow window)
     {
         var page = Assert.Single(window.GetVisualDescendants().OfType<Control>(), c => c.Name == "ContextPage");
         var hints = page.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "ContextKeyHints");
         var scroller = page.FindAncestorOfType<ScrollViewer>()!;
         var bottom = Avalonia.VisualExtensions.TranslatePoint(hints, default, scroller)!.Value.Y + hints.Bounds.Height;
-        return (bottom, scroller.Viewport.Height);
+        return (bottom, scroller.Viewport.Height, scroller.Extent.Height);
     }
 }
