@@ -134,7 +134,7 @@ public sealed class SteeringMinerCapsTests : IClassFixture<RoslynWarmup>
     private static int MostThatFit(char heavy, int bytes)
     {
         var count = 0;
-        while (JsonValue.Create(JsonValue.Create(new string(heavy, count + 1))!.ToJsonString())!.ToJsonString().Length <= bytes)
+        while (JsonValue.Create(JsonValue.Create(new string(heavy, count + 1)).ToJsonString()).ToJsonString().Length <= bytes)
         {
             count++;
         }
