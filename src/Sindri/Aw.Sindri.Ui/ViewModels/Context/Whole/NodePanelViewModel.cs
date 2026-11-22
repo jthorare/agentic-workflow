@@ -34,7 +34,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     internal IClipboard? Clipboard { get; set; }
 
     /// <summary>Gets the copy-path button's words.</summary>
-    public string CopyPathText { get; } = Labels.ContextNodePanelCopyPath;
+    public string CopyPathText { get; } = Labels.ContextInspCopyPath;
 
     /// <summary>Copies the source's file path (#3715).</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
