@@ -42,6 +42,7 @@ internal sealed partial class GraphIterationWorkflow
     {
         ArgumentNullException.ThrowIfNull(input);
         _run = input.Run;
+        (_budget, _used) = (input.Budget, input.Used);
         _agentLaunchAttempts = input.AgentLaunchAttempts > 0 ? input.AgentLaunchAttempts : GraphAgentLoop.DefaultAgentLaunchAttempts;
         _agents = new GraphAgentLoop(_run, _agentLaunchAttempts, Announce);
         try
@@ -59,11 +60,11 @@ internal sealed partial class GraphIterationWorkflow
             {
                 if (await Walk(spec, found.Value, item).ConfigureAwait(true) is { } failure)
                 {
-                    return new GraphIterationResult(failure);
+                    return new GraphIterationResult(failure, Tokens: _spent);
                 }
             }
 
-            return new GraphIterationResult(Failure: null, _skipped);
+            return new GraphIterationResult(Failure: null, _skipped, _spent);
         }
         catch (Exception e) when (TemporalException.IsCanceledException(e))
         {
@@ -154,8 +155,9 @@ internal sealed partial class GraphIterationWorkflow
         _current = node;
         _item = item;
         await Record(Row(node, item, NodeRunStatus.Running)).ConfigureAwait(true);
-        var outcome = await RunBlock(node, item).ConfigureAwait(true);
+        var outcome = OverBudget(node) ?? await RunBlock(node, item).ConfigureAwait(true);
         outcome = await Park(node, outcome).ConfigureAwait(true);
+        _spent += outcome.Tokens;
 
         // why: as in the run's walk, once the block has answered the node's result is decided, so the write is not cancelled with the workflow
         _current = null;

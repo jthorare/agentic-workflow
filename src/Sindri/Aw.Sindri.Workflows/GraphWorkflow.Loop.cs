@@ -68,11 +68,12 @@ internal sealed partial class GraphWorkflow
         var skipped = 0;
         for (var first = 1; first <= count; first += batch)
         {
-            var input = new GraphIterationInput(_run, forEach.Id, first, Math.Min(batch, count - first + 1), _agentLaunchAttempts);
+            var input = new GraphIterationInput(_run, forEach.Id, first, Math.Min(batch, count - first + 1), _agentLaunchAttempts, _budget, _tokens);
             var options = new ChildWorkflowOptions { Id = $"{_run.Value}/{forEach.Id.Value}/{first.ToString(System.Globalization.CultureInfo.InvariantCulture)}" };
             try
             {
                 var result = await Workflow.ExecuteChildWorkflowAsync((GraphIterationWorkflow w) => w.RunAsync(input), options).ConfigureAwait(true);
+                _tokens += result.Tokens;
                 if (result.Failure is { } failure)
                 {
                     return (failure, skipped);
