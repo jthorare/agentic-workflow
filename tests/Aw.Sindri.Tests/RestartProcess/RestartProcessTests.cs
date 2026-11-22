@@ -41,4 +41,30 @@ public sealed class RestartProcessTests
         Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
         Assert.Equal(0, _stop.Calls);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Restart_with_nothing_open_stops_serve_and_answers_the_old_pid()
+    {
+        using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
+
+        var result = await new RestartProcessService(_slice.Callers, new FixedOpenRuns(), _stop).Handle(new RestartProcessRequest(), Token);
+
+        Assert.Equal(new RestartProcessResponse(4242, 7, 12), result.Value);
+        Assert.Equal(1, _stop.Calls);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_refusal_names_how_to_see_each_open_run()
+    {
+        var open = new FixedOpenRuns(
+            new OpenRun("workflow-run", "nightly-gate@1:14", "Nightly gate (run 14, running)", "sindri://workflow/nightly-gate/runs/nightly-gate%401%3A14"),
+            new OpenRun("session", "claude-code/aaaaaaaa-0000-4000-8000-000000000001", "Fix login (an agent session)", "sindri://session/claude-code/aaaaaaaa-0000-4000-8000-000000000001"));
+        using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
+
+        var result = await new RestartProcessService(_slice.Callers, open, _stop).Handle(new RestartProcessRequest(), Token);
+
+        Assert.StartsWith("Sindri restarts when 2 finish: Nightly gate (run 14, running), Fix login (an agent session)", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("sindri wf run-show nightly-gate@1:14", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("sindri agents show claude-code/aaaaaaaa-0000-4000-8000-000000000001", result.Error.Message, StringComparison.Ordinal);
+    }
 }

@@ -67,11 +67,11 @@ public sealed class OwnerOnlyRoutesTests
     {
         using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
 
-        var restart = await Record.ExceptionAsync(async () => await new RestartProcessService(_slice.Callers, new FixedOpenRuns(), new RecordingStop()).Handle(new RestartProcessRequest(), Token));
+        var restart = await new RestartProcessService(_slice.Callers, new FixedOpenRuns(), new RecordingStop()).Handle(new RestartProcessRequest(), Token);
         var connect = await Record.ExceptionAsync(async () => await new ConnectAccountService(_slice.Callers).Handle(new ConnectAccountRequest("github"), Token));
 
-        _ = Assert.IsType<NotSupportedException>(restart);   // past the check, the stub is unbuilt
-        _ = Assert.IsType<NotSupportedException>(connect);
+        Assert.True(restart.IsSuccess);
+        _ = Assert.IsType<NotSupportedException>(connect);   // past the check, the stub is unbuilt
     }
 
     [Fact, Trait("Lane", "unit")]
