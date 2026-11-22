@@ -183,6 +183,7 @@ internal sealed partial class WorkflowsPageViewModel
         try
         {
             var error = await send(url, slug, cancellationToken).ConfigureAwait(true);
+            _savedWhileOff = error is null && string.Equals(Runs.Slug, slug, StringComparison.Ordinal) ? 0 : _savedWhileOff;   // the state changed since that save: its line is no longer news (#3303)
             await LandStateChange(url, slug, error, refused, cancellationToken).ConfigureAwait(true);
         }
         finally
