@@ -162,6 +162,13 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
         return Deliver(message, cancellationToken);
     }
 
+    /// <summary>The size the pane fits: sent as a `size` message once the socket is ready (#3860).</summary>
+    /// <param name="cols">Columns.</param>
+    /// <param name="rows">Rows.</param>
+    /// <param name="cancellationToken">Cancels the send.</param>
+    /// <returns>True when a size message went out.</returns>
+    internal Task<bool> FitSize(int cols, int rows, CancellationToken cancellationToken) => throw new NotSupportedException();
+
     /// <summary>Ctrl-C through the socket.</summary>
     /// <param name="cancellationToken">Cancels the send.</param>
     /// <returns>True when the key was sent.</returns>
