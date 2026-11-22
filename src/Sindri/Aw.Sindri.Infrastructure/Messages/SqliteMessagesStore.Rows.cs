@@ -2,7 +2,6 @@ using Aw.Kernel.Data;
 using Aw.Sindri.Core.Messages;
 using Microsoft.Data.Sqlite;
 
-
 namespace Aw.Sindri.Infrastructure.Messages;
 
 /// <summary>messages.db's row types and mappers.</summary>

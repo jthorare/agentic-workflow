@@ -3,7 +3,6 @@ using Aw.Kernel.Data;
 using Aw.Sindri.Core.Messages;
 using Microsoft.Data.Sqlite;
 
-
 namespace Aw.Sindri.Infrastructure.Messages;
 
 /// <summary>The retention pass and purge of messages.db (messages spec §8.1): what is kept, what goes, and the derived columns that go with it.</summary>
