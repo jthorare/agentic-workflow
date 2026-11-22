@@ -1,0 +1,1 @@
+Write	{"file_path":"/ws/.aw-state/cwd/plans/greeter-flags/stages.md","content":"---\naw-doc: 1\n---\n\n# Stages\n\n## Ph1 Shout flag\n\n- status: planned\n\n## Ph2 Performance sweep\n\n- files touched: none\n\n## Ph3 Bug sweep\n\n- files touched: none\n\n## Closing checks\n\n1. Bug sweep. Exit check: no new findings.\n2. Performance sweep. Exit check: under budget.\n"}

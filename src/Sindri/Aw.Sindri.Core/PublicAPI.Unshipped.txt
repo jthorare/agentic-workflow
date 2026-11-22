@@ -1908,6 +1908,7 @@ Aw.Sindri.Core.Scheduling.IScheduledService.Identity() -> Aw.Sindri.Core.Ids.Ser
 Aw.Sindri.Core.Scheduling.IScheduledService.Run(Aw.Sindri.Core.Scheduling.ScheduledRun! run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Scheduling.ScheduledResult!>!>
 Aw.Sindri.Core.Scheduling.LiveSchedule
 Aw.Sindri.Core.Scheduling.LiveSchedule.Current.get -> System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Ids.ServiceName, System.DateTimeOffset>?
+Aw.Sindri.Core.Scheduling.LiveSchedule.Schedules.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Scheduling.ServiceSchedule!>?
 Aw.Sindri.Core.Scheduling.LiveSchedule.LiveSchedule() -> void
 Aw.Sindri.Core.Scheduling.LiveSchedule.Publish(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Scheduling.ServiceSchedule!>! schedules) -> void
 Aw.Sindri.Core.Scheduling.IServicePauses
@@ -23583,6 +23584,7 @@ Aw.Sindri.Core.Launch.IOpenTerminalPane.Frames(System.Threading.CancellationToke
 Aw.Sindri.Core.Launch.IOpenTerminalPane.Host.get -> Aw.Sindri.Core.Launch.TerminalHost!
 Aw.Sindri.Core.Launch.IOpenTerminalPane.Paste(string! text, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Launch.IOpenTerminalPane.Resize(Aw.Sindri.Core.Launch.HostSize! size, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Launch.IOpenTerminalPane.Scroll(int back, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Launch.IOpenTerminalPane.SendKey(string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Launch.IOpenTerminalPane.SendText(string! text, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Launch.TerminalKeys
@@ -23810,6 +23812,10 @@ Aw.Sindri.Core.Launch.TerminalFrame.InMode.get -> bool
 Aw.Sindri.Core.Launch.TerminalFrame.InMode.init -> void
 Aw.Sindri.Core.Launch.TerminalFrame.Dead.get -> bool
 Aw.Sindri.Core.Launch.TerminalFrame.Dead.init -> void
+Aw.Sindri.Core.Launch.TerminalFrame.Back.get -> int
+Aw.Sindri.Core.Launch.TerminalFrame.Back.init -> void
+Aw.Sindri.Core.Launch.TerminalFrame.Hist.get -> int
+Aw.Sindri.Core.Launch.TerminalFrame.Hist.init -> void
 override Aw.Sindri.Core.Launch.TerminalFrame.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Launch.TerminalFrame.GetHashCode() -> int
 override Aw.Sindri.Core.Launch.TerminalFrame.ToString() -> string!

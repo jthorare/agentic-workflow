@@ -15,6 +15,7 @@ trap 'rm -rf "$WORK"' EXIT
 export HOME="$WORK/home"; mkdir -p "$HOME"
 export AW_STATE_DIR="$WORK/state"
 unset AW_JUDGE_CHILD AW_SINDRI_CHILD
+for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done   # a meta lane caller's AW_META_* would steer the adapters' lane hooks; CI has none (#3818)
 REPO="$WORK/repo"; mkdir -p "$REPO"; git -C "$REPO" init -q
 BIN="$WORK/bin"; mkdir -p "$BIN"
 cat > "$BIN/sindri" <<'EOF'

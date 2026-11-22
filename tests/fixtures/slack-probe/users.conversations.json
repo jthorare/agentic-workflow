@@ -1,0 +1,9 @@
+{"ok":true,"channels":[
+ {"id":"C0PUB1","name":"SECRET-NAME-general","is_channel":true,"is_private":false,"is_im":false,"is_mpim":false,"purpose":{"value":"SECRET-TEXT purpose"}},
+ {"id":"C0PUB2","name":"SECRET-NAME-random","is_channel":true,"is_private":false,"is_im":false,"is_mpim":false},
+ {"id":"G0PRIV1","name":"SECRET-NAME-private","is_channel":false,"is_group":true,"is_private":true,"is_im":false,"is_mpim":false,"topic":{"value":"SECRET-TEXT topic"}},
+ {"id":"G0MPIM1","name":"mpdm-SECRET-USER-a--SECRET-USER-b-1","is_mpim":true,"is_private":true,"is_im":false},
+ {"id":"D0IM1","is_im":true,"user":"U0ALICE"},
+ {"id":"D0IM2","is_im":true,"user":"U0BOB"},
+ {"id":"D0IM3","is_im":true,"user":"U0CAROL"}
+],"response_metadata":{"next_cursor":""}}
