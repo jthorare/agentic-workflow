@@ -16,13 +16,15 @@ namespace Aw.Context.Tests.Concepts;
 [Trait("Lane", "unit")]
 public sealed class ConceptAnswerOverlayTests : IDisposable
 {
-    private static readonly ContextScope App = MapWorld.HumanVia(ContextClient.Http);
+    private static readonly ContextScope _app = MapWorld.HumanVia(ContextClient.Http);
     private static readonly DateTimeOffset _changed = new(2026, 5, 4, 10, 0, 0, TimeSpan.Zero);
 
     private readonly MapWorld _world;
 
-    public ConceptAnswerOverlayTests() =>
+    public ConceptAnswerOverlayTests()
+    {
         _world = new MapWorld(history: new ScriptedHistory(inner: null!, (_, query, _) => ValueTask.FromResult(Answer(query))));
+    }
 
     public void Dispose() => _world.Dispose();
 
@@ -43,7 +45,7 @@ public sealed class ConceptAnswerOverlayTests : IDisposable
 
     private async Task<DateTimeOffset?> Scheduling()
     {
-        var view = await _world.Engine.Concepts(new ConceptsQuery(MapRead.Current, new ConceptPage()), App, MapWorld.None);
+        var view = await _world.Engine.Concepts(new ConceptsQuery(MapRead.Current, new ConceptPage()), _app, MapWorld.None);
         Assert.True(view.IsSuccess, view.IsError ? view.Error.Message : null);
         return view.Value.Concepts.Single(c => c.Id.Value == "concept:scheduling").LastChanged;
     }

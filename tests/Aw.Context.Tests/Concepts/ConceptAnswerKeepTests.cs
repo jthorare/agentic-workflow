@@ -12,7 +12,7 @@ namespace Aw.Context.Tests.Concepts;
 [Trait("Lane", "unit")]
 public sealed class ConceptAnswerKeepTests : IDisposable
 {
-    private static readonly ContextScope App = MapWorld.HumanVia(ContextClient.Http);
+    private static readonly ContextScope _app = MapWorld.HumanVia(ContextClient.Http);
 
     private readonly MapWorld _world = new();
     private int _loads;
@@ -29,7 +29,7 @@ public sealed class ConceptAnswerKeepTests : IDisposable
     private static ContextScope Pinned(string summary)
     {
         var pin = ConceptPin.Of(ConceptId.From("billing"), "Billing", summary, features: null, paths: ["services/billing/**"]).WithAliases(["payments"]);
-        return App with { Repos = [MapWorld.Repos[0] with { Concepts = [pin] }, MapWorld.Repos[1]] };
+        return _app with { Repos = [MapWorld.Repos[0] with { Concepts = [pin] }, MapWorld.Repos[1]] };
     }
 
     [Fact]
@@ -38,8 +38,8 @@ public sealed class ConceptAnswerKeepTests : IDisposable
         _ = await _world.ImportFixture();
         CountLoads();
 
-        var concepts = await _world.Engine.Concepts(FirstPage, App, MapWorld.None);
-        var glossary = await _world.Engine.ConceptGlossary(new ConceptGlossaryQuery(MapRead.Current), App, MapWorld.None);
+        var concepts = await _world.Engine.Concepts(FirstPage, _app, MapWorld.None);
+        var glossary = await _world.Engine.ConceptGlossary(new ConceptGlossaryQuery(MapRead.Current), _app, MapWorld.None);
 
         Assert.True(concepts.IsSuccess, concepts.IsError ? concepts.Error.Message : null);
         Assert.True(glossary.IsSuccess, glossary.IsError ? glossary.Error.Message : null);
@@ -53,7 +53,7 @@ public sealed class ConceptAnswerKeepTests : IDisposable
         var promoted = await _world.Map.Promote(MapWorld.Human, MapWorld.None);
         CountLoads();
 
-        var concepts = await _world.Engine.Concepts(FirstPage, App, MapWorld.None);
+        var concepts = await _world.Engine.Concepts(FirstPage, _app, MapWorld.None);
 
         Assert.True(promoted.IsSuccess, promoted.IsError ? promoted.Error.Message : null);
         Assert.Equal(MapVersionRef.Tag(promoted.Value.Version.Number), concepts.Value.MapVersion.Split('@')[0]);
@@ -79,13 +79,13 @@ public sealed class ConceptAnswerKeepTests : IDisposable
     public async Task A_second_version_never_answers_with_the_first_versions_rows()
     {
         var first = await Saved(new ConceptGraph().ConceptWithTerms("concept:billing", "Billing", "invoice"));
-        var v1 = await _world.Engine.Concepts(FirstPage, App, MapWorld.None);
-        var g1 = await _world.Engine.ConceptGlossary(new ConceptGlossaryQuery(MapRead.Current), App, MapWorld.None);
+        var v1 = await _world.Engine.Concepts(FirstPage, _app, MapWorld.None);
+        var g1 = await _world.Engine.ConceptGlossary(new ConceptGlossaryQuery(MapRead.Current), _app, MapWorld.None);
         var second = await Saved(new ConceptGraph().ConceptWithTerms("concept:auth", "Auth", "login"));
 
-        var v2 = await _world.Engine.Concepts(FirstPage, App, MapWorld.None);
-        var g2 = await _world.Engine.ConceptGlossary(new ConceptGlossaryQuery(MapRead.Current), App, MapWorld.None);
-        var retained = await _world.Engine.Concepts(new ConceptsQuery(new MapRead(Draft: false, new MapVersionRef(first.Number, Commit: null)), new ConceptPage()), App, MapWorld.None);
+        var v2 = await _world.Engine.Concepts(FirstPage, _app, MapWorld.None);
+        var g2 = await _world.Engine.ConceptGlossary(new ConceptGlossaryQuery(MapRead.Current), _app, MapWorld.None);
+        var retained = await _world.Engine.Concepts(new ConceptsQuery(new MapRead(Draft: false, new MapVersionRef(first.Number, Commit: null)), new ConceptPage()), _app, MapWorld.None);
 
         Assert.Equal(["concept:billing"], v1.Value.Concepts.Select(c => c.Id.Value), StringComparer.Ordinal);
         Assert.Equal(["concept:auth"], v2.Value.Concepts.Select(c => c.Id.Value), StringComparer.Ordinal);
@@ -99,10 +99,10 @@ public sealed class ConceptAnswerKeepTests : IDisposable
     public async Task An_override_appended_after_a_read_answers_with_the_renamed_concept()
     {
         _ = await Saved(ConceptGraph.Product());
-        _ = await _world.Engine.Concepts(FirstPage, App, MapWorld.None);
+        _ = await _world.Engine.Concepts(FirstPage, _app, MapWorld.None);
         _ = await _world.Store.AppendOverrides([new MapOverride(OverrideAction.Rename, NodeKey.From("concept:billing"), "avery", DateTimeOffset.UnixEpoch, "Payments")], MapWorld.None);
 
-        var renamed = await _world.Engine.Concepts(FirstPage, App, MapWorld.None);
+        var renamed = await _world.Engine.Concepts(FirstPage, _app, MapWorld.None);
 
         Assert.Equal("Payments", renamed.Value.Concepts.Single(c => c.Id.Value == "concept:billing").Name);
     }
@@ -113,10 +113,10 @@ public sealed class ConceptAnswerKeepTests : IDisposable
         _ = await Saved(ConceptGraph.Product());
         CountLoads();
 
-        _ = await _world.Engine.Concepts(FirstPage, App, MapWorld.None);
+        _ = await _world.Engine.Concepts(FirstPage, _app, MapWorld.None);
         _ = await _world.Engine.Concepts(FirstPage, MapWorld.HumanVia(ContextClient.Mcp), MapWorld.None);
-        var searched = await _world.Engine.Concepts(FirstPage with { Q = "shift" }, App, MapWorld.None);
-        _ = await _world.Engine.Concepts(FirstPage with { Q = "shift" }, App, MapWorld.None);
+        var searched = await _world.Engine.Concepts(FirstPage with { Q = "shift" }, _app, MapWorld.None);
+        _ = await _world.Engine.Concepts(FirstPage with { Q = "shift" }, _app, MapWorld.None);
 
         Assert.Equal(["concept:scheduling"], searched.Value.Concepts.Select(c => c.Id.Value), StringComparer.Ordinal);
         Assert.Equal(4, _loads);

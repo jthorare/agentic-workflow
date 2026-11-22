@@ -13,12 +13,15 @@ namespace Aw.Context.Tests.Concepts;
 [Trait("Lane", "unit")]
 public sealed class ConceptAnswerReadTests : IDisposable
 {
-    private static readonly ContextScope App = MapWorld.HumanVia(ContextClient.Http);
+    private static readonly ContextScope _app = MapWorld.HumanVia(ContextClient.Http);
 
     private readonly MapWorld _world = new();
     private int _loads;
 
-    public ConceptAnswerReadTests() => _world.Store.AfterSnapshot = _ => _loads++;
+    public ConceptAnswerReadTests()
+    {
+        _world.Store.AfterSnapshot = _ => _loads++;
+    }
 
     public void Dispose() => _world.Dispose();
 
@@ -33,8 +36,8 @@ public sealed class ConceptAnswerReadTests : IDisposable
     {
         await Saved(ConceptGraph.Product());
 
-        var first = await _world.Engine.Concepts(FirstPage, App, MapWorld.None);
-        var second = await _world.Engine.Concepts(FirstPage, App, MapWorld.None);
+        var first = await _world.Engine.Concepts(FirstPage, _app, MapWorld.None);
+        var second = await _world.Engine.Concepts(FirstPage, _app, MapWorld.None);
 
         Assert.True(first.IsSuccess, first.IsError ? first.Error.Message : null);
         Assert.Equal(["concept:billing", "concept:scheduling"], second.Value.Concepts.Select(c => c.Id.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);
@@ -46,8 +49,8 @@ public sealed class ConceptAnswerReadTests : IDisposable
     {
         await Saved(new ConceptGraph().ConceptWithTerms("concept:billing", "Billing", "invoice", "refund"));
 
-        var first = await _world.Engine.ConceptGlossary(new ConceptGlossaryQuery(MapRead.Current), App, MapWorld.None);
-        var second = await _world.Engine.ConceptGlossary(new ConceptGlossaryQuery(MapRead.Current), App, MapWorld.None);
+        var first = await _world.Engine.ConceptGlossary(new ConceptGlossaryQuery(MapRead.Current), _app, MapWorld.None);
+        var second = await _world.Engine.ConceptGlossary(new ConceptGlossaryQuery(MapRead.Current), _app, MapWorld.None);
 
         Assert.True(first.IsSuccess, first.IsError ? first.Error.Message : null);
         Assert.Equal(["invoice", "refund"], second.Value.Terms.Select(t => t.Term), StringComparer.Ordinal);

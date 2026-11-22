@@ -38,14 +38,12 @@ public abstract class ConceptAnswerStoreContract
         _ = Expect.Ok(await answers.Keep("k1", basis!, Concepts("v1"), None), test);
         _ = Expect.Ok(await answers.Keep("k2", basis!, Glossary("v1"), None), test);
         var kept = Expect.Ok(await answers.Concepts("k1", None), test);
-        var concepts = kept?.View;
         var glossary = Expect.Ok(await answers.Glossary("k2", None), test);
 
-        Expect.That(concepts is not null && Same(concepts.MapVersion, "v1") && Same(concepts.State, ConceptStates.Ok) && concepts.Concepts.Count == 1 && Same(concepts.Concepts[0].Name, "Billing")
-            && concepts.Concepts[0].Pinned && concepts.Concepts[0].Terms?.SequenceEqual(["invoice"], StringComparer.Ordinal) == true && Same(concepts.Other.Name, "Other") && Same(concepts.Next, "c2")
-            && concepts.PagesInNoConcept == 3 && kept?.Paths.SequenceEqual(["src/a.cs", "src/b.cs"], StringComparer.Ordinal) == true, test, "the concepts answer changed on the way back");
-        Expect.That(glossary is not null && Same(glossary.MapVersion, "v1") && glossary.Concepts.Count == 1 && glossary.Concepts[0].Terms.SequenceEqual(["invoice", "refund"], StringComparer.Ordinal)
-            && glossary.Concepts[0].OwnerTerms?.SequenceEqual(["invoice"], StringComparer.Ordinal) == true && Same(glossary.Terms[0].Term, "invoice"), test, "the glossary answer changed on the way back");
+        Expect.That(kept is not null && ViewReadBack(kept.View), test, "the concepts answer changed on the way back");
+        Expect.That(kept is not null && RowReadBack(kept.View.Concepts[0]), test, "the concepts row changed on the way back");
+        Expect.That(kept?.Paths.SequenceEqual(["src/a.cs", "src/b.cs"], StringComparer.Ordinal) == true, test, "the code paths changed on the way back");
+        Expect.That(glossary is not null && GlossaryReadBack(glossary), test, "the glossary answer changed on the way back");
         Expect.That(Expect.Ok(await answers.Concepts("k3", None), test) is null, test, "a key nobody kept read an answer");
         Expect.That(Expect.Ok(await answers.Glossary("k1", None), test) is null, test, "a concepts row read as a glossary");
     }
@@ -91,6 +89,17 @@ public abstract class ConceptAnswerStoreContract
     }
 
     private static bool Same(string? a, string b) => string.Equals(a, b, StringComparison.Ordinal);
+
+    // Split in three so each check stays under CA1502's complexity limit.
+    private static bool ViewReadBack(ConceptsView view) =>
+        Same(view.MapVersion, "v1") && Same(view.State, ConceptStates.Ok) && view.Concepts.Count == 1 && Same(view.Other.Name, "Other") && Same(view.Next, "c2") && view.PagesInNoConcept == 3;
+
+    private static bool RowReadBack(ConceptRow row) =>
+        Same(row.Name, "Billing") && row.Pinned && row.Terms?.SequenceEqual(["invoice"], StringComparer.Ordinal) == true;
+
+    private static bool GlossaryReadBack(ConceptGlossaryView glossary) =>
+        Same(glossary.MapVersion, "v1") && glossary.Concepts.Count == 1 && glossary.Concepts[0].Terms.SequenceEqual(["invoice", "refund"], StringComparer.Ordinal)
+            && glossary.Concepts[0].OwnerTerms?.SequenceEqual(["invoice"], StringComparer.Ordinal) == true && Same(glossary.Terms[0].Term, "invoice");
 
     private static KeptConcepts Concepts(string version)
     {

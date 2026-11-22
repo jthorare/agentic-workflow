@@ -22,7 +22,7 @@ internal static class ConceptAnswerKey
     /// <summary>The key of one concepts page.</summary>
     internal static string Concepts(ConceptAnswerBasis basis, ConceptsQuery query, ContextScope scope, string ruleset)
     {
-        var text = Start("concepts", basis, query.Read, scope, withIntent: true, ruleset);
+        var text = Start(new KeyHead("concepts", query.Read, WithIntent: true, ruleset), basis, scope);
         Field(text, query.Repo);
         Field(text, query.Page.Cursor);
         Field(text, query.Page.Limit?.ToString(CultureInfo.InvariantCulture));
@@ -35,14 +35,15 @@ internal static class ConceptAnswerKey
     /// </summary>
     internal static string Glossary(ConceptAnswerBasis basis, ConceptGlossaryQuery query, ContextScope scope, string ruleset)
     {
-        var text = Start("glossary", basis, query.Read, scope, withIntent: scope.Caller.Kind != ContextCallerKind.Human || query.Repo is not null, ruleset);
+        var text = Start(new KeyHead("glossary", query.Read, WithIntent: scope.Caller.Kind != ContextCallerKind.Human || query.Repo is not null, ruleset), basis, scope);
         Field(text, query.Repo);
         return Hash(text);
     }
 
     // The ruleset is the running redactor's digest (default rules and the profile's extra patterns): a toolkit upgrade that changes a rule misses, so no kept text skips today's scrub.
-    private static StringBuilder Start(string kind, ConceptAnswerBasis basis, MapRead read, ContextScope scope, bool withIntent, string ruleset)
+    private static StringBuilder Start(KeyHead head, ConceptAnswerBasis basis, ContextScope scope)
     {
+        var (kind, read, withIntent, ruleset) = head;
         var text = new StringBuilder();
         Field(text, Format);
         Field(text, kind);
@@ -110,4 +111,7 @@ internal static class ConceptAnswerKey
         _ = value is null ? text.Append("-;") : text.Append(value.Length.ToString(CultureInfo.InvariantCulture)).Append(':').Append(value).Append(';');
 
     private static string Hash(StringBuilder text) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text.ToString())));
+
+    // What a key starts with besides the basis and the scope: the answer's kind, the map it was asked of, whether the intent layer counts and the redactor's rules digest.
+    private readonly record struct KeyHead(string Kind, MapRead Read, bool WithIntent, string Ruleset);
 }

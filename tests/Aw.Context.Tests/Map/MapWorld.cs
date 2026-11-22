@@ -81,14 +81,13 @@ internal sealed class MapWorld : IDisposable
     public MapWorld(IRepoReader? repoReader = null, IContextSource? intent = null, ICodeSearch? codeSearch = null, IFileHistory? history = null, ICodeSymbolSource? symbols = null, WholeMapRules? wholeMapRules = null, WalkOptions? walk = null, IRecordStore? records = null, ILexicalLeg? lexical = null, IIndexSync? indexSync = null, IRecordFeedCatalog? feeds = null, Action<IServiceCollection>? configure = null)
     {
         Sources = new FixedSourceCatalog(intent is null ? [Docs] : [Docs, intent]);
-        Answers = new FakeConceptAnswerStore(Store, Intents);
         Exports = new FakeExportStore(Clock);
         Reader.Put(MapPath, Maps.Fixture(), FixtureMap.Yaml);
         var services = new ServiceCollection()
             .AddSingleton<TimeProvider>(Clock)
             .AddSingleton<IGraphStore>(Store)
             .AddSingleton<IProposalRuns>(Store)
-            .AddSingleton<IConceptHintStore>(Hints).AddSingleton<IConceptAnswerStore>(Answers)
+            .AddSingleton<IConceptHintStore>(Hints).AddSingleton<IConceptAnswerStore>(Answers = new FakeConceptAnswerStore(Store, Intents))
             .AddSingleton<IConceptSynthesisStore>(ConceptSynthesis)
             .AddSingleton<IExportStore>(Exports)
             .AddSingleton<IMapFileReader>(Reader)
@@ -115,21 +114,27 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton(wholeMapRules ?? WholeMapRules.Default)
             .AddSingleton<IScopeRunStore>(new FakeScopeRunStore())
             .AddSingleton<IMapSearchIndexFactory>(new Context.Infrastructure.Search.SqliteMapSearchIndexFactory())
-            .AddContextFeatures()
-            .AddSingleton<IConceptAnswerFills>(static sp => new InlineConceptAnswerFills(async (scope, ct) =>
-            {
-                await using var own = sp.CreateAsyncScope();
-                await own.ServiceProvider.GetRequiredService<ConceptAnswers>().Fill(scope, ct);
-            }));
+            .AddContextFeatures();
         AddOverrides(services, (walk, indexSync, feeds), configure);
 
         _provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = false, ValidateScopes = true });
         _scope = _provider.CreateScope();
     }
 
+    /// <summary>The publish fill of the kept concepts answers runs inside the publish call (issue 3676), so a test never races a background fill.</summary>
+    private static void AddInlineFills(IServiceCollection services)
+    {
+        _ = services.AddSingleton<IConceptAnswerFills>(static sp => new InlineConceptAnswerFills(async (scope, ct) =>
+        {
+            await using var own = sp.CreateAsyncScope();
+            await own.ServiceProvider.GetRequiredService<ConceptAnswers>().Fill(scope, ct);
+        }));
+    }
+
     /// <summary>What a test replaces after AddContextFeatures: the walk options and the owned index's sync port and its record feeds.</summary>
     private static void AddOverrides(IServiceCollection services, (WalkOptions? Walk, IIndexSync? IndexSync, IRecordFeedCatalog? Feeds) overrides, Action<IServiceCollection>? configure)
     {
+        AddInlineFills(services);
         var (walk, indexSync, feeds) = overrides;
         configure?.Invoke(services);
         if (feeds is not null)

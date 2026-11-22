@@ -9,8 +9,8 @@ namespace Aw.Context.Tests.Concepts;
 [Trait("Lane", "unit")]
 public sealed class ConceptAnswerKeyTests
 {
-    private static readonly ConceptAnswerBasis Basis = new(3, "0:0", 7);
-    private static readonly ContextScope App = MapWorld.HumanVia(ContextClient.Http);
+    private static readonly ConceptAnswerBasis _basis = new(3, "0:0", 7);
+    private static readonly ContextScope _app = MapWorld.HumanVia(ContextClient.Http);
 
     [Fact]
     public void A_changed_rules_digest_misses_and_the_same_one_hits()
@@ -18,8 +18,8 @@ public sealed class ConceptAnswerKeyTests
         var query = new ConceptsQuery(MapRead.Current, new ConceptPage());
         var glossary = new ConceptGlossaryQuery(MapRead.Current);
 
-        Assert.Equal(ConceptAnswerKey.Concepts(Basis, query, App, "a1b2c3d4e5f60718"), ConceptAnswerKey.Concepts(Basis, query, App, "a1b2c3d4e5f60718"));
-        Assert.NotEqual(ConceptAnswerKey.Concepts(Basis, query, App, "a1b2c3d4e5f60718"), ConceptAnswerKey.Concepts(Basis, query, App, "ffffffffffffffff"));
-        Assert.NotEqual(ConceptAnswerKey.Glossary(Basis, glossary, App, "a1b2c3d4e5f60718"), ConceptAnswerKey.Glossary(Basis, glossary, App, "ffffffffffffffff"));
+        Assert.Equal(ConceptAnswerKey.Concepts(_basis, query, _app, "a1b2c3d4e5f60718"), ConceptAnswerKey.Concepts(_basis, query, _app, "a1b2c3d4e5f60718"), StringComparer.Ordinal);
+        Assert.False(string.Equals(ConceptAnswerKey.Concepts(_basis, query, _app, "a1b2c3d4e5f60718"), ConceptAnswerKey.Concepts(_basis, query, _app, "ffffffffffffffff"), StringComparison.Ordinal));
+        Assert.False(string.Equals(ConceptAnswerKey.Glossary(_basis, glossary, _app, "a1b2c3d4e5f60718"), ConceptAnswerKey.Glossary(_basis, glossary, _app, "ffffffffffffffff"), StringComparison.Ordinal));
     }
 }
