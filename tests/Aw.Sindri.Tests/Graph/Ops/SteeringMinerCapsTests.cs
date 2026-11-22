@@ -50,20 +50,39 @@ public sealed class SteeringMinerCapsTests : IClassFixture<RoslynWarmup>
         Assert.Contains("split", result.Error.Message, StringComparison.Ordinal);
     }
 
-    [Fact]
-    public void A_full_batch_of_quote_and_backslash_text_keeps_label_s_input_under_the_cap()
+    // why: '"' costs the most in label's stored input (8 bytes: '\"' in the rendered prompt, then '\\' and '\u0022'), '\' the most chars per turn; the worst
+    // batch shape accepts is 20 turns each holding exactly the most of one of them that shape's twice-written budget keeps (2,000 bytes of text, 500 before),
+    // and the same turns padded until the batch's own JSON sits just under shape's 60,000-byte cap
+    [Theory]
+    [InlineData('"', false)]
+    [InlineData('"', true)]
+    [InlineData('\\', false)]
+    [InlineData('\\', true)]
+    public void The_worst_batch_shape_accepts_keeps_label_s_input_under_the_cap(char heavy, bool padToCap)
     {
-        var batch = new JsonArray();
-        for (var line = 1; line <= 20; line++)
+        var (textKept, beforeKept) = (MostThatFit(heavy, 2_000), MostThatFit(heavy, 500));
+        var batch = Batch(heavy, textKept, beforeKept);
+        if (padToCap)
         {
-            batch.Add((JsonNode)new JsonObject { ["ref"] = "transcript:0000000a#" + line.ToString(CultureInfo.InvariantCulture), ["text"] = new string('"', 1500), ["before"] = new string('\\', 400) });
+            var perChar = JsonValue.Create(new string(heavy, 1))!.ToJsonString().Length - 2;
+            batch = Batch(heavy, textKept + ((59_900 - batch.ToJsonString().Length) / (20 * perChar)), beforeKept);
         }
 
-        var shaped = Run("shape", new JsonObject { ["item"] = batch }).Value;
-        var label = (JsonObject)Spec.Nodes.Single(static n => string.Equals(n.Id.Value, "label", StringComparison.Ordinal)).Config.DeepClone();
-        label["prompt"] = Template.Render(label["prompt"]!.GetValue<string>(), reference => Lookup(new JsonObject { ["shape"] = new JsonObject { ["result"] = JsonNode.Parse(shaped) } }, reference));
+        var shaped = Run("shape", new JsonObject { ["item"] = batch });
 
-        Assert.True(Encoding.UTF8.GetByteCount(label.ToJsonString()) < NodeRunLimits.PayloadBytes, "label's input is " + Encoding.UTF8.GetByteCount(label.ToJsonString()).ToString(CultureInfo.InvariantCulture) + " bytes");
+        Assert.True(shaped.IsSuccess, shaped.IsError ? shaped.Error.Message : null);
+        Assert.InRange(batch.ToJsonString().Length, padToCap ? 55_000 : 0, 60_000);
+        var turns = JsonNode.Parse(shaped.Value)!["turns"]!.AsArray();
+        Assert.Equal(20, turns.Count);
+        if (!padToCap)
+        {
+            Assert.All(turns, t => Assert.Equal(textKept, t!["text"]!.GetValue<string>().Length));   // the budget is reached, not cut below
+        }
+
+        var label = (JsonObject)Spec.Nodes.Single(static n => string.Equals(n.Id.Value, "label", StringComparison.Ordinal)).Config.DeepClone();
+        label["prompt"] = Template.Render(label["prompt"]!.GetValue<string>(), reference => Lookup(new JsonObject { ["shape"] = new JsonObject { ["result"] = JsonNode.Parse(shaped.Value) } }, reference));
+        var stored = Encoding.UTF8.GetByteCount(label.ToJsonString());
+        Assert.True(stored < NodeRunLimits.PayloadBytes, "label's input is " + stored.ToString(CultureInfo.InvariantCulture) + " bytes");
     }
 
     [Fact]
@@ -98,6 +117,29 @@ public sealed class SteeringMinerCapsTests : IClassFixture<RoslynWarmup>
         var ranked = JsonNode.Parse(Run("rank", new JsonObject { ["gather"] = new JsonObject { ["items"] = gathered }, ["merge"] = new JsonObject { ["merges"] = merges } }).Value)!;
 
         Assert.Empty(ranked["findings"]!.AsArray());
+    }
+
+    private static JsonArray Batch(char heavy, int text, int before)
+    {
+        var batch = new JsonArray();
+        for (var line = 1; line <= 20; line++)
+        {
+            batch.Add((JsonNode)new JsonObject { ["ref"] = "transcript:0000000a#" + line.ToString(CultureInfo.InvariantCulture), ["text"] = new string(heavy, text), ["before"] = new string(heavy, before) });
+        }
+
+        return batch;
+    }
+
+    // why: shape's own measure: a text's size as JSON written twice
+    private static int MostThatFit(char heavy, int bytes)
+    {
+        var count = 0;
+        while (JsonValue.Create(JsonValue.Create(new string(heavy, count + 1))!.ToJsonString())!.ToJsonString().Length <= bytes)
+        {
+            count++;
+        }
+
+        return count;
     }
 
     // why: the engine stores a step's interpolated config through StoredJson.Fit; this is that config's size with an input of 'filler' text
