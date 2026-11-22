@@ -5,7 +5,7 @@
 # AW_HEAVY_SESSION_PID (this shell, or a dead pid, or a sleeping stand-in session). Nothing real is built or tested.
 # Covers: usage (exit 2); the exit code of the job passes through; the lock files (heavy-session/<pid>.lock, heavy-job.lock
 # and .k, the owner line, released on exit, a dead owner reclaimed, an ownerless dir never); the cap file heavy-slots-cap;
-# the memory guard (AW_HEAVY_MIN_FREE_MB and _STEP_MB, Linux /proc/meminfo only); the meta reserve heavy-meta-reserve (capped at slots-1, #2060) and
+# the memory guard (AW_HEAVY_MIN_FREE_MB and _HIGH_MB, Linux /proc/meminfo only); the meta reserve heavy-meta-reserve (capped at slots-1, #2060) and
 # AW_HEAVY_PRIORITY=meta; the lock timeout (75, on a copy of the script with TIMEOUT=0: the real one is a constant 5400 s);
 # the session dying (124); INT and TERM (130); the job launched through `systemd-run --user --scope -p OOMPolicy=continue` when
 # that works, and the old direct launch when it doesn't (#2931, stub systemd-run); a nested run under AW_HEAVY_LOCK_HELD=1 taking no lock; --light, --expensive
@@ -247,11 +247,12 @@ if [ "$have_meminfo" = 1 ]; then
   has "...the wait names both slots" "$out" "(2 slot(s), $LOCKS/heavy-job.lock)"
   check "free memory is not asked for slot 1" "$(reset; AW_HEAVY_MIN_FREE_MB=999999999 H --expensive echo ran)" "ran"
   reset; hold "$LOCKS/heavy-job.lock"; hold "$LOCKS/heavy-job.lock.2"
-  out="$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=0 AW_HEAVY_MIN_FREE_STEP_MB=999999999 F --expensive echo ran 2>&1)"; rc=$?
-  check "slot 3 needs MIN + STEP free: refused when STEP is huge" "$rc" "75"
-  check "...taken when STEP is 0" "$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=0 AW_HEAVY_MIN_FREE_STEP_MB=0 slot_of)" "$LOCKS/heavy-job.lock.3"
-  check "a garbage STEP falls back to 4096 (slot 3 refused when MIN is huge)" \
-    "$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=999999999 AW_HEAVY_MIN_FREE_STEP_MB=x F --expensive echo ran > /dev/null 2>&1; echo $?)" "75"
+  out="$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=0 AW_HEAVY_MIN_FREE_HIGH_MB=999999999 F --expensive echo ran 2>&1)"; rc=$?
+  check "slot 3 has its own floor (#3813): refused when HIGH is huge" "$rc" "75"
+  check "...taken when HIGH is 0, whatever slot 2's floor is" "$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=999999999 AW_HEAVY_MIN_FREE_HIGH_MB=0 slot_of)" "$LOCKS/heavy-job.lock.3"
+  reset; hold "$LOCKS/heavy-job.lock"
+  check "slot 2's floor not met, slot 3's met: slot 2 is skipped, slot 3 taken" "$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=999999999 AW_HEAVY_MIN_FREE_HIGH_MB=0 slot_of)" "$LOCKS/heavy-job.lock.3"
+  check "a garbage HIGH falls back to 3072 (the script's default line)" "$(grep -c 'HIGH_FREE_MB=3072 ;;' "$HEAVY")" "1"
 
   # the cap file: the box-wide slot count, whatever AW_HEAVY_SLOTS says
   reset; hold "$LOCKS/heavy-job.lock"
@@ -267,7 +268,7 @@ if [ "$have_meminfo" = 1 ]; then
   out="$(AW_HEAVY_SLOTS=3 F --expensive echo ran 2>&1)"; has "heavy-slots-cap=1 beats AW_HEAVY_SLOTS=3" "$out" "(1 slot(s)"
   # the cap file with a newline, as `echo` writes it, is read whole
   echo 3 > "$STATE/heavy-slots-cap"
-  out="$(AW_HEAVY_MIN_FREE_MB=999999999 F --expensive echo ran 2>&1)"; has "heavy-slots-cap=3 (with its newline) sets 3 slots" "$out" "(3 slot(s)"
+  out="$(AW_HEAVY_MIN_FREE_MB=999999999 AW_HEAVY_MIN_FREE_HIGH_MB=999999999 F --expensive echo ran 2>&1)"; has "heavy-slots-cap=3 (with its newline) sets 3 slots" "$out" "(3 slot(s)"
 
   # --- the meta reserve ---
   reset
