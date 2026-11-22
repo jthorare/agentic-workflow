@@ -34,6 +34,10 @@
       <Border Classes="card" Height="132" Margin="0,0,12,12" Opacity="0.6" />
     </UniformGrid>
 
+    <StackPanel x:Name="ProjectsLinearNote" Orientation="Horizontal" Spacing="8" IsVisible="{Binding ShowsLinearNote}">
+      <TextBlock x:Name="ProjectsLinearNoteText" Classes="caption subtle" Text="{Binding LinearNote}" VerticalAlignment="Center" AutomationProperties.Name="{Binding LinearNote}" />
+      <Button x:Name="ProjectsConnectNote" Content="{Binding ConnectText}" Click="OnConnect" VerticalAlignment="Center" AutomationProperties.Name="{Binding ConnectText}" />
+    </StackPanel>
     <Border x:Name="ProjectsBanner" Classes="card" Background="{DynamicResource Brush.ErrorSoft}" BorderBrush="{DynamicResource Brush.Error}" BorderThickness="1" IsVisible="{Binding IsBanner}">
       <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
         <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Error}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
