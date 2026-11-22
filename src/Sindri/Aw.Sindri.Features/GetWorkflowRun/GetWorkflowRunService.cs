@@ -48,12 +48,12 @@ internal sealed class GetWorkflowRunService(IWorkflowRunStore runs, IWorkflowSto
     {
         if (!rows.Any(static r => r.Status == NodeRunStatus.Failed))
         {
-            return new Dictionary<NodeId, string>();
+            return [];
         }
 
         var revision = await workflows.GetRevision(run.WorkflowId, run.Revision, cancellationToken).ConfigureAwait(false);
         return revision.IsError
-            ? new Dictionary<NodeId, string>()
+            ? []
             : revision.Value.Spec.Nodes.ToDictionary(static n => n.Id, StepTitle.Of);
     }
 
