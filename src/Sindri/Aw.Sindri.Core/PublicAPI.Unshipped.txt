@@ -24015,4 +24015,4 @@ Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs.Facts.get -> Aw.Sindri.Core.Pro
 Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs.Facts.init -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruths
 static Aw.Sindri.Core.Projects.Truth.ProjectTruths.Build(Aw.Sindri.Core.Projects.Truth.ProjectTruthInputs! inputs) -> Aw.Sindri.Core.Projects.Truth.ProjectTruth!
-static Aw.Sindri.Core.Projects.Truth.ProjectTruths.SourcesOf(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectLink!>! links, System.Collections.Generic.IReadOnlyList<string!>! linearRepos, System.Collections.Generic.IReadOnlyList<string!>! profileRepos) -> Aw.Sindri.Core.Projects.Truth.ProjectSources!
+static Aw.Sindri.Core.Projects.Truth.ProjectTruths.SourcesOf(System.Collections.Generic.IReadOnlyList<string!>! linkUrls, System.Collections.Generic.IReadOnlyList<string!>! linearRepos, System.Collections.Generic.IReadOnlyList<string!>! profileRepos) -> Aw.Sindri.Core.Projects.Truth.ProjectSources!

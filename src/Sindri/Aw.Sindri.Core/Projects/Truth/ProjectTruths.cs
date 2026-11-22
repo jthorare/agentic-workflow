@@ -1,5 +1,4 @@
 using System.Globalization;
-using Aw.Sindri.Core.Projects.Cards;
 using Aw.Sindri.Core.Reviews;
 
 namespace Aw.Sindri.Core.Projects.Truth;
@@ -7,24 +6,24 @@ namespace Aw.Sindri.Core.Projects.Truth;
 /// <summary>Derives a project's truth from Sindri's own data (issue 3718), pure.</summary>
 public static class ProjectTruths
 {
-    /// <summary>A project's sources: its links that name a GitHub PR or repo, its Linear repos and the profile's 'review.projects[].repos' for it.</summary>
-    /// <param name="links">The card's links.</param>
+    /// <summary>A project's sources: its link urls that name a GitHub PR or repo, its Linear repos and the profile's 'review.projects[].repos' for it.</summary>
+    /// <param name="linkUrls">The urls of the card's links.</param>
     /// <param name="linearRepos">The Linear card's repos.</param>
     /// <param name="profileRepos">The repos 'review.projects' names for this project.</param>
     /// <returns>The sources, each list without duplicates.</returns>
-    public static ProjectSources SourcesOf(IReadOnlyList<ProjectLink> links, IReadOnlyList<string> linearRepos, IReadOnlyList<string> profileRepos)
+    public static ProjectSources SourcesOf(IReadOnlyList<string> linkUrls, IReadOnlyList<string> linearRepos, IReadOnlyList<string> profileRepos)
     {
-        ArgumentNullException.ThrowIfNull(links);
+        ArgumentNullException.ThrowIfNull(linkUrls);
         ArgumentNullException.ThrowIfNull(linearRepos);
         ArgumentNullException.ThrowIfNull(profileRepos);
         var repos = new List<string>();
         var pulls = new List<string>();
-        foreach (var link in links)
+        foreach (var link in linkUrls)
         {
-            switch (GithubLink(link.Url))
+            switch (GithubLink(link))
             {
                 case (_, true):
-                    pulls.Add(link.Url.TrimEnd('/'));
+                    pulls.Add(link.TrimEnd('/'));
                     break;
                 case (var repo, false):
                     repos.Add(repo);
@@ -66,25 +65,29 @@ public static class ProjectTruths
         var (sources, facts) = (inputs.Sources, inputs.Facts);
         var named = sources.PullUrls.Select(static u => u.TrimEnd('/')).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var prs = new List<ProjectTruthPr>();
+        var uncheckedCount = 0;
         foreach (var pull in facts.Pulls)
         {
             var url = UrlOf(pull);
             if (named.Contains(url) || sources.Repos.Contains(pull.Repo, StringComparer.OrdinalIgnoreCase))
             {
-                prs.Add(Pr(pull, url, facts.Summaries));
+                var (pr, ciChecked) = Pr(pull, url, facts.Summaries);
+                prs.Add(pr);
+                uncheckedCount += pr.State != ProjectPrState.Draft && !ciChecked ? 1 : 0;
             }
         }
 
         var prUrls = prs.Select(static p => p.Url).Concat(named).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var items = facts.Items.Where(i => i.LinkUrls.Any(u => prUrls.Contains(u.TrimEnd('/')))).ToList();
         var agents = facts.Agents.Count(a => a.Running && a.Repo is { } repo && sources.Repos.Contains(repo, StringComparer.OrdinalIgnoreCase));
-        return new ProjectTruth(prs, items.Count(static i => !i.Done), items.Count(static i => i.Done), items.Count, agents, HealthOf(prs));
+        return new ProjectTruth(prs, items.Count(static i => !i.Done), items.Count(static i => i.Done), items.Count, agents, HealthOf(prs, uncheckedCount));
     }
 
     private static string UrlOf(ReviewPull pull) => (pull.Url ?? string.Create(CultureInfo.InvariantCulture, $"https://github.com/{pull.Repo}/pull/{pull.Number}")).TrimEnd('/');
 
-    // draft > ciRed > waiting > unknown > ready; a summary counts only when it was decided on the PR's current head
-    private static ProjectTruthPr Pr(ReviewPull pull, string url, IReadOnlyDictionary<string, ReviewSummary> summaries)
+    // draft > ciRed > waiting > unknown > ready; a summary counts only when it was decided on the PR's current head. 'CiChecked' is apart from the state:
+    // a PR that waits on a reviewer and has no CI result on its head is still unchecked for the health line
+    private static (ProjectTruthPr Pr, bool CiChecked) Pr(ReviewPull pull, string url, IReadOnlyDictionary<string, ReviewSummary> summaries)
     {
         var summary = summaries.TryGetValue(string.Create(CultureInfo.InvariantCulture, $"{pull.Repo}#{pull.Number}"), out var found) && pull.HeadSha is { } head && string.Equals(found.Sha, head, StringComparison.Ordinal) ? found : null;
         var waiting = pull.RequestedReviewers.Concat(pull.Reviews.Where(static r => r.NewCommits is > 0).Select(static r => r.Login)).Distinct(StringComparer.Ordinal).ToList();
@@ -96,12 +99,12 @@ public static class ProjectTruths
             (_, ReviewCi.Pass, _) => (ProjectPrState.Ready, null, null),
             _ => (ProjectPrState.Unknown, null, null),
         };
-        return new ProjectTruthPr(url, pull.Repo, pull.Number, pull.Title, state, decidedAt, waitingOn);
+        return (new ProjectTruthPr(url, pull.Repo, pull.Number, pull.Title, state, decidedAt, waitingOn), summary?.Ci is ReviewCi.Pass or ReviewCi.Fail);
     }
 
     // null when no PR is open (drafts are not open); every count and the sentence read the same open set; offTrack at half red or more, atRisk at any red,
-    // unknown when none is red but some have no CI summary on their current head
-    private static ProjectTruthHealth? HealthOf(List<ProjectTruthPr> prs)
+    // unknown when none is red but some have no CI result on their current head, whatever their state ('unknown' counts those, drafts left out)
+    private static ProjectTruthHealth? HealthOf(List<ProjectTruthPr> prs, int unknown)
     {
         var open = prs.Where(static p => p.State != ProjectPrState.Draft).ToList();
         if (open.Count == 0)
@@ -110,7 +113,6 @@ public static class ProjectTruths
         }
 
         var red = open.Count(static p => p.State == ProjectPrState.CiRed);
-        var unknown = open.Count(static p => p.State == ProjectPrState.Unknown);
         var total = open.Count;
         var noun = total == 1 ? "PR" : "PRs";
         var tail = unknown > 0 ? string.Create(CultureInfo.InvariantCulture, $", {unknown} not checked yet") : string.Empty;
