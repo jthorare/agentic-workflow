@@ -17,7 +17,9 @@ public sealed partial class TranscriptBatchBlock(IGraphTranscriptPort transcript
 
     private static readonly BlockOutputs _outputs = new(new Dictionary<string, string>(StringComparer.Ordinal)
     {
-        ["turns"] = "array", ["missing"] = "number", ["dropped"] = "number",
+        ["turns"] = "array",
+        ["missing"] = "number",
+        ["dropped"] = "number",
     });
 
     /// <inheritdoc />

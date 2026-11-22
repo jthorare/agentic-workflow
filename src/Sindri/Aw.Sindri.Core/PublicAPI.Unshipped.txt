@@ -23866,3 +23866,78 @@ static Aw.Sindri.Core.Graph.Blocks.GraphFence.Calls(Aw.Sindri.Core.Graph.Blocks.
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.ConnectionTools(Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort! live) -> Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort!
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.Toolkits(Aw.Sindri.Core.Toolkits.IRunningToolkits! live) -> Aw.Sindri.Core.Toolkits.IRunningToolkits!
 static Aw.Sindri.Core.Connections.ConnectionName.ParseUnreserved(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.At.init -> void
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.HumanTurnRef!
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.Deconstruct(out string! Ref, out string! Session, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.Equals(Aw.Sindri.Core.Graph.Blocks.HumanTurnRef? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.HumanTurnRef(string! Ref, string! Session, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.Ref.get -> string!
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.Ref.init -> void
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.Session.get -> string!
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.Session.init -> void
+Aw.Sindri.Core.Graph.Blocks.IGraphTranscriptPort
+Aw.Sindri.Core.Graph.Blocks.IGraphTranscriptPort.HumanTurns(Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery! query, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.HumanTurnRef!>!>!>
+Aw.Sindri.Core.Graph.Blocks.IGraphTranscriptPort.Read(System.Collections.Generic.IReadOnlyList<string!>! refs, bool withBefore, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText!>!>!>
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.TranscriptBatchBlock(Aw.Sindri.Core.Graph.Blocks.IGraphTranscriptPort! transcripts) -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Deconstruct(out System.DateTimeOffset Since, out System.Collections.Generic.IReadOnlyList<string!>! Providers, out string? Repo) -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Equals(Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Providers.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Providers.init -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Repo.get -> string?
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Repo.init -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Since.get -> System.DateTimeOffset
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Since.init -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.TranscriptTurnQuery(System.DateTimeOffset Since, System.Collections.Generic.IReadOnlyList<string!>! Providers, string? Repo) -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.TranscriptTurnsBlock(Aw.Sindri.Core.Graph.Blocks.IGraphTranscriptPort! transcripts, System.TimeProvider! clock) -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Before.get -> string?
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Before.init -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Deconstruct(out string! Ref, out string! Text, out string? Before) -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Equals(Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Ref.get -> string!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Ref.init -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Text.get -> string!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Text.init -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.TranscriptTurnText(string! Ref, string! Text, string? Before) -> void
+const Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.MaxTurns = 20 -> int
+const Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.MaxTurnsCeiling = 400 -> int
+override Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.TranscriptBlocks(Aw.Sindri.Core.Graph.Blocks.IGraphTranscriptPort! transcripts, System.TimeProvider! clock) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.IGraphBlock!>!
+static Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.operator !=(Aw.Sindri.Core.Graph.Blocks.HumanTurnRef? left, Aw.Sindri.Core.Graph.Blocks.HumanTurnRef? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.operator ==(Aw.Sindri.Core.Graph.Blocks.HumanTurnRef? left, Aw.Sindri.Core.Graph.Blocks.HumanTurnRef? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.operator !=(Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery? left, Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.operator ==(Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery? left, Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.operator !=(Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText? left, Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.operator ==(Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText? left, Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText? right) -> bool

@@ -21,7 +21,10 @@ public sealed class TranscriptTurnsBlock(IGraphTranscriptPort transcripts, TimeP
 
     private static readonly BlockOutputs _outputs = new(new Dictionary<string, string>(StringComparer.Ordinal)
     {
-        ["batches"] = "array", ["sessions"] = "number", ["turns"] = "number", ["truncated"] = "boolean",
+        ["batches"] = "array",
+        ["sessions"] = "number",
+        ["turns"] = "number",
+        ["truncated"] = "boolean",
     });
 
     /// <inheritdoc />
@@ -103,17 +106,16 @@ public sealed class TranscriptTurnsBlock(IGraphTranscriptPort transcripts, TimeP
         // why: one reader for the validator and the run, so a config that validates runs the same way; a field that is one reference is checked only at run time
         public static Result<Settings> Read(JsonObject config)
         {
-            var sinceText = ConfigValues.Text(config["since"]) ?? DefaultSince;
-            var since = ConfigValues.IsReference(sinceText) ? Results.Success(TimeSpan.FromDays(7)) : BlockDuration.Parse(sinceText);
+            var since = ReadSince(config);
             if (since.IsError)
             {
-                return Invalid("since", $"must be a length of time such as 7d or 12h, not '{sinceText}'");
+                return since.Error;
             }
 
-            var providers = config["providers"] is JsonArray list ? list.Select(static p => ConfigValues.Text(p) ?? string.Empty).ToList() : [];
-            if (providers.Find(p => !_providers.Contains(p, StringComparer.Ordinal)) is { } unknown)
+            var providers = ReadProviders(config);
+            if (providers.IsError)
             {
-                return Invalid("providers", $"names '{unknown}'; the agents are {string.Join(", ", _providers)}");
+                return providers.Error;
             }
 
             var batchSize = ConfigValues.Int(config["batchSize"]) ?? DefaultBatchSize;
@@ -125,7 +127,22 @@ public sealed class TranscriptTurnsBlock(IGraphTranscriptPort transcripts, TimeP
             var maxTurns = ConfigValues.Int(config["maxTurns"]) ?? MaxTurnsCeiling;
             return maxTurns is < 1 or > MaxTurnsCeiling
                 ? Invalid("maxTurns", $"must be from 1 to {MaxTurnsCeiling.ToString(CultureInfo.InvariantCulture)}")
-                : new Settings(since.Value, providers, ConfigValues.Text(config["repo"]), batchSize, maxTurns);
+                : new Settings(since.Value, providers.Value, ConfigValues.Text(config["repo"]), batchSize, maxTurns);
+        }
+
+        private static Result<TimeSpan> ReadSince(JsonObject config)
+        {
+            var text = ConfigValues.Text(config["since"]) ?? DefaultSince;
+            var since = ConfigValues.IsReference(text) ? Results.Success(TimeSpan.FromDays(7)) : BlockDuration.Parse(text);
+            return since.IsError ? Invalid("since", $"must be a length of time such as 7d or 12h, not '{text}'").Error : since;
+        }
+
+        private static Result<IReadOnlyList<string>> ReadProviders(JsonObject config)
+        {
+            List<string> providers = config["providers"] is JsonArray list ? [.. list.Select(static p => ConfigValues.Text(p) ?? string.Empty)] : [];
+            return providers.Find(p => !_providers.Contains(p, StringComparer.Ordinal)) is { } unknown
+                ? Invalid("providers", $"names '{unknown}'; the agents are {string.Join(", ", _providers)}").Error
+                : Results.Success<IReadOnlyList<string>>(providers);
         }
 
         private static Result<Settings> Invalid(string field, string problem) => SindriErrors.GraphBlockFailed.With($"'{field}' {problem}");
