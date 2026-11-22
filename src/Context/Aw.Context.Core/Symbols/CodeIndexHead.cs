@@ -13,6 +13,9 @@ public sealed record CodeIndexHead(CodeIndexState State, string? Commit, DateTim
     /// <summary>The files changed between the index's commit and the map's, when the index is <see cref="CodeIndexState.CatchingUp"/>; null otherwise.</summary>
     public IReadOnlyList<string>? Pending { get; init; }
 
+    /// <summary>True when the graph layer is turned off by the profile (it never ran), so only C# files have symbols.</summary>
+    public bool GraphOff { get; init; }
+
     /// <summary>No readable index and nothing to say about why: the head of a repo the code index has no file for, and of the source Context registers until Sindri's Host replaces it.</summary>
     public static CodeIndexHead None { get; } = new(CodeIndexState.Missing, Commit: null, BuiltAt: null, AsOfCommit: null, Layer: null, Code: null);
 }
