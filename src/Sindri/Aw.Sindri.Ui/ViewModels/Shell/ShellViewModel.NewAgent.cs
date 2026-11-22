@@ -22,7 +22,7 @@ internal sealed partial class ShellViewModel
     {
         form.OpenRequested += (_, e) =>
         {
-            Agents.SelectWhenDrawn(e.Started.Id);
+            Agents.SelectStarted(e.Started.Id);
             AgentPaneRequested?.Invoke(this, e);
         };
         return form;

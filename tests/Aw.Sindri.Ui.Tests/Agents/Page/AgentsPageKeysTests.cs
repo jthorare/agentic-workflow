@@ -43,14 +43,14 @@ public sealed class AgentsPageKeysTests
     }
 
     [Fact]
-    public async Task SelectWhenDrawn_selects_a_drawn_row_at_once_3384()
+    public async Task SelectStarted_selects_a_drawn_row_by_its_session_name_at_once_3384()
     {
         var page = await _f.Shown(Token);
-        var target = page.Groups.SelectMany(g => g.Rows).Select(r => r.Ref).Last();
+        var target = page.Groups.SelectMany(g => g.Rows).First(r => r.Row.Host.Session is { Length: > 0 });
 
-        page.SelectWhenDrawn(target);
+        page.SelectStarted(target.Row.Host.Session!);
 
-        Assert.Equal(target, page.SelectedKey);
+        Assert.Equal(target.Ref, page.SelectedKey);
     }
 
     [Fact]
