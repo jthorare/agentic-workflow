@@ -31,7 +31,7 @@ internal sealed partial class ContextPageViewModel
     {
         Concepts.WirePins(Ports.OpenPin, () => _repo ?? string.Empty);
         Concepts.TryAgain = () => _ = TryRefreshAgain();
-        Ports.Follow(RefreshPins);
+        Follow(RefreshPins);
         Whole.ConceptsRequested += (_, _) => CloseConcept();
         Whole.UpRequested += (_, _) => _ = Up();
     }

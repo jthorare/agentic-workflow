@@ -347,6 +347,10 @@
   <Style Selector="Border.sheet.covers Button.back">
     <Setter Property="IsVisible" Value="True" />
   </Style>
+  <!-- #3710: covering the page, Back and Close did the same thing; Back stays. -->
+  <Style Selector="Border.sheet.covers Button#SheetClose">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
   <!-- The 404 state's Back is the header's Back where the sheet covers the page. -->
   <Style Selector="Button.not-found-back">
     <Setter Property="IsVisible" Value="False" />

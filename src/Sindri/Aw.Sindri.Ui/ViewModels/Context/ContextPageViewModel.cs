@@ -24,6 +24,21 @@ internal sealed partial class ContextPageViewModel : ObservableObject
         Concepts = new ConceptLayerViewModel(id => _ = OpenConcept(id));
         InitConcepts();
         InitPageSheet();
+        Ports.Follow(FollowInOrder);
+    }
+
+    // The page's reads after every event, one after another in the order they were added: the shell runs the followed views
+    // side by side (#2775), but these read each other's state (the rules line reads the whole map's answer, the whole map the build's state).
+    private readonly List<Func<Uri, CancellationToken, Task>> _follows = [];
+
+    private void Follow(Func<Uri, CancellationToken, Task> read) => _follows.Add(read);
+
+    private async Task FollowInOrder(Uri api, CancellationToken cancellationToken)
+    {
+        foreach (var read in _follows)
+        {
+            await read(api, cancellationToken).ConfigureAwait(true);
+        }
     }
 
     /// <summary>What the page and its stages read through.</summary>
