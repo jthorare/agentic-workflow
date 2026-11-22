@@ -104,8 +104,12 @@
                     <Button Classes="row-title" Focusable="False" Margin="-2,0" Click="OnOpenWorkflow" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
                       <TextBlock Classes="body-strong" Text="{Binding NameText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
-                    <controls:StateChipView Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Word="{Binding ChipWord}" Tone="{Binding ChipToneWord}" Glyph="{Binding ChipGlyph}" />
-                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
+                    <controls:StateChipView Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Word="{Binding ChipWord}" Tone="{Binding ChipToneWord}" Glyph="{Binding ChipGlyph}" IsVisible="{Binding IsShownStatus}" />
+                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" IsVisible="{Binding DidNotStart}" AutomationProperties.AccessibilityView="Raw">
+                      <TextBlock Classes="caption" Text="{Binding DidNotStartText}" AutomationProperties.AutomationId="RunDidNotStart" VerticalAlignment="Center" />
+                      <Button Content="{Binding RetryText}" Click="OnRetryStart" AutomationProperties.AutomationId="RunStartRetry" AutomationProperties.Name="{Binding RetryText}" />
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" IsVisible="{Binding IsShownStatus}" AutomationProperties.AccessibilityView="Raw">
                       <TextBlock Classes="caption subtle mono" Text="{Binding IdText}" IsVisible="{Binding HasIdText}" />
                       <TextBlock Classes="caption subtle" Text="{Binding RevisionText}" IsVisible="{Binding HasRevisionText}" />
                       <TextBlock Classes="caption subtle" Text="{Binding ChangedText}" TextTrimming="CharacterEllipsis" />

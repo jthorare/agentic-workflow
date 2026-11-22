@@ -56,7 +56,16 @@ internal sealed partial class WorkflowsPageViewModel
     /// <param name="runId">The placeholder's run id.</param>
     /// <param name="cancellationToken">Cancels the call and the reads.</param>
     /// <returns>A task that completes when the answer is shown.</returns>
-    internal Task RetryStart(string runId, CancellationToken cancellationToken) => runId.Length > 0 ? throw new NotSupportedException() : Task.CompletedTask;
+    internal async Task RetryStart(string runId, CancellationToken cancellationToken)
+    {
+        if (Runs.IsStarting || !Runs.CanRun)
+        {
+            return;   // what Run now would refuse: the placeholder stays
+        }
+
+        Runs.DropStarting(runId);
+        await RunNow(cancellationToken).ConfigureAwait(true);
+    }
 
     // A refusal says why; one that says the workflow is off turns Run now off. When Sindri didn't answer, the run may have started, so the runs are read
     // again and the note says so: a second press could start a second run.
