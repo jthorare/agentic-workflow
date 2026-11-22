@@ -21,8 +21,8 @@ public sealed class ThreadRowTests
     [InlineData("T0HARBOR", "D0/SAM")]
     public void A_key_part_that_is_empty_or_holds_a_slash_is_refused(string workspace, string conversation)
     {
-        Assert.Throws<ArgumentException>(() => ThreadRow.DmKey(workspace, conversation));
-        Assert.Throws<ArgumentException>(() => ThreadRow.ThreadKey(workspace, conversation, new MessageTs("1767771000.000100")));
+        _ = Assert.Throws<ArgumentException>(() => ThreadRow.DmKey(workspace, conversation));
+        _ = Assert.Throws<ArgumentException>(() => ThreadRow.ThreadKey(workspace, conversation, new MessageTs("1767771000.000100")));
     }
 
     [Fact]
