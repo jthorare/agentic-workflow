@@ -21,6 +21,10 @@ public static partial class GraphTemplates
             "hello-sindri",
             "Four steps with no account, model or network: make a greeting in code, tell you, and add an item. The setup service makes this one for the first repo.",
             """{"version":1,"name":"hello-sindri","nodes":[ {"id":"start","type":"manual","title":"Start","config":{}}, {"id":"greet","type":"code","title":"Make a greeting","config":{"code":"return \"Hello from Sindri\";","timeout":"60s"}}, {"id":"tell","type":"notify","title":"Tell me","config":{"title":"hello-sindri","body":"{{greet.result}}"}}, {"id":"add_item","type":"create_item","title":"Add an item","config":{"title":"Hello from Sindri"}} ],"edges":[ {"from":"start","to":"greet"}, {"from":"greet","to":"tell"}, {"from":"tell","to":"add_item"} ]}"""),
+        (
+            SkillProposer.Name,
+            "Run it with the findings of a steering-miner run and the toolkit repo's name: for each of the top 5, a model picks the skill to change and an agent drafts the edit on its own branch.",
+            SkillProposer.Json()),
     ];
 
     /// <summary>Every template, in the order they are listed.</summary>

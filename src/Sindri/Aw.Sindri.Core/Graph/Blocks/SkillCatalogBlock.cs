@@ -38,5 +38,23 @@ public sealed class SkillCatalogBlock(ISkillCatalogPort catalog) : IGraphBlock
     public BlockOutputs OutputsFor(JsonObject config) => _outputs;
 
     /// <inheritdoc />
-    public ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken) => throw new NotSupportedException($"red: {catalog.GetType().Name}");
+    public async ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        var listed = await catalog.List(cancellationToken).ConfigureAwait(false);
+        if (listed.IsError)
+        {
+            return listed.Error;
+        }
+
+        var skills = new JsonArray();
+        foreach (var skill in listed.Value)
+        {
+            var cut = skill.Description.Length > DescriptionChars && char.IsHighSurrogate(skill.Description[DescriptionChars - 1]) ? DescriptionChars - 1 : DescriptionChars;
+            var description = skill.Description.Length > cut ? skill.Description[..cut] : skill.Description;
+            skills.Add((JsonNode)new JsonObject { ["name"] = skill.Name, ["description"] = description });
+        }
+
+        return new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal) { ["skills"] = skills, ["count"] = listed.Value.Count });
+    }
 }
