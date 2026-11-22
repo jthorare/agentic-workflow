@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: officeHours-roi-sweeps
+kind: behaviour
+plants: see graders
+# Issue 3788: plan.md opens with the ROI and data-analysis plan (skills/_shared/roi-analysis.md), and TASKS.md ends with
+# the performance sweep and then the bug sweep, each with its exit check (skills/_shared/closing-sweeps.md).
