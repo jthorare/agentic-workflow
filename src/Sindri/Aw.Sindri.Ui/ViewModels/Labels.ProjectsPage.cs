@@ -45,15 +45,20 @@ internal static partial class Labels
     /// <summary>The page when a read failed: the reason follows.</summary>
     internal static string ProjectsFailed(Error error) => "Couldn't read the projects just now. " + InstanceRefused(error);
 
-    /// <summary>One source's part of the freshness line: its name, then its served text. Context's text already names it ("Context is not answering").</summary>
+    /// <summary>One source's part of the freshness line: its name, then its served text. Context's text already names it ("Context is not answering").
+    /// Sindri's row is served only when its own PR, check and agent read failed, and its text is that error's first line, so the app says what is missing instead.</summary>
     internal static string ProjectFreshnessPart(string source, string text) => source switch
     {
         "linear-projects" => "Linear projects " + text,
         "linear" => "Linear issues " + text,
         "github" => "GitHub " + text,
         "context" => text,
+        "sindri" => ProjectSindriFactsMissing,
         _ => source + " " + text,
     };
+
+    /// <summary>The freshness line's part when Sindri couldn't read its own PR, check and agent facts for the cards.</summary>
+    internal const string ProjectSindriFactsMissing = "PRs, checks and agents couldn't be read just now";
 
     /// <summary>The freshness line's last part.</summary>
     internal static string ProjectViewer(string viewer) => "Linear says you're " + viewer;
