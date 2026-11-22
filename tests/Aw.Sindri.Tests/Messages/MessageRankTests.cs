@@ -70,5 +70,5 @@ public sealed class MessageRankTests
     private static string[] Conversations(params ThreadRow[] rows) => [.. MessageRank.Order(rows).Select(static r => r.Conversation)];
 
     private static ThreadRow Row(string conversation, string newest, string? key = null) =>
-        new(key ?? ("slack:dm:T0/" + conversation), ConversationKind.Dm, conversation, new MessageTs(newest));
+        new(key ?? "slack:dm:T0/" + conversation, ConversationKind.Dm, conversation, new MessageTs(newest));
 }

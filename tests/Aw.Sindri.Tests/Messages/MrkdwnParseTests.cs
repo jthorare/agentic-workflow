@@ -38,7 +38,7 @@ public sealed class MrkdwnParseTests
         var here = Mrkdwn.Parse("<!here> lunch Friday?").Spans[0];
 
         Assert.Equal((MrkdwnKind.Link, "https://github.com/acme/harbor/pull/3120", "#3120", "#3120"), (link.Kind, link.Target, link.Label, link.Text));
-        Assert.Equal((MrkdwnKind.UserMention, "U0KIM", null, "U0KIM"), (user.Kind, user.Target, user.Label, user.Text));
+        Assert.Equal((MrkdwnKind.UserMention, "U0KIM", (string?)null, "U0KIM"), (user.Kind, user.Target, user.Label, user.Text));
         Assert.Equal((MrkdwnKind.ChannelMention, "C0HARBOR", "harbor"), (channel.Kind, channel.Target, channel.Label));
         Assert.Equal((MrkdwnKind.Broadcast, "here"), (here.Kind, here.Target));
     }

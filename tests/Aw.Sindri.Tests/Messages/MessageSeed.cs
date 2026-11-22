@@ -41,8 +41,8 @@ internal static class MessageSeed
                 LatestReplyTs = new MessageTs(KimReply),
             },
             new StoredMessage(Harbor, new MessageTs(KimReply), new MessageTs(AdaRoot), "U0KIM", "<@U0JOI> and the group path too?", Mine: false, NamesMe: true),
-            new StoredMessage(Harbor, new MessageTs(LeeLunch), null, "U0LEE", "lunch Friday", Mine: false, NamesMe: false),
-            new StoredMessage(Sam, new MessageTs(SamAsk), null, "U0SAM", "can you ship the fare table today?", Mine: false, NamesMe: false),
+            new StoredMessage(Harbor, new MessageTs(LeeLunch), ThreadTs: null, "U0LEE", "lunch Friday", Mine: false, NamesMe: false),
+            new StoredMessage(Sam, new MessageTs(SamAsk), ThreadTs: null, "U0SAM", "can you ship the fare table today?", Mine: false, NamesMe: false),
         ];
         var put = await store.PutMessages(messages, ct);
         Assert.True(put.IsSuccess, put.IsError ? put.Error.Message : null);

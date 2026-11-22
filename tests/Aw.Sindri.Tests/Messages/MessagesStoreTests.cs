@@ -127,8 +127,8 @@ public sealed class MessagesStoreTests : IDisposable
     {
         await _home.Conversation("T0HARBOR", Harbor, ConversationKind.Channel);
         _ = await _home.Put(
-            new StoredMessage(Harbor, new MessageTs(AdaRoot), null, "U0ADA", "fare table ready", Mine: false, NamesMe: false),
-            new StoredMessage(Harbor, new MessageTs(LeeRoot), null, "U0LEE", "lunch Friday", Mine: false, NamesMe: false));
+            new StoredMessage(Harbor, new MessageTs(AdaRoot), ThreadTs: null, "U0ADA", "fare table ready", Mine: false, NamesMe: false),
+            new StoredMessage(Harbor, new MessageTs(LeeRoot), ThreadTs: null, "U0LEE", "lunch Friday", Mine: false, NamesMe: false));
         _home.Exec("INSERT INTO users (id, workspace, name, real_name, display_name) VALUES ('U0ADA', 'T0HARBOR', 'ada', 'Ada Moss', '')");
 
         var window = await _home.Store.Window(Harbor, before: null, after: null, limit: 10, Cancel);

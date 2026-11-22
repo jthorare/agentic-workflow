@@ -24,7 +24,7 @@ internal sealed partial class SqliteMessagesStore
             MessageList.Drafts => MessagesReadSql.DraftRows,
             _ => throw new ArgumentOutOfRangeException(nameof(list), list, "not a list"),
         };
-        return await InRead(session => Translated(SqliteQueries.List(session, new SqlStatement(sql, null, "list rows"), ThreadRowMapper.Instance, cancellationToken)), cancellationToken).ConfigureAwait(false);
+        return await InRead(session => Translated(SqliteQueries.List(session, new SqlStatement(sql, Bind: null, "list rows"), ThreadRowMapper.Instance, cancellationToken)), cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<Result<IReadOnlyList<ConversationSummary>>> Conversations(CancellationToken cancellationToken)
@@ -34,7 +34,7 @@ internal sealed partial class SqliteMessagesStore
             return Array.Empty<ConversationSummary>();
         }
 
-        return await InRead(session => Translated(SqliteQueries.List(session, new SqlStatement(MessagesReadSql.Conversations, null, "conversations"), ConversationMapper.Instance, cancellationToken)), cancellationToken).ConfigureAwait(false);
+        return await InRead(session => Translated(SqliteQueries.List(session, new SqlStatement(MessagesReadSql.Conversations, Bind: null, "conversations"), ConversationMapper.Instance, cancellationToken)), cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<Result<ConversationWindow>> Window(string conversation, MessageTs? before, MessageTs? after, int limit, CancellationToken cancellationToken)
