@@ -218,6 +218,26 @@ public sealed class AgentsPageNeedsYouTests
         Assert.Equal((asking[0], asking[1], asking[0], asking[1]), (one, two, wrapped, back));
     }
 
+    [Fact]
+    public async Task Close_and_open_bracket_move_keyboard_focus_to_the_row_they_jump_to_3082()
+    {
+        var list = AgentsPageFixture.Edited(_ => { });
+        _ = Add(list, Codex, "000000000012", title: "zz-asking");
+        _f.Serve(list);
+        var page = await _f.Shown(Token);
+        var asked = new List<AgentFocusEventArgs>();
+        page.FocusRequested += (_, e) => asked.Add(e);
+
+        _ = page.Press("]");
+        var forward = page.SelectedKey;
+        _ = page.Press("[");
+        var backward = page.SelectedKey;
+
+        List<string?> keys = [.. asked.Select(e => e.Key)];
+        Assert.Equal([forward, backward], keys);
+        Assert.All(asked, e => Assert.False(e.ToFocusLine || e.OnlyIfLost));
+    }
+
     private static SessionRowViewModel Row(AgentsPageViewModel page, string prefix) => page.Groups.SelectMany(g => g.Rows).Single(r => r.Ref.StartsWith(prefix, StringComparison.Ordinal));
 
     private static void Set(JsonNode list, string prefix, string state, bool estimated)
