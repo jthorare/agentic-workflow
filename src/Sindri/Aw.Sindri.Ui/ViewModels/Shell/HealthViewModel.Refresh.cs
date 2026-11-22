@@ -11,25 +11,32 @@ internal sealed partial class HealthViewModel
     /// <returns>The URL, or null.</returns>
     internal Uri? ApiUrl() => _url;
 
-    /// <summary>Adds a view the follower re-reads on connect and after every event (§9.2: re-query, never fold).</summary>
+    /// <summary>
+    /// Adds a view the follower re-reads on connect and after every event (§9.2: re-query, never fold). The views are read side by side,
+    /// so a view must not count on another view's answer from the same round; one that uses another's state maps it again when that one answers.
+    /// </summary>
     /// <param name="view">Reads the view from the API's base URL.</param>
     internal void Follow(Func<Uri, CancellationToken, Task> view) => _views.Add(view);
 
-    /// <summary>Re-reads every followed view, in the order they were added.</summary>
+    /// <summary>
+    /// Re-reads the context map and every followed view at once (#2775): each read starts here, in the order the views were added, and
+    /// the reads overlap; each answer is shown back on this thread. A view that throws stops no other: its exception comes out once every read has ended.
+    /// </summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>A task that completes when every view is shown.</returns>
     internal async Task RefreshViews(Uri url, CancellationToken cancellationToken)
     {
-        await ContextMap.Refresh(url, cancellationToken).ConfigureAwait(true);
-        foreach (var view in _views)
-        {
-            await view(url, cancellationToken).ConfigureAwait(true);
-        }
-
+        Task[] reads = [Read(ContextMap.Refresh, url, cancellationToken), .. _views.Select(view => Read(view, url, cancellationToken))];
+        await Task.WhenAll(reads).ConfigureAwait(true);
         ViewReads++;
         OnChanged(nameof(ViewReads));
     }
+
+    // One view's read as a task. The async wrapper is there only for a view that throws before its first await: that faults its own
+    // task instead of stopping the views after it, so keep it even though it looks like a plain call.
+    private static async Task Read(Func<Uri, CancellationToken, Task> view, Uri url, CancellationToken cancellationToken) =>
+        await view(url, cancellationToken).ConfigureAwait(true);
 
     /// <summary>How many times every followed view has been re-read; a test (or a view) waits on it to know a read, answered or refused, was handled.</summary>
     internal int ViewReads { get; private set; }
