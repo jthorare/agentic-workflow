@@ -77,8 +77,8 @@ public sealed class GetWorkflowRunTokensTests
     private async Task Insert(GraphBudget? budget, params (string Node, string? Usage)[] nodes)
     {
         var spec = new GraphSpec(Version: 1, Name: "Morning check", Description: null, Concurrency: null, Resources: null,
-            Nodes: [new GraphNode(NodeId.From("start"), "manual", Title: null, [])], Edges: []) { Budget = budget };
-        _ = (await _workflows.Create(_id, _slug, spec, "owner", Token)).Value;
+            Nodes: [new GraphNode(NodeId.From("start"), "manual", Title: null, [])], Edges: []);
+        _ = (await _workflows.Create(_id, _slug, spec with { Budget = budget }, "owner", Token)).Value;
         _ = (await _runs.Insert(new WorkflowRun(_run, _id, 1, "{\"kind\":\"manual\"}", WorkflowRunStatus.Succeeded, Outputs: null, Error: null, ItemId: null, _clock.GetUtcNow(), EndedAt: null), Token)).Value;
         foreach (var (node, usage) in nodes)
         {

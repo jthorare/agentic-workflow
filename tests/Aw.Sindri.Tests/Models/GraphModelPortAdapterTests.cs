@@ -2,7 +2,6 @@ using Aw.Context.Core.Models;
 using Aw.Context.Testing.Engine;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Host.Models;
 
 namespace Aw.Sindri.Tests.Models;
@@ -44,7 +43,7 @@ public sealed class GraphModelPortAdapterTests
         var port = new FakeModelPort { Answer = Reply };
         var expected = ((Prompt.Length + 3L) / 4) + ((Reply.Length + 3L) / 4);   // why: the fake counts a token per four characters of the prompt and of the reply
 
-        var answer = await ((IGraphModelPort)new GraphModelPortAdapter(port)).Answer(Prompt, Token);
+        var answer = await new GraphModelPortAdapter(port).Answer(Prompt, Token);
 
         Assert.Equal(Reply, answer.Value.Text);
         Assert.Equal(expected, answer.Value.Tokens);

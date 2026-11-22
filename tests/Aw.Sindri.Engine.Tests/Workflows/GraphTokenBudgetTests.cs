@@ -19,8 +19,10 @@ public sealed class GraphTokenBudgetTests
         var spec = GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("first", "prompt", config: (JsonObject)_ask.DeepClone()), GraphRig.Node("second", "prompt", onFailure, (JsonObject)_ask.DeepClone()), GraphRig.Node("after", "echo")],
             [GraphRig.Edge("start", "first"), GraphRig.Edge("first", "second"), GraphRig.Edge("second", "after")]);
-        return budget is { } tokens ? spec with { Budget = new GraphBudget(tokens) } : spec;
+        return budget is { } tokens ? Budgeted(spec, tokens) : spec;
     }
+
+    private static GraphSpec Budgeted(GraphSpec spec, long tokens) => spec with { Budget = new GraphBudget(tokens) };
 
     private static async Task<(WorkflowRun Run, IReadOnlyDictionary<string, NodeRun> Nodes)> RunToEnd(GraphRig rig, GraphSpec spec, string trigger = """{"kind":"manual"}""")
     {
@@ -137,10 +139,10 @@ public sealed class GraphTokenBudgetTests
     {
         await using var rig = await GraphRig.StartAsync();
         rig.Model.TokensPerAnswer = 60;
-        var spec = GraphRig.Spec("unlimited",
+        var spec = Budgeted(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: new JsonObject { ["items"] = "{{trigger.items}}", ["batchSize"] = batchSize }),
                 GraphRig.Node("ask", "prompt", onFailure: "skip-item", config: (JsonObject)_ask.DeepClone()), GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{item}}" })],
-            [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "ask"), GraphRig.Edge("ask", "gather")]) with { Budget = new GraphBudget(100) };
+            [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "ask"), GraphRig.Edge("ask", "gather")]), 100);
         var trigger = new JsonObject { ["kind"] = "manual", ["items"] = new JsonArray(1, 2, 3) }.ToJsonString();
 
         var (run, _) = await RunToEnd(rig, spec, trigger);
@@ -161,11 +163,11 @@ public sealed class GraphTokenBudgetTests
     {
         await using var rig = await GraphRig.StartAsync();
         rig.Model.TokensPerAnswer = 60;
-        var spec = GraphRig.Spec("unlimited",
+        var spec = Budgeted(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: new JsonObject { ["items"] = "{{trigger.items}}" }),
                 GraphRig.Node("ask", "prompt", config: (JsonObject)_ask.DeepClone()), GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{item}}" }),
                 GraphRig.Node("last", "prompt", config: (JsonObject)_ask.DeepClone())],
-            [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "ask"), GraphRig.Edge("ask", "gather"), GraphRig.Edge("gather", "last")]) with { Budget = new GraphBudget(100) };
+            [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "ask"), GraphRig.Edge("ask", "gather"), GraphRig.Edge("gather", "last")]), 100);
         var trigger = new JsonObject { ["kind"] = "manual", ["items"] = new JsonArray(1, 2) }.ToJsonString();
 
         var (run, nodes) = await RunToEnd(rig, spec, trigger);
