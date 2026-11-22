@@ -4,7 +4,8 @@
 # while a live job waits for a box-wide slot and MemAvailable is under that slot's floor. Covers: N run and the N+1th waits
 # until one ends; the cap file is read again while a job waits; the env fallback and the default 4; the hold, and its end
 # when the waiter goes or memory is enough; the hold counts heavy-meta-reserve and the slots the waiter can take (#3810); its
-# note repeats (on a copy with HOLD_NOTE_EVERY=1) and names the waiter and the memory figure; slot 1 free and a dead waiter
+# note repeats (on a copy with HOLD_NOTE_EVERY=1), comes at once for a new hold or another waiter, and names the waiter and
+# the memory figure; no MemAvailable read without a box-wide waiter; slot 1 free and a dead waiter
 # hold nothing; a path-qualified dotnet build and a dotnet msbuild take a light slot; a job that compiles nothing never
 # waits on the pool; AW_HEAVY_PRIORITY=meta skips the hold but not the pool; a held wait doesn't count toward the lock
 # timeout; a dead holder's light slot is reclaimed.
