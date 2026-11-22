@@ -1,4 +1,6 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Workflows;
@@ -25,15 +27,30 @@ public sealed class WorkflowDetailHeaderTests
     }
 
     [Fact]
-    public async Task A_workflows_page_shows_its_own_state_word_and_the_list_does_not()
+    public async Task An_active_workflows_page_shows_no_state_chip_and_the_list_shows_none()
     {
         var page = await _f.Shown(Token);
         Assert.False(page.ShowsDetailState);
 
         await page.OpenWorkflow(Slug, Token);
 
-        Assert.True(page.ShowsDetailState);
-        Assert.Equal(page.Rows[0].ChipGlyph + " " + page.Rows[0].ChipWord, page.DetailStateText);
+        Assert.False(page.ShowsDetailState);   // the #3684 frames (canvas-16.png): an active workflow's header has its title and step count only
+        page.Back();
+        Assert.False(page.ShowsDetailState);
+    }
+
+    [Fact]
+    public async Task An_off_workflows_page_shows_the_off_chip_beside_its_title()
+    {
+        var page = await _f.Shown(Token);
+        var off = Golden("workflows-slug", "found");
+        off["activeRevision"] = null;
+        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, off.ToJsonString());
+
+        await page.OpenWorkflow(Slug, Token);
+
+        Assert.True(page.ShowsDetailState);   // cards.png: "a paused workflow shows this chip in its header"
+        Assert.Equal(Labels.WfState(active: false).Word, page.DetailChipWord, StringComparer.Ordinal);
         page.Back();
         Assert.False(page.ShowsDetailState);
     }
