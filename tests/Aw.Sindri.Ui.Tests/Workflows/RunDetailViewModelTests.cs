@@ -91,7 +91,7 @@ public sealed class RunDetailViewModelTests
         var group = Group(run, "agent");
         Assert.Equal((2, "agent · 3 items", true), (run.Groups.Count, group.HeaderText, group.IsForEach));
         Assert.Equal(["Item 1 of 3", "Item 2 of 3", "Item 3 of 3"], group.Runs.Select(r => r.TitleText), StringComparer.Ordinal);
-        Assert.Single(Group(run, "start").Runs);
+        _ = Assert.Single(Group(run, "start").Runs);
     }
 
     [Fact]
