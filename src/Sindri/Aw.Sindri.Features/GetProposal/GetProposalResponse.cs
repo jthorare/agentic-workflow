@@ -11,4 +11,5 @@ namespace Aw.Sindri.Features.GetProposal;
 /// <param name="Sessions">The opaque refs of the sessions it was built from.</param>
 /// <param name="Origin">Where it came from.</param>
 /// <param name="CreatedAt">When it was first saved.</param>
-internal sealed record GetProposalResponse(ProposalSummary Proposal, string Rationale, string Change, IReadOnlyList<string> Files, IReadOnlyList<string> Evidence, IReadOnlyList<string> Sessions, string Origin, DateTimeOffset CreatedAt);
+/// <param name="Draft">The local branch and commit that hold its real edit, or null when there is none.</param>
+internal sealed record GetProposalResponse(ProposalSummary Proposal, string Rationale, string Change, IReadOnlyList<string> Files, IReadOnlyList<string> Evidence, IReadOnlyList<string> Sessions, string Origin, DateTimeOffset CreatedAt, ProposalDraft? Draft);

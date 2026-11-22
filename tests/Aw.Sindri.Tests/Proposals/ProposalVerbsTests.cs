@@ -54,11 +54,21 @@ public sealed class ProposalVerbsTests
     [Fact]
     public void Show_escapes_control_characters_in_model_text()
     {
-        var shown = new GetProposalResponse(_held, "line one\u001b[31m", "change", ["skills/review/SKILL.md"], ["transcript:1a2b3c4d#12"], ["transcript:1a2b3c4d"], "workflow:steering-miner", KnownInstants.Epoch);
+        var shown = new GetProposalResponse(_held, "line one\u001b[31m", "change", ["skills/review/SKILL.md"], ["transcript:1a2b3c4d#12"], ["transcript:1a2b3c4d"], "workflow:steering-miner", KnownInstants.Epoch, Draft: null);
 
         var text = ProposalVerbs.ShowText(shown, fence: false);
 
         Assert.DoesNotContain("\u001b", text, StringComparison.Ordinal);
         Assert.Contains("sessions:  transcript:1a2b3c4d", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Show_prints_the_draft_branch_and_commit_only_when_there_is_one()
+    {
+        var shown = new GetProposalResponse(_held, "why", "change", ["skills/review/SKILL.md"], ["transcript:1a2b3c4d#12"], ["transcript:1a2b3c4d"], "workflow:steering-miner", KnownInstants.Epoch, Draft: null);
+        var drafted = shown with { Draft = new ProposalDraft("wf/steering-miner/run_1/work", "0123456789abcdef0123456789abcdef01234567") };
+
+        Assert.DoesNotContain("draft:", ProposalVerbs.ShowText(shown, fence: false), StringComparison.Ordinal);
+        Assert.Contains("draft:     wf/steering-miner/run_1/work @ 0123456789abcdef0123456789abcdef01234567\n", ProposalVerbs.ShowText(drafted, fence: false), StringComparison.Ordinal);
     }
 }

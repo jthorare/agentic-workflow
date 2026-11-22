@@ -11,6 +11,7 @@ namespace Aw.Sindri.Core.Evolve;
 /// <param name="Origin">Where it came from.</param>
 /// <param name="CreatedAt">When it was first saved.</param>
 /// <param name="UpdatedAt">When it last changed.</param>
+/// <param name="Draft">Where its real edit lives, or null when there is none.</param>
 public sealed record StoredProposal(
     ProposalId Id,
     Proposal Original,
@@ -21,7 +22,8 @@ public sealed record StoredProposal(
     IReadOnlyList<string> Sessions,
     string Origin,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt)
+    DateTimeOffset UpdatedAt,
+    ProposalDraft? Draft = null)
 {
     /// <summary>Gets a value indicating whether the owner may still reject it: proposed, staged or held.</summary>
     public bool Rejectable => State is ProposalState.Proposed or ProposalState.Staged or ProposalState.Held;

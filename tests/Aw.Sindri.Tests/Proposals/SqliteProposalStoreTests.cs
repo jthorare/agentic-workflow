@@ -73,6 +73,33 @@ public sealed class SqliteProposalStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task A_proposal_saved_with_a_draft_reads_it_back_and_one_without_reads_null()
+    {
+        var draft = new ProposalDraft("wf/steering-miner/run_1/work", "0123456789abcdef0123456789abcdef01234567");
+        var with = (await _store.Save(ProposalSeeds.Saving("Run the tests before saying done") with { Draft = draft }, Token)).Value;
+        var without = (await _store.Save(ProposalSeeds.Saving("Ask before widening the scope"), Token)).Value;
+
+        Assert.Equal(draft, (await _store.Find(with.Id, Token)).Value?.Draft);
+        Assert.Null((await _store.Find(without.Id, Token)).Value?.Draft);
+    }
+
+    [Fact]
+    public async Task A_merge_keeps_the_newer_draft_and_a_merge_without_one_keeps_the_old()
+    {
+        var older = new ProposalDraft("wf/steering-miner/run_1/work", "1111111111111111111111111111111111111111");
+        var newer = new ProposalDraft("wf/steering-miner/run_2/work", "2222222222222222222222222222222222222222");
+        var first = (await _store.Save(ProposalSeeds.Saving("Run the tests before saying done") with { Draft = older }, Token)).Value;
+
+        _ = await _store.Save(ProposalSeeds.Saving("Run the tests before saying done") with { Draft = newer }, Token);
+        var afterNewer = (await _store.Find(first.Id, Token)).Value?.Draft;
+        _ = await _store.Save(ProposalSeeds.Saving("Run the tests before saying done"), Token);
+        var afterNone = (await _store.Find(first.Id, Token)).Value?.Draft;
+
+        Assert.Equal(newer, afterNewer);
+        Assert.Equal(newer, afterNone);
+    }
+
+    [Fact]
     public async Task The_same_title_for_another_target_is_a_new_proposal()
     {
         _ = await _store.Save(ProposalSeeds.Saving("Run the tests before saying done"), Token);
