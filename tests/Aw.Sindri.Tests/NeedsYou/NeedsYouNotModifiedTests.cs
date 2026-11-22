@@ -6,6 +6,7 @@ using Aw.Sindri.Core.Decisions;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items.Vocabulary;
+using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Profile;
@@ -151,6 +152,21 @@ public sealed class NeedsYouNotModifiedTests
         Assert.True((await Query(new GetNeedsYouRequest(IfNoneMatch: first.Tag))).NotModified, "back to the baseline, the tag is the first one again");
     }
 
+    [Fact]
+    public async Task A_restarted_serve_with_the_same_marks_moves_the_tag()
+    {
+        await SeedDecisionRow();
+        var first = await Query(new GetNeedsYouRequest());
+        var held = _views.Slice.Held.Current!;
+        var restarted = new HeldLease();
+        restarted.Hold(held with { Epoch = held.Epoch + 1 });   // the next serve takes the lease at the next epoch; a views rebuild replays the same ledger, so every mark comes back the same
+
+        var second = await Query(new GetNeedsYouRequest(IfNoneMatch: first.Tag), lease: restarted);
+
+        AssertMoved(first, second);   // #3883: a new build may fold different row text from the same events, so a tag from before the restart answers 200
+        Assert.True((await Query(new GetNeedsYouRequest(IfNoneMatch: first.Tag))).NotModified, "inside one process the tag holds");
+    }
+
     private static void AssertMoved(GetNeedsYouResponse first, GetNeedsYouResponse second)
     {
         Assert.False(second.NotModified);
@@ -188,7 +204,7 @@ public sealed class NeedsYouNotModifiedTests
         _ = await _views.Slice.Profiles.Save(loaded, Token);
     }
 
-    private async Task<GetNeedsYouResponse> Query(GetNeedsYouRequest request, IViewReader? reader = null)
+    private async Task<GetNeedsYouResponse> Query(GetNeedsYouRequest request, IViewReader? reader = null, HeldLease? lease = null)
     {
         var slice = _views.Slice;
         if (slice.Held.Current is null)
@@ -200,7 +216,7 @@ public sealed class NeedsYouNotModifiedTests
         var gate = new McpAutoGate(slice.Profiles, new McpEvents(slice.Held, slice.Store, slice.Events, slice.Callers), _switch, jobs);
         var live = new NeedsYouLiveRows(new SetupNotices(jobs, slice.Profiles, new PassScrubber(), slice.Clock, gate, _sighting));
         using var entered = slice.Callers.Enter(A.Caller().Human().Build());
-        var result = await new GetNeedsYouService(reader ?? _views.Views, _views.Progress, slice.Callers, live, SliceHarness.Json).Handle(request, Token);
+        var result = await new GetNeedsYouService(reader ?? _views.Views, _views.Progress, slice.Callers, live, SliceHarness.Json, lease ?? slice.Held).Handle(request, Token);
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
         return result.Value;
     }

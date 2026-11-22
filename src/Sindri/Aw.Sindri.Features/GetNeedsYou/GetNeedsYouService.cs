@@ -7,6 +7,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Items.Vocabulary;
+using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Views;
 
@@ -21,7 +22,8 @@ namespace Aw.Sindri.Features.GetNeedsYou;
 /// <param name="callers">The caller; a read needs one.</param>
 /// <param name="live">The rows read at request time, not from the view (the setup rows).</param>
 /// <param name="json">The host's JSON options: the tag hashes each row as the client receives it.</param>
-internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus status, ICallerContextAccessor callers, NeedsYouLiveRows live, JsonSerializerOptions json) : IService<GetNeedsYouRequest, GetNeedsYouResponse>
+/// <param name="lease">The lease this serve process holds: its epoch goes into the tag (#3883).</param>
+internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus status, ICallerContextAccessor callers, NeedsYouLiveRows live, JsonSerializerOptions json, HeldLease lease) : IService<GetNeedsYouRequest, GetNeedsYouResponse>
 {
     private static readonly string[] _marked = [ViewNames.NeedsYou, ViewNames.Decisions, ViewNames.Items];
 
@@ -33,6 +35,7 @@ internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus sta
             return SindriErrors.AuthRefused.With("the needs-you list needs a caller");
         }
 
+        _ = lease;   // red (#3883): not in the tag yet
         var current = status.Current;
         var setup = await live.Read(cancellationToken).ConfigureAwait(false);   // at most two rows, read at request time: hashed as served, so every input they read (jobs, profile, consent, the mcp switch) is in the tag
         var marks = await Marks(cancellationToken).ConfigureAwait(false);
