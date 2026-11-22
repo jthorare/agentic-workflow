@@ -6,10 +6,11 @@ using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Testing.Workflow;
 
-/// <summary>The in-memory <see cref="IWorkflowRunStore"/>. Passes <see cref="WorkflowRunStoreContract"/>.</summary>
+/// <summary>The in-memory <see cref="IWorkflowRunStore"/> and <see cref="IRunSeenStore"/> over one run list. Passes <see cref="WorkflowRunStoreContract"/> and <see cref="RunSeenStoreContract"/>.</summary>
 /// <param name="clock">The clock the end times come from.</param>
-public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunStore
+public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunStore, IRunSeenStore
 {
+    private readonly HashSet<WorkflowRunId> _seen = [];
     private readonly Lock _gate = new();
     private readonly List<WorkflowRun> _runs = [];
     private readonly Dictionary<WorkflowId, DateTimeOffset> _ticks = [];
@@ -278,6 +279,30 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
                 .OrderBy(static n => n.NodeId.Value, StringComparer.Ordinal)
                 .ThenBy(static n => n.ItemIndex)];
             return Ok(rows);
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(int limit, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            IReadOnlyList<WorkflowRun> rows = [.. _runs
+                .Where(r => r.Status == WorkflowRunStatus.Failed && string.Equals(r.Mode, WorkflowRunMode.Live, StringComparison.Ordinal) && !_seen.Contains(r.Id))
+                .OrderByDescending(static r => r.EndedAt ?? r.StartedAt)
+                .ThenByDescending(static r => r.Id.Value, StringComparer.Ordinal)
+                .Take(Math.Max(limit, 1))];
+            return Ok(rows);
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<Unit>> MarkSeen(WorkflowRunId run, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _ = _seen.Add(run);
+            return Ok(Unit.Value);
         }
     }
 

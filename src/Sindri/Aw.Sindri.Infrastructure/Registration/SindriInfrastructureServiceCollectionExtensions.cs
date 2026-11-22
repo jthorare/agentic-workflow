@@ -89,7 +89,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
     public static IServiceCollection AddSindriInfrastructure(this IServiceCollection services, Func<string, string?> environment)
     {
         var settings = SettingsFromEnvironment.Read(environment);
-        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment).AddAgentRuntimeAdapters().AddSindriMcp(environment).AddSecretInfrastructure().AddProfileEditing(environment).AddLeftoverInfrastructure().AddScopingInfrastructure().AddJudgeInfrastructure(environment).AddScopeWatch().AddSkillBlocks(environment).AddSingleton<Core.Reviews.IReviewSummaries, Reviews.FileReviewSummaries>().AddSingleton<Core.Reviews.IFixTaskFiles, Reviews.FixTaskFiles>().AddSingleton<Core.Reviews.IFixSessions>(sp => new Reviews.GitFixSessions(sp.GetRequiredService<Core.Sessions.ISessionSnapshot>(), new ProcessToolRunner())).AddSingleton<Core.Reviews.IReviewPages, Reviews.FileReviewPages>().AddSingleton<Core.Reviews.IReviewEvidence>(_ => new Reviews.FileReviewEvidence(environment)).AddSingleton(_ => new Todos.NoteLinkCounter(new SandboxProcesses())).AddSingleton<Core.Todos.Note.ITodoNoteDisk>(sp => new Todos.FileTodoNoteDisk(sp.GetRequiredService<Todos.NoteLinkCounter>())).AddSingleton<Core.Todos.Note.ITodoNoteFiles>(sp => new Todos.FileTodoNoteFiles(sp.GetRequiredService<ISindriHome>(), sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<Todos.NoteLinkCounter>()));
+        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment).AddAgentRuntimeAdapters().AddSindriMcp(environment).AddSecretInfrastructure().AddProfileEditing(environment).AddLeftoverInfrastructure().AddScopingInfrastructure().AddJudgeInfrastructure(environment).AddHomeReaders(environment).AddScopeWatch().AddSkillBlocks(environment).AddSingleton<Core.Reviews.IReviewSummaries, Reviews.FileReviewSummaries>().AddSingleton<Core.Reviews.IFixTaskFiles, Reviews.FixTaskFiles>().AddSingleton<Core.Reviews.IFixSessions>(sp => new Reviews.GitFixSessions(sp.GetRequiredService<Core.Sessions.ISessionSnapshot>(), new ProcessToolRunner())).AddSingleton<Core.Reviews.IReviewPages, Reviews.FileReviewPages>().AddSingleton<Core.Reviews.IReviewEvidence>(_ => new Reviews.FileReviewEvidence(environment)).AddSingleton(_ => new Todos.NoteLinkCounter(new SandboxProcesses())).AddSingleton<Core.Todos.Note.ITodoNoteDisk>(sp => new Todos.FileTodoNoteDisk(sp.GetRequiredService<Todos.NoteLinkCounter>())).AddSingleton<Core.Todos.Note.ITodoNoteFiles>(sp => new Todos.FileTodoNoteFiles(sp.GetRequiredService<ISindriHome>(), sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<Todos.NoteLinkCounter>()));
     }
 
     /// <summary>SB-3a: what 'session wrap --limits' watches a session's systemd scope through (systemctl --user and the cgroup files).</summary>
@@ -126,6 +126,10 @@ public static class SindriInfrastructureServiceCollectionExtensions
         services.AddSingleton<IJudgeChoice>(sp => new JudgeCliChoice(new ProcessToolRunner(), environment, Path.Combine(sp.GetRequiredService<SindriSettings>().Home, "judge")))
             .AddSingleton<IModelPickJudge>(sp => new JudgeCliModelPick(new ProcessToolRunner(), environment, Path.Combine(sp.GetRequiredService<SindriSettings>().Home, "judge")));
 
+    /// <summary>The home-lanes collector's read of the box's aw-meta team (home spec §3.3; deps.yaml Sindri to Meta, kind cli).</summary>
+    private static IServiceCollection AddHomeReaders(this IServiceCollection services, Func<string, string?> environment) =>
+        services.AddSingleton<Core.Home.IMetaTeamReader>(_ => new Home.AwMetaTeamReader(new ProcessToolRunner(), environment));
+
     private static IServiceCollection AddScopingInfrastructure(this IServiceCollection services) =>
         services.AddSingleton<IForgeRepos>(sp => new GitForgeRepos(new ProcessToolRunner(), sp.GetRequiredService<IApprovedProfile>()))
             .AddSingleton<IRunArea, DiskRunArea>();
@@ -137,6 +141,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IWorktrees, GitWorktrees>()               // per-run worktrees (engine spec §6.5)
             .AddSingleton<IWorkflowStore, SqliteWorkflowStore>()    // workflow graphs and their revisions (#2258, PR 5): workflow and workflow_revision in ledger.db
             .AddSingleton<IWorkflowRunStore, SqliteWorkflowRunStore>()    // workflow runs and node runs (#2258, PR 6): workflow_run and workflow_node_run in ledger.db
+            .AddSingleton<IRunSeenStore, SqliteRunSeenStore>()    // which failed runs the owner has seen (home spec §3.3, E1): workflow_run_seen in ledger.db
             .AddSingleton<IWorkflowDocs, WorkflowDocs.ShippedWorkflowDocs>()   // workflow_docs: the pages embedded in the binary
             .AddSingleton<IGraphLaunchRuns, NoGraphLaunchRuns>()   // no graph run launches an agent session until PR 9
             .AddSingleton<IGraphBlockCatalog, EmptyGraphBlockCatalog>() // no graph blocks until PR 6 and 9
