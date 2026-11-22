@@ -10,7 +10,7 @@ using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Shell;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>The Todo panel's sync line on Home under the headless platform (todo spec §3.1, §3.4, §3.5): one frame test per state, quiet or warning, and which of the two blocks is the live region.</summary>
 [Lane(TestLane.Integration)]
@@ -67,9 +67,9 @@ public sealed class TodoSyncLineFramesTests : IDisposable
 
     private static async Task Until(Window window, Func<bool> condition)
     {
-        for (var i = 0; i < 300 && !condition(); i++)
+        for (var i = 0; i < 3000 && !condition(); i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Settle(window);
         }
 

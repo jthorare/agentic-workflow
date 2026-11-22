@@ -14,14 +14,13 @@ internal sealed partial class GraphIterationWorkflow
             return null;
         }
 
-        var on = $"node '{node.Id.Value}' failed on item {item.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
         if (!string.Equals(node.OnFailure, "continue", StringComparison.Ordinal))
         {
-            return $"{on}: {outcome.Error}";
+            return NodeFailureText.Stopped(node.Id.Value, item, outcome.Error);
         }
 
         return Workflow.Patched("graph-continue-nowhere-loop-1") && GraphContinueRule.LeavesNowhere(spec, node)
-            ? $"{on} and has onFailure continue, but it has no 'out' edge to continue on: {outcome.Error}"
+            ? NodeFailureText.Stranded(node.Id.Value, item, outcome.Error)
             : null;
     }
 }

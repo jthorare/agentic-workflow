@@ -10,7 +10,7 @@ using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Views.NeedsYou;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>
 /// U3' key frames (UI spec §18.2: one per state in the integration lane) for the Needs-you panel, against the in-memory API

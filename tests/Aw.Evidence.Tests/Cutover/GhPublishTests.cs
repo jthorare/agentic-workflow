@@ -115,23 +115,51 @@ public sealed class GhPublishTests
         Assert.Empty(_gh.Calls);
     }
 
-    [Fact, Trait("Lane", "unit")]
-    public async Task A_run_on_a_non_local_host_is_never_seeded_whatever_the_caller_claims()
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(null)]
+    [InlineData(DbProvenance.Seeded)]
+    public async Task A_script_run_on_a_preview_host_pushes_as_scrubbed_whatever_the_caller_claims(DbProvenance? claimed)
     {
         _ = _files
             .With($"{Run}/summary.json", AwJson.Serialize(A.RunSummary().OnHost("https://pr-9.preview.example.com").Build(), TestJson.Options))
             .With(FirstShot, [1]);
 
-        var result = await Handle(Request(DbProvenance.Seeded, FirstShot));
+        var result = await Handle(Request(claimed, FirstShot));
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal(Provenance.Scrubbed, result.Value.Provenance);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_script_run_on_a_preview_host_said_unknown_pushes_nothing()
+    {
+        _ = _files
+            .With($"{Run}/summary.json", AwJson.Serialize(A.RunSummary().OnHost("https://pr-9.preview.example.com").Build(), TestJson.Options))
+            .With(FirstShot, [1]);
+
+        var result = await Handle(Request(DbProvenance.Unknown, FirstShot));
 
         Assert.Equal(EvidenceErrors.PublishRefused.Code, result.Error.Code);
         Assert.Empty(_gh.Calls);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_scrubbed_parity_run_keeps_its_images_off_github()
+    public async Task A_scrubbed_parity_run_pushes_its_images_and_says_scrubbed()
     {
         var parity = A.ParitySummary().WithProvenance(Provenance.Scrubbed).WithFrame(ParitySummaryBuilder.Frame("default")).Build();
+        _ = _files.With("/runs/parity-1/parity.json", AwJson.Serialize(parity, TestJson.Options)).With(parity.Frames[0].Files.SideBySide, [7]);
+
+        var result = await Handle(new GhPublishRequest("/runs/parity-1", "o/n", 7, Provenance: null, [parity.Frames[0].Files.SideBySide]));
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal(Provenance.Scrubbed, result.Value.Provenance);
+        Assert.Equal([7], _gh.FilesAt(result.Value.Commit!)["pr-7/parity-1/default-side-by-side.png"]);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_unknown_parity_run_keeps_its_images_off_github()
+    {
+        var parity = A.ParitySummary().WithProvenance(Provenance.Unknown).WithFrame(ParitySummaryBuilder.Frame("default")).Build();
         _ = _files.With("/runs/parity-1/parity.json", AwJson.Serialize(parity, TestJson.Options)).With(parity.Frames[0].Files.SideBySide, [7]);
 
         var result = await Handle(new GhPublishRequest("/runs/parity-1", "o/n", 7, Provenance: null, [parity.Frames[0].Files.SideBySide]));

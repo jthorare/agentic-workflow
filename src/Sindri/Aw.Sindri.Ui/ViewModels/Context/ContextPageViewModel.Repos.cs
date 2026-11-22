@@ -1,3 +1,5 @@
+using Aw.Sindri.Ui.ViewModels.Context.Whole;
+
 namespace Aw.Sindri.Ui.ViewModels.Context;
 
 /// <summary>The repo picker (<see cref="ContextPageViewModel"/>, continued): when the map covers more than one repo, each has its own top ("~") and the page reads one at a time.</summary>
@@ -58,7 +60,7 @@ internal sealed partial class ContextPageViewModel
     {
         if (answer.Repos is { Count: > 0 } repos)
         {
-            Repos = [.. repos.Select(r => r.Name).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+            Repos = [.. repos.Select(r => r.Name).Distinct(StringComparer.Ordinal).Order(NaturalOrder.Instance)];
             OnChanged(nameof(HasRepoPicker));
             OnChanged(nameof(SelectedRepo));
         }
