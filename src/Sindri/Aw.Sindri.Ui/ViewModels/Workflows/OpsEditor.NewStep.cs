@@ -41,6 +41,18 @@ internal sealed partial class OpsEditor
         OnChanged(nameof(HasPendingStep));
     }
 
+    // True while FailureText is Sindri's refusal of an edit (or an unsure answer), not a failed read: closing the sheet drops the edit, so its refusal goes too (#3944).
+    private bool _refused;
+
+    /// <summary>Clears the failure line when it is the refusal of an edit the closed sheet held; a failed read after a save ("The edit was saved, but ...") stays.</summary>
+    internal void ClearRefusal()
+    {
+        if (_refused)
+        {
+            (FailureText, _refused) = (string.Empty, false);
+        }
+    }
+
     /// <summary>Drops the new step being filled in, with whatever was typed.</summary>
     internal void ClearPendingStep()
     {
