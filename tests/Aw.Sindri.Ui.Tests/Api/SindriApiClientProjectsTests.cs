@@ -141,6 +141,7 @@ public sealed class SindriApiClientProjectsTests
     private static async Task<ProjectList> Read(JsonNode served) => (await Client(new Canned(HttpStatusCode.OK, served.ToJsonString())).Projects(_api, all: true, Token)).Value;
 
     // One open PR per state, the third in redState; two open items, three done, one running agent.
+#pragma warning disable MA0136 // a raw string with line ends is the readable form of this JSON
     private static string Truth(string redState, string level) => $$"""
         {
           "openPrs": [
@@ -157,6 +158,7 @@ public sealed class SindriApiClientProjectsTests
           "health": { "level": "{{level}}", "reason": "At risk: 1 of 4 PRs red, 1 not checked yet" }
         }
         """;
+#pragma warning restore MA0136
 
     private sealed class Canned(HttpStatusCode code, string body) : HttpMessageHandler
     {
