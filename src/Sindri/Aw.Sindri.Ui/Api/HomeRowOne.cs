@@ -1,4 +1,6 @@
-namespace Aw.Sindri.Ui.Api.Home;
+using Aw.Sindri.Ui.Api.Home;
+
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>GET /sindri/home/rows/{id}: one row with its blocks list.</summary>
 /// <param name="AsOf">How fresh the views are.</param>

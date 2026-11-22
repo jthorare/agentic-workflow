@@ -1,4 +1,6 @@
-namespace Aw.Sindri.Ui.Api.Home;
+using Aw.Sindri.Ui.Api.Home;
+
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>GET /sindri/home/done (home spec §5.4): the rows done in the last <paramref name="KeepDays"/> days, the most recently done first.</summary>
 /// <param name="AsOf">How fresh the views are.</param>

@@ -4,6 +4,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Home;
 using Aw.Sindri.Core.Views;
+using Aw.Sindri.Features.HomeSession;
 
 namespace Aw.Sindri.Features.GetHomeRow;
 

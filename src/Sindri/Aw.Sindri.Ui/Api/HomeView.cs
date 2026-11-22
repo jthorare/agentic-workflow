@@ -1,4 +1,6 @@
-namespace Aw.Sindri.Ui.Api.Home;
+using Aw.Sindri.Ui.Api.Home;
+
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>GET /sindri/home (home spec §8): a page of the rows that need the owner, each group in ranked order.</summary>
 /// <param name="AsOf">How fresh the views are.</param>

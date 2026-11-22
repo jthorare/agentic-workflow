@@ -1,7 +1,7 @@
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Home;
 
-namespace Aw.Sindri.Features;
+namespace Aw.Sindri.Features.HomeSession;
 
 /// <summary>
 /// What an agent session sees of Home (home spec §9): only its own repo's rows, and of a row with no repo (a DM, a mention, a thread reply, a keyword hit, an agent at its limit,

@@ -8,7 +8,6 @@ using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.CodeIndex;
 using Aw.Sindri.Ui.Api.Connections;
 using Aw.Sindri.Ui.Api.Context;
-using Aw.Sindri.Ui.Api.Home;
 using Aw.Sindri.Ui.Api.Jobs;
 using Aw.Sindri.Ui.Api.Linear;
 using Aw.Sindri.Ui.Api.Memory;
