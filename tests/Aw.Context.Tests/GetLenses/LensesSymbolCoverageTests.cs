@@ -85,7 +85,7 @@ public sealed class LensesSymbolCoverageTests
     [Fact, Trait("Lane", "unit")]
     public void Files_in_two_repos_join_to_the_worst_state_and_keep_the_answering_repos_files()
     {
-        var ok = new LensSymbols(SymbolsState.Ok, null, []) { Files = [new FileSymbolsRow("a.ts", [], "aaa", null, SymbolsState.Ok)], Commit = "aaa" };
+        var ok = new LensSymbols(SymbolsState.Ok, Reason: null, []) { Files = [new FileSymbolsRow("a.ts", [], "aaa", AsOfCommit: null, SymbolsState.Ok)], Commit = "aaa" };
         var down = LensSymbols.Unavailable with { Reason = "index damaged" };
 
         var joined = Features.GetLenses.RepoSymbols.Join([ok, down]);
@@ -96,7 +96,7 @@ public sealed class LensesSymbolCoverageTests
     [Fact, Trait("Lane", "unit")]
     public void An_ok_and_a_stale_repo_join_to_stale()
     {
-        var ok = new LensSymbols(SymbolsState.Ok, null, []) { Files = [] };
+        var ok = new LensSymbols(SymbolsState.Ok, Reason: null, []) { Files = [] };
         var stale = new LensSymbols(SymbolsState.Stale, "stale", []) { Files = [], AsOfMismatch = true };
 
         var joined = Features.GetLenses.RepoSymbols.Join([ok, stale]);
