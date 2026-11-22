@@ -29,8 +29,8 @@ public abstract class GraphTranscriptPortContract
 
         var listed = await port.HumanTurns(new TranscriptTurnQuery(_now.AddDays(-7), [], Repo: null), Token);
 
-        Assert.Equal(["transcript:0000000a#5", "transcript:0000000b#3", "transcript:0000000a#1"], listed.Value.Select(static t => t.Ref), StringComparer.Ordinal);
-        Assert.Equal("transcript:0000000b", listed.Value[1].Session);
+        Expect.Sequence(["transcript:0000000a#5", "transcript:0000000b#3", "transcript:0000000a#1"], listed.Value.Select(static t => t.Ref));
+        Expect.Equal("transcript:0000000b", listed.Value[1].Session);
     }
 
     [Fact]
@@ -45,8 +45,8 @@ public abstract class GraphTranscriptPortContract
         var codex = await port.HumanTurns(new TranscriptTurnQuery(_now.AddDays(-7), ["codex"], Repo: null), Token);
         var repo = await port.HumanTurns(new TranscriptTurnQuery(_now.AddDays(-7), [], "/r/a"), Token);
 
-        Assert.Equal(["transcript:0000000b#1"], codex.Value.Select(static t => t.Ref), StringComparer.Ordinal);
-        Assert.Equal(["transcript:0000000b#1", "transcript:0000000a#1"], repo.Value.Select(static t => t.Ref), StringComparer.Ordinal);
+        Expect.Sequence(["transcript:0000000b#1"], codex.Value.Select(static t => t.Ref));
+        Expect.Sequence(["transcript:0000000b#1", "transcript:0000000a#1"], repo.Value.Select(static t => t.Ref));
     }
 
     [Fact]
@@ -59,8 +59,9 @@ public abstract class GraphTranscriptPortContract
         var read = await port.Read(["transcript:0000000a#7", "transcript:ffffffff#1", "transcript:0000000a#1"], withBefore: true, Token);
         var bare = await port.Read(["transcript:0000000a#7"], withBefore: false, Token);
 
-        Assert.Equal([("transcript:0000000a#7", "no, the other way", "the answer"), ("transcript:0000000a#1", "first ask", (string?)null)], read.Value.Select(static t => (t.Ref, t.Text, t.Before)));
-        Assert.Null(Assert.Single(bare.Value).Before);
+        Expect.Sequence([("transcript:0000000a#7", "no, the other way", (string?)"the answer"), ("transcript:0000000a#1", "first ask", null)], read.Value.Select(static t => (t.Ref, t.Text, t.Before)));
+        Expect.Equal(1, bare.Value.Count);
+        Expect.Equal(expected: null, bare.Value[0].Before);
     }
 
     private static TranscriptSeed Session(string session, string provider, string? repo, bool subagent, params TranscriptSeedTurn[] turns) => new(session, provider, repo, subagent, turns);
