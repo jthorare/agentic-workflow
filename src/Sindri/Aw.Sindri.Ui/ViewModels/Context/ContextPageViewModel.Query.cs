@@ -18,7 +18,7 @@ internal sealed partial class ContextPageViewModel
             return (words, false, []);
         }
 
-        var asked = await Ports.Api.QueryAnchors(api, AnchorText.Trim(), cancellationToken).ConfigureAwait(true);
+        var asked = await Ports.Api.QueryAnchors(api, Asked.Trim(), cancellationToken).ConfigureAwait(true);
         if (generation != _generation)
         {
             return null;
@@ -35,13 +35,13 @@ internal sealed partial class ContextPageViewModel
         // why a miss is one anchor: the whole text may be a node's label, and a question is never a list of anchors
         if (!asked.IsSuccess)
         {
-            return ([AnchorText.Trim()], false, []);
+            return ([Asked.Trim()], false, []);
         }
 
         KeepTitles(asked.Value.Suggestions);
         return asked.Value.Anchors.Count > 0
             ? ([.. asked.Value.Anchors.Distinct(StringComparer.Ordinal)], true, [])
-            : ([AnchorText.Trim()], false, [.. asked.Value.SuggestedAnchors.Distinct(StringComparer.Ordinal)]);
+            : ([Asked.Trim()], false, [.. asked.Value.SuggestedAnchors.Distinct(StringComparer.Ordinal)]);
     }
 
     // Anchors are keys like surface:pane/Drop; every word of one has a colon. Anything else is a person's question.

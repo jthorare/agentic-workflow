@@ -94,7 +94,8 @@
     </Grid>
 
     <!-- The control row (#3677): the question box takes the row, with the repo and the Map or Files switch to its right and the coverage strip after them. No label: the box's placeholder and name say Ask a question. -->
-    <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="16" MinHeight="{StaticResource Size.TopBar}">
+    <!-- Bound to the page's width: the page scrolls, so a star column would otherwise shrink to what the box wants and leave the row short of the view switch (as ContextChoices does). -->
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="16" MinHeight="{StaticResource Size.TopBar}" HorizontalAlignment="Left" Width="{Binding $parent[UserControl].Bounds.Width}">
       <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" VerticalAlignment="Center" Margin="0,0,0,8">
         <TextBox x:Name="AnchorBox" KeyDown="OnAnchorKey" MinWidth="220" Text="{Binding AnchorText, Mode=TwoWay}" PlaceholderText="{Binding AnchorHint}"
                  AutomationProperties.Name="{Binding AnchorLabel}" />

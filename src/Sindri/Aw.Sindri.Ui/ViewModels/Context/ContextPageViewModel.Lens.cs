@@ -57,7 +57,7 @@ internal sealed partial class ContextPageViewModel
     /// <returns>When the answer is drawn.</returns>
     public async Task Submit(CancellationToken cancellationToken = default)
     {
-        var words = Words(AnchorText);
+        var words = Words(Asked);
         if (words.Count == 0)
         {
             _ = BackToWholeMap();   // Enter on an empty box returns to the full map
@@ -130,17 +130,16 @@ internal sealed partial class ContextPageViewModel
     /// <returns>When the answer is drawn.</returns>
     public Task Pick(string anchor, string? title, CancellationToken cancellationToken = default)
     {
-        AnchorText = anchor;
-        var read = Submit(cancellationToken);
-        return title is null ? read : ShowTitleAfter(read, title);
+        // The box shows the title; what is read is the key (a person typing the same title later reads it as a question).
+        _picked = title is null ? null : (anchor, title);
+        AnchorText = title ?? anchor;
+        return Submit(cancellationToken);
     }
 
-    // The key is what is read; the box then says what a person would have typed (#3677).
-    private async Task ShowTitleAfter(Task read, string title)
-    {
-        await read.ConfigureAwait(true);
-        AnchorText = title;
-    }
+    private (string Key, string Title)? _picked;
+
+    // What the box asks: the key of a chip whose title it still shows, else what is typed.
+    private string Asked => _picked is { } p && string.Equals(AnchorText, p.Title, StringComparison.Ordinal) ? p.Key : AnchorText;
 
     private List<string> Suggestions(Error error)
     {

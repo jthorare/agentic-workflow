@@ -145,7 +145,7 @@ public sealed class ConceptRowViewTests
             {
                 window.Show();
                 Settle(window);
-                var rows = view.GetVisualDescendants().OfType<Button>().Where(IsOpenButton).ToList();
+                var rows = view.GetVisualDescendants().OfType<Button>().Where(b => b.Classes.Contains("result-open")).ToList();   // the footer and pin buttons are not rows
                 _ = rows[0].Focus(NavigationMethod.Tab);
 
                 window.KeyPress(Key.Down, RawInputModifiers.None, PhysicalKey.ArrowDown, keySymbol: null);

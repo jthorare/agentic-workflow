@@ -48,7 +48,7 @@ internal sealed partial class ContextPageViewModel : ObservableObject
     public string AnchorLabel { get; } = Labels.ContextAnchor;
 
     /// <summary>The anchor box's hint.</summary>
-    public string AnchorHint { get; } = Labels.ContextAnchorHint;
+    public string AnchorHint { get; } = Labels.ContextAnchor;
 
     /// <summary>What is typed in the anchor box.</summary>
     public string AnchorText

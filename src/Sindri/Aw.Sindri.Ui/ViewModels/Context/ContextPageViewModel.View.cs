@@ -4,7 +4,7 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 internal sealed partial class ContextPageViewModel
 {
     /// <summary>The label of the starting points box.</summary>
-    public string StartsAtLabel { get; } = Labels.ContextMapStartsAt;
+    public string StartsAtLabel { get; } = Labels.ContextAnchor;
 
     /// <summary>The view switch's name.</summary>
     public string ViewName { get; } = Labels.ContextMapViewName;

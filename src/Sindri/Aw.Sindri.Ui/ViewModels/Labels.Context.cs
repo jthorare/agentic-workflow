@@ -20,9 +20,6 @@ internal static partial class Labels
     /// <summary>The anchor box's name.</summary>
     internal const string ContextAnchor = "Ask a question";
 
-    /// <summary>The anchor box's hint.</summary>
-    internal const string ContextAnchorHint = "Ask a question";
-
     /// <summary>The head of a read: how many topics it was asked about. The map's version is in the answer's closed disclosure, not up front.</summary>
     /// <param name="anchors">How many anchors were found.</param>
     /// <returns>The head line.</returns>

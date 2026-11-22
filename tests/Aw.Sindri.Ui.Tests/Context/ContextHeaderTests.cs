@@ -27,5 +27,5 @@ public sealed class ContextHeaderTests
 
     [Fact]
     public void Labels_keep_the_question_words_in_one_place() =>
-        Assert.Equal(("Ask a question", "Ask a question", "Ask a question"), (Labels.ContextMapStartsAt, Labels.ContextAnchorHint, Labels.ContextAnchor));
+        Assert.Equal(("Ask a question", "Ask a question", "Ask a question"), (Labels.ContextAnchor, Labels.ContextAnchor, Labels.ContextAnchor));
 }
