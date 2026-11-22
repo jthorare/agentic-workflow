@@ -28,16 +28,16 @@ public sealed class MessagesStoreTests : IDisposable
         var seeded = await _home.Put(
             new StoredMessage(Harbor, new MessageTs(AdaRoot), new MessageTs(AdaRoot), "U0ADA", "<@U0JOI> review #3120 when you can", Mine: false, NamesMe: true),
             new StoredMessage(Harbor, new MessageTs(LeeRoot), null, "U0LEE", "lunch Friday", Mine: false, NamesMe: false));
-        Assert.Equal(["slack:thread:T0HARBOR/C0HARBOR/1767771000.000100", "slack:thread:T0HARBOR/C0HARBOR/1767772000.000100"], seeded);
+        Assert.Equal(["slack:thread:T0HARBOR/C0HARBOR/1767771000.000100", "slack:thread:T0HARBOR/C0HARBOR/1767772000.000100"], seeded, StringComparer.Ordinal);
         var leeRev = Rev(LeeRoot);
 
         // Kim replies in Ada's thread: the write rebuilds that thread only, and so does a rebuild asked for by hand
         var replied = await _home.Put(new StoredMessage(Harbor, new MessageTs("1767771500.000100"), new MessageTs(AdaRoot), "U0KIM", "can you check the group path?", Mine: false, NamesMe: true));
         var touched = await _home.Store.RebuildNeedsReply(Harbor, new MessageTs(AdaRoot), Cancel);
 
-        Assert.Equal(["slack:thread:T0HARBOR/C0HARBOR/1767771000.000100"], replied);
+        Assert.Equal(["slack:thread:T0HARBOR/C0HARBOR/1767771000.000100"], replied, StringComparer.Ordinal);
         Assert.True(touched.IsSuccess);
-        Assert.Equal(["slack:thread:T0HARBOR/C0HARBOR/1767771000.000100"], touched.Value);
+        Assert.Equal(["slack:thread:T0HARBOR/C0HARBOR/1767771000.000100"], touched.Value, StringComparer.Ordinal);
         Assert.Equal(leeRev, Rev(LeeRoot));
         Assert.Equal(3L, Rev(AdaRoot));
         Assert.Equal(1L, _home.Scalar($"SELECT needs_reply FROM thread_state WHERE conversation = '{Harbor}' AND thread_ts = '{AdaRoot}'"));
@@ -50,12 +50,12 @@ public sealed class MessagesStoreTests : IDisposable
     {
         await _home.Conversation("T0HARBOR", "D0SAM", ConversationKind.Dm);
         var asked = await _home.Put(new StoredMessage("D0SAM", new MessageTs("1767771000.000100"), null, "U0SAM", "can you ship the fare table today?", Mine: false, NamesMe: false));
-        Assert.Equal(["slack:dm:T0HARBOR/D0SAM"], asked);
+        Assert.Equal(["slack:dm:T0HARBOR/D0SAM"], asked, StringComparer.Ordinal);
         Assert.Equal(1L, _home.Scalar("SELECT needs_reply FROM thread_state WHERE conversation = 'D0SAM' AND thread_ts = ''"));
 
         var answered = await _home.Put(new StoredMessage("D0SAM", new MessageTs("1767771100.000100"), null, "U0JOI", "on it", Mine: true, NamesMe: false));
 
-        Assert.Equal(["slack:dm:T0HARBOR/D0SAM"], answered);
+        Assert.Equal(["slack:dm:T0HARBOR/D0SAM"], answered, StringComparer.Ordinal);
         Assert.Equal(0L, _home.Scalar("SELECT needs_reply FROM thread_state WHERE conversation = 'D0SAM' AND thread_ts = ''"));
         Assert.Equal("1767771100.000100", _home.Scalar("SELECT my_last_ts FROM thread_state WHERE conversation = 'D0SAM' AND thread_ts = ''"));
     }
@@ -117,7 +117,7 @@ public sealed class MessagesStoreTests : IDisposable
         var removed = await _home.Store.RemoveMessage(Harbor, new MessageTs(LeeRoot), Cancel);
 
         Assert.True(removed.IsSuccess);
-        Assert.Equal(["slack:thread:T0HARBOR/C0HARBOR/1767772000.000100"], removed.Value);
+        Assert.Equal(["slack:thread:T0HARBOR/C0HARBOR/1767772000.000100"], removed.Value, StringComparer.Ordinal);
         Assert.Equal(0L, _home.Matches("timetable"));
         Assert.Null(_home.Scalar($"SELECT newest_ts FROM thread_state WHERE thread_ts = '{LeeRoot}'"));
     }

@@ -20,8 +20,6 @@ public sealed class MessagesReadRouteTests
     // Text the seeded fake holds (M1f seeds it through FakeSlackServer); none of it may reach a session.
     private static readonly string[] _text = ["can you ship the fare table today?", "Sam Lee", "#harbor", "harbor"];
 
-    private static CancellationToken Cancel => TestContext.Current.CancellationToken;
-
     public static TheoryData<string, string> ListRows()
     {
         var rows = new TheoryData<string, string>();
@@ -37,7 +35,7 @@ public sealed class MessagesReadRouteTests
     [MemberData(nameof(ListRows))]
     public Task ApiGoldens_messages_lists(string slug, string scenario) => RedUntil.Phase("M1f", async () =>
     {
-        await using var host = await GoldenHost.Start(temporary: true, Cancel);
+        await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken);
         await Probe(host);
 
         var answer = await host.Http.Ask(Get(MessageScenarios.Path(slug, scenario), Human(host.Token.Value)));
@@ -49,13 +47,13 @@ public sealed class MessagesReadRouteTests
     [Fact(Timeout = 30_000)]
     public Task Session_read_returns_no_text() => RedUntil.Phase("M1f", async () =>
     {
-        await using var host = await GoldenHost.Start(temporary: true, Cancel);
+        await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken);
         await Probe(host);
 
         Answer answer;
         using (AsSession())
         {
-            answer = await host.Http.Ask(Get("/sindri/messages/lists/needs-reply", Human(host.Token.Value)));
+        answer = await host.Http.Ask(Get("/sindri/messages/lists/needs-reply", Human(host.Token.Value)));
         }
 
         Assert.Equal(HttpStatusCode.OK, answer.Status);
@@ -69,6 +67,6 @@ public sealed class MessagesReadRouteTests
     {
         await using var scope = host.App.Services.CreateAsyncScope();
         _ = await scope.ServiceProvider.GetRequiredService<IService<ListMessageRowsRequest, ListMessageRowsResponse>>()
-            .Handle(new ListMessageRowsRequest(MessageList.NeedsReply, After: null, Limit: 1), Cancel);
+            .Handle(new ListMessageRowsRequest(MessageList.NeedsReply, After: null, Limit: 1), TestContext.Current.CancellationToken);
     }
 }
