@@ -18,11 +18,11 @@ def poll():
     rows=tm("capture-pane","-e","-p","-t",pane).split("\n")
     if rows and rows[-1]=="": rows.pop()
     rows=(rows+[""]*ROWS)[:ROWS]
-    d=tm("display-message","-p","-t",pane,"#{cursor_x} #{cursor_y} #{pane_width} #{pane_height} #{pane_in_mode} #{alternate_on} #{pane_dead}").split()
-    if len(d)<7: return rows
+    d=tm("display-message","-p","-t",pane,"#{cursor_x} #{cursor_y} #{pane_width} #{pane_height} #{pane_in_mode} #{alternate_on} #{pane_dead} #{history_size}").split()
+    if len(d)<8: return rows
     if rows!=last:
         seq+=1; last=rows
-        out.append({"dir":"out","ms":ms(),"msg":{"t":"frame","seq":seq,"rows":rows,"cursor":{"x":int(d[0]),"y":int(d[1])},"w":int(d[2]),"h":int(d[3]),"alt":int(d[5]),"inMode":int(d[4]),"dead":int(d[6])}})
+        out.append({"dir":"out","ms":ms(),"msg":{"t":"frame","seq":seq,"rows":rows,"cursor":{"x":int(d[0]),"y":int(d[1])},"w":int(d[2]),"h":int(d[3]),"alt":int(d[5]),"inMode":int(d[4]),"dead":int(d[6]),"back":0,"hist":int(d[7])}})
     return rows
 def run(secs):
     end=time.time()+secs

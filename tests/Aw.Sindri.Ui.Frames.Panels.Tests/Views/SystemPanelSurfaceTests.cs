@@ -20,8 +20,9 @@ public sealed class SystemPanelSurfaceTests : FrameHost
     public Task A_System_card_has_no_outer_border_and_its_title_sits_24_px_in() => OnUi(async () =>
     {
         Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, Body);
-        var (window, shell) = await Connected(s => s.Health.CodeIndex.Lines.Count > 0);
-        shell.GoTo(PageId.System);
+        var (window, shell) = await Connected();
+        shell.GoTo(PageId.System);   // #2775: the cards read only while System is the page
+        await Until(window, () => shell.Health.CodeIndex.Lines.Count > 0);
         Settle(window);
         Frame(window, "system-panel-surface", "gh2779-");
 
