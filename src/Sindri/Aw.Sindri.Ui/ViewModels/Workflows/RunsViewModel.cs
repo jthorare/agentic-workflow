@@ -10,7 +10,7 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// One workflow's runs, newest first as the API serves them, under the workflow's name and one line on the revision shown. A workflow with no active revision has no
 /// runs list (Sindri refuses it with SND-GRAPH-105); the page says so in its own words instead of showing an error.
 /// </summary>
-internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : ObservableObject
+internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) : ObservableObject
 {
     /// <summary>The refusal code for a workflow with no active revision.</summary>
     internal const string NotActive = "SND-GRAPH-105";

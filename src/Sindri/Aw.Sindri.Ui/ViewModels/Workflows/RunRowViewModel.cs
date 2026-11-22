@@ -49,6 +49,9 @@ internal sealed class RunRowViewModel : ObservableObject
     /// <summary>"Started 2m ago" while it is live, "Ended 5m ago" after.</summary>
     public string WhenText { get; }
 
+    /// <summary>The exact moment <see cref="WhenText"/> names, in local time: "Mon 9 Mar 2026 · 07:00:00" (the time's tooltip).</summary>
+    public string WhenTip { get; } = string.Empty;
+
     /// <summary>Why it failed, as served; empty otherwise.</summary>
     public string ErrorText { get; }
 
