@@ -552,10 +552,10 @@ graph TD
 
 Task guidelines:
 - Order tasks by dependency graph (topological sort)
-- The last two tasks are always the closing sweeps from `_shared/closing-sweeps.md`: the performance sweep, then the bug sweep. The performance sweep depends on every build task and the bug sweep depends on the performance sweep. Each one's Definition of Done is its exit check, word for word. `- reqs: none` is allowed only on these two
+- The last two tasks are always the closing sweeps from `_shared/closing-sweeps.md`: the performance sweep, then the bug sweep. The performance sweep depends on every build task and the bug sweep depends on the performance sweep. Each one's Definition of Done is its exit check, word for word.
 - Complexity values: `small` (< 1 hour), `medium` (1-4 hours), `large` (4+ hours)
 - The `domain` field is `engineering`, `design`, or `product`
-- The `reqs` field traces each task back to one or more requirements
+- The `reqs` field traces each task back to one or more requirements. Only the two closing sweeps take `- reqs: none`
 - Each task's keys are list items (`- key: value`) right under its `## TASK-n: {title}` heading, never a `---` block: a `key: value` line followed by `---` reads as a heading in Markdown, and Sindri reads `- reqs:` and `- depends:` as links to the requirements and the tasks it waits on. `- depends: none` for a task with no dependencies
 - Each task has `owner` (assigned name or "unassigned") and `status` (todo/in-progress/blocked/done)
 - Each task should be atomic — one logical unit of work
