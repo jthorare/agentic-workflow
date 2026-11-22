@@ -31,6 +31,12 @@ internal sealed partial class ContextPageViewModel
     /// <summary>Whether a map is drawn.</summary>
     public bool HasStack => Map is not null;
 
+    /// <summary>What the answer searched and why the rest was not; empty on an exact hit or when every area was searched.</summary>
+    public string Coverage => Map?.Coverage ?? string.Empty;
+
+    /// <summary>Whether there is a coverage sentence to show.</summary>
+    public bool HasCoverage => Coverage.Length > 0;
+
     /// <summary>Whether the map drawn is the draft one (the page head says so).</summary>
     public bool IsDraft => Map?.Draft == true;
 
@@ -90,20 +96,23 @@ internal sealed partial class ContextPageViewModel
         if (result.IsSuccess)
         {
             Show(result.Value, choices: [], fromQuestion);
+            ShowAnswerFiles(fromQuestion);
             NoteRead();
             await ZoomIntoWhole(api, cancellationToken).ConfigureAwait(true);
         }
         else if (string.Equals(result.Error.Code, NoMapCode, StringComparison.Ordinal))
         {
             Show(view: null, choices: []);
-            Problem = result.Error.Message;
+            ShowAnswerFiles(fromQuestion);
+            ShowProblem(result.Error);
             await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
         }
         else
         {
             // A miss is said in plain words and the map that was on the page stays: nothing is cleared or dimmed for it.
+            ShowAnswerFiles(fromQuestion);
             Choices = Suggestions(result.Error) is { Count: > 0 } own ? own : suggested;
-            Problem = Labels.ContextRefusal(result.Error.Code, result.Error.Message, AnchorText.Trim());
+            ShowProblem(result.Error, Labels.ContextRefusal(result.Error.Code, result.Error.Message, AnchorText.Trim()));
             await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
         }
 
@@ -173,6 +182,9 @@ internal sealed partial class ContextPageViewModel
         ForgetSelection();
         Problem = string.Empty;
         Choices = choices;
+        AnswerFiles = [];
+        _answerFilesHidden = 0;
+        StageMessage = string.Empty;
         if (view is null)
         {
             Head = Whole.IsReady ? Whole.Head : string.Empty;   // no neighbourhood: the whole map is what the page shows
@@ -182,7 +194,7 @@ internal sealed partial class ContextPageViewModel
         }
 
         Head = fromQuestion ? Labels.ContextFromQuestion(view.Anchors.Count) : Labels.ContextHead(view.Anchors.Count);
-        Map = new ContextMapViewModel(view) { Chosen = key => _ = Select(key) };
+        Map = new ContextMapViewModel(view, exact: !fromQuestion) { Chosen = key => _ = Select(key) };
         Missing = [.. (view.MissingAnchors ?? []).Select(a => new ContextLine($"{a} · {Labels.ContextNotFound}"))];
     }
 
@@ -190,12 +202,20 @@ internal sealed partial class ContextPageViewModel
     {
         OnChanged(nameof(Map));
         OnChanged(nameof(Head));
+        OnChanged(nameof(AnswerFiles));
+        OnChanged(nameof(HasAnswerFiles));
+        OnChanged(nameof(AnswerFilesMore));
+        OnChanged(nameof(HasAnswerFilesMore));
+        OnChanged(nameof(StageMessage));
+        OnChanged(nameof(HasStageMessage));
         OnChanged(nameof(HasHead));
         OnChanged(nameof(Missing));
         OnChanged(nameof(Choices));
         OnChanged(nameof(ChoiceRows));
         OnChanged(nameof(Problem));
         OnChanged(nameof(HasStack));
+        OnChanged(nameof(Coverage));
+        OnChanged(nameof(HasCoverage));
         OnChanged(nameof(MapVisible));
         OnChanged(nameof(ShowWhole));
         OnChanged(nameof(ShowWholeStatus));

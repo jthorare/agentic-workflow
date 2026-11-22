@@ -74,6 +74,15 @@ public sealed class CliFormTests
         Assert.Equal("sindri item add <title> [--repo agentic-workflow]", scoped.Value.Text);
     }
 
+    // #3733: a graph run id is '<slug>@<revision>:<occurrence>', and '@' already stands in forms ('<recipe>@<hash>'), so a run id fills a placeholder
+    [Fact, Trait("Lane", "unit")]
+    public void Fill_takes_a_run_id_with_its_at_sign()
+    {
+        var filled = CliForm.Parse("sindri wf run-show <run>").Value.Fill("run", new LooseId("nightly@3:12"));
+
+        Assert.Equal("sindri wf run-show nightly@3:12", filled.Value.Text);
+    }
+
     [Theory, Trait("Lane", "unit")]
     [InlineData("hash")]
     [InlineData("repo>")]

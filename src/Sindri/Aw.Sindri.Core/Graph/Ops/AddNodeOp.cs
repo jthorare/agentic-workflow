@@ -9,7 +9,7 @@ namespace Aw.Sindri.Core.Graph.Ops;
 /// <param name="Type">The block type, such as 'notify'.</param>
 /// <param name="Title">What the canvas shows, or null.</param>
 /// <param name="Config">The block's config; null means an empty object.</param>
-/// <param name="OnFailure">'stop' or 'continue', or null for the default.</param>
+/// <param name="OnFailure">'stop', 'continue' or 'skip-item' (a for_each body node only), or null for the default.</param>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record AddNodeOp(
     [property: JsonRequired] NodeId Id,

@@ -14,7 +14,7 @@ internal sealed class YamlProfileSource(SindriSettings settings, JsonSerializerO
         if (!File.Exists(path))
         {
             return SindriErrors.ProfileMissing.With(
-                $"{path} doesn't exist (fix: run 'sindri profile init', then and 'sindri repo add <path>'; keys are in docs/csharp/sindri.md)");
+                $"{path} doesn't exist (fix: run 'sindri profile init', then 'sindri repo add <path>'; keys are in docs/csharp/sindri.md)");
         }
 
         string yaml;
@@ -24,11 +24,11 @@ internal sealed class YamlProfileSource(SindriSettings settings, JsonSerializerO
         }
         catch (IOException e)
         {
-            return SindriErrors.ProfileMissing.With($"{path} can't be read: {e.Message}");
+            return SindriErrors.ProfileUnreadable.With($"{path} can't be read: {e.Message} (fix: check the file's permissions, e.g. chmod 600 {path})");
         }
         catch (UnauthorizedAccessException e)
         {
-            return SindriErrors.ProfileMissing.With($"{path} can't be read: {e.Message}");
+            return SindriErrors.ProfileUnreadable.With($"{path} can't be read: {e.Message} (fix: check the file's permissions, e.g. chmod 600 {path})");
         }
 
         return YamlToJson.TryConvert(yaml, out var json) is { } problem

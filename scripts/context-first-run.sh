@@ -3,6 +3,7 @@
 # Walk-through and what to check at each step: docs/sindri/first-context-run.md.
 #
 #   scripts/context-first-run.sh up [--dry-run] [--no-ui] [--no-embeddings] [--no-graph] [--stop-after N]
+#   scripts/context-first-run.sh up --time [--dry-run]      time home, profile, serve, app and rows; never waits on the index or the map
 #   scripts/context-first-run.sh continue [...]     the same as up: every step checks its outcome first and skips what is done
 #   scripts/context-first-run.sh status [--dry-run]
 #   scripts/context-first-run.sh down [--dry-run]
@@ -25,6 +26,15 @@
 # down    `sindri stop`, closes the app this script opened, and deletes the scratch home. Nothing else is touched.
 #
 # --stop-after N ends `up` with exit 0 once step N (0 to 7) is done; scripts/model-limit-check.sh stops after the index build (5).
+# --time (up only) times six steps with a wall clock and stops after the sixth: home (folder and marker exist), profile (init, repo,
+#   `profile validate` exit 0), serve (control.json written and `status --json` answers), workflow (`wf create hello-sindri
+#   --template hello-sindri` unless `wf show` answers, `wf activate`, `wf run`), app (sindri-ui with AW_UI_DRIVER=1 under Xvfb,
+#   `aw-ui-driver ready`) and rows (at least one row under NeedsYouRows, RunningRows or QueuedRows on Home: the item "Hello from
+#   Sindri" that hello-sindri's last node adds). It prints
+#   `first-run <step> <seconds>` per step and `first-run total <seconds>`, and writes the same to <home>/first-run.json
+#   ({"steps":{...},"total":N}). The preflight skips ollama and graphify, and the index and the map are never waited on. A rows wait
+#   that passes FIRST_RUN_ROWS_TIMEOUT prints `first-run rows timeout`, still prints the steps that finished and exits 1. Not with
+#   --stop-after or --no-ui. The app is stopped at the end (the plane stays up for `down`).
 # --dry-run prints every command it would run (and the checks it would make) and runs nothing, writes nothing: not the home,
 # not a profile, no build. It always shows the whole path as if nothing were done yet.
 #
@@ -40,6 +50,9 @@
 #   FIRST_RUN_CONTEXT_EXTRA   YAML lines, indented two spaces, appended to the profile's context: section when it is written; default none
 #   SINDRI                    the sindri command line, split on spaces; default `sindri` on the PATH (the C# build
 #                             scripts/install-cs.sh links; run it first)
+#   FIRST_RUN_ROWS_TIMEOUT    --time: seconds to wait for a Home row; default 180
+#   FIRST_RUN_UI_DRIVER       --time: the aw-ui-driver command line, split on spaces; default scripts/aw-ui-driver.sh
+#   FIRST_RUN_XVFB            --time: 0 uses the DISPLAY you have instead of starting Xvfb (tests/ui-checks/xvfb-lib.sh); default 1
 #   AW_SINDRI_UI              the sindri-ui binary; default $AW_STATE_DIR/bin/cs/current/sindri-ui
 # It exports AW_SINDRI_APP_NO_MCP=1 for every Sindri it starts, so the scratch plane never registers a 'sindri' MCP server in ~/.claude.json.
 #
@@ -49,20 +62,21 @@ set -uo pipefail
 
 die()   { echo "context-first-run: $*" >&2; exit 2; }
 broke() { echo "context-first-run: $*" >&2; exit 1; }
-usage() { sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 
 [ "$#" -ge 1 ] || usage
 action="$1"; shift
 case "$action" in up|continue|status|down) ;; -h|--help) usage ;; *) usage ;; esac
 [ "$action" = continue ] && action=up
 
-dry=0 no_ui=0 no_embeddings=0 no_graph=0 stop_after=
+dry=0 no_ui=0 no_embeddings=0 no_graph=0 stop_after= time_mode=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --dry-run) dry=1 ;;
     --no-ui) [ "$action" = up ] || usage; no_ui=1 ;;
     --no-embeddings) [ "$action" = up ] || usage; no_embeddings=1 ;;
     --no-graph) [ "$action" = up ] || usage; no_graph=1 ;;
+    --time) [ "$action" = up ] || usage; time_mode=1 ;;
     --stop-after)
       [ "$action" = up ] && [ "$#" -ge 2 ] || usage
       case "$2" in [0-7]) stop_after="$2" ;; *) die "--stop-after takes a step number 0 to 7 (got '$2')" ;; esac
@@ -71,6 +85,13 @@ while [ "$#" -gt 0 ]; do
   esac
   shift
 done
+
+if [ "$time_mode" = 1 ]; then
+  [ -z "$stop_after" ] || die "--time stops after its own fifth step; it takes no --stop-after"
+  [ "$no_ui" = 0 ] || die "--time starts the app; it takes no --no-ui"
+  # Nothing waits on the index, so the layers that need ollama and graphify stay off.
+  no_embeddings=1 no_graph=1
+fi
 
 # The tmux the team shares must never be reached from here (AGENTS memory: lanes inherit TMUX).
 unset TMUX TMUX_PANE
@@ -147,6 +168,8 @@ sx_out() {
   if [ "$dry" = 1 ]; then echo "+ $(shown) $(words "$@")"; OUT=""; RC=0; return 0; fi
   OUT="$(AW_SINDRI_HOME="$home" AW_SINDRI_PORT="$port" "${SX[@]}" "$@")"; RC=$?
 }
+# sx_quiet <args>: sindri like sx, for a read whose failure is an answer (never printed in a dry run).
+sx_quiet() { AW_SINDRI_HOME="$home" AW_SINDRI_PORT="$port" "${SX[@]}" "$@"; }
 # plain <command…>: any other command, printed in a dry run.
 plain() {
   if [ "$dry" = 1 ]; then echo "+ $*"; return 0; fi
@@ -166,8 +189,12 @@ preflight() {
   if [ "$dry" = 1 ]; then
     echo "  check: git, jq on PATH"
     echo "  check: $repo_path is a git checkout with a clean tree whose HEAD is contained in origin/main or main (the code index never builds from another branch)"
-    echo "  check: ollama on PATH, answering on 127.0.0.1:11434, with the pinned model from context/code-index.lock"
-    echo "  check: the code-index graphify under $state/cache/code-index/graphify-*, and bwrap (Linux) for its sandbox"
+    if [ "$time_mode" = 1 ]; then
+      echo "  skip: ollama and graphify (--time never waits on the index)"
+    else
+      echo "  check: ollama on PATH, answering on 127.0.0.1:11434, with the pinned model from context/code-index.lock"
+      echo "  check: the code-index graphify under $state/cache/code-index/graphify-*, and bwrap (Linux) for its sandbox"
+    fi
     echo "  check: the pinned temporal binary under $state/cache/bin/temporal-*"
     echo "  check: nothing but this script's own plane listens on port $port"
     return 0
@@ -423,6 +450,155 @@ open_ui() {
   echo "  open (pid $(cat "$home/first-run/ui.pid")); click Context in the rail"
 }
 
+# ---- --time: the first run on a clock ----
+rows_timeout="${FIRST_RUN_ROWS_TIMEOUT:-180}"
+read -r -a UIDRV <<<"${FIRST_RUN_UI_DRIVER:-$root/scripts/aw-ui-driver.sh}"
+TIMES=""   # "<step> <seconds>" lines, in order
+T_TOTAL=0
+
+# now_ms: milliseconds since the epoch (date +%s%3N where it works, else python3: macOS date has no %N).
+now_ms() {
+  local n; n="$(date +%s%3N 2>/dev/null)"
+  case "$n" in '' | *[!0-9]*) n="$(python3 -c 'import time; print(int(time.time()*1000))')" ;; esac
+  printf '%s' "$n"
+}
+# secs <from_ms> <to_ms>: the span in seconds with one decimal.
+secs() { awk -v a="$1" -v b="$2" 'BEGIN { printf "%.1f", (b - a) / 1000 }'; }
+# lap <step>: the step ended now; record it (T_LAST is the end of the step before).
+lap() {
+  local t; t="$(now_ms)"
+  TIMES="$TIMES$1 $(secs "$T_LAST" "$t")"$'\n'
+  T_LAST="$t"
+}
+# report <ok>: the step lines, the total, and first-run.json in the home (when it exists). ok is true or false.
+report() {
+  local step val steps_json="" total
+  total="$(secs "$T_START" "$(now_ms)")"
+  while read -r step val; do
+    [ -n "$step" ] || continue
+    echo "first-run $step $val"
+    steps_json="$steps_json${steps_json:+,}\"$step\":$val"
+  done <<<"$TIMES"
+  echo "first-run total $total"
+  if [ -d "$home" ]; then
+    printf '{"ok":%s,"steps":{%s},"total":%s}\n' "$1" "$steps_json" "$total" >"$home/first-run.json"
+  fi
+}
+
+# ui_cmd: the driver, pointed at the app this script started.
+ui_drv() { AW_UI_DRIVER_DIR="$home/first-run/driver" "${UIDRV[@]}" "$@"; }
+
+time_serve_files() {
+  # serve ends when control.json is written and status answers (start_serve checked the answer).
+  local i
+  for i in $(seq 1 50); do [ -f "$home/control.json" ] && return 0; sleep 0.2; done
+  broke "step 4 (serve): the control plane answers but $home/control.json was never written"
+}
+
+# time_workflow: make (unless it exists), activate and run hello-sindri, so Home gets an item. A failed verb ends the run with its stderr.
+time_workflow() {
+  step "workflow: run hello-sindri so Home has a row"
+  local err="$home/.first-run-wf.err" verb
+  if sx_quiet wf show hello-sindri >/dev/null 2>&1; then
+    note "hello-sindri already exists; not created"
+  else
+    sx wf create hello-sindri --template hello-sindri 2>"$err" || broke "workflow: 'wf create hello-sindri' failed: $(cat "$err")"
+  fi
+  sx wf activate hello-sindri 2>"$err" || broke "workflow: 'wf activate hello-sindri' failed: $(cat "$err")"
+  sx wf run hello-sindri 2>"$err" || broke "workflow: 'wf run hello-sindri' failed: $(cat "$err")"
+}
+
+time_start_app() {
+  step "app: sindri-ui with the UI driver on the scratch home"
+  if [ "$FIRST_RUN_XVFB_ON" = 1 ]; then
+    # shellcheck source=../tests/ui-checks/xvfb-lib.sh
+    . "$root/tests/ui-checks/xvfb-lib.sh"
+    xvfb_start 1600x1000x24 || broke "app: no Xvfb display (install xvfb, or set FIRST_RUN_XVFB=0 with a DISPLAY)"
+  fi
+  local ui; ui="$(find_ui)"
+  [ -n "$ui" ] && [ -x "$ui" ] || broke "app: no sindri-ui found; build it with scripts/install-cs.sh, or set AW_SINDRI_UI"
+  mkdir -p "$home/first-run/driver"
+  AW_UI_DRIVER=1 AW_UI_DRIVER_DIR="$home/first-run/driver" AW_SINDRI_HOME="$home" AW_SINDRI_PORT="$port" \
+    nohup "$ui" >"$home/logs/ui.log" 2>&1 &
+  echo $! >"$home/first-run/ui.pid"
+  ui_drv ready --wait-ms 60000 >/dev/null 2>&1 || broke "app: the UI driver never answered (see $home/logs/ui.log)"
+  echo "  the driver answers (pid $(cat "$home/first-run/ui.pid"))"
+}
+
+# rows_seen: success when any of the three Home lists has a descendant that shows text. wait-for takes one selector and has no
+# child count, so this reads each list's tree and counts the nodes that show text.
+rows_seen() {
+  local name n
+  for name in NeedsYouRows RunningRows QueuedRows; do
+    n="$(ui_drv tree --name "$name" --depth 8 2>/dev/null | jq '[.. | objects | select((.text // "") != "")] | length' 2>/dev/null)"
+    case "$n" in '' | *[!0-9]*) continue ;; esac
+    if [ "$n" -ge 1 ]; then echo "  $name has a row"; return 0; fi
+  done
+  return 1
+}
+
+time_wait_rows() {
+  step "rows: the first row on Home"
+  local deadline; deadline=$(( $(now_ms) + rows_timeout * 1000 ))
+  while ! rows_seen; do
+    if [ "$(now_ms)" -ge "$deadline" ]; then
+      stop_app_pid
+      report false
+      echo "first-run rows timeout"
+      exit 1
+    fi
+    sleep 1
+  done
+}
+
+stop_app_pid() {
+  local p; p="$(cat "$home/first-run/ui.pid" 2>/dev/null)"
+  [ -n "$p" ] && kill "$p" 2>/dev/null
+  return 0
+}
+
+do_up_time() {
+  FIRST_RUN_XVFB_ON="${FIRST_RUN_XVFB:-1}"
+  if [ "$dry" = 1 ]; then
+    preflight
+    echo
+    echo "== time: six steps on a wall clock (nothing waits on the index or the map)"
+    make_home
+    echo "  clock: home ends when the folder and marker exist"
+    write_profile
+    echo "  clock: profile ends when 'profile validate' exits 0"
+    start_serve
+    echo "  clock: serve ends when $home/control.json exists and 'status --json' answers"
+    sx wf show hello-sindri
+    check "skip the create when that answers"
+    sx wf create hello-sindri --template hello-sindri
+    sx wf activate hello-sindri
+    sx wf run hello-sindri
+    echo "  clock: workflow ends when 'wf run' exits 0"
+    [ "$FIRST_RUN_XVFB_ON" != 1 ] || echo "+ Xvfb through tests/ui-checks/xvfb-lib.sh"
+    echo "+ AW_UI_DRIVER=1 AW_UI_DRIVER_DIR=$home/first-run/driver AW_SINDRI_HOME=$home AW_SINDRI_PORT=$port <sindri-ui> &"
+    echo "+ ${UIDRV[*]} ready --wait-ms 60000"
+    echo "  clock: app ends when the driver answers"
+    echo "+ poll '${UIDRV[*]} tree --name <list>' for NeedsYouRows, RunningRows, QueuedRows up to $rows_timeout s"
+    echo "  clock: rows ends when one list has a row; on timeout print 'first-run rows timeout' and exit 1"
+    echo "+ print 'first-run <step> <seconds>' per step and 'first-run total <seconds>'; write $home/first-run.json"
+    return 0
+  fi
+  preflight
+  T_START="$(now_ms)"; T_LAST="$T_START"
+  make_home; lap home
+  write_profile; lap profile
+  approval_gate
+  start_serve; time_serve_files; lap serve
+  time_workflow; lap workflow
+  time_start_app; lap app
+  time_wait_rows; lap rows
+  stop_app_pid
+  echo
+  report true
+  echo "context-first-run up --time: done. The plane is still up; clean up with: $self down"
+}
+
 # ---- the verbs ----
 # stopped <step>: with --stop-after <step>, end here (exit 0).
 stopped() {
@@ -434,6 +610,7 @@ stopped() {
 
 do_up() {
   guard
+  if [ "$time_mode" = 1 ]; then do_up_time; return; fi
   preflight; stopped 0
   make_home; stopped 1
   write_profile; stopped 2

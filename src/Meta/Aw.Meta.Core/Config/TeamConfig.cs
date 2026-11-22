@@ -12,6 +12,7 @@ public sealed record TeamConfig
     private RoutingConfig? _routing;
     private DefectsConfig? _defects;
     private WatchConfig? _watch;
+    private DelegationConfig? _delegation;
 #pragma warning restore IDE0032
 
     /// <summary>Creates a config.</summary>
@@ -144,5 +145,13 @@ public sealed record TeamConfig
         // Like Routing: a file without the block reads as the defaults here.
         get => _watch ??= new WatchConfig();
         init => _watch = value;
+    }
+
+    /// <summary>The lane keywords `aw-meta delegate` suggests a lane by when none is given.</summary>
+    public DelegationConfig Delegation
+    {
+        // Like Routing: a file without the block reads as the defaults here.
+        get => _delegation ??= new DelegationConfig();
+        init => _delegation = value;
     }
 }
