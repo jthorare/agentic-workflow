@@ -38,6 +38,7 @@ internal static partial class SkillProposer
         JsonNode?[] nodes =
         [
             Node("start", "manual", "Run with findings and the toolkit repo", []),
+            Node("check", "code", "Check the payload", new JsonObject { ["input"] = "{{trigger.payload}}", ["code"] = CheckCode, ["timeout"] = "10s" }),
             Node("skills", "skill_catalog", "List the skills", []),
             Node("each", "for_each", "Each top finding", new JsonObject { ["items"] = "{{trigger.payload.findings}}", ["maxItems"] = MaxFindings }),
             Node("match", "prompt", "Pick the skill", new JsonObject { ["prompt"] = MatchPrompt, ["output"] = MatchAnswer() }),
@@ -63,7 +64,7 @@ internal static partial class SkillProposer
     // why: one straight line but for the condition, whose true branch goes on to the draft; a false branch ends the item, which then adds nothing to the collect
     private static JsonArray Edges()
     {
-        string[] order = ["start", "skills", "each", "match", "pick", "has_skill", "draft", "entry", "gather", "summary", "tell"];
+        string[] order = ["start", "check", "skills", "each", "match", "pick", "has_skill", "draft", "entry", "gather", "summary", "tell"];
         var edges = new JsonArray();
         for (var i = 1; i < order.Length; i++)
         {

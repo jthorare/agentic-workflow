@@ -6,7 +6,7 @@ Template name: `skill-proposer` (issue 3787, piece 4). This first version ends a
 
 ## What it does
 
-1. `start` (manual) takes the payload below.
+1. `start` (manual) takes the payload below, and `check` (code) stops the run when it has no `repo` or no `findings` list, naming what is missing.
 2. `skills` (`skill_catalog`) lists every skill with its description.
 3. `each` loops over the findings, at most 5. The first ones are the top ranked.
 4. `match` (prompt) picks the skill whose instructions should change, or `none`.
@@ -18,6 +18,8 @@ Template name: `skill-proposer` (issue 3787, piece 4). This first version ends a
 10. `tell` (notify) shows the drafts and how many findings had no skill.
 
 ## The payload
+
+The payload needs both fields. A run without `repo` fails at `check` before any model or agent is asked.
 
 - `findings`: the `findings` of a steering-miner run's `rank` step, as `wf run-show` prints them.
 - `repo`: the name of the toolkit checkout in your profile. The agent works in it.

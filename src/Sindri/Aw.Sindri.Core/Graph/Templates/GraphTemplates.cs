@@ -23,7 +23,7 @@ public static partial class GraphTemplates
             """{"version":1,"name":"hello-sindri","nodes":[ {"id":"start","type":"manual","title":"Start","config":{}}, {"id":"greet","type":"code","title":"Make a greeting","config":{"code":"return \"Hello from Sindri\";","timeout":"60s"}}, {"id":"tell","type":"notify","title":"Tell me","config":{"title":"hello-sindri","body":"{{greet.result}}"}}, {"id":"add_item","type":"create_item","title":"Add an item","config":{"title":"Hello from Sindri"}} ],"edges":[ {"from":"start","to":"greet"}, {"from":"greet","to":"tell"}, {"from":"tell","to":"add_item"} ]}"""),
         (
             SkillProposer.Name,
-            "Run it with the findings of a steering-miner run and the toolkit repo's name: for each of the top 5, a model picks the skill to change and an agent drafts the edit on its own branch.",
+            "Run it with a payload holding 'findings' (from a steering-miner run) and 'repo' (the toolkit repo's name in your profile): for each of the top 5, a model picks the skill to change and an agent drafts the edit on its own branch.",
             SkillProposer.Json()),
     ];
 

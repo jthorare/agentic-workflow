@@ -3,6 +3,27 @@ namespace Aw.Sindri.Core.Graph.Templates;
 internal static partial class SkillProposer
 {
     /// <summary>
+    /// 'check', once at the start: fails the run, naming what is missing, when the payload has no 'repo' (the toolkit repo's name in the profile, where the
+    /// agent works) or no 'findings' list, before any model or agent is asked. Output: repo, findings (the count).
+    /// </summary>
+    public static string CheckCode { get; } = Lines(
+    [
+        "var payload = input as JsonObject;",
+        "var repo = payload?[\"repo\"] is JsonValue value && value.TryGetValue<string>(out var text) ? text.Trim() : string.Empty;",
+        "if (repo.Length == 0)",
+        "{",
+        "    throw new InvalidOperationException(\"the payload needs 'repo': the toolkit repo's name in your profile, where the agent drafts the edit; put it next to 'findings'\");",
+        "}",
+        "",
+        "if (payload?[\"findings\"] is not JsonArray findings)",
+        "{",
+        "    throw new InvalidOperationException(\"the payload needs 'findings': the list a steering-miner run's rank step hands on\");",
+        "}",
+        "",
+        "return new JsonObject { [\"repo\"] = repo, [\"findings\"] = findings.Count };",
+    ]);
+
+    /// <summary>
     /// 'pick', once per finding: keeps the matched skill only when the catalog has that exact name, else 'none'; the reason is cut to 300 characters. Output: skill, why.
     /// </summary>
     public static string PickCode { get; } = Lines(

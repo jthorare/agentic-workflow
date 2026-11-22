@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
@@ -39,7 +40,7 @@ public sealed class SkillProposerTests : IClassFixture<RoslynWarmup>
     {
         var spec = Spec;
 
-        Assert.Equal(["manual", "skill_catalog", "for_each", "prompt", "code", "condition", "run_agent", "code", "collect", "code", "notify"], spec.Nodes.Select(static n => n.Type), StringComparer.Ordinal);
+        Assert.Equal(["manual", "code", "skill_catalog", "for_each", "prompt", "code", "condition", "run_agent", "code", "collect", "code", "notify"], spec.Nodes.Select(static n => n.Type), StringComparer.Ordinal);
         var each = spec.Nodes.Single(static n => n.Type == "for_each");
         Assert.Equal(("{{trigger.payload.findings}}", 5), (each.Config["items"]!.GetValue<string>(), each.Config["maxItems"]!.GetValue<int>()));
         Assert.Contains(spec.Edges, static e => e.Output == "true" && e.To.Value == "draft");
@@ -60,6 +61,28 @@ public sealed class SkillProposerTests : IClassFixture<RoslynWarmup>
         Assert.Contains("never run skill-evals.sh without --selftest, --lint-descriptions or --dry-run", prompt, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("skills/{{pick.result.skill}}/", prompt, StringComparison.Ordinal);
         Assert.DoesNotContain("{{item.refs}}", prompt, StringComparison.Ordinal);   // the agent sees the generic mistake, never the turns behind it
+    }
+
+    [Theory]
+    [InlineData("""{"findings":[]}""")]
+    [InlineData("""{"repo":"  ","findings":[]}""")]
+    [InlineData("null")]
+    public void A_payload_with_no_repo_fails_the_run_at_check_with_a_named_error(string payload)
+    {
+        var result = Execute("check", new JsonObject { ["trigger"] = new JsonObject { ["payload"] = JsonNode.Parse(payload) } });
+
+        Assert.True(result.IsError);
+        Assert.Contains("the payload needs 'repo'", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_payload_with_a_repo_and_no_findings_list_fails_naming_findings_and_a_full_one_passes()
+    {
+        var missing = Execute("check", new JsonObject { ["trigger"] = new JsonObject { ["payload"] = new JsonObject { ["repo"] = "toolkit" } } });
+        var full = Execute("check", new JsonObject { ["trigger"] = new JsonObject { ["payload"] = new JsonObject { ["repo"] = "toolkit", ["findings"] = new JsonArray(1, 2) } } });
+
+        Assert.Contains("the payload needs 'findings'", missing.Error.Message, StringComparison.Ordinal);
+        Assert.Equal(2, JsonNode.Parse(full.Value)!["findings"]!.GetValue<int>());
     }
 
     [Theory]
@@ -129,12 +152,17 @@ public sealed class SkillProposerTests : IClassFixture<RoslynWarmup>
     // why: the engine interpolates the node's 'input' with the run's values, then hands the code its JSON text; the same Template.Render runs here
     private static JsonNode Run(string nodeId, JsonObject scope)
     {
-        var config = Spec.Nodes.Single(n => string.Equals(n.Id.Value, nodeId, StringComparison.Ordinal)).Config;
-        var input = Template.Render(config["input"]!.GetValue<string>(), reference => Lookup(scope, reference));
-        var result = InProcessCodePort.Execute(config["code"]!.GetValue<string>(), input?.ToJsonString() ?? "null", Token);
+        var result = Execute(nodeId, scope);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : null);
         return JsonNode.Parse(result.Value)!;
+    }
+
+    private static Result<string> Execute(string nodeId, JsonObject scope)
+    {
+        var config = Spec.Nodes.Single(n => string.Equals(n.Id.Value, nodeId, StringComparison.Ordinal)).Config;
+        var input = Template.Render(config["input"]!.GetValue<string>(), reference => Lookup(scope, reference));
+        return InProcessCodePort.Execute(config["code"]!.GetValue<string>(), input?.ToJsonString() ?? "null", Token);
     }
 
     private static JsonNode? Lookup(JsonObject scope, string reference)
