@@ -38,7 +38,6 @@ internal static class ProjectTruthPage
         }
 
         ProjectCard With(ProjectCard card) => card with { Truth = ProjectTruths.Build(new ProjectTruthInputs(sources[card.Key], read.Value)) };
-        IReadOnlyList<ProjectFreshnessRow> freshness = read.Value.Owner is null && read.Value.Pulls.Count > 0 ? [.. page.Freshness, NoLogin] : page.Freshness;
-        return page with { Projects = [.. page.Projects.Select(With)], Finished = [.. page.Finished.Select(With)], Hidden = [.. page.Hidden.Select(With)], Freshness = freshness };
+        return page with { Projects = [.. page.Projects.Select(With)], Finished = [.. page.Finished.Select(With)], Hidden = [.. page.Hidden.Select(With)], Freshness = read.Value.Owner is null && read.Value.Pulls.Count > 0 ? [.. page.Freshness, NoLogin] : page.Freshness };
     }
 }

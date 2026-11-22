@@ -7,10 +7,8 @@ using Aw.Sindri.Core.Projects.Truth;
 using Aw.Sindri.Core.Projects.Vocabulary;
 using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Features.ListReviews;
 using Aw.Sindri.Features.ProjectFacts;
 using Aw.Sindri.Testing;
-using Aw.Sindri.Testing.Forge;
 using Aw.Sindri.Tests.Views;
 
 namespace Aw.Sindri.Tests.Projects;
@@ -37,7 +35,7 @@ public sealed class ProjectTruthOwnerTests
     {
         _ = (await _v.Views.Open(ViewSchema.Version, Token)).Value;
         var reviews = new FakeReviewFacts().With(new ReviewFactsSnapshot(pulls, Github: null, new ReviewLibraryFacts(Reading: false, Docs: 0, WithErrors: 0, UnreadableRoots: [])));
-        return new SindriProjectTruthFacts(reviews, new NoSummaries(), _v.Views, new InMemorySessionSnapshot(), _v.Slice.Profiles, new ReviewAccountReader(_account, new FakePullRequests(["github.com"])));
+        return new SindriProjectTruthFacts(reviews, new NoSummaries(), _v.Views, new InMemorySessionSnapshot(), _v.Slice.Profiles, _account);
     }
 
     private static IReadOnlyDictionary<string, IReadOnlyList<string>> NoProfileRepos => new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);

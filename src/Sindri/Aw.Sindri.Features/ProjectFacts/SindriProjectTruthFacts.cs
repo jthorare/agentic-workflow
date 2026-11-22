@@ -1,19 +1,19 @@
 using System.Globalization;
 using Aw.Kernel;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Projects.Truth;
 using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Features.ListReviews;
 
 namespace Aw.Sindri.Features.ProjectFacts;
 
 /// <summary>
 /// <see cref="IProjectTruthFacts"/> over Sindri's own data, one read for the whole page: the stored open PR records (<see cref="IReviewFacts"/>), the newest stored CI summary of each PR in scope
 /// (<see cref="IReviewSummaries"/>, no forge call), the 'items' and 'item-links' views and the collector's live sessions. A session's repo is the profile's name for it, so it is matched to the
-/// "owner/name" of the sources by the name part. The owner's GitHub login is read once per page the way the Reviews read reads it (<see cref="ReviewAccountReader"/>): the profile's
+/// "owner/name" of the sources by the name part. The owner's GitHub login is read once per page the way the Reviews read reads it (<see cref="ReviewConnectRules"/>): the profile's
 /// 'review.login', else the GitHub connection's login, and none while the connection needs connecting.
 /// </summary>
 /// <param name="reviews">The open PR records.</param>
@@ -21,8 +21,8 @@ namespace Aw.Sindri.Features.ProjectFacts;
 /// <param name="views">The 'items' and 'item-links' views.</param>
 /// <param name="sessions">The collector's snapshot.</param>
 /// <param name="approvals">The approved profile, for 'review.login'.</param>
-/// <param name="account">The Reviews read's GitHub account reader.</param>
-internal sealed class SindriProjectTruthFacts(IReviewFacts reviews, IReviewSummaries summaries, IViewReader views, ISessionSnapshot sessions, IApprovedProfile approvals, ReviewAccountReader account) : IProjectTruthFacts
+/// <param name="account">The GitHub connection.</param>
+internal sealed class SindriProjectTruthFacts(IReviewFacts reviews, IReviewSummaries summaries, IViewReader views, ISessionSnapshot sessions, IApprovedProfile approvals, IGitHubAccount account) : IProjectTruthFacts
 {
     public async ValueTask<Result<ProjectTruthFacts>> Read(ProjectSources union, CancellationToken cancellationToken)
     {
@@ -59,8 +59,16 @@ internal sealed class SindriProjectTruthFacts(IReviewFacts reviews, IReviewSumma
     private async ValueTask<string?> Owner(string? lastCode, CancellationToken cancellationToken)
     {
         var approved = await approvals.ForRead(cancellationToken).ConfigureAwait(false);
-        var who = await account.Identity(approved.IsError ? null : approved.Value?.Profile, lastCode, cancellationToken).ConfigureAwait(false);
-        return who is { IsSuccess: true, Value: { Connect: null, Login: { } login } } && !string.IsNullOrWhiteSpace(login) ? login : null;
+        var profile = approved.IsError ? null : approved.Value?.Profile;
+        var current = await account.Current(cancellationToken).ConfigureAwait(false);
+        if (current.IsError || ReviewConnectRules.For(current.Value, ReviewConnectRules.HasProfileToken(profile?.Context), lastCode) is not null)
+        {
+            return null;
+        }
+
+        var typed = profile?.Review?.Login;
+        var login = string.IsNullOrWhiteSpace(typed) ? current.Value.Login : typed;
+        return string.IsNullOrWhiteSpace(login) ? null : login;
     }
 
     private async ValueTask<Result<IReadOnlyList<ProjectTruthItem>>> Items(CancellationToken cancellationToken)
