@@ -108,10 +108,11 @@ internal partial interface ISindriApi
     /// <returns>The newest revision, SND-GRAPH-008 for an unknown workflow, or SND-UI-002/003.</returns>
     public Task<Result<WorkflowPaused>> PauseWorkflow(Uri api, string slug, CancellationToken cancellationToken);
 
-    /// <summary>POST /sindri/workflows/validate: the checks Activate runs, on the workflow's newest revision. A read: it writes nothing (#3803).</summary>
+    /// <summary>POST /sindri/workflows/validate: the checks Activate runs, on one revision of the workflow. A read: it writes nothing (#3803).</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="slug">The workflow.</param>
+    /// <param name="revision">The revision to check (the one the page draws), or null for the newest.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>What the checks found, SND-GRAPH-008 for an unknown workflow, or SND-UI-002/003.</returns>
-    public Task<Result<WorkflowValidated>> ValidateWorkflow(Uri api, string slug, CancellationToken cancellationToken);
+    public Task<Result<WorkflowValidated>> ValidateWorkflow(Uri api, string slug, int? revision, CancellationToken cancellationToken);
 }

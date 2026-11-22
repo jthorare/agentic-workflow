@@ -78,6 +78,6 @@ internal sealed partial class SindriApiClient
         Call<WorkflowPaused>(api, HttpMethod.Post, WorkflowRoutes.Pause(slug), cancellationToken);
 
     /// <inheritdoc />
-    public Task<Result<WorkflowValidated>> ValidateWorkflow(Uri api, string slug, CancellationToken cancellationToken) =>
-        Call<WorkflowValidated>(api, HttpMethod.Post, WorkflowRoutes.Validate(), cancellationToken, new CallOptions(Content: AwJson.Serialize(new ValidateWorkflowBody(slug, Revision: null, Spec: null), Json)));
+    public Task<Result<WorkflowValidated>> ValidateWorkflow(Uri api, string slug, int? revision, CancellationToken cancellationToken) =>
+        Call<WorkflowValidated>(api, HttpMethod.Post, WorkflowRoutes.Validate(), cancellationToken, new CallOptions(Content: AwJson.Serialize(new ValidateWorkflowBody(slug, revision, Spec: null), Json)));
 }

@@ -60,6 +60,18 @@ public sealed class WorkflowWritesClientTests
         Assert.Equal("SND-GRAPH-107", cancelled.Error.Code);
     }
 
+    [Fact]
+    public async Task ValidateWorkflow_posts_the_slug_and_the_revision_to_validate()
+    {
+        var canned = new Canned("""{"passed":true,"hash":null,"findings":[]}""");
+
+        var validated = await Client(canned).ValidateWorkflow(_api, "morning-check", 1, Token);
+
+        var sent = Assert.Single(canned.Seen);
+        Assert.Equal(("POST", "/sindri/workflows/validate", "{\"slug\":\"morning-check\",\"revision\":1,\"spec\":null}"), (sent.Method, sent.Path, sent.Body));
+        Assert.True(validated.Value.Passed);
+    }
+
     private static SindriApiClient Client(HttpMessageHandler handler) => new(new HttpClient(handler), new InMemoryHumanToken("tok-1"), TimeProvider.System);
 
     private sealed class Canned(string body, HttpStatusCode code = HttpStatusCode.OK) : HttpMessageHandler

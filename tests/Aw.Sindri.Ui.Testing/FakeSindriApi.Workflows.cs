@@ -19,6 +19,7 @@ internal sealed partial class FakeSindriApi
     private readonly List<string> _pausedWorkflows = [];
     private readonly List<AppliedOps> _appliedOps = [];
     private readonly List<string> _validatedWorkflows = [];
+    private readonly List<int?> _validatedRevisions = [];
     private readonly List<(string Slug, string Template)> _createdWorkflows = [];
 
     /// <summary>POST /sindri/workflows/{slug}/runs's answer: the started body by default (a refusal golden, such as workflows-slug-runs/not-active, to test a refusal).</summary>
@@ -212,14 +213,18 @@ internal sealed partial class FakeSindriApi
     /// <summary>The workflows validate was sent for, in order.</summary>
     public IReadOnlyList<string> ValidatedWorkflows { get { lock (_gate) { return [.. _validatedWorkflows]; } } }
 
+    /// <summary>The revision each validate asked for (null: the newest), in the order of <see cref="ValidatedWorkflows"/>.</summary>
+    public IReadOnlyList<int?> ValidatedRevisions { get { lock (_gate) { return [.. _validatedRevisions]; } } }
+
     /// <summary>The ops sent, in order.</summary>
     internal IReadOnlyList<AppliedOps> AppliedWorkflowOps { get { lock (_gate) { return [.. _appliedOps]; } } }
 
-    public Task<Result<WorkflowValidated>> ValidateWorkflow(Uri api, string slug, CancellationToken cancellationToken)
+    public Task<Result<WorkflowValidated>> ValidateWorkflow(Uri api, string slug, int? revision, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
             _validatedWorkflows.Add(slug);
+            _validatedRevisions.Add(revision);
         }
 
         return Task.FromResult(Answer<WorkflowValidated>(api, WorkflowRoutes.Validate(), ValidateWorkflowAnswer));

@@ -54,6 +54,15 @@ public sealed class WorkflowFindingsTests
     }
 
     [Fact]
+    public async Task Validate_checks_the_revision_the_graph_draws_not_the_newest()
+    {
+        var page = await OnRuns(RouteAnswer.SpecShaped("workflows-validate", "passed"));
+
+        Assert.Equal((1, 2), (page.Runs.Shown!.Revision, page.Runs.Shown!.LatestRevision));   // the golden runs revision 1 and holds a newer 2: the graph draws 1
+        Assert.Equal(1, Assert.Single(_f.Server.ValidatedRevisions));
+    }
+
+    [Fact]
     public async Task No_findings_mark_no_step_and_leave_the_header_empty()
     {
         var page = await OnRuns(RouteAnswer.SpecShaped("workflows-validate", "passed"));

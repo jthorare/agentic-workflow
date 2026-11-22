@@ -136,7 +136,7 @@ internal sealed partial class WorkflowsPageViewModel
     private async Task ReadFindings(Uri url, string slug)
     {
         var read = ++_findingReads;
-        var answer = await Api.ValidateWorkflow(url, slug, CancellationToken.None).ConfigureAwait(true);
+        var answer = await Api.ValidateWorkflow(url, slug, revision: null, CancellationToken.None).ConfigureAwait(true);
         if (read != _findingReads || !string.Equals(Runs.Slug, slug, StringComparison.Ordinal))
         {
             return;   // a newer revision was asked about since, or another workflow opened
