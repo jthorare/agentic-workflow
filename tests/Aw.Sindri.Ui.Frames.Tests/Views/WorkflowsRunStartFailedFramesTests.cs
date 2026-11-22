@@ -62,5 +62,6 @@ public sealed class WorkflowsRunStartFailedFramesTests : FrameHost
         Assert.Equal("The run didn't start.", text.Text);
         Assert.True(text.IsEffectivelyVisible && retry.IsEffectivelyVisible && retry.IsEnabled);
         Assert.Equal("Retry", retry.Content);
+        Assert.False(Visible(window, "RunCancel"), "Cancel is offered for a run the server never saw");
     });
 }

@@ -49,6 +49,8 @@ public sealed class RunDetailStartTimeoutTests : IDisposable
 
         _f.Clock.Advance(TimeSpan.FromSeconds(1));
 
+        Assert.False(page.Run.CanCancel);   // a "starting" run is not cancellable (RunStatus.CanCancel is running or waiting only): Retry is the only action
+
         Assert.Equal((true, "The run didn't start.", "Retry"), (page.Run.DidNotStart, page.Run.DidNotStartText, page.Run.StartRetryText));
     }
 
