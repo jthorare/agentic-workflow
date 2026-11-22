@@ -5,7 +5,7 @@
 # until one ends; the cap file is read again while a job waits; the env fallback and the default 4; the hold, and its end
 # when the waiter goes or memory is enough; the hold counts heavy-meta-reserve and the slots the waiter can take (#3810); its
 # note repeats (on a copy with HOLD_NOTE_EVERY=1) and names the waiter and the memory figure; slot 1 free and a dead waiter
-# hold nothing; a path-qualified dotnet build takes a light slot, a dotnet msbuild doesn't yet; a job that compiles nothing never
+# hold nothing; a path-qualified dotnet build and a dotnet msbuild take a light slot; a job that compiles nothing never
 # waits on the pool; AW_HEAVY_PRIORITY=meta skips the hold but not the pool; a held wait doesn't count toward the lock
 # timeout; a dead holder's light slot is reclaimed.
 # A fake dotnet on PATH waits for a go file per job; an awk shim answers MemAvailable from a file. Scratch state and lock
@@ -189,11 +189,11 @@ wait_for 'started t1 && started c1 && started s1'
 check "pool full and held: test --no-build, clean and a script run" "$(yn 'started t1 && started c1 && started s1')" "yes"
 rc_of t1; rcs="$RC"; rc_of c1; rcs="$rcs $RC"; rc_of s1; check "they exit 0" "$rcs $RC" "0 0 0"
 
-# --- a path-qualified dotnet build compiles too: it takes a light slot (#3810) ---
+# --- a path-qualified dotnet build and a dotnet msbuild compile too: they take a light slot (#3810) ---
 reset; echo 1 > "$STATE/heavy-light-cap"; fill_light
-job p1 --light "$STUB/dotnet" build p1; job q1 --light dotnet msbuild q1; wait_for 'waiting p1 && started q1'
+job p1 --light "$STUB/dotnet" build p1; job q1 --light dotnet msbuild q1; wait_for 'waiting p1 && waiting q1'
 check "pool full: a path-qualified dotnet build waits for a light slot" "$(yn '! started p1')" "yes"
-check "pool full: a dotnet msbuild starts at once until the sandbox shim table lists it (#3810 item 3)" "$(yn 'started q1')" "yes"
+check "pool full: a dotnet msbuild waits for a light slot (#3810 item 3)" "$(yn '! started q1')" "yes"
 
 # --- AW_HEAVY_PRIORITY=meta skips the hold, not the pool ---
 reset; hold_box; box_waiter "$live"; mem_mb 5000; JOB_ENV="AW_HEAVY_PRIORITY=meta"
