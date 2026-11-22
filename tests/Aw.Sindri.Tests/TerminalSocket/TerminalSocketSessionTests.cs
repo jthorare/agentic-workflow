@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
@@ -114,6 +115,108 @@ public sealed class TerminalSocketSessionTests
     }
 
     [Fact]
+    public async Task Every_frame_carries_back_and_hist()
+    {
+        var (session, _, _) = Build();
+        var channel = new FakeTerminalChannel(Hello());
+
+        var run = session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), channel, Cancel).AsTask();
+        await channel.WaitForSent(2, Cancel);
+        channel.End();
+        await run;
+
+        using var frame = JsonDocument.Parse(channel.Sent[1]);
+        Assert.Equal(0, frame.RootElement.GetProperty("back").GetInt32());
+        Assert.Equal(0, frame.RootElement.GetProperty("hist").GetInt32());
+    }
+
+    [Fact]
+    public async Task A_scroll_message_reaches_the_pane_and_is_answered_by_a_frame_with_back()
+    {
+        var source = FakeTerminalPaneSource.FromFixture();
+        source.History = [.. Enumerable.Range(1, 100).Select(n => $"history {n.ToString(CultureInfo.InvariantCulture)}")];
+        var (session, _, _) = Build(source);
+        var channel = new FakeTerminalChannel(Hello(), """{"t":"scroll","back":5}""");
+
+        var run = session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), channel, Cancel).AsTask();
+        await channel.WaitForSent(3, Cancel);   // ready, first frame, the frame the scroll made
+        channel.End();
+        await run;
+
+        Assert.Equal(["scroll:5"], source.Sent);
+        using var frame = JsonDocument.Parse(channel.Sent[2]);
+        Assert.Equal(5, frame.RootElement.GetProperty("back").GetInt32());
+        Assert.Equal(100, frame.RootElement.GetProperty("hist").GetInt32());
+        Assert.Equal(frame.RootElement.GetProperty("h").GetInt32(), frame.RootElement.GetProperty("rows").GetArrayLength());
+    }
+
+    [Fact]
+    public async Task A_scroll_past_the_history_is_clamped_in_the_frame()
+    {
+        var source = FakeTerminalPaneSource.FromFixture();
+        source.History = [.. Enumerable.Range(1, 20).Select(n => $"history {n.ToString(CultureInfo.InvariantCulture)}")];
+        var (session, _, _) = Build(source);
+        var channel = new FakeTerminalChannel(Hello(), """{"t":"scroll","back":999}""");
+
+        var run = session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), channel, Cancel).AsTask();
+        await channel.WaitForSent(3, Cancel);
+        channel.End();
+        await run;
+
+        using var frame = JsonDocument.Parse(channel.Sent[2]);
+        Assert.Equal(20, frame.RootElement.GetProperty("back").GetInt32());
+    }
+
+    [Fact]
+    public async Task A_key_after_a_scroll_sends_a_live_frame()
+    {
+        var source = FakeTerminalPaneSource.FromFixture();
+        source.History = [.. Enumerable.Range(1, 100).Select(n => $"history {n.ToString(CultureInfo.InvariantCulture)}")];
+        var (session, _, _) = Build(source);
+        var channel = new FakeTerminalChannel(Hello(), """{"t":"scroll","back":5}""");
+
+        var run = session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), channel, Cancel).AsTask();
+        await channel.WaitForSent(3, Cancel);
+        await channel.Feed("""{"t":"key","key":"Enter"}""");
+        await channel.WaitForSent(4, Cancel);
+        channel.End();
+        await run;
+
+        using var frame = JsonDocument.Parse(channel.Sent[3]);
+        Assert.Equal(0, frame.RootElement.GetProperty("back").GetInt32());
+    }
+
+    [Fact]
+    public async Task A_scroll_message_without_a_whole_number_is_dropped()
+    {
+        var (session, source, _) = Build();
+        var channel = new FakeTerminalChannel(Hello(), """{"t":"scroll"}""", """{"t":"scroll","back":"up"}""", """{"t":"scroll","back":1.5}""");
+
+        var run = session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), channel, Cancel).AsTask();
+        await channel.WaitForSent(2, Cancel);
+        channel.End();
+        await run;
+
+        Assert.Empty(source.Sent);
+        Assert.Equal(2, channel.Sent.Count);
+    }
+
+    [Fact]
+    public async Task An_unknown_message_type_is_ignored_and_the_socket_stays_open()
+    {
+        var (session, source, _) = Build();
+        var channel = new FakeTerminalChannel(Hello(), """{"t":"future-thing","x":1}""", "not json at all", """{"t":"key","key":"Enter"}""");
+
+        var run = session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), channel, Cancel).AsTask();
+        await channel.WaitForSent(3, Cancel);   // the key after them still works
+        channel.End();
+        await run;
+
+        Assert.Null(channel.Closed);
+        Assert.Equal(["key:Enter"], source.Sent);
+    }
+
+    [Fact]
     public async Task A_paste_over_256_KiB_closes_1009()
     {
         var (session, _, _) = Build();
@@ -146,8 +249,10 @@ public sealed class TerminalSocketSessionTests
 
         var run = session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), channel, Cancel).AsTask();
         await channel.WaitForSent(2, Cancel);
+        await time.WaitForTimers(2, Cancel);    // the hello deadline, then the ping delay: the pinger runs on its own task (#3597)
         time.Advance(TimeSpan.FromSeconds(15));
         await channel.WaitForSent(3, Cancel);   // the ping
+        await time.WaitForTimers(3, Cancel);    // the pong deadline starts just after the ping is sent
         time.Advance(TimeSpan.FromSeconds(10.1));
         await run;
 

@@ -195,14 +195,6 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string WfRunTitle(string id) => "Run " + id;
 
-    /// <summary>What started a run.</summary>
-    /// <param name="kind">The trigger's kind, as served.</param>
-    /// <returns>The words.</returns>
-    internal static string WfStartedBy(string kind) => "Started by " + kind;
-
-    /// <summary>A run row's trigger when the object has no kind.</summary>
-    internal const string WfUnknownTrigger = "an unknown trigger";
-
     /// <summary>The heading over a run's outputs.</summary>
     internal const string WfOutputsHeading = "What the run produced";
 

@@ -18,11 +18,18 @@ internal sealed partial class TodoNoteCardViewModel
     /// <param name="url">The API's base URL.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>A task that completes when the card shows what is true.</returns>
-    internal async Task Refresh(Uri url, CancellationToken cancellationToken)
+    internal Task Refresh(Uri url, CancellationToken cancellationToken) => Refresh(url, library: null, cancellationToken);
+
+    /// <summary>Reads where the sync stands and shows it with a library read another card shares (one GET /sindri/library per Settings refresh); null reads the library here.</summary>
+    /// <param name="url">The API's base URL.</param>
+    /// <param name="library">The shared library read, started by the caller; null reads it after the note, as <see cref="Refresh(Uri, CancellationToken)"/> does.</param>
+    /// <param name="cancellationToken">Cancels the reads.</param>
+    /// <returns>A task that completes when the card shows what is true.</returns>
+    internal async Task Refresh(Uri url, Task<Result<LibraryView>>? library, CancellationToken cancellationToken)
     {
         try
         {
-            await Read(url, cancellationToken).ConfigureAwait(true);
+            await Read(url, library, cancellationToken).ConfigureAwait(true);
         }
 #pragma warning disable CA1031 // why: a read runs unobserved from the shell; an exception must show on the card, not end the process
         catch (Exception e) when (e is not OperationCanceledException)
@@ -36,7 +43,7 @@ internal sealed partial class TodoNoteCardViewModel
         }
     }
 
-    private async Task Read(Uri url, CancellationToken cancellationToken)
+    private async Task Read(Uri url, Task<Result<LibraryView>>? shared, CancellationToken cancellationToken)
     {
         var read = ++_reads;
         var note = await _api.TodoNote(url, cancellationToken).ConfigureAwait(true);
@@ -52,7 +59,7 @@ internal sealed partial class TodoNoteCardViewModel
         }
 
         IsAvailable = true;
-        var library = await _api.Library(url, cancellationToken).ConfigureAwait(true);
+        var library = await (shared ?? _api.Library(url, cancellationToken)).ConfigureAwait(true);
         if (Held || read != _reads)
         {
             return;   // a click came in while the reads ran: its answer is the one to show
@@ -122,8 +129,8 @@ internal sealed partial class TodoNoteCardViewModel
                 (Stage, _checkedVault, _checkedNote) = (TodoNoteCardStage.Syncing, set.Vault, set.Note);
             }
         }
-        else if (Stage is TodoNoteCardStage.Reading or TodoNoteCardStage.NoVaults or TodoNoteCardStage.Syncing)
-        {
+        else if (Stage is TodoNoteCardStage.Reading or TodoNoteCardStage.NoVaults or TodoNoteCardStage.Syncing || (Stage == TodoNoteCardStage.Form && Vaults.Count == 0))
+        {   // why the last case (#3931): the fields with no vault left to pick can't be saved, so the card says to add a vault; fields with a vault stay, the owner may be typing
             (_note, IsConfirmingStop) = (null, false);
             Stage = Vaults.Count > 0 ? TodoNoteCardStage.Form : TodoNoteCardStage.NoVaults;
         }

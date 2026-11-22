@@ -67,11 +67,13 @@ aw_hooks_init() {
 
 # aw_install_failopen_lib <hooks-dir> — copy config/lib/failopen.sh to
 # <hooks-dir>/lib/, where every fail-open hook looks for its HOOK-FAILOPEN logger, and config/lib/image-paths.sh beside it,
-# where the hooks that attach images for the judge (done-gate, scope-gate, send-gate, prompt-sort) look.
+# where the hooks that attach images for the judge (done-gate, scope-gate, send-gate, prompt-sort) look, and
+# config/lib/kill-tree.sh, which the watchdog hooks (done-gate, prompt-sort, sindri-tasks) kill a timed-out script with.
 aw_install_failopen_lib() {
   mkdir -p "$1/lib"
   cp "$AW_TOOLKIT_ROOT/config/lib/failopen.sh" "$1/lib/failopen.sh"
   cp "$AW_TOOLKIT_ROOT/config/lib/image-paths.sh" "$1/lib/image-paths.sh"
+  cp "$AW_TOOLKIT_ROOT/config/lib/kill-tree.sh" "$1/lib/kill-tree.sh"
 }
 
 # Copy every canonical hook, the adapters, lib/locks.sh (send-gate.sh

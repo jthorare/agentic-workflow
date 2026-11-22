@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -73,13 +74,13 @@ public sealed class ListPickerTests
     });
 
     [Fact]
-    public async Task Down_and_Up_move_across_groups_skip_a_disabled_row_and_stop_at_the_ends() => await OnUi(() =>
+    public async Task Down_and_Up_move_across_groups_through_a_disabled_row_and_stop_at_the_ends() => await OnUi(() =>
     {
         var (window, picker) = Show();
         _ = picker.FocusFirst();
         var seen = new List<string?> { Name(window.FocusManager?.GetFocusedElement()) };
 
-        foreach (var _ in Enumerable.Range(0, 4))
+        foreach (var _ in Enumerable.Range(0, 5))
         {
             window.KeyPressQwerty(PhysicalKey.ArrowDown, RawInputModifiers.None);
             Dispatcher.UIThread.RunJobs();
@@ -89,7 +90,7 @@ public sealed class ListPickerTests
         window.KeyPressQwerty(PhysicalKey.ArrowUp, RawInputModifiers.None);
         var back = Name(window.FocusManager?.GetFocusedElement());
 
-        Assert.Equal(["On a schedule", "Run an agent", "Run code", "Ask me", "Ask me"], seen);
+        Assert.Equal(["On a schedule", "When a webhook arrives", "Run an agent", "Run code", "Ask me", "Ask me"], seen);
         Assert.Equal("Run code", back);
         window.Close();
         return true;
@@ -121,6 +122,7 @@ public sealed class ListPickerTests
         picker.Picked += (_, e) => picked.Add(e.Value);
         picker.Closed += (_, _) => closed++;
         _ = picker.FocusFirst();
+        window.KeyPressQwerty(PhysicalKey.ArrowDown, RawInputModifiers.None);   // the disabled webhook row takes focus too (#3651)
         window.KeyPressQwerty(PhysicalKey.ArrowDown, RawInputModifiers.None);
 
         window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
@@ -133,7 +135,7 @@ public sealed class ListPickerTests
     });
 
     [Fact]
-    public async Task A_disabled_row_is_off_shows_its_reason_and_is_never_picked() => await OnUi(() =>
+    public async Task A_disabled_row_is_unavailable_shows_its_reason_and_is_never_picked() => await OnUi(() =>
     {
         var (window, picker) = Show();
         var picked = 0;
@@ -142,9 +144,67 @@ public sealed class ListPickerTests
 
         off.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
-        Assert.False(off.IsEnabled);
-        Assert.Equal("Needs a connection", ToolTip.GetTip(off));
+        Assert.True(off.IsEnabled);   // enabled and focusable (#3651): unavailable is the row's own state
+        Assert.True(off.IsUnavailable);
+        Assert.Null(ToolTip.GetTip(off));   // the reason is inline, not a tooltip
         Assert.Equal(0, picked);
+        window.Close();
+        return true;
+    });
+
+    // A disabled row is unavailable, not unreachable (#3651): the arrow keys land on it so a keyboard user reaches its reason, and Enter on it picks nothing.
+    [Fact]
+    public async Task The_keyboard_lands_on_a_disabled_row_and_Enter_on_it_picks_nothing() => await OnUi(() =>
+    {
+        var (window, picker) = Show();
+        var picked = new List<PickerItem>();
+        picker.Picked += (_, e) => picked.Add(e.Value);
+        _ = picker.FocusFirst();
+
+        window.KeyPressQwerty(PhysicalKey.ArrowDown, RawInputModifiers.None);
+        Dispatcher.UIThread.RunJobs();
+        var focused = window.FocusManager?.GetFocusedElement();
+        window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("When a webhook arrives", Avalonia.Automation.AutomationProperties.GetName((Control)focused!));
+        Assert.Empty(picked);
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task A_disabled_rows_reason_shows_under_its_label_in_the_secondary_style() => await OnUi(() =>
+    {
+        var (window, picker) = Show();
+        window.UpdateLayout();
+        var off = Tiles(picker).Single(t => (string?)t.Content == "When a webhook arrives");
+        var label = off.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Text == "When a webhook arrives");
+        var reason = off.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Text == "Needs a connection");
+
+        Assert.True(reason.IsEffectivelyVisible);
+        Assert.True(reason.TranslatePoint(default, off)!.Value.Y >= label.TranslatePoint(new Point(0, label.Bounds.Height), off)!.Value.Y - 0.5, "the reason sits under the label");
+        Assert.Contains("caption", reason.Classes, StringComparer.Ordinal);
+        Assert.Contains("subtle", reason.Classes, StringComparer.Ordinal);
+        Assert.Equal(Token("Brush.InkSubtle"), Assert.IsType<ISolidColorBrush>(reason.Foreground, exactMatch: false).Color);
+        Assert.DoesNotContain(Tiles(picker).Where(t => !ReferenceEquals(t, off)), t => t.GetVisualDescendants().OfType<TextBlock>().Any(b => b.IsEffectivelyVisible && b.Text == "Needs a connection"));
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task A_disabled_row_reads_as_label_unavailable_and_its_reason() => await OnUi(() =>
+    {
+        var (window, picker) = Show();
+        var off = Tiles(picker).Single(t => (string?)t.Content == "When a webhook arrives");
+        var on = Tiles(picker).Single(t => (string?)t.Content == "Run code");
+        var peer = ControlAutomationPeer.CreatePeerForElement(off);
+
+        Assert.Equal("When a webhook arrives", peer.GetName());
+        Assert.False(peer.IsEnabled());
+        Assert.Equal("Needs a connection", peer.GetHelpText());
+        Assert.True(ControlAutomationPeer.CreatePeerForElement(on).IsEnabled());
+        Assert.True(string.IsNullOrEmpty(ControlAutomationPeer.CreatePeerForElement(on).GetHelpText()));
         window.Close();
         return true;
     });
@@ -218,6 +278,21 @@ public sealed class ListPickerTests
 
         Assert.True(icon.Bounds.Width > 0 && icon.Bounds.Height > 0, string.Create(CultureInfo.InvariantCulture, $"the error icon is {icon.Bounds.Width} x {icon.Bounds.Height}"));
         Assert.Equal(Token("Brush.Error"), Assert.IsType<ISolidColorBrush>(icon.Foreground, exactMatch: false).Color);
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task The_Details_chevron_sits_next_to_the_word() => await OnUi(() =>
+    {
+        var (window, box) = ShowError();
+        var details = box.GetVisualDescendants().OfType<Expander>().Single();
+        var word = details.GetVisualDescendants().OfType<TextBlock>().First(t => t.Text == "Details");
+        var chevron = details.GetVisualDescendants().OfType<Border>().First(b => b.Name == "ExpandCollapseChevronBorder");
+
+        var gap = chevron.TranslatePoint(default, window)!.Value.X - (word.TranslatePoint(default, window)!.Value.X + word.Bounds.Width);
+
+        Assert.True(gap is >= 0 and <= 12, string.Create(CultureInfo.InvariantCulture, $"the chevron box starts {gap} px after the word Details"));
         window.Close();
         return true;
     });

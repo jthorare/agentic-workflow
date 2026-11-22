@@ -50,6 +50,8 @@ internal static class TerminalSocketText
             json.WriteNumber("alt", frame.Alt ? 1 : 0);
             json.WriteNumber("inMode", frame.InMode ? 1 : 0);
             json.WriteNumber("dead", frame.Dead ? 1 : 0);
+            json.WriteNumber("back", frame.Back);
+            json.WriteNumber("hist", frame.Hist);
             json.WriteEndObject();
         }
 
