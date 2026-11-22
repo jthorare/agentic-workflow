@@ -17,7 +17,7 @@ using Aw.Sindri.Ui.ViewModels.Todo;
 using Aw.Sindri.Ui.Views.Shell;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>Edit in place and the link list on Home under the headless platform (todo spec §3.3, §3.4): Enter opens the edit, Enter saves, Esc cancels, a typed X is text, O opens the links.</summary>
 [Lane(TestLane.Integration)]
@@ -109,9 +109,9 @@ public sealed class TodoPanelEditTests : IDisposable
 
     private static async Task Until(Window window, Func<bool> condition, string what = "the view never reached the expected state")
     {
-        for (var i = 0; i < 300 && !condition(); i++)
+        for (var i = 0; i < 3000 && !condition(); i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Settle(window);
         }
 

@@ -153,8 +153,11 @@ internal sealed class LedgerDatabase : IDisposable
     /// <summary>The first migration with 'workflow_node_run.raw' (#3196); the column is read by every node-run query, so it is always on a file Sindri opens.</summary>
     internal const int NodeRunRawVersion = 20;
 
-    /// <summary>The first migration with 'workflow_node_run.started_at' and 'ended_at' and 'workflow.was_activated' (#3683); every workflow and node-run query reads them, so they are always on a file Sindri opens. The number is renumbered at the final main merge.</summary>
-    internal const int NodeTimesAndWasActivatedVersion = 21;
+    /// <summary>The first migration with 'workflow_run.mode' and 'test_options' and the 'workflow_pin' table (Workflows page spec §3.1, §3.2); the run store reads and writes the columns, so they are always on a file Sindri opens.</summary>
+    internal const int TestRunsVersion = 21;
+
+    /// <summary>The first migration with 'workflow_node_run.started_at' and 'ended_at' and 'workflow.was_activated' (#3683); every workflow and node-run query reads them, so they are always on a file Sindri opens.</summary>
+    internal const int NodeTimesAndWasActivatedVersion = 22;
 
     private static IReadOnlyList<Migration> LoadMigrations()
     {
