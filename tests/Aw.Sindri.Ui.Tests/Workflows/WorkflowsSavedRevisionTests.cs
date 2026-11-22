@@ -50,6 +50,15 @@ public sealed class WorkflowsSavedRevisionTests
         _f.Server.WorkflowNewestAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, newest.ToJsonString());
     }
 
+    // the list as the next read serves it: the open workflow's row is on (at this revision) or off
+    private void ServeRow(int? active)
+    {
+        var list = Golden("workflows", "list-two");
+        list["workflows"]![0]!["activeRevision"] = active;
+        list["workflows"]![0]!["latestRevision"] = 3;
+        _f.ServeList(list);
+    }
+
     private async Task<WorkflowsPageViewModel> EditingNode(int? active)
     {
         _f.Server.WorkflowBlocksAnswer = new RouteAnswer(HttpStatusCode.OK, Blocks);
@@ -130,6 +139,23 @@ public sealed class WorkflowsSavedRevisionTests
         var page = await Saved(active: null);
 
         Assert.Equal(("Saved as revision 3.", true, false), (page.SavedLineText, page.HasSavedLine, page.CanMakeLive));
+    }
+
+    [Fact]
+    public async Task Activate_then_Pause_after_a_save_on_a_workflow_that_is_off_drops_the_saved_line()
+    {
+        ServeRow(active: null);
+        var page = await Saved(active: null);
+        ServeRow(active: 3);
+        Serve(active: 3, latest: 3);
+        await page.Activate(Token);
+        ServeRow(active: null);
+        Serve(active: null, latest: 3);
+
+        await page.Pause(Token);
+
+        Assert.Equal([Slug], _f.Server.PausedWorkflows);
+        Assert.Equal((string.Empty, false), (page.SavedLineText, page.HasSavedLine));   // nothing was saved since the line last showed
     }
 
     [Fact]
