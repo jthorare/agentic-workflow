@@ -9,6 +9,7 @@ internal sealed partial class FakeSindriApi
     private int _workflowsCalls;
     private int _allWorkflowsCalls;
     private int _workflowCalls;
+    private int _workflowNewestCalls;
     private int _workflowRunsCalls;
     private int _workflowRunCalls;
     private readonly List<string> _startedWorkflows = [];
@@ -74,6 +75,9 @@ internal sealed partial class FakeSindriApi
     /// <summary>How many times one workflow was read.</summary>
     public int WorkflowCalls => Volatile.Read(ref _workflowCalls);
 
+    /// <summary>How many times one workflow was read with ?revision=latest (#3303).</summary>
+    public int WorkflowNewestCalls => Volatile.Read(ref _workflowNewestCalls);
+
     /// <summary>How many times a workflow's runs were read.</summary>
     public int WorkflowRunsCalls => Volatile.Read(ref _workflowRunsCalls);
 
@@ -112,6 +116,7 @@ internal sealed partial class FakeSindriApi
 
     public async Task<Result<WorkflowView>> WorkflowNewest(Uri api, string slug, CancellationToken cancellationToken)
     {
+        _ = Interlocked.Increment(ref _workflowNewestCalls);
         await WaitFor(WorkflowGates.GetValueOrDefault(slug), cancellationToken).ConfigureAwait(false);
         var answer = WorkflowNewestAnswers.TryGetValue(slug, out var newest) ? newest : WorkflowAnswers.TryGetValue(slug, out var own) ? own : RouteAnswer.Problem("workflows-slug", "not-found");
         return Answer<WorkflowView>(api, WorkflowRoutes.Newest(slug), answer);
