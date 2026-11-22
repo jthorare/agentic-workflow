@@ -708,6 +708,11 @@ edges:
     kind: project
     status: current
     note: "Result, IService, ports (scaffolded by /new-package)"
+  - from: Transcripts
+    to: Redaction
+    kind: project
+    status: current
+    note: "turn text goes through the scrubber before it leaves the library (Aw.Transcripts.Infrastructure only)"
 
 exceptions:
   - rule: DEPS-CYCLE-001

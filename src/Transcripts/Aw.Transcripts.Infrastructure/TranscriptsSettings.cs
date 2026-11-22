@@ -1,5 +1,7 @@
+using Aw.Transcripts.Core;
+
 namespace Aw.Transcripts.Infrastructure;
 
-/// <summary>Transcripts's infrastructure settings, read from the environment (SettingsFromEnvironment).</summary>
-/// <param name="StateDirectory">Where Transcripts keeps its state: $AW_STATE_DIR/transcripts, or ~/.agentic-workflow/transcripts.</param>
-internal sealed record TranscriptsSettings(string StateDirectory);
+/// <summary>Transcripts's infrastructure settings: the directories it reads (SettingsFromEnvironment builds the defaults).</summary>
+/// <param name="Roots">The transcript roots, one provider each.</param>
+internal sealed record TranscriptsSettings(IReadOnlyList<TranscriptRoot> Roots);

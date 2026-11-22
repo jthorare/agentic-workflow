@@ -176,6 +176,9 @@
           "xunit.v3.extensibility.core": "[4.0.2, 4.0.2]"
         }
       },
+      "aw.redaction": {
+        "type": "Project"
+      },
       "aw.transcripts.core": {
         "type": "Project",
         "dependencies": {
@@ -196,6 +199,7 @@
         "type": "Project",
         "dependencies": {
           "Aw.Kernel": "[1.0.0, )",
+          "Aw.Redaction": "[1.0.0, )",
           "Aw.Transcripts.Core": "[1.0.0, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]"
         }

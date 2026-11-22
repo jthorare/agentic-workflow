@@ -1,12 +1,24 @@
 #nullable enable
 Aw.Transcripts.Features.ListSessions.ListSessionsRequest
 Aw.Transcripts.Features.ListSessions.ListSessionsRequest.<Clone>$() -> Aw.Transcripts.Features.ListSessions.ListSessionsRequest!
+Aw.Transcripts.Features.ListSessions.ListSessionsRequest.Deconstruct(out System.DateTimeOffset Since) -> void
 Aw.Transcripts.Features.ListSessions.ListSessionsRequest.Equals(Aw.Transcripts.Features.ListSessions.ListSessionsRequest? other) -> bool
-Aw.Transcripts.Features.ListSessions.ListSessionsRequest.ListSessionsRequest() -> void
+Aw.Transcripts.Features.ListSessions.ListSessionsRequest.IncludeSubagents.get -> bool
+Aw.Transcripts.Features.ListSessions.ListSessionsRequest.IncludeSubagents.init -> void
+Aw.Transcripts.Features.ListSessions.ListSessionsRequest.ListSessionsRequest(System.DateTimeOffset Since) -> void
+Aw.Transcripts.Features.ListSessions.ListSessionsRequest.Provider.get -> Aw.Transcripts.Core.TranscriptProvider?
+Aw.Transcripts.Features.ListSessions.ListSessionsRequest.Provider.init -> void
+Aw.Transcripts.Features.ListSessions.ListSessionsRequest.Repo.get -> string?
+Aw.Transcripts.Features.ListSessions.ListSessionsRequest.Repo.init -> void
+Aw.Transcripts.Features.ListSessions.ListSessionsRequest.Since.get -> System.DateTimeOffset
+Aw.Transcripts.Features.ListSessions.ListSessionsRequest.Since.init -> void
 Aw.Transcripts.Features.ListSessions.ListSessionsResponse
 Aw.Transcripts.Features.ListSessions.ListSessionsResponse.<Clone>$() -> Aw.Transcripts.Features.ListSessions.ListSessionsResponse!
+Aw.Transcripts.Features.ListSessions.ListSessionsResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Transcripts.Core.Sessions.TranscriptSession!>! Sessions) -> void
 Aw.Transcripts.Features.ListSessions.ListSessionsResponse.Equals(Aw.Transcripts.Features.ListSessions.ListSessionsResponse? other) -> bool
-Aw.Transcripts.Features.ListSessions.ListSessionsResponse.ListSessionsResponse() -> void
+Aw.Transcripts.Features.ListSessions.ListSessionsResponse.ListSessionsResponse(System.Collections.Generic.IReadOnlyList<Aw.Transcripts.Core.Sessions.TranscriptSession!>! Sessions) -> void
+Aw.Transcripts.Features.ListSessions.ListSessionsResponse.Sessions.get -> System.Collections.Generic.IReadOnlyList<Aw.Transcripts.Core.Sessions.TranscriptSession!>!
+Aw.Transcripts.Features.ListSessions.ListSessionsResponse.Sessions.init -> void
 Aw.Transcripts.Features.TranscriptsFeaturesServiceCollectionExtensions
 override Aw.Transcripts.Features.ListSessions.ListSessionsRequest.Equals(object? obj) -> bool
 override Aw.Transcripts.Features.ListSessions.ListSessionsRequest.GetHashCode() -> int

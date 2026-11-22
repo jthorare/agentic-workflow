@@ -47,6 +47,9 @@
       "aw.kernel": {
         "type": "Project"
       },
+      "aw.redaction": {
+        "type": "Project"
+      },
       "aw.transcripts.core": {
         "type": "Project",
         "dependencies": {
