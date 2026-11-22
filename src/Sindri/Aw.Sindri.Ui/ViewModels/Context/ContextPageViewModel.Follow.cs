@@ -91,8 +91,10 @@ internal sealed partial class ContextPageViewModel
         var before = Whole.Answer;
         Whole.LeaveConcept();   // clears the drawn map, so the concept layer is not shown beside it
         ChangedWhole();
-        await OpenFirst(cancellationToken).ConfigureAwait(true);
-        if (before is not null && Whole.IsFailed && !Concepts.HasConcepts)
+        var reading = OpenFirst(cancellationToken);
+        var generation = _openGeneration;   // OpenFirst bumps it before its first await; a repo switch while it reads bumps it again
+        await reading.ConfigureAwait(true);
+        if (generation == _openGeneration && before is not null && Whole.IsFailed && !Concepts.HasConcepts)
         {
             Whole.Show(before);
             Head = Whole.Head;
