@@ -34,7 +34,7 @@ internal static class WorkflowJson
     /// </summary>
     /// <param name="value">The served input.</param>
     /// <returns>The code body, or empty, and the rest as the page shows it.</returns>
-    internal static (string Code, string Rest) CodeAndRest(JsonElement? value)
+    internal static (string Code, string Input) CodeAndRest(JsonElement? value)
     {
         if (value is not { ValueKind: JsonValueKind.Object } element || !element.TryGetProperty(CodeField, out var code) || code.ValueKind != JsonValueKind.String)
         {
