@@ -122,5 +122,20 @@ public sealed class MessagesStoreTests : IDisposable
         Assert.Null(_home.Scalar($"SELECT newest_ts FROM thread_state WHERE thread_ts = '{LeeRoot}'"));
     }
 
+    [Fact]
+    public async Task A_window_names_each_author_from_the_users_table_and_leaves_an_unknown_one_null()
+    {
+        await _home.Conversation("T0HARBOR", Harbor, ConversationKind.Channel);
+        _ = await _home.Put(
+            new StoredMessage(Harbor, new MessageTs(AdaRoot), null, "U0ADA", "fare table ready", Mine: false, NamesMe: false),
+            new StoredMessage(Harbor, new MessageTs(LeeRoot), null, "U0LEE", "lunch Friday", Mine: false, NamesMe: false));
+        _home.Exec("INSERT INTO users (id, workspace, name, real_name, display_name) VALUES ('U0ADA', 'T0HARBOR', 'ada', 'Ada Moss', '')");
+
+        var window = await _home.Store.Window(Harbor, before: null, after: null, limit: 10, Cancel);
+
+        Assert.True(window.IsSuccess, window.IsError ? window.Error.Message : null);
+        Assert.Equal<(string, string?)>([("U0ADA", "Ada Moss"), ("U0LEE", null)], window.Value.Lines.Select(static l => (l.Author, l.AuthorName)));   // an empty display name falls back to the real name
+    }
+
     private long Rev(string root) => _home.Count($"SELECT rev FROM thread_state WHERE conversation = '{Harbor}' AND thread_ts = '{root}'");
 }
