@@ -8,7 +8,7 @@ namespace Aw.Sindri.Testing;
 public sealed class FakeProjectTruthFacts : IProjectTruthFacts
 {
     private readonly List<ProjectSources> _asked = [];
-    private Result<ProjectTruthFacts> _facts = new ProjectTruthFacts([], new Dictionary<string, ReviewSummary>(StringComparer.Ordinal), [], []);
+    private Result<ProjectTruthFacts> _facts = new ProjectTruthFacts([], new Dictionary<string, ReviewSummary>(StringComparer.Ordinal), [], [], Owner: null);
 
     /// <summary>The union each read asked for, in order.</summary>
     public IReadOnlyList<ProjectSources> Asked => _asked;

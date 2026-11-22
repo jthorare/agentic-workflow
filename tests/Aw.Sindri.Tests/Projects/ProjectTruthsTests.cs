@@ -31,7 +31,8 @@ public sealed class ProjectTruthsTests
         IReadOnlyDictionary<string, ReviewSummary>? summaries = null,
         IReadOnlyList<ProjectTruthItem>? items = null,
         IReadOnlyList<ProjectTruthAgent>? agents = null,
-        bool noSummaries = false)
+        bool noSummaries = false,
+        string? owner = null)
     {
         var all = new Dictionary<string, ReviewSummary>(StringComparer.Ordinal);
         foreach (var pull in pulls ?? [])
@@ -47,7 +48,7 @@ public sealed class ProjectTruthsTests
             all[key] = summary;
         }
 
-        return new(sources ?? _apiOnly, new ProjectTruthFacts(pulls ?? [], all, items ?? [], agents ?? []));
+        return new(sources ?? _apiOnly, new ProjectTruthFacts(pulls ?? [], all, items ?? [], agents ?? [], owner));
     }
 
     private static ReviewSummary Red(DateTimeOffset at) => new("abc", ReviewCi.Fail, RequiredOpen: null, at);
@@ -323,5 +324,64 @@ public sealed class ProjectTruthsTests
         var truth = ProjectTruths.Build(open with { Facts = facts });
 
         Assert.Equal("At risk: 1 of 3 PRs red, 1 not checked yet", truth.Health!.Reason);
+    }
+
+    [Fact]
+    public void A_pr_whose_requested_reviewers_include_the_owner_is_blocked_on_you()
+    {
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1, requested: ["sam", "joi"]), Pull(2)], owner: "joi"));
+
+        Assert.True(truth.BlockedOnYou);
+        Assert.Equal(new[] { true, false }, truth.OpenPrs.OrderBy(static p => p.Number).Select(static p => p.WaitsOnYou).ToArray());
+    }
+
+    [Fact]
+    public void A_red_pr_that_asks_the_owner_for_review_is_still_blocked_on_you()
+    {
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1, requested: ["joi"])], summaries: new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = Red(_now) }, owner: "joi"));
+
+        var pr = truth.OpenPrs.Single();
+        Assert.Equal((ProjectPrState.CiRed, true, true), (pr.State, pr.WaitsOnYou, truth.BlockedOnYou));
+    }
+
+    [Fact]
+    public void A_pr_that_asks_only_another_reviewer_is_not_blocked_on_you()
+    {
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1, requested: ["sam"])], owner: "joi"));
+
+        Assert.Equal((false, false), (truth.OpenPrs.Single().WaitsOnYou, truth.BlockedOnYou));
+    }
+
+    [Fact]
+    public void A_pr_with_commits_after_the_owners_review_is_not_blocked_on_you_since_only_requested_reviewers_count()
+    {
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1, reviews: [new ReviewedAt("joi", "old", NewCommits: 2)])], owner: "joi"));
+
+        Assert.False(truth.BlockedOnYou);
+    }
+
+    [Fact]
+    public void With_no_github_login_known_nothing_is_blocked_on_you()
+    {
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1, requested: ["joi"])], owner: null));
+
+        Assert.Equal((false, false), (truth.OpenPrs.Single().WaitsOnYou, truth.BlockedOnYou));
+    }
+
+    [Fact]
+    public void The_owner_login_matches_a_requested_reviewer_in_another_case()
+    {
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1, requested: ["Joi-Example"])], owner: "joi-example"));
+
+        Assert.True(truth.BlockedOnYou);
+    }
+
+    [Fact]
+    public void A_draft_that_asks_the_owner_for_review_is_not_blocked_on_you_since_drafts_are_not_open()
+    {
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1, draft: true, requested: ["joi"])], owner: "joi"));
+
+        var pr = truth.OpenPrs.Single();
+        Assert.Equal((ProjectPrState.Draft, false, false), (pr.State, pr.WaitsOnYou, truth.BlockedOnYou));
     }
 }
