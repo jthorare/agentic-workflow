@@ -53,7 +53,15 @@ internal sealed partial class ReviewPageView
         }
 
         var built = rows.GetVisualDescendants().OfType<Control>().Where(c => c.IsEffectivelyVisible).ToList();
+        // why: a scroll viewer brings a control that takes keyboard focus into view. The row list is taller than the page, so that pulled the page back
+        // from its end and hid the review buttons (#3929); taking back a lost focus must leave the page where the reader scrolled it.
+        var scroller = rows.FindAncestorOfType<ScrollViewer>();
+        var at = scroller?.Offset;
         _ = (Find(built, focus) ?? rows).Focus(NavigationMethod.Tab);
+        if (scroller is not null && at is { } offset)
+        {
+            scroller.Offset = offset;
+        }
     }
 
     // Show swaps the deleted file's rows and hides the button, so a focused Show button would leave focus nowhere: the file's path row takes it instead.
