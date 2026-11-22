@@ -33,6 +33,7 @@ internal static class ProjectRows
         ProjectView.NeedsMe => card.Truth?.BlockedOnYou == true,
         ProjectView.MyWork => Is(card.Origin, "led") || Is(card.Origin, "handMade"),
         ProjectView.All => true,
+        ProjectView.Triage => false,
         _ => false,
     };
 
@@ -47,8 +48,12 @@ internal static class ProjectRows
     {
         ProjectSort.Target => [.. cards.OrderBy(c => TargetDay(c.Target) is null).ThenBy(c => TargetDay(c.Target)).ThenBy(c => c.Name, StringComparer.OrdinalIgnoreCase).ThenBy(c => c.Id, StringComparer.Ordinal)],
         ProjectSort.Name => [.. cards.OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase).ThenBy(c => c.Id, StringComparer.Ordinal)],
-        _ => [.. cards.OrderBy(c => c.LastActivity is null).ThenByDescending(c => c.LastActivity).ThenBy(c => c.Name, StringComparer.OrdinalIgnoreCase).ThenBy(c => c.Id, StringComparer.Ordinal)],
+        ProjectSort.Activity => ByActivity(cards),
+        _ => ByActivity(cards),
     };
+
+    private static List<ProjectCardView> ByActivity(IEnumerable<ProjectCardView> cards) =>
+        [.. cards.OrderBy(c => c.LastActivity is null).ThenByDescending(c => c.LastActivity).ThenBy(c => c.Name, StringComparer.OrdinalIgnoreCase).ThenBy(c => c.Id, StringComparer.Ordinal)];
 
     /// <summary>
     /// The groups of a sorted list, in their fixed order; groups with no project are left out. Grouping by health or by repo reads the truth, so
@@ -71,6 +76,7 @@ internal static class ProjectRows
             ProjectGrouping.None => [new ProjectRowGroup(string.Empty, string.Empty, cards)],
             ProjectGrouping.Health when !factsMissing => ByHealth(cards),
             ProjectGrouping.Repo when !factsMissing => ByRepo(cards),
+            ProjectGrouping.Health or ProjectGrouping.Repo or ProjectGrouping.State => ByState(cards),
             _ => ByState(cards),
         };
     }

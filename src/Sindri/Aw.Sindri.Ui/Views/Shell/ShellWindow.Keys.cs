@@ -139,15 +139,27 @@ internal sealed partial class ShellWindow
     }
 
     // 1 to 4 on Projects pick its view (issue 3717); digits reach no other page, so they never start a chord or a row key there.
-    private static string? ViewDigit(ViewModels.Shell.ShellViewModel shell, KeyEventArgs e) =>
-        !shell.IsProjects || e.KeyModifiers != KeyModifiers.None ? null : e.Key switch
+    private static string? ViewDigit(ViewModels.Shell.ShellViewModel shell, KeyEventArgs e)
+    {
+        if (!shell.IsProjects || e.KeyModifiers != KeyModifiers.None)
         {
-            Key.D1 or Key.NumPad1 => "1",
-            Key.D2 or Key.NumPad2 => "2",
-            Key.D3 or Key.NumPad3 => "3",
-            Key.D4 or Key.NumPad4 => "4",
-            _ => null,
-        };
+            return null;
+        }
+
+        switch (e.Key)
+        {
+            case Key.D1 or Key.NumPad1:
+                return "1";
+            case Key.D2 or Key.NumPad2:
+                return "2";
+            case Key.D3 or Key.NumPad3:
+                return "3";
+            case Key.D4 or Key.NumPad4:
+                return "4";
+            default:
+                return null;
+        }
+    }
 
     // The key as the view model names it: a letter (no Shift), "Enter" or ".".
     private static string? KeyName(KeyEventArgs e)

@@ -84,7 +84,7 @@ internal sealed partial class ProjectsPage : UserControl
     // Focus on a row's frame makes it the row the keys act on.
     private void OnRowFocused(object? sender, RoutedEventArgs e)
     {
-        if (e.Source is Border { Name: "ProjectRowFrame", DataContext: ProjectCardViewModel card } && DataContext is ProjectsPageViewModel page)
+        if (e.Source is Border { DataContext: ProjectCardViewModel card } frame && string.Equals(frame.Name, "ProjectRowFrame", StringComparison.Ordinal) && DataContext is ProjectsPageViewModel page)
         {
             _ = page.Select(card.Id);
         }
@@ -93,18 +93,27 @@ internal sealed partial class ProjectsPage : UserControl
     // On a row: Up and Down walk the rows like K and J, Enter opens the row's sheet. A key with a modifier is left alone.
     private void OnRowKey(object? sender, KeyEventArgs e)
     {
-        if (e.KeyModifiers != KeyModifiers.None || e.Source is not Border { Name: "ProjectRowFrame" } || DataContext is not ProjectsPageViewModel page)
+        if (e.KeyModifiers != KeyModifiers.None || e.Source is not Border frame || !string.Equals(frame.Name, "ProjectRowFrame", StringComparison.Ordinal) || DataContext is not ProjectsPageViewModel page)
         {
             return;
         }
 
-        e.Handled = e.Key switch
+        e.Handled = PressRowKey(page, e.Key);
+    }
+
+    private static bool PressRowKey(ProjectsPageViewModel page, Key key)
+    {
+        switch (key)
         {
-            Key.Down => page.Press("J"),
-            Key.Up => page.Press("K"),
-            Key.Enter => page.Press("Enter"),
-            _ => false,
-        };
+            case Key.Down:
+                return page.Press("J");
+            case Key.Up:
+                return page.Press("K");
+            case Key.Enter:
+                return page.Press("Enter");
+            default:
+                return false;
+        }
     }
 
     // O and B open the Sort and the Group menu under their buttons, the way a click does.
@@ -129,13 +138,22 @@ internal sealed partial class ProjectsPage : UserControl
             return;
         }
 
-        e.Handled = e.Key switch
+        e.Handled = PressSearchKey(page, e.Key);
+    }
+
+    private static bool PressSearchKey(ProjectsPageViewModel page, Key key)
+    {
+        switch (key)
         {
-            Key.Escape => page.ClearSearch(),
-            Key.Down => page.Press("J"),
-            Key.Enter => (page.SelectedId is not null || page.Press("J")) && page.Press("Enter"),
-            _ => false,
-        };
+            case Key.Escape:
+                return page.ClearSearch();
+            case Key.Down:
+                return page.Press("J");
+            case Key.Enter:
+                return (page.SelectedId is not null || page.Press("J")) && page.Press("Enter");
+            default:
+                return false;
+        }
     }
 
     private void OnSearchFocus(object? sender, RoutedEventArgs e) => (DataContext as ProjectsPageViewModel)?.SearchFocused(ProjectsSearch.IsFocused);

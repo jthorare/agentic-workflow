@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
@@ -59,25 +60,29 @@ internal sealed partial class ShellViewModel
             OpenerProject = Uri.UnescapeDataString(e.Link.Subject ?? string.Empty);   // Esc comes back to this card, after the sheet's own opening cleared it
         };
         ProjectSheet.Done += OnProjectDone;
-        Projects.Laid += (_, _) =>
-        {
-            if (IsProjectSheet && SheetLink?.Subject is { } subject)
-            {
-                ProjectSheet.EditNotesWith(Projects.CardOf(Uri.UnescapeDataString(subject)));   // a sheet opened before the page read gets its row now
-            }
-        };
+        Projects.Laid += OnProjectsLaid;
         WireProjectAdd();
-        ProjectSheet.PropertyChanged += (_, e) =>
+        ProjectSheet.PropertyChanged += OnProjectSheetChanged;
+    }
+
+    private void OnProjectsLaid(object? sender, EventArgs e)
+    {
+        if (IsProjectSheet && SheetLink?.Subject is { } subject)
         {
-            if (string.Equals(e.PropertyName, nameof(ProjectSheetViewModel.Heading), StringComparison.Ordinal))
-            {
-                Changed(nameof(SheetTitle), nameof(SheetName), nameof(EdgeTabName), nameof(EdgeTabText));
-            }
-            else if (string.Equals(e.PropertyName, nameof(ProjectSheetViewModel.Announcement), StringComparison.Ordinal) && ProjectSheet.Announcement.Length > 0)
-            {
-                _line.Say(ProjectSheet.Announcement);
-            }
-        };
+            ProjectSheet.EditNotesWith(Projects.CardOf(Uri.UnescapeDataString(subject)));   // a sheet opened before the page read gets its row now
+        }
+    }
+
+    private void OnProjectSheetChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(ProjectSheetViewModel.Heading), StringComparison.Ordinal))
+        {
+            Changed(nameof(SheetTitle), nameof(SheetName), nameof(EdgeTabName), nameof(EdgeTabText));
+        }
+        else if (string.Equals(e.PropertyName, nameof(ProjectSheetViewModel.Announcement), StringComparison.Ordinal) && ProjectSheet.Announcement.Length > 0)
+        {
+            _line.Say(ProjectSheet.Announcement);
+        }
     }
 
     // The Add project sheet: the page's button opens it, Cancel closes it, and an added project closes it with the sentence said.
