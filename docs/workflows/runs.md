@@ -19,6 +19,7 @@ A node is `running`, `waiting`, `succeeded`, `failed`, `skipped` or `cancelled`.
 
 - A node is `skipped` when it never ran: a branch was not taken, or a failure halted the walk.
 - A node with `onFailure` set to `continue` fails without halting the run. Its own outputs are missing, so later nodes read nothing from it.
+- A node inside a `for_each` loop with `onFailure` set to `skip-item` fails for one item without halting the run. The rest of that item's nodes are `skipped`, and the loop goes on with the next item.
 
 ## What a node run stores
 

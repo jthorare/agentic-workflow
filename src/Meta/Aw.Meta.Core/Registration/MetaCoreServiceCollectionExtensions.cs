@@ -22,6 +22,8 @@ public static class MetaCoreServiceCollectionExtensions
         .AddScoped<InboxCounts>()
         .AddScoped<LaneRefresher>()
         .AddScoped<ObligationReader>()
+        .AddScoped<DelegationLedger>()
+        .AddScoped<LaneDelivery>()
         .AddScoped<MetaSession>()
         .AddScoped<MetaSweep>()
         .AddScoped<StopGuard>()
