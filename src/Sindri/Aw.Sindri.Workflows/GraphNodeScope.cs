@@ -55,7 +55,7 @@ internal sealed class GraphNodeScope(WorkflowRun run, GraphSpec spec, IReadOnlyL
             return (null, RowAt(node, index, NodeRunStatus.Failed) is null ? null : node);
         }
 
-        if (found.Truncated)   // why: Fit's cut sets 'Truncated' on the row; the output's shape is never read, so a real output shaped like the cut envelope is a value (#3486)
+        if (found.Truncated)   // why: Fit's cut of the output sets 'Truncated' on the row (a cut input does not, #3896); the output's shape is never read, so a real output shaped like the cut envelope is a value (#3486)
         {
             Cut ??= node;
             return (null, null);

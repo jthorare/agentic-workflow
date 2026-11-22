@@ -10,6 +10,12 @@ internal sealed record CommandLine(IReadOnlyList<string> Positionals, IReadOnlyD
 {
     internal string? this[string option] => Values.GetValueOrDefault(option);
 
+    /// <summary>The values of the repeatable options, in the order given.</summary>
+    internal IReadOnlyDictionary<string, IReadOnlyList<string>> Lists { get; init; } = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+
+    // Every value of a repeatable option; empty when it was not given.
+    internal IReadOnlyList<string> All(string option) => Lists.GetValueOrDefault(option) ?? [];
+
     // A required option: Parse already guaranteed it is present.
     internal string Value(string option) => Values[option];
 
@@ -23,11 +29,20 @@ internal sealed record CommandLine(IReadOnlyList<string> Positionals, IReadOnlyD
     internal static CommandLine? Parse(IReadOnlyList<string> args, CommandSpec spec, out string problem)
     {
         var (positionals, values, flags) = (new List<string>(), new Dictionary<string, string>(StringComparer.Ordinal), new HashSet<string>(StringComparer.Ordinal));
+        var lists = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
         for (var i = 0; i < args.Count; i++)
         {
             if (!args[i].StartsWith("--", StringComparison.Ordinal))
             {
                 positionals.Add(args[i]);
+            }
+            else if (spec.Repeated.Contains(args[i][2..], StringComparer.Ordinal))
+            {
+                if (Repeated(args, ref i, lists) is { } missing)
+                {
+                    problem = missing;
+                    return null;
+                }
             }
             else if (Option(args, ref i, spec, values, flags) is { } bad)
             {
@@ -36,9 +51,22 @@ internal sealed record CommandLine(IReadOnlyList<string> Positionals, IReadOnlyD
             }
         }
 
-        var line = new CommandLine(positionals, values, flags);
+        var line = new CommandLine(positionals, values, flags) { Lists = lists };
         problem = Check(spec, line);
         return problem.Length == 0 ? line : null;
+    }
+
+    // A repeatable option at args[i] and its one non-empty value, added to the option's list. Returns the problem, if any.
+    private static string? Repeated(IReadOnlyList<string> args, ref int i, Dictionary<string, IReadOnlyList<string>> lists)
+    {
+        var name = args[i][2..];
+        if (i + 1 >= args.Count || args[i + 1].Length == 0 || args[i + 1].StartsWith("--", StringComparison.Ordinal))
+        {
+            return $"--{name} needs one non-empty value";
+        }
+
+        lists[name] = [.. lists.GetValueOrDefault(name) ?? [], args[++i]];
+        return null;
     }
 
     // One option at args[i] (and its value): a flag, or an option with one non-empty value. Returns the problem, if any.

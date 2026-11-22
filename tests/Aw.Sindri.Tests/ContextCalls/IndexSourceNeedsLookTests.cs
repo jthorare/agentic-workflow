@@ -4,6 +4,7 @@ using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Testing;
+using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
@@ -51,14 +52,34 @@ public sealed class IndexSourceNeedsLookTests
     [MemberData(nameof(Cases))]
     public async Task The_status_row_says_whether_the_source_needs_a_look(string name, bool look)
     {
+        var row = await Status(_sources[name], new SourceSyncClock(TimeProvider.System));
+
+        Assert.Equal(look, row.NeedsLook);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_source_with_no_finished_pass_ten_minutes_after_serve_started_carries_the_look_and_its_words_3832()
+    {
+        var clock = new FakeTimeProvider(_now);
+        var started = new SourceSyncClock(clock);
+        clock.Advance(TimeSpan.FromMinutes(10));
+
+        var row = await Status(Source() with { LastSync = null, Pull = "running", Records = 0 }, started);
+
+        Assert.Equal((true, "linear hasn't finished a sync in 10 minutes"), (row.NeedsLook, row.LookWords));
+    }
+
+    private async Task<IndexSourceRow> Status(SourceProgress source, SourceSyncClock started)
+    {
         _ = await _h.Profiles.Save(SliceHarness.Profile("5m"), Ct);
-        _index.Standing = [_sources[name]];
+        _index.Standing = [source];
         using var caller = _h.Callers.EnterService("test");
 
-        var view = await new GetIndexStatusService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), IndexStoreEngineProxy.Create(_index, new MapHealth("context:store", MapHealthState.Ok, "ok", Fix: null))).Handle(new GetIndexStatusRequest(), Ct);
+        var view = await new GetIndexStatusService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), IndexStoreEngineProxy.Create(_index, new MapHealth("context:store", MapHealthState.Ok, "ok", Fix: null)), started)
+            .Handle(new GetIndexStatusRequest(), Ct);
 
-        Assert.True(view.IsSuccess, name);
-        Assert.Equal(look, Assert.Single(view.Value.Sources).NeedsLook);
+        Assert.True(view.IsSuccess);
+        return Assert.Single(view.Value.Sources);
     }
 
     private static SourceProgress Source(bool usable = true, string? lastCode = null) =>

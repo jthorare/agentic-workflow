@@ -5,6 +5,7 @@ using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.CodeIndexReads;
+using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Host;
 using Aw.Sindri.Host.Registration;
 using Aw.Sindri.Host.Server;
@@ -47,9 +48,10 @@ public sealed class HostTests
 
         var hosted = provider.GetServices<IHostedService>().ToList();
 
-        Assert.Equal(18, hosted.Count);
+        Assert.Equal(19, hosted.Count);
         _ = Assert.Single(hosted.OfType<ServeListenerCheck>());
         _ = Assert.Single(hosted.OfType<QueuedClockStart>());
+        _ = Assert.Single(hosted.OfType<SourceSyncClockStart>());
         _ = Assert.Single(hosted.OfType<SchedulerHost>());
         _ = Assert.Single(hosted.OfType<ProjectorHost>());
         _ = Assert.Single(hosted.OfType<LostSessionsHost>());
@@ -129,5 +131,19 @@ public sealed class HostTests
 
         var queued = provider.GetRequiredService<QueuedClock>();
         Assert.Equal((TimeSpan.FromMinutes(31), TimeSpan.Zero), (queued.For("demo", queued: true, clock.GetUtcNow()), queued.For("added", queued: true, clock.GetUtcNow())));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Serve_start_starts_the_source_look_clock_so_the_first_pass_limit_counts_from_serve_start_3832()
+    {
+        var clock = new FakeTimeProvider(new DateTimeOffset(2026, 11, 21, 12, 0, 0, TimeSpan.Zero));
+        await using var provider = Compose().AddSindriServe().AddOptions().AddSingleton<TimeProvider>(clock).BuildServiceProvider();
+        _ = provider.GetRequiredService<TelemetryRuntime>();
+
+        var start = Assert.Single(provider.GetServices<IHostedService>().OfType<SourceSyncClockStart>());   // the host resolves its hosted services as serve starts
+        await start.StartAsync(TestContext.Current.CancellationToken);
+        clock.Advance(TimeSpan.FromMinutes(10));
+
+        Assert.Equal(TimeSpan.FromMinutes(10), provider.GetRequiredService<SourceSyncClock>().Running());
     }
 }
