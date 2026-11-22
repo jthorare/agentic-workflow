@@ -7,8 +7,10 @@ namespace Aw.Sindri.Core.Projects.Truth;
 /// <param name="Summaries">The newest per-head summary by "owner/name#number"; a PR with no entry has not been checked yet.</param>
 /// <param name="Items">Every item with its links.</param>
 /// <param name="Agents">Every live session.</param>
+/// <param name="Owner">The owner's GitHub login, from the same source the Reviews read uses (issue 3797); null when GitHub is not connected or no login is known, and then no PR waits on the owner.</param>
 public sealed record ProjectTruthFacts(
     IReadOnlyList<ReviewPull> Pulls,
     IReadOnlyDictionary<string, ReviewSummary> Summaries,
     IReadOnlyList<ProjectTruthItem> Items,
-    IReadOnlyList<ProjectTruthAgent> Agents);
+    IReadOnlyList<ProjectTruthAgent> Agents,
+    string? Owner);

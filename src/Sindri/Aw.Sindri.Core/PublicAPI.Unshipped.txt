@@ -23868,9 +23868,9 @@ Aw.Sindri.Core.Projects.Truth.ProjectPrState.Unknown = 3 -> Aw.Sindri.Core.Proje
 Aw.Sindri.Core.Projects.Truth.ProjectPrState.Waiting = 4 -> Aw.Sindri.Core.Projects.Truth.ProjectPrState
 Aw.Sindri.Core.Projects.Truth.ProjectTruthPr
 Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.<Clone>$() -> Aw.Sindri.Core.Projects.Truth.ProjectTruthPr!
-Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Deconstruct(out string! Url, out string! Repo, out int Number, out string! Title, out Aw.Sindri.Core.Projects.Truth.ProjectPrState State, out System.DateTimeOffset? DecidedAt, out string? WaitingOn) -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Deconstruct(out string! Url, out string! Repo, out int Number, out string! Title, out Aw.Sindri.Core.Projects.Truth.ProjectPrState State, out System.DateTimeOffset? DecidedAt, out string? WaitingOn, out bool WaitsOnYou) -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Equals(Aw.Sindri.Core.Projects.Truth.ProjectTruthPr? other) -> bool
-Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.ProjectTruthPr(string! Url, string! Repo, int Number, string! Title, Aw.Sindri.Core.Projects.Truth.ProjectPrState State, System.DateTimeOffset? DecidedAt, string? WaitingOn) -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.ProjectTruthPr(string! Url, string! Repo, int Number, string! Title, Aw.Sindri.Core.Projects.Truth.ProjectPrState State, System.DateTimeOffset? DecidedAt, string? WaitingOn, bool WaitsOnYou) -> void
 override Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.GetHashCode() -> int
 override Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.ToString() -> string!
@@ -23890,6 +23890,8 @@ Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.DecidedAt.get -> System.DateTimeOff
 Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.DecidedAt.init -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.WaitingOn.get -> string?
 Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.WaitingOn.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.WaitsOnYou.get -> bool
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.WaitsOnYou.init -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth
 Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.<Clone>$() -> Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth!
 Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Deconstruct(out Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel Level, out string! Reason) -> void
@@ -23906,9 +23908,9 @@ Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Reason.get -> string!
 Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Reason.init -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruth
 Aw.Sindri.Core.Projects.Truth.ProjectTruth.<Clone>$() -> Aw.Sindri.Core.Projects.Truth.ProjectTruth!
-Aw.Sindri.Core.Projects.Truth.ProjectTruth.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthPr!>! OpenPrs, out int OpenItems, out int DoneItems, out int TotalItems, out int RunningAgents, out Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? Health) -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthPr!>! OpenPrs, out int OpenItems, out int DoneItems, out int TotalItems, out int RunningAgents, out Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? Health, out bool BlockedOnYou) -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruth.Equals(Aw.Sindri.Core.Projects.Truth.ProjectTruth? other) -> bool
-Aw.Sindri.Core.Projects.Truth.ProjectTruth.ProjectTruth(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthPr!>! OpenPrs, int OpenItems, int DoneItems, int TotalItems, int RunningAgents, Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? Health) -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.ProjectTruth(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthPr!>! OpenPrs, int OpenItems, int DoneItems, int TotalItems, int RunningAgents, Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? Health, bool BlockedOnYou) -> void
 override Aw.Sindri.Core.Projects.Truth.ProjectTruth.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Projects.Truth.ProjectTruth.GetHashCode() -> int
 override Aw.Sindri.Core.Projects.Truth.ProjectTruth.ToString() -> string!
@@ -23926,6 +23928,8 @@ Aw.Sindri.Core.Projects.Truth.ProjectTruth.RunningAgents.get -> int
 Aw.Sindri.Core.Projects.Truth.ProjectTruth.RunningAgents.init -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruth.Health.get -> Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth?
 Aw.Sindri.Core.Projects.Truth.ProjectTruth.Health.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.BlockedOnYou.get -> bool
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.BlockedOnYou.init -> void
 static Aw.Sindri.Core.Projects.Truth.ProjectTruth.Empty.get -> Aw.Sindri.Core.Projects.Truth.ProjectTruth!
 Aw.Sindri.Core.Projects.Truth.ProjectSources
 Aw.Sindri.Core.Projects.Truth.ProjectSources.<Clone>$() -> Aw.Sindri.Core.Projects.Truth.ProjectSources!
@@ -23973,9 +23977,9 @@ Aw.Sindri.Core.Projects.Truth.ProjectTruthAgent.Running.get -> bool
 Aw.Sindri.Core.Projects.Truth.ProjectTruthAgent.Running.init -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts
 Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts.<Clone>$() -> Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts!
-Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPull!>! Pulls, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Reviews.ReviewSummary!>! Summaries, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthItem!>! Items, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthAgent!>! Agents) -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPull!>! Pulls, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Reviews.ReviewSummary!>! Summaries, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthItem!>! Items, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthAgent!>! Agents, out string? Owner) -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts.Equals(Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts? other) -> bool
-Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts.ProjectTruthFacts(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPull!>! Pulls, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Reviews.ReviewSummary!>! Summaries, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthItem!>! Items, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthAgent!>! Agents) -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts.ProjectTruthFacts(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPull!>! Pulls, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Reviews.ReviewSummary!>! Summaries, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthItem!>! Items, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthAgent!>! Agents, string? Owner) -> void
 override Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts.GetHashCode() -> int
 override Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts.ToString() -> string!
@@ -23989,6 +23993,8 @@ Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts.Items.get -> System.Collections.
 Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts.Items.init -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts.Agents.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthAgent!>!
 Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts.Agents.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts.Owner.get -> string?
+Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts.Owner.init -> void
 Aw.Sindri.Core.Projects.Truth.IProjectTruthFacts
 Aw.Sindri.Core.Projects.Truth.IProjectTruthFacts.Read(Aw.Sindri.Core.Projects.Truth.ProjectSources! union, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Projects.Truth.ProjectTruthFacts!>!>
 Aw.Sindri.Core.Projects.Cards.ProjectCard.Truth.get -> Aw.Sindri.Core.Projects.Truth.ProjectTruth!
