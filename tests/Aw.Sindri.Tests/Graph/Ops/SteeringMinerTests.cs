@@ -32,7 +32,7 @@ public sealed class SteeringMinerTests : IClassFixture<RoslynWarmup>
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static GraphSpec Spec => GraphTemplates.Find("steering-miner")!.Spec;
+    private static GraphSpec Spec => GraphTemplates.Find("steering-miner-payload")!.Spec;
 
     [Fact]
     public void The_graph_is_a_manual_start_a_loop_over_batches_and_a_ranked_notify_and_it_validates_with_its_code_compiled()
@@ -43,17 +43,31 @@ public sealed class SteeringMinerTests : IClassFixture<RoslynWarmup>
         var each = spec.Nodes.Single(static n => n.Type == "for_each");
         Assert.Equal("{{trigger.payload.turns}}", each.Config["items"]!.GetValue<string>());
         Assert.Equal(20, each.Config["maxItems"]!.GetValue<int>());
-        var validator = GraphFixtures.Validator(
-            blocks: GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"), more: [new CodeBlock(runner: null!)]).Types,
-            cron: (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem,
-            condition: text => ConditionExpression.TryParse(text, out var expression, out var error) ? new ConditionParse(Error: null, expression!.References) : new ConditionParse(error, []),
-            codeCheck: body => [.. new CodeCompiler().Compile(body, Token).Diagnostics.Select(static d => new CodeProblem(d.Line, d.Column, d.Id, d.Message))]);
-
-        var result = validator.Validate(spec, GraphMode.Activate);
+        var result = Validator().Validate(spec, GraphMode.Activate);
 
         Assert.True(result.Passed, string.Join("; ", result.Findings));
         Assert.Empty(result.Findings);
     }
+
+    [Fact]
+    public void The_transcript_graph_reads_batches_of_refs_then_each_batch_s_text_and_shares_the_rest_and_it_validates()
+    {
+        var spec = GraphTemplates.Find("steering-miner")!.Spec;
+
+        Assert.Equal(["manual", "transcript_turns", "for_each", "transcript_batch", "code", "prompt", "code", "collect", "code", "prompt", "code", "notify"], spec.Nodes.Select(static n => n.Type), StringComparer.Ordinal);
+        Assert.Equal("{{turns.batches}}", spec.Nodes.Single(static n => n.Type == "for_each").Config["items"]!.GetValue<string>());
+        Assert.Equal("{{load.turns}}", spec.Nodes.Single(static n => n.Id.Value == "shape").Config["input"]!.GetValue<string>());
+        Assert.Equal(Spec.Nodes.Skip(3).Select(static n => n.Config.ToJsonString()), spec.Nodes.Skip(5).Select(static n => n.Config.ToJsonString()), StringComparer.Ordinal);   // after 'shape', both graphs are the same
+        var result = Validator().Validate(spec, GraphMode.Activate);
+        Assert.True(result.Passed, string.Join("; ", result.Findings));
+        Assert.Empty(result.Findings);
+    }
+
+    private static GraphValidator Validator() => GraphFixtures.Validator(
+        blocks: GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"), more: [new CodeBlock(runner: null!), .. GraphBlockRegistry.TranscriptBlocks(new FakeGraphTranscripts([]), TimeProvider.System)]).Types,
+        cron: (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem,
+        condition: text => ConditionExpression.TryParse(text, out var expression, out var error) ? new ConditionParse(Error: null, expression!.References) : new ConditionParse(error, []),
+        codeCheck: body => [.. new CodeCompiler().Compile(body, Token).Diagnostics.Select(static d => new CodeProblem(d.Line, d.Column, d.Id, d.Message))]);
 
     [Fact]
     public void Shape_keeps_the_first_twenty_well_formed_turns_and_cuts_text_to_its_head_and_before_to_its_tail()

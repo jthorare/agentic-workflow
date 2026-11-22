@@ -2,12 +2,17 @@
 
 A starter template. It reads human turns from past agent sessions and finds the mistakes you keep correcting. A label step marks each turn, and code groups the corrections. Each mistake you corrected at least twice comes back as one finding, with the refs of its turns.
 
-Template name: `steering-miner` (issue 3787). Until the transcript source lands, you hand it the turns yourself.
+Two templates share one graph from `shape` on:
+
+- `steering-miner` reads your transcripts itself. `turns` (`transcript_turns`) lists the newest 400 human turns of the last 7 days as batches of refs. Inside the loop, `load` (`transcript_batch`) reads each batch's text.
+- `steering-miner-payload` takes the turns from the run's payload instead (below). Use it for a hand-picked set or a test.
+
+The text stays out of the list on purpose. 400 turns of 1,500 characters are far more than the 64 KB a step may hand on, while 400 refs are about 12 KB. Each batch's text is read inside the loop, under 64 KB per batch, so a turn keeps up to 1,500 characters.
 
 ## What it does
 
-1. `start` (manual) takes the payload below.
-2. `each` loops over the batches, at most 20.
+1. `start` (manual) starts the run.
+2. `steering-miner` only: `turns` lists the turns, `each` loops over its batches (at most 20), and `load` reads one batch's text. `steering-miner-payload`: `each` loops over the payload's batches.
 3. `shape` (code) checks one batch and cuts it to size.
 4. `label` (prompt) gives each turn one label and, for a correction, a short mistake phrase.
 5. `keep` (code) drops rows it cannot trust and keeps the corrections.
@@ -19,7 +24,7 @@ Template name: `steering-miner` (issue 3787). Until the transcript source lands,
 
 The model only labels and merges. Code applies the caps, the threshold of 2 and the order.
 
-## The payload
+## The payload (`steering-miner-payload`)
 
 `turns` is a list of batches. A batch is a list of turns. A turn has three fields:
 
@@ -35,7 +40,7 @@ The model only labels and merges. Code applies the caps, the threshold of 2 and 
 ]}
 ```
 
-A later source step will hand on the same list of batches, so the steps after `each` stay as they are.
+`load` hands on the same shape for one batch, so `shape` and every step after it are the same in both templates.
 
 ## Labels
 
@@ -80,8 +85,10 @@ Read them with `sindri wf run-show <run>`, on the `rank` step. The run's own out
 
 1. `sindri wf create steering-miner --template steering-miner`
 2. `sindri wf activate steering-miner`
-3. `sindri wf run steering-miner --payload "$(cat turns.json)"`
+3. `sindri wf run steering-miner`
 4. `sindri wf run-show <run>`
+
+To feed it by hand, create it from `--template steering-miner-payload` and run it with `--payload "$(cat turns.json)"`. To read another week or one repo, edit the `turns` step's `since` and `repo`.
 
 ## Limits
 

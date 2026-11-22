@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Graph.Templates;
 using Aw.Sindri.Testing.Workflow;
+using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Workflows;
 
@@ -34,7 +35,7 @@ public sealed partial class SteeringMinerRunTests
     {
         var model = new CannedModel();
         await using var rig = await GraphRig.StartAsync([new PromptBlock(model), new CodeBlock(new InProcessCodePort())]);
-        var workflow = await rig.Define(GraphTemplates.Find("steering-miner")!.Spec);
+        var workflow = await rig.Define(GraphTemplates.Find("steering-miner-payload")!.Spec);
         var trigger = new JsonObject
         {
             ["kind"] = "manual",
@@ -53,6 +54,40 @@ public sealed partial class SteeringMinerRunTests
         Assert.Equal(["Steering miner: 2 findings"], rig.Ports.Notified);
         Assert.Equal(3, model.Prompts.Count);   // one label prompt per batch, then the merge prompt
         Assert.All(model.Prompts, static p => Assert.Contains("<untrusted source=\"workflow:node:", p, StringComparison.Ordinal));   // the turns and phrases reach the model fenced
+    }
+
+    [Fact]
+    public async Task The_transcript_graph_reads_the_same_turns_from_the_transcripts_and_ends_in_the_same_findings()
+    {
+        var now = new DateTimeOffset(2026, 11, 20, 12, 0, 0, TimeSpan.Zero);
+        var transcripts = new FakeGraphTranscripts([Seed("transcript:1111aaaa", now, 3, 9, 12), Seed("transcript:2222bbbb", now, 4, 8, 15)]);
+        var model = new CannedModel();
+        await using var rig = await GraphRig.StartAsync([new PromptBlock(model), new CodeBlock(new InProcessCodePort()), .. GraphBlockRegistry.TranscriptBlocks(transcripts, new FakeTimeProvider(now))]);
+        var workflow = await rig.Define(GraphTemplates.Find("steering-miner")!.Spec);
+
+        var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
+        var run = await rig.Final(started.RunId, _long);
+        var rank = JsonNode.Parse((await rig.ItemRuns(started.RunId, "rank"))[0].Output!)!["result"]!;
+
+        Assert.True(run.Status == WorkflowRunStatus.Succeeded, run.Error);
+        var findings = rank["findings"]!.AsArray().Select(static f => (f!["label"]!.GetValue<string>(), f["mistake"]!.GetValue<string>(), f["count"]!.GetValue<int>())).ToList();
+        Assert.Equal([("wrong_approach_process", "ran the tests locally instead of in CI", 2), ("restate", "ignored the instruction to keep the API", 2)], findings);
+        Assert.Equal(6, rank["turns"]!.GetValue<int>());
+        Assert.Equal(1, transcripts.Reads);   // six turns are one batch, so one 'transcript_batch' read
+        Assert.Equal(["Steering miner: 2 findings"], rig.Ports.Notified);
+    }
+
+    // why: one session's human turns on the given lines, each after an assistant turn on the line before, newest at the highest line
+    private static TranscriptSeed Seed(string session, DateTimeOffset now, params int[] lines)
+    {
+        var turns = new List<TranscriptSeedTurn>();
+        foreach (var line in lines)
+        {
+            turns.Add(new TranscriptSeedTurn(line - 1, Human: false, now.AddMinutes(line - 100), "the assistant's last words"));
+            turns.Add(new TranscriptSeedTurn(line, Human: true, now.AddMinutes(line - 99), $"human text of {session}#{line.ToString(System.Globalization.CultureInfo.InvariantCulture)}"));
+        }
+
+        return new TranscriptSeed(session, "claude-code", "/r/a", IsSubagent: false, turns);
     }
 
     private static JsonArray Batch(params string[] refs)
