@@ -55,6 +55,7 @@ internal sealed class UsageReadCache(string directory)
     /// <summary>Writes what changed: for each transcript marked dirty only the messages added or changed since the last save (the whole transcript when it is new or was read again from byte 0), and the removal of the ones no longer in <paramref name="files"/>. Nothing is written when nothing changed.</summary>
     /// <param name="reader">The reader's name.</param>
     /// <param name="files">The state per transcript path.</param>
+    /// <remarks>A failure that is not a SQLite one (an <see cref="IOException"/>) leaves the file as it is and the exception reaches the caller, which writes every transcript whole on the next pass: one full rewrite.</remarks>
     /// <exception cref="InvalidDataException">The file was unusable (unreadable, or another version); it has been deleted and the caller should write everything again.</exception>
     public void Save(string reader, IReadOnlyDictionary<string, FileState> files)
     {
@@ -181,9 +182,9 @@ internal sealed class UsageReadCache(string directory)
         }
     }
 
-    private static List<string> SavedPaths(SqliteConnection connection)
+    private static HashSet<string> SavedPaths(SqliteConnection connection)
     {
-        var paths = new List<string>();
+        var paths = new HashSet<string>(StringComparer.Ordinal);
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT path FROM files";
         using var rows = command.ExecuteReader();
