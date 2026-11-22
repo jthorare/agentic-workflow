@@ -110,7 +110,7 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.XS}" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
-  <Style Selector="TextBlock.error">
+  <Style Selector="TextBlock.error, SelectableTextBlock.error">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Error}" />
   </Style>
   <Style Selector="icons|StateIcon.error">
