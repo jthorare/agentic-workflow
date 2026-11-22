@@ -12,7 +12,7 @@ internal static class FlowRules
     /// <summary>The deepest 'workflow.callDepth' may be set to.</summary>
     internal const int MaxCallDepth = 10;
 
-    internal static Error? Check(WorkflowSettings? workflow) => CallDepth(workflow?.CallDepth) ?? Hosts(workflow?.Http?.Hosts) ?? Editor(workflow?.Editor);
+    internal static Error? Check(WorkflowSettings? workflow) => CallDepth(workflow?.CallDepth) ?? Hosts(workflow?.Http?.Hosts) ?? Editor(workflow?.Editor) ?? Budget(workflow?.Budget);
 
     /// <summary>Whether <paramref name="host"/> is a lower-case DNS name with a dot, whose last label has a letter (so no IP address), and is not under 'localhost'.</summary>
     /// <param name="host">The name.</param>
@@ -44,6 +44,11 @@ internal static class FlowRules
         editor is null || Editors.Contains(editor, StringComparer.Ordinal)
             ? null
             : Invalid("workflow.editor", $"must be 'sheet' or 'steps', not '{editor}'");
+
+    private static Error? Budget(RunBudgetSettings? budget) =>
+        budget?.Tokens is { } tokens && tokens < 1
+            ? Invalid("workflow.budget.tokens", "must be a whole number above 0, such as 200000")
+            : null;
 
     private static Error? CallDepth(int? depth) =>
         depth is { } set && set is < 1 or > MaxCallDepth

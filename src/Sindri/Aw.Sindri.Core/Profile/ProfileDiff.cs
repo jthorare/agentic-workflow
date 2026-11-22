@@ -229,6 +229,7 @@ public static partial class ProfileDiff
         ("workflow.http.hosts", Joined(workflow?.Http?.Hosts)),
         ("workflow.callDepth", Number(workflow?.CallDepth)),
         ("workflow.editor", workflow?.Editor),
+        ("workflow.budget.tokens", Number(workflow?.Budget?.Tokens)),
     ];
 
     private static string? Number(long? value) => value?.ToString(System.Globalization.CultureInfo.InvariantCulture);

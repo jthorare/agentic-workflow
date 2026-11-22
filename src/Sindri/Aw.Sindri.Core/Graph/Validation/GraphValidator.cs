@@ -21,6 +21,7 @@ public sealed partial class GraphValidator(GraphValidationContext context)
         var structure = new GraphStructure(spec);
         Duplicates(spec, found);
         ResourceDeclarations(spec, found);
+        Budget(spec, found);
         Edges(spec, structure, found);
         foreach (var node in spec.Nodes)
         {

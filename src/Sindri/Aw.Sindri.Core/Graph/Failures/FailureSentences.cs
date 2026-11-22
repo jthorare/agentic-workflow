@@ -26,6 +26,7 @@ public static class FailureSentences
         Row("SND-GRAPH-107", "This run already ended."),
         Row("SND-GRAPH-108", "The output of {step} was cut at 64 KB, so a later step can't read it.", "Open the step"),
         Row("SND-GRAPH-109", "A run of this workflow can't start the workflow again.", "Open the step that does"),
+        Row("SND-GRAPH-134", "{step} didn't start: the run used its whole token budget.", "Raise the budget", EditCommand + " --file <spec.json> (set budget.tokens)"),
         Row("SND-CODE-001", "{step} doesn't compile: {message}.", "Open {step}"),
         Row("SND-CODE-002", "{step} ran past its time limit.", "Open {step}"),
         Row("SND-CODE-003", "{step} used more memory than its limit.", "Open {step}"),
