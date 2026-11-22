@@ -42,7 +42,7 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
 
         var nodes = new List<GraphNodeViewModel>();
         var unplaced = new List<string>();
-        foreach (var (id, type, title) in ReadNodes(workflow.Spec))
+        foreach (var (id, type, title, config) in ReadNodes(workflow.Spec))
         {
             if (!positions.TryGetValue(id, out var at))
             {
@@ -51,7 +51,11 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
             }
 
             var status = statuses is not null && statuses.TryGetValue(id, out var word) ? word : null;
-            nodes.Add(new GraphNodeViewModel(id, title.Length > 0 ? title : id, type, at.X, at.Y, status));
+            var served = _summaries.TryGetValue(id, out var summary) ? summary : null;
+            nodes.Add(new GraphNodeViewModel(id, GraphCardLine.Title(title, type, served?.KindTitle), type, at.X, at.Y, status)
+            {
+                Line = GraphCardLine.Settings(type, config, served?.Summary, served?.KindTitle),
+            });
         }
 
         _spec = workflow.Spec;
@@ -207,9 +211,9 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
         return next >= 0 && next < Order.Count && SelectNode(Order[next].Id);
     }
 
-    private static List<(string Id, string Type, string Title)> ReadNodes(JsonElement spec)
+    private static List<(string Id, string Type, string Title, JsonElement Config)> ReadNodes(JsonElement spec)
     {
-        var found = new List<(string, string, string)>();
+        var found = new List<(string, string, string, JsonElement)>();
         if (spec.ValueKind != JsonValueKind.Object || !spec.TryGetProperty("nodes", out var list) || list.ValueKind != JsonValueKind.Array)
         {
             return found;
@@ -219,7 +223,7 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
         {
             if (Text(node, "id") is { Length: > 0 } id)
             {
-                found.Add((id, Text(node, "type"), Text(node, "title")));
+                found.Add((id, Text(node, "type"), Text(node, "title"), node.TryGetProperty("config", out var config) ? config.Clone() : default));
             }
         }
 

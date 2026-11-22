@@ -40,13 +40,13 @@ public sealed class WorkflowGraphViewModelTests
         """;
 
     [Fact]
-    public async Task Nodes_sit_at_the_positions_the_server_returned_and_a_node_without_a_title_shows_its_id()
+    public async Task Nodes_sit_at_the_positions_the_server_returned_and_a_node_without_a_title_shows_its_blocks_name()
     {
         var served = await _f.Server.Workflow(Url, Slug, Token);
         var graph = new WorkflowGraphViewModel(served.Value);
 
         Assert.Equal(
-            [("start", "start", "manual", 0d, 0d), ("agent", "Check the repos", "run_agent", 280d, 0d)],
+            [("start", "When called", "manual", 0d, 0d), ("agent", "Check the repos", "run_agent", 280d, 0d)],
             graph.Nodes.Select(n => (n.Id, n.Title, n.Type, n.X, n.Y)));
         var edge = Assert.Single(graph.Edges);
         Assert.Equal(("start", "agent"), (edge.From, edge.To));

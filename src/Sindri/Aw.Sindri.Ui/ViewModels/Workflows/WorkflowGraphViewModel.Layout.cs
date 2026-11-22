@@ -74,7 +74,7 @@ internal sealed partial class WorkflowGraphViewModel
         return _isOff && string.Equals(node.Type, "schedule", StringComparison.Ordinal) ? Labels.WfState(active: false).Word.ToLowerInvariant() : null;
     }
 
-    // A card whose settings line is longer than SettingsWrapAt wraps it to a second line, so it is taller; the line is the summary the card draws.
+    // A card whose settings line is longer than SettingsWrapAt wraps it to a second line, so it is taller; the line is the card's line 2 (GraphCardLine.Settings).
     private Dictionary<string, double> Heights() =>
-        Nodes.ToDictionary(n => n.Id, n => _summaries.TryGetValue(n.Id, out var line) && line.Summary.Length > SettingsWrapAt ? CardTallHeight : CardHeight, StringComparer.Ordinal);
+        Nodes.ToDictionary(n => n.Id, n => n.Line.Length > SettingsWrapAt ? CardTallHeight : CardHeight, StringComparer.Ordinal);
 }

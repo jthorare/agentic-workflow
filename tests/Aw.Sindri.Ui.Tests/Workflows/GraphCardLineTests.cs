@@ -1,0 +1,65 @@
+using System.Text.Json;
+using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.ViewModels.Workflows;
+
+namespace Aw.Sindri.Ui.Tests.Workflows;
+
+/// <summary>The words on a workflow card (#3684): line 1 is the title or the block's name, never the id; line 2 is one settings line per block kind.</summary>
+[Lane(TestLane.Unit)]
+public sealed class GraphCardLineTests
+{
+    private static JsonElement Config(string json)
+    {
+        using var doc = JsonDocument.Parse(json);
+        return doc.RootElement.Clone();
+    }
+
+    [Theory]
+    [InlineData("manual", "{}", "From Run now or the API")]
+    [InlineData("code", "{\"code\":\"const a = 1;\\n\\nreturn a;\\n\"}", "JavaScript · 2 lines")]
+    [InlineData("code", "{\"code\":\"return 1;\"}", "JavaScript · 1 line")]
+    [InlineData("condition", "{\"when\":\"failing checks > 0\"}", "If failing checks > 0")]
+    [InlineData("http", "{\"url\":\"https://status.example.com/api\"}", "GET status.example.com/api")]
+    [InlineData("http", "{\"method\":\"post\",\"url\":\"http://a.test/hook\"}", "POST a.test/hook")]
+    [InlineData("notify", "{\"title\":\"#release, with a ping\"}", "Notify: #release, with a ping")]
+    [InlineData("wait", "{\"duration\":\"10m\"}", "Wait 10 minutes")]
+    [InlineData("wait", "{\"duration\":\"1h\"}", "Wait 1 hour")]
+    [InlineData("wait", "{\"until\":\"07:00\",\"timezone\":\"America/Los_Angeles\"}", "Wait until 07:00 America/Los_Angeles")]
+    [InlineData("collect", "{\"items\":\"{{ steps }}\"}", "Collect {{ steps }}")]
+    [InlineData("prompt", "{\"prompt\":\"Summarize\"}", "Prompt, answer in text")]
+    [InlineData("prompt", "{\"prompt\":\"Summarize\",\"output\":{\"type\":\"object\"}}", "Prompt, answer as fields")]
+    [InlineData("create_item", "{}", "Create item in the queue")]
+    [InlineData("create_item", "{\"repo\":\"me/app\"}", "Create item in me/app")]
+    [InlineData("run_agent", "{\"agent\":\"claude-code\",\"repo\":\"me/app\"}", "Run claude-code in me/app")]
+    [InlineData("run_workflow", "{\"workflow\":\"nightly\"}", "Run workflow nightly")]
+    [InlineData("for_each", "{\"items\":\"{{ prs }}\"}", "For each of {{ prs }}")]
+    [InlineData("call_tool", "{\"toolkit\":\"notes\",\"tool\":\"add_note\"}", "notes · add_note")]
+    [InlineData("ask_owner", "{\"question\":\"Ship it?\"}", "Ask: Ship it?")]
+    public void Each_block_kind_gets_one_settings_line_from_its_config(string type, string config, string expected) =>
+        Assert.Equal(expected, GraphCardLine.Settings(type, Config(config), summary: null, kindTitle: null));
+
+    [Fact]
+    public void The_schedule_line_is_the_one_the_server_serves() =>
+        Assert.Equal("Every weekday 7:00 America/Los_Angeles", GraphCardLine.Settings("schedule", Config("{\"cron\":\"0 7 * * 1-5\"}"), "Every weekday 7:00 America/Los_Angeles", "Schedule"));
+
+    [Theory]
+    [InlineData("code", "{}", "Code")]
+    [InlineData("http", "{\"method\":\"GET\"}", "HTTP request")]
+    [InlineData("schedule", "{}", "Schedule")]
+    [InlineData("memory_write", "{}", "Remember")]
+    public void A_kind_whose_setting_is_missing_shows_the_blocks_name(string type, string config, string expected) =>
+        Assert.Equal(expected, GraphCardLine.Settings(type, Config(config), summary: null, kindTitle: null));
+
+    [Fact]
+    public void A_missing_config_reads_like_an_empty_one() =>
+        Assert.Equal("If", GraphCardLine.Settings("condition", default, summary: null, kindTitle: null));
+
+    [Theory]
+    [InlineData("Fetch upstream status", "code", null, "Fetch upstream status")]
+    [InlineData("", "code", null, "Code")]
+    [InlineData("  ", "condition", null, "If")]
+    [InlineData("", "code", "Run code", "Run code")]
+    [InlineData("", "made_up_kind", null, "made up kind")]
+    public void Line_1_is_the_title_or_the_blocks_name_never_the_id(string title, string type, string? kindTitle, string expected) =>
+        Assert.Equal(expected, GraphCardLine.Title(title, type, kindTitle));
+}
