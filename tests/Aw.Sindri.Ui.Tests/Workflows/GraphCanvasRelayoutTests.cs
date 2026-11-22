@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Headless;
 using Avalonia.Threading;
 using Aw.Kernel.Testing;
@@ -88,26 +87,25 @@ public sealed class GraphCanvasRelayoutTests
     {
         var graph = await Release();
 
-        var (fits, scrolls) = await OnUi(() =>
+        // The wheel step itself, not the headless input route: a headless MouseWheel did not reach the drawn canvas, so the window saw an unhandled wheel both times.
+        var (fits, scrolls, panBefore, panAfter) = await OnUi(() =>
         {
             var canvas = new GraphCanvas { Graph = graph };
             var window = new Window { Content = canvas, Width = 1440, Height = 728 };
-            var handled = new List<bool>();
-            window.AddHandler(InputElement.PointerWheelChangedEvent, (_, e) => handled.Add(e.Handled), RoutingStrategies.Bubble, handledEventsToo: true);
             window.Show();
             Settle(window);
             try
             {
-                window.MouseWheel(new Point(200, 200), new Vector(0, -1));
-                var atFit = handled[^1];
+                var atFit = canvas.Wheel(new Vector(0, -1), KeyModifiers.None, new Point(200, 200));
                 for (var i = 0; i < 8; i++)
                 {
                     canvas.ZoomIn();   // to 200 %, where the chain overflows the canvas both ways
                 }
 
                 Settle(window);
-                window.MouseWheel(new Point(200, 200), new Vector(0, -1));
-                return (atFit, handled[^1]);
+                var before = canvas.Pan;
+                var took = canvas.Wheel(new Vector(0, -1), KeyModifiers.None, new Point(200, 200));
+                return (atFit, took, before, canvas.Pan);
             }
             finally
             {
@@ -116,7 +114,8 @@ public sealed class GraphCanvasRelayoutTests
         });
 
         Assert.False(fits, "the canvas took the wheel while the whole graph fits");
-        Assert.True(scrolls, "the canvas left the wheel to the page while it can scroll");
+        Assert.True(scrolls, $"the canvas left the wheel to the page while it can scroll (pan {panBefore} -> {panAfter})");
+        Assert.Equal(panBefore.Y - 48, panAfter.Y, 3);   // one 48 px step down
     }
 
     [Fact]

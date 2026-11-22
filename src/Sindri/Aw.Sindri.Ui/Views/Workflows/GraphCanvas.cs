@@ -190,26 +190,31 @@ internal sealed partial class GraphCanvas : Control
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {
         base.OnPointerWheelChanged(e);
-        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        e.Handled = Wheel(e.Delta, e.KeyModifiers, e.GetPosition(this));
+    }
+
+    /// <summary>One wheel step. Ctrl+wheel zooms about the pointer. A plain wheel scrolls up and down; a sideways swipe (or Shift+wheel) scrolls left and right. The canvas takes the
+    /// wheel only while it can move that way; at its end, or when it fits, the wheel is left to the page.</summary>
+    /// <param name="delta">The wheel's delta.</param>
+    /// <param name="modifiers">The keys held.</param>
+    /// <param name="at">The pointer, in this control.</param>
+    /// <returns>True when the canvas took the wheel.</returns>
+    internal bool Wheel(Vector delta, KeyModifiers modifiers, Point at)
+    {
+        _fitPending = false;
+        if (!modifiers.HasFlag(KeyModifiers.Control))
         {
-            // the wheel scrolls up and down, Shift+wheel left and right; nothing happens when the canvas does not scroll
-            _fitPending = false;
-            // the canvas takes the wheel only while it can move that way; at its end, or when it fits, the page scrolls
-            // a sideways swipe (Delta.X) scrolls left and right; Shift turns a plain wheel's Delta.Y sideways
-            var (dx, dy) = e.KeyModifiers.HasFlag(KeyModifiers.Shift) && Math.Abs(e.Delta.X) < 1e-9 ? (e.Delta.Y, 0d) : (e.Delta.X, e.Delta.Y);
+            var (dx, dy) = modifiers.HasFlag(KeyModifiers.Shift) && Math.Abs(delta.X) < 1e-9 ? (delta.Y, 0d) : (delta.X, delta.Y);
             var before = Pan;
             Pan = new Point(Pan.X + (dx * WheelStep), Pan.Y + (dy * WheelStep));
-            e.Handled = Pan != before;
-            return;
+            return Pan != before;
         }
 
         // Zoom about the pointer: the world point under it stays under it.
-        _fitPending = false;
-        var at = e.GetPosition(this);
         var world = ToWorld(at);
-        Zoom *= Math.Pow(ZoomStep, e.Delta.Y);
+        Zoom *= Math.Pow(ZoomStep, delta.Y);
         Pan = new Point(at.X - (world.X * Zoom), at.Y - (world.Y * Zoom));
-        e.Handled = true;
+        return true;
     }
 
     /// <inheritdoc/>
