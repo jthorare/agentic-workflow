@@ -3,6 +3,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Features.RemoveSessionWorktree;
 using Aw.Sindri.Features.StartSession;
 
@@ -45,7 +46,7 @@ internal sealed class AgentStartVerbs(ControlPlaneClient client, Output output)
     /// <param name="started">The started session.</param>
     /// <returns>The two lines.</returns>
     internal static string StartedText(StartedSession started) =>
-        $"started {started.Id.Value} (act id {started.ActId.Value}, pane {started.Host.Pane})\nattach: tmux -L {started.Host.Socket} attach -t ={started.Host.Session}\n";
+        $"started {started.Id.Value} (act id {started.ActId.Value}, pane {started.Host.Pane})\nattach: {TmuxAttachLine.NamedLine(started.Host.Socket, started.Host.Session)}\n";
 
     internal async Task<int> RemoveWorktree(string[] args, bool json, CancellationToken ct)
     {
