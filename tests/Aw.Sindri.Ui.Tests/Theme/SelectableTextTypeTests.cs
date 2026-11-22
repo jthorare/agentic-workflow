@@ -9,14 +9,12 @@ namespace Aw.Sindri.Ui.Tests.Theme;
 
 /// <summary>
 /// A type class on a SelectableTextBlock renders like the same class on a TextBlock (#3785). An Avalonia type selector matches the
-/// exact style key, so a `TextBlock.caption` style never reaches a SelectableTextBlock, and the copyable failed-open lines rendered at
-/// body size.
+/// exact style key, so a TextBlock-only style never reaches a SelectableTextBlock. Caption has its own test (CaptionSelectableTextTests).
 /// </summary>
 [Lane(TestLane.Unit)]
 public sealed class SelectableTextTypeTests
 {
     [Theory]
-    [InlineData("caption")]
     [InlineData("mono")]
     public async Task A_selectable_text_block_with_a_type_class_renders_like_a_text_block_with_it(string name)
     {
@@ -25,7 +23,7 @@ public sealed class SelectableTextTypeTests
         var (selectable, plain) = await session.Dispatch(
             () =>
             {
-                var copyable = new SelectableTextBlock { Text = "This file isn't on this machine." };
+                var copyable = new SelectableTextBlock { Text = "A model trace" };
                 copyable.Classes.Add(name);
                 return (Rendered(copyable), Rendered(Classed(name)));
             },

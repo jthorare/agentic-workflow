@@ -32,7 +32,8 @@
     <Setter Property="FontWeight" Value="{DynamicResource Type.DetailTitle.Weight}" />
     <Setter Property="LetterSpacing" Value="-0.24" />
   </Style>
-  <Style Selector="TextBlock.body">
+  <!-- The Linear issue lines (LinearLineView) are SelectableTextBlocks in the body type (#3785). -->
+  <Style Selector="TextBlock.body, SelectableTextBlock.body">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.Body.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.Body.LineHeight}" />
@@ -53,22 +54,6 @@
     <Setter Property="LineHeight" Value="{DynamicResource Type.Caption.LineHeight}" />
     <Setter Property="FontWeight" Value="{DynamicResource Type.Caption.Weight}" />
     <Setter Property="LetterSpacing" Value="-0.24" />
-  </Style>
-  <!-- The copyable failed-open lines (#3785) and the Linear issue lines (LinearLineView) are SelectableTextBlocks: a type
-       selector matches the exact type, so .caption and .body need their own. -->
-  <Style Selector="SelectableTextBlock.caption">
-    <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
-    <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
-    <Setter Property="LineHeight" Value="{DynamicResource Type.Caption.LineHeight}" />
-    <Setter Property="FontWeight" Value="{DynamicResource Type.Caption.Weight}" />
-    <Setter Property="LetterSpacing" Value="-0.24" />
-  </Style>
-  <Style Selector="SelectableTextBlock.body">
-    <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
-    <Setter Property="FontSize" Value="{DynamicResource Type.Body.Size}" />
-    <Setter Property="LineHeight" Value="{DynamicResource Type.Body.LineHeight}" />
-    <Setter Property="FontWeight" Value="{DynamicResource Type.Body.Weight}" />
-    <Setter Property="LetterSpacing" Value="-0.13" />
   </Style>
   <Style Selector="TextBlock.eyebrow">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
