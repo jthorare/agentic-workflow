@@ -21,6 +21,8 @@ public sealed partial class RuleGateTests
     public void A_caseless_rule_compares_letters_only_in_any_case()
     {
         // An exact clause in an IgnoreCase rule would miss "BEARER" for "bearer": only letterless literals may be exact.
+        // An inline (?i) turns IgnoreCase on where Options never shows it, so no built-in pattern may hold one.
+        Assert.All(BuiltinRules.All, r => Assert.DoesNotContain("(?i", r.Pattern, StringComparison.Ordinal));
         foreach (var rule in BuiltinRules.All.Where(r => r.Options.HasFlag(RegexOptions.IgnoreCase)))
         {
             var exact = rule.Gate!.Clauses.Where(c => !c.Caseless).SelectMany(c => c.Literals);
