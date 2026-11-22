@@ -16,6 +16,8 @@ public sealed class TmuxAllowlistTests
     [
         Args("capture-pane", "-e", "-p", "-t", "%3"),
         Args("capture-pane", "-e", "-p", "-t", "%3", "-S", "-200", "-E", "-1"),
+        Args("capture-pane", "-e", "-p", "-t", "%3", "-S", "-37", "-E", "-2"),
+        Args("capture-pane", "-e", "-p", "-t", "%3", "-S", "0", "-E", "35"),
         Args("send-keys", "-t", "%3", "-l", "--", "hello world"),
         Args("send-keys", "-t", "%3", "Enter"),
         Args("send-keys", "-t", "%3", "Escape"),

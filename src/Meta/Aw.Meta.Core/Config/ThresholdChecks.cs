@@ -34,7 +34,13 @@ public static class ThresholdChecks
             : string.IsNullOrWhiteSpace(defects.Repo) ? "defects.repo must not be blank"
             : null;
 
-    private static string? AgentAndRoutingProblem(TeamConfig team) => GateModeProblem(team.Gate) ?? AgentProblem(team.Agent) ?? RoutingChecks.Problem(team);
+    private static string? ReviewModeProblem(ReviewConfig? review) =>
+        review is null || string.Equals(review.Mode, ReviewConfig.OkMode, StringComparison.Ordinal) || review.IsCounts
+            ? null
+            : $"review.mode must be \"{ReviewConfig.OkMode}\" or \"{ReviewConfig.CountsMode}\", not \"{review.Mode}\"";
+
+    private static string? AgentAndRoutingProblem(TeamConfig team) =>
+        GateModeProblem(team.Gate) ?? ReviewModeProblem(team.Review) ?? AgentProblem(team.Agent) ?? RoutingChecks.Problem(team);
 
     private static string? AgentProblem(string? agent) =>
         agent is null || IsAgentId(agent) ? null : $"agent must be an agent id (^[a-z][a-z0-9-]{{1,31}}$), not '{agent}'";
