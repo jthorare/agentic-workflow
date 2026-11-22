@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Aw.Sindri.Ui.Views.Agents;
 using Aw.Sindri.Ui.Views.Item;
 using Aw.Sindri.Ui.Views.Linear;
 
@@ -66,7 +67,7 @@ internal sealed partial class ShellWindow
 
         if (!FocusFirstSheetAction())
         {
-            _ = this.Get<Control>("SheetTitle").Focus(NavigationMethod.Tab);   // no action, or none takes focus (pending): the heading
+            _ = SheetFocusTarget().Focus(NavigationMethod.Tab);   // no action, or none takes focus (pending): the heading (a session sheet's body)
         }
 
         return true;
@@ -153,6 +154,11 @@ internal sealed partial class ShellWindow
         if (e.Key == Key.OemQuestion && e.KeyModifiers == KeyModifiers.None)
         {
             return "/";
+        }
+
+        if (e is { Key: Key.Up or Key.Down, KeyModifiers: KeyModifiers.None, Source: SessionRow or EndedSessionRow })
+        {
+            return e.Key.ToString();   // #3710: on a focused Agents row the arrows walk the rows like J and K
         }
 
         return e.Key is >= Key.A and <= Key.Z && e.KeyModifiers == KeyModifiers.None ? e.Key.ToString() : null;
