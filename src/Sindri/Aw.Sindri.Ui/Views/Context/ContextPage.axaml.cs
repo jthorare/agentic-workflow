@@ -14,6 +14,7 @@ namespace Aw.Sindri.Ui.Views.Context;
 internal sealed partial class ContextPage : UserControl
 {
     private const double StageMinimum = 420;
+    private const double HintGap = 8;   // the row gap of the grid that holds the stage and the hint row
     private const double PageEdge = 24;   // the room the page keeps under the stage
     private ContextPageViewModel? _page;
     private ScrollViewer? _scroller;
@@ -277,7 +278,9 @@ internal sealed partial class ContextPage : UserControl
         // The stage fills what the window leaves: the viewport less where the page starts in it, where the stage starts in the page, and the edge. It starts at the top of its row, so a row taller than it never centres it.
         var top = ContextStageHost.TranslatePoint(default, this)?.Y ?? 0;
         var start = scroller.Content is Visual content ? this.TranslatePoint(default, content)?.Y ?? 0 : 0;
-        var height = Math.Max(StageMinimum, scroller.Viewport.Height - start - top - PageEdge);
+        // The key hint row sits under the stage (and its row gap): it is left room, or it is scrolled out of the window.
+        var hints = ContextKeyHints.IsVisible ? ContextKeyHints.DesiredSize.Height + HintGap : 0;
+        var height = Math.Max(StageMinimum, scroller.Viewport.Height - start - top - PageEdge - hints);
         if (Math.Abs(ContextStageHost.Height - height) > 0.5 || double.IsNaN(ContextStageHost.Height))
         {
             ContextStageHost.Height = height;
