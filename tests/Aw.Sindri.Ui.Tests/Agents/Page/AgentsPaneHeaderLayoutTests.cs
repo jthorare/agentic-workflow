@@ -21,7 +21,7 @@ public sealed class AgentsPaneHeaderLayoutTests : FrameHost
     private const string ReadyJson = "{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%3\"}}";
     private const string WithPane = "aaaaaaaa-0000-4000-8000-000000000001";
 
-    private static readonly string[] FilterNames = ["ProviderFilter", "StateFilter", "RepoFilter"];
+    private static readonly string[] _filterNames = ["ProviderFilter", "StateFilter", "RepoFilter"];
 
     [Theory]
     [InlineData(1440)]
@@ -38,17 +38,17 @@ public sealed class AgentsPaneHeaderLayoutTests : FrameHost
         await Until(window, () => shell.Agents.Drawn > 0, "the Agents page never read the list");
         for (var i = 0; i < 6 && shell.Agents.SelectedKey?.Contains(WithPane, StringComparison.Ordinal) != true; i++)
         {
-            window.KeyPress(Key.J, RawInputModifiers.None, PhysicalKey.J, symbol: "j");
+            window.KeyPress(Key.J, RawInputModifiers.None, PhysicalKey.J, keySymbol: "j");
             Dispatcher.UIThread.RunJobs();
         }
 
-        window.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, symbol: null);
+        window.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, keySymbol: null);
         Dispatcher.UIThread.RunJobs();
         await Until(window, () => shell.Agents.IsTerminalOpen, "the pane never opened");
         Settle(window);
 
         var paneLeft = Named<TerminalView>(window, "TerminalPanel").TranslatePoint(new Point(x: 0, y: 0), window)!.Value.X;
-        foreach (var name in FilterNames)
+        foreach (var name in _filterNames)
         {
             var filter = Named<ComboBox>(window, name);
             var right = filter.TranslatePoint(new Point(x: filter.Bounds.Width, y: 0), window)!.Value.X;
