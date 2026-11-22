@@ -35,6 +35,7 @@ internal static partial class Labels
         ["StopToolkit"] = "Stop toolkit",
         ["PauseToolkit"] = "Pause toolkit",
         ["ResumeToolkit"] = "Resume toolkit",
+        ["RejectProposal"] = "Reject proposal",
         ["CreateWorkflow"] = "Create workflow",
         ["ReplaceWorkflow"] = "Replace workflow",
         ["ApplyWorkflowOps"] = "Edit workflow",
