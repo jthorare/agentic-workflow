@@ -18,22 +18,36 @@ internal sealed partial class ProjectSheetViewModel
         }
 
         var card = one.Project;
-        var target = EditTarget.Trim();
-        var notes = EditNotes.Trim();
-        var links = EditLinks.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var change = new ProjectChange(
-            card.Version,
-            Name: CanEditName && !string.Equals(EditName.Trim(), card.Name, StringComparison.Ordinal) ? EditName.Trim() : null,
-            Links: links.SequenceEqual(OwnerLinks(card), StringComparer.Ordinal) ? null : links,
-            Target: target.Length > 0 && !string.Equals(target, card.Target, StringComparison.Ordinal) ? target : null,
-            ClearTarget: target.Length == 0 && card.Target is not null,
-            Notes: notes.Length > 0 && !string.Equals(notes, card.Notes, StringComparison.Ordinal) ? notes : null,
-            ClearNotes: notes.Length == 0 && !string.IsNullOrEmpty(card.Notes));
+        var change = EditedChange(card);
         if (await Send((url, ct) => Api.ChangeProject(url, card.Id, change, ct), cancellationToken).ConfigureAwait(true))
         {
             await Saved(cancellationToken).ConfigureAwait(true);
         }
     }
+
+    // The form's fields as a change: only what differs from the card read, an emptied target or notes as a clear.
+    private ProjectChange EditedChange(ProjectCardView card)
+    {
+        var target = EditTarget.Trim();
+        var notes = EditNotes.Trim();
+        var links = EditLinks.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return new ProjectChange(
+            card.Version,
+            Name: EditedName(card),
+            Links: links.SequenceEqual(OwnerLinks(card), StringComparer.Ordinal) ? null : links,
+            Target: NewText(target, card.Target),
+            ClearTarget: target.Length == 0 && card.Target is not null,
+            Notes: NewText(notes, card.Notes),
+            ClearNotes: notes.Length == 0 && !string.IsNullOrEmpty(card.Notes));
+    }
+
+    // The edited name when the name can be edited and differs, else null.
+    private string? EditedName(ProjectCardView card) =>
+        CanEditName && !string.Equals(EditName.Trim(), card.Name, StringComparison.Ordinal) ? EditName.Trim() : null;
+
+    // The edited text when it is not empty and differs from the one read, else null.
+    private static string? NewText(string edited, string? was) =>
+        edited.Length > 0 && !string.Equals(edited, was, StringComparison.Ordinal) ? edited : null;
 
     /// <summary>Sets the owner's state to the picked one.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
