@@ -60,8 +60,16 @@ internal sealed partial class AgentsPageViewModel
         "E" => HasEnded && Toggled(),
         "Enter" or "O" => PressOnLive(key, SelectedLive),
         "Y" => Copied(),
+        "N" => NewAgent(),
         _ => false,
     };
+
+    // N opens the New agent form (agents spec §15.6); it writes nothing until Ctrl+Enter.
+    private bool NewAgent()
+    {
+        NewAgentRequested?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
 
     private bool Toggled()
     {
