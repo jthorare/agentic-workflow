@@ -182,23 +182,11 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         }
     }
 
-    /// <summary>
-    /// A succeeded run's outputs as JSON: an object keyed by node id holding what each succeeded node gave. A node that ran once gives its outputs object; a node that ran per item
-    /// (item index above 0) gives an array of them in item order. Null when nothing succeeded or the text would pass <see cref="NodeRunLimits.PayloadBytes"/>.
-    /// </summary>
+    /// <summary>A succeeded run's outputs as JSON: its result node or last nodes (<see cref="GraphResultOutputs"/>), kept up to 64 KB on their own (#3807).</summary>
     private async Task<string?> Outputs(WorkflowRunId run, CancellationToken cancel)
     {
-        var rows = GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false));
-        var result = new JsonObject();
-        foreach (var group in rows.Where(static n => n.Status == NodeRunStatus.Succeeded && n.Output is not null && !n.Truncated).GroupBy(static n => n.NodeId))
-        {
-            // why: a cut output is no longer JSON, so that node is left out rather than half-written
-            var parsed = group.OrderBy(static n => n.ItemIndex).Select(static n => JsonNode.Parse(n.Output!)).ToList();
-            result[group.Key.Value] = group.Any(static n => n.ItemIndex > 0) ? new JsonArray([.. parsed]) : parsed[0];
-        }
-
-        var text = result.Count == 0 ? null : result.ToJsonString();
-        // why: like a node's output, the run's is kept only up to 64 KB; a cut JSON text is worse than none, so a larger one is not stored
-        return text is not null && NodeRunLimits.Cap(text, out var truncated) is not null && !truncated ? text : null;
+        var row = GraphFailures.Value(await runs.Get(run, cancel).ConfigureAwait(false));
+        var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
+        return GraphResultOutputs.Build(spec, GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false)));
     }
 }

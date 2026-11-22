@@ -28,6 +28,7 @@ public sealed partial class GraphValidator(GraphValidationContext context)
         }
 
         Triggers(spec, structure, found);
+        ResultNode(spec, structure, found);
         Cycles(structure, found);
         Loops(spec, found);
         PromptReads(spec, structure, found);
@@ -46,6 +47,14 @@ public sealed partial class GraphValidator(GraphValidationContext context)
     }
 
     internal bool IsTriggerType(string type) => context.Blocks.TryGetValue(type, out var block) && block.IsTrigger;
+
+    private static void ResultNode(GraphSpec spec, GraphStructure structure, List<GraphFinding> found)
+    {
+        if (spec.Result is { } result && !structure.Has(result.Value))
+        {
+            found.Add(new GraphFinding("GRAPH-RESULT-001", GraphSeverity.Error, [], "result", $"'result' names node '{result.Value}', which does not exist", "name the node whose output is the run's result, or remove 'result'"));
+        }
+    }
 
     private static void Duplicates(GraphSpec spec, List<GraphFinding> found)
     {

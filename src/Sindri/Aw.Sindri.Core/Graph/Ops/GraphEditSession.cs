@@ -14,8 +14,9 @@ internal sealed class GraphEditSession(GraphSpec spec, Func<string, bool> isTrig
     private string _name = spec.Name;
     private string? _description = spec.Description;
     private string? _concurrency = spec.Concurrency;
+    private NodeId? _result = spec.Result;
 
-    public GraphSpec ToSpec() => spec with { Name = _name, Description = _description, Concurrency = _concurrency, Nodes = [.. _nodes], Edges = [.. _edges] };
+    public GraphSpec ToSpec() => spec with { Name = _name, Description = _description, Concurrency = _concurrency, Result = _result, Nodes = [.. _nodes], Edges = [.. _edges] };
 
     // why: returns the reason an op can't apply, or null once it is applied; the caller adds the op's number.
     public string? Apply(GraphOp op) => op switch
@@ -223,6 +224,7 @@ internal sealed class GraphEditSession(GraphSpec spec, Func<string, bool> isTrig
         }
 
         _nodes[index] = _nodes[index] with { Id = rename.To };
+        _result = _result?.Value == old ? rename.To : _result;
         for (var i = 0; i < _edges.Count; i++)
         {
             var edge = _edges[i];
