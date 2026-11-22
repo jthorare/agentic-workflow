@@ -26,8 +26,6 @@ namespace Aw.Sindri.Features.GetNeedsYou;
 /// <param name="lease">The lease this serve process holds: its epoch goes into the tag (#3883).</param>
 internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus status, ICallerContextAccessor callers, NeedsYouLiveRows live, JsonSerializerOptions json, HeldLease lease) : IService<GetNeedsYouRequest, GetNeedsYouResponse>
 {
-    private static readonly string[] _marked = [ViewNames.NeedsYou, ViewNames.Decisions, ViewNames.Items];
-
     public async ValueTask<Result<GetNeedsYouResponse>> Handle(GetNeedsYouRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -38,7 +36,7 @@ internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus sta
 
         var current = status.Current;
         var setup = await live.Read(cancellationToken).ConfigureAwait(false);   // at most two rows, read at request time: hashed as served, so every input they read (jobs, profile, consent, the mcp switch) is in the tag
-        var marks = await Marks(cancellationToken).ConfigureAwait(false);
+        var marks = await Marks(setup, current, cancellationToken).ConfigureAwait(false);
         if (marks.IsError)
         {
             return marks.Error;
@@ -77,27 +75,55 @@ internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus sta
     }
 
     /// <summary>
-    /// The serve process's lease epoch (#3883), then the marks of the three views the answer reads (#2882): 'needs_you' (the rows),
-    /// 'decisions' (the joined decision) and 'items' (the empty sentence's counts). Each mark is one aggregate query that reads no row
-    /// and moves on any write or delete of its view.
+    /// The serve process's lease epoch (#3883), then the marks of the views the answer reads (#2882): 'needs_you' (the rows),
+    /// 'decisions' (the joined decision) and, only while the list can show its empty sentence, 'items' (that sentence's counts). Each
+    /// mark is one aggregate query that reads no row and moves on any write or delete of its view.
     /// </summary>
-    private async ValueTask<Result<string>> Marks(CancellationToken cancellationToken)
+    private async ValueTask<Result<string>> Marks(IReadOnlyList<NeedsYouRow> setup, ViewsStatus current, CancellationToken cancellationToken)
     {
         // why (#3883): a views rebuild replays the same ledger, so the marks come back the same even when a new build folds other row text; each serve takes the lease at a new epoch and keeps it while it runs
         var marks = new StringBuilder("serve=").Append((lease.Current?.Epoch ?? 0).ToString(CultureInfo.InvariantCulture)).Append(';');
-        foreach (var view in _marked)
+        var rows = await views.Mark(ViewNames.NeedsYou, cancellationToken).ConfigureAwait(false);
+        if (rows.IsError)
         {
-            var mark = await views.Mark(view, cancellationToken).ConfigureAwait(false);
-            if (mark.IsError)
-            {
-                return mark.Error;
-            }
-
-            _ = marks.Append(view).Append('=').Append(mark.Value).Append(';');
+            return rows.Error;
         }
 
+        var decisions = await views.Mark(ViewNames.Decisions, cancellationToken).ConfigureAwait(false);
+        if (decisions.IsError)
+        {
+            return decisions.Error;
+        }
+
+        Named(marks, ViewNames.NeedsYou, rows.Value);
+        Named(marks, ViewNames.Decisions, decisions.Value);
+        if (!MayShowCounts(setup, current, rows.Value))
+        {
+            return marks.ToString();   // #3883: a list with rows (or a stale-views sentence) never shows the counts, so an item write keeps its tag
+        }
+
+        var items = await views.Mark(ViewNames.Items, cancellationToken).ConfigureAwait(false);
+        if (items.IsError)
+        {
+            return items.Error;
+        }
+
+        Named(marks, ViewNames.Items, items.Value);
         return marks.ToString();
     }
+
+    private static void Named(StringBuilder marks, string view, string mark) => _ = marks.Append(view).Append('=').Append(mark).Append(';');
+
+    /// <summary>
+    /// Whether the answer can be the items' empty sentence: no stale-views sentence, no setup row and no folded row, the last known from
+    /// the needs_you mark's count without reading a row. A mark that names no count keeps the items in: a needless 200, never a stale 304.
+    /// </summary>
+    private static bool MayShowCounts(IReadOnlyList<NeedsYouRow> setup, ViewsStatus current, string rowsMark) =>
+        current.Text is null && setup.Count == 0 && RowCount(rowsMark) is null or 0;
+
+    /// <summary>The row count a view's mark ends with (<see cref="IViewReader.Mark"/>: '…:&lt;count&gt;'), or null when it names none.</summary>
+    private static long? RowCount(string mark) =>
+        long.TryParse(mark.AsSpan(mark.LastIndexOf(':') + 1), NumberStyles.None, CultureInfo.InvariantCulture, out var count) ? count : null;
 
     private async ValueTask<Result<string?>> EmptySentence(ViewsStatus current, List<NeedsYouRow> rows, CancellationToken cancellationToken)
     {
