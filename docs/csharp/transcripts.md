@@ -89,12 +89,12 @@ its own) before it leaves the library. A secret becomes a `[REDACTED:<rule>]` pl
 
 | Ref | Shape | Made from |
 |---|---|---|
-| Session | `transcript:<8 hex>` | The first 4 bytes of SHA-256 of the provider's wire name, a newline and the file's full path |
-| Turn | `transcript:<8 hex>#<line>` | The session ref and the 1-based line the turn starts on |
+| Session | `transcript:<12 hex>` | The first 6 bytes of SHA-256 of the provider's wire name, a newline and the file's full path |
+| Turn | `transcript:<12 hex>#<line>` | The session ref and the 1-based line the turn starts on |
 
 A ref names no project, repo or path. It stays the same across runs while the file stays where it is. `ReadSession`
 resolves a ref by hashing the path of every file under the roots, without opening any. A turn's session ref is `TurnRef.SessionOf()`: a method, because a derived typed-id property breaks `ARCH-ID-002` (a typed-id property must be required on read). Two files with one ref are
-`AW-TRANSCRIPTS-004`; with 8 hex digits that needs tens of thousands of files to become likely.
+`AW-TRANSCRIPTS-004`; with 12 hex digits (48 bits) a collision stays below one in a million up to about 20,000 files.
 
 ## Resume and fork dedupe
 
