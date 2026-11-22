@@ -25,7 +25,7 @@ public readonly partial struct WorkflowRunId : ITypedId<WorkflowRunId, string>
     /// </summary>
     /// <param name="slug">The workflow the call named.</param>
     /// <returns>The stand-in id.</returns>
-    public static WorkflowRunId StandIn(WorkflowSlug slug) => From(string.Create(CultureInfo.InvariantCulture, $"{StandInPrefix}{slug.Value}@1:1"));
+    public static WorkflowRunId StandIn(WorkflowSlug slug) => From($"{StandInPrefix}{slug.Value}@1:1");
 
     /// <summary>True for an id made by <see cref="StandIn"/>.</summary>
     public bool IsStandIn => Value.StartsWith(StandInPrefix, StringComparison.Ordinal);
@@ -39,6 +39,6 @@ public readonly partial struct WorkflowRunId : ITypedId<WorkflowRunId, string>
     private static Vogen.Validation Validate(string value) =>
         Shape.IsMatch(value) ? Vogen.Validation.Ok : Vogen.Validation.Invalid("A run id is '<slug>@<revision>:<occurrence>', both numbers 1 or more (a test run's stand-in for a call it only recorded has 'TEST-' before the slug)");
 
-    [GeneratedRegex("^(TEST-)?[a-z0-9][a-z0-9-]{0,62}@[1-9][0-9]{0,8}:[1-9][0-9]{0,8}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex("^(TEST-)?[a-z0-9][a-z0-9-]{0,62}@[1-9][0-9]{0,8}:[1-9][0-9]{0,8}\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }
 }
