@@ -8,7 +8,7 @@ using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>The System page's cards are a surface step with no outer border, and their content sits Space.LG 24 inside the card (#2779, inspora note §3).</summary>
 [Lane(TestLane.Integration)]

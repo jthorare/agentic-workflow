@@ -12,7 +12,7 @@ using Aw.Sindri.Ui.Views.Context.Whole;
 using Aw.Sindri.Ui.Views.Controls;
 using Aw.Sindri.Ui.Views.Shell;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>
 /// The Context page opening on the whole map (whole-map spec §3.1) against the in-memory API serving context's whole-map goldens

@@ -236,12 +236,9 @@ public static class MergeGate
                 : $"the gated head merges onto main {facts.CurrentMain} to the tested tree (the gate stacked {string.Join(", ", gate.Stack.Select(s => "#" + s.Pr.ToString(CultureInfo.InvariantCulture)))})");
         }
 
-        // A merge queue re-tests the merged tree before it lands, so a main that moved past the gate is the queue's to settle.
-        if (facts.BaseHasMergeQueue)
+        if (QueueSettles(gate, facts) is { } queued)
         {
-            return new MergeCheck("main", Ok: true, gate.Main == facts.CurrentMain
-                ? $"the gated head does not merge to the tested tree on main {facts.CurrentMain}; GitHub's merge queue re-tests on the merged tree"
-                : $"main moved from {gate.Main} to {facts.CurrentMain}; GitHub's merge queue re-tests on the merged tree");
+            return queued;
         }
 
         if (gate.Tree is null)
@@ -252,6 +249,25 @@ public static class MergeGate
         return new MergeCheck("main", Ok: false, gate.Stack.Count == 0
             ? $"gate ran on main {gate.Main}, main is {facts.CurrentMain}, and the gated head no longer merges onto it to the tested tree"
             : $"the gate stacked {string.Join(", ", gate.Stack.Select(s => "#" + s.Pr.ToString(CultureInfo.InvariantCulture)))}; merging the gated head onto main {facts.CurrentMain} does not give the tested tree");
+    }
+
+    // A merge queue re-tests the merged tree before it lands, so a main that moved past the gate is the queue's to settle. A head that
+    // conflicts with main is not: the queue would drop the pull request, so it refuses here. Null when the base has no merge queue.
+    private static MergeCheck? QueueSettles(GateRecord gate, MergeFacts facts)
+    {
+        if (!facts.BaseHasMergeQueue)
+        {
+            return null;
+        }
+
+        if (facts.MergeConflicts)
+        {
+            return new MergeCheck("main", Ok: false, $"gate ran on main {gate.Main}, main is {facts.CurrentMain}, and the gated head conflicts with it; the merge queue would drop it too");
+        }
+
+        return new MergeCheck("main", Ok: true, gate.Main == facts.CurrentMain
+            ? $"the gated head does not merge to the tested tree on main {facts.CurrentMain}; GitHub's merge queue re-tests on the merged tree"
+            : $"main moved from {gate.Main} to {facts.CurrentMain}; GitHub's merge queue re-tests on the merged tree");
     }
 
     private static MergeCheck Order(MergeFacts facts)

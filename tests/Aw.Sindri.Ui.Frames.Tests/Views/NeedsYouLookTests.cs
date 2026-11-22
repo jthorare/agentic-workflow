@@ -62,9 +62,9 @@ public sealed class NeedsYouLookTests : IDisposable
         _windows.Add(window);
         window.Show();
         _ = shell.Run(_stop.Token);
-        for (var i = 0; i < 300 && shell.State != ShellState.Normal; i++)
+        for (var i = 0; i < 3000 && shell.State != ShellState.Normal; i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Settle(window);
         }
 
@@ -94,9 +94,9 @@ public sealed class NeedsYouLookTests : IDisposable
         Assert.True(Frame(row).Focus(NavigationMethod.Tab));
         Settle(window);
         _clock.Advance(SeenTracker.OnScreenFor);
-        for (var i = 0; i < 50 && vm.IsPulsing; i++)
+        for (var i = 0; i < 500 && vm.IsPulsing; i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Settle(window);
         }
 
@@ -128,9 +128,9 @@ public sealed class NeedsYouLookTests : IDisposable
         Assert.True(window.IsActive, "active");
         Assert.NotNull(window.FocusManager?.GetFocusedElement());
         _clock.Advance(SeenTracker.OnScreenFor);
-        for (var i = 0; i < 50 && vm.IsPulsing; i++)
+        for (var i = 0; i < 500 && vm.IsPulsing; i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Settle(window);
         }
 
