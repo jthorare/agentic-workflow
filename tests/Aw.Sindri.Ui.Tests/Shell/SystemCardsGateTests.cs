@@ -1,3 +1,4 @@
+using System.Net;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
@@ -27,6 +28,8 @@ public sealed class SystemCardsGateTests
         return shell;
     }
 
+    private static bool CardsShown(ShellViewModel shell) => shell.Health.CodeIndex.Lines.Count > 0 && shell.Health.ContextIndex.Lines.Count > 0;
+
     private (int Code, int Context) Reads() => (_server.CodeIndexCalls, _server.IndexCalls);
 
     [Fact]
@@ -48,7 +51,7 @@ public sealed class SystemCardsGateTests
         var (code, context) = Reads();
 
         shell.GoTo(PageId.System);
-        await ShellWait.Until(shell, () => shell.Health.CodeIndex.Lines.Count > 0, Token);
+        await ShellWait.Until(shell, () => CardsShown(shell), Token);
 
         Assert.Equal((code + 1, context + 1), Reads());
     }, Token);
@@ -58,12 +61,84 @@ public sealed class SystemCardsGateTests
     {
         var shell = await Connected();
         shell.GoTo(PageId.System);
-        await ShellWait.Until(shell, () => shell.Health.CodeIndex.Lines.Count > 0, Token);
+        await ShellWait.Until(shell, () => CardsShown(shell), Token);
         var ((code, context), views) = (Reads(), shell.Health.ViewReads);
 
         _server.Push(A.Event(71, "heartbeat.tick"));
         await ShellWait.Until(shell, () => shell.Health.ViewReads > views, Token);
 
         Assert.Equal((code + 1, context + 1), Reads());
+    }, Token);
+
+    [Fact]
+    public Task Opening_System_again_reads_each_card_again() => UiThread.Run(async () =>
+    {
+        var shell = await Connected();
+        var (code, context) = Reads();
+
+        shell.GoTo(PageId.System);
+        shell.GoTo(PageId.Home);
+        shell.GoTo(PageId.System);
+
+        Assert.Equal((code + 2, context + 2), Reads());
+    }, Token);
+
+    [Fact]
+    public Task Leaving_System_cancels_a_read_in_flight() => UiThread.Run(async () =>
+    {
+        var shell = await Connected();
+        _server.CodeIndexHold = new TaskCompletionSource();
+        shell.GoTo(PageId.System);
+        var token = _server.CodeIndexToken;
+        Assert.False(token.IsCancellationRequested);
+
+        shell.GoTo(PageId.Home);
+
+        Assert.True(token.IsCancellationRequested);
+    }, Token);
+
+    [Fact]
+    public Task A_read_cancelled_by_leaving_shows_nothing_when_it_answers_late() => UiThread.Run(async () =>
+    {
+        var shell = await Connected();
+        var hold = _server.CodeIndexHold = new TaskCompletionSource();
+        _server.IgnoreCancellation = true;
+        using var cancel = new CancellationTokenSource();
+        var read = shell.Health.CodeIndex.Refresh(shell.Health.ApiUrl()!, cancel.Token);
+        await cancel.CancelAsync();
+
+        hold.SetResult();
+        await read;
+
+        Assert.Empty(shell.Health.CodeIndex.Lines);
+    }, Token);
+
+    [Fact]
+    public Task A_late_answer_does_not_overwrite_a_newer_one() => UiThread.Run(async () =>
+    {
+        var shell = await Connected();
+        var (card, url) = (shell.Health.CodeIndex, shell.Health.ApiUrl()!);
+        var hold = _server.CodeIndexHold = new TaskCompletionSource();
+        var older = card.Refresh(url, Token);
+        _server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, """{"repos":[]}""");
+        await card.Refresh(url, Token);
+        Assert.Empty(card.Lines);
+
+        hold.SetResult();
+        await older;
+
+        Assert.Empty(card.Lines);
+    }, Token);
+
+    [Fact]
+    public Task Opening_System_while_Not_running_reads_neither_card() => UiThread.Run(async () =>
+    {
+        var shell = await Connected();
+        var before = Reads();
+        _ = shell.Health.NotRunning("stopped");
+
+        shell.GoTo(PageId.System);
+
+        Assert.Equal(before, Reads());
     }, Token);
 }

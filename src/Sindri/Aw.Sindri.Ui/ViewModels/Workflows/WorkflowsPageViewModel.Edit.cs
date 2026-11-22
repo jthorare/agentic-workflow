@@ -152,6 +152,7 @@ internal sealed partial class WorkflowsPageViewModel
     internal void CloseSettings()
     {
         Editor.ClearPendingStep();
+        Editor.ClearRefusal();   // the sheet's refusal is not left on the page line once the sheet is gone (#3944)
         (IsSettingsOpen, GraphEdit.SheetOpen) = (false, false);
         OnChanged(nameof(IsNewStep));
         OnChanged(nameof(NoFieldsText));

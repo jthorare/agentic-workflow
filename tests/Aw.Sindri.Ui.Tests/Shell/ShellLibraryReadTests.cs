@@ -51,11 +51,14 @@ public sealed class ShellLibraryReadTests
     {
         var shell = await OnSettings();
         var before = _server.LibraryCalls;
+        Assert.False(shell.LibraryRoots.Rows[0].IsOff);
         _server.LibraryAnswer = RouteAnswer.Api("library", "empty");
 
         await shell.Health.RefreshViews(shell.Health.ApiUrl()!, Token);   // why: what an event runs
 
-        Assert.Equal((before + 1, false, true), (_server.LibraryCalls, shell.LibraryRoots.HasRows, shell.LibraryRoots.IsEmpty));
+        // why: the "empty" library golden has no docs and no vault but still lists three roots (aw and two repos), so the card keeps its rows and shows the new answer in them (aw is off there, on in "ok").
+        Assert.Equal((before + 1, 3, false), (_server.LibraryCalls, shell.LibraryRoots.Rows.Count, shell.LibraryRoots.IsEmpty));
+        Assert.True(shell.LibraryRoots.Rows[0].IsOff, "the second read's answer did not reach the card");
         Assert.Equal(TodoNoteCardStage.NoVaults, shell.TodoNoteCard.Stage);
     }, Token);
 

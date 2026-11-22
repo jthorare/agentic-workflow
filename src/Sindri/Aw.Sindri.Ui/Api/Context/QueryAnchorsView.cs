@@ -9,4 +9,7 @@ internal sealed record QueryAnchorsView(
 {
     /// <summary>The suggestions with their labels and kinds (#2809); null from a server that does not send them.</summary>
     public IReadOnlyList<QueryChoiceView>? Suggestions { get; init; }
+
+    /// <summary>The answer's sections with their items (#2974); null from a server that does not send them.</summary>
+    public IReadOnlyList<QuerySectionView>? Sections { get; init; }
 }
