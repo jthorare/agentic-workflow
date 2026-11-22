@@ -51,7 +51,7 @@ public sealed class WorkflowGraphViewModelTests
         var edge = Assert.Single(graph.Edges);
         Assert.Equal(("start", "agent"), (edge.From, edge.To));
         Assert.Null(edge.Label);
-        Assert.Equal((new GraphPoint(200, 32), new GraphPoint(280, 32)), (edge.Start, edge.End));
+        Assert.Equal((new GraphPoint(290, 30), new GraphPoint(280, 30)), (edge.Start, edge.End));
     }
 
     [Fact]
@@ -60,9 +60,9 @@ public sealed class WorkflowGraphViewModelTests
         var graph = await GraphOf(_f, Branching, BranchEdges, BranchPositions);
 
         Assert.Equal([("check", "yes", "true"), ("check", "no", "false")], graph.Edges.Select(e => (e.From, e.To, e.Label)));
-        Assert.Equal(new GraphPoint(200, 132), graph.Edges[0].Start);
-        Assert.Equal(new GraphPoint(300, 32), graph.Edges[0].End);
-        Assert.Equal(new GraphPoint(300, 232), graph.Edges[1].End);
+        Assert.Equal(new GraphPoint(290, 130), graph.Edges[0].Start);
+        Assert.Equal(new GraphPoint(300, 30), graph.Edges[0].End);
+        Assert.Equal(new GraphPoint(300, 230), graph.Edges[1].End);
     }
 
     [Fact]

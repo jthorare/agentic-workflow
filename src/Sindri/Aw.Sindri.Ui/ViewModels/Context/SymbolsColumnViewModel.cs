@@ -15,6 +15,12 @@ internal sealed class SymbolsColumnViewModel
     {
         ArgumentNullException.ThrowIfNull(symbols);
         (Caption, Dimmed) = SymbolsCaption.Of(symbols);
+        if (string.Equals(symbols.State, "ok", StringComparison.Ordinal) && symbols.Files is { Count: 0 })
+        {
+            // An index that answers with no rows: say why. Graph off = only C# files get names (the real app's .ts names come from the graph layer); graph on = the files have no functions.
+            Caption = string.Equals(symbols.Reason, "graph-off", StringComparison.Ordinal) ? Labels.ContextSymbolsGraphOff : Labels.ContextSymbolsNoneIndexed;
+        }
+
         Unavailable = string.Equals(symbols.State, "unavailable", StringComparison.Ordinal);
         _files = (symbols.Files ?? []).ToDictionary(static f => f.Path, StringComparer.Ordinal);
     }
@@ -30,7 +36,7 @@ internal sealed class SymbolsColumnViewModel
 
     /// <summary>The cell of one file.</summary>
     /// <param name="path">The repo-relative path.</param>
-    /// <returns>"setOrientation · resize · +3"; the caption when the index cannot answer; empty for a file the index does not know.</returns>
+    /// <returns>"setOrientation · resize · +3"; the caption when the index cannot answer; a dash for a file the index does not know.</returns>
     internal string Cell(string path)
     {
         if (Unavailable)
@@ -40,7 +46,7 @@ internal sealed class SymbolsColumnViewModel
 
         if (!_files.TryGetValue(path, out var file) || file.Symbols.Count == 0)
         {
-            return string.Empty;
+            return Labels.ContextSymbolsNoRow;
         }
 
         return Labels.ContextSymbolsCell([.. file.Symbols.Take(NamesShown).Select(static s => s.Name)], Math.Max(0, file.Symbols.Count - NamesShown));

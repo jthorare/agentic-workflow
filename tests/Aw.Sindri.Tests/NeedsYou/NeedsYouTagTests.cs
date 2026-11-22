@@ -8,7 +8,7 @@ using Aw.Sindri.Testing;
 namespace Aw.Sindri.Tests.NeedsYou;
 
 /// <summary>
-/// The needs-you tag hashes each row as the client receives it (#2789 review): any field the client sees changes the tag, so a 304
+/// The needs-you tag hashes each setup row (read at request time) as the client receives it (#2789 review; the folded rows go in by their views' marks, #2882): any field the client sees changes the tag, so a 304
 /// never hides a change, while a timeout's countdown alone keeps it, so a list with a timeout row can still answer 304.
 /// </summary>
 [Lane(TestLane.Unit)]
@@ -16,7 +16,7 @@ public sealed class NeedsYouTagTests
 {
     private static readonly ViewsStatus _current = new(Cursor: 10, LedgerHead: 10, ProjectedAt: KnownInstants.Epoch, Rebuilding: false, Stalled: false, StalledAt: null, StalledType: null);
 
-    private static string Tag(params NeedsYouRow[] rows) => GetNeedsYouService.TagOf(rows, empty: null, _current, SliceHarness.Json);
+    private static string Tag(params NeedsYouRow[] rows) => GetNeedsYouService.TagOf(marks: string.Empty, rows, _current, SliceHarness.Json);
 
     [Fact]
     public void Two_rows_that_differ_only_in_their_notice_get_different_tags()

@@ -48,6 +48,7 @@ internal sealed partial class ShellViewModel
             OpenSheet(e.Link);
             OpenerSession = e.Link.Subject;   // Esc comes back to this row, after the sheet's own opening cleared it
         };
+        WireNewAgent();
     }
 
     partial void OnAgentSheetOpened(DeepLink link)

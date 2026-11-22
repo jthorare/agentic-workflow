@@ -130,10 +130,15 @@ internal sealed class LibraryRootsViewModel : ObservableObject
     /// <param name="url">The API's base URL.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that completes when the card is up to date.</returns>
-    internal async Task Refresh(Uri url, CancellationToken cancellationToken)
+    internal Task Refresh(Uri url, CancellationToken cancellationToken) => Refresh(_api.Library(url, cancellationToken));
+
+    /// <summary>Shows a library read another card shares (one GET /sindri/library per Settings refresh); the rules of <see cref="Refresh(Uri, CancellationToken)"/> hold.</summary>
+    /// <param name="library">The read, started by the caller.</param>
+    /// <returns>A task that completes when the card is up to date.</returns>
+    internal async Task Refresh(Task<Result<LibraryView>> library)
     {
         var generation = ++_generation;
-        var read = await _api.Library(url, cancellationToken).ConfigureAwait(true);
+        var read = await library.ConfigureAwait(true);
         if (generation != _generation)
         {
             return;   // a newer read started meanwhile; this older answer must not bring back what the newer one dropped
