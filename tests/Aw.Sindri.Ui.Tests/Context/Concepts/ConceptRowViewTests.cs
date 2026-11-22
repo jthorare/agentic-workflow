@@ -20,6 +20,8 @@ public sealed class ConceptRowViewTests
 {
     private static readonly MapRebuildView _idle = new(MapRebuildPhases.Idle, Progress: null, RetryAt: null, Stale: false, Failed: null);
 
+    private static readonly string[] _authRowButtons = ["ConceptOpen.concept:auth", "ConceptPin.concept:auth", "ConceptEditPin.concept:auth"];
+
     private static void Settle(Window window)
     {
         Dispatcher.UIThread.RunJobs();
@@ -114,15 +116,15 @@ public sealed class ConceptRowViewTests
                 Settle(window);
                 window.KeyPress(Key.P, RawInputModifiers.None, PhysicalKey.P, keySymbol: "p");
                 Settle(window);
-                Assert.Single(opened);
+                _ = Assert.Single(opened);
 
-                window.FocusManager?.ClearFocus();   // focus is in the sheet while it is open, so the row's pin slot is hidden
+                _ = window.Focus();   // focus is in the sheet while it is open, so the row's pin slot is hidden
                 Settle(window);
                 layer.SheetClosed();
                 Settle(window);
 
                 var id = window.FocusManager?.GetFocusedElement() is Control focused ? AutomationProperties.GetAutomationId(focused) : null;
-                Assert.Contains(id, new[] { "ConceptOpen.concept:auth", "ConceptPin.concept:auth", "ConceptEditPin.concept:auth" }, StringComparer.Ordinal);
+                Assert.Contains(id, _authRowButtons, StringComparer.Ordinal);
             }
             finally
             {
