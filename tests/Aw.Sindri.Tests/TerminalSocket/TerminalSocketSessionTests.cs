@@ -146,8 +146,10 @@ public sealed class TerminalSocketSessionTests
 
         var run = session.Run(new SessionRef(AgentId.From("claude-code"), SessionId.From("live")), channel, Cancel).AsTask();
         await channel.WaitForSent(2, Cancel);
+        await time.WaitForTimers(2, Cancel);    // the hello deadline, then the ping delay: the pinger runs on its own task (#3597)
         time.Advance(TimeSpan.FromSeconds(15));
         await channel.WaitForSent(3, Cancel);   // the ping
+        await time.WaitForTimers(3, Cancel);    // the pong deadline starts just after the ping is sent
         time.Advance(TimeSpan.FromSeconds(10.1));
         await run;
 
