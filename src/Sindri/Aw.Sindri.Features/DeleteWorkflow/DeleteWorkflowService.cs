@@ -3,6 +3,7 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Resources;
 
@@ -23,26 +24,58 @@ internal sealed class DeleteWorkflowService(IWorkflowStore workflows, IWorkflowR
     public async ValueTask<Result<DeleteWorkflowResponse>> Handle(DeleteWorkflowRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        var record = await Find(request.Slug, cancellationToken).ConfigureAwait(false);
+        if (record.IsError)
+        {
+            return record.Error;
+        }
+
+        if (await Refusal(record.Value, cancellationToken).ConfigureAwait(false) is { } refused)
+        {
+            return refused;
+        }
+
+        var at = await Archive(record.Value, request.By, cancellationToken).ConfigureAwait(false);
+        if (at.IsError)
+        {
+            return at.Error;
+        }
+
+        var kept = await runs.Count(record.Value.Id, cancellationToken).ConfigureAwait(false);
+        if (kept.IsError)
+        {
+            return kept.Error;
+        }
+
+        // why: the archive stands even when a purge fails; the answer names the owners whose resources stayed instead of failing the delete
+        var (freed, stayed) = await Purge(record.Value, cancellationToken).ConfigureAwait(false);
+        return new DeleteWorkflowResponse(record.Value.Slug, at.Value, kept.Value, freed, stayed);
+    }
+
+    /// <summary>The workflow by slug: SND-GRAPH-008 when there is none, SND-GRAPH-011 when it is archived.</summary>
+    private async ValueTask<Result<WorkflowRecord>> Find(WorkflowSlug slug, CancellationToken cancellationToken)
+    {
         var listed = await workflows.List(includeArchived: true, cancellationToken).ConfigureAwait(false);
         if (listed.IsError)
         {
             return listed.Error;
         }
 
-        var record = listed.Value.FirstOrDefault(r => r.Slug == request.Slug);
+        var record = listed.Value.FirstOrDefault(r => r.Slug == slug);
         if (record is null)
         {
-            return SindriErrors.GraphNotFound.With($"no workflow '{request.Slug.Value}'; list the workflows to see what exists");
+            return SindriErrors.GraphNotFound.With($"no workflow '{slug.Value}'; list the workflows to see what exists");
         }
 
-        if (record.ArchivedAt is not null)
-        {
-            return SindriErrors.GraphArchived.With($"'{request.Slug.Value}' is already archived");
-        }
+        return record.ArchivedAt is null ? record : SindriErrors.GraphArchived.With($"'{slug.Value}' is already archived");
+    }
 
+    /// <summary>Why the workflow can't be deleted now, or null: SND-GRAPH-114 when it is active, SND-GRAPH-115 naming the oldest run in flight.</summary>
+    private async ValueTask<Error?> Refusal(WorkflowRecord record, CancellationToken cancellationToken)
+    {
         if (record.ActiveRevision is not null)
         {
-            return SindriErrors.GraphDeleteActive.With($"'{request.Slug.Value}' is active; pause it first, then delete it");
+            return SindriErrors.GraphDeleteActive.With($"'{record.Slug.Value}' is active; pause it first, then delete it");
         }
 
         var inFlight = await runs.InFlight(record.Id, cancellationToken).ConfigureAwait(false);
@@ -51,11 +84,14 @@ internal sealed class DeleteWorkflowService(IWorkflowStore workflows, IWorkflowR
             return inFlight.Error;
         }
 
-        if (inFlight.Value.Count > 0)
-        {
-            return SindriErrors.GraphDeleteRunInFlight.With($"the run '{inFlight.Value[0].Id.Value}' of '{request.Slug.Value}' is still going; delete the workflow after it ends or cancel the run");
-        }
+        return inFlight.Value.Count > 0
+            ? SindriErrors.GraphDeleteRunInFlight.With($"the run '{inFlight.Value[0].Id.Value}' of '{record.Slug.Value}' is still going; delete the workflow after it ends or cancel the run")
+            : null;
+    }
 
+    /// <summary>Archives the workflow and writes the lifecycle event. Returns when it was archived.</summary>
+    private async ValueTask<Result<DateTimeOffset>> Archive(WorkflowRecord record, string by, CancellationToken cancellationToken)
+    {
         if (log.LeaseProblem() is { } down)
         {
             return down;
@@ -67,26 +103,13 @@ internal sealed class DeleteWorkflowService(IWorkflowStore workflows, IWorkflowR
             return archived.Error;
         }
 
-        var recorded = await log.Record(EventTypes.WorkflowArchived, new WorkflowChangedPayload(record.Id, record.Slug, archived.Value.LatestRevision, SpecHash: null, request.By), cancellationToken).ConfigureAwait(false);
+        var recorded = await log.Record(EventTypes.WorkflowArchived, new WorkflowChangedPayload(record.Id, record.Slug, archived.Value.LatestRevision, SpecHash: null, by), cancellationToken).ConfigureAwait(false);
         if (recorded.IsError)
         {
             return recorded.Error;
         }
 
-        if (archived.Value.ArchivedAt is not { } at)
-        {
-            return SindriErrors.GraphNotFound.With("the workflow was not archived");
-        }
-
-        var kept = await runs.Count(record.Id, cancellationToken).ConfigureAwait(false);
-        if (kept.IsError)
-        {
-            return kept.Error;
-        }
-
-        // why: the archive stands even when a purge fails; the answer names the owners whose resources stayed instead of failing the delete
-        var (freed, stayed) = await Purge(record, cancellationToken).ConfigureAwait(false);
-        return new DeleteWorkflowResponse(record.Slug, at, kept.Value, freed, stayed);
+        return archived.Value.ArchivedAt is { } at ? at : SindriErrors.GraphNotFound.With("the workflow was not archived");
     }
 
     /// <summary>Purges <c lang="text">workflow:slug</c> and every <c lang="text">node:slug/id</c> on disk. Returns the bytes freed and the owners that stayed.</summary>
