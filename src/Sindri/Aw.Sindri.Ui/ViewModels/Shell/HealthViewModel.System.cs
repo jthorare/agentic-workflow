@@ -101,7 +101,15 @@ internal sealed partial class HealthViewModel
     public IReadOnlyList<ServiceRowViewModel> ServiceTable { get; private set => Set(ref field, value); } = [];
 
     /// <summary>The first services, for the Overview's card.</summary>
-    public IReadOnlyList<ServiceRowViewModel> ServiceCard { get; private set => Set(ref field, value); } = [];
+    public IReadOnlyList<ServiceRowViewModel> ServiceCard
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(HasServices));
+        }
+    } = [];
 
     /// <summary>The heading over the problem lines.</summary>
     public string NeedsALookHeading { get; } = Labels.SystemNeedsALook;
@@ -198,6 +206,7 @@ internal sealed partial class HealthViewModel
         ServiceCard = [.. shown];
         ServicesTabLabel = Labels.ServicesTab(shown.Count);
         ServicesScheduled = Labels.ServicesScheduled(shown.Count);
+        ShowServicesNote();
         lock (_gate)
         {
             ShowSystemState();
