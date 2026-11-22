@@ -34,6 +34,7 @@ public static partial class ReviewProof
             QaSha = standing.Qa.Sha,
             ReadySha = ready is null ? null : ReadySha(ready.Body),
             Counts = ready is null ? [] : Counts(ready.Body),
+            BuildOnly = ready is not null && IsBuildOnly(ready.Body),
         };
     }
 
@@ -129,6 +130,10 @@ public static partial class ReviewProof
 
         return lines;
     }
+
+    // A line such as "build -warnaserror 0 warnings, 0 errors (build only)": the lane built and ran no test.
+    private static bool IsBuildOnly(string body) =>
+        body.Contains("(build only)", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Whether <paramref name="sha"/> (7 to 40 hex characters) names <paramref name="head"/>.</summary>
     /// <param name="sha">The sha a message names.</param>

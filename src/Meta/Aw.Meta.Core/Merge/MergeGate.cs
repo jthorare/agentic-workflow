@@ -119,11 +119,14 @@ public static class MergeGate
                 ? new MergeCheck("ready", Ok: true, $"ready at {review.ReadySha}")
                 : new MergeCheck("ready", Ok: false, $"the newest ready is at {review.ReadySha}, the head is {facts.CurrentHead}");
         var failed = review.Counts.Where(c => c.Failed > 0).ToList();
-        var counts = review.Counts.Count == 0
-            ? new MergeCheck("counts", Ok: false, "the ready message has no \"N passed, M skipped, K failed\" line")
-            : failed.Count > 0
-                ? new MergeCheck("counts", Ok: false, $"the ready message counts {failed.Sum(c => c.Failed).ToString(CultureInfo.InvariantCulture)} failed")
-                : new MergeCheck("counts", Ok: true, $"{review.Counts.Count.ToString(CultureInfo.InvariantCulture)} count line(s), 0 failed");
+        // In review.mode counts a "(build only)" line stands in for a missing count line; a failed count still refuses next to it.
+        var counts = failed.Count > 0
+            ? new MergeCheck("counts", Ok: false, $"the ready message counts {failed.Sum(c => c.Failed).ToString(CultureInfo.InvariantCulture)} failed")
+            : review.Counts.Count > 0
+                ? new MergeCheck("counts", Ok: true, $"{review.Counts.Count.ToString(CultureInfo.InvariantCulture)} count line(s), 0 failed")
+                : review.CountsMode && review.BuildOnly
+                    ? new MergeCheck("counts", Ok: true, "build only, no test counts")
+                    : new MergeCheck("counts", Ok: false, "the ready message has no \"N passed, M skipped, K failed\" line");
         return [ok, ready, counts, Order(facts), new MergeCheck("draft", !facts.IsDraft, facts.IsDraft ? "the pull request is a draft" : "ready for review")];
     }
 

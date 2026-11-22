@@ -24,6 +24,9 @@ public sealed record ReviewFacts
     /// <summary>The sha on the first line of the newest ready message for the pull request; null when there is no such message.</summary>
     public string? ReadySha { get; init; }
 
+    /// <summary>Whether that ready message has a line holding "(build only)", in any case: the lane built and ran no test. In review.mode counts it stands in for a count line.</summary>
+    public bool BuildOnly { get; init; }
+
     /// <summary>The count lines of that ready message.</summary>
     public IReadOnlyList<CountLine> Counts { get; init; } = [];
 }
