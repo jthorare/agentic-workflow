@@ -177,6 +177,20 @@
 #                                  paused is a job parked on model-limit with its progress line, so its row shows Resume; none is a
 #                                  running job that made no call. Each state is its own job (fixed ids, INSERT OR IGNORE, a rerun adds
 #                                  nothing); prints the job id. Needs jq and sqlite3 or python3.
+#   sindri-ui-fixture.sh system fresh|flagged|indexed|building  (run after 'up')
+#                                  the System page's Code index and Context index cards (#3430). fresh names code-index-main-move and
+#                                  index-sync in the live profile's services (a built-in can be paused only when the profile names it) and
+#                                  pauses both, so no real build or feed tick changes what the cards read; then runs 'context up' (the tabs
+#                                  repo, aw-split-panes) and adds the Linear team SPL (token pointer env:FIXTURE_LINEAR_KEY, unset) and the
+#                                  GitHub repos to context.sources: every source is idle with 0 records and no pass ended, so no card is
+#                                  flagged; the repo has no index (missing, its build paused). flagged writes the Linear feed's cursor row as
+#                                  a failing one (SND-CONTEXT-071, 3 failures, next try in 30 min): the pull reads 'backoff' and the server
+#                                  flags the source, so the Context index card says "needs a look". indexed puts that row back as a
+#                                  healthy pass (last sync and last commit now, no failures) and writes a code index file for aw-split-panes
+#                                  at the repo's HEAD (the header-only layout 'context publish stale' writes): the repo reads ok, both cards
+#                                  "ok". building is indexed plus a job.started ledger row of a BuildCodeIndex job for the repo (key
+#                                  index:aw-split-panes, fixed id, no end): the Code index card says "building". Each state runs the
+#                                  earlier ones it needs; a repeat writes the same rows. Needs jq and sqlite3 or python3.
 #   sindri-ui-fixture.sh sandbox blocked|clear
 #   sindri-ui-fixture.sh sandbox denials|denials-many|waiting|limit-memory|limit-wall|learning|takeover|attended <ITM-id> <instance-address>
 #                                  the sandbox surfaces' states (sandbox spec section 8, States; goldens tests/Aw.Sindri.Tests/Golden/Sandbox/).
@@ -1431,6 +1445,64 @@ model_calls() { # $1 state
   printf '%s\n' "$job"
 }
 
+# --- system: the System page's Code index and Context index cards (#3430) ---
+SYSTEM_PAUSED=("code-index-main-move" "index-sync")
+SYSTEM_JOB="JOB-000000000000000000000000343000b1"
+SYSTEM_CMD="5c0f1e03-3430-4d1e-9a55-3c2f6d8e1b01"
+
+# Names the two built-ins in the profile's services (at their built-in cadence) so they can be paused, then pauses them. A profile edit applies
+# on save, so the pause is tried until the control plane has read the new profile (about 15 s at most).
+system_pause() {
+  local profile name every i
+  profile="$(profile_path)"
+  for name in "${SYSTEM_PAUSED[@]}"; do
+    grep -q "^  $name:" "$profile" && continue
+    every=1m; [ "$name" = index-sync ] && every=5m
+    awk -v e="  $name: { every: $every }" '{print} /^services:/ {print e}' "$profile" > "$profile.new" && mv "$profile.new" "$profile" || die "system: can't add $name to $profile"
+  done
+  approve >&2 || return
+  for name in "${SYSTEM_PAUSED[@]}"; do
+    for i in $(seq 1 30); do
+      "$PROVE" human services pause "$name" >/dev/null 2>&1 && break
+      [ "$i" = 30 ] && die "system: 'services pause $name' kept failing (is the profile loaded?)"
+      sleep 0.5
+    done
+  done
+}
+
+system_cursor() { # $1 the SQL for the Linear feed's cursor row
+  sql_on "$(context_db)" "$1
+UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;" >/dev/null || die "system: can't write the Linear cursor row"
+}
+
+system() {
+  need jq
+  need_sql
+  local state="$1" dir head
+  system_pause || return
+  context_up >/dev/null || return
+  projects_profile || return
+  lc_connect
+  [ "$state" = fresh ] && { index_clear; sql_on "$(context_db)" "DELETE FROM source_cursor WHERE repo = 'records';" >/dev/null || die "system: can't clear the cursor rows"; printf 'fresh\n'; return; }
+  if [ "$state" = flagged ]; then
+    index_clear
+    system_cursor "INSERT OR REPLACE INTO source_cursor (source, repo, cursor, last_sync, last_error, phase, failures, next_try, last_commit, last_error_text)
+      VALUES ('linear', 'records', NULL, $(projects_ts '-4 minutes'), 'SND-CONTEXT-071', NULL, 3, $(projects_ts '+30 minutes'), NULL, 'Linear refused the key (401)');"
+    printf 'flagged\n'; return
+  fi
+  system_cursor "INSERT OR REPLACE INTO source_cursor (source, repo, cursor, last_sync, last_error, phase, failures, next_try, last_commit, last_error_text)
+    VALUES ('linear', 'records', NULL, $(projects_ts '-2 minutes'), NULL, 'incremental', 0, NULL, $(projects_ts '-2 minutes'), NULL);"
+  dir="$(context_dir)/$CONTEXT_REPO"
+  head="$(git -C "$dir" rev-parse HEAD)" || die "system: can't read the head of $dir"
+  INDEX_COMMIT="$head" index_write "$CONTEXT_REPO" || die "system: can't write the code index file"
+  sql_on "$(index_dir)/$CONTEXT_REPO.$INDEX_ULID.db" "UPDATE meta SET value = '5' WHERE key = 'files'; UPDATE meta SET value = '6' WHERE key = 'symbols';" >/dev/null || die "system: can't set the index counts"
+  if [ "$state" = building ]; then
+    calls_event "started:$SYSTEM_JOB" job.started "$(jq -cn --arg c "$SYSTEM_CMD" --arg j "$SYSTEM_JOB" --arg k "index:$CONTEXT_REPO" --arg r "$CONTEXT_REPO" '{commandId: $c, job: $j, kind: "BuildCodeIndex", key: $k, item: null, repo: $r, service: null}')" \
+      || die "system: can't write the build job"
+  fi
+  printf '%s\n' "$state"
+}
+
 # --- sandbox: the sandbox surfaces' states (sandbox spec section 8; issue #1113 SB-6) ---
 
 sandbox_dir() { printf '%s\n' "$AW_SINDRI_HOME/ui-fixture-sandbox"; }
@@ -1551,6 +1623,7 @@ case "$verb" in
       *) die "usage: sandbox blocked|clear | sandbox denials|denials-many|waiting|limit-memory|limit-wall|learning|takeover|attended <ITM-id> <instance-address>" ;;
     esac ;;
   decide) [ "$#" -eq 3 ] || die "usage: decide <DEC-id> <choice>" ;;
+  system) { [ "$#" -eq 2 ] && case "$2" in fresh | flagged | indexed | building) true ;; *) false ;; esac; } || die "usage: system fresh|flagged|indexed|building" ;;
   *) usage >&2; die "unknown verb: $verb" ;;
 esac
 
