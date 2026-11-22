@@ -159,7 +159,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         }
 
         _starting.Add(runId);
-        _startTimers[runId] = clock.CreateTimer(_ => _ui.PostOrInline(() => StartTimedOut(runId)), state: null, StartWait, Timeout.InfiniteTimeSpan);   // no run row by then: the placeholder says so
+        _startTimers[runId] = clock.CreateTimer(_ => _ui.PostOrInline(() => StartDeadlinePassed(runId)), state: null, StartWait, Timeout.InfiniteTimeSpan);   // no run row by then: the placeholder says so
         Rows.Insert(0, Placeholder(runId));
         (IsEmpty, EmptyText) = (false, string.Empty);
     }
@@ -176,7 +176,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     }
 
     // The timer ran out: the placeholder stays in the list (a late row still replaces it) and says the run did not start.
-    private void StartTimedOut(string runId)
+    private void StartDeadlinePassed(string runId)
     {
         StopStartTimer(runId);
         if (!_starting.Contains(runId, StringComparer.Ordinal))
