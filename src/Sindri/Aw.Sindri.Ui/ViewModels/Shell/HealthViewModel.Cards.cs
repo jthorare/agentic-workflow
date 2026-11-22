@@ -23,11 +23,25 @@ internal sealed partial class HealthViewModel
         ViewsFix = views is { } v && (v.Stalled || v.Rebuilding) ? Catalog.Rebuild : null;
     }
 
-    /// <summary>Has the Code index and Context index cards read on connect and after every event, with the other views.</summary>
-    internal void FollowCards()
+    /// <summary>
+    /// Has the Code index and Context index cards read on connect and after every event, with the other views, while they are shown
+    /// (#2775: they and the headline they feed are on the System page only); <see cref="ReadCards"/> reads them when it opens.
+    /// </summary>
+    /// <param name="shown">True while the cards are on screen.</param>
+    internal void FollowCards(Func<bool> shown)
     {
-        Follow(CodeIndex.Refresh);
-        Follow(ContextIndex.Refresh);
+        Follow((url, token) => shown() ? CodeIndex.Refresh(url, token) : Task.CompletedTask);
+        Follow((url, token) => shown() ? ContextIndex.Refresh(url, token) : Task.CompletedTask);
+    }
+
+    /// <summary>Reads both cards once now (the page they are on was opened, so they are never stale on open); nothing while not connected.</summary>
+    internal void ReadCards()
+    {
+        if (_url is { } url)
+        {
+            _ = CodeIndex.Refresh(url, CancellationToken.None);
+            _ = ContextIndex.Refresh(url, CancellationToken.None);
+        }
     }
 
     private CodeIndexCardViewModel WatchCodeIndex(CodeIndexCardViewModel card)

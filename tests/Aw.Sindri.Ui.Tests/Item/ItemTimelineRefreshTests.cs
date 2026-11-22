@@ -162,4 +162,47 @@ public sealed class ItemTimelineRefreshTests
         Assert.Equal(calls + 3, _server.TimelineCalls);
         InOrderOnce(sheet, 250);
     }
+
+    // #3876: a re-read from the first page that started while two pages were shown (lines 1..200) waits on its second page; a
+    // Load more answers meanwhile with lines 201..300. When the re-read lands it keeps the page Load more added.
+    [Fact]
+    public async Task A_load_more_that_answers_while_a_reread_is_in_flight_keeps_its_page()
+    {
+        Serve(0, 1, 100, 100);
+        Serve(100, 101, 200, 200);
+        Serve(200, 201, 300, next: null);
+        var sheet = await Sheet();
+        await sheet.Open(_api, A.NewItem, Token);
+        Assert.True(await sheet.LoadMore(Token));
+        Assert.Equal((200, true), (sheet.Timeline.Count, sheet.HasMore));
+
+        var gate = _server.TimelineGates[(A.NewItem, 100)] = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var calls = _server.TimelineCalls;
+        try
+        {
+            var reread = sheet.Refresh(new Uri("http://127.0.0.1:7411/"), Token);
+            await Until(() => _server.TimelineCalls == calls + 2);   // the re-read read page 1 and waits on page 2
+
+            Assert.True(await sheet.LoadMore(Token).WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token));
+            gate.SetResult();
+            await reread.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);
+        }
+        finally
+        {
+            _ = gate.TrySetResult();
+        }
+
+        InOrderOnce(sheet, 300);
+        Assert.False(sheet.HasMore);
+    }
+
+    private static async Task Until(Func<bool> done)
+    {
+        var until = TimeProvider.System.GetUtcNow().AddSeconds(5);
+        while (!done())
+        {
+            Assert.True(TimeProvider.System.GetUtcNow() < until, "timed out");
+            await Task.Delay(TimeSpan.FromMilliseconds(5), TimeProvider.System, Token);
+        }
+    }
 }
