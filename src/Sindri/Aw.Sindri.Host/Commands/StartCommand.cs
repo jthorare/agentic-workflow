@@ -73,7 +73,13 @@ internal sealed class StartCommand(IControlPlaneProbe probe, IControlPlaneLaunch
         }
 
         var found = await probe.Check(ct).ConfigureAwait(false);
-        if (found.IsSuccess || found.Error.Code != SindriErrors.NotRunning.Code)
+        if (found.IsSuccess)
+        {
+            client.Remember(found.Value);   // the call that follows doesn't ping again (#3727)
+            return found;
+        }
+
+        if (found.Error.Code != SindriErrors.NotRunning.Code)
         {
             return found;
         }
@@ -97,6 +103,7 @@ internal sealed class StartCommand(IControlPlaneProbe probe, IControlPlaneLaunch
             var found = await probe.Check(ct).ConfigureAwait(false);
             if (found.IsSuccess)
             {
+                client.Remember(found.Value);
                 return found;
             }
 

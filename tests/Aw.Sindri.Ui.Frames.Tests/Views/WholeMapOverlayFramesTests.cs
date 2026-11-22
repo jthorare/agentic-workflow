@@ -51,7 +51,7 @@ public sealed class WholeMapOverlayFramesTests : FrameHost
 
         Assert.True(Visible(window, "ContextEmpty"));
         Assert.False(Visible(window, "ContextBuilding"));
-        Assert.Equal("No map yet for 1 repository", Named<TextBlock>(window, "ContextEmptyTitle").Text);
+        Assert.Equal("No map yet for aw-split-panes", Named<TextBlock>(window, "ContextEmptyTitle").Text);
         Assert.True(Visible(window, "ContextBuild"));
         Assert.NotNull(shell.Context.BuildControl);
         Frame(window, "no-map-1440", "overlay-");

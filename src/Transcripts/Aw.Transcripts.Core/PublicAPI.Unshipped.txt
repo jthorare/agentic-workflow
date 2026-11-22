@@ -1,0 +1,212 @@
+#nullable enable
+Aw.Transcripts.Core.Ports.ITranscriptCorpus
+Aw.Transcripts.Core.Ports.ITranscriptCorpus.ListSessions(Aw.Transcripts.Core.Sessions.SessionQuery! query, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Transcripts.Core.Sessions.TranscriptSession!>!>!>
+Aw.Transcripts.Core.Ports.ITranscriptCorpus.ReadSession(Aw.Transcripts.Core.Refs.SessionRef session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Transcripts.Core.Sessions.SessionTranscript!>!>
+Aw.Transcripts.Core.Prompts.CursorPrompt
+Aw.Transcripts.Core.Prompts.PromptText
+Aw.Transcripts.Core.Refs.SessionRef
+Aw.Transcripts.Core.Refs.SessionRef.Equals(Aw.Transcripts.Core.Refs.SessionRef other) -> bool
+Aw.Transcripts.Core.Refs.SessionRef.Equals(Aw.Transcripts.Core.Refs.SessionRef other, System.Collections.Generic.IEqualityComparer<Aw.Transcripts.Core.Refs.SessionRef>! comparer) -> bool
+Aw.Transcripts.Core.Refs.SessionRef.GetTypeCode() -> System.TypeCode
+Aw.Transcripts.Core.Refs.SessionRef.IsInitialized() -> bool
+Aw.Transcripts.Core.Refs.SessionRef.SessionRef() -> void
+Aw.Transcripts.Core.Refs.SessionRef.ToString(System.IFormatProvider? provider) -> string!
+Aw.Transcripts.Core.Refs.SessionRef.Value.get -> string!
+Aw.Transcripts.Core.Refs.TranscriptRefs
+Aw.Transcripts.Core.Refs.TurnRef
+Aw.Transcripts.Core.Refs.TurnRef.Equals(Aw.Transcripts.Core.Refs.TurnRef other) -> bool
+Aw.Transcripts.Core.Refs.TurnRef.Equals(Aw.Transcripts.Core.Refs.TurnRef other, System.Collections.Generic.IEqualityComparer<Aw.Transcripts.Core.Refs.TurnRef>! comparer) -> bool
+Aw.Transcripts.Core.Refs.TurnRef.GetTypeCode() -> System.TypeCode
+Aw.Transcripts.Core.Refs.TurnRef.IsInitialized() -> bool
+Aw.Transcripts.Core.Refs.TurnRef.Line.get -> int
+Aw.Transcripts.Core.Refs.TurnRef.Session.get -> Aw.Transcripts.Core.Refs.SessionRef
+Aw.Transcripts.Core.Refs.TurnRef.ToString(System.IFormatProvider? provider) -> string!
+Aw.Transcripts.Core.Refs.TurnRef.TurnRef() -> void
+Aw.Transcripts.Core.Refs.TurnRef.Value.get -> string!
+Aw.Transcripts.Core.Sessions.SessionQuery
+Aw.Transcripts.Core.Sessions.SessionQuery.<Clone>$() -> Aw.Transcripts.Core.Sessions.SessionQuery!
+Aw.Transcripts.Core.Sessions.SessionQuery.Deconstruct(out System.DateTimeOffset Since) -> void
+Aw.Transcripts.Core.Sessions.SessionQuery.Equals(Aw.Transcripts.Core.Sessions.SessionQuery? other) -> bool
+Aw.Transcripts.Core.Sessions.SessionQuery.IncludeSubagents.get -> bool
+Aw.Transcripts.Core.Sessions.SessionQuery.IncludeSubagents.init -> void
+Aw.Transcripts.Core.Sessions.SessionQuery.Provider.get -> Aw.Transcripts.Core.TranscriptProvider?
+Aw.Transcripts.Core.Sessions.SessionQuery.Provider.init -> void
+Aw.Transcripts.Core.Sessions.SessionQuery.Repo.get -> string?
+Aw.Transcripts.Core.Sessions.SessionQuery.Repo.init -> void
+Aw.Transcripts.Core.Sessions.SessionQuery.SessionQuery(System.DateTimeOffset Since) -> void
+Aw.Transcripts.Core.Sessions.SessionQuery.Since.get -> System.DateTimeOffset
+Aw.Transcripts.Core.Sessions.SessionQuery.Since.init -> void
+Aw.Transcripts.Core.Sessions.SessionTranscript
+Aw.Transcripts.Core.Sessions.SessionTranscript.<Clone>$() -> Aw.Transcripts.Core.Sessions.SessionTranscript!
+Aw.Transcripts.Core.Sessions.SessionTranscript.Deconstruct(out Aw.Transcripts.Core.Sessions.TranscriptSession! Session, out System.Collections.Generic.IReadOnlyList<Aw.Transcripts.Core.Turns.TranscriptTurn!>! Turns, out int SkippedLines) -> void
+Aw.Transcripts.Core.Sessions.SessionTranscript.Equals(Aw.Transcripts.Core.Sessions.SessionTranscript? other) -> bool
+Aw.Transcripts.Core.Sessions.SessionTranscript.Session.get -> Aw.Transcripts.Core.Sessions.TranscriptSession!
+Aw.Transcripts.Core.Sessions.SessionTranscript.Session.init -> void
+Aw.Transcripts.Core.Sessions.SessionTranscript.SessionTranscript(Aw.Transcripts.Core.Sessions.TranscriptSession! Session, System.Collections.Generic.IReadOnlyList<Aw.Transcripts.Core.Turns.TranscriptTurn!>! Turns, int SkippedLines) -> void
+Aw.Transcripts.Core.Sessions.SessionTranscript.SkippedLines.get -> int
+Aw.Transcripts.Core.Sessions.SessionTranscript.SkippedLines.init -> void
+Aw.Transcripts.Core.Sessions.SessionTranscript.Turns.get -> System.Collections.Generic.IReadOnlyList<Aw.Transcripts.Core.Turns.TranscriptTurn!>!
+Aw.Transcripts.Core.Sessions.SessionTranscript.Turns.init -> void
+Aw.Transcripts.Core.Sessions.TranscriptSession
+Aw.Transcripts.Core.Sessions.TranscriptSession.<Clone>$() -> Aw.Transcripts.Core.Sessions.TranscriptSession!
+Aw.Transcripts.Core.Sessions.TranscriptSession.Deconstruct(out Aw.Transcripts.Core.Refs.SessionRef Ref, out Aw.Transcripts.Core.TranscriptProvider Provider, out System.DateTimeOffset StartedAt, out System.DateTimeOffset LastWrittenAt, out string? Repo, out bool IsSubagent, out Aw.Transcripts.Core.Refs.SessionRef? Parent, out int HumanTurns) -> void
+Aw.Transcripts.Core.Sessions.TranscriptSession.Equals(Aw.Transcripts.Core.Sessions.TranscriptSession? other) -> bool
+Aw.Transcripts.Core.Sessions.TranscriptSession.HumanTurns.get -> int
+Aw.Transcripts.Core.Sessions.TranscriptSession.HumanTurns.init -> void
+Aw.Transcripts.Core.Sessions.TranscriptSession.IsSubagent.get -> bool
+Aw.Transcripts.Core.Sessions.TranscriptSession.IsSubagent.init -> void
+Aw.Transcripts.Core.Sessions.TranscriptSession.LastWrittenAt.get -> System.DateTimeOffset
+Aw.Transcripts.Core.Sessions.TranscriptSession.LastWrittenAt.init -> void
+Aw.Transcripts.Core.Sessions.TranscriptSession.Parent.get -> Aw.Transcripts.Core.Refs.SessionRef?
+Aw.Transcripts.Core.Sessions.TranscriptSession.Parent.init -> void
+Aw.Transcripts.Core.Sessions.TranscriptSession.Provider.get -> Aw.Transcripts.Core.TranscriptProvider
+Aw.Transcripts.Core.Sessions.TranscriptSession.Provider.init -> void
+Aw.Transcripts.Core.Sessions.TranscriptSession.Ref.get -> Aw.Transcripts.Core.Refs.SessionRef
+Aw.Transcripts.Core.Sessions.TranscriptSession.Ref.init -> void
+Aw.Transcripts.Core.Sessions.TranscriptSession.Repo.get -> string?
+Aw.Transcripts.Core.Sessions.TranscriptSession.Repo.init -> void
+Aw.Transcripts.Core.Sessions.TranscriptSession.StartedAt.get -> System.DateTimeOffset
+Aw.Transcripts.Core.Sessions.TranscriptSession.StartedAt.init -> void
+Aw.Transcripts.Core.Sessions.TranscriptSession.TranscriptSession(Aw.Transcripts.Core.Refs.SessionRef Ref, Aw.Transcripts.Core.TranscriptProvider Provider, System.DateTimeOffset StartedAt, System.DateTimeOffset LastWrittenAt, string? Repo, bool IsSubagent, Aw.Transcripts.Core.Refs.SessionRef? Parent, int HumanTurns) -> void
+Aw.Transcripts.Core.TranscriptProvider
+Aw.Transcripts.Core.TranscriptProvider.ClaudeCode = 0 -> Aw.Transcripts.Core.TranscriptProvider
+Aw.Transcripts.Core.TranscriptProvider.Codex = 1 -> Aw.Transcripts.Core.TranscriptProvider
+Aw.Transcripts.Core.TranscriptProvider.Cursor = 2 -> Aw.Transcripts.Core.TranscriptProvider
+Aw.Transcripts.Core.TranscriptProviderNames
+Aw.Transcripts.Core.TranscriptRoot
+Aw.Transcripts.Core.TranscriptRoot.<Clone>$() -> Aw.Transcripts.Core.TranscriptRoot!
+Aw.Transcripts.Core.TranscriptRoot.Deconstruct(out Aw.Transcripts.Core.TranscriptProvider Provider, out string! Directory) -> void
+Aw.Transcripts.Core.TranscriptRoot.Directory.get -> string!
+Aw.Transcripts.Core.TranscriptRoot.Directory.init -> void
+Aw.Transcripts.Core.TranscriptRoot.Equals(Aw.Transcripts.Core.TranscriptRoot? other) -> bool
+Aw.Transcripts.Core.TranscriptRoot.Provider.get -> Aw.Transcripts.Core.TranscriptProvider
+Aw.Transcripts.Core.TranscriptRoot.Provider.init -> void
+Aw.Transcripts.Core.TranscriptRoot.TranscriptRoot(Aw.Transcripts.Core.TranscriptProvider Provider, string! Directory) -> void
+Aw.Transcripts.Core.TranscriptsCoreServiceCollectionExtensions
+Aw.Transcripts.Core.TranscriptsErrors
+Aw.Transcripts.Core.Turns.EarlierFileFirst
+Aw.Transcripts.Core.Turns.EarlierFileFirst.Compare(Aw.Transcripts.Core.Turns.FileSpan? x, Aw.Transcripts.Core.Turns.FileSpan? y) -> int
+Aw.Transcripts.Core.Turns.EarlierFileFirst.EarlierFileFirst() -> void
+Aw.Transcripts.Core.Turns.EntryKind
+Aw.Transcripts.Core.Turns.EntryKind.Assistant = 1 -> Aw.Transcripts.Core.Turns.EntryKind
+Aw.Transcripts.Core.Turns.EntryKind.Human = 0 -> Aw.Transcripts.Core.Turns.EntryKind
+Aw.Transcripts.Core.Turns.EntryKind.MachinePrompt = 2 -> Aw.Transcripts.Core.Turns.EntryKind
+Aw.Transcripts.Core.Turns.FileSpan
+Aw.Transcripts.Core.Turns.FileSpan.<Clone>$() -> Aw.Transcripts.Core.Turns.FileSpan!
+Aw.Transcripts.Core.Turns.FileSpan.Deconstruct(out System.DateTimeOffset? First, out System.DateTimeOffset? Last, out string! Identity) -> void
+Aw.Transcripts.Core.Turns.FileSpan.Equals(Aw.Transcripts.Core.Turns.FileSpan? other) -> bool
+Aw.Transcripts.Core.Turns.FileSpan.FileSpan(System.DateTimeOffset? First, System.DateTimeOffset? Last, string! Identity) -> void
+Aw.Transcripts.Core.Turns.FileSpan.First.get -> System.DateTimeOffset?
+Aw.Transcripts.Core.Turns.FileSpan.First.init -> void
+Aw.Transcripts.Core.Turns.FileSpan.Identity.get -> string!
+Aw.Transcripts.Core.Turns.FileSpan.Identity.init -> void
+Aw.Transcripts.Core.Turns.FileSpan.Last.get -> System.DateTimeOffset?
+Aw.Transcripts.Core.Turns.FileSpan.Last.init -> void
+Aw.Transcripts.Core.Turns.TranscriptEntry
+Aw.Transcripts.Core.Turns.TranscriptEntry.<Clone>$() -> Aw.Transcripts.Core.Turns.TranscriptEntry!
+Aw.Transcripts.Core.Turns.TranscriptEntry.At.get -> System.DateTimeOffset
+Aw.Transcripts.Core.Turns.TranscriptEntry.At.init -> void
+Aw.Transcripts.Core.Turns.TranscriptEntry.Deconstruct(out int Line, out System.DateTimeOffset At, out Aw.Transcripts.Core.Turns.EntryKind Kind, out string! Text, out System.Collections.Generic.IReadOnlyList<string!>! Tools) -> void
+Aw.Transcripts.Core.Turns.TranscriptEntry.Equals(Aw.Transcripts.Core.Turns.TranscriptEntry? other) -> bool
+Aw.Transcripts.Core.Turns.TranscriptEntry.Kind.get -> Aw.Transcripts.Core.Turns.EntryKind
+Aw.Transcripts.Core.Turns.TranscriptEntry.Kind.init -> void
+Aw.Transcripts.Core.Turns.TranscriptEntry.Line.get -> int
+Aw.Transcripts.Core.Turns.TranscriptEntry.Line.init -> void
+Aw.Transcripts.Core.Turns.TranscriptEntry.Text.get -> string!
+Aw.Transcripts.Core.Turns.TranscriptEntry.Text.init -> void
+Aw.Transcripts.Core.Turns.TranscriptEntry.Tools.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Transcripts.Core.Turns.TranscriptEntry.Tools.init -> void
+Aw.Transcripts.Core.Turns.TranscriptEntry.TranscriptEntry(int Line, System.DateTimeOffset At, Aw.Transcripts.Core.Turns.EntryKind Kind, string! Text, System.Collections.Generic.IReadOnlyList<string!>! Tools) -> void
+Aw.Transcripts.Core.Turns.TranscriptTurn
+Aw.Transcripts.Core.Turns.TranscriptTurn.<Clone>$() -> Aw.Transcripts.Core.Turns.TranscriptTurn!
+Aw.Transcripts.Core.Turns.TranscriptTurn.At.get -> System.DateTimeOffset
+Aw.Transcripts.Core.Turns.TranscriptTurn.At.init -> void
+Aw.Transcripts.Core.Turns.TranscriptTurn.Deconstruct(out Aw.Transcripts.Core.Refs.TurnRef Ref, out Aw.Transcripts.Core.Turns.TurnRole Role, out System.DateTimeOffset At, out string! Text, out System.Collections.Generic.IReadOnlyList<string!>! Tools) -> void
+Aw.Transcripts.Core.Turns.TranscriptTurn.Equals(Aw.Transcripts.Core.Turns.TranscriptTurn? other) -> bool
+Aw.Transcripts.Core.Turns.TranscriptTurn.Ref.get -> Aw.Transcripts.Core.Refs.TurnRef
+Aw.Transcripts.Core.Turns.TranscriptTurn.Ref.init -> void
+Aw.Transcripts.Core.Turns.TranscriptTurn.Role.get -> Aw.Transcripts.Core.Turns.TurnRole
+Aw.Transcripts.Core.Turns.TranscriptTurn.Role.init -> void
+Aw.Transcripts.Core.Turns.TranscriptTurn.Text.get -> string!
+Aw.Transcripts.Core.Turns.TranscriptTurn.Text.init -> void
+Aw.Transcripts.Core.Turns.TranscriptTurn.Tools.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Transcripts.Core.Turns.TranscriptTurn.Tools.init -> void
+Aw.Transcripts.Core.Turns.TranscriptTurn.TranscriptTurn(Aw.Transcripts.Core.Refs.TurnRef Ref, Aw.Transcripts.Core.Turns.TurnRole Role, System.DateTimeOffset At, string! Text, System.Collections.Generic.IReadOnlyList<string!>! Tools) -> void
+Aw.Transcripts.Core.Turns.TurnAssembler
+Aw.Transcripts.Core.Turns.TurnDedupe
+Aw.Transcripts.Core.Turns.TurnKey
+Aw.Transcripts.Core.Turns.TurnRole
+Aw.Transcripts.Core.Turns.TurnRole.Assistant = 1 -> Aw.Transcripts.Core.Turns.TurnRole
+Aw.Transcripts.Core.Turns.TurnRole.Human = 0 -> Aw.Transcripts.Core.Turns.TurnRole
+override Aw.Transcripts.Core.Refs.SessionRef.Equals(object? obj) -> bool
+override Aw.Transcripts.Core.Refs.SessionRef.GetHashCode() -> int
+override Aw.Transcripts.Core.Refs.SessionRef.ToString() -> string!
+override Aw.Transcripts.Core.Refs.TurnRef.Equals(object? obj) -> bool
+override Aw.Transcripts.Core.Refs.TurnRef.GetHashCode() -> int
+override Aw.Transcripts.Core.Refs.TurnRef.ToString() -> string!
+override Aw.Transcripts.Core.Sessions.SessionQuery.Equals(object? obj) -> bool
+override Aw.Transcripts.Core.Sessions.SessionQuery.GetHashCode() -> int
+override Aw.Transcripts.Core.Sessions.SessionQuery.ToString() -> string!
+override Aw.Transcripts.Core.Sessions.SessionTranscript.Equals(object? obj) -> bool
+override Aw.Transcripts.Core.Sessions.SessionTranscript.GetHashCode() -> int
+override Aw.Transcripts.Core.Sessions.SessionTranscript.ToString() -> string!
+override Aw.Transcripts.Core.Sessions.TranscriptSession.Equals(object? obj) -> bool
+override Aw.Transcripts.Core.Sessions.TranscriptSession.GetHashCode() -> int
+override Aw.Transcripts.Core.Sessions.TranscriptSession.ToString() -> string!
+override Aw.Transcripts.Core.TranscriptRoot.Equals(object? obj) -> bool
+override Aw.Transcripts.Core.TranscriptRoot.GetHashCode() -> int
+override Aw.Transcripts.Core.TranscriptRoot.ToString() -> string!
+override Aw.Transcripts.Core.Turns.FileSpan.Equals(object? obj) -> bool
+override Aw.Transcripts.Core.Turns.FileSpan.GetHashCode() -> int
+override Aw.Transcripts.Core.Turns.FileSpan.ToString() -> string!
+override Aw.Transcripts.Core.Turns.TranscriptEntry.Equals(object? obj) -> bool
+override Aw.Transcripts.Core.Turns.TranscriptEntry.GetHashCode() -> int
+override Aw.Transcripts.Core.Turns.TranscriptEntry.ToString() -> string!
+override Aw.Transcripts.Core.Turns.TranscriptTurn.Equals(object? obj) -> bool
+override Aw.Transcripts.Core.Turns.TranscriptTurn.GetHashCode() -> int
+override Aw.Transcripts.Core.Turns.TranscriptTurn.ToString() -> string!
+static Aw.Transcripts.Core.Prompts.CursorPrompt.Body(string! text) -> string!
+static Aw.Transcripts.Core.Prompts.CursorPrompt.Timestamp(string! text) -> System.DateTimeOffset?
+static Aw.Transcripts.Core.Prompts.PromptText.IsTyped(string! text) -> bool
+static Aw.Transcripts.Core.Prompts.PromptText.StripLeadingTagBlocks(string! text) -> string!
+static Aw.Transcripts.Core.Refs.SessionRef.From(string! value) -> Aw.Transcripts.Core.Refs.SessionRef
+static Aw.Transcripts.Core.Refs.SessionRef.Parse(string! s, System.IFormatProvider? provider) -> Aw.Transcripts.Core.Refs.SessionRef
+static Aw.Transcripts.Core.Refs.SessionRef.TryFrom(string? value, out Aw.Transcripts.Core.Refs.SessionRef vo) -> bool
+static Aw.Transcripts.Core.Refs.SessionRef.TryParse(string? s, System.IFormatProvider? provider, out Aw.Transcripts.Core.Refs.SessionRef result) -> bool
+static Aw.Transcripts.Core.Refs.SessionRef.operator !=(Aw.Transcripts.Core.Refs.SessionRef left, Aw.Transcripts.Core.Refs.SessionRef right) -> bool
+static Aw.Transcripts.Core.Refs.SessionRef.operator ==(Aw.Transcripts.Core.Refs.SessionRef left, Aw.Transcripts.Core.Refs.SessionRef right) -> bool
+static Aw.Transcripts.Core.Refs.TranscriptRefs.ForFile(Aw.Transcripts.Core.TranscriptProvider provider, string! fileIdentity) -> Aw.Transcripts.Core.Refs.SessionRef
+static Aw.Transcripts.Core.Refs.TranscriptRefs.ForTurn(Aw.Transcripts.Core.Refs.SessionRef session, int line) -> Aw.Transcripts.Core.Refs.TurnRef
+static Aw.Transcripts.Core.Refs.TurnRef.From(string! value) -> Aw.Transcripts.Core.Refs.TurnRef
+static Aw.Transcripts.Core.Refs.TurnRef.Parse(string! s, System.IFormatProvider? provider) -> Aw.Transcripts.Core.Refs.TurnRef
+static Aw.Transcripts.Core.Refs.TurnRef.TryFrom(string? value, out Aw.Transcripts.Core.Refs.TurnRef vo) -> bool
+static Aw.Transcripts.Core.Refs.TurnRef.TryParse(string? s, System.IFormatProvider? provider, out Aw.Transcripts.Core.Refs.TurnRef result) -> bool
+static Aw.Transcripts.Core.Refs.TurnRef.operator !=(Aw.Transcripts.Core.Refs.TurnRef left, Aw.Transcripts.Core.Refs.TurnRef right) -> bool
+static Aw.Transcripts.Core.Refs.TurnRef.operator ==(Aw.Transcripts.Core.Refs.TurnRef left, Aw.Transcripts.Core.Refs.TurnRef right) -> bool
+static Aw.Transcripts.Core.Sessions.SessionQuery.operator !=(Aw.Transcripts.Core.Sessions.SessionQuery? left, Aw.Transcripts.Core.Sessions.SessionQuery? right) -> bool
+static Aw.Transcripts.Core.Sessions.SessionQuery.operator ==(Aw.Transcripts.Core.Sessions.SessionQuery? left, Aw.Transcripts.Core.Sessions.SessionQuery? right) -> bool
+static Aw.Transcripts.Core.Sessions.SessionTranscript.operator !=(Aw.Transcripts.Core.Sessions.SessionTranscript? left, Aw.Transcripts.Core.Sessions.SessionTranscript? right) -> bool
+static Aw.Transcripts.Core.Sessions.SessionTranscript.operator ==(Aw.Transcripts.Core.Sessions.SessionTranscript? left, Aw.Transcripts.Core.Sessions.SessionTranscript? right) -> bool
+static Aw.Transcripts.Core.Sessions.TranscriptSession.operator !=(Aw.Transcripts.Core.Sessions.TranscriptSession? left, Aw.Transcripts.Core.Sessions.TranscriptSession? right) -> bool
+static Aw.Transcripts.Core.Sessions.TranscriptSession.operator ==(Aw.Transcripts.Core.Sessions.TranscriptSession? left, Aw.Transcripts.Core.Sessions.TranscriptSession? right) -> bool
+static Aw.Transcripts.Core.TranscriptProviderNames.Of(Aw.Transcripts.Core.TranscriptProvider provider) -> string!
+static Aw.Transcripts.Core.TranscriptProviderNames.TryParse(string? name, out Aw.Transcripts.Core.TranscriptProvider provider) -> bool
+static Aw.Transcripts.Core.TranscriptRoot.operator !=(Aw.Transcripts.Core.TranscriptRoot? left, Aw.Transcripts.Core.TranscriptRoot? right) -> bool
+static Aw.Transcripts.Core.TranscriptRoot.operator ==(Aw.Transcripts.Core.TranscriptRoot? left, Aw.Transcripts.Core.TranscriptRoot? right) -> bool
+static Aw.Transcripts.Core.TranscriptsCoreServiceCollectionExtensions.AddTranscriptsCore(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static Aw.Transcripts.Core.TranscriptsErrors.All.get -> System.Collections.Generic.IReadOnlyList<Aw.Kernel.ErrorDefinition!>!
+static Aw.Transcripts.Core.Turns.EarlierFileFirst.Instance.get -> Aw.Transcripts.Core.Turns.EarlierFileFirst!
+static Aw.Transcripts.Core.Turns.FileSpan.operator !=(Aw.Transcripts.Core.Turns.FileSpan? left, Aw.Transcripts.Core.Turns.FileSpan? right) -> bool
+static Aw.Transcripts.Core.Turns.FileSpan.operator ==(Aw.Transcripts.Core.Turns.FileSpan? left, Aw.Transcripts.Core.Turns.FileSpan? right) -> bool
+static Aw.Transcripts.Core.Turns.TranscriptEntry.operator !=(Aw.Transcripts.Core.Turns.TranscriptEntry? left, Aw.Transcripts.Core.Turns.TranscriptEntry? right) -> bool
+static Aw.Transcripts.Core.Turns.TranscriptEntry.operator ==(Aw.Transcripts.Core.Turns.TranscriptEntry? left, Aw.Transcripts.Core.Turns.TranscriptEntry? right) -> bool
+static Aw.Transcripts.Core.Turns.TranscriptTurn.operator !=(Aw.Transcripts.Core.Turns.TranscriptTurn? left, Aw.Transcripts.Core.Turns.TranscriptTurn? right) -> bool
+static Aw.Transcripts.Core.Turns.TranscriptTurn.operator ==(Aw.Transcripts.Core.Turns.TranscriptTurn? left, Aw.Transcripts.Core.Turns.TranscriptTurn? right) -> bool
+static Aw.Transcripts.Core.Turns.TurnAssembler.Assemble(Aw.Transcripts.Core.Refs.SessionRef session, System.Collections.Generic.IEnumerable<Aw.Transcripts.Core.Turns.TranscriptEntry!>! entries) -> System.Collections.Generic.IReadOnlyList<Aw.Transcripts.Core.Turns.TranscriptTurn!>!
+static Aw.Transcripts.Core.Turns.TurnDedupe.CanHoldOriginals(Aw.Transcripts.Core.Turns.FileSpan! candidate, System.DateTimeOffset candidateWrittenAt, Aw.Transcripts.Core.Turns.FileSpan! target) -> bool
+static Aw.Transcripts.Core.Turns.TurnDedupe.Own(System.Collections.Generic.IReadOnlyList<string!>! ownKeys, System.Collections.Generic.IEnumerable<System.Collections.Generic.IReadOnlyList<string!>!>! earlierKeys) -> System.Collections.Generic.IReadOnlyList<bool>!
+static Aw.Transcripts.Core.Turns.TurnKey.Of(Aw.Transcripts.Core.Turns.TranscriptTurn! turn) -> string!
+static readonly Aw.Transcripts.Core.TranscriptsErrors.AmbiguousRef -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Transcripts.Core.TranscriptsErrors.Invalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Transcripts.Core.TranscriptsErrors.SessionNotFound -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Transcripts.Core.TranscriptsErrors.Unreadable -> Aw.Kernel.ErrorDefinition!
