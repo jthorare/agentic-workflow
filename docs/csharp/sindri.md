@@ -800,7 +800,7 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `SND-MSG-019` | The workspace blocks the Slack app: `ok:false` `team_access_not_granted`, `access_denied`, `ekm_access_denied`, `org_login_required` or `app_restricted` (guessed slugs until the P0 probe reads the real ones) (403, CLI exit 1) |
 | `SND-MSG-024` | The token belongs to a different Slack workspace than the `slack:messages` connection (409, CLI exit 1) |
 | `SND-MSG-030` | A pasted token is not a User OAuth Token: a bot (`xoxb-`), app-level (`xapp-`) or cookie (`xoxc-`) token, or anything not `xoxp-`, refused by prefix before any call; also Slack's `not_allowed_token_type` (400, CLI exit 2) |
-| `SND-MSG-033` | Slack could not be reached (no network, a timeout, an HTTP 5xx); nothing was read (503, CLI exit 1). A redirect or a reply that is not Slack's JSON is `SND-CONN-012` |
+| `SND-MSG-033` | Slack could not be reached (no network, DNS, a timeout); nothing was read (503, CLI exit 1). A redirect, an HTTP 5xx or a reply that is not Slack's JSON is `SND-CONN-012` |
 | `SND-SESSION-001` | One of the session collector's sources failed or a pass overran its 500 ms budget: a problem row beside a normal list, never an exception message (collector CO-2a) |
 | `SND-SESSION-002` | The session collector can't run here; the `detail` is `unsupported-platform`, `proc-unreadable` or `disabled`, and only these replace the list (collector CO-2a; the routes `GET /sessions` and `GET /sessions/{provider}/{id}` answer it, CO-3) |
 | `SND-SESSION-003` | A test override (`AW_SESSIONS_PROC_ROOT`, `AW_SESSIONS_CLAUDE_DIR`) is set in this run: informational, one problem row beside a normal list; pruning of hook files is off and focus answers `copy` (collector CO-2a) |

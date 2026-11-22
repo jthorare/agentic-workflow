@@ -25,7 +25,7 @@ public static partial class SindriErrors
     /// <summary>SND-MSG-030: the pasted token is a bot, app-level or cookie token ('xoxb-', 'xapp-', 'xoxc-'), checked by prefix before any call (400, CLI exit 2).</summary>
     public static readonly ErrorDefinition MessagesNotUserToken = new("SND-MSG-030", ErrorKind.Invalid, "Messages needs the User OAuth Token (xoxp-) from OAuth & Permissions, User Token section");
 
-    /// <summary>SND-MSG-033: Slack could not be reached (no answer, a timeout, no network); nothing was read (503, CLI exit 1).</summary>
+    /// <summary>SND-MSG-033: Slack could not be reached (no network, DNS, a timeout); nothing was read (503, CLI exit 1).</summary>
     public static readonly ErrorDefinition MessagesSlackUnreachable = new("SND-MSG-033", ErrorKind.Unavailable, "Slack could not be reached");
 
     /// <summary>The Messages codes (messages spec §10), for <see cref="All"/>.</summary>

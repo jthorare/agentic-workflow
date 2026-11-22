@@ -23,7 +23,6 @@ internal sealed partial class SlackWebClient
             429 => Hold(method, RetryAfter(response)),
             401 => SindriErrors.MessagesTokenInvalid.With(Said(method, "HTTP 401") + " Make a new token, then sindri messages connect."),
             >= 300 and < 400 => SindriErrors.ConnectionProviderChanged.With(Said(method, Http(status)) + " Redirects are never followed."),
-            >= 500 => SindriErrors.MessagesSlackUnreachable.With(Said(method, Http(status)) + " Nothing was read."),
             _ => SindriErrors.ConnectionProviderChanged.With(Said(method, Http(status))),
         };
     }

@@ -49,7 +49,8 @@ public sealed class SlackFixtureBaseUrlTests : IDisposable
         File.Delete(marker);
         _ = await client.AuthTest(token, TestContext.Current.CancellationToken);
 
-        Assert.Equal(["127.0.0.1", "slack.com"], _slack.Seen.Select(static s => s.Url.Host), StringComparer.Ordinal);
+        string[] hosts = ["127.0.0.1", "slack.com"];
+        Assert.Equal(hosts, _slack.Seen.Select(static s => s.Url.Host), StringComparer.Ordinal);
     }
 
     private async Task<Result<SlackAuth>> Call(string token)

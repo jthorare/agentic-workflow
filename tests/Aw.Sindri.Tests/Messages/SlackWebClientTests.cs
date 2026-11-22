@@ -99,7 +99,7 @@ public sealed class SlackWebClientTests
     [Theory]
     [InlineData(HttpStatusCode.Found, "SND-CONN-012")]
     [InlineData(HttpStatusCode.Unauthorized, "SND-MSG-002")]
-    [InlineData(HttpStatusCode.ServiceUnavailable, "SND-MSG-033")]
+    [InlineData(HttpStatusCode.ServiceUnavailable, "SND-CONN-012")]
     [InlineData(HttpStatusCode.NotFound, "SND-CONN-012")]
     public async Task Http_statuses_map_to_the_messages_codes(HttpStatusCode status, string code)
     {
