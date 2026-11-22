@@ -1,4 +1,4 @@
 Phases, first to last:
-- Ph1 Bug sweep. Exit check: every finding is a GitHub issue.
+- Ph1 Bug sweep. Exit check: every finding is an issue in the repo's tracker.
 - Ph2 Booking history API
 - Ph3 Performance sweep.
