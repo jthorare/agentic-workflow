@@ -7,7 +7,7 @@ using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>The System page's visual pass (#2779): one display number, section titles on borderless 24 px cards, and the Context index backlog as ticks.</summary>
 [Lane(TestLane.Integration)]

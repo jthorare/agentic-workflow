@@ -17,7 +17,7 @@ using Aw.Sindri.Ui.Views.NeedsYou;
 using Aw.Sindri.Ui.Views.Shell;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>The Todo panel's keys on Home under the headless platform (todo spec §3.3, §3.4, D6): the two focus regions, J and K, X, Space and Delete on a row, the toast's Undo and Esc.</summary>
 [Lane(TestLane.Integration)]
@@ -109,9 +109,9 @@ public sealed class TodoPanelKeysTests : IDisposable
 
     private static async Task Until(Window window, Func<bool> condition, string what = "the view never reached the expected state")
     {
-        for (var i = 0; i < 300 && !condition(); i++)
+        for (var i = 0; i < 3000 && !condition(); i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Settle(window);
         }
 
