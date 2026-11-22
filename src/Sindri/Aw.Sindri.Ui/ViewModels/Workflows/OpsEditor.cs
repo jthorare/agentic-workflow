@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
@@ -34,28 +33,6 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
     /// <summary>The form of the selected node.</summary>
     public ObservableCollection<ConfigFieldViewModel> Fields { get; } = [];
 
-    /// <summary>True when the selected step has settings in an Advanced group.</summary>
-    public bool HasAdvancedFields => Fields.Any(f => f.InAdvanced);
-
-    /// <summary>True when the Advanced group is open.</summary>
-    public bool AdvancedOpen
-    {
-        get;
-        set
-        {
-            Set(ref field, value);
-            foreach (var f in Fields)
-            {
-                f.GroupOpen = value;
-            }
-        }
-    }
-
-    /// <summary>The Advanced toggle's words.</summary>
-#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
-    public string AdvancedText => Labels.WfFieldAdvanced;
-#pragma warning restore CA1822, MA0041
-
     /// <summary>The selected step as the sheet names it ("Every weekday at 7:00 \u00b7 trigger"), never its id; empty when none is selected.</summary>
     public string NodeHeading { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -78,9 +55,6 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
 
     /// <summary>Why the last edit or read failed (not a stale base), in words; empty otherwise.</summary>
     public string FailureText { get; private set => Set(ref field, value); } = string.Empty;
-
-    /// <summary>Drops the refusal on screen: it belongs to the sheet it came from, which is closing or moving on.</summary>
-    internal void ClearFailure() => FailureText = string.Empty;
 
     /// <summary>Reads a workflow and the block list. Both must be read: the form is made from the two.</summary>
     /// <param name="url">The API's base URL.</param>
@@ -136,7 +110,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         }
 
         _selected = nodeId.Length == 0 ? null : nodeId;
-        FailureText = string.Empty;   // a refusal belongs to the step it came from
+        ClearRefusal();   // a refusal belongs to the step it came from; a failed read stays
         Fields.Clear();
         var node = Nodes.FirstOrDefault(n => string.Equals(n.Id, nodeId, StringComparison.Ordinal));
         var block = node is null ? null : Groups.SelectMany(g => g.Blocks).FirstOrDefault(b => string.Equals(b.Type, node.Type, StringComparison.Ordinal));
@@ -149,11 +123,6 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         AdvancedOpen = false;
         OnChanged(nameof(HasAdvancedFields));
     }
-
-    private static string ExampleOf(WorkflowBlock block, string field) =>
-        block.ExampleConfig is { ValueKind: JsonValueKind.Object } example && example.TryGetProperty(field, out var value) && value.ValueKind == JsonValueKind.String && string.Equals(field, "code", StringComparison.Ordinal)
-            ? value.GetString() ?? string.Empty
-            : string.Empty;
 
     private static string HeadingOf(EditorNode? node, WorkflowBlock? block)
     {
@@ -310,23 +279,5 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
 
         var unsure = string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
         (FailureText, _refused) = (unsure ? Labels.WfEditUnsure(error) : Labels.WfEditRefused(error), true);
-    }
-
-    private static List<EditorNode> ReadNodes(JsonElement spec)
-    {
-        var nodes = new List<EditorNode>();
-        if (spec.ValueKind != JsonValueKind.Object || !spec.TryGetProperty("nodes", out var list) || list.ValueKind != JsonValueKind.Array)
-        {
-            return nodes;
-        }
-
-        foreach (var node in list.EnumerateArray())
-        {
-            var title = node.TryGetProperty("title", out var t) && t.ValueKind == JsonValueKind.String ? t.GetString() : null;
-            var config = node.TryGetProperty("config", out var c) ? c.Clone() : default;
-            nodes.Add(new EditorNode(node.GetProperty("id").GetString() ?? string.Empty, node.GetProperty("type").GetString() ?? string.Empty, title, config));
-        }
-
-        return nodes;
     }
 }
