@@ -10,7 +10,7 @@ using Aw.Sindri.Features.SearchWorkflowDocs;
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// 'sindri wf list', 'wf show &lt;slug&gt;', 'wf runs &lt;slug&gt;' and 'wf run-show &lt;run&gt;' (each with --json): clients of GET /sindri/workflows, /sindri/workflows/{slug}, /sindri/workflows/{slug}/runs and
+/// 'sindri wf list', 'wf show &lt;slug&gt; [--revision &lt;n|latest&gt;]', 'wf runs &lt;slug&gt;' and 'wf run-show &lt;run&gt;' (each with --json): clients of GET /sindri/workflows, /sindri/workflows/{slug}, /sindri/workflows/{slug}/runs and
 /// /sindri/workflow-runs/{run}. They read the routes and never start the control plane. Exit 0 ok (an empty list included), 1 when Sindri isn't running, 2 on usage or any other error.
 /// </summary>
 /// <param name="client">The API client.</param>
@@ -18,7 +18,7 @@ namespace Aw.Sindri.Host.Commands;
 internal sealed class WfReadVerbs(ControlPlaneClient client, Output output)
 {
     internal const string ListUsage = "usage: sindri wf list [--json]";
-    internal const string ShowUsage = "usage: sindri wf show <slug> [--json]";
+    internal const string ShowUsage = "usage: sindri wf show <slug> [--revision <n|latest>] [--json]";
     internal const string RunsUsage = "usage: sindri wf runs <slug> [--json]";
     internal const string BlocksUsage = "usage: sindri wf blocks [--json]";
     internal const string DocsUsage = "usage: sindri wf docs [<question words>] [--page <slug>] [--json]";
@@ -40,13 +40,15 @@ internal sealed class WfReadVerbs(ControlPlaneClient client, Output output)
     internal async Task<int> Show(string[] args, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(args);
-        var slug = One(args, 1, "wf show", ShowUsage);
+        var (rest, revision, bad) = RevisionOption(args);
+        var slug = bad is null ? One(rest, 1, "wf show", ShowUsage) : SindriErrors.InvalidInput.With($"{bad} ({ShowUsage})");
         if (slug.IsError)
         {
             return await output.Error(slug.Error).ConfigureAwait(false);
         }
 
-        var answer = await client.Get<GetWorkflowResponse>("/sindri/workflows/" + Uri.EscapeDataString(slug.Value), ct).ConfigureAwait(false);
+        // why: the route checks the value (a number or 'latest'), so a bad one gets the same SND-CLI-003 over HTTP, MCP and here
+        var answer = await client.Get<GetWorkflowResponse>("/sindri/workflows/" + Uri.EscapeDataString(slug.Value) + UrlQuery.Of([("revision", revision)]), ct).ConfigureAwait(false);
         return await Print(answer, args, WfReadText.Show, ct).ConfigureAwait(false);
     }
 
@@ -136,6 +138,24 @@ internal sealed class WfReadVerbs(ControlPlaneClient client, Output output)
         return args.Contains("--json", StringComparer.Ordinal)
             ? await output.Raw(answer.Value.Body, 0).ConfigureAwait(false)
             : await output.Text(text(answer.Value.Value), 0).ConfigureAwait(false);
+    }
+
+    /// <summary>Takes '--revision &lt;value&gt;' out of the arguments (#3693).</summary>
+    private static (string[] Rest, string? Revision, string? Bad) RevisionOption(string[] args)
+    {
+        var at = Array.IndexOf(args, "--revision");
+        if (at < 0)
+        {
+            return (args, null, null);
+        }
+
+        if (at + 1 >= args.Length || args[at + 1].StartsWith('-'))
+        {
+            return (args, null, "'--revision' needs a revision number or 'latest'");
+        }
+
+        string[] rest = [.. args[..at], .. args[(at + 2)..]];
+        return (rest, args[at + 1], null);
     }
 
     /// <summary>The verb's positional arguments: exactly <paramref name="count"/> and the optional --json.</summary>

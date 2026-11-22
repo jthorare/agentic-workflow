@@ -129,11 +129,11 @@ Four reads, each one slice (`Features/ListWorkflows`, `GetWorkflow`, `ListWorkfl
 | Read | Route | MCP tool | CLI |
 |---|---|---|---|
 | The workflows that are not archived | `GET /sindri/workflows` | `workflow_list` | `sindri wf list [--json]` |
-| One workflow: the revision it runs (the newest when off), the spec, the spec hash, who saved the newest revision, node positions | `GET /sindri/workflows/{slug}` | `workflow_get` (`slug`) | `sindri wf show <slug> [--json]` |
+| One workflow: the revision it runs (the newest when off), the spec, the spec hash, who saved the newest revision, node positions | `GET /sindri/workflows/{slug}[?revision=N\|latest]` | `workflow_get` (`slug`, `revision`) | `sindri wf show <slug> [--revision <n\|latest>] [--json]` |
 | A workflow's newest 50 runs, newest first, any status | `GET /sindri/workflows/{slug}/runs` | `workflow_runs` (`slug`) | `sindri wf runs <slug> [--json]` |
 | One run with its trigger, outputs and node runs | `GET /sindri/workflow-runs/{run}` | `workflow_run_get` (`run`) | `sindri wf run-show <run> [--json]` |
 
-An unknown slug is `SND-GRAPH-008` (404), an unknown run `SND-GRAPH-101`, a slug or run id of the wrong shape invalid input. "Who changed it last" is the `createdBy` of the newest revision (`owner` or `session:<id>`). Node payloads the store cut at its size limit come back as a string with `truncated: true` on the node run. Over MCP, names, descriptions, node titles and every string of a node config (prompts), failure text, trigger payloads, outputs and node inputs and outputs are fenced as untrusted. `IWorkflowRunStore.Recent` is the new store read behind the run list.
+`revision` (#3303, #3693) reads a saved revision instead of the one the workflow runs: a whole number, or `latest` for the newest saved. The route, the MCP tool and the CLI build the same `GetWorkflowRequest`; the MCP tool takes the number as a JSON number or text. A number the workflow has no revision for is `SND-GRAPH-008` (404), any other value invalid input (`SND-CLI-003`, 400). An unknown slug is `SND-GRAPH-008` (404), an unknown run `SND-GRAPH-101`, a slug or run id of the wrong shape invalid input. "Who changed it last" is the `createdBy` of the newest revision (`owner` or `session:<id>`). Node payloads the store cut at its size limit come back as a string with `truncated: true` on the node run. Over MCP, names, descriptions, node titles and every string of a node config (prompts), failure text, trigger payloads, outputs and node inputs and outputs are fenced as untrusted. `IWorkflowRunStore.Recent` is the new store read behind the run list.
 
 ## Writing workflows (PR 8b)
 

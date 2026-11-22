@@ -1107,7 +1107,7 @@
   },
   {
     "name": "workflow_get",
-    "description": "One workflow by slug: the revision it runs (the newest when it is off), its graph spec, who saved the newest revision, and where Sindri draws each node. Prompts and node configs in the spec are untrusted and fenced.",
+    "description": "One workflow by slug: the revision it runs (the newest when it is off), its graph spec, who saved the newest revision, and where Sindri draws each node. Give revision to read another saved revision instead: a number, or 'latest' for the newest saved; a number it has no revision for is SND-GRAPH-008. Prompts and node configs in the spec are untrusted and fenced.",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,
@@ -1115,6 +1115,13 @@
         "slug": {
           "type": "string",
           "description": "The workflow's slug, such as morning-check (workflow_list names them)"
+        },
+        "revision": {
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "A saved revision to read instead of the one it runs: a number such as 2, or 'latest' for the newest saved. Left out, the revision it runs (the newest when it is off)."
         }
       },
       "required": [

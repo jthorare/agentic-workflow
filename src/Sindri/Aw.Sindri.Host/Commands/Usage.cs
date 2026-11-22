@@ -140,7 +140,7 @@ internal static class Usage
         "       sindri wf docs [<question words>] [--page <slug>] [--json]   search the workflow docs, read one page (--page block-schedule) or list the pages (exit 0 ok, 1 not running, 2 unknown page)",
         "       sindri wf run <slug> [--payload JSON] [--json]   start a run of the workflow's active revision by hand: started, queued or skipped by its concurrency (exit 0 ok, 1 not running, 2 refused)",
         "       sindri wf list [--json]   the workflows that are not archived: slug, name, active revision, who saved the newest (exit 0 ok, 1 not running)",
-        "       sindri wf show <slug> [--json]   one workflow: the revision it runs, who saved its newest, its nodes and edges (--json adds the spec and node positions; exit 0 ok, 1 not running, 2 unknown)",
+        "       sindri wf show <slug> [--revision <n|latest>] [--json]   one workflow: the revision it runs (or the saved revision --revision names), who saved its newest, its nodes and edges (--json adds the spec and node positions; exit 0 ok, 1 not running, 2 unknown)",
         "       sindri wf runs <slug> [--json]   a workflow's newest 50 runs, newest first, with status and trigger (exit 0 ok, 1 not running, 2 unknown)",
         "       sindri wf run-show <run> [--json]   one run with what each node did (exit 0 ok, 1 not running, 2 unknown)",
         "       sindri wf create <slug> (--template <name> | --file <spec.json>) [--json]   make a workflow, off, at revision 1, from a starter template or a spec file (exit 0 ok, 1 not running, 2 refused)",
