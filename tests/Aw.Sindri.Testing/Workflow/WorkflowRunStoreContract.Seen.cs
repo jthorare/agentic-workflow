@@ -77,6 +77,23 @@ public abstract partial class WorkflowRunStoreContract
         Expect.Sequence([Run(2).Id], (await store.FailedUnseen(10, Token)).Value.Select(static r => r.Id));
     }
 
+    /// <summary>Only a failed run takes the mark: a run in any other state comes back unseen.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task MarkSeen_of_a_run_that_did_not_fail_leaves_it_unseen()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(1), Token)).Value;
+        _ = (await store.Insert(Run(2, WorkflowRunStatus.Succeeded), Token)).Value;
+
+        var running = (await store.MarkSeen(Run(1).Id, KnownInstants.Epoch, Token)).Value;
+        var succeeded = (await store.MarkSeen(Run(2).Id, KnownInstants.Epoch, Token)).Value;
+
+        Expect.True(running.SeenAt is null);
+        Expect.True(succeeded.SeenAt is null);
+        Expect.True((await store.Get(Run(1).Id, Token)).Value.SeenAt is null);
+    }
+
     /// <summary>Marking a run that does not exist is SND-GRAPH-101.</summary>
     /// <returns>The test.</returns>
     [Fact]
