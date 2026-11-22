@@ -11,6 +11,14 @@ internal static class NamesDetail
     internal static string For(SymbolsView symbols)
     {
         ArgumentNullException.ThrowIfNull(symbols);
-        return Labels.ContextMapNamesDetail;
+        return symbols.Reason?.Replace('-', ' ') switch
+        {
+            null or "index not built" => Labels.ContextMapNamesDetail,
+            "index building" => Labels.ContextMapNamesBuilding,
+            "index damaged" => Labels.ContextMapNamesDamaged,
+            "not configured" => Labels.ContextMapNamesNotConfigured,
+            "files are in no single repo" => Labels.ContextMapNamesSeveralRepos,
+            _ => Labels.ContextMapNamesUnknown,
+        };
     }
 }

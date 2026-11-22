@@ -13,14 +13,15 @@ internal static class CoverageWords
     {
         ArgumentNullException.ThrowIfNull(view);
         var c = view.Coverage;
-        var symbols = view.Bands.Code.Symbols.State;
+        var symbolsView = view.Bands.Code.Symbols;
+        var symbols = symbolsView.State;
         IReadOnlyList<CoverageArea> areas =
         [
             Area(Labels.ContextMapAreaIntent, view.Searched.Bands.Intent.Empty, c.Intent.Covered, c.Intent.Of),
             Area(Labels.ContextMapAreaProduct, view.Searched.Bands.Product.Empty, c.Product.Confirmed, c.Product.Of),
             Area(Labels.ContextMapAreaCode, view.Searched.Bands.Code.Empty, c.Code.Implemented, c.Code.Of),
             Level(Labels.ContextMapAreaNames, string.Equals(symbols, "ok", StringComparison.Ordinal) ? CoverageLevel.Searched : string.Equals(symbols, "stale", StringComparison.Ordinal) ? CoverageLevel.Limited : CoverageLevel.NotAvailable,
-                string.Equals(symbols, "unavailable", StringComparison.Ordinal) ? Labels.ContextMapNamesDetail : null),
+                string.Equals(symbols, "unavailable", StringComparison.Ordinal) ? NamesDetail.For(symbolsView) : null),
         ];
         var searched = areas.Count(a => a.Level == CoverageLevel.Searched);
         var limited = areas.Where(a => a.Level == CoverageLevel.Limited).Select(a => a.Name).ToList();
