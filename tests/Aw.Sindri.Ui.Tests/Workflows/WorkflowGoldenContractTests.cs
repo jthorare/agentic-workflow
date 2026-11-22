@@ -71,6 +71,19 @@ public sealed class WorkflowGoldenContractTests
     }
 
     [Fact]
+    public void A_failed_node_run_reads_its_failure_field_for_field()
+    {
+        var run = Read<WorkflowRunView>("workflow-runs-run", "failed");
+
+        var failure = run.Nodes[0].Failure;
+        Assert.NotNull(failure);
+        Assert.Equal(("SND-LAUNCH-003", "Check the repos", "Choose an agent", "sindri profile set workflow.agent.target <id>"), (failure.Code, failure.Step, failure.FixLabel, failure.FixCommand));
+        Assert.StartsWith("The agent for step Check the repos", failure.Sentence, StringComparison.Ordinal);
+        Assert.Equal((null, run.Nodes[0].Error), (failure.SecondaryLabel, failure.Detail));
+        Assert.Null(run.Nodes[1].Failure);
+    }
+
+    [Fact]
     public void The_routes_escape_a_run_ids_at_sign_and_colon()
     {
         Assert.Equal(("/sindri/workflows", "/sindri/workflows/morning-check", "/sindri/workflows/morning-check/runs", "/sindri/workflow-runs/morning-check%401%3A1"),
