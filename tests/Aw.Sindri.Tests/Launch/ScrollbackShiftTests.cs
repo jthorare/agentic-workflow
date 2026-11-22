@@ -29,7 +29,7 @@ public sealed class ScrollbackShiftTests
 
     [Fact]
     public void Rows_found_at_no_shift_are_no_match() =>
-        Expect.Equal<int?>(null, ScrollbackShift.Find(["p", "q"], ["a", "b", "c", "d"], extra: 2));
+        Expect.Equal<int?>(expected: null, ScrollbackShift.Find(["p", "q"], ["a", "b", "c", "d"], extra: 2));
 
     [Fact]
     public void A_blank_view_is_shift_zero() =>
@@ -39,7 +39,7 @@ public sealed class ScrollbackShiftTests
     public void Without_extra_rows_only_shift_zero_is_tried()
     {
         Expect.Equal<int?>(0, ScrollbackShift.Find(["a", "b"], ["a", "b"], extra: 0));
-        Expect.Equal<int?>(null, ScrollbackShift.Find(["a", "b"], ["b", "c"], extra: 0));
+        Expect.Equal<int?>(expected: null, ScrollbackShift.Find(["a", "b"], ["b", "c"], extra: 0));
     }
 
     [Theory]
