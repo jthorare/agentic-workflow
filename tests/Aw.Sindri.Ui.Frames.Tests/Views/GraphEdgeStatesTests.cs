@@ -38,10 +38,45 @@ public sealed class GraphEdgeStatesTests
 
         Assert.NotNull(head);
         Assert.Equal(3, head.Length);
-        Assert.Equal(new Point(220, 100), head[0]);   // the tip sits on the edge's end
-        Assert.All(head.Skip(1), wing => Assert.True(wing.X < 220 && Math.Abs(Math.Sqrt(Math.Pow(wing.X - 220, 2) + Math.Pow(wing.Y - 100, 2)) - 9) < 0.01, $"wing {wing}"));
+        Assert.Equal(new Point(215, 100), head[0]);   // the tip sits on the port square's outer edge (#3650)
+        Assert.All(head.Skip(1), wing => Assert.True(wing.X < 215 && Math.Abs(Math.Sqrt(Math.Pow(wing.X - 215, 2) + Math.Pow(wing.Y - 100, 2)) - 9) < 0.01, $"wing {wing}"));
         Assert.True(head[1].Y < 100 && head[2].Y > 100, "the wings sit either side of the line");
         Assert.Null(edges.ArrowHead("plain"));
+        window.Close();
+        return true;
+    });
+
+    // #3650: the 10 px port square is drawn over the arrow, so a tip on the route end hides the front 5 px of the 9 px head (by the head's geometry:
+    // 12 of its 31.7 px2, 38 %). The tip belongs on the port square's outer edge, so the whole head shows.
+    [Fact]
+    public async Task The_arrow_head_ends_at_the_port_squares_outer_edge_and_no_corner_sits_under_the_port() => await OnUi(() =>
+    {
+        var edges = Show(out var window, Line("a", arrow: true));
+        var head = edges.ArrowHead("a");
+        var port = new Rect(215, 95, 10, 10);   // the route ends at (220, 100): the 10 px port square is centred there
+
+        Assert.NotNull(head);
+        Assert.Equal(new Point(215, 100), head[0]);   // the tip is on the square's outer edge, on the incoming side
+        Assert.All(head, corner => Assert.False(corner.X > port.Left && corner.X < port.Right && corner.Y > port.Top && corner.Y < port.Bottom, $"{corner} is under the port"));
+        Assert.All(head.Skip(1), wing => Assert.True(wing.X < 215 && Math.Abs(Math.Sqrt(Math.Pow(wing.X - 215, 2) + Math.Pow(wing.Y - 100, 2)) - 9) < 0.01, $"wing {wing}"));
+        window.Close();
+        return true;
+    });
+
+    // #3650: Render built every head geometry and every label text again on each call. With the routes and labels unchanged, a second Render builds none.
+    [Fact]
+    public async Task A_second_render_with_unchanged_routes_and_labels_builds_no_head_and_no_label_text() => await OnUi(() =>
+    {
+        var edges = Show(out var window, Line("a", arrow: true, label: "if ok"), Line("b", arrow: true, label: "else"));
+        _ = window.CaptureRenderedFrame();
+        var (heads, labels) = (edges.HeadGeometryBuilds, edges.LabelTextBuilds);
+        Assert.True(heads > 0 && labels > 0, "the first render builds them");
+
+        edges.Highlighted = new HashSet<string>(["a"], StringComparer.Ordinal);   // invalidates the visual; the routes and labels stay
+        _ = window.CaptureRenderedFrame();
+
+        Assert.Equal(heads, edges.HeadGeometryBuilds);
+        Assert.Equal(labels, edges.LabelTextBuilds);
         window.Close();
         return true;
     });

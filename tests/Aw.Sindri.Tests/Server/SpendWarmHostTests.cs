@@ -39,8 +39,15 @@ public sealed class SpendWarmHostTests
 
         public SpendPeek Peek(AgentId target) => new(Landed: true, Spend: null);
 
+        public AgentId? Throws { get; init; }
+
         public ValueTask<Result<AgentSpend?>> Today(AgentId target, CancellationToken cancellationToken)
         {
+            if (Throws == target)
+            {
+                throw new InvalidOperationException("the usage read failed");
+            }
+
             lock (_gate)
             {
                 _asked.Add(target);
@@ -135,15 +142,20 @@ public sealed class SpendWarmHostTests
         var spend = new RecordingSpend();
         var clock = new FakeTimeProvider(KnownInstants.Epoch);
         var catalog = new ThrowsOnceCatalog(Entry(_claude, "claude-code"), Entry(_codex, "codex"));
-        using var host = new SpendWarmHost(catalog, spend, clock, NullLogger<SpendWarmHost>.Instance);
+        var log = new ListLogger<SpendWarmHost>();
+        using var host = new SpendWarmHost(catalog, spend, clock, log);
         var token = TestContext.Current.CancellationToken;
 
         await host.StartAsync(token);
         clock.Advance(TimeSpan.FromSeconds(5));
         _ = await catalog.Threw.Task.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, token);
-        await Task.Delay(TimeSpan.FromMilliseconds(200), TimeProvider.System, token);   // the throw has had time to fault the loop if nothing catches it
+        for (var i = 0; i < 500 && log.Exceptions.Count == 0; i++)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(10), TimeProvider.System, token);   // until the throw has been caught and logged
+        }
 
         Assert.False(host.ExecuteTask!.IsFaulted, "the host's loop faulted on the catalog throw");
+        Assert.Equal("the catalog could not be read", Assert.Single(log.Exceptions).Message);   // #3751: the exception itself is in the Warning line
 
         // the loop creates its 30 s wait after the first pass, so advance in steps until the next pass has asked both agents
         for (var i = 0; i < 500 && !spend.Two.Task.IsCompleted; i++)
@@ -155,5 +167,29 @@ public sealed class SpendWarmHostTests
         _ = await spend.Two.Task.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, token);
         await host.StopAsync(token);
         Assert.Equivalent(new[] { _claude, _codex }, spend.Asked.Distinct().ToArray(), strict: false);
+    }
+
+    /// <summary>#3751: a failed warm read of one agent logs its exception, and the pass still reads the other agent and ends.</summary>
+    [Fact]
+    public async Task A_failed_warm_read_logs_its_exception_and_the_pass_still_ends()
+    {
+        var spend = new RecordingSpend { Throws = _claude };
+        var clock = new FakeTimeProvider(KnownInstants.Epoch);
+        var catalog = new FixedAgentCatalog(Entry(_claude, "claude-code"), Entry(_codex, "codex"));
+        var log = new ListLogger<SpendWarmHost>();
+        using var host = new SpendWarmHost(catalog, spend, clock, log);
+        var token = TestContext.Current.CancellationToken;
+
+        await host.StartAsync(token);
+        clock.Advance(TimeSpan.FromSeconds(5));
+        for (var i = 0; i < 500 && !log.Lines.Any(static l => l.StartsWith("Spend warm pass ended", StringComparison.Ordinal)); i++)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(10), TimeProvider.System, token);
+        }
+
+        await host.StopAsync(token);
+        Assert.Equal("the usage read failed", Assert.Single(log.Exceptions).Message);
+        Assert.Contains(_codex, spend.Asked);
+        Assert.Contains(log.Lines, static l => l.StartsWith("Spend warm pass ended for 2 agents", StringComparison.Ordinal));
     }
 }

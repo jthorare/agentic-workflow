@@ -9,7 +9,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Views.NeedsYou;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>The reduced-motion outline never hides the focus ring or the selection bar (review run 1, K2; UI spec §11.1).</summary>
 [Lane(TestLane.Integration)]
