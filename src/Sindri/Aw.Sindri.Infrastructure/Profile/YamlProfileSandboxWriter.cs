@@ -104,6 +104,12 @@ internal sealed class YamlProfileSandboxWriter(SindriSettings settings, IProfile
             return SindriErrors.ProfileInvalid.With($"{path} has a layout Sindri won't edit (fix: add {string.Join(" / ", Lines(kind, entry))} to sandbox.repos.{repo}.{list} by hand)");
         }
 
+        return Put(path, before, after, entry);
+    }
+
+    // null: the file changed under us, read again.
+    private Result<SandboxAllowed>? Put(string path, string before, string after, string entry)
+    {
         var (written, reason) = YamlProfileRepoWriter.Write(path, before, after);
         return written switch
         {

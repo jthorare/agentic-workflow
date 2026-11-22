@@ -11,7 +11,7 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// The workflow editor's logic (#2258 PR 17 part 2b), no view yet: it reads a workflow and the block list, builds the form of the selected node from its block's config fields, and
 /// sends each edit as ops with the revision it read as the base. Each edit is sent once and never retried; a workflow that changed elsewhere is not overwritten but asks for a reload.
 /// </summary>
-internal sealed class OpsEditor(ISindriApi api) : ObservableObject
+internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
 {
     private const string StaleBase = "SND-GRAPH-007";
 
@@ -87,7 +87,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         if (workflow.IsError || blocks.IsError)
         {
             var error = workflow.IsError ? workflow.Error : blocks.Error;
-            FailureText = afterSave ? Labels.WfEditSavedReloadFailed(error) : Labels.WfEditLoadFailed(error);
+            (FailureText, _refused) = (afterSave ? Labels.WfEditSavedReloadFailed(error) : Labels.WfEditLoadFailed(error), false);
             return;
         }
 
@@ -105,6 +105,11 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     /// <param name="nodeId">The node.</param>
     internal void Select(string nodeId)
     {
+        if (_pending is not null)
+        {
+            return;   // a new step is being filled in: a read must not replace its form
+        }
+
         _selected = nodeId.Length == 0 ? null : nodeId;
         Fields.Clear();
         var node = Nodes.FirstOrDefault(n => string.Equals(n.Id, nodeId, StringComparison.Ordinal));
@@ -143,7 +148,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         field.ErrorText = problem;
         if (problem.Length == 0)
         {
-            await Send(new JsonArray((JsonNode)new JsonObject { ["op"] = "set_config", ["node"] = node, ["path"] = name, ["value"] = value }), cancellationToken).ConfigureAwait(true);
+            _ = await Send(new JsonArray((JsonNode)new JsonObject { ["op"] = "set_config", ["node"] = node, ["path"] = name, ["value"] = value }), cancellationToken).ConfigureAwait(true);
         }
     }
 
@@ -234,14 +239,14 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         Send(new JsonArray((JsonNode)new JsonObject { ["op"] = "remove_node", ["node"] = id }), cancellationToken);
 
     // One call, on the revision read, never retried. A saved edit reads the workflow again; a stale base asks for a reload and holds further edits.
-    private async Task Send(JsonArray ops, CancellationToken cancellationToken)
+    private async Task<bool> Send(JsonArray ops, CancellationToken cancellationToken)
     {
         if (IsSending || NeedsReload || _url is not { } url || Slug.Length == 0)
         {
-            return;
+            return false;
         }
 
-        FailureText = string.Empty;
+        (FailureText, _refused) = (string.Empty, false);
         IsSending = true;
         try
         {
@@ -249,10 +254,11 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
             if (applied.IsError)
             {
                 Refused(applied.Error);
-                return;
+                return false;
             }
 
             await Load(url, Slug, afterSave: true, cancellationToken).ConfigureAwait(true);
+            return true;
         }
         finally
         {
@@ -269,7 +275,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         }
 
         var unsure = string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
-        FailureText = unsure ? Labels.WfEditUnsure(error) : Labels.WfEditRefused(error);
+        (FailureText, _refused) = (unsure ? Labels.WfEditUnsure(error) : Labels.WfEditRefused(error), true);
     }
 
     private static List<EditorNode> ReadNodes(JsonElement spec)

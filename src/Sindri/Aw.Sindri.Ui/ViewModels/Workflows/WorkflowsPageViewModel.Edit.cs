@@ -49,7 +49,7 @@ internal sealed partial class WorkflowsPageViewModel
     public string CloseEditorText => Labels.WfEditClose;
 
     /// <summary>The line shown when the form has no fields.</summary>
-    public string NoFieldsText => Labels.WfEditorNoFields;
+    public string NoFieldsText => IsNewStep ? Labels.WfEditorNewStepNoFields : Labels.WfEditorNoFields;
 #pragma warning restore CA1822, MA0041
 
     /// <summary>The sheet's heading: the selected step and its kind, or the workflow's name when none is selected.</summary>
@@ -62,7 +62,10 @@ internal sealed partial class WorkflowsPageViewModel
     public string SaveText => Editor.IsSending ? Labels.WfEditSaving : Labels.WfEditSave;
 
     /// <summary>True when Save does something: the form has fields read for the workflow the page shows (and it is not archived), no edit is on the way and no reload is due.</summary>
-    public bool CanSave => Editor.Fields.Count > 0 && !Editor.IsSending && !Editor.NeedsReload && CanEdit && Editor.BaseRevision > 0 && string.Equals(Editor.Slug, Runs.Slug, StringComparison.Ordinal);
+    public bool CanSave => IsNewStep ? Editor.RequiredFilled && CanSend : Editor.Fields.Count > 0 && CanSend;
+
+    // no edit is on the way, no reload is due, and the workflow the page shows is the one the editor read
+    private bool CanSend => !Editor.IsSending && !Editor.NeedsReload && CanEdit && Editor.BaseRevision > 0 && string.Equals(Editor.Slug, Runs.Slug, StringComparison.Ordinal);
 
     /// <summary>Turns graph edit mode on: the edit bar shows and works, the sheet stays shut.</summary>
     internal void Edit()
@@ -83,6 +86,9 @@ internal sealed partial class WorkflowsPageViewModel
             return;
         }
 
+        Editor.ClearPendingStep();   // Step settings on a node leaves a new step that was being filled in
+        OnChanged(nameof(IsNewStep));
+        OnChanged(nameof(NoFieldsText));
         (IsEditing, IsSettingsOpen, GraphEdit.SheetOpen) = (true, true, true);
         var (edit, slug) = (++_edits, Runs.Slug);
         var node = Runs.Graph?.SelectedId ?? string.Empty;
@@ -102,6 +108,19 @@ internal sealed partial class WorkflowsPageViewModel
     {
         if (!IsSettingsOpen || !CanSave)
         {
+            return;
+        }
+
+        if (IsNewStep)
+        {
+            var slugNew = Runs.Slug;
+            var added = await Editor.AddPendingStep(cancellationToken).ConfigureAwait(true);
+            await RereadRuns(slugNew, cancellationToken).ConfigureAwait(true);
+            if (added)
+            {
+                CloseSettings();   // the step exists now; a refusal keeps the sheet open with the refusal shown and every typed value
+            }
+
             return;
         }
 
@@ -129,8 +148,15 @@ internal sealed partial class WorkflowsPageViewModel
         }
     }
 
-    /// <summary>Closes the sheet; edit mode stays on.</summary>
-    internal void CloseSettings() => (IsSettingsOpen, GraphEdit.SheetOpen) = (false, false);
+    /// <summary>Closes the sheet; edit mode stays on. A new step being filled in is dropped: nothing was sent, nothing is added.</summary>
+    internal void CloseSettings()
+    {
+        Editor.ClearPendingStep();
+        Editor.ClearRefusal();   // the sheet's refusal is not left on the page line once the sheet is gone (#3944)
+        (IsSettingsOpen, GraphEdit.SheetOpen) = (false, false);
+        OnChanged(nameof(IsNewStep));
+        OnChanged(nameof(NoFieldsText));
+    }
 
     /// <summary>Closes the sheet and leaves edit mode (Done, or leaving the workflow).</summary>
     internal void CloseEditor()
@@ -151,6 +177,9 @@ internal sealed partial class WorkflowsPageViewModel
                 OnChanged(nameof(CanEdit));
                 OnChanged(nameof(ShowsEdit));
                 OnChanged(nameof(DetailStateText));
+                OnChanged(nameof(DetailChipWord));
+                OnChanged(nameof(DetailChipGlyph));
+                OnChanged(nameof(DetailChipTone));
                 OnChanged(nameof(ShowsDetailState));
                 OnChanged(nameof(CanOpenSettings));
                 OnChanged(nameof(ShowsStepRow));
@@ -217,5 +246,9 @@ internal sealed partial class WorkflowsPageViewModel
     {
         OnChanged(nameof(HasNoFields));
         OnChanged(nameof(CanSave));
+        foreach (var field in e.NewItems?.OfType<ConfigFieldViewModel>() ?? [])
+        {
+            field.PropertyChanged += (_, _) => OnChanged(nameof(CanSave));   // a new step's Save turns on as its required fields are filled
+        }
     }
 }

@@ -26,6 +26,24 @@ internal static partial class Labels
     internal static string ContextFromQuestion(int topics) =>
         string.Create(CultureInfo.InvariantCulture, $"From your question: {topics} {(topics == 1 ? "topic" : "topics")}");
 
+    /// <summary>The name of the list of files the engine returned for a question (#2974).</summary>
+    internal const string ContextAnswerFiles = "Files the answer names";
+
+    /// <summary>The line under the files list when the answer named more files than it shows.</summary>
+    /// <param name="more">How many files the list leaves off.</param>
+    /// <returns>The line.</returns>
+    internal static string ContextAnswerFilesMore(int more) =>
+        string.Create(CultureInfo.InvariantCulture, $"and {more} more {(more == 1 ? "file" : "files")}");
+
+    /// <summary>What a stage that draws no nodes says when the question named files.</summary>
+    /// <param name="files">How many files the answer named.</param>
+    /// <returns>The sentence.</returns>
+    internal static string ContextStageEmptyWithFiles(int files) =>
+        string.Create(CultureInfo.InvariantCulture, $"The map draws nothing for this question, but the answer names {files} {(files == 1 ? "file" : "files")}. They are listed above.");
+
+    /// <summary>What a stage that draws no nodes says when the question named no files either.</summary>
+    internal const string ContextStageEmpty = "The map draws nothing for this question.";
+
     /// <summary>The word for an anchor the map does not hold.</summary>
     internal const string ContextNotFound = "not found";
 
@@ -93,6 +111,25 @@ internal static partial class Labels
         if (string.Equals(code, "SND-CONTEXT-037", StringComparison.Ordinal))
         {
             return ContextSeveralMatch(asked);
+        }
+
+        return ContextProblem(code, message);
+    }
+
+    /// <summary>The line for any other refusal on the Context page: a missing draft in plain words, else the server's sentence without its command-line hint.</summary>
+    /// <param name="code">The refusal's code.</param>
+    /// <param name="message">The server's sentence.</param>
+    /// <returns>"There is no draft map yet.", or the sentence cut before " (fix: ...)".</returns>
+    internal static string ContextProblem(string code, string message)
+    {
+        if (string.Equals(code, "SND-CONTEXT-044", StringComparison.Ordinal))
+        {
+            return "There is no draft map yet.";
+        }
+
+        if (string.Equals(code, "SND-CONTEXT-030", StringComparison.Ordinal))
+        {
+            return "There is no map yet.";
         }
 
         var hint = message.IndexOf(" (fix:", StringComparison.Ordinal);
