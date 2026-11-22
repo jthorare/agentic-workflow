@@ -1,6 +1,6 @@
 using Aw.Sindri.Core.Reviews;
 
-namespace Aw.Sindri.Core.Projects.Truth;
+namespace Aw.Sindri.Core.Projects.TruthSources;
 
 /// <summary>What the page's truth is built from, read once for the union of every card's sources.</summary>
 /// <param name="Pulls">Open PR records of those sources.</param>

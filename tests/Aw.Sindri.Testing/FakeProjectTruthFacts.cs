@@ -1,5 +1,5 @@
 using Aw.Kernel;
-using Aw.Sindri.Core.Projects.Truth;
+using Aw.Sindri.Core.Projects.TruthSources;
 using Aw.Sindri.Core.Reviews;
 
 namespace Aw.Sindri.Testing;

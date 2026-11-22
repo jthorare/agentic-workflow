@@ -1,6 +1,6 @@
 using Aw.Kernel;
 
-namespace Aw.Sindri.Core.Projects.Truth;
+namespace Aw.Sindri.Core.Projects.TruthSources;
 
 /// <summary>Sindri's own PR, CI, item and agent data for the Projects page. One read per page, never one per project.</summary>
 public interface IProjectTruthFacts

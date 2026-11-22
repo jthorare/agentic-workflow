@@ -3,7 +3,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Profile;
-using Aw.Sindri.Core.Projects.Truth;
+using Aw.Sindri.Core.Projects.TruthSources;
 using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Core.Views;

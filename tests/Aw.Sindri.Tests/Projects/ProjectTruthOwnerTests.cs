@@ -3,7 +3,6 @@ using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Projects.Cards;
-using Aw.Sindri.Core.Projects.Truth;
 using Aw.Sindri.Core.Projects.Vocabulary;
 using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Core.Views;

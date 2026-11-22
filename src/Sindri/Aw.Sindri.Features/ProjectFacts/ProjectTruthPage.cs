@@ -1,5 +1,5 @@
 using Aw.Sindri.Core.Projects.Cards;
-using Aw.Sindri.Core.Projects.Truth;
+using Aw.Sindri.Core.Projects.TruthSources;
 
 namespace Aw.Sindri.Features.ProjectFacts;
 
@@ -21,7 +21,7 @@ internal static class ProjectTruthPage
         ArgumentNullException.ThrowIfNull(profileRepos);
         ArgumentNullException.ThrowIfNull(facts);
         var cards = page.Projects.Concat(page.Finished).Concat(page.Hidden).ToList();
-        var sources = cards.ToDictionary(static c => c.Key, c => ProjectTruths.SourcesOf(c.Links, c.Repos, profileRepos.GetValueOrDefault(c.Key) ?? []), StringComparer.Ordinal);
+        var sources = cards.ToDictionary(static c => c.Key, c => ProjectTruths.SourcesOf([.. c.Links.Select(static l => l.Url)], c.Repos, profileRepos.GetValueOrDefault(c.Key) ?? []), StringComparer.Ordinal);
         var union = new ProjectSources(
             [.. sources.Values.SelectMany(static s => s.Repos).Distinct(StringComparer.OrdinalIgnoreCase)],
             [.. sources.Values.SelectMany(static s => s.PullUrls).Distinct(StringComparer.OrdinalIgnoreCase)]);
