@@ -163,12 +163,46 @@ PY
 has "SIGINT: exit 130" "$sig" "RC=130"
 has "SIGINT: cleanup deleted the message" "$sig" "cleanup.messages: deleted 1 of 1"
 has "SIGINT: nothing left" "$sig" "cleanup.left: 0"
-for s in public not-mine members; do
+for s in public not-mine members im mpim missing null; do
   run AW_SLACK_PROBE_KEY="$KEY" STUB_SCRATCH="$s" -- --url "$LOOP" --write --channel G0PROBE
   check "write guard ($s): exit 2" "$rc" 2
   has "write guard ($s): refused" "$out" "refused: --channel must be a private channel you made, with no other member"
   check "write guard ($s): nothing written" "$(writes)" 0
 done
+run AW_SLACK_PROBE_KEY="$KEY" STUB_ERR=conversations.info:channel_not_found -- --url "$LOOP" --write --channel G0PROBE
+check "write guard (ok:false): exit 2" "$rc" 2
+has "write guard (ok:false): refused with the code" "$out" "(conversations.info: no (channel_not_found))"
+check "write guard (ok:false): nothing written" "$(writes)" 0
+# Both ids empty: auth.test without user_id and a channel whose creator is "" must not count as "made by you".
+run AW_SLACK_PROBE_KEY="$KEY" STUB_AUTH_NO_USER=1 STUB_SCRATCH=no-creator -- --url "$LOOP" --write --channel G0PROBE
+check "write guard (both ids empty): exit 2" "$rc" 2
+has "write guard (both ids empty): refused" "$out" "refused: --channel must be a private channel you made, with no other member"
+check "write guard (both ids empty): nothing written" "$(writes)" 0
+run AW_SLACK_PROBE_KEY="$KEY" STUB_AUTH_NO_USER=1 -- --url "$LOOP" --write --channel G0PROBE
+check "write guard (no user_id): exit 2" "$rc" 2
+check "write guard (no user_id): nothing written" "$(writes)" 0
+
+# --- the key's alphabet: a key that would break the curl config line is refused before any call, and never printed ---
+for c in quote backslash space newline; do
+  case "$c" in quote) bad="${KEY}\"x" ;; backslash) bad="${KEY}\\x" ;; space) bad="${KEY} x" ;; newline) bad="${KEY}"$'\n'"x" ;; esac
+  run AW_SLACK_PROBE_KEY="$bad" -- --url "$LOOP" --burst 1
+  check "a key with a $c: exit 2" "$rc" 2
+  check "a key with a $c: nothing sent" "$(count 'curl ran' "$STUB_LOG")" 0
+  check "a key with a $c: not printed" "$(countin PROBESECRETKEY "$out")" 0
+done
+run AW_SLACK_PROBE_KEY="$KEY" AW_SLACK_PROBE_APP_KEY="${APPKEY}\"x" -- --url "$LOOP" --burst 1
+check "an app key with a bad character: exit 2" "$rc" 2
+check "an app key with a bad character: nothing sent" "$(count 'curl ran' "$STUB_LOG")" 0
+run AW_SLACK_PROBE_KEY="${X}e.${X}p-1-ROTATING" -- --url "$LOOP" --burst 1
+check "a rotating key (a dot in it) is accepted: exit 0" "$rc" 0
+
+# --- loopback runs never go through a proxy, and the keys stay out of curl's environment ---
+run AW_SLACK_PROBE_KEY="$KEY" AW_SLACK_PROBE_APP_KEY="$APPKEY" http_proxy=http://127.0.0.1:1 HTTPS_PROXY=http://127.0.0.1:1 \
+  -- --url "$LOOP" --burst 1 --write --channel G0PROBE
+check "proxy set, loopback url: exit 0" "$rc" 0
+check "proxy set, loopback url: every call has --noproxy" "$(count 'PROXY IN USE' "$STUB_LOG")" 0
+check "proxy set, loopback url: the upload and file fetches ran" "$(count '^curl ran method=\(UPLOAD\|FILEGET\)' "$STUB_LOG")" 3
+check "the key variables never reach curl" "$(count 'KEY IN ENV' "$STUB_LOG")" 0
 
 # --- the url guard ---
 for u in "http://localhost:9/api" "http://[::1]:9/api"; do
