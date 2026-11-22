@@ -87,7 +87,7 @@ public sealed class MapNotReadyTests
         var (one, _) = await Page(RouteAnswer.Problem("context-whole", "no-map-030"));
 
         Assert.Equal((true, false, "No map yet for 2 repositories"), (two.ShowEmpty, two.ShowBuilding, two.EmptyTitle));
-        Assert.Equal((true, "No map yet for 1 repository"), (one.ShowEmpty, one.EmptyTitle));
+        Assert.Equal((true, "No map yet for aw-split-panes"), (one.ShowEmpty, one.EmptyTitle));
         Assert.NotNull(two.BuildControl);
     }
 

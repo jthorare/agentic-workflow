@@ -27,7 +27,7 @@ public sealed class MessagesStoreTests : IDisposable
         await _home.Conversation("T0HARBOR", Harbor, ConversationKind.Channel);
         var seeded = await _home.Put(
             new StoredMessage(Harbor, new MessageTs(AdaRoot), new MessageTs(AdaRoot), "U0ADA", "<@U0JOI> review #3120 when you can", Mine: false, NamesMe: true),
-            new StoredMessage(Harbor, new MessageTs(LeeRoot), null, "U0LEE", "lunch Friday", Mine: false, NamesMe: false));
+            new StoredMessage(Harbor, new MessageTs(LeeRoot), ThreadTs: null, "U0LEE", "lunch Friday", Mine: false, NamesMe: false));
         Assert.Equal(["slack:thread:T0HARBOR/C0HARBOR/1767771000.000100", "slack:thread:T0HARBOR/C0HARBOR/1767772000.000100"], seeded, StringComparer.Ordinal);
         var leeRev = Rev(LeeRoot);
 
@@ -49,11 +49,11 @@ public sealed class MessagesStoreTests : IDisposable
     public async Task My_reply_takes_the_thread_out_of_needs_reply_and_a_dm_is_one_row()
     {
         await _home.Conversation("T0HARBOR", "D0SAM", ConversationKind.Dm);
-        var asked = await _home.Put(new StoredMessage("D0SAM", new MessageTs("1767771000.000100"), null, "U0SAM", "can you ship the fare table today?", Mine: false, NamesMe: false));
+        var asked = await _home.Put(new StoredMessage("D0SAM", new MessageTs("1767771000.000100"), ThreadTs: null, "U0SAM", "can you ship the fare table today?", Mine: false, NamesMe: false));
         Assert.Equal(["slack:dm:T0HARBOR/D0SAM"], asked, StringComparer.Ordinal);
         Assert.Equal(1L, _home.Scalar("SELECT needs_reply FROM thread_state WHERE conversation = 'D0SAM' AND thread_ts = ''"));
 
-        var answered = await _home.Put(new StoredMessage("D0SAM", new MessageTs("1767771100.000100"), null, "U0JOI", "on it", Mine: true, NamesMe: false));
+        var answered = await _home.Put(new StoredMessage("D0SAM", new MessageTs("1767771100.000100"), ThreadTs: null, "U0JOI", "on it", Mine: true, NamesMe: false));
 
         Assert.Equal(["slack:dm:T0HARBOR/D0SAM"], answered, StringComparer.Ordinal);
         Assert.Equal(0L, _home.Scalar("SELECT needs_reply FROM thread_state WHERE conversation = 'D0SAM' AND thread_ts = ''"));
@@ -63,7 +63,7 @@ public sealed class MessagesStoreTests : IDisposable
     [Fact]
     public async Task A_message_for_an_unknown_conversation_is_refused()
     {
-        var put = await _home.Store.PutMessages([new StoredMessage("C0NOWHERE", new MessageTs(AdaRoot), null, "U0ADA", "hi", Mine: false, NamesMe: false)], Cancel);
+        var put = await _home.Store.PutMessages([new StoredMessage("C0NOWHERE", new MessageTs(AdaRoot), ThreadTs: null, "U0ADA", "hi", Mine: false, NamesMe: false)], Cancel);
 
         Assert.True(put.IsError);
         Assert.Equal("SND-MSG-011", put.Error.Code);
@@ -112,7 +112,7 @@ public sealed class MessagesStoreTests : IDisposable
     public async Task A_slack_delete_takes_the_message_and_its_fts_row()
     {
         await _home.Conversation("T0HARBOR", Harbor, ConversationKind.Channel);
-        _ = await _home.Put(new StoredMessage(Harbor, new MessageTs(LeeRoot), null, "U0LEE", "ferry timetable", Mine: false, NamesMe: false));
+        _ = await _home.Put(new StoredMessage(Harbor, new MessageTs(LeeRoot), ThreadTs: null, "U0LEE", "ferry timetable", Mine: false, NamesMe: false));
 
         var removed = await _home.Store.RemoveMessage(Harbor, new MessageTs(LeeRoot), Cancel);
 

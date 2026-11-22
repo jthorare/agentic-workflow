@@ -14,6 +14,7 @@ namespace Aw.Sindri.Ui.Tests.Item;
 public sealed class ItemSheetViewModelTests
 {
     private static readonly Uri _api = new("http://127.0.0.1:7410/");
+    private static readonly Uri _other = new("http://127.0.0.1:7411/");   // another connection: the timeline is read again from the first page
     private readonly FakeTimeProvider _clock = new(A.Noon);
     private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog") };
 
@@ -200,7 +201,7 @@ public sealed class ItemSheetViewModelTests
         await sheet.Refresh(_api, Token);
 
         Assert.Equal(before, sheet.Actions);
-        Assert.Equal(2, _server.TimelineCalls);
+        Assert.Equal(1, _server.TimelineCalls);   // #3800: more pages wait, so the newest lines are past what's shown: no page is read again
     }
 
     // The needs-decision item says what it waits on.
@@ -385,7 +386,8 @@ public sealed class ItemSheetViewModelTests
         Assert.DoesNotContain(sheet.Timeline, r => r.Sequence == 152);
     }
 
-    // testing-2: a refresh that moved the cursor while Load more was in flight makes that page the wrong one: it is dropped.
+    // testing-2: a refresh that moved the cursor while Load more was in flight makes that page the wrong one: it is dropped. Only
+    // a re-read from the first page can move it (#3800), here the one on another connection.
     [Fact]
     public async Task A_load_more_that_lands_after_a_refresh_moved_the_cursor_is_dropped()
     {
@@ -397,7 +399,7 @@ public sealed class ItemSheetViewModelTests
         {
             var more = sheet.LoadMore(Token);
             _server.TimelinePages[0] = new RouteAnswer(System.Net.HttpStatusCode.OK, GoldenFiles.SpecShaped("items-id-timeline", "fixture").Replace("\"next\": 151", "\"next\": 200", StringComparison.Ordinal));
-            await Within(sheet.Refresh(_api, Token));
+            await Within(sheet.Refresh(_other, Token));
             gate.SetResult();
             appended = await WithinResult(more);
         }
@@ -448,7 +450,7 @@ public sealed class ItemSheetViewModelTests
         Assert.Equal((false, "Done", "2"), (sheet.IsStale, sheet.StateWord, sheet.VersionText));
     }
 
-    // L15 (testing-2): a refresh re-reads every page Load more showed, from the first, so it never shrinks the timeline.
+    // L15 (testing-2), #3800: a refresh after Load more reads once, after the newest line, and never shrinks the timeline.
     [Fact]
     public async Task A_refresh_after_load_more_keeps_all_the_pages()
     {
@@ -459,11 +461,12 @@ public sealed class ItemSheetViewModelTests
 
         await sheet.Refresh(_api, Token);
 
-        Assert.Equal(calls + 2, _server.TimelineCalls);   // both pages, the first from the start
+        Assert.Equal(calls + 1, _server.TimelineCalls);   // one read after 152, not both pages again
         Assert.Equal((101, 152L, false), (sheet.Timeline.Count, sheet.Timeline[^1].Sequence, sheet.HasMore));
     }
 
-    // L15: a page that fails part-way through a re-read leaves the timeline as it was, in full, rather than a shorter one.
+    // L15: a page that fails part-way through a re-read from the first page (another connection, #3800) leaves the timeline as
+    // it was, in full, rather than a shorter one.
     [Fact]
     public async Task A_page_error_part_way_through_a_re_read_keeps_the_old_timeline()
     {
@@ -472,9 +475,11 @@ public sealed class ItemSheetViewModelTests
         _ = await sheet.LoadMore(Token);
         var last = sheet.Timeline[^1];
         _server.TimelinePages[151] = RouteAnswer.Problem(System.Net.HttpStatusCode.ServiceUnavailable, "SND-API-011", "The views didn't catch up within 2 s (fix: retry)");
+        var calls = _server.TimelineCalls;
 
-        await sheet.Refresh(_api, Token);
+        await sheet.Refresh(_other, Token);
 
+        Assert.Equal(calls + 2, _server.TimelineCalls);
         Assert.Equal((101, false), (sheet.Timeline.Count, sheet.HasMore));
         Assert.Same(last, sheet.Timeline[^1]);
     }

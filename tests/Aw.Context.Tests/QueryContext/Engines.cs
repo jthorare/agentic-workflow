@@ -95,7 +95,7 @@ internal static class Engines
                     new GetSubgraphService(graphs, new LensBasisReader(repos, clock), scrubbers),
                     new GetWholeMapService(graphs, scrubbers, new WholeMapCache(), WholeMapRules.Default),
                     new Features.SearchMap.SearchMapService(graphs, scrubbers, new SqliteMapSearchIndexFactory(), new Features.SearchMap.MapSearchCache(), WholeMapRules.Default),
-                    new ContextConceptReads(new Features.GetConcepts.GetConceptsService(new ConceptReader(graphs, scrubbers)), new Features.GetConceptMembers.GetConceptMembersService(new ConceptReader(graphs, scrubbers)),
+                    new ContextConceptReads(new Features.GetConcepts.GetConceptsService(new ConceptReader(graphs, scrubbers), new Features.GetConcepts.ConceptChangeTimes(new FakeFileHistory(Repos[0], new HistoryWorld("0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", [])), repos)), new Features.GetConceptMembers.GetConceptMembersService(new ConceptReader(graphs, scrubbers)),
                         new Features.GetConceptGlossary.GetConceptGlossaryService(new ConceptReader(graphs, scrubbers)), new Features.GetPages.GetPagesService(new ConceptReader(graphs, scrubbers)), new Features.CheckPages.CheckPagesService(store), new Features.GetPinSuggest.GetPinSuggestService(new ConceptReader(graphs, scrubbers), intents, recordStore), new Features.GetPageFacts.GetPageFactsService(store)),
                     new ContextScopeGraph(new GetScopeGraphService(graphs, new LensBasisReader(repos, clock), scrubbers), new FakeScopeRunStore(), clock))),
             new ContextEval(Probes(clock), new NoBacktest(), new NoMapQuality(), new NoPurge()),

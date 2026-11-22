@@ -22,6 +22,8 @@ internal sealed class FakeLauncher : ILauncher
 
     public Task<bool> OpenFile(string path, CancellationToken cancellationToken) => Path.IsPathRooted(path) && _files.Contains(path) ? Record(path) : Task.FromResult(false);
 
+    public bool FileExists(string path) => Path.IsPathRooted(path) && _files.Contains(path);
+
     private Task<bool> Record(string what)
     {
         if (Refuse)

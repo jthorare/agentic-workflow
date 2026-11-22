@@ -9,4 +9,6 @@ public static partial class SindriErrors
 
     /// <summary>SND-MSG-025: messages.db is newer than this build, or damaged (messages spec §10); `sindri messages doctor`, and `purge` rebuilds the cache.</summary>
     public static readonly ErrorDefinition MessagesStoreUnusable = new("SND-MSG-025", ErrorKind.Unavailable, "messages.db is newer than this build, or damaged");
+
+    private static ErrorDefinition[] EveryMessages() => [MessagesConversationUnknown, MessagesStoreUnusable];
 }

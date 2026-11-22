@@ -22,7 +22,7 @@ internal sealed class LedgerSnoozes(ILedgerReader ledger)
 
     private const int Page = 500;
 
-    private static readonly LedgerFilter Filter = new(TypeFilter.Parse($"{Snoozed},{Woke},{Done},{Cleared}").Value, Item: null);
+    private static readonly LedgerFilter _filter = new(TypeFilter.Parse($"{Snoozed},{Woke},{Done},{Cleared}").Value, Item: null);
 
     /// <summary>The row ids whose snooze is live at <paramref name="now"/>.</summary>
     /// <param name="now">The time.</param>
@@ -39,7 +39,7 @@ internal sealed class LedgerSnoozes(ILedgerReader ledger)
         var until = new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal);
         for (var cursor = 0L; cursor < head.Value;)
         {
-            var scan = await ledger.Scan(cursor, Page, Filter, cancellationToken).ConfigureAwait(false);
+            var scan = await ledger.Scan(cursor, Page, _filter, cancellationToken).ConfigureAwait(false);
             if (scan.IsError)
             {
                 return scan.Error;
@@ -75,6 +75,7 @@ internal sealed class LedgerSnoozes(ILedgerReader ledger)
             id = payload.RootElement.TryGetProperty("id", out var idValue) && idValue.ValueKind == JsonValueKind.String ? idValue.GetString() : null;
             if (payload.RootElement.TryGetProperty("until", out var untilValue) && untilValue.ValueKind == JsonValueKind.String)
             {
+                // why: GetString never returns null for a JsonValueKind.String element
                 end = DateTimeOffset.Parse(untilValue.GetString()!, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
             }
         }

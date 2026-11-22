@@ -90,7 +90,7 @@ public sealed class MessagesReadRouteTests
     {
         await using var host = await Seeded();
         _ = await host.App.Services.GetRequiredService<IMessagesStore>().PutMessages(
-            [new StoredMessage(Harbor, new MessageTs(FerryNote), null, "U0ADA", "<@U0JOI> fyi the ferry moved", Mine: false, NamesMe: true)], Cancel);
+            [new StoredMessage(Harbor, new MessageTs(FerryNote), ThreadTs: null, "U0ADA", "<@U0JOI> fyi the ferry moved", Mine: false, NamesMe: true)], Cancel);
 
         var needsReply = await Read(host, "/sindri/messages/lists/needs-reply");
         var unread = JsonNode.Parse((await Read(host, "/sindri/messages/lists/unread")).Body)!["rows"]!.AsArray();
