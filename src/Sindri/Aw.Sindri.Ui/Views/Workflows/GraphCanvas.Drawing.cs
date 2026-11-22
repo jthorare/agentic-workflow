@@ -56,33 +56,44 @@ internal sealed partial class GraphCanvas
     {
         var (start, c1, c2, end) = Curve(edge);
         var wire = Brush("Brush.Wire");
-        var curve = new StreamGeometry();
-        using (var ctx = curve.Open())
-        {
-            ctx.BeginFigure(start, isFilled: false);
-            if (edge.Route.Count > 0)
-            {
-                // A wrapped edge runs along its row's return lane (#3684): straight lines through the right pad, the row gap and the left pad, never across a card.
-                foreach (var corner in edge.Route)
-                {
-                    ctx.LineTo(new Point(corner.X, corner.Y));
-                }
-
-                ctx.LineTo(end);
-                c2 = new Point(edge.Route[^1].X, edge.Route[^1].Y);
-            }
-            else
-            {
-                ctx.CubicBezierTo(c1, c2, end);
-            }
-
-            ctx.EndFigure(isClosed: false);
-        }
-
-        context.DrawGeometry(brush: null, new Pen(wire, 2, lineJoin: PenLineJoin.Round), curve);
+        context.DrawGeometry(brush: null, new Pen(wire, 2, lineJoin: PenLineJoin.Round), EdgePath(edge, start, c1, c2, end));
 
         // The arrow head points along the path's last stretch (from the second control point, or the last corner, to the end).
-        var angle = Math.Atan2(end.Y - c2.Y, end.X - c2.X);
+        var from = edge.Route.Count > 0 ? new Point(edge.Route[^1].X, edge.Route[^1].Y) : c2;
+        DrawArrowHead(context, wire, from, end);
+        if (edge.Label is { } label)
+        {
+            DrawEdgeLabel(context, label, new Point((start.X + (3 * c1.X) + (3 * from.X) + end.X) / 8, (start.Y + (3 * c1.Y) + (3 * from.Y) + end.Y) / 8));
+        }
+    }
+
+    // One curve for an edge inside a row; a wrapped edge runs along its row's return lane (#3684): straight lines through the right pad, the row gap and the left pad, never across a card.
+    private static StreamGeometry EdgePath(GraphEdgeViewModel edge, Point start, Point c1, Point c2, Point end)
+    {
+        var path = new StreamGeometry();
+        using var ctx = path.Open();
+        ctx.BeginFigure(start, isFilled: false);
+        if (edge.Route.Count > 0)
+        {
+            foreach (var corner in edge.Route)
+            {
+                ctx.LineTo(new Point(corner.X, corner.Y));
+            }
+
+            ctx.LineTo(end);
+        }
+        else
+        {
+            ctx.CubicBezierTo(c1, c2, end);
+        }
+
+        ctx.EndFigure(isClosed: false);
+        return path;
+    }
+
+    private static void DrawArrowHead(DrawingContext context, IBrush wire, Point from, Point end)
+    {
+        var angle = Math.Atan2(end.Y - from.Y, end.X - from.X);
         Point Wing(double turn) => new(end.X - (ArrowSize * Math.Cos(angle + turn)), end.Y - (ArrowSize * Math.Sin(angle + turn)));
         var head = new StreamGeometry();
         using (var ctx = head.Open())
@@ -94,15 +105,15 @@ internal sealed partial class GraphCanvas
         }
 
         context.DrawGeometry(wire, pen: null, head);
+    }
 
-        if (edge.Label is { } label)
-        {
-            var text = Text(label, 11, Brush("Brush.Ink"), 80, semiBold: true);
-            var mid = new Point((start.X + (3 * c1.X) + (3 * c2.X) + end.X) / 8, (start.Y + (3 * c1.Y) + (3 * c2.Y) + end.Y) / 8);
-            var pill = new Rect(mid.X - (text.Width / 2) - 6, mid.Y - (text.Height / 2) - 2, text.Width + 12, text.Height + 4);
-            context.DrawRectangle(Brush("Brush.Surface1"), new Pen(Brush("Brush.Hairline"), 1), pill, 4, 4);
-            context.DrawText(text, new Point(pill.X + 6, pill.Y + 2));
-        }
+    // The branch output's pill at the middle of the curve.
+    private void DrawEdgeLabel(DrawingContext context, string label, Point mid)
+    {
+        var text = Text(label, 11, Brush("Brush.Ink"), 80, semiBold: true);
+        var pill = new Rect(mid.X - (text.Width / 2) - 6, mid.Y - (text.Height / 2) - 2, text.Width + 12, text.Height + 4);
+        context.DrawRectangle(Brush("Brush.Surface1"), new Pen(Brush("Brush.Hairline"), 1), pill, 4, 4);
+        context.DrawText(text, new Point(pill.X + 6, pill.Y + 2));
     }
 
     // Thin scrollbars, only on an axis that overflows: a thumb showing where the viewport is in the scroll extent.
