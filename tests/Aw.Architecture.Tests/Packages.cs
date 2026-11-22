@@ -61,6 +61,9 @@ internal static class Packages
         "Aw.Embeddings",
         "Aw.Sindri.Toolkit",
         "Aw.Sindri.CodeRunner",
+        "Aw.Transcripts.Core",
+        "Aw.Transcripts.Features",
+        "Aw.Transcripts.Infrastructure",
     ];
 
     /// <summary>

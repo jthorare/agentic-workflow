@@ -28,6 +28,46 @@ public sealed class AgentsPageKeysTests
     }
 
     [Fact]
+    public async Task N_asks_for_the_New_agent_form_with_or_without_a_selected_row()
+    {
+        var page = await _f.Shown(Token);
+        var asked = 0;
+        page.NewAgentRequested += (_, _) => asked++;
+
+        var bare = page.Press("N");
+        _ = page.Press("J");
+        var onRow = page.Press("N");
+
+        Assert.Equal((true, true, 2), (bare, onRow, asked));
+    }
+
+    [Fact]
+    public async Task SelectStarted_selects_a_drawn_row_by_its_session_name_at_once_3384()
+    {
+        var page = await _f.Shown(Token);
+        var target = page.Groups.SelectMany(g => g.Rows).First(r => r.Row.Host.Session is { Length: > 0 });
+
+        page.SelectStarted(target.Row.Host.Session!);
+
+        Assert.Equal(target.Ref, page.SelectedKey);
+    }
+
+    [Fact]
+    public async Task Down_and_Up_walk_the_rows_like_J_and_K_3710()
+    {
+        var page = await _f.Shown(Token);
+        var refs = page.Groups.SelectMany(g => g.Rows).Select(r => r.Ref).ToList();
+
+        var down = page.Press("Down");
+        var first = page.SelectedKey;
+        _ = page.Press("Down");
+        var second = page.SelectedKey;
+        var up = page.Press("Up");
+
+        Assert.Equal((true, true, refs[0], refs[1], refs[0]), (down, up, first, second, page.SelectedKey));
+    }
+
+    [Fact]
     public async Task K_from_no_row_goes_to_the_last()
     {
         var page = await _f.Shown(Token);

@@ -142,7 +142,7 @@ public sealed class WholeNodePanelTests
         await page.Whole.Panel.OpenSource(Token);
 
         var panel = page.Whole.Panel;
-        Assert.Equal((true, false, "Open the ticket in the browser"), (panel.HasLink, panel.HasNoLink, panel.OpenSourceName));
+        Assert.Equal((true, false, "Open in Linear (the ticket in the browser)"), (panel.HasLink, panel.HasNoLink, panel.OpenSourceName));
         Assert.Equal(["https://linear.app/x/issue/LIN-12"], launcher.Opened, StringComparer.Ordinal);
     }
 

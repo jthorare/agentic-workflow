@@ -39,9 +39,9 @@ public sealed class ContextPageWindowTests
             {
                 window.Show();
                 _ = shell.Run(stop.Token);
-                for (var i = 0; i < 200 && shell.State != ShellState.Normal; i++)
+                for (var i = 0; i < 2000 && shell.State != ShellState.Normal; i++)
                 {
-                    await Task.Delay(10, Token);
+                    await Task.Delay(1, Token);
                     Dispatcher.UIThread.RunJobs();
                 }
 
@@ -83,9 +83,9 @@ public sealed class ContextPageWindowTests
             {
                 window.Show();
                 _ = shell.Run(stop.Token);
-                for (var i = 0; i < 200 && shell.State != ShellState.Normal; i++)
+                for (var i = 0; i < 2000 && shell.State != ShellState.Normal; i++)
                 {
-                    await Task.Delay(10, Token);
+                    await Task.Delay(1, Token);
                     Dispatcher.UIThread.RunJobs();
                 }
 
@@ -149,9 +149,9 @@ public sealed class ContextPageWindowTests
     {
         window.Show();
         _ = shell.Run(stop);
-        for (var i = 0; i < 200 && shell.State != ShellState.Normal; i++)
+        for (var i = 0; i < 2000 && shell.State != ShellState.Normal; i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Dispatcher.UIThread.RunJobs();
         }
 
