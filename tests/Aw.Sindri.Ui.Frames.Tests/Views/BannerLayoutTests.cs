@@ -65,9 +65,9 @@ public sealed class BannerLayoutTests : IDisposable
         _windows.Add(window);
         window.Show();
         var following = shell.Run(_stop.Token);
-        for (var i = 0; i < 200 && !ready(shell) && !following.IsFaulted; i++)
+        for (var i = 0; i < 2000 && !ready(shell) && !following.IsFaulted; i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Dispatcher.UIThread.RunJobs();
         }
 
