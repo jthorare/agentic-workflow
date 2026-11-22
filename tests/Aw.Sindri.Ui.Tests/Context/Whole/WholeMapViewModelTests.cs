@@ -157,8 +157,8 @@ public sealed class WholeMapViewModelTests
     }
 
     [Theory]
-    [InlineData(0.2, 0.25)]
-    [InlineData(0.4, 0.4)]
+    [InlineData(0.2, 0.5)]
+    [InlineData(0.4, 0.5)]
     [InlineData(3.0, 2.0)]
     public void The_first_open_fits_the_map_but_never_below_the_floor(double fit, double expected) =>
         Assert.Equal(expected, WholeMapViewModel.FirstOpenScale(fit));
