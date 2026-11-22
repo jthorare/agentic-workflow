@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Aw.Redaction.Tests;
@@ -86,7 +87,7 @@ public sealed partial class RuleGateTests
     [Fact]
     public void Every_builtin_rule_has_samples_its_regex_matches()
     {
-        var unknown = _samples.Keys.Except(BuiltinRules.All.Select(r => r.Id)).ToArray();
+        var unknown = _samples.Keys.Except(BuiltinRules.All.Select(r => r.Id), StringComparer.Ordinal).ToArray();
         Assert.True(unknown.Length == 0, "samples name unknown rule ids: " + string.Join(", ", unknown));
         foreach (var (rule, samples) in RulesWithSamples())
         {
@@ -120,13 +121,13 @@ public sealed partial class RuleGateTests
     // fails with its own id.
     private static IEnumerable<(RedactionRule Rule, string[] Samples)> RulesWithSamples()
     {
-        var seen = new Dictionary<string, int>();
+        var seen = new Dictionary<string, int>(StringComparer.Ordinal);
         foreach (var rule in BuiltinRules.All)
         {
             var nth = seen.GetValueOrDefault(rule.Id);
             seen[rule.Id] = nth + 1;
             var groups = _samples.GetValueOrDefault(rule.Id) ?? [];
-            Assert.True(nth < groups.Length, $"rule {rule.Id} (#{nth + 1} with that id) has no samples");
+            Assert.True(nth < groups.Length, $"rule {rule.Id} (#{(nth + 1).ToString(CultureInfo.InvariantCulture)} with that id) has no samples");
             Assert.NotEmpty(groups[nth]);
             yield return (rule, groups[nth]);
         }

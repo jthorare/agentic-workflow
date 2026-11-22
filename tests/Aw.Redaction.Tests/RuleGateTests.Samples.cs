@@ -6,7 +6,7 @@ public sealed partial class RuleGateTests
     // Samples per built-in rule id, one group per rule with that id, in BuiltinRules.All order (secret-assignment is
     // seven rules), one sample per branch the gate names (assembled from parts, like the corpus, so no scanner sees a
     // whole token here).
-    private static readonly Dictionary<string, string[][]> _samples = new()
+    private static readonly Dictionary<string, string[][]> _samples = new(StringComparer.Ordinal)
     {
         ["private-key"] =
         [
