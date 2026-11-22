@@ -35,6 +35,8 @@
 #      standing back once AW_HEAVY_FIFO_MAX_DEFER seconds (default 1800; 0 turns the order off) have passed since its first
 #      stand-back, in any pool.
 #   The job runs in its own systemd user scope (OOMPolicy=continue) when systemd-run works, so an OOM kill ends the job only.
+#   Test switches (scratch suites only): AW_HEAVY_TEST_PATH (a stub dir put first on PATH), AW_HEAVY_TEST_CGROUP (a file read for
+#   /proc/self/cgroup) and AW_HEAVY_TEST_PS_START=1 (start tokens through `ps -o lstart=`, the path without /proc, #3859).
 set -u
 # The cap and reserve readers live next to locks.sh; this script may run through a link (~/.agentic-workflow/bin-r1b/heavy).
 # In a build folder it sits beside this script; in the repo it is ../config/lib.
@@ -155,13 +157,17 @@ WAITFILE="$LOCKS/heavy-wait/$$"; WAIT_SINCE=""; MY_START=""
 # pid_start <pid>: set START to the process start token of <pid>, empty when it can't be read. Linux: field 22 of
 # /proc/<pid>/stat (clock ticks since boot), read with builtins after the last ")" because the command name may hold spaces or
 # brackets. Without /proc (macOS): `ps -o lstart=`, its words joined by _. A pid that a new process took has another token.
+# A pid that dies between kill -0 and ps gives no words; "${f[*]-}" keeps that an empty START on bash before 4.4 (macOS
+# /bin/bash 3.2), where "${f[*]}" of an empty array is an unbound-variable exit under set -u. AW_HEAVY_TEST_PS_START=1 takes the
+# ps branch on a box with /proc too, so the suite runs it on Linux (#3859).
+PS_START="${AW_HEAVY_TEST_PS_START:-}"
 pid_start() {
   local l f; START=""
-  if [ -r /proc/self/stat ]; then
+  if [ -r /proc/self/stat ] && [ "$PS_START" != 1 ]; then
     { IFS= read -r l < "/proc/$1/stat"; } 2>/dev/null || return 0
     read -r -a f <<< "${l##*) }"; START="${f[19]:-}"
   else
-    l="$(ps -o lstart= -p "$1" 2>/dev/null)"; read -r -a f <<< "$l"; local IFS=_; START="${f[*]}"
+    l="$(ps -o lstart= -p "$1" 2>/dev/null)"; read -r -a f <<< "$l"; local IFS=_; START="${f[*]-}"
   fi
   return 0
 }

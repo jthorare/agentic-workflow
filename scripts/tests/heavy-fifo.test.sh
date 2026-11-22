@@ -88,7 +88,7 @@ start_of() {
     IFS= read -r l < "/proc/$1/stat" 2> /dev/null || return 0
     r="${l##*) }"; read -r -a f <<< "$r"; printf '%s' "${f[19]:-}"
   else
-    r="$(ps -o lstart= -p "$1" 2> /dev/null)"; read -r -a f <<< "$r"; (IFS=_; printf '%s' "${f[*]}")
+    r="$(ps -o lstart= -p "$1" 2> /dev/null)"; read -r -a f <<< "$r"; (IFS=_; printf '%s' "${f[*]-}")
   fi
 }
 # A second stub dir whose ps prints nothing for `-o lstart=`, as when the pid dies between kill -0 and ps; any other call is the
