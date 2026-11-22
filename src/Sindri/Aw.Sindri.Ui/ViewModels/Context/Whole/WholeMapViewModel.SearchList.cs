@@ -9,6 +9,9 @@ internal sealed partial class WholeMapViewModel
     /// <summary>Gets whether the stage is the list of a search's matches.</summary>
     public bool IsSearchList => _hits is not null;
 
+    /// <summary>Gets whether a search shows its matches as the ranked list: on the area tiles, or on a search's list already there (a second search replaces it).</summary>
+    internal bool SearchesAsList => ShowAreaTiles || IsSearchList;
+
     /// <summary>A search resolved on the area tiles: the matches are the list; none is the "No matches" note over the tiles.</summary>
     /// <param name="hits">The matches, best first.</param>
     internal void ShowSearchList(IReadOnlyList<MapSearchHit> hits)

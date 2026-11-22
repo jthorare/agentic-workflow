@@ -24,7 +24,7 @@ internal sealed partial class ContextPageViewModel
         }
 
         var hits = await MapSearch.Search(AnchorText, cancellationToken).ConfigureAwait(true);
-        if (Whole.ShowAreaTiles || Whole.IsSearchList)
+        if (Whole.SearchesAsList)
         {
             Whole.ShowSearchList(hits);   // above 60 nodes the matches are the ranked list, never a zoom on the canvas (#3674); a search on a search's list replaces it
             Problem = hits.Count == 0 ? Labels.ContextWholeNoMatch : string.Empty;
