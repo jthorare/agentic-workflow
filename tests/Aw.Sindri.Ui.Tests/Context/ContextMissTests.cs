@@ -56,6 +56,7 @@ public sealed class ContextMissTests
 
         await page.Pick(Tabs, "Tab groups", Token);
 
-        Assert.Equal(([Tabs], "Tab groups"), (Assert.Single(asked), page.AnchorText));
+        Assert.Equal([Tabs], Assert.Single(asked), StringComparer.Ordinal);
+        Assert.Equal("Tab groups", page.AnchorText);
     }
 }
