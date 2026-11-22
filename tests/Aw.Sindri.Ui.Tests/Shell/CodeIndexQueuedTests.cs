@@ -13,8 +13,8 @@ namespace Aw.Sindri.Ui.Tests.Shell;
 public sealed class CodeIndexQueuedTests
 {
     private const string Queued = """{"repos":[{"repo":"repo","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[{"repo":"repo","state":"queued","embeddingsPercent":null,"waiting":null}]}""";
-    private const string Waiting = """{"repos":[{"repo":"repo","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[{"repo":"repo","state":"waiting","embeddingsPercent":null,"waiting":"retrying in 5 min"}]}""";
-    private const string QueuedBehindMain = """{"repos":[{"repo":"a","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null},{"repo":"b","state":"stale","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[{"repo":"a","state":"queued","embeddingsPercent":null,"waiting":null}]}""";
+    private const string Waiting = """{"repos":[{"repo":"repo","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[{"repo":"repo","state":"waiting","embeddingsPercent":null,"waiting":"retrying in 5 min","needsLook":true}]}""";
+    private const string QueuedBehindMain = """{"repos":[{"repo":"a","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null},{"repo":"b","state":"stale","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[{"repo":"a","state":"queued","embeddingsPercent":null,"waiting":null},{"repo":"b","state":"stale","embeddingsPercent":null,"waiting":null,"needsLook":true}]}""";
 
     private const string QueuedTooLong = """{"repos":[{"repo":"repo","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[{"repo":"repo","state":"queued","embeddingsPercent":null,"waiting":null,"needsLook":true}]}""";
 
