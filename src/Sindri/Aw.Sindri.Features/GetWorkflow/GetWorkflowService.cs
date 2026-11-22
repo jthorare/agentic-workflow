@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Kernel.Services;
@@ -30,13 +31,13 @@ internal sealed class GetWorkflowService(IWorkflowStore workflows, IGraphBlockCa
             return SindriErrors.GraphNotFound.With($"no workflow '{request.Slug.Value}'; list the workflows to see what exists");
         }
 
-        if (!request.Newest && request.Revision is { } asked && (asked < 1 || asked > record.LatestRevision))
+        var target = Target(request, record);
+        if (target.IsError)
         {
-            return SindriErrors.GraphNotFound.With($"workflow '{request.Slug.Value}' has no revision {asked} (its newest is {record.LatestRevision})");   // never the active spec instead
+            return target.Error;
         }
 
-        var target = request.Newest ? record.LatestRevision : request.Revision ?? record.ActiveRevision ?? record.LatestRevision;
-        var shown = await workflows.GetRevision(record.Id, target, cancellationToken).ConfigureAwait(false);
+        var shown = await workflows.GetRevision(record.Id, target.Value, cancellationToken).ConfigureAwait(false);
         if (shown.IsError)
         {
             return shown.Error;
@@ -52,6 +53,16 @@ internal sealed class GetWorkflowService(IWorkflowStore workflows, IGraphBlockCa
         var spec = JsonNode.Parse(GraphJson.Write(shown.Value.Spec))!;
         return new GetWorkflowResponse(record.Id, record.Slug, record.Name, shown.Value.Revision, record.ActiveRevision, record.LatestRevision, record.ArchivedAt, record.CreatedBy,
             newest.Value.CreatedBy, newest.Value.CreatedAt, shown.Value.SpecHash, spec, WorkflowPositions.Of(shown.Value.Spec), [.. shown.Value.Spec.Nodes.Select(Summary)]);
+    }
+
+    private static Result<int> Target(GetWorkflowRequest request, WorkflowRecord record)
+    {
+        if (!request.Newest && request.Revision is { } asked && (asked < 1 || asked > record.LatestRevision))
+        {
+            return SindriErrors.GraphNotFound.With(string.Create(CultureInfo.InvariantCulture, $"workflow '{request.Slug.Value}' has no revision {asked} (its newest is {record.LatestRevision})"));   // never the active spec instead
+        }
+
+        return request.Newest ? record.LatestRevision : request.Revision ?? record.ActiveRevision ?? record.LatestRevision;
     }
 
     private NodeSummary Summary(GraphNode node)
