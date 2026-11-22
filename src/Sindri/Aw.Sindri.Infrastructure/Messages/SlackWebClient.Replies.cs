@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Globalization;
 using System.Text.Json;
 using Aw.Kernel;
@@ -13,6 +14,10 @@ internal sealed partial class SlackWebClient
 {
     // Slack's Retry-After when a 429 or 'ratelimited' carries none (guess: Slack documents the header on every 429).
     private static readonly TimeSpan _defaultWait = TimeSpan.FromSeconds(60);
+
+    private static readonly FrozenSet<string> _rateLimited = new[] { "ratelimited", "rate_limited" }.ToFrozenSet(StringComparer.Ordinal);
+    private static readonly FrozenSet<string> _tokenInvalid = new[] { "invalid_auth", "not_authed", "token_revoked", "token_expired", "account_inactive" }.ToFrozenSet(StringComparer.Ordinal);
+    private static readonly FrozenSet<string> _appBlocked = new[] { "team_access_not_granted", "access_denied", "ekm_access_denied", "org_login_required", "app_restricted" }.ToFrozenSet(StringComparer.Ordinal);
 
     private async ValueTask<Result<JsonElement>> Interpret(string method, HttpResponseMessage response, CancellationToken cancellationToken)
     {
@@ -54,13 +59,11 @@ internal sealed partial class SlackWebClient
         var said = Said(method, $"ok:false ({slug})");
         return slug switch
         {
-            "ratelimited" or "rate_limited" => Hold(method, _defaultWait),
-            "invalid_auth" or "not_authed" or "token_revoked" or "token_expired" or "account_inactive"
-                => SindriErrors.MessagesTokenInvalid.With(said + " Make a new token, then sindri messages connect."),
+            _ when _rateLimited.Contains(slug) => Hold(method, _defaultWait),
+            _ when _tokenInvalid.Contains(slug) => SindriErrors.MessagesTokenInvalid.With(said + " Make a new token, then sindri messages connect."),
             "missing_scope" => SindriErrors.MessagesScopeMissing.With(
                 $"{said} The token needs the scope {Word(root, "needed") ?? "Slack did not name"}: add it in the Slack app, reinstall, reconnect."),
-            "team_access_not_granted" or "access_denied" or "ekm_access_denied" or "org_login_required" or "app_restricted"
-                => SindriErrors.MessagesAppBlocked.With(said + " Ask the workspace admin to approve the app."),
+            _ when _appBlocked.Contains(slug) => SindriErrors.MessagesAppBlocked.With(said + " Ask the workspace admin to approve the app."),
             "not_allowed_token_type" => SindriErrors.MessagesNotUserToken.With(said + " " + SindriErrors.MessagesNotUserToken.Title + "."),
             _ => SindriErrors.ConnectionProviderChanged.With(said),
         };
@@ -96,8 +99,9 @@ internal sealed partial class SlackWebClient
     // A short Slack word (an error slug, a scope list such as 'channels:history,im:history'): lowercase letters, digits and _ : . , only, at most 128
     // characters, so nothing a reply makes up reaches a message.
     private static string? Word(JsonElement root, string name) =>
-        root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString() is { Length: > 0 and <= 128 } text
-            && text.All(static c => c is (>= 'a' and <= 'z') or (>= '0' and <= '9') or '_' or ':' or '.' or ',')
-                ? text
-                : null;
+        root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString() is { Length: > 0 and <= 128 } text && text.All(IsWordChar)
+            ? text
+            : null;
+
+    private static bool IsWordChar(char c) => c is (>= 'a' and <= 'z') or (>= '0' and <= '9') or '_' or ':' or '.' or ',';
 }

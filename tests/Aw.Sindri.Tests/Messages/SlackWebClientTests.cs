@@ -45,7 +45,7 @@ public sealed class SlackWebClientTests
         Assert.Equal("SND-MSG-005", first.Error.Code);
         Assert.Equal("SND-MSG-005", held.Error.Code);
         Assert.Contains("retry in 7 s", held.Error.Message, StringComparison.Ordinal);
-        Assert.Single(slack.Seen);
+        _ = Assert.Single(slack.Seen);
         Assert.True(_budget.MayCall("users.info", _clock.GetUtcNow()));
         Assert.False(_budget.MayCall("auth.test", _clock.GetUtcNow()));
 

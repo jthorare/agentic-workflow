@@ -29,13 +29,20 @@ public static class SlackBaseUrlRule
     public static Uri Resolve(string? overrideUrl, string? marker, string token)
     {
         ArgumentNullException.ThrowIfNull(token);
-        if (string.IsNullOrWhiteSpace(overrideUrl) || marker is null || !token.StartsWith(FixtureTokenPrefix, StringComparison.Ordinal)
-            || !Uri.TryCreate(overrideUrl.Trim(), UriKind.Absolute, out var url) || !IsLoopbackHttp(url) || MarkerPort(marker) is not { } port || url.Port != port)
+        return Accepted(overrideUrl, marker, token) is { } url
+            ? (url.AbsolutePath.EndsWith('/') ? url : new Uri(url.GetLeftPart(UriPartial.Path) + "/"))
+            : Slack;
+    }
+
+    // The override's URL when all four conditions hold, else null.
+    private static Uri? Accepted(string? overrideUrl, string? marker, string token)
+    {
+        if (string.IsNullOrWhiteSpace(overrideUrl) || marker is null || !token.StartsWith(FixtureTokenPrefix, StringComparison.Ordinal))
         {
-            return Slack;
+            return null;
         }
 
-        return url.AbsolutePath.EndsWith('/') ? url : new Uri(url.GetLeftPart(UriPartial.Path) + "/");
+        return Uri.TryCreate(overrideUrl.Trim(), UriKind.Absolute, out var url) && IsLoopbackHttp(url) && MarkerPort(marker) == url.Port ? url : null;
     }
 
     // http or https, no user info, no query or fragment, and a host of exactly 127.0.0.1, ::1 or localhost (not the rest of 127/8).
