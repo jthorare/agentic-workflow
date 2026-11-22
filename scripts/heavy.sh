@@ -10,7 +10,15 @@
 #      take slot 1 of the same lock, so they count against this cap too.
 #   A job is expensive when it builds or tests the whole solution, publishes or smoke-tests a NativeAOT/framework
 #   binary, or opens a browser (Playwright, ui-evidence, Aw.Evidence); `heavy --expensive <cmd>` forces it,
-#   `heavy --light <cmd>` forces the per-session slot only.
+#   `heavy --light <cmd>` forces light (no box-wide slot).
+#   3. Box-wide, for light jobs that compile (#3796): a `--light` command with ` dotnet build `, publish, format, pack,
+#      restore, run, or `dotnet test` without --no-build, takes one of N light slots of <locks>/heavy-light.lock (slot 1 the
+#      bare path, slot k .k, the same mkdir mutexes and dead-holder reclaim as rule 2). N is $AW_STATE_DIR/heavy-light-cap,
+#      else AW_HEAVY_LIGHT_SLOTS, else 4, read again on every pass. Such a build also doesn't START while a live job waits for
+#      a box-wide slot and MemAvailable is under the floor of the lowest free box-wide slot (slot 1 has no floor), so builders
+#      can't keep a gate's slot shut; nothing running is stopped, and that wait doesn't count toward the lock timeout.
+#      AW_HEAVY_PRIORITY=meta skips that hold, not the pool. A light job that compiles nothing (`dotnet test --no-build`,
+#      `dotnet clean`, a script) takes the per-session slot only.
 #   The job runs in its own systemd user scope (OOMPolicy=continue) when systemd-run works, so an OOM kill ends the job only.
 set -u
 # The cap and reserve readers live next to locks.sh; this script may run through a link (~/.agentic-workflow/bin-r1b/heavy).
@@ -54,6 +62,10 @@ TIMEOUT=5400
 # a job blocked only by the reservation (it skipped a free reserved slot) does not count that wait toward TIMEOUT.
 RESERVE="$(heavy_reserve "$SLOTS")"
 PRIORITY="${AW_HEAVY_PRIORITY:-}"
+# The light pool (rule 3, #3796). A non-number or 0 in AW_HEAVY_LIGHT_SLOTS means the default 4.
+LIGHT_LOCK="$LOCKS/heavy-light.lock"
+LIGHT_GIVEN="${AW_HEAVY_LIGHT_SLOTS:-4}"
+case $LIGHT_GIVEN in ""|*[!0-9]*|0) LIGHT_GIVEN=4 ;; esac
 
 mode=auto
 case "${1:-}" in --expensive) mode=expensive; shift ;; --light) mode=light; shift ;; esac
@@ -62,17 +74,26 @@ case "${1:-}" in --expensive) mode=expensive; shift ;; --light) mode=light; shif
 # again would deadlock. Run straight through.
 if [ "${AW_HEAVY_LOCK_HELD:-}" = 1 ]; then exec "$@"; fi
 
+# compiles: the command runs a dotnet step that compiles. In auto mode that makes the job expensive; under --light it takes
+# a light slot (rule 3).
+compiles=""
+case " $* " in
+  *" dotnet build "*|*" dotnet publish "*|*" dotnet format "*|*" dotnet pack "*|*" dotnet restore "*|*" dotnet run "*) compiles=1 ;;
+  *" dotnet test "*) case " $* " in *" --no-build "*) ;; *) compiles=1 ;; esac ;;
+esac
 if [ "$mode" = auto ]; then
   # Owner, 2026-10-14 (second tightening, swap full at load 128): every build is expensive. Light is only what
   # compiles nothing: a `dotnet test --no-build`, a plain script. Everything that compiles, restores, publishes,
   # formats or opens a browser shares the box-wide slots.
   mode=light
-  case " $* " in
-    *" dotnet build "*|*" dotnet publish "*|*" dotnet format "*|*" dotnet pack "*|*" dotnet restore "*|*" dotnet run "*) mode=expensive ;;
-    *" dotnet test "*) case " $* " in *" --no-build "*) ;; *) mode=expensive ;; esac ;;
-    *" npm ci "*|*" npm install "*|*" npm test "*|*" npx vitest "*|*" npx tsc "*|*vitest*) mode=expensive ;;
-    *AgenticWorkflow.slnx*|*aot-smoke*|*playwright*|*ui-evidence*|*Aw.Evidence*|*" e2e.sh "*) mode=expensive ;;
-  esac
+  if [ -n "$compiles" ]; then mode=expensive
+  else
+    case " $* " in
+      *" dotnet test "*) ;;   # a --no-build test stays light, whatever else the line names
+      *" npm ci "*|*" npm install "*|*" npm test "*|*" npx vitest "*|*" npx tsc "*|*vitest*) mode=expensive ;;
+      *AgenticWorkflow.slnx*|*aot-smoke*|*playwright*|*ui-evidence*|*Aw.Evidence*|*" e2e.sh "*) mode=expensive ;;
+    esac
+  fi
 fi
 
 # The session: nearest ancestor whose command is `claude`; fall back to the parent shell's pid.
@@ -92,10 +113,11 @@ if [ -n "${AW_HEAVY_SESSION_PID:-}" ]; then session="$AW_HEAVY_SESSION_PID"; cla
 
 mkdir -p "$LOCKS/heavy-session" "$LOCKS/heavy-wait" "$(dirname "$LOCK")"
 # <locks>/heavy-wait/<pid>: one file per job that is waiting for a slot (pid = this wrapper's $$), one JSON line:
-# {"pid","session" (number),"lock":"session"|"box-wide","since" (UTC, when the first wait began),"argv":[...] (raw),"cwd"}.
+# {"pid","session" (number),"lock":"session"|"box-wide"|"light","since" (UTC, when the first wait began),"argv":[...] (raw),"cwd"}.
+# "light" is a compiling light job waiting for the light pool or held back for a box-wide waiter (rule 3).
 # The reader is `aw-meta heavy --json` (#3142); it redacts argv and skips a file whose pid is dead (a SIGKILLed wrapper
 # leaves one; the dead-holder reclaim below does not touch these). Written atomically on the first pass without a slot,
-# rewritten when the wait moves from the session lock to the box-wide one, removed once a slot is taken, on the lock
+# rewritten when the wait moves from the session lock to the box-wide or light one, removed once a slot is taken, on the lock
 # timeout and in both traps. A job that gets its slots at once writes none. A write failure never delays the job.
 WAITFILE="$LOCKS/heavy-wait/$$"; WAIT_SINCE=""
 json_str() { local s="$1"; s="${s//\\/\\\\}"; s="${s//\"/\\\"}"; s="${s//$'\n'/\\n}"; s="${s//$'\r'/\\r}"; s="${s//$'\t'/\\t}"; printf '"%s"' "$s"; }
@@ -156,20 +178,44 @@ reclaim_slot() {
 }
 
 # slot_still_allowed <k>: box-wide slot k is within the cap and, for a non-meta job, outside the reserve, as read now.
-# The reserve is clamped by the pass's usable count like the pass does (#2060).
+# The reserve is clamped by the pass's usable count like the pass does (#2060). Light slot k: within the light cap.
 slot_still_allowed() {
   local k="$1" cap res
+  if [ "$label" = light ]; then [ "$k" -le "$(heavy_light_cap "$LIGHT_GIVEN")" ]; return; fi
   cap="$(heavy_cap "$GIVEN_SLOTS")"; [ "$k" -le "$cap" ] || return 1
   [ "$PRIORITY" = meta ] && return 0
   res="$(heavy_reserve "$cap")"; [ "$res" -gt "$((usable - 1))" ] && res=$((usable - 1))
   [ "$k" -gt "$res" ]
 }
 
+# boxwide_starved: some live job waits for a box-wide slot (a heavy-wait file with "lock":"box-wide" whose pid is alive) and
+# MemAvailable is under the floor of the lowest free box-wide slot within the cap. Slot 1 has no floor, and with no free slot
+# there is no floor to keep, so both mean no. A dead waiter's file (SIGKILL leaves one) counts for nothing.
+boxwide_starved() {
+  local f pid line cap k d waiter=""
+  for f in "$LOCKS/heavy-wait/"*; do
+    pid="${f##*/}"; case $pid in ""|*[!0-9]*) continue ;; esac   # also skips <pid>.tmp.<pid> files mid-write
+    [ "$pid" != "$$" ] && [ -f "$f" ] || continue
+    line="$(cat "$f" 2>/dev/null)" || continue
+    case $line in *'"lock":"box-wide"'*) ;; *) continue ;; esac
+    if kill -0 "$pid" 2>/dev/null; then waiter=1; break; fi
+  done
+  [ -n "$waiter" ] || return 1
+  cap="$(heavy_cap "$GIVEN_SLOTS")"
+  for k in $(seq 1 "$cap"); do
+    if [ "$k" -eq 1 ]; then d="$LOCK"; else d="$LOCK.$k"; fi
+    [ -d "$d" ] && continue
+    [ "$k" -gt 1 ] && ! mem_ok "$k"
+    return
+  done
+  return 1
+}
+
 # acquire <label> <base> <slots>: take one slot of a mkdir-mutex pool; a slot whose owner pid is gone is reclaimed.
 acquire() {
-  local label="$1" base="$2" slots="$3" waited=0 printed=0 k d got="" reserve_blocked usable
+  local label="$1" base="$2" slots="$3" waited=0 printed=0 told=0 k d got="" free_wait held usable
   while [ -z "$got" ]; do
-    reserve_blocked=0
+    free_wait=0; held=0
     # Re-read the cap and the reservation each pass: a drained queue releases waiting lane jobs promptly, and a lowered cap
     # keeps them off the slots above it (nothing running is pre-empted). The memory guard below is slow (two vm_stat forks
     # without /proc/meminfo), so a slot taken is checked again against the cap and reserve read after the take (#2718).
@@ -179,23 +225,32 @@ acquire() {
       usable=1; while [ "$usable" -lt "$slots" ] && mem_ok "$((usable + 1))"; do usable=$((usable + 1)); done
       [ "$RESERVE" -gt "$((usable - 1))" ] && RESERVE=$((usable - 1))
     fi
-    for k in $(seq 1 "$slots"); do
+    # The light pool: its cap, read now, and the hold for a box-wide waiter short of memory (rule 3; a meta job skips the hold).
+    if [ "$label" = light ]; then
+      slots="$(heavy_light_cap "$LIGHT_GIVEN")"
+      if [ "$PRIORITY" != meta ] && boxwide_starved; then
+        held=1; free_wait=1
+        [ "$told" -eq 1 ] || { echo "heavy: holding this build back: a box-wide job waits for free memory" >&2; told=1; }
+      fi
+    fi
+    [ "$held" = 1 ] || for k in $(seq 1 "$slots"); do
       if [ "$k" -eq 1 ]; then d="$base"; else d="$base.$k"; fi
-      # Box-wide slots above 1 need the memory guard; the per-session pool doesn't.
-      if [ "$label" = box-wide ] && [ "$PRIORITY" != meta ] && [ "$k" -le "$RESERVE" ]; then [ -d "$d" ] || reserve_blocked=1; continue; fi
+      # Box-wide slots above 1 need the memory guard; the per-session and light pools don't.
+      if [ "$label" = box-wide ] && [ "$PRIORITY" != meta ] && [ "$k" -le "$RESERVE" ]; then [ -d "$d" ] || free_wait=1; continue; fi
       if [ "$k" -gt 1 ] && [ "$label" = box-wide ] && ! mem_ok "$k"; then continue; fi
       if mkdir "$d" 2>/dev/null || { reclaim_slot "$d" && mkdir "$d" 2>/dev/null; }; then
-        # Take-then-check (#2718): read the cap and reserve again now the slot is ours. Over the cap, or inside the reserve
-        # for a non-meta job: give the empty slot back (before the owner write) and keep waiting.
-        if [ "$label" = box-wide ] && ! slot_still_allowed "$k"; then rmdir "$d" 2>/dev/null; continue; fi
+        # Take-then-check (#2718): read the cap and reserve again now the slot is ours. Over the cap (box-wide or light), or
+        # inside the reserve for a non-meta job: give the empty slot back (before the owner write) and keep waiting.
+        if [ "$label" != session ] && ! slot_still_allowed "$k"; then rmdir "$d" 2>/dev/null; continue; fi
         got="$d"; break
       fi
     done
     [ -n "$got" ] && break
     [ "$printed" -eq 0 ] && { echo "heavy: waiting for the $label lock ($slots slot(s), $base)" >&2; printed=1; write_wait "$label" "${@:4}"; }
     [ "$waited" -ge "$TIMEOUT" ] && { echo "heavy: $label lock timeout ($base)" >&2; rm_wait; exit 75; }
-    # A pass that skipped a free reserved slot was blocked only by the reservation and doesn't count; any other pass does.
-    sleep 1; [ "$reserve_blocked" = 1 ] || waited=$((waited + 1))
+    # A pass that skipped a free reserved slot was blocked only by the reservation, and a light pass held back for a box-wide
+    # waiter only by that hold: neither counts. Any other pass does.
+    sleep 1; [ "$free_wait" = 1 ] || waited=$((waited + 1))
   done
   rm_wait
   echo "$$ $(date -u +%FT%TZ) session=$session $*" > "$got/owner" 2>/dev/null || true
@@ -204,7 +259,8 @@ acquire() {
 
 # Order: the session slot first, then the box-wide one, so a session never holds a box-wide slot while queued behind itself.
 acquire session "$LOCKS/heavy-session/$session.lock" "$SESSION_SLOTS" "$@"
-if [ "$mode" = expensive ]; then acquire box-wide "$LOCK" "$SLOTS" "$@"; export AW_HEAVY_SLOT="${HELD[1]}"; fi
+if [ "$mode" = expensive ]; then acquire box-wide "$LOCK" "$SLOTS" "$@"; export AW_HEAVY_SLOT="${HELD[1]}"
+elif [ -n "$compiles" ]; then acquire light "$LIGHT_LOCK" "$(heavy_light_cap "$LIGHT_GIVEN")" "$@"; fi
 export AW_HEAVY_LOCK_HELD=1 AW_HEAVY_MODE="$mode"
 # Keep one job from taking the whole box: fewer cores per .NET process (MSBuild -m, test parallelism), no MSBuild
 # worker reuse (nodes exit with the build instead of staying resident between builds).
