@@ -46,13 +46,13 @@ internal sealed partial class ConceptLayerView : UserControl
     {
         PinFocus.AddSeveral => this.FindControl<Button>("AddSeveralButton"),
         PinFocus.NewPin => this.FindControl<Button>("NewPinButton"),
-        PinFocus.PinThis => CardButton(e.CardId, "PinThis"),
-        PinFocus.EditPin => CardButton(e.CardId, "EditPin"),
+        PinFocus.PinThis => CardButton(e.CardId, "ConceptPin."),
+        PinFocus.EditPin => CardButton(e.CardId, "ConceptEditPin."),
         _ => null,
     };
 
-    private Button? CardButton(string? cardId, string automationId) => this.GetVisualDescendants().OfType<Button>()
-        .FirstOrDefault(b => b.IsEffectivelyVisible && string.Equals(AutomationProperties.GetAutomationId(b), automationId, StringComparison.Ordinal)
+    private Button? CardButton(string? cardId, string idPrefix) => this.GetVisualDescendants().OfType<Button>()
+        .FirstOrDefault(b => b.IsEffectivelyVisible && string.Equals(AutomationProperties.GetAutomationId(b), idPrefix + cardId, StringComparison.Ordinal)
             && b.DataContext is ConceptTileViewModel tile && string.Equals(tile.Id, cardId, StringComparison.Ordinal));
 
     private void OnPinThis(object? sender, RoutedEventArgs e)

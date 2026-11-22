@@ -45,7 +45,7 @@ public sealed class ConceptRowViewTests
         return (window, view, layer, opened);
     }
 
-    private static bool IsOpenButton(Button b) => b.DataContext is ConceptTileViewModel && AutomationProperties.GetAutomationId(b) is not ("PinThis" or "EditPin");
+    private static bool IsOpenButton(Button b) => b.DataContext is ConceptTileViewModel && (AutomationProperties.GetAutomationId(b) ?? string.Empty).StartsWith("ConceptOpen.", StringComparison.Ordinal);
 
     [Fact]
     public async Task A_row_is_one_line_with_no_summary_or_breakdown_drawn_under_its_name()
@@ -111,7 +111,7 @@ public sealed class ConceptRowViewTests
             try
             {
                 var list = view.FindControl<ItemsControl>("ConceptList")!;
-                List<Button> PinButtons() => [.. list.GetVisualDescendants().OfType<Button>().Where(b => string.Equals(AutomationProperties.GetAutomationId(b), "PinThis", StringComparison.Ordinal))];
+                List<Button> PinButtons() => [.. list.GetVisualDescendants().OfType<Button>().Where(b => (AutomationProperties.GetAutomationId(b) ?? string.Empty).StartsWith("ConceptPin.", StringComparison.Ordinal))];
                 var before = PinButtons().Count(b => b.IsEffectivelyVisible);
 
                 var firstRow = list.ItemsPanelRoot!.Children[0];
