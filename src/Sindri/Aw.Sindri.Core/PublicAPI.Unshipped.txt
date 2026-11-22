@@ -6322,8 +6322,6 @@ Aw.Sindri.Core.Profile.JudgeSettings.Parallel.get -> int?
 Aw.Sindri.Core.Profile.JudgeSettings.Parallel.init -> void
 Aw.Sindri.Core.Profile.JudgeSettings.Providers.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Sindri.Core.Profile.JudgeSettings.Providers.init -> void
-Aw.Sindri.Core.Profile.RepoEntry.Deconstruct(out string! Name, out string! Path, out Aw.Sindri.Core.Profile.IndexSettings? Index, out Aw.Sindri.Core.Profile.RepoWorkflowSettings? Workflow) -> void
-Aw.Sindri.Core.Profile.RepoEntry.RepoEntry(string! Name, string! Path, Aw.Sindri.Core.Profile.IndexSettings? Index = null, Aw.Sindri.Core.Profile.RepoWorkflowSettings? Workflow = null) -> void
 Aw.Sindri.Core.Profile.RepoEntry.Workflow.get -> Aw.Sindri.Core.Profile.RepoWorkflowSettings?
 Aw.Sindri.Core.Profile.RepoEntry.Workflow.init -> void
 Aw.Sindri.Core.Profile.RepoWorkflowSettings
@@ -20368,8 +20366,6 @@ override Aw.Sindri.Core.Events.RetirePassDone.GetHashCode() -> int
 override Aw.Sindri.Core.Events.RetirePassDone.ToString() -> string!
 static Aw.Sindri.Core.Events.RetirePassDone.operator !=(Aw.Sindri.Core.Events.RetirePassDone? left, Aw.Sindri.Core.Events.RetirePassDone? right) -> bool
 static Aw.Sindri.Core.Events.RetirePassDone.operator ==(Aw.Sindri.Core.Events.RetirePassDone? left, Aw.Sindri.Core.Events.RetirePassDone? right) -> bool
-Aw.Sindri.Core.Profile.SindriProfile.Deconstruct(out int SchemaVersion, out string! User, out string! Tenant, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>? Repos, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.ServiceSettings!>? Services, out Aw.Sindri.Core.Profile.ApiSettings? Api, out Aw.Sindri.Core.Profile.WorkflowSettings? Workflow, out System.Text.Json.JsonElement? Context, out Aw.Sindri.Core.Profile.IndexSettings? Index, out Aw.Sindri.Core.Profile.LaunchSettings? Launch, out Aw.Sindri.Core.Profile.AgentSettings? Agents, out Aw.Sindri.Core.Profile.SetupSettings? Setup, out Aw.Sindri.Core.Profile.SandboxSettings? Sandbox, out Aw.Sindri.Core.Profile.PrReviewSettings? Review, out Aw.Sindri.Core.Profile.TodoSettings? Todo) -> void
-Aw.Sindri.Core.Profile.SindriProfile.SindriProfile(int SchemaVersion, string! User, string! Tenant = "local", System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>? Repos = null, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.ServiceSettings!>? Services = null, Aw.Sindri.Core.Profile.ApiSettings? Api = null, Aw.Sindri.Core.Profile.WorkflowSettings? Workflow = null, System.Text.Json.JsonElement? Context = null, Aw.Sindri.Core.Profile.IndexSettings? Index = null, Aw.Sindri.Core.Profile.LaunchSettings? Launch = null, Aw.Sindri.Core.Profile.AgentSettings? Agents = null, Aw.Sindri.Core.Profile.SetupSettings? Setup = null, Aw.Sindri.Core.Profile.SandboxSettings? Sandbox = null, Aw.Sindri.Core.Profile.PrReviewSettings? Review = null, Aw.Sindri.Core.Profile.TodoSettings? Todo = null) -> void
 Aw.Sindri.Core.Profile.SindriProfile.Todo.get -> Aw.Sindri.Core.Profile.TodoSettings?
 Aw.Sindri.Core.Profile.SindriProfile.Todo.init -> void
 Aw.Sindri.Core.Profile.TodoObsidianRules
@@ -24065,3 +24061,27 @@ static Aw.Sindri.Core.Evolve.StoredProposal.operator !=(Aw.Sindri.Core.Evolve.St
 static Aw.Sindri.Core.Evolve.StoredProposal.operator ==(Aw.Sindri.Core.Evolve.StoredProposal? left, Aw.Sindri.Core.Evolve.StoredProposal? right) -> bool
 static readonly Aw.Sindri.Core.SindriErrors.ProposalNotFound -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ProposalNotRejectable -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Profile.PrivacyKeyRules
+Aw.Sindri.Core.Profile.PrivacySettings
+Aw.Sindri.Core.Profile.PrivacySettings.<Clone>$() -> Aw.Sindri.Core.Profile.PrivacySettings!
+Aw.Sindri.Core.Profile.PrivacySettings.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? DenyTerms, out System.Collections.Generic.IReadOnlyList<string!>? DenyPatterns) -> void
+Aw.Sindri.Core.Profile.PrivacySettings.DenyPatterns.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Profile.PrivacySettings.DenyPatterns.init -> void
+Aw.Sindri.Core.Profile.PrivacySettings.DenyTerms.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Profile.PrivacySettings.DenyTerms.init -> void
+Aw.Sindri.Core.Profile.PrivacySettings.Equals(Aw.Sindri.Core.Profile.PrivacySettings? other) -> bool
+Aw.Sindri.Core.Profile.PrivacySettings.PrivacySettings(System.Collections.Generic.IReadOnlyList<string!>? DenyTerms = null, System.Collections.Generic.IReadOnlyList<string!>? DenyPatterns = null) -> void
+Aw.Sindri.Core.Profile.RepoEntry.Deconstruct(out string! Name, out string! Path, out Aw.Sindri.Core.Profile.IndexSettings? Index, out Aw.Sindri.Core.Profile.RepoWorkflowSettings? Workflow, out bool? Private) -> void
+Aw.Sindri.Core.Profile.RepoEntry.Private.get -> bool?
+Aw.Sindri.Core.Profile.RepoEntry.Private.init -> void
+Aw.Sindri.Core.Profile.RepoEntry.RepoEntry(string! Name, string! Path, Aw.Sindri.Core.Profile.IndexSettings? Index = null, Aw.Sindri.Core.Profile.RepoWorkflowSettings? Workflow = null, bool? Private = null) -> void
+Aw.Sindri.Core.Profile.SindriProfile.Deconstruct(out int SchemaVersion, out string! User, out string! Tenant, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>? Repos, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.ServiceSettings!>? Services, out Aw.Sindri.Core.Profile.ApiSettings? Api, out Aw.Sindri.Core.Profile.WorkflowSettings? Workflow, out System.Text.Json.JsonElement? Context, out Aw.Sindri.Core.Profile.IndexSettings? Index, out Aw.Sindri.Core.Profile.LaunchSettings? Launch, out Aw.Sindri.Core.Profile.AgentSettings? Agents, out Aw.Sindri.Core.Profile.SetupSettings? Setup, out Aw.Sindri.Core.Profile.SandboxSettings? Sandbox, out Aw.Sindri.Core.Profile.PrReviewSettings? Review, out Aw.Sindri.Core.Profile.TodoSettings? Todo, out Aw.Sindri.Core.Profile.PrivacySettings? Privacy) -> void
+Aw.Sindri.Core.Profile.SindriProfile.Privacy.get -> Aw.Sindri.Core.Profile.PrivacySettings?
+Aw.Sindri.Core.Profile.SindriProfile.Privacy.init -> void
+Aw.Sindri.Core.Profile.SindriProfile.SindriProfile(int SchemaVersion, string! User, string! Tenant = "local", System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>? Repos = null, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.ServiceSettings!>? Services = null, Aw.Sindri.Core.Profile.ApiSettings? Api = null, Aw.Sindri.Core.Profile.WorkflowSettings? Workflow = null, System.Text.Json.JsonElement? Context = null, Aw.Sindri.Core.Profile.IndexSettings? Index = null, Aw.Sindri.Core.Profile.LaunchSettings? Launch = null, Aw.Sindri.Core.Profile.AgentSettings? Agents = null, Aw.Sindri.Core.Profile.SetupSettings? Setup = null, Aw.Sindri.Core.Profile.SandboxSettings? Sandbox = null, Aw.Sindri.Core.Profile.PrReviewSettings? Review = null, Aw.Sindri.Core.Profile.TodoSettings? Todo = null, Aw.Sindri.Core.Profile.PrivacySettings? Privacy = null) -> void
+override Aw.Sindri.Core.Profile.PrivacySettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.PrivacySettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.PrivacySettings.ToString() -> string!
+static Aw.Sindri.Core.Profile.PrivacyKeyRules.Check(Aw.Sindri.Core.Profile.PrivacySettings? privacy) -> Aw.Kernel.Error?
+static Aw.Sindri.Core.Profile.PrivacySettings.operator !=(Aw.Sindri.Core.Profile.PrivacySettings? left, Aw.Sindri.Core.Profile.PrivacySettings? right) -> bool
+static Aw.Sindri.Core.Profile.PrivacySettings.operator ==(Aw.Sindri.Core.Profile.PrivacySettings? left, Aw.Sindri.Core.Profile.PrivacySettings? right) -> bool
