@@ -1,4 +1,3 @@
-using System.Globalization;
 using Aw.Sindri.Ui.Api.Projects;
 
 namespace Aw.Sindri.Ui.ViewModels.Projects;
@@ -35,7 +34,7 @@ internal sealed partial class ProjectsPageViewModel
         var groups = new List<ProjectGroupViewModel>();
         foreach (var planned in ProjectRows.Grouped(rows, Grouping, FactsMissing))
         {
-            var key = string.Create(CultureInfo.InvariantCulture, $"{Grouping}:{planned.Key}");
+            var key = $"{Grouping}:{planned.Key}";
             if (!_groups.TryGetValue(key, out var group))
             {
                 group = _groups[key] = new ProjectGroupViewModel(planned.Heading);
