@@ -33,6 +33,13 @@ internal partial interface ISindriApi
     /// <returns>The workflow, SND-GRAPH-008 for an unknown one, SND-CLI-003 for a bad slug, or SND-UI-002/003.</returns>
     public Task<Result<WorkflowView>> Workflow(Uri api, string slug, CancellationToken cancellationToken);
 
+    /// <summary>GET /sindri/workflows/{slug}?revision=latest: one workflow with its newest revision shown, saved but maybe not live (#3303).</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="slug">The workflow.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The workflow, SND-GRAPH-008 for an unknown one, SND-CLI-003 for a bad slug, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowView>> WorkflowNewest(Uri api, string slug, CancellationToken cancellationToken);
+
     /// <summary>GET /sindri/workflows/{slug}/runs: the newest runs, newest first.</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="slug">The workflow.</param>

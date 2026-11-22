@@ -150,7 +150,7 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>Activate: turns the open workflow's newest revision on. Sent once; the list and the runs are read again after any answer that reached Sindri.</summary>
     /// <param name="cancellationToken">Cancels the call and the reads.</param>
     /// <returns>A task that completes when the answer is shown.</returns>
-    internal Task Activate(CancellationToken cancellationToken) => ChangeState(CanActivate, ActivateCall, Labels.WfActivateRefused, cancellationToken);
+    internal Task Activate(CancellationToken cancellationToken) => ChangeState(CanActivate || CanMakeLive, ActivateCall, Labels.WfActivateRefused, cancellationToken);
 
     /// <summary>Pause: turns the open workflow off. Sent once; the list and the runs are read again after any answer that reached Sindri.</summary>
     /// <param name="cancellationToken">Cancels the call and the reads.</param>
@@ -216,12 +216,14 @@ internal sealed partial class WorkflowsPageViewModel
     {
         OnChanged(nameof(CanActivate));
         OnChanged(nameof(CanPause));
+        NotifySaved();
     }
 
     // another workflow was opened: the old one's note is not about it
     private void ForgetStateNote()
     {
         StateNoticeText = string.Empty;
+        _savedWhileOff = 0;
         NotifyStateButtons();
     }
 }

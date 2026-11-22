@@ -75,7 +75,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
 
         (_url, Slug) = (url, slug);
         var read = ++_reads;
-        var workflowRead = api.Workflow(url, slug, cancellationToken);
+        var workflowRead = api.WorkflowNewest(url, slug, cancellationToken);   // the newest revision: after a save on a live workflow that is the saved one, not the live one (#3303)
         var blocksRead = api.WorkflowBlocks(url, cancellationToken);
         await Task.WhenAll(workflowRead, blocksRead).ConfigureAwait(true);
         var (workflow, blocks) = (await workflowRead.ConfigureAwait(true), await blocksRead.ConfigureAwait(true));
