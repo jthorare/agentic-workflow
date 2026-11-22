@@ -111,7 +111,7 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
         if (set.IsError)
         {
             var code = await output.Error(set.Error).ConfigureAwait(false);
-            return set.Error.Code is "SND-PROFILE-001" or "SND-PROFILE-004" or "SND-PROFILE-005" ? code : 1;
+            return ProfileExit(set.Error.Code) ? code : 1;
         }
 
         var done = set.Value;
@@ -151,4 +151,10 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
         CheckState.Fail => "fail",
         _ => "?",
     };
+
+    // the profile codes whose own exit code the command keeps (missing, invalid, unreadable)
+    private static bool ProfileExit(string code) =>
+        string.Equals(code, "SND-PROFILE-001", StringComparison.Ordinal)
+        || string.Equals(code, "SND-PROFILE-004", StringComparison.Ordinal)
+        || string.Equals(code, "SND-PROFILE-005", StringComparison.Ordinal);
 }
