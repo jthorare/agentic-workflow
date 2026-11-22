@@ -58,7 +58,7 @@ internal static class GraphResultOutputs
         }
 
         var parsed = rows.Select(static r => StoredJson.Parse(r.Output)).ToList();
-        return rows.Any(static r => r.ItemIndex > 0) ? new JsonArray([.. parsed]) : parsed[0];
+        return rows.Exists(static r => r.ItemIndex > 0) ? new JsonArray([.. parsed]) : parsed[0];
     }
 
     private static long? Size(string? output) =>
