@@ -15,21 +15,24 @@ internal sealed partial class HealthViewModel
     /// <param name="view">Reads the view from the API's base URL.</param>
     internal void Follow(Func<Uri, CancellationToken, Task> view) => _views.Add(view);
 
-    /// <summary>Re-reads every followed view, in the order they were added.</summary>
+    /// <summary>
+    /// Re-reads the context map and every followed view at once (#2775): each read starts here, in the order the views were added, and
+    /// the reads overlap; each answer is shown back on this thread. A view that throws stops no other: its exception comes out once every read has ended.
+    /// </summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>A task that completes when every view is shown.</returns>
     internal async Task RefreshViews(Uri url, CancellationToken cancellationToken)
     {
-        await ContextMap.Refresh(url, cancellationToken).ConfigureAwait(true);
-        foreach (var view in _views)
-        {
-            await view(url, cancellationToken).ConfigureAwait(true);
-        }
-
+        Task[] reads = [Read(ContextMap.Refresh, url, cancellationToken), .. _views.Select(view => Read(view, url, cancellationToken))];
+        await Task.WhenAll(reads).ConfigureAwait(true);
         ViewReads++;
         OnChanged(nameof(ViewReads));
     }
+
+    // One view's read as a task: a view that throws before its first await faults its own task instead of stopping the views after it.
+    private static async Task Read(Func<Uri, CancellationToken, Task> view, Uri url, CancellationToken cancellationToken) =>
+        await view(url, cancellationToken).ConfigureAwait(true);
 
     /// <summary>How many times every followed view has been re-read; a test (or a view) waits on it to know a read, answered or refused, was handled.</summary>
     internal int ViewReads { get; private set; }
