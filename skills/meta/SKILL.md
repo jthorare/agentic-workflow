@@ -88,7 +88,7 @@ With several ready pull requests use `aw-meta queue-gate` (a train); the steps a
 
 ## Owner requests for work
 
-An owner request for work goes to a lane, never into your own hands. Run `aw-meta delegate --lane <lane> --title <title> --what <what the owner wants>` (or `--issue <n>` for an issue that already exists). It files the issue in the team repo and records the delegation. A non-Claude lane gets the `ACTION: #<n>` message at once. For a Claude lane, send the printed text with SendMessage to the printed `<team>-<lane>`; `stop-check` keeps it open until that send names `#<n>`. Not sure which lane? Run it without `--lane`: it files nothing and lists the lanes, with keyword matches marked. You never edit code, run builds or investigate for a lane yourself. `aw-meta delegated` shows what is still owed or waiting for the lane's answer.
+An owner request for work goes to a lane, never into your own hands. Run `aw-meta delegate --lane <lane> --title <title> --what <what the owner wants>` (or `--issue <n>` for an issue that already exists). It files the issue in the team repo and records the delegation. A non-Claude lane gets the `ACTION: #<n>` message at once. For a Claude lane, send the printed text with SendMessage to the printed `<team>-<lane>`; `stop-check` keeps it open until that send names `#<n>`. Not sure which lane? Run it without `--lane`: it files nothing and lists the lanes, with keyword matches marked. You never edit code, run builds or investigate for a lane yourself. `aw-meta delegated` shows what is still owed or waiting for the lane's answer; `aw-meta delegate --drop <n>` forgets one that no lane will take.
 
 ## Toolkit defects
 
