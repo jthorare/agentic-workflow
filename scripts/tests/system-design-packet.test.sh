@@ -143,6 +143,11 @@ test_write_packet_doc_md() {
   done
   local err; err="$(python3 -I -B "$SD/write_packet.py" "$D" --slug harbor-booking --title "Harbor: ferry booking" 2>&1 >/dev/null)"
   [ -z "$err" ] || fail "a TDD that opens with the ROI plan should not warn: $err"
+  local Q="$TMP/singleq"; mkdir -p "$Q"
+  echo "<html><body><section id='roi'><h2>ROI and data-analysis plan</h2></section><section class=x id='scope'><h2>Scope</h2></section></body></html>" >"$Q/tdd.html"
+  err="$(python3 -I -B "$SD/write_packet.py" "$Q" --slug single-quotes --title T 2>&1 >/dev/null)" || fail "write_packet failed on single-quoted ids"
+  [ -z "$err" ] || fail "id='roi' (single quotes) should count as the ROI plan: $err"
+  [ "$(grep '^## ' "$Q/doc.md" | head -2 | tr '\n' '|')" = '## ROI and data-analysis plan|## Scope|' ] || fail "single-quoted section ids should be read"
   local before; before="$(cat "$D/doc.md")"
   python3 -I -B "$SD/write_packet.py" "$D" --slug harbor-booking --title "Harbor: ferry booking" >/dev/null
   [ "$before" = "$(cat "$D/doc.md")" ] || fail "rerun changed doc.md"
