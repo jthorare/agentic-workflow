@@ -17,6 +17,7 @@ internal sealed partial class FakeSindriApi
 
     private readonly List<string> _activatedWorkflows = [];
     private readonly List<string> _pausedWorkflows = [];
+    private readonly List<string> _deletedWorkflows = [];
     private readonly List<AppliedOps> _appliedOps = [];
     private readonly List<(string Slug, string Template)> _createdWorkflows = [];
 
@@ -205,6 +206,15 @@ internal sealed partial class FakeSindriApi
     /// <summary>The workflows Pause was sent for, in order.</summary>
     public IReadOnlyList<string> PausedWorkflows { get { lock (_gate) { return [.. _pausedWorkflows]; } } }
 
+    /// <summary>DELETE /sindri/workflows/{slug}'s answer.</summary>
+    public RouteAnswer DeleteWorkflowAnswer { get; set; } = RouteAnswer.Api("workflows-slug", "archived");
+
+    /// <summary>Holds DELETE /sindri/workflows/{slug} until a test releases it (the call is recorded first).</summary>
+    public TaskCompletionSource? DeleteWorkflowGate { get; set; }
+
+    /// <summary>The workflows Delete was sent for, in order.</summary>
+    public IReadOnlyList<string> DeletedWorkflows { get { lock (_gate) { return [.. _deletedWorkflows]; } } }
+
     /// <summary>The ops sent, in order.</summary>
     internal IReadOnlyList<AppliedOps> AppliedWorkflowOps { get { lock (_gate) { return [.. _appliedOps]; } } }
 
@@ -253,5 +263,16 @@ internal sealed partial class FakeSindriApi
 
         await WaitFor(WorkflowStateGate, cancellationToken).ConfigureAwait(false);
         return Answer<WorkflowPaused>(api, WorkflowRoutes.Pause(slug), PauseWorkflowAnswer);
+    }
+
+    public async Task<Result<WorkflowArchived>> DeleteWorkflow(Uri api, string slug, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _deletedWorkflows.Add(slug);
+        }
+
+        await WaitFor(DeleteWorkflowGate, cancellationToken).ConfigureAwait(false);
+        return Answer<WorkflowArchived>(api, WorkflowRoutes.One(slug), DeleteWorkflowAnswer);
     }
 }

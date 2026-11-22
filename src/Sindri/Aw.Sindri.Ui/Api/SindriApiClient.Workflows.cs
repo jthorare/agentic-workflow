@@ -5,7 +5,7 @@ using Aw.Sindri.Ui.Api.Workflows;
 
 namespace Aw.Sindri.Ui.Api;
 
-/// <summary>The workflow reads (<see cref="SindriApiClient"/>, continued; #2258 PR 8a): the reads are GETs; Run now, Cancel run, ops, Activate and Pause are POSTs, each sent once.</summary>
+/// <summary>The workflow reads (<see cref="SindriApiClient"/>, continued; #2258 PR 8a): the reads are GETs; Run now, Cancel run, ops, Activate and Pause are POSTs and Delete is a DELETE, each sent once.</summary>
 internal sealed partial class SindriApiClient
 {
     /// <inheritdoc />
@@ -76,4 +76,7 @@ internal sealed partial class SindriApiClient
     /// <inheritdoc />
     public Task<Result<WorkflowPaused>> PauseWorkflow(Uri api, string slug, CancellationToken cancellationToken) =>
         Call<WorkflowPaused>(api, HttpMethod.Post, WorkflowRoutes.Pause(slug), cancellationToken);
+
+    public Task<Result<WorkflowArchived>> DeleteWorkflow(Uri api, string slug, CancellationToken cancellationToken) =>
+        Call<WorkflowArchived>(api, HttpMethod.Delete, WorkflowRoutes.One(slug), cancellationToken);
 }
