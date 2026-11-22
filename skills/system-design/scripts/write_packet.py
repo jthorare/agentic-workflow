@@ -4,7 +4,9 @@ Layout (see SKILL.md): tdd.html, product-design.html (or <persona>.html), tdd-sh
 diagrams/<key>.mmd + <key>.svg, status.md, prs/pr-NN.md.
 Also writes doc.md next to packet.json: the design-doc convention (docs/conventions/design-docs.md), id <slug>-tdd, generated from packet.json (front matter generated + source-sha256),
 with sections, a Ph<n> per PR card, a REQ-<n> per EARS criterion in tdd.html (an li/p/td/th that starts with When/While/Where/If/The and holds "shall") and a TP-<n> per list item or table row under a card's ## Tests / ## Test plan.
-Sections come from the TDD's <section id="..."> blocks, in document order, each with its heading and the diagram keys it embeds."""
+After the PR phases it always adds the two closing phases, the performance sweep and then the bug sweep, each with its exit check and a TP row
+(skills/_shared/closing-sweeps.md holds the same text). Sections come from the TDD's <section id="..."> blocks, in document order, each with its heading
+and the diagram keys it embeds; a TDD whose first section is not <section id="roi"> (the ROI plan, skills/_shared/roi-analysis.md) gets a warning on stderr."""
 import hashlib, json, os, re, sys
 
 def arg(name, default=None):
@@ -75,6 +77,8 @@ manifest = {
 }
 with open(os.path.join(root, "packet.json"), "w", encoding="utf-8") as fh:
     json.dump(manifest, fh, indent=2)
+if not sections or sections[0]["id"] != "roi":
+    print('warning: the first section of tdd.html is not <section id="roi">, the ROI and data-analysis plan (skills/_shared/roi-analysis.md)', file=sys.stderr)
 print(f"packet.json: {len(personas)} pages, {len(diagrams)} diagrams, {len(sections)} sections, {len(manifest['prs'])} PRs")
 
 
@@ -150,16 +154,26 @@ cards = []
 for f in manifest["prs"]:
     n = int(re.search(r"pr-(\d+)\.md", f).group(1))
     cards.append((n,) + card(f))
-if cards:
-    out += ["## Phases", ""]
-    for n, title, _ in cards:
-        out += [f"### Ph{n} {title}", ""]
+# The closing phases: after the last PR, so the project is done only when both exit checks pass (skills/_shared/closing-sweeps.md, word for word).
+SWEEPS = [
+    ("Performance sweep", "Exit check: every data or interactive surface has a measured time in the real app at or under its budget. "
+     "A miss passes only when the owner accepts it in writing (a D-number)."),
+    ("Bug sweep", "Exit check: every finding is a GitHub issue, and a merged fix or a written reason closes each one. "
+     "A second walk of every surface finds nothing new."),
+]
+last = max((n for n, _, _ in cards), default=0)
+sweeps = [(last + i, title, check) for i, (title, check) in enumerate(SWEEPS, 1)]
+out += ["## Phases", ""]
+for n, title, _ in cards:
+    out += [f"### Ph{n} {title}", ""]
+for n, title, check in sweeps:
+    out += [f"### Ph{n} {title}", "", check, ""]
 if ears:
     out += ["## Requirements", ""] + [f"- **REQ-{i}** {t}" for i, t in enumerate(ears, 1)] + [""]
-tp = [(n, r) for n, _, rows in cards for r in rows]
+tp = [(n, r) for n, _, rows in cards for r in rows] + [(n, f"{title}: {check[len('Exit check: '):]}") for n, title, check in sweeps]
 if tp:
     out += ["## Test plan", "", "| Row | Check | Verifies |", "|---|---|---|"]
     out += [f"| TP-{i} | {cell(r)} | Ph{n} |" for i, (n, r) in enumerate(tp, 1)] + [""]
 with open(os.path.join(root, "doc.md"), "w", encoding="utf-8") as fh:
     fh.write("\n".join(out).rstrip("\n") + "\n")
-print(f"doc.md: id {slug_id}, {len(cards)} phases, {len(ears)} requirements, {len(tp)} test rows")
+print(f"doc.md: id {slug_id}, {len(cards) + len(sweeps)} phases, {len(ears)} requirements, {len(tp)} test rows")
