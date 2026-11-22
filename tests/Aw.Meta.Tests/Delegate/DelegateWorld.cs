@@ -1,8 +1,10 @@
 using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Delegations;
+using Aw.Meta.Core.Ports;
 using Aw.Meta.Features.Delegate;
 using Aw.Meta.Features.Delegated;
+using Aw.Meta.Features.DelegateDrop;
 using Aw.Meta.Testing;
 
 namespace Aw.Meta.Tests.Delegate;
@@ -16,14 +18,17 @@ internal sealed class DelegateWorld
 
     internal DelegationLedger Ledger => new(World.Values);
 
-    internal DelegateService Service() => new(
+    // beatValues: the store the delivery reads the lane hook beats from; null for the world's own.
+    internal DelegateService Service(IKeyValueStore? beatValues = null) => new(
         World.Config,
         World.Repo,
         World.LaneFiles,
         Ledger,
         World.Log,
-        new LaneDelivery(World.LaneFiles, World.LaneMail, World.Messages, World.Beats, World.Panes, World.Clock),
+        new LaneDelivery(World.LaneFiles, World.LaneMail, World.Messages, beatValues is null ? World.Beats : new LaneBeats(beatValues, World.Delay), World.Panes, World.Clock),
         World.Clock);
+
+    internal DelegateDropService Dropping() => new();
 
     internal DelegatedService Listing() => new(Ledger, World.Messages);
 
