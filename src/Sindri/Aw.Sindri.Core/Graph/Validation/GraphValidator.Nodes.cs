@@ -10,9 +10,9 @@ public sealed partial class GraphValidator
     private void Node(GraphNode node, List<GraphFinding> found)
     {
         var id = node.Id.Value;
-        if (node.OnFailure is { } onFailure && !string.Equals(onFailure, "stop", StringComparison.Ordinal) && !string.Equals(onFailure, "continue", StringComparison.Ordinal))
+        if (node.OnFailure is { } onFailure && !string.Equals(onFailure, "stop", StringComparison.Ordinal) && !string.Equals(onFailure, "continue", StringComparison.Ordinal) && !string.Equals(onFailure, "skip-item", StringComparison.Ordinal))
         {
-            found.Add(Found.At("GRAPH-NODE-003", id, "onFailure", $"'{onFailure}' is not an 'onFailure' value", "write 'stop' (halt the run when this node fails, the default) or 'continue' (keep walking)"));
+            found.Add(Found.At("GRAPH-NODE-003", id, "onFailure", $"'{onFailure}' is not an 'onFailure' value", "write 'stop' (halt the run when this node fails, the default), 'continue' (keep walking) or 'skip-item' (on a for_each body node: drop the item and go on with the next)"));
         }
 
         if (!context.Blocks.TryGetValue(node.Type, out var block))
@@ -59,6 +59,17 @@ public sealed partial class GraphValidator
     {
         var crons = StringsOf(node.Config["cron"]).ToList();
         var timezone = StringsOf(node.Config["timezone"]).FirstOrDefault();
+        // why: StringsOf drops a value that is not a string, so a number or list looked absent and the cron passed (#3759)
+        if (node.Config["timezone"] is { } zone && !(zone is JsonValue v && v.TryGetValue<string>(out var name) && name.Length > 0))
+        {
+            found.Add(Found.At("GRAPH-CRON-001", node.Id.Value, "config.timezone", "the timezone must be a timezone name written as text", "write a timezone name such as America/Los_Angeles"));
+        }
+
+        if (node.Config["cron"] is { } raw && !CronIsText(raw))
+        {
+            found.Add(Found.At("GRAPH-CRON-001", node.Id.Value, "config.cron", "the cron must be text, or a list of text", "write five fields (minute hour day month weekday), such as \"0 7 * * 1-5\""));
+        }
+
         if (crons.Count > MaxCrons)
         {
             found.Add(Found.At("GRAPH-CRON-001", node.Id.Value, "config.cron", $"a schedule takes up to {MaxCrons} crons, this has {crons.Count}", "split it into two workflows or merge the crons"));
@@ -114,6 +125,13 @@ public sealed partial class GraphValidator
     private static GraphFinding Unanswered(string node, NameCheck check, string name, GraphLookup answer) => answer == GraphLookup.Unknown
         ? Found.At(check.Code + "-001", node, "config." + check.Field, $"there is no {check.What} '{name}'", $"use a {check.What} that exists, or add '{name}' first")
         : new GraphFinding(check.Code + "-002", GraphSeverity.Warning, [node], "config." + check.Field, $"could not check {check.What} '{name}' yet", $"check by hand that {check.What} '{name}' exists");
+
+    private static bool CronIsText(JsonNode raw) => raw switch
+    {
+        JsonArray list => list.All(static e => e is JsonValue v && v.TryGetValue<string>(out _)),
+        JsonValue value => value.TryGetValue<string>(out _),
+        _ => false,
+    };
 
     private static IEnumerable<string> StringsOf(JsonNode? node) => node switch
     {
