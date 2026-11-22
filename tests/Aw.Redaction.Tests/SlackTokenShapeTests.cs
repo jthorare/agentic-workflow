@@ -18,7 +18,7 @@ public sealed class SlackTokenShapeTests
     {
         // why: no stub stands in front of a regex, so the red skips while the shipped rule is unchanged (main stays green); the day M1d widens or
         // adds a Slack rule this runs for real and fails on a regression
-        if (BuiltinRules.All.Count(static r => r.Id.Contains("slack", StringComparison.Ordinal)) == 1
+        if (BuiltinRules.All.Where(static r => r.Id.Contains("slack", StringComparison.Ordinal)).Take(2).Count() == 1
             && BuiltinRules.All.Single(static r => r.Id == "slack-token").Pattern.EndsWith(ShippedSlackPattern, StringComparison.Ordinal))
         {
             Assert.Skip("red until M1d: the slack-token rule is still xox[abprs]-");
