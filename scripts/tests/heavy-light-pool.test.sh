@@ -35,7 +35,7 @@ cleanup() {
 trap cleanup EXIT
 
 export AW_STATE_DIR="$STATE" AW_HEAVY_SESSION_PID="$$" AW_SESSION_HEAVY_SLOTS=50 AW_HEAVY_RUN_MAX=0 \
-  AW_HEAVY_MIN_FREE_MB=10240 AW_HEAVY_MIN_FREE_STEP_MB=4096 RUN
+  AW_HEAVY_MIN_FREE_MB=10240 AW_HEAVY_MIN_FREE_HIGH_MB=14336 RUN
 echo 4 > "$STATE/heavy-slots-cap"
 echo '0::/test.slice' > "$WORK/cgroup"; export AW_HEAVY_TEST_CGROUP="$WORK/cgroup"
 STUB="$WORK/stub"; mkdir -p "$STUB"

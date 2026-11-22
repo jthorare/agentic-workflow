@@ -40,12 +40,15 @@ GIVEN_SLOTS="$SLOTS"   # the fallback each pass re-reads the cap against, so tak
 # the box-wide slots, whatever a session's inherited AW_HEAVY_SLOTS says (sessions were launched with AW_HEAVY_SLOTS=1).
 SLOTS="$(heavy_cap "$SLOTS")"
 # Memory guard (owner, 2026-10-15): a box-wide slot above 1 is only taken while MemAvailable is at least
-# AW_HEAVY_MIN_FREE_MB (default 10240); below that, jobs queue for slot 1 as before.
+# its floor: AW_HEAVY_MIN_FREE_MB (default 10240) for slot 2; a slot whose floor is not met is skipped.
 MIN_FREE_MB="${AW_HEAVY_MIN_FREE_MB:-10240}"
 case $MIN_FREE_MB in ""|*[!0-9]*) MIN_FREE_MB=10240 ;; esac
-# Slot k (k >= 2) needs MIN_FREE_MB + (k-2) * STEP_MB available (owner, 2026-10-15: slot 3 needs 14 GB by default).
-STEP_MB="${AW_HEAVY_MIN_FREE_STEP_MB:-4096}"
-case $STEP_MB in ""|*[!0-9]*) STEP_MB=4096 ;; esac
+# Slot 2 needs MIN_FREE_MB available. Slots 3 and up need AW_HEAVY_MIN_FREE_HIGH_MB (default 3072; owner, 2026-11-22, #3813:
+# at 14 GB for slot 3 the upper slots stayed shut while gates queued). 3 GB is less than two compiles use (a csc takes 1 to
+# 2 GB), so a job that starts on slot 3 or 4 near the floor can push the box into swap; each job runs in its own systemd scope
+# with OOMPolicy=continue, so an OOM kill ends that job only.
+HIGH_FREE_MB="${AW_HEAVY_MIN_FREE_HIGH_MB:-3072}"
+case $HIGH_FREE_MB in ""|*[!0-9]*) HIGH_FREE_MB=3072 ;; esac
 # Without /proc/meminfo (macOS), the available figure is vm_stat's free + inactive + speculative pages times its page size,
 # the figure aw-meta reads there; an unreadable figure keeps the guard closed (#2584: macOS had one slot and no meta reserve).
 avail_kb() {
@@ -54,7 +57,7 @@ avail_kb() {
     /^Pages (free|inactive|speculative):/ {gsub(/\./, "", $NF); n += $NF} END {if (ps > 0 && n > 0) printf "%d", n * ps / 1024}')"
   printf '%s' "$kb"
 }
-mem_ok() { local kb need; need=$((MIN_FREE_MB + (${1:-2} - 2) * STEP_MB)); kb="$(avail_kb)"; [ -n "$kb" ] && [ "$((kb / 1024))" -ge "$need" ]; }
+mem_ok() { local kb need; if [ "${1:-2}" -ge 3 ]; then need=$HIGH_FREE_MB; else need=$MIN_FREE_MB; fi; kb="$(avail_kb)"; [ -n "$kb" ] && [ "$((kb / 1024))" -ge "$need" ]; }
 TIMEOUT=5400
 # Meta gate reservation (owner, 2026-10-17): the meta orchestrator writes how many box-wide slots its gates reserve
 # (0..SLOTS; every reader caps it at SLOTS-1, so a lane job always has a slot, #2060) to <state>/heavy-meta-reserve, scaled to its merge-queue depth. A job run with AW_HEAVY_PRIORITY=meta may
