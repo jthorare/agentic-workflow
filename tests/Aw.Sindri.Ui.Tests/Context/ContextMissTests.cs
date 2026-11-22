@@ -91,4 +91,19 @@ public sealed class ContextMissTests
 
         Assert.Equal((false, false, string.Empty), (page.IsMiss, page.ShowBanner, page.Problem));
     }
+
+    [Fact]
+    public async Task A_title_retyped_by_hand_is_asked_by_text_not_by_the_chips_key()
+    {
+        var asked = new List<IReadOnlyList<string>>();
+        var page = Page(new FakeSindriApi { LensesAnswer = q => { asked.Add(q.Anchors); return Unknown(q); } });
+        await page.Pick(Tabs, "Tab groups", Token);
+        asked.Clear();
+
+        page.AnchorText = "Tab";
+        page.AnchorText = "Tab groups";
+        await page.Submit(Token);
+
+        Assert.Equal(["Tab groups"], Assert.Single(asked), StringComparer.Ordinal);
+    }
 }

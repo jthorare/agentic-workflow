@@ -71,6 +71,11 @@ internal sealed partial class ContextPageViewModel : ObservableObject
         get;
         set
         {
+            if (!_picking && !string.Equals(field, value, StringComparison.Ordinal))
+            {
+                _picked = null;   // typing is a question again, even when it spells a chip's title
+            }
+
             Set(ref field, value);
             if (string.IsNullOrWhiteSpace(value))
             {

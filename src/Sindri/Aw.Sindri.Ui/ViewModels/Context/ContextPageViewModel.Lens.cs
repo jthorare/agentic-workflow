@@ -137,11 +137,15 @@ internal sealed partial class ContextPageViewModel
     {
         // The box shows the title; what is read is the key (a person typing the same title later reads it as a question).
         _picked = title is null ? null : (anchor, title);
+        _picking = true;
         AnchorText = title ?? anchor;
+        _picking = false;
         return Submit(cancellationToken);
     }
 
     private (string Key, string Title)? _picked;
+
+    private bool _picking;
 
     // What the box asks: the key of a chip whose title it still shows, else what is typed.
     private string Asked => _picked is { } p && string.Equals(AnchorText, p.Title, StringComparison.Ordinal) ? p.Key : AnchorText;
