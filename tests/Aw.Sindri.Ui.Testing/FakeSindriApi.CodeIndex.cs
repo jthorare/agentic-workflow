@@ -14,9 +14,19 @@ internal sealed partial class FakeSindriApi
     /// <summary>How many times the status was read.</summary>
     public int CodeIndexCalls => Volatile.Read(ref _codeIndexCalls);
 
-    public Task<Result<CodeIndexStatusView>> CodeIndexStatus(Uri api, CancellationToken cancellationToken)
+    /// <summary>Holds the next status read (once) until it is completed; the read takes its answer when it starts, so a later change of <see cref="CodeIndexStatusAnswer"/> is not seen by it.</summary>
+    public TaskCompletionSource? CodeIndexHold { get; set; }
+
+    /// <summary>The token of the newest status read.</summary>
+    public CancellationToken CodeIndexToken { get; private set; }
+
+    public async Task<Result<CodeIndexStatusView>> CodeIndexStatus(Uri api, CancellationToken cancellationToken)
     {
         _ = Interlocked.Increment(ref _codeIndexCalls);
-        return Task.FromResult(Answer<CodeIndexStatusView>(api, "/sindri/code-index/status", CodeIndexStatusAnswer));
+        CodeIndexToken = cancellationToken;
+        var (answer, hold) = (CodeIndexStatusAnswer, CodeIndexHold);
+        CodeIndexHold = null;
+        await WaitFor(hold, cancellationToken).ConfigureAwait(false);
+        return Answer<CodeIndexStatusView>(api, "/sindri/code-index/status", answer);
     }
 }

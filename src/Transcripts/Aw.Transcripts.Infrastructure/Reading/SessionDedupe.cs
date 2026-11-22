@@ -61,7 +61,7 @@ internal sealed class SessionDedupe(TranscriptFileReader reader, IReadOnlyList<T
         var read = await reader.Read(file, cancellationToken).ConfigureAwait(false);
         var loaded = read.Map(parsed =>
         {
-            var turns = TurnAssembler.Assemble(file.Ref, parsed.Entries);
+            var turns = TurnAssembler.Assemble(file.SessionOf(), parsed.Entries);
             parsed.Entries.Clear();
             return new LoadedFile(parsed, new FileSpan(parsed.First, parsed.Last, file.Path), keepTurns ? turns : null, [.. turns.Select(TurnKey.Of)], [.. turns.Select(t => t.Role)]);
         });

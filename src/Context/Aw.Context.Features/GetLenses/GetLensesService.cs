@@ -75,19 +75,37 @@ internal sealed class GetLensesService(MapReader reader, LensBasisReader bases, 
 
     private const string SymbolLevel = "symbol";
 
-    // Phase 9: the code band's symbols for a scope of one repo (a file's repo is not on the lens row, so a wider scope stays file-level). The links come from the files' file-level 'implements'.
+    // Phase 9, #3776: the code band's symbols, read once per repo the band's files are in (a file row names its repo) and joined by RepoSymbols. A file that names no repo is read in the scope's only repo, else not at all.
+    // The links come from the files' file-level 'implements'.
     private async Task<Result<LensesView>> WithSymbols(LensesView view, ContextSettings settings, ContextScope scope, MapVersion version, CancellationToken cancellationToken)
     {
         var repos = ScopeRules.Resolve(settings, scope.Repos, scope.Caller, scope.LeftOut);
         var code = view.Bands.Code;
-        if (repos.IsError || repos.Value.Count != 1 || code.Files.Count == 0)
+        if (repos.IsError || repos.Value.Count == 0 || code.Files.Count == 0)
         {
             return view;
         }
 
-        var links = code.Files.Where(f => f.Implements.Count > 0).Select(f => (f.Path, f.Implements)).ToList();
-        var column = await SymbolColumn.Read(new TrailingCodeSymbolSource(symbols, repoReader, repos.Value[0]), new SymbolColumnReading(repos.Value[0], version, [.. code.Files.Select(f => f.Path)], links), cancellationToken).ConfigureAwait(false);
-        var answered = column.State != SymbolsState.Unavailable;   // an index that answers (ok, or stale with both commits named) makes the code coverage symbol-level
+        var columns = new List<LensSymbols>();
+        foreach (var repo in repos.Value)
+        {
+            var files = code.Files.Where(f => f.Repo is null ? repos.Value.Count == 1 : string.Equals(f.Repo, repo.Name.Value, StringComparison.Ordinal)).ToList();
+            if (files.Count == 0)
+            {
+                continue;
+            }
+
+            var links = files.Where(f => f.Implements.Count > 0).Select(f => (f.Path, f.Implements)).ToList();
+            columns.Add(await SymbolColumn.Read(new TrailingCodeSymbolSource(symbols, repoReader, repo), new SymbolColumnReading(repo, version, [.. files.Select(f => f.Path)], links), cancellationToken).ConfigureAwait(false));
+        }
+
+        if (columns.Count == 0)
+        {
+            return view with { Bands = view.Bands with { Code = code with { Symbols = LensSymbols.Unavailable with { Reason = "files are in no single repo" } } } };
+        }
+
+        var column = RepoSymbols.Join(columns);
+        var answered = columns.Exists(c => c.State != SymbolsState.Unavailable);   // an index that answers (ok, or stale with both commits named) makes the code coverage symbol-level
         var coverage = answered ? view.Coverage with { Code = view.Coverage.Code with { Level = SymbolLevel } } : view.Coverage;
         return view with { Bands = view.Bands with { Code = code with { Symbols = column } }, Coverage = coverage };
     }

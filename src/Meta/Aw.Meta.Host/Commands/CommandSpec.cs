@@ -11,5 +11,8 @@ internal sealed record CommandSpec(string Usage, string[] Required, string[] Opt
 {
     internal const string JsonFlag = "json";
 
+    /// <summary>Options with a value that may be given more than once (delegate --label a --label b).</summary>
+    internal string[] Repeated { get; init; } = [];
+
     internal static CommandSpec None(string usage) => new(usage, [], [], []);
 }
