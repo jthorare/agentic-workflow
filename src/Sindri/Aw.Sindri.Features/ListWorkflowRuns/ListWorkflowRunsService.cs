@@ -2,6 +2,8 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Failures;
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Features.ListWorkflowRuns;
@@ -36,6 +38,28 @@ internal sealed class ListWorkflowRunsService(IWorkflowStore workflows, IWorkflo
             return recent.Error;
         }
 
-        return new ListWorkflowRunsResponse(record.Slug, [.. recent.Value.Take(limit).Select(static r => new WorkflowRunSummary(r.Id, r.Revision, RunWords.Of(r.Status), RunWords.Kind(r.Trigger), r.StartedAt, r.EndedAt, r.Error))], More: recent.Value.Count > limit);
+        var page = recent.Value.Take(limit).ToList();
+        var titles = await Titles(record.Id, page, cancellationToken).ConfigureAwait(false);
+        return new ListWorkflowRunsResponse(record.Slug, [.. page.Select(r => new WorkflowRunSummary(r.Id, r.Revision, RunWords.Of(r.Status), RunWords.Kind(r.Trigger), r.StartedAt, r.EndedAt, r.Error, Sentence(r, titles)))], More: recent.Value.Count > limit);
+    }
+
+    // why: the row says why in the §6.1 words, naming the step by its title (#3304); one revision read per revision a failed run on this page walked, never one per run
+    private static string? Sentence(WorkflowRun run, Dictionary<int, Dictionary<string, string>> titles) =>
+        run.Status == WorkflowRunStatus.Failed && run.Error is { } error && titles.TryGetValue(run.Revision, out var named) ? StepFailures.ForRun(error, named)?.Sentence : null;
+
+    // Each node's title (its own, else its block kind in words) per revision a failed run walked; a revision the store can't give leaves those rows with their error only.
+    private async ValueTask<Dictionary<int, Dictionary<string, string>>> Titles(WorkflowId workflow, List<WorkflowRun> page, CancellationToken cancellationToken)
+    {
+        var titles = new Dictionary<int, Dictionary<string, string>>();
+        foreach (var revision in page.Where(static r => r.Status == WorkflowRunStatus.Failed && r.Error is not null).Select(static r => r.Revision).Distinct())
+        {
+            var read = await workflows.GetRevision(workflow, revision, cancellationToken).ConfigureAwait(false);
+            if (read.IsSuccess)
+            {
+                titles[revision] = read.Value.Spec.Nodes.ToDictionary(static n => n.Id.Value, static n => StepTitle.Of(n), StringComparer.Ordinal);
+            }
+        }
+
+        return titles;
     }
 }

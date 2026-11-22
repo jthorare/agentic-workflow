@@ -23887,3 +23887,5 @@ static Aw.Sindri.Core.Graph.Failures.StepFailure.operator ==(Aw.Sindri.Core.Grap
 Aw.Sindri.Core.Graph.Failures.StepFailures
 static Aw.Sindri.Core.Graph.Failures.StepFailures.ForRun(string! error, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! titles) -> Aw.Sindri.Core.Graph.Failures.StepFailure?
 static Aw.Sindri.Core.Graph.Failures.StepFailures.Describe(string! step, string! error, string? raw = null) -> Aw.Sindri.Core.Graph.Failures.StepFailure?
+Aw.Sindri.Core.Graph.Failures.StepTitle
+static Aw.Sindri.Core.Graph.Failures.StepTitle.Of(Aw.Sindri.Core.Graph.GraphNode! node) -> string!

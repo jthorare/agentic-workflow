@@ -54,13 +54,7 @@ internal sealed class GetWorkflowRunService(IWorkflowRunStore runs, IWorkflowSto
         var revision = await workflows.GetRevision(run.WorkflowId, run.Revision, cancellationToken).ConfigureAwait(false);
         return revision.IsError
             ? new Dictionary<NodeId, string>()
-            : revision.Value.Spec.Nodes.ToDictionary(static n => n.Id, static n => n.Title is { Length: > 0 } own ? own : Kind(n.Type));
-    }
-
-    private static string Kind(string type)
-    {
-        var words = type.Replace('_', ' ');
-        return words.Length == 0 ? words : words[..1].ToUpperInvariant() + words[1..];
+            : revision.Value.Spec.Nodes.ToDictionary(static n => n.Id, StepTitle.Of);
     }
 
     // The agent state of the run's rows. The candidates are the 'run_agent' nodes of the revision the run walked whose row runs now (item 0: a run_agent node runs once). The run's workflow says which

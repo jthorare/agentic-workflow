@@ -7,6 +7,8 @@ public static class StepFailures
 
     private const string CodeThrew = "SND-CODE-004";
 
+    private const string NodeHead = "node '";
+
     // why: the engine's SND-CODE-005 message for a missing runner (CodeRunnerMissing.Message, #3757) and the text it replaces; both mean the binary is not installed
     private static readonly string[] _runnerMissingLeads = ["Runner binary not found at ", "the runner binary is not at "];
 
@@ -54,7 +56,27 @@ public static class StepFailures
     /// <param name="error">The run's error as the engine wrote it.</param>
     /// <param name="titles">Each node id of the revision the run walked to its title.</param>
     /// <returns>The failure in words, or null when the error names no known step or its code has no sentence.</returns>
-    public static StepFailure? ForRun(string error, IReadOnlyDictionary<string, string> titles) => throw new NotSupportedException();
+    public static StepFailure? ForRun(string error, IReadOnlyDictionary<string, string> titles)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        ArgumentNullException.ThrowIfNull(titles);
+        var close = error.StartsWith(NodeHead, StringComparison.Ordinal) ? error.IndexOf('\'', NodeHead.Length) : -1;
+        if (close < 0 || !titles.TryGetValue(error[NodeHead.Length..close], out var title))
+        {
+            return null;
+        }
+
+        // why: what comes between the node and its error differs ("failed", "failed on item 2", "... no 'out' edge to continue on"), so the first ": " that starts a known code wins
+        for (var at = error.IndexOf(Separator, close, StringComparison.Ordinal); at >= 0; at = error.IndexOf(Separator, at + Separator.Length, StringComparison.Ordinal))
+        {
+            if (Describe(title, error[(at + Separator.Length)..]) is { } failure)
+            {
+                return failure with { Detail = error };
+            }
+        }
+
+        return null;
+    }
 
     // why: sindri-code-runner writes "<type>: <message>" for an exception the code threw; the type stays in Details, the owner reads the message
     private static string WithoutExceptionType(string message)
