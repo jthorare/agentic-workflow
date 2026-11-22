@@ -46,7 +46,9 @@ internal sealed class NodeRunViewModel : ObservableObject
     public bool CanEditStep => IsError;
 
     /// <summary>The Edit step button's words.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     public string EditStepText => Labels.WfEditStep;
+#pragma warning restore CA1822, MA0041
 
     /// <summary>Opens the workflow with this step selected and its sheet open.</summary>
     /// <param name="cancellationToken">Cancels the reads.</param>
