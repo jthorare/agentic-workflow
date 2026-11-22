@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Failures;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Launches;
@@ -31,9 +32,35 @@ internal sealed class GetWorkflowRunService(IWorkflowRunStore runs, IWorkflowSto
 
         var found = run.Value;
         var agentNodes = await AgentNodes(found, nodes.Value, cancellationToken).ConfigureAwait(false);
+        var titles = await StepTitles(found, nodes.Value, cancellationToken).ConfigureAwait(false);
         var slug = WorkflowSlug.From(found.Id.Value[..found.Id.Value.IndexOf('@', StringComparison.Ordinal)]);
         return new GetWorkflowRunResponse(found.Id, slug, found.Revision, RunText.Of(found.Status), RunText.Json(found.Trigger), RunText.Json(found.Outputs), found.Error, found.ItemId, found.StartedAt, found.EndedAt,
-            [.. nodes.Value.Select(n => new NodeRunView(n.NodeId, n.ItemIndex, RunText.Of(n.Status), RunText.Json(n.Input), RunText.Json(n.Output), n.Truncated, n.Error, agentNodes.Of(n), n.Raw))]);
+            [.. nodes.Value.Select(n => new NodeRunView(n.NodeId, n.ItemIndex, RunText.Of(n.Status), RunText.Json(n.Input), RunText.Json(n.Output), n.Truncated, n.Error, agentNodes.Of(n), n.Raw, Failure(n, titles)))]);
+    }
+
+    // why: the §6.1 sentence names a step by its title, never its node id (#3304); a row the revision can't name keeps only its raw error
+    private static StepFailure? Failure(NodeRun row, Dictionary<NodeId, string> titles) =>
+        row.Status == NodeRunStatus.Failed && row.Error is { } error && titles.TryGetValue(row.NodeId, out var title) ? StepFailures.Describe(title, error, row.Raw) : null;
+
+    // The title of each node of the revision the run walked, read only when a row failed: the node's own title, else its block kind in words ("run_agent" -> "Run agent").
+    // A revision the store can't give leaves no title, so the failed rows carry no sentence and the read still answers.
+    private async ValueTask<Dictionary<NodeId, string>> StepTitles(WorkflowRun run, IReadOnlyList<NodeRun> rows, CancellationToken cancellationToken)
+    {
+        if (!rows.Any(static r => r.Status == NodeRunStatus.Failed))
+        {
+            return new Dictionary<NodeId, string>();
+        }
+
+        var revision = await workflows.GetRevision(run.WorkflowId, run.Revision, cancellationToken).ConfigureAwait(false);
+        return revision.IsError
+            ? new Dictionary<NodeId, string>()
+            : revision.Value.Spec.Nodes.ToDictionary(static n => n.Id, static n => n.Title is { Length: > 0 } own ? own : Kind(n.Type));
+    }
+
+    private static string Kind(string type)
+    {
+        var words = type.Replace('_', ' ');
+        return words.Length == 0 ? words : words[..1].ToUpperInvariant() + words[1..];
     }
 
     // The agent state of the run's rows. The candidates are the 'run_agent' nodes of the revision the run walked whose row runs now (item 0: a run_agent node runs once). The run's workflow says which
