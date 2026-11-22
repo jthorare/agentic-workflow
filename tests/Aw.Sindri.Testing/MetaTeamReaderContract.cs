@@ -39,12 +39,12 @@ public abstract class MetaTeamReaderContract
     {
         var read = await Create(Team).Read(Token);
 
-        Assert.Null(read.Unavailable);
-        Assert.Equal(Team.RecycleAt, read.RecycleAt);
-        Assert.Equal(Team.Lanes.ToArray(), read.Lanes.ToArray());
-        Assert.Equal(Team.MergeQueue.ToArray(), read.MergeQueue.ToArray());
-        Assert.Equal(Team.Usage.ToArray(), read.Usage.ToArray());
-        Assert.Equal(Team.RepoDirectory, read.RepoDirectory);
+        Expect.Equal(expected: null, read.Unavailable);
+        Expect.Equal(Team.RecycleAt, read.RecycleAt);
+        Expect.True(Team.Lanes.SequenceEqual(read.Lanes));
+        Expect.True(Team.MergeQueue.SequenceEqual(read.MergeQueue));
+        Expect.True(Team.Usage.SequenceEqual(read.Usage));
+        Expect.Equal(Team.RepoDirectory, read.RepoDirectory);
     }
 
     /// <summary>No team: unavailable, with a reason and nothing else.</summary>
@@ -54,9 +54,9 @@ public abstract class MetaTeamReaderContract
     {
         var read = await Create(MetaTeamRead.NotAvailable("no aw-meta")).Read(Token);
 
-        Assert.False(string.IsNullOrWhiteSpace(read.Unavailable));
-        Assert.Empty(read.Lanes);
-        Assert.Empty(read.MergeQueue);
-        Assert.Empty(read.Usage);
+        Expect.True(!string.IsNullOrWhiteSpace(read.Unavailable));
+        Expect.Equal(0, read.Lanes.Count);
+        Expect.Equal(0, read.MergeQueue.Count);
+        Expect.Equal(0, read.Usage.Count);
     }
 }
