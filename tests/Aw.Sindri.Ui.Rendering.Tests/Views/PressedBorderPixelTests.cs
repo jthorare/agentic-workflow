@@ -9,7 +9,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Frames.Tests.Views;
+using Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 using Aw.Sindri.Ui.Tests.Views;
 
 namespace Aw.Sindri.Ui.Rendering.Tests.Views;

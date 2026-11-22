@@ -65,9 +65,9 @@ public sealed class QueueFramesTests : IDisposable
         _windows.Add(window);
         window.Show();
         _ = shell.Run(_stop.Token);
-        for (var i = 0; i < 200 && !(shell.State == ShellState.Normal && ready(shell)); i++)
+        for (var i = 0; i < 2000 && !(shell.State == ShellState.Normal && ready(shell)); i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Dispatcher.UIThread.RunJobs();
         }
 
@@ -96,9 +96,9 @@ public sealed class QueueFramesTests : IDisposable
 
     private static async Task Until(Window window, Func<bool> condition)
     {
-        for (var i = 0; i < 300 && !condition(); i++)
+        for (var i = 0; i < 3000 && !condition(); i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Settle(window);
         }
 
