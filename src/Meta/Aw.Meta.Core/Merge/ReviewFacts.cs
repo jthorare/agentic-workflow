@@ -9,6 +9,12 @@ public sealed record ReviewFacts
     /// <summary>The sha of the reviewer's standing "OK #pr at sha" line: the newest one not cleared by a later "HOLD #pr"; null when there is none.</summary>
     public string? OkSha { get; init; }
 
+    /// <summary>The reviewer's standing "HOLD #pr" line: set when the newest of its OK and HOLD lines for the pull request is a HOLD; null otherwise.</summary>
+    public string? Hold { get; init; }
+
+    /// <summary>Whether the team's review.mode is "counts": no OK is needed, only a standing HOLD refuses.</summary>
+    public bool CountsMode { get; init; }
+
     /// <summary>Whether the line after that OK says "qa not yet": a UI pull request qa hasn't passed.</summary>
     public bool QaNotYet { get; init; }
 

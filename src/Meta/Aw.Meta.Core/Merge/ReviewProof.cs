@@ -16,9 +16,9 @@ public static partial class ReviewProof
     {
         ArgumentNullException.ThrowIfNull(messages);
 
-        // Replay the reviewer's lines in order: an OK sets the standing OK, a HOLD clears it. A later message that names
-        // neither keeps whatever stands, so a reviewer's unrelated message never voids an OK.
-        var standing = (Ok: (string?)null, Qa: Qa.None);
+        // Replay the reviewer's lines in order: an OK sets the standing OK and lifts a hold, a HOLD clears the OK and stands as
+        // the hold. A later message that names neither keeps whatever stands, so a reviewer's unrelated message never voids an OK.
+        var standing = Standing.None;
         foreach (var message in messages.Where(m => string.Equals(m.FromName, reviewer, StringComparison.Ordinal)))
         {
             standing = Replay(message.Body, pr, standing);
@@ -29,6 +29,7 @@ public static partial class ReviewProof
         {
             Reviewer = reviewer,
             OkSha = standing.Ok,
+            Hold = standing.Hold,
             QaNotYet = standing.Qa.NotYet,
             QaSha = standing.Qa.Sha,
             ReadySha = ready is null ? null : ReadySha(ready.Body),
@@ -41,9 +42,15 @@ public static partial class ReviewProof
         public static Qa None => default;
     }
 
+    // What the reviewer's lines leave standing for the pull request: an OK with its qa line, or a HOLD line, or neither.
+    private readonly record struct Standing(string? Ok, Qa Qa, string? Hold)
+    {
+        public static Standing None => default;
+    }
+
     // One reviewer message, line by line: "OK #pr at sha" (with the qa line right after it) or "HOLD #pr". A STATUS: or ACTION: tag
     // on the first line is read past (#2651).
-    private static (string? Ok, Qa Qa) Replay(string body, int pr, (string? Ok, Qa Qa) standing)
+    private static Standing Replay(string body, int pr, Standing standing)
     {
         var lines = body.Split('\n');
         lines[0] = NoticeRule.StripTag(lines[0].Trim());
@@ -54,11 +61,11 @@ public static partial class ReviewProof
                 var ok = OkLine.Match(lines[i]);
                 if (ok.Success && SamePr(ok, pr))
                 {
-                    standing = (ok.Groups["sha"].Value, i + 1 < lines.Length ? QaOf(lines[i + 1]) : Qa.None);
+                    standing = new Standing(ok.Groups["sha"].Value, i + 1 < lines.Length ? QaOf(lines[i + 1]) : Qa.None, Hold: null);
                 }
                 else if (HoldLine.Match(lines[i]) is { Success: true } hold && SamePr(hold, pr))
                 {
-                    standing = (null, Qa.None);
+                    standing = new Standing(Ok: null, Qa.None, lines[i].Trim());
                 }
             }
         }

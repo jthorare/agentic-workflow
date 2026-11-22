@@ -2479,11 +2479,20 @@ static Aw.Meta.Core.Watch.WatchMemory.Format(string! repo, Aw.Meta.Core.Watch.Wa
 static Aw.Meta.Core.Watch.WatchMemory.Parse(string? text, string! repo, Aw.Meta.Core.Watch.WatchResources! resources) -> Aw.Meta.Core.Watch.WatchState!
 Aw.Meta.Core.Config.ReviewConfig
 Aw.Meta.Core.Config.ReviewConfig.<Clone>$() -> Aw.Meta.Core.Config.ReviewConfig!
-Aw.Meta.Core.Config.ReviewConfig.Deconstruct(out string! Lane) -> void
+Aw.Meta.Core.Config.ReviewConfig.Deconstruct(out string! Lane, out string! Mode) -> void
 Aw.Meta.Core.Config.ReviewConfig.Equals(Aw.Meta.Core.Config.ReviewConfig? other) -> bool
 Aw.Meta.Core.Config.ReviewConfig.Lane.get -> string!
 Aw.Meta.Core.Config.ReviewConfig.Lane.init -> void
-Aw.Meta.Core.Config.ReviewConfig.ReviewConfig(string! Lane) -> void
+Aw.Meta.Core.Config.ReviewConfig.ReviewConfig(string! Lane, string! Mode = "ok") -> void
+Aw.Meta.Core.Config.ReviewConfig.Mode.get -> string!
+Aw.Meta.Core.Config.ReviewConfig.Mode.init -> void
+Aw.Meta.Core.Config.ReviewConfig.IsCounts.get -> bool
+const Aw.Meta.Core.Config.ReviewConfig.OkMode = "ok" -> string!
+const Aw.Meta.Core.Config.ReviewConfig.CountsMode = "counts" -> string!
+Aw.Meta.Core.Merge.ReviewFacts.Hold.get -> string?
+Aw.Meta.Core.Merge.ReviewFacts.Hold.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.CountsMode.get -> bool
+Aw.Meta.Core.Merge.ReviewFacts.CountsMode.init -> void
 Aw.Meta.Core.Config.TeamConfig.Review.get -> Aw.Meta.Core.Config.ReviewConfig?
 Aw.Meta.Core.Config.TeamConfig.Review.init -> void
 Aw.Meta.Core.Config.TeamConfig.TeamConfig(string! team, string! repo, System.Collections.Generic.IReadOnlyList<string!>! lanes, string! metaLane = "meta", string? log = null, string? prompts = null, Aw.Meta.Core.Config.GateConfig? gate = null, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Config.MergeOrderRule!>? mergeOrder = null, System.Collections.Generic.IReadOnlyList<string!>? knownFlakes = null, Aw.Meta.Core.Config.WorktreeConfig? worktrees = null, Aw.Meta.Core.Config.ResourcesConfig? resources = null, Aw.Meta.Core.Config.BuildersConfig? builders = null, Aw.Meta.Core.Config.HeavyConfig? heavy = null, Aw.Meta.Core.Config.ContextConfig? context = null, Aw.Meta.Core.Config.UsageConfig? usage = null, string? agent = null, Aw.Meta.Core.Config.ReviewConfig? review = null) -> void

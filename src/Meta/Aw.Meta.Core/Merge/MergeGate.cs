@@ -107,7 +107,8 @@ public static class MergeGate
         ];
     }
 
-    // The review path: the reviewer's OK at the head, the lane's ready at the head, its counts, order and draft. Nothing is checked against main.
+    // The review path: the reviewer's OK at the head (in review.mode counts: no standing HOLD), the lane's ready at the head, its
+    // counts, order and draft. Nothing is checked against main.
     private static MergeCheck[] ReviewChecks(MergeFacts facts, ReviewFacts review)
     {
         var pr = facts.Pr.ToString(CultureInfo.InvariantCulture);
@@ -127,8 +128,19 @@ public static class MergeGate
     }
 
     // The reviewer's standing OK must name the head; a qa line under it ("qa not yet", "qa passed <sha>") must say passed at the head.
+    // In review.mode counts no OK is needed: only a standing HOLD refuses, and an OK at the head still brings its qa line along.
     private static MergeCheck ReviewCheck(ReviewFacts review, string pr, string head)
     {
+        if (review.Hold is not null)
+        {
+            return new MergeCheck("review", Ok: false, $"{review.Reviewer} holds #{pr}: \"{review.Hold}\"; a later \"OK #{pr} at <sha>\" lifts it");
+        }
+
+        if (review.CountsMode && !ReviewProof.IsHead(review.OkSha, head))
+        {
+            return new MergeCheck("review", Ok: true, $"review.mode counts: no OK needed, no HOLD from {review.Reviewer}");
+        }
+
         if (review.OkSha is null)
         {
             return new MergeCheck("review", Ok: false, $"no standing \"OK #{pr} at <sha>\" from {review.Reviewer}");
