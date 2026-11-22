@@ -196,7 +196,7 @@ internal sealed partial class GraphCanvas : Control
             _fitPending = false;
             // the canvas takes the wheel only while it can move that way; at its end, or when it fits, the page scrolls
             // a sideways swipe (Delta.X) scrolls left and right; Shift turns a plain wheel's Delta.Y sideways
-            var (dx, dy) = e.KeyModifiers.HasFlag(KeyModifiers.Shift) && e.Delta.X == 0 ? (e.Delta.Y, 0d) : (e.Delta.X, e.Delta.Y);
+            var (dx, dy) = e.KeyModifiers.HasFlag(KeyModifiers.Shift) && Math.Abs(e.Delta.X) < 1e-9 ? (e.Delta.Y, 0d) : (e.Delta.X, e.Delta.Y);
             var before = Pan;
             Pan = new Point(Pan.X + (dx * WheelStep), Pan.Y + (dy * WheelStep));
             e.Handled = Pan != before;
