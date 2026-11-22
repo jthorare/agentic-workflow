@@ -146,19 +146,16 @@ internal sealed partial class ShellWindow
             return null;
         }
 
-        switch (e.Key)
+#pragma warning disable IDE0072 // every other key is not a view's digit
+        return e.Key switch
         {
-            case Key.D1 or Key.NumPad1:
-                return "1";
-            case Key.D2 or Key.NumPad2:
-                return "2";
-            case Key.D3 or Key.NumPad3:
-                return "3";
-            case Key.D4 or Key.NumPad4:
-                return "4";
-            default:
-                return null;
-        }
+            Key.D1 or Key.NumPad1 => "1",
+            Key.D2 or Key.NumPad2 => "2",
+            Key.D3 or Key.NumPad3 => "3",
+            Key.D4 or Key.NumPad4 => "4",
+            _ => null,
+        };
+#pragma warning restore IDE0072
     }
 
     // The key as the view model names it: a letter (no Shift), "Enter" or ".".

@@ -101,20 +101,15 @@ internal sealed partial class ProjectsPage : UserControl
         e.Handled = PressRowKey(page, e.Key);
     }
 
-    private static bool PressRowKey(ProjectsPageViewModel page, Key key)
+#pragma warning disable IDE0072 // every other key is not the rows'
+    private static bool PressRowKey(ProjectsPageViewModel page, Key key) => key switch
     {
-        switch (key)
-        {
-            case Key.Down:
-                return page.Press("J");
-            case Key.Up:
-                return page.Press("K");
-            case Key.Enter:
-                return page.Press("Enter");
-            default:
-                return false;
-        }
-    }
+        Key.Down => page.Press("J"),
+        Key.Up => page.Press("K"),
+        Key.Enter => page.Press("Enter"),
+        _ => false,
+    };
+#pragma warning restore IDE0072
 
     // O and B open the Sort and the Group menu under their buttons, the way a click does.
     private void OnMenuRequested(object? sender, ProjectMenuRequestedEventArgs e)
@@ -141,20 +136,15 @@ internal sealed partial class ProjectsPage : UserControl
         e.Handled = PressSearchKey(page, e.Key);
     }
 
-    private static bool PressSearchKey(ProjectsPageViewModel page, Key key)
+#pragma warning disable IDE0072 // every other key is the search box's own
+    private static bool PressSearchKey(ProjectsPageViewModel page, Key key) => key switch
     {
-        switch (key)
-        {
-            case Key.Escape:
-                return page.ClearSearch();
-            case Key.Down:
-                return page.Press("J");
-            case Key.Enter:
-                return (page.SelectedId is not null || page.Press("J")) && page.Press("Enter");
-            default:
-                return false;
-        }
-    }
+        Key.Escape => page.ClearSearch(),
+        Key.Down => page.Press("J"),
+        Key.Enter => (page.SelectedId is not null || page.Press("J")) && page.Press("Enter"),
+        _ => false,
+    };
+#pragma warning restore IDE0072
 
     private void OnSearchFocus(object? sender, RoutedEventArgs e) => (DataContext as ProjectsPageViewModel)?.SearchFocused(ProjectsSearch.IsFocused);
 
