@@ -8,14 +8,17 @@
 |---|---|---|---|
 | `hello` | in, first message | `{t, v: 1, token, cols, rows}` | must arrive 3 s after open, else close 1008. A bad token closes 1008 with SND-AUTH-002 |
 | `ready` | out | `{t, v, host: {socket, session, pane}}` | one, after a good hello |
-| `frame` | out | `{t, seq, rows: [ansi lines], cursor: {x, y}, w, h, alt, inMode, dead}` whole screen each time (`dead` is 1 when the pane's process has exited) | at most 30 a second; none when the screen is unchanged |
+| `frame` | out | `{t, seq, rows: [ansi lines], cursor: {x, y}, w, h, alt, inMode, dead, back, hist}` whole screen each time (`dead` is 1 when the pane's process has exited). `rows` is always `h` lines. `back` is the offset the rows show (0 is the live screen) and `hist` is tmux's `#{history_size}` for the pane: 0 on the alternate screen | at most 30 a second; none when the screen is unchanged. A change of `hist` alone sends a frame |
 | `key` | in | `{t, key}` with a name from the foreign list, or `{t, text}` for literal text | `text` at most 4 KiB; one message is one tmux call, a trailing `;` included |
+| `scroll` | in | `{t, back}`, `back` an integer: rows above the live screen's top, 0 is live. Serve clamps it to 0..`hist` (a negative number is 0) and answers with a frame whose `back` is the clamped value. Rows come from `capture-pane -S -back -E -back+h-1`, never copy-mode. While `back` is above 0 and `hist` grows by k, `back` grows by k (the view stays on the same lines). A `key`, `text` or `paste` sets `back` to 0; `size` keeps it and clamps it again. The client maps `Shift+PageUp` to `back + h` | On the alternate screen `back` stays 0 and a `scroll` is ignored; if the app enters it while `back` is above 0, the scroll state is dropped (the first alt frame says `back` 0, and leaving it lands on live) |
 | `paste` | in | `{t, text}` | at most 256 KiB, else close 1009 |
 | `size` | in | `{t, cols, rows}`, 20 to 400 columns and 5 to 200 rows | on a foreign socket it only sets how Sindri draws; it never resizes the window |
 | `ping` / `pong` | out / in | `{t}` | Serve pings every 15 s; no pong in 10 s closes the socket (view: Reconnecting) |
 | `close` | out | WebSocket close code and reason | 4015 "SND-AGENT-015" (no pane), 4016 "SND-AGENT-016" (tmux or session gone, or a tmux call that took over 5 s; both after the upgrade only when the pane went away or tmux stalled in between), 1001 (Serve stopping), 1008 (token), 1009 (message too big) |
 
 Key names (foreign list, spec §15.2): `Enter`, `Escape`, `Tab`, `BTab`, `BSpace`, `DC`, `Up`, `Down`, `Left`, `Right`, `Home`, `End`, `PageUp`, `PageDown`, `F1` to `F12`, `C-a` to `C-z`, `M-a` to `M-z`. Any other name is dropped and gets no echo.
+
+A client message with a `t` outside this table, or text that is not JSON, is ignored: the socket stays open and nothing is echoed. A newer client can send a message an older Serve does not know without dropping to Reconnecting.
 
 ## Later (#3381)
 

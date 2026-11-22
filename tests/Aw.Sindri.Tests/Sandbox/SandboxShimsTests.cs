@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Runtime.Versioning;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Infrastructure.Sandbox;
+using Aw.Sindri.Tests.Library;
 
 namespace Aw.Sindri.Tests.Sandbox;
 
@@ -9,6 +10,9 @@ namespace Aw.Sindri.Tests.Sandbox;
 [UnsupportedOSPlatform("windows")]
 public sealed class SandboxShimsTests : IDisposable
 {
+    // heavy marks a pattern row two ways: `) mode=expensive` (npm, npx, the anywhere markers) and `) compiles=1` (the dotnet steps that compile, #3808).
+    private static readonly string[] _heavyRowMarkers = [") mode=expensive", ") compiles=1"];
+
     private readonly string _dir = Path.Combine(Path.GetTempPath(), "aw-shims-" + RealTime.NewGuid().ToString("N"));
 
     public SandboxShimsTests()
@@ -139,13 +143,13 @@ public sealed class SandboxShimsTests : IDisposable
     {
         var heavy = Environment.GetEnvironmentVariable("AW_HEAVY_BIN") is { Length: > 0 } set
             ? set
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".agentic-workflow", "bin-r1b", "heavy");
+            : Path.Combine(LibraryValidateTests.RepoRoot(), "scripts", "heavy.sh");   // the tree's heavy, so this test and heavy.sh move together (#3868)
         Assert.SkipUnless(File.Exists(heavy), "no heavy wrapper at " + heavy);
 
         var lines = File.ReadAllLines(heavy);
         var patterns = lines
-            .Where(l => l.TrimStart().StartsWith('*') && l.Contains(") mode=expensive", StringComparison.Ordinal) && !l.Contains("--no-build", StringComparison.Ordinal))
-            .SelectMany(l => l[..l.IndexOf(") mode=expensive", StringComparison.Ordinal)].Trim().Split('|'))
+            .Where(l => l.TrimStart().StartsWith('*') && RowMarkerAt(l) >= 0 && !l.Contains("--no-build", StringComparison.Ordinal))
+            .SelectMany(l => l[..RowMarkerAt(l)].Trim().Split('|'))
             .Select(p => p.Trim('*').Replace("\"", string.Empty, StringComparison.Ordinal))
             .ToList();
         Assert.NotEmpty(patterns);
@@ -162,6 +166,8 @@ public sealed class SandboxShimsTests : IDisposable
             Assert.Equal(SandboxShims.ExpensiveSubcommands(tool).Order(StringComparer.Ordinal), fromHeavy.Order(StringComparer.Ordinal));
         }
     }
+
+    private static int RowMarkerAt(string line) => _heavyRowMarkers.Select(m => line.IndexOf(m, StringComparison.Ordinal)).Where(i => i >= 0).DefaultIfEmpty(-1).Min();
 
     private void Script(string name, string body) => ExecutableScript.Write(Path.Combine(_dir, name), body + "\n");
 

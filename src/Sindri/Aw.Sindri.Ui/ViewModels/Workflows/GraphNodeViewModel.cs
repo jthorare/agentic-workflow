@@ -35,10 +35,19 @@ internal sealed class GraphNodeViewModel : ObservableObject
     public string Type { get; }
 
     /// <summary>Left edge in the graph's world.</summary>
-    public double X { get; }
+    public double X { get; internal set; }
 
     /// <summary>Top edge in the graph's world.</summary>
-    public double Y { get; }
+    public double Y { get; internal set; }
+
+    /// <summary>The card's width in the world; the wrap layout sets it to the text scale times the card width.</summary>
+    public double Width { get; internal set; } = WorkflowGraphViewModel.CardWidth;
+
+    /// <summary>The card's height in the world: 60, or 80 when its settings line wraps, times the text scale.</summary>
+    public double Height { get; internal set; } = WorkflowGraphViewModel.CardHeight;
+
+    /// <summary>The text scale the card was laid out at (1 until the wrap layout runs).</summary>
+    internal double Scale { get; set; } = 1;
 
     /// <summary>The status glyph of the run shown, or empty.</summary>
     public string Glyph { get; }

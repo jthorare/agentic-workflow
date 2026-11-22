@@ -40,11 +40,12 @@ for f in sorted(os.listdir(dd)) if os.path.isdir(dd) else []:
 
 tdd = open(os.path.join(root, "tdd.html"), encoding="utf-8").read()
 sections = []
-for m in re.finditer(r'<section\b[^>]*\bid="([^"]+)"[^>]*>(.*?)</section>', tdd, re.S):
-    h = re.search(r"<h2[^>]*>(.*?)</h2>", m.group(2), re.S)
-    title = re.sub(r"<[^>]+>", "", h.group(1)).strip() if h else m.group(1)
-    keys = [k for k in re.findall(r'diagrams/([\w.-]+?)\.svg', m.group(2)) if k in diagrams]
-    sections.append({"id": m.group(1), "title": title, "anchor": "#" + m.group(1), "diagrams": list(dict.fromkeys(keys))})
+for m in re.finditer(r"""<section\b[^>]*\bid=(["'])(.+?)\1[^>]*>(.*?)</section>""", tdd, re.S):  # id="x" or id='x'
+    sid, body = m.group(2), m.group(3)
+    h = re.search(r"<h2[^>]*>(.*?)</h2>", body, re.S)
+    title = re.sub(r"<[^>]+>", "", h.group(1)).strip() if h else sid
+    keys = [k for k in re.findall(r'diagrams/([\w.-]+?)\.svg', body) if k in diagrams]
+    sections.append({"id": sid, "title": title, "anchor": "#" + sid, "diagrams": list(dict.fromkeys(keys))})
 
 def doc_id(slug, suffix="-tdd"):  # the TDD's id is <slug>-tdd, so it never collides with officeHours' <slug> plan
     s = re.sub(r"-+", "-", re.sub(r"[^a-z0-9-]", "-", slug.lower())).strip("-")
@@ -158,7 +159,7 @@ for f in manifest["prs"]:
 SWEEPS = [
     ("Performance sweep", "Exit check: every data or interactive surface has a measured time in the real app at or under its budget. "
      "A miss passes only when the owner accepts it in writing (a D-number)."),
-    ("Bug sweep", "Exit check: every finding is a GitHub issue, and a merged fix or a written reason closes each one. "
+    ("Bug sweep", "Exit check: every finding is an issue in the repo's tracker, and a merged fix or a written reason closes each one. "
      "A second walk of every surface finds nothing new."),
 ]
 last = max((n for n, _, _ in cards), default=0)

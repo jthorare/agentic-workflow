@@ -9,6 +9,15 @@ internal sealed class Placeholders
     private readonly int[] _starts;
     private readonly int[] _ends;
 
+    private Placeholders()
+    {
+        _starts = [];
+        _ends = [];
+    }
+
+    /// <summary>No placeholder (a text without "[REDACTED:" holds none).</summary>
+    public static Placeholders None { get; } = new();
+
     public Placeholders(MatchCollection matches)
     {
         _starts = new int[matches.Count];

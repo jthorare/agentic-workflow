@@ -21,6 +21,7 @@ trap 'rm -rf "$WORK"' EXIT
 export HOME="$WORK/home"; mkdir -p "$HOME"
 export AW_STATE_DIR="$WORK/state"
 unset AW_JUDGE_CHILD CURSOR_TRANSCRIPT_PATH CURSOR_PROJECT_DIR
+for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done   # a meta lane caller's AW_META_* would steer the adapters' lane hooks; CI has none (#3818)
 
 BIN="$WORK/bin"; mkdir -p "$BIN"
 printf '#!/usr/bin/env bash\nexit 0\n' > "$BIN/rtk"
