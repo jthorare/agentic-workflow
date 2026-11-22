@@ -67,7 +67,7 @@ internal sealed partial class ShellWindow
 
         if (!FocusFirstSheetAction())
         {
-            _ = SheetFocusTarget().Focus(NavigationMethod.Tab);   // no action, or none takes focus (pending): the heading (a session sheet's body)
+            _ = SheetFocusTarget().Focus(NavigationMethod.Tab);   // no action, or none takes focus (pending): the heading
         }
 
         return true;
