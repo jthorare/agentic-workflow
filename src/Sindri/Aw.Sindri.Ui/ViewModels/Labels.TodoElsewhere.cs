@@ -20,6 +20,9 @@ internal static partial class Labels
     /// <summary>The Linear part when its read failed.</summary>
     internal const string ElsewhereLinearFailed = "Linear didn't load";
 
+    /// <summary>The Reviews part when no GitHub is connected (a home with no profile yet); it opens Connections.</summary>
+    internal const string ElsewhereReviewsNotConnected = "Connect GitHub";
+
     /// <summary>The Linear part when no Linear source is set up; it opens Connections.</summary>
     internal const string ElsewhereLinearNotConnected = "Connect Linear";
 

@@ -18,6 +18,7 @@ public sealed class SindriToolsListTests(PlainMcpHost plain) : IClassFixture<Pla
         "workflow_create", "workflow_apply_ops", "workflow_replace", "workflow_validate", "workflow_activate", "workflow_pause", "workflow_delete", "workflow_run", "workflow_cancel", "workflow_docs", "workflow_blocks",
         "workflow_answer",
         "resources_list", "resources_purge",
+        "agents_start", "agents_worktree_remove",
         "toolkit_list", "toolkit_create", "toolkit_build", "toolkit_start", "toolkit_stop", "toolkit_pause", "toolkit_resume", "toolkit_calls",
     ];
 

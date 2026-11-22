@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Graph;
 using Temporalio.Exceptions;
 using Temporalio.Workflows;
 
@@ -7,7 +8,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 internal sealed partial class GraphAgentLoop
 {
     // why: a full session cap makes the activity hand back after its slice, and the workflow asks again
-    private async Task<AgentNodeLaunched> Launch(AgentNodeRef reference)
+    private async Task<AgentNodeLaunched> Launch(AgentNodeRef reference, NodeAgentRecorder events)
     {
         var attempts = Workflow.Patched("agent-launch-attempts-1");   // why: histories from before this change keep the one unbounded retried call
         AgentNodeLaunched started;
@@ -17,9 +18,14 @@ internal sealed partial class GraphAgentLoop
                 ? await LaunchOnce(reference).ConfigureAwait(true)
                 : await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.LaunchAsync(reference), _agentLaunch).ConfigureAwait(true);
             Workflow.CancellationToken.ThrowIfCancellationRequested();   // why: the launch is not cancelled with the workflow (_agentLaunch); a cancel that came during it stops here, and the catch closes what it made
+            if (started.Launched.Waiting)
+            {
+                await events.Record(NodeAgentStates.WaitingForSlot, NodeAgentRecorder.SlotWait).ConfigureAwait(true);
+            }
         }
         while (started.Launched.Waiting);
 
+        await events.Record(NodeAgentStates.Launching).ConfigureAwait(true);
         return started;
     }
 

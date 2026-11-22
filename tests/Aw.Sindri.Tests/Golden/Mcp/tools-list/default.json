@@ -1560,6 +1560,70 @@
     }
   },
   {
+    "name": "agents_start",
+    "description": "Start a one-off agent in a tmux session on Sindri's own tmux server. For the person only: an agent session is refused (SND-AUTH-002). Answers the row id, the act id, the state 'starting' and the tmux socket, session and pane.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repo": {
+          "type": "string",
+          "description": "A repo of the profile"
+        },
+        "agent": {
+          "type": "string",
+          "description": "claude-code or codex"
+        },
+        "prompt": {
+          "type": "string",
+          "description": "The first message, at most 8,000 characters; leave out to start the agent at its own prompt"
+        },
+        "worktree": {
+          "type": "boolean",
+          "description": "True runs the agent in a new worktree of the repo"
+        },
+        "actId": {
+          "type": "string",
+          "description": "8 to 32 characters of a-z and 0-9; a replay of a started one answers the first result"
+        }
+      },
+      "required": [
+        "repo",
+        "agent",
+        "actId"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "agents_worktree_remove",
+    "description": "Remove the worktree a one-off start made ('git worktree remove', never --force). For the person only: an agent session is refused (SND-AUTH-002). A tree with changes is SND-AGENT-018.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actId": {
+          "type": "string",
+          "description": "The act id the start used"
+        }
+      },
+      "required": [
+        "actId"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
     "name": "toolkit_list",
     "description": "List Sindri toolkits (small programs Sindri builds and runs in a sandbox) with their state and tools.",
     "inputSchema": {

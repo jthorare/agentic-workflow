@@ -34,6 +34,20 @@ public sealed class ContextMapTextTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void The_status_names_every_mapped_repo_with_its_short_commit_not_only_the_first()
+    {
+        var view = View(scopedTo: null) with { Heads = [new MapHead(_repo, "84c0e62aa", OnDefault: true), new MapHead(ContextRepoName.From("internal-apps"), "d692bd2", OnDefault: false)] };
+
+        var text = ContextMapText.Status(view);
+
+        Assert.Contains("\nrepos: aw-split-panes @84c0e62, internal-apps @d692bd2 (not on its default branch)\n", text, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_status_with_no_heads_has_no_repos_line() =>
+        Assert.DoesNotContain("repos:", ContextMapText.Status(View(scopedTo: null)), StringComparison.Ordinal);
+
+    [Fact, Trait("Lane", "unit")]
     public void The_publish_state_reads_in_the_specs_short_form_then_Sindris_sentences_indented()
     {
         var view = new MapPublishStatusView("published-stale", "published, code answers stale", "TimedOut", Stale: true, [new StaleRepo("aw-split-panes", "abcdef0", "1234567")], 14, Until: null,

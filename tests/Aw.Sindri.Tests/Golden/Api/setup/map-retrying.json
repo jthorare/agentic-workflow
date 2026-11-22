@@ -1,6 +1,41 @@
 {
   "steps": [
     {
+      "id": "serve",
+      "title": "Sindri is current",
+      "state": "done",
+      "why": "Sindri is running the installed build.",
+      "detail": null,
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [],
+      "cli": null
+    },
+    {
+      "id": "sources",
+      "title": "Connect your accounts",
+      "state": "done",
+      "why": "Every source your profile names is connected.",
+      "detail": "GitHub, Slack.",
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [
+        {
+          "repo": "github",
+          "state": "done",
+          "detail": "connected"
+        },
+        {
+          "repo": "slack",
+          "state": "done",
+          "detail": "connected"
+        }
+      ],
+      "cli": null
+    },
+    {
       "id": "repo",
       "title": "Add your repo",
       "state": "done",
@@ -15,7 +50,8 @@
           "state": "done",
           "detail": null
         }
-      ]
+      ],
+      "cli": null
     },
     {
       "id": "profile",
@@ -26,7 +62,20 @@
       "error": null,
       "action": null,
       "progress": null,
-      "items": []
+      "items": [],
+      "cli": null
+    },
+    {
+      "id": "agent",
+      "title": "Agent for workflows",
+      "state": "done",
+      "why": "Workflows run on an agent.",
+      "detail": "Workflows run on claude-code.",
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [],
+      "cli": null
     },
     {
       "id": "mcp",
@@ -50,7 +99,8 @@
             }
           ]
         }
-      ]
+      ],
+      "cli": null
     },
     {
       "id": "map",
@@ -71,29 +121,20 @@
           "state": "running",
           "detail": null
         }
-      ]
+      ],
+      "cli": "sindri context map refresh"
     },
     {
-      "id": "sources",
-      "title": "Connect your sources",
+      "id": "first-workflow",
+      "title": "Run hello-sindri",
       "state": "done",
-      "why": "Every source your profile names is connected.",
-      "detail": "GitHub, Slack.",
+      "why": "hello-sindri ran once.",
+      "detail": null,
       "error": null,
       "action": null,
       "progress": null,
-      "items": [
-        {
-          "repo": "github",
-          "state": "done",
-          "detail": "connected"
-        },
-        {
-          "repo": "slack",
-          "state": "done",
-          "detail": "connected"
-        }
-      ]
+      "items": [],
+      "cli": null
     }
   ],
   "asOf": {

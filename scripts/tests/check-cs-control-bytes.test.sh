@@ -22,20 +22,20 @@ printf 'class Bad\n{\n    [GeneratedRegex(@"Evidence\x08")]\n}\n' > "$R/src/Sub/
 git -C "$R" add -A
 
 out="$(bash "$CHECK" "$R" 2>&1)"; rc=$?
-if [ "$rc" = 1 ] && printf '%s' "$out" | grep -qx 'src/Sub/Bad.cs:3: control byte 0x08'; then
+if [ "$rc" = 1 ] && grep -qx 'src/Sub/Bad.cs:3: control byte 0x08' <<<"$out"; then
   ok "a planted backspace fails naming file:line and the byte"
 else
   bad "planted 0x08 rc=$rc out=$out"
 fi
-printf '%s' "$out" | grep -q Clean.cs && bad "tab or CR was flagged" || ok "tab, CR and LF pass"
+grep -q Clean.cs <<<"$out" && bad "tab or CR was flagged" || ok "tab, CR and LF pass"
 printf '%s' "$out" | LC_ALL=C grep -q "$(printf '\x08')" && bad "the raw byte was printed" || ok "the byte is printed as hex, never raw"
 
 printf 'a\x00b\n' > "$R/src/Nul.cs"
 printf '// x\n// y\x1f\x0b\n' > "$R/src/Unit.cs"
 git -C "$R" add -A
 out="$(bash "$CHECK" "$R" 2>&1)"; rc=$?
-{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -qx 'src/Nul.cs:1: control byte 0x00'; } && ok "a NUL byte fails" || bad "NUL rc=$rc out=$out"
-{ printf '%s' "$out" | grep -qx 'src/Unit.cs:2: control byte 0x1F' && printf '%s' "$out" | grep -qx 'src/Unit.cs:2: control byte 0x0B'; } \
+{ [ "$rc" = 1 ] && grep -qx 'src/Nul.cs:1: control byte 0x00' <<<"$out"; } && ok "a NUL byte fails" || bad "NUL rc=$rc out=$out"
+{ grep -qx 'src/Unit.cs:2: control byte 0x1F' <<<"$out" && grep -qx 'src/Unit.cs:2: control byte 0x0B' <<<"$out"; } \
   && ok "every byte on a line is named (0x1F and 0x0B in a comment)" || bad "unit separator out=$out"
 
 git -C "$R" rm -q --cached src/Sub/Bad.cs src/Nul.cs src/Unit.cs

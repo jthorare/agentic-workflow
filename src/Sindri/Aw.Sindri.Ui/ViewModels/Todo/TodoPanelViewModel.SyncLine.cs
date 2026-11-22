@@ -10,6 +10,18 @@ internal sealed partial class TodoPanelViewModel
 {
     private TodoNoteView? _syncNote;
     private ITimer? _syncTick;
+    private bool _profileMissing;
+
+    /// <summary>Takes whether there is no profile yet: no vault is set up then, so the sync line stays empty whatever the note read says.</summary>
+    /// <param name="missing">True on a home with no profile.</param>
+    internal void SetProfileMissing(bool missing)
+    {
+        if (_profileMissing != missing)
+        {
+            _profileMissing = missing;
+            ShowSync(_syncNote);
+        }
+    }
 
     /// <summary>The quiet line ("Synced with Obsidian 10:05"); empty when a warning or the countdown shows or no note is set.</summary>
     public string SyncQuiet { get; private set => Set(ref field, value); } = string.Empty;
@@ -31,7 +43,7 @@ internal sealed partial class TodoPanelViewModel
         _syncTick = null;
         _syncNote = note;
         var now = _clock.GetUtcNow();
-        (SyncQuiet, SyncLive, SyncIsWarning) = TodoSyncLine.Of(note, now, _clock.LocalTimeZone);
+        (SyncQuiet, SyncLive, SyncIsWarning) = _profileMissing ? (string.Empty, string.Empty, false) : TodoSyncLine.Of(note, now, _clock.LocalTimeZone);
         OnChanged(nameof(HasSync));
         if (note is not null && TodoSyncLine.Countdown(note, now) is not null)
         {

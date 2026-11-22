@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-AGENT-017",
+  "status": 400,
+  "detail": "the prompt is 8001 characters; the most is 8000",
+  "traceId": "<trace>"
+}

@@ -76,7 +76,7 @@ internal sealed partial class FakeSindriApi : ISindriApi
     private int _pingCalls;
 
     /// <summary>The cursor each event stream was opened with.</summary>
-    public IReadOnlyList<long> StreamCursors => [.. _cursors];
+    public IReadOnlyList<long> StreamCursors { get { lock (_gate) { return [.. _cursors]; } } }
 
     private readonly List<long> _cursors = [];
 
@@ -198,8 +198,20 @@ internal sealed partial class FakeSindriApi : ISindriApi
 
         await foreach (var e in stream.Reader.ReadAllAsync(cancellationToken))
         {
+            RaisePending(e.Sequence);
             yield return e;
         }
+    }
+
+    // As the client does (#3734): the next direct view read waits for a streamed event's sequence; never lowers one pending.
+    private void RaisePending(long sequence)
+    {
+        long seen;
+        do
+        {
+            seen = Volatile.Read(ref _pending);
+        }
+        while (sequence > seen && Interlocked.CompareExchange(ref _pending, sequence, seen) != seen);
     }
 
     // A view query uses the sequence once, whatever the answer is (best effort, UI spec §9.1), but not when the call never

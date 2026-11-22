@@ -51,6 +51,7 @@ internal static class ApiScenarios
         ["WorkflowRuns"] = WorkflowRunScenarios.All,
         ["WorkflowReads"] = WorkflowReadScenarios.All,
         ["Resources"] = ResourceScenarios.All,
+        ["AgentStarts"] = AgentStartScenarios.All,
         ["Toolkits"] = ToolkitScenarios.All,
         ["WorkflowWrites"] = WorkflowWriteScenarios.All,
     };
@@ -64,7 +65,7 @@ internal static class ApiScenarios
     /// <summary>Starts the host the scenario runs on: the plain golden host, or for the context routes one over a small git repo with a map.</summary>
     public static async Task<GoldenHost> Start(string slug, string scenario, CancellationToken ct) =>
         CodeIndexScenarios.Handles(slug, scenario)
-            ? await CodeIndexScenarios.Start(ct, demoBehindMain: scenario == CodeIndexScenarios.StaleScenario)
+            ? await CodeIndexScenarios.Start(ct, demoBehindMain: CodeIndexScenarios.DemoBehindMain(scenario))
             : ConnectionSignInScenarios.Handles(slug, scenario)
             ? await ConnectionSignInScenarios.Start(scenario, ct)
             : ConnectionScenarios.Handles(slug, scenario)
@@ -97,6 +98,12 @@ internal static class ApiScenarios
             ? await LaunchScenarios.Start(scenario, ct)
             : AppChallengeScenarios.Handles(slug, scenario)
             ? await GoldenHost.Start(temporary: true, ct)
+            : await StartSessionOrPlain(slug, scenario, ct);
+
+    /// <summary>The host of a terminal-route, wrapped-session or cgroup scenario, else the plain golden host.</summary>
+    private static async Task<GoldenHost> StartSessionOrPlain(string slug, string scenario, CancellationToken ct) =>
+        AgentStartScenarios.NeedsLocator(slug, scenario)
+            ? await AgentStartScenarios.StartHost(scenario, ct)
             : WrapSessionScenarios.Handles(slug, scenario)
             ? await GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml)
             : SessionScenarios.NeedsCgroup(slug, scenario)
@@ -188,6 +195,7 @@ internal static class ApiScenarios
     private static Func<Task<string>>? DelegatedOrWorkflow(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
         WorkflowRunScenarios.Handles(slug, scenario) ? () => WorkflowRunScenarios.Body(host, slug, scenario, ct)
         : WorkflowReadScenarios.Handles(slug, scenario) ? () => WorkflowReadScenarios.Body(host, slug, scenario, ct)
+        : AgentStartScenarios.Handles(slug, scenario) ? () => AgentStartScenarios.Body(host, slug, scenario)
         : ResourceScenarios.Handles(slug, scenario) ? () => ResourceScenarios.Body(host, slug, scenario, ct)
         : ToolkitScenarios.Handles(slug, scenario) ? () => ToolkitScenarios.Body(host, slug, scenario, ct)
         : WorkflowWriteScenarios.Handles(slug, scenario) ? () => WorkflowWriteScenarios.Body(host, slug, scenario, ct)

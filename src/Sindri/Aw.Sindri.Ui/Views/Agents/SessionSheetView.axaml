@@ -53,6 +53,10 @@
                 AutomationProperties.Name="{Binding RefCopy.Announcement}">
           <TextBlock Classes="caption mono" Text="{Binding RefCopy.Label}" AutomationProperties.AccessibilityView="Raw" />
         </Button>
+        <Button x:Name="SessionAttachCopy" Classes="copy" Click="OnCopyAttach" HorizontalAlignment="Left" IsVisible="{Binding AttachCopy, Converter={x:Static ObjectConverters.IsNotNull}}"
+                AutomationProperties.Name="{Binding AttachCopy.Announcement}">
+          <TextBlock Classes="caption mono" Text="{Binding AttachCopy.Label}" AutomationProperties.AccessibilityView="Raw" />
+        </Button>
       </StackPanel>
 
       <Border x:Name="SessionAskingCallout" Classes="callout attn" IsVisible="{Binding IsAsking}" AutomationProperties.Name="{Binding CalloutText}"

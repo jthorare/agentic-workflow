@@ -7,7 +7,7 @@ using static Aw.Sindri.Tests.Callers.CallerRequests;
 namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
-/// The goldens of 'GET /setup' (the setup list): the route's body for each way the six steps can stand. The sources are the set facts of <see cref="InMemorySetupFacts"/>, because the real
+/// The goldens of 'GET /setup' (the setup list): the route's body for each way the eight steps can stand. The sources are the set facts of <see cref="InMemorySetupFacts"/>, because the real
 /// ones read this machine (Docker, a Claude Code config); the real adapters are tested apart (SetupFactsTests, the served-route test of this group).
 /// </summary>
 internal static class SetupScenarios
@@ -15,7 +15,7 @@ internal static class SetupScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("setup", "first-run"), ("setup", "profile-needs-approval"), ("setup", "running-progress"), ("setup", "failed"), ("setup", "all-done"), ("setup", "map-retrying"), ("setup", "profile-preview"),
+        ("setup", "first-run"), ("setup", "profile-needs-approval"), ("setup", "running-progress"), ("setup", "failed"), ("setup", "all-done"), ("setup", "map-retrying"), ("setup", "map-indexing"), ("setup", "map-building"), ("setup", "profile-preview"),
         ("setup", "sources-none"), ("setup", "sources-github-needs-token"), ("setup", "sources-all-connected"),
     ];
 
@@ -52,6 +52,8 @@ internal static class SetupScenarios
         },
         "running-progress" => Done(map: new MapFact(MapPhase.Building, new SetupProgress(40, 100, "files")) { Items = Lines(SetupState.Running) }),
         "failed" => Done(map: new MapFact(MapPhase.Failed, FailureCode: "SND-CONTEXT-042") { Items = Lines(SetupState.Failed) }),
+        "map-indexing" => Done(map: new MapFact(MapPhase.Building, new SetupProgress(1200, 4800, "files")) { Items = Lines(SetupState.Running), Stage = MapStage.Index }),
+        "map-building" => Done(map: new MapFact(MapPhase.Building, new SetupProgress(40, 100, "files")) { Items = Lines(SetupState.Running), Stage = MapStage.Map }),
         "map-retrying" => Done(map: new MapFact(MapPhase.Building, new SetupProgress(0, 1, "files")) { Items = Lines(SetupState.Running), Retry = new MapRetry(TimeSpan.FromMinutes(5), "the code index was busy") }),
         "sources-none" => Done(sources: new SourcesFact(0)),
         "sources-github-needs-token" => Done(sources: InMemorySetupFacts.NamedSources(("github", false))),

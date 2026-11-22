@@ -8,7 +8,9 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
+using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Testing;
 using Microsoft.Extensions.Logging;
@@ -41,7 +43,7 @@ public sealed class ContextMapRefreshServiceTests
 
     private static RepoHead Head(string repo, string sha, bool onDefault = true) => new(ContextRepoName.From(repo), sha, onDefault);
 
-    private async Task<ContextMapRefreshService> Service(bool context = true, bool indexed = true)
+    private async Task<ContextMapRefreshService> Service(bool context = true, bool indexed = true, FakeRepoCheckouts? checkouts = null, params RepoEntry[] repos)
     {
         _h.Clock.SetUtcNow(_now);
         if (indexed)
@@ -50,9 +52,9 @@ public sealed class ContextMapRefreshServiceTests
         }
 
         var loaded = SliceHarness.Profile("5s");
-        loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse("""{"docs":{"globs":["docs/**/*.md"]}}""").RootElement.Clone() : null } };
+        loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse("""{"docs":{"globs":["docs/**/*.md"]}}""").RootElement.Clone() : null, Repos = repos.Length == 0 ? loaded.Profile.Repos : repos } };
         _ = await _h.Profiles.Save(loaded, Ct);
-        return new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _jobs, _outlooks, new MapJobStarts(_start, _publish, new RelinkStarter(_h)), _h.Clock, new CapturingLogger());
+        return new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers, checkouts ?? new FakeRepoCheckouts()), _engine.Proxy, _jobs, _outlooks, new MapJobStarts(_start, _publish, new RelinkStarter(_h)), _h.Clock, new CapturingLogger());
     }
 
     private void Job(JobState state, TimeSpan endedAgo, params (string Repo, string Sha)[] heads)
@@ -172,6 +174,19 @@ public sealed class ContextMapRefreshServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_profile_repo_that_is_not_a_git_checkout_is_left_out_and_named_with_its_fix_in_the_summary()
+    {
+        Job(JobState.Succeeded, TimeSpan.FromHours(1), ("a", "1"));
+        _engine.Heads = [Head("a", "1")];
+
+        var result = await Run(await Service(checkouts: new FakeRepoCheckouts(RepoCheckout.PlainFolder).At("/r/a", RepoCheckout.Checkout), repos: [new RepoEntry("a", "/r/a"), new RepoEntry("notes", "/r/notes")]));
+
+        Assert.True(result.Value.Idle);
+        Assert.Contains("not a git checkout, left out: notes (fix: git init and commit in it, or remove it from repos:)", result.Value.Summary, StringComparison.Ordinal);
+        Assert.Empty(_start.Requests);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_running_refresh_is_never_doubled()
     {
         Job(JobState.Running, TimeSpan.Zero);
@@ -264,7 +279,7 @@ public sealed class ContextMapRefreshServiceTests
     {
         _engine.Heads = [Head("a", "1", onDefault: false)];
         Assert.True((await Run(await Service())).Value.Idle);
-        var unapproved = new ContextMapRefreshService(new ContextScopes(new SliceHarness().Profiles, _h.Callers), _engine.Proxy, _jobs, _outlooks, new MapJobStarts(_start, _publish, new RelinkStarter(_h)), _h.Clock, new CapturingLogger());
+        var unapproved = new ContextMapRefreshService(new ContextScopes(new SliceHarness().Profiles, _h.Callers, new FakeRepoCheckouts()), _engine.Proxy, _jobs, _outlooks, new MapJobStarts(_start, _publish, new RelinkStarter(_h)), _h.Clock, new CapturingLogger());
         Assert.True((await Run(unapproved)).Value.Idle);
         Assert.Empty(_start.Requests);
     }

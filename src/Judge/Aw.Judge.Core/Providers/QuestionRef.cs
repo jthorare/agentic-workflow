@@ -31,6 +31,12 @@ public sealed record QuestionRef
     public string? Model { get; init; }
 
     /// <summary>
+    /// Whether Codex runs its own default model: no model flag at all, so neither <see cref="Model"/> nor the provider's small default is
+    /// passed (Sindri's built-in codex name when codex's list lacks it, issue 3389); false passes a model as before. Only the Codex provider reads it.
+    /// </summary>
+    public bool OwnDefaultModel { get; init; }
+
+    /// <summary>
     /// The prompt without the input's text, for a provider that is sent the input separately (Jev's state); null when the prompt is
     /// all there is. Choose sets it: its facts ride in the state once, the agent CLIs get them in <see cref="Prompt"/>.
     /// </summary>

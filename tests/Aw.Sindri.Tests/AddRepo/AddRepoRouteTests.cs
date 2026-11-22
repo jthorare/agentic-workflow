@@ -119,7 +119,7 @@ public sealed class AddRepoRouteTests : IAsyncLifetime
         _ = await Finished(started);
 
         var setup = JsonDocument.Parse((await Host.Http.Ask(Get("/sindri/setup", Human(Host.Token.Value)))).Body).RootElement;
-        var repo = setup.GetProperty("steps")[0];
+        var repo = setup.GetProperty("steps").EnumerateArray().Single(static s => s.GetProperty("id").GetString() == "repo");
 
         Assert.Equal("repo", repo.GetProperty("id").GetString());
         Assert.Equal("done", repo.GetProperty("state").GetString());

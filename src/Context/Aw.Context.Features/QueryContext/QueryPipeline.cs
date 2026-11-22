@@ -7,6 +7,7 @@ using Aw.Context.Core.Linear;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Models;
+using Aw.Context.Core.Ranking;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Trust;
@@ -40,10 +41,9 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
     /// <returns>The packed result, or the query's error.</returns>
     public async ValueTask<Result<ContextResult>> Run(QueryContextRequest request, PipelineInputs inputs, CancellationToken cancellationToken)
     {
-        var (graphs, catalog) = (inputs.Map, inputs.Catalog);
         var settings = SettingsReader.Read(request.Scope.Settings);
         var scrubbers = settings.Bind(s => scrubberFactory.For(s.ExtraPatterns));
-        var repos = scrubbers.Bind(_ => ScopeRules.Resolve(settings.Value, request.Scope.Repos, request.Scope.Caller));
+        var repos = scrubbers.Bind(_ => ScopeRules.Resolve(settings.Value, request.Scope.Repos, request.Scope.Caller, request.Scope.LeftOut));
         var valid = repos.Bind(_ => CheckedQuery.Of(request.Query, settings.Value));
         if (valid.IsError)
         {
@@ -58,7 +58,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
 
         var (graph, terms, miss) = anchored.Value;
         var deadline = clock.GetUtcNow() + settings.Value.Deadline;
-        var catalogSources = terms.Count == 0 ? [] : catalog.For(settings.Value, repos.Value, scrubbers.Value).ToList();
+        var catalogSources = terms.Count == 0 ? [] : inputs.Catalog.For(settings.Value, repos.Value, scrubbers.Value).ToList();
         var (sources, degraded) = await WithRecordStore(catalogSources, (settings.Value, repos.Value), (inputs.AsOf, terms), (request, inputs.Map, valid.Value.Read), cancellationToken).ConfigureAwait(false);
         var searched = await WithAnchorRecord(await Search(sources, terms, (deadline, inputs.AsOf), (graph.Pins.Scope, graph.Pins.Skipped), cancellationToken).ConfigureAwait(false), (graph, sources), cancellationToken).ConfigureAwait(false);
         if (catalogSources.Count > 0 && NothingAnswered(searched, graph) && graph.Anchors.Count == 0)
@@ -68,7 +68,8 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
 
         degraded.AddRange(searched.Degraded);
         var fused = await Ranked(searched, (graph, RankerPlan.For(settings.Value.Ranker, inputs.Ranker) with { LibraryModelRoots = settings.Value.LibraryModelRoots }), scrubbers.Value.Egress, degraded, cancellationToken).ConfigureAwait(false);
-        var fetched = await Fetch(fused, (sources, scrubbers.Value.Ingest), deadline, degraded, cancellationToken).ConfigureAwait(false);
+        var (toRead, matches) = Windowed(fused, request.Query.Window, miss);
+        var fetched = await Fetch(toRead, (sources, scrubbers.Value.Ingest), deadline, degraded, cancellationToken).ConfigureAwait(false);
         if (miss is not null && !Answers(fetched, miss.Item.Trim()))
         {
             return Unknown(miss, request.Scope);   // not linked by any sync, and no live record carries that tracker key
@@ -76,9 +77,22 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
 
         var notes = await AnswerNotes(graph, (fetched.Count, degraded, searched.Notes), cancellationToken).ConfigureAwait(false);
         var versions = await Versions(fetched, sources, deadline, degraded, cancellationToken).ConfigureAwait(false);
-        var assembly = new ResultAssembly(scrubbers.Value.Egress, QueryId.From("q_" + ids.NewId().ToString("N", CultureInfo.InvariantCulture)), clock.GetUtcNow());
-        var built = assembly.Build(request.Query, new RecordPart(fetched, versions, degraded), DemotedLast(graph, request.Scope.Repos));
-        return built with { Filtered = DemotedFiles.Counts(CodeKeys(graph), request.Scope.Repos), Notes = notes };
+        var built = new ResultAssembly(scrubbers.Value.Egress, QueryId.From("q_" + ids.NewId().ToString("N", CultureInfo.InvariantCulture)), clock.GetUtcNow())
+            .Build(request.Query, new RecordPart(fetched, versions, degraded), DemotedLast(graph, request.Scope.Repos));
+        return built with { Filtered = DemotedFiles.Counts(CodeKeys(graph), request.Scope.Repos), Notes = notes, Matches = matches };
+    }
+
+    // The page of ranked records the caller reads (#3370): no window reads every match (#938). An item question whose key no sync
+    // linked reads every match too, because the record that carries the key may rank past the page and the answer would wrongly say unknown.
+    private static (List<FusedItem> ToRead, RecordMatches? Matches) Windowed(List<FusedItem> ranked, QueryWindow? window, ItemMiss? miss)
+    {
+        if (window is null || miss is not null)
+        {
+            return (ranked, null);
+        }
+
+        var page = ranked.Skip(window.Offset).Take(window.Limit).ToList();
+        return (page, new RecordMatches(ranked.Count, window.Offset, page.Count));
     }
 
     private static IEnumerable<NodeKey> CodeKeys(GraphPart graph) =>

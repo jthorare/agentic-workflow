@@ -48,9 +48,18 @@ public sealed class StackProbeTests : IDisposable
         listener.Start();
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
 
-        Assert.True((await probe.PortOpenAsync("127.0.0.1", port, TestContext.Current.CancellationToken)).IsSuccess);
-        listener.Stop();
-        Assert.Equal(EvidenceErrors.ProbeFailed.Code, (await probe.PortOpenAsync("127.0.0.1", port, TestContext.Current.CancellationToken)).Error.Code);
+        try
+        {
+            Assert.True((await probe.PortOpenAsync("127.0.0.1", port, TestContext.Current.CancellationToken)).IsSuccess);
+        }
+        finally
+        {
+            listener.Stop();
+        }
+
+        // A port bound but never listening: nobody can take it, unlike a freed one (#3241).
+        using var closed = LocalHttpServer.ClosedPort(out var closedPort);
+        Assert.Equal(EvidenceErrors.ProbeFailed.Code, (await probe.PortOpenAsync("127.0.0.1", closedPort, TestContext.Current.CancellationToken)).Error.Code);
     }
 
     [Fact]

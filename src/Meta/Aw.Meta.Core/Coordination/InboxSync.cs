@@ -15,15 +15,17 @@ namespace Aw.Meta.Core.Coordination;
 /// <param name="owner">Queues owner questions.</param>
 /// <param name="clock">Dates a record that carries no timestamp.</param>
 /// <param name="meta">Finds the meta's live transcript; null when the caller never syncs the meta's own transcript.</param>
-public sealed class InboxSync(ITranscriptReader transcripts, IMessageStore messages, IOwnerStore owner, TimeProvider clock, MetaTranscriptResolver? meta)
+/// <param name="obligations">Writes obligation.opened for each new message that is owed a reply; null to write none.</param>
+public sealed class InboxSync(ITranscriptReader transcripts, IMessageStore messages, IOwnerStore owner, TimeProvider clock, MetaTranscriptResolver? meta, ObligationEventWriter? obligations = null)
 {
+
     /// <summary>Creates a sync that can't find the meta's own transcript.</summary>
     /// <param name="transcripts">Reads the transcript.</param>
     /// <param name="messages">Stores the messages and the offset.</param>
     /// <param name="owner">Queues owner questions.</param>
     /// <param name="clock">Dates a record that carries no timestamp.</param>
     public InboxSync(ITranscriptReader transcripts, IMessageStore messages, IOwnerStore owner, TimeProvider clock)
-        : this(transcripts, messages, owner, clock, meta: null)
+        : this(transcripts, messages, owner, clock, meta: null, obligations: null)
     {
     }
 
@@ -82,8 +84,24 @@ public sealed class InboxSync(ITranscriptReader transcripts, IMessageStore messa
             return added.Error;
         }
 
+        await WriteOpened(found.Where(m => added.Value.Contains(m.Id)), cancellationToken).ConfigureAwait(false);
         var queued = await QueueQuestions(found.Where(m => added.Value.Contains(m.Id)), cancellationToken).ConfigureAwait(false);
         return queued.IsError ? queued.Error : added;
+    }
+
+    // A new message that asks something owes a reply (the evaluator skips notices the same way); the sender's name is the lane that waits.
+    private async ValueTask WriteOpened(IEnumerable<InboxMessage> fresh, CancellationToken cancellationToken)
+    {
+        if (obligations is null)
+        {
+            return;
+        }
+
+        foreach (var message in fresh.Where(m => !NoticeRule.IsNotice(m.Body)))
+        {
+            var who = message.FromName.Length > 0 ? message.FromName : message.From;
+            await obligations.Opened(message.At, message.Id.Value, who, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private async ValueTask<Result<Unit>> QueueQuestions(IEnumerable<InboxMessage> fresh, CancellationToken cancellationToken)

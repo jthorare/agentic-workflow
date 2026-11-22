@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Aw.Sindri.Core.Graph.Blocks;
 
 namespace Aw.Sindri.Core.Graph.Validation;
 
@@ -19,6 +20,8 @@ public sealed partial class GraphValidator
             found.Add(Found.At("GRAPH-BLOCK-001", id, "type", $"there is no block type '{node.Type}'", $"use one of: {string.Join(", ", context.Blocks.Keys.Order(StringComparer.Ordinal))}"));
             return;
         }
+
+        ContinuePath(node, block, found);
 
         foreach (var (field, problem) in block.Config.Check(node.Config))
         {
@@ -41,6 +44,15 @@ public sealed partial class GraphValidator
         }
 
         Names(node, found);
+    }
+
+    // why: a failed node takes no named branch, so a node with only named outputs has nowhere to continue and every node after it would be skipped (#3003)
+    private static void ContinuePath(GraphNode node, IGraphBlockType block, List<GraphFinding> found)
+    {
+        if (string.Equals(node.OnFailure, "continue", StringComparison.Ordinal) && !block.OutputsFor(node.Config).BranchNames.Contains("out", StringComparer.Ordinal))
+        {
+            found.Add(Found.At("GRAPH-NODE-004", node.Id.Value, "onFailure", $"'{node.Id.Value}' is a {node.Type}, so it has no single path to continue on when it fails", "remove onFailure continue, or add a step after both branches"));
+        }
     }
 
     private void Crons(GraphNode node, List<GraphFinding> found)

@@ -12,6 +12,7 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.CodeIndexReads;
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Testing;
 using CodeRepoName = Aw.CodeIndex.Core.Values.RepoName;
 using CodeSymbolKind = Aw.CodeIndex.Core.Model.SymbolKind;
 using ContextRepoName = Aw.Context.Core.Engine.ContextRepoName;
@@ -77,7 +78,7 @@ public sealed class FindCodeSymbolsConceptTests
     private async Task Build(string? mapCommit) =>
         _ = await _graphs.SaveCurrent(new MapImport(ContextRepoName.From("demo"), mapCommit, Map(), []), DateTimeOffset.UnixEpoch, Ct);
 
-    private PinnedCodeReader Reader() => new(new ContextScopes(_h.Profiles, _h.Callers), new MapReader(_graphs, new FakeIntentStore()));
+    private PinnedCodeReader Reader() => new(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), new MapReader(_graphs, new FakeIntentStore()));
 
     private static FakeCodeIndex Index(string indexCommit) => new FakeCodeIndex()
         .WithIndex(CodeRepoName.From("demo"), CommitSha.From(indexCommit), Hit("demo", "src/pay.cs"), Hit("demo", "src/auth.cs"))

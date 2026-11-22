@@ -32,9 +32,14 @@ REPO="$T/work/agentic-workflow"
 mkdir -p "$STATE" "$REPO"
 git -C "$REPO" init -q -b main && git -C "$REPO" -c user.name=t -c user.email=t@t commit -q --allow-empty -m init
 
+# The runs that reach the preflight probe their port, so they take a free one from the kernel: the script's default 7481 is
+# shared by every checkout and by a real first run on the box, and a listener there turned this suite red (#3029). The dry runs
+# keep the default, because they print the port and bind or probe nothing.
+PORT="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()')"
+
 # run <args…>: the script against the temp state and repo, with the stub sindri. Sets OUT (both streams) and CODE.
 run() {
-  OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$REPO" SINDRI="$T/stub-sindri" "$SCRIPT" "$@" 2>&1)"; CODE=$?
+  OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_PORT="$PORT" FIRST_RUN_REPO_PATH="$REPO" SINDRI="$T/stub-sindri" "$SCRIPT" "$@" 2>&1)"; CODE=$?
 }
 norm() { sed -e "s#$T#<T>#g" -e "s#$ROOT#<ROOT>#g"; }
 
@@ -144,7 +149,7 @@ expect "with no origin the name falls back to the path's basename" 0 "--repo fir
 echo "context-first-run: the checkout preflight"
 # A real (non-dry) run reaches the preflight; --no-embeddings --no-graph keep it to git, jq and temporal. Only the repo checks matter here.
 pf() { # pf <repo path>: sets OUT and CODE of a real up against that repo
-  OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$1" SINDRI="$T/stub-sindri" "$SCRIPT" up --stop-after 0 --no-embeddings --no-graph --no-ui 2>&1)"; CODE=$?
+  OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_PORT="$PORT" FIRST_RUN_REPO_PATH="$1" SINDRI="$T/stub-sindri" "$SCRIPT" up --stop-after 0 --no-embeddings --no-graph --no-ui 2>&1)"; CODE=$?
 }
 G() { git -C "$1" -c user.name=t -c user.email=t@t "${@:2}"; }
 if command -v jq >/dev/null 2>&1; then
@@ -192,7 +197,7 @@ else
   P="$STATE/sindri-app-firstrun/profile/profile.yaml"
   if grep -q "path: $REPO" "$P" && grep -q 'context-docs-refresh' "$P" && grep -q 'enabled: false' "$P" && grep -q '^context:' "$P" && grep -q '^index:' "$P"; then ok "the profile onboards the repo with services, index and context"; else fail "the profile onboards the repo with services, index and context"; sed 's/^/       | /' "$P"; fi
   # test-ports: ok: the port=N strings are what the stub sindri logged, matched as text; nothing binds them
-  if logged "home=sindri-app-firstrun port=7481" && ! logged "port=7480" && ! logged "port=7410"; then ok "every call used the scratch home and port 7481"; else fail "every call used the scratch home and port 7481"; fi
+  if logged "home=sindri-app-firstrun port=$PORT " && ! logged "port=7480" && ! logged "port=7410"; then ok "every call used the scratch home and the run's port"; else fail "every call used the scratch home and the run's port"; fi
   before="$(wc -l < "$P" | tr -d ' ')"
   run up --no-embeddings --no-graph --no-ui
   expect "a second up finishes too (exit 0)" 0 "context-first-run up: done"
@@ -211,7 +216,7 @@ else
     : > "$STATE/sindri-app-firstrun/stub/mapstate"
     local st; for st in "$@"; do echo "$st" >> "$STATE/sindri-app-firstrun/stub/mapstate"; done
     : > "$STUB_LOG"
-    OUT="$(FIRST_RUN_MAP_POLL_SECONDS=1 FIRST_RUN_MAP_TIMEOUT=3 AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$REPO" SINDRI="$T/stub-sindri" "$SCRIPT" continue --no-embeddings --no-graph --no-ui 2>&1)"; CODE=$?
+    OUT="$(FIRST_RUN_MAP_POLL_SECONDS=1 FIRST_RUN_MAP_TIMEOUT=3 AW_STATE_DIR="$STATE" FIRST_RUN_PORT="$PORT" FIRST_RUN_REPO_PATH="$REPO" SINDRI="$T/stub-sindri" "$SCRIPT" continue --no-embeddings --no-graph --no-ui 2>&1)"; CODE=$?
   }
   step6 held held published
   expect "a held map is waited for, then published (exit 0)" 0 "the map is held" "map published (v1, published)"

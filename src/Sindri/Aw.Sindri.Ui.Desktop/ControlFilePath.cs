@@ -14,6 +14,12 @@ internal static class ControlFilePath
     /// <returns>The token file's path.</returns>
     internal static string TokenFrom(Func<string, string?> environment, string userHome) => Path.Combine(Home(environment, userHome), "auth", "human.token");
 
+    /// <summary>Sindri's state folder (where logs/serve.log is).</summary>
+    /// <param name="environment">Reads an environment variable.</param>
+    /// <param name="userHome">The user's home directory.</param>
+    /// <returns>The folder.</returns>
+    internal static string HomeFrom(Func<string, string?> environment, string userHome) => Home(environment, userHome);
+
     private static string Home(Func<string, string?> environment, string userHome) =>
         environment("AW_SINDRI_HOME") is { Length: > 0 } explicitHome
             ? explicitHome

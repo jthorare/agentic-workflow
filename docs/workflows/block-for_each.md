@@ -15,7 +15,7 @@ Inside the loop:
 - `{{item}}` is the item, `{{itemIndex}}` its position counted from 1.
 - A node of the loop reads another node of the loop at the same item. A node after the `collect` reads only `collect`'s `items` and `count`, never a node of the loop.
 - Every node of the loop has one run per item (`workflow_run_get` lists them with their `itemIndex`). `for_each` and `collect` themselves have one run each, at index 0.
-- A node that fails and says `stop` (the default) ends the loop: no later item runs, the `collect` fails with `node '<id>' failed on item N: <why>`, and the run follows the `collect`'s `onFailure`. Say `continue` on a node to let the loop go on without it.
+- A node that fails and says `stop` (the default) ends the loop: no later item runs, the `collect` fails with the bare `<why>` and the run's error is `node '<id>' failed on item N: <why>` (the node is named once, never nested), and the run follows the `collect`'s `onFailure`. Say `continue` on a node to let the loop go on without it.
 
 The loop is what lies between the `for_each` and its one `collect`. Loops don't nest (start another workflow with `run_workflow`), and a node of the loop may be fed only from the loop. `sindri wf validate` reports both as `GRAPH-LOOP-001`. A `run_agent` node in the loop runs one agent per item (the launch id ends in the item's position, counted from 1). A `wait` can sit in the loop and sleeps once per item; an `ask_owner` can too and asks once per item (answer it with `--item`, see the `ask_owner` page).
 

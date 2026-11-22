@@ -18,18 +18,26 @@ internal sealed partial class ContextPageViewModel
     private string? _buildJob;
     private MapNotReadyView _notReady = MapNotReadyView.None;
     private bool _servedBuilding;
+    private IReadOnlyList<string> _repos = [];   // the repositories a no-map answer named; kept so serve's building line keeps the head (#3391)
 
-    /// <summary>The Building state's title: the whole map's answer says how far the build is, else the item map's words.</summary>
-    public string BuildingTitle => _servedBuilding ? Labels.ContextBuildingLine(BuildingParts()) : Labels.ContextStateBuilding;
+    /// <summary>The Building state's title: the head only ("Building the map for aw"); the progress is the body, so a long name cannot cut it off (#3463).</summary>
+    public string BuildingTitle => _servedBuilding ? BuildingHead()
+        : _itemOpened is not null ? Labels.ContextStateBuilding
+        : Labels.ContextBuildingFor(_repos);   // why: with no item there is no ticket and no promise of a time (#3391)
 
-    /// <summary>The Building state's body: "last map 2 h ago" when the answer names it; nothing when the title is the answer's.</summary>
-    public string BuildingBody => !_servedBuilding ? Labels.ContextStateBuildingBody : _notReady.Building?.LastSyncAt is { } last ? Labels.ContextLastMap(Age(last)) : string.Empty;
+    /// <summary>The Building state's whole line for a screen reader: the head and the progress, as the title once held them.</summary>
+    public string BuildingName => _servedBuilding ? Labels.ContextBuildingLine(BuildingParts(), BuildingHead()) : BuildingTitle;
+
+    private string BuildingHead() => _itemOpened is null ? Labels.ContextBuildingFor(_repos) : Labels.ContextBuildingFor([]);
+
+    /// <summary>The Building state's body: the progress parts and "last map 2 h ago" when the answer names it; it wraps, so nothing is cut.</summary>
+    public string BuildingBody => !_servedBuilding ? (_itemOpened is null ? string.Empty : Labels.ContextStateBuildingBody) : string.Join(" · ", BuildingParts().Concat(_notReady.Building?.LastSyncAt is { } last ? [Labels.ContextLastMap(Age(last))] : []));
 
     /// <summary>Whether the Building state's body has words.</summary>
     public bool HasBuildingBody => BuildingBody.Length > 0;
 
-    /// <summary>The No map state's title: "No map yet for 2 repositories" when the answer names them.</summary>
-    public string EmptyTitle => _notReady.NoMap?.Repos is { Count: > 0 } repos ? Labels.ContextNoMapRepos(repos.Count) : _itemOpened is null ? Labels.ContextStateEmptyTitle : Labels.ContextStateEmptyItemTitle;
+    /// <summary>The No map state's title: "No map yet for aw" or "No map yet for 2 repositories" when the answer names them.</summary>
+    public string EmptyTitle => _notReady.NoMap?.Repos is { Count: > 0 } repos ? Labels.ContextNoMapRepos(repos) : _itemOpened is null ? Labels.ContextStateEmptyTitle : Labels.ContextStateEmptyItemTitle;
 
     /// <summary>The button's text that opens the build's job.</summary>
     public string BuildJobText { get; } = Labels.ContextBuildingJob;
@@ -59,6 +67,11 @@ internal sealed partial class ContextPageViewModel
             yield return Labels.ContextBuildingSources(done, total);
         }
 
+        if (_notReady.Building is { FilesDone: { } filesDone, FilesTotal: { } filesTotal })
+        {
+            yield return Labels.ContextBuildingFiles(filesDone, filesTotal);
+        }
+
         if ((_notReady.Building?.StartedAt ?? _notReady.NoMap?.FirstRunStartedAt) is { } started)
         {
             yield return Labels.ContextBuildingStarted(Age(started));
@@ -70,6 +83,19 @@ internal sealed partial class ContextPageViewModel
 
     /// <summary>The build button (the catalog's BuildContextMap), or null before the first no-map answer.</summary>
     public ControlViewModel? BuildControl { get; private set; }
+
+    /// <summary>The banner's one button: the build, when the refusal is "no map yet"; none for a refusal the app cannot fix.</summary>
+    public ControlViewModel? ProblemFix => HasProblem && string.Equals(_problemCode, NoMapCode, StringComparison.Ordinal) ? BuildControl ??= MakeBuildControl() : null;
+
+    private string? _problemCode;
+
+    // The banner for a refused read: its plain words, and its code so the banner knows which fix to offer.
+    private void ShowProblem(Error error, string? words = null)
+    {
+        Problem = words ?? Labels.ContextProblem(error.Code, error.Message);
+        _problemCode = error.Code;
+        OnChanged(nameof(ProblemFix));
+    }
 
     /// <summary>Whether the last read was answered "no map yet".</summary>
     internal bool NoMap { get; private set; }
@@ -87,7 +113,7 @@ internal sealed partial class ContextPageViewModel
     public bool ShowBuilding => Overlay == ContextOverlay.Building;
 
     // Registered once: after every event the running build is looked at, so the overlay goes when the map is there.
-    private void InitStates() => Ports.Follow(FollowBuild);
+    private void InitStates() => Follow(FollowBuild);
 
     // A refusal is the No map state when the API says so; a build already running then shows as Building at once.
     private async Task NoteRefusal(Uri api, Error error, CancellationToken cancellationToken)
@@ -113,6 +139,11 @@ internal sealed partial class ContextPageViewModel
     private void NoteNotReady(Error error)
     {
         _notReady = MapNotReadyView.From(error, SindriApiClient.Json);
+        if (_notReady.NoMap?.Repos is { Count: > 0 } named)
+        {
+            _repos = named;
+        }
+
         _servedBuilding = _notReady.Building is not null || _notReady.NoMap?.FirstRunStartedAt is not null;
         if (_servedBuilding)
         {
@@ -213,6 +244,7 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(NoMap));
         OnChanged(nameof(IsBuilding));
         OnChanged(nameof(BuildingTitle));
+        OnChanged(nameof(BuildingName));
         OnChanged(nameof(BuildingBody));
         OnChanged(nameof(HasBuildingBody));
         OnChanged(nameof(EmptyTitle));
@@ -226,5 +258,6 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(BuildControl));
         OnChanged(nameof(HasProblem));
         OnChanged(nameof(Problem));
+        OnChanged(nameof(ProblemFix));
     }
 }

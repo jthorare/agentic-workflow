@@ -68,9 +68,9 @@ internal static class WholeMapBandDrill
         return Cut(geometry, band, [.. geometry.Edges.Where(e => inside.Contains(e.From) && inside.Contains(e.To))], inside);
     }
 
-    // The other end of every link at the node, in key order.
+    // The other end of every link at the node, in natural key order.
     private static IEnumerable<string> Neighbours(List<PlacedEdge> links, string node) =>
-        links.Where(e => e.From == node || e.To == node).Select(e => e.From == node ? e.To : e.From).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal);
+        links.Where(e => e.From == node || e.To == node).Select(e => e.From == node ? e.To : e.From).Distinct(StringComparer.Ordinal).Order(NaturalOrder.Instance);
 
     private static HashSet<string> Inside(WholeMapGeometry geometry, WholeBand band) =>
         [.. geometry.Nodes.Where(n => NodeBands.Of(n.Kind) == band).Select(n => n.Key)];

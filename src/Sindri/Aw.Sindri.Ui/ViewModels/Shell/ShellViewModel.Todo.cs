@@ -25,6 +25,14 @@ internal sealed partial class ShellViewModel
     {
         Todo = new TodoPanelViewModel(_api, _clock);
         Health.Follow(Todo.Refresh);
+        Health.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(HealthViewModel.IsProfileMissing), StringComparison.Ordinal))
+            {
+                Todo.SetProfileMissing(Health.IsProfileMissing);
+                Elsewhere.SetProfileMissing(Health.IsProfileMissing);
+            }
+        };
         Todo.LinkOpened += (_, link) => OpenTodoLink(link.Href);
         Todo.Acted += (_, acted) => ShowToast(new ToastMessage(acted.Text, acted.Undo));
         Todo.Picked += (_, picked) => ShowToast(new ToastMessage(picked.Text, picked.Undo, ToastKind.Pick, picked.Seconds ?? PickWindowSeconds));

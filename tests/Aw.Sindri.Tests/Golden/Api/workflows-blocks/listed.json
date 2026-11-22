@@ -77,20 +77,14 @@
             "occurredAt": "string",
             "connection": "string",
             "event": "string",
-            "repo?": "string",
-            "number?": "string",
-            "title?": "string",
-            "url?": "string",
-            "author?": "string",
-            "ref?": "string",
-            "identifier?": "string",
-            "label?": "string",
-            "to?": "string",
-            "channel?": "string",
-            "ts?": "string",
-            "user?": "string",
-            "text?": "string",
-            "start?": "string"
+            "repo": "string",
+            "number": "number",
+            "title": "string",
+            "author": "string",
+            "url": "string",
+            "headSha": "string",
+            "baseRef": "string",
+            "draft": "boolean"
           },
           "branches": [
             "out"
@@ -307,7 +301,9 @@
             }
           ],
           "outputs": {
-            "scheduledFor": "string"
+            "scheduledFor": "string",
+            "localDate": "string",
+            "weekday": "string"
           },
           "branches": [
             "out"

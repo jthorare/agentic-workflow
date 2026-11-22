@@ -84,6 +84,7 @@ internal sealed class TodoNoteDoctorChecks(INoteLocator locator, ITodoNoteSync s
             TodoNoteState.CantRead => new DoctorCheck(Name, CheckState.Warn, $"note: can't read ({status.LastError}); {where}; last sync: {last}", "fix the note or its folder; the next check is within 60 s"),
             TodoNoteState.OneWay => new DoctorCheck(Name, CheckState.Warn, string.Create(CultureInfo.InvariantCulture, $"note: one way: no atomic swap ({status.NotAdopted} bare lines not adopted); {where}; last sync: {last}"), "put the vault on a disk that supports an atomic swap"),
             TodoNoteState.Busy => new DoctorCheck(Name, CheckState.Warn, $"note: busy, trying again; {where}; last sync: {last}", Fix: null),
+            TodoNoteState.NotSetUp => new DoctorCheck(Name, CheckState.Ok, "note: no profile yet", Fix: null),
             TodoNoteState.NotSet or TodoNoteState.Syncing => new DoctorCheck(Name, CheckState.Ok, $"note: syncing; {where}; last sync: {last}", Fix: null),
             _ => throw new ArgumentOutOfRangeException(nameof(status), status.State, "not a note state"),
         };

@@ -1,6 +1,6 @@
 # Agentic Workflow
 
-A portable, provider-agnostic workflow toolkit for AI coding agents. It works the same way in **Claude Code**, **Codex**, and **Cursor**: 59 native skills plus 4 fetched external packs (impeccable, emil-design-eng, taste-skill, tdd-artifact), a repo bootstrapper, safety hooks, a cheap-decision judge, Sindri (the C# control plane and workflow engine), and a token-efficiency tool (the rtk command rewriter).
+A portable, provider-agnostic workflow toolkit for AI coding agents. It works the same way in **Claude Code**, **Codex**, and **Cursor**: 59 native skills plus 5 fetched external packs (impeccable, emil-design-eng, taste-skill, tdd-artifact, ui-sdk), a repo bootstrapper, safety hooks, a cheap-decision judge, Sindri (the C# control plane and workflow engine), and a token-efficiency tool (the rtk command rewriter).
 
 There is one canonical core: skills, hook logic, MCP servers, and judge. Each provider gets a thin adapter on top. Skills describe *capabilities* ("ask the user", "spawn a subagent", "call an MCP tool"), and each provider maps those to its own tools. See [Providers](#providers) and [`planning/PROVIDERS.md`](planning/PROVIDERS.md).
 
@@ -26,14 +26,14 @@ This toolkit supports an end-to-end product workflow where **AI sessions replace
 /officeHours [feature or problem]
 ```
 
-**Human in the loop:** This is a back-and-forth collaboration. The agent proposes requirements and you push back. It drafts the technical design, and you redirect priorities and flag constraints it doesn't know about. Think of it as a YC office hours session: you leave with decisions made, not just options listed. It also gives structure to multi-team collaboration. Product and engineering can align on vision, scope, and trade-offs in a shared session before anyone writes a line of code. The output lands in `~/.agentic-workflow/<repo>/plans/<feature>/`: a canonical `plan.md` handoff plus per-owner docs:
+**Human in the loop:** This is a back-and-forth collaboration. The agent proposes requirements and you push back. It drafts the technical design, and you redirect priorities and flag constraints it doesn't know about. Think of it as a YC office hours session: you leave with decisions made, not just options listed. It also gives structure to multi-team collaboration. Product and engineering can align on vision, scope, and trade-offs in a shared session before anyone writes a line of code. The output lands in `~/.agentic-workflow/<repo>/plans/<feature>/`: a canonical `plan.md` handoff, which opens with the ROI and data-analysis plan (`skills/_shared/roi-analysis.md`), plus per-owner docs:
 
 | File | Owner | Contents |
 |------|-------|----------|
 | `product.md` | Product | Problem statement, EARS requirements, acceptance criteria, success metrics, MVP scope |
 | `engineering.md` | Engineering | Current state, approach, architecture decisions, open questions |
 | `design-brief.md` | Design | Experience goals, key interactions, UX requirements, design language reference |
-| `TASKS.md` | Engineering | Atomic task breakdown with `domain` tags for cross-team visibility |
+| `TASKS.md` | Engineering | Atomic task breakdown with `domain` tags for cross-team visibility, ending with the performance sweep and then the bug sweep (`skills/_shared/closing-sweeps.md`) |
 
 Each file is a standalone artifact. Everyone leaves the session with a doc they own, not a monolith that nobody owns.
 
@@ -150,7 +150,7 @@ cd ~/repos/agentic-workflow
 The setup script:
 - Checks hard prerequisites (`jq`, Docker) and detects which provider CLIs are installed (or uses `--providers`)
 - Creates the `~/.agentic-workflow/toolkit` symlink and writes the `~/.agentic-workflow/providers` registry
-- Symlinks native skills, `/bootstrap`, and the external packs (cloned at pinned commits from `EXTERNAL_PINS.env`) into each selected provider's skills directory
+- Symlinks native skills, `/bootstrap`, and the external packs (four cloned at pinned commits from `EXTERNAL_PINS.env`; ui-sdk from `vercel-labs/ui` is unpinned by the owner's decision and follows the upstream default branch) into each selected provider's skills directory
 - Installs the safety hooks (`block-destructive.sh`, `block-push-main.sh`, `detect-secrets.sh`, `rtk-rewrite.sh`) and session-context hooks for each provider. Claude Code uses them natively; Codex and Cursor go through their hook adapters.
 - Publishes the C# binaries (`sindri`, `sindri-ui`, `judge`, `aw-packets`, `bugfix-state`, `ui-evidence`, `aw-readiness`) with `scripts/install-cs.sh` into `$AW_STATE_DIR/bin/cs/` and links them into `~/.local/bin`; removes what an older TypeScript install left (`scripts/cutover-clean-ts.sh`)
 - Builds the Serena Docker images (base TS/Python image; opt-in C# and Swift extensions) and installs the `serena-docker` wrapper to `~/.local/bin/`

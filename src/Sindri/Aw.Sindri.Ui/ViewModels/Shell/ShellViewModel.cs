@@ -51,6 +51,7 @@ internal sealed partial class ShellViewModel : ObservableObject
     /// <param name="window">The window's adapters (opening links and files, choosing a file); none opens and chooses nothing.</param>
     internal ShellViewModel(IEndpointRecordSource records, ISindriApi api, TimeProvider clock, Preferences preferences, IClipboard clipboard, IMotionPreference? motion = null, WindowPorts? window = null)
     {
+        Start = new SindriStartViewModel((window ?? WindowPorts.None).Starter, clock, (window ?? WindowPorts.None).Log);
         _store = preferences;
         _clock = clock;
         Health = new HealthViewModel(records, api, clock, clipboard);
@@ -59,7 +60,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         CommandOutcome = new CommandOutcomeRegion(control => Health.Banner.HasRebuild && ReferenceEquals(Health.Banner.Rebuild, control));
         Create = new CreateItemViewModel(Health.Catalog, () => Health.ApiUrl(), api);
         QuickAdd = new QuickAddViewModel(api, () => Health.ApiUrl(), clock);
-        Palette = new CommandPaletteViewModel(Health.Catalog, GoTo, RememberRun, CommandOutcome, () => Create.Open(), openTodo: OpenTodo, newTodo: () => OpenQuickAdd());
+        Palette = new CommandPaletteViewModel(Health.Catalog, GoTo, RememberRun, CommandOutcome, () => Create.Open(), openTodo: OpenTodo, newTodo: () => OpenQuickAdd()) { OpenSetting = OpenSettingFilter };
         Shortcuts = new ShortcutsViewModel(Health.Catalog);
         Queue = new QueueViewModel(api, Health.Catalog, clock);
         Queue.PageShown(RowScopeOf(CurrentPage));
@@ -93,9 +94,9 @@ internal sealed partial class ShellViewModel : ObservableObject
         InitToast();
         WireQuickAddToasts();
         InitLinear();
-        Health.Follow(Queue.Refresh);
+        Health.Follow(ReadQueue);
         Health.Follow(Item.Refresh);
-        Health.FollowCards();
+        FollowSystemCards();
     }
 
     /// <summary>The app's copy, for the view.</summary>
@@ -162,6 +163,9 @@ internal sealed partial class ShellViewModel : ObservableObject
 
     /// <summary>The window's pre-API state.</summary>
     public ShellState State => Health.State;
+
+    /// <summary>The Not running page's start states: Starting, Didn't start, Already starting, a broken install.</summary>
+    public SindriStartViewModel Start { get; }
 
     /// <summary>The state's reason in words: why it isn't running, the two versions, the unreadable answer's code and message; empty when Normal.</summary>
     public string Reason => Health.Reason;
@@ -231,10 +235,10 @@ internal sealed partial class ShellViewModel : ObservableObject
     {
         if (page == PageId.Settings)
         {
-            ReadLibraryRoots();
+            var library = Health.ApiUrl() is { } url ? ReadLibraryRoots(url) : null;
             Setup.RevealChecklist();   // every way into Settings (the rail, ⌘,, G U, the setup link, Home's line) shows the checklist, its first section
             ReadLinearConnection();   // after the checklist's reveal, so a Connect that asked for the Linear card is the last scroll
-            ReadTodoNoteCard();
+            ReadTodoNoteCard(library);
         }
 
         if (page == PageId.Context)
@@ -262,6 +266,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         }
 
         CurrentPage = page;
+        Start.ShowPage(PageName);
         Queue.PageShown(RowScopeOf(page));
         Changed(_pageProperties);
         Remember(p => p with { LastPage = page.ToString() });

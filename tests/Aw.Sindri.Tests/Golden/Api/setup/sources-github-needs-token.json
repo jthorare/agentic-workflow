@@ -1,6 +1,36 @@
 {
   "steps": [
     {
+      "id": "serve",
+      "title": "Sindri is current",
+      "state": "done",
+      "why": "Sindri is running the installed build.",
+      "detail": null,
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [],
+      "cli": null
+    },
+    {
+      "id": "sources",
+      "title": "Connect your accounts",
+      "state": "todo",
+      "why": "GitHub needs a token.",
+      "detail": null,
+      "error": null,
+      "action": "ConnectAccount",
+      "progress": null,
+      "items": [
+        {
+          "repo": "github",
+          "state": "todo",
+          "detail": "needs token"
+        }
+      ],
+      "cli": null
+    },
+    {
       "id": "repo",
       "title": "Add your repo",
       "state": "done",
@@ -15,7 +45,8 @@
           "state": "done",
           "detail": null
         }
-      ]
+      ],
+      "cli": null
     },
     {
       "id": "profile",
@@ -26,7 +57,20 @@
       "error": null,
       "action": null,
       "progress": null,
-      "items": []
+      "items": [],
+      "cli": null
+    },
+    {
+      "id": "agent",
+      "title": "Agent for workflows",
+      "state": "done",
+      "why": "Workflows run on an agent.",
+      "detail": "Workflows run on claude-code.",
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [],
+      "cli": null
     },
     {
       "id": "mcp",
@@ -50,7 +94,8 @@
             }
           ]
         }
-      ]
+      ],
+      "cli": null
     },
     {
       "id": "map",
@@ -67,24 +112,20 @@
           "state": "done",
           "detail": null
         }
-      ]
+      ],
+      "cli": null
     },
     {
-      "id": "sources",
-      "title": "Connect your sources",
-      "state": "todo",
-      "why": "GitHub needs a token.",
+      "id": "first-workflow",
+      "title": "Run hello-sindri",
+      "state": "done",
+      "why": "hello-sindri ran once.",
       "detail": null,
       "error": null,
-      "action": "ConnectIndexSource",
+      "action": null,
       "progress": null,
-      "items": [
-        {
-          "repo": "github",
-          "state": "todo",
-          "detail": "needs token"
-        }
-      ]
+      "items": [],
+      "cli": null
     }
   ],
   "asOf": {

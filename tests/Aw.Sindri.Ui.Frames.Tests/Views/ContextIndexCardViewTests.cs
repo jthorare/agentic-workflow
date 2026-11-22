@@ -13,14 +13,15 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 [Lane(TestLane.Integration)]
 public sealed class ContextIndexCardViewTests : FrameHost
 {
-    private const string Body = """{"sources":[{"source":"github","phase":"live","usable":true,"complete":false,"lastSync":null,"lastCode":null,"pull":"running","records":200,"lastCommit":"2026-10-11T11:57:00Z"},{"source":"linear","phase":"live","usable":false,"complete":false,"lastSync":null,"lastCode":null,"pull":"idle","records":0,"lastCommit":null}]}""";
+    private const string Body = """{"sources":[{"source":"github","phase":"live","usable":true,"complete":false,"lastSync":null,"lastCode":null,"pull":"running","records":200,"lastCommit":"2026-10-11T11:57:00Z"},{"source":"linear","phase":"live","usable":false,"complete":false,"lastSync":null,"lastCode":null,"pull":"idle","records":0,"lastCommit":null,"needsLook":true}]}""";
 
     [Fact]
     public Task The_card_names_each_line_and_the_heading_for_assistive_technology() => OnUi(async () =>
     {
         Server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, Body);
-        var (window, shell) = await Connected(s => s.Health.ContextIndex.Lines.Count > 0);
-        shell.GoTo(PageId.System);
+        var (window, shell) = await Connected();
+        shell.GoTo(PageId.System);   // #2775: the cards read only while System is the page
+        await Until(window, () => shell.Health.ContextIndex.Lines.Count > 0);
         Settle(window);
 
         var lines = Named<ItemsControl>(window, "ContextIndexLines").GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).ToList();
@@ -35,8 +36,9 @@ public sealed class ContextIndexCardViewTests : FrameHost
     public Task The_card_sits_right_after_the_Code_index() => OnUi(async () =>
     {
         Server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, Body);
-        var (window, shell) = await Connected(s => s.Health.ContextIndex.Lines.Count > 0);
-        shell.GoTo(PageId.System);
+        var (window, shell) = await Connected();
+        shell.GoTo(PageId.System);   // #2775: the cards read only while System is the page
+        await Until(window, () => shell.Health.ContextIndex.Lines.Count > 0);
         Settle(window);
 
         var cards = Named<Panel>(window, "SystemCards").Children;

@@ -28,6 +28,20 @@ public sealed class AddConnectionServiceTests
     }
 
     [Fact]
+    public async Task Generic_connection_add_refuses_the_messages_name()
+    {
+        var world = new ConnectionHarness();
+        world.Environment.Set("ACME_KEY", "sk-live-ACME-0001");
+
+        var added = await world.Add().Handle(ConnectionHarness.Rest("slack:messages"), Token);
+
+        Assert.Equal(SindriErrors.ConnectionNameReserved.Code, added.Error.Code);
+        Assert.Contains("sindri messages connect", added.Error.Message, StringComparison.Ordinal);
+        Assert.Empty(world.Store.Rows);
+        Assert.Empty(world.Secrets.Pointers);
+    }
+
+    [Fact]
     public async Task An_oauth_add_without_waiting_returns_the_consent_url_at_once_and_writes_no_row_yet()
     {
         var world = new ConnectionHarness();

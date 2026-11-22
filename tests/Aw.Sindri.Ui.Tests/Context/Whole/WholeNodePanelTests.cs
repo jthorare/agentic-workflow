@@ -142,7 +142,7 @@ public sealed class WholeNodePanelTests
         await page.Whole.Panel.OpenSource(Token);
 
         var panel = page.Whole.Panel;
-        Assert.Equal((true, false, "Open the ticket in the browser"), (panel.HasLink, panel.HasNoLink, panel.OpenSourceName));
+        Assert.Equal((true, false, "Open in Linear (the ticket in the browser)"), (panel.HasLink, panel.HasNoLink, panel.OpenSourceName));
         Assert.Equal(["https://linear.app/x/issue/LIN-12"], launcher.Opened, StringComparer.Ordinal);
     }
 
@@ -156,6 +156,20 @@ public sealed class WholeNodePanelTests
 
         Assert.Equal((false, true, "No link to the source"), (page.Whole.Panel.HasLink, page.Whole.Panel.HasNoLink, page.Whole.Panel.NoLinkText));
         Assert.Empty(launcher.Opened);
+    }
+
+    [Fact]
+    public async Task A_file_source_with_a_local_path_and_no_url_opens_the_file_and_has_no_no_link_line()
+    {
+        var (page, launcher, _) = await Open(Served(""", "source": { "kind": "file", "ref": "src/a/File17.ts", "path": "/work/r/src/a/File17.ts" }"""));
+        launcher.AddFile("/work/r/src/a/File17.ts");
+
+        await Click(page, Node);
+        await page.Whole.Panel.OpenSource(Token);
+
+        var panel = page.Whole.Panel;
+        Assert.Equal((false, false, true), (panel.HasLink, panel.HasNoLink, panel.HasOpenFile));
+        Assert.Equal(["/work/r/src/a/File17.ts"], launcher.Opened, StringComparer.Ordinal);
     }
 
     [Fact]
