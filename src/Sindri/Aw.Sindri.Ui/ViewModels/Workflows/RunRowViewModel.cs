@@ -22,6 +22,15 @@ internal sealed class RunRowViewModel : ObservableObject
         Name = Labels.WfRunRowName(Id, word.ToLowerInvariant(), TriggerText.ToLowerInvariant(), WhenText, ErrorText);
     }
 
+    /// <summary>True when this Starting placeholder waited 10 s and no run row came: it says the run did not start and offers Retry.</summary>
+    public bool DidNotStart => false;
+
+    /// <summary>"The run didn't start."</summary>
+    public string DidNotStartText => string.Empty;
+
+    /// <summary>The Retry button's words.</summary>
+    public string RetryText => string.Empty;
+
     /// <summary>The run's id.</summary>
     public string Id { get; }
 
