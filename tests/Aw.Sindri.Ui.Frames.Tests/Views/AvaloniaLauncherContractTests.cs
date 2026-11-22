@@ -29,6 +29,16 @@ public sealed class AvaloniaLauncherContractTests : LauncherContract
         Expect.True(!await launcher.OpenFile(ExistingFile(launcher), TestContext.Current.CancellationToken));
     }
 
+    [Fact]
+    public void A_hash_or_question_mark_in_a_file_name_is_part_of_the_path_not_a_fragment_or_query()
+    {
+        var path = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "a b#c?d.ts"));
+
+        var uri = AvaloniaLauncher.FileUri(path);
+
+        Expect.True(uri.IsFile && string.Equals(uri.LocalPath, path, StringComparison.Ordinal) && uri.Fragment.Length == 0 && uri.Query.Length == 0);
+    }
+
     private static Task<T> OnUi<T>(Func<Task<T>> body) =>
         HeadlessUnitTestSession.GetOrStartForAssembly(typeof(AvaloniaLauncherContractTests).Assembly)
             .Dispatch(body, TestContext.Current.CancellationToken);
@@ -40,6 +50,8 @@ public sealed class AvaloniaLauncherContractTests : LauncherContract
 
         public Task<bool> OpenFile(string path, CancellationToken cancellationToken) =>
             OnUi(() => new AvaloniaLauncher(Top).OpenFile(path, cancellationToken));
+
+        public bool FileExists(string path) => new AvaloniaLauncher(Top).FileExists(path);
 
         private Window? _window;
 

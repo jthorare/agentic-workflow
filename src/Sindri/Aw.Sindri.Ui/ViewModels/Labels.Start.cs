@@ -8,6 +8,11 @@ internal static partial class Labels
     /// <summary>The sentence under "Sindri isn't running", before any start.</summary>
     internal const string StartSentence = "Start it and Home loads your reviews, runs and messages. This takes about 10 seconds.";
 
+    /// <summary>The sentence under "Sindri isn't running" on a page other than Home: it names the page (#3719).</summary>
+    /// <param name="pageName">The page's name.</param>
+    /// <returns>The sentence.</returns>
+    internal static string StartSentenceFor(string pageName) => "Start it and " + pageName + " loads. This takes about 10 seconds.";
+
     /// <summary>The Start Sindri button.</summary>
     internal const string StartSindri = "Start Sindri";
 
