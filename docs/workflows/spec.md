@@ -12,6 +12,7 @@ You never send positions. Sindri lays the graph out itself.
 | `description` | no | What the workflow is for. |
 | `concurrency` | no | How runs overlap: `one-per-workflow` (the default), `queue` or `unlimited`. See the concurrency page. |
 | `resources` | no | A named `database`, and a default `sandbox` size (`memory`, `wall`) for agent blocks. |
+| `result` | no | The id of the node whose output is the run's result, what `run_workflow` and `workflow_result` read. With no `result`, the result holds every node no edge leaves. See "The run's result". |
 | `nodes` | yes | The blocks the workflow uses. |
 | `edges` | no | The wires between nodes. |
 
@@ -32,6 +33,17 @@ A node has an `id`, a `type` and a `config`. It may also have a `title` (what th
 An edge has a `from` node, a `to` node and an optional `output`. With no `output`, the edge leaves by `out`.
 A branching block names its own outputs. A `condition` block leaves by `true` or `false`.
 
+## The run's result
+
+A run that succeeds keeps one result, an object keyed by node id. Another workflow reads it with `run_workflow` (with `wait`) or `workflow_result`.
+
+- With `result`, it holds that one node: `"result": "rank"` gives `{"rank": {...}}`.
+- With no `result`, it holds every node no edge leaves that succeeded. In a straight line that is the last node. After a `condition`, it is the branch that ran.
+- A node that ran per item gives a list of its outputs, in item order.
+- The result is kept up to 64 KB on its own. The other nodes' rows do not count, so a long run with a small last step still has a result.
+- A result node whose output was cut at 64 KB, or a result over 64 KB, is stored as `{"truncated":true,"bytes":N}`. A reader then fails with `SND-GRAPH-108`. Name a smaller node with `result`.
+- The run page still shows every node's own row.
+
 ## Rules the validator checks
 
 1. The workflow has exactly one trigger block.
@@ -40,6 +52,7 @@ A branching block names its own outputs. A `condition` block leaves by `true` or
 4. A node reads only from nodes upstream of it.
 5. Every block type exists and its config fits.
 6. A cron text parses.
+7. A `result` names a node of the workflow (`GRAPH-RESULT-001`).
 
 A draft saves with wiring gaps (no trigger yet, a node not connected). Activation and a run take none.
 
