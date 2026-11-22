@@ -1,6 +1,6 @@
 namespace Aw.Sindri.Ui.Platform;
 
-/// <summary>The three settings that name the editor a code file opens in, in the order they win: Sindri's own, then the Unix <c>VISUAL</c> and <c>EDITOR</c> (#3715).</summary>
+/// <summary>The three settings that name the editor a code file opens in, in the order they win: Sindri's own, then the Unix VISUAL and EDITOR (#3715).</summary>
 /// <param name="Configured">AW_SINDRI_EDITOR, or null.</param>
 /// <param name="Visual">VISUAL, or null.</param>
 /// <param name="Editor">EDITOR, or null.</param>
