@@ -7,6 +7,25 @@ public static class WorktreeRoots
     /// <param name="roots">The host's pairs; empty means no mapping.</param>
     /// <param name="cwd">An absolute cwd that no longer exists.</param>
     /// <returns>The main checkout, or null when no root holds the cwd.</returns>
-    public static string? MainCheckoutOf(IReadOnlyList<WorktreeRoot> roots, string cwd) =>
-        throw new NotSupportedException("red: map a gone cwd under a worktree root to its main checkout");
+    public static string? MainCheckoutOf(IReadOnlyList<WorktreeRoot> roots, string cwd)
+    {
+        ArgumentNullException.ThrowIfNull(roots);
+        ArgumentNullException.ThrowIfNull(cwd);
+        var path = cwd.TrimEnd('/');
+        WorktreeRoot? best = null;
+        var bestLength = -1;
+        foreach (var pair in roots)
+        {
+            var root = pair.Root.TrimEnd('/');
+            var holds = root.Length > 0
+                && (string.Equals(path, root, StringComparison.Ordinal) || path.StartsWith(root + "/", StringComparison.Ordinal));
+            if (holds && root.Length > bestLength)
+            {
+                best = pair;
+                bestLength = root.Length;
+            }
+        }
+
+        return best?.MainCheckout.TrimEnd('/');
+    }
 }
