@@ -46,7 +46,7 @@ public sealed class TestRunCallStandInTests
         {
             var called = (await fenced.Start(new GraphCall(WorkflowRunId.From("caller@1:1"), NodeId.From("call"), 0, _target, Payload: null, Depth: 1), Token)).Value;
 
-            Assert.NotEqual("target@1:1", called.Run.Value);
+            Assert.NotEqual("target@1:1", called.Run.Value, StringComparer.Ordinal);
             Assert.True(called.Run.IsStandIn);
             Assert.Equal(0, live.Calls);
         }
