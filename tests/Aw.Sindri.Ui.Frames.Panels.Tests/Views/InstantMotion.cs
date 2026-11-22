@@ -1,7 +1,7 @@
 using Avalonia;
 using Aw.Sindri.Ui.Theme;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>
 /// Zero Motion.* durations in the app's resources for one test, then the token values back (#2535). The fake reduce-motion

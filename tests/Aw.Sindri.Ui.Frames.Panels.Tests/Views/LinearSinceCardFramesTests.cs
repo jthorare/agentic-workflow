@@ -9,7 +9,7 @@ using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>The Work > Linear "Since you last looked" card in the window at 900 px (#2536): the card header with its one action, grouped rows with a long title that trims, and the empty and error states.</summary>
 [Lane(TestLane.Integration)]

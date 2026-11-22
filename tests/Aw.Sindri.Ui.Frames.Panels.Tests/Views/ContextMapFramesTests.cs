@@ -12,7 +12,7 @@ using Aw.Sindri.Ui.Views.Context.Map;
 using Aw.Sindri.Ui.Views.Controls;
 using Aw.Sindri.Ui.Views.Shell;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>
 /// The context map's key frames (F3 spec 1, slice 2) against the in-memory API serving the map-tabs golden: every node on its
