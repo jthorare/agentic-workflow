@@ -4,13 +4,13 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
 /// <summary>
 /// The Workflows page (<see cref="WorkflowsPageViewModel"/>, continued): the server's validation findings (#3803). Each time the open workflow's read brings a new revision, the page asks
-/// POST /sindri/workflows/validate (the workflow's newest revision) and shows what came back: a mark on each step's card, a count over the graph, and the selected step's findings with
+/// POST /sindri/workflows/validate on the revision the graph draws (the active one, else the newest; never a newer one the graph doesn't show) and shows what came back: a mark on each step's card, a count over the graph, and the selected step's findings with
 /// the server's sentence and fix line. GRAPH-PROMPT-001 has a fix button: it opens the step's sheet on its question field and asks for the <c>/</c> field picker, which #3033 builds.
 /// </summary>
 internal sealed partial class WorkflowsPageViewModel
 {
     private int _findingReads;   // counts validate calls: only the newest one's answer shows
-    private (string Slug, int Latest, string Hash)? _findingsOf;   // the read the findings were asked for: a re-read of the same revision asks nothing
+    private (string Slug, int Revision, string Hash)? _findingsOf;   // the drawn revision the findings were asked for: a re-read of the same revision asks nothing
     private WorkflowGraphViewModel? _findingsGraph;   // the graph whose selection picks the step's findings
 
     /// <summary>The open workflow's findings.</summary>
@@ -123,20 +123,20 @@ internal sealed partial class WorkflowsPageViewModel
             return;
         }
 
-        var of = (shown.Slug, shown.LatestRevision, shown.SpecHash);
+        var of = (shown.Slug, shown.Revision, shown.SpecHash);   // Revision and SpecHash are the drawn revision's, so a finding never names a step the graph doesn't show
         if (_findingsOf == of)
         {
             return;
         }
 
         _findingsOf = of;
-        FindingsRead = ReadFindings(url, shown.Slug);
+        FindingsRead = ReadFindings(url, shown.Slug, shown.Revision);
     }
 
-    private async Task ReadFindings(Uri url, string slug)
+    private async Task ReadFindings(Uri url, string slug, int revision)
     {
         var read = ++_findingReads;
-        var answer = await Api.ValidateWorkflow(url, slug, revision: null, CancellationToken.None).ConfigureAwait(true);
+        var answer = await Api.ValidateWorkflow(url, slug, revision, CancellationToken.None).ConfigureAwait(true);
         if (read != _findingReads || !string.Equals(Runs.Slug, slug, StringComparison.Ordinal))
         {
             return;   // a newer revision was asked about since, or another workflow opened
