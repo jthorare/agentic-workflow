@@ -24065,3 +24065,4 @@ const Aw.Sindri.Core.Messages.MessagesConnection.Name = "slack:messages" -> stri
 static Aw.Sindri.Core.Messages.MessagesConnection.Config(string! workspace, string! user) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
 static Aw.Sindri.Core.Messages.SlackBaseUrlRule.Resolve(string? overrideUrl, string? marker, string! token) -> System.Uri!
 static Aw.Sindri.Core.Messages.SlackBaseUrlRule.Slack.get -> System.Uri!
+const Aw.Sindri.Core.Events.EventTypes.MessagesSynced = "messages.synced" -> string!
