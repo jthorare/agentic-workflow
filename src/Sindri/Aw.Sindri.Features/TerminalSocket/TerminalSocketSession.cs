@@ -9,7 +9,7 @@ namespace Aw.Sindri.Features.TerminalSocket;
 
 /// <summary>
 /// One terminal WebSocket (agents spec §15.8, message table in docs/sindri/agents.md): hello within 3 s, ready, whole-screen frames,
-/// keys, paste and size in, ping every 15 s with a 10 s pong deadline. A key makes the source capture at once (perf D14).
+/// keys, scroll, paste and size in, ping every 15 s with a 10 s pong deadline. A key makes the source capture at once (perf D14).
 /// It writes no frame or key to a log or the ledger.
 /// </summary>
 // why: internal; the Host's TerminalSocketEndpoint builds it through InternalsVisibleTo, and MA0182 only looks inside this assembly
@@ -262,6 +262,9 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
             case "key" when root.TryGetProperty("text", out var text) && text.GetString() is { } literal:
                 _ = await pane.SendText(literal, cancellationToken).ConfigureAwait(false);
                 break;
+            case "scroll" when ScrollBack(root) is { } rows:
+                _ = await pane.Scroll(rows, cancellationToken).ConfigureAwait(false);   // the source clamps it to the history; a missing or fractional number is dropped
+                break;
             case "size":
                 _ = await pane.Resize(new HostSize(Dimension(root, "cols", 0), Dimension(root, "rows", 0)), cancellationToken).ConfigureAwait(false);
                 break;
@@ -272,6 +275,10 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
                 break;
         }
     }
+
+    /// <summary>The rows a scroll message asks for, or null when 'back' is missing or not a whole number.</summary>
+    private static int? ScrollBack(JsonElement root) =>
+        root.TryGetProperty("back", out var back) && back.ValueKind == JsonValueKind.Number && back.TryGetInt64(out var rows) ? (int)Math.Clamp(rows, 0, int.MaxValue) : null;
 
     private static async ValueTask<bool> Paste(IOpenTerminalPane pane, ITerminalChannel channel, string pasted, CancellationToken cancellationToken)
     {

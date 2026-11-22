@@ -3,7 +3,9 @@
 # (<locks>/heavy-light.lock, N from $AW_STATE_DIR/heavy-light-cap, else AW_HEAVY_LIGHT_SLOTS, else 4), and doesn't start
 # while a live job waits for a box-wide slot and MemAvailable is under that slot's floor. Covers: N run and the N+1th waits
 # until one ends; the cap file is read again while a job waits; the env fallback and the default 4; the hold, and its end
-# when the waiter goes or memory is enough; slot 1 free and a dead waiter hold nothing; a job that compiles nothing never
+# when the waiter goes or memory is enough; the hold counts heavy-meta-reserve and the slots the waiter can take (#3810); its
+# note repeats (on a copy with HOLD_NOTE_EVERY=1) and names the waiter and the memory figure; slot 1 free and a dead waiter
+# hold nothing; a path-qualified dotnet build takes a light slot, a dotnet msbuild doesn't yet; a job that compiles nothing never
 # waits on the pool; AW_HEAVY_PRIORITY=meta skips the hold but not the pool; a held wait doesn't count toward the lock
 # timeout; a dead holder's light slot is reclaimed.
 # A fake dotnet on PATH waits for a go file per job; an awk shim answers MemAvailable from a file. Scratch state and lock
@@ -59,8 +61,12 @@ export AW_HEAVY_TEST_PATH="$STUB"
 # A copy with a 1 s lock timeout, laid out so it finds ../config/lib/heavy-config.sh.
 mkdir -p "$WORK/scripts"; ln -s "$DIR/../config" "$WORK/config"
 ONE="$WORK/scripts/heavy-one.sh"; sed 's/^TIMEOUT=5400$/TIMEOUT=1/' "$HEAVY" > "$ONE"
+# A copy that repeats the hold note every second instead of every 300.
+NOTE="$WORK/scripts/heavy-note.sh"; sed 's/^HOLD_NOTE_EVERY=300$/HOLD_NOTE_EVERY=1/' "$HEAVY" > "$NOTE"
 LIGHT="$LOCKS/heavy-light.lock"; BOX="$LOCKS/heavy-job.lock"
-sleep 300 & live=$!; bgpids+=("$live")
+# The stand-in live process lives as long as this suite (#3810: a `sleep 300` could end mid-suite on a loaded box and turn rows
+# red for the wrong reason). cleanup kills it by its recorded pid; if the suite is SIGKILLed it ends within a second on its own.
+(while kill -0 "$$" 2> /dev/null; do sleep 1; done) & live=$!; bgpids+=("$live")
 true & dead=$!; wait "$dead"
 
 wait_for() { local i; for i in $(seq 1 100); do eval "$1" && return 0; sleep 0.1; done; return 1; }   # <= 10 s
@@ -77,7 +83,7 @@ started() { [ -e "$RUN/started.$1" ]; }
 waiting() { [ -s "$LOCKS/heavy-wait/$(pid_of "$1")" ]; }
 go() { touch "$RUN/go.$1"; }
 rc_of() { wait "$(pid_of "$1")" 2> /dev/null; RC=$?; }   # in this shell: a $(...) subshell can't wait for our jobs
-# reset: end every job, empty the locks, the run dir and the cap files; memory back to plenty.
+# reset: end every job, empty the locks and the run dir, no light cap or reserve file, box-wide cap 4; memory back to plenty.
 reset() {
   touch "$RUN/go.all"
   local f id; for f in "$RUN"/pid.*; do
@@ -86,10 +92,11 @@ reset() {
     wait "$(cat "$f")" 2> /dev/null
   done
   find "$RUN" "$LOCKS" -mindepth 1 -delete 2> /dev/null
-  rm -f "$STATE/heavy-light-cap"; mem_mb 64000; JOB_ENV=""; SCRIPT=""
+  rm -f "$STATE/heavy-light-cap" "$STATE/heavy-meta-reserve"; echo 4 > "$STATE/heavy-slots-cap"; mem_mb 64000; JOB_ENV=""; SCRIPT=""
 }
 hold_box() { mkdir -p "$BOX"; echo "$live 2026-01-01T00:00:00Z session=x held" > "$BOX/owner"; }
-box_waiter() { mkdir -p "$LOCKS/heavy-wait"; printf '{"pid":%s,"session":1,"lock":"box-wide","since":"2026-01-01T00:00:00Z","argv":["x"],"cwd":"/"}\n' "$1" > "$LOCKS/heavy-wait/$1"; }
+# box_waiter <pid> [<extra fields>]
+box_waiter() { mkdir -p "$LOCKS/heavy-wait"; printf '{"pid":%s,"session":1,"lock":"box-wide","since":"2026-01-01T00:00:00Z","argv":["x"],"cwd":"/"%s}\n' "$1" "${2:-}" > "$LOCKS/heavy-wait/$1"; }
 fill_light() { mkdir -p "$LIGHT"; echo "$live 2026-01-01T00:00:00Z session=x held" > "$LIGHT/owner"; }
 
 # --- the pool: N run, the N+1th waits and starts when one ends ---
@@ -129,6 +136,13 @@ check "held: it says why on stderr" "$(grep -c 'holding this build back' "$RUN/o
 rm -f "$LOCKS/heavy-wait/$live"; wait_for 'started j1'
 check "held: the waiter's file goes, the build starts" "$(yn 'started j1')" "yes"
 
+# --- the hold note repeats while the hold lasts and names the waiter and the memory figure (#3810) ---
+reset; hold_box; box_waiter "$live"; mem_mb 5000; SCRIPT="$NOTE"
+job n1; wait_for 'waiting n1'; sleep 3.5
+check "held 3.5 s, a note every 1 s: the note is printed again" "$(yn '[ "$(grep -c "holding this build back" "$RUN/out.n1")" -ge 2 ]')" "yes"
+check "the note names the waiter's pid and argv" "$(grep -c "box-wide job $live (\"x\")" "$RUN/out.n1" | sed 's/^[1-9][0-9]*$/some/')" "some"
+check "the note names slot 2, its floor and the MB available" "$(grep -c 'slot 2, which needs 10240 MB free; 5000 MB available' "$RUN/out.n1" | sed 's/^[1-9][0-9]*$/some/')" "some"
+
 reset; hold_box; box_waiter "$live"; mem_mb 5000
 job j1; wait_for 'waiting j1'
 check "held again before memory frees" "$(yn 'started j1')" "no"
@@ -143,6 +157,27 @@ reset; box_waiter "$live"; mem_mb 5000
 job j1; wait_for 'started j1'
 check "not held: box-wide slot 1 is free (no floor), low memory" "$(yn 'started j1')" "yes"
 
+# --- the hold counts the meta reserve as the box-wide pool does (#3810) ---
+# Cap 3, reserve 1, slot 1 free, slot 2 held, 12000 MB: the pool keeps the reserve at 1 (slot 2's floor is met), so a lane
+# waiter can't take slot 1 and slot 3 needs 14336 MB. A meta waiter takes slot 1.
+reset; echo 3 > "$STATE/heavy-slots-cap"; echo 1 > "$STATE/heavy-meta-reserve"
+mkdir -p "$BOX.2"; echo "$live x" > "$BOX.2/owner"; box_waiter "$live"; mem_mb 12000
+job j1; wait_for 'waiting j1'
+check "held: slot 1 free but reserved, a lane waiter needs slot 3 (12000 MB under 14336)" "$(yn 'started j1')" "no"
+reset; echo 3 > "$STATE/heavy-slots-cap"; echo 1 > "$STATE/heavy-meta-reserve"
+mkdir -p "$BOX.2"; echo "$live x" > "$BOX.2/owner"; box_waiter "$live" ',"meta":1'; mem_mb 12000
+job j1; wait_for 'started j1'
+check "not held: the same, but the waiter is meta and may take reserved slot 1" "$(yn 'started j1')" "yes"
+# Memory too low for slot 2 (the pool then drops the reserve to 0): a lane waiter takes slot 1.
+reset; echo 3 > "$STATE/heavy-slots-cap"; echo 1 > "$STATE/heavy-meta-reserve"
+mkdir -p "$BOX.2"; echo "$live x" > "$BOX.2/owner"; box_waiter "$live"; mem_mb 5000
+job j1; wait_for 'started j1'
+check "not held: 5000 MB, the reserve drops to 0, so a lane waiter may take slot 1" "$(yn 'started j1')" "yes"
+# Slot 2 free but short of memory while slot 3's lower floor is met: the waiter takes slot 3, so nothing holds.
+reset; hold_box; box_waiter "$live"; mem_mb 5000; JOB_ENV="AW_HEAVY_MIN_FREE_HIGH_MB=3072"
+job j1; wait_for 'started j1'
+check "not held: slot 2 under its floor, but free slot 3 (floor 3072) is one the waiter can take" "$(yn 'started j1')" "yes"
+
 reset; hold_box; box_waiter "$dead"; mem_mb 5000
 job j1; wait_for 'started j1'
 check "not held: the box-wide waiter's pid is dead" "$(yn 'started j1')" "yes"
@@ -153,6 +188,12 @@ job t1 --light dotnet test --no-build x; job c1 --light dotnet clean; job s1 --l
 wait_for 'started t1 && started c1 && started s1'
 check "pool full and held: test --no-build, clean and a script run" "$(yn 'started t1 && started c1 && started s1')" "yes"
 rc_of t1; rcs="$RC"; rc_of c1; rcs="$rcs $RC"; rc_of s1; check "they exit 0" "$rcs $RC" "0 0 0"
+
+# --- a path-qualified dotnet build compiles too: it takes a light slot (#3810) ---
+reset; echo 1 > "$STATE/heavy-light-cap"; fill_light
+job p1 --light "$STUB/dotnet" build p1; job q1 --light dotnet msbuild q1; wait_for 'waiting p1 && started q1'
+check "pool full: a path-qualified dotnet build waits for a light slot" "$(yn '! started p1')" "yes"
+check "pool full: a dotnet msbuild starts at once until the sandbox shim table lists it (#3810 item 3)" "$(yn 'started q1')" "yes"
 
 # --- AW_HEAVY_PRIORITY=meta skips the hold, not the pool ---
 reset; hold_box; box_waiter "$live"; mem_mb 5000; JOB_ENV="AW_HEAVY_PRIORITY=meta"

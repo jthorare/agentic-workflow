@@ -55,13 +55,7 @@ public sealed class TemporalDevServerForeignListenerTests : IDisposable
     {
         var script = Path.Combine(_home.Path, "fake-temporal.sh");
         var ran = Path.Combine(_home.Path, "ran");
-        File.WriteAllText(script, string.Create(CultureInfo.InvariantCulture, $"#!/bin/sh\nif [ -e '{ran}' ]; then exec sleep 60; fi\n: > '{ran}'\nsleep 1\necho 'listen tcp 127.0.0.1:{lostPort}: bind: address already in use'\nexit 1\n"));
-        if (!OperatingSystem.IsWindows())
-        {
-            File.SetUnixFileMode(script, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
-        }
-
-        return script;
+        return ExecutableScript.Write(script, string.Create(CultureInfo.InvariantCulture, $"if [ -e '{ran}' ]; then exec sleep 60; fi\n: > '{ran}'\nsleep 1\necho 'listen tcp 127.0.0.1:{lostPort}: bind: address already in use'\nexit 1\n"));
     }
 
     private static int FreePort()
