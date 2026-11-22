@@ -15,5 +15,5 @@ public interface ISlackClient
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The workspace and user, or SND-MSG-002 (revoked or invalid), 003 (a missing scope), 005 (rate limited), 019 (the workspace blocks the
     /// app), 033 (Slack unreachable) or SND-CONN-012 (an answer that is not Slack's shape).</returns>
-    ValueTask<Result<SlackAuth>> AuthTest(string token, CancellationToken cancellationToken);
+    public ValueTask<Result<SlackAuth>> AuthTest(string token, CancellationToken cancellationToken);
 }

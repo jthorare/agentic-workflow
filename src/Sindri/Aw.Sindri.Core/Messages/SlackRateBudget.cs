@@ -51,7 +51,7 @@ public sealed class SlackRateBudget
                 return until - now;
             }
 
-            _holds.Remove(method);
+            _ = _holds.Remove(method);
             return TimeSpan.Zero;
         }
     }
