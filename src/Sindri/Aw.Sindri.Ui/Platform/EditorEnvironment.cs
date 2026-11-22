@@ -8,5 +8,8 @@ internal sealed record EditorEnvironment(string? Configured, string? Visual, str
 {
     /// <summary>Reads the three variables of this process.</summary>
     /// <returns>Their values.</returns>
-    internal static EditorEnvironment Read() => throw new NotSupportedException();
+    internal static EditorEnvironment Read() => new(
+        Environment.GetEnvironmentVariable("AW_SINDRI_EDITOR"),
+        Environment.GetEnvironmentVariable("VISUAL"),
+        Environment.GetEnvironmentVariable("EDITOR"));
 }

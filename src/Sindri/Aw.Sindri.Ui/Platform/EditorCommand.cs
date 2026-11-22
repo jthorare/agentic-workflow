@@ -6,9 +6,17 @@ internal static class EditorCommand
     /// <summary>The command's argv without the file.</summary>
     /// <param name="environment">The three settings.</param>
     /// <returns>The program and its arguments, or null when none is set.</returns>
-    internal static IReadOnlyList<string>? Resolve(EditorEnvironment environment) 
+    internal static IReadOnlyList<string>? Resolve(EditorEnvironment environment)
     {
-        _ = environment;
-        throw new NotSupportedException();
+        foreach (var value in (string?[])[environment.Configured, environment.Visual, environment.Editor])
+        {
+            var argv = value?.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (argv is { Length: > 0 })
+            {
+                return argv;
+            }
+        }
+
+        return null;
     }
 }
