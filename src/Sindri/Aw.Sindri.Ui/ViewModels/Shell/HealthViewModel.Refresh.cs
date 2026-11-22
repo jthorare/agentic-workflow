@@ -11,7 +11,10 @@ internal sealed partial class HealthViewModel
     /// <returns>The URL, or null.</returns>
     internal Uri? ApiUrl() => _url;
 
-    /// <summary>Adds a view the follower re-reads on connect and after every event (§9.2: re-query, never fold).</summary>
+    /// <summary>
+    /// Adds a view the follower re-reads on connect and after every event (§9.2: re-query, never fold). The views are read side by side,
+    /// so a view must not count on another view's answer from the same round; one that uses another's state maps it again when that one answers.
+    /// </summary>
     /// <param name="view">Reads the view from the API's base URL.</param>
     internal void Follow(Func<Uri, CancellationToken, Task> view) => _views.Add(view);
 
@@ -30,7 +33,8 @@ internal sealed partial class HealthViewModel
         OnChanged(nameof(ViewReads));
     }
 
-    // One view's read as a task: a view that throws before its first await faults its own task instead of stopping the views after it.
+    // One view's read as a task. The async wrapper is there only for a view that throws before its first await: that faults its own
+    // task instead of stopping the views after it, so keep it even though it looks like a plain call.
     private static async Task Read(Func<Uri, CancellationToken, Task> view, Uri url, CancellationToken cancellationToken) =>
         await view(url, cancellationToken).ConfigureAwait(true);
 
