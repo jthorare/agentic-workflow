@@ -16,8 +16,8 @@
 #      #3810), takes one of N light slots of <locks>/heavy-light.lock (slot 1 the bare path, slot k .k, the same mkdir mutexes
 #      and dead-holder reclaim as rule 2). N is $AW_STATE_DIR/heavy-light-cap, else AW_HEAVY_LIGHT_SLOTS, else 4, read again on
 #      every pass. Such a build also doesn't START while a live job waits for a box-wide slot and every free slot that job may
-#      take is under its memory floor (slot 1 has no floor). A lane waiter may take only the slots above heavy-meta-reserve,
-#      the reserve clamped as rule 2's pool clamps it; a meta waiter may take any (#3810). So builders can't keep a gate's slot
+#      take is under its memory floor (slot 1 has no floor). A lane waiter may take only the slots above heavy-meta-reserve;
+#      a meta waiter may take any (#3810). So builders can't keep a gate's slot
 #      shut; nothing running is stopped, and that wait doesn't count toward the lock timeout. The hold has no limit of its own:
 #      a held build prints a line when the hold starts or moves to another waiter, and every 5 minutes after. The line names
 #      the waiter (pid, argv), the slot it waits for, that slot's floor and the MB available.
@@ -80,6 +80,8 @@ TIMEOUT=5400
 # (0..SLOTS; every reader caps it at SLOTS-1, so a lane job always has a slot, #2060) to <state>/heavy-meta-reserve, scaled to its merge-queue depth. A job run with AW_HEAVY_PRIORITY=meta may
 # take any slot; any other expensive job may take only slots above the reservation. Nothing running is pre-empted, and
 # a job blocked only by the reservation (it skipped a free reserved slot) does not count that wait toward TIMEOUT.
+# The reserve is a slot count, held whatever memory is free (meta, 2026-11-22, #3885): the memory floors decide only whether a
+# job may start in a slot, never how many slots meta keeps. So with slot 2 under its floor, a lane job still can't take slot 1.
 RESERVE="$(heavy_reserve "$SLOTS")"
 PRIORITY="${AW_HEAVY_PRIORITY:-}"
 # The light pool (rule 3, #3796). A non-number or 0 in AW_HEAVY_LIGHT_SLOTS means the default 4.
@@ -232,13 +234,13 @@ reclaim_slot() {
 }
 
 # slot_still_allowed <k>: box-wide slot k is within the cap and, for a non-meta job, outside the reserve, as read now.
-# The reserve is clamped by the pass's usable count like the pass does (#2060). Light slot k: within the light cap.
+# Light slot k: within the light cap.
 slot_still_allowed() {
   local k="$1" cap res
   if [ "$label" = light ]; then [ "$k" -le "$(heavy_light_cap "$LIGHT_GIVEN")" ]; return; fi
   cap="$(heavy_cap "$GIVEN_SLOTS")"; [ "$k" -le "$cap" ] || return 1
   [ "$PRIORITY" = meta ] && return 0
-  res="$(heavy_reserve "$cap")"; [ "$res" -gt "$((usable - 1))" ] && res=$((usable - 1))
+  res="$(heavy_reserve "$cap")"
   [ "$k" -gt "$res" ]
 }
 
@@ -285,19 +287,17 @@ older_peer() {
 
 # boxwide_starved: some live job waits for a box-wide slot (a heavy-wait file with "lock":"box-wide" whose pid is alive), and
 # every free box-wide slot that job may take is shut by its memory floor. A meta waiter may take any slot within the cap. Any other
-# waiter may take only the slots above the reserve, clamped as the box-wide pool clamps it: below the slots free memory allows
-# (#2060). So a free slot 1 it may take (no floor), a free slot whose floor is met, or no free slot it may take all mean no: the
-# waiter takes the slot or waits for a holder, not for memory. A dead waiter's file (SIGKILL leaves one) counts for nothing.
+# waiter may take only the slots above the reserve, a slot count whatever memory is free, as in the box-wide pool (#3885). So a
+# free slot 1 it may take (no floor), a free slot whose floor is met, or no free slot it may take all mean no: the waiter takes
+# the slot or waits for a holder, not for memory. A dead waiter's file (SIGKILL leaves one) counts for nothing.
 # The waiter lookup comes first and uses builtins only: the cap file (cat) and MemAvailable (awk, or vm_stat) are read only once
-# a waiter is found, and then once per call, so a compiling light job with no box-wide waiter forks nothing here. On a yes, HOLD_LINE is the waiter's wait-file line, HOLD_SLOT the lowest slot it can't take
-# for memory, HOLD_NEED that slot's floor and HOLD_MB the MB available (empty when unreadable), for the hold note.
+# a waiter is found, and then once per call, so a compiling light job with no box-wide waiter forks nothing here. On a yes,
+# HOLD_LINE is the waiter's wait-file line, HOLD_SLOT the lowest slot it can't take for memory, HOLD_NEED that slot's floor and HOLD_MB the MB available (empty when unreadable), for the hold note.
 boxwide_starved() {
-  local cap="" res usable kb=""
+  local cap="" kb=""
   if live_waiter boxwide_lane_line; then
     cap="$(heavy_cap "$GIVEN_SLOTS")"; kb="$(avail_kb)"
-    usable=1; while [ "$usable" -lt "$cap" ] && floor_met "$((usable + 1))" "$kb"; do usable=$((usable + 1)); done
-    res="$(heavy_reserve "$cap")"; [ "$res" -gt "$((usable - 1))" ] && res=$((usable - 1))
-    starved_above "$res" "$cap" "$kb" && return 0
+    starved_above "$(heavy_reserve "$cap")" "$cap" "$kb" && return 0
   fi
   live_waiter boxwide_meta_line || return 1
   [ -n "$cap" ] || { cap="$(heavy_cap "$GIVEN_SLOTS")"; kb="$(avail_kb)"; }
@@ -334,7 +334,7 @@ hold_note() {
 
 # acquire <label> <base> <slots>: take one slot of a mkdir-mutex pool; a slot whose owner pid is gone is reclaimed.
 acquire() {
-  local label="$1" base="$2" slots="$3" waited=0 printed=0 told=0 k d got="" free_wait held usable
+  local label="$1" base="$2" slots="$3" waited=0 printed=0 told=0 k d got="" free_wait held
   local fifo=1 older stood told_at=0 told_pid=""
   [ "$PRIORITY" = meta ] && fifo=0
   while [ -z "$got" ]; do
@@ -343,10 +343,9 @@ acquire() {
     # keeps them off the slots above it (nothing running is pre-empted). The memory guard below is slow (two vm_stat forks
     # without /proc/meminfo), so a slot taken is checked again against the cap and reserve read after the take (#2718).
     if [ "$label" = box-wide ]; then
+      # heavy_reserve keeps the reserve at most slots - 1, so a lane job always has a slot to wait for (#2060). There is no memory
+      # clamp: the reserve is a slot count (#3885), and each slot's floor below decides only whether a job may start there.
       slots="$(heavy_cap "$GIVEN_SLOTS")"; RESERVE="$(heavy_reserve "$slots")"
-      # The reserve also stays below the slots free memory allows this pass, so a lane job keeps one (#2060).
-      usable=1; while [ "$usable" -lt "$slots" ] && mem_ok "$((usable + 1))"; do usable=$((usable + 1)); done
-      [ "$RESERVE" -gt "$((usable - 1))" ] && RESERVE=$((usable - 1))
     fi
     # The light pool: its cap, read now, and the hold for a box-wide waiter short of memory (rule 3; a meta job skips the hold).
     if [ "$label" = light ]; then
