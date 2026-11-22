@@ -1,0 +1,26 @@
+schema_version: '1.1'
+name: system-design-roi-sweeps
+tags:
+- tier-b
+- behaviour
+execution:
+  max_turns: 45
+  timeout_seconds: 900
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Write
+  - Edit
+  - Skill
+  - Agent
+  - TodoWrite
+  - AskUserQuestion
+  - Bash
+context:
+  scaffold_script: fixture.sh
+# AW_GIT_MODE=readonly. No stubs needed: the skill's scripts are python3 stdlib only.
+# What it checks (issue 3788): the TDD opens with the ROI and data-analysis plan (<section id="roi">, skills/_shared/roi-analysis.md),
+# and the map's phases end with the performance sweep and then the bug sweep, each with an exit check (skills/_shared/closing-sweeps.md).
+# Planted fact: the fixture's AGENTS.md documents no read access to data, so the ROI plan's production-data source says "no data access".
+# Eval sandbox: Bash writes nothing a grader sees, so tdd.html is graded through its Write call and doc.md through the reply.
