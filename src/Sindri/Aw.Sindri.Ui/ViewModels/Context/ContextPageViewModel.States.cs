@@ -89,11 +89,17 @@ internal sealed partial class ContextPageViewModel
 
     private string? _problemCode;
 
+    // The sentence and its code change together, so a code never outlives the words it came with.
+    private void SetProblem(string text, string? code = null)
+    {
+        Problem = text;
+        _problemCode = code;
+    }
+
     // The banner for a refused read: its plain words, and its code so the banner knows which fix to offer.
     private void ShowProblem(Error error, string? words = null)
     {
-        Problem = words ?? Labels.ContextProblem(error.Code, error.Message);
-        _problemCode = error.Code;
+        SetProblem(words ?? Labels.ContextProblem(error.Code, error.Message), error.Code);
         OnChanged(nameof(ProblemFix));
     }
 
@@ -128,7 +134,7 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
-        Problem = string.Empty;   // the overlay says it, not the banner
+        SetProblem(string.Empty);   // the overlay says it, not the banner
         BuildControl ??= MakeBuildControl();   // null until the catalog is read; the next no-map answer tries again
         if (!IsBuilding && await BuildRunning(api, cancellationToken).ConfigureAwait(true))
         {

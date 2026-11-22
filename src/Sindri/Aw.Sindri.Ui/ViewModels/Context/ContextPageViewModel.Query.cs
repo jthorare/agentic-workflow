@@ -27,7 +27,7 @@ internal sealed partial class ContextPageViewModel
         if (!asked.IsSuccess && string.Equals(asked.Error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal))
         {
             Show(view: null, choices: []);
-            Problem = asked.Error.Message;
+            SetProblem(asked.Error.Message);
             Refresh();
             return null;
         }

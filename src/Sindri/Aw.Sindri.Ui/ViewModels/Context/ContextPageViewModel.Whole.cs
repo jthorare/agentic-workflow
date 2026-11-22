@@ -191,7 +191,7 @@ internal sealed partial class ContextPageViewModel
         if (read.IsSuccess)
         {
             Whole.ShowArea(read.Value);
-            Problem = string.Empty;
+            SetProblem(string.Empty);
         }
         else
         {

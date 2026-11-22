@@ -201,7 +201,7 @@ internal sealed partial class ContextPageViewModel
     private void Show(LensesView? view, List<string> choices, bool fromQuestion = false)
     {
         ForgetSelection();
-        Problem = string.Empty;
+        SetProblem(string.Empty);
         Choices = choices;
         if (view is null)
         {
