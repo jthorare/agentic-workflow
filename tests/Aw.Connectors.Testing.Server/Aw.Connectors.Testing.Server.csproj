@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.Connectors.Testing.Server (messages spec §8.1, M1a): the fake Slack (Aw.Connectors.Testing's FakeSlackServer) served over
+       loopback HTTP, so `sindri serve`, the app and scripts/slack-fixture.sh read the same fake the tests use. Test support under
+       tests/: nothing under src/ references it (Aw.Architecture.Tests). The name avoids .Host, which the build reads as a
+       production entry point. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Aw.Connectors.Testing.Server</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Kestrel, loopback only. A shared framework, not a NuGet package. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Aw.Connectors.Testing/Aw.Connectors.Testing.csproj" />
+  </ItemGroup>
+</Project>
