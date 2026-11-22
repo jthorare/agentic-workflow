@@ -1,5 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.Tests.Agents.Page;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Agents;
@@ -69,4 +70,36 @@ public sealed class NewAgentShellTests
         var sent = Assert.Single(_server.Starts);
         Assert.Equal(("sindri-" + sent.ActId, sent.ActId), (asked?.Id, asked?.ActId));
     }, Token);
+
+    [Fact]
+    public Task A_2xx_selects_the_started_row_before_and_after_its_id_changes_3384() => UiThread.Run(async () =>
+    {
+        var shell = await OnAgents();
+        await shell.OpenNewAgent(Token);
+        await shell.NewAgent.Start(background: false, Token);
+        var act = Assert.Single(_server.Starts).ActId;
+        var url = shell.Health.ApiUrl()!;
+
+        // Before the fleet file: the Starting row's id is the tmux session name.
+        var starting = AgentsPageFixture.Edited(list => Retarget(list, $"claude-code/sindri-{act}", $"sindri-{act}", act));
+        _server.SessionAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, starting.ToJsonString());
+        await shell.Agents.Refresh(url, Token);
+        var before = shell.Agents.SelectedKey;
+
+        // After it: the same session under the provider's own id.
+        var found = AgentsPageFixture.Edited(list => Retarget(list, "claude-code/cccccccc-0000-4000-8000-000000000009", "cccccccc-0000-4000-8000-000000000009", act));
+        _server.SessionAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, found.ToJsonString());
+        await shell.Agents.Refresh(url, Token);
+
+        Assert.Equal(($"claude-code/sindri-{act}", "claude-code/cccccccc-0000-4000-8000-000000000009"), (before, shell.Agents.SelectedKey));
+    }, Token);
+
+    // The first row becomes the started session: its address, id and tmux session name.
+    private static void Retarget(System.Text.Json.Nodes.JsonObject list, string reference, string id, string act)
+    {
+        var row = list["sessions"]![0]!.AsObject();
+        row["ref"] = reference;
+        row["id"] = id;
+        row["host"]!["session"] = "sindri-" + act;
+    }
 }
