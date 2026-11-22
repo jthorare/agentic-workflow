@@ -267,6 +267,7 @@ public sealed class SindriApiClientContextTests
         var slack = status.Value.Sources[2];
         Assert.Equal(("failed", "SND-CONTEXT-041", 3), (slack.Pull, slack.LastError, slack.Failures));
         Assert.Null(status.Value.Sources[1].LastCommit);
+        Assert.Equal([false, true, true], status.Value.Sources.Select(s => s.NeedsLook));
     }
 
     [Fact]
@@ -277,7 +278,7 @@ public sealed class SindriApiClientContextTests
 
         var status = await client.IndexStatus(_api, Token);
 
-        Assert.All(status.Value.Sources, s => Assert.Equal((null, null, null), (s.Pull, s.Records, s.LastCommit)));
+        Assert.All(status.Value.Sources, s => Assert.Equal((null, null, null, false), (s.Pull, s.Records, s.LastCommit, s.NeedsLook)));
     }
 
     [Fact]
