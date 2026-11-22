@@ -214,6 +214,12 @@ internal sealed partial class AgentsPageViewModel
 
         var at = asking.FindIndex(r => string.Equals(r, SelectedKey, StringComparison.Ordinal));
         var next = at < 0 ? (forward ? 0 : asking.Count - 1) : (at + (forward ? 1 : asking.Count - 1)) % asking.Count;
-        return Select(asking[next]);
+        if (!Select(asking[next]))
+        {
+            return false;
+        }
+
+        RequestFocus(new AgentFocusEventArgs(asking[next], toFocusLine: false, onlyIfLost: false));   // like Move: the focus ring follows the selection
+        return true;
     }
 }
