@@ -74,6 +74,8 @@ else
     # prompt-sort attaches the images its prompt names through lib/image-paths.sh next to it.
     mkdir -p "$HOOKS_DIR/lib"
     cp "$SCRIPT_DIR/config/lib/image-paths.sh" "$HOOKS_DIR/lib/image-paths.sh"
+    # and kills its timed-out script and children through lib/kill-tree.sh next to it.
+    cp "$SCRIPT_DIR/config/lib/kill-tree.sh" "$HOOKS_DIR/lib/kill-tree.sh"
     SORT_ENTRY=$(jq -nc --arg c "$HOOKS_DIR/prompt-sort.sh # aw:prompt-sort" '{hooks:[{type:"command",command:$c,timeout:10}]}')
     merge_hook "$SETTINGS_FILE" UserPromptSubmit aw:prompt-sort "$SORT_ENTRY"
     echo "  judge: UserPromptSubmit prompt-sort hook installed (shadow mode: records, injects nothing until a scaffold switch is on)"
