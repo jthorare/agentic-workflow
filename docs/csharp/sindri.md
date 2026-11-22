@@ -527,6 +527,7 @@ on the four carve-out routes with `issue` rows; queries are GET or QUERY, a comm
 `sindri transcripts list` and `sindri transcripts show <ref>` read the local agent transcripts through `Aw.Transcripts`
 (`docs/csharp/transcripts.md`). They run in the CLI's own process: they read files, need no control plane and never
 start serve. An agent session may run them; neither verb has a catalog row, a route or an MCP tool.
+Neither verb has a slice: like `WfValidateCommand`, the Host command calls `ITranscriptCorpus` directly.
 
 | Verb | Prints | `--json` |
 |---|---|---|
