@@ -62,6 +62,17 @@ internal sealed class NodeRunViewModel : ObservableObject
     /// <summary>The node's id, or "Item 2 of 3" for one item of a for_each node.</summary>
     public string TitleText { get; }
 
+#pragma warning disable CA1822, MA0041 // red stubs (#3307), replaced by the fix
+    /// <summary>True when the row shows its own title (an item of a for_each node); a node that runs once is named by its group's heading.</summary>
+    public bool HasTitle => true;
+
+    /// <summary>A code step's body as written, with real line breaks; empty for any other step.</summary>
+    public string CodeText => string.Empty;
+
+    /// <summary>True when the step has a code body.</summary>
+    public bool HasCode => false;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>The chip's tone; the glyph and word carry the status too.</summary>
     public ChipTone Tone { get; }
 
@@ -98,6 +109,9 @@ internal sealed class NodeRunViewModel : ObservableObject
 
     /// <summary>The input's heading.</summary>
     public string InputHeading => Labels.WfInputHeading;
+
+    /// <summary>The code's heading.</summary>
+    public string CodeHeading => string.Empty;
 
     /// <summary>The output's heading.</summary>
     public string OutputHeading => Labels.WfOutputHeading;
