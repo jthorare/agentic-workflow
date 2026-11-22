@@ -18,7 +18,9 @@
 #      every pass. Such a build also doesn't START while a live job waits for a box-wide slot and every free slot that job may
 #      take is under its memory floor (slot 1 has no floor). A lane waiter may take only the slots above heavy-meta-reserve,
 #      the reserve clamped as rule 2's pool clamps it; a meta waiter may take any (#3810). So builders can't keep a gate's slot
-#      shut; nothing running is stopped, and that wait doesn't count toward the lock timeout.
+#      shut; nothing running is stopped, and that wait doesn't count toward the lock timeout. The hold has no limit of its own:
+#      a held build prints a line when the hold starts and every 5 minutes after, naming the waiter (pid, argv), the slot it
+#      waits for, that slot's floor and the MB available.
 #      AW_HEAVY_PRIORITY=meta skips that hold, not the pool. A light job that compiles nothing (`dotnet test --no-build`,
 #      `dotnet clean`, a script) takes the per-session slot only.
 #      For a PR that touches one src project, a light build of that project alone is the compile check. Build the whole test
@@ -87,6 +89,9 @@ case $LIGHT_GIVEN in ""|*[!0-9]*|0) LIGHT_GIVEN=4 ;; esac
 MAX_DEFER="${AW_HEAVY_FIFO_MAX_DEFER:-1800}"
 case $MAX_DEFER in ""|*[!0-9]*) MAX_DEFER=1800 ;; esac
 STOOD_AT=""
+# A light build held back for a box-wide waiter (rule 3) says so when the hold starts and again every HOLD_NOTE_EVERY seconds of
+# holding, so a long hold shows in the job's output (#3810). The hold has no time limit of its own.
+HOLD_NOTE_EVERY=300
 
 mode=auto
 case "${1:-}" in --expensive) mode=expensive; shift ;; --light) mode=light; shift ;; esac
@@ -307,10 +312,20 @@ starved_above() {
   HOLD_LINE="$WAITER_LINE"; HOLD_SLOT=$short; HOLD_MB=""; [ -z "$3" ] || HOLD_MB=$(($3 / 1024))
 }
 
+# hold_note: the hold's line on stderr, from what boxwide_starved found: the waiter's pid and argv (as JSON, cut at 200
+# characters), the slot it can't take, that slot's floor and the MB available.
+hold_note() {
+  local pid argv mem
+  pid="${HOLD_LINE#*\"pid\":}"; pid="${pid%%,*}"
+  argv="${HOLD_LINE#*\"argv\":[}"; argv="${argv%%],\"cwd\":*}"; [ "${#argv}" -le 200 ] || argv="${argv:0:200}..."
+  if [ -n "$HOLD_MB" ]; then mem="$HOLD_MB MB available"; else mem="MemAvailable unreadable"; fi
+  echo "heavy: holding this build back: box-wide job $pid ($argv) waits for slot $HOLD_SLOT, which needs $HOLD_NEED MB free; $mem" >&2
+}
+
 # acquire <label> <base> <slots>: take one slot of a mkdir-mutex pool; a slot whose owner pid is gone is reclaimed.
 acquire() {
   local label="$1" base="$2" slots="$3" waited=0 printed=0 told=0 k d got="" free_wait held usable
-  local fifo=1 older stood
+  local fifo=1 older stood told_at=0
   [ "$PRIORITY" = meta ] && fifo=0
   while [ -z "$got" ]; do
     free_wait=0; held=0; older=""; stood=0
@@ -328,7 +343,7 @@ acquire() {
       slots="$(heavy_light_cap "$LIGHT_GIVEN")"
       if [ "$PRIORITY" != meta ] && boxwide_starved; then
         held=1; free_wait=1
-        [ "$told" -eq 1 ] || { echo "heavy: holding this build back: a box-wide job waits for free memory" >&2; told=1; }
+        if [ "$told" -eq 0 ] || [ "$((SECONDS - told_at))" -ge "$HOLD_NOTE_EVERY" ]; then hold_note; told=1; told_at=$SECONDS; fi
       fi
     fi
     [ "$held" = 1 ] || for k in $(seq 1 "$slots"); do
