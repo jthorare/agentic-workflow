@@ -230,6 +230,29 @@ public sealed class SessionSheetViewModelTests
     }
 
     [Fact]
+    public async Task The_attach_command_shows_the_text_it_copies_3871()
+    {
+        var tmux = await Opened(ClaudeRef);
+        var other = await Opened(CodexRef);
+
+        await tmux.CopyAttach(Token);
+
+        Assert.Equal((_clipboard.Text, string.Empty), (tmux.AttachText, other.AttachText));
+        Assert.StartsWith("tmux -S ", tmux.AttachText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task The_state_is_a_toned_dot_and_a_word_3872()
+    {
+        var working = await Opened(ClaudeRef);
+        var waiting = await Opened(CodexRef);
+
+        Assert.Equal(("●", true, false), (working.StateGlyph, working.IsStateWorking, working.IsStateWaiting));
+        Assert.Equal(("●", false, true), (waiting.StateGlyph, waiting.IsStateWorking, waiting.IsStateWaiting));
+        Assert.StartsWith("Working", working.StateLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_session_that_is_not_in_tmux_has_no_attach_command_3710()
     {
         var sheet = await Opened(CodexRef);
