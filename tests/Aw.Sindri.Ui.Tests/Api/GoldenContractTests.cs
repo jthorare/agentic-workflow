@@ -194,6 +194,7 @@ public sealed class GoldenContractTests
         "todos-note-import",   // POST /todos/note/import (todo Ph3b): dry-run, imported and the stale 409; the app's Import and start syncing reads it with its own view once the card's golden contract lists it
         "workflows-validate",   // #2258 PR 8b: validate is the CLI's; ops and activate are read above
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
+        "messages-lists-id", "messages-status", "messages-conversations", "messages-conversations-id-messages", "messages-threads-id-id", "messages-search",   // messages spec §8.2 (M1s): M1f records these goldens; M1k and M1l move the ones the page reads to _read with their views
     };
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
