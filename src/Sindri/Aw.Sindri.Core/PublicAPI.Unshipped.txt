@@ -17702,6 +17702,8 @@ Aw.Sindri.Core.Graph.GraphSpec.Nodes.get -> System.Collections.Generic.IReadOnly
 Aw.Sindri.Core.Graph.GraphSpec.Nodes.init -> void
 Aw.Sindri.Core.Graph.GraphSpec.Resources.get -> Aw.Sindri.Core.Graph.GraphResources?
 Aw.Sindri.Core.Graph.GraphSpec.Resources.init -> void
+Aw.Sindri.Core.Graph.GraphSpec.Result.get -> Aw.Sindri.Core.Graph.Ids.NodeId?
+Aw.Sindri.Core.Graph.GraphSpec.Result.init -> void
 Aw.Sindri.Core.Graph.GraphSpec.Version.get -> int
 Aw.Sindri.Core.Graph.GraphSpec.Version.init -> void
 Aw.Sindri.Core.Graph.IWorkflowStore
@@ -23860,3 +23862,7 @@ static Aw.Sindri.Core.Graph.Blocks.GraphFence.Calls(Aw.Sindri.Core.Graph.Blocks.
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.ConnectionTools(Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort! live) -> Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort!
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.Toolkits(Aw.Sindri.Core.Toolkits.IRunningToolkits! live) -> Aw.Sindri.Core.Toolkits.IRunningToolkits!
 static Aw.Sindri.Core.Connections.ConnectionName.ParseUnreserved(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!
+Aw.Sindri.Core.Graph.Runs.RunResultMarker
+static Aw.Sindri.Core.Graph.Runs.RunResultMarker.IsMarker(System.Text.Json.Nodes.JsonNode? node) -> bool
+static Aw.Sindri.Core.Graph.Runs.RunResultMarker.Of(long? bytes) -> System.Text.Json.Nodes.JsonObject!
+static Aw.Sindri.Core.Graph.Runs.RunResultMarker.Refusal(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, System.Text.Json.Nodes.JsonNode? outputs) -> string?
