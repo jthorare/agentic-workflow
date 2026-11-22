@@ -36,7 +36,7 @@ internal sealed class RunRowViewModel : ObservableObject
     public string RetryText => Labels.WfRunStartRetry;
 
     /// <summary>What to do about a run that did not start.</summary>
-    public string DidNotStartHint => string.Empty;
+    public string DidNotStartHint => Labels.WfRunDidNotStartHint;
 #pragma warning restore CA1822, MA0041
 
     /// <summary>Turns a Starting placeholder into the "didn't start" row.</summary>

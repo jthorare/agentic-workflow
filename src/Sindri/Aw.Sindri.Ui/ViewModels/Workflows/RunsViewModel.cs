@@ -209,6 +209,17 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         _didNotStart.Clear();
     }
 
+    /// <summary>The page was left: every Starting placeholder goes and its deadline stops, so no timer outlives the page and no row waits on a timer that is gone.</summary>
+    internal void ForgetStarting()
+    {
+        foreach (var id in _starting.ToList())
+        {
+            DropStarting(id);
+        }
+
+        ClearStarting();
+    }
+
     /// <summary>Drops a Starting placeholder (Retry on a run that did not start): its row goes and its timer stops.</summary>
     /// <param name="runId">The placeholder's run id.</param>
     internal void DropStarting(string runId)

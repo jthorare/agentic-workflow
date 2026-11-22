@@ -107,6 +107,7 @@
                     <controls:StateChipView Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Word="{Binding ChipWord}" Tone="{Binding ChipToneWord}" Glyph="{Binding ChipGlyph}" IsVisible="{Binding IsShownStatus}" />
                     <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" IsVisible="{Binding DidNotStart}" AutomationProperties.AccessibilityView="Raw">
                       <TextBlock Classes="caption" Text="{Binding DidNotStartText}" AutomationProperties.AutomationId="RunDidNotStart" VerticalAlignment="Center" />
+                      <TextBlock Classes="caption subtle" Text="{Binding DidNotStartHint}" VerticalAlignment="Center" />
                       <Button Content="{Binding RetryText}" Click="OnRetryStart" AutomationProperties.AutomationId="RunStartRetry" AutomationProperties.Name="{Binding RetryText}" />
                     </StackPanel>
                     <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" IsVisible="{Binding IsShownStatus}" AutomationProperties.AccessibilityView="Raw">
@@ -207,6 +208,7 @@
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <controls:StateChipView x:Name="RunChipName" Word="{Binding Run.ChipWord}" Tone="{Binding Run.ChipToneWord}" Glyph="{Binding Run.ChipGlyph}" IsVisible="{Binding !Run.DidNotStart}" />
         <TextBlock Classes="caption" Text="{Binding Run.DidNotStartText}" IsVisible="{Binding Run.DidNotStart}" VerticalAlignment="Center" AutomationProperties.AutomationId="RunPageDidNotStart" />
+        <TextBlock Classes="caption subtle" Text="{Binding Run.DidNotStartHint}" IsVisible="{Binding Run.DidNotStart}" VerticalAlignment="Center" />
         <Button Content="{Binding Run.StartRetryText}" Click="OnRetryStartRunPage" IsVisible="{Binding Run.DidNotStart}" AutomationProperties.AutomationId="RunPageStartRetry" AutomationProperties.Name="{Binding Run.StartRetryText}" />
         <Button x:Name="RunCancel" Content="{Binding Run.CancelText}" Click="OnCancelRun" IsVisible="{Binding Run.CanCancel}" IsEnabled="{Binding Run.CanPressCancel}" AutomationProperties.Name="{Binding Run.CancelText}" />
       </StackPanel>

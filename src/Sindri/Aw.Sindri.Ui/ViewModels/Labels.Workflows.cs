@@ -193,6 +193,9 @@ internal static partial class Labels
     /// <summary>A Starting placeholder that got no run row for 10 s.</summary>
     internal const string WfRunDidNotStart = "The run didn't start.";
 
+    /// <summary>What to do about a run that didn't start, under that line.</summary>
+    internal const string WfRunDidNotStartHint = "Retry, or open Health if it keeps happening.";
+
     /// <summary>The Retry button on that row.</summary>
     internal const string WfRunStartRetry = "Retry";
 
