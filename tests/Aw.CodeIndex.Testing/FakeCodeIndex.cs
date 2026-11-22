@@ -64,6 +64,15 @@ public sealed class FakeCodeIndex : ICodeIndex
         return this;
     }
 
+    /// <summary>Marks a repo's graph layer as disabled by the profile: it never ran, the structure still answers.</summary>
+    /// <param name="repo">The repo.</param>
+    /// <returns>This fake.</returns>
+    public FakeCodeIndex WithGraphDisabled(RepoName repo)
+    {
+        _repos[repo].GraphOff = true;
+        return this;
+    }
+
     /// <summary>Scripts a repo's embeddings layer: <see cref="Status"/> lists it, and <see cref="Embed"/> leaves it in <paramref name="afterEmbed"/> (or answers <see cref="EmbedError"/>).</summary>
     /// <param name="repo">The repo; it needs a readable index.</param>
     /// <param name="state">The layer's state now.</param>
@@ -242,7 +251,7 @@ public sealed class FakeCodeIndex : ICodeIndex
     private static List<LayerStatus> LayersOf(Repo repo)
     {
         var layers = new List<LayerStatus> { new(LayerName.Structure, LayerState.Ok, Code: null, "ok") };
-        if (repo.GraphDown)
+        if (repo.GraphDown || repo.GraphOff)
         {
             layers.Add(GraphOf(repo));
         }
@@ -259,7 +268,8 @@ public sealed class FakeCodeIndex : ICodeIndex
 
     private static AnswerStamp Stamp(Repo repo) => new(repo.Name, repo.Commit!.Value, BuiltAt, IndexState.Ok, GraphOf(repo));
 
-    private static LayerStatus GraphOf(Repo repo) => repo.GraphDown
+    private static LayerStatus GraphOf(Repo repo) => repo.GraphOff ? new LayerStatus(LayerName.Graph, LayerState.Disabled, Code: null, "disabled by the profile")
+        : repo.GraphDown
         ? new LayerStatus(LayerName.Graph, LayerState.Unavailable, "SND-CODEIDX-008", "graphify is missing")
         : new LayerStatus(LayerName.Graph, LayerState.Ok, Code: null, "ok");
 
@@ -289,6 +299,8 @@ public sealed class FakeCodeIndex : ICodeIndex
         internal bool Damaged { get; init; }
 
         internal bool GraphDown { get; set; }
+
+        internal bool GraphOff { get; set; }
 
         internal LayerState? Embeddings { get; set; }
 

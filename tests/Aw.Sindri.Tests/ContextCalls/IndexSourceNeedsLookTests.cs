@@ -7,7 +7,7 @@ using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
-/// <summary>Each context source row carries needsLook, decided on the server (issue #3430): a failing pull or a source that holds nothing and never committed is a look; a running or new pull is not.</summary>
+/// <summary>Each context source row carries needsLook, decided on the server (issue #3430): a failing pull or a source that holds nothing and never committed after a pass ended is a look; a running or new pull is not.</summary>
 public sealed class IndexSourceNeedsLookTests
 {
     private static readonly DateTimeOffset _now = new(2026, 11, 12, 12, 0, 0, TimeSpan.Zero);
@@ -18,6 +18,7 @@ public sealed class IndexSourceNeedsLookTests
         ["pull in backoff"] = Source() with { Pull = "backoff", Records = 40, LastCommit = _now.AddHours(-2) },
         ["idle with nothing ever committed"] = Source() with { Pull = "idle", Records = 0 },
         ["idle with records"] = Source() with { Pull = "idle", Records = 40, LastCommit = _now.AddHours(-2) },
+        ["idle, no pass ended yet"] = Source() with { Pull = "idle", Records = 0, LastSync = null },
         ["idle, empty but committed"] = Source() with { Pull = "idle", Records = 0, LastCommit = _now.AddHours(-2) },
         ["running first read"] = Source() with { Pull = "running", Records = 0 },
         ["a pull word the app never saw"] = Source() with { Pull = "throttled", Records = 0 },
@@ -37,6 +38,7 @@ public sealed class IndexSourceNeedsLookTests
         { "pull in backoff", true },
         { "idle with nothing ever committed", true },
         { "idle with records", false },
+        { "idle, no pass ended yet", false },
         { "idle, empty but committed", false },
         { "running first read", false },
         { "a pull word the app never saw", false },
