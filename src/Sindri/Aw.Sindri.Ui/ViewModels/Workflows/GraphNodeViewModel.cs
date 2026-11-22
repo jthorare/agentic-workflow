@@ -22,8 +22,10 @@ internal sealed class GraphNodeViewModel : ObservableObject
             "skipped" or "cancelled" => GraphTone.Muted,
             _ => GraphTone.None,
         };
-        Name = Labels.WfGraphNodeName(title, type, word.ToLowerInvariant());
+        _name = Labels.WfGraphNodeName(title, type, word.ToLowerInvariant());
     }
+
+    private readonly string _name;
 
     /// <summary>The node's id.</summary>
     public string Id { get; }
@@ -49,9 +51,23 @@ internal sealed class GraphNodeViewModel : ObservableObject
     /// <summary>How the status is coloured.</summary>
     public GraphTone Tone { get; }
 
-    /// <summary>The accessible name: title, type and status word.</summary>
-    public string Name { get; }
+    /// <summary>The accessible name: title, type and status word, then the number of things to fix when the server found any (#3803).</summary>
+    public string Name => FindingCount == 0 ? _name : Labels.WfFindingNodeName(_name, FindingCount);
+
+    /// <summary>How many of the server's validation findings name this step (#3803); 0 when none.</summary>
+    public int FindingCount { get; private set => Set(ref field, value); }
+
+    /// <summary>True when one of those findings is an error (the mark is drawn in the error tone, else the attention tone).</summary>
+    public bool IsFindingError { get; private set => Set(ref field, value); }
+
+    /// <summary>The mark drawn on the card's top right: "⚠ 1" for warnings, "✕ 2" when one is an error; empty with none.</summary>
+    public string FindingMark => Labels.WfFindingMark(FindingCount, IsFindingError);
 
     /// <summary>Gets a value indicating whether this is the selected node.</summary>
     public bool IsSelected { get; internal set => Set(ref field, value); }
+
+    /// <summary>Marks the step with the findings that name it (#3803).</summary>
+    /// <param name="count">How many name it.</param>
+    /// <param name="error">True when one of them is an error.</param>
+    internal void MarkFindings(int count, bool error) => (FindingCount, IsFindingError) = (count, count > 0 && error);
 }
