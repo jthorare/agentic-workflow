@@ -47,7 +47,7 @@ internal sealed class CodeRunnerProcess(IReadOnlyList<string> runner, Func<IRead
             // why: only ENOENT (2) means the file is missing; any other code (e.g. permission denied) keeps the OS text, led by the runner it is about
             return SindriErrors.CodeRunnerUnavailable.With(e.NativeErrorCode == 2
                 ? CodeRunnerMissing.Message(start.FileName)
-                : string.Create(CultureInfo.InvariantCulture, $"Runner binary at {start.FileName} could not start: {e.Message}"));
+                : $"Runner binary at {start.FileName} could not start: {e.Message}");
         }
 
         using (process)
