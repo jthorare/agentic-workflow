@@ -106,4 +106,19 @@ public sealed class ContextMissTests
 
         Assert.Equal(["Tab groups"], Assert.Single(asked), StringComparer.Ordinal);
     }
+
+    [Fact]
+    public async Task An_unreachable_answer_after_a_miss_shows_the_banner_not_the_miss_sentence()
+    {
+        var api = new FakeSindriApi { LensesAnswer = Unknown };
+        var page = Page(api);
+        page.AnchorText = "Tab groups";
+        await page.Submit(Token);
+        Assert.True(page.IsMiss);
+
+        api.GoDown();
+        await page.Submit(Token);
+
+        Assert.Equal((false, true), (page.IsMiss, page.ShowBanner));
+    }
 }
