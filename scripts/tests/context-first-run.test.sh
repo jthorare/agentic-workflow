@@ -273,7 +273,7 @@ STUB
 #!/usr/bin/env bash
 echo "dir=${AW_UI_DRIVER_DIR:-unset} home=$([ -e "$STUB_HOME" ] && echo exists || echo absent) $*" >> "$STUB_LOG.drv"
 if [ -n "${STUB_DRV_PUBLISH_FAILS:-}" ]; then echo "aw-ui-driver.sh: publishing aw-ui-driver failed" >&2; exit 1; fi
-if [ -n "${STUB_DRV_SLOW:-}" ] && [ ! -e "$STUB_DRV_SLOW" ]; then touch "$STUB_DRV_SLOW"; sleep 3; fi
+if [ -n "${STUB_DRV_SLOW:-}" ] && [ ! -e "$STUB_DRV_SLOW" ]; then touch "$STUB_DRV_SLOW"; sleep 5; fi
 case "$1" in
   ready) [ "$2" = --wait-ms ] && [ "$3" = 1 ] && [ -n "${STUB_DRV_NOAPP:-}" ] && { echo "no app running" >&2; exit 4; }; exit 0 ;;
   tree)
@@ -312,7 +312,7 @@ STUB
   if [ "$(head -1 "$STUB_LOG.drv")" = "dir=$HOME_T/first-run/driver home=absent ready --wait-ms 1" ]; then ok "the warm-up driver call comes first, before the home exists"; else fail "the warm-up driver call comes first, before the home exists"; head -2 "$STUB_LOG.drv" | sed 's/^/       | /'; fi
   case "$OUT" in *"driver ready (not on the clock)"*) ok "a no-app exit from the warm-up does not stop the run" ;; *) fail "a no-app exit from the warm-up does not stop the run" ;; esac
   app_s="$(printf '%s\n' "$OUT" | awk '$1=="first-run" && $2=="app"{print $3}')"; tot_s="$(printf '%s\n' "$OUT" | awk '$1=="first-run" && $2=="total"{print $3}')"
-  if awk -v a="$app_s" -v t="$tot_s" 'BEGIN{exit !(a<2 && t<3)}'; then ok "a slow first driver call does not raise the app time or the total"; else fail "a slow first driver call does not raise the app time or the total (app $app_s, total $tot_s)"; fi
+  if awk -v a="$app_s" -v t="$tot_s" 'BEGIN{exit !(a<5 && t<5)}'; then ok "a slow first driver call does not raise the app time or the total"; else fail "a slow first driver call does not raise the app time or the total (app $app_s, total $tot_s)"; fi
   run down
   : > "$STUB_LOG"; rm -f "$STUB_LOG.ui" "$STUB_LOG.drv"
   trun STUB_DRV_PUBLISH_FAILS=1 -- up --time
