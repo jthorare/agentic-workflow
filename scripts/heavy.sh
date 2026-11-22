@@ -19,6 +19,9 @@
 #      can't keep a gate's slot shut; nothing running is stopped, and that wait doesn't count toward the lock timeout.
 #      AW_HEAVY_PRIORITY=meta skips that hold, not the pool. A light job that compiles nothing (`dotnet test --no-build`,
 #      `dotnet clean`, a script) takes the per-session slot only.
+#      For a PR that touches one src project, a light build of that project alone is the compile check. Build the whole test
+#      project only when the PR edits tests: a test project compiles its full dependency graph and holds a light slot for 3 to 8
+#      minutes. On the owner's box, heavy-light-cap raised the cap to 6 on 2026-11-22; the default stays 4.
 #   4. Arrival order (#3819): a waiter takes a free slot only when no older live waiter of the same pool is queued. Older means
 #      an earlier wait-file `since`, then a lower pid. Only wait files with "fifo":1 count (older heavy.sh copies don't write it
 #      and can't take every slot), and never one with "meta":1: AW_HEAVY_PRIORITY=meta jobs skip the queue both ways. The box-wide
