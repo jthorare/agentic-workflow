@@ -25,7 +25,11 @@ internal sealed partial class TerminalView : UserControl
         AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
         DataContextChanged += (_, _) => FollowStopAsk();
         Pane.FitChanged += (_, e) => PaneFitChanged?.Invoke(this, e);
+        PaneFrame.AddHandler(PointerPressedEvent, OnPanePressed, RoutingStrategies.Tunnel, handledEventsToo: true);
     }
+
+    // A press in the pane (or on its card) gives it the keys; the page then moves keyboard focus here.
+    private void OnPanePressed(object? sender, PointerPressedEventArgs e) => (DataContext as TerminalViewViewModel)?.ClickPane();
 
     /// <summary>Raised for a key that goes to the agent (the pane has focus and the key is not a chord).</summary>
     internal event EventHandler<TerminalKeyEventArgs>? PaneKeyPressed;
