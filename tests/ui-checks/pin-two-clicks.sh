@@ -52,6 +52,8 @@ d click --type ListBoxItem --name Context >/dev/null 2>&1 || setup_fail "no Cont
 # Step 1: the Self scheduling card is Suggested and carries Pin this.
 d wait-for --type TextBlock --contains "Self scheduling" --state visible --wait-ms 60000 >/dev/null 2>&1 \
   || setup_fail "the Context page did not open on the concept list (no 'Self scheduling' card)"
+# The pin buttons show only while the row has the pointer or focus: focus the first row's open button (its name holds the concept name).
+d action --type Button --contains "Self scheduling" --index 0 --do focus >/dev/null 2>&1 || setup_fail "could not focus the Self scheduling row"
 wait_visible 30 --type Button --text "Pin this" || fail "step 1: no card carries Pin this"
 visible --type TextBlock --text "Suggested" || fail "step 1: no card is marked Suggested"
 sleep 1

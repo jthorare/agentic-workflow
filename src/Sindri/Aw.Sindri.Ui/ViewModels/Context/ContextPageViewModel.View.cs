@@ -3,9 +3,6 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 /// <summary>Which view the page shows: the map, or the files (F3 spec 1 §2, "1c").</summary>
 internal sealed partial class ContextPageViewModel
 {
-    /// <summary>The label of the starting points box.</summary>
-    public string StartsAtLabel { get; } = Labels.ContextAnchor;
-
     /// <summary>The view switch's name.</summary>
     public string ViewName { get; } = Labels.ContextMapViewName;
 

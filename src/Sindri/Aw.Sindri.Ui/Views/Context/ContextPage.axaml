@@ -222,7 +222,7 @@
         </Border>
       </Panel>
       <!-- The one key-hint row under the list (#3677). -->
-      <TextBlock x:Name="ContextKeyHints" Grid.Row="2" Classes="caption subtle" Text="{Binding KeyHints}" AutomationProperties.AccessibilityView="Raw" />
+      <TextBlock x:Name="ContextKeyHints" Grid.Row="2" Classes="caption subtle" Text="{Binding KeyHints}" IsVisible="{Binding HasKeyHints}" AutomationProperties.AccessibilityView="Raw" />
     </Grid>
   </Grid>
 </UserControl>

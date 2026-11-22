@@ -99,6 +99,9 @@ internal sealed partial class ContextPageViewModel
     /// <summary>Whether the Building overlay shows (the page puts it on the map view only).</summary>
     public bool ShowBuilding => Overlay == ContextOverlay.Building;
 
+    /// <summary>Whether a list is on screen under the key hints: neither the No map nor the Building overlay covers it.</summary>
+    public bool HasKeyHints => !ShowEmpty && !ShowBuilding;
+
     // Registered once: after every event the running build is looked at, so the overlay goes when the map is there.
     private void InitStates() => Ports.Follow(FollowBuild);
 
@@ -240,6 +243,7 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(Overlay));
         OnChanged(nameof(ShowEmpty));
         OnChanged(nameof(ShowBuilding));
+        OnChanged(nameof(HasKeyHints));
         OnChanged(nameof(ShowWhole));
         OnChanged(nameof(ShowWholeStatus));
         OnChanged(nameof(BuildControl));

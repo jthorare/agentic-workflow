@@ -14,7 +14,7 @@ public sealed class ContextHeaderTests
     {
         var page = await ConceptPage.Made(new FakeSindriApi());
 
-        Assert.Equal(("Ask a question", "Ask a question", "Ask a question"), (page.StartsAtLabel, page.AnchorHint, page.AnchorLabel));
+        Assert.Equal(("Ask a question", "Ask a question"), (page.AnchorHint, page.AnchorLabel));
     }
 
     [Fact]
