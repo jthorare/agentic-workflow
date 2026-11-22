@@ -68,7 +68,7 @@ internal sealed class SqliteConceptAnswerStore(ContextDatabase database, TimePro
     public async ValueTask<Result<KeptConcepts?>> Concepts(string key, CancellationToken cancellationToken)
     {
         var body = await Body(key, "concepts", cancellationToken).ConfigureAwait(false);
-        return body.IsError ? body.Error : body.Value is { } text ? AwJson.Deserialize<KeptConcepts>(Encoding.UTF8.GetBytes(text), _json).Map<KeptConcepts?>(v => v) : Results.Success<KeptConcepts?>(value: null);
+        return body.IsError ? body.Error : body.Value is { } text ? AwJson.Deserialize<StoredConcepts>(Encoding.UTF8.GetBytes(text), _json).Map<KeptConcepts?>(v => v.Kept()) : Results.Success<KeptConcepts?>(value: null);
     }
 
     public async ValueTask<Result<ConceptGlossaryView?>> Glossary(string key, CancellationToken cancellationToken)
@@ -78,7 +78,7 @@ internal sealed class SqliteConceptAnswerStore(ContextDatabase database, TimePro
     }
 
     public ValueTask<Result<Unit>> Keep(string key, ConceptAnswerBasis basis, KeptConcepts view, CancellationToken cancellationToken) =>
-        Write(key, "concepts", basis, Encoding.UTF8.GetString(AwJson.Serialize(view, _json)), cancellationToken);
+        Write(key, "concepts", basis, Encoding.UTF8.GetString(AwJson.Serialize(StoredConcepts.Of(view), _json)), cancellationToken);
 
     public ValueTask<Result<Unit>> Keep(string key, ConceptAnswerBasis basis, ConceptGlossaryView view, CancellationToken cancellationToken) =>
         Write(key, "glossary", basis, Encoding.UTF8.GetString(AwJson.Serialize(view, _json)), cancellationToken);

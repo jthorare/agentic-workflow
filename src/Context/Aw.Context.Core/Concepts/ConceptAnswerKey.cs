@@ -14,13 +14,15 @@ namespace Aw.Context.Core.Concepts;
 /// </summary>
 internal static class ConceptAnswerKey
 {
-    // A change to what an answer holds or how it is built bumps this, so rows built the old way are never answered again.
+    // Bump this in the same change as anything that alters a kept answer for the same inputs: ConceptBuilder or ConceptGlossaryBuilder output, the row records or their JSON,
+    // KeptConcepts' code paths, or a new input the answer reads (add that input to the key as well). Rows built the old way are then never answered again. Redaction rules need
+    // no bump: their digest is part of the key.
     private const string Format = "1";
 
     /// <summary>The key of one concepts page.</summary>
-    internal static string Concepts(ConceptAnswerBasis basis, ConceptsQuery query, ContextScope scope)
+    internal static string Concepts(ConceptAnswerBasis basis, ConceptsQuery query, ContextScope scope, string ruleset)
     {
-        var text = Start("concepts", basis, query.Read, scope, withIntent: true);
+        var text = Start("concepts", basis, query.Read, scope, withIntent: true, ruleset);
         Field(text, query.Repo);
         Field(text, query.Page.Cursor);
         Field(text, query.Page.Limit?.ToString(CultureInfo.InvariantCulture));
@@ -31,18 +33,20 @@ internal static class ConceptAnswerKey
     /// The key of the glossary. It reads only the concept nodes and the pins, never a record or decision, so a human's whole-map glossary skips the intent layer and a sync doesn't
     /// miss it; a session's or a named repo's graph is cut along the layer's links, so theirs keeps it.
     /// </summary>
-    internal static string Glossary(ConceptAnswerBasis basis, ConceptGlossaryQuery query, ContextScope scope)
+    internal static string Glossary(ConceptAnswerBasis basis, ConceptGlossaryQuery query, ContextScope scope, string ruleset)
     {
-        var text = Start("glossary", basis, query.Read, scope, withIntent: scope.Caller.Kind != ContextCallerKind.Human || query.Repo is not null);
+        var text = Start("glossary", basis, query.Read, scope, withIntent: scope.Caller.Kind != ContextCallerKind.Human || query.Repo is not null, ruleset);
         Field(text, query.Repo);
         return Hash(text);
     }
 
-    private static StringBuilder Start(string kind, ConceptAnswerBasis basis, MapRead read, ContextScope scope, bool withIntent)
+    // The ruleset is the running redactor's digest (default rules and the profile's extra patterns): a toolkit upgrade that changes a rule misses, so no kept text skips today's scrub.
+    private static StringBuilder Start(string kind, ConceptAnswerBasis basis, MapRead read, ContextScope scope, bool withIntent, string ruleset)
     {
         var text = new StringBuilder();
         Field(text, Format);
         Field(text, kind);
+        Field(text, ruleset);
         Field(text, read.Draft ? "draft" : "current");
         Field(text, read.Version?.Label);
         Field(text, basis.Version.ToString(CultureInfo.InvariantCulture));

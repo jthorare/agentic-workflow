@@ -12570,12 +12570,12 @@ Aw.Context.Core.Concepts.IConceptAnswerStore.Glossary(string! key, System.Thread
 Aw.Context.Core.Concepts.IConceptAnswerStore.Keep(string! key, Aw.Context.Core.Concepts.ConceptAnswerBasis! basis, Aw.Context.Core.Concepts.KeptConcepts! view, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Context.Core.Concepts.IConceptAnswerStore.Keep(string! key, Aw.Context.Core.Concepts.ConceptAnswerBasis! basis, Aw.Context.Core.Concepts.ConceptGlossaryView! view, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Context.Core.Concepts.ConceptAnswers
-Aw.Context.Core.Concepts.ConceptAnswers.ConceptAnswers(Aw.Context.Core.Concepts.ConceptReader! reader, Aw.Context.Core.Concepts.IConceptAnswerStore! store) -> void
+Aw.Context.Core.Concepts.ConceptAnswers.ConceptAnswers(Aw.Context.Core.Concepts.ConceptReader! reader, Aw.Context.Core.Concepts.IConceptAnswerStore! store, Aw.Context.Core.Trust.IScrubberFactory! scrubbers) -> void
 Aw.Context.Core.Concepts.ConceptAnswers.Concepts(Aw.Context.Core.Engine.ContextScope! scope, Aw.Context.Core.Concepts.ConceptsQuery! query, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Concepts.KeptConcepts!>!>
 Aw.Context.Core.Concepts.ConceptAnswers.Fill(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
 Aw.Context.Core.Concepts.ConceptAnswers.Glossary(Aw.Context.Core.Engine.ContextScope! scope, Aw.Context.Core.Concepts.ConceptGlossaryQuery! query, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptGlossaryView!>!>
 Aw.Context.Core.Concepts.ConceptAnswerFills
-Aw.Context.Core.Concepts.ConceptAnswerFills.ConceptAnswerFills(System.Func<Aw.Context.Core.Engine.ContextScope!, System.Threading.CancellationToken, System.Threading.Tasks.Task!>! fill) -> void
+Aw.Context.Core.Concepts.ConceptAnswerFills.ConceptAnswerFills(System.Func<Aw.Context.Core.Engine.ContextScope!, System.Threading.CancellationToken, System.Threading.Tasks.Task!>! fill, System.Action<System.Exception!>? failed = null) -> void
 Aw.Context.Core.Concepts.ConceptAnswerFills.Start(Aw.Context.Core.Engine.ContextScope! scope) -> void
 Aw.Context.Core.Concepts.IConceptAnswerFills
 Aw.Context.Core.Concepts.IConceptAnswerFills.Start(Aw.Context.Core.Engine.ContextScope! scope) -> void

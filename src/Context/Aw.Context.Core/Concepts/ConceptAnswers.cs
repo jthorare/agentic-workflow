@@ -1,5 +1,6 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Trust;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.Concepts;
@@ -11,7 +12,8 @@ namespace Aw.Context.Core.Concepts;
 /// </summary>
 /// <param name="reader">Reads the map the caller may see.</param>
 /// <param name="store">The kept answers.</param>
-public sealed class ConceptAnswers(ConceptReader reader, IConceptAnswerStore store)
+/// <param name="scrubbers">Builds the scrubbers whose rules digest is part of every key.</param>
+public sealed class ConceptAnswers(ConceptReader reader, IConceptAnswerStore store, IScrubberFactory scrubbers)
 {
     /// <summary>One page of the concepts of the map the caller may read, as kept: no row has a last change yet (the read lays it over with <see cref="KeptConcepts.With"/>).</summary>
     /// <param name="scope">The profile's context section and repos, and the caller.</param>
@@ -23,7 +25,7 @@ public sealed class ConceptAnswers(ConceptReader reader, IConceptAnswerStore sto
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(query);
         var basis = query.Q is null ? await Basis(scope, query.Read, cancellationToken).ConfigureAwait(false) : null;
-        var key = basis is null ? null : ConceptAnswerKey.Concepts(basis, query, scope);
+        var key = basis is null || Ruleset(scope) is not { } rules ? null : ConceptAnswerKey.Concepts(basis, query, scope, rules);
         if (key is not null && await store.Concepts(key, cancellationToken).ConfigureAwait(false) is { IsSuccess: true, Value: { } kept })
         {
             return kept;
@@ -49,7 +51,7 @@ public sealed class ConceptAnswers(ConceptReader reader, IConceptAnswerStore sto
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(query);
         var basis = await Basis(scope, query.Read, cancellationToken).ConfigureAwait(false);
-        var key = basis is null ? null : ConceptAnswerKey.Glossary(basis, query, scope);
+        var key = basis is null || Ruleset(scope) is not { } rules ? null : ConceptAnswerKey.Glossary(basis, query, scope, rules);
         if (key is not null && await store.Glossary(key, cancellationToken).ConfigureAwait(false) is { IsSuccess: true, Value: { } kept })
         {
             return kept;
@@ -102,6 +104,13 @@ public sealed class ConceptAnswers(ConceptReader reader, IConceptAnswerStore sto
     {
         var view = ConceptBuilder.Build(read.Basis, query, read.Graph, read.Text, read.Pins);
         return view.IsError ? view.Error : new KeptConcepts(view.Value, ConceptBuilder.CodePathsOf(view.Value.Concepts.Select(c => c.Id), read.Graph));
+    }
+
+    // The digest of the rules this read scrubs with, or null when the profile's patterns don't build (the read then refuses, and nothing is kept).
+    private string? Ruleset(ContextScope scope)
+    {
+        var built = SettingsReader.Read(scope.Settings).Bind(s => scrubbers.For(s.ExtraPatterns));
+        return built.IsSuccess ? built.Value.Ruleset.Value : null;
     }
 
     // The stored map the read names, when the caller may read it at all: a refused caller is refused by the read, never answered from a kept row.

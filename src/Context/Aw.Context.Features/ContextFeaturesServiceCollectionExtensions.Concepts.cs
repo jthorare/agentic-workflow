@@ -2,6 +2,8 @@ using Aw.Context.Core.Concepts;
 using Aw.Context.Features.GetConcepts;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aw.Context.Features;
 
@@ -21,6 +23,10 @@ public static partial class ContextFeaturesServiceCollectionExtensions
                 {
                     await own.ServiceProvider.GetRequiredService<ConceptAnswers>().Fill(scope, ct).ConfigureAwait(false);
                 }
-            }));
+            }, failed => FillFailed(sp.GetService<ILogger<ConceptAnswers>>() ?? NullLogger<ConceptAnswers>.Instance, failed)));
     }
+
+    // The reads build what a failed fill didn't keep, so this is a warning, not an error.
+    [LoggerMessage(Level = LogLevel.Warning, Message = "the concepts and glossary fill after a publish failed; reads build their answers instead")]
+    private static partial void FillFailed(ILogger logger, Exception exception);
 }

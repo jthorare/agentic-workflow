@@ -84,7 +84,7 @@ internal static class Engines
         var intents = intentStore ?? new FakeIntentStore();
         var recordStore = records ?? new FakeRecordStore();
         var graphs = new MapReader(store, intents);
-        var answers = new ConceptAnswers(new ConceptReader(graphs, scrubbers), new FakeConceptAnswerStore(store, intents));
+        var answers = new ConceptAnswers(new ConceptReader(graphs, scrubbers), new FakeConceptAnswerStore(store, intents), scrubbers);
         var repos = new FakeRepoReader(Repos[0], "0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", new Dictionary<string, string>(StringComparer.Ordinal));
         return new ContextEngine(new QueryContextService(scrubbers, new SequentialIdGenerator(), clock, new LiveInputs(graphs, catalog, repos, new NoMapRebuild()), intents, new FakeModelPort(),
                 new RecordSearch(lexical ?? new FakeLexicalLeg(), recordStore, embedder ?? new FakeQueryEmbedder(), new FakeVectorMatrixCache(recordStore), new FakeVectorScan())),

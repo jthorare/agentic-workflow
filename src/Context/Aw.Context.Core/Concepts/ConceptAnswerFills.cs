@@ -8,7 +8,8 @@ namespace Aw.Context.Core.Concepts;
 /// restart cuts short leaves the reads to build what it didn't keep.
 /// </summary>
 /// <param name="fill">Builds and keeps the answers for a publisher's scope in a scope of its own (the host's registration makes it, so this type needs no container).</param>
-public sealed class ConceptAnswerFills(Func<ContextScope, CancellationToken, Task> fill) : IConceptAnswerFills
+/// <param name="failed">Told about a fill that threw (the host logs it), or null.</param>
+public sealed class ConceptAnswerFills(Func<ContextScope, CancellationToken, Task> fill, Action<Exception>? failed = null) : IConceptAnswerFills
 {
     private readonly Lock _gate = new();
     private Task _last = Task.CompletedTask;
@@ -19,9 +20,17 @@ public sealed class ConceptAnswerFills(Func<ContextScope, CancellationToken, Tas
         ArgumentNullException.ThrowIfNull(scope);
         lock (_gate)
         {
-            // a fill outlives the publish that started it, so it takes no caller's token; a fill that throws ends quietly, the next one still runs
+            // a fill outlives the publish that started it, so it takes no caller's token; a fill that throws is reported and the next one still runs
             _last = _last.ContinueWith(_ => fill(scope, CancellationToken.None), CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default).Unwrap()
-                .ContinueWith(static t => _ = t.Exception, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+                .ContinueWith(Report, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+        }
+    }
+
+    private void Report(Task done)
+    {
+        if (done.Exception is { } thrown)
+        {
+            failed?.Invoke(thrown.GetBaseException());
         }
     }
 }

@@ -64,7 +64,8 @@ public sealed class ConceptAnswerRoundTripTests : IDisposable
         Assert.NotNull(read.Value);
         Assert.NotNull(view.Next);
         Assert.NotEmpty(built.Paths);
-        Assert.Equal(AwJson.Serialize(built, _json), AwJson.Serialize(read.Value, _json));
+        Assert.Equal(AwJson.Serialize(view, _json), AwJson.Serialize(read.Value.View, _json));
+        Assert.Equal(built.Paths, read.Value.Paths);
     }
 
     // Review of PR 3881: every built answer has no 'code' and a last page has no 'next', and both are left out of the JSON; the read must still answer, not miss on every read.
