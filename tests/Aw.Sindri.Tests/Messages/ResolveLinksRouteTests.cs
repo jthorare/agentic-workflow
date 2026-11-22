@@ -70,7 +70,8 @@ public sealed class ResolveLinksRouteTests
     {
         await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken);
 
-        var answer = await host.Http.Ask(Query(Route, Body, [.. Human(host.Token.Value), ("Origin", "https://evil.example")]));
+        // a loopback Origin (a local web page): LoopbackGuard answers a non-loopback one first with a bare 403, so only this one reaches the body-query refusal
+        var answer = await host.Http.Ask(Query(Route, Body, [.. Human(host.Token.Value), ("Origin", "http://localhost:3000")]));
 
         Assert.Equal((HttpStatusCode.Forbidden, "SND-API-008"), (answer.Status, answer.Code));
     }
