@@ -22,6 +22,9 @@ internal sealed class FakeTerminalConnector : ITerminalConnector
     /// <summary>When true, the link keeps yielding after its token is cancelled (a frame already read when the view switched).</summary>
     public bool IgnoresCancellation { get; set; }
 
+    /// <summary>When true, the link stays open after the script until its token is cancelled (a live pane a window test types into).</summary>
+    public bool StaysOpen { get; set; }
+
     /// <summary>When true, Connect answers null (the socket could not open).</summary>
     public bool Refuse { get; set; }
 
@@ -74,6 +77,11 @@ internal sealed class FakeTerminalConnector : ITerminalConnector
 
                 yield return TerminalSocketMessages.Parse(json);
                 await Task.Yield();
+            }
+
+            if (owner.StaysOpen)
+            {
+                await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(true);
             }
 
             if (owner.ThrowsAfterScript)

@@ -28,6 +28,7 @@ internal sealed partial class AgentsPage : UserControl
         TerminalPanel.TranscriptRequested += (_, _) => Page?.OpenTranscript();
         AddHandler(KeyDownEvent, OnEscape, RoutingStrategies.Bubble);
         DataContextChanged += (_, _) => FollowTerminal();
+        WireTyping();
     }
 
     private const double NarrowBelow = 1100;
@@ -56,6 +57,7 @@ internal sealed partial class AgentsPage : UserControl
         }
 
         _followed?.PropertyChanged += OnPageChanged;
+        FollowSide();
         Split();
     }
 

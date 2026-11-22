@@ -5,6 +5,18 @@ namespace Aw.Sindri.Ui.Views.Agents;
 /// <summary>Names a key the way TerminalViewViewModel.Route reads it: "F6", "Shift+F6", "Ctrl+Shift+L", "Cmd+Shift+L", "Esc", "Tab", "Shift+Tab", "Enter", else the key's own name.</summary>
 internal static class TerminalKeyNames
 {
+    // Avalonia's Key gives some values two names (PageUp/Prior, PageDown/Next, Enter/Return, CapsLock/Capital, PrintScreen/Snapshot), and Key.ToString()
+    // may answer either: those keys (and Escape, which the routes call Esc) are named from the value, every other key by ToString().
+    private static readonly Dictionary<Key, string> _byValue = new()
+    {
+        [Key.Escape] = "Esc",
+        [Key.Enter] = "Enter",
+        [Key.PageUp] = "PageUp",
+        [Key.PageDown] = "PageDown",
+        [Key.CapsLock] = "CapsLock",
+        [Key.PrintScreen] = "PrintScreen",
+    };
+
     /// <summary>True for a paste: Ctrl+Shift+V, Shift+Insert and Cmd+V. Plain Ctrl+V is not one: Claude Code pastes images on it and vim reads it as literal-next, so it goes to the agent as a key.</summary>
     /// <param name="name">A route name from <see cref="From"/>.</param>
     /// <returns>True when the key pastes.</returns>
@@ -21,11 +33,8 @@ internal static class TerminalKeyNames
             + (modifiers.HasFlag(KeyModifiers.Meta) ? "Cmd+" : string.Empty)
             + (modifiers.HasFlag(KeyModifiers.Alt) ? "Alt+" : string.Empty)
             + (shift ? "Shift+" : string.Empty);
-        if (key == Key.Escape)
-        {
-            return prefix.Length == 0 ? "Esc" : prefix + "Esc";
-        }
-
-        return key == Key.Return ? (prefix.Length == 0 ? "Enter" : prefix + "Enter") : prefix + key;
+        return prefix + Name(key);
     }
+
+    private static string Name(Key key) => _byValue.TryGetValue(key, out var name) ? name : key.ToString();
 }
