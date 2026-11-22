@@ -91,33 +91,6 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>True when the list's counts show beside the title: on the list only, never beside one workflow's or run's title.</summary>
     public bool ShowsListHead => IsList && HasHead;
 
-    /// <summary>True when the open workflow's own state shows beside its title (on its runs level).</summary>
-    public bool ShowsDetailState => IsRuns && DetailStateText.Length > 0;
-
-    /// <summary>The open workflow's state, as its list row says it ("● Active", "○ Off"): from the workflow read, else from the list row; empty when neither is known.</summary>
-    public string DetailStateText => Runs.Shown is { } shown
-        ? StateOf(shown.ActiveRevision is not null)
-        : Rows.FirstOrDefault(r => string.Equals(r.Slug, Runs.Slug, StringComparison.Ordinal)) is { } row ? StateOf(row.IsActive) : string.Empty;
-
-    /// <summary>The word of the open workflow's state chip in the header ("Active", "Off"); empty when no state is known.</summary>
-    public string DetailChipWord => DetailActive is { } active ? Labels.WfState(active).Word : string.Empty;
-
-    /// <summary>The glyph of the header's state chip.</summary>
-    public string DetailChipGlyph => DetailActive is { } active ? Labels.WfState(active).Glyph : string.Empty;
-
-    /// <summary>The tone of the header's state chip: "ok" when active, "neutral" when off.</summary>
-    public string DetailChipTone => DetailActive is { } active ? (active ? "ok" : "neutral") : string.Empty;
-
-    private bool? DetailActive => Runs.Shown is { } shown
-        ? shown.ActiveRevision is not null
-        : Rows.FirstOrDefault(r => string.Equals(r.Slug, Runs.Slug, StringComparison.Ordinal)) is { } row ? row.IsActive : null;
-
-    private static string StateOf(bool active)
-    {
-        var (glyph, word) = Labels.WfState(active);
-        return glyph + " " + word;
-    }
-
 #pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
     /// <summary>The empty state's create action: "New workflow".</summary>
     public string NewWorkflowText => Labels.WfNew;
@@ -241,7 +214,9 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         SetLevel(_level == Level.Run ? Level.Runs : Level.List);
         if (_listBehind && _url is { } url)
         {
-            _ = ReadList(url, CancellationToken.None);   // an event came while one run was open: the rows (and the buttons they decide) catch up
+            // An event came while one run was open: the rows (and the buttons they decide) catch up. The read is not awaited, so until it
+            // answers (one loopback round trip) whether Activate and Pause are offered on the runs level goes by the old list row (OpenRow).
+            _ = ReadList(url, CancellationToken.None);
         }
     }
 

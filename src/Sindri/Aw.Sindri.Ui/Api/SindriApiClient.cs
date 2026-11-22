@@ -57,6 +57,7 @@ internal sealed partial class SindriApiClient(HttpClient http, IHumanTokenSource
         {
             if (item is { } frame && AwJson.Deserialize<EventView>(System.Text.Encoding.UTF8.GetBytes(frame.Data), Json) is { IsSuccess: true } e)
             {
+                RaisePending(e.Value.Sequence);
                 yield return e.Value;
             }
         }
