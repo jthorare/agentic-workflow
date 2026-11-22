@@ -45,7 +45,7 @@ internal sealed partial class SessionSheetViewModel
     /// <returns>A task that completes once the clipboard answered.</returns>
     internal Task CopyRef(CancellationToken cancellationToken) => RefCopy?.Run(Ref, cancellationToken) ?? Task.CompletedTask;
 
-    /// <summary>The copy chip of the attach command, "tmux -S &lt;socket&gt; attach -t &lt;session&gt;"; null when the session is not in tmux (#3710).</summary>
+    /// <summary>The copy chip of the attach command, "tmux -S &lt;socket&gt; attach -t '=&lt;session&gt;'" (the '=' makes tmux match the name exactly, #3870); null when the session is not in tmux (#3710).</summary>
     public CopyAction? AttachCopy { get; private set => Set(ref field, value); }
 
     /// <summary>Copies the attach command.</summary>
@@ -84,7 +84,7 @@ internal sealed partial class SessionSheetViewModel
     {
         if (_catalog is { } catalog && host.Socket is { Length: > 0 } socket && host.Session is { Length: > 0 } session)
         {
-            _attachCommand = $"tmux -S {Quoted(socket)} attach -t {Quoted(session)}";
+            _attachCommand = $"tmux -S {Quoted(socket)} attach -t {Quoted("=" + session)}";
             AttachCopy = new CopyAction(catalog.Clipboard, _clock, Labels.SheetCopyAttach + " " + Ref, Labels.SheetCopyAttach);
         }
         else
@@ -94,5 +94,7 @@ internal sealed partial class SessionSheetViewModel
         }
     }
 
-    private static string Quoted(string value) => value.Any(c => char.IsWhiteSpace(c) || c == '\'') ? "'" + value.Replace("'", "'\\''", StringComparison.Ordinal) + "'" : value;
+    // A value of only [A-Za-z0-9_./-] goes as it is; anything else is single-quoted, so no shell reads $, ;, ", ` or = in it (#3870).
+    private static string Quoted(string value) =>
+        value.All(static c => char.IsAsciiLetterOrDigit(c) || c is '_' or '.' or '/' or '-') ? value : "'" + value.Replace("'", "'\\''", StringComparison.Ordinal) + "'";
 }

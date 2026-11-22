@@ -182,7 +182,8 @@ internal sealed partial class ItemSheetViewModel
 
     // A timeline line is written once, under its own ledger sequence, and the pages are oldest first (ItemTimelineProjection,
     // GetItemTimelineService): an event can only add lines after the newest one, so one read after it is the whole change. The
-    // lines shown are read again from the first page only when they may differ: another connection, or the views rebuilt.
+    // lines shown are read again from the first page only when they may differ: another URL, or the views rebuilt. A serve
+    // restart on the same URL is not another URL: only its rebuilding answer, when the sheet reads one, rereads (#3876).
     private Task<bool> ReadTimeline(Uri url, string id, int generation, CancellationToken cancellationToken) =>
         _rereadTimeline || (Timeline.Count > 0 && !url.Equals(_timelineUrl))
             ? ReadShownTimeline(url, id, generation, cancellationToken)
@@ -214,15 +215,15 @@ internal sealed partial class ItemSheetViewModel
         }
 
         (Next, _timelineUrl) = (answer.Value.Next, url);
-        _rereadTimeline = answer.Value.AsOf.Rebuilding;
+        _rereadTimeline |= answer.Value.AsOf.Rebuilding;
         return true;
     }
 
-    // Every page from the first up to the newest line shown (a re-read never shrinks what Load more showed).
+    // Every page from the first up to the newest line shown (a re-read never shrinks what Load more showed). The end is read
+    // again after every page: a Load more that answers while this read waits moves it, and its page must stay (#3876).
     private async Task<bool> ReadShownTimeline(Uri url, string id, int generation, CancellationToken cancellationToken)
     {
         var (rows, rebuilding) = (new List<TimelineRow>(), false);
-        var end = Next ?? (Timeline.Count > 0 ? Timeline[^1].Sequence : 0);
         long? after = 0;
         do
         {
@@ -240,12 +241,15 @@ internal sealed partial class ItemSheetViewModel
             rows.AddRange(Rows(answer.Value));
             (after, rebuilding) = (answer.Value.Next, rebuilding || answer.Value.AsOf.Rebuilding);
         }
-        while (after is { } cursor && cursor < end);
+        while (after is { } cursor && cursor < ShownEnd());
 
         Keep(rows);
         (Next, _timelineUrl, _rereadTimeline) = (after, url, rebuilding);
         return true;
     }
+
+    // The cursor the lines shown end at: Load more's next page, or the newest line when every page is shown.
+    private long ShownEnd() => Next ?? (Timeline.Count > 0 ? Timeline[^1].Sequence : 0);
 
     // The row already shown for an entry (same sequence, same fields) stays, so its control and the focus on it do.
     private void Keep(List<TimelineRow> rows)
