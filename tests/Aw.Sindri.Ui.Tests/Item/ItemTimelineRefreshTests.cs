@@ -28,7 +28,7 @@ public sealed class ItemTimelineRefreshTests
         var json = new StringBuilder("{\"entries\":[");
         for (var i = first; i <= last; i++)
         {
-            var line = reworded ? $"Reworded {i}" : $"Event {i}";
+            var line = (reworded ? "Reworded " : "Event ") + i.ToString(CultureInfo.InvariantCulture);
             _ = json.Append(CultureInfo.InvariantCulture, $"{(i > first ? "," : string.Empty)}{{\"sequence\":{i},\"time\":\"2026-10-11T11:55:00.0000000Z\",\"type\":\"item.note\",\"actor\":\"human:cli\",\"line\":\"{line}\"}}");
         }
 
@@ -50,7 +50,7 @@ public sealed class ItemTimelineRefreshTests
     {
         Serve(0, 1, 100, 100);
         Serve(100, 101, 200, 200);
-        Serve(200, 201, 250, null);
+        Serve(200, 201, 250, next: null);
         var sheet = await Sheet();
         await sheet.Open(_api, A.NewItem, Token);
         Assert.True(await sheet.LoadMore(Token));
@@ -69,7 +69,7 @@ public sealed class ItemTimelineRefreshTests
     public async Task An_event_on_a_sheet_with_three_loaded_pages_makes_one_timeline_read()
     {
         var sheet = await ThreePagesLoaded();
-        Serve(250, 251, 253, null);
+        Serve(250, 251, 253, next: null);
         var first = sheet.Timeline[0];
         var calls = _server.TimelineCalls;
 
@@ -85,7 +85,7 @@ public sealed class ItemTimelineRefreshTests
     public async Task Lines_the_sheet_already_shows_are_never_added_twice()
     {
         var sheet = await ThreePagesLoaded();
-        Serve(250, 249, 252, null);   // overlaps the lines shown
+        Serve(250, 249, 252, next: null);   // overlaps the lines shown
 
         await sheet.Refresh(_api, Token);
         await sheet.Refresh(_api, Token);   // after 252 the fake answers an empty last page
@@ -111,7 +111,7 @@ public sealed class ItemTimelineRefreshTests
     [Fact]
     public async Task Load_more_after_an_event_added_a_page_of_lines_pages_on_from_there()
     {
-        Serve(0, 1, 50, null);
+        Serve(0, 1, 50, next: null);
         var sheet = await Sheet();
         await sheet.Open(_api, A.NewItem, Token);
         Serve(50, 51, 150, 150);   // more than a page arrived
@@ -119,7 +119,7 @@ public sealed class ItemTimelineRefreshTests
         await sheet.Refresh(_api, Token);
         Assert.Equal((150, true), (sheet.Timeline.Count, sheet.HasMore));
 
-        Serve(150, 151, 160, null);
+        Serve(150, 151, 160, next: null);
         Assert.True(await sheet.LoadMore(Token));
 
         InOrderOnce(sheet, 160);
@@ -132,11 +132,11 @@ public sealed class ItemTimelineRefreshTests
     public async Task After_the_views_said_they_were_rebuilding_the_next_read_rereads_the_shown_pages()
     {
         var sheet = await ThreePagesLoaded();
-        Serve(250, 0, -1, null, rebuilding: true);
+        Serve(250, 0, -1, next: null, rebuilding: true);
         await sheet.Refresh(_api, Token);
         Serve(0, 1, 100, 100, reworded: true);
         Serve(100, 101, 200, 200, reworded: true);
-        Serve(200, 201, 250, null, reworded: true);
+        Serve(200, 201, 250, next: null, reworded: true);
         var calls = _server.TimelineCalls;
 
         await sheet.Refresh(_api, Token);
@@ -145,7 +145,7 @@ public sealed class ItemTimelineRefreshTests
         InOrderOnce(sheet, 250);
         Assert.Equal(("Reworded 1", "Reworded 250"), (sheet.Timeline[0].Line, sheet.Timeline[^1].Line));
 
-        Serve(250, 251, 251, null);
+        Serve(250, 251, 251, next: null);
         await sheet.Refresh(_api, Token);
         Assert.Equal(calls + 4, _server.TimelineCalls);
         InOrderOnce(sheet, 251);
