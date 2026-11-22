@@ -31,7 +31,7 @@ public sealed class MessageTriageTests
         Members = 2, Mine = MineReason.DirectMessage, NewestText = "thanks!",
     };
 
-    private static ThreadRow Lee() => Row("slack:dm:T0HARBOR/D0LEE", ConversationKind.Dm, "D0LEE", "1767776640.000100") with
+    private static ThreadRow Lee() => Row("slack:dm:T0HARBOR/D0LEE", ConversationKind.Dm, "D0LEE", "1767777120.000100") with
     {
         Members = 2, Mine = MineReason.DirectMessage, NewestText = "got a sec?",
     };
@@ -39,12 +39,15 @@ public sealed class MessageTriageTests
     [Fact]
     public void MessageRank_orders_the_example() => RedUntil.Phase("M1b", () =>
     {
-            var rows = new[] { Pat(), Ada(), Sam(), Kim(), Lee() }.Select(r => r with { Class = MessageTriage.Classify(r, _phrases) });
+            // 09:10: Kim's thread blocks 2, so it leads class 3; then Sam (class 3, blocks 0), Ada (class 2), Pat (class 1)
+            Assert.Equal(["C0HARBOR/1767771000.000100", "D0SAM", "C0HARBOR/1767748200.000100", "D0PAT"], Ranked(Pat(), Ada(), Sam(), Kim()));
 
-            var order = MessageRank.Order(rows).Select(static r => r.Conversation + (r.Thread is { } t ? "/" + t.Value : string.Empty));
+            // Lee's 09:12 DM is class 3, blocks 0 too, but newer: while Sam waits, Sam has waited longer and stays above Lee (oldest first)
+            Assert.Equal(["C0HARBOR/1767771000.000100", "D0SAM", "D0LEE", "C0HARBOR/1767748200.000100", "D0PAT"], Ranked(Pat(), Ada(), Sam(), Kim(), Lee()));
 
-            // Kim's thread blocks 2, so it leads class 3; Lee's 09:12 DM takes its ranked place under it after R; then Sam, Ada (class 2), Pat (class 1)
-            Assert.Equal(["C0HARBOR/1767771000.000100", "D0LEE", "D0SAM", "C0HARBOR/1767748200.000100", "D0PAT"], order);
+            // 09:14 the owner answers Sam; at 09:16 R settles the list: Sam's row leaves, and Lee's DM takes its ranked place, second, under Kim's thread
+            var answered = Sam() with { Newest = new MessageTs("1767777240.000100"), NewestIsMine = true };
+            Assert.Equal(["C0HARBOR/1767771000.000100", "D0LEE", "C0HARBOR/1767748200.000100", "D0PAT"], Ranked(Pat(), Ada(), answered, Kim(), Lee()));
     });
 
     [Fact]
@@ -74,6 +77,11 @@ public sealed class MessageTriageTests
             Assert.Equal([MessageClass.DirectQuestion, MessageClass.DirectQuestion, MessageClass.ReviewAsk, MessageClass.Fyi], rows.Select(static r => r.Class));
             Assert.Equal(["C0HARBOR", "D0SAM", "C0HARBOR"], rows.Where(MessageTriage.InRelease1NeedsReply).Select(static r => r.Conversation));   // Pat (class 1) shows in Unread (call 21)
     });
+
+    // the rows still in Needs reply, classified, in rank order, as 'conversation' or 'conversation/thread ts'
+    private static string[] Ranked(params ThreadRow[] rows) =>
+        [.. MessageRank.Order(rows.Where(MessageTriage.NeedsReply).Select(static r => r with { Class = MessageTriage.Classify(r, _phrases) }))
+            .Select(static r => r.Conversation + (r.Thread is { } t ? "/" + t.Value : string.Empty))];
 
     private static ThreadRow Row(string key, ConversationKind kind, string conversation, string newest) => new(key, kind, conversation, new MessageTs(newest));
 }
