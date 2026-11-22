@@ -1,4 +1,11 @@
+using System.Globalization;
+using Aw.Kernel;
+using Aw.Kernel.Events;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Lease;
+using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Messages;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.RetainMessages;
 
@@ -9,44 +16,144 @@ namespace Aw.Sindri.Tests.Messages;
 /// with owner state; snooze is read from the ledger's home.row.snoozed and .woke (seeded events), so a views rebuild cannot unsnooze it; any skip ends at 180 days.
 /// </summary>
 [Lane(TestLane.Integration)]
-public sealed class RetainMessagesTests
+public sealed class RetainMessagesTests : IDisposable
 {
+    private const string Harbor = "C0HARBOR";
+
+    private readonly SliceHarness _harness = new();
+    private readonly MessagesHome _home;
+    private LeaseGrant? _grant;
+    private int _events;
+
+    public RetainMessagesTests()
+    {
+        _home = new MessagesHome(_harness.Clock);
+    }
+
     private static CancellationToken Cancel => TestContext.Current.CancellationToken;
 
-    [Fact]
-    public Task Retention_keeps_a_thread_in_needs_reply() => RedUntil.Phase("M1c", async () =>
-    {
-            // M1c seeds a 35-day-old unanswered DM: it stays in Needs reply with its text
-            var ran = await Run();
+    private DateTimeOffset Now => _harness.Clock.GetUtcNow();
 
-            Assert.True(ran.IsSuccess);
-            Assert.Equal(ScheduledResult.Quiet, ran.Value);
-    });
+    public void Dispose() => _home.Dispose();
 
     [Fact]
-    public Task Retention_keeps_a_snoozed_thread_after_views_rebuild() => RedUntil.Phase("M1c", async () =>
+    public async Task Retention_keeps_a_thread_in_needs_reply()
     {
-            // M1c seeds home.row.snoozed for a 40-day-old thread, rebuilds views.db, then runs the pass: the snooze still holds the text
-            var ran = await Run();
+        // a 35-day-old unanswered DM: it stays in Needs reply with its text
+        await _home.Conversation("T0HARBOR", "D0SAM", ConversationKind.Dm);
+        _ = await _home.Put(new StoredMessage("D0SAM", MessagesHome.Ts(Now.AddDays(-35)), null, "U0SAM", "can you ship the fare table today?", Mine: false, NamesMe: false));
 
-            Assert.True(ran.IsSuccess);
-            Assert.Equal(ScheduledResult.Quiet, ran.Value);
-    });
+        var ran = await Run();
+
+        Assert.True(ran.IsSuccess);
+        Assert.Equal(ScheduledResult.Quiet, ran.Value);
+        Assert.Equal(1L, _home.Count("SELECT COUNT(*) FROM messages WHERE conversation = 'D0SAM'"));
+        Assert.Equal(1L, _home.Matches("fare"));
+    }
 
     [Fact]
-    public Task Retention_ends_a_skip_after_180_days() => RedUntil.Phase("M1c", async () =>
+    public async Task Retention_keeps_a_snoozed_thread_after_views_rebuild()
     {
-            // M1c seeds a thread with a Later flag and messages 181 days old: the text goes and the row shows "text expired"
-            var ran = await Run();
+        // a 40-day-old thread where I spoke last (not in Needs reply), snoozed through the ledger. This home has no views.db at all: whatever a views
+        // rebuild or a stalled projector does to home_rows, the pass reads only the ledger's events, so the snooze still holds the text
+        var key = await SeedAnsweredThread(Now.AddDays(-40), "berth");
+        await Append("home.row.snoozed", string.Create(CultureInfo.InvariantCulture, $$"""{"id":"{{key}}","until":"{{Now.AddDays(7):O}}"}"""));
 
-            Assert.True(ran.IsSuccess);
-            Assert.Equal(ScheduledResult.Worked, ran.Value);
-    });
+        var ran = await Run();
 
-    private static async Task<Aw.Kernel.Result<ScheduledResult>> Run()
+        Assert.True(ran.IsSuccess);
+        Assert.Equal(ScheduledResult.Quiet, ran.Value);
+        Assert.False(File.Exists(Path.Combine(_home.Home, "views.db")));
+        Assert.Equal(2L, _home.Count($"SELECT COUNT(*) FROM messages WHERE conversation = '{Harbor}'"));
+        Assert.Equal(1L, _home.Matches("berth"));
+    }
+
+    [Fact]
+    public async Task Retention_takes_a_thread_once_its_snooze_woke()
     {
-        var harness = new SliceHarness();
-        var grant = await harness.HoldLease();
-        return await new RetainMessagesService().Run(new ScheduledRun(grant, harness.Clock.GetUtcNow()), Cancel);
+        var key = await SeedAnsweredThread(Now.AddDays(-40), "berth");
+        await Append("home.row.snoozed", string.Create(CultureInfo.InvariantCulture, $$"""{"id":"{{key}}","until":"{{Now.AddDays(7):O}}"}"""));
+        await Append("home.row.woke", string.Create(CultureInfo.InvariantCulture, $$"""{"id":"{{key}}","reason":"replied"}"""));
+
+        var ran = await Run();
+
+        Assert.True(ran.IsSuccess);
+        Assert.Equal(ScheduledResult.Worked, ran.Value);
+        Assert.Equal(0L, _home.Count("SELECT COUNT(*) FROM messages"));
+        Assert.Equal(0L, _home.Matches("berth"));
+    }
+
+    [Fact]
+    public async Task Retention_ends_a_skip_after_180_days()
+    {
+        // a thread with a Later flag and messages 181 days old: the text goes and the row shows "text expired"; the flag stays
+        var root = MessagesHome.Ts(Now.AddDays(-181));
+        _ = await SeedAnsweredThread(Now.AddDays(-181), "manifest");
+        Assert.True((await _home.Store.PutThreadState(new ThreadOwnerState(Harbor, root, Later: true, Follow: false), Cancel)).IsSuccess);
+
+        var ran = await Run();
+
+        Assert.True(ran.IsSuccess);
+        Assert.Equal(ScheduledResult.Worked, ran.Value);
+        Assert.Equal(0L, _home.Count("SELECT COUNT(*) FROM messages"));
+        Assert.Equal(0L, _home.Matches("manifest"));
+        Assert.Equal(1L, _home.Count($"SELECT COUNT(*) FROM thread_state WHERE thread_ts = '{root.Value}' AND text_expired_at IS NOT NULL AND later = 1 AND my_last_ts IS NULL"));
+    }
+
+    [Fact]
+    public async Task Retention_deletes_an_old_thread_with_its_fts_rows_and_derived_columns_and_keeps_the_rest()
+    {
+        // an answered thread 35 days old goes with its FTS rows and gist; a 5-day-old one in the same channel stays
+        var oldRoot = MessagesHome.Ts(Now.AddDays(-35));
+        _ = await SeedAnsweredThread(Now.AddDays(-35), "gangway");
+        _ = await _home.Put(new StoredMessage(Harbor, MessagesHome.Ts(Now.AddDays(-5)), null, "U0LEE", "tide tables", Mine: false, NamesMe: false));
+        _home.Exec($"UPDATE thread_state SET gist = 'Ada asks about the gangway', gist_key = 'k1' WHERE thread_ts = '{oldRoot.Value}'");
+
+        var ran = await Run();
+
+        Assert.True(ran.IsSuccess);
+        Assert.Equal(ScheduledResult.Worked, ran.Value);
+        Assert.Equal(0L, _home.Matches("gangway"));
+        Assert.Equal(1L, _home.Matches("tide"));
+        Assert.Equal(1L, _home.Count($"SELECT COUNT(*) FROM thread_state WHERE thread_ts = '{oldRoot.Value}' AND gist IS NULL AND gist_key IS NULL AND my_last_ts IS NULL AND text_expired_at IS NULL"));
+    }
+
+    [Fact]
+    public async Task A_snooze_event_it_cannot_read_deletes_nothing()
+    {
+        _ = await SeedAnsweredThread(Now.AddDays(-40), "berth");
+        await Append("home.row.snoozed", """{"until":"not a time"}""");
+
+        var ran = await Run();
+
+        Assert.True(ran.IsError);
+        Assert.Equal(2L, _home.Count("SELECT COUNT(*) FROM messages"));
+    }
+
+    // Ada asks in #harbor and I answer an hour later: the thread is mine, but I spoke last, so it is not in Needs reply.
+    private async Task<string> SeedAnsweredThread(DateTimeOffset at, string word)
+    {
+        await _home.Conversation("T0HARBOR", Harbor, ConversationKind.Channel);
+        var root = MessagesHome.Ts(at);
+        var keys = await _home.Put(
+            new StoredMessage(Harbor, root, root, "U0ADA", $"<@U0JOI> where is the {word}?", Mine: false, NamesMe: true),
+            new StoredMessage(Harbor, MessagesHome.Ts(at.AddHours(1)), root, "U0JOI", "pier 3", Mine: true, NamesMe: false));
+        Assert.Equal(0L, _home.Scalar($"SELECT needs_reply FROM thread_state WHERE thread_ts = '{root.Value}'"));
+        return Assert.Single(keys);
+    }
+
+    private async Task Append(string type, string payload)
+    {
+        _grant ??= await _harness.HoldLease();
+        var scope = EventScope.ControlPlane;
+        var envelope = EventContext.Create(scope.Actor, scope.Tenant, scope.Ring, _harness.Ids.NewId()).Value.Envelope(type, payload, _harness.Clock, _harness.Ids);
+        var appended = await _harness.Store.Append(new LedgerEntry(envelope, $"test:{type}:{++_events}", Item: null), _grant, Cancel);
+        Assert.True(appended.IsSuccess);
+    }
+
+    private async Task<Result<ScheduledResult>> Run()
+    {
+        _grant ??= await _harness.HoldLease();
+        return await new RetainMessagesService(_home.Store, new LedgerSnoozes(_harness.Store), _harness.Clock).Run(new ScheduledRun(_grant, Now), Cancel);
     }
 }
