@@ -45,7 +45,7 @@ public sealed class ShellProjectsTests
         await Until(() => !shell.Projects.IsLoading);
 
         Assert.Equal((true, 1), (shell.IsProjects, _server.ProjectsCalls));
-        Assert.Equal(3, shell.Projects.Groups.Count);
+        Assert.Equal(3, shell.Projects.Groups.Sum(g => g.Count));   // one row per open project, whatever the grouping
     }, Token);
 
     [Fact]

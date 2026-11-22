@@ -36,20 +36,24 @@ internal static class ProjectRows
         _ => false,
     };
 
-    /// <summary>The projects in the sort's order. Last activity keeps the served order (newest first, then name).</summary>
+    /// <summary>
+    /// The projects in the sort's order. Last activity is newest first, then name; a project with no last activity (an attached one while Context can't
+    /// answer) goes after every project that has one, by name. Target date is soonest first, then name; no target (or one that isn't a day) goes last, by name.
+    /// </summary>
     /// <param name="cards">The projects as served.</param>
     /// <param name="sort">The sort.</param>
     /// <returns>The projects, sorted.</returns>
     internal static IReadOnlyList<ProjectCardView> Sorted(IEnumerable<ProjectCardView> cards, ProjectSort sort) => sort switch
     {
-        ProjectSort.Target => [.. cards.OrderBy(c => TargetDay(c.Target) ?? DateOnly.MaxValue).ThenBy(c => c.Name, StringComparer.OrdinalIgnoreCase)],
+        ProjectSort.Target => [.. cards.OrderBy(c => TargetDay(c.Target) is null).ThenBy(c => TargetDay(c.Target)).ThenBy(c => c.Name, StringComparer.OrdinalIgnoreCase).ThenBy(c => c.Id, StringComparer.Ordinal)],
         ProjectSort.Name => [.. cards.OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase).ThenBy(c => c.Id, StringComparer.Ordinal)],
-        _ => [.. cards],
+        _ => [.. cards.OrderBy(c => c.LastActivity is null).ThenByDescending(c => c.LastActivity).ThenBy(c => c.Name, StringComparer.OrdinalIgnoreCase).ThenBy(c => c.Id, StringComparer.Ordinal)],
     };
 
     /// <summary>
     /// The groups of a sorted list, in their fixed order; groups with no project are left out. Grouping by health or by repo reads the truth, so
-    /// while the truth is missing the list is one group with no head (the page says why on one line). Grouping none is one group with no head.
+    /// while the truth is missing the rows are grouped by state instead (the page says why on one line, and the Group button keeps the owner's pick).
+    /// Grouping none is one group with no head.
     /// </summary>
     /// <param name="cards">The projects, sorted.</param>
     /// <param name="grouping">The grouping.</param>
@@ -64,10 +68,10 @@ internal static class ProjectRows
 
         return grouping switch
         {
+            ProjectGrouping.None => [new ProjectRowGroup(string.Empty, string.Empty, cards)],
             ProjectGrouping.Health when !factsMissing => ByHealth(cards),
             ProjectGrouping.Repo when !factsMissing => ByRepo(cards),
-            ProjectGrouping.State => ByState(cards),
-            _ => [new ProjectRowGroup(string.Empty, string.Empty, cards)],
+            _ => ByState(cards),
         };
     }
 
@@ -100,7 +104,13 @@ internal static class ProjectRows
         return glyphs;
     }
 
-    /// <summary>The Blocked on cell: "you" when the server flags a PR that waits on the owner, else the first reviewer a PR waits on, else nothing.</summary>
+    /// <summary>True when the server says the project or one of its PRs waits on the owner (issue 3797).</summary>
+    /// <param name="truth">The project's truth.</param>
+    /// <returns>True when it waits on the owner.</returns>
+    internal static bool WaitsOnYou(ProjectTruthView? truth) =>
+        truth is not null && (truth.BlockedOnYou == true || truth.OpenPrs.Any(p => p.WaitsOnYou == true));
+
+    /// <summary>The Blocked on cell: "you" when the server flags the project or a PR as waiting on the owner, else the first reviewer a PR waits on, else nothing.</summary>
     /// <param name="truth">The project's truth.</param>
     /// <returns>The words; empty for none.</returns>
     internal static string BlockedOn(ProjectTruthView? truth)
@@ -110,7 +120,7 @@ internal static class ProjectRows
             return string.Empty;
         }
 
-        if (truth.BlockedOnYou == true)
+        if (WaitsOnYou(truth))
         {
             return Labels.ProjectBlockedOnYou;
         }

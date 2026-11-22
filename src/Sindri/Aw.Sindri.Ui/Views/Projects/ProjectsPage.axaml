@@ -59,7 +59,7 @@
             <Button x:Name="ProjectsTab" Classes="view-tab" Classes.on="{Binding IsOn}" Click="OnTab" ToolTip.Tip="{Binding Key}" AutomationProperties.Name="{Binding Name}">
               <StackPanel Orientation="Horizontal" Spacing="6">
                 <TextBlock Classes="body tab-word" Text="{Binding Text}" />
-                <TextBlock Classes="caption subtle" Text="{Binding CountText}" VerticalAlignment="Center" />
+                <TextBlock Classes="caption subtle" Text="{Binding CountText}" IsVisible="{Binding ShowsCount}" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
           </DataTemplate>

@@ -64,7 +64,7 @@ public sealed class ProjectSheetShellTests
         shell.GoTo(PageId.Projects);
         await Until(() => !shell.Projects.IsLoading);
 
-        shell.Projects.RequestOpen(shell.Projects.Groups[2].Cards[0].Link);
+        shell.Projects.RequestOpen(shell.Projects.Groups.SelectMany(g => g.Cards).First(c => c.Id == "prj_00000000000000000000000008").Link);
 
         Assert.Equal((true, "prj_00000000000000000000000008"), (shell.IsProjectSheet, shell.OpenerProject));
     }, Token);

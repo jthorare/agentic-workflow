@@ -42,7 +42,7 @@ internal sealed partial class ProjectCardViewModel
     /// <summary>"you", a reviewer's login, or empty.</summary>
     public string BlockedOnText { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>True when the server says a PR waits on the owner: "you" is drawn bold.</summary>
+    /// <summary>True when the server says the project or a PR waits on the owner: "you" is drawn bold.</summary>
     public bool IsBlockedOnYou { get; private set => Set(ref field, value); }
 
     /// <summary>"Dec 7", "Nov 12 passed", or empty (none, or the project is finished).</summary>
@@ -91,7 +91,7 @@ internal sealed partial class ProjectCardViewModel
         ItemsText = ProjectRows.Items(truth);
         AgentsText = ProjectRows.Agents(truth);
         BlockedOnText = ProjectRows.BlockedOn(truth);
-        IsBlockedOnYou = truth?.BlockedOnYou == true;
+        IsBlockedOnYou = ProjectRows.WaitsOnYou(truth);
         var now = _clock.GetLocalNow();
         (TargetText, TargetPassed) = Card.FinishedAt is null ? ProjectRows.Target(Card.Target, DateOnly.FromDateTime(now.DateTime)) : (string.Empty, false);
         AgeText = Card.LastActivity is { } activity ? Labels.ProjectRowAge(_clock.GetUtcNow() - activity) : string.Empty;

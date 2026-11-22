@@ -10,15 +10,16 @@ public sealed class ProjectRowsTests
 {
     private static readonly DateOnly _today = new(2026, 11, 14);
 
-    private static ProjectCardView Card(string name, string origin = "led", string? state = "inProgress", string? target = null, ProjectTruthView? truth = null) =>
+    private static ProjectCardView Card(string name, string origin = "led", string? state = "inProgress", string? target = null, ProjectTruthView? truth = null, int? daysAgo = null) =>
         new("prj_" + name, origin, name, Description: null, state, StateSetByOwner: false, Health: null, Lead: null, target, OpenIssues: null, Counting: false,
-            OpenPrs: null, PrScope: null, LastActivity: null, FinishedAt: null, Repos: [], Links: [], Notes: null, Synced: true, Version: 1, truth);
+            OpenPrs: null, PrScope: null, daysAgo is { } days ? new DateTimeOffset(2026, 11, 14, 10, 42, 0, TimeSpan.Zero).AddDays(-days) : null, FinishedAt: null,
+            Repos: [], Links: [], Notes: null, Synced: true, Version: 1, truth);
 
     private static ProjectTruthView Truth(string? level, bool? blockedOnYou = null, params ProjectTruthPrView[] prs) =>
         new(prs, OpenItems: 0, DoneItems: 0, TotalItems: 0, RunningAgents: 0, level is null ? null : new ProjectTruthHealthView(level, "served reason"), blockedOnYou);
 
-    private static ProjectTruthPrView Pr(string state, string repo = "acme/api", string? waitingOn = null) =>
-        new("https://github.com/" + repo + "/pull/1", repo, 1, "A PR", state, DecidedAt: null, waitingOn);
+    private static ProjectTruthPrView Pr(string state, string repo = "acme/api", string? waitingOn = null, bool? waitsOnYou = null) =>
+        new("https://github.com/" + repo + "/pull/1", repo, 1, "A PR", state, DecidedAt: null, waitingOn, waitsOnYou);
 
     private static List<string> Names(IEnumerable<ProjectCardView> cards) => [.. cards.Select(c => c.Name)];
 
@@ -51,9 +52,19 @@ public sealed class ProjectRowsTests
     }
 
     [Fact]
-    public void Last_activity_keeps_the_served_order()
+    public void Last_activity_sorts_newest_first_then_by_name()
     {
-        Assert.Equal(["Zebra", "apple", "Mango"], Names(ProjectRows.Sorted([Card("Zebra"), Card("apple"), Card("Mango")], ProjectSort.Activity)), StringComparer.Ordinal);
+        var sorted = ProjectRows.Sorted([Card("Old", daysAgo: 9), Card("Zebra", daysAgo: 1), Card("apple", daysAgo: 1), Card("New", daysAgo: 0)], ProjectSort.Activity);
+
+        Assert.Equal(["New", "apple", "Zebra", "Old"], Names(sorted), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void Projects_with_no_last_activity_go_after_the_others_by_name()
+    {
+        var sorted = ProjectRows.Sorted([Card("Zulu"), Card("Old", daysAgo: 30), Card("alpha"), Card("New", daysAgo: 0)], ProjectSort.Activity);
+
+        Assert.Equal(["New", "Old", "alpha", "Zulu"], Names(sorted), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -98,14 +109,13 @@ public sealed class ProjectRowsTests
     }
 
     [Fact]
-    public void Missing_facts_show_no_health_groups_but_one_list_with_no_head()
+    public void Missing_facts_show_no_health_or_repo_groups_but_state_groups()
     {
-        ProjectCardView[] cards = [Card("A", truth: Truth(level: null)), Card("B", truth: Truth(level: null))];
+        ProjectCardView[] cards = [Card("A", state: "planned", truth: Truth(level: null)), Card("B", truth: Truth(level: null))];
 
-        var group = Assert.Single(ProjectRows.Grouped(cards, ProjectGrouping.Health, factsMissing: true));
-
-        Assert.Equal((string.Empty, 2), (group.Heading, group.Cards.Count));
-        _ = Assert.Single(ProjectRows.Grouped(cards, ProjectGrouping.Repo, factsMissing: true));
+        Assert.Equal(["In progress", "Planned"], ProjectRows.Grouped(cards, ProjectGrouping.Health, factsMissing: true).Select(g => g.Heading), StringComparer.Ordinal);
+        Assert.Equal(["In progress", "Planned"], ProjectRows.Grouped(cards, ProjectGrouping.Repo, factsMissing: true).Select(g => g.Heading), StringComparer.Ordinal);
+        Assert.Equal(string.Empty, Assert.Single(ProjectRows.Grouped(cards, ProjectGrouping.None, factsMissing: true)).Heading);
     }
 
     [Theory]
@@ -182,5 +192,14 @@ public sealed class ProjectRowsTests
         Assert.Equal("you", ProjectRows.BlockedOn(Truth("atRisk", blockedOnYou: true, Pr("waiting", waitingOn: "sam"))));
         Assert.Equal("sam", ProjectRows.BlockedOn(Truth("atRisk", blockedOnYou: null, Pr("ciRed"), Pr("waiting", waitingOn: "sam, lee"))));
         Assert.Equal(string.Empty, ProjectRows.BlockedOn(Truth("onTrack", blockedOnYou: null, Pr("ready"))));
+    }
+
+    [Fact]
+    public void A_PR_that_waits_on_you_makes_the_project_blocked_on_you()
+    {
+        var truth = Truth("atRisk", blockedOnYou: null, Pr("waiting", waitingOn: "sam, joi", waitsOnYou: true));
+
+        Assert.Equal(("you", true), (ProjectRows.BlockedOn(truth), ProjectRows.WaitsOnYou(truth)));
+        Assert.False(ProjectRows.WaitsOnYou(Truth("atRisk", blockedOnYou: false, Pr("waiting", waitingOn: "sam", waitsOnYou: false))));
     }
 }

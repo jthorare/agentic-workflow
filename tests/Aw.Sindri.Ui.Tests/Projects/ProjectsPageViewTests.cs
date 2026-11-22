@@ -47,7 +47,7 @@ public sealed class ProjectsPageViewTests : FrameHost
 
         var headings = window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "ProjectsGroupHeading" && t.IsEffectivelyVisible).Select(t => t.Text);
         Assert.Equal(["No open PRs"], headings, StringComparer.Ordinal);   // the golden serves no truth, so no project has an open PR
-        Assert.Equal(["Checkout rewrite", "Kitchen", "Mobile app"], Frames(window).Select(f => ((ViewModels.Projects.ProjectCardViewModel)f.DataContext!).Name), StringComparer.Ordinal);
+        Assert.Equal(["Kitchen", "Checkout rewrite", "Mobile app"], Frames(window).Select(f => ((ViewModels.Projects.ProjectCardViewModel)f.DataContext!).Name), StringComparer.Ordinal);   // newest activity first
     });
 
     [Fact]
@@ -55,7 +55,7 @@ public sealed class ProjectsPageViewTests : FrameHost
     {
         var (window, _) = await OnProjects();
 
-        var card = Frames(window)[0];
+        var card = Frames(window).First(f => ((ViewModels.Projects.ProjectCardViewModel)f.DataContext!).Name == "Checkout rewrite");
         Assert.StartsWith("Checkout rewrite, Jan 31", Heard.Name(card), StringComparison.Ordinal);
         Assert.True(card.Focusable);
     });

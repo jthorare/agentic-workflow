@@ -31,11 +31,22 @@ internal sealed class ProjectViewTab : ObservableObject
         }
     }
 
+    /// <summary>True when the tab draws its count: Needs me draws none while Sindri can't read its PR, check and agent facts, since its count comes from them.</summary>
+    public bool ShowsCount
+    {
+        get;
+        internal set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(Name));
+        }
+    } = true;
+
     /// <summary>The count as drawn.</summary>
     public string CountText => Count.ToString(CultureInfo.InvariantCulture);
 
-    /// <summary>The tab's accessible name: "Needs me, 6 projects".</summary>
-    public string Name => Labels.ProjectsViewName(Text, Count);
+    /// <summary>The tab's accessible name: "Needs me, 6 projects", or the words alone while it draws no count.</summary>
+    public string Name => ShowsCount ? Labels.ProjectsViewName(Text, Count) : Text;
 
     /// <summary>True while it is the view shown.</summary>
     public bool IsOn { get; internal set => Set(ref field, value); }

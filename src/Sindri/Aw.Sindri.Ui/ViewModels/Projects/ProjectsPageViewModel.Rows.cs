@@ -59,7 +59,7 @@ internal sealed partial class ProjectsPageViewModel
     /// <summary>The Group button's accessible name: "Group: Health".</summary>
     public string GroupName => Labels.ProjectsMenuButtonName(Labels.ProjectsGroupLabel, GroupText);
 
-    /// <summary>True when Sindri couldn't read its own PR, check and agent facts: no group by health or repo, and the one line below says so.</summary>
+    /// <summary>True when Sindri couldn't read its own PR, check and agent facts: rows group by state instead of health or repo, and the one line below says so.</summary>
     public bool FactsMissing { get; private set => Set(ref field, value); }
 
     /// <summary>True when the list draws the line that the facts are missing: they are, and the view has rows.</summary>
@@ -226,9 +226,10 @@ internal sealed partial class ProjectsPageViewModel
     {
         foreach (var tab in Tabs)
         {
+            tab.ShowsCount = tab.View != ProjectView.NeedsMe || !FactsMissing;
             tab.Count = tab.View switch
             {
-                ProjectView.All => list.Projects.Count + list.Finished.Count,   // hidden projects are not counted
+                ProjectView.All => list.Projects.Count + list.Finished.Count,   // the cards the answer holds, open and finished; hidden ones are not counted
                 ProjectView.Triage => 0,
                 _ => list.Projects.Count(c => ProjectRows.InView(tab.View, c)),
             };

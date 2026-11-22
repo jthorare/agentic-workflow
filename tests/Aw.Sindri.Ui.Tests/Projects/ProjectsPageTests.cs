@@ -55,7 +55,7 @@ public sealed class ProjectsPageTests
     }
 
     [Fact]
-    public async Task The_cards_stay_in_the_order_the_server_serves()
+    public async Task Rows_with_the_same_last_activity_go_by_name()
     {
         var list = Golden("mixed");
         var second = list["projects"]![0]!.DeepClone();

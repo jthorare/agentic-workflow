@@ -15,7 +15,7 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
 /// <summary>
 /// The Projects rows in the window at 1280 and 1000 px (issue 3717, frames round 11): a long name trims before the PRs column, the health groups' heads
-/// show in their fixed order, and a failed truth read shows its one line and no group head. Saved under frames/ as projects-rows-*.png.
+/// show in their fixed order, and a failed truth read shows its one line and state groups instead (frames round 13, truth-failed). Saved under frames/ as projects-rows-*.png.
 /// </summary>
 [Lane(TestLane.Integration)]
 public sealed class ProjectsRowsFramesTests : FrameHost
@@ -95,12 +95,13 @@ public sealed class ProjectsRowsFramesTests : FrameHost
     [Theory]
     [InlineData(1280, 800)]
     [InlineData(1000, 700)]
-    public Task A_failed_truth_read_shows_its_line_and_no_group_head(int width, int height) => OnUi(async () =>
+    public Task A_failed_truth_read_shows_its_line_and_state_groups(int width, int height) => OnUi(async () =>
     {
         var (window, _) = await OnProjects(width, height, factsMissing: true);
 
+        var heads = window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "ProjectsGroupHeading" && t.IsEffectivelyVisible).Select(t => t.Text).ToList();
         Assert.True(Visible(window, "ProjectsFactsMissing"));
-        Assert.DoesNotContain(window.GetVisualDescendants().OfType<TextBlock>(), t => t.Name == "ProjectsGroupHeading" && t.IsEffectivelyVisible);
+        Assert.Equal(["In progress", "Planned", "Paused"], heads, StringComparer.Ordinal);
         Frame(window, string.Create(CultureInfo.InvariantCulture, $"projects-rows-facts-missing-{width}"), prefix: string.Empty);
     });
 }

@@ -155,7 +155,7 @@ internal static partial class Labels
     internal const string ProjectsMyWorkEmptyTitle = "No projects of yours yet";
 
     /// <summary>The My work view's empty body (decisions comment: attached projects are not in My work).</summary>
-    internal const string ProjectsMyWorkEmptyBody = "Projects you lead or make by hand show here.";
+    internal const string ProjectsMyWorkEmptyBody = "Projects you lead or make by hand show here, grouped by state.";
 
     /// <summary>The Triage view, not built yet.</summary>
     internal const string ProjectsTriageTitle = "Triage isn’t built yet";

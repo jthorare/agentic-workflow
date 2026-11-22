@@ -39,6 +39,8 @@ public sealed class ProjectsPageRowsTests
 
     private static List<string> Rows(ProjectsPageViewModel page) => [.. page.Groups.SelectMany(g => g.Cards).Select(c => c.Name)];
 
+    private static ProjectCardViewModel Row(ProjectsPageViewModel page, string name) => page.Groups.SelectMany(g => g.Cards).First(c => c.Name == name);
+
     [Fact]
     public void The_page_groups_by_health_and_shows_every_project_until_told_otherwise()
     {
@@ -61,7 +63,7 @@ public sealed class ProjectsPageRowsTests
     }
 
     [Fact]
-    public async Task A_failed_truth_read_shows_no_health_groups_and_the_one_line()
+    public async Task A_failed_truth_read_groups_by_state_with_the_one_line_and_no_Needs_me_count()
     {
         var list = Mixed(Truth(level: null), Truth(level: null), Truth(level: null));
         list["freshness"]!.AsArray().Add(new JsonObject { ["source"] = "sindri", ["state"] = "failing", ["text"] = "SND-REVIEWS-012: reviews.db is locked", ["at"] = null });
@@ -69,12 +71,12 @@ public sealed class ProjectsPageRowsTests
 
         var page = await _f.Shown(Token, ProjectGrouping.Health);
 
-        var group = Assert.Single(page.Groups);
-        Assert.False(group.HasHeading);
-        Assert.Equal(["Checkout rewrite", "Kitchen", "Mobile app"], Rows(page), StringComparer.Ordinal);
-        Assert.True(page.ShowsFactsMissing);
+        Assert.Equal(["In progress", "Planned", "Paused"], page.Groups.Select(g => g.Heading), StringComparer.Ordinal);
+        Assert.Equal(("Health", true), (page.GroupText, page.ShowsFactsMissing));   // the Group button keeps the owner's pick
         Assert.Equal("PRs, checks and agents couldn't be read just now", page.FactsMissingText);
-        Assert.All(group.Cards, c => Assert.False(c.ShowsFacts));
+        Assert.All(page.Groups.SelectMany(g => g.Cards), c => Assert.False(c.ShowsFacts));
+        Assert.Equal([false, true, true, true], page.Tabs.Select(t => t.ShowsCount));
+        Assert.Equal("Needs me", page.Tabs[0].Name);
     }
 
     [Fact]
@@ -97,7 +99,7 @@ public sealed class ProjectsPageRowsTests
 
         page.SetView(ProjectView.MyWork);
 
-        Assert.Equal(["Checkout rewrite", "Kitchen"], Rows(page), StringComparer.Ordinal);
+        Assert.Equal(["Kitchen", "Checkout rewrite"], Rows(page), StringComparer.Ordinal);   // newest activity first
         Assert.Equal((false, 0, 0), (page.ShowsFolds, page.Finished.Count, page.Hidden.Count));
         Assert.Equal([false, true, false, false], page.Tabs.Select(t => t.IsOn));
     }
@@ -164,7 +166,7 @@ public sealed class ProjectsPageRowsTests
 
         var page = await _f.Shown(Token, ProjectGrouping.None);
 
-        Assert.Equal(["1d", "<1m"], page.Groups[0].Cards.Take(2).Select(c => c.AgeText), StringComparer.Ordinal);
+        Assert.Equal(("<1m", "1d"), (Row(page, "Kitchen").AgeText, Row(page, "Checkout rewrite").AgeText));
     }
 
     [Fact]
@@ -177,9 +179,9 @@ public sealed class ProjectsPageRowsTests
 
         var page = await _f.Shown(Token, ProjectGrouping.None);
 
-        var checkout = page.Groups[0].Cards[0];
+        var checkout = Row(page, "Checkout rewrite");
         Assert.Equal(("Dec 30 passed", true), (checkout.TargetText, checkout.TargetPassed));
-        Assert.Equal("Mar 1", page.Groups[0].Cards[1].TargetText);
+        Assert.Equal("Mar 1", Row(page, "Kitchen").TargetText);
         Assert.Equal(string.Empty, page.Finished.Cards[0].TargetText);
     }
 
@@ -195,7 +197,7 @@ public sealed class ProjectsPageRowsTests
             new JsonObject { ["url"] = "https://github.com/acme/api/pull/2", ["repo"] = "acme/api", ["number"] = 2, ["title"] = "Two", ["state"] = "draft", ["decidedAt"] = null, ["waitingOn"] = null });
         _ = Mixed(truth, kitchen: null, mobile: null);
 
-        var row = (await _f.Shown(Token, ProjectGrouping.None)).Groups[0].Cards[0];
+        var row = Row(await _f.Shown(Token, ProjectGrouping.None), "Checkout rewrite");
 
         Assert.Equal(("5/12", "2", "you", true), (row.ItemsText, row.AgentsText, row.BlockedOnText, row.IsBlockedOnYou));
         Assert.Equal(["1 CI red", "1 draft"], row.Prs.Select(p => p.Name), StringComparer.Ordinal);
