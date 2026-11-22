@@ -1,40 +1,94 @@
 using Aw.Sindri.Ui.Api.Context;
-using Aw.Sindri.Ui.ViewModels.Context.Layout;
+using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.ViewModels.Context;
 
-/// <summary>The coverage strip's words, built on the client from the answer's coverage, searched bands and symbols state.</summary>
+/// <summary>The sentence under an answer: what was searched and why the rest was not, built on the client from the answer's coverage, searched bands and symbols state.</summary>
 internal static class CoverageWords
 {
-    /// <summary>The four areas and the sentence over them.</summary>
+    /// <summary>The one plain sentence under the answer.</summary>
     /// <param name="view">The lenses answer.</param>
-    /// <returns>The areas, the lead ("3 of 4 areas searched.") and the rest ("Code is limited.").</returns>
-    internal static (IReadOnlyList<CoverageArea> Areas, string Lead, string Tail) Words(LensesView view)
+    /// <param name="exact">Whether the answer came from a direct pick or an exact name.</param>
+    /// <returns>"Searched Code. No Why or Product records. Function names aren't indexed.", or empty on an exact hit or when every area was searched.</returns>
+    internal static string Sentence(LensesView view, bool exact)
     {
         ArgumentNullException.ThrowIfNull(view);
+        if (exact)
+        {
+            return string.Empty;
+        }
+
         var c = view.Coverage;
-        var symbols = view.Bands.Code.Symbols.State;
-        IReadOnlyList<CoverageArea> areas =
-        [
-            Area(Labels.ContextMapAreaIntent, view.Searched.Bands.Intent.Empty, c.Intent.Covered, c.Intent.Of),
-            Area(Labels.ContextMapAreaProduct, view.Searched.Bands.Product.Empty, c.Product.Confirmed, c.Product.Of),
-            Area(Labels.ContextMapAreaCode, view.Searched.Bands.Code.Empty, c.Code.Implemented, c.Code.Of),
-            Level(Labels.ContextMapAreaNames, string.Equals(symbols, "ok", StringComparison.Ordinal) ? CoverageLevel.Searched : string.Equals(symbols, "stale", StringComparison.Ordinal) ? CoverageLevel.Limited : CoverageLevel.NotAvailable,
-                string.Equals(symbols, "unavailable", StringComparison.Ordinal) ? Labels.ContextMapNamesDetail : null),
-        ];
-        var searched = areas.Count(a => a.Level == CoverageLevel.Searched);
-        var limited = areas.Where(a => a.Level == CoverageLevel.Limited).Select(a => a.Name).ToList();
-        return (areas, Labels.ContextMapCoverageLead(searched, areas.Count), limited.Count == 0 ? string.Empty : Labels.ContextMapCoverageRest(limited));
+        var areas = new Areas();
+        areas.Sort(NodeBands.Title(WholeBand.Intent), view.Searched.Bands.Intent.Empty, c.Intent.Covered < c.Intent.Of);
+        areas.Sort(NodeBands.Title(WholeBand.Product), view.Searched.Bands.Product.Empty, c.Product.Confirmed < c.Product.Of);
+        areas.Sort(NodeBands.Title(WholeBand.Code), view.Searched.Bands.Code.Empty, c.Code.Implemented < c.Code.Of);
+        var names = view.Bands.Code.Symbols.State;
+        var stale = string.Equals(names, "stale", StringComparison.Ordinal);
+        var missing = !stale && !string.Equals(names, "ok", StringComparison.Ordinal);
+        if (!missing)
+        {
+            areas.Sort(Labels.ContextMapWordNames, none: false, some: stale);
+        }
+
+        return areas.Searched.Count == 4 ? string.Empty : Compose(areas, missing);
     }
 
-    private static CoverageArea Area(string name, bool empty, int covered, int of) =>
-        Level(name, empty ? CoverageLevel.NotAvailable : covered < of ? CoverageLevel.Limited : CoverageLevel.Searched, detail: null);
-
-    private static CoverageArea Level(string name, CoverageLevel level, string? detail) => new(name, level, level switch
+    private static string Compose(Areas areas, bool namesMissing)
     {
-        CoverageLevel.Searched => Labels.ContextMapSearched,
-        CoverageLevel.Limited => Labels.ContextMapLimited,
-        CoverageLevel.NotAvailable => Labels.ContextMapNotAvailable,
-        _ => Labels.ContextMapNotAvailable,
-    }, detail);
+        var (searched, empty, partly) = (areas.Searched, areas.Empty, areas.Partly);
+        var parts = new List<string>();
+        if (searched.Count > 0)
+        {
+            parts.Add(Labels.ContextMapSearchedSentence(searched));
+        }
+        else if (partly.Count == 0)
+        {
+            // Nothing was searched at all; with an area searched in part, the opening would contradict the partly sentence.
+            parts.Add(Labels.ContextMapSearchedNothing);
+        }
+
+        if (empty.Count > 0)
+        {
+            parts.Add(Labels.ContextMapNoRecords(empty));
+        }
+
+        if (partly.Count > 0)
+        {
+            parts.Add(Labels.ContextMapPartlySearched(partly));
+        }
+
+        if (namesMissing)
+        {
+            parts.Add(Labels.ContextMapNamesNotIndexed);
+        }
+
+        return string.Join(' ', parts);
+    }
+
+    /// <summary>The area words, sorted by how much of each area was searched.</summary>
+    private sealed class Areas
+    {
+        public List<string> Searched { get; } = [];
+
+        public List<string> Empty { get; } = [];
+
+        public List<string> Partly { get; } = [];
+
+        public void Sort(string word, bool none, bool some)
+        {
+            if (none)
+            {
+                Empty.Add(word);
+            }
+            else if (some)
+            {
+                Partly.Add(word);
+            }
+            else
+            {
+                Searched.Add(word);
+            }
+        }
+    }
 }

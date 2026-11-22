@@ -35,7 +35,29 @@ internal sealed partial class ShellViewModel
         }
     }
 
-    // Home's other totals are the queue's groups as the queue view (read just before this one) shows them.
+    // The queue's read, then Home's and the tray's totals again from its groups. Needs-you is read at the same time (#2775), so
+    // its answer may come before the queue's and map the groups of the queue read before: this maps them again once the queue has answered.
+    private async Task ReadQueue(Uri url, CancellationToken cancellationToken)
+    {
+        await Queue.Refresh(url, cancellationToken).ConfigureAwait(true);
+        Recount();
+    }
+
+    // The last needs-you list with the totals the queue shows now; nothing changes when they are the ones it already has.
+    private void Recount()
+    {
+        var counts = CountsFor(Queue);
+        if (_needsYou is not { } feed || feed.Counts == counts)
+        {
+            return;
+        }
+
+        _needsYou = feed with { Counts = counts };
+        UpdateNeedsYou();
+        Reattend();
+    }
+
+    // Home's other totals are the queue's groups as the queue view shows them now; ReadQueue maps them again when the queue answers later.
     private static HomeCounts CountsFor(QueueViewModel queue)
     {
         int Of(string group) => queue.Groups.Where(g => string.Equals(g.Group, group, StringComparison.Ordinal)).Sum(g => g.Count);
