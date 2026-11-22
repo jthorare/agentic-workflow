@@ -126,6 +126,8 @@ public sealed class QueueFocusTests : IDisposable
     [Fact]
     public Task A_refresh_keeps_focus_on_the_same_timeline_row() => OnUi(async () =>
     {
+        // The first page is the last one, so the event reads the lines after it (#3800): 152 is appended under the focused row.
+        _server.TimelinePages[0] = new RouteAnswer(System.Net.HttpStatusCode.OK, GoldenFiles.SpecShaped("items-id-timeline", "fixture").Replace("\"next\": 151", "\"next\": null", StringComparison.Ordinal));
         var (window, shell) = await Connected();
         shell.OpenItem(A.NewItem);
         await Until(window, () => shell.Item.HasItem && shell.Item.Timeline.Count > 2);
@@ -139,7 +141,7 @@ public sealed class QueueFocusTests : IDisposable
 
         _server.Items[A.NewItem] = new RouteAnswer(System.Net.HttpStatusCode.OK, GoldenFiles.SpecShaped("items-id", "new").Replace("Try the queue", "Renamed item", StringComparison.Ordinal));
         _server.Push(A.Event(58, "item.state-changed"));
-        await Until(window, () => shell.Item.Title == "Renamed item" && _server.TimelineCalls > calls);
+        await Until(window, () => shell.Item.Title == "Renamed item" && _server.TimelineCalls > calls && shell.Item.Timeline[^1].Sequence == 152);
 
         Assert.Same(row, Focused(window));
         Assert.True(row.IsEffectivelyVisible);

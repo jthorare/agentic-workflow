@@ -1,5 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
@@ -7,6 +9,7 @@ using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Agents;
+using Aw.Sindri.Ui.ViewModels.Queue;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Shell;
 
@@ -84,5 +87,56 @@ public sealed class AgentsPolishFramesTests : FrameHost
         }
 
         Assert.DoesNotContain(chain, c => string.Equals(c.Name, "SheetTitle", StringComparison.Ordinal));
+        Assert.Contains(chain, c => string.Equals(c.Name, "Sheet", StringComparison.Ordinal));
+    });
+
+    // #3783: narrowing below 1100 px with focus on the page makes the sheet cover the page; focus leaves the disabled page for the
+    // session sheet's body (Neighbour's covering fallback), never its title, which draws a focus underline.
+    [Fact]
+    public Task Narrowing_to_cover_moves_focus_from_the_page_to_the_session_sheets_body_3783() => OnUi(async () =>
+    {
+        var (window, _) = await Opened(Claude, width: 1400);
+        Assert.True(Named<Border>(window, "Page").Focus(NavigationMethod.Tab));
+        Settle(window);
+
+        window.Width = 1000;
+        Settle(window);
+
+        Assert.Contains("covers", Named<Border>(window, "Sheet").Classes, StringComparer.Ordinal);
+        Assert.Equal("Sheet", (window.FocusManager?.GetFocusedElement() as Control)?.Name);
+    });
+
+    // #3839: the sheet stays open across pages, so Work -> Enter on a row (its item sheet) -> G A -> Enter on a session row (the session
+    // sheet) -> G W leaves the session sheet beside Work with the row still selected. Enter on that row reopens its item, never moves
+    // into the session sheet: the row's sheet is open only while the sheet shows that row's item.
+    [Fact]
+    public Task Enter_on_the_Work_row_after_a_session_sheet_opened_on_Agents_reopens_its_item_3839() => OnUi(async () =>
+    {
+        var (window, shell) = await Connected(s => s.Queue.Total > 0 && s.Queue.Groups.Count > 0, width: 1400, height: 1000);
+        shell.GoTo(PageId.Work);
+        Settle(window);
+        for (var i = 0; i < 12 && shell.Queue.SelectedId != A.NewItem; i++)
+        {
+            window.KeyPressQwerty(PhysicalKey.J, RawInputModifiers.None);
+        }
+
+        Assert.Equal(A.NewItem, shell.Queue.SelectedId);   // J never reached the fixture's new item: its order changed
+        window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        await Until(window, () => shell.IsSheetShown && shell.Item.HasItem, "the item sheet never showed");
+        shell.GoTo(PageId.Agents);
+        Settle(window);
+        shell.Agents.RequestOpen(new SessionOpenRequestedEventArgs(new DeepLink(DeepLinkKind.Session, Claude)));   // what Enter on a session row raises
+        await Until(window, () => shell.IsSessionSheet && shell.AgentSheet.Phase == FramePhase.Shown, "the sheet never showed the session");
+        shell.GoTo(PageId.Work);
+        Settle(window);
+        var row = window.GetVisualDescendants().OfType<Border>()
+            .First(b => string.Equals(b.Name, "RowFrame", StringComparison.Ordinal) && b is { IsEffectivelyVisible: true, DataContext: ItemRowViewModel r } && string.Equals(r.Id, A.NewItem, StringComparison.Ordinal));
+        Assert.True(row.Focus(NavigationMethod.Tab));
+        Settle(window);
+
+        window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        Settle(window);
+
+        Assert.Equal((true, A.NewItem), (shell.IsItemSheet, shell.Item.ItemId));
     });
 }

@@ -54,7 +54,7 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
         Backlog = BacklogOf(concepts);
         OnChanged(nameof(HasBacklog));
         Lines = sources.Count == 0 ? [] : [.. sources.Select(Line).Concat(ConceptLines(concepts, Backlog is not null)).Concat(StoreLines(store)).Select(t => new ContextIndexLine(t))];
-        var fine = sources.All(static s => !NeedsLook(s)) && concepts?.Code is null && (store is null || Is(store.State, "ok"));
+        var fine = sources.All(static s => !s.NeedsLook) && concepts?.Code is null && (store is null || Is(store.State, "ok"));
         Word = sources.Count == 0 ? string.Empty : fine ? Labels.CodeIndexOk : Labels.CodeIndexNeedsLook;
         Show(sources.Count == 0 ? Labels.ContextIndexNone : string.Empty);
     }
@@ -66,15 +66,6 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
     }
 
     private static bool Is(string? value, string word) => string.Equals(value, word, StringComparison.Ordinal);
-
-    // A source that isn't pulling and holds nothing is the case this card exists for; a running one with nothing has only just started.
-    private static bool NeedsLook(IndexSourceView source) => source.Pull switch
-    {
-        null => !source.Usable && !string.IsNullOrEmpty(source.LastCode),
-        "failed" or "backoff" => true,
-        "idle" => source.Records == 0 && source.LastCommit is null,
-        _ => false,
-    };
 
     // A failed read carries zero counts, so its code is checked first; queued groups and records in no concept are normal work, not a look,
     // and so is the last pass's code (SND-CONTEXT-030 while there is no map yet): it is shown, not flagged.

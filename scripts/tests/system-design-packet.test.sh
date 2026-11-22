@@ -136,13 +136,18 @@ test_write_packet_doc_md() {
   [ "$(grep -A2 '^### Ph4 Performance sweep' "$D/doc.md" | sed -n 3p | cut -c1-12)" = 'Exit check: ' ] || fail "the performance sweep has no exit check"
   [ "$(grep -A2 '^### Ph5 Bug sweep' "$D/doc.md" | sed -n 3p | cut -c1-12)" = 'Exit check: ' ] || fail "the bug sweep has no exit check"
   has -e '^\| TP-5 \| Performance sweep: every data or interactive surface .* \| Ph4 \|$' "$D/doc.md" || fail "TP-5 should verify the performance sweep"
-  has -e '^\| TP-6 \| Bug sweep: every finding is a GitHub issue.* \| Ph5 \|$' "$D/doc.md" || fail "TP-6 should verify the bug sweep"
+  has -e '^\| TP-6 \| Bug sweep: every finding is an issue in the repo.s tracker.* \| Ph5 \|$' "$D/doc.md" || fail "TP-6 should verify the bug sweep"
   local sh="$DIR/../../skills/_shared/closing-sweeps.md" c
   for c in "$(sed -n '/^### Ph4/,/^### Ph5/p' "$D/doc.md" | grep '^Exit check: ')" "$(sed -n '/^### Ph5/,/^## /p' "$D/doc.md" | grep '^Exit check: ')"; do
     tr '\n' ' ' <"$sh" | grep -qF "**${c%%:*}:**${c#Exit check:}" || fail "exit check not word for word in closing-sweeps.md: $c"
   done
   local err; err="$(python3 -I -B "$SD/write_packet.py" "$D" --slug harbor-booking --title "Harbor: ferry booking" 2>&1 >/dev/null)"
   [ -z "$err" ] || fail "a TDD that opens with the ROI plan should not warn: $err"
+  local Q="$TMP/singleq"; mkdir -p "$Q"
+  echo "<html><body><section id='roi'><h2>ROI and data-analysis plan</h2></section><section class=x id='scope'><h2>Scope</h2></section></body></html>" >"$Q/tdd.html"
+  err="$(python3 -I -B "$SD/write_packet.py" "$Q" --slug single-quotes --title T 2>&1 >/dev/null)" || fail "write_packet failed on single-quoted ids"
+  [ -z "$err" ] || fail "id='roi' (single quotes) should count as the ROI plan: $err"
+  [ "$(grep '^## ' "$Q/doc.md" | head -2 | tr '\n' '|')" = '## ROI and data-analysis plan|## Scope|' ] || fail "single-quoted section ids should be read"
   local before; before="$(cat "$D/doc.md")"
   python3 -I -B "$SD/write_packet.py" "$D" --slug harbor-booking --title "Harbor: ferry booking" >/dev/null
   [ "$before" = "$(cat "$D/doc.md")" ] || fail "rerun changed doc.md"
