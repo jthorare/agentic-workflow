@@ -77,6 +77,17 @@ internal sealed partial class AgentsPage : UserControl
         AgentsSplit.ColumnDefinitions[0].Width = open ? new GridLength(narrow ? 56 : 360) : new GridLength(1, GridUnitType.Star);
         AgentsSplit.ColumnDefinitions[1].Width = open ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
         Page?.Resize(open ? (narrow ? 56 : 360) : Bounds.Width);
+        PlaceFilters(open);
+    }
+
+    // The filter row is part of the list column: beside the title while the list has the page, wrapped under it while the pane takes the right side.
+    private void PlaceFilters(bool open)
+    {
+        Grid.SetRow(AgentsFilters, open ? 1 : 0);
+        Grid.SetColumn(AgentsFilters, open ? 0 : 2);
+        Grid.SetColumnSpan(AgentsFilters, open ? 3 : 1);
+        AgentsFilters.HorizontalAlignment = open ? Avalonia.Layout.HorizontalAlignment.Left : Avalonia.Layout.HorizontalAlignment.Stretch;
+        AgentsFilters.Margin = open ? new Thickness(0, 8, 0, 0) : default;
     }
 
     private bool _focusWasHere;
