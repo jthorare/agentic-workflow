@@ -19,8 +19,8 @@
 #      take is under its memory floor (slot 1 has no floor). A lane waiter may take only the slots above heavy-meta-reserve,
 #      the reserve clamped as rule 2's pool clamps it; a meta waiter may take any (#3810). So builders can't keep a gate's slot
 #      shut; nothing running is stopped, and that wait doesn't count toward the lock timeout. The hold has no limit of its own:
-#      a held build prints a line when the hold starts and every 5 minutes after, naming the waiter (pid, argv), the slot it
-#      waits for, that slot's floor and the MB available.
+#      a held build prints a line when the hold starts or moves to another waiter, and every 5 minutes after. The line names
+#      the waiter (pid, argv), the slot it waits for, that slot's floor and the MB available.
 #      AW_HEAVY_PRIORITY=meta skips that hold, not the pool. A light job that compiles nothing (`dotnet test --no-build`,
 #      `dotnet clean`, a script) takes the per-session slot only.
 #      For a PR that touches one src project, a light build of that project alone is the compile check. Build the whole test
@@ -92,7 +92,7 @@ MAX_DEFER="${AW_HEAVY_FIFO_MAX_DEFER:-1800}"
 case $MAX_DEFER in ""|*[!0-9]*) MAX_DEFER=1800 ;; esac
 STOOD_AT=""
 # A light build held back for a box-wide waiter (rule 3) says so when the hold starts and again every HOLD_NOTE_EVERY seconds of
-# holding, so a long hold shows in the job's output (#3810). The hold has no time limit of its own.
+# holding, so a long hold shows in the job's output (#3810). A hold that starts again, or switches to another waiter, says so at once. The hold has no time limit of its own.
 HOLD_NOTE_EVERY=300
 
 mode=auto
@@ -319,7 +319,7 @@ starved_above() {
     [ -n "$short" ] || { short=$k; HOLD_NEED=$FLOOR; }
   done
   [ -n "$short" ] || return 1
-  HOLD_LINE="$WAITER_LINE"; HOLD_SLOT=$short; HOLD_MB=""; [ -z "$3" ] || HOLD_MB=$(($3 / 1024))
+  HOLD_LINE="$WAITER_LINE"; HOLD_PID="${WAITER_LINE#*\"pid\":}"; HOLD_PID="${HOLD_PID%%,*}"; HOLD_SLOT=$short; HOLD_MB=""; [ -z "$3" ] || HOLD_MB=$(($3 / 1024))
 }
 
 # hold_note: the hold's line on stderr, from what boxwide_starved found: the waiter's pid and argv (as JSON, cut at 200
@@ -335,7 +335,7 @@ hold_note() {
 # acquire <label> <base> <slots>: take one slot of a mkdir-mutex pool; a slot whose owner pid is gone is reclaimed.
 acquire() {
   local label="$1" base="$2" slots="$3" waited=0 printed=0 told=0 k d got="" free_wait held usable
-  local fifo=1 older stood told_at=0
+  local fifo=1 older stood told_at=0 told_pid=""
   [ "$PRIORITY" = meta ] && fifo=0
   while [ -z "$got" ]; do
     free_wait=0; held=0; older=""; stood=0
@@ -353,7 +353,13 @@ acquire() {
       slots="$(heavy_light_cap "$LIGHT_GIVEN")"
       if [ "$PRIORITY" != meta ] && boxwide_starved; then
         held=1; free_wait=1
-        if [ "$told" -eq 0 ] || [ "$((SECONDS - told_at))" -ge "$HOLD_NOTE_EVERY" ]; then hold_note; told=1; told_at=$SECONDS; fi
+        # A new hold (told was reset on a pass that wasn't held) or a hold for another waiter says so at once; a hold that goes
+        # on repeats its note every HOLD_NOTE_EVERY seconds.
+        if [ "$told" -eq 0 ] || [ "$HOLD_PID" != "$told_pid" ] || [ "$((SECONDS - told_at))" -ge "$HOLD_NOTE_EVERY" ]; then
+          hold_note; told=1; told_at=$SECONDS; told_pid="$HOLD_PID"
+        fi
+      else
+        told=0
       fi
     fi
     [ "$held" = 1 ] || for k in $(seq 1 "$slots"); do

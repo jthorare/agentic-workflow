@@ -215,8 +215,8 @@ the other:
 - Builders' `heavy --light` builds don't use these slots. Each takes one of the wrapper's light slots (`heavy-light-cap`, default 4),
   and none starts while a job waits for a box-wide slot whose memory floor isn't met, so builders can't keep a gate's slot shut
   (#3796). The hold looks only at the slots that waiter may take: a lane job's waiter skips the slots the reservation keeps, a
-  gate's waiter may take any (#3810). The hold has no time limit. A held build prints a line on stderr when the hold starts
-  and every 5 minutes after. The line names the waiter's pid and argv, the slot it waits for, that slot's floor and the MB
+  gate's waiter may take any (#3810). The hold has no time limit. A held build prints a line on stderr when the hold starts,
+  when it moves to another waiter, and every 5 minutes after. The line names the waiter's pid and argv, the slot it waits for, that slot's floor and the MB
   available. A gate step's `AW_HEAVY_PRIORITY=meta` skips that hold too.
 - The reservation assumes every gate runs through `aw-meta gate-run`. A gate run by hand carries no priority and would wait behind
   the reservation it is meant to share; nothing running is ever pre-empted.
