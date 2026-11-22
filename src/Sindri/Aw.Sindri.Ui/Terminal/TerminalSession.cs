@@ -9,6 +9,13 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
     private ITerminalLink? _link;
     private int _height;
     private int _hist;
+    private bool _ready;
+    private (int Cols, int Rows) _sent;
+    private (int Cols, int Rows)? _wanted;
+
+    // Under this the pane has no room to draw: the fit is not sent (tmux would shrink the pane to nothing).
+    private const int MinCols = 10;
+    private const int MinRows = 3;
 
     /// <summary>The rows above the live screen's top the pane shows or asked for (the socket's `scroll`, #3730); 0 is live. A frame sets it to the `back` it was drawn for.</summary>
     internal int Back { get; private set; }
@@ -21,6 +28,7 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
     {
         view.SocketOpening();
         (_height, _hist) = (0, 0);
+        (_ready, _sent) = (false, (open.Cols, open.Rows));   // the hello carried this size; a fit made before ready (or before Run) is kept in _wanted
         SetBack(0);
         if (await Open(open, cancellationToken).ConfigureAwait(true) is not { } link)
         {
@@ -167,7 +175,33 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
     /// <param name="rows">Rows.</param>
     /// <param name="cancellationToken">Cancels the send.</param>
     /// <returns>True when a size message went out.</returns>
-    internal Task<bool> FitSize(int cols, int rows, CancellationToken cancellationToken) => throw new NotSupportedException();
+    internal async Task<bool> FitSize(int cols, int rows, CancellationToken cancellationToken)
+    {
+        if (cols < MinCols || rows < MinRows)
+        {
+            return false;
+        }
+
+        _wanted = (cols, rows);
+        return _ready && _link is { } link && await SendWanted(link, cancellationToken).ConfigureAwait(true);
+    }
+
+    // The wanted size, unless the socket already has it: one `size` message.
+    private async Task<bool> SendWanted(ITerminalLink link, CancellationToken cancellationToken)
+    {
+        if (_wanted is not { } size || size == _sent)
+        {
+            return false;
+        }
+
+        if (!await link.Send(TerminalSocketMessages.Size(size.Cols, size.Rows), cancellationToken).ConfigureAwait(true))
+        {
+            return false;
+        }
+
+        _sent = size;
+        return true;
+    }
 
     /// <summary>Ctrl-C through the socket.</summary>
     /// <param name="cancellationToken">Cancels the send.</param>
@@ -203,6 +237,8 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
                         _ = await link.Send(queued, cancellationToken).ConfigureAwait(true);
                     }
 
+                    _ready = true;
+                    _ = await SendWanted(link, cancellationToken).ConfigureAwait(true);
                     break;
                 case TerminalServerKind.Frame:
                     (_height, _hist) = (message.Status.Height ?? message.Rows.Count, message.Status.Hist);

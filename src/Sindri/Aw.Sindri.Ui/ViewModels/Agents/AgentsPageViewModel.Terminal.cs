@@ -8,6 +8,11 @@ internal sealed partial class AgentsPageViewModel
     private bool _terminalWired;
     private TerminalSession? _session;
     private CancellationTokenSource? _sessionEnds;
+    private (int Cols, int Rows) _fit = (DefaultCols, DefaultRows);
+
+    // What a socket opens with until the pane has fitted its own size.
+    private const int DefaultCols = 120;
+    private const int DefaultRows = 36;
 
     /// <summary>Draws a parsed frame into the pane; the view sets it.</summary>
     internal Action<TerminalGrid>? DrawFrame { get; set; }
@@ -32,6 +37,16 @@ internal sealed partial class AgentsPageViewModel
     /// <param name="pages">Screens to move: positive back, negative towards live.</param>
     /// <returns>True when a scroll message went out.</returns>
     internal Task<bool> ScrollPane(int pages) => _session?.ScrollPage(pages, CancellationToken.None) ?? Task.FromResult(false);
+
+    /// <summary>The pane fitted a new size (columns by rows): the open socket gets it as a `size` message, and a later socket opens with it (#3860).</summary>
+    /// <param name="cols">Columns.</param>
+    /// <param name="rows">Rows.</param>
+    /// <returns>True when a size message went out.</returns>
+    internal Task<bool> FitPane(int cols, int rows)
+    {
+        _fit = (cols, rows);
+        return _session?.FitSize(cols, rows, CancellationToken.None) ?? Task.FromResult(false);
+    }
 
     /// <summary>The terminal view's state.</summary>
     internal TerminalViewViewModel Terminal => field ??= NewTerminal();
@@ -162,7 +177,7 @@ internal sealed partial class AgentsPageViewModel
 #pragma warning restore CA2000
         var session = new TerminalSession(connector, Terminal, grid => DrawFrame?.Invoke(grid));
         (_sessionEnds, _session) = (ends, session);
-        _ = Pump(session, new TerminalOpen(api, row.Row.Provider, row.Row.Id, 120, 36), ends.Token);
+        _ = Pump(session, new TerminalOpen(api, row.Row.Provider, row.Row.Id, _fit.Cols, _fit.Rows), ends.Token);
     }
 
     private static async Task Pump(TerminalSession session, TerminalOpen open, CancellationToken token)
