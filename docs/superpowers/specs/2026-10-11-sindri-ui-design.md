@@ -889,6 +889,9 @@ later `ThemeVariant` dictionary with the same keys.
 | primary-focus | `#5e69d1` | — (not used) | DESIGN.md's focus tint; the app's focus ring uses `PrimaryHover` instead (§11.1) |
 | — (derived, §11.1) | `#4c57be` | `PrimaryPressed` | Primary button pressed (white 6.2:1) |
 | on-primary | `#ffffff` | `OnPrimary` | Primary button text |
+| — (derived, #3234) | `#c93c3c` | `ErrorFill` | Danger primary button fill (white 5.0:1; `Error` is 3.5:1 under white) |
+| — (derived, #3234) | `#b83232` | `ErrorFillHover` | Danger primary button hover (white 5.9:1) |
+| — (derived, #3234) | `#a82c2c` | `ErrorFillPressed` | Danger primary button pressed (white 6.9:1) |
 | semantic-success | `#27a644` | `Success` | `ok` glyphs |
 | semantic-overlay | `#000000` | `Overlay` (60 % opacity) | Dialog scrim |
 | — (new, §11.3) | `#f2994a` | `Attention` | Needs-you only |

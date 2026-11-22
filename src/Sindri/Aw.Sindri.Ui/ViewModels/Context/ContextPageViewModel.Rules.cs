@@ -32,7 +32,7 @@ internal sealed partial class ContextPageViewModel
     public bool ShowRulesRefresh => ShowRulesOlder && RefreshControl is not null;
 
     // Registered once: whenever the control plane is reachable and the whole map is drawn, its status is read once per answer (the whole map's own answer does not carry the rules).
-    private void InitRules() => Ports.Follow(ReadRules);
+    private void InitRules() => Follow(ReadRules);
 
     private async Task ReadRules(Uri api, CancellationToken cancellationToken)
     {

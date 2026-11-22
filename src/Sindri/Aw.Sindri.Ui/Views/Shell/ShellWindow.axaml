@@ -180,6 +180,7 @@
                   <TextBlock x:Name="NotRunningText" Classes="detail-title" Text="{Binding Text.NotRunning}"
                              AutomationProperties.Name="{Binding Text.NotRunning}" />
                 </StackPanel>
+                <StackPanel Spacing="{StaticResource Space.SM}" IsVisible="{Binding !Start.HidesNotRunningReason}">
                 <TextBlock x:Name="ReasonText" Classes="body muted" Text="{Binding Reason}" TextWrapping="Wrap"
                            AutomationProperties.Name="{Binding Reason}" />
                 <!-- I7: the reason's detail on its own mono line: the record's path shortened (~, a middle ellipsis), the address, or
@@ -187,7 +188,14 @@
                 <TextBlock x:Name="ReasonDetailText" Classes="mono subtle" Text="{Binding ReasonDetail}" TextWrapping="NoWrap"
                            TextTrimming="PrefixCharacterEllipsis" IsVisible="{Binding ReasonDetail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                            AutomationProperties.Name="{Binding ReasonDetail}" />
-                <StackPanel Orientation="Horizontal" Spacing="10">
+                </StackPanel>
+                <TextBlock x:Name="StartMessageText" Classes="body" Text="{Binding Start.Message}" TextWrapping="Wrap"
+                           IsVisible="{Binding Start.HasMessage}" AutomationProperties.Name="{Binding Start.Message}" />
+                <TextBlock x:Name="StartDetailsText" Classes="mono subtle" Text="{Binding Start.Details}" TextWrapping="Wrap"
+                           IsVisible="{Binding Start.HasDetails}" AutomationProperties.Name="{Binding Start.Details}" />
+                <Button x:Name="StartSindriButton" Classes="accent" Click="OnStartSindri" HorizontalAlignment="Left" Content="{Binding Start.Primary}"
+                        IsVisible="{Binding Start.HasPrimary}" AutomationProperties.Name="{Binding Start.Primary}" />
+                <StackPanel Orientation="Horizontal" Spacing="10" IsVisible="{Binding Start.ShowsTerminalCommand}">
                   <TextBlock Classes="body subtle" Text="{Binding Text.StartIt}" AutomationProperties.Name="{Binding Text.StartIt}" VerticalAlignment="Center" />
                   <Border Classes="command">
                     <TextBlock x:Name="FixText" Classes="mono" Text="{Binding Text.StartFix}"
@@ -195,7 +203,7 @@
                   </Border>
                 </StackPanel>
                 <!-- §12.4, states.html's help line: the follower's retry wait (HealthViewModel.RetryEvery), in caption type. -->
-                <TextBlock x:Name="LooksAgainText" Classes="caption subtle" Text="{Binding Text.LooksAgain}"
+                <TextBlock x:Name="LooksAgainText" Classes="caption subtle" Text="{Binding Text.LooksAgain}" IsVisible="{Binding !Start.HidesNotRunningReason}"
                            AutomationProperties.Name="{Binding Text.LooksAgain}" />
               </StackPanel>
             </Border>

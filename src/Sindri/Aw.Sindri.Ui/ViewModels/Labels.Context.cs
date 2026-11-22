@@ -113,6 +113,25 @@ internal static partial class Labels
             return ContextSeveralMatch(asked);
         }
 
+        return ContextProblem(code, message);
+    }
+
+    /// <summary>The line for any other refusal on the Context page: a missing draft in plain words, else the server's sentence without its command-line hint.</summary>
+    /// <param name="code">The refusal's code.</param>
+    /// <param name="message">The server's sentence.</param>
+    /// <returns>"There is no draft map yet.", or the sentence cut before " (fix: ...)".</returns>
+    internal static string ContextProblem(string code, string message)
+    {
+        if (string.Equals(code, "SND-CONTEXT-044", StringComparison.Ordinal))
+        {
+            return "There is no draft map yet.";
+        }
+
+        if (string.Equals(code, "SND-CONTEXT-030", StringComparison.Ordinal))
+        {
+            return "There is no map yet.";
+        }
+
         var hint = message.IndexOf(" (fix:", StringComparison.Ordinal);
         return hint < 0 ? message : message[..hint];
     }

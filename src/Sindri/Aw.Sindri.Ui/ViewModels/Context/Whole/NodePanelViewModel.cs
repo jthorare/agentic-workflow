@@ -15,6 +15,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     private int _version;
     private Uri? _link;
     private readonly LinkLaunch _launch;
+    private string? _localPath;
 
     internal NodePanelViewModel(Func<string, (string Label, string Kind)?> lookup, Action<string> jump)
     {
@@ -57,13 +58,16 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     public bool HasLink => _link is not null;
 
     /// <summary>Gets a value indicating whether the node has a source but nothing to open (said out loud, never hidden).</summary>
-    public bool HasNoLink => HasSource && !HasLink;
+    public bool HasNoLink => HasSource && !HasLink && !HasOpenFile;
+
+    /// <summary>Gets a value indicating whether the source is a file on this machine that the panel can open.</summary>
+    public bool HasOpenFile => _localPath is { Length: > 0 };
 
     /// <summary>Gets the line shown when the source has no link.</summary>
     public string NoLinkText { get; } = Labels.ContextNodePanelNoLink;
 
     /// <summary>Gets the open-source button's accessible name, by the source's kind.</summary>
-    public string OpenSourceName { get; private set; } = Labels.ContextNodePanelOpenSourceName(string.Empty);
+    public string OpenSourceName { get; private set; } = Labels.ContextNodePanelOpenSourceName(place: null, string.Empty);
 
     /// <summary>Gets the short description; empty when none is served.</summary>
     public string Description { get; private set; } = string.Empty;
@@ -93,7 +97,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     public string LinksText { get; } = Labels.ContextNodePanelLinks;
 
     /// <summary>Gets the open-source button's words.</summary>
-    public string OpenSourceText { get; } = Labels.ContextNodePanelOpenSource;
+    public string OpenSourceText { get; private set; } = Labels.ContextNodePanelOpenSource;
 
     /// <summary>Opens the panel on a node and reads it.</summary>
     /// <param name="key">The node's key.</param>
@@ -161,7 +165,24 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     /// <summary>The short line shown when the launch failed: "Couldn't open the link" and the link to copy.</summary>
     public string LaunchFailedText => _launch.FailedText;
 
-    /// <summary>Opens the source's link in the system's browser.</summary>
+    /// <summary>Gets the open-file button's words.</summary>
+    public string OpenFileText { get; } = Labels.ContextNodePanelOpenFile;
+
+    /// <summary>Gets the open-file button's accessible name.</summary>
+    public string OpenFileName { get; } = Labels.ContextNodePanelOpenFileName;
+
+    /// <summary>Opens the source's file on this machine with the system's default app.</summary>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>When the system answered.</returns>
+    internal async Task OpenLocalFile(CancellationToken cancellationToken = default)
+    {
+        if (_localPath is { Length: > 0 } path)
+        {
+            _ = await _launch.OpenPath(path, cancellationToken).ConfigureAwait(true);
+        }
+    }
+
+    /// <summary>Opens the source: the link in the system's browser, else the file on this machine (the "Open file" button always opens the file).</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>When the system answered.</returns>
     internal async Task OpenSource(CancellationToken cancellationToken = default)
@@ -170,13 +191,17 @@ internal sealed partial class NodePanelViewModel : ObservableObject
         {
             _ = await _launch.Open(link, cancellationToken).ConfigureAwait(true);
         }
+        else
+        {
+            await OpenLocalFile(cancellationToken).ConfigureAwait(true);
+        }
     }
 
     private static string KindOf(string key) => key.IndexOf(':', StringComparison.Ordinal) is var i and > 0 ? key[..i] : string.Empty;
 
     private void Clear()
     {
-        (Kind, Title, SourceText, Description, _link) = (string.Empty, string.Empty, string.Empty, string.Empty, null);
+        (Kind, Title, SourceText, Description, _link, _localPath) = (string.Empty, string.Empty, string.Empty, string.Empty, null, null);
         (Groups, Sections) = ([], []);
         _launch.Reset();
     }
@@ -192,7 +217,9 @@ internal sealed partial class NodePanelViewModel : ObservableObject
             var text = string.IsNullOrWhiteSpace(source.Title) ? source.Ref : source.Title;
             SourceText = Labels.ContextNodePanelSource(source.Kind, text);
             _link = LinkOf(source.Url);
-            OpenSourceName = Labels.ContextNodePanelOpenSourceName(source.Kind);
+            _localPath = source.Path;
+            var place = Labels.ContextNodePanelPlace(_link);
+            (OpenSourceText, OpenSourceName) = (Labels.ContextNodePanelOpenSourceText(place), Labels.ContextNodePanelOpenSourceName(place, source.Kind));
         }
 
         var covered = IsAction(node.Kind) || NodePageKinds.IsPage(view);   // the sections already list these edges: the groups keep the rest
@@ -220,7 +247,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsOpen), nameof(IsLoading), nameof(IsFailed), nameof(Kind), nameof(Title), nameof(SourceText), nameof(HasSource), nameof(HasLink), nameof(HasNoLink), nameof(OpenSourceName), nameof(LaunchFailed), nameof(LaunchFailedText), nameof(Description), nameof(HasDescription), nameof(Groups), nameof(HasGroups), nameof(Sections), nameof(HasSections)])
+        foreach (var name in (string[])[nameof(IsOpen), nameof(IsLoading), nameof(IsFailed), nameof(Kind), nameof(Title), nameof(SourceText), nameof(HasSource), nameof(HasLink), nameof(HasNoLink), nameof(HasOpenFile), nameof(OpenSourceName), nameof(OpenSourceText), nameof(LaunchFailed), nameof(LaunchFailedText), nameof(Description), nameof(HasDescription), nameof(Groups), nameof(HasGroups), nameof(Sections), nameof(HasSections)])
         {
             OnChanged(name);
         }
