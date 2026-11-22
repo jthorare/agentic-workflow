@@ -64,8 +64,13 @@ internal static class TriggerWords
             return null;
         }
 
+        return Soonest(Crons(node), timezone, now);
+    }
+
+    private static DateTimeOffset? Soonest(List<string> crons, string? timezone, DateTimeOffset now)
+    {
         DateTimeOffset? soonest = null;
-        foreach (var text in Crons(node))
+        foreach (var text in crons)
         {
             if (CronExpression.TryParse(text, timezone, out var cron, out _) && cron.Next(now) is var tick && (soonest is null || tick < soonest))
             {
