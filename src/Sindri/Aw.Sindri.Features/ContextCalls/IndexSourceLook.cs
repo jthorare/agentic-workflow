@@ -1,4 +1,5 @@
 using Aw.Context.Core.Sync;
+using Aw.Sindri.Core.Health;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
@@ -17,4 +18,13 @@ internal static class IndexSourceLook
         "idle" => p.Records == 0 && p.LastCommit is null && p.LastSync is not null,
         _ => false,
     };
+
+    /// <summary>The source's health problem (#4010): one line with its code, or null when the source needs no look.</summary>
+    /// <param name="p">The source's progress.</param>
+    /// <returns>The problem, or null.</returns>
+    internal static HealthProblem? Problem(SourceProgress p)
+    {
+        ArgumentNullException.ThrowIfNull(p);
+        throw new NotSupportedException();
+    }
 }
