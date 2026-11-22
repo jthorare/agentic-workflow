@@ -21,7 +21,7 @@ internal sealed record LeakVerdict
     public bool Held => Layer is not null;
 
     /// <summary>Gets the held reason: the layer's fixed words, never matched text; empty when it passed.</summary>
-    public string Reason => throw new NotSupportedException(Layer?.ToString());
+    public string Reason => Layer is { } layer ? $"held by the {layer.ToString().ToLowerInvariant()} layer" : string.Empty;
 
     /// <summary>The verdict for a hold by one layer.</summary>
     /// <param name="layer">The layer.</param>

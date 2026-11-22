@@ -13,11 +13,16 @@ internal static class ProposalStates
     /// <param name="state">Its state.</param>
     /// <param name="attempts">Gate runs so far.</param>
     /// <returns>True for a proposed one, or a held one with attempts left.</returns>
-    public static bool CanStage(ProposalState state, int attempts) => throw new NotSupportedException();
+    public static bool CanStage(ProposalState state, int attempts) =>
+        state == ProposalState.Proposed || (state == ProposalState.Held && attempts < MaxAttempts);
 
     /// <summary>The state after one gate run.</summary>
     /// <param name="verdict">The gate's verdict.</param>
     /// <param name="attempts">Gate runs before this one.</param>
     /// <returns>Staged when clean, held otherwise; the attempt count goes up by one either way.</returns>
-    public static StageOutcome After(LeakVerdict verdict, int attempts) => throw new NotSupportedException();
+    public static StageOutcome After(LeakVerdict verdict, int attempts)
+    {
+        ArgumentNullException.ThrowIfNull(verdict);
+        return new StageOutcome(verdict.Held ? ProposalState.Held : ProposalState.Staged, attempts + 1);
+    }
 }
