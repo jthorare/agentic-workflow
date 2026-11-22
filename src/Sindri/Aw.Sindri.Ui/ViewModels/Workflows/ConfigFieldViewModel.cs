@@ -5,13 +5,13 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// <summary>One config field of the selected node's form: its name, its type in words, the text being edited, and the line under it when the text can't be sent.</summary>
 internal sealed class ConfigFieldViewModel : ObservableObject
 {
-    private static readonly string[] CodeAdvanced = ["repo", "branch", "timeout", "memoryMb"];
+    private static readonly string[] _codeAdvanced = ["repo", "branch", "timeout", "memoryMb"];
 
     internal ConfigFieldViewModel(WorkflowBlockField field, string text, string blockType = "", string example = "")
     {
         var isCodeBlock = string.Equals(blockType, "code", StringComparison.Ordinal);
         IsCode = isCodeBlock && string.Equals(field.Name, "code", StringComparison.Ordinal);
-        InAdvanced = isCodeBlock && CodeAdvanced.Contains(field.Name, StringComparer.Ordinal);
+        InAdvanced = isCodeBlock && _codeAdvanced.Contains(field.Name, StringComparer.Ordinal);
         Example = example;
         Name = field.Name;
         Type = field.Type;

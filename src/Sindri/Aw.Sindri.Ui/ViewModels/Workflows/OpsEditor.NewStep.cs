@@ -33,11 +33,12 @@ internal sealed partial class OpsEditor
             var text = EditorFieldText.Of(example, field);
             var foreign = ExampleReferences.NamesMissingStep(text, steps);   // the example reads a step of the doc page's graph ("{{triage.items}}"): it starts empty, with the example as its hint (#3944)
             var shown = foreign ? string.Empty : text;
-            Fields.Add(new ConfigFieldViewModel(field, shown.Length == 0 && boolean && field.Required ? "false" : shown) { Placeholder = foreign ? text : string.Empty });   // why: a required check box shows a value, and the value it shows is the one sent
+            Fields.Add(new ConfigFieldViewModel(field, shown.Length == 0 && boolean && field.Required ? "false" : shown, block.Type) { Placeholder = foreign ? text : string.Empty });   // why: a required check box shows a value, and the value it shows is the one sent
         }
 
         NodeHeading = Labels.WfEditorNewStep(block.Title);
-
+        AdvancedOpen = false;   // a new Code step gets the code box and a shut Advanced group, like an existing one (#3682)
+        OnChanged(nameof(HasAdvancedFields));
         OnChanged(nameof(HasPendingStep));
     }
 
@@ -64,6 +65,7 @@ internal sealed partial class OpsEditor
         _pending = null;
         Fields.Clear();
         NodeHeading = string.Empty;
+        OnChanged(nameof(HasAdvancedFields));
         OnChanged(nameof(HasPendingStep));
     }
 
