@@ -87,10 +87,11 @@ public sealed class SteeringMinerTests : IClassFixture<RoslynWarmup>
     [Fact]
     public void Shape_keeps_a_full_batch_of_long_non_ascii_turns_under_the_node_output_cap()
     {
+        // why: 20 turns of 350 + 80 '€' are about 54 KB as JSON (6 bytes a character), a full batch just under shape's 60,000-byte input cap
         var batch = new JsonArray();
         for (var line = 1; line <= 20; line++)
         {
-            batch.Add((JsonNode)new JsonObject { ["ref"] = "transcript:" + new string('b', 60) + "#" + line.ToString(System.Globalization.CultureInfo.InvariantCulture), ["text"] = new string('€', 3000), ["before"] = new string('€', 1000) });
+            batch.Add((JsonNode)new JsonObject { ["ref"] = "transcript:" + new string('b', 60) + "#" + line.ToString(System.Globalization.CultureInfo.InvariantCulture), ["text"] = new string('€', 350), ["before"] = new string('€', 80) });
         }
 
         var shaped = Run("shape", new JsonObject { ["item"] = batch })!;
