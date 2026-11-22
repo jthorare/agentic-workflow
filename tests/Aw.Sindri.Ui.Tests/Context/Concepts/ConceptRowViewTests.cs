@@ -103,6 +103,38 @@ public sealed class ConceptRowViewTests
     }
 
     [Fact]
+    public async Task Focus_returns_to_the_concept_row_when_the_pin_sheet_closes()
+    {
+        _ = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(ConceptRowViewTests).Assembly).Dispatch(() =>
+        {
+            var (window, view, layer, opened) = Show();
+            try
+            {
+                _ = view.GetVisualDescendants().OfType<Button>().First(IsOpenButton).Focus(NavigationMethod.Tab);
+                Settle(window);
+                window.KeyPress(Key.P, RawInputModifiers.None, PhysicalKey.P, keySymbol: "p");
+                Settle(window);
+                Assert.Single(opened);
+
+                window.FocusManager?.ClearFocus();   // focus is in the sheet while it is open, so the row's pin slot is hidden
+                Settle(window);
+                layer.SheetClosed();
+                Settle(window);
+
+                var id = window.FocusManager?.GetFocusedElement() is Control focused ? AutomationProperties.GetAutomationId(focused) : null;
+                Assert.Contains(id, new[] { "ConceptOpen.concept:auth", "ConceptPin.concept:auth", "ConceptEditPin.concept:auth" }, StringComparer.Ordinal);
+            }
+            finally
+            {
+                window.Close();
+                Dispatcher.UIThread.RunJobs();
+            }
+
+            return true;
+        }, TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
     public async Task Pin_shows_while_the_pointer_is_over_a_row_and_not_otherwise()
     {
         _ = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(ConceptRowViewTests).Assembly).Dispatch(() =>
