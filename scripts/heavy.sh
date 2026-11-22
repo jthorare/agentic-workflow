@@ -288,17 +288,20 @@ older_peer() {
 # waiter may take only the slots above the reserve, clamped as the box-wide pool clamps it: below the slots free memory allows
 # (#2060). So a free slot 1 it may take (no floor), a free slot whose floor is met, or no free slot it may take all mean no: the
 # waiter takes the slot or waits for a holder, not for memory. A dead waiter's file (SIGKILL leaves one) counts for nothing.
-# MemAvailable is read once per call. On a yes, HOLD_LINE is the waiter's wait-file line, HOLD_SLOT the lowest slot it can't take
+# The waiter lookup comes first and uses builtins only: the cap file (cat) and MemAvailable (awk, or vm_stat) are read only once
+# a waiter is found, and then once per call, so a compiling light job with no box-wide waiter forks nothing here. On a yes, HOLD_LINE is the waiter's wait-file line, HOLD_SLOT the lowest slot it can't take
 # for memory, HOLD_NEED that slot's floor and HOLD_MB the MB available (empty when unreadable), for the hold note.
 boxwide_starved() {
-  local cap res usable kb
-  cap="$(heavy_cap "$GIVEN_SLOTS")"; kb="$(avail_kb)"
+  local cap="" res usable kb=""
   if live_waiter boxwide_lane_line; then
+    cap="$(heavy_cap "$GIVEN_SLOTS")"; kb="$(avail_kb)"
     usable=1; while [ "$usable" -lt "$cap" ] && floor_met "$((usable + 1))" "$kb"; do usable=$((usable + 1)); done
     res="$(heavy_reserve "$cap")"; [ "$res" -gt "$((usable - 1))" ] && res=$((usable - 1))
     starved_above "$res" "$cap" "$kb" && return 0
   fi
-  live_waiter boxwide_meta_line && starved_above 0 "$cap" "$kb"
+  live_waiter boxwide_meta_line || return 1
+  [ -n "$cap" ] || { cap="$(heavy_cap "$GIVEN_SLOTS")"; kb="$(avail_kb)"; }
+  starved_above 0 "$cap" "$kb"
 }
 # floor_met <k> <kb>: box-wide slot k's memory floor is met by <kb> KB available; slot 1 has none, an empty <kb> meets none above.
 floor_met() {
