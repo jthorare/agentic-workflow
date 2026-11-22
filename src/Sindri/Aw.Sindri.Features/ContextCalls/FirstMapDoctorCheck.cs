@@ -45,6 +45,7 @@ internal sealed class FirstMapDoctorCheck(IJobViews jobs, IServicePauses pauses,
             return named;
         }
 
+        // why: when #3181 lands (RepoHead.DefaultTip), an off-default repo builds from its default tip; the rule then becomes "no default tip", and the PR landing second switches it
         var offDefault = heads.Value.Where(static h => !h.OnDefault).Select(static h => h.Repo.Value).ToHashSet(StringComparer.Ordinal);
         return [.. named.Where(r => !offDefault.Contains(r))];
     }
