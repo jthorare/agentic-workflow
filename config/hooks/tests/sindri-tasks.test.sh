@@ -154,4 +154,17 @@ check "slow box: ends near the 600 ms budget, not at the end of the work (< 1300
 check "slow box: one failopen timeout row" "$(grep -c '"hook":"sindri-tasks","cause":"timeout"' "$AW_STATE_DIR/logs/failopen.log" 2> /dev/null)" "1"
 check "slow box: the task was not marked seen" "$([ -f "$FT/seen/slow1" ] && echo seen || echo not-seen)" "not-seen"
 check "fast box: same session still hears the task" "$(run slow1)" "$LINE1"
+
+# #3778: a timeout must not leave the work it started running. A hanging git writes its own pid and then becomes the sleep
+# (exec), so that pid is the hanging process. After the hook returns it must be gone within 1 s (10 checks, 0.1 s apart).
+# Checked by the recorded pid only, never by process name.
+HANG="$WORK/hangbin"; mkdir -p "$HANG"
+printf '#!/bin/sh\necho "$$" > "%s/git.pid"\nexec /bin/sleep 20\n' "$HANG" > "$HANG/git"; chmod +x "$HANG/git"
+OUT="$(cd "$REPO" && printf '{"session_id":"hang1","prompt":"hi"}' | PATH="$HANG:/usr/bin:/bin" AW_SINDRI_TASKS_BUDGET_MS=600 bash "$HOOK")"; RC=$?
+check "hanging git: silent" "$OUT" ""
+check "hanging git: exit 0" "$RC" "0"
+HPID="$(cat "$HANG/git.pid" 2> /dev/null)"
+for _n in 1 2 3 4 5 6 7 8 9 10; do [ -n "$HPID" ] && kill -0 "$HPID" 2> /dev/null || break; sleep 0.1; done
+check "hanging git: the git it started is gone after the timeout" "$([ -n "$HPID" ] && { kill -0 "$HPID" 2> /dev/null && echo "alive ($HPID)" || echo gone; } || echo "no pid")" "gone"
+[ -n "$HPID" ] && kill -9 "$HPID" 2> /dev/null
 exit $fail

@@ -23,21 +23,31 @@ failopen() {
 # The output is printed only at the very end, so a kill never leaves a half answer. A normal run ends the watchdog.
 if [ -z "${AW_HOOK_WD_INNER:-}" ] && [ -z "${AW_SINDRI_CHILD:-}" ]; then
   _aw_ms="${AW_SINDRI_TASKS_BUDGET_MS:-1500}"; case "$_aw_ms" in '' | *[!0-9]*) _aw_ms=1500 ;; esac
-  AW_HOOK_WD_INNER=1 "$BASH" "${BASH_SOURCE[0]}" "$@" 0<&0 &
+  # Kill a process and everything under it, by pid only (`pgrep -P`, never a name match). Each process is frozen (STOP)
+  # before its children are listed, so it can't fork again or print "Terminated"; it dies before its children, so the
+  # script (the top) dies first and the hook returns at once, and its children are then killed by the pids listed.
+  _aw_kill_tree() { local _c _k; kill -STOP "$1" 2> /dev/null; _k="$(pgrep -P "$1" 2> /dev/null)"; kill -9 "$1" 2> /dev/null; for _c in $_k; do _aw_kill_tree "$_c"; done; }
+  # The script's temp files go in a dir this bash owns and removes on every path: a killed script runs no EXIT trap.
+  _aw_tmp="$(mktemp -d 2> /dev/null)" || _aw_tmp=""
+  AW_HOOK_WD_INNER=1 AW_HOOK_WD_TMP="$_aw_tmp" "$BASH" "${BASH_SOURCE[0]}" "$@" 0<&0 &
   _aw_child=$!
   (
     set +eu
     sleep "$((_aw_ms / 1000)).$(printf '%03d' "$((_aw_ms % 1000))")" 2> /dev/null || exit 0
+    [ -z "$_aw_tmp" ] || : > "$_aw_tmp/.wd-fired"
     failopen timeout
-    pkill -P "$_aw_child" 2> /dev/null
-    kill -9 "$_aw_child" 2> /dev/null
+    _aw_kill_tree "$_aw_child"
   ) > /dev/null 2>&1 < /dev/null &
   _aw_wd=$!
-  trap 'kill -9 "$_aw_child" 2> /dev/null; kill "$_aw_wd" 2> /dev/null; exit 0' TERM
+  trap '_aw_kill_tree "$_aw_child"; kill "$_aw_wd" 2> /dev/null; [ -z "$_aw_tmp" ] || rm -rf "$_aw_tmp"; exit 0' TERM
   _aw_rc=0
   { wait "$_aw_child"; } 2> /dev/null || _aw_rc=$?
-  pkill -P "$_aw_wd" 2> /dev/null
-  kill "$_aw_wd" 2> /dev/null
+  # A watchdog that fired is left to finish killing the tree under the script; any other is ended here.
+  if [ -z "$_aw_tmp" ] || [ ! -e "$_aw_tmp/.wd-fired" ]; then
+    pkill -P "$_aw_wd" 2> /dev/null
+    kill "$_aw_wd" 2> /dev/null
+  fi
+  [ -z "$_aw_tmp" ] || rm -rf "$_aw_tmp"
   if [ "$_aw_rc" -eq 137 ]; then _aw_rc=0; fi
   exit "$_aw_rc"
 fi
@@ -47,8 +57,8 @@ INPUT="$(cat 2> /dev/null || true)"
 SID="$(printf '%s' "$INPUT" | jq -r '.session_id // empty' 2> /dev/null)" || exit 0
 case "$SID" in '' | *[!A-Za-z0-9-]*) exit 0 ;; esac
 
-OUT_FILE="$(mktemp 2> /dev/null)" || exit 0
-IDS_FILE="$(mktemp 2> /dev/null)" || { rm -f "$OUT_FILE"; exit 0; }
+OUT_FILE="$(mktemp "${AW_HOOK_WD_TMP:-${TMPDIR:-/tmp}}/aw-hook.XXXXXX" 2> /dev/null)" || exit 0
+IDS_FILE="$(mktemp "${AW_HOOK_WD_TMP:-${TMPDIR:-/tmp}}/aw-hook.XXXXXX" 2> /dev/null)" || { rm -f "$OUT_FILE"; exit 0; }
 trap 'rm -f "$OUT_FILE" "$IDS_FILE"' EXIT
 
 work() {
@@ -81,9 +91,8 @@ work() {
   return 0
 }
 
-( work ) > /dev/null 2>&1 &
-PID=$!
-wait "$PID" 2> /dev/null || exit 0
+# work runs in this bash: the watchdog bounds it now, and on a spent budget it kills the whole tree, git included (#3778).
+work > /dev/null 2>&1
 [ -s "$OUT_FILE" ] || exit 0
 HOME_DIR="${AW_SINDRI_HOME:-${AW_STATE_DIR:-$HOME/.agentic-workflow}/sindri-app}"
 mkdir -p "$HOME_DIR/fix-tasks/seen" 2> /dev/null && chmod 700 "$HOME_DIR/fix-tasks" "$HOME_DIR/fix-tasks/seen" 2> /dev/null

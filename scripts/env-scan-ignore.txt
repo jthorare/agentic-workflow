@@ -79,3 +79,4 @@ EDITOR # the user's own editor choice; sindri-pod.sh profile edit opens the prof
 ZDOTDIR # zsh's own config dir (set by the user's shell setup); scripts/launcher-lib.sh looks for zsh startup files there
 REVIEWS_AS # set per call inside scripts/sindri-ui-fixture.sh (the PR author the reviews fixture acts as), never by a user
 AW_HOOK_WD_INNER # set by a hook for its own watchdog child (config/hooks/{done-gate,prompt-sort,sindri-tasks}.sh, #3778), never by a user
+AW_HOOK_WD_TMP # the temp dir a hook's watchdog makes for its child and removes on every path (config/hooks/{done-gate,prompt-sort,sindri-tasks}.sh, #3778), never set by a user

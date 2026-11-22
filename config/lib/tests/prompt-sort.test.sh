@@ -63,15 +63,16 @@ assert_judge_gone() { # assert_judge_gone <bin>
 }
 
 test_slow_judge_is_killed_within_budget_with_no_output_rf2() {
-  local bin out rc start end; bin="$(make_fake_judge)"
+  local bin out rc start end tmp; bin="$(make_fake_judge)"; tmp="$(mktemp -d)"
   start=$(date +%s)
-  set +e; out="$(RUN_BUDGET_MS=600 run_hook "$bin" slow '{"session_id":"s1","prompt":"fix the login button"}')"; rc=$?; set -e
+  set +e; out="$(RUN_BUDGET_MS=600 run_hook "$bin" slow '{"session_id":"s1","prompt":"fix the login button"}' TMPDIR="$tmp")"; rc=$?; set -e
   end=$(date +%s)
   [ "$rc" -eq 0 ] || { echo "FAIL: RF-2 must exit 0, got $rc"; exit 1; }
   [ -z "$out" ] || { echo "FAIL: RF-2 must print nothing, got: $out"; exit 1; }
   grep -q '"hook":"prompt-sort","cause":"timeout"' "$AW_STATE_DIR/logs/failopen.log" 2>/dev/null || { echo "FAIL: JG-18: a timeout must be logged to failopen.log"; exit 1; }
   [ $((end - start)) -le 3 ] || { echo "FAIL: RF-2 hook took $((end - start))s, budget is 0.6s"; exit 1; }
   assert_judge_gone "$bin"
+  [ -z "$(ls -A "$tmp")" ] || { echo "FAIL: #3778: the timeout left temp files behind: $(ls -A "$tmp")"; exit 1; }
   echo "PASS: test_slow_judge_is_killed_within_budget_with_no_output_rf2"
 }
 
