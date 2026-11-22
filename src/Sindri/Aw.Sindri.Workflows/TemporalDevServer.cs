@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
+using Temporalio.Exceptions;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
 
@@ -153,8 +154,16 @@ internal sealed class TemporalDevServer
             var (answer, problem) = await DevServerProbe.Ask(server.Frontend, start.Namespace, TimeSpan.FromSeconds(2), cancellationToken).ConfigureAwait(false);
             if (answer == DevServerAnswer.Ready)
             {
-                await DevServerProbe.RegisterSearchAttributes(server.Frontend, start.Namespace, cancellationToken).ConfigureAwait(false);
-                return true;
+                try
+                {
+                    await DevServerProbe.RegisterSearchAttributes(server.Frontend, start.Namespace, cancellationToken).ConfigureAwait(false);
+                    return true;
+                }
+                catch (RpcException e) when (e.Code == RpcException.StatusCode.Unimplemented)
+                {
+                    // why: a Temporal frontend always has the operator service; a listener without it is another process that took the picked port (a time-skipping test server, #3767). Keep waiting: our own server then exits on the taken port and the retry above picks new ports
+                    problem = e.Message;
+                }
             }
 
             if (waited.Elapsed > _readyWait)
