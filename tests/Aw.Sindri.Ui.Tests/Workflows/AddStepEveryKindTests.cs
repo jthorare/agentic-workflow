@@ -1,24 +1,25 @@
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels.Workflows;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Workflows;
 
 /// <summary>
 /// #3072: for every block the Add step menu offers (the API's own workflows-blocks golden), Add step then Save with nothing touched sends one add_node whose config is the block's example, unchanged.
-/// #3944: except a field whose example names a step the workflow lacks ("{{triage.items}}"): it opens empty and is not sent; a required one keeps Save off until it is typed.
-/// #3999 (qa on #3944): no field of a new step, as the sheet opens, names a step the workflow lacks, read with a hand scan of every "{{" rather than the editor's pattern.
+/// #3944: except a field whose example names a step the new one can't read ("{{triage.items}}"; nothing is selected here, so the new step follows no step and may read none):
+/// it opens empty and is not sent; a required one keeps Save off until it is typed. Which fields those are comes from the Ui's ExampleReferences, tied to Core's copies by
+/// ExampleReferencesCopyTests in Aw.Sindri.Tests.
+/// #3999 (qa on #3944): no field of a new step, as the sheet opens, names a step, read with a hand scan of every "{{" rather than the editor's pattern.
 /// The engine side (that each example passes GRAPH-CONFIG-001) is BlockExamplesAcceptedTests in Aw.Sindri.Tests: the Ui project has no reference to the engine's validator.
 /// </summary>
 [Lane(TestLane.Unit)]
-public sealed partial class AddStepEveryKindTests
+public sealed class AddStepEveryKindTests
 {
     private const string Typed = "typed by the person";
 
-    // why: the roots the graph validator reads as scope, not as a step (GraphValidator.References in Aw.Sindri.Core)
-    private static readonly string[] _scopeRoots = ["trigger", "item", "itemIndex", "workflow"];
+    private static readonly HashSet<string> _none = new(StringComparer.Ordinal);
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -34,21 +35,20 @@ public sealed partial class AddStepEveryKindTests
         var page = await f.Shown(Token);
         await page.OpenWorkflow(Slug, Token);
         await page.GraphEdit.BeginAdd(Token);
-        var block = page.GraphEdit.Groups.SelectMany(static g => g.Blocks).Single(b => b.Type == type);
+        var block = page.GraphEdit.Groups.SelectMany(static g => g.Blocks).Single(b => string.Equals(b.Type, type, StringComparison.Ordinal));
 
         await page.GraphEdit.AddStep(block, Token);
-        var steps = page.Editor.Nodes.Select(static n => n.Id).ToHashSet(StringComparer.Ordinal);
         var example = block.ExampleConfig is { } raw ? JsonNode.Parse(raw.GetRawText()) as JsonObject ?? [] : [];
         var expected = new JsonObject();
         foreach (var (name, value) in example)
         {
-            if (!NamesMissingStep(value, steps))
+            if (!ExampleReferences.NamesStepNotUpstream(type, name, Text(value), _none))
             {
                 expected[name] = value?.DeepClone();
                 continue;
             }
 
-            var field = page.Editor.Fields.Single(x => x.Name == name);
+            var field = page.Editor.Fields.Single(x => string.Equals(x.Name, name, StringComparison.Ordinal));
             Assert.Equal(string.Empty, field.Text);   // the example names a step the workflow lacks
             if (field.IsRequired)
             {
@@ -68,7 +68,7 @@ public sealed partial class AddStepEveryKindTests
 
     [Theory]
     [MemberData(nameof(Kinds))]
-    public async Task No_prefilled_field_of_a_new_step_names_a_step_the_workflow_lacks(string type)
+    public async Task No_prefilled_field_of_a_new_step_that_follows_nothing_names_a_step(string type)
     {
         var f = new WorkflowsFixture();
         f.Server.WorkflowBlocksAnswer = RouteAnswer.Api("workflows-blocks", "listed");
@@ -78,8 +78,7 @@ public sealed partial class AddStepEveryKindTests
         var block = page.GraphEdit.Groups.SelectMany(static g => g.Blocks).Single(b => string.Equals(b.Type, type, StringComparison.Ordinal));
 
         await page.GraphEdit.AddStep(block, Token);
-        var known = page.Editor.Nodes.Select(static n => n.Id).Concat(_scopeRoots).ToHashSet(StringComparer.Ordinal);
-        var foreign = page.Editor.Fields.SelectMany(static x => Roots(x.Text).Select(root => (x.Name, Root: root))).Where(r => !known.Contains(r.Root)).ToList();
+        var foreign = page.Editor.Fields.SelectMany(static x => Roots(x.Text).Select(root => (x.Name, Root: root))).Where(static r => !ExampleReferences.ScopeRoots.Contains(r.Root)).ToList();
 
         Assert.True(foreign.Count == 0, $"'{type}': " + string.Join(", ", foreign.Select(static r => $"{r.Name} names '{r.Root}'")));
     }
@@ -97,12 +96,5 @@ public sealed partial class AddStepEveryKindTests
         }
     }
 
-    private static bool NamesMissingStep(JsonNode? value, HashSet<string> steps)
-    {
-        var text = value is JsonValue v && v.TryGetValue<string>(out var s) ? s : value?.ToJsonString() ?? string.Empty;
-        return Reference.Matches(text).Select(static m => m.Groups["ref"].Value.Split('.', 2)[0]).Any(root => !_scopeRoots.Contains(root, StringComparer.Ordinal) && !steps.Contains(root));
-    }
-
-    [GeneratedRegex("\\{\\{\\s*(?<ref>[^{}]*?)\\s*\\}\\}", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex Reference { get; }
+    private static string Text(JsonNode? value) => value is JsonValue v && v.TryGetValue<string>(out var s) ? s : value?.ToJsonString() ?? string.Empty;
 }
