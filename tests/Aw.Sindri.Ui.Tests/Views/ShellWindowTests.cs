@@ -1182,7 +1182,8 @@ public sealed class ShellWindowTests : IDisposable
         Assert.True(DeepLink.TryParse("item/ITM-01JC8", out var link));
         shell.Navigate(link);
         Settle(window);
-        Assert.True(window.Get<Button>("SheetClose").Focus(NavigationMethod.Tab));
+        // #3710: covering the page (below 1100) the sheet has one way back, Back; Close shows only beside the page.
+        Assert.True(window.Get<Button>(width < 1100 ? "SheetBack" : "SheetClose").Focus(NavigationMethod.Tab));
 
         window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, keySymbol: null);
         Settle(window);
