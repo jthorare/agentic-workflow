@@ -69,5 +69,10 @@ internal sealed class GraphNodeViewModel : ObservableObject
     /// <summary>Marks the step with the findings that name it (#3803).</summary>
     /// <param name="count">How many name it.</param>
     /// <param name="error">True when one of them is an error.</param>
-    internal void MarkFindings(int count, bool error) => (FindingCount, IsFindingError) = (count, count > 0 && error);
+    internal void MarkFindings(int count, bool error)
+    {
+        (FindingCount, IsFindingError) = (count, count > 0 && error);
+        OnChanged(nameof(FindingMark));   // both are computed from the two above
+        OnChanged(nameof(Name));
+    }
 }
