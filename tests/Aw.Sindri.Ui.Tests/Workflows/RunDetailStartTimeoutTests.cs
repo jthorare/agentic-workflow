@@ -89,4 +89,18 @@ public sealed class RunDetailStartTimeoutTests : IDisposable
 
         Assert.Equal("Retry, or open Health if it keeps happening.", page.Run.DidNotStartHint);
     }
+
+    // After the page was left, the run's deadline is gone, so opening the run again must not read Starting with no timer behind it: it is an unknown run.
+    [Fact]
+    public async Task Opening_the_run_after_leaving_the_page_is_a_failed_read_not_Starting()
+    {
+        var page = await OnTheRunPage();
+        page.Leave();
+        await page.OpenWorkflow(Slug, Token);
+
+        await page.OpenRun(NewRun, Token);
+
+        Assert.Equal((true, false), (page.Run.IsFailed, page.Run.DidNotStart));
+        Assert.NotEqual("Starting", page.Run.ChipWord);
+    }
 }
