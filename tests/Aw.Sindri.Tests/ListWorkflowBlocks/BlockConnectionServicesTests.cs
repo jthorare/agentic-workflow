@@ -25,7 +25,7 @@ public sealed class BlockConnectionServicesTests
     {
         var connection = await Field("connection_event", "connection");
 
-        Assert.Equal(["github", "linear", "slack", "google"], connection.Services!, StringComparer.Ordinal);
+        Assert.Equal(["github", "linear", "slack", "google"], connection.Services!, StringComparer.Ordinal);   // why: a connection field carries its services; null fails the comparison
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public sealed class BlockConnectionServicesTests
 
         Assert.NotNull(connection.Services);
         Assert.Empty(connection.Services);
-        Assert.Equal(0, JsonSerializer.SerializeToNode(connection, _web)!.AsObject()["services"]!.AsArray().Count);
+        Assert.Empty(JsonSerializer.SerializeToNode(connection, _web)!.AsObject()["services"]!.AsArray());   // why: a record serializes to an object, and an empty list is written as "services": []
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public sealed class BlockConnectionServicesTests
         var other = await Field("connection_event", "event");
 
         Assert.Null(other.Services);
-        Assert.False(JsonSerializer.SerializeToNode(other, _web)!.AsObject().ContainsKey("services"));
+        Assert.False(JsonSerializer.SerializeToNode(other, _web)!.AsObject().ContainsKey("services"));   // why: a record serializes to an object
     }
 
     private static async Task<BlockFieldView> Field(string type, string name)
