@@ -5,16 +5,19 @@ using Aw.Meta.Core.Ports;
 namespace Aw.Meta.Features.Health;
 
 /// <summary>
-/// Compares the installed heavy and meta-gate-reserve with the copies in the toolkit checkout (issue #3698). install-cs.sh ships them
-/// only on a reinstall, so a box can keep running a wrapper from before a fix.
+/// Compares the installed heavy and meta-gate-reserve with origin/main's copies in the toolkit checkout (issue #3698). install-cs.sh ships
+/// them only on a reinstall, so a box can keep running a wrapper from before a fix. It compares with origin/main, not the checkout's files:
+/// the toolkit link is often a parked checkout on an old commit, and an install from a newer tree would warn on every run.
 /// </summary>
-/// <param name="runner">Runs cmp.</param>
+/// <param name="runner">Runs git.</param>
 /// <param name="paths">Names the installed scripts and the checkout.</param>
 internal sealed class ScriptStaleCheck(ICommandRunner runner, MetaPaths paths)
 {
-    /// <summary>The warning line when an installed script differs from the checkout's.</summary>
+    private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(10);
+
+    /// <summary>The warning line when an installed script differs from origin/main's.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The line, or <see langword="null"/> when every script matches or can't be compared (not installed, no checkout, cmp missing).</returns>
+    /// <returns>The line, or <see langword="null"/> when every script matches or can't be compared (not installed, no checkout, no origin/main, git failed or timed out).</returns>
     internal async ValueTask<string?> Warning(CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(paths.Toolkit))
@@ -25,22 +28,32 @@ internal sealed class ScriptStaleCheck(ICommandRunner runner, MetaPaths paths)
         var differing = new List<string>();
         foreach (var (installed, script) in new[] { (paths.Heavy, "heavy.sh"), (paths.Reserve, "meta-gate-reserve.sh") })
         {
-            var source = Path.Combine(paths.Toolkit, "scripts", script);
-            if (!string.IsNullOrEmpty(installed) && await Differs(installed, source, cancellationToken).ConfigureAwait(false))
+            if (!string.IsNullOrEmpty(installed) && await Differs(installed, script, cancellationToken).ConfigureAwait(false))
             {
-                differing.Add($"{installed} differs from {source}");
+                differing.Add($"{installed} differs from origin/main's scripts/{script}");
             }
         }
 
-        return differing.Count == 0
-            ? null
-            : string.Join("; ", differing) + ". Lanes run the installed copy, so a fix in the checkout does not reach them. Fix: scripts/install-cs.sh (publishes and links the build)";
+        return differing.Count == 0 ? null : string.Join("; ", differing) + ". Fix: scripts/install-cs.sh (publishes and links the build)";
     }
 
-    // cmp exits 0 for the same bytes, 1 for different ones and 2 or more when it can't tell (a missing file, no cmp, a timeout).
-    private async ValueTask<bool> Differs(string installed, string source, CancellationToken cancellationToken)
+    private async ValueTask<bool> Differs(string installed, string script, CancellationToken cancellationToken)
     {
-        var run = await runner.Run(new CommandRequest(["cmp", "-s", installed, source], TimeSpan.FromSeconds(10)), cancellationToken).ConfigureAwait(false);
-        return run.IsSuccess && !run.Value.TimedOut && run.Value.ExitCode == 1;
+        var mine = await Hash(["git", "-C", paths.Toolkit!, "hash-object", installed], cancellationToken).ConfigureAwait(false);
+        var theirs = mine is null ? null : await Hash(["git", "-C", paths.Toolkit!, "rev-parse", $"origin/main:scripts/{script}"], cancellationToken).ConfigureAwait(false);
+        return mine is not null && theirs is not null && !string.Equals(mine, theirs, StringComparison.Ordinal);
+    }
+
+    // The first line of stdout when git exits 0 in time; null for anything else (a missing file, no origin/main, a timeout).
+    private async ValueTask<string?> Hash(string[] argv, CancellationToken cancellationToken)
+    {
+        var run = await runner.Run(new CommandRequest(argv, _timeout), cancellationToken).ConfigureAwait(false);
+        if (!run.IsSuccess || run.Value.TimedOut || run.Value.ExitCode != 0)
+        {
+            return null;
+        }
+
+        var text = run.Value.Stdout.Trim();
+        return text.Length == 0 ? null : text;
     }
 }

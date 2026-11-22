@@ -43,7 +43,7 @@ public sealed record HealthResponse(
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? OomPolicy { get; init; }
 
-    /// <summary>The warning when the installed heavy or meta-gate-reserve differs from the toolkit checkout's (issue #3698); null otherwise. Never raises attention.</summary>
+    /// <summary>The warning when the installed heavy or meta-gate-reserve differs from origin/main's copy in the toolkit checkout (issue #3698); null otherwise. Never raises attention.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? StaleScripts { get; init; }
 }

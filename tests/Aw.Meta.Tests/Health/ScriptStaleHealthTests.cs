@@ -11,41 +11,57 @@ public sealed class ScriptStaleHealthTests
 
     private MetaPaths Paths => _world.Paths with { Heavy = "/state/bin-r1b/heavy", Reserve = "/state/bin-r1b/meta-gate-reserve", Toolkit = "/kit" };
 
+    // Scripts the two git calls for one script: hash-object of the installed file, rev-parse of origin/main's copy.
+    private void Hashes(string script, string installedHash, string mainHash)
+    {
+        _ = _world.Runner.When($"rev-parse origin/main:scripts/{script}", stdout: mainHash + "\n");
+        _ = _world.Runner.When($"hash-object /state/bin-r1b/{script.Replace(".sh", string.Empty, StringComparison.Ordinal)}", stdout: installedHash + "\n");
+    }
+
     private Task<string?> Warning() => new ScriptStaleCheck(_world.Runner, Paths).Warning(CancellationToken.None).AsTask();
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_changed_heavy_gives_one_line_naming_both_paths_and_the_fix()
     {
-        _ = _world.Runner.When("scripts/heavy.sh", exitCode: 1);
-        _ = _world.Runner.When("scripts/meta-gate-reserve.sh");
+        Hashes("heavy.sh", "aaa", "bbb");
+        Hashes("meta-gate-reserve.sh", "ccc", "ccc");
 
         var line = await Warning();
 
         Assert.NotNull(line);
         Assert.DoesNotContain("\n", line, StringComparison.Ordinal);
         Assert.Contains("/state/bin-r1b/heavy", line, StringComparison.Ordinal);
-        Assert.Contains("/kit/scripts/heavy.sh", line, StringComparison.Ordinal);
+        Assert.Contains("origin/main's scripts/heavy.sh", line, StringComparison.Ordinal);
         Assert.DoesNotContain("meta-gate-reserve", line, StringComparison.Ordinal);
         Assert.Contains("scripts/install-cs.sh", line, StringComparison.Ordinal);
-        Assert.Equal(["cmp -s /state/bin-r1b/heavy /kit/scripts/heavy.sh", "cmp -s /state/bin-r1b/meta-gate-reserve /kit/scripts/meta-gate-reserve.sh"], _world.Runner.Lines);
+        Assert.Equal(
+            [
+                "git -C /kit hash-object /state/bin-r1b/heavy",
+                "git -C /kit rev-parse origin/main:scripts/heavy.sh",
+                "git -C /kit hash-object /state/bin-r1b/meta-gate-reserve",
+                "git -C /kit rev-parse origin/main:scripts/meta-gate-reserve.sh",
+            ],
+            _world.Runner.Lines);
     }
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_changed_meta_gate_reserve_gives_a_line()
     {
-        _ = _world.Runner.When("scripts/meta-gate-reserve.sh", exitCode: 1);
+        Hashes("heavy.sh", "aaa", "aaa");
+        Hashes("meta-gate-reserve.sh", "ccc", "ddd");
 
         var line = await Warning();
 
         Assert.NotNull(line);
         Assert.Contains("/state/bin-r1b/meta-gate-reserve", line, StringComparison.Ordinal);
-        Assert.Contains("/kit/scripts/meta-gate-reserve.sh", line, StringComparison.Ordinal);
+        Assert.Contains("origin/main's scripts/meta-gate-reserve.sh", line, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
     public async Task Both_changed_still_gives_one_line()
     {
-        _ = _world.Runner.When("cmp -s", exitCode: 1);
+        Hashes("heavy.sh", "aaa", "bbb");
+        Hashes("meta-gate-reserve.sh", "ccc", "ddd");
 
         var line = await Warning();
 
@@ -56,23 +72,34 @@ public sealed class ScriptStaleHealthTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Identical_copies_give_no_line()
+    public async Task Matching_hashes_give_no_line()
     {
-        _ = _world.Runner.When("cmp -s");
+        Hashes("heavy.sh", "aaa", "aaa");
+        Hashes("meta-gate-reserve.sh", "ccc", "ccc");
 
         Assert.Null(await Warning());
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_file_cmp_cannot_read_gives_no_line()
+    public async Task A_file_git_cannot_hash_gives_no_line()
     {
-        _ = _world.Runner.When("cmp -s", exitCode: 2);
+        _ = _world.Runner.When("hash-object", exitCode: 128);
+        _ = _world.Runner.When("rev-parse", stdout: "bbb\n");
 
         Assert.Null(await Warning());
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task No_cmp_gives_no_line() => Assert.Null(await Warning());
+    public async Task No_origin_main_gives_no_line()
+    {
+        _ = _world.Runner.When("hash-object", stdout: "aaa\n");
+        _ = _world.Runner.When("rev-parse", exitCode: 128);
+
+        Assert.Null(await Warning());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_failing_or_unscripted_git_run_gives_no_line() => Assert.Null(await Warning());
 
     [Fact, Trait("Lane", "unit")]
     public async Task Without_a_checkout_nothing_is_compared()
@@ -86,7 +113,7 @@ public sealed class ScriptStaleHealthTests
     [Fact, Trait("Lane", "unit")]
     public async Task Health_carries_the_line_without_raising_attention()
     {
-        _ = _world.Runner.When("scripts/heavy.sh", exitCode: 1);
+        Hashes("heavy.sh", "aaa", "bbb");
         var service = new HealthService(
             new HostProbe(_world.Processes, _world.Resources, new OomPolicyCheck(_world.Runner, _world.Paths), new ScriptStaleCheck(_world.Runner, Paths)),
             new LaneCheck(_world.Config, new Core.Coordination.MissingLanes(_world.Sessions, _world.Messages, _world.Lanes), _world.LaneHealth, _world.Context),
@@ -99,7 +126,7 @@ public sealed class ScriptStaleHealthTests
         var result = await service.Handle(new HealthRequest(KillOrphans: false), CancellationToken.None);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
-        Assert.Contains("/kit/scripts/heavy.sh", result.Value.StaleScripts, StringComparison.Ordinal);
+        Assert.Contains("origin/main's scripts/heavy.sh", result.Value.StaleScripts, StringComparison.Ordinal);
         Assert.False(result.Value.Attention);
     }
 }
