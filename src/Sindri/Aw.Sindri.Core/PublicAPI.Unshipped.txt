@@ -23904,3 +23904,24 @@ override Aw.Sindri.Core.Setup.ServeStopped.GetHashCode() -> int
 override Aw.Sindri.Core.Setup.ServeStopped.ToString() -> string!
 static Aw.Sindri.Core.Setup.ServeStopped.operator !=(Aw.Sindri.Core.Setup.ServeStopped? left, Aw.Sindri.Core.Setup.ServeStopped? right) -> bool
 static Aw.Sindri.Core.Setup.ServeStopped.operator ==(Aw.Sindri.Core.Setup.ServeStopped? left, Aw.Sindri.Core.Setup.ServeStopped? right) -> bool
+Aw.Sindri.Core.Setup.BuildInfo
+Aw.Sindri.Core.Setup.BuildInfo.<Clone>$() -> Aw.Sindri.Core.Setup.BuildInfo!
+Aw.Sindri.Core.Setup.BuildInfo.BuildInfo(string! Commit, System.DateTimeOffset Built) -> void
+Aw.Sindri.Core.Setup.BuildInfo.Deconstruct(out string! Commit, out System.DateTimeOffset Built) -> void
+Aw.Sindri.Core.Setup.BuildInfo.Equals(Aw.Sindri.Core.Setup.BuildInfo? other) -> bool
+Aw.Sindri.Core.Setup.BuildInfo.Commit.get -> string!
+Aw.Sindri.Core.Setup.BuildInfo.Commit.init -> void
+Aw.Sindri.Core.Setup.BuildInfo.Built.get -> System.DateTimeOffset
+Aw.Sindri.Core.Setup.BuildInfo.Built.init -> void
+Aw.Sindri.Core.Setup.BuildInfo.ShortCommit.get -> string!
+override Aw.Sindri.Core.Setup.BuildInfo.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.BuildInfo.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.BuildInfo.ToString() -> string!
+static Aw.Sindri.Core.Setup.BuildInfo.operator !=(Aw.Sindri.Core.Setup.BuildInfo? left, Aw.Sindri.Core.Setup.BuildInfo? right) -> bool
+static Aw.Sindri.Core.Setup.BuildInfo.operator ==(Aw.Sindri.Core.Setup.BuildInfo? left, Aw.Sindri.Core.Setup.BuildInfo? right) -> bool
+Aw.Sindri.Core.Setup.IBuildStamps.RunningBuild() -> Aw.Sindri.Core.Setup.BuildInfo?
+Aw.Sindri.Core.Setup.IBuildStamps.InstalledBuild() -> Aw.Sindri.Core.Setup.BuildInfo?
+Aw.Sindri.Core.Setup.ServeFact.Running.get -> Aw.Sindri.Core.Setup.BuildInfo?
+Aw.Sindri.Core.Setup.ServeFact.Running.init -> void
+Aw.Sindri.Core.Setup.ServeFact.Installed.get -> Aw.Sindri.Core.Setup.BuildInfo?
+Aw.Sindri.Core.Setup.ServeFact.Installed.init -> void

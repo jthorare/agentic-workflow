@@ -4,6 +4,7 @@ using Aw.Sindri.Features.ConnectAccount;
 using Aw.Sindri.Features.RestartProcess;
 using Aw.Sindri.Host;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.SetupSources;
 using Aw.Sindri.Tests.RestartProcess;
 
 namespace Aw.Sindri.Tests.FirstRun;
@@ -20,7 +21,7 @@ public sealed class OwnerOnlyRoutesTests
     {
         using var entered = _slice.Callers.Enter(A.Caller().Launched().Build());
 
-        var result = await new RestartProcessService(_slice.Callers, new FixedOpenRuns(), new RecordingStop()).Handle(new RestartProcessRequest(), Token);
+        var result = await new RestartProcessService(_slice.Callers, new FixedOpenRuns(), new RecordingStop(), new FixedBuildStamps()).Handle(new RestartProcessRequest(), Token);
 
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
@@ -31,7 +32,7 @@ public sealed class OwnerOnlyRoutesTests
     {
         using var entered = _slice.Callers.Enter(A.Caller().Session().Build());
 
-        var result = await new RestartProcessService(_slice.Callers, new FixedOpenRuns(), new RecordingStop()).Handle(new RestartProcessRequest(), Token);
+        var result = await new RestartProcessService(_slice.Callers, new FixedOpenRuns(), new RecordingStop(), new FixedBuildStamps()).Handle(new RestartProcessRequest(), Token);
 
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
@@ -67,7 +68,7 @@ public sealed class OwnerOnlyRoutesTests
     {
         using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
 
-        var restart = await new RestartProcessService(_slice.Callers, new FixedOpenRuns(), new RecordingStop()).Handle(new RestartProcessRequest(), Token);
+        var restart = await new RestartProcessService(_slice.Callers, new FixedOpenRuns(), new RecordingStop(), new FixedBuildStamps()).Handle(new RestartProcessRequest(), Token);
         var connect = await Record.ExceptionAsync(async () => await new ConnectAccountService(_slice.Callers).Handle(new ConnectAccountRequest("github"), Token));
 
         Assert.True(restart.IsSuccess);

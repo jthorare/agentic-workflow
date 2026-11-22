@@ -2,6 +2,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.RestartProcess;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.SetupSources;
 
 namespace Aw.Sindri.Tests.RestartProcess;
 
@@ -21,7 +22,7 @@ public sealed class RestartProcessTests
             new OpenRun("job", "job-3", "Code index of agentic-workflow (a job)", "sindri://job/job-3"));
         using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
 
-        var result = await new RestartProcessService(_slice.Callers, open, _stop).Handle(new RestartProcessRequest(), Token);
+        var result = await new RestartProcessService(_slice.Callers, open, _stop, new FixedBuildStamps()).Handle(new RestartProcessRequest(), Token);
 
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.SetupRestartRunsOpen.Code, result.Error.Code);
@@ -35,7 +36,7 @@ public sealed class RestartProcessTests
     {
         using var entered = _slice.Callers.Enter(A.Caller().Launched().Build());
 
-        var result = await new RestartProcessService(_slice.Callers, new FixedOpenRuns(), _stop).Handle(new RestartProcessRequest(), Token);
+        var result = await new RestartProcessService(_slice.Callers, new FixedOpenRuns(), _stop, new FixedBuildStamps()).Handle(new RestartProcessRequest(), Token);
 
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
@@ -47,7 +48,7 @@ public sealed class RestartProcessTests
     {
         using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
 
-        var result = await new RestartProcessService(_slice.Callers, new FixedOpenRuns(), _stop).Handle(new RestartProcessRequest(), Token);
+        var result = await new RestartProcessService(_slice.Callers, new FixedOpenRuns(), _stop, new FixedBuildStamps()).Handle(new RestartProcessRequest(), Token);
 
         Assert.Equal(new RestartProcessResponse(4242, 7, 12), result.Value);
         Assert.Equal(1, _stop.Calls);
@@ -61,10 +62,22 @@ public sealed class RestartProcessTests
             new OpenRun("session", "claude-code/aaaaaaaa-0000-4000-8000-000000000001", "Fix login (an agent session)", "sindri://session/claude-code/aaaaaaaa-0000-4000-8000-000000000001"));
         using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
 
-        var result = await new RestartProcessService(_slice.Callers, open, _stop).Handle(new RestartProcessRequest(), Token);
+        var result = await new RestartProcessService(_slice.Callers, open, _stop, new FixedBuildStamps()).Handle(new RestartProcessRequest(), Token);
 
         Assert.StartsWith("Sindri restarts when 2 finish: Nightly gate (run 14, running), Fix login (an agent session)", result.Error.Message, StringComparison.Ordinal);
         Assert.Contains("sindri wf run-show nightly-gate@1:14", result.Error.Message, StringComparison.Ordinal);
         Assert.Contains("sindri agents show claude-code/aaaaaaaa-0000-4000-8000-000000000001", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Restart_refuses_an_installed_build_without_build_info()
+    {
+        var builds = new FixedBuildStamps { Runs = ("older", null), Links = ("newer", null) };
+        using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
+
+        var result = await new RestartProcessService(_slice.Callers, new FixedOpenRuns(), _stop, builds).Handle(new RestartProcessRequest(), Token);
+
+        Assert.Equal(SindriErrors.SetupInstallUnfinished.Code, result.Error.Code);
+        Assert.Equal(0, _stop.Calls);
     }
 }
