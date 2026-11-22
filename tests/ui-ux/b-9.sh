@@ -3,13 +3,18 @@
 # Expected: the System overview agrees with its own cards and the services: no 'Everything is running.' while the Code
 # index card needs a look; the Agents card names its count with the Agents page's word (Working) and counts only the
 # working sessions. (The services' frozen next slot is the server's listing, fixed in the API: not checked here.)
+# A fresh scratch home needs no look since #3430 (the cards read the server's needsLook flag), so the check makes one: it pauses
+# code-index-main-move, then puts a code index at an old commit (the 'context publish stale' fixture). A stale index needs a look
+# on the server even while builds are paused, and the pause stops a rebuild from clearing it during the check.
 source "$(dirname "$0")/lib.sh"
 uxu_start up "sessions up" "context up"
+bash "$UXU_ROOT/scripts/sindri-prove.sh" human services pause code-index-main-move </dev/null >/dev/null 2>&1 || uxu_die "could not pause code-index-main-move"
+uxu_fixture context publish stale >/dev/null 2>&1 || uxu_die "fixture 'context publish stale' failed"
 
 working="$($SINDRI agents --json | jq '[.sessions[] | select(.state == "running")] | length')"
 
 d click --type ListBoxItem --name System >/dev/null || uxu_die "no System tab"
-d wait-for --text "needs a look" --state visible --wait-ms 30000 >/dev/null || uxu_die "the Code index card never said 'needs a look'"
+d wait-for --text "needs a look" --state visible --wait-ms 30000 >/dev/null || uxu_die "the Code index card never said 'needs a look' for the stale index"
 sleep 3
 
 expect "the headline does not say everything is running while the Code index needs a look" \

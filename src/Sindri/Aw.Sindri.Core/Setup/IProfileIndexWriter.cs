@@ -15,6 +15,6 @@ public interface IProfileIndexWriter
     /// <param name="edits">Each one sets an entry (inserted after the last entry when its id is new, replaced in place when it is there) or removes one.</param>
     /// <param name="ifHash">The live profile hash the caller read; when given and the file's hash differs, nothing is written. Null reads the live file and writes once.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
-    /// <returns>The new file's hash; SND-PROFILE-003 when <paramref name="ifHash"/> isn't the file's hash; SND-PROFILE-002 when the file has a layout Sindri won't edit, changed twice while writing, or can't be written; SND-PROFILE-001 when it can't be read or there is none.</returns>
+    /// <returns>The new file's hash; SND-PROFILE-003 when <paramref name="ifHash"/> isn't the file's hash; SND-PROFILE-002 when the file has a layout Sindri won't edit, changed twice while writing, or can't be written; SND-PROFILE-004 when it can't be read; SND-PROFILE-001 when there is none.</returns>
     public ValueTask<Result<ProfileHash>> Write(IReadOnlyList<IndexEdit> edits, ProfileHash? ifHash, CancellationToken cancellationToken);
 }
