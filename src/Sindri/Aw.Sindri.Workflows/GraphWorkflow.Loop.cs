@@ -27,11 +27,11 @@ internal sealed partial class GraphWorkflow
         _ = _pending.RemoveAll(n => n.Id == shape.Collect.Id);
         _current = shape.Collect;
         await Record(Row(shape.Collect, NodeRunStatus.Running), _write).ConfigureAwait(true);
-        var failure = await RunBatches(forEach, count, batch).ConfigureAwait(true);
+        var (failure, skipped) = await RunBatches(forEach, count, batch).ConfigureAwait(true);
         _current = null;
 
         Decide(shape);
-        failure ??= await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.CollectAsync(new GraphCollect(_run, shape.Collect.Id)), _write).ConfigureAwait(true);
+        failure ??= await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.CollectAsync(new GraphCollect(_run, shape.Collect.Id, skipped)), _write).ConfigureAwait(true);
         if (failure is null)
         {
             return null;
@@ -62,8 +62,10 @@ internal sealed partial class GraphWorkflow
         }
     }
 
-    private async Task<string?> RunBatches(GraphNode forEach, int count, int batch)
+    // why: the batches' 'skip-item' counts add up to the collect's 'skipped'; a failed batch ends the loop, so its count no longer matters
+    private async Task<(string? Failure, int Skipped)> RunBatches(GraphNode forEach, int count, int batch)
     {
+        var skipped = 0;
         for (var first = 1; first <= count; first += batch)
         {
             var input = new GraphIterationInput(_run, forEach.Id, first, Math.Min(batch, count - first + 1), _agentLaunchAttempts);
@@ -73,15 +75,17 @@ internal sealed partial class GraphWorkflow
                 var result = await Workflow.ExecuteChildWorkflowAsync((GraphIterationWorkflow w) => w.RunAsync(input), options).ConfigureAwait(true);
                 if (result.Failure is { } failure)
                 {
-                    return failure;
+                    return (failure, skipped);
                 }
+
+                skipped += result.Skipped;
             }
             catch (ChildWorkflowFailureException e) when (!TemporalException.IsCanceledException(e))
             {
-                return e.InnerException?.Message ?? e.Message;
+                return (e.InnerException?.Message ?? e.Message, skipped);
             }
         }
 
-        return null;
+        return (null, skipped);
     }
 }
