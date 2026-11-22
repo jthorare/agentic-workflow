@@ -138,7 +138,7 @@ internal sealed partial class ShellWindow
     // A page's button is about to open an overlay: closing it returns focus there even when a click left focus on the page region.
     private void NoteInvoker(object? sender, OpenerNoteEventArgs e) => _invoker = e.Invoker;
 
-    private bool OverlayOpen => Shell is { } shell && (shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen || shell.QuickAdd.IsOpen);
+    private bool OverlayOpen => Shell is { } shell && (shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen || shell.QuickAdd.IsOpen || shell.NewAgent.IsOpen);
 
     // `?` is Shift+/ on most layouts; the key symbol says so on the rest.
     private static bool IsQuestionMark(KeyEventArgs e) =>
