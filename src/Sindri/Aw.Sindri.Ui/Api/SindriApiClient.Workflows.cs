@@ -77,6 +77,7 @@ internal sealed partial class SindriApiClient
     public Task<Result<WorkflowPaused>> PauseWorkflow(Uri api, string slug, CancellationToken cancellationToken) =>
         Call<WorkflowPaused>(api, HttpMethod.Post, WorkflowRoutes.Pause(slug), cancellationToken);
 
+    /// <inheritdoc />
     public Task<Result<WorkflowArchived>> DeleteWorkflow(Uri api, string slug, CancellationToken cancellationToken) =>
         Call<WorkflowArchived>(api, HttpMethod.Delete, WorkflowRoutes.One(slug), cancellationToken);
 }
