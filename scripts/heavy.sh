@@ -19,6 +19,11 @@
 #      can't keep a gate's slot shut; nothing running is stopped, and that wait doesn't count toward the lock timeout.
 #      AW_HEAVY_PRIORITY=meta skips that hold, not the pool. A light job that compiles nothing (`dotnet test --no-build`,
 #      `dotnet clean`, a script) takes the per-session slot only.
+#   4. Arrival order (#3819): a waiter takes a free slot only when no older live waiter of the same pool is queued. Older means
+#      an earlier wait-file `since`, then a lower pid. Only wait files with "fifo":1 count (older heavy.sh copies don't write it
+#      and can't take every slot), and never one with "meta":1: AW_HEAVY_PRIORITY=meta jobs skip the queue both ways. The box-wide
+#      and light pools are shared by every waiter; the session pool only by waiters for the same session. A waiter that has stood
+#      back from a free slot for AW_HEAVY_FIFO_MAX_DEFER seconds in total (default 1800) stops standing back.
 #   The job runs in its own systemd user scope (OOMPolicy=continue) when systemd-run works, so an OOM kill ends the job only.
 set -u
 # The cap and reserve readers live next to locks.sh; this script may run through a link (~/.agentic-workflow/bin-r1b/heavy).
@@ -69,6 +74,9 @@ PRIORITY="${AW_HEAVY_PRIORITY:-}"
 LIGHT_LOCK="$LOCKS/heavy-light.lock"
 LIGHT_GIVEN="${AW_HEAVY_LIGHT_SLOTS:-4}"
 case $LIGHT_GIVEN in ""|*[!0-9]*|0) LIGHT_GIVEN=4 ;; esac
+# Rule 4's safety valve: a wait file whose pid was reused by another process would hold the queue forever otherwise.
+MAX_DEFER="${AW_HEAVY_FIFO_MAX_DEFER:-1800}"
+case $MAX_DEFER in ""|*[!0-9]*) MAX_DEFER=1800 ;; esac
 
 mode=auto
 case "${1:-}" in --expensive) mode=expensive; shift ;; --light) mode=light; shift ;; esac
@@ -116,8 +124,10 @@ if [ -n "${AW_HEAVY_SESSION_PID:-}" ]; then session="$AW_HEAVY_SESSION_PID"; cla
 
 mkdir -p "$LOCKS/heavy-session" "$LOCKS/heavy-wait" "$(dirname "$LOCK")"
 # <locks>/heavy-wait/<pid>: one file per job that is waiting for a slot (pid = this wrapper's $$), one JSON line:
-# {"pid","session" (number),"lock":"session"|"box-wide"|"light","since" (UTC, when the first wait began),"argv":[...] (raw),"cwd"}.
+# {"pid","session" (number),"lock":"session"|"box-wide"|"light","since" (UTC, when the first wait began),"argv":[...] (raw),"cwd",
+# "fifo":1 (this copy orders waiters by arrival, rule 4), and "meta":1 for an AW_HEAVY_PRIORITY=meta job}.
 # "light" is a compiling light job waiting for the light pool or held back for a box-wide waiter (rule 3).
+# A waiter reads the other files to find older waiters (rule 4) and box-wide waiters (rule 3).
 # The reader is `aw-meta heavy --json` (#3142); it redacts argv and skips a file whose pid is dead (a SIGKILLed wrapper
 # leaves one; the dead-holder reclaim below does not touch these). Written atomically on the first pass without a slot,
 # rewritten when the wait moves from the session lock to the box-wide or light one, removed once a slot is taken, on the lock
@@ -127,11 +137,12 @@ json_str() { local s="$1"; s="${s//\\/\\\\}"; s="${s//\"/\\\"}"; s="${s//$'\n'/\
 rm_wait() { rm -f "$WAITFILE" 2>/dev/null; return 0; }
 # write_wait <label> <argv...>
 write_wait() {
-  local label="$1" a first=1 argv=""; shift
+  local label="$1" a first=1 argv="" meta=""; shift
   [ -n "$WAIT_SINCE" ] || WAIT_SINCE="$(date -u +%FT%TZ)"
+  [ "$PRIORITY" = meta ] && meta=',"meta":1'
   for a in "$@"; do if [ "$first" = 1 ]; then first=0; else argv="$argv,"; fi; argv="$argv$(json_str "$a")"; done
-  { printf '{"pid":%s,"session":%s,"lock":"%s","since":"%s","argv":[%s],"cwd":%s}\n' \
-      "$$" "$session" "$label" "$WAIT_SINCE" "$argv" "$(json_str "$PWD")" > "$WAITFILE.tmp.$$" && mv -f "$WAITFILE.tmp.$$" "$WAITFILE"; } 2>/dev/null || true
+  { printf '{"pid":%s,"session":%s,"lock":"%s","since":"%s","argv":[%s],"cwd":%s,"fifo":1%s}\n' \
+      "$$" "$session" "$label" "$WAIT_SINCE" "$argv" "$(json_str "$PWD")" "$meta" > "$WAITFILE.tmp.$$" && mv -f "$WAITFILE.tmp.$$" "$WAITFILE"; } 2>/dev/null || true
 }
 HELD=(); reason=""
 release() { [ -z "$reason" ] || rm -f "$reason" 2>/dev/null; rm_wait; rm -f "$WAITFILE.tmp.$$" 2>/dev/null; local d; for d in "${HELD[@]+"${HELD[@]}"}"; do unlink "$d/owner" 2>/dev/null; rmdir "$d" 2>/dev/null || true; done; }
@@ -191,19 +202,41 @@ slot_still_allowed() {
   [ "$k" -gt "$res" ]
 }
 
+# live_waiter <match>: some other job's wait file, whose line <match> accepts (called with the pid and the line), has a live pid.
+# The case skips <pid>.tmp.<pid> files mid-write; a dead waiter's file (SIGKILL leaves one) counts for nothing. `read`, not cat:
+# no fork per file, since every waiter runs this each pass.
+live_waiter() {
+  local f pid line
+  for f in "$LOCKS/heavy-wait/"*; do
+    pid="${f##*/}"; case $pid in ""|*[!0-9]*) continue ;; esac
+    [ "$pid" != "$$" ] && [ -f "$f" ] || continue
+    line=""; { IFS= read -r line || [ -n "$line" ]; } 2>/dev/null < "$f" || continue
+    "$1" "$pid" "$line" || continue
+    kill -0 "$pid" 2>/dev/null && return 0
+  done
+  return 1
+}
+boxwide_line() { case $2 in *'"lock":"box-wide"'*) return 0 ;; esac; return 1; }
+# older_peer <pid> <line>: the line is a rule-4 waiter of this pool (the caller's $label; for the session pool, this session)
+# that came first: an earlier since, or the same since and a lower pid. Before this job has a since, every such waiter came first.
+# json_str escapes every quote in argv and cwd, so none of these patterns can match inside them.
+older_peer() {
+  local pid="$1" line="$2" since
+  case $line in *'"fifo":1'*) ;; *) return 1 ;; esac
+  case $line in *'"meta":1'*) return 1 ;; esac
+  case $line in *"\"lock\":\"$label\""*) ;; *) return 1 ;; esac
+  if [ "$label" = session ]; then case $line in *"\"session\":$session,"*) ;; *) return 1 ;; esac; fi
+  [ -n "$WAIT_SINCE" ] || return 0
+  since="${line#*\"since\":\"}"; since="${since%%\"*}"
+  [[ "$since" < "$WAIT_SINCE" ]] || { [ "$since" = "$WAIT_SINCE" ] && [ "$pid" -lt "$$" ]; }
+}
+
 # boxwide_starved: some live job waits for a box-wide slot (a heavy-wait file with "lock":"box-wide" whose pid is alive) and
 # MemAvailable is under the floor of the lowest free box-wide slot within the cap. Slot 1 has no floor, and with no free slot
 # there is no floor to keep, so both mean no. A dead waiter's file (SIGKILL leaves one) counts for nothing.
 boxwide_starved() {
-  local f pid line cap k d waiter=""
-  for f in "$LOCKS/heavy-wait/"*; do
-    pid="${f##*/}"; case $pid in ""|*[!0-9]*) continue ;; esac   # also skips <pid>.tmp.<pid> files mid-write
-    [ "$pid" != "$$" ] && [ -f "$f" ] || continue
-    line="$(cat "$f" 2>/dev/null)" || continue
-    case $line in *'"lock":"box-wide"'*) ;; *) continue ;; esac
-    if kill -0 "$pid" 2>/dev/null; then waiter=1; break; fi
-  done
-  [ -n "$waiter" ] || return 1
+  local cap k d
+  live_waiter boxwide_line || return 1
   cap="$(heavy_cap "$GIVEN_SLOTS")"
   for k in $(seq 1 "$cap"); do
     if [ "$k" -eq 1 ]; then d="$LOCK"; else d="$LOCK.$k"; fi
@@ -217,8 +250,10 @@ boxwide_starved() {
 # acquire <label> <base> <slots>: take one slot of a mkdir-mutex pool; a slot whose owner pid is gone is reclaimed.
 acquire() {
   local label="$1" base="$2" slots="$3" waited=0 printed=0 told=0 k d got="" free_wait held usable
+  local fifo=1 older stood stood_s=0
+  [ "$PRIORITY" = meta ] && fifo=0
   while [ -z "$got" ]; do
-    free_wait=0; held=0
+    free_wait=0; held=0; older=""; stood=0
     # Re-read the cap and the reservation each pass: a drained queue releases waiting lane jobs promptly, and a lowered cap
     # keeps them off the slots above it (nothing running is pre-empted). The memory guard below is slow (two vm_stat forks
     # without /proc/meminfo), so a slot taken is checked again against the cap and reserve read after the take (#2718).
@@ -241,6 +276,15 @@ acquire() {
       # Box-wide slots above 1 need the memory guard; the per-session and light pools don't.
       if [ "$label" = box-wide ] && [ "$PRIORITY" != meta ] && [ "$k" -le "$RESERVE" ]; then [ -d "$d" ] || free_wait=1; continue; fi
       if [ "$k" -gt 1 ] && [ "$label" = box-wide ] && ! mem_ok "$k"; then continue; fi
+      # Rule 4: stand back while an older waiter of this pool is queued (looked up once per pass, at the first slot we could
+      # try). No head-of-line deadlock: the older waiter runs this version, is not meta and waits for the same pool, so the
+      # reserve, the memory floors, the light cap and the light hold bind it exactly as they bind us; whatever it can't take,
+      # we can't either. The one difference would be a session slot, and a box-wide or light waiter already holds its own.
+      # A dead holder's slot is still freed; the older waiter takes it.
+      if [ "$fifo" = 1 ]; then
+        [ -n "$older" ] || { if live_waiter older_peer; then older=y; else older=n; fi; }
+        if [ "$older" = y ]; then { [ ! -d "$d" ] || reclaim_slot "$d"; } && stood=1; continue; fi
+      fi
       if mkdir "$d" 2>/dev/null || { reclaim_slot "$d" && mkdir "$d" 2>/dev/null; }; then
         # Take-then-check (#2718): read the cap and reserve again now the slot is ours. Over the cap (box-wide or light), or
         # inside the reserve for a non-meta job: give the empty slot back (before the owner write) and keep waiting.
@@ -249,6 +293,13 @@ acquire() {
       fi
     done
     [ -n "$got" ] && break
+    # The safety valve: standing back from a free slot counts toward the cap (and, like any wait, toward TIMEOUT).
+    if [ "$stood" = 1 ]; then
+      stood_s=$((stood_s + 1))
+      if [ "$stood_s" -gt "$MAX_DEFER" ]; then
+        fifo=0; echo "heavy: no longer waiting for older jobs: stood back from a free $label slot for ${MAX_DEFER}s (AW_HEAVY_FIFO_MAX_DEFER)" >&2
+      fi
+    fi
     [ "$printed" -eq 0 ] && { echo "heavy: waiting for the $label lock ($slots slot(s), $base)" >&2; printed=1; write_wait "$label" "${@:4}"; }
     [ "$waited" -ge "$TIMEOUT" ] && { echo "heavy: $label lock timeout ($base)" >&2; rm_wait; exit 75; }
     # A pass that skipped a free reserved slot was blocked only by the reservation, and a light pass held back for a box-wide
