@@ -54,6 +54,17 @@ public sealed class MrkdwnParseTests
     }
 
     [Fact]
+    public void A_mark_never_closes_inside_a_code_span()
+    {
+        var bold = Assert.Single(Mrkdwn.Parse("*a `x*` b*").Spans);
+        var after = Assert.Single(Mrkdwn.Parse("*a `x` b*").Spans);
+
+        Assert.Equal([MrkdwnKind.Text, MrkdwnKind.Code, MrkdwnKind.Text], bold.Children.Select(static s => s.Kind));
+        Assert.Equal("x*", bold.Children[1].Text);
+        Assert.Equal((MrkdwnKind.Bold, "a `x` b"), (after.Kind, after.Text));
+    }
+
+    [Fact]
     public void Quote_and_list_lines_keep_their_marker_as_written()
     {
         var escaped = Assert.Single(Mrkdwn.Parse("&gt; quoted").Spans);
