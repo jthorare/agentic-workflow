@@ -136,4 +136,22 @@ export AW_SINDRI_HOME="$WORK/sindri"
 printf '{"session_id":"cx1","cwd":"%s","hook_event_name":"UserPromptSubmit","prompt":"hi"}' "$REPO" > "$WORK/cx.json"
 OUT="$(PATH="/usr/bin:/bin" bash "$HOOKS/adapters/codex.sh" "$HOOK" < "$WORK/cx.json")"
 check "codex adapter: line passes through" "$(printf '%s' "$OUT" | grep -c "Fix task $I1 on #2071")" "1"
+
+# #3778: the budget is wall-clock and covers the whole script. A slow jq (0.5 s per call, real sleep) makes the script run past a
+# 600 ms budget: the hook must end by itself near the budget, print nothing and write one failopen `timeout` row, even though a
+# task is waiting. (A bound counted in sleep passes, covering only work(), let it run to the end and print the line.)
+now_ms() { local t; t="$(date +%s%3N 2> /dev/null)"; case "$t" in *[!0-9]* | '') t=$(($(date +%s) * 1000)) ;; esac; printf '%s' "$t"; }
+SLOW="$WORK/slowbin"; mkdir -p "$SLOW"
+REAL_JQ="$(command -v jq)"
+printf '#!/bin/sh\n/bin/sleep 0.5\nexec "%s" "$@"\n' "$REAL_JQ" > "$SLOW/jq"; chmod +x "$SLOW/jq"
+find "$AW_STATE_DIR/logs" -delete 2> /dev/null
+t0="$(now_ms)"
+OUT="$(cd "$REPO" && printf '{"session_id":"slow1","prompt":"hi"}' | PATH="$SLOW:/usr/bin:/bin" AW_SINDRI_TASKS_BUDGET_MS=600 bash "$HOOK")"; RC=$?
+t1="$(now_ms)"
+check "slow box: silent" "$OUT" ""
+check "slow box: exit 0" "$RC" "0"
+check "slow box: ends near the 600 ms budget, not at the end of the work (< 1300 ms)" "$([ $((t1 - t0)) -lt 1300 ] && echo yes || echo "no ($((t1 - t0)) ms)")" "yes"
+check "slow box: one failopen timeout row" "$(grep -c '"hook":"sindri-tasks","cause":"timeout"' "$AW_STATE_DIR/logs/failopen.log" 2> /dev/null)" "1"
+check "slow box: the task was not marked seen" "$([ -f "$FT/seen/slow1" ] && echo seen || echo not-seen)" "not-seen"
+check "fast box: same session still hears the task" "$(run slow1)" "$LINE1"
 exit $fail

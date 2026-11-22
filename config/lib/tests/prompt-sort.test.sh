@@ -150,4 +150,23 @@ test_images_past_four_leave_a_probe_log_line_with_the_dropped_count() {
 }
 
 test_images_past_four_leave_a_probe_log_line_with_the_dropped_count
+
+# #3778: the budget is wall-clock and covers the whole script, not a count of 100 ms passes after the judge started. A slow jq
+# (0.4 s per call) before the judge call used to add to the budget; now the hook ends near AW_PROMPT_SORT_BUDGET_MS from its start,
+# prints nothing and writes ONE failopen timeout row.
+test_the_budget_is_wall_clock_over_the_whole_script() {
+  local bin slow out rc t0 t1 real_jq rows; bin="$(make_fake_judge)"; slow="$(mktemp -d)"; real_jq="$(command -v jq)"
+  printf '#!/bin/sh\n/bin/sleep 0.4\nexec "%s" "$@"\n' "$real_jq" > "$slow/jq"; chmod +x "$slow/jq"
+  find "$AW_STATE_DIR/logs" -delete 2> /dev/null
+  t0=$(date +%s%3N 2> /dev/null); case "$t0" in *[!0-9]* | '') echo "SKIP: no millisecond clock"; return 0 ;; esac
+  set +e; out="$(PATH="$slow:$PATH" RUN_BUDGET_MS=1000 run_hook "$bin" slow '{"session_id":"s1","prompt":"fix the login button"}')"; rc=$?; set -e
+  t1=$(date +%s%3N)
+  [ "$rc" -eq 0 ] || { echo "FAIL: exit 0 expected, got $rc"; exit 1; }
+  [ -z "$out" ] || { echo "FAIL: expected no output, got: $out"; exit 1; }
+  [ $((t1 - t0)) -lt 1800 ] || { echo "FAIL: the hook ran $((t1 - t0)) ms against a 1000 ms wall-clock budget"; exit 1; }
+  rows="$(grep -c '"hook":"prompt-sort","cause":"timeout"' "$AW_STATE_DIR/logs/failopen.log" 2> /dev/null || true)"
+  [ "$rows" = "1" ] || { echo "FAIL: expected one failopen timeout row, got $rows"; exit 1; }
+  echo "PASS: test_the_budget_is_wall_clock_over_the_whole_script"
+}
+test_the_budget_is_wall_clock_over_the_whole_script
 echo "All prompt-sort hook tests passed."
