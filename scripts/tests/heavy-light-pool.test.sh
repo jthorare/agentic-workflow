@@ -59,6 +59,8 @@ export AW_HEAVY_TEST_PATH="$STUB"
 # A copy with a 1 s lock timeout, laid out so it finds ../config/lib/heavy-config.sh.
 mkdir -p "$WORK/scripts"; ln -s "$DIR/../config" "$WORK/config"
 ONE="$WORK/scripts/heavy-one.sh"; sed 's/^TIMEOUT=5400$/TIMEOUT=1/' "$HEAVY" > "$ONE"
+# A copy that repeats the hold note every second instead of every 300.
+NOTE="$WORK/scripts/heavy-note.sh"; sed 's/^HOLD_NOTE_EVERY=300$/HOLD_NOTE_EVERY=1/' "$HEAVY" > "$NOTE"
 LIGHT="$LOCKS/heavy-light.lock"; BOX="$LOCKS/heavy-job.lock"
 sleep 300 & live=$!; bgpids+=("$live")
 true & dead=$!; wait "$dead"
@@ -129,6 +131,13 @@ check "held: its wait file says lock light" "$(grep -c '"lock":"light"' "$LOCKS/
 check "held: it says why on stderr" "$(grep -c 'holding this build back' "$RUN/out.j1")" "1"
 rm -f "$LOCKS/heavy-wait/$live"; wait_for 'started j1'
 check "held: the waiter's file goes, the build starts" "$(yn 'started j1')" "yes"
+
+# --- the hold note repeats while the hold lasts and names the waiter and the memory figure (#3810) ---
+reset; hold_box; box_waiter "$live"; mem_mb 5000; SCRIPT="$NOTE"
+job n1; wait_for 'waiting n1'; sleep 3.5
+check "held 3.5 s, a note every 1 s: the note is printed again" "$(yn '[ "$(grep -c "holding this build back" "$RUN/out.n1")" -ge 2 ]')" "yes"
+check "the note names the waiter's pid and argv" "$(grep -c "box-wide job $live (\"x\")" "$RUN/out.n1" | sed 's/^[1-9][0-9]*$/some/')" "some"
+check "the note names slot 2, its floor and the MB available" "$(grep -c 'slot 2, which needs 10240 MB free; 5000 MB available' "$RUN/out.n1" | sed 's/^[1-9][0-9]*$/some/')" "some"
 
 reset; hold_box; box_waiter "$live"; mem_mb 5000
 job j1; wait_for 'waiting j1'
