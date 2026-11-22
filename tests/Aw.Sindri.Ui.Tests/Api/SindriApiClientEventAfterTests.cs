@@ -34,7 +34,8 @@ public sealed class SindriApiClientEventAfterTests
 
         Assert.Equal(
             ["7", null],
-            handler.Requests.Where(r => r.Path == "/sindri/todos").Select(r => r.After));
+            handler.Requests.Where(r => r.Path == "/sindri/todos").Select(r => r.After),
+            StringComparer.Ordinal);
     }
 
     [Fact]
