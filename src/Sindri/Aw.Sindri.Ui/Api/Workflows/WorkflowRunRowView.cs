@@ -7,5 +7,6 @@ namespace Aw.Sindri.Ui.Api.Workflows;
 /// <param name="Trigger">The trigger's kind, such as "manual" or "schedule".</param>
 /// <param name="StartedAt">When it was recorded.</param>
 /// <param name="EndedAt">When it ended, or null while it has not.</param>
-/// <param name="Error">Why it failed, or null.</param>
-internal sealed record WorkflowRunRowView(string Id, int Revision, string Status, string Trigger, DateTimeOffset StartedAt, DateTimeOffset? EndedAt, string? Error);
+/// <param name="Error">Why it failed, as the engine wrote it, or null.</param>
+/// <param name="FailureSentence">Why it failed in words, naming the step by its title, or null (absent when the error has none).</param>
+internal sealed record WorkflowRunRowView(string Id, int Revision, string Status, string Trigger, DateTimeOffset StartedAt, DateTimeOffset? EndedAt, string? Error, string? FailureSentence = null);

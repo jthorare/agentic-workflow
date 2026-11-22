@@ -21,6 +21,8 @@ internal sealed class WorkflowsFixture
 
     internal FakeTimeProvider Clock { get; } = new(Now);
 
+    internal FakeClipboard Clipboard { get; } = new();
+
     internal static JsonNode Golden(string slug, string scenario) => JsonNode.Parse(GoldenFiles.Api(slug, scenario))!; // why: the golden is a JSON document
 
     internal WorkflowsFixture()
@@ -38,7 +40,7 @@ internal sealed class WorkflowsFixture
 
     internal void ServeRun(JsonNode run) => Server.WorkflowRunAnswers[RunId] = new RouteAnswer(HttpStatusCode.OK, run.ToJsonString());
 
-    internal WorkflowsPageViewModel Page() => new(Server, Clock);
+    internal WorkflowsPageViewModel Page() => new(Server, Clock, Clipboard);
 
     /// <summary>A page that is shown and has read the list once.</summary>
     internal async Task<WorkflowsPageViewModel> Shown(CancellationToken token)

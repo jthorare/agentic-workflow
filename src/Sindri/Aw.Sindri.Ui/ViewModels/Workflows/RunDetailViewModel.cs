@@ -1,11 +1,12 @@
 using System.Text.Json;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflows;
+using Aw.Sindri.Ui.Platform;
 
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
 /// <summary>One run with every node's status, input, output and error. Nodes keep the order they were served in, grouped by node id.</summary>
-internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : ObservableObject
+internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock, IClipboard? clipboard = null) : ObservableObject
 {
     private int _reads;
     private Uri? _url;
@@ -64,8 +65,14 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     /// <summary>Why the run failed, as served; empty otherwise.</summary>
     public string ErrorText { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>True when the run has an error.</summary>
-    public bool HasError => ErrorText.Length > 0;
+    /// <summary>True when the run has an error that Sindri gave no sentence for (a run with one shows <see cref="Failure"/> and keeps the text under its Details).</summary>
+    public bool HasError => ErrorText.Length > 0 && Failure is null;
+
+    /// <summary>The failed step in words, or null.</summary>
+    public RunFailureViewModel? Failure { get; private set => Set(ref field, value); }
+
+    /// <summary>True when the failure has a sentence.</summary>
+    public bool HasFailure => Failure is not null;
 
     /// <summary>The run's outputs as indented JSON; empty while none.</summary>
     public string OutputsText { get; private set => Set(ref field, value); } = string.Empty;

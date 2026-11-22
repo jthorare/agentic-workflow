@@ -12,4 +12,5 @@ namespace Aw.Sindri.Ui.Api.Workflows;
 /// <param name="Error">Why it failed, or null.</param>
 /// <param name="Agent">Null for a node that is not a run_agent waiting on an agent, else "waiting" or "taken_over".</param>
 /// <param name="Raw">The raw text a prompt node got back from the model, cut at 64 KB, or null.</param>
-internal sealed record NodeRunView(string Node, int ItemIndex, string Status, JsonElement? Input, JsonElement? Output, bool Truncated, string? Error, string? Agent = null, string? Raw = null);
+/// <param name="Failure">A failed node run's sentence and fix, or null (absent when the run did not fail or its code has no sentence).</param>
+internal sealed record NodeRunView(string Node, int ItemIndex, string Status, JsonElement? Input, JsonElement? Output, bool Truncated, string? Error, string? Agent = null, string? Raw = null, StepFailureView? Failure = null);
