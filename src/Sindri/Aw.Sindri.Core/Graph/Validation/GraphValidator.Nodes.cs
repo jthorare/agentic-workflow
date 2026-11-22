@@ -10,9 +10,9 @@ public sealed partial class GraphValidator
     private void Node(GraphNode node, List<GraphFinding> found)
     {
         var id = node.Id.Value;
-        if (node.OnFailure is { } onFailure && !string.Equals(onFailure, "stop", StringComparison.Ordinal) && !string.Equals(onFailure, "continue", StringComparison.Ordinal))
+        if (node.OnFailure is { } onFailure && !string.Equals(onFailure, "stop", StringComparison.Ordinal) && !string.Equals(onFailure, "continue", StringComparison.Ordinal) && !string.Equals(onFailure, "skip-item", StringComparison.Ordinal))
         {
-            found.Add(Found.At("GRAPH-NODE-003", id, "onFailure", $"'{onFailure}' is not an 'onFailure' value", "write 'stop' (halt the run when this node fails, the default) or 'continue' (keep walking)"));
+            found.Add(Found.At("GRAPH-NODE-003", id, "onFailure", $"'{onFailure}' is not an 'onFailure' value", "write 'stop' (halt the run when this node fails, the default), 'continue' (keep walking) or 'skip-item' (on a for_each body node: drop the item and go on with the next)"));
         }
 
         if (!context.Blocks.TryGetValue(node.Type, out var block))

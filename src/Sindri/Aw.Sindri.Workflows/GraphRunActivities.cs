@@ -99,7 +99,7 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
     }
 
     /// <summary>
-    /// Writes the 'collect' node's own row once a loop is done: 'items' (each item's value in item order; an item whose branch skipped the collect adds nothing) and 'count'.
+    /// Writes the 'collect' node's own row once a loop is done: 'items' (each item's value in item order; an item whose branch skipped the collect, or that a 'skip-item' node dropped, adds nothing), 'count' and 'skipped'.
     /// The values are read here and written here, so they never pass through the workflow's history.
     /// </summary>
     /// <param name="request">The loop's collect node.</param>
@@ -113,7 +113,7 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
             .Where(r => r.NodeId == request.Collect && r.ItemIndex > 0 && r.Status == NodeRunStatus.Succeeded)
             .OrderBy(static r => r.ItemIndex)
             .ToList();
-        var (output, failure) = Gather(rows);
+        var (output, failure) = Gather(rows, request.Skipped);
         if (failure is not null)
         {
             return failure;
@@ -130,7 +130,6 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
     internal static (string? Output, string? Failure) Gather(IReadOnlyList<NodeRun> rows, int skipped = 0)
     {
         ArgumentNullException.ThrowIfNull(rows);
-        _ = skipped;   // red stub (#3806)
         var cut = rows.FirstOrDefault(static r => r.Truncated);
         if (cut is not null)
         {
@@ -138,7 +137,7 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         }
 
         var items = new JsonArray([.. rows.Select(static r => (StoredJson.Parse(r.Output) as JsonObject)?["value"]?.DeepClone())]);
-        var text = new JsonObject { ["items"] = items, ["count"] = rows.Count }.ToJsonString();
+        var text = new JsonObject { ["items"] = items, ["count"] = rows.Count, ["skipped"] = skipped }.ToJsonString();
         var bytes = System.Text.Encoding.UTF8.GetByteCount(text);
         return bytes > NodeRunLimits.PayloadBytes
             ? (null, $"the collected values from {rows.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} items are {bytes.ToString(System.Globalization.CultureInfo.InvariantCulture)} bytes, over the {NodeRunLimits.PayloadBytes.ToString(System.Globalization.CultureInfo.InvariantCulture)}-byte (64 KB) cap on a node's output; collect a smaller field or fewer items")

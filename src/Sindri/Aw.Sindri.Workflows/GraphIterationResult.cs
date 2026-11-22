@@ -2,4 +2,5 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 
 /// <summary>How one batch ended.</summary>
 /// <param name="Failure">Why the batch stopped (the first failed item), or null when every item ran.</param>
-internal sealed record GraphIterationResult(string? Failure);
+/// <param name="Skipped">How many of the batch's items a body node with 'onFailure: skip-item' dropped (#3806); 0 in a history written before it.</param>
+internal sealed record GraphIterationResult(string? Failure, int Skipped = 0);
