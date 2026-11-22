@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# Stub curl for slack-probe.test.sh: a small stateful Slack Web API. It answers by the method at the end of the url path, from the
+# fake answer files next to it, and keeps the probe's writes in $STUB_STATE. Every name and text in the answers holds SECRET, so a
+# test can prove none of it reaches the probe's output.
+# Knobs: STUB_ERR=method:code (that method answers ok:false with the code), STUB_FAIL=method (transport failure, exit 7),
+# STUB_429=method:N (calls after the Nth answer HTTP 429 with Retry-After: 30), STUB_SCOPES_DROP=scope (left out of x-oauth-scopes),
+# STUB_SCRATCH=public|not-mine|members (the scratch channel's conversations.info), STUB_NO_METADATA=1 (history drops metadata),
+# STUB_KEEP=1 (chat.delete answers ok and deletes nothing), STUB_SLEEP=method (that method sleeps 3 s, once).
+fix="$STUB_FIX"; st="$STUB_STATE"; hdr="" out="" cfg="" url="" binary=""
+params="$(mktemp)"; trap 'rm -f "$params"' EXIT
+all="$*"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -D) hdr="$2"; shift 2 ;; -o) out="$2"; shift 2 ;; -K) cfg="$2"; shift 2 ;; -w|-X|--max-time) shift 2 ;;
+    --data-urlencode) printf '%s\n' "$2" >> "$params"; shift 2 ;;
+    --data-binary) binary="${2#@}"; shift 2 ;;
+    -*) shift ;;
+    *) url="$1"; shift ;;
+  esac
+done
+mkdir -p "$st"; touch "$st/posted" "$st/sched" "$st/files" "$st/reacted"
+path="${url#*://}"; path="/${path#*/}"; method="${path##*/}"
+kind=none
+if [ -n "$cfg" ]; then
+  if grep -q 'Authorization: Bearer xapp-' "$cfg"; then kind=app; elif grep -q 'Authorization: Bearer ' "$cfg"; then kind=user; fi
+fi
+case "$path" in /upload/*) method=UPLOAD ;; /files-pri/*) method=FILEGET ;; esac
+echo "curl ran method=$method cfg=$(basename "${cfg:-none}") args=$all" >> "$STUB_LOG"
+p() { sed -n "s/^$1=//p" "$params" | head -n1; }   # p NAME: that form field's value
+
+[ "${STUB_FAIL:-}" = "$method" ] && exit 7
+if [ "${STUB_SLEEP:-}" = "$method" ] && [ ! -f "$st/slept" ]; then touch "$st/slept"; sleep 3; fi
+n=$(( $(cat "$st/n.$method" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$st/n.$method"
+
+headers='HTTP/2 200\r\ncontent-type: application/json\r\n'
+code=200
+if [ -n "${STUB_429:-}" ] && [ "${STUB_429%%:*}" = "$method" ] && [ "$n" -gt "${STUB_429#*:}" ]; then
+  printf 'HTTP/2 429\r\nretry-after: 30\r\n\r\n' > "$hdr"; printf '{"ok":false,"error":"ratelimited"}' > "$out"; printf 429; exit 0
+fi
+if [ "$method" = auth.test ]; then
+  scopes="channels:read,groups:read,im:read,mpim:read,channels:history,groups:history,im:history,mpim:history,users:read,emoji:read,search:read,chat:write,reactions:read,reactions:write,channels:write,groups:write,im:write,mpim:write,files:read,files:write,users.profile:write,dnd:write,dnd:read,pins:read,pins:write"
+  [ -n "${STUB_SCOPES_DROP:-}" ] && scopes="$(tr ',' '\n' <<<"$scopes" | grep -vx -- "$STUB_SCOPES_DROP" | paste -sd, -)"
+  headers="${headers}x-oauth-scopes: $scopes\r\n"
+fi
+printf "${headers}\\r\\n" > "$hdr"
+reply() { printf '%s' "$1" > "$out"; printf '%s' "$code"; exit 0; }
+answer() { cp "$fix/$1" "$out"; printf '%s' "$code"; exit 0; }
+err() { reply "{\"ok\":false,\"error\":\"$1\"}"; }
+
+[ -n "${STUB_ERR:-}" ] && [ "${STUB_ERR%%:*}" = "$method" ] && err "${STUB_ERR#*:}"
+case "$method" in UPLOAD|FILEGET) ;; *) [ "$kind" = none ] && err not_authed ;; esac
+if [ "$kind" = app ] && [ "$method" != apps.connections.open ]; then err not_allowed_token_type; fi
+
+write_guard() { [ "$(p channel)" = G0PROBE ] || [ "$(p channel_id)" = G0PROBE ] || { echo "WRITE OUTSIDE $method" >> "$STUB_LOG"; err channel_not_found; }; }
+
+case "$method" in
+  auth.test) answer auth.test.json ;;
+  users.conversations) answer users.conversations.json ;;
+  conversations.replies) answer conversations.replies.json ;;
+  search.messages) answer search.messages.json ;;
+  emoji.list) answer emoji.list.json ;;
+  chat.command) answer chat.command.json ;;
+  apps.connections.open)
+    if [ "$kind" = app ]; then reply "{\"ok\":true,\"url\":\"wss://${STUB_WSS_HOST:-wss-primary.slack.com}/link/?ticket=SECRET-ticket\"}"; fi
+    err not_allowed_token_type ;;
+  conversations.info)
+    case "$(p channel)" in
+      G0PROBE)
+        case "${STUB_SCRATCH:-}" in
+          public) reply "$(jq -c '.channel.is_private = false' "$fix/conversations.info.scratch.json")" ;;
+          not-mine) reply "$(jq -c '.channel.creator = "U0ALICE"' "$fix/conversations.info.scratch.json")" ;;
+          members) reply "$(jq -c '.channel.num_members = 3' "$fix/conversations.info.scratch.json")" ;;
+          *) answer conversations.info.scratch.json ;;
+        esac ;;
+      D*) answer conversations.info.im.json ;;
+      *) answer conversations.info.channel.json ;;
+    esac ;;
+  conversations.history)
+    if [ "$(p channel)" = G0PROBE ]; then
+      if [ -n "$(p latest)" ]; then
+        line="$(grep "^$(p latest) " "$st/posted" | head -n1)"
+        [ -n "$line" ] || reply '{"ok":true,"messages":[],"has_more":false}'
+        if [ "${STUB_NO_METADATA:-}" = 1 ]; then reply "{\"ok\":true,\"messages\":[{\"ts\":\"${line%% *}\",\"text\":\"SECRET-TEXT\"}]}"; fi
+        reply "$(jq -nc --arg ts "${line%% *}" --arg a "${line#* }" '{ok:true,messages:[{ts:$ts,text:"SECRET-TEXT",metadata:{event_type:"sindri_probe",event_payload:{act_id:$a}}}]}')"
+      fi
+      reply "$(cut -d' ' -f1 "$st/posted" | jq -R . | jq -sc '{ok:true,messages:[.[] | {ts:., text:"SECRET-TEXT"}],has_more:false}')"
+    fi
+    answer conversations.history.json ;;
+  chat.postMessage)
+    write_guard
+    k=$(( $(wc -l < "$st/posted") + 1 )); ts="1800000000.00000$k"
+    act="$(p metadata | jq -r '.event_payload.act_id // "none"' 2>/dev/null)"
+    echo "$ts $act" >> "$st/posted"
+    reply "{\"ok\":true,\"channel\":\"G0PROBE\",\"ts\":\"$ts\",\"message\":{\"text\":\"SECRET-TEXT\"}}" ;;
+  chat.update) write_guard; grep -q "^$(p ts) " "$st/posted" && reply '{"ok":true}'; err message_not_found ;;
+  chat.delete)
+    write_guard
+    grep -q "^$(p ts) " "$st/posted" || err message_not_found
+    if [ "${STUB_KEEP:-}" != 1 ]; then grep -v "^$(p ts) " "$st/posted" > "$st/posted.tmp"; mv "$st/posted.tmp" "$st/posted"; fi
+    reply '{"ok":true}' ;;
+  reactions.add)
+    write_guard
+    if grep -qx "$(p timestamp)" "$st/reacted"; then err already_reacted; fi
+    echo "$(p timestamp)" >> "$st/reacted"; reply '{"ok":true}' ;;
+  reactions.remove) write_guard; reply '{"ok":true}' ;;
+  conversations.mark) write_guard; reply '{"ok":true}' ;;
+  chat.scheduleMessage)
+    write_guard
+    if [ $(( $(p post_at) - $(date +%s) )) -gt $((120 * 86400)) ]; then err time_too_far; fi
+    k=$(( $(wc -l < "$st/sched") + 1 )); echo "Q0SCHED$k" >> "$st/sched"
+    reply "{\"ok\":true,\"channel\":\"G0PROBE\",\"scheduled_message_id\":\"Q0SCHED$k\",\"post_at\":$(p post_at)}" ;;
+  chat.deleteScheduledMessage)
+    write_guard
+    grep -qx "$(p scheduled_message_id)" "$st/sched" || err invalid_scheduled_message_id
+    grep -vx "$(p scheduled_message_id)" "$st/sched" > "$st/sched.tmp"; mv "$st/sched.tmp" "$st/sched"; reply '{"ok":true}' ;;
+  files.getUploadURLExternal) reply '{"ok":true,"upload_url":"http://127.0.0.1:9/upload/v1/SECRET-upload","file_id":"F0PROBE1"}' ;;
+  UPLOAD)
+    [ -n "$cfg" ] && echo "UPLOAD with token" >> "$STUB_LOG"
+    [ -n "$binary" ] && [ -f "$binary" ] || { code=400; reply 'no body'; }
+    reply "OK - $(wc -c < "$binary" | tr -d ' ')" ;;
+  files.completeUploadExternal)
+    write_guard
+    echo "$(p files | jq -r '.[0].id')" >> "$st/files"
+    reply '{"ok":true,"files":[{"id":"F0PROBE1","title":"SECRET-NAME-file"}]}' ;;
+  files.info) reply '{"ok":true,"file":{"id":"F0PROBE1","name":"SECRET-NAME-file.txt","url_private":"http://127.0.0.1:9/files-pri/T0PROBE-F0PROBE1/sindri-probe.txt"}}' ;;
+  FILEGET) if [ -n "$cfg" ]; then reply 'probe'; fi; code=302; reply '' ;;
+  files.delete)
+    grep -qx "$(p file)" "$st/files" || err file_not_found
+    grep -vx "$(p file)" "$st/files" > "$st/files.tmp"; mv "$st/files.tmp" "$st/files"; reply '{"ok":true}' ;;
+  *) err unknown_method ;;
+esac
