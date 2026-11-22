@@ -39,6 +39,7 @@ public sealed class WriteAttributionTests
         ["POST /sindri/workflow/challenges/app"] = "refuses every text (IssueAppChallengeService.cs:17, no ports) and its endpoint appends nothing: writes no event",
         ["POST /sindri/workflows/{slug}/activate"] = "a session is refused (#3199): the owner's, so no launched session appends its event",
         ["POST /sindri/workflows/{slug}/pause"] = "a session is refused (#3199): the owner's, so no launched session appends its event",
+        ["POST /sindri/workflow-runs/{run}/seen"] = "the owner's (#3733): a launched session gets SND-AUTH-002, and the owner's mark sets workflow_run.seen_at and writes no ledger event",
         ["POST /sindri/workflows/{slug}/test"] = "a Workflows page P0 stub (#3191): refuses SND-GRAPH-119 and writes no event until the test phase builds it",
         ["POST /sindri/workflows/{slug}/pins"] = "a Workflows page P0 stub (#3191): refuses SND-GRAPH-119 and writes no event until the pins phase builds it",
         ["POST /sindri/workflows/validate"] = "checks a stored spec and returns its findings (ValidateWorkflowService): stores nothing and writes no event",

@@ -11,16 +11,16 @@
 #   A job is expensive when it builds or tests the whole solution, publishes or smoke-tests a NativeAOT/framework
 #   binary, or opens a browser (Playwright, ui-evidence, Aw.Evidence); `heavy --expensive <cmd>` forces it,
 #   `heavy --light <cmd>` forces light (no box-wide slot).
-#   3. Box-wide, for light jobs that compile (#3796): a `--light` command with ` dotnet build `, publish, format, pack,
+#   3. Box-wide, for light jobs that compile (#3796): a `--light` command with ` dotnet build `, msbuild, publish, format, pack,
 #      restore, run, or `dotnet test` without --no-build (dotnet matched by its basename, so `~/.dotnet/dotnet build` counts,
 #      #3810), takes one of N light slots of <locks>/heavy-light.lock (slot 1 the bare path, slot k .k, the same mkdir mutexes
 #      and dead-holder reclaim as rule 2). N is $AW_STATE_DIR/heavy-light-cap, else AW_HEAVY_LIGHT_SLOTS, else 4, read again on
 #      every pass. Such a build also doesn't START while a live job waits for a box-wide slot and every free slot that job may
-#      take is under its memory floor (slot 1 has no floor). A lane waiter may take only the slots above heavy-meta-reserve,
-#      the reserve clamped as rule 2's pool clamps it; a meta waiter may take any (#3810). So builders can't keep a gate's slot
+#      take is under its memory floor (slot 1 has no floor). A lane waiter may take only the slots above heavy-meta-reserve;
+#      a meta waiter may take any (#3810). So builders can't keep a gate's slot
 #      shut; nothing running is stopped, and that wait doesn't count toward the lock timeout. The hold has no limit of its own:
-#      a held build prints a line when the hold starts and every 5 minutes after, naming the waiter (pid, argv), the slot it
-#      waits for, that slot's floor and the MB available.
+#      a held build prints a line when the hold starts or moves to another waiter, and every 5 minutes after. The line names
+#      the waiter (pid, argv), the slot it waits for, that slot's floor and the MB available.
 #      AW_HEAVY_PRIORITY=meta skips that hold, not the pool. A light job that compiles nothing (`dotnet test --no-build`,
 #      `dotnet clean`, a script) takes the per-session slot only.
 #      For a PR that touches one src project, a light build of that project alone is the compile check. Build the whole test
@@ -79,7 +79,10 @@ TIMEOUT=5400
 # Meta gate reservation (owner, 2026-10-17): the meta orchestrator writes how many box-wide slots its gates reserve
 # (0..SLOTS; every reader caps it at SLOTS-1, so a lane job always has a slot, #2060) to <state>/heavy-meta-reserve, scaled to its merge-queue depth. A job run with AW_HEAVY_PRIORITY=meta may
 # take any slot; any other expensive job may take only slots above the reservation. Nothing running is pre-empted, and
-# a job blocked only by the reservation (it skipped a free reserved slot) does not count that wait toward TIMEOUT.
+# a job blocked only by the reservation (it skipped a free reserved slot) does not count that wait toward TIMEOUT. Such a wait
+# prints a note when it starts and every HOLD_NOTE_EVERY seconds while it lasts: the reserve, the slot count and the MB available (#3907).
+# The reserve is a slot count, held whatever memory is free (meta, 2026-11-22, #3885): the memory floors decide only whether a
+# job may start in a slot, never how many slots meta keeps. So with slot 2 under its floor, a lane job still can't take slot 1.
 RESERVE="$(heavy_reserve "$SLOTS")"
 PRIORITY="${AW_HEAVY_PRIORITY:-}"
 # The light pool (rule 3, #3796). A non-number or 0 in AW_HEAVY_LIGHT_SLOTS means the default 4.
@@ -92,7 +95,8 @@ MAX_DEFER="${AW_HEAVY_FIFO_MAX_DEFER:-1800}"
 case $MAX_DEFER in ""|*[!0-9]*) MAX_DEFER=1800 ;; esac
 STOOD_AT=""
 # A light build held back for a box-wide waiter (rule 3) says so when the hold starts and again every HOLD_NOTE_EVERY seconds of
-# holding, so a long hold shows in the job's output (#3810). The hold has no time limit of its own.
+# holding, so a long hold shows in the job's output (#3810). A hold that starts again, or switches to another waiter, says so at once. The hold has no time limit of its own.
+# The box-wide wait beside a free reserved slot repeats its note on the same interval (#3907).
 HOLD_NOTE_EVERY=300
 
 mode=auto
@@ -105,12 +109,12 @@ if [ "${AW_HEAVY_LOCK_HELD:-}" = 1 ]; then exec "$@"; fi
 # compiles: the command runs a dotnet step that compiles. In auto mode that makes the job expensive; under --light it takes
 # a light slot (rule 3). The words are matched in CMDLINE, the args joined by spaces with every "/dotnet " turned into
 # " dotnet ": a path-qualified dotnet (`~/.dotnet/dotnet build`) is matched by its basename, also inside a `bash -c` string,
-# and every other word is left as it was. `dotnet msbuild` is not in the row yet: Sindri's sandbox shim table
-# (SandboxShims.cs) must list the same dotnet subcommands (SandboxShimsTests), and it gets msbuild in its own change (#3810).
+# and every other word is left as it was. `dotnet msbuild` compiles like `dotnet build` (#3810). Sindri's sandbox shim table
+# (SandboxShims.cs) lists the same dotnet subcommands, in the same order; SandboxShimsTests checks this row against it.
 CMDLINE=" $* "; CMDLINE="${CMDLINE//\/dotnet / dotnet }"
 compiles=""
 case $CMDLINE in
-  *" dotnet build "*|*" dotnet publish "*|*" dotnet format "*|*" dotnet pack "*|*" dotnet restore "*|*" dotnet run "*) compiles=1 ;;
+  *" dotnet build "*|*" dotnet msbuild "*|*" dotnet publish "*|*" dotnet format "*|*" dotnet pack "*|*" dotnet restore "*|*" dotnet run "*) compiles=1 ;;
   *" dotnet test "*) case $CMDLINE in *" --no-build "*) ;; *) compiles=1 ;; esac ;;
 esac
 if [ "$mode" = auto ]; then
@@ -232,13 +236,13 @@ reclaim_slot() {
 }
 
 # slot_still_allowed <k>: box-wide slot k is within the cap and, for a non-meta job, outside the reserve, as read now.
-# The reserve is clamped by the pass's usable count like the pass does (#2060). Light slot k: within the light cap.
+# Light slot k: within the light cap.
 slot_still_allowed() {
   local k="$1" cap res
   if [ "$label" = light ]; then [ "$k" -le "$(heavy_light_cap "$LIGHT_GIVEN")" ]; return; fi
   cap="$(heavy_cap "$GIVEN_SLOTS")"; [ "$k" -le "$cap" ] || return 1
   [ "$PRIORITY" = meta ] && return 0
-  res="$(heavy_reserve "$cap")"; [ "$res" -gt "$((usable - 1))" ] && res=$((usable - 1))
+  res="$(heavy_reserve "$cap")"
   [ "$k" -gt "$res" ]
 }
 
@@ -285,20 +289,21 @@ older_peer() {
 
 # boxwide_starved: some live job waits for a box-wide slot (a heavy-wait file with "lock":"box-wide" whose pid is alive), and
 # every free box-wide slot that job may take is shut by its memory floor. A meta waiter may take any slot within the cap. Any other
-# waiter may take only the slots above the reserve, clamped as the box-wide pool clamps it: below the slots free memory allows
-# (#2060). So a free slot 1 it may take (no floor), a free slot whose floor is met, or no free slot it may take all mean no: the
-# waiter takes the slot or waits for a holder, not for memory. A dead waiter's file (SIGKILL leaves one) counts for nothing.
-# MemAvailable is read once per call. On a yes, HOLD_LINE is the waiter's wait-file line, HOLD_SLOT the lowest slot it can't take
-# for memory, HOLD_NEED that slot's floor and HOLD_MB the MB available (empty when unreadable), for the hold note.
+# waiter may take only the slots above the reserve, a slot count whatever memory is free, as in the box-wide pool (#3885). So a
+# free slot 1 it may take (no floor), a free slot whose floor is met, or no free slot it may take all mean no: the waiter takes
+# the slot or waits for a holder, not for memory. A dead waiter's file (SIGKILL leaves one) counts for nothing.
+# The waiter lookup comes first and uses builtins only: the cap file (cat) and MemAvailable (awk, or vm_stat) are read only once
+# a waiter is found, and then once per call, so a compiling light job with no box-wide waiter forks nothing here. On a yes,
+# HOLD_LINE is the waiter's wait-file line, HOLD_SLOT the lowest slot it can't take for memory, HOLD_NEED that slot's floor and HOLD_MB the MB available (empty when unreadable), for the hold note.
 boxwide_starved() {
-  local cap res usable kb
-  cap="$(heavy_cap "$GIVEN_SLOTS")"; kb="$(avail_kb)"
+  local cap="" kb=""
   if live_waiter boxwide_lane_line; then
-    usable=1; while [ "$usable" -lt "$cap" ] && floor_met "$((usable + 1))" "$kb"; do usable=$((usable + 1)); done
-    res="$(heavy_reserve "$cap")"; [ "$res" -gt "$((usable - 1))" ] && res=$((usable - 1))
-    starved_above "$res" "$cap" "$kb" && return 0
+    cap="$(heavy_cap "$GIVEN_SLOTS")"; kb="$(avail_kb)"
+    starved_above "$(heavy_reserve "$cap")" "$cap" "$kb" && return 0
   fi
-  live_waiter boxwide_meta_line && starved_above 0 "$cap" "$kb"
+  live_waiter boxwide_meta_line || return 1
+  [ -n "$cap" ] || { cap="$(heavy_cap "$GIVEN_SLOTS")"; kb="$(avail_kb)"; }
+  starved_above 0 "$cap" "$kb"
 }
 # floor_met <k> <kb>: box-wide slot k's memory floor is met by <kb> KB available; slot 1 has none, an empty <kb> meets none above.
 floor_met() {
@@ -316,7 +321,7 @@ starved_above() {
     [ -n "$short" ] || { short=$k; HOLD_NEED=$FLOOR; }
   done
   [ -n "$short" ] || return 1
-  HOLD_LINE="$WAITER_LINE"; HOLD_SLOT=$short; HOLD_MB=""; [ -z "$3" ] || HOLD_MB=$(($3 / 1024))
+  HOLD_LINE="$WAITER_LINE"; HOLD_PID="${WAITER_LINE#*\"pid\":}"; HOLD_PID="${HOLD_PID%%,*}"; HOLD_SLOT=$short; HOLD_MB=""; [ -z "$3" ] || HOLD_MB=$(($3 / 1024))
 }
 
 # hold_note: the hold's line on stderr, from what boxwide_starved found: the waiter's pid and argv (as JSON, cut at 200
@@ -329,10 +334,18 @@ hold_note() {
   echo "heavy: holding this build back: box-wide job $pid ($argv) waits for slot $HOLD_SLOT, which needs $HOLD_NEED MB free; $mem" >&2
 }
 
+# reserve_note <slots>: the reserve wait's line on stderr (#3907): the reserve, the slot count and the MB available. MemAvailable is
+# read here, only when the note is due, not on every pass.
+reserve_note() {
+  local kb mem; kb="$(avail_kb)"
+  if [ -n "$kb" ]; then mem="$((kb / 1024)) MB available"; else mem="MemAvailable unreadable"; fi
+  echo "heavy: waiting although a box-wide slot is free: meta reserves $RESERVE of $1 slot(s) (heavy-meta-reserve); every slot above those is held or under its memory floor; $mem" >&2
+}
+
 # acquire <label> <base> <slots>: take one slot of a mkdir-mutex pool; a slot whose owner pid is gone is reclaimed.
 acquire() {
-  local label="$1" base="$2" slots="$3" waited=0 printed=0 told=0 k d got="" free_wait held usable
-  local fifo=1 older stood told_at=0
+  local label="$1" base="$2" slots="$3" waited=0 printed=0 told=0 k d got="" free_wait held
+  local fifo=1 older stood told_at=0 told_pid="" rtold=0 rtold_at=0
   [ "$PRIORITY" = meta ] && fifo=0
   while [ -z "$got" ]; do
     free_wait=0; held=0; older=""; stood=0
@@ -340,17 +353,22 @@ acquire() {
     # keeps them off the slots above it (nothing running is pre-empted). The memory guard below is slow (two vm_stat forks
     # without /proc/meminfo), so a slot taken is checked again against the cap and reserve read after the take (#2718).
     if [ "$label" = box-wide ]; then
+      # heavy_reserve keeps the reserve at most slots - 1, so a lane job always has a slot to wait for (#2060). There is no memory
+      # clamp: the reserve is a slot count (#3885), and each slot's floor below decides only whether a job may start there.
       slots="$(heavy_cap "$GIVEN_SLOTS")"; RESERVE="$(heavy_reserve "$slots")"
-      # The reserve also stays below the slots free memory allows this pass, so a lane job keeps one (#2060).
-      usable=1; while [ "$usable" -lt "$slots" ] && mem_ok "$((usable + 1))"; do usable=$((usable + 1)); done
-      [ "$RESERVE" -gt "$((usable - 1))" ] && RESERVE=$((usable - 1))
     fi
     # The light pool: its cap, read now, and the hold for a box-wide waiter short of memory (rule 3; a meta job skips the hold).
     if [ "$label" = light ]; then
       slots="$(heavy_light_cap "$LIGHT_GIVEN")"
       if [ "$PRIORITY" != meta ] && boxwide_starved; then
         held=1; free_wait=1
-        if [ "$told" -eq 0 ] || [ "$((SECONDS - told_at))" -ge "$HOLD_NOTE_EVERY" ]; then hold_note; told=1; told_at=$SECONDS; fi
+        # A new hold (told was reset on a pass that wasn't held) or a hold for another waiter says so at once; a hold that goes
+        # on repeats its note every HOLD_NOTE_EVERY seconds.
+        if [ "$told" -eq 0 ] || [ "$HOLD_PID" != "$told_pid" ] || [ "$((SECONDS - told_at))" -ge "$HOLD_NOTE_EVERY" ]; then
+          hold_note; told=1; told_at=$SECONDS; told_pid="$HOLD_PID"
+        fi
+      else
+        told=0
       fi
     fi
     [ "$held" = 1 ] || for k in $(seq 1 "$slots"); do
@@ -386,6 +404,13 @@ acquire() {
       fi
     fi
     [ "$printed" -eq 0 ] && { echo "heavy: waiting for the $label lock ($slots slot(s), $base)" >&2; printed=1; write_wait "$label" "${@:4}"; }
+    # A box-wide pass that skipped a free reserved slot and stood back for no older waiter waits only for meta's reserve (#3907):
+    # say so when such a wait starts and every HOLD_NOTE_EVERY seconds while it lasts; any other pass ends it.
+    if [ "$label" = box-wide ] && [ "$free_wait" = 1 ] && [ "$stood" = 0 ]; then
+      if [ "$rtold" -eq 0 ] || [ "$((SECONDS - rtold_at))" -ge "$HOLD_NOTE_EVERY" ]; then reserve_note "$slots"; rtold=1; rtold_at=$SECONDS; fi
+    else
+      rtold=0
+    fi
     [ "$waited" -ge "$TIMEOUT" ] && { echo "heavy: $label lock timeout ($base)" >&2; rm_wait; exit 75; }
     # A pass that skipped a free reserved slot was blocked only by the reservation, and a light pass held back for a box-wide
     # waiter only by that hold: neither counts. Any other pass does.
