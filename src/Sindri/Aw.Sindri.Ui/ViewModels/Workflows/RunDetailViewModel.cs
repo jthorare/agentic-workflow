@@ -27,6 +27,9 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
 
     /// <summary>The Retry button's words on a run that did not start.</summary>
     public string StartRetryText => Labels.WfRunStartRetry;
+
+    /// <summary>What to do about a run that did not start.</summary>
+    public string DidNotStartHint => string.Empty;
 #pragma warning restore CA1822, MA0041
 
     /// <summary>The runs model's start deadline passed for a run: when this page shows that Starting run, it says the run did not start. The deadline is the runs model's one timer; this page starts none.</summary>

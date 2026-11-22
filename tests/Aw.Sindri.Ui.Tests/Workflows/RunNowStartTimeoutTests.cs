@@ -79,4 +79,28 @@ public sealed class RunNowStartTimeoutTests : IDisposable
         var row = Assert.Single(page.Runs.Rows, r => r.Id == NewRun);
         Assert.Equal(("Starting", false, 4), (row.ChipWord, row.DidNotStart, page.Runs.Rows.Count));
     }
+
+    [Fact]
+    public async Task The_did_not_start_row_says_what_to_do_next()
+    {
+        var page = await StartedNoRow();
+
+        _f.Clock.Advance(TimeSpan.FromSeconds(10));
+
+        Assert.Equal("Retry, or open Health if it keeps happening.", page.Runs.Rows[0].DidNotStartHint);
+    }
+
+    // Leaving the page stops the start deadline: coming back to the workflow shows no Starting row that would never time out.
+    [Fact]
+    public async Task Leaving_the_page_drops_the_placeholder_and_its_deadline()
+    {
+        var page = await StartedNoRow();
+        page.Leave();
+        _f.Clock.Advance(TimeSpan.FromSeconds(30));
+
+        await page.OpenWorkflow(Slug, Token);
+
+        Assert.DoesNotContain(page.Runs.Rows, r => r.Id == NewRun);
+        Assert.False(page.Run.DidNotStart);
+    }
 }

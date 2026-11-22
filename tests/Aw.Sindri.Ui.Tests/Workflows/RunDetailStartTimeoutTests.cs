@@ -79,4 +79,14 @@ public sealed class RunDetailStartTimeoutTests : IDisposable
         Assert.Equal([Slug, Slug], _f.Server.StartedWorkflows);
         Assert.Equal(("Starting", false), (page.Run.ChipWord, page.Run.DidNotStart));
     }
+
+    [Fact]
+    public async Task The_did_not_start_page_says_what_to_do_next()
+    {
+        var page = await OnTheRunPage();
+
+        _f.Clock.Advance(TimeSpan.FromSeconds(10));
+
+        Assert.Equal("Retry, or open Health if it keeps happening.", page.Run.DidNotStartHint);
+    }
 }
