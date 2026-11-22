@@ -20,7 +20,9 @@ internal static class MessagesReadEndpoints
 {
     private const int DefaultLimit = 50;
 
-    internal static RouteGroupBuilder MapMessagesReads(this RouteGroupBuilder group)
+    internal static RouteGroupBuilder MapMessagesReads(this RouteGroupBuilder group) => group.MapListReads().MapConversationReads();
+
+    private static RouteGroupBuilder MapListReads(this RouteGroupBuilder group)
     {
         _ = group.MapGet("/messages/status", static async (IService<GetMessagesStatusRequest, GetMessagesStatusResponse> service, CancellationToken ct) =>
             (await service.Handle(new GetMessagesStatusRequest(), ct).ConfigureAwait(false)).ToHttpResult());
@@ -28,6 +30,11 @@ internal static class MessagesReadEndpoints
             List(list) is { } known
                 ? (await service.Handle(new ListMessageRowsRequest(known, after, limit ?? DefaultLimit), ct).ConfigureAwait(false)).ToHttpResult()
                 : ((Result<ListMessageRowsResponse>)SindriErrors.InvalidQuery.With($"'{list}' is not a list (needs-reply, unread, later, drafts)")).ToHttpResult());
+        return group;
+    }
+
+    private static RouteGroupBuilder MapConversationReads(this RouteGroupBuilder group)
+    {
         _ = group.MapGet("/messages/conversations", static async (bool? starred, string? q, IService<ListConversationsRequest, ListConversationsResponse> service, CancellationToken ct) =>
             (await service.Handle(new ListConversationsRequest(starred, q), ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapGet("/messages/conversations/{conversation}/messages", static async (string conversation, string? before, string? after, int? limit, IService<GetConversationMessagesRequest, GetConversationMessagesResponse> service, CancellationToken ct) =>
