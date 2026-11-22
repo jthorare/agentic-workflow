@@ -13,11 +13,17 @@ internal sealed partial class GraphCanvas
     private const double Radius = 8;
     private const double RingGap = 3;
 
+    private readonly List<(string Text, double Size)> _drawn = [];
+
+    /// <summary>The words the last pass drew, each with its font size: a test reads it to see that the text size setting reaches the canvas (#3231).</summary>
+    internal IReadOnlyList<(string Text, double Size)> DrawnText => _drawn;
+
     /// <inheritdoc/>
     public override void Render(DrawingContext context)
     {
         base.Render(context);
         RenderCount++;
+        _drawn.Clear();
         context.DrawRectangle(Brushes.Transparent, pen: null, new Rect(Bounds.Size));   // so a drag on empty space hits this control
         if (Graph is not { } graph)
         {
@@ -210,13 +216,16 @@ internal sealed partial class GraphCanvas
 
     private Point ToWorld(Point screen) => new((screen.X - Pan.X) / Zoom, (screen.Y - Pan.Y) / Zoom);
 
-    private static FormattedText Text(string text, double size, IBrush brush, double maxWidth, bool semiBold) =>
-        new(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, new Typeface(FontFamily.Default, FontStyle.Normal, semiBold ? FontWeight.SemiBold : FontWeight.Normal), size, brush)
+    private FormattedText Text(string text, double size, IBrush brush, double maxWidth, bool semiBold)
+    {
+        _drawn.Add((text, size));
+        return new(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, new Typeface(FontFamily.Default, FontStyle.Normal, semiBold ? FontWeight.SemiBold : FontWeight.Normal), size, brush)
         {
             MaxTextWidth = maxWidth,
             MaxLineCount = 1,
             Trimming = TextTrimming.CharacterEllipsis,
         };
+    }
 
     private IBrush Brush(string key) => this.TryFindResource(key, ActualThemeVariant, out var value) && value is IBrush brush ? brush : Brushes.Gray;
 }
