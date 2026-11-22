@@ -26,6 +26,9 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
     {
     }
 
+    /// <summary>How many changed message ids the read state holds that no save has taken yet; always 0 for a reader with no cache. For tests.</summary>
+    internal int PendingChangedIds => _files.Values.Sum(static state => state.ChangedIds.Count);
+
     /// <inheritdoc/>
     public string Name => "claude-code";
 
@@ -76,6 +79,12 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
     {
         if (cache is null)
         {
+            // nothing is saved, so nothing may pile up in the changed ids either
+            foreach (var state in _files.Values)
+            {
+                state.MarkSaved();
+            }
+
             return;
         }
 
