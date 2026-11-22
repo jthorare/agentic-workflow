@@ -55,8 +55,8 @@ public sealed class TsNamespaceExportTests
     {
         var pairs = ImportEdges.Find(_files).Pairs.Select(p => $"{p.From}>{p.To}").ToList();
 
-        Assert.Contains("app/one-level.ts>packages/effect/src/sql/index.ts", pairs);
-        Assert.Contains("app/one-level.ts>" + SqlClient, pairs);
-        Assert.Contains("app/two-level.ts>" + SqlClient, pairs);
+        Assert.Contains("app/one-level.ts>packages/effect/src/sql/index.ts", pairs, StringComparer.Ordinal);
+        Assert.Contains("app/one-level.ts>" + SqlClient, pairs, StringComparer.Ordinal);
+        Assert.Contains("app/two-level.ts>" + SqlClient, pairs, StringComparer.Ordinal);
     }
 }
