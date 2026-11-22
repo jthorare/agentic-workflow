@@ -175,13 +175,8 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
         Detail.Show(url, status);
         Api = url.Authority;
         Lease = StatusText.Lease(status);
-        ProfileState = StatusText.ProfileState(status.Profile);
-        ProfileDetail = StatusText.ProfileDetail(status.Profile);
-        LiveProfile = status.Profile.Live;
-        ModelChoice.Show(status.Profile);
-        LabelChoice.Show(status.Profile);
-        SurfaceChoice.Show(status.Profile);
         Services = [.. status.Services.Select(StatusText.Service)];
+        ShowProfile(status.Profile);
         if (status.Running)
         {
             lock (_gate)

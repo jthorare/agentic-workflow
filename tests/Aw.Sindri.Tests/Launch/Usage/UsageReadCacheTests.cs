@@ -215,6 +215,7 @@ public sealed class UsageReadCacheTests : IDisposable
 
         Expect.Equal((1L, 3L), (Count(db, "SELECT COUNT(*) FROM inserted"), Count(db, "SELECT COUNT(*) FROM messages")));
         Expect.Equal(20L, Count(db, "SELECT offset FROM files"));
+        _ = Count(db, "DROP TRIGGER logged; DROP TABLE inserted; SELECT 0");
     }
 
     /// <summary>A cache file of another version is dropped at the first failed save and written fresh on the next pass; it does not fail every pass after.</summary>
