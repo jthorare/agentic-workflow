@@ -4,6 +4,7 @@
   "status": 404,
   "detail": "there is no map yet (fix: sindri context map import <file>)",
   "building": {
+    "stage": "map",
     "sourcesDone": 1,
     "sourcesTotal": 1,
     "filesDone": 4,

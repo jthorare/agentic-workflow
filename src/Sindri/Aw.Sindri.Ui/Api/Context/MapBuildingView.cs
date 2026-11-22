@@ -13,6 +13,7 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// <param name="StartedAt">When the build started.</param>
 /// <param name="LastSyncAt">When the last map was synced.</param>
 /// <param name="JobId">The build's job.</param>
+/// <param name="Stage">"map" while a map build runs, "index" while the first code index build of a mapped repo runs and no map build does (#3015); the files are that build's own count.</param>
 internal sealed record MapBuildingView(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? SourcesDone = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? SourcesTotal = null,
@@ -20,4 +21,5 @@ internal sealed record MapBuildingView(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? FilesTotal = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] DateTimeOffset? StartedAt = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] DateTimeOffset? LastSyncAt = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? JobId = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? JobId = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Stage = null);
