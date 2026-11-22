@@ -92,6 +92,8 @@ public sealed class WorkflowGoldenContractTests
 
         var archived = Read<WorkflowArchived>("workflows-slug", "archived");
         Assert.Equal(("morning-check", DateTimeOffset.Parse("2026-01-01T00:00:00Z", System.Globalization.CultureInfo.InvariantCulture)), (archived.Slug, archived.ArchivedAt));
+        Assert.Equal((0, 0L), (archived.RunsKept, archived.BytesFreed));
+        Assert.Empty(archived.ResourcesStayed);
     }
 
     [Fact]

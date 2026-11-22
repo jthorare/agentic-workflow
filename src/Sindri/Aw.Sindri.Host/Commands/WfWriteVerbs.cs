@@ -134,7 +134,7 @@ internal sealed class WfWriteVerbs(RecipeDesk desk, Output output)
         await Send(new Call<ActivateWorkflowBody, PauseWorkflowResponse>(HttpMethod.Post, "/sindri/workflows/" + Uri.EscapeDataString(slug) + "/pause", Body: null, static r => $"{r.Slug.Value} is off\n"), flags.Json, ct).ConfigureAwait(false), ct);
 
     internal Task<int> Delete(string[] args, CancellationToken ct) => OneSlug(args, DeleteUsage, flag: null, async (slug, flags) =>
-        await Send(new Call<ActivateWorkflowBody, DeleteWorkflowResponse>(HttpMethod.Delete, "/sindri/workflows/" + Uri.EscapeDataString(slug), Body: null, static r => $"{r.Slug.Value} is archived\n"), flags.Json, ct).ConfigureAwait(false), ct);
+        await Send(new Call<ActivateWorkflowBody, DeleteWorkflowResponse>(HttpMethod.Delete, "/sindri/workflows/" + Uri.EscapeDataString(slug), Body: null, static r => r.Sentence() + "\n"), flags.Json, ct).ConfigureAwait(false), ct);
 
     private async Task<int> OneSlug(string[] args, string usage, string? flag, Func<string, Flags, Task<int>> run, CancellationToken ct)
     {

@@ -1,12 +1,13 @@
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Runs;
 using Microsoft.Extensions.DependencyInjection;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
 
 namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
-/// The goldens of the workflow writes (issue 2258, PR 8b): a pause, an archive, the refusals (a stale base revision with the current revision, a body missing a field, an unknown workflow), a validate with nothing to validate, and the success answers
+/// The goldens of the workflow writes (issue 2258, PR 8b): a pause, an archive (with its runs kept and bytes freed), the refusals (an archive of an active workflow, SND-GRAPH-114, and of one with a run going, SND-GRAPH-115; a stale base revision with the current revision, a body missing a field, an unknown workflow), a validate with nothing to validate, and the success answers
 /// of a replace, an ops batch and an activate. The golden host runs the real block catalog (schedule, manual, condition, notify, prompt), so the seeded one-node 'manual' workflow validates; the listing of the blocks is pinned here too.
 /// A create that validates is pinned by the service tests.
 /// </summary>
@@ -21,7 +22,7 @@ internal static class WorkflowWriteScenarios
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
         ("workflows", "create-nothing-to-create"), ("workflows-validate", "validate-nothing-to-check"),
-        ("workflows-slug", "replace-stale"), ("workflows-slug", "archived"), ("workflows-slug", "archive-not-found"),
+        ("workflows-slug", "replace-stale"), ("workflows-slug", "archived"), ("workflows-slug", "archive-not-found"), ("workflows-slug", "archive-active"), ("workflows-slug", "archive-in-flight"),
         ("workflows-slug-ops", "ops-stale"), ("workflows-slug-ops", "ops-missing-fields"),
         ("workflows-slug-pause", "paused"), ("workflows-slug-activate", "not-found"),
         ("workflows-slug-ops", "ops-applied"), ("workflows-slug-activate", "activated"), ("workflows-blocks", "listed"), ("workflows-slug", "replaced"), ("workflows", "created"),
@@ -68,6 +69,19 @@ internal static class WorkflowWriteScenarios
         [("workflows-slug", "replace-stale")] = Seeded(newerRevision: true, h => Put(Route, "{\"baseRevision\":1,\"spec\":{\"version\":1,\"name\":\"Morning check\",\"nodes\":[],\"edges\":[]}}", h)),
         [("workflows-slug", "archived")] = Seeded(newerRevision: false, h => Delete(Route, h)),
         [("workflows-slug", "archive-not-found")] = Plain(h => Delete("/sindri/workflows/nope", h)),
+        [("workflows-slug", "archive-active")] = async (host, human, ct) =>
+        {
+            await Seed(host, newerRevision: false, ct);
+            _ = (await host.App.Services.GetRequiredService<IWorkflowStore>().Activate(_id, 1, ct)).Value;
+            return await Ask(host, Delete(Route, human));
+        },
+        [("workflows-slug", "archive-in-flight")] = async (host, human, ct) =>
+        {
+            await Seed(host, newerRevision: false, ct);
+            var run = new WorkflowRun(WorkflowRunId.Of(_slug, 1, 1), _id, 1, "{\"kind\":\"manual\"}", WorkflowRunStatus.Running, Outputs: null, Error: null, ItemId: null, host.Now(), EndedAt: null);
+            _ = (await host.App.Services.GetRequiredService<IWorkflowRunStore>().Insert(run, ct)).Value;
+            return await Ask(host, Delete(Route, human));
+        },
         [("workflows-slug-ops", "ops-stale")] = Seeded(newerRevision: true, h => Post(Route + "/ops", $"{{\"baseRevision\":1,\"ops\":{Rename}}}", h)),
         [("workflows-slug-ops", "ops-missing-fields")] = Seeded(newerRevision: false, h => Post(Route + "/ops", "{}", h)),
         [("workflows-slug-pause", "paused")] = Seeded(newerRevision: false, h => Post(Route + "/pause", json: null, h)),
