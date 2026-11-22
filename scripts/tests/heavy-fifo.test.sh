@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Tests for scripts/heavy.sh's arrival order (#3819): a waiter takes a free slot only when no older live waiter of the same
 # pool is queued (wait-file since, then pid). Covers: three box-wide waiters get one slot in arrival order, and three light
-# ones; a live older wait file holds a free slot back and its removal lets the job through; a dead one, one without
-# "fifo":1, one of another pool and one of another session hold nothing; the session pool is ordered too; a meta job skips
+# ones; a live older wait file holds a free slot back and its removal lets the job through; a dead one, one whose pid now
+# belongs to another process (its "start" differs) or that has no "start", one without "fifo":1, one of another pool and one of
+# another session hold nothing; the session pool is ordered too; a meta job skips
 # older waiters and nobody waits for a meta waiter; AW_HEAVY_FIFO_MAX_DEFER lets a waiter through; standing back counts toward
 # the lock timeout; an empty queue adds no wait; the wait file carries "fifo":1, and "meta":1 for a meta job.
 # A fake dotnet on PATH waits for a go file per job. Scratch state and lock dirs only; every pid killed is one this suite
@@ -79,11 +80,26 @@ reset() {
   find "$RUN" "$LOCKS" -mindepth 1 -delete 2> /dev/null
   echo 1 > "$STATE/heavy-slots-cap"; echo 1 > "$STATE/heavy-light-cap"; JOB_ENV=""; SCRIPT=""
 }
-# fake <pid> <lock> [<extra fields>] [<session>]: an older wait file (since 2026-01-01) for <pid>.
+# start_of <pid>: the process start token heavy.sh writes as "start" (Linux: field 22 of /proc/<pid>/stat, read after the
+# last ")"; macOS: ps lstart, spaces as _). Empty when the pid is gone.
+start_of() {
+  local l r f
+  if [ -r "/proc/$1/stat" ]; then
+    IFS= read -r l < "/proc/$1/stat" 2> /dev/null || return 0
+    r="${l##*) }"; read -r -a f <<< "$r"; printf '%s' "${f[19]:-}"
+  else
+    r="$(ps -o lstart= -p "$1" 2> /dev/null)"; read -r -a f <<< "$r"; (IFS=_; printf '%s' "${f[*]}")
+  fi
+}
+# fake <pid> <lock> [<extra fields>] [<session>] [<start>]: an older wait file (since 2026-01-01) for <pid>. <start> defaults
+# to <pid>'s real start token (a genuine waiter); "-" leaves the field out; anything else is written as given.
 fake() {
+  local st="${5:-auto}" sf=""
+  [ "$st" = auto ] && st="$(start_of "$1")"
+  [ "$st" = - ] || sf=",\"start\":\"$st\""
   mkdir -p "$LOCKS/heavy-wait"
-  printf '{"pid":%s,"session":%s,"lock":"%s","since":"2026-01-01T00:00:00Z","argv":["x"],"cwd":"/"%s}\n' \
-    "$1" "${4:-$$}" "$2" "${3-,\"fifo\":1}" > "$LOCKS/heavy-wait/$1"
+  printf '{"pid":%s,"session":%s,"lock":"%s","since":"2026-01-01T00:00:00Z"%s,"argv":["x"],"cwd":"/"%s}\n' \
+    "$1" "${4:-$$}" "$2" "$sf" "${3-,\"fifo\":1}" > "$LOCKS/heavy-wait/$1"
 }
 
 # --- three box-wide waiters get the one slot in arrival order ---
@@ -127,6 +143,15 @@ check "a live older light waiter holds a light build back" "$(yn '! started j')"
 # --- waiters that don't count ---
 reset; fake "$dead" box-wide; job j; wait_for 'started j'
 check "a dead older waiter's file is ignored" "$(yn 'started j')" "yes"
+# A SIGKILLed waiter's file stays; when another process gets its pid, the file must hold no job back, the first one or the next.
+reset; [ -n "$(start_of "$live")" ] && [ "$(start_of "$live")" != 1 ]; check "the live pid has a start token" "$?" "0"
+fake "$live" box-wide ',"fifo":1' "$$" 1
+job r1; wait_for 'started r1'
+check "a reused pid's wait file (start differs): the job takes the free slot at once" "$(yn 'started r1 && ! grep -q waiting "$RUN/out.r1"')" "yes"
+go r1; started r1 || kill "$(pid_of r1)" 2> /dev/null; wait "$(pid_of r1)" 2> /dev/null; job r2; wait_for 'started r2'
+check "a reused pid's wait file: the next job takes the free slot at once too" "$(yn 'started r2 && ! grep -q waiting "$RUN/out.r2"')" "yes"
+reset; fake "$live" box-wide ',"fifo":1' "$$" -; job n; wait_for 'started n'
+check "a fifo:1 wait file with no start is ignored" "$(yn 'started n && ! grep -q waiting "$RUN/out.n"')" "yes"
 reset; fake "$live" box-wide ""; job j; wait_for 'started j'
 check "an older file without fifo:1 (an older heavy.sh) is ignored" "$(yn 'started j')" "yes"
 reset; fake "$live" light; job j; wait_for 'started j'
