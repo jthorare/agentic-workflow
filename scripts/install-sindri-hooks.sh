@@ -31,6 +31,7 @@ if [ "${AW_DRY_RUN:-0}" = "1" ]; then
   fi
 elif [ "$AW_PROVIDER" = "claude" ]; then
   mkdir -p "$AW_HOOKS_INSTALL_DIR"
+  aw_install_failopen_lib "$AW_HOOKS_INSTALL_DIR"   # sindri-tasks logs its budget timeout through lib/failopen.sh
   cp "$SCRIPT_DIR/config/hooks/sindri-nudge.sh" "$AW_HOOKS_INSTALL_DIR/sindri-nudge.sh"
   chmod +x "$AW_HOOKS_INSTALL_DIR/sindri-nudge.sh"
   ENTRY=$(jq -nc --arg c "$AW_HOOKS_INSTALL_DIR/sindri-nudge.sh # aw:sindri-nudge" '{hooks:[{type:"command",command:$c}]}')
@@ -38,7 +39,7 @@ elif [ "$AW_PROVIDER" = "claude" ]; then
   echo "  sindri: SessionStart nudge installed for claude in $AW_HOOKS_CONFIG"
   cp "$SCRIPT_DIR/config/hooks/sindri-tasks.sh" "$AW_HOOKS_INSTALL_DIR/sindri-tasks.sh"
   chmod +x "$AW_HOOKS_INSTALL_DIR/sindri-tasks.sh"
-  TASKS_ENTRY=$(jq -nc --arg c "$AW_HOOKS_INSTALL_DIR/sindri-tasks.sh # aw:sindri-tasks" '{hooks:[{type:"command",command:$c,timeout:1}]}')
+  TASKS_ENTRY=$(jq -nc --arg c "$AW_HOOKS_INSTALL_DIR/sindri-tasks.sh # aw:sindri-tasks" '{hooks:[{type:"command",command:$c,timeout:4}]}')
   merge_hook "$AW_HOOKS_CONFIG" UserPromptSubmit aw:sindri-tasks "$TASKS_ENTRY"
   echo "  sindri: UserPromptSubmit fix-task hook installed for claude in $AW_HOOKS_CONFIG"
 else
@@ -48,7 +49,7 @@ else
   if [ "$AW_PROVIDER" = "cursor" ]; then
     aw_unsupported sindri-tasks "beforeSubmitPrompt cannot inject context"
   else
-    aw_hook_set UserPromptSubmit aw:sindri-tasks sindri-tasks.sh "" 1
+    aw_hook_set UserPromptSubmit aw:sindri-tasks sindri-tasks.sh "" 4
     echo "  sindri: UserPromptSubmit fix-task hook installed for $AW_PROVIDER in $AW_HOOKS_CONFIG"
   fi
 fi

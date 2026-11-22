@@ -16,6 +16,8 @@ internal sealed class EditorLauncher(ILauncher inner, Func<EditorEnvironment> en
 
     public Task<bool> OpenUri(Uri uri, CancellationToken cancellationToken) => inner.OpenUri(uri, cancellationToken);
 
+    public bool FileExists(string path) => inner.FileExists(path);
+
     public Task<bool> OpenFile(string path, CancellationToken cancellationToken)
     {
         if (Path.IsPathRooted(path) && File.Exists(path) && EditorCommand.Resolve(environment()) is { } argv && start([.. argv, path]))

@@ -26,6 +26,9 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
     {
     }
 
+    /// <summary>How many changed message ids the read state holds that no save has taken yet; always 0 for a reader with no cache. For tests.</summary>
+    internal int PendingChangedIds => _files.Values.Sum(static state => state.ChangedIds.Count);
+
     /// <inheritdoc/>
     public string Name => "claude-code";
 
@@ -71,11 +74,17 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
         }
     }
 
-    /// <summary>Saves what changed; a save that fails keeps the state in memory and tries again, in full, on the next pass.</summary>
+    /// <summary>Saves what changed; a save that fails keeps the state in memory and writes it whole on the next pass (the cache file was dropped by then).</summary>
     private void Persist()
     {
         if (cache is null)
         {
+            // nothing is saved, so nothing may pile up in the changed ids either
+            foreach (var state in _files.Values)
+            {
+                state.MarkSaved();
+            }
+
             return;
         }
 
@@ -84,14 +93,14 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
             cache.Save(Name, _files);
             foreach (var state in _files.Values)
             {
-                state.Dirty = false;
+                state.MarkSaved();
             }
         }
         catch (Exception e) when (e is InvalidDataException or IOException or UnauthorizedAccessException)
         {
             foreach (var state in _files.Values)
             {
-                state.Dirty = true;
+                state.MarkUnsaved();
             }
         }
     }
@@ -117,6 +126,8 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
         if (restarted)
         {
             state.Messages.Clear();
+            state.ChangedIds.Clear();
+            state.Rewrite = true;
         }
 
         foreach (var line in lines)
@@ -125,6 +136,7 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
             if (document is not null && Counted(document.RootElement) is { } counted)
             {
                 state.Messages[counted.Id] = (UsageJson.Timestamp(document.RootElement), counted.Tokens);
+                _ = state.ChangedIds.Add(counted.Id);
             }
         }
 
