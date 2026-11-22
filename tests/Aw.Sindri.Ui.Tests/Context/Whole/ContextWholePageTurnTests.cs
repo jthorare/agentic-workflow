@@ -55,7 +55,7 @@ public sealed class ContextWholePageTurnTests
     }
 
     [Fact]
-    public async Task Leaving_the_feature_before_its_page_answers_keeps_the_feature_closed()
+    public async Task Leaving_the_feature_before_its_page_answers_keeps_the_feature_closed_and_ends_the_skeleton_rows()
     {
         var api = new FakeSindriApi { WholeMapAnswer = AreaPage };
         var page = Page(api);
@@ -71,5 +71,6 @@ public sealed class ContextWholePageTurnTests
         await two;
 
         Assert.False(page.Whole.IsAreaOpen);
+        Assert.Equal((false, false), (page.Whole.ListLoading, page.Whole.IsListFailed));   // why: the dropped answer would have ended the skeleton rows, so leaving ends them
     }
 }
