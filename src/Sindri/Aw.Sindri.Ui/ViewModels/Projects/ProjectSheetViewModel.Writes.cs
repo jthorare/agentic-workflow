@@ -64,6 +64,10 @@ internal sealed partial class ProjectSheetViewModel
         {
             await Saved(cancellationToken, closeForm: false).ConfigureAwait(true);
         }
+        else
+        {
+            SelectedState = StateChoices.FirstOrDefault(s => string.Equals(s.Value, one.Project.State, StringComparison.Ordinal));   // a refused pick leaves no mark
+        }
     }
 
     /// <summary>A state chip was picked: the state is saved at once (#3719).</summary>
@@ -72,6 +76,11 @@ internal sealed partial class ProjectSheetViewModel
     /// <returns>A task that ends when the answer is drawn.</returns>
     internal Task PickState(ProjectStateChoice choice, CancellationToken cancellationToken)
     {
+        if (IsSaving)
+        {
+            return Task.CompletedTask;   // the chip is disabled while a write is in flight; a pick that gets here is dropped unmarked
+        }
+
         SelectedState = choice;
         return SetState(cancellationToken);
     }
