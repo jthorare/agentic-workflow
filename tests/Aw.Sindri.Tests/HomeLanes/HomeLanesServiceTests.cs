@@ -42,7 +42,7 @@ public sealed class HomeLanesServiceTests
         var first = await Tick();
         var second = await Tick();
 
-        Assert.Equal(["lane:recycle:meta", "gh:ready:jthorare/agentic-workflow#3099"], (await Raised()).Select(static r => r.Row.Id.Value).ToArray());
+        Assert.Equal(["lane:recycle:meta", "gh:ready:jthorare/agentic-workflow#3099"], [.. (await Raised()).Select(static r => r.Row.Id.Value)]);
         Assert.False(first.Idle);
         Assert.True(second.Idle);
     }
@@ -57,7 +57,7 @@ public sealed class HomeLanesServiceTests
 
         Assert.Equal(
             [EventTypes.HomeRowRaised, EventTypes.HomeRowRaised, EventTypes.HomeRowCleared, EventTypes.HomeRowCleared],
-            (await Events()).Select(static e => e.Envelope.Type).ToArray());
+            [.. (await Events()).Select(static e => e.Envelope.Type)]);
         Assert.Null((await _view.Get(HomeRowId.From("lane:recycle:meta"), Token)).Value);
     }
 

@@ -26,12 +26,12 @@ public sealed class HomeRunRowsTests
         Assert.Equal("sindri:run-failed:morning-check@3:12", row.Id.Value);
         Assert.Equal((1L, HomeKind.RunFailed, HomeGroup.NeedsYou, HomeState.Open), (row.Version, row.Kind, row.Group, row.State));
         Assert.Equal("morning-check failed: step 'fetch' failed: GitHub answered 502", row.Title);
-        Assert.Equal(["failed", "morning-check@3:12", "schedule"], row.Facts.Select(static f => f.Text).ToArray());
+        Assert.Equal(["failed", "morning-check@3:12", "schedule"], [.. row.Facts.Select(static f => f.Text)]);
         Assert.Equal([HomeFactKind.Why, HomeFactKind.Ref, HomeFactKind.From], row.Facts.Select(static f => f.Kind).ToArray());
         Assert.Equal("you", row.WaitsOn);
         Assert.Equal(_ended, row.Since);
         Assert.Equal(HomeRunRows.Weight, row.Rank.Weight);
-        Assert.Equal(["retry-run", "open-run", "hand-to-agent"], row.Actions.ToArray());
+        Assert.Equal(["retry-run", "open-run", "hand-to-agent"], [.. row.Actions]);
         Assert.Equal((HomeRunRows.SourceName, _read), (row.Source.Name, row.Source.ReadAt));
         Assert.Equal("run", Assert.Single(row.Links).Kind);
         Assert.Empty(raise.Edges);
@@ -64,7 +64,7 @@ public sealed class HomeRunRowsTests
     {
         var row = HomeRunRows.Failed(Failed("boom", item: ItemId.From("ITM-0000000000000000000000000000000c")), _read, new Masking()).Row;
 
-        Assert.Equal(["run", "item"], row.Links.Select(static l => l.Kind).ToArray());
+        Assert.Equal(["run", "item"], [.. row.Links.Select(static l => l.Kind)]);
         Assert.Equal("sindri:item:ITM-0000000000000000000000000000000c", row.Links[1].Id.Value);
     }
 

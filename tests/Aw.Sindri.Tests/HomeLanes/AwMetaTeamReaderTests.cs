@@ -67,7 +67,7 @@ public sealed class AwMetaTeamReaderTests : MetaTeamReaderContract
 
         _ = await reader.Read(Token);
 
-        Assert.Equal(["lanes-context --json", "status --json", "usage --json", "team-list --json"], runner.Calls.Select(static c => string.Join(' ', c.Arguments)).ToArray());
+        Assert.Equal(["lanes-context --json", "status --json", "usage --json", "team-list --json"], [.. runner.Calls.Select(static c => string.Join(' ', c.Arguments))]);
         Assert.All(runner.Calls, static c => Assert.Equal("/opt/aw/aw-meta", c.FileName));
     }
 
@@ -106,12 +106,7 @@ public sealed class AwMetaTeamReaderTests : MetaTeamReaderContract
             }))]),
             ["attention"] = exitCode == 1,
         };
-        var teams = new JsonObject
-        {
-            ["teams"] = new JsonArray(
-                new JsonObject { ["name"] = "other", ["layout"] = "warp", ["repo"] = "/home/owner/repos/other", ["lanes"] = new JsonArray(), ["live"] = false, ["selected"] = false },
-                new JsonObject { ["name"] = "sindri-v3", ["layout"] = "warp", ["repo"] = team.RepoDirectory, ["lanes"] = new JsonArray("meta"), ["metaSession"] = "sindri-v3-meta", ["live"] = true, ["selected"] = true }),
-        };
+        var teams = Teams(team);
         return (_, args) => args[0] switch
         {
             "lanes-context" => new ToolRun(ToolOutcome.Exited, exitCode, context.ToJsonString()),
@@ -121,6 +116,13 @@ public sealed class AwMetaTeamReaderTests : MetaTeamReaderContract
             _ => new ToolRun(ToolOutcome.Exited, 2, ""),
         };
     }
+
+    private static JsonObject Teams(MetaTeamRead team) => new()
+    {
+        ["teams"] = new JsonArray(
+            new JsonObject { ["name"] = "other", ["layout"] = "warp", ["repo"] = "/home/owner/repos/other", ["lanes"] = new JsonArray(), ["live"] = false, ["selected"] = false },
+            new JsonObject { ["name"] = "sindri-v3", ["layout"] = "warp", ["repo"] = team.RepoDirectory, ["lanes"] = new JsonArray("meta"), ["metaSession"] = "sindri-v3-meta", ["live"] = true, ["selected"] = true }),
+    };
 
     // aw-meta leaves a null optional key out (JsonIgnoreCondition.WhenWritingNull)
     private static JsonObject Drop(JsonObject node)

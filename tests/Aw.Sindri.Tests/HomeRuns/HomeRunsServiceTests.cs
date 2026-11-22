@@ -63,7 +63,7 @@ public sealed class HomeRunsServiceTests
         Assert.True((await _runs.MarkSeen(failed.Id, _h.Clock.GetUtcNow(), Token)).IsSuccess);
         _ = await Tick();
 
-        Assert.Equal([EventTypes.HomeRowRaised, EventTypes.HomeRowCleared], (await Events()).Select(static e => e.Envelope.Type).ToArray());
+        Assert.Equal([EventTypes.HomeRowRaised, EventTypes.HomeRowCleared], [.. (await Events()).Select(static e => e.Envelope.Type)]);
         Assert.Null((await _view.Get(HomeRunRows.IdOf(failed.Id), Token)).Value);
     }
 

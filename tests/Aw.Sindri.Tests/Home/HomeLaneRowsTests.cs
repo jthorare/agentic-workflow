@@ -30,7 +30,7 @@ public sealed class HomeLaneRowsTests
     {
         var rows = HomeLaneRows.From(Box(), Repo, _read, new PassThroughScrubber());
 
-        Assert.Equal(["lane:recycle:meta", "lane:recycle:ideas", "lane:limited:qa", $"gh:ready:{Repo}#3099", $"gh:ready:{Repo}#3101"], rows.Select(static r => r.Row.Id.Value).ToArray());
+        Assert.Equal(["lane:recycle:meta", "lane:recycle:ideas", "lane:limited:qa", $"gh:ready:{Repo}#3099", $"gh:ready:{Repo}#3101"], [.. rows.Select(static r => r.Row.Id.Value)]);
         Assert.Equal([HomeKind.LaneRecycle, HomeKind.LaneRecycle, HomeKind.AgentLimited, HomeKind.PrReadyMerge, HomeKind.PrReadyMerge], rows.Select(static r => r.Row.Kind).ToArray());
         Assert.All(rows, static r => Assert.Equal((HomeLaneRows.SourceName, _read, HomeState.Open, HomeGroup.NeedsYou), (r.Row.Source.Name, r.Row.Source.ReadAt, r.Row.State, r.Row.Group)));
     }
@@ -41,12 +41,12 @@ public sealed class HomeLaneRowsTests
         var meta = HomeLaneRows.From(Box(), Repo, _read, new PassThroughScrubber())[0].Row;
 
         Assert.Equal("meta: at 205k, recycle from a digest", meta.Title);
-        Assert.Equal(["at 200k", "meta", "lane meta"], meta.Facts.Select(static f => f.Text).ToArray());
-        Assert.Equal(["copy-digest-request", "open-session"], meta.Actions.ToArray());
+        Assert.Equal(["at 200k", "meta", "lane meta"], [.. meta.Facts.Select(static f => f.Text)]);
+        Assert.Equal(["copy-digest-request", "open-session"], [.. meta.Actions]);
         Assert.Equal(HomeLaneRows.LaneWeight, meta.Rank.Weight);
-        Assert.Equal(["lane", "session"], meta.Links.Select(static l => l.Kind).ToArray());
+        Assert.Equal(["lane", "session"], [.. meta.Links.Select(static l => l.Kind)]);
         Assert.Equal("at 210k", HomeLaneRows.RecycleWhy(219_999));
-        Assert.Equal("at the mark", HomeLaneRows.RecycleWhy(null));
+        Assert.Equal("at the mark", HomeLaneRows.RecycleWhy(tokens: null));
     }
 
     [Fact]
@@ -65,8 +65,8 @@ public sealed class HomeLaneRowsTests
         var qa = HomeLaneRows.From(Box(), Repo, _read, new PassThroughScrubber())[2].Row;
 
         Assert.Equal("qa: stopped at its weekly limit, resets Nov 14 17:00 UTC", qa.Title);
-        Assert.Equal(["limited", "qa", "claude-code"], qa.Facts.Select(static f => f.Text).ToArray());
-        Assert.Equal(["open-session"], qa.Actions.ToArray());
+        Assert.Equal(["limited", "qa", "claude-code"], [.. qa.Facts.Select(static f => f.Text)]);
+        Assert.Equal(["open-session"], [.. qa.Actions]);
     }
 
     [Fact]
@@ -77,11 +77,11 @@ public sealed class HomeLaneRowsTests
         var ready = rows[3].Row;
         var merging = rows[4].Row;
         Assert.Equal(("PR 3099 is ready to merge", "you"), (ready.Title, ready.WaitsOn));
-        Assert.Equal(["merge", "open"], ready.Actions.ToArray());
-        Assert.Equal(["ready", "#3099", "meta queue"], ready.Facts.Select(static f => f.Text).ToArray());
+        Assert.Equal(["merge", "open"], [.. ready.Actions]);
+        Assert.Equal(["ready", "#3099", "meta queue"], [.. ready.Facts.Select(static f => f.Text)]);
         Assert.Equal($"gh:pr:{Repo}#3099", Assert.Single(ready.Links).Id.Value);
         Assert.Equal("meta is merging (queued 2 (AWAITING_CHECKS))", merging.WaitsOn);
-        Assert.Equal(["open"], merging.Actions.ToArray());
+        Assert.Equal(["open"], [.. merging.Actions]);
         Assert.Equal(HomeLaneRows.ReadyWeight, ready.Rank.Weight);
     }
 

@@ -67,7 +67,7 @@ public sealed class HomeReconcileTests
 
         var plan = HomeReconcile.Plan([waits, actions], [held, Want(B).Row]);
 
-        Assert.Equal([A, B], plan.Changed.Select(static c => c.Row.Id.Value).ToArray());
+        Assert.Equal([A, B], [.. plan.Changed.Select(static c => c.Row.Id.Value)]);
     }
 
     [Fact]

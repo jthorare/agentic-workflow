@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Home;
 using Aw.Sindri.Infrastructure.Home;
@@ -16,9 +17,9 @@ public sealed class AwMetaJsonTests
 
         Assert.Null(read.Unavailable);
         Assert.Equal(200_000, read.RecycleAt);
-        Assert.Equal(["meta:Ok:146236", "api:Recycle:212004"], read.Lanes.Select(static l => $"{l.Lane}:{l.Verdict}:{l.Tokens}").ToArray());
+        Assert.Equal(["meta:Ok:146236", "api:Recycle:212004"], [.. read.Lanes.Select(static l => string.Create(CultureInfo.InvariantCulture, $"{l.Lane}:{l.Verdict}:{l.Tokens}"))]);
         Assert.All(read.Lanes, static l => Assert.Null(l.SessionName));   // the real status has no lanes.entries: no session name, so no lane-to-PR edge
-        Assert.Equal([2897, 2950, 3214], read.MergeQueue.Select(static q => q.Pr).ToArray());
+        Assert.Equal([2897, 2950, 3214], [.. read.MergeQueue.Select(static q => q.Pr)]);
         Assert.Equal("queued 2", read.MergeQueue[2].Github);
         var engine = Assert.Single(read.Usage, static u => u.State == "Limited");
         Assert.Equal(("engine", "Session"), (engine.Subject, engine.Kind));
@@ -48,7 +49,7 @@ public sealed class AwMetaJsonTests
         Assert.Equal(["sindri-v3-meta", "sindri-v3-api"], read.Lanes.Select(static l => l.SessionName).ToArray());
         Assert.Equal("/r/agentic-workflow", read.RepoDirectory);
         var api = Assert.Single(rows, static r => r.Row.Id.Value == "lane:recycle:api");
-        Assert.Equal(["gh:ready:jthorare/agentic-workflow#3214"], api.Edges.Select(static e => e.To).ToArray());
+        Assert.Equal(["gh:ready:jthorare/agentic-workflow#3214"], [.. api.Edges.Select(static e => e.To)]);
         Assert.All(api.Edges, static e => Assert.Equal(HomeEdgeKind.ItemOf, e.Edge));
     }
 }
