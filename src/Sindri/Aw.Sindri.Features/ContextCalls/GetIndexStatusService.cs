@@ -6,6 +6,7 @@ using Aw.Context.Core.Sync;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Doctor;
+using Aw.Sindri.Core.Scheduling;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
@@ -13,7 +14,8 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <param name="scopes">The profile's scope and the caller.</param>
 /// <param name="engine">Context's facade: its record-feed members are Tick and Progress.</param>
 /// <param name="started">How long this serve has run, for the first-pass limit (#3832).</param>
-internal sealed class GetIndexStatusService(ContextScopes scopes, IContextEngine engine, SourceSyncClock started) : IService<GetIndexStatusRequest, IndexStatusView>
+/// <param name="pauses">The paused services: a paused index-sync never trips the first-pass limit (#3909).</param>
+internal sealed class GetIndexStatusService(ContextScopes scopes, IContextEngine engine, SourceSyncClock started, IServicePauses pauses) : IService<GetIndexStatusRequest, IndexStatusView>
 {
     public async ValueTask<Result<IndexStatusView>> Handle(GetIndexStatusRequest request, CancellationToken cancellationToken)
     {
@@ -32,6 +34,7 @@ internal sealed class GetIndexStatusService(ContextScopes scopes, IContextEngine
         // why: the concepts part is extra; a failed read leaves the feed rows standing and carries its code
         var concepts = await engine.ConceptStatus(scope.Value, cancellationToken).ConfigureAwait(false);
         var store = await engine.CheckStore(cancellationToken).ConfigureAwait(false);
+        _ = pauses;
         var running = started.Running();
         return new IndexStatusView([.. progress.Value.Select(p => Row(p, running))]) { Concepts = concepts.IsError ? new IndexConceptsView(Enabled: true, Code: concepts.Error.Code) : Concepts(concepts.Value), Store = Store(store) };
     }
