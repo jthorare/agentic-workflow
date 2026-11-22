@@ -1,7 +1,6 @@
 using Aw.CodeIndex.Core.Facade;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Core.Values;
-using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Features.CodeIndexJobs;
 using RepoStatus = Aw.CodeIndex.Core.Facade.RepoStatus;
 
