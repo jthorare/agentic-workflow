@@ -73,7 +73,10 @@ public sealed class ListWorkflowRunsReadTests
     [Theory]
     [InlineData("{\"kind\":\"manual\",\"by\":\"owner\"}", "manual")]
     [InlineData("{\"kind\":\"manual\",\"by\":\"session:s1\"}", "agent")]
-    [InlineData("{\"kind\":\"manual\",\"by\":\"cli\"}", "cli")]
+    [InlineData("{\"kind\":\"manual\",\"by\":\"session:launch:L-1\"}", "agent")]
+    [InlineData("{\"kind\":\"manual\",\"by\":\"human:cli\"}", "cli")]
+    [InlineData("{\"kind\":\"manual\",\"by\":\"human:ui\"}", "manual")]
+    [InlineData("{\"kind\":\"manual\",\"by\":\"human:http\"}", "manual")]
     [InlineData("{\"kind\":\"schedule\",\"scheduledFor\":\"2026-11-14T10:40:00Z\"}", "schedule")]
     public async Task The_trigger_is_one_of_manual_schedule_cli_or_agent(string stored, string served)
     {
