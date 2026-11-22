@@ -6,6 +6,8 @@ namespace Aw.Context.Tests.QueryContext;
 
 public sealed class CodeRankerTests
 {
+    private static readonly string[] SharedWordPaths = ["src/SplitAlpha.ts", "src/SplitBeta.ts", "src/SplitGamma.ts", "src/ZoomResize.ts", "src/Other.ts"];
+
     private static ResultItem Code(string path, int depth) =>
         new("code", "code:" + path, path, "implements feature:x", Score: null, ["implements→feature:x"], Provenance.Deterministic, Confirmed: false, Trust.Untrusted, ["C1"])
         { Depth = depth };
@@ -70,7 +72,7 @@ public sealed class CodeRankerTests
     [Fact, Trait("Lane", "unit")]
     public void A_word_most_candidates_share_does_not_lift_one_file_over_a_file_that_matches_a_rarer_word()
     {
-        var items = new[] { "src/SplitAlpha.ts", "src/SplitBeta.ts", "src/SplitGamma.ts", "src/ZoomResize.ts", "src/Other.ts" }.Select(p => Code(p, depth: 2)).ToList();
+        var items = SharedWordPaths.Select(p => Code(p, depth: 2)).ToList();
 
         var page = CodeRanker.Rank(items, "split resize", symbol: null, offset: 0, CodeRanker.DefaultLimit);
 
@@ -80,7 +82,7 @@ public sealed class CodeRankerTests
     [Fact, Trait("Lane", "unit")]
     public void The_why_never_cites_a_word_that_scores_zero()
     {
-        var items = new[] { "src/SplitAlpha.ts", "src/SplitBeta.ts", "src/SplitGamma.ts", "src/ZoomResize.ts", "src/Other.ts" }.Select(p => Code(p, depth: 2)).ToList();
+        var items = SharedWordPaths.Select(p => Code(p, depth: 2)).ToList();
 
         var page = CodeRanker.Rank(items, "split resize", symbol: null, offset: 0, CodeRanker.DefaultLimit);
 
