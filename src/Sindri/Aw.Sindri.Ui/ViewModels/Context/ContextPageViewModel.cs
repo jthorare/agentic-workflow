@@ -24,6 +24,45 @@ internal sealed partial class ContextPageViewModel : ObservableObject
         Concepts = new ConceptLayerViewModel(id => _ = OpenConcept(id));
         InitConcepts();
         InitPageSheet();
+        Ports.Follow((api, cancellationToken) => InOrder(_follows, api, cancellationToken));
+    }
+
+    // The page's reads after every event, one after another in the order they were added: the shell runs the followed views
+    // side by side (#2775), but these read each other's state (the rules line reads the whole map's answer, the whole map the build's state).
+    private readonly List<Func<Uri, CancellationToken, Task>> _follows = [];
+
+    private void Follow(Func<Uri, CancellationToken, Task> read) => _follows.Add(read);
+
+    /// <summary>
+    /// Runs the reads one after another. One that throws stops none after it: the first exception comes out once all have run, as the
+    /// shell's own refresh reports a view that throws (a cancelled refresh still ends at once).
+    /// </summary>
+    /// <param name="reads">The reads, in order.</param>
+    /// <param name="api">The API's base URL.</param>
+    /// <param name="cancellationToken">Cancels the reads.</param>
+    /// <returns>A task that ends when every read has.</returns>
+    internal static async Task InOrder(IReadOnlyList<Func<Uri, CancellationToken, Task>> reads, Uri api, CancellationToken cancellationToken)
+    {
+        System.Runtime.ExceptionServices.ExceptionDispatchInfo? first = null;
+        foreach (var read in reads)
+        {
+            try
+            {
+                await read(api, cancellationToken).ConfigureAwait(true);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+#pragma warning disable CA1031 // why: kept and thrown again below, once the reads after it have run
+            catch (Exception e)
+#pragma warning restore CA1031
+            {
+                first ??= System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(e);
+            }
+        }
+
+        first?.Throw();
     }
 
     /// <summary>What the page and its stages read through.</summary>
