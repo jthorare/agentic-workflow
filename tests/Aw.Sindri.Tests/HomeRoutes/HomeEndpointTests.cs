@@ -70,6 +70,31 @@ public sealed class HomeEndpointTests
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task A_rank_explain_for_an_id_with_slashes_and_a_hash_is_read_percent_encoded()
+    {
+        await using var host = await Start(HomeFixture.View());
+        await ViewScenarios.Approve(host, Token);
+        var segment = HomeRowId.From(HomeFixture.Review).PathSegment();
+
+        var answer = await host.Http.Ask(Get($"/sindri/home/rank/{segment}", ItemScenarios.Human(host)));
+
+        Assert.Equal(HttpStatusCode.OK, answer.Status);
+        Assert.Equal(HomeFixture.Review, JsonDocument.Parse(answer.Body).RootElement.GetProperty("id").GetString());
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task An_unknown_encoded_row_names_the_decoded_id()
+    {
+        await using var host = await Start(HomeFixture.View());
+        await ViewScenarios.Approve(host, Token);
+
+        var answer = await host.Http.Ask(Get($"/sindri/home/rows/{HomeRowId.From("gh:review:a/b#999").PathSegment()}", ItemScenarios.Human(host)));
+
+        Assert.Equal((HttpStatusCode.NotFound, "SND-HOME-002"), (answer.Status, answer.Code));
+        Assert.Contains("gh:review:a/b#999", answer.Body, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task Session_ledger_hides_home_events()
     {
         await using var host = await Start(HomeFixture.View());
