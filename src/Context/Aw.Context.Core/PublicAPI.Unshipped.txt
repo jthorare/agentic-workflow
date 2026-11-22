@@ -7841,6 +7841,8 @@ static Aw.Context.Core.Concepts.ConceptMembersView.operator !=(Aw.Context.Core.C
 static Aw.Context.Core.Concepts.ConceptMembersView.operator ==(Aw.Context.Core.Concepts.ConceptMembersView? left, Aw.Context.Core.Concepts.ConceptMembersView? right) -> bool
 Aw.Context.Core.Concepts.ConceptsBasis
 Aw.Context.Core.Concepts.ConceptsBasis.<Clone>$() -> Aw.Context.Core.Concepts.ConceptsBasis!
+Aw.Context.Core.Concepts.ConceptsBasis.Changed.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.DateTimeOffset>?
+Aw.Context.Core.Concepts.ConceptsBasis.Changed.init -> void
 Aw.Context.Core.Concepts.ConceptsBasis.MapVersion.get -> string!
 Aw.Context.Core.Concepts.ConceptsBasis.MapVersion.init -> void
 Aw.Context.Core.Concepts.ConceptsBasis.Repo.get -> string?
@@ -7859,7 +7861,7 @@ const Aw.Context.Core.Concepts.ConceptStates.Empty = "empty" -> string!
 const Aw.Context.Core.Concepts.ConceptStates.Building = "building" -> string!
 const Aw.Context.Core.Concepts.ConceptStates.Unavailable = "unavailable" -> string!
 Aw.Context.Core.Concepts.ConceptBuilder
-static Aw.Context.Core.Concepts.ConceptBuilder.Build(Aw.Context.Core.Concepts.ConceptsBasis! basis, Aw.Context.Core.Concepts.ConceptsQuery! query, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text, Aw.Context.Core.Concepts.PinSet? pins = null, System.Collections.Generic.IReadOnlyDictionary<string!, System.DateTimeOffset>? changed = null) -> Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptsView!>!
+static Aw.Context.Core.Concepts.ConceptBuilder.Build(Aw.Context.Core.Concepts.ConceptsBasis! basis, Aw.Context.Core.Concepts.ConceptsQuery! query, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text, Aw.Context.Core.Concepts.PinSet? pins = null) -> Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptsView!>!
 static Aw.Context.Core.Concepts.ConceptBuilder.CodePaths(Aw.Context.Core.Concepts.ConceptsBasis! basis, Aw.Context.Core.Concepts.ConceptsQuery! query, Aw.Context.Core.Graph.GraphSnapshot! graph) -> System.Collections.Generic.IReadOnlyList<string!>!
 static Aw.Context.Core.Concepts.ConceptBuilder.Members(Aw.Context.Core.Concepts.ConceptsBasis! basis, Aw.Context.Core.Concepts.ConceptMembersQuery! query, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text) -> Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptMembersView!>!
 Aw.Context.Core.Facade.IContextConcepts

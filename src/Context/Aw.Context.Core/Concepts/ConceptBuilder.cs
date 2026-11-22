@@ -19,9 +19,8 @@ public static class ConceptBuilder
     /// <param name="graph">The graph the caller may see.</param>
     /// <param name="text">The caller's text policy.</param>
     /// <param name="pins">The pins the caller sees; a pin's definition and aliases are read from them over the map's. Null reads none.</param>
-    /// <param name="changed">The newest change time of code files by repo-relative path (see <see cref="CodePaths"/>); a concept's last change is the newest of its files'. Null knows none.</param>
     /// <returns>The view, or SND-CONTEXT-006 for a bad page.</returns>
-    public static Result<ConceptsView> Build(ConceptsBasis basis, ConceptsQuery query, GraphSnapshot graph, MapText text, PinSet? pins = null, IReadOnlyDictionary<string, DateTimeOffset>? changed = null)
+    public static Result<ConceptsView> Build(ConceptsBasis basis, ConceptsQuery query, GraphSnapshot graph, MapText text, PinSet? pins = null)
     {
         ArgumentNullException.ThrowIfNull(basis);
         ArgumentNullException.ThrowIfNull(query);
@@ -41,7 +40,7 @@ public static class ConceptBuilder
         var end = offset + page.Count;
         var other = new ConceptOther(NodeKey.From(ConceptKeys.Other), OtherName, Size(index, index.MembersOf(ConceptKeys.Other)));
         var pages = PageReader.ByConcept(graph);
-        var rows = page.Select(n => Row(index, n, text, pins, pages.GetValueOrDefault(n.Key.Value), changed)).ToList();
+        var rows = page.Select(n => Row(index, n, text, pins, pages.GetValueOrDefault(n.Key.Value)) with { LastChanged = LastChanged(index, n, basis.Changed) }).ToList();
         return new ConceptsView(1, basis.Repo, basis.MapVersion, index.Concepts.Count == 0 ? ConceptStates.Empty : ConceptStates.Ok, Code: null, rows, other, Links(index, edges, page), ConceptPages.Next(basis.MapVersion, end, matching.Count)) { PagesInNoConcept = PagesInNoConcept.Of(graph).Count };
     }
 
@@ -143,7 +142,7 @@ public static class ConceptBuilder
 
     private static IReadOnlyList<string>? Suggested(ConceptPageSet? pages) => pages is { Suggested.Count: > 0 } ? pages.Suggested : null;
 
-    private static ConceptRow Row(ConceptIndex index, GraphNode node, MapText text, PinSet? pins, ConceptPageSet? pages, IReadOnlyDictionary<string, DateTimeOffset>? changed)
+    private static ConceptRow Row(ConceptIndex index, GraphNode node, MapText text, PinSet? pins, ConceptPageSet? pages)
     {
         var trust = TrustPolicy.ForNode(node, node.Provenance == Provenance.Human);
         var pinned = pins?.IsPinned(node.Key) == true;
@@ -153,7 +152,7 @@ public static class ConceptBuilder
         var citations = node.EvidenceOrEmpty.Select(e => new ConceptCitation(text.Line(e.Key.Value), e.Span)).ToList();
         var terms = ConceptTermsAttribute.Of(node).Select(t => text.Label(t, trust)).ToList();
         var aliases = own?.AliasesOf(node.Key).Select(a => text.Label(a, trust)).ToList() ?? [];
-        return new ConceptRow(node.Key, text.Label(node.Label, trust), summary, source, Size(index, index.MembersOf(node.Key.Value)), citations) { Terms = terms.Count == 0 ? null : terms, Pinned = pinned, Aliases = aliases.Count == 0 ? null : aliases, Pages = pages?.Count ?? 0, SuggestedPages = Suggested(pages), LastChanged = LastChanged(index, node, changed) };
+        return new ConceptRow(node.Key, text.Label(node.Label, trust), summary, source, Size(index, index.MembersOf(node.Key.Value)), citations) { Terms = terms.Count == 0 ? null : terms, Pinned = pinned, Aliases = aliases.Count == 0 ? null : aliases, Pages = pages?.Count ?? 0, SuggestedPages = Suggested(pages) };
     }
 
     // A pin's definition is the approved profile's, over the node's from the last build.

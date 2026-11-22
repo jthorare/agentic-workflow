@@ -11,7 +11,7 @@ public sealed class ConceptLastChangedTests
     private static readonly DateTimeOffset _new = new(2026, 11, 20, 8, 15, 0, TimeSpan.Zero);
 
     private static ConceptsView Read(IReadOnlyDictionary<string, DateTimeOffset>? changed) =>
-        ConceptBuilder.Build(ConceptGraph.Basis, new ConceptsQuery(MapRead.Current, new ConceptPage()), ConceptGraph.Product().Build(), ConceptGraph.Text, pins: null, changed).Value;
+        ConceptBuilder.Build(ConceptGraph.Basis with { Changed = changed }, new ConceptsQuery(MapRead.Current, new ConceptPage()), ConceptGraph.Product().Build(), ConceptGraph.Text).Value;
 
     [Fact, Trait("Lane", "unit")]
     public void Concepts_carry_the_newest_file_change_time()

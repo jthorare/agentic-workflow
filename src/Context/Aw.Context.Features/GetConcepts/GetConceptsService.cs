@@ -23,6 +23,6 @@ internal sealed class GetConceptsService(ConceptReader reader, ConceptChangeTime
         var paths = ConceptBuilder.CodePaths(basis, query, read.Value.Graph);
         var repos = request.Scope.Repos.Where(r => basis.Repo is null || string.Equals(r.Name.Value, basis.Repo, StringComparison.Ordinal));
         var changed = await times.Read(repos, paths, cancellationToken).ConfigureAwait(false);
-        return ConceptBuilder.Build(basis, query, read.Value.Graph, read.Value.Text, read.Value.Pins, changed);
+        return ConceptBuilder.Build(basis with { Changed = changed }, query, read.Value.Graph, read.Value.Text, read.Value.Pins);
     }
 }
