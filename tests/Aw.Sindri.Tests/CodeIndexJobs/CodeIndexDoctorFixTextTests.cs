@@ -39,6 +39,14 @@ public sealed class CodeIndexDoctorFixTextTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_pin_mismatch_009_keeps_the_setup_reinstall_fix()
+    {
+        var fix = FixOn("code-index:ollama", LayerName.Embeddings, "SND-CODEIDX-009");
+
+        Assert.Equal("./setup.sh re-installs the pin", fix);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_code_with_no_fix_text_points_at_the_json_report_not_at_setup()
     {
         var fix = FixOn("code-index:graphify", LayerName.Graph, "SND-CODEIDX-099");
