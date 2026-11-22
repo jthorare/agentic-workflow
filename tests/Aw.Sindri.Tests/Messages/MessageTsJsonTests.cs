@@ -48,4 +48,15 @@ public sealed class MessageTsJsonTests
         Assert.Throws<JsonException>(() => JsonSerializer.Deserialize(json, MessagesJsonContext.Default.MessageTsHolder));
         Assert.Equal(KernelErrors.Invalid.Code, AwJson.Deserialize<MessageTsHolder>(Encoding.UTF8.GetBytes(json), _json).Error.Code);
     }
+
+    [Theory]
+    [InlineData(MineReason.DirectMessage, "\"directMessage\"")]
+    [InlineData(MineReason.WroteInThread, "\"wroteInThread\"")]
+    [InlineData(MineReason.NamedMe, "\"namedMe\"")]
+    [InlineData(MineReason.Followed, "\"followed\"")]
+    public void Mine_reason_round_trips_as_a_camel_case_string(MineReason reason, string json)
+    {
+        Assert.Equal(json, Encoding.UTF8.GetString(AwJson.Serialize(reason, _json)));
+        Assert.Equal(reason, AwJson.Deserialize<MineReason>(Encoding.UTF8.GetBytes(json), _json).Value);
+    }
 }
