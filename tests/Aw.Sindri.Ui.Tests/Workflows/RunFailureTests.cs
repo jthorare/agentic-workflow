@@ -74,7 +74,7 @@ public sealed class RunFailureTests
     public async Task A_failed_run_whose_node_carries_no_failure_keeps_the_engine_text_in_the_header()
     {
         var served = Golden("workflow-runs-run", "failed");
-        served["nodes"]![0]!.AsObject().Remove("failure");
+        _ = served["nodes"]![0]!.AsObject().Remove("failure");
         _f.ServeRun(served);
 
         var run = await _f.OpenedRun(Token);

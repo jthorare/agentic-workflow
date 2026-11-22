@@ -94,7 +94,7 @@ public static class StepFailures
     // why: a row whose sentence needs a value the error does not carry (SND-GRAPH-113's field) has no sentence here; the app shows the raw error instead
     private static bool Fills(string template, Dictionary<string, string> values)
     {
-        for (var open = template.IndexOf('{'); open >= 0; open = template.IndexOf('{', open + 1))
+        for (var open = template.IndexOf('{', StringComparison.Ordinal); open >= 0; open = template.IndexOf('{', open + 1))
         {
             var close = template.IndexOf('}', open);
             if (close < 0)
