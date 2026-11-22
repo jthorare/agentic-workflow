@@ -23,7 +23,7 @@ pre#measure { display:none; }
 body.w1000 { width:1000px; height:700px; }
 body.w1000 .app { height:700px; }
 body.w1000 .cmdk { width:150px; }
-body.w1000 .cmdk kbd { display:none; }
+/* at 1000 the bar keeps "Search…" and its keycap (TopBar.axaml:91) */
 body.w1000 .nav a { padding:4px 7px; }
 body.w1000 .topbar { gap:8px; }
 
@@ -145,3 +145,28 @@ body.w1000 .body.peeking .row.pj, body.w1000 .body.peeking .row.colhead.pj { gri
 .peek-fields dt, .peek-fields dd { height:auto; min-height:28px; }
 .peek-fields dd { flex-wrap:wrap; row-gap:2px; padding:3px 0; }
 .keys span.fx { padding:2px 6px; }
+
+/* ---------- round 8 ---------- */
+/* a draft does not count for health: its glyph sits apart, after a hairline (only when other glyphs precede it), so "of N" matches the glyphs before it */
+.fact.prs .pc + .pc.dr { border-left:1px solid var(--hair-strong); padding-left:8px; }
+/* the CI-not-checked dot: a brighter ring, so it is not the faintest mark on a hovered row */
+.hd.unk { border-color:var(--ink-muted); }
+
+/* ---------- round 9 ---------- */
+/* spec 3.1 card marks: "counting…" in the Items cell during the one-time re-read; a project no longer in the store reads greyed (name in ink-subtle, the phrase as its reason) */
+.row.pj .fact.it.counting { overflow:visible; white-space:nowrap; color:var(--ink-subtle); font-style:italic; }
+.row.pj.gone .title .t { color:var(--ink-subtle); }
+.row.pj.gone .title .sub { color:var(--ink-subtle); font-style:italic; }
+
+/* ---------- round 10 ---------- */
+/* the reason line: dot, the server's reason (shrinks first, ellipsis), then the Linear tail (never shrinks) */
+.row.pj .title .sub { display:flex; align-items:center; }
+.row.pj .title .sub .hd { flex:none; }
+.row.pj .title .sub .why { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.row.pj .title .sub .lin { flex:none; margin-left:4px; white-space:nowrap; }
+/* Create project in the header bar: no key badge; at 1000 the + icon */
+.hbtn { height:28px; box-sizing:border-box; display:inline-flex; align-items:center; padding:0 10px; font-size:12px; white-space:nowrap; }
+body.w1000 .hbtn { width:28px; padding:0; justify-content:center; font-size:15px; }
+/* at 1000 the header keeps the four tabs on one line next to the + button: the search field gives up 50 px */
+.tabs a { white-space:nowrap; }
+body.w1000 .fld { width:150px; }

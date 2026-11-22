@@ -77,3 +77,76 @@ Spec section 14 (the #3168 health table) versus #3718 groups: the lead files the
 - long-name-1000 peek ends on a whole section (Open PRs); the Note sits below the fold.
 - Narrow reason rule: when the reason has under about 120 px, the row shows only the level dot (long-name at 1440, peek open). The full reason is in the peek's Derived row.
 - Focus: one ring, 2 px primary-hi, drawn inside the control. focus-controls draws the tab ring on Needs me, which has no pill beside it.
+
+## Round 8 (qa on r7: 3 holds, 10 nits)
+- long-name (Group = State, peek open): every group that fits, in order, rows by last activity. In progress 6 (Checkout rewrite first at 1h, the long-named SSO rollout last at 1d), Planned 6, then Paused 5 cut after 4 rows (Tenant isolation). Same budget rule as by_health (gen.py `by_state`). The name fits at 1440 (no ellipsis), so this frame draws no tooltip; long-name-1000 keeps it.
+- Draft PRs never count as open. Every count in a frame follows that: the Checkout rewrite peek reads "Open PRs 3 · 1 draft · from acme/api and acme/web", matching "At risk: 1 of 3 PRs red". The other peeks (Billing v2 9, Import wizard 2, SSO rollout 4) have no draft and already agreed. On a row the draft glyph sits after a hairline, apart from the PRs that count (Checkout rewrite, Dark mode); a drafts-only row (Rate limits) has no hairline.
+- first-run (new): no Linear and no project. Tab counts 0 / 0 / 0 / 0, no search/sort/group bar (nothing to find), the §14 sheet's words: "No projects yet. A project groups issues and PRs and shows whether they are on track. Create one, or connect Linear to bring yours in." Primary: Create project (`p`); secondary: Connect Linear. The footer adds `p create project`.
+- The CI-not-checked dot ring is --ink-muted (was --ink-subtle). (Its group is gone, see part 2.)
+- A list cut by height draws the cut group's head when it fits (projects, peek, menus, menus-group, no-linear-row, focus-controls end on "No open PRs 8" and its first row; stale on the head alone); its rows scroll. Still no Finished after a cut.
+- Peek: Derived shows the level once (dot + reason, no chip). The by-hand peek lists items once: "Items 2/5 3 open, from the PRs' linked items".
+- needs-me-empty: "No PR waits on your review, and no project you lead has red CI."
+- search-none footer: only "Esc clear" (0 rows: nothing to move to or open).
+- Top-bar pill reads "Sindri running" on every frame, so it can't be read as Linear's state.
+- 1280 x 800 with the peek open (no frame): the list is 860 px. Minus the 24 px insets that leaves 812; the fixed columns (glyph 16, PRs 144, Items 56, Agents 48, Blocked on 112, Target 96, Active 44) plus 7 gaps of 12 take 600, so name + reason get 212, under the 220 minimum. Agents drops first (it is in the peek): name + reason get 272. The reason then shows dot-only for names over about 150 px (the under-120 px rule). Items, Target stay. Below 860 the 1000 rule applies (name, PRs, Blocked on, Active).
+
+## Round 8, part 2 (the projects lane checked guesses.md against the code)
+- Health groups follow the spec's list (spec:447): Off track, At risk, On track, No open PRs (the spec's "No links"; null health = no open non-draft PR). The spec has no group for the unknown level, so its 3 rows (reason "CI not checked yet for N of M PRs", hollow dot) sit in On track, where nothing is red. Group counts are now 3 / 3 / 8 / 8 (gen.py `GROUPS`, `grp`, assert); the level counts stay 3 / 3 / 3 / 5 / 8. Open question: guesses 1.
+- Row order is the served order: exact last activity, then name (ProjectCards.cs:40). SSO rollout is a little older than Billing v2 (both show 1d), so it is last in Needs me and the long-named row stays last at 1000.
+- Kept-place row: Import wizard, now a by-hand project (only a by-hand project's activity moves on an owner edit, ProjectCards.cs:144). Its age reads `<1m` (Labels.NeedsYou.cs:74), not "now". Billing v2 (Linear-led) has no "note saved" line any more: a notes edit on a led project doesn't change its age, so nothing moves.
+- The top bar's search is always "Search…" plus the Ctrl+K keycap, at 1440 and 1000 (Labels.cs:69, TopBar.axaml:91). The 1000 variant without the keycap is gone.
+- "Blocked on you" stays as drawn.
+
+### Key map (every key on the Projects page, one action each)
+Shell keys that are taken everywhere: bare `g` starts the page chord (ShellViewModel.Keys.cs:26), `c` opens the item create box (:66-68), `n` opens the quick-add todo box on every page (ShellWindow.Overlays.cs:53-68), `j`/`k` move, `Enter` opens, `y` copies the row's CLI, `/` search, `?` shortcuts, Ctrl+K the palette, Ctrl+N the create form. `l` switches Work's view (Work only). Page-only keys on other pages (`a`, `d`, `x`, `h`) don't reach Projects.
+
+| Key | Action on Projects | Where it shows |
+|---|---|---|
+| `j` / `k` | move between rows | footer |
+| `Space` | open / close the peek | footer |
+| `Enter` | open the project (also the peek's "Open" button) | footer, peek |
+| `Esc` | layered: clear search when the field has text, else close a menu, else close the peek, else back | footer, search box, menus |
+| `/` | search | footer, search box |
+| `Ctrl+K` | palette | footer, top bar |
+| `1` to `4` | Needs me, My work, Projects, Triage (needs its own handler: the shell passes no digits) | footer; badges "Back to Needs me 1", "Open Projects 3" |
+| `o` | sort menu (no shell handler takes a bare O; O after G is the Connections chord) | footer |
+| `b` | group menu ("group by"; no shell handler, and #2996 / the §14 sheet don't use it) | footer |
+| (no key) | Create project: no bare key (`n` is the app-wide quick-add, ShellWindow.Overlays.cs:53-69, and runs first; `p` is #2996's priority; lead's decision, round 10). Reach it with the "Create project" button in the header bar (a + icon at 1000, same accessible name), on first-run and my-work-empty, by Tab / Enter, or as "Create project" in the Ctrl+K palette | header bar, first-run, my-work-empty, palette |
+| `↑` `↓`, `Enter`, `Esc` | inside an open menu: move, choose, close | menu footer |
+| `↓` | from the search box to the list | search footer |
+| `Ctrl+Enter` | Draft update (peek; on Needs you it is a page-only key) | peek |
+| (empty views) | no row keys: `Esc` back, `/` search (views with a bar), `Ctrl+K`, `1-4`, on first-run | footer of first-run, needs-me-empty, my-work-empty, triage-empty |
+| later, from the §14 sheet | `.` actions (#3171), `x` select (#3169), `s` state…, `a` lead…, `i` self-assign…, `p` priority…, `m` mine only (#2996) on a project row | not drawn yet; none of them is used above |
+No key is bound to two actions on this page, now or once the sheet's row keys land.
+
+## Round 9 (review-r8: 6 holds, 5 smalls)
+- Health groups are the server's five levels in the enum doc's order: Off track 3, At risk 3, CI not checked 3, On track 5, No open PRs 8 (gen.py `GROUPS`, assert). OnTrack means every open PR was checked, so the not-checked rows never sit under On track. The spec's list needs one line (guesses.md).
+- Every count comes from the row data in gen.py: tab counts (Needs me and My work from the rows), group heads, search "N of M" (search matches name, note and lead, gen.py `match_where`), the peek's "Open PRs" line (gen.py `prs_head`), "4 more open PRs".
+- Search "Checkout": Projects 2 of 32 and Needs me 2 of 6 (Checkout rewrite by name, Billing v2 "matched in note").
+- PR cell order: CI red, waiting, not checked, ready, then the draft after its hairline. The glyphs before the hairline add up to the reason's "of N" (Dark mode: 1 red + 1 ready = "of 2").
+- linear-expired replaces not-connected, with the §14 sheet's words: "Linear connection expired · Linear projects last updated 3d ago · Reconnect Linear". Rows are Linear's last read. first-run keeps "Connect Linear" (spec §3.1 state 4: no Linear at all).
+- By-hand projects have no lead: the peek reads "Lead none · by hand". My work = projects you lead plus the ones you made by hand (still 6). my-work-empty: "No projects of yours yet. Projects you lead or made by hand show here, grouped by state." Checkout rewrite's ask is now "review" (the "you lead it and CI is red" rule needs a lead).
+- A Linear-led row whose Linear health differs spells out both: "At risk: 3 of 9 PRs red, 1 not checked yet · Linear says on track" (Billing v2). When the column is narrow the tail ellipsizes like any reason (peek frames, needs-me-1000); the peek's Linear says row keeps it.
+- Empty views draw no row keys (first-run, needs-me-empty, my-work-empty, triage-empty).
+- stale uses spec §3.1 state 3 verbatim: "Linear and GitHub data unavailable: <the error's one line>", here "GitHub API rate limit, resets at 10:58", then a Retry link (not in the spec's sentence).
+- Column header: one name, "Blocked on" (issue #3717's row list), in every view. In Needs me the cell adds the ask: "you · review", "you · fix CI".
+
+### Spec states, now drawn (review-r8 small 3)
+- marks (new frame): the freshness line in the normal state with the re-read running (spec §3.1 and §4.3 words): "Linear projects synced 4 min ago · Linear issues: re-reading for project links, 1,200 / ~4,000 · GitHub 3 min ago · Linear says you're joi". Linear-led rows' Items read "counting…" (by-hand rows count from their PRs). Docs portal is an attached project no longer in the store: greyed name, reason "no longer synced from Linear", no counts; its peek offers Remove (not drawn). The list ends on Finished 10 and Hidden 2.
+- Hidden (n) fold: after Finished in every list that reaches the end (marks, linear-expired), "Hidden 2 · projects you hid"; not in the 32.
+- group-repo (new frame): Group = Repo. One group per repo of the project's open PRs (drafts don't count), acme/api 8 then acme/web 10, then No open PRs; a project with open PRs in both repos shows in both groups. The web group is cut by height after 9 rows (same cut rule).
+- The create sheet that the Create project button opens: the existing Add project sheet (spec §3.2), not redrawn here.
+
+## Round 10 (review-r9: 2 holds, 3 smalls)
+- Create project has no key badge anywhere. It is a button in the header bar after Group ("Create project"; a + icon at 1000 with the same accessible name), on first-run and on my-work-empty, and a palette entry. At 1000 the search field is 150 px so the four tabs stay on one line.
+- The reason line is three parts: the level dot, the server's reason in its own span (shrinks first, ellipsis), and the Linear tail "· Linear says on track" in a span that never shrinks. The tail is whole in every frame: needs-me-1000, peek, no-linear-row, long-name, projects, search, stale, group-repo. The server string is unchanged; the full reason is in the tooltip and the peek's Derived row.
+- My work = projects you lead, attached or made by hand (no attached rows in the data, so still 6). my-work-empty: "Projects you lead, attach or make by hand show here, grouped by state."
+- By-hand peek: Lead reads "none" (Source already says "by hand").
+- stale: "Linear and GitHub data unavailable: Sindri's context store isn't answering (timeout after 5 s) · Retry" (spec state 3 is one Context error for both).
+
+## Round 11 (review-r10: 1 hold, 4 smalls)
+- Hidden is not in the Projects count. The fold reads "Hidden 2 · projects you hid · not counted" (spec §3: "Hidden (n) (projects the owner hid)"). The tab count = every grouped row + Finished: 22 + 10 = 32, never Hidden (assert in gen.py next to `HID`).
+- The freshness line's "Linear says you're …" shows the Linear viewer's display name (`viewer`, ProjectsPage.cs:12), not a GitHub login. The frames use the spec's sample name, "Jo Smith".
+- group-repo: the PR column is headed "PRs in this repo". A project in two repos shows only that repo's PRs in each group (gen.py `REPO_PRS`, asserted to add up to the project's PRs). The reason stays the project's own, so "of N" there counts every repo.
+- The group menu's Repo hint reads "acme/api, acme/web…", the same names as the groups.
+- focus-controls draws the 2 px inset ring on the Create project button too.
