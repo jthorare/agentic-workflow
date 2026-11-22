@@ -8,7 +8,7 @@ public interface IProfileKeyWriter
     /// <summary>Plans the edit of <paramref name="keyPath"/> to <paramref name="value"/> and writes nothing.</summary>
     /// <param name="keyPath">The dotted key, such as `context.models.labeling.pick`.</param>
     /// <param name="value">The value as typed; the writer decides whether it is a boolean, a number or a string.</param>
-    /// <returns>The file, the edited text and whether it differs; SND-CLI-003 for a key that isn't a dotted path; SND-PROFILE-002 for a layout Sindri won't edit (a flow-style parent, a map or list at the key); SND-PROFILE-001 when the file can't be read.</returns>
+    /// <returns>The file, the edited text and whether it differs; SND-CLI-003 for a key that isn't a dotted path; SND-PROFILE-002 for a layout Sindri won't edit (a flow-style parent, a map or list at the key); SND-PROFILE-004 when the file can't be read.</returns>
     public Result<ProfileKeyEdit> Plan(string keyPath, string value);
 
     /// <summary>Plans the edit like <see cref="Plan"/>, but the value is always written as a quoted string (a login of digits stays a string, not a number).</summary>
@@ -24,11 +24,11 @@ public interface IProfileKeyWriter
 
     /// <summary>Plans the removal of <paramref name="keyPath"/> (a scalar, a map or a list) and writes nothing: the key's lines go, comments and every other line stay, and a parent map left empty goes too.</summary>
     /// <param name="keyPath">The dotted key, such as `todo.obsidian`.</param>
-    /// <returns>The file, the edited text and whether it differs (a key that is already absent is unchanged); SND-CLI-003 for a key that isn't a dotted path; SND-PROFILE-002 for a layout Sindri won't edit; SND-PROFILE-001 when the file can't be read.</returns>
+    /// <returns>The file, the edited text and whether it differs (a key that is already absent is unchanged); SND-CLI-003 for a key that isn't a dotted path; SND-PROFILE-002 for a layout Sindri won't edit; SND-PROFILE-004 when the file can't be read.</returns>
     public Result<ProfileKeyEdit> PlanRemove(string keyPath);
 
     /// <summary>Writes a planned edit atomically (a temporary file renamed over the profile), keeping the file's mode. Nothing is written when the edit is unchanged.</summary>
     /// <param name="edit">The plan from <see cref="Plan"/>.</param>
-    /// <returns>The profile file's path; SND-PROFILE-001 when it can't be written.</returns>
+    /// <returns>The profile file's path; SND-PROFILE-005 when it can't be written.</returns>
     public Result<string> Save(ProfileKeyEdit edit);
 }
