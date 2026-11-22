@@ -30,11 +30,12 @@ internal sealed partial class OpsEditor
         {
             var boolean = string.Equals(field.Type, "boolean", StringComparison.Ordinal);
             var text = EditorFieldText.Of(example, field);
-            Fields.Add(new ConfigFieldViewModel(field, text.Length == 0 && boolean && field.Required ? "false" : text));   // why: a required check box shows a value, and the value it shows is the one sent
+            Fields.Add(new ConfigFieldViewModel(field, text.Length == 0 && boolean && field.Required ? "false" : text, block.Type));   // why: a required check box shows a value, and the value it shows is the one sent; the box already holds the example, so no example line under it
         }
 
         NodeHeading = Labels.WfEditorNewStep(block.Title);
-
+        AdvancedOpen = false;   // a new Code step gets the code box and a shut Advanced group, like an existing one (#3682)
+        OnChanged(nameof(HasAdvancedFields));
         OnChanged(nameof(HasPendingStep));
     }
 
@@ -49,6 +50,7 @@ internal sealed partial class OpsEditor
         _pending = null;
         Fields.Clear();
         NodeHeading = string.Empty;
+        OnChanged(nameof(HasAdvancedFields));
         OnChanged(nameof(HasPendingStep));
     }
 
