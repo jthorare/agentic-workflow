@@ -18,6 +18,7 @@ using Aw.Sindri.Features.SearchWorkflowDocs;
 using Aw.Sindri.Host;
 using Aw.Sindri.Host.Mcp;
 using Aw.Sindri.Testing.Workflow;
+using Aw.Sindri.Tests.RunWorkflow;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
 
@@ -86,7 +87,7 @@ public sealed class WorkflowToolsTests
         var ids = new SequentialIdGenerator();
         var callers = new AsyncLocalCallerContextAccessor(ids);
         var clock = TimeProvider.System;
-        var service = new RunWorkflowService(new InMemoryWorkflowStore(clock), new InMemoryWorkflowRunStore(clock), new NeverStarter(), new Launches(run), callers, clock);   // why: the guard lives in the service now (#2452); the tool must still answer its refusal
+        var service = new RunWorkflowService(new InMemoryWorkflowStore(clock), new InMemoryWorkflowRunStore(clock), new NeverStarter(), new Launches(run), callers, clock, new FixtureChecker());   // why: the guard lives in the service now (#2452); the tool must still answer its refusal
         await using var services = Services(s => s.AddSingleton<ICallerContextAccessor>(callers).AddSingleton<IService<RunWorkflowRequest, RunWorkflowResponse>>(service));
         using var caller = callers.Enter(new CallerContext(CallerClass.Session, Terminal: false, "session:s1", ids.New<CommandId>(), ids.New<CorrelationId>(), Repo: null, launch));
 

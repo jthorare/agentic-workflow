@@ -138,7 +138,7 @@ internal static class Usage
         "       sindri wf validate <file> [--json]   check a workflow graph in-process: findings naming node and field with the fix, or its hash (exit 0 pass, 1 findings, 2 error)",
         "       sindri wf blocks [--json]   the block types a workflow can use, grouped as the picker shows them, with config fields, outputs and branches (exit 0 ok, 1 not running)",
         "       sindri wf docs [<question words>] [--page <slug>] [--json]   search the workflow docs, read one page (--page block-schedule) or list the pages (exit 0 ok, 1 not running, 2 unknown page)",
-        "       sindri wf run <slug> [--payload JSON] [--json]   start a run of the workflow's active revision by hand: started, queued or skipped by its concurrency (exit 0 ok, 1 not running, 2 refused)",
+        "       sindri wf run <slug> [--revision <n>] [--payload JSON] [--json]   start a run of the workflow's active revision by hand (--revision: that saved revision once, the active one stays): started, queued or skipped by its concurrency (exit 0 ok, 1 not running, 2 refused)",
         "       sindri wf list [--json]   the workflows that are not archived: slug, name, active revision, who saved the newest (exit 0 ok, 1 not running)",
         "       sindri wf show <slug> [--revision <n|latest>] [--json]   one workflow: the revision it runs (or the saved revision --revision names), who saved its newest, its nodes and edges (--json adds the spec and node positions; exit 0 ok, 1 not running, 2 unknown)",
         "       sindri wf runs <slug> [--json]   a workflow's newest 50 runs, newest first, with status and trigger (exit 0 ok, 1 not running, 2 unknown)",

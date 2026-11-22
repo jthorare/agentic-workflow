@@ -35,7 +35,7 @@ public sealed class RunWorkflowRevisionTests
     {
         _workflows = new InMemoryWorkflowStore(_clock);
         _callers = new AsyncLocalCallerContextAccessor(_ids);
-        _service = new RunWorkflowService(_workflows, new InMemoryWorkflowRunStore(_clock), _starter, new NoLaunches(), _callers, _clock);
+        _service = new RunWorkflowService(_workflows, new InMemoryWorkflowRunStore(_clock), _starter, new NoLaunches(), _callers, _clock, new FixtureChecker());
     }
 
     [Fact]

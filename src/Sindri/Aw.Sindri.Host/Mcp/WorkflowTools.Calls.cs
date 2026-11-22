@@ -169,16 +169,29 @@ internal static partial class WorkflowTools
 
     private static async ValueTask<CallToolResult> CallRun(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {
-        var slug = McpArguments.Only(Run, arguments, ["slug", "payload"]) is { } refused ? refused : Slug(Run, arguments);
-        var payload = Json(Run, arguments, "payload", JsonValueKind.Object);
-        if (slug.IsError || payload.IsError)
+        var request = BindRun(services, arguments);
+        if (request.IsError)
         {
-            return McpResults.Failure(services, slug.IsError ? slug.Error : payload.Error);
+            return McpResults.Failure(services, request.Error);
         }
 
-        var caller = services.GetRequiredService<ICallerContextAccessor>().Current;
-        var answer = await services.GetRequiredService<IService<RunWorkflowRequest, RunWorkflowResponse>>().Handle(new RunWorkflowRequest(slug.Value, payload.Value, caller?.Actor ?? "owner"), ct).ConfigureAwait(false);
+        var answer = await services.GetRequiredService<IService<RunWorkflowRequest, RunWorkflowResponse>>().Handle(request.Value, ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static started => $"{started.Status} {started.Run.Value}{(started.Reason is null ? string.Empty : ": " + started.Reason)}");
+    }
+
+    // The slug, the payload and the optional revision to run once (#3691; a whole number of 1 or more, so a wrap past int is refused here, not run).
+    private static Result<RunWorkflowRequest> BindRun(IServiceProvider services, IDictionary<string, JsonElement>? arguments)
+    {
+        var slug = McpArguments.Only(Run, arguments, ["slug", "payload", "revision"]) is { } refused ? refused : Slug(Run, arguments);
+        var payload = Json(Run, arguments, "payload", JsonValueKind.Object);
+        var revision = McpArguments.OptionalLong(Run, arguments, "revision", min: 1, max: int.MaxValue);
+        if (slug.IsError || payload.IsError || revision.IsError)
+        {
+            return slug.IsError ? slug.Error : payload.IsError ? payload.Error : revision.Error;
+        }
+
+        var by = services.GetRequiredService<ICallerContextAccessor>().Current?.Actor ?? "owner";
+        return new RunWorkflowRequest(slug.Value, payload.Value, by, (int?)revision.Value);
     }
 
     private static async ValueTask<CallToolResult> CallCancel(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
