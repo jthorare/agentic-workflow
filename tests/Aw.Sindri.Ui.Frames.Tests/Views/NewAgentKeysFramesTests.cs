@@ -55,4 +55,18 @@ public sealed class NewAgentKeysFramesTests : FrameHost
 
         Assert.Equal((false, true), (shell.NewAgent.IsOpen, shell.QuickAdd.IsOpen));
     });
+
+    [Fact]
+    public Task With_the_form_open_and_focus_on_its_Start_button_J_does_not_walk_the_rows_behind_3384() => OnUi(async () =>
+    {
+        var (window, shell) = await OnAgents();
+        shell.NewAgent.Open();
+        Settle(window);
+        _ = Named<Button>(window, "NewAgentStart").Focus();
+        Settle(window);
+
+        Press(window, Key.J, PhysicalKey.J);
+
+        Assert.Null(shell.Agents.SelectedKey);
+    });
 }
