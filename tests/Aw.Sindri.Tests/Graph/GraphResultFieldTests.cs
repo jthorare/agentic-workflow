@@ -12,8 +12,11 @@ namespace Aw.Sindri.Tests.Graph;
 public sealed class GraphResultFieldTests
 {
     // daily -> rank -> tell
-    private static GraphSpec Base(string? result) => Spec([Trigger("daily"), Search("rank"), Notify("tell", "{{rank.facts}}")], [Edge("daily", "rank"), Edge("rank", "tell")])
-        with { Result = result is null ? null : NodeId.From(result) };
+    private static GraphSpec Base(string? result)
+    {
+        var spec = Spec([Trigger("daily"), Search("rank"), Notify("tell", "{{rank.facts}}")], [Edge("daily", "rank"), Edge("rank", "tell")]);
+        return spec with { Result = result is null ? null : NodeId.From(result), };
+    }
 
     [Fact]
     public void A_result_that_names_no_node_is_refused()

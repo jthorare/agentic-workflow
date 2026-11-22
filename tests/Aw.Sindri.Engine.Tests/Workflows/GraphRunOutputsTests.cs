@@ -42,7 +42,7 @@ public sealed class GraphRunOutputsTests
         Assert.Equal(WorkflowRunStatus.Succeeded, run.Status);
         Assert.NotNull(run.Outputs);
         var outputs = JsonNode.Parse(run.Outputs)!.AsObject();
-        Assert.Equal(["rank"], outputs.Select(static p => p.Key));
+        Assert.Equal(["rank"], outputs.Select(static p => p.Key), StringComparer.Ordinal);
         Assert.Equal("rank", outputs["rank"]!["node"]!.GetValue<string>());
     }
 
@@ -52,13 +52,13 @@ public sealed class GraphRunOutputsTests
         await using var rig = await GraphRig.StartAsync();
         var spec = GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("rank", "echo"), Large("tell")],
-            [GraphRig.Edge("start", "rank"), GraphRig.Edge("rank", "tell")]) with { Result = NodeId.From("rank") };
-        var workflow = await rig.Define(spec);
+            [GraphRig.Edge("start", "rank"), GraphRig.Edge("rank", "tell")]);
+        var workflow = await rig.Define(spec with { Result = NodeId.From("rank"), });
 
         var run = await rig.Final((await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited)).RunId);
 
         var outputs = JsonNode.Parse(run.Outputs!)!.AsObject();
-        Assert.Equal(["rank"], outputs.Select(static p => p.Key));
+        Assert.Equal(["rank"], outputs.Select(static p => p.Key), StringComparer.Ordinal);
     }
 
     [Fact]

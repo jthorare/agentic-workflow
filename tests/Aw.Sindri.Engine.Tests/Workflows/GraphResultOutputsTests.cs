@@ -13,9 +13,11 @@ public sealed class GraphResultOutputsTests
 {
     private static readonly WorkflowRunId _run = WorkflowRunId.From("result@1:1");
 
-    private static GraphSpec Spec(string[] nodes, (string From, string To)[] edges, string? result = null) =>
-        GraphRig.Spec("unlimited", [.. nodes.Select(static n => GraphRig.Node(n, "echo"))], [.. edges.Select(static e => GraphRig.Edge(e.From, e.To))])
-            with { Result = result is null ? null : NodeId.From(result) };
+    private static GraphSpec Spec(string[] nodes, (string From, string To)[] edges, string? result = null)
+    {
+        var spec = GraphRig.Spec("unlimited", [.. nodes.Select(static n => GraphRig.Node(n, "echo"))], [.. edges.Select(static e => GraphRig.Edge(e.From, e.To))]);
+        return spec with { Result = result is null ? null : NodeId.From(result), };
+    }
 
     private static NodeRun Row(string node, string output, int item = 0, NodeRunStatus status = NodeRunStatus.Succeeded, bool truncated = false) =>
         new(_run, NodeId.From(node), item, status, Input: null, output, truncated, Error: null, Usage: null);
@@ -32,7 +34,7 @@ public sealed class GraphResultOutputsTests
 
         var outputs = Outputs(GraphResultOutputs.Build(spec, rows));
 
-        Assert.Equal(["last"], outputs.Select(static p => p.Key));
+        Assert.Equal(["last"], outputs.Select(static p => p.Key), StringComparer.Ordinal);
         Assert.Equal(2, outputs["last"]!["findings"]!.AsArray().Count);
     }
 
@@ -44,7 +46,7 @@ public sealed class GraphResultOutputsTests
 
         var outputs = Outputs(GraphResultOutputs.Build(spec, rows));
 
-        Assert.Equal(["rank"], outputs.Select(static p => p.Key));
+        Assert.Equal(["rank"], outputs.Select(static p => p.Key), StringComparer.Ordinal);
         Assert.Equal("x", outputs["rank"]!["top"]!.GetValue<string>());
     }
 
@@ -56,7 +58,7 @@ public sealed class GraphResultOutputsTests
 
         var outputs = Outputs(GraphResultOutputs.Build(spec, rows));
 
-        Assert.Equal(["yes"], outputs.Select(static p => p.Key));
+        Assert.Equal(["yes"], outputs.Select(static p => p.Key), StringComparer.Ordinal);
     }
 
     [Fact]
