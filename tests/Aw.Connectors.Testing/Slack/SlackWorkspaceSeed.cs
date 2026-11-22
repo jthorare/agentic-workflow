@@ -102,5 +102,5 @@ public static class SlackWorkspaceSeed
         .Add(General, Message(MentionTs, "Lee Sample", "<@" + Me + "> the nightly build is red on main, can you check?"), Lee)
         .Add(Private, Message(PrivateTs, "Lee Sample", "The rota swap for next week is confirmed."), Lee);
 
-    private static SlackMessage Message(string ts, string author, string text, string? threadTs = null) => new(ts, threadTs, author, text, 0, null);
+    private static SlackMessage Message(string ts, string author, string text, string? threadTs = null) => new(ts, threadTs, author, text, ReplyCount: 0, Subtype: null);
 }

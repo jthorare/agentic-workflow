@@ -53,8 +53,8 @@ public sealed class FakeSlackServerTests : IDisposable
         Assert.Equal(Pat, dm["user"]!.GetValue<string>());
 
         var (_, history) = await Call("conversations.history?channel=" + DirectMessage);
-        Assert.Equal([DmWaitingTs, DmMyAnswerTs, DmAnsweredTs], Values(history, "messages", "ts"));
-        Assert.Equal([Pat, Me, Pat], Values(history, "messages", "user"));
+        Assert.Equal([DmWaitingTs, DmMyAnswerTs, DmAnsweredTs], Values(history, "messages", "ts"), StringComparer.Ordinal);
+        Assert.Equal([Pat, Me, Pat], Values(history, "messages", "user"), StringComparer.Ordinal);
 
         _ = _server.ScriptRateLimit("conversations.history", 30);
         var (limited, body) = await Call("conversations.history?channel=" + DirectMessage);
@@ -86,8 +86,8 @@ public sealed class FakeSlackServerTests : IDisposable
         var (_, plain) = await Call("users.conversations");
         var (_, privateOnly) = await Call("users.conversations?types=private_channel");
 
-        Assert.Equal([DirectMessage, GroupMessage, General, Private], Values(all, "channels", "id"));
-        Assert.Equal([General], Values(plain, "channels", "id"));
+        Assert.Equal([DirectMessage, GroupMessage, General, Private], Values(all, "channels", "id"), StringComparer.Ordinal);
+        Assert.Equal([General], Values(plain, "channels", "id"), StringComparer.Ordinal);
         var ops = Assert.Single(privateOnly["channels"]!.AsArray())!;
         Assert.True(ops["is_private"]!.GetValue<bool>());
         Assert.True(ops["is_group"]!.GetValue<bool>());
@@ -103,9 +103,9 @@ public sealed class FakeSlackServerTests : IDisposable
         var cursor = first["response_metadata"]!["next_cursor"]!.GetValue<string>();
         var (_, second) = await Call("users.conversations?limit=3&cursor=" + cursor + types);
 
-        Assert.Equal([DirectMessage, GroupMessage, General], Values(first, "channels", "id"));
+        Assert.Equal([DirectMessage, GroupMessage, General], Values(first, "channels", "id"), StringComparer.Ordinal);
         Assert.NotEmpty(cursor);
-        Assert.Equal([Private], Values(second, "channels", "id"));
+        Assert.Equal([Private], Values(second, "channels", "id"), StringComparer.Ordinal);
         Assert.Empty(second["response_metadata"]!["next_cursor"]!.GetValue<string>());
     }
 
@@ -119,8 +119,8 @@ public sealed class FakeSlackServerTests : IDisposable
         var (_, kept) = await Call("users.conversations");
         var (_, hidden) = await Call("users.conversations?exclude_archived=true");
 
-        Assert.Equal([General, "C0003OLD"], Values(kept, "channels", "id"));
-        Assert.Equal([General], Values(hidden, "channels", "id"));
+        Assert.Equal([General, "C0003OLD"], Values(kept, "channels", "id"), StringComparer.Ordinal);
+        Assert.Equal([General], Values(hidden, "channels", "id"), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -143,7 +143,7 @@ public sealed class FakeSlackServerTests : IDisposable
     {
         var (_, history) = await Call("conversations.history?channel=" + General);
 
-        Assert.Equal([MentionTs, ThreadRootTs], Values(history, "messages", "ts"));
+        Assert.Equal([MentionTs, ThreadRootTs], Values(history, "messages", "ts"), StringComparer.Ordinal);
         var root = history["messages"]![1]!;
         Assert.Equal(2, root["reply_count"]!.GetValue<int>());
         Assert.Equal(ThreadNewReplyTs, root["latest_reply"]!.GetValue<string>());
@@ -158,9 +158,9 @@ public sealed class FakeSlackServerTests : IDisposable
         var (_, newer) = await Call(thread + "&oldest=" + ThreadMyReplyTs);
         var (_, inclusive) = await Call(thread + "&oldest=" + ThreadMyReplyTs + "&inclusive=true");
 
-        Assert.Equal([ThreadRootTs, ThreadMyReplyTs, ThreadNewReplyTs], Values(whole, "messages", "ts"));
-        Assert.Equal([ThreadRootTs, ThreadNewReplyTs], Values(newer, "messages", "ts"));
-        Assert.Equal([ThreadRootTs, ThreadMyReplyTs, ThreadNewReplyTs], Values(inclusive, "messages", "ts"));
+        Assert.Equal([ThreadRootTs, ThreadMyReplyTs, ThreadNewReplyTs], Values(whole, "messages", "ts"), StringComparer.Ordinal);
+        Assert.Equal([ThreadRootTs, ThreadNewReplyTs], Values(newer, "messages", "ts"), StringComparer.Ordinal);
+        Assert.Equal([ThreadRootTs, ThreadMyReplyTs, ThreadNewReplyTs], Values(inclusive, "messages", "ts"), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -182,7 +182,7 @@ public sealed class FakeSlackServerTests : IDisposable
         var (_, body) = await Call("emoji.list");
 
         var emoji = body["emoji"]!.AsObject();
-        Assert.Equal(["fixture-ok", "fixture-yes"], emoji.Select(static e => e.Key));
+        Assert.Equal(["fixture-ok", "fixture-yes"], emoji.Select(static e => e.Key), StringComparer.Ordinal);
         Assert.StartsWith("https://", emoji["fixture-ok"]!.GetValue<string>(), StringComparison.Ordinal);
         Assert.Equal("alias:fixture-ok", emoji["fixture-yes"]!.GetValue<string>());
     }
@@ -193,10 +193,10 @@ public sealed class FakeSlackServerTests : IDisposable
         var (_, to) = await Call("search.messages?query=" + Q("to:me"));
         var (_, from) = await Call("search.messages?query=" + Q("from:me"));
 
-        Assert.Equal([DmWaitingTs, GroupTs, MentionTs, DmAnsweredTs], SearchTs(to));
+        Assert.Equal([DmWaitingTs, GroupTs, MentionTs, DmAnsweredTs], SearchTs(to), StringComparer.Ordinal);
         Assert.Equal(4, to["messages"]!["total"]!.GetValue<int>());
         Assert.Equal(DirectMessage, to["messages"]!["matches"]![0]!["channel"]!["id"]!.GetValue<string>());
-        Assert.Equal([ThreadMyReplyTs, DmMyAnswerTs], SearchTs(from));
+        Assert.Equal([ThreadMyReplyTs, DmMyAnswerTs], SearchTs(from), StringComparer.Ordinal);
         Assert.Contains("?thread_ts=" + ThreadRootTs, from["messages"]!["matches"]![0]!["permalink"]!.GetValue<string>(), StringComparison.Ordinal);
     }
 
@@ -205,7 +205,7 @@ public sealed class FakeSlackServerTests : IDisposable
     {
         var (_, body) = await Call("search.messages?query=" + Q("Changelog in:general"));
 
-        Assert.Equal([ThreadMyReplyTs, ThreadRootTs], SearchTs(body));
+        Assert.Equal([ThreadMyReplyTs, ThreadRootTs], SearchTs(body), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -213,7 +213,7 @@ public sealed class FakeSlackServerTests : IDisposable
     {
         var (_, body) = await Call("search.messages?query=" + Q("to:me") + "&count=3&page=2");
 
-        Assert.Equal([DmAnsweredTs], SearchTs(body));
+        Assert.Equal([DmAnsweredTs], SearchTs(body), StringComparer.Ordinal);
         var paging = body["messages"]!["paging"]!;
         Assert.Equal(2, paging["page"]!.GetValue<int>());
         Assert.Equal(2, paging["pages"]!.GetValue<int>());

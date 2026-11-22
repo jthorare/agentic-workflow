@@ -14,7 +14,7 @@ namespace Aw.Connectors.Testing.Slack;
 /// query or a form body. Scripted answers come first: a revoked token answers every method with ok:false; a 429 with Retry-After can be queued for one method or
 /// for the next request (also ok:false, a redirect, a reply that reflects the token). It records every request and FAILS the run (throws) on a route it does not
 /// know, a history or replies read of a channel that is not allowed, or a search modifier it does not know. A conversation added with
-/// <see cref="AddConversation"/> is allowed. It is safe to call from several threads, so <c>Aw.Connectors.Testing.Server</c> can serve it over loopback HTTP.
+/// <see cref="AddConversation"/> is allowed. It is safe to call from several threads, so Aw.Connectors.Testing.Server can serve it over loopback HTTP.
 /// </summary>
 public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessageHandler
 {
@@ -36,7 +36,6 @@ public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessa
     private static readonly HashSet<string> _channelReads = new(["conversations.history", "conversations.replies"], StringComparer.Ordinal);
 
     private readonly Lock _gate = new();
-    private readonly SlackStore _store = new();
     private readonly HashSet<string> _allowed = new(allowedChannels ?? [], StringComparer.Ordinal);
     private readonly Queue<Func<HttpRequestMessage, HttpResponseMessage?>> _script = new();
     private readonly Dictionary<string, Queue<int?>> _methodLimits = new(StringComparer.Ordinal);
@@ -64,7 +63,7 @@ public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessa
         }
     }
 
-    internal SlackStore Store => _store;
+    internal SlackStore Store { get; } = new();
 
     internal IEnumerable<SlackUserSeed> Users => _users.Values;
 
@@ -77,7 +76,7 @@ public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessa
     {
         lock (_gate)
         {
-            _store.Add(channelId, message, userId);
+            Store.Add(channelId, message, userId);
         }
 
         return this;
@@ -246,7 +245,7 @@ public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessa
     {
         ArgumentNullException.ThrowIfNull(request);
         var query = ParseQuery(request.RequestUri!.Query);
-        if (request.Content is { Headers.ContentType.MediaType: "application/x-www-form-urlencoded" } form)
+        if (request.Content is { } form && string.Equals(form.Headers.ContentType?.MediaType, "application/x-www-form-urlencoded", StringComparison.Ordinal))
         {
             foreach (var (key, value) in ParseQuery(await form.ReadAsStringAsync(cancellationToken).ConfigureAwait(false)))
             {
@@ -332,18 +331,18 @@ public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessa
     private HttpResponseMessage History(Dictionary<string, string> query)
     {
         var channel = query["channel"];
-        return MessagesPage(query, channel, _store.Top(channel, query.GetValueOrDefault("oldest"), query.GetValueOrDefault("latest")));
+        return MessagesPage(query, channel, Store.Top(channel, query.GetValueOrDefault("oldest"), query.GetValueOrDefault("latest")));
     }
 
     private HttpResponseMessage Replies(Dictionary<string, string> query)
     {
         var channel = query["channel"];
-        return MessagesPage(query, channel, _store.Thread(channel, query.GetValueOrDefault("ts", string.Empty), query.GetValueOrDefault("oldest"), IsTrue(query, "inclusive")));
+        return MessagesPage(query, channel, Store.Thread(channel, query.GetValueOrDefault("ts", string.Empty), query.GetValueOrDefault("oldest"), IsTrue(query, "inclusive")));
     }
 
     private HttpResponseMessage MessagesPage(Dictionary<string, string> query, string channel, List<SlackMessage> messages)
     {
-        var (page, next) = Slice(query, messages, m => SlackMessageJson.Of(m, _store.UserOf(channel, m.Ts)));
+        var (page, next) = Slice(query, messages, m => SlackMessageJson.Of(m, Store.UserOf(channel, m.Ts)));
         return Json(new JsonObject
         {
             ["ok"] = true,
@@ -390,11 +389,12 @@ public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessa
         SlackConversationKind.Private => "private_channel",
         SlackConversationKind.Im => "im",
         SlackConversationKind.Mpim => "mpim",
-        _ => "public_channel",
+        SlackConversationKind.Public => "public_channel",
+        _ => throw new ArgumentOutOfRangeException(nameof(kind)),
     };
 
     private static bool IsTrue(Dictionary<string, string> query, string key)
-        => query.TryGetValue(key, out var value) && value is "true" or "1";
+        => query.TryGetValue(key, out var value) && (string.Equals(value, "true", StringComparison.Ordinal) || string.Equals(value, "1", StringComparison.Ordinal));
 
     private static Dictionary<string, string> ParseQuery(string query)
     {
