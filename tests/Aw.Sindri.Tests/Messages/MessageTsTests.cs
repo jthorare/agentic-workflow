@@ -24,6 +24,8 @@ public sealed class MessageTsTests
     [InlineData("1767776100.000100\n")]
     [InlineData("1767776100.000100.000100")]
     [InlineData("1234567890123456.000100")]
+    [InlineData("01767776100.000100")]
+    [InlineData("00.000100")]
     public void Parse_refuses_any_other_text(string text)
     {
         Assert.False(MessageTs.TryParse(text, out var ts));
@@ -35,6 +37,9 @@ public sealed class MessageTsTests
         Assert.Equal(SindriErrors.MessagesTsInvalid.Code, refused.Error.Code);
         Assert.DoesNotContain("17677", refused.Error.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void A_zero_second_ts_is_one_digit() => Assert.True(MessageTs.TryParse("0.000100", out _));
 
     [Fact]
     public void A_null_ts_is_refused()
@@ -49,7 +54,6 @@ public sealed class MessageTsTests
         // as text "999999999.…" sorts after "1000000000.…"; as time it is older
         Assert.True(MessageTs.Compare(new MessageTs("999999999.999999"), new MessageTs("1000000000.000000")) < 0);
         Assert.True(MessageTs.Compare(new MessageTs("1000000000.000000"), new MessageTs("999999999.999999")) > 0);
-        Assert.Equal(0, MessageTs.Compare(new MessageTs("01767776100.000100"), new MessageTs("1767776100.000100")));
     }
 
     [Fact]
