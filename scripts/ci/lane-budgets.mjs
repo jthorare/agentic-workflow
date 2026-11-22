@@ -61,10 +61,13 @@ const PACKAGE_BUDGETS = {
 // 5 s: Aw.Sindri.Engine.Tests 85.3 s (run 41217292972) -> 110 s, Aw.Sindri.Ui.Frames.Tests 69.6 s (run 41218010358) -> 90 s,
 // Aw.Sindri.Ui.Controls.Tests 43.4 s (run 41218010358) -> 55 s, under the 60 s default, so it gets the default. It stays listed so it
 // stays a row of its own: unlisted, it would count toward SindriUi's sum.
+// #3692: Aw.Sindri.Ui.Frames.Tests grew to 126 s, over its 90 s row, so the system panel, todo panel and clickable-state suites moved to
+// Aw.Sindri.Ui.Frames.Panels.Tests; both rows keep the 90 s budget.
 const PROJECT_BUDGETS = {
   "Aw.Sindri.Engine.Tests": { integration: 110 },
   "Aw.Sindri.Ui.Controls.Tests": { integration: 60 },
   "Aw.Sindri.Ui.Frames.Tests": { integration: 90 },
+  "Aw.Sindri.Ui.Frames.Panels.Tests": { integration: 90 },
 };
 const SOLUTION = "AgenticWorkflow.slnx";
 
