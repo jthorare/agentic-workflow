@@ -175,7 +175,16 @@ for sub in build publish format run; do check "dotnet $sub is expensive" "$(mode
 check "dotnet test is expensive" "$(mode_of dotnet test x)" "expensive"
 check "dotnet test --no-build is light" "$(mode_of dotnet test x --no-build)" "light"
 check "dotnet --version is light" "$(mode_of dotnet --version)" "light"
-check "a path-qualified dotnet is not matched (pinned as is): light" "$(mode_of "$STUB/dotnet" build x)" "light"
+check "a path-qualified dotnet build is matched by its basename: expensive" "$(mode_of "$STUB/dotnet" build x)" "expensive"
+check "a path-qualified dotnet build inside a bash -c string: expensive" "$(mode_of bash -c "$STUB/dotnet build x")" "expensive"
+check "dotnet msbuild is expensive, like dotnet build (#3810 item 3)" "$(mode_of dotnet msbuild x)" "expensive"
+check "a path-qualified dotnet msbuild is expensive (#3810 item 3)" "$(mode_of "$STUB/dotnet" msbuild x)" "expensive"
+check "a path-qualified dotnet --version stays light" "$(mode_of "$STUB/dotnet" --version)" "light"
+check "dotnet clean stays light" "$(mode_of dotnet clean)" "light"
+check "a path-qualified dotnet clean stays light" "$(mode_of "$STUB/dotnet" clean)" "light"
+check "a path-qualified dotnet test --no-build stays light" "$(mode_of "$STUB/dotnet" test x --no-build)" "light"
+check "a path argument ending in /dotnet before build counts (pinned as is, review of #3882): expensive" "$(mode_of sh -c "$sh_mode" x /srv/dotnet build)" "expensive"
+check "a word that only ends in dotnet is not dotnet: light" "$(mode_of sh -c "$sh_mode" x mydotnet build)" "light"
 for w in "npm ci" "npx vitest"; do
   # shellcheck disable=SC2086
   check "$w anywhere in the args is expensive" "$(mode_of sh -c "$sh_mode" x $w)" "expensive"
@@ -202,7 +211,7 @@ check "AW_HEAVY_RUN_MAX=abc: the default 45" "$(AW_HEAVY_RUN_MAX=abc args_of dot
 check "the caller's --timeout stays alone" "$(args_of dotnet test --timeout 10m)" "test --timeout 10m"
 check "the caller's --timeout=... stays alone" "$(args_of dotnet test --timeout=10m)" "test --timeout=10m"
 check "dotnet build gets no --timeout" "$(args_of dotnet build x)" "build x"
-check "a path-qualified dotnet test gets it, though it is classified light (pinned as is)" "$(args_of "$STUB/dotnet" test x)" "test x --timeout 40m"
+check "a path-qualified dotnet test gets it" "$(args_of "$STUB/dotnet" test x)" "test x --timeout 40m"
 
 # --- the lock timeout (75), on the TIMEOUT=0 copy ---
 reset
@@ -283,10 +292,11 @@ if [ "$have_meminfo" = 1 ]; then
   # from outside, since a job blocked only by the reserve never times out
   out="$(AW_HEAVY_PRIORITY=other AW_HEAVY_MIN_FREE_MB=0 timeout 5 bash "$HEAVY" --expensive bash -c 'echo slot=$AW_HEAVY_SLOT' 2>&1 | sed -n 's/^slot=//p')"
   check "reserve 2 of 2 is capped to 1: a lane job (AW_HEAVY_PRIORITY=other is not meta) takes slot 2" "$out" "$LOCKS/heavy-job.lock.2"
-  # the reserve is also capped at the slots free memory allows minus one: memory for slot 1 only means no reserve
+  # the reserve is a slot count whatever memory is free (#3885): memory for slot 1 only leaves a lane job waiting (bounded from
+  # outside), not on meta's slot 1
   echo 1 > "$STATE/heavy-meta-reserve"
   out="$(AW_HEAVY_MIN_FREE_MB=999999999 timeout 5 bash "$HEAVY" --expensive bash -c 'echo slot=$AW_HEAVY_SLOT' 2>&1 | sed -n 's/^slot=//p')"
-  check "reserve 1 of 2, memory for slot 1 only: a lane job takes slot 1" "$out" "$LOCKS/heavy-job.lock"
+  check "reserve 1 of 2, memory for slot 1 only: a lane job waits, it does not take reserved slot 1 (#3885)" "$out" ""
   out="$(AW_HEAVY_MIN_FREE_MB=0 timeout 5 bash "$HEAVY" --expensive bash -c 'echo slot=$AW_HEAVY_SLOT' 2>&1 | sed -n 's/^slot=//p')"
   check "reserve 1 of 2, memory for both: a lane job still takes slot 2" "$out" "$LOCKS/heavy-job.lock.2"
   # blocked only by the reserve (slot 1 free, slot 2 busy): the wait is not counted; the file is re-read each second

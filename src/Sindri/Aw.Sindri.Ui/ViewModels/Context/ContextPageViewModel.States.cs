@@ -36,8 +36,8 @@ internal sealed partial class ContextPageViewModel
     /// <summary>Whether the Building state's body has words.</summary>
     public bool HasBuildingBody => BuildingBody.Length > 0;
 
-    /// <summary>The No map state's title: "No map yet for 2 repositories" when the answer names them.</summary>
-    public string EmptyTitle => _notReady.NoMap?.Repos is { Count: > 0 } repos ? Labels.ContextNoMapRepos(repos.Count) : _itemOpened is null ? Labels.ContextStateEmptyTitle : Labels.ContextStateEmptyItemTitle;
+    /// <summary>The No map state's title: "No map yet for aw" or "No map yet for 2 repositories" when the answer names them.</summary>
+    public string EmptyTitle => _notReady.NoMap?.Repos is { Count: > 0 } repos ? Labels.ContextNoMapRepos(repos) : _itemOpened is null ? Labels.ContextStateEmptyTitle : Labels.ContextStateEmptyItemTitle;
 
     /// <summary>The button's text that opens the build's job.</summary>
     public string BuildJobText { get; } = Labels.ContextBuildingJob;
@@ -83,6 +83,19 @@ internal sealed partial class ContextPageViewModel
 
     /// <summary>The build button (the catalog's BuildContextMap), or null before the first no-map answer.</summary>
     public ControlViewModel? BuildControl { get; private set; }
+
+    /// <summary>The banner's one button: the build, when the refusal is "no map yet"; none for a refusal the app cannot fix.</summary>
+    public ControlViewModel? ProblemFix => HasProblem && string.Equals(_problemCode, NoMapCode, StringComparison.Ordinal) ? BuildControl ??= MakeBuildControl() : null;
+
+    private string? _problemCode;
+
+    // The banner for a refused read: its plain words, and its code so the banner knows which fix to offer.
+    private void ShowProblem(Error error, string? words = null)
+    {
+        Problem = words ?? Labels.ContextProblem(error.Code, error.Message);
+        _problemCode = error.Code;
+        OnChanged(nameof(ProblemFix));
+    }
 
     /// <summary>Whether the last read was answered "no map yet".</summary>
     internal bool NoMap { get; private set; }
@@ -245,5 +258,6 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(BuildControl));
         OnChanged(nameof(HasProblem));
         OnChanged(nameof(Problem));
+        OnChanged(nameof(ProblemFix));
     }
 }
