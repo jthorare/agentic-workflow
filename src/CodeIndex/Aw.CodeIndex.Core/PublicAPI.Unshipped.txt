@@ -671,6 +671,9 @@ Aw.CodeIndex.Core.Model.RepoHead.OnDefaultBranch.get -> bool
 Aw.CodeIndex.Core.Model.RepoHead.OnDefaultBranch.init -> void
 Aw.CodeIndex.Core.Model.RepoHead.Repo.get -> Aw.CodeIndex.Core.Values.RepoName
 Aw.CodeIndex.Core.Model.RepoHead.Repo.init -> void
+Aw.CodeIndex.Core.Model.DefaultTips
+const Aw.CodeIndex.Core.Model.DefaultTips.NoneWords = "no main or origin/main" -> string!
+static Aw.CodeIndex.Core.Model.DefaultTips.NoneToBuildFrom(Aw.CodeIndex.Core.Model.RepoHead? head) -> bool
 Aw.CodeIndex.Core.Model.RepoHead.RepoHead(Aw.CodeIndex.Core.Values.RepoName Repo, Aw.CodeIndex.Core.Values.CommitSha? Head, bool OnDefaultBranch, Aw.CodeIndex.Core.Values.CommitSha? DefaultTip = null) -> void
 Aw.CodeIndex.Core.Model.ResolutionSymbol
 Aw.CodeIndex.Core.Model.ResolutionSymbol.<Clone>$() -> Aw.CodeIndex.Core.Model.ResolutionSymbol!
