@@ -29,6 +29,7 @@ public sealed class DelegationObligationTests
     private async Task DelegateToApi()
     {
         await _d.Ready();
+        _d.World.Transcripts.Write(MetaWorld.Transcript, string.Empty);   // stop-check syncs the meta transcript first; an empty one holds no message
         _ = await _d.Delegate(DelegateWorld.Request());
         _d.World.Clock.Advance(TimeSpan.FromMinutes(1));
     }
