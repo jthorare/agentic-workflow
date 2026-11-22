@@ -158,7 +158,7 @@ for f in manifest["prs"]:
 SWEEPS = [
     ("Performance sweep", "Exit check: every data or interactive surface has a measured time in the real app at or under its budget. "
      "A miss passes only when the owner accepts it in writing (a D-number)."),
-    ("Bug sweep", "Exit check: every finding is a GitHub issue, and a merged fix or a written reason closes each one. "
+    ("Bug sweep", "Exit check: every finding is an issue in the repo's tracker, and a merged fix or a written reason closes each one. "
      "A second walk of every surface finds nothing new."),
 ]
 last = max((n for n, _, _ in cards), default=0)

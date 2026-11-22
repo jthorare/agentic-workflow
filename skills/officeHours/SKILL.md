@@ -515,9 +515,9 @@ _Tasks are ordered by dependency graph (topological sort). Each task points to i
 - owner: unassigned
 - status: blocked
 
-**What:** Walk the finished project in the real app, file each finding as a GitHub issue and route it as a fix.
+**What:** Walk the finished project in the real app, file each finding as an issue in the repo's tracker and route it as a fix.
 **Why:** The project is not done until a walk of it finds nothing new.
-**Definition of Done:** Exit check: every finding is a GitHub issue, and a merged fix or a written reason closes each one. A second walk of every surface finds nothing new.
+**Definition of Done:** Exit check: every finding is an issue in the repo's tracker, and a merged fix or a written reason closes each one. A second walk of every surface finds nothing new.
 **Reference:** See `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/closing-sweeps.md`, "Bug sweep"
 
 ## Task Summary

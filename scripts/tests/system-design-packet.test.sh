@@ -136,7 +136,7 @@ test_write_packet_doc_md() {
   [ "$(grep -A2 '^### Ph4 Performance sweep' "$D/doc.md" | sed -n 3p | cut -c1-12)" = 'Exit check: ' ] || fail "the performance sweep has no exit check"
   [ "$(grep -A2 '^### Ph5 Bug sweep' "$D/doc.md" | sed -n 3p | cut -c1-12)" = 'Exit check: ' ] || fail "the bug sweep has no exit check"
   has -e '^\| TP-5 \| Performance sweep: every data or interactive surface .* \| Ph4 \|$' "$D/doc.md" || fail "TP-5 should verify the performance sweep"
-  has -e '^\| TP-6 \| Bug sweep: every finding is a GitHub issue.* \| Ph5 \|$' "$D/doc.md" || fail "TP-6 should verify the bug sweep"
+  has -e '^\| TP-6 \| Bug sweep: every finding is an issue in the repo.s tracker.* \| Ph5 \|$' "$D/doc.md" || fail "TP-6 should verify the bug sweep"
   local sh="$DIR/../../skills/_shared/closing-sweeps.md" c
   for c in "$(sed -n '/^### Ph4/,/^### Ph5/p' "$D/doc.md" | grep '^Exit check: ')" "$(sed -n '/^### Ph5/,/^## /p' "$D/doc.md" | grep '^Exit check: ')"; do
     tr '\n' ' ' <"$sh" | grep -qF "**${c%%:*}:**${c#Exit check:}" || fail "exit check not word for word in closing-sweeps.md: $c"
