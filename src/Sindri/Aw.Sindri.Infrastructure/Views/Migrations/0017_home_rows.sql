@@ -1,7 +1,7 @@
 -- The Home page's rows and their edges (Home S0, #3733; home spec §3.1, §8), the same base shape as the other views (a key, the row as JSON text and the ledger
 -- sequence that last wrote it) plus virtual columns generated from the row's JSON, so a read can filter by them. view_home_rows holds one row per object keyed by its
 -- id (state: open, snoozed, done or muted; grp: needs-you or moving); view_home_links holds one row per edge keyed '<from>|<to>|<edge>', with its source object in
--- the item column (the generated 'from') so a row's edges are one lookup. Schema version 38 (ViewSchema.Version): an older views.db gains the tables here and the
+-- the item column (the generated 'from') so a row's edges are one lookup. Schema version 39 (ViewSchema.Version): an older views.db gains the tables here and the
 -- projector rebuilds the views from the ledger, because the version differs. Numbered after 0016_items_state (no gaps, AW-DATA-005).
 CREATE TABLE view_home_rows (
     key TEXT PRIMARY KEY,

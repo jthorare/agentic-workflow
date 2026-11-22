@@ -15,6 +15,7 @@ using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.GetNeedsYou;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Views;
 
 namespace Aw.Sindri.Tests.NeedsYou;
@@ -198,7 +199,8 @@ public sealed class NeedsYouNotModifiedTests
 
         var jobs = new InMemoryJobViews();
         var gate = new McpAutoGate(slice.Profiles, new McpEvents(slice.Held, slice.Store, slice.Events, slice.Callers), _switch, jobs);
-        var live = new NeedsYouLiveRows(new SetupNotices(jobs, slice.Profiles, new PassScrubber(), slice.Clock, gate, _sighting));
+        var setup = new SetupNotices(jobs, slice.Profiles, new PassScrubber(), slice.Clock, gate, _sighting);
+        var live = new NeedsYouLiveRows(setup, new InMemoryWorkflowRunStore(slice.Clock), new PassScrubber());
         using var entered = slice.Callers.Enter(A.Caller().Human().Build());
         var result = await new GetNeedsYouService(reader ?? _views.Views, _views.Progress, slice.Callers, live, SliceHarness.Json).Handle(request, Token);
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
