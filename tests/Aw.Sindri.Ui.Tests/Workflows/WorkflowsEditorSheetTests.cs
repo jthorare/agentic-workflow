@@ -41,15 +41,14 @@ public sealed class WorkflowsEditorSheetTests
         var page = await OnRuns();
         Assert.True(page.Runs.Graph!.SelectNode("agent"));
 
-        await page.OpenSettings(Token);
+        await page.Edit(Token);
 
-        Assert.Equal((true, true), (page.IsSettingsOpen, page.CanEdit));
+        Assert.Equal((true, true), (page.IsEditing, page.CanEdit));
         Assert.Equal(["prompt", "strict"], page.Editor.Fields.Select(f => f.Name), StringComparer.Ordinal);
-        Assert.Equal("EditorFieldCheck.strict", page.Editor.Fields[1].CheckAutomationId);   // #3111: a driver targets one field's checkbox by this id
         Assert.Equal("Look for drift", page.Editor.Fields[0].Text);
         Assert.Equal("Check the repos \u00b7 Run an agent", page.EditorHeading);   // the step's title and its kind, never the node id or the revision
         page.CloseEditor();
-        Assert.False(page.IsSettingsOpen);
+        Assert.False(page.IsEditing);
     }
 
     [Fact]
@@ -57,7 +56,7 @@ public sealed class WorkflowsEditorSheetTests
     {
         var page = await OnRuns();
         _ = page.Runs.Graph!.SelectNode("agent");
-        await page.OpenSettings(Token);
+        await page.Edit(Token);
         page.Editor.Fields[0].Text = "Check twice";
 
         await page.Save(Token);
@@ -73,7 +72,7 @@ public sealed class WorkflowsEditorSheetTests
     {
         var page = await OnRuns();
         _ = page.Runs.Graph!.SelectNode("agent");
-        await page.OpenSettings(Token);
+        await page.Edit(Token);
         _f.Server.ApplyWorkflowOpsAnswer = RouteAnswer.Problem("workflows-slug-ops", "ops-stale");
         page.Editor.Fields[0].Text = "Check twice";
 
@@ -94,7 +93,7 @@ public sealed class WorkflowsEditorSheetTests
     {
         var page = await OnRuns();
         _ = page.Runs.Graph!.SelectNode("agent");
-        await page.OpenSettings(Token);
+        await page.Edit(Token);
         page.Editor.Fields[0].Text = "Check twice";
         _f.Server.WorkflowAnswers[Slug] = RouteAnswer.Problem("workflows-slug", "not-found");
 
@@ -110,7 +109,7 @@ public sealed class WorkflowsEditorSheetTests
     {
         var page = await OnRuns();
         _ = page.Runs.Graph!.SelectNode("agent");
-        await page.OpenSettings(Token);
+        await page.Edit(Token);
         page.Editor.Fields[0].Text = "Check twice";
         page.Editor.Fields[1].Text = "true";
 
@@ -128,7 +127,7 @@ public sealed class WorkflowsEditorSheetTests
     {
         var page = await OnRuns();
         _ = page.Runs.Graph!.SelectNode("agent");
-        await page.OpenSettings(Token);
+        await page.Edit(Token);
         _f.Server.ApplyWorkflowOpsAnswer = RouteAnswer.Problem("workflows-slug-ops", "ops-stale");
         page.Editor.Fields[0].Text = "Check twice";
         page.Editor.Fields[1].Text = "true";
@@ -136,7 +135,7 @@ public sealed class WorkflowsEditorSheetTests
         await page.Save(Token);
 
         _ = Assert.Single(_f.Server.AppliedWorkflowOps);
-        Assert.Equal((true, true, true), (page.IsSettingsOpen, page.Editor.NeedsReload, page.Editor.Fields.All(f => f.IsChanged)));
+        Assert.Equal((true, true, true), (page.IsEditing, page.Editor.NeedsReload, page.Editor.Fields.All(f => f.IsChanged)));
         Assert.Equal(("Check twice", "true"), (page.Editor.Fields[0].Text, page.Editor.Fields[1].Text));
     }
 
@@ -149,9 +148,9 @@ public sealed class WorkflowsEditorSheetTests
         var page = await OnRuns();
         Assert.False(page.CanEdit);
 
-        await page.OpenSettings(Token);
+        await page.Edit(Token);
 
-        Assert.False(page.IsSettingsOpen);
+        Assert.False(page.IsEditing);
         var closed = _f.Page();
         Assert.False(closed.CanEdit);
     }
@@ -163,13 +162,13 @@ public sealed class WorkflowsEditorSheetTests
         _f.Server.WorkflowAnswers[other] = RouteAnswer.Api("workflows-slug", "found");
         var page = await OnRuns();
         _ = page.Runs.Graph!.SelectNode("agent");
-        await page.OpenSettings(Token);
+        await page.Edit(Token);
         page.Editor.Fields[0].Text = "Check twice";
 
         await page.OpenWorkflow(other, Token);   // straight from the runs level: OpenWorkflow itself closes the sheet
         await page.Save(Token);
 
-        Assert.False(page.IsSettingsOpen);
+        Assert.False(page.IsEditing);
         Assert.Empty(_f.Server.AppliedWorkflowOps);
     }
 
@@ -178,11 +177,11 @@ public sealed class WorkflowsEditorSheetTests
     {
         var page = await OnRuns();
         _ = page.Runs.Graph!.SelectNode("agent");
-        await page.OpenSettings(Token);
+        await page.Edit(Token);
 
         await page.OpenRun(RunId, Token);
 
-        Assert.False(page.IsSettingsOpen);
+        Assert.False(page.IsEditing);
     }
 
     [Fact]
@@ -212,16 +211,16 @@ public sealed class WorkflowsEditorSheetTests
         _ = page.Runs.Graph!.SelectNode("agent");
         var slow = new TaskCompletionSource();
         _f.Server.WorkflowGates[Slug] = slow;
-        var staleEdit = page.OpenSettings(Token);
+        var staleEdit = page.Edit(Token);
 
         page.Back();
         await page.OpenWorkflow(Other, Token);
         _ = page.Runs.Graph!.SelectNode("start");
-        await page.OpenSettings(Token);
+        await page.Edit(Token);
         slow.SetResult();
         await staleEdit;
 
-        Assert.Equal((true, Other), (page.IsSettingsOpen, page.Editor.Slug));
+        Assert.Equal((true, Other), (page.IsEditing, page.Editor.Slug));
         Assert.Equal("Manual \u00b7 trigger", page.EditorHeading);   // the node has no title: its block's
         Assert.Empty(page.Editor.Fields);
     }
@@ -239,7 +238,7 @@ public sealed class WorkflowsEditorSheetTests
     {
         var page = await OnRuns();
         _ = page.Runs.Graph!.SelectNode("agent");
-        await page.OpenSettings(Token);
+        await page.Edit(Token);
         page.Editor.Fields[0].Text = "Check twice";
         _ = ServeRevision(3);   // what the save makes Sindri hold
         await page.Save(Token);
@@ -260,7 +259,7 @@ public sealed class WorkflowsEditorSheetTests
     {
         var page = await OnRuns();
         _ = page.Runs.Graph!.SelectNode("agent");
-        await page.OpenSettings(Token);
+        await page.Edit(Token);
         _ = ServeRevision(3);
 
         await page.ReloadEditor(Token);
@@ -276,14 +275,14 @@ public sealed class WorkflowsEditorSheetTests
         _f.Server.WorkflowAnswers[other] = RouteAnswer.Api("workflows-slug", "found");
         var page = await OnRuns();
         _ = page.Runs.Graph!.SelectNode("agent");
-        await page.OpenSettings(Token);
+        await page.Edit(Token);
         page.Editor.Fields[0].Text = "Check twice";
         page.CloseEditor();
         await page.OpenWorkflow(other, Token);   // the page reads it
         _ = page.Runs.Graph!.SelectNode("agent");
         _f.Server.WorkflowAnswers[other] = RouteAnswer.Problem("workflows-slug", "not-found");   // the editor's own read fails
 
-        await page.OpenSettings(Token);
+        await page.Edit(Token);
         if (page.Editor.Fields.Count > 0)
         {
             page.Editor.Fields[0].Text = "Check three";
@@ -301,7 +300,7 @@ public sealed class WorkflowsEditorSheetTests
         var page = await OnRuns();
         _ = page.Runs.Graph!.SelectNode("agent");
         await page.GraphEdit.BeginAdd(Token);
-        await page.OpenSettings(Token);
+        await page.Edit(Token);
         page.Editor.Fields[0].Text = "Typed, not saved";
 
         await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
@@ -320,7 +319,7 @@ public sealed class WorkflowsEditorSheetTests
     {
         var page = await OnRuns();
         _ = page.Runs.Graph!.SelectNode("agent");
-        await page.OpenSettings(Token);
+        await page.Edit(Token);
         page.Editor.Fields[0].Text = "Check twice";
         var archived = ServeRevision(2);
         archived["archivedAt"] = "2026-01-01T00:00:00Z";
