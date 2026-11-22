@@ -20,9 +20,26 @@ internal sealed partial class AgentsPage : UserControl
         AddHandler(EndedSessionRow.SelectEvent, OnSelectEnded);
         AddHandler(SessionGroup.ToggleEvent, OnToggle);
         SizeChanged += OnSized;
+        AddHandler(KeyDownEvent, OnAnyKeyDown, RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(TextInputEvent, OnTextInputTunnel, RoutingStrategies.Tunnel);
     }
 
     private bool _focusWasHere;
+
+    // Set when "/" asked for the search box: the key's own "/" text input may reach the box once it has focus, and that one is dropped.
+    private bool _dropSlashText;
+
+    // The next key press means the "/" text (if any) is already gone, so a "/" typed later on purpose is kept.
+    private void OnAnyKeyDown(object? sender, KeyEventArgs e) => _dropSlashText = false;
+
+    private void OnTextInputTunnel(object? sender, TextInputEventArgs e)
+    {
+        if (_dropSlashText && string.Equals(e.Text, "/", StringComparison.Ordinal))
+        {
+            _dropSlashText = false;
+            e.Handled = true;
+        }
+    }
 
     // Under 640 px only Status, Agent and For stay: the page tells the rows, and the head's columns follow.
     private void OnSized(object? sender, SizeChangedEventArgs e)
@@ -53,8 +70,11 @@ internal sealed partial class AgentsPage : UserControl
     }
 
     // Posted, like the Queue filter's focus: focused inside KeyDown, the box would also get the key's "/" text input.
-    private void OnSearchRequested(object? sender, EventArgs e) =>
+    private void OnSearchRequested(object? sender, EventArgs e)
+    {
+        _dropSlashText = true;
         Dispatcher.UIThread.Post(() => _ = this.FindControl<TextBox>("AgentsSearch")?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
+    }
 
     // Esc in the box clears it.
     private void OnSearchKey(object? sender, KeyEventArgs e)
