@@ -38,7 +38,7 @@ public interface IWorkflowRunStore
     /// <returns>The runs; none when every failed run was seen.</returns>
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(int limit, CancellationToken cancellationToken);
 
-    /// <summary>Marks a run seen. The first mark wins: a run that is already seen keeps its time.</summary>
+    /// <summary>Marks a failed run seen. The first mark wins: a run that is already seen keeps its time, and a run that did not fail stays unseen.</summary>
     /// <param name="id">The run.</param>
     /// <param name="at">When the owner saw it.</param>
     /// <param name="cancellationToken">Cancels the write.</param>

@@ -119,7 +119,11 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
                 return Done<WorkflowRun>(NotFound(id));
             }
 
-            _runs[found] = _runs[found] with { SeenAt = _runs[found].SeenAt ?? at };
+            if (_runs[found].Status == WorkflowRunStatus.Failed)
+            {
+                _runs[found] = _runs[found] with { SeenAt = _runs[found].SeenAt ?? at };
+            }
+
             return Done<WorkflowRun>(_runs[found]);
         }
     }
