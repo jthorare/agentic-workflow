@@ -9,8 +9,9 @@ using Aw.Meta.Testing;
 
 namespace Aw.Meta.Tests.CheckMerge;
 
-// #3789: with review.mode "counts" a pull request is ready on the lane's ready line and its counts alone. The reviewer keeps a
-// veto: a standing HOLD refuses until a later OK lifts it, and "qa not yet" under an OK at the head still refuses.
+// #3789: with review.mode "counts" a pull request is ready on the lane's ready line and its counts alone. The reviewer can still
+// stop the review path: a standing HOLD refuses until a later OK lifts it, and a qa line under the standing OK refuses until it
+// says "qa passed" at the head, wherever that OK points (#3840).
 public sealed class ReviewCountsModeTests
 {
     private const string Head = "0123456789abcdef0123456789abcdef01234567";
@@ -103,6 +104,24 @@ public sealed class ReviewCountsModeTests
         Assert.Contains("HOLD #190: the retry loop never ends", Detail(response, "review"), StringComparison.Ordinal);
     }
 
+    // #3840: the standing HOLD names no sha, so a push does not lift it. The lane was ready at the old head, the reviewer held, the
+    // lane pushed and sent a green ready at the new head: still refused.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_HOLD_survives_a_push_and_a_green_ready_at_the_new_head()
+    {
+        await Team();
+        await Inbox("t1-api", ReadyBody(sha: Old));
+        await Inbox("t1-ideas", "HOLD #190: the retry loop never ends");
+        await Inbox("t1-api", ReadyBody());
+        Script();
+
+        var response = await Check();
+
+        Assert.False(response.Ready);
+        Assert.Equal(["review"], Failed(response));
+        Assert.Contains("HOLD #190: the retry loop never ends", Detail(response, "review"), StringComparison.Ordinal);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task A_HOLD_after_an_OK_at_the_head_still_refuses()
     {
@@ -168,6 +187,41 @@ public sealed class ReviewCountsModeTests
         Assert.Contains("qa not yet", Detail(response, "review"), StringComparison.Ordinal);
     }
 
+    // #3840: the qa block stands per pull request like a HOLD. A push plus a green ready at the new head does not lift it.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Qa_not_yet_under_an_OK_at_an_older_head_still_refuses()
+    {
+        await Team();
+        await Inbox("t1-ideas", $"OK #190 at {Old}\nqa not yet");
+        await Inbox("t1-api", ReadyBody());
+        Script();
+
+        var response = await Check();
+
+        Assert.False(response.Ready);
+        Assert.Equal(["review"], Failed(response));
+        Assert.Contains("qa not yet", Detail(response, "review"), StringComparison.Ordinal);
+    }
+
+    // A qa pass at the old head says nothing about the new one; a new OK with "qa passed <head>" clears it.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Qa_passed_at_an_older_head_refuses_until_qa_passes_at_the_head()
+    {
+        await Team();
+        await Inbox("t1-ideas", $"OK #190 at {Old}\nqa passed {Old}");
+        await Inbox("t1-api", ReadyBody());
+        Script();
+
+        var refused = await Check();
+        Assert.False(refused.Ready);
+        Assert.Equal(["review"], Failed(refused));
+        Assert.Contains($"qa passed at {Old}", Detail(refused, "review"), StringComparison.Ordinal);
+
+        await Inbox("t1-ideas", $"OK #190 at {Head}\nqa passed {Head}");
+
+        Assert.True((await Check()).Ready);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task No_ready_message_refuses()
     {
@@ -219,19 +273,69 @@ public sealed class ReviewCountsModeTests
         Assert.Equal(["counts"], Failed(response));
     }
 
-    private const string BuildOnly = "build -warnaserror 0 warnings, 0 errors (Build Only)";
+    // #3840: the build-only marker is a count line of its own shape, alone on its line (trimmed, any case).
+    private const string BuildOnly = "  0 passed, 0 skipped, 0 failed (build only)  ";
 
-    [Fact, Trait("Lane", "unit")]
-    public async Task A_build_only_line_with_no_count_line_is_ready_in_counts_mode()
+    // The old prose form: "(build only)" next to other words is not the marker.
+    private const string BuildOnlyProse = "build -warnaserror 0 warnings, 0 errors (build only)";
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(BuildOnly)]
+    [InlineData("0 Passed, 0 Skipped, 0 Failed (Build Only)\r")]
+    public async Task A_build_only_line_with_no_other_count_line_is_ready_in_counts_mode(string line)
     {
         await Team();
-        await Inbox("t1-api", $"ready #190 {Head}\n{BuildOnly}");
+        await Inbox("t1-api", $"ready #190 {Head}\n{line}");
         Script();
 
         var response = await Check();
 
         Assert.True(response.Ready);
         Assert.Equal("build only, no test counts", Detail(response, "counts"));
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(BuildOnlyProse)]
+    [InlineData("Gate: built only, so no tests ran (build only)")]
+    [InlineData("Aw.Meta.Tests unit 0 passed, 0 skipped, 0 failed (build only)")]
+    [InlineData("0 passed, 0 skipped, 0 failed (build only), tests next")]
+    public async Task Build_only_outside_its_own_line_does_not_count_in_counts_mode(string line)
+    {
+        await Team();
+        await Inbox("t1-api", $"ready #190 {Head}\n{line}");
+        Script();
+
+        var response = await Check();
+
+        Assert.False(response.Ready);
+        Assert.Equal(["counts"], Failed(response));
+    }
+
+    // A filtered run that matched no test counts zero; without the marker that proves nothing.
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("0 passed, 0 skipped, 0 failed")]
+    [InlineData("0 passed, 12 skipped, 0 failed")]
+    public async Task Counts_that_total_zero_passed_refuse_in_counts_mode(string counts)
+    {
+        await Team();
+        await Inbox("t1-api", ReadyBody(counts: counts));
+        Script();
+
+        var response = await Check();
+
+        Assert.False(response.Ready);
+        Assert.Equal(["counts"], Failed(response));
+        Assert.Contains("0 passed", Detail(response, "counts"), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_zero_count_line_next_to_a_green_one_is_ready_in_counts_mode()
+    {
+        await Team();
+        await Inbox("t1-api", ReadyBody(counts: "0 passed, 0 skipped, 0 failed\nAw.Meta.Tests integration 40 passed, 0 skipped, 0 failed"));
+        Script();
+
+        Assert.True((await Check()).Ready);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -248,11 +352,11 @@ public sealed class ReviewCountsModeTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_build_only_line_is_not_a_count_line_in_ok_mode()
+    public async Task A_build_only_note_is_not_a_count_line_in_ok_mode()
     {
         await Team(ReviewConfig.OkMode);
         await Inbox("t1-ideas", $"OK #190 at {Head}");
-        await Inbox("t1-api", $"ready #190 {Head}\n{BuildOnly}");
+        await Inbox("t1-api", $"ready #190 {Head}\n{BuildOnlyProse}");
         Script();
 
         var response = await Check();

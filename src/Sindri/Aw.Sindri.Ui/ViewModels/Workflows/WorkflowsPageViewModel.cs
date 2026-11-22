@@ -11,6 +11,9 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// </summary>
 internal sealed partial class WorkflowsPageViewModel : ObservableObject
 {
+    /// <summary>The text size setting as a factor (Settings sets it): the graph canvases lay their cards out at it.</summary>
+    public double TextScale { get; internal set => Set(ref field, value); } = 1;
+
     private enum Level
     {
         List,
@@ -87,20 +90,6 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
 
     /// <summary>True when the list's counts show beside the title: on the list only, never beside one workflow's or run's title.</summary>
     public bool ShowsListHead => IsList && HasHead;
-
-    /// <summary>True when the open workflow's own state shows beside its title (on its runs level).</summary>
-    public bool ShowsDetailState => IsRuns && DetailStateText.Length > 0;
-
-    /// <summary>The open workflow's state, as its list row says it ("● Active", "○ Off"): from the workflow read, else from the list row; empty when neither is known.</summary>
-    public string DetailStateText => Runs.Shown is { } shown
-        ? StateOf(shown.ActiveRevision is not null)
-        : Rows.FirstOrDefault(r => string.Equals(r.Slug, Runs.Slug, StringComparison.Ordinal)) is { } row ? StateOf(row.IsActive) : string.Empty;
-
-    private static string StateOf(bool active)
-    {
-        var (glyph, word) = Labels.WfState(active);
-        return glyph + " " + word;
-    }
 
 #pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
     /// <summary>The empty state's create action: "New workflow".</summary>
@@ -225,7 +214,9 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         SetLevel(_level == Level.Run ? Level.Runs : Level.List);
         if (_listBehind && _url is { } url)
         {
-            _ = ReadList(url, CancellationToken.None);   // an event came while one run was open: the rows (and the buttons they decide) catch up
+            // An event came while one run was open: the rows (and the buttons they decide) catch up. The read is not awaited, so until it
+            // answers (one loopback round trip) whether Activate and Pause are offered on the runs level goes by the old list row (OpenRow).
+            _ = ReadList(url, CancellationToken.None);
         }
     }
 
@@ -246,6 +237,9 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         OnChanged(nameof(ShowsListHead));
         OnChanged(nameof(ShowsDetailState));
         OnChanged(nameof(DetailStateText));
+        OnChanged(nameof(DetailChipWord));
+        OnChanged(nameof(DetailChipGlyph));
+        OnChanged(nameof(DetailChipTone));
         NotifyStateButtons();
     }
 
