@@ -31,8 +31,8 @@ if (seed)
     _ = server.SeedWorkspace();
 }
 
-await using var host = await FakeSlackHost.Start(server, port);
+await using var host = await FakeSlackHost.Start(server, port, CancellationToken.None);
 await Console.Out.WriteLineAsync("listening " + host.BaseUrl.AbsoluteUri);
-await Console.Out.FlushAsync();
-await host.WaitForShutdown();
+await Console.Out.FlushAsync(CancellationToken.None);
+await host.WaitForShutdown(CancellationToken.None);
 return 0;

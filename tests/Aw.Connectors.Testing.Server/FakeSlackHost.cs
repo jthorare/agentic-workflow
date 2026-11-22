@@ -73,8 +73,9 @@ public sealed class FakeSlackHost : IAsyncDisposable
     }
 
     /// <summary>Waits until the process is asked to stop (Ctrl+C or SIGTERM).</summary>
+    /// <param name="cancellationToken">Stops the wait early.</param>
     /// <returns>A task that ends at shutdown.</returns>
-    public Task WaitForShutdown() => _app.WaitForShutdownAsync();
+    public Task WaitForShutdown(CancellationToken cancellationToken = default) => _app.WaitForShutdownAsync(cancellationToken);
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
