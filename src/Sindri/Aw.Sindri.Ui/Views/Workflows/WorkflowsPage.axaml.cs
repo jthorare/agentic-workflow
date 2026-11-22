@@ -15,20 +15,7 @@ internal sealed partial class WorkflowsPage : UserControl
     public WorkflowsPage()
     {
         InitializeComponent();
-        WorkflowsListLevel.SizeChanged += (_, e) =>
-        {
-            if (DataContext is WorkflowsPageViewModel page)
-            {
-                page.SetListWidth(e.NewSize.Width);   // the columns that fit: Next run drops first, then the strip shortens and Trigger drops
-            }
-        };
-        DataContextChanged += (_, _) =>
-        {
-            if (DataContext is WorkflowsPageViewModel page && WorkflowsListLevel.Bounds.Width > 0)
-            {
-                page.SetListWidth(WorkflowsListLevel.Bounds.Width);
-            }
-        };
+        WatchListWidth();
     }
 
     /// <inheritdoc/>
@@ -84,36 +71,6 @@ internal sealed partial class WorkflowsPage : UserControl
             var open = page.OpenWorkflow(row.Slug, CancellationToken.None);
             FocusLater(WorkflowsBack);   // a level opens on its Back button
             await open.ConfigureAwait(true);
-        }
-    }
-
-    /// <inheritdoc />
-    protected override void OnKeyDown(KeyEventArgs e)
-    {
-        if (e.Key == Key.Escape && DataContext is WorkflowsPageViewModel { IsCompare: true } page)
-        {
-            page.Back();   // Compare goes back to the runs with its two ticks kept
-            e.Handled = true;
-            return;
-        }
-
-        base.OnKeyDown(e);
-    }
-
-    private void OnClearRunFilters(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is WorkflowsPageViewModel page)
-        {
-            page.Runs.ClearFilters();
-        }
-    }
-
-    private async void OnCompare(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is WorkflowsPageViewModel page)
-        {
-            await page.OpenCompare(CancellationToken.None).ConfigureAwait(true);
-            FocusLater(WorkflowsBack);   // Esc then goes back to the runs
         }
     }
 
@@ -278,14 +235,6 @@ internal sealed partial class WorkflowsPage : UserControl
         if (sender is Control { DataContext: NodeRunViewModel node })
         {
             await node.TakeOver(CancellationToken.None).ConfigureAwait(true);
-        }
-    }
-
-    private async void OnEditFailedStep(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Control { DataContext: NodeRunViewModel node })
-        {
-            await node.EditStep(CancellationToken.None).ConfigureAwait(true);
         }
     }
 
