@@ -43,6 +43,7 @@ A run that succeeds keeps one result, an object keyed by node id. Another workfl
 - The result is kept up to 64 KB on its own. The other nodes' rows do not count, so a long run with a small last step still has a result.
 - A result node whose output was cut at 64 KB, or a result over 64 KB, is stored as `{"truncated":true,"bytes":N}`. A reader then fails with `SND-GRAPH-108`. Name a smaller node with `result`.
 - The run page still shows every node's own row.
+- An edit sets `result` with `{"op":"set_meta","result":"rank"}`. `""` clears it.
 
 ## Rules the validator checks
 

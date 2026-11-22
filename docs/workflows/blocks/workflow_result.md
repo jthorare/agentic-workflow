@@ -12,7 +12,7 @@ Reads what a finished run of a workflow gave and starts nothing. Use it to pick 
 | `runId` | string | The run that was read. |
 | `status` | string | `succeeded`, `failed` or `cancelled`. |
 | `finishedAt` | string, optional | When the run ended (ISO 8601). |
-| `outputs` | any | The run's result: an object keyed by node id, holding the node the workflow's top-level `result` names, or every node no edge leaves that succeeded (`{{result.outputs.rank.findings}}`). It is kept up to 64 KB on its own; a cut result node or a result over 64 KB fails this node with `SND-GRAPH-108` instead of being read. `null` for a run that did not succeed or whose result nodes did not succeed. Runs that ended before #3807 keep the outputs they stored: every succeeded node. |
+| `outputs` | any | The run's result: an object keyed by node id, holding the node the workflow's top-level `result` names, or every node no edge leaves that succeeded (`{{result.outputs.rank.findings}}`). It is kept up to 64 KB on its own; a cut result node or a result over 64 KB fails this node with `SND-GRAPH-108` instead of being read. `null` for a run that did not succeed or whose result nodes did not succeed. A node that is not in the result, such as one an edge leaves when the workflow names no `result`, can't be read this way. Runs that ended before #3807 keep the outputs they stored: every succeeded node. |
 
 **Refusals.** A run id that is not one of that workflow's runs, a run that has not finished, and a workflow with no succeeded run fail the node with `SND-GRAPH-124`. A workflow that does not exist is `SND-GRAPH-008`.
 
