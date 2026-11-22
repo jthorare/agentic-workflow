@@ -1,5 +1,7 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Aw.Kernel.Testing;
@@ -49,7 +51,7 @@ public sealed class AgentsPaneHeaderLayoutTests : FrameHost
             var filter = Named<ComboBox>(window, name);
             var right = filter.TranslatePoint(new Point(filter.Bounds.Width, 0), window)!.Value.X;
             Assert.True(filter.IsVisible && filter.Bounds.Width > 0, $"{name} is not shown");
-            Assert.True(right <= paneLeft, $"{name} ends at {right}, the pane starts at {paneLeft}");
+            Assert.True(right <= paneLeft, string.Create(CultureInfo.InvariantCulture, $"{name} ends at {right}, the pane starts at {paneLeft}"));
         }
     });
 }
