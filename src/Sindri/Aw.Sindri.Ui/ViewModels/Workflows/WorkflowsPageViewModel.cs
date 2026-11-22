@@ -68,10 +68,10 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>The header's big title: the page on the list, the workflow's name on its runs, the run's id on a run.</summary>
     public string PageTitle => _level switch { Level.Runs => Runs.Title, Level.Run => Run.Id, Level.List => Labels.Workflows, _ => Labels.Workflows };
 
-    /// <summary>The crumb above the title: "Workflows" from a workflow's runs, the workflow's name from a run.</summary>
     /// <summary>The crumb's accessible name: where it goes ("Back to Workflows").</summary>
     public string CrumbName => Labels.WfBackTo(CrumbText);
 
+    /// <summary>The crumb above the title: "Workflows" from a workflow's runs, the workflow's name from a run.</summary>
     public string CrumbText => _level == Level.Run ? Runs.Title : Labels.Workflows;
 
     private void NotifyCrumb()

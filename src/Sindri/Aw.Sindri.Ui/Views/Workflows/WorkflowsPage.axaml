@@ -9,8 +9,6 @@
   <!-- The Workflows page, read-only (#2258 PR 17 part 1), three levels in one place: the workflow list, one workflow's runs, one run's detail. Back goes up a level.
        Every status is a glyph and a word. Every named line is a Border wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
   <UserControl.Styles>
-    <!-- The detail page's state word is ok-green while the workflow is on, like the list row's chip (#3655). -->
-    <Style Selector="TextBlock.detail-state.ok"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Ok.Fg}" /></Style>
     <Style Selector="TextBlock.invalid"><Setter Property="Foreground" Value="{DynamicResource Brush.Error}" /></Style>
     <Style Selector="TextBox.invalid /template/ Border#PART_BorderElement"><Setter Property="BorderBrush" Value="{DynamicResource Brush.Error}" /></Style>
   </UserControl.Styles>

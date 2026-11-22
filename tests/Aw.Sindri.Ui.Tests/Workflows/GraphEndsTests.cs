@@ -49,9 +49,17 @@ public sealed class GraphEndsTests
     }
 
     [Fact]
-    public void A_graph_with_no_condition_gets_no_end()
+    public void A_graph_with_no_condition_gets_no_branch_end_only_the_done_word()
     {
-        Assert.Empty(GraphEnds.Build([Step("a", 0, 0)], [], _none));
+        Assert.Equal(["done"], Texts(GraphEnds.Build([Step("a", 0, 0)], [], _none)));
+    }
+
+    [Fact]
+    public void A_step_the_spec_has_an_out_edge_for_gets_no_done_word_even_when_its_target_is_not_drawn()
+    {
+        HashSet<(string, string)> spec = [("a", string.Empty)];
+
+        Assert.Empty(GraphEnds.Build([Step("a", 0, 0)], [], spec));
     }
 
     [Fact]
@@ -78,7 +86,7 @@ public sealed class GraphEndsTests
         var below = Step("below", 0, WorkflowGraphViewModel.CardHeight);
         var right = Step("right", WorkflowGraphViewModel.CardWidth, 0);
 
-        var end = Assert.Single(GraphEnds.Build([c, below, right], [Edge(c, "true")], _none));
+        var end = Assert.Single(GraphEnds.Build([c, below, right], [Edge(c, "true")], _none), static e => string.Equals(e.Node, "c", StringComparison.Ordinal));   // the two plain steps get their own "done" words
 
         Assert.Equal("false \u2192 done", end.Text);
         Assert.True(end.Label.Y >= below.Y + WorkflowGraphViewModel.CardHeight, "the words were not lowered past the card below");

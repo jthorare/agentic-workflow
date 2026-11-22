@@ -125,7 +125,7 @@ public sealed class WorkflowsDoneAsksTests
         await page.OpenWorkflow(Slug, Token);
 
         Assert.Equal("\u25cb Archived", page.DetailStateText);
-        Assert.False(page.DetailStateIsActive);
+        Assert.Equal(("Archived", "\u25cb", "neutral"), (page.DetailChipWord, page.DetailChipGlyph, page.DetailChipTone));
         Assert.False(page.Runs.ShowsRunNow);
     }
 }

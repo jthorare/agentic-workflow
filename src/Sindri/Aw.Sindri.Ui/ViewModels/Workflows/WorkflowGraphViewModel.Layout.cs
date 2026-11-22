@@ -66,7 +66,7 @@ internal sealed partial class WorkflowGraphViewModel
             edge.Route = GraphFit.Route(fit, edge.From, edge.To, edge.Start, edge.End);
         }
 
-        Ends = GraphEnds.Build([.. Nodes], Edges);
+        Ends = GraphEnds.Build([.. Nodes], Edges, SpecBranches(_spec));
         return fit.Zoom;
     }
 
