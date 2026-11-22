@@ -104,6 +104,9 @@ internal sealed class ConceptTileViewModel
     /// <summary>The automation id of a pinned or waiting card ("PinCard.billing"); empty on a derived one.</summary>
     public string AutomationId => Card.Pin is { } pin ? "PinCard." + pin.Id : string.Empty;
 
+    /// <summary>The automation id of the row's open button ("ConceptOpen.concept:billing"), so a check can focus one row by its concept.</summary>
+    public string OpenAutomationId => "ConceptOpen." + Id;
+
     /// <summary>"Set by a person" or "Suggested"; empty when the server has no pins.</summary>
     public string MarkText => Card.Mark;
 

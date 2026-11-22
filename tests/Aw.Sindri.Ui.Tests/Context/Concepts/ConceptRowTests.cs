@@ -23,6 +23,14 @@ public sealed class ConceptRowTests
     private static PinView Pin(string id, string name) => new(id, name, "def of " + name, [], [], FolderRules: 0, "profile", "approved", Change: null);
 
     [Fact]
+    public void A_rows_open_button_has_an_automation_id_per_concept()
+    {
+        var layer = Layer([AConcepts.Concept("concept:self-scheduling", "Self scheduling"), AConcepts.Concept("concept:billing", "Billing")]);
+
+        Assert.Equal(["ConceptOpen.concept:self-scheduling", "ConceptOpen.concept:billing"], layer.Tiles.Select(t => t.OpenAutomationId));
+    }
+
+    [Fact]
     public void A_row_counts_files_only_and_says_when_it_last_changed()
     {
         var concept = AConcepts.Concept("concept:self-scheduling", "Self scheduling", features: 4, records: 3, decisions: 2, code: 40) with { LastChanged = new DateTimeOffset(2026, 11, 13, 9, 0, 0, TimeSpan.Zero) };

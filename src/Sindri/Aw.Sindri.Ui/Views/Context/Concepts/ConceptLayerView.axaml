@@ -41,7 +41,7 @@
               <StackPanel>
                 <Grid ColumnDefinitions="*,Auto">
                   <Button Classes="result-open" Click="OnOpen" Padding="14,8" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" Background="Transparent" BorderThickness="0"
-                          ToolTip.Tip="{Binding Tip}" AutomationProperties.Name="{Binding AccessibleName}">
+                          ToolTip.Tip="{Binding Tip}" AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AutomationId="{Binding OpenAutomationId}">
                     <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="16">
                       <TextBlock Classes="body-strong" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                       <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding MarkText}" IsVisible="{Binding HasMark}" VerticalAlignment="Center" />

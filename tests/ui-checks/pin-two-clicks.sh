@@ -53,9 +53,13 @@ d click --type ListBoxItem --name Context >/dev/null 2>&1 || setup_fail "no Cont
 d wait-for --type TextBlock --contains "Self scheduling" --state visible --wait-ms 60000 >/dev/null 2>&1 \
   || setup_fail "the Context page did not open on the concept list (no 'Self scheduling' card)"
 # The pin buttons show only while the row has the pointer or focus: focus the first row's open button (its name holds the concept name).
-d action --type Button --contains "Self scheduling" --index 0 --do focus >/dev/null 2>&1 || setup_fail "could not focus the Self scheduling row"
+# The open button has the automation id ConceptOpen.<concept id>; its name starts with the concept name (the id is read from the tree, not guessed).
+OPEN_ID="$(d search --type Button --limit 200 2>/dev/null | jq -r 'first(.matches[] | select((.automationId // "") | startswith("ConceptOpen.")) | select((.name // "") | startswith("Self scheduling,")) | .automationId)')"
+[ -n "$OPEN_ID" ] || setup_fail "no ConceptOpen.* button named Self scheduling"
+focus_row() { d action --automation-id "$OPEN_ID" --do focus >/dev/null 2>&1; }
+focus_row || setup_fail "could not focus the Self scheduling row"
 wait_visible 30 --type Button --text "Pin this" || fail "step 1: no card carries Pin this"
-visible --type TextBlock --text "Suggested" || fail "step 1: no card is marked Suggested"
+# No "Suggested" mark here: it shows only when pinned and unpinned concepts are mixed, and nothing is pinned yet.
 sleep 1
 frame frame-1-card
 texts >"$OUT/frame-1-texts.txt"
@@ -81,6 +85,7 @@ sleep 2
 frame frame-3-pinned
 texts >"$OUT/frame-3-texts.txt"
 # The card now reads as the person's pin: Edit pin replaces Pin this, and the live profile holds the pin with no approval waiting.
+focus_row   # the pin slot is hidden without pointer or focus, and the sheet's close left focus on a button that is gone
 wait_visible 30 --type Button --text "Edit pin" || fail "step 3: no card carries Edit pin after Pin and approve"
 grep -q "Self scheduling" "$AW_SINDRI_HOME/profile/profile.yaml" || fail "step 3: the live profile has no Self scheduling pin"
 "$PROVE" human profile validate >"$OUT/profile-validate.txt" 2>&1 || true
@@ -88,6 +93,7 @@ grep -q "Self scheduling" "$AW_SINDRI_HOME/profile/profile.yaml" || fail "step 3
 
 # Step 4 (frames for review, not part of the two clicks): Edit pin reopens the sheet as "Edit pin"; a word made only of small words is
 # refused with the sheet's own sentence; Unpin asks first, naming the pin.
+focus_row
 d click --type Button --text "Edit pin" >/dev/null 2>&1 || fail "step 4: could not click Edit pin"
 d wait-for --type TextBlock --text "Edit pin" --state visible --wait-ms 30000 >/dev/null 2>&1 || fail "step 4: the sheet's heading is not 'Edit pin'"
 d type --name "Add a word" --value "the" --replace >/dev/null 2>&1 || fail "step 4: could not type a word"
