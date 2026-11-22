@@ -6,7 +6,7 @@
 # Covers: usage (exit 2); the exit code of the job passes through; the lock files (heavy-session/<pid>.lock, heavy-job.lock
 # and .k, the owner line, released on exit, a dead owner reclaimed, an ownerless dir never); the cap file heavy-slots-cap;
 # the memory guard (AW_HEAVY_MIN_FREE_MB and _HIGH_MB, Linux /proc/meminfo only); the meta reserve heavy-meta-reserve (capped at slots-1, #2060) and
-# AW_HEAVY_PRIORITY=meta; the lock timeout (75, on a copy of the script with TIMEOUT=0: the real one is a constant 5400 s);
+# AW_HEAVY_PRIORITY=meta, and the note of a wait beside a free reserved slot (#3907, on a copy with HOLD_NOTE_EVERY=1); the lock timeout (75, on a copy of the script with TIMEOUT=0: the real one is a constant 5400 s);
 # the session dying (124); INT and TERM (130); the job launched through `systemd-run --user --scope -p OOMPolicy=continue` when
 # that works, and the old direct launch when it doesn't (#2931, stub systemd-run); a nested run under AW_HEAVY_LOCK_HELD=1 taking no lock; --light, --expensive
 # and the auto classification; the --timeout added to `dotnet test`.
@@ -71,6 +71,9 @@ mkdir -p "$WORK/scripts"; ln -s "$DIR/../config" "$WORK/config"   # the copies f
 FAST="$WORK/scripts/heavy-fast.sh"; sed 's/^TIMEOUT=5400$/TIMEOUT=0/' "$HEAVY" > "$FAST"
 ONE="$WORK/scripts/heavy-one.sh"; sed 's/^TIMEOUT=5400$/TIMEOUT=1/' "$HEAVY" > "$ONE"
 check "the copies differ from the wrapper only in TIMEOUT" "$(diff "$HEAVY" "$FAST" | grep -c '^>')$(diff "$HEAVY" "$ONE" | grep -c '^>')" "11"
+# NOTE repeats the reserve-wait note every second (#3907; the wrapper's interval is the constant HOLD_NOTE_EVERY=300).
+NOTE="$WORK/scripts/heavy-note.sh"; sed 's/^HOLD_NOTE_EVERY=300$/HOLD_NOTE_EVERY=1/' "$HEAVY" > "$NOTE"
+check "the note copy differs from the wrapper only in HOLD_NOTE_EVERY" "$(diff "$HEAVY" "$NOTE" | grep -c '^>')" "1"
 
 # The wrapper's watchdog leaves a `sleep 5` holding its stdout after the job ends, so a $(...) around it would wait up to 5 s for
 # the pipe to close (pinned as is). H and F (the wrapper, and the TIMEOUT=0 copy) write to a file and cat it: the sleep holds the file.
@@ -177,12 +180,13 @@ check "dotnet test --no-build is light" "$(mode_of dotnet test x --no-build)" "l
 check "dotnet --version is light" "$(mode_of dotnet --version)" "light"
 check "a path-qualified dotnet build is matched by its basename: expensive" "$(mode_of "$STUB/dotnet" build x)" "expensive"
 check "a path-qualified dotnet build inside a bash -c string: expensive" "$(mode_of bash -c "$STUB/dotnet build x")" "expensive"
-check "dotnet msbuild is light until the sandbox shim table lists it (#3810 item 3)" "$(mode_of dotnet msbuild x)" "light"
-check "a path-qualified dotnet msbuild is light until the sandbox shim table lists it (#3810 item 3)" "$(mode_of "$STUB/dotnet" msbuild x)" "light"
+check "dotnet msbuild is expensive, like dotnet build (#3810 item 3)" "$(mode_of dotnet msbuild x)" "expensive"
+check "a path-qualified dotnet msbuild is expensive (#3810 item 3)" "$(mode_of "$STUB/dotnet" msbuild x)" "expensive"
 check "a path-qualified dotnet --version stays light" "$(mode_of "$STUB/dotnet" --version)" "light"
 check "dotnet clean stays light" "$(mode_of dotnet clean)" "light"
 check "a path-qualified dotnet clean stays light" "$(mode_of "$STUB/dotnet" clean)" "light"
 check "a path-qualified dotnet test --no-build stays light" "$(mode_of "$STUB/dotnet" test x --no-build)" "light"
+check "a path argument ending in /dotnet before build counts (pinned as is, review of #3882): expensive" "$(mode_of sh -c "$sh_mode" x /srv/dotnet build)" "expensive"
 check "a word that only ends in dotnet is not dotnet: light" "$(mode_of sh -c "$sh_mode" x mydotnet build)" "light"
 for w in "npm ci" "npx vitest"; do
   # shellcheck disable=SC2086
@@ -291,10 +295,11 @@ if [ "$have_meminfo" = 1 ]; then
   # from outside, since a job blocked only by the reserve never times out
   out="$(AW_HEAVY_PRIORITY=other AW_HEAVY_MIN_FREE_MB=0 timeout 5 bash "$HEAVY" --expensive bash -c 'echo slot=$AW_HEAVY_SLOT' 2>&1 | sed -n 's/^slot=//p')"
   check "reserve 2 of 2 is capped to 1: a lane job (AW_HEAVY_PRIORITY=other is not meta) takes slot 2" "$out" "$LOCKS/heavy-job.lock.2"
-  # the reserve is also capped at the slots free memory allows minus one: memory for slot 1 only means no reserve
+  # the reserve is a slot count whatever memory is free (#3885): memory for slot 1 only leaves a lane job waiting (bounded from
+  # outside), not on meta's slot 1
   echo 1 > "$STATE/heavy-meta-reserve"
   out="$(AW_HEAVY_MIN_FREE_MB=999999999 timeout 5 bash "$HEAVY" --expensive bash -c 'echo slot=$AW_HEAVY_SLOT' 2>&1 | sed -n 's/^slot=//p')"
-  check "reserve 1 of 2, memory for slot 1 only: a lane job takes slot 1" "$out" "$LOCKS/heavy-job.lock"
+  check "reserve 1 of 2, memory for slot 1 only: a lane job waits, it does not take reserved slot 1 (#3885)" "$out" ""
   out="$(AW_HEAVY_MIN_FREE_MB=0 timeout 5 bash "$HEAVY" --expensive bash -c 'echo slot=$AW_HEAVY_SLOT' 2>&1 | sed -n 's/^slot=//p')"
   check "reserve 1 of 2, memory for both: a lane job still takes slot 2" "$out" "$LOCKS/heavy-job.lock.2"
   # blocked only by the reserve (slot 1 free, slot 2 busy): the wait is not counted; the file is re-read each second
@@ -305,10 +310,36 @@ if [ "$have_meminfo" = 1 ]; then
   check "reserved: a lane job is still waiting after 2 s although TIMEOUT is 1 s" "$(kill -0 "$rp" 2> /dev/null && echo waiting || echo exited)" "waiting"
   has "reserved: it announced the wait" "$(cat "$WORK/res.err")" "heavy: waiting for the box-wide lock"
   lacks "reserved: no timeout sentence" "$(cat "$WORK/res.err")" "timeout"
+  # #3907: a wait beside a free reserved slot says why, once at its start; the next note is 300 s away
+  has "reserved: the note names the reserve and the slot count (#3907)" "$(cat "$WORK/res.err")" "heavy: waiting although a box-wide slot is free: meta reserves 1 of 2 slot(s) (heavy-meta-reserve)"
+  check "reserved: the note names the MB available (#3907)" "$(grep -cE 'held or under its memory floor; [0-9]+ MB available$' "$WORK/res.err")" "1"
+  check "reserved: one note in the first 2 s, the next is due at 300 s (#3907)" "$(grep -c 'meta reserves' "$WORK/res.err")" "1"
   echo 0 > "$STATE/heavy-meta-reserve"
   wait "$rp"; rc=$?
   check "reserve drained: the waiting job runs on slot 1 and exits 0" "$rc" "0"
   check "...and printed its output" "$(cat "$WORK/res.out")" "ran"
+  # #3907: the reserve-wait note repeats on its interval (a copy with HOLD_NOTE_EVERY=1), comes back at once when a wait that
+  # ended starts again, and is not printed when every slot is held or for a meta job
+  unhold() { rm -f "$1/owner"; rmdir "$1" 2> /dev/null; return 0; }
+  echo 1 > "$STATE/heavy-meta-reserve"
+  AW_HEAVY_MIN_FREE_MB=0 bash "$NOTE" --expensive echo ran > "$WORK/rn.out" 2> "$WORK/rn.err" &
+  rp=$!; bgpids+=("$rp")
+  sleep 3.5
+  check "reserved, a note every 1 s: printed again after 3.5 s (#3907)" "$([ "$(grep -c 'meta reserves' "$WORK/rn.err")" -ge 2 ] && echo again || echo once)" "again"
+  kill "$rp" 2> /dev/null; wait "$rp" 2> /dev/null
+  AW_HEAVY_MIN_FREE_MB=0 bash "$HEAVY" --expensive echo ran > "$WORK/rs.out" 2> "$WORK/rs.err" &
+  rp=$!; bgpids+=("$rp")
+  sleep 1.5; hold "$LOCKS/heavy-job.lock"; sleep 2; unhold "$LOCKS/heavy-job.lock"
+  sleep 1.5
+  check "reserved, then every slot held, then reserved again: a second note at once (#3907)" "$(grep -c 'meta reserves' "$WORK/rs.err")" "2"
+  kill "$rp" 2> /dev/null; wait "$rp" 2> /dev/null
+  hold "$LOCKS/heavy-job.lock"
+  out="$(AW_HEAVY_MIN_FREE_MB=0 bash "$ONE" --expensive echo ran 2>&1)"; rc=$?
+  check "every slot held, reserve 1: the plain wait times out (75)" "$rc" "75"
+  lacks "every slot held: no reserve note (#3907)" "$out" "meta reserves"
+  out="$(AW_HEAVY_PRIORITY=meta AW_HEAVY_MIN_FREE_MB=0 bash "$ONE" --expensive echo ran 2>&1)"
+  lacks "a meta job waiting with every slot held: no reserve note (#3907)" "$out" "meta reserves"
+  unhold "$LOCKS/heavy-job.lock"; unhold "$LOCKS/heavy-job.lock.2"
 else
   echo "ok - (skipped: no /proc/meminfo; the memory guard fails closed there, so slots above 1 are never taken - pinned as is)"
 fi

@@ -25,7 +25,7 @@ A node has an `id`, a `type` and a `config`. It may also have a `title` (what th
 - `trigger`, `item` and `workflow` are reserved. A node cannot use them as an id.
 - `type` is a block type, such as `schedule`. Each block has its own page.
 - `config` holds the block's fields. Any key the block does not list is refused.
-- `onFailure` is `stop` (the default: the run halts when this node fails) or `continue` (the run keeps walking).
+- `onFailure` is `stop` (the default: the run halts when this node fails), `continue` (the run keeps walking) or `skip-item`. `skip-item` works only on a node inside a `for_each` loop, before its `collect`: when the node fails for one item, the loop drops that item and goes on with the next. Anywhere else `sindri wf validate` reports `GRAPH-NODE-005`. The [`for_each` page](block-for_each.md) has the details.
 
 ## Edges
 
