@@ -67,6 +67,6 @@ public sealed class MessageTsTests
 
         var sorted = times.Select(static t => new MessageTs(t)).Order(Comparer<MessageTs>.Create(MessageTs.Compare)).Select(static t => t.Value);
 
-        Assert.Equal(["999999999.000001", "1767771000.000100", "1767776100.000099", "1767776100.000100", "1767776640.000100"], sorted);
+        Assert.Equal(["999999999.000001", "1767771000.000100", "1767776100.000099", "1767776100.000100", "1767776640.000100"], sorted, StringComparer.Ordinal);
     }
 }

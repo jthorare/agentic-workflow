@@ -13,7 +13,7 @@ public sealed class MrkdwnParseTests
         var spans = Mrkdwn.Parse("*bold* and _italic_ and ~strike~").Spans;
 
         Assert.Equal([MrkdwnKind.Bold, MrkdwnKind.Text, MrkdwnKind.Italic, MrkdwnKind.Text, MrkdwnKind.Strike], spans.Select(static s => s.Kind));
-        Assert.Equal(["bold", " and ", "italic", " and ", "strike"], spans.Select(static s => s.Text));
+        Assert.Equal(["bold", " and ", "italic", " and ", "strike"], spans.Select(static s => s.Text), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public sealed class MrkdwnParseTests
         Assert.Equal((MrkdwnKind.Quote, "&gt; ", "quoted"), (escaped.Kind, escaped.Marker, escaped.Text));
         Assert.Equal((MrkdwnKind.Quote, ">>> ", "all\nof this"), (rest.Kind, rest.Marker, rest.Text));
         Assert.Equal([MrkdwnKind.ListItem, MrkdwnKind.Text, MrkdwnKind.ListItem, MrkdwnKind.Text, MrkdwnKind.ListItem], list.Select(static s => s.Kind));
-        Assert.Equal(["• ", "- ", "  1. "], list.Where(static s => s.Kind == MrkdwnKind.ListItem).Select(static s => s.Marker));
+        Assert.Equal(["• ", "- ", "  1. "], list.Where(static s => s.Kind == MrkdwnKind.ListItem).Select(static s => s.Marker), StringComparer.Ordinal);
     }
 
     [Theory]

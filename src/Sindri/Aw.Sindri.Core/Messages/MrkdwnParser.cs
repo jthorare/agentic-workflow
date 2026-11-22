@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 
 namespace Aw.Sindri.Core.Messages;
 
@@ -134,7 +135,7 @@ internal sealed partial class MrkdwnParser
     private List<MrkdwnSpan> InlineSpans(int start, int end, int depth)
     {
         var spans = new SpanList(_s);
-        Inline(spans, start, new Scope(end, end, depth));
+        _ = Inline(spans, start, new Scope(end, end, depth));
         return spans.Done();
     }
 
@@ -173,6 +174,7 @@ internal sealed partial class MrkdwnParser
     private bool Starts(int i, int end, string mark) => _s.AsSpan(i, end - i).StartsWith(mark, StringComparison.Ordinal);
 
     /// <summary>Where inline tokens may reach: the end of the range, the end a ``` block may reach, and the nesting depth.</summary>
+    [StructLayout(LayoutKind.Auto)]
     private readonly record struct Scope(int End, int PreEnd, int Depth);
 
     /// <summary>The spans so far, with the text between tokens kept as one run until the next span.</summary>

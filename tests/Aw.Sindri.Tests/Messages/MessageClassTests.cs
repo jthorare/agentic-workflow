@@ -44,8 +44,16 @@ public sealed class MessageClassTests
     [InlineData(3, MessageClass.DirectQuestion)]
     [InlineData(4, MessageClass.Fyi)]
     [InlineData(0, MessageClass.Fyi)]
-    public void A_group_dm_counts_as_small_up_to_3_people(int members, MessageClass expected) =>
-        Assert.Equal(expected, Classify(Dm("can you check?") with { Kind = ConversationKind.Mpim, Members = members }));
+    public void A_group_dm_counts_as_small_up_to_3_people(int members, MessageClass expected)
+    {
+        var group = Dm("can you check?") with
+        {
+            Kind = ConversationKind.Mpim,
+            Members = members,
+        };
+
+        Assert.Equal(expected, Classify(group));
+    }
 
     [Fact]
     public void A_thread_that_is_not_mine_or_has_my_last_word_has_no_class()
@@ -59,20 +67,32 @@ public sealed class MessageClassTests
         Assert.Equal(MessageClass.Fyi, MessageTriage.Classify(Dm("ok, thanks"), ["", "  "]));
 
     [Fact]
-    public void Release_1_needs_reply_leaves_out_a_row_that_needs_no_reply() =>
-        Assert.False(MessageTriage.InRelease1NeedsReply(Dm("can you check?") with { Class = MessageClass.DirectQuestion, Done = true }));
+    public void Release_1_needs_reply_leaves_out_a_row_that_needs_no_reply()
+    {
+        var done = Dm("can you check?") with
+        {
+            Class = MessageClass.DirectQuestion,
+            Done = true,
+        };
+
+        Assert.False(MessageTriage.InRelease1NeedsReply(done));
+    }
 
     private static MessageClass Classify(ThreadRow row) => MessageTriage.Classify(row, _phrases);
 
     private static ThreadRow Dm(string text) =>
         new ThreadRow("slack:dm:T0HARBOR/D0SAM", ConversationKind.Dm, "D0SAM", new MessageTs("1767776520.000100")) with
         {
-            Members = 2, Mine = MineReason.DirectMessage, NewestText = text,
+            Members = 2,
+            Mine = MineReason.DirectMessage,
+            NewestText = text,
         };
 
     private static ThreadRow Channel(string text) =>
         new ThreadRow("slack:thread:T0HARBOR/C0HARBOR/1767748200.000100", ConversationKind.Channel, "C0HARBOR", new MessageTs("1767748200.000100")) with
         {
-            Thread = new MessageTs("1767748200.000100"), Mine = MineReason.WroteInThread, NewestText = text,
+            Thread = new MessageTs("1767748200.000100"),
+            Mine = MineReason.WroteInThread,
+            NewestText = text,
         };
 }

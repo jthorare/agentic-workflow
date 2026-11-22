@@ -36,19 +36,23 @@ internal sealed partial class MrkdwnParser
 
     private bool TryToken(int i, Scope scope, [NotNullWhen(true)] out MrkdwnSpan? span, out int next)
     {
-        switch (_s[i])
+        var c = _s[i];
+        if (c == '<')
         {
-            case '<':
-                return TryAngle(i, scope.End, out span, out next);
-            case '`':
-                return TryFence(i, scope.PreEnd, out span, out next) || TryCode(i, scope.End, out span, out next);
-            case '*' or '_' or '~':
-                return TryMark(i, scope.End, scope.Depth, out span, out next);
-            case ':':
-                return TryEmoji(i, scope.End, out span, out next);
-            default:
-                return None(i, out span, out next);
+            return TryAngle(i, scope.End, out span, out next);
         }
+
+        if (c == '`')
+        {
+            return TryFence(i, scope.PreEnd, out span, out next) || TryCode(i, scope.End, out span, out next);
+        }
+
+        if (c is '*' or '_' or '~')
+        {
+            return TryMark(i, scope.End, scope.Depth, out span, out next);
+        }
+
+        return c == ':' ? TryEmoji(i, scope.End, out span, out next) : None(i, out span, out next);
     }
 
     // *bold*, _italic_, ~strike~: opens after a non-word character before a non-space, closes on the first valid closer in the same range
@@ -108,22 +112,32 @@ internal sealed partial class MrkdwnParser
     // :name: between non-word characters
     private bool TryEmoji(int i, int end, [NotNullWhen(true)] out MrkdwnSpan? span, out int next)
     {
+        var close = EmojiNameEnd(i, end);
+        var closes = close > i + 1 && close < end && _s[close] == ':' && !WordAt(close + 1);
+        if (!closes || WordAt(i - 1))
+        {
+            return None(i, out span, out next);
+        }
+
+        span = new MrkdwnSpan(MrkdwnKind.Emoji, _s[(i + 1)..close]);
+        next = close + 1;
+        return true;
+    }
+
+    // where the emoji name after the ':' at i stops: the first character that is not a name character, capped at MaxEmojiName
+    private int EmojiNameEnd(int i, int end)
+    {
         var j = i + 1;
         while (j < end && j - i <= MaxEmojiName && IsEmojiChar(_s[j]))
         {
             j++;
         }
 
-        var closes = j > i + 1 && j < end && _s[j] == ':' && (j + 1 == _s.Length || !char.IsLetterOrDigit(_s[j + 1]));
-        if (!closes || (i > 0 && char.IsLetterOrDigit(_s[i - 1])))
-        {
-            return None(i, out span, out next);
-        }
-
-        span = new MrkdwnSpan(MrkdwnKind.Emoji, _s[(i + 1)..j]);
-        next = j + 1;
-        return true;
+        return j;
     }
+
+    // a letter or digit at j; nothing before the start or past the end is one
+    private bool WordAt(int j) => j >= 0 && j < _s.Length && char.IsLetterOrDigit(_s[j]);
 
     private static MrkdwnSpan? AngleSpan(string inner)
     {
