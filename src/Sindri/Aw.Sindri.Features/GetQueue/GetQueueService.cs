@@ -7,6 +7,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Items.Vocabulary;
+using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Features.GetQueue;
@@ -19,7 +20,8 @@ namespace Aw.Sindri.Features.GetQueue;
 /// <param name="views">The 'items' view.</param>
 /// <param name="status">How fresh the views are.</param>
 /// <param name="callers">The caller; a read needs one.</param>
-internal sealed class GetQueueService(IViewReader views, IProjectorStatus status, ICallerContextAccessor callers) : IService<GetQueueRequest, QueueResponse>
+/// <param name="lease">The lease this serve process holds: its epoch goes into the tag (#4007).</param>
+internal sealed class GetQueueService(IViewReader views, IProjectorStatus status, ICallerContextAccessor callers, HeldLease lease) : IService<GetQueueRequest, QueueResponse>
 {
     private static readonly ItemState[] _openStates =
         [.. Enum.GetValues<ItemState>().Where(static s => QueueGroups.GroupOf(s) is not null)];
@@ -45,6 +47,8 @@ internal sealed class GetQueueService(IViewReader views, IProjectorStatus status
             return mark.Error;
         }
 
+        var epoch = lease.Current?.Epoch ?? 0;   // red stub: not in the tag yet (#4007)
+        _ = epoch;
         var tag = TagOf(mark.Value, current, request);
         if (request.IfNoneMatch is not null && string.Equals(request.IfNoneMatch, tag, StringComparison.Ordinal))
         {
