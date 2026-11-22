@@ -244,4 +244,24 @@ public sealed class TerminalSessionTests
 
         Assert.Equal(1, drawn);
     }
+
+    // #3860 item 2: the view switched panes (the old run's token is cancelled) just as the old socket ended; its close must not mark the pane Reconnecting.
+    [Fact]
+    public async Task A_cancelled_run_whose_socket_then_ends_leaves_the_pane_state_alone()
+    {
+        var (f, socket, _, _) = Make();
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        var atCancel = TerminalState.Connecting;
+        var session = new TerminalSession(socket, f.View, _ =>
+        {
+            atCancel = f.View.State;
+            cts.Cancel();
+        });
+        socket.Script = [ReadyJson, FakeTerminalConnector.FixtureOut().First(m => TerminalSocketMessages.Parse(m).Kind == TerminalServerKind.Frame)];
+        socket.IgnoresCancellation = true;
+
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), cts.Token);
+
+        Assert.Equal((TerminalState.Attached, TerminalState.Attached), (atCancel, f.View.State));
+    }
 }

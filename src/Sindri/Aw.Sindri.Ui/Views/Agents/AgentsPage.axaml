@@ -9,22 +9,22 @@
        sessions in their groups, the recently ended under a fold, and the footer. Every named line is a Border wrapper (a TextBlock's peer
        ignores AutomationProperties.Name) and its text is drawn only. -->
   <Grid x:Name="AgentsSplit" ColumnDefinitions="*,0">
-  <StackPanel x:Name="AgentsListColumn" Spacing="{StaticResource Size.PanelGap}">
-    <Grid ColumnDefinitions="Auto,*,Auto">
+  <StackPanel x:Name="AgentsListColumn" ClipToBounds="True" Spacing="{StaticResource Size.PanelGap}">
+    <Grid x:Name="AgentsHeader" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
       <StackPanel x:Name="AgentsHeadRegion" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock Classes="page-title" Text="Agents" AutomationProperties.Name="Agents" />
         <Border x:Name="AgentsHeadName" AutomationProperties.Name="{Binding HeadName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" VerticalAlignment="Center">
           <TextBlock x:Name="AgentsHead" Classes="caption subtle" Text="{Binding Head}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
       </StackPanel>
-      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" IsVisible="{Binding ShowsFilters}">
+      <WrapPanel x:Name="AgentsFilters" Grid.Column="2" Orientation="Horizontal" ItemSpacing="8" LineSpacing="8" VerticalAlignment="Center" IsVisible="{Binding ShowsFilters}">
         <ComboBox x:Name="ProviderFilter" ItemsSource="{Binding ProviderChoices}" SelectedIndex="0" IsEnabled="{Binding FiltersEnabled}" SelectionChanged="OnProviderChosen"
                   MinWidth="150" AutomationProperties.Name="{Binding ProviderFilterName}" />
         <ComboBox x:Name="StateFilter" ItemsSource="{Binding StateChoices}" SelectedIndex="0" IsEnabled="{Binding FiltersEnabled}" SelectionChanged="OnStateChosen"
                   MinWidth="130" AutomationProperties.Name="{Binding StateFilterName}" />
         <ComboBox x:Name="RepoFilter" ItemsSource="{Binding RepoChoices}" SelectedIndex="0" IsEnabled="{Binding FiltersEnabled}" SelectionChanged="OnRepoChosen"
                   MinWidth="130" AutomationProperties.Name="{Binding RepoFilterName}" />
-      </StackPanel>
+      </WrapPanel>
 
       <!-- One polite region: "N agents · M asking", said when those counts change and never on a read that changes nothing. -->
       <TextBlock x:Name="AgentsCountsAnnouncement" Grid.Column="1" Classes="caption live-region" Classes.live="{Binding Voice.IsAnnouncing}" Width="0" Opacity="0"
