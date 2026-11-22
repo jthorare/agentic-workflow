@@ -214,11 +214,16 @@ the other:
   `status` and apply the new depth, or `meta-gate-reserve --clear` when the queue is empty.
 - Builders' `heavy --light` builds don't use these slots. Each takes one of the wrapper's light slots (`heavy-light-cap`, default 4),
   and none starts while a job waits for a box-wide slot whose memory floor isn't met, so builders can't keep a gate's slot shut
-  (#3796). A gate step's `AW_HEAVY_PRIORITY=meta` skips that hold too.
+  (#3796). The hold looks only at the slots that waiter may take: a lane job's waiter skips the slots the reservation keeps, a
+  gate's waiter may take any (#3810). The hold has no time limit. A held build prints a line on stderr when the hold starts
+  and every 5 minutes after. The line names the waiter's pid and argv, the slot it waits for, that slot's floor and the MB
+  available. A gate step's `AW_HEAVY_PRIORITY=meta` skips that hold too.
 - The reservation assumes every gate runs through `aw-meta gate-run`. A gate run by hand carries no priority and would wait behind
   the reservation it is meant to share; nothing running is ever pre-empted.
 
-**Wait files.** `heavy` writes one file, `$AW_STATE_DIR/locks/heavy-wait/<pid>` (the wrapper's own pid), for each job that has to wait for a slot. The file is one JSON line with `pid`, `session`, `lock` (`session`, `box-wide`, or `light` for a `heavy --light` build waiting for the light pool or held back for a box-wide waiter, #3796), `since` (UTC, when the first wait began), `argv` (raw) and `cwd`. `heavy` removes the file when the job takes its slot, on the lock timeout and when a signal ends it. A job that gets its slots at once writes none. SIGKILL leaves a file behind, so `aw-meta heavy --json` (#3142), the reader, skips a dead pid and redacts `argv`.
+**Wait files.** `heavy` writes one file, `$AW_STATE_DIR/locks/heavy-wait/<pid>` (the wrapper's own pid), for each job that has to wait for a slot. The file is one JSON line with `pid`, `session`, `lock` (`session`, `box-wide`, or `light` for a `heavy --light` build waiting for the light pool or held back for a box-wide waiter, #3796), `since` (UTC, when the first wait began), `start` (the wrapper's process start token: field 22 of `/proc/<pid>/stat` on Linux, `ps -o lstart=` on macOS), `argv` (raw), `cwd`, `fifo` (always 1) and `meta` (1 for an `AW_HEAVY_PRIORITY=meta` job, absent otherwise). `heavy` removes the file when the job takes its slot, on the lock timeout and when a signal ends it. A job that gets its slots at once writes none. SIGKILL leaves a file behind, so `aw-meta heavy --json` (#3142), the reader, skips a dead pid and redacts `argv`.
+
+**Arrival order (#3819).** A waiter takes a free slot only when no older live waiter of the same pool has a wait file. Older means an earlier `since`, then a lower pid; the session pool counts only waiters of the same session. Only files with `"fifo":1` and a `start` count, and never one with `"meta":1`; a meta job never stands back. A waiter is live only while its pid is alive and still has the file's `start`. A SIGKILLed waiter's file then holds no one back once another process gets its pid. Two jobs that arrive in the same second go by pid (`since` has 1 s resolution). A waiter stops standing back `AW_HEAVY_FIFO_MAX_DEFER` seconds after its first stand-back in any pool (default 1800; 0 turns the order off).
 
 **Builders per lane.** `health` (and `status`, one line) advises how many builder subagents each lane should run now, from
 `builders.maxPerLane` (none by default: nothing caps it but the host): it is reduced while free disk is under `resources.diskFloorGb + lanes x builders x builders.worktreeGb`
