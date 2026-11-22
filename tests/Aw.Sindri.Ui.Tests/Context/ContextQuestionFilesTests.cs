@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
@@ -95,7 +96,7 @@ public sealed class ContextQuestionFilesTests
     [Fact]
     public async Task A_long_answer_lists_its_first_25_files_and_says_how_many_more_in_words()
     {
-        var files = Enumerable.Range(1, 30).Select(n => $"src/Many/File{n:D2}.cs").ToList();
+        var files = Enumerable.Range(1, 30).Select(n => string.Create(CultureInfo.InvariantCulture, $"src/Many/File{n:D2}.cs")).ToList();
         var answer = new JsonObject
         {
             ["anchors"] = new JsonArray("thing:lanes"),
@@ -107,7 +108,7 @@ public sealed class ContextQuestionFilesTests
 
         await page.Submit(Token);
 
-        Assert.Equal(files.Take(25), page.AnswerFiles.Select(f => f.Path));
+        Assert.Equal(files.Take(25), page.AnswerFiles.Select(f => f.Path), StringComparer.Ordinal);
         Assert.Equal((true, "and 5 more files"), (page.HasAnswerFilesMore, page.AnswerFilesMore));
         Assert.Equal("The map draws nothing for this question, but the answer names 30 files. They are listed above.", page.StageMessage);
     }
