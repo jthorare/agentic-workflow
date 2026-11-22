@@ -83,6 +83,7 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(Resources.PurgeResourcesBody))]
 [JsonSerializable(typeof(Home.HomeView))]
 [JsonSerializable(typeof(Home.HomeRowOne))]
+[JsonSerializable(typeof(Home.HomeDoneView))]
 [JsonSerializable(typeof(Memory.MemoryList))]
 [JsonSerializable(typeof(Memory.MemoryCreated))]
 [JsonSerializable(typeof(Memory.MemorySearchView))]
