@@ -89,13 +89,9 @@ public sealed class ContextKeyHintsFramesTests
                     window.UpdateLayout();
                 }
 
-                var page = Assert.Single(window.GetVisualDescendants().OfType<Control>(), c => c.Name == "ContextPage");
-                var hints = page.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "ContextKeyHints");
-                var scroller = page.FindAncestorOfType<ScrollViewer>()!;
-                var bottom = Avalonia.VisualExtensions.TranslatePoint(hints, default, scroller)!.Value.Y + hints.Bounds.Height;
-
                 // The stage takes the height the window leaves, so the hint row has to be left room under it: the real app drew it below the fold.
-                Assert.True(bottom <= scroller.Viewport.Height + 0.5, $"the hint row ends at {bottom}, below the viewport's {scroller.Viewport.Height}");
+                var (bottom, viewport) = HintBottomAndViewport(window);
+                Assert.True(bottom <= viewport + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the hint row ends at {bottom}, below the viewport's {viewport}"));
             }
             finally
             {
@@ -106,5 +102,15 @@ public sealed class ContextKeyHintsFramesTests
 
             return true;
         }, Token);
+    }
+
+    // Where the key hint row ends inside the page's scroller, and how tall the scroller's viewport is.
+    private static (double Bottom, double Viewport) HintBottomAndViewport(ShellWindow window)
+    {
+        var page = Assert.Single(window.GetVisualDescendants().OfType<Control>(), c => c.Name == "ContextPage");
+        var hints = page.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "ContextKeyHints");
+        var scroller = page.FindAncestorOfType<ScrollViewer>()!;
+        var bottom = Avalonia.VisualExtensions.TranslatePoint(hints, default, scroller)!.Value.Y + hints.Bounds.Height;
+        return (bottom, scroller.Viewport.Height);
     }
 }
