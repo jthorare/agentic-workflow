@@ -21628,13 +21628,15 @@ Aw.Sindri.Core.Graph.Ops.SetConfigOp.Value.init -> void
 Aw.Sindri.Core.Graph.Ops.SetMetaOp
 Aw.Sindri.Core.Graph.Ops.SetMetaOp.Concurrency.get -> string?
 Aw.Sindri.Core.Graph.Ops.SetMetaOp.Concurrency.init -> void
-Aw.Sindri.Core.Graph.Ops.SetMetaOp.Deconstruct(out string? Name, out string? Description, out string? Concurrency) -> void
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Deconstruct(out string? Name, out string? Description, out string? Concurrency, out string? Result) -> void
 Aw.Sindri.Core.Graph.Ops.SetMetaOp.Description.get -> string?
 Aw.Sindri.Core.Graph.Ops.SetMetaOp.Description.init -> void
 Aw.Sindri.Core.Graph.Ops.SetMetaOp.Equals(Aw.Sindri.Core.Graph.Ops.SetMetaOp? other) -> bool
 Aw.Sindri.Core.Graph.Ops.SetMetaOp.Name.get -> string?
 Aw.Sindri.Core.Graph.Ops.SetMetaOp.Name.init -> void
-Aw.Sindri.Core.Graph.Ops.SetMetaOp.SetMetaOp(string? Name = null, string? Description = null, string? Concurrency = null) -> void
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Result.get -> string?
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Result.init -> void
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.SetMetaOp(string? Name = null, string? Description = null, string? Concurrency = null, string? Result = null) -> void
 Aw.Sindri.Core.Graph.Templates.GraphTemplate
 Aw.Sindri.Core.Graph.Templates.GraphTemplate.<Clone>$() -> Aw.Sindri.Core.Graph.Templates.GraphTemplate!
 Aw.Sindri.Core.Graph.Templates.GraphTemplate.Deconstruct(out string! Name, out string! Description, out Aw.Sindri.Core.Graph.GraphSpec! Spec) -> void
