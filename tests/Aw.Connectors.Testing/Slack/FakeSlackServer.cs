@@ -129,6 +129,15 @@ public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessa
     /// <returns>This server.</returns>
     public FakeSlackServer SeedWorkspace() => SlackWorkspaceSeed.Apply(this);
 
+    /// <summary>Whether the fake serves <paramref name="method"/> ('conversations.history'), so a caller can check a name before scripting it.</summary>
+    /// <param name="method">The Web API method.</param>
+    /// <returns>True when the fake answers it.</returns>
+    public static bool Serves(string method)
+    {
+        ArgumentNullException.ThrowIfNull(method);
+        return _methods.ContainsKey(method);
+    }
+
     /// <summary>Revokes the token: from now on every method answers HTTP 200 with {"ok":false,"error":<paramref name="error"/>}, before any script.</summary>
     /// <param name="error">Slack's error code; 'invalid_auth' by default ('token_revoked' is the other one Slack sends).</param>
     /// <returns>This server.</returns>
