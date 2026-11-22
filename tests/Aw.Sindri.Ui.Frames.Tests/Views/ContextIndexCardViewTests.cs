@@ -13,7 +13,7 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 [Lane(TestLane.Integration)]
 public sealed class ContextIndexCardViewTests : FrameHost
 {
-    private const string Body = """{"sources":[{"source":"github","phase":"live","usable":true,"complete":false,"lastSync":null,"lastCode":null,"pull":"running","records":200,"lastCommit":"2026-10-11T11:57:00Z"},{"source":"linear","phase":"live","usable":false,"complete":false,"lastSync":null,"lastCode":null,"pull":"idle","records":0,"lastCommit":null}]}""";
+    private const string Body = """{"sources":[{"source":"github","phase":"live","usable":true,"complete":false,"lastSync":null,"lastCode":null,"pull":"running","records":200,"lastCommit":"2026-10-11T11:57:00Z"},{"source":"linear","phase":"live","usable":false,"complete":false,"lastSync":null,"lastCode":null,"pull":"idle","records":0,"lastCommit":null,"needsLook":true}]}""";
 
     [Fact]
     public Task The_card_names_each_line_and_the_heading_for_assistive_technology() => OnUi(async () =>
