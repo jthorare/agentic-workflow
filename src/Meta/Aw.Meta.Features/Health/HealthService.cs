@@ -63,7 +63,7 @@ internal sealed class HealthService(HostProbe probe, LaneCheck lanes, OrphanKill
         var context = await lanes.Context(cancellationToken).ConfigureAwait(false);
         var response = new HealthResponse(
             ProcessGroups.Group(processes), processes.Count, host.Resources, orphans, killed, HostRules.Duplicates(processes), missing, host.Locks, low, NeedsAttention(remaining, low, missing, standing), standing, advice.Value.Heavy, advice.Value.Builders, context)
-        { Consumer = await Consumer(cancellationToken).ConfigureAwait(false), OomPolicy = host.OomPolicy };
+        { Consumer = await Consumer(cancellationToken).ConfigureAwait(false), OomPolicy = host.OomPolicy, StaleScripts = host.StaleScripts };
         var kept = await values.Set(KvKeys.HealthLast, Summary(response, remaining), cancellationToken).ConfigureAwait(false);
         return kept.IsError ? kept.Error : response;
     }

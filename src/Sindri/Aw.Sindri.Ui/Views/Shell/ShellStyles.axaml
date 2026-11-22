@@ -347,6 +347,10 @@
   <Style Selector="Border.sheet.covers Button.back">
     <Setter Property="IsVisible" Value="True" />
   </Style>
+  <!-- #3710: covering the page, Back and Close did the same thing; Back stays. -->
+  <Style Selector="Border.sheet.covers Button#SheetClose">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
   <!-- The 404 state's Back is the header's Back where the sheet covers the page. -->
   <Style Selector="Button.not-found-back">
     <Setter Property="IsVisible" Value="False" />
@@ -370,5 +374,17 @@
     <Setter Property="BorderThickness" Value="1,1,0,1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
     <Setter Property="Padding" Value="6,12" />
+  </Style>
+  <!-- A link button is a word, not a boxed button: no fill or border, muted ink that brightens under the pointer.
+       The keyboard ring is the stock one, drawn on :focus-visible only. -->
+  <Style Selector="Button.link">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0,2" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkMuted}" />
+  </Style>
+  <Style Selector="Button.link:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.link:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
   </Style>
 </Styles>
