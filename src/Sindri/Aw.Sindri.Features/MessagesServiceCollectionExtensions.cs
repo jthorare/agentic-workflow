@@ -17,7 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features;
 
-/// <summary>Registers the Messages slices (messages spec §8.2, §14 M1s): every service is a stub that throws until its phase builds it.</summary>
+/// <summary>Registers the Messages slices (messages spec §8.2, §14 M1s): a service its phase has not built yet is a stub that throws.</summary>
 internal static class MessagesServiceCollectionExtensions
 {
     /// <summary>

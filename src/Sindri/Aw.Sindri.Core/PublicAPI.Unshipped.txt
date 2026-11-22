@@ -24190,3 +24190,63 @@ Aw.Sindri.Core.Messages.IMessagesStore.Expire(Aw.Sindri.Core.Messages.MessageTs 
 Aw.Sindri.Core.Messages.IMessagesStore.Purge(string? conversation, bool ownerState, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 static readonly Aw.Sindri.Core.SindriErrors.MessagesStoreUnusable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.MessagesConversationUnknown -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Messages.ConversationSummary
+Aw.Sindri.Core.Messages.ConversationSummary.Conversation.get -> string!
+Aw.Sindri.Core.Messages.ConversationSummary.Conversation.init -> void
+Aw.Sindri.Core.Messages.ConversationSummary.Kind.get -> Aw.Sindri.Core.Messages.ConversationKind
+Aw.Sindri.Core.Messages.ConversationSummary.Kind.init -> void
+Aw.Sindri.Core.Messages.ConversationSummary.Name.get -> string!
+Aw.Sindri.Core.Messages.ConversationSummary.Name.init -> void
+Aw.Sindri.Core.Messages.ConversationSummary.Starred.get -> bool
+Aw.Sindri.Core.Messages.ConversationSummary.Starred.init -> void
+Aw.Sindri.Core.Messages.ConversationSummary.Unread.get -> int
+Aw.Sindri.Core.Messages.ConversationSummary.Unread.init -> void
+Aw.Sindri.Core.Messages.ConversationSummary.<Clone>$() -> Aw.Sindri.Core.Messages.ConversationSummary!
+Aw.Sindri.Core.Messages.ConversationSummary.Deconstruct(out string! Conversation, out Aw.Sindri.Core.Messages.ConversationKind Kind, out string! Name, out bool Starred, out int Unread) -> void
+Aw.Sindri.Core.Messages.ConversationSummary.Equals(Aw.Sindri.Core.Messages.ConversationSummary? other) -> bool
+Aw.Sindri.Core.Messages.ConversationSummary.ConversationSummary(string! Conversation, Aw.Sindri.Core.Messages.ConversationKind Kind, string! Name, bool Starred, int Unread) -> void
+override Aw.Sindri.Core.Messages.ConversationSummary.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Messages.ConversationSummary.GetHashCode() -> int
+override Aw.Sindri.Core.Messages.ConversationSummary.ToString() -> string!
+static Aw.Sindri.Core.Messages.ConversationSummary.operator !=(Aw.Sindri.Core.Messages.ConversationSummary? left, Aw.Sindri.Core.Messages.ConversationSummary? right) -> bool
+static Aw.Sindri.Core.Messages.ConversationSummary.operator ==(Aw.Sindri.Core.Messages.ConversationSummary? left, Aw.Sindri.Core.Messages.ConversationSummary? right) -> bool
+Aw.Sindri.Core.Messages.ConversationWindow
+Aw.Sindri.Core.Messages.ConversationWindow.Lines.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MessageLine!>!
+Aw.Sindri.Core.Messages.ConversationWindow.Lines.init -> void
+Aw.Sindri.Core.Messages.ConversationWindow.Gaps.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.GapMarker!>!
+Aw.Sindri.Core.Messages.ConversationWindow.Gaps.init -> void
+Aw.Sindri.Core.Messages.ConversationWindow.<Clone>$() -> Aw.Sindri.Core.Messages.ConversationWindow!
+Aw.Sindri.Core.Messages.ConversationWindow.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MessageLine!>! Lines, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.GapMarker!>! Gaps) -> void
+Aw.Sindri.Core.Messages.ConversationWindow.Equals(Aw.Sindri.Core.Messages.ConversationWindow? other) -> bool
+Aw.Sindri.Core.Messages.ConversationWindow.ConversationWindow(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MessageLine!>! Lines, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.GapMarker!>! Gaps) -> void
+override Aw.Sindri.Core.Messages.ConversationWindow.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Messages.ConversationWindow.GetHashCode() -> int
+override Aw.Sindri.Core.Messages.ConversationWindow.ToString() -> string!
+static Aw.Sindri.Core.Messages.ConversationWindow.operator !=(Aw.Sindri.Core.Messages.ConversationWindow? left, Aw.Sindri.Core.Messages.ConversationWindow? right) -> bool
+static Aw.Sindri.Core.Messages.ConversationWindow.operator ==(Aw.Sindri.Core.Messages.ConversationWindow? left, Aw.Sindri.Core.Messages.ConversationWindow? right) -> bool
+Aw.Sindri.Core.Messages.StoredThread
+Aw.Sindri.Core.Messages.StoredThread.Root.get -> Aw.Sindri.Core.Messages.MessageLine!
+Aw.Sindri.Core.Messages.StoredThread.Root.init -> void
+Aw.Sindri.Core.Messages.StoredThread.Replies.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MessageLine!>!
+Aw.Sindri.Core.Messages.StoredThread.Replies.init -> void
+Aw.Sindri.Core.Messages.StoredThread.Row.get -> Aw.Sindri.Core.Messages.ThreadRow?
+Aw.Sindri.Core.Messages.StoredThread.Row.init -> void
+Aw.Sindri.Core.Messages.StoredThread.<Clone>$() -> Aw.Sindri.Core.Messages.StoredThread!
+Aw.Sindri.Core.Messages.StoredThread.Deconstruct(out Aw.Sindri.Core.Messages.MessageLine! Root, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MessageLine!>! Replies, out Aw.Sindri.Core.Messages.ThreadRow? Row) -> void
+Aw.Sindri.Core.Messages.StoredThread.Equals(Aw.Sindri.Core.Messages.StoredThread? other) -> bool
+Aw.Sindri.Core.Messages.StoredThread.StoredThread(Aw.Sindri.Core.Messages.MessageLine! Root, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MessageLine!>! Replies, Aw.Sindri.Core.Messages.ThreadRow? Row) -> void
+override Aw.Sindri.Core.Messages.StoredThread.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Messages.StoredThread.GetHashCode() -> int
+override Aw.Sindri.Core.Messages.StoredThread.ToString() -> string!
+static Aw.Sindri.Core.Messages.StoredThread.operator !=(Aw.Sindri.Core.Messages.StoredThread? left, Aw.Sindri.Core.Messages.StoredThread? right) -> bool
+static Aw.Sindri.Core.Messages.StoredThread.operator ==(Aw.Sindri.Core.Messages.StoredThread? left, Aw.Sindri.Core.Messages.StoredThread? right) -> bool
+Aw.Sindri.Core.Messages.MessageLine.AuthorName.get -> string?
+Aw.Sindri.Core.Messages.MessageLine.AuthorName.init -> void
+Aw.Sindri.Core.Messages.MessageReadFilter
+static Aw.Sindri.Core.Messages.MessageReadFilter.ShowsText(Aw.Sindri.Core.Commands.CallerContext? caller) -> bool
+static Aw.Sindri.Core.Messages.MessageReadFilter.WithoutText(Aw.Sindri.Core.Messages.MessageLine! line) -> Aw.Sindri.Core.Messages.MessageLine!
+static Aw.Sindri.Core.Messages.MessageReadFilter.WithoutText(Aw.Sindri.Core.Messages.ThreadRow! row) -> Aw.Sindri.Core.Messages.ThreadRow!
+Aw.Sindri.Core.Messages.IMessagesStore.Rows(Aw.Sindri.Core.Messages.MessageList list, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.ThreadRow!>!>!>
+Aw.Sindri.Core.Messages.IMessagesStore.Conversations(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.ConversationSummary!>!>!>
+Aw.Sindri.Core.Messages.IMessagesStore.Window(string! conversation, Aw.Sindri.Core.Messages.MessageTs? before, Aw.Sindri.Core.Messages.MessageTs? after, int limit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Messages.ConversationWindow!>!>
+Aw.Sindri.Core.Messages.IMessagesStore.Thread(string! conversation, Aw.Sindri.Core.Messages.MessageTs thread, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Messages.StoredThread!>!>

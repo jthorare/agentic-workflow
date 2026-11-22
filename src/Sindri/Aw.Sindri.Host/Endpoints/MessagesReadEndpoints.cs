@@ -13,7 +13,8 @@ namespace Aw.Sindri.Host.Endpoints;
 
 /// <summary>
 /// The Messages reads under /sindri/messages (messages spec §8.2; queries): status, a list, the conversations, a conversation window, a thread and local
-/// search. Each binds and calls one service; every service is a stub until M1f, so each answers a 500 until then. A session's answer carries no text (W17).
+/// search. Each binds and calls one service. The lists, conversations, window and thread read messages.db (M1f); status and search are stubs that answer a
+/// 500 until M1f's second PR. A session's answer carries no text (W17).
 /// </summary>
 internal static class MessagesReadEndpoints
 {

@@ -14,4 +14,7 @@ public sealed record MessageLine(MessageTs Ts, string Author, string Text)
 
     /// <summary>Gets a value indicating whether the line is known only from a search hit.</summary>
     public bool Partial { get; init; }
+
+    /// <summary>Gets the author's display name from the users table, or null when the store has no row for them; a session's answer carries none (W17).</summary>
+    public string? AuthorName { get; init; }
 }
