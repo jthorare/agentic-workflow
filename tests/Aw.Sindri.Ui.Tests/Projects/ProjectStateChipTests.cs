@@ -1,4 +1,6 @@
+using System.Net;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Projects;
 
 namespace Aw.Sindri.Ui.Tests.Projects;
@@ -37,5 +39,33 @@ public sealed class ProjectStateChipTests
 
         var (_, body) = _f.Server.ProjectWrites[^1];
         Assert.Equal("typed, not saved yet", Assert.IsType<Ui.Api.Projects.ProjectChange>(body).Notes);
+    }
+
+    [Fact]
+    public async Task A_chip_pick_while_a_write_is_in_flight_sends_nothing_and_marks_nothing()
+    {
+        _f.Server.CommandGate = new TaskCompletionSource();
+        var sheet = await _f.Opened(ProjectSheetFixture.Attached, Token);
+        var saved = sheet.SelectedState;
+        sheet.BeginEdit();
+        var saving = sheet.Save(Token);
+
+        await sheet.PickState(Other(sheet), Token);
+
+        Assert.Equal((saved, 1), (sheet.SelectedState, _f.Server.ProjectWrites.Count));
+        _f.Server.CommandGate.SetResult();
+        await saving;
+    }
+
+    [Fact]
+    public async Task A_refused_chip_pick_puts_the_mark_back_on_the_saved_state()
+    {
+        var sheet = await _f.Opened(ProjectSheetFixture.Attached, Token);
+        var saved = sheet.SelectedState;
+        _f.Server.ProjectWriteAnswer = RouteAnswer.Problem(HttpStatusCode.BadRequest, "SND-PROJECT-004", "refused");
+
+        await sheet.PickState(Other(sheet), Token);
+
+        Assert.Equal((saved, true), (sheet.SelectedState, sheet.SaveError.Length > 0));
     }
 }
