@@ -71,7 +71,7 @@ internal sealed partial class GraphEditViewModel : ObservableObject
 
     /// <summary>The nodes a connect may go to: every node but the selected one.</summary>
     public IReadOnlyList<ConnectTarget> Targets =>
-        _runs.Graph is { } graph ? [.. graph.Nodes.Where(n => !string.Equals(n.Id, graph.SelectedId, StringComparison.Ordinal)).Select(n => new ConnectTarget(n.Id, Labels.WfEditTarget(n.Title, n.Id)))] : [];
+        _runs.Graph is { } graph ? ConnectTarget.ListOf([.. graph.Nodes.Where(n => !string.Equals(n.Id, graph.SelectedId, StringComparison.Ordinal))]) : [];
 
     /// <summary>The prompt when the workflow changed elsewhere; empty otherwise.</summary>
     public string ReloadPromptText => Editor.ReloadPromptText;
