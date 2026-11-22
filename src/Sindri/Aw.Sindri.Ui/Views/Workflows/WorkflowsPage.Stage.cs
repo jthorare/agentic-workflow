@@ -26,7 +26,7 @@ internal sealed partial class WorkflowsPage
             return;
         }
 
-        foreach (var panel in new[] { RunsPanel, RunPanel })
+        foreach (var panel in new[] { RunsStagePanel, RunPanel })
         {
             if (panel.IsVisible && panel.TranslatePoint(default, this) is { } at)
             {

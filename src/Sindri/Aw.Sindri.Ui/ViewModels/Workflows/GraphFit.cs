@@ -33,7 +33,7 @@ internal static class GraphFit
         {
             var zoom = percent / 100.0;
             var result = Lay(input, canvasWidth / zoom, textScale, zoom);
-            if (zoom <= floor + 1e-9 || (result.Width * zoom <= canvasWidth + 0.5 && result.Height * zoom <= canvasHeight))
+            if (zoom <= floor + 1e-9 || (result.Width * zoom <= canvasWidth + 0.5 && result.Height * zoom <= canvasHeight && ArmsBeside(input, result)))
             {
                 return result;
             }
@@ -42,23 +42,25 @@ internal static class GraphFit
         }
     }
 
-    private static List<List<(IReadOnlyList<string> Layer, double X)>> Pack(GraphFitInput input, double width, double u)
+    // A fork's arms stay in the fork's row: a layout that wraps them onto the next row is not a fit, so Fit tries a smaller zoom.
+    private static bool ArmsBeside(GraphFitInput input, GraphFitResult result) =>
+        input.Forks.All(fork => input.Edges.Where(e => string.Equals(e.From, fork, StringComparison.Ordinal)).All(e => result.RowOf[e.To] == result.RowOf[fork]));
+
+    // The margins and the left pad are screen pixels (they do not scale with the zoom), so in the world they are divided by it.
+    private static List<List<(IReadOnlyList<string> Layer, double X)>> Pack(GraphFitInput input, double width, double u, double zoom)
     {
-        double cardW = WorkflowGraphViewModel.CardWidth * u, hGap = WorkflowGraphViewModel.ColumnGap * u, wide = WorkflowGraphViewModel.ForkGap * u, padLeft = WorkflowGraphViewModel.LeftPad * u, padRight = WorkflowGraphViewModel.RightPad * u;
+        double cardW = WorkflowGraphViewModel.CardWidth * u, hGap = WorkflowGraphViewModel.ColumnGap * u, wide = WorkflowGraphViewModel.ForkGap * u, padLeft = WorkflowGraphViewModel.LeftPad / zoom, padRight = WorkflowGraphViewModel.RightPad * u;
         var rows = new List<List<(IReadOnlyList<string> Layer, double X)>>();
         List<(IReadOnlyList<string> Layer, double X)> current = [];
         var x = padLeft;
         var previousGap = hGap;
         var forks = input.Forks;
         var limit = width - padRight + 0.5;
-        for (var k = 0; k < input.Layers.Count; k++)
+        foreach (var layer in input.Layers)
         {
-            var layer = input.Layers[k];
             var isFork = layer.Any(forks.Contains);
             var next = current.Count == 0 ? padLeft : x + cardW + previousGap;
-            // a fork's arms are the next layer: they stay in the fork's row, so a fork whose arms would not fit beside it starts the next row
-            var armsEnd = next + cardW + wide + cardW;
-            if (current.Count > 0 && (next + cardW > limit || (isFork && k + 1 < input.Layers.Count && armsEnd > limit)))
+            if (current.Count > 0 && next + cardW > limit)
             {
                 rows.Add(current);
                 current = [];
@@ -78,9 +80,11 @@ internal static class GraphFit
     private static GraphFitResult Lay(GraphFitInput input, double width, double u, double zoom)
     {
         double cardW = WorkflowGraphViewModel.CardWidth * u, vGap = WorkflowGraphViewModel.StackGap * u, rowGap = WorkflowGraphViewModel.RowGap * u, padRight = WorkflowGraphViewModel.RightPad * u;
-        var rows = Pack(input, width, u);
+        var rows = Pack(input, width, u, zoom);
+        var rowOf = RowsOf(rows);
         var cards = new Dictionary<string, GraphBox>(StringComparer.Ordinal);
-        var y = WorkflowGraphViewModel.EdgeMargin * u;
+        var margin = WorkflowGraphViewModel.EdgeMargin / zoom;
+        var y = margin;
         var right = 0.0;
         List<(double Top, double Height, double Right)> bands = [];
         foreach (var row in rows)
@@ -104,13 +108,16 @@ internal static class GraphFit
             y += rowHeight + rowGap;
         }
 
-        return new GraphFitResult(zoom, cards, rows.Max(r => r.Count), rows.Count, right + padRight, y - rowGap + (WorkflowGraphViewModel.EdgeMargin * u), Lanes(bands, u));
+        return new GraphFitResult(zoom, cards, rows.Max(r => r.Count), rows.Count, right + padRight, y - rowGap + margin, Lanes(bands, u, zoom), rowOf);
     }
+
+    private static Dictionary<string, int> RowsOf(List<List<(IReadOnlyList<string> Layer, double X)>> rows) =>
+        rows.SelectMany((row, r) => row.SelectMany(c => c.Layer).Select(id => (id, r))).ToDictionary(p => p.id, p => p.r, StringComparer.Ordinal);
 
     private static double HeightOf(GraphFitInput input, string id, double u) => (input.Heights is not null && input.Heights.TryGetValue(id, out var h) ? h : WorkflowGraphViewModel.CardHeight) * u;
 
     // The line that runs back from the end of a row to the start of the next: down the right pad, left along the row gap, down the left pad. Each part is a thin box.
-    private static List<GraphBox> Lanes(List<(double Top, double Height, double Right)> bands, double u)
+    private static List<GraphBox> Lanes(List<(double Top, double Height, double Right)> bands, double u, double zoom)
     {
         const double thick = 2;
         List<GraphBox> lanes = [];
@@ -119,7 +126,7 @@ internal static class GraphFit
             var (top, height, right) = bands[r];
             var gapY = top + height + (WorkflowGraphViewModel.RowGap * u / 2);
             var outX = right + (WorkflowGraphViewModel.ReturnLaneOffset * u);
-            var inX = WorkflowGraphViewModel.LeftPad * u / 2;
+            var inX = WorkflowGraphViewModel.LeftPad / zoom / 2;
             var nextMid = bands[r + 1].Top + (bands[r + 1].Height / 2);
             lanes.Add(new GraphBox(outX, top + (height / 2), thick, gapY - top - (height / 2)));
             lanes.Add(new GraphBox(inX, gapY, outX - inX, thick));

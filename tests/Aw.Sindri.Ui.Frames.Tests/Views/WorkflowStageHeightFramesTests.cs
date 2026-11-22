@@ -20,9 +20,9 @@ public sealed class WorkflowStageHeightFramesTests : FrameHost
         shell.GoTo(PageId.Workflows);
         await Until(window, () => shell.Workflows.Rows.Count > 0, "the Workflows page never read the list");
         await shell.Workflows.OpenWorkflow(WorkflowsSlug, TestContext.Current.CancellationToken);
-        await Until(window, () => Visible(window, "RunsPanel"), "the graph never showed");
+        await Until(window, () => Visible(window, "RunsStagePanel"), "the graph never showed");
         Settle(window);
-        var panel = Named<Border>(window, "RunsPanel");
+        var panel = Named<Border>(window, "RunsStagePanel");
         return (panel.Bounds.Height, panel.TranslatePoint(new Point(0, panel.Bounds.Height), window)!.Value.Y, window.Bounds.Height);
     }
 

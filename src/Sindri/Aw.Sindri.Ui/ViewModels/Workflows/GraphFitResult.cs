@@ -7,5 +7,6 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// <param name="Rows">The number of rows.</param>
 /// <param name="Width">The world's width, right padding included.</param>
 /// <param name="Height">The world's height, the 24 px bottom margin included once.</param>
+/// <param name="RowOf">The row each node sits in, from 0.</param>
 /// <param name="ReturnLanes">The lines that run back from the end of a row to the start of the next, each part a thin box in the world.</param>
-internal sealed record GraphFitResult(double Zoom, IReadOnlyDictionary<string, GraphBox> Cards, int Columns, int Rows, double Width, double Height, IReadOnlyList<GraphBox> ReturnLanes);
+internal sealed record GraphFitResult(double Zoom, IReadOnlyDictionary<string, GraphBox> Cards, int Columns, int Rows, double Width, double Height, IReadOnlyList<GraphBox> ReturnLanes, IReadOnlyDictionary<string, int> RowOf);

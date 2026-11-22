@@ -145,7 +145,7 @@
           <wv:GraphEditBar x:Name="RunsEdit" DataContext="{Binding GraphEdit}" />
           <Button x:Name="WorkflowEditDone" Grid.Column="1" VerticalAlignment="Top" Content="{Binding DoneText}" Click="OnDone" AutomationProperties.Name="{Binding DoneText}" />
         </Grid>
-        <Border x:Name="RunsPanel" Classes="panel" Height="320">
+        <Border x:Name="RunsStagePanel" Classes="panel" Height="320">
           <wv:GraphStage x:Name="RunsCanvas" Graph="{Binding Runs.Graph}" TextScale="{Binding TextScale}" />
         </Border>
         <!-- What the selected step is and does, read-only, while Edit is off (#2807). It shows for every workflow, archived too; only Step settings needs edit rights. -->

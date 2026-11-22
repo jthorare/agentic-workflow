@@ -15,7 +15,7 @@ using Aw.Sindri.Ui.Views.Workflows;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
-/// <summary>The workflow node card (#3234): title, type and a status chip, 200 by 64, and the tile pens in every state (hover, focus ring outside the selected ring, disabled, error).</summary>
+/// <summary>The workflow node card (#3234): title, type and a status chip, 290 by 60, and the tile pens in every state (hover, focus ring outside the selected ring, disabled, error).</summary>
 [Lane(TestLane.Integration)]
 [Collection(HeadlessWindows.Name)]
 public sealed class GraphNodeCardTests
@@ -40,15 +40,15 @@ public sealed class GraphNodeCardTests
     private static Color Colour(IBrush? brush) => Assert.IsType<ISolidColorBrush>(brush, exactMatch: false).Color;
 
     [Fact]
-    public async Task The_card_is_200_by_64_and_shows_the_title_the_type_and_the_status_chip() => await OnUi(() =>
+    public async Task The_card_is_290_by_60_and_shows_the_title_the_type_and_the_status_chip() => await OnUi(() =>
     {
         var (window, card) = Show();
 
         var texts = card.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
         var chip = card.GetVisualDescendants().OfType<StateChipView>().Single();
 
-        Assert.Equal(200, card.Bounds.Width);
-        Assert.Equal(64, card.Bounds.Height);
+        Assert.Equal(290, card.Bounds.Width);
+        Assert.Equal(60, card.Bounds.Height);
         Assert.Contains("Ask the agent", texts, StringComparer.Ordinal);
         Assert.Contains("run_agent", texts, StringComparer.Ordinal);
         Assert.Equal("Running", chip.Word);

@@ -142,11 +142,12 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
             return false;
         }
 
-        SelectedId = id;
         foreach (var node in Nodes)
         {
             node.IsSelected = string.Equals(node.Id, id, StringComparison.Ordinal);
         }
+
+        SelectedId = id;   // after the cards: a listener of the change (the minimap) reads the cards' selected flags
 
         NodeSelected?.Invoke(this, new ValueEventArgs<string>(id));
         return true;

@@ -99,10 +99,11 @@ public sealed class GraphCanvasRelayoutTests
             {
                 window.MouseWheel(new Point(200, 200), new Vector(0, -1));
                 var atFit = handled[^1];
-                canvas.ZoomIn();
-                canvas.ZoomIn();
-                canvas.ZoomIn();
-                canvas.ZoomIn();
+                for (var i = 0; i < 8; i++)
+                {
+                    canvas.ZoomIn();   // to 200 %, where the chain overflows the canvas both ways
+                }
+
                 Settle(window);
                 window.MouseWheel(new Point(200, 200), new Vector(0, -1));
                 return (atFit, handled[^1]);

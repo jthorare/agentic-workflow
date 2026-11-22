@@ -64,7 +64,8 @@ public sealed class GraphFitTests
             }
         }
 
-        return new GraphFitInput(layers, edges);
+        // only the Schedule card's settings line ("Every weekday 7:00 America/Los_Angeles", 39 characters) wraps, so only it is 80 tall
+        return new GraphFitInput(layers, edges, new Dictionary<string, double>(StringComparer.Ordinal) { ["start"] = WorkflowGraphViewModel.CardTallHeight });
     }
 
     [Fact]
