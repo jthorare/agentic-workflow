@@ -8,6 +8,7 @@ using Aw.Sindri.Core.Graph.Expressions;
 using Aw.Sindri.Core.Graph.Schedule;
 using Aw.Sindri.Core.Graph.Validation;
 using Aw.Sindri.Infrastructure.WorkflowDocs;
+using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Graph.Blocks;
 using Aw.Sindri.Tests.Toolkits;
 using Microsoft.Extensions.Time.Testing;
@@ -27,7 +28,8 @@ public sealed class WorkflowDocsTests
             .. GraphBlockRegistry.ResultBlocks(new FlowFakes.ScriptedResultPort()),
             .. GraphBlockRegistry.MemoryBlocks(new BlockFakes.RecordingMemoryPort()),
             new CallToolBlock(new FakeRunningToolkits([]), new NoConnections()),
-            .. GraphBlockRegistry.CodeBlocks(new FlowFakes.ScriptedCodePort())]);
+            .. GraphBlockRegistry.CodeBlocks(new FlowFakes.ScriptedCodePort()),
+            .. GraphBlockRegistry.TranscriptBlocks(new FakeGraphTranscripts([]), new FakeTimeProvider())]);
 
     // why: the docs only need 'call_tool' registered; no example reaches a connection, so every call is refused
     private sealed class NoConnections : IConnectionToolPort

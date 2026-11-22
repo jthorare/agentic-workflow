@@ -69,6 +69,13 @@ public sealed class GraphBlockRegistry : IGraphBlockCatalog
     /// <returns>The block.</returns>
     public static IReadOnlyList<IGraphBlock> CodeBlocks(ICodeRunPort code) => [new CodeBlock(code)];
 
+    /// <summary>The transcript blocks of issue 3787: transcript_turns (the newest human turns, as batches of refs) and transcript_batch (one batch's text).</summary>
+    /// <param name="transcripts">Where the local agent transcripts are read.</param>
+    /// <param name="clock">The clock 'transcript_turns' counts 'since' back from.</param>
+    /// <returns>The two blocks.</returns>
+    public static IReadOnlyList<IGraphBlock> TranscriptBlocks(IGraphTranscriptPort transcripts, TimeProvider clock) =>
+        [new TranscriptTurnsBlock(transcripts, clock), new TranscriptBatchBlock(transcripts)];
+
     /// <summary>Finds the block of a type.</summary>
     /// <param name="type">The type name, such as 'condition'.</param>
     /// <returns>The block, or null when this build has no such block.</returns>
