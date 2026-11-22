@@ -24397,3 +24397,7 @@ const Aw.Sindri.Core.Events.ApiViews.Home = "home" -> string!
 const Aw.Sindri.Core.Views.ViewNames.HomeRows = "home-rows" -> string!
 const Aw.Sindri.Core.Views.ViewNames.HomeLinks = "home-links" -> string!
 static readonly Aw.Sindri.Core.SindriErrors.HomeNotFound -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.HomeReads.HomeSessionCut
+static Aw.Sindri.Core.HomeReads.HomeSessionCut.For(Aw.Sindri.Core.Commands.CallerContext! caller, Aw.Sindri.Core.Home.HomeRow! row) -> Aw.Sindri.Core.Home.HomeRow!
+static Aw.Sindri.Core.HomeReads.HomeSessionCut.ScopeOf(Aw.Sindri.Core.Commands.CallerContext! caller) -> Aw.Sindri.Core.Home.HomeScope?
+static Aw.Sindri.Core.HomeReads.HomeSessionCut.Sees(Aw.Sindri.Core.Commands.CallerContext! caller, Aw.Sindri.Core.Home.HomeRow! row) -> bool
