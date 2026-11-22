@@ -42,7 +42,7 @@ public sealed class GraphModelPortAdapterTests
         const string Prompt = "did the contract drift?";
         const string Reply = "{\"drifted\":false}";
         var port = new FakeModelPort { Answer = Reply };
-        long expected = ((Prompt.Length + 3) / 4) + ((Reply.Length + 3) / 4);   // why: the fake counts a token per four characters of the prompt and of the reply
+        var expected = ((Prompt.Length + 3L) / 4) + ((Reply.Length + 3L) / 4);   // why: the fake counts a token per four characters of the prompt and of the reply
 
         var answer = await ((IGraphModelPort)new GraphModelPortAdapter(port)).Answer(Prompt, Token);
 
