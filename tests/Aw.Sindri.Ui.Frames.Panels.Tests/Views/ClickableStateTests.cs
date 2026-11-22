@@ -22,7 +22,7 @@ using Aw.Sindri.Ui.Views.Queue;
 using Aw.Sindri.Ui.Views.Reviews;
 using Aw.Sindri.Ui.Views.Workflows;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>Clickable surfaces answer the pointer (#2535): the shared clickable class gives a hover and a pressed look from theme tokens, eased over Motion.Hover (150 ms), instantly under reduced motion. The project card is the first user.</summary>
 [Lane(TestLane.Integration)]
