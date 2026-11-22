@@ -4,35 +4,136 @@
              xmlns:pv="using:Aw.Sindri.Ui.Views.Projects"
              x:Class="Aw.Sindri.Ui.Views.Projects.ProjectsPage"
              x:DataType="pvm:ProjectsPageViewModel">
-  <!-- The Projects page (Projects page spec §3, mockup B): the title with the freshness line and Add project, the served sentence as an empty block or a
-       banner, a group per state with its cards in a grid of Columns, and the Finished and Hidden folds. Add opens the Add project sheet. Every named line is a
-       Border wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
+  <!-- The Projects page (Projects page spec §3, issue 3717 frames round 11): the title, the views' tabs (keys 1 to 4), Sort (O) and Group (B) and Add project
+       on one bar, the freshness line, the served sentence as an empty block or a banner, a view's own empty state, the column heads, the groups of 40 px rows,
+       the Finished and Hidden folds (on Projects only), and the key hints. As the page narrows, Agents goes first, then Items, Target and the health reason
+       (the col-* styles below, set from ShowsAgents and ShowsWide). Add opens the Add project sheet. Every named line is a Border wrapper (a TextBlock's peer
+       ignores AutomationProperties.Name). -->
   <UserControl.Styles>
-    <Style Selector="ItemsControl.cards">
+    <Style Selector="ItemsControl.rows">
       <Setter Property="ItemTemplate">
         <DataTemplate x:DataType="pvm:ProjectCardViewModel">
-          <pv:ProjectCard Margin="0,0,12,12" VerticalAlignment="Stretch" />
+          <pv:ProjectRow />
         </DataTemplate>
       </Setter>
     </Style>
+    <Style Selector="StackPanel.no-agents Border.col-agents"><Setter Property="IsVisible" Value="False" /></Style>
+    <Style Selector="StackPanel.narrow Border.col-agents, StackPanel.narrow Border.col-items, StackPanel.narrow Border.col-target, StackPanel.narrow Border.col-reason">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
     <Style Selector="TextBlock.failing"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
+    <!-- The views' tabs: one segmented control; the view shown sits on Surface3 with its words in ink. -->
+    <Style Selector="Button.view-tab">
+      <Setter Property="Height" Value="{StaticResource Size.Control}" />
+      <Setter Property="Padding" Value="10,0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
+    </Style>
+    <Style Selector="Button.view-tab.on"><Setter Property="Background" Value="{DynamicResource Brush.Surface3}" /></Style>
+    <Style Selector="Button.view-tab TextBlock.tab-word"><Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" /></Style>
+    <Style Selector="Button.view-tab.on TextBlock.tab-word"><Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" /></Style>
+    <Style Selector="Border.column-heads">
+      <Setter Property="Height" Value="{StaticResource Row.GroupHeader}" />
+      <Setter Property="Padding" Value="{StaticResource Row.Inset.Thickness}" />
+    </Style>
+    <Style Selector="Border.group-head">
+      <Setter Property="Height" Value="{StaticResource Row.GroupHeader}" />
+      <Setter Property="Padding" Value="{StaticResource Row.Inset.Thickness}" />
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
+    </Style>
+    <Style Selector="Border.skeleton-row">
+      <Setter Property="Height" Value="{StaticResource Row.Height.Comfortable}" />
+      <Setter Property="Padding" Value="{StaticResource Row.Inset.Thickness}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+      <Setter Property="BorderThickness" Value="0,1,0,0" />
+    </Style>
   </UserControl.Styles>
-  <StackPanel x:Name="ProjectsRoot" Spacing="{StaticResource Size.PanelGap}">
-    <Grid ColumnDefinitions="*,Auto">
-      <StackPanel>
-        <TextBlock x:Name="ProjectsTitle" Classes="page-title" Focusable="True" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" />
-        <TextBlock x:Name="ProjectsFreshness" Classes="caption subtle" Classes.failing="{Binding FreshnessFailing}" Text="{Binding Freshness}" TextWrapping="Wrap" />
+  <StackPanel x:Name="ProjectsRoot" Spacing="{StaticResource Size.PanelGap}" Classes.no-agents="{Binding !ShowsAgents}" Classes.narrow="{Binding !ShowsWide}">
+    <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+      <TextBlock x:Name="ProjectsTitle" Classes="page-title" Focusable="True" Text="{Binding Title}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Title}" />
+      <ItemsControl x:Name="ProjectsTabs" Grid.Column="1" Margin="16,0,0,0" ItemsSource="{Binding Tabs}" VerticalAlignment="Center">
+        <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="2" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="pvm:ProjectViewTab">
+            <Button x:Name="ProjectsTab" Classes="view-tab" Classes.on="{Binding IsOn}" Click="OnTab" ToolTip.Tip="{Binding Key}" AutomationProperties.Name="{Binding Name}">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Classes="body tab-word" Text="{Binding Text}" />
+                <TextBlock Classes="caption subtle" Text="{Binding CountText}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="{StaticResource Space.SM}" VerticalAlignment="Center">
+        <Button x:Name="ProjectsSort" AutomationProperties.Name="{Binding SortName}">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBlock Classes="caption subtle" Text="{Binding SortLabel}" VerticalAlignment="Center" />
+            <TextBlock Classes="caption" Text="{Binding SortText}" VerticalAlignment="Center" />
+            <TextBlock Classes="caption subtle" Text="▾" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+          </StackPanel>
+          <Button.Flyout>
+            <MenuFlyout Placement="BottomEdgeAlignedRight">
+              <MenuItem Header="{Binding SortBy}" IsEnabled="False" />
+              <MenuItem DataContext="{Binding SortChoices[0]}" x:DataType="pvm:ProjectMenuChoice" Click="OnChoice" AutomationProperties.Name="{Binding Text}">
+                <MenuItem.Header><StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Text="{Binding Text}" /><TextBlock Classes="caption subtle" Text="{Binding Hint}" VerticalAlignment="Center" /></StackPanel></MenuItem.Header>
+                <MenuItem.Icon><TextBlock Text="✓" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding IsOn}" /></MenuItem.Icon>
+              </MenuItem>
+              <MenuItem DataContext="{Binding SortChoices[1]}" x:DataType="pvm:ProjectMenuChoice" Click="OnChoice" AutomationProperties.Name="{Binding Text}">
+                <MenuItem.Header><StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Text="{Binding Text}" /><TextBlock Classes="caption subtle" Text="{Binding Hint}" VerticalAlignment="Center" /></StackPanel></MenuItem.Header>
+                <MenuItem.Icon><TextBlock Text="✓" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding IsOn}" /></MenuItem.Icon>
+              </MenuItem>
+              <MenuItem DataContext="{Binding SortChoices[2]}" x:DataType="pvm:ProjectMenuChoice" Click="OnChoice" AutomationProperties.Name="{Binding Text}">
+                <MenuItem.Header><StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Text="{Binding Text}" /><TextBlock Classes="caption subtle" Text="{Binding Hint}" VerticalAlignment="Center" /></StackPanel></MenuItem.Header>
+                <MenuItem.Icon><TextBlock Text="✓" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding IsOn}" /></MenuItem.Icon>
+              </MenuItem>
+            </MenuFlyout>
+          </Button.Flyout>
+        </Button>
+        <Button x:Name="ProjectsGroup" AutomationProperties.Name="{Binding GroupName}">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBlock Classes="caption subtle" Text="{Binding GroupLabel}" VerticalAlignment="Center" />
+            <TextBlock Classes="caption" Text="{Binding GroupText}" VerticalAlignment="Center" />
+            <TextBlock Classes="caption subtle" Text="▾" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+          </StackPanel>
+          <Button.Flyout>
+            <MenuFlyout Placement="BottomEdgeAlignedRight">
+              <MenuItem Header="{Binding GroupBy}" IsEnabled="False" />
+              <MenuItem DataContext="{Binding GroupChoices[0]}" x:DataType="pvm:ProjectMenuChoice" Click="OnChoice" AutomationProperties.Name="{Binding Text}">
+                <MenuItem.Header><StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Text="{Binding Text}" /><TextBlock Classes="caption subtle" Text="{Binding Hint}" VerticalAlignment="Center" /></StackPanel></MenuItem.Header>
+                <MenuItem.Icon><TextBlock Text="✓" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding IsOn}" /></MenuItem.Icon>
+              </MenuItem>
+              <MenuItem DataContext="{Binding GroupChoices[1]}" x:DataType="pvm:ProjectMenuChoice" Click="OnChoice" AutomationProperties.Name="{Binding Text}">
+                <MenuItem.Header><StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Text="{Binding Text}" /><TextBlock Classes="caption subtle" Text="{Binding Hint}" VerticalAlignment="Center" /></StackPanel></MenuItem.Header>
+                <MenuItem.Icon><TextBlock Text="✓" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding IsOn}" /></MenuItem.Icon>
+              </MenuItem>
+              <MenuItem DataContext="{Binding GroupChoices[2]}" x:DataType="pvm:ProjectMenuChoice" Click="OnChoice" AutomationProperties.Name="{Binding Text}">
+                <MenuItem.Header><StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Text="{Binding Text}" /><TextBlock Classes="caption subtle" Text="{Binding Hint}" VerticalAlignment="Center" /></StackPanel></MenuItem.Header>
+                <MenuItem.Icon><TextBlock Text="✓" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding IsOn}" /></MenuItem.Icon>
+              </MenuItem>
+              <MenuItem DataContext="{Binding GroupChoices[3]}" x:DataType="pvm:ProjectMenuChoice" Click="OnChoice" AutomationProperties.Name="{Binding Text}">
+                <MenuItem.Header><TextBlock Text="{Binding Text}" /></MenuItem.Header>
+                <MenuItem.Icon><TextBlock Text="✓" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding IsOn}" /></MenuItem.Icon>
+              </MenuItem>
+            </MenuFlyout>
+          </Button.Flyout>
+        </Button>
+        <Button x:Name="ProjectsAdd" Content="{Binding AddText}" Click="OnAdd" AutomationProperties.Name="{Binding AddText}" />
       </StackPanel>
-      <Button x:Name="ProjectsAdd" Grid.Column="1" Content="{Binding AddText}" Click="OnAdd" VerticalAlignment="Top" AutomationProperties.Name="{Binding AddText}" />
     </Grid>
+    <TextBlock x:Name="ProjectsFreshness" Classes="caption subtle" Classes.failing="{Binding FreshnessFailing}" Text="{Binding Freshness}" TextWrapping="Wrap" />
 
     <TextBlock x:Name="ProjectsError" Classes="caption subtle" Text="{Binding Error}" TextWrapping="Wrap" IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
-    <UniformGrid x:Name="ProjectsLoading" Columns="3" IsVisible="{Binding IsLoading}" AutomationProperties.AccessibilityView="Raw">
-      <Border Classes="card" Height="132" Margin="0,0,12,12" Opacity="0.6" />
-      <Border Classes="card" Height="132" Margin="0,0,12,12" Opacity="0.6" />
-      <Border Classes="card" Height="132" Margin="0,0,12,12" Opacity="0.6" />
-    </UniformGrid>
+    <!-- Loading: row-shaped placeholders on the 40 px rhythm, no text. -->
+    <StackPanel x:Name="ProjectsLoading" IsVisible="{Binding IsLoading}" AutomationProperties.AccessibilityView="Raw">
+      <Border Classes="skeleton-row"><Border Height="8" Width="240" CornerRadius="4" HorizontalAlignment="Left" Background="{DynamicResource Brush.Surface3}" /></Border>
+      <Border Classes="skeleton-row"><Border Height="8" Width="200" CornerRadius="4" HorizontalAlignment="Left" Background="{DynamicResource Brush.Surface3}" /></Border>
+      <Border Classes="skeleton-row"><Border Height="8" Width="260" CornerRadius="4" HorizontalAlignment="Left" Background="{DynamicResource Brush.Surface3}" /></Border>
+      <Border Classes="skeleton-row"><Border Height="8" Width="180" CornerRadius="4" HorizontalAlignment="Left" Background="{DynamicResource Brush.Surface3}" /></Border>
+      <Border Classes="skeleton-row"><Border Height="8" Width="220" CornerRadius="4" HorizontalAlignment="Left" Background="{DynamicResource Brush.Surface3}" /></Border>
+      <Border Classes="skeleton-row"><Border Height="8" Width="200" CornerRadius="4" HorizontalAlignment="Left" Background="{DynamicResource Brush.Surface3}" /></Border>
+    </StackPanel>
 
     <Border x:Name="ProjectsBanner" Classes="card" Background="{DynamicResource Brush.ErrorSoft}" BorderBrush="{DynamicResource Brush.Error}" BorderThickness="1" IsVisible="{Binding IsBanner}">
       <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
@@ -54,21 +155,70 @@
       </StackPanel>
     </Border>
 
-    <ItemsControl x:Name="ProjectsGroups" pv:CardGrid.IsGrid="True" ItemsSource="{Binding Groups}">
-      <ItemsControl.ItemTemplate>
-        <DataTemplate x:DataType="pvm:ProjectGroupViewModel">
-          <StackPanel Spacing="{StaticResource Space.XS}" Margin="0,0,0,8">
-            <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
-              <TextBlock x:Name="ProjectsGroupHeading" Classes="eyebrow subtle" Text="{Binding Heading}" />
-              <TextBlock Classes="eyebrow" Foreground="{DynamicResource Brush.InkSubtle}" Text="{Binding Count}" />
-            </StackPanel>
-            <ItemsControl Classes="cards" ItemsSource="{Binding Cards}">
-              <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-            </ItemsControl>
+    <!-- A view with no row (Needs me, My work) and Triage: what the view holds, and one button to another view with its key. -->
+    <Border x:Name="ProjectsViewEmpty" Classes="card" BorderThickness="1" IsVisible="{Binding IsViewEmpty}">
+      <StackPanel Margin="{StaticResource Space.MD.Thickness}" Spacing="{StaticResource Space.SM}" HorizontalAlignment="Center" MaxWidth="560">
+        <Border x:Name="ProjectsViewEmptyTitle" AutomationProperties.Name="{Binding ViewEmptyTitle}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body-strong" Text="{Binding ViewEmptyTitle}" TextAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Border x:Name="ProjectsViewEmptyBody" AutomationProperties.Name="{Binding ViewEmptyBody}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body muted" Text="{Binding ViewEmptyBody}" TextWrapping="Wrap" TextAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Button x:Name="ProjectsViewEmptyAction" Classes="accent" Click="OnViewEmptyAction" HorizontalAlignment="Center" Margin="0,8,0,0" AutomationProperties.Name="{Binding ViewEmptyAction}">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBlock Text="{Binding ViewEmptyAction}" VerticalAlignment="Center" />
+            <Border Classes="kbd" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw"><TextBlock Text="{Binding ViewEmptyKey}" /></Border>
           </StackPanel>
-        </DataTemplate>
-      </ItemsControl.ItemTemplate>
-    </ItemsControl>
+        </Button>
+      </StackPanel>
+    </Border>
+
+    <Border x:Name="ProjectsFactsMissing" IsVisible="{Binding ShowsFactsMissing}" Padding="{StaticResource Row.Inset.Thickness}"
+            AutomationProperties.Name="{Binding FactsMissingText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <TextBlock Classes="caption failing" Text="{Binding FactsMissingText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+
+    <StackPanel x:Name="ProjectsList" IsVisible="{Binding HasRows}" Spacing="0">
+      <Border x:Name="ProjectsColumnHeads" Classes="column-heads" AutomationProperties.AccessibilityView="Raw">
+        <Grid VerticalAlignment="Center">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="16" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding ColumnProject}" />
+          <Border Grid.Column="2" Width="144" Margin="12,0,0,0"><TextBlock Classes="caption subtle" Text="{Binding ColumnPrs}" /></Border>
+          <Border Grid.Column="3" Classes="col-items" Width="56" Margin="12,0,0,0"><TextBlock Classes="caption subtle" Text="{Binding ColumnItems}" /></Border>
+          <Border Grid.Column="4" Classes="col-agents" Width="48" Margin="12,0,0,0"><TextBlock Classes="caption subtle" Text="{Binding ColumnAgents}" /></Border>
+          <Border Grid.Column="5" Width="112" Margin="12,0,0,0"><TextBlock Classes="caption subtle" Text="{Binding ColumnBlockedOn}" /></Border>
+          <Border Grid.Column="6" Classes="col-target" Width="96" Margin="12,0,0,0"><TextBlock Classes="caption subtle" Text="{Binding ColumnTarget}" /></Border>
+          <Border Grid.Column="7" Width="44" Margin="12,0,0,0"><TextBlock Classes="caption subtle" Text="{Binding ColumnActive}" HorizontalAlignment="Right" /></Border>
+        </Grid>
+      </Border>
+
+      <ItemsControl x:Name="ProjectsGroups" ItemsSource="{Binding Groups}" AutomationProperties.Name="{Binding Title}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="pvm:ProjectGroupViewModel">
+            <StackPanel>
+              <Border x:Name="ProjectsGroupHead" Classes="group-head" IsVisible="{Binding HasHeading}"
+                      AutomationProperties.Name="{Binding HeadingName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                <Grid ColumnDefinitions="Auto,Auto,*" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+                  <TextBlock x:Name="ProjectsGroupHeading" Classes="caption" Foreground="{DynamicResource Brush.InkMuted}" FontWeight="Medium" Text="{Binding Heading}" />
+                  <TextBlock Grid.Column="1" Classes="caption subtle" Margin="8,0,0,0" Text="{Binding Count}" />
+                  <TextBlock Grid.Column="2" Classes="caption subtle" HorizontalAlignment="Right" Text="{Binding Hint}" TextTrimming="CharacterEllipsis" />
+                </Grid>
+              </Border>
+              <ItemsControl Classes="rows" ItemsSource="{Binding Cards}" />
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
 
     <Expander x:Name="ProjectsFinished" DataContext="{Binding Finished}" x:DataType="pvm:ProjectFoldViewModel" IsVisible="{Binding IsVisible}"
               IsExpanded="{Binding IsOpen, Mode=TwoWay}" TemplateApplied="OnFoldTemplate" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" AutomationProperties.Name="{Binding Heading}">
@@ -78,9 +228,7 @@
           <TextBlock Grid.Column="1" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" HorizontalAlignment="Right" Text="{Binding Why}" />
         </Grid>
       </Expander.Header>
-      <ItemsControl Classes="cards" pv:CardGrid.IsGrid="True" ItemsSource="{Binding Cards}" Margin="0,8,0,0">
-        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-      </ItemsControl>
+      <ItemsControl Classes="rows" ItemsSource="{Binding Cards}" />
     </Expander>
 
     <Expander x:Name="ProjectsHidden" DataContext="{Binding Hidden}" x:DataType="pvm:ProjectFoldViewModel" IsVisible="{Binding IsVisible}"
@@ -91,9 +239,19 @@
           <TextBlock Grid.Column="1" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" HorizontalAlignment="Right" Text="{Binding Why}" />
         </Grid>
       </Expander.Header>
-      <ItemsControl Classes="cards" pv:CardGrid.IsGrid="True" ItemsSource="{Binding Cards}" Margin="0,8,0,0">
-        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-      </ItemsControl>
+      <ItemsControl Classes="rows" ItemsSource="{Binding Cards}" />
     </Expander>
+
+    <ItemsControl x:Name="ProjectsKeys" ItemsSource="{Binding KeyHints}" IsVisible="{Binding !IsLoading}">
+      <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="16" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="pvm:ProjectKeyHint">
+          <StackPanel Orientation="Horizontal" Spacing="6" AutomationProperties.Name="{Binding Name}">
+            <Border Classes="kbd" VerticalAlignment="Center"><TextBlock Text="{Binding Key}" /></Border>
+            <TextBlock Classes="caption subtle" Text="{Binding Word}" VerticalAlignment="Center" />
+          </StackPanel>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
   </StackPanel>
 </UserControl>

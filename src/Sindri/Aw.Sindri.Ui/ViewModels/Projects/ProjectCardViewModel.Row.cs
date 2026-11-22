@@ -24,6 +24,12 @@ internal sealed partial class ProjectCardViewModel
     /// <summary>True for On track: a green dot.</summary>
     public bool IsOnTrack { get; private set => Set(ref field, value); }
 
+    /// <summary>True for In progress: the state square is the primary colour.</summary>
+    public bool IsInProgress { get; private set => Set(ref field, value); }
+
+    /// <summary>True for Paused: the state square is amber.</summary>
+    public bool IsPaused { get; private set => Set(ref field, value); }
+
     /// <summary>The PRs cell's glyphs, in order.</summary>
     public IReadOnlyList<ProjectPrGlyph> Prs { get; private set => Set(ref field, value); } = [];
 
@@ -79,6 +85,8 @@ internal sealed partial class ProjectCardViewModel
         IsAtRisk = string.Equals(HealthLevel, "atRisk", StringComparison.Ordinal);
         IsNotChecked = string.Equals(HealthLevel, "unknown", StringComparison.Ordinal);
         IsOnTrack = string.Equals(HealthLevel, "onTrack", StringComparison.Ordinal);
+        IsInProgress = string.Equals(Card.State, "inProgress", StringComparison.Ordinal);
+        IsPaused = string.Equals(Card.State, "paused", StringComparison.Ordinal);
         Prs = ProjectRows.Glyphs(truth);
         ItemsText = ProjectRows.Items(truth);
         AgentsText = ProjectRows.Agents(truth);

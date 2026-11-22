@@ -38,25 +38,25 @@ public sealed class ProjectsPageViewTests : FrameHost
     }
 
     private static List<Border> Frames(Window window) =>
-        [.. window.GetVisualDescendants().OfType<Border>().Where(b => b.Name == "ProjectCardFrame" && b.IsEffectivelyVisible)];
+        [.. window.GetVisualDescendants().OfType<Border>().Where(b => b.Name == "ProjectRowFrame" && b.IsEffectivelyVisible)];
 
     [Fact]
-    public Task The_mixed_list_draws_a_heading_per_state_and_a_card_per_project() => OnUi(async () =>
+    public Task The_mixed_list_draws_its_health_group_and_a_row_per_project() => OnUi(async () =>
     {
         var (window, _) = await OnProjects();
 
         var headings = window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "ProjectsGroupHeading" && t.IsEffectivelyVisible).Select(t => t.Text);
-        Assert.Equal(["IN PROGRESS", "PLANNED", "PAUSED"], headings, StringComparer.Ordinal);
+        Assert.Equal(["No open PRs"], headings, StringComparer.Ordinal);   // the golden serves no truth, so no project has an open PR
         Assert.Equal(["Checkout rewrite", "Kitchen", "Mobile app"], Frames(window).Select(f => ((ViewModels.Projects.ProjectCardViewModel)f.DataContext!).Name), StringComparer.Ordinal);
     });
 
     [Fact]
-    public Task A_card_is_named_in_words_and_can_take_focus() => OnUi(async () =>
+    public Task A_row_is_named_in_words_and_can_take_focus() => OnUi(async () =>
     {
         var (window, _) = await OnProjects();
 
         var card = Frames(window)[0];
-        Assert.Equal("Checkout rewrite, In progress, at risk, 12 open issues", Heard.Name(card));
+        Assert.StartsWith("Checkout rewrite, Jan 31", Heard.Name(card), StringComparison.Ordinal);
         Assert.True(card.Focusable);
     });
 
