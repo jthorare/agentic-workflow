@@ -10,6 +10,12 @@
     <Style Selector="Border.diff-line:focus-within, Border.diff-line:focus"><Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" /></Style>
     <Style Selector="Border.diff-line.added"><Setter Property="Background" Value="{DynamicResource Brush.SuccessSoft}" /></Style>
     <Style Selector="Border.diff-line.removed"><Setter Property="Background" Value="{DynamicResource Brush.ErrorSoft}" /></Style>
+    <!-- A file's card, drawn row by row in the flat diff (#2776): sides on every row, the top edge on the file row, the bottom edge and the gap on its last row. -->
+    <Style Selector="Border.diff-card"><Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" /><Setter Property="BorderThickness" Value="1,0,1,0" /></Style>
+    <Style Selector="Border.diff-card.first"><Setter Property="BorderThickness" Value="1,1,1,0" /><Setter Property="CornerRadius" Value="6,6,0,0" /></Style>
+    <Style Selector="Border.diff-card.last"><Setter Property="BorderThickness" Value="1,0,1,1" /><Setter Property="CornerRadius" Value="0,0,6,6" /><Setter Property="Margin" Value="0,0,0,8" /></Style>
+    <Style Selector="Border.diff-card.first.last"><Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="6" /></Style>
+    <Style Selector="Button.diff-group.open"><Setter Property="Margin" Value="0,0,0,4" /></Style>
     <Style Selector="Border.panel-row:focus-within, Border.panel-row:focus"><Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" /></Style>
   </UserControl.Styles>
   <StackPanel x:Name="ReviewPageRoot" Spacing="{StaticResource Size.PanelGap}">
@@ -155,60 +161,57 @@
           </WrapPanel>
           <TextBlock x:Name="ReviewDiffText" Classes="caption muted" Text="{Binding Text}" TextWrapping="Wrap" IsVisible="{Binding Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
           <TextBlock x:Name="ReviewDiffCapped" Classes="caption subtle" Text="{Binding CappedText}" TextWrapping="Wrap" IsVisible="{Binding CappedText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-          <ItemsControl ItemsSource="{Binding Groups}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate x:DataType="rvm:ReviewDiffGroupViewModel">
-                <StackPanel Spacing="4">
-                  <Button x:Name="ReviewDiffGroupHeader" Tag="{Binding Name}" Click="OnToggleGroup" GotFocus="OnGroupHeaderFocused" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding AutomationName}">
-                    <TextBlock Classes="eyebrow subtle" Text="{Binding Name}" />
-                  </Button>
-                  <ItemsControl ItemsSource="{Binding Files}" IsVisible="{Binding IsOpen}">
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate x:DataType="rvm:ReviewDiffFileViewModel">
-                        <Border BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="6" Margin="0,0,0,8">
-                          <StackPanel>
-                            <Grid ColumnDefinitions="*,Auto,Auto" Margin="8,4">
-                              <TextBlock x:Name="ReviewDiffFile" Classes="caption mono" Focusable="True" Tag="{Binding Path}" Text="{Binding Path}" TextTrimming="CharacterEllipsis" />
-                              <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding Status}" Margin="8,0" />
-                              <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding Stat}" />
-                            </Grid>
-                            <Grid ColumnDefinitions="*,Auto,Auto" Margin="8,2" IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                              <TextBlock Classes="caption" Text="{Binding Note}" TextWrapping="Wrap" VerticalAlignment="Top" />
-                              <Button x:Name="ReviewDiffShow" Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Top" Click="OnShowFile" IsVisible="{Binding HasShow}" Content="{Binding ShowText}" AutomationProperties.Name="{Binding ShowName}" />
-                              <Button x:Name="ReviewDiffOpenFile" Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Top" Click="OnOpenFile" IsVisible="{Binding HasOpenOnGitHub}" Content="{Binding OpenText}" AutomationProperties.Name="{Binding OpenName}" />
-                            </Grid>
-                            <ItemsControl ItemsSource="{Binding Hunks}">
-                              <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="rvm:ReviewDiffHunkViewModel">
-                                  <StackPanel>
-                                    <TextBlock Classes="caption mono subtle" Text="{Binding Header}" Margin="8,2" AutomationProperties.Name="{Binding AutomationName}" />
-                                    <ItemsControl ItemsSource="{Binding Lines}">
-                                      <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="rvm:ReviewDiffLineViewModel">
-                                          <Border x:Name="ReviewDiffLine" Classes="diff-line" Classes.added="{Binding IsAdded}" Classes.removed="{Binding IsRemoved}" Tag="{Binding Key}" Focusable="True" BorderThickness="1" Padding="8,0"
-                                                  GotFocus="OnLineFocused" AutomationProperties.Name="{Binding AutomationName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-                                            <Grid ColumnDefinitions="40,40,16,*" AutomationProperties.AccessibilityView="Raw">
-                                              <TextBlock Classes="caption mono subtle" VerticalAlignment="Top" Text="{Binding OldNumber}" />
-                                              <TextBlock Grid.Column="1" Classes="caption mono subtle" VerticalAlignment="Top" Text="{Binding NewNumber}" />
-                                              <TextBlock Grid.Column="2" Classes="caption mono" VerticalAlignment="Top" Text="{Binding Sign}" />
-                                              <TextBlock Grid.Column="3" Classes="caption mono" Text="{Binding Text}" TextWrapping="Wrap" />
-                                            </Grid>
-                                          </Border>
-                                        </DataTemplate>
-                                      </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                  </StackPanel>
-                                </DataTemplate>
-                              </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                          </StackPanel>
-                        </Border>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                </StackPanel>
+          <!-- The diff as one flat list of rows (#2776): group headers, file headers, hunk headers and lines. The panel builds only the rows in the page's
+               viewport (it reads the effective viewport of the page's ScrollViewer), so a 5,000-line PR builds a screenful. A file's card is drawn row by row:
+               the file row opens it (top edge), every row draws its sides, the file's last row closes it (bottom edge and the 8 px gap). -->
+          <ItemsControl x:Name="ReviewDiffRows" ItemsSource="{Binding Rows}" Focusable="True" IsTabStop="False" FocusAdorner="{x:Null}" ContainerPrepared="OnDiffRowPrepared" ContainerClearing="OnDiffRowClearing">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <VirtualizingStackPanel />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.DataTemplates>
+              <DataTemplate DataType="rvm:ReviewDiffGroupRow" x:DataType="rvm:ReviewDiffGroupRow">
+                <Button x:Name="ReviewDiffGroupHeader" DataContext="{Binding Group}" x:DataType="rvm:ReviewDiffGroupViewModel" Classes="diff-group" Classes.open="{Binding IsOpen}"
+                        Tag="{Binding Name}" Click="OnToggleGroup" GotFocus="OnGroupHeaderFocused" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding AutomationName}">
+                  <TextBlock Classes="eyebrow subtle" Text="{Binding Name}" />
+                </Button>
               </DataTemplate>
-            </ItemsControl.ItemTemplate>
+              <DataTemplate DataType="rvm:ReviewDiffFileRow" x:DataType="rvm:ReviewDiffFileRow">
+                <Border Classes="diff-card first" Classes.last="{Binding IsLast}">
+                  <StackPanel DataContext="{Binding File}" x:DataType="rvm:ReviewDiffFileViewModel">
+                    <Grid ColumnDefinitions="*,Auto,Auto" Margin="8,4">
+                      <TextBlock x:Name="ReviewDiffFile" Classes="caption mono" Focusable="True" Tag="{Binding Path}" Text="{Binding Path}" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding Status}" Margin="8,0" />
+                      <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding Stat}" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto,Auto" Margin="8,2" IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                      <TextBlock Classes="caption" Text="{Binding Note}" TextWrapping="Wrap" VerticalAlignment="Top" />
+                      <Button x:Name="ReviewDiffShow" Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Top" Click="OnShowFile" IsVisible="{Binding HasShow}" Content="{Binding ShowText}" AutomationProperties.Name="{Binding ShowName}" />
+                      <Button x:Name="ReviewDiffOpenFile" Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Top" Click="OnOpenFile" IsVisible="{Binding HasOpenOnGitHub}" Content="{Binding OpenText}" AutomationProperties.Name="{Binding OpenName}" />
+                    </Grid>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+              <DataTemplate DataType="rvm:ReviewDiffHunkRow" x:DataType="rvm:ReviewDiffHunkRow">
+                <Border Classes="diff-card" Classes.last="{Binding IsLast}">
+                  <TextBlock x:Name="ReviewDiffHunk" DataContext="{Binding Hunk}" x:DataType="rvm:ReviewDiffHunkViewModel" Classes="caption mono subtle" Text="{Binding Header}" Margin="8,2" AutomationProperties.Name="{Binding AutomationName}" />
+                </Border>
+              </DataTemplate>
+              <DataTemplate DataType="rvm:ReviewDiffLineRow" x:DataType="rvm:ReviewDiffLineRow">
+                <Border Classes="diff-card" Classes.last="{Binding IsLast}">
+                  <Border x:Name="ReviewDiffLine" DataContext="{Binding Line}" x:DataType="rvm:ReviewDiffLineViewModel" Classes="diff-line" Classes.added="{Binding IsAdded}" Classes.removed="{Binding IsRemoved}" Tag="{Binding Key}" Focusable="True" BorderThickness="1" Padding="8,0"
+                          GotFocus="OnLineFocused" AutomationProperties.Name="{Binding AutomationName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                    <Grid ColumnDefinitions="40,40,16,*" AutomationProperties.AccessibilityView="Raw">
+                      <TextBlock Classes="caption mono subtle" VerticalAlignment="Top" Text="{Binding OldNumber}" />
+                      <TextBlock Grid.Column="1" Classes="caption mono subtle" VerticalAlignment="Top" Text="{Binding NewNumber}" />
+                      <TextBlock Grid.Column="2" Classes="caption mono" VerticalAlignment="Top" Text="{Binding Sign}" />
+                      <TextBlock Grid.Column="3" Classes="caption mono" Text="{Binding Text}" TextWrapping="Wrap" />
+                    </Grid>
+                  </Border>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.DataTemplates>
           </ItemsControl>
         </StackPanel>
       </Grid>

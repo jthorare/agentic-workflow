@@ -6,9 +6,11 @@ Group: Logic. Type: `collect`. Ends a [`for_each`](block-for_each.md) and gather
 |---|---|---|---|
 | `value` | reference | yes | What one item contributes, evaluated once per item, usually one whole reference such as `{{summary.line}}`; it keeps its type (a number stays a number, an object an object) |
 
-Outputs (the node's own row, written after the last item): `items`, every item's value in item order, and `count`, how many values it holds.
+Outputs (the node's own row, written after the last item): `items`, every item's value in item order, `count`, how many values it holds, and `skipped`, how many items a node with `onFailure: skip-item` dropped (0 when none).
 
 - An item whose branch never reached the `collect` (a `condition` sent it elsewhere) adds nothing, so `count` can be lower than the `for_each`'s.
+- An item a `skip-item` node dropped adds nothing either, and counts in `skipped`. Kept items stay in item order.
+- `skip-item` on the `collect` itself is `GRAPH-NODE-005`: put it on the body node that can fail.
 - A value is stored like any node output and cut at 64 KB. A cut value fails the `collect` (`the value of item N was cut at 64 KB`); collect a smaller field.
 - A `collect` that no `for_each` reaches is `GRAPH-LOOP-002`.
 

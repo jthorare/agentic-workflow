@@ -79,11 +79,11 @@ internal sealed partial class GraphEditViewModel : ObservableObject
     /// <summary>True when the reload prompt is shown.</summary>
     public bool HasReloadPrompt => Editor.NeedsReload;
 
-    /// <summary>Why the last edit failed (not a stale base), in words; empty otherwise.</summary>
-    public string FailureText => Editor.FailureText;
+    /// <summary>Why the last edit failed (not a stale base), in words; empty otherwise, and empty while the editor sheet is open: the sheet shows it then, once (#3944).</summary>
+    public string FailureText => SheetOpen ? string.Empty : Editor.FailureText;
 
     /// <summary>True when a failure line is shown.</summary>
-    public bool HasFailure => Editor.FailureText.Length > 0;
+    public bool HasFailure => FailureText.Length > 0;
 
     private GraphNodeViewModel? Selected => _runs.Graph is { SelectedId: { } id } graph ? graph.Nodes.FirstOrDefault(n => string.Equals(n.Id, id, StringComparison.Ordinal)) : null;
 
