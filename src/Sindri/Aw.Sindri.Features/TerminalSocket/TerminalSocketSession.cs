@@ -262,8 +262,8 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
             case "key" when root.TryGetProperty("text", out var text) && text.GetString() is { } literal:
                 _ = await pane.SendText(literal, cancellationToken).ConfigureAwait(false);
                 break;
-            case "scroll" when root.TryGetProperty("back", out var back) && back.ValueKind == JsonValueKind.Number && back.TryGetInt64(out var rows):
-                _ = await pane.Scroll((int)Math.Clamp(rows, 0, int.MaxValue), cancellationToken).ConfigureAwait(false);   // the source clamps it to the history; a missing or fractional number is dropped
+            case "scroll" when ScrollBack(root) is { } rows:
+                _ = await pane.Scroll(rows, cancellationToken).ConfigureAwait(false);   // the source clamps it to the history; a missing or fractional number is dropped
                 break;
             case "size":
                 _ = await pane.Resize(new HostSize(Dimension(root, "cols", 0), Dimension(root, "rows", 0)), cancellationToken).ConfigureAwait(false);
@@ -275,6 +275,10 @@ internal sealed class TerminalSocketSession(ITerminalPaneSource source, Func<str
                 break;
         }
     }
+
+    /// <summary>The rows a scroll message asks for, or null when 'back' is missing or not a whole number.</summary>
+    private static int? ScrollBack(JsonElement root) =>
+        root.TryGetProperty("back", out var back) && back.ValueKind == JsonValueKind.Number && back.TryGetInt64(out var rows) ? (int)Math.Clamp(rows, 0, int.MaxValue) : null;
 
     private static async ValueTask<bool> Paste(IOpenTerminalPane pane, ITerminalChannel channel, string pasted, CancellationToken cancellationToken)
     {
