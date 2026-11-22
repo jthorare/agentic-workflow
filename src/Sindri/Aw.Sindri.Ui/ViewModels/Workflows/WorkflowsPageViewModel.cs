@@ -182,6 +182,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     {
         _reads++;
         Runs.ForgetStarting();   // the start deadlines stop with the page (#3702)
+        Run.ForgetStarting();
         SetLevel(Level.List);
     }
 

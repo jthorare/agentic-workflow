@@ -199,6 +199,16 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     /// <param name="runId">The new run's id.</param>
     internal void ExpectStarting(string runId) => (_startingId, _timedOutId, DidNotStart) = (runId, null, false);
 
+    /// <summary>The page was left: the run Run now started is no longer awaited (its deadline stopped with the page), so a later read of it is an ordinary read.</summary>
+    internal void ForgetStarting()
+    {
+        (_startingId, _timedOutId, DidNotStart) = (null, null, false);
+        if (string.Equals(Status, "starting", StringComparison.Ordinal))
+        {
+            Id = string.Empty;   // the next read starts clean: no Starting chip stays from the placeholder
+        }
+    }
+
     private void ShowStarting(string runId)
     {
         var (glyph, word) = Labels.WfChip("starting");
