@@ -52,7 +52,7 @@ internal sealed partial class WholeMapViewModel
     {
         var total = Math.Max(1, areas.Sum(a => a.Members));
         return [.. areas
-            .Select((a, i) => (Area: a, Colour: WholePalette.For(i).Colour))
+            .Select((a, i) => (Area: a, WholePalette.For(i).Colour))
             .OrderByDescending(a => a.Area.Members)
             .ThenBy(a => a.Area.Label, StringComparer.Ordinal)
             .ThenBy(a => a.Area.Key, StringComparer.Ordinal)

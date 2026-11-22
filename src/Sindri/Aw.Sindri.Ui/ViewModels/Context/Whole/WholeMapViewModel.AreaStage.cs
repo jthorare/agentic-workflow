@@ -65,7 +65,11 @@ internal sealed partial class WholeMapViewModel
     public bool HasAreaPages => (IsAreaOpen || IsConceptList || IsSearchList) && AreaPages > 1;
 
     /// <summary>Gets the paging line: "Page 2 of 3 · 50 of 121 items".</summary>
-    public string AreaPageText => HasAreaPages ? Labels.ContextWholeAreaPage(AreaPage, AreaPages, _hits is { } h ? SearchRows(h).Count : Answer?.Nodes?.Count ?? 0, _hits?.Count ?? Answer?.ConceptList?.Items ?? Answer?.Area?.Counts.Nodes ?? 0) : string.Empty;
+    public string AreaPageText => HasAreaPages ? Labels.ContextWholeAreaPage(AreaPage, AreaPages, PageShown, PageTotal) : string.Empty;
+
+    private int PageShown => _hits is { } h ? SearchRows(h).Count : Answer?.Nodes?.Count ?? 0;
+
+    private int PageTotal => _hits?.Count ?? Answer?.ConceptList?.Items ?? Answer?.Area?.Counts.Nodes ?? 0;
 
     /// <summary>Gets whether a page comes before this one.</summary>
     public bool CanPreviousPage => AreaPage > 1;

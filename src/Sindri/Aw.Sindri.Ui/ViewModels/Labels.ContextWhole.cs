@@ -85,8 +85,11 @@ internal static partial class Labels
     /// <param name="tab">all, code, feature or record.</param>
     /// <param name="count">How many items the tab holds.</param>
     /// <returns>"Code 1980".</returns>
-    internal static string ContextWholeConceptTab(string tab, int count) =>
-        string.Create(CultureInfo.InvariantCulture, $"{(tab switch { "code" => "Code", "feature" => "Features", "record" => "Records", _ => "All" })} {count}");
+    internal static string ContextWholeConceptTab(string tab, int count)
+    {
+        var name = tab switch { "code" => "Code", "feature" => "Features", "record" => "Records", _ => "All" };
+        return string.Create(CultureInfo.InvariantCulture, $"{name} {count}");
+    }
 
     /// <summary>The note by the search box when nothing on the map matches.</summary>
     internal const string ContextSearchNoMatches = "No matches";

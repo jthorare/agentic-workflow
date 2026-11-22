@@ -11,41 +11,30 @@ internal sealed partial class WholeMapViewModel
     public string ItemsName { get; } = Labels.ContextMapItems;
 
     /// <summary>What the canvas draws now, in reading order: the features of the overview, or the nodes.</summary>
-    public IReadOnlyList<MapItemViewModel> Items
+    public IReadOnlyList<MapItemViewModel> Items => _hits is { } hits ? SearchRows(hits) : ShowAreaList ? ListedRows() : Shown is { } shown ? ShownRows(shown) : [];
+
+    private IReadOnlyList<MapItemViewModel> ListedRows()
     {
-        get
+        if (_listed is not { } have || !ReferenceEquals(have.Source, Answer))
         {
-            if (_hits is { } hits)
-            {
-                return SearchRows(hits);
-            }
-
-            if (ShowAreaList)
-            {
-                if (_listed is not { } have || !ReferenceEquals(have.Source, Answer))
-                {
-                    IReadOnlyList<MapItemViewModel> rows = [.. (Answer?.Nodes ?? []).Select(n => new MapItemViewModel(n.Key, n.Label, Labels.ContextMapItemName(n.Label, n.Kind), IsTile: false))];
-                    _listed = have = (Answer, rows);
-                }
-
-                return have.Items;
-            }
-
-            if (Shown is not { } shown)
-            {
-                return [];
-            }
-
-            if (_items is not { } cached || !ReferenceEquals(cached.Source, shown))
-            {
-                IReadOnlyList<MapItemViewModel> built = shown.ByArea
-                    ? [.. shown.Tiles.Select(t => new MapItemViewModel(t.Key, t.Label, Labels.ContextMapItemName(t.Label, Labels.ContextWholeMembers(t.Members)), IsTile: true))]
-                    : [.. shown.Nodes.Select(n => new MapItemViewModel(n.Key, n.Label, Labels.ContextMapItemName(n.Label, n.Kind), IsTile: false))];
-                _items = cached = (shown, built);
-            }
-
-            return cached.Items;
+            IReadOnlyList<MapItemViewModel> rows = [.. (Answer?.Nodes ?? []).Select(n => new MapItemViewModel(n.Key, n.Label, Labels.ContextMapItemName(n.Label, n.Kind), IsTile: false))];
+            _listed = have = (Answer, rows);
         }
+
+        return have.Items;
+    }
+
+    private IReadOnlyList<MapItemViewModel> ShownRows(WholeMapGeometry shown)
+    {
+        if (_items is not { } cached || !ReferenceEquals(cached.Source, shown))
+        {
+            IReadOnlyList<MapItemViewModel> built = shown.ByArea
+                ? [.. shown.Tiles.Select(t => new MapItemViewModel(t.Key, t.Label, Labels.ContextMapItemName(t.Label, Labels.ContextWholeMembers(t.Members)), IsTile: true))]
+                : [.. shown.Nodes.Select(n => new MapItemViewModel(n.Key, n.Label, Labels.ContextMapItemName(n.Label, n.Kind), IsTile: false))];
+            _items = cached = (shown, built);
+        }
+
+        return cached.Items;
     }
 
     /// <summary>The item the pinned node or feature is, so the list follows the map.</summary>
