@@ -24080,3 +24080,7 @@ static Aw.Sindri.Core.Messages.MessagesConnection.Config(string! workspace, stri
 static Aw.Sindri.Core.Messages.SlackBaseUrlRule.Resolve(string? overrideUrl, string? marker, string! token) -> System.Uri!
 static Aw.Sindri.Core.Messages.SlackBaseUrlRule.Slack.get -> System.Uri!
 const Aw.Sindri.Core.Events.EventTypes.MessagesSynced = "messages.synced" -> string!
+Aw.Sindri.Core.Messages.MessageTsJsonConverter
+Aw.Sindri.Core.Messages.MessageTsJsonConverter.MessageTsJsonConverter() -> void
+override Aw.Sindri.Core.Messages.MessageTsJsonConverter.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> Aw.Sindri.Core.Messages.MessageTs
+override Aw.Sindri.Core.Messages.MessageTsJsonConverter.Write(System.Text.Json.Utf8JsonWriter! writer, Aw.Sindri.Core.Messages.MessageTs value, System.Text.Json.JsonSerializerOptions! options) -> void

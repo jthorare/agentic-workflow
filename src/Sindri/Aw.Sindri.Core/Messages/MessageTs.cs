@@ -1,7 +1,10 @@
+using System.Text.Json.Serialization;
+
 namespace Aw.Sindri.Core.Messages;
 
 /// <summary>A Slack message timestamp ('1700000000.000100'): a message's key inside its conversation and its place in time (messages spec §8.1).</summary>
 /// <param name="Value">The text Slack sends.</param>
+[JsonConverter(typeof(MessageTsJsonConverter))]
 public readonly record struct MessageTs(string Value)
 {
     private const int FractionDigits = 6;
