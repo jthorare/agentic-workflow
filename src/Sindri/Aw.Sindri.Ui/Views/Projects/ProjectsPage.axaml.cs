@@ -25,6 +25,7 @@ internal sealed partial class ProjectsPage : UserControl
         };
         AddHandler(ProjectRow.OpenEvent, OnOpen);
         AddHandler(GotFocusEvent, OnRowFocused, RoutingStrategies.Bubble, handledEventsToo: true);
+        AddHandler(KeyDownEvent, OnRowKey, RoutingStrategies.Bubble);
     }
 
     // The Expander's inner toggle is what a screen reader lands on, and it announces expanded or collapsed itself, so its name is just the fold's visible words ("Finished (1)").
@@ -59,12 +60,14 @@ internal sealed partial class ProjectsPage : UserControl
         if (_watched is { } old)
         {
             old.FocusRequested -= OnFocusRequested;
+            old.MenuRequested -= OnMenuRequested;
         }
 
         _watched = DataContext as ProjectsPageViewModel;
         if (_watched is { } now)
         {
             now.FocusRequested += OnFocusRequested;
+            now.MenuRequested += OnMenuRequested;
         }
     }
 
@@ -82,6 +85,33 @@ internal sealed partial class ProjectsPage : UserControl
         if (e.Source is Border { Name: "ProjectRowFrame", DataContext: ProjectCardViewModel card } && DataContext is ProjectsPageViewModel page)
         {
             _ = page.Select(card.Id);
+        }
+    }
+
+    // On a row: Up and Down walk the rows like K and J, Enter opens the row's sheet. A key with a modifier is left alone.
+    private void OnRowKey(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyModifiers != KeyModifiers.None || e.Source is not Border { Name: "ProjectRowFrame" } || DataContext is not ProjectsPageViewModel page)
+        {
+            return;
+        }
+
+        e.Handled = e.Key switch
+        {
+            Key.Down => page.Press("J"),
+            Key.Up => page.Press("K"),
+            Key.Enter => page.Press("Enter"),
+            _ => false,
+        };
+    }
+
+    // O and B open the Sort and the Group menu under their buttons, the way a click does.
+    private void OnMenuRequested(object? sender, ProjectMenuRequestedEventArgs e)
+    {
+        var button = this.FindControl<Button>(e.Menu == ProjectMenu.Sort ? "ProjectsSort" : "ProjectsGroup");
+        if (button is { IsEffectivelyVisible: true, Flyout: { } flyout })
+        {
+            flyout.ShowAt(button);
         }
     }
 

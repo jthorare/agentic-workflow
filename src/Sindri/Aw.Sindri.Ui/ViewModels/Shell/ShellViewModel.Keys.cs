@@ -36,9 +36,9 @@ internal sealed partial class ShellViewModel
         return LinearKeyPressed(key, inSheet) || PageKeyPressed(key, inSheet) || Single(key, inSheet) || RowKey(key, inSheet);
     }
 
-    // The keys of the pages that have their own (Needs you, Agents).
+    // The keys of the pages that have their own (Needs you, Agents, Projects).
     private bool PageKeyPressed(string key, bool inSheet) =>
-        NeedsYouKeyPressed(key, inSheet) || AgentsKeyPressed(key, inSheet);
+        NeedsYouKeyPressed(key, inSheet) || AgentsKeyPressed(key, inSheet) || ProjectsKeyPressed(key, inSheet);
 
     // Y copies the selected row's CLI (§8); / opens the Queue page's filter.
     private bool RowKey(string key, bool inSheet)

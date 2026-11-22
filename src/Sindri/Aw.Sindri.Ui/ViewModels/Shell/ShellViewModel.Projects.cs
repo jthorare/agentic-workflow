@@ -35,6 +35,9 @@ internal sealed partial class ShellViewModel
     /// <summary>True on Projects.</summary>
     public bool IsProjects => CurrentPage == PageId.Projects;
 
+    // The Projects page's own keys (1 to 4, O, B, J / K, Enter; issue 3717) belong to the page and never to the sheet.
+    private bool ProjectsKeyPressed(string key, bool inSheet) => !inSheet && IsProjects && Projects.Press(key);
+
     [MemberNotNull(nameof(Projects), nameof(ProjectSheet), nameof(ProjectAdd))]
     private void InitProjects(ILauncher launcher)
     {

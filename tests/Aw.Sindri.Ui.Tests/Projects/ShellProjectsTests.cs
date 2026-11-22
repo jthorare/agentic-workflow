@@ -68,4 +68,27 @@ public sealed class ShellProjectsTests
 
         Assert.Equal(PageId.Connections, shell.CurrentPage);
     }, Token);
+
+    [Fact]
+    public Task On_Projects_the_view_keys_pick_its_view() => UiThread.Run(async () =>
+    {
+        var shell = await Shell();
+        shell.GoTo(PageId.Projects);
+        await Until(() => !shell.Projects.IsLoading);
+
+        Assert.True(shell.Press("2"));
+
+        Assert.Equal(ViewModels.Projects.ProjectView.MyWork, shell.Projects.View);
+    }, Token);
+
+    [Fact]
+    public Task Off_Projects_a_view_key_leaves_its_view_alone() => UiThread.Run(async () =>
+    {
+        var shell = await Shell();
+        shell.GoTo(PageId.Home);
+
+        _ = shell.Press("2");
+
+        Assert.Equal(ViewModels.Projects.ProjectView.All, shell.Projects.View);
+    }, Token);
 }
