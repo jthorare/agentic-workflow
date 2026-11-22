@@ -96,7 +96,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         InitLinear();
         Health.Follow(ReadQueue);
         Health.Follow(Item.Refresh);
-        Health.FollowCards();
+        FollowSystemCards();
     }
 
     /// <summary>The app's copy, for the view.</summary>
@@ -266,6 +266,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         }
 
         CurrentPage = page;
+        Start.ShowPage(PageName);
         Queue.PageShown(RowScopeOf(page));
         Changed(_pageProperties);
         Remember(p => p with { LastPage = page.ToString() });
