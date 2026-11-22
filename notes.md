@@ -42,12 +42,12 @@ Per project: `openPrs[]` (state draft | ready | ciRed | waiting | unknown, decid
 ## Per frame
 1. needs-me: 6 rows (a PR waits on joi, or the owner's own PR is ciRed). Sorted by last activity.
 2. projects: all 32 (22 active rows in health groups plus the Finished fold). 15 rows fully in view.
-3. my-work: the 6 projects the owner leads, grouped by state.
+3. [superseded] my-work: the 6 projects the owner leads, grouped by state.
 4. triage-empty: no search/sort/group bar, one action (Back to Needs me, key 1); says what Triage will hold and when (#3002, needs Linear).
 5. peek: Space on Billing v2 (Linear-led, 9 PRs). 420 px; the list keeps every column and stays usable. The note is in the peek.
 6. search: "Checkout" typed, "2 of 32" in the field. Matches: Checkout rewrite (name, highlighted) and Billing v2 (its note).
 7. menus: Sort menu open. menus-group (7b): Group menu open.
-8. not-connected: all 32 by hand; the quiet line "Linear not connected · Connect" (28 px, no box, no red) under the title; no "Linear says". The On track group is collapsed so the No open PRs rows (null health: blank reason, no PR glyphs) are in view.
+8. [superseded] not-connected: all 32 by hand; the quiet line "Linear not connected · Connect" (28 px, no box, no red) under the title; no "Linear says". The On track group is collapsed so the No open PRs rows (null health: blank reason, no PR glyphs) are in view.
 9. needs-me-1000 (1000x700): the whole row fits; top bar condenses. peek-1000 (1000x700): the peek does NOT overlay the list; it takes 420 px and the list narrows to 580 px (grammar: "the list stays, narrows, keeps focus"; an overlay would hide the right half of every row while j/k moves the peek). The list keeps name, PRs, Blocked on and Active; Items, Agents, Target and the reason line drop (the reason is in the peek's Derived row). Esc closes the peek and the columns return.
 10. no-linear-row: the by-hand project (Checkout rewrite) in the peek, built from the server's example verbatim: 4 PRs (ciRed decided Nov 12, waiting on joi and sam, unknown, draft), 3 of 5 items open, 1 running agent, health at risk "At risk: 1 of 4 PRs red, 1 unknown". Source reads "by hand, no Linear".
 
@@ -57,7 +57,7 @@ Per project: `openPrs[]` (state draft | ready | ciRed | waiting | unknown, decid
 ## Round 3 changes
 - Edited row keeps its place (peek frame): Billing v2 had its note saved just now. Its Active cell reads "now" but the row stays in its old slot (third in At risk, between 2h and 2d), and the peek says "Note saved just now. This row keeps its place, even though it is now the newest, until you leave Projects."
 - Avatar initial is 11 px (minFontPx is 11 on every frame).
-- not-connected: the Unknown and On track groups are collapsed so every row ends inside the view (11 of 11).
+- [superseded] not-connected: the Unknown and On track groups are collapsed so every row ends inside the view (11 of 11).
 - needs-me, needs-me-1000, peek-1000: the column is headed "Ask" and holds only the ask ("fix CI", "review"); the group row says all six wait on joi.
 - peek-1000: Import wizard's note is real text now.
 - triage-empty: the button has no key badge; "or press 1" sits beside it.
@@ -170,7 +170,7 @@ No key is bound to two actions on this page, now or once the sheet's row keys la
 
 ## Round 11 (review-r10: 1 hold, 4 smalls)
 - Hidden is not in the Projects count. The fold reads "Hidden 2 · projects you hid · not counted" (spec §3: "Hidden (n) (projects the owner hid)"). The tab count = every grouped row + Finished: 22 + 10 = 32, never Hidden (assert in gen.py next to `HID`).
-- The freshness line's "Linear says you're …" shows the Linear viewer's display name (`viewer`, ProjectsPage.cs:12), not a GitHub login. The frames use the spec's sample name, "Jo Smith".
+- [superseded] The freshness line's "Linear says you're …" shows the Linear viewer's display name (`viewer`, ProjectsPage.cs:12), not a GitHub login. The frames use the spec's sample name, "Jo Smith".
 - group-repo: the PR column is headed "PRs in this repo". A project in two repos shows only that repo's PRs in each group (gen.py `REPO_PRS`, asserted to add up to the project's PRs). The reason stays the project's own, so "of N" there counts every repo.
 - The group menu's Repo hint reads "acme/api, acme/web…", the same names as the groups.
 [superseded] - focus-controls draws the 2 px inset ring on the Create project button too.
