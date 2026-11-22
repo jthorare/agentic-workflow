@@ -25,10 +25,15 @@ public sealed class LedgerInstanceTypeScanTests : IDisposable
     private readonly FakeTimeProvider _clock = new(KnownInstants.Epoch);
     private readonly SequentialIdGenerator _ids = new();
     private readonly FakeProcessProbe _probe = new();
+    private LedgerDatabase? _database;
     private SindriStores? _stores;
     private LeaseGrant? _grant;
 
-    public void Dispose() => _home.Dispose();
+    public void Dispose()
+    {
+        _database?.Dispose();
+        _home.Dispose();
+    }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -76,8 +81,10 @@ public sealed class LedgerInstanceTypeScanTests : IDisposable
         var refused = await Append("workflow.refused", "workflow:T-1/step/1:run-2:1");
         var filter = new LedgerFilter(_engineRows, Item: null, Instance: _instance);
 
-        var scan = (await _stores!.Ledger.Scan(0, 500, filter, Token)).Value;
-        var everything = (await _stores.Ledger.Scan(0, 500, LedgerFilter.All, Token)).Value;
+        _database = new LedgerDatabase(new SindriSettings(_home.Path, Path.Combine(_home.Path, "profile.yaml")), _clock);
+        var reader = new SqliteLedgerReader(_database);
+        var scan = (await reader.Scan(0, 500, filter, Token)).Value;
+        var everything = (await reader.Scan(0, 500, LedgerFilter.All, Token)).Value;
 
         Assert.Equal([started, moved, refused], scan.Events.Select(static e => e.Sequence));
         Assert.Equal(everything.Events.Where(filter.Keeps).Select(static e => e.Sequence), scan.Events.Select(static e => e.Sequence));
