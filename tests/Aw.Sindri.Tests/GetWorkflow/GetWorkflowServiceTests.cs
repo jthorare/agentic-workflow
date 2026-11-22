@@ -24,7 +24,7 @@ public sealed class GetWorkflowServiceTests
     public GetWorkflowServiceTests()
     {
         _workflows = new InMemoryWorkflowStore(_clock);
-        _service = new GetWorkflowService(_workflows, new Catalog(new ScheduleBlock(), new ManualBlock()));
+        _service = new GetWorkflowService(_workflows, new Catalog(new ScheduleBlock(), new ManualBlock()), _clock);
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;

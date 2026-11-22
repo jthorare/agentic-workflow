@@ -4,6 +4,7 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
+using Aw.Sindri.Core.Graph.Schedule;
 
 namespace Aw.Sindri.Features.GetWorkflow;
 
@@ -13,7 +14,8 @@ namespace Aw.Sindri.Features.GetWorkflow;
 /// </summary>
 /// <param name="workflows">The workflows and their revisions.</param>
 /// <param name="catalog">The block types; each node's summary line comes from its type.</param>
-internal sealed class GetWorkflowService(IWorkflowStore workflows, IGraphBlockCatalog catalog) : IService<GetWorkflowRequest, GetWorkflowResponse>
+/// <param name="clock">The time the next run is measured from (issue 3756).</param>
+internal sealed class GetWorkflowService(IWorkflowStore workflows, IGraphBlockCatalog catalog, TimeProvider clock) : IService<GetWorkflowRequest, GetWorkflowResponse>
 {
     public async ValueTask<Result<GetWorkflowResponse>> Handle(GetWorkflowRequest request, CancellationToken cancellationToken)
     {
@@ -45,7 +47,8 @@ internal sealed class GetWorkflowService(IWorkflowStore workflows, IGraphBlockCa
         // why: GraphJson.Write always writes a JSON object, so Parse never answers null
         var spec = JsonNode.Parse(GraphJson.Write(shown.Value.Spec))!;
         return new GetWorkflowResponse(record.Id, record.Slug, record.Name, shown.Value.Revision, record.ActiveRevision, record.LatestRevision, record.ArchivedAt, record.CreatedBy,
-            newest.Value.CreatedBy, newest.Value.CreatedAt, shown.Value.SpecHash, spec, WorkflowPositions.Of(shown.Value.Spec), [.. shown.Value.Spec.Nodes.Select(Summary)]);
+            newest.Value.CreatedBy, newest.Value.CreatedAt, shown.Value.SpecHash, spec, WorkflowPositions.Of(shown.Value.Spec), [.. shown.Value.Spec.Nodes.Select(Summary)],
+            WorkflowNextRun.Of(record, shown.Value.Spec, clock.GetUtcNow()));
     }
 
     private NodeSummary Summary(GraphNode node)
