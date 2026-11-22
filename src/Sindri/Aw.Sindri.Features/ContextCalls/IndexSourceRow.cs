@@ -20,4 +20,7 @@ public sealed record IndexSourceRow(string Source, string? Phase, bool Usable, b
 {
     /// <summary>True when the source needs a look (issue #3430): its pull failed or backs off, it is idle holding nothing and never committed after a pass ended, or, with no pull read, it is unusable with a code.</summary>
     public bool NeedsLook { get; init; }
+
+    /// <summary>Why the source needs a look when its own state words don't say it ("linear hasn't finished a sync in 10 minutes", #3832), or null.</summary>
+    public string? LookWords { get; init; }
 }
