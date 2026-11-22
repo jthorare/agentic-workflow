@@ -79,10 +79,11 @@ public sealed class RepoAttributionTests : IDisposable
     {
         var repo = Directory.CreateDirectory(Path.Combine(_roots.Root, "repos", "alpha")).FullName;
         _ = Directory.CreateDirectory(Path.Combine(repo, ".git"));
+        var src = Directory.CreateDirectory(Path.Combine(repo, "src")).FullName;
         var plain = Directory.CreateDirectory(Path.Combine(_roots.Root, "plain")).FullName;
         var resolver = new RepoResolver([]);
 
-        Assert.Equal(repo, resolver.Resolve(Path.Combine(repo, "src")));
+        Assert.Equal(repo, resolver.Resolve(src));
         Assert.Equal(plain, resolver.Resolve(plain));
         Assert.Equal("/no/such/worktree", resolver.Resolve("/no/such/worktree"));
         Assert.Equal("relative/dir", resolver.Resolve("relative/dir"));
