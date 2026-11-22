@@ -145,7 +145,6 @@ public sealed class ClaudeCodeUsageTests : IDisposable
 
         _ = await reader.Between(_from, _to, Token);
 
-        var states = (Dictionary<string, FileState>)typeof(ClaudeCodeUsage).GetField("_files", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(reader)!;
-        Assert.Empty(Assert.Single(states).Value.ChangedIds);
+        Assert.Equal(0, reader.PendingChangedIds);
     }
 }
