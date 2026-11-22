@@ -18,7 +18,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     internal static readonly TimeSpan StartWait = TimeSpan.FromSeconds(10);
 
     /// <summary>Raised with the run id when a Starting run's 10 s start deadline passes with no run row. The one timer is here; the list row and the run page both read this.</summary>
-    internal event Action<string>? StartTimedOut;
+    internal event EventHandler<ValueEventArgs<string>>? StartTimedOut;
 
     private readonly UiContext _ui = new();
     private readonly Dictionary<string, ITimer> _startTimers = new(StringComparer.Ordinal);
@@ -186,7 +186,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
 
         _ = _didNotStart.Add(runId);
         Rows.FirstOrDefault(r => string.Equals(r.Id, runId, StringComparison.Ordinal) && string.Equals(r.Status, "starting", StringComparison.Ordinal))?.MarkDidNotStart();
-        StartTimedOut?.Invoke(runId);
+        StartTimedOut?.Invoke(this, new ValueEventArgs<string>(runId));
     }
 
     private void StopStartTimer(string runId)
@@ -249,7 +249,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     {
         (IsFailed, FailedText, CanRun) = (false, string.Empty, true);
         Rows.Clear();
-        foreach (var id in _starting.Where(id => list.Runs.Any(r => string.Equals(r.Id, id, StringComparison.Ordinal))).ToList())
+        foreach (var id in _starting.Where(s => list.Runs.Any(r => string.Equals(r.Id, s, StringComparison.Ordinal))).ToList())
         {
             _ = _starting.Remove(id);   // the real row is here: it replaces the placeholder
             _ = _didNotStart.Remove(id);
