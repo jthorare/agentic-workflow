@@ -9,8 +9,9 @@ using Aw.Meta.Testing;
 
 namespace Aw.Meta.Tests.CheckMerge;
 
-// #3789: with review.mode "counts" a pull request is ready on the lane's ready line and its counts alone. The reviewer keeps a
-// veto: a standing HOLD refuses until a later OK lifts it, and "qa not yet" under an OK at the head still refuses.
+// #3789: with review.mode "counts" a pull request is ready on the lane's ready line and its counts alone. The reviewer can still
+// stop the review path: a standing HOLD refuses until a later OK lifts it, and a qa line under the standing OK refuses until it
+// says "qa passed" at the head, wherever that OK points (#3840).
 public sealed class ReviewCountsModeTests
 {
     private const string Head = "0123456789abcdef0123456789abcdef01234567";
@@ -184,6 +185,41 @@ public sealed class ReviewCountsModeTests
         Assert.False(response.Ready);
         Assert.Equal(["review"], Failed(response));
         Assert.Contains("qa not yet", Detail(response, "review"), StringComparison.Ordinal);
+    }
+
+    // #3840: the qa block stands per pull request like a HOLD. A push plus a green ready at the new head does not lift it.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Qa_not_yet_under_an_OK_at_an_older_head_still_refuses()
+    {
+        await Team();
+        await Inbox("t1-ideas", $"OK #190 at {Old}\nqa not yet");
+        await Inbox("t1-api", ReadyBody());
+        Script();
+
+        var response = await Check();
+
+        Assert.False(response.Ready);
+        Assert.Equal(["review"], Failed(response));
+        Assert.Contains("qa not yet", Detail(response, "review"), StringComparison.Ordinal);
+    }
+
+    // A qa pass at the old head says nothing about the new one; a new OK with "qa passed <head>" clears it.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Qa_passed_at_an_older_head_refuses_until_qa_passes_at_the_head()
+    {
+        await Team();
+        await Inbox("t1-ideas", $"OK #190 at {Old}\nqa passed {Old}");
+        await Inbox("t1-api", ReadyBody());
+        Script();
+
+        var refused = await Check();
+        Assert.False(refused.Ready);
+        Assert.Equal(["review"], Failed(refused));
+        Assert.Contains($"qa passed at {Old}", Detail(refused, "review"), StringComparison.Ordinal);
+
+        await Inbox("t1-ideas", $"OK #190 at {Head}\nqa passed {Head}");
+
+        Assert.True((await Check()).Ready);
     }
 
     [Fact, Trait("Lane", "unit")]
