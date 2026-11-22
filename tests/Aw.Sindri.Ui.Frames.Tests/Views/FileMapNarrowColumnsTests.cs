@@ -1,8 +1,9 @@
+using System.Globalization;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
-using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Shell;
@@ -40,7 +41,7 @@ public sealed class FileMapNarrowColumnsTests : FrameHost
         var columnRight = Margin + ((row.Bounds.Width - (2 * Margin)) * FileColumnShare);
         var right = status.TranslatePoint(default, row)!.Value.X + status.Bounds.Width;
 
-        Assert.True(right <= columnRight + 0.5, $"the status ends at {right:F1} px, the File column ends at {columnRight:F1} px");
+        Assert.True(right <= columnRight + 0.5, string.Create(CultureInfo.InvariantCulture, $"the status ends at {right:F1} px, the File column ends at {columnRight:F1} px"));
     });
 
     [Fact]
