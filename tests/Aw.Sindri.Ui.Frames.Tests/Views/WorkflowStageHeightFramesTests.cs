@@ -12,7 +12,8 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 [Collection(HeadlessWindows.Name)]
 public sealed class WorkflowStageHeightFramesTests : FrameHost
 {
-    private async Task<(double Height, double Bottom, double Window)> Measure(int height)
+    // The stage's height, its bottom in the window, and the bottom of the page scroller's viewport in the window.
+    private async Task<(double Height, double Bottom, double ViewportBottom)> Measure(int height)
     {
         Server.WorkflowAnswers[WorkflowsSlug] = RouteAnswer.Api("workflows-slug", "found");
         Server.WorkflowRunsAnswers[WorkflowsSlug] = RouteAnswer.Api("workflows-slug-runs", "list-three");
@@ -23,7 +24,9 @@ public sealed class WorkflowStageHeightFramesTests : FrameHost
         await Until(window, () => Visible(window, "RunsStagePanel"), "the graph never showed");
         Settle(window);
         var panel = Named<Border>(window, "RunsStagePanel");
-        return (panel.Bounds.Height, panel.TranslatePoint(new Point(0, panel.Bounds.Height), window)!.Value.Y, window.Bounds.Height);
+        var pages = Named<ScrollViewer>(window, "Pages");
+        var viewportBottom = pages.TranslatePoint(default, window)!.Value.Y + pages.Viewport.Height;
+        return (panel.Bounds.Height, panel.TranslatePoint(new Point(0, panel.Bounds.Height), window)!.Value.Y, viewportBottom);
     }
 
     private const string WorkflowsSlug = "waiting-on-review";
@@ -31,17 +34,19 @@ public sealed class WorkflowStageHeightFramesTests : FrameHost
     [Fact]
     public Task At_1440_by_900_the_stage_is_taller_than_320_and_ends_inside_the_window() => OnUi(async () =>
     {
-        var (h, bottom, window) = await Measure(900);
+        var (h, bottom, viewportBottom) = await Measure(900);
 
         Assert.True(h > 320, "the stage did not grow past 320");
-        Assert.True(bottom <= window, "the stage runs past the window");
+        Assert.Equal(viewportBottom - 16, bottom, 0.5);   // it fills the page's viewport down to the 16 px gap, so it ends inside the window
     });
 
+    // The window can't be shorter than Size.WindowMinHeight (600), so the 320 floor never binds at 100 % text on this page; GraphZoomTests checks the floor itself.
     [Fact]
-    public Task At_1440_by_500_the_stage_is_320() => OnUi(async () =>
+    public Task At_the_600_px_window_minimum_the_stage_still_fills_the_viewport_and_is_at_least_320() => OnUi(async () =>
     {
-        var (h, _, _) = await Measure(500);
+        var (h, bottom, viewportBottom) = await Measure(600);
 
-        Assert.Equal(320, h, 0.5);
+        Assert.True(h >= 320, "the stage went under 320");
+        Assert.Equal(viewportBottom - 16, bottom, 0.5);
     });
 }

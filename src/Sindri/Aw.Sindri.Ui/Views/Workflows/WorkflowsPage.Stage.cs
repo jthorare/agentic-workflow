@@ -28,9 +28,10 @@ internal sealed partial class WorkflowsPage
 
         foreach (var panel in new[] { RunsStagePanel, RunPanel })
         {
-            if (panel.IsVisible && panel.TranslatePoint(default, this) is { } at)
+            // the top inside the scroll viewer's content, not inside this page: the page sits under the shell's 24 px gutter, so the page's own top would leave the stage 24 px too tall
+            if (panel.IsVisible && panel.TranslatePoint(default, _pages) is { } at)
             {
-                var wanted = GraphZoom.StageHeight(_pages.Viewport.Height, at.Y, 16);
+                var wanted = GraphZoom.StageHeight(_pages.Viewport.Height, at.Y + _pages.Offset.Y, 16);
                 if (Math.Abs(panel.Height - wanted) > 0.5)
                 {
                     panel.Height = wanted;

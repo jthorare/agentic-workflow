@@ -23,6 +23,7 @@ public sealed class GraphCanvasRelayoutTests
     {
         Dispatcher.UIThread.RunJobs();
         window.UpdateLayout();
+        AvaloniaHeadlessPlatform.ForceRenderTimerTick();   // the canvas is hit only where it has drawn (its transparent back), and headless draws only on a render tick
         Dispatcher.UIThread.RunJobs();
     }
 
