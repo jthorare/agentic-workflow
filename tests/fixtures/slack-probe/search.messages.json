@@ -1,0 +1,4 @@
+{"ok":true,"query":"to:me","messages":{"total":7,"matches":[
+ {"ts":"1700000300.000100","text":"SECRET-TEXT newest","username":"SECRET-USER-alice","channel":{"id":"D0IM1","name":"SECRET-NAME-dm"}},
+ {"ts":"1700000250.000100","text":"SECRET-TEXT older","username":"SECRET-USER-bob","channel":{"id":"C0PUB1","name":"SECRET-NAME-general"}}
+],"paging":{"count":2,"total":7,"page":1,"pages":4}}}

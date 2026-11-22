@@ -68,7 +68,7 @@ test_build_prs_refusals() {
 }
 
 test_write_packet_manifest() {
-  python3 -I -B "$SD/write_packet.py" "$P" --slug demo --title "Demo" >/dev/null || fail "write_packet failed"
+  python3 -I -B "$SD/write_packet.py" "$P" --slug demo --title "Demo" >/dev/null 2>&1 || fail "write_packet failed"
   python3 -I -B - "$P/packet.json" <<'PY' || fail "packet.json content wrong"
 import json, sys
 m = json.load(open(sys.argv[1]))
@@ -96,7 +96,8 @@ test_write_packet_refusals() {
 mkdoc() { # a packet with three cards, EARS criteria and test rows
   D="$TMP/docpkt"; mkdir -p "$D/prs"; find "$D" -type f -delete
   cat >"$D/tdd.html" <<'HTML'
-<html><body><section id="scope"><h2>Scope</h2><ul>
+<html><body><section id="roi"><h2>ROI and data-analysis plan</h2></section>
+<section id="scope"><h2>Scope</h2><ul>
 <li>When a rider books a seat, the system shall show it booked.</li>
 <li>If payment fails, the system shall release the seat | within 10 s.</li>
 <li>Not a criterion without the keyword.</li></ul></section>
@@ -123,12 +124,25 @@ test_write_packet_doc_md() {
   ! has -e 'Ph0' "$D/doc.md" || fail "leading zero in a phase id"
   has -x -e '### Ph2 Payments' "$D/doc.md" || fail "card title should come from front matter"
   [ "$(grep -c '^- \*\*REQ-' "$D/doc.md")" = 2 ] || fail "expected 2 REQ items"
-  [ "$(grep -c '^| TP-' "$D/doc.md")" = 4 ] || fail "expected 4 TP rows"
+  [ "$(grep -c '^| TP-' "$D/doc.md")" = 6 ] || fail "expected 6 TP rows (4 from cards, 2 sweep exit checks)"
   has -F -x -e '| TP-4 | Retry \| twice - ok | Ph2 |' "$D/doc.md" || fail "TP-4: an escaped pipe in a card table cell split the cell"
   has -F -x -e '## Section Ph2 notes & risks' "$D/doc.md" || fail "a section titled Ph2 ... must not define Ph2 (and entities unescaped)"
   has -F -x -e '| TP-3 | Fail the payment - ok | Ph2 |' "$D/doc.md" || fail "TP-3 row wrong (phase)"
   has -F -x -e '| TP-2 | Reload \| still booked. | Ph1 |' "$D/doc.md" || fail "TP-2 pipe not escaped"
   has -x -e '## Scope' "$D/doc.md" || fail "section heading missing"
+  [ "$(grep -m1 '^## ' "$D/doc.md")" = '## ROI and data-analysis plan' ] || fail "the ROI plan should be the first section"
+  [ "$(grep '^### Ph' "$D/doc.md" | tr '\n' '|')" = '### Ph1 Booking form|### Ph2 Payments|### Ph3 Cleanup|### Ph4 Performance sweep|### Ph5 Bug sweep|' ] \
+    || fail "phases should end with Ph4 Performance sweep then Ph5 Bug sweep"
+  [ "$(grep -A2 '^### Ph4 Performance sweep' "$D/doc.md" | sed -n 3p | cut -c1-12)" = 'Exit check: ' ] || fail "the performance sweep has no exit check"
+  [ "$(grep -A2 '^### Ph5 Bug sweep' "$D/doc.md" | sed -n 3p | cut -c1-12)" = 'Exit check: ' ] || fail "the bug sweep has no exit check"
+  has -e '^\| TP-5 \| Performance sweep: every data or interactive surface .* \| Ph4 \|$' "$D/doc.md" || fail "TP-5 should verify the performance sweep"
+  has -e '^\| TP-6 \| Bug sweep: every finding is a GitHub issue.* \| Ph5 \|$' "$D/doc.md" || fail "TP-6 should verify the bug sweep"
+  local sh="$DIR/../../skills/_shared/closing-sweeps.md" c
+  for c in "$(sed -n '/^### Ph4/,/^### Ph5/p' "$D/doc.md" | grep '^Exit check: ')" "$(sed -n '/^### Ph5/,/^## /p' "$D/doc.md" | grep '^Exit check: ')"; do
+    tr '\n' ' ' <"$sh" | grep -qF "**${c%%:*}:**${c#Exit check:}" || fail "exit check not word for word in closing-sweeps.md: $c"
+  done
+  local err; err="$(python3 -I -B "$SD/write_packet.py" "$D" --slug harbor-booking --title "Harbor: ferry booking" 2>&1 >/dev/null)"
+  [ -z "$err" ] || fail "a TDD that opens with the ROI plan should not warn: $err"
   local before; before="$(cat "$D/doc.md")"
   python3 -I -B "$SD/write_packet.py" "$D" --slug harbor-booking --title "Harbor: ferry booking" >/dev/null
   [ "$before" = "$(cat "$D/doc.md")" ] || fail "rerun changed doc.md"
@@ -146,6 +160,15 @@ test_write_packet_doc_md() {
   [ "$rc" -eq 1 ] || fail "a 1-char id should exit 1, got $rc"
   [ ! -e "$D/packet.json" ] || fail "a refused slug should write nothing"
   echo "PASS: test_write_packet_doc_md"
+}
+
+test_write_packet_sweeps_without_cards() {
+  local E="$TMP/nocards" err; mkdir -p "$E"
+  echo '<html><body><section id="scope"><h2>Scope</h2></section></body></html>' >"$E/tdd.html"
+  err="$(python3 -I -B "$SD/write_packet.py" "$E" --slug no-cards --title "T" 2>&1 >/dev/null)" || fail "write_packet failed"
+  case "$err" in *'not <section id="roi">'*) ;; *) fail "a TDD without the ROI plan first should warn, got: $err" ;; esac
+  [ "$(grep '^### Ph' "$E/doc.md" | tr '\n' '|')" = '### Ph1 Performance sweep|### Ph2 Bug sweep|' ] || fail "no cards: the sweeps should be Ph1 and Ph2"
+  echo "PASS: test_write_packet_sweeps_without_cards"
 }
 
 test_write_packet_doc_md_schema() {
@@ -214,5 +237,6 @@ test_build_prs_refusals
 test_write_packet_manifest
 test_write_packet_refusals
 test_write_packet_doc_md
+test_write_packet_sweeps_without_cards
 test_write_packet_doc_md_schema
 test_storyboard_layout
