@@ -1908,6 +1908,7 @@ Aw.Sindri.Core.Scheduling.IScheduledService.Identity() -> Aw.Sindri.Core.Ids.Ser
 Aw.Sindri.Core.Scheduling.IScheduledService.Run(Aw.Sindri.Core.Scheduling.ScheduledRun! run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Scheduling.ScheduledResult!>!>
 Aw.Sindri.Core.Scheduling.LiveSchedule
 Aw.Sindri.Core.Scheduling.LiveSchedule.Current.get -> System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Ids.ServiceName, System.DateTimeOffset>?
+Aw.Sindri.Core.Scheduling.LiveSchedule.Schedules.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Scheduling.ServiceSchedule!>?
 Aw.Sindri.Core.Scheduling.LiveSchedule.LiveSchedule() -> void
 Aw.Sindri.Core.Scheduling.LiveSchedule.Publish(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Scheduling.ServiceSchedule!>! schedules) -> void
 Aw.Sindri.Core.Scheduling.IServicePauses

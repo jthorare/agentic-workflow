@@ -148,7 +148,7 @@ public sealed class SessionSheetTests : FrameHost
         Assert.True(row.Focus(NavigationMethod.Tab));
 
         shell.Agents.RequestOpen(new SessionOpenRequestedEventArgs(Link(Claude)));
-        await Until(window, () => shell.IsSheetShown && Named<Border>(window, "SheetTitle").IsFocused, "focus never reached the sheet's heading");
+        await Until(window, () => shell.IsSheetShown && Named<Border>(window, "Sheet").IsFocused, "focus never reached the sheet");   // #3710: a session sheet takes focus on its body, not the title
         Press(window, Key.Escape);
 
         await Until(window, () => !shell.IsSheetOpen && ReferenceEquals(window.FocusManager?.GetFocusedElement(), row), $"focus is on {window.FocusManager?.GetFocusedElement()}");
