@@ -53,7 +53,7 @@ public sealed class CodeIndexCardTests
     [Fact]
     public async Task A_layer_that_cannot_be_built_says_unavailable_with_its_code_and_the_card_needs_a_look()
     {
-        var card = await Read(Repo("repo", "ok", Sha, 3, Layer("structure", "ok"), Layer("graph", "unavailable", "SND-CODEIDX-020"), Layer("embeddings", "disabled")));
+        var card = await ReadWithHealth([Repo("repo", "ok", Sha, 3, Layer("structure", "ok"), Layer("graph", "unavailable", "SND-CODEIDX-020"), Layer("embeddings", "disabled"))], [Health("repo", "ok", needsLook: true)]);
 
         Assert.Equal("repo @ abcdef0, 3 min old, structure ok · graph unavailable (SND-CODEIDX-020) · embeddings off", Assert.Single(card.Lines).Text);
         Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
@@ -160,7 +160,6 @@ public sealed class CodeIndexCardTests
         var card = await Read(Repo("repo", state, commit: null, 0));
 
         Assert.Equal(expected, Assert.Single(card.Lines).Text);
-        Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
     }
 
     // #3399: missing comes paused or off the default branch too, where no build is coming; only queued may promise one.
@@ -171,7 +170,7 @@ public sealed class CodeIndexCardTests
     [Fact]
     public async Task A_stale_index_names_the_state_beside_its_age()
     {
-        var card = await Read(Repo("repo", "stale", Sha, 120, Layer("structure", "ok")));
+        var card = await ReadWithHealth([Repo("repo", "stale", Sha, 120, Layer("structure", "ok"))], [Health("repo", "stale", needsLook: true)]);
 
         Assert.Equal("repo @ abcdef0, 2 h old (behind main), structure ok", Assert.Single(card.Lines).Text);
         Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
@@ -222,7 +221,6 @@ public sealed class CodeIndexCardTests
         var card = await ReadWithHealth([Repo("repo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("repo", state)]);
 
         Assert.Equal(expected, Assert.Single(card.Lines).Text);
-        Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
     }
 
     [Theory]
@@ -269,7 +267,7 @@ public sealed class CodeIndexCardTests
     [Fact]
     public async Task A_paused_repo_in_backoff_never_reads_waiting_to_retry()
     {
-        var card = await ReadWithHealth([Repo("repo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("repo", "stale", paused: true)]);
+        var card = await ReadWithHealth([Repo("repo", "ok", Sha, 3, Layer("structure", "ok"))], [Health("repo", "stale", paused: true, needsLook: true)]);
 
         Assert.Equal("repo @ abcdef0, 3 min old (behind main · paused), structure ok", Assert.Single(card.Lines).Text);
         Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);

@@ -244,7 +244,7 @@ public sealed class FailureSentenceTableTests
     {
         var row = Row("SND-CODE-005");
 
-        Assert.Equal("Sindri can't run code steps: the code runner couldn't start.\nthe runner binary is not at /x/sindri-code-runner", FailureSentences.Say(row.Code, With(("message", "the runner binary is not at /x/sindri-code-runner"))));
+        Assert.Equal("Sindri can't run code steps: the code runner couldn't start.\nRunner binary not found at /x/sindri-code-runner. Install it beside the Sindri host.", FailureSentences.Say(row.Code, With(("message", "Runner binary not found at /x/sindri-code-runner. Install it beside the Sindri host."))));
         Assert.Null(row.FixLabel);
         Assert.Null(row.FixCommand);
     }

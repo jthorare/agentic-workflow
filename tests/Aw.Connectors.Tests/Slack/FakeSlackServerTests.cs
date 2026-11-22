@@ -17,10 +17,7 @@ public sealed class FakeSlackServerTests : IDisposable
     private readonly FakeSlackServer _server = new FakeSlackServer().SeedWorkspace();
     private readonly HttpClient _client;
 
-    public FakeSlackServerTests()
-    {
-        _client = new HttpClient(_server, disposeHandler: false);
-    }
+    public FakeSlackServerTests() => _client = new HttpClient(_server, disposeHandler: false);
 
     public void Dispose()
     {
@@ -222,9 +219,7 @@ public sealed class FakeSlackServerTests : IDisposable
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_search_modifier_the_fake_does_not_know_fails_the_run()
-    {
-        _ = await Assert.ThrowsAsync<InvalidOperationException>(() => Call("search.messages?query=" + Q("has:reaction")));
-    }
+        => _ = await Assert.ThrowsAsync<InvalidOperationException>(() => Call("search.messages?query=" + Q("has:reaction")));
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_rate_limit_scripted_for_one_method_leaves_the_other_methods_alone()
@@ -248,9 +243,7 @@ public sealed class FakeSlackServerTests : IDisposable
 
     [Fact, Trait("Lane", "unit")]
     public void A_rate_limit_for_a_method_the_fake_does_not_serve_is_refused()
-    {
-        _ = Assert.Throws<ArgumentException>(() => _server.ScriptRateLimit("chat.postMessage", 5));
-    }
+        => _ = Assert.Throws<ArgumentException>(() => _server.ScriptRateLimit("chat.postMessage", 5));
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_revoked_token_answers_invalid_auth_on_every_method()
@@ -300,7 +293,5 @@ public sealed class FakeSlackServerTests : IDisposable
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_method_the_fake_does_not_serve_still_fails_the_run()
-    {
-        _ = await Assert.ThrowsAsync<InvalidOperationException>(() => Call("chat.postMessage"));
-    }
+        => _ = await Assert.ThrowsAsync<InvalidOperationException>(() => Call("chat.postMessage"));
 }

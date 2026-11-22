@@ -6,6 +6,11 @@
     <Project Path="src/Aw.Kernel.Telemetry/Aw.Kernel.Telemetry.csproj" />
     <Project Path="src/Redaction/Aw.Redaction/Aw.Redaction.csproj" />
   </Folder>
+  <Folder Name="/src/Transcripts/">
+    <Project Path="src/Transcripts/Aw.Transcripts.Core/Aw.Transcripts.Core.csproj" />
+    <Project Path="src/Transcripts/Aw.Transcripts.Features/Aw.Transcripts.Features.csproj" />
+    <Project Path="src/Transcripts/Aw.Transcripts.Infrastructure/Aw.Transcripts.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Toolkit/">
     <Project Path="src/Toolkit/Aw.Sindri.Toolkit/Aw.Sindri.Toolkit.csproj" />
   </Folder>
@@ -127,5 +132,7 @@
     <Project Path="tests/Aw.Embeddings.Testing/Aw.Embeddings.Testing.csproj" />
     <Project Path="tests/Aw.Sindri.Toolkit.Testing/Aw.Sindri.Toolkit.Testing.csproj" />
     <Project Path="tests/Aw.Sindri.Toolkit.Tests/Aw.Sindri.Toolkit.Tests.csproj" />
+    <Project Path="tests/Aw.Transcripts.Tests/Aw.Transcripts.Tests.csproj" />
+    <Project Path="tests/Aw.Transcripts.Testing/Aw.Transcripts.Testing.csproj" />
   </Folder>
 </Solution>
