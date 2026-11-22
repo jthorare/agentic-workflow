@@ -17,6 +17,9 @@ internal static class StatusText
     // "not set up" with no profile yet, "invalid" when the file reads but won't load, "unreadable" for any other problem (the server's "unreadable", or no kind), else "live": an edit applies on save, so there is no approval state to word.
     internal static string ProfileState(ProfileView p) => IsMissing(p) ? Labels.ProfileNotSetUp : p.Problem is null ? "live" : string.Equals(p.ProblemKind, "invalid", StringComparison.Ordinal) ? "invalid" : "unreadable";
 
+    /// <summary>Why only the built-in services run: the live profile is missing or won't load; empty when it loads.</summary>
+    internal static string ServicesNote(ProfileView p) => IsMissing(p) ? Labels.ServicesNoProfile : p.Problem is not null ? Labels.ServicesProfileWontLoad : string.Empty;
+
     /// <summary>True when there is no profile yet (a brand-new home), which is not a fault. Only Sindri's problemKind "missing" says it: without it a problem reads as unreadable or invalid, so a broken profile file never hides behind a Setup link.</summary>
     /// <param name="p">The status's profile part.</param>
     /// <returns>True when the profile is missing.</returns>
