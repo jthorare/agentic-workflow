@@ -8,6 +8,7 @@ port. Nothing in it is installed or pulled for you: it tells you what is missing
 ```
 scripts/context-first-run.sh up --dry-run     # read this first: every command it would run, nothing run
 scripts/context-first-run.sh up               # steps 0 to 7, with no stop: the profile is live as written
+scripts/context-first-run.sh up --time        # time home, profile, serve, app and first Home row; no index, no map
 scripts/context-first-run.sh status           # read only
 scripts/context-first-run.sh down             # stop, close the app, delete the scratch home
 ```
@@ -89,6 +90,45 @@ v1 at once: extraction took longer than the index build, so the citations were r
 **7. The app.** Starts `sindri-ui` on the scratch home (`AW_SINDRI_UI`, else the newest
 `$AW_STATE_DIR/bin/cs/*/sindri-ui`) and keeps its pid in `<home>/first-run/ui.pid`. Click Context in the rail: you
 should see the map and, on Health, a Code index card for `agentic-workflow`. Skip it with `--no-ui`.
+
+## Timing the first run (`up --time`)
+
+`up --time` measures how long a fresh home takes to show its first row on Home. It never waits for the code index or the
+map, and its preflight skips ollama and graphify (it turns both layers off in the profile). It times five steps and stops
+after the fifth:
+
+| step | ends when |
+|---|---|
+| `home` | the scratch folder and its marker exist |
+| `profile` | `sindri profile init`, the repo entry, and `sindri profile validate` exits 0 |
+| `serve` | `control.json` exists and `sindri status --json` says running |
+| `app` | `sindri-ui` runs with `AW_UI_DRIVER=1` under Xvfb and `aw-ui-driver ready` succeeds |
+| `rows` | `NeedsYouRows`, `RunningRows` or `QueuedRows` on Home shows at least one row |
+
+The clock starts after the preflight. Output is one line per step, then the total, and the same numbers in
+`<home>/first-run.json`:
+
+```
+first-run home 0.0
+first-run profile 1.4
+first-run serve 38.2
+first-run app 6.1
+first-run rows 2.0
+first-run total 47.7
+```
+
+```
+{"ok":true,"steps":{"home":0.0,"profile":1.4,"serve":38.2,"app":6.1,"rows":2.0},"total":47.7}
+```
+
+If no list shows a row within `FIRST_RUN_ROWS_TIMEOUT` seconds (default 180), the script prints the steps that finished, the
+total so far and `first-run rows timeout`, writes `first-run.json` with `"ok":false` and no `rows` key, and exits 1. The
+app is stopped at the end; the plane stays up until `down`. The app runs on its own Xvfb display through
+`tests/ui-checks/xvfb-lib.sh` (the script stops that exact Xvfb on exit); set `FIRST_RUN_XVFB=0` to use the `DISPLAY` you
+have. `--time` takes no `--stop-after` and no `--no-ui`. `FIRST_RUN_UI_DRIVER` replaces the `aw-ui-driver` command line.
+
+A row is counted as a node that shows text under one of the three lists (`aw-ui-driver tree --name <list>`), because
+`wait-for` takes one selector and cannot count children. This has not been run against the real app yet.
 
 ## Looking around and stopping
 
