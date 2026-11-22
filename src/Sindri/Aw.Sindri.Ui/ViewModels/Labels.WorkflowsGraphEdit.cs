@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Aw.Sindri.Ui.ViewModels;
 
 /// <summary>The app's own copy (<see cref="Labels"/>, continued): the graph edits of the Workflows page, Add step, Remove and Connect (#2258 PR 17 part 3b). Never a served sentence.</summary>
@@ -42,5 +44,5 @@ internal static partial class Labels
     /// <param name="text">The line.</param>
     /// <param name="n">Its place, from 1.</param>
     /// <returns>The words, "Code (2)".</returns>
-    internal static string WfEditTargetNth(string text, int n) => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{text} ({n})");
+    internal static string WfEditTargetNth(string text, int n) => text + " (" + n.ToString(CultureInfo.InvariantCulture) + ")";
 }

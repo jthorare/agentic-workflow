@@ -7,7 +7,7 @@ using Aw.Sindri.Ui.Views.Workflows;
 
 namespace Aw.Sindri.Ui.Tests.Workflows;
 
-/// <summary>The canvas's zoom keys (#3684): <c>+</c> and <c>-</c> step the zoom ladder, <c>0</c> is 100 %, and none of them lays the cards out again.</summary>
+/// <summary>The canvas's zoom keys (#3684): + and - step the zoom ladder, 0 is 100 %, and none of them lays the cards out again.</summary>
 [Lane(TestLane.Integration)]
 public sealed class GraphCanvasZoomKeysTests
 {

@@ -50,12 +50,7 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
                 continue;
             }
 
-            var status = statuses is not null && statuses.TryGetValue(id, out var word) ? word : null;
-            var served = _summaries.TryGetValue(id, out var summary) ? summary : null;
-            nodes.Add(new GraphNodeViewModel(id, GraphCardLine.Title(title, type, served?.KindTitle), type, at.X, at.Y, status)
-            {
-                Line = GraphCardLine.Settings(type, config, served?.Summary, served?.KindTitle),
-            });
+            nodes.Add(NodeOf(id, type, title, config, at, statuses));
         }
 
         _spec = workflow.Spec;
@@ -66,6 +61,17 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
         Edges = BuildEdges(workflow.Spec, nodes);
         Ends = GraphEnds.Build(nodes, Edges);
         Order = [.. nodes.OrderBy(n => n.X).ThenBy(n => n.Y).ThenBy(n => n.Id, StringComparer.Ordinal)];
+    }
+
+    // One card: line 1 and line 2 from GraphCardLine (#3684), the run's status word when a run is shown.
+    private GraphNodeViewModel NodeOf(string id, string type, string title, JsonElement config, GraphPoint at, IReadOnlyDictionary<string, string>? statuses)
+    {
+        var status = statuses is not null && statuses.TryGetValue(id, out var word) ? word : null;
+        var served = _summaries.TryGetValue(id, out var summary) ? summary : null;
+        return new GraphNodeViewModel(id, GraphCardLine.Title(title, type, served?.KindTitle), type, at.X, at.Y, status)
+        {
+            Line = GraphCardLine.Settings(type, config, served?.Summary, served?.KindTitle),
+        };
     }
 
     private readonly Dictionary<string, NodeSummaryView> _summaries;

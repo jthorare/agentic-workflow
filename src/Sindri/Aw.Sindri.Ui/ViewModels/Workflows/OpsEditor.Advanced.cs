@@ -7,5 +7,7 @@ internal sealed partial class OpsEditor
     public string NodeIdLine { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>The Advanced group's name.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it (WorkflowEditorSheet.axaml, Editor.AdvancedText)
     public string AdvancedText => Labels.WfFieldAdvanced;
+#pragma warning restore CA1822, MA0041
 }

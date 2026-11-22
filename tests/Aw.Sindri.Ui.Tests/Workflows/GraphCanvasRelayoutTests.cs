@@ -114,7 +114,7 @@ public sealed class GraphCanvasRelayoutTests
         });
 
         Assert.False(fits, "the canvas took the wheel while the whole graph fits");
-        Assert.True(scrolls, $"the canvas left the wheel to the page while it can scroll (pan {panBefore} -> {panAfter})");
+        Assert.True(scrolls, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the canvas left the wheel to the page while it can scroll (pan y {panBefore.Y} -> {panAfter.Y})"));
         Assert.Equal(panBefore.Y - 48, panAfter.Y, 3);   // one 48 px step down
     }
 
