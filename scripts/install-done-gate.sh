@@ -30,7 +30,7 @@ if [ "$AW_PROVIDER" != "claude" ]; then
     exit 1
   fi
   aw_hooks_stage
-  aw_hook_set "$STOP_EVENT" aw:done-gate done-gate.sh "" 12
+  aw_hook_set "$STOP_EVENT" aw:done-gate done-gate.sh "" 25
   aw_unsupported done-gate-annotate "no hook sees a finished subagent's result alongside its dispatch id"
   echo "  done-gate: done-gate ($STOP_EVENT) hook installed for $AW_PROVIDER in $AW_HOOKS_CONFIG"
   exit 0
@@ -51,12 +51,12 @@ fi
 mkdir -p "$HOOKS_DIR"
 aw_install_failopen_lib "$HOOKS_DIR"
 
-# timeout: 12s = ask-check's own timeBudgetMs (10s, project rule for a
-# claude-cli-routed question) + 2s margin, so Claude Code never kills this
-# hook before `judge` itself can fail open on a slow/timed-out model call.
+# timeout: 25s. The hook ends itself after AW_DONE_GATE_BUDGET_MS (default 10s, ask-check's own timeBudgetMs) of wall-clock
+# time and logs a failopen `timeout` row; the host timeout is a backstop at 2.5x that, so a stalled box doesn't kill the
+# hook before it can say so (#3778).
 cp "$ROOT/config/hooks/done-gate.sh" "$HOOKS_DIR/done-gate.sh"
 chmod +x "$HOOKS_DIR/done-gate.sh"
-STOP_ENTRY=$(jq -nc --arg c "$HOOKS_DIR/done-gate.sh # aw:done-gate" '{hooks:[{type:"command",command:$c,timeout:12}]}')
+STOP_ENTRY=$(jq -nc --arg c "$HOOKS_DIR/done-gate.sh # aw:done-gate" '{hooks:[{type:"command",command:$c,timeout:25}]}')
 merge_hook "$SETTINGS_FILE" Stop aw:done-gate "$STOP_ENTRY"
 
 # done-gate-annotate.sh only ever calls `judge brief get` (a plain sqlite
