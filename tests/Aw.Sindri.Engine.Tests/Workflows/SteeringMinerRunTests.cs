@@ -88,7 +88,9 @@ public sealed partial class SteeringMinerRunTests
         }
 
         return new TranscriptSeed(session, "claude-code", "/r/a", IsSubagent: false, turns);
+    }
 
+    [Fact]
     public async Task An_oversized_batch_fails_at_shape_naming_the_byte_cap_and_never_reaches_label_as_a_cut_output()
     {
         var model = new CannedModel();
