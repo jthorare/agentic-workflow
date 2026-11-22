@@ -3,6 +3,7 @@ using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Delegations;
 using Aw.Meta.Core.Obligations;
 using Aw.Meta.Features.Delegate;
+using Aw.Meta.Testing;
 
 namespace Aw.Meta.Tests.Delegate;
 
@@ -52,6 +53,7 @@ public sealed class DelegateTests
     {
         await _d.Ready();
         _ = _d.World.PutLane("api");
+        _ = await _d.World.Beats.Record("api", stopped: false, A.At(20), CancellationToken.None);   // its hooks run, so it can act on the message
 
         var response = await _d.Delegate(DelegateWorld.Request());
 
@@ -129,6 +131,30 @@ public sealed class DelegateTests
         Assert.Empty(await _d.Recorded());
         Assert.Empty(_d.World.Log.Lines);
         Assert.Empty(await _d.World.Open());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_log_failure_after_the_issue_is_filed_says_to_rerun_with_the_issue_number()
+    {
+        await _d.Ready();
+        _d.World.Log.FailAppends = true;
+
+        var result = await _d.Service().Handle(DelegateWorld.Request(), CancellationToken.None);
+
+        Assert.True(result.IsError);
+        Assert.Contains("issue #77 is filed already: rerun with aw-meta delegate --lane api --issue 77", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_lane_send_hint_quotes_the_text_as_one_literal_shell_word()
+    {
+        var delegation = new Delegation(77, "https://x/77", "it's $(whoami) `id` \"y\"", "api", "t1-api", A.At(1)) { Claude = false };
+
+        var owed = Assert.Single(ObligationEvaluator.Evaluate(A.Facts() with { Delegations = [delegation] }));
+
+        Assert.Equal(
+            "aw-meta lane-send --lane api --text 'ACTION: #77 it'\\''s $(whoami) `id` \"y\"\nhttps://x/77\nYours: take it in your lane and reply with the PR number.'",
+            owed.NextCommand);
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Meta.Core.Ids;
 
 namespace Aw.Meta.Core.Delegations;
 
@@ -16,6 +17,9 @@ public sealed record Delegation(int Issue, string Url, string Title, string Lane
 
     /// <summary>Whether the lane runs Claude Code, so the meta sends with SendMessage; false for a lane reached through lane-send.</summary>
     public bool Claude { get; init; } = true;
+
+    /// <summary>The id of aw-meta's own lane-send of the message to a lane that can't act on it (launch-only, or its hooks aren't running); that send does not settle the delegation. Null for none.</summary>
+    public MessageId? Attempt { get; init; }
 
     /// <summary>The issue as text names it: "#12".</summary>
     public string Marker => "#" + Issue.ToString(CultureInfo.InvariantCulture);

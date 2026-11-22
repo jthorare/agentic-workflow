@@ -82,7 +82,10 @@ public static class ObligationEvaluator
     private static string DelegateSend(Delegation delegation) =>
         delegation.Claude
             ? $"SendMessage to {delegation.Session} with this text:\n{delegation.Message}"
-            : $"aw-meta lane-send --lane {delegation.Lane} --text \"{delegation.Message}\"";
+            : $"aw-meta lane-send --lane {delegation.Lane} --text {ShellQuote(delegation.Message)}";
+
+    // One shell word in single quotes, a ' inside written as '\'' : $, backticks and " in a title stay literal when the line is pasted.
+    internal static string ShellQuote(string text) => "'" + text.Replace("'", "'\\''", StringComparison.Ordinal) + "'";
 
     /// <summary>The rearm hint per provider (#2370): a Claude meta runs --until-event in the background (no window, no model turn until a real line), because --until-mail exits on its first
     /// poll whenever mail waits; a Codex or Cursor meta runs --until-mail in the foreground and rearms after each exit.</summary>

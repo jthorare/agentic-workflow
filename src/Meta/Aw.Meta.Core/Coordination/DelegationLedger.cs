@@ -42,6 +42,6 @@ public sealed class DelegationLedger(IKeyValueStore values)
             }
         }
 
-        return MetaErrors.CommandFailed.With("the delegations changed under every write; run aw-meta delegate again");
+        return MetaErrors.CommandFailed.With("the delegations changed under every write");
     }
 }

@@ -52,8 +52,9 @@ internal static class DelegateCommand
                 Environment.NewLine,
                 [
                     head,
-                    response.SendProblem is { } problem ? "not sent: " + problem : null,
-                    $"owed: send this with SendMessage to {d.Session} (stop-check lists it until a send to {d.Session} names #{d.Issue.ToString(CultureInfo.InvariantCulture)}):",
+                    response.SendProblem is { } problem
+                        ? $"owed, the lane did not get it: {problem}. Send it again with aw-meta lane-send --lane {d.Lane} once the lane can act (stop-check lists it until then):"
+                        : $"owed: send this with SendMessage to {d.Session} (stop-check lists it until a send to {d.Session} names #{d.Issue.ToString(CultureInfo.InvariantCulture)}):",
                     d.Message,
                 ]);
     }

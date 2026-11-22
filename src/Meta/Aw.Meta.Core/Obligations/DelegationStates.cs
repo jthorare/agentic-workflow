@@ -24,7 +24,7 @@ public static class DelegationStates
         return IsSent(delegation, outbound) ? DelegationState.Sent : DelegationState.Owed;
     }
 
-    /// <summary>Whether the ACTION message reached the lane: aw-meta delivered it, or a send to the lane's session since the delegation names the issue.</summary>
+    /// <summary>Whether the ACTION message reached the lane: aw-meta delivered it, or a send to the lane's session since the delegation names the issue (aw-meta's own attempt to a lane that couldn't act on it does not count).</summary>
     /// <param name="delegation">The delegation.</param>
     /// <param name="outbound">Every message the meta sent.</param>
     /// <returns>True when sent.</returns>
@@ -33,6 +33,9 @@ public static class DelegationStates
         ArgumentNullException.ThrowIfNull(delegation);
         ArgumentNullException.ThrowIfNull(outbound);
         return delegation.Delivered
-            || outbound.Any(o => o.At >= delegation.At && Recipient.Matches(o.To, delegation.Session) && DelegationText.Names(o.Message, delegation.Issue));
+            || outbound.Any(o => o.At >= delegation.At && !IsAttempt(o, delegation) && Recipient.Matches(o.To, delegation.Session) && DelegationText.Names(o.Message, delegation.Issue));
     }
+
+    private static bool IsAttempt(Outbound sent, Delegation delegation) =>
+        delegation.Attempt is { } attempt && sent.Id is { } id && id.Equals(attempt);
 }

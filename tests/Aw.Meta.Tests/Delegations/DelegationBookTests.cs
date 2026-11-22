@@ -1,4 +1,5 @@
 using Aw.Meta.Core.Delegations;
+using Aw.Meta.Core.Ids;
 using Aw.Meta.Testing;
 
 namespace Aw.Meta.Tests.Delegations;
@@ -9,7 +10,7 @@ public sealed class DelegationBookTests
     public void A_book_round_trips_and_a_tab_in_the_title_becomes_a_space()
     {
         var first = new Delegation(5, "https://x/5", "Fix\tthe board", "api", "t1-api", A.At(1));
-        var second = new Delegation(6, "https://x/6", "Theme", "ui", "t1-ui", A.At(2)) { Delivered = true, Claude = false };
+        var second = new Delegation(6, "https://x/6", "Theme", "ui", "t1-ui", A.At(2)) { Delivered = true, Claude = false, Attempt = MessageId.From("lane-send:ui:3") };
 
         var read = DelegationBook.Parse(DelegationBook.Format([first, second]));
 

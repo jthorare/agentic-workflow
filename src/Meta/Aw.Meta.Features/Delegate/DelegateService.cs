@@ -71,23 +71,33 @@ internal sealed class DelegateService(IMetaConfig config, RepoCommands repo, ILa
         if (target is not null)
         {
             var sent = await delivery.Deliver(target, delegation.Message, confirm, cancellationToken).ConfigureAwait(false);
-            problem = sent.IsError ? $"{sent.Error.Code}: {sent.Error.Message}" : null;
-            delegation = delegation with { Delivered = sent.IsSuccess };
+            (delegation, problem) = Outcome(delegation, sent);
         }
 
         var added = await ledger.Add(delegation, cancellationToken).ConfigureAwait(false);
         if (added.IsError)
         {
-            return added.Error;
+            return Retry(added.Error, delegation);
         }
 
         var state = delegation.Delivered ? DelegationState.Sent : DelegationState.Owed;
         var line = LogLine.Event(LogKind.Note, delegation.At, $"delegated {delegation.Marker} to lane {delegation.Lane} ({DelegationView.Name(state)}): {delegation.Title} {delegation.Url}");
         var appended = await log.Append(line, cancellationToken).ConfigureAwait(false);
         return appended.IsError
-            ? appended.Error
+            ? Retry(appended.Error, delegation)
             : new DelegateResponse(DelegationView.Name(state), DelegationView.Of(delegation, state), []) { SendProblem = problem, LogLine = line };
     }
+
+    // Delivered only when the lane can act on it. A message stored for a lane whose hooks can't pick it up (launch-only, or its hooks
+    // aren't running) stays owed, as lane-send's exit 1 says; that stored send is the attempt, which does not settle the delegation.
+    private static (Delegation Delegation, string? Problem) Outcome(Delegation delegation, Result<LaneDelivered> sent) =>
+        sent.IsError ? (delegation, $"{sent.Error.Code}: {sent.Error.Message}")
+        : sent.Value.Attention is { } attention ? (delegation with { Attempt = sent.Value.Id }, $"lane {delegation.Lane} is {attention}")
+        : (delegation with { Delivered = true }, null);
+
+    // The issue is filed by now (and a non-Claude lane may hold the message): a plain rerun would file a second one.
+    private static Error Retry(Error error, Delegation delegation) =>
+        error with { Message = $"{error.Message}; issue {delegation.Marker} is filed already: rerun with aw-meta delegate --lane {delegation.Lane} --issue {delegation.Issue.ToString(CultureInfo.InvariantCulture)}" };
 
     // The lane as the config names it. The meta lane routes work; it never takes it.
     private static Result<string> Lane(TeamConfig team, string asked)

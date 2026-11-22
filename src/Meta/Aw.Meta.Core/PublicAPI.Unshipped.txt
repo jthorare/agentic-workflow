@@ -2971,3 +2971,5 @@ static Aw.Meta.Core.Delegations.DelegationView.Name(Aw.Meta.Core.Delegations.Del
 static Aw.Meta.Core.Delegations.DelegationView.Of(Aw.Meta.Core.Delegations.Delegation! delegation, Aw.Meta.Core.Delegations.DelegationState state) -> Aw.Meta.Core.Delegations.DelegationView!
 static Aw.Meta.Core.Delegations.DelegationView.operator !=(Aw.Meta.Core.Delegations.DelegationView? left, Aw.Meta.Core.Delegations.DelegationView? right) -> bool
 static Aw.Meta.Core.Delegations.DelegationView.operator ==(Aw.Meta.Core.Delegations.DelegationView? left, Aw.Meta.Core.Delegations.DelegationView? right) -> bool
+Aw.Meta.Core.Delegations.Delegation.Attempt.get -> Aw.Meta.Core.Ids.MessageId?
+Aw.Meta.Core.Delegations.Delegation.Attempt.init -> void

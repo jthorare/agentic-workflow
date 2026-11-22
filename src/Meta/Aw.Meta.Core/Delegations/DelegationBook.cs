@@ -1,14 +1,17 @@
 using System.Globalization;
+using Aw.Meta.Core.Ids;
 
 namespace Aw.Meta.Core.Delegations;
 
 /// <summary>
 /// The delegations as the key-value store keeps them: one line per issue, tab-separated
-/// "issue, lane, session, time (round-trip), delivered (0|1), claude (0|1), url, title". A line that doesn't read is skipped.
+/// "issue, lane, session, time (round-trip), delivered (0|1), claude (0|1), url, title, attempt" (attempt empty for none; a line
+/// without it reads as none). A line that doesn't read is skipped, so the next add drops it.
 /// </summary>
 public static class DelegationBook
 {
     private const int Fields = 8;
+    private const int FieldsWithAttempt = 9;
 
     /// <summary>Reads the stored text.</summary>
     /// <param name="stored">The stored value; null when nothing was delegated yet.</param>
@@ -31,7 +34,8 @@ public static class DelegationBook
             d.Delivered ? "1" : "0",
             d.Claude ? "1" : "0",
             Clean(d.Url),
-            Clean(d.Title))));
+            Clean(d.Title),
+            d.Attempt is { } attempt ? Clean(attempt.Value) : string.Empty)));
     }
 
     /// <summary>The list with <paramref name="delegation"/> added; an earlier delegation of the same issue is replaced (the latest wins).</summary>
@@ -48,12 +52,15 @@ public static class DelegationBook
     private static Delegation? Line(string line)
     {
         var parts = line.TrimEnd('\r').Split('\t');
-        return parts.Length == Fields
+        return parts.Length is Fields or FieldsWithAttempt
             && int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var issue)
             && DateTimeOffset.TryParse(parts[3], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var at)
-            ? new Delegation(issue, parts[6], parts[7], parts[1], parts[2], at) { Delivered = parts[4] == "1", Claude = parts[5] == "1" }
+            ? new Delegation(issue, parts[6], parts[7], parts[1], parts[2], at) { Delivered = parts[4] == "1", Claude = parts[5] == "1", Attempt = Attempt(parts) }
             : null;
     }
+
+    private static MessageId? Attempt(string[] parts) =>
+        parts.Length == FieldsWithAttempt && MessageId.TryFrom(parts[8], out var id) ? id : null;
 
     private static string Clean(string text) => text.Replace('\t', ' ').ReplaceLineEndings(" ").Trim();
 }
