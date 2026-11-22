@@ -46,6 +46,7 @@ internal static class SindriHostServiceCollectionExtensions
         .AddSingleton<ServePort>()
         .AddHostedService<ServeListenerCheck>()
         .AddHostedService<QueuedClockStart>()   // the queued count starts at serve start (#3480)
+        .AddHostedService<SourceSyncClockStart>()   // the source look's first-pass limit counts from serve start (#3832)
         .AddHostedService<SchedulerHost>()
         .AddHostedService<ProjectorHost>()
         .AddHostedService<JobRecoveryHost>()

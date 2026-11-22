@@ -238,9 +238,9 @@ internal sealed partial class SqliteWorkflowRunStore(LedgerDatabase database, Ti
     public ValueTask<Result<NodeRun>> RecordNodeRun(NodeRun nodeRun, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(nodeRun);
-        var input = NodeRunLimits.Cap(nodeRun.Input, out var inputCut);
+        var input = NodeRunLimits.Cap(nodeRun.Input, out _);   // why: a cut input is for display; 'Truncated' says only that the output was cut (#3896)
         var output = NodeRunLimits.Cap(nodeRun.Output, out var outputCut);
-        var stored = nodeRun with { Input = input, Output = output, Truncated = nodeRun.Truncated || inputCut || outputCut };
+        var stored = nodeRun with { Input = input, Output = output, Truncated = nodeRun.Truncated || outputCut };
         return RecipeSessions.Write(database, async ValueTask<Result<NodeRun>> (session, token) =>
         {
             var existing = await FindRun(session, stored.RunId, token).ConfigureAwait(false);

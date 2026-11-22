@@ -42,13 +42,24 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
     /// <summary>The state in a word at the heading's right: "ok" or "needs a look"; empty with no lines.</summary>
     public string Word { get; private set => Set(ref field, value); } = string.Empty;
 
+    // The newest read's number: an older read that answers late shows nothing over a newer one's.
+    private int _reads;
+
+    private bool IsOld(int round, CancellationToken cancellationToken) => round != _reads || cancellationToken.IsCancellationRequested;
+
     /// <summary>Reads the status and shows it.</summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that completes when the answer is shown.</returns>
     internal async Task Refresh(Uri url, CancellationToken cancellationToken)
     {
+        var round = ++_reads;
         var read = await api.CodeIndexStatus(url, cancellationToken).ConfigureAwait(true);
+        if (IsOld(round, cancellationToken))
+        {
+            return;   // a newer read started, or this one was cancelled: its answer is old
+        }
+
         if (read.IsError)
         {
             Lines = [];

@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using Aw.Sindri.Ui.ViewModels.Context.Concepts;
 
 namespace Aw.Sindri.Ui.ViewModels.Context;
@@ -43,7 +44,7 @@ internal sealed partial class ContextPageViewModel : ObservableObject
     /// <returns>A task that ends when every read has.</returns>
     internal static async Task InOrder(IReadOnlyList<Func<Uri, CancellationToken, Task>> reads, Uri api, CancellationToken cancellationToken)
     {
-        System.Runtime.ExceptionServices.ExceptionDispatchInfo? first = null;
+        ExceptionDispatchInfo? first = null;
         foreach (var read in reads)
         {
             try
@@ -58,7 +59,7 @@ internal sealed partial class ContextPageViewModel : ObservableObject
             catch (Exception e)
 #pragma warning restore CA1031
             {
-                first ??= System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(e);
+                first ??= ExceptionDispatchInfo.Capture(e);
             }
         }
 
