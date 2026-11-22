@@ -131,7 +131,8 @@ public static class MergeGate
     }
 
     // The reviewer's standing OK must name the head; a qa line under it ("qa not yet", "qa passed <sha>") must say passed at the head.
-    // In review.mode counts no OK is needed: only a standing HOLD refuses, and an OK at the head still brings its qa line along.
+    // In review.mode counts no OK is needed: a standing HOLD refuses, and so does the qa line under the standing OK wherever that OK
+    // points, so a push does not lift a qa block (#3840). A later OK with no qa line, or with "qa passed" at the head, clears it.
     private static MergeCheck ReviewCheck(ReviewFacts review, string pr, string head)
     {
         if (review.Hold is not null)
@@ -139,17 +140,13 @@ public static class MergeGate
             return new MergeCheck("review", Ok: false, $"{review.Reviewer} holds #{pr}: \"{review.Hold}\"; a later \"OK #{pr} at <sha>\" lifts it");
         }
 
-        if (review.CountsMode && !ReviewProof.IsHead(review.OkSha, head))
-        {
-            return new MergeCheck("review", Ok: true, $"review.mode counts: no OK needed, no HOLD from {review.Reviewer}");
-        }
-
-        if (review.OkSha is null)
+        var okAtHead = ReviewProof.IsHead(review.OkSha, head);
+        if (!review.CountsMode && review.OkSha is null)
         {
             return new MergeCheck("review", Ok: false, $"no standing \"OK #{pr} at <sha>\" from {review.Reviewer}");
         }
 
-        if (!ReviewProof.IsHead(review.OkSha, head))
+        if (!review.CountsMode && !okAtHead)
         {
             return new MergeCheck("review", Ok: false, $"{review.Reviewer}'s newest OK is at {review.OkSha}, the head is {head}");
         }
@@ -159,9 +156,14 @@ public static class MergeGate
             return new MergeCheck("review", Ok: false, $"{review.Reviewer} said OK at {review.OkSha} but qa not yet");
         }
 
-        return review.QaSha is null || ReviewProof.IsHead(review.QaSha, head)
+        if (review.QaSha is not null && !ReviewProof.IsHead(review.QaSha, head))
+        {
+            return new MergeCheck("review", Ok: false, $"qa passed at {review.QaSha}, the head is {head}");
+        }
+
+        return okAtHead
             ? new MergeCheck("review", Ok: true, $"{review.Reviewer} said OK at {review.OkSha}" + (review.QaSha is null ? string.Empty : $", qa passed at {review.QaSha}"))
-            : new MergeCheck("review", Ok: false, $"qa passed at {review.QaSha}, the head is {head}");
+            : new MergeCheck("review", Ok: true, $"review.mode counts: no OK needed, no HOLD from {review.Reviewer}");
     }
 
     private static MergeCheck GateResult(GateRecord gate, IReadOnlyDictionary<string, IReadOnlyList<string>> failing, IReadOnlyDictionary<string, (int Summarized, int Named)> counts)
