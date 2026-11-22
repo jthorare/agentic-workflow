@@ -62,7 +62,7 @@ internal sealed partial class ProjectSheetViewModel
         var change = new ProjectChange(one.Project.Version, State: state.Value);
         if (await Send((url, ct) => Api.ChangeProject(url, one.Project.Id, change, ct), cancellationToken).ConfigureAwait(true))
         {
-            await Saved(cancellationToken).ConfigureAwait(true);
+            await Saved(cancellationToken, closeForm: false).ConfigureAwait(true);
         }
     }
 
@@ -89,7 +89,7 @@ internal sealed partial class ProjectSheetViewModel
         var change = new ProjectChange(one.Project.Version, ClearState: true);
         if (await Send((url, ct) => Api.ChangeProject(url, one.Project.Id, change, ct), cancellationToken).ConfigureAwait(true))
         {
-            await Saved(cancellationToken).ConfigureAwait(true);
+            await Saved(cancellationToken, closeForm: false).ConfigureAwait(true);
         }
     }
 
@@ -174,9 +174,14 @@ internal sealed partial class ProjectSheetViewModel
         return false;
     }
 
-    private async Task Saved(CancellationToken cancellationToken)
+    // A state write leaves an open edit form and its typed fields alone; the form's own Save closes it.
+    private async Task Saved(CancellationToken cancellationToken, bool closeForm = true)
     {
-        IsEditing = false;
+        if (closeForm)
+        {
+            IsEditing = false;
+        }
+
         Announcement = Labels.ProjectSaved(Heading);
         await Read(cancellationToken).ConfigureAwait(true);
     }
