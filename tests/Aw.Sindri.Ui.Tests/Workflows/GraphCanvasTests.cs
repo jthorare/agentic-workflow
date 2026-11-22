@@ -59,12 +59,12 @@ public sealed class GraphCanvasTests
 
         Assert.Equal(new Size(800, 500), size);
         Assert.Equal(
-            [new Rect(Margin, Margin + 100, 200, 64), new Rect(Margin + 300, Margin, 200, 64), new Rect(Margin + 300, Margin + 200, 200, 64)],
+            [new Rect(32, 66, 290, 60), new Rect(394, 24, 290, 60), new Rect(394, 108, 290, 60)],   // the canvas lays the cards out: layer 0 at the 32 px left pad, layer 1 a fork gap (72) right of the 290 px card, the two arms stacked
             rects.Select(r => r!.Value));
 
         // Both labels sit between the cards they join: right of the source card's edge, left of the target's.
         Assert.Equal(["true", "false"], labels.Select(l => l.Label), StringComparer.Ordinal);
-        Assert.All(labels, l => Assert.InRange(l.Item2.X, Margin + 200, Margin + 300));
+        Assert.All(labels, l => Assert.InRange(l.Item2.X, 322, 394));
         Assert.True(labels[0].Item2.Y < labels[1].Item2.Y, "the true branch leaves upward, the false one downward");
     }
 
@@ -143,11 +143,7 @@ public sealed class GraphCanvasTests
     [Fact]
     public async Task Moving_the_selection_with_the_keys_pans_a_card_that_is_off_screen_into_view()
     {
-        var graph = await WorkflowGraphViewModelTests.GraphOf(
-            new WorkflowsFixture(),
-            """[{"id":"a","type":"x","config":{}},{"id":"b","type":"x","config":{}}]""",
-            "[]",
-            """[{"node":"a","x":0,"y":0},{"node":"b","x":2000,"y":900}]""");
+        var graph = await ChainGraph.Of(40);   // at Fit the 40 steps stop at the 86 % floor and the canvas scrolls
 
         var (before, card, size) = await OnUi(() =>
         {
@@ -158,10 +154,14 @@ public sealed class GraphCanvasTests
             try
             {
                 _ = canvas.Focus();
-                window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, keySymbol: null);   // selects a: already in view
+                window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, keySymbol: null);   // selects the first card: already in view
                 var before = canvas.Pan;
-                window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, keySymbol: null);   // selects b: far off
-                return (before, canvas.NodeRect("b")!.Value, canvas.Bounds.Size);
+                for (var i = 1; i < 40; i++)
+                {
+                    window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, keySymbol: null);   // each press selects the next card, the last one far off
+                }
+
+                return (before, canvas.NodeRect("s39")!.Value, canvas.Bounds.Size);
             }
             finally
             {
@@ -169,7 +169,7 @@ public sealed class GraphCanvasTests
             }
         });
 
-        Assert.Equal(new Point(Margin, Margin), before);
+        Assert.Equal(new Point(0, 0), before);   // Fit puts the world's origin at the corner: the 24 px margin is part of the laid-out world
         Assert.True(card.Left >= 0 && card.Right <= size.Width && card.Top >= 0 && card.Bottom <= size.Height, $"the card {card} is inside {size}");
     }
 

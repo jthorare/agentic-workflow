@@ -161,6 +161,16 @@ public sealed class AgentsPageViewModelTests
         Assert.Equal(3, page.Groups.Sum(g => g.Rows.Count));
     }
 
+    [Fact]
+    public async Task The_problem_slot_is_empty_and_takes_no_room_until_the_collector_reports_one_3710()
+    {
+        var quiet = await _f.Shown(Token);
+        _f.Serve("problems-source-failed");
+        var loud = await _f.Shown(Token);
+
+        Assert.Equal((false, true), (quiet.HasProblems, loud.HasProblems));
+    }
+
     [Theory]
     [InlineData("disabled")]
     [InlineData("proc-unreadable")]

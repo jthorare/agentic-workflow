@@ -19,7 +19,7 @@ internal static class SandboxShims
 
     private static readonly Dictionary<string, string[]> _expensive = new(StringComparer.Ordinal)
     {
-        ["dotnet"] = ["build", "publish", "format", "pack", "restore", "run"],
+        ["dotnet"] = ["build", "msbuild", "publish", "format", "pack", "restore", "run"],
         ["npm"] = ["ci", "install", "test"],
         ["npx"] = ["vitest", "tsc"],
     };
