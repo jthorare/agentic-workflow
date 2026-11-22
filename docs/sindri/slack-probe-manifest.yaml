@@ -1,0 +1,87 @@
+# docs/sindri/slack-probe-manifest.yaml: the Slack app manifest for the P0 probe of the Messages page
+# (spec docs/superpowers/specs/2026-11-12-sindri-messages-page-design.md, §5.1 and §5.5; phase M0a).
+#
+# This app is the owner's own. It asks for user scopes only: every scope of the §5.1 table, because the probe's
+# line 6 posts, reacts, marks, schedules and uploads. Release 1 of Messages uses a smaller manifest with the first
+# three rows of that table. scripts/slack-probe.sh reads the scope list below (oauth_config.scopes.user), so this
+# file is the one list.
+#
+# By-hand steps (the owner, once per workspace):
+#  1. Open https://api.slack.com/apps and choose Create New App, then From a manifest. Pick the workspace.
+#     To try the prefilled link instead (probe line 8), run `scripts/slack-probe.sh --manifest-link` and open the
+#     link it prints. Write down whether the link opened the create page with this manifest filled in.
+#  2. Paste this file (comments may stay). Choose Next, then Create.
+#     If Slack refuses the `user_events` block, write down Slack's message as "line 5: user events refused at
+#     create". Delete the `event_subscriptions` block, then create the app again.
+#  3. In the app's page, choose Install to Workspace and allow it. If the workspace asks for admin approval,
+#     write down "line 8: admin approval asked" and the scopes it names. The probe cannot run until the admin approves.
+#  4. Open OAuth & Permissions and copy the User OAuth Token. It starts with xoxp-.
+#  5. Optional, for probe line 5: open Basic Information, App-Level Tokens. Choose Generate Token and Scopes,
+#     add the scope connections:write, and copy the token. It starts with xapp-.
+#  6. In a terminal, read the tokens without echo, so they stay out of the shell history:
+#       read -rs AW_SLACK_PROBE_KEY && export AW_SLACK_PROBE_KEY
+#       read -rs AW_SLACK_PROBE_APP_KEY && export AW_SLACK_PROBE_APP_KEY   # only for line 5
+#  7. Run the read-only probe: `scripts/slack-probe.sh`. It prints counts, yes/no results, error codes and header
+#     numbers. It never prints a channel name, a user name or message text.
+#  8. For line 6, make a private channel in Slack with no one else in it. Copy its id (channel details, at the
+#     bottom; it starts with C or G). Run `scripts/slack-probe.sh --write --channel <id>`. The probe refuses a
+#     channel that is public, that you did not create, or that has other members. It deletes what it posted,
+#     scheduled and uploaded before it exits.
+#  9. Paste the block under "paste this into the M0c issue" into the M0c issue. Then unset both variables.
+# 10. When the probe is done, delete the app: Basic Information, Delete App. That also revokes both tokens.
+display_information:
+  name: Sindri probe
+  description: The owner's probe for Sindri's Messages page. Reads counts only. Writes only to the owner's scratch channel.
+  background_color: "#2f3136"
+features: {}
+oauth_config:
+  scopes:
+    user:
+      # List and read channels, DMs, group DMs (Release 1)
+      - channels:read
+      - groups:read
+      - im:read
+      - mpim:read
+      - channels:history
+      - groups:history
+      - im:history
+      - mpim:history
+      # People and emoji (Release 1)
+      - users:read
+      - emoji:read
+      # Search (Release 1)
+      - search:read
+      # Send, edit, delete (Release 2)
+      - chat:write
+      # React (Release 2)
+      - reactions:read
+      - reactions:write
+      # Mark read, only with the opt-in (Release 2)
+      - channels:write
+      - groups:write
+      - im:write
+      - mpim:write
+      # Files (Release 3)
+      - files:read
+      - files:write
+      # Status, DND (Release 3)
+      - users.profile:write
+      - dnd:write
+      - dnd:read
+      # Pins (Release 3)
+      - pins:read
+      - pins:write
+settings:
+  # Probe line 5 asks whether a user-scope app can subscribe to user events. Slack's manifest page shows
+  # bot_events only, so this block is itself the test (step 2).
+  event_subscriptions:
+    user_events:
+      - message.channels
+      - message.groups
+      - message.im
+      - message.mpim
+  interactivity:
+    is_enabled: false
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false

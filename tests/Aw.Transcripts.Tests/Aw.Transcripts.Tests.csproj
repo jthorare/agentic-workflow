@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.Transcripts.Tests (scaffolded by /new-package): by feature, one Lane trait per test (spec §4b.5). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Aw.Transcripts.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Transcripts/Aw.Transcripts.Core/Aw.Transcripts.Core.csproj" />
+    <ProjectReference Include="../../src/Transcripts/Aw.Transcripts.Features/Aw.Transcripts.Features.csproj" />
+    <ProjectReference Include="../../src/Transcripts/Aw.Transcripts.Infrastructure/Aw.Transcripts.Infrastructure.csproj" />
+    <ProjectReference Include="../Aw.Transcripts.Testing/Aw.Transcripts.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>
