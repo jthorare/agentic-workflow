@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # tests/ui-checks/pin-two-clicks.sh — proof check for Q7b of #1667 (concept pins spec, owner steps): pinning a suggested concept is two
-# clicks. Pin this on the Self scheduling card opens the Pin sheet prefilled (name, definition, its words, its features); Pin and
-# approve writes the pin and approves it, the sheet closes, and the card turns into the person's pin.
-# Expected: step 1 the card is Suggested and carries Pin this; step 2 the sheet shows "Pin this", the name and the Pin and approve
+# clicks. Pin this on the Self scheduling card opens the Pin sheet prefilled (name, definition, its words, its features);
+# Pin writes the pin (no approval: edits apply on save), the sheet closes, and the card turns into the person's pin.
+# Expected: step 1 the card carries Pin this; step 2 the sheet shows "Pin this", the name and the Pin
 # button; step 3 after one click the sheet is gone, the card carries Edit pin and the live profile holds the pin. On main (no Pin
 # this) it FAILs at step 1; on the branch it passes. Frames land in $OUT (frame-1-card, -2-sheet, -3-pinned, -4-word-refused, -5-unpin-confirm .png).
 # Step 4 reopens the pin with Edit pin, types 'the' (refused: only small words) and presses Unpin (asks, naming the pin).
@@ -69,7 +69,7 @@ texts >"$OUT/frame-1-texts.txt"
 focus_row
 d click --automation-id "ConceptPin.$CONCEPT_ID" >/dev/null 2>&1 || fail "step 2: could not click Pin this"
 CLICKS=$((CLICKS + 1))
-d wait-for --type Button --name "Pin and approve" --state enabled --wait-ms 30000 >/dev/null 2>&1 || fail "step 2: the sheet has no enabled 'Pin and approve'"
+d wait-for --type Button --name "Pin" --automation-id PinSubmit --state enabled --wait-ms 30000 >/dev/null 2>&1 || fail "step 2: the sheet has no enabled Pin"
 d wait-for --type TextBlock --text "Pin this" --state visible --wait-ms 10000 >/dev/null 2>&1 || fail "step 2: the sheet's heading is not 'Pin this'"
 name="$(d search --type TextBox --limit 20 2>/dev/null | jq -r 'first(.matches[] | select(.visible) | .text // empty)')"
 [ "$name" = "Self scheduling" ] || fail "step 2: the sheet's name is '$name', not the card's 'Self scheduling'"
@@ -77,18 +77,18 @@ sleep 1
 frame frame-2-sheet
 texts >"$OUT/frame-2-texts.txt"
 
-# Step 3: click 2, Pin and approve writes and approves the pin; the sheet closes.
-d click --type Button --name "Pin and approve" >/dev/null 2>&1 || fail "step 3: could not click Pin and approve"
+# Step 3: click 2, Pin writes the pin (edits apply on save, there is no approval); the sheet closes.
+d click --type Button --name "Pin" --automation-id PinSubmit >/dev/null 2>&1 || fail "step 3: could not click Pin"
 CLICKS=$((CLICKS + 1))
-d wait-for --type Button --name "Pin and approve" --state gone --wait-ms 90000 >/dev/null 2>&1 \
-  || d wait-for --type Button --name "Pin and approve" --state notVisible --wait-ms 1000 >/dev/null 2>&1 \
-  || { texts >"$OUT/frame-3-texts.txt"; fail "step 3: the sheet did not close after Pin and approve (texts in $OUT/frame-3-texts.txt)"; }
+d wait-for --type Button --name "Pin" --automation-id PinSubmit --state gone --wait-ms 90000 >/dev/null 2>&1 \
+  || d wait-for --type Button --name "Pin" --automation-id PinSubmit --state notVisible --wait-ms 1000 >/dev/null 2>&1 \
+  || { texts >"$OUT/frame-3-texts.txt"; fail "step 3: the sheet did not close after Pin (texts in $OUT/frame-3-texts.txt)"; }
 sleep 2
 frame frame-3-pinned
 texts >"$OUT/frame-3-texts.txt"
 # The card now reads as the person's pin: Edit pin replaces Pin this, and the live profile holds the pin with no approval waiting.
 focus_row || fail "step 3: could not focus the Self scheduling row again"   # the pin slot is hidden without pointer or focus, and the sheet's close left focus on a button that is gone
-wait_visible 30 --type Button --automation-id "ConceptEditPin.$CONCEPT_ID" || fail "step 3: no card carries Edit pin after Pin and approve"
+wait_visible 30 --type Button --automation-id "ConceptEditPin.$CONCEPT_ID" || fail "step 3: no card carries Edit pin after Pin"
 grep -q "Self scheduling" "$AW_SINDRI_HOME/profile/profile.yaml" || fail "step 3: the live profile has no Self scheduling pin"
 "$PROVE" human profile validate >"$OUT/profile-validate.txt" 2>&1 || true
 [ "$CLICKS" -eq 2 ] || fail "the path took $CLICKS clicks"
@@ -109,4 +109,4 @@ d wait-for --type TextBlock --contains "Unpin Self scheduling?" --state visible 
 sleep 1
 frame frame-5-unpin-confirm
 texts >"$OUT/frame-5-texts.txt"
-echo "PASS: Pin this -> sheet prefilled -> Pin and approve = $CLICKS clicks; Edit pin refuses a small word and Unpin asks first (frames in $OUT)"
+echo "PASS: Pin this -> sheet prefilled -> Pin = $CLICKS clicks; Edit pin refuses a small word and Unpin asks first (frames in $OUT)"
