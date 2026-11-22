@@ -53,7 +53,7 @@ internal static class HomeFixture
     /// <param name="repo">Its profile repo, or null for none.</param>
     /// <returns>The row.</returns>
     public static HomeRow Row(string id, int position, HomeGroup group = HomeGroup.NeedsYou, HomeKind kind = HomeKind.ReviewRequested, HomeState state = HomeState.Open, string? repo = "demo") =>
-        new(HomeRowId.From(id), 1, kind, group, $"Row {position.ToString(CultureInfo.InvariantCulture)}", [new HomeFact(HomeFactKind.Why, "why"), new HomeFact(HomeFactKind.ObjectRef, id), new HomeFact(HomeFactKind.From, "Sam")], "you", _since.AddMinutes(position),
+        new(HomeRowId.From(id), 1, kind, group, $"Row {position.ToString(CultureInfo.InvariantCulture)}", [new HomeFact(HomeFactKind.Why, "why"), new HomeFact(HomeFactKind.Ref, id), new HomeFact(HomeFactKind.From, "Sam")], "you", _since.AddMinutes(position),
             new HomeRank(0, 5, position, position), [new HomeBlocked(HomeRowId.From("gh:pr:a/b#1"), "PR 1", "closes")], [new HomeLink("pr", HomeRowId.From("gh:pr:a/b#1"), "PR 1")], state,
             state == HomeState.Snoozed ? _since.AddDays(1) : null, state == HomeState.Done ? _since.AddHours(1) : null, ["open"], new HomeSource("github", _since, Connection: null), repo is null ? null : RepoName.From(repo));
 }

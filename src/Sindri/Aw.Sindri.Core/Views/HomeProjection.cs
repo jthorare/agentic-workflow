@@ -111,18 +111,23 @@ internal sealed class HomeProjection(EventFactory events) : IProjection
             return held.IsError ? held.Error : Unit.Value;
         }
 
-        var put = await rows.Put(ViewNames.HomeRows, p.Id.Value, Fold(row, p), cancellationToken).ConfigureAwait(false);
+        var put = await rows.Put(ViewNames.HomeRows, p.Id.Value, MergeLinks(MergeText(row, p), p), cancellationToken).ConfigureAwait(false);
         return put.IsError || p.Edges is null ? put : await ReplaceEdges(rows, p.Id.Value, p.Edges, cancellationToken).ConfigureAwait(false);
     }
 
-    // A change names only the fields that moved; the rest stay as the row holds them.
-    private static HomeRow Fold(HomeRow row, HomeRowChanged p) => row with
+    // a changed event names only the fields that moved: the version and the row's text fields
+    private static HomeRow MergeText(HomeRow row, HomeRowChanged p) => row with
     {
         Version = p.Version,
         Title = p.Title ?? row.Title,
         Facts = p.Facts ?? row.Facts,
         WaitsOn = p.WaitsOn ?? row.WaitsOn,
         Rank = p.Rank ?? row.Rank,
+    };
+
+    // ... and its links, actions and source
+    private static HomeRow MergeLinks(HomeRow row, HomeRowChanged p) => row with
+    {
         BlocksList = p.BlocksList ?? row.BlocksList,
         Links = p.Links ?? row.Links,
         Actions = p.Actions ?? row.Actions,

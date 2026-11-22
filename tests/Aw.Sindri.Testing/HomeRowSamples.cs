@@ -22,7 +22,7 @@ public static class HomeRowSamples
             HomeKind.ReviewRequested,
             group,
             "Review requested: the Home inbox spec",
-            [new HomeFact(HomeFactKind.Why, "review requested"), new HomeFact(HomeFactKind.ObjectRef, "#3120"), new HomeFact(HomeFactKind.From, "sam")],
+            [new HomeFact(HomeFactKind.Why, "review requested"), new HomeFact(HomeFactKind.Ref, "#3120"), new HomeFact(HomeFactKind.From, "sam")],
             WaitsOn: "you",
             Since,
             new HomeRank(Blocks: 2, Weight: 5, SinceRank: 1, position),

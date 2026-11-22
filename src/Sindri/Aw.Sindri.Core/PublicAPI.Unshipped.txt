@@ -23887,7 +23887,7 @@ Aw.Sindri.Core.Home.HomeKind.IssueAssigned = 14 -> Aw.Sindri.Core.Home.HomeKind
 Aw.Sindri.Core.Home.HomeKind.TodoDue = 15 -> Aw.Sindri.Core.Home.HomeKind
 Aw.Sindri.Core.Home.HomeFactKind
 Aw.Sindri.Core.Home.HomeFactKind.Why = 0 -> Aw.Sindri.Core.Home.HomeFactKind
-Aw.Sindri.Core.Home.HomeFactKind.ObjectRef = 1 -> Aw.Sindri.Core.Home.HomeFactKind
+Aw.Sindri.Core.Home.HomeFactKind.Ref = 1 -> Aw.Sindri.Core.Home.HomeFactKind
 Aw.Sindri.Core.Home.HomeFactKind.From = 2 -> Aw.Sindri.Core.Home.HomeFactKind
 Aw.Sindri.Core.Home.HomeEdgeKind
 Aw.Sindri.Core.Home.HomeEdgeKind.ItemOf = 0 -> Aw.Sindri.Core.Home.HomeEdgeKind
