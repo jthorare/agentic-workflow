@@ -48,14 +48,14 @@ internal sealed class FakeTerminalConnector : ITerminalConnector
         return lines;
     }
 
-    public Task<ITerminalLink?> Connect(Uri api, string provider, string id, int cols, int rows, CancellationToken cancellationToken)
+    public Task<ITerminalLink?> Connect(TerminalOpen open, CancellationToken cancellationToken)
     {
         if (Refuse)
         {
             return Task.FromResult<ITerminalLink?>(null);
         }
 
-        _connected.Add(provider + "/" + id);
+        _connected.Add(open.Provider + "/" + open.Id);
         return Task.FromResult<ITerminalLink?>(new Link(this));
     }
 

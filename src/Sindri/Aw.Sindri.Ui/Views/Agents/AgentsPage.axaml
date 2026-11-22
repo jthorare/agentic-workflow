@@ -112,6 +112,6 @@
     </Border>
   </StackPanel>
   <!-- The terminal view (agents spec §15.3): beside the list while a row's pane is open; the list narrows to 360 px (56 px under 1100 px of window width). -->
-  <agv:TerminalView x:Name="TerminalPanel" Grid.Column="1" IsVisible="{Binding IsTerminalOpen}" DataContext="{Binding Terminal}" />
+  <agv:TerminalView x:Name="TerminalPanel" Grid.Column="1" IsVisible="{Binding $parent.((ag:AgentsPageViewModel)DataContext).IsTerminalOpen}" DataContext="{Binding Terminal}" />
   </Grid>
 </UserControl>

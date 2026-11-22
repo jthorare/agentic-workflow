@@ -56,7 +56,7 @@ public sealed class TerminalSocketMessagesTests
     public void A_key_that_typed_text_sends_the_text_and_one_with_neither_name_nor_text_is_dropped()
     {
         Assert.Equal("é", Field(TerminalSocketMessages.FromKey("E", "é")!, "text"));
-        Assert.Null(TerminalSocketMessages.FromKey("Capital", null));
+        Assert.Null(TerminalSocketMessages.FromKey("Capital", text: null));
     }
 
     [Fact]

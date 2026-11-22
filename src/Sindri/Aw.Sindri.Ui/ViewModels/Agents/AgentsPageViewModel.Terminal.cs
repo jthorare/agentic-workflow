@@ -152,17 +152,19 @@ internal sealed partial class AgentsPageViewModel
             return;
         }
 
+#pragma warning disable CA2000 // the field keeps it, and StopSession cancels and disposes it when the pane closes or switches
         var ends = new CancellationTokenSource();
+#pragma warning restore CA2000
         var session = new TerminalSession(connector, Terminal, grid => DrawFrame?.Invoke(grid));
         (_sessionEnds, _session) = (ends, session);
-        _ = Pump(session, api, row.Row.Provider, row.Row.Id, ends.Token);
+        _ = Pump(session, new TerminalOpen(api, row.Row.Provider, row.Row.Id, 120, 36), ends.Token);
     }
 
-    private static async Task Pump(TerminalSession session, Uri api, string provider, string id, CancellationToken token)
+    private static async Task Pump(TerminalSession session, TerminalOpen open, CancellationToken token)
     {
         try
         {
-            await session.Run(api, provider, id, 120, 36, token).ConfigureAwait(true);
+            await session.Run(open, token).ConfigureAwait(true);
         }
         catch (Exception e) when (e is IOException or InvalidOperationException or System.Net.WebSockets.WebSocketException or HttpRequestException)
         {

@@ -77,7 +77,7 @@ public sealed class TerminalViewKeyTests
     }
 
     private static TerminalGrid GridWithHistory(int history) =>
-        new(width: 10, height: 5, history, Enumerable.Repeat(TerminalCell.Blank, (history + 5) * 10).ToArray());
+        new(width: 10, height: 5, history, [.. Enumerable.Repeat(TerminalCell.Blank, (history + 5) * 10)]);
 
     [Fact]
     public async Task Ctrl_Shift_V_Shift_Insert_and_Cmd_V_send_the_clipboard_text_as_one_paste_and_never_as_keys()

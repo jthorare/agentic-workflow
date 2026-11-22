@@ -1,6 +1,7 @@
 #pragma warning disable MA0182 // the Agents page hosts the view in the U1 page PR
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Aw.Sindri.Ui.Terminal;
@@ -147,13 +148,14 @@ internal sealed partial class TerminalView : UserControl
 
     private void OnTranscript(object? sender, RoutedEventArgs e) => TranscriptRequested?.Invoke(this, EventArgs.Empty);
 
+#pragma warning disable MA0155 // why: an Avalonia RoutedEvent handler returns void, so it can only be async void
     private async void OnStop(object? sender, RoutedEventArgs e)
     {
         if (DataContext is TerminalViewViewModel vm)
         {
             try
             {
-                _ = await vm.PressStop(CancellationToken.None);
+                _ = await vm.PressStop(CancellationToken.None).ConfigureAwait(true);
             }
             catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidOperationException or OperationCanceledException)
             {
@@ -166,9 +168,10 @@ internal sealed partial class TerminalView : UserControl
     {
         if (DataContext is TerminalViewViewModel vm)
         {
-            _ = await vm.PressInterrupt(CancellationToken.None);
+            _ = await vm.PressInterrupt(CancellationToken.None).ConfigureAwait(true);
         }
     }
+#pragma warning restore MA0155
 
     // The first Stop press asks for 2 s; the view ticks the view model once the window is over so the label goes back.
     private void FollowStopAsk()

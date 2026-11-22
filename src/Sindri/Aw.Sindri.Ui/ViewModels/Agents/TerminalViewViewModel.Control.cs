@@ -1,18 +1,18 @@
 #pragma warning disable MA0182 // see TerminalViewViewModel.cs
+using Aw.Sindri.Ui.Terminal;
+
 namespace Aw.Sindri.Ui.ViewModels.Agents;
 
 /// <summary>The terminal view (continued): Stop and Interrupt in the pane header, for a session Sindri started only (#3023, #3334).</summary>
 internal sealed partial class TerminalViewViewModel
 {
-    private static readonly TimeSpan _stopWindow = TimeSpan.FromSeconds(2);
-
     private DateTimeOffset? _armedUntil;
 
     /// <summary>Raised on the first Stop press: the view calls <see cref="Tick"/> after the window so the label goes back.</summary>
     internal event EventHandler? StopArmed;
 
     /// <summary>How long the first Stop press waits for the second (#3023).</summary>
-    internal static TimeSpan StopWindow => _stopWindow;
+    internal static TimeSpan StopWindow { get; } = TimeSpan.FromSeconds(2);
 
     /// <summary>True when the header shows Stop: Sindri started the session and the state rule of <see cref="ShowStop"/> holds.</summary>
     public bool CanStop => ShowStop && Target is { StartedBySindri: true };
@@ -61,7 +61,7 @@ internal sealed partial class TerminalViewViewModel
 
         if (!IsStopArmed)
         {
-            _armedUntil = Clock.GetUtcNow() + _stopWindow;
+            _armedUntil = Clock.GetUtcNow() + StopWindow;
             ControlLine = string.Empty;
             Refresh();
             Raise(StopArmed);

@@ -8,7 +8,7 @@ internal static class TerminalKeyNames
     /// <summary>True for a paste: Ctrl+Shift+V, Shift+Insert and Cmd+V. Plain Ctrl+V is not one: Claude Code pastes images on it and vim reads it as literal-next, so it goes to the agent as a key.</summary>
     /// <param name="name">A route name from <see cref="From"/>.</param>
     /// <returns>True when the key pastes.</returns>
-    internal static bool IsPaste(string name) => name is "Ctrl+Shift+V" or "Cmd+V" or "Shift+Insert";
+    internal static bool IsPaste(string name) => string.Equals(name, "Ctrl+Shift+V", StringComparison.Ordinal) || string.Equals(name, "Cmd+V", StringComparison.Ordinal) || string.Equals(name, "Shift+Insert", StringComparison.Ordinal);
 
     /// <summary>Names one key press.</summary>
     /// <param name="key">The key.</param>

@@ -8,9 +8,23 @@ internal static class TerminalSocketMessages
 {
     private static readonly Dictionary<string, string> _named = new(StringComparer.Ordinal)
     {
-        ["Enter"] = "Enter", ["Return"] = "Enter", ["Esc"] = "Escape", ["Escape"] = "Escape", ["Tab"] = "Tab", ["Back"] = "BSpace", ["Delete"] = "DC",
-        ["Up"] = "Up", ["Down"] = "Down", ["Left"] = "Left", ["Right"] = "Right", ["Home"] = "Home", ["End"] = "End",
-        ["PageUp"] = "PageUp", ["Prior"] = "PageUp", ["PageDown"] = "PageDown", ["Next"] = "PageDown",
+        ["Enter"] = "Enter",
+        ["Return"] = "Enter",
+        ["Esc"] = "Escape",
+        ["Escape"] = "Escape",
+        ["Tab"] = "Tab",
+        ["Back"] = "BSpace",
+        ["Delete"] = "DC",
+        ["Up"] = "Up",
+        ["Down"] = "Down",
+        ["Left"] = "Left",
+        ["Right"] = "Right",
+        ["Home"] = "Home",
+        ["End"] = "End",
+        ["PageUp"] = "PageUp",
+        ["Prior"] = "PageUp",
+        ["PageDown"] = "PageDown",
+        ["Next"] = "PageDown",
     };
 
     /// <summary>The most UTF-8 bytes one paste may hold: the cap Serve closes the socket over (1009).</summary>
@@ -73,33 +87,43 @@ internal static class TerminalSocketMessages
         var parts = name.Split('+');
         var key = parts[^1];
         var mods = parts[..^1];
-        var (ctrl, alt, shift, meta) = (mods.Contains("Ctrl", StringComparer.Ordinal), mods.Contains("Alt", StringComparer.Ordinal), mods.Contains("Shift", StringComparer.Ordinal), mods.Contains("Cmd", StringComparer.Ordinal));
-        if (meta)
+        var (ctrl, alt) = (mods.Contains("Ctrl", StringComparer.Ordinal), mods.Contains("Alt", StringComparer.Ordinal));
+        if (mods.Contains("Cmd", StringComparer.Ordinal))
         {
             return null;
         }
 
-        if (key.Length == 1 && char.IsAsciiLetter(key[0]) && (ctrl || alt))
+        if (LetterChord(key, ctrl, alt) is { } chord)
         {
-            return Key((ctrl ? "C-" : "M-") + char.ToLowerInvariant(key[0]));
+            return Key(chord);
         }
 
+        if (TmuxName(key, shift: mods.Contains("Shift", StringComparer.Ordinal)) is { } tmux)
+        {
+            return Key(tmux);
+        }
+
+        return text is { Length: > 0 } && !ctrl && !alt ? Text(text) : null;
+    }
+
+    // Ctrl or Alt with a letter: C-a or M-a; null for any other key.
+    private static string? LetterChord(string key, bool ctrl, bool alt) =>
+        key.Length == 1 && char.IsAsciiLetter(key[0]) && (ctrl || alt) ? (ctrl ? "C-" : "M-") + char.ToLowerInvariant(key[0]) : null;
+
+    // The tmux name of a key with no Ctrl or Alt letter: Shift+Tab is BTab, then the named keys, then F1 to F12; null for any other key.
+    private static string? TmuxName(string key, bool shift)
+    {
         if (shift && string.Equals(key, "Tab", StringComparison.Ordinal))
         {
-            return Key("BTab");
+            return "BTab";
         }
 
         if (_named.TryGetValue(key, out var named))
         {
-            return Key(named);
+            return named;
         }
 
-        if (key.Length is 2 or 3 && key[0] == 'F' && int.TryParse(key.AsSpan(1), out var f) && f is >= 1 and <= 12)
-        {
-            return Key(key);
-        }
-
-        return text is { Length: > 0 } && !ctrl && !alt ? Text(text) : null;
+        return key.Length is 2 or 3 && key[0] == 'F' && int.TryParse(key.AsSpan(1), out var f) && f is >= 1 and <= 12 ? key : null;
     }
 
     /// <summary>Reads one server message.</summary>
@@ -130,7 +154,7 @@ internal static class TerminalSocketMessages
         var cursor = root.GetProperty("cursor");
         var status = new TerminalStatus(
             root.GetProperty("w").GetInt32(), root.GetProperty("h").GetInt32(), cursor.GetProperty("x").GetInt32(), cursor.GetProperty("y").GetInt32(),
-            root.GetProperty("inMode").GetInt32() != 0, root.GetProperty("alt").GetInt32() != 0, root.GetProperty("dead").GetInt32() != 0, null);
+            root.GetProperty("inMode").GetInt32() != 0, root.GetProperty("alt").GetInt32() != 0, root.GetProperty("dead").GetInt32() != 0, DeadStatus: null);
         return new TerminalServerMessage(TerminalServerKind.Frame, rows, status, root.GetProperty("seq").GetInt32());
     }
 

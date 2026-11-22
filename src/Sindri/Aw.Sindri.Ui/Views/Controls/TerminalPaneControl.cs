@@ -41,7 +41,10 @@ internal sealed class TerminalPaneControl : Control, ITerminalPane
     }
 
     /// <summary>Initializes a new instance of the <see cref="TerminalPaneControl"/> class; its default name for assistive technology is "Terminal".</summary>
-    public TerminalPaneControl() => AutomationProperties.SetName(this, "Terminal");
+    public TerminalPaneControl()
+    {
+        AutomationProperties.SetName(this, "Terminal");
+    }
 
     /// <summary>Raised when the drawing area fits another number of columns or rows.</summary>
     public event EventHandler<TerminalSizeEventArgs>? FitChanged;

@@ -13,9 +13,12 @@ namespace Aw.Sindri.Ui.Terminal;
 internal sealed class WebSocketTerminalConnector(IHumanTokenSource token) : ITerminalConnector
 {
     /// <inheritdoc />
-    public async Task<ITerminalLink?> Connect(Uri api, string provider, string id, int cols, int rows, CancellationToken cancellationToken)
+    public async Task<ITerminalLink?> Connect(TerminalOpen open, CancellationToken cancellationToken)
     {
+        var (api, provider, id, cols, rows) = (open.Api, open.Provider, open.Id, open.Cols, open.Rows);
+#pragma warning disable CA2000 // the Link returned owns the socket and disposes it; every path that returns no Link disposes it here
         var socket = new ClientWebSocket();
+#pragma warning restore CA2000
         socket.Options.CollectHttpResponseDetails = true;
         try
         {
@@ -44,23 +47,15 @@ internal sealed class WebSocketTerminalConnector(IHumanTokenSource token) : ITer
         }
     }
 
-    private static ClosedLink? Refused(HttpStatusCode status) => status switch
-    {
-        HttpStatusCode.Conflict => new ClosedLink(4015),
-        HttpStatusCode.NotFound => new ClosedLink(4016),
-        _ => null,
-    };
+    // Two of HttpStatusCode's codes have a close code; every other one is a drop.
+    private static ClosedLink? Refused(HttpStatusCode status) =>
+        status == HttpStatusCode.Conflict ? new ClosedLink(4015) : status == HttpStatusCode.NotFound ? new ClosedLink(4016) : null;
 
     private sealed class ClosedLink(int code) : ITerminalLink
     {
         public int? CloseCode { get; } = code;
 
-#pragma warning disable CS1998 // an iterator with nothing to yield
-        public async IAsyncEnumerable<TerminalServerMessage> Read([EnumeratorCancellation] CancellationToken cancellationToken)
-        {
-            yield break;
-        }
-#pragma warning restore CS1998
+        public IAsyncEnumerable<TerminalServerMessage> Read(CancellationToken cancellationToken) => AsyncEnumerable.Empty<TerminalServerMessage>();
 
         public Task<bool> Send(string json, CancellationToken cancellationToken) => Task.FromResult(false);
 
@@ -86,7 +81,7 @@ internal sealed class WebSocketTerminalConnector(IHumanTokenSource token) : ITer
                     yield break;
                 }
 
-                text.Write(buffer, 0, result.Count);
+                await text.WriteAsync(buffer.AsMemory(0, result.Count), cancellationToken).ConfigureAwait(false);
                 if (result.EndOfMessage)
                 {
                     var json = Encoding.UTF8.GetString(text.GetBuffer(), 0, (int)text.Length);

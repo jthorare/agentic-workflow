@@ -9,29 +9,14 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
     private ITerminalLink? _link;
 
     /// <summary>Connects and pumps until the socket ends or the token cancels; reports each state to the view.</summary>
-    /// <param name="api">The base URL.</param>
-    /// <param name="provider">The session's provider.</param>
-    /// <param name="id">The session's id.</param>
-    /// <param name="cols">The columns the view fits.</param>
-    /// <param name="rows">The rows the view fits.</param>
+    /// <param name="open">The session and the size the view fits.</param>
     /// <param name="cancellationToken">Ends the session (the view closed or switched).</param>
     /// <returns>When the socket has ended.</returns>
-    internal async Task Run(Uri api, string provider, string id, int cols, int rows, CancellationToken cancellationToken)
+    internal async Task Run(TerminalOpen open, CancellationToken cancellationToken)
     {
         view.SocketOpening();
-        ITerminalLink? link;
-        try
+        if (await Open(open, cancellationToken).ConfigureAwait(true) is not { } link)
         {
-            link = await connector.Connect(api, provider, id, cols, rows, cancellationToken).ConfigureAwait(true);
-        }
-        catch (OperationCanceledException)
-        {
-            return;
-        }
-
-        if (link is null)
-        {
-            view.SocketDropped();
             return;
         }
 
@@ -64,6 +49,27 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
         }
 
         view.SocketClosed(link.CloseCode ?? 1006);
+    }
+
+    // The connect: null when it was cancelled (nothing to report) or the socket could not open (a drop, reported here).
+    private async Task<ITerminalLink?> Open(TerminalOpen open, CancellationToken cancellationToken)
+    {
+        ITerminalLink? link;
+        try
+        {
+            link = await connector.Connect(open, cancellationToken).ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+
+        if (link is null)
+        {
+            view.SocketDropped();
+        }
+
+        return link;
     }
 
     /// <summary>Sends a key the person typed in the pane; the view queues it until `ready` and drops it when the socket is down.</summary>

@@ -80,10 +80,7 @@ internal sealed partial class AgentsPage : UserControl
     private bool _focusWasHere;
 
     // Under 640 px only Status, Agent and For stay: the page tells the rows, and the head's columns follow.
-    private void OnSized(object? sender, SizeChangedEventArgs e)
-    {
-        Split();
-    }
+    private void OnSized(object? sender, SizeChangedEventArgs e) => Split();
 
     private void OnClearFilters(object? sender, RoutedEventArgs e)
     {

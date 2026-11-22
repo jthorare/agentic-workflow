@@ -28,7 +28,7 @@ public sealed class TerminalSessionTests
         var (f, socket, session, drawn) = Make();
         var frames = FakeTerminalConnector.FixtureOut().Count(m => TerminalSocketMessages.Parse(m).Kind == TerminalServerKind.Frame);
 
-        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), Token);
 
         Assert.Equal(["claude-code/ideas"], socket.Connected);
         Assert.Equal(frames, drawn.Count);
@@ -42,24 +42,24 @@ public sealed class TerminalSessionTests
         var (f, socket, session, drawn) = Make();
         socket.Refuse = true;
 
-        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), Token);
 
         Assert.Equal((TerminalState.Reconnecting, 0), (f.View.State, drawn.Count));
     }
 
     [Theory]
-    [InlineData(4016, TerminalState.Gone)]
-    [InlineData(4001, TerminalState.TakenOver)]
-    [InlineData(4015, TerminalState.CantAttach)]
-    public async Task A_close_code_ends_in_its_state(int code, TerminalState state)
+    [InlineData(4016, nameof(TerminalState.Gone))]
+    [InlineData(4001, nameof(TerminalState.TakenOver))]
+    [InlineData(4015, nameof(TerminalState.CantAttach))]
+    public async Task A_close_code_ends_in_its_state(int code, string state)
     {
         var (f, socket, session, _) = Make();
         socket.Script = ["{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%0\"}}"];
         socket.EndsWith = code;
 
-        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), Token);
 
-        Assert.Equal(state, f.View.State);
+        Assert.Equal(Enum.Parse<TerminalState>(state), f.View.State);
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public sealed class TerminalSessionTests
         var (_, socket, session, _) = Make();
         socket.Script = ["{\"t\":\"ping\"}"];
 
-        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), Token);
 
         Assert.Equal([TerminalSocketMessages.Pong()], socket.Sent);
     }
@@ -79,9 +79,9 @@ public sealed class TerminalSessionTests
         var (f, socket, session, _) = Make();
         socket.Script = ["{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%0\"}}"];
         f.View.SocketOpening();
-        var early = new[] { await session.SendKey("A", "a", Token), await session.SendKey("Enter", null, Token) };
+        var early = new[] { await session.SendKey("A", "a", Token), await session.SendKey("Enter", text: null, Token) };
 
-        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), Token);
 
         Assert.Equal([TerminalKeyFate.Queued, TerminalKeyFate.Queued], early);
         Assert.Equal([TerminalSocketMessages.Text("a"), TerminalSocketMessages.Key("Enter")], socket.Sent);
@@ -95,7 +95,7 @@ public sealed class TerminalSessionTests
         f.View.SocketOpening();
 
         _ = await session.SendPaste("echo hi\nls -l", Token);
-        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), Token);
 
         Assert.Equal([TerminalSocketMessages.Paste("echo hi\nls -l")], socket.Sent);
     }
@@ -108,7 +108,7 @@ public sealed class TerminalSessionTests
         f.View.SocketOpening();
 
         var fate = await session.SendPaste(new string('a', (256 * 1024) + 1), Token);
-        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), Token);
 
         Assert.Equal((TerminalKeyFate.TooBig, 0, string.Empty), (fate, socket.Sent.Count, f.View.ControlLine));
     }
@@ -122,7 +122,7 @@ public sealed class TerminalSessionTests
         f.View.SocketOpening();
 
         var fate = await session.SendPaste(new string('<', 150 * 1024), Token);
-        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), Token);
 
         Assert.Equal((TerminalKeyFate.TooBig, 0, string.Empty), (fate, socket.Sent.Count, f.View.ControlLine));
     }
@@ -136,7 +136,7 @@ public sealed class TerminalSessionTests
         var text = new string('a', 150 * 1024);
 
         _ = await session.SendPaste(text, Token);
-        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), Token);
 
         Assert.Equal([TerminalSocketMessages.Paste(text)], socket.Sent);
     }
@@ -150,7 +150,7 @@ public sealed class TerminalSessionTests
         var threeBytesEach = new string('\u20ac', 90_000);   // 90,000 characters, 270,000 bytes
 
         var fate = await session.SendPaste(threeBytesEach, Token);
-        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), Token);
 
         Assert.Equal((TerminalKeyFate.TooBig, 0), (fate, socket.Sent.Count));
     }
@@ -164,7 +164,7 @@ public sealed class TerminalSessionTests
         var text = new string('a', 256 * 1024);
 
         _ = await session.SendPaste(text, Token);
-        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), Token);
 
         Assert.Equal([TerminalSocketMessages.Paste(text)], socket.Sent);
         Assert.Equal(string.Empty, f.View.ControlLine);
@@ -178,7 +178,7 @@ public sealed class TerminalSessionTests
         f.View.SocketOpening();
 
         var fate = await session.SendPaste(string.Empty, Token);
-        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), Token);
 
         Assert.Equal((TerminalKeyFate.Dropped, 0), (fate, socket.Sent.Count));
     }
@@ -188,13 +188,13 @@ public sealed class TerminalSessionTests
     {
         var (_, socket, session, _) = Make();
         socket.Script = ["{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%0\"}}"];
-        var run = session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+        var run = session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), Token);
         await run;
 
         var sentWhileClosed = await session.Interrupt(Token);
 
         Assert.False(sentWhileClosed);
-        Assert.DoesNotContain(TerminalSocketMessages.Interrupt(), socket.Sent);
+        Assert.DoesNotContain(TerminalSocketMessages.Interrupt(), socket.Sent, StringComparer.Ordinal);
     }
 
     private const string ReadyJson = "{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%0\"}}";
@@ -206,7 +206,7 @@ public sealed class TerminalSessionTests
         socket.Script = [ReadyJson];
         socket.ThrowsAfterScript = true;
 
-        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), Token);
         f.Clock.Advance(TimeSpan.FromMilliseconds(1100));
         f.View.Tick();
 
@@ -220,7 +220,7 @@ public sealed class TerminalSessionTests
         socket.Script = [ReadyJson];
         socket.ThrowsAfterScript = true;
 
-        await session.Run(_api, "claude-code", "ideas", 120, 36, Token);
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), Token);
 
         Assert.Equal(TerminalState.Reconnecting, f.View.State);
     }
@@ -240,7 +240,7 @@ public sealed class TerminalSessionTests
         socket.Script = [ReadyJson, frame, frame, frame];
         socket.IgnoresCancellation = true;
 
-        await session.Run(_api, "claude-code", "ideas", 120, 36, cts.Token);
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), cts.Token);
 
         Assert.Equal(1, drawn);
     }
