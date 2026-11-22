@@ -35,7 +35,7 @@ internal static class RepoSymbols
 
     private static IReadOnlyList<T>? Concat<T>(IEnumerable<IReadOnlyList<T>?> parts)
     {
-        var present = parts.Where(p => p is not null).ToList();
-        return present.Count == 0 ? null : [.. present.SelectMany(p => p!)];
+        var present = parts.OfType<IReadOnlyList<T>>().ToList();
+        return present.Count == 0 ? null : [.. present.SelectMany(p => p)];
     }
 }
