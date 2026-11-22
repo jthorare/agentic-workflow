@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Input;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.Views.Workflows;
@@ -26,6 +27,34 @@ internal sealed partial class GraphCanvas
 
     /// <summary>Zooms to the next ladder step down about the canvas's centre.</summary>
     internal void ZoomOut() => StepTo(GraphZoom.Previous(ZoomPercent));
+
+    /// <summary>The canvas's zoom keys (#3684): <c>0</c> is 100 %, <c>+</c> (also Shift+=, the keypad's +) the next step up, <c>-</c> the next step down. The shell passes digits,
+    /// = and - on to the focused control (ShellWindow.Keys.cs names only letters, Enter, "." and "/"), so the canvas takes them itself.</summary>
+    /// <param name="key">The key.</param>
+    /// <param name="modifiers">The modifiers held: none, or Shift for the + on the = key.</param>
+    /// <returns>True when the key zoomed.</returns>
+    internal bool ZoomKey(Key key, KeyModifiers modifiers)
+    {
+        if ((modifiers & ~KeyModifiers.Shift) != KeyModifiers.None)
+        {
+            return false;
+        }
+
+        switch (key)
+        {
+            case Key.D0 or Key.NumPad0 when modifiers == KeyModifiers.None:
+                StepTo(100);
+                return true;
+            case Key.OemPlus or Key.Add:
+                ZoomIn();
+                return true;
+            case Key.OemMinus or Key.Subtract when modifiers == KeyModifiers.None:
+                ZoomOut();
+                return true;
+            default:
+                return false;
+        }
+    }
 
     /// <summary>Goes back to Fit: wraps the cards for this width and zooms to the largest zoom at which the whole graph fits.</summary>
     internal void FitNow()

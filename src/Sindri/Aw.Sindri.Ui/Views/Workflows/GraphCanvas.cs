@@ -220,6 +220,12 @@ internal sealed partial class GraphCanvas : Control
             return;
         }
 
+        if (ZoomKey(e.Key, e.KeyModifiers))
+        {
+            e.Handled = true;   // a zoom key zooms about the centre and leaves the selection where it is
+            return;
+        }
+
 #pragma warning disable IDE0072 // every other key is not the canvas's
         e.Handled = e.Key switch
         {
