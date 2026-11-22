@@ -41,8 +41,8 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
         new("findings[].message"), new("findings[].fix"), new("findings[].field"), new("findings[].nodes[]"),
     ]);
 
-    /// <summary>workflow_runs: each run's failure text.</summary>
-    internal static FencePlan WorkflowRuns { get; } = new("sindri:workflow-run", [new("runs[].error")]);
+    /// <summary>workflow_runs: each run's failure text and its sentence (which quotes the error).</summary>
+    internal static FencePlan WorkflowRuns { get; } = new("sindri:workflow-run", [new("runs[].error"), new("runs[].failureSentence")]);
 
     /// <summary>workflow_run_get: the failure text, what a trigger carried, the outputs, and each node run's input, output, error and failure sentence (payloads an agent or a service wrote; the sentence quotes the error and the step's title).</summary>
     internal static FencePlan WorkflowRun { get; } = new("sindri:workflow-run",
