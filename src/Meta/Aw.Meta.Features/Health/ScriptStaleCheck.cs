@@ -20,7 +20,7 @@ internal sealed class ScriptStaleCheck(ICommandRunner runner, MetaPaths paths)
     /// <returns>The line, or <see langword="null"/> when every script matches or can't be compared (not installed, no checkout, no origin/main, git failed or timed out).</returns>
     internal async ValueTask<string?> Warning(CancellationToken cancellationToken)
     {
-        if (string.IsNullOrEmpty(paths.Toolkit))
+        if (paths.Toolkit is not { Length: > 0 } toolkit)
         {
             return null;
         }
@@ -28,7 +28,7 @@ internal sealed class ScriptStaleCheck(ICommandRunner runner, MetaPaths paths)
         var differing = new List<string>();
         foreach (var (installed, script) in new[] { (paths.Heavy, "heavy.sh"), (paths.Reserve, "meta-gate-reserve.sh") })
         {
-            if (!string.IsNullOrEmpty(installed) && await Differs(installed, script, cancellationToken).ConfigureAwait(false))
+            if (!string.IsNullOrEmpty(installed) && await Differs(toolkit, installed, script, cancellationToken).ConfigureAwait(false))
             {
                 differing.Add($"{installed} differs from origin/main's scripts/{script}");
             }
@@ -37,10 +37,10 @@ internal sealed class ScriptStaleCheck(ICommandRunner runner, MetaPaths paths)
         return differing.Count == 0 ? null : string.Join("; ", differing) + ". Fix: scripts/install-cs.sh (publishes and links the build)";
     }
 
-    private async ValueTask<bool> Differs(string installed, string script, CancellationToken cancellationToken)
+    private async ValueTask<bool> Differs(string toolkit, string installed, string script, CancellationToken cancellationToken)
     {
-        var mine = await Hash(["git", "-C", paths.Toolkit!, "hash-object", installed], cancellationToken).ConfigureAwait(false);
-        var theirs = mine is null ? null : await Hash(["git", "-C", paths.Toolkit!, "rev-parse", $"origin/main:scripts/{script}"], cancellationToken).ConfigureAwait(false);
+        var mine = await Hash(["git", "-C", toolkit, "hash-object", installed], cancellationToken).ConfigureAwait(false);
+        var theirs = mine is null ? null : await Hash(["git", "-C", toolkit, "rev-parse", $"origin/main:scripts/{script}"], cancellationToken).ConfigureAwait(false);
         return mine is not null && theirs is not null && !string.Equals(mine, theirs, StringComparison.Ordinal);
     }
 
