@@ -88,6 +88,9 @@ internal static partial class Labels
     /// <summary>The group of projects with no open PR that is not a draft (health null), by health or by repo.</summary>
     internal const string ProjectsNoOpenPrs = "No open PRs";
 
+    /// <summary>The failed-read line's tail while the owner's grouping is Health or Repo: the rows show state groups instead.</summary>
+    internal const string ProjectsGroupedByStateUntilThen = " · grouped by state until then";
+
     /// <summary>The first health group's hint, on the right of its head.</summary>
     internal const string ProjectsHealthHint = "derived from each project’s open PRs";
 

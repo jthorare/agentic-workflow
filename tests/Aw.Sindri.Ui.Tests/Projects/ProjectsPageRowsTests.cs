@@ -51,6 +51,40 @@ public sealed class ProjectsPageRowsTests
     }
 
     [Fact]
+    public async Task Needs_me_is_the_first_view_once_the_server_serves_the_flag()
+    {
+        _ = Mixed(Truth("offTrack", blockedOnYou: false), Truth("atRisk", blockedOnYou: true), mobile: null);
+
+        var page = await _f.Shown(Token);
+
+        Assert.Equal((ProjectView.NeedsMe, true), (page.View, page.Tabs[0].IsOn));
+        Assert.Equal(["Kitchen"], Rows(page), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task An_older_server_without_the_flag_opens_on_Projects()
+    {
+        _ = Mixed(Truth("offTrack"), Truth("atRisk"), mobile: null);
+
+        var page = await _f.Shown(Token);
+
+        Assert.Equal(ProjectView.All, page.View);
+    }
+
+    [Fact]
+    public async Task A_view_the_owner_picked_stays_when_the_flag_arrives()
+    {
+        _ = Mixed(checkout: null, kitchen: null, mobile: null);
+        var page = await _f.Shown(Token);
+        page.SetView(ProjectView.All);
+        _ = Mixed(Truth("offTrack", blockedOnYou: true), kitchen: null, mobile: null);
+
+        await page.Refresh(Url, Token);
+
+        Assert.Equal(ProjectView.All, page.View);
+    }
+
+    [Fact]
     public async Task Health_groups_are_in_order_and_the_first_carries_the_hint()
     {
         _ = Mixed(Truth("offTrack"), Truth("unknown"), mobile: null);
@@ -73,7 +107,8 @@ public sealed class ProjectsPageRowsTests
 
         Assert.Equal(["In progress", "Planned", "Paused"], page.Groups.Select(g => g.Heading), StringComparer.Ordinal);
         Assert.Equal(("Health", true), (page.GroupText, page.ShowsFactsMissing));   // the Group button keeps the owner's pick
-        Assert.Equal("PRs, checks and agents couldn't be read just now", page.FactsMissingText);
+        Assert.Equal("PRs, checks and agents couldn't be read just now · grouped by state until then", page.FactsMissingText);
+        Assert.DoesNotContain("couldn't be read", page.Freshness, StringComparison.Ordinal);   // said once, on this line
         Assert.All(page.Groups.SelectMany(g => g.Cards), c => Assert.False(c.ShowsFacts));
         Assert.Equal([false, true, true, true], page.Tabs.Select(t => t.ShowsCount));
         Assert.Equal("Needs me", page.Tabs[0].Name);

@@ -11,6 +11,7 @@ namespace Aw.Sindri.Ui.ViewModels.Projects;
 internal sealed partial class ProjectsPageViewModel
 {
     private ProjectList? _list;
+    private bool _viewPicked;
 
     /// <summary>The rows were laid out again (a read, a new view, sort or grouping): the shell hands the open sheet its project's row for the notes.</summary>
     internal event EventHandler? Laid;
@@ -41,7 +42,7 @@ internal sealed partial class ProjectsPageViewModel
         new(ProjectMenu.Group, (int)ProjectGrouping.None, Labels.ProjectsGroupNone, string.Empty),
     ];
 
-    /// <summary>The view shown. Projects (every open project) until the owner picks another: Needs me reads a server flag that is not served yet (issue 3797).</summary>
+    /// <summary>The view shown. Until the owner picks one: Needs me when the served truth carries the blocked-on-you flag (issue 3797), else Projects (an older server).</summary>
     public ProjectView View { get; private set => Set(ref field, value); } = ProjectView.All;
 
     /// <summary>The rows' order inside a group.</summary>
@@ -65,8 +66,13 @@ internal sealed partial class ProjectsPageViewModel
     /// <summary>True when Sindri couldn't read its own PR, check and agent facts: rows group by state instead of health or repo, and the one line below says so.</summary>
     public bool FactsMissing { get; private set => Set(ref field, value); }
 
-    /// <summary>True when the list draws the line that the facts are missing: they are, and the view has rows.</summary>
+    /// <summary>True when the page draws the line that the facts are missing.</summary>
     public bool ShowsFactsMissing { get; private set => Set(ref field, value); }
+
+    /// <summary>The line drawn instead of health groups when the facts are missing, with "· grouped by state until then" while the owner's pick is Health or Repo.</summary>
+    public string FactsMissingText => Grouping is ProjectGrouping.Health or ProjectGrouping.Repo
+        ? Labels.ProjectSindriFactsMissing + Labels.ProjectsGroupedByStateUntilThen
+        : Labels.ProjectSindriFactsMissing;
 
     /// <summary>True when the column heads and rows are drawn: the view has rows.</summary>
     public bool HasRows { get; private set => Set(ref field, value); }
@@ -105,9 +111,6 @@ internal sealed partial class ProjectsPageViewModel
     /// <summary>The Group menu's heading.</summary>
     public string GroupBy => Labels.ProjectsGroupBy;
 
-    /// <summary>The line drawn instead of health groups when the facts are missing.</summary>
-    public string FactsMissingText => Labels.ProjectSindriFactsMissing;
-
     /// <summary>The Project column's head.</summary>
     public string ColumnProject => Labels.ProjectsColumnProject;
 
@@ -134,6 +137,23 @@ internal sealed partial class ProjectsPageViewModel
     /// <param name="view">The view.</param>
     internal void SetView(ProjectView view)
     {
+        _viewPicked = true;
+        ShowView(view);
+        Arrange();
+    }
+
+    // Until the owner picks a view: Needs me once a served card carries the flag (null from an older server, which stays on Projects). A read whose truth
+    // failed carries no flag and moves nothing back, so the view never flips between reads.
+    private void DefaultView(ProjectList list)
+    {
+        if (!_viewPicked && !FactsMissing && list.Projects.Concat(list.Finished).Any(c => c.Truth?.BlockedOnYou is not null))
+        {
+            ShowView(ProjectView.NeedsMe);
+        }
+    }
+
+    private void ShowView(ProjectView view)
+    {
         View = view;
         foreach (var tab in Tabs)
         {
@@ -141,7 +161,6 @@ internal sealed partial class ProjectsPageViewModel
         }
 
         OnChanged(nameof(ShowsFolds));
-        Arrange();
     }
 
     /// <summary>The Sort menu picked a sort.</summary>
@@ -163,6 +182,7 @@ internal sealed partial class ProjectsPageViewModel
         Mark(GroupChoices, (int)grouping);
         OnChanged(nameof(GroupText));
         OnChanged(nameof(GroupName));
+        OnChanged(nameof(FactsMissingText));
         Arrange();
     }
 
@@ -220,7 +240,7 @@ internal sealed partial class ProjectsPageViewModel
         Hidden.Show(all ? [.. ProjectRows.Sorted(list.Hidden, Sort).Select(Card)] : []);
         CountTabs(list);
         HasRows = rows.Count > 0;
-        ShowsFactsMissing = FactsMissing && HasRows;
+        ShowsFactsMissing = FactsMissing;
         ShowEmptyView(empty: !IsEmptyBlock && (View == ProjectView.Triage || (View != ProjectView.All && rows.Count == 0)));
         Reselect();
         Laid?.Invoke(this, EventArgs.Empty);

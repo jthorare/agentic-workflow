@@ -135,8 +135,10 @@ public sealed class ProjectsPageTests
 
         var page = await _f.Shown(Token);
 
-        Assert.True(page.FreshnessFailing);
-        Assert.Contains("GitHub synced 14 min ago · PRs, checks and agents couldn't be read just now · Linear says you're Jo Smith", page.Freshness, StringComparison.Ordinal);
+        Assert.False(page.FreshnessFailing);   // the freshness line leaves Sindri's row out: the line above the rows says it, once (frames round 13, truth-failed)
+        Assert.Contains("GitHub synced 14 min ago · Linear says you're Jo Smith", page.Freshness, StringComparison.Ordinal);
+        Assert.DoesNotContain("couldn't be read", page.Freshness, StringComparison.Ordinal);
+        Assert.Equal((true, "PRs, checks and agents couldn't be read just now"), (page.ShowsFactsMissing, page.FactsMissingText));   // grouped by state already: no tail
         Assert.DoesNotContain("SND-", page.Freshness, StringComparison.Ordinal);
         Assert.DoesNotContain("sindri", page.Freshness, StringComparison.Ordinal);
     }

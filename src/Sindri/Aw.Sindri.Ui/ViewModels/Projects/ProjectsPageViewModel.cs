@@ -236,14 +236,16 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
     private void Show(ProjectList list)
     {
         (IsLoading, Error) = (false, string.Empty);
-        var failing = list.Freshness.Any(f => string.Equals(f.State, "failing", StringComparison.Ordinal));
-        FreshnessFailing = failing;
-        Freshness = ProjectsLinear.Freshness(list);
+        // Sindri's own failing row is said once, on the line above the rows (ProjectsPageViewModel.Rows.cs FactsMissingText), so the freshness line leaves it out.
+        var sources = list with { Freshness = [.. list.Freshness.Where(f => !string.Equals(f.Source, "sindri", StringComparison.Ordinal))] };
+        FreshnessFailing = sources.Freshness.Any(f => string.Equals(f.State, "failing", StringComparison.Ordinal));
+        Freshness = ProjectsLinear.Freshness(sources);
         NamesOnly = list.Freshness.Any(f => string.Equals(f.Source, "context", StringComparison.Ordinal) && string.Equals(f.State, "failing", StringComparison.Ordinal));
         (Sentence, ShowsConnect) = (ProjectsLinear.Sentence(list, _clock.GetUtcNow()), ProjectsLinear.OffersConnect(list));
         IsEmptyBlock = list.Projects.Count == 0 && list.Empty is not null;
         IsBanner = list.Projects.Count > 0 && list.Empty is not null;
         FactsMissing = ProjectRows.FactsMissing(list);
+        DefaultView(list);
         _list = list;
 
         var present = new HashSet<string>(list.Projects.Concat(list.Finished).Concat(list.Hidden).Select(c => c.Id), StringComparer.Ordinal);

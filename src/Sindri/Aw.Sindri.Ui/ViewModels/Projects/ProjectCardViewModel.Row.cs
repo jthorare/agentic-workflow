@@ -72,7 +72,7 @@ internal sealed partial class ProjectCardViewModel
     /// <summary>True when the row draws the truth's cells.</summary>
     public bool ShowsFacts => !FactsMissing;
 
-    /// <summary>The row's accessible name: the name, the reason, the PRs, then the other cells that have words.</summary>
+    /// <summary>The row's accessible name: the name, the reason, the PRs, then the other cells that have words (what the row draws, so no origin).</summary>
     public string RowName { get; private set => Set(ref field, value); } = string.Empty;
 
     private void DeriveRow()
@@ -100,11 +100,7 @@ internal sealed partial class ProjectCardViewModel
 
     private string SpokenRow()
     {
-        var parts = new List<string> { Card.Name };
-        if (OriginChip is { } chip)
-        {
-            parts.Add(chip);
-        }
+        var parts = new List<string> { Card.Name };   // no origin: the frames draw none on a row
 
         if (!FactsMissing)
         {
