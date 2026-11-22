@@ -12,6 +12,7 @@ internal sealed partial class ShellViewModel
     internal void ApplyAppearance(AppearanceSettings appearance)
     {
         NeedsYou.TextScale = appearance.TextScale;
+        Workflows.TextScale = appearance.TextScale;
         NeedsYou.Seen.SetInAppReduceMotion(appearance.ReduceMotion);
     }
 
