@@ -27,12 +27,12 @@ internal sealed partial class OpsEditor
         _pending = new PendingStep(id, block.Type, after);
         Fields.Clear();
         var example = block.ExampleConfig ?? default;   // the block's example settings: a step that opens complete saves untouched; a block with no example opens with its required fields empty
-        var steps = Nodes.Select(static n => n.Id).ToHashSet(StringComparer.Ordinal);
+        var steps = Upstream(after);   // the validator lets a step read only steps upstream of it (GRAPH-REF-003 a missing one, GRAPH-REF-001 one that runs later)
         foreach (var field in block.Config)
         {
             var boolean = string.Equals(field.Type, "boolean", StringComparison.Ordinal);
             var text = EditorFieldText.Of(example, field);
-            var foreign = ExampleReferences.NamesMissingStep(text, steps);   // the example reads a step of the doc page's graph ("{{triage.items}}"): it starts empty, with the example as its hint (#3944)
+            var foreign = ExampleReferences.NamesStepNotUpstream(block.Type, field.Name, text, steps);   // the example reads a step of the doc page's graph ("{{triage.items}}"): it starts empty, with the example as its hint (#3944)
             var shown = foreign ? string.Empty : text;
             Fields.Add(new ConfigFieldViewModel(field, shown.Length == 0 && boolean && field.Required ? "false" : shown) { Placeholder = foreign ? text : string.Empty });   // why: a required check box shows a value, and the value it shows is the one sent
         }
