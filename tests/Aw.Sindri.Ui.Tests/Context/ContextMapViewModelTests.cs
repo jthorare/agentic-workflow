@@ -177,6 +177,23 @@ public sealed class ContextMapViewModelTests
     }
 
     [Theory]
+    [InlineData("index not built", Labels.ContextMapNamesDetail)]
+    [InlineData("index-not-built", Labels.ContextMapNamesDetail)]
+    [InlineData("index building", Labels.ContextMapNamesBuilding)]
+    [InlineData("index damaged", Labels.ContextMapNamesDamaged)]
+    [InlineData("not configured", Labels.ContextMapNamesNotConfigured)]
+    [InlineData("files are in no single repo", Labels.ContextMapNamesSeveralRepos)]
+    [InlineData("something new", Labels.ContextMapNamesUnknown)]
+    [InlineData(null, Labels.ContextMapNamesDetail)]
+    public void The_function_names_detail_follows_the_reason_the_server_gives(string? reason, string detail)
+    {
+        var map = Map(node => node["bands"]!["code"]!["symbols"]!["reason"] = reason);
+
+        Assert.Equal(detail, map.CoverageAreas[3].Detail);
+        Assert.Equal(detail, NamesDetail.For(new SymbolsView("unavailable", reason, [])));
+    }
+
+    [Theory]
     [InlineData(1, "A is limited.")]
     [InlineData(2, "A and B are limited.")]
     [InlineData(3, "A, B and C are limited.")]
