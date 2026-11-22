@@ -51,7 +51,7 @@ public sealed class SkipItemInLoopTests
         Assert.Equal("[1,3]", output["items"]!.ToJsonString());
         Assert.Equal(2, output["count"]!.GetValue<int>());
         Assert.Equal(1, output["skipped"]!.GetValue<int>());
-        Assert.Equal(NodeRunStatus.Succeeded, (await rig.NodeStatuses(id))["after"]);
+        Assert.Equal(NodeRunStatus.Succeeded, (await rig.ItemRuns(id, "after"))[0].Status);
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public sealed class SkipItemInLoopTests
         Assert.Equal("[]", output["items"]!.ToJsonString());
         Assert.Equal(0, output["count"]!.GetValue<int>());
         Assert.Equal(2, output["skipped"]!.GetValue<int>());
-        Assert.Equal(NodeRunStatus.Succeeded, (await rig.NodeStatuses(id))["after"]);
+        Assert.Equal(NodeRunStatus.Succeeded, (await rig.ItemRuns(id, "after"))[0].Status);
     }
 
     [Fact]
