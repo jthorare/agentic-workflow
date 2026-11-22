@@ -142,6 +142,7 @@ internal sealed partial class ProjectCardViewModel : ObservableObject
         Footer = Parts();
         OnChanged(nameof(FooterText));
         AccessibleName = Spoken();
+        DeriveRow();
     }
 
     private static string? Face(string? note)

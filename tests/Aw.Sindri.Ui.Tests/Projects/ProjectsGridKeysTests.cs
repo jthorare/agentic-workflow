@@ -41,7 +41,7 @@ public sealed class ProjectsGridKeysTests : FrameHost
 
         var (window, shell) = await Connected(width: 1600);
         shell.GoTo(PageId.Projects);
-        await Until(window, () => !shell.Projects.IsLoading && shell.Projects.Columns == 3, "the Projects page never drew three across");
+        await Until(window, () => !shell.Projects.IsLoading && shell.Projects.ShowsAgents, "the Projects page never drew every column");
         if (finishedOpen)
         {
             shell.Projects.Finished.Toggle();

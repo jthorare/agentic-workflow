@@ -9,7 +9,7 @@ using Aw.Sindri.Ui.Tests.Views;
 
 namespace Aw.Sindri.Ui.Tests.Projects;
 
-/// <summary>The Projects page in the window (#2805): what a screen reader says for the notes buttons and the folds, and how many cards sit across at 1,280 px.</summary>
+/// <summary>The Projects page in the window (#2805): what a screen reader says for the notes buttons and the folds, and that every column shows at 1,280 px.</summary>
 [Lane(TestLane.Integration)]
 [Collection(HeadlessWindows.Name)]
 public sealed class ProjectsNamesViewTests : FrameHost
@@ -69,13 +69,13 @@ public sealed class ProjectsNamesViewTests : FrameHost
     });
 
     [Fact]
-    public Task SetPageWidth_gives_three_columns_at_1280_window() => OnUi(async () =>
+    public Task Every_column_shows_at_a_1280_window() => OnUi(async () =>
     {
         Server.ProjectsAnswer = RouteAnswer.Api("projects", "mixed");
         var (window, shell) = await Connected(width: 1280, height: 900);
         shell.GoTo(PageId.Projects);
         await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
 
-        Assert.Equal(3, shell.Projects.Columns);
+        Assert.Equal((true, true), (shell.Projects.ShowsAgents, shell.Projects.ShowsWide));
     });
 }

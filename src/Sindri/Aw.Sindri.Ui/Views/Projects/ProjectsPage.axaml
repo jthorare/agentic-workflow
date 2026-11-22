@@ -28,7 +28,7 @@
 
     <TextBlock x:Name="ProjectsError" Classes="caption subtle" Text="{Binding Error}" TextWrapping="Wrap" IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
-    <UniformGrid x:Name="ProjectsLoading" Columns="{Binding Columns}" IsVisible="{Binding IsLoading}" AutomationProperties.AccessibilityView="Raw">
+    <UniformGrid x:Name="ProjectsLoading" Columns="3" IsVisible="{Binding IsLoading}" AutomationProperties.AccessibilityView="Raw">
       <Border Classes="card" Height="132" Margin="0,0,12,12" Opacity="0.6" />
       <Border Classes="card" Height="132" Margin="0,0,12,12" Opacity="0.6" />
       <Border Classes="card" Height="132" Margin="0,0,12,12" Opacity="0.6" />
@@ -59,11 +59,11 @@
         <DataTemplate x:DataType="pvm:ProjectGroupViewModel">
           <StackPanel Spacing="{StaticResource Space.XS}" Margin="0,0,0,8">
             <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
-              <TextBlock x:Name="ProjectsGroupHeading" Classes="eyebrow subtle" Text="{Binding HeadingCaps}" />
+              <TextBlock x:Name="ProjectsGroupHeading" Classes="eyebrow subtle" Text="{Binding Heading}" />
               <TextBlock Classes="eyebrow" Foreground="{DynamicResource Brush.InkSubtle}" Text="{Binding Count}" />
             </StackPanel>
             <ItemsControl Classes="cards" ItemsSource="{Binding Cards}">
-              <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="{Binding Columns}" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
             </ItemsControl>
           </StackPanel>
         </DataTemplate>
@@ -79,7 +79,7 @@
         </Grid>
       </Expander.Header>
       <ItemsControl Classes="cards" pv:CardGrid.IsGrid="True" ItemsSource="{Binding Cards}" Margin="0,8,0,0">
-        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="{Binding Columns}" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
       </ItemsControl>
     </Expander>
 
@@ -92,7 +92,7 @@
         </Grid>
       </Expander.Header>
       <ItemsControl Classes="cards" pv:CardGrid.IsGrid="True" ItemsSource="{Binding Cards}" Margin="0,8,0,0">
-        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="{Binding Columns}" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
       </ItemsControl>
     </Expander>
   </StackPanel>

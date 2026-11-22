@@ -302,19 +302,19 @@ public sealed class ProjectsPageTests
     }
 
     [Theory]
-    [InlineData(0, 1)]
-    [InlineData(559, 1)]
-    [InlineData(560, 2)]
-    [InlineData(1039, 2)]
-    [InlineData(1040, 3)]
-    [InlineData(2000, 3)]
-    public void The_columns_follow_the_page_width(double width, int columns)
+    [InlineData(0, false, false)]
+    [InlineData(807, false, false)]
+    [InlineData(808, false, true)]
+    [InlineData(867, false, true)]
+    [InlineData(868, true, true)]
+    [InlineData(2000, true, true)]
+    public void The_columns_drop_as_the_page_narrows(double width, bool agents, bool wide)
     {
         var page = _f.Page();
 
         page.SetPageWidth(width);
 
-        Assert.Equal(columns, page.Columns);
+        Assert.Equal((agents, wide), (page.ShowsAgents, page.ShowsWide));
     }
 
     [Fact]

@@ -23,10 +23,11 @@ internal sealed class ProjectsFixture
 
     internal ProjectsPageViewModel Page() => new(Server, Clock);
 
-    /// <summary>A page that is shown and has read the list once.</summary>
-    internal async Task<ProjectsPageViewModel> Shown(CancellationToken token)
+    /// <summary>A page that is shown and has read the list once. Grouped by state unless asked otherwise: the goldens carry no truth, so by health every card would sit in one group.</summary>
+    internal async Task<ProjectsPageViewModel> Shown(CancellationToken token, ProjectGrouping grouping = ProjectGrouping.State)
     {
         var page = Page();
+        page.SetGrouping(grouping);
         page.SetShown(shown: true);
         await page.Refresh(Url, token);
         return page;

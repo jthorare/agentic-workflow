@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 
 namespace Aw.Sindri.Ui.ViewModels.Projects;
 
-/// <summary>One state's cards on the Projects page ("In progress").</summary>
+/// <summary>One group of rows on the Projects page ("Off track 3", "In progress 6"), or the one group with no head when the rows are not grouped.</summary>
 internal sealed class ProjectGroupViewModel : ObservableObject
 {
     internal ProjectGroupViewModel(string heading)
@@ -10,26 +10,30 @@ internal sealed class ProjectGroupViewModel : ObservableObject
         Heading = heading;
     }
 
-    /// <summary>The state's word.</summary>
+    /// <summary>The head's words; empty for the one group with no head.</summary>
     public string Heading { get; }
 
-    /// <summary>The heading as the page draws it, in capitals (Avalonia has no text-transform).</summary>
-    public string HeadingCaps => Heading.ToUpperInvariant();
+    /// <summary>True when the group draws its head.</summary>
+    public bool HasHeading => Heading.Length > 0;
 
-    /// <summary>How many cards.</summary>
+    /// <summary>The words on the right of the head ("derived from each project’s open PRs" on the first health group); empty for none.</summary>
+    public string Hint { get; internal set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>How many rows.</summary>
     public int Count => Cards.Count;
 
-    /// <summary>How many cards sit across, as the page last set it.</summary>
-    public int Columns { get; internal set => Set(ref field, value); } = 1;
+    /// <summary>The head's accessible name: "Off track, 3".</summary>
+    public string HeadingName => Heading + ", " + Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-    /// <summary>The cards, as the server orders them.</summary>
+    /// <summary>The rows, in order.</summary>
     public ObservableCollection<ProjectCardViewModel> Cards { get; } = [];
 
-    /// <summary>Shows these cards.</summary>
-    /// <param name="cards">The cards, in order.</param>
+    /// <summary>Shows these rows.</summary>
+    /// <param name="cards">The rows, in order.</param>
     internal void Show(IReadOnlyList<ProjectCardViewModel> cards)
     {
         Patch.To(Cards, cards);
         OnChanged(nameof(Count));
+        OnChanged(nameof(HeadingName));
     }
 }
