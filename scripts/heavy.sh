@@ -332,10 +332,18 @@ hold_note() {
   echo "heavy: holding this build back: box-wide job $pid ($argv) waits for slot $HOLD_SLOT, which needs $HOLD_NEED MB free; $mem" >&2
 }
 
+# reserve_note <slots>: the reserve wait's line on stderr (#3907): the reserve, the slot count and the MB available. MemAvailable is
+# read here, only when the note is due, not on every pass.
+reserve_note() {
+  local kb mem; kb="$(avail_kb)"
+  if [ -n "$kb" ]; then mem="$((kb / 1024)) MB available"; else mem="MemAvailable unreadable"; fi
+  echo "heavy: waiting although a box-wide slot is free: meta reserves $RESERVE of $1 slot(s) (heavy-meta-reserve); every slot above those is held or under its memory floor; $mem" >&2
+}
+
 # acquire <label> <base> <slots>: take one slot of a mkdir-mutex pool; a slot whose owner pid is gone is reclaimed.
 acquire() {
   local label="$1" base="$2" slots="$3" waited=0 printed=0 told=0 k d got="" free_wait held
-  local fifo=1 older stood told_at=0 told_pid=""
+  local fifo=1 older stood told_at=0 told_pid="" rtold=0 rtold_at=0
   [ "$PRIORITY" = meta ] && fifo=0
   while [ -z "$got" ]; do
     free_wait=0; held=0; older=""; stood=0
@@ -394,6 +402,13 @@ acquire() {
       fi
     fi
     [ "$printed" -eq 0 ] && { echo "heavy: waiting for the $label lock ($slots slot(s), $base)" >&2; printed=1; write_wait "$label" "${@:4}"; }
+    # A box-wide pass that skipped a free reserved slot and stood back for no older waiter waits only for meta's reserve (#3907):
+    # say so when such a wait starts and every HOLD_NOTE_EVERY seconds while it lasts; any other pass ends it.
+    if [ "$label" = box-wide ] && [ "$free_wait" = 1 ] && [ "$stood" = 0 ]; then
+      if [ "$rtold" -eq 0 ] || [ "$((SECONDS - rtold_at))" -ge "$HOLD_NOTE_EVERY" ]; then reserve_note "$slots"; rtold=1; rtold_at=$SECONDS; fi
+    else
+      rtold=0
+    fi
     [ "$waited" -ge "$TIMEOUT" ] && { echo "heavy: $label lock timeout ($base)" >&2; rm_wait; exit 75; }
     # A pass that skipped a free reserved slot was blocked only by the reservation, and a light pass held back for a box-wide
     # waiter only by that hold: neither counts. Any other pass does.
