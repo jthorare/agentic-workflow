@@ -37,7 +37,7 @@ public static class HomeReconcile
             }
             else if (Moved(current, want.Row))
             {
-                changed.Add(want with { Row = current with
+                var next = current with
                 {
                     Version = current.Version + 1,
                     Title = want.Row.Title,
@@ -46,7 +46,8 @@ public static class HomeReconcile
                     Links = want.Row.Links,
                     Actions = want.Row.Actions,
                     Source = want.Row.Source,
-                } });
+                };
+                changed.Add(want with { Row = next });
             }
         }
 
