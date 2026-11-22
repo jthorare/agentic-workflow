@@ -54,11 +54,18 @@ d wait-for --type TextBlock --contains "Self scheduling" --state visible --wait-
   || setup_fail "the Context page did not open on the concept list (no 'Self scheduling' card)"
 # The pin buttons show only while the row has the pointer or focus: focus the first row's open button (its name holds the concept name).
 # The open button has the automation id ConceptOpen.<concept id>; its name starts with the concept name (the id is read from the tree, not guessed).
-OPEN_ID="$(d search --type Button --limit 200 2>/dev/null | jq -r 'first(.matches[] | select((.automationId // "") | startswith("ConceptOpen.")) | select((.name // "") | startswith("Self scheduling,")) | .automationId)')"
-[ -n "$OPEN_ID" ] || setup_fail "no ConceptOpen.* button named Self scheduling"
-CONCEPT_ID="${OPEN_ID#ConceptOpen.}"   # the pin-slot buttons carry ConceptPin.<id> and ConceptEditPin.<id>; Billing's hidden Pin this comes first by index
-focus_row() { d action --automation-id "$OPEN_ID" --do focus >/dev/null 2>&1; }
-focus_row || setup_fail "could not focus the Self scheduling row"
+# Finds the row again each time: after a pin the row can carry a different concept id (a pin the map has no node for yet is a card of its own), so the id is read from the tree, never kept.
+find_row() {
+  local i
+  for i in $(seq 1 60); do
+    OPEN_ID="$(d search --type Button --limit 200 2>/dev/null | jq -r 'first(.matches[] | select((.automationId // "") | startswith("ConceptOpen.")) | select((.name // "") | startswith("Self scheduling,")) | .automationId)')"
+    [ -n "$OPEN_ID" ] && { CONCEPT_ID="${OPEN_ID#ConceptOpen.}"; return 0; }   # the pin-slot buttons carry ConceptPin.<id> and ConceptEditPin.<id>
+    sleep 0.5
+  done
+  return 1
+}
+focus_row() { find_row && d action --automation-id "$OPEN_ID" --do focus >/dev/null 2>&1; }
+focus_row || setup_fail "could not find and focus the Self scheduling row"
 wait_visible 30 --type Button --automation-id "ConceptPin.$CONCEPT_ID" || fail "step 1: no card carries Pin this"
 # No "Suggested" mark here: it shows only when pinned and unpinned concepts are mixed, and nothing is pinned yet.
 sleep 1
