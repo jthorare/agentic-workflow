@@ -78,3 +78,4 @@ AW_HOOK_PROVIDER # set by the Codex and Cursor adapters (config/hooks/adapters/c
 EDITOR # the user's own editor choice; sindri-pod.sh profile edit opens the profile in it (vi when unset)
 ZDOTDIR # zsh's own config dir (set by the user's shell setup); scripts/launcher-lib.sh looks for zsh startup files there
 REVIEWS_AS # set per call inside scripts/sindri-ui-fixture.sh (the PR author the reviews fixture acts as), never by a user
+AW_HOOK_WD_INNER # set by a hook for its own watchdog child (config/hooks/{done-gate,prompt-sort,sindri-tasks}.sh, #3778), never by a user

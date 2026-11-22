@@ -5,8 +5,42 @@
 # Prints one line per task not yet shown to this session (ids and numbers only, never finding text) and
 # records it in fix-tasks/seen/<session id>. Seen files older than 7 days are pruned on the way.
 # Starts no .NET process. Silent in child sessions (AW_JUDGE_CHILD, AW_SINDRI_CHILD), without a git origin
-# on GitHub, with nothing new, or on any error. Exits 0 always; bounded at 500 ms overall.
+# on GitHub, with nothing new, or on any error. Exits 0 always; bounded at 1500 ms of wall-clock time overall (AW_SINDRI_TASKS_BUDGET_MS), whole script included.
+# HOOK-FAILOPEN: only the budget timeout is logged (config/lib/failopen.sh, installed at <hooks>/lib/failopen.sh).
+failopen() {
+  (
+    set +eu
+    d="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" || exit 0
+    for f in "$d/lib/failopen.sh" "$d/../lib/failopen.sh"; do
+      if [ -f "$f" ]; then . "$f" && aw_failopen sindri-tasks "$@"; exit 0; fi
+    done
+  ) > /dev/null 2>&1 || true
+}
 [ -n "${AW_JUDGE_CHILD:-}${AW_SINDRI_CHILD:-}" ] && exit 0
+# HOOK-WATCHDOG (#3778): the host timeout is a backstop; the hook ends itself first. The whole script runs in a child bash
+# that a watchdog kills after a WALL-CLOCK budget (AW_SINDRI_TASKS_BUDGET_MS, default 1500 ms), counted from the hook's start and covering every
+# command, not a count of sleep passes. On a spent budget it writes one failopen `timeout` row and the hook prints nothing.
+# The output is printed only at the very end, so a kill never leaves a half answer. A normal run ends the watchdog.
+if [ -z "${AW_HOOK_WD_INNER:-}" ] && [ -z "${AW_SINDRI_CHILD:-}" ]; then
+  _aw_ms="${AW_SINDRI_TASKS_BUDGET_MS:-1500}"; case "$_aw_ms" in '' | *[!0-9]*) _aw_ms=1500 ;; esac
+  AW_HOOK_WD_INNER=1 "$BASH" "${BASH_SOURCE[0]}" "$@" 0<&0 &
+  _aw_child=$!
+  (
+    set +eu
+    sleep "$((_aw_ms / 1000)).$(printf '%03d' "$((_aw_ms % 1000))")" 2> /dev/null || exit 0
+    failopen timeout
+    pkill -P "$_aw_child" 2> /dev/null
+    kill -9 "$_aw_child" 2> /dev/null
+  ) > /dev/null 2>&1 < /dev/null &
+  _aw_wd=$!
+  trap 'kill -9 "$_aw_child" 2> /dev/null; kill "$_aw_wd" 2> /dev/null; exit 0' TERM
+  _aw_rc=0
+  { wait "$_aw_child"; } 2> /dev/null || _aw_rc=$?
+  pkill -P "$_aw_wd" 2> /dev/null
+  kill "$_aw_wd" 2> /dev/null
+  if [ "$_aw_rc" -eq 137 ]; then _aw_rc=0; fi
+  exit "$_aw_rc"
+fi
 command -v jq > /dev/null 2>&1 || exit 0
 INPUT="$(cat 2> /dev/null || true)"
 [ -n "$INPUT" ] || exit 0
@@ -49,15 +83,6 @@ work() {
 
 ( work ) > /dev/null 2>&1 &
 PID=$!
-TICKS=10
-while kill -0 "$PID" 2> /dev/null; do
-  if [ "$TICKS" -le 0 ]; then
-    kill -9 "$PID" 2> /dev/null
-    exit 0
-  fi
-  TICKS=$((TICKS - 1))
-  sleep 0.05
-done
 wait "$PID" 2> /dev/null || exit 0
 [ -s "$OUT_FILE" ] || exit 0
 HOME_DIR="${AW_SINDRI_HOME:-${AW_STATE_DIR:-$HOME/.agentic-workflow}/sindri-app}"

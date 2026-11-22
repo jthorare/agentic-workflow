@@ -16,6 +16,30 @@ failopen() {
     done
   ) > /dev/null 2>&1 || true
 }
+# HOOK-WATCHDOG (#3778): the host timeout is a backstop; the hook ends itself first. The whole script runs in a child bash
+# that a watchdog kills after a WALL-CLOCK budget (AW_DONE_GATE_BUDGET_MS, default 10000 ms), counted from the hook's start and covering every
+# command, not a count of sleep passes. On a spent budget it writes one failopen `timeout` row and the hook prints nothing.
+# The output is printed only at the very end, so a kill never leaves a half answer. A normal run ends the watchdog.
+if [ -z "${AW_HOOK_WD_INNER:-}" ] && [ -z "${AW_JUDGE_CHILD:-}" ]; then
+  _aw_ms="${AW_DONE_GATE_BUDGET_MS:-10000}"; case "$_aw_ms" in '' | *[!0-9]*) _aw_ms=10000 ;; esac
+  AW_HOOK_WD_INNER=1 "$BASH" "${BASH_SOURCE[0]}" "$@" 0<&0 &
+  _aw_child=$!
+  (
+    set +eu
+    sleep "$((_aw_ms / 1000)).$(printf '%03d' "$((_aw_ms % 1000))")" 2> /dev/null || exit 0
+    failopen timeout
+    pkill -P "$_aw_child" 2> /dev/null
+    kill -9 "$_aw_child" 2> /dev/null
+  ) > /dev/null 2>&1 < /dev/null &
+  _aw_wd=$!
+  trap 'kill -9 "$_aw_child" 2> /dev/null; kill "$_aw_wd" 2> /dev/null; exit 0' TERM
+  _aw_rc=0
+  { wait "$_aw_child"; } 2> /dev/null || _aw_rc=$?
+  pkill -P "$_aw_wd" 2> /dev/null
+  kill "$_aw_wd" 2> /dev/null
+  if [ "$_aw_rc" -eq 137 ]; then _aw_rc=0; fi
+  exit "$_aw_rc"
+fi
 # The images a hook sends the judge (config/lib/image-paths.sh, installed beside failopen.sh). Without it the hook sends none, as before.
 for _aw_f in "$(cd "$(dirname "${BASH_SOURCE[0]}")" 2> /dev/null && pwd)/lib/image-paths.sh" "$(cd "$(dirname "${BASH_SOURCE[0]}")" 2> /dev/null && pwd)/../lib/image-paths.sh"; do
   if [ -f "$_aw_f" ]; then . "$_aw_f" 2> /dev/null && break; fi
