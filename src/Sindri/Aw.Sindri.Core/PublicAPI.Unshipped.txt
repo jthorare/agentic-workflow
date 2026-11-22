@@ -24067,3 +24067,42 @@ static Aw.Sindri.Core.Messages.MessagesConnection.Config(string! workspace, stri
 static Aw.Sindri.Core.Messages.SlackBaseUrlRule.Resolve(string? overrideUrl, string? marker, string! token) -> System.Uri!
 static Aw.Sindri.Core.Messages.SlackBaseUrlRule.Slack.get -> System.Uri!
 const Aw.Sindri.Core.Events.EventTypes.MessagesSynced = "messages.synced" -> string!
+Aw.Sindri.Core.Messages.SlackRateBudget.Wait(string! method, System.DateTimeOffset now) -> System.TimeSpan
+const Aw.Sindri.Core.Messages.MessagesConnection.WorkspaceKey = "workspace" -> string!
+const Aw.Sindri.Core.Messages.MessagesConnection.UserKey = "user" -> string!
+const Aw.Sindri.Core.Messages.MessagesConnection.ProbeUrlKey = "probeUrl" -> string!
+static Aw.Sindri.Core.Messages.MessagesConnection.ProbeUrl.get -> System.Uri!
+const Aw.Sindri.Core.Messages.SlackBaseUrlRule.MarkerFile = ".slack-fixture-home" -> string!
+const Aw.Sindri.Core.Messages.SlackBaseUrlRule.MarkerHeader = "slack-fixture v1" -> string!
+Aw.Sindri.Core.Messages.SlackHostRule
+static Aw.Sindri.Core.Messages.SlackHostRule.IsSlack(System.Uri! url) -> bool
+Aw.Sindri.Core.Messages.SlackUserToken
+static Aw.Sindri.Core.Messages.SlackUserToken.Check(string? token) -> Aw.Kernel.Result<string!>!
+Aw.Sindri.Core.Messages.ISlackClient
+Aw.Sindri.Core.Messages.ISlackClient.AuthTest(string! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Messages.SlackAuth!>!>
+Aw.Sindri.Core.Messages.SlackAuth
+Aw.Sindri.Core.Messages.SlackAuth.<Clone>$() -> Aw.Sindri.Core.Messages.SlackAuth!
+Aw.Sindri.Core.Messages.SlackAuth.Deconstruct(out string! Workspace, out string! User, out string? Enterprise) -> void
+Aw.Sindri.Core.Messages.SlackAuth.Enterprise.get -> string?
+Aw.Sindri.Core.Messages.SlackAuth.Enterprise.init -> void
+Aw.Sindri.Core.Messages.SlackAuth.Equals(Aw.Sindri.Core.Messages.SlackAuth? other) -> bool
+Aw.Sindri.Core.Messages.SlackAuth.SlackAuth(string! Workspace, string! User, string? Enterprise) -> void
+Aw.Sindri.Core.Messages.SlackAuth.User.get -> string!
+Aw.Sindri.Core.Messages.SlackAuth.User.init -> void
+Aw.Sindri.Core.Messages.SlackAuth.Workspace.get -> string!
+Aw.Sindri.Core.Messages.SlackAuth.Workspace.init -> void
+override Aw.Sindri.Core.Messages.SlackAuth.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Messages.SlackAuth.GetHashCode() -> int
+override Aw.Sindri.Core.Messages.SlackAuth.ToString() -> string!
+static Aw.Sindri.Core.Messages.SlackAuth.operator !=(Aw.Sindri.Core.Messages.SlackAuth? left, Aw.Sindri.Core.Messages.SlackAuth? right) -> bool
+static Aw.Sindri.Core.Messages.SlackAuth.operator ==(Aw.Sindri.Core.Messages.SlackAuth? left, Aw.Sindri.Core.Messages.SlackAuth? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.MessagesNotConnected -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.MessagesTokenInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.MessagesScopeMissing -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.MessagesRateLimited -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.MessagesAppBlocked -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.MessagesWrongWorkspace -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.MessagesNotUserToken -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.MessagesSlackUnreachable -> Aw.Kernel.ErrorDefinition!
+static Aw.Sindri.Core.Messages.SlackUserToken.Prefix.get -> string!
+static Aw.Sindri.Core.Messages.SlackBaseUrlRule.FixtureTokenPrefix.get -> string!
