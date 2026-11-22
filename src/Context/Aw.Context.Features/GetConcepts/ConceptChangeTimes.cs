@@ -53,7 +53,7 @@ internal sealed class ConceptChangeTimes(IFileHistory history, IRepoReader repos
                 var missing = paths.Where(p => !state.Asked.Contains(p)).ToList();
                 if (missing.Count > 0 && state.Fill is null)
                 {
-                    state.Fill = Task.Run(() => Fill(repo, state, missing));
+                    state.Fill = Task.Run(() => Fill(repo, state, missing), CancellationToken.None);   // a fill outlives the read that started it
                 }
             }
         }

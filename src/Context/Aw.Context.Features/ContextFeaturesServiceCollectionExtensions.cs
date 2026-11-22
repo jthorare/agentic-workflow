@@ -3,14 +3,11 @@ using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
-using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
-using Aw.Context.Core.Eval.MapQuality;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Glossary;
 using Aw.Context.Core.Graph;
-using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Library;
 using Aw.Context.Core.Linear;
@@ -32,18 +29,12 @@ using Aw.Context.Core.Symbols;
 using Aw.Context.Core.Sync;
 using Aw.Context.Core.Walks;
 using Aw.Context.Core.WholeMap;
-using Aw.Context.Features.Adjudicate;
 using Aw.Context.Features.ApplyReviewFile;
 using Aw.Context.Features.BuildMap;
 using Aw.Context.Features.CheckMap;
 using Aw.Context.Features.CheckPages;
-using Aw.Context.Features.CheckRetention;
-using Aw.Context.Features.CheckStore;
 using Aw.Context.Features.CleanMap;
 using Aw.Context.Features.EmbedRecords;
-using Aw.Context.Features.EvalMap;
-using Aw.Context.Features.EvalProbes;
-using Aw.Context.Features.EvalPurge;
 using Aw.Context.Features.ExportMap;
 using Aw.Context.Features.ExportReview;
 using Aw.Context.Features.FindPath;
@@ -52,7 +43,6 @@ using Aw.Context.Features.GetConceptGlossary;
 using Aw.Context.Features.GetConceptMembers;
 using Aw.Context.Features.GetConcepts;
 using Aw.Context.Features.GetFileMap;
-using Aw.Context.Features.GetHistory;
 using Aw.Context.Features.GetLenses;
 using Aw.Context.Features.GetPageFacts;
 using Aw.Context.Features.GetPages;
@@ -83,7 +73,6 @@ using Aw.Context.Features.ReviewHistory;
 using Aw.Context.Features.ReviewMap;
 using Aw.Context.Features.ReviewQueue;
 using Aw.Context.Features.RunBacktest;
-using Aw.Context.Features.RunUpkeep;
 using Aw.Context.Features.ScanConcepts;
 using Aw.Context.Features.SearchMap;
 using Aw.Context.Features.ShowMapStatus;
@@ -100,7 +89,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 namespace Aw.Context.Features;
 
 /// <summary>Registers Aw.Context.Features: the IContextEngine facade and the slices behind it.</summary>
-public static class ContextFeaturesServiceCollectionExtensions
+public static partial class ContextFeaturesServiceCollectionExtensions
 {
     /// <summary>Adds the facade (IContextEngine, and IContextMap behind it) and every Context use case as an IService. The ports come from Aw.Context.Infrastructure.</summary>
     /// <param name="services">The service collection.</param>
@@ -141,11 +130,6 @@ public static class ContextFeaturesServiceCollectionExtensions
             ? new ContextLinearWrites(writes, reads, services.GetRequiredService<ILinearWriteThrough>())
             : new UnconfiguredContextLinearWrites();
 
-    private static IServiceCollection AddMapHealthChecks(this IServiceCollection services) => services
-        .AddScoped<IService<CheckRetentionRequest, MapHealth>, CheckRetentionService>()
-        .AddScoped<IService<CheckStoreRequest, MapHealth>, CheckStoreService>()
-        .AddScoped<IService<RunUpkeepRequest, StoreUpkeep?>, RunUpkeepService>()
-        .AddScoped<MapHealthChecks>();
 
     private static IServiceCollection AddRecordSearch(this IServiceCollection services) => services.AddScoped<RecordSearch>();
 
@@ -278,24 +262,4 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IService<CleanMapRequest, CleanupReport>, CleanMapService>()
         .AddScoped<IService<ScanConceptsRequest, ConceptScanReport>, ScanConceptsService>()
         .AddScoped<IConceptScanSearch, ConceptScanSearch>();
-
-    private static IServiceCollection AddHistory(this IServiceCollection services) => services
-        .AddScoped<IService<GetHistoryRequest, HistoryView>, GetHistoryService>()
-        .AddScoped<HistoryPipeline>()
-        .AddScoped<IContextHistory>(static sp => sp.GetRequiredService<ContextGraph>())
-        .AddScoped<IContextConcepts>(static sp => sp.GetRequiredService<ContextGraph>());
-
-    private static IServiceCollection AddBacktest(this IServiceCollection services) => services
-        .AddScoped<IService<EvalProbesRequest, ProbeRun>, EvalProbesService>()
-        .AddScoped<IService<BacktestRequest, BacktestRun>, RunBacktestService>()
-        .AddScoped<IService<MapQualityRequest, MapQualityRun>, EvalMapService>()
-        .AddScoped<IService<EvalPurgeRequest, EvalPurgeReport>, EvalPurgeService>()
-        .AddScoped<ContextEval>()
-        .AddScoped<QueryPipeline>()
-        .AddScoped<IArmQuery, ArmQuery>()
-        .AddScoped<AsOfMapBuilder>()
-        .AddScoped<ArmRunner>()
-        .AddScoped<CorpusLoader>()
-        .AddScoped<IAdjudicator, Adjudicator>()
-        .AddScoped<SampleScorer>();
 }
