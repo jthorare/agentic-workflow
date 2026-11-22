@@ -164,7 +164,7 @@
           <!-- The diff as one flat list of rows (#2776): group headers, file headers, hunk headers and lines. The panel builds only the rows in the page's
                viewport (it reads the effective viewport of the page's ScrollViewer), so a 5,000-line PR builds a screenful. A file's card is drawn row by row:
                the file row opens it (top edge), every row draws its sides, the file's last row closes it (bottom edge and the 8 px gap). -->
-          <ItemsControl x:Name="ReviewDiffRows" ItemsSource="{Binding Rows}">
+          <ItemsControl x:Name="ReviewDiffRows" ItemsSource="{Binding Rows}" Focusable="True" IsTabStop="False" ContainerPrepared="OnDiffRowPrepared" ContainerClearing="OnDiffRowClearing">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
                 <VirtualizingStackPanel />

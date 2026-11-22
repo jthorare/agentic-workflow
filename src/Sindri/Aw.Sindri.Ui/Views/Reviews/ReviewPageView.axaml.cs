@@ -247,9 +247,9 @@ internal sealed partial class ReviewPageView : UserControl
 
     private void OnShowFile(object? sender, RoutedEventArgs e)
     {
-        if (sender is Control { DataContext: ReviewDiffFileViewModel file })
+        if (sender is Control { DataContext: ReviewDiffFileViewModel file } button)
         {
-            file.Show();
+            ShowFile(button, file);
         }
     }
 
