@@ -156,8 +156,11 @@ internal sealed class LedgerDatabase : IDisposable
     /// <summary>The first migration with 'workflow_run.mode' and 'test_options' and the 'workflow_pin' table (Workflows page spec §3.1, §3.2); the run store reads and writes the columns, so they are always on a file Sindri opens.</summary>
     internal const int TestRunsVersion = 21;
 
+    /// <summary>The first migration with 'workflow_run.seen_at' (Home spec §3.2, E1); the run store reads the column in every run query.</summary>
+    internal const int RunSeenVersion = 22;
+
     /// <summary>The first migration with 'proposal', 'proposal_source' and 'proposal_public' (issue 3787, piece 3); reads of an older file find no proposal. The number is renumbered at the final main merge.</summary>
-    internal const int ProposalsVersion = 22;
+    internal const int ProposalsVersion = 23;
 
     private static IReadOnlyList<Migration> LoadMigrations()
     {

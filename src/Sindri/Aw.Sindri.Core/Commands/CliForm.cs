@@ -57,7 +57,7 @@ public sealed partial record CliForm
         if (id.Value is not { } value || !SafeValue.IsMatch(value))
         {
             return SindriErrors.InvalidInput.With(
-                $"The value for <{Printable(placeholder)}> isn't safe on a command line: letters, digits, '.', '_', ':' and '-' only, starting with a letter or digit");
+                $"The value for <{Printable(placeholder)}> isn't safe on a command line: letters, digits, '.', '_', ':', '@' and '-' only, starting with a letter or digit");
         }
 
         var filled = parts.Select(part => part.Replace(token, value, StringComparison.Ordinal));
@@ -97,7 +97,7 @@ public sealed partial record CliForm
     [GeneratedRegex("^sindri(?: " + Part + "| \\[" + Part + "(?: " + Part + ")*\\])*\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }
 
-    [GeneratedRegex("^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex("^[A-Za-z0-9][A-Za-z0-9._:@-]{0,199}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex SafeValue { get; }
 
     [GeneratedRegex("^[a-zA-Z]+\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]

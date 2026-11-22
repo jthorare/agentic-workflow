@@ -129,8 +129,8 @@ internal sealed partial class TodoNoteCardViewModel
                 (Stage, _checkedVault, _checkedNote) = (TodoNoteCardStage.Syncing, set.Vault, set.Note);
             }
         }
-        else if (Stage is TodoNoteCardStage.Reading or TodoNoteCardStage.NoVaults or TodoNoteCardStage.Syncing)
-        {
+        else if (Stage is TodoNoteCardStage.Reading or TodoNoteCardStage.NoVaults or TodoNoteCardStage.Syncing || (Stage == TodoNoteCardStage.Form && Vaults.Count == 0))
+        {   // why the last case (#3931): the fields with no vault left to pick can't be saved, so the card says to add a vault; fields with a vault stay, the owner may be typing
             (_note, IsConfirmingStop) = (null, false);
             Stage = Vaults.Count > 0 ? TodoNoteCardStage.Form : TodoNoteCardStage.NoVaults;
         }

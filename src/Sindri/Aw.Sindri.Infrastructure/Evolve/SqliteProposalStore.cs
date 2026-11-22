@@ -8,7 +8,7 @@ using Aw.Sindri.Infrastructure.Ledger;
 namespace Aw.Sindri.Infrastructure.Evolve;
 
 /// <summary>
-/// The 'proposal', 'proposal_source' and 'proposal_public' tables of the ledger file (migration 22, issue 3787). A ledger older than 22 reads as no proposals.
+/// The 'proposal', 'proposal_source' and 'proposal_public' tables of the ledger file (migration 23, issue 3787). A ledger older than 23 reads as no proposals.
 /// The caller scrubs text before it saves; the store writes what it is given.
 /// </summary>
 /// <param name="database">The ledger file.</param>
