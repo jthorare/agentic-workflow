@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
@@ -45,7 +46,10 @@ public sealed class MessageTsJsonTests
     [InlineData("{\"ts\":\"1767777120.000100\",\"before\":\"x\"}")]
     public void A_malformed_ts_is_a_json_error(string json)
     {
-        _ = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize(json, MessagesJsonContext.Default.MessageTsHolder));
+        // the AwJson options' type info (camelCase names): the context's Default is PascalCase, so "ts" would match no property and nothing would be read
+        var holder = (JsonTypeInfo<MessageTsHolder>)_json.GetTypeInfo(typeof(MessageTsHolder));
+
+        _ = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize(json, holder));
         Assert.Equal(KernelErrors.Invalid.Code, AwJson.Deserialize<MessageTsHolder>(Encoding.UTF8.GetBytes(json), _json).Error.Code);
     }
 
