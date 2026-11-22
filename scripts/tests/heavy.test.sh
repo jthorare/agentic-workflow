@@ -183,6 +183,7 @@ check "a path-qualified dotnet --version stays light" "$(mode_of "$STUB/dotnet" 
 check "dotnet clean stays light" "$(mode_of dotnet clean)" "light"
 check "a path-qualified dotnet clean stays light" "$(mode_of "$STUB/dotnet" clean)" "light"
 check "a path-qualified dotnet test --no-build stays light" "$(mode_of "$STUB/dotnet" test x --no-build)" "light"
+check "a path argument ending in /dotnet before build counts (pinned as is, review of #3882): expensive" "$(mode_of sh -c "$sh_mode" x /srv/dotnet build)" "expensive"
 check "a word that only ends in dotnet is not dotnet: light" "$(mode_of sh -c "$sh_mode" x mydotnet build)" "light"
 for w in "npm ci" "npx vitest"; do
   # shellcheck disable=SC2086
