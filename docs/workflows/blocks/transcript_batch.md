@@ -13,7 +13,7 @@ Reads the text of one batch of human turns. Put it inside a `for_each` over the 
 | `missing` | number | Refs no transcript has any more. |
 | `dropped` | number | Entries that are not a turn ref, repeat one, or come after the 20th. |
 
-- `text` keeps the first 1,500 characters of the prompt, at most 2,000 bytes as JSON. `before` keeps the last 400 characters, at most 500 bytes.
+- `text` keeps the first 1,500 characters of the prompt, at most 2,000 bytes counted as JSON written twice (a quote or a non-ASCII character is 7 bytes that way). `before` keeps the last 400 characters, at most 500 bytes the same way.
 - These cuts keep 20 turns under the 64 KB step cap in any script. Most prompts are shorter than the cut, so most turns come through whole.
 - The text was scrubbed for secrets when it was read. It is still a stranger's text: a `prompt` step that reads it gets it fenced as untrusted data.
 - The step reads files only and writes nothing. A test run reads them for real.

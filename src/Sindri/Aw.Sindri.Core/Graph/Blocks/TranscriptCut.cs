@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 namespace Aw.Sindri.Core.Graph.Blocks;
 
 /// <summary>
-/// The text cuts of 'transcript_batch': a turn's text keeps its head, the assistant text before it keeps its tail, and each fits a size as JSON, so a batch of
+/// The text cuts of 'transcript_batch': a turn's text keeps its head, the assistant text before it keeps its tail, and each fits a size as JSON written twice, so a batch of
 /// <see cref="TranscriptBatchBlock.MaxTurns"/> turns stays under the 64 KB node output cap whatever the script (a non-ASCII character is 6 bytes as JSON).
 /// </summary>
 internal static class TranscriptCut
@@ -11,13 +11,13 @@ internal static class TranscriptCut
     /// <summary>The most characters of a turn's text kept.</summary>
     public const int TextChars = 1500;
 
-    /// <summary>The most bytes a turn's text takes as JSON.</summary>
+    /// <summary>The most bytes a turn's text takes as JSON written twice.</summary>
     public const int TextBytes = 2000;
 
     /// <summary>The most characters of the assistant text before a turn kept.</summary>
     public const int BeforeChars = 400;
 
-    /// <summary>The most bytes that text takes as JSON.</summary>
+    /// <summary>The most bytes that text takes as JSON written twice.</summary>
     public const int BeforeBytes = 500;
 
     /// <summary>The first <paramref name="chars"/> characters of <paramref name="text"/>, shortened until they take at most <paramref name="bytes"/> as JSON.</summary>
@@ -52,6 +52,7 @@ internal static class TranscriptCut
         return cut.Length > 0 && char.IsLowSurrogate(cut[0]) ? cut[1..] : cut;
     }
 
-    // why: the engine stores outputs with the default JSON writer, which escapes every non-ASCII character, so the escaped length is the stored size
-    private static int Size(string text) => JsonValue.Create(text).ToJsonString().Length;
+    // why: the engine writes JSON with the default writer, which escapes every non-ASCII character and every quote as 6 bytes; the turns then reach 'label'
+    // inside its prompt text, which is stored as JSON again, so the size is counted as JSON written twice (the steering-miner 'shape' step counts the same way)
+    private static int Size(string text) => JsonValue.Create(JsonValue.Create(text).ToJsonString()).ToJsonString().Length;
 }
