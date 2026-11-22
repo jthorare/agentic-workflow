@@ -125,10 +125,12 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
 
     /// <summary>Builds the 'collect' node's output from the item rows, or says why it can't be: a value was cut at 64 KB, or all the values together do not fit in the 64 KB the store keeps.</summary>
     /// <param name="rows">The collect rows of items 1 to N that succeeded, in item order.</param>
+    /// <param name="skipped">How many items a body node with 'onFailure: skip-item' dropped.</param>
     /// <returns>The output text, or the failure.</returns>
-    internal static (string? Output, string? Failure) Gather(IReadOnlyList<NodeRun> rows)
+    internal static (string? Output, string? Failure) Gather(IReadOnlyList<NodeRun> rows, int skipped = 0)
     {
         ArgumentNullException.ThrowIfNull(rows);
+        _ = skipped;   // red stub (#3806)
         var cut = rows.FirstOrDefault(static r => r.Truncated);
         if (cut is not null)
         {
