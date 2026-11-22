@@ -126,7 +126,7 @@ public sealed class InMemoryViewStore(JsonSerializerOptions options) : IViewStor
     }
 
     /// <inheritdoc/>
-    /// <remarks>The rows keep no sequence here, so the mark is the row count and a hash of every key and row text: equal only when the rows are.</remarks>
+    /// <remarks>The rows keep no sequence here, so the mark is a hash of every key and row text, then the row count: equal only when the rows are.</remarks>
     public ValueTask<Result<string>> Mark(string view, CancellationToken cancellationToken)
     {
         lock (_gate)
@@ -145,7 +145,7 @@ public sealed class InMemoryViewStore(JsonSerializerOptions options) : IViewStor
                 hash.AppendData([0]);
             }
 
-            var mark = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{table.Count}:{Convert.ToHexStringLower(hash.GetHashAndReset())}");
+            var mark = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{Convert.ToHexStringLower(hash.GetHashAndReset())}:{table.Count}");
             return ValueTask.FromResult<Result<string>>(mark);
         }
     }
