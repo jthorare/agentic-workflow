@@ -13,7 +13,7 @@ public enum HomeFactKind
 
     /// <summary>The object reference, shown in mono.</summary>
     [JsonStringEnumMemberName("object")]
-    Object,
+    ObjectRef,
 
     /// <summary>The person or session it comes from.</summary>
     [JsonStringEnumMemberName("from")]

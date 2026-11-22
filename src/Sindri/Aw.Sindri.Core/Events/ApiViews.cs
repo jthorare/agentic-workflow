@@ -72,7 +72,7 @@ public static class ApiViews
     /// <summary>GET /sindri/projects and GET /sindri/projects/{id}: the Projects page.</summary>
     public const string Projects = "projects";
 
-    /// <summary>GET /sindri/home and GET /sindri/home/rows/{id}: the Home page (home spec §8).</summary>
+    /// <summary>GET /sindri/home, /sindri/home/rows/{id}, /sindri/home/done and /sindri/home/rank/{id}: the Home page (home spec §8).</summary>
     public const string Home = "home";
 
     /// <summary>Every view name.</summary>

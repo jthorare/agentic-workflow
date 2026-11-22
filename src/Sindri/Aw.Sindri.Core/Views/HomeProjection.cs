@@ -111,21 +111,23 @@ internal sealed class HomeProjection(EventFactory events) : IProjection
             return held.IsError ? held.Error : Unit.Value;
         }
 
-        var next = row with
-        {
-            Version = p.Version,
-            Title = p.Title ?? row.Title,
-            Facts = p.Facts ?? row.Facts,
-            WaitsOn = p.WaitsOn ?? row.WaitsOn,
-            Rank = p.Rank ?? row.Rank,
-            BlocksList = p.BlocksList ?? row.BlocksList,
-            Links = p.Links ?? row.Links,
-            Actions = p.Actions ?? row.Actions,
-            Source = p.Source ?? row.Source,
-        };
-        var put = await rows.Put(ViewNames.HomeRows, p.Id.Value, next, cancellationToken).ConfigureAwait(false);
+        var put = await rows.Put(ViewNames.HomeRows, p.Id.Value, Fold(row, p), cancellationToken).ConfigureAwait(false);
         return put.IsError || p.Edges is null ? put : await ReplaceEdges(rows, p.Id.Value, p.Edges, cancellationToken).ConfigureAwait(false);
     }
+
+    // A change names only the fields that moved; the rest stay as the row holds them.
+    private static HomeRow Fold(HomeRow row, HomeRowChanged p) => row with
+    {
+        Version = p.Version,
+        Title = p.Title ?? row.Title,
+        Facts = p.Facts ?? row.Facts,
+        WaitsOn = p.WaitsOn ?? row.WaitsOn,
+        Rank = p.Rank ?? row.Rank,
+        BlocksList = p.BlocksList ?? row.BlocksList,
+        Links = p.Links ?? row.Links,
+        Actions = p.Actions ?? row.Actions,
+        Source = p.Source ?? row.Source,
+    };
 
     private async ValueTask<Result<Unit>> Cleared(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {

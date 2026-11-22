@@ -1,4 +1,5 @@
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Home;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Features.GetHomeRow;
 using Aw.Sindri.Testing;
@@ -69,6 +70,41 @@ public sealed class GetHomeRowTests
         var one = (await Service().Handle(new GetHomeRowRequest(HomeRowId.From(HomeFixture.Dm)), Token)).Value;
 
         Assert.Equal((HomeFixture.Dm, string.Empty, 0), (one.Row.Id.Value, one.Row.Title, one.Row.Facts.Count));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_session_reads_a_dm_row_with_its_id_and_kind_and_no_body()
+    {
+        using var session = _slice.Callers.Enter(A.Caller().Session().InRepo("demo").Build());
+
+        var one = (await Service().Handle(new GetHomeRowRequest(HomeRowId.From(HomeFixture.Dm)), Token)).Value;
+
+        Assert.Equal((HomeFixture.Dm, HomeKind.Dm), (one.Row.Id.Value, one.Row.Kind));
+        Assert.Equal(string.Empty, one.Row.Title);
+        Assert.Empty(one.Row.Facts);
+        Assert.Empty(one.Row.BlocksList);
+        Assert.Empty(one.Row.Links);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_session_reads_its_own_repos_row_whole()
+    {
+        using var session = _slice.Callers.Enter(A.Caller().Session().InRepo("demo").Build());
+
+        var one = (await Service().Handle(new GetHomeRowRequest(HomeRowId.From(HomeFixture.Review)), Token)).Value;
+
+        Assert.NotEmpty(one.Row.Title);
+        Assert.NotEmpty(one.Row.BlocksList);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Another_repos_row_is_SND_HOME_002_for_a_session()
+    {
+        using var session = _slice.Callers.Enter(A.Caller().Session().InRepo("other").Build());
+
+        var one = await Service().Handle(new GetHomeRowRequest(HomeRowId.From(HomeFixture.Review)), Token);
+
+        Assert.Equal("SND-HOME-002", one.Error.Code);
     }
 
     [Fact, Trait("Lane", "unit")]

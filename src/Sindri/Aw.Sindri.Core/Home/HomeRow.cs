@@ -19,4 +19,5 @@ namespace Aw.Sindri.Core.Home;
 /// <param name="DoneAt">When a done row was marked done, or null.</param>
 /// <param name="Actions">Action ids that apply, the first is the primary.</param>
 /// <param name="Source">Where the facts came from.</param>
-public sealed record HomeRow(HomeRowId Id, long Version, HomeKind Kind, HomeGroup Group, string Title, IReadOnlyList<HomeFact> Facts, string WaitsOn, DateTimeOffset Since, HomeRank Rank, IReadOnlyList<HomeBlocked> BlocksList, IReadOnlyList<HomeLink> Links, HomeState State, DateTimeOffset? SnoozeUntil, DateTimeOffset? DoneAt, IReadOnlyList<string> Actions, HomeSource Source);
+/// <param name="Repo">The profile repo the row is about, as its collector names it (home spec §9: a session reads only its repo's rows), or null for a row of no repo.</param>
+public sealed record HomeRow(HomeRowId Id, long Version, HomeKind Kind, HomeGroup Group, string Title, IReadOnlyList<HomeFact> Facts, string WaitsOn, DateTimeOffset Since, HomeRank Rank, IReadOnlyList<HomeBlocked> BlocksList, IReadOnlyList<HomeLink> Links, HomeState State, DateTimeOffset? SnoozeUntil, DateTimeOffset? DoneAt, IReadOnlyList<string> Actions, HomeSource Source, RepoName? Repo = null);

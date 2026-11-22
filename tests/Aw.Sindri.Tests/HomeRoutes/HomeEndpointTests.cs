@@ -1,9 +1,9 @@
+using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Home;
 using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.ApiGoldens;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +20,7 @@ public sealed class HomeEndpointTests
     private static Task<GoldenHost> Start(InMemoryHomeView view) =>
         GoldenHost.Start(temporary: true, Token, ItemScenarios.ProfileYaml, extra: services =>
         {
-            services.RemoveAll<IHomeViewReader>();
+            _ = services.RemoveAll<IHomeViewReader>();
             _ = services.AddSingleton<IHomeViewReader>(view);
         });
 
@@ -30,7 +30,7 @@ public sealed class HomeEndpointTests
         var view = HomeFixture.View();
         for (var i = 1; i <= 70; i++)
         {
-            view.Put(HomeFixture.Row($"gh:review:a/b#{i}", position: 100 + i, i % 2 == 0 ? HomeGroup.Moving : HomeGroup.NeedsYou));
+            view.Put(HomeFixture.Row($"gh:review:a/b#{i.ToString(CultureInfo.InvariantCulture)}", position: 100 + i, i % 2 == 0 ? HomeGroup.Moving : HomeGroup.NeedsYou));
         }
 
         await using var host = await Start(view);

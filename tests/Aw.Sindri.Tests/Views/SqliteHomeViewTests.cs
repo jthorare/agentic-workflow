@@ -22,7 +22,7 @@ public sealed class SqliteHomeViewTests
 
         var page = (await view.List(new HomeQuery(Group: null, [HomeState.Open], After: null, Limit: 0), Token)).Value;
 
-        Assert.Equal(["gh:pr:a#1", "gh:pr:b#2"], page.Rows.Select(static r => r.Id.Value));
+        Expect.Sequence(["gh:pr:a#1", "gh:pr:b#2"], page.Rows.Select(static r => r.Id.Value));
         Assert.Equal(2, page.Counts.NeedsYou);
     }
 

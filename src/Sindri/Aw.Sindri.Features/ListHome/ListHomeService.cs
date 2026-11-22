@@ -9,7 +9,7 @@ using Aw.Sindri.Core.Views;
 namespace Aw.Sindri.Features.ListHome;
 
 /// <summary>
-/// A page of Home rows (home spec §8): one read of the Home view for the open rows (or the snoozed ones), each group in ranked order. A session sees no body of a row with no repo (<see cref="HomeSessionCut"/>).
+/// A page of Home rows (home spec §8): one read of the Home view for the open rows (or the snoozed ones), each group in ranked order. A session sees only its repo's rows, and no body of a row with no repo (<see cref="HomeSessionCut"/>); its counts cover what it sees.
 /// The page says 'behind' when the views trail the ledger.
 /// </summary>
 /// <param name="view">The Home view.</param>
@@ -26,7 +26,7 @@ internal sealed class ListHomeService(IHomeViewReader view, IProjectorStatus sta
         }
 
         HomeState[] states = [request.Snoozed ? HomeState.Snoozed : HomeState.Open];
-        var page = await view.List(new HomeQuery(request.Split, states, request.After, request.Limit), cancellationToken).ConfigureAwait(false);
+        var page = await view.List(new HomeQuery(request.Split, states, request.After, request.Limit, HomeSessionCut.ScopeOf(caller)), cancellationToken).ConfigureAwait(false);
         if (page.IsError)
         {
             return page.Error;

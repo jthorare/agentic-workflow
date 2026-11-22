@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Home;
 using Aw.Sindri.Core.Views;
@@ -38,7 +39,7 @@ public sealed class ListHomeTests
     {
         for (var i = 1; i <= 70; i++)
         {
-            _view.Put(HomeFixture.Row($"gh:review:a/b#{i}", position: 100 + i, i % 2 == 0 ? HomeGroup.Moving : HomeGroup.NeedsYou));
+            _view.Put(HomeFixture.Row($"gh:review:a/b#{i.ToString(CultureInfo.InvariantCulture)}", position: 100 + i, i % 2 == 0 ? HomeGroup.Moving : HomeGroup.NeedsYou));
         }
 
         using var human = _slice.Callers.Enter(A.Caller().Human().Build());
@@ -61,7 +62,7 @@ public sealed class ListHomeTests
         var moving = (await Service().Handle(new ListHomeRequest(Split: HomeGroup.Moving), Token)).Value;
 
         Assert.Empty(moving.NeedsYou);
-        Assert.Equal(["session:claude-code/ab12cd34"], moving.Moving.Select(r => r.Id.Value));
+        Expect.Sequence(["session:claude-code/ab12cd34"], moving.Moving.Select(r => r.Id.Value));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -72,14 +73,14 @@ public sealed class ListHomeTests
 
         var snoozed = (await Service().Handle(new ListHomeRequest(Snoozed: true), Token)).Value;
 
-        Assert.Equal(["gh:review:a/b#7"], snoozed.NeedsYou.Select(r => r.Id.Value));
+        Expect.Sequence(["gh:review:a/b#7"], snoozed.NeedsYou.Select(r => r.Id.Value));
         Assert.Equal(1, snoozed.Counts.Snoozed);
     }
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_session_gets_no_body_for_a_row_with_no_repo()
     {
-        using var session = _slice.Callers.Enter(A.Caller().Session().Build());
+        using var session = _slice.Callers.Enter(A.Caller().Session().InRepo("demo").Build());
 
         var page = (await Service().Handle(new ListHomeRequest(), Token)).Value;
 
@@ -89,9 +90,47 @@ public sealed class ListHomeTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_session_sees_only_its_repos_rows_and_counts_only_those()
+    {
+        _view.Put(HomeFixture.Row("gh:review:jthorare/other#7", position: 7, repo: "other"));
+        _view.Put(HomeFixture.Row("lane:recycle:qa", position: 8, kind: HomeKind.LaneRecycle, repo: null));
+        using var session = _slice.Callers.Enter(A.Caller().Session().InRepo("demo").Build());
+
+        var page = (await Service().Handle(new ListHomeRequest(), Token)).Value;
+
+        Expect.Sequence([HomeFixture.Meta, HomeFixture.Review, HomeFixture.Ready3099, HomeFixture.Ideas, HomeFixture.Ready3101, HomeFixture.Dm], page.NeedsYou.Select(r => r.Id.Value));
+        Assert.Equal(6, page.Counts.NeedsYou);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_session_with_no_repo_sees_only_the_rows_of_no_repo_and_no_body()
+    {
+        using var session = _slice.Callers.Enter(A.Caller().Session().Build());
+
+        var page = (await Service().Handle(new ListHomeRequest(), Token)).Value;
+
+        var dm = Assert.Single(page.NeedsYou);
+        Assert.Equal(HomeFixture.Dm, dm.Id.Value);
+        Assert.Equal(string.Empty, dm.Title);
+        Assert.Equal(1, page.Counts.NeedsYou);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_owner_sees_every_repos_rows()
+    {
+        _view.Put(HomeFixture.Row("gh:review:jthorare/other#7", position: 7, repo: "other"));
+        using var human = _slice.Callers.Enter(A.Caller().Human().Build());
+
+        var page = (await Service().Handle(new ListHomeRequest(), Token)).Value;
+
+        Assert.Contains("gh:review:jthorare/other#7", page.NeedsYou.Select(r => r.Id.Value), StringComparer.Ordinal);
+        Assert.Equal(7, page.Counts.NeedsYou);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Degraded_says_behind_when_the_views_trail_the_ledger()
     {
-        _views.Progress.Publish(new ViewsStatus(5, 9, _slice.Clock.GetUtcNow(), Rebuilding: false, Stalled: false, null, null));
+        _views.Progress.Publish(new ViewsStatus(5, 9, _slice.Clock.GetUtcNow(), Rebuilding: false, Stalled: false, StalledAt: null, StalledType: null));
         using var human = _slice.Callers.Enter(A.Caller().Human().Build());
 
         var page = (await Service().Handle(new ListHomeRequest(), Token)).Value;

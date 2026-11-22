@@ -7,7 +7,7 @@ using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Features.GetHomeRow;
 
-/// <summary>One Home row by id, in any state (home spec §8): a read of the Home view; SND-HOME-002 when it holds none. A session sees no body of a row with no repo (<see cref="HomeSessionCut"/>).</summary>
+/// <summary>One Home row by id, in any state (home spec §8): a read of the Home view; SND-HOME-002 when it holds none. A session sees no body of a row with no repo, and another repo's row is not found for it (<see cref="HomeSessionCut"/>).</summary>
 /// <param name="view">The Home view.</param>
 /// <param name="status">How fresh the views are.</param>
 /// <param name="callers">The caller; a read needs one.</param>
@@ -27,7 +27,7 @@ internal sealed class GetHomeRowService(IHomeViewReader view, IProjectorStatus s
             return row.Error;
         }
 
-        return row.Value is { } found
+        return row.Value is { } found && HomeSessionCut.Sees(caller, found)
             ? new GetHomeRowResponse(status.Current.AsOf, HomeSessionCut.For(caller, found))
             : SindriErrors.HomeNotFound.With($"No Home row {request.Id.Value}.");
     }

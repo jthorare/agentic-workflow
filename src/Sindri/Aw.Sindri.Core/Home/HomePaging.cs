@@ -11,7 +11,7 @@ public static class HomePaging
 
     /// <summary>
     /// Orders <paramref name="rows"/> by rank position and then id (ordinal), keeps those of the query's group and states, starts after the row named by its cursor
-    /// (an unknown cursor starts at the top) and takes one page. The counts cover all of <paramref name="rows"/>.
+    /// (an unknown cursor starts at the top) and takes one page. The counts cover all of <paramref name="rows"/> the query's scope sees: a session's page and counts leave out other repos' rows.
     /// </summary>
     /// <param name="rows">Every row of the view.</param>
     /// <param name="query">What to read.</param>
@@ -20,6 +20,11 @@ public static class HomePaging
     {
         ArgumentNullException.ThrowIfNull(rows);
         ArgumentNullException.ThrowIfNull(query);
+        if (query.Scope is { } scope)
+        {
+            rows = [.. rows.Where(scope.Sees)];
+        }
+
         var counts = new HomeCounts(
             rows.Count(static r => r is { State: HomeState.Open, Group: HomeGroup.NeedsYou }),
             rows.Count(static r => r is { State: HomeState.Open, Group: HomeGroup.Moving }),
