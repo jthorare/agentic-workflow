@@ -49,8 +49,11 @@ internal sealed class ConceptIndex
     internal bool Has(string key) => _membersOf.ContainsKey(key);
 
     /// <summary>The distinct code nodes the member features of <paramref name="members"/> are implemented by.</summary>
-    internal int CodeOf(IEnumerable<string> members) =>
-        members.Where(m => Known[m].Key.Kind == NodeKind.Feature).SelectMany(m => _implementedBy.TryGetValue(m, out var code) ? code : []).Distinct(StringComparer.Ordinal).Count();
+    internal int CodeOf(IEnumerable<string> members) => CodeKeysOf(members).Count();
+
+    /// <summary>The distinct keys ('code:src/a.cs') of the code nodes the member features of <paramref name="members"/> are implemented by.</summary>
+    internal IEnumerable<string> CodeKeysOf(IEnumerable<string> members) =>
+        members.Where(m => Known[m].Key.Kind == NodeKind.Feature).SelectMany(m => _implementedBy.TryGetValue(m, out var code) ? code : []).Distinct(StringComparer.Ordinal);
 
     private static List<GraphNode> SortedConcepts(IReadOnlyDictionary<string, GraphNode> known) =>
         [.. known.Values.Where(n => n.Key.Kind == NodeKind.Concept && n.Key.Value != ConceptKeys.Other)
