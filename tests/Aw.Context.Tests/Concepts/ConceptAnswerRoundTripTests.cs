@@ -67,6 +67,24 @@ public sealed class ConceptAnswerRoundTripTests : IDisposable
         Assert.Equal(AwJson.Serialize(built, _json), AwJson.Serialize(read.Value, _json));
     }
 
+    // Review of PR 3881: every built answer has no 'code' and a last page has no 'next', and both are left out of the JSON; the read must still answer, not miss on every read.
+    [Fact]
+    public async Task A_kept_last_page_with_no_code_and_no_next_reads_back()
+    {
+        var graph = ConceptGraph.Product().Build();
+        var view = ConceptBuilder.Build(ConceptGraph.Basis, new ConceptsQuery(MapRead.Current, new ConceptPage()), graph, ConceptGraph.Text).Value;
+        var built = new KeptConcepts(view, ConceptBuilder.CodePathsOf(view.Concepts.Select(c => c.Id), graph));
+
+        _ = await _answers.Keep("last", await Basis(), built, MapWorld.None);
+        var read = await _answers.Concepts("last", MapWorld.None);
+
+        Assert.Null(view.Code);
+        Assert.Null(view.Next);
+        Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : null);
+        Assert.NotNull(read.Value);
+        Assert.Equal(AwJson.Serialize(view, _json), AwJson.Serialize(read.Value.View, _json));
+    }
+
     [Fact]
     public async Task A_kept_glossary_answer_reads_back_as_the_same_json()
     {
