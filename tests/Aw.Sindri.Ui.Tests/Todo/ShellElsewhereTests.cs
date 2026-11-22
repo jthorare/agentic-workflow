@@ -141,4 +141,40 @@ public sealed class ShellElsewhereTests
 
         Assert.Contains(Labels.TrayTodos(shell.Todo.OverdueCount, 0), shell.Attention.Tray.Tooltip, StringComparison.Ordinal);
     }, Token);
+
+    // #2775: the line sits on Home's Todo panel and feeds no badge, so an event does not read it while another page is shown; showing Home reads it once.
+    [Fact]
+    public Task A_hidden_todo_panel_skips_the_line_on_events_and_reads_it_once_when_shown() => UiThread.Run(async () =>
+    {
+        var shell = await Shell();
+        await ShellWait.Until(shell, () => !shell.Elsewhere.IsLoading, Token);
+        shell.GoTo(PageId.Settings);
+        var (lines, reads) = (LineReads(), shell.Health.ViewReads);
+
+        _server.Push(A.Event(60, "heartbeat.tick"));
+        await ShellWait.Until(shell, () => shell.Health.ViewReads > reads, Token);
+
+        Assert.Equal(lines, LineReads());
+
+        shell.GoTo(PageId.Home);
+        await ShellWait.Until(shell, () => LineReads() > lines, Token);
+
+        Assert.Equal(lines + 1, LineReads());
+    }, Token);
+
+    [Fact]
+    public Task Every_event_reads_the_line_while_the_todo_panel_is_shown() => UiThread.Run(async () =>
+    {
+        var shell = await Shell();
+        await ShellWait.Until(shell, () => !shell.Elsewhere.IsLoading, Token);
+        var (lines, reads) = (LineReads(), shell.Health.ViewReads);
+
+        _server.Push(A.Event(61, "heartbeat.tick"));
+        await ShellWait.Until(shell, () => shell.Health.ViewReads > reads, Token);
+
+        Assert.True(LineReads() > lines);
+    }, Token);
+
+    // The From elsewhere line's read: the "mine" list with the line's limit (Work's list is not read off Work).
+    private int LineReads() => _server.LinearQueries.Count(q => string.Equals(q.Group, "mine", StringComparison.Ordinal) && q.Limit == FromElsewhereViewModel.LinearLimit);
 }

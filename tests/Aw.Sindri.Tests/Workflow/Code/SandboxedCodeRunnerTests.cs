@@ -67,7 +67,7 @@ public sealed class SandboxedCodeRunnerTests : IDisposable
         var result = await runner.Run(Run(), TestContext.Current.CancellationToken);
 
         Assert.Equal("SND-CODE-005", result.Error.Code);
-        Assert.Contains(missing, result.Error.Message, StringComparison.Ordinal);
+        Assert.Equal($"Runner binary not found at {missing}. Install it beside the Sindri host.", result.Error.Message);
         Assert.Equal(0, sandbox.Plans);
     }
 
