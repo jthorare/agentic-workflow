@@ -58,6 +58,8 @@ public sealed class Redactor : IRedactor
     /// The scan engine's version, part of <see cref="RulesDigest"/>: raise it with any change to how a text is scanned
     /// beyond the rules themselves (FoldedText's folding and escapes, the invisible characters, how hits merge, the
     /// placeholder skip, the 'v' group). The homoglyph table and the options every rule gets are hashed as they are.
+    /// A shortcut that can't change any hit, such as a rule's gate or skipping the placeholder scan on a text without
+    /// "[REDACTED:", is not a change to how a text is scanned and needs no raise.
     /// </summary>
     internal const int EngineVersion = 1;
 

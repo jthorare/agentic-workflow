@@ -52,5 +52,5 @@ internal sealed class RuleGateClause
     public bool MayHold(ReadOnlySpan<char> text, bool ascii) =>
         _chars is not null
             ? text.ContainsAny(_chars)
-            : (Caseless && !ascii) || _strings is null || text.ContainsAny(_strings);
+            : (Caseless && !ascii) || text.ContainsAny(_strings!);   // why: the constructor sets _strings whenever _chars is null
 }
