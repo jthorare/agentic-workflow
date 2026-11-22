@@ -59,4 +59,36 @@ public sealed class ContextMissTests
         Assert.Equal([Tabs], Assert.Single(asked), StringComparer.Ordinal);
         Assert.Equal("Tab groups", page.AnchorText);
     }
+
+    private static RouteAnswer MissExceptTabs(Ui.Api.Context.LensesQuery query) => Unknown(query);
+
+    [Fact]
+    public async Task Clear_search_ends_a_miss_on_a_zoomed_map()
+    {
+        var page = Page(new FakeSindriApi { LensesAnswer = MissExceptTabs });
+        await page.Opened(Token);
+        page.AnchorText = Tabs;
+        await page.Submit(Token);
+        Assert.True(page.IsZoomedIn);
+        page.AnchorText = "Tab groups";
+        await page.Submit(Token);
+        Assert.True(page.IsMiss);
+
+        page.ClearSearch();
+
+        Assert.Equal((false, false, string.Empty), (page.IsMiss, page.ShowBanner, page.Problem));
+    }
+
+    [Fact]
+    public async Task Clear_search_ends_a_miss_on_an_unzoomed_map()
+    {
+        var page = Page(new FakeSindriApi { LensesAnswer = MissExceptTabs });
+        page.AnchorText = "Tab groups";
+        await page.Submit(Token);
+        Assert.True(page.IsMiss);
+
+        page.ClearSearch();
+
+        Assert.Equal((false, false, string.Empty), (page.IsMiss, page.ShowBanner, page.Problem));
+    }
 }
