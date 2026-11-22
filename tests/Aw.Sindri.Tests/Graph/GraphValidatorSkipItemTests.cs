@@ -35,7 +35,9 @@ public sealed class GraphValidatorSkipItemTests
 
         var result = Validator(blocks: _blocks).Validate(spec, GraphMode.Activate);
 
-        Assert.DoesNotContain(result.Findings, static f => f.Code is "GRAPH-NODE-003" or "GRAPH-NODE-005");
+        Assert.DoesNotContain(result.Findings, static f =>
+            string.Equals(f.Code, "GRAPH-NODE-003", StringComparison.Ordinal)
+            || string.Equals(f.Code, "GRAPH-NODE-005", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -74,8 +76,6 @@ public sealed class GraphValidatorSkipItemTests
     }
 
     [Fact]
-    public void The_collect_block_declares_a_skipped_output()
-    {
+    public void The_collect_block_declares_a_skipped_output() =>
         Assert.Equal("number", new CollectBlock().OutputsFor([]).Fields.GetValueOrDefault("skipped"));
-    }
 }
