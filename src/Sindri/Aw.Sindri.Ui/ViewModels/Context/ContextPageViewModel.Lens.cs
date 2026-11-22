@@ -50,7 +50,8 @@ internal sealed partial class ContextPageViewModel
     public bool HasProblem => Problem.Length > 0;
 
     /// <summary>True when the last search found nothing, or several items: a plain sentence with one action, not the refusal banner (#3677).</summary>
-    public bool IsMiss => HasProblem && _problemCode is "SND-CONTEXT-003" or "SND-CONTEXT-037";
+    public bool IsMiss => HasProblem
+        && (string.Equals(_problemCode, "SND-CONTEXT-003", StringComparison.Ordinal) || string.Equals(_problemCode, "SND-CONTEXT-037", StringComparison.Ordinal));
 
     /// <summary>Whether the refusal banner shows: a refusal that is not a miss.</summary>
     public bool ShowBanner => HasProblem && !IsMiss;
