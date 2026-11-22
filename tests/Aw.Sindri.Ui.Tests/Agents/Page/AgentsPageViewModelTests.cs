@@ -66,10 +66,12 @@ public sealed class AgentsPageViewModelTests
     {
         var page = await _f.Shown(Token);
 
-        var outside = page.Groups[1];
+        var outside = page.Groups[2];
         Assert.Equal(Labels.OutsideWorkflow, outside.Name);
-        Assert.Equal([Claude, Codex], Providers(outside.Rows), StringComparer.Ordinal);
-        Assert.Equal(Labels.GroupHeader(Labels.OutsideWorkflow, 2), outside.Header);
+        Assert.Equal([Claude], Providers(outside.Rows), StringComparer.Ordinal);
+        Assert.Equal(Labels.GroupHeader(Labels.OutsideWorkflow, 1), outside.Header);
+        Assert.Equal(Labels.NeedsYouGroup, page.Groups[0].Name);
+        Assert.Equal([Codex], Providers(page.Groups[0].Rows), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -77,7 +79,7 @@ public sealed class AgentsPageViewModelTests
     {
         var page = await _f.Shown(Token);
 
-        var launched = page.Groups[0];
+        var launched = page.Groups[1];
         Assert.Equal(Labels.StartedBySindri, launched.Name);
         var row = Assert.Single(launched.Rows);
         Assert.Equal(Labels.LaunchLine, row.LaneText);
@@ -215,7 +217,7 @@ public sealed class AgentsPageViewModelTests
         await page.Refresh(Url, Token);
 
         Assert.False(page.IsUnavailable);
-        Assert.Equal(2, page.Groups.Count);
+        Assert.Equal(3, page.Groups.Count);
         Assert.True(page.FiltersEnabled);
     }
 
@@ -430,7 +432,7 @@ public sealed class AgentsPageViewModelTests
 
         Assert.True(page.IsUnreadable);
         Assert.True(page.IsStale);
-        Assert.Equal(2, page.Groups.Count);
+        Assert.Equal(3, page.Groups.Count);
     }
 
     [Fact]
@@ -443,7 +445,7 @@ public sealed class AgentsPageViewModelTests
 
         Assert.True(page.IsStale);
         Assert.False(page.IsUnreadable);
-        Assert.Equal(2, page.Groups.Count);
+        Assert.Equal(3, page.Groups.Count);
     }
 
     [Fact]
