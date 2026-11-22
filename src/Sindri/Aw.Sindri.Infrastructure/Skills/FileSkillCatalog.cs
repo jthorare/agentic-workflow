@@ -13,6 +13,9 @@ internal sealed class FileSkillCatalog(string skillsFolder) : ISkillCatalogPort
 {
     private const string SkillFile = "SKILL.md";
 
+    // why: a YAML block scalar ('description: >' and its chomping forms) starts its text on the next lines
+    private static readonly string[] _blockMarkers = [">", "|", ">-", "|-", ">+", "|+"];
+
     /// <inheritdoc />
     public ValueTask<Result<IReadOnlyList<SkillListing>>> List(CancellationToken cancellationToken)
     {
@@ -65,7 +68,7 @@ internal sealed class FileSkillCatalog(string skillsFolder) : ISkillCatalogPort
 
     private static string Value(string first, IEnumerator<string> line)
     {
-        var parts = first is ">" or "|" or ">-" or "|-" or ">+" or "|+" ? [] : new List<string> { first };
+        var parts = _blockMarkers.Contains(first, StringComparer.Ordinal) ? [] : new List<string> { first };
         while (line.MoveNext() && line.Current.Length > 0 && char.IsWhiteSpace(line.Current[0]))
         {
             parts.Add(line.Current.Trim());
