@@ -45,7 +45,7 @@ public sealed class MessageTsJsonTests
     [InlineData("{\"ts\":\"1767777120.000100\",\"before\":\"x\"}")]
     public void A_malformed_ts_is_a_json_error(string json)
     {
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize(json, MessagesJsonContext.Default.MessageTsHolder));
+        _ = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize(json, MessagesJsonContext.Default.MessageTsHolder));
         Assert.Equal(KernelErrors.Invalid.Code, AwJson.Deserialize<MessageTsHolder>(Encoding.UTF8.GetBytes(json), _json).Error.Code);
     }
 
