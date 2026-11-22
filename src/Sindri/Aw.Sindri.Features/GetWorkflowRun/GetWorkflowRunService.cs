@@ -32,17 +32,23 @@ internal sealed class GetWorkflowRunService(IWorkflowRunStore runs, IWorkflowSto
 
         var found = run.Value;
         var agentNodes = await AgentNodes(found, nodes.Value, cancellationToken).ConfigureAwait(false);
+        var tokens = await Tokens(found, nodes.Value, cancellationToken).ConfigureAwait(false);
         var slug = WorkflowSlug.From(found.Id.Value[..found.Id.Value.IndexOf('@', StringComparison.Ordinal)]);
         return new GetWorkflowRunResponse(found.Id, slug, found.Revision, RunText.Of(found.Status), RunText.Json(found.Trigger), RunText.Json(found.Outputs), found.Error, found.ItemId, found.StartedAt, found.EndedAt,
             [.. nodes.Value.Select(n => new NodeRunView(n.NodeId, n.ItemIndex, RunText.Of(n.Status), RunText.Json(n.Input), RunText.Json(n.Output), n.Truncated, n.Error, agentNodes.Of(n), n.Raw))],
-            Tokens());
+            tokens);
     }
 
-    private RunTokens Tokens()
+    // #3805: what the run's node runs used, and the budget a run of this revision gets: the spec's, else the profile's as it is now (the walk read the profile once, when the run started)
+    private async ValueTask<RunTokens> Tokens(WorkflowRun run, IReadOnlyList<NodeRun> rows, CancellationToken cancellationToken)
     {
-        _ = budgets;
-        return new RunTokens(Used: 0, Budget: null);
+        var used = rows.Sum(static r => NodeRunUsage.Tokens(r.Usage));
+        var revision = await workflows.GetRevision(run.WorkflowId, run.Revision, cancellationToken).ConfigureAwait(false);
+        var budget = revision.IsError ? null : revision.Value.Spec.Budget?.Tokens;
+        return new RunTokens(used, budget ?? await Default(cancellationToken).ConfigureAwait(false));
     }
+
+    private async ValueTask<long?> Default(CancellationToken cancellationToken) => budgets is null ? null : await budgets.DefaultTokens(cancellationToken).ConfigureAwait(false);
 
     // The agent state of the run's rows. The candidates are the 'run_agent' nodes of the revision the run walked whose row runs now (item 0: a run_agent node runs once). The run's workflow says which
     // one it waits on and whether it is held; when it can't be asked (Temporal down, no workflow), the held marker of the node's launch files answers instead. A revision the store can't give leaves no
