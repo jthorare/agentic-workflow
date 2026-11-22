@@ -41,7 +41,7 @@ public sealed class AddStepExampleReferencesTests
 
         Assert.Equal(string.Empty, input.Text);
         Assert.Equal("{{triage.items}}", input.Placeholder);
-        Assert.NotEqual(string.Empty, Field(page, "code").Text);   // the rest of the example is still filled in
+        Assert.NotEmpty(Field(page, "code").Text);   // the rest of the example is still filled in
     }
 
     [Fact]

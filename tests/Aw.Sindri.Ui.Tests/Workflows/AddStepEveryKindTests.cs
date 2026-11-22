@@ -48,7 +48,7 @@ public sealed partial class AddStepEveryKindTests
             }
 
             var field = page.Editor.Fields.Single(x => x.Name == name);
-            Assert.True(field.Text.Length == 0, $"'{type}': field '{name}' opened with '{field.Text}', which names a step the workflow lacks");
+            Assert.Equal(string.Empty, field.Text);   // the example names a step the workflow lacks
             if (field.IsRequired)
             {
                 Assert.False(page.CanSave, $"'{type}': Save is on with the required '{name}' empty");
