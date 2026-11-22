@@ -100,7 +100,7 @@ internal sealed partial class ContextPageViewModel
     public bool ShowBuilding => Overlay == ContextOverlay.Building;
 
     // Registered once: after every event the running build is looked at, so the overlay goes when the map is there.
-    private void InitStates() => Ports.Follow(FollowBuild);
+    private void InitStates() => Follow(FollowBuild);
 
     // A refusal is the No map state when the API says so; a build already running then shows as Building at once.
     private async Task NoteRefusal(Uri api, Error error, CancellationToken cancellationToken)

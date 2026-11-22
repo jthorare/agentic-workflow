@@ -94,7 +94,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         InitToast();
         WireQuickAddToasts();
         InitLinear();
-        Health.Follow(Queue.Refresh);
+        Health.Follow(ReadQueue);
         Health.Follow(Item.Refresh);
         Health.FollowCards();
     }
