@@ -10,7 +10,7 @@ using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.Controls;
 using Aw.Sindri.Ui.Views.Controls;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>
 /// The System page's wide cards use their width (#3356, #3357): the full-width Actions card lays its commands out in two columns when two fit and in one below

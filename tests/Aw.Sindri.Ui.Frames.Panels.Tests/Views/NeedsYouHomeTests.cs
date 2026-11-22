@@ -14,7 +14,7 @@ using Aw.Sindri.Ui.Views.NeedsYou;
 using Aw.Sindri.Ui.Views.Shell;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>Home's Needs you panel under the headless platform (U3' T9): rows with the one chip, the summary line, the overflow, the sheets.</summary>
 [Lane(TestLane.Integration)]
@@ -75,9 +75,9 @@ public sealed class NeedsYouHomeTests : IDisposable
 
     private static async Task Until(Window window, Func<bool> condition, string what = "the view never reached the expected state")
     {
-        for (var i = 0; i < 300 && !condition(); i++)
+        for (var i = 0; i < 3000 && !condition(); i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Settle(window);
         }
 
