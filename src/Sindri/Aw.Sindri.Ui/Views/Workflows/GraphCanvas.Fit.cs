@@ -21,6 +21,7 @@ internal sealed partial class GraphCanvas
         }
 
         var fitZoom = graph.Relayout(Bounds.Width, Bounds.Height, TextScale);
+        _fitZoom = fitZoom;
         _laidOutWidth = Bounds.Width;
         _laidOutScale = TextScale;
         _laidOut = graph;
@@ -32,6 +33,8 @@ internal sealed partial class GraphCanvas
         InvalidateVisual();
         ViewChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    private double _fitZoom = 1;   // the Fit zoom of the current layout: Fit goes back to it without laying the cards out again
 
     private bool CanFit => Graph is { Nodes.Count: > 0 } && Bounds.Width > 0 && Bounds.Height > 0;
 

@@ -26,4 +26,8 @@ internal sealed class GraphEdgeViewModel
 
     /// <summary>Where the arrow head lands.</summary>
     public GraphPoint End { get; }
+
+    /// <summary>The corners of a wrapped edge (#3684), between <see cref="Start"/> and <see cref="End"/>: out along the row's return lane, back along the row gap and down the left
+    /// pad, so it never crosses a card. Empty for an edge inside one row, which is one curve.</summary>
+    public IReadOnlyList<GraphPoint> Route { get; internal set; } = [];
 }

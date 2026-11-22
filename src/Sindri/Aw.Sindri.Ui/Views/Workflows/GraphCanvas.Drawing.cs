@@ -60,13 +60,28 @@ internal sealed partial class GraphCanvas
         using (var ctx = curve.Open())
         {
             ctx.BeginFigure(start, isFilled: false);
-            ctx.CubicBezierTo(c1, c2, end);
+            if (edge.Route.Count > 0)
+            {
+                // A wrapped edge runs along its row's return lane (#3684): straight lines through the right pad, the row gap and the left pad, never across a card.
+                foreach (var corner in edge.Route)
+                {
+                    ctx.LineTo(new Point(corner.X, corner.Y));
+                }
+
+                ctx.LineTo(end);
+                c2 = new Point(edge.Route[^1].X, edge.Route[^1].Y);
+            }
+            else
+            {
+                ctx.CubicBezierTo(c1, c2, end);
+            }
+
             ctx.EndFigure(isClosed: false);
         }
 
-        context.DrawGeometry(brush: null, new Pen(wire, 2), curve);
+        context.DrawGeometry(brush: null, new Pen(wire, 2, lineJoin: PenLineJoin.Round), curve);
 
-        // The arrow head points along the curve's last stretch (from the second control point to the end).
+        // The arrow head points along the path's last stretch (from the second control point, or the last corner, to the end).
         var angle = Math.Atan2(end.Y - c2.Y, end.X - c2.X);
         Point Wing(double turn) => new(end.X - (ArrowSize * Math.Cos(angle + turn)), end.Y - (ArrowSize * Math.Sin(angle + turn)));
         var head = new StreamGeometry();

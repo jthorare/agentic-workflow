@@ -74,8 +74,9 @@ public sealed class WorkflowsPolishFramesTests : FrameHost
         await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
         await Until(window, () => shell.Workflows.Runs.Graph is not null, "the graph never showed");
 
-        var end = Assert.Single(shell.Workflows.Runs.Graph!.Ends);
+        var end = Assert.Single(shell.Workflows.Runs.Graph!.Ends, e => string.Equals(e.Node, "check", StringComparison.Ordinal));   // the condition's missing branch; the last step gets its own "done" end too (#3684)
         Assert.Equal(("check", "false → done"), (end.Node, end.Text));
+        Assert.Contains(shell.Workflows.Runs.Graph!.Ends, e => string.Equals(e.Node, "agent", StringComparison.Ordinal) && string.Equals(e.Text, "done", StringComparison.Ordinal));
         Settle(window);
         Frame(window, "graph-false-end-1280", "workflows-");
     });
@@ -95,10 +96,10 @@ public sealed class WorkflowsPolishFramesTests : FrameHost
         await Until(window, () => shell.Workflows.Runs.Graph is not null, "the graph never showed");
 
         var graph = shell.Workflows.Runs.Graph!;
-        var end = Assert.Single(graph.Ends);
+        var end = Assert.Single(graph.Ends, e => string.Equals(e.Node, "check", StringComparison.Ordinal));   // the condition's missing branch; the last step gets its own "done" end too (#3684)
         foreach (var node in graph.Nodes)
         {
-            var card = new GraphBox(node.X, node.Y, WorkflowGraphViewModel.CardWidth, WorkflowGraphViewModel.CardHeight);
+            var card = new GraphBox(node.X, node.Y, node.Width, node.Height);
             Assert.False(end.Label.Overlaps(card), string.Create(CultureInfo.InvariantCulture, $"'{end.Text}' at ({end.Label.X}, {end.Label.Y}, {end.Label.Width}x{end.Label.Height}) is drawn under the '{node.Title}' card at ({card.X}, {card.Y})"));
         }
 
@@ -120,11 +121,11 @@ public sealed class WorkflowsPolishFramesTests : FrameHost
         await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
         await Until(window, () => shell.Workflows.Runs.Graph is not null, "the graph never showed");
 
-        var end = Assert.Single(shell.Workflows.Runs.Graph!.Ends);
+        var end = Assert.Single(shell.Workflows.Runs.Graph!.Ends, e => string.Equals(e.Node, "check", StringComparison.Ordinal));   // the condition's missing branch; the last step gets its own "done" end too (#3684)
         Assert.True(end.Label.Y >= 0, string.Create(CultureInfo.InvariantCulture, $"'{end.Text}' is drawn at y={end.Label.Y}, above the world's top, so the canvas clips it"));
         foreach (var node in shell.Workflows.Runs.Graph.Nodes)
         {
-            Assert.False(end.Label.Overlaps(new GraphBox(node.X, node.Y, WorkflowGraphViewModel.CardWidth, WorkflowGraphViewModel.CardHeight)), $"'{end.Text}' is drawn under the '{node.Title}' card");
+            Assert.False(end.Label.Overlaps(new GraphBox(node.X, node.Y, node.Width, node.Height)), $"'{end.Text}' is drawn under the '{node.Title}' card");
         }
     });
 

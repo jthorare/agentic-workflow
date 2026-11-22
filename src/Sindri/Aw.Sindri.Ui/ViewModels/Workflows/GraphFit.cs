@@ -42,6 +42,27 @@ internal static class GraphFit
         }
     }
 
+    /// <summary>The corners of an edge that wraps from the end of one row to the start of the next (#3684): right to the row's return lane, down to the middle of the row gap,
+    /// left to the middle of the left pad, down to the target's middle. The path runs along <see cref="GraphFitResult.ReturnLanes"/>, so it crosses no card.</summary>
+    /// <param name="fit">The layout.</param>
+    /// <param name="from">The source node's id.</param>
+    /// <param name="to">The target node's id.</param>
+    /// <param name="start">Where the edge leaves the source (its right middle).</param>
+    /// <param name="end">Where the edge lands on the target (its left middle).</param>
+    /// <returns>The four corners, or none for an edge inside one row (or one the lanes don't cover).</returns>
+    internal static IReadOnlyList<GraphPoint> Route(GraphFitResult fit, string from, string to, GraphPoint start, GraphPoint end)
+    {
+        ArgumentNullException.ThrowIfNull(fit);
+        if (!fit.RowOf.TryGetValue(from, out var row) || !fit.RowOf.TryGetValue(to, out var next) || next != row + 1 || fit.ReturnLanes.Count < (3 * row) + 3)
+        {
+            return [];
+        }
+
+        // Lanes come in threes per row gap: down the right pad, left along the gap, down the left pad.
+        var (down, across) = (fit.ReturnLanes[3 * row], fit.ReturnLanes[(3 * row) + 1]);
+        return [new GraphPoint(down.X, start.Y), new GraphPoint(down.X, across.Y), new GraphPoint(across.X, across.Y), new GraphPoint(across.X, end.Y)];
+    }
+
     // A fork's arms stay in the fork's row: a layout that wraps them onto the next row is not a fit, so Fit tries a smaller zoom.
     private static bool ArmsBeside(GraphFitInput input, GraphFitResult result) =>
         input.Forks.All(fork => input.Edges.Where(e => string.Equals(e.From, fork, StringComparison.Ordinal)).All(e => result.RowOf[e.To] == result.RowOf[fork]));
