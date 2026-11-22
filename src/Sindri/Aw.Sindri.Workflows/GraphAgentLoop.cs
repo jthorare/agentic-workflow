@@ -182,10 +182,10 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
         await events.Record(NodeAgentRecorder.EndState(ending.Failure)).ConfigureAwait(true);
         if (ending.Failure is { } reason)
         {
-            return Failed(started.Input, reason, ending.FailureOutput, started.InputCut);
+            return Failed(started.Input, reason, ending.FailureOutput, started.InputCut) with { Tokens = closed.Tokens };   // why: a failed session spent its tokens too (#3805)
         }
 
-        return Succeeded(started.Input, started.InputCut, ending.Outputs, address, closed);
+        return Succeeded(started.Input, started.InputCut, ending.Outputs, address, closed) with { Tokens = closed.Tokens };
     }
 
     // The agent's reported outputs plus what closing the run measured, as the node's succeeded outcome.

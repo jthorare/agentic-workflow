@@ -154,6 +154,18 @@ public static class GraphFence
             return Done("{}");
         }
 
+        // why: the live port's answer carries its exit code and its tokens (#3805); the default Answer would call Ask and drop both
+        public ValueTask<Result<ModelAnswer>> Answer(string prompt, CancellationToken cancellationToken)
+        {
+            if (!GraphTestRecorder.Active)
+            {
+                return live.Answer(prompt, cancellationToken);
+            }
+
+            GraphTestRecorder.Record("model not run");
+            return Done(new ModelAnswer("{}"));
+        }
+
         public string Untrusted(string source, string text) => live.Untrusted(source, text);
     }
 
