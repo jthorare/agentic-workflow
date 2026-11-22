@@ -38,8 +38,14 @@ internal sealed class AgentStartVerbs(ControlPlaneClient client, Output output)
         var started = answer.Value.Value;
         return json
             ? await output.Raw(answer.Value.Body, 0).ConfigureAwait(false)
-            : await output.Text($"started {started.Id.Value} (act id {started.ActId.Value}, pane {started.Host.Pane})\nattach: tmux -L {started.Host.Socket} attach -t ={started.Host.Session}\n", 0).ConfigureAwait(false);
+            : await output.Text(StartedText(started), 0).ConfigureAwait(false);
     }
+
+    /// <summary>What a plain start prints: the session, its act id and pane, then the command that attaches a terminal to it.</summary>
+    /// <param name="started">The started session.</param>
+    /// <returns>The two lines.</returns>
+    internal static string StartedText(StartedSession started) =>
+        $"started {started.Id.Value} (act id {started.ActId.Value}, pane {started.Host.Pane})\nattach: tmux -L {started.Host.Socket} attach -t ={started.Host.Session}\n";
 
     internal async Task<int> RemoveWorktree(string[] args, bool json, CancellationToken ct)
     {
