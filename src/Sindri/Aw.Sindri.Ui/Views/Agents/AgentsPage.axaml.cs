@@ -52,7 +52,9 @@ internal sealed partial class AgentsPage : UserControl
         }
     }
 
-    private void OnSearchRequested(object? sender, EventArgs e) => this.FindControl<TextBox>("AgentsSearch")?.Focus();
+    // Posted, like the Queue filter's focus: focused inside KeyDown, the box would also get the key's "/" text input.
+    private void OnSearchRequested(object? sender, EventArgs e) =>
+        Dispatcher.UIThread.Post(() => _ = this.FindControl<TextBox>("AgentsSearch")?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
 
     // Esc in the box clears it.
     private void OnSearchKey(object? sender, KeyEventArgs e)
