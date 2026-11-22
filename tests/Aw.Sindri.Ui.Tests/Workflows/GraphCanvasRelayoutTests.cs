@@ -87,34 +87,53 @@ public sealed class GraphCanvasRelayoutTests
     {
         var graph = await Release();
 
-        // The wheel step itself, not the headless input route: a headless MouseWheel did not reach the drawn canvas, so the window saw an unhandled wheel both times.
-        var (fits, scrolls, panBefore, panAfter) = await OnUi(() =>
+        // The wheel step itself (GraphCanvas.Wheel), from a pan the test sets: the canvas's own pan after zooming is not what this fact is about.
+        var r = await OnUi(() => WheelSteps(graph));
+
+        Assert.False(r.AtFit, "the canvas took the wheel while the whole graph fits");
+        Assert.Equal(-100, r.Mid, 3);
+        Assert.True(r.TookDown, $"the canvas left a wheel down to the page while it can scroll down (pan y after each zoom step: {r.Path})");
+        Assert.Equal(-148, r.AfterDown, 3);   // one 48 px step down
+        Assert.Equal(0, r.AtTop, 3);
+        Assert.False(r.TookAtTop, "the canvas took a wheel up at its top edge instead of leaving it to the page");
+    }
+
+    // At Fit, then at 200 % from pan y -100: one wheel down, wheel up to the top edge, one more wheel up. Also the pan y after each zoom step, for the failure message.
+    private static (bool AtFit, double Mid, bool TookDown, double AfterDown, double AtTop, bool TookAtTop, string Path) WheelSteps(WorkflowGraphViewModel graph)
+    {
+        var canvas = new GraphCanvas { Graph = graph };
+        var window = new Window { Content = canvas, Width = 1440, Height = 728 };
+        window.Show();
+        Settle(window);
+        try
         {
-            var canvas = new GraphCanvas { Graph = graph };
-            var window = new Window { Content = canvas, Width = 1440, Height = 728 };
-            window.Show();
+            var down = new Vector(0, -1);
+            var up = new Vector(0, 1);
+            var atFit = canvas.Wheel(down, KeyModifiers.None, new Point(200, 200));
+            var path = new List<double>();
+            for (var i = 0; i < 8; i++)
+            {
+                canvas.ZoomIn();   // to 200 %: the chain is 432 px tall, 864 at 200 % plus the map's 144, over a 728 px canvas
+                path.Add(canvas.Pan.Y);
+            }
+
             Settle(window);
-            try
+            canvas.Pan = new Point(canvas.Pan.X, -100);   // inside [-280, 0]
+            var mid = canvas.Pan.Y;
+            var tookDown = canvas.Wheel(down, KeyModifiers.None, new Point(200, 200));
+            var afterDown = canvas.Pan.Y;
+            for (var i = 0; i < 10 && canvas.Pan.Y < 0; i++)
             {
-                var atFit = canvas.Wheel(new Vector(0, -1), KeyModifiers.None, new Point(200, 200));
-                for (var i = 0; i < 8; i++)
-                {
-                    canvas.ZoomIn();   // to 200 %, where the chain overflows the canvas both ways
-                }
-
-                Settle(window);
-                var before = canvas.Pan;
-                var took = canvas.Wheel(new Vector(0, -1), KeyModifiers.None, new Point(200, 200));
-                return (atFit, took, before, canvas.Pan);
+                _ = canvas.Wheel(up, KeyModifiers.None, new Point(200, 200));
             }
-            finally
-            {
-                window.Close();
-            }
-        });
 
-        Assert.False(fits, "the canvas took the wheel while the whole graph fits");
-        Assert.True(scrolls, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the canvas left the wheel to the page while it can scroll (pan y {panBefore.Y} -> {panAfter.Y})"));
-        Assert.Equal(panBefore.Y - 48, panAfter.Y, 3);   // one 48 px step down
+            var atTop = canvas.Pan.Y;
+            var tookAtTop = canvas.Wheel(up, KeyModifiers.None, new Point(200, 200));
+            return (atFit, mid, tookDown, afterDown, atTop, tookAtTop, Path: string.Join(", ", path.Select(y => y.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))));
+        }
+        finally
+        {
+            window.Close();
+        }
     }
 }
