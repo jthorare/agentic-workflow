@@ -190,15 +190,6 @@ internal static partial class Labels
     /// <summary>The button on a workflow's runs that starts a run by hand.</summary>
     internal const string WfRunNow = "Run now";
 
-    /// <summary>A Starting placeholder that got no run row for 10 s.</summary>
-    internal const string WfRunDidNotStart = "The run didn't start.";
-
-    /// <summary>What to do about a run that didn't start, under that line.</summary>
-    internal const string WfRunDidNotStartHint = "Retry, or open Health if it keeps happening.";
-
-    /// <summary>The Retry button on that row.</summary>
-    internal const string WfRunStartRetry = "Retry";
-
     /// <summary>The same button while its call is on the way.</summary>
     internal const string WfRunNowBusy = "Starting…";
 
