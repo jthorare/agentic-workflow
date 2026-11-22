@@ -14,6 +14,7 @@ public sealed class NodePanelFileActionsTests
     private const string Node = "feature:tabs.tab-manager";
     private const string Path = "/work/r/src/a/File17.ts";
     private const string Link = "https://github.com/acme/r/blob/abc/src/a/File17.ts";
+    private const string Both = $$"""{ "kind": "file", "ref": "src/a/File17.ts", "url": "{{Link}}", "path": "{{Path}}" }""";
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -39,12 +40,10 @@ public sealed class NodePanelFileActionsTests
         return (page, launcher, clipboard);
     }
 
-    private static readonly string _both = $$"""{ "kind": "file", "ref": "src/a/File17.ts", "url": "{{Link}}", "path": "{{Path}}" }""";
-
     [Fact]
     public async Task Enter_opens_the_local_file_when_the_node_has_one_even_with_a_link()
     {
-        var (page, launcher, _) = await Open(_both);
+        var (page, launcher, _) = await Open(Both);
 
         await page.Whole.Panel.OpenSource(Token);
 
@@ -64,7 +63,7 @@ public sealed class NodePanelFileActionsTests
     [Fact]
     public async Task The_open_source_button_opens_the_link_only()
     {
-        var (page, launcher, _) = await Open(_both);
+        var (page, launcher, _) = await Open(Both);
 
         await page.Whole.Panel.OpenLink(Token);
 
@@ -74,7 +73,7 @@ public sealed class NodePanelFileActionsTests
     [Fact]
     public async Task Copy_path_puts_the_file_path_on_the_clipboard()
     {
-        var (page, _, clipboard) = await Open(_both);
+        var (page, _, clipboard) = await Open(Both);
 
         await page.Whole.Panel.CopyPath(Token);
 
@@ -85,7 +84,7 @@ public sealed class NodePanelFileActionsTests
     [Fact]
     public async Task A_refused_copy_says_so_and_shows_the_path()
     {
-        var (page, _, clipboard) = await Open(_both);
+        var (page, _, clipboard) = await Open(Both);
         clipboard.Refuse = true;
 
         await page.Whole.Panel.CopyPath(Token);
