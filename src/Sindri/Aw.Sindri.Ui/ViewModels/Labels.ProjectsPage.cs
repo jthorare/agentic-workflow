@@ -33,12 +33,6 @@ internal static partial class Labels
     /// <summary>A card of a project the store no longer holds.</summary>
     internal const string ProjectGone = "no longer synced from Linear";
 
-    /// <summary>The page width from which cards sit two across.</summary>
-    internal const double ProjectsTwoColumnsFrom = 560;
-
-    /// <summary>The page width from which cards sit three across (the mockup README moved it from 900 so names aren't cut at a 1,000 px window).</summary>
-    internal const double ProjectsThreeColumnsFrom = 1040;
-
     /// <summary>The longest note the card's face shows, in characters.</summary>
     internal const int ProjectNoteFaceMax = 80;
 
