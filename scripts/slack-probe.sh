@@ -20,6 +20,7 @@
 # Output: counts, yes/no, error codes, header numbers and host names. Never a channel name, user name, id, topic or message text.
 # Write part guards: the channel must be private, made by the token's user, with 1 member. Every message, scheduled message and
 #   file it makes is deleted at the end, from the EXIT trap too (a SIGINT included), and the channel is read again to count what is left.
+#   A post or schedule call cut off by a SIGINT or a lost answer is still deleted (a lost post is found by its metadata act id).
 # Exit 0 ok, 1 a probe call failed or the cleanup left something (the "failed:" lines say which), 2 usage, no key or a guard refused.
 set -uo pipefail
 
@@ -305,13 +306,33 @@ if [ "$rc" -eq 0 ]; then
   emit emoji.hosts "${hosts:-none}"
 else emit emoji "$(result Emoji "$rc" emoji.list)"; fi
 
-posted=() sched=() file_id=""
+posted=() sched=() file_id="" probe_act="" inflight=""
+# inflight: the api name of a post or schedule call whose answer is not recorded yet. A SIGINT runs the EXIT trap once that curl
+# returns, so the answer file is there; when the answer was lost, cleanup finds the post by its act id in the channel instead.
+# recover_inflight: add the in-flight call's message or scheduled message to the lists cleanup deletes, once (a SIGINT can land after
+# the list was updated and before inflight moved on).
+recover_inflight() {
+  local ts id
+  case "$inflight" in
+    Post)
+      ts="$(jq -r 'select(.ok == true) | .ts // empty' "$work/Post.json" 2>/dev/null)"
+      if [ -z "$ts" ] && api user Find conversations.history "channel=$channel" limit=100 include_all_metadata=true; then
+        ts="$(jq -r --arg a "$probe_act" '[.messages[]? | select(.metadata.event_payload.act_id == $a) | .ts] | first // empty' "$work/Find.json")"
+      fi
+      [ -n "$ts" ] && ! printf '%s\n' ${posted[@]+"${posted[@]}"} | grep -qxF -- "$ts" && posted+=("$ts") ;;
+    Sched|Sched121)
+      id="$(jq -r 'select(.ok == true) | .scheduled_message_id // empty' "$work/$inflight.json" 2>/dev/null)"
+      [ -n "$id" ] && ! printf '%s\n' ${sched[@]+"${sched[@]}"} | grep -qxF -- "$id" && sched+=("$id") ;;
+  esac
+  inflight=""
+}
 # cleanup: delete every message, scheduled message and file this run made, then read the channel again. Runs once, from the main
 # flow or the EXIT trap.
 cleanup() {
   [ "$cleanup_armed" -eq 1 ] && [ "$cleanup_done" -eq 0 ] || return 0
   cleanup_done=1
   local ts id n=0 m=0 left
+  recover_inflight
   for ts in ${posted[@]+"${posted[@]}"}; do
     m=$((m + 1)); api user Del chat.delete "channel=$channel" "ts=$ts" && n=$((n + 1)) || failed "cleanup chat.delete"
   done
@@ -336,15 +357,15 @@ cleanup() {
 write_part() {
   local rc act ts r now body url
   emit write.channel "private, mine, 1 member"
-  act="$(od -An -N8 -tx1 /dev/urandom | tr -d ' \n')"
-  cleanup_armed=1
+  act="$(od -An -N8 -tx1 /dev/urandom | tr -d ' \n')"; probe_act="$act"
+  cleanup_armed=1 inflight=Post
   api user Post chat.postMessage "channel=$channel" "text=sindri-probe ${act:0:8}" \
     "metadata=$(jq -nc --arg a "$act" '{event_type:"sindri_probe",event_payload:{act_id:$a}}')"; rc=$?
   emit post.ok "$(result Post "$rc" chat.postMessage)"
   [ "$rc" -eq 0 ] || return
   ts="$(jq -r '.ts // empty' "$work/Post.json")"
   [ -n "$ts" ] || { failed "chat.postMessage (no ts)"; return; }
-  posted+=("$ts")
+  posted+=("$ts") inflight=""
   api user Back conversations.history "channel=$channel" "latest=$ts" inclusive=true limit=1 include_all_metadata=true; rc=$?
   if [ "$rc" -eq 0 ]; then
     emit post.metadata_kept "$(if [ "$(jq -r '.messages[0].metadata.event_payload.act_id // ""' "$work/Back.json")" = "$act" ]; then echo yes; else echo no; fi)"
@@ -361,12 +382,15 @@ write_part() {
   api user Mark conversations.mark "channel=$channel" "ts=$ts"; rc=$?
   emit mark.ok "$(result Mark "$rc" conversations.mark)"
   now="$(date +%s)"
+  inflight=Sched
   api user Sched chat.scheduleMessage "channel=$channel" "text=sindri-probe ${act:0:8} scheduled" "post_at=$((now + 3600))"; rc=$?
   emit schedule.ok "$(result Sched "$rc" chat.scheduleMessage)"
   if [ "$rc" -eq 0 ]; then sched+=("$(jq -r '.scheduled_message_id' "$work/Sched.json")"); fi
+  inflight=Sched121
   api user Sched121 chat.scheduleMessage "channel=$channel" "text=sindri-probe ${act:0:8} far" "post_at=$((now + 121 * 86400))"; rc=$?
   r="$(result Sched121 "$rc" "chat.scheduleMessage (121 days)")"
   if [ "$rc" -eq 0 ]; then sched+=("$(jq -r '.scheduled_message_id' "$work/Sched121.json")"); r=accepted; fi
+  inflight=""
   case "$r" in "no ("*) r="${r#no (}"; r="${r%)}" ;; esac
   emit schedule.121_days "$r"
 
