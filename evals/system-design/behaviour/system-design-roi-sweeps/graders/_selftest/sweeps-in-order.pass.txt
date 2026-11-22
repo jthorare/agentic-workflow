@@ -1,0 +1,5 @@
+Phases, first to last:
+- Ph1 Booking history API
+- Ph2 History panel on the lookup page
+- Ph3 Performance sweep. Exit check: every data or interactive surface has a measured time in the real app at or under its budget.
+- Ph4 Bug sweep. Exit check: every finding is a GitHub issue, and a merged fix or a written reason closes each one. A second walk finds nothing new.
