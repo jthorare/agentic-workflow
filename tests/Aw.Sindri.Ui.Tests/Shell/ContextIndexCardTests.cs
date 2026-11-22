@@ -25,7 +25,7 @@ public sealed class ContextIndexCardTests
     {
         var commit = _clock.GetUtcNow().AddMinutes(-3);
         _server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK,
-            $$"""{"sources":[{"source":"github","phase":"live","usable":true,"complete":false,"lastSync":null,"lastCode":null,"pull":"running","records":200,"lastCommit":"{{commit:O}}"},{"source":"linear","phase":"live","usable":false,"complete":false,"lastSync":null,"lastCode":null,"pull":"idle","records":0,"lastCommit":null}]}""");
+            $$"""{"sources":[{"source":"github","phase":"live","usable":true,"complete":false,"lastSync":null,"lastCode":null,"pull":"running","records":200,"lastCommit":"{{commit:O}}"},{"source":"linear","phase":"live","usable":false,"complete":false,"lastSync":null,"lastCode":null,"pull":"idle","records":0,"lastCommit":null,"needsLook":true}]}""");
         var card = new ContextIndexCardViewModel(_server, _clock);
 
         await card.Refresh(_api, Token);
@@ -204,8 +204,8 @@ public sealed class ContextIndexCardTests
         return card;
     }
 
-    private static string Source(string name, string pull, int? records = null, string? lastCommit = null, string? lastCode = null, string? lastError = null, string? lastErrorText = null, string? nextTry = null) =>
-        $$"""{"source":"{{name}}","phase":"live","usable":true,"complete":false,"lastSync":null,"lastCode":{{Json(lastCode)}},"pull":"{{pull}}","records":{{(records is { } r ? r.ToString(CultureInfo.InvariantCulture) : "null")}},"lastCommit":{{Json(lastCommit)}},"lastError":{{Json(lastError)}},"lastErrorText":{{Json(lastErrorText)}},"nextTry":{{Json(nextTry)}}}""";
+    private static string Source(string name, string pull, int? records = null, string? lastCommit = null, string? lastCode = null, string? lastError = null, string? lastErrorText = null, string? nextTry = null, bool needsLook = false) =>
+        $$"""{"source":"{{name}}","phase":"live","usable":true,"complete":false,"lastSync":null,"lastCode":{{Json(lastCode)}},"pull":"{{pull}}","records":{{(records is { } r ? r.ToString(CultureInfo.InvariantCulture) : "null")}},"lastCommit":{{Json(lastCommit)}},"lastError":{{Json(lastError)}},"lastErrorText":{{Json(lastErrorText)}},"nextTry":{{Json(nextTry)}},"needsLook":{{(needsLook ? "true" : "false")}}}""";
 
     private static string Json(string? value) => value is null ? "null" : "\"" + value + "\"";
 
@@ -261,7 +261,7 @@ public sealed class ContextIndexCardTests
     {
         var next = _clock.GetUtcNow().AddMinutes(minutes).AddSeconds(30).ToString("O", CultureInfo.InvariantCulture);
 
-        var card = await Read(Source("slack", "backoff", lastError: "SND-CONTEXT-041", nextTry: next));
+        var card = await Read(Source("slack", "backoff", lastError: "SND-CONTEXT-041", nextTry: next, needsLook: true));
 
         Assert.Equal("slack: " + expected, Assert.Single(card.Lines).Text);
         Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
@@ -270,7 +270,7 @@ public sealed class ContextIndexCardTests
     [Fact]
     public async Task A_failed_source_names_its_code_and_what_failed()
     {
-        var card = await Read(Source("slack", "failed", 0, lastError: "SND-CONTEXT-041", lastErrorText: "the Slack token was refused"));
+        var card = await Read(Source("slack", "failed", 0, lastError: "SND-CONTEXT-041", lastErrorText: "the Slack token was refused", needsLook: true));
 
         Assert.Equal("slack: failed (SND-CONTEXT-041): the Slack token was refused · 0 records · nothing committed yet", Assert.Single(card.Lines).Text);
         Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
@@ -301,7 +301,7 @@ public sealed class ContextIndexCardTests
     {
         var card = await Read(
             """{"source":"slack","phase":null,"usable":false,"complete":false,"lastSync":null,"lastCode":null}""",
-            """{"source":"linear","phase":"live","usable":false,"complete":false,"lastSync":null,"lastCode":"SND-CONTEXT-041"}""");
+            """{"source":"linear","phase":"live","usable":false,"complete":false,"lastSync":null,"lastCode":"SND-CONTEXT-041","needsLook":true}""");
 
         Assert.Equal(["slack: not started", "linear: live"], card.Lines.Select(l => l.Text), StringComparer.Ordinal);
         Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
@@ -343,7 +343,7 @@ public sealed class ContextIndexCardTests
     {
         var harness = new SystemTestHarness();
         await harness.Show(A.Status() with { Health = new HealthView("healthy", []) });
-        harness.Server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, $$"""{"sources":[{{Source("linear", "idle", 0)}}]}""");
+        harness.Server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, $$"""{"sources":[{{Source("linear", "idle", 0, needsLook: true)}}]}""");
 
         await harness.Vm.ContextIndex.Refresh(A.Record().Url, Token);
 

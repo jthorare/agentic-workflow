@@ -43,7 +43,7 @@ internal sealed partial class ContextPageViewModel
         }
         else
         {
-            Problem = read.Error.Message;
+            ShowProblem(read.Error);
         }
 
         OnChanged(nameof(Problem));
@@ -83,7 +83,7 @@ internal sealed partial class ContextPageViewModel
         }
         else if (!read.IsSuccess)
         {
-            Problem = read.Error.Message;
+            ShowProblem(read.Error);
         }
 
         OnChanged(nameof(Problem));
