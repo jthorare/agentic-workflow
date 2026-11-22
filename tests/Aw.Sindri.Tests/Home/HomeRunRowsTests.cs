@@ -27,7 +27,7 @@ public sealed class HomeRunRowsTests
         Assert.Equal((1L, HomeKind.RunFailed, HomeGroup.NeedsYou, HomeState.Open), (row.Version, row.Kind, row.Group, row.State));
         Assert.Equal("morning-check failed: step 'fetch' failed: GitHub answered 502", row.Title);
         Assert.Equal(["failed", "morning-check@3:12", "schedule"], row.Facts.Select(static f => f.Text).ToArray());
-        Assert.Equal([HomeFactKind.Why, HomeFactKind.Object, HomeFactKind.From], row.Facts.Select(static f => f.Kind).ToArray());
+        Assert.Equal([HomeFactKind.Why, HomeFactKind.Ref, HomeFactKind.From], row.Facts.Select(static f => f.Kind).ToArray());
         Assert.Equal("you", row.WaitsOn);
         Assert.Equal(_ended, row.Since);
         Assert.Equal(HomeRunRows.Weight, row.Rank.Weight);
@@ -65,7 +65,7 @@ public sealed class HomeRunRowsTests
         var row = HomeRunRows.Failed(Failed("boom", item: ItemId.From("ITM-0000000000000000000000000000000c")), _read, new Masking()).Row;
 
         Assert.Equal(["run", "item"], row.Links.Select(static l => l.Kind).ToArray());
-        Assert.Equal("ITM-0000000000000000000000000000000c", row.Links[1].Id);
+        Assert.Equal("sindri:item:ITM-0000000000000000000000000000000c", row.Links[1].Id.Value);
     }
 
     [Fact]

@@ -47,15 +47,15 @@ public static class HomeRunRows
         var error = FirstLine(run.Error is { } text ? scrubber.Scrub(text) : null);
         var title = error is null ? $"{slug}: run {run.Id.Occurrence.ToString(System.Globalization.CultureInfo.InvariantCulture)} failed" : $"{slug} failed: {error}";
         IReadOnlyList<HomeLink> links = run.ItemId is { } item
-            ? [new HomeLink("run", run.Id.Value, slug), new HomeLink("item", item.Value, Title: null)]
-            : [new HomeLink("run", run.Id.Value, slug)];
+            ? [new HomeLink("run", HomeRowId.From("sindri:run:" + run.Id.Value), slug), new HomeLink("item", HomeRowId.From("sindri:item:" + item.Value), Title: null)]
+            : [new HomeLink("run", HomeRowId.From("sindri:run:" + run.Id.Value), slug)];
         var row = new HomeRow(
             IdOf(run.Id),
             Version: 1,
             HomeKind.RunFailed,
             HomeGroup.NeedsYou,
             title,
-            [new HomeFact(HomeFactKind.Why, "failed"), new HomeFact(HomeFactKind.Object, run.Id.Value), new HomeFact(HomeFactKind.From, scrubber.Scrub(StartedBy(run.Trigger)))],
+            [new HomeFact(HomeFactKind.Why, "failed"), new HomeFact(HomeFactKind.Ref, run.Id.Value), new HomeFact(HomeFactKind.From, scrubber.Scrub(StartedBy(run.Trigger)))],
             WaitsOn: "you",
             run.EndedAt ?? run.StartedAt,
             new HomeRank(Blocks: 0, Weight, SinceRank: 0, Position: 0),

@@ -79,7 +79,7 @@ public sealed class HomeLaneRowsTests
         Assert.Equal(("PR 3099 is ready to merge", "you"), (ready.Title, ready.WaitsOn));
         Assert.Equal(["merge", "open"], ready.Actions.ToArray());
         Assert.Equal(["ready", "#3099", "meta queue"], ready.Facts.Select(static f => f.Text).ToArray());
-        Assert.Equal($"gh:pr:{Repo}#3099", Assert.Single(ready.Links).Id);
+        Assert.Equal($"gh:pr:{Repo}#3099", Assert.Single(ready.Links).Id.Value);
         Assert.Equal("meta is merging (queued 2 (AWAITING_CHECKS))", merging.WaitsOn);
         Assert.Equal(["open"], merging.Actions.ToArray());
         Assert.Equal(HomeLaneRows.ReadyWeight, ready.Rank.Weight);

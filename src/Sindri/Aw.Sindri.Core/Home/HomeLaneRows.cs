@@ -88,9 +88,7 @@ public static class HomeLaneRows
         }
 
         var size = lane.Tokens is { } t ? string.Create(CultureInfo.InvariantCulture, $"at {t / 1000}k") : "at the mark";
-        IReadOnlyList<HomeLink> links = lane.Session is { } session
-            ? [new HomeLink("lane", name, name), new HomeLink("session", scrubber.Scrub(session), Title: null)]
-            : [new HomeLink("lane", name, name)];
+        IReadOnlyList<HomeLink> links = [.. Links(("lane", $"lane:{name}", name), ("session", lane.Session is { } session ? $"session:{scrubber.Scrub(session)}" : null, null))];
 
         // why: the PRs this lane sent 'ready' wait on it (item-of): the ranker counts them as what the recycle row blocks
         IReadOnlyList<HomeEdge> edges = lane.SessionName is { } tmux
@@ -116,7 +114,7 @@ public static class HomeLaneRows
         };
         var resets = usage.ResetsAt is { } at ? "resets " + at.UtcDateTime.ToString("MMM d HH:mm 'UTC'", CultureInfo.InvariantCulture) : "reset time unknown";
         var from = usage.Agent is { } agent ? scrubber.Scrub(agent) : $"lane {name}";
-        var row = Row(new RowWords(id, HomeKind.AgentLimited, $"{name}: stopped at its {limit}, {resets}", "limited", name, from, LaneWeight), [new HomeLink("lane", name, name)], ["open-session"], source);
+        var row = Row(new RowWords(id, HomeKind.AgentLimited, $"{name}: stopped at its {limit}, {resets}", "limited", name, from, LaneWeight), [.. Links(("lane", $"lane:{name}", name))], ["open-session"], source);
         return new HomeRaise(row, Edges: []);
     }
 
@@ -128,7 +126,7 @@ public static class HomeLaneRows
         }
 
         var number = queued.Pr.ToString(CultureInfo.InvariantCulture);
-        IReadOnlyList<HomeLink> links = repo is null ? [] : [new HomeLink("pr", $"gh:pr:{repo}#{number}", $"PR {number}")];
+        IReadOnlyList<HomeLink> links = [.. Links(("pr", repo is null ? null : $"gh:pr:{repo}#{number}", $"PR {number}"))];
 
         // why: while meta is already merging it (GitHub's merge queue holds it) the row offers no second Merge (spec §5.1)
         var merging = queued.Github is { } github ? $"meta is merging ({scrubber.Scrub(github)})" : null;
@@ -139,6 +137,10 @@ public static class HomeLaneRows
         return new HomeRaise(row, Edges: []);
     }
 
+    // The links whose id text is a row id ('<source>:<id>'); one without an id, or with a space in it, is left out.
+    private static IEnumerable<HomeLink> Links(params (string Kind, string? Id, string? Title)[] links) =>
+        links.Where(static l => l.Id is not null && HomeRowId.TryFrom(l.Id, out _)).Select(static l => new HomeLink(l.Kind, HomeRowId.From(l.Id!), l.Title));   // why: the Where keeps only ids that are not null
+
     private static HomeRow Row(RowWords text, IReadOnlyList<HomeLink> links, IReadOnlyList<string> actions, HomeSource source) =>
         new(
             text.Id,
@@ -146,7 +148,7 @@ public static class HomeLaneRows
             text.Kind,
             HomeGroup.NeedsYou,
             text.Title,
-            [new HomeFact(HomeFactKind.Why, text.Why), new HomeFact(HomeFactKind.Object, text.ObjectRef), new HomeFact(HomeFactKind.From, text.From)],
+            [new HomeFact(HomeFactKind.Why, text.Why), new HomeFact(HomeFactKind.Ref, text.ObjectRef), new HomeFact(HomeFactKind.From, text.From)],
             WaitsOn: "you",
             source.ReadAt,
             new HomeRank(Blocks: 0, text.Weight, SinceRank: 0, Position: 0),

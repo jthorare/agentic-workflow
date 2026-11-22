@@ -13,7 +13,7 @@ public sealed class HomeReconcileTests
     private const string C = "lane:recycle:qa";
 
     private static HomeRaise Want(string id, string why = "at 210k", string waitsOn = "you") =>
-        new(HomeRowSamples.Row(id) with { Facts = [new HomeFact(HomeFactKind.Why, why), new HomeFact(HomeFactKind.Object, id), new HomeFact(HomeFactKind.From, "lane")], WaitsOn = waitsOn }, Edges: []);
+        new(HomeRowSamples.Row(id) with { Facts = [new HomeFact(HomeFactKind.Why, why), new HomeFact(HomeFactKind.Ref, id), new HomeFact(HomeFactKind.From, "lane")], WaitsOn = waitsOn }, Edges: []);
 
     [Fact]
     public void A_new_row_is_raised_a_gone_row_is_cleared_and_a_quiet_one_writes_nothing()
