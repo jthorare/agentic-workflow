@@ -37,23 +37,24 @@ public static class HomeReconcile
             }
             else if (Moved(current, want.Row))
             {
-                var next = current with
-                {
-                    Version = current.Version + 1,
-                    Title = want.Row.Title,
-                    Facts = want.Row.Facts,
-                    WaitsOn = want.Row.WaitsOn,
-                    Links = want.Row.Links,
-                    Actions = want.Row.Actions,
-                    Source = want.Row.Source,
-                };
-                changed.Add(want with { Row = next });
+                changed.Add(want with { Row = Next(current, want.Row) });
             }
         }
 
         var cleared = held.Where(r => !wantedIds.Contains(r.Id.Value)).DistinctBy(static r => r.Id.Value, StringComparer.Ordinal).Select(static r => r.Id).ToList();
         return new HomePlan(raised, changed, cleared);
     }
+
+    private static HomeRow Next(HomeRow current, HomeRow want) => current with
+    {
+        Version = current.Version + 1,
+        Title = want.Title,
+        Facts = want.Facts,
+        WaitsOn = want.WaitsOn,
+        Links = want.Links,
+        Actions = want.Actions,
+        Source = want.Source,
+    };
 
     private static bool Moved(HomeRow current, HomeRow next) =>
         !string.Equals(Why(current), Why(next), StringComparison.Ordinal)
