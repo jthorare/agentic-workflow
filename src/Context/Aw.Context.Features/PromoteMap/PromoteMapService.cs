@@ -1,6 +1,7 @@
 using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Concepts;
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Overrides;
 using Aw.Context.Core.Review;
@@ -48,15 +49,15 @@ internal sealed class PromoteMapService(IGraphStore store, IConceptAnswerFills f
         }
 
         var ready = PromoteReadiness.Check(seen.Value.Queue);
-        if (ready.IsError)
-        {
-            return ready.Error;
-        }
+        return ready.IsError ? ready.Error : Filled(await Promote(draft, seen.Value.View, cancellationToken).ConfigureAwait(false), request.Scope);
+    }
 
-        var promoted = await Promote(draft, seen.Value.View, cancellationToken).ConfigureAwait(false);
+    // A committed promote queues the fill of the new version's concepts and glossary; it runs after this call, never inside it.
+    private Result<MapPromoted> Filled(Result<MapPromoted> promoted, ContextScope scope)
+    {
         if (promoted.IsSuccess)
         {
-            fills.Start(request.Scope);   // after the commit, outside this call
+            fills.Start(scope);
         }
 
         return promoted;

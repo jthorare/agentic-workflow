@@ -16,8 +16,11 @@ public static partial class ContextFeaturesServiceCollectionExtensions
             .AddSingleton<IConceptAnswerFills>(static sp => new ConceptAnswerFills(async (scope, ct) =>
             {
                 // the fill runs after the publish's own scope ended, so it reads in a scope of its own
-                await using var own = sp.CreateAsyncScope();
-                await own.ServiceProvider.GetRequiredService<ConceptAnswers>().Fill(scope, ct).ConfigureAwait(false);
+                var own = sp.CreateAsyncScope();
+                await using (own.ConfigureAwait(false))
+                {
+                    await own.ServiceProvider.GetRequiredService<ConceptAnswers>().Fill(scope, ct).ConfigureAwait(false);
+                }
             }));
     }
 }

@@ -40,8 +40,11 @@ public abstract class ConceptAnswerStoreContract
         var concepts = Expect.Ok(await answers.Concepts("k1", None), test);
         var glossary = Expect.Ok(await answers.Glossary("k2", None), test);
 
-        Expect.That(concepts is { MapVersion: "v1", State: ConceptStates.Ok, Concepts: [{ Name: "Billing", Pinned: true, Terms: ["invoice"] }], Other.Name: "Other", Next: "c2" } && concepts.PagesInNoConcept == 3, test, "the concepts answer changed on the way back");
-        Expect.That(glossary is { MapVersion: "v1", Concepts: [{ Terms: ["invoice", "refund"], OwnerTerms: ["invoice"] }], Terms: [{ Term: "invoice" }] }, test, "the glossary answer changed on the way back");
+        Expect.That(concepts is not null && Same(concepts.MapVersion, "v1") && Same(concepts.State, ConceptStates.Ok) && concepts.Concepts.Count == 1 && Same(concepts.Concepts[0].Name, "Billing")
+            && concepts.Concepts[0].Pinned && concepts.Concepts[0].Terms?.SequenceEqual(["invoice"], StringComparer.Ordinal) == true && Same(concepts.Other.Name, "Other") && Same(concepts.Next, "c2")
+            && concepts.PagesInNoConcept == 3, test, "the concepts answer changed on the way back");
+        Expect.That(glossary is not null && Same(glossary.MapVersion, "v1") && glossary.Concepts.Count == 1 && glossary.Concepts[0].Terms.SequenceEqual(["invoice", "refund"], StringComparer.Ordinal)
+            && glossary.Concepts[0].OwnerTerms?.SequenceEqual(["invoice"], StringComparer.Ordinal) == true && Same(glossary.Terms[0].Term, "invoice"), test, "the glossary answer changed on the way back");
         Expect.That(Expect.Ok(await answers.Concepts("k3", None), test) is null, test, "a key nobody kept read an answer");
         Expect.That(Expect.Ok(await answers.Glossary("k1", None), test) is null, test, "a concepts row read as a glossary");
     }
@@ -86,10 +89,19 @@ public abstract class ConceptAnswerStoreContract
         Expect.That(Expect.Ok(await answers.Concepts("new", None), test)?.MapVersion == "v2", test, "the new version's answer isn't kept");
     }
 
-    private static ConceptsView Concepts(string version) =>
-        new(1, Repo: null, version, ConceptStates.Ok, Code: null,
-            [new ConceptRow(NodeKey.From("concept:billing"), "Billing", "Charges and refunds.", "derived", new ConceptSize(2, 1, 0, 4), [new ConceptCitation("repo:web/docs/billing.md")]) { Terms = ["invoice"], Pinned = true, Pages = 0 }],
-            new ConceptOther(NodeKey.From("concept:other"), "Other", new ConceptSize(1, 0, 0, 0)), [new ConceptLink(NodeKey.From("concept:billing"), NodeKey.From("concept:other"), 2)], Next: "c2") { PagesInNoConcept = 3 };
+    private static bool Same(string? a, string b) => string.Equals(a, b, StringComparison.Ordinal);
+
+    private static ConceptsView Concepts(string version)
+    {
+        var row = new ConceptRow(NodeKey.From("concept:billing"), "Billing", "Charges and refunds.", "derived", new ConceptSize(2, 1, 0, 4), [new ConceptCitation("repo:web/docs/billing.md")])
+        {
+            Terms = ["invoice"],
+            Pinned = true,
+            Pages = 0,
+        };
+        var other = new ConceptOther(NodeKey.From("concept:other"), "Other", new ConceptSize(1, 0, 0, 0));
+        return new ConceptsView(1, Repo: null, version, ConceptStates.Ok, Code: null, [row], other, [new ConceptLink(NodeKey.From("concept:billing"), NodeKey.From("concept:other"), 2)], Next: "c2") { PagesInNoConcept = 3 };
+    }
 
     private static ConceptGlossaryView Glossary(string version) =>
         new(1, Repo: null, version, ConceptStates.Ok, [new ConceptTermsRow(NodeKey.From("concept:billing"), "Billing", ["invoice", "refund"]) { OwnerTerms = ["invoice"] }],
