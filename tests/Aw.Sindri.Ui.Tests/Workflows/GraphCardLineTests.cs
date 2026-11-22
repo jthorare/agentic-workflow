@@ -36,11 +36,11 @@ public sealed class GraphCardLineTests
     [InlineData("call_tool", "{\"toolkit\":\"notes\",\"tool\":\"add_note\"}", "notes · add_note")]
     [InlineData("ask_owner", "{\"question\":\"Ship it?\"}", "Ask: Ship it?")]
     public void Each_block_kind_gets_one_settings_line_from_its_config(string type, string config, string expected) =>
-        Assert.Equal(expected, GraphCardLine.Settings(type, Config(config), summary: null, kindTitle: null));
+        Assert.Equal(expected, GraphCardLine.Settings(type, Config(config), summary: null, kindTitle: null), StringComparer.Ordinal);
 
     [Fact]
     public void The_schedule_line_is_the_one_the_server_serves() =>
-        Assert.Equal("Every weekday 7:00 America/Los_Angeles", GraphCardLine.Settings("schedule", Config("{\"cron\":\"0 7 * * 1-5\"}"), "Every weekday 7:00 America/Los_Angeles", "Schedule"));
+        Assert.Equal("Every weekday 7:00 America/Los_Angeles", GraphCardLine.Settings("schedule", Config("{\"cron\":\"0 7 * * 1-5\"}"), "Every weekday 7:00 America/Los_Angeles", "Schedule"), StringComparer.Ordinal);
 
     [Theory]
     [InlineData("code", "{}", "Code")]
@@ -48,11 +48,11 @@ public sealed class GraphCardLineTests
     [InlineData("schedule", "{}", "Schedule")]
     [InlineData("memory_write", "{}", "Remember")]
     public void A_kind_whose_setting_is_missing_shows_the_blocks_name(string type, string config, string expected) =>
-        Assert.Equal(expected, GraphCardLine.Settings(type, Config(config), summary: null, kindTitle: null));
+        Assert.Equal(expected, GraphCardLine.Settings(type, Config(config), summary: null, kindTitle: null), StringComparer.Ordinal);
 
     [Fact]
     public void A_missing_config_reads_like_an_empty_one() =>
-        Assert.Equal("If", GraphCardLine.Settings("condition", default, summary: null, kindTitle: null));
+        Assert.Equal("If", GraphCardLine.Settings("condition", default, summary: null, kindTitle: null), StringComparer.Ordinal);
 
     [Theory]
     [InlineData("Fetch upstream status", "code", null, "Fetch upstream status")]
@@ -61,5 +61,5 @@ public sealed class GraphCardLineTests
     [InlineData("", "code", "Run code", "Run code")]
     [InlineData("", "made_up_kind", null, "made up kind")]
     public void Line_1_is_the_title_or_the_blocks_name_never_the_id(string title, string type, string? kindTitle, string expected) =>
-        Assert.Equal(expected, GraphCardLine.Title(title, type, kindTitle));
+        Assert.Equal(expected, GraphCardLine.Title(title, type, kindTitle), StringComparer.Ordinal);
 }

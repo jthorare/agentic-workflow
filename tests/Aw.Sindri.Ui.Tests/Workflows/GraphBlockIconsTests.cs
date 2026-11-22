@@ -17,7 +17,7 @@ public sealed class GraphBlockIconsTests
     [Fact]
     public void Every_catalog_kind_has_an_icon_and_no_two_kinds_share_one()
     {
-        Assert.All(_catalog, type => Assert.Contains(type, GraphBlockIcons.Known));
+        Assert.All(_catalog, type => Assert.Contains(type, GraphBlockIcons.Known, StringComparer.Ordinal));
         Assert.Equal(_catalog.Length, _catalog.Select(GraphBlockIcons.PathFor).Distinct(StringComparer.Ordinal).Count());
     }
 
@@ -26,6 +26,6 @@ public sealed class GraphBlockIconsTests
     {
         var square = GraphBlockIcons.PathFor("made_up_kind");
 
-        Assert.DoesNotContain(square, _catalog.Select(GraphBlockIcons.PathFor));
+        Assert.DoesNotContain(square, _catalog.Select(GraphBlockIcons.PathFor), StringComparer.Ordinal);
     }
 }

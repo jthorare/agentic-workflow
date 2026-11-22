@@ -61,7 +61,7 @@ public sealed class WorkflowsEditorSheetTests
         await page.OpenSettings(Token);
 
         Assert.Equal(("Step id: agent", "Advanced"), (page.Editor.NodeIdLine, page.Editor.AdvancedText));
-        Assert.Equal("Check the repos", page.Runs.Graph.Nodes.Single(n => string.Equals(n.Id, "agent", StringComparison.Ordinal)).Title);   // the card shows the title, not the id
+        Assert.Equal("Check the repos", page.Runs.Graph.Nodes.Single(n => string.Equals(n.Id, "agent", StringComparison.Ordinal)).Title, StringComparer.Ordinal);   // the card shows the title, not the id
     }
 
     [Fact]
