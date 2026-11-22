@@ -52,10 +52,11 @@ internal sealed class UsageReadCache(string directory)
         }
     }
 
-    /// <summary>Writes what changed: the transcripts marked dirty, and the removal of the ones no longer in <paramref name="files"/>. Nothing is written when nothing changed.</summary>
+    /// <summary>Writes what changed: for each transcript marked dirty only the messages added or changed since the last save (the whole transcript when it is new or was read again from byte 0), and the removal of the ones no longer in <paramref name="files"/>. Nothing is written when nothing changed.</summary>
     /// <param name="reader">The reader's name.</param>
     /// <param name="files">The state per transcript path.</param>
-    /// <exception cref="InvalidDataException">The file was unusable; it has been deleted and the caller should write everything again.</exception>
+    /// <remarks>A failure that is not a SQLite one (an <see cref="IOException"/>) leaves the file as it is and the exception reaches the caller, which writes every transcript whole on the next pass: one full rewrite.</remarks>
+    /// <exception cref="InvalidDataException">The file was unusable (unreadable, or another version); it has been deleted and the caller should write everything again.</exception>
     public void Save(string reader, IReadOnlyDictionary<string, FileState> files)
     {
         ArgumentException.ThrowIfNullOrEmpty(reader);
@@ -64,7 +65,8 @@ internal sealed class UsageReadCache(string directory)
         try
         {
             using var connection = Open(path, create: true);
-            var gone = SavedPaths(connection).Where(p => !files.ContainsKey(p)).ToList();
+            var saved = SavedPaths(connection);
+            var gone = saved.Where(p => !files.ContainsKey(p)).ToList();
             var dirty = files.Where(static f => f.Value.Dirty).ToList();
             if (gone.Count == 0 && dirty.Count == 0)
             {
@@ -79,17 +81,30 @@ internal sealed class UsageReadCache(string directory)
 
             foreach (var (file, state) in dirty)
             {
-                Forget(connection, transaction, file);
-                Write(connection, transaction, file, state);
+                SaveOne(connection, transaction, file, state, whole: state.Rewrite || !saved.Contains(file));
             }
 
             transaction.Commit();
             Writes++;
         }
-        catch (SqliteException e)
+        catch (Exception e) when (e is SqliteException or InvalidDataException)   // like Load: a file of another version is dropped, not kept failing
         {
             Delete(path);
             throw new InvalidDataException($"The usage read cache {path} could not be written", e);
+        }
+    }
+
+    // A transcript new to the cache, or read again from byte 0, is written whole; any other only gets its new rows.
+    private static void SaveOne(SqliteConnection connection, SqliteTransaction transaction, string file, FileState state, bool whole)
+    {
+        if (whole)
+        {
+            Forget(connection, transaction, file);
+            Write(connection, transaction, file, state);
+        }
+        else
+        {
+            Append(connection, transaction, file, state);
         }
     }
 
@@ -167,9 +182,9 @@ internal sealed class UsageReadCache(string directory)
         }
     }
 
-    private static List<string> SavedPaths(SqliteConnection connection)
+    private static HashSet<string> SavedPaths(SqliteConnection connection)
     {
-        var paths = new List<string>();
+        var paths = new HashSet<string>(StringComparer.Ordinal);
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT path FROM files";
         using var rows = command.ExecuteReader();
@@ -195,6 +210,7 @@ internal sealed class UsageReadCache(string directory)
     }
 #pragma warning restore CA2100
 
+    /// <summary>Writes a transcript whole: its file row and every message.</summary>
     private static void Write(SqliteConnection connection, SqliteTransaction transaction, string file, FileState state)
     {
         using var upsert = connection.CreateCommand();
@@ -202,10 +218,26 @@ internal sealed class UsageReadCache(string directory)
         upsert.CommandText = "INSERT INTO files (path, offset) VALUES ($path, $offset)";
         _ = upsert.Bind("$path", file).Bind("$offset", state.Offset);
         _ = upsert.ExecuteNonQuery();
+        InsertMessages(connection, transaction, file, state.Messages);
+    }
+
+    /// <summary>Writes what a saved transcript gained: its new offset, and only the messages added or changed since.</summary>
+    private static void Append(SqliteConnection connection, SqliteTransaction transaction, string file, FileState state)
+    {
+        using var move = connection.CreateCommand();
+        move.Transaction = transaction;
+        move.CommandText = "UPDATE files SET offset = $offset WHERE path = $path";
+        _ = move.Bind("$path", file).Bind("$offset", state.Offset);
+        _ = move.ExecuteNonQuery();
+        InsertMessages(connection, transaction, file, state.ChangedIds.Where(state.Messages.ContainsKey).Select(id => KeyValuePair.Create(id, state.Messages[id])));
+    }
+
+    private static void InsertMessages(SqliteConnection connection, SqliteTransaction transaction, string file, IEnumerable<KeyValuePair<string, (DateTimeOffset? At, ModelTokens Tokens)>> messages)
+    {
         using var insert = connection.CreateCommand();
         insert.Transaction = transaction;
-        insert.CommandText = "INSERT INTO messages (path, id, at, model, input, cache_read, cache_write, output) VALUES ($path, $id, $at, $model, $input, $read, $write, $output)";
-        foreach (var (id, (at, tokens)) in state.Messages)
+        insert.CommandText = "INSERT OR REPLACE INTO messages (path, id, at, model, input, cache_read, cache_write, output) VALUES ($path, $id, $at, $model, $input, $read, $write, $output)";
+        foreach (var (id, (at, tokens)) in messages)
         {
             insert.Parameters.Clear();
             _ = insert.Bind("$path", file).Bind("$id", id).Bind("$at", at?.ToString("O", CultureInfo.InvariantCulture)).Bind("$model", tokens.Model)

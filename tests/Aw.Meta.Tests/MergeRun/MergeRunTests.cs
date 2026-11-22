@@ -1,5 +1,6 @@
 using Aw.Meta.Core;
 using Aw.Meta.Core.Commands;
+using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Gate;
 using Aw.Meta.Core.Lanes;
@@ -21,7 +22,7 @@ public sealed class MergeRunTests
     private async Task<IReadOnlyList<(string Kind, string? Lane, string Fields)>> Written() =>
         [.. (await _events.Read(0, kind: null, lane: null, 100, CancellationToken.None)).Value.Events.Select(e => (e.Kind, e.Lane, e.Fields))];
 
-    private async Task Ready(bool gated = true, bool mergeFails = false, bool fetchFails = false, string state = "OPEN", string? mergeCommit = null, string queue = QueueAnswers.Off, bool queueFails = false, bool positionFails = false, string? queueBefore = null, string? extensions = null)
+    private async Task Ready(bool gated = true, bool mergeFails = false, bool fetchFails = false, string state = "OPEN", string? mergeCommit = null, string queue = QueueAnswers.Off, bool queueFails = false, bool positionFails = false, string? queueBefore = null, string? extensions = null, string stateAfterMerge = "MERGED")
     {
         await _world.ReadyWithGate();
         if (gated)
@@ -30,11 +31,17 @@ public sealed class MergeRunTests
         }
 
         ScriptGitHub(mergeFails, fetchFails, state, mergeCommit, queue, queueFails, positionFails, queueBefore);
+        ScriptStateAfterStackMerge(stateAfterMerge);
         if (extensions is not null)
         {
             ScriptStack(extensions);
         }
     }
+
+    // The re-read after a stack merge: the pull request reads as `state` once "gh stack merge" ran, and OPEN before.
+    private void ScriptStateAfterStackMerge(string state) =>
+        _ = _world.Runner.When("gh pr view 190 --json state", _ =>
+            new CommandResult(0, "{\"state\":\"" + (_world.Runner.Lines.Contains("gh stack merge 190 --yes", StringComparer.Ordinal) ? state : "OPEN") + "\"}", string.Empty, TimedOut: false));
 
     // What "gh extension list" prints: name, repo and version, tab separated.
     private const string StackInstalled = "gh stack\tgithub/gh-stack\tv1.0.0\n";
@@ -373,5 +380,35 @@ public sealed class MergeRunTests
         Assert.True(view.IsSuccess, view.IsError ? view.Error.Message : string.Empty);
         Assert.Equal((true, false), (view.Value.Enabled, view.Value.Stacked));
         Assert.Equal(2, asked.Count);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_stack_merge_that_exits_0_is_not_recorded_while_the_pr_is_still_open()
+    {
+        await Ready(queue: QueueAnswers.Stacked(), extensions: StackInstalled, stateAfterMerge: "OPEN");
+
+        var result = await Service().Handle(new MergeRunRequest(190), CancellationToken.None);
+
+        Assert.True(result.IsError);
+        Assert.Equal(MetaErrors.CommandFailed.Code, result.Error.Code);
+        Assert.Contains("still open", result.Error.Message, StringComparison.Ordinal);
+        Assert.Null((await _world.Gates.LatestMerge(CancellationToken.None)).Value);
+        Assert.Empty(await Written());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Merge_order_refuses_a_stacked_pr_while_a_lower_pr_of_the_stack_is_unmerged()
+    {
+        await Ready(queue: QueueAnswers.Stacked(), extensions: StackInstalled);
+        var team = (await _world.Config.Load(CancellationToken.None)).Value;
+        _ = await _world.Config.Save(team with { MergeOrder = [new MergeOrderRule(189, 190)] }, CancellationToken.None);   // 189 is the lower PR of the stack
+        _ = _world.Runner.When("gh pr view 189 --json state", """{"state":"OPEN"}""");
+
+        var result = await Service().Handle(new MergeRunRequest(190), CancellationToken.None);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.False(result.Value.Merged);
+        Assert.Contains(result.Value.Checks, c => c.Name.Equals("order", StringComparison.Ordinal) && !c.Ok);
+        Assert.DoesNotContain(_world.Runner.Lines, l => l.Contains(" merge ", StringComparison.Ordinal));
     }
 }

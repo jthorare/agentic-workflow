@@ -22,6 +22,11 @@ internal sealed class HealthServiceRows(IViewReader views, IEnumerable<BuiltInSe
     /// <returns>The context.</returns>
     public HealthContext Context(IReadOnlyList<HealthProblem>? codeIndexProblems) => new(codeIndexProblems, clock?.GetUtcNow());
 
+    /// <summary>What the scheduler would run before it first publishes: the approved profile's services (none when there is no approved profile) and the built-ins, as the services list shows them (#3623).</summary>
+    /// <param name="approved">The approved profile, or null.</param>
+    /// <returns>One schedule per service.</returns>
+    public IReadOnlyList<ServiceSchedule> Scheduled(LoadedProfile? approved) => ServiceSchedule.From(approved?.Profile, builtIns, DateTimeOffset.MinValue);
+
     /// <summary>The report with the stale build problem (#1032) when the running build is not the one 'bin/cs/current' names.</summary>
     /// <param name="report">The report so far.</param>
     /// <returns>The report; the same one outside an install.</returns>
