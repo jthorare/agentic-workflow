@@ -2,7 +2,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using Aw.Context.Core.Graph;
-using Aw.Context.Core.Linear;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
 
@@ -48,11 +47,17 @@ public static partial class RulesLinker
         var run = new Run(record, Bounded(text), graph, tracker.Known, tracker.Teams);
         void Step(LinkRule rule, Action step)
         {
-            rules.Before?.Invoke(rule);
-            step();
+            try
+            {
+                rules.Before?.Invoke(rule);
+                step();
+            }
+            catch (RegexMatchTimeoutException)   // boundary: a rule matches its whole text before it links, so a timeout leaves that rule's links out and nothing half-added (#3816)
+            {
+                rules.TimedOut?.Invoke(rule);
+            }
         }
 
-        _ = rules.TimedOut;
         Step(LinkRule.Url, run.Urls);
         Step(LinkRule.Path, run.Paths);
         Step(LinkRule.QuotedTitle, run.QuotedTitles);
@@ -82,13 +87,15 @@ public static partial class RulesLinker
 
         public void Paths()
         {
-            foreach (var match in RepoPath.Matches(_rest.ToString()).ToList())
+            var rest = _rest.ToString();
+            foreach (var (index, length) in RepoPaths(rest))
             {
-                if (graph.Nodes.FirstOrDefault(n => n.Key.Value == "code:" + match.Value) is { } code)
+                var path = rest.Substring(index, length);
+                if (graph.Nodes.FirstOrDefault(n => n.Key.Value == "code:" + path) is { } code)
                 {
-                    Add(code.Key.Value, LinkRule.Path, ByPath, match.Value);
-                    LinkImplemented(code, match.Value);
-                    Mask(match);
+                    Add(code.Key.Value, LinkRule.Path, ByPath, path);
+                    LinkImplemented(code, path);
+                    Mask(index, length);
                 }
             }
         }
@@ -185,7 +192,9 @@ public static partial class RulesLinker
             }
         }
 
-        private void Mask(Match match) => _ = _rest.Remove(match.Index, match.Length).Insert(match.Index, new string(' ', match.Length));
+        private void Mask(Match match) => Mask(match.Index, match.Length);
+
+        private void Mask(int index, int length) => _ = _rest.Remove(index, length).Insert(index, new string(' ', length));
     }
 
     private static bool IsTeamKey(string issueKey, IReadOnlySet<string> teams) => teams.Contains(issueKey[..issueKey.IndexOf('-', StringComparison.Ordinal)]);
@@ -277,22 +286,4 @@ public static partial class RulesLinker
     }
 
     private static string Hash(string span) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(span)));
-
-    [GeneratedRegex(@"[\p{L}\p{N}]+", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex Word { get; }
-
-    [GeneratedRegex(@"https://linear\.app/[^/\s]+/issue/(?<key>" + LinearRecordKeys.TeamKeyPattern + @"-[0-9]+)(?:/[^\s]*)?", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex LinearUrl { get; }
-
-    [GeneratedRegex(@"(?<![A-Za-z0-9-])" + LinearRecordKeys.TeamKeyPattern + @"-[0-9]+(?![A-Za-z0-9-])", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex IssueKey { get; }
-
-    [GeneratedRegex(@"(?<![\w/.\-])(?:[\w.\-]+/)+[\w\-]+(?:\.[A-Za-z0-9]+)+(?![\w/\-])", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex RepoPath { get; }
-
-    [GeneratedRegex("(?<![\\w])[\"'`“‘](?<title>[^\"'`“”‘’\\n]{2,120})[\"'`”’](?![\\w])", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex Quoted { get; }
-
-    [GeneratedRegex(@"(?<![A-Za-z0-9_\-.])[A-Za-z_][A-Za-z0-9_\-.]*[A-Za-z0-9_](?![A-Za-z0-9_\-]|\.[A-Za-z0-9_])", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex Token { get; }
 }

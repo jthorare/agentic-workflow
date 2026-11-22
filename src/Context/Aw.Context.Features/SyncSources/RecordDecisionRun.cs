@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Library;
@@ -175,26 +174,18 @@ internal sealed partial class RecordDecisionRun(SourceId source, VisibleMap map,
         return null;
     }
 
-    /// <summary>Links one record; a record whose linking times out gets no links (it is still committed, so it is done for this version and later runs skip it) and a warning that names its key and text length.</summary>
-    private IReadOnlyList<IntentLink> Link(RecordKey key, string text, Dictionary<string, IntentRecord> known)
-    {
-        try
-        {
-            return RulesLinker.Link(key, text, map.Graph, ([.. known.Values], new HashSet<string>(context.Settings.LinearTeams, StringComparer.Ordinal)), pins);
-        }
-        catch (RegexMatchTimeoutException)   // boundary: one pathological record must not fail the run for the rest of its feed (#1769)
+    /// <summary>Links one record; a rule that times out on it links nothing (the record is still committed with the other rules' links, so later runs skip this version) and logs a warning that names the key, the rule and the text length.</summary>
+    private IReadOnlyList<IntentLink> Link(RecordKey key, string text, Dictionary<string, IntentRecord> known) =>
+        RulesLinker.Link(key, text, map.Graph, ([.. known.Values], new HashSet<string>(context.Settings.LinearTeams, StringComparer.Ordinal)), pins, rule =>
         {
             if (logger is not null)
             {
-                LogLinkTimeout(logger, key.Value, text.Length);
+                LogLinkTimeout(logger, key.Value, rule, text.Length);
             }
+        });
 
-            return [];
-        }
-    }
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "record {Key} ({Length} chars) timed out while linking; it is stored without links")]
-    private static partial void LogLinkTimeout(ILogger logger, string key, int length);
+    [LoggerMessage(Level = LogLevel.Warning, Message = "record {Key} ({Length} chars): the {Rule} rule timed out while linking; it is stored without that rule's links")]
+    private static partial void LogLinkTimeout(ILogger logger, string key, LinkRule rule, int length);
 
     /// <summary>Writes only the aliases of a done record whose stored ones differ from the permalink's identifier; a code when the run must stop.</summary>
     private async ValueTask<string?> Realias(StoredRecord stored, Dictionary<string, IntentRecord> known, CancellationToken cancellationToken)
