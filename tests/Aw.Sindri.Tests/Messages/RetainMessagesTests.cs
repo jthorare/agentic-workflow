@@ -41,7 +41,7 @@ public sealed class RetainMessagesTests : IDisposable
     {
         // a 35-day-old unanswered DM: it stays in Needs reply with its text
         await _home.Conversation("T0HARBOR", "D0SAM", ConversationKind.Dm);
-        _ = await _home.Put(new StoredMessage("D0SAM", MessagesHome.Ts(Now.AddDays(-35)), null, "U0SAM", "can you ship the fare table today?", Mine: false, NamesMe: false));
+        _ = await _home.Put(new StoredMessage("D0SAM", MessagesHome.Ts(Now.AddDays(-35)), ThreadTs: null, "U0SAM", "can you ship the fare table today?", Mine: false, NamesMe: false));
 
         var ran = await Run();
 
@@ -57,7 +57,7 @@ public sealed class RetainMessagesTests : IDisposable
         // a 40-day-old thread where I spoke last (not in Needs reply), snoozed through the ledger. This home has no views.db at all: whatever a views
         // rebuild or a stalled projector does to home_rows, the pass reads only the ledger's events, so the snooze still holds the text
         var key = await SeedAnsweredThread(Now.AddDays(-40), "berth");
-        await Append("home.row.snoozed", string.Create(CultureInfo.InvariantCulture, $$"""{"id":"{{key}}","until":"{{Now.AddDays(7):O}}"}"""));
+        await Append("home.row.snoozed", Snooze(key, Now.AddDays(7)));
 
         var ran = await Run();
 
@@ -72,8 +72,8 @@ public sealed class RetainMessagesTests : IDisposable
     public async Task Retention_takes_a_thread_once_its_snooze_woke()
     {
         var key = await SeedAnsweredThread(Now.AddDays(-40), "berth");
-        await Append("home.row.snoozed", string.Create(CultureInfo.InvariantCulture, $$"""{"id":"{{key}}","until":"{{Now.AddDays(7):O}}"}"""));
-        await Append("home.row.woke", string.Create(CultureInfo.InvariantCulture, $$"""{"id":"{{key}}","reason":"replied"}"""));
+        await Append("home.row.snoozed", Snooze(key, Now.AddDays(7)));
+        await Append("home.row.woke", $$"""{"id":"{{key}}","reason":"replied"}""");
 
         var ran = await Run();
 
@@ -106,7 +106,7 @@ public sealed class RetainMessagesTests : IDisposable
         // an answered thread 35 days old goes with its FTS rows and gist; a 5-day-old one in the same channel stays
         var oldRoot = MessagesHome.Ts(Now.AddDays(-35));
         _ = await SeedAnsweredThread(Now.AddDays(-35), "gangway");
-        _ = await _home.Put(new StoredMessage(Harbor, MessagesHome.Ts(Now.AddDays(-5)), null, "U0LEE", "tide tables", Mine: false, NamesMe: false));
+        _ = await _home.Put(new StoredMessage(Harbor, MessagesHome.Ts(Now.AddDays(-5)), ThreadTs: null, "U0LEE", "tide tables", Mine: false, NamesMe: false));
         _home.Exec($"UPDATE thread_state SET gist = 'Ada asks about the gangway', gist_key = 'k1' WHERE thread_ts = '{oldRoot.Value}'");
 
         var ran = await Run();
@@ -130,6 +130,9 @@ public sealed class RetainMessagesTests : IDisposable
         Assert.Equal(2L, _home.Count("SELECT COUNT(*) FROM messages"));
     }
 
+    // A home.row.snoozed payload: the row id and the time it wakes.
+    private static string Snooze(string key, DateTimeOffset until) => $$"""{"id":"{{key}}","until":"{{until.ToString("O", CultureInfo.InvariantCulture)}}"}""";
+
     // Ada asks in #harbor and I answer an hour later: the thread is mine, but I spoke last, so it is not in Needs reply.
     private async Task<string> SeedAnsweredThread(DateTimeOffset at, string word)
     {
@@ -147,7 +150,7 @@ public sealed class RetainMessagesTests : IDisposable
         _grant ??= await _harness.HoldLease();
         var scope = EventScope.ControlPlane;
         var envelope = EventContext.Create(scope.Actor, scope.Tenant, scope.Ring, _harness.Ids.NewId()).Value.Envelope(type, payload, _harness.Clock, _harness.Ids);
-        var appended = await _harness.Store.Append(new LedgerEntry(envelope, $"test:{type}:{++_events}", Item: null), _grant, Cancel);
+        var appended = await _harness.Store.Append(new LedgerEntry(envelope, string.Create(CultureInfo.InvariantCulture, $"test:{type}:{++_events}"), Item: null), _grant, Cancel);
         Assert.True(appended.IsSuccess);
     }
 

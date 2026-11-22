@@ -56,6 +56,7 @@ internal sealed class MessagesHome : IDisposable
         return value is DBNull ? null : value;
     }
 
+    // why: every query passed here is a COUNT or a NOT NULL column, so the value is never NULL
     public long Count(string sql) => (long)Scalar(sql)!;
 
     /// <summary>Messages matching <paramref name="word"/> in the FTS index.</summary>
