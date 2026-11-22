@@ -10,10 +10,8 @@ internal sealed partial class ShellViewModel
     /// <summary>The Obsidian todo note card behind Settings' Connections group.</summary>
     public TodoNoteCardViewModel TodoNoteCard => field ??= InitTodoNoteCard();
 
-    private TodoNoteCardViewModel InitTodoNoteCard()
-    {
-        return new TodoNoteCardViewModel(Health.ApiUrl, _api, _clock);   // the Library card's follow refreshes it after every event (RefreshLibraryCards)
-    }
+    // The Library card's follow refreshes it after every event (RefreshLibraryCards).
+    private TodoNoteCardViewModel InitTodoNoteCard() => new(Health.ApiUrl, _api, _clock);
 
     private void ReadTodoNoteCard(Task<Result<LibraryView>>? library)
     {

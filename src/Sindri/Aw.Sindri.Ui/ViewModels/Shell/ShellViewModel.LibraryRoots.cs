@@ -34,13 +34,8 @@ internal sealed partial class ShellViewModel
     }
 
     // Opening Settings reads the library once; the todo note card shows the same read (ReadTodoNoteCard).
-    private Task<Result<LibraryView>>? ReadLibraryRoots()
+    private Task<Result<LibraryView>> ReadLibraryRoots(Uri url)
     {
-        if (Health.ApiUrl() is not { } url)
-        {
-            return null;
-        }
-
         var library = _api.Library(url, CancellationToken.None);
         _ = LibraryRoots.Refresh(library);
         return library;

@@ -235,7 +235,7 @@ internal sealed partial class ShellViewModel : ObservableObject
     {
         if (page == PageId.Settings)
         {
-            var library = ReadLibraryRoots();
+            var library = Health.ApiUrl() is { } url ? ReadLibraryRoots(url) : null;
             Setup.RevealChecklist();   // every way into Settings (the rail, ⌘,, G U, the setup link, Home's line) shows the checklist, its first section
             ReadLinearConnection();   // after the checklist's reveal, so a Connect that asked for the Linear card is the last scroll
             ReadTodoNoteCard(library);

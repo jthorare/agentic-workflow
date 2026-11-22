@@ -168,14 +168,8 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
 
         var now = clock.GetUtcNow();
         var fresh = new Dictionary<string, ItemRowViewModel>(StringComparer.Ordinal);
-        _newIds = 0;
         var all = view.Groups.ToDictionary(g => g.Group, g => g.Items.Select(i => Row(i, g.Group, now, fresh)).ToList(), StringComparer.Ordinal);
-        if (_newIds > 0 || fresh.Count != _rows.Count)
-        {
-            _idsVersion++;   // no new id and the same count: the same ids, so the closed fold need not be read again
-        }
-
-        _rows = fresh;
+        Swap(fresh);
         Patch.To(Groups, [.. view.Groups.Select(g => Group(g, all[g.Group]))]);
         Total = all.Values.Sum(r => r.Count);
         var unmatched = (FilterText.Length > 0 || SelectedRepo.Length > 0) && !Visible().Any();
@@ -185,6 +179,17 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
         Toolbar(all);
         States(view);
         Mark();
+    }
+
+    // The rows a Show built become the shown ones; no new id and the same count is the same ids, so the closed fold need not be read again.
+    private void Swap(Dictionary<string, ItemRowViewModel> fresh)
+    {
+        if (_newIds > 0 || fresh.Count != _rows.Count)
+        {
+            _idsVersion++;
+        }
+
+        (_rows, _newIds) = (fresh, 0);
     }
 
     // The row for an item: the one already shown, updated, or a new one.
