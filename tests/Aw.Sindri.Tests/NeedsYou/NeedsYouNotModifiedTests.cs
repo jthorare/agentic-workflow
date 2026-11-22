@@ -97,6 +97,22 @@ public sealed class NeedsYouNotModifiedTests
     }
 
     [Fact]
+    public async Task An_item_write_keeps_the_tag_while_the_list_has_rows()
+    {
+        await SeedDecisionRow();
+        await Seed(t => t.Put(ViewNames.Items, Item(1).Id.Value, Item(1), Token));
+        var first = await Query(new GetNeedsYouRequest());
+        Assert.NotEmpty(first.Rows);
+
+        await Seed(t => t.Put(ViewNames.Items, Item(1).Id.Value, Item(1) with { State = ItemState.Running }, Token));
+        var calls = new List<ReadCall>();
+        var second = await Query(new GetNeedsYouRequest(IfNoneMatch: first.Tag), new CountingViewReader(_views.Views, calls));
+
+        Assert.True(second.NotModified);   // #3883: the items only feed the empty sentence, which a list with rows never shows
+        Assert.Equal(0, calls.Sum(static c => c.Rows));   // "the list has rows" comes from the needs_you mark's count, not from reading the rows
+    }
+
+    [Fact]
     public async Task An_approved_profile_change_that_adds_or_clears_a_setup_row_moves_the_tag()
     {
         await SeedDecisionRow();
