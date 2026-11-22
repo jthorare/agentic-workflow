@@ -59,10 +59,19 @@ internal static partial class SteeringMiner
 
     /// <summary>
     /// 'group', once after the loop: groups the gathered corrections by label and mistake phrase (lower case, punctuation as spaces) and lists the groups as
-    /// phrases p1, p2, ... (most turns first) for the merge prompt, at most 200. Output: phrases, turns, labeled, corrections.
+    /// phrases p1, p2, ... (most turns first) for the merge prompt, at most 200. It fails first, with the cap in its message, when the gathered corrections would
+    /// pass 45,000 bytes in rank's input (rank's input is one JSON text, so its quotes are escaped once more; 45,000 leaves room for RankCode and the merges
+    /// under the 64 KB step input cap), so no merge prompt is spent on a run rank can't finish. Output: phrases, turns, labeled, corrections.
     /// </summary>
     public static string GroupCode { get; } = Lines(
     [
+        "const int MaxGathered = 45000;",
+        "var gathered = input is null ? 0 : JsonValue.Create(input.ToJsonString())!.ToJsonString().Length;",
+        "if (gathered > MaxGathered)",
+        "{",
+        "    throw new InvalidOperationException($\"the corrections of this run take {gathered} bytes in rank's input, over the {MaxGathered} that fit under the engine's 64 KB step input cap; run fewer turns\");",
+        "}",
+        "",
         "var (rows, turns, labeled) = Rows(input);",
         "var groups = Groups(rows);",
         "var phrases = new JsonArray();",
@@ -75,7 +84,8 @@ internal static partial class SteeringMiner
     ], _sharedLines);
 
     /// <summary>
-    /// 'rank', once at the end: rebuilds the same groups as 'group', joins the groups the merge prompt named (same label only, unknown ids ignored), keeps a group
+    /// 'rank', once at the end: rebuilds the same groups as 'group', joins the groups the merge prompt named (same label only; an unknown id, one past p200
+    /// the prompt never showed, and a self-merge are ignored), keeps a group
     /// of at least 2 different turns and ranks by turns, then sessions, then label and phrase. A joined group takes the phrase of its member with the most turns,
     /// then of the one a merge named as 'keep', then the first. Output: count, findings ({label, mistake, count, sessions, refs};
     /// at most 50), summary (the top 5 as lines), turns, labeled, corrections.
@@ -88,7 +98,7 @@ internal static partial class SteeringMiner
         "var parent = Enumerable.Range(0, groups.Count).ToArray();",
         "var keeps = new HashSet<int>();",
         "var index = new Dictionary<string, int>(StringComparer.Ordinal);",
-        "for (var i = 0; i < groups.Count; i++)",
+        "for (var i = 0; i < Math.Min(groups.Count, 200); i++)",
         "{",
         "    index[groups[i].Id] = i;",
         "}",
@@ -102,7 +112,7 @@ internal static partial class SteeringMiner
         "",
         "    foreach (var other in row[\"same\"] as JsonArray ?? new JsonArray())",
         "    {",
-        "        if (Str(other) is { } id && index.TryGetValue(id, out var from) && string.Equals(groups[from].Label, groups[into].Label, StringComparison.Ordinal))",
+        "        if (Str(other) is { } id && index.TryGetValue(id, out var from) && from != into && string.Equals(groups[from].Label, groups[into].Label, StringComparison.Ordinal))",
         "        {",
         "            _ = keeps.Add(into);",
         "            var (a, b) = (Root(parent, into), Root(parent, from));",

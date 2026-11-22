@@ -27,7 +27,7 @@ public static partial class GraphTemplates
             SteeringMiner.Json(fromTranscripts: true)),
         (
             SteeringMiner.PayloadName,
-            "The steering miner fed by hand: run it with a payload of batches of human turns instead of reading the transcripts.",
+            "The steering miner fed by hand: run it with a payload of batches of human turns, each batch at most 60,000 bytes as JSON, instead of reading the transcripts.",
             SteeringMiner.Json(fromTranscripts: false)),
     ];
 

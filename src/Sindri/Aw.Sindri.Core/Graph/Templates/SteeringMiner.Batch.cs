@@ -4,8 +4,10 @@ internal static partial class SteeringMiner
 {
     /// <summary>
     /// 'shape', once per batch: keeps the first 20 well-formed turns ({ref, text, before?}; a ref is text of at most 80 characters with no white space, seen once),
-    /// cuts 'text' to its first 1,500 characters and 'before' to its last 400, and keeps each under a JSON size (2,000 and 500 bytes), so 20 turns stay well
-    /// under the engine's 64 KB node output cap whatever the script. Output: turns, refs, given, dropped.
+    /// cuts 'text' to its first 1,500 characters and 'before' to its last 400, and keeps each under a size counted as JSON twice (2,000 and 500 bytes; the turns
+    /// reach 'label' inside its prompt text), so 20 turns stay under the 64 KB step cap of shape's output and of label's input. A batch whose own JSON passes
+    /// 60,000 bytes fails here with that cap in its message: the engine marks a step whose input it cut at 64 KB as unreadable (StoredJson.Fit), so 'label'
+    /// could only fail on it later with SND-GRAPH-108. Output: turns, refs, given, dropped.
     /// </summary>
     public static string ShapeCode { get; } = Lines(
     [
@@ -15,6 +17,13 @@ internal static partial class SteeringMiner
         "const int TextBytes = 2000;",
         "const int BeforeChars = 400;",
         "const int BeforeBytes = 500;",
+        "const int MaxBatchBytes = 60000;",
+        "var batchBytes = input is null ? 0 : input.ToJsonString().Length;",
+        "if (batchBytes > MaxBatchBytes)",
+        "{",
+        "    throw new InvalidOperationException($\"this batch is {batchBytes} bytes as JSON, over the {MaxBatchBytes} bytes a batch may take (the engine's 64 KB step input cap, less this code); split it into smaller batches or cut its turns' text before the run\");",
+        "}",
+        "",
         "var list = input as JsonArray ?? (input is JsonObject wrapped ? wrapped[\"turns\"] as JsonArray : null) ?? new JsonArray();",
         "var turns = new JsonArray();",
         "var refs = new JsonArray();",
@@ -44,7 +53,8 @@ internal static partial class SteeringMiner
         "",
         "static string? Str(JsonNode? node) => node is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;",
         "",
-        "static int Size(string text) => JsonValue.Create(text)!.ToJsonString().Length;",
+        "// why: the turns reach 'label' inside its prompt text, which the engine stores as JSON again, so a quote or backslash costs 4 bytes, not 2",
+        "static int Size(string text) => JsonValue.Create(JsonValue.Create(text)!.ToJsonString())!.ToJsonString().Length;",
         "",
         "static string Head(string text, int chars, int bytes)",
         "{",
