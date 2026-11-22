@@ -123,14 +123,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
                 _toMarkSeen = null;   // another run: the old open's mark is not wanted
             }
 
-            Id = runId;
-            Groups = [];   // another run: nothing of the old one stays
-            Graph = null;
-            (Status, Tone, NoticeText) = (string.Empty, ChipTone.Neutral, string.Empty);
-            (ChipWord, ChipGlyph, ChipToneWord) = (string.Empty, string.Empty, "neutral");
-            (IsFailed, FailedText) = (false, string.Empty);
-            (TitleText, TriggerText, RevisionText, WhenText, ErrorText, OutputsText) = (Labels.WfRunTitle(runId), string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
-            Changed();
+            Empty(runId);
         }
 
         IsReading = Groups.Count == 0;
@@ -155,6 +148,19 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         (IsFailed, FailedText) = (false, string.Empty);
         Show(run.Value);
         await MarkSeen(url, run.Value, cancellationToken).ConfigureAwait(true);
+    }
+
+    // Another run: nothing of the old one stays.
+    private void Empty(string runId)
+    {
+        Id = runId;
+        Groups = [];
+        Graph = null;
+        (Status, Tone, NoticeText) = (string.Empty, ChipTone.Neutral, string.Empty);
+        (ChipWord, ChipGlyph, ChipToneWord) = (string.Empty, string.Empty, "neutral");
+        (IsFailed, FailedText) = (false, string.Empty);
+        (TitleText, TriggerText, RevisionText, WhenText, ErrorText, OutputsText) = (Labels.WfRunTitle(runId), string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+        Changed();
     }
 
     // Once per open: the first read that shows the run failed sends the mark; a run that ended another way has nothing to mark.
