@@ -55,6 +55,27 @@ public sealed partial class SteeringMinerRunTests
         Assert.All(model.Prompts, static p => Assert.Contains("<untrusted source=\"workflow:node:", p, StringComparison.Ordinal));   // the turns and phrases reach the model fenced
     }
 
+    [Fact]
+    public async Task An_oversized_batch_fails_at_shape_naming_the_byte_cap_and_never_reaches_label_as_a_cut_output()
+    {
+        var model = new CannedModel();
+        await using var rig = await GraphRig.StartAsync([new PromptBlock(model), new CodeBlock(new InProcessCodePort())]);
+        var workflow = await rig.Define(GraphTemplates.Find("steering-miner")!.Spec);
+        JsonArray batch = [new JsonObject { ["ref"] = "transcript:1111aaaa#3", ["text"] = new string('a', 70_000) }];   // why: one pasted 70 KB log; its batch's JSON passes the engine's 64 KB step input cap
+        var trigger = new JsonObject { ["kind"] = "manual", ["payload"] = new JsonObject { ["turns"] = new JsonArray(batch) } };
+
+        var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, trigger.ToJsonString());
+        var run = await rig.Final(started.RunId, _long);
+        var shape = (await rig.ItemRuns(started.RunId, "shape"))[1];
+
+        Assert.Equal(WorkflowRunStatus.Failed, run.Status);
+        Assert.Equal(NodeRunStatus.Failed, shape.Status);
+        Assert.Contains("split", shape.Error, StringComparison.Ordinal);
+        Assert.Contains("60000 bytes", shape.Error, StringComparison.Ordinal);
+        Assert.DoesNotContain("SND-GRAPH-108", run.Error, StringComparison.Ordinal);
+        Assert.Empty(model.Prompts);   // no model call is spent on a batch that can't go on
+    }
+
     private static JsonArray Batch(params string[] refs)
     {
         var batch = new JsonArray();
