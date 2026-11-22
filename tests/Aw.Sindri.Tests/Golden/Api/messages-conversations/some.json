@@ -1,0 +1,18 @@
+{
+  "conversations": [
+    {
+      "conversation": "D0SAM",
+      "kind": "dm",
+      "name": "U0SAM",
+      "starred": true,
+      "unread": 1
+    },
+    {
+      "conversation": "C0HARBOR",
+      "kind": "channel",
+      "name": "harbor",
+      "starred": false,
+      "unread": 2
+    }
+  ]
+}
