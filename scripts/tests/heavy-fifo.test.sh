@@ -49,7 +49,9 @@ export AW_HEAVY_TEST_PATH="$STUB"
 # A copy with a 1 s lock timeout, laid out so it finds ../config/lib/heavy-config.sh.
 mkdir -p "$WORK/scripts"; ln -s "$DIR/../config" "$WORK/config"
 ONE="$WORK/scripts/heavy-one.sh"; sed 's/^TIMEOUT=5400$/TIMEOUT=1/' "$HEAVY" > "$ONE"
-sleep 300 & live=$!; bgpids+=("$live")
+# The stand-in live process lives as long as this suite (#3810: a `sleep 300` could end mid-suite on a loaded box and turn rows
+# red for the wrong reason). cleanup kills it by its recorded pid; if the suite is SIGKILLed it ends within a second on its own.
+(while kill -0 "$$" 2> /dev/null; do sleep 1; done) & live=$!; bgpids+=("$live")
 true & dead=$!; wait "$dead"
 
 wait_for() { local i; for i in $(seq 1 200); do eval "$1" && return 0; sleep 0.1; done; return 1; }   # <= 20 s
