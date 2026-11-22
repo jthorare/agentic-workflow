@@ -77,7 +77,7 @@ public sealed class ConceptChangeTimesTests : IDisposable
 
         Assert.Null(cold);
         Assert.Equal(_first, filled);
-        Assert.Single(_history.Calls);
+        _ = Assert.Single(_history.Calls);
     }
 
     [Fact, Trait("Lane", "unit")]
