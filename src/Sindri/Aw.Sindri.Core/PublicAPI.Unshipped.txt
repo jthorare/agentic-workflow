@@ -24053,3 +24053,15 @@ static Aw.Sindri.Core.Messages.ThreadRow.DmKey(string! workspace, string! conver
 static Aw.Sindri.Core.Messages.ThreadRow.operator !=(Aw.Sindri.Core.Messages.ThreadRow? left, Aw.Sindri.Core.Messages.ThreadRow? right) -> bool
 static Aw.Sindri.Core.Messages.ThreadRow.operator ==(Aw.Sindri.Core.Messages.ThreadRow? left, Aw.Sindri.Core.Messages.ThreadRow? right) -> bool
 static Aw.Sindri.Core.Messages.ThreadRow.ThreadKey(string! workspace, string! conversation, Aw.Sindri.Core.Messages.MessageTs thread) -> string!
+Aw.Sindri.Core.Messages.IMessagesStore
+Aw.Sindri.Core.Messages.IMessagesStore.RebuildNeedsReply(string! conversation, Aw.Sindri.Core.Messages.MessageTs thread, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
+Aw.Sindri.Core.Messages.MessagesConnection
+Aw.Sindri.Core.Messages.SlackBaseUrlRule
+Aw.Sindri.Core.Messages.SlackRateBudget
+Aw.Sindri.Core.Messages.SlackRateBudget.Hold(string! method, System.DateTimeOffset now, System.TimeSpan retryAfter) -> void
+Aw.Sindri.Core.Messages.SlackRateBudget.MayCall(string! method, System.DateTimeOffset now) -> bool
+Aw.Sindri.Core.Messages.SlackRateBudget.SlackRateBudget() -> void
+const Aw.Sindri.Core.Messages.MessagesConnection.Name = "slack:messages" -> string!
+static Aw.Sindri.Core.Messages.MessagesConnection.Config(string! workspace, string! user) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+static Aw.Sindri.Core.Messages.SlackBaseUrlRule.Resolve(string? overrideUrl, string? marker, string! token) -> System.Uri!
+static Aw.Sindri.Core.Messages.SlackBaseUrlRule.Slack.get -> System.Uri!
