@@ -17,6 +17,9 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     /// <summary>How long a Starting placeholder waits for the server's run row before it says the run did not start.</summary>
     internal static readonly TimeSpan StartWait = TimeSpan.FromSeconds(10);
 
+    /// <summary>Raised with the run id when a Starting run's 10 s start deadline passes with no run row. The one timer is here; the list row and the run page both read this.</summary>
+    internal event Action<string>? StartTimedOut;
+
     private readonly UiContext _ui = new();
     private readonly Dictionary<string, ITimer> _startTimers = new(StringComparer.Ordinal);
     private readonly HashSet<string> _didNotStart = new(StringComparer.Ordinal);
@@ -183,6 +186,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
 
         _ = _didNotStart.Add(runId);
         Rows.FirstOrDefault(r => string.Equals(r.Id, runId, StringComparison.Ordinal) && string.Equals(r.Status, "starting", StringComparison.Ordinal))?.MarkDidNotStart();
+        StartTimedOut?.Invoke(runId);
     }
 
     private void StopStartTimer(string runId)
