@@ -19,8 +19,9 @@ public sealed class ContextIndexCardViewTests : FrameHost
     public Task The_card_names_each_line_and_the_heading_for_assistive_technology() => OnUi(async () =>
     {
         Server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, Body);
-        var (window, shell) = await Connected(s => s.Health.ContextIndex.Lines.Count > 0);
-        shell.GoTo(PageId.System);
+        var (window, shell) = await Connected();
+        shell.GoTo(PageId.System);   // #2775: the cards read only while System is the page
+        await Until(window, () => shell.Health.ContextIndex.Lines.Count > 0);
         Settle(window);
 
         var lines = Named<ItemsControl>(window, "ContextIndexLines").GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).ToList();
@@ -35,8 +36,9 @@ public sealed class ContextIndexCardViewTests : FrameHost
     public Task The_card_sits_right_after_the_Code_index() => OnUi(async () =>
     {
         Server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, Body);
-        var (window, shell) = await Connected(s => s.Health.ContextIndex.Lines.Count > 0);
-        shell.GoTo(PageId.System);
+        var (window, shell) = await Connected();
+        shell.GoTo(PageId.System);   // #2775: the cards read only while System is the page
+        await Until(window, () => shell.Health.ContextIndex.Lines.Count > 0);
         Settle(window);
 
         var cards = Named<Panel>(window, "SystemCards").Children;
