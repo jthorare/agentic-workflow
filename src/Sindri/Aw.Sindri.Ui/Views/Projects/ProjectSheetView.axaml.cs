@@ -58,7 +58,13 @@ internal sealed partial class ProjectSheetView : UserControl
 
     private void OnSave(object? sender, RoutedEventArgs e) => _ = Sheet?.Save(CancellationToken.None);
 
-    private void OnSetState(object? sender, RoutedEventArgs e) => _ = Sheet?.SetState(CancellationToken.None);
+    private void OnPickState(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: ProjectStateChip chip })
+        {
+            _ = Sheet?.PickState(chip.Choice, CancellationToken.None);
+        }
+    }
 
     private void OnClearState(object? sender, RoutedEventArgs e) => _ = Sheet?.ClearState(CancellationToken.None);
 
