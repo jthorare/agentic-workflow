@@ -39,4 +39,15 @@ public interface IOpenTerminalPane : IAsyncDisposable
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>Success, or an invalid error for a size out of range.</returns>
     public ValueTask<Result<Unit>> Resize(HostSize size, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Shows history instead of the live screen (agents spec §15.8, the 'scroll' message). <paramref name="back"/> is the number of rows above the live screen's top:
+    /// 0 is live. The source clamps it to 0..<see cref="TerminalFrame.Hist"/> and reads the rows with 'capture-pane -S -E', never copy-mode. While it is above 0 and
+    /// the history grows by k rows, the offset grows by k, so the view stays on the same lines. <see cref="SendKey"/>, <see cref="SendText"/> and <see cref="Paste"/>
+    /// set it back to 0, and <see cref="Resize"/> keeps it and clamps it again. It makes one capture at once, like a key. On the alternate screen it stays 0.
+    /// </summary>
+    /// <param name="back">The offset; a negative number is 0.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Success: an offset past the history is clamped, not refused.</returns>
+    public ValueTask<Result<Unit>> Scroll(int back, CancellationToken cancellationToken);
 }
