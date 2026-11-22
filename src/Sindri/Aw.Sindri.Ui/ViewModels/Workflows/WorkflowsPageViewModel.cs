@@ -37,7 +37,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         Runs = new RunsViewModel(api, clock);
         Run = new RunDetailViewModel(api, clock);
         Editor = new OpsEditor(api);
-        GraphEdit = new GraphEditViewModel(Editor, Runs, () => _url);   // made with the page, not on first read: the canvas's Delete key raises on the graph, and the edit bar must already be listening
+        GraphEdit = new GraphEditViewModel(Editor, Runs, () => _url) { OpenNewStep = BeginNewStep };   // made with the page, not on first read: the canvas's Delete key raises on the graph, and the edit bar must already be listening
         Runs.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Runs.Title)) { NotifyCrumb(); } };
         Run.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Run.Id)) { NotifyCrumb(); } };
         WatchEditor();

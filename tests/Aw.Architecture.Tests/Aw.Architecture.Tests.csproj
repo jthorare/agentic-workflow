@@ -69,6 +69,9 @@
     <ProjectReference Include="../../src/Embeddings/Aw.Embeddings/Aw.Embeddings.csproj" />
     <ProjectReference Include="../../src/Toolkit/Aw.Sindri.Toolkit/Aw.Sindri.Toolkit.csproj" />
     <ProjectReference Include="../../src/Sindri/Aw.Sindri.CodeRunner/Aw.Sindri.CodeRunner.csproj" />
+    <ProjectReference Include="../../src/Transcripts/Aw.Transcripts.Core/Aw.Transcripts.Core.csproj" />
+    <ProjectReference Include="../../src/Transcripts/Aw.Transcripts.Features/Aw.Transcripts.Features.csproj" />
+    <ProjectReference Include="../../src/Transcripts/Aw.Transcripts.Infrastructure/Aw.Transcripts.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -7,7 +7,6 @@ using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Context;
-using Aw.Sindri.Ui.ViewModels.Context.Layout;
 
 namespace Aw.Sindri.Ui.Tests.Context;
 
@@ -17,7 +16,6 @@ public sealed class ContextMapViewModelTests
 {
     private static readonly HashSet<string> _quiet = new(["part-of", "on"], StringComparer.Ordinal);
     private static readonly HashSet<string> _loud = new(["implements", "decides", "mentions", "conflicts"], StringComparer.Ordinal);
-    private static readonly string[] _letters = ["A", "B", "C"];
 
     private static ContextMapViewModel Map(Action<JsonNode>? edit = null)
     {
@@ -149,36 +147,17 @@ public sealed class ContextMapViewModelTests
     }
 
     [Fact]
-    public void Coverage_is_four_areas_with_a_sentence_built_on_the_client()
+    public void Coverage_is_the_sentence_built_on_the_client_and_an_exact_hit_has_none()
     {
-        var map = Map();
-
-        Assert.Equal([Labels.ContextMapAreaIntent, Labels.ContextMapAreaProduct, Labels.ContextMapAreaCode, Labels.ContextMapAreaNames], map.CoverageAreas.Select(a => a.Name), StringComparer.Ordinal);
-        Assert.Equal([CoverageLevel.Limited, CoverageLevel.Searched, CoverageLevel.Limited, CoverageLevel.NotAvailable], map.CoverageAreas.Select(a => a.Level));
-        Assert.Equal(Labels.ContextMapCoverageLead(1, 4), map.CoverageLead);
-        Assert.Equal(Labels.ContextMapCoverageRest([Labels.ContextMapAreaIntent, Labels.ContextMapAreaCode]), map.CoverageRest);
-        Assert.Equal(Labels.ContextMapNamesDetail, map.CoverageAreas[3].Detail);
-        Assert.Equal([Labels.ContextMapLimited, Labels.ContextMapSearched, Labels.ContextMapLimited, Labels.ContextMapNotAvailable], map.CoverageAreas.Select(a => a.LevelWord), StringComparer.Ordinal);
+        Assert.Equal(CoverageWords.Sentence(Read(_ => { }), exact: false), Map().Coverage);
+        Assert.NotEqual(string.Empty, Map().Coverage, StringComparer.Ordinal);
+        Assert.Equal(string.Empty, new ContextMapViewModel(Read(_ => { }), exact: true).Coverage);
     }
 
-    [Fact]
-    public void An_empty_band_is_not_available_and_a_fully_covered_one_is_searched()
+    private static LensesView Read(Action<JsonNode> edit)
     {
-        var map = Map(node =>
-        {
-            node["searched"]!["bands"]!["intent"]!["empty"] = true;
-            node["coverage"]!["code"]!["implemented"] = 6;
-            node["bands"]!["code"]!["symbols"]!["state"] = "ok";
-        });
-
-        Assert.Equal([CoverageLevel.NotAvailable, CoverageLevel.Searched, CoverageLevel.Searched, CoverageLevel.Searched], map.CoverageAreas.Select(a => a.Level));
-        Assert.Equal(Labels.ContextMapCoverageLead(3, 4), map.CoverageLead);
-        Assert.Equal(string.Empty, map.CoverageRest);
+        var node = GoldenFiles.Node("context-lenses", "map-tabs");
+        edit(node);
+        return AwJson.Deserialize<LensesView>(Encoding.UTF8.GetBytes(node.ToJsonString()), SindriApiClient.Json).Value;
     }
-
-    [Theory]
-    [InlineData(1, "A is limited.")]
-    [InlineData(2, "A and B are limited.")]
-    [InlineData(3, "A, B and C are limited.")]
-    public void The_sentence_names_the_limited_areas(int count, string words) => Assert.Equal(words, Labels.ContextMapCoverageRest(_letters[..count]));
 }
