@@ -142,6 +142,7 @@ internal static class Usage
         "       sindri wf list [--json]   the workflows that are not archived: slug, name, active revision, who saved the newest (exit 0 ok, 1 not running)",
         "       sindri wf show <slug> [--json]   one workflow: the revision it runs, who saved its newest, its nodes and edges (--json adds the spec and node positions; exit 0 ok, 1 not running, 2 unknown)",
         "       sindri wf runs <slug> [--json]   a workflow's newest 50 runs, newest first, with status and trigger (exit 0 ok, 1 not running, 2 unknown)",
+        "       sindri wf seen <run> [--json]   mark a failed run seen, so its Home row clears (exit 0 ok, 1 not running, 2 refused or unknown)",
         "       sindri wf run-show <run> [--json]   one run with what each node did (exit 0 ok, 1 not running, 2 unknown)",
         "       sindri wf create <slug> (--template <name> | --file <spec.json>) [--json]   make a workflow, off, at revision 1, from a starter template or a spec file (exit 0 ok, 1 not running, 2 refused)",
         "       sindri wf edit <slug> --base <revision> (--ops <json> | --ops-file <file> | --file <spec.json>) [--json]   edit by ops (all apply or none) or replace the whole graph; a stale --base is refused with the current revision",

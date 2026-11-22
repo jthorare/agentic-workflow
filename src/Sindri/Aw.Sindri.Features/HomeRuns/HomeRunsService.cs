@@ -1,5 +1,6 @@
 using System.Globalization;
 using Aw.Kernel;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Home;
 using Aw.Sindri.Core.Ids;
@@ -15,14 +16,14 @@ namespace Aw.Sindri.Features.HomeRuns;
 /// has not seen, and clears the row of a run that is seen now. A row the owner marked done or muted marks its run seen first, so the row clears and the run
 /// never comes back (a clear ends the episode, spec §5.4).
 /// </summary>
-/// <param name="seen">The failed runs and their seen marks.</param>
+/// <param name="runs">The run store: the failed runs nobody has seen (Home spec §3.3), and the seen mark.</param>
 /// <param name="view">The Home rows this collector raised before.</param>
 /// <param name="writer">Appends the pass's events.</param>
 /// <param name="scrubber">Scrubs the run's error before it reaches a row.</param>
 /// <param name="clock">The read time each row's source carries.</param>
-internal sealed class HomeRunsService(IRunSeenStore seen, IHomeViewReader view, HomeRowWriter writer, ITextScrubber scrubber, TimeProvider clock) : IScheduledService
+internal sealed class HomeRunsService(IWorkflowRunStore runs, IHomeViewReader view, HomeRowWriter writer, ITextScrubber scrubber, TimeProvider clock) : IScheduledService
 {
-    /// <summary>The most failed runs one pass reads.</summary>
+    /// <summary>The most failed runs one pass raises rows for (the newest first).</summary>
     internal const int FailedLimit = 200;
 
     /// <summary>What the service does, as GET /sindri/services says it.</summary>
@@ -40,7 +41,7 @@ internal sealed class HomeRunsService(IRunSeenStore seen, IHomeViewReader view, 
     public async ValueTask<Result<ScheduledResult>> Run(ScheduledRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
-        var failed = await seen.FailedUnseen(FailedLimit, cancellationToken).ConfigureAwait(false);
+        var failed = await runs.FailedUnseen(cancellationToken).ConfigureAwait(false);
         if (failed.IsError)
         {
             return failed.Error;
@@ -59,7 +60,7 @@ internal sealed class HomeRunsService(IRunSeenStore seen, IHomeViewReader view, 
         }
 
         var now = clock.GetUtcNow();
-        var wanted = failed.Value.Select(r => HomeRunRows.Failed(r, now, scrubber)).Where(r => !putAway.Value.Contains(r.Row.Id.Value)).ToList();
+        var wanted = failed.Value.Take(FailedLimit).Select(r => HomeRunRows.Failed(r, now, scrubber)).Where(r => !putAway.Value.Contains(r.Row.Id.Value)).ToList();
         var plan = HomeReconcile.Plan(wanted, held.Value);
         if (plan.IsEmpty)
         {
@@ -80,8 +81,8 @@ internal sealed class HomeRunsService(IRunSeenStore seen, IHomeViewReader view, 
         {
             if (HomeRunRows.RunOf(row.Id) is { } failedRun)
             {
-                var marked = await seen.MarkSeen(failedRun, cancellationToken).ConfigureAwait(false);
-                if (marked.IsError)
+                var marked = await runs.MarkSeen(failedRun, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+                if (marked.IsError && marked.Error.Code != SindriErrors.GraphRunNotFound.Code)   // why: a run purged meanwhile has nothing to mark; its row still clears
                 {
                     return marked.Error;
                 }
