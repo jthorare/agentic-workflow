@@ -69,7 +69,7 @@ texts >"$OUT/frame-1-texts.txt"
 focus_row
 d click --automation-id "ConceptPin.$CONCEPT_ID" >/dev/null 2>&1 || fail "step 2: could not click Pin this"
 CLICKS=$((CLICKS + 1))
-d wait-for --type Button --name "Pin" --automation-id PinSubmit --state enabled --wait-ms 30000 >/dev/null 2>&1 || fail "step 2: the sheet has no enabled Pin"
+d wait-for --type Button --name "Pin" --state enabled --wait-ms 30000 >/dev/null 2>&1 || fail "step 2: the sheet has no enabled Pin"
 d wait-for --type TextBlock --text "Pin this" --state visible --wait-ms 10000 >/dev/null 2>&1 || fail "step 2: the sheet's heading is not 'Pin this'"
 name="$(d search --type TextBox --limit 20 2>/dev/null | jq -r 'first(.matches[] | select(.visible) | .text // empty)')"
 [ "$name" = "Self scheduling" ] || fail "step 2: the sheet's name is '$name', not the card's 'Self scheduling'"
@@ -78,10 +78,10 @@ frame frame-2-sheet
 texts >"$OUT/frame-2-texts.txt"
 
 # Step 3: click 2, Pin writes the pin (edits apply on save, there is no approval); the sheet closes.
-d click --type Button --name "Pin" --automation-id PinSubmit >/dev/null 2>&1 || fail "step 3: could not click Pin"
+d click --type Button --name "Pin" >/dev/null 2>&1 || fail "step 3: could not click Pin"
 CLICKS=$((CLICKS + 1))
-d wait-for --type Button --name "Pin" --automation-id PinSubmit --state gone --wait-ms 90000 >/dev/null 2>&1 \
-  || d wait-for --type Button --name "Pin" --automation-id PinSubmit --state notVisible --wait-ms 1000 >/dev/null 2>&1 \
+d wait-for --type Button --name "Pin" --state gone --wait-ms 90000 >/dev/null 2>&1 \
+  || d wait-for --type Button --name "Pin" --state notVisible --wait-ms 1000 >/dev/null 2>&1 \
   || { texts >"$OUT/frame-3-texts.txt"; fail "step 3: the sheet did not close after Pin (texts in $OUT/frame-3-texts.txt)"; }
 sleep 2
 frame frame-3-pinned
