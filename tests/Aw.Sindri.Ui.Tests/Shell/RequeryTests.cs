@@ -112,4 +112,27 @@ public sealed class RequeryTests
         Assert.True(_server.NeedsYouCalls > before);
         Assert.Equal(3, shell.Attention.Badge);
     }, Token);
+
+    // #2775: the queue and needs-you are read side by side. When needs-you answers first it maps the old queue's groups; Home's and the
+    // tray's totals must follow the queue once it answers, not wait for the next event.
+    [Fact]
+    public Task The_totals_follow_a_queue_that_answers_after_needs_you() => UiThread.Run(async () =>
+    {
+        var shell = await Connected();
+        var queue = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _server.QueueGate = queue;
+        _server.QueueView = RouteAnswer.SpecShaped("queue", "extra-p11-running");
+        _server.NeedsYouView = RouteAnswer.SpecShaped("needs-you", "extra-nothing");
+        var reads = shell.Health.ViewReads;
+
+        _server.Push(A.Event(65, "item.state-changed"));
+        await ShellWait.Until(shell, () => shell.Attention.Badge == 0, Token);   // needs-you has answered; the queue is still held
+
+        Assert.Equal(Labels.TrayRunningItem(0), shell.Attention.Tray.RunningLabel);
+
+        queue.SetResult();
+        await ShellWait.Until(shell, () => shell.Health.ViewReads > reads, Token);
+
+        Assert.Equal(Labels.TrayRunningItem(6), shell.Attention.Tray.RunningLabel);
+    }, Token);
 }
