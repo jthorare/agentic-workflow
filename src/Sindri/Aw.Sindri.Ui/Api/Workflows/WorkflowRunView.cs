@@ -14,6 +14,7 @@ namespace Aw.Sindri.Ui.Api.Workflows;
 /// <param name="StartedAt">When it was recorded.</param>
 /// <param name="EndedAt">When it ended, or null while it has not.</param>
 /// <param name="Nodes">The node runs, in the order served.</param>
+/// <param name="Tokens">What the run used against its token budget (#3805); null from a Sindri that doesn't serve it.</param>
 internal sealed record WorkflowRunView(
     string Id,
     string Slug,
@@ -25,4 +26,5 @@ internal sealed record WorkflowRunView(
     string? ItemId,
     DateTimeOffset StartedAt,
     DateTimeOffset? EndedAt,
-    IReadOnlyList<NodeRunView> Nodes);
+    IReadOnlyList<NodeRunView> Nodes,
+    WorkflowRunTokens? Tokens = null);
