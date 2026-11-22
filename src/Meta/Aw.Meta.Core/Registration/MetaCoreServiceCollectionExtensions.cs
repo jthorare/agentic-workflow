@@ -23,6 +23,7 @@ public static class MetaCoreServiceCollectionExtensions
         .AddScoped<LaneRefresher>()
         .AddScoped<ObligationReader>()
         .AddScoped<DelegationLedger>()
+        .AddScoped<LaneDelivery>()
         .AddScoped<MetaSession>()
         .AddScoped<MetaSweep>()
         .AddScoped<StopGuard>()

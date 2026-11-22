@@ -2889,3 +2889,74 @@ static Aw.Meta.Core.Delegations.DelegationText.Names(string! text, int issue) ->
 static Aw.Meta.Core.Github.GhIssues.View(string! json) -> Aw.Meta.Core.Github.IssueRef?
 static Aw.Meta.Core.Obligations.DelegationStates.IsSent(Aw.Meta.Core.Delegations.Delegation! delegation, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.Outbound!>! outbound) -> bool
 static Aw.Meta.Core.Obligations.DelegationStates.Of(Aw.Meta.Core.Delegations.Delegation! delegation, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>! inbound, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.Outbound!>! outbound) -> Aw.Meta.Core.Delegations.DelegationState
+Aw.Meta.Core.Coordination.LaneDelivered
+Aw.Meta.Core.Coordination.LaneDelivered.Attention.get -> string?
+Aw.Meta.Core.Coordination.LaneDelivered.Attention.init -> void
+Aw.Meta.Core.Coordination.LaneDelivered.<Clone>$() -> Aw.Meta.Core.Coordination.LaneDelivered!
+Aw.Meta.Core.Coordination.LaneDelivered.Deconstruct(out Aw.Meta.Core.Ids.MessageId Id, out bool Woken, out string? WakeSkipped, out string? Attention, out bool ViewerAttached) -> void
+Aw.Meta.Core.Coordination.LaneDelivered.Equals(Aw.Meta.Core.Coordination.LaneDelivered? other) -> bool
+Aw.Meta.Core.Coordination.LaneDelivered.Id.get -> Aw.Meta.Core.Ids.MessageId
+Aw.Meta.Core.Coordination.LaneDelivered.Id.init -> void
+Aw.Meta.Core.Coordination.LaneDelivered.LaneDelivered(Aw.Meta.Core.Ids.MessageId Id, bool Woken, string? WakeSkipped, string? Attention, bool ViewerAttached) -> void
+Aw.Meta.Core.Coordination.LaneDelivered.ViewerAttached.get -> bool
+Aw.Meta.Core.Coordination.LaneDelivered.ViewerAttached.init -> void
+Aw.Meta.Core.Coordination.LaneDelivered.WakeSkipped.get -> string?
+Aw.Meta.Core.Coordination.LaneDelivered.WakeSkipped.init -> void
+Aw.Meta.Core.Coordination.LaneDelivered.Woken.get -> bool
+Aw.Meta.Core.Coordination.LaneDelivered.Woken.init -> void
+Aw.Meta.Core.Coordination.LaneDelivery
+Aw.Meta.Core.Coordination.LaneDelivery.Deliver(Aw.Meta.Core.Coordination.LaneTarget! target, string! text, System.TimeSpan confirm, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Coordination.LaneDelivered!>!>
+Aw.Meta.Core.Coordination.LaneDelivery.LaneDelivery(Aw.Meta.Core.Ports.ILaneFiles! files, Aw.Meta.Core.Ports.ILaneMail! mail, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Coordination.LaneBeats! beats, Aw.Meta.Core.Ports.ILanePane! pane, System.TimeProvider! clock) -> void
+Aw.Meta.Core.Coordination.LaneTarget
+Aw.Meta.Core.Coordination.LaneTarget.Agent.get -> Aw.Meta.Core.Lanes.LaneAgent!
+Aw.Meta.Core.Coordination.LaneTarget.Agent.init -> void
+Aw.Meta.Core.Coordination.LaneTarget.<Clone>$() -> Aw.Meta.Core.Coordination.LaneTarget!
+Aw.Meta.Core.Coordination.LaneTarget.Deconstruct(out string! Team, out string! Lane, out Aw.Meta.Core.Lanes.LaneRecord! Record, out Aw.Meta.Core.Lanes.LaneAgent! Agent) -> void
+Aw.Meta.Core.Coordination.LaneTarget.Equals(Aw.Meta.Core.Coordination.LaneTarget? other) -> bool
+Aw.Meta.Core.Coordination.LaneTarget.Lane.get -> string!
+Aw.Meta.Core.Coordination.LaneTarget.Lane.init -> void
+Aw.Meta.Core.Coordination.LaneTarget.LaneTarget(string! Team, string! Lane, Aw.Meta.Core.Lanes.LaneRecord! Record, Aw.Meta.Core.Lanes.LaneAgent! Agent) -> void
+Aw.Meta.Core.Coordination.LaneTarget.Record.get -> Aw.Meta.Core.Lanes.LaneRecord!
+Aw.Meta.Core.Coordination.LaneTarget.Record.init -> void
+Aw.Meta.Core.Coordination.LaneTarget.Session.get -> string!
+Aw.Meta.Core.Coordination.LaneTarget.Team.get -> string!
+Aw.Meta.Core.Coordination.LaneTarget.Team.init -> void
+Aw.Meta.Core.Delegations.DelegationView
+Aw.Meta.Core.Delegations.DelegationView.At.get -> System.DateTimeOffset
+Aw.Meta.Core.Delegations.DelegationView.At.init -> void
+Aw.Meta.Core.Delegations.DelegationView.<Clone>$() -> Aw.Meta.Core.Delegations.DelegationView!
+Aw.Meta.Core.Delegations.DelegationView.Deconstruct(out int Issue, out string! Url, out string! Title, out string! Lane, out string! Session, out System.DateTimeOffset At, out string! State, out string! Message) -> void
+Aw.Meta.Core.Delegations.DelegationView.DelegationView(int Issue, string! Url, string! Title, string! Lane, string! Session, System.DateTimeOffset At, string! State, string! Message) -> void
+Aw.Meta.Core.Delegations.DelegationView.Equals(Aw.Meta.Core.Delegations.DelegationView? other) -> bool
+Aw.Meta.Core.Delegations.DelegationView.Issue.get -> int
+Aw.Meta.Core.Delegations.DelegationView.Issue.init -> void
+Aw.Meta.Core.Delegations.DelegationView.Lane.get -> string!
+Aw.Meta.Core.Delegations.DelegationView.Lane.init -> void
+Aw.Meta.Core.Delegations.DelegationView.Message.get -> string!
+Aw.Meta.Core.Delegations.DelegationView.Message.init -> void
+Aw.Meta.Core.Delegations.DelegationView.Session.get -> string!
+Aw.Meta.Core.Delegations.DelegationView.Session.init -> void
+Aw.Meta.Core.Delegations.DelegationView.State.get -> string!
+Aw.Meta.Core.Delegations.DelegationView.State.init -> void
+Aw.Meta.Core.Delegations.DelegationView.Title.get -> string!
+Aw.Meta.Core.Delegations.DelegationView.Title.init -> void
+Aw.Meta.Core.Delegations.DelegationView.Url.get -> string!
+Aw.Meta.Core.Delegations.DelegationView.Url.init -> void
+const Aw.Meta.Core.Coordination.LaneDelivery.WakeLine = "A message from the meta is waiting (aw-meta lane-inbox). Answer it, ending your turn with a line starting REPLY TO META:" -> string!
+override Aw.Meta.Core.Coordination.LaneDelivered.Equals(object? obj) -> bool
+override Aw.Meta.Core.Coordination.LaneDelivered.GetHashCode() -> int
+override Aw.Meta.Core.Coordination.LaneDelivered.ToString() -> string!
+override Aw.Meta.Core.Coordination.LaneTarget.Equals(object? obj) -> bool
+override Aw.Meta.Core.Coordination.LaneTarget.GetHashCode() -> int
+override Aw.Meta.Core.Coordination.LaneTarget.ToString() -> string!
+override Aw.Meta.Core.Delegations.DelegationView.Equals(object? obj) -> bool
+override Aw.Meta.Core.Delegations.DelegationView.GetHashCode() -> int
+override Aw.Meta.Core.Delegations.DelegationView.ToString() -> string!
+static Aw.Meta.Core.Coordination.LaneDelivered.operator !=(Aw.Meta.Core.Coordination.LaneDelivered? left, Aw.Meta.Core.Coordination.LaneDelivered? right) -> bool
+static Aw.Meta.Core.Coordination.LaneDelivered.operator ==(Aw.Meta.Core.Coordination.LaneDelivered? left, Aw.Meta.Core.Coordination.LaneDelivered? right) -> bool
+static Aw.Meta.Core.Coordination.LaneTarget.operator !=(Aw.Meta.Core.Coordination.LaneTarget? left, Aw.Meta.Core.Coordination.LaneTarget? right) -> bool
+static Aw.Meta.Core.Coordination.LaneTarget.operator ==(Aw.Meta.Core.Coordination.LaneTarget? left, Aw.Meta.Core.Coordination.LaneTarget? right) -> bool
+static Aw.Meta.Core.Delegations.DelegationView.Name(Aw.Meta.Core.Delegations.DelegationState state) -> string!
+static Aw.Meta.Core.Delegations.DelegationView.Of(Aw.Meta.Core.Delegations.Delegation! delegation, Aw.Meta.Core.Delegations.DelegationState state) -> Aw.Meta.Core.Delegations.DelegationView!
+static Aw.Meta.Core.Delegations.DelegationView.operator !=(Aw.Meta.Core.Delegations.DelegationView? left, Aw.Meta.Core.Delegations.DelegationView? right) -> bool
+static Aw.Meta.Core.Delegations.DelegationView.operator ==(Aw.Meta.Core.Delegations.DelegationView? left, Aw.Meta.Core.Delegations.DelegationView? right) -> bool
