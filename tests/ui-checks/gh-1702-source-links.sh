@@ -27,8 +27,8 @@ TICKET_KEY="record:linear:issue/0e5a1b00-0000-4000-8000-000000000702"
 TICKET_LABEL="Roll out staffing"
 TICKET_URL="https://linear.app/acme/issue/SPL-142/roll-out-staffing"
 DOC_PATH="migrations/0001_staffing/migration.sql"
-FILE_BUTTON="Open the file on GitHub in the browser"
-TICKET_BUTTON="Open the ticket in the browser"
+FILE_BUTTON="Open on GitHub (the file in the browser)"
+TICKET_BUTTON="Open in Linear (the ticket in the browser)"
 NO_LINK="No link to the source"
 
 # Every driver call: timeout 120; a timeout (124) is a setup failure, any other exit is the caller's to read.
