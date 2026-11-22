@@ -65,6 +65,24 @@ public sealed class DelegateTests
         Assert.DoesNotContain(await _d.World.Open(), o => o.Kind == ObligationKind.Delegate);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_launch_only_lane_gets_the_message_stored_but_the_delegation_stays_owed_with_the_reason()
+    {
+        await _d.Ready();
+        _ = _d.World.PutLane("api", hooks: false);
+
+        var response = await _d.Delegate(DelegateWorld.Request());
+
+        Assert.Equal("owed", response.Outcome);
+        Assert.Contains("launch-only", response.SendProblem, StringComparison.Ordinal);
+        Assert.Equal("owed", Assert.IsType<DelegationView>(response.Delegation).State);
+        _ = Assert.Single((await _d.World.LaneMail.Owed("api", CancellationToken.None)).Value);
+        Assert.False(Assert.Single(await _d.Recorded()).Delivered);
+        Assert.Contains("(owed)", Assert.Single(_d.World.Log.Lines), StringComparison.Ordinal);
+        var owed = Assert.Single(await _d.World.Open(), static o => o.Kind == ObligationKind.Delegate);
+        Assert.StartsWith("aw-meta lane-send --lane api --text 'ACTION: #77 ", owed.NextCommand, StringComparison.Ordinal);
+    }
+
     [Theory, Trait("Lane", "unit")]
     [InlineData("meta")]
     [InlineData("META")]
