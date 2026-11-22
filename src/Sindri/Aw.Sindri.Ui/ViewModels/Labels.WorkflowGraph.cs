@@ -18,12 +18,6 @@ internal static partial class Labels
     /// <summary>The zoom strip's plus button text.</summary>
     internal const string WfZoomPlus = "+";
 
-    /// <summary>The minus button's accessible name.</summary>
-    internal const string WfZoomOutName = "Zoom out";
-
-    /// <summary>The plus button's accessible name.</summary>
-    internal const string WfZoomInName = "Zoom in";
-
     /// <summary>The word after a step with no out port.</summary>
     internal const string WfEndDone = "done";
 

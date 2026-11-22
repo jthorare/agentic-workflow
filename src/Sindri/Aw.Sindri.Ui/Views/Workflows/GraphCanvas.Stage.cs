@@ -27,9 +27,18 @@ internal sealed partial class GraphCanvas
     /// <summary>Zooms to the next ladder step down about the canvas's centre.</summary>
     internal void ZoomOut() => StepTo(GraphZoom.Previous(ZoomPercent));
 
-    /// <summary>Goes back to Fit: wraps the cards for this width and zooms to the largest zoom at which the whole graph fits.</summary>
+    /// <summary>Goes back to Fit: the largest zoom at which the whole graph fits. Like + and -, it never wraps the cards again unless the width, the text size or the graph changed since they were laid out.</summary>
     internal void FitNow()
     {
+        // same width, same text size, same graph: the cards stay where they are, only the zoom and pan go back to Fit
+        if (CanFit && Graph is { } graph && ReferenceEquals(graph, _laidOut) && !WrapChanged)
+        {
+            ShowFit(graph, _fitZoom);
+            InvalidateVisual();
+            ViewChanged?.Invoke(this, EventArgs.Empty);
+            return;
+        }
+
         _fitPending = true;
         FitIfPending();
     }

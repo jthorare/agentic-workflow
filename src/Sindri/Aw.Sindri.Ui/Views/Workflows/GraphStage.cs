@@ -46,8 +46,9 @@ internal sealed class GraphStage : Grid
         Children.Add(top);
 
         var fit = MakeButton(Labels.WfZoomFit, Labels.WfZoomFit, Canvas.FitNow);
-        var minus = MakeButton(Labels.WfZoomMinus, Labels.WfZoomOutName, Canvas.ZoomOut);
-        var plus = MakeButton(Labels.WfZoomPlus, Labels.WfZoomInName, Canvas.ZoomIn);
+        var minus = MakeButton(Labels.WfZoomMinus, Labels.ContextMapZoomOut, Canvas.ZoomOut);   // one word for both zoom bands: the context map's
+        var plus = MakeButton(Labels.WfZoomPlus, Labels.ContextMapZoomIn, Canvas.ZoomIn);
+        (fit.Name, minus.Name, _percent.Name, plus.Name) = ("GraphZoomFit", "GraphZoomOut", "GraphZoomPercent", "GraphZoomIn");   // set in code, so not in the page's name scope: two stages can share them
         ToolTip.SetTip(fit, Labels.WfZoomFitTip);
         Strip.Child = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(24, 0), VerticalAlignment = VerticalAlignment.Center, Children = { fit, minus, _percent, plus } };
         SetRow(Strip, 1);
