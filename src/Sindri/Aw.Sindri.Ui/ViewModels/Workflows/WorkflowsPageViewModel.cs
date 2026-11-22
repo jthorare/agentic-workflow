@@ -11,6 +11,9 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// </summary>
 internal sealed partial class WorkflowsPageViewModel : ObservableObject
 {
+    /// <summary>The text size setting as a factor (Settings sets it): the graph canvases lay their cards out at it.</summary>
+    public double TextScale { get; internal set => Set(ref field, value); } = 1;
+
     private enum Level
     {
         List,
@@ -25,6 +28,9 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     private Uri? _url;
     private Level _level = Level.List;
 
+    // True when an event on one run's level skipped the list read; Back reads it then.
+    private bool _listBehind;
+
     /// <summary>The page over its ports.</summary>
     /// <param name="api">The API.</param>
     /// <param name="clock">The clock the ages run on.</param>
@@ -34,7 +40,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         Runs = new RunsViewModel(api, clock);
         Run = new RunDetailViewModel(api, clock);
         Editor = new OpsEditor(api);
-        GraphEdit = new GraphEditViewModel(Editor, Runs, () => _url);   // made with the page, not on first read: the canvas's Delete key raises on the graph, and the edit bar must already be listening
+        GraphEdit = new GraphEditViewModel(Editor, Runs, () => _url) { OpenNewStep = BeginNewStep };   // made with the page, not on first read: the canvas's Delete key raises on the graph, and the edit bar must already be listening
         Runs.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Runs.Title)) { NotifyCrumb(); } };
         Run.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Run.Id)) { NotifyCrumb(); } };
         WatchEditor();
@@ -93,6 +99,19 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         ? StateOf(shown.ActiveRevision is not null)
         : Rows.FirstOrDefault(r => string.Equals(r.Slug, Runs.Slug, StringComparison.Ordinal)) is { } row ? StateOf(row.IsActive) : string.Empty;
 
+    /// <summary>The word of the open workflow's state chip in the header ("Active", "Off"); empty when no state is known.</summary>
+    public string DetailChipWord => DetailActive is { } active ? Labels.WfState(active).Word : string.Empty;
+
+    /// <summary>The glyph of the header's state chip.</summary>
+    public string DetailChipGlyph => DetailActive is { } active ? Labels.WfState(active).Glyph : string.Empty;
+
+    /// <summary>The tone of the header's state chip: "ok" when active, "neutral" when off.</summary>
+    public string DetailChipTone => DetailActive is { } active ? (active ? "ok" : "neutral") : string.Empty;
+
+    private bool? DetailActive => Runs.Shown is { } shown
+        ? shown.ActiveRevision is not null
+        : Rows.FirstOrDefault(r => string.Equals(r.Slug, Runs.Slug, StringComparison.Ordinal)) is { } row ? row.IsActive : null;
+
     private static string StateOf(bool active)
     {
         var (glyph, word) = Labels.WfState(active);
@@ -143,21 +162,24 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>The open run.</summary>
     public RunDetailViewModel Run { get; }
 
-    /// <summary>The page was shown: reads the list, and the level open under it again.</summary>
+    /// <summary>The page was shown: reads the level open on it again, and the list under it unless that level is one run (whose screen shows nothing from the list; Back reads it then).</summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>A task that completes when what the page shows is read.</returns>
     internal async Task Show(Uri url, CancellationToken cancellationToken)
     {
         _url = url;
+        if (_level == Level.Run)
+        {
+            _listBehind = true;   // the runs level's Activate and Pause read the list's row: Back to it reads the list first
+            await Run.Read(url, Run.Id, cancellationToken).ConfigureAwait(true);
+            return;
+        }
+
         await ReadList(url, cancellationToken).ConfigureAwait(true);
         if (_level == Level.Runs)
         {
             await Runs.Read(url, Runs.Slug, Runs.Title, cancellationToken).ConfigureAwait(true);
-        }
-        else if (_level == Level.Run)
-        {
-            await Run.Read(url, Run.Id, cancellationToken).ConfigureAwait(true);
         }
     }
 
@@ -214,7 +236,14 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     }
 
     /// <summary>Goes up one level: a run to its workflow's runs, runs to the list.</summary>
-    internal void Back() => SetLevel(_level == Level.Run ? Level.Runs : Level.List);
+    internal void Back()
+    {
+        SetLevel(_level == Level.Run ? Level.Runs : Level.List);
+        if (_listBehind && _url is { } url)
+        {
+            _ = ReadList(url, CancellationToken.None);   // an event came while one run was open: the rows (and the buttons they decide) catch up
+        }
+    }
 
     private void SetLevel(Level level)
     {
@@ -233,12 +262,16 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         OnChanged(nameof(ShowsListHead));
         OnChanged(nameof(ShowsDetailState));
         OnChanged(nameof(DetailStateText));
+        OnChanged(nameof(DetailChipWord));
+        OnChanged(nameof(DetailChipGlyph));
+        OnChanged(nameof(DetailChipTone));
         NotifyStateButtons();
     }
 
     private async Task ReadList(Uri url, CancellationToken cancellationToken)
     {
         var read = ++_reads;
+        _listBehind = false;
         var list = await Api.Workflows(url, cancellationToken).ConfigureAwait(true);
         if (read != _reads)
         {

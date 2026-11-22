@@ -9,6 +9,8 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 /// <summary>The Todo panel's other places in the shell (<see cref="ShellViewModel"/>, continued; todo spec §3, §5): the From elsewhere line, G T and the focus requests.</summary>
 internal sealed partial class ShellViewModel
 {
+    private bool _elsewhereShown;
+
     /// <summary>Focus should move to a list on Home (G T, the palette's Todo row); the window honours it once Home is drawn.</summary>
     internal event EventHandler<HomeFocusRequestedEventArgs>? HomeFocusRequested;
 
@@ -19,7 +21,15 @@ internal sealed partial class ShellViewModel
     private void InitElsewhere()
     {
         Elsewhere = new FromElsewhereViewModel(_api);
-        Health.Follow(Elsewhere.Refresh);
+        Health.Follow((url, token) => IsElsewhereShown ? Elsewhere.Refresh(url, token) : Task.CompletedTask);   // #2775: the line is on Home's Todo panel only, and no badge counts it
+        _elsewhereShown = IsElsewhereShown;
+        PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(IsHomeShown), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(IsTodoShown), StringComparison.Ordinal))
+            {
+                ElsewhereShownChanged();
+            }
+        };
         Todo.PropertyChanged += (_, e) =>
         {
             if (string.Equals(e.PropertyName, nameof(TodoPanelViewModel.OverdueCount), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(TodoPanelViewModel.ToSortOutCount), StringComparison.Ordinal))
@@ -27,6 +37,25 @@ internal sealed partial class ShellViewModel
                 Reattend();   // the tray's tooltip carries the counts
             }
         };
+    }
+
+    // True while the Todo panel, and the From elsewhere line under it, is on screen: Home shown, with the decisions filter off.
+    private bool IsElsewhereShown => IsHomeShown && IsTodoShown;
+
+    // The line became visible: read it once at once, so it is never stale on open (the event reads skipped it while it was hidden).
+    private void ElsewhereShownChanged()
+    {
+        var shown = IsElsewhereShown;
+        if (shown == _elsewhereShown)
+        {
+            return;
+        }
+
+        _elsewhereShown = shown;
+        if (shown && Health.ApiUrl() is { } url)
+        {
+            _ = Elsewhere.Refresh(url, CancellationToken.None);
+        }
     }
 
     // Reviews exists by now: its count and failure feed the line, and the line's links and Retry go to the shell.

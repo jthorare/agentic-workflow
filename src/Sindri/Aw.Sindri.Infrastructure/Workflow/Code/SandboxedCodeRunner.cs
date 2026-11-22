@@ -80,7 +80,7 @@ internal sealed class SandboxedCodeRunner(CompiledCodeCache cache, IApprovedProf
 
         return File.Exists(runnerPath)
             ? assembly
-            : SindriErrors.CodeRunnerUnavailable.With($"the runner binary is not at {runnerPath} (fix: install it beside the Sindri host)");
+            : SindriErrors.CodeRunnerUnavailable.With(CodeRunnerMissing.Message(runnerPath));
     }
 
     // why: a node with no repo reads no files; a named repo must be in the live profile
