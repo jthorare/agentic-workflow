@@ -83,36 +83,33 @@ internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus sta
     {
         // why (#3883): a views rebuild replays the same ledger, so the marks come back the same even when a new build folds other row text; each serve takes the lease at a new epoch and keeps it while it runs
         var marks = new StringBuilder("serve=").Append((lease.Current?.Epoch ?? 0).ToString(CultureInfo.InvariantCulture)).Append(';');
-        var rows = await views.Mark(ViewNames.NeedsYou, cancellationToken).ConfigureAwait(false);
-        if (rows.IsError)
-        {
-            return rows.Error;
-        }
-
-        var decisions = await views.Mark(ViewNames.Decisions, cancellationToken).ConfigureAwait(false);
+        var rows = await Append(marks, ViewNames.NeedsYou, cancellationToken).ConfigureAwait(false);
+        var decisions = rows.IsError ? rows : await Append(marks, ViewNames.Decisions, cancellationToken).ConfigureAwait(false);
         if (decisions.IsError)
         {
-            return decisions.Error;
+            return decisions;
         }
 
-        Named(marks, ViewNames.NeedsYou, rows.Value);
-        Named(marks, ViewNames.Decisions, decisions.Value);
         if (!MayShowCounts(setup, current, rows.Value))
         {
             return marks.ToString();   // #3883: a list with rows (or a stale-views sentence) never shows the counts, so an item write keeps its tag
         }
 
-        var items = await views.Mark(ViewNames.Items, cancellationToken).ConfigureAwait(false);
-        if (items.IsError)
-        {
-            return items.Error;
-        }
-
-        Named(marks, ViewNames.Items, items.Value);
-        return marks.ToString();
+        var items = await Append(marks, ViewNames.Items, cancellationToken).ConfigureAwait(false);
+        return items.IsError ? items : marks.ToString();
     }
 
-    private static void Named(StringBuilder marks, string view, string mark) => _ = marks.Append(view).Append('=').Append(mark).Append(';');
+    /// <summary>Reads one view's mark and, when it reads, adds it to the tag text.</summary>
+    private async ValueTask<Result<string>> Append(StringBuilder marks, string view, CancellationToken cancellationToken)
+    {
+        var mark = await views.Mark(view, cancellationToken).ConfigureAwait(false);
+        if (!mark.IsError)
+        {
+            _ = marks.Append(view).Append('=').Append(mark.Value).Append(';');
+        }
+
+        return mark;
+    }
 
     /// <summary>
     /// Whether the answer can be the items' empty sentence: no stale-views sentence, no setup row and no folded row, the last known from

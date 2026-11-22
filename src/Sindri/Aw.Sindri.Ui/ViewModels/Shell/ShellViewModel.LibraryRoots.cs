@@ -25,12 +25,12 @@ internal sealed partial class ShellViewModel
         return card;
     }
 
-    // Settings' two cards that show the library (this one and the todo note card) share one GET /sindri/library per event.
-    private async Task RefreshLibraryCards(Uri url, CancellationToken cancellationToken)
+    // Settings' two cards that show the library (this one and the todo note card) share one GET /sindri/library per event. They run
+    // side by side (#3887): the note card reads GET /sindri/todo-note first and awaits the shared library answer only after it.
+    private Task RefreshLibraryCards(Uri url, CancellationToken cancellationToken)
     {
         var library = _api.Library(url, cancellationToken);
-        await LibraryRoots.Refresh(library).ConfigureAwait(true);
-        await TodoNoteCard.Refresh(url, library, cancellationToken).ConfigureAwait(true);
+        return Task.WhenAll(LibraryRoots.Refresh(library), TodoNoteCard.Refresh(url, library, cancellationToken));
     }
 
     // Opening Settings reads the library once; the todo note card shows the same read (ReadTodoNoteCard).
