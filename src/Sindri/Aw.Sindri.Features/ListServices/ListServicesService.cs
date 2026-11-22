@@ -43,13 +43,19 @@ internal sealed class ListServicesService(IApprovedProfile approvals, IViewReade
 
         var named = approved.Value?.Profile.Services ?? SindriProfile.NoServices;
         var own = builtIns.Where(b => BuiltInService.Is(b.Name, named.ContainsKey(b.Name.Value), builtIns)).ToDictionary(b => b.Name.Value, b => b.Cadence.ToString(), StringComparer.Ordinal);   // a profile entry of the same name sets the cadence instead
-        var runs = rows.Value.Where(r => named.ContainsKey(r.Name.Value) || own.ContainsKey(r.Name.Value)).ToDictionary(r => r.Name.Value, StringComparer.Ordinal);
         var described = Descriptions(builtIns);
-        IReadOnlyList<ServiceView> services = [.. named.Select(s => (Name: s.Key, s.Value.Every)).Concat(own.Select(s => (Name: s.Key, Every: s.Value)))
+        var stillRun = StillRun(named, own);
+        var runs = rows.Value.Where(r => named.ContainsKey(r.Name.Value) || own.ContainsKey(r.Name.Value) || stillRun.ContainsKey(r.Name.Value)).ToDictionary(r => r.Name.Value, StringComparer.Ordinal);
+        var profileNamed = named.Select(s => (Name: s.Key, s.Value.Every)).Concat(stillRun.Select(s => (Name: s.Key, Every: s.Value)));
+        IReadOnlyList<ServiceView> services = [.. profileNamed.Concat(own.Select(s => (Name: s.Key, Every: s.Value)))
             .OrderBy(s => s.Name, StringComparer.Ordinal)
-            .Select(s => View(new Listed(s.Name, s.Every, described.GetValueOrDefault(s.Name), named.ContainsKey(s.Name)), runs.GetValueOrDefault(s.Name), running.Value.FirstOrDefault(j => j.Service?.Value == s.Name)?.Id))];
+            .Select(s => View(new Listed(s.Name, s.Every, described.GetValueOrDefault(s.Name), !own.ContainsKey(s.Name)), runs.GetValueOrDefault(s.Name), running.Value.FirstOrDefault(j => j.Service?.Value == s.Name)?.Id))];
         return new ListServicesResponse(services, EmptyText.For(current, services.Count == 0, EmptyText.Services), asOf);
     }
+
+    /// <summary>A profile service the scheduler still runs after the profile stopped loading (#3623): its name and cadence, so the list matches what runs.</summary>
+    private Dictionary<string, string> StillRun(IReadOnlyDictionary<string, ServiceSettings> named, Dictionary<string, string> own) =>
+        (live.Schedules ?? []).Where(s => !named.ContainsKey(s.Name.Value) && !own.ContainsKey(s.Name.Value)).ToDictionary(s => s.Name.Value, s => s.Cadence.ToString(), StringComparer.Ordinal);
 
     /// <summary>What each service the build knows does: the built-ins carry their own sentence, a profile service of the build (the profile has no field for one) is named in <see cref="ServiceDescriptions"/>.</summary>
     private static Dictionary<string, string> Descriptions(IEnumerable<BuiltInService> builtIns)

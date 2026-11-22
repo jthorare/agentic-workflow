@@ -2,12 +2,49 @@
 # Workspace for the specToProvenPR cases: a tiny greeter CLI plus an approved spec. No remote is set.
 #   $1 = fresh   feature not built yet (spec -> PRs from scratch)
 #   $1 = halfway --shout is implemented in core.py and unit-tested, but never wired to the CLI
+#   $1 = sweeps  feature not built; the design is a system-design doc.md (planning/system-design/greeter-flags/) whose
+#                phases end with the performance sweep and the bug sweep, which are end checks, not PR stages
 set -eu
 . "$(dirname "${BASH_SOURCE[0]}")/../_lib/fixture-lib.sh"
 variant="${1:-fresh}"
-mkdir -p greeter tests planning/specs/greeter
+mkdir -p greeter tests
 : > greeter/__init__.py
 : > tests/__init__.py
+if [ "$variant" = "sweeps" ]; then
+mkdir -p planning/system-design/greeter-flags
+cat > planning/system-design/greeter-flags/doc.md <<'Q'
+---
+aw-doc: 1
+id: greeter-flags-tdd
+kind: tdd
+title: "Greeter: shout flag"
+status: approved
+---
+
+# Greeter: shout flag
+
+The `greeter` CLI (`python3 -m greeter NAME`) prints `Hello, NAME!`.
+
+## ROI and data-analysis plan
+
+The bet: support stops getting "how do I make it loud" questions (target: agent default). Source: research, the support inbox.
+
+## Phases
+
+### Ph1 Shout flag
+
+`python3 -m greeter NAME --shout` prints `HELLO, NAME!`. Observable signal: `python3 -m greeter ADA --shout` prints `HELLO, ADA!`.
+
+### Ph2 Performance sweep
+
+Exit check: every data or interactive surface has a measured time in the real app at or under its budget. A miss passes only when the owner accepts it in writing (a D-number).
+
+### Ph3 Bug sweep
+
+Exit check: every finding is an issue in the repo's tracker, and a merged fix or a written reason closes each one. A second walk of every surface finds nothing new.
+Q
+else
+mkdir -p planning/specs/greeter
 cat > planning/specs/greeter/DESIGN.md <<'Q'
 # Greeter: shout and language flags
 
@@ -26,6 +63,7 @@ Observable signal: the three outputs above, plus the exit status of the unknown-
 
 Each phase ships as its own PR.
 Q
+fi
 cat > README.md <<'Q'
 # greeter
 Run: `python3 -m greeter NAME`. Tests: `python3 -m unittest`.

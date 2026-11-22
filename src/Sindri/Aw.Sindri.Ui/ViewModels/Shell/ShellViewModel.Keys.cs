@@ -79,7 +79,8 @@ internal sealed partial class ShellViewModel
 
     // The pages with rows, and the rows the keys walk there: Home's panels or the Queue page's groups.
     /// <summary>True when the selected row is drawn on this page and the sheet shows its item.</summary>
-    internal bool IsSelectedRowOpen => OnRowPage && Queue.HasSelectionOn(RowScope)
+    /// <remarks>The item sheet's id outlives it (#3839): a session or job sheet opened on another page stays open back on Work, so the sheet's kind is checked too.</remarks>
+    internal bool IsSelectedRowOpen => OnRowPage && IsItemSheet && Queue.HasSelectionOn(RowScope)
         && string.Equals(Item.ItemId, Queue.SelectedId, StringComparison.Ordinal);
 
     private bool OnRowPage => IsHome || IsWork;

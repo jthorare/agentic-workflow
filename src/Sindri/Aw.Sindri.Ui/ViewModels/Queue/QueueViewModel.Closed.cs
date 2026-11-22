@@ -19,8 +19,8 @@ internal sealed partial class QueueViewModel
     /// <summary>"Closed" before the first read, then "Closed 3" (the name; the view draws the label and the count apart).</summary>
     public string ClosedHeader { get; private set => Set(ref field, value); } = Labels.ClosedHeader(count: null);
 
-    // The queue's item ids when the closed items were last read: a refresh that finds other ids reads them again (an item closed while another was added keeps the size, not the ids).
-    private string _closedKey = string.Empty;
+    // The queue's id set version (_idsVersion) when the closed items were last read: a refresh that finds other ids reads them again (an item closed while another was added keeps the size, not the ids).
+    private long _closedAt = -1;
 
     /// <summary>The fold's label.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
@@ -60,7 +60,7 @@ internal sealed partial class QueueViewModel
         }
 
         _closedRead = true;
-        _closedKey = QueueKey();
+        _closedAt = _idsVersion;
         var now = clock.GetUtcNow();
         var items = (done.IsSuccess ? done.Value.Items : []).Concat(cancelled.IsSuccess ? cancelled.Value.Items : []).OrderByDescending(i => i.Since);
         Patch.To(ClosedRows, [.. items.Select(i => new ItemRowViewModel(i, "closed", primaryAction: null, now))]);
@@ -72,7 +72,5 @@ internal sealed partial class QueueViewModel
 
     // After a refresh: learn whether there is anything closed, so the fold is hidden when there is not.
     private Task LearnClosed(Uri url, CancellationToken cancellationToken) =>
-        _closedRead && string.Equals(_closedKey, QueueKey(), StringComparison.Ordinal) ? Task.CompletedTask : ReadClosed(url, cancellationToken);
-
-    private string QueueKey() => string.Join('|', _rows.Keys.Order(StringComparer.Ordinal));
+        _closedRead && _closedAt == _idsVersion ? Task.CompletedTask : ReadClosed(url, cancellationToken);
 }
