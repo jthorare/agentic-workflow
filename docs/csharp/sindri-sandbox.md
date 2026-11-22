@@ -117,7 +117,7 @@ The sandbox puts `dotnet`, `npm` and `npx` shims first on `PATH`. Each calls `he
 
 | Shim | Subcommand | Route |
 |---|---|---|
-| `dotnet` | `build`, `publish`, `format`, `pack`, `restore`, `run`; `test` without `--no-build` | `heavy --expensive` |
+| `dotnet` | `build`, `msbuild`, `publish`, `format`, `pack`, `restore`, `run`; `test` without `--no-build` | `heavy --expensive` |
 | `dotnet` | `test --no-build`, `new`, `sln`, every other | `heavy --light` |
 | `dotnet` | `--version`, `--info`, `--list-sdks`, `--list-runtimes` | direct |
 | `npm` | `ci`, `install`, `test` | `heavy --expensive` |
