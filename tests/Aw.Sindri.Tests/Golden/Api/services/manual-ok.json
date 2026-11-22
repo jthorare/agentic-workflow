@@ -151,6 +151,18 @@
       "description": "Deletes memory facts whose expiry has passed."
     },
     {
+      "name": "messages-retention",
+      "every": "24h",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Deletes Slack messages past the retention window, keeping threads that wait on you."
+    },
+    {
       "name": "phantom",
       "every": "5s",
       "paused": false,
