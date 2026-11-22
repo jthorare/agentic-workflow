@@ -22,9 +22,13 @@ internal static class SettingsFromEnvironment
             Path.Combine(state, "lane-sessions"),
             environment("AW_TMUX") is { Length: > 0 } tmux ? tmux : "tmux",
             environment("AW_META_TMUX_SOCKET") is { Length: > 0 } socket ? socket : null,
-            new MetaPaths(state, Path.Combine(state, "gates"), File.Exists(heavy) ? heavy : null, environment("AW_GH") is { Length: > 0 } gh ? gh : "gh", home, UserConfig(environment, home)),
+            new MetaPaths(state, Path.Combine(state, "gates"), File.Exists(heavy) ? heavy : null, environment("AW_GH") is { Length: > 0 } gh ? gh : "gh", home, UserConfig(environment, home), Path.Combine(root, "bin-r1b", "meta-gate-reserve"), Toolkit(environment, home)),
             layout);
     }
+
+    // The toolkit checkout the scripts come from: $AW_TOOLKIT, else ~/.agentic-workflow/toolkit.
+    private static string Toolkit(Func<string, string?> environment, string home) =>
+        environment("AW_TOOLKIT") is { Length: > 0 } set ? set : Path.Combine(home, ".agentic-workflow", "toolkit");
 
     // Where the installer writes the systemd drop-in: $XDG_CONFIG_HOME, else <home>/.config.
     private static string UserConfig(Func<string, string?> environment, string home) =>

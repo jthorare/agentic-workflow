@@ -39,4 +39,6 @@ internal sealed class AvaloniaLauncher(Func<TopLevel?> window) : Platform.ILaunc
             return false;
         }
     }
+
+    public bool FileExists(string path) => Path.IsPathRooted(path) && File.Exists(path);
 }

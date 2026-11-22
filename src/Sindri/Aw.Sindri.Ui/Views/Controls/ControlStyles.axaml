@@ -110,7 +110,7 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.XS}" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
-  <Style Selector="TextBlock.error">
+  <Style Selector="TextBlock.error, SelectableTextBlock.error">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Error}" />
   </Style>
   <Style Selector="icons|StateIcon.error">
@@ -441,8 +441,12 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Border Name="PART_Chrome" Background="Transparent" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.SM}" MinHeight="28" Padding="12,4">
-          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}"
-                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+          <StackPanel>
+            <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}"
+                              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+            <!-- #3651: why the choice is unavailable, under the label. A screen reader gets it as the tile's help text, so this line is raw for it. -->
+            <TextBlock Name="PART_Reason" Classes="caption subtle" Text="" IsVisible="False" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          </StackPanel>
         </Border>
       </ControlTemplate>
     </Setter>
@@ -463,13 +467,15 @@
     <Setter Property="Background" Value="{DynamicResource Brush.PrimarySoft}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
   </Style>
-  <Style Selector="controls|SelectableTile:disabled /template/ Border#PART_Chrome">
+  <!-- :unavailable (#3651) is the picker's disabled row: it stays enabled and focusable, so it looks like :disabled and takes no hover or press. -->
+  <Style Selector="controls|SelectableTile:disabled /template/ Border#PART_Chrome, controls|SelectableTile:unavailable /template/ Border#PART_Chrome">
     <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
   </Style>
-  <Style Selector="controls|SelectableTile:disabled">
+  <Style Selector="controls|SelectableTile:disabled, controls|SelectableTile:unavailable">
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
   </Style>
-  <Style Selector="controls|SelectableTile:disabled TextBlock">
+  <Style Selector="controls|SelectableTile:disabled TextBlock, controls|SelectableTile:unavailable TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
   </Style>
   <!-- The picker's error box (#3234): its own class, because QueueStyles' amber Border.callout loads after this file and wins over Border.callout.fail. Error on ErrorSoft, Radius.MD, padding 12.
@@ -493,6 +499,8 @@
     <Setter Property="MinHeight" Value="0" />
   </Style>
   <Style Selector="Border.picker-error Expander /template/ ToggleButton#ExpanderHeader">
+    <!-- #3651: the header is as wide as "Details" plus the chevron box (Fluent stretches it across the box, which left the chevron about 35 px from the word). -->
+    <Setter Property="HorizontalAlignment" Value="Left" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="0,2" />
