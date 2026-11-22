@@ -7,12 +7,10 @@ namespace Aw.Redaction;
 /// gate that misses a match would leak a secret, so a rule without a gate always runs, and the tests check each gate
 /// against its regex (RuleGateTests).
 /// </summary>
-internal sealed class RuleGate
+/// <param name="clauses">The clauses; all must hold.</param>
+internal sealed class RuleGate(params RuleGateClause[] clauses)
 {
-    private readonly RuleGateClause[] _clauses;
-
-    /// <summary>A gate over <paramref name="clauses"/>; all must hold.</summary>
-    public RuleGate(params RuleGateClause[] clauses) => _clauses = clauses;
+    private readonly RuleGateClause[] _clauses = clauses;
 
     /// <summary>The clauses, all of which must hold.</summary>
     public IReadOnlyList<RuleGateClause> Clauses => _clauses;

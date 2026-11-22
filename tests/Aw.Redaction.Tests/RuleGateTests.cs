@@ -8,17 +8,14 @@ namespace Aw.Redaction.Tests;
 /// scan as it ran before the gates), over the whole corpus and a seeded set of generated texts.
 /// </summary>
 [Trait("Lane", "unit")]
-public sealed class RuleGateTests
+public sealed partial class RuleGateTests
 {
-    private static readonly Redactor Ungated =
+    private static readonly Redactor _ungated =
         new([.. BuiltinRules.All.Select(r => r with { Gate = null })], Redactor.DefaultMatchTimeout);
 
+    // A rule without a gate still runs (safe, only slower); a new built-in rule gets its gate derived with it.
     [Fact]
-    public void Every_builtin_rule_has_a_gate()
-    {
-        // A rule without a gate still runs (safe, only slower); a new built-in rule gets its gate derived with it.
-        Assert.All(BuiltinRules.All, r => Assert.NotNull(r.Gate));
-    }
+    public void Every_builtin_rule_has_a_gate() => Assert.All(BuiltinRules.All, r => Assert.NotNull(r.Gate));
 
     [Fact]
     public void A_caseless_rule_compares_letters_only_in_any_case()
@@ -48,7 +45,7 @@ public sealed class RuleGateTests
             }
         }
 
-        Assert.True(checkedMatches > 500, $"too few matches to prove the gates: {checkedMatches}");
+        Assert.True(checkedMatches > 500, "too few matches to prove the gates: " + checkedMatches.ToString(System.Globalization.CultureInfo.InvariantCulture));
     }
 
     [Fact]
@@ -57,7 +54,7 @@ public sealed class RuleGateTests
         foreach (var text in Texts())
         {
             var gated = Redactor.Default.Scrub(text);
-            var ungated = Ungated.Scrub(text);
+            var ungated = _ungated.Scrub(text);
 
             Assert.Equal(ungated.Outcome, gated.Outcome);
             Assert.Equal(ungated.Text, gated.Text);
@@ -70,11 +67,8 @@ public sealed class RuleGateTests
     [InlineData("Started review of the login page")]
     [InlineData("waiting for checks to finish")]
     [InlineData("")]
-    public void Plain_status_text_skips_every_rule(string text)
-    {
-        // The point of the gates: a short status line with no secret never reaches a regex.
-        Assert.All(BuiltinRules.All, r => Assert.False(r.Gate!.MayMatch(text, IsAscii(text)), r.Id));
-    }
+    public void Plain_status_text_skips_every_rule(string text) =>
+        Assert.All(BuiltinRules.All, r => Assert.False(r.Gate!.MayMatch(text, IsAscii(text)), r.Id));   // a status line never reaches a regex
 
     [Fact]
     public void A_caseless_clause_holds_on_any_non_ascii_text()
@@ -84,8 +78,11 @@ public sealed class RuleGateTests
         var clause = RuleGateClause.AnyCase("token");
 
         Assert.True(clause.MayHold(text, ascii: false));
-        Assert.Matches(new Regex("token", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant), text);
+        Assert.Matches(CaselessToken, text);
     }
+
+    [GeneratedRegex("token", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex CaselessToken { get; }
 
     private static bool IsAscii(string text) => !text.AsSpan().ContainsAnyExceptInRange('\u0000', '\u007F');
 

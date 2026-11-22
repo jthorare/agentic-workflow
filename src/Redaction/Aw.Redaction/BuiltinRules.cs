@@ -40,9 +40,9 @@ internal static class BuiltinRules
 
     // Gate clauses (RuleGate): every rule's gate names only what each of its matches must contain. SecretWord's
     // alternatives each hold one of these stems (API_KEY holds API, PRIVATE-KEY holds PRIVATE, ACCESSKEY holds ACCESS).
-    private static readonly RuleGateClause SecretStem = AnyCase("api", "secret", "token", "password", "private", "access");
-    private static readonly RuleGateClause Digit = AnyChar("0123456789");
-    private static readonly RuleGateClause Separator = AnyChar("=:");
+    private static readonly RuleGateClause _secretStem = AnyCase("api", "secret", "token", "password", "private", "access");
+    private static readonly RuleGateClause _digit = AnyChar("0123456789");
+    private static readonly RuleGateClause _separator = AnyChar("=:");
 
     /// <summary>The rules, in priority order. A new or changed pattern needs its gate derived again (RuleGateTests).</summary>
     public static IReadOnlyList<RedactionRule> All { get; } =
@@ -88,13 +88,13 @@ internal static class BuiltinRules
         // member access and calls never do (refreshToken: RefreshTokenSchemaV2).
         new("secret-assignment",
             "(?<![A-Za-z0-9_-])[A-Za-z0-9_-]*?" + SecretWord + "['\"]?" + Ws + "*[=:]" + Ws + "*['\"]" + Value, RegexOptions.IgnoreCase,
-            new(SecretStem, Separator, AnyChar("'\""), Digit)),
+            new(_secretStem, _separator, AnyChar("'\""), _digit)),
 
         // Env style: an UPPER_SNAKE name may take an unquoted value, dots included (API_KEY=..., CLIENT_SECRET=...).
         new("secret-assignment",
             "(?<![A-Za-z0-9_-])(?:[A-Z0-9]+_)*(?:API_?KEY|SECRET(?:_KEY)?|TOKEN|PASSWORD|PRIVATE_KEY|ACCESS_KEY)" + Ws + "*[=:]" + Ws + "*['\"]?"
             + DottedValue,
-            Gate: new(Exact("API", "SECRET", "TOKEN", "PASSWORD", "PRIVATE_KEY", "ACCESS_KEY"), Separator, Digit)),
+            Gate: new(Exact("API", "SECRET", "TOKEN", "PASSWORD", "PRIVATE_KEY", "ACCESS_KEY"), _separator, _digit)),
 
         // Shell style: name=value at a line start or after a space, ;, |, (, comma, quote, {, [ or : (a scoped .npmrc
         // //host/:_authToken=...), in any case (cd repo; export
@@ -102,17 +102,17 @@ internal static class BuiltinRules
         // the value stops at a dot.
         new("secret-assignment",
             "(?<![^ \t\r\n;|(,\"'{\\[:])[A-Za-z0-9_.-]*?" + SecretWord + "=['\"]?" + Value, RegexOptions.IgnoreCase,
-            new(SecretStem, Exact("="), Digit)),
+            new(_secretStem, Exact("="), _digit)),
 
         // Query style: name=value right after ?, & or # (?access_token=..., a #access_token= redirect fragment); the value
         // may hold dots.
         new("secret-assignment", "(?<=[?&#])[A-Za-z0-9_.-]*?" + SecretWord + "=" + DottedValue, RegexOptions.IgnoreCase,
-            new(AnyChar("?&#"), SecretStem, Exact("="), Digit)),
+            new(AnyChar("?&#"), _secretStem, Exact("="), _digit)),
 
         // Header style: a hyphenated header name may take an unquoted value (X-Api-Key: ...).
         new("secret-assignment",
             "(?<![A-Za-z0-9_-])(?:[A-Za-z0-9]+-)+(?:API-?KEY|SECRET|TOKEN|PASSWORD|ACCESS-?KEY|PRIVATE-?KEY):" + Ws + "*" + Value,
-            RegexOptions.IgnoreCase, new(Exact("-"), SecretStem, Exact(":"), Digit)),
+            RegexOptions.IgnoreCase, new(Exact("-"), _secretStem, Exact(":"), _digit)),
 
         // Config style (INI, YAML, .properties, .env in any case): a line that starts with the name may take an
         // unquoted value, which must end the line (or meet a comment), so code such as `secret = hash_v2(input)` or
@@ -120,15 +120,15 @@ internal static class BuiltinRules
         new("secret-assignment",
             "^[ \t]*(?:export[ \t]+)?(?:[A-Za-z0-9]+[_.-])*" + SecretWord + "[ \t]*[=:][ \t]*" + Value
             + "(?=[ \t]*(?:[#;][^\r\n]*)?\r?$)",
-            RegexOptions.IgnoreCase | RegexOptions.Multiline, new(SecretStem, Separator, Digit)),
+            RegexOptions.IgnoreCase | RegexOptions.Multiline, new(_secretStem, _separator, _digit)),
 
         // ~/.aws/credentials (INI): these fixed keys at a line start take an unquoted value.
         new("secret-assignment",
             "^[ \t]*(?:aws_secret_access_key|aws_session_token)[ \t]*[=:][ \t]*(?<v>[A-Za-z0-9+/=]{16,})",
-            RegexOptions.IgnoreCase | RegexOptions.Multiline, new(AnyCase("aws_secret_access_key", "aws_session_token"), Separator)),
+            RegexOptions.IgnoreCase | RegexOptions.Multiline, new(AnyCase("aws_secret_access_key", "aws_session_token"), _separator)),
 
-        new("ssn", Start + "[0-9]{3}-[0-9]{2}-[0-9]{4}" + End, Gate: new(Exact("-"), Digit)),
+        new("ssn", Start + "[0-9]{3}-[0-9]{2}-[0-9]{4}" + End, Gate: new(Exact("-"), _digit)),
         new("mrn", Start + "MRN(?:" + Ws + "|[:#-])*(?<v>[0-9]{6,10})" + End, RegexOptions.IgnoreCase,
-            new(AnyCase("mrn"), Digit)),
+            new(AnyCase("mrn"), _digit)),
     ];
 }
