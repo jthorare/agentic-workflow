@@ -96,7 +96,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         InitLinear();
         Health.Follow(ReadQueue);
         Health.Follow(Item.Refresh);
-        Health.FollowCards();
+        FollowSystemCards();
     }
 
     /// <summary>The app's copy, for the view.</summary>

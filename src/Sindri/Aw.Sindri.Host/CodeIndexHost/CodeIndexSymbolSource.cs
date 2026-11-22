@@ -163,8 +163,9 @@ internal sealed class CodeIndexSymbolSource(ICodeIndex index, ICodeIndexScopeSou
         }
 
         var down = row.Layers.FirstOrDefault(static l => l.Layer == LayerName.Graph && l.State == LayerState.Unavailable);
+        var off = row.Layers.Any(static l => l.Layer == LayerName.Graph && l.State == LayerState.Disabled);
         return down is null
-            ? new CodeIndexHead(CodeIndexState.Ok, commit, row.BuiltAt, AsOfCommit: null, Layer: null, Code: null)
+            ? new CodeIndexHead(CodeIndexState.Ok, commit, row.BuiltAt, AsOfCommit: null, Layer: null, Code: null) { GraphOff = off }
             : new CodeIndexHead(CodeIndexState.LayerUnavailable, commit, row.BuiltAt, AsOfCommit: null, Layer: "graph", down.Code);
     }
 
