@@ -19,3 +19,19 @@
 17. Footer key `o` for sort: confirm with ui.
 18. The edited row's cue is a line in the peek plus the "now" age; no mark on the row itself.
 19. "passed" after a past target is my wording for the target cue.
+
+## Round 5 guesses
+20. Drafts do not count toward health (api's coming change): Dark mode now has 3 PRs that count, so it keeps "At risk: 1 of 3"; Checkout rewrite is "1 of 3 PRs red, 1 unknown" (its 4th PR is a draft); Rate limits (one draft) has no health. Group counts become 2 / 4 / 3 / 5 / 8. Singular and plural follow the same rule ("1 of 1 PR"). All of it is in the STR block.
+21. The stale line says "as of 10:31", not 13:52: 13:52 would be after the frames' clock (10:42).
+22. needs-me-empty keeps the full bar (search, sort, group) so the header matches; a search over zero rows does nothing, so the owner may want it hidden like Triage.
+23. The footer hint "g group" is drawn as a focusable control (ring); the footer keys are not clickable in the grammar, so this is a guess that they take focus.
+24. Focus is one control at a time in the app; focus-controls draws four rings in one frame to show the look.
+25. State dots as rounded squares is my pick for "a different outline from the PR pies".
+26. The Unknown level dot is a hollow grey ring; On track green, so no two levels share a look.
+27. The group menu "No grouping" row and button both say "No grouping"; State and Health keep their names.
+28. Menu hint ink #a4a9b2 is mine (one step above ink-subtle).
+
+## Round 7 guesses
+29. A list cut by the height budget stops at the cut and draws no Finished head; Finished shows only once the owner scrolls past No open PRs.
+30. The "under about 120 px, dot only" threshold is mine; 120 px fits "Off track: 2 of 4…" plus the dot.
+31. Ties in Last activity (SSO rollout and Billing v2, both 1d) keep any stable order; the frames put the long-named row last.

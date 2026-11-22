@@ -10,8 +10,6 @@ pre#measure { display:none; }
 .sect{display:flex;align-items:center;gap:8px;height:28px;font-size:12px;font-weight:500;color:var(--ink-subtle);margin-top:var(--sp2)}
 .sect .n{font-weight:400}
 .sect .chev{width:10px;color:var(--ink-subtle)}
-.bar{background:#5e6268}
-.g.box{border-color:#70757c}
 .row.cursor,.row.sel{box-shadow:none}
 .row.cursor::after,.row.sel::after{content:'';position:absolute;left:calc(var(--inset) - 8px);right:calc(var(--inset) - 8px);top:0;bottom:0;border:1px solid var(--primary-hi);border-radius:var(--r1);pointer-events:none}
 .row.sel{background:linear-gradient(var(--primary-soft),var(--primary-soft)) 16px 0/calc(100% - 32px) 100% no-repeat}
@@ -104,3 +102,46 @@ body.w1000 .body.peeking .row.pj, body.w1000 .body.peeking .row.colhead.pj { gri
 
 .ddb { box-sizing:border-box; width:112px; justify-content:space-between; }
 body.w1000 .ddb { width:112px; }
+
+/* ---------- round 5 ---------- */
+:root { --ink-hint:#a4a9b2; --bar-fill:#5e6268; --box-edge:#70757c; --ring:var(--primary-hi); }
+.bar{background:var(--bar-fill)}
+.g.box{border-color:var(--box-edge)}
+/* menu hints: one step lighter than ink-subtle */
+.menu .ment .when, .menu .ment.on .when, .menu .mfoot, .menu .mhead { color:var(--ink-hint); }
+.ddb { width:150px; }
+body.w1000 .ddb { width:150px; }
+/* health dot before the reason: 8 px, level-coloured; unknown is a hollow ring so no two levels share a grey */
+.hd { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:baseline; position:relative; }
+.hd.off { background:var(--err); } .hd.risk { background:var(--att); } .hd.ok { background:var(--ok); }
+.hd.unk { box-sizing:border-box; border:1.5px solid var(--ink-subtle); }
+.peek-fields .rs { display:inline-flex; align-items:center; }
+/* state dots are rounded squares, so they never share a shape with the round PR glyphs */
+.row.pj > .g.st { border-radius:3px; }
+/* the long name rule: the reason shrinks first, the name keeps >= 140 px then gets an ellipsis */
+.row.pj .title .t { flex:0 1 auto; max-width:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.row.pj .title .sub { flex:1 1 0; min-width:0; flex-shrink:1000; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+body.w1000 .body.peeking .row.pj, body.w1000 .body.peeking .row.colhead.pj { grid-template-columns: var(--col-glyph) minmax(140px,1fr) 144px 112px 44px; }
+.tip { position:absolute; left:calc(var(--inset) + 28px); top:30px; z-index:7; background:var(--s4); color:var(--ink); border:1px solid var(--hair-strong); border-radius:var(--r2); box-shadow:0 8px 24px rgba(0,0,0,.45); padding:4px 8px; font-size:12px; line-height:18px; white-space:nowrap; }
+/* focus: one ring everywhere, 2 px primary-hi drawn inside the control (outline-offset -2px; the row ring is a 2 px inset border) */
+.row.cursor::after, .row.sel::after { border-width:2px; }
+.row.cursor.dim::after { border-color:var(--hair-strong); }
+.fx { outline:2px solid var(--ring); outline-offset:-2px; }
+.tabs a.fx { border-radius:var(--r2); }
+.keys span.fx { border-radius:var(--r1); }
+/* a hovered row (grammar: s2) and the kept-place row's 1 px primary left edge while the peek is closed */
+.row.hov { background:var(--s2); }
+.row.kept::before { content:''; position:absolute; left:calc(var(--inset) - 8px); top:0; bottom:0; width:1px; background:var(--primary-hi); }
+/* loading: row-shaped placeholders on the 40 px rhythm, no text */
+.skb { display:block; height:8px; border-radius:4px; background:var(--s3); }
+.row.sk .g.skd { border-radius:3px; background:var(--s3); }
+.row.sk .title, .row.sk .fact, .row.sk .age { display:flex; align-items:center; }
+.empty .acts .btn kbd { margin-left:6px; }
+.peek-head h2 { white-space:normal; overflow:visible; } /* a long name wraps in the peek title: the full name is always readable there */
+.tip { top:32px; }
+
+.empty .acts .btn kbd { margin-left:6px; }
+/* peek fields: a long value (the health reason) wraps inside its row instead of spilling out */
+.peek-fields dt, .peek-fields dd { height:auto; min-height:28px; }
+.peek-fields dd { flex-wrap:wrap; row-gap:2px; padding:3px 0; }
+.keys span.fx { padding:2px 6px; }

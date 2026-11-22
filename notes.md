@@ -48,3 +48,32 @@ Per project: `openPrs[]` (state draft | ready | ciRed | waiting | unknown, decid
 
 ## Round 4 (api's exact strings)
 Health null = no open PR. Those rows (7) sit in the group "No open PRs", with no reason; they keep their Items count when they have items. All reason strings are api's: off track, at risk (with ", N unknown" tail), "On track: N open PRs, none red", "CI unknown for N of M PRs".
+
+## Round 5 (after r4 973a1979c6; ideas and qa holds)
+Clock of the new frames is the same (Sat 14 Nov 2026, 10:42). All reason strings live in ONE block, `STR` at the top of gen.py ("strings"): swap the wording there and run gen.py.
+
+Holds fixed:
+1. triage-empty: no ticket number and no build name. "Triage isn't built yet. When it is, it will hold new Linear projects and project updates that wait for a decision: accept, decline, mark as duplicate or snooze. It needs Linear connected."
+2. needs-me-empty (Needs me 0, same header and bar, key 3 button) and my-work-empty (My work 0) added. Needs me counts: a PR waits on your review, or your own PR has red CI.
+3. search-none ("0 of 32", "No project matches “xyz”", Clear search Esc), loading (11 placeholder rows on the 40 px rhythm, no text, no tab counts), stale (28 px line under the title "GitHub and Linear data unavailable. Showing what Sindri read at 10:31 · Retry", the PRs column head reads "PRs as of 10:31"). "Sindri not running" reuses the app's existing panel; it has no frame here.
+4. Long names: long-name-1000 (peek open at 1000) and long-name (peek open at 1440). Rule, drawn in both: the reason line shrinks first and gets its own ellipsis (long-name); the name keeps at least 140 px, then gets an ellipsis (long-name-1000: 168 px); the full name shows in a hover tooltip (drawn) and in the peek title (it wraps, never cuts).
+5. Group hint reads "derived from each project’s open PRs" (projects, peek, menus, menus-group, no-linear-row, not-connected, stale, focus-controls).
+6. Group = No grouping draws no group head (needs-me, needs-me-1000, peek-1000). The owner's own page says "you": peek chips read "waiting on you, sam".
+
+Health look: an 8 px dot before the reason on every row with health: red Off track, amber At risk, hollow grey ring Unknown, green On track. A chip stays only for At risk and Off track (peek). State dots are now rounded squares, so no state dot shares a round pie shape with a PR glyph. A project with only draft PRs has no health, no group head of its own (it sits in "No open PRs") and draws no dot or reason (Rate limits).
+
+Smalls: row cursor and selection are a 2 px primary-hi ring; focus-controls draws the same ring on a tab (My work), Sort, Group and a footer hint (g group); the row ring dims to the hairline colour while the search field has focus (search, search-needs-me) and the footer then reads "Esc clear · ↓ to the list · Enter open". "of N" in the search box counts the rows of the current view: Projects 32, Needs me 6 (search-needs-me: "1 of 6"), My work 6. Menu hint ink is #a4a9b2 (menu minimum contrast is now above 5.19). projects.css: #5e6268 is token --bar-fill and #70757c is --box-edge. Which ask word wins: when a project has both a red CI of its own and a review waiting on you, the Ask cell says "fix CI" (CI first); the peek says it in "Asks you": "fix CI first (api#412), then review web#97" (no-linear-row). Kept-place row with the peek closed: 1 px primary-hi left edge (Billing v2 in projects, Active reads "now"). One hovered row is drawn (Usage metering in projects, grammar s2). Button and menu say the same words: "Last activity" and "No grouping". Footer: "/ search"; "c create" is gone (no create control is drawn).
+Spec section 14 (the #3168 health table) versus #3718 groups: the lead files the spec note; not a frame change.
+
+## Round 6 / 7
+- Final #3718 strings (str3718-final.md) are in the STR block: "N not checked yet", "CI not checked yet for N of M PRs", singular PR, drafts excluded. "CI unknown" is gone from the frames (the peek PR chip reads "not checked").
+- Dark mode (1 red, 1 draft, 1 ready) is now Off track: "1 of 2 PRs red"; group counts 3 / 3 / 3 / 5 / 8. Rate limits (1 draft) has no health.
+- long-name frames: the long-named project is the last row, so the tooltip covers no text; long-name rows are in Last activity order. Lists end on a whole row (footerCut=0 in measure.txt). Empty-state buttons are text plus key badge everywhere; triage-empty footer drops search, sort, group. Focus rings are 2 px inside every control.
+
+## Round 7 (review-r6 hold and smalls)
+- Group order is never broken. When the height budget cuts a group, the list stops there: no later group and no Finished head (gen.py `by_health`, the `cut` flag). The rest of the list scrolls. projects, peek, menus, menus-group, no-linear-row and focus-controls now end inside On track; stale ends the same way. Order stays Off track, At risk, Unknown, On track, No open PRs, then Finished.
+- Long name: both frames rename the same project, SSO rollout (Off track 2 of 4, Mira, Dec 7, 5/12). At 1000 the long-named row is last (it ties with Billing v2 at 1d), so its tooltip covers nothing.
+- The SSO peek has "Asks you: review web#2215".
+- long-name-1000 peek ends on a whole section (Open PRs); the Note sits below the fold.
+- Narrow reason rule: when the reason has under about 120 px, the row shows only the level dot (long-name at 1440, peek open). The full reason is in the peek's Derived row.
+- Focus: one ring, 2 px primary-hi, drawn inside the control. focus-controls draws the tab ring on Needs me, which has no pill beside it.

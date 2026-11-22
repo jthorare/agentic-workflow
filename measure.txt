@@ -1,12 +1,22 @@
-== needs-me: rows=6 rowsFullyInView=6 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
-== projects: rows=22 rowsFullyInView=15 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
-== my-work: rows=6 rowsFullyInView=6 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
-== triage-empty: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=0 hScroll=0 font=Inter
-== peek: rows=22 rowsFullyInView=15 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
-== search: rows=2 rowsFullyInView=2 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
-== menus: rows=22 rowsFullyInView=15 cut=[] contrastUnder4_5=[] minContrast=4.60 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
-== menus-group: rows=22 rowsFullyInView=15 cut=[] contrastUnder4_5=[] minContrast=4.60 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
-== not-connected: rows=9 rowsFullyInView=9 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
-== needs-me-1000: rows=6 rowsFullyInView=6 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
-== peek-1000: rows=6 rowsFullyInView=6 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
-== no-linear-row: rows=22 rowsFullyInView=15 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=40 hScroll=0 font=Inter
+== needs-me: rows=6 rowsFullyInView=6 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["5.19","Ctrl+K","bg(28,29,32,1)"],["5.19","6","bg(28,29,32,1)"]] font=Inter
+== projects: rows=14 rowsFullyInView=14 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["5.19","Ctrl+K","bg(28,29,32,1)"],["5.19","32","bg(28,29,32,1)"]] font=Inter
+== my-work: rows=6 rowsFullyInView=6 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["5.19","Ctrl+K","bg(28,29,32,1)"],["5.19","6","bg(28,29,32,1)"]] font=Inter
+== triage-empty: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=0 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["4.70","Back to Needs me","bg(94,106,210,1)"],["5.19","Ctrl+K","bg(28,29,32,1)"]] font=Inter
+== peek: rows=14 rowsFullyInView=14 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["4.70","Open","bg(94,106,210,1)"],["5.02","CI red · Nov 10","bg(40,20,21,1)"]] font=Inter
+== search: rows=2 rowsFullyInView=2 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["5.19","Ctrl+K","bg(28,29,32,1)"],["5.19","32","bg(28,29,32,1)"]] font=Inter
+== search-needs-me: rows=1 rowsFullyInView=1 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["5.19","Ctrl+K","bg(28,29,32,1)"],["5.19","6","bg(28,29,32,1)"]] font=Inter
+== search-none: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=0 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["4.70","Clear search","bg(94,106,210,1)"],["5.19","Ctrl+K","bg(28,29,32,1)"]] font=Inter
+== menus: rows=14 rowsFullyInView=14 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["5.19","Ctrl+K","bg(28,29,32,1)"],["5.19","32","bg(28,29,32,1)"]] font=Inter
+== menus-group: rows=14 rowsFullyInView=14 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["5.19","Ctrl+K","bg(28,29,32,1)"],["5.19","32","bg(28,29,32,1)"]] font=Inter
+== not-connected: rows=11 rowsFullyInView=11 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["5.19","Ctrl+K","bg(28,29,32,1)"],["5.19","32","bg(28,29,32,1)"]] font=Inter
+== needs-me-1000: rows=6 rowsFullyInView=6 cut=["At risk: 1 of 3 PRs red, 1 not checked yet"] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=988 lowest2=[["5.19","6","bg(28,29,32,1)"],["5.19","/","bg(28,29,32,1)"]] font=Inter
+== peek-1000: rows=6 rowsFullyInView=6 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=988 lowest2=[["4.70","Open","bg(94,106,210,1)"],["5.19","6","bg(28,29,32,1)"]] font=Inter
+== no-linear-row: rows=14 rowsFullyInView=14 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["4.70","Open","bg(94,106,210,1)"],["5.02","CI red · Nov 12","bg(40,20,21,1)"]] font=Inter
+== needs-me-empty: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=0 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["4.70","Open Projects","bg(94,106,210,1)"],["5.19","Ctrl+K","bg(28,29,32,1)"]] font=Inter
+== my-work-empty: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=0 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["4.70","Open Projects","bg(94,106,210,1)"],["5.19","Ctrl+K","bg(28,29,32,1)"]] font=Inter
+== loading: rows=11 rowsFullyInView=11 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["5.19","Ctrl+K","bg(28,29,32,1)"],["5.19","/","bg(28,29,32,1)"]] font=Inter
+== stale: rows=14 rowsFullyInView=14 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["5.19","Ctrl+K","bg(28,29,32,1)"],["5.19","32","bg(28,29,32,1)"]] font=Inter
+== long-name: rows=5 rowsFullyInView=5 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=1428 nameW=265 nameEllipsis=0 lowest2=[["4.70","Open","bg(94,106,210,1)"],["5.02","off track","bg(40,20,21,1)"]] font=Inter
+== long-name-1000: rows=6 rowsFullyInView=6 cut=["Enterprise onboarding experience overhaul"] contrastUnder4_5=[] minContrast=4.70 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=988 nameW=168 nameEllipsis=1 lowest2=[["4.70","Open","bg(94,106,210,1)"],["5.02","off track","bg(40,20,21,1)"]] font=Inter
+== focus-controls: rows=14 rowsFullyInView=14 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=11.00 rowH=40 footerCut=0 hScroll=0 rightInk=1428 lowest2=[["5.19","Ctrl+K","bg(28,29,32,1)"],["5.19","32","bg(28,29,32,1)"]] font=Inter
+# note: cut= on long-name-1000 is the name's drawn ellipsis; needs-me-1000 cut= is the reason line's ellipsis. long-name (1440, peek open) shows only the level dot on the long row, so it has no cut. footerCut=0: every list ends on a whole row; a list cut by height stops at the cut group (no Finished).
