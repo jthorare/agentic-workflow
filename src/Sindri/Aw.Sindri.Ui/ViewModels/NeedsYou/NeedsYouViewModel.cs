@@ -191,11 +191,11 @@ internal sealed partial class NeedsYouViewModel : ObservableObject
     private void Apply()
     {
         var before = Rows.Select(r => r.Entry).ToList();
-        var holding = PointerOver && _hasShown;
+        var holding = PointerOver && _hasShown;   // nothing is held back before the first read: it is the first paint, never "new" rows (#3734)
         _shown = [.. _feed.Rows.Where(e => _filter is null || _filter(e))];
         _visible = [.. _shown.Where(e => !holding || _shownIds.Contains(e.Id))];
         _shownIds = [.. _visible.Select(e => e.Id)];
-        _hasShown = true;
+        _hasShown = _loaded;
         Seen.Update(_visible, [.. _feed.Rows.Select(e => e.Id)]);
         var selected = SelectedId;
         if (selected is not null && !_visible.Exists(e => string.Equals(e.Id, selected, StringComparison.Ordinal)))
