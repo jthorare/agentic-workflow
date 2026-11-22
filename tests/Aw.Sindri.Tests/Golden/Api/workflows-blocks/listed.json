@@ -1065,7 +1065,8 @@
           ],
           "outputs": {
             "items": "array",
-            "count": "number"
+            "count": "number",
+            "skipped": "number"
           },
           "branches": [
             "out"
