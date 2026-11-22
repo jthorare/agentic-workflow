@@ -5,6 +5,7 @@
       "shim": "dotnet",
       "subcommands": [
         "build",
+        "msbuild",
         "publish",
         "format",
         "pack",

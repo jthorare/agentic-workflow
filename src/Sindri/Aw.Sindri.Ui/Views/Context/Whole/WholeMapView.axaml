@@ -186,6 +186,7 @@
               <StackPanel Spacing="2" IsVisible="{Binding HasSource}">
                 <TextBlock x:Name="WholeNodeSource" Classes="body" Text="{Binding SourceText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding SourceText}" />
                 <Button x:Name="WholeNodeOpenFile" Classes="panel-action" Content="{Binding OpenFileText}" IsVisible="{Binding HasOpenFile}" Click="OnNodePanelOpenFile" HorizontalAlignment="Left" AutomationProperties.Name="{Binding OpenFileName}" />
+                <Button x:Name="WholeNodeCopyPath" Classes="panel-action" Content="{Binding CopyPathText}" IsVisible="{Binding HasOpenFile}" Click="OnNodePanelCopyPath" HorizontalAlignment="Left" AutomationProperties.Name="{Binding CopyPathText}" />
                 <Button x:Name="WholeNodeOpenSource" Classes="panel-action" Content="{Binding OpenSourceText}" IsVisible="{Binding HasLink}" Click="OnNodePanelOpenSource" HorizontalAlignment="Left" AutomationProperties.Name="{Binding OpenSourceName}" />
                 <SelectableTextBlock x:Name="WholeNodeLaunchFailed" Classes="caption error" Text="{Binding LaunchFailedText}" IsVisible="{Binding LaunchFailed}" TextWrapping="Wrap" AutomationProperties.Name="{Binding LaunchFailedText}" />
                 <TextBlock x:Name="WholeNodeNoLink" Classes="caption subtle" Text="{Binding NoLinkText}" IsVisible="{Binding HasNoLink}" AutomationProperties.Name="{Binding NoLinkText}" />

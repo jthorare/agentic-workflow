@@ -38,6 +38,7 @@ internal sealed partial class ContextPageViewModel
         Whole.ConceptListRequested += (_, e) => _ = OpenConceptList(e.Value.Tab, e.Value.Page, CancellationToken.None);
         Whole.HomeRequested += (_, _) => MapHome();
         Whole.Panel.Launcher = Ports.Launcher ?? NullLauncher.Instance;
+        Whole.Panel.Clipboard = Ports.Clipboard;
         Whole.Panel.Loader = async (key, cancellationToken) => Ports.ApiUrl() is { } api ? await Ports.Api.Node(api, key, cancellationToken).ConfigureAwait(true) : null;
         Whole.Panel.WhyLoader = async (key, cancellationToken) => Ports.ApiUrl() is { } api ? await Ports.Api.Lenses(api, new LensesQuery([key], Depth: null, Draft: false, MapVersion: null), cancellationToken).ConfigureAwait(true) : null;
         Whole.NodeChosen += (_, e) => _ = ChooseWholeNode(e.Value, CancellationToken.None);
