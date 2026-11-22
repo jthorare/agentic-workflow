@@ -7,7 +7,6 @@ namespace Aw.Meta.Core.Merge;
 public static class MergeGate
 {
     private const string NoGate = "no gate recorded for this pull request";
-    private const string NoCountLine = "the ready message has no \"N passed, M skipped, K failed\" line";
 
     /// <summary>Evaluates every precondition: gate, gate-result, head, main, order, draft. With no gate recorded and no reviewer
     /// lane, only the gate check. With a reviewer lane (<see cref="MergeFacts.Review"/>), the review path (review, ready, counts, order, draft) is
@@ -113,77 +112,14 @@ public static class MergeGate
     private static MergeCheck[] ReviewChecks(MergeFacts facts, ReviewFacts review)
     {
         var pr = facts.Pr.ToString(CultureInfo.InvariantCulture);
-        var ok = ReviewCheck(review, pr, facts.CurrentHead);
+        var ok = ReviewPath.Review(review, pr, facts.CurrentHead);
         var ready = review.ReadySha is null
             ? new MergeCheck("ready", Ok: false, $"no ready message for #{pr} naming a sha")
             : ReviewProof.IsHead(review.ReadySha, facts.CurrentHead)
                 ? new MergeCheck("ready", Ok: true, $"ready at {review.ReadySha}")
                 : new MergeCheck("ready", Ok: false, $"the newest ready is at {review.ReadySha}, the head is {facts.CurrentHead}");
-        var failed = review.Counts.Where(c => c.Failed > 0).ToList();
-        var counts = failed.Count > 0
-            ? new MergeCheck("counts", Ok: false, $"the ready message counts {failed.Sum(c => c.Failed).ToString(CultureInfo.InvariantCulture)} failed")
-            : review.CountsMode
-                ? CountsModeCounts(review)
-                : review.Counts.Count > 0
-                    ? new MergeCheck("counts", Ok: true, $"{review.Counts.Count.ToString(CultureInfo.InvariantCulture)} count line(s), 0 failed")
-                    : new MergeCheck("counts", Ok: false, NoCountLine);
+        var counts = ReviewPath.Counts(review);
         return [ok, ready, counts, Order(facts), new MergeCheck("draft", !facts.IsDraft, facts.IsDraft ? "the pull request is a draft" : "ready for review")];
-    }
-
-    // review.mode counts, with no failed count: the ready message is the only proof, so its count lines must pass at least one
-    // test. A filtered run that matched nothing counts zero and refuses. A line that is exactly
-    // "0 passed, 0 skipped, 0 failed (build only)" stands in for the tests when the lane built and ran none (#3840).
-    private static MergeCheck CountsModeCounts(ReviewFacts review)
-    {
-        if (review.Counts.Sum(c => c.Passed) > 0)
-        {
-            return new MergeCheck("counts", Ok: true, $"{review.Counts.Count.ToString(CultureInfo.InvariantCulture)} count line(s), 0 failed");
-        }
-
-        if (review.BuildOnly)
-        {
-            return new MergeCheck("counts", Ok: true, "build only, no test counts");
-        }
-
-        return review.Counts.Count > 0
-            ? new MergeCheck("counts", Ok: false, $"the ready message's count lines total 0 passed; a lane that ran no test puts \"{ReviewProof.BuildOnlyLine}\" on a line of its own")
-            : new MergeCheck("counts", Ok: false, NoCountLine);
-    }
-
-    // The reviewer's standing OK must name the head; a qa line under it ("qa not yet", "qa passed <sha>") must say passed at the head.
-    // In review.mode counts no OK is needed: a standing HOLD refuses, and so does the qa line under the standing OK wherever that OK
-    // points, so a push does not lift a qa block (#3840). A later OK with no qa line, or with "qa passed" at the head, clears it.
-    private static MergeCheck ReviewCheck(ReviewFacts review, string pr, string head)
-    {
-        if (review.Hold is not null)
-        {
-            return new MergeCheck("review", Ok: false, $"{review.Reviewer} holds #{pr}: \"{review.Hold}\"; a later \"OK #{pr} at <sha>\" lifts it");
-        }
-
-        var okAtHead = ReviewProof.IsHead(review.OkSha, head);
-        if (!review.CountsMode && review.OkSha is null)
-        {
-            return new MergeCheck("review", Ok: false, $"no standing \"OK #{pr} at <sha>\" from {review.Reviewer}");
-        }
-
-        if (!review.CountsMode && !okAtHead)
-        {
-            return new MergeCheck("review", Ok: false, $"{review.Reviewer}'s newest OK is at {review.OkSha}, the head is {head}");
-        }
-
-        if (review.QaNotYet)
-        {
-            return new MergeCheck("review", Ok: false, $"{review.Reviewer} said OK at {review.OkSha} but qa not yet");
-        }
-
-        if (review.QaSha is not null && !ReviewProof.IsHead(review.QaSha, head))
-        {
-            return new MergeCheck("review", Ok: false, $"qa passed at {review.QaSha}, the head is {head}");
-        }
-
-        return okAtHead
-            ? new MergeCheck("review", Ok: true, $"{review.Reviewer} said OK at {review.OkSha}" + (review.QaSha is null ? string.Empty : $", qa passed at {review.QaSha}"))
-            : new MergeCheck("review", Ok: true, $"review.mode counts: no OK needed, no HOLD from {review.Reviewer}");
     }
 
     private static MergeCheck GateResult(GateRecord gate, IReadOnlyDictionary<string, IReadOnlyList<string>> failing, IReadOnlyDictionary<string, (int Summarized, int Named)> counts)
