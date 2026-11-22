@@ -24530,7 +24530,7 @@ static Aw.Sindri.Core.Home.HomeLaneRows.Kinds.get -> System.Collections.Generic.
 static Aw.Sindri.Core.Home.HomeLaneRows.From(Aw.Sindri.Core.Home.MetaTeamRead! team, string? repo, System.DateTimeOffset readAt, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeRaise!>!
 static Aw.Sindri.Core.Home.HomeLaneRows.RecycleWhy(long? tokens) -> string!
 Aw.Sindri.Core.Home.HomeHeldRows
-static Aw.Sindri.Core.Home.HomeHeldRows.Of(Aw.Sindri.Core.Home.IHomeViewReader! view, string! source, System.Collections.Generic.IReadOnlySet<Aw.Sindri.Core.Home.HomeKind>! kinds, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeRow!>!>>
+static Aw.Sindri.Core.Home.HomeHeldRows.Of(Aw.Sindri.Core.Home.IHomeViewReader! view, string! source, System.Collections.Generic.IReadOnlySet<Aw.Sindri.Core.Home.HomeKind>! kinds, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeRow!>!>!>
 Aw.Sindri.Core.Home.HomeRowWriter
 Aw.Sindri.Core.Home.HomeRowWriter.HomeRowWriter(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events) -> void
-Aw.Sindri.Core.Home.HomeRowWriter.Write(Aw.Sindri.Core.Home.HomePlan! plan, Aw.Sindri.Core.Scheduling.ScheduledRun! run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>>
+Aw.Sindri.Core.Home.HomeRowWriter.Write(Aw.Sindri.Core.Home.HomePlan! plan, Aw.Sindri.Core.Scheduling.ScheduledRun! run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
