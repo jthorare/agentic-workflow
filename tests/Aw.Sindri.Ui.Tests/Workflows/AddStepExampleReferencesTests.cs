@@ -86,4 +86,18 @@ public sealed class AddStepExampleReferencesTests
         Assert.Equal(string.Empty, page.GraphEdit.FailureText);   // the page's line under "Close step settings to change the graph."
         Assert.False(page.GraphEdit.HasFailure);
     }
+
+    [Fact]
+    public async Task A_closed_sheet_leaves_no_old_refusal_on_the_page()
+    {
+        var page = await AddedStep("code");
+        _f.Server.ApplyWorkflowOpsAnswer = RouteAnswer.Problem(HttpStatusCode.UnprocessableEntity, "SND-GRAPH-002", "GRAPH-REF-003 node 'code_1' field 'config.code': refused");
+        await page.Save(Token);
+
+        page.CloseSettings();   // the new step is dropped, and its refusal with it
+
+        Assert.False(page.IsSettingsOpen);
+        Assert.Equal(string.Empty, page.GraphEdit.FailureText);
+        Assert.False(page.GraphEdit.HasFailure);
+    }
 }
