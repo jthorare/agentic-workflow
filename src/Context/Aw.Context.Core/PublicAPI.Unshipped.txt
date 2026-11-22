@@ -12596,3 +12596,6 @@ override Aw.Context.Core.Concepts.KeptConcepts.ToString() -> string!
 static Aw.Context.Core.Concepts.KeptConcepts.operator !=(Aw.Context.Core.Concepts.KeptConcepts? left, Aw.Context.Core.Concepts.KeptConcepts? right) -> bool
 static Aw.Context.Core.Concepts.KeptConcepts.operator ==(Aw.Context.Core.Concepts.KeptConcepts? left, Aw.Context.Core.Concepts.KeptConcepts? right) -> bool
 static Aw.Context.Core.Concepts.ConceptBuilder.CodePathsOf(System.Collections.Generic.IEnumerable<Aw.Context.Core.Graph.NodeKey>! concepts, Aw.Context.Core.Graph.GraphSnapshot! graph) -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Context.Core.Symbols.CodeIndexHead.GraphOff.get -> bool
+Aw.Context.Core.Symbols.CodeIndexHead.GraphOff.init -> void
+const Aw.Context.Core.Code.CodeIndexReading.GraphOffReason = "graph-off" -> string!
