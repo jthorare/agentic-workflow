@@ -182,6 +182,34 @@ run AW_SLACK_PROBE_KEY="$KEY" STUB_AUTH_NO_USER=1 -- --url "$LOOP" --write --cha
 check "write guard (no user_id): exit 2" "$rc" 2
 check "write guard (no user_id): nothing written" "$(writes)" 0
 
+# --- a post whose answer never came back is still found and deleted ---
+run AW_SLACK_PROBE_KEY="$KEY" STUB_POST_LOST=1 -- --url "$LOOP" --burst 1 --write --channel G0PROBE
+check "lost post answer: exit 1" "$rc" 1
+has "lost post answer: names the call" "$out" "failed: chat.postMessage"
+has "lost post answer: cleanup found and deleted it" "$out" "cleanup.messages: deleted 1 of 1"
+has "lost post answer: nothing left" "$out" "cleanup.left: 0"
+check "lost post answer: the fake channel is empty" "$(grep -c . "$STUB_STATE/posted" || true)" 0
+# SIGINT while chat.postMessage is in flight (the post is kept, its answer not read yet) still deletes the message
+rm -rf "$STUB_STATE"; : > "$STUB_LOG"
+sig="$(AW_SLACK_PROBE_KEY="$KEY" STUB_POST_SLOW=1 python3 -I - "$SCRIPT" "$STUB_LOG" "$LOOP" <<'PY'
+import os, signal, subprocess, sys, time
+script, log, url = sys.argv[1:4]
+p = subprocess.Popen(["bash", script, "--url", url, "--burst", "1", "--write", "--channel", "G0PROBE"], stdout=subprocess.PIPE,
+                     stderr=subprocess.STDOUT, text=True, preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_DFL))
+end = time.time() + 30
+while time.time() < end and "method=chat.postMessage" not in open(log).read():
+    time.sleep(0.05)
+time.sleep(0.3)
+os.kill(p.pid, signal.SIGINT)
+out, _ = p.communicate(timeout=60)
+print(out, end=""); print("RC=%d" % p.returncode)
+PY
+)"
+has "SIGINT mid-post: exit 130" "$sig" "RC=130"
+has "SIGINT mid-post: cleanup deleted the message" "$sig" "cleanup.messages: deleted 1 of 1"
+has "SIGINT mid-post: nothing left" "$sig" "cleanup.left: 0"
+check "SIGINT mid-post: the fake channel is empty" "$(grep -c . "$STUB_STATE/posted" || true)" 0
+
 # --- the key's alphabet: a key that would break the curl config line is refused before any call, and never printed ---
 for c in quote backslash space newline; do
   case "$c" in quote) bad="${KEY}\"x" ;; backslash) bad="${KEY}\\x" ;; space) bad="${KEY} x" ;; newline) bad="${KEY}"$'\n'"x" ;; esac
