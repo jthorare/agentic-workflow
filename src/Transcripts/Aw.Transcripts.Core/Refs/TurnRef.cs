@@ -17,8 +17,9 @@ public readonly partial struct TurnRef : ITypedId<TurnRef, string>
 {
     private const int SessionLength = 19; // "transcript:" and 8 hex digits
 
-    /// <summary>The session the turn belongs to.</summary>
-    public SessionRef Session => SessionRef.From(Value[..SessionLength]);
+    /// <summary>The session the turn belongs to. A method, not a property: a typed-id property must be required on read (ARCH-ID-002), and this one is derived.</summary>
+    /// <returns>The session's ref.</returns>
+    public SessionRef SessionOf() => SessionRef.From(Value[..SessionLength]);
 
     /// <summary>The 1-based line of the transcript file the turn starts on.</summary>
     public int Line => int.Parse(Value.AsSpan(SessionLength + 1), NumberStyles.None, CultureInfo.InvariantCulture);
