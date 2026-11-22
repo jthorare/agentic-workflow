@@ -87,6 +87,7 @@ internal sealed partial class WorkflowsPageViewModel
         }
 
         Editor.ClearPendingStep();   // Step settings on a node leaves a new step that was being filled in
+        Editor.ClearRefusal();   // an earlier refusal (a graph edit, or the new step just left) is not shown on this sheet, not even while it reads (#3999)
         OnChanged(nameof(IsNewStep));
         OnChanged(nameof(NoFieldsText));
         (IsEditing, IsSettingsOpen, GraphEdit.SheetOpen) = (true, true, true);

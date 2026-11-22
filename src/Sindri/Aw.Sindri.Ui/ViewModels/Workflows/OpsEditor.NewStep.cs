@@ -23,6 +23,7 @@ internal sealed partial class OpsEditor
     /// <param name="after">The node the new one follows, or null for none.</param>
     internal void BeginNewStep(WorkflowBlock block, string id, string? after)
     {
+        ClearRefusal();   // a refusal belongs to the save that caused it: the new step's sheet opens without it (#3999)
         _pending = new PendingStep(id, block.Type, after);
         Fields.Clear();
         var example = block.ExampleConfig ?? default;   // the block's example settings: a step that opens complete saves untouched; a block with no example opens with its required fields empty
