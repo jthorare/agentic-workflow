@@ -88,3 +88,9 @@
 79. Round 5d: the Messages tab offers one Connect per source that is off (GitHub and Linear), each worded exactly as its setup row on All ("Connect GitHub to see reviews", "Connect Linear to see issues and mentions"); in the seed GitHub is off, so tab-messages-empty offers GitHub. Wording is mine; spec 7.3 owner to confirm (replaces the 73 wording).
 80. Round 5d: the `?` sheet frame draws all 22 rows at a compact 27 px row (the real card rows are 40 px and scroll); a mock.
 81. Round 5d: Todo line = 6 non-due todos + the due ones that are open or snoozed in the frame; d3-17 and lanes-glyphs don't draw the 2 due rows, so they say "Todo, 6 open".
+82. Round 6: guess 78 and 81 are closed by the home lane's take: the Todo line is always on All, N = the Todo panel's open count (8), whatever Home does to a due row. Spec 5.5 needs "the Todo line" added to what the empty Home shows.
+83. Round 6: guess 79 is replaced: Messages offers only Linear; guess 61 closed: no "#2979", no link. Spec 7.1 and 7.3 edits are the home lane's (take 1).
+84. Round 6, new guess: loading-1440 and read-failed-1440 draw "Todo, 8 open" too (the Todo store is read apart from Home). If the app hides the line while Home itself is down, say so.
+85. Round 6, new guess: brief-states-1440 (a stacked review sheet) draws one Todo line at the bottom, not four.
+86. Round 6: nav counts are derived: Items = open Linear issue rows (blank in most frames), Agents = Moving sessions + asking, limited and lane rows (a lane row is its own session, never one of the Moving ones). The real app would read these from the Reviews, Items and Agents pages.
+87. Round 6: brief-cap's "and N more: see Moving, Work" keeps the spec 6.1 words (qa found them aimless); it is drawn as a link. Spec owner: should it name where the facts live?

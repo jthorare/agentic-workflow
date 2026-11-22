@@ -47,7 +47,10 @@ action-panel-1440, source slack is later: no Connect row, ok, pass
 action-panel-1440, Connect rows drawn as the data says, 1 vs 1, pass
 action-panel-1440, waits-on text is whole, 0 cut, pass
 action-panel-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-action-panel-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+action-panel-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+action-panel-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+action-panel-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+action-panel-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 action-panel-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 action-panel-1440, shell: status pill, Sindri running, pass
 action-panel-1440, shell: search placeholder, Search…, pass
@@ -64,7 +67,10 @@ action-panel-1440, no A, X or Y key hint, 0, pass
 action-panel-1440, footer is a menu, sheet, field or Done list footer: menu, ok, pass
 action-panel-1440, every key the footer hints is in the ? sheet, all in, pass
 action-panel-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-action-panel-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+action-panel-1440, All frame draws the Todo line, ok, pass
+action-panel-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+action-panel-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+action-panel-1440, no #2979 anywhere on the page, ok, pass
 action-panel-1440, hScroll, 0, pass
 action-panel-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 action-panel-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -119,7 +125,10 @@ agent-asking-1440, source slack is later: no Connect row, ok, pass
 agent-asking-1440, Connect rows drawn as the data says, 1 vs 1, pass
 agent-asking-1440, waits-on text is whole, 0 cut, pass
 agent-asking-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-agent-asking-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+agent-asking-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+agent-asking-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+agent-asking-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+agent-asking-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 agent-asking-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 agent-asking-1440, shell: status pill, Sindri running, pass
 agent-asking-1440, shell: search placeholder, Search…, pass
@@ -136,7 +145,10 @@ agent-asking-1440, no A, X or Y key hint, 0, pass
 agent-asking-1440, footer holds the grammar keys before the divider, all 7, pass
 agent-asking-1440, every key the footer hints is in the ? sheet, all in, pass
 agent-asking-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-agent-asking-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+agent-asking-1440, All frame draws the Todo line, ok, pass
+agent-asking-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+agent-asking-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+agent-asking-1440, no #2979 anywhere on the page, ok, pass
 agent-asking-1440, hScroll, 0, pass
 agent-asking-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 agent-asking-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -184,7 +196,10 @@ agents-tab-1440, source linear is on: no Connect row, ok, pass
 agents-tab-1440, source slack is on: no Connect row, ok, pass
 agents-tab-1440, waits-on text is whole, 0 cut, pass
 agents-tab-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-agents-tab-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 21|4|31||3||, pass
+agents-tab-1440, shell: nav counts are this frame's own (Reviews 5, Items, Agents), as the Projects shell draws them, 21|5|2||10||, pass
+agents-tab-1440, shell: Reviews nav = the open review rows of this data (5), none while GitHub is off, 5 vs 5, pass
+agents-tab-1440, shell: Agents nav = live sessions of this data (10), 10 vs 10, pass
+agents-tab-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 agents-tab-1440, shell: Home nav count = the All tab (none when 0), 21 vs 21, pass
 agents-tab-1440, shell: status pill, Sindri running, pass
 agents-tab-1440, shell: search placeholder, Search…, pass
@@ -202,6 +217,8 @@ agents-tab-1440, footer holds the grammar keys before the divider, all 7, pass
 agents-tab-1440, every key the footer hints is in the ? sheet, all in, pass
 agents-tab-1440, split tab: no brief and no Todo line (spec 7.1: All only), ok, pass
 agents-tab-1440, split tab: only its own kind is drawn, 0 other, pass
+agents-tab-1440, not an All frame: no Todo line, ok, pass
+agents-tab-1440, no #2979 anywhere on the page, ok, pass
 agents-tab-1440, hScroll, 0, pass
 agents-tab-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 agents-tab-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -257,7 +274,10 @@ brief-1440, source slack is later: no Connect row, ok, pass
 brief-1440, Connect rows drawn as the data says, 1 vs 1, pass
 brief-1440, waits-on text is whole, 0 cut, pass
 brief-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-brief-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+brief-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+brief-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+brief-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+brief-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 brief-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 brief-1440, shell: status pill, Sindri running, pass
 brief-1440, shell: search placeholder, Search…, pass
@@ -275,7 +295,10 @@ brief-1440, "b N more" is its own target (a button-shaped link), A 81x24, pass
 brief-1440, footer holds the grammar keys before the divider, all 7, pass
 brief-1440, every key the footer hints is in the ? sheet, all in, pass
 brief-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-brief-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+brief-1440, All frame draws the Todo line, ok, pass
+brief-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+brief-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+brief-1440, no #2979 anywhere on the page, ok, pass
 brief-1440, hScroll, 0, pass
 brief-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 brief-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -338,7 +361,10 @@ brief-cap-1440, source slack is later: no Connect row, ok, pass
 brief-cap-1440, Connect rows drawn as the data says, 1 vs 1, pass
 brief-cap-1440, waits-on text is whole, 0 cut, pass
 brief-cap-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-brief-cap-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+brief-cap-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+brief-cap-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+brief-cap-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+brief-cap-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 brief-cap-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 brief-cap-1440, shell: status pill, Sindri running, pass
 brief-cap-1440, shell: search placeholder, Search…, pass
@@ -355,7 +381,10 @@ brief-cap-1440, no A, X or Y key hint, 0, pass
 brief-cap-1440, footer holds the grammar keys before the divider, all 7, pass
 brief-cap-1440, every key the footer hints is in the ? sheet, all in, pass
 brief-cap-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-brief-cap-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+brief-cap-1440, All frame draws the Todo line, ok, pass
+brief-cap-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+brief-cap-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+brief-cap-1440, no #2979 anywhere on the page, ok, pass
 brief-cap-1440, hScroll, 0, pass
 brief-cap-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 brief-cap-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -409,7 +438,10 @@ brief-more-focus-1440, source slack is later: no Connect row, ok, pass
 brief-more-focus-1440, Connect rows drawn as the data says, 1 vs 1, pass
 brief-more-focus-1440, waits-on text is whole, 0 cut, pass
 brief-more-focus-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-brief-more-focus-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+brief-more-focus-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+brief-more-focus-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+brief-more-focus-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+brief-more-focus-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 brief-more-focus-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 brief-more-focus-1440, shell: status pill, Sindri running, pass
 brief-more-focus-1440, shell: search placeholder, Search…, pass
@@ -427,7 +459,10 @@ brief-more-focus-1440, "b N more" is its own target (a button-shaped link), A 81
 brief-more-focus-1440, footer holds the grammar keys before the divider, all 7, pass
 brief-more-focus-1440, every key the footer hints is in the ? sheet, all in, pass
 brief-more-focus-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-brief-more-focus-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+brief-more-focus-1440, All frame draws the Todo line, ok, pass
+brief-more-focus-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+brief-more-focus-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+brief-more-focus-1440, no #2979 anywhere on the page, ok, pass
 brief-more-focus-1440, hScroll, 0, pass
 brief-more-focus-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 brief-more-focus-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -483,7 +518,10 @@ brief-more-hover-1440, source slack is later: no Connect row, ok, pass
 brief-more-hover-1440, Connect rows drawn as the data says, 1 vs 1, pass
 brief-more-hover-1440, waits-on text is whole, 0 cut, pass
 brief-more-hover-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-brief-more-hover-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+brief-more-hover-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+brief-more-hover-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+brief-more-hover-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+brief-more-hover-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 brief-more-hover-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 brief-more-hover-1440, shell: status pill, Sindri running, pass
 brief-more-hover-1440, shell: search placeholder, Search…, pass
@@ -501,7 +539,10 @@ brief-more-hover-1440, "b N more" is its own target (a button-shaped link), A 81
 brief-more-hover-1440, footer holds the grammar keys before the divider, all 7, pass
 brief-more-hover-1440, every key the footer hints is in the ? sheet, all in, pass
 brief-more-hover-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-brief-more-hover-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+brief-more-hover-1440, All frame draws the Todo line, ok, pass
+brief-more-hover-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+brief-more-hover-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+brief-more-hover-1440, no #2979 anywhere on the page, ok, pass
 brief-more-hover-1440, hScroll, 0, pass
 brief-more-hover-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 brief-more-hover-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -517,6 +558,8 @@ brief-states-1440, count group brief, 2 vs 2, pass
 brief-states-1440, count group brief, 2 vs 2, pass
 brief-states-1440, count group brief, 2 vs 2, pass
 brief-states-1440, count group brief, 0 vs 0, pass
+brief-states-1440, count todo line, 8 vs 8, pass
+brief-states-1440, count todo text, true vs true, pass
 brief-states-1440, count tab All, 0 vs 0, pass
 brief-states-1440, count tab Reviews, 0 vs 0, pass
 brief-states-1440, count tab Messages, 0 vs 0, pass
@@ -536,7 +579,8 @@ brief-states-1440, footer fits, 1440 vs 1440, pass
 brief-states-1440, no row keys in the footer without a cursor row (none), ok, pass
 brief-states-1440, waits-on text is whole, 0 cut, pass
 brief-states-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-brief-states-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), |4|31||3||, pass
+brief-states-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, ||||6||, pass
+brief-states-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 brief-states-1440, shell: Home nav count = the All tab (none when 0),  vs 0, pass
 brief-states-1440, shell: status pill, Sindri running, pass
 brief-states-1440, shell: search placeholder, Search…, pass
@@ -544,6 +588,10 @@ brief-states-1440, shell: wordmark, ok, pass
 brief-states-1440, no A, X or Y key hint, 0, pass
 brief-states-1440, footer holds the grammar keys before the divider, all 7, pass
 brief-states-1440, every key the footer hints is in the ? sheet, all in, pass
+brief-states-1440, All frame draws the Todo line, ok, pass
+brief-states-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+brief-states-1440, Todo line N covers the due todo rows drawn (0), 8, pass
+brief-states-1440, no #2979 anywhere on the page, ok, pass
 brief-states-1440, hScroll, 0, pass
 brief-states-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 brief-states-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -598,7 +646,10 @@ changed-1440, source slack is later: no Connect row, ok, pass
 changed-1440, Connect rows drawn as the data says, 1 vs 1, pass
 changed-1440, waits-on text is whole, 0 cut, pass
 changed-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-changed-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+changed-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+changed-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+changed-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+changed-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 changed-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 changed-1440, shell: status pill, Sindri running, pass
 changed-1440, shell: search placeholder, Search…, pass
@@ -615,7 +666,10 @@ changed-1440, no A, X or Y key hint, 0, pass
 changed-1440, footer holds the grammar keys before the divider, all 7, pass
 changed-1440, every key the footer hints is in the ? sheet, all in, pass
 changed-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-changed-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+changed-1440, All frame draws the Todo line, ok, pass
+changed-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+changed-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+changed-1440, no #2979 anywhere on the page, ok, pass
 changed-1440, hScroll, 0, pass
 changed-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 changed-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -670,7 +724,10 @@ connect-1440, source slack is later: no Connect row, ok, pass
 connect-1440, Connect rows drawn as the data says, 1 vs 1, pass
 connect-1440, waits-on text is whole, 0 cut, pass
 connect-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-connect-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+connect-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+connect-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+connect-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+connect-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 connect-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 connect-1440, shell: status pill, Sindri running, pass
 connect-1440, shell: search placeholder, Search…, pass
@@ -687,7 +744,10 @@ connect-1440, no A, X or Y key hint, 0, pass
 connect-1440, footer holds the grammar keys before the divider, all 7, pass
 connect-1440, every key the footer hints is in the ? sheet, all in, pass
 connect-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-connect-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+connect-1440, All frame draws the Todo line, ok, pass
+connect-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+connect-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+connect-1440, no #2979 anywhere on the page, ok, pass
 connect-1440, hScroll, 0, pass
 connect-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 connect-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -741,7 +801,10 @@ connect-stale-1440, source slack is later: no Connect row, ok, pass
 connect-stale-1440, Connect rows drawn as the data says, 0 vs 0, pass
 connect-stale-1440, waits-on text is whole, 0 cut, pass
 connect-stale-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-connect-stale-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+connect-stale-1440, shell: nav counts are this frame's own (Reviews 1, Items, Agents), as the Projects shell draws them, 7|1|||7||, pass
+connect-stale-1440, shell: Reviews nav = the open review rows of this data (1), none while GitHub is off, 1 vs 1, pass
+connect-stale-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+connect-stale-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 connect-stale-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 connect-stale-1440, shell: status pill, Sindri running, pass
 connect-stale-1440, shell: search placeholder, Search…, pass
@@ -758,7 +821,10 @@ connect-stale-1440, avatars: sessions square, people circle, 5 rows, pass
 connect-stale-1440, no A, X or Y key hint, 0, pass
 connect-stale-1440, footer holds the grammar keys before the divider, all 7, pass
 connect-stale-1440, every key the footer hints is in the ? sheet, all in, pass
-connect-stale-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+connect-stale-1440, All frame draws the Todo line, ok, pass
+connect-stale-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+connect-stale-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+connect-stale-1440, no #2979 anywhere on the page, ok, pass
 connect-stale-1440, hScroll, 0, pass
 connect-stale-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 connect-stale-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -788,7 +854,7 @@ d3-17-1440, count group needs, 17 vs 17, pass
 d3-17-1440, count group brief, 6 vs 6, pass
 d3-17-1440, count moving n, 6 vs 6, pass
 d3-17-1440, count moving label, true vs true, pass
-d3-17-1440, count todo line, 6 vs 6, pass
+d3-17-1440, count todo line, 8 vs 8, pass
 d3-17-1440, count todo text, true vs true, pass
 d3-17-1440, count tab All, 17 vs 17, pass
 d3-17-1440, count tab Reviews, 5 vs 5, pass
@@ -814,7 +880,10 @@ d3-17-1440, source slack is on: no Connect row, ok, pass
 d3-17-1440, Connect rows drawn as the data says, 0 vs 0, pass
 d3-17-1440, waits-on text is whole, 0 cut, pass
 d3-17-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-d3-17-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 17|4|31||3||, pass
+d3-17-1440, shell: nav counts are this frame's own (Reviews 5, Items, Agents), as the Projects shell draws them, 17|5|||10||, pass
+d3-17-1440, shell: Reviews nav = the open review rows of this data (5), none while GitHub is off, 5 vs 5, pass
+d3-17-1440, shell: Agents nav = live sessions of this data (10), 10 vs 10, pass
+d3-17-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 d3-17-1440, shell: Home nav count = the All tab (none when 0), 17 vs 17, pass
 d3-17-1440, shell: status pill, Sindri running, pass
 d3-17-1440, shell: search placeholder, Search…, pass
@@ -845,7 +914,10 @@ d3-17-1440, no A, X or Y key hint, 0, pass
 d3-17-1440, "b N more" is its own target (a button-shaped link), A 81x24, pass
 d3-17-1440, footer holds the grammar keys before the divider, all 7, pass
 d3-17-1440, every key the footer hints is in the ? sheet, all in, pass
-d3-17-1440, Todo line = 6 other todos + the due ones (open 0, snoozed 0), 6 vs 6, pass
+d3-17-1440, All frame draws the Todo line, ok, pass
+d3-17-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+d3-17-1440, Todo line N covers the due todo rows drawn (0), 8, pass
+d3-17-1440, no #2979 anywhere on the page, ok, pass
 d3-17-1440, hScroll, 0, pass
 d3-17-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 d3-17-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -900,7 +972,10 @@ default-1000, source slack is later: no Connect row, ok, pass
 default-1000, Connect rows drawn as the data says, 1 vs 1, pass
 default-1000, waits-on text is whole, 0 cut, pass
 default-1000, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-default-1000, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+default-1000, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+default-1000, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+default-1000, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+default-1000, one filled primary button across the rows (hover and cursor never both), 1, pass
 default-1000, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 default-1000, shell: status pill, Sindri running, pass
 default-1000, shell: search placeholder, Search…, pass
@@ -917,7 +992,10 @@ default-1000, no A, X or Y key hint, 0, pass
 default-1000, footer holds the grammar keys before the divider, all 7, pass
 default-1000, every key the footer hints is in the ? sheet, all in, pass
 default-1000, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-default-1000, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+default-1000, All frame draws the Todo line, ok, pass
+default-1000, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+default-1000, Todo line N covers the due todo rows drawn (2), 8, pass
+default-1000, no #2979 anywhere on the page, ok, pass
 default-1000, hScroll, 0, pass
 default-1000, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 default-1000, footer and keycap font = Projects 11, 11.00, pass
@@ -972,7 +1050,10 @@ default-1440, source slack is later: no Connect row, ok, pass
 default-1440, Connect rows drawn as the data says, 1 vs 1, pass
 default-1440, waits-on text is whole, 0 cut, pass
 default-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-default-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+default-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+default-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+default-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+default-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 default-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 default-1440, shell: status pill, Sindri running, pass
 default-1440, shell: search placeholder, Search…, pass
@@ -989,7 +1070,10 @@ default-1440, no A, X or Y key hint, 0, pass
 default-1440, footer holds the grammar keys before the divider, all 7, pass
 default-1440, every key the footer hints is in the ? sheet, all in, pass
 default-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-default-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+default-1440, All frame draws the Todo line, ok, pass
+default-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+default-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+default-1440, no #2979 anywhere on the page, ok, pass
 default-1440, hScroll, 0, pass
 default-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 default-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1043,7 +1127,10 @@ default-full-1440, source slack is on: no Connect row, ok, pass
 default-full-1440, Connect rows drawn as the data says, 0 vs 0, pass
 default-full-1440, waits-on text is whole, 0 cut, pass
 default-full-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-default-full-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 21|4|31||3||, pass
+default-full-1440, shell: nav counts are this frame's own (Reviews 5, Items, Agents), as the Projects shell draws them, 21|5|2||10||, pass
+default-full-1440, shell: Reviews nav = the open review rows of this data (5), none while GitHub is off, 5 vs 5, pass
+default-full-1440, shell: Agents nav = live sessions of this data (10), 10 vs 10, pass
+default-full-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 default-full-1440, shell: Home nav count = the All tab (none when 0), 21 vs 21, pass
 default-full-1440, shell: status pill, Sindri running, pass
 default-full-1440, shell: search placeholder, Search…, pass
@@ -1078,7 +1165,10 @@ default-full-1440, no A, X or Y key hint, 0, pass
 default-full-1440, "b N more" is its own target (a button-shaped link), A 81x24, pass
 default-full-1440, footer holds the grammar keys before the divider, all 7, pass
 default-full-1440, every key the footer hints is in the ? sheet, all in, pass
-default-full-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+default-full-1440, All frame draws the Todo line, ok, pass
+default-full-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+default-full-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+default-full-1440, no #2979 anywhere on the page, ok, pass
 default-full-1440, hScroll, 0, pass
 default-full-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 default-full-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1133,7 +1223,10 @@ density-comfortable-1440, source slack is later: no Connect row, ok, pass
 density-comfortable-1440, Connect rows drawn as the data says, 1 vs 1, pass
 density-comfortable-1440, waits-on text is whole, 0 cut, pass
 density-comfortable-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-density-comfortable-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+density-comfortable-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+density-comfortable-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+density-comfortable-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+density-comfortable-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 density-comfortable-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 density-comfortable-1440, shell: status pill, Sindri running, pass
 density-comfortable-1440, shell: search placeholder, Search…, pass
@@ -1150,7 +1243,10 @@ density-comfortable-1440, no A, X or Y key hint, 0, pass
 density-comfortable-1440, footer holds the grammar keys before the divider, all 7, pass
 density-comfortable-1440, every key the footer hints is in the ? sheet, all in, pass
 density-comfortable-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-density-comfortable-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+density-comfortable-1440, All frame draws the Todo line, ok, pass
+density-comfortable-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+density-comfortable-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+density-comfortable-1440, no #2979 anywhere on the page, ok, pass
 density-comfortable-1440, hScroll, 0, pass
 density-comfortable-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 density-comfortable-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1183,7 +1279,8 @@ done-list-1440, footer fits, 1440 vs 1440, pass
 done-list-1440, no row keys in the footer without a cursor row (done), ok, pass
 done-list-1440, waits-on text is whole, 0 cut, pass
 done-list-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-done-list-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 5|4|31||3||, pass
+done-list-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 5||||7||, pass
+done-list-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 done-list-1440, shell: status pill, Sindri running, pass
 done-list-1440, shell: search placeholder, Search…, pass
 done-list-1440, shell: wordmark, ok, pass
@@ -1193,6 +1290,8 @@ done-list-1440, avatars: sessions square, people circle, 2 rows, pass
 done-list-1440, no A, X or Y key hint, 0, pass
 done-list-1440, footer holds the grammar keys before the divider, all 7, pass
 done-list-1440, every key the footer hints is in the ? sheet, all in, pass
+done-list-1440, not an All frame: no Todo line, ok, pass
+done-list-1440, no #2979 anywhere on the page, ok, pass
 done-list-1440, hScroll, 0, pass
 done-list-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 done-list-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1211,7 +1310,8 @@ done-list-empty-1440, footer fits, 1440 vs 1440, pass
 done-list-empty-1440, no row keys in the footer without a cursor row (done), ok, pass
 done-list-empty-1440, waits-on text is whole, 0 cut, pass
 done-list-empty-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-done-list-empty-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+done-list-empty-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+done-list-empty-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 done-list-empty-1440, shell: status pill, Sindri running, pass
 done-list-empty-1440, shell: search placeholder, Search…, pass
 done-list-empty-1440, shell: wordmark, ok, pass
@@ -1219,6 +1319,8 @@ done-list-empty-1440, empty Done list: no keys after the divider (nothing to act
 done-list-empty-1440, no A, X or Y key hint, 0, pass
 done-list-empty-1440, footer holds the grammar keys before the divider, all 7, pass
 done-list-empty-1440, every key the footer hints is in the ? sheet, all in, pass
+done-list-empty-1440, not an All frame: no Todo line, ok, pass
+done-list-empty-1440, no #2979 anywhere on the page, ok, pass
 done-list-empty-1440, hScroll, 0, pass
 done-list-empty-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 done-list-empty-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1231,6 +1333,8 @@ empty-1440, body, 784, pass
 empty-1440, footer, 28, pass
 empty-1440, group header, 28, pass
 empty-1440, count group brief, 2 vs 2, pass
+empty-1440, count todo line, 8 vs 8, pass
+empty-1440, count todo text, true vs true, pass
 empty-1440, count tab All, 0 vs 0, pass
 empty-1440, count tab Reviews, 0 vs 0, pass
 empty-1440, count tab Messages, 0 vs 0, pass
@@ -1252,7 +1356,10 @@ empty-1440, source slack is later: no Connect row, ok, pass
 empty-1440, Connect rows drawn as the data says, 0 vs 0, pass
 empty-1440, waits-on text is whole, 0 cut, pass
 empty-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-empty-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), |4|31||3||, pass
+empty-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, ||||6||, pass
+empty-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+empty-1440, shell: Agents nav = live sessions of this data (6), 6 vs 6, pass
+empty-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 empty-1440, shell: Home nav count = the All tab (none when 0),  vs 0, pass
 empty-1440, shell: status pill, Sindri running, pass
 empty-1440, shell: search placeholder, Search…, pass
@@ -1260,6 +1367,10 @@ empty-1440, shell: wordmark, ok, pass
 empty-1440, no A, X or Y key hint, 0, pass
 empty-1440, footer holds the grammar keys before the divider, all 7, pass
 empty-1440, every key the footer hints is in the ? sheet, all in, pass
+empty-1440, All frame draws the Todo line, ok, pass
+empty-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+empty-1440, Todo line N covers the due todo rows drawn (0), 8, pass
+empty-1440, no #2979 anywhere on the page, ok, pass
 empty-1440, hScroll, 0, pass
 empty-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 empty-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1270,6 +1381,8 @@ empty-stale-1440, header, 48, pass
 empty-stale-1440, window, 1440x900, info
 empty-stale-1440, body, 784, pass
 empty-stale-1440, footer, 28, pass
+empty-stale-1440, count todo line, 8 vs 8, pass
+empty-stale-1440, count todo text, true vs true, pass
 empty-stale-1440, count tab All, 0 vs 0, pass
 empty-stale-1440, count tab Reviews, 0 vs 0, pass
 empty-stale-1440, count tab Messages, 0 vs 0, pass
@@ -1283,7 +1396,8 @@ empty-stale-1440, footer fits, 1440 vs 1440, pass
 empty-stale-1440, no row keys in the footer without a cursor row (none), ok, pass
 empty-stale-1440, waits-on text is whole, 0 cut, pass
 empty-stale-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-empty-stale-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), |4|31||3||, pass
+empty-stale-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, ||||6||, pass
+empty-stale-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 empty-stale-1440, shell: Home nav count = the All tab (none when 0),  vs 0, pass
 empty-stale-1440, shell: status pill, Sindri running, pass
 empty-stale-1440, shell: search placeholder, Search…, pass
@@ -1291,6 +1405,10 @@ empty-stale-1440, shell: wordmark, ok, pass
 empty-stale-1440, no A, X or Y key hint, 0, pass
 empty-stale-1440, footer holds the grammar keys before the divider, all 7, pass
 empty-stale-1440, every key the footer hints is in the ? sheet, all in, pass
+empty-stale-1440, All frame draws the Todo line, ok, pass
+empty-stale-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+empty-stale-1440, Todo line N covers the due todo rows drawn (0), 8, pass
+empty-stale-1440, no #2979 anywhere on the page, ok, pass
 empty-stale-1440, hScroll, 0, pass
 empty-stale-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 empty-stale-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1343,7 +1461,10 @@ filter-focus-1440, source slack is later: no Connect row, ok, pass
 filter-focus-1440, Connect rows drawn as the data says, 1 vs 1, pass
 filter-focus-1440, waits-on text is whole, 0 cut, pass
 filter-focus-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-filter-focus-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+filter-focus-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+filter-focus-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+filter-focus-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+filter-focus-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 filter-focus-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 filter-focus-1440, shell: status pill, Sindri running, pass
 filter-focus-1440, shell: search placeholder, Search…, pass
@@ -1360,7 +1481,10 @@ filter-focus-1440, no A, X or Y key hint, 0, pass
 filter-focus-1440, footer is a menu, sheet, field or Done list footer: filter, ok, pass
 filter-focus-1440, every key the footer hints is in the ? sheet, all in, pass
 filter-focus-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-filter-focus-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+filter-focus-1440, All frame draws the Todo line, ok, pass
+filter-focus-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+filter-focus-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+filter-focus-1440, no #2979 anywhere on the page, ok, pass
 filter-focus-1440, hScroll, 0, pass
 filter-focus-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 filter-focus-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1415,7 +1539,10 @@ first-paint-1440, source slack is later: no Connect row, ok, pass
 first-paint-1440, Connect rows drawn as the data says, 1 vs 1, pass
 first-paint-1440, waits-on text is whole, 0 cut, pass
 first-paint-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-first-paint-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+first-paint-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+first-paint-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+first-paint-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+first-paint-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 first-paint-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 first-paint-1440, shell: status pill, Sindri running, pass
 first-paint-1440, shell: search placeholder, Search…, pass
@@ -1432,7 +1559,10 @@ first-paint-1440, no A, X or Y key hint, 0, pass
 first-paint-1440, footer holds the grammar keys before the divider, all 7, pass
 first-paint-1440, every key the footer hints is in the ? sheet, all in, pass
 first-paint-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-first-paint-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+first-paint-1440, All frame draws the Todo line, ok, pass
+first-paint-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+first-paint-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+first-paint-1440, no #2979 anywhere on the page, ok, pass
 first-paint-1440, hScroll, 0, pass
 first-paint-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 first-paint-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1469,7 +1599,10 @@ folded-1440, source slack is later: rows drawn, 0, pass
 folded-1440, source slack is later: no Connect row, ok, pass
 folded-1440, waits-on text is whole, 0 cut, pass
 folded-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-folded-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+folded-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+folded-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+folded-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+folded-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 folded-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 folded-1440, shell: status pill, Sindri running, pass
 folded-1440, shell: search placeholder, Search…, pass
@@ -1477,7 +1610,10 @@ folded-1440, shell: wordmark, ok, pass
 folded-1440, no A, X or Y key hint, 0, pass
 folded-1440, footer holds the grammar keys before the divider, all 7, pass
 folded-1440, every key the footer hints is in the ? sheet, all in, pass
-folded-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+folded-1440, All frame draws the Todo line, ok, pass
+folded-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+folded-1440, Todo line N covers the due todo rows drawn (0), 8, pass
+folded-1440, no #2979 anywhere on the page, ok, pass
 folded-1440, hScroll, 0, pass
 folded-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 folded-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1531,7 +1667,10 @@ hand-picker-1440, source slack is later: no Connect row, ok, pass
 hand-picker-1440, Connect rows drawn as the data says, 1 vs 1, pass
 hand-picker-1440, waits-on text is whole, 0 cut, pass
 hand-picker-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-hand-picker-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+hand-picker-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+hand-picker-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+hand-picker-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+hand-picker-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 hand-picker-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 hand-picker-1440, shell: status pill, Sindri running, pass
 hand-picker-1440, shell: search placeholder, Search…, pass
@@ -1549,7 +1688,10 @@ hand-picker-1440, no A, X or Y key hint, 0, pass
 hand-picker-1440, footer is a menu, sheet, field or Done list footer: menu, ok, pass
 hand-picker-1440, every key the footer hints is in the ? sheet, all in, pass
 hand-picker-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-hand-picker-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+hand-picker-1440, All frame draws the Todo line, ok, pass
+hand-picker-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+hand-picker-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+hand-picker-1440, no #2979 anywhere on the page, ok, pass
 hand-picker-1440, hScroll, 0, pass
 hand-picker-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 hand-picker-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1604,7 +1746,10 @@ hand-picker-empty-1440, source slack is later: no Connect row, ok, pass
 hand-picker-empty-1440, Connect rows drawn as the data says, 1 vs 1, pass
 hand-picker-empty-1440, waits-on text is whole, 0 cut, pass
 hand-picker-empty-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-hand-picker-empty-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 6|4|31||3||, pass
+hand-picker-empty-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 6||||||, pass
+hand-picker-empty-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+hand-picker-empty-1440, shell: Agents nav = live sessions of this data (0),  vs 0, pass
+hand-picker-empty-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 hand-picker-empty-1440, shell: Home nav count = the All tab (none when 0), 6 vs 6, pass
 hand-picker-empty-1440, shell: status pill, Sindri running, pass
 hand-picker-empty-1440, shell: search placeholder, Search…, pass
@@ -1620,7 +1765,10 @@ hand-picker-empty-1440, no A, X or Y key hint, 0, pass
 hand-picker-empty-1440, footer is a menu, sheet, field or Done list footer: menu, ok, pass
 hand-picker-empty-1440, every key the footer hints is in the ? sheet, all in, pass
 hand-picker-empty-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-hand-picker-empty-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+hand-picker-empty-1440, All frame draws the Todo line, ok, pass
+hand-picker-empty-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+hand-picker-empty-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+hand-picker-empty-1440, no #2979 anywhere on the page, ok, pass
 hand-picker-empty-1440, hScroll, 0, pass
 hand-picker-empty-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 hand-picker-empty-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1676,7 +1824,10 @@ hover-1440, source slack is later: no Connect row, ok, pass
 hover-1440, Connect rows drawn as the data says, 1 vs 1, pass
 hover-1440, waits-on text is whole, 0 cut, pass
 hover-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-hover-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+hover-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+hover-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+hover-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+hover-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 hover-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 hover-1440, shell: status pill, Sindri running, pass
 hover-1440, shell: search placeholder, Search…, pass
@@ -1693,7 +1844,10 @@ hover-1440, no A, X or Y key hint, 0, pass
 hover-1440, footer holds the grammar keys before the divider, all 7, pass
 hover-1440, every key the footer hints is in the ? sheet, all in, pass
 hover-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-hover-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+hover-1440, All frame draws the Todo line, ok, pass
+hover-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+hover-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+hover-1440, no #2979 anywhere on the page, ok, pass
 hover-1440, hScroll, 0, pass
 hover-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 hover-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1747,7 +1901,10 @@ keys-sheet-1440, source slack is later: no Connect row, ok, pass
 keys-sheet-1440, Connect rows drawn as the data says, 1 vs 1, pass
 keys-sheet-1440, waits-on text is whole, 0 cut, pass
 keys-sheet-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-keys-sheet-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+keys-sheet-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+keys-sheet-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+keys-sheet-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+keys-sheet-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 keys-sheet-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 keys-sheet-1440, shell: status pill, Sindri running, pass
 keys-sheet-1440, shell: search placeholder, Search…, pass
@@ -1766,9 +1923,12 @@ keys-sheet-1440, every key the footer hints is in the ? sheet, all in, pass
 keys-sheet-1440, drawn ? sheet rows hold every key any footer hints (12 keys), all drawn, pass
 keys-sheet-1440, drawn ? sheet rows equal the sheet key list, all drawn, pass
 keys-sheet-1440, ? sheet draws a Done list row (spec 5.4), 1, pass
-keys-sheet-1440, sheet scrollbar thumb matches what is drawn (all content fits: thumb fills the track), 632 of 632, pass
+keys-sheet-1440, sheet draws no scrollbar when its rows fit the card (nothing to scroll), no bar, pass
 keys-sheet-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-keys-sheet-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+keys-sheet-1440, All frame draws the Todo line, ok, pass
+keys-sheet-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+keys-sheet-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+keys-sheet-1440, no #2979 anywhere on the page, ok, pass
 keys-sheet-1440, hScroll, 0, pass
 keys-sheet-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 keys-sheet-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1798,7 +1958,7 @@ lanes-glyphs-1440, count group needs, 4 vs 4, pass
 lanes-glyphs-1440, count group brief, 2 vs 2, pass
 lanes-glyphs-1440, count moving n, 6 vs 6, pass
 lanes-glyphs-1440, count moving label, true vs true, pass
-lanes-glyphs-1440, count todo line, 6 vs 6, pass
+lanes-glyphs-1440, count todo line, 8 vs 8, pass
 lanes-glyphs-1440, count todo text, true vs true, pass
 lanes-glyphs-1440, count tab All, 4 vs 4, pass
 lanes-glyphs-1440, count tab Reviews, 2 vs 2, pass
@@ -1822,7 +1982,10 @@ lanes-glyphs-1440, source slack is later: no Connect row, ok, pass
 lanes-glyphs-1440, Connect rows drawn as the data says, 0 vs 0, pass
 lanes-glyphs-1440, waits-on text is whole, 0 cut, pass
 lanes-glyphs-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-lanes-glyphs-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 4|4|31||3||, pass
+lanes-glyphs-1440, shell: nav counts are this frame's own (Reviews 2, Items, Agents), as the Projects shell draws them, 4|2|||8||, pass
+lanes-glyphs-1440, shell: Reviews nav = the open review rows of this data (2), none while GitHub is off, 2 vs 2, pass
+lanes-glyphs-1440, shell: Agents nav = live sessions of this data (8), 8 vs 8, pass
+lanes-glyphs-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 lanes-glyphs-1440, shell: Home nav count = the All tab (none when 0), 4 vs 4, pass
 lanes-glyphs-1440, shell: status pill, Sindri running, pass
 lanes-glyphs-1440, shell: search placeholder, Search…, pass
@@ -1838,7 +2001,10 @@ lanes-glyphs-1440, avatars: sessions square, people circle, 4 rows, pass
 lanes-glyphs-1440, no A, X or Y key hint, 0, pass
 lanes-glyphs-1440, footer holds the grammar keys before the divider, all 7, pass
 lanes-glyphs-1440, every key the footer hints is in the ? sheet, all in, pass
-lanes-glyphs-1440, Todo line = 6 other todos + the due ones (open 0, snoozed 0), 6 vs 6, pass
+lanes-glyphs-1440, All frame draws the Todo line, ok, pass
+lanes-glyphs-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+lanes-glyphs-1440, Todo line N covers the due todo rows drawn (0), 8, pass
+lanes-glyphs-1440, no #2979 anywhere on the page, ok, pass
 lanes-glyphs-1440, hScroll, 0, pass
 lanes-glyphs-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 lanes-glyphs-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1894,7 +2060,10 @@ linear-off-1440, source slack is later: no Connect row, ok, pass
 linear-off-1440, Connect rows drawn as the data says, 2 vs 2, pass
 linear-off-1440, waits-on text is whole, 0 cut, pass
 linear-off-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-linear-off-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 8|4|31||3||, pass
+linear-off-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 8||||7||, pass
+linear-off-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+linear-off-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+linear-off-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 linear-off-1440, shell: Home nav count = the All tab (none when 0), 8 vs 8, pass
 linear-off-1440, shell: status pill, Sindri running, pass
 linear-off-1440, shell: search placeholder, Search…, pass
@@ -1913,7 +2082,10 @@ linear-off-1440, footer holds the grammar keys before the divider, all 7, pass
 linear-off-1440, every key the footer hints is in the ? sheet, all in, pass
 linear-off-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
 linear-off-1440, Connect row text is the offer string (linear), Connect Linear to see issues and mentions, pass
-linear-off-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+linear-off-1440, All frame draws the Todo line, ok, pass
+linear-off-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+linear-off-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+linear-off-1440, no #2979 anywhere on the page, ok, pass
 linear-off-1440, hScroll, 0, pass
 linear-off-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 linear-off-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1925,19 +2097,26 @@ loading-1440, window, 1440x900, info
 loading-1440, body, 784, pass
 loading-1440, footer, 28, pass
 loading-1440, group header, 28, pass
+loading-1440, count todo line, 8 vs 8, pass
+loading-1440, count todo text, true vs true, pass
 loading-1440, count new rows, 0 vs 0, pass
 loading-1440, count window title, 0 vs 0, pass
 loading-1440, footer fits, 1440 vs 1440, pass
 loading-1440, no row keys in the footer without a cursor row (none), ok, pass
 loading-1440, waits-on text is whole, 0 cut, pass
 loading-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-loading-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), |4|31||3||, pass
+loading-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, ||||6||, pass
+loading-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 loading-1440, shell: status pill, Sindri running, pass
 loading-1440, shell: search placeholder, Search…, pass
 loading-1440, shell: wordmark, ok, pass
 loading-1440, no A, X or Y key hint, 0, pass
 loading-1440, footer holds the grammar keys before the divider, all 7, pass
 loading-1440, every key the footer hints is in the ? sheet, all in, pass
+loading-1440, All frame draws the Todo line, ok, pass
+loading-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+loading-1440, Todo line N covers the due todo rows drawn (0), 8, pass
+loading-1440, no #2979 anywhere on the page, ok, pass
 loading-1440, hScroll, 0, pass
 loading-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 loading-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -1993,7 +2172,10 @@ long-title-1000, source slack is later: no Connect row, ok, pass
 long-title-1000, Connect rows drawn as the data says, 1 vs 1, pass
 long-title-1000, waits-on text is whole, 0 cut, pass
 long-title-1000, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-long-title-1000, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 8|4|31||3||, pass
+long-title-1000, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 8||||7||, pass
+long-title-1000, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+long-title-1000, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+long-title-1000, one filled primary button across the rows (hover and cursor never both), 1, pass
 long-title-1000, shell: Home nav count = the All tab (none when 0), 8 vs 8, pass
 long-title-1000, shell: status pill, Sindri running, pass
 long-title-1000, shell: search placeholder, Search…, pass
@@ -2013,7 +2195,10 @@ long-title-1000, no A, X or Y key hint, 0, pass
 long-title-1000, footer holds the grammar keys before the divider, all 7, pass
 long-title-1000, every key the footer hints is in the ? sheet, all in, pass
 long-title-1000, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-long-title-1000, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+long-title-1000, All frame draws the Todo line, ok, pass
+long-title-1000, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+long-title-1000, Todo line N covers the due todo rows drawn (2), 8, pass
+long-title-1000, no #2979 anywhere on the page, ok, pass
 long-title-1000, hScroll, 0, pass
 long-title-1000, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 long-title-1000, footer and keycap font = Projects 11, 11.00, pass
@@ -2068,7 +2253,10 @@ long-title-peek-1000, source slack is later: no Connect row, ok, pass
 long-title-peek-1000, Connect rows drawn as the data says, 1 vs 1, pass
 long-title-peek-1000, waits-on text is whole, 0 cut, pass
 long-title-peek-1000, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-long-title-peek-1000, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 8|4|31||3||, pass
+long-title-peek-1000, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 8||||7||, pass
+long-title-peek-1000, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+long-title-peek-1000, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+long-title-peek-1000, one filled primary button across the rows (hover and cursor never both), 0, pass
 long-title-peek-1000, shell: Home nav count = the All tab (none when 0), 8 vs 8, pass
 long-title-peek-1000, shell: status pill, Sindri running, pass
 long-title-peek-1000, shell: search placeholder, Search…, pass
@@ -2089,7 +2277,10 @@ long-title-peek-1000, no A, X or Y key hint, 0, pass
 long-title-peek-1000, footer holds the grammar keys before the divider, all 7, pass
 long-title-peek-1000, every key the footer hints is in the ? sheet, all in, pass
 long-title-peek-1000, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-long-title-peek-1000, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+long-title-peek-1000, All frame draws the Todo line, ok, pass
+long-title-peek-1000, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+long-title-peek-1000, Todo line N covers the due todo rows drawn (2), 8, pass
+long-title-peek-1000, no #2979 anywhere on the page, ok, pass
 long-title-peek-1000, hScroll, 0, pass
 long-title-peek-1000, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 long-title-peek-1000, footer and keycap font = Projects 11, 11.00, pass
@@ -2143,7 +2334,10 @@ moving-empty-1440, source slack is later: no Connect row, ok, pass
 moving-empty-1440, Connect rows drawn as the data says, 1 vs 1, pass
 moving-empty-1440, waits-on text is whole, 0 cut, pass
 moving-empty-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-moving-empty-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+moving-empty-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||1||, pass
+moving-empty-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+moving-empty-1440, shell: Agents nav = live sessions of this data (1), 1 vs 1, pass
+moving-empty-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 moving-empty-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 moving-empty-1440, shell: status pill, Sindri running, pass
 moving-empty-1440, shell: search placeholder, Search…, pass
@@ -2160,7 +2354,10 @@ moving-empty-1440, no A, X or Y key hint, 0, pass
 moving-empty-1440, footer holds the grammar keys before the divider, all 7, pass
 moving-empty-1440, every key the footer hints is in the ? sheet, all in, pass
 moving-empty-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-moving-empty-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+moving-empty-1440, All frame draws the Todo line, ok, pass
+moving-empty-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+moving-empty-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+moving-empty-1440, no #2979 anywhere on the page, ok, pass
 moving-empty-1440, hScroll, 0, pass
 moving-empty-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 moving-empty-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -2214,7 +2411,10 @@ moving-open-1440, source slack is later: no Connect row, ok, pass
 moving-open-1440, Connect rows drawn as the data says, 1 vs 1, pass
 moving-open-1440, waits-on text is whole, 0 cut, pass
 moving-open-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-moving-open-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+moving-open-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+moving-open-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+moving-open-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+moving-open-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 moving-open-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 moving-open-1440, shell: status pill, Sindri running, pass
 moving-open-1440, shell: search placeholder, Search…, pass
@@ -2232,7 +2432,10 @@ moving-open-1440, no A, X or Y key hint, 0, pass
 moving-open-1440, footer holds the grammar keys before the divider, all 7, pass
 moving-open-1440, every key the footer hints is in the ? sheet, all in, pass
 moving-open-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-moving-open-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+moving-open-1440, All frame draws the Todo line, ok, pass
+moving-open-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+moving-open-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+moving-open-1440, no #2979 anywhere on the page, ok, pass
 moving-open-1440, hScroll, 0, pass
 moving-open-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 moving-open-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -2288,7 +2491,10 @@ new-band-1440, source slack is later: no Connect row, ok, pass
 new-band-1440, Connect rows drawn as the data says, 1 vs 1, pass
 new-band-1440, waits-on text is whole, 0 cut, pass
 new-band-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-new-band-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+new-band-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+new-band-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+new-band-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+new-band-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 new-band-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 new-band-1440, shell: status pill, Sindri running, pass
 new-band-1440, shell: search placeholder, Search…, pass
@@ -2309,7 +2515,10 @@ new-band-1440, every key the footer hints is in the ? sheet, all in, pass
 new-band-1440, a New band above the viewport draws the sticky bar, ok, pass
 new-band-1440, cursor row y when the New band is above (spec 4.3), 124, pass
 new-band-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-new-band-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+new-band-1440, All frame draws the Todo line, ok, pass
+new-band-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+new-band-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+new-band-1440, no #2979 anywhere on the page, ok, pass
 new-band-1440, hScroll, 0, pass
 new-band-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 new-band-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -2354,9 +2563,9 @@ new-band-top-1440, brief ref r-0409, resolves, pass
 new-band-top-1440, count new rows, 2 vs 2, pass
 new-band-top-1440, count window title, 2 vs 2, pass
 new-band-top-1440, footer fits, 1440 vs 1440, pass
-new-band-top-1440, cursor row draws its buttons (asking), ok, pass
-new-band-top-1440, footer keys are the cursor row's (asking), ok, pass
-new-band-top-1440, footer text is the table's for asking, r reply · o terminal · e done · h snooze, pass
+new-band-top-1440, cursor row draws its buttons (decision), ok, pass
+new-band-top-1440, footer keys are the cursor row's (decision), ok, pass
+new-band-top-1440, footer text is the table's for decision, Ctrl+Enter answer · e done · h snooze · t hand to agent, pass
 new-band-top-1440, source github is off: rows drawn, 0, pass
 new-band-top-1440, source github is off: its Connect row is open data or Done, 1 open, pass
 new-band-top-1440, source linear is on: no Connect row, ok, pass
@@ -2365,7 +2574,10 @@ new-band-top-1440, source slack is later: no Connect row, ok, pass
 new-band-top-1440, Connect rows drawn as the data says, 1 vs 1, pass
 new-band-top-1440, waits-on text is whole, 0 cut, pass
 new-band-top-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-new-band-top-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+new-band-top-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+new-band-top-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+new-band-top-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+new-band-top-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 new-band-top-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 new-band-top-1440, shell: status pill, Sindri running, pass
 new-band-top-1440, shell: search placeholder, Search…, pass
@@ -2382,7 +2594,10 @@ new-band-top-1440, no A, X or Y key hint, 0, pass
 new-band-top-1440, footer holds the grammar keys before the divider, all 7, pass
 new-band-top-1440, every key the footer hints is in the ? sheet, all in, pass
 new-band-top-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-new-band-top-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+new-band-top-1440, All frame draws the Todo line, ok, pass
+new-band-top-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+new-band-top-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+new-band-top-1440, no #2979 anywhere on the page, ok, pass
 new-band-top-1440, hScroll, 0, pass
 new-band-top-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 new-band-top-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -2437,7 +2652,10 @@ peek-1000, source slack is later: no Connect row, ok, pass
 peek-1000, Connect rows drawn as the data says, 1 vs 1, pass
 peek-1000, waits-on text is whole, 0 cut, pass
 peek-1000, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-peek-1000, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+peek-1000, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+peek-1000, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+peek-1000, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+peek-1000, one filled primary button across the rows (hover and cursor never both), 0, pass
 peek-1000, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 peek-1000, shell: status pill, Sindri running, pass
 peek-1000, shell: search placeholder, Search…, pass
@@ -2455,7 +2673,10 @@ peek-1000, no A, X or Y key hint, 0, pass
 peek-1000, footer holds the grammar keys before the divider, all 7, pass
 peek-1000, every key the footer hints is in the ? sheet, all in, pass
 peek-1000, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-peek-1000, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+peek-1000, All frame draws the Todo line, ok, pass
+peek-1000, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+peek-1000, Todo line N covers the due todo rows drawn (2), 8, pass
+peek-1000, no #2979 anywhere on the page, ok, pass
 peek-1000, hScroll, 0, pass
 peek-1000, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 peek-1000, footer and keycap font = Projects 11, 11.00, pass
@@ -2513,7 +2734,10 @@ peek-1440, source slack is later: no Connect row, ok, pass
 peek-1440, Connect rows drawn as the data says, 1 vs 1, pass
 peek-1440, waits-on text is whole, 0 cut, pass
 peek-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-peek-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+peek-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+peek-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+peek-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+peek-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 peek-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 peek-1440, shell: status pill, Sindri running, pass
 peek-1440, shell: search placeholder, Search…, pass
@@ -2531,7 +2755,10 @@ peek-1440, no A, X or Y key hint, 0, pass
 peek-1440, footer holds the grammar keys before the divider, all 7, pass
 peek-1440, every key the footer hints is in the ? sheet, all in, pass
 peek-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-peek-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+peek-1440, All frame draws the Todo line, ok, pass
+peek-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+peek-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+peek-1440, no #2979 anywhere on the page, ok, pass
 peek-1440, hScroll, 0, pass
 peek-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 peek-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -2588,7 +2815,10 @@ peek-decision-1440, source slack is later: no Connect row, ok, pass
 peek-decision-1440, Connect rows drawn as the data says, 1 vs 1, pass
 peek-decision-1440, waits-on text is whole, 0 cut, pass
 peek-decision-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-peek-decision-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+peek-decision-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+peek-decision-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+peek-decision-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+peek-decision-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 peek-decision-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 peek-decision-1440, shell: status pill, Sindri running, pass
 peek-decision-1440, shell: search placeholder, Search…, pass
@@ -2606,7 +2836,10 @@ peek-decision-1440, no A, X or Y key hint, 0, pass
 peek-decision-1440, footer holds the grammar keys before the divider, all 7, pass
 peek-decision-1440, every key the footer hints is in the ? sheet, all in, pass
 peek-decision-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-peek-decision-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+peek-decision-1440, All frame draws the Todo line, ok, pass
+peek-decision-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+peek-decision-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+peek-decision-1440, no #2979 anywhere on the page, ok, pass
 peek-decision-1440, hScroll, 0, pass
 peek-decision-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 peek-decision-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -2663,7 +2896,10 @@ peek-failed-1440, source slack is later: no Connect row, ok, pass
 peek-failed-1440, Connect rows drawn as the data says, 1 vs 1, pass
 peek-failed-1440, waits-on text is whole, 0 cut, pass
 peek-failed-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-peek-failed-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+peek-failed-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+peek-failed-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+peek-failed-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+peek-failed-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 peek-failed-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 peek-failed-1440, shell: status pill, Sindri running, pass
 peek-failed-1440, shell: search placeholder, Search…, pass
@@ -2682,7 +2918,10 @@ peek-failed-1440, no A, X or Y key hint, 0, pass
 peek-failed-1440, footer holds the grammar keys before the divider, all 7, pass
 peek-failed-1440, every key the footer hints is in the ? sheet, all in, pass
 peek-failed-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-peek-failed-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+peek-failed-1440, All frame draws the Todo line, ok, pass
+peek-failed-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+peek-failed-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+peek-failed-1440, no #2979 anywhere on the page, ok, pass
 peek-failed-1440, hScroll, 0, pass
 peek-failed-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 peek-failed-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -2739,7 +2978,10 @@ peek-issue-1440, source slack is on: no Connect row, ok, pass
 peek-issue-1440, Connect rows drawn as the data says, 0 vs 0, pass
 peek-issue-1440, waits-on text is whole, 0 cut, pass
 peek-issue-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-peek-issue-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 21|4|31||3||, pass
+peek-issue-1440, shell: nav counts are this frame's own (Reviews 5, Items, Agents), as the Projects shell draws them, 21|5|2||10||, pass
+peek-issue-1440, shell: Reviews nav = the open review rows of this data (5), none while GitHub is off, 5 vs 5, pass
+peek-issue-1440, shell: Agents nav = live sessions of this data (10), 10 vs 10, pass
+peek-issue-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 peek-issue-1440, shell: Home nav count = the All tab (none when 0), 21 vs 21, pass
 peek-issue-1440, shell: status pill, Sindri running, pass
 peek-issue-1440, shell: search placeholder, Search…, pass
@@ -2775,7 +3017,10 @@ peek-issue-1440, no A, X or Y key hint, 0, pass
 peek-issue-1440, "b N more" is its own target (a button-shaped link), A 81x24, pass
 peek-issue-1440, footer holds the grammar keys before the divider, all 7, pass
 peek-issue-1440, every key the footer hints is in the ? sheet, all in, pass
-peek-issue-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+peek-issue-1440, All frame draws the Todo line, ok, pass
+peek-issue-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+peek-issue-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+peek-issue-1440, no #2979 anywhere on the page, ok, pass
 peek-issue-1440, hScroll, 0, pass
 peek-issue-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 peek-issue-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -2832,7 +3077,10 @@ peek-lane-1440, source slack is on: no Connect row, ok, pass
 peek-lane-1440, Connect rows drawn as the data says, 0 vs 0, pass
 peek-lane-1440, waits-on text is whole, 0 cut, pass
 peek-lane-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-peek-lane-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 21|4|31||3||, pass
+peek-lane-1440, shell: nav counts are this frame's own (Reviews 5, Items, Agents), as the Projects shell draws them, 21|5|2||10||, pass
+peek-lane-1440, shell: Reviews nav = the open review rows of this data (5), none while GitHub is off, 5 vs 5, pass
+peek-lane-1440, shell: Agents nav = live sessions of this data (10), 10 vs 10, pass
+peek-lane-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 peek-lane-1440, shell: Home nav count = the All tab (none when 0), 21 vs 21, pass
 peek-lane-1440, shell: status pill, Sindri running, pass
 peek-lane-1440, shell: search placeholder, Search…, pass
@@ -2868,7 +3116,10 @@ peek-lane-1440, no A, X or Y key hint, 0, pass
 peek-lane-1440, "b N more" is its own target (a button-shaped link), A 81x24, pass
 peek-lane-1440, footer holds the grammar keys before the divider, all 7, pass
 peek-lane-1440, every key the footer hints is in the ? sheet, all in, pass
-peek-lane-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+peek-lane-1440, All frame draws the Todo line, ok, pass
+peek-lane-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+peek-lane-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+peek-lane-1440, no #2979 anywhere on the page, ok, pass
 peek-lane-1440, hScroll, 0, pass
 peek-lane-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 peek-lane-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -2925,7 +3176,10 @@ peek-message-1440, source slack is on: no Connect row, ok, pass
 peek-message-1440, Connect rows drawn as the data says, 0 vs 0, pass
 peek-message-1440, waits-on text is whole, 0 cut, pass
 peek-message-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-peek-message-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 21|4|31||3||, pass
+peek-message-1440, shell: nav counts are this frame's own (Reviews 5, Items, Agents), as the Projects shell draws them, 21|5|2||10||, pass
+peek-message-1440, shell: Reviews nav = the open review rows of this data (5), none while GitHub is off, 5 vs 5, pass
+peek-message-1440, shell: Agents nav = live sessions of this data (10), 10 vs 10, pass
+peek-message-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 peek-message-1440, shell: Home nav count = the All tab (none when 0), 21 vs 21, pass
 peek-message-1440, shell: status pill, Sindri running, pass
 peek-message-1440, shell: search placeholder, Search…, pass
@@ -2961,7 +3215,10 @@ peek-message-1440, no A, X or Y key hint, 0, pass
 peek-message-1440, "b N more" is its own target (a button-shaped link), A 81x24, pass
 peek-message-1440, footer holds the grammar keys before the divider, all 7, pass
 peek-message-1440, every key the footer hints is in the ? sheet, all in, pass
-peek-message-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+peek-message-1440, All frame draws the Todo line, ok, pass
+peek-message-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+peek-message-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+peek-message-1440, no #2979 anywhere on the page, ok, pass
 peek-message-1440, hScroll, 0, pass
 peek-message-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 peek-message-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -3018,7 +3275,10 @@ peek-pr-1440, source slack is on: no Connect row, ok, pass
 peek-pr-1440, Connect rows drawn as the data says, 0 vs 0, pass
 peek-pr-1440, waits-on text is whole, 0 cut, pass
 peek-pr-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-peek-pr-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 21|4|31||3||, pass
+peek-pr-1440, shell: nav counts are this frame's own (Reviews 5, Items, Agents), as the Projects shell draws them, 21|5|2||10||, pass
+peek-pr-1440, shell: Reviews nav = the open review rows of this data (5), none while GitHub is off, 5 vs 5, pass
+peek-pr-1440, shell: Agents nav = live sessions of this data (10), 10 vs 10, pass
+peek-pr-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 peek-pr-1440, shell: Home nav count = the All tab (none when 0), 21 vs 21, pass
 peek-pr-1440, shell: status pill, Sindri running, pass
 peek-pr-1440, shell: search placeholder, Search…, pass
@@ -3054,7 +3314,10 @@ peek-pr-1440, no A, X or Y key hint, 0, pass
 peek-pr-1440, "b N more" is its own target (a button-shaped link), A 81x24, pass
 peek-pr-1440, footer holds the grammar keys before the divider, all 7, pass
 peek-pr-1440, every key the footer hints is in the ? sheet, all in, pass
-peek-pr-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+peek-pr-1440, All frame draws the Todo line, ok, pass
+peek-pr-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+peek-pr-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+peek-pr-1440, no #2979 anywhere on the page, ok, pass
 peek-pr-1440, hScroll, 0, pass
 peek-pr-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 peek-pr-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -3065,19 +3328,26 @@ read-failed-1440, header, 48, pass
 read-failed-1440, window, 1440x900, info
 read-failed-1440, body, 784, pass
 read-failed-1440, footer, 28, pass
+read-failed-1440, count todo line, 8 vs 8, pass
+read-failed-1440, count todo text, true vs true, pass
 read-failed-1440, count new rows, 0 vs 0, pass
 read-failed-1440, count window title, 0 vs 0, pass
 read-failed-1440, footer fits, 1440 vs 1440, pass
 read-failed-1440, no row keys in the footer without a cursor row (none), ok, pass
 read-failed-1440, waits-on text is whole, 0 cut, pass
 read-failed-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-read-failed-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), |4|31||3||, pass
+read-failed-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, ||||6||, pass
+read-failed-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 read-failed-1440, shell: status pill, Sindri running, pass
 read-failed-1440, shell: search placeholder, Search…, pass
 read-failed-1440, shell: wordmark, ok, pass
 read-failed-1440, no A, X or Y key hint, 0, pass
 read-failed-1440, footer holds the grammar keys before the divider, all 7, pass
 read-failed-1440, every key the footer hints is in the ? sheet, all in, pass
+read-failed-1440, All frame draws the Todo line, ok, pass
+read-failed-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+read-failed-1440, Todo line N covers the due todo rows drawn (0), 8, pass
+read-failed-1440, no #2979 anywhere on the page, ok, pass
 read-failed-1440, hScroll, 0, pass
 read-failed-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 read-failed-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -3122,7 +3392,10 @@ reviews-tab-1440, source linear is on: no Connect row, ok, pass
 reviews-tab-1440, source slack is on: no Connect row, ok, pass
 reviews-tab-1440, waits-on text is whole, 0 cut, pass
 reviews-tab-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-reviews-tab-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 21|4|31||3||, pass
+reviews-tab-1440, shell: nav counts are this frame's own (Reviews 5, Items, Agents), as the Projects shell draws them, 21|5|2||10||, pass
+reviews-tab-1440, shell: Reviews nav = the open review rows of this data (5), none while GitHub is off, 5 vs 5, pass
+reviews-tab-1440, shell: Agents nav = live sessions of this data (10), 10 vs 10, pass
+reviews-tab-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 reviews-tab-1440, shell: Home nav count = the All tab (none when 0), 21 vs 21, pass
 reviews-tab-1440, shell: status pill, Sindri running, pass
 reviews-tab-1440, shell: search placeholder, Search…, pass
@@ -3141,6 +3414,8 @@ reviews-tab-1440, every key the footer hints is in the ? sheet, all in, pass
 reviews-tab-1440, split tab: no brief and no Todo line (spec 7.1: All only), ok, pass
 reviews-tab-1440, split tab: no Moving unless Agents, ok, pass
 reviews-tab-1440, split tab: only its own kind is drawn, 0 other, pass
+reviews-tab-1440, not an All frame: no Todo line, ok, pass
+reviews-tab-1440, no #2979 anywhere on the page, ok, pass
 reviews-tab-1440, hScroll, 0, pass
 reviews-tab-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 reviews-tab-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -3195,7 +3470,10 @@ row-failed-1440, source slack is later: no Connect row, ok, pass
 row-failed-1440, Connect rows drawn as the data says, 1 vs 1, pass
 row-failed-1440, waits-on text is whole, 0 cut, pass
 row-failed-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-row-failed-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+row-failed-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+row-failed-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+row-failed-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+row-failed-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 row-failed-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 row-failed-1440, shell: status pill, Sindri running, pass
 row-failed-1440, shell: search placeholder, Search…, pass
@@ -3212,7 +3490,10 @@ row-failed-1440, no A, X or Y key hint, 0, pass
 row-failed-1440, footer holds the grammar keys before the divider, all 7, pass
 row-failed-1440, every key the footer hints is in the ? sheet, all in, pass
 row-failed-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-row-failed-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+row-failed-1440, All frame draws the Todo line, ok, pass
+row-failed-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+row-failed-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+row-failed-1440, no #2979 anywhere on the page, ok, pass
 row-failed-1440, hScroll, 0, pass
 row-failed-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 row-failed-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -3267,7 +3548,10 @@ run-failed-1440, source slack is later: no Connect row, ok, pass
 run-failed-1440, Connect rows drawn as the data says, 1 vs 1, pass
 run-failed-1440, waits-on text is whole, 0 cut, pass
 run-failed-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-run-failed-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+run-failed-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+run-failed-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+run-failed-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+run-failed-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 run-failed-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 run-failed-1440, shell: status pill, Sindri running, pass
 run-failed-1440, shell: search placeholder, Search…, pass
@@ -3284,7 +3568,10 @@ run-failed-1440, no A, X or Y key hint, 0, pass
 run-failed-1440, footer holds the grammar keys before the divider, all 7, pass
 run-failed-1440, every key the footer hints is in the ? sheet, all in, pass
 run-failed-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-run-failed-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+run-failed-1440, All frame draws the Todo line, ok, pass
+run-failed-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+run-failed-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+run-failed-1440, no #2979 anywhere on the page, ok, pass
 run-failed-1440, hScroll, 0, pass
 run-failed-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 run-failed-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -3339,7 +3626,10 @@ scale13-1440, source slack is later: no Connect row, ok, pass
 scale13-1440, Connect rows drawn as the data says, 1 vs 1, pass
 scale13-1440, waits-on text is whole, 0 cut, pass
 scale13-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-scale13-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+scale13-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+scale13-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+scale13-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+scale13-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 scale13-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 scale13-1440, shell: status pill, Sindri running, pass
 scale13-1440, shell: search placeholder, Search…, pass
@@ -3356,7 +3646,10 @@ scale13-1440, no A, X or Y key hint, 0, pass
 scale13-1440, footer holds the grammar keys before the divider, all 7, pass
 scale13-1440, every key the footer hints is in the ? sheet, all in, pass
 scale13-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-scale13-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+scale13-1440, All frame draws the Todo line, ok, pass
+scale13-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+scale13-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+scale13-1440, no #2979 anywhere on the page, ok, pass
 scale13-1440, hScroll, 0, pass
 scale13-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 14.00, pass
 scale13-1440, footer and keycap font = Projects 11, 14.00, pass
@@ -3413,7 +3706,10 @@ snoozed-1440, source slack is later: no Connect row, ok, pass
 snoozed-1440, Connect rows drawn as the data says, 1 vs 1, pass
 snoozed-1440, waits-on text is whole, 0 cut, pass
 snoozed-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-snoozed-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 4|4|31||3||, pass
+snoozed-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 4||||7||, pass
+snoozed-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+snoozed-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+snoozed-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 snoozed-1440, shell: Home nav count = the All tab (none when 0), 4 vs 4, pass
 snoozed-1440, shell: status pill, Sindri running, pass
 snoozed-1440, shell: search placeholder, Search…, pass
@@ -3430,7 +3726,10 @@ snoozed-1440, no A, X or Y key hint, 0, pass
 snoozed-1440, footer holds the grammar keys before the divider, all 7, pass
 snoozed-1440, every key the footer hints is in the ? sheet, all in, pass
 snoozed-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-snoozed-1440, Todo line = 6 other todos + the due ones (open 0, snoozed 2), 8 vs 8, pass
+snoozed-1440, All frame draws the Todo line, ok, pass
+snoozed-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+snoozed-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+snoozed-1440, no #2979 anywhere on the page, ok, pass
 snoozed-1440, hScroll, 0, pass
 snoozed-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 snoozed-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -3484,7 +3783,10 @@ snooze-picker-1440, source slack is later: no Connect row, ok, pass
 snooze-picker-1440, Connect rows drawn as the data says, 1 vs 1, pass
 snooze-picker-1440, waits-on text is whole, 0 cut, pass
 snooze-picker-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-snooze-picker-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+snooze-picker-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+snooze-picker-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+snooze-picker-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+snooze-picker-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 snooze-picker-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 snooze-picker-1440, shell: status pill, Sindri running, pass
 snooze-picker-1440, shell: search placeholder, Search…, pass
@@ -3501,7 +3803,10 @@ snooze-picker-1440, no A, X or Y key hint, 0, pass
 snooze-picker-1440, footer is a menu, sheet, field or Done list footer: menu, ok, pass
 snooze-picker-1440, every key the footer hints is in the ? sheet, all in, pass
 snooze-picker-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-snooze-picker-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+snooze-picker-1440, All frame draws the Todo line, ok, pass
+snooze-picker-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+snooze-picker-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+snooze-picker-1440, no #2979 anywhere on the page, ok, pass
 snooze-picker-1440, hScroll, 0, pass
 snooze-picker-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 snooze-picker-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -3557,7 +3862,10 @@ snooze-woken-1440, source slack is later: no Connect row, ok, pass
 snooze-woken-1440, Connect rows drawn as the data says, 1 vs 1, pass
 snooze-woken-1440, waits-on text is whole, 0 cut, pass
 snooze-woken-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-snooze-woken-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+snooze-woken-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+snooze-woken-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+snooze-woken-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+snooze-woken-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 snooze-woken-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 snooze-woken-1440, shell: status pill, Sindri running, pass
 snooze-woken-1440, shell: search placeholder, Search…, pass
@@ -3578,7 +3886,10 @@ snooze-woken-1440, every key the footer hints is in the ? sheet, all in, pass
 snooze-woken-1440, a New band above the viewport draws the sticky bar, ok, pass
 snooze-woken-1440, cursor row y when the New band is above (spec 4.3), 124, pass
 snooze-woken-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-snooze-woken-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+snooze-woken-1440, All frame draws the Todo line, ok, pass
+snooze-woken-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+snooze-woken-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+snooze-woken-1440, no #2979 anywhere on the page, ok, pass
 snooze-woken-1440, hScroll, 0, pass
 snooze-woken-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 snooze-woken-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -3634,7 +3945,10 @@ snooze-woken-top-1440, source slack is later: no Connect row, ok, pass
 snooze-woken-top-1440, Connect rows drawn as the data says, 1 vs 1, pass
 snooze-woken-top-1440, waits-on text is whole, 0 cut, pass
 snooze-woken-top-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-snooze-woken-top-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+snooze-woken-top-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+snooze-woken-top-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+snooze-woken-top-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+snooze-woken-top-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 snooze-woken-top-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 snooze-woken-top-1440, shell: status pill, Sindri running, pass
 snooze-woken-top-1440, shell: search placeholder, Search…, pass
@@ -3651,7 +3965,10 @@ snooze-woken-top-1440, no A, X or Y key hint, 0, pass
 snooze-woken-top-1440, footer holds the grammar keys before the divider, all 7, pass
 snooze-woken-top-1440, every key the footer hints is in the ? sheet, all in, pass
 snooze-woken-top-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-snooze-woken-top-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+snooze-woken-top-1440, All frame draws the Todo line, ok, pass
+snooze-woken-top-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+snooze-woken-top-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+snooze-woken-top-1440, no #2979 anywhere on the page, ok, pass
 snooze-woken-top-1440, hScroll, 0, pass
 snooze-woken-top-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 snooze-woken-top-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -3705,7 +4022,10 @@ stale-source-1440, source slack is later: no Connect row, ok, pass
 stale-source-1440, Connect rows drawn as the data says, 0 vs 0, pass
 stale-source-1440, waits-on text is whole, 0 cut, pass
 stale-source-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-stale-source-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 9|4|31||3||, pass
+stale-source-1440, shell: nav counts are this frame's own (Reviews 3, Items, Agents), as the Projects shell draws them, 9|3|||7||, pass
+stale-source-1440, shell: Reviews nav = the open review rows of this data (3), none while GitHub is off, 3 vs 3, pass
+stale-source-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+stale-source-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 stale-source-1440, shell: Home nav count = the All tab (none when 0), 9 vs 9, pass
 stale-source-1440, shell: status pill, Sindri running, pass
 stale-source-1440, shell: search placeholder, Search…, pass
@@ -3725,7 +4045,10 @@ stale-source-1440, avatars: sessions square, people circle, 7 rows, pass
 stale-source-1440, no A, X or Y key hint, 0, pass
 stale-source-1440, footer holds the grammar keys before the divider, all 7, pass
 stale-source-1440, every key the footer hints is in the ? sheet, all in, pass
-stale-source-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+stale-source-1440, All frame draws the Todo line, ok, pass
+stale-source-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+stale-source-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+stale-source-1440, no #2979 anywhere on the page, ok, pass
 stale-source-1440, hScroll, 0, pass
 stale-source-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 stale-source-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -3780,7 +4103,10 @@ still-sending-1440, source slack is later: no Connect row, ok, pass
 still-sending-1440, Connect rows drawn as the data says, 1 vs 1, pass
 still-sending-1440, waits-on text is whole, 0 cut, pass
 still-sending-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-still-sending-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+still-sending-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+still-sending-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+still-sending-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+still-sending-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 still-sending-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 still-sending-1440, shell: status pill, Sindri running, pass
 still-sending-1440, shell: search placeholder, Search…, pass
@@ -3797,7 +4123,10 @@ still-sending-1440, no A, X or Y key hint, 0, pass
 still-sending-1440, footer holds the grammar keys before the divider, all 7, pass
 still-sending-1440, every key the footer hints is in the ? sheet, all in, pass
 still-sending-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-still-sending-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+still-sending-1440, All frame draws the Todo line, ok, pass
+still-sending-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+still-sending-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+still-sending-1440, no #2979 anywhere on the page, ok, pass
 still-sending-1440, hScroll, 0, pass
 still-sending-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 still-sending-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -3851,7 +4180,10 @@ stopped-1440, source slack is later: no Connect row, ok, pass
 stopped-1440, Connect rows drawn as the data says, 1 vs 1, pass
 stopped-1440, waits-on text is whole, 0 cut, pass
 stopped-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-stopped-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+stopped-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+stopped-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+stopped-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+stopped-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 stopped-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 stopped-1440, shell: status pill, Not running, pass
 stopped-1440, shell: search placeholder, Search…, pass
@@ -3868,7 +4200,10 @@ stopped-1440, no A, X or Y key hint, 0, pass
 stopped-1440, footer holds the grammar keys before the divider, all 7, pass
 stopped-1440, every key the footer hints is in the ? sheet, all in, pass
 stopped-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-stopped-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+stopped-1440, All frame draws the Todo line, ok, pass
+stopped-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+stopped-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+stopped-1440, no #2979 anywhere on the page, ok, pass
 stopped-1440, hScroll, 0, pass
 stopped-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 stopped-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -3921,7 +4256,10 @@ submit-menu-1440, source slack is later: no Connect row, ok, pass
 submit-menu-1440, Connect rows drawn as the data says, 0 vs 0, pass
 submit-menu-1440, waits-on text is whole, 0 cut, pass
 submit-menu-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-submit-menu-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 9|4|31||3||, pass
+submit-menu-1440, shell: nav counts are this frame's own (Reviews 3, Items, Agents), as the Projects shell draws them, 9|3|||7||, pass
+submit-menu-1440, shell: Reviews nav = the open review rows of this data (3), none while GitHub is off, 3 vs 3, pass
+submit-menu-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+submit-menu-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 submit-menu-1440, shell: Home nav count = the All tab (none when 0), 9 vs 9, pass
 submit-menu-1440, shell: status pill, Sindri running, pass
 submit-menu-1440, shell: search placeholder, Search…, pass
@@ -3941,12 +4279,15 @@ submit-menu-1440, avatars: sessions square, people circle, 7 rows, pass
 submit-menu-1440, no A, X or Y key hint, 0, pass
 submit-menu-1440, footer is a menu, sheet, field or Done list footer: menu, ok, pass
 submit-menu-1440, every key the footer hints is in the ? sheet, all in, pass
-submit-menu-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+submit-menu-1440, All frame draws the Todo line, ok, pass
+submit-menu-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+submit-menu-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+submit-menu-1440, no #2979 anywhere on the page, ok, pass
 submit-menu-1440, hScroll, 0, pass
 submit-menu-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 submit-menu-1440, footer and keycap font = Projects 11, 11.00, pass
 submit-menu-1440, minContrast, 4.60, pass
-== tab-messages-empty-1440: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=12.00 rowH=0 small=[] hScroll=0 font=Inter
+== tab-messages-empty-1440: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=5.19 minFontPx=12.00 rowH=0 small=[] hScroll=0 font=Inter
 tab-messages-empty-1440, topbar, 40, pass
 tab-messages-empty-1440, header, 48, pass
 tab-messages-empty-1440, window, 1440x900, info
@@ -3970,10 +4311,13 @@ tab-messages-empty-1440, source github is off: its Connect row is open data or D
 tab-messages-empty-1440, source linear is on: no Connect row, ok, pass
 tab-messages-empty-1440, source slack is later: rows drawn, 0, pass
 tab-messages-empty-1440, source slack is later: no Connect row, ok, pass
-tab-messages-empty-1440, Messages split: a Connect offer per source that is off (github), ok, pass
+tab-messages-empty-1440, Messages split: no Connect, the Slack-later line, no "Nothing in Messages", ok, pass
 tab-messages-empty-1440, waits-on text is whole, 0 cut, pass
 tab-messages-empty-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-tab-messages-empty-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+tab-messages-empty-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+tab-messages-empty-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+tab-messages-empty-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+tab-messages-empty-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 tab-messages-empty-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 tab-messages-empty-1440, shell: status pill, Sindri running, pass
 tab-messages-empty-1440, shell: search placeholder, Search…, pass
@@ -3984,11 +4328,14 @@ tab-messages-empty-1440, every key the footer hints is in the ? sheet, all in, p
 tab-messages-empty-1440, split tab: no brief and no Todo line (spec 7.1: All only), ok, pass
 tab-messages-empty-1440, split tab: no Moving unless Agents, ok, pass
 tab-messages-empty-1440, split tab: only its own kind is drawn, 0 other, pass
-tab-messages-empty-1440, Connect offer in a tab reads as its Connect row (github), Connect GitHub to see reviews, pass
+tab-messages-empty-1440, not an All frame: no Todo line, ok, pass
+tab-messages-empty-1440, Messages offers only Linear (spec 3.2: GitHub mentions are not shipped), 0 other offers, pass
+tab-messages-empty-1440, Messages empty line reads exactly "Slack messages arrive in a later release." with no link, Slack messages arrive in a later release., pass
+tab-messages-empty-1440, no #2979 anywhere on the page, ok, pass
 tab-messages-empty-1440, hScroll, 0, pass
 tab-messages-empty-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 tab-messages-empty-1440, footer and keycap font = Projects 11, 11.00, pass
-tab-messages-empty-1440, minContrast, 4.70, pass
+tab-messages-empty-1440, minContrast, 5.19, pass
 == tab-messages-linear-off-1440: rows=0 rowsFullyInView=0 cut=[] contrastUnder4_5=[] minContrast=4.70 minFontPx=12.00 rowH=0 small=[] hScroll=0 font=Inter
 tab-messages-linear-off-1440, topbar, 40, pass
 tab-messages-linear-off-1440, header, 48, pass
@@ -4014,10 +4361,13 @@ tab-messages-linear-off-1440, source linear is off: rows drawn, 0, pass
 tab-messages-linear-off-1440, source linear is off: its Connect row is open data or Done, 1 open, pass
 tab-messages-linear-off-1440, source slack is later: rows drawn, 0, pass
 tab-messages-linear-off-1440, source slack is later: no Connect row, ok, pass
-tab-messages-linear-off-1440, Messages split: a Connect offer per source that is off (github, linear), ok, pass
+tab-messages-linear-off-1440, Messages split: Connect Linear offer, the Slack-later line, no "Nothing in Messages", ok, pass
 tab-messages-linear-off-1440, waits-on text is whole, 0 cut, pass
 tab-messages-linear-off-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-tab-messages-linear-off-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 8|4|31||3||, pass
+tab-messages-linear-off-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 8||||7||, pass
+tab-messages-linear-off-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+tab-messages-linear-off-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+tab-messages-linear-off-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 tab-messages-linear-off-1440, shell: Home nav count = the All tab (none when 0), 8 vs 8, pass
 tab-messages-linear-off-1440, shell: status pill, Sindri running, pass
 tab-messages-linear-off-1440, shell: search placeholder, Search…, pass
@@ -4028,8 +4378,11 @@ tab-messages-linear-off-1440, every key the footer hints is in the ? sheet, all 
 tab-messages-linear-off-1440, split tab: no brief and no Todo line (spec 7.1: All only), ok, pass
 tab-messages-linear-off-1440, split tab: no Moving unless Agents, ok, pass
 tab-messages-linear-off-1440, split tab: only its own kind is drawn, 0 other, pass
-tab-messages-linear-off-1440, Connect offer in a tab reads as its Connect row (github), Connect GitHub to see reviews, pass
 tab-messages-linear-off-1440, Connect offer in a tab reads as its Connect row (linear), Connect Linear to see issues and mentions, pass
+tab-messages-linear-off-1440, not an All frame: no Todo line, ok, pass
+tab-messages-linear-off-1440, Messages offers only Linear (spec 3.2: GitHub mentions are not shipped), 0 other offers, pass
+tab-messages-linear-off-1440, Messages empty line reads exactly "Slack messages arrive in a later release." with no link, Slack messages arrive in a later release., pass
+tab-messages-linear-off-1440, no #2979 anywhere on the page, ok, pass
 tab-messages-linear-off-1440, hScroll, 0, pass
 tab-messages-linear-off-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 tab-messages-linear-off-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -4061,7 +4414,10 @@ tab-reviews-empty-1440, source slack is later: no Connect row, ok, pass
 tab-reviews-empty-1440, Reviews split: Connect GitHub, not "Nothing in Reviews", ok, pass
 tab-reviews-empty-1440, waits-on text is whole, 0 cut, pass
 tab-reviews-empty-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-tab-reviews-empty-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+tab-reviews-empty-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+tab-reviews-empty-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+tab-reviews-empty-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+tab-reviews-empty-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 tab-reviews-empty-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 tab-reviews-empty-1440, shell: status pill, Sindri running, pass
 tab-reviews-empty-1440, shell: search placeholder, Search…, pass
@@ -4073,6 +4429,8 @@ tab-reviews-empty-1440, split tab: no brief and no Todo line (spec 7.1: All only
 tab-reviews-empty-1440, split tab: no Moving unless Agents, ok, pass
 tab-reviews-empty-1440, split tab: only its own kind is drawn, 0 other, pass
 tab-reviews-empty-1440, Connect offer in a tab reads as its Connect row (github), Connect GitHub to see reviews, pass
+tab-reviews-empty-1440, not an All frame: no Todo line, ok, pass
+tab-reviews-empty-1440, no #2979 anywhere on the page, ok, pass
 tab-reviews-empty-1440, hScroll, 0, pass
 tab-reviews-empty-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 tab-reviews-empty-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -4126,7 +4484,10 @@ undo-1440, source slack is later: no Connect row, ok, pass
 undo-1440, Connect rows drawn as the data says, 1 vs 1, pass
 undo-1440, waits-on text is whole, 0 cut, pass
 undo-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-undo-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 6|4|31||3||, pass
+undo-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 6||||7||, pass
+undo-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+undo-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+undo-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 undo-1440, shell: Home nav count = the All tab (none when 0), 6 vs 6, pass
 undo-1440, shell: status pill, Sindri running, pass
 undo-1440, shell: search placeholder, Search…, pass
@@ -4142,7 +4503,10 @@ undo-1440, no A, X or Y key hint, 0, pass
 undo-1440, footer holds the grammar keys before the divider, all 7, pass
 undo-1440, every key the footer hints is in the ? sheet, all in, pass
 undo-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-undo-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+undo-1440, All frame draws the Todo line, ok, pass
+undo-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+undo-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+undo-1440, no #2979 anywhere on the page, ok, pass
 undo-1440, hScroll, 0, pass
 undo-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 undo-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -4197,7 +4561,10 @@ updating-1440, source slack is later: no Connect row, ok, pass
 updating-1440, Connect rows drawn as the data says, 1 vs 1, pass
 updating-1440, waits-on text is whole, 0 cut, pass
 updating-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-updating-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+updating-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+updating-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+updating-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+updating-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 updating-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 updating-1440, shell: status pill, Sindri running, pass
 updating-1440, shell: search placeholder, Search…, pass
@@ -4214,7 +4581,10 @@ updating-1440, no A, X or Y key hint, 0, pass
 updating-1440, footer holds the grammar keys before the divider, all 7, pass
 updating-1440, every key the footer hints is in the ? sheet, all in, pass
 updating-1440, Connect row text is the offer string (github), Connect GitHub to see reviews, pass
-updating-1440, Todo line = 6 other todos + the due ones (open 2, snoozed 0), 8 vs 8, pass
+updating-1440, All frame draws the Todo line, ok, pass
+updating-1440, Todo line N is the panel count (8 of 8 open todos), whatever Home did to its rows, 8 vs 8, pass
+updating-1440, Todo line N covers the due todo rows drawn (2), 8, pass
+updating-1440, no #2979 anywhere on the page, ok, pass
 updating-1440, hScroll, 0, pass
 updating-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 updating-1440, footer and keycap font = Projects 11, 11.00, pass
@@ -4261,7 +4631,10 @@ work-tab-1440, source slack is later: rows drawn, 0, pass
 work-tab-1440, source slack is later: no Connect row, ok, pass
 work-tab-1440, waits-on text is whole, 0 cut, pass
 work-tab-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-work-tab-1440, shell: nav counts as Projects (Reviews 4, Items 31, Agents 3), 7|4|31||3||, pass
+work-tab-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+work-tab-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
+work-tab-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+work-tab-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 work-tab-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 work-tab-1440, shell: status pill, Sindri running, pass
 work-tab-1440, shell: search placeholder, Search…, pass
@@ -4278,6 +4651,8 @@ work-tab-1440, every key the footer hints is in the ? sheet, all in, pass
 work-tab-1440, split tab: no brief and no Todo line (spec 7.1: All only), ok, pass
 work-tab-1440, split tab: no Moving unless Agents, ok, pass
 work-tab-1440, split tab: only its own kind is drawn, 0 other, pass
+work-tab-1440, not an All frame: no Todo line, ok, pass
+work-tab-1440, no #2979 anywhere on the page, ok, pass
 work-tab-1440, hScroll, 0, pass
 work-tab-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 work-tab-1440, footer and keycap font = Projects 11, 11.00, pass

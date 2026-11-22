@@ -250,7 +250,7 @@ body.w1000 .topbar{gap:8px}
 .plain-line .lk2{margin-left:12px;color:var(--primary-hi)}
 .menu.hand .parse{white-space:nowrap}
 .peek-actions .why-off{margin-left:auto;align-self:center;font-size:12px;color:var(--ink-subtle);white-space:nowrap}
-.filter.focus{border-color:var(--primary-hi);box-shadow:0 0 0 2px var(--primary-soft);color:var(--ink)}
+.filter.focus{border-color:var(--primary-hi);box-shadow:0 0 0 2px var(--primary-soft)}      /* an empty focused field keeps its subtle placeholder (qa r5 nit); only the caret is ink */
 .filter .caret{width:1px;height:14px;background:var(--ink);margin-left:-4px}
 .group .bmore{height:24px;padding:0 8px;border:1px solid var(--hair-strong);border-radius:var(--r2);background:var(--s2);color:var(--ink-muted);cursor:pointer;text-decoration:none;box-sizing:border-box;font-size:12px}
 .group .bmore.hv{background:var(--primary-soft);color:var(--ink);border-color:var(--primary-hi)}
@@ -276,3 +276,7 @@ body.w1000 .topbar{gap:8px}
 .shortcuts .sc-row{min-height:27px}
 .shortcuts .sc-sec{margin-top:6px}
 .shortcuts .sc-bar i{top:0;height:100%}
+
+/* round 6: a hovered row that does not hold the cursor draws its primary outlined: one filled primary per view (qa r5 nit 4) */
+.row.hv:not(.cursor):not(.sel) .actions .btn.primary{background:transparent;border-color:var(--primary-hi);color:var(--primary-hi)}
+.more-line[data-more]{color:var(--primary-hi)}
