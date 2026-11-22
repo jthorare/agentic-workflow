@@ -1,5 +1,7 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Home;
 using Aw.Sindri.Infrastructure.Home;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.HomeLanes;
 
@@ -19,7 +21,8 @@ public sealed class AwMetaJsonTests
         Assert.Equal([2897, 2950, 3214], read.MergeQueue.Select(static q => q.Pr).ToArray());
         Assert.Equal("queued 2", read.MergeQueue[2].Github);
         var engine = Assert.Single(read.Usage, static u => u.State == "Limited");
-        Assert.Equal(("engine", "Session", new DateTimeOffset(2026, 11, 21, 23, 0, 0, TimeSpan.Zero)), (engine.Subject, engine.Kind, engine.ResetsAt!.Value));
+        Assert.Equal(("engine", "Session"), (engine.Subject, engine.Kind));
+        Assert.Equal(new DateTimeOffset(2026, 11, 21, 23, 0, 0, TimeSpan.Zero), engine.ResetsAt);
         Assert.Null(read.RepoDirectory);
     }
 
@@ -32,5 +35,20 @@ public sealed class AwMetaJsonTests
 
         Assert.Null(Assert.Single(read.Lanes).Tokens);
         Assert.Empty(read.MergeQueue);
+    }
+
+    [Fact]
+    public void On_the_real_capture_a_lane_takes_its_team_session_name_so_its_queued_prs_hang_off_its_recycle_row()
+    {
+        const string teams = """{"teams":[{"name":"other","layout":"warp","repo":"/r/other","lanes":[],"live":false,"selected":false},{"name":"sindri-v3","layout":"warp","repo":"/r/agentic-workflow","lanes":["api","meta"],"metaSession":"sindri-v3-meta","live":true,"selected":true}]}""";
+
+        var read = AwMetaJson.Parse(LaneFixtures.ContextRecycle, LaneFixtures.Status, LaneFixtures.UsageOk, teams);
+        var rows = HomeLaneRows.From(read, "jthorare/agentic-workflow", new DateTimeOffset(2026, 11, 21, 21, 10, 0, TimeSpan.Zero), new PassThroughScrubber());
+
+        Assert.Equal(["sindri-v3-meta", "sindri-v3-api"], read.Lanes.Select(static l => l.SessionName).ToArray());
+        Assert.Equal("/r/agentic-workflow", read.RepoDirectory);
+        var api = Assert.Single(rows, static r => r.Row.Id.Value == "lane:recycle:api");
+        Assert.Equal(["gh:ready:jthorare/agentic-workflow#3214"], api.Edges.Select(static e => e.To).ToArray());
+        Assert.All(api.Edges, static e => Assert.Equal(HomeEdgeKind.ItemOf, e.Edge));
     }
 }

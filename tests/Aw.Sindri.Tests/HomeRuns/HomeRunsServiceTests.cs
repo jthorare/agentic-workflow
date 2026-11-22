@@ -75,7 +75,7 @@ public sealed class HomeRunsServiceTests
     {
         var failed = await Fail(1, "boom");
         _ = await Tick();
-        var row = (await _view.Get(HomeRunRows.IdOf(failed.Id), Token)).Value!;
+        var row = (await _view.Get(HomeRunRows.IdOf(failed.Id), Token)).Value!;   // why: the first tick raised this row and the fold put it in the view
         _view.Put(row with { State = state, Version = 2 });
 
         _ = await Tick();
@@ -90,7 +90,7 @@ public sealed class HomeRunsServiceTests
     {
         var failed = await Fail(1, "boom");
         _ = await Tick();
-        var row = (await _view.Get(HomeRunRows.IdOf(failed.Id), Token)).Value!;
+        var row = (await _view.Get(HomeRunRows.IdOf(failed.Id), Token)).Value!;   // why: the first tick raised this row and the fold put it in the view
         _view.Put(row with { State = HomeState.Snoozed, SnoozeUntil = _h.Clock.GetUtcNow().AddHours(1), Version = 2 });
 
         var pass = await Tick();

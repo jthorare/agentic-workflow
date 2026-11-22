@@ -163,7 +163,7 @@ public sealed class HomeLanesServiceTests
         else if (recorded.Envelope.Type == EventTypes.HomeRowChanged)
         {
             var p = _h.Events.Payload<HomeRowChanged>(recorded).Value;
-            var row = (await _view.Get(p.Id, Token)).Value!;
+            var row = (await _view.Get(p.Id, Token)).Value!;   // why: a change follows the raise of its row, which this fold put in the view
             _view.Put(row with { Version = p.Version, Title = p.Title ?? row.Title, Facts = p.Facts ?? row.Facts, WaitsOn = p.WaitsOn ?? row.WaitsOn, Actions = p.Actions ?? row.Actions, Links = p.Links ?? row.Links });
         }
         else if (recorded.Envelope.Type == EventTypes.HomeRowCleared)

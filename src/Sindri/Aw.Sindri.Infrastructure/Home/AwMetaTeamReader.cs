@@ -20,25 +20,37 @@ internal sealed class AwMetaTeamReader(IToolRunner runner, Func<string, string?>
 
     private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(20);
 
+    // why: the order Parse reads them in; team-list is optional and read after
+    private static readonly string[] _required = ["lanes-context", "status", "usage"];
+
     public ValueTask<MetaTeamRead> Read(CancellationToken cancellationToken)
     {
         var program = environment(ProgramVariable) is { Length: > 0 } set ? set : "aw-meta";
-        var context = Run(program, "lanes-context", cancellationToken);
-        var status = context.Problem is null ? Run(program, "status", cancellationToken) : context;
-        var usage = status.Problem is null ? Run(program, "usage", cancellationToken) : status;
-        if ((context.Problem ?? status.Problem ?? usage.Problem) is { } problem)
+        var answers = new List<string>();
+        foreach (var command in _required)
         {
-            return ValueTask.FromResult(MetaTeamRead.NotAvailable(problem));
+            var (output, problem) = Run(program, command, cancellationToken);
+            if (problem is not null)
+            {
+                return ValueTask.FromResult(MetaTeamRead.NotAvailable(problem));
+            }
+
+            answers.Add(output);
         }
 
         var teams = Run(program, "team-list", cancellationToken);
+        return ValueTask.FromResult(Parse(answers, teams.Problem is null ? teams.Output : null));
+    }
+
+    private static MetaTeamRead Parse(List<string> answers, string? teamList)
+    {
         try
         {
-            return ValueTask.FromResult(AwMetaJson.Parse(context.Output, status.Output, usage.Output, teams.Problem is null ? teams.Output : null));
+            return AwMetaJson.Parse(answers[0], answers[1], answers[2], teamList);
         }
         catch (Exception e) when (e is JsonException or InvalidOperationException or FormatException or KeyNotFoundException)   // boundary: aw-meta's JSON is outside text; a shape this build doesn't know is 'unavailable', never a crash
         {
-            return ValueTask.FromResult(MetaTeamRead.NotAvailable($"aw-meta printed JSON this build can't read ({e.GetType().Name})"));
+            return MetaTeamRead.NotAvailable($"aw-meta printed JSON this build can't read ({e.GetType().Name})");
         }
     }
 

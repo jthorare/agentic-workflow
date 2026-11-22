@@ -21,35 +21,56 @@ internal static class AwMetaJson
         using var context = JsonDocument.Parse(lanesContext);
         using var state = JsonDocument.Parse(status);
         using var subjects = JsonDocument.Parse(usage);
-        var sessionNames = Items(state.RootElement, "lanes", "entries")
-            .Select(static e => (Lane: Text(e, "lane"), Name: Text(e, "sessionName")))
-            .Where(static e => e.Lane is not null && e.Name is not null)
-            .GroupBy(static e => e.Lane!, StringComparer.Ordinal)
-            .ToDictionary(static g => g.Key, static g => g.First().Name!, StringComparer.Ordinal);
-        var lanes = Items(context.RootElement, "lanes").Select(l => Lane(l, sessionNames)).ToList();
-        var queue = Items(state.RootElement, "mergeQueue").Select(static q => new MetaQueuedPr(q.GetProperty("pr").GetInt32(), Text(q, "from") ?? "", Text(q, "gate") ?? "none", Text(q, "github"))).ToList();
-        var usages = Items(subjects.RootElement, "subjects").Select(static u => new MetaUsage(Text(u, "subject") ?? "", Text(u, "state") ?? "Unknown", Text(u, "kind"), Time(u, "resetsAt"), Text(u, "agent"))).ToList();
-        return new MetaTeamRead(Number(context.RootElement, "recycleAt") ?? 0, lanes, queue, usages, RepoDirectory(teamList), Unavailable: null);
+        var (repo, team) = SelectedTeam(teamList);
+        var sessionNames = SessionNames(state.RootElement);
+        var lanes = Items(context.RootElement, "lanes").Select(l => Lane(l, sessionNames, team)).ToList();
+        var queue = Items(state.RootElement, "mergeQueue").Select(Queued).ToList();
+        var usages = Items(subjects.RootElement, "subjects").Select(Usage).ToList();
+        return new MetaTeamRead(Number(context.RootElement, "recycleAt") ?? 0, lanes, queue, usages, repo, Unavailable: null);
     }
 
-    private static MetaLane Lane(JsonElement lane, Dictionary<string, string> sessionNames)
+    // 'status' lanes.entries[]: lane -> its tmux session name. The real box prints no entries (capture of 2026-11-21), so Lane falls back to '<team>-<lane>'.
+    private static Dictionary<string, string> SessionNames(JsonElement status)
+    {
+        var names = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var entry in Items(status, "lanes", "entries"))
+        {
+            if (Text(entry, "lane") is { } lane && Text(entry, "sessionName") is { } name)
+            {
+                _ = names.TryAdd(lane, name);
+            }
+        }
+
+        return names;
+    }
+
+    // why: aw-meta names a lane's tmux session '<team>-<lane>' (TeamConfig: session names are "team-lane"), which is what a merge-queue entry's 'from' holds
+    private static MetaLane Lane(JsonElement lane, Dictionary<string, string> sessionNames, string? team)
     {
         var name = Text(lane, "lane") ?? "";
-        return new MetaLane(name, sessionNames.GetValueOrDefault(name), Text(lane, "session"), Number(lane, "tokens"), Number(lane, "threshold") ?? 0, Text(lane, "verdict") ?? "Unknown");
+        var session = sessionNames.TryGetValue(name, out var listed) ? listed : team is null ? null : $"{team}-{name}";
+        return new MetaLane(name, session, Text(lane, "session"), Number(lane, "tokens"), Number(lane, "threshold") ?? 0, Text(lane, "verdict") ?? "Unknown");
     }
 
-    // The selected team's repository directory; the only team when one is listed and none is marked selected.
-    private static string? RepoDirectory(string? teamList)
+    private static MetaQueuedPr Queued(JsonElement queued) =>
+        new(queued.GetProperty("pr").GetInt32(), Text(queued, "from") ?? "", Text(queued, "gate") ?? "none", Text(queued, "github"));
+
+    private static MetaUsage Usage(JsonElement subject) =>
+        new(Text(subject, "subject") ?? "", Text(subject, "state") ?? "Unknown", Text(subject, "kind"), Time(subject, "resetsAt"), Text(subject, "agent"));
+
+    // The selected team's repository directory and name; the only team when one is listed and none is marked selected.
+    private static (string? Repo, string? Team) SelectedTeam(string? teamList)
     {
         if (teamList is null)
         {
-            return null;
+            return (null, null);
         }
 
         using var teams = JsonDocument.Parse(teamList);
         var all = Items(teams.RootElement, "teams").ToList();
         var chosen = all.Where(static t => t.TryGetProperty("selected", out var s) && s.ValueKind == JsonValueKind.True).ToList();
-        return chosen.Count == 1 ? Text(chosen[0], "repo") : all.Count == 1 ? Text(all[0], "repo") : null;
+        JsonElement? team = chosen.Count == 1 ? chosen[0] : all.Count == 1 ? all[0] : null;
+        return team is { } t ? (Text(t, "repo"), Text(t, "name")) : (null, null);
     }
 
     private static IEnumerable<JsonElement> Items(JsonElement root, params string[] path)

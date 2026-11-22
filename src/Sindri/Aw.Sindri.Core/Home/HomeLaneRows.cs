@@ -69,8 +69,8 @@ public static class HomeLaneRows
     /// <summary>The id of a merge-queue row: 'gh:ready:&lt;owner/name&gt;#&lt;pr&gt;' when the repository is known (the forge half uses the same id, so one PR is one row), else 'lane:ready:&lt;pr&gt;'.</summary>
     /// <param name="repo">The repository's 'owner/name', or null.</param>
     /// <param name="pr">The pull request number.</param>
-    /// <returns>The id text.</returns>
-    public static string ReadyId(string? repo, int pr) =>
+    /// <returns>The id text (a row id and an edge end).</returns>
+    private static string ReadyKey(string? repo, int pr) =>
         repo is null ? string.Create(CultureInfo.InvariantCulture, $"lane:ready:{pr}") : string.Create(CultureInfo.InvariantCulture, $"gh:ready:{repo}#{pr}");
 
     /// <summary>The why chip of a lane at its mark: the size rounded down to 10k ('at 210k'), so a lane above the mark changes its row every 10k tokens, not every minute.</summary>
@@ -94,9 +94,9 @@ public static class HomeLaneRows
 
         // why: the PRs this lane sent 'ready' wait on it (item-of): the ranker counts them as what the recycle row blocks
         IReadOnlyList<HomeEdge> edges = lane.SessionName is { } tmux
-            ? [.. queue.Where(q => string.Equals(q.From, tmux, StringComparison.Ordinal)).Select(q => new HomeEdge(id.Value, ReadyId(repo, q.Pr), HomeEdgeKind.ItemOf))]
+            ? [.. queue.Where(q => string.Equals(q.From, tmux, StringComparison.Ordinal)).Select(q => new HomeEdge(id.Value, ReadyKey(repo, q.Pr), HomeEdgeKind.ItemOf))]
             : [];
-        var row = Row(id, HomeKind.LaneRecycle, $"{name}: {size}, recycle from a digest", RecycleWhy(lane.Tokens), name, $"lane {name}", LaneWeight, links, ["copy-digest-request", "open-session"], source);
+        var row = Row(new RowWords(id, HomeKind.LaneRecycle, $"{name}: {size}, recycle from a digest", RecycleWhy(lane.Tokens), name, $"lane {name}", LaneWeight), links, ["copy-digest-request", "open-session"], source);
         return new HomeRaise(row, edges);
     }
 
@@ -116,13 +116,13 @@ public static class HomeLaneRows
         };
         var resets = usage.ResetsAt is { } at ? "resets " + at.UtcDateTime.ToString("MMM d HH:mm 'UTC'", CultureInfo.InvariantCulture) : "reset time unknown";
         var from = usage.Agent is { } agent ? scrubber.Scrub(agent) : $"lane {name}";
-        var row = Row(id, HomeKind.AgentLimited, $"{name}: stopped at its {limit}, {resets}", "limited", name, from, LaneWeight, [new HomeLink("lane", name, name)], ["open-session"], source);
+        var row = Row(new RowWords(id, HomeKind.AgentLimited, $"{name}: stopped at its {limit}, {resets}", "limited", name, from, LaneWeight), [new HomeLink("lane", name, name)], ["open-session"], source);
         return new HomeRaise(row, Edges: []);
     }
 
     private static HomeRaise? Ready(MetaQueuedPr queued, string? repo, HomeSource source, ITextScrubber scrubber)
     {
-        if (queued.Pr <= 0 || !HomeRowId.TryFrom(ReadyId(repo, queued.Pr), out var id))
+        if (queued.Pr <= 0 || !HomeRowId.TryFrom(ReadyKey(repo, queued.Pr), out var id))
         {
             return null;
         }
@@ -132,24 +132,24 @@ public static class HomeLaneRows
 
         // why: while meta is already merging it (GitHub's merge queue holds it) the row offers no second Merge (spec §5.1)
         var merging = queued.Github is { } github ? $"meta is merging ({scrubber.Scrub(github)})" : null;
-        var row = Row(id, HomeKind.PrReadyMerge, $"PR {number} is ready to merge", "ready", "#" + number, "meta queue", ReadyWeight, links, merging is null ? ["merge", "open"] : ["open"], source) with
+        var row = Row(new RowWords(id, HomeKind.PrReadyMerge, $"PR {number} is ready to merge", "ready", "#" + number, "meta queue", ReadyWeight), links, merging is null ? ["merge", "open"] : ["open"], source) with
         {
             WaitsOn = merging ?? "you",
         };
         return new HomeRaise(row, Edges: []);
     }
 
-    private static HomeRow Row(HomeRowId id, HomeKind kind, string title, string why, string objectRef, string from, int weight, IReadOnlyList<HomeLink> links, IReadOnlyList<string> actions, HomeSource source) =>
+    private static HomeRow Row(RowWords text, IReadOnlyList<HomeLink> links, IReadOnlyList<string> actions, HomeSource source) =>
         new(
-            id,
+            text.Id,
             Version: 1,
-            kind,
+            text.Kind,
             HomeGroup.NeedsYou,
-            title,
-            [new HomeFact(HomeFactKind.Why, why), new HomeFact(HomeFactKind.Object, objectRef), new HomeFact(HomeFactKind.From, from)],
+            text.Title,
+            [new HomeFact(HomeFactKind.Why, text.Why), new HomeFact(HomeFactKind.Object, text.ObjectRef), new HomeFact(HomeFactKind.From, text.From)],
             WaitsOn: "you",
             source.ReadAt,
-            new HomeRank(Blocks: 0, weight, SinceRank: 0, Position: 0),
+            new HomeRank(Blocks: 0, text.Weight, SinceRank: 0, Position: 0),
             BlocksList: [],
             links,
             HomeState.Open,
@@ -157,4 +157,7 @@ public static class HomeLaneRows
             DoneAt: null,
             actions,
             source);
+
+    // The words of one row: its id and kind, the title, the three facts and the reason's weight.
+    private sealed record RowWords(HomeRowId Id, HomeKind Kind, string Title, string Why, string ObjectRef, string From, int Weight);
 }
