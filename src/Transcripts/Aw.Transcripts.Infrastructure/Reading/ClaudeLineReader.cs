@@ -36,6 +36,13 @@ internal sealed class ClaudeLineReader(bool subagent, DateTimeOffset clock, Func
             file.Cwd = cwd;
         }
 
+        // A line with no type, or a user or assistant line whose content is no string or block array, is of an unknown shape.
+        if (row.Type is null || (Spoken(row.Type) && !ContentBlocks.IsReadable(row.Message?.Content)))
+        {
+            file.SkippedLines++;
+            return;
+        }
+
         var entry = row.Type switch
         {
             "user" => User(number, row),
@@ -87,4 +94,6 @@ internal sealed class ClaudeLineReader(bool subagent, DateTimeOffset clock, Func
             ? null
             : new TranscriptEntry(number, _now, EntryKind.Assistant, text.Length == 0 ? "" : scrub(text), content.Tools);
     }
+
+    private static bool Spoken(string type) => string.Equals(type, "user", StringComparison.Ordinal) || string.Equals(type, "assistant", StringComparison.Ordinal);
 }

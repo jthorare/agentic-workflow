@@ -32,8 +32,10 @@ internal sealed class CodexLineReader(DateTimeOffset clock, Func<string, string>
             file.Saw(at);
         }
 
-        if (row.Payload is not { } payload)
+        // Every rollout line is '{ timestamp, type, payload }'; one without a type or a payload is of an unknown shape.
+        if (row.Type is null || row.Payload is not { } payload)
         {
+            file.SkippedLines++;
             return;
         }
 

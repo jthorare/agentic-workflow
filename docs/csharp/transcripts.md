@@ -124,8 +124,10 @@ Dedupe runs only inside one directory. A Codex resume in a later day's folder is
 | `AW-TRANSCRIPTS-003` | The ref's file exists but can't be read |
 | `AW-TRANSCRIPTS-004` | Two files share the ref |
 
-A line that is not a JSON object of the provider's shape is skipped and counted in `SkippedLines`; this includes lines
-of a known kind whose fields have an unexpected type. A list leaves out a file it can't read (deleted or locked
+A line that is not a JSON object of the provider's shape is skipped and counted in `SkippedLines`. That includes lines
+of a known kind whose fields have an unexpected type, a line with no type (Claude Code, Codex) or no payload (Codex), a
+user or assistant line whose content is no string or block array, and a Cursor line with neither a user or assistant
+role nor a type. A known bookkeeping line (a Claude Code `permission-mode`, a Cursor `turn_ended`) is not counted. A list leaves out a file it can't read (deleted or locked
 mid-scan) and lists the rest.
 
 ## Not verified
