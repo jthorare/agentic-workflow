@@ -29,6 +29,6 @@ public static partial class SindriErrors
     public static readonly ErrorDefinition MessagesSlackUnreachable = new("SND-MSG-033", ErrorKind.Unavailable, "Slack could not be reached");
 
     /// <summary>The Messages codes (messages spec §10), for <see cref="All"/>.</summary>
-    private static ErrorDefinition[] EveryMessage() =>
+    private static ErrorDefinition[] EveryMessages() =>
         [MessagesNotConnected, MessagesTokenInvalid, MessagesScopeMissing, MessagesRateLimited, MessagesAppBlocked, MessagesWrongWorkspace, MessagesNotUserToken, MessagesSlackUnreachable];
 }
