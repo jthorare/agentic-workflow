@@ -26,7 +26,7 @@ public sealed class StateBorderContrastTests
 
     /// <summary>
     /// Reads a style selector's pseudo-classes. Required: the states a user must see (pressed, the focus family, checked, selected, and the .selected class). Exempt: :pointerover (hover is not a required state)
-    /// and :disabled (an inactive component is outside WCAG 1.4.11). Functional :not, :is and :nth-child are not states themselves, but the states inside them count. Any other pseudo-class is Unknown.
+    /// and :disabled and :unavailable (an inactive component is outside WCAG 1.4.11; :unavailable is a picker row that stays focusable but cannot be taken, #3651). Functional :not, :is and :nth-child are not states themselves, but the states inside them count. Any other pseudo-class is Unknown.
     /// </summary>
     internal static class StateSelectors
     {
@@ -36,7 +36,7 @@ public sealed class StateBorderContrastTests
 
         private static readonly HashSet<string> _required = new(StringComparer.Ordinal) { "pressed", "focus", "focus-visible", "focus-within", "checked", "selected" };
 
-        private static readonly HashSet<string> _exempt = new(StringComparer.Ordinal) { "pointerover", "disabled" };
+        private static readonly HashSet<string> _exempt = new(StringComparer.Ordinal) { "pointerover", "disabled", "unavailable" };
 
         private static readonly HashSet<string> _functional = new(StringComparer.Ordinal) { "not", "is", "nth-child", "nth-last-child" };
 

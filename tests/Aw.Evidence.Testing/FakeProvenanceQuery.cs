@@ -27,13 +27,6 @@ public sealed class FakeProvenanceQuery : IProvenanceQuery
         return Answer([.. Emails.Where(e => Like(e, likePattern))]);
     }
 
-    /// <inheritdoc/>
-    public ValueTask<Result<IReadOnlyList<string>>> AllEmailsAsync(string? database, CancellationToken cancellationToken)
-    {
-        Databases.Add(database);
-        return Answer([.. Emails]);
-    }
-
     private ValueTask<Result<IReadOnlyList<string>>> Answer(IReadOnlyList<string> rows) =>
         ValueTask.FromResult(Failure is null ? Results.Success(rows) : EvidenceErrors.ProbeFailed.With(Failure));
 

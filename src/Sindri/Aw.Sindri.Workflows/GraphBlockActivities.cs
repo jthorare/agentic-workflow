@@ -70,7 +70,8 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
     {
         var (graphNode, block, scope, config) = (node.Node, node.Block, node.Scope, node.Config);
         // why: idempotent, so it runs before every node and the activity keeps no state across a retry; each call is a workflow read plus one ledger upsert transaction (a 20-node run makes 20), acceptable because a graph declares no disk, so a repeat changes no data and creates no files
-        var ensured = await _resources.Ensure(row.WorkflowId, spec, cancel).ConfigureAwait(false);
+        var test = string.Equals(row.Mode, WorkflowRunMode.Test, StringComparison.Ordinal);
+        var ensured = test ? ProvisionedResources.None : await _resources.Ensure(row.WorkflowId, spec, cancel).ConfigureAwait(false);   // why: a test run creates no folder
         if (ensured.IsError)
         {
             return Failed(config, ensured.Error);
@@ -83,7 +84,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             Item = itemIndex > 0 ? itemIndex : null,
             BatchWorkflow = itemIndex > 0 ? ActivityExecutionContext.Current.Info.WorkflowId : null,
         };
-        var result = await block.Execute(context, cancel).ConfigureAwait(false);   // a condition reads its references inside Execute
+        var result = await GraphTestWalk.Execute(block, context, test, cancel).ConfigureAwait(false);   // a condition reads its references inside Execute
         if (Cut(scope, config) is { } cutAfter)
         {
             return cutAfter;
@@ -99,7 +100,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             return FailedBlock(config, result.Error, context.FailureOutput, context.Raw);
         }
 
-        return SucceededBlock(config, result.Value);   // why: Commit waits for the run's end (CommitRunAsync): a later node can still fail the run
+        return SucceededBlock(config, result.Value, test) with { Fenced = test && GraphTestWalk.Parks(graphNode.Type) };   // why: Commit waits for the run's end (CommitRunAsync): a later node can still fail the run
     }
 
     // why: the block's own text (an http body, a model answer) can hold a secret; it is scrubbed BEFORE Fit cuts it, so a secret the cut would split is gone first (#3225, #3196)
@@ -110,7 +111,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         return new(NodeRunStatus.Failed, fitInput.Text, fitOutput.Text, [], NodeRunLimits.Cap(Clean($"{error.Code}: {error.Message}"), out _), NodeRunLimits.Cap(Clean(raw), out _), fitInput.Cut || fitOutput.Cut);
     }
 
-    private GraphBlockOutcome SucceededBlock(JsonObject input, BlockResult result)
+    private GraphBlockOutcome SucceededBlock(JsonObject input, BlockResult result, bool test)
     {
         var output = new JsonObject();
         foreach (var (name, value) in result.Outputs)
@@ -118,7 +119,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             output[name] = value?.DeepClone();
         }
 
-        var (fitInput, fitOutput) = (StoredJson.Fit(input.ToJsonString()), StoredJson.Fit(CleanJson(output.ToJsonString())));
+        var (fitInput, fitOutput) = (StoredJson.Fit(input.ToJsonString()), StoredJson.Fit(CleanJson(output.ToJsonString(test ? GraphTestWalk.Readable : null))));
         return new GraphBlockOutcome(NodeRunStatus.Succeeded, fitInput.Text, fitOutput.Text, result.Taken, Error: null, Truncated: fitInput.Cut || fitOutput.Cut);
     }
 
@@ -161,6 +162,28 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
         var nodeRuns = GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false));
         var outer = new GraphNodeScope(row, spec, nodeRuns, loop: null);
+        // why: a test run's commit writes go to the recorder, never to a live store (spec §5.1: the run-end Commit writes nothing); the recorder is held across the awaits below
+        var test = string.Equals(row.Mode, WorkflowRunMode.Test, StringComparison.Ordinal);
+        if (test)
+        {
+            _ = GraphTestRecorder.Begin();
+        }
+
+        try
+        {
+            return await CommitNodes(spec, outer, row, nodeRuns, cancel).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (test)
+            {
+                GraphTestRecorder.End();
+            }
+        }
+    }
+
+    private async Task<string?> CommitNodes(GraphSpec spec, GraphNodeScope outer, WorkflowRun row, IReadOnlyList<NodeRun> nodeRuns, CancellationToken cancel)
+    {
         foreach (var graphNode in spec.Nodes)
         {
             if (blocks.Find(graphNode.Type) is not { } block)
