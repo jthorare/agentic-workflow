@@ -17,6 +17,15 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     /// <summary>"Run morning-check@1:1".</summary>
     public string TitleText { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>True when the run Run now started got no run row for 10 s: the page says it did not start and offers Retry.</summary>
+    public bool DidNotStart => false;
+
+    /// <summary>"The run didn't start."</summary>
+    public string DidNotStartText => string.Empty;
+
+    /// <summary>The Retry button's words on a run that did not start.</summary>
+    public string StartRetryText => string.Empty;
+
     /// <summary>The served status word; empty before the first answer.</summary>
     public string Status { get; private set => Set(ref field, value); } = string.Empty;
 
