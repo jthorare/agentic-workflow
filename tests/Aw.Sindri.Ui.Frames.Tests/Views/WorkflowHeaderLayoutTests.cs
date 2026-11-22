@@ -6,6 +6,7 @@ using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Theme;
+using Aw.Sindri.Ui.Views.Controls;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
@@ -45,7 +46,7 @@ public sealed class WorkflowHeaderLayoutTests : FrameHost
             Settle(window);
             Assert.False(Visible(window, "WorkflowsHead"), "the list's counts show on a workflow's page");
             Assert.True(Visible(window, "WorkflowsState"), "the workflow's own state does not show");
-            Assert.Equal(shell.Workflows.DetailStateText, Named<TextBlock>(window, "WorkflowsState").Text);
+            Assert.Equal(shell.Workflows.DetailChipWord, Named<StateChipView>(window, "WorkflowsState").Word);   // the header state is a chip now (#3684): it shows the state word
         }
         finally
         {
@@ -72,7 +73,7 @@ public sealed class WorkflowHeaderLayoutTests : FrameHost
             Settle(window);
 
             var title = Named<TextBlock>(window, "WorkflowsTitle");
-            var state = Named<TextBlock>(window, "WorkflowsState");
+            var state = Named<StateChipView>(window, "WorkflowsState");
             var region = Named<Grid>(window, "WorkflowsHeadRegion");
             Assert.True(title.TextLayout.TextLines.Any(l => l.HasCollapsed), "the long title was not shortened");
             var stateRight = state.TranslatePoint(new Point(state.Bounds.Width, 0), window)!.Value.X;

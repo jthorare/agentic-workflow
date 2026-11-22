@@ -39,6 +39,12 @@ internal static partial class Labels
     /// <summary>The page width from which cards sit three across (the mockup README moved it from 900 so names aren't cut at a 1,000 px window).</summary>
     internal const double ProjectsThreeColumnsFrom = 1040;
 
+    /// <summary>The quiet line under the Projects title when Linear is not set up.</summary>
+    internal const string LinearNotConnected = "Linear not connected";
+
+    /// <summary>The announcement when a project's sheet was open and the project was removed from somewhere else.</summary>
+    internal const string ProjectRemovedElsewhere = "Removed elsewhere";
+
     /// <summary>The longest note the card's face shows, in characters.</summary>
     internal const int ProjectNoteFaceMax = 80;
 
