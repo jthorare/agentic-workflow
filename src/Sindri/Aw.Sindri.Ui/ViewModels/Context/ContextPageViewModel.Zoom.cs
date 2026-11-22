@@ -156,6 +156,12 @@ internal sealed partial class ContextPageViewModel
     {
         AnchorText = string.Empty;   // an empty box ends the search itself
         _ = BackToWholeMap();
+        if (HasProblem)
+        {
+            Problem = string.Empty;   // a miss (or a refusal) ends with the search, zoomed or not
+            _problemCode = null;
+            Refresh();
+        }
     }
 
     /// <summary>Back to the whole map: the answer stops standing out and the camera fits the world again.</summary>

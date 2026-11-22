@@ -50,7 +50,7 @@ internal sealed partial class ContextPageViewModel
     public bool HasProblem => Problem.Length > 0;
 
     /// <summary>True when the last search found nothing, or several items: a plain sentence with one action, not the refusal banner (#3677).</summary>
-    public bool IsMiss { get; private set; }
+    public bool IsMiss => HasProblem && _problemCode is "SND-CONTEXT-003" or "SND-CONTEXT-037";
 
     /// <summary>Whether the refusal banner shows: a refusal that is not a miss.</summary>
     public bool ShowBanner => HasProblem && !IsMiss;
@@ -116,7 +116,6 @@ internal sealed partial class ContextPageViewModel
             // A miss is said in plain words and the map that was on the page stays: nothing is cleared or dimmed for it.
             Choices = Suggestions(result.Error) is { Count: > 0 } own ? own : suggested;
             ShowProblem(result.Error, Labels.ContextRefusal(result.Error.Code, result.Error.Message, AnchorText.Trim()));
-            IsMiss = string.Equals(result.Error.Code, "SND-CONTEXT-003", StringComparison.Ordinal) || string.Equals(result.Error.Code, "SND-CONTEXT-037", StringComparison.Ordinal);
             await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
         }
 
@@ -199,7 +198,6 @@ internal sealed partial class ContextPageViewModel
     {
         ForgetSelection();
         Problem = string.Empty;
-        IsMiss = false;
         Choices = choices;
         if (view is null)
         {
