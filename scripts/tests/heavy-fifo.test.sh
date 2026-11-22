@@ -80,17 +80,26 @@ reset() {
   find "$RUN" "$LOCKS" -mindepth 1 -delete 2> /dev/null
   echo 1 > "$STATE/heavy-slots-cap"; echo 1 > "$STATE/heavy-light-cap"; JOB_ENV=""; SCRIPT=""
 }
-# start_of <pid>: the process start token heavy.sh writes as "start" (Linux: field 22 of /proc/<pid>/stat, read after the
-# last ")"; macOS: ps lstart, spaces as _). Empty when the pid is gone.
+# start_of <pid> [ps]: the process start token heavy.sh writes as "start" (Linux: field 22 of /proc/<pid>/stat, read after the
+# last ")"; macOS, or with "ps" as heavy.sh's AW_HEAVY_TEST_PS_START=1 does: ps lstart, spaces as _). Empty when the pid is gone.
 start_of() {
   local l r f
-  if [ -r "/proc/$1/stat" ]; then
+  if [ -r "/proc/$1/stat" ] && [ "${2:-}" != ps ]; then
     IFS= read -r l < "/proc/$1/stat" 2> /dev/null || return 0
     r="${l##*) }"; read -r -a f <<< "$r"; printf '%s' "${f[19]:-}"
   else
     r="$(ps -o lstart= -p "$1" 2> /dev/null)"; read -r -a f <<< "$r"; (IFS=_; printf '%s' "${f[*]}")
   fi
 }
+# A second stub dir whose ps prints nothing for `-o lstart=`, as when the pid dies between kill -0 and ps; any other call is the
+# real ps (heavy.sh's session lookup).
+STUB_NOPS="$WORK/stub-nops"; mkdir -p "$STUB_NOPS"; REAL_PS="$(command -v ps)"
+cat > "$STUB_NOPS/ps" <<EOF2
+#!/usr/bin/env bash
+for a in "\$@"; do [ "\$a" = lstart= ] && exit 1; done
+exec "$REAL_PS" "\$@"
+EOF2
+chmod +x "$STUB_NOPS/ps"
 # fake <pid> <lock> [<extra fields>] [<session>] [<start>]: an older wait file (since 2026-01-01) for <pid>. <start> defaults
 # to <pid>'s real start token (a genuine waiter); "-" leaves the field out; anything else is written as given.
 fake() {
@@ -150,6 +159,24 @@ job r1; wait_for 'started r1'
 check "a reused pid's wait file (start differs): the job takes the free slot at once" "$(yn 'started r1 && ! grep -q waiting "$RUN/out.r1"')" "yes"
 go r1; started r1 || kill "$(pid_of r1)" 2> /dev/null; wait "$(pid_of r1)" 2> /dev/null; job r2; wait_for 'started r2'
 check "a reused pid's wait file: the next job takes the free slot at once too" "$(yn 'started r2 && ! grep -q waiting "$RUN/out.r2"')" "yes"
+# The same through pid_start's ps branch (the path without /proc, macOS), forced on any box by AW_HEAVY_TEST_PS_START=1 (#3859).
+reset; pst="$(start_of "$live" ps)"; case $pst in *_*) r=0 ;; *) r=1 ;; esac
+check "ps branch: the live pid has an lstart token with words joined by _" "$r" "0"
+fake "$live" box-wide ',"fifo":1' "$$" "$pst"; JOB_ENV="AW_HEAVY_TEST_PS_START=1"
+job p1; wait_for 'waiting p1'; sleep 1.5
+check "ps branch: a genuine older waiter (its lstart matches) holds the free slot back" "$(yn '! started p1 && [ ! -d "$LOCKS/heavy-job.lock" ]')" "yes"
+check "ps branch: the job's own wait file carries an lstart token" "$(yn 'grep -q "\"start\":\"[A-Z][a-z]*_" "$LOCKS/heavy-wait/$(pid_of p1)" 2> /dev/null')" "yes"
+rm -f "$LOCKS/heavy-wait/$live"; wait_for 'started p1'
+check "ps branch: the older waiter's file goes, the job starts" "$(yn 'started p1')" "yes"
+reset; fake "$live" box-wide ',"fifo":1' "$$" "Mon_Jan_1_00:00:00_2001"; JOB_ENV="AW_HEAVY_TEST_PS_START=1"
+job p2; wait_for 'started p2'
+check "ps branch: a reused pid's wait file (lstart differs): the job takes the free slot at once" "$(yn 'started p2 && ! grep -q waiting "$RUN/out.p2"')" "yes"
+# The pid dies between kill -0 and ps: ps prints nothing, the start is empty, the file holds no one back and the job doesn't die
+# (bash before 4.4 exits on "${f[*]}" of an empty array under set -u).
+reset; fake "$live" box-wide ',"fifo":1' "$$" "$(start_of "$live" ps)"; JOB_ENV="AW_HEAVY_TEST_PS_START=1 AW_HEAVY_TEST_PATH=$STUB_NOPS:$STUB"
+job p3; wait_for 'started p3'; go p3; rc_of p3
+check "ps branch, ps prints nothing (the pid just died): the job runs at once and exits 0" "$(yn 'started p3 && ! grep -q waiting "$RUN/out.p3"') $RC" "yes 0"
+check "ps branch, ps prints nothing: no unbound-variable error" "$(grep -c 'unbound variable' "$RUN/out.p3")" "0"
 reset; fake "$live" box-wide ',"fifo":1' "$$" -; job n; wait_for 'started n'
 check "a fifo:1 wait file with no start is ignored" "$(yn 'started n && ! grep -q waiting "$RUN/out.n"')" "yes"
 reset; fake "$live" box-wide ""; job j; wait_for 'started j'
