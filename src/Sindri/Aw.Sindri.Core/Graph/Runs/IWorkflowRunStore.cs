@@ -52,6 +52,12 @@ public interface IWorkflowRunStore
     /// <returns>The runs; none when the workflow has none.</returns>
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Recent(WorkflowId workflow, int offset, int limit, CancellationToken cancellationToken);
 
+    /// <summary>How many runs a workflow has in every status and mode, test runs included (a delete says how many it keeps, Workflows page spec §4.9).</summary>
+    /// <param name="workflow">The workflow.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The count; 0 when the workflow has none.</returns>
+    public ValueTask<Result<int>> Count(WorkflowId workflow, CancellationToken cancellationToken);
+
     /// <summary>Every run in 'running', over all workflows, oldest first (serve start reads it to find runs whose Temporal workflow was never started).</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The runs.</returns>

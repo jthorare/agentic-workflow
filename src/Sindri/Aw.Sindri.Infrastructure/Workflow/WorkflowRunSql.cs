@@ -15,6 +15,10 @@ internal static class WorkflowRunSql
 
     // why: the recent list is live runs only, filtered in the query so a test row takes no room in a page (spec §3.2: LatestSucceeded and the repair pass read pages of it)
     internal const string Recent = SelectRun + " WHERE workflow_id = $workflow AND mode = 'live' ORDER BY started_at DESC, CAST(substr(id, instr(id, ':') + 1) AS INTEGER) DESC LIMIT $limit OFFSET $offset";
+
+    // why: a delete says how many runs it keeps, so this counts every row of the workflow, test runs included (spec 2026-11-12 §4.9)
+    internal const string CountAll = "SELECT COUNT(*) FROM workflow_run WHERE workflow_id = $workflow";
+
     internal const string Running = SelectRun + " WHERE status = 'running' ORDER BY started_at, id";
     internal const string QueuedWorkflows = "SELECT DISTINCT workflow_id FROM workflow_run WHERE status = 'queued' ORDER BY workflow_id";
 
