@@ -9,6 +9,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
 {
     private int _reads;
     private Uri? _url;
+    private string? _toMarkSeen;
 
     /// <summary>The run's id.</summary>
     public string Id { get; private set => Set(ref field, value); } = string.Empty;
@@ -95,7 +96,18 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     /// <summary>The sentence for a failed read.</summary>
     public string FailedText { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>Reads one run and shows it.</summary>
+    /// <summary>Opens the run page on one run: reads it, and marks a failed run seen once for this open so its Home row clears.</summary>
+    /// <param name="url">The API's base URL.</param>
+    /// <param name="runId">The run.</param>
+    /// <param name="cancellationToken">Cancels the read and the mark.</param>
+    /// <returns>A task that completes when the run is shown or the failure is.</returns>
+    internal Task Open(Uri url, string runId, CancellationToken cancellationToken)
+    {
+        _toMarkSeen = runId;
+        return Read(url, runId, cancellationToken);
+    }
+
+    /// <summary>Reads one run and shows it. A read alone never marks the run seen; only <see cref="Open"/> does.</summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="runId">The run.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
@@ -106,6 +118,11 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         _url = url;
         if (!string.Equals(Id, runId, StringComparison.Ordinal))
         {
+            if (!string.Equals(_toMarkSeen, runId, StringComparison.Ordinal))
+            {
+                _toMarkSeen = null;   // another run: the old open's mark is not wanted
+            }
+
             Id = runId;
             Groups = [];   // another run: nothing of the old one stays
             Graph = null;
@@ -137,6 +154,23 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
 
         (IsFailed, FailedText) = (false, string.Empty);
         Show(run.Value);
+        await MarkSeen(url, run.Value, cancellationToken).ConfigureAwait(true);
+    }
+
+    // Once per open: the first read that shows the run failed sends the mark; a run that ended another way has nothing to mark.
+    // The read does not say whether the run is a test run, so the mark goes anyway and Sindri answers Marked=false for one.
+    private async Task MarkSeen(Uri url, WorkflowRunView run, CancellationToken cancellationToken)
+    {
+        if (!string.Equals(_toMarkSeen, run.Id, StringComparison.Ordinal) || RunStatus.IsLive(run.Status))
+        {
+            return;
+        }
+
+        _toMarkSeen = null;
+        if (string.Equals(run.Status, "failed", StringComparison.Ordinal))
+        {
+            _ = await api.MarkWorkflowRunSeen(url, run.Id, cancellationToken).ConfigureAwait(true);   // best effort: a failed mark leaves the Home row, the page shows the run as read
+        }
     }
 
     private void Show(WorkflowRunView run)
