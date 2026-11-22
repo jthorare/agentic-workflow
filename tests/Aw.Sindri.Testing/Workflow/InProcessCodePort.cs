@@ -40,7 +40,7 @@ public sealed class InProcessCodePort : ICodeRunPort
             var compiled = new CodeCompiler().Compile(code, cancellationToken);
             if (compiled.Assembly is null)
             {
-                return SindriErrors.CodeCompileFailed.With(string.Join("; ", compiled.Diagnostics.Select(static d => $"{d.Line}:{d.Column} {d.Id} {d.Message}")));
+                return SindriErrors.CodeCompileFailed.With(string.Join("; ", compiled.Diagnostics.Select(static d => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{d.Line}:{d.Column} {d.Id} {d.Message}"))));
             }
 
             bytes = _compiled.GetOrAdd(code, compiled.Assembly);

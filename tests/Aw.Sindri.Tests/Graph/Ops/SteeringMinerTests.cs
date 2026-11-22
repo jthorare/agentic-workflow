@@ -58,15 +58,17 @@ public sealed class SteeringMinerTests : IClassFixture<RoslynWarmup>
     [Fact]
     public void Shape_keeps_the_first_twenty_well_formed_turns_and_cuts_text_to_its_head_and_before_to_its_tail()
     {
-        var batch = new JsonArray(
+        JsonArray batch =
+        [
             new JsonObject { ["text"] = "no ref" },
             new JsonObject { ["ref"] = "transcript:0000000a#1 x", ["text"] = "a ref with a space" },
             new JsonObject { ["ref"] = "transcript:0000000a#2", ["text"] = "   " },
-            "not a turn");
-        batch.Add((JsonNode)new JsonObject { ["ref"] = Ref(10), ["text"] = new string('a', 1600), ["before"] = new string('x', 100) + new string('y', 400) });
+            "not a turn",
+            new JsonObject { ["ref"] = Ref(10), ["text"] = new string('a', 1600), ["before"] = new string('x', 100) + new string('y', 400) },
+        ];
         for (var line = 11; line < 32; line++)
         {
-            batch.Add((JsonNode)new JsonObject { ["ref"] = Ref(line), ["text"] = $"turn {line}" });
+            batch.Add((JsonNode)new JsonObject { ["ref"] = Ref(line), ["text"] = "turn " + line.ToString(System.Globalization.CultureInfo.InvariantCulture) });
         }
 
         batch.Add((JsonNode)new JsonObject { ["ref"] = Ref(10), ["text"] = "the same ref again" });
@@ -88,14 +90,14 @@ public sealed class SteeringMinerTests : IClassFixture<RoslynWarmup>
         var batch = new JsonArray();
         for (var line = 1; line <= 20; line++)
         {
-            batch.Add((JsonNode)new JsonObject { ["ref"] = "transcript:" + new string('b', 60) + "#" + line, ["text"] = new string('€', 3000), ["before"] = new string('€', 1000) });
+            batch.Add((JsonNode)new JsonObject { ["ref"] = "transcript:" + new string('b', 60) + "#" + line.ToString(System.Globalization.CultureInfo.InvariantCulture), ["text"] = new string('€', 3000), ["before"] = new string('€', 1000) });
         }
 
         var shaped = Run("shape", new JsonObject { ["item"] = batch })!;
         var stored = new JsonObject { ["result"] = shaped.DeepClone() }.ToJsonString();
 
         Assert.Equal(20, shaped["turns"]!.AsArray().Count);
-        Assert.True(Encoding.UTF8.GetByteCount(stored) < NodeRunLimits.PayloadBytes, $"a full batch is {Encoding.UTF8.GetByteCount(stored)} bytes");
+        Assert.True(Encoding.UTF8.GetByteCount(stored) < NodeRunLimits.PayloadBytes, "a full batch is " + Encoding.UTF8.GetByteCount(stored).ToString(System.Globalization.CultureInfo.InvariantCulture) + " bytes");
         Assert.All(shaped["turns"]!.AsArray(), static t => Assert.NotEmpty(t!["text"]!.GetValue<string>()));
     }
 
@@ -197,9 +199,10 @@ public sealed class SteeringMinerTests : IClassFixture<RoslynWarmup>
     [Fact]
     public void Group_lists_each_label_and_phrase_once_with_most_turns_first()
     {
-        var grouped = Run("group", Scope(("gather", new JsonObject { ["items"] = new JsonArray(Batch(4,
+        var batch = Batch(4,
             ("transcript:aaaaaaaa#1", "restate", "skipped the tests"), ("transcript:aaaaaaaa#2", "rigor", "not a correction label"),
-            ("transcript:aaaaaaaa#3", "restate", "Repeated the ask"), ("transcript:aaaaaaaa#4", "restate", "repeated, the ask"))) })))!;
+            ("transcript:aaaaaaaa#3", "restate", "Repeated the ask"), ("transcript:aaaaaaaa#4", "restate", "repeated, the ask"));
+        var grouped = Run("group", Scope(("gather", new JsonObject { ["items"] = new JsonArray(batch) })))!;
 
         var phrases = grouped["phrases"]!.AsArray().Select(static p => (p!["id"]!.GetValue<string>(), p["label"]!.GetValue<string>(), p["count"]!.GetValue<int>())).ToList();
         Assert.Equal([("p1", "restate", 2), ("p2", "restate", 1)], phrases);

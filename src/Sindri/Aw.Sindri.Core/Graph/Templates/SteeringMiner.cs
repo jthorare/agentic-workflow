@@ -70,10 +70,11 @@ internal static partial class SteeringMiner
     // why: the graph is one straight line, so each node's edge goes to the next one in the list
     private static JsonArray Chain(JsonNode?[] nodes)
     {
+        var ids = nodes.OfType<JsonObject>().Select(static n => n["id"]?.GetValue<string>() ?? string.Empty).ToList();
         var edges = new JsonArray();
-        for (var i = 1; i < nodes.Length; i++)
+        for (var i = 1; i < ids.Count; i++)
         {
-            edges.Add((JsonNode)new JsonObject { ["from"] = nodes[i - 1]!["id"]!.GetValue<string>(), ["to"] = nodes[i]!["id"]!.GetValue<string>() });
+            edges.Add((JsonNode)new JsonObject { ["from"] = ids[i - 1], ["to"] = ids[i] });
         }
 
         return edges;

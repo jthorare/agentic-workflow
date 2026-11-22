@@ -2,6 +2,61 @@ namespace Aw.Sindri.Core.Graph.Templates;
 
 internal static partial class SteeringMiner
 {
+    // why: 'group' and 'rank' must build the very same groups, or the merge prompt's ids would point at other phrases; both bodies end with this text; declared before them, since a static field is set in text order
+    private static readonly string[] _sharedLines =
+    [
+        "static string? Str(JsonNode? node) => node is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;",
+        "",
+        "static int Int(JsonNode? node) => node is JsonValue value && value.TryGetValue<int>(out var number) ? number : 0;",
+        "",
+        "static string Key(string mistake) => Regex.Replace(mistake.ToLowerInvariant(), @\"[^\\p{L}\\p{Nd}]+\", \" \").Trim();",
+        "",
+        "static (List<(string Ref, string Label, string Mistake)> Rows, int Turns, int Labeled) Rows(JsonNode? batches)",
+        "{",
+        "    var rows = new List<(string Ref, string Label, string Mistake)>();",
+        "    var seen = new HashSet<string>(StringComparer.Ordinal);",
+        "    var (turns, labeled) = (0, 0);",
+        "    foreach (var batch in batches as JsonArray ?? new JsonArray())",
+        "    {",
+        "        if (batch is not JsonObject kept)",
+        "        {",
+        "            continue;",
+        "        }",
+        "",
+        "        turns += Int(kept[\"turns\"]);",
+        "        labeled += Int(kept[\"labeled\"]);",
+        "        foreach (var item in kept[\"corrections\"] as JsonArray ?? new JsonArray())",
+        "        {",
+        "            var row = item as JsonObject;",
+        "            if (Str(row?[\"ref\"]) is { } id && Str(row?[\"label\"]) is { } label && Array.IndexOf(Labels(), label) >= 0 && Str(row?[\"mistake\"]) is { } mistake && Key(mistake).Length > 0 && seen.Add(id))",
+        "            {",
+        "                rows.Add((id, label, mistake));",
+        "            }",
+        "        }",
+        "    }",
+        "",
+        "    return (rows, turns, labeled);",
+        "}",
+        "",
+        "static List<(string Id, string Label, string Mistake, List<string> Refs)> Groups(List<(string Ref, string Label, string Mistake)> rows)",
+        "{",
+        "    var groups = rows",
+        "        .GroupBy(static r => (r.Label, Key: Key(r.Mistake)))",
+        "        .Select(static g => (",
+        "            g.Key.Label,",
+        "            g.Key.Key,",
+        "            Mistake: g.GroupBy(static r => r.Mistake, StringComparer.Ordinal).OrderByDescending(static p => p.Count()).ThenBy(static p => p.Key.Length).ThenBy(static p => p.Key, StringComparer.Ordinal).First().Key,",
+        "            Refs: g.Select(static r => r.Ref).ToList()))",
+        "        .OrderByDescending(static g => g.Refs.Count)",
+        "        .ThenBy(static g => Array.IndexOf(Labels(), g.Label))",
+        "        .ThenBy(static g => g.Key, StringComparer.Ordinal)",
+        "        .ToList();",
+        "    return [.. groups.Select(static (g, i) => ($\"p{i + 1}\", g.Label, g.Mistake, g.Refs))];",
+        "}",
+        "",
+        "static string[] Labels() => [\"wrong_approach_design\", \"wrong_approach_process\", \"restate\", \"scope_surface\"];",
+    ];
+
     /// <summary>
     /// 'group', once after the loop: groups the gathered corrections by label and mistake phrase (lower case, punctuation as spaces) and lists the groups as
     /// phrases p1, p2, ... (most turns first) for the merge prompt, at most 200. Output: phrases, turns, labeled, corrections.
@@ -17,7 +72,7 @@ internal static partial class SteeringMiner
         "}",
         "",
         "return new JsonObject { [\"phrases\"] = phrases, [\"turns\"] = turns, [\"labeled\"] = labeled, [\"corrections\"] = rows.Count };",
-    ], SharedLines);
+    ], _sharedLines);
 
     /// <summary>
     /// 'rank', once at the end: rebuilds the same groups as 'group', joins the groups the merge prompt named (same label only, unknown ids ignored), keeps a group
@@ -109,63 +164,9 @@ internal static partial class SteeringMiner
         "",
         "    return i;",
         "}",
-    ], SharedLines);
+    ], _sharedLines);
 
-    // why: 'group' and 'rank' must build the very same groups, or the merge prompt's ids would point at other phrases; both bodies end with this text
-    private static string[] SharedLines =>
-    [
-        "static string? Str(JsonNode? node) => node is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;",
-        "",
-        "static int Int(JsonNode? node) => node is JsonValue value && value.TryGetValue<int>(out var number) ? number : 0;",
-        "",
-        "static string Key(string mistake) => Regex.Replace(mistake.ToLowerInvariant(), @\"[^\\p{L}\\p{Nd}]+\", \" \").Trim();",
-        "",
-        "static (List<(string Ref, string Label, string Mistake)> Rows, int Turns, int Labeled) Rows(JsonNode? batches)",
-        "{",
-        "    var rows = new List<(string Ref, string Label, string Mistake)>();",
-        "    var seen = new HashSet<string>(StringComparer.Ordinal);",
-        "    var (turns, labeled) = (0, 0);",
-        "    foreach (var batch in batches as JsonArray ?? new JsonArray())",
-        "    {",
-        "        if (batch is not JsonObject kept)",
-        "        {",
-        "            continue;",
-        "        }",
-        "",
-        "        turns += Int(kept[\"turns\"]);",
-        "        labeled += Int(kept[\"labeled\"]);",
-        "        foreach (var item in kept[\"corrections\"] as JsonArray ?? new JsonArray())",
-        "        {",
-        "            var row = item as JsonObject;",
-        "            if (Str(row?[\"ref\"]) is { } id && Str(row?[\"label\"]) is { } label && Array.IndexOf(Labels(), label) >= 0 && Str(row?[\"mistake\"]) is { } mistake && Key(mistake).Length > 0 && seen.Add(id))",
-        "            {",
-        "                rows.Add((id, label, mistake));",
-        "            }",
-        "        }",
-        "    }",
-        "",
-        "    return (rows, turns, labeled);",
-        "}",
-        "",
-        "static List<(string Id, string Label, string Mistake, List<string> Refs)> Groups(List<(string Ref, string Label, string Mistake)> rows)",
-        "{",
-        "    var groups = rows",
-        "        .GroupBy(static r => (r.Label, Key: Key(r.Mistake)))",
-        "        .Select(static g => (",
-        "            g.Key.Label,",
-        "            g.Key.Key,",
-        "            Mistake: g.GroupBy(static r => r.Mistake, StringComparer.Ordinal).OrderByDescending(static p => p.Count()).ThenBy(static p => p.Key.Length).ThenBy(static p => p.Key, StringComparer.Ordinal).First().Key,",
-        "            Refs: g.Select(static r => r.Ref).ToList()))",
-        "        .OrderByDescending(static g => g.Refs.Count)",
-        "        .ThenBy(static g => Array.IndexOf(Labels(), g.Label))",
-        "        .ThenBy(static g => g.Key, StringComparer.Ordinal)",
-        "        .ToList();",
-        "    return [.. groups.Select(static (g, i) => ($\"p{i + 1}\", g.Label, g.Mistake, g.Refs))];",
-        "}",
-        "",
-        "static string[] Labels() => [\"wrong_approach_design\", \"wrong_approach_process\", \"restate\", \"scope_surface\"];",
-    ];
 
     // why: the bodies are kept as lines joined with "\n", never a multi-line literal (MA0136), so the text the runner compiles is the same on every OS
-    private static string Lines(string[] lines, string[]? shared = null) => string.Join("\n", shared is null ? lines : [.. lines, string.Empty, .. shared]);
+    private static string Lines(string[] lines, string[]? shared = null) => string.Join('\n', shared is null ? lines : [.. lines, string.Empty, .. shared]);
 }
