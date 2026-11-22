@@ -29,9 +29,22 @@ public abstract partial class WorkflowRunStoreContract
         _ = (await store.Insert(Run(4, WorkflowRunStatus.Cancelled), Token)).Value;
         _ = (await store.Insert(Run(5), Token)).Value;
 
-        var failed = (await store.FailedUnseen(Token)).Value;
+        var failed = (await store.FailedUnseen(10, Token)).Value;
 
         Expect.Sequence([Run(2).Id, elsewhere.Id, Run(1).Id], failed.Select(static r => r.Id));
+    }
+
+    /// <summary>The limit keeps the newest failures.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task FailedUnseen_keeps_the_newest_up_to_the_limit()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(FailedAt(1, 1), Token)).Value;
+        _ = (await store.Insert(FailedAt(2, 9), Token)).Value;
+        _ = (await store.Insert(FailedAt(3, 5), Token)).Value;
+
+        Expect.Sequence([Run(2).Id, Run(3).Id], (await store.FailedUnseen(2, Token)).Value.Select(static r => r.Id));
     }
 
     /// <summary>A failed test run never counts.</summary>
@@ -42,7 +55,7 @@ public abstract partial class WorkflowRunStoreContract
         var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
         _ = (await store.Insert(FailedAt(500, 1) with { Mode = WorkflowRunMode.Test }, Token)).Value;
 
-        Expect.Equal(0, (await store.FailedUnseen(Token)).Value.Count);
+        Expect.Equal(0, (await store.FailedUnseen(10, Token)).Value.Count);
     }
 
     /// <summary>A seen run leaves the list, keeps its time, and a second mark keeps the first time.</summary>
@@ -61,7 +74,7 @@ public abstract partial class WorkflowRunStoreContract
         Expect.Equal(first, marked.SeenAt);
         Expect.Equal(first, again.SeenAt);
         Expect.Equal(first, (await store.Get(Run(1).Id, Token)).Value.SeenAt);
-        Expect.Sequence([Run(2).Id], (await store.FailedUnseen(Token)).Value.Select(static r => r.Id));
+        Expect.Sequence([Run(2).Id], (await store.FailedUnseen(10, Token)).Value.Select(static r => r.Id));
     }
 
     /// <summary>Marking a run that does not exist is SND-GRAPH-101.</summary>

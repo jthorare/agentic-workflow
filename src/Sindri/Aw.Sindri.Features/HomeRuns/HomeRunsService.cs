@@ -41,7 +41,7 @@ internal sealed class HomeRunsService(IWorkflowRunStore runs, IHomeViewReader vi
     public async ValueTask<Result<ScheduledResult>> Run(ScheduledRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
-        var failed = await runs.FailedUnseen(cancellationToken).ConfigureAwait(false);
+        var failed = await runs.FailedUnseen(FailedLimit, cancellationToken).ConfigureAwait(false);
         if (failed.IsError)
         {
             return failed.Error;
@@ -60,7 +60,7 @@ internal sealed class HomeRunsService(IWorkflowRunStore runs, IHomeViewReader vi
         }
 
         var now = clock.GetUtcNow();
-        var wanted = failed.Value.Take(FailedLimit).Select(r => HomeRunRows.Failed(r, now, scrubber)).Where(r => !putAway.Value.Contains(r.Row.Id.Value)).ToList();
+        var wanted = failed.Value.Select(r => HomeRunRows.Failed(r, now, scrubber)).Where(r => !putAway.Value.Contains(r.Row.Id.Value)).ToList();
         var plan = HomeReconcile.Plan(wanted, held.Value);
         if (plan.IsEmpty)
         {

@@ -44,11 +44,11 @@ public sealed class RunSeenMigrationTests : IDisposable
         Assert.True((await database.Writable(Token)).IsSuccess);
         var store = new SqliteWorkflowRunStore(database, clock);
 
-        var afterUpgrade = (await store.FailedUnseen(Token)).Value;
+        var afterUpgrade = (await store.FailedUnseen(10, Token)).Value;
         var fresh = new WorkflowRun(WorkflowRunId.From("old-flow@1:3"), WorkflowId.From("WF-00000000000000000000000000000001"), 1, "{\"kind\":\"manual\"}", WorkflowRunStatus.Failed,
             Outputs: null, Error: "boom again", ItemId: null, KnownInstants.Epoch, KnownInstants.Epoch.AddMinutes(1));
         _ = (await store.Insert(fresh, Token)).Value;
-        var afterNewFailure = (await store.FailedUnseen(Token)).Value;
+        var afterNewFailure = (await store.FailedUnseen(10, Token)).Value;
 
         Assert.Empty(afterUpgrade);
         Assert.Equal("old-flow@1:3", Assert.Single(afterNewFailure).Id.Value);

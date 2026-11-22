@@ -100,9 +100,9 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
             return oldest with { Status = WorkflowRunStatus.Running };
         }, cancellationToken);
 
-    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(CancellationToken cancellationToken) =>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(int limit, CancellationToken cancellationToken) =>
         RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, [],
-            (session, token) => RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.FailedUnseen, static _ => { }), WorkflowRunMapper.Instance, token), cancellationToken);
+            (session, token) => RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.FailedUnseen, c => c.Bind("$limit", Math.Max(limit, 1))), WorkflowRunMapper.Instance, token), cancellationToken);
 
     public ValueTask<Result<WorkflowRun>> MarkSeen(WorkflowRunId id, DateTimeOffset at, CancellationToken cancellationToken) =>
         RecipeSessions.Write(database, async ValueTask<Result<WorkflowRun>> (session, token) =>

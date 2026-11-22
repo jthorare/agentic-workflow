@@ -33,9 +33,10 @@ public interface IWorkflowRunStore
     public ValueTask<Result<WorkflowRun?>> PromoteOldestQueued(WorkflowId workflow, CancellationToken cancellationToken);
 
     /// <summary>The live runs of every workflow that ended 'failed' and have not been marked seen, newest first (a test run never counts; the Home failed-run row reads it).</summary>
+    /// <param name="limit">How many runs to keep, the newest first; 1 or more.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The runs; none when every failed run was seen.</returns>
-    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(CancellationToken cancellationToken);
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(int limit, CancellationToken cancellationToken);
 
     /// <summary>Marks a run seen. The first mark wins: a run that is already seen keeps its time.</summary>
     /// <param name="id">The run.</param>

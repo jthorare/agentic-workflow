@@ -80,7 +80,7 @@ public sealed class HomeRunsServiceTests
 
         _ = await Tick();
 
-        Assert.Empty((await _runs.FailedUnseen(Token)).Value);
+        Assert.Empty((await _runs.FailedUnseen(10, Token)).Value);
         Assert.Equal(EventTypes.HomeRowCleared, (await Events())[^1].Envelope.Type);
         Assert.Null((await _view.Get(HomeRunRows.IdOf(failed.Id), Token)).Value);
     }
