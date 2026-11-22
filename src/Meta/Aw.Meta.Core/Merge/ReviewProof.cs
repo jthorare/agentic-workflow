@@ -131,9 +131,12 @@ public static partial class ReviewProof
         return lines;
     }
 
-    // A line such as "build -warnaserror 0 warnings, 0 errors (build only)": the lane built and ran no test.
+    // The build-only marker: a line that is exactly "0 passed, 0 skipped, 0 failed (build only)" once trimmed, in any case. The
+    // lane built and ran no test. "(build only)" next to other words is not the marker (#3840).
+    internal const string BuildOnlyLine = "0 passed, 0 skipped, 0 failed (build only)";
+
     private static bool IsBuildOnly(string body) =>
-        body.Contains("(build only)", StringComparison.OrdinalIgnoreCase);
+        body.Split('\n').Any(line => string.Equals(line.Trim(), BuildOnlyLine, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Whether <paramref name="sha"/> (7 to 40 hex characters) names <paramref name="head"/>.</summary>
     /// <param name="sha">The sha a message names.</param>

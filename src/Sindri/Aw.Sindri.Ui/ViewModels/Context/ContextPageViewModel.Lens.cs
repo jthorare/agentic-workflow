@@ -102,14 +102,14 @@ internal sealed partial class ContextPageViewModel
         else if (string.Equals(result.Error.Code, NoMapCode, StringComparison.Ordinal))
         {
             Show(view: null, choices: []);
-            Problem = result.Error.Message;
+            ShowProblem(result.Error);
             await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
         }
         else
         {
             // A miss is said in plain words and the map that was on the page stays: nothing is cleared or dimmed for it.
             Choices = Suggestions(result.Error) is { Count: > 0 } own ? own : suggested;
-            Problem = Labels.ContextRefusal(result.Error.Code, result.Error.Message, AnchorText.Trim());
+            ShowProblem(result.Error, Labels.ContextRefusal(result.Error.Code, result.Error.Message, AnchorText.Trim()));
             await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
         }
 
