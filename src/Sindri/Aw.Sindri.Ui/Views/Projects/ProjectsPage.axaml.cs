@@ -61,6 +61,7 @@ internal sealed partial class ProjectsPage : UserControl
         {
             old.FocusRequested -= OnFocusRequested;
             old.MenuRequested -= OnMenuRequested;
+            old.SearchRequested -= OnSearchRequested;
         }
 
         _watched = DataContext as ProjectsPageViewModel;
@@ -68,6 +69,7 @@ internal sealed partial class ProjectsPage : UserControl
         {
             now.FocusRequested += OnFocusRequested;
             now.MenuRequested += OnMenuRequested;
+            now.SearchRequested += OnSearchRequested;
         }
     }
 
@@ -112,6 +114,45 @@ internal sealed partial class ProjectsPage : UserControl
         if (button is { IsEffectivelyVisible: true, Flyout: { } flyout })
         {
             flyout.ShowAt(button);
+        }
+    }
+
+    // `/`: focus in the search field, posted (as the shell does for the Queue filter) so the key's own "/" is not typed into it.
+    private void OnSearchRequested(object? sender, EventArgs e) =>
+        Dispatcher.UIThread.Post(() => _ = ProjectsSearch.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
+
+    // In the field: Esc clears it (then, empty, is left to the shell's Esc), Down goes to the list, Enter opens the selected row (the first when none is).
+    private void OnSearchKey(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyModifiers != KeyModifiers.None || DataContext is not ProjectsPageViewModel page)
+        {
+            return;
+        }
+
+        e.Handled = e.Key switch
+        {
+            Key.Escape => page.ClearSearch(),
+            Key.Down => page.Press("J"),
+            Key.Enter => (page.SelectedId is not null || page.Press("J")) && page.Press("Enter"),
+            _ => false,
+        };
+    }
+
+    private void OnSearchFocus(object? sender, RoutedEventArgs e) => (DataContext as ProjectsPageViewModel)?.SearchFocused(ProjectsSearch.IsFocused);
+
+    private void OnClearSearch(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is ProjectsPageViewModel page && page.ClearSearch())
+        {
+            _ = ProjectsSearch.Focus(NavigationMethod.Tab);
+        }
+    }
+
+    private void OnGroupHead(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: ProjectGroupViewModel group } && DataContext is ProjectsPageViewModel page)
+        {
+            page.ToggleGroup(group);
         }
     }
 

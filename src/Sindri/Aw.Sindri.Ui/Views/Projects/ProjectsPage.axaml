@@ -37,10 +37,12 @@
       <Setter Property="Height" Value="{StaticResource Row.GroupHeader}" />
       <Setter Property="Padding" Value="{StaticResource Row.Inset.Thickness}" />
     </Style>
-    <Style Selector="Border.group-head">
+    <Style Selector="Button.group-head">
       <Setter Property="Height" Value="{StaticResource Row.GroupHeader}" />
       <Setter Property="Padding" Value="{StaticResource Row.Inset.Thickness}" />
       <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="CornerRadius" Value="0" />
     </Style>
     <Style Selector="Border.skeleton-row">
       <Setter Property="Height" Value="{StaticResource Row.Height.Comfortable}" />
@@ -66,6 +68,12 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
       <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="{StaticResource Space.SM}" VerticalAlignment="Center">
+        <!-- Search (/): name, note and lead; the count is the rows found of the rows the view holds. Esc clears it, Down goes to the list (ProjectsPage.axaml.cs). -->
+        <Panel Width="280">
+          <TextBox x:Name="ProjectsSearch" Text="{Binding SearchText, Mode=TwoWay}" PlaceholderText="{Binding SearchPlaceholder}" Padding="8,4,64,4"
+                   KeyDown="OnSearchKey" GotFocus="OnSearchFocus" LostFocus="OnSearchFocus" AutomationProperties.Name="{Binding SearchName}" />
+          <TextBlock Classes="caption subtle" Text="{Binding SearchCount}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0" IsHitTestVisible="False" AutomationProperties.AccessibilityView="Raw" />
+        </Panel>
         <Button x:Name="ProjectsSort" AutomationProperties.Name="{Binding SortName}">
           <StackPanel Orientation="Horizontal" Spacing="6">
             <TextBlock Classes="caption subtle" Text="{Binding SortLabel}" VerticalAlignment="Center" />
@@ -173,6 +181,22 @@
       </StackPanel>
     </Border>
 
+    <!-- The search found nothing in the view: what search looks at, and Clear search (Esc). -->
+    <Border x:Name="ProjectsSearchEmpty" Classes="card" BorderThickness="1" IsVisible="{Binding IsSearchEmpty}">
+      <StackPanel Margin="{StaticResource Space.MD.Thickness}" Spacing="{StaticResource Space.SM}" HorizontalAlignment="Center" MaxWidth="560">
+        <Border x:Name="ProjectsSearchEmptyTitle" AutomationProperties.Name="{Binding SearchEmptyTitle}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body-strong" Text="{Binding SearchEmptyTitle}" TextAlignment="Center" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <TextBlock Classes="body muted" Text="{Binding SearchEmptyBody}" TextWrapping="Wrap" TextAlignment="Center" />
+        <Button x:Name="ProjectsClearSearch" Classes="accent" Click="OnClearSearch" HorizontalAlignment="Center" Margin="0,8,0,0" AutomationProperties.Name="{Binding ClearSearchText}">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBlock Text="{Binding ClearSearchText}" VerticalAlignment="Center" />
+            <Border Classes="kbd" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw"><TextBlock Text="{Binding ClearSearchKey}" /></Border>
+          </StackPanel>
+        </Button>
+      </StackPanel>
+    </Border>
+
     <Border x:Name="ProjectsFactsMissing" IsVisible="{Binding ShowsFactsMissing}" Padding="{StaticResource Row.Inset.Thickness}"
             AutomationProperties.Name="{Binding FactsMissingText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
       <TextBlock Classes="caption failing" Text="{Binding FactsMissingText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
@@ -205,15 +229,17 @@
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="pvm:ProjectGroupViewModel">
             <StackPanel>
-              <Border x:Name="ProjectsGroupHead" Classes="group-head" IsVisible="{Binding HasHeading}"
-                      AutomationProperties.Name="{Binding HeadingName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-                <Grid ColumnDefinitions="Auto,Auto,*" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
-                  <TextBlock x:Name="ProjectsGroupHeading" Classes="caption" Foreground="{DynamicResource Brush.InkMuted}" FontWeight="Medium" Text="{Binding Heading}" />
-                  <TextBlock Grid.Column="1" Classes="caption subtle" Margin="8,0,0,0" Text="{Binding Count}" />
-                  <TextBlock Grid.Column="2" Classes="caption subtle" HorizontalAlignment="Right" Text="{Binding Hint}" TextTrimming="CharacterEllipsis" />
+              <!-- The head is a button: a click or Enter folds its rows (▾ open, ▸ folded), kept across reads. -->
+              <Button x:Name="ProjectsGroupHead" Classes="group-head" IsVisible="{Binding HasHeading}" Click="OnGroupHead"
+                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" AutomationProperties.Name="{Binding HeadingName}">
+                <Grid ColumnDefinitions="Auto,Auto,Auto,*" VerticalAlignment="Center">
+                  <TextBlock Classes="caption subtle" Width="14" Text="{Binding Chevron}" />
+                  <TextBlock x:Name="ProjectsGroupHeading" Grid.Column="1" Classes="caption" Foreground="{DynamicResource Brush.InkMuted}" FontWeight="Medium" Text="{Binding Heading}" />
+                  <TextBlock Grid.Column="2" Classes="caption subtle" Margin="8,0,0,0" Text="{Binding Count}" />
+                  <TextBlock Grid.Column="3" Classes="caption subtle" HorizontalAlignment="Right" Text="{Binding Hint}" TextTrimming="CharacterEllipsis" />
                 </Grid>
-              </Border>
-              <ItemsControl Classes="rows" ItemsSource="{Binding Cards}" />
+              </Button>
+              <ItemsControl Classes="rows" ItemsSource="{Binding Cards}" IsVisible="{Binding IsExpanded}" />
             </StackPanel>
           </DataTemplate>
         </ItemsControl.ItemTemplate>

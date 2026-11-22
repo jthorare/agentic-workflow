@@ -200,6 +200,14 @@ internal sealed partial class ProjectsPageViewModel
         }
     }
 
+    /// <summary>A group head was clicked or got Enter: its rows fold or unfold, and a selection inside a folded group moves to the next row drawn.</summary>
+    /// <param name="group">The group.</param>
+    internal void ToggleGroup(ProjectGroupViewModel group)
+    {
+        group.Toggle();
+        Reselect();
+    }
+
     /// <summary>The empty view's button: Open Projects, or Back to Needs me on Triage.</summary>
     internal void RunViewEmptyAction() => SetView(View == ProjectView.Triage ? ProjectView.NeedsMe : ProjectView.All);
 
@@ -219,7 +227,8 @@ internal sealed partial class ProjectsPageViewModel
             return;
         }
 
-        IReadOnlyList<ProjectCardView> rows = View == ProjectView.Triage ? [] : ProjectRows.Sorted(list.Projects.Where(c => ProjectRows.InView(View, c)), Sort);
+        IReadOnlyList<ProjectCardView> inView = View == ProjectView.Triage ? [] : ProjectRows.Sorted(list.Projects.Where(c => ProjectRows.InView(View, c)), Sort);
+        var rows = Searched(inView);
         var groups = new List<ProjectGroupViewModel>();
         foreach (var planned in ProjectRows.Grouped(rows, Grouping, FactsMissing))
         {
@@ -236,12 +245,13 @@ internal sealed partial class ProjectsPageViewModel
 
         Patch.To(Groups, groups);
         var all = View == ProjectView.All;
-        Finished.Show(all ? [.. ProjectRows.Sorted(list.Finished, Sort).Select(Card)] : []);
-        Hidden.Show(all ? [.. ProjectRows.Sorted(list.Hidden, Sort).Select(Card)] : []);
+        Finished.Show(all ? [.. Searched(ProjectRows.Sorted(list.Finished, Sort)).Select(Card)] : []);
+        Hidden.Show(all ? [.. Searched(ProjectRows.Sorted(list.Hidden, Sort)).Select(Card)] : []);
         CountTabs(list);
         HasRows = rows.Count > 0;
         ShowsFactsMissing = FactsMissing;
-        ShowEmptyView(empty: !IsEmptyBlock && (View == ProjectView.Triage || (View != ProjectView.All && rows.Count == 0)));
+        ShowEmptyView(empty: !IsEmptyBlock && (View == ProjectView.Triage || (View != ProjectView.All && inView.Count == 0)));
+        ShowSearch(inView, rows.Count);
         Reselect();
         Laid?.Invoke(this, EventArgs.Empty);
     }
@@ -269,7 +279,13 @@ internal sealed partial class ProjectsPageViewModel
             ProjectView.MyWork => (Labels.ProjectsMyWorkEmptyTitle, Labels.ProjectsMyWorkEmptyBody, Labels.ProjectsOpenAll, "3"),
             _ => (Labels.ProjectsTriageTitle, Labels.ProjectsTriageBody, Labels.ProjectsBackToNeedsMe, "1"),
         };
-        var hints = empty || !HasRows ? Labels.ProjectsEmptyKeyHints : Labels.ProjectsKeyHints;
+        ShowKeyHints();
+    }
+
+    // The footer: the field's keys while it has focus, else the row keys, else (no row) the view keys.
+    private void ShowKeyHints()
+    {
+        var hints = _searchFocused ? Labels.ProjectsSearchKeyHints : IsViewEmpty || !HasRows ? Labels.ProjectsEmptyKeyHints : Labels.ProjectsKeyHints;
         KeyHints = [.. hints.Select(h => new ProjectKeyHint(h.Key, h.Word))];
     }
 }

@@ -54,6 +54,28 @@ internal sealed partial class ProjectCardViewModel
     /// <summary>The last activity's age: "&lt;1m", "2h", "3d", "1w"; empty when unknown.</summary>
     public string AgeText { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>True when the page's search found the row only by its note: the row says "matched in note" (it never prints the note).</summary>
+    public bool MatchedInNote { get; internal set => Set(ref field, value); }
+
+    /// <summary>"matched in note".</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string MatchedInNoteText => Labels.ProjectMatchedInNote;
+#pragma warning restore CA1822, MA0041
+
+    /// <summary>True on Needs me: Blocked on adds the ask ("you · review").</summary>
+    public bool InNeedsMe
+    {
+        get;
+        internal set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(BlockedOnCell));
+        }
+    }
+
+    /// <summary>The Blocked on cell as drawn: on Needs me a project that waits on the owner reads "you · review"; elsewhere <see cref="BlockedOnText"/>. "fix CI" is not shown: it needs an app-side rule.</summary>
+    public string BlockedOnCell => InNeedsMe && IsBlockedOnYou ? Labels.ProjectBlockedOnYouReview : BlockedOnText;
+
     /// <summary>True while the row is the one the keys act on.</summary>
     public bool IsSelected { get; internal set => Set(ref field, value); }
 
@@ -92,6 +114,7 @@ internal sealed partial class ProjectCardViewModel
         AgentsText = ProjectRows.Agents(truth);
         BlockedOnText = ProjectRows.BlockedOn(truth);
         IsBlockedOnYou = ProjectRows.WaitsOnYou(truth);
+        OnChanged(nameof(BlockedOnCell));
         var now = _clock.GetLocalNow();
         (TargetText, TargetPassed) = Card.FinishedAt is null ? ProjectRows.Target(Card.Target, DateOnly.FromDateTime(now.DateTime)) : (string.Empty, false);
         AgeText = Card.LastActivity is { } activity ? Labels.ProjectRowAge(_clock.GetUtcNow() - activity) : string.Empty;

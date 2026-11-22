@@ -69,6 +69,7 @@
           <StackPanel Orientation="Horizontal" IsVisible="{Binding ShowsFacts}">
             <Ellipse Classes="health" Classes.off="{Binding IsOffTrack}" Classes.risk="{Binding IsAtRisk}" Classes.unk="{Binding IsNotChecked}" Classes.ok="{Binding IsOnTrack}" IsVisible="{Binding HasHealth}" />
             <TextBlock x:Name="ProjectRowReason" Classes="caption subtle" Text="{Binding HealthReason}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+            <TextBlock x:Name="ProjectRowMatchedInNote" Classes="caption" Foreground="{DynamicResource Brush.PrimaryHover}" Margin="8,0,0,0" Text="{Binding MatchedInNoteText}" IsVisible="{Binding MatchedInNote}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
           </StackPanel>
         </Border>
       </DockPanel>
@@ -114,7 +115,7 @@
         <TextBlock Classes="caption subtle" Text="{Binding AgentsText}" IsVisible="{Binding ShowsFacts}" />
       </Border>
       <Border Grid.Column="5" Width="112" Margin="12,0,0,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
-        <TextBlock Classes="caption subtle" Classes.you="{Binding IsBlockedOnYou}" Text="{Binding BlockedOnText}" TextTrimming="CharacterEllipsis" IsVisible="{Binding ShowsFacts}" />
+        <TextBlock Classes="caption subtle" Classes.you="{Binding IsBlockedOnYou}" Text="{Binding BlockedOnCell}" TextTrimming="CharacterEllipsis" IsVisible="{Binding ShowsFacts}" />
       </Border>
       <Border Grid.Column="6" Classes="col-target" Width="96" Margin="12,0,0,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
         <TextBlock x:Name="ProjectRowTarget" Classes="caption subtle" Classes.passed="{Binding TargetPassed}" Text="{Binding TargetText}" TextTrimming="CharacterEllipsis" />

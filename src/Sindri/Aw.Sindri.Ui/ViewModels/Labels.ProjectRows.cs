@@ -118,6 +118,45 @@ internal static partial class Labels
     /// <summary>The Blocked on cell when the server says a PR waits on the owner.</summary>
     internal const string ProjectBlockedOnYou = "you";
 
+    /// <summary>The Blocked on cell in Needs me when a PR waits on the owner's review: the ask after "you".</summary>
+    internal const string ProjectBlockedOnYouReview = "you · review";
+
+    /// <summary>The search field's placeholder.</summary>
+    internal const string ProjectsSearchPlaceholder = "Search name, note, lead";
+
+    /// <summary>The search field's accessible name.</summary>
+    internal const string ProjectsSearchName = "Search projects";
+
+    /// <summary>The search field's count: "2 of 32" (the rows of the view shown).</summary>
+    internal static string ProjectsSearchCount(int shown, int of) => string.Create(CultureInfo.InvariantCulture, $"{shown} of {of}");
+
+    /// <summary>A row that matched the search only in its note (the note itself is not printed on a row).</summary>
+    internal const string ProjectMatchedInNote = "matched in note";
+
+    /// <summary>The search with no match: its title.</summary>
+    internal static string ProjectsSearchNone(string query) => "No project matches “" + query + "”";
+
+    /// <summary>The search with no match: what search looks at.</summary>
+    internal const string ProjectsSearchNoneBody = "Search looks at the name, the note and the lead.";
+
+    /// <summary>The key that clears the search, on its button.</summary>
+    internal const string ProjectsClearSearchKey = "Esc";
+
+    /// <summary>The search with no match: its button.</summary>
+    internal const string ProjectsClearSearch = "Clear search";
+
+    /// <summary>The footer's key hints while the search field has focus.</summary>
+    internal static readonly (string Key, string Word)[] ProjectsSearchKeyHints =
+    [
+        ("Esc", "clear"),
+        ("↓", "to the list"),
+        ("Enter", "open"),
+    ];
+
+    /// <summary>A group head's toggle: "Off track, 3, collapsed".</summary>
+    internal static string ProjectsGroupToggleName(string heading, int count, bool collapsed) =>
+        string.Create(CultureInfo.InvariantCulture, $"{heading}, {count}, {(collapsed ? "collapsed" : "expanded")}");
+
     /// <summary>A target before today: "Nov 12 passed".</summary>
     internal static string ProjectTargetPassed(string day) => day + " passed";
 
@@ -177,6 +216,7 @@ internal static partial class Labels
     [
         ("j/k", "move"),
         ("Enter", "open"),
+        ("/", "search"),
         ("o", "sort"),
         ("b", "group"),
         ("1-4", "view"),
@@ -186,6 +226,7 @@ internal static partial class Labels
     /// <summary>The footer's key hints in an empty view: no row keys.</summary>
     internal static readonly (string Key, string Word)[] ProjectsEmptyKeyHints =
     [
+        ("/", "search"),
         ("1-4", "view"),
         ("Ctrl+K", "palette"),
     ];

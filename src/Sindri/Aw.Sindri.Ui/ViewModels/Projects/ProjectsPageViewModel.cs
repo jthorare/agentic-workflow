@@ -123,7 +123,7 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
 
     // The cards as the page lays them out: the groups, then the folds that are open.
     private IEnumerable<ProjectCardViewModel> InReadingOrder() =>
-        Groups.SelectMany(g => g.Cards).Concat(Finished.IsOpen ? Finished.Cards : []).Concat(Hidden.IsOpen ? Hidden.Cards : []);
+        Groups.Where(g => g.IsExpanded).SelectMany(g => g.Cards).Concat(Finished.IsOpen ? Finished.Cards : []).Concat(Hidden.IsOpen ? Hidden.Cards : []);
 
     // The first neighbour still on the page, else Add project.
     private ProjectFocusEventArgs Card(List<string> candidates, string gone) =>
@@ -270,6 +270,7 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
 
         kept.NamesOnly = NamesOnly;
         kept.FactsMissing = FactsMissing;
+        kept.InNeedsMe = View == ProjectView.NeedsMe;
         return kept;
     }
 }

@@ -11,7 +11,7 @@ internal sealed partial class ProjectsPageViewModel
     internal event EventHandler<ProjectMenuRequestedEventArgs>? MenuRequested;
 
     /// <summary>One single key on the page.</summary>
-    /// <param name="key">"1" to "4", "O", "B", "J", "K" or "Enter".</param>
+    /// <param name="key">"1" to "4", "O", "B", "/", "J", "K" or "Enter".</param>
     /// <returns>True when the key was used.</returns>
     internal bool Press(string key) => key switch
     {
@@ -21,6 +21,7 @@ internal sealed partial class ProjectsPageViewModel
         "4" => Viewed(ProjectView.Triage),
         "O" => Asked(ProjectMenu.Sort),
         "B" => Asked(ProjectMenu.Group),
+        "/" => AskedForSearch(),
         "J" => Move(1),
         "K" => Move(-1),
         "Enter" => Opened(),

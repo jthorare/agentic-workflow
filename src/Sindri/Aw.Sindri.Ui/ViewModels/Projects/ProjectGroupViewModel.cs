@@ -22,8 +22,30 @@ internal sealed class ProjectGroupViewModel : ObservableObject
     /// <summary>How many rows.</summary>
     public int Count => Cards.Count;
 
-    /// <summary>The head's accessible name: "Off track, 3".</summary>
-    public string HeadingName => Heading + ", " + Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    /// <summary>The head's accessible name: "Off track, 3, expanded".</summary>
+    public string HeadingName => Labels.ProjectsGroupToggleName(Heading, Count, IsCollapsed);
+
+    /// <summary>True while the group's rows are folded under its head; kept across reads (the page keeps the group by its key).</summary>
+    public bool IsCollapsed
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(IsExpanded));
+            OnChanged(nameof(Chevron));
+            OnChanged(nameof(HeadingName));
+        }
+    }
+
+    /// <summary>True while the rows show.</summary>
+    public bool IsExpanded => !IsCollapsed;
+
+    /// <summary>The head's chevron: ▾ open, ▸ folded.</summary>
+    public string Chevron => IsCollapsed ? "▸" : "▾";
+
+    /// <summary>Folds or unfolds the group's rows (a click or Enter on its head).</summary>
+    internal void Toggle() => IsCollapsed = !IsCollapsed;
 
     /// <summary>The rows, in order.</summary>
     public ObservableCollection<ProjectCardViewModel> Cards { get; } = [];
