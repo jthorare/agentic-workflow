@@ -270,6 +270,23 @@ internal sealed class GraphEditSession(GraphSpec spec, Func<string, bool> isTrig
             _concurrency = concurrency.Length == 0 ? null : concurrency;
         }
 
+        if (meta.Result is { } result)
+        {
+            NodeId? named = null;
+            if (result.Length > 0)
+            {
+                if (!NodeId.TryFrom(result, out var id))
+                {
+                    return $"'{result}' is not a node id";
+                }
+
+                named = id;
+            }
+
+            // why: a name that matches no node is the validator's GRAPH-RESULT-001, which the batch reports like any finding
+            _result = named;
+        }
+
         return null;
     }
 }
