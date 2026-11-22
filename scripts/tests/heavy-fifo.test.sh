@@ -3,7 +3,8 @@
 # pool is queued (wait-file since, then pid). Covers: three box-wide waiters get one slot in arrival order, and three light
 # ones; a live older wait file holds a free slot back and its removal lets the job through; a dead one, one whose pid now
 # belongs to another process (its "start" differs) or that has no "start", one without "fifo":1, one of another pool and one of
-# another session hold nothing; the session pool is ordered too; a meta job skips
+# another session hold nothing; the genuine and reused-pid cases through pid_start's ps branch (AW_HEAVY_TEST_PS_START=1,
+# #3859), and a ps that prints nothing leaving the job running; the session pool is ordered too; a meta job skips
 # older waiters and nobody waits for a meta waiter; AW_HEAVY_FIFO_MAX_DEFER lets a waiter through; standing back counts toward
 # the lock timeout; an empty queue adds no wait; the wait file carries "fifo":1, and "meta":1 for a meta job.
 # A fake dotnet on PATH waits for a go file per job. Scratch state and lock dirs only; every pid killed is one this suite
