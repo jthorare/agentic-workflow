@@ -35,6 +35,11 @@ internal static class TranscriptsCommand
         };
     }
 
+    /// <summary>Whether turn text reaches this caller fenced as untrusted.</summary>
+    /// <param name="session">How the CLI classed itself.</param>
+    /// <returns>True unless a person runs it on a terminal.</returns>
+    internal static bool Fenced(AgentSession session) => !session.Terminal;
+
     private static async Task<int> List(string[] args, ITranscriptCorpus corpus, DateTimeOffset now, Output output, CancellationToken ct)
     {
         var parsed = TranscriptsArguments.List(args, now);

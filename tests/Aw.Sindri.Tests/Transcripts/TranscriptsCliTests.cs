@@ -5,6 +5,8 @@ using Aw.Sindri.Tests.Ledger;
 using Aw.Transcripts.Core;
 using Aw.Transcripts.Core.Ports;
 using Aw.Transcripts.Core.Refs;
+using Aw.Transcripts.Core.Sessions;
+using Aw.Transcripts.Core.Turns;
 using Aw.Transcripts.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
@@ -136,10 +138,42 @@ public sealed class TranscriptsCliTests : IDisposable
         Assert.StartsWith(TranscriptsErrors.SessionNotFound.Code, run.Stderr, StringComparison.Ordinal);
     }
 
-    private async Task<CliRun> Run(bool fence, params string[] args)
+    [Fact, Trait("Lane", "unit")]
+    public void A_person_on_a_terminal_reads_transcripts_unfenced() =>
+        Assert.False(TranscriptsCommand.Fenced(AgentSession.Detect(_ => null, interactive: true)));
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_session_sindri_launched_reads_transcripts_fenced_even_on_a_terminal() =>
+        Assert.True(TranscriptsCommand.Fenced(AgentSession.Detect(name => name == AgentSession.LaunchVariable ? "launch-1" : null, interactive: true)));
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_one_off_session_reads_transcripts_fenced_even_on_a_terminal() =>
+        Assert.True(TranscriptsCommand.Fenced(AgentSession.Detect(name => name == AgentSession.OneOffVariable ? "1" : null, interactive: true)));
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_caller_without_a_terminal_reads_transcripts_fenced() =>
+        Assert.True(TranscriptsCommand.Fenced(AgentSession.Detect(_ => null, interactive: false)));
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task Show_escapes_control_bytes_in_turn_text_and_keeps_newlines()
+    {
+        var session = TranscriptRefs.ForFile(TranscriptProvider.ClaudeCode, "fake/ansi.jsonl");
+        var turn = new TranscriptTurn(TranscriptRefs.ForTurn(session, 1), TurnRole.Human, StandardCorpus.Start, "red \u001b[31mtext\u001b]52;c;Zm9v\u0007\nnext\tline", []);
+        var transcript = new SessionTranscript(new TranscriptSession(session, TranscriptProvider.ClaudeCode, StandardCorpus.Start, StandardCorpus.Start, Repo: null, IsSubagent: false, Parent: null, HumanTurns: 1), [turn], 0);
+
+        var run = await Run(new InMemoryTranscriptCorpus([transcript]), fence: false, "show", session.Value);
+
+        Assert.Contains("  red \\x1b[31mtext\\x1b]52;c;Zm9v\\x07\n  next\tline\n", run.Stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain('\u001b', run.Stdout);
+    }
+
+    private Task<CliRun> Run(bool fence, params string[] args) =>
+        Run(new InMemoryTranscriptCorpus(StandardCorpus.Transcripts(RefOf)), fence, args);
+
+    private async Task<CliRun> Run(InMemoryTranscriptCorpus corpus, bool fence, params string[] args)
     {
         var collection = Composition.Compose(new ServiceCollection(), name => name == "AW_SINDRI_HOME" ? _home.Path : null, new FakeTimeProvider(_now));
-        _ = collection.AddSingleton<ITranscriptCorpus>(new InMemoryTranscriptCorpus(StandardCorpus.Transcripts(RefOf)));
+        _ = collection.AddSingleton<ITranscriptCorpus>(corpus);
         var provider = collection.BuildServiceProvider();
         await using var disposeProvider = provider;
         await using var scope = provider.CreateAsyncScope();
