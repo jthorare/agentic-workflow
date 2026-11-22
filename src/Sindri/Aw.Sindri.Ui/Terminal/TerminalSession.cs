@@ -42,6 +42,18 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
             await link.DisposeAsync().ConfigureAwait(true);
         }
 
+        Report(link, broke, cancellationToken);
+    }
+
+    // The socket ended: a drop (it broke) or a close by code. Nothing when the run was cancelled: the view switched or closed, and a socket that ended
+    // meanwhile is not the shown pane's news (#3860).
+    private void Report(ITerminalLink link, bool broke, CancellationToken cancellationToken)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+
         if (broke)
         {
             view.SocketDropped();
@@ -64,7 +76,7 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
             return null;
         }
 
-        if (link is null)
+        if (link is null && !cancellationToken.IsCancellationRequested)
         {
             view.SocketDropped();
         }
