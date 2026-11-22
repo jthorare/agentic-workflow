@@ -29,7 +29,7 @@ public sealed partial class RulesLinkerPathScanTests
 
     [Theory, Trait("Lane", "unit")]
     [MemberData(nameof(Texts))]
-    public void The_scan_finds_what_the_regex_found(string text) => Assert.Equal(Regex(text), Scan(text));
+    public void The_scan_finds_what_the_regex_found(string text) => Assert.Equal(OldMatches(text), Scan(text));
 
     [Fact, Trait("Lane", "unit")]
     public void The_scan_finds_what_the_regex_found_on_random_text_from_path_chars()
@@ -44,7 +44,7 @@ public sealed partial class RulesLinkerPathScanTests
                 _ = text.Append(Alphabet[random.Next(Alphabet.Length)]);
             }
 
-            Assert.Equal(Regex(text.ToString()), Scan(text.ToString()));
+            Assert.Equal(OldMatches(text.ToString()), Scan(text.ToString()));
         }
     }
 
@@ -61,7 +61,7 @@ public sealed partial class RulesLinkerPathScanTests
 
     private static List<string> Scan(string text) => [.. RulesLinker.RepoPaths(text).Select(p => text.Substring(p.Index, p.Length))];
 
-    private static List<string> Regex(string text) => [.. OldRepoPath().Matches(text).Select(m => m.Value)];
+    private static List<string> OldMatches(string text) => [.. OldRepoPath().Matches(text).Select(m => m.Value)];
 
     // The pattern the scan replaced, kept here as the answer key.
     [GeneratedRegex(@"(?<![\w/.\-])(?:[\w.\-]+/)+[\w\-]+(?:\.[A-Za-z0-9]+)+(?![\w/\-])", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 10_000)]
