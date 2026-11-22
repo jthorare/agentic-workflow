@@ -46,7 +46,8 @@ public sealed class DelegateFollowUpTests
 
         var response = await Drop(5);
 
-        Assert.Equal((5, false, default(string)), (response.Issue, response.Dropped, response.Lane));
+        Assert.Equal((5, false), (response.Issue, response.Dropped));
+        Assert.Null(response.Lane);
     }
 
     [Theory, Trait("Lane", "unit")]
