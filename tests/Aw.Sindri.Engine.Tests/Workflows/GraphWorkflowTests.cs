@@ -167,4 +167,25 @@ public sealed class GraphWorkflowTests
         Assert.Empty(rig.Blocks.Log);   // 'use' never ran its block
         Assert.Equal(NodeRunStatus.Skipped, nodes["after"].Status);
     }
+
+    [Fact]
+    public async Task A_node_whose_input_was_cut_hands_its_whole_output_to_the_next_node()
+    {
+        // why: #3896, only a cut OUTPUT hides a node's value; the stored input is cut for display and says nothing about the output
+        await using var rig = await GraphRig.StartAsync();
+        var bigInput = new JsonObject { ["text"] = new string('x', NodeRunLimits.PayloadBytes + 1024) };
+        var workflow = await rig.Define(GraphRig.Spec("unlimited",
+            [GraphRig.Node("start", "manual"), GraphRig.Node("shrink", "echo", config: bigInput), GraphRig.Node("use", "pass", config: new JsonObject { ["value"] = "{{shrink.node}}" })],
+            [GraphRig.Edge("start", "shrink"), GraphRig.Edge("shrink", "use")]));
+
+        var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
+        var run = await rig.Final(started.RunId);
+        var nodes = (await rig.Runs.NodeRuns(started.RunId, Token)).Value.ToDictionary(static n => n.NodeId.Value, StringComparer.Ordinal);
+
+        Assert.Equal(WorkflowRunStatus.Succeeded, run.Status);
+        Assert.True(JsonNode.Parse(nodes["shrink"].Input!)!["truncated"]!.GetValue<bool>());
+        Assert.False(nodes["shrink"].Truncated);
+        Assert.Equal(NodeRunStatus.Succeeded, nodes["use"].Status);
+        Assert.Equal("shrink", JsonNode.Parse(nodes["use"].Output!)!["value"]!.GetValue<string>());
+    }
 }

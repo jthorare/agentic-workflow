@@ -52,7 +52,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     /// <summary>True when there is a note under the run's title.</summary>
     public bool HasNotice => NoticeText.Length > 0;
 
-    /// <summary>"Started by manual".</summary>
+    /// <summary>"Started by hand".</summary>
     public string TriggerText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>"Revision 1".</summary>
@@ -257,9 +257,9 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         OnChanged(nameof(CanPressCancel));
     }
 
-    // The trigger is the stored object; its "kind" names it. One without a kind reads as an unknown trigger rather than failing the run.
-    private static string KindOf(JsonElement? trigger) =>
+    // The trigger is the stored object; its "kind" names it. One without a kind reads as "an unknown trigger" rather than failing the run.
+    private static string? KindOf(JsonElement? trigger) =>
         trigger is { ValueKind: JsonValueKind.Object } t && t.TryGetProperty("kind", out var kind) && kind.ValueKind == JsonValueKind.String && kind.GetString() is { Length: > 0 } text
             ? text
-            : Labels.WfUnknownTrigger;
+            : null;
 }

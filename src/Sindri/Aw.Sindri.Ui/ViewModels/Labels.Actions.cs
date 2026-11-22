@@ -88,6 +88,7 @@ internal static partial class Labels
         ["AnswerQuestion"] = "Answer question",
         ["CancelWorkflowRun"] = "Cancel workflow run",
         ["RerunWorkflowRun"] = "Re-run workflow run from a step",
+        ["MarkWorkflowRunSeen"] = "Mark run seen",
         ["TakeOverAgentNode"] = "Take over agent",
         ["HandBackAgentNode"] = "Hand back agent",
         ["RunWorkflow"] = "Run workflow",
