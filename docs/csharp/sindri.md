@@ -522,6 +522,31 @@ on the four carve-out routes with `issue` rows; queries are GET or QUERY, a comm
 `ILedgerStore`, `ILease` or `IApprovals`, also through a handler's own Features helpers, followed one level; `GetStatusService` and `StreamEventsService` are allowlisted until P2's
 `ILedgerReader`; the read-only approvals port is `IApprovedProfile`, which the context query handlers already take) and `ARCH-CQRS-003` (every command and issue has its row; a classified command has variant rows).
 
+## Transcripts
+
+`sindri transcripts list` and `sindri transcripts show <ref>` read the local agent transcripts through `Aw.Transcripts`
+(`docs/csharp/transcripts.md`). They run in the CLI's own process: they read files, need no control plane and never
+start serve. An agent session may run them; neither verb has a catalog row, a route or an MCP tool.
+
+| Verb | Prints | `--json` |
+|---|---|---|
+| `list [--since T] [--provider P] [--repo PATH] [--subagents]` | One line per session, newest first: ref, provider, last written, human turns, repo; a subagent names its parent | `TranscriptListView`: `since`, `fenced` (always false), `sessions[]` |
+| `show <ref>` | The session's header, then each turn: role, time, line, an assistant turn's tools, the text indented | `TranscriptShowView`: `session`, `fenced`, `skippedLines`, `turns[]` |
+
+`--since` takes `7d` (a whole number of days), a date (`YYYY-MM-DD`, midnight UTC) or an RFC 3339 time; the default
+is 7 days. `--repo` is an absolute path, matched exactly against the session's main checkout. Subagents are listed
+only with `--subagents`.
+
+Turn text is untrusted. When stdout is not a terminal (an agent session, a script), `show` wraps each turn's text in
+`<untrusted source="transcript">…</untrusted>` and sets `fenced`; a person on a terminal gets it bare. The text is
+already scrubbed by the corpus.
+
+Exit codes: 0 ok, 1 an unknown ref, an unreadable file or two files with one ref (`AW-TRANSCRIPTS-002`..`004` on stderr),
+2 usage (`SND-CLI-003`).
+
+The roots are the corpus defaults, read by `AddTranscriptsInfrastructure(environment)` in `Composition`: `HOME`,
+`AW_STATE_DIR` and `AW_SINDRI_HOME` (for the agent homes). No new environment variable.
+
 ## Proving it
 
 Proving a phase isn't a user feature, so its recipe isn't here: it is in API spec §12 and the phase's plan. The
