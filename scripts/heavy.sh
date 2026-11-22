@@ -79,7 +79,8 @@ TIMEOUT=5400
 # Meta gate reservation (owner, 2026-10-17): the meta orchestrator writes how many box-wide slots its gates reserve
 # (0..SLOTS; every reader caps it at SLOTS-1, so a lane job always has a slot, #2060) to <state>/heavy-meta-reserve, scaled to its merge-queue depth. A job run with AW_HEAVY_PRIORITY=meta may
 # take any slot; any other expensive job may take only slots above the reservation. Nothing running is pre-empted, and
-# a job blocked only by the reservation (it skipped a free reserved slot) does not count that wait toward TIMEOUT.
+# a job blocked only by the reservation (it skipped a free reserved slot) does not count that wait toward TIMEOUT. Such a wait
+# prints a note when it starts and every HOLD_NOTE_EVERY seconds while it lasts: the reserve, the slot count and the MB available (#3907).
 # The reserve is a slot count, held whatever memory is free (meta, 2026-11-22, #3885): the memory floors decide only whether a
 # job may start in a slot, never how many slots meta keeps. So with slot 2 under its floor, a lane job still can't take slot 1.
 RESERVE="$(heavy_reserve "$SLOTS")"
@@ -95,6 +96,7 @@ case $MAX_DEFER in ""|*[!0-9]*) MAX_DEFER=1800 ;; esac
 STOOD_AT=""
 # A light build held back for a box-wide waiter (rule 3) says so when the hold starts and again every HOLD_NOTE_EVERY seconds of
 # holding, so a long hold shows in the job's output (#3810). A hold that starts again, or switches to another waiter, says so at once. The hold has no time limit of its own.
+# The box-wide wait beside a free reserved slot repeats its note on the same interval (#3907).
 HOLD_NOTE_EVERY=300
 
 mode=auto
