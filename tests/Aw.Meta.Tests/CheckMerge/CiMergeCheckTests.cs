@@ -158,7 +158,8 @@ public sealed class CiMergeCheckTests
             .When("rev-parse --verify --quiet origin/main", "newmain\n")
             .When("diff --name-only oldmain...headsha", "src/a.cs\n")
             .When("merge-tree", exitCode: 1)
-            .When("git fetch");
+            .When("git fetch")
+            .When("gh api graphql", MergeRun.QueueAnswers.Off);
 
         var response = await Check();
 

@@ -9,5 +9,6 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="Taken">The outputs an edge may leave by.</param>
 /// <param name="Error">Why it failed, or null.</param>
 /// <param name="Raw">The scrubbed raw model text a failed prompt step left through BlockContext.LeaveRaw, or null.</param>
+/// <param name="Fenced">True when a test run already decided what a 'wait' or 'ask_owner' node does, so the walk parks on nothing.</param>
 /// <param name="Truncated">True when <see cref="StoredJson.Fit"/> cut the input or the output; the node row keeps the flag the store would have set.</param>
-internal sealed record GraphBlockOutcome(NodeRunStatus Status, string? Input, string? Output, IReadOnlyList<string> Taken, string? Error, string? Raw = null, bool Truncated = false);
+internal sealed record GraphBlockOutcome(NodeRunStatus Status, string? Input, string? Output, IReadOnlyList<string> Taken, string? Error, string? Raw = null, bool Truncated = false, bool Fenced = false);
