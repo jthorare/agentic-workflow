@@ -47,9 +47,10 @@ action-panel-1440, source slack is later: no Connect row, ok, pass
 action-panel-1440, Connect rows drawn as the data says, 1 vs 1, pass
 action-panel-1440, waits-on text is whole, 0 cut, pass
 action-panel-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-action-panel-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+action-panel-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 action-panel-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 action-panel-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+action-panel-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 action-panel-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 action-panel-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 action-panel-1440, shell: status pill, Sindri running, pass
@@ -125,9 +126,10 @@ agent-asking-1440, source slack is later: no Connect row, ok, pass
 agent-asking-1440, Connect rows drawn as the data says, 1 vs 1, pass
 agent-asking-1440, waits-on text is whole, 0 cut, pass
 agent-asking-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-agent-asking-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+agent-asking-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 agent-asking-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 agent-asking-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+agent-asking-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 agent-asking-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 agent-asking-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 agent-asking-1440, shell: status pill, Sindri running, pass
@@ -196,9 +198,10 @@ agents-tab-1440, source linear is on: no Connect row, ok, pass
 agents-tab-1440, source slack is on: no Connect row, ok, pass
 agents-tab-1440, waits-on text is whole, 0 cut, pass
 agents-tab-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-agents-tab-1440, shell: nav counts are this frame's own (Reviews 5, Items, Agents), as the Projects shell draws them, 21|5|2||10||, pass
+agents-tab-1440, shell: nav counts are this frame's own (Reviews 5, Agents; Items always blank: Home builds none), as the Projects shell draws them, 21|5|||10||, pass
 agents-tab-1440, shell: Reviews nav = the open review rows of this data (5), none while GitHub is off, 5 vs 5, pass
 agents-tab-1440, shell: Agents nav = live sessions of this data (10), 10 vs 10, pass
+agents-tab-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 agents-tab-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 agents-tab-1440, shell: Home nav count = the All tab (none when 0), 21 vs 21, pass
 agents-tab-1440, shell: status pill, Sindri running, pass
@@ -274,9 +277,10 @@ brief-1440, source slack is later: no Connect row, ok, pass
 brief-1440, Connect rows drawn as the data says, 1 vs 1, pass
 brief-1440, waits-on text is whole, 0 cut, pass
 brief-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-brief-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+brief-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 brief-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 brief-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+brief-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 brief-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 brief-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 brief-1440, shell: status pill, Sindri running, pass
@@ -361,9 +365,10 @@ brief-cap-1440, source slack is later: no Connect row, ok, pass
 brief-cap-1440, Connect rows drawn as the data says, 1 vs 1, pass
 brief-cap-1440, waits-on text is whole, 0 cut, pass
 brief-cap-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-brief-cap-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+brief-cap-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 brief-cap-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 brief-cap-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+brief-cap-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 brief-cap-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 brief-cap-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 brief-cap-1440, shell: status pill, Sindri running, pass
@@ -438,9 +443,10 @@ brief-more-focus-1440, source slack is later: no Connect row, ok, pass
 brief-more-focus-1440, Connect rows drawn as the data says, 1 vs 1, pass
 brief-more-focus-1440, waits-on text is whole, 0 cut, pass
 brief-more-focus-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-brief-more-focus-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+brief-more-focus-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 brief-more-focus-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 brief-more-focus-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+brief-more-focus-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 brief-more-focus-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 brief-more-focus-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 brief-more-focus-1440, shell: status pill, Sindri running, pass
@@ -518,9 +524,10 @@ brief-more-hover-1440, source slack is later: no Connect row, ok, pass
 brief-more-hover-1440, Connect rows drawn as the data says, 1 vs 1, pass
 brief-more-hover-1440, waits-on text is whole, 0 cut, pass
 brief-more-hover-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-brief-more-hover-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+brief-more-hover-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 brief-more-hover-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 brief-more-hover-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+brief-more-hover-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 brief-more-hover-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 brief-more-hover-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 brief-more-hover-1440, shell: status pill, Sindri running, pass
@@ -579,7 +586,8 @@ brief-states-1440, footer fits, 1440 vs 1440, pass
 brief-states-1440, no row keys in the footer without a cursor row (none), ok, pass
 brief-states-1440, waits-on text is whole, 0 cut, pass
 brief-states-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-brief-states-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, ||||6||, pass
+brief-states-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, ||||7||, pass
+brief-states-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 brief-states-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 brief-states-1440, shell: Home nav count = the All tab (none when 0),  vs 0, pass
 brief-states-1440, shell: status pill, Sindri running, pass
@@ -646,9 +654,10 @@ changed-1440, source slack is later: no Connect row, ok, pass
 changed-1440, Connect rows drawn as the data says, 1 vs 1, pass
 changed-1440, waits-on text is whole, 0 cut, pass
 changed-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-changed-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+changed-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 changed-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 changed-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+changed-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 changed-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 changed-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 changed-1440, shell: status pill, Sindri running, pass
@@ -724,9 +733,10 @@ connect-1440, source slack is later: no Connect row, ok, pass
 connect-1440, Connect rows drawn as the data says, 1 vs 1, pass
 connect-1440, waits-on text is whole, 0 cut, pass
 connect-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-connect-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+connect-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 connect-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 connect-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+connect-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 connect-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 connect-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 connect-1440, shell: status pill, Sindri running, pass
@@ -801,9 +811,10 @@ connect-stale-1440, source slack is later: no Connect row, ok, pass
 connect-stale-1440, Connect rows drawn as the data says, 0 vs 0, pass
 connect-stale-1440, waits-on text is whole, 0 cut, pass
 connect-stale-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-connect-stale-1440, shell: nav counts are this frame's own (Reviews 1, Items, Agents), as the Projects shell draws them, 7|1|||7||, pass
+connect-stale-1440, shell: nav counts are this frame's own (Reviews 1, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7|1|||7||, pass
 connect-stale-1440, shell: Reviews nav = the open review rows of this data (1), none while GitHub is off, 1 vs 1, pass
 connect-stale-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+connect-stale-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 connect-stale-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 connect-stale-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 connect-stale-1440, shell: status pill, Sindri running, pass
@@ -880,9 +891,10 @@ d3-17-1440, source slack is on: no Connect row, ok, pass
 d3-17-1440, Connect rows drawn as the data says, 0 vs 0, pass
 d3-17-1440, waits-on text is whole, 0 cut, pass
 d3-17-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-d3-17-1440, shell: nav counts are this frame's own (Reviews 5, Items, Agents), as the Projects shell draws them, 17|5|||10||, pass
+d3-17-1440, shell: nav counts are this frame's own (Reviews 5, Agents; Items always blank: Home builds none), as the Projects shell draws them, 17|5|||10||, pass
 d3-17-1440, shell: Reviews nav = the open review rows of this data (5), none while GitHub is off, 5 vs 5, pass
 d3-17-1440, shell: Agents nav = live sessions of this data (10), 10 vs 10, pass
+d3-17-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 d3-17-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 d3-17-1440, shell: Home nav count = the All tab (none when 0), 17 vs 17, pass
 d3-17-1440, shell: status pill, Sindri running, pass
@@ -972,9 +984,10 @@ default-1000, source slack is later: no Connect row, ok, pass
 default-1000, Connect rows drawn as the data says, 1 vs 1, pass
 default-1000, waits-on text is whole, 0 cut, pass
 default-1000, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-default-1000, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+default-1000, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 default-1000, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 default-1000, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+default-1000, shell: Items nav is blank (no number) on every frame, blank, pass
 default-1000, one filled primary button across the rows (hover and cursor never both), 1, pass
 default-1000, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 default-1000, shell: status pill, Sindri running, pass
@@ -1050,9 +1063,10 @@ default-1440, source slack is later: no Connect row, ok, pass
 default-1440, Connect rows drawn as the data says, 1 vs 1, pass
 default-1440, waits-on text is whole, 0 cut, pass
 default-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-default-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+default-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 default-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 default-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+default-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 default-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 default-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 default-1440, shell: status pill, Sindri running, pass
@@ -1127,9 +1141,10 @@ default-full-1440, source slack is on: no Connect row, ok, pass
 default-full-1440, Connect rows drawn as the data says, 0 vs 0, pass
 default-full-1440, waits-on text is whole, 0 cut, pass
 default-full-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-default-full-1440, shell: nav counts are this frame's own (Reviews 5, Items, Agents), as the Projects shell draws them, 21|5|2||10||, pass
+default-full-1440, shell: nav counts are this frame's own (Reviews 5, Agents; Items always blank: Home builds none), as the Projects shell draws them, 21|5|||10||, pass
 default-full-1440, shell: Reviews nav = the open review rows of this data (5), none while GitHub is off, 5 vs 5, pass
 default-full-1440, shell: Agents nav = live sessions of this data (10), 10 vs 10, pass
+default-full-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 default-full-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 default-full-1440, shell: Home nav count = the All tab (none when 0), 21 vs 21, pass
 default-full-1440, shell: status pill, Sindri running, pass
@@ -1223,9 +1238,10 @@ density-comfortable-1440, source slack is later: no Connect row, ok, pass
 density-comfortable-1440, Connect rows drawn as the data says, 1 vs 1, pass
 density-comfortable-1440, waits-on text is whole, 0 cut, pass
 density-comfortable-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-density-comfortable-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+density-comfortable-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 density-comfortable-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 density-comfortable-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+density-comfortable-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 density-comfortable-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 density-comfortable-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 density-comfortable-1440, shell: status pill, Sindri running, pass
@@ -1279,7 +1295,8 @@ done-list-1440, footer fits, 1440 vs 1440, pass
 done-list-1440, no row keys in the footer without a cursor row (done), ok, pass
 done-list-1440, waits-on text is whole, 0 cut, pass
 done-list-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-done-list-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 5||||7||, pass
+done-list-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 5||||7||, pass
+done-list-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 done-list-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 done-list-1440, shell: status pill, Sindri running, pass
 done-list-1440, shell: search placeholder, Search…, pass
@@ -1310,7 +1327,8 @@ done-list-empty-1440, footer fits, 1440 vs 1440, pass
 done-list-empty-1440, no row keys in the footer without a cursor row (done), ok, pass
 done-list-empty-1440, waits-on text is whole, 0 cut, pass
 done-list-empty-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-done-list-empty-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+done-list-empty-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
+done-list-empty-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 done-list-empty-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 done-list-empty-1440, shell: status pill, Sindri running, pass
 done-list-empty-1440, shell: search placeholder, Search…, pass
@@ -1356,9 +1374,10 @@ empty-1440, source slack is later: no Connect row, ok, pass
 empty-1440, Connect rows drawn as the data says, 0 vs 0, pass
 empty-1440, waits-on text is whole, 0 cut, pass
 empty-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-empty-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, ||||6||, pass
+empty-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, ||||6||, pass
 empty-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 empty-1440, shell: Agents nav = live sessions of this data (6), 6 vs 6, pass
+empty-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 empty-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 empty-1440, shell: Home nav count = the All tab (none when 0),  vs 0, pass
 empty-1440, shell: status pill, Sindri running, pass
@@ -1396,7 +1415,8 @@ empty-stale-1440, footer fits, 1440 vs 1440, pass
 empty-stale-1440, no row keys in the footer without a cursor row (none), ok, pass
 empty-stale-1440, waits-on text is whole, 0 cut, pass
 empty-stale-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-empty-stale-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, ||||6||, pass
+empty-stale-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, ||||6||, pass
+empty-stale-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 empty-stale-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 empty-stale-1440, shell: Home nav count = the All tab (none when 0),  vs 0, pass
 empty-stale-1440, shell: status pill, Sindri running, pass
@@ -1461,9 +1481,10 @@ filter-focus-1440, source slack is later: no Connect row, ok, pass
 filter-focus-1440, Connect rows drawn as the data says, 1 vs 1, pass
 filter-focus-1440, waits-on text is whole, 0 cut, pass
 filter-focus-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-filter-focus-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+filter-focus-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 filter-focus-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 filter-focus-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+filter-focus-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 filter-focus-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 filter-focus-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 filter-focus-1440, shell: status pill, Sindri running, pass
@@ -1539,9 +1560,10 @@ first-paint-1440, source slack is later: no Connect row, ok, pass
 first-paint-1440, Connect rows drawn as the data says, 1 vs 1, pass
 first-paint-1440, waits-on text is whole, 0 cut, pass
 first-paint-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-first-paint-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+first-paint-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 first-paint-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 first-paint-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+first-paint-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 first-paint-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 first-paint-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 first-paint-1440, shell: status pill, Sindri running, pass
@@ -1599,9 +1621,10 @@ folded-1440, source slack is later: rows drawn, 0, pass
 folded-1440, source slack is later: no Connect row, ok, pass
 folded-1440, waits-on text is whole, 0 cut, pass
 folded-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-folded-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+folded-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 folded-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 folded-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+folded-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 folded-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 folded-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 folded-1440, shell: status pill, Sindri running, pass
@@ -1667,9 +1690,10 @@ hand-picker-1440, source slack is later: no Connect row, ok, pass
 hand-picker-1440, Connect rows drawn as the data says, 1 vs 1, pass
 hand-picker-1440, waits-on text is whole, 0 cut, pass
 hand-picker-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-hand-picker-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+hand-picker-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 hand-picker-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 hand-picker-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+hand-picker-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 hand-picker-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 hand-picker-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 hand-picker-1440, shell: status pill, Sindri running, pass
@@ -1746,9 +1770,10 @@ hand-picker-empty-1440, source slack is later: no Connect row, ok, pass
 hand-picker-empty-1440, Connect rows drawn as the data says, 1 vs 1, pass
 hand-picker-empty-1440, waits-on text is whole, 0 cut, pass
 hand-picker-empty-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-hand-picker-empty-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 6||||||, pass
+hand-picker-empty-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 6||||||, pass
 hand-picker-empty-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 hand-picker-empty-1440, shell: Agents nav = live sessions of this data (0),  vs 0, pass
+hand-picker-empty-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 hand-picker-empty-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 hand-picker-empty-1440, shell: Home nav count = the All tab (none when 0), 6 vs 6, pass
 hand-picker-empty-1440, shell: status pill, Sindri running, pass
@@ -1824,9 +1849,10 @@ hover-1440, source slack is later: no Connect row, ok, pass
 hover-1440, Connect rows drawn as the data says, 1 vs 1, pass
 hover-1440, waits-on text is whole, 0 cut, pass
 hover-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-hover-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+hover-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 hover-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 hover-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+hover-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 hover-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 hover-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 hover-1440, shell: status pill, Sindri running, pass
@@ -1901,9 +1927,10 @@ keys-sheet-1440, source slack is later: no Connect row, ok, pass
 keys-sheet-1440, Connect rows drawn as the data says, 1 vs 1, pass
 keys-sheet-1440, waits-on text is whole, 0 cut, pass
 keys-sheet-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-keys-sheet-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+keys-sheet-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 keys-sheet-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 keys-sheet-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+keys-sheet-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 keys-sheet-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 keys-sheet-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 keys-sheet-1440, shell: status pill, Sindri running, pass
@@ -1982,9 +2009,10 @@ lanes-glyphs-1440, source slack is later: no Connect row, ok, pass
 lanes-glyphs-1440, Connect rows drawn as the data says, 0 vs 0, pass
 lanes-glyphs-1440, waits-on text is whole, 0 cut, pass
 lanes-glyphs-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-lanes-glyphs-1440, shell: nav counts are this frame's own (Reviews 2, Items, Agents), as the Projects shell draws them, 4|2|||8||, pass
+lanes-glyphs-1440, shell: nav counts are this frame's own (Reviews 2, Agents; Items always blank: Home builds none), as the Projects shell draws them, 4|2|||8||, pass
 lanes-glyphs-1440, shell: Reviews nav = the open review rows of this data (2), none while GitHub is off, 2 vs 2, pass
 lanes-glyphs-1440, shell: Agents nav = live sessions of this data (8), 8 vs 8, pass
+lanes-glyphs-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 lanes-glyphs-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 lanes-glyphs-1440, shell: Home nav count = the All tab (none when 0), 4 vs 4, pass
 lanes-glyphs-1440, shell: status pill, Sindri running, pass
@@ -2060,9 +2088,10 @@ linear-off-1440, source slack is later: no Connect row, ok, pass
 linear-off-1440, Connect rows drawn as the data says, 2 vs 2, pass
 linear-off-1440, waits-on text is whole, 0 cut, pass
 linear-off-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-linear-off-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 8||||7||, pass
+linear-off-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 8||||7||, pass
 linear-off-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 linear-off-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+linear-off-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 linear-off-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 linear-off-1440, shell: Home nav count = the All tab (none when 0), 8 vs 8, pass
 linear-off-1440, shell: status pill, Sindri running, pass
@@ -2105,7 +2134,8 @@ loading-1440, footer fits, 1440 vs 1440, pass
 loading-1440, no row keys in the footer without a cursor row (none), ok, pass
 loading-1440, waits-on text is whole, 0 cut, pass
 loading-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-loading-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, ||||6||, pass
+loading-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, ||||7||, pass
+loading-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 loading-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 loading-1440, shell: status pill, Sindri running, pass
 loading-1440, shell: search placeholder, Search…, pass
@@ -2172,9 +2202,10 @@ long-title-1000, source slack is later: no Connect row, ok, pass
 long-title-1000, Connect rows drawn as the data says, 1 vs 1, pass
 long-title-1000, waits-on text is whole, 0 cut, pass
 long-title-1000, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-long-title-1000, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 8||||7||, pass
+long-title-1000, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 8||||7||, pass
 long-title-1000, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 long-title-1000, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+long-title-1000, shell: Items nav is blank (no number) on every frame, blank, pass
 long-title-1000, one filled primary button across the rows (hover and cursor never both), 1, pass
 long-title-1000, shell: Home nav count = the All tab (none when 0), 8 vs 8, pass
 long-title-1000, shell: status pill, Sindri running, pass
@@ -2253,9 +2284,10 @@ long-title-peek-1000, source slack is later: no Connect row, ok, pass
 long-title-peek-1000, Connect rows drawn as the data says, 1 vs 1, pass
 long-title-peek-1000, waits-on text is whole, 0 cut, pass
 long-title-peek-1000, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-long-title-peek-1000, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 8||||7||, pass
+long-title-peek-1000, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 8||||7||, pass
 long-title-peek-1000, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 long-title-peek-1000, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+long-title-peek-1000, shell: Items nav is blank (no number) on every frame, blank, pass
 long-title-peek-1000, one filled primary button across the rows (hover and cursor never both), 0, pass
 long-title-peek-1000, shell: Home nav count = the All tab (none when 0), 8 vs 8, pass
 long-title-peek-1000, shell: status pill, Sindri running, pass
@@ -2334,9 +2366,10 @@ moving-empty-1440, source slack is later: no Connect row, ok, pass
 moving-empty-1440, Connect rows drawn as the data says, 1 vs 1, pass
 moving-empty-1440, waits-on text is whole, 0 cut, pass
 moving-empty-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-moving-empty-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||1||, pass
+moving-empty-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||1||, pass
 moving-empty-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 moving-empty-1440, shell: Agents nav = live sessions of this data (1), 1 vs 1, pass
+moving-empty-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 moving-empty-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 moving-empty-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 moving-empty-1440, shell: status pill, Sindri running, pass
@@ -2411,9 +2444,10 @@ moving-open-1440, source slack is later: no Connect row, ok, pass
 moving-open-1440, Connect rows drawn as the data says, 1 vs 1, pass
 moving-open-1440, waits-on text is whole, 0 cut, pass
 moving-open-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-moving-open-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+moving-open-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 moving-open-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 moving-open-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+moving-open-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 moving-open-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 moving-open-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 moving-open-1440, shell: status pill, Sindri running, pass
@@ -2491,9 +2525,10 @@ new-band-1440, source slack is later: no Connect row, ok, pass
 new-band-1440, Connect rows drawn as the data says, 1 vs 1, pass
 new-band-1440, waits-on text is whole, 0 cut, pass
 new-band-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-new-band-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+new-band-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 new-band-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 new-band-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+new-band-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 new-band-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 new-band-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 new-band-1440, shell: status pill, Sindri running, pass
@@ -2574,9 +2609,10 @@ new-band-top-1440, source slack is later: no Connect row, ok, pass
 new-band-top-1440, Connect rows drawn as the data says, 1 vs 1, pass
 new-band-top-1440, waits-on text is whole, 0 cut, pass
 new-band-top-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-new-band-top-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+new-band-top-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 new-band-top-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 new-band-top-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+new-band-top-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 new-band-top-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 new-band-top-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 new-band-top-1440, shell: status pill, Sindri running, pass
@@ -2652,9 +2688,10 @@ peek-1000, source slack is later: no Connect row, ok, pass
 peek-1000, Connect rows drawn as the data says, 1 vs 1, pass
 peek-1000, waits-on text is whole, 0 cut, pass
 peek-1000, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-peek-1000, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+peek-1000, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 peek-1000, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 peek-1000, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+peek-1000, shell: Items nav is blank (no number) on every frame, blank, pass
 peek-1000, one filled primary button across the rows (hover and cursor never both), 0, pass
 peek-1000, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 peek-1000, shell: status pill, Sindri running, pass
@@ -2734,9 +2771,10 @@ peek-1440, source slack is later: no Connect row, ok, pass
 peek-1440, Connect rows drawn as the data says, 1 vs 1, pass
 peek-1440, waits-on text is whole, 0 cut, pass
 peek-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-peek-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+peek-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 peek-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 peek-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+peek-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 peek-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 peek-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 peek-1440, shell: status pill, Sindri running, pass
@@ -2815,9 +2853,10 @@ peek-decision-1440, source slack is later: no Connect row, ok, pass
 peek-decision-1440, Connect rows drawn as the data says, 1 vs 1, pass
 peek-decision-1440, waits-on text is whole, 0 cut, pass
 peek-decision-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-peek-decision-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+peek-decision-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 peek-decision-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 peek-decision-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+peek-decision-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 peek-decision-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 peek-decision-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 peek-decision-1440, shell: status pill, Sindri running, pass
@@ -2896,9 +2935,10 @@ peek-failed-1440, source slack is later: no Connect row, ok, pass
 peek-failed-1440, Connect rows drawn as the data says, 1 vs 1, pass
 peek-failed-1440, waits-on text is whole, 0 cut, pass
 peek-failed-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-peek-failed-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+peek-failed-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 peek-failed-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 peek-failed-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+peek-failed-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 peek-failed-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 peek-failed-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 peek-failed-1440, shell: status pill, Sindri running, pass
@@ -2978,9 +3018,10 @@ peek-issue-1440, source slack is on: no Connect row, ok, pass
 peek-issue-1440, Connect rows drawn as the data says, 0 vs 0, pass
 peek-issue-1440, waits-on text is whole, 0 cut, pass
 peek-issue-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-peek-issue-1440, shell: nav counts are this frame's own (Reviews 5, Items, Agents), as the Projects shell draws them, 21|5|2||10||, pass
+peek-issue-1440, shell: nav counts are this frame's own (Reviews 5, Agents; Items always blank: Home builds none), as the Projects shell draws them, 21|5|||10||, pass
 peek-issue-1440, shell: Reviews nav = the open review rows of this data (5), none while GitHub is off, 5 vs 5, pass
 peek-issue-1440, shell: Agents nav = live sessions of this data (10), 10 vs 10, pass
+peek-issue-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 peek-issue-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 peek-issue-1440, shell: Home nav count = the All tab (none when 0), 21 vs 21, pass
 peek-issue-1440, shell: status pill, Sindri running, pass
@@ -3077,9 +3118,10 @@ peek-lane-1440, source slack is on: no Connect row, ok, pass
 peek-lane-1440, Connect rows drawn as the data says, 0 vs 0, pass
 peek-lane-1440, waits-on text is whole, 0 cut, pass
 peek-lane-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-peek-lane-1440, shell: nav counts are this frame's own (Reviews 5, Items, Agents), as the Projects shell draws them, 21|5|2||10||, pass
+peek-lane-1440, shell: nav counts are this frame's own (Reviews 5, Agents; Items always blank: Home builds none), as the Projects shell draws them, 21|5|||10||, pass
 peek-lane-1440, shell: Reviews nav = the open review rows of this data (5), none while GitHub is off, 5 vs 5, pass
 peek-lane-1440, shell: Agents nav = live sessions of this data (10), 10 vs 10, pass
+peek-lane-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 peek-lane-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 peek-lane-1440, shell: Home nav count = the All tab (none when 0), 21 vs 21, pass
 peek-lane-1440, shell: status pill, Sindri running, pass
@@ -3176,9 +3218,10 @@ peek-message-1440, source slack is on: no Connect row, ok, pass
 peek-message-1440, Connect rows drawn as the data says, 0 vs 0, pass
 peek-message-1440, waits-on text is whole, 0 cut, pass
 peek-message-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-peek-message-1440, shell: nav counts are this frame's own (Reviews 5, Items, Agents), as the Projects shell draws them, 21|5|2||10||, pass
+peek-message-1440, shell: nav counts are this frame's own (Reviews 5, Agents; Items always blank: Home builds none), as the Projects shell draws them, 21|5|||10||, pass
 peek-message-1440, shell: Reviews nav = the open review rows of this data (5), none while GitHub is off, 5 vs 5, pass
 peek-message-1440, shell: Agents nav = live sessions of this data (10), 10 vs 10, pass
+peek-message-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 peek-message-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 peek-message-1440, shell: Home nav count = the All tab (none when 0), 21 vs 21, pass
 peek-message-1440, shell: status pill, Sindri running, pass
@@ -3275,9 +3318,10 @@ peek-pr-1440, source slack is on: no Connect row, ok, pass
 peek-pr-1440, Connect rows drawn as the data says, 0 vs 0, pass
 peek-pr-1440, waits-on text is whole, 0 cut, pass
 peek-pr-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-peek-pr-1440, shell: nav counts are this frame's own (Reviews 5, Items, Agents), as the Projects shell draws them, 21|5|2||10||, pass
+peek-pr-1440, shell: nav counts are this frame's own (Reviews 5, Agents; Items always blank: Home builds none), as the Projects shell draws them, 21|5|||10||, pass
 peek-pr-1440, shell: Reviews nav = the open review rows of this data (5), none while GitHub is off, 5 vs 5, pass
 peek-pr-1440, shell: Agents nav = live sessions of this data (10), 10 vs 10, pass
+peek-pr-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 peek-pr-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 peek-pr-1440, shell: Home nav count = the All tab (none when 0), 21 vs 21, pass
 peek-pr-1440, shell: status pill, Sindri running, pass
@@ -3336,7 +3380,8 @@ read-failed-1440, footer fits, 1440 vs 1440, pass
 read-failed-1440, no row keys in the footer without a cursor row (none), ok, pass
 read-failed-1440, waits-on text is whole, 0 cut, pass
 read-failed-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-read-failed-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, ||||6||, pass
+read-failed-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, ||||7||, pass
+read-failed-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 read-failed-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 read-failed-1440, shell: status pill, Sindri running, pass
 read-failed-1440, shell: search placeholder, Search…, pass
@@ -3392,9 +3437,10 @@ reviews-tab-1440, source linear is on: no Connect row, ok, pass
 reviews-tab-1440, source slack is on: no Connect row, ok, pass
 reviews-tab-1440, waits-on text is whole, 0 cut, pass
 reviews-tab-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-reviews-tab-1440, shell: nav counts are this frame's own (Reviews 5, Items, Agents), as the Projects shell draws them, 21|5|2||10||, pass
+reviews-tab-1440, shell: nav counts are this frame's own (Reviews 5, Agents; Items always blank: Home builds none), as the Projects shell draws them, 21|5|||10||, pass
 reviews-tab-1440, shell: Reviews nav = the open review rows of this data (5), none while GitHub is off, 5 vs 5, pass
 reviews-tab-1440, shell: Agents nav = live sessions of this data (10), 10 vs 10, pass
+reviews-tab-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 reviews-tab-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 reviews-tab-1440, shell: Home nav count = the All tab (none when 0), 21 vs 21, pass
 reviews-tab-1440, shell: status pill, Sindri running, pass
@@ -3470,9 +3516,10 @@ row-failed-1440, source slack is later: no Connect row, ok, pass
 row-failed-1440, Connect rows drawn as the data says, 1 vs 1, pass
 row-failed-1440, waits-on text is whole, 0 cut, pass
 row-failed-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-row-failed-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+row-failed-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 row-failed-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 row-failed-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+row-failed-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 row-failed-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 row-failed-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 row-failed-1440, shell: status pill, Sindri running, pass
@@ -3548,9 +3595,10 @@ run-failed-1440, source slack is later: no Connect row, ok, pass
 run-failed-1440, Connect rows drawn as the data says, 1 vs 1, pass
 run-failed-1440, waits-on text is whole, 0 cut, pass
 run-failed-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-run-failed-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+run-failed-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 run-failed-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 run-failed-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+run-failed-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 run-failed-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 run-failed-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 run-failed-1440, shell: status pill, Sindri running, pass
@@ -3626,9 +3674,10 @@ scale13-1440, source slack is later: no Connect row, ok, pass
 scale13-1440, Connect rows drawn as the data says, 1 vs 1, pass
 scale13-1440, waits-on text is whole, 0 cut, pass
 scale13-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-scale13-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+scale13-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 scale13-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 scale13-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+scale13-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 scale13-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 scale13-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 scale13-1440, shell: status pill, Sindri running, pass
@@ -3706,9 +3755,10 @@ snoozed-1440, source slack is later: no Connect row, ok, pass
 snoozed-1440, Connect rows drawn as the data says, 1 vs 1, pass
 snoozed-1440, waits-on text is whole, 0 cut, pass
 snoozed-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-snoozed-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 4||||7||, pass
+snoozed-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 4||||7||, pass
 snoozed-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 snoozed-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+snoozed-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 snoozed-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 snoozed-1440, shell: Home nav count = the All tab (none when 0), 4 vs 4, pass
 snoozed-1440, shell: status pill, Sindri running, pass
@@ -3783,9 +3833,10 @@ snooze-picker-1440, source slack is later: no Connect row, ok, pass
 snooze-picker-1440, Connect rows drawn as the data says, 1 vs 1, pass
 snooze-picker-1440, waits-on text is whole, 0 cut, pass
 snooze-picker-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-snooze-picker-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+snooze-picker-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 snooze-picker-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 snooze-picker-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+snooze-picker-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 snooze-picker-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 snooze-picker-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 snooze-picker-1440, shell: status pill, Sindri running, pass
@@ -3862,9 +3913,10 @@ snooze-woken-1440, source slack is later: no Connect row, ok, pass
 snooze-woken-1440, Connect rows drawn as the data says, 1 vs 1, pass
 snooze-woken-1440, waits-on text is whole, 0 cut, pass
 snooze-woken-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-snooze-woken-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+snooze-woken-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 snooze-woken-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 snooze-woken-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+snooze-woken-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 snooze-woken-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 snooze-woken-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 snooze-woken-1440, shell: status pill, Sindri running, pass
@@ -3945,9 +3997,10 @@ snooze-woken-top-1440, source slack is later: no Connect row, ok, pass
 snooze-woken-top-1440, Connect rows drawn as the data says, 1 vs 1, pass
 snooze-woken-top-1440, waits-on text is whole, 0 cut, pass
 snooze-woken-top-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-snooze-woken-top-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+snooze-woken-top-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 snooze-woken-top-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 snooze-woken-top-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+snooze-woken-top-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 snooze-woken-top-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 snooze-woken-top-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 snooze-woken-top-1440, shell: status pill, Sindri running, pass
@@ -4022,9 +4075,10 @@ stale-source-1440, source slack is later: no Connect row, ok, pass
 stale-source-1440, Connect rows drawn as the data says, 0 vs 0, pass
 stale-source-1440, waits-on text is whole, 0 cut, pass
 stale-source-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-stale-source-1440, shell: nav counts are this frame's own (Reviews 3, Items, Agents), as the Projects shell draws them, 9|3|||7||, pass
+stale-source-1440, shell: nav counts are this frame's own (Reviews 3, Agents; Items always blank: Home builds none), as the Projects shell draws them, 9|3|||7||, pass
 stale-source-1440, shell: Reviews nav = the open review rows of this data (3), none while GitHub is off, 3 vs 3, pass
 stale-source-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+stale-source-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 stale-source-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 stale-source-1440, shell: Home nav count = the All tab (none when 0), 9 vs 9, pass
 stale-source-1440, shell: status pill, Sindri running, pass
@@ -4103,9 +4157,10 @@ still-sending-1440, source slack is later: no Connect row, ok, pass
 still-sending-1440, Connect rows drawn as the data says, 1 vs 1, pass
 still-sending-1440, waits-on text is whole, 0 cut, pass
 still-sending-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-still-sending-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+still-sending-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 still-sending-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 still-sending-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+still-sending-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 still-sending-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 still-sending-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 still-sending-1440, shell: status pill, Sindri running, pass
@@ -4180,9 +4235,10 @@ stopped-1440, source slack is later: no Connect row, ok, pass
 stopped-1440, Connect rows drawn as the data says, 1 vs 1, pass
 stopped-1440, waits-on text is whole, 0 cut, pass
 stopped-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-stopped-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+stopped-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 stopped-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 stopped-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+stopped-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 stopped-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 stopped-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 stopped-1440, shell: status pill, Not running, pass
@@ -4256,9 +4312,10 @@ submit-menu-1440, source slack is later: no Connect row, ok, pass
 submit-menu-1440, Connect rows drawn as the data says, 0 vs 0, pass
 submit-menu-1440, waits-on text is whole, 0 cut, pass
 submit-menu-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-submit-menu-1440, shell: nav counts are this frame's own (Reviews 3, Items, Agents), as the Projects shell draws them, 9|3|||7||, pass
+submit-menu-1440, shell: nav counts are this frame's own (Reviews 3, Agents; Items always blank: Home builds none), as the Projects shell draws them, 9|3|||7||, pass
 submit-menu-1440, shell: Reviews nav = the open review rows of this data (3), none while GitHub is off, 3 vs 3, pass
 submit-menu-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+submit-menu-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 submit-menu-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 submit-menu-1440, shell: Home nav count = the All tab (none when 0), 9 vs 9, pass
 submit-menu-1440, shell: status pill, Sindri running, pass
@@ -4314,9 +4371,10 @@ tab-messages-empty-1440, source slack is later: no Connect row, ok, pass
 tab-messages-empty-1440, Messages split: no Connect, the Slack-later line, no "Nothing in Messages", ok, pass
 tab-messages-empty-1440, waits-on text is whole, 0 cut, pass
 tab-messages-empty-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-tab-messages-empty-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+tab-messages-empty-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 tab-messages-empty-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 tab-messages-empty-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+tab-messages-empty-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 tab-messages-empty-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 tab-messages-empty-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 tab-messages-empty-1440, shell: status pill, Sindri running, pass
@@ -4364,9 +4422,10 @@ tab-messages-linear-off-1440, source slack is later: no Connect row, ok, pass
 tab-messages-linear-off-1440, Messages split: Connect Linear offer, the Slack-later line, no "Nothing in Messages", ok, pass
 tab-messages-linear-off-1440, waits-on text is whole, 0 cut, pass
 tab-messages-linear-off-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-tab-messages-linear-off-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 8||||7||, pass
+tab-messages-linear-off-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 8||||7||, pass
 tab-messages-linear-off-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 tab-messages-linear-off-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+tab-messages-linear-off-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 tab-messages-linear-off-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 tab-messages-linear-off-1440, shell: Home nav count = the All tab (none when 0), 8 vs 8, pass
 tab-messages-linear-off-1440, shell: status pill, Sindri running, pass
@@ -4414,9 +4473,10 @@ tab-reviews-empty-1440, source slack is later: no Connect row, ok, pass
 tab-reviews-empty-1440, Reviews split: Connect GitHub, not "Nothing in Reviews", ok, pass
 tab-reviews-empty-1440, waits-on text is whole, 0 cut, pass
 tab-reviews-empty-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-tab-reviews-empty-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+tab-reviews-empty-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 tab-reviews-empty-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 tab-reviews-empty-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+tab-reviews-empty-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 tab-reviews-empty-1440, one filled primary button across the rows (hover and cursor never both), 0, pass
 tab-reviews-empty-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 tab-reviews-empty-1440, shell: status pill, Sindri running, pass
@@ -4484,9 +4544,10 @@ undo-1440, source slack is later: no Connect row, ok, pass
 undo-1440, Connect rows drawn as the data says, 1 vs 1, pass
 undo-1440, waits-on text is whole, 0 cut, pass
 undo-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-undo-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 6||||7||, pass
+undo-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 6||||7||, pass
 undo-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 undo-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+undo-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 undo-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 undo-1440, shell: Home nav count = the All tab (none when 0), 6 vs 6, pass
 undo-1440, shell: status pill, Sindri running, pass
@@ -4561,9 +4622,10 @@ updating-1440, source slack is later: no Connect row, ok, pass
 updating-1440, Connect rows drawn as the data says, 1 vs 1, pass
 updating-1440, waits-on text is whole, 0 cut, pass
 updating-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-updating-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+updating-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 updating-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 updating-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+updating-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 updating-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 updating-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 updating-1440, shell: status pill, Sindri running, pass
@@ -4631,9 +4693,10 @@ work-tab-1440, source slack is later: rows drawn, 0, pass
 work-tab-1440, source slack is later: no Connect row, ok, pass
 work-tab-1440, waits-on text is whole, 0 cut, pass
 work-tab-1440, shell: nav items, Home Reviews Items Workflows Agents Projects Context, pass
-work-tab-1440, shell: nav counts are this frame's own (Reviews none, Items, Agents), as the Projects shell draws them, 7||||7||, pass
+work-tab-1440, shell: nav counts are this frame's own (Reviews none, Agents; Items always blank: Home builds none), as the Projects shell draws them, 7||||7||, pass
 work-tab-1440, shell: Reviews nav = the open review rows of this data (0), none while GitHub is off,  vs 0, pass
 work-tab-1440, shell: Agents nav = live sessions of this data (7), 7 vs 7, pass
+work-tab-1440, shell: Items nav is blank (no number) on every frame, blank, pass
 work-tab-1440, one filled primary button across the rows (hover and cursor never both), 1, pass
 work-tab-1440, shell: Home nav count = the All tab (none when 0), 7 vs 7, pass
 work-tab-1440, shell: status pill, Sindri running, pass
@@ -4657,3 +4720,5 @@ work-tab-1440, hScroll, 0, pass
 work-tab-1440, minFontPx (outside the footer and keycaps; those are the shell's 11 px as Projects), 12.00, pass
 work-tab-1440, footer and keycap font = Projects 11, 11.00, pass
 work-tab-1440, minContrast, 4.70, pass
+crossframe, frames of seed "seed" (45) draw one Agents count, 7, pass
+crossframe, no frame draws an Items count (63 frames), none, pass
