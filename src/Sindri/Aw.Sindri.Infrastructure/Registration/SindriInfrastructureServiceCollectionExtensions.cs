@@ -145,7 +145,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton(static sp => new ResourceProvisioner(new ResourceStore(Path.Combine(sp.GetRequiredService<ISindriHome>().Path, "resources")), sp.GetRequiredService<LedgerDatabase>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IResourceProvisioner>(static sp => sp.GetRequiredService<ResourceProvisioner>())   // makes an owner's resources exist before a run and books them in ledger.db
             .AddSingleton<IMemoryStore, SqliteMemoryStore>()       // memory stores and facts (agent-first PR 13): memory and memory_fact in ledger.db
-            .AddSingleton<IMessagesStore, SqliteMessagesStore>()   // messages.db (messages spec §8.1): a stub until M1c
+            .AddSingleton<MessagesDatabase>().AddSingleton<IMessagesStore, SqliteMessagesStore>()   // messages.db (messages spec §8.1): its own file and migrations, Slack text, never a ledger view
             .AddSingleton<IToolkitCalls, SqliteToolkitCalls>()       // toolkit call log (agent-first PR 16): toolkit_call in ledger.db
             .AddSingleton<ToolkitCallLog>()
             .AddSingleton<IGraphSeenStore, SqliteSeenStore>()      // what 'only_new' nodes have passed on (agent-first PR 9): workflow_seen in ledger.db
