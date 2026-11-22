@@ -31,20 +31,19 @@ public static partial class RulesLinker
     /// <param name="graph">The map to link into.</param>
     /// <param name="tracker">Every intent record the sync knows, for the issue-key and URL rules, and the profile's tracker teams: only their keys link.</param>
     /// <param name="pins">The approved pins' ids and aliases, for the alias rule (see <see cref="Aliases"/>); none runs no alias rule.</param>
-    /// <param name="timedOut">Told the rule whose match ran out of time; that rule links nothing and the others still run.</param>
     /// <returns>The links, ordered by target then rule.</returns>
-    public static IReadOnlyList<IntentLink> Link(RecordKey record, string text, GraphSnapshot graph, (IReadOnlyList<IntentRecord> Known, IReadOnlySet<string> Teams) tracker, IReadOnlyList<PinAliases> pins, Action<LinkRule>? timedOut = null) =>
-        LinkWith(record, text, graph, tracker, pins, (timedOut, null));
+    public static IReadOnlyList<IntentLink> Link(RecordKey record, string text, GraphSnapshot graph, (IReadOnlyList<IntentRecord> Known, IReadOnlySet<string> Teams) tracker, IReadOnlyList<PinAliases> pins) =>
+        LinkWith(record, text, (graph, tracker.Known, tracker.Teams, pins), (null, null));
 
-    // The seam: rules.Before runs as each rule starts, so a test can make one rule time out without a clock.
-    internal static IReadOnlyList<IntentLink> LinkWith(RecordKey record, string text, GraphSnapshot graph, (IReadOnlyList<IntentRecord> Known, IReadOnlySet<string> Teams) tracker, IReadOnlyList<PinAliases> pins, (Action<LinkRule>? TimedOut, Action<LinkRule>? Before) rules)
+    // Link, told each rule whose match ran out of time (that rule links nothing and the others still run). rules.Before runs as each rule starts: the seam a test uses to time a rule out without a clock.
+    internal static IReadOnlyList<IntentLink> LinkWith(RecordKey record, string text, (GraphSnapshot Graph, IReadOnlyList<IntentRecord> Known, IReadOnlySet<string> Teams, IReadOnlyList<PinAliases> Pins) map, (Action<LinkRule>? TimedOut, Action<LinkRule>? Before) rules)
     {
         ArgumentNullException.ThrowIfNull(text);
-        ArgumentNullException.ThrowIfNull(graph);
-        ArgumentNullException.ThrowIfNull(tracker.Known);
-        ArgumentNullException.ThrowIfNull(tracker.Teams);
-        ArgumentNullException.ThrowIfNull(pins);
-        var run = new Run(record, Bounded(text), graph, tracker.Known, tracker.Teams);
+        ArgumentNullException.ThrowIfNull(map.Graph);
+        ArgumentNullException.ThrowIfNull(map.Known);
+        ArgumentNullException.ThrowIfNull(map.Teams);
+        ArgumentNullException.ThrowIfNull(map.Pins);
+        var run = new Run(record, Bounded(text), map.Graph, map.Known, map.Teams);
         void Step(LinkRule rule, Action step)
         {
             try
@@ -64,7 +63,7 @@ public static partial class RulesLinker
         Step(LinkRule.IssueKey, run.IssueKeys);
         Step(LinkRule.Identifier, run.IdentifierTokens);
         Step(LinkRule.Name, run.Names);
-        Step(LinkRule.Alias, () => run.Aliases(pins));
+        Step(LinkRule.Alias, () => run.Aliases(map.Pins));
         return run.Result();
     }
 

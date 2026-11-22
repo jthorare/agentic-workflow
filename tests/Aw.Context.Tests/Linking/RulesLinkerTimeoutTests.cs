@@ -26,7 +26,7 @@ public sealed class RulesLinkerTimeoutTests
         var timedOut = new List<LinkRule>();
         IReadOnlyList<IntentLink> links = [];
 
-        var thrown = Record.Exception(() => links = RulesLinker.LinkWith(_record, "Implemented in " + Path + ", follow-up in SPL-104.", Map(), ([], _teams), [], (timedOut.Add, TimeOut(LinkRule.Path))));
+        var thrown = Record.Exception(() => links = RulesLinker.LinkWith(_record, "Implemented in " + Path + ", follow-up in SPL-104.", (Map(), [], _teams, []), (timedOut.Add, TimeOut(LinkRule.Path))));
 
         Assert.Null(thrown);
         Assert.Equal([LinkRule.Path], timedOut);
@@ -39,7 +39,7 @@ public sealed class RulesLinkerTimeoutTests
     {
         var timedOut = new List<LinkRule>();
 
-        var links = RulesLinker.LinkWith(_record, "Implemented in " + Path + ", follow-up in SPL-104.", Map(), ([], _teams), [], (timedOut.Add, static _ => throw new RegexMatchTimeoutException()));
+        var links = RulesLinker.LinkWith(_record, "Implemented in " + Path + ", follow-up in SPL-104.", (Map(), [], _teams, []), (timedOut.Add, static _ => throw new RegexMatchTimeoutException()));
 
         Assert.Empty(links);
         Assert.Equal(Enum.GetValues<LinkRule>().Order(), timedOut.Order());

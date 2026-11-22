@@ -3,7 +3,7 @@ using System.Globalization;
 namespace Aw.Context.Core.Linking;
 
 /// <summary>
-/// The repo-path rule's scan, by hand so it needs no clock (#3816). It finds what <c>(?&lt;![\w/.\-])(?:[\w.\-]+/)+[\w\-]+(?:\.[A-Za-z0-9]+)+(?![\w/\-])</c> finds:
+/// The repo-path rule's scan, by hand so it needs no clock (#3816). It finds what the old pattern (?&lt;![\w/.\-])(?:[\w.\-]+/)+[\w\-]+(?:\.[A-Za-z0-9]+)+(?![\w/\-]) found:
 /// a run of path chars (word chars, '/', '.', '-') can only hold one path and it starts at the run's first char; the longest set of whole folders that
 /// leaves a name with one or more ASCII extensions after them wins, and a name whose last extension runs into a word char, '-' or '/' gives up that extension.
 /// Each run is read a bounded number of times, so the scan is linear in the text.
@@ -89,18 +89,7 @@ public static partial class RulesLinker
             return null;
         }
 
-        var ends = new List<int>();
-        while (j + 1 < run.End && text[j] == '.' && char.IsAsciiLetterOrDigit(text[j + 1]))
-        {
-            j += 2;
-            while (j < run.End && char.IsAsciiLetterOrDigit(text[j]))
-            {
-                j++;
-            }
-
-            ends.Add(j);
-        }
-
+        var ends = Extensions(text, j, run.End);
         if (ends.Count == 0)
         {
             return null;
@@ -113,6 +102,24 @@ public static partial class RulesLinker
         }
 
         return ends.Count > 1 ? ends[^2] : null;   // the last extension ran into a word char, '-' or '/': without it the name ends before a '.'
+    }
+
+    // Where each '.'-and-ASCII-alphanumerics extension from at ends, greedy.
+    private static List<int> Extensions(string text, int at, int end)
+    {
+        var ends = new List<int>();
+        while (at + 1 < end && text[at] == '.' && char.IsAsciiLetterOrDigit(text[at + 1]))
+        {
+            at += 2;
+            while (at < end && char.IsAsciiLetterOrDigit(text[at]))
+            {
+                at++;
+            }
+
+            ends.Add(at);
+        }
+
+        return ends;
     }
 
     // The regex \w: a letter, a non-spacing mark, a decimal digit or a connector ('_'). RulesLinkerPathScanTests checks it against \w for every char.

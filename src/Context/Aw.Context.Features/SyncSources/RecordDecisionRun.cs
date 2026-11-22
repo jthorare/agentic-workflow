@@ -176,13 +176,13 @@ internal sealed partial class RecordDecisionRun(SourceId source, VisibleMap map,
 
     /// <summary>Links one record; a rule that times out on it links nothing (the record is still committed with the other rules' links, so later runs skip this version) and logs a warning that names the key, the rule and the text length.</summary>
     private IReadOnlyList<IntentLink> Link(RecordKey key, string text, Dictionary<string, IntentRecord> known) =>
-        RulesLinker.Link(key, text, map.Graph, ([.. known.Values], new HashSet<string>(context.Settings.LinearTeams, StringComparer.Ordinal)), pins, rule =>
+        RulesLinker.LinkWith(key, text, (map.Graph, [.. known.Values], new HashSet<string>(context.Settings.LinearTeams, StringComparer.Ordinal), pins), (rule =>
         {
             if (logger is not null)
             {
                 LogLinkTimeout(logger, key.Value, rule, text.Length);
             }
-        });
+        }, null));
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "record {Key} ({Length} chars): the {Rule} rule timed out while linking; it is stored without that rule's links")]
     private static partial void LogLinkTimeout(ILogger logger, string key, LinkRule rule, int length);

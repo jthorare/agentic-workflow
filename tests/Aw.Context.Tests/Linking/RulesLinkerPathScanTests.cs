@@ -55,18 +55,18 @@ public sealed partial class RulesLinkerPathScanTests
         for (var c = 0; c <= char.MaxValue; c++)
         {
             one[0] = (char)c;
-            Assert.True(WordChar().IsMatch(one) == RulesLinker.IsWordChar((char)c), $"U+{c:X4}");
+            Assert.True(WordChar.IsMatch(one) == RulesLinker.IsWordChar((char)c), $"U+{c:X4}");
         }
     }
 
     private static List<string> Scan(string text) => [.. RulesLinker.RepoPaths(text).Select(p => text.Substring(p.Index, p.Length))];
 
-    private static List<string> OldMatches(string text) => [.. OldRepoPath().Matches(text).Select(m => m.Value)];
+    private static List<string> OldMatches(string text) => [.. OldRepoPath.Matches(text).Select(m => m.Value)];
 
     // The pattern the scan replaced, kept here as the answer key.
     [GeneratedRegex(@"(?<![\w/.\-])(?:[\w.\-]+/)+[\w\-]+(?:\.[A-Za-z0-9]+)+(?![\w/\-])", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 10_000)]
-    private static partial Regex OldRepoPath();
+    private static partial Regex OldRepoPath { get; }
 
     [GeneratedRegex(@"^\w$", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 10_000)]
-    private static partial Regex WordChar();
+    private static partial Regex WordChar { get; }
 }
