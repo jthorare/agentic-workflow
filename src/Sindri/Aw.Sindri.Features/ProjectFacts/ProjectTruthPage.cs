@@ -1,5 +1,5 @@
 using Aw.Sindri.Core.Projects.Cards;
-using Aw.Sindri.Core.Projects.Truth;
+using Aw.Sindri.Core.Projects.TruthSources;
 
 namespace Aw.Sindri.Features.ProjectFacts;
 

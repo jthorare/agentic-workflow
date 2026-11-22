@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Core.Projects.Truth;
+namespace Aw.Sindri.Core.Projects.TruthSources;
 
 /// <summary>One live agent session, cut down to what the truth counts.</summary>
 /// <param name="Repo">Its repo (owner/name), or null.</param>

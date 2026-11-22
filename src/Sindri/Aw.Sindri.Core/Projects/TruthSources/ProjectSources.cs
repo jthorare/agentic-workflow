@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Core.Projects.Truth;
+namespace Aw.Sindri.Core.Projects.TruthSources;
 
 /// <summary>What a project's truth is derived from (issue 3718).</summary>
 /// <param name="Repos">owner/name of the repos whose open PRs and agents count.</param>

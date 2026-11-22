@@ -1,7 +1,8 @@
 using System.Globalization;
+using Aw.Sindri.Core.Projects.Truth;
 using Aw.Sindri.Core.Reviews;
 
-namespace Aw.Sindri.Core.Projects.Truth;
+namespace Aw.Sindri.Core.Projects.TruthSources;
 
 /// <summary>Derives a project's truth from Sindri's own data (issue 3718), pure.</summary>
 public static class ProjectTruths
