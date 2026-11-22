@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Text.Json.Nodes;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
@@ -157,6 +158,21 @@ public sealed class ReviewDiffVirtualTests : FrameHost
         Assert.NotEqual(key, page.Focus.Key, StringComparer.Ordinal);
         var moved = page.Focus.Key;
         await Until(window, () => HoldsLine(window, moved), "the next row never took keyboard focus after the key");
+    });
+
+    [Fact]
+    public Task Scrolling_to_the_end_while_the_focused_row_is_not_built_still_shows_the_review_buttons() => OnUi(async () =>
+    {
+        var (window, _, _) = await FocusedFirstLine();
+
+        await ScrollPageTo(window, end: true);
+        await Until(window, () => Focused(window) is ItemsControl list && string.Equals(list.Name, "ReviewDiffRows", StringComparison.Ordinal), "the row list never took keyboard focus");
+        Settle(window);
+
+        var scroller = PageScroller(window);
+        var approve = window.GetVisualDescendants().OfType<Button>().First(b => string.Equals(b.Name, "ReviewApprove", StringComparison.Ordinal));
+        var bottom = approve.TranslatePoint(new Avalonia.Point(0, approve.Bounds.Height), scroller);
+        Assert.True(bottom is { } at && at.Y <= scroller.Bounds.Height + 0.5, string.Create(CultureInfo.InvariantCulture, $"the Approve button ends at {bottom?.Y} in a page {scroller.Bounds.Height} high: taking focus scrolled the page back"));
     });
 
     [Fact]
