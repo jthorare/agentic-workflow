@@ -2,6 +2,7 @@ using Aw.Context.Core.Models;
 using Aw.Context.Testing.Engine;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Host.Models;
 
 namespace Aw.Sindri.Tests.Models;
@@ -33,5 +34,19 @@ public sealed class GraphModelPortAdapterTests
         var answer = await new GraphModelPortAdapter(port).Ask("hello", Token);
 
         Assert.Equal(SindriErrors.NotRunning.Code, answer.Error.Code);
+    }
+
+    [Fact]
+    public async Task An_answer_reports_the_input_and_output_tokens_together()
+    {
+        const string Prompt = "did the contract drift?";
+        const string Reply = "{\"drifted\":false}";
+        var port = new FakeModelPort { Answer = Reply };
+        long expected = ((Prompt.Length + 3) / 4) + ((Reply.Length + 3) / 4);   // why: the fake counts a token per four characters of the prompt and of the reply
+
+        var answer = await ((IGraphModelPort)new GraphModelPortAdapter(port)).Answer(Prompt, Token);
+
+        Assert.Equal(Reply, answer.Value.Text);
+        Assert.Equal(expected, answer.Value.Tokens);
     }
 }

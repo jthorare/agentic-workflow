@@ -67,6 +67,7 @@ public sealed class DiffCoversHashedKeysCheckTests
             ("workflow.http.hosts", _approved with { Workflow = new WorkflowSettings { Http = new HttpSettings(["api.example.com"]) } }),
             ("workflow.callDepth", _approved with { Workflow = new WorkflowSettings { CallDepth = 2 } }),
             ("workflow.editor", _approved with { Workflow = new WorkflowSettings { Editor = "steps" } }),
+            ("workflow.budget.tokens", _approved with { Workflow = new WorkflowSettings { Budget = new RunBudgetSettings(200000) } }),
             ("workflow.forEach.maxItems", _approved with { Workflow = new WorkflowSettings(ForEach: new ForEachSettings(MaxItems: 50)) }),
             ("workflow.forEach.batchSize", _approved with { Workflow = new WorkflowSettings(ForEach: new ForEachSettings(BatchSize: 5)) }),
             ("context", _approved with { Context = context.RootElement.Clone() }),

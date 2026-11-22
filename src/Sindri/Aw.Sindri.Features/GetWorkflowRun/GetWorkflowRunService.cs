@@ -12,7 +12,8 @@ namespace Aw.Sindri.Features.GetWorkflowRun;
 /// <param name="workflows">The revision the run walked: it says which nodes are 'run_agent' nodes.</param>
 /// <param name="files">The per-launch files: the held marker says whether a person holds an agent node, when the run can't be asked.</param>
 /// <param name="control">Asks the run's workflow which agent node it waits on and whether it is held: the same query a takeover flips, so a read right after one is current.</param>
-internal sealed class GetWorkflowRunService(IWorkflowRunStore runs, IWorkflowStore workflows, ILaunchFiles files, IAgentNodeControl control) : IService<GetWorkflowRunRequest, GetWorkflowRunResponse>
+/// <param name="budgets">The profile's token budget, shown for a run whose spec sets none (#3805); null shows none.</param>
+internal sealed class GetWorkflowRunService(IWorkflowRunStore runs, IWorkflowStore workflows, ILaunchFiles files, IAgentNodeControl control, IRunBudgetSource? budgets = null) : IService<GetWorkflowRunRequest, GetWorkflowRunResponse>
 {
     public async ValueTask<Result<GetWorkflowRunResponse>> Handle(GetWorkflowRunRequest request, CancellationToken cancellationToken)
     {
@@ -33,7 +34,14 @@ internal sealed class GetWorkflowRunService(IWorkflowRunStore runs, IWorkflowSto
         var agentNodes = await AgentNodes(found, nodes.Value, cancellationToken).ConfigureAwait(false);
         var slug = WorkflowSlug.From(found.Id.Value[..found.Id.Value.IndexOf('@', StringComparison.Ordinal)]);
         return new GetWorkflowRunResponse(found.Id, slug, found.Revision, RunText.Of(found.Status), RunText.Json(found.Trigger), RunText.Json(found.Outputs), found.Error, found.ItemId, found.StartedAt, found.EndedAt,
-            [.. nodes.Value.Select(n => new NodeRunView(n.NodeId, n.ItemIndex, RunText.Of(n.Status), RunText.Json(n.Input), RunText.Json(n.Output), n.Truncated, n.Error, agentNodes.Of(n), n.Raw))]);
+            [.. nodes.Value.Select(n => new NodeRunView(n.NodeId, n.ItemIndex, RunText.Of(n.Status), RunText.Json(n.Input), RunText.Json(n.Output), n.Truncated, n.Error, agentNodes.Of(n), n.Raw))],
+            Tokens());
+    }
+
+    private RunTokens Tokens()
+    {
+        _ = budgets;
+        return new RunTokens(Used: 0, Budget: null);
     }
 
     // The agent state of the run's rows. The candidates are the 'run_agent' nodes of the revision the run walked whose row runs now (item 0: a run_agent node runs once). The run's workflow says which

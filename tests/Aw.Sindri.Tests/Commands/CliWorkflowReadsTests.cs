@@ -128,7 +128,8 @@ public sealed class CliWorkflowReadsTests : IDisposable
     public async Task Wf_run_show_prints_the_run_and_a_line_per_node_run()
     {
         var run = new GetWorkflowRunResponse(WorkflowRunId.Of(_slug, 1, 2), _slug, 1, "failed", JsonNode.Parse("{\"kind\":\"manual\"}"), Outputs: null, "node 'agent' failed", ItemId: null, _at, _at.AddMinutes(1),
-            [new NodeRunView(NodeId.From("agent"), 0, "failed", Input: null, Output: null, Truncated: false, "timed out"), new NodeRunView(NodeId.From("start"), 0, "succeeded", Input: null, Output: JsonNode.Parse("{}"), Truncated: false, Error: null)]);
+            [new NodeRunView(NodeId.From("agent"), 0, "failed", Input: null, Output: null, Truncated: false, "timed out"), new NodeRunView(NodeId.From("start"), 0, "succeeded", Input: null, Output: JsonNode.Parse("{}"), Truncated: false, Error: null)],
+            new RunTokens(Used: 0, Budget: null));
         var api = new Api(HttpStatusCode.OK, Body(run));
 
         var code = await Verbs(_up, api).RunShow(["morning-check@1:2"], Token);

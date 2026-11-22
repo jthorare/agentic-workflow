@@ -42,5 +42,9 @@
       "agent": null,
       "raw": null
     }
-  ]
+  ],
+  "tokens": {
+    "used": 0,
+    "budget": null
+  }
 }

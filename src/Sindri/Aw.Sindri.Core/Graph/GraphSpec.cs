@@ -18,4 +18,9 @@ public sealed record GraphSpec(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Concurrency,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] GraphResources? Resources,
     IReadOnlyList<GraphNode> Nodes,
-    IReadOnlyList<GraphEdge> Edges);
+    IReadOnlyList<GraphEdge> Edges)
+{
+    /// <summary>Gets the run's token budget (#3805), or null: a run then takes the profile's 'workflow.budget.tokens', and with neither it has no cap.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public GraphBudget? Budget { get; init; }
+}
