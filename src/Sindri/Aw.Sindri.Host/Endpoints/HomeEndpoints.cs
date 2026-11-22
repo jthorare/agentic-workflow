@@ -45,7 +45,8 @@ internal static class HomeEndpoints
         return group;
     }
 
-    private static Result<HomeRowId> RowId(string id) => HomeRowId.TryFrom(id, out var rowId)
+    // why: ASP.NET keeps an escaped '/' as "%2F" in a route value (ProjectRoute.Segment has the same rule), and a gh: row id holds one, so the segment is unescaped here, once, for both routes
+    private static Result<HomeRowId> RowId(string id) => HomeRowId.TryFrom(Uri.UnescapeDataString(id), out var rowId)
         ? rowId
         : SindriErrors.InvalidInput.With($"'{SafeText.Line(SafeText.Escape(id), 80)}' isn't a Home row id (<source>:<id>, such as gh:pr:owner/repo#12)");
 
