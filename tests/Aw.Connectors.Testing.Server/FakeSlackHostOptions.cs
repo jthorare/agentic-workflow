@@ -136,7 +136,7 @@ public sealed class FakeSlackHostOptions
         return null;
     }
 
-    private static (string Name, string Rest) Split(string? value)
+    private static (string Name, string Tail) Split(string? value)
     {
         var at = value?.IndexOf('=', StringComparison.Ordinal) ?? -1;
         return at > 0 ? (value![..at], value[(at + 1)..]) : (string.Empty, string.Empty);
