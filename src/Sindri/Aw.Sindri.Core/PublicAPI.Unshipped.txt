@@ -23222,7 +23222,7 @@ Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.RejectLike.get -> bool
 Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.RejectLike.init -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Decision.get -> Aw.Sindri.Core.NeedsYou.NeedsYouDecision?
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Decision.init -> void
-const Aw.Sindri.Core.Views.ViewSchema.Version = 37 -> int
+const Aw.Sindri.Core.Views.ViewSchema.Version = 38 -> int
 override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Equals(object? obj) -> bool
 override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.GetHashCode() -> int
 override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.ToString() -> string!
@@ -23894,7 +23894,7 @@ Aw.Sindri.Core.Home.HomeKind.IssueAssigned = 14 -> Aw.Sindri.Core.Home.HomeKind
 Aw.Sindri.Core.Home.HomeKind.TodoDue = 15 -> Aw.Sindri.Core.Home.HomeKind
 Aw.Sindri.Core.Home.HomeFactKind
 Aw.Sindri.Core.Home.HomeFactKind.Why = 0 -> Aw.Sindri.Core.Home.HomeFactKind
-Aw.Sindri.Core.Home.HomeFactKind.Object = 1 -> Aw.Sindri.Core.Home.HomeFactKind
+Aw.Sindri.Core.Home.HomeFactKind.Ref = 1 -> Aw.Sindri.Core.Home.HomeFactKind
 Aw.Sindri.Core.Home.HomeFactKind.From = 2 -> Aw.Sindri.Core.Home.HomeFactKind
 Aw.Sindri.Core.Home.HomeEdgeKind
 Aw.Sindri.Core.Home.HomeEdgeKind.ItemOf = 0 -> Aw.Sindri.Core.Home.HomeEdgeKind
@@ -23938,15 +23938,15 @@ static Aw.Sindri.Core.Home.HomeRank.operator !=(Aw.Sindri.Core.Home.HomeRank? le
 static Aw.Sindri.Core.Home.HomeRank.operator ==(Aw.Sindri.Core.Home.HomeRank? left, Aw.Sindri.Core.Home.HomeRank? right) -> bool
 Aw.Sindri.Core.Home.HomeBlocked
 Aw.Sindri.Core.Home.HomeBlocked.<Clone>$() -> Aw.Sindri.Core.Home.HomeBlocked!
-Aw.Sindri.Core.Home.HomeBlocked.Deconstruct(out string! Id, out string! Title, out string! Via) -> void
+Aw.Sindri.Core.Home.HomeBlocked.Deconstruct(out Aw.Sindri.Core.Ids.HomeRowId Id, out string! Title, out string! Via) -> void
 Aw.Sindri.Core.Home.HomeBlocked.Equals(Aw.Sindri.Core.Home.HomeBlocked? other) -> bool
-Aw.Sindri.Core.Home.HomeBlocked.Id.get -> string!
+Aw.Sindri.Core.Home.HomeBlocked.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
 Aw.Sindri.Core.Home.HomeBlocked.Id.init -> void
 Aw.Sindri.Core.Home.HomeBlocked.Title.get -> string!
 Aw.Sindri.Core.Home.HomeBlocked.Title.init -> void
 Aw.Sindri.Core.Home.HomeBlocked.Via.get -> string!
 Aw.Sindri.Core.Home.HomeBlocked.Via.init -> void
-Aw.Sindri.Core.Home.HomeBlocked.HomeBlocked(string! Id, string! Title, string! Via) -> void
+Aw.Sindri.Core.Home.HomeBlocked.HomeBlocked(Aw.Sindri.Core.Ids.HomeRowId Id, string! Title, string! Via) -> void
 override Aw.Sindri.Core.Home.HomeBlocked.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Home.HomeBlocked.GetHashCode() -> int
 override Aw.Sindri.Core.Home.HomeBlocked.ToString() -> string!
@@ -23954,15 +23954,15 @@ static Aw.Sindri.Core.Home.HomeBlocked.operator !=(Aw.Sindri.Core.Home.HomeBlock
 static Aw.Sindri.Core.Home.HomeBlocked.operator ==(Aw.Sindri.Core.Home.HomeBlocked? left, Aw.Sindri.Core.Home.HomeBlocked? right) -> bool
 Aw.Sindri.Core.Home.HomeLink
 Aw.Sindri.Core.Home.HomeLink.<Clone>$() -> Aw.Sindri.Core.Home.HomeLink!
-Aw.Sindri.Core.Home.HomeLink.Deconstruct(out string! Kind, out string! Id, out string? Title) -> void
+Aw.Sindri.Core.Home.HomeLink.Deconstruct(out string! Kind, out Aw.Sindri.Core.Ids.HomeRowId Id, out string? Title) -> void
 Aw.Sindri.Core.Home.HomeLink.Equals(Aw.Sindri.Core.Home.HomeLink? other) -> bool
 Aw.Sindri.Core.Home.HomeLink.Kind.get -> string!
 Aw.Sindri.Core.Home.HomeLink.Kind.init -> void
-Aw.Sindri.Core.Home.HomeLink.Id.get -> string!
+Aw.Sindri.Core.Home.HomeLink.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
 Aw.Sindri.Core.Home.HomeLink.Id.init -> void
 Aw.Sindri.Core.Home.HomeLink.Title.get -> string?
 Aw.Sindri.Core.Home.HomeLink.Title.init -> void
-Aw.Sindri.Core.Home.HomeLink.HomeLink(string! Kind, string! Id, string? Title) -> void
+Aw.Sindri.Core.Home.HomeLink.HomeLink(string! Kind, Aw.Sindri.Core.Ids.HomeRowId Id, string? Title) -> void
 override Aw.Sindri.Core.Home.HomeLink.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Home.HomeLink.GetHashCode() -> int
 override Aw.Sindri.Core.Home.HomeLink.ToString() -> string!

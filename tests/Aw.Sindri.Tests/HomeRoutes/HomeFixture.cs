@@ -51,7 +51,7 @@ internal static class HomeFixture
     /// <param name="state">Its state.</param>
     /// <returns>The row.</returns>
     public static HomeRow Row(string id, int position, HomeGroup group = HomeGroup.NeedsYou, HomeKind kind = HomeKind.ReviewRequested, HomeState state = HomeState.Open) =>
-        new(HomeRowId.From(id), 1, kind, group, $"Row {position}", [new HomeFact(HomeFactKind.Why, "why"), new HomeFact(HomeFactKind.Object, id), new HomeFact(HomeFactKind.From, "Sam")], "you", _since.AddMinutes(position),
-            new HomeRank(0, 5, position, position), [new HomeBlocked("gh:pr:a/b#1", "PR 1", "closes")], [new HomeLink("pr", "gh:pr:a/b#1", "PR 1")], state,
+        new(HomeRowId.From(id), 1, kind, group, $"Row {position}", [new HomeFact(HomeFactKind.Why, "why"), new HomeFact(HomeFactKind.Ref, id), new HomeFact(HomeFactKind.From, "Sam")], "you", _since.AddMinutes(position),
+            new HomeRank(0, 5, position, position), [new HomeBlocked(HomeRowId.From("gh:pr:a/b#1"), "PR 1", "closes")], [new HomeLink("pr", HomeRowId.From("gh:pr:a/b#1"), "PR 1")], state,
             state == HomeState.Snoozed ? _since.AddDays(1) : null, state == HomeState.Done ? _since.AddHours(1) : null, ["open"], new HomeSource("github", _since, null));
 }
