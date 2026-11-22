@@ -1,0 +1,5 @@
+### Ph3 Performance sweep
+Exit check: every surface is at or under its budget.
+### Ph4 Bug sweep
+Exit check: every finding is an issue in the repo's tracker.
+### Ph5 History panel on the lookup page

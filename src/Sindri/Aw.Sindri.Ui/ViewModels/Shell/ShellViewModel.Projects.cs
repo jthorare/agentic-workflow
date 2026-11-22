@@ -74,8 +74,10 @@ internal sealed partial class ShellViewModel
     private void WireProjectAdd()
     {
         Projects.ConnectRequested += (_, _) => GoTo(PageId.Connections);
+        ProjectAdd.ConnectRequested += (_, _) => GoTo(PageId.Connections);
         Projects.AddRequested += (_, _) =>
         {
+            ProjectAdd.SetLinearConnected(!Projects.IsLinearMissing);
             OpenSheet(DeepLink.ProjectAdd);
             OpenerAdd = true;   // Esc comes back to the button, after the sheet's own opening cleared it
         };
