@@ -49,7 +49,7 @@ internal sealed class SqliteMessagesStore(MessagesDatabase database, TimeProvide
         return InTransaction<Unit>(async session =>
         {
             var written = await Execute(session, new SqlStatement(MessagesSql.UpsertConversation, c => c
-                .Bind("$id", conversation.Id).Bind("$workspace", conversation.Workspace).Bind("$kind", KindText(conversation.Kind))
+                .Bind("$id", conversation.Conversation).Bind("$workspace", conversation.Workspace).Bind("$kind", KindText(conversation.Kind))
                 .Bind("$name", conversation.Name).Bind("$ext", conversation.ExtShared), "conversation"), cancellationToken).ConfigureAwait(false);
             return written.IsError ? written.Error : Results.Ok();
         }, cancellationToken);
@@ -335,7 +335,7 @@ internal sealed class SqliteMessagesStore(MessagesDatabase database, TimeProvide
         .Bind("$workspace", place.Workspace).Bind("$c", message.Conversation).Bind("$ts", message.Ts.Value).Bind("$threadTs", message.ThreadTs?.Value)
         .Bind("$root", root).Bind("$user", message.User).Bind("$text", message.Text).Bind("$blocks", message.Blocks).Bind("$reactions", message.Reactions)
         .Bind("$subtype", message.Subtype).Bind("$edited", message.EditedTs?.Value).Bind("$replies", message.ReplyCount)
-        .Bind("$latestReply", message.LatestReplyTs?.Value).Bind("$partial", message.Partial).Bind("$files", message.FileIds)
+        .Bind("$latestReply", message.LatestReplyTs?.Value).Bind("$partial", message.Partial).Bind("$files", message.Files)
         .Bind("$mine", message.Mine).Bind("$namesMe", message.NamesMe), "message");
 
     private static Action<SqliteCommand> Bind(string conversation, string root) => c => c.Bind("$c", conversation).Bind("$root", root);

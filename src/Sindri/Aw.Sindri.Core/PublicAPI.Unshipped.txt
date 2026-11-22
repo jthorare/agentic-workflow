@@ -24069,8 +24069,8 @@ const Aw.Sindri.Core.Events.EventTypes.MessagesSynced = "messages.synced" -> str
 Aw.Sindri.Core.Messages.StoredConversation
 Aw.Sindri.Core.Messages.StoredConversation.Workspace.get -> string!
 Aw.Sindri.Core.Messages.StoredConversation.Workspace.init -> void
-Aw.Sindri.Core.Messages.StoredConversation.Id.get -> string!
-Aw.Sindri.Core.Messages.StoredConversation.Id.init -> void
+Aw.Sindri.Core.Messages.StoredConversation.Conversation.get -> string!
+Aw.Sindri.Core.Messages.StoredConversation.Conversation.init -> void
 Aw.Sindri.Core.Messages.StoredConversation.Kind.get -> Aw.Sindri.Core.Messages.ConversationKind
 Aw.Sindri.Core.Messages.StoredConversation.Kind.init -> void
 Aw.Sindri.Core.Messages.StoredConversation.Name.get -> string!
@@ -24078,9 +24078,9 @@ Aw.Sindri.Core.Messages.StoredConversation.Name.init -> void
 Aw.Sindri.Core.Messages.StoredConversation.ExtShared.get -> bool
 Aw.Sindri.Core.Messages.StoredConversation.ExtShared.init -> void
 Aw.Sindri.Core.Messages.StoredConversation.<Clone>$() -> Aw.Sindri.Core.Messages.StoredConversation!
-Aw.Sindri.Core.Messages.StoredConversation.Deconstruct(out string! Workspace, out string! Id, out Aw.Sindri.Core.Messages.ConversationKind Kind, out string! Name, out bool ExtShared) -> void
+Aw.Sindri.Core.Messages.StoredConversation.Deconstruct(out string! Workspace, out string! Conversation, out Aw.Sindri.Core.Messages.ConversationKind Kind, out string! Name, out bool ExtShared) -> void
 Aw.Sindri.Core.Messages.StoredConversation.Equals(Aw.Sindri.Core.Messages.StoredConversation? other) -> bool
-Aw.Sindri.Core.Messages.StoredConversation.StoredConversation(string! Workspace, string! Id, Aw.Sindri.Core.Messages.ConversationKind Kind, string! Name, bool ExtShared) -> void
+Aw.Sindri.Core.Messages.StoredConversation.StoredConversation(string! Workspace, string! Conversation, Aw.Sindri.Core.Messages.ConversationKind Kind, string! Name, bool ExtShared) -> void
 override Aw.Sindri.Core.Messages.StoredConversation.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Messages.StoredConversation.GetHashCode() -> int
 override Aw.Sindri.Core.Messages.StoredConversation.ToString() -> string!
@@ -24115,8 +24115,8 @@ Aw.Sindri.Core.Messages.StoredMessage.Blocks.get -> string?
 Aw.Sindri.Core.Messages.StoredMessage.Blocks.init -> void
 Aw.Sindri.Core.Messages.StoredMessage.Reactions.get -> string!
 Aw.Sindri.Core.Messages.StoredMessage.Reactions.init -> void
-Aw.Sindri.Core.Messages.StoredMessage.FileIds.get -> string!
-Aw.Sindri.Core.Messages.StoredMessage.FileIds.init -> void
+Aw.Sindri.Core.Messages.StoredMessage.Files.get -> string!
+Aw.Sindri.Core.Messages.StoredMessage.Files.init -> void
 Aw.Sindri.Core.Messages.StoredMessage.<Clone>$() -> Aw.Sindri.Core.Messages.StoredMessage!
 Aw.Sindri.Core.Messages.StoredMessage.Deconstruct(out string! Conversation, out Aw.Sindri.Core.Messages.MessageTs Ts, out Aw.Sindri.Core.Messages.MessageTs? ThreadTs, out string! User, out string! Text, out bool Mine, out bool NamesMe) -> void
 Aw.Sindri.Core.Messages.StoredMessage.Equals(Aw.Sindri.Core.Messages.StoredMessage? other) -> bool

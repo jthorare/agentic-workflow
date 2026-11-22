@@ -34,6 +34,6 @@ public sealed record StoredMessage(string Conversation, MessageTs Ts, MessageTs?
     /// <summary>Gets the reactions as a JSON array.</summary>
     public string Reactions { get; init; } = "[]";
 
-    /// <summary>Gets the file ids as a JSON array.</summary>
-    public string FileIds { get; init; } = "[]";
+    /// <summary>Gets the message's files (their Slack ids) as a JSON array.</summary>
+    public string Files { get; init; } = "[]";
 }
