@@ -130,10 +130,10 @@ Four reads, each one slice (`Features/ListWorkflows`, `GetWorkflow`, `ListWorkfl
 |---|---|---|---|
 | The workflows that are not archived | `GET /sindri/workflows` | `workflow_list` | `sindri wf list [--json]` |
 | One workflow: the revision it runs (the newest when off), the spec, the spec hash, who saved the newest revision, node positions | `GET /sindri/workflows/{slug}` | `workflow_get` (`slug`) | `sindri wf show <slug> [--json]` |
-| A workflow's newest 50 runs, newest first, any status | `GET /sindri/workflows/{slug}/runs` | `workflow_runs` (`slug`) | `sindri wf runs <slug> [--json]` |
+| A workflow's runs, newest first, any status: 50 a page, `more` true when older ones are left | `GET /sindri/workflows/{slug}/runs[?offset=N&limit=M]` | `workflow_runs` (`slug`, `offset`, `limit`) | `sindri wf runs <slug> [--json]` |
 | One run with its trigger, outputs and node runs | `GET /sindri/workflow-runs/{run}` | `workflow_run_get` (`run`) | `sindri wf run-show <run> [--json]` |
 
-An unknown slug is `SND-GRAPH-008` (404), an unknown run `SND-GRAPH-101`, a slug or run id of the wrong shape invalid input. "Who changed it last" is the `createdBy` of the newest revision (`owner` or `session:<id>`). Node payloads the store cut at its size limit come back as a string with `truncated: true` on the node run. Over MCP, names, descriptions, node titles and every string of a node config (prompts), failure text, trigger payloads, outputs and node inputs and outputs are fenced as untrusted. `IWorkflowRunStore.Recent` is the new store read behind the run list.
+An unknown slug is `SND-GRAPH-008` (404), an unknown run `SND-GRAPH-101`, a slug or run id of the wrong shape invalid input. "Who changed it last" is the `createdBy` of the newest revision (`owner` or `session:<id>`). Node payloads the store cut at its size limit come back as a string with `truncated: true` on the node run. Over MCP, names, descriptions, node titles and every string of a node config (prompts), failure text, trigger payloads, outputs and node inputs and outputs are fenced as untrusted. `IWorkflowRunStore.Recent` is the new store read behind the run list. The route's `offset` skips that many of the newest runs and `limit` caps the page at 50; a value that is not a whole number (offset 0 or more, limit 1 or more) is invalid input, not the first page. The app's runs list pages with it: Show older runs reads the page past every run shown so far (#3305).
 
 ## Writing workflows (PR 8b)
 
