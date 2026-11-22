@@ -30,6 +30,30 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     /// <summary>Opens a link; set by the page.</summary>
     internal ILauncher Launcher { get; set; } = NullLauncher.Instance;
 
+    /// <summary>Copies the file's path; set by the page.</summary>
+    internal IClipboard? Clipboard { get; set; }
+
+    /// <summary>Gets the copy-path button's words.</summary>
+    public string CopyPathText { get; } = Labels.ContextNodePanelCopyPath;
+
+    /// <summary>Copies the source's file path (#3715).</summary>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>When the clipboard answered.</returns>
+    internal Task CopyPath(CancellationToken cancellationToken = default)
+    {
+        _ = cancellationToken;
+        throw new NotSupportedException();
+    }
+
+    /// <summary>Opens the source's web link only (the "Open source" button).</summary>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>When the system answered.</returns>
+    internal Task OpenLink(CancellationToken cancellationToken = default)
+    {
+        _ = cancellationToken;
+        throw new NotSupportedException();
+    }
+
     /// <summary>Gets a value indicating whether the panel shows.</summary>
     public bool IsOpen { get; private set; }
 

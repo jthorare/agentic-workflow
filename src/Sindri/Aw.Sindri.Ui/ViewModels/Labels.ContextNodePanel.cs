@@ -27,6 +27,14 @@ internal static partial class Labels
     /// <summary>The open-file button's accessible name (#3258).</summary>
     internal const string ContextNodePanelOpenFileName = "Open the file on this machine";
 
+    /// <summary>Copies the source file's path (#3715).</summary>
+    internal const string ContextNodePanelCopyPath = "Copy path";
+
+    /// <summary>The line when the clipboard refused the path (#3715).</summary>
+    /// <param name="path">The path.</param>
+    /// <returns>The words, with the path to copy by hand.</returns>
+    internal static string ContextNodePanelCopyPathFailed(string path) => $"Couldn't copy the path. It is {path}";
+
     /// <summary>The muted line when the node has a source but no link to open (#1702).</summary>
     internal const string ContextNodePanelNoLink = "No link to the source";
 

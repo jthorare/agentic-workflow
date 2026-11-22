@@ -22,6 +22,15 @@ internal sealed class AvaloniaLauncher(Func<TopLevel?> window) : Platform.ILaunc
         }
     }
 
+    /// <summary>The file: URI of a path, each segment escaped, so a '#' or '?' in a file name is part of the path (#3715).</summary>
+    /// <param name="path">A path.</param>
+    /// <returns>The URI.</returns>
+    internal static Uri FileUri(string path)
+    {
+        _ = path;
+        throw new NotSupportedException();
+    }
+
     public async Task<bool> OpenFile(string path, CancellationToken cancellationToken)
     {
         try

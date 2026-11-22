@@ -50,6 +50,17 @@ internal sealed class SourceLinks(ContextScope scope, VisibleMap map, IEgressScr
         return repo is null ? null : Inside(repo.Path, path);
     }
 
+    /// <summary><see cref="LocalPath(ContextScope, SourceTarget?)"/> with the checkout prefix compared by case (macOS ignores it, #3715).</summary>
+    /// <param name="scope">The caller's scope.</param>
+    /// <param name="target">The node's source target.</param>
+    /// <param name="ignoreCase">True to compare the prefix without regard to case.</param>
+    /// <returns>The absolute path, or null.</returns>
+    public static string? LocalPath(ContextScope scope, SourceTarget? target, bool ignoreCase)
+    {
+        _ = (scope, target, ignoreCase);
+        throw new NotSupportedException();
+    }
+
     private static string? Inside(string checkout, string path)
     {
         if (!Path.IsPathRooted(checkout) || Path.IsPathRooted(path))
