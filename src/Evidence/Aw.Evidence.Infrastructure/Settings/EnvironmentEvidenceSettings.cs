@@ -8,7 +8,7 @@ namespace Aw.Evidence.Infrastructure.Settings;
 /// <summary>
 /// The deployment settings from the environment Composition passes (blank counts as unset): UI_EVIDENCE_USER_AGENT,
 /// AW_VISUAL_MODEL (default 'judge-default'), UI_EVIDENCE_PREVIEW_HOST_PATTERN, UI_EVIDENCE_API_PORT (1-65535; anything
-/// else is unset), UI_EVIDENCE_SEED_DOMAINS and UI_EVIDENCE_SEED_EMAIL_PATTERN, and
+/// else is unset), UI_EVIDENCE_SEED_EMAIL_PATTERN, and
 /// the UI_EVIDENCE_SLOT_* worktree slot convention (all of FILE, KEY, COUNT and PORT_STEP, else none), and
 /// UI_EVIDENCE_APP_TITLE, else that name in the local NAME=value env file UI_EVIDENCE_CONFIG names.
 /// </summary>
@@ -19,7 +19,6 @@ internal sealed partial class EnvironmentEvidenceSettings(Func<string, string?> 
     internal const string DefaultModel = "judge-default";
     internal const string PreviewHostVariable = "UI_EVIDENCE_PREVIEW_HOST_PATTERN";
     internal const string ApiPortVariable = "UI_EVIDENCE_API_PORT";
-    internal const string DomainsVariable = "UI_EVIDENCE_SEED_DOMAINS";
     internal const string PatternVariable = "UI_EVIDENCE_SEED_EMAIL_PATTERN";
     internal const string TitleVariable = "UI_EVIDENCE_APP_TITLE";
     internal const string ConfigVariable = "UI_EVIDENCE_CONFIG";
@@ -53,7 +52,7 @@ internal sealed partial class EnvironmentEvidenceSettings(Func<string, string?> 
             : null;   // unset, or incomplete: doctor says so when a worktree is asked for
 
     /// <inheritdoc/>
-    public SeedPolicy SeedPolicy => SeedPolicy.From(Set(DomainsVariable), Set(PatternVariable));
+    public SeedPolicy SeedPolicy => SeedPolicy.From(Set(PatternVariable));
 
     /// <inheritdoc/>
     public string AppTitleSource => $"{TitleVariable} in the environment, or in the env file {ConfigVariable} names";

@@ -135,4 +135,16 @@ public sealed class ClaudeCodeUsageTests : IDisposable
 
     [Fact]
     public async Task A_missing_root_is_no_usage() => Assert.Empty(await new ClaudeCodeUsage(Path.Combine(_files.Root, "nowhere")).Between(_from, _to, Token));
+
+    /// <summary>A reader with no cache keeps no list of changed ids: nothing reads it, so it must not grow with every message.</summary>
+    [Fact]
+    public async Task A_reader_without_a_cache_keeps_no_changed_ids()
+    {
+        _files.Write("-repo/a.jsonl", UsageFixture.Claude("m1", "2026-10-17T08:00:00.000Z", "claude-sonnet-4-5", 10, 0, 0, 0));
+        var reader = new ClaudeCodeUsage(_files.Root);
+
+        _ = await reader.Between(_from, _to, Token);
+
+        Assert.Equal(0, reader.PendingChangedIds);
+    }
 }
