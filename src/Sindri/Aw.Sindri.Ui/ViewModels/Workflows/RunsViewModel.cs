@@ -94,6 +94,7 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
             (IsFailed, FailedText, IsEmpty, EmptyText) = (false, string.Empty, false, string.Empty);   // nor does the old one's failure or "off" line
             (CanRun, NoticeText) = (false, string.Empty);   // until this one's runs read says it is on
             (Graph, Shown) = (null, null);
+            ForgetOlder();   // nor its older pages
         }
 
         (Slug, Title) = (slug, name);
@@ -125,10 +126,12 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
         {
             CanRun = true;
             Show(runs.Value);
+            Paged(runs.Value);
         }
         else if (string.Equals(runs.Error.Code, NotActive, StringComparison.Ordinal))
         {
             Rows.Clear();
+            ForgetOlder();
             (IsFailed, FailedText, IsEmpty, EmptyText, Head) = (false, string.Empty, true, Labels.WfRunsOff, string.Empty);
             CanRun = false;
         }
@@ -168,4 +171,9 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
         var nodes = workflow.Spec.ValueKind == JsonValueKind.Object && workflow.Spec.TryGetProperty("nodes", out var list) && list.ValueKind == JsonValueKind.Array ? list.GetArrayLength() : 0;
         return Labels.WfDetail(workflow.Revision, workflow.LatestRevision, nodes, workflow.CreatedBy, workflow.ActiveRevision is not null);
     }
+
+    // The API and the clock, for the other parts of this class (RunsViewModel.Paging.cs).
+    private ISindriApi Api => api;
+
+    private TimeProvider Clock => clock;
 }

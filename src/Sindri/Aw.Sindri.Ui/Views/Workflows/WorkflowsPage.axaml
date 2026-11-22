@@ -186,7 +186,7 @@
                     <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
                       <TextBlock Classes="caption subtle" Text="{Binding TriggerText}" />
                       <TextBlock Classes="caption subtle" Text="{Binding RevisionText}" />
-                      <TextBlock Classes="caption subtle" Text="{Binding WhenText}" />
+                      <TextBlock Classes="caption subtle" Text="{Binding WhenText}" ToolTip.Tip="{Binding WhenTip}" />
                     </StackPanel>
                     <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Classes="caption" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" Margin="0,0,0,8" />
                   </Grid>
@@ -194,6 +194,13 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
+          <!-- Show older runs (#3305): Sindri serves 50 runs a page; while it says more exist, the next page is appended under the rows, which stay put. -->
+          <StackPanel x:Name="RunsOlder" Margin="16,8" Spacing="8" IsVisible="{Binding Runs.HasMore}">
+            <Border x:Name="RunsOlderFailedName" IsVisible="{Binding Runs.IsMoreFailed}" AutomationProperties.Name="{Binding Runs.MoreFailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+              <TextBlock Classes="caption quiet" Text="{Binding Runs.MoreFailedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            </Border>
+            <Button x:Name="RunsShowOlder" Content="{Binding Runs.ShowMoreText}" Click="OnShowOlderRuns" IsEnabled="{Binding Runs.CanShowMore}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Runs.ShowMoreText}" />
+          </StackPanel>
         </StackPanel>
       </Border>
     </StackPanel>

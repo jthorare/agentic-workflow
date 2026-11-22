@@ -15,9 +15,8 @@ internal sealed class RunRowViewModel : ObservableObject
         TriggerText = Labels.WfTriggerWord(row.Trigger);
         RevisionText = Labels.WfRunRevision(row.Revision);
         var live = RunStatus.IsLive(row.Status);
-        WhenText = live
-            ? Labels.JobWhen(running: true, clock.GetUtcNow() - row.StartedAt)
-            : Labels.JobWhen(running: false, clock.GetUtcNow() - (row.EndedAt ?? row.StartedAt));
+        var at = live ? row.StartedAt : row.EndedAt ?? row.StartedAt;   // past a day the row names the day and time, not "1d ago" (#3305)
+        (WhenText, WhenTip) = (Labels.WfRunWhen(live, at, clock), Labels.WfRunMoment(at, clock));
         ErrorText = row.Error ?? string.Empty;
         Name = Labels.WfRunRowName(Id, word.ToLowerInvariant(), TriggerText.ToLowerInvariant(), WhenText, ErrorText);
     }
@@ -46,11 +45,11 @@ internal sealed class RunRowViewModel : ObservableObject
     /// <summary>"Revision 1".</summary>
     public string RevisionText { get; }
 
-    /// <summary>"Started 2m ago" while it is live, "Ended 5m ago" after.</summary>
+    /// <summary>"Started 2m ago" while it is live, "Ended 5m ago" after; past a day "Ended yesterday 07:00" or "Ended Mar 1 07:00".</summary>
     public string WhenText { get; }
 
     /// <summary>The exact moment <see cref="WhenText"/> names, in local time: "Mon 9 Mar 2026 · 07:00:00" (the time's tooltip).</summary>
-    public string WhenTip { get; } = string.Empty;
+    public string WhenTip { get; }
 
     /// <summary>Why it failed, as served; empty otherwise.</summary>
     public string ErrorText { get; }

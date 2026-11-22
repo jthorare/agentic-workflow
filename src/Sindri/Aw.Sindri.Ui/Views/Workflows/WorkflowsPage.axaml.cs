@@ -181,6 +181,14 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
+    private async void OnShowOlderRuns(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            await page.ShowOlderRuns(CancellationToken.None).ConfigureAwait(true);
+        }
+    }
+
     private async void OnRetryRun(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)
