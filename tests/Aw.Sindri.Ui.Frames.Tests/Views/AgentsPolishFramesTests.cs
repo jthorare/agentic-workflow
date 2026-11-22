@@ -87,6 +87,7 @@ public sealed class AgentsPolishFramesTests : FrameHost
         }
 
         Assert.DoesNotContain(chain, c => string.Equals(c.Name, "SheetTitle", StringComparison.Ordinal));
+        Assert.Contains(chain, c => string.Equals(c.Name, "Sheet", StringComparison.Ordinal));
     });
 
     // #3783: narrowing below 1100 px with focus on the page makes the sheet cover the page; focus leaves the disabled page for the
