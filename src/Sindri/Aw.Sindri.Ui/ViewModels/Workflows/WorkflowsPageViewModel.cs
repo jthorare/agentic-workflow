@@ -214,7 +214,9 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         SetLevel(_level == Level.Run ? Level.Runs : Level.List);
         if (_listBehind && _url is { } url)
         {
-            _ = ReadList(url, CancellationToken.None);   // an event came while one run was open: the rows (and the buttons they decide) catch up
+            // An event came while one run was open: the rows (and the buttons they decide) catch up. The read is not awaited, so until it
+            // answers (one loopback round trip) whether Activate and Pause are offered on the runs level goes by the old list row (OpenRow).
+            _ = ReadList(url, CancellationToken.None);
         }
     }
 
