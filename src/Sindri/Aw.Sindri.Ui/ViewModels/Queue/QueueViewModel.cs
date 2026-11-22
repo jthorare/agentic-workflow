@@ -21,6 +21,10 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
 
     // The rows and groups as last shown, by id and by name: a refresh updates them in place (§3.3).
     private Dictionary<string, ItemRowViewModel> _rows = new(StringComparer.Ordinal);
+
+    // Bumped when a Show finds another set of item ids than the last one (an id added or gone); Rows built since the last Show count the new ids.
+    private long _idsVersion;
+    private int _newIds;
     private readonly Dictionary<string, QueueGroupViewModel> _groups = new(StringComparer.Ordinal);
 
     /// <summary>The groups in the API's order (empty ones included, hidden by <see cref="QueueGroupViewModel.IsVisible"/>).</summary>
@@ -164,7 +168,13 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
 
         var now = clock.GetUtcNow();
         var fresh = new Dictionary<string, ItemRowViewModel>(StringComparer.Ordinal);
+        _newIds = 0;
         var all = view.Groups.ToDictionary(g => g.Group, g => g.Items.Select(i => Row(i, g.Group, now, fresh)).ToList(), StringComparer.Ordinal);
+        if (_newIds > 0 || fresh.Count != _rows.Count)
+        {
+            _idsVersion++;   // no new id and the same count: the same ids, so the closed fold need not be read again
+        }
+
         _rows = fresh;
         Patch.To(Groups, [.. view.Groups.Select(g => Group(g, all[g.Group]))]);
         Total = all.Values.Sum(r => r.Count);
@@ -188,6 +198,7 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
         else
         {
             row = new ItemRowViewModel(item, group, action, now);
+            _newIds++;
         }
 
         fresh[item.Id] = row;
