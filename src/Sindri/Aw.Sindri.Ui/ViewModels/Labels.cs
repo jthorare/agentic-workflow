@@ -101,7 +101,13 @@ internal static partial class Labels
     internal const string LastEventCard = "Last event";
 
     /// <summary>The services card with none scheduled.</summary>
-    internal const string NoServices = "none scheduled (the profile names no services)";
+    internal const string NoServices = "none scheduled";
+
+    /// <summary>The services card's line when the live profile won't load: the list holds the built-in services.</summary>
+    internal const string ServicesProfileWontLoad = "The profile won't load, so only the built-in services run.";
+
+    /// <summary>The services card's line when no profile is set up yet.</summary>
+    internal const string ServicesNoProfile = "No profile is set up, so only the built-in services run.";
 
     /// <summary>The not-running panel's fix prompt.</summary>
     internal const string StartIt = "Start it:";

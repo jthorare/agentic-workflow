@@ -25,12 +25,12 @@ Parity_check_fails_on_a_bare_row() {
   # partial with an empty How cell is bare; so is a status with no detail at all
   ledger "$TMP/bare.md" '| 1 | Channels | `conversations.history` | planned M1 | |' '| 2 | Direct messages | | partial | |'
   out="$(bash "$CHECK" "$TMP/bare.md" 2>&1)"; rc=$?
-  if [ "$rc" = 1 ] && printf '%s\n' "$out" | grep -q "^$TMP/bare.md:6: row 2: partial needs its limit"; then
+  if [ "$rc" = 1 ] && grep -q "^$TMP/bare.md:6: row 2: partial needs its limit" <<<"$out"; then
     ok "Parity_check_fails_on_a_bare_row: partial with no limit fails naming file:line and the row"
   else
     bad "Parity_check_fails_on_a_bare_row rc=$rc out=$out"
   fi
-  printf '%s' "$out" | grep -q 'row 1:' && bad "a good planned row was flagged" || ok "a planned row with a phase passes"
+  grep -q 'row 1:' <<<"$out" && bad "a good planned row was flagged" || ok "a planned row with a phase passes"
 }
 Parity_check_fails_on_a_bare_row
 
@@ -48,7 +48,7 @@ for case in \
   name="${case%%|*}"; rest="${case#*|}"; want="${rest%%|*}"; cells="${rest#*|}"
   ledger "$TMP/$name.md" "| 1 | Fn | $cells"
   out="$(bash "$CHECK" "$TMP/$name.md" 2>&1)"; rc=$?
-  { [ "$rc" = 1 ] && printf '%s' "$out" | grep -qF "row 1: $want"; } && ok "bare $name fails: $want" || bad "bare $name rc=$rc out=$out"
+  { [ "$rc" = 1 ] && grep -qF "row 1: $want" <<<"$out"; } && ok "bare $name fails: $want" || bad "bare $name rc=$rc out=$out"
 done
 
 # Every good form passes, alone and in a comma list.
@@ -67,28 +67,28 @@ out="$(bash "$CHECK" "$TMP/good.md" 2>&1)"; rc=$?
 # A bare part inside a comma list still fails.
 ledger "$TMP/list.md" '| 1 | A | x | partial, planned | |'
 out="$(bash "$CHECK" "$TMP/list.md" 2>&1)"; rc=$?
-{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -qF 'row 1: planned needs a phase'; } && ok "a bare part of a comma list fails" || bad "list rc=$rc out=$out"
+{ [ "$rc" = 1 ] && grep -qF 'row 1: planned needs a phase' <<<"$out"; } && ok "a bare part of a comma list fails" || bad "list rc=$rc out=$out"
 
 # Row numbers run 1..N: a gap or a repeat fails, so no row goes silently absent.
 ledger "$TMP/gap.md" '| 1 | A | x | planned M1 | |' '| 3 | C | x | planned M1 | |'
 out="$(bash "$CHECK" "$TMP/gap.md" 2>&1)"; rc=$?
-{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -qF 'row 3: expected row 2'; } && ok "a gap in the row numbers fails" || bad "gap rc=$rc out=$out"
+{ [ "$rc" = 1 ] && grep -qF 'row 3: expected row 2' <<<"$out"; } && ok "a gap in the row numbers fails" || bad "gap rc=$rc out=$out"
 ledger "$TMP/dup.md" '| 1 | A | x | planned M1 | |' '| 1 | B | x | planned M1 | |'
 out="$(bash "$CHECK" "$TMP/dup.md" 2>&1)"; rc=$?
-{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -qF 'row 1: expected row 2'; } && ok "a repeated row number fails" || bad "dup rc=$rc out=$out"
+{ [ "$rc" = 1 ] && grep -qF 'row 1: expected row 2' <<<"$out"; } && ok "a repeated row number fails" || bad "dup rc=$rc out=$out"
 ledger "$TMP/none.md"
 out="$(bash "$CHECK" "$TMP/none.md" 2>&1)"; rc=$?
-{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -qF 'no ledger rows'; } && ok "a ledger with no rows fails" || bad "no rows rc=$rc out=$out"
+{ [ "$rc" = 1 ] && grep -qF 'no ledger rows' <<<"$out"; } && ok "a ledger with no rows fails" || bad "no rows rc=$rc out=$out"
 ledger "$TMP/cols.md" '| 1 | A | x | planned M1 |'
 out="$(bash "$CHECK" "$TMP/cols.md" 2>&1)"; rc=$?
-{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -qF 'row 1: 4 cells, expected 5'; } && ok "a row with the wrong cell count fails" || bad "cols rc=$rc out=$out"
+{ [ "$rc" = 1 ] && grep -qF 'row 1: 4 cells, expected 5' <<<"$out"; } && ok "a row with the wrong cell count fails" || bad "cols rc=$rc out=$out"
 
 # --release is W6's pass: planned, differs and blocked rows fail; done, partial, missing #N and dropped pass.
 out="$(bash "$CHECK" --release "$TMP/good.md" 2>&1)"; rc=$?
-if [ "$rc" = 1 ] && printf '%s' "$out" | grep -qF 'row 4: differs is not a release status' \
-   && printf '%s' "$out" | grep -qF 'row 7: blocked is not a release status' \
-   && printf '%s' "$out" | grep -qF 'row 8: planned is not a release status' \
-   && ! printf '%s' "$out" | grep -qE 'row [1256]:'; then
+if [ "$rc" = 1 ] && grep -qF 'row 4: differs is not a release status' <<<"$out" \
+   && grep -qF 'row 7: blocked is not a release status' <<<"$out" \
+   && grep -qF 'row 8: planned is not a release status' <<<"$out" \
+   && ! grep -qE 'row [1256]:' <<<"$out"; then
   ok "--release fails planned, differs and blocked, passes done, partial, missing and dropped"
 else
   bad "--release rc=$rc out=$out"

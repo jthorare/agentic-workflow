@@ -14,7 +14,7 @@ bad() { echo "not ok - $1"; [ $# -lt 2 ] || echo "  $2"; fail=1; }
 # --- (a) the fix text ---
 lines="$(grep -n 'fix: sindri recipe approve' "$SRC")"
 [ -n "$lines" ] || bad "the source has SND-RECIPE-003 fix text" "no 'fix: sindri recipe approve' in $SRC"
-if printf '%s\n' "$lines" | grep -qE 'recipe approve (\{[^}]+\}|[^ ]+) \{[^}]+\}'; then
+if grep -qE 'recipe approve (\{[^}]+\}|[^ ]+) \{[^}]+\}' <<<"$lines"; then
   bad "the fix text does not name '<id> <version>'" "$(printf '%s\n' "$lines" | grep -E 'recipe approve (\{[^}]+\}|[^ ]+) \{')"
 else ok "the fix text does not name '<id> <version>'"; fi
 if [ -n "$lines" ] && ! printf '%s\n' "$lines" | grep -vE 'recipe approve \{[^}]+\}@\{[^}]+\}' | grep -q .; then
