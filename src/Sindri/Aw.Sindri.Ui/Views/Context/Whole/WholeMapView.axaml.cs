@@ -4,7 +4,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 using Aw.Sindri.Ui.ViewModels.Controls;
@@ -42,12 +41,7 @@ internal sealed partial class WholeMapView : UserControl
                 ViewChanged();
             }
         };
-        WholeCanvas.SizeChanged += (_, _) =>
-        {
-            _map?.ViewWidth = TopLevel.GetTopLevel(this)?.ClientSize.Width ?? Bounds.Width;   // the window's width decides how Core draws
-
-            Arrange();
-        };
+        WholeCanvas.SizeChanged += (_, _) => Resized();
         WholeMiniMap.Centred += (_, e) => Centre(e.Value);
         WholeCanvas.Clicked += (_, e) => WholeWorld.Click(e.GetPosition(WholeWorld));
         ViewChanged();
@@ -92,11 +86,7 @@ internal sealed partial class WholeMapView : UserControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-        if (!e.Handled && e.Source is not TextBox && (e.Key == Key.OemOpenBrackets || e.Key == Key.OemCloseBrackets) && _map?.PageKey(next: e.Key == Key.OemCloseBrackets) == true)
-        {
-            e.Handled = true;   // [ and ] turn the pages of a list
-        }
-        else if (!e.Handled && e.Source is not TextBox && WholeCanvas.HandleZoomKey(e.Key))
+        if (!e.Handled && e.Source is not TextBox && (TurnPage(e.Key) || WholeCanvas.HandleZoomKey(e.Key)))
         {
             e.Handled = true;
         }
@@ -241,38 +231,33 @@ internal sealed partial class WholeMapView : UserControl
         }
     }
 
-    // Esc came back to a list or the tiles: focus goes to the tile or row the person left from.
-    private void OnFocusReturned(object? sender, ValueEventArgs<string> e) =>
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-        {
-            Control? target = this.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.DataContext is AreaCard card && string.Equals(card.Key, e.Value, StringComparison.Ordinal));
-            if (target is null && WholeAreaList.Items.OfType<MapItemViewModel>().FirstOrDefault(i => string.Equals(i.Key, e.Value, StringComparison.Ordinal)) is { } row)
-            {
-                target = WholeAreaList.ContainerFromItem(row);
-            }
-
-            _ = target?.Focus(NavigationMethod.Tab);
-        });
-
-    private void OnAreaCard(object? sender, RoutedEventArgs e)
+    // The list's items carry their name for a screen reader and the driver.
+    private void OnItemPrepared(object? sender, ContainerPreparedEventArgs e)
     {
-        if (sender is Control { DataContext: AreaCard card })
+        if (e.Container is ListBoxItem container && container.DataContext is MapItemViewModel item)
         {
-            _map?.OpenTile(card.Key);
+            AutomationProperties.SetName(container, item.Name);
         }
     }
 
-    private void OnConceptTab(object? sender, RoutedEventArgs e)
+    // Enter on an item is a click on the map's node or feature.
+    private void OnItemsKey(object? sender, KeyEventArgs e)
     {
-        if (sender is Control { DataContext: ConceptTabItem tab })
+        var item = (e.Source as Control)?.DataContext as MapItemViewModel ?? WholeItems.SelectedItem as MapItemViewModel;   // the focused row first: the selection can lag it
+        if (e.Key == Key.Enter && item is not null)
         {
-            _map?.ChooseTab(tab.Key);
+            _map?.ChooseItem(item);
+            e.Handled = true;
         }
     }
 
-    private void OnAreaPrevious(object? sender, RoutedEventArgs e) => _map?.PreviousPage();
-
-    private void OnAreaNext(object? sender, RoutedEventArgs e) => _map?.NextPage();
+    private void OnItemsTapped(object? sender, TappedEventArgs e)
+    {
+        if (WholeItems.SelectedItem is MapItemViewModel item)
+        {
+            _map?.ChooseItem(item);
+        }
+    }
 
     private void OnCrumb(object? sender, ValueEventArgs<Crumb> e) => _map?.Navigate(e.Value);
 
