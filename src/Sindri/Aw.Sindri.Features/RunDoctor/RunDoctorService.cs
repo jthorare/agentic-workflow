@@ -12,16 +12,16 @@ internal sealed class RunDoctorService(
     public async ValueTask<Result<RunDoctorResponse>> Handle(RunDoctorRequest request, CancellationToken cancellationToken)
     {
         var now = clock.GetUtcNow();
-        var read = await lease.Read(cancellationToken).ConfigureAwait(false);
+        var read = await ledger.Lease(lease, cancellationToken).ConfigureAwait(false);
         var row = read.IsSuccess ? read.Value : null;
-        var (views, head) = await ledger.Views(cancellationToken).ConfigureAwait(false);
+        var (viewsSchema, views, head) = await ledger.Views(cancellationToken).ConfigureAwait(false);
         var live = await profile.Read(cancellationToken).ConfigureAwait(false);
         var liveness = row is null ? HolderLiveness.Unknown : LeaseDecision.Liveness(row.Holder, probe.Self(), probe.Facts(row.Holder.Pid));
         DoctorCheck[] checks =
         [
             read.IsError ? new DoctorCheck("lease", CheckState.Fail, read.Error.Message, "check the ledger file") : DoctorRules.Lease(row, now, liveness),
             DoctorRules.Ledger(await ledger.Schema(cancellationToken).ConfigureAwait(false)),
-            DoctorRules.Views(views, head),
+            DoctorRules.Views(viewsSchema, views, head),
             DoctorRules.Profile(live),
             DoctorRules.Api(await runtime.Api(cancellationToken).ConfigureAwait(false), row, now),
             DoctorRules.Temporal(await runtime.Temporal(cancellationToken).ConfigureAwait(false)),
