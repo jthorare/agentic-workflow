@@ -44,7 +44,7 @@ internal sealed partial class SlackWebClient
                 return SindriErrors.ConnectionProviderChanged.With(Said(method, "a reply that is not a JSON object"));
             }
 
-            return root.TryGetProperty("ok", out var ok) && ok.ValueKind == JsonValueKind.True ? root.Clone() : NotOk(method, root);
+            return root.TryGetProperty("ok", out var ok) && ok.ValueKind == JsonValueKind.True ? root.Clone() : NotOk(method, root, response);
         }
         catch (JsonException)
         {
@@ -53,13 +53,13 @@ internal sealed partial class SlackWebClient
     }
 
     // An ok:false answer, by its error slug. The admin-gate slugs (019) and 'not_allowed_token_type' (030) are guesses until P0 reads the real ones.
-    private Result<JsonElement> NotOk(string method, JsonElement root)
+    private Result<JsonElement> NotOk(string method, JsonElement root, HttpResponseMessage response)
     {
         var slug = Word(root, "error") ?? "unknown";
         var said = Said(method, $"ok:false ({slug})");
         return slug switch
         {
-            _ when _rateLimited.Contains(slug) => Hold(method, _defaultWait),
+            _ when _rateLimited.Contains(slug) => Hold(method, RetryAfter(response)),
             _ when _tokenInvalid.Contains(slug) => SindriErrors.MessagesTokenInvalid.With(said + " Make a new token, then sindri messages connect."),
             "missing_scope" => SindriErrors.MessagesScopeMissing.With(
                 $"{said} The token needs the scope {Word(root, "needed") ?? "Slack did not name"}: add it in the Slack app, reinstall, reconnect."),
@@ -88,7 +88,7 @@ internal sealed partial class SlackWebClient
     private TimeSpan RetryAfter(HttpResponseMessage response) => response.Headers.RetryAfter switch
     {
         { Delta: { } delta } => delta,
-        { Date: { } date } => date - _clock.GetUtcNow(),
+        { Date: { } date } => date > _clock.GetUtcNow() ? date - _clock.GetUtcNow() : TimeSpan.Zero,   // a date already past waits nothing, never a negative time
         _ => _defaultWait,
     };
 

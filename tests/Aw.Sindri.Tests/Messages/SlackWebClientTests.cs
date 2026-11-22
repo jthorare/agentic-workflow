@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Messages;
 using Aw.Sindri.Infrastructure.Messages;
@@ -130,6 +131,37 @@ public sealed class SlackWebClientTests
         _ = await client.AuthTest(fixtureToken, TestContext.Current.CancellationToken);
 
         Assert.Equal("slack.com", Assert.Single(slack.Seen).Url.Host);
+    }
+
+    [Fact]
+    public async Task A_retry_after_date_already_past_waits_zero_seconds()
+    {
+        var past = _clock.GetUtcNow().AddSeconds(-3);
+        using var client = Client(new SlackStubHandler(_ => Answer(HttpStatusCode.TooManyRequests, new RetryConditionHeaderValue(past))));
+
+        var auth = await client.AuthTest(_token, TestContext.Current.CancellationToken);
+
+        Assert.Equal("SND-MSG-005", auth.Error.Code);
+        Assert.Contains("retry in 0 s", auth.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_200_ratelimited_answer_waits_its_retry_after()
+    {
+        using var client = Client(new SlackStubHandler(_ => Answer(HttpStatusCode.OK, new RetryConditionHeaderValue(TimeSpan.FromSeconds(20)))));
+
+        var auth = await client.AuthTest(_token, TestContext.Current.CancellationToken);
+
+        Assert.Equal("SND-MSG-005", auth.Error.Code);
+        Assert.Contains("retry in 20 s", auth.Error.Message, StringComparison.Ordinal);
+        Assert.Equal(TimeSpan.FromSeconds(20), _budget.Wait("auth.test", _clock.GetUtcNow()));
+    }
+
+    private static HttpResponseMessage Answer(HttpStatusCode status, RetryConditionHeaderValue retryAfter)
+    {
+        var response = SlackStubHandler.Json("{\"ok\":false,\"error\":\"ratelimited\"}", status);
+        response.Headers.RetryAfter = retryAfter;
+        return response;
     }
 
     private SlackWebClient Client(SlackStubHandler slack) => new(slack, new SlackWebSettings(BaseUrlOverride: null, Home: "/nonexistent-sindri-home"), _budget, _clock);
