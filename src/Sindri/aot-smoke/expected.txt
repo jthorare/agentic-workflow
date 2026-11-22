@@ -52,7 +52,7 @@ exit 2
  \__ \ | | | | (_| | |  | |
  |___/_|_| |_|\__,_|_|  |_|
   profile   WORK/home/profile/profile.yaml (hash HASH6)
-  services  heartbeat every 5s
+  services  heartbeat every 5s · workflow-schedule every 1m · setup every 1m · context-sync-gaps every 1m · context-map-refresh every 1m · context-concept-scan every 1m · index-embed every 1m · context-upkeep every 15m · index-sync every 5m · index-decisions every 15m · code-index-main-move every 1m · code-index-embed every 1m · connection-refresh every 5m · workflow-poll every 30s · memory-expire every 1h · toolkit-calls-expire every 1h · todo-note every 24h
   views     cursor N of M
   health    healthy
   api       127.0.0.1:PORT
@@ -67,7 +67,7 @@ removed: edits apply on save (nothing to approve; `sindri profile set`, `repo ad
 removed: edits apply on save (nothing to approve; `sindri profile set`, `repo add` and the app write the live profile)
 ## sindri status
   profile   WORK/home/profile/profile.yaml (hash HASH6)
-  services  heartbeat every 5s
+  services  heartbeat every 5s · workflow-schedule every 1m · setup every 1m · context-sync-gaps every 1m · context-map-refresh every 1m · context-concept-scan every 1m · index-embed every 1m · context-upkeep every 15m · index-sync every 5m · index-decisions every 15m · code-index-main-move every 1m · code-index-embed every 1m · connection-refresh every 5m · workflow-poll every 30s · memory-expire every 1h · toolkit-calls-expire every 1h · todo-note every 24h
   views     cursor N of M
   health    healthy
   api       127.0.0.1:PORT
@@ -89,7 +89,7 @@ views rebuild requested (sequence SEQ)
 views rebuild requested (sequence SEQ)
 ## sindri status
   profile   WORK/home/profile/profile.yaml (hash HASH6)
-  services  heartbeat every 5s
+  services  heartbeat every 5s · workflow-schedule every 1m · setup every 1m · context-sync-gaps every 1m · context-map-refresh every 1m · context-concept-scan every 1m · index-embed every 1m · context-upkeep every 15m · index-sync every 5m · index-decisions every 15m · code-index-main-move every 1m · code-index-embed every 1m · connection-refresh every 5m · workflow-poll every 30s · memory-expire every 1h · toolkit-calls-expire every 1h · todo-note every 24h
   views     cursor N of M
   health    healthy
   api       127.0.0.1:PORT
@@ -232,7 +232,7 @@ SND-API-001 not running: no control plane is recorded (fix: sindri)
 exit 1
 ## sindri doctor
 ok    lease             free (last epoch 1)
-ok    ledger            schema 20/20
+ok    ledger            schema 21/21
 ok    views             cursor N of head M
 ok    profile           hash HASH6
 fail  api               unreachable: no control plane is recorded (fix: sindri)

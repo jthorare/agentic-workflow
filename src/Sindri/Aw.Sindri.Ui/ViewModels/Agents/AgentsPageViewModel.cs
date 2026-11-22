@@ -54,6 +54,9 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
     /// <summary>One line per source problem (its text; the code stays out of the line), above the list.</summary>
     public ObservableCollection<string> ProblemLines { get; } = [];
 
+    /// <summary>True when the collector reports a problem line; the empty slot takes no room (#3710).</summary>
+    public bool HasProblems { get; private set => Set(ref field, value); }
+
     /// <summary>"3 live · 1 asking · 2 outside a workflow", as served and whatever the filters; empty until the first list.</summary>
     public string Head { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -182,6 +185,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         OnChanged(nameof(HeadName));
         ObserveCounts(list.Counts.Live, list.Counts.Asking);
         Patch.To(ProblemLines, [.. list.Problems.Select(p => p.Text)]);
+        HasProblems = ProblemLines.Count > 0;
         ReplaceChoices(list);
         Apply(before, list);
     }
@@ -196,6 +200,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         OnChanged(nameof(HeadName));
         UnavailableText = Labels.SessionsUnavailable(detail);
         ProblemLines.Clear();
+        HasProblems = false;
         Groups.Clear();
         _groups.Clear();
         _rows.Clear();

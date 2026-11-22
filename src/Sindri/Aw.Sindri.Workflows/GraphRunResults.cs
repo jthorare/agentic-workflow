@@ -52,6 +52,11 @@ internal sealed class GraphRunResults(IWorkflowStore workflows, IWorkflowRunStor
                 : row.Error;
         }
 
+        if (string.Equals(row.Value.Mode, WorkflowRunMode.Test, StringComparison.Ordinal))
+        {
+            return SindriErrors.GraphResultUnavailable.With($"'{id.Value}' is a test run; 'workflow_result' reads real runs only (fix: name a run of '{record.Slug.Value}' that was not a test)");
+        }
+
         if (row.Value.WorkflowId != record.Id)
         {
             return SindriErrors.GraphResultUnavailable.With($"'{id.Value}' is not a run of '{record.Slug.Value}'");

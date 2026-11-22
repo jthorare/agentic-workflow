@@ -1,0 +1,12 @@
+Phases, first to last:
+- Booking history API (Ph1)
+- History panel (Ph2)
+- Performance sweep (Ph3). Exit check: every data or interactive surface has a measured time at or under its budget.
+- Bug sweep (Ph4). Exit check: every finding is an issue in the repo's tracker, and a merged fix or a written reason closes each one.
+
+| Row | Check | Verifies |
+|---|---|---|
+| TP-6 | Bug sweep: every finding is an issue in the repo's tracker. | Ph4 |
+
+## Next steps
+- `/specToProvenPR` to build Ph1 and Ph2 as PRs.
