@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
@@ -226,7 +228,24 @@ public sealed class SessionSheetViewModelTests
 
         await sheet.CopyAttach(Token);
 
-        Assert.Equal(("Copy attach command", "tmux -S /tmp/tmux-1000/default attach -t main"), (before, _clipboard.Text));
+        Assert.Equal(("Copy attach command", "tmux -S /tmp/tmux-1000/default attach -t '=main'"), (before, _clipboard.Text));
+    }
+
+    [Fact]
+    public async Task The_attach_command_single_quotes_a_shell_special_session_and_socket_and_matches_the_session_exactly_3870()
+    {
+        _server.SessionOneBody = (provider, id) =>
+        {
+            var body = JsonNode.Parse(SessionAnswers.One(provider, id).Body)!; // why: the golden is a JSON document
+            body["session"]!["host"]!["session"] = "it's \"x\";$y"; // why: the claude-tmux golden has a tmux host
+            body["session"]!["host"]!["socket"] = "/tmp/my sock/default";
+            return new RouteAnswer(HttpStatusCode.OK, body.ToJsonString());
+        };
+        var sheet = await Opened(ClaudeRef);
+
+        await sheet.CopyAttach(Token);
+
+        Assert.Equal("""tmux -S '/tmp/my sock/default' attach -t '=it'\''s "x";$y'""", _clipboard.Text);
     }
 
     [Fact]

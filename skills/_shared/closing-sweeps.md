@@ -31,11 +31,11 @@ One pass after the performance sweep. Walk the finished project in the real app 
 
 1. Walk each surface from the performance sweep's list: the main path, empty data, bad input, a slow network and a
    narrow window.
-2. File each finding as a GitHub issue in the project's repo. Search the open issues first, and add to a match instead
-   of filing a copy.
+2. File each finding as an issue in the repo's tracker. Search the open issues first, and add to a match instead of
+   filing a copy.
 3. Route each issue as a fix through the project's fix workflow (for example `/bugFixOrchestrator`), so every fix
    starts from a check that fails.
 4. Walk the surfaces again once the fixes merge.
 
-**Exit check:** every finding is a GitHub issue, and a merged fix or a written reason closes each one. A second walk
-of every surface finds nothing new.
+**Exit check:** every finding is an issue in the repo's tracker, and a merged fix or a written reason closes each one.
+A second walk of every surface finds nothing new.
