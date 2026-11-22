@@ -6,6 +6,21 @@ internal static partial class Labels
     /// <summary>The graph's accessible name.</summary>
     internal const string WfGraphName = "Workflow graph";
 
+    /// <summary>The zoom strip's Fit button: its text and accessible name.</summary>
+    internal const string WfZoomFit = "Fit";
+
+    /// <summary>The Fit button's tooltip: the name and its key.</summary>
+    internal const string WfZoomFitTip = "Fit  F";
+
+    /// <summary>The zoom strip's minus button text.</summary>
+    internal const string WfZoomMinus = "\u2212";
+
+    /// <summary>The zoom strip's plus button text.</summary>
+    internal const string WfZoomPlus = "+";
+
+    /// <summary>The word after a step with no out port.</summary>
+    internal const string WfEndDone = "done";
+
     /// <summary>The graph when the workflow has no steps.</summary>
     internal const string WfGraphEmpty = "This workflow has no steps.";
 
