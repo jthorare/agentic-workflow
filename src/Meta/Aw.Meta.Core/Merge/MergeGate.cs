@@ -107,46 +107,19 @@ public static class MergeGate
         ];
     }
 
-    // The review path: the reviewer's OK at the head, the lane's ready at the head, its counts, order and draft. Nothing is checked against main.
+    // The review path: the reviewer's OK at the head (in review.mode counts: no standing HOLD), the lane's ready at the head, its
+    // counts, order and draft. Nothing is checked against main.
     private static MergeCheck[] ReviewChecks(MergeFacts facts, ReviewFacts review)
     {
         var pr = facts.Pr.ToString(CultureInfo.InvariantCulture);
-        var ok = ReviewCheck(review, pr, facts.CurrentHead);
+        var ok = ReviewPath.Review(review, pr, facts.CurrentHead);
         var ready = review.ReadySha is null
             ? new MergeCheck("ready", Ok: false, $"no ready message for #{pr} naming a sha")
             : ReviewProof.IsHead(review.ReadySha, facts.CurrentHead)
                 ? new MergeCheck("ready", Ok: true, $"ready at {review.ReadySha}")
                 : new MergeCheck("ready", Ok: false, $"the newest ready is at {review.ReadySha}, the head is {facts.CurrentHead}");
-        var failed = review.Counts.Where(c => c.Failed > 0).ToList();
-        var counts = review.Counts.Count == 0
-            ? new MergeCheck("counts", Ok: false, "the ready message has no \"N passed, M skipped, K failed\" line")
-            : failed.Count > 0
-                ? new MergeCheck("counts", Ok: false, $"the ready message counts {failed.Sum(c => c.Failed).ToString(CultureInfo.InvariantCulture)} failed")
-                : new MergeCheck("counts", Ok: true, $"{review.Counts.Count.ToString(CultureInfo.InvariantCulture)} count line(s), 0 failed");
+        var counts = ReviewPath.Counts(review);
         return [ok, ready, counts, Order(facts), new MergeCheck("draft", !facts.IsDraft, facts.IsDraft ? "the pull request is a draft" : "ready for review")];
-    }
-
-    // The reviewer's standing OK must name the head; a qa line under it ("qa not yet", "qa passed <sha>") must say passed at the head.
-    private static MergeCheck ReviewCheck(ReviewFacts review, string pr, string head)
-    {
-        if (review.OkSha is null)
-        {
-            return new MergeCheck("review", Ok: false, $"no standing \"OK #{pr} at <sha>\" from {review.Reviewer}");
-        }
-
-        if (!ReviewProof.IsHead(review.OkSha, head))
-        {
-            return new MergeCheck("review", Ok: false, $"{review.Reviewer}'s newest OK is at {review.OkSha}, the head is {head}");
-        }
-
-        if (review.QaNotYet)
-        {
-            return new MergeCheck("review", Ok: false, $"{review.Reviewer} said OK at {review.OkSha} but qa not yet");
-        }
-
-        return review.QaSha is null || ReviewProof.IsHead(review.QaSha, head)
-            ? new MergeCheck("review", Ok: true, $"{review.Reviewer} said OK at {review.OkSha}" + (review.QaSha is null ? string.Empty : $", qa passed at {review.QaSha}"))
-            : new MergeCheck("review", Ok: false, $"qa passed at {review.QaSha}, the head is {head}");
     }
 
     private static MergeCheck GateResult(GateRecord gate, IReadOnlyDictionary<string, IReadOnlyList<string>> failing, IReadOnlyDictionary<string, (int Summarized, int Named)> counts)
@@ -236,12 +209,9 @@ public static class MergeGate
                 : $"the gated head merges onto main {facts.CurrentMain} to the tested tree (the gate stacked {string.Join(", ", gate.Stack.Select(s => "#" + s.Pr.ToString(CultureInfo.InvariantCulture)))})");
         }
 
-        // A merge queue re-tests the merged tree before it lands, so a main that moved past the gate is the queue's to settle.
-        if (facts.BaseHasMergeQueue)
+        if (QueueSettles(gate, facts) is { } queued)
         {
-            return new MergeCheck("main", Ok: true, gate.Main == facts.CurrentMain
-                ? $"the gated head does not merge to the tested tree on main {facts.CurrentMain}; GitHub's merge queue re-tests on the merged tree"
-                : $"main moved from {gate.Main} to {facts.CurrentMain}; GitHub's merge queue re-tests on the merged tree");
+            return queued;
         }
 
         if (gate.Tree is null)
@@ -252,6 +222,25 @@ public static class MergeGate
         return new MergeCheck("main", Ok: false, gate.Stack.Count == 0
             ? $"gate ran on main {gate.Main}, main is {facts.CurrentMain}, and the gated head no longer merges onto it to the tested tree"
             : $"the gate stacked {string.Join(", ", gate.Stack.Select(s => "#" + s.Pr.ToString(CultureInfo.InvariantCulture)))}; merging the gated head onto main {facts.CurrentMain} does not give the tested tree");
+    }
+
+    // A merge queue re-tests the merged tree before it lands, so a main that moved past the gate is the queue's to settle. A head that
+    // conflicts with main is not: the queue would drop the pull request, so it refuses here. Null when the base has no merge queue.
+    private static MergeCheck? QueueSettles(GateRecord gate, MergeFacts facts)
+    {
+        if (!facts.BaseHasMergeQueue)
+        {
+            return null;
+        }
+
+        if (facts.MergeConflicts)
+        {
+            return new MergeCheck("main", Ok: false, $"gate ran on main {gate.Main}, main is {facts.CurrentMain}, and the gated head conflicts with it; the merge queue would drop it too");
+        }
+
+        return new MergeCheck("main", Ok: true, gate.Main == facts.CurrentMain
+            ? $"the gated head does not merge to the tested tree on main {facts.CurrentMain}; GitHub's merge queue re-tests on the merged tree"
+            : $"main moved from {gate.Main} to {facts.CurrentMain}; GitHub's merge queue re-tests on the merged tree");
     }
 
     private static MergeCheck Order(MergeFacts facts)
