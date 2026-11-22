@@ -16,7 +16,7 @@ make_fake_judge() {
 case "${FAKE_MODE:-context}" in
   context) echo '{"id":"d1","fired":["brief"],"context":"Prompt sorter note: state Goal and Verify."}' ;;
   silent) echo '{"id":"d1","fired":[],"context":""}' ;;
-  slow) sleep 5; echo '{"context":"too late"}' ;;
+  slow) echo "$$" > "${FAKE_LOG%/*}/judge.pid"; sleep 5; echo '{"context":"too late"}' ;;
   crash) echo '{"context":"partial"}'; exit 3 ;;
   garbage) echo 'not json at all' ;;
 esac
@@ -52,6 +52,16 @@ test_silent_when_no_scaffold_fires() {
   echo "PASS: test_silent_when_no_scaffold_fires"
 }
 
+# #3778: a timeout must not leave the judge it started running. The slow fake writes its own pid; after the hook returns,
+# that pid must be gone within 1 s (10 checks, 0.1 s apart). Checked by the recorded pid only, never by process name.
+assert_judge_gone() { # assert_judge_gone <bin>
+  local pid n; pid="$(cat "$1/judge.pid" 2> /dev/null)"
+  [ -n "$pid" ] || { echo "FAIL: the slow fake judge never wrote its pid"; exit 1; }
+  for n in 1 2 3 4 5 6 7 8 9 10; do kill -0 "$pid" 2> /dev/null || return 0; sleep 0.1; done
+  kill -9 "$pid" 2> /dev/null || true
+  echo "FAIL: #3778: the judge (pid $pid) still runs after the hook timed out"; exit 1
+}
+
 test_slow_judge_is_killed_within_budget_with_no_output_rf2() {
   local bin out rc start end; bin="$(make_fake_judge)"
   start=$(date +%s)
@@ -61,6 +71,7 @@ test_slow_judge_is_killed_within_budget_with_no_output_rf2() {
   [ -z "$out" ] || { echo "FAIL: RF-2 must print nothing, got: $out"; exit 1; }
   grep -q '"hook":"prompt-sort","cause":"timeout"' "$AW_STATE_DIR/logs/failopen.log" 2>/dev/null || { echo "FAIL: JG-18: a timeout must be logged to failopen.log"; exit 1; }
   [ $((end - start)) -le 3 ] || { echo "FAIL: RF-2 hook took $((end - start))s, budget is 0.6s"; exit 1; }
+  assert_judge_gone "$bin"
   echo "PASS: test_slow_judge_is_killed_within_budget_with_no_output_rf2"
 }
 
