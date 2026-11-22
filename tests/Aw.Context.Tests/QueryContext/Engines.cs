@@ -54,6 +54,7 @@ using Aw.Context.Features.SourcesStatus;
 using Aw.Context.Features.SyncSources;
 using Aw.Context.Infrastructure.Search;
 using Aw.Context.Testing.Code;
+using Aw.Context.Testing.Concepts;
 using Aw.Context.Testing.Engine;
 using Aw.Context.Testing.Extract;
 using Aw.Context.Testing.History;
@@ -83,11 +84,12 @@ internal static class Engines
         var intents = intentStore ?? new FakeIntentStore();
         var recordStore = records ?? new FakeRecordStore();
         var graphs = new MapReader(store, intents);
+        var answers = new ConceptAnswers(new ConceptReader(graphs, scrubbers), new FakeConceptAnswerStore(store, intents));
         var repos = new FakeRepoReader(Repos[0], "0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", new Dictionary<string, string>(StringComparer.Ordinal));
         return new ContextEngine(new QueryContextService(scrubbers, new SequentialIdGenerator(), clock, new LiveInputs(graphs, catalog, repos, new NoMapRebuild()), intents, new FakeModelPort(),
                 new RecordSearch(lexical ?? new FakeLexicalLeg(), recordStore, embedder ?? new FakeQueryEmbedder(), new FakeVectorMatrixCache(recordStore), new FakeVectorScan())),
             new ContextSources(new SourcesStatusService(docs, catalog, scrubbers, intents, recordStore, clock), new RefreshDocsService(docs, scrubbers), new SyncSourcesService(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), scrubbers, graphs, intents, new FakeModelPort(), clock), new EmbedRecordsService(new FakeRecordStore(), new FakeChunkEmbedder()),
-                (IIndexSync?)indexSync ?? new IndexSync(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), new FakeRecordStore(), scrubbers)), scrubbers, Map(clock, store, scrubbers, new ConceptReader(graphs, scrubbers)),
+                (IIndexSync?)indexSync ?? new IndexSync(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), new FakeRecordStore(), scrubbers)), scrubbers, Map(clock, store, scrubbers, new ConceptReader(graphs, scrubbers), answers),
             new ContextGraph(new ShowNodeService(graphs, scrubbers, recordStore, new FakeRepoRemote()), new ListNeighborsService(graphs, scrubbers), new FindPathService(graphs, scrubbers),
                 new GetLensesService(graphs, new LensBasisReader(repos, clock), scrubbers, new NoCodeSymbolSource(), repos, recordStore, clock), new GetLensesSetService(graphs, new LensBasisReader(repos, clock), scrubbers, recordStore, clock), new GetFileMapService(graphs, repos, new NoCodeSymbolSource(), new RepoTreeCache()),
                 new ContextCodeHistory(new GetCodeService(graphs, new LensBasisReader(repos, clock), Lexical(repos, clock), new CodeSymbolSearch(new NoCodeSymbolSource(), repos), scrubbers),
@@ -95,8 +97,8 @@ internal static class Engines
                     new GetSubgraphService(graphs, new LensBasisReader(repos, clock), scrubbers),
                     new GetWholeMapService(graphs, scrubbers, new WholeMapCache(), WholeMapRules.Default),
                     new Features.SearchMap.SearchMapService(graphs, scrubbers, new SqliteMapSearchIndexFactory(), new Features.SearchMap.MapSearchCache(), WholeMapRules.Default),
-                    new ContextConceptReads(new Features.GetConcepts.GetConceptsService(new ConceptReader(graphs, scrubbers)), new Features.GetConceptMembers.GetConceptMembersService(new ConceptReader(graphs, scrubbers)),
-                        new Features.GetConceptGlossary.GetConceptGlossaryService(new ConceptReader(graphs, scrubbers)), new Features.GetPages.GetPagesService(new ConceptReader(graphs, scrubbers)), new Features.CheckPages.CheckPagesService(store), new Features.GetPinSuggest.GetPinSuggestService(new ConceptReader(graphs, scrubbers), intents, recordStore), new Features.GetPageFacts.GetPageFactsService(store)),
+                    new ContextConceptReads(new Features.GetConcepts.GetConceptsService(answers), new Features.GetConceptMembers.GetConceptMembersService(new ConceptReader(graphs, scrubbers)),
+                        new Features.GetConceptGlossary.GetConceptGlossaryService(answers), new Features.GetPages.GetPagesService(new ConceptReader(graphs, scrubbers)), new Features.CheckPages.CheckPagesService(store), new Features.GetPinSuggest.GetPinSuggestService(new ConceptReader(graphs, scrubbers), intents, recordStore), new Features.GetPageFacts.GetPageFactsService(store)),
                     new ContextScopeGraph(new GetScopeGraphService(graphs, new LensBasisReader(repos, clock), scrubbers), new FakeScopeRunStore(), clock))),
             new ContextEval(Probes(clock), new NoBacktest(), new NoMapQuality(), new NoPurge()),
             new ContextReads(new Features.MapHeads.MapHeadsService(repos, new FakeDefaultBranch()),
@@ -118,18 +120,20 @@ internal static class Engines
     private static EvalProbesService Probes(TimeProvider clock) => new(new NoProbes(), new NoProbes(), clock);
 
     /// <summary>The map part over its fakes (S-3a); the query tests never touch it.</summary>
-    private static ContextMap Map(TimeProvider clock, FakeGraphStore store, FakeScrubberFactory scrubbers, ConceptReader concepts)
+    private static ContextMap Map(TimeProvider clock, FakeGraphStore store, FakeScrubberFactory scrubbers, ConceptReader concepts, ConceptAnswers answers)
     {
         var exports = new FakeExportStore(clock);
         var reader = new FakeMapFileReader();
-        var admin = new MapAdmin(new PreviewMapService(reader), new ImportMapService(reader, store, clock), new ExportMapService(store, exports, clock),
+        var admin = new MapAdmin(new PreviewMapService(reader), new ImportMapService(reader, store, Fills(answers), clock), new ExportMapService(store, exports, clock),
             new ShowMapStatusService(store), new CheckMapService(store), new MapHealthChecks(new CheckRetentionService(store, exports, clock, new Features.RunBacktest.UnconfiguredBacktest()), new CheckStoreService(new FakeStoreFiles()), new RunUpkeepService(new FakeStoreUpkeep())), new PurgeMapService(store, exports, clock));
         var review = new MapReview(new ReviewQueueService(store, scrubbers), new ReviewMapService(store, new FakeCurrentUser(), clock), new ReviewHistoryService(store), new ExportReviewService(store, scrubbers, new FakeReviewFileStore(), clock),
-            new PreviewReviewFileService(new FakeReviewFileStore()), new ApplyReviewFileService(store, new FakeReviewFileStore(), new FakeCurrentUser(), clock), new PromoteMapService(store, clock));
+            new PreviewReviewFileService(new FakeReviewFileStore()), new ApplyReviewFileService(store, new FakeReviewFileStore(), new FakeCurrentUser(), clock), new PromoteMapService(store, Fills(answers), clock));
         return new ContextMap(admin, review, new MapProposals(Build(clock, store), new ProposeFromScopeService(store, store, clock), new GetProposalsService(store, store, scrubbers)), Publishing(store, concepts), new CleanMapService(store, scrubbers, new FakeModelPort(), new FakeCurrentUser(), clock),
             new Features.ScanConcepts.ScanConceptsService(store, scrubbers, new FakeModelPort(), new NoConceptSearch(), new FakeConceptHintStore(), clock),
             new CheckStructureService(store, Build(clock, store), new Testing.Locks.FakeHeavyJobLock()));
     }
+
+    private static InlineConceptAnswerFills Fills(ConceptAnswers answers) => new((scope, ct) => answers.Fill(scope, ct).AsTask());
 
     /// <summary>A scan search that finds nothing: the query tests never scan.</summary>
     private sealed class NoConceptSearch : IConceptScanSearch

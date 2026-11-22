@@ -12542,3 +12542,35 @@ Aw.Context.Core.Engine.ContextQuery.Window.get -> Aw.Context.Core.Engine.QueryWi
 Aw.Context.Core.Engine.ContextQuery.Window.init -> void
 Aw.Context.Core.Results.ContextResult.Matches.get -> Aw.Context.Core.Results.RecordMatches?
 Aw.Context.Core.Results.ContextResult.Matches.init -> void
+Aw.Context.Core.Concepts.ConceptAnswerBasis
+Aw.Context.Core.Concepts.ConceptAnswerBasis.<Clone>$() -> Aw.Context.Core.Concepts.ConceptAnswerBasis!
+Aw.Context.Core.Concepts.ConceptAnswerBasis.ConceptAnswerBasis(int Version, string! Overrides, long Intent) -> void
+Aw.Context.Core.Concepts.ConceptAnswerBasis.Deconstruct(out int Version, out string! Overrides, out long Intent) -> void
+Aw.Context.Core.Concepts.ConceptAnswerBasis.Equals(Aw.Context.Core.Concepts.ConceptAnswerBasis? other) -> bool
+Aw.Context.Core.Concepts.ConceptAnswerBasis.Intent.get -> long
+Aw.Context.Core.Concepts.ConceptAnswerBasis.Intent.init -> void
+Aw.Context.Core.Concepts.ConceptAnswerBasis.Overrides.get -> string!
+Aw.Context.Core.Concepts.ConceptAnswerBasis.Overrides.init -> void
+Aw.Context.Core.Concepts.ConceptAnswerBasis.Version.get -> int
+Aw.Context.Core.Concepts.ConceptAnswerBasis.Version.init -> void
+override Aw.Context.Core.Concepts.ConceptAnswerBasis.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.ConceptAnswerBasis.GetHashCode() -> int
+override Aw.Context.Core.Concepts.ConceptAnswerBasis.ToString() -> string!
+static Aw.Context.Core.Concepts.ConceptAnswerBasis.operator !=(Aw.Context.Core.Concepts.ConceptAnswerBasis? left, Aw.Context.Core.Concepts.ConceptAnswerBasis? right) -> bool
+static Aw.Context.Core.Concepts.ConceptAnswerBasis.operator ==(Aw.Context.Core.Concepts.ConceptAnswerBasis? left, Aw.Context.Core.Concepts.ConceptAnswerBasis? right) -> bool
+Aw.Context.Core.Concepts.IConceptAnswerStore
+Aw.Context.Core.Concepts.IConceptAnswerStore.Basis(Aw.Context.Core.Map.MapRead read, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptAnswerBasis?>!>
+Aw.Context.Core.Concepts.IConceptAnswerStore.Concepts(string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptsView?>!>
+Aw.Context.Core.Concepts.IConceptAnswerStore.Glossary(string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptGlossaryView?>!>
+Aw.Context.Core.Concepts.IConceptAnswerStore.Keep(string! key, Aw.Context.Core.Concepts.ConceptAnswerBasis! basis, Aw.Context.Core.Concepts.ConceptsView! view, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.Concepts.IConceptAnswerStore.Keep(string! key, Aw.Context.Core.Concepts.ConceptAnswerBasis! basis, Aw.Context.Core.Concepts.ConceptGlossaryView! view, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.Concepts.ConceptAnswers
+Aw.Context.Core.Concepts.ConceptAnswers.ConceptAnswers(Aw.Context.Core.Concepts.ConceptReader! reader, Aw.Context.Core.Concepts.IConceptAnswerStore! store) -> void
+Aw.Context.Core.Concepts.ConceptAnswers.Concepts(Aw.Context.Core.Engine.ContextScope! scope, Aw.Context.Core.Concepts.ConceptsQuery! query, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptsView!>!>
+Aw.Context.Core.Concepts.ConceptAnswers.Fill(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Context.Core.Concepts.ConceptAnswers.Glossary(Aw.Context.Core.Engine.ContextScope! scope, Aw.Context.Core.Concepts.ConceptGlossaryQuery! query, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptGlossaryView!>!>
+Aw.Context.Core.Concepts.ConceptAnswerFills
+Aw.Context.Core.Concepts.ConceptAnswerFills.ConceptAnswerFills(System.Func<Aw.Context.Core.Engine.ContextScope!, System.Threading.CancellationToken, System.Threading.Tasks.Task!>! fill) -> void
+Aw.Context.Core.Concepts.ConceptAnswerFills.Start(Aw.Context.Core.Engine.ContextScope! scope) -> void
+Aw.Context.Core.Concepts.IConceptAnswerFills
+Aw.Context.Core.Concepts.IConceptAnswerFills.Start(Aw.Context.Core.Engine.ContextScope! scope) -> void

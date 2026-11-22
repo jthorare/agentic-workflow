@@ -100,7 +100,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 namespace Aw.Context.Features;
 
 /// <summary>Registers Aw.Context.Features: the IContextEngine facade and the slices behind it.</summary>
-public static class ContextFeaturesServiceCollectionExtensions
+public static partial class ContextFeaturesServiceCollectionExtensions
 {
     /// <summary>Adds the facade (IContextEngine, and IContextMap behind it) and every Context use case as an IService. The ports come from Aw.Context.Infrastructure.</summary>
     /// <param name="services">The service collection.</param>
@@ -257,7 +257,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IService<GetConceptMembersRequest, ConceptMembersView>, GetConceptMembersService>()
         .AddScoped<IService<GetConceptGlossaryRequest, ConceptGlossaryView>, GetConceptGlossaryService>()
         .AddScoped<IService<GetPinSuggestRequest, PinSuggestView>, GetPinSuggestService>()
-        .AddScoped<ConceptReader>()
+        .AddScoped<ConceptReader>().AddConceptAnswers()
         .AddSingleton<WholeMapCache>()
         .AddScoped<IService<SearchMapRequest, MapSearchView>, SearchMapService>()
         .AddSingleton<MapSearchCache>()

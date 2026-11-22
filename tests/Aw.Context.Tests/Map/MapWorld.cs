@@ -1,4 +1,5 @@
 using Aw.Context.Core.Code;
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Docs;
@@ -25,6 +26,7 @@ using Aw.Context.Core.Walks;
 using Aw.Context.Core.WholeMap;
 using Aw.Context.Features;
 using Aw.Context.Testing.Code;
+using Aw.Context.Testing.Concepts;
 using Aw.Context.Testing.ConceptSynthesis;
 using Aw.Context.Testing.Engine;
 using Aw.Context.Testing.Extract;
@@ -79,13 +81,14 @@ internal sealed class MapWorld : IDisposable
     public MapWorld(IRepoReader? repoReader = null, IContextSource? intent = null, ICodeSearch? codeSearch = null, IFileHistory? history = null, ICodeSymbolSource? symbols = null, WholeMapRules? wholeMapRules = null, WalkOptions? walk = null, IRecordStore? records = null, ILexicalLeg? lexical = null, IIndexSync? indexSync = null, IRecordFeedCatalog? feeds = null, Action<IServiceCollection>? configure = null)
     {
         Sources = new FixedSourceCatalog(intent is null ? [Docs] : [Docs, intent]);
+        Answers = new FakeConceptAnswerStore(Store, Intents);
         Exports = new FakeExportStore(Clock);
         Reader.Put(MapPath, Maps.Fixture(), FixtureMap.Yaml);
         var services = new ServiceCollection()
             .AddSingleton<TimeProvider>(Clock)
             .AddSingleton<IGraphStore>(Store)
             .AddSingleton<IProposalRuns>(Store)
-            .AddSingleton<IConceptHintStore>(Hints)
+            .AddSingleton<IConceptHintStore>(Hints).AddSingleton<IConceptAnswerStore>(Answers)
             .AddSingleton<IConceptSynthesisStore>(ConceptSynthesis)
             .AddSingleton<IExportStore>(Exports)
             .AddSingleton<IMapFileReader>(Reader)
@@ -112,7 +115,12 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton(wholeMapRules ?? WholeMapRules.Default)
             .AddSingleton<IScopeRunStore>(new FakeScopeRunStore())
             .AddSingleton<IMapSearchIndexFactory>(new Context.Infrastructure.Search.SqliteMapSearchIndexFactory())
-            .AddContextFeatures();
+            .AddContextFeatures()
+            .AddSingleton<IConceptAnswerFills>(static sp => new InlineConceptAnswerFills(async (scope, ct) =>
+            {
+                await using var own = sp.CreateAsyncScope();
+                await own.ServiceProvider.GetRequiredService<ConceptAnswers>().Fill(scope, ct);
+            }));
         AddOverrides(services, (walk, indexSync, feeds), configure);
 
         _provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = false, ValidateScopes = true });
@@ -143,6 +151,9 @@ internal sealed class MapWorld : IDisposable
     public FakeTimeProvider Clock { get; } = new(DateTimeOffset.Parse("2026-08-01T12:00:00Z", System.Globalization.CultureInfo.InvariantCulture));
 
     public FakeGraphStore Store { get; } = new();
+
+    /// <summary>The kept concepts and glossary answers, over <see cref="Store"/> and <see cref="Intents"/>.</summary>
+    public FakeConceptAnswerStore Answers { get; }
 
     public FakeConceptHintStore Hints { get; } = new();
 
