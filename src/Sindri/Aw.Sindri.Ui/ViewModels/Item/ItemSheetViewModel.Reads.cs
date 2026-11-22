@@ -10,6 +10,8 @@ internal sealed partial class ItemSheetViewModel
     private int _generation;   // bumped by every read and by a change of subject: an answer from an older one is dropped
     private int? _loadingMore;   // the subject (ItemSheetViewModel.Clear bumps it) a Load more is in flight for
     private CancellationTokenSource? _reads;
+    private Uri? _timelineUrl;   // the connection the timeline shown was read from: on another one it is read again from the first page
+    private bool _rereadTimeline;   // an answer said the views were rebuilding: the lines shown may be gone or reworded, so read them all again
 
     /// <summary>Opens an item: reads it and its timeline's first page.</summary>
     /// <param name="url">The API's base URL.</param>
@@ -19,7 +21,7 @@ internal sealed partial class ItemSheetViewModel
     internal async Task Open(Uri url, string itemId, CancellationToken cancellationToken)
     {
         Show(itemId);
-        (_url, _pages) = (url, Math.Max(_pages, 1));
+        _url = url;
         await ReadAndSettle(cancellationToken).ConfigureAwait(true);
     }
 
@@ -39,7 +41,7 @@ internal sealed partial class ItemSheetViewModel
         IsLoading = !HasItem;
     }
 
-    /// <summary>Re-reads the open item and the timeline pages read so far (on every event, §9.2).</summary>
+    /// <summary>Re-reads the open item and the timeline lines newer than the ones shown (on every event, §9.2).</summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>A task that completes when the sheet shows the answer.</returns>
@@ -51,7 +53,6 @@ internal sealed partial class ItemSheetViewModel
         }
 
         _url = url;
-        _pages = Math.Max(_pages, 1);
         return ReadAndSettle(cancellationToken);
     }
 
@@ -104,7 +105,7 @@ internal sealed partial class ItemSheetViewModel
 
     private bool Append(TimelineView page)
     {
-        _pages++;
+        _rereadTimeline |= page.AsOf.Rebuilding;
         foreach (var row in Rows(page))
         {
             Timeline.Add(row);
@@ -179,14 +180,54 @@ internal sealed partial class ItemSheetViewModel
         return await ReadTimeline(url, id, generation, cancellationToken).ConfigureAwait(true);
     }
 
-    // The pages read so far, from the first (a refresh never shrinks what Load more showed).
-    private async Task<bool> ReadTimeline(Uri url, string id, int generation, CancellationToken cancellationToken)
+    // A timeline line is written once, under its own ledger sequence, and the pages are oldest first (ItemTimelineProjection,
+    // GetItemTimelineService): an event can only add lines after the newest one, so one read after it is the whole change. The
+    // lines shown are read again from the first page only when they may differ: another URL, or the views rebuilt. A serve
+    // restart on the same URL is not another URL: only its rebuilding answer, when the sheet reads one, rereads (#3876).
+    private Task<bool> ReadTimeline(Uri url, string id, int generation, CancellationToken cancellationToken) =>
+        _rereadTimeline || (Timeline.Count > 0 && !url.Equals(_timelineUrl))
+            ? ReadShownTimeline(url, id, generation, cancellationToken)
+            : ReadNewTimeline(url, id, generation, cancellationToken);
+
+    // The lines after the newest one shown, appended; the rows shown are untouched, so their controls, focus and scroll stay.
+    private async Task<bool> ReadNewTimeline(Uri url, string id, int generation, CancellationToken cancellationToken)
     {
-        var rows = new List<TimelineRow>();
-        long? after = 0;
-        for (var page = 0; page < _pages && after is { } cursor; page++)
+        if (Next is not null)
         {
-            var answer = await api.Timeline(url, id, cursor, cancellationToken).ConfigureAwait(true);
+            return true;   // newer lines sit past the pages Load more hasn't read yet: nothing shown can change
+        }
+
+        var newest = Timeline.Count > 0 ? Timeline[^1].Sequence : 0;
+        var answer = await api.Timeline(url, id, newest, cancellationToken).ConfigureAwait(true);
+        if (generation != _generation)
+        {
+            return false;
+        }
+
+        if (answer.IsError)
+        {
+            return true;
+        }
+
+        foreach (var row in Rows(answer.Value).Where(r => r.Sequence > newest))
+        {
+            Timeline.Add(row);
+        }
+
+        (Next, _timelineUrl) = (answer.Value.Next, url);
+        _rereadTimeline |= answer.Value.AsOf.Rebuilding;
+        return true;
+    }
+
+    // Every page from the first up to the newest line shown (a re-read never shrinks what Load more showed). The end is read
+    // again after every page: a Load more that answers while this read waits moves it, and its page must stay (#3876).
+    private async Task<bool> ReadShownTimeline(Uri url, string id, int generation, CancellationToken cancellationToken)
+    {
+        var (rows, rebuilding) = (new List<TimelineRow>(), false);
+        long? after = 0;
+        do
+        {
+            var answer = await api.Timeline(url, id, after.Value, cancellationToken).ConfigureAwait(true);
             if (generation != _generation)
             {
                 return false;
@@ -194,14 +235,25 @@ internal sealed partial class ItemSheetViewModel
 
             if (answer.IsError)
             {
-                return true;
+                return true;   // the old timeline stays, in full, and the next read tries again from the first page
             }
 
             rows.AddRange(Rows(answer.Value));
-            after = answer.Value.Next;
+            (after, rebuilding) = (answer.Value.Next, rebuilding || answer.Value.AsOf.Rebuilding);
         }
+        while (after is { } cursor && cursor < ShownEnd());
 
-        // The row already shown for an entry (same sequence, same fields) stays, so its control and the focus on it do.
+        Keep(rows);
+        (Next, _timelineUrl, _rereadTimeline) = (after, url, rebuilding);
+        return true;
+    }
+
+    // The cursor the lines shown end at: Load more's next page, or the newest line when every page is shown.
+    private long ShownEnd() => Next ?? (Timeline.Count > 0 ? Timeline[^1].Sequence : 0);
+
+    // The row already shown for an entry (same sequence, same fields) stays, so its control and the focus on it do.
+    private void Keep(List<TimelineRow> rows)
+    {
         var shown = new Dictionary<long, TimelineRow>();
         foreach (var row in Timeline)
         {
@@ -209,8 +261,6 @@ internal sealed partial class ItemSheetViewModel
         }
 
         Patch.To(Timeline, [.. rows.Select(r => shown.TryGetValue(r.Sequence, out var kept) && kept == r ? kept : r)]);
-        Next = after;
-        return true;
     }
 
     private IEnumerable<TimelineRow> Rows(TimelineView page) => page.Entries.Select(e => new TimelineRow(

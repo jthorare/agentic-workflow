@@ -36,11 +36,12 @@ internal sealed partial class ContextPageViewModel
         Whole.AreaOpenRequested += (_, e) => _ = OpenWholeArea(e.Value, CancellationToken.None);
         Whole.HomeRequested += (_, _) => MapHome();
         Whole.Panel.Launcher = Ports.Launcher ?? NullLauncher.Instance;
+        Whole.Panel.Clipboard = Ports.Clipboard;
         Whole.Panel.Loader = async (key, cancellationToken) => Ports.ApiUrl() is { } api ? await Ports.Api.Node(api, key, cancellationToken).ConfigureAwait(true) : null;
         Whole.Panel.WhyLoader = async (key, cancellationToken) => Ports.ApiUrl() is { } api ? await Ports.Api.Lenses(api, new LensesQuery([key], Depth: null, Draft: false, MapVersion: null), cancellationToken).ConfigureAwait(true) : null;
         Whole.NodeChosen += (_, e) => _ = ChooseWholeNode(e.Value, CancellationToken.None);
         Whole.PagesRetryRequested += (_, _) => _ = ReadWhole(CancellationToken.None);
-        Ports.Follow((_, cancellationToken) => FollowWhole(cancellationToken));
+        Follow((_, cancellationToken) => FollowWhole(cancellationToken));
     }
 
     // After every event: a map not read yet is read; one that is drawn is read again when the stored map moved to another version (an import, a promote); an open concept's map follows the stored map too.
@@ -195,7 +196,7 @@ internal sealed partial class ContextPageViewModel
         }
         else
         {
-            Problem = read.Error.Message;
+            ShowProblem(read.Error);
         }
 
         OnChanged(nameof(Problem));

@@ -10,4 +10,6 @@ Baseline (spec §8 step 5): agent claude-sonnet-5-5, judge sonnet, 3 runs per ca
   0.89 / 0.39 (20261102T125212-304950-behaviour).
 - sp-forced-pressure 0.83 / 1 (-0.17): 1 of 3 runs with the skill skipped running the CLI by hand, the rule this case is for. Too few
   runs to call it, so the nightly watches it: 2 misses in a row is a skill-text issue.
+- sp-closing-checks (issue 3843): not run yet. A system-design doc.md ends in the performance sweep and the bug sweep; stages.md
+  must list both under `## Closing checks` with their exit checks, performance first, and give neither a `## Ph<n>` stage.
 - Caveat: 3 runs per arm. One run flips a case by about 0.1-0.3, so a Δ that small is noise. sp-forced's preamble-on case joins the nightly (spec §8).

@@ -18,6 +18,6 @@ namespace Aw.Sindri.Features.ContextCalls;
 public sealed record IndexSourceRow(string Source, string? Phase, bool Usable, bool Complete, DateTimeOffset? LastSync, string? LastCode, int? ReReading = null,
     string? Pull = null, int? Records = null, DateTimeOffset? LastCommit = null, string? LastError = null, string? LastErrorText = null, int? Failures = null, DateTimeOffset? NextTry = null)
 {
-    /// <summary>True when the source needs a look (issue #3430): its pull failed or backs off, it is idle holding nothing and never committed, or, with no pull read, it is unusable with a code.</summary>
+    /// <summary>True when the source needs a look (issue #3430): its pull failed or backs off, it is idle holding nothing and never committed after a pass ended, or, with no pull read, it is unusable with a code.</summary>
     public bool NeedsLook { get; init; }
 }
