@@ -8,7 +8,7 @@ using Microsoft.Extensions.Time.Testing;
 namespace Aw.Sindri.Ui.Tests.Shell;
 
 /// <summary>
-/// #3430: the Code index and Context index cards say "needs a look" exactly when the server flags a row with <c>needsLook</c>, whatever state word
+/// #3430: the Code index and Context index cards say "needs a look" exactly when the server flags a row with needsLook, whatever state word
 /// comes with it, a word this app has never seen included. The app keeps no list of state words that count as a look.
 /// </summary>
 [Lane(TestLane.Unit)]
