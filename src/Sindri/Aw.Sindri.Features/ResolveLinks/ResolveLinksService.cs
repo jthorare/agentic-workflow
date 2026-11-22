@@ -18,7 +18,7 @@ internal sealed class ResolveLinksService(ILinkRows rows) : IService<ResolveLink
     public async ValueTask<Result<ResolveLinksResponse>> Handle(ResolveLinksRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request.Urls is null || request.Urls.Count is 0 or > LinkShapes.MaxUrls || request.Urls.Any(static u => u is null))
+        if (!IsValid(request.Urls))
         {
             return SindriErrors.InvalidQuery.With(string.Create(CultureInfo.InvariantCulture, $"'urls' is a list of 1 to {LinkShapes.MaxUrls} urls, none of them null (fix: send at most one window's links)"));
         }
@@ -36,8 +36,15 @@ internal sealed class ResolveLinksService(ILinkRows rows) : IService<ResolveLink
             return found.Error;
         }
 
-        return new ResolveLinksResponse([.. request.Urls.Select((url, i) => keys[i] is { } key && found.Value.TryGetValue(key, out var row) ? Hit(url, row) : None(url))]);
+        return new ResolveLinksResponse([.. request.Urls.Select((url, i) => Answer(url, keys[i], found.Value))]);
     }
+
+    // one to MaxUrls urls, none of them null (a JSON body can hold a null where the type says it can't)
+    private static bool IsValid(IReadOnlyList<Uri>? urls) =>
+        urls is { Count: > 0 and <= LinkShapes.MaxUrls } && urls.All(static u => u is not null);
+
+    private static ResolvedLink Answer(Uri url, string? key, IReadOnlyDictionary<string, LinkRow> found) =>
+        key is not null && found.TryGetValue(key, out var row) ? Hit(url, row) : None(url);
 
     private static ResolvedLink Hit(Uri url, LinkRow row) => new(url, row.Key, row.Title, row.State)
     {

@@ -19,38 +19,45 @@ public sealed class ResolveLinksRouteTests
     private const string Route = "/sindri/links/resolve";
     private const string Body = """{"urls":["https://github.com/acme/harbor/pull/3120","https://example.com/x"]}""";
 
-    private static CancellationToken Cancel => TestContext.Current.CancellationToken;
-
     [Fact(Timeout = 60_000)]
     public async Task The_registered_store_answers_none_for_every_url_until_home_rows_land()
     {
-        await using var host = await GoldenHost.Start(temporary: true, Cancel);
+        await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken);
 
         var answer = await host.Http.Ask(Query(Route, Body, Human(host.Token.Value)));
 
         Assert.Equal(HttpStatusCode.OK, answer.Status);
+
+        // why: a 200 body is the response record, which always holds 'links', and each answer is an object
         var links = JsonNode.Parse(answer.Body)!["links"]!.AsArray();
         Assert.Equal(2, links.Count);
-        Assert.All(links, l => Assert.Null(l!["rowKey"]?.GetValue<string>()));
+
+        // why: each answer is an object, never JSON null
+        Assert.All(links, static l => Assert.Null(l!["rowKey"]?.GetValue<string>()));
     }
 
     [Fact(Timeout = 60_000)]
     public async Task A_row_the_store_holds_answers_its_key_and_fields()
     {
-        await using var host = await GoldenHost.Start(temporary: true, Cancel, extra: static s => s.AddSingleton<ILinkRows>(new OneRow()));
+        await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken, extra: static s => s.AddSingleton<ILinkRows>(new OneRow()));
 
         var answer = await host.Http.Ask(Query(Route, Body, Human(host.Token.Value)));
 
+        // why: a 200 body is the response record, which always holds 'links'
         var links = JsonNode.Parse(answer.Body)!["links"]!.AsArray();
+
+        // why: the first url has a row, so its answer is an object with every field the row holds
         Assert.Equal(("gh:pr:acme/harbor#3120", "Fare table uses 90 s", "open", "passing"),
             ((string)links[0]!["rowKey"]!, (string)links[0]!["title"]!, (string)links[0]!["state"]!, (string)links[0]!["ci"]!));
+
+        // why: each answer is an object, never JSON null
         Assert.Null(links[1]!["rowKey"]?.GetValue<string>());
     }
 
     [Fact(Timeout = 60_000)]
     public async Task More_than_twenty_urls_are_refused_with_api_013()
     {
-        await using var host = await GoldenHost.Start(temporary: true, Cancel);
+        await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken);
         var urls = new JsonArray([.. Enumerable.Range(1, 21).Select(static i => (JsonNode?)JsonValue.Create("https://github.com/acme/harbor/pull/" + i.ToString(System.Globalization.CultureInfo.InvariantCulture)))]);
 
         var answer = await host.Http.Ask(Query(Route, new JsonObject { ["urls"] = urls }.ToJsonString(), Human(host.Token.Value)));
@@ -61,7 +68,7 @@ public sealed class ResolveLinksRouteTests
     [Fact(Timeout = 60_000)]
     public async Task An_origin_header_is_refused_like_every_body_read()
     {
-        await using var host = await GoldenHost.Start(temporary: true, Cancel);
+        await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken);
 
         var answer = await host.Http.Ask(Query(Route, Body, [.. Human(host.Token.Value), ("Origin", "https://evil.example")]));
 

@@ -33,7 +33,8 @@ public sealed class ResolveLinksTests
         Assert.True(answer.IsSuccess);
         var link = Assert.Single(answer.Value.Links);
         Assert.Equal((url, PrKey), (link.Url, link.RowKey));
-        Assert.Equal(("Fare table uses 90 s", "open", "passing", "you", (DateTimeOffset?)_since), (link.Title, link.State, link.Ci, link.WaitsOn, link.Since));
+        Assert.Equal(("Fare table uses 90 s", "open", "passing", "you"), (link.Title, link.State, link.Ci, link.WaitsOn));
+        Assert.Equal(_since, link.Since);
     }
 
     [Theory]
