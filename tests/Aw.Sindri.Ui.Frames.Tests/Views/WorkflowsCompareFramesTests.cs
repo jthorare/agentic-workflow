@@ -55,6 +55,10 @@ public sealed class WorkflowsCompareFramesTests : FrameHost
     private static List<string> Visibles(Window window, string name) =>
         [.. window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == name && t.IsEffectivelyVisible).Select(t => t.Text ?? string.Empty)];
 
+    // The two run titles share one name scope (and the differs marks one step's), so they are found by their class, not a name.
+    private static List<string> ClassVisibles(Window window, string cls) =>
+        [.. window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains(cls) && t.IsEffectivelyVisible).Select(t => t.Text ?? string.Empty)];
+
     [Theory]
     [InlineData(1440)]
     [InlineData(1000)]
@@ -62,10 +66,10 @@ public sealed class WorkflowsCompareFramesTests : FrameHost
     {
         var (window, _) = await Compared(width);
 
-        Assert.Equal(2, Visibles(window, "CompareRunTitle").Count);
-        Assert.StartsWith("Run A", Visibles(window, "CompareRunTitle")[0], StringComparison.Ordinal);
+        Assert.Equal(2, ClassVisibles(window, "compare-run-title").Count);
+        Assert.StartsWith("Run A", ClassVisibles(window, "compare-run-title")[0], StringComparison.Ordinal);
         Assert.Equal(["start", "sum"], Visibles(window, "CompareStepName"), StringComparer.Ordinal);
-        Assert.Equal(2, Visibles(window, "CompareDiffers").Count);   // the "by" line, once in each run's cell
+        Assert.Equal(2, ClassVisibles(window, "compare-differs").Count);   // the "by" line, once in each run's cell
         Assert.Equal("differs in 1 of 2 steps", Named<TextBlock>(window, "CompareSummary").Text);
         var steps = Named<ItemsControl>(window, "CompareSteps");
         Assert.True(steps.Bounds.Width <= window.Bounds.Width, "the comparison is wider than the window");

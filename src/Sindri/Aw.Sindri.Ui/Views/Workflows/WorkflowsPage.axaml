@@ -104,12 +104,12 @@
           <!-- The column heads (frame wf-list): the same cell widths as a row's, so a dropped column leaves no gap. -->
           <StackPanel x:Name="WorkflowColumns" Orientation="Horizontal" Spacing="16" Margin="16,0" Height="28" IsVisible="{Binding !IsReading}">
             <TextBlock Width="24" />
-            <TextBlock Name="ColumnHead" Classes="caption subtle" Text="Name" Width="{Binding Columns.Name}" VerticalAlignment="Center" />
-            <TextBlock Name="ColumnHead" Classes="caption subtle" Text="Trigger" Width="{Binding Columns.Trigger}" IsVisible="{Binding Columns.ShowsTrigger}" VerticalAlignment="Center" />
-            <TextBlock Name="ColumnHead" Classes="caption subtle" Text="Last run" Width="{Binding Columns.LastRun}" VerticalAlignment="Center" />
-            <TextBlock Name="ColumnHead" Classes="caption subtle" Text="Next run" Width="{Binding Columns.NextRun}" IsVisible="{Binding Columns.ShowsNextRun}" VerticalAlignment="Center" />
-            <TextBlock Name="ColumnHead" Classes="caption subtle" Text="Last 10 runs" Width="{Binding Columns.Strip}" VerticalAlignment="Center" />
-            <TextBlock Name="ColumnHead" Classes="caption subtle" Text="State" Width="72" VerticalAlignment="Center" />
+            <TextBlock Classes="caption subtle column-head" Text="Name" Width="{Binding Columns.Name}" VerticalAlignment="Center" />
+            <TextBlock Classes="caption subtle column-head" Text="Trigger" Width="{Binding Columns.Trigger}" IsVisible="{Binding Columns.ShowsTrigger}" VerticalAlignment="Center" />
+            <TextBlock Classes="caption subtle column-head" Text="Last run" Width="{Binding Columns.LastRun}" VerticalAlignment="Center" />
+            <TextBlock Classes="caption subtle column-head" Text="Next run" Width="{Binding Columns.NextRun}" IsVisible="{Binding Columns.ShowsNextRun}" VerticalAlignment="Center" />
+            <TextBlock Classes="caption subtle column-head" Text="Last 10 runs" Width="{Binding Columns.Strip}" VerticalAlignment="Center" />
+            <TextBlock Classes="caption subtle column-head" Text="State" Width="72" VerticalAlignment="Center" />
           </StackPanel>
           <ItemsControl x:Name="WorkflowRows" ItemsSource="{Binding Rows}">
             <ItemsControl.ItemTemplate>
@@ -241,11 +241,11 @@
             <TextBlock Classes="caption quiet" Text="{Binding Runs.NoMatchText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
           <Grid ColumnDefinitions="24,136,168,64,80,*" ColumnSpacing="16" Margin="16,0" Height="28" IsVisible="{Binding !Runs.IsReading}">
-            <TextBlock Grid.Column="1" Name="RunColumnHead" Classes="caption subtle" Text="Time" VerticalAlignment="Center" />
-            <TextBlock Grid.Column="2" Name="RunColumnHead" Classes="caption subtle" Text="Trigger" VerticalAlignment="Center" />
-            <TextBlock Grid.Column="3" Name="RunColumnHead" Classes="caption subtle" Text="Revision" VerticalAlignment="Center" />
-            <TextBlock Grid.Column="4" Name="RunColumnHead" Classes="caption subtle" Text="Duration" VerticalAlignment="Center" />
-            <TextBlock Grid.Column="5" Name="RunColumnHead" Classes="caption subtle" Text="Result" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" Classes="caption subtle run-column-head" Text="Time" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="2" Classes="caption subtle run-column-head" Text="Trigger" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="3" Classes="caption subtle run-column-head" Text="Revision" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="4" Classes="caption subtle run-column-head" Text="Duration" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="5" Classes="caption subtle run-column-head" Text="Result" VerticalAlignment="Center" />
           </Grid>
           <ItemsControl x:Name="RunRows" ItemsSource="{Binding Runs.Rows}">
             <ItemsControl.ItemTemplate>
@@ -285,14 +285,14 @@
       <Grid ColumnDefinitions="168,*,*" ColumnSpacing="16">
         <Border Grid.Column="1" Classes="panel" Padding="12,10">
           <StackPanel Spacing="2">
-            <TextBlock Name="CompareRunTitle" Classes="body-strong" Text="{Binding Compare.A.Title}" />
+            <TextBlock Classes="body-strong compare-run-title" Text="{Binding Compare.A.Title}" />
             <TextBlock Classes="caption subtle" Text="{Binding Compare.A.Facts}" />
             <StackPanel Orientation="Horizontal" Spacing="8"><controls:StateChipView Word="{Binding Compare.A.ChipWord}" Tone="{Binding Compare.A.ToneWord}" Glyph="{Binding Compare.A.ChipGlyph}" /><TextBlock Classes="caption muted" Text="{Binding Compare.A.Result}" VerticalAlignment="Center" /></StackPanel>
           </StackPanel>
         </Border>
         <Border Grid.Column="2" Classes="panel" Padding="12,10">
           <StackPanel Spacing="2">
-            <TextBlock Name="CompareRunTitle" Classes="body-strong" Text="{Binding Compare.B.Title}" />
+            <TextBlock Classes="body-strong compare-run-title" Text="{Binding Compare.B.Title}" />
             <TextBlock Classes="caption subtle" Text="{Binding Compare.B.Facts}" />
             <StackPanel Orientation="Horizontal" Spacing="8"><controls:StateChipView Word="{Binding Compare.B.ChipWord}" Tone="{Binding Compare.B.ToneWord}" Glyph="{Binding Compare.B.ChipGlyph}" /><TextBlock Classes="caption muted" Text="{Binding Compare.B.Result}" VerticalAlignment="Center" /></StackPanel>
           </StackPanel>
@@ -320,7 +320,7 @@
                                 <Border Classes="cmpline" Classes.differs="{Binding Differs}" Padding="12,0">
                                   <Grid ColumnDefinitions="*,Auto">
                                     <TextBlock Classes="caption mono" Text="{Binding Text}" />
-                                    <TextBlock Name="CompareDiffers" Grid.Column="1" Classes="caption" Text="&#9670; differs" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding Differs}" />
+                                    <TextBlock Grid.Column="1" Classes="caption compare-differs" Text="&#9670; differs" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding Differs}" />
                                   </Grid>
                                 </Border>
                               </DataTemplate>
@@ -329,7 +329,7 @@
                           <Border Classes="cmpline" Classes.differs="{Binding A.MessageDiffers}" Padding="12,6" IsVisible="{Binding A.HasMessage}">
                             <Grid ColumnDefinitions="*,Auto">
                               <TextBlock Classes="caption" Text="{Binding A.Message}" TextWrapping="Wrap" />
-                              <TextBlock Name="CompareDiffers" Grid.Column="1" Classes="caption" Text="&#9670; differs" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding A.MessageDiffers}" />
+                              <TextBlock Grid.Column="1" Classes="caption compare-differs" Text="&#9670; differs" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding A.MessageDiffers}" />
                             </Grid>
                           </Border>
                         </StackPanel>
@@ -349,7 +349,7 @@
                                 <Border Classes="cmpline" Classes.differs="{Binding Differs}" Padding="12,0">
                                   <Grid ColumnDefinitions="*,Auto">
                                     <TextBlock Classes="caption mono" Text="{Binding Text}" />
-                                    <TextBlock Name="CompareDiffers" Grid.Column="1" Classes="caption" Text="&#9670; differs" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding Differs}" />
+                                    <TextBlock Grid.Column="1" Classes="caption compare-differs" Text="&#9670; differs" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding Differs}" />
                                   </Grid>
                                 </Border>
                               </DataTemplate>
@@ -358,7 +358,7 @@
                           <Border Classes="cmpline" Classes.differs="{Binding B.MessageDiffers}" Padding="12,6" IsVisible="{Binding B.HasMessage}">
                             <Grid ColumnDefinitions="*,Auto">
                               <TextBlock Classes="caption" Text="{Binding B.Message}" TextWrapping="Wrap" />
-                              <TextBlock Name="CompareDiffers" Grid.Column="1" Classes="caption" Text="&#9670; differs" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding B.MessageDiffers}" />
+                              <TextBlock Grid.Column="1" Classes="caption compare-differs" Text="&#9670; differs" Foreground="{DynamicResource Brush.PrimaryHover}" IsVisible="{Binding B.MessageDiffers}" />
                             </Grid>
                           </Border>
                         </StackPanel>

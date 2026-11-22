@@ -59,12 +59,16 @@ public sealed class WorkflowsListFramesTests : FrameHost
     private static IEnumerable<string> Texts(Window window, string name) =>
         window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == name && t.IsEffectivelyVisible).Select(t => t.Text ?? string.Empty);
 
+    // The column heads share one name scope, so they are found by their class, not a name.
+    private static IEnumerable<string> ClassTexts(Window window, string cls) =>
+        window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains(cls) && t.IsEffectivelyVisible).Select(t => t.Text ?? string.Empty);
+
     [Fact]
     public Task At_1440_the_list_has_every_column_the_groups_and_a_ten_slot_strip_per_row() => OnUi(async () =>
     {
         var (window, _) = await Shown(1440);
 
-        Assert.Equal(["Name", "Trigger", "Last run", "Next run", "Last 10 runs", "State"], Texts(window, "ColumnHead").ToList(), StringComparer.Ordinal);
+        Assert.Equal(["Name", "Trigger", "Last run", "Next run", "Last 10 runs", "State"], ClassTexts(window, "column-head").ToList(), StringComparer.Ordinal);
         Assert.Equal(["Needs a look · 2", "Everything else · 3"], Texts(window, "RowGroupHeader").ToList(), StringComparer.Ordinal);
         var rows = RowBorders(window);
         Assert.Equal(5, rows.Count);

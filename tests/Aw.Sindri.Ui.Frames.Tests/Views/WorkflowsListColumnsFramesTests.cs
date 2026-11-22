@@ -25,7 +25,7 @@ public sealed class WorkflowsListColumnsFramesTests : FrameHost
     }
 
     private static List<string> Heads(Window window) =>
-        [.. window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "ColumnHead" && t.IsEffectivelyVisible).Select(t => t.Text ?? string.Empty)];
+        [.. window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("column-head") && t.IsEffectivelyVisible).Select(t => t.Text ?? string.Empty)];
 
     [Fact]
     public Task At_1000_the_Next_run_column_is_gone_and_the_others_stay() => OnUi(async () =>

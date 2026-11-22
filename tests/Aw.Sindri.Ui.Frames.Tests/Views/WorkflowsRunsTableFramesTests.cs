@@ -45,6 +45,10 @@ public sealed class WorkflowsRunsTableFramesTests : FrameHost
     private static List<string> Visibles(Window window, string name) =>
         [.. window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == name && t.IsEffectivelyVisible).Select(t => t.Text ?? string.Empty)];
 
+    // The column heads share one name scope, so they are found by their class, not a name.
+    private static List<string> ClassVisibles(Window window, string cls) =>
+        [.. window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains(cls) && t.IsEffectivelyVisible).Select(t => t.Text ?? string.Empty)];
+
     [Theory]
     [InlineData(1440)]
     [InlineData(1000)]
@@ -52,7 +56,7 @@ public sealed class WorkflowsRunsTableFramesTests : FrameHost
     {
         var (window, _) = await Opened(width);
 
-        Assert.Equal(["Time", "Trigger", "Revision", "Duration", "Result"], Visibles(window, "RunColumnHead"), StringComparer.Ordinal);
+        Assert.Equal(["Time", "Trigger", "Revision", "Duration", "Result"], ClassVisibles(window, "run-column-head"), StringComparer.Ordinal);
         Assert.Equal(["22m ago", "2h ago", "7h ago"], Visibles(window, "RunTime"), StringComparer.Ordinal);
         Assert.Equal(["On schedule", "From the CLI", "By hand"], Visibles(window, "RunTrigger"), StringComparer.Ordinal);
         Assert.Equal(["r2", "r2", "r2"], Visibles(window, "RunRevision"), StringComparer.Ordinal);
