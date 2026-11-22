@@ -16,14 +16,8 @@ internal sealed partial class ShellWindow
             return false;
         }
 
-        if (EscapeOverlay(shell))
+        if (EscapeOverlay(shell) || EscapeNewAgent(shell))
         {
-            return true;
-        }
-
-        if (shell.NewAgent.IsOpen)
-        {
-            shell.NewAgent.Close();   // keeps what was typed (agents spec §15.4)
             return true;
         }
 
@@ -53,6 +47,18 @@ internal sealed partial class ShellWindow
         }
 
         Dispatcher.UIThread.Post(KeepFocus, DispatcherPriority.Loaded);
+        return true;
+    }
+
+    // The New agent form closes and keeps what was typed (agents spec §15.4).
+    private static bool EscapeNewAgent(ShellViewModel shell)
+    {
+        if (!shell.NewAgent.IsOpen)
+        {
+            return false;
+        }
+
+        shell.NewAgent.Close();
         return true;
     }
 

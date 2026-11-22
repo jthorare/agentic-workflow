@@ -5,10 +5,8 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 /// <summary>The New agent form in the shell (<see cref="ShellViewModel"/>, continued; agents spec §15.4, U8): N on the Agents page opens it, a 2xx selects the new row and asks for its pane.</summary>
 internal sealed partial class ShellViewModel
 {
-    private NewAgentFormViewModel? _newAgent;
-
     /// <summary>The form; one for the whole run, so what was typed survives Esc.</summary>
-    public NewAgentFormViewModel NewAgent => _newAgent ??= Wired(new NewAgentFormViewModel(Health.ApiUrl, _api, Health.Catalog.Clipboard, [], new NewAgentDefaults(Repo: null, Agent: null), () => Guid.NewGuid().ToString("N")[..16]));
+    public NewAgentFormViewModel NewAgent => field ??= Wired(new NewAgentFormViewModel(Health.ApiUrl, _api, Health.Catalog.Clipboard, [], new NewAgentDefaults(Repo: null, Agent: null), () => Guid.NewGuid().ToString("N")[..16]));
 
     /// <summary>Raised when a start succeeded and its pane should open (the terminal view is the Agents page's).</summary>
     internal event EventHandler<AgentOpenRequestedEventArgs>? AgentPaneRequested;
