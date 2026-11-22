@@ -25,6 +25,18 @@ public sealed class CodeRunnerTests : IDisposable
     }
 
     [Fact(Timeout = 60_000)]
+    public async Task A_runner_binary_that_is_missing_fails_the_node_with_SND_CODE_005_and_the_install_sentence()
+    {
+        var missing = Path.Combine(_directory.FullName, "no-such-runner");
+        var runner = new CodeRunnerProcess([missing]);
+
+        var result = await runner.Run(Path.Combine(_directory.FullName, "code.dll"), "null", new CodeLimits(TimeSpan.FromSeconds(5), MemoryMb: 256), TestContext.Current.CancellationToken);
+
+        Assert.Equal("SND-CODE-005", result.Error.Code);
+        Assert.Equal($"Runner binary not found at {missing}. Install it beside the Sindri host.", result.Error.Message);
+    }
+
+    [Fact(Timeout = 60_000)]
     public async Task A_result_between_64_KiB_and_1_MiB_comes_back_whole()
     {
         var ct = TestContext.Current.CancellationToken;

@@ -14,6 +14,7 @@ internal sealed partial class ProjectAddViewModel
     private bool _linearLoaded;
     private bool _linearReading;
     private bool _attaching;
+    private bool _linearConnected = true;
     private int _linearGeneration;
 
     /// <summary>What the From Linear search box holds; the rows are filtered by name as it changes.</summary>
@@ -35,6 +36,34 @@ internal sealed partial class ProjectAddViewModel
 
     /// <summary>Why the list could not be read, or why the last Attach was refused; empty otherwise.</summary>
     public string LinearError { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>Tells the sheet whether Linear is connected (the page knows); false makes it open on By hand (#3719).</summary>
+    /// <param name="connected">False when Linear is not set up.</param>
+    internal void SetLinearConnected(bool connected)
+    {
+        _linearConnected = connected;
+        OnChanged(nameof(ShowsLinearConnect));
+        ApplyLinearSearch();
+    }
+
+    /// <summary>The From Linear tab's line when Linear is not connected.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string LinearNotConnectedText => Labels.ProjectAddLinearNotConnected;
+#pragma warning restore CA1822, MA0041
+
+    /// <summary>True when the tab offers Connect: Linear is not connected.</summary>
+    public bool ShowsLinearConnect => !_linearConnected;
+
+    /// <summary>The Connect button's word.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string ConnectText => Labels.LinearConnect;
+#pragma warning restore CA1822, MA0041
+
+    /// <summary>Connect was pressed: the shell opens Connections.</summary>
+    internal event EventHandler? ConnectRequested;
+
+    /// <summary>Asks the shell to open Connections.</summary>
+    internal void RequestConnect() => ConnectRequested?.Invoke(this, EventArgs.Empty);
 
     /// <summary>The latest read of the From Linear list, so a test can wait for it.</summary>
     internal Task LinearLoad { get; private set; } = Task.CompletedTask;
@@ -78,7 +107,7 @@ internal sealed partial class ProjectAddViewModel
     // Reads the list once per opening; a read that failed is tried again the next time the tab shows.
     private void StartLinearLoad()
     {
-        if (!_linearLoaded && _apiUrl() is { } url)
+        if (_linearConnected && !_linearLoaded && _apiUrl() is { } url)
         {
             _linearLoaded = true;
             LinearLoad = ReadLinear(url, ++_linearGeneration);
@@ -130,6 +159,12 @@ internal sealed partial class ProjectAddViewModel
     // The search narrows the rows already read by name; it never calls the API.
     private void ApplyLinearSearch()
     {
+        if (!_linearConnected)
+        {
+            (LinearRows, LinearStatus) = ([], Labels.ProjectAddLinearNotConnected);   // not "you have none": Linear isn't set up (#3719)
+            return;
+        }
+
         var term = LinearSearch.Trim();
         LinearRows = term.Length == 0 ? _linearAll : [.. _linearAll.Where(r => r.Name.Contains(term, StringComparison.OrdinalIgnoreCase))];
         LinearStatus = (_linearReading, LinearError.Length > 0, _linearAll.Count, LinearRows.Count) switch

@@ -227,10 +227,10 @@ internal sealed partial class ShellWindow
         FocusManager?.GetFocusedElement() is not Visual focused || ReferenceEquals(focused, PagePanel) || SheetPanel.IsVisualAncestorOf(focused) || ReferenceEquals(focused, SheetPanel);
 
     // The sheet's opener (the row it was opened from, by id, or the edge tab), else the row the selection moved to when the opener cleared, else the page region for the sheet; the health pill for the top bar; the page
-    // region, or the sheet's heading while the sheet covers the page.
+    // region, or while the sheet covers the page its focus target: the heading, or a session sheet's body (SheetFocusTarget).
     private Control? Neighbour(Control last)
     {
-        var page = Usable(this.Get<Control>("Page")) ?? (Covering ? Usable(this.Get<Border>("SheetTitle")) : null);
+        var page = Usable(this.Get<Control>("Page")) ?? (Covering ? Usable(SheetFocusTarget()) : null);
         if (SheetPanel == last || SheetPanel.IsVisualAncestorOf(last))
         {
             return SheetOpenerFrame() ?? page;
@@ -263,10 +263,12 @@ internal sealed partial class ShellWindow
 
         if (Shell is { IsSheetShown: true } && (Covering || !HasRealFocus))
         {
-            // #3710: a session sheet takes focus on its body, not the title (the title drew a focus underline).
-            _ = this.Get<Border>(Shell is { IsSessionSheet: true } ? "Sheet" : "SheetTitle").Focus(Method());
+            _ = SheetFocusTarget().Focus(Method());
         }
     }
+
+    // Where focus rests in the sheet itself: its heading, but a session sheet's body (#3710, #3783: the session heading draws a focus underline).
+    private Border SheetFocusTarget() => this.Get<Border>(Shell is { IsSessionSheet: true } ? "Sheet" : "SheetTitle");
 
     // A tab was selected without the keyboard's arrows: focus rests on the selected tab (a pointer press already put it there; a screen reader's or the driver's activation did not).
     private void FocusSelectedTab()
