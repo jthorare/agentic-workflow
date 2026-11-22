@@ -25,8 +25,7 @@ internal sealed class ListConversationsService(IMessagesStore store, ICallerCont
         var names = MessageReadFilter.ShowsText(callers.Current);
         var query = string.IsNullOrWhiteSpace(request.Query) ? null : request.Query.Trim();
         var rows = conversations.Value
-            .Where(c => request.Starred is not { } starred || c.Starred == starred)
-            .Where(c => query is null || c.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .Where(c => (request.Starred is not { } starred || c.Starred == starred) && (query is null || c.Name.Contains(query, StringComparison.OrdinalIgnoreCase)))
             .Select(c => new ConversationListRow(c.Conversation, c.Kind, names ? c.Name : null, c.Starred, c.Unread))
             .ToList();
         return new ListConversationsResponse(rows);
