@@ -41,6 +41,47 @@ public sealed class GitRepoHeadsTests
     }
 
     [Fact]
+    public async Task A_checkout_off_main_reports_local_mains_tip_as_the_default_tip_gh3181()
+    {
+        using var repo = new GitRepoBuilder().WithFile("a.cs", "class A {}").Build();
+        var onMain = repo.Head;
+        _ = repo.Git("checkout", "-q", "-b", "feature");
+        _ = repo.Commit("feature work");
+
+        var heads = await _heads.Heads([repo.AsRepo()], TestContext.Current.CancellationToken);
+
+        Assert.Equal(onMain, Assert.Single(heads.Value).DefaultTip);
+    }
+
+    [Fact]
+    public async Task A_checkout_with_no_local_main_reports_origin_mains_tip_as_the_default_tip_gh3181()
+    {
+        using var repo = new GitRepoBuilder().WithFile("a.cs", "class A {}").Build();
+        var onMain = repo.Head;
+        _ = repo.Git("checkout", "-q", "-b", "feature");
+        _ = repo.Commit("feature work");
+        _ = repo.Git("update-ref", "refs/remotes/origin/main", onMain.Value);
+        _ = repo.Git("branch", "-q", "-D", "main");
+
+        var heads = await _heads.Heads([repo.AsRepo()], TestContext.Current.CancellationToken);
+
+        Assert.Equal(onMain, Assert.Single(heads.Value).DefaultTip);
+    }
+
+    [Fact]
+    public async Task A_checkout_with_no_main_and_no_origin_main_has_no_default_tip_gh3181()
+    {
+        using var repo = new GitRepoBuilder().WithFile("a.cs", "class A {}").Build();
+        _ = repo.Git("checkout", "-q", "-b", "feature");
+        _ = repo.Commit("feature work");
+        _ = repo.Git("branch", "-q", "-D", "main");
+
+        var heads = await _heads.Heads([repo.AsRepo()], TestContext.Current.CancellationToken);
+
+        Assert.Null(Assert.Single(heads.Value).DefaultTip);
+    }
+
+    [Fact]
     public async Task A_path_git_cannot_read_has_no_head_and_is_not_on_the_default_branch()
     {
         var missing = new CodeIndexRepo(RepoName.From("gone"), Path.Combine(Path.GetTempPath(), "aw-no-repo-" + RealTime.NewGuid().ToString("N")), CodeIndexSettings.Default);
