@@ -53,6 +53,18 @@ public sealed class WorkflowsEditorSheetTests
     }
 
     [Fact]
+    public async Task The_steps_id_shows_only_in_the_sheets_Advanced_group()
+    {
+        var page = await OnRuns();
+        Assert.True(page.Runs.Graph!.SelectNode("agent"));
+
+        await page.OpenSettings(Token);
+
+        Assert.Equal(("Step id: agent", "Advanced"), (page.Editor.NodeIdLine, page.Editor.AdvancedText));
+        Assert.Equal("Check the repos", page.Runs.Graph.Nodes.Single(n => string.Equals(n.Id, "agent", StringComparison.Ordinal)).Title);   // the card shows the title, not the id
+    }
+
+    [Fact]
     public async Task Save_sends_set_config_for_the_changed_field_at_the_read_revision()
     {
         var page = await OnRuns();
