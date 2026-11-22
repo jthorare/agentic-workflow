@@ -65,4 +65,22 @@ public sealed class ShellLibraryReadTests
         Assert.Equal((before + 1, false, true), (_server.LibraryCalls, shell.LibraryRoots.HasRows, shell.LibraryRoots.IsEmpty));
         Assert.Equal(TodoNoteCardStage.NoVaults, shell.TodoNoteCard.Stage);
     }
+
+    // #3887: the todo note card's own read (GET /sindri/todo-note) is another route; it needs the shared library answer only after the note, so it must not wait for the library to start.
+    [Fact]
+    public Task An_event_on_Settings_starts_the_note_read_before_the_library_answers() => UiThread.Run(async () =>
+    {
+        var shell = await OnSettings();
+        var notes = _server.TodoNoteCalls;
+        var library = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _server.GateNextLibraryRead(library);
+
+        var refresh = shell.Health.RefreshViews(shell.Health.ApiUrl()!, Token);   // why: what an event runs
+        var started = _server.TodoNoteCalls > notes;
+        library.SetResult();
+        await refresh;
+
+        Assert.True(started, "the note read waited for the library read to answer");
+        Assert.Equal(TodoNoteCardStage.Form, shell.TodoNoteCard.Stage);
+    }, Token);
 }
