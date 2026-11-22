@@ -15,7 +15,7 @@ using IndexRepoStatus = Aw.CodeIndex.Core.Facade.RepoStatus;
 namespace Aw.Sindri.Features.CodeIndexJobs;
 
 /// <summary>
-/// The code index's doctor rows (code index spec §8): 'code-index:&lt;repo&gt;' per repo (ok, warn when stale, first build queued, waiting or retrying, or code-index-main-move paused, fail when damaged) and 'code-index:graphify',
+/// The code index's doctor rows (code index spec §8): 'code-index:&lt;repo&gt;' per repo (ok, warn when stale, first build queued, no default-branch commit to build from, waiting or retrying, or code-index-main-move paused, fail when damaged) and 'code-index:graphify',
 /// 'code-index:ollama' and 'code-index:lock', read from the layer statuses the last builds stored, so doctor runs no tool. A layer that is unavailable is a warning, never a failure.
 /// </summary>
 /// <param name="index">The code index: its status, from the files only.</param>
@@ -122,11 +122,17 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
         return repo.State switch
         {
             IndexState.Damaged => new DoctorCheck(name, CheckState.Fail, "index damaged, rebuilding (SND-CODEIDX-010)", "none needed: the next tick deletes and rebuilds it; sindri jobs shows the build"),
+            IndexState.Missing when DefaultTips.NoneToBuildFrom(live) => new DoctorCheck(name, CheckState.Warn, UnbuildableWords, UnbuildableFix),
             IndexState.Missing when paused => new DoctorCheck(name, CheckState.Warn, $"no index: {PausedWords}, so no build starts", Resume),
             IndexState.Missing => new DoctorCheck(name, CheckState.Warn, running ? "building the first index" : IndexBuildWords.Waiting(finished, now) ?? "first build queued", Fix: null),
             IndexState.Ok or _ => Readable(name, repo, live, new StaleWords(buildWords, paused ? Resume : "none needed: the next tick builds it"), now),
         };
     }
+
+    // A repo with no index that no build can start for: off its default branch with no default-branch commit to build from (#3181).
+    private const string UnbuildableWords = "no index: the checkout is off its default branch and has " + DefaultTips.NoneWords + " to build from";
+
+    private const string UnbuildableFix = "check out the repo's default branch, or fetch origin so origin/main exists";
 
     // What a stale row says about the next build and how to get one (#3399: paused, the fix is the resume).
     private readonly record struct StaleWords(string Build, string Fix);
