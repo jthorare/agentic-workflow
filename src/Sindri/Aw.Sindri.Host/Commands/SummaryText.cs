@@ -15,7 +15,7 @@ internal static class SummaryText
         var lines = new StringBuilder();
         Line(lines, "profile", Profile(status.Profile));
         Line(lines, "services", status.Services.Count == 0
-            ? "none scheduled (the profile names no services)"
+            ? "none scheduled"
             : string.Join(" · ", status.Services.Select(s => $"{s.Name.Value} every {s.Every}{LastRun(s.LastRun)}")));
         if (status.Views is { } views)
         {

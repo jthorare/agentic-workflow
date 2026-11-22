@@ -49,24 +49,52 @@ internal sealed partial class GraphCanvas
                 DrawNode(context, node);
             }
         }
+
+        DrawScrollbars(context);
     }
 
     private void DrawEdge(DrawingContext context, GraphEdgeViewModel edge)
     {
         var (start, c1, c2, end) = Curve(edge);
         var wire = Brush("Brush.Wire");
-        var curve = new StreamGeometry();
-        using (var ctx = curve.Open())
+        context.DrawGeometry(brush: null, new Pen(wire, 2, lineJoin: PenLineJoin.Round), EdgePath(edge, start, c1, c2, end));
+
+        // The arrow head points along the path's last stretch (from the second control point, or the last corner, to the end).
+        var from = edge.Route.Count > 0 ? new Point(edge.Route[^1].X, edge.Route[^1].Y) : c2;
+        DrawArrowHead(context, wire, from, end);
+        if (edge.Label is { } label)
         {
-            ctx.BeginFigure(start, isFilled: false);
+            DrawEdgeLabel(context, label, new Point((start.X + (3 * c1.X) + (3 * from.X) + end.X) / 8, (start.Y + (3 * c1.Y) + (3 * from.Y) + end.Y) / 8));
+        }
+    }
+
+    // One curve for an edge inside a row; a wrapped edge runs along its row's return lane (#3684): straight lines through the right pad, the row gap and the left pad, never across a card.
+    private static StreamGeometry EdgePath(GraphEdgeViewModel edge, Point start, Point c1, Point c2, Point end)
+    {
+        var path = new StreamGeometry();
+        using var ctx = path.Open();
+        ctx.BeginFigure(start, isFilled: false);
+        if (edge.Route.Count > 0)
+        {
+            foreach (var corner in edge.Route)
+            {
+                ctx.LineTo(new Point(corner.X, corner.Y));
+            }
+
+            ctx.LineTo(end);
+        }
+        else
+        {
             ctx.CubicBezierTo(c1, c2, end);
-            ctx.EndFigure(isClosed: false);
         }
 
-        context.DrawGeometry(brush: null, new Pen(wire, 2), curve);
+        ctx.EndFigure(isClosed: false);
+        return path;
+    }
 
-        // The arrow head points along the curve's last stretch (from the second control point to the end).
-        var angle = Math.Atan2(end.Y - c2.Y, end.X - c2.X);
+    private static void DrawArrowHead(DrawingContext context, IBrush wire, Point from, Point end)
+    {
+        var angle = Math.Atan2(end.Y - from.Y, end.X - from.X);
         Point Wing(double turn) => new(end.X - (ArrowSize * Math.Cos(angle + turn)), end.Y - (ArrowSize * Math.Sin(angle + turn)));
         var head = new StreamGeometry();
         using (var ctx = head.Open())
@@ -78,14 +106,41 @@ internal sealed partial class GraphCanvas
         }
 
         context.DrawGeometry(wire, pen: null, head);
+    }
 
-        if (edge.Label is { } label)
+    // The branch output's pill at the middle of the curve.
+    private void DrawEdgeLabel(DrawingContext context, string label, Point mid)
+    {
+        var text = Text(label, 11, Brush("Brush.Ink"), 80, semiBold: true);
+        var pill = new Rect(mid.X - (text.Width / 2) - 6, mid.Y - (text.Height / 2) - 2, text.Width + 12, text.Height + 4);
+        context.DrawRectangle(Brush("Brush.Surface1"), new Pen(Brush("Brush.Hairline"), 1), pill, 4, 4);
+        context.DrawText(text, new Point(pill.X + 6, pill.Y + 2));
+    }
+
+    // Thin scrollbars, only on an axis that overflows: a thumb showing where the viewport is in the scroll extent.
+    private void DrawScrollbars(DrawingContext context)
+    {
+        if (!Scrolls)
         {
-            var text = Text(label, 11, Brush("Brush.Ink"), 80, semiBold: true);
-            var mid = new Point((start.X + (3 * c1.X) + (3 * c2.X) + end.X) / 8, (start.Y + (3 * c1.Y) + (3 * c2.Y) + end.Y) / 8);
-            var pill = new Rect(mid.X - (text.Width / 2) - 6, mid.Y - (text.Height / 2) - 2, text.Width + 12, text.Height + 4);
-            context.DrawRectangle(Brush("Brush.Surface1"), new Pen(Brush("Brush.Hairline"), 1), pill, 4, 4);
-            context.DrawText(text, new Point(pill.X + 6, pill.Y + 2));
+            return;
+        }
+
+        var world = World;
+        var extentW = world.Right * Zoom;
+        var extentH = GraphZoom.ExtentHeight(world.Bottom, Zoom, mapShown: true);
+        var thumb = Brush("Brush.InkSubtle");
+        if (extentH > Bounds.Height + 0.5)
+        {
+            var h = Math.Max(MinHandle, Bounds.Height * Bounds.Height / extentH);
+            var y = -Pan.Y / (extentH - Bounds.Height) * (Bounds.Height - h);
+            context.DrawRectangle(thumb, pen: null, new Rect(Bounds.Width - 8, y, 4, h), 2, 2);
+        }
+
+        if (extentW > Bounds.Width + 0.5)
+        {
+            var w = Math.Max(MinHandle, Bounds.Width * Bounds.Width / extentW);
+            var x = -Pan.X / (extentW - Bounds.Width) * (Bounds.Width - w);
+            context.DrawRectangle(thumb, pen: null, new Rect(x, Bounds.Height - 8, w, 4), 2, 2);
         }
     }
 
@@ -102,26 +157,44 @@ internal sealed partial class GraphCanvas
         var rect = WorldRect(node);
         if (node.IsSelected)
         {
-            context.DrawRectangle(brush: null, new Pen(Brush("Brush.Primary"), 2), rect.Inflate(RingGap), Radius + RingGap, Radius + RingGap);
+            context.DrawRectangle(brush: null, new Pen(Brush("Brush.Primary"), 2), SelectedRing(rect), Radius + RingGap + 1, Radius + RingGap + 1);
         }
 
         context.DrawRectangle(Brush("Brush.Surface2"), new Pen(Brush("Brush.Hairline"), 1), rect, Radius, Radius);
-        var width = rect.Width - 24;
-        var titleWidth = width;
-        if (node.FindingMark.Length > 0)
-        {
-            // The server's findings on this step (#3803): "⚠ 1" or "✕ 2" on the top right, in the attention or error tone; the title gives way to it
-            var mark = Text(node.FindingMark, 11, Brush(node.IsFindingError ? "Brush.Error" : "Brush.Attention"), MarkWidth, semiBold: true);
-            context.DrawText(mark, new Point(rect.Right - 12 - mark.Width, rect.Y + 9));
-            titleWidth = Math.Max(0, width - mark.Width - 8);
-        }
-
-        context.DrawText(Text(node.Title, 13, Brush("Brush.Ink"), titleWidth, semiBold: true), new Point(rect.X + 12, rect.Y + 8));
-        context.DrawText(Text(node.Type, 11, Brush("Brush.InkMuted"), width, semiBold: false), new Point(rect.X + 12, rect.Y + 27));
+        var k = node.Scale;
+        var width = DrawTitleLine(context, node, rect, k);
+        context.DrawText(Text(node.Type, 11 * k, Brush("Brush.InkMuted"), width, semiBold: false), new Point(rect.X + (12 * k), rect.Y + (27 * k)));
         if (node.StatusWord.Length > 0)
         {
-            context.DrawText(Text(node.Glyph + " " + node.StatusWord, 11, Brush(ToneKey(node.Tone)), width, semiBold: false), new Point(rect.X + 12, rect.Y + 44));
+            context.DrawText(Text(node.Glyph + " " + node.StatusWord, 11 * k, Brush(ToneKey(node.Tone)), width, semiBold: false), new Point(rect.X + (12 * k), rect.Y + (44 * k)));
         }
+    }
+
+    // The card's title line: the title on the left; on the right the server's findings on this step (#3803: "⚠ 1" or "✕ 2" in the attention or
+    // error tone) and left of it the card's chip ("off"). The title gives way to both; the width it got is returned for the lines below it.
+    private double DrawTitleLine(DrawingContext context, GraphNodeViewModel node, Rect rect, double k)
+    {
+        var right = rect.Right - (12 * k);
+        if (node.FindingMark.Length > 0)
+        {
+            var mark = Text(node.FindingMark, 11 * k, Brush(node.IsFindingError ? "Brush.Error" : "Brush.Attention"), MarkWidth * k, semiBold: true);
+            context.DrawText(mark, new Point(right - mark.Width, rect.Y + (9 * k)));
+            right -= mark.Width + (8 * k);
+        }
+
+        var chip = Graph?.ChipFor(node);
+        if (chip is not null)
+        {
+            var chipText = Text(chip, 11 * k, Brush("Brush.InkMuted"), rect.Width / 3, semiBold: false);
+            var box = new Rect(right - chipText.Width - (16 * k), rect.Y + (6 * k), chipText.Width + (16 * k), chipText.Height + (4 * k));
+            context.DrawRectangle(brush: null, new Pen(Brush("Brush.Hairline"), 1), box, box.Height / 2, box.Height / 2);
+            context.DrawText(chipText, new Point(box.X + (8 * k), box.Y + (2 * k)));
+            right = box.X - (8 * k);
+        }
+
+        var width = Math.Max(0, right - rect.X - (12 * k));
+        context.DrawText(Text(node.Title, 13 * k, Brush("Brush.Ink"), width, semiBold: true), new Point(rect.X + (12 * k), rect.Y + (8 * k)));
+        return width;
     }
 
 #pragma warning disable IDE0072 // None and Muted share the subtle ink
@@ -141,7 +214,12 @@ internal sealed partial class GraphCanvas
         return (start, new Point(start.X + reach, start.Y), new Point(end.X - reach, end.Y), end);
     }
 
-    private static Rect WorldRect(GraphNodeViewModel node) => new(node.X, node.Y, WorkflowGraphViewModel.CardWidth, WorkflowGraphViewModel.CardHeight);
+    /// <summary>The path the selected card's ring is stroked along: the pen is centred on it, so its inner edge is 3 px outside the card's border.</summary>
+    /// <param name="card">The card's rectangle.</param>
+    /// <returns>The rectangle to stroke.</returns>
+    internal static Rect SelectedRing(Rect card) => card.Inflate(RingGap + 1);
+
+    private static Rect WorldRect(GraphNodeViewModel node) => new(node.X, node.Y, node.Width, node.Height);
 
     private Rect ToScreen(Rect world) => new((world.X * Zoom) + Pan.X, (world.Y * Zoom) + Pan.Y, world.Width * Zoom, world.Height * Zoom);
 

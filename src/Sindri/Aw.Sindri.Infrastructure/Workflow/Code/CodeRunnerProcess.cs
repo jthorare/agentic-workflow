@@ -44,7 +44,10 @@ internal sealed class CodeRunnerProcess(IReadOnlyList<string> runner, Func<IRead
         }
         catch (Win32Exception e)   // boundary: no runner binary is an expected failure
         {
-            return SindriErrors.CodeRunnerUnavailable.With(e.Message);
+            // why: only ENOENT (2) means the file is missing; any other code (e.g. permission denied) keeps the OS text, led by the runner it is about
+            return SindriErrors.CodeRunnerUnavailable.With(e.NativeErrorCode == 2
+                ? CodeRunnerMissing.Message(start.FileName)
+                : $"Runner binary at {start.FileName} could not start: {e.Message}");
         }
 
         using (process)

@@ -90,6 +90,8 @@ mkdir -p "$HOOKS_DIR/lib"
 cp "$SCRIPT_DIR/config/lib/failopen.sh" "$HOOKS_DIR/lib/failopen.sh"
 # done-gate, scope-gate, send-gate and prompt-sort attach images through lib/image-paths.sh next to them.
 cp "$SCRIPT_DIR/config/lib/image-paths.sh" "$HOOKS_DIR/lib/image-paths.sh"
+# done-gate, prompt-sort and sindri-tasks kill a timed-out script and its children through lib/kill-tree.sh next to them.
+cp "$SCRIPT_DIR/config/lib/kill-tree.sh" "$HOOKS_DIR/lib/kill-tree.sh"
 
 # Merge safety hooks into existing settings.json
 if [ -f "$SETTINGS_FILE" ] && command -v jq &>/dev/null; then
