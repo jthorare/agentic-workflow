@@ -34,6 +34,7 @@ A person may take the session over. While they hold it, the timeout clock stops.
 
 - A `run_agent` node can't sit inside a `for_each` body.
 - The prompt goes to the agent as written. Text in it that came from a connection is untrusted. Don't ask the agent to obey it.
+- The tokens the session spent count against the run's token budget. Once the run has used its budget, the step fails with `SND-GRAPH-134` before an agent starts ([token budget](spec.md#token-budget)).
 
 ## Example
 
