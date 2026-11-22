@@ -14,8 +14,9 @@ internal static class FirstMapRow
     /// <param name="paused">Whether context-map-refresh is paused.</param>
     /// <param name="mapJobs">The RefreshContextMap and BuildContextMap jobs, any state.</param>
     /// <param name="indexed">The repos with a succeeded code index build.</param>
+    /// <param name="leftOut">The profile's repos the map doesn't wait on: their checkout is off its default branch (#3216).</param>
     /// <returns>The row.</returns>
-    internal static DoctorCheck Of(IReadOnlyList<string> repos, bool paused, IReadOnlyList<JobRow> mapJobs, IReadOnlySet<string> indexed)
+    internal static DoctorCheck Of(IReadOnlyList<string> repos, bool paused, IReadOnlyList<JobRow> mapJobs, IReadOnlySet<string> indexed, IReadOnlyList<string>? leftOut = null)
     {
         ArgumentNullException.ThrowIfNull(repos);
         ArgumentNullException.ThrowIfNull(mapJobs);
@@ -30,10 +31,16 @@ internal static class FirstMapRow
             return Row(CheckState.Warn, "no map yet: context-map-refresh is paused, so the first map doesn't build", "sindri services resume context-map-refresh");
         }
 
-        if (mapJobs.Where(static j => j.EndedAt is not null).MaxBy(static j => j.EndedAt) is { State: JobState.Failed } failed)
+        // why: a job cancelled before it built says nothing about the build, so it must not hide an earlier failure (#3216); a later build that ended does
+        if (mapJobs.Where(static j => j.EndedAt is not null && j.State != JobState.Cancelled).MaxBy(static j => j.EndedAt) is { State: JobState.Failed } failed)
         {
             var code = failed.Code is { } c ? $" ({c})" : string.Empty;
             return Row(CheckState.Warn, $"no map yet: the first map build failed{code}", $"sindri context map build, or Build map on the Context page (the failed job: sindri jobs show {failed.Id.Value})");
+        }
+
+        if (repos.Count == 0 && leftOut is { Count: > 0 })
+        {
+            return Row(CheckState.Warn, $"no map yet: no mapped repo is on its default branch ({string.Join(", ", leftOut)})", "check out the default branch in one of them");
         }
 
         if (!repos.Any(indexed.Contains))

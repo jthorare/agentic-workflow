@@ -27,7 +27,7 @@ public sealed class ContextPagesDoctorTests
         var checks = new ContextEngineChecks(engine.Proxy, new MapPublishDoctorCheck(new MapPublishStatusReader(FakeContextEngine.Instance, new NoIndexOutlooks(), h.Store, clock), clock),
             new LinearDoctor(FakeContextEngine.Instance, new PointerSecrets(_ => null, new FakeToolRunner(ToolRun.Missing))),
             new CodeIndexDoctor(new CodeIndex.Testing.FakeCodeIndex(), new CodeIndex.Testing.FakeRepoHeads(), new InMemoryJobViews(), new CodeIndexProbes(new CodeIndex.Testing.FakeEmbedder(), new CodeIndex.Testing.FakePins()), clock, new InMemoryProfiles(), new NoPauses()),
-            new FirstMapDoctorCheck(new InMemoryJobViews(), new NoPauses()));
+            new FirstMapDoctorCheck(new InMemoryJobViews(), new NoPauses(), FakeContextEngine.Instance));
         var rows = await checks.Check(approved, Ct);
         return ([.. rows.Select(r => r.Name)], engine);
     }
