@@ -27,7 +27,9 @@ public sealed class ConceptRowTests
     {
         var layer = Layer([AConcepts.Concept("concept:self-scheduling", "Self scheduling"), AConcepts.Concept("concept:billing", "Billing")]);
 
-        Assert.Equal(["ConceptOpen.concept:self-scheduling", "ConceptOpen.concept:billing"], layer.Tiles.Select(t => t.OpenAutomationId));
+        string[] expected = ["ConceptOpen.concept:self-scheduling", "ConceptOpen.concept:billing"];
+
+        Assert.Equal(expected, layer.Tiles.Select(t => t.OpenAutomationId), StringComparer.Ordinal);
     }
 
     [Fact]
