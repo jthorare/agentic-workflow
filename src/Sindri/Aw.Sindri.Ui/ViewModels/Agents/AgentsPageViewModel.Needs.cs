@@ -14,7 +14,7 @@ internal sealed partial class AgentsPageViewModel
 
     private readonly Dictionary<string, (string Shown, (string State, DateTimeOffset At)? Candidate)> _held = new(StringComparer.Ordinal);
 
-    /// <summary>Raised when <c>/</c> asks for the search box.</summary>
+    /// <summary>Raised when the / key asks for the search box.</summary>
     internal event EventHandler? SearchRequested;
 
     /// <summary>The order the user picked; it holds across reads.</summary>
@@ -126,7 +126,7 @@ internal sealed partial class AgentsPageViewModel
     private List<SessionRowViewModel> Ordered(IEnumerable<SessionRowViewModel> rows)
     {
         var byName = StringComparer.OrdinalIgnoreCase;
-        IOrderedEnumerable<SessionRowViewModel> ordered = Sort switch
+        var ordered = Sort switch
         {
             AgentSort.Repo => rows.OrderBy(r => r.Row.Repo ?? string.Empty, byName).ThenBy(r => r.TitleText, byName),
             AgentSort.State => rows.OrderBy(r => StateRank(r.Row.State)).ThenBy(r => r.TitleText, byName),

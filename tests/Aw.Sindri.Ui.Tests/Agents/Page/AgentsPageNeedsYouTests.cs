@@ -76,7 +76,7 @@ public sealed class AgentsPageNeedsYouTests
         var page = await _f.Shown(Token);
         var before = Titles(Outside(page));
 
-        Add(list, Claude, "000000000013", title: "mid", since: "2026-10-16T11:00:00.0000000Z");
+        _ = Add(list, Claude, "000000000013", title: "mid", since: "2026-10-16T11:00:00.0000000Z");
         _f.Serve(list);
         await page.Refresh(AgentsPageFixture.Url, Token);
 
@@ -299,10 +299,12 @@ public sealed class AgentsPageNeedsYouTests
         var firstDescending = page.SortDescending;
         page.SortBy(AgentSort.Name);
         var second = Titles(Outside(page));
+        List<string> ascending = [.. first.Order(StringComparer.OrdinalIgnoreCase)];
+        List<string> reversed = [.. first.AsEnumerable().Reverse()];
 
         Assert.False(firstDescending);
-        Assert.Equal(first.Order(StringComparer.OrdinalIgnoreCase).ToList(), first);
-        Assert.Equal(first.AsEnumerable().Reverse().ToList(), second);
+        Assert.Equal(ascending, first);
+        Assert.Equal(reversed, second);
         Assert.True(page.SortDescending);
     }
 
@@ -329,6 +331,6 @@ public sealed class AgentsPageNeedsYouTests
         Assert.Equal((true, false), (upMark.Contains('▲', StringComparison.Ordinal), page.ForHeader.Contains('▲', StringComparison.Ordinal) || page.ForHeader.Contains('▼', StringComparison.Ordinal)));
         Assert.True(downMark.Contains('▼', StringComparison.Ordinal));
         Assert.Equal((AgentSort.Repo, false), (page.Sort, page.SortDescending));
-        Assert.Contains('▲', page.RepoHeader, StringComparison.Ordinal);
+        Assert.Contains("▲", page.RepoHeader, StringComparison.Ordinal);
     }
 }
