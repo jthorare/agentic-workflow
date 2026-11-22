@@ -5,7 +5,9 @@ using Aw.Kernel.Json;
 using Aw.Kernel.Services;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Features.GetWorkflow;
+using Aw.Sindri.Features.RunWorkflow;
 using Aw.Sindri.Host;
 using Aw.Sindri.Host.Mcp;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,7 +15,7 @@ using ModelContextProtocol.Protocol;
 
 namespace Aw.Sindri.Tests.WorkflowTools;
 
-/// <summary>workflow_get's revision argument (#3693): a number or 'latest' builds the same read as GET /sindri/workflows/{slug}?revision=, and a bad one is refused before the read.</summary>
+/// <summary>workflow_get's revision argument (#3693): a number or 'latest' builds the same read as GET /sindri/workflows/{slug}?revision=, and a bad one is refused before the read. workflow_run's (#3691): a whole number of 1 or more, passed on to the run.</summary>
 [Lane(TestLane.Unit)]
 public sealed class WorkflowRevisionArgumentTests
 {
@@ -114,6 +116,69 @@ public sealed class WorkflowRevisionArgumentTests
 
         Assert.NotNull(schema["properties"]?["revision"]);
         Assert.Equal(["slug"], schema["required"]!.AsArray().Select(static r => r!.GetValue<string>()), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task workflow_run_passes_the_revision_on()
+    {
+        var runs = new Runs();
+        await using var services = RunServices(runs);
+
+        _ = await Host.Mcp.WorkflowTools.Call(Host.Mcp.WorkflowTools.Run, services, Arguments(("slug", "morning-check"), ("revision", 2)), Token);
+
+        Assert.Equal((int?)2, Assert.Single(runs.Asked).Revision);
+    }
+
+    [Fact]
+    public async Task workflow_run_without_a_revision_runs_the_live_one()
+    {
+        var runs = new Runs();
+        await using var services = RunServices(runs);
+
+        _ = await Host.Mcp.WorkflowTools.Call(Host.Mcp.WorkflowTools.Run, services, Arguments(("slug", "morning-check")), Token);
+
+        Assert.Null(Assert.Single(runs.Asked).Revision);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData("latest")]
+    [InlineData(4_294_967_297L)]
+    public async Task workflow_run_refuses_a_revision_that_is_not_a_whole_number_of_1_or_more(object revision)
+    {
+        var runs = new Runs();
+        await using var services = RunServices(runs);
+
+        var result = await Host.Mcp.WorkflowTools.Call(Host.Mcp.WorkflowTools.Run, services, Arguments(("slug", "morning-check"), ("revision", revision)), Token);
+
+        Assert.True(result.IsError);
+        Assert.Equal(ArgumentsInvalid, Structured(result)["code"]!.GetValue<string>());
+        Assert.Empty(runs.Asked);
+    }
+
+    [Fact]
+    public void workflow_run_input_schema_names_revision()
+    {
+        var tool = Assert.Single(Host.Mcp.WorkflowTools.All, static t => t.Name == Host.Mcp.WorkflowTools.Run);
+
+        Assert.NotNull(JsonNode.Parse(tool.InputSchema.GetRawText())!["properties"]?["revision"]);
+    }
+
+    private static ServiceProvider RunServices(Runs runs) =>
+        new ServiceCollection().AddSingleton(AwJson.CreateOptions(SindriJsonContext.Default))
+            .AddSingleton<ICallerContextAccessor>(new AsyncLocalCallerContextAccessor(new SequentialIdGenerator()))
+            .AddSingleton<IService<RunWorkflowRequest, RunWorkflowResponse>>(runs).BuildServiceProvider();
+
+    /// <summary>Records what it was asked and answers that no workflow exists.</summary>
+    private sealed class Runs : IService<RunWorkflowRequest, RunWorkflowResponse>
+    {
+        public List<RunWorkflowRequest> Asked { get; } = [];
+
+        public ValueTask<Result<RunWorkflowResponse>> Handle(RunWorkflowRequest request, CancellationToken cancellationToken)
+        {
+            Asked.Add(request);
+            return ValueTask.FromResult<Result<RunWorkflowResponse>>(SindriErrors.GraphNotFound.With($"no workflow '{request.Slug.Value}'"));
+        }
     }
 
     /// <summary>Records what it was asked and answers that no workflow exists, so the call needs no store.</summary>
