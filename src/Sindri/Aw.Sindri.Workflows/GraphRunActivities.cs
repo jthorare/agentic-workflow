@@ -77,11 +77,11 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         }
     }
 
-    // why: the scrub can make a text longer, so Fit runs after it; a cut here sets 'Truncated' like the block's own Fit does (#3486)
+    // why: the scrub can make a text longer, so Fit runs after it (#3486); only the input is fitted here, and a cut input never sets 'Truncated', which says the output was cut (#3896)
     private NodeRun Scrubbed(NodeRun nodeRun)
     {
         var input = StoredJson.Fit(StoredJson.Quote(mirror.Clean(nodeRun.Input)));
-        return nodeRun with { Input = input.Text, Truncated = nodeRun.Truncated || input.Cut, Error = mirror.Clean(nodeRun.Error) };
+        return nodeRun with { Input = input.Text, Error = mirror.Clean(nodeRun.Error) };
     }
 
     /// <summary>Mirrors one change of a 'run_agent' node's session into the ledger (#3151). Keyed by the node run and the change's place in its series, so a retry or a replay writes it once.</summary>
