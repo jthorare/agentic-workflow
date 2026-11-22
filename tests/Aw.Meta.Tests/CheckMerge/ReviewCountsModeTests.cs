@@ -103,6 +103,24 @@ public sealed class ReviewCountsModeTests
         Assert.Contains("HOLD #190: the retry loop never ends", Detail(response, "review"), StringComparison.Ordinal);
     }
 
+    // #3840: the standing HOLD names no sha, so a push does not lift it. The lane was ready at the old head, the reviewer held, the
+    // lane pushed and sent a green ready at the new head: still refused.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_HOLD_survives_a_push_and_a_green_ready_at_the_new_head()
+    {
+        await Team();
+        await Inbox("t1-api", ReadyBody(sha: Old));
+        await Inbox("t1-ideas", "HOLD #190: the retry loop never ends");
+        await Inbox("t1-api", ReadyBody());
+        Script();
+
+        var response = await Check();
+
+        Assert.False(response.Ready);
+        Assert.Equal(["review"], Failed(response));
+        Assert.Contains("HOLD #190: the retry loop never ends", Detail(response, "review"), StringComparison.Ordinal);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task A_HOLD_after_an_OK_at_the_head_still_refuses()
     {
