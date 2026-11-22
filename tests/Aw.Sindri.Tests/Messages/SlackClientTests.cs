@@ -12,14 +12,14 @@ public sealed class SlackClientTests
     [Fact]
     public void Rate_limit_429_pauses_only_that_method() => RedUntil.Phase("M1d", () =>
     {
-            var now = KnownInstants.Epoch;
-            var budget = new SlackRateBudget();
+        var now = KnownInstants.Epoch;
+        var budget = new SlackRateBudget();
 
-            budget.Hold("conversations.history", now, TimeSpan.FromSeconds(12));
+        budget.Hold("conversations.history", now, TimeSpan.FromSeconds(12));
 
-            Assert.False(budget.MayCall("conversations.history", now.AddSeconds(11)));
-            Assert.True(budget.MayCall("users.info", now.AddSeconds(1)));
-            Assert.True(budget.MayCall("conversations.history", now.AddSeconds(13)));
+        Assert.False(budget.MayCall("conversations.history", now.AddSeconds(11)));
+        Assert.True(budget.MayCall("users.info", now.AddSeconds(1)));
+        Assert.True(budget.MayCall("conversations.history", now.AddSeconds(13)));
     });
 
     [Fact]
@@ -29,9 +29,9 @@ public sealed class SlackClientTests
     [Fact]
     public void Connection_test_calls_auth_test() => RedUntil.Phase("M1d", () =>
     {
-            // without a probeUrl a Preset-null connection reports "connected" with no call (§5.1); M1d also proves the Test button calls it on the fake
-            var config = MessagesConnection.Config("T0HARBOR", "U0JOI");
+        // without a probeUrl a Preset-null connection reports "connected" with no call (§5.1); M1d also proves the Test button calls it on the fake
+        var config = MessagesConnection.Config("T0HARBOR", "U0JOI");
 
-            Assert.Equal("https://slack.com/api/auth.test", config["probeUrl"]);
+        Assert.Equal("https://slack.com/api/auth.test", config["probeUrl"]);
     });
 }

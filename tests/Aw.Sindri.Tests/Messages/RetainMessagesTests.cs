@@ -16,31 +16,31 @@ public sealed class RetainMessagesTests
     [Fact]
     public Task Retention_keeps_a_thread_in_needs_reply() => RedUntil.Phase("M1c", async () =>
     {
-            // M1c seeds a 35-day-old unanswered DM: it stays in Needs reply with its text
-            var ran = await Run();
+        // M1c seeds a 35-day-old unanswered DM: it stays in Needs reply with its text
+        var ran = await Run();
 
-            Assert.True(ran.IsSuccess);
-            Assert.Equal(ScheduledResult.Quiet, ran.Value);
+        Assert.True(ran.IsSuccess);
+        Assert.Equal(ScheduledResult.Quiet, ran.Value);
     });
 
     [Fact]
     public Task Retention_keeps_a_snoozed_thread_after_views_rebuild() => RedUntil.Phase("M1c", async () =>
     {
-            // M1c seeds home.row.snoozed for a 40-day-old thread, rebuilds views.db, then runs the pass: the snooze still holds the text
-            var ran = await Run();
+        // M1c seeds home.row.snoozed for a 40-day-old thread, rebuilds views.db, then runs the pass: the snooze still holds the text
+        var ran = await Run();
 
-            Assert.True(ran.IsSuccess);
-            Assert.Equal(ScheduledResult.Quiet, ran.Value);
+        Assert.True(ran.IsSuccess);
+        Assert.Equal(ScheduledResult.Quiet, ran.Value);
     });
 
     [Fact]
     public Task Retention_ends_a_skip_after_180_days() => RedUntil.Phase("M1c", async () =>
     {
-            // M1c seeds a thread with a Later flag and messages 181 days old: the text goes and the row shows "text expired"
-            var ran = await Run();
+        // M1c seeds a thread with a Later flag and messages 181 days old: the text goes and the row shows "text expired"
+        var ran = await Run();
 
-            Assert.True(ran.IsSuccess);
-            Assert.Equal(ScheduledResult.Worked, ran.Value);
+        Assert.True(ran.IsSuccess);
+        Assert.Equal(ScheduledResult.Worked, ran.Value);
     });
 
     private static async Task<Aw.Kernel.Result<ScheduledResult>> Run()

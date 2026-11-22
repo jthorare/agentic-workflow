@@ -10,12 +10,12 @@ public sealed class ResolveLinksTests
     [Fact]
     public Task Resolve_github_pr_url_to_row_key() => RedUntil.Phase("M1g", async () =>
     {
-            var url = new Uri("https://github.com/acme/harbor/pull/3120");
+        var url = new Uri("https://github.com/acme/harbor/pull/3120");
 
-            var answer = await new ResolveLinksService().Handle(new ResolveLinksRequest([url]), TestContext.Current.CancellationToken);
+        var answer = await new ResolveLinksService().Handle(new ResolveLinksRequest([url]), TestContext.Current.CancellationToken);
 
-            Assert.True(answer.IsSuccess);
-            var link = Assert.Single(answer.Value.Links);
-            Assert.Equal((url, "github:pr:acme/harbor#3120"), (link.Url, link.RowKey));
+        Assert.True(answer.IsSuccess);
+        var link = Assert.Single(answer.Value.Links);
+        Assert.Equal((url, "github:pr:acme/harbor#3120"), (link.Url, link.RowKey));
     });
 }
