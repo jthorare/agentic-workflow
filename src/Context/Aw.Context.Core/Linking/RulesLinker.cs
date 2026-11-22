@@ -32,8 +32,13 @@ public static partial class RulesLinker
     /// <param name="graph">The map to link into.</param>
     /// <param name="tracker">Every intent record the sync knows, for the issue-key and URL rules, and the profile's tracker teams: only their keys link.</param>
     /// <param name="pins">The approved pins' ids and aliases, for the alias rule (see <see cref="Aliases"/>); none runs no alias rule.</param>
+    /// <param name="timedOut">Told the rule whose match ran out of time; that rule links nothing and the others still run.</param>
     /// <returns>The links, ordered by target then rule.</returns>
-    public static IReadOnlyList<IntentLink> Link(RecordKey record, string text, GraphSnapshot graph, (IReadOnlyList<IntentRecord> Known, IReadOnlySet<string> Teams) tracker, IReadOnlyList<PinAliases> pins)
+    public static IReadOnlyList<IntentLink> Link(RecordKey record, string text, GraphSnapshot graph, (IReadOnlyList<IntentRecord> Known, IReadOnlySet<string> Teams) tracker, IReadOnlyList<PinAliases> pins, Action<LinkRule>? timedOut = null) =>
+        LinkWith(record, text, graph, tracker, pins, (timedOut, null));
+
+    // The seam: rules.Before runs as each rule starts, so a test can make one rule time out without a clock.
+    internal static IReadOnlyList<IntentLink> LinkWith(RecordKey record, string text, GraphSnapshot graph, (IReadOnlyList<IntentRecord> Known, IReadOnlySet<string> Teams) tracker, IReadOnlyList<PinAliases> pins, (Action<LinkRule>? TimedOut, Action<LinkRule>? Before) rules)
     {
         ArgumentNullException.ThrowIfNull(text);
         ArgumentNullException.ThrowIfNull(graph);
@@ -41,13 +46,20 @@ public static partial class RulesLinker
         ArgumentNullException.ThrowIfNull(tracker.Teams);
         ArgumentNullException.ThrowIfNull(pins);
         var run = new Run(record, Bounded(text), graph, tracker.Known, tracker.Teams);
-        run.Urls();
-        run.Paths();
-        run.QuotedTitles();
-        run.IssueKeys();
-        run.IdentifierTokens();
-        run.Names();
-        run.Aliases(pins);
+        void Step(LinkRule rule, Action step)
+        {
+            rules.Before?.Invoke(rule);
+            step();
+        }
+
+        _ = rules.TimedOut;
+        Step(LinkRule.Url, run.Urls);
+        Step(LinkRule.Path, run.Paths);
+        Step(LinkRule.QuotedTitle, run.QuotedTitles);
+        Step(LinkRule.IssueKey, run.IssueKeys);
+        Step(LinkRule.Identifier, run.IdentifierTokens);
+        Step(LinkRule.Name, run.Names);
+        Step(LinkRule.Alias, () => run.Aliases(pins));
         return run.Result();
     }
 
