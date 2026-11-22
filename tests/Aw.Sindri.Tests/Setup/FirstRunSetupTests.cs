@@ -65,7 +65,7 @@ public sealed class FirstRunSetupTests : IDisposable
     }
 
     // the same services the slice ports wrap, called directly (no command chain in a unit test)
-    private Creator Create(InMemoryWorkflowStore store) => new(new CreateWorkflowService(store, _rig.Checker, _rig.Harness.Ids, _rig.Log));
+    private Creator Create(InMemoryWorkflowStore store) => new(new CreateWorkflowService(store, _rig.Checker, _rig.Harness.Ids, _rig.Log, new FakeCiSourceLookup()));
 
     private Activator Activate(InMemoryWorkflowStore store) => new(new ActivateWorkflowService(store, _rig.Checker, _rig.Log, _rig.Harness.Callers), _rig.Harness.Callers);
 
@@ -165,7 +165,7 @@ public sealed class FirstRunSetupTests : IDisposable
         _ = await _rig.Harness.HoldLease();
         Profile(repos: "demo");
         var template = Core.Graph.Templates.GraphTemplates.Find("hello-sindri")!;
-        _ = await new CreateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log)
+        _ = await new CreateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log, new FakeCiSourceLookup())
             .Handle(new CreateWorkflowRequest(_hello, Template: null, Core.Graph.GraphJson.Write(template.Spec), "owner"), Token);
         var setup = Setup();
 

@@ -5,7 +5,7 @@
 # AW_HEAVY_SESSION_PID (this shell, or a dead pid, or a sleeping stand-in session). Nothing real is built or tested.
 # Covers: usage (exit 2); the exit code of the job passes through; the lock files (heavy-session/<pid>.lock, heavy-job.lock
 # and .k, the owner line, released on exit, a dead owner reclaimed, an ownerless dir never); the cap file heavy-slots-cap;
-# the memory guard (AW_HEAVY_MIN_FREE_MB and _STEP_MB, Linux /proc/meminfo only); the meta reserve heavy-meta-reserve (capped at slots-1, #2060) and
+# the memory guard (AW_HEAVY_MIN_FREE_MB and _HIGH_MB, Linux /proc/meminfo only); the meta reserve heavy-meta-reserve (capped at slots-1, #2060) and
 # AW_HEAVY_PRIORITY=meta; the lock timeout (75, on a copy of the script with TIMEOUT=0: the real one is a constant 5400 s);
 # the session dying (124); INT and TERM (130); the job launched through `systemd-run --user --scope -p OOMPolicy=continue` when
 # that works, and the old direct launch when it doesn't (#2931, stub systemd-run); a nested run under AW_HEAVY_LOCK_HELD=1 taking no lock; --light, --expensive
@@ -23,11 +23,14 @@ check() {
 }
 shown() { printf '%s\n' "$1" | sed 's/^/  in: /'; }   # every line prefixed: the CI runner keeps only "  in:" lines of a failing suite
 has() { # has <name> <text> <fixed string>
-  if printf '%s' "$2" | grep -qF -- "$3"; then echo "ok - $1"; else echo "not ok - $1"; echo "  missing: $3"; shown "$2"; fail=1; fi
+  if grep -qF -- "$3" <<<"$2"; then echo "ok - $1"; else echo "not ok - $1"; echo "  missing: $3"; shown "$2"; fail=1; fi
 }
 lacks() {
-  if printf '%s' "$2" | grep -qF -- "$3"; then echo "not ok - $1"; echo "  unexpected: $3"; shown "$2"; fail=1; else echo "ok - $1"; fi
+  if grep -qF -- "$3" <<<"$2"; then echo "not ok - $1"; echo "  unexpected: $3"; shown "$2"; fail=1; else echo "ok - $1"; fi
 }
+# #3660: `has` was `printf | grep -qF` under pipefail: a needle on the first line of a long text read as missing (SIGPIPE, 141).
+needle_first="$(printf 'AW_HEAVY_NEEDLE: on line one\n'; head -c 100000 /dev/zero | tr '\0' x | fold -w 80)"
+for _i in 1 2 3 4 5; do has "has finds a needle on the first line of a 100 KB text ($_i)" "$needle_first" "AW_HEAVY_NEEDLE: on line one"; done
 WORK="$(mktemp -d)"
 bgpids=()
 cleanup() { for p in ${bgpids[@]+"${bgpids[@]}"}; do kill "$p" 2> /dev/null; done; find "$WORK" -delete 2> /dev/null; }   # by recorded pid only
@@ -244,11 +247,12 @@ if [ "$have_meminfo" = 1 ]; then
   has "...the wait names both slots" "$out" "(2 slot(s), $LOCKS/heavy-job.lock)"
   check "free memory is not asked for slot 1" "$(reset; AW_HEAVY_MIN_FREE_MB=999999999 H --expensive echo ran)" "ran"
   reset; hold "$LOCKS/heavy-job.lock"; hold "$LOCKS/heavy-job.lock.2"
-  out="$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=0 AW_HEAVY_MIN_FREE_STEP_MB=999999999 F --expensive echo ran 2>&1)"; rc=$?
-  check "slot 3 needs MIN + STEP free: refused when STEP is huge" "$rc" "75"
-  check "...taken when STEP is 0" "$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=0 AW_HEAVY_MIN_FREE_STEP_MB=0 slot_of)" "$LOCKS/heavy-job.lock.3"
-  check "a garbage STEP falls back to 4096 (slot 3 refused when MIN is huge)" \
-    "$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=999999999 AW_HEAVY_MIN_FREE_STEP_MB=x F --expensive echo ran > /dev/null 2>&1; echo $?)" "75"
+  out="$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=0 AW_HEAVY_MIN_FREE_HIGH_MB=999999999 F --expensive echo ran 2>&1)"; rc=$?
+  check "slot 3 has its own floor (#3813): refused when HIGH is huge" "$rc" "75"
+  check "...taken when HIGH is 0, whatever slot 2's floor is" "$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=999999999 AW_HEAVY_MIN_FREE_HIGH_MB=0 slot_of)" "$LOCKS/heavy-job.lock.3"
+  reset; hold "$LOCKS/heavy-job.lock"
+  check "slot 2's floor not met, slot 3's met: slot 2 is skipped, slot 3 taken" "$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=999999999 AW_HEAVY_MIN_FREE_HIGH_MB=0 slot_of)" "$LOCKS/heavy-job.lock.3"
+  check "a garbage HIGH falls back to 3072 (the script's default line)" "$(grep -c 'HIGH_FREE_MB=3072 ;;' "$HEAVY")" "1"
 
   # the cap file: the box-wide slot count, whatever AW_HEAVY_SLOTS says
   reset; hold "$LOCKS/heavy-job.lock"
@@ -264,7 +268,7 @@ if [ "$have_meminfo" = 1 ]; then
   out="$(AW_HEAVY_SLOTS=3 F --expensive echo ran 2>&1)"; has "heavy-slots-cap=1 beats AW_HEAVY_SLOTS=3" "$out" "(1 slot(s)"
   # the cap file with a newline, as `echo` writes it, is read whole
   echo 3 > "$STATE/heavy-slots-cap"
-  out="$(AW_HEAVY_MIN_FREE_MB=999999999 F --expensive echo ran 2>&1)"; has "heavy-slots-cap=3 (with its newline) sets 3 slots" "$out" "(3 slot(s)"
+  out="$(AW_HEAVY_MIN_FREE_MB=999999999 AW_HEAVY_MIN_FREE_HIGH_MB=999999999 F --expensive echo ran 2>&1)"; has "heavy-slots-cap=3 (with its newline) sets 3 slots" "$out" "(3 slot(s)"
 
   # --- the meta reserve ---
   reset
@@ -365,6 +369,28 @@ for sig in INT TERM; do
   check "$sig: the job is gone" "$(gone "${jp:-0}" && echo gone || echo alive)" "gone"
   check "$sig: locks released" "$(find "$LOCKS" -name '*.lock*' -type d | wc -l | tr -d ' ')" "0"
   rm -f "$WORK/job.pid"
+done
+
+# --- the reason file (heavy-reason.*) is gone on every way out (#3699) ---
+# A private TMPDIR, so only this wrapper's files count. Passing, failing and watchdog-killed jobs, then INT and TERM.
+RTMP="$WORK/rtmp"; mkdir -p "$RTMP"
+left() { find "$RTMP" -name 'heavy-reason.*' | wc -l | tr -d ' '; }
+reset; TMPDIR="$RTMP" H --light echo hi > /dev/null 2>&1
+check "reason file: none left after a passing job" "$(left)" "0"
+reset; TMPDIR="$RTMP" H --light sh -c 'exit 7' > /dev/null 2>&1
+check "reason file: none left after a failing job" "$(left)" "0"
+reset; TMPDIR="$RTMP" AW_HEAVY_SESSION_PID="$DEAD" H --light sleep 30 > /dev/null 2>&1; rc=$?
+check "reason file: the watchdog kill still exits 124" "$rc" "124"
+check "reason file: none left after the watchdog kill" "$(left)" "0"
+for sig in INT TERM; do
+  reset; rm -f "$WORK/job.pid"
+  TMPDIR="$RTMP" perl -e '$SIG{INT}="DEFAULT"; $SIG{TERM}="DEFAULT"; exec @ARGV' bash "$HEAVY" --expensive bash "$WORK/job.sh" "$WORK/job.pid" > /dev/null 2>&1 &
+  hp=$!; bgpids+=("$hp")
+  wait_file "$WORK/job.pid" || echo "  (job did not start)"
+  check "reason file: one exists while the job runs ($sig)" "$(left)" "1"
+  kill -"$sig" "$hp"; wait "$hp" 2> /dev/null
+  check "reason file: none left after $sig" "$(left)" "0"
+  find "$RTMP" -name 'heavy-reason.*' -delete
 done
 
 # --- the job runs in its own systemd scope (#2931) ---

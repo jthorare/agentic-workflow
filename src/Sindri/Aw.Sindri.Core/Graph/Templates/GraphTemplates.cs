@@ -1,7 +1,7 @@
 namespace Aw.Sindri.Core.Graph.Templates;
 
 /// <summary>The starter templates. Each call builds fresh copies, so a caller may edit a spec without changing the next caller's.</summary>
-public static class GraphTemplates
+public static partial class GraphTemplates
 {
     private static readonly (string Name, string Description, string Json)[] _sources =
     [
@@ -28,10 +28,16 @@ public static class GraphTemplates
 
     /// <summary>Finds a template by name.</summary>
     /// <param name="name">The name.</param>
+    /// <param name="ci">The repo's CI to read, or null for the plain template. Only weekday-check and daily-digest use it.</param>
     /// <returns>The template, or null.</returns>
-    public static GraphTemplate? Find(string name)
+    public static GraphTemplate? Find(string name, GitHubCiSource? ci = null)
     {
         ArgumentNullException.ThrowIfNull(name);
+        if (ci is not null && CiTemplate(name, ci) is { } withCi)
+        {
+            return withCi;
+        }
+
         var source = _sources.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.Ordinal));
         return source.Name is null ? null : Build(source);
     }

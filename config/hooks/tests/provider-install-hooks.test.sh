@@ -106,7 +106,7 @@ q bash "$ROOT/scripts/install-context-guard.sh" --provider cursor
 check "context-guard cursor: unsupported, nothing written" "$([ -f "$CURSOR_FILE" ] && echo written || echo none)" "none"
 
 q bash "$ROOT/scripts/install-done-gate.sh" --provider codex
-check "done-gate codex: Stop, timeout 12" "$(jq -c '.hooks.Stop[0].hooks[0].timeout' "$CODEX_FILE")" "12"
+check "done-gate codex: Stop, timeout 25" "$(jq -c '.hooks.Stop[0].hooks[0].timeout' "$CODEX_FILE")" "25"
 q bash "$ROOT/scripts/install-done-gate.sh" --provider cursor
 check "done-gate cursor: stop" "$(jq -r '.hooks.stop[0].command | test("done-gate.sh.? # aw:done-gate$")' "$CURSOR_FILE")" "true"
 
@@ -123,7 +123,7 @@ check "external-write-guard cursor: shell + MCP + prompt" \
   "$(jq -c '[.hooks.beforeShellExecution, .hooks.beforeMCPExecution, .hooks.beforeSubmitPrompt | length]' "$CURSOR_FILE")" "[1,1,1]"
 
 q bash "$ROOT/scripts/install-judge-hooks.sh" --hook-only --provider codex
-check "judge codex: UserPromptSubmit prompt-sort, timeout 6" "$(jq -c '[.hooks.UserPromptSubmit[].hooks[] | select(.command | endswith("# aw:prompt-sort")) | .timeout]' "$CODEX_FILE")" "[6]"
+check "judge codex: UserPromptSubmit prompt-sort, timeout 10" "$(jq -c '[.hooks.UserPromptSubmit[].hooks[] | select(.command | endswith("# aw:prompt-sort")) | .timeout]' "$CODEX_FILE")" "[10]"
 check "judge codex: prompt-sort runs through the adapter" "$(jq -r '.hooks.UserPromptSubmit[].hooks[] | select(.command | endswith("# aw:prompt-sort")) | .command | contains("adapters/codex.sh")' "$CODEX_FILE")" "true"
 q bash "$ROOT/scripts/install-judge-hooks.sh" --hook-only --provider cursor
 check "judge cursor: no prompt-sort (beforeSubmitPrompt cannot inject context)" "$(jq -r '[.hooks.beforeSubmitPrompt[]?.command | select(endswith("# aw:prompt-sort"))] | length' "$CURSOR_FILE")" "0"
@@ -153,7 +153,7 @@ check "unknown provider is rejected" "$rc" "1"
 : > /dev/null
 echo '{"hooks":{}}' > "$CODEX_FILE"
 q bash "$ROOT/scripts/install-sindri-hooks.sh" --provider codex
-check "sindri-tasks codex: UserPromptSubmit through the adapter, timeout 1" "$(jq -c '[.hooks.UserPromptSubmit[].hooks[] | select(.command | endswith("# aw:sindri-tasks")) | [(.command | contains("adapters/codex.sh")), .timeout]]' "$CODEX_FILE")" "[[true,1]]"
+check "sindri-tasks codex: UserPromptSubmit through the adapter, timeout 4" "$(jq -c '[.hooks.UserPromptSubmit[].hooks[] | select(.command | endswith("# aw:sindri-tasks")) | [(.command | contains("adapters/codex.sh")), .timeout]]' "$CODEX_FILE")" "[[true,4]]"
 check "sindri-tasks codex: nudge still on SessionStart" "$(jq '[.hooks.SessionStart[].hooks[].command | select(endswith("# aw:sindri-nudge"))] | length' "$CODEX_FILE")" "1"
 check "sindri-tasks codex: script staged" "$([ -x "$AWH/sindri-tasks.sh" ] && echo y)" "y"
 q bash "$ROOT/scripts/install-sindri-hooks.sh" --provider codex
@@ -163,7 +163,7 @@ check "sindri-tasks cursor: none (beforeSubmitPrompt cannot add context)" "$(jq 
 check "sindri-tasks cursor: nudge installed" "$(jq -r '[.hooks.sessionStart[]?.command | select(endswith("# aw:sindri-nudge"))] | length' "$CURSOR_FILE")" "1"
 CDS="$WORK/claude-sindri"; mkdir -p "$CDS"; echo '{}' > "$CDS/settings.json"
 q env CLAUDE_SETTINGS_FILE="$CDS/settings.json" CLAUDE_HOOKS_DIR="$CDS/hooks" bash "$ROOT/scripts/install-sindri-hooks.sh"
-check "sindri-tasks claude: UserPromptSubmit entry, timeout 1" "$(jq -c '[.hooks.UserPromptSubmit[].hooks[] | select(.command | endswith("# aw:sindri-tasks")) | .timeout]' "$CDS/settings.json")" "[1]"
+check "sindri-tasks claude: UserPromptSubmit entry, timeout 4" "$(jq -c '[.hooks.UserPromptSubmit[].hooks[] | select(.command | endswith("# aw:sindri-tasks")) | .timeout]' "$CDS/settings.json")" "[4]"
 check "sindri-tasks claude: script copied" "$([ -x "$CDS/hooks/sindri-tasks.sh" ] && echo y)" "y"
 check "sindri-tasks dry run names the hook" "$(AW_DRY_RUN=1 bash "$ROOT/scripts/install-sindri-hooks.sh" --provider codex | grep -c 'sindri-tasks')" "1"
 

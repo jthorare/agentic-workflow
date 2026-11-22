@@ -849,7 +849,6 @@ Aw.Evidence.Core.Scripts.ViewportKind
 Aw.Evidence.Core.Scripts.ViewportKind.Desktop = 0 -> Aw.Evidence.Core.Scripts.ViewportKind
 Aw.Evidence.Core.Scripts.ViewportKind.Phone = 1 -> Aw.Evidence.Core.Scripts.ViewportKind
 Aw.Evidence.Core.Stack.IProvenanceQuery
-Aw.Evidence.Core.Stack.IProvenanceQuery.AllEmailsAsync(string? database, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
 Aw.Evidence.Core.Stack.IProvenanceQuery.EmailsLikeAsync(string! likePattern, string? database, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
 Aw.Evidence.Core.Stack.IStackProbe
 Aw.Evidence.Core.Stack.IStackProbe.DatabaseReadyAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
@@ -867,13 +866,11 @@ Aw.Evidence.Core.Stack.ProvenanceFinding.Reason.get -> string!
 Aw.Evidence.Core.Stack.ProvenanceFinding.Reason.init -> void
 Aw.Evidence.Core.Stack.SeedPolicy
 Aw.Evidence.Core.Stack.SeedPolicy.<Clone>$() -> Aw.Evidence.Core.Stack.SeedPolicy!
-Aw.Evidence.Core.Stack.SeedPolicy.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Domains, out string! EmailPattern) -> void
-Aw.Evidence.Core.Stack.SeedPolicy.Domains.get -> System.Collections.Generic.IReadOnlyList<string!>!
-Aw.Evidence.Core.Stack.SeedPolicy.Domains.init -> void
+Aw.Evidence.Core.Stack.SeedPolicy.Deconstruct(out string! EmailPattern) -> void
 Aw.Evidence.Core.Stack.SeedPolicy.EmailPattern.get -> string!
 Aw.Evidence.Core.Stack.SeedPolicy.EmailPattern.init -> void
 Aw.Evidence.Core.Stack.SeedPolicy.Equals(Aw.Evidence.Core.Stack.SeedPolicy? other) -> bool
-Aw.Evidence.Core.Stack.SeedPolicy.SeedPolicy(System.Collections.Generic.IReadOnlyList<string!>! Domains, string! EmailPattern) -> void
+Aw.Evidence.Core.Stack.SeedPolicy.SeedPolicy(string! EmailPattern) -> void
 Aw.Evidence.Core.Steps.RepairRules
 Aw.Evidence.Core.Steps.StepRunner
 Aw.Evidence.Core.Steps.StepRunner.RunAsync(Aw.Evidence.Core.Browser.IBrowserSession! session, Aw.Evidence.Core.Scripts.ScriptStep! step, Aw.Evidence.Core.Steps.StepRunOptions! options, Aw.Evidence.Core.Usage.InvocationLog! log, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Evidence.Core.Steps.StepStatus>
@@ -1465,7 +1462,7 @@ static Aw.Evidence.Core.Stack.ProvenanceCheck.RunAsync(Aw.Evidence.Core.Stack.IP
 static Aw.Evidence.Core.Stack.ProvenanceFinding.operator !=(Aw.Evidence.Core.Stack.ProvenanceFinding? left, Aw.Evidence.Core.Stack.ProvenanceFinding? right) -> bool
 static Aw.Evidence.Core.Stack.ProvenanceFinding.operator ==(Aw.Evidence.Core.Stack.ProvenanceFinding? left, Aw.Evidence.Core.Stack.ProvenanceFinding? right) -> bool
 static Aw.Evidence.Core.Stack.SeedPolicy.Default.get -> Aw.Evidence.Core.Stack.SeedPolicy!
-static Aw.Evidence.Core.Stack.SeedPolicy.From(string? domains, string? emailPattern) -> Aw.Evidence.Core.Stack.SeedPolicy!
+static Aw.Evidence.Core.Stack.SeedPolicy.From(string? emailPattern) -> Aw.Evidence.Core.Stack.SeedPolicy!
 static Aw.Evidence.Core.Stack.SeedPolicy.operator !=(Aw.Evidence.Core.Stack.SeedPolicy? left, Aw.Evidence.Core.Stack.SeedPolicy? right) -> bool
 static Aw.Evidence.Core.Stack.SeedPolicy.operator ==(Aw.Evidence.Core.Stack.SeedPolicy? left, Aw.Evidence.Core.Stack.SeedPolicy? right) -> bool
 static Aw.Evidence.Core.Steps.RepairRules.Fits(Aw.Evidence.Core.Scripts.StepAction action, Aw.Evidence.Core.Browser.Candidate! candidate, bool refuseWrites) -> bool

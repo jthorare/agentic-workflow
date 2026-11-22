@@ -1,3 +1,5 @@
+using Aw.CodeIndex.Core;
+using Aw.CodeIndex.Core.Embedding;
 using Aw.CodeIndex.Core.Facade;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Core.Ports;
@@ -131,6 +133,45 @@ public sealed class CodeIndexDoctorTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_refused_chunk_on_the_embeddings_layer_names_the_real_cause_not_start_ollama_issue_3128()
+    {
+        var rejected = new LayerStatus(LayerName.Embeddings, LayerState.Unavailable, CodeIndexErrors.EmbeddingInputRejected.Code, "a chunk was refused");
+        var rows = CodeIndexDoctor.Rows(new([Built(Ok(LayerName.Structure), rejected)], [], []), _now);
+
+        var fix = rows.Single(static c => c.Name == "code-index:ollama").Fix;
+
+        Assert.Contains("too long", fix, StringComparison.Ordinal);
+        Assert.DoesNotContain("start Ollama", fix, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_layer_settled_with_a_refused_chunk_shows_the_017_fix_on_the_ollama_row_issue_3128()
+    {
+        var status = await SettledWithOneRefused();
+
+        var row = CodeIndexDoctor.Rows(new([status], [], []), _now).Single(static c => c.Name == "code-index:ollama");
+
+        Assert.Equal(CheckState.Warn, row.State);
+        Assert.Contains("too long", row.Fix, StringComparison.Ordinal);
+        Assert.Contains("SND-CODEIDX-017", row.Detail, StringComparison.Ordinal);
+    }
+
+    // The status of a repo whose embeddings layer ran for real (EmbeddingsLayer over the fake store) with one text the model refused.
+    private static async Task<RepoStatus> SettledWithOneRefused()
+    {
+        var token = TestContext.Current.CancellationToken;
+        var symbol = new SymbolRecord(SymbolRef.From("demo:src/A.cs#A.Run"), "Run", "A.Run", SymbolKind.Method, 0, 1, 5, Exported: true, Utility: false, "void Run()", "shape", TokenCount: 10, Complexity: 1, MinHash: default, [], Body: "REFUSED body", []);
+        var store = new FakeIndexStore();
+        var begun = await store.BeginBuild(_repo, incremental: false, token);
+        await using var build = begun.Value;
+        _ = await build.WriteFiles([new FileRecord("src/A.cs", "file-hash", 10, "csharp", Parsed: true, [symbol])], token);
+        var layer = new EmbeddingsLayer(new FakeEmbedder { SkipTextsContaining = "REFUSED" }, TimeProvider.System);
+        _ = await layer.Run(build, CodeIndexSettings.Default.Embeddings, new Progress<string>(), 100, token);
+        var published = await build.Publish(new IndexMeta(_old, "main", _now, CodeIndexRules.SchemaVersion, "parser-1", LockSha: "lock-1", new IndexCounts(0, 0, 0)), token);
+        return Built([.. published.Value.Layers.Select(static l => new LayerStatus(l.Layer, l.State, l.Code, l.Detail))]);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void No_repos_is_one_ok_row() =>
         Assert.Equal([("code-index", CheckState.Ok)], CodeIndexDoctor.Rows(new([], [], []), _now).Select(static c => (c.Name, c.State)));
 
@@ -156,7 +197,7 @@ public sealed class CodeIndexDoctorTests
     [Fact, Trait("Lane", "unit")]
     public void An_unreachable_embedding_server_is_a_warning_from_the_live_probe()
     {
-        var row = Row("code-index:ollama", Probes(LockState.Matches, CodeIndex.Core.CodeIndexErrors.EmbeddingServerFailed.With("no answer")));
+        var row = Row("code-index:ollama", Probes(LockState.Matches, CodeIndexErrors.EmbeddingServerFailed.With("no answer")));
 
         Assert.Equal(CheckState.Warn, row.State);
         Assert.Contains("SND-CODEIDX-006", row.Detail, StringComparison.Ordinal);

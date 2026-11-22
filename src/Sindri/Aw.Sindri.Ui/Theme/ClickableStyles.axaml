@@ -13,13 +13,13 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Hover}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.HoverBorder}" />
   </Style>
-  <!-- A calm Needs You row rests on Surface2, close to the hover fill: it lifts to the pressed fill so the pointer still shows. -->
+  <!-- A calm Needs You row rests on Surface2, close to the hover fill: it lifts to the lift fill so the pointer still shows. -->
   <Style Selector="Border.clickable.subtle:pointerover">
-    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Lift}" />
   </Style>
-  <!-- A selected row rests on Surface2 too (QueueStyles item-row.selected): the same lift. -->
+  <!-- A selected row rests on Surface2 too (QueueStyles item-row.selected): the same lift fill. -->
   <Style Selector="Border.clickable.selected:pointerover">
-    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Lift}" />
   </Style>
   <Style Selector="Border.clickable:pressed">
     <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
@@ -49,8 +49,12 @@
   <Style Selector="Border.clickable:focus-visible:pointerover, Border.clickable:focus-visible:pressed">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
   </Style>
-  <Style Selector="Border.clickable.selected:pointerover, Border.clickable.selected:pressed">
+  <Style Selector="Border.clickable.selected:pointerover">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
+  </Style>
+  <!-- On the pressed fill Primary is 2.93:1; PrimaryHover is 4.80:1 (#3517). A press keeps the bar as the only selection sign, so it must hold 3:1. -->
+  <Style Selector="Border.clickable.selected:pressed">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
   </Style>
   <!-- A selected row with focus keeps the focus ring's colour too: the rule above comes later than the focus one and would turn it Primary (#3506). -->
   <Style Selector="Border.clickable.selected:focus-visible:pointerover, Border.clickable.selected:focus-visible:pressed">

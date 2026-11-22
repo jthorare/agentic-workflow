@@ -14,7 +14,7 @@ using Aw.Sindri.Core.Views;
 namespace Aw.Sindri.Features.GetStatus;
 
 internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, ILedgerReader ledger,
-    IProjectorStatus projector, HealthServiceRows healthRows, ISessionSnapshot sessions)
+    IProjectorStatus projector, HealthServiceRows healthRows, ISessionSnapshot sessions, LiveSchedule? live = null)
     : IService<GetStatusRequest, GetStatusResponse>
 {
     public async ValueTask<Result<GetStatusResponse>> Handle(GetStatusRequest request, CancellationToken cancellationToken)
@@ -28,6 +28,7 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         var views = await Views(cancellationToken).ConfigureAwait(false);
         var health = await Health(grant is not null, views, approvedProfile, cancellationToken).ConfigureAwait(false);
         health = healthRows.WithStaleBuild(health);
+        health = HealthSummary.WithProfileProblem(health, string.Equals(profile.ProblemKind, "invalid", StringComparison.Ordinal) || string.Equals(profile.ProblemKind, "unreadable", StringComparison.Ordinal), ProfileFix(loaded));   // #3436: a profile that won't load is not healthy
         var status = new GetStatusResponse(grant is not null, grant?.Holder.Pid ?? 0, grant?.Epoch ?? 0, grant?.ExpiresAt, profile, services);
         return status with { ApiVersion = SindriApi.Version, Views = views, Health = health, Sessions = SessionCounts() };
     }
@@ -59,14 +60,20 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         new(loaded.IsSuccess ? loaded.Value.Hash : null, loaded.IsError ? loaded.Error.Message : null, loaded.IsSuccess ? loaded.Value.Source : null,
             ModelPick(approved), labelPick, surfacePick, ProblemKind(loaded, profiles.FileExists()));
 
-    // 'missing' when there is no profile file yet, 'invalid' for any other reason it won't load (a file the source can't read answers SND-PROFILE-001 too, so the file must be absent), null when it loads (#3113): the app reads the word, not the message.
+    // 'missing' when there is no profile file yet; 'unreadable' when the file is there but the source can't read it (it answers SND-PROFILE-001 and the file exists); 'invalid' for any other reason it won't load (bad YAML, a broken profile rule); null when it loads (#3113, #3622): the app reads the word, not the message.
+    // The health row's fix: a file the source can't read answers SND-PROFILE-001, so it gets Setup's permissions line; any other reason is the reader's own message (#3607).
+    private static string? ProfileFix(Result<LoadedProfile> loaded) =>
+        loaded.IsSuccess ? null : string.Equals(loaded.Error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal) ? SindriErrors.ProfileUnreadableFix : loaded.Error.Message;
+
     private static string? ProblemKind(Result<LoadedProfile> loaded, bool fileExists) =>
-        loaded.IsSuccess ? null : string.Equals(loaded.Error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal) && !fileExists ? "missing" : "invalid";
+        loaded.IsSuccess ? null
+        : !string.Equals(loaded.Error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal) ? "invalid"
+        : fileExists ? "unreadable" : "missing";
 
     private async ValueTask<IReadOnlyList<ServiceStatus>> Services(LoadedProfile? approved, CancellationToken cancellationToken)
     {
         var services = new List<ServiceStatus>();
-        foreach (var schedule in approved is null ? [] : ServiceSchedule.From(approved.Profile, DateTimeOffset.MinValue))
+        foreach (var schedule in live?.Schedules ?? healthRows.Scheduled(approved))   // what the scheduler runs, built-ins too, so the count agrees with the services list (#3623)
         {
             var last = await ledger.Latest(EventTypes.ServiceRun(schedule.Name), cancellationToken).ConfigureAwait(false);
             services.Add(new ServiceStatus(schedule.Name, schedule.Cadence.ToString(), last.IsSuccess ? last.Value?.Envelope.OccurredAt : null));

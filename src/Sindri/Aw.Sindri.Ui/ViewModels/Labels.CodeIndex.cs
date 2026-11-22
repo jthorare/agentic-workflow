@@ -29,6 +29,9 @@ internal static partial class Labels
     /// <summary>The card's state word while the only repos not ok are queued for their first build.</summary>
     internal const string CodeIndexQueued = "build queued";
 
+    /// <summary>A repo line's state word for a repo queued for its first build: it has no commit yet (#3602).</summary>
+    internal const string CodeIndexFirstBuildQueued = "first build queued";
+
     /// <summary>What an index state reads as when the line has no commit to name (§7.3).</summary>
     /// <param name="state">The served state.</param>
     /// <returns>The words; a state this app doesn't know is shown as served.</returns>
