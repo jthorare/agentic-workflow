@@ -35,6 +35,7 @@ internal static partial class CommandTable
             ["code-index", .. var rest] => await new CodeIndexVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
             ["index", .. var rest] => await Index(client, output, host).Run(rest, ct, signals.Again).ConfigureAwait(false),
             ["library", .. var rest] => await new LibraryVerbs(Index(client, output, host), client, output).Run(rest, ct, signals.Again).ConfigureAwait(false),
+            ["transcripts", .. var rest] => await TranscriptsCommand.Run(rest, host.Services, output, fence: !Interactive(), ct).ConfigureAwait(false),   // in process: reads the transcript files, never starts or contacts serve; fenced unless a person is on a terminal
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
     }

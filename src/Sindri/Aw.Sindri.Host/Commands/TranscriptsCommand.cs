@@ -27,8 +27,9 @@ internal static class TranscriptsCommand
         return args switch
         {
             ["list", .. var rest] => await List(rest, corpus, services.GetRequiredService<TimeProvider>().GetUtcNow(), output, ct).ConfigureAwait(false),
-            ["show", var text] when !text.StartsWith('-') => await Show(text, json: false, corpus, output, fence, ct).ConfigureAwait(false),
-            ["show", var text, "--json"] or ["show", "--json", var text] when !text.StartsWith('-') => await Show(text, json: true, corpus, output, fence, ct).ConfigureAwait(false),
+            ["show", var text] when !text.StartsWith('-') => await Show(text, (Json: false, Fence: fence), (corpus, output), ct).ConfigureAwait(false),
+            ["show", var text, "--json"] when !text.StartsWith('-') => await Show(text, (Json: true, Fence: fence), (corpus, output), ct).ConfigureAwait(false),
+            ["show", "--json", var text] when !text.StartsWith('-') => await Show(text, (Json: true, Fence: fence), (corpus, output), ct).ConfigureAwait(false),
             ["show", ..] => await output.Error(SindriErrors.InvalidInput.With($"transcripts show needs one ref ({TranscriptsArguments.ShowUsage})")).ConfigureAwait(false),
             _ => await output.Error(SindriErrors.InvalidInput.With($"transcripts takes list or show ({TranscriptsArguments.ListUsage}; {TranscriptsArguments.ShowUsage})")).ConfigureAwait(false),
         };
@@ -54,8 +55,10 @@ internal static class TranscriptsCommand
             : await output.Text(TranscriptsText.List(listed.Value, query.Since), 0).ConfigureAwait(false);
     }
 
-    private static async Task<int> Show(string text, bool json, ITranscriptCorpus corpus, Output output, bool fence, CancellationToken ct)
+    private static async Task<int> Show(string text, (bool Json, bool Fence) how, (ITranscriptCorpus Corpus, Output Output) io, CancellationToken ct)
     {
+        var (json, fence) = how;
+        var (corpus, output) = io;
         if (!SessionRef.TryFrom(text, out var session))
         {
             return await output.Error(SindriErrors.InvalidInput.With($"'{text}' is not a session ref: it is 'transcript:' and 8 hex digits, as 'transcripts list' prints ({TranscriptsArguments.ShowUsage})")).ConfigureAwait(false);
