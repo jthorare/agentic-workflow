@@ -27,7 +27,7 @@ A workflow is a JSON document Sindri stores as revisions. This page covers what 
 | `GRAPH-CYCLE-001` | a loop, with its path in spec order (`a -> b -> c -> a`) |
 | `GRAPH-REF-001` / `-002` / `-003` / `-004` / `-005` | a reference that can be empty at run time: to a node that is not upstream, to a node that can be skipped on a path to the reader (it sits on one branch of a condition that later joins), to a loop-body node from outside its for_each body (read the collect), or `{{item}}` / `{{itemIndex}}` outside a for_each body / to an output name the node does not have, or a `{{workflow.<field>}}` a run does not have (`id`, `name`, `runId`, `revision`) / to no node / a `{{` that is never closed (a `{{` inside a string literal of a condition is text, not a reference) / an output whose type does not fit the field it fills |
 | `GRAPH-BLOCK-001`, `GRAPH-CONFIG-001` | unknown block type, config that fails the block's schema |
-| `GRAPH-CRON-001`, `GRAPH-COND-001` | unreadable cron or timezone, unreadable condition |
+| `GRAPH-CRON-001`, `GRAPH-COND-001` | unreadable cron or timezone (a timezone or cron that is not text too), unreadable condition |
 | `GRAPH-REPO-001`, `GRAPH-NAME-001` | repo, connection or memory that does not exist (`-002` is the warning when nobody can answer yet) |
 | `GRAPH-LOOP-003` | retired (#2470): a `run_agent` node in a `for_each` body runs one agent per item; only a run that started on the old walk still fails it |
 | `GRAPH-LOOP-001` / `-002` | a `for_each` that can't run as a loop: no `collect` after it, more than one, a loop inside it, or a node of the loop also fed from outside it / a `collect` no `for_each` reaches |
