@@ -235,5 +235,5 @@ public sealed class RunDetailViewModelTests
 
     private static JsonNode Node(JsonNode served, string node) => served["nodes"]!.AsArray().Single(n => n!["node"]!.GetValue<string>() == node)!;
 
-    private static string[] Served(JsonNode served) => [.. served["nodes"]!.AsArray().Select(static n => n!["node"]!.GetValue<string>()).Distinct()];
+    private static string[] Served(JsonNode served) => [.. served["nodes"]!.AsArray().Select(static n => n!["node"]!.GetValue<string>()).Distinct(StringComparer.Ordinal)];
 }
