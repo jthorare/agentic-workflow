@@ -54,11 +54,11 @@ internal sealed partial class SqliteProposalStore
         var now = ProposalSql.Stamp(clock.GetUtcNow());
         var original = proposal.Original;
         var insert = new SqlStatement(
-            "INSERT INTO proposal (id, kind, target, norm_title, state, tier, attempts, held_by, body, origin, created_at, updated_at) " +
-            "VALUES ($id, $kind, $target, $title, $state, $tier, 0, NULL, $body, $origin, $at, $at)",
+            "INSERT INTO proposal (id, kind, target, norm_title, state, tier, attempts, held_by, body, origin, draft_branch, draft_commit, created_at, updated_at) " +
+            "VALUES ($id, $kind, $target, $title, $state, $tier, 0, NULL, $body, $origin, $branch, $commit, $at, $at)",
             c => c.Bind("$id", id.Value).Bind("$kind", ProposalSql.Name(original.Kind)).Bind("$target", original.Target).Bind("$title", title)
                 .Bind("$state", ProposalSql.Name(ProposalState.Proposed)).Bind("$tier", ProposalSql.Name(proposal.Tier)).Bind("$body", ProposalSql.Write(original))
-                .Bind("$origin", proposal.Origin).Bind("$at", now),
+                .Bind("$origin", proposal.Origin).Bind("$branch", proposal.Draft?.Branch).Bind("$commit", proposal.Draft?.Commit).Bind("$at", now),
             $"proposal {id.Value}");
         var written = await SqliteQueries.Execute(session, insert, cancellationToken).ConfigureAwait(false);
         if (written.IsError)
@@ -70,14 +70,17 @@ internal sealed partial class SqliteProposalStore
         return sources.IsError ? sources.Error : new ProposalSaved(id, ProposalSaveOutcome.Saved);
     }
 
-    // why: a re-proposal adds its evidence (the newest 20 kept) and its sessions, so the gate later checks every turn the proposal was built from
+    // why: a re-proposal adds its evidence (the newest 20 kept) and its sessions, so the gate later checks every turn the proposal was built from;
+    // its draft, when it has one, is the newer edit and replaces the stored pointer, and a re-proposal without one keeps it
     private async ValueTask<Result<ProposalSaved>> Merge(SqliteUnitOfWork session, StoredProposal open, ProposalToSave proposal, CancellationToken cancellationToken)
     {
         var evidence = open.Original.Evidence.Concat(proposal.Original.Evidence).Distinct(StringComparer.Ordinal).ToList();
         var body = open.Original with { Evidence = [.. evidence.Skip(Math.Max(0, evidence.Count - MaxEvidence))] };
+        var draft = proposal.Draft ?? open.Draft;
         var update = new SqlStatement(
-            "UPDATE proposal SET body = $body, updated_at = $at WHERE id = $id",
-            c => c.Bind("$body", ProposalSql.Write(body)).Bind("$at", ProposalSql.Stamp(clock.GetUtcNow())).Bind("$id", open.Id.Value),
+            "UPDATE proposal SET body = $body, draft_branch = $branch, draft_commit = $commit, updated_at = $at WHERE id = $id",
+            c => c.Bind("$body", ProposalSql.Write(body)).Bind("$branch", draft?.Branch).Bind("$commit", draft?.Commit)
+                .Bind("$at", ProposalSql.Stamp(clock.GetUtcNow())).Bind("$id", open.Id.Value),
             $"proposal {open.Id.Value}");
         var written = await SqliteQueries.Execute(session, update, cancellationToken).ConfigureAwait(false);
         if (written.IsError)

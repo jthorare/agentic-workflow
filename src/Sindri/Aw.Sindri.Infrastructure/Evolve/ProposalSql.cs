@@ -13,7 +13,7 @@ internal static class ProposalSql
 {
     internal const string Select =
         "SELECT p.id, p.state, p.tier, p.attempts, p.held_by, p.body, p.origin, p.created_at, p.updated_at, " +
-        "(SELECT json_group_array(s.session) FROM proposal_source s WHERE s.proposal_id = p.id) FROM proposal p";
+        "(SELECT json_group_array(s.session) FROM proposal_source s WHERE s.proposal_id = p.id), p.draft_branch, p.draft_commit FROM proposal p";
 
     internal static readonly System.Text.Json.JsonSerializerOptions Json = AwJson.CreateOptions(EvolveJsonContext.Default);
 
@@ -49,7 +49,8 @@ internal static class ProposalSql
             sessions.IsError ? [] : [.. sessions.Value.Order(StringComparer.Ordinal)],
             row.Origin,
             DateTimeOffset.Parse(row.CreatedAt, CultureInfo.InvariantCulture),
-            DateTimeOffset.Parse(row.UpdatedAt, CultureInfo.InvariantCulture));
+            DateTimeOffset.Parse(row.UpdatedAt, CultureInfo.InvariantCulture),
+            row.DraftBranch is { } branch && row.DraftCommit is { } commit ? new ProposalDraft(branch, commit) : null);
     }
 
     internal sealed class RowMapper : IRowMapper<ProposalRow>
@@ -66,7 +67,9 @@ internal static class ProposalSql
             reader.GetString(6),
             reader.GetString(7),
             reader.GetString(8),
-            reader.IsDBNull(9) ? null : reader.GetString(9));
+            reader.IsDBNull(9) ? null : reader.GetString(9),
+            reader.IsDBNull(10) ? null : reader.GetString(10),
+            reader.IsDBNull(11) ? null : reader.GetString(11));
     }
 
     internal sealed class TurnsMapper : IRowMapper<string>

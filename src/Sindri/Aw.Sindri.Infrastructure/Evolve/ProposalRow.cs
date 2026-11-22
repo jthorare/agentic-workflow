@@ -11,4 +11,6 @@ namespace Aw.Sindri.Infrastructure.Evolve;
 /// <param name="CreatedAt">When it was first saved, ISO 8601.</param>
 /// <param name="UpdatedAt">When it last changed, ISO 8601.</param>
 /// <param name="Sessions">The source sessions as a JSON array, or null.</param>
-internal sealed record ProposalRow(string Id, string State, string Tier, int Attempts, string? HeldBy, string Body, string Origin, string CreatedAt, string UpdatedAt, string? Sessions);
+/// <param name="DraftBranch">The draft's local branch, or null.</param>
+/// <param name="DraftCommit">The draft's commit, or null.</param>
+internal sealed record ProposalRow(string Id, string State, string Tier, int Attempts, string? HeldBy, string Body, string Origin, string CreatedAt, string UpdatedAt, string? Sessions, string? DraftBranch, string? DraftCommit);

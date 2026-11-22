@@ -24,6 +24,6 @@ internal sealed class GetProposalService(IProposalStore store) : IService<GetPro
         }
 
         var original = stored.Original;
-        return new GetProposalResponse(ProposalSummary.From(stored), original.Rationale, original.Change.Description, original.Change.Files, original.Evidence, stored.Sessions, stored.Origin, stored.CreatedAt, Draft: null);
+        return new GetProposalResponse(ProposalSummary.From(stored), original.Rationale, original.Change.Description, original.Change.Files, original.Evidence, stored.Sessions, stored.Origin, stored.CreatedAt, stored.Draft);
     }
 }

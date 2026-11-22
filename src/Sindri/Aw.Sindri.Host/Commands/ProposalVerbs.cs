@@ -79,6 +79,7 @@ internal sealed class ProposalVerbs(ControlPlaneClient client, Output output, Fu
             .Append("evidence:  ").AppendJoin(", ", shown.Evidence.Select(e => Untrusted(e, fence))).Append('\n')
             .Append("sessions:  ").AppendJoin(", ", shown.Sessions).Append('\n')
             .Append("origin:    ").Append(shown.Origin).Append('\n');
+        _ = shown.Draft is { } draft ? text.Append("draft:     ").Append(SafeText.Line(SafeText.Escape(draft.Branch), 200)).Append(" @ ").Append(SafeText.Line(SafeText.Escape(draft.Commit), 80)).Append('\n') : text;
         return (p.HeldReason is { } reason ? text.Append(CultureInfo.InvariantCulture, $"held:      {reason}, attempt {p.Attempts}\n") : text).ToString();
     }
 
