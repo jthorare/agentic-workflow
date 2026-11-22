@@ -30,6 +30,35 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     /// <summary>Opens a link; set by the page.</summary>
     internal ILauncher Launcher { get; set; } = NullLauncher.Instance;
 
+    /// <summary>Copies the file's path; set by the page.</summary>
+    internal IClipboard? Clipboard { get; set; }
+
+    /// <summary>Gets the copy-path button's words.</summary>
+    public string CopyPathText { get; } = Labels.ContextInspCopyPath;
+
+    /// <summary>Copies the source's file path (#3715).</summary>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>When the clipboard answered.</returns>
+    internal async Task CopyPath(CancellationToken cancellationToken = default)
+    {
+        if (_localPath is { Length: > 0 } path && Clipboard is { } clipboard)
+        {
+            var copied = await clipboard.SetText(path, cancellationToken).ConfigureAwait(true);
+            _launch.Record(copied, Labels.ContextNodePanelCopyPathFailed(path));
+        }
+    }
+
+    /// <summary>Opens the source's web link only (the "Open source" button).</summary>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>When the system answered.</returns>
+    internal async Task OpenLink(CancellationToken cancellationToken = default)
+    {
+        if (_link is { } link)
+        {
+            _ = await _launch.Open(link, cancellationToken).ConfigureAwait(true);
+        }
+    }
+
     /// <summary>Gets a value indicating whether the panel shows.</summary>
     public bool IsOpen { get; private set; }
 
@@ -67,7 +96,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     public string NoLinkText { get; } = Labels.ContextNodePanelNoLink;
 
     /// <summary>Gets the open-source button's accessible name, by the source's kind.</summary>
-    public string OpenSourceName { get; private set; } = Labels.ContextNodePanelOpenSourceName(string.Empty);
+    public string OpenSourceName { get; private set; } = Labels.ContextNodePanelOpenSourceName(place: null, string.Empty);
 
     /// <summary>Gets the short description; empty when none is served.</summary>
     public string Description { get; private set; } = string.Empty;
@@ -97,7 +126,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     public string LinksText { get; } = Labels.ContextNodePanelLinks;
 
     /// <summary>Gets the open-source button's words.</summary>
-    public string OpenSourceText { get; } = Labels.ContextNodePanelOpenSource;
+    public string OpenSourceText { get; private set; } = Labels.ContextNodePanelOpenSource;
 
     /// <summary>Opens the panel on a node and reads it.</summary>
     /// <param name="key">The node's key.</param>
@@ -182,18 +211,18 @@ internal sealed partial class NodePanelViewModel : ObservableObject
         }
     }
 
-    /// <summary>Opens the source: the link in the system's browser, else the file on this machine (the "Open file" button always opens the file).</summary>
+    /// <summary>Opens the source (Enter): the file on this machine when the node has one, else the link in the system's browser. The "Open source" button opens the link only (<see cref="OpenLink"/>).</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>When the system answered.</returns>
     internal async Task OpenSource(CancellationToken cancellationToken = default)
     {
-        if (_link is { } link)
+        if (HasOpenFile)
         {
-            _ = await _launch.Open(link, cancellationToken).ConfigureAwait(true);
+            await OpenLocalFile(cancellationToken).ConfigureAwait(true);
         }
         else
         {
-            await OpenLocalFile(cancellationToken).ConfigureAwait(true);
+            await OpenLink(cancellationToken).ConfigureAwait(true);
         }
     }
 
@@ -218,7 +247,8 @@ internal sealed partial class NodePanelViewModel : ObservableObject
             SourceText = Labels.ContextNodePanelSource(source.Kind, text);
             _link = LinkOf(source.Url);
             _localPath = source.Path;
-            OpenSourceName = Labels.ContextNodePanelOpenSourceName(source.Kind);
+            var place = Labels.ContextNodePanelPlace(_link);
+            (OpenSourceText, OpenSourceName) = (Labels.ContextNodePanelOpenSourceText(place), Labels.ContextNodePanelOpenSourceName(place, source.Kind));
         }
 
         var covered = IsAction(node.Kind) || NodePageKinds.IsPage(view);   // the sections already list these edges: the groups keep the rest
@@ -246,7 +276,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsOpen), nameof(IsLoading), nameof(IsFailed), nameof(Kind), nameof(Title), nameof(SourceText), nameof(HasSource), nameof(HasLink), nameof(HasNoLink), nameof(HasOpenFile), nameof(OpenSourceName), nameof(LaunchFailed), nameof(LaunchFailedText), nameof(Description), nameof(HasDescription), nameof(Groups), nameof(HasGroups), nameof(Sections), nameof(HasSections)])
+        foreach (var name in (string[])[nameof(IsOpen), nameof(IsLoading), nameof(IsFailed), nameof(Kind), nameof(Title), nameof(SourceText), nameof(HasSource), nameof(HasLink), nameof(HasNoLink), nameof(HasOpenFile), nameof(CopyPathText), nameof(OpenSourceName), nameof(OpenSourceText), nameof(LaunchFailed), nameof(LaunchFailedText), nameof(Description), nameof(HasDescription), nameof(Groups), nameof(HasGroups), nameof(Sections), nameof(HasSections)])
         {
             OnChanged(name);
         }

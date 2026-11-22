@@ -170,9 +170,11 @@ internal static partial class Labels
     internal const string ContextBuildingJob = "View build job";
 
     /// <summary>The No map overlay's title when the API names the repositories.</summary>
-    /// <param name="repos">How many repositories.</param>
-    /// <returns>"No map yet for 2 repositories".</returns>
-    internal static string ContextNoMapRepos(int repos) => string.Create(CultureInfo.InvariantCulture, $"No map yet for {repos} {(repos == 1 ? "repository" : "repositories")}");
+    /// <param name="repos">The repositories the answer names.</param>
+    /// <returns>"No map yet for aw-split-panes", or "No map yet for 2 repositories".</returns>
+    internal static string ContextNoMapRepos(IReadOnlyList<string> repos) => repos.Count == 1
+        ? "No map yet for " + repos[0]
+        : string.Create(CultureInfo.InvariantCulture, $"No map yet for {repos.Count} repositories");
 
     // A short age in the Context page's words.
     private static string ContextAgo(TimeSpan age) => age.TotalMinutes switch

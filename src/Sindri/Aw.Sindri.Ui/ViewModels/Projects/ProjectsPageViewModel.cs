@@ -62,6 +62,17 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
     /// <summary>True when there are cards and a sentence: the banner.</summary>
     public bool IsBanner { get; private set => Set(ref field, value); }
 
+    /// <summary>True when the quiet "Linear not connected" line shows instead of a red box (#3719).</summary>
+    public bool ShowsLinearNote { get; private set => Set(ref field, value); }
+
+    /// <summary>True when the served list says Linear is not set up.</summary>
+    public bool IsLinearMissing { get; private set; }
+
+    /// <summary>The quiet line's words.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string LinearNote => Labels.LinearNotConnected;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>True when Context is failing: cards show their name and origin chip only.</summary>
     public bool NamesOnly { get; private set => Set(ref field, value); }
 
@@ -95,45 +106,6 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
     /// <summary>Asks the shell to open a card's sheet.</summary>
     /// <param name="link">The card's link.</param>
     internal void RequestOpen(DeepLink link) => OpenRequested?.Invoke(this, new ProjectOpenRequestedEventArgs(link));
-
-    /// <summary>Re-reads the list after a write took a card off the page (or back), then asks the view to move focus: to the next card, else the previous, else Add project; an unhidden project's fold.</summary>
-    /// <param name="done">What the write did.</param>
-    /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>A task that completes when the list is shown and focus is asked for.</returns>
-    internal async Task Settled(ProjectDoneEventArgs done, CancellationToken cancellationToken)
-    {
-        var order = InReadingOrder().Select(c => c.Id).ToList();
-        var at = order.IndexOf(done.Id);
-        var candidates = at < 0 ? [] : order.Skip(at + 1).Take(1).Concat(order.Take(at).Reverse().Take(1)).ToList();   // the next card, else the previous
-        if (_url is { } url)
-        {
-            await Read(url, cancellationToken).ConfigureAwait(true);
-        }
-
-        FocusRequested?.Invoke(this, done.Kind switch
-        {
-            ProjectDone.Unhidden => Fold(done.WentToFinished),
-            ProjectDone.Added => Card([done.Id], gone: string.Empty),   // the new card, else Add project when a fold hides it
-            ProjectDone.Removed or ProjectDone.Hidden => Card(candidates, done.Id),
-            _ => throw new ArgumentOutOfRangeException(nameof(done), done.Kind, message: null),
-        });
-    }
-
-    // The cards as the page lays them out: the state groups, then the folds that are open.
-    private IEnumerable<ProjectCardViewModel> InReadingOrder() =>
-        Groups.SelectMany(g => g.Cards).Concat(Finished.IsOpen ? Finished.Cards : []).Concat(Hidden.IsOpen ? Hidden.Cards : []);
-
-    // The first neighbour still on the page, else Add project.
-    private ProjectFocusEventArgs Card(List<string> candidates, string gone) =>
-        candidates.FirstOrDefault(id => !string.Equals(id, gone, StringComparison.Ordinal) && InReadingOrder().Any(c => string.Equals(c.Id, id, StringComparison.Ordinal))) is { } id
-            ? new ProjectFocusEventArgs(ProjectFocus.Card, id)
-            : new ProjectFocusEventArgs(ProjectFocus.Add, cardId: null);
-
-    // An unhidden project's fold button, while it still has cards, else Add project.
-    private ProjectFocusEventArgs Fold(bool finished) =>
-        (finished ? Finished : Hidden).IsVisible
-            ? new ProjectFocusEventArgs(finished ? ProjectFocus.FinishedFold : ProjectFocus.HiddenFold, cardId: null)
-            : new ProjectFocusEventArgs(ProjectFocus.Add, cardId: null);
 
     /// <summary>The catch-up read started by the last show.</summary>
     internal Task CatchUp { get; private set; } = Task.CompletedTask;
@@ -239,7 +211,10 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
         NamesOnly = list.Freshness.Any(f => string.Equals(f.Source, "context", StringComparison.Ordinal) && string.Equals(f.State, "failing", StringComparison.Ordinal));
         (Sentence, ShowsConnect) = (ProjectsLinear.Sentence(list, _clock.GetUtcNow()), ProjectsLinear.OffersConnect(list));
         IsEmptyBlock = list.Projects.Count == 0 && list.Empty is not null;
-        IsBanner = list.Projects.Count > 0 && list.Empty is not null;
+        // Linear not set up is not a failure: a quiet line with Connect, never the red box (#3719).
+        IsLinearMissing = string.Equals(list.EmptyCode, "linear-missing", StringComparison.Ordinal);
+        ShowsLinearNote = list.Projects.Count > 0 && IsLinearMissing;
+        IsBanner = list.Projects.Count > 0 && list.Empty is not null && !ShowsLinearNote;
 
         var present = new HashSet<string>(list.Projects.Concat(list.Finished).Concat(list.Hidden).Select(c => c.Id), StringComparer.Ordinal);
         foreach (var gone in _cards.Keys.Where(k => !present.Contains(k)).ToList())

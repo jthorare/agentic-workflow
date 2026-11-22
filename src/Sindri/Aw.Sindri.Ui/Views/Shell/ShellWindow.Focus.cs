@@ -227,7 +227,7 @@ internal sealed partial class ShellWindow
         FocusManager?.GetFocusedElement() is not Visual focused || ReferenceEquals(focused, PagePanel) || SheetPanel.IsVisualAncestorOf(focused) || ReferenceEquals(focused, SheetPanel);
 
     // The sheet's opener (the row it was opened from, by id, or the edge tab), else the row the selection moved to when the opener cleared, else the page region for the sheet; the health pill for the top bar; the page
-    // region, or the sheet's heading while the sheet covers the page.
+    // region, or while the sheet covers the page its focus target: the heading, or a session sheet's body (SheetFocusTarget).
     private Control? Neighbour(Control last)
     {
         var page = Usable(this.Get<Control>("Page")) ?? (Covering ? Usable(SheetFocusTarget()) : null);

@@ -26,7 +26,6 @@ internal sealed partial class ItemSheetViewModel(ISindriApi api, CatalogViewMode
     private TaskCompletionSource? _conflictEnded;   // completed when the pending conflict is settled, failed or abandoned: Close waits for it
     private string _conflictAction = string.Empty;   // the 409 line shown, if any: the action it refused and the version it was shown at
     private long _conflictVersion;
-    private int _pages;
 
     /// <summary>Copies the item's id to the clipboard (Details: the id is never up front).</summary>
     /// <returns>A task that completes once the clipboard answered.</returns>
@@ -240,7 +239,8 @@ internal sealed partial class ItemSheetViewModel(ISindriApi api, CatalogViewMode
         EndConflict();
         _subject++;
         _generation++;
-        (_pages, Next, HasItem, IsNotFound, IsStale) = (0, null, false, false, false);
+        (Next, HasItem, IsNotFound, IsStale) = (null, false, false, false);
+        (_timelineUrl, _rereadTimeline) = (null, false);
         (Title, Repo, StateWord, VersionText, Age, Step, CreatedBy, WaitingOn, Instance) =
             (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
         StatusLine = string.Empty;

@@ -178,7 +178,7 @@ internal sealed partial class ControlPlaneClient(IControlPlaneProbe probe, JsonS
             return refused;
         }
 
-        var found = await probe.Check(ct).ConfigureAwait(false);
+        var found = await Find(ct).ConfigureAwait(false);
         if (found.IsError)
         {
             content?.Dispose();
@@ -205,6 +205,7 @@ internal sealed partial class ControlPlaneClient(IControlPlaneProbe probe, JsonS
         }
         catch (Exception e) when (Transport(e, ct))
         {
+            _found = null;   // the next call pings again
             return Failed(e, found.Value.Endpoint.Url.Authority, $"answer {route}");
         }
     }
@@ -231,7 +232,7 @@ internal sealed partial class ControlPlaneClient(IControlPlaneProbe probe, JsonS
             return refused;
         }
 
-        var found = await probe.Check(ct).ConfigureAwait(false);
+        var found = await Find(ct).ConfigureAwait(false);
         if (found.IsError)
         {
             return found.Error;
@@ -255,6 +256,7 @@ internal sealed partial class ControlPlaneClient(IControlPlaneProbe probe, JsonS
         }
         catch (Exception e) when (Transport(e, ct))
         {
+            _found = null;   // the next call pings again
             return Failed(e, found.Value.Endpoint.Url.Authority, $"open {route}");
         }
     }
