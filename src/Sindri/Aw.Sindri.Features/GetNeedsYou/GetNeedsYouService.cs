@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -35,7 +36,6 @@ internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus sta
             return SindriErrors.AuthRefused.With("the needs-you list needs a caller");
         }
 
-        _ = lease;   // red (#3883): not in the tag yet
         var current = status.Current;
         var setup = await live.Read(cancellationToken).ConfigureAwait(false);   // at most two rows, read at request time: hashed as served, so every input they read (jobs, profile, consent, the mcp switch) is in the tag
         var marks = await Marks(cancellationToken).ConfigureAwait(false);
@@ -77,12 +77,14 @@ internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus sta
     }
 
     /// <summary>
-    /// The marks of the three views the answer reads (#2882): 'needs_you' (the rows), 'decisions' (the joined decision) and 'items' (the
-    /// empty sentence's counts). Each is one aggregate query that reads no row and moves on any write, delete or rebuild of its view.
+    /// The serve process's lease epoch (#3883), then the marks of the three views the answer reads (#2882): 'needs_you' (the rows),
+    /// 'decisions' (the joined decision) and 'items' (the empty sentence's counts). Each mark is one aggregate query that reads no row
+    /// and moves on any write or delete of its view.
     /// </summary>
     private async ValueTask<Result<string>> Marks(CancellationToken cancellationToken)
     {
-        var marks = new StringBuilder();
+        // why (#3883): a views rebuild replays the same ledger, so the marks come back the same even when a new build folds other row text; each serve takes the lease at a new epoch and keeps it while it runs
+        var marks = new StringBuilder("serve=").Append((lease.Current?.Epoch ?? 0).ToString(CultureInfo.InvariantCulture)).Append(';');
         foreach (var view in _marked)
         {
             var mark = await views.Mark(view, cancellationToken).ConfigureAwait(false);
@@ -175,7 +177,7 @@ internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus sta
     }
 
     /// <summary>
-    /// The tag (#2882): a hash of every input of the answer, each read in O(1) rows. The marks of the views it reads stand for the
+    /// The tag (#2882): a hash of every input of the answer, each read in O(1) rows. The serve's lease epoch and the marks of the views it reads stand for the
     /// folded rows, the joined decisions and the empty sentence's counts. The setup rows are read at request time, so each is hashed as
     /// the client receives it (every field). Then the projector's state word, its stale-views sentence (a rebuild's names the cursor)
     /// and whether the views are behind. Never the as-of time or the cursor alone: an event that writes none of the three views keeps
