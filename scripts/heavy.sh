@@ -12,11 +12,15 @@
 #   binary, or opens a browser (Playwright, ui-evidence, Aw.Evidence); `heavy --expensive <cmd>` forces it,
 #   `heavy --light <cmd>` forces light (no box-wide slot).
 #   3. Box-wide, for light jobs that compile (#3796): a `--light` command with ` dotnet build `, publish, format, pack,
-#      restore, run, or `dotnet test` without --no-build, takes one of N light slots of <locks>/heavy-light.lock (slot 1 the
-#      bare path, slot k .k, the same mkdir mutexes and dead-holder reclaim as rule 2). N is $AW_STATE_DIR/heavy-light-cap,
-#      else AW_HEAVY_LIGHT_SLOTS, else 4, read again on every pass. Such a build also doesn't START while a live job waits for
-#      a box-wide slot and MemAvailable is under the floor of the lowest free box-wide slot (slot 1 has no floor), so builders
-#      can't keep a gate's slot shut; nothing running is stopped, and that wait doesn't count toward the lock timeout.
+#      restore, run, or `dotnet test` without --no-build (dotnet matched by its basename, so `~/.dotnet/dotnet build` counts,
+#      #3810), takes one of N light slots of <locks>/heavy-light.lock (slot 1 the bare path, slot k .k, the same mkdir mutexes
+#      and dead-holder reclaim as rule 2). N is $AW_STATE_DIR/heavy-light-cap, else AW_HEAVY_LIGHT_SLOTS, else 4, read again on
+#      every pass. Such a build also doesn't START while a live job waits for a box-wide slot and every free slot that job may
+#      take is under its memory floor (slot 1 has no floor). A lane waiter may take only the slots above heavy-meta-reserve,
+#      the reserve clamped as rule 2's pool clamps it; a meta waiter may take any (#3810). So builders can't keep a gate's slot
+#      shut; nothing running is stopped, and that wait doesn't count toward the lock timeout. The hold has no limit of its own:
+#      a held build prints a line when the hold starts and every 5 minutes after, naming the waiter (pid, argv), the slot it
+#      waits for, that slot's floor and the MB available.
 #      AW_HEAVY_PRIORITY=meta skips that hold, not the pool. A light job that compiles nothing (`dotnet test --no-build`,
 #      `dotnet clean`, a script) takes the per-session slot only.
 #      For a PR that touches one src project, a light build of that project alone is the compile check. Build the whole test
@@ -31,6 +35,8 @@
 #      standing back once AW_HEAVY_FIFO_MAX_DEFER seconds (default 1800; 0 turns the order off) have passed since its first
 #      stand-back, in any pool.
 #   The job runs in its own systemd user scope (OOMPolicy=continue) when systemd-run works, so an OOM kill ends the job only.
+#   Test switches (scratch suites only): AW_HEAVY_TEST_PATH (a stub dir put first on PATH), AW_HEAVY_TEST_CGROUP (a file read for
+#   /proc/self/cgroup) and AW_HEAVY_TEST_PS_START=1 (start tokens through `ps -o lstart=`, the path without /proc, #3859).
 set -u
 # The cap and reserve readers live next to locks.sh; this script may run through a link (~/.agentic-workflow/bin-r1b/heavy).
 # In a build folder it sits beside this script; in the repo it is ../config/lib.
@@ -85,6 +91,9 @@ case $LIGHT_GIVEN in ""|*[!0-9]*|0) LIGHT_GIVEN=4 ;; esac
 MAX_DEFER="${AW_HEAVY_FIFO_MAX_DEFER:-1800}"
 case $MAX_DEFER in ""|*[!0-9]*) MAX_DEFER=1800 ;; esac
 STOOD_AT=""
+# A light build held back for a box-wide waiter (rule 3) says so when the hold starts and again every HOLD_NOTE_EVERY seconds of
+# holding, so a long hold shows in the job's output (#3810). The hold has no time limit of its own.
+HOLD_NOTE_EVERY=300
 
 mode=auto
 case "${1:-}" in --expensive) mode=expensive; shift ;; --light) mode=light; shift ;; esac
@@ -94,11 +103,15 @@ case "${1:-}" in --expensive) mode=expensive; shift ;; --light) mode=light; shif
 if [ "${AW_HEAVY_LOCK_HELD:-}" = 1 ]; then exec "$@"; fi
 
 # compiles: the command runs a dotnet step that compiles. In auto mode that makes the job expensive; under --light it takes
-# a light slot (rule 3).
+# a light slot (rule 3). The words are matched in CMDLINE, the args joined by spaces with every "/dotnet " turned into
+# " dotnet ": a path-qualified dotnet (`~/.dotnet/dotnet build`) is matched by its basename, also inside a `bash -c` string,
+# and every other word is left as it was. `dotnet msbuild` is not in the row yet: Sindri's sandbox shim table
+# (SandboxShims.cs) must list the same dotnet subcommands (SandboxShimsTests), and it gets msbuild in its own change (#3810).
+CMDLINE=" $* "; CMDLINE="${CMDLINE//\/dotnet / dotnet }"
 compiles=""
-case " $* " in
+case $CMDLINE in
   *" dotnet build "*|*" dotnet publish "*|*" dotnet format "*|*" dotnet pack "*|*" dotnet restore "*|*" dotnet run "*) compiles=1 ;;
-  *" dotnet test "*) case " $* " in *" --no-build "*) ;; *) compiles=1 ;; esac ;;
+  *" dotnet test "*) case $CMDLINE in *" --no-build "*) ;; *) compiles=1 ;; esac ;;
 esac
 if [ "$mode" = auto ]; then
   # Owner, 2026-10-14 (second tightening, swap full at load 128): every build is expensive. Light is only what
@@ -107,7 +120,7 @@ if [ "$mode" = auto ]; then
   mode=light
   if [ -n "$compiles" ]; then mode=expensive
   else
-    case " $* " in
+    case $CMDLINE in
       *" dotnet test "*) ;;   # a --no-build test stays light, whatever else the line names
       *" npm ci "*|*" npm install "*|*" npm test "*|*" npx vitest "*|*" npx tsc "*|*vitest*) mode=expensive ;;
       *AgenticWorkflow.slnx*|*aot-smoke*|*playwright*|*ui-evidence*|*Aw.Evidence*|*" e2e.sh "*) mode=expensive ;;
@@ -145,13 +158,17 @@ WAITFILE="$LOCKS/heavy-wait/$$"; WAIT_SINCE=""; MY_START=""
 # pid_start <pid>: set START to the process start token of <pid>, empty when it can't be read. Linux: field 22 of
 # /proc/<pid>/stat (clock ticks since boot), read with builtins after the last ")" because the command name may hold spaces or
 # brackets. Without /proc (macOS): `ps -o lstart=`, its words joined by _. A pid that a new process took has another token.
+# A pid that dies between kill -0 and ps gives no words; "${f[*]-}" keeps that an empty START on bash before 4.4 (macOS
+# /bin/bash 3.2), where "${f[*]}" of an empty array is an unbound-variable exit under set -u. AW_HEAVY_TEST_PS_START=1 takes the
+# ps branch on a box with /proc too, so the suite runs it on Linux (#3859).
+PS_START="${AW_HEAVY_TEST_PS_START:-}"
 pid_start() {
   local l f; START=""
-  if [ -r /proc/self/stat ]; then
+  if [ -r /proc/self/stat ] && [ "$PS_START" != 1 ]; then
     { IFS= read -r l < "/proc/$1/stat"; } 2>/dev/null || return 0
     read -r -a f <<< "${l##*) }"; START="${f[19]:-}"
   else
-    l="$(ps -o lstart= -p "$1" 2>/dev/null)"; read -r -a f <<< "$l"; local IFS=_; START="${f[*]}"
+    l="$(ps -o lstart= -p "$1" 2>/dev/null)"; read -r -a f <<< "$l"; local IFS=_; START="${f[*]-}"
   fi
   return 0
 }
@@ -229,7 +246,9 @@ slot_still_allowed() {
 # and, when the line has a "start", that pid's process start token is still the one written there. The case skips
 # <pid>.tmp.<pid> files mid-write; a dead waiter's file (SIGKILL leaves one) and one whose pid another process took count for
 # nothing. Such files are left in place: the pid's next heavy wrapper overwrites its own, and aw-meta skips dead pids. `read`, not
-# cat, and pid_start reads /proc with builtins: no fork per file on Linux, since every waiter runs this each pass.
+# cat, and pid_start reads /proc with builtins: no fork per file on Linux, since every waiter runs this each pass. On a match,
+# WAITER_LINE is that file's line.
+WAITER_LINE=""
 live_waiter() {
   local f pid line want
   for f in "$LOCKS/heavy-wait/"*; do
@@ -242,11 +261,13 @@ live_waiter() {
       *'"start":"'*) want="${line#*\"start\":\"}"; want="${want%%\"*}"; pid_start "$pid"
         [ -n "$want" ] && [ "$START" = "$want" ] || continue ;;
     esac
-    return 0
+    WAITER_LINE="$line"; return 0
   done
   return 1
 }
-boxwide_line() { case $2 in *'"lock":"box-wide"'*) return 0 ;; esac; return 1; }
+# boxwide_lane_line / boxwide_meta_line <pid> <line>: a box-wide waiter without / with "meta":1 (older copies never write it).
+boxwide_lane_line() { case $2 in *'"meta":1'*) return 1 ;; *'"lock":"box-wide"'*) return 0 ;; esac; return 1; }
+boxwide_meta_line() { case $2 in *'"meta":1'*) case $2 in *'"lock":"box-wide"'*) return 0 ;; esac ;; esac; return 1; }
 # older_peer <pid> <line>: the line is a rule-4 waiter of this pool (the caller's $label; for the session pool, this session)
 # that came first: an earlier since, or the same since and a lower pid. Before this job has a since, every such waiter came first.
 # json_str escapes every quote in argv and cwd, so none of these patterns can match inside them.
@@ -262,26 +283,56 @@ older_peer() {
   [[ "$since" < "$WAIT_SINCE" ]] || { [ "$since" = "$WAIT_SINCE" ] && [ "$pid" -lt "$$" ]; }
 }
 
-# boxwide_starved: some live job waits for a box-wide slot (a heavy-wait file with "lock":"box-wide" whose pid is alive) and
-# MemAvailable is under the floor of the lowest free box-wide slot within the cap. Slot 1 has no floor, and with no free slot
-# there is no floor to keep, so both mean no. A dead waiter's file (SIGKILL leaves one) counts for nothing.
+# boxwide_starved: some live job waits for a box-wide slot (a heavy-wait file with "lock":"box-wide" whose pid is alive), and
+# every free box-wide slot that job may take is shut by its memory floor. A meta waiter may take any slot within the cap. Any other
+# waiter may take only the slots above the reserve, clamped as the box-wide pool clamps it: below the slots free memory allows
+# (#2060). So a free slot 1 it may take (no floor), a free slot whose floor is met, or no free slot it may take all mean no: the
+# waiter takes the slot or waits for a holder, not for memory. A dead waiter's file (SIGKILL leaves one) counts for nothing.
+# MemAvailable is read once per call. On a yes, HOLD_LINE is the waiter's wait-file line, HOLD_SLOT the lowest slot it can't take
+# for memory, HOLD_NEED that slot's floor and HOLD_MB the MB available (empty when unreadable), for the hold note.
 boxwide_starved() {
-  local cap k d
-  live_waiter boxwide_line || return 1
-  cap="$(heavy_cap "$GIVEN_SLOTS")"
-  for k in $(seq 1 "$cap"); do
+  local cap res usable kb
+  cap="$(heavy_cap "$GIVEN_SLOTS")"; kb="$(avail_kb)"
+  if live_waiter boxwide_lane_line; then
+    usable=1; while [ "$usable" -lt "$cap" ] && floor_met "$((usable + 1))" "$kb"; do usable=$((usable + 1)); done
+    res="$(heavy_reserve "$cap")"; [ "$res" -gt "$((usable - 1))" ] && res=$((usable - 1))
+    starved_above "$res" "$cap" "$kb" && return 0
+  fi
+  live_waiter boxwide_meta_line && starved_above 0 "$cap" "$kb"
+}
+# floor_met <k> <kb>: box-wide slot k's memory floor is met by <kb> KB available; slot 1 has none, an empty <kb> meets none above.
+floor_met() {
+  [ "$1" -le 1 ] && return 0
+  if [ "$1" -ge 3 ]; then FLOOR=$HIGH_FREE_MB; else FLOOR=$MIN_FREE_MB; fi
+  [ -n "$2" ] && [ "$(($2 / 1024))" -ge "$FLOOR" ]
+}
+# starved_above <res> <cap> <kb>: of the box-wide slots res+1..cap, at least one is free and every free one is short of memory.
+starved_above() {
+  local k d short=""
+  for ((k = $1 + 1; k <= $2; k++)); do
     if [ "$k" -eq 1 ]; then d="$LOCK"; else d="$LOCK.$k"; fi
     [ -d "$d" ] && continue
-    [ "$k" -gt 1 ] && ! mem_ok "$k"
-    return
+    floor_met "$k" "$3" && return 1
+    [ -n "$short" ] || { short=$k; HOLD_NEED=$FLOOR; }
   done
-  return 1
+  [ -n "$short" ] || return 1
+  HOLD_LINE="$WAITER_LINE"; HOLD_SLOT=$short; HOLD_MB=""; [ -z "$3" ] || HOLD_MB=$(($3 / 1024))
+}
+
+# hold_note: the hold's line on stderr, from what boxwide_starved found: the waiter's pid and argv (as JSON, cut at 200
+# characters), the slot it can't take, that slot's floor and the MB available.
+hold_note() {
+  local pid argv mem
+  pid="${HOLD_LINE#*\"pid\":}"; pid="${pid%%,*}"
+  argv="${HOLD_LINE#*\"argv\":[}"; argv="${argv%%],\"cwd\":*}"; [ "${#argv}" -le 200 ] || argv="${argv:0:200}..."
+  if [ -n "$HOLD_MB" ]; then mem="$HOLD_MB MB available"; else mem="MemAvailable unreadable"; fi
+  echo "heavy: holding this build back: box-wide job $pid ($argv) waits for slot $HOLD_SLOT, which needs $HOLD_NEED MB free; $mem" >&2
 }
 
 # acquire <label> <base> <slots>: take one slot of a mkdir-mutex pool; a slot whose owner pid is gone is reclaimed.
 acquire() {
   local label="$1" base="$2" slots="$3" waited=0 printed=0 told=0 k d got="" free_wait held usable
-  local fifo=1 older stood
+  local fifo=1 older stood told_at=0
   [ "$PRIORITY" = meta ] && fifo=0
   while [ -z "$got" ]; do
     free_wait=0; held=0; older=""; stood=0
@@ -299,7 +350,7 @@ acquire() {
       slots="$(heavy_light_cap "$LIGHT_GIVEN")"
       if [ "$PRIORITY" != meta ] && boxwide_starved; then
         held=1; free_wait=1
-        [ "$told" -eq 1 ] || { echo "heavy: holding this build back: a box-wide job waits for free memory" >&2; told=1; }
+        if [ "$told" -eq 0 ] || [ "$((SECONDS - told_at))" -ge "$HOLD_NOTE_EVERY" ]; then hold_note; told=1; told_at=$SECONDS; fi
       fi
     fi
     [ "$held" = 1 ] || for k in $(seq 1 "$slots"); do
