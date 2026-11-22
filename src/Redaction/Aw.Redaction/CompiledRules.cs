@@ -8,13 +8,16 @@ internal sealed class CompiledRules
     /// <summary>The options every rule is compiled with; extra patterns are checked with the same ones.</summary>
     public const RegexOptions Always = RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture;
 
-    private readonly (string Id, Regex Regex)[] _rules;
+    // The text that starts every placeholder; a text without it holds none, so the placeholder scan is skipped.
+    private const string PlaceholderStart = "[REDACTED:";
+
+    private readonly (string Id, Regex Regex, RuleGate? Gate)[] _rules;
     private readonly Regex _placeholder;
 
     public CompiledRules(IReadOnlyList<RedactionRule> rules, IReadOnlyList<string> ruleIds, TimeSpan matchTimeout)
     {
         MatchTimeout = matchTimeout;
-        _rules = [.. rules.Select(r => (r.Id, new Regex(r.Pattern, r.Options | Always, matchTimeout)))];
+        _rules = [.. rules.Select(r => (r.Id, new Regex(r.Pattern, r.Options | Always, matchTimeout), r.Gate))];
 
         // Only a placeholder naming one of these rules is skipped, so a crafted "[REDACTED:<secret>]" is still scanned.
         var ids = string.Join('|', ruleIds.Append("blocked").Append("secret-field").Select(Regex.Escape));
@@ -24,7 +27,8 @@ internal sealed class CompiledRules
     /// <summary>The match timeout these rules were compiled with (the redactor's, scaled to the size tier).</summary>
     public TimeSpan MatchTimeout { get; }
 
-    /// <summary>Every rule's hits in <paramref name="text"/>, outside existing placeholders; unsorted, may overlap.</summary>
+    /// <summary>Every rule's hits in <paramref name="text"/>, outside existing placeholders; unsorted, may overlap. A rule
+    /// whose gate shows it can't match the text is skipped (<see cref="RuleGate"/>).</summary>
     /// <param name="text">The text to scan.</param>
     /// <param name="deadline">The whole-scrub budget, checked around the placeholder scan, before every
     /// rule's scan and after every match; null when the rules are all built in.</param>
@@ -35,13 +39,19 @@ internal sealed class CompiledRules
         // regex work between two checks is one match call (bounded by the match timeout) or the built-in, linear
         // placeholder scan, whether a rule matches or not.
         deadline?.Check();
-        var placeholders = new Placeholders(_placeholder.Matches(text));
+        var placeholders = text.Contains(PlaceholderStart, StringComparison.Ordinal)
+            ? new Placeholders(_placeholder.Matches(text))
+            : Placeholders.None;
         deadline?.Check();
+        var ascii = !text.AsSpan().ContainsAnyExceptInRange('\u0000', '\u007F');
         var raw = new List<RawHit>();
         for (var order = 0; order < _rules.Length; order++)
         {
             deadline?.Check();
-            Collect(order, text, placeholders, deadline, raw);
+            if (_rules[order].Gate?.MayMatch(text, ascii) ?? true)
+            {
+                Collect(order, text, placeholders, deadline, raw);
+            }
         }
 
         deadline?.Check();
@@ -52,7 +62,7 @@ internal sealed class CompiledRules
     // placeholder are skipped.
     private void Collect(int order, string text, Placeholders placeholders, ScanDeadline? deadline, List<RawHit> raw)
     {
-        var (id, regex) = _rules[order];
+        var (id, regex, _) = _rules[order];
         foreach (Match match in regex.Matches(text))
         {
             deadline?.Check();

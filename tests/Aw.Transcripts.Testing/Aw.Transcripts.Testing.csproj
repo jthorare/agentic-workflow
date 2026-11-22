@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.Transcripts.Testing (scaffolded by /new-package): builders, in-memory fakes and contract bases for Transcripts's
+       ports (spec §4b.5). Test support: only *.Tests and *.Testing projects reference it. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Aw.Transcripts.Testing</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Transcripts/Aw.Transcripts.Core/Aw.Transcripts.Core.csproj" />
+    <ProjectReference Include="../../src/Transcripts/Aw.Transcripts.Features/Aw.Transcripts.Features.csproj" />
+    <ProjectReference Include="../Aw.Kernel.Testing/Aw.Kernel.Testing.csproj" />
+  </ItemGroup>
+</Project>
