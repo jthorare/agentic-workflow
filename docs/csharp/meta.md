@@ -212,7 +212,10 @@ the other:
   (from 3) prints 7. A count in between has no argument; it prints 5 (the script keeps 2, never more than computed).
   `gate-run` computes before its steps and prints the line after them, so to apply the reservation before a gate read it from
   `status` (which recomputes it). The wrapper then gives every expensive job *without* the priority only the
-  slots above the reservation, and does not count a wait for the reservation toward its timeout. A line ending `[stale: computed
+  slots above the reservation, and does not count a wait for the reservation toward its timeout. While such a job waits beside a
+  free reserved slot, it prints `heavy: waiting although a box-wide slot is free: meta reserves R of C slot(s) (heavy-meta-reserve);
+  every slot above those is held or under its memory floor; N MB available` on stderr, when the wait starts and every 300 s after
+  (#3907). A line ending `[stale: computed
   HH:MMZ; ...]` means nothing recomputed it for 30 minutes (no watch is running and no gate, merge, drop or status has run): run
   `status` and apply the new depth, or `meta-gate-reserve --clear` when the queue is empty.
 - Builders' `heavy --light` builds don't use these slots. Each takes one of the wrapper's light slots (`heavy-light-cap`, default 4),
