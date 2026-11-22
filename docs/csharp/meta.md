@@ -212,10 +212,13 @@ the other:
   slots above the reservation, and does not count a wait for the reservation toward its timeout. A line ending `[stale: computed
   HH:MMZ; ...]` means nothing recomputed it for 30 minutes (no watch is running and no gate, merge, drop or status has run): run
   `status` and apply the new depth, or `meta-gate-reserve --clear` when the queue is empty.
+- Builders' `heavy --light` builds don't use these slots. Each takes one of the wrapper's light slots (`heavy-light-cap`, default 4),
+  and none starts while a job waits for a box-wide slot whose memory floor isn't met, so builders can't keep a gate's slot shut
+  (#3796). A gate step's `AW_HEAVY_PRIORITY=meta` skips that hold too.
 - The reservation assumes every gate runs through `aw-meta gate-run`. A gate run by hand carries no priority and would wait behind
   the reservation it is meant to share; nothing running is ever pre-empted.
 
-**Wait files.** `heavy` writes one file, `$AW_STATE_DIR/locks/heavy-wait/<pid>` (the wrapper's own pid), for each job that has to wait for a slot. The file is one JSON line with `pid`, `session`, `lock` (`session` or `box-wide`), `since` (UTC, when the first wait began), `argv` (raw) and `cwd`. `heavy` removes the file when the job takes its slot, on the lock timeout and when a signal ends it. A job that gets its slots at once writes none. SIGKILL leaves a file behind, so `aw-meta heavy --json` (#3142), the reader, skips a dead pid and redacts `argv`.
+**Wait files.** `heavy` writes one file, `$AW_STATE_DIR/locks/heavy-wait/<pid>` (the wrapper's own pid), for each job that has to wait for a slot. The file is one JSON line with `pid`, `session`, `lock` (`session`, `box-wide`, or `light` for a `heavy --light` build waiting for the light pool or held back for a box-wide waiter, #3796), `since` (UTC, when the first wait began), `argv` (raw) and `cwd`. `heavy` removes the file when the job takes its slot, on the lock timeout and when a signal ends it. A job that gets its slots at once writes none. SIGKILL leaves a file behind, so `aw-meta heavy --json` (#3142), the reader, skips a dead pid and redacts `argv`.
 
 **Builders per lane.** `health` (and `status`, one line) advises how many builder subagents each lane should run now, from
 `builders.maxPerLane` (none by default: nothing caps it but the host): it is reduced while free disk is under `resources.diskFloorGb + lanes x builders x builders.worktreeGb`
