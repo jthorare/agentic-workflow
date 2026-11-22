@@ -37,10 +37,8 @@ public sealed class ProjectRowsTests
     }
 
     [Fact]
-    public void My_work_holds_led_and_hand_made_projects_and_leaves_attached_out()
-    {
-        Assert.Equal(["Led", "By hand"], InView(ProjectView.MyWork, Card("Led"), Card("By hand", origin: "handMade"), Card("Attached", origin: "attached")), StringComparer.Ordinal);
-    }
+    public void My_work_holds_led_and_hand_made_projects_and_leaves_attached_out() =>
+            Assert.Equal(["Led", "By hand"], InView(ProjectView.MyWork, Card("Led"), Card("By hand", origin: "handMade"), Card("Attached", origin: "attached")), StringComparer.Ordinal);
 
     [Fact]
     public void Projects_holds_every_open_project_and_Triage_holds_none()
@@ -76,10 +74,8 @@ public sealed class ProjectRowsTests
     }
 
     [Fact]
-    public void Name_sorts_A_to_Z_whatever_the_case()
-    {
-        Assert.Equal(["apple", "Mango", "Zebra"], Names(ProjectRows.Sorted([Card("Zebra"), Card("apple"), Card("Mango")], ProjectSort.Name)), StringComparer.Ordinal);
-    }
+    public void Name_sorts_A_to_Z_whatever_the_case() =>
+            Assert.Equal(["apple", "Mango", "Zebra"], Names(ProjectRows.Sorted([Card("Zebra"), Card("apple"), Card("Mango")], ProjectSort.Name)), StringComparer.Ordinal);
 
     [Fact]
     public void Health_groups_follow_the_fixed_order_with_CI_not_checked_and_No_open_PRs_last()
@@ -162,19 +158,15 @@ public sealed class ProjectRowsTests
     }
 
     [Fact]
-    public void A_target_before_today_reads_passed()
-    {
-        Assert.Equal(("Nov 12 passed", true), ProjectRows.Target("2026-11-12", _today));
-    }
+    public void A_target_before_today_reads_passed() =>
+            Assert.Equal(("Nov 12 passed", true), ProjectRows.Target("2026-11-12", _today));
 
     [Theory]
     [InlineData("2026-11-14", "Nov 14")]
     [InlineData("2026-12-07", "Dec 7")]
     [InlineData("next week", "next week")]
-    public void A_target_today_or_later_reads_its_day(string target, string words)
-    {
-        Assert.Equal((words, false), ProjectRows.Target(target, _today));
-    }
+    public void A_target_today_or_later_reads_its_day(string target, string words) =>
+            Assert.Equal((words, false), ProjectRows.Target(target, _today));
 
     [Fact]
     public void The_PR_glyphs_go_red_waiting_unknown_ready_then_drafts_after_a_hairline()
