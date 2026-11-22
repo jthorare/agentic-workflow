@@ -2822,3 +2822,70 @@ Aw.Meta.Core.Merge.MergeFacts.MergeConflicts.get -> bool
 Aw.Meta.Core.Merge.MergeFacts.MergeConflicts.init -> void
 Aw.Meta.Core.Worktrees.WorktreeInspector.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Worktrees.WorktreeInspector!
 Aw.Meta.Core.Worktrees.WorktreeSweeper.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Worktrees.WorktreeSweeper!
+Aw.Meta.Core.Config.DelegationConfig
+Aw.Meta.Core.Config.DelegationConfig.<Clone>$() -> Aw.Meta.Core.Config.DelegationConfig!
+Aw.Meta.Core.Config.DelegationConfig.DelegationConfig(System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>? lanes = null) -> void
+Aw.Meta.Core.Config.DelegationConfig.Equals(Aw.Meta.Core.Config.DelegationConfig? other) -> bool
+Aw.Meta.Core.Config.DelegationConfig.Lanes.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Meta.Core.Config.DelegationConfig.Lanes.init -> void
+Aw.Meta.Core.Config.TeamConfig.Delegation.get -> Aw.Meta.Core.Config.DelegationConfig!
+Aw.Meta.Core.Config.TeamConfig.Delegation.init -> void
+Aw.Meta.Core.Coordination.DelegationLedger
+Aw.Meta.Core.Coordination.DelegationLedger.Add(Aw.Meta.Core.Delegations.Delegation! delegation, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Coordination.DelegationLedger.All(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Delegations.Delegation!>!>!>
+Aw.Meta.Core.Coordination.DelegationLedger.DelegationLedger(Aw.Meta.Core.Ports.IKeyValueStore! values) -> void
+Aw.Meta.Core.Delegations.Delegation
+Aw.Meta.Core.Delegations.Delegation.At.get -> System.DateTimeOffset
+Aw.Meta.Core.Delegations.Delegation.At.init -> void
+Aw.Meta.Core.Delegations.DelegationBook
+Aw.Meta.Core.Delegations.Delegation.Claude.get -> bool
+Aw.Meta.Core.Delegations.Delegation.Claude.init -> void
+Aw.Meta.Core.Delegations.Delegation.<Clone>$() -> Aw.Meta.Core.Delegations.Delegation!
+Aw.Meta.Core.Delegations.Delegation.Deconstruct(out int Issue, out string! Url, out string! Title, out string! Lane, out string! Session, out System.DateTimeOffset At) -> void
+Aw.Meta.Core.Delegations.Delegation.Delegation(int Issue, string! Url, string! Title, string! Lane, string! Session, System.DateTimeOffset At) -> void
+Aw.Meta.Core.Delegations.Delegation.Delivered.get -> bool
+Aw.Meta.Core.Delegations.Delegation.Delivered.init -> void
+Aw.Meta.Core.Delegations.Delegation.Equals(Aw.Meta.Core.Delegations.Delegation? other) -> bool
+Aw.Meta.Core.Delegations.Delegation.Issue.get -> int
+Aw.Meta.Core.Delegations.Delegation.Issue.init -> void
+Aw.Meta.Core.Delegations.Delegation.Lane.get -> string!
+Aw.Meta.Core.Delegations.Delegation.Lane.init -> void
+Aw.Meta.Core.Delegations.Delegation.Marker.get -> string!
+Aw.Meta.Core.Delegations.Delegation.Message.get -> string!
+Aw.Meta.Core.Delegations.Delegation.Session.get -> string!
+Aw.Meta.Core.Delegations.Delegation.Session.init -> void
+Aw.Meta.Core.Delegations.DelegationState
+Aw.Meta.Core.Delegations.DelegationState.Answered = 3 -> Aw.Meta.Core.Delegations.DelegationState
+Aw.Meta.Core.Delegations.DelegationState.Owed = 1 -> Aw.Meta.Core.Delegations.DelegationState
+Aw.Meta.Core.Delegations.DelegationState.Sent = 2 -> Aw.Meta.Core.Delegations.DelegationState
+Aw.Meta.Core.Delegations.DelegationText
+Aw.Meta.Core.Delegations.Delegation.Title.get -> string!
+Aw.Meta.Core.Delegations.Delegation.Title.init -> void
+Aw.Meta.Core.Delegations.Delegation.Url.get -> string!
+Aw.Meta.Core.Delegations.Delegation.Url.init -> void
+Aw.Meta.Core.Obligations.DelegationStates
+Aw.Meta.Core.Obligations.ObligationFacts.Delegations.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Delegations.Delegation!>!
+Aw.Meta.Core.Obligations.ObligationFacts.Delegations.init -> void
+Aw.Meta.Core.Obligations.ObligationKind.Delegate = 7 -> Aw.Meta.Core.Obligations.ObligationKind
+const Aw.Meta.Core.Delegations.DelegationText.Yours = "Yours: take it in your lane and reply with the PR number." -> string!
+const Aw.Meta.Core.KvKeys.Delegations = "delegations" -> string!
+override Aw.Meta.Core.Config.DelegationConfig.Equals(object? obj) -> bool
+override Aw.Meta.Core.Config.DelegationConfig.GetHashCode() -> int
+override Aw.Meta.Core.Config.DelegationConfig.ToString() -> string!
+override Aw.Meta.Core.Delegations.Delegation.Equals(object? obj) -> bool
+override Aw.Meta.Core.Delegations.Delegation.GetHashCode() -> int
+override Aw.Meta.Core.Delegations.Delegation.ToString() -> string!
+static Aw.Meta.Core.Config.DelegationConfig.operator !=(Aw.Meta.Core.Config.DelegationConfig? left, Aw.Meta.Core.Config.DelegationConfig? right) -> bool
+static Aw.Meta.Core.Config.DelegationConfig.operator ==(Aw.Meta.Core.Config.DelegationConfig? left, Aw.Meta.Core.Config.DelegationConfig? right) -> bool
+static Aw.Meta.Core.Delegations.DelegationBook.Format(System.Collections.Generic.IEnumerable<Aw.Meta.Core.Delegations.Delegation!>! delegations) -> string!
+static Aw.Meta.Core.Delegations.DelegationBook.Parse(string? stored) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Delegations.Delegation!>!
+static Aw.Meta.Core.Delegations.DelegationBook.With(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Delegations.Delegation!>! delegations, Aw.Meta.Core.Delegations.Delegation! delegation) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Delegations.Delegation!>!
+static Aw.Meta.Core.Delegations.Delegation.operator !=(Aw.Meta.Core.Delegations.Delegation? left, Aw.Meta.Core.Delegations.Delegation? right) -> bool
+static Aw.Meta.Core.Delegations.Delegation.operator ==(Aw.Meta.Core.Delegations.Delegation? left, Aw.Meta.Core.Delegations.Delegation? right) -> bool
+static Aw.Meta.Core.Delegations.DelegationText.Footer(string! lane) -> string!
+static Aw.Meta.Core.Delegations.DelegationText.HasWord(string! text, string! keyword) -> bool
+static Aw.Meta.Core.Delegations.DelegationText.Message(int issue, string! title, string! url) -> string!
+static Aw.Meta.Core.Delegations.DelegationText.Names(string! text, int issue) -> bool
+static Aw.Meta.Core.Github.GhIssues.View(string! json) -> Aw.Meta.Core.Github.IssueRef?
+static Aw.Meta.Core.Obligations.DelegationStates.IsSent(Aw.Meta.Core.Delegations.Delegation! delegation, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.Outbound!>! outbound) -> bool
+static Aw.Meta.Core.Obligations.DelegationStates.Of(Aw.Meta.Core.Delegations.Delegation! delegation, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>! inbound, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.Outbound!>! outbound) -> Aw.Meta.Core.Delegations.DelegationState
