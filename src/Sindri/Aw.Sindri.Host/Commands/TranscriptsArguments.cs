@@ -28,6 +28,7 @@ internal static partial class TranscriptsArguments
                 case Taken.FlagAndValue:
                     i++;
                     break;
+                case Taken.Unknown:
                 default:
                     return SindriErrors.InvalidInput.With($"transcripts list can't read '{args[i]}'{(value is null ? string.Empty : $" {value}")} ({ListUsage})");
             }
