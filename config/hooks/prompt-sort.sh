@@ -69,12 +69,16 @@ if printf '%s' "$PROMPT" | grep -qE '^[[:space:]]*/[A-Za-z][A-Za-z0-9:_-]*([[:sp
 command -v judge >/dev/null 2>&1 || exit 0
 PAYLOAD="$(jq -nc --arg p "$PROMPT" --arg s "$SESSION_ID" '{prompt:$p, sessionId:$s}' 2>/dev/null)" || exit 0
 OUT_FILE="$(mktemp 2>/dev/null)" || exit 0
-trap 'rm -f "$OUT_FILE"' EXIT
+IN_FILE="$(mktemp 2>/dev/null)" || { rm -f "$OUT_FILE"; exit 0; }
+trap 'rm -f "$OUT_FILE" "$IN_FILE"' EXIT
 
 PAYLOAD="$(aw_images_attach "$PAYLOAD" "$(aw_image_paths "$PROMPT" prompt-sort)")"
-( printf '%s' "$PAYLOAD" | AW_SESSION_ID="$SESSION_ID" judge prompt-sort > "$OUT_FILE" 2>/dev/null ) > /dev/null 2>&1 &
+printf '%s' "$PAYLOAD" > "$IN_FILE" 2>/dev/null || exit 0
+# judge is a DIRECT child of this bash (stdin from a file, no subshell or pipe around it), so the watchdog's
+# `pkill -P` reaches it on a spent budget. Wrapped in ( … ) it was a grandchild and outlived the hook (#3778).
+AW_SESSION_ID="$SESSION_ID" judge prompt-sort < "$IN_FILE" > "$OUT_FILE" 2>/dev/null &
 PID=$!
-# The wall-clock budget is the watchdog above: it kills this process tree and logs `timeout`.
+# The wall-clock budget is the watchdog above: it kills judge, then this script, and logs `timeout`.
 # A crashed or failed judge never contributes output; the prompt proceeds.
 wait "$PID" 2>/dev/null || exit 0
 CONTEXT="$(jq -r '.context // empty' "$OUT_FILE" 2>/dev/null)" || exit 0
