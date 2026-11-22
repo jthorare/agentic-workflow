@@ -348,8 +348,9 @@ Each failure code maps to `{code, sentence template, fixAction}`. The mapping li
 | `SND-CODE-001` | "{step} doesn't compile: {message}." ({message} lists each error with its line and column) | Open {step} |
 | `SND-CODE-002` | "{step} ran past its time limit." | Open {step} |
 | `SND-CODE-003` | "{step} used more memory than its limit." | Open {step} |
-| `SND-CODE-004` | "{step} stopped: {message}." ({message} is the exception message, or says the result is not JSON) | Open {step} |
-| `SND-CODE-005` | "Sindri can't run code steps: the code runner couldn't start." with the SND message underneath (the runner binary missing, a refused sandbox plan, a run area that can't be made, a process that doesn't start, a runner exit 2) | None |
+| `SND-CODE-004` | "{step} stopped: {message}." ({message} is the exception message without its type name, so `InvalidOperationException: repo is 812 MB` reads "Check stopped: repo is 812 MB."; or it says the result is not JSON) | Open {step} |
+| `SND-CODE-005`, runner missing | "Sindri can't run code steps: sindri-code-runner isn't installed." (the runner binary is not beside the Sindri host) | Install the code runner / `scripts/install-cs.sh` |
+| `SND-CODE-005`, any other cause | "Sindri can't run code steps: the code runner couldn't start." with the SND message underneath (a refused sandbox plan, a run area that can't be made, a process that doesn't start, a runner exit 2) | None |
 | `SND-GRAPH-007` | "Changed elsewhere." | Reload / `wf show S` |
 | `SND-API-001` | "Sindri is not running." | Start Sindri / `sindri serve` |
 
@@ -374,7 +375,7 @@ The runs list is its own page under the workflow ("Workflows › PR review › R
 
 ### 7.3 A failed run
 
-The header sentence comes from the §6.1 table. Under it, one button chosen from the cause. The one exception is `SND-GRAPH-103`: "Retry with model" stays primary and "Open {step}" sits beside it as a secondary action. Raw codes stay in "Details". **Re-run from here** (ledger 9) is later (P7): it restores the earlier steps' stored outputs, re-runs this step and the ones after it, and links the new run to the old one. A step that already made an object shows "done before: comment #5521" and skips it by default, with "do again" as an explicit toggle (ledger 12).
+The header sentence comes from the §6.1 table: the run read (`GET /sindri/workflow-runs/{run}`, `workflow_run_get`) gives each failed node run a `failure` object (`code`, `sentence`, `fixLabel`, `fixCommand`, `secondaryLabel`, `detail`) built by `StepFailures.Describe` in Core from the step's title and the node run's `<code>: <message>` error. It is absent when the code has no row or the row needs a value the error does not carry (`SND-GRAPH-113`'s field); the app then shows the raw error. `detail` is the engine's text, shown in Details. Under it, one button chosen from the cause. The one exception is `SND-GRAPH-103`: "Retry with model" stays primary and "Open {step}" sits beside it as a secondary action. Raw codes stay in "Details". **Re-run from here** (ledger 9) is later (P7): it restores the earlier steps' stored outputs, re-runs this step and the ones after it, and links the new run to the old one. A step that already made an object shows "done before: comment #5521" and skips it by default, with "do again" as an explicit toggle (ledger 12).
 
 ## 8. Agents
 
