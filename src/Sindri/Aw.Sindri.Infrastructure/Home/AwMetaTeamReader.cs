@@ -38,8 +38,8 @@ internal sealed class AwMetaTeamReader(IToolRunner runner, Func<string, string?>
             answers.Add(output);
         }
 
-        var teams = Run(program, "team-list", cancellationToken);
-        return ValueTask.FromResult(Parse(answers, teams.Problem is null ? teams.Output : null));
+        var (teamList, teamProblem) = Run(program, "team-list", cancellationToken);
+        return ValueTask.FromResult(Parse(answers, teamProblem is null ? teamList : null));
     }
 
     private static MetaTeamRead Parse(List<string> answers, string? teamList)
@@ -63,7 +63,8 @@ internal sealed class AwMetaTeamReader(IToolRunner runner, Func<string, string?>
             ToolOutcome.TimedOut => ("", $"aw-meta {command} ran past {_timeout.TotalSeconds.ToString(CultureInfo.InvariantCulture)} s"),
             ToolOutcome.Exited when run.ExitCode is 0 or 1 => (run.Output, null),
             ToolOutcome.Exited => ("", string.Create(CultureInfo.InvariantCulture, $"aw-meta {command} exited {run.ExitCode}")),
-            _ => ("", $"aw-meta {command} was cancelled"),
+            ToolOutcome.Cancelled => ("", $"aw-meta {command} was cancelled"),
+            _ => ("", $"aw-meta {command} ended with an outcome this build does not know"),
         };
     }
 }

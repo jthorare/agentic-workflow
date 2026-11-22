@@ -3,7 +3,7 @@ using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.GetHomeRank;
 using Aw.Sindri.Features.GetHomeRow;
-using Aw.Sindri.Features.HomeCollect;
+using Aw.Sindri.Core.Home;
 using Aw.Sindri.Features.HomeLanes;
 using Aw.Sindri.Features.HomeRuns;
 using Aw.Sindri.Features.ListHome;

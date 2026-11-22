@@ -6,7 +6,6 @@ using Aw.Sindri.Core.Home;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Scheduling;
-using Aw.Sindri.Features.HomeCollect;
 using Aw.Sindri.Features.HomeRuns;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Workflow;

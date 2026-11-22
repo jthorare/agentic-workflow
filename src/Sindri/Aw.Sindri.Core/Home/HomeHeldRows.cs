@@ -1,10 +1,9 @@
 using Aw.Kernel;
-using Aw.Sindri.Core.Home;
 
-namespace Aw.Sindri.Features.HomeCollect;
+namespace Aw.Sindri.Core.Home;
 
 /// <summary>The rows Home holds for one collector: every row of the view whose source is the collector's and whose kind it raises, in any state, read page by page.</summary>
-internal static class HomeHeldRows
+public static class HomeHeldRows
 {
     // why: the view pages at 200 rows; a cursor that vanished between pages starts at the top again, so the walk is capped instead of trusted to end
     private const int MaxPages = 50;

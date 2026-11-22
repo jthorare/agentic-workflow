@@ -1,11 +1,10 @@
 using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core.Events;
-using Aw.Sindri.Core.Home;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Scheduling;
 
-namespace Aw.Sindri.Features.HomeCollect;
+namespace Aw.Sindri.Core.Home;
 
 /// <summary>
 /// Appends one collector pass's plan as 'home.row.raised', '.changed' and '.cleared' events (home spec §3.1), fenced by the pass's lease grant.
@@ -13,7 +12,7 @@ namespace Aw.Sindri.Features.HomeCollect;
 /// </summary>
 /// <param name="ledger">The ledger.</param>
 /// <param name="events">Builds the entries.</param>
-internal sealed class HomeRowWriter(ILedgerStore ledger, EventFactory events)
+public sealed class HomeRowWriter(ILedgerStore ledger, EventFactory events)
 {
     /// <summary>Writes <paramref name="plan"/>: raises first, then changes, then clears. It stops at the first append that fails.</summary>
     /// <param name="plan">The pass's plan.</param>
