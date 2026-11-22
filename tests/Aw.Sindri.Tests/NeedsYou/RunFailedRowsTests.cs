@@ -52,6 +52,6 @@ public sealed class RunFailedRowsTests
 
         var rows = await NeedsYouLiveRows.FailedRunRows(runs, new PassThroughScrubber(), Token);
 
-        Assert.Equal(["run-failed:nightly@3:1"], rows.Select(static r => r.Id.Value));
+        Assert.Equal(["run-failed:nightly@3:1"], rows.Select(static r => r.Id.Value), StringComparer.Ordinal);
     }
 }
