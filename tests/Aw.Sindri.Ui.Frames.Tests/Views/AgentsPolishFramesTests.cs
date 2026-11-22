@@ -119,6 +119,7 @@ public sealed class AgentsPolishFramesTests : FrameHost
             window.KeyPressQwerty(PhysicalKey.J, RawInputModifiers.None);
         }
 
+        Assert.Equal(A.NewItem, shell.Queue.SelectedId);   // J never reached the fixture's new item: its order changed
         window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
         await Until(window, () => shell.IsSheetShown && shell.Item.HasItem, "the item sheet never showed");
         shell.OpenSheet(new DeepLink(DeepLinkKind.Session, Claude));
