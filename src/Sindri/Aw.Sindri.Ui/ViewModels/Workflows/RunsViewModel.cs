@@ -14,6 +14,10 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
 {
     /// <summary>The refusal code for a workflow with no active revision.</summary>
     internal const string NotActive = "SND-GRAPH-105";
+
+    // The API and the clock, kept as fields so the other parts of this class (RunsViewModel.Paging.cs) read them too.
+    private readonly ISindriApi _api = api;
+    private readonly TimeProvider _clock = clock;
     private int _reads;
 
     /// <summary>The workflow's slug.</summary>
@@ -104,8 +108,8 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
             (IsFailed, FailedText) = (false, string.Empty);   // the old failure line hides while this read is on its way
         }
 
-        var detailRead = api.Workflow(url, slug, cancellationToken);
-        var runsRead = api.WorkflowRuns(url, slug, cancellationToken);
+        var detailRead = _api.Workflow(url, slug, cancellationToken);
+        var runsRead = _api.WorkflowRuns(url, slug, cancellationToken);
         await Task.WhenAll(detailRead, runsRead).ConfigureAwait(true);
         var (detail, runs) = (await detailRead.ConfigureAwait(true), await runsRead.ConfigureAwait(true));
         if (read != _reads)
@@ -158,7 +162,7 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
         Rows.Clear();
         foreach (var run in list.Runs)
         {
-            Rows.Add(new RunRowViewModel(run, clock));
+            Rows.Add(new RunRowViewModel(run, _clock));
         }
 
         var running = list.Runs.Count(r => string.Equals(r.Status, "running", StringComparison.Ordinal));
@@ -171,9 +175,4 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
         var nodes = workflow.Spec.ValueKind == JsonValueKind.Object && workflow.Spec.TryGetProperty("nodes", out var list) && list.ValueKind == JsonValueKind.Array ? list.GetArrayLength() : 0;
         return Labels.WfDetail(workflow.Revision, workflow.LatestRevision, nodes, workflow.CreatedBy, workflow.ActiveRevision is not null);
     }
-
-    // The API and the clock, for the other parts of this class (RunsViewModel.Paging.cs).
-    private ISindriApi Api => api;
-
-    private TimeProvider Clock => clock;
 }

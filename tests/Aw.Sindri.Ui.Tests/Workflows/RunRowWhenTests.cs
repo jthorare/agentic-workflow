@@ -17,7 +17,10 @@ public sealed class RunRowWhenTests
 
     private readonly FakeTimeProvider _clock = new(_now);
 
-    public RunRowWhenTests() => _clock.SetLocalTimeZone(TimeZoneInfo.Utc);
+    public RunRowWhenTests()
+    {
+        _clock.SetLocalTimeZone(TimeZoneInfo.Utc);
+    }
 
     private static DateTimeOffset At(string text) => DateTimeOffset.Parse(text, CultureInfo.InvariantCulture);
 

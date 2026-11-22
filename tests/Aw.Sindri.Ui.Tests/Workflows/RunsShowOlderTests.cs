@@ -133,7 +133,7 @@ public sealed class RunsShowOlderTests
         gate.SetResult();
         await loading;
 
-        Assert.Single(_f.Server.WorkflowRunsPages);
+        _ = Assert.Single(_f.Server.WorkflowRunsPages);
         Assert.Equal(["5", "4", "3"], Ids(runs), StringComparer.Ordinal);
         Assert.False(runs.IsLoadingMore);
     }

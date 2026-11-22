@@ -49,7 +49,7 @@ internal sealed partial class RunsViewModel
         Result<WorkflowRunList> page;
         try
         {
-            page = await Api.WorkflowRunsPage(url, slug, _newest.Count + _older.Count, cancellationToken).ConfigureAwait(true);
+            page = await _api.WorkflowRunsPage(url, slug, _newest.Count + _older.Count, cancellationToken).ConfigureAwait(true);
         }
         finally
         {
@@ -67,18 +67,24 @@ internal sealed partial class RunsViewModel
             return;
         }
 
+        Append(page.Value);
+    }
+
+    // An older page landed: its runs not shown yet go under the rows, and the button follows this page.
+    private void Append(WorkflowRunList page)
+    {
         var shown = Known();
-        foreach (var run in page.Value.Runs)
+        foreach (var run in page.Runs)
         {
             if (shown.Add(run.Id))
             {
                 _older.Add(run);
-                Rows.Add(new RunRowViewModel(run, Clock));
+                Rows.Add(new RunRowViewModel(run, _clock));
             }
         }
 
-        _olderMore = page.Value.More;
-        HasMore = page.Value.More;
+        _olderMore = page.More;
+        HasMore = page.More;
         Recount();
     }
 
@@ -92,7 +98,7 @@ internal sealed partial class RunsViewModel
             _older = [.. _newest.Concat(_older).Where(r => onTop.Add(r.Id))];
             foreach (var run in _older)
             {
-                Rows.Add(new RunRowViewModel(run, Clock));
+                Rows.Add(new RunRowViewModel(run, _clock));
             }
         }
 
