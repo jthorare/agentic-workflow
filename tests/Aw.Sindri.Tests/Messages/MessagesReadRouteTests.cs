@@ -53,7 +53,7 @@ public sealed class MessagesReadRouteTests
         Answer answer;
         using (AsSession())
         {
-        answer = await host.Http.Ask(Get("/sindri/messages/lists/needs-reply", Human(host.Token.Value)));
+            answer = await host.Http.Ask(Get("/sindri/messages/lists/needs-reply", Human(host.Token.Value)));
         }
 
         Assert.Equal(HttpStatusCode.OK, answer.Status);

@@ -18,6 +18,7 @@ export HOME="$WORK/home"; mkdir -p "$HOME"
 export AW_STATE_DIR="$WORK/state"
 export AW_SINDRI_HOME="$WORK/sindri"
 unset AW_JUDGE_CHILD AW_SINDRI_CHILD
+for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done   # a meta lane caller's AW_META_* would steer the adapters' lane hooks; CI has none (#3818)
 FT="$AW_SINDRI_HOME/fix-tasks"
 
 sha() { printf '%s' "$1" | { sha256sum 2> /dev/null || shasum -a 256; } | cut -d' ' -f1; }

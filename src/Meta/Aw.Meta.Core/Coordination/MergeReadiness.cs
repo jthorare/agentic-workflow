@@ -158,7 +158,7 @@ public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCom
         return new MergeAssessment(team, [.. MergeGate.Evaluate(facts), State(view)], view);
     }
 
-    // Null when the team has no reviewer lane.
+    // Null when the team has no reviewer lane. The review mode rides along, so the merge gate knows whether an OK is needed.
     private async ValueTask<Result<ReviewFacts?>> Review(TeamConfig team, int pr, CancellationToken cancellationToken)
     {
         if (team.Review is not { } review)
@@ -167,7 +167,9 @@ public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCom
         }
 
         var all = await messages.Messages(cancellationToken).ConfigureAwait(false);
-        return all.IsError ? all.Error : Results.Success<ReviewFacts?>(ReviewProof.Collect(all.Value, $"{team.Team}-{review.Lane}", pr));
+        return all.IsError
+            ? all.Error
+            : Results.Success<ReviewFacts?>(ReviewProof.Collect(all.Value, $"{team.Team}-{review.Lane}", pr) with { CountsMode = review.IsCounts });
     }
 
     private static MergeAssessment NeverGated(TeamConfig team, int pr) =>

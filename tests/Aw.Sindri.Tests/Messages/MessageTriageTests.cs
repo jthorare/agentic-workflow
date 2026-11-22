@@ -83,7 +83,11 @@ public sealed class MessageTriageTests
             ("a read mark never drops it", Sam(), true),
         ];
 
-        Assert.All(cases, c => Assert.True(c.Expected == MessageTriage.NeedsReply(c.Row), c.Why));
+        // a plain loop, not Assert.All: Assert.All wraps the stub's NotSupportedException, and RedUntil would then fail the test where it should skip it
+        foreach (var c in cases)
+        {
+            Assert.True(c.Expected == MessageTriage.NeedsReply(c.Row), c.Why);
+        }
     });
 
     [Fact]
