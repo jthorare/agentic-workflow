@@ -67,6 +67,21 @@ public sealed class ClaudeTranscriptTests : IDisposable
     }
 
     [Fact]
+    public async Task A_line_of_an_unknown_shape_is_counted_as_skipped()
+    {
+        var read = await Read(
+            ClaudeLines.User("before", _t),
+            """{"foo":1}""",
+            """{"type":"user","timestamp":"2026-11-03T09:00:01.000Z","message":{"content":42}}""",
+            """{"type":"assistant","timestamp":"2026-11-03T09:00:02.000Z"}""",
+            ClaudeLines.Bookkeeping(),
+            ClaudeLines.User("after", _t.AddSeconds(5)));
+
+        Assert.Equal(["before", "after"], read.Turns.Select(t => t.Text), StringComparer.Ordinal);
+        Assert.Equal(3, read.SkippedLines);
+    }
+
+    [Fact]
     public async Task Secrets_in_turn_text_are_scrubbed()
     {
         const string Key = "ghp_" + "abcdefghijklmnopqrstuvwxyz0123456789";
