@@ -147,7 +147,8 @@ internal sealed partial class SqliteMessagesStore
             var conversation = reader.GetString(2);
             var root = reader.GetString(3);
             var newestIsMine = reader.GetInt64(8) == 1;
-            return new ThreadRow(Key(reader.GetString(0), dm, conversation, root), KindOf(kind), conversation, new MessageTs(reader.GetString(4)))
+            var key = dm ? ThreadRow.DmKey(reader.GetString(0), conversation) : ThreadRow.ThreadKey(reader.GetString(0), conversation, new MessageTs(root));   // the same text the store's Key writes
+            return new ThreadRow(key, KindOf(kind), conversation, new MessageTs(reader.GetString(4)))
             {
                 Thread = dm ? null : new MessageTs(root),
                 Mine = Reason(dm, wrote: reader.GetInt64(5) == 1, namedMe: reader.GetInt64(6) == 1, followed: reader.GetInt64(7) == 1),

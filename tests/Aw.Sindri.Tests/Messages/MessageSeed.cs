@@ -21,9 +21,11 @@ internal static class MessageSeed
     public const string HarborKey = "slack:thread:T0HARBOR/C0HARBOR/1767771000.000100";
     public const string SamKey = "slack:dm:T0HARBOR/D0SAM";
     public const string LunchKey = "slack:thread:T0HARBOR/C0HARBOR/1767772000.000100";
+    public const string FerryNote = "1767773000.000100";
+    public const string FerryKey = "slack:thread:T0HARBOR/C0HARBOR/1767773000.000100";
 
     /// <summary>
-    /// Writes #harbor (Ada's thread naming me with Kim's reply, and Lee's lunch line), Sam's DM ask, Sam's user row, a star on Sam's DM and a gap of 12
+    /// Writes #harbor (Ada's thread naming me, with Kim's reply asking me a question, and Lee's lunch line), Sam's DM ask, Sam's user row, a star on Sam's DM and a gap of 12
     /// between Ada's thread and the lunch line.
     /// </summary>
     public static async Task Seed(IServiceProvider services, string home, CancellationToken ct)
@@ -38,7 +40,7 @@ internal static class MessageSeed
                 ReplyCount = 1,
                 LatestReplyTs = new MessageTs(KimReply),
             },
-            new StoredMessage(Harbor, new MessageTs(KimReply), new MessageTs(AdaRoot), "U0KIM", "and the group path too", Mine: false, NamesMe: false),
+            new StoredMessage(Harbor, new MessageTs(KimReply), new MessageTs(AdaRoot), "U0KIM", "<@U0JOI> and the group path too?", Mine: false, NamesMe: true),
             new StoredMessage(Harbor, new MessageTs(LeeLunch), null, "U0LEE", "lunch Friday", Mine: false, NamesMe: false),
             new StoredMessage(Sam, new MessageTs(SamAsk), null, "U0SAM", "can you ship the fare table today?", Mine: false, NamesMe: false),
         ];

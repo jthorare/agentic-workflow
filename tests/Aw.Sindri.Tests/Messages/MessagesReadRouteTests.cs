@@ -1,9 +1,11 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Messages;
 using Aw.Sindri.Tests.ApiGoldens;
 using Aw.Sindri.Tests.Callers;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
+using Microsoft.Extensions.DependencyInjection;
 using static Aw.Sindri.Tests.Messages.MessageSeed;
 
 namespace Aw.Sindri.Tests.Messages;
@@ -46,6 +48,7 @@ public sealed class MessagesReadRouteTests
         Assert.Equal(HttpStatusCode.OK, answer.Status);
         Assert.Contains("\"rows\"", answer.Body, StringComparison.Ordinal);
         Assert.Equal([SamKey, HarborKey], Keys(answer), StringComparer.Ordinal);
+        Assert.All(JsonNode.Parse(answer.Body)!["rows"]!.AsArray(), r => Assert.Equal(string.Empty, (string)r!["newestText"]!));
         Assert.All(_text, t => Assert.DoesNotContain(t, answer.Body, StringComparison.Ordinal));
     }
 
@@ -80,6 +83,21 @@ public sealed class MessagesReadRouteTests
         Assert.Equal(2, (int)body["count"]!);
         Assert.Null(body["next"]);
         Assert.Equal("can you ship the fare table today?", (string)body["rows"]![0]!["newestText"]!);
+    }
+
+    [Fact]
+    public async Task Needs_reply_holds_class_3_rows_only_and_leaves_an_fyi_mention_in_unread()
+    {
+        await using var host = await Seeded();
+        _ = await host.App.Services.GetRequiredService<IMessagesStore>().PutMessages(
+            [new StoredMessage(Harbor, new MessageTs(FerryNote), null, "U0ADA", "<@U0JOI> fyi the ferry moved", Mine: false, NamesMe: true)], Cancel);
+
+        var needsReply = await Read(host, "/sindri/messages/lists/needs-reply");
+        var unread = JsonNode.Parse((await Read(host, "/sindri/messages/lists/unread")).Body)!["rows"]!.AsArray();
+
+        Assert.Equal([SamKey, HarborKey], Keys(needsReply), StringComparer.Ordinal);
+        Assert.All(JsonNode.Parse(needsReply.Body)!["rows"]!.AsArray(), r => Assert.Equal("directQuestion", (string)r!["class"]!));
+        Assert.Equal("fyi", (string)unread.Single(r => string.Equals((string)r!["key"]!, FerryKey, StringComparison.Ordinal))!["class"]!);
     }
 
     [Fact]
@@ -164,7 +182,7 @@ public sealed class MessagesReadRouteTests
         var body = JsonNode.Parse(answer.Body)!;
 
         Assert.Equal(HttpStatusCode.OK, answer.Status);
-        Assert.Equal(AdaRoot, TsText(body["root"]!["ts"]!));
+        Assert.Equal(AdaRoot, (string)body["root"]!["ts"]!);
         Assert.Equal([KimReply], Ts(body["replies"]!), StringComparer.Ordinal);
         Assert.Equal(HarborKey, (string)body["row"]!["key"]!);
         Assert.Equal(LunchKey, (string)JsonNode.Parse(quiet.Body)!["row"]!["key"]!);   // not mine, but unread
@@ -195,8 +213,5 @@ public sealed class MessagesReadRouteTests
 
     private static List<string> Conversations(Answer answer) => [.. JsonNode.Parse(answer.Body)!["conversations"]!.AsArray().Select(c => (string)c!["conversation"]!)];
 
-    private static List<string> Ts(JsonNode lines) => [.. lines.AsArray().Select(l => TsText(l!["ts"]!))];
-
-    // a MessageTs is written as {"value": ts} until it gets a string converter; either shape reads
-    private static string TsText(JsonNode ts) => ts is JsonValue ? (string)ts : (string)ts["value"]!;
+    private static List<string> Ts(JsonNode lines) => [.. lines.AsArray().Select(l => (string)l!["ts"]!)];
 }
