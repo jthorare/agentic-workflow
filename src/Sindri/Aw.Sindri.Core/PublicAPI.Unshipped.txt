@@ -24066,3 +24066,126 @@ static Aw.Sindri.Core.Messages.MessagesConnection.Config(string! workspace, stri
 static Aw.Sindri.Core.Messages.SlackBaseUrlRule.Resolve(string? overrideUrl, string? marker, string! token) -> System.Uri!
 static Aw.Sindri.Core.Messages.SlackBaseUrlRule.Slack.get -> System.Uri!
 const Aw.Sindri.Core.Events.EventTypes.MessagesSynced = "messages.synced" -> string!
+Aw.Sindri.Core.Messages.StoredConversation
+Aw.Sindri.Core.Messages.StoredConversation.Workspace.get -> string!
+Aw.Sindri.Core.Messages.StoredConversation.Workspace.init -> void
+Aw.Sindri.Core.Messages.StoredConversation.Id.get -> string!
+Aw.Sindri.Core.Messages.StoredConversation.Id.init -> void
+Aw.Sindri.Core.Messages.StoredConversation.Kind.get -> Aw.Sindri.Core.Messages.ConversationKind
+Aw.Sindri.Core.Messages.StoredConversation.Kind.init -> void
+Aw.Sindri.Core.Messages.StoredConversation.Name.get -> string!
+Aw.Sindri.Core.Messages.StoredConversation.Name.init -> void
+Aw.Sindri.Core.Messages.StoredConversation.ExtShared.get -> bool
+Aw.Sindri.Core.Messages.StoredConversation.ExtShared.init -> void
+Aw.Sindri.Core.Messages.StoredConversation.<Clone>$() -> Aw.Sindri.Core.Messages.StoredConversation!
+Aw.Sindri.Core.Messages.StoredConversation.Deconstruct(out string! Workspace, out string! Id, out Aw.Sindri.Core.Messages.ConversationKind Kind, out string! Name, out bool ExtShared) -> void
+Aw.Sindri.Core.Messages.StoredConversation.Equals(Aw.Sindri.Core.Messages.StoredConversation? other) -> bool
+Aw.Sindri.Core.Messages.StoredConversation.StoredConversation(string! Workspace, string! Id, Aw.Sindri.Core.Messages.ConversationKind Kind, string! Name, bool ExtShared) -> void
+override Aw.Sindri.Core.Messages.StoredConversation.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Messages.StoredConversation.GetHashCode() -> int
+override Aw.Sindri.Core.Messages.StoredConversation.ToString() -> string!
+static Aw.Sindri.Core.Messages.StoredConversation.operator !=(Aw.Sindri.Core.Messages.StoredConversation? left, Aw.Sindri.Core.Messages.StoredConversation? right) -> bool
+static Aw.Sindri.Core.Messages.StoredConversation.operator ==(Aw.Sindri.Core.Messages.StoredConversation? left, Aw.Sindri.Core.Messages.StoredConversation? right) -> bool
+Aw.Sindri.Core.Messages.StoredMessage
+Aw.Sindri.Core.Messages.StoredMessage.Conversation.get -> string!
+Aw.Sindri.Core.Messages.StoredMessage.Conversation.init -> void
+Aw.Sindri.Core.Messages.StoredMessage.Ts.get -> Aw.Sindri.Core.Messages.MessageTs
+Aw.Sindri.Core.Messages.StoredMessage.Ts.init -> void
+Aw.Sindri.Core.Messages.StoredMessage.ThreadTs.get -> Aw.Sindri.Core.Messages.MessageTs?
+Aw.Sindri.Core.Messages.StoredMessage.ThreadTs.init -> void
+Aw.Sindri.Core.Messages.StoredMessage.User.get -> string!
+Aw.Sindri.Core.Messages.StoredMessage.User.init -> void
+Aw.Sindri.Core.Messages.StoredMessage.Text.get -> string!
+Aw.Sindri.Core.Messages.StoredMessage.Text.init -> void
+Aw.Sindri.Core.Messages.StoredMessage.Mine.get -> bool
+Aw.Sindri.Core.Messages.StoredMessage.Mine.init -> void
+Aw.Sindri.Core.Messages.StoredMessage.NamesMe.get -> bool
+Aw.Sindri.Core.Messages.StoredMessage.NamesMe.init -> void
+Aw.Sindri.Core.Messages.StoredMessage.Subtype.get -> string?
+Aw.Sindri.Core.Messages.StoredMessage.Subtype.init -> void
+Aw.Sindri.Core.Messages.StoredMessage.EditedTs.get -> Aw.Sindri.Core.Messages.MessageTs?
+Aw.Sindri.Core.Messages.StoredMessage.EditedTs.init -> void
+Aw.Sindri.Core.Messages.StoredMessage.ReplyCount.get -> int
+Aw.Sindri.Core.Messages.StoredMessage.ReplyCount.init -> void
+Aw.Sindri.Core.Messages.StoredMessage.LatestReplyTs.get -> Aw.Sindri.Core.Messages.MessageTs?
+Aw.Sindri.Core.Messages.StoredMessage.LatestReplyTs.init -> void
+Aw.Sindri.Core.Messages.StoredMessage.Partial.get -> bool
+Aw.Sindri.Core.Messages.StoredMessage.Partial.init -> void
+Aw.Sindri.Core.Messages.StoredMessage.Blocks.get -> string?
+Aw.Sindri.Core.Messages.StoredMessage.Blocks.init -> void
+Aw.Sindri.Core.Messages.StoredMessage.Reactions.get -> string!
+Aw.Sindri.Core.Messages.StoredMessage.Reactions.init -> void
+Aw.Sindri.Core.Messages.StoredMessage.FileIds.get -> string!
+Aw.Sindri.Core.Messages.StoredMessage.FileIds.init -> void
+Aw.Sindri.Core.Messages.StoredMessage.<Clone>$() -> Aw.Sindri.Core.Messages.StoredMessage!
+Aw.Sindri.Core.Messages.StoredMessage.Deconstruct(out string! Conversation, out Aw.Sindri.Core.Messages.MessageTs Ts, out Aw.Sindri.Core.Messages.MessageTs? ThreadTs, out string! User, out string! Text, out bool Mine, out bool NamesMe) -> void
+Aw.Sindri.Core.Messages.StoredMessage.Equals(Aw.Sindri.Core.Messages.StoredMessage? other) -> bool
+Aw.Sindri.Core.Messages.StoredMessage.StoredMessage(string! Conversation, Aw.Sindri.Core.Messages.MessageTs Ts, Aw.Sindri.Core.Messages.MessageTs? ThreadTs, string! User, string! Text, bool Mine, bool NamesMe) -> void
+override Aw.Sindri.Core.Messages.StoredMessage.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Messages.StoredMessage.GetHashCode() -> int
+override Aw.Sindri.Core.Messages.StoredMessage.ToString() -> string!
+static Aw.Sindri.Core.Messages.StoredMessage.operator !=(Aw.Sindri.Core.Messages.StoredMessage? left, Aw.Sindri.Core.Messages.StoredMessage? right) -> bool
+static Aw.Sindri.Core.Messages.StoredMessage.operator ==(Aw.Sindri.Core.Messages.StoredMessage? left, Aw.Sindri.Core.Messages.StoredMessage? right) -> bool
+Aw.Sindri.Core.Messages.ThreadOwnerState
+Aw.Sindri.Core.Messages.ThreadOwnerState.Conversation.get -> string!
+Aw.Sindri.Core.Messages.ThreadOwnerState.Conversation.init -> void
+Aw.Sindri.Core.Messages.ThreadOwnerState.Thread.get -> Aw.Sindri.Core.Messages.MessageTs?
+Aw.Sindri.Core.Messages.ThreadOwnerState.Thread.init -> void
+Aw.Sindri.Core.Messages.ThreadOwnerState.Later.get -> bool
+Aw.Sindri.Core.Messages.ThreadOwnerState.Later.init -> void
+Aw.Sindri.Core.Messages.ThreadOwnerState.Follow.get -> bool
+Aw.Sindri.Core.Messages.ThreadOwnerState.Follow.init -> void
+Aw.Sindri.Core.Messages.ThreadOwnerState.<Clone>$() -> Aw.Sindri.Core.Messages.ThreadOwnerState!
+Aw.Sindri.Core.Messages.ThreadOwnerState.Deconstruct(out string! Conversation, out Aw.Sindri.Core.Messages.MessageTs? Thread, out bool Later, out bool Follow) -> void
+Aw.Sindri.Core.Messages.ThreadOwnerState.Equals(Aw.Sindri.Core.Messages.ThreadOwnerState? other) -> bool
+Aw.Sindri.Core.Messages.ThreadOwnerState.ThreadOwnerState(string! Conversation, Aw.Sindri.Core.Messages.MessageTs? Thread, bool Later, bool Follow) -> void
+override Aw.Sindri.Core.Messages.ThreadOwnerState.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Messages.ThreadOwnerState.GetHashCode() -> int
+override Aw.Sindri.Core.Messages.ThreadOwnerState.ToString() -> string!
+static Aw.Sindri.Core.Messages.ThreadOwnerState.operator !=(Aw.Sindri.Core.Messages.ThreadOwnerState? left, Aw.Sindri.Core.Messages.ThreadOwnerState? right) -> bool
+static Aw.Sindri.Core.Messages.ThreadOwnerState.operator ==(Aw.Sindri.Core.Messages.ThreadOwnerState? left, Aw.Sindri.Core.Messages.ThreadOwnerState? right) -> bool
+Aw.Sindri.Core.Messages.RetentionThread
+Aw.Sindri.Core.Messages.RetentionThread.Key.get -> string!
+Aw.Sindri.Core.Messages.RetentionThread.Key.init -> void
+Aw.Sindri.Core.Messages.RetentionThread.Conversation.get -> string!
+Aw.Sindri.Core.Messages.RetentionThread.Conversation.init -> void
+Aw.Sindri.Core.Messages.RetentionThread.Root.get -> string!
+Aw.Sindri.Core.Messages.RetentionThread.Root.init -> void
+Aw.Sindri.Core.Messages.RetentionThread.NeedsReply.get -> bool
+Aw.Sindri.Core.Messages.RetentionThread.NeedsReply.init -> void
+Aw.Sindri.Core.Messages.RetentionThread.OwnerState.get -> bool
+Aw.Sindri.Core.Messages.RetentionThread.OwnerState.init -> void
+Aw.Sindri.Core.Messages.RetentionThread.<Clone>$() -> Aw.Sindri.Core.Messages.RetentionThread!
+Aw.Sindri.Core.Messages.RetentionThread.Deconstruct(out string! Key, out string! Conversation, out string! Root, out bool NeedsReply, out bool OwnerState) -> void
+Aw.Sindri.Core.Messages.RetentionThread.Equals(Aw.Sindri.Core.Messages.RetentionThread? other) -> bool
+Aw.Sindri.Core.Messages.RetentionThread.RetentionThread(string! Key, string! Conversation, string! Root, bool NeedsReply, bool OwnerState) -> void
+override Aw.Sindri.Core.Messages.RetentionThread.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Messages.RetentionThread.GetHashCode() -> int
+override Aw.Sindri.Core.Messages.RetentionThread.ToString() -> string!
+static Aw.Sindri.Core.Messages.RetentionThread.operator !=(Aw.Sindri.Core.Messages.RetentionThread? left, Aw.Sindri.Core.Messages.RetentionThread? right) -> bool
+static Aw.Sindri.Core.Messages.RetentionThread.operator ==(Aw.Sindri.Core.Messages.RetentionThread? left, Aw.Sindri.Core.Messages.RetentionThread? right) -> bool
+Aw.Sindri.Core.Messages.RetentionOutcome
+Aw.Sindri.Core.Messages.RetentionOutcome.MessagesDeleted.get -> int
+Aw.Sindri.Core.Messages.RetentionOutcome.MessagesDeleted.init -> void
+Aw.Sindri.Core.Messages.RetentionOutcome.OutboxDeleted.get -> int
+Aw.Sindri.Core.Messages.RetentionOutcome.OutboxDeleted.init -> void
+Aw.Sindri.Core.Messages.RetentionOutcome.TextExpired.get -> int
+Aw.Sindri.Core.Messages.RetentionOutcome.TextExpired.init -> void
+Aw.Sindri.Core.Messages.RetentionOutcome.<Clone>$() -> Aw.Sindri.Core.Messages.RetentionOutcome!
+Aw.Sindri.Core.Messages.RetentionOutcome.Deconstruct(out int MessagesDeleted, out int OutboxDeleted, out int TextExpired) -> void
+Aw.Sindri.Core.Messages.RetentionOutcome.Equals(Aw.Sindri.Core.Messages.RetentionOutcome? other) -> bool
+Aw.Sindri.Core.Messages.RetentionOutcome.RetentionOutcome(int MessagesDeleted, int OutboxDeleted, int TextExpired) -> void
+override Aw.Sindri.Core.Messages.RetentionOutcome.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Messages.RetentionOutcome.GetHashCode() -> int
+override Aw.Sindri.Core.Messages.RetentionOutcome.ToString() -> string!
+static Aw.Sindri.Core.Messages.RetentionOutcome.operator !=(Aw.Sindri.Core.Messages.RetentionOutcome? left, Aw.Sindri.Core.Messages.RetentionOutcome? right) -> bool
+static Aw.Sindri.Core.Messages.RetentionOutcome.operator ==(Aw.Sindri.Core.Messages.RetentionOutcome? left, Aw.Sindri.Core.Messages.RetentionOutcome? right) -> bool
+Aw.Sindri.Core.Messages.IMessagesStore.PutConversation(Aw.Sindri.Core.Messages.StoredConversation! conversation, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Messages.IMessagesStore.PutMessages(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.StoredMessage!>! messages, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
+Aw.Sindri.Core.Messages.IMessagesStore.RemoveMessage(string! conversation, Aw.Sindri.Core.Messages.MessageTs ts, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
+Aw.Sindri.Core.Messages.IMessagesStore.PutThreadState(Aw.Sindri.Core.Messages.ThreadOwnerState! state, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Messages.IMessagesStore.RetentionThreads(Aw.Sindri.Core.Messages.MessageTs olderThan, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.RetentionThread!>!>!>
+Aw.Sindri.Core.Messages.IMessagesStore.Expire(Aw.Sindri.Core.Messages.MessageTs olderThan, Aw.Sindri.Core.Messages.MessageTs capOlderThan, System.DateTimeOffset outboxOlderThan, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.RetentionThread!>! keep, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Messages.RetentionOutcome!>!>
+Aw.Sindri.Core.Messages.IMessagesStore.Purge(string? conversation, bool ownerState, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+static readonly Aw.Sindri.Core.SindriErrors.MessagesStoreUnusable -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.MessagesConversationUnknown -> Aw.Kernel.ErrorDefinition!
