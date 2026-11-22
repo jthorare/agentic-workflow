@@ -32,7 +32,7 @@ public static class StepFailures
         var message = error[(at + Separator.Length)..];
         if (string.Equals(row.Code, _runnerMissing.Code, StringComparison.Ordinal) && Array.Exists(_runnerMissingLeads, lead => message.StartsWith(lead, StringComparison.Ordinal)))
         {
-            return new StepFailure(row.Code, _runnerMissing.Template, _runnerMissing.FixLabel, _runnerMissing.FixCommand, SecondaryLabel: null, error);
+            return new StepFailure(row.Code, step, _runnerMissing.Template, _runnerMissing.FixLabel, _runnerMissing.FixCommand, SecondaryLabel: null, error);
         }
 
         var values = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -46,9 +46,15 @@ public static class StepFailures
         }
 
         return Fills(row.Template, values)
-            ? new StepFailure(row.Code, FailureSentences.Say(row.Code, values), Label(row.FixLabel, step), row.FixCommand, Label(row.SecondaryLabel, step), error)
+            ? new StepFailure(row.Code, step, FailureSentences.Say(row.Code, values), Label(row.FixLabel, step), row.FixCommand, Label(row.SecondaryLabel, step), error)
             : null;
     }
+
+    /// <summary>The sentence and fix for a run's error ("node '&lt;id&gt;' failed: &lt;code&gt;: &lt;message&gt;", or a loop item's or a stranded continue's), for the run list.</summary>
+    /// <param name="error">The run's error as the engine wrote it.</param>
+    /// <param name="titles">Each node id of the revision the run walked to its title.</param>
+    /// <returns>The failure in words, or null when the error names no known step or its code has no sentence.</returns>
+    public static StepFailure? ForRun(string error, IReadOnlyDictionary<string, string> titles) => throw new NotSupportedException();
 
     // why: sindri-code-runner writes "<type>: <message>" for an exception the code threw; the type stays in Details, the owner reads the message
     private static string WithoutExceptionType(string message)

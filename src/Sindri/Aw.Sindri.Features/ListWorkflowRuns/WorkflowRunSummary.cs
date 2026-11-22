@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Aw.Sindri.Core.Graph.Ids;
 
 namespace Aw.Sindri.Features.ListWorkflowRuns;
@@ -10,4 +11,6 @@ namespace Aw.Sindri.Features.ListWorkflowRuns;
 /// <param name="StartedAt">When it was recorded.</param>
 /// <param name="EndedAt">When it ended, or null while it has not.</param>
 /// <param name="Error">Why it failed, or null.</param>
-internal sealed record WorkflowRunSummary(WorkflowRunId Id, int Revision, string Status, string Trigger, DateTimeOffset StartedAt, DateTimeOffset? EndedAt, string? Error);
+/// <param name="FailureSentence">A failed run's §6.1 sentence, naming the step by its title ("Check stopped: ..."); left out when the error has none (#3304).</param>
+internal sealed record WorkflowRunSummary(WorkflowRunId Id, int Revision, string Status, string Trigger, DateTimeOffset StartedAt, DateTimeOffset? EndedAt, string? Error,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? FailureSentence = null);

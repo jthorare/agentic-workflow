@@ -19,6 +19,7 @@ public sealed class StepFailuresTests
 
         Assert.NotNull(failure);
         Assert.Equal("SND-CODE-004", failure.Code);
+        Assert.Equal("Check", failure.Step);
         Assert.Equal("Check stopped: repo is 812 MB, over the 500 MB budget.", failure.Sentence);
         Assert.Equal("Open Check", failure.FixLabel);
         Assert.Equal(Error, failure.Detail);
@@ -152,4 +153,33 @@ public sealed class StepFailuresTests
     [InlineData("node 'check' failed: SND-CODE-004: boom")]
     public void An_error_with_no_row_gives_no_sentence(string error)
         => Assert.Null(StepFailures.Describe("Check", error));
+
+    private static readonly Dictionary<string, string> _titles = new(StringComparer.Ordinal) { ["check"] = "Check", ["bad"] = "Fetch page" };
+
+    [Fact]
+    public void A_run_error_names_the_failed_step_by_its_title_and_reads_as_its_sentence()
+    {
+        var failure = StepFailures.ForRun("node 'check' failed: " + "SND-CODE-004: InvalidOperationException: repo is 812 MB", _titles);
+
+        Assert.NotNull(failure);
+        Assert.Equal("Check", failure.Step);
+        Assert.Equal("Check stopped: repo is 812 MB.", failure.Sentence);
+    }
+
+    [Theory]
+    [InlineData("node 'bad' failed on item 1: SND-CODE-004: boom")]
+    [InlineData("node 'bad' failed on item 3 and has onFailure continue, but it has no 'out' edge to continue on: SND-CODE-004: boom")]
+    [InlineData("node 'bad' failed and has onFailure continue, but it has no 'out' edge to continue on: SND-CODE-004: boom")]
+    public void A_loop_or_continue_run_error_reads_as_the_step_sentence_too(string error)
+        => Assert.Equal("Fetch page stopped: boom.", StepFailures.ForRun(error, _titles)?.Sentence);
+
+    [Theory]
+    [InlineData("node 'gone' failed: SND-CODE-004: boom")]
+    [InlineData("node 'check' failed: SND-NOPE-999: boom")]
+    [InlineData("node 'check' failed: boom")]
+    [InlineData("the run was cancelled")]
+    [InlineData("node 'check")]
+    [InlineData("")]
+    public void A_run_error_with_no_known_step_or_code_gives_no_sentence(string error)
+        => Assert.Null(StepFailures.ForRun(error, _titles));
 }

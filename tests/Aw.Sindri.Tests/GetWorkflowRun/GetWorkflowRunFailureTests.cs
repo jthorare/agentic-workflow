@@ -48,6 +48,7 @@ public sealed class GetWorkflowRunFailureTests
 
         var failure = read.Nodes.Single(static n => n.Node.Value == "check").Failure;
         Assert.NotNull(failure);
+        Assert.Equal("Check", failure.Step);
         Assert.Equal("Check stopped: repo is 812 MB, over the 500 MB budget.", failure.Sentence);
         Assert.Equal("Open Check", failure.FixLabel);
         Assert.Equal(Threw, failure.Detail);
