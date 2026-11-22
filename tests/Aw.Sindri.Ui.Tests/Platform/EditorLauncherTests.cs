@@ -27,7 +27,7 @@ public sealed class EditorLauncherTests
     [Fact]
     public async Task A_configured_editor_gets_the_file_as_its_last_argument()
     {
-        var (launcher, inner, started) = Make(new EditorEnvironment(configured: null, visual: "code --wait", editor: null));
+        var (launcher, inner, started) = Make(new EditorEnvironment(Configured: null, Visual: "code --wait", Editor: null));
 
         Assert.True(await launcher.OpenFile(_file, Token));
 
@@ -43,7 +43,7 @@ public sealed class EditorLauncherTests
         {
             var odd = Path.Combine(dir.FullName, "a b;$(x)#.cs");
             await File.WriteAllTextAsync(odd, "x", Token);
-            var (launcher, _, started) = Make(new EditorEnvironment(configured: "vim", visual: null, editor: null));
+            var (launcher, _, started) = Make(new EditorEnvironment(Configured: "vim", Visual: null, Editor: null));
 
             Assert.True(await launcher.OpenFile(odd, Token));
 
@@ -58,7 +58,7 @@ public sealed class EditorLauncherTests
     [Fact]
     public async Task No_editor_set_opens_the_file_with_the_system_default()
     {
-        var (launcher, inner, started) = Make(new EditorEnvironment(configured: null, visual: null, editor: null));
+        var (launcher, inner, started) = Make(new EditorEnvironment(Configured: null, Visual: null, Editor: null));
 
         Assert.True(await launcher.OpenFile(_file, Token));
 
@@ -69,7 +69,7 @@ public sealed class EditorLauncherTests
     [Fact]
     public async Task An_editor_that_will_not_start_falls_back_to_the_system_default()
     {
-        var (launcher, inner, started) = Make(new EditorEnvironment(configured: null, visual: null, editor: "no-such-editor"), startWorks: false);
+        var (launcher, inner, started) = Make(new EditorEnvironment(Configured: null, Visual: null, Editor: "no-such-editor"), startWorks: false);
 
         Assert.True(await launcher.OpenFile(_file, Token));
 
@@ -80,7 +80,7 @@ public sealed class EditorLauncherTests
     [Fact]
     public async Task A_file_that_is_not_there_does_not_start_the_editor()
     {
-        var (launcher, _, started) = Make(new EditorEnvironment(configured: "code", visual: null, editor: null));
+        var (launcher, _, started) = Make(new EditorEnvironment(Configured: "code", Visual: null, Editor: null));
 
         Assert.False(await launcher.OpenFile(Path.Combine(Path.GetDirectoryName(_file)!, "missing-3715.ts"), Token));
 
@@ -90,7 +90,7 @@ public sealed class EditorLauncherTests
     [Fact]
     public async Task A_link_goes_straight_to_the_system_default()
     {
-        var (launcher, inner, started) = Make(new EditorEnvironment(configured: "code", visual: null, editor: null));
+        var (launcher, inner, started) = Make(new EditorEnvironment(Configured: "code", Visual: null, Editor: null));
 
         Assert.True(await launcher.OpenUri(new Uri("https://example.test/x"), Token));
 
