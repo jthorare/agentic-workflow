@@ -55,7 +55,7 @@ internal sealed partial class ContextPageViewModel
     // With the whole map ready the stage shows the whole map, not the lens, so it never draws nothing; a zoom that finds none of the answer says so itself (ContextWholeNoMatch).
     private void ShowAnswerFiles(bool fromQuestion)
     {
-        IReadOnlyList<AnswerFile> files = fromQuestion ? _askedFiles : [];
+        var files = fromQuestion ? _askedFiles : [];
         AnswerFiles = [.. files.Take(MaxAnswerFiles)];
         _answerFilesHidden = files.Count - AnswerFiles.Count;
         var drawsNothing = !Whole.IsReady && (Map is null || Map.Nodes.Count == 0);
