@@ -53,7 +53,7 @@ REAL_AWK="$(command -v awk)"
 export FAKE_MEM="$WORK/mem.kb"
 cat > "$STUB/awk" <<SHIM
 #!/usr/bin/env bash
-for a in "\$@"; do case "\$a" in *MemAvailable*) [ -f "\$FAKE_MEM" ] && { cat "\$FAKE_MEM"; exit 0; } ;; esac; done
+for a in "\$@"; do case "\$a" in *MemAvailable*) echo x >> "\$FAKE_MEM.reads"; [ -f "\$FAKE_MEM" ] && { cat "\$FAKE_MEM"; exit 0; } ;; esac; done
 exec "$REAL_AWK" "\$@"
 SHIM
 chmod +x "$STUB/systemd-run" "$STUB/dotnet" "$STUB/awk"
@@ -67,6 +67,7 @@ LIGHT="$LOCKS/heavy-light.lock"; BOX="$LOCKS/heavy-job.lock"
 # The stand-in live process lives as long as this suite (#3810: a `sleep 300` could end mid-suite on a loaded box and turn rows
 # red for the wrong reason). cleanup kills it by its recorded pid; if the suite is SIGKILLed it ends within a second on its own.
 (while kill -0 "$$" 2> /dev/null; do sleep 1; done) & live=$!; bgpids+=("$live")
+(while kill -0 "$$" 2> /dev/null; do sleep 1; done) & live2=$!; bgpids+=("$live2")   # a second live waiter
 true & dead=$!; wait "$dead"
 
 wait_for() { local i; for i in $(seq 1 100); do eval "$1" && return 0; sleep 0.1; done; return 1; }   # <= 10 s
@@ -143,6 +144,17 @@ check "held 3.5 s, a note every 1 s: the note is printed again" "$(yn '[ "$(grep
 check "the note names the waiter's pid and argv" "$(grep -c "box-wide job $live (\"x\")" "$RUN/out.n1" | sed 's/^[1-9][0-9]*$/some/')" "some"
 check "the note names slot 2, its floor and the MB available" "$(grep -c 'slot 2, which needs 10240 MB free; 5000 MB available' "$RUN/out.n1" | sed 's/^[1-9][0-9]*$/some/')" "some"
 
+# --- a new hold, or a hold for another waiter, prints its note at once (the real 300 s cadence; review of #3882) ---
+# The light pool is full, so the build keeps waiting for a slot after the hold ends.
+reset; echo 1 > "$STATE/heavy-light-cap"; fill_light; hold_box; box_waiter "$live"; mem_mb 5000
+job h1; wait_for 'grep -q "holding this build back" "$RUN/out.h1"'
+mem_mb 64000; sleep 2.5; mem_mb 5000; wait_for '[ "$(grep -c "holding this build back" "$RUN/out.h1")" -ge 2 ]'
+check "a hold that ends and starts again within 300 s prints a second note" "$(grep -c 'holding this build back' "$RUN/out.h1")" "2"
+reset; echo 1 > "$STATE/heavy-light-cap"; fill_light; hold_box; box_waiter "$live"; mem_mb 5000
+job h2; wait_for 'grep -q "box-wide job $live " "$RUN/out.h2"'
+box_waiter "$live2"; rm -f "$LOCKS/heavy-wait/$live"; wait_for 'grep -q "box-wide job $live2 " "$RUN/out.h2"'
+check "a hold for another waiter names that waiter at once" "$(yn 'grep -q "box-wide job $live2 " "$RUN/out.h2"')" "yes"
+
 reset; hold_box; box_waiter "$live"; mem_mb 5000
 job j1; wait_for 'waiting j1'
 check "held again before memory frees" "$(yn 'started j1')" "no"
@@ -202,6 +214,10 @@ check "meta: a held light build starts" "$(yn 'started m1')" "yes"
 reset; echo 1 > "$STATE/heavy-light-cap"; fill_light; JOB_ENV="AW_HEAVY_PRIORITY=meta"
 job m2; wait_for 'waiting m2'
 check "meta: the light pool still binds it" "$(yn 'started m2')" "no"
+
+# --- no box-wide waiter: the hold check reads no memory (review of #3882: no fork per pass without a waiter) ---
+reset; rm -f "$FAKE_MEM.reads"; job f1; wait_for 'started f1'
+check "a light build with no box-wide waiter reads MemAvailable 0 times" "$(cat "$FAKE_MEM.reads" 2> /dev/null | wc -l | tr -d ' ')" "0"
 
 # --- a held wait doesn't count toward the lock timeout; a pool wait does ---
 reset; hold_box; box_waiter "$live"; mem_mb 5000; SCRIPT="$ONE"
