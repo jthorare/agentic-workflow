@@ -17,7 +17,10 @@ public sealed class FakeSlackServerTests : IDisposable
     private readonly FakeSlackServer _server = new FakeSlackServer().SeedWorkspace();
     private readonly HttpClient _client;
 
-    public FakeSlackServerTests() => _client = new HttpClient(_server, disposeHandler: false);
+    public FakeSlackServerTests()
+    {
+        _client = new HttpClient(_server, disposeHandler: false);
+    }
 
     public void Dispose()
     {

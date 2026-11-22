@@ -37,7 +37,7 @@ public sealed class FakeSlackHostTests
             using var wait = CancellationTokenSource.CreateLinkedTokenSource(Ct);
             wait.CancelAfter(TimeSpan.FromSeconds(5));
             var refused = await Record.ExceptionAsync(async () => await socket.ConnectAsync(new IPEndPoint(other, host.BaseUrl.Port), wait.Token));
-            Assert.True(refused is SocketException or OperationCanceledException, other + " accepted a connection on the fake's port");
+            Assert.True(refused is SocketException or OperationCanceledException, other.ToString() + " accepted a connection on the fake's port");
         }
     }
 
