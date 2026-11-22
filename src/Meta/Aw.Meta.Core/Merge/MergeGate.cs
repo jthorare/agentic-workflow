@@ -7,6 +7,7 @@ namespace Aw.Meta.Core.Merge;
 public static class MergeGate
 {
     private const string NoGate = "no gate recorded for this pull request";
+    private const string NoCountLine = "the ready message has no \"N passed, M skipped, K failed\" line";
 
     /// <summary>Evaluates every precondition: gate, gate-result, head, main, order, draft. With no gate recorded and no reviewer
     /// lane, only the gate check. With a reviewer lane (<see cref="MergeFacts.Review"/>), the review path (review, ready, counts, order, draft) is
@@ -119,15 +120,34 @@ public static class MergeGate
                 ? new MergeCheck("ready", Ok: true, $"ready at {review.ReadySha}")
                 : new MergeCheck("ready", Ok: false, $"the newest ready is at {review.ReadySha}, the head is {facts.CurrentHead}");
         var failed = review.Counts.Where(c => c.Failed > 0).ToList();
-        // In review.mode counts a "(build only)" line stands in for a missing count line; a failed count still refuses next to it.
         var counts = failed.Count > 0
             ? new MergeCheck("counts", Ok: false, $"the ready message counts {failed.Sum(c => c.Failed).ToString(CultureInfo.InvariantCulture)} failed")
-            : review.Counts.Count > 0
-                ? new MergeCheck("counts", Ok: true, $"{review.Counts.Count.ToString(CultureInfo.InvariantCulture)} count line(s), 0 failed")
-                : review.CountsMode && review.BuildOnly
-                    ? new MergeCheck("counts", Ok: true, "build only, no test counts")
-                    : new MergeCheck("counts", Ok: false, "the ready message has no \"N passed, M skipped, K failed\" line");
+            : review.CountsMode
+                ? CountsModeCounts(review)
+                : review.Counts.Count > 0
+                    ? new MergeCheck("counts", Ok: true, $"{review.Counts.Count.ToString(CultureInfo.InvariantCulture)} count line(s), 0 failed")
+                    : new MergeCheck("counts", Ok: false, NoCountLine);
         return [ok, ready, counts, Order(facts), new MergeCheck("draft", !facts.IsDraft, facts.IsDraft ? "the pull request is a draft" : "ready for review")];
+    }
+
+    // review.mode counts, with no failed count: the ready message is the only proof, so its count lines must pass at least one
+    // test. A filtered run that matched nothing counts zero and refuses. A line that is exactly
+    // "0 passed, 0 skipped, 0 failed (build only)" stands in for the tests when the lane built and ran none (#3840).
+    private static MergeCheck CountsModeCounts(ReviewFacts review)
+    {
+        if (review.Counts.Sum(c => c.Passed) > 0)
+        {
+            return new MergeCheck("counts", Ok: true, $"{review.Counts.Count.ToString(CultureInfo.InvariantCulture)} count line(s), 0 failed");
+        }
+
+        if (review.BuildOnly)
+        {
+            return new MergeCheck("counts", Ok: true, "build only, no test counts");
+        }
+
+        return review.Counts.Count > 0
+            ? new MergeCheck("counts", Ok: false, $"the ready message's count lines total 0 passed; a lane that ran no test puts \"{ReviewProof.BuildOnlyLine}\" on a line of its own")
+            : new MergeCheck("counts", Ok: false, NoCountLine);
     }
 
     // The reviewer's standing OK must name the head; a qa line under it ("qa not yet", "qa passed <sha>") must say passed at the head.
