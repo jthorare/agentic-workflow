@@ -61,6 +61,11 @@ internal sealed partial class WorkflowGraphViewModel
         }
 
         Edges = BuildEdges(_spec, [.. Nodes]);
+        foreach (var edge in Edges)
+        {
+            edge.Route = GraphFit.Route(fit, edge.From, edge.To, edge.Start, edge.End);
+        }
+
         Ends = GraphEnds.Build([.. Nodes], Edges);
         return fit.Zoom;
     }
