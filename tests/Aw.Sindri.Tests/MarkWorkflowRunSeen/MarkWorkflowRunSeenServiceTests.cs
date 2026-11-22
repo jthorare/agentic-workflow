@@ -20,7 +20,10 @@ public sealed class MarkWorkflowRunSeenServiceTests
     private readonly FakeTimeProvider _clock = new(KnownInstants.Epoch);
     private readonly InMemoryWorkflowRunStore _runs;
 
-    public MarkWorkflowRunSeenServiceTests() => _runs = new InMemoryWorkflowRunStore(_clock);
+    public MarkWorkflowRunSeenServiceTests()
+    {
+        _runs = new InMemoryWorkflowRunStore(_clock);
+    }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
