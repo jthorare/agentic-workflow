@@ -255,10 +255,10 @@ public sealed class AgentsPageNeedsYouTests
         var jumped = page.Press("]");
         var afterJump = (page.Groups[0].IsExpanded, page.SelectedKey);
 
-        Assert.Equal((true, true, true), (head, jumped, afterJump.Item1));
+        Assert.Equal((true, true, true), (head, jumped, afterJump.IsExpanded));
         Assert.Equal((true, asking), afterHead);
-        Assert.Equal(asking, afterJump.Item2);
-        Assert.Equal([asking, asking], asked.Select(e => e.Key));
+        Assert.Equal(asking, afterJump.SelectedKey);
+        Assert.Equal([asking, asking], asked.Select(e => e.Key), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -276,8 +276,8 @@ public sealed class AgentsPageNeedsYouTests
         var fromSelected = page.LeaveSearch();
 
         Assert.Equal((true, true), (fromNone, fromSelected));
-        Assert.Equal([other], asked.Select(e => e.Key));
-        Assert.NotEqual(first, other);
+        Assert.Equal([other], asked.Select(e => e.Key), StringComparer.Ordinal);
+        Assert.NotEqual(first, other, StringComparer.Ordinal);
     }
 
     [Fact]
@@ -295,7 +295,7 @@ public sealed class AgentsPageNeedsYouTests
         var during = page.SelectedKey;
         page.SearchText = string.Empty;
 
-        Assert.NotEqual(zeta, during);
+        Assert.NotEqual(zeta, during, StringComparer.Ordinal);
         Assert.Equal(zeta, page.SelectedKey);
     }
 
