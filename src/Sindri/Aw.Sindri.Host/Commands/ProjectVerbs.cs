@@ -153,6 +153,11 @@ internal sealed class ProjectVerbs(ControlPlaneClient client, Output output, Fun
             _ = text.Append("  ").Append(ProjectWords.LevelWord(health.Level));
         }
 
+        if (truth.BlockedOnYou)
+        {
+            _ = text.Append("  blocked-on-you");
+        }
+
         return text.ToString();
     }
 
@@ -209,7 +214,7 @@ internal sealed class ProjectVerbs(ControlPlaneClient client, Output output, Fun
         foreach (var pr in truth.OpenPrs)
         {
             _ = text.Append("  PR ").Append(pr.Repo).Append('#').Append(pr.Number.ToString(CultureInfo.InvariantCulture)).Append("  ").Append(ProjectWords.PrWord(pr.State))
-                .Append("  ").Append(pr.DecidedAt is { } decided ? Instant(decided) : "-").Append("  ").Append(pr.WaitingOn ?? "-").Append("  ").AppendLine(pr.Url);
+                .Append("  ").Append(pr.DecidedAt is { } decided ? Instant(decided) : "-").Append("  ").Append(pr.WaitingOn ?? "-").Append("  ").Append(pr.Url).AppendLine(pr.WaitsOnYou ? "  waits-on-you" : string.Empty);
         }
     }
 

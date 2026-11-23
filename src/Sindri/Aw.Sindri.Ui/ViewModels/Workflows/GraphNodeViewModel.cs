@@ -28,8 +28,11 @@ internal sealed class GraphNodeViewModel : ObservableObject
     /// <summary>The node's id.</summary>
     public string Id { get; }
 
-    /// <summary>The title, or the id when the node has none.</summary>
+    /// <summary>Card line 1: the title, or the block's name when the node has none (never the id).</summary>
     public string Title { get; }
+
+    /// <summary>Card line 2: the step's one settings line (<see cref="GraphCardLine.Settings"/>); empty until the graph sets it.</summary>
+    public string Line { get; internal init; } = string.Empty;
 
     /// <summary>The block type, such as "run_agent".</summary>
     public string Type { get; }

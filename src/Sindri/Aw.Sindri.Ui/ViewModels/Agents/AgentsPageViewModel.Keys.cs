@@ -63,7 +63,7 @@ internal sealed partial class AgentsPageViewModel
         "Esc" => IsTerminalOpen && Terminal.Route("Esc") == TerminalKeyRoute.Handled,
         "Y" => Copied(),
         "N" => NewAgent(),
-        _ => false,
+        _ => NeedsKey(key),
     };
 
     // N opens the New agent form (agents spec §15.6); it writes nothing until Ctrl+Enter.
