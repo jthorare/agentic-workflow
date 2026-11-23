@@ -23,6 +23,7 @@ using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Registration;
 using Aw.Sindri.Infrastructure.Sandbox.Launch;
 using Aw.Sindri.Infrastructure.Workflows;
+using Aw.Transcripts.Infrastructure;
 
 namespace Aw.Sindri.Host;
 
@@ -53,6 +54,7 @@ internal static class Composition
             .AddContextInfrastructure(ContextEnvironment(environment))   // context engine: $AW_SINDRI_HOME/context (compose edge); pointers resolve here
             .AddCodeIndexFeatures()
             .AddCodeIndexInfrastructure(environment)   // the code index: $AW_SINDRI_HOME/code-index (compose edge)
+            .AddTranscriptsInfrastructure(environment)   // the local agent transcripts (compose edge): ~/.claude, ~/.codex, ~/.cursor and the agent homes, read-only
             .AddSlackConnectorFactory()
             .AddGitHubConnectorFactory()   // the source readers are built per token (owned-index spec §9.2), so only the factory; the Host adapter over IConnector is IndexSources/ConnectorFeed
             .AddConnectorsInfrastructure(environment)

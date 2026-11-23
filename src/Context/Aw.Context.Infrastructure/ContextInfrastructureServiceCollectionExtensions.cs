@@ -1,4 +1,5 @@
 using Aw.Context.Core.Code;
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Docs;
@@ -19,6 +20,7 @@ using Aw.Context.Core.Search;
 using Aw.Context.Core.Sync;
 using Aw.Context.Core.Trust;
 using Aw.Context.Core.Vectors;
+using Aw.Context.Infrastructure.ConceptAnswers;
 using Aw.Context.Infrastructure.ConceptScan;
 using Aw.Context.Infrastructure.ConceptSynthesis;
 using Aw.Context.Infrastructure.Docs;
@@ -68,7 +70,7 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<SqliteGraphStore>()
             .AddSingleton<IGraphStore>(sp => sp.GetRequiredService<SqliteGraphStore>())
             .AddSingleton<IProposalRuns>(sp => sp.GetRequiredService<SqliteGraphStore>())
-            .AddSingleton<IConceptHintStore, SqliteConceptHintStore>()
+            .AddSingleton<IConceptHintStore, SqliteConceptHintStore>().AddSingleton<IConceptAnswerStore, SqliteConceptAnswerStore>()
             .AddSingleton<IConceptSynthesisStore, SqliteConceptSynthesisStore>()
             .AddSingleton<IIntentStore, SqliteIntentStore>()
             .AddSingleton<IRecordStore, SqliteRecordStore>()
