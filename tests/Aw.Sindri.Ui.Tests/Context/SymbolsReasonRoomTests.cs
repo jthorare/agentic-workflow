@@ -15,7 +15,7 @@ namespace Aw.Sindri.Ui.Tests.Context;
 [Lane(TestLane.Unit)]
 public sealed class SymbolsReasonRoomTests
 {
-    private const string GraphOff = "only C# files get names: the code graph is off for this repo";
+    private const string GraphOff = "only C# files get names: the code graph is off in the profile (index.graph.enabled)";
 
     [Fact]
     public async Task Graph_off_with_no_rows_keeps_the_heading_short_and_says_why_under_the_table()

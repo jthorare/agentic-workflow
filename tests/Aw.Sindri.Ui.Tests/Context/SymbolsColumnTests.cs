@@ -30,8 +30,17 @@ public sealed class SymbolsColumnTests
     {
         var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false) with { Reason = "graph-off" });
 
-        Assert.Equal(("from 7c3e1a2", "only C# files get names: the code graph is off for this repo", false), (column.Caption, column.EmptyReason, column.Dimmed));
+        Assert.Equal(("from 7c3e1a2", "only C# files get names: the code graph is off in the profile (index.graph.enabled)", false), (column.Caption, column.EmptyReason, column.Dimmed));
         Assert.Equal("—", column.Cell("src/tabs/TabManager.ts"));
+    }
+
+    // #3862: a graph layer that is down is not one the profile turned off; the words name the other fix.
+    [Fact]
+    public void An_ok_index_with_the_graph_down_and_no_rows_says_graphify_is_missing_or_failed()
+    {
+        var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false) with { Reason = "graph-unavailable" });
+
+        Assert.Equal(("from 7c3e1a2", "only C# files get names: the code graph did not build, graphify is missing or failed (sindri doctor says which)", "only C# files get names: the code graph did not build, graphify is missing or failed (sindri doctor says which)"), (column.Caption, column.EmptyReason, column.NoRowTip));
     }
 
     [Fact]
