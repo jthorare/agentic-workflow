@@ -70,14 +70,21 @@ Optional, additive, in schema 1 (`schemas/launcher.schema.json`, `$defs.sessions
 | `sessions.pollSeconds` | 2 | Pass cadence, 1 to 30 |
 | `sessions.providers` | every catalog entry | Which agents to discover (`["claude-code", "codex"]`) |
 | `sessions.tmuxSockets` | `[]` | Extra absolute socket paths to read besides the ones found from processes |
-| `sessions.scope` | `all` | `all` lists every agent session the box runs. `own` lists only sessions on Sindri's own tmux sockets (`sindri`, `sindri-launch`) and sessions Sindri launched (`AW_SINDRI_LAUNCH` set) |
+| `sessions.scope` | `all` | `all` lists every agent session the box runs. `own` lists only sessions on a tmux socket under this home's own `tmux` folder (`$AW_SINDRI_HOME/tmux/`) and sessions whose `AW_SINDRI_LAUNCH` id is a launch record of this home |
 | `sessions.claudeSessionsDir` | `~/.claude/sessions` | For a relocated Claude config (`CLAUDE_CONFIG_DIR`) |
 
-`sessions.scope: own` is for a scratch Sindri home (UI proofs, owner checks, check scripts). A foreign tmux server (Warp, a
-team socket) and a foreign `claude` or `codex` process found through `/proc` give no row, so the Agents page is empty even
-when the box runs real lanes and a script can't click one. Any other value is refused (`SND-LAUNCH-011`) and the home
-falls back to `all` with a problem row. The filter sits in one place, `SessionScopeRules` in `Aw.Sindri.Features`, applied
-after host detection in `SessionDiscovery`.
+`sessions.scope: own` is for a scratch Sindri home (UI proofs, owner checks, check scripts). It compares the socket **path**,
+never the socket name or kind: a lane socket (`tmux -L sindri-v4`) and another home's `sindri` or `sindri-launch` socket
+are foreign, so they give no row. A foreign claude or codex process found through `/proc` gives no row either. Point the
+scratch home's tmux at its folder (`TMUX_TMPDIR=$AW_SINDRI_HOME/tmux`) for its sessions to count as own.
+
+Limits. The real launcher keeps its sockets in tmux's default folder today, so under `own` a session it launched there
+counts only through its launch record. The check reads this home's launch files once per pass, and an unreadable folder
+means no launched row. Paths are compared as text; a symlinked home folder is not resolved.
+
+An unknown value fails closed. `"scope": "onw"`, or any value but `"all"` in a `sessions` section that is otherwise
+invalid, is read as `own` and shows a problem row (`SND-LAUNCH-011`, 'sessions.scope is 'all' or 'own''). A launcher.json
+that is not valid JSON or has no `"schema": 1` still gives the defaults (`all`).
 
 The bash reader (`scripts/launcher-lib.sh`) refuses unknown keys, so CO-0 adds `sessions` to `x-aw-keys.root` and the
 reader accepts the key and ignores its content. An `aw-meta-launch` installed before this change refuses a file that
