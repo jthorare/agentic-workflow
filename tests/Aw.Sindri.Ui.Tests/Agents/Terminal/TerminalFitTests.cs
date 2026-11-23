@@ -127,7 +127,7 @@ public sealed class TerminalFitTests
         var socket = new FakeTerminalConnector { Script = [ReadyJson, FrameJson] };
         var session = new TerminalSession(socket, f.View, _ => { });
         var landed = false;
-        socket.BeforeSend = async _ =>
+        socket.BeforeSend = async message =>
         {
             if (!landed)
             {
