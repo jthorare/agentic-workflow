@@ -62,7 +62,8 @@ public sealed class SindriApiClientAgentStartTests
 
         var started = await fake.Start(_api, new StartAgentRequest("sindri", "codex", Prompt: null, Worktree: false, "act00000003"), Token);
 
-        Assert.Equal((["act00000003"], "starting", "sindri-act00000003"), (fake.Starts.Select(s => s.ActId).ToList(), started.Value.State, started.Value.Id));
+        Assert.Equal(["act00000003"], fake.Starts.Select(s => s.ActId), StringComparer.Ordinal);
+        Assert.Equal(("starting", "sindri-act00000003"), (started.Value.State, started.Value.Id));
     }
 
     private sealed class Canned(HttpStatusCode code, string body) : HttpMessageHandler

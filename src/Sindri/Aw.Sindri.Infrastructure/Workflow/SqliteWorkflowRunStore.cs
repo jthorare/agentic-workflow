@@ -12,7 +12,7 @@ namespace Aw.Sindri.Infrastructure.Workflow;
 /// <summary>'workflow_run' and 'workflow_node_run' in ledger.db (issue 2258, PR 6): the run id is the primary key, so a second insert of one id is refused. A read never creates or migrates the file.</summary>
 /// <param name="database">The ledger file.</param>
 /// <param name="clock">The clock the end times come from.</param>
-internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvider clock) : IWorkflowRunStore
+internal sealed partial class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvider clock) : IWorkflowRunStore
 {
     public ValueTask<Result<WorkflowRun>> Insert(WorkflowRun run, CancellationToken cancellationToken)
     {
@@ -98,6 +98,29 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
             }
 
             return oldest with { Status = WorkflowRunStatus.Running };
+        }, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(CancellationToken cancellationToken) =>
+        RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, [],
+            (session, token) => RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.FailedUnseen, static _ => { }), WorkflowRunMapper.Instance, token), cancellationToken);
+
+    public ValueTask<Result<WorkflowRun>> MarkSeen(WorkflowRunId id, DateTimeOffset at, CancellationToken cancellationToken) =>
+        RecipeSessions.Write(database, async ValueTask<Result<WorkflowRun>> (session, token) =>
+        {
+            var existing = await FindRun(session, id, token).ConfigureAwait(false);
+            if (existing.IsError || existing.Value is null)
+            {
+                return existing.IsError ? existing.Error : NotFound(id);
+            }
+
+            var marked = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.MarkSeen, c => c.Bind("$id", id.Value).Bind("$at", at)), token).ConfigureAwait(false);
+            if (marked.IsError)
+            {
+                return marked.Error;
+            }
+
+            var after = await FindRun(session, id, token).ConfigureAwait(false);
+            return after.IsError ? after.Error : after.Value ?? (Result<WorkflowRun>)NotFound(id);
         }, cancellationToken);
 
     public async ValueTask<Result<WorkflowRun>> Get(WorkflowRunId id, CancellationToken cancellationToken)
@@ -222,9 +245,9 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
     public ValueTask<Result<NodeRun>> RecordNodeRun(NodeRun nodeRun, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(nodeRun);
-        var input = NodeRunLimits.Cap(nodeRun.Input, out var inputCut);
+        var input = NodeRunLimits.Cap(nodeRun.Input, out _);   // why: a cut input is for display; 'Truncated' says only that the output was cut (#3896)
         var output = NodeRunLimits.Cap(nodeRun.Output, out var outputCut);
-        var stored = nodeRun with { Input = input, Output = output, Truncated = nodeRun.Truncated || inputCut || outputCut };
+        var stored = nodeRun with { Input = input, Output = output, Truncated = nodeRun.Truncated || outputCut };
         return RecipeSessions.Write(database, async ValueTask<Result<NodeRun>> (session, token) =>
         {
             var existing = await FindRun(session, stored.RunId, token).ConfigureAwait(false);
@@ -248,35 +271,6 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
     public ValueTask<Result<IReadOnlyList<NodeRun>>> NodeRunsForItem(WorkflowRunId id, int itemIndex, CancellationToken cancellationToken) =>
         RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, [],
             (session, token) => RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.SelectNodeRunsForItem, c => c.Bind("$run", id.Value).Bind("$item", itemIndex)), NodeRunMapper.Instance, token), cancellationToken);
-
-    private static async ValueTask<Result<GraphStartKind>> Decide(ISqliteSession session, WorkflowRun run, GraphConcurrency mode, CancellationToken token)
-    {
-        // why: a test run neither waits for a live run nor makes one wait (spec §3.2), so it is never counted against and never queued.
-        var inFlight = mode == GraphConcurrency.Unlimited || run.Mode == WorkflowRunMode.Test ? 0 : await CountInFlight(session, run.WorkflowId, token).ConfigureAwait(false);
-        if (inFlight < 0)
-        {
-            return SindriErrors.LedgerUnavailable.With("could not read the runs in flight");
-        }
-
-        var busy = inFlight > 0;
-        if (busy && mode == GraphConcurrency.OnePerWorkflow)
-        {
-            return GraphStartKind.Skipped;
-        }
-
-        var status = busy ? WorkflowRunStatus.Queued : WorkflowRunStatus.Running;
-        var inserted = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.InsertRun,
-            c => c.Bind("$id", run.Id.Value).Bind("$workflow", run.WorkflowId.Value).Bind("$revision", run.Revision).Bind("$trigger", run.Trigger)
-                .Bind("$status", RunStatusText.Of(status)).Bind("$outputs", run.Outputs).Bind("$error", run.Error)
-                .Bind("$item", run.ItemId?.Value).Bind("$at", run.StartedAt).Bind("$mode", run.Mode).Bind("$options", run.TestOptions), $"run {run.Id.Value}"), token).ConfigureAwait(false);
-        return inserted.IsError ? inserted.Error : busy ? GraphStartKind.Queued : GraphStartKind.Started;
-    }
-
-    private static async ValueTask<int> CountInFlight(ISqliteSession session, WorkflowId workflow, CancellationToken token)
-    {
-        var inFlight = await RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.LiveInFlight, c => c.Bind("$workflow", workflow.Value)), WorkflowRunMapper.Instance, token).ConfigureAwait(false);
-        return inFlight.IsError ? -1 : inFlight.Value.Count;
-    }
 
     private static ValueTask<Result<WorkflowRun?>> FindRun(ISqliteSession session, WorkflowRunId id, CancellationToken token) =>
         RecipeSessions.First(session, new SqlStatement(WorkflowRunSql.ById, c => c.Bind("$id", id.Value)), WorkflowRunMapper.Instance, token);

@@ -14,7 +14,7 @@ public sealed class GetQueueTests
 {
     private readonly ItemQueryHarness _q = new();
 
-    private GetQueueService Service() => new(_q.Views.Views, _q.Views.Progress, _q.Views.Slice.Callers);
+    private GetQueueService Service() => new(_q.Views.Views, _q.Views.Progress, _q.Views.Slice.Callers, _q.Views.Slice.Held);
 
     [Fact]
     public async Task GetQueue_groups_open_items_in_the_fixed_order_with_their_empty_text()

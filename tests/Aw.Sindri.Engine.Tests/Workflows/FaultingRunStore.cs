@@ -34,6 +34,10 @@ internal sealed class FaultingRunStore(IWorkflowRunStore inner) : IWorkflowRunSt
 
     public ValueTask<Result<int>> Count(WorkflowId workflow, CancellationToken cancellationToken) => inner.Count(workflow, cancellationToken);
 
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(CancellationToken cancellationToken) => inner.FailedUnseen(cancellationToken);
+
+    public ValueTask<Result<WorkflowRun>> MarkSeen(WorkflowRunId id, DateTimeOffset at, CancellationToken cancellationToken) => inner.MarkSeen(id, at, cancellationToken);
+
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Running(CancellationToken cancellationToken) => inner.Running(cancellationToken);
 
     public ValueTask<Result<IReadOnlyList<WorkflowId>>> QueuedWorkflows(CancellationToken cancellationToken) => inner.QueuedWorkflows(cancellationToken);

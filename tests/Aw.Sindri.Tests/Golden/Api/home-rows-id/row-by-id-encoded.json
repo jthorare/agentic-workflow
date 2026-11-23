@@ -1,0 +1,77 @@
+{
+  "asOf": {
+    "cursor": 1,
+    "ledgerHead": 1,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "row": {
+    "id": "gh:review:jthorare/agentic-workflow#3120",
+    "version": 1,
+    "kind": "review-requested",
+    "group": "needs-you",
+    "title": "Review requested: PR 3120",
+    "facts": [
+      {
+        "kind": "why",
+        "text": "blocks 2"
+      },
+      {
+        "kind": "object",
+        "text": "#3120"
+      },
+      {
+        "kind": "from",
+        "text": "Sam"
+      }
+    ],
+    "waitsOn": "you",
+    "since": "2026-11-12T07:30:00.0000000Z",
+    "rank": {
+      "blocks": 2,
+      "weight": 5,
+      "sinceRank": 1,
+      "position": 2
+    },
+    "blocksList": [
+      {
+        "id": "linear:issue:ENG-3055",
+        "title": "Issue 3055",
+        "via": "closes"
+      },
+      {
+        "id": "gh:pr:jthorare/agentic-workflow#3125",
+        "title": "PR 3125",
+        "via": "stacked"
+      }
+    ],
+    "links": [
+      {
+        "kind": "issue",
+        "id": "linear:issue:ENG-3055",
+        "title": "Issue 3055"
+      },
+      {
+        "kind": "pr",
+        "id": "gh:pr:jthorare/agentic-workflow#3125",
+        "title": "PR 3125"
+      }
+    ],
+    "state": "open",
+    "snoozeUntil": null,
+    "doneAt": null,
+    "actions": [
+      "open-review",
+      "approve",
+      "comment",
+      "request-changes"
+    ],
+    "source": {
+      "name": "github",
+      "readAt": "2026-11-12T09:10:00.0000000Z",
+      "connection": "jthorare"
+    },
+    "repo": "demo"
+  }
+}

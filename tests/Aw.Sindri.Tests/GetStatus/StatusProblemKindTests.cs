@@ -82,6 +82,16 @@ public sealed class StatusProblemKindTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task An_unreadable_answer_says_unreadable_not_invalid()
+    {
+        _h.Profiles.Live = SindriErrors.ProfileUnreadable.With("/home/thor/profile.yaml can't be read: Access to the path is denied.");
+
+        var status = (await Service(_h.Profiles, new NoApproval(), new FileProbe(exists: true)).Handle(new GetStatusRequest(), Token)).Value;
+
+        Assert.Equal("unreadable", status.Profile.ProblemKind);   // #3345
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_missing_answer_with_no_file_on_disk_says_missing()
     {
         _h.Profiles.Live = SindriErrors.ProfileMissing.With("/home/thor/profile.yaml doesn't exist");
@@ -110,6 +120,17 @@ public sealed class StatusProblemKindTests
         {
             File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
         }
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_directory_at_the_profile_path_says_unreadable_not_missing()
+    {
+        using var files = new ProfileFiles();
+        _ = Directory.CreateDirectory(files.Settings.ProfilePath);
+
+        var status = (await Service(files.Source, new NoApproval(), new FileProbe(File.Exists(files.Settings.ProfilePath))).Handle(new GetStatusRequest(), Token)).Value;
+
+        Assert.Equal("unreadable", status.Profile.ProblemKind);   // #3833
     }
 
     private sealed class FileProbe(bool exists) : IProfileFile

@@ -10,6 +10,7 @@ namespace Aw.Sindri.Features.ListWorkflowBlocks;
 /// <param name="Choices">A closed list of values, or null (left out of the JSON).</param>
 /// <param name="Presets">Open one-click shortcuts, or null (left out of the JSON).</param>
 /// <param name="Advanced">True when the editor hides the field until asked.</param>
+/// <param name="Services">Set when the field names a connection: the services whose connections fit it ('github'), empty for any connection; null otherwise (left out of the JSON; #3704).</param>
 internal sealed record BlockFieldView(
     string Name,
     string Type,
@@ -17,4 +18,5 @@ internal sealed record BlockFieldView(
     string Caption,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<BlockChoiceView>? Choices = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<BlockChoiceView>? Presets = null,
-    bool Advanced = false);
+    bool Advanced = false,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? Services = null);

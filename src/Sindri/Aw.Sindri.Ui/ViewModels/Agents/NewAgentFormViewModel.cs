@@ -77,9 +77,10 @@ internal sealed partial class NewAgentFormViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(repos);
         ArgumentNullException.ThrowIfNull(defaults);
+        var pickedName = Repo?.Name;   // before Repos changes: a ComboBox may write null into Repo when its items are swapped
         Repos = repos;
         _applyingDefault = true;
-        Repo = repos.FirstOrDefault(r => string.Equals(r.Name, Repo?.Name, StringComparison.Ordinal))
+        Repo = repos.FirstOrDefault(r => string.Equals(r.Name, pickedName, StringComparison.Ordinal))
             ?? repos.FirstOrDefault(r => string.Equals(r.Name, defaults.Repo, StringComparison.Ordinal))
             ?? (repos.Count > 0 ? repos[0] : null);
         if (!_defaultsTaken)
@@ -117,6 +118,11 @@ internal sealed partial class NewAgentFormViewModel : ObservableObject
         get;
         set
         {
+            if (value is null)
+            {
+                return;   // a binding may write null (on unload): the agent stays
+            }
+
             var before = field;
             var changed = !string.Equals(before?.Id, value.Id, StringComparison.Ordinal);
             Set(ref field, value);

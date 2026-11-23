@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Ids;
@@ -7,14 +8,15 @@ namespace Aw.Sindri.Infrastructure.Skills;
 
 internal static class SkillBlockServiceCollectionExtensions
 {
-    /// <summary>Loads the skills folder once, registers the 'step.skill.*' descriptors with the block catalog so recipes can name them, and the <see cref="ISkillBlocks"/> the API reads (skill flows spec §3.2).</summary>
+    /// <summary>Loads the skills folder once, registers the 'step.skill.*' descriptors with the block catalog so recipes can name them, and the <see cref="ISkillBlocks"/> the API reads (skill flows spec §3.2), and the skill catalog the 'skill_catalog' block reads.</summary>
     /// <param name="services">The service collection.</param>
     /// <param name="environment">Reads an environment variable.</param>
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddSkillBlocks(this IServiceCollection services, Func<string, string?> environment)
     {
         ArgumentNullException.ThrowIfNull(services);
-        var registry = new SkillBlockRegistry(SkillFolders.Resolve(environment, Directory.GetCurrentDirectory()));
+        var folder = SkillFolders.Resolve(environment, Directory.GetCurrentDirectory());
+        var registry = new SkillBlockRegistry(folder);
         foreach (var block in registry.Loaded)
         {
             _ = services.AddBlockDescriptor(block.Descriptor);
@@ -28,6 +30,7 @@ internal static class SkillBlockServiceCollectionExtensions
             }
         }
 
-        return services.AddSingleton<ISkillBlocks>(registry);
+        return services.AddSingleton<ISkillBlocks>(registry)
+            .AddSingleton<ISkillCatalogPort>(new FileSkillCatalog(folder));   // 'skill_catalog' (issue 3787, piece 4) reads the same skills folder
     }
 }

@@ -1,8 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.Threading;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.ViewModels.Workflows;
@@ -88,26 +87,37 @@ public sealed class GraphCanvasRelayoutTests
     {
         var graph = await Release();
 
-        var (fits, scrolls) = await OnUi(() =>
+        // The wheel step itself (GraphCanvas.Wheel), from a pan the test sets: the canvas's own pan after zooming is not what this fact is about.
+        var r = await OnUi(() => WheelSteps(graph));
+
+        Assert.False(r.AtFit, "the canvas took the wheel while the whole graph fits");
+        Assert.Equal(-100, r.Mid, 3);
+        Assert.True(r.TookDown, $"the canvas left a wheel down to the page while it can scroll down (pan y after each zoom step: {r.Path})");
+        Assert.Equal(-148, r.AfterDown, 3);   // one 48 px step down
+        Assert.Equal(0, r.AtTop, 3);
+        Assert.False(r.TookAtTop, "the canvas took a wheel up at its top edge instead of leaving it to the page");
+    }
+
+    [Fact]
+    public async Task Fit_after_the_canvas_got_shorter_fits_the_new_height()
+    {
+        var graph = await Release();
+
+        var (before, after, scrolls) = await OnUi(() =>
         {
             var canvas = new GraphCanvas { Graph = graph };
             var window = new Window { Content = canvas, Width = 1440, Height = 728 };
-            var handled = new List<bool>();
-            window.AddHandler(InputElement.PointerWheelChangedEvent, (_, e) => handled.Add(e.Handled), RoutingStrategies.Bubble, handledEventsToo: true);
             window.Show();
             Settle(window);
             try
             {
-                window.MouseWheel(new Point(200, 200), new Vector(0, -1));
-                var atFit = handled[^1];
-                for (var i = 0; i < 8; i++)
-                {
-                    canvas.ZoomIn();   // to 200 %, where the chain overflows the canvas both ways
-                }
-
+                var atFit = canvas.ZoomPercent;   // 100 %: the 16 steps are 456 px tall
+                canvas.ZoomIn();                  // the person moved the view, so the resize below does not refit by itself
+                window.Height = 420;
                 Settle(window);
-                window.MouseWheel(new Point(200, 200), new Vector(0, -1));
-                return (atFit, handled[^1]);
+                canvas.FitNow();
+                Settle(window);
+                return (atFit, canvas.ZoomPercent, canvas.Scrolls);
             }
             finally
             {
@@ -115,7 +125,47 @@ public sealed class GraphCanvasRelayoutTests
             }
         });
 
-        Assert.False(fits, "the canvas took the wheel while the whole graph fits");
-        Assert.True(scrolls, "the canvas left the wheel to the page while it can scroll");
+        Assert.Equal(100, before);
+        Assert.True(after < 100, "Fit kept the zoom it found for the taller canvas");
+        Assert.False(scrolls, "after Fit the graph does not fit the shorter canvas");
+    }
+
+    // At Fit, then at 200 % from pan y -100: one wheel down, wheel up to the top edge, one more wheel up. Also the pan y after each zoom step, for the failure message.
+    private static (bool AtFit, double Mid, bool TookDown, double AfterDown, double AtTop, bool TookAtTop, string Path) WheelSteps(WorkflowGraphViewModel graph)
+    {
+        var canvas = new GraphCanvas { Graph = graph };
+        var window = new Window { Content = canvas, Width = 1440, Height = 728 };
+        window.Show();
+        Settle(window);
+        try
+        {
+            var down = new Vector(0, -1);
+            var up = new Vector(0, 1);
+            var atFit = canvas.Wheel(down, KeyModifiers.None, new Point(200, 200));
+            var path = new List<double>();
+            for (var i = 0; i < 8; i++)
+            {
+                canvas.ZoomIn();   // to 200 %: the chain is 432 px tall, 864 at 200 % plus the map's 144, over a 728 px canvas
+                path.Add(canvas.Pan.Y);
+            }
+
+            Settle(window);
+            canvas.Pan = new Point(canvas.Pan.X, -100);   // inside [-280, 0]
+            var mid = canvas.Pan.Y;
+            var tookDown = canvas.Wheel(down, KeyModifiers.None, new Point(200, 200));
+            var afterDown = canvas.Pan.Y;
+            for (var i = 0; i < 10 && canvas.Pan.Y < 0; i++)
+            {
+                _ = canvas.Wheel(up, KeyModifiers.None, new Point(200, 200));
+            }
+
+            var atTop = canvas.Pan.Y;
+            var tookAtTop = canvas.Wheel(up, KeyModifiers.None, new Point(200, 200));
+            return (atFit, mid, tookDown, afterDown, atTop, tookAtTop, Path: string.Join(", ", path.Select(y => y.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))));
+        }
+        finally
+        {
+            window.Close();
+        }
     }
 }
