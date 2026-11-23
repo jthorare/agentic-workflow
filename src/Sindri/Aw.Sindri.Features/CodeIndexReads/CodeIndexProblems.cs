@@ -7,7 +7,7 @@ using Aw.Sindri.Core.Scheduling;
 namespace Aw.Sindri.Features.CodeIndexReads;
 
 /// <summary>
-/// The health row a repo's code index makes, if any (the Health card's words, code index spec §7.3): damaged, a build retrying after failures, a failed code graph, or an index behind main.
+/// The health row a repo's code index makes, if any (the Health card's words, code index spec §7.3): damaged, a build retrying after failures, a failed code graph, a first index that can never build (#3187), or an index behind main.
 /// Missing, building, queued under 30 min (a first build not started yet) and pending embeddings are not problems. At most one row a repo: damaged, then retrying, then unavailable, then queued too long, then stale.
 /// </summary>
 internal static class CodeIndexProblems
@@ -42,13 +42,27 @@ internal static class CodeIndexProblems
             return new(code, $"{repo}: code graph is unavailable", $"the code index for {repo} is unavailable");
         }
 
-        if (health.State == "queued" && health.QueuedFor >= TimeSpan.FromMinutes(QueuedLimitMinutes))
+        if (FirstBuild(health) is { } first)
         {
-            return new(CodeIndexErrors.IndexNotBuilt.Code, $"{repo}: the first code index build hasn't started in {QueuedLimitMinutes} min", $"the code index for {repo} hasn't started its first build");
+            return first;
         }
 
         return health.State == "stale"
             ? new(CodeIndexErrors.IndexBehind.Code, $"{repo}: code index is behind main; {StaleCause(health.Paused)}", $"the code index for {repo} is behind main")
+            : null;
+    }
+
+    // A first index that can never build (#3187) or that stays queued past the limit (#3440); null for one on its way.
+    private static HealthProblem? FirstBuild(RepoHealth health)
+    {
+        var repo = health.Repo;
+        if (health.State == "unbuildable")
+        {
+            return new(CodeIndexErrors.IndexNotBuilt.Code, $"{repo}: can't build a code index: no default branch to build from (no origin/HEAD, main or master); check out the default branch or fetch origin", $"the code index for {repo} has no default branch to build from");
+        }
+
+        return health.State == "queued" && health.QueuedFor >= TimeSpan.FromMinutes(QueuedLimitMinutes)
+            ? new(CodeIndexErrors.IndexNotBuilt.Code, $"{repo}: the first code index build hasn't started in {QueuedLimitMinutes} min", $"the code index for {repo} hasn't started its first build")
             : null;
     }
 

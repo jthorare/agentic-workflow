@@ -159,6 +159,9 @@ internal sealed class LedgerDatabase : IDisposable
     /// <summary>The first migration with 'workflow_run.seen_at' (Home spec §3.2, E1); the run store reads the column in every run query.</summary>
     internal const int RunSeenVersion = 22;
 
+    /// <summary>The first migration with 'workflow_node_run.started_at' and 'ended_at' and 'workflow.was_activated' (#3683); every workflow and node-run query reads them, so they are always on a file Sindri opens.</summary>
+    internal const int NodeTimesAndWasActivatedVersion = 23;
+
     private static IReadOnlyList<Migration> LoadMigrations()
     {
         var own = EmbeddedMigrations.Load(typeof(LedgerDatabase).Assembly, "Aw.Sindri.Infrastructure.Ledger.Migrations.").Value;

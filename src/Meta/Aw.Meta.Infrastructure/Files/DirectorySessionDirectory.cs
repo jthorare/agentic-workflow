@@ -51,7 +51,11 @@ internal sealed class DirectorySessionDirectory(string directory, IProcessLivene
                 return null;
             }
 
-            return new LiveSession(SessionId.From(id), Text(root, "name") ?? string.Empty, processId, Text(root, "status") ?? string.Empty, Text(root, "cwd") ?? string.Empty);
+            // A peer message carries the sender's socket as "uds:<messagingSocketPath>" (#4103).
+            return new LiveSession(SessionId.From(id), Text(root, "name") ?? string.Empty, processId, Text(root, "status") ?? string.Empty, Text(root, "cwd") ?? string.Empty)
+            {
+                Address = Text(root, "messagingSocketPath") is { Length: > 0 } socket ? "uds:" + socket : null,
+            };
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
         {

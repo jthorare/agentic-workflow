@@ -23,6 +23,7 @@ internal sealed partial class GraphCanvas
         var fitZoom = graph.Relayout(Bounds.Width, Bounds.Height, TextScale);
         _fitZoom = fitZoom;
         _laidOutWidth = Bounds.Width;
+        _laidOutHeight = Bounds.Height;
         _laidOutScale = TextScale;
         _laidOut = graph;
         if (_fitPending || wrapChanged)
@@ -34,6 +35,8 @@ internal sealed partial class GraphCanvas
         ViewChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    private double _laidOutHeight;   // the height the stored Fit zoom was found for: a new height needs a new Fit, which may wrap the cards differently
+
     private double _fitZoom = 1;   // the Fit zoom of the current layout: Fit goes back to it without laying the cards out again
 
     private bool CanFit => Graph is { Nodes.Count: > 0 } && Bounds.Width > 0 && Bounds.Height > 0;
@@ -43,7 +46,7 @@ internal sealed partial class GraphCanvas
     private void ShowFit(WorkflowGraphViewModel graph, double zoom)
     {
         Zoom = zoom;
-        Pan = default;
+        PanTo(default);
         _fitPending = true;
         if (graph.SelectedId is { } selected)
         {
@@ -63,6 +66,6 @@ internal sealed partial class GraphCanvas
         static double Shift(double near, double far, double size) =>
             near < 0 || far - near > size ? ViewMargin - near : far > size ? size - ViewMargin - far : 0;
 
-        Pan = new Point(Pan.X + Shift(card.Left, card.Right, Bounds.Width), Pan.Y + Shift(card.Top, card.Bottom, Bounds.Height));
+        PanTo(new Point(Pan.X + Shift(card.Left, card.Right, Bounds.Width), Pan.Y + Shift(card.Top, card.Bottom, Bounds.Height)));
     }
 }
