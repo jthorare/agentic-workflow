@@ -20,6 +20,8 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 [Lane(TestLane.Integration)]
 public sealed class ProjectsRowsFramesTests : FrameHost
 {
+    private static readonly string[] BarButtons = ["ProjectsSort", "ProjectsGroup", "ProjectsAdd"];
+
     private const string LongName = "Enterprise onboarding experience overhaul for every tenant and every region we sell in";
 
     private static JsonObject Truth(string? level) => new()
@@ -113,7 +115,7 @@ public sealed class ProjectsRowsFramesTests : FrameHost
     {
         var (window, _) = await OnProjects(width, height);
 
-        foreach (var name in new[] { "ProjectsSort", "ProjectsGroup", "ProjectsAdd" })
+        foreach (var name in BarButtons)
         {
             var right = Right(Named<Button>(window, name), window);
             Assert.True(right <= window.Bounds.Width, string.Create(CultureInfo.InvariantCulture, $"{name} ends at {right}, past the window's {window.Bounds.Width}"));
