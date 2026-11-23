@@ -26,6 +26,9 @@ internal sealed class LinearLineView : SelectableTextBlock
         Classes.Add("body");
     }
 
+    /// <summary>Styled as a SelectableTextBlock, so the theme and the `SelectableTextBlock.body` type class reach it (#3785).</summary>
+    protected override Type StyleKeyOverride => typeof(SelectableTextBlock);
+
     public LinearTextLine? Line
     {
         get => GetValue(LineProperty);

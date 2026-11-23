@@ -8,7 +8,7 @@ namespace Aw.Sindri.Ui.Tests.Architecture;
 public sealed class LaunchResultGuardTests
 {
     // The helper, the ILauncher contract, and the adapters that implement it.
-    private static readonly string[] _allowed = ["ViewModels/LinkLaunch.cs", "Platform/ILauncher.cs", "Platform/NullLauncher.cs", "Views/AvaloniaLauncher.cs"];
+    private static readonly string[] _allowed = ["ViewModels/LinkLaunch.cs", "Platform/ILauncher.cs", "Platform/NullLauncher.cs", "Platform/EditorLauncher.cs", "Views/AvaloniaLauncher.cs"];
 
     [Fact]
     public void No_code_calls_the_launcher_outside_the_helper()

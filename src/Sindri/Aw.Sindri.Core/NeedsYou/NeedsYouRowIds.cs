@@ -28,6 +28,11 @@ public static class NeedsYouRowIds
     /// <returns>The id.</returns>
     public static NeedsYouRowId WorkflowNotify(WorkflowRunId run, NodeId node) => NeedsYouRowId.From($"workflow-notify:{run.Value}:{node.Value}");
 
+    /// <summary>The row id of a failed run: one row per run.</summary>
+    /// <param name="run">The run.</param>
+    /// <returns>The id.</returns>
+    public static NeedsYouRowId RunFailed(WorkflowRunId run) => NeedsYouRowId.From("run-failed:" + run.Value);
+
     /// <summary>The row id of a graph 'ask_owner' node's question: one row per run and node, and per item for a node in a 'for_each' body.</summary>
     /// <param name="run">The run.</param>
     /// <param name="node">The 'ask_owner' node.</param>

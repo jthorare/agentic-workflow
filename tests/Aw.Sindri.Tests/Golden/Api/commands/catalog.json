@@ -1047,6 +1047,24 @@
       "confirm": null
     },
     {
+      "action": "MarkWorkflowRunSeen",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflow-runs/{run}/seen",
+      "cli": "sindri wf seen <run>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "MoveReadPointer:read",
       "class": "desk",
       "allowedCallers": [

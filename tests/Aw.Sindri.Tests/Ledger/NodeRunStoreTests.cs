@@ -55,4 +55,31 @@ public sealed class NodeRunStoreTests : IDisposable
             Assert.Equal(NodeRunLimits.PayloadBytes, Encoding.UTF8.GetByteCount(stored[1].Output!));
         }
     }
+
+    [Fact]
+    public async Task Node_input_over_the_cap_is_cut_but_leaves_the_output_unflagged()
+    {
+        // why: #3896, 'Truncated' says the OUTPUT was cut; a reference to a node whose input alone was cut must still read its output
+        var clock = new FakeTimeProvider(KnownInstants.Epoch);
+        var database = new LedgerDatabase(new SindriSettings(_home.Path, Path.Combine(_home.Path, "profile.yaml")), clock);
+        _databases.Add(database);
+        IWorkflowRunStore[] stores = [new SqliteWorkflowRunStore(database, clock), new InMemoryWorkflowRunStore(clock)];
+
+        foreach (var store in stores)
+        {
+            var run = new WorkflowRun(WorkflowRunId.From("big-input@1:1"), WorkflowId.From("WF-00000000000000000000000000000003"), 1, "{}",
+                WorkflowRunStatus.Running, Outputs: null, Error: null, ItemId: null, KnownInstants.Epoch, EndedAt: null);
+            _ = (await store.Insert(run, TestContext.Current.CancellationToken)).Value;
+            var big = new string('x', NodeRunLimits.PayloadBytes + 10);
+            var row = new NodeRun(run.Id, NodeId.From("shrink"), 0, NodeRunStatus.Succeeded, Input: big, Output: "{\"ok\":true}", Truncated: false, Error: null, Usage: null);
+
+            var written = (await store.RecordNodeRun(row, TestContext.Current.CancellationToken)).Value;
+
+            Assert.False(written.Truncated);
+            Assert.Equal(NodeRunLimits.PayloadBytes, Encoding.UTF8.GetByteCount(written.Input!));
+            var stored = (await store.NodeRuns(run.Id, TestContext.Current.CancellationToken)).Value.Single();
+            Assert.False(stored.Truncated);
+            Assert.Equal("{\"ok\":true}", stored.Output);
+        }
+    }
 }
