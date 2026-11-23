@@ -102,6 +102,12 @@
     <Setter Property="FontWeight" Value="{DynamicResource Type.DetailTitle.Weight}" />
     <Setter Property="LetterSpacing" Value="-0.24" />
   </Style>
+  <!-- Code reads as typed (#4087): JetBrains Mono joins "=>", "<=" and "!=" into one glyph through its 'calt' and 'liga'
+       features, so every mono text turns both off here (TextBox.typed-field does the same in ControlStyles). A feature list
+       is parsed from text when the XAML compiles, so it is a setter, not a DynamicResource token. -->
+  <Style Selector="TextBlock.mono, SelectableTextBlock.mono, TextBlock.kbd">
+    <Setter Property="FontFeatures" Value="-calt, -liga" />
+  </Style>
   <!-- Buttons whose content is a plain string: their text is a Button step, not Fluent's fixed 14. -->
   <Style Selector="Button">
     <Setter Property="FontSize" Value="{DynamicResource Type.Button.Size}" />
