@@ -23,12 +23,13 @@ public static class GraphTestBindings
         typeof(IRunningToolkits),
     };
 
-    /// <summary>The types that are read-only and run for real in a test: the clock, the sandboxed code runner, the result reader and the loop limits.</summary>
+    /// <summary>The types that are read-only and run for real in a test: the clock, the sandboxed code runner, the result reader, the loop limits and the skill catalog.</summary>
     public static IReadOnlySet<Type> ReadOnly { get; } = new HashSet<Type>
     {
         typeof(TimeProvider),
         typeof(ICodeRunPort),
         typeof(IGraphResultPort),
         typeof(IForEachLimitSource),
+        typeof(ISkillCatalogPort),
     };
 }

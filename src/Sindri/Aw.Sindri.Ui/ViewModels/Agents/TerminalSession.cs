@@ -1,6 +1,6 @@
-using Aw.Sindri.Ui.ViewModels.Agents;
+using Aw.Sindri.Ui.Terminal;
 
-namespace Aw.Sindri.Ui.Terminal;
+namespace Aw.Sindri.Ui.ViewModels.Agents;
 
 /// <summary>Joins an open socket to the terminal view's state and the pane's drawing: frames in, keys out (agents spec §15.3, #3382).</summary>
 // Continuations return to the caller's context (the UI thread), because each one changes the view model and draws.
