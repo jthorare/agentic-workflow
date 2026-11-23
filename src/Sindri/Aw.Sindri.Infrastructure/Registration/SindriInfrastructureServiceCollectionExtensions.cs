@@ -130,7 +130,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
 
     /// <summary>The home-lanes collector's read of the box's aw-meta team (home spec §3.3; deps.yaml Sindri to Meta, kind cli).</summary>
     private static IServiceCollection AddHomeReaders(this IServiceCollection services, Func<string, string?> environment) =>
-        services.AddSingleton<Core.Home.IMetaTeamReader>(_ => new Home.AwMetaTeamReader(new ProcessToolRunner(), environment));
+        services.AddSingleton<IMetaTeamReader>(_ => new Home.AwMetaTeamReader(new ProcessToolRunner(), environment));
 
     private static IServiceCollection AddScopingInfrastructure(this IServiceCollection services) =>
         services.AddSingleton<IForgeRepos>(sp => new GitForgeRepos(new ProcessToolRunner(), sp.GetRequiredService<IApprovedProfile>()))
