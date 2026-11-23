@@ -124,6 +124,7 @@ public sealed class ProjectsPageTests
             ["source"] = "github-login",
             ["state"] = "ok",
             ["text"] = "not known: connect GitHub or set review.login to see what is blocked on you",
+            ["at"] = null,   // served as null: the row has no sync time
         });
         _f.Serve(list);
 
