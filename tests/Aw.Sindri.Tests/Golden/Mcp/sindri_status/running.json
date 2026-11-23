@@ -144,13 +144,13 @@
       "more": false,
       "lists": {
         "services": {
-          "total": 19,
+          "total": 20,
           "more": false
         }
       }
     }
   },
   "content": [
-    "sindri <build>, port <port>: running, health healthy, views fresh, 19 services"
+    "sindri <build>, port <port>: running, health healthy, views fresh, 20 services"
   ]
 }
