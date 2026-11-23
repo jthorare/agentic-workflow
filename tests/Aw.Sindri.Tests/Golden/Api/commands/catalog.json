@@ -454,6 +454,24 @@
       "confirm": null
     },
     {
+      "action": "ConnectMessages",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/messages/connect",
+      "cli": "sindri messages connect [--manifest]",
+      "ui": "pending:M1d",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "CreateHandoffItem",
       "class": "desk",
       "allowedCallers": [
@@ -917,6 +935,42 @@
       "confirm": null
     },
     {
+      "action": "MarkAllRead:read",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/messages/lists/unread/read",
+      "cli": "sindri messages read --all",
+      "ui": "pending:M1h",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "MarkAllRead:unread",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/messages/lists/unread/unread",
+      "cli": "sindri messages unread --all",
+      "ui": "pending:M1h",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "MarkTodo:done",
       "class": "request",
       "allowedCallers": [
@@ -1005,6 +1059,42 @@
       "route": "/sindri/workflow-runs/{run}/seen",
       "cli": "sindri wf seen <run>",
       "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "MoveReadPointer:read",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/messages/conversations/{id}/read",
+      "cli": "sindri messages read <conversation> <ts>",
+      "ui": "pending:M1h",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "MoveReadPointer:unread",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/messages/conversations/{id}/unread",
+      "cli": "sindri messages unread <conversation> <ts>",
+      "ui": "pending:M1h",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -1535,8 +1625,8 @@
       "terminal": false,
       "method": "POST",
       "route": "/sindri/restart",
-      "cli": "sindri restart [--wait]",
-      "ui": "pending:FR2",
+      "cli": "sindri restart [--wait] [--timeout <duration>]",
+      "ui": "ready",
       "destructive": true,
       "readsViews": false,
       "shortcut": null,

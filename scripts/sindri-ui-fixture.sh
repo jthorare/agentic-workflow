@@ -25,6 +25,14 @@
 #                                  real routes): one overdue, two due today, three upcoming (tomorrow twice, a weekday, a MM-dd), three with no
 #                                  date, links on four (one with a PR and a Linear issue), and the last one marked done. Each add carries a fixed
 #                                  --client-id (ui-fixture-todo-NN), so a repeat adds nothing and marks nothing done twice
+#   sindri-ui-fixture.sh home [clear]  (run after 'up'; needs jq and sqlite3 or python3)
+#                                  the Home page's data (home spec §15, S0): one home.row.raised event per row of tests/fixtures/home/rows.json
+#                                  (the spec's §4.2 example: meta, review 3120, ready 3099, ideas, ready 3101 and Sam's DM), with the edges of
+#                                  each row's blocksList, written to <home>/ledger.db like 'stall' writes its row; the projector fills home_rows
+#                                  and home_links from them, so 'sindri views rebuild' replays the same rows. Each event has a fixed id and
+#                                  idempotency key (sindri-ui-fixture:home:raised:<row id>), so a repeat adds nothing. 'clear' deletes those
+#                                  events again (then 'sindri views rebuild' empties Home). The row payloads are the home.row.raised
+#                                  payload of the Home spec §3: { row, edges: [{ from, to, edge }] }
 #   sindri-ui-fixture.sh decide <DEC-id> <choice>
 #                                  decide at the CLI (sindri decide, as the owner): with the app open on the same
 #                                  decision, the app's own Decide is then refused (SND-ITEM-409)
@@ -1507,6 +1515,34 @@ sandbox() { # $1 state, $2 item, $3 instance
   printf '%s\n' "$instance"
 }
 
+# $1 key suffix, $2 type, $3 payload JSON: one fixed-id ledger row of the Home fixture, INSERT OR IGNORE on its key (see publish_event).
+home_event() {
+  local key="sindri-ui-fixture:home:$1" id corr payload="${3//\'/\'\'}"
+  id="$(printf '%s' "$key" | cksum | awk '{printf "5d0f1e02-%04x-4d1e-9a55-3c2f6d8e1b06", $1 % 65536}')"
+  corr="${id%?}7"
+  ledger "INSERT OR IGNORE INTO events (id, type, schema_version, occurred_at, actor, tenant, ring, correlation_id, epoch, idempotency_key, payload_json)
+          VALUES ('$id', '$2', 1, strftime('%Y-%m-%dT%H:%M:%S', 'now') || '.0000000Z', 'sindri-ui-fixture', 'local', 0, '$corr',
+                  COALESCE((SELECT MAX(epoch) FROM events), 0), '$key', '$payload');" >/dev/null
+}
+
+home() {
+  need jq
+  need_sql
+  if [ "${1:-}" = clear ]; then
+    ledger "DELETE FROM events WHERE idempotency_key LIKE 'sindri-ui-fixture:home:%'; SELECT changes() || ' row(s) removed';"
+    return
+  fi
+
+  local rows="$ROOT/tests/fixtures/home/rows.json" payload id n=0
+  [ -f "$rows" ] || die "home: no fixture rows at $rows"
+  while IFS= read -r payload; do
+    id="$(jq -r '.row.id' <<< "$payload")"
+    home_event "raised:$id" home.row.raised "$payload" || return
+    n=$((n + 1))
+  done < <(jq -c '.rows[] | . as $r | {row: $r, edges: [$r.blocksList[] | {from: $r.id, to: .id, edge: .via}]}' "$rows")
+  printf '%s home.row.raised event(s) in the ledger\n' "$n"
+}
+
 verb="${1:-}"
 case "$verb" in
   -h | --help) usage; exit 0 ;;
@@ -1518,6 +1554,7 @@ case "$verb" in
   projects) [ "$#" -eq 1 ] || die "'projects' takes no arguments" ;;
   linear-catchup) { [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && case "$2" in empty | typical | error | read-error) true ;; *) false ;; esac; }; } || die "usage: linear-catchup [empty|typical|error|read-error]" ;;
   todos) [ "$#" -eq 1 ] || die "'todos' takes no arguments" ;;
+  home) [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && [ "$2" = clear ]; } || die "usage: home [clear]" ;;
   resources) [ "$#" -eq 1 ] || die "'resources' takes no arguments" ;;
   connections) { [ "$#" -eq 2 ] && case "$2" in empty | typical | error | down) true ;; *) false ;; esac; } || die "usage: connections empty|typical|error|down" ;;
   reviews) { [ "$#" -eq 2 ] && { [ "$2" = up ] || [ "$2" = down ]; }; } || die "usage: reviews up|down" ;;

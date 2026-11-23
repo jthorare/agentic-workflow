@@ -10,7 +10,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/context-lib.sh"
 ctx_init ux-c4-clear-focus
 ctx_start 1280 900
 
-"$DRIVER" type --name "Ask or look up" --value "zzzz" --replace >/dev/null 2>&1 || setup_fail "could not type into the search box"
+"$DRIVER" type --name "Ask a question" --value "zzzz" --replace >/dev/null 2>&1 || setup_fail "could not type into the search box"
 "$DRIVER" wait-for --type Button --name "Clear search" --state visible --wait-ms 5000 >/dev/null 2>&1 || setup_fail "no Clear search button after typing"
 # A keyboard user Tabs to Clear search and presses Enter (click through the peer would not move focus, so focus it first).
 "$DRIVER" action --type Button --name "Clear search" --do focus >/dev/null 2>&1 || setup_fail "Clear search cannot take focus"
