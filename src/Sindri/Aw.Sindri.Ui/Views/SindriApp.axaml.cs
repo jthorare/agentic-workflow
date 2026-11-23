@@ -60,11 +60,11 @@ public sealed partial class SindriApp : Application, IDisposable
         var launcher = EditorLauncher.OfProcess(new AvaloniaLauncher(static () => (Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow));
 #pragma warning disable CA2000 // the shell view model keeps the client for the app's process
         var api = new SindriApiClient(Loopback(), platform.Token, clock, platform.Log);
-        var stopper = new Aw.Sindri.Ui.Terminal.HttpSessionStopper(Loopback(), platform.Token);   // the shell view model keeps the stopper's client too
+        var stopper = new HttpSessionStopper(Loopback(), platform.Token);   // the shell view model keeps the stopper's client too
 #pragma warning restore CA2000
         var folders = new AvaloniaFolderPicker(static () => (Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
         var files = new AvaloniaFilePicker(static () => (Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
-        return new(new ShellViewModel(platform.Records, api, clock, preferences, clipboard, platform.Motion, new WindowPorts(launcher, files, folders, new Aw.Sindri.Ui.Terminal.WebSocketTerminalConnector(platform.Token), stopper) { Starter = platform.Starter, Log = platform.Log }), preferences, platform, clock);
+        return new(new ShellViewModel(platform.Records, api, clock, preferences, clipboard, platform.Motion, new WindowPorts(launcher, files, folders, new WebSocketTerminalConnector(platform.Token), stopper) { Starter = platform.Starter, Log = platform.Log }), preferences, platform, clock);
     }
 
     /// <summary>Stops reading the single instance's messages (the app's exit does; a test that starts the app calls it).</summary>

@@ -1,6 +1,6 @@
-using Aw.Sindri.Ui.Platform;
+using Aw.Sindri.Ui.Terminal;
 
-namespace Aw.Sindri.Ui.Terminal;
+namespace Aw.Sindri.Ui.Platform;
 
 /// <summary>The real stopper: one POST with the human token, never retried.</summary>
 internal sealed class HttpSessionStopper(HttpClient http, IHumanTokenSource token) : ISessionStopper

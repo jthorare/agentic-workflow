@@ -1,5 +1,5 @@
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Terminal;
+using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Terminal;
