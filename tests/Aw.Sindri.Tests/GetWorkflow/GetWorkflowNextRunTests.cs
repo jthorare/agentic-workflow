@@ -105,11 +105,41 @@ public sealed class GetWorkflowNextRunTests
         Assert.Equal(fromList, fromGet);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task A_newer_revision_that_is_not_active_does_not_move_the_next_run(bool newest)
+    {
+        await Create(Schedule("0 7 * * *", "UTC"));
+        _ = (await _workflows.Activate(_id, 1, Token)).Value;
+        _ = (await _workflows.Save(_id, 1, Spec(Schedule("0 9 * * *", "UTC")), "owner", Token)).Value;   // saved, never activated: the workflow still runs at 7:00
+
+        var shown = (await _get.Handle(newest ? new GetWorkflowRequest(_slug, Newest: true) : new GetWorkflowRequest(_slug, Revision: 2), Token)).Value;
+        var fromList = (await _list.Handle(new ListWorkflowsRequest(), Token)).Value.Workflows.Single().NextRunAt;
+
+        Assert.Equal(2, shown.Revision);
+        Assert.Equal(new DateTimeOffset(2026, 11, 15, 7, 0, 0, TimeSpan.Zero), shown.NextRunAt);
+        Assert.Equal(fromList, shown.NextRunAt);
+    }
+
+    [Fact]
+    public async Task A_newer_manual_revision_that_is_not_active_keeps_the_active_schedules_next_run()
+    {
+        await Create(Schedule("0 7 * * *", "UTC"));
+        _ = (await _workflows.Activate(_id, 1, Token)).Value;
+        _ = (await _workflows.Save(_id, 1, Spec(new GraphNode(NodeId.From("start"), "manual", Title: null, [])), "owner", Token)).Value;
+
+        var shown = (await _get.Handle(new GetWorkflowRequest(_slug, Newest: true), Token)).Value;
+
+        Assert.Equal(new DateTimeOffset(2026, 11, 15, 7, 0, 0, TimeSpan.Zero), shown.NextRunAt);
+    }
+
     private static GraphNode Schedule(string cron, string timezone) =>
         new(NodeId.From("start"), "schedule", Title: null, new JsonObject { ["cron"] = cron, ["timezone"] = timezone });
 
-    private async Task Create(GraphNode trigger) =>
-        _ = (await _workflows.Create(_id, _slug, new GraphSpec(Version: 1, "Morning check", Description: null, Concurrency: null, Resources: null, Nodes: [trigger], Edges: []), "owner", Token)).Value;
+    private static GraphSpec Spec(GraphNode trigger) => new(Version: 1, "Morning check", Description: null, Concurrency: null, Resources: null, Nodes: [trigger], Edges: []);
+
+    private async Task Create(GraphNode trigger) => _ = (await _workflows.Create(_id, _slug, Spec(trigger), "owner", Token)).Value;
 
     private async Task<DateTimeOffset?> NextRun()
     {
