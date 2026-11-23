@@ -72,7 +72,7 @@ public static class ProjectTruths
             var url = UrlOf(pull);
             if (named.Contains(url) || sources.Repos.Contains(pull.Repo, StringComparer.OrdinalIgnoreCase))
             {
-                var (pr, ciChecked) = Pr(pull, url, facts.Summaries);
+                var (pr, ciChecked) = Pr(pull, url, facts.Summaries, facts.Owner);
                 prs.Add(pr);
                 uncheckedCount += pr.State != ProjectPrState.Draft && !ciChecked ? 1 : 0;
             }
@@ -81,14 +81,15 @@ public static class ProjectTruths
         var prUrls = prs.Select(static p => p.Url).Concat(named).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var items = facts.Items.Where(i => i.LinkUrls.Any(u => prUrls.Contains(u.TrimEnd('/')))).ToList();
         var agents = facts.Agents.Count(a => a.Running && a.Repo is { } repo && sources.Repos.Contains(repo, StringComparer.OrdinalIgnoreCase));
-        return new ProjectTruth(prs, items.Count(static i => !i.Done), items.Count(static i => i.Done), items.Count, agents, HealthOf(prs, uncheckedCount));
+        return new ProjectTruth(prs, items.Count(static i => !i.Done), items.Count(static i => i.Done), items.Count, agents, HealthOf(prs, uncheckedCount), prs.Exists(static p => p.WaitsOnYou));
     }
 
     private static string UrlOf(ReviewPull pull) => (pull.Url ?? string.Create(CultureInfo.InvariantCulture, $"https://github.com/{pull.Repo}/pull/{pull.Number}")).TrimEnd('/');
 
     // draft > ciRed > waiting > unknown > ready; a summary counts only when it was decided on the PR's current head. 'CiChecked' is apart from the state:
     // a PR that waits on a reviewer and has no CI result on its head is still unchecked for the health line
-    private static (ProjectTruthPr Pr, bool CiChecked) Pr(ReviewPull pull, string url, IReadOnlyDictionary<string, ReviewSummary> summaries)
+    // why: waitsOnYou sits beside the state, so a red PR that asks for the owner's review still waits on the owner; a draft never does, since drafts are not open
+    private static (ProjectTruthPr Pr, bool CiChecked) Pr(ReviewPull pull, string url, IReadOnlyDictionary<string, ReviewSummary> summaries, string? owner)
     {
         var summary = summaries.TryGetValue(string.Create(CultureInfo.InvariantCulture, $"{pull.Repo}#{pull.Number}"), out var found) && pull.HeadSha is { } head && string.Equals(found.Sha, head, StringComparison.Ordinal) ? found : null;
         var waiting = pull.RequestedReviewers.Concat(pull.Reviews.Where(static r => r.NewCommits is > 0).Select(static r => r.Login)).Distinct(StringComparer.Ordinal).ToList();
@@ -100,7 +101,8 @@ public static class ProjectTruths
             (_, ReviewCi.Pass, _) => (ProjectPrState.Ready, null, null),
             _ => (ProjectPrState.Unknown, null, null),
         };
-        return (new ProjectTruthPr(url, pull.Repo, pull.Number, pull.Title, state, decidedAt, waitingOn), summary?.Ci is ReviewCi.Pass or ReviewCi.Fail);
+        var waitsOnYou = !pull.Draft && !string.IsNullOrWhiteSpace(owner) && pull.RequestedReviewers.Contains(owner, StringComparer.OrdinalIgnoreCase);
+        return (new ProjectTruthPr(url, pull.Repo, pull.Number, pull.Title, state, decidedAt, waitingOn, waitsOnYou), summary?.Ci is ReviewCi.Pass or ReviewCi.Fail);
     }
 
     // null when no PR is open (drafts are not open); every count and the sentence read the same open set; offTrack at half red or more, atRisk at any red,
