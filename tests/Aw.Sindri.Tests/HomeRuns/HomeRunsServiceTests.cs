@@ -140,7 +140,7 @@ public sealed class HomeRunsServiceTests
     private async Task<LeaseGrant> Grant() => _grant ??= await _h.HoldLease();
 
     // One pass a minute after the last, then the projector's fold of what it wrote (the real view folds the same events).
-    private async Task<Aw.Kernel.Result<ScheduledResult>> Tick()
+    private async Task<Kernel.Result<ScheduledResult>> Tick()
     {
         var grant = await Grant();
         _h.Clock.Advance(TimeSpan.FromMinutes(1));

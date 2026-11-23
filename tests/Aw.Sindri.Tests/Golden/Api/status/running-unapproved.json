@@ -74,6 +74,11 @@
       "lastRun": null
     },
     {
+      "name": "messages-retention",
+      "every": "24h",
+      "lastRun": null
+    },
+    {
       "name": "connection-refresh",
       "every": "5m",
       "lastRun": null
