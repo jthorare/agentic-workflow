@@ -27,6 +27,18 @@ public sealed class WorkflowWritesClientTests
     }
 
     [Fact]
+    public async Task StartWorkflowRevisionRun_posts_the_revision_to_the_runs_path()
+    {
+        var canned = new Canned("""{"run":"morning-check@2:1","status":"started","reason":null}""");
+
+        var started = await Client(canned).StartWorkflowRevisionRun(_api, "morning-check", 2, Token);
+
+        var sent = Assert.Single(canned.Seen);
+        Assert.Equal(("POST", "/sindri/workflows/morning-check/runs", "{\"payload\":null,\"revision\":2}"), (sent.Method, sent.Path, sent.Body));
+        Assert.Equal("morning-check@2:1", started.Value.Run);
+    }
+
+    [Fact]
     public async Task StartWorkflowRun_answers_the_refusal_code_and_is_sent_once()
     {
         var canned = new Canned("""{"type":"about:blank","title":"SND-GRAPH-105","status":409,"detail":"'morning-check' has no active revision; activate one first","traceId":"x"}""", HttpStatusCode.Conflict);
