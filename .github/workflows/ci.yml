@@ -60,7 +60,7 @@ jobs:
     # macos-15 is a moving image label: BSD tool updates on it are accepted churn,
     # and they're what this job exists to catch.
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       CHANGED: ${{ needs.changes.outputs.bash }}
     steps:
