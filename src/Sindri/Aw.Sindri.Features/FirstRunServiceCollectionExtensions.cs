@@ -22,7 +22,7 @@ internal static class FirstRunServiceCollectionExtensions
         return services
             .AddScoped<IValidator<SkipSetupStepRequest>, AcceptAllValidator<SkipSetupStepRequest>>().AddCommand<SkipSetupStepRequest, SkipSetupStepResponse, SkipSetupStepService>()
             .AddScoped<IValidator<RestartProcessRequest>, AcceptAllValidator<RestartProcessRequest>>().AddRestartCommand<RestartProcessRequest, RestartProcessResponse, RestartProcessService>()
-            .AddScoped<AccountProfileWrites>()
+            .AddScoped<AccountProfileWrites>().AddSingleton<DeviceAccountSignIn>()
             .AddScoped<IValidator<ConnectAccountRequest>, AcceptAllValidator<ConnectAccountRequest>>().AddCommand<ConnectAccountRequest, ConnectAccountResponse, ConnectAccountService>()
             .AddScoped<IOpenRuns, OpenRunsRead>().AddScoped<IServeStop, ServeStopPort>()
             .AddScoped<IValidator<GetOpenRunsRequest>, AcceptAllValidator<GetOpenRunsRequest>>().AddQuery<GetOpenRunsRequest, GetOpenRunsResponse, GetOpenRunsService>()
