@@ -332,6 +332,8 @@ Frame `states`, panel "Stale serve under the top bar". One 32 px line under the 
 
 An agent reading `sindri setup` sees the serve step as `needs-you` with `Cli = null` and exits 3 (decision 9).
 
+Known gap (P2, #3318): a run or job that a schedule or a service tick starts between the restart's check and its stop is not refused. The restart refuses only command starts (`SND-API-009`), because it holds the command gate. There is no separate restart audit entry: the command audit records who called `RestartProcess` and the code, and the `SND-SETUP-009` answer names the open set.
+
 ### 4.6 Every page's empty and failed state
 
 These follow design's `states` frame, one panel each. Each row has exactly one primary.

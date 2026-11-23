@@ -48,6 +48,27 @@ public static class SindriCommandServiceCollectionExtensions
     }
 
     /// <summary>
+    /// Adds <typeparamref name="TService"/> as the restart's service (first-run spec decision 11): the whole command chain, gate included, so no other
+    /// command (a run or job start among them) runs between its open-set check and its stop; a start that waits meanwhile gets SND-API-009. Once the stop
+    /// has succeeded, the gate stops like the stop command's, so a start still waiting is cancelled rather than run on a stopping process.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <typeparam name="TCommand">The command record.</typeparam>
+    /// <typeparam name="TResult">What it answers.</typeparam>
+    /// <typeparam name="TService">The handler.</typeparam>
+    /// <returns>The same collection.</returns>
+    internal static IServiceCollection AddRestartCommand<TCommand, TResult, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(this IServiceCollection services)
+        where TCommand : ICommand<TResult>
+        where TService : class, IService<TCommand, TResult>
+    {
+        services.TryAddSingleton<CommandGateLock>();
+        services.TryAddSingleton<AuditTrail>();
+        return services
+            .AddScoped<TService>()
+            .AddScoped<IService<TCommand, TResult>>(static sp => new StoppingGate<TCommand, TResult>(Chain<TCommand, TResult, TService>(sp), sp.GetRequiredService<CommandGateLock>()));
+    }
+
+    /// <summary>
     /// Adds <typeparamref name="TService"/> as a command's service behind the command chain without its gate: audited, authorized and validated like
     /// any command, but it does not hold the gate while it runs. For a command that waits on a secret store or a provider (the connection test, #2349);
     /// its handler takes the <see cref="ICommandGate"/> itself, around the writes only, so a slow call can't make every other command fail SND-API-009.

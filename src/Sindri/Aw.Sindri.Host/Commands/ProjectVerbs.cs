@@ -5,6 +5,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Projects.Cards;
+using Aw.Sindri.Core.Projects.Truth;
 using Aw.Sindri.Core.Projects.Vocabulary;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.AttachProject;
@@ -103,13 +104,17 @@ internal sealed class ProjectVerbs(ControlPlaneClient client, Output output, Fun
             _ = text.AppendLine(sentence);
         }
 
-        foreach (var card in page.Projects)
+        // why: one flat list, so `grep ^prj_` finds every project; the state word says which fold it was in
+        foreach (var card in page.Projects.Concat(page.Finished))
         {
             _ = text.AppendLine(CardLine(card));
         }
 
-        Fold(text, "Finished", page.Finished);
-        Fold(text, "Hidden", page.Hidden);
+        foreach (var card in page.Hidden)
+        {
+            _ = text.AppendLine(CardLine(card, "hidden"));
+        }
+
         if (page.Freshness.Count > 0)
         {
             _ = text.AppendJoin(", ", page.Freshness.Select(static row => $"{row.Source} {row.Text}")).AppendLine();
@@ -118,25 +123,38 @@ internal sealed class ProjectVerbs(ControlPlaneClient client, Output output, Fun
         return text.ToString();
     }
 
-    private static void Fold(StringBuilder text, string name, IReadOnlyList<ProjectCard> cards)
-    {
-        if (cards.Count == 0)
-        {
-            return;
-        }
+    private static string CardLine(ProjectCard card, string? state = null) =>
+        $"{card.Key}  {state ?? StateWord(card.State)}  {card.Name}  {Issues(card)}{Counts(card)}  {Instant(card.LastActivity)}";
 
-        _ = text.AppendLine(string.Create(CultureInfo.InvariantCulture, $"{name} ({cards.Count})"));
-        foreach (var card in cards)
-        {
-            _ = text.Append("  ").AppendLine(CardLine(card));
-        }
-    }
-
-    private static string CardLine(ProjectCard card) =>
-        $"{card.Key}  {StateWord(card.State)}  {card.Name}  {Issues(card)}  {Instant(card.LastActivity)}";
-
+    // Linear's open issues, else the open items linked to the project
     private static string Issues(ProjectCard card) =>
-        card.Counting ? "counting…" : card.OpenIssues is { } n ? string.Create(CultureInfo.InvariantCulture, $"{n} issues") : "-";
+        card.Counting ? "counting…"
+        : card.OpenIssues is { } n ? string.Create(CultureInfo.InvariantCulture, $"{n} issues")
+        : card.Truth.TotalItems > 0 ? string.Create(CultureInfo.InvariantCulture, $"{card.Truth.OpenItems} issues")
+        : "-";
+
+    private static string Counts(ProjectCard card)
+    {
+        var truth = card.Truth;
+        var prs = truth.OpenPrs.Count > 0 ? truth.OpenPrs.Count : card.Repos.Count > 0 ? card.OpenPrs ?? 0 : 0;
+        var text = new StringBuilder();
+        if (prs > 0)
+        {
+            _ = text.Append(CultureInfo.InvariantCulture, $"  {prs} PRs");
+        }
+
+        if (truth.RunningAgents > 0)
+        {
+            _ = text.Append(CultureInfo.InvariantCulture, $"  {truth.RunningAgents} agents");
+        }
+
+        if (truth.Health is { } health)
+        {
+            _ = text.Append("  ").Append(ProjectWords.LevelWord(health.Level));
+        }
+
+        return text.ToString();
+    }
 
     private static string Instant(DateTimeOffset? at) => at is { } when ? when.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture) : "-";
 
@@ -173,12 +191,26 @@ internal sealed class ProjectVerbs(ControlPlaneClient client, Output output, Fun
             _ = text.Append("  ").Append(link.Label).Append(": ").AppendLine(link.Url);
         }
 
+        TruthLines(text, card.Truth);
+
         if (shown.Freshness.Count > 0)
         {
             _ = text.AppendJoin(", ", shown.Freshness.Select(static row => $"{row.Source} {row.Text}")).AppendLine();
         }
 
         return text.ToString();
+    }
+
+    private static void TruthLines(StringBuilder text, ProjectTruth truth)
+    {
+        Field(text, "items", truth.TotalItems > 0 ? string.Create(CultureInfo.InvariantCulture, $"{truth.OpenItems} open, {truth.DoneItems} done") : null);
+        Field(text, "agents", truth.RunningAgents > 0 ? string.Create(CultureInfo.InvariantCulture, $"{truth.RunningAgents} running") : null);
+        Field(text, "pr health", truth.Health is { } health ? $"{ProjectWords.LevelWord(health.Level)}: {health.Reason}" : null);
+        foreach (var pr in truth.OpenPrs)
+        {
+            _ = text.Append("  PR ").Append(pr.Repo).Append('#').Append(pr.Number.ToString(CultureInfo.InvariantCulture)).Append("  ").Append(ProjectWords.PrWord(pr.State))
+                .Append("  ").Append(pr.DecidedAt is { } decided ? Instant(decided) : "-").Append("  ").Append(pr.WaitingOn ?? "-").Append("  ").AppendLine(pr.Url);
+        }
     }
 
     private static void Field(StringBuilder text, string name, string? value)

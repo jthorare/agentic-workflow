@@ -164,7 +164,7 @@ internal static partial class WholeMapLayout
                     top + (i / Across * NodeCell),
                     NodeWidth,
                     NodeHeight);
-                placed.Add(new PlacedNode(members[i].Key, members[i].Label, members[i].Kind, area, rect, members[i].Confirmed));
+                placed.Add(new PlacedNode(members[i].Key, members[i].Label, members[i].Kind, area, rect, members[i].Confirmed, members[i].Confidence));
             }
         }
 

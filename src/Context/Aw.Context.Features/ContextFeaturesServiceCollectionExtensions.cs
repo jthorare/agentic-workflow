@@ -242,7 +242,7 @@ public static partial class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IService<GetConceptGlossaryRequest, ConceptGlossaryView>, GetConceptGlossaryService>()
         .AddScoped<IService<GetPinSuggestRequest, PinSuggestView>, GetPinSuggestService>()
         .AddSingleton<ConceptChangeTimes>()
-        .AddScoped<ConceptReader>()
+        .AddScoped<ConceptReader>().AddConceptAnswers()
         .AddSingleton<WholeMapCache>()
         .AddScoped<IService<SearchMapRequest, MapSearchView>, SearchMapService>()
         .AddSingleton<MapSearchCache>()
