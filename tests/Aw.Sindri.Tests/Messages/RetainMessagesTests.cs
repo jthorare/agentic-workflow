@@ -100,6 +100,30 @@ public sealed class RetainMessagesTests : IDisposable
         Assert.Equal(1L, _home.Count($"SELECT COUNT(*) FROM thread_state WHERE thread_ts = '{root.Value}' AND text_expired_at IS NOT NULL AND later = 1 AND my_last_ts IS NULL"));
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Retention_keeps_needs_reply_when_the_cap_takes_part_of_a_kept_thread(bool mineRoot)
+    {
+        // the root (mine, or naming me) is 200 days old and Bob's reply 100 days: the thread waits on me, so the pass keeps it; the cap takes the root only,
+        // and the thread still waits on me, with "text expired" on its row
+        await _home.Conversation("T0HARBOR", Harbor, ConversationKind.Channel);
+        var root = MessagesHome.Ts(Now.AddDays(-200));
+        _ = await _home.Put(
+            mineRoot
+                ? new StoredMessage(Harbor, root, root, "U0JOI", "where is the dock?", Mine: true, NamesMe: false)
+                : new StoredMessage(Harbor, root, root, "U0ADA", "<@U0JOI> where is the dock?", Mine: false, NamesMe: true),
+            new StoredMessage(Harbor, MessagesHome.Ts(Now.AddDays(-100)), root, "U0BOB", "pier 9, can you check?", Mine: false, NamesMe: false));
+        Assert.Equal(1L, _home.Scalar($"SELECT needs_reply FROM thread_state WHERE thread_ts = '{root.Value}'"));
+
+        var ran = await Run();
+
+        Assert.True(ran.IsSuccess);
+        Assert.Equal(ScheduledResult.Worked, ran.Value);
+        Assert.Equal(1L, _home.Count($"SELECT COUNT(*) FROM messages WHERE conversation = '{Harbor}'"));   // Bob's reply, inside the cap
+        Assert.Equal(1L, _home.Count($"SELECT COUNT(*) FROM thread_state WHERE thread_ts = '{root.Value}' AND needs_reply = 1 AND text_expired_at IS NOT NULL"));
+    }
+
     [Fact]
     public async Task Retention_deletes_an_old_thread_with_its_fts_rows_and_derived_columns_and_keeps_the_rest()
     {

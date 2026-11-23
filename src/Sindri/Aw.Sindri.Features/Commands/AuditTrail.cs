@@ -13,6 +13,9 @@ namespace Aw.Sindri.Features.Commands;
 /// <summary>
 /// Writes a command attempt's 'command.handled' audit row (API spec §2.1, §3.4) under the process's lease grant, keyed
 /// 'command.handled:&lt;commandId&gt;' so a replay is a no-op. Without a grant the row can't be written (SND-LEDGER-002).
+/// A self-audited command may have written its accepted row early, under that key, before it failed (RestartProcess, #4024): the chain's
+/// row for any other outcome of a self-audited command is keyed 'command.handled:&lt;commandId&gt;:final', so it isn't taken for a replay of the early
+/// row and lands after it. Readers take the last row of a command id.
 /// </summary>
 /// <param name="held">The grant this process holds.</param>
 /// <param name="ledger">The ledger.</param>
@@ -28,18 +31,34 @@ internal sealed partial class AuditTrail(HeldLease held, ILedgerStore ledger, Ev
     /// <param name="code">The error code when it didn't succeed.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
     /// <returns>Success, or the ledger's error (SND-LEDGER-002 without a grant).</returns>
-    internal async ValueTask<Result<Unit>> Record(CallerContext? caller, CommandRow row, CommandOutcome outcome, string? code, CancellationToken cancellationToken)
+    internal ValueTask<Result<Unit>> Record(CallerContext? caller, CommandRow row, CommandOutcome outcome, string? code, CancellationToken cancellationToken) =>
+        Write(caller, row, (outcome, code, Final: false), cancellationToken);
+
+    /// <summary>
+    /// Appends the chain's row of a self-audited command that didn't end accepted, keyed 'command.handled:&lt;commandId&gt;:final' (#4024): the command may
+    /// have written its accepted row early under the plain key, and this row must land after it, not be taken for its replay.
+    /// </summary>
+    /// <param name="caller">The caller, or null ('none').</param>
+    /// <param name="row">The row the attempt ran as.</param>
+    /// <param name="outcome">How it ended.</param>
+    /// <param name="code">The error code when it didn't succeed.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>Success, or the ledger's error (SND-LEDGER-002 without a grant).</returns>
+    internal ValueTask<Result<Unit>> RecordFinal(CallerContext? caller, CommandRow row, CommandOutcome outcome, string? code, CancellationToken cancellationToken) =>
+        Write(caller, row, (outcome, code, Final: true), cancellationToken);
+
+    private async ValueTask<Result<Unit>> Write(CallerContext? caller, CommandRow row, (CommandOutcome Outcome, string? Code, bool Final) attempt, CancellationToken cancellationToken)
     {
         if (held.Current is not { } grant)
         {
             // why: only an accepted command needed the lease; a refused, invalid or failed attempt without one isn't the process's fault
-            var fix = outcome == CommandOutcome.Accepted ? " (fix: restart sindri)" : "";
+            var fix = attempt.Outcome == CommandOutcome.Accepted ? " (fix: restart sindri)" : "";
             return SindriErrors.LedgerUnavailable.With($"no lease is held, so the audit row for {row.Action.Value} can't be written{fix}");
         }
 
         var commandId = caller?.CommandId ?? ids.New<CommandId>();
-        var payload = new CommandHandled(commandId, row.Action, row.Class, caller?.Actor ?? "none", outcome, code);
-        var key = $"{EventTypes.CommandHandled}:{commandId.Value}";
+        var payload = new CommandHandled(commandId, row.Action, row.Class, caller?.Actor ?? "none", attempt.Outcome, attempt.Code);
+        var key = attempt.Final ? $"{EventTypes.CommandHandled}:{commandId.Value}:final" : $"{EventTypes.CommandHandled}:{commandId.Value}";
         var appended = await ledger.Append(events.Entry(EventTypes.CommandHandled, payload, key), grant, cancellationToken).ConfigureAwait(false);
         return appended.IsError ? appended.Error : Unit.Value;
     }

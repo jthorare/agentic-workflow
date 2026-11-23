@@ -59,5 +59,19 @@ public sealed class RepoAttributionTests : IDisposable
         Assert.Equal(main, Assert.Single(listed).Repo);
     }
 
+    [Fact]
+    public async Task A_cwd_with_a_nul_byte_lists_the_session_without_a_repo()
+    {
+        var at = new DateTimeOffset(2026, 11, 3, 9, 0, 0, TimeSpan.Zero);
+        _ = _roots.Write("claude/projects/-bad/s.jsonl", at.AddMinutes(5), ClaudeLines.User("go", at, cwd: "/work/a\0b"));
+
+        Assert.Null(new RepoResolver().Resolve("/work/a\0b"));
+        var listed = await _roots.Corpus().ListSessions(new SessionQuery(at), CancellationToken.None);
+
+        var session = Assert.Single(listed.Value);
+        Assert.Null(session.Repo);
+        Assert.Equal(1, session.HumanTurns);
+    }
+
     public void Dispose() => _roots.Dispose();
 }

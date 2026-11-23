@@ -29,10 +29,12 @@ public sealed class ClaudeTranscriptTests : IDisposable
             ClaudeLines.User("a scripted prompt", _t.AddSeconds(9), l => l["entrypoint"] = "sdk-cli"),
             ClaudeLines.User("Caveat: local command output follows", _t.AddSeconds(10)),
             ClaudeLines.User("a typed prompt with an origin", _t.AddSeconds(11), l => l["origin"] = new JsonObject { ["kind"] = "human" }),
-            ClaudeLines.UserBlocks(_t.AddSeconds(12), "a prompt in", "text blocks"));
+            ClaudeLines.UserBlocks(_t.AddSeconds(12), "a prompt in", "text blocks"),
+            ClaudeLines.User("<ide_opened_file>The user opened a.cs</ide_opened_file> fix the null check", _t.AddSeconds(13)),
+            ClaudeLines.User("<ide_selection>lines 1-4</ide_selection>", _t.AddSeconds(14)));
 
-        Assert.Equal(["the one real prompt", "a typed prompt with an origin", "a prompt in\ntext blocks"], read.Turns.Where(t => t.Role == TurnRole.Human).Select(t => t.Text), StringComparer.Ordinal);
-        Assert.Equal(3, read.Session.HumanTurns);
+        Assert.Equal(["the one real prompt", "a typed prompt with an origin", "a prompt in\ntext blocks", "fix the null check"], read.Turns.Where(t => t.Role == TurnRole.Human).Select(t => t.Text), StringComparer.Ordinal);
+        Assert.Equal(4, read.Session.HumanTurns);
     }
 
     [Fact]
@@ -64,6 +66,21 @@ public sealed class ClaudeTranscriptTests : IDisposable
         Assert.Equal(["before", "after"], read.Turns.Select(t => t.Text), StringComparer.Ordinal);
         Assert.Equal(2, read.SkippedLines);
         Assert.Equal(5, read.Turns[1].Ref.Line);
+    }
+
+    [Fact]
+    public async Task A_line_of_an_unknown_shape_is_counted_as_skipped()
+    {
+        var read = await Read(
+            ClaudeLines.User("before", _t),
+            """{"foo":1}""",
+            """{"type":"user","timestamp":"2026-11-03T09:00:01.000Z","message":{"content":42}}""",
+            """{"type":"assistant","timestamp":"2026-11-03T09:00:02.000Z"}""",
+            ClaudeLines.Bookkeeping(),
+            ClaudeLines.User("after", _t.AddSeconds(5)));
+
+        Assert.Equal(["before", "after"], read.Turns.Select(t => t.Text), StringComparer.Ordinal);
+        Assert.Equal(3, read.SkippedLines);
     }
 
     [Fact]
