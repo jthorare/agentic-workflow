@@ -11,6 +11,9 @@ internal sealed partial class TopBar
 {
     private const double ProblemsMax = 220;
 
+    /// <summary>The least room the pill's problem text is shown in, about one word; under it the text gives way entirely (#4008).</summary>
+    internal const double MinProblems = 60;
+
     // The placeholder's target width is its text plus this: an exact fit trims on font rounding, and the pill's problem
     // text gives way instead. 4 px, not 12 (QA #2547): at 1280 px a short problem ("service broken failed") was 8 px short.
     internal const double PlaceholderSlack = 4;
@@ -59,7 +62,15 @@ internal sealed partial class TopBar
 
         var others = bar.Padding.Left + bar.Padding.Right + Brand.DesiredSize.Width + NavigationWidthAt(_fit) + search + _pillRest;
         var room = width - others - PillProblems.Margin.Left - PillProblems.Margin.Right;
-        SetProblemsCap(Math.Clamp(YieldAge(room), 0, ProblemsMax));
+        SetProblemsCap(WholeWordsOnly(Math.Clamp(YieldAge(room), 0, ProblemsMax)));
+    }
+
+    // Under about one word of room the problem text gives way entirely (#4008): a one-letter stub ("Degraded y...") reads as a bug. A text
+    // shorter than that still shows. Once hidden it needs Slack more room to come back, so a bar at the edge doesn't flip each measure.
+    private double WholeWordsOnly(double cap)
+    {
+        var least = MinProblems + (PillProblems.MaxWidth < 0.5 ? Slack : 0);
+        return cap < least && cap < NaturalProblems() ? 0 : cap;
     }
 
     // A cap that moves by less than half a pixel stays: every new value measures the bar again.
