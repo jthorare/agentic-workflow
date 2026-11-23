@@ -1,0 +1,128 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pvm="using:Aw.Sindri.Ui.ViewModels.Projects"
+             x:Class="Aw.Sindri.Ui.Views.Projects.ProjectRow"
+             x:DataType="pvm:ProjectCardViewModel">
+  <!-- One project as a 40 px row (issue 3717, frames round 11): state square | name, then the health dot and the served reason | PRs by state | Items |
+       Agents | Blocked on | Target | Active. The name keeps its width and trims last; the reason trims first (a DockPanel gives the name what it needs, the reason
+       the rest). The fact cells are fixed widths with a 12 px gap; the page hides Agents, then Items, Target and the reason, as it narrows (ProjectsPage.axaml
+       styles on the col-* wrappers). The frame takes focus and draws the app's 2 px ring inside itself (QueueStyles Border.item-row); a click opens the
+       project's sheet (ProjectRow.axaml.cs), Enter and the arrows are the page's. Every named cell is a Border wrapper (a TextBlock's peer ignores
+       AutomationProperties.Name). -->
+  <UserControl.Styles>
+    <!-- The hover and pressed looks are the shared clickable class's (ClickableStateTests); the row only sets its 40 px height. -->
+    <Style Selector="Border.project-row">
+      <Setter Property="Height" Value="{StaticResource Row.Height.Comfortable}" />
+    </Style>
+    <Style Selector="Border.state">
+      <Setter Property="Width" Value="8" />
+      <Setter Property="Height" Value="8" />
+      <Setter Property="CornerRadius" Value="2" />
+      <Setter Property="Background" Value="{DynamicResource Brush.InkSubtle}" />
+    </Style>
+    <Style Selector="Border.state.doing"><Setter Property="Background" Value="{DynamicResource Brush.Primary}" /></Style>
+    <Style Selector="Border.state.paused"><Setter Property="Background" Value="{DynamicResource Brush.Attention}" /></Style>
+    <Style Selector="Ellipse.health">
+      <Setter Property="Width" Value="8" />
+      <Setter Property="Height" Value="8" />
+      <Setter Property="Margin" Value="0,0,6,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Ellipse.health.off"><Setter Property="Fill" Value="{DynamicResource Brush.Error}" /></Style>
+    <Style Selector="Ellipse.health.risk"><Setter Property="Fill" Value="{DynamicResource Brush.Attention}" /></Style>
+    <Style Selector="Ellipse.health.ok"><Setter Property="Fill" Value="{DynamicResource Brush.Success}" /></Style>
+    <Style Selector="Ellipse.health.unk">
+      <Setter Property="Stroke" Value="{DynamicResource Brush.InkMuted}" />
+      <Setter Property="StrokeThickness" Value="1.5" />
+    </Style>
+    <!-- The PR glyphs (grammar-2978 grammar.css .g.*, projects.css .g.unk), 14 px, a shape per state so colour is never the only cue: red CI a filled dot with
+         a cross, waiting a ring with a three-quarter pie, not checked a grey ring with a question mark (the frames' own path), ready a green ring with a dot, a
+         draft a dashed ring. -->
+    <Style Selector="Ellipse.ring"><Setter Property="StrokeThickness" Value="1.5" /></Style>
+    <Style Selector="TextBlock.passed"><Setter Property="Foreground" Value="{DynamicResource Brush.Error}" /></Style>
+    <Style Selector="TextBlock.you">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+  </UserControl.Styles>
+  <Border x:Name="ProjectRowFrame" Classes="item-row project-row clickable" Classes.selected="{Binding IsSelected}" Focusable="True"
+          AutomationProperties.Name="{Binding RowName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+    <Grid x:Name="ProjectRowGrid" VerticalAlignment="Center">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="16" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <Border Classes="state" Classes.doing="{Binding IsInProgress}" Classes.paused="{Binding IsPaused}" HorizontalAlignment="Left" VerticalAlignment="Center"
+              ToolTip.Tip="{Binding StateWord}" AutomationProperties.AccessibilityView="Raw" />
+
+      <DockPanel x:Name="ProjectRowTitle" Grid.Column="1" LastChildFill="True" VerticalAlignment="Center" ClipToBounds="True">
+        <Border x:Name="ProjectRowName" DockPanel.Dock="Left" ToolTip.Tip="{Binding Name}" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock x:Name="ProjectRowNameText" Classes="body" Foreground="{DynamicResource Brush.Ink}" Text="{Binding Name}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Border Classes="col-reason" Margin="10,0,0,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+          <StackPanel Orientation="Horizontal" IsVisible="{Binding ShowsFacts}">
+            <Ellipse Classes="health" Classes.off="{Binding IsOffTrack}" Classes.risk="{Binding IsAtRisk}" Classes.unk="{Binding IsNotChecked}" Classes.ok="{Binding IsOnTrack}" IsVisible="{Binding HasHealth}" />
+            <TextBlock x:Name="ProjectRowReason" Classes="caption subtle" Text="{Binding HealthReason}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+            <TextBlock x:Name="ProjectRowMatchedInNote" Classes="caption" Foreground="{DynamicResource Brush.PrimaryHover}" Margin="8,0,0,0" Text="{Binding MatchedInNoteText}" IsVisible="{Binding MatchedInNote}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+          </StackPanel>
+        </Border>
+      </DockPanel>
+
+      <Border x:Name="ProjectRowPrs" Grid.Column="2" Width="144" Margin="12,0,0,0" VerticalAlignment="Center" ClipToBounds="True" AutomationProperties.AccessibilityView="Raw">
+        <ItemsControl ItemsSource="{Binding Prs}" IsVisible="{Binding ShowsFacts}">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="10" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="pvm:ProjectPrGlyph">
+              <StackPanel Orientation="Horizontal" Spacing="5" ToolTip.Tip="{Binding Name}">
+                <Border Width="1" Height="12" Margin="2,0,2,0" Background="{DynamicResource Brush.InkTertiary}" IsVisible="{Binding AfterHairline}" VerticalAlignment="Center" />
+                <Panel Width="14" Height="14" VerticalAlignment="Center">
+                  <Panel IsVisible="{Binding IsCiRed}">
+                    <Ellipse Fill="{DynamicResource Brush.Error}" />
+                    <Path Data="M4.2,4.2 L9.8,9.8 M9.8,4.2 L4.2,9.8" Stroke="{DynamicResource Brush.Canvas}" StrokeThickness="1.5" />
+                  </Panel>
+                  <Panel IsVisible="{Binding IsWaiting}">
+                    <Ellipse Classes="ring" Stroke="{DynamicResource Brush.PrimaryHover}" />
+                    <Path Data="M7,7 L7,3.5 A3.5,3.5 0 1 1 3.5,7 Z" Fill="{DynamicResource Brush.PrimaryHover}" />
+                  </Panel>
+                  <Panel IsVisible="{Binding IsUnknown}">
+                    <Path Data="M1.25,7 A5.75,5.75 0 1 1 12.75,7 A5.75,5.75 0 1 1 1.25,7 Z" Stroke="{DynamicResource Brush.InkSubtle}" StrokeThickness="1.5" />
+                    <Path Data="M5.4,5.6 c0,-1 0.7,-1.6 1.6,-1.6 s1.6,0.6 1.6,1.4 c0,1.1 -1.6,1.2 -1.6,2.4" Stroke="{DynamicResource Brush.InkSubtle}" StrokeThickness="1.3" StrokeLineCap="Round" />
+                    <Path Data="M6.2,10 A0.8,0.8 0 1 1 7.8,10 A0.8,0.8 0 1 1 6.2,10 Z" Fill="{DynamicResource Brush.InkSubtle}" />
+                  </Panel>
+                  <Panel IsVisible="{Binding IsReady}">
+                    <Ellipse Classes="ring" Stroke="{DynamicResource Brush.Success}" />
+                    <Ellipse Width="4" Height="4" Fill="{DynamicResource Brush.Success}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  </Panel>
+                  <Ellipse Classes="ring" Stroke="{DynamicResource Brush.InkTertiary}" StrokeDashArray="2,2" IsVisible="{Binding IsDraft}" />
+                </Panel>
+                <TextBlock Classes="caption" Foreground="{DynamicResource Brush.InkMuted}" Text="{Binding CountText}" VerticalAlignment="Center" />
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </Border>
+
+      <Border Grid.Column="3" Classes="col-items" Width="56" Margin="12,0,0,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+        <TextBlock Classes="caption subtle" Text="{Binding ItemsText}" IsVisible="{Binding ShowsFacts}" />
+      </Border>
+      <Border Grid.Column="4" Classes="col-agents" Width="48" Margin="12,0,0,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+        <TextBlock Classes="caption subtle" Text="{Binding AgentsText}" IsVisible="{Binding ShowsFacts}" />
+      </Border>
+      <Border Grid.Column="5" Width="112" Margin="12,0,0,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+        <TextBlock Classes="caption subtle" Classes.you="{Binding IsBlockedOnYou}" Text="{Binding BlockedOnCell}" TextTrimming="CharacterEllipsis" IsVisible="{Binding ShowsFacts}" />
+      </Border>
+      <Border Grid.Column="6" Classes="col-target" Width="96" Margin="12,0,0,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+        <TextBlock x:Name="ProjectRowTarget" Classes="caption subtle" Classes.passed="{Binding TargetPassed}" Text="{Binding TargetText}" TextTrimming="CharacterEllipsis" />
+      </Border>
+      <Border Grid.Column="7" Width="44" Margin="12,0,0,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+        <TextBlock x:Name="ProjectRowAge" Classes="caption subtle" Text="{Binding AgeText}" HorizontalAlignment="Right" />
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>
