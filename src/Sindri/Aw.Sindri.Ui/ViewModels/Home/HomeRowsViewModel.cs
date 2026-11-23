@@ -8,6 +8,8 @@ namespace Aw.Sindri.Ui.ViewModels.Home;
 [SuppressMessage("Design", "MA0182", Justification = "The page commit of this PR binds it (#3733, U1).")]
 internal sealed class HomeRowsViewModel : ObservableObject
 {
+    private readonly List<HomeRowItem> _rows = [];
+
     /// <summary>The fact columns every row shows.</summary>
     public static IReadOnlyList<RowColumn> Columns { get; } = [new(HomeRowItem.Why, string.Empty), new(HomeRowItem.Object, string.Empty), new(HomeRowItem.From, string.Empty, Wide: true)];
 
@@ -42,14 +44,46 @@ internal sealed class HomeRowsViewModel : ObservableObject
     /// <summary>Shows a first page, in place of what the page held.</summary>
     /// <param name="page">The read's first page.</param>
     /// <param name="now">The time the ages count to.</param>
-    internal void Show(HomeView page, DateTimeOffset now) => throw new NotSupportedException();
+    internal void Show(HomeView page, DateTimeOffset now)
+    {
+        _rows.Clear();
+        Add(page, now);
+    }
 
     /// <summary>Adds a later page; a row the page already holds is not added twice.</summary>
     /// <param name="page">The page read with the cursor of the one before.</param>
     /// <param name="now">The time the ages count to.</param>
-    internal void Add(HomeView page, DateTimeOffset now) => throw new NotSupportedException();
+    internal void Add(HomeView page, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(page);
+        var held = _rows.Select(r => r.Key).ToHashSet(StringComparer.Ordinal);
+        _rows.AddRange(page.NeedsYou.Concat(page.Moving).Where(r => held.Add(r.Id)).Select(r => HomeRowItem.Of(r, now)));
+        Fill();
+    }
 
     /// <summary>Selects a split: its rows show, the counts stay.</summary>
     /// <param name="split">The split to show.</param>
-    internal void Select(HomeSplit split) => throw new NotSupportedException();
+    internal void Select(HomeSplit split)
+    {
+        Split = split;
+        Fill();
+    }
+
+    private static bool IsOpen(HomeRowItem row) => string.Equals(row.Row.State, "open", StringComparison.Ordinal);
+
+    private void Fill()
+    {
+        var open = _rows.Where(IsOpen).ToList();
+        Tabs = [.. HomeSplits.InOrder.Select(s => new HomeTab(s, HomeSplits.Label(s), open.Count(r => HomeSplits.Holds(s, r.Row.Kind)), s == Split))];
+        var shown = open.Where(r => HomeSplits.Holds(Split, r.Row.Kind)).ToList();
+        Groups = [.. new[] { Group(Labels.HomeNeedsYouGroup, shown, "needs-you"), Group(Labels.HomeMovingGroup, shown, "moving") }.OfType<HomeRowGroup>()];
+        EmptyLine = shown.Count > 0 ? null : HomeSplits.EmptyLine(Split);
+    }
+
+    // A group with no row under the split is not listed: the split's one empty line says why.
+    private static HomeRowGroup? Group(string heading, List<HomeRowItem> shown, string group)
+    {
+        var rows = shown.Where(r => string.Equals(r.Row.Group, group, StringComparison.Ordinal)).ToList();
+        return rows.Count == 0 ? null : new HomeRowGroup(heading, rows);
+    }
 }

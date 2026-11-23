@@ -94,14 +94,15 @@ public sealed class HomeRowsViewModelTests
     }
 
     [Fact]
-    public void A_lane_row_has_no_id_and_names_the_lane_as_its_object()
+    public void A_lane_row_has_no_id_and_keeps_its_served_facts()
     {
         var row = Shown().Groups[0].Rows[0];
 
         Assert.Equal(string.Empty, row.Id);
         Assert.Equal("session", row.Kind);
         Assert.Equal(RowGlyph.NeedsYou, RowGlyphs.For(row.Kind, row.StateClass, row.StateKey));
-        Assert.Equal(new RowFact(RowFactKind.Text, "lane meta"), row.Facts[HomeRowItem.Object]);
+        Assert.Equal(new RowFact(RowFactKind.Text, "meta"), row.Facts[HomeRowItem.Object]);
+        Assert.Equal(new RowFact(RowFactKind.Person, "lane meta"), row.Facts[HomeRowItem.From]);
     }
 
     [Fact]
