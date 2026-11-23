@@ -94,11 +94,18 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
     /// <summary>The row's tooltip: the same words as its accessible name (provider, title, state, "estimated", what it asks, host).</summary>
     public string Tip => Name;
 
-    /// <summary>The status dot's glyph (stub).</summary>
-    public string DotGlyph => Glyph;
+    /// <summary>The status dot's glyph: an estimated row in the narrow column draws the hollow dot (same tone) because the word "estimated" is hidden there (#4162).</summary>
+    public string DotGlyph => IsEstimated && IsCompact ? HollowDot : Glyph;
 
-    /// <summary>The text the row's title cell shows (stub).</summary>
-    public string ListText => TitleText;
+    /// <summary>The text of the row's name cell: the title; in the narrow column the lane's name, else the tmux session's name, else the title (the title stays in the tooltip).</summary>
+    public string ListText => IsCompact ? NarrowName() : TitleText;
+
+    private const string HollowDot = "○";
+
+    private string NarrowName() =>
+        Row.Lane is { Lane: { Length: > 0 } lane } ? lane
+        : Row.Host.Session is { Length: > 0 } session ? session
+        : TitleText;
 
     /// <summary>True when the row has something for the Repository column.</summary>
     internal bool HasRepoValue => !string.Equals(RepoText, Labels.EmptyCell, StringComparison.Ordinal);
@@ -132,6 +139,8 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
         OnChanged(nameof(IsWide));
         OnChanged(nameof(ShowsProvider));
         OnChanged(nameof(ShowsEstimated));
+        OnChanged(nameof(DotGlyph));
+        OnChanged(nameof(ListText));
     }
 
     /// <summary>The lane ("meta · sindri/ideas") or, for a launched session, its launch; else empty.</summary>
@@ -207,7 +216,7 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
         Name = Labels.SessionName(Row.ProviderLabel, title, chip.Word.ToLowerInvariant() + (EstimatedText.Length > 0 ? " (" + EstimatedText + ")" : string.Empty), string.Join(", ", new[] { AskingText, StepText }.Where(p => p.Length > 0)), HostText);
         Signature = string.Join('|', Row.State, AskingText, EstimatedText, title, WorktreeText, HostText, LaneText, StepText, Row.Focus.Method, Row.Repo);
         Focus.Show(Row.Ref);
-        foreach (var name in (string[])[nameof(IsAsking), nameof(HasAsking), nameof(IsEstimated), nameof(ShowsEstimated), nameof(Tip), nameof(EstimatedTip), nameof(HasWorktree), nameof(HasLane), nameof(IsLaunched), nameof(HasStep), nameof(HasNoStep)])
+        foreach (var name in (string[])[nameof(IsAsking), nameof(HasAsking), nameof(IsEstimated), nameof(ShowsEstimated), nameof(DotGlyph), nameof(ListText), nameof(Tip), nameof(EstimatedTip), nameof(HasWorktree), nameof(HasLane), nameof(IsLaunched), nameof(HasStep), nameof(HasNoStep)])
         {
             OnChanged(name);
         }

@@ -12,6 +12,9 @@
     <Style Selector="TextBlock.dot"><Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" /></Style>
     <Style Selector="TextBlock.dot.working"><Setter Property="Foreground" Value="{DynamicResource Brush.Success}" /></Style>
     <Style Selector="TextBlock.dot.waiting"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
+    <!-- The title ends with the ellipsis; in the narrow list column it keeps 8 characters, the ellipsis, then the tail (#4162). A style, not a local value, so the class can switch it. -->
+    <Style Selector="TextBlock#SessionRowTitle"><Setter Property="TextTrimming" Value="CharacterEllipsis" /></Style>
+    <Style Selector="TextBlock#SessionRowTitle.narrow"><Setter Property="TextTrimming" Value="PrefixCharacterEllipsis" /></Style>
   </UserControl.Styles>
   <Border x:Name="SessionRowFrame" Classes="item-row session-row clickable" Classes.selected="{Binding IsSelected}" Focusable="True"
           ToolTip.Tip="{Binding Tip}" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
@@ -27,7 +30,7 @@
       </Grid.ColumnDefinitions>
       <Border x:Name="SessionRowChip" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <StackPanel Orientation="Horizontal" Spacing="8" AutomationProperties.AccessibilityView="Raw">
-          <TextBlock x:Name="SessionRowGlyph" Classes="body-strong dot" Classes.working="{Binding IsWorking}" Classes.waiting="{Binding IsWaiting}" Text="{Binding Glyph}" AutomationProperties.AccessibilityView="Raw" />
+          <TextBlock x:Name="SessionRowGlyph" Classes="body-strong dot" Classes.working="{Binding IsWorking}" Classes.waiting="{Binding IsWaiting}" Text="{Binding DotGlyph}" AutomationProperties.AccessibilityView="Raw" />
           <TextBlock Classes="body-strong" Text="{Binding StateWord}" AutomationProperties.AccessibilityView="Raw" />
           <TextBlock x:Name="SessionRowEstimated" Classes="caption subtle" Text="{Binding EstimatedText}" IsVisible="{Binding ShowsEstimated}" VerticalAlignment="Center" ToolTip.Tip="{Binding EstimatedTip}" AutomationProperties.AccessibilityView="Raw" />
         </StackPanel>
@@ -36,7 +39,7 @@
         <!-- A grid, not a stack: the title column is a star, so the title is trimmed with an ellipsis at the room it has. The provider word drops in the narrow list column (#4162). -->
         <Grid ColumnDefinitions="Auto,*" AutomationProperties.AccessibilityView="Raw">
           <TextBlock x:Name="SessionRowProvider" Classes="caption subtle" Text="{Binding Provider}" IsVisible="{Binding ShowsProvider}" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-          <TextBlock x:Name="SessionRowTitle" Grid.Column="1" Classes="body-strong" Text="{Binding TitleText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+          <TextBlock x:Name="SessionRowTitle" Grid.Column="1" Classes="body-strong" Classes.narrow="{Binding IsCompact}" Text="{Binding ListText}" AutomationProperties.AccessibilityView="Raw" />
         </Grid>
       </Button>
       <Border x:Name="SessionRowRepo" Grid.Column="2" Margin="0,0,8,0" MaxWidth="200" IsVisible="{Binding ShowsRepo}" ToolTip.Tip="{Binding RepoText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding RepoText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
