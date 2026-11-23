@@ -3,9 +3,6 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 /// <summary>Which view the page shows: the map, or the files (F3 spec 1 §2, "1c").</summary>
 internal sealed partial class ContextPageViewModel
 {
-    /// <summary>The label of the starting points box.</summary>
-    public string StartsAtLabel { get; } = Labels.ContextMapStartsAt;
-
     /// <summary>The view switch's name.</summary>
     public string ViewName { get; } = Labels.ContextMapViewName;
 
@@ -33,6 +30,7 @@ internal sealed partial class ContextPageViewModel
             OnChanged(nameof(ShowWhole));
             OnChanged(nameof(ShowWholeStatus));
             OnChanged(nameof(ShowConcepts));
+            OnChanged(nameof(KeyHints));
             if (value)
             {
                 _ = FileMap.Opened();   // the folder is read as the view opens, so it is never stale

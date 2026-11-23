@@ -164,7 +164,7 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>Activate: turns the open workflow's newest revision on. Sent once; the list and the runs are read again after any answer that reached Sindri.</summary>
     /// <param name="cancellationToken">Cancels the call and the reads.</param>
     /// <returns>A task that completes when the answer is shown.</returns>
-    internal Task Activate(CancellationToken cancellationToken) => ChangeState(CanActivate, ActivateCall, Labels.WfActivateRefused, cancellationToken);
+    internal Task Activate(CancellationToken cancellationToken) => ChangeState(CanActivate || CanMakeLive, ActivateCall, Labels.WfActivateRefused, cancellationToken);
 
     /// <summary>Pause: turns the open workflow off. Sent once; the list and the runs are read again after any answer that reached Sindri.</summary>
     /// <param name="cancellationToken">Cancels the call and the reads.</param>
@@ -197,6 +197,7 @@ internal sealed partial class WorkflowsPageViewModel
         try
         {
             var error = await send(url, slug, cancellationToken).ConfigureAwait(true);
+            _savedWhileOff = error is null && string.Equals(Runs.Slug, slug, StringComparison.Ordinal) ? 0 : _savedWhileOff;   // the state changed since that save: its line is no longer news (#3303)
             await LandStateChange(url, slug, error, refused, cancellationToken).ConfigureAwait(true);
         }
         finally
@@ -230,12 +231,14 @@ internal sealed partial class WorkflowsPageViewModel
     {
         OnChanged(nameof(CanActivate));
         OnChanged(nameof(CanPause));
+        NotifySaved();
     }
 
     // another workflow was opened: the old one's note is not about it
     private void ForgetStateNote()
     {
         StateNoticeText = string.Empty;
+        _savedWhileOff = 0;
         NotifyStateButtons();
     }
 }

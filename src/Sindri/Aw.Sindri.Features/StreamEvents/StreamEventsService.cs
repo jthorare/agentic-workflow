@@ -30,12 +30,16 @@ internal sealed class StreamEventsService(CallerEventView view, IItemResolver it
             return item.Error;
         }
 
-        var query = new EventQuery(request.After, Math.Clamp(request.Max, 1, 500), new LedgerFilter(request.Types, item.Value), IncludeNonPublic: false, e => Keeps(request, e));
+        var session = callers.Current?.Class == CallerClass.Session;
+        var query = new EventQuery(request.After, Math.Clamp(request.Max, 1, 500), new LedgerFilter(request.Types, item.Value), IncludeNonPublic: false, e => Keeps(request, session, e));
         var page = await view.Read(query, cancellationToken).ConfigureAwait(false);
         return page.IsError ? page.Error : new StreamEventsResponse(page.Value.Events, page.Value.ScannedTo);
     }
 
-    private static bool Keeps(StreamEventsRequest request, LedgerEvent e) =>
-        (request.Item is not { } item || string.Equals(e.Item, item.Value, StringComparison.Ordinal))
+    // why: 'home.*' events carry row titles, facts and brief lines, so an agent session never reads them from the stream, as from the ledger (home spec §8); the owner reads all.
+    // The scan skips them, so a session's cursor still moves past them.
+    private static bool Keeps(StreamEventsRequest request, bool session, LedgerEvent e) =>
+        !(session && e.Envelope.Type.StartsWith("home.", StringComparison.Ordinal))
+        && (request.Item is not { } item || string.Equals(e.Item, item.Value, StringComparison.Ordinal))
         && (request.Instance is not { } instance || InstanceEvents.Belongs(e, instance));
 }

@@ -51,7 +51,12 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
-      <ToggleButton x:Name="EditorAdvancedGroup" IsVisible="{Binding Editor.HasAdvancedFields}" IsChecked="{Binding Editor.AdvancedOpen, Mode=TwoWay}" Content="{Binding Editor.AdvancedText}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Editor.AdvancedText}" />
+      <!-- The step's id shows only here (#3684): never on the card or in the heading. Opening it also shows the Code step's repo, branch, timeout and memory fields above (#3682). -->
+      <Expander x:Name="EditorAdvanced" Header="{Binding Editor.AdvancedText}" IsVisible="{Binding Editor.ShowsAdvanced}" IsExpanded="{Binding Editor.AdvancedOpen, Mode=TwoWay}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Editor.AdvancedText}">
+        <Border x:Name="EditorStepIdName" IsVisible="{Binding Editor.NodeIdLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Editor.NodeIdLine}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption mono" Text="{Binding Editor.NodeIdLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+      </Expander>
 
       <Border x:Name="EditorFailure" IsVisible="{Binding Editor.FailureText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Editor.FailureText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption" Text="{Binding Editor.FailureText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />

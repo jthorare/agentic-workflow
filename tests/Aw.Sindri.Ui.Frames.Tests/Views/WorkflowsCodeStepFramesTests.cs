@@ -1,6 +1,5 @@
 using System.Text.Json.Nodes;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
@@ -57,8 +56,8 @@ public sealed class WorkflowsCodeStepFramesTests : FrameHost
 
         var repo = fields.GetVisualDescendants().OfType<TextBox>().Single(t => t.Name == "EditorFieldText" && ((ViewModels.Workflows.ConfigFieldViewModel)t.DataContext!).Name == "repo");
         Assert.False(repo.IsEffectivelyVisible, "Repository shows before Advanced is opened");
-        var toggle = Named<ToggleButton>(window, "EditorAdvancedGroup");
-        toggle.IsChecked = true;
+        var advanced = Named<Expander>(window, "EditorAdvanced");   // one Advanced group: the step's id and the Code step's settings (#3684, #3682)
+        advanced.IsExpanded = true;
         await Until(window, () => repo.IsEffectivelyVisible, "Advanced never showed Repository");
     });
 }

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
@@ -69,12 +70,12 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         {
             // another workflow: nothing of the old one stays to be saved to this one, even when this read fails
             Fields.Clear();
-            (Nodes, BaseRevision, _selected, NodeHeading) = ([], 0, null, string.Empty);
+            (Nodes, BaseRevision, _selected, NodeHeading, NodeIdLine) = ([], 0, null, string.Empty, string.Empty);
         }
 
         (_url, Slug) = (url, slug);
         var read = ++_reads;
-        var workflowRead = api.Workflow(url, slug, cancellationToken);
+        var workflowRead = api.WorkflowNewest(url, slug, cancellationToken);   // the newest revision: after a save on a live workflow that is the saved one, not the live one (#3303)
         var blocksRead = api.WorkflowBlocks(url, cancellationToken);
         await Task.WhenAll(workflowRead, blocksRead).ConfigureAwait(true);
         var (workflow, blocks) = (await workflowRead.ConfigureAwait(true), await blocksRead.ConfigureAwait(true));
@@ -115,6 +116,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         var node = Nodes.FirstOrDefault(n => string.Equals(n.Id, nodeId, StringComparison.Ordinal));
         var block = node is null ? null : Groups.SelectMany(g => g.Blocks).FirstOrDefault(b => string.Equals(b.Type, node.Type, StringComparison.Ordinal));
         NodeHeading = HeadingOf(node, block);
+        NodeIdLine = node is null ? string.Empty : Labels.WfEditorStepId(node.Id);
         foreach (var field in block?.Config ?? [])
         {
             Fields.Add(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field), block!.Type, ExampleOf(block, field.Name)));   // why: a block was found, so node and block are not null
@@ -122,7 +124,13 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
 
         AdvancedOpen = false;
         OnChanged(nameof(HasAdvancedFields));
+        OnChanged(nameof(ShowsAdvanced));
     }
+
+    private static string ExampleOf(WorkflowBlock block, string field) =>
+        block.ExampleConfig is { ValueKind: JsonValueKind.Object } example && example.TryGetProperty(field, out var value) && value.ValueKind == JsonValueKind.String && string.Equals(field, "code", StringComparison.Ordinal)
+            ? value.GetString() ?? string.Empty
+            : string.Empty;
 
     private static string HeadingOf(EditorNode? node, WorkflowBlock? block)
     {
@@ -222,5 +230,23 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
 
         var unsure = string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
         (FailureText, _refused) = (unsure ? Labels.WfEditUnsure(error) : Labels.WfEditRefused(error), true);
+    }
+
+    private static List<EditorNode> ReadNodes(JsonElement spec)
+    {
+        var nodes = new List<EditorNode>();
+        if (spec.ValueKind != JsonValueKind.Object || !spec.TryGetProperty("nodes", out var list) || list.ValueKind != JsonValueKind.Array)
+        {
+            return nodes;
+        }
+
+        foreach (var node in list.EnumerateArray())
+        {
+            var title = node.TryGetProperty("title", out var t) && t.ValueKind == JsonValueKind.String ? t.GetString() : null;
+            var config = node.TryGetProperty("config", out var c) ? c.Clone() : default;
+            nodes.Add(new EditorNode(node.GetProperty("id").GetString() ?? string.Empty, node.GetProperty("type").GetString() ?? string.Empty, title, config));
+        }
+
+        return nodes;
     }
 }

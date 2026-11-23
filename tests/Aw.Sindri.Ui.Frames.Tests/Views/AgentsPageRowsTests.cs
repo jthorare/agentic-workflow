@@ -21,15 +21,16 @@ public sealed class AgentsPageRowsTests : FrameHost
         return (window, shell);
     }
 
+    // The sortable heads (Status, Agent, Repository, For) are Buttons holding a TextBlock; Where and Doing are bare TextBlocks.
     private static List<string> Heads(Window window) =>
-        [.. Named<Grid>(window, "AgentsColumnsGrid").Children.OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).Select(t => t.Text ?? string.Empty)];
+        [.. Named<Grid>(window, "AgentsColumnsGrid").Children.Where(c => c.IsEffectivelyVisible).Select(c => (c as TextBlock ?? (c as Button)?.Content as TextBlock)?.Text ?? string.Empty)];
 
     [Fact]
     public Task The_groups_come_in_order_with_their_counts_and_the_six_columns_sit_under_their_heads() => OnUi(async () =>
     {
         var (window, shell) = await Shown(1440);
 
-        Assert.Equal(["Started by Sindri (1)", "Not part of a workflow (2)"], shell.Agents.Groups.Select(g => g.Header), StringComparer.Ordinal);
+        Assert.Equal(["Needs you (1)", "Started by Sindri (1)", "Not part of a workflow (1)"], shell.Agents.Groups.Select(g => g.Header), StringComparer.Ordinal);
         Assert.Equal(["Status", "Agent", "Repository", "Where it runs", "What it is doing", "For"], Heads(window), StringComparer.Ordinal);
         Assert.False(shell.Agents.IsCompact);
         var repos = window.GetVisualDescendants().OfType<SessionRow>().Select(r => Named<Border>(r, "SessionRowRepo")).Where(b => b.IsEffectivelyVisible).Select(b => Avalonia.Automation.AutomationProperties.GetName(b)).ToList();

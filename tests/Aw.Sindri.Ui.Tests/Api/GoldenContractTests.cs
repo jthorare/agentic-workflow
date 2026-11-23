@@ -82,6 +82,7 @@ public sealed class GoldenContractTests
         ["workflows-slug-runs"] = As<WorkflowRunList>,   // GET /workflows/{slug}/runs: a workflow's runs
         ["workflow-runs-run"] = As<WorkflowRunView>,   // GET /workflow-runs/{run}: a run's detail
         ["workflow-runs-run-cancel"] = As<WorkflowRunCancelled>,   // POST /workflow-runs/{run}/cancel's cancelled body (the API golden cancels a queued run)
+        ["workflow-runs-run-seen"] = As<WorkflowRunSeen>,   // POST /workflow-runs/{run}/seen: the run page marks a failed live run seen when it opens (#3753)
         ["workflow-runs-run-nodes-node-takeover"] = As<AgentNodeControlled>,   // POST /workflow-runs/{run}/nodes/{node}/takeover's taken-over body; the refusals are ProblemDetails
         ["workflow-runs-run-nodes-node-handback"] = As<AgentNodeControlled>,   // POST .../handback's handed-back body; the refusals are ProblemDetails
         ["jobs-id-cancel"] = As<CommandAcceptedView>,   // POST /jobs/{id}/cancel's accepted answer; the refusals are ProblemDetails
@@ -140,6 +141,9 @@ public sealed class GoldenContractTests
         ["connections-id-test"] = As<ConnectionTested>,   // POST /sindri/connections/{name}/test
         ["connections-id-rename"] = As<ConnectionRenamed>,   // POST /sindri/connections/{name}/rename (the Rename action)
         ["connections-id-signin"] = As<ConnectionAdded>,   // POST /sindri/connections/{name}/signin (the Sign in again action)
+        ["home"] = As<HomeView>,   // GET /sindri/home: the Home page's first read (home spec §8, S0)
+        ["home-rows-id"] = As<HomeRowOne>,   // GET /sindri/home/rows/{id}: the peek; unknown-row-404 is a ProblemDetails
+        ["home-done"] = As<HomeDoneView>,   // GET /sindri/home/done: the Done list (home spec §5.4)
         ["memories"] = As<MemoryList>,   // GET /sindri/memories; created is POST's MemoryCreated (_readByScenario)
         ["memories-id-search"] = As<MemorySearchView>,   // GET /sindri/memories/{name}/search
         ["memories-id-facts"] = As<MemoryFactWritten>,   // POST /sindri/memories/{name}/facts; the forgot* scenarios are DELETE's MemoryForgotten (_readByScenario)
@@ -172,7 +176,6 @@ public sealed class GoldenContractTests
     {
         "stop",
         "toolkits", "toolkits-build", "toolkits-name-start", "toolkits-name-stop", "toolkits-name-pause", "toolkits-name-resume", "toolkits-name-calls",   // agent-first PR 16c: the app has no Toolkits page; the CLI's `toolkit` verbs and the toolkit_* MCP tools call these
-        "workflow-runs-run-seen",   // Home spec E1: POST /workflow-runs/{run}/seen ({run, marked}); the CLI's `wf seen` for now, #3753 moves it to the read list when the app marks a run seen
         "workflow-runs-run-nodes-node-answer",   // #2425: POST .../nodes/{node}/answer, the engine's answer to an ask_owner question; the app calls it once the Needs-you question row has its answer form (UI lane)
         "todos-id",   // the app never calls GET /sindri/todos/{id}; the CLI's `todo show` does
         "todos-keep", "todos-keep-undo", "todos-hold-apply", "todos-hold-undo",   // the picks (todo Ph3b): the conflict and hold rows that call them are ui's Ph4
@@ -194,7 +197,9 @@ public sealed class GoldenContractTests
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
         "todos-note-import",   // POST /todos/note/import (todo Ph3b): dry-run, imported and the stale 409; the app's Import and start syncing reads it with its own view once the card's golden contract lists it
         "workflows-validate",   // #2258 PR 8b: validate is the CLI's; ops and activate are read above
+        "home-rank-id",   // GET /sindri/home/rank/{id}: the explain data is the CLI's `home rank --explain` and the home_rank MCP tool; the row's why chip reads the rank inside the row
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
+        "messages-lists-id", "messages-status", "messages-conversations", "messages-conversations-id-messages", "messages-threads-id-id", "messages-search",   // messages spec §8.2 (M1s): M1f records these goldens; M1k and M1l move the ones the page reads to _read with their views
     };
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
