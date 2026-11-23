@@ -50,12 +50,13 @@ internal sealed class GitHubDeviceSignIn(HttpClient http, TimeProvider clock) : 
         var interval = authorization.Interval;
         while (true)
         {
-            if (clock.GetUtcNow() + interval > authorization.ExpiresAt)
+            var left = authorization.ExpiresAt - clock.GetUtcNow();
+            if (left <= TimeSpan.Zero)
             {
                 return Expired();
             }
 
-            await Task.Delay(interval, clock, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(interval < left ? interval : left, clock, cancellationToken).ConfigureAwait(false);   // the last poll lands on the expiry, so a yes in the final seconds still counts
             var answer = await Post(endpoint, [new("client_id", client), new("device_code", authorization.DeviceCode), new("grant_type", DeviceGrant)], cancellationToken).ConfigureAwait(false);
             if (answer.IsError)
             {

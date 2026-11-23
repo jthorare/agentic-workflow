@@ -85,11 +85,32 @@ public sealed class GitHubDeviceSignInTests : IDisposable
 
         var completing = SignIn().Complete(_github, Client, started, Token).AsTask();
         _clock.Advance(TimeSpan.FromSeconds(5));
-        _ = await _fake.NextPoll(Token);   // pending; the next wait would pass the code's expiry
+        _ = await _fake.NextPoll(Token);   // pending
+        _clock.Advance(TimeSpan.FromSeconds(3));
+        var last = await _fake.NextPoll(Token);   // pending at the expiry itself
         var result = await completing;
+
+        Assert.Equal(KnownInstants.Epoch.AddSeconds(8), last);
 
         Assert.Equal(SindriErrors.ConnectionSignInTimeout.Code, result.Error.Code);
         Assert.DoesNotContain("dc-secret", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_yes_in_the_last_seconds_before_the_expiry_still_returns_the_token()
+    {
+        var started = await Started(interval: "5", expiresIn: "8");
+        _fake.Polls.Enqueue("""{"error":"authorization_pending"}""");
+        _fake.Polls.Enqueue("""{"access_token":"gho_late"}""");
+
+        var completing = SignIn().Complete(_github, Client, started, Token).AsTask();
+        _clock.Advance(TimeSpan.FromSeconds(5));
+        _ = await _fake.NextPoll(Token);
+        _clock.Advance(TimeSpan.FromSeconds(3));
+        var last = await _fake.NextPoll(Token);
+
+        Assert.Equal(KnownInstants.Epoch.AddSeconds(8), last);
+        Assert.Equal("gho_late", (await completing).Value.AccessToken);
     }
 
     [Theory, Trait("Lane", "unit")]
