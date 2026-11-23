@@ -116,4 +116,27 @@ public sealed class GraphCardLineTests
     [Fact]
     public void A_port_with_an_at_later_in_the_url_reads_as_a_password() =>
         Assert.Equal("GET name", HttpLine("https://host:8080/@name"), StringComparer.Ordinal);
+
+    // #4156, the class: whatever sits before the last @ may be a password, wherever its ':' is. A user name with a raw / (a domain/user sign-in) puts the ':'
+    // after the first separator, and a bracket that holds no IPv6 address hides nothing. No suffix of the password may be on the card.
+    [Theory]
+    [InlineData("user", "12/34")]
+    [InlineData("user", "12?34")]
+    [InlineData("user", "12#34")]
+    [InlineData("user", "9")]
+    [InlineData("user", "1:2/3")]
+    [InlineData("user", "p@1/2")]
+    [InlineData("", "12/34")]
+    [InlineData("dom/user", "secret")]
+    [InlineData("dom?user", "12")]
+    [InlineData("[a", "9/8]")]
+    public void No_suffix_of_a_url_password_shows_on_the_card(string user, string password)
+    {
+        var line = HttpLine("https://" + string.Join(":", user, password) + "@host/x");
+        Assert.Equal("GET host/x", line, StringComparer.Ordinal);
+        for (var i = 0; i < password.Length; i++)
+        {
+            Assert.DoesNotContain(password[i..], line, StringComparison.Ordinal);
+        }
+    }
 }
