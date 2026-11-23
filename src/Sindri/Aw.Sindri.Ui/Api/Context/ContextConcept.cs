@@ -9,4 +9,5 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// <param name="Citations">The nodes the concept was derived from; absent when none is served.</param>
 /// <param name="Pages">How many pages express the concept; null from a server that does not count them.</param>
 /// <param name="SuggestedPages">The map keys of the concept's suggested pages, in section order, at most 200; null from a server that does not send them or when there are none.</param>
-internal sealed record ContextConcept(string Id, string Name, string Summary, ConceptSize Size, string Source = "derived", IReadOnlyList<ConceptCitation>? Citations = null, int? Pages = null, IReadOnlyList<string>? SuggestedPages = null);
+/// <param name="LastChanged">When the newest file of the concept changed; null from a server that does not send it (the row then shows no date).</param>
+internal sealed record ContextConcept(string Id, string Name, string Summary, ConceptSize Size, string Source = "derived", IReadOnlyList<ConceptCitation>? Citations = null, int? Pages = null, IReadOnlyList<string>? SuggestedPages = null, DateTimeOffset? LastChanged = null);
