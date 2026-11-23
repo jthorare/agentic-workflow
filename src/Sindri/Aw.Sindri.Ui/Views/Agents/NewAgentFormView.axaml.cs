@@ -5,7 +5,7 @@ using Aw.Sindri.Ui.ViewModels.Agents;
 
 namespace Aw.Sindri.Ui.Views.Agents;
 
-#pragma warning disable MA0182 // why: the shell places it in a sheet template once A7's route and the page wiring land
+#pragma warning disable MA0182 // why: the shell places it in a sheet template
 /// <summary>The New agent form inside the shell's sheet: Ctrl+Enter starts, Ctrl+Shift+Enter starts in the background and Esc closes, from any field.</summary>
 internal sealed partial class NewAgentFormView : UserControl
 {

@@ -7,8 +7,9 @@ namespace Aw.Sindri.Core.Projects.Truth;
 /// <param name="TotalItems">Every item linked to the project, cancelled ones left out.</param>
 /// <param name="RunningAgents">Live agent sessions in the project's repos that are running or asking.</param>
 /// <param name="Health">The derived health, or null when there is nothing to judge.</param>
-public sealed record ProjectTruth(IReadOnlyList<ProjectTruthPr> OpenPrs, int OpenItems, int DoneItems, int TotalItems, int RunningAgents, ProjectTruthHealth? Health)
+/// <param name="BlockedOnYou">At least one of <paramref name="OpenPrs"/> waits on the owner's review (<see cref="ProjectTruthPr.WaitsOnYou"/>); false when no GitHub login is known (issue 3797).</param>
+public sealed record ProjectTruth(IReadOnlyList<ProjectTruthPr> OpenPrs, int OpenItems, int DoneItems, int TotalItems, int RunningAgents, ProjectTruthHealth? Health, bool BlockedOnYou)
 {
     /// <summary>No PRs, no items, no agents, no health: what a card carries until the truth is read.</summary>
-    public static ProjectTruth Empty { get; } = new(OpenPrs: [], OpenItems: 0, DoneItems: 0, TotalItems: 0, RunningAgents: 0, Health: null);
+    public static ProjectTruth Empty { get; } = new(OpenPrs: [], OpenItems: 0, DoneItems: 0, TotalItems: 0, RunningAgents: 0, Health: null, BlockedOnYou: false);
 }
