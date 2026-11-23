@@ -116,7 +116,10 @@ public sealed class GitHubDeviceSignInTests : IDisposable
     [Theory, Trait("Lane", "unit")]
     [InlineData("access_denied", "SND-CONN-009")]
     [InlineData("expired_token", "SND-CONN-003")]
-    [InlineData("device_flow_disabled", "SND-SETUP-013")]
+    [InlineData("device_flow_disabled", "SND-SETUP-014")]
+    [InlineData("incorrect_client_credentials", "SND-SETUP-014")]
+    [InlineData("unsupported_grant_type", "SND-SETUP-014")]
+    [InlineData("unauthorized_client", "SND-SETUP-013")]
     [InlineData("something_new", "SND-CONN-012")]
     public async Task A_final_poll_error_ends_the_sign_in_with_its_code(string error, string code)
     {

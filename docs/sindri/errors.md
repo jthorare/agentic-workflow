@@ -169,7 +169,7 @@ Words from the first-run spec (`docs/superpowers/specs/2026-11-12-sindri-first-r
 | `SND-SETUP-011` | The installed Sindri has no `build-info`, so it isn't finished installing. | `scripts/install-cs.sh --link` |
 | `SND-SETUP-012` | Sindri didn't answer 30 seconds after a start or restart. | `sindri serve` |
 | `SND-SETUP-013` | GitHub or Linear refused Sindri's OAuth app (an org policy). | Paste a token: `sindri setup connect <provider> --token-env NAME` |
-| `SND-SETUP-014` | This build ships no client id for the provider and the profile sets none (`setup.oauth.github`, `setup.oauth.linear`). | Paste a token: `sindri setup connect <provider> --token-env NAME` |
+| `SND-SETUP-014` | This build ships no client id for the provider and the profile sets none (`setup.oauth.github`, `setup.oauth.linear`), or GitHub doesn't take the client id: it is wrong, or the app has no Device Flow. | Paste a token: `sindri setup connect <provider> --token-env NAME` |
 | `SND-SETUP-015` | The setup pass of `sindri setup --apply` didn't finish within `--timeout`; it keeps running. | `sindri jobs show <id>`, then `sindri setup` |
 | `SND-SETUP-016` | The setup pass of `sindri setup --apply` failed. | `sindri jobs show <id>` |
 
