@@ -24,6 +24,7 @@ internal sealed class FileRowViewModel
         IntentText = entry.Intent is { } intent ? Labels.ContextFilesIntent(intent.Records, intent.Decisions) : Labels.ContextFilesIntentNone;
         SymbolsText = IsDirectory ? string.Empty : symbols?.Cell(Path) ?? string.Empty;
         SymbolsOpacity = symbols?.Dimmed == true ? MapHighlightStyle.DimmedOpacity : 1;
+        SymbolsTip = string.Equals(SymbolsText, Labels.ContextSymbolsNoRow, StringComparison.Ordinal) ? symbols?.NoRowTip : null;
         AutomationName = Dots(Name, StatusWord, ForText, IntentText, SymbolsText);
     }
 
@@ -75,7 +76,7 @@ internal sealed class FileRowViewModel
     public string SymbolsText { get; }
 
     /// <summary>The symbols cell's tooltip: why a dash cell is empty, or null (#3996).</summary>
-    public string? SymbolsTip => null;
+    public string? SymbolsTip { get; }
 
     /// <summary>1, or the dimmed opacity when the index is stale.</summary>
     public double SymbolsOpacity { get; }

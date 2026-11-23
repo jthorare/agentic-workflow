@@ -22,8 +22,8 @@ internal sealed partial class FileMapViewModel
     // The server sends ok, stale or unavailable: only an index that does not exist gets the "not built" note.
     private string SymbolsNote() => _symbolsServed?.State switch
     {
-        "ok" => string.Empty,
-        "stale" => Labels.ContextFilesNamesStale(_symbolsServed.Commit),
+        "ok" => Symbols is { AsOfNote: null, EmptyReason: null } or null ? string.Empty : Labels.Dots(ColSymbols, Symbols.AsOfNote, Symbols.EmptyReason),
+        "stale" => Labels.Dots(Labels.ContextFilesNamesStale(_symbolsServed.Commit), Symbols?.AsOfNote),
         _ => Labels.ContextMapNamesDetail,
     };
 

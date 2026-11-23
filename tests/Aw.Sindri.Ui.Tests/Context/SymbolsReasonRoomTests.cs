@@ -56,6 +56,15 @@ public sealed class SymbolsReasonRoomTests
         Assert.Equal(string.Empty, map.Note);
     }
 
+    [Fact]
+    public async Task An_index_at_another_commit_keeps_the_heading_short_and_names_both_commits_under_the_table()
+    {
+        var map = await Loaded("""{"state":"ok","reason":null,"items":[],"commit":"7c3e1a2","asOfCommit":"1234567","asOfMismatch":true,"files":[]}""");
+
+        Assert.Equal("symbols · from 7c3e1a2", map.SymbolsHeading);
+        Assert.Equal("symbols · from 7c3e1a2, not 1234567 · none in these files", map.Note);
+    }
+
     private static async Task<FileMapViewModel> Loaded(string symbols)
     {
         var clipboard = new FakeClipboard();
