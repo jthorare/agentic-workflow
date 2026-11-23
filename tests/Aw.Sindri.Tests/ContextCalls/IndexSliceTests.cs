@@ -6,6 +6,7 @@ using Aw.Context.Core.Sync;
 using Aw.Sindri.Core;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.Server;
 using Aw.Sindri.Tests.Workflow.Blocks.Input;
 
 namespace Aw.Sindri.Tests.ContextCalls;
@@ -35,7 +36,7 @@ public sealed class IndexSliceTests
         ];
         using var caller = _h.Callers.EnterService("test");
 
-        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
+        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index), new SourceSyncClock(TimeProvider.System), new NoPauses()).Handle(new GetIndexStatusRequest(), Ct);
 
         Assert.True(view.IsSuccess);
         Assert.Equal(
@@ -58,7 +59,7 @@ public sealed class IndexSliceTests
         ];
         using var caller = _h.Callers.EnterService("test");
 
-        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
+        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index), new SourceSyncClock(TimeProvider.System), new NoPauses()).Handle(new GetIndexStatusRequest(), Ct);
 
         Assert.True(view.IsSuccess);
         Assert.Equal(
@@ -82,7 +83,7 @@ public sealed class IndexSliceTests
         ];
         using var caller = _h.Callers.EnterService("test");
 
-        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
+        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index), new SourceSyncClock(TimeProvider.System), new NoPauses()).Handle(new GetIndexStatusRequest(), Ct);
 
         Assert.Equal(
             [new IndexSourceRow("github", "recent", Usable: false, Complete: false, _now, "SND-CONTEXT-010", Pull: "backoff", Records: 12, LastCommit: _now.AddHours(-1), LastError: "SND-CONTEXT-010", LastErrorText: "the source is down", Failures: 3, NextTry: _now.AddMinutes(20)) { NeedsLook = true }],
@@ -97,7 +98,7 @@ public sealed class IndexSliceTests
         _index.Concepts = new ConceptStatus(Enabled: true, Concepts: 101, MultiSource: 34, Queued: 3, Covered: 300, Watermark: 8812, Embedded: 550, Pending: 12);
         using var caller = _h.Callers.EnterService("test");
 
-        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
+        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index), new SourceSyncClock(TimeProvider.System), new NoPauses()).Handle(new GetIndexStatusRequest(), Ct);
 
         Assert.True(view.IsSuccess);
         Assert.Equal(new IndexConceptsView(Enabled: true, Concepts: 101, MultiSource: 34, Queued: 3, Covered: 300, Embedded: 550, Pending: 12, Watermark: 8812, Coverage: 300d / 550), view.Value.Concepts);
@@ -110,7 +111,7 @@ public sealed class IndexSliceTests
         _index.Concepts = new ConceptStatus(Enabled: true, Concepts: 0, MultiSource: 0, Queued: 0, Covered: 0, Watermark: 0, Embedded: 0, Pending: 0, LastRun: _now, LastCode: "SND-CONTEXT-042");
         using var caller = _h.Callers.EnterService("test");
 
-        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
+        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index), new SourceSyncClock(TimeProvider.System), new NoPauses()).Handle(new GetIndexStatusRequest(), Ct);
 
         Assert.Equal((_now, "SND-CONTEXT-042"), (view.Value.Concepts?.LastRun, view.Value.Concepts?.LastCode));
     }
@@ -122,7 +123,7 @@ public sealed class IndexSliceTests
         _index.Concepts = new ConceptStatus(Enabled: true, Concepts: 0, MultiSource: 0, Queued: 0, Covered: 0, Watermark: 0, Embedded: 0, Pending: 5);
         using var caller = _h.Callers.EnterService("test");
 
-        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
+        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index), new SourceSyncClock(TimeProvider.System), new NoPauses()).Handle(new GetIndexStatusRequest(), Ct);
 
         Assert.Equal(0d, view.Value.Concepts?.Coverage);
     }
@@ -135,7 +136,7 @@ public sealed class IndexSliceTests
         _index.ConceptsFailure = ContextErrors.StoreUnavailable.With("the concept store can't be opened");
         using var caller = _h.Callers.EnterService("test");
 
-        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
+        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index), new SourceSyncClock(TimeProvider.System), new NoPauses()).Handle(new GetIndexStatusRequest(), Ct);
 
         Assert.True(view.IsSuccess);
         Assert.Equal("linear", Assert.Single(view.Value.Sources).Source);
@@ -147,7 +148,7 @@ public sealed class IndexSliceTests
     {
         using var caller = _h.Callers.EnterService("test");
 
-        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
+        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index), new SourceSyncClock(TimeProvider.System), new NoPauses()).Handle(new GetIndexStatusRequest(), Ct);
 
         Assert.True(view.IsError);
         Assert.Equal(SindriErrors.ProfileMissing.Code, view.Error.Code);

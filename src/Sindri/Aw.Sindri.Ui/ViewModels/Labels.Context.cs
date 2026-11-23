@@ -8,11 +8,17 @@ internal static partial class Labels
     /// <summary>The page head before any map has been read.</summary>
     internal const string ContextNoMap = "No context map yet";
 
-    /// <summary>The anchor box's name.</summary>
-    internal const string ContextAnchor = "Ask or look up";
+    /// <summary>The key hints under the concepts list.</summary>
+    internal const string ContextKeysConcepts = "↑ ↓ move · Enter open · p pin · / ask · Esc back";
 
-    /// <summary>The anchor box's hint.</summary>
-    internal const string ContextAnchorHint = "Ask a question, or type a topic such as feature:name";
+    /// <summary>The key hints under the Files list.</summary>
+    internal const string ContextKeysFiles = "↑ ↓ move · Enter open · / ask · Esc back";
+
+    /// <summary>The key hints under the map and its item list.</summary>
+    internal const string ContextKeysMap = "↑ ↓ move · Enter open · / ask · Esc up a layer";
+
+    /// <summary>The anchor box's name.</summary>
+    internal const string ContextAnchor = "Ask a question";
 
     /// <summary>The head of a read: how many topics it was asked about. The map's version is in the answer's closed disclosure, not up front.</summary>
     /// <param name="anchors">How many anchors were found.</param>
@@ -87,9 +93,9 @@ internal static partial class Labels
 
     /// <summary>The line when a question or a name is not on the map.</summary>
     /// <param name="asked">What was typed.</param>
-    /// <returns>"Nothing on the map matches 'Tab groups'. Try a topic such as feature:name."</returns>
+    /// <returns>"Nothing matches 'Tab groups'."</returns>
     internal static string ContextNothingMatches(string asked) =>
-        $"Nothing on the map matches '{asked}'. Try a topic such as feature:name.";
+        $"Nothing matches '{asked}'.";
 
     /// <summary>The line when a name is the name of several items.</summary>
     /// <param name="asked">What was typed.</param>

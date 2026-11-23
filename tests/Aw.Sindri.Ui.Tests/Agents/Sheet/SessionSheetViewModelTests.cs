@@ -44,7 +44,7 @@ public sealed class SessionSheetViewModelTests
         var sheet = await Opened(ClaudeRef);
 
         Assert.Equal((FramePhase.Shown, ClaudeRef, ClaudeRef, 1), (sheet.Phase, sheet.Ref, _server.LastSessionRef, _server.SessionCalls));
-        Assert.Equal(("Claude Code private title", "● Working"), (sheet.Heading, sheet.StateLine));
+        Assert.Equal(("Claude Code private title", "Working"), (sheet.Heading, sheet.StateLine));
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public sealed class SessionSheetViewModelTests
     {
         var sheet = await Opened(CodexRef);
 
-        Assert.Equal(("Codex web/bbbbbbbb", "● Waiting on you · approval · Bash"), (sheet.Heading, sheet.StateLine));
+        Assert.Equal(("Codex web/bbbbbbbb", "Waiting on you · approval · Bash"), (sheet.Heading, sheet.StateLine));
         Assert.Equal(["Shown in", "Terminal"], sheet.HostFields.Select(f => f.Label), StringComparer.Ordinal);
         Assert.Equal(("Warp", "warp", "/work/web"), (Value(sheet.HostFields, "Shown in"), Value(sheet.HostFields, "Terminal"), Value(sheet.Fields, "Working directory")));
         Assert.DoesNotContain(sheet.Fields, f => new[] { "Worktree", "Lane" }.Contains(f.Label, StringComparer.Ordinal));
@@ -246,6 +246,45 @@ public sealed class SessionSheetViewModelTests
         await sheet.CopyAttach(Token);
 
         Assert.Equal("""tmux -S '/tmp/my sock/default' attach -t '=it'\''s "x";$y'""", _clipboard.Text);
+    }
+
+    [Fact]
+    public async Task The_attach_command_shows_the_text_it_copies_3871()
+    {
+        var tmux = await Opened(ClaudeRef);
+        var other = await Opened(CodexRef);
+
+        await tmux.CopyAttach(Token);
+
+        Assert.Equal((_clipboard.Text, string.Empty), (tmux.AttachText, other.AttachText));
+        Assert.StartsWith("tmux -S ", tmux.AttachText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task The_state_is_a_toned_dot_and_a_word_3872()
+    {
+        var working = await Opened(ClaudeRef);
+        var waiting = await Opened(CodexRef);
+
+        Assert.Equal(("●", true, false), (working.StateGlyph, working.IsStateWorking, working.IsStateWaiting));
+        Assert.Equal(("●", false, true), (waiting.StateGlyph, waiting.IsStateWorking, waiting.IsStateWaiting));
+        Assert.StartsWith("Working", working.StateLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task The_state_text_has_no_dot_because_the_toned_dot_draws_it_3872()
+    {
+        var working = await Opened(ClaudeRef);
+        _server.SessionOneBody = (provider, id) =>
+        {
+            var body = JsonNode.Parse(SessionAnswers.One(provider, id).Body)!; // why: the golden is a JSON document
+            body["session"]!["state"] = "idle";
+            return new RouteAnswer(HttpStatusCode.OK, body.ToJsonString());
+        };
+        var idle = await Opened(ClaudeRef);
+
+        Assert.Equal(("Working", "Idle"), (working.StateLine, idle.StateLine));
+        Assert.DoesNotContain("●", working.StateLine + idle.StateLine, StringComparison.Ordinal);
     }
 
     [Fact]
