@@ -67,9 +67,20 @@ internal sealed partial class AgentsPage
     // footer and the key routing agree with where focus is (#4002).
     private void DropSideWhenFocusLeavesPane(RoutedEventArgs e)
     {
-        if (Page is { IsTerminalOpen: true } page && page.Terminal.Side != TerminalSide.List && e.Source is Visual source && !ReferenceEquals(source, TerminalPanel) && !TerminalPanel.IsVisualAncestorOf(source))
+        if (Page is not { IsTerminalOpen: true } page || e.Source is not Visual source)
+        {
+            return;
+        }
+
+        var inPane = ReferenceEquals(source, TerminalPanel) || TerminalPanel.IsVisualAncestorOf(source);
+        if (!inPane && page.Terminal.Side != TerminalSide.List)
         {
             page.Terminal.ClickList();
+        }
+        else if (inPane && page.Terminal.Side == TerminalSide.List)
+        {
+            // An overlay (the palette) opened from the pane gave focus back to it on close: the pane takes the keys again, by the rule a click in it uses (#4142).
+            page.Terminal.ClickPane();
         }
     }
 
