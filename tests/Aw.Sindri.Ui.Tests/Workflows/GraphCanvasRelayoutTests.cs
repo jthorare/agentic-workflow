@@ -172,8 +172,11 @@ public sealed class GraphCanvasRelayoutTests
     // #4033 (qa on #4061): at 125 % with the view at the bottom right limit, one step in and one step out must return to the start pan. StepTo set the
     // zoom first, so the zoom handler clamped the pan to the smaller extent and the centre formula read the clamped pan. Out from 150 % to 125 %, with the
     // limit start p0 = (cw - 1.25 R, ch - 1.25 H - 144): in gives c - (c - p0) * 1.2, still inside the 150 % extent (0.1 cw and 0.1 ch - 28.8 to spare),
-    // but outside the 125 % extent, so the old order clamped it back to p0 and then moved again. Worked at 600 x 400 with a world 432 px tall: p0.y = -284,
-    // in -380.8, old out -203.3 (80 px off), new out -284. The limit itself can return: the 150 % extent is wider on both axes, so the step in never clamps.
+    // but outside the 125 % extent, so the old order clamped it back to p0 and then moved again. Window 300 x 400, not 600 x 400: the canvas wraps the 16 cards to its width, and at 600 px the world may be a single
+    // 290 px column (1.25 x 290 = 362 < 600: no x scroll, the guard failed there). Every card is at least 290 px wide (ChainGraph), so R >= 290 and
+    // 1.25 R >= 362 > 300: x always scrolls; 16 cards are far taller than 205 px, so 1.25 H + 144 > 400 and y scrolls. With R = 290 and H = 432 (a
+    // guess for H, from the five-steps fact's 'cards to y 432'): p0 = (-62.5, -284), in = (-87.5, -380.8), old out x = 300/2 - (150 + 62.5) * 0.8333 = -27.1
+    // (35 px off), old out y = -203.3 (80 px off), new out = p0 exactly. Both axes fail under the old order when R > 0.4 cw = 120 and H > 45. The limit itself can return: the 150 % extent is wider on both axes, so the step in never clamps.
     [Fact]
     public async Task One_zoom_step_in_and_one_out_at_125_percent_return_to_the_start_pan_at_the_bottom_right_limit()
     {
@@ -182,7 +185,7 @@ public sealed class GraphCanvasRelayoutTests
         var (start, back, scrolls) = await OnUi(() =>
         {
             var canvas = new GraphCanvas { Graph = graph };
-            var window = new Window { Content = canvas, Width = 600, Height = 400 };
+            var window = new Window { Content = canvas, Width = 300, Height = 400 };
             window.Show();
             Settle(window);
             try
@@ -203,7 +206,7 @@ public sealed class GraphCanvasRelayoutTests
             }
         });
 
-        Assert.True(scrolls, "the test needs a graph that scrolls on both axes at 125 % in 600 x 400");
+        Assert.True(scrolls, "the test needs a graph that scrolls on both axes at 125 % in 300 x 400");
         Assert.True(
             Math.Abs(back.X - start.X) <= 0.5 && Math.Abs(back.Y - start.Y) <= 0.5,
             "the pan started at " + start.X.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + ", " + start.Y.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)
