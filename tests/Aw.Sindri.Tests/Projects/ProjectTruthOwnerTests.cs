@@ -5,6 +5,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Projects.Cards;
+using Aw.Sindri.Core.Projects.TruthSources;
 using Aw.Sindri.Core.Projects.Vocabulary;
 using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Core.Views;
@@ -74,10 +75,10 @@ public sealed class ProjectTruthOwnerTests
     }
 
     [Fact]
-    public void The_no_login_row_is_a_quiet_hint_not_a_failure()
-    {
-        Assert.Equal(("github-login", ProjectFreshnessState.Ok, "not known: connect GitHub or set review.login to see what is blocked on you"), (ProjectTruthPage.NoLogin.Source, ProjectTruthPage.NoLogin.State, ProjectTruthPage.NoLogin.Text));
-    }
+    public void The_no_login_row_is_a_quiet_hint_not_a_failure() =>
+        Assert.Equal(
+            ("github-login", ProjectFreshnessState.Ok, "not known: connect GitHub or set review.login to see what is blocked on you"),
+            (ProjectTruthPage.NoLogin.Source, ProjectTruthPage.NoLogin.State, ProjectTruthPage.NoLogin.Text));
 
     [Fact]
     public async Task With_no_pull_in_scope_the_page_does_not_read_the_owner_login_at_all()
