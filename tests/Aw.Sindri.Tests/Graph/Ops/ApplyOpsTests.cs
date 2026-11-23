@@ -191,6 +191,25 @@ public sealed class ApplyOpsTests
     }
 
     [Fact]
+    public void Set_meta_sets_and_clears_the_result()
+    {
+        var set = Apply(Base(), new SetMetaOp(Result: "a"));
+        var cleared = Apply(set.Value, new SetMetaOp(Result: ""));
+
+        Assert.Equal(Id("a"), set.Value.Result);
+        Assert.Null(cleared.Value.Result);
+    }
+
+    [Fact]
+    public void Set_meta_with_a_result_that_names_no_node_is_refused()
+    {
+        var result = Apply(Base(), new SetMetaOp(Result: "ghost"));
+
+        Assert.True(result.IsError);
+        Assert.Contains("GRAPH-RESULT-001", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Ops_read_and_write_as_JSON_with_an_op_member()
     {
         var parsed = GraphOpJson.Parse(

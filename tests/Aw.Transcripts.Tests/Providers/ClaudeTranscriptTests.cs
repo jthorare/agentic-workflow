@@ -31,7 +31,7 @@ public sealed class ClaudeTranscriptTests : IDisposable
             ClaudeLines.User("a typed prompt with an origin", _t.AddSeconds(11), l => l["origin"] = new JsonObject { ["kind"] = "human" }),
             ClaudeLines.UserBlocks(_t.AddSeconds(12), "a prompt in", "text blocks"));
 
-        Assert.Equal<string>(["the one real prompt", "a typed prompt with an origin", "a prompt in\ntext blocks"], read.Turns.Where(t => t.Role == TurnRole.Human).Select(t => t.Text), StringComparer.Ordinal);
+        Assert.Equal(["the one real prompt", "a typed prompt with an origin", "a prompt in\ntext blocks"], read.Turns.Where(t => t.Role == TurnRole.Human).Select(t => t.Text), StringComparer.Ordinal);
         Assert.Equal(3, read.Session.HumanTurns);
     }
 
@@ -61,7 +61,7 @@ public sealed class ClaudeTranscriptTests : IDisposable
             "",
             ClaudeLines.User("after", _t.AddSeconds(5)));
 
-        Assert.Equal<string>(["before", "after"], read.Turns.Select(t => t.Text), StringComparer.Ordinal);
+        Assert.Equal(["before", "after"], read.Turns.Select(t => t.Text), StringComparer.Ordinal);
         Assert.Equal(2, read.SkippedLines);
         Assert.Equal(5, read.Turns[1].Ref.Line);
     }

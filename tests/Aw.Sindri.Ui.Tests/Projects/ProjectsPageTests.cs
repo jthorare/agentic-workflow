@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Projects;
@@ -115,6 +116,25 @@ public sealed class ProjectsPageTests
     }
 
     [Fact]
+    public async Task An_unset_github_login_keeps_the_hint_on_the_freshness_line_without_tinting_it()
+    {
+        var list = Golden("mixed");
+        list["freshness"] = new JsonArray(new JsonObject
+        {
+            ["source"] = "github-login",
+            ["state"] = "ok",
+            ["text"] = "not known: connect GitHub or set review.login to see what is blocked on you",
+            ["at"] = null,   // served as null: the row has no sync time
+        });
+        _f.Serve(list);
+
+        var page = await _f.Shown(Token);
+
+        Assert.False(page.FreshnessFailing);
+        Assert.Contains("not known: connect GitHub or set review.login to see what is blocked on you", page.Freshness, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_failing_source_tints_the_freshness_line()
     {
         _f.Serve("linear-failing");
@@ -123,6 +143,21 @@ public sealed class ProjectsPageTests
 
         Assert.True(page.FreshnessFailing);
         Assert.Contains("Linear issues needs attention (SND-INDEX-401)", page.Freshness, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_failing_sindri_row_says_what_could_not_be_read_without_the_raw_error()
+    {
+        var list = Golden("mixed");
+        list["freshness"]!.AsArray().Add(new JsonObject { ["source"] = "sindri", ["state"] = "failing", ["text"] = "SND-REVIEWS-012: reviews.db is locked", ["at"] = null });
+        _f.Serve(list);
+
+        var page = await _f.Shown(Token);
+
+        Assert.True(page.FreshnessFailing);
+        Assert.Contains("GitHub synced 14 min ago · PRs, checks and agents couldn't be read just now · Linear says you're Jo Smith", page.Freshness, StringComparison.Ordinal);
+        Assert.DoesNotContain("SND-", page.Freshness, StringComparison.Ordinal);
+        Assert.DoesNotContain("sindri", page.Freshness, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -183,7 +218,7 @@ public sealed class ProjectsPageTests
 
     private const string ServedMissingKey = "Linear needs a token. Run sindri index connect linear in your terminal to connect it.";
 
-    private async Task<ProjectsPageViewModel> ShownWithMissingKey(Action<System.Text.Json.Nodes.JsonNode>? edit = null)
+    private async Task<ProjectsPageViewModel> ShownWithMissingKey(Action<JsonNode>? edit = null)
     {
         var list = Golden("mixed");
         list["empty"] = ServedMissingKey;
@@ -219,7 +254,7 @@ public sealed class ProjectsPageTests
     [Fact]
     public async Task A_missing_key_banner_with_no_last_read_leaves_the_last_read_out()
     {
-        var page = await ShownWithMissingKey(list => list["freshness"] = new System.Text.Json.Nodes.JsonArray());
+        var page = await ShownWithMissingKey(list => list["freshness"] = new JsonArray());
 
         Assert.Equal("Sindri has no Linear key, so projects aren't refreshing.", page.Sentence);
     }

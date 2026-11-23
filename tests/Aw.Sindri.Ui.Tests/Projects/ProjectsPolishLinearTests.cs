@@ -39,7 +39,7 @@ public sealed class ProjectsPolishLinearTests
         sheet.Done += (_, e) => done.Add(e);
         _f.Server.ProjectAnswers[ProjectSheetFixture.Attached] = RouteAnswer.Problem(HttpStatusCode.NotFound, "SND-PROJECT-404", "No project prj_x. `sindri projects` lists them.");
 
-        await sheet.Refresh(ProjectsFixture.Url, Token);
+        await sheet.Refresh(Url, Token);
 
         var e = Assert.Single(done);
         Assert.Equal((ProjectDone.Removed, "Removed elsewhere"), (e.Kind, e.Said));
@@ -76,7 +76,7 @@ public sealed class ProjectsPolishLinearTests
     [Fact]
     public void The_Add_sheet_opens_on_By_hand_and_says_Linear_is_not_connected_when_it_is_not()
     {
-        var add = new ProjectAddViewModel(_f.Server, () => ProjectsFixture.Url);
+        var add = new ProjectAddViewModel(_f.Server, () => Url);
         add.SetLinearConnected(connected: false);
 
         add.Reset();

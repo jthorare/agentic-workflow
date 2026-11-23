@@ -28,14 +28,47 @@ public sealed class SetupDeriver(ISetupFacts facts, Action<string, Exception>? s
             Step(SetupStepId.Serve, serve, SetupSteps.Serve),
             Step(SetupStepId.Sources, sources, SetupSteps.Sources),
             Step(SetupStepId.Repo, repo, SetupSteps.Repo),
-            repo.IsError ? SetupSteps.Unreadable(SetupStepId.Profile, repo.Error) : Step(SetupStepId.Profile, profile, p => SetupSteps.Profile(p, repo.Value)),
-            repo.IsError ? SetupSteps.Unreadable(SetupStepId.Agent, repo.Error) : Step(SetupStepId.Agent, agent, a => SetupSteps.Agent(a, repo.Value)),
+            Profile(repo, profile),
+            Agent(repo, agent),
             Step(SetupStepId.Mcp, mcp, SetupSteps.Mcp),
             Step(SetupStepId.Map, map, SetupSteps.Map),
             repo.IsError ? SetupSteps.Unreadable(SetupStepId.FirstWorkflow, repo.Error) : Step(SetupStepId.FirstWorkflow, first, f => SetupSteps.FirstWorkflow(f, repo.Value)),
         ];
-        return [.. steps.Select(static s => s with { Cli = SetupActions.CliFor(s.Action) })];   // the command an agent runs for the step's action; null for an owner-only one
+        return WithCli(steps);
     }
+
+    /// <summary>
+    /// The eight steps while serve is down ('sindri setup' in process; first-run spec decision 8): serve says Sindri isn't running; repo, profile and agent are decided from the profile as
+    /// <see cref="Derive"/> decides them; sources, mcp, map and first-workflow wait for Sindri to run, since only the running Sindri can read their sources.
+    /// </summary>
+    /// <param name="repo">The repos read, or the error that stopped it.</param>
+    /// <param name="profile">The profile read, or the error that stopped it.</param>
+    /// <param name="agent">The agent read, or the error that stopped it.</param>
+    /// <returns>The eight steps, in the same order as <see cref="Derive"/>.</returns>
+    public static IReadOnlyList<SetupStep> WithoutServe(Result<RepoFact> repo, Result<ProfileFact> profile, Result<AgentFact> agent)
+    {
+        SetupStep[] steps =
+        [
+            SetupSteps.NotRunning(),
+            SetupSteps.WaitsForServe(SetupStepId.Sources),
+            Step(SetupStepId.Repo, repo, SetupSteps.Repo),
+            Profile(repo, profile),
+            Agent(repo, agent),
+            SetupSteps.WaitsForServe(SetupStepId.Mcp),
+            SetupSteps.WaitsForServe(SetupStepId.Map),
+            SetupSteps.WaitsForServe(SetupStepId.FirstWorkflow),
+        ];
+        return WithCli(steps);
+    }
+
+    // the command an agent runs for the step's action; null for an owner-only one
+    private static SetupStep[] WithCli(SetupStep[] steps) => [.. steps.Select(static s => s with { Cli = SetupActions.CliFor(s.Action) })];
+
+    private static SetupStep Profile(Result<RepoFact> repo, Result<ProfileFact> profile) =>
+        repo.IsError ? SetupSteps.Unreadable(SetupStepId.Profile, repo.Error) : Step(SetupStepId.Profile, profile, p => SetupSteps.Profile(p, repo.Value));
+
+    private static SetupStep Agent(Result<RepoFact> repo, Result<AgentFact> agent) =>
+        repo.IsError ? SetupSteps.Unreadable(SetupStepId.Agent, repo.Error) : Step(SetupStepId.Agent, agent, a => SetupSteps.Agent(a, repo.Value));
 
     private static SetupStep Step<T>(SetupStepId id, Result<T> read, Func<T, SetupStep> decide) =>
         read.IsError ? SetupSteps.Unreadable(id, read.Error) : decide(read.Value);

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Sessions;
 using Aw.Sindri.Ui.Platform;
+using Aw.Sindri.Ui.Terminal;
 using Aw.Sindri.Ui.ViewModels.Components;
 using Aw.Sindri.Ui.ViewModels.Controls;
 
@@ -19,7 +20,7 @@ namespace Aw.Sindri.Ui.ViewModels.Agents;
 /// <param name="connector">Opens the terminal WebSocket; null: the pane never connects.</param>
 /// <param name="stopper">The stop route for the pane header's Stop; null: Stop is refused.</param>
 /// <param name="control">Stop and Interrupt for the terminal view's header; null until Serve's routes are wired (the buttons then answer "Couldn't stop it.").</param>
-internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard clipboard, TimeProvider clock, CatalogViewModel catalog, Aw.Sindri.Ui.Terminal.ISessionControl? control = null, Aw.Sindri.Ui.Terminal.ITerminalConnector? connector = null, Aw.Sindri.Ui.Terminal.ISessionStopper? stopper = null) : ObservableObject
+internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard clipboard, TimeProvider clock, CatalogViewModel catalog, ISessionControl? control = null, ITerminalConnector? connector = null, ISessionStopper? stopper = null) : ObservableObject
 {
     private readonly Dictionary<string, SessionRowViewModel> _rows = new(StringComparer.Ordinal);
     private readonly Dictionary<string, EndedSessionViewModel> _ended = new(StringComparer.Ordinal);
@@ -243,7 +244,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
     private void Apply(IReadOnlyList<string> before, SessionList list)
     {
         var shownSessions = list.Sessions.Where(Matches).ToList();
-        var kept = shownSessions.Select(Row).ToList();
+        var kept = shownSessions.Select(Held).Select(Row).ToList();
         Head = IsFiltered
             ? Labels.AgentsFilteredHead(shownSessions.Count, list.Counts.Live, shownSessions.Count(s => string.Equals(s.State, "asking", StringComparison.Ordinal)))
             : Labels.AgentsHead(list.Counts.Live, list.Counts.Asking);
@@ -255,20 +256,9 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
             _ = _rows.Remove(gone);
         }
 
-        var outside = kept.Where(r => !r.IsLaunched).ToList();
-        var launched = kept.Where(r => r.IsLaunched).ToList();
-        var shown = new List<SessionGroupViewModel>();
-        if (launched.Count > 0)
-        {
-            shown.Add(Group(Labels.StartedBySindri, launched));
-        }
-
-        if (outside.Count > 0)
-        {
-            shown.Add(Group(Labels.OutsideWorkflow, outside));
-        }
-
+        var shown = ShownGroups(kept);
         Patch.To(Groups, shown);
+        OnChanged(nameof(HasAsking));   // after the patch: HasAsking reads Groups[0]
         RefreshColumns(kept);
         OnChanged(nameof(HasColumns));
         ShowEnded(list);
