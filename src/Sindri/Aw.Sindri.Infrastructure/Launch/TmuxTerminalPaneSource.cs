@@ -55,10 +55,12 @@ internal sealed partial class TmuxTerminalPaneSource(TmuxHostOptions options, IT
     private sealed partial class PaneStream(TmuxHostOptions options, TerminalTarget target) : IOpenTerminalPane
     {
         private readonly SemaphoreSlim _kick = new(0);
-        private readonly Lock _view = new();   // guards _back, _hist and _alt: the pump reads them, the receive loop sets them
+        private readonly Lock _view = new();   // guards _back, _hist, _alt and _seenBack: the pump reads them, the receive loop sets them
         private int _back;   // rows above the live screen the view shows; 0 is live
         private int _hist;   // the history size of the last capture, 0 on the alternate screen
         private bool _alt;
+        private int _seenBack;   // the offset of the last capture's rows: a view still there was not scrolled since
+        private List<string>? _seen;   // the last capture's rows, which a full history finds again by content (the pump only)
         private long _seq;   // per stream, not per enumeration: a reader that comes back gets the next number, so frames always count up
 
         public TerminalHost Host { get; } = new(target.SocketIsPath ? "path" : target.Socket, target.Session, target.Pane);
@@ -74,21 +76,12 @@ internal sealed partial class TmuxTerminalPaneSource(TmuxHostOptions options, IT
                     yield break;   // tmux or the session went away: the socket closes with 4016
                 }
 
-                var (back, hist) = View(facts);
-                string[] captureArgs = back == 0
-                    ? ["capture-pane", "-e", "-p", "-t", target.Pane]
-                    : [
-                        "capture-pane", "-e", "-p", "-t", target.Pane,
-                        "-S", (-back).ToString(CultureInfo.InvariantCulture),
-                        "-E", (facts.Height - 1 - back).ToString(CultureInfo.InvariantCulture),
-                    ];
-                var captured = await Call(captureArgs, stdin: null, cancellationToken).ConfigureAwait(false);
-                if (captured.ExitCode != 0)
+                if (await Capture(facts, cancellationToken).ConfigureAwait(false) is not { } shown)
                 {
                     yield break;
                 }
 
-                var rows = Rows(captured.Output, facts.Height);
+                var (rows, back, hist) = shown;
                 var signature = string.Join('\n', rows) + facts.Signature + "|" + back.ToString(CultureInfo.InvariantCulture) + "," + hist.ToString(CultureInfo.InvariantCulture);
                 if (!string.Equals(signature, last, StringComparison.Ordinal))
                 {
@@ -103,6 +96,33 @@ internal sealed partial class TmuxTerminalPaneSource(TmuxHostOptions options, IT
                 // The next capture is a tick away, or at once after a key (perf D14); the tick after a kicked capture is still a full tick, so the cap holds.
                 _ = await _kick.WaitAsync(_tick, cancellationToken).ConfigureAwait(false);
             }
+        }
+
+        /// <summary>
+        /// The rows this capture shows, with its offset and history size, or null when tmux refused it. With a full history it also captures the rows above
+        /// the view and holds the view on the last capture's rows by content (issue 3829): no match keeps the offset and sends what is there.
+        /// </summary>
+        private async ValueTask<(List<string> Rows, int Back, int Hist)?> Capture(PaneFacts facts, CancellationToken cancellationToken)
+        {
+            var (back, hist, extra) = View(facts);
+            string[] captureArgs = back == 0
+                ? ["capture-pane", "-e", "-p", "-t", target.Pane]
+                : [
+                    "capture-pane", "-e", "-p", "-t", target.Pane,
+                    "-S", (-(back + extra)).ToString(CultureInfo.InvariantCulture),
+                    "-E", (facts.Height - 1 - back).ToString(CultureInfo.InvariantCulture),
+                ];
+            var captured = await Call(captureArgs, stdin: null, cancellationToken).ConfigureAwait(false);
+            if (captured.ExitCode != 0)
+            {
+                return null;
+            }
+
+            var all = Rows(captured.Output, facts.Height + extra);
+            var shift = extra > 0 && _seen is { } seen && seen.Count == facts.Height ? ScrollbackShift.Find(seen, all, extra) ?? 0 : 0;
+            var rows = all.GetRange(extra - shift, all.Count - extra);
+            _seen = rows;
+            return (rows, Hold(back, shift), hist);
         }
 
         public async ValueTask<Result<Unit>> SendKey(string key, CancellationToken cancellationToken)
@@ -193,13 +213,15 @@ internal sealed partial class TmuxTerminalPaneSource(TmuxHostOptions options, IT
         /// <summary>
         /// The offset and history size this capture shows. The alternate screen has no scrollback, so entering it drops the offset (leaving it lands live). While
         /// scrolled, rows that arrived since the last capture move the offset with them, so the view stays on the same lines; then it is clamped to the history.
+        /// A full history can't count new rows, so a view not scrolled since the last capture also gets the rows to capture above it for the content match.
         /// </summary>
-        private (int Back, int Hist) View(PaneFacts facts)
+        private (int Back, int Hist, int Extra) View(PaneFacts facts)
         {
             lock (_view)
             {
                 _alt = facts.Alt;
                 var hist = facts.Alt ? 0 : facts.Hist;
+                var anchored = _back > 0 && _back == _seenBack;   // not scrolled since the last capture, so its rows are where the view was
                 if (facts.Alt)
                 {
                     _back = 0;
@@ -211,7 +233,22 @@ internal sealed partial class TmuxTerminalPaneSource(TmuxHostOptions options, IT
 
                 _back = Math.Clamp(_back, 0, hist);
                 _hist = hist;
-                return (_back, hist);
+                return (_back, hist, anchored ? ScrollbackShift.Extra(_back, hist, facts.Limit, facts.Height) : 0);
+            }
+        }
+
+        /// <summary>Moves the offset by the shift the content match found, unless a scroll came in since the capture. Returns the offset of the rows sent.</summary>
+        private int Hold(int back, int shift)
+        {
+            lock (_view)
+            {
+                if (_back == back)
+                {
+                    _back = back + shift;
+                }
+
+                _seenBack = back + shift;
+                return back + shift;
             }
         }
 
@@ -222,7 +259,7 @@ internal sealed partial class TmuxTerminalPaneSource(TmuxHostOptions options, IT
         }
     }
 
-    private sealed record PaneFacts(int CursorX, int CursorY, int Width, int Height, bool InMode, bool Alt, bool Dead, int Hist)
+    private sealed record PaneFacts(int CursorX, int CursorY, int Width, int Height, bool InMode, bool Alt, bool Dead, int Hist, int Limit)
     {
         public string Signature => string.Create(CultureInfo.InvariantCulture, $"|{CursorX},{CursorY},{Width},{Height},{InMode},{Alt},{Dead}");
     }

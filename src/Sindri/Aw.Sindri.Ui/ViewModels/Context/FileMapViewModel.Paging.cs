@@ -19,12 +19,12 @@ internal sealed partial class FileMapViewModel
             ? Labels.ContextFilesFilterPartial(_entries.Length, _total ?? _entries.Length)
             : SymbolsNote();
 
-    // The server sends ok, stale or unavailable: only an index that does not exist gets the "not built" note.
+    // The server sends ok, stale or unavailable: an unavailable index gets the note for its reason.
     private string SymbolsNote() => _symbolsServed?.State switch
     {
         "ok" => Symbols is { AsOfNote: null, EmptyReason: null } or null ? string.Empty : Labels.Dots(ColSymbols, Symbols.AsOfNote, Symbols.EmptyReason),
         "stale" => Labels.Dots(Labels.ContextFilesNamesStale(_symbolsServed.Commit), Symbols?.AsOfNote),
-        _ => Labels.ContextMapNamesDetail,
+        _ => _symbolsServed is null ? Labels.ContextMapNamesDetail : NamesDetail.For(_symbolsServed),
     };
 
     // The list asked for a row: near the end of what is read, the next page is read ahead of the scroll.

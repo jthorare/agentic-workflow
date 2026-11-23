@@ -8,6 +8,7 @@ namespace Aw.Sindri.Core.Graph.Blocks;
 /// <param name="Choices">A closed list: the value must be one of these, or null.</param>
 /// <param name="Presets">Open shortcuts: any value is allowed, these are one-click fills, or null.</param>
 /// <param name="Advanced">True when the editor hides the field until the person asks for it.</param>
+/// <param name="Services">Set when the field names a connection: the services whose connections fit it ('github'), empty for any connection; null when the field is not a connection (#3704).</param>
 public sealed record BlockField(
     string Name,
     BlockFieldType Type,
@@ -15,4 +16,5 @@ public sealed record BlockField(
     string? Caption = null,
     IReadOnlyList<BlockChoice>? Choices = null,
     IReadOnlyList<BlockChoice>? Presets = null,
-    bool Advanced = false);
+    bool Advanced = false,
+    IReadOnlyList<string>? Services = null);
