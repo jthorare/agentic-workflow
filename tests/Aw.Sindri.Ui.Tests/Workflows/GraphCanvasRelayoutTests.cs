@@ -190,8 +190,8 @@ public sealed class GraphCanvasRelayoutTests
                 canvas.Zoom = 1.25;
                 Settle(window);
                 var world = canvas.World;
-                var limit = GraphZoom.ClampPan((-1e6, -1e6), (world.Right, world.Bottom), 1.25, (canvas.Bounds.Width, canvas.Bounds.Height));
-                canvas.Pan = new Point(limit.X, limit.Y);
+                var (limitX, limitY) = GraphZoom.ClampPan((-1e6, -1e6), (world.Right, world.Bottom), 1.25, (canvas.Bounds.Width, canvas.Bounds.Height));
+                canvas.Pan = new Point(limitX, limitY);
                 var from = canvas.Pan;
                 canvas.ZoomIn();
                 canvas.ZoomOut();
