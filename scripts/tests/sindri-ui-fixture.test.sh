@@ -768,7 +768,7 @@ check "empty removes every row" "$(sqlq "$CN/ledger.db" "SELECT COUNT(*) FROM co
 
 # --- home: the Home page's data (home spec §15, S0), home.row.raised events written to the ledger like stall's row ---
 contains "the usage lists home" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh home [clear]"
-HM="$TMPDIR/home"
+HM="$TMPDIR/home-rows"   # its own home: "$TMPDIR/home" is $H above, whose ledger already holds the stall rows (#4071)
 mkdir -p "$HM"
 migrate "$HM/ledger.db" "$ROOT/src/Sindri/Aw.Sindri.Infrastructure/Ledger/Migrations/0001_events.sql"
 hms() { AW_SINDRI_HOME="$HM" bash "$FIXTURE" home "$@"; }

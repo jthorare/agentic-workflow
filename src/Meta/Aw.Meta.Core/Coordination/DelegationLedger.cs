@@ -4,7 +4,7 @@ using Aw.Meta.Core.Ports;
 
 namespace Aw.Meta.Core.Coordination;
 
-/// <summary>Reads and adds the delegations in the key-value store (DelegationBook's text under KvKeys.Delegations). An add is a compare and set, retried when another call wrote in between.</summary>
+/// <summary>Reads, adds and removes the delegations in the key-value store (DelegationBook's text under KvKeys.Delegations). A write is a compare and set, retried when another call wrote in between; lines it can't read are kept.</summary>
 /// <param name="values">The key-value store.</param>
 public sealed class DelegationLedger(IKeyValueStore values)
 {
@@ -26,6 +26,30 @@ public sealed class DelegationLedger(IKeyValueStore values)
     public async ValueTask<Result<Unit>> Add(Delegation delegation, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(delegation);
+        var written = await Write(stored => DelegationBook.Add(stored, delegation), cancellationToken).ConfigureAwait(false);
+        return written.IsError ? written.Error : Results.Ok();
+    }
+
+    /// <summary>Removes the delegation of one issue, owed or settled.</summary>
+    /// <param name="issue">The issue number.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The removed delegation, null when the issue had none (nothing is written), or AW-META-012 when other writers kept winning.</returns>
+    public async ValueTask<Result<Delegation?>> Remove(int issue, CancellationToken cancellationToken)
+    {
+        Delegation? removed = null;
+        var written = await Write(
+            stored =>
+            {
+                removed = DelegationBook.Find(stored, issue);
+                return removed is null ? null : DelegationBook.Without(stored, issue);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return written.IsError ? written.Error : Results.Success(removed);
+    }
+
+    // Reads the stored text, computes the new one (null: write nothing) and sets it if nobody wrote in between; retried on a lost race.
+    private async ValueTask<Result<Unit>> Write(Func<string?, string?> change, CancellationToken cancellationToken)
+    {
         for (var i = 0; i < Tries; i++)
         {
             var stored = await values.Get(KvKeys.Delegations, cancellationToken).ConfigureAwait(false);
@@ -34,7 +58,11 @@ public sealed class DelegationLedger(IKeyValueStore values)
                 return stored.Error;
             }
 
-            var text = DelegationBook.Format(DelegationBook.With(DelegationBook.Parse(stored.Value), delegation));
+            if (change(stored.Value) is not { } text)
+            {
+                return Results.Ok();
+            }
+
             var written = await values.SetIf(KvKeys.Delegations, stored.Value, text, cancellationToken).ConfigureAwait(false);
             if (written.IsError || written.Value)
             {
