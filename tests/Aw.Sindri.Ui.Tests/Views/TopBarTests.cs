@@ -240,7 +240,7 @@ public sealed class TopBarTests : IDisposable
             var problems = Named<TextBlock>(window, "PillProblems");
             var pill = Named<Button>(window, "HealthPill");
             var bar = window.Get<TopBar>("TopBar");
-            var shown = new List<int>();
+            var shown = 0;
             for (var width = 1000; width <= 1400; width += 6)
             {
                 bar.ResetMeasurePasses();
@@ -253,17 +253,11 @@ public sealed class TopBarTests : IDisposable
                 Assert.True(passes <= 3, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the bar measured {passes} times for one change of width"));
                 Assert.True(pillRight <= window.Bounds.Width + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the pill ends at {pillRight}, the window is {window.Bounds.Width}"));
                 Assert.True(problems.Bounds.Width is < 0.5 or >= TopBar.MinProblems - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the problem text is a {problems.Bounds.Width} px stub"));
-                if (age.IsEffectivelyVisible)
-                {
-                    Assert.True(age.Bounds.Width >= Natural(age) - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the age got {age.Bounds.Width} of its {Natural(age)}"));
-                    if (problems.Bounds.Width < 0.5)
-                    {
-                        shown.Add(width);
-                    }
-                }
+                Assert.True(!age.IsEffectivelyVisible || age.Bounds.Width >= Natural(age) - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the age got {age.Bounds.Width} of its {Natural(age)}"));
+                shown += age.IsEffectivelyVisible && problems.Bounds.Width < 0.5 ? 1 : 0;
             }
 
-            Assert.True(shown.Count > 0, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"at scale {scale:0.0} no width from 1000 to 1400 px shows the age with the problem text dropped"));
+            Assert.True(shown > 0, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"at scale {scale:0.0} no width from 1000 to 1400 px shows the age with the problem text dropped"));
         }
         finally
         {
