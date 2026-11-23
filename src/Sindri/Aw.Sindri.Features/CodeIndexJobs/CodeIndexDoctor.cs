@@ -200,8 +200,12 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
     {
         "SND-CODEIDX-007" => "install bubblewrap (" + Setup + "), or set index.graph.enabled: false",
         "SND-CODEIDX-017" => "a chunk is too long for the embedding model; it is refused and not asked for again, the rest embed (editing the file embeds it again)",
-        "SND-CODEIDX-006" => "start Ollama (the pin is in context/code-index.lock)",
-        _ => Setup + " installs the pin",
+        "SND-CODEIDX-006" => "start Ollama (the pin is in context/code-index.lock); the embed retries on its own once it answers",
+        "SND-CODEIDX-009" => Setup + " re-installs the pin",
+        "SND-CODEIDX-008" => "graphify is missing or its run failed: scripts/install-deps.sh installs it at the pin; when it is installed, the detail says why the graph failed",
+
+        // why: a code with no text of its own gets no guessed fix (#3097); the JSON report carries the code and its detail
+        _ => "see sindri doctor --json",
     };
 
     private static string Age(DateTimeOffset? builtAt, DateTimeOffset now)
