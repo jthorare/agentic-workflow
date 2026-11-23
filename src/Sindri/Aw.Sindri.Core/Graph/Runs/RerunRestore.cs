@@ -47,7 +47,7 @@ internal sealed class RerunRestore
 
     /// <summary>The steps taken from the source run, in spec order.</summary>
     /// <returns>The node ids.</returns>
-    internal IReadOnlyList<NodeId> Steps() => [.. _spec.Nodes.Select(static n => n.Id).Where(id => Decide(id) != Keep.Run)];
+    internal List<NodeId> Steps() => [.. _spec.Nodes.Select(static n => n.Id).Where(id => Decide(id) != Keep.Run)];
 
     private Keep Decide(NodeId id)
     {

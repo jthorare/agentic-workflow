@@ -119,7 +119,7 @@ public sealed class RerunRestoreTests
     }
 
     /// <summary>Admits the run into the store like the real starter and keeps the request.</summary>
-    private sealed class Starter(InMemoryWorkflowRunStore runs, TimeProvider clock, ICollection<GraphStartRequest> started) : IGraphRunStarter
+    private sealed class Starter(InMemoryWorkflowRunStore runs, TimeProvider clock, List<GraphStartRequest> started) : IGraphRunStarter
     {
         public async ValueTask<Result<GraphStart>> Start(GraphStartRequest request, CancellationToken cancellationToken)
         {
