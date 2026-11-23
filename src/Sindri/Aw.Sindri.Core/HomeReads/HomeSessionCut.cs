@@ -1,13 +1,13 @@
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Home;
 
-namespace Aw.Sindri.Features;
+namespace Aw.Sindri.Core.HomeReads;
 
 /// <summary>
 /// What an agent session sees of Home (home spec §9): only its own repo's rows, and of a row with no repo (a DM, a mention, a thread reply, a keyword hit, an agent at its limit,
 /// a system row) no body, only that it exists. The owner sees every row whole.
 /// </summary>
-internal static class HomeSessionCut
+public static class HomeSessionCut
 {
     /// <summary>The scope a read of <paramref name="caller"/> pages through.</summary>
     /// <param name="caller">The caller.</param>

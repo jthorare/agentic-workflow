@@ -55,9 +55,13 @@ internal sealed class YamlProfileKeyWriter(SindriSettings settings, Core.Profile
         {
             before = File.ReadAllText(path);
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
         {
             return SindriErrors.ProfileMissing.With($"{path} can't be read: {e.Message} (fix: run 'sindri profile init' when there is no profile)");
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return SindriErrors.ProfileUnreadable.With($"{path} can't be read: {e.Message} (fix: check the file's permissions, e.g. chmod 600 {path})");
         }
 
         var edited = edit(before);
@@ -86,7 +90,7 @@ internal sealed class YamlProfileKeyWriter(SindriSettings settings, Core.Profile
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            return SindriErrors.ProfileMissing.With($"{edit.Path} can't be written: {e.Message}");
+            return SindriErrors.ProfileUnwritable.With($"{edit.Path} can't be written: {e.Message} (fix: check the file's permissions, e.g. chmod 600 {edit.Path})");
         }
     }
 }

@@ -5,11 +5,11 @@ namespace Aw.Sindri.Core.Graph.Blocks;
 
 /// <summary>
 /// The 'collect' block: ends a 'for_each'. In each item's run it hands on its 'value'; once the last item is done the engine writes the node's own output,
-/// 'items' (the values in item order; an item whose branch skipped the collect adds nothing) and 'count'.
+/// 'items' (the values in item order; an item whose branch skipped the collect, or that a 'skip-item' node dropped, adds nothing), 'count' and 'skipped' (the items dropped).
 /// </summary>
 public sealed class CollectBlock : IGraphBlock
 {
-    private static readonly BlockOutputs _outputs = new(new Dictionary<string, string>(StringComparer.Ordinal) { ["items"] = "array", ["count"] = "number" });
+    private static readonly BlockOutputs _outputs = new(new Dictionary<string, string>(StringComparer.Ordinal) { ["items"] = "array", ["count"] = "number", ["skipped"] = "number" });
 
     /// <inheritdoc />
     public string Type => "collect";

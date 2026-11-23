@@ -16,10 +16,11 @@ public sealed class FakeRepoHeads : IRepoHeads
     /// <param name="repo">The repo.</param>
     /// <param name="head">The checkout's HEAD, or null when unreadable.</param>
     /// <param name="onDefaultBranch">Whether it is on the default branch.</param>
+    /// <param name="defaultTip">The default branch's tip, or null when the repo has no main and no origin/main.</param>
     /// <returns>This fake.</returns>
-    public FakeRepoHeads With(RepoName repo, CommitSha? head, bool onDefaultBranch)
+    public FakeRepoHeads With(RepoName repo, CommitSha? head, bool onDefaultBranch, CommitSha? defaultTip = null)
     {
-        _heads[repo] = new RepoHead(repo, head, onDefaultBranch);
+        _heads[repo] = new RepoHead(repo, head, onDefaultBranch, defaultTip);
         return this;
     }
 
