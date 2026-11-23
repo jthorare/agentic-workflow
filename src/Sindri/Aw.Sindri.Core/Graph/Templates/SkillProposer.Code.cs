@@ -4,9 +4,12 @@ internal static partial class SkillProposer
 {
     /// <summary>
     /// 'check', once at the start: fails the run, naming what is missing, when the payload has no 'repo' (the toolkit repo's name in the profile, where the
-    /// agent works) or no 'findings' list, before any model or agent is asked. Output: repo, findings (the count).
+    /// agent works) or no 'findings' list, before any model or agent is asked. Output: repo, findings (the count of all of them), top (the first
+    /// <paramref name="top"/> findings, which 'each' loops over: a for_each fails on a list longer than its maxItems, it never cuts one).
     /// </summary>
-    public static string CheckCode { get; } = Lines(
+    /// <param name="top">How many findings to hand on.</param>
+    /// <returns>The code body.</returns>
+    public static string CheckCode(int top) => Lines(
     [
         "var payload = input as JsonObject;",
         "var repo = payload?[\"repo\"] is JsonValue value && value.TryGetValue<string>(out var text) ? text.Trim() : string.Empty;",
@@ -20,7 +23,13 @@ internal static partial class SkillProposer
         "    throw new InvalidOperationException(\"the payload needs 'findings': the list a steering-miner run's rank step hands on\");",
         "}",
         "",
-        "return new JsonObject { [\"repo\"] = repo, [\"findings\"] = findings.Count };",
+        "var first = new JsonArray();",
+        $"for (var i = 0; i < findings.Count && i < {top.ToString(System.Globalization.CultureInfo.InvariantCulture)}; i++)",
+        "{",
+        "    first.Add(findings[i]?.DeepClone());",
+        "}",
+        "",
+        "return new JsonObject { [\"repo\"] = repo, [\"findings\"] = findings.Count, [\"top\"] = first };",
     ]);
 
     /// <summary>
@@ -78,7 +87,7 @@ internal static partial class SkillProposer
     ]);
 
     /// <summary>
-    /// 'summary', once at the end: one line per draft and how many findings had no skill. Output: count, text.
+    /// 'summary', once at the end: one line per draft, how many of the looped findings had no skill, and how many findings were past the top ones. Output: count, text.
     /// </summary>
     public static string SummaryCode { get; } = Lines(
     [
@@ -92,10 +101,16 @@ internal static partial class SkillProposer
         "    lines.Add($\"- {Str(row?[\"skill\"])}: {Str(row?[\"title\"])} (branch {Str(row?[\"branch\"])})\");",
         "}",
         "",
+        "var given = doc?[\"given\"] is JsonValue all && all.TryGetValue<int>(out var g) ? g : findings;",
         "var missing = Math.Max(0, findings - drafts.Count);",
         "if (missing > 0)",
         "{",
         "    lines.Add(missing == 1 ? \"1 finding had no skill\" : $\"{missing} findings had no skill\");",
+        "}",
+        "",
+        "if (given > findings)",
+        "{",
+        "    lines.Add(given - findings == 1 ? $\"1 more finding was past the top {findings} and got no draft\" : $\"{given - findings} more findings were past the top {findings} and got no draft\");",
         "}",
         "",
         "if (lines.Count == 0)",

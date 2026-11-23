@@ -6,16 +6,16 @@ Template name: `skill-proposer` (issue 3787, piece 4). This first version ends a
 
 ## What it does
 
-1. `start` (manual) takes the payload below, and `check` (code) stops the run when it has no `repo` or no `findings` list, naming what is missing.
+1. `start` (manual) takes the payload below, and `check` (code) stops the run when it has no `repo` or no `findings` list, naming what is missing. It hands on the first 5 findings.
 2. `skills` (`skill_catalog`) lists every skill with its description.
-3. `each` loops over the findings, at most 5. The first ones are the top ranked.
+3. `each` loops over those 5. The first ones are the top ranked, so a longer list is fine: the rest get no draft.
 4. `match` (prompt) picks the skill whose instructions should change, or `none`.
 5. `pick` (code) keeps the pick only when the list has that exact name. Anything else becomes `none`.
 6. `has_skill` (condition) ends the item when there is no skill.
 7. `draft` (`run_agent`) edits that skill's files on its own branch and checks them with the free eval modes.
 8. `entry` (code) notes the skill, the agent's report, the branch and the commit.
 9. `gather` (collect) ends the loop, and `summary` (code) writes one line per draft.
-10. `tell` (notify) shows the drafts and how many findings had no skill.
+10. `tell` (notify) shows the drafts, how many findings had no skill and how many were past the top 5.
 
 ## The payload
 

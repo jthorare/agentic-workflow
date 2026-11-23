@@ -38,16 +38,16 @@ internal static partial class SkillProposer
         JsonNode?[] nodes =
         [
             Node("start", "manual", "Run with findings and the toolkit repo", []),
-            Node("check", "code", "Check the payload", new JsonObject { ["input"] = "{{trigger.payload}}", ["code"] = CheckCode, ["timeout"] = "10s" }),
+            Node("check", "code", "Check the payload", new JsonObject { ["input"] = "{{trigger.payload}}", ["code"] = CheckCode(MaxFindings), ["timeout"] = "10s" }),
             Node("skills", "skill_catalog", "List the skills", []),
-            Node("each", "for_each", "Each top finding", new JsonObject { ["items"] = "{{trigger.payload.findings}}", ["maxItems"] = MaxFindings }),
+            Node("each", "for_each", "Each top finding", new JsonObject { ["items"] = "{{check.result.top}}", ["maxItems"] = MaxFindings }),
             Node("match", "prompt", "Pick the skill", new JsonObject { ["prompt"] = MatchPrompt, ["output"] = MatchAnswer() }),
             Node("pick", "code", "Keep a skill the catalog has", new JsonObject { ["input"] = """{"skills":{{skills.skills}},"answer":{{match.answer}}}""", ["code"] = PickCode, ["timeout"] = "10s" }),
             Node("has_skill", "condition", "Is there a skill?", new JsonObject { ["when"] = "pick.result.skill != \"none\"" }),
             Node("draft", "run_agent", "Draft the skill edit", new JsonObject { ["repo"] = "{{trigger.payload.repo}}", ["prompt"] = DraftPrompt, ["outputs"] = new JsonObject { ["report"] = "object" }, ["timeout"] = "45m" }),
             Node("entry", "code", "Note the draft", new JsonObject { ["input"] = """{"pick":{{pick.result}},"report":{{draft.report}},"branch":"{{draft.branch}}","commit":"{{draft.commit}}"}""", ["code"] = EntryCode, ["timeout"] = "10s" }),
             Node("gather", "collect", "Gather the drafts", new JsonObject { ["value"] = "{{entry.result}}" }),
-            Node("summary", "code", "Sum up", new JsonObject { ["input"] = """{"drafts":{{gather.items}},"findings":{{each.count}}}""", ["code"] = SummaryCode, ["timeout"] = "10s" }),
+            Node("summary", "code", "Sum up", new JsonObject { ["input"] = """{"drafts":{{gather.items}},"findings":{{each.count}},"given":{{check.result.findings}}}""", ["code"] = SummaryCode, ["timeout"] = "10s" }),
             Node("tell", "notify", "Tell me", new JsonObject { ["title"] = "Skill proposer: {{summary.result.count}} drafts", ["body"] = "{{summary.result.text}}" }),
         ];
 
