@@ -102,6 +102,16 @@
       "name": "todo-note",
       "every": "24h",
       "lastRun": null
+    },
+    {
+      "name": "home-runs",
+      "every": "1m",
+      "lastRun": null
+    },
+    {
+      "name": "home-lanes",
+      "every": "1m",
+      "lastRun": null
     }
   ],
   "apiVersion": 1,

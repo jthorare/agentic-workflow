@@ -46,6 +46,11 @@ public sealed class WriteAttributionTests
         ["POST /sindri/setup/skip"] = "edits the live profile file (setup.skipAccounts, setup.skipFirstWorkflow) through the profile key writer, like todos/note/set: writes no ledger event",
         ["POST /sindri/restart"] = "a stub until the restart commit (first-run spec decision 11): it stops the host, so the ledger can't be read after it, and refuses a caller without the human token",
         ["POST /sindri/setup/accounts/{provider}"] = "a stub until the accounts commit (first-run spec A8): it refuses a caller without the human token and writes to the secret store and the profile, not the ledger",
+        ["POST /sindri/messages/connect"] = "the owner's (messages spec §5.1): it writes the token to the secret store and the 'slack:messages' connection row, not the ledger; a stub until M1d (#3272)",
+        ["POST /sindri/messages/conversations/{id}/read"] = "a local write (messages spec §8.2): it moves read pointers in messages.db and writes no ledger event; a stub until M1h (#3275)",
+        ["POST /sindri/messages/conversations/{id}/unread"] = "a local write (messages spec §8.2): it moves read pointers in messages.db and writes no ledger event; a stub until M1h (#3275)",
+        ["POST /sindri/messages/lists/unread/read"] = "a local write (messages spec §8.2): it moves read pointers in messages.db and writes no ledger event; a stub until M1h (#3275)",
+        ["POST /sindri/messages/lists/unread/unread"] = "a local write (messages spec §8.2): it moves read pointers in messages.db and writes no ledger event; a stub until M1h (#3275)",
     };
 
     // Write routes that do append events but whose caller is proven another way than a launched session's header; not swept here.

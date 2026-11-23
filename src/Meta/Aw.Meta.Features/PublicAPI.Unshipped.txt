@@ -1373,3 +1373,37 @@ static Aw.Meta.Features.Delegate.DelegateResponse.operator !=(Aw.Meta.Features.D
 static Aw.Meta.Features.Delegate.DelegateResponse.operator ==(Aw.Meta.Features.Delegate.DelegateResponse? left, Aw.Meta.Features.Delegate.DelegateResponse? right) -> bool
 static Aw.Meta.Features.Delegate.LaneHint.operator !=(Aw.Meta.Features.Delegate.LaneHint? left, Aw.Meta.Features.Delegate.LaneHint? right) -> bool
 static Aw.Meta.Features.Delegate.LaneHint.operator ==(Aw.Meta.Features.Delegate.LaneHint? left, Aw.Meta.Features.Delegate.LaneHint? right) -> bool
+Aw.Meta.Features.DelegateDrop.DelegateDropRequest
+Aw.Meta.Features.DelegateDrop.DelegateDropRequest.<Clone>$() -> Aw.Meta.Features.DelegateDrop.DelegateDropRequest!
+Aw.Meta.Features.DelegateDrop.DelegateDropRequest.Deconstruct(out int Issue) -> void
+Aw.Meta.Features.DelegateDrop.DelegateDropRequest.DelegateDropRequest(int Issue) -> void
+Aw.Meta.Features.DelegateDrop.DelegateDropRequest.Equals(Aw.Meta.Features.DelegateDrop.DelegateDropRequest? other) -> bool
+Aw.Meta.Features.DelegateDrop.DelegateDropRequest.Issue.get -> int
+Aw.Meta.Features.DelegateDrop.DelegateDropRequest.Issue.init -> void
+override Aw.Meta.Features.DelegateDrop.DelegateDropRequest.Equals(object? obj) -> bool
+override Aw.Meta.Features.DelegateDrop.DelegateDropRequest.GetHashCode() -> int
+override Aw.Meta.Features.DelegateDrop.DelegateDropRequest.ToString() -> string!
+static Aw.Meta.Features.DelegateDrop.DelegateDropRequest.operator !=(Aw.Meta.Features.DelegateDrop.DelegateDropRequest? left, Aw.Meta.Features.DelegateDrop.DelegateDropRequest? right) -> bool
+static Aw.Meta.Features.DelegateDrop.DelegateDropRequest.operator ==(Aw.Meta.Features.DelegateDrop.DelegateDropRequest? left, Aw.Meta.Features.DelegateDrop.DelegateDropRequest? right) -> bool
+Aw.Meta.Features.DelegateDrop.DelegateDropResponse
+Aw.Meta.Features.DelegateDrop.DelegateDropResponse.<Clone>$() -> Aw.Meta.Features.DelegateDrop.DelegateDropResponse!
+Aw.Meta.Features.DelegateDrop.DelegateDropResponse.Deconstruct(out int Issue, out bool Dropped, out string? Lane) -> void
+Aw.Meta.Features.DelegateDrop.DelegateDropResponse.DelegateDropResponse(int Issue, bool Dropped, string? Lane) -> void
+Aw.Meta.Features.DelegateDrop.DelegateDropResponse.Equals(Aw.Meta.Features.DelegateDrop.DelegateDropResponse? other) -> bool
+Aw.Meta.Features.DelegateDrop.DelegateDropResponse.Issue.get -> int
+Aw.Meta.Features.DelegateDrop.DelegateDropResponse.Issue.init -> void
+Aw.Meta.Features.DelegateDrop.DelegateDropResponse.Dropped.get -> bool
+Aw.Meta.Features.DelegateDrop.DelegateDropResponse.Dropped.init -> void
+Aw.Meta.Features.DelegateDrop.DelegateDropResponse.Lane.get -> string?
+Aw.Meta.Features.DelegateDrop.DelegateDropResponse.Lane.init -> void
+override Aw.Meta.Features.DelegateDrop.DelegateDropResponse.Equals(object? obj) -> bool
+override Aw.Meta.Features.DelegateDrop.DelegateDropResponse.GetHashCode() -> int
+override Aw.Meta.Features.DelegateDrop.DelegateDropResponse.ToString() -> string!
+static Aw.Meta.Features.DelegateDrop.DelegateDropResponse.operator !=(Aw.Meta.Features.DelegateDrop.DelegateDropResponse? left, Aw.Meta.Features.DelegateDrop.DelegateDropResponse? right) -> bool
+static Aw.Meta.Features.DelegateDrop.DelegateDropResponse.operator ==(Aw.Meta.Features.DelegateDrop.DelegateDropResponse? left, Aw.Meta.Features.DelegateDrop.DelegateDropResponse? right) -> bool
+Aw.Meta.Features.Delegate.DelegateResponse.MovedFrom.get -> string?
+Aw.Meta.Features.Delegate.DelegateResponse.MovedFrom.init -> void
+Aw.Meta.Features.Delegate.DelegateResponse.MovedNotice.get -> string?
+Aw.Meta.Features.Delegate.DelegateResponse.MovedNotice.init -> void
+Aw.Meta.Features.Delegate.DelegateResponse.MovedProblem.get -> string?
+Aw.Meta.Features.Delegate.DelegateResponse.MovedProblem.init -> void

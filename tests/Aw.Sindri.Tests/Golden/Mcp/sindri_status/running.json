@@ -104,6 +104,16 @@
         "name": "todo-note",
         "every": "24h",
         "lastRun": null
+      },
+      {
+        "name": "home-runs",
+        "every": "1m",
+        "lastRun": null
+      },
+      {
+        "name": "home-lanes",
+        "every": "1m",
+        "lastRun": null
       }
     ],
     "apiVersion": 1,
@@ -134,13 +144,13 @@
       "more": false,
       "lists": {
         "services": {
-          "total": 18,
+          "total": 19,
           "more": false
         }
       }
     }
   },
   "content": [
-    "sindri <build>, port <port>: running, health healthy, views fresh, 18 services"
+    "sindri <build>, port <port>: running, health healthy, views fresh, 19 services"
   ]
 }
