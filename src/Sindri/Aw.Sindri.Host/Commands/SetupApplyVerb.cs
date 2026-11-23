@@ -115,7 +115,8 @@ internal sealed class SetupApplyVerb(ControlPlaneClient client, Output output, F
         var seconds = ((int)timeout.TotalSeconds).ToString(CultureInfo.InvariantCulture);
         if (string.Equals(pass.State, SetupPassOutcome.Timeout, StringComparison.Ordinal))
         {
-            _ = await output.Error(SindriErrors.SetupPassTimedOut.With($"the setup pass didn't finish in {seconds} s; it keeps running as {pass.JobId} (fix: sindri jobs show {pass.JobId}, then sindri setup)")).ConfigureAwait(false);
+            var rest = pass.JobId is { } running ? $"it keeps running as {running} (fix: sindri jobs show {running}, then sindri setup)" : "a scheduled pass still runs (fix: sindri jobs, then sindri setup)";
+            _ = await output.Error(SindriErrors.SetupPassTimedOut.With($"the setup pass didn't finish in {seconds} s; {rest}")).ConfigureAwait(false);
         }
         else if (string.Equals(pass.State, SetupPassOutcome.Failed, StringComparison.Ordinal))
         {
@@ -150,8 +151,10 @@ internal sealed class SetupApplyVerb(ControlPlaneClient client, Output output, F
     private static string PassText(SetupPassOutcome pass) => pass.State switch
     {
         SetupPassOutcome.Done => string.Create(CultureInfo.InvariantCulture, $"setup pass done in {pass.Seconds} s ({pass.JobId})"),
+        SetupPassOutcome.Skipped when pass.JobId is null => "setup pass runs already (a scheduled one); not waiting for it (--timeout 0)",
         SetupPassOutcome.Skipped => $"setup pass started ({pass.JobId}); not waiting for it (--timeout 0)",
         SetupPassOutcome.Refused => "setup pass: this caller may not run services; it runs on its own within 60 s",
+        SetupPassOutcome.Timeout when pass.JobId is null => "setup pass still running (a scheduled one)",
         SetupPassOutcome.Timeout => $"setup pass still running ({pass.JobId})",
         _ => "setup pass failed",
     };

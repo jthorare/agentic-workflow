@@ -2,7 +2,7 @@ namespace Aw.Sindri.Host.Commands;
 
 /// <summary>How the setup pass that 'setup --apply' ran ended.</summary>
 /// <param name="State">'done', 'timeout', 'failed', 'skipped' (--timeout 0: no wait) or 'refused' (a caller that may not run services: the pass runs on its next tick, within 60 s).</param>
-/// <param name="JobId">The pass's job, or null when none started.</param>
+/// <param name="JobId">The pass's job, or null when none started or the pass in flight is a scheduled one (SND-JOB-409 naming no job).</param>
 /// <param name="Seconds">How long the wait took, in whole seconds.</param>
 internal sealed record SetupPassOutcome(string State, string? JobId, int Seconds)
 {

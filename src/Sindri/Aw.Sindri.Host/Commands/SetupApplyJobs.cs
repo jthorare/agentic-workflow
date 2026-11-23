@@ -62,9 +62,7 @@ internal sealed partial class SetupApplyJobs(ControlPlaneClient client, TimeProv
         var id = await StartPass(deadline, ct).ConfigureAwait(false);
         if (id.IsError)
         {
-            return Refused(id.Error)
-                ? new SetupPassOutcome(SetupPassOutcome.Refused, JobId: null, Seconds: 0)
-                : new SetupPassOutcome(SetupPassOutcome.Failed, JobId: null, Seconds(start)) { Error = Line(id.Error.Message) };
+            return NotStarted(id.Error, timeout, start);
         }
 
         if (timeout == TimeSpan.Zero)
@@ -85,6 +83,25 @@ internal sealed partial class SetupApplyJobs(ControlPlaneClient client, TimeProv
             { State: JobState.Succeeded } => new SetupPassOutcome(SetupPassOutcome.Done, job, Seconds(start)),
             var view => new SetupPassOutcome(SetupPassOutcome.Failed, job, Seconds(start)) { Error = Line(view.Summary ?? view.Code ?? "the job ended without a summary") },
         };
+    }
+
+    // No job to follow. A caller that may not run services: refused. A scheduled pass still in flight (SND-JOB-409 naming no job): the pass runs, so --timeout 0 skips the wait
+    // and any other wait timed out. Anything else failed.
+    private SetupPassOutcome NotStarted(Error error, TimeSpan timeout, DateTimeOffset start)
+    {
+        if (Refused(error))
+        {
+            return new SetupPassOutcome(SetupPassOutcome.Refused, JobId: null, Seconds: 0);
+        }
+
+        if (!string.Equals(error.Code, SindriErrors.JobConflict.Code, StringComparison.Ordinal))
+        {
+            return new SetupPassOutcome(SetupPassOutcome.Failed, JobId: null, Seconds(start)) { Error = Line(error.Message) };
+        }
+
+        return timeout == TimeSpan.Zero
+            ? new SetupPassOutcome(SetupPassOutcome.Skipped, JobId: null, Seconds: 0)
+            : new SetupPassOutcome(SetupPassOutcome.Timeout, JobId: null, Seconds(start));
     }
 
     // The pass's job: the one this start made, or the one already running (SND-JOB-409 naming it). A scheduled pass in flight (409 naming no job) is waited out, one try a second, until the deadline.
