@@ -82,6 +82,11 @@ internal sealed class YamlProfileRepoWriter(SindriSettings settings, IProfileCac
 
     private static Result<string?> Read(string path)
     {
+        if (ProfileDirectoryInTheWay.At(path) is { } inTheWay)
+        {
+            return inTheWay;
+        }
+
         try
         {
             return File.Exists(path) ? File.ReadAllText(path) : null;
