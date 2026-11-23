@@ -241,6 +241,8 @@ public sealed class TopBarTests : IDisposable
             var pill = Named<Button>(window, "HealthPill");
             var bar = window.Get<TopBar>("TopBar");
             var shown = 0;
+            window.Width = 1000;   // settled first: the jump from the opening width (and a new text scale) is several fit steps in one layout, not the 6 px step under test
+            Settle(window);
             for (var width = 1000; width <= 1400; width += 6)
             {
                 bar.ResetMeasurePasses();
