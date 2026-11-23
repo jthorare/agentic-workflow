@@ -49,7 +49,7 @@ internal sealed class RestartCommand(ControlPlaneClient client, IControlPlanePro
 
             if (!string.Equals(restarted.Error.Code, SindriErrors.SetupRestartRunsOpen.Code, StringComparison.Ordinal) || !parsed.Value.Wait)
             {
-                return await Fail(restarted.Error).ConfigureAwait(false);
+                return await Fail(await WithStartHint(restarted.Error, ct).ConfigureAwait(false)).ConfigureAwait(false);
             }
 
             var waited = await WaitForOpenSet(named, deadline, ct).ConfigureAwait(false);
@@ -100,7 +100,7 @@ internal sealed class RestartCommand(ControlPlaneClient client, IControlPlanePro
     private async Task<int> Restart(int oldPid, CancellationToken ct)
     {
         var until = clock.GetUtcNow() + StopBudget;
-        while ((oldPid > 0 && processes.Facts(oldPid).Running) || (await probe.Check(ct).ConfigureAwait(false)).IsSuccess)
+        while ((oldPid > 0 && processes.Facts(oldPid).Running) || await OldServeAnswers(oldPid, ct).ConfigureAwait(false))
         {
             if (clock.GetUtcNow() >= until)
             {
@@ -115,6 +115,18 @@ internal sealed class RestartCommand(ControlPlaneClient client, IControlPlanePro
             ? await Fail(SindriErrors.SetupServeDidNotStart.With($"Sindri didn't start: {started.Error.Code} {started.Error.Message} (fix: sindri serve)")).ConfigureAwait(false)
             : await output.Text(string.Create(CultureInfo.InvariantCulture, $"restarted: pid {oldPid} stopped, pid {started.Value.Endpoint.Pid} serves {started.Value.Endpoint.Url}\n"), 0).ConfigureAwait(false);
     }
+
+    /// <summary>Whether the old serve still answers the port; a serve with another pid (the app's own start won the race) is the new one, found by FindOrLaunch.</summary>
+    private async Task<bool> OldServeAnswers(int oldPid, CancellationToken ct) =>
+        await probe.Check(ct).ConfigureAwait(false) is { IsSuccess: true } answer && answer.Value.Endpoint.Pid == oldPid;
+
+    /// <summary>
+    /// A restart whose stop failed halfway leaves no serve: when nothing answers, the error says how to start one. A refusal and an error that names its own fix are kept.
+    /// </summary>
+    private async Task<Error> WithStartHint(Error error, CancellationToken ct) =>
+        error.Message.Contains("(fix:", StringComparison.Ordinal) || (await probe.Check(ct).ConfigureAwait(false)).IsSuccess
+            ? error
+            : error with { Message = error.Message + " (fix: sindri)" };
 
     /// <summary>Prints the error: exit 1 for runs open, a timeout or serve that didn't come back (and 'not running'), 2 for a refusal.</summary>
     private async Task<int> Fail(Error error)
