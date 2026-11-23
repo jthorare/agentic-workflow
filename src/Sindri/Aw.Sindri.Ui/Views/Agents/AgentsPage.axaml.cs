@@ -159,11 +159,16 @@ internal sealed partial class AgentsPage : UserControl
         Dispatcher.UIThread.Post(() => _ = this.FindControl<TextBox>("AgentsSearch")?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
     }
 
-    // Esc in the box clears it.
+    // Esc in the box clears it; in an empty box it leaves it for the list.
     private void OnSearchKey(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape && Page is { } page)
         {
+            if (string.IsNullOrEmpty(page.SearchText))
+            {
+                _ = page.LeaveSearch();
+            }
+
             page.SearchText = string.Empty;
             e.Handled = true;
         }

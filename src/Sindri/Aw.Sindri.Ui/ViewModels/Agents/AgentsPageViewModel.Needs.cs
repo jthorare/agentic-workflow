@@ -85,7 +85,18 @@ internal sealed partial class AgentsPageViewModel
 
     /// <summary>Esc in an empty search box: puts focus back on the list, on the selected row or the first one.</summary>
     /// <returns>True when a row took the request.</returns>
-    internal bool LeaveSearch() => false;
+    internal bool LeaveSearch()
+    {
+        var keys = WalkKeys();
+        var key = SelectedKey is { } picked && keys.Contains(picked, StringComparer.Ordinal) ? picked : keys.FirstOrDefault();
+        if (key is null || !Select(key))
+        {
+            return false;
+        }
+
+        RequestFocus(new AgentFocusEventArgs(key, toFocusLine: false, onlyIfLost: false));
+        return true;
+    }
 
     // Walk skips a collapsed group, so a jump to one of its rows opens it first.
     private void ExpandNeedsYou()
