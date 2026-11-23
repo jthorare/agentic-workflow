@@ -42,7 +42,8 @@ public sealed class QueuedWaitingWordsTests
     {
         var health = await Read(Status(IndexState.Ok, _head), queuedSince: _now);
 
-        Assert.Equal(("ok", (string?)null), (health.State, health.Waiting));
+        Assert.Equal("ok", health.State);
+        Assert.Null(health.Waiting);
     }
 
     private static RepoStatus Status(IndexState state, CommitSha? commit) =>
