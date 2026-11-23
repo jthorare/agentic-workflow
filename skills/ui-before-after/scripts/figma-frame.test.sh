@@ -2,6 +2,12 @@
 # Tests for figma-frame.sh against a fake curl, so nothing reaches Figma.
 set -u
 
+# Temp-dir cleanup (#3262): every mktemp this suite makes is recorded and removed when it exits.
+__aw_tmp_reg="$(command mktemp)"
+mktemp() { local p; p="$(command mktemp "$@")" || return; printf '%s\n' "$p" >>"$__aw_tmp_reg"; printf '%s\n' "$p"; }
+__aw_tmp_clean() { local rc=$? p; while IFS= read -r p; do [ -z "$p" ] || { chmod -R u+rwX "$p" 2>/dev/null || true; rm -rf "$p" || true; }; done <"$__aw_tmp_reg"; rm -f "$__aw_tmp_reg"; exit "$rc"; }
+trap __aw_tmp_clean EXIT
+
 FRAME="$(cd "$(dirname "$0")" && pwd)/figma-frame.sh"
 FAILURES=0
 URL="https://www.figma.com/design/PVmS7pZqcyyisBOM0OASW7/Components?node-id=698-9058&m=dev"

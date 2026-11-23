@@ -86,8 +86,8 @@ public abstract class RepoScanTreeContract
         var without = Checkout("work/lib", origin: null);
         var tree = Create();
 
-        Expect.Equal<string?>("https://github.com/acme/app.git", await tree.Origin(withOrigin, Token));
-        Expect.Equal<string?>(expected: null, actual: await tree.Origin(without, Token));
+        Expect.Equal("https://github.com/acme/app.git", await tree.Origin(withOrigin, Token));
+        Expect.Equal(expected: null, actual: await tree.Origin(without, Token));
     }
 
     /// <summary>A folder reads as its real path; a missing one as null.</summary>
@@ -97,7 +97,7 @@ public abstract class RepoScanTreeContract
         var folder = Folder("work");
         var tree = Create();
 
-        Expect.Equal<string?>(folder, tree.Real(folder));
-        Expect.Equal<string?>(expected: null, actual: tree.Real(HomeFolder() + "/gone"));
+        Expect.Equal(folder, tree.Real(folder));
+        Expect.Equal(expected: null, actual: tree.Real(HomeFolder() + "/gone"));
     }
 }

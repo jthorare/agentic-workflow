@@ -151,6 +151,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IResourceProvisioner>(static sp => sp.GetRequiredService<ResourceProvisioner>())   // makes an owner's resources exist before a run and books them in ledger.db
             .AddSingleton<IMemoryStore, SqliteMemoryStore>()       // memory stores and facts (agent-first PR 13): memory and memory_fact in ledger.db
             .AddSingleton<MessagesDatabase>().AddSingleton<IMessagesStore, SqliteMessagesStore>()   // messages.db (messages spec §8.1): its own file and migrations, Slack text, never a ledger view
+            .AddSingleton<ILinkRows, NoLinkRows>()   // the rows links resolve to (messages spec §9.3, M1g): none until Home's row store (home_rows) lands
             .AddSingleton<SlackRateBudget>().AddSingleton<ISlackClient>(sp => new SlackWebClient(_noRedirect, SlackWebSettings.From(environment, sp.GetRequiredService<SindriSettings>().Home), sp.GetRequiredService<SlackRateBudget>(), sp.GetRequiredService<TimeProvider>()))   // Messages' Slack Web API (spec §5.3): one rate budget, no redirects
             .AddSingleton<IToolkitCalls, SqliteToolkitCalls>()       // toolkit call log (agent-first PR 16): toolkit_call in ledger.db
             .AddSingleton<ToolkitCallLog>()
@@ -182,8 +183,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IOldApprovalsCleanup, ApprovalsDirectoryCleanup>()   // #2258 PR 1: run once at start by serve
             .AddSingleton<IBoxLimitsSource>(sp => new HeavyCapSource(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))
             .AddSingleton(static sp => new LiveApprovedProfile(sp.GetRequiredService<IProfileSource>(), sp.GetRequiredService<SindriSettings>().ProfilePath)).AddSingleton<IApprovedProfile>(static sp => sp.GetRequiredService<LiveApprovedProfile>()).AddSingleton<IProfileCache>(static sp => sp.GetRequiredService<LiveApprovedProfile>())
-            .AddSingleton<IEndpointFile, FileEndpoint>()
-            .AddSingleton<IControlPlaneProbe, HttpControlPlaneProbe>()
+            .AddSingleton<IEndpointFile, FileEndpoint>().AddSingleton<IControlPlaneProbe, HttpControlPlaneProbe>()
             .AddSingleton<IControlPlaneLauncher, ServeLauncher>()
             .AddSingleton<IHumanTokenStore, FileHumanToken>()
             .AddSingleton(static sp => new ProverLabel(sp.GetRequiredService<SindriSettings>().ProverLabelAllowed))
@@ -250,9 +250,10 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IMcpConnectionClient>(static _ => new McpConnectionClient(new HttpClient()))
             .AddSingleton<IConnectionToolPort>(static sp => new ConnectionToolAdapter(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<IMcpConnectionClient>(), NoRedirectClient(), sp.GetRequiredService<ITextScrubber>()))
             .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener())
-            .AddSingleton<IConnectionCredentials>(static sp => new ConnectionCredentials(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<ISecretPointers>()))   // #2508: the one token order (connection first, profile pointer second) for the github, slack and linear feeds
-            .AddSingleton<IKnownRepos>(static sp => new Connections.GitHub.GitHubKnownRepos(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), NoRedirectClient()))   // first-run gap 7: the scan's 'known'
-            .AddSingleton<IGitHubAccount>(static sp => new Connections.GitHub.GitHubConnectionAccount(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<IConnectionPresetCatalog>(), NoRedirectClient(), sp.GetRequiredService<TimeProvider>()))   // #2499: the Reviews tab's GitHub account, from the Connections page
+            .AddSingleton<ICommandCredentials>(static _ => new CommandCredentials(new ProcessToolRunner())).AddSingleton<IGitHubCliLogin>(static _ => new GhCliLogin(new ProcessToolRunner()))   // first-run decisions 13, 14: the gh login and its command: credential
+            .AddSingleton<IConnectionCredentials>(static sp => new ConnectionCredentials(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<ISecretPointers>(), sp.GetRequiredService<ICommandCredentials>()))   // #2508: the one token order (connection first, profile pointer second) for the github, slack and linear feeds
+            .AddSingleton<IKnownRepos>(static sp => new Connections.GitHub.GitHubKnownRepos(sp.GetRequiredService<IConnectionStore>(), NoRedirectClient(), sp.GetRequiredService<IConnectionCredentials>()))   // first-run gap 7: the scan's 'known'
+            .AddSingleton<IGitHubAccount>(static sp => new Connections.GitHub.GitHubConnectionAccount(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionPresetCatalog>(), NoRedirectClient(), sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<IConnectionCredentials>()))   // #2499: the Reviews tab's GitHub account, from the Connections page
             .AddSingleton<IPollCursors, SqlitePollCursors>()   // PR 11: poll cursors in ledger.db
             .AddSingleton<IEventPoller>(static sp => new GitHubEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IEventPoller>(static sp => new LinearEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))

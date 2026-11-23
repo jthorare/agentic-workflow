@@ -30,7 +30,7 @@ public sealed class AgentsNeedsYouFramesTests : FrameHost
         Assert.Equal("Needs you (1)", shell.Agents.Groups[0].Header);
         Assert.True(search.IsEffectivelyVisible);
         Assert.Same(search, window.FocusManager?.GetFocusedElement());
-        Assert.NotNull(window.GetVisualDescendants().OfType<Control>().FirstOrDefault(c => c.IsEffectivelyVisible && c.DataContext is Aw.Sindri.Ui.ViewModels.Agents.SessionGroupViewModel g && string.Equals(g.Name, "Needs you", StringComparison.Ordinal)));
+        Assert.NotNull(window.GetVisualDescendants().OfType<Control>().FirstOrDefault(c => c.IsEffectivelyVisible && c.DataContext is ViewModels.Agents.SessionGroupViewModel g && string.Equals(g.Name, "Needs you", StringComparison.Ordinal)));
     });
 
     [Fact]

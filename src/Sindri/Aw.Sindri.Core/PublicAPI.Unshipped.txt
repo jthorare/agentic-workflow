@@ -22759,7 +22759,7 @@ Aw.Sindri.Core.Graph.Blocks.CallToolBlock.Title.get -> string!
 Aw.Sindri.Core.Graph.Runs.WorkflowLoopRule
 static Aw.Sindri.Core.Graph.Runs.WorkflowLoopRule.Decide(Aw.Sindri.Core.Graph.Ids.WorkflowRunId? parent, Aw.Sindri.Core.Graph.Ids.WorkflowSlug slug) -> Aw.Kernel.Error?
 Aw.Sindri.Core.Connections.ConnectionCredentials
-Aw.Sindri.Core.Connections.ConnectionCredentials.ConnectionCredentials(Aw.Sindri.Core.Connections.IConnectionStore? connections, Aw.Sindri.Core.Connections.IConnectionSecrets? connectionSecrets, Aw.Sindri.Core.Secrets.ISecretPointers! pointers) -> void
+Aw.Sindri.Core.Connections.ConnectionCredentials.ConnectionCredentials(Aw.Sindri.Core.Connections.IConnectionStore? connections, Aw.Sindri.Core.Connections.IConnectionSecrets? connectionSecrets, Aw.Sindri.Core.Secrets.ISecretPointers! pointers, Aw.Sindri.Core.Connections.ICommandCredentials? commands = null) -> void
 Aw.Sindri.Core.Connections.ConnectionCredentials.TokenFor(string! preset, string? profilePointer) -> string?
 Aw.Sindri.Core.Connections.IConnectionCredentials
 Aw.Sindri.Core.Connections.IConnectionCredentials.TokenFor(string! preset, string? profilePointer) -> string?
@@ -25165,6 +25165,33 @@ Aw.Sindri.Core.Messages.IMessagesStore.Expire(Aw.Sindri.Core.Messages.MessageTs 
 Aw.Sindri.Core.Messages.IMessagesStore.Purge(string? conversation, bool ownerState, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 static readonly Aw.Sindri.Core.SindriErrors.MessagesStoreUnusable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.MessagesConversationUnknown -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Messages.ILinkRows
+Aw.Sindri.Core.Messages.ILinkRows.Find(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Messages.LinkRow!>!>!>
+Aw.Sindri.Core.Messages.LinkRow
+Aw.Sindri.Core.Messages.LinkRow.<Clone>$() -> Aw.Sindri.Core.Messages.LinkRow!
+Aw.Sindri.Core.Messages.LinkRow.Ci.get -> string?
+Aw.Sindri.Core.Messages.LinkRow.Ci.init -> void
+Aw.Sindri.Core.Messages.LinkRow.Deconstruct(out string! Key, out string! Title, out string! State) -> void
+Aw.Sindri.Core.Messages.LinkRow.Equals(Aw.Sindri.Core.Messages.LinkRow? other) -> bool
+Aw.Sindri.Core.Messages.LinkRow.Key.get -> string!
+Aw.Sindri.Core.Messages.LinkRow.Key.init -> void
+Aw.Sindri.Core.Messages.LinkRow.LinkRow(string! Key, string! Title, string! State) -> void
+Aw.Sindri.Core.Messages.LinkRow.Since.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Messages.LinkRow.Since.init -> void
+Aw.Sindri.Core.Messages.LinkRow.State.get -> string!
+Aw.Sindri.Core.Messages.LinkRow.State.init -> void
+Aw.Sindri.Core.Messages.LinkRow.Title.get -> string!
+Aw.Sindri.Core.Messages.LinkRow.Title.init -> void
+Aw.Sindri.Core.Messages.LinkRow.WaitsOn.get -> string?
+Aw.Sindri.Core.Messages.LinkRow.WaitsOn.init -> void
+Aw.Sindri.Core.Messages.LinkShapes
+const Aw.Sindri.Core.Messages.LinkShapes.MaxUrls = 20 -> int
+override Aw.Sindri.Core.Messages.LinkRow.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Messages.LinkRow.GetHashCode() -> int
+override Aw.Sindri.Core.Messages.LinkRow.ToString() -> string!
+static Aw.Sindri.Core.Messages.LinkRow.operator !=(Aw.Sindri.Core.Messages.LinkRow? left, Aw.Sindri.Core.Messages.LinkRow? right) -> bool
+static Aw.Sindri.Core.Messages.LinkRow.operator ==(Aw.Sindri.Core.Messages.LinkRow? left, Aw.Sindri.Core.Messages.LinkRow? right) -> bool
+static Aw.Sindri.Core.Messages.LinkShapes.RowKey(System.Uri! url) -> string?
 Aw.Sindri.Core.Messages.SlackRateBudget.Wait(string! method, System.DateTimeOffset now) -> System.TimeSpan
 const Aw.Sindri.Core.Messages.MessagesConnection.WorkspaceKey = "workspace" -> string!
 const Aw.Sindri.Core.Messages.MessagesConnection.UserKey = "user" -> string!
@@ -25229,6 +25256,18 @@ const Aw.Sindri.Core.Setup.RepoScanRules.MaxDepth = 6 -> int
 static Aw.Sindri.Core.Setup.RepoScanRules.InsideHome(string! path, string! home) -> bool
 static Aw.Sindri.Core.Setup.RepoScanRules.Origin(string? url) -> (string! Host, string! Slug)?
 static Aw.Sindri.Core.Setup.RepoScanRules.Skips(string! name) -> bool
+Aw.Sindri.Core.Connections.IGitHubCliLogin
+Aw.Sindri.Core.Connections.IGitHubCliLogin.Login(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
+Aw.Sindri.Core.Connections.GitHubCliCredential
+Aw.Sindri.Core.Connections.ICommandCredentials
+Aw.Sindri.Core.Connections.ICommandCredentials.Token(string! credential) -> string?
+const Aw.Sindri.Core.Connections.GitHubCliCredential.Command = "command:gh auth token --hostname github.com" -> string!
+const Aw.Sindri.Core.Connections.GitHubCliCredential.ConfigKey = "credential" -> string!
+static Aw.Sindri.Core.Connections.GitHubCliCredential.ConnectionName.get -> Aw.Sindri.Core.Connections.ConnectionName
+static Aw.Sindri.Core.Connections.GitHubCliCredential.Of(Aw.Sindri.Core.Connections.Connection! connection) -> string?
+Aw.Sindri.Core.Connections.ConnectionCredentials.TokenOf(Aw.Sindri.Core.Connections.Connection! connection) -> string?
+Aw.Sindri.Core.Connections.IConnectionCredentials.TokenOf(Aw.Sindri.Core.Connections.Connection! connection) -> string?
+static Aw.Sindri.Core.Connections.ConnectionCredentials.Newest(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Connections.Connection!>! rows) -> System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Connections.Connection!>!
 static Aw.Sindri.Core.Setup.SetupSteps.NotRunning() -> Aw.Sindri.Core.Setup.SetupStep!
 static Aw.Sindri.Core.Setup.SetupSteps.WaitsForServe(Aw.Sindri.Core.Setup.SetupStepId id) -> Aw.Sindri.Core.Setup.SetupStep!
 static Aw.Sindri.Core.Setup.SetupDeriver.WithoutServe(Aw.Kernel.Result<Aw.Sindri.Core.Setup.RepoFact!>! repo, Aw.Kernel.Result<Aw.Sindri.Core.Setup.ProfileFact!>! profile, Aw.Kernel.Result<Aw.Sindri.Core.Setup.AgentFact!>! agent) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.SetupStep!>!

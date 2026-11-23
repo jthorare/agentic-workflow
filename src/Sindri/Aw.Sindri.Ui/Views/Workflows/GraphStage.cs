@@ -11,7 +11,7 @@ namespace Aw.Sindri.Ui.Views.Workflows;
 
 /// <summary>
 /// The workflow canvas with its zoom strip and minimap (#3684): the canvas above, a 56 px band under it with Fit, minus, the percent and plus (a band, never an overlay), and the
-/// minimap bottom right inside the canvas, shown only while the canvas scrolls.
+/// minimap bottom right inside the canvas, shown only while the graph is over twice the canvas one way (#4055).
 /// </summary>
 internal sealed class GraphStage : Grid
 {
@@ -80,7 +80,7 @@ internal sealed class GraphStage : Grid
     /// <summary>Gets the minimap.</summary>
     internal MiniMapControl Map { get; } = new() { IsVisible = false };
 
-    /// <summary>Gets the opaque panel the minimap sits on, in the canvas's bottom right corner (#4055): shown only while the canvas scrolls, like the map.</summary>
+    /// <summary>Gets the opaque panel the minimap sits on, in the canvas's bottom right corner (#4055): shown and hidden with the map.</summary>
     internal Border MapPanel { get; } = new()
     {
         Width = GraphZoom.MapWidth,
@@ -98,6 +98,13 @@ internal sealed class GraphStage : Grid
 
     /// <summary>Gets the zoom percent's words.</summary>
     internal string PercentText => _percent.Text ?? string.Empty;
+
+    /// <inheritdoc/>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        PaintMapPanel();   // a refresh before the stage was in the tree found no theme and painted the fallback colours
+    }
 
     // The minimap's panel: the cards' surface (opaque, so nothing under the map shows through, #4055), a hairline border and the small radius.
     private void PaintMapPanel()
@@ -127,11 +134,11 @@ internal sealed class GraphStage : Grid
     private void Refresh()
     {
         _percent.Text = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{Canvas.ZoomPercent}%");
-        var scrolls = Canvas.Scrolls;
-        Map.IsVisible = scrolls;
+        var shown = Canvas.MapShown;   // only for a graph over twice the canvas one way (#4055); ExtentHeight adds the map's 144 px only then
+        Map.IsVisible = shown;
         PaintMapPanel();
-        MapPanel.IsVisible = scrolls;   // no reserved room and no panel while the graph fits: ExtentHeight adds the map's 144 px only while it shows
-        if (scrolls && Graph is { } graph)
+        MapPanel.IsVisible = shown;
+        if (shown && Graph is { } graph)
         {
             var fill = this.TryFindResource("Brush.InkSubtle", ActualThemeVariant, out var value) && value is IBrush brush ? brush : Brushes.Gray;
             Map.Nodes = [.. graph.Nodes.Select(n => new MiniMapNode(new Rect(n.X, n.Y, n.Width, n.Height), fill, n.IsSelected))];
