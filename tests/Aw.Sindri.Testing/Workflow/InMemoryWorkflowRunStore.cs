@@ -95,14 +95,15 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     }
 
     /// <inheritdoc/>
-    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(CancellationToken cancellationToken)
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(int limit, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
             IReadOnlyList<WorkflowRun> failed = [.. _runs
                 .Where(static r => r.Status == WorkflowRunStatus.Failed && r.SeenAt is null && string.Equals(r.Mode, WorkflowRunMode.Live, StringComparison.Ordinal))
                 .OrderByDescending(static r => r.StartedAt)
-                .ThenByDescending(static r => r.Id.Value, StringComparer.Ordinal)];
+                .ThenByDescending(static r => r.Id.Value, StringComparer.Ordinal)
+                .Take(Math.Max(limit, 1))];
             return Ok(failed);
         }
     }
@@ -118,7 +119,11 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
                 return Done<WorkflowRun>(NotFound(id));
             }
 
-            _runs[found] = _runs[found] with { SeenAt = _runs[found].SeenAt ?? at };
+            if (_runs[found].Status == WorkflowRunStatus.Failed)
+            {
+                _runs[found] = _runs[found] with { SeenAt = _runs[found].SeenAt ?? at };
+            }
+
             return Done<WorkflowRun>(_runs[found]);
         }
     }

@@ -70,7 +70,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         {
             // another workflow: nothing of the old one stays to be saved to this one, even when this read fails
             Fields.Clear();
-            (Nodes, BaseRevision, _selected, NodeHeading) = ([], 0, null, string.Empty);
+            (Nodes, BaseRevision, _selected, NodeHeading, NodeIdLine) = ([], 0, null, string.Empty, string.Empty);
         }
 
         (_url, Slug) = (url, slug);
@@ -115,6 +115,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         var node = Nodes.FirstOrDefault(n => string.Equals(n.Id, nodeId, StringComparison.Ordinal));
         var block = node is null ? null : Groups.SelectMany(g => g.Blocks).FirstOrDefault(b => string.Equals(b.Type, node.Type, StringComparison.Ordinal));
         NodeHeading = HeadingOf(node, block);
+        NodeIdLine = node is null ? string.Empty : Labels.WfEditorStepId(node.Id);
         foreach (var field in block?.Config ?? [])
         {
             Fields.Add(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field)));   // why: a block was found, so node is not null
