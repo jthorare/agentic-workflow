@@ -1,0 +1,19 @@
+{
+  "asOf": {
+    "cursor": 1,
+    "ledgerHead": 1,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "counts": {
+    "needsYou": 0,
+    "moving": 0,
+    "snoozed": 0,
+    "done": 0
+  },
+  "needsYou": [],
+  "moving": [],
+  "cursor": null,
+  "degraded": []
+}

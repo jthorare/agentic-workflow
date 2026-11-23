@@ -10,7 +10,7 @@ namespace Aw.Context.Core.Sync;
 /// </summary>
 /// <param name="Source">The source.</param>
 /// <param name="Phase">The stored phase, or null for a source that never committed a page.</param>
-/// <param name="LastSync">When the last tick of this feed ended since the process started, or null when none has.</param>
+/// <param name="LastSync">When the last tick of this feed ended, in any process (read from the stored outcome row, so it survives a restart), or null when none has.</param>
 /// <param name="LastCode">The code the last tick ended with (a down source's SND-CONTEXT-010, the time cap's SND-CONTEXT-059), or null when it completed or none has run.</param>
 /// <param name="Usable">The recent window is synced.</param>
 /// <param name="Complete">The backfill is done (the embeddings are not counted yet).</param>
