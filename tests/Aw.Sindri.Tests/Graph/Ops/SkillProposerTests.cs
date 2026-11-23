@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Kernel.Testing;
@@ -42,7 +43,7 @@ public sealed class SkillProposerTests : IClassFixture<RoslynWarmup>
 
         Assert.Equal(["manual", "code", "skill_catalog", "for_each", "prompt", "code", "condition", "run_agent", "code", "collect", "code", "notify"], spec.Nodes.Select(static n => n.Type), StringComparer.Ordinal);
         var each = spec.Nodes.Single(static n => n.Type == "for_each");
-        Assert.Equal(("{{trigger.payload.findings}}", 5), (each.Config["items"]!.GetValue<string>(), each.Config["maxItems"]!.GetValue<int>()));
+        Assert.Equal(("{{check.result.top}}", 5), (each.Config["items"]!.GetValue<string>(), each.Config["maxItems"]!.GetValue<int>()));
         Assert.Contains(spec.Edges, static e => e.Output == "true" && e.To.Value == "draft");
         Assert.Equal("{{trigger.payload.repo}}", spec.Nodes.Single(static n => n.Type == "run_agent").Config["repo"]!.GetValue<string>());
         var result = Validator().Validate(spec, GraphMode.Activate);
@@ -83,6 +84,31 @@ public sealed class SkillProposerTests : IClassFixture<RoslynWarmup>
 
         Assert.Contains("the payload needs 'findings'", missing.Error.Message, StringComparison.Ordinal);
         Assert.Equal(2, JsonNode.Parse(full.Value)!["findings"]!.GetValue<int>());
+    }
+
+    [Fact]
+    public void Check_hands_on_the_first_five_findings_in_order_and_still_counts_all_of_them()
+    {
+        var findings = new JsonArray();
+        for (var i = 1; i <= 7; i++)
+        {
+            findings.Add((JsonNode)new JsonObject { ["label"] = "label" + i.ToString(CultureInfo.InvariantCulture), ["mistake"] = "mistake " + i.ToString(CultureInfo.InvariantCulture) });
+        }
+
+        var check = Run("check", new JsonObject { ["trigger"] = new JsonObject { ["payload"] = new JsonObject { ["repo"] = "toolkit", ["findings"] = findings } } });
+
+        Assert.Equal(7, check["findings"]!.GetValue<int>());
+        Assert.Equal(["label1", "label2", "label3", "label4", "label5"], check["top"]!.AsArray().Select(static f => f!["label"]!.GetValue<string>()), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void Summary_says_how_many_findings_were_past_the_top_five()
+    {
+        var summary = Run("summary", new JsonObject { ["gather"] = new JsonObject { ["items"] = new JsonArray() }, ["each"] = new JsonObject { ["count"] = 5 }, ["check"] = new JsonObject { ["result"] = new JsonObject { ["findings"] = 7 } } });
+
+        var text = summary["text"]!.GetValue<string>();
+        Assert.Contains("5 findings had no skill", text, StringComparison.Ordinal);
+        Assert.Contains("2 more findings were past the top 5 and got no draft", text, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -131,7 +157,7 @@ public sealed class SkillProposerTests : IClassFixture<RoslynWarmup>
     {
         JsonArray drafts = [Draft("review", "Run the tests before done"), Draft("syncDocs", "Update the changelog")];
 
-        var summary = Run("summary", new JsonObject { ["gather"] = new JsonObject { ["items"] = drafts }, ["each"] = new JsonObject { ["count"] = 3 } });
+        var summary = Run("summary", new JsonObject { ["gather"] = new JsonObject { ["items"] = drafts }, ["each"] = new JsonObject { ["count"] = 3 }, ["check"] = new JsonObject { ["result"] = new JsonObject { ["findings"] = 3 } } });
 
         Assert.Equal(2, summary["count"]!.GetValue<int>());
         var text = summary["text"]!.GetValue<string>();

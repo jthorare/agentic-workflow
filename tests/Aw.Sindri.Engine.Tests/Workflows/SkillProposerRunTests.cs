@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Kernel.Testing;
@@ -56,6 +57,33 @@ public sealed class SkillProposerRunTests
         Assert.Contains("1 finding had no skill", summary["text"]!.GetValue<string>(), StringComparison.Ordinal);
         Assert.Equal(["Skill proposer: 2 drafts"], rig.Ports.Notified);
         Assert.All(model.Prompts, static p => Assert.DoesNotContain("transcript:", p, StringComparison.Ordinal));   // the match prompt sees the mistake, never the turns' refs
+    }
+
+    [Fact]
+    public async Task Seven_findings_run_the_first_five_and_the_run_succeeds()
+    {
+        var model = new MatchingModel();
+        var agents = new FakeAgentNodeRuntime();
+        var catalog = new FakeSkillCatalog([new SkillCatalogSeed("review", "Looks a pull request over.")]);
+        await using var rig = await GraphRig.StartAsync(agents, [new PromptBlock(model), new CodeBlock(new InProcessCodePort()), .. GraphBlockRegistry.SkillBlocks(catalog)]);
+        var workflow = await rig.Define(GraphTemplates.Find("skill-proposer")!.Spec);
+        var findings = new JsonArray();
+        for (var i = 1; i <= 7; i++)
+        {
+            findings.Add((JsonNode)Finding("label" + i.ToString(CultureInfo.InvariantCulture), "an unmatched mistake, number " + i.ToString(CultureInfo.InvariantCulture), "transcript:1111aaaa#3", "transcript:2222bbbb#4"));
+        }
+
+        var trigger = new JsonObject { ["kind"] = "manual", ["payload"] = new JsonObject { ["repo"] = "web", ["findings"] = findings } };
+
+        var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, trigger.ToJsonString());
+        var run = await rig.Final(started.RunId, _long);
+        var summary = JsonNode.Parse((await rig.ItemRuns(started.RunId, "summary"))[0].Output!)!["result"]!;
+
+        Assert.True(run.Status == WorkflowRunStatus.Succeeded, run.Error);
+        Assert.Equal(5, model.Prompts.Count);
+        Assert.Empty(agents.Launches);
+        Assert.Contains("2 more findings were past the top 5 and got no draft", summary["text"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.Equal(["Skill proposer: 0 drafts"], rig.Ports.Notified);
     }
 
     private static JsonObject Finding(string label, string mistake, params string[] refs)
