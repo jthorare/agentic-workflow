@@ -1,3 +1,4 @@
+using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Connections;
@@ -91,7 +92,7 @@ public sealed class ConnectionCredentialsTests
     public async Task The_most_recently_added_connected_row_wins_over_an_older_oauth_one()
     {
         await Connect("github", ConnectionStatus.Connected, "default");   // added at the samples' epoch, and sorts before github:gh by name
-        _ = (await _connections.Insert(GhRows.Row(Aw.Kernel.Testing.KnownInstants.Epoch.AddHours(1)), CancellationToken.None)).Value;
+        _ = (await _connections.Insert(GhRows.Row(KnownInstants.Epoch.AddHours(1)), CancellationToken.None)).Value;
         var credentials = new ConnectionCredentials(_connections, _connectionSecrets, _pointers, new GhRows.Commands());
 
         Assert.Equal(GhRows.Token, credentials.TokenFor("github", profilePointer: null));

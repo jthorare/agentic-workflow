@@ -5,8 +5,8 @@ using Aw.Sindri.Features.RestartProcess;
 using Aw.Sindri.Host;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.ConnectAccount;
-using Aw.Sindri.Tests.SetupSources;
 using Aw.Sindri.Tests.RestartProcess;
+using Aw.Sindri.Tests.SetupSources;
 
 namespace Aw.Sindri.Tests.FirstRun;
 
