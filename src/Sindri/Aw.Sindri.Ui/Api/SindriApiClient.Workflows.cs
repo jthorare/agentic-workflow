@@ -25,6 +25,10 @@ internal sealed partial class SindriApiClient
         Get<WorkflowView>(api, WorkflowRoutes.One(slug), cancellationToken);
 
     /// <inheritdoc />
+    public Task<Result<WorkflowView>> WorkflowNewest(Uri api, string slug, CancellationToken cancellationToken) =>
+        Get<WorkflowView>(api, WorkflowRoutes.Newest(slug), cancellationToken);
+
+    /// <inheritdoc />
     public Task<Result<WorkflowRunList>> WorkflowRuns(Uri api, string slug, CancellationToken cancellationToken) =>
         Get<WorkflowRunList>(api, WorkflowRoutes.Runs(slug), cancellationToken);
 

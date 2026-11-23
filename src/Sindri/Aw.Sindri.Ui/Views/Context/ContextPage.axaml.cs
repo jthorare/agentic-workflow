@@ -266,6 +266,10 @@ internal sealed partial class ContextPage : UserControl
         }
     }
 
+    // Everything the page holds under the stage (the hint row, the row gaps, any bottom margin), read from the content's wanted height so none of it has to be modelled: left unsubtracted, it is scrolled out of the window.
+    // The wanted height, not the extent: the extent grows to fill the viewport, so a short page would read as having room under the stage.
+    private static double UnderStage(ScrollViewer scroller, double stageBottom) => scroller.Content is Avalonia.Layout.Layoutable content ? Math.Max(0, content.DesiredSize.Height - stageBottom) : 0;
+
     // The page scrolls, so the stage cannot fill what is left; it is given the viewport's height under its own top.
     private void FitStage()
     {
@@ -277,7 +281,8 @@ internal sealed partial class ContextPage : UserControl
         // The stage fills what the window leaves: the viewport less where the page starts in it, where the stage starts in the page, and the edge. It starts at the top of its row, so a row taller than it never centres it.
         var top = ContextStageHost.TranslatePoint(default, this)?.Y ?? 0;
         var start = scroller.Content is Visual content ? this.TranslatePoint(default, content)?.Y ?? 0 : 0;
-        var height = Math.Max(StageMinimum, scroller.Viewport.Height - start - top - PageEdge);
+        var under = UnderStage(scroller, start + top + ContextStageHost.Bounds.Height);
+        var height = Math.Max(StageMinimum, scroller.Viewport.Height - start - top - PageEdge - under);
         if (Math.Abs(ContextStageHost.Height - height) > 0.5 || double.IsNaN(ContextStageHost.Height))
         {
             ContextStageHost.Height = height;

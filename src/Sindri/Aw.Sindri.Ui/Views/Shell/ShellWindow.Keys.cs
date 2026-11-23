@@ -176,6 +176,16 @@ internal sealed partial class ShellWindow
             return "/";
         }
 
+        if (e is { Key: Key.OemCloseBrackets, KeyModifiers: KeyModifiers.None })
+        {
+            return "]";   // #3082: the next asking row on the Agents page
+        }
+
+        if (e is { Key: Key.OemOpenBrackets, KeyModifiers: KeyModifiers.None })
+        {
+            return "[";
+        }
+
         if (e is { Key: Key.Up or Key.Down, KeyModifiers: KeyModifiers.None, Source: SessionRow or EndedSessionRow })
         {
             return e.Key.ToString();   // #3710: on a focused Agents row the arrows walk the rows like J and K
