@@ -1,5 +1,7 @@
 using System.Globalization;
 using Aw.Context.Core;
+using Aw.Context.Core.Concepts;
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Overrides;
 using Aw.Context.Core.Review;
@@ -12,9 +14,9 @@ namespace Aw.Context.Features.PromoteMap;
 /// Makes the latest draft the current map (spec §8.7), when nothing in it is left to decide (SND-CONTEXT-046: no draft, or
 /// undecided review items; a skipped item isn't decided). The proposals a person accepted become nodes of the version first,
 /// because a 'propose' row only adds its node to a draft and a pending one is never part of the current map. Sindri checks
-/// the caller and the typed confirmation first (protected).
+/// the caller and the typed confirmation first (protected). The new current version's concepts and glossary are built and kept after the promote, in the background (issue 3676).
 /// </summary>
-internal sealed class PromoteMapService(IGraphStore store, TimeProvider clock) : IService<PromoteMapRequest, MapPromoted>
+internal sealed class PromoteMapService(IGraphStore store, IConceptAnswerFills fills, TimeProvider clock) : IService<PromoteMapRequest, MapPromoted>
 {
     public async ValueTask<Result<MapPromoted>> Handle(PromoteMapRequest request, CancellationToken cancellationToken)
     {
@@ -47,7 +49,18 @@ internal sealed class PromoteMapService(IGraphStore store, TimeProvider clock) :
         }
 
         var ready = PromoteReadiness.Check(seen.Value.Queue);
-        return ready.IsError ? ready.Error : await Promote(draft, seen.Value.View, cancellationToken).ConfigureAwait(false);
+        return ready.IsError ? ready.Error : Filled(await Promote(draft, seen.Value.View, cancellationToken).ConfigureAwait(false), request.Scope);
+    }
+
+    // A committed promote queues the fill of the new version's concepts and glossary; it runs after this call, never inside it.
+    private Result<MapPromoted> Filled(Result<MapPromoted> promoted, ContextScope scope)
+    {
+        if (promoted.IsSuccess)
+        {
+            fills.Start(scope);
+        }
+
+        return promoted;
     }
 
     // The caller decided about one draft; a rebuild replaced it or it was promoted (retrieval spec §8.7a).
