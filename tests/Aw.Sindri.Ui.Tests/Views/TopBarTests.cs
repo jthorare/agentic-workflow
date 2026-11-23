@@ -217,14 +217,15 @@ public sealed class TopBarTests : IDisposable
         }
     });
 
-    // #4070: when the problem text is dropped (under a word of room, #4008) the age comes back if it fits; it had yielded to a text that
-    // is not shown. Widths 1000 px at both scales are the ones #4008 dropped the text at. NOT computed, only read: that the age has room
-    // at these sizes (the bar's step is not NoAge) is checked by running this; if it fails for a hidden age at a size where the bar chose
-    // NoAge, pick a wider window here.
+    // #4070: when the problem text is dropped (under a word of room, #4008) the age comes back if it fits, and stays hidden when it does not
+    // (a pill with the age overflowed the window by 62 px at 1280 px, scale 1.3). Which widths drop the text and leave room for the age is not
+    // computed here: the window grows from 1000 to 1400 px in 6 px steps, and at each width the pill must end inside the window, the problem text
+    // is 0 or at least 60 wide, and an age that shows has its whole width. At least one width must show the age with the text dropped, or the
+    // age fix does nothing at this scale (then #4070 is by design and the issue closes).
     [Theory]
-    [InlineData(1000, 1.0)]
-    [InlineData(1000, 1.3)]
-    public Task The_pill_shows_its_age_when_the_problem_text_is_dropped(int width, double scale) => OnUi(async () =>
+    [InlineData(1.0)]
+    [InlineData(1.3)]
+    public Task The_pill_shows_its_age_only_where_it_fits_when_the_problem_text_is_dropped(double scale) => OnUi(async () =>
     {
         _records.Write(A.Record());
         _server.Current = A.Status() with { Health = LongProblems() };
@@ -233,18 +234,29 @@ public sealed class TopBarTests : IDisposable
         TextScale.Apply(resources, scale);
         try
         {
-            window.Width = width;
-            Settle(window);
             var age = Named<TextBlock>(window, "PillAgeText");
             var problems = Named<TextBlock>(window, "PillProblems");
             var pill = Named<Button>(window, "HealthPill");
-            var pillRight = pill.TranslatePoint(new Point(pill.Bounds.Width, 0), window)!.Value.X;
-            var where = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"at {width} px, scale {scale:0.0}");
+            var shown = new List<int>();
+            for (var width = 1000; width <= 1400; width += 6)
+            {
+                window.Width = width;
+                Settle(window);
+                var pillRight = pill.TranslatePoint(new Point(pill.Bounds.Width, 0), window)!.Value.X;
+                var where = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"at {width} px, scale {scale:0.0}");
+                Assert.True(pillRight <= window.Bounds.Width + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the pill ends at {pillRight}, the window is {window.Bounds.Width}"));
+                Assert.True(problems.Bounds.Width is < 0.5 or >= TopBar.MinProblems - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the problem text is a {problems.Bounds.Width} px stub"));
+                if (age.IsEffectivelyVisible)
+                {
+                    Assert.True(age.Bounds.Width >= Natural(age) - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the age got {age.Bounds.Width} of its {Natural(age)}"));
+                    if (problems.Bounds.Width < 0.5)
+                    {
+                        shown.Add(width);
+                    }
+                }
+            }
 
-            Assert.True(problems.Bounds.Width < 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the problem text is {problems.Bounds.Width} px, the test needs it dropped"));
-            Assert.True(age.IsEffectivelyVisible, where + ": the age is hidden although the problem text is dropped");
-            Assert.True(age.Bounds.Width >= Natural(age) - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the age got {age.Bounds.Width} of its {Natural(age)}"));
-            Assert.True(pillRight <= window.Bounds.Width + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the pill ends at {pillRight}, the window is {window.Bounds.Width}"));
+            Assert.True(shown.Count > 0, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"at scale {scale:0.0} no width from 1000 to 1400 px shows the age with the problem text dropped"));
         }
         finally
         {

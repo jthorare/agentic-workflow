@@ -26,6 +26,10 @@ internal sealed partial class TopBar
     // The age gives way before the problem text is trimmed (QA #2547): a short problem reads in full at 1280 px.
     private bool _ageYields;
 
+    // The age was brought back after the problem text was dropped (#4070), and what room the pill had left with the age shown, from the last YieldAge.
+    private bool _ageKept;
+    private double _roomWithAge;
+
     // What Full reserves for the ⌘K field: the column the field needs to show its whole placeholder (#2710), between SearchMin
     // and SearchMax. "Full always means the whole placeholder". It must not read the field's size now: folded, the field's
     // placeholder and keycap are hidden and it measures as its magnifier. So it is two parts that hold in both steps: the
@@ -67,16 +71,25 @@ internal sealed partial class TopBar
         {
             KeepAge();
         }
+        else
+        {
+            _ageKept = false;
+        }
 
         SetProblemsCap(cap);
     }
 
-    // A dropped problem text takes no room, so the age has nothing to give way to (#4070). Whether the age fits is the step's call
-    // (Choose drops it from NoAge on). Stable: the next measure yields it again, drops the text again and lands here again.
+    // A dropped problem text takes no room, so the age has nothing to give way to (#4070), but only when the age fits: its room is what the
+    // pill has left with the age shown (a width the problem text didn't need), and a hidden age needs Slack more to come back (#4008's idea).
+    // Stable: the next measure yields it again, drops the text again and decides the same here.
     private void KeepAge()
     {
-        _ageYields = false;
-        PillAge.IsVisible = _fit < Fit.NoAge;
+        _ageKept = _ageYields && _roomWithAge >= (_ageKept ? 0 : Slack);
+        if (_ageKept)
+        {
+            _ageYields = false;
+            PillAge.IsVisible = _fit < Fit.NoAge;
+        }
     }
 
     // Under about one word of room the problem text gives way entirely (#4008): a one-letter stub ("Degraded y...") reads as a bug. A text
@@ -108,6 +121,7 @@ internal sealed partial class TopBar
     {
         var ageSize = PillAgeText.Text is { Length: > 0 } ? _ageWidth + PillGroup.Spacing : 0;
         var roomWithAge = room - (PillAge.IsVisible ? 0 : ageSize);
+        _roomWithAge = roomWithAge;
         var natural = NaturalProblems();
         _ageYields = natural > 0 && ageSize > 0 && natural > roomWithAge - (_ageYields ? Slack : 0);
         PillAge.IsVisible = _fit < Fit.NoAge && !_ageYields;
