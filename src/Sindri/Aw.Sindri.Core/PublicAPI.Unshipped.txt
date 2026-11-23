@@ -22431,6 +22431,7 @@ static readonly Aw.Sindri.Core.SindriErrors.ReviewNoConnection -> Aw.Kernel.Erro
 static readonly Aw.Sindri.Core.SindriErrors.ReviewSignInAgain -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Reviews.ReviewConnectRules
 static Aw.Sindri.Core.Reviews.ReviewConnectRules.For(Aw.Sindri.Core.Connections.GitHubAccount! account, bool profileHasToken, string? lastCode) -> Aw.Sindri.Core.Reviews.ReviewConnect?
+static Aw.Sindri.Core.Reviews.ReviewConnectRules.HasProfileToken(System.Text.Json.JsonElement? context) -> bool
 static Aw.Sindri.Core.Reviews.ReviewConnectRules.IsSignInCode(string? code) -> bool
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.<Clone>$() -> Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest!
@@ -23951,9 +23952,9 @@ Aw.Sindri.Core.Projects.Truth.ProjectPrState.Unknown = 3 -> Aw.Sindri.Core.Proje
 Aw.Sindri.Core.Projects.Truth.ProjectPrState.Waiting = 4 -> Aw.Sindri.Core.Projects.Truth.ProjectPrState
 Aw.Sindri.Core.Projects.Truth.ProjectTruthPr
 Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.<Clone>$() -> Aw.Sindri.Core.Projects.Truth.ProjectTruthPr!
-Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Deconstruct(out string! Url, out string! Repo, out int Number, out string! Title, out Aw.Sindri.Core.Projects.Truth.ProjectPrState State, out System.DateTimeOffset? DecidedAt, out string? WaitingOn) -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Deconstruct(out string! Url, out string! Repo, out int Number, out string! Title, out Aw.Sindri.Core.Projects.Truth.ProjectPrState State, out System.DateTimeOffset? DecidedAt, out string? WaitingOn, out bool WaitsOnYou) -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Equals(Aw.Sindri.Core.Projects.Truth.ProjectTruthPr? other) -> bool
-Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.ProjectTruthPr(string! Url, string! Repo, int Number, string! Title, Aw.Sindri.Core.Projects.Truth.ProjectPrState State, System.DateTimeOffset? DecidedAt, string? WaitingOn) -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.ProjectTruthPr(string! Url, string! Repo, int Number, string! Title, Aw.Sindri.Core.Projects.Truth.ProjectPrState State, System.DateTimeOffset? DecidedAt, string? WaitingOn, bool WaitsOnYou) -> void
 override Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.GetHashCode() -> int
 override Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.ToString() -> string!
@@ -23973,6 +23974,8 @@ Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.DecidedAt.get -> System.DateTimeOff
 Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.DecidedAt.init -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.WaitingOn.get -> string?
 Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.WaitingOn.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.WaitsOnYou.get -> bool
+Aw.Sindri.Core.Projects.Truth.ProjectTruthPr.WaitsOnYou.init -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth
 Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.<Clone>$() -> Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth!
 Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Deconstruct(out Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel Level, out string! Reason) -> void
@@ -23989,9 +23992,9 @@ Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Reason.get -> string!
 Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth.Reason.init -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruth
 Aw.Sindri.Core.Projects.Truth.ProjectTruth.<Clone>$() -> Aw.Sindri.Core.Projects.Truth.ProjectTruth!
-Aw.Sindri.Core.Projects.Truth.ProjectTruth.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthPr!>! OpenPrs, out int OpenItems, out int DoneItems, out int TotalItems, out int RunningAgents, out Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? Health) -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthPr!>! OpenPrs, out int OpenItems, out int DoneItems, out int TotalItems, out int RunningAgents, out Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? Health, out bool BlockedOnYou) -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruth.Equals(Aw.Sindri.Core.Projects.Truth.ProjectTruth? other) -> bool
-Aw.Sindri.Core.Projects.Truth.ProjectTruth.ProjectTruth(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthPr!>! OpenPrs, int OpenItems, int DoneItems, int TotalItems, int RunningAgents, Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? Health) -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.ProjectTruth(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Truth.ProjectTruthPr!>! OpenPrs, int OpenItems, int DoneItems, int TotalItems, int RunningAgents, Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth? Health, bool BlockedOnYou) -> void
 override Aw.Sindri.Core.Projects.Truth.ProjectTruth.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Projects.Truth.ProjectTruth.GetHashCode() -> int
 override Aw.Sindri.Core.Projects.Truth.ProjectTruth.ToString() -> string!
@@ -24009,6 +24012,8 @@ Aw.Sindri.Core.Projects.Truth.ProjectTruth.RunningAgents.get -> int
 Aw.Sindri.Core.Projects.Truth.ProjectTruth.RunningAgents.init -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruth.Health.get -> Aw.Sindri.Core.Projects.Truth.ProjectTruthHealth?
 Aw.Sindri.Core.Projects.Truth.ProjectTruth.Health.init -> void
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.BlockedOnYou.get -> bool
+Aw.Sindri.Core.Projects.Truth.ProjectTruth.BlockedOnYou.init -> void
 static Aw.Sindri.Core.Projects.Truth.ProjectTruth.Empty.get -> Aw.Sindri.Core.Projects.Truth.ProjectTruth!
 Aw.Sindri.Core.Projects.TruthSources.ProjectSources
 Aw.Sindri.Core.Projects.TruthSources.ProjectSources.<Clone>$() -> Aw.Sindri.Core.Projects.TruthSources.ProjectSources!
@@ -24056,9 +24061,9 @@ Aw.Sindri.Core.Projects.TruthSources.ProjectTruthAgent.Running.get -> bool
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruthAgent.Running.init -> void
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts.<Clone>$() -> Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts!
-Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPull!>! Pulls, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Reviews.ReviewSummary!>! Summaries, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.ProjectTruthItem!>! Items, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.ProjectTruthAgent!>! Agents) -> void
+Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPull!>! Pulls, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Reviews.ReviewSummary!>! Summaries, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.ProjectTruthItem!>! Items, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.ProjectTruthAgent!>! Agents, out string? Owner) -> void
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts.Equals(Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts? other) -> bool
-Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts.ProjectTruthFacts(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPull!>! Pulls, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Reviews.ReviewSummary!>! Summaries, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.ProjectTruthItem!>! Items, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.ProjectTruthAgent!>! Agents) -> void
+Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts.ProjectTruthFacts(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewPull!>! Pulls, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Reviews.ReviewSummary!>! Summaries, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.ProjectTruthItem!>! Items, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.ProjectTruthAgent!>! Agents, string? Owner) -> void
 override Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts.GetHashCode() -> int
 override Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts.ToString() -> string!
@@ -24072,6 +24077,8 @@ Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts.Items.get -> System.Colle
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts.Items.init -> void
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts.Agents.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.ProjectTruthAgent!>!
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts.Agents.init -> void
+Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts.Owner.get -> string?
+Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts.Owner.init -> void
 Aw.Sindri.Core.Projects.TruthSources.IProjectTruthFacts
 Aw.Sindri.Core.Projects.TruthSources.IProjectTruthFacts.Read(Aw.Sindri.Core.Projects.TruthSources.ProjectSources! union, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts!>!>
 Aw.Sindri.Core.Projects.Cards.ProjectCard.Truth.get -> Aw.Sindri.Core.Projects.Truth.ProjectTruth!
@@ -24718,6 +24725,7 @@ Aw.Sindri.Core.Messages.MrkdwnKind.Code = 4 -> Aw.Sindri.Core.Messages.MrkdwnKin
 Aw.Sindri.Core.Messages.MrkdwnKind.Emoji = 11 -> Aw.Sindri.Core.Messages.MrkdwnKind
 Aw.Sindri.Core.Messages.MrkdwnKind.Italic = 2 -> Aw.Sindri.Core.Messages.MrkdwnKind
 Aw.Sindri.Core.Messages.MrkdwnKind.Link = 7 -> Aw.Sindri.Core.Messages.MrkdwnKind
+Aw.Sindri.Core.Messages.MrkdwnKind.ListItem = 12 -> Aw.Sindri.Core.Messages.MrkdwnKind
 Aw.Sindri.Core.Messages.MrkdwnKind.Pre = 5 -> Aw.Sindri.Core.Messages.MrkdwnKind
 Aw.Sindri.Core.Messages.MrkdwnKind.Quote = 6 -> Aw.Sindri.Core.Messages.MrkdwnKind
 Aw.Sindri.Core.Messages.MrkdwnKind.Strike = 3 -> Aw.Sindri.Core.Messages.MrkdwnKind
@@ -24727,6 +24735,15 @@ Aw.Sindri.Core.Messages.Mrkdwn.Mrkdwn(System.Collections.Generic.IReadOnlyList<A
 Aw.Sindri.Core.Messages.Mrkdwn.Render() -> string!
 Aw.Sindri.Core.Messages.MrkdwnSpan
 Aw.Sindri.Core.Messages.MrkdwnSpan.<Clone>$() -> Aw.Sindri.Core.Messages.MrkdwnSpan!
+Aw.Sindri.Core.Messages.MrkdwnSpan.Children.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MrkdwnSpan!>!
+Aw.Sindri.Core.Messages.MrkdwnSpan.Children.init -> void
+Aw.Sindri.Core.Messages.MrkdwnSpan.Display.get -> string!
+Aw.Sindri.Core.Messages.MrkdwnSpan.Label.get -> string?
+Aw.Sindri.Core.Messages.MrkdwnSpan.Label.init -> void
+Aw.Sindri.Core.Messages.MrkdwnSpan.Marker.get -> string?
+Aw.Sindri.Core.Messages.MrkdwnSpan.Marker.init -> void
+Aw.Sindri.Core.Messages.MrkdwnSpan.Target.get -> string?
+Aw.Sindri.Core.Messages.MrkdwnSpan.Target.init -> void
 Aw.Sindri.Core.Messages.MrkdwnSpan.Deconstruct(out Aw.Sindri.Core.Messages.MrkdwnKind Kind, out string! Text) -> void
 Aw.Sindri.Core.Messages.MrkdwnSpan.Equals(Aw.Sindri.Core.Messages.MrkdwnSpan? other) -> bool
 Aw.Sindri.Core.Messages.MrkdwnSpan.Kind.get -> Aw.Sindri.Core.Messages.MrkdwnKind
@@ -24800,6 +24817,7 @@ static Aw.Sindri.Core.Messages.GapMarker.operator !=(Aw.Sindri.Core.Messages.Gap
 static Aw.Sindri.Core.Messages.GapMarker.operator ==(Aw.Sindri.Core.Messages.GapMarker? left, Aw.Sindri.Core.Messages.GapMarker? right) -> bool
 static Aw.Sindri.Core.Messages.MessageLine.operator !=(Aw.Sindri.Core.Messages.MessageLine? left, Aw.Sindri.Core.Messages.MessageLine? right) -> bool
 static Aw.Sindri.Core.Messages.MessageLine.operator ==(Aw.Sindri.Core.Messages.MessageLine? left, Aw.Sindri.Core.Messages.MessageLine? right) -> bool
+static Aw.Sindri.Core.Messages.MessageRank.Compare(Aw.Sindri.Core.Messages.MessageRank left, Aw.Sindri.Core.Messages.MessageRank right) -> int
 static Aw.Sindri.Core.Messages.MessageRank.Of(Aw.Sindri.Core.Messages.ThreadRow! row) -> Aw.Sindri.Core.Messages.MessageRank
 static Aw.Sindri.Core.Messages.MessageRank.operator !=(Aw.Sindri.Core.Messages.MessageRank left, Aw.Sindri.Core.Messages.MessageRank right) -> bool
 static Aw.Sindri.Core.Messages.MessageRank.operator ==(Aw.Sindri.Core.Messages.MessageRank left, Aw.Sindri.Core.Messages.MessageRank right) -> bool
@@ -24811,10 +24829,12 @@ static Aw.Sindri.Core.Messages.MessageTriage.ReturnsAfterDone(Aw.Sindri.Core.Mes
 static Aw.Sindri.Core.Messages.MessageTs.Compare(Aw.Sindri.Core.Messages.MessageTs left, Aw.Sindri.Core.Messages.MessageTs right) -> int
 static Aw.Sindri.Core.Messages.MessageTs.operator !=(Aw.Sindri.Core.Messages.MessageTs left, Aw.Sindri.Core.Messages.MessageTs right) -> bool
 static Aw.Sindri.Core.Messages.MessageTs.operator ==(Aw.Sindri.Core.Messages.MessageTs left, Aw.Sindri.Core.Messages.MessageTs right) -> bool
-static Aw.Sindri.Core.Messages.MessageTs.Parse(string! text) -> Aw.Sindri.Core.Messages.MessageTs
+static Aw.Sindri.Core.Messages.MessageTs.Parse(string? text) -> Aw.Kernel.Result<Aw.Sindri.Core.Messages.MessageTs>!
+static Aw.Sindri.Core.Messages.MessageTs.TryParse(string? text, out Aw.Sindri.Core.Messages.MessageTs ts) -> bool
 static Aw.Sindri.Core.Messages.Mrkdwn.operator !=(Aw.Sindri.Core.Messages.Mrkdwn? left, Aw.Sindri.Core.Messages.Mrkdwn? right) -> bool
 static Aw.Sindri.Core.Messages.Mrkdwn.operator ==(Aw.Sindri.Core.Messages.Mrkdwn? left, Aw.Sindri.Core.Messages.Mrkdwn? right) -> bool
 static Aw.Sindri.Core.Messages.Mrkdwn.Parse(string! text) -> Aw.Sindri.Core.Messages.Mrkdwn!
+static Aw.Sindri.Core.Messages.Mrkdwn.ToDisplay(string! text) -> string!
 static Aw.Sindri.Core.Messages.MrkdwnSpan.operator !=(Aw.Sindri.Core.Messages.MrkdwnSpan? left, Aw.Sindri.Core.Messages.MrkdwnSpan? right) -> bool
 static Aw.Sindri.Core.Messages.MrkdwnSpan.operator ==(Aw.Sindri.Core.Messages.MrkdwnSpan? left, Aw.Sindri.Core.Messages.MrkdwnSpan? right) -> bool
 static Aw.Sindri.Core.Messages.ThreadRow.DmKey(string! workspace, string! conversation) -> string!
@@ -24957,6 +24977,11 @@ Aw.Sindri.Core.Messages.IMessagesStore.Expire(Aw.Sindri.Core.Messages.MessageTs 
 Aw.Sindri.Core.Messages.IMessagesStore.Purge(string? conversation, bool ownerState, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 static readonly Aw.Sindri.Core.SindriErrors.MessagesStoreUnusable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.MessagesConversationUnknown -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Messages.MessageTsJsonConverter
+Aw.Sindri.Core.Messages.MessageTsJsonConverter.MessageTsJsonConverter() -> void
+override Aw.Sindri.Core.Messages.MessageTsJsonConverter.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> Aw.Sindri.Core.Messages.MessageTs
+override Aw.Sindri.Core.Messages.MessageTsJsonConverter.Write(System.Text.Json.Utf8JsonWriter! writer, Aw.Sindri.Core.Messages.MessageTs value, System.Text.Json.JsonSerializerOptions! options) -> void
+static readonly Aw.Sindri.Core.SindriErrors.MessagesTsInvalid -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Setup.GitMarker
 Aw.Sindri.Core.Setup.GitMarker.File = 2 -> Aw.Sindri.Core.Setup.GitMarker
 Aw.Sindri.Core.Setup.GitMarker.Folder = 1 -> Aw.Sindri.Core.Setup.GitMarker
