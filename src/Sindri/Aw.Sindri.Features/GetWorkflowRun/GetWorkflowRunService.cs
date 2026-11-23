@@ -7,7 +7,7 @@ using Aw.Sindri.Core.Launches;
 
 namespace Aw.Sindri.Features.GetWorkflowRun;
 
-/// <summary>One run with its node runs; an unknown run is SND-GRAPH-101. A node payload the store cut short comes back as text, with the node's Truncated flag set.</summary>
+/// <summary>One run with its node runs; an unknown run is SND-GRAPH-101. A node payload the store cut short comes back as text; the node's Truncated flag says its output was cut.</summary>
 /// <param name="runs">The runs and node runs.</param>
 /// <param name="workflows">The revision the run walked: it gives the order the node runs are served in (graph order, #3307) and says which nodes are 'run_agent' nodes.</param>
 /// <param name="files">The per-launch files: the held marker says whether a person holds an agent node, when the run can't be asked.</param>

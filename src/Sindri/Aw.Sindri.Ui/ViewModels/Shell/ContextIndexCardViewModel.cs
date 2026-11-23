@@ -1,3 +1,4 @@
+using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Sources;
 
@@ -33,13 +34,29 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
     /// <summary>True when the bar shows.</summary>
     public bool HasBacklog => Backlog is not null;
 
+    // The newest read's number: an older read that answers late shows nothing over a newer one's.
+    private int _reads;
+
+    private bool IsOld(int round, CancellationToken cancellationToken) => round != _reads || cancellationToken.IsCancellationRequested;
+
     /// <summary>Reads the status and shows it.</summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that completes when the answer is shown.</returns>
     internal async Task Refresh(Uri url, CancellationToken cancellationToken)
     {
+        var round = ++_reads;
         var read = await api.IndexStatus(url, cancellationToken).ConfigureAwait(true);
+        if (IsOld(round, cancellationToken))
+        {
+            return;   // a newer read started, or this one was cancelled: its answer is old
+        }
+
+        Apply(read);
+    }
+
+    private void Apply(Result<IndexStatusView> read)
+    {
         if (read.IsError)
         {
             Lines = [];

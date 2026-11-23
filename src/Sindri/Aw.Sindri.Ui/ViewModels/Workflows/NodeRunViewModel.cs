@@ -99,7 +99,7 @@ internal sealed class NodeRunViewModel : ObservableObject
     /// <summary>True when the node has an output.</summary>
     public bool HasOutput => OutputText.Length > 0;
 
-    /// <summary>True when Sindri cut the input or the output to fit its size limit.</summary>
+    /// <summary>True when Sindri cut the output to fit its size limit; a cut input never sets it (#3896).</summary>
     public bool IsTruncated { get; }
 
     /// <summary>The note shown when it was cut.</summary>

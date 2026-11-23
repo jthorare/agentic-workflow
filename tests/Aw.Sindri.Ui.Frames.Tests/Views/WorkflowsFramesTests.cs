@@ -294,6 +294,9 @@ public sealed class WorkflowsFramesTests : FrameHost
         Assert.False(string.IsNullOrEmpty(word), $"{what}: the view model has no chip word");
     }
 
+    /// <summary>A visible status chip of a run row: the header's workflow state chip (WorkflowsState) is not a run's status.</summary>
+    private static bool IsRunRowChip(StateChipView chip) => chip.IsEffectivelyVisible && !string.Equals(chip.Name, "WorkflowsState", StringComparison.Ordinal);
+
     private static void AssertNoHandDrawnChip(Window window) =>
         Assert.DoesNotContain(window.GetVisualDescendants().OfType<Border>(), b => b is not StateChipView && b.Classes.Contains("status-chip"));
 
@@ -303,7 +306,7 @@ public sealed class WorkflowsFramesTests : FrameHost
         var (window, shell) = await OnWorkflows(1440);
 
         AssertNoHandDrawnChip(window);
-        var chips = window.GetVisualDescendants().OfType<StateChipView>().Where(c => c.IsEffectivelyVisible).ToList();
+        var chips = window.GetVisualDescendants().OfType<StateChipView>().Where(IsRunRowChip).ToList();
         Assert.Equal(shell.Workflows.Rows.Count, chips.Count);
         for (var i = 0; i < chips.Count; i++)
         {
@@ -321,7 +324,7 @@ public sealed class WorkflowsFramesTests : FrameHost
         await Until(window, () => shell.Workflows.Runs.Rows.Count > 0, "the runs never showed");
 
         AssertNoHandDrawnChip(window);
-        var chips = window.GetVisualDescendants().OfType<StateChipView>().Where(c => c.IsEffectivelyVisible).ToList();
+        var chips = window.GetVisualDescendants().OfType<StateChipView>().Where(IsRunRowChip).ToList();
         Assert.Equal(shell.Workflows.Runs.Rows.Count, chips.Count);
         for (var i = 0; i < chips.Count; i++)
         {
@@ -371,7 +374,7 @@ public sealed class WorkflowsFramesTests : FrameHost
 
         await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
         await Until(window, () => shell.Workflows.Runs.Rows.Count == 2, "the two runs never showed");
-        var rows = window.GetVisualDescendants().OfType<StateChipView>().Where(c => c.IsEffectivelyVisible).ToList();
+        var rows = window.GetVisualDescendants().OfType<StateChipView>().Where(IsRunRowChip).ToList();
         Assert.Equal("waiting running", string.Join(' ', rows.Select(c => c.Tone)));
         Assert.All(rows, c => Assert.Contains("status-" + c.Tone, c.Classes, StringComparer.Ordinal));
 

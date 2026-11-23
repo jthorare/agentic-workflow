@@ -13,7 +13,7 @@ namespace Aw.Sindri.Tests.SetupSources;
 [Lane(TestLane.Unit)]
 public sealed class ProfileSetupUnreadableTests
 {
-    private readonly InMemoryProfiles _profiles = new();   // answers SND-PROFILE-001 by default, as the source does for an absent and for an unreadable file
+    private readonly InMemoryProfiles _profiles = new();   // answers SND-PROFILE-001 by default, as the source does for an absent file (an unreadable one is SND-PROFILE-004 since #3345)
     private readonly FakeRepoInspector _inspector = new();
     private readonly FakeTimeProvider _clock = new(KnownInstants.Epoch);
 
@@ -37,6 +37,16 @@ public sealed class ProfileSetupUnreadableTests
 
         Assert.True(repos.IsError);
         Assert.Equal(SindriErrors.ProfileInvalid.Code, repos.Error.Code);
+    }
+
+    [Fact]
+    public async Task A_source_answer_of_unreadable_is_the_presence_steps_failure()
+    {
+        _profiles.Live = SindriErrors.ProfileUnreadable.With("/home/thor/profile.yaml can't be read: Access to the path is denied.");
+
+        var presence = await Reader(new OnDisk(exists: true)).Presence(Token);
+
+        Assert.Equal((SindriErrors.ProfileInvalid.Code, SindriErrors.ProfileUnreadableFix), (presence.Error.Code, presence.Error.Message));   // #3345
     }
 
     [Fact]

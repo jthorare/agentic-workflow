@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Aw.Sindri.Core.Projects.Truth;
 using Aw.Sindri.Core.Projects.Vocabulary;
 
 namespace Aw.Sindri.Core.Projects.Cards;
@@ -44,4 +45,8 @@ public sealed record ProjectCard(
     IReadOnlyList<ProjectLink> Links,
     string? Notes,
     bool Synced,
-    long Version);
+    long Version)
+{
+    /// <summary>What Sindri's own PR, item and agent data says about the project (issue 3718); empty until read.</summary>
+    public ProjectTruth Truth { get; init; } = ProjectTruth.Empty;
+}
