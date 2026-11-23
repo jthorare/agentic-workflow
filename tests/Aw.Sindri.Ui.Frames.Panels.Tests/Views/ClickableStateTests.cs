@@ -31,6 +31,7 @@ public sealed class ClickableStateTests : FrameHost
     private async Task<(Window Window, Border Card)> OnFirstCard()
     {
         var (window, shell) = await Connected();
+        shell.Projects.SetView(ViewModels.Projects.ProjectView.All);   // why: the golden carries blockedOnYou, so an unpicked view opens on Needs me, which has no row
         shell.GoTo(PageId.Projects);
         await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
         var card = window.GetVisualDescendants().OfType<Border>().First(b => string.Equals(b.Name, "ProjectRowFrame", StringComparison.Ordinal) && b.IsEffectivelyVisible);
