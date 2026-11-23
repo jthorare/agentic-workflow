@@ -23893,6 +23893,34 @@ Aw.Sindri.Core.Graph.Runs.RunResultMarker
 static Aw.Sindri.Core.Graph.Runs.RunResultMarker.IsMarker(System.Text.Json.Nodes.JsonNode? node) -> bool
 static Aw.Sindri.Core.Graph.Runs.RunResultMarker.Of(long? bytes) -> System.Text.Json.Nodes.JsonObject!
 static Aw.Sindri.Core.Graph.Runs.RunResultMarker.Refusal(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, System.Text.Json.Nodes.JsonNode? outputs) -> string?
+Aw.Sindri.Core.Graph.Blocks.ISkillCatalogPort
+Aw.Sindri.Core.Graph.Blocks.ISkillCatalogPort.List(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.SkillListing!>!>!>
+Aw.Sindri.Core.Graph.Blocks.SkillCatalogBlock
+Aw.Sindri.Core.Graph.Blocks.SkillCatalogBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.SkillCatalogBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.SkillCatalogBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.SkillCatalogBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.SkillCatalogBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.SkillCatalogBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.SkillCatalogBlock.SkillCatalogBlock(Aw.Sindri.Core.Graph.Blocks.ISkillCatalogPort! catalog) -> void
+Aw.Sindri.Core.Graph.Blocks.SkillCatalogBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.SkillCatalogBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.SkillListing
+Aw.Sindri.Core.Graph.Blocks.SkillListing.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.SkillListing!
+Aw.Sindri.Core.Graph.Blocks.SkillListing.Deconstruct(out string! Name, out string! Description) -> void
+Aw.Sindri.Core.Graph.Blocks.SkillListing.Description.get -> string!
+Aw.Sindri.Core.Graph.Blocks.SkillListing.Description.init -> void
+Aw.Sindri.Core.Graph.Blocks.SkillListing.Equals(Aw.Sindri.Core.Graph.Blocks.SkillListing? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.SkillListing.Name.get -> string!
+Aw.Sindri.Core.Graph.Blocks.SkillListing.Name.init -> void
+Aw.Sindri.Core.Graph.Blocks.SkillListing.SkillListing(string! Name, string! Description) -> void
+const Aw.Sindri.Core.Graph.Blocks.SkillCatalogBlock.DescriptionChars = 300 -> int
+override Aw.Sindri.Core.Graph.Blocks.SkillListing.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.SkillListing.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.SkillListing.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.SkillBlocks(Aw.Sindri.Core.Graph.Blocks.ISkillCatalogPort! catalog) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.IGraphBlock!>!
+static Aw.Sindri.Core.Graph.Blocks.SkillListing.operator !=(Aw.Sindri.Core.Graph.Blocks.SkillListing? left, Aw.Sindri.Core.Graph.Blocks.SkillListing? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.SkillListing.operator ==(Aw.Sindri.Core.Graph.Blocks.SkillListing? left, Aw.Sindri.Core.Graph.Blocks.SkillListing? right) -> bool
 Aw.Sindri.Core.Setup.IOpenRuns
 Aw.Sindri.Core.Setup.IOpenRuns.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.OpenRun!>!>!>
 Aw.Sindri.Core.Setup.IServeStop
