@@ -38,7 +38,7 @@ internal sealed class ChainHarness : IAsyncDisposable
     private readonly ServiceProvider _provider;
 
     public ChainHarness(Func<ILedgerStore, ILedgerStore>? ledger = null, IEndpointFile? endpoints = null, bool fixtureReadsViews = false,
-        IReadOnlyList<string>? grants = null, ProverLabel? prover = null)
+        IReadOnlyList<string>? grants = null, ProverLabel? prover = null, Func<IServiceProvider, IServeStop>? serveStop = null)
     {
         FixtureGrants = grants ?? [];
         Ledger = ledger?.Invoke(H.Store) ?? H.Store;
@@ -71,7 +71,7 @@ internal sealed class ChainHarness : IAsyncDisposable
             .AddSingleton<ILogger<AuditTrail>>(Log)
             .AddScoped<IValidator<FixtureCommand>, FixtureValidator>().AddCommand<FixtureCommand, CommandAccepted, FixtureService>()
             .AddScoped<IValidator<StopProcessRequest>, AcceptAllValidator<StopProcessRequest>>().AddStopCommand<StopProcessRequest, StopProcessResponse, StopProcessService>()
-            .AddSingleton<IOpenRuns>(new FixedOpenRuns()).AddSingleton<IBuildStamps>(new FixedBuildStamps()).AddScoped<IServeStop, ServeStopPort>()
+            .AddSingleton<IOpenRuns>(new FixedOpenRuns()).AddSingleton<IBuildStamps>(new FixedBuildStamps()).AddScoped(serveStop ?? (static sp => ActivatorUtilities.CreateInstance<ServeStopPort>(sp)))
             .AddScoped<IValidator<RestartProcessRequest>, AcceptAllValidator<RestartProcessRequest>>().AddRestartCommand<RestartProcessRequest, RestartProcessResponse, RestartProcessService>()
             .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
     }
