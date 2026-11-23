@@ -22,4 +22,7 @@ internal sealed class ViewServicePauses(IViewReader reader, IProjectorStatus sta
         var rows = await reader.List<ServiceRow>(ViewNames.Services, cancellationToken).ConfigureAwait(false);
         return rows.IsError ? rows.Error : Results.Success<IReadOnlySet<ServiceName>>(rows.Value.Where(static r => r.Paused).Select(static r => r.Name).ToHashSet());
     }
+
+    public ValueTask<Result<DateTimeOffset?>> ResumedAt(ServiceName service, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success<DateTimeOffset?>(value: null));
 }

@@ -1916,6 +1916,7 @@ Aw.Sindri.Core.Scheduling.LiveSchedule.LiveSchedule() -> void
 Aw.Sindri.Core.Scheduling.LiveSchedule.Publish(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Scheduling.ServiceSchedule!>! schedules) -> void
 Aw.Sindri.Core.Scheduling.IServicePauses
 Aw.Sindri.Core.Scheduling.IServicePauses.Paused(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlySet<Aw.Sindri.Core.Ids.ServiceName>!>!>
+Aw.Sindri.Core.Scheduling.IServicePauses.ResumedAt(Aw.Sindri.Core.Ids.ServiceName service, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset?>!>
 Aw.Sindri.Core.Scheduling.IServiceRunRecorder
 Aw.Sindri.Core.Scheduling.IServiceRunRecorder.Record(Aw.Sindri.Core.Ids.ServiceName service, Aw.Sindri.Core.Scheduling.ScheduledRun! run, Aw.Kernel.Result<Aw.Kernel.Unit>! outcome, Aw.Sindri.Core.Ids.JobId? job, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
 Aw.Sindri.Core.Scheduling.ScheduledResult
