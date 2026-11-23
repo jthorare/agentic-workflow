@@ -31,7 +31,8 @@ public sealed class ConnectionEventBlock : IGraphBlock
     public bool IsTrigger => true;
 
     /// <inheritdoc />
-    public BlockSchema Config { get; } = new([new("connection", BlockFieldType.Text, Caption: "Connection"), new("event", BlockFieldType.Text, Caption: "Event"), new("filter", BlockFieldType.Text, Required: false, Caption: "Only when")]);
+    /// <remarks>The connection fits every service with pollable events, the only ones a connection event can watch (#3704).</remarks>
+    public BlockSchema Config { get; } = new([new("connection", BlockFieldType.Text, Caption: "Connection", Services: [.. PollableEvents.Presets.Where(static p => PollableEvents.For(p).Count > 0)]), new("event", BlockFieldType.Text, Caption: "Event"), new("filter", BlockFieldType.Text, Required: false, Caption: "Only when")]);
 
     /// <inheritdoc />
     public string Example => """{"connection":"github:work","event":"github.pr.merged","filter":"trigger.repo == \"acme/api\""}""";

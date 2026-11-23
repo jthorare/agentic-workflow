@@ -9,10 +9,12 @@ internal sealed partial class FakeSindriApi
     private int _workflowsCalls;
     private int _allWorkflowsCalls;
     private int _workflowCalls;
+    private int _workflowNewestCalls;
     private int _workflowRunsCalls;
     private int _workflowRunCalls;
     private readonly List<string> _startedWorkflows = [];
     private readonly List<string> _cancelledWorkflowRuns = [];
+    private readonly List<string> _seenWorkflowRuns = [];
     private readonly List<string> _agentNodeControls = [];
 
     private readonly List<string> _activatedWorkflows = [];
@@ -25,6 +27,12 @@ internal sealed partial class FakeSindriApi
 
     /// <summary>POST /sindri/workflow-runs/{run}/cancel's answer: the cancelled body by default.</summary>
     public RouteAnswer CancelWorkflowRunAnswer { get; set; } = RouteAnswer.SpecShaped("workflow-runs-run-cancel", "cancelled");
+
+    /// <summary>POST /sindri/workflow-runs/{run}/seen's answer: the marked body by default (a ProblemDetails to test a failed mark).</summary>
+    public RouteAnswer MarkWorkflowRunSeenAnswer { get; set; } = RouteAnswer.Api("workflow-runs-run-seen", "marked");
+
+    /// <summary>Every run a seen mark was sent for, in order.</summary>
+    public IReadOnlyList<string> SeenWorkflowRuns { get { lock (_gate) { return [.. _seenWorkflowRuns]; } } }
 
     /// <summary>POST .../takeover's answer: taken_over by default.</summary>
     public RouteAnswer TakeOverAgentNodeAnswer { get; set; } = RouteAnswer.Api("workflow-runs-run-nodes-node-takeover", "taken-over");
@@ -74,6 +82,9 @@ internal sealed partial class FakeSindriApi
     /// <summary>How many times one workflow was read.</summary>
     public int WorkflowCalls => Volatile.Read(ref _workflowCalls);
 
+    /// <summary>How many times one workflow was read with ?revision=latest (#3303).</summary>
+    public int WorkflowNewestCalls => Volatile.Read(ref _workflowNewestCalls);
+
     /// <summary>How many times a workflow's runs were read.</summary>
     public int WorkflowRunsCalls => Volatile.Read(ref _workflowRunsCalls);
 
@@ -112,6 +123,7 @@ internal sealed partial class FakeSindriApi
 
     public async Task<Result<WorkflowView>> WorkflowNewest(Uri api, string slug, CancellationToken cancellationToken)
     {
+        _ = Interlocked.Increment(ref _workflowNewestCalls);
         await WaitFor(WorkflowGates.GetValueOrDefault(slug), cancellationToken).ConfigureAwait(false);
         var answer = WorkflowNewestAnswers.TryGetValue(slug, out var newest) ? newest : WorkflowAnswers.TryGetValue(slug, out var own) ? own : RouteAnswer.Problem("workflows-slug", "not-found");
         return Answer<WorkflowView>(api, WorkflowRoutes.Newest(slug), answer);
@@ -152,6 +164,16 @@ internal sealed partial class FakeSindriApi
         }
 
         return Task.FromResult(Answer<WorkflowRunCancelled>(api, WorkflowRoutes.Cancel(runId), CancelWorkflowRunAnswer));
+    }
+
+    public Task<Result<WorkflowRunSeen>> MarkWorkflowRunSeen(Uri api, string runId, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _seenWorkflowRuns.Add(runId);
+        }
+
+        return Task.FromResult(Answer<WorkflowRunSeen>(api, WorkflowRoutes.Seen(runId), MarkWorkflowRunSeenAnswer));
     }
 
     public async Task<Result<AgentNodeControlled>> TakeOverAgentNode(Uri api, string runId, string node, int itemIndex, CancellationToken cancellationToken)

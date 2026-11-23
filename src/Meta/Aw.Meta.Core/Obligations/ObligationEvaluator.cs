@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Meta.Core.Delegations;
 using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Messages;
 
@@ -9,13 +10,14 @@ public static class ObligationEvaluator
 {
     /// <summary>Evaluates the open set.</summary>
     /// <param name="facts">The recorded facts.</param>
-    /// <returns>The open obligations: replies in arrival order, then owner relay, watch and the meta lane's own recycle.</returns>
+    /// <returns>The open obligations: replies in arrival order, then owner relay, owed delegations, watch and the meta lane's own recycle.</returns>
     public static IReadOnlyList<Obligation> Evaluate(ObligationFacts facts)
     {
         ArgumentNullException.ThrowIfNull(facts);
         var open = new List<Obligation>();
         open.AddRange(Replies(facts));
         open.AddRange(Relays(facts));
+        open.AddRange(Delegations(facts));
         open.AddRange(Rearm(facts));
         open.AddRange(Recycle(facts));
         return open;
@@ -66,6 +68,24 @@ public static class ObligationEvaluator
                 string.Create(CultureInfo.InvariantCulture, $"q{a.Question}"),
                 string.Create(CultureInfo.InvariantCulture, $"owner answer q{a.Question} not relayed to {a.AskedBy}"),
                 string.Create(CultureInfo.InvariantCulture, $"SendMessage \"OWNER ANSWER q{a.Question}: {a.Text}\" to {a.AskedBy}")));
+
+    // A delegation stays owed until a send to the lane's session names its issue (lane-send records one for a non-Claude lane).
+    private static IEnumerable<Obligation> Delegations(ObligationFacts facts) =>
+        facts.Delegations
+            .Where(d => !DelegationStates.IsSent(d, facts.Outbound))
+            .Select(static d => new Obligation(
+                ObligationKind.Delegate,
+                d.Marker,
+                $"delegation {d.Marker} not sent to {d.Session}: {d.Title}",
+                DelegateSend(d)));
+
+    private static string DelegateSend(Delegation delegation) =>
+        delegation.Claude
+            ? $"SendMessage to {delegation.Session} with this text:\n{delegation.Message}"
+            : $"aw-meta lane-send --lane {delegation.Lane} --text {ShellQuote(delegation.Message)}";
+
+    // One shell word in single quotes, a ' inside written as '\'' : $, backticks and " in a title stay literal when the line is pasted.
+    internal static string ShellQuote(string text) => "'" + text.Replace("'", "'\\''", StringComparison.Ordinal) + "'";
 
     /// <summary>The rearm hint per provider (#2370): a Claude meta runs --until-event in the background (no window, no model turn until a real line), because --until-mail exits on its first
     /// poll whenever mail waits; a Codex or Cursor meta runs --until-mail in the foreground and rearms after each exit.</summary>

@@ -21,6 +21,8 @@ internal static class WorkflowRoutes
 
     internal static string Cancel(string runId) => $"{Run(runId)}/cancel";
 
+    internal static string Seen(string runId) => $"{Run(runId)}/seen";
+
     internal static string TakeOver(string runId, string node) => $"{Run(runId)}/nodes/{Uri.EscapeDataString(node)}/takeover";
 
     internal static string HandBack(string runId, string node) => $"{Run(runId)}/nodes/{Uri.EscapeDataString(node)}/handback";

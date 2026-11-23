@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
@@ -59,7 +60,7 @@ internal static class WorkflowReadEndpoints
         int? limit = null;
         if (Text(query, "limit") is { } text)
         {
-            if (!int.TryParse(text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var parsed) || parsed < 1)
+            if (!int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var parsed) || parsed < 1)
             {
                 return SindriErrors.InvalidInput.With($"'{text}' is not a limit (a whole number 1 or more)");
             }
@@ -94,7 +95,7 @@ internal static class WorkflowReadEndpoints
             return new GetWorkflowRequest(parsed.Value, Revision: null, Newest: true);
         }
 
-        return int.TryParse(revision, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var number) && number >= 1
+        return int.TryParse(revision, NumberStyles.None, CultureInfo.InvariantCulture, out var number) && number >= 1
             ? new GetWorkflowRequest(parsed.Value, number)
             : SindriErrors.InvalidInput.With($"'{revision}' is not a revision ('latest' or a whole number 1 or more)");
     }

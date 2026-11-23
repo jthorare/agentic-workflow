@@ -23,7 +23,8 @@ internal static class CoverageWords
         areas.Sort(NodeBands.Title(WholeBand.Intent), view.Searched.Bands.Intent.Empty, c.Intent.Covered < c.Intent.Of);
         areas.Sort(NodeBands.Title(WholeBand.Product), view.Searched.Bands.Product.Empty, c.Product.Confirmed < c.Product.Of);
         areas.Sort(NodeBands.Title(WholeBand.Code), view.Searched.Bands.Code.Empty, c.Code.Implemented < c.Code.Of);
-        var names = view.Bands.Code.Symbols.State;
+        var symbols = view.Bands.Code.Symbols;
+        var names = symbols.State;
         var stale = string.Equals(names, "stale", StringComparison.Ordinal);
         var missing = !stale && !string.Equals(names, "ok", StringComparison.Ordinal);
         if (!missing)
@@ -31,10 +32,10 @@ internal static class CoverageWords
             areas.Sort(Labels.ContextMapWordNames, none: false, some: stale);
         }
 
-        return areas.Searched.Count == 4 ? string.Empty : Compose(areas, missing);
+        return areas.Searched.Count == 4 ? string.Empty : Compose(areas, missing ? NamesDetail.Sentence(symbols) : null);
     }
 
-    private static string Compose(Areas areas, bool namesMissing)
+    private static string Compose(Areas areas, string? namesMissing)
     {
         var (searched, empty, partly) = (areas.Searched, areas.Empty, areas.Partly);
         var parts = new List<string>();
@@ -58,9 +59,9 @@ internal static class CoverageWords
             parts.Add(Labels.ContextMapPartlySearched(partly));
         }
 
-        if (namesMissing)
+        if (namesMissing is not null)
         {
-            parts.Add(Labels.ContextMapNamesNotIndexed);
+            parts.Add(namesMissing);   // why the function names were not searched (#3777)
         }
 
         return string.Join(' ', parts);

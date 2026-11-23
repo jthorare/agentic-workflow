@@ -73,6 +73,34 @@ public sealed class FileMapViewModelTests
     }
 
     [Theory]
+    [InlineData("index damaged", Labels.ContextMapNamesDamaged)]
+    [InlineData("files are in no single repo", Labels.ContextMapNamesSeveralRepos)]
+    [InlineData("something new", Labels.ContextMapNamesUnknown)]
+    public async Task The_function_names_note_follows_the_reason_when_unavailable(string reason, string note)
+    {
+        var api = new FakeSindriApi
+        {
+            FileMapResponder = _ =>
+            {
+                var body = Golden("src-tabs");
+                body["symbols"] = new System.Text.Json.Nodes.JsonObject
+                {
+                    ["state"] = "unavailable",
+                    ["reason"] = reason,
+                    ["items"] = new System.Text.Json.Nodes.JsonArray(),
+                    ["commit"] = null,
+                };
+                return new RouteAnswer(System.Net.HttpStatusCode.OK, body.ToJsonString());
+            },
+        };
+        var files = Files(api);
+
+        await files.Load("src/tabs/", Token);
+
+        Assert.Equal(note, files.Note);
+    }
+
+    [Theory]
     [InlineData("ok", "")]
     [InlineData("stale", "Function names come from an older index build (7c3e1a2), so they may be out of date.")]
     [InlineData("unavailable", "Function names are not available yet: the code index isn't built.")]

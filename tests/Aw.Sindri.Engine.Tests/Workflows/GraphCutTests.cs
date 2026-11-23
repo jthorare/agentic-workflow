@@ -88,7 +88,18 @@ public sealed class GraphCutTests
         var (output, failure) = GraphRunActivities.Gather(rows);
 
         Assert.Null(failure);
-        Assert.Equal("""{"items":["a","b"],"count":2}""", output);
+        Assert.Equal("""{"items":["a","b"],"count":2,"skipped":0}""", output);
+    }
+
+    [Fact]
+    public void Items_a_skip_item_dropped_are_counted_in_skipped()
+    {
+        IReadOnlyList<NodeRun> rows = [Row(1, "a"), Row(3, "c")];
+
+        var (output, failure) = GraphRunActivities.Gather(rows, skipped: 1);
+
+        Assert.Null(failure);
+        Assert.Equal("""{"items":["a","c"],"count":2,"skipped":1}""", output);
     }
 
     [Fact]

@@ -9,7 +9,8 @@ using static Aw.Sindri.Tests.Callers.CallerRequests;
 namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
-/// The goldens of 'POST /sindri/workflows/{slug}/runs', 'POST /sindri/workflow-runs/{run}/cancel' (issue 2258, PR 6) and 'POST /sindri/workflow-runs/{run}/nodes/{node}/answer' (PR 9): the refusals, which need no Temporal
+/// The goldens of 'POST /sindri/workflows/{slug}/runs', 'POST /sindri/workflow-runs/{run}/cancel' (issue 2258, PR 6), 'POST /sindri/workflow-runs/{run}/nodes/{node}/answer' (PR 9)
+/// and 'POST /sindri/workflow-runs/{run}/seen' (Home spec §3.3, E1): the refusals, which need no Temporal
 /// server. A started run needs one, so its answer is pinned by the service tests. Each scenario seeds the workflow or run it needs through the host's stores.
 /// The takeover and handback of a 'run_agent' node (#2472) run on a host whose <see cref="IAgentNodeControl"/> is a <see cref="FakeAgentNodeControl"/>,
 /// so their success answers need no Temporal either.
@@ -24,6 +25,8 @@ internal static class WorkflowRunScenarios
     private static readonly WorkflowRunId _queued = WorkflowRunId.Of(_slug, 1, 2);
     private const string TakeOverSlug = "workflow-runs-run-nodes-node-takeover";
     private const string HandBackSlug = "workflow-runs-run-nodes-node-handback";
+    private const string SeenSlug = "workflow-runs-run-seen";
+    private static readonly WorkflowRunId _failed = WorkflowRunId.Of(_slug, 1, 3);
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
@@ -33,6 +36,7 @@ internal static class WorkflowRunScenarios
         (AnswerSlug, "not-found"), (AnswerSlug, "bad-id"), (AnswerSlug, "already-ended"), (AnswerSlug, "answered"),
         (TakeOverSlug, "taken-over"), (TakeOverSlug, "not-waiting"), (TakeOverSlug, "bad-id"), (TakeOverSlug, "not-found"), (TakeOverSlug, "already-ended"), (TakeOverSlug, "temporal-down"),
         (HandBackSlug, "handed-back"), (HandBackSlug, "not-taken-over"), (HandBackSlug, "not-waiting"),
+        (SeenSlug, "marked"), (SeenSlug, "not-failed"), (SeenSlug, "not-found"), (SeenSlug, "session-refused"),
     ];
 
     /// <summary>Whether the scenario runs on <see cref="Start"/>'s host (the takeover and handback routes).</summary>
@@ -91,6 +95,8 @@ internal static class WorkflowRunScenarios
                 // why: a queued run is cancelled in the store with its workflow.run.cancelled event, so no Temporal worker is needed
                 await QueuedRun(host, ct);
                 return await Ask(host, Post($"/sindri/workflow-runs/{Uri.EscapeDataString(_queued.Value)}/cancel", json: null, human));
+            case (SeenSlug, _):
+                return await Seen(host, scenario, human, ct);
             case (TakeOverSlug, _) or (HandBackSlug, _):
                 return await AgentNode(host, slug, scenario, human, ct);
             default:
@@ -173,6 +179,28 @@ internal static class WorkflowRunScenarios
                 return await Ask(host, Post(AgentRoute(_queued, "agent", route), "{\"itemIndex\":0}", human));
         }
     }
+
+    // POST /sindri/workflow-runs/{run}/seen: a failed live run is marked (marked true), a run that did not fail is left alone (marked false), an unknown run is
+    // SND-GRAPH-101, and an agent session is refused before any read (SND-AUTH-002).
+    private static async Task<string> Seen(GoldenHost host, string scenario, (string Name, string Value)[] human, CancellationToken ct)
+    {
+        switch (scenario)
+        {
+            case "marked":
+                var failed = new WorkflowRun(_failed, _id, 1, "{\"kind\":\"manual\"}", WorkflowRunStatus.Failed, Outputs: null, Error: "node 'start' failed", ItemId: null, host.Now(), host.Now());
+                _ = (await host.App.Services.GetRequiredService<IWorkflowRunStore>().Insert(failed, ct)).Value;
+                return await Ask(host, Post(SeenRoute(_failed), json: null, human));
+            case "not-failed":
+                await EndedRun(host, ct);
+                return await Ask(host, Post(SeenRoute(_ended), json: null, human));
+            case "session-refused":
+                return await Ask(host, Post(SeenRoute(_failed), json: null, ItemScenarios.Session("demo")));
+            default:
+                return await Ask(host, Post(SeenRoute(_failed), json: null, human));
+        }
+    }
+
+    private static string SeenRoute(WorkflowRunId run) => $"/sindri/workflow-runs/{Uri.EscapeDataString(run.Value)}/seen";
 
     private static string AgentRoute(WorkflowRunId run, string node, string verb) => $"/sindri/workflow-runs/{Uri.EscapeDataString(run.Value)}/nodes/{node}/{verb}";
 
