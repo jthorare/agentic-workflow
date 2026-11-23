@@ -197,13 +197,39 @@ public sealed class YamlProfileRepoWriterTests : IDisposable
     [Fact]
     public async Task A_write_that_the_system_refuses_says_so_with_the_reason_and_not_that_the_profile_is_missing()
     {
-        _ = Directory.CreateDirectory(ProfilePath);   // a folder where the file should be: the move onto it fails
+        if (OperatingSystem.IsWindows())
+        {
+            return;   // why: the refusal is staged with Unix folder modes
+        }
+
+        _ = Directory.CreateDirectory(_dir);
+        var writable = File.GetUnixFileMode(_dir);
+        File.SetUnixFileMode(_dir, UnixFileMode.UserRead | UnixFileMode.UserExecute);   // a folder nothing can be created in: the write fails
+        try
+        {
+            var done = await Writer().Append(new RepoEntry("demo", "/work/demo"), _effects, Token);
+
+            Assert.Equal("SND-PROFILE-002", done.Error.Code);
+            Assert.Contains("can't be written:", done.Error.Message, StringComparison.Ordinal);
+            Assert.Contains("fix: make the file and its folder writable", done.Error.Message, StringComparison.Ordinal);
+        }
+        finally
+        {
+            File.SetUnixFileMode(_dir, writable);
+        }
+
+        Assert.Empty(Directory.GetFiles(_dir, "*.tmp"));
+    }
+
+    [Fact]
+    public async Task A_folder_at_the_profile_path_is_named_as_a_folder_and_nothing_is_written()
+    {
+        _ = Directory.CreateDirectory(ProfilePath);
 
         var done = await Writer().Append(new RepoEntry("demo", "/work/demo"), _effects, Token);
 
-        Assert.Equal("SND-PROFILE-002", done.Error.Code);
-        Assert.Contains("can't be written:", done.Error.Message, StringComparison.Ordinal);
-        Assert.Contains("fix: make the file and its folder writable", done.Error.Message, StringComparison.Ordinal);
+        Assert.Equal("SND-PROFILE-004", done.Error.Code);
+        Assert.Contains("is a directory, not a file", done.Error.Message, StringComparison.Ordinal);
         Assert.Empty(Directory.GetFiles(_dir, "*.tmp"));
     }
 }

@@ -27,16 +27,17 @@ internal sealed partial class GraphWorkflow
     {
         ArgumentNullException.ThrowIfNull(input);
         _ = Workflow.Patched("graph-walk-1");
+        _local = Workflow.Patched("graph-local-activities-1");
         _run = input.Run;
         _agentLaunchAttempts = input.AgentLaunchAttempts > 0 ? input.AgentLaunchAttempts : GraphAgentLoop.DefaultAgentLaunchAttempts;
         _agents = new GraphAgentLoop(_run, _agentLaunchAttempts);
         try
         {
-            var spec = await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.LoadAsync(_run), _write).ConfigureAwait(true);
-            await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.BeginAsync(_run), _write).ConfigureAwait(true);
+            var spec = await Call((GraphRunActivities a) => a.LoadAsync(_run), detached: false).ConfigureAwait(true);
+            await Call((GraphRunActivities a) => a.BeginAsync(_run), detached: false).ConfigureAwait(true);
             // why: a run replays the activities its history holds; the patch keeps a run started before re-run from a step existed replaying without this call
             var restored = Workflow.Patched("graph-rerun-1")
-                ? await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RestoredAsync(_run), _write).ConfigureAwait(true)
+                ? await Call((GraphRunActivities a) => a.RestoredAsync(_run), detached: false).ConfigureAwait(true)
                 : [];
             Restore(restored);
             return await Walk(spec).ConfigureAwait(true);
@@ -58,7 +59,7 @@ internal sealed partial class GraphWorkflow
         _current = null;
         try
         {
-            await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.FinishAsync(new GraphFinish(_run, WorkflowRunStatus.Failed, GraphFaults.Reason(e))), _detached).ConfigureAwait(true);
+            await Call((GraphRunActivities a) => a.FinishAsync(new GraphFinish(_run, WorkflowRunStatus.Failed, GraphFaults.Reason(e))), detached: true).ConfigureAwait(true);
         }
         catch (Exception finish) when (GraphFaults.Ends(finish))
         {

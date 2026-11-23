@@ -20,7 +20,7 @@ public static partial class SindriErrors
     /// <summary>SND-PROFILE-002: the profile doesn't parse or doesn't match the schema.</summary>
     public static readonly ErrorDefinition ProfileInvalid = new("SND-PROFILE-002", ErrorKind.Invalid, "The profile is invalid");
 
-    /// <summary>SND-PROFILE-004: the profile file exists but can't be read (permissions or an I/O error). It is not "no profile yet": nothing may write a fresh one over it.</summary>
+    /// <summary>SND-PROFILE-004: the profile file exists but can't be read (permissions, an I/O error, or a directory at its path). It is not "no profile yet": nothing may write a fresh one over it.</summary>
     public static readonly ErrorDefinition ProfileUnreadable = new("SND-PROFILE-004", ErrorKind.Unavailable, "The profile can't be read");
 
     /// <summary>SND-PROFILE-005: the profile file can't be written (permissions or an I/O error).</summary>
@@ -287,6 +287,7 @@ public static partial class SindriErrors
         CodeCompileFailed, CodeTimeout, CodeMemory, CodeFailed, CodeRunnerUnavailable,
         ToolkitNotBuilt, ToolkitTestsFailed, ToolkitManifestInvalid, ToolkitProcessDied, ToolkitPaused, ToolkitCallTimedOut, ToolkitToolUnknown, ToolkitSandboxUnavailable, ToolkitNotFound, ToolkitNameInvalid, ToolkitToolFailed, ToolkitExists, ToolkitCreateFailed,
         .. EveryTodo(),
+        .. EveryHome(),
         .. EveryAgentStart(),
     ];
 }
