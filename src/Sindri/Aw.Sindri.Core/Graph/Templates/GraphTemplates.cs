@@ -29,6 +29,10 @@ public static partial class GraphTemplates
             SkillProposer.Name,
             "Run it with a payload holding 'findings' (from a steering-miner run) and 'repo' (the toolkit repo's name in your profile): for each of the top 5, a model picks the skill to change and an agent drafts the edit on its own branch.",
             SkillProposer.Json()),
+        (
+            StyleRuleProposer.Name,
+            "Run it with a payload holding 'findings' (from a steering-miner run) and 'repo' (the toolkit repo's name in your profile): for each of the top 3, a model says whether a deterministic check can enforce the style mistake and an agent drafts the rule record and its check on its own branch.",
+            StyleRuleProposer.Json()),
     ];
 
     /// <summary>Every template, in the order they are listed.</summary>
