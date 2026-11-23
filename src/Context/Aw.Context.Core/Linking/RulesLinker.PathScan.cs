@@ -26,12 +26,14 @@ public static partial class RulesLinker
             }
 
             var end = i;
+            var slash = false;
             while (end < text.Length && InRun(text[end]))
             {
+                slash |= text[end] == '/';
                 end++;
             }
 
-            if (PathAt(text, (i, end)) is { } stop)
+            if (slash && PathAt(text, (i, end)) is { } stop)   // why: a run with no '/' has no folder, so no path; prose allocates nothing here (#3864)
             {
                 found.Add((i, stop - i));
             }
@@ -122,7 +124,8 @@ public static partial class RulesLinker
         return ends;
     }
 
-    // The regex \w: a letter, a non-spacing mark, a decimal digit or a connector ('_'). RulesLinkerPathScanTests checks it against \w for every char.
+    // The regex \w: a letter, a non-spacing mark, a decimal digit or a connector ('_'), as .NET's RegexCharClass.WordClass lists them (no Mc, and U+200C and U+200D only
+    // in the \b boundary helper, not in \w). RulesLinkerPathScanTests checks it against \w for every char.
     internal static bool IsWordChar(char c) => char.GetUnicodeCategory(c) is UnicodeCategory.UppercaseLetter or UnicodeCategory.LowercaseLetter or UnicodeCategory.TitlecaseLetter
         or UnicodeCategory.ModifierLetter or UnicodeCategory.OtherLetter or UnicodeCategory.NonSpacingMark or UnicodeCategory.DecimalDigitNumber or UnicodeCategory.ConnectorPunctuation;
 }
