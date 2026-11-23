@@ -70,7 +70,14 @@ Optional, additive, in schema 1 (`schemas/launcher.schema.json`, `$defs.sessions
 | `sessions.pollSeconds` | 2 | Pass cadence, 1 to 30 |
 | `sessions.providers` | every catalog entry | Which agents to discover (`["claude-code", "codex"]`) |
 | `sessions.tmuxSockets` | `[]` | Extra absolute socket paths to read besides the ones found from processes |
+| `sessions.scope` | `all` | `all` lists every agent session the box runs. `own` lists only sessions on Sindri's own tmux sockets (`sindri`, `sindri-launch`) and sessions Sindri launched (`AW_SINDRI_LAUNCH` set) |
 | `sessions.claudeSessionsDir` | `~/.claude/sessions` | For a relocated Claude config (`CLAUDE_CONFIG_DIR`) |
+
+`sessions.scope: own` is for a scratch Sindri home (UI proofs, owner checks, check scripts). A foreign tmux server (Warp, a
+team socket) and a foreign `claude` or `codex` process found through `/proc` give no row, so the Agents page is empty even
+when the box runs real lanes and a script can't click one. Any other value is refused (`SND-LAUNCH-011`) and the home
+falls back to `all` with a problem row. The filter sits in one place, `SessionScopeRules` in `Aw.Sindri.Features`, applied
+after host detection in `SessionDiscovery`.
 
 The bash reader (`scripts/launcher-lib.sh`) refuses unknown keys, so CO-0 adds `sessions` to `x-aw-keys.root` and the
 reader accepts the key and ignores its content. An `aw-meta-launch` installed before this change refuses a file that
