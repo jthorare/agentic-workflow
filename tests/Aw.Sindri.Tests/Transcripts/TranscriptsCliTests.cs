@@ -89,6 +89,8 @@ public sealed class TranscriptsCliTests : IDisposable
     [InlineData("list --since")]
     [InlineData("list --provider copilot")]
     [InlineData("list --repo relative/dir")]
+    [InlineData("list --repo //")]
+    [InlineData("list --repo /")]
     [InlineData("list --verbose")]
     [InlineData("show")]
     [InlineData("show main.jsonl")]
