@@ -30,7 +30,8 @@ public sealed class SymbolsColumnTests
     {
         var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false) with { Reason = "graph-off" });
 
-        Assert.Equal(("from 7c3e1a2", "only C# files get names: the code graph is off in the profile (index.graph.enabled)", false), (column.Caption, column.EmptyReason, column.Dimmed));
+        // #3862: the heading names a commit while the note says "off"; the sentence says the C# names are the index's, the rest wait on the graph.
+        Assert.Equal(("from 7c3e1a2", "C# names come from the index. Other languages need the code graph, which is off for this repo.", "C# names come from the index. Other languages need the code graph, which is off for this repo.", false), (column.Caption, column.EmptyReason, column.NoRowTip, column.Dimmed));
         Assert.Equal("—", column.Cell("src/tabs/TabManager.ts"));
     }
 
@@ -40,7 +41,7 @@ public sealed class SymbolsColumnTests
     {
         var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false) with { Reason = "graph-unavailable" });
 
-        Assert.Equal(("from 7c3e1a2", "only C# files get names: the code graph did not build, graphify is missing or failed (sindri doctor says which)", "only C# files get names: the code graph did not build, graphify is missing or failed (sindri doctor says which)"), (column.Caption, column.EmptyReason, column.NoRowTip));
+        Assert.Equal(("from 7c3e1a2", "C# names come from the index. Other languages need the code graph, which did not build: graphify is missing or failed (sindri doctor says which).", "C# names come from the index. Other languages need the code graph, which did not build: graphify is missing or failed (sindri doctor says which)."), (column.Caption, column.EmptyReason, column.NoRowTip));
     }
 
     [Fact]
