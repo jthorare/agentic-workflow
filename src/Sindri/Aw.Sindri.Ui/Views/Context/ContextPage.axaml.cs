@@ -70,17 +70,25 @@ internal sealed partial class ContextPage : UserControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-        if (!e.Handled && e.Source is not TextBox && _page is { } page)
+        if (!e.Handled && e.Source is not TextBox)
         {
-            if (e.KeyModifiers == KeyModifiers.None)
-            {
-                e.Handled = Handle(page, e.Key);
-            }
-            else if (e.KeyModifiers == KeyModifiers.Alt && e.Key == Key.Left)
-            {
-                e.Handled = page.Up();   // Alt+Left goes up a layer, as Backspace does
-            }
+            e.Handled = HandleKey(e);
         }
+    }
+
+    private bool HandleKey(KeyEventArgs e)
+    {
+        if (e.Key == Key.Oem2 && e.KeyModifiers == KeyModifiers.None)
+        {
+            return AnchorBox.Focus(NavigationMethod.Tab);   // / goes to the question box from anywhere on the page
+        }
+
+        if (_page is not { } page)
+        {
+            return false;
+        }
+
+        return e.KeyModifiers == KeyModifiers.None ? Handle(page, e.Key) : e.KeyModifiers == KeyModifiers.Alt && e.Key == Key.Left && page.Up();   // Alt+Left goes up a layer, as Backspace does
     }
 
     // Esc closes the inspector; J and K walk the nodes; F and M choose the view (F3 spec 1 §5).
@@ -194,9 +202,9 @@ internal sealed partial class ContextPage : UserControl
 
     private void OnPick(object? sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: string anchor } && DataContext is ContextPageViewModel page)
+        if (sender is Button { Tag: string anchor } button && DataContext is ContextPageViewModel page)
         {
-            _ = page.Pick(anchor);
+            _ = page.Pick(anchor, (button.DataContext as ContextChoice)?.Title);
         }
     }
 
@@ -258,6 +266,10 @@ internal sealed partial class ContextPage : UserControl
         }
     }
 
+    // Everything the page holds under the stage (the hint row, the row gaps, any bottom margin), read from the content's wanted height so none of it has to be modelled: left unsubtracted, it is scrolled out of the window.
+    // The wanted height, not the extent: the extent grows to fill the viewport, so a short page would read as having room under the stage.
+    private static double UnderStage(ScrollViewer scroller, double stageBottom) => scroller.Content is Avalonia.Layout.Layoutable content ? Math.Max(0, content.DesiredSize.Height - stageBottom) : 0;
+
     // The page scrolls, so the stage cannot fill what is left; it is given the viewport's height under its own top.
     private void FitStage()
     {
@@ -269,7 +281,8 @@ internal sealed partial class ContextPage : UserControl
         // The stage fills what the window leaves: the viewport less where the page starts in it, where the stage starts in the page, and the edge. It starts at the top of its row, so a row taller than it never centres it.
         var top = ContextStageHost.TranslatePoint(default, this)?.Y ?? 0;
         var start = scroller.Content is Visual content ? this.TranslatePoint(default, content)?.Y ?? 0 : 0;
-        var height = Math.Max(StageMinimum, scroller.Viewport.Height - start - top - PageEdge);
+        var under = UnderStage(scroller, start + top + ContextStageHost.Bounds.Height);
+        var height = Math.Max(StageMinimum, scroller.Viewport.Height - start - top - PageEdge - under);
         if (Math.Abs(ContextStageHost.Height - height) > 0.5 || double.IsNaN(ContextStageHost.Height))
         {
             ContextStageHost.Height = height;
