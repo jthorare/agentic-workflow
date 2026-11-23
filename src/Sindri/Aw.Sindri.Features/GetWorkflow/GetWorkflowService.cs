@@ -51,11 +51,18 @@ internal sealed class GetWorkflowService(IWorkflowStore workflows, IGraphBlockCa
             return newest.Error;
         }
 
+        // why: triggers fire the ACTIVE revision, so the next run is its schedule's, also when the request shows another revision (the list row says the same)
+        var running = record.ActiveRevision is { } active && active != shown.Value.Revision ? await workflows.GetRevision(record.Id, active, cancellationToken).ConfigureAwait(false) : shown;
+        if (running.IsError)
+        {
+            return running.Error;
+        }
+
         // why: GraphJson.Write always writes a JSON object, so Parse never answers null
         var spec = JsonNode.Parse(GraphJson.Write(shown.Value.Spec))!;
         return new GetWorkflowResponse(record.Id, record.Slug, record.Name, shown.Value.Revision, record.ActiveRevision, record.LatestRevision, record.ArchivedAt, record.CreatedBy,
             newest.Value.CreatedBy, newest.Value.CreatedAt, shown.Value.SpecHash, spec, WorkflowPositions.Of(shown.Value.Spec), [.. shown.Value.Spec.Nodes.Select(Summary)],
-            WorkflowNextRun.Of(record, shown.Value.Spec, clock.GetUtcNow()));
+            WorkflowNextRun.Of(record, running.Value.Spec, clock.GetUtcNow()));
     }
 
     private static Result<int> Target(GetWorkflowRequest request, WorkflowRecord record)
