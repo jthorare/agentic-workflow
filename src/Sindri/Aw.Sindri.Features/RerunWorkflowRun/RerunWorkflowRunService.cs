@@ -6,6 +6,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Loops;
+using Aw.Sindri.Core.Graph.Rerun;
 using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Features.RerunWorkflowRun;

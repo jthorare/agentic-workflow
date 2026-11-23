@@ -1,7 +1,8 @@
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Loops;
+using Aw.Sindri.Core.Graph.Runs;
 
-namespace Aw.Sindri.Core.Graph.Runs;
+namespace Aw.Sindri.Core.Graph.Rerun;
 
 /// <summary>
 /// Decides which steps of the source run a re-run takes (<see cref="RerunPlan.Restored"/>), each step after the steps it reads from. A step is taken when it is not after the chosen step,

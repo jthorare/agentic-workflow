@@ -1,6 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Rerun;
 using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Tests.RerunWorkflowRun;

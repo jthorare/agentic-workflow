@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Rerun;
 using Aw.Sindri.Core.Graph.Runs;
 using Temporalio.Activities;
 using Temporalio.Exceptions;

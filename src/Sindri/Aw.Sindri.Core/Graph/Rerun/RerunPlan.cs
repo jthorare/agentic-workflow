@@ -1,6 +1,7 @@
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Runs;
 
-namespace Aw.Sindri.Core.Graph.Runs;
+namespace Aw.Sindri.Core.Graph.Rerun;
 
 /// <summary>Which steps a re-run from a step takes from the source run and which it runs again (Workflows page spec §7.3, P7). Pure: the service and the walk's restore activity share it.</summary>
 public static class RerunPlan
