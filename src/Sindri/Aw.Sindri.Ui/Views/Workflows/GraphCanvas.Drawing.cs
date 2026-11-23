@@ -171,8 +171,15 @@ internal sealed partial class GraphCanvas
         var chip = Graph?.ChipFor(node);
         var chipText = chip is null ? null : Text(chip, 11 * k, Brush("Brush.InkMuted"), rect.Width / 3, semiBold: false);
         var chipWidth = chipText is null ? 0 : chipText.Width + (16 * k);
-        var width = rect.Width - (24 * k) - (chipWidth > 0 ? chipWidth + (8 * k) : 0);
-        context.DrawText(Text(node.Title, 13 * k, Brush("Brush.Ink"), width, semiBold: true), new Point(rect.X + (12 * k), rect.Y + (8 * k)));
+        var iconSize = GraphBlockIcons.Size * k;
+        using (context.PushTransform(Matrix.CreateScale(k, k) * Matrix.CreateTranslation(rect.X + (12 * k), rect.Y + ((rect.Height - iconSize) / 2))))
+        {
+            context.DrawGeometry(brush: null, new Pen(Brush("Brush.InkMuted"), 1.5, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round), GraphBlockIcons.For(node.Type));
+        }
+
+        var textX = rect.X + (12 * k) + iconSize + (12 * k);   // the icon, then a 12 px gap
+        var width = rect.Right - (12 * k) - textX - (chipWidth > 0 ? chipWidth + (8 * k) : 0);
+        context.DrawText(Text(node.Title, 13 * k, Brush("Brush.Ink"), width, semiBold: true), new Point(textX, rect.Y + (8 * k)));
         if (chipText is not null)
         {
             var box = new Rect(rect.Right - (12 * k) - chipWidth, rect.Y + (6 * k), chipWidth, chipText.Height + (4 * k));
@@ -180,10 +187,11 @@ internal sealed partial class GraphCanvas
             context.DrawText(chipText, new Point(box.X + (8 * k), box.Y + (2 * k)));
         }
 
-        context.DrawText(Text(node.Type, 11 * k, Brush("Brush.InkMuted"), width, semiBold: false), new Point(rect.X + (12 * k), rect.Y + (27 * k)));
+        var lineWidth = rect.Right - (12 * k) - textX;
+        context.DrawText(Text(node.Line.Length > 0 ? node.Line : node.Type, 11 * k, Brush("Brush.InkMuted"), lineWidth, semiBold: false), new Point(textX, rect.Y + (27 * k)));
         if (node.StatusWord.Length > 0)
         {
-            context.DrawText(Text(node.Glyph + " " + node.StatusWord, 11 * k, Brush(ToneKey(node.Tone)), width, semiBold: false), new Point(rect.X + (12 * k), rect.Y + (44 * k)));
+            context.DrawText(Text(node.Glyph + " " + node.StatusWord, 11 * k, Brush(ToneKey(node.Tone)), lineWidth, semiBold: false), new Point(textX, rect.Bottom - (16 * k)));
         }
     }
 

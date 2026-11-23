@@ -6,5 +6,5 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="Timeout">The node's timeout; taken-over time does not count against it.</param>
 /// <param name="AskEvery">How often the ask activity reads the session's state file (#3151); null for the default of 2 s.</param>
 /// <param name="AskCap">How long one ask call may run before it hands back (#3151); null for the default of 10 minutes.</param>
-/// <param name="InputCut">True when <see cref="Input"/> is the envelope for a config that was over the cap (#3486).</param>
+/// <param name="InputCut">True when <see cref="Input"/> is the envelope for a config that was over the cap (#3486). It no longer sets the node's 'Truncated', which says the output was cut (#3896); kept so a launch result already in a run's history still reads the same.</param>
 internal sealed record AgentNodeLaunched(AgentLaunched Launched, string? Input, TimeSpan Timeout, TimeSpan? AskEvery = null, TimeSpan? AskCap = null, bool InputCut = false);

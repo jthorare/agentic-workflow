@@ -26,7 +26,8 @@
 # down    `sindri stop`, closes the app this script opened, and deletes the scratch home. Nothing else is touched.
 #
 # --stop-after N ends `up` with exit 0 once step N (0 to 7) is done; scripts/model-limit-check.sh stops after the index build (5).
-# --time (up only) times six steps with a wall clock and stops after the sixth: home (folder and marker exist), profile (init, repo,
+# --time (up only) first calls the driver once off the clock (`driver ready (not on the clock)`), so a `dotnet publish` of aw-ui-driver
+#   never lands in the app time or the total; a failed publish stops the run before `first-run home`. It then times six steps with a wall clock and stops after the sixth: home (folder and marker exist), profile (init, repo,
 #   `profile validate` exit 0), serve (control.json written and `status --json` answers), workflow (`wf create hello-sindri
 #   --template hello-sindri` unless `wf show` answers, `wf activate`, `wf run`), app (sindri-ui with AW_UI_DRIVER=1 under Xvfb,
 #   `aw-ui-driver ready`) and rows (at least one row under NeedsYouRows, RunningRows or QueuedRows on Home: the item "Hello from
@@ -557,11 +558,27 @@ stop_app_pid() {
   return 0
 }
 
+# time_warm_driver: one driver call before the clock, so the `dotnet publish` that scripts/aw-ui-driver.sh runs when src/UiDriver
+# changed happens off the clock. `ready --wait-ms 1` reaches that publish step and needs no app: with none running it exits non-zero.
+# why: a "no app yet" exit and a failed publish both exit non-zero (the wrapper's own failures exit 1, and so can a usage error), so the
+# exit code can't tell them apart. The wrapper's failure lines start with "aw-ui-driver.sh: publishing aw-ui-driver failed" or
+# "aw-ui-driver.sh: AW_UI_DRIVER_BIN=", and the driver itself never prints that prefix: only those lines stop the run.
+time_warm_driver() {
+  local err rc=0
+  err="$(ui_drv ready --wait-ms 1 2>&1 >/dev/null)" || rc=$?
+  if printf '%s\n' "$err" | grep -qE '^aw-ui-driver\.sh: (publishing aw-ui-driver failed|AW_UI_DRIVER_BIN=)'; then
+    broke "driver warm-up failed (exit $rc): $err"
+  fi
+  echo "  driver ready (not on the clock)"
+}
+
 do_up_time() {
   FIRST_RUN_XVFB_ON="${FIRST_RUN_XVFB:-1}"
   if [ "$dry" = 1 ]; then
     preflight
     echo
+    echo "+ ${UIDRV[*]} ready --wait-ms 1   # warm-up: publishes the driver off the clock; only a failed publish stops the run"
+    echo "  driver ready (not on the clock)"
     echo "== time: six steps on a wall clock (nothing waits on the index or the map)"
     make_home
     echo "  clock: home ends when the folder and marker exist"
@@ -585,6 +602,7 @@ do_up_time() {
     return 0
   fi
   preflight
+  time_warm_driver
   T_START="$(now_ms)"; T_LAST="$T_START"
   make_home; lap home
   write_profile; lap profile

@@ -40,9 +40,12 @@ internal sealed partial class ShellViewModel
             var lastRead = _api.LastStart(url, cancellationToken);
             var setup = await setupRead.ConfigureAwait(true);
             var last = await lastRead.ConfigureAwait(true);
-            var repos = setup.IsSuccess
-                ? setup.Value.Steps.Where(s => string.Equals(s.Id, "repo", StringComparison.Ordinal)).SelectMany(s => s.Items ?? []).Select(i => new RepoChoice(i.Repo, string.Equals(i.State, "done", StringComparison.Ordinal))).ToList()
-                : [];
+            if (!setup.IsSuccess)
+            {
+                return;   // a failed read keeps the repos that loaded before: Start stays on
+            }
+
+            var repos = setup.Value.Steps.Where(s => string.Equals(s.Id, "repo", StringComparison.Ordinal)).SelectMany(s => s.Items ?? []).Select(i => new RepoChoice(i.Repo, string.Equals(i.State, "done", StringComparison.Ordinal))).ToList();
             NewAgent.SetRepos(repos, last.IsSuccess ? new NewAgentDefaults(last.Value.Repo, last.Value.Agent) : new NewAgentDefaults(Repo: null, Agent: null));
         }
     }

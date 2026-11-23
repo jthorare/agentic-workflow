@@ -1,6 +1,7 @@
 using Aw.Kernel.Events;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Home;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Ledger;
@@ -28,6 +29,8 @@ public abstract class ViewStoreContract
     private static readonly RequestId _hitRequest = RequestId.From("REQ-00000000000000000000000000000002");
     private static readonly DecisionId _hitDecision = DecisionId.From("DEC-00000000000000000000000000000002");
     private static readonly NeedsYouRowId _hitNeedsYou = NeedsYouRowId.From("failure:service:hit");
+    private const string HitHomeRow = "run:hit";
+    private const string HitHomeEdge = "hit|blocks|other";
     private readonly SequentialIdGenerator _ids = new();
 
     /// <summary>The contract's clock.</summary>
@@ -329,10 +332,10 @@ public abstract class ViewStoreContract
 
         var value = column switch
         {
-            ViewColumn.Item => _hitItem.Value,
+            ViewColumn.Item => string.Equals(view, ViewNames.HomeLinks, StringComparison.Ordinal) ? "hit" : _hitItem.Value,
             ViewColumn.Repo => HitRepo,
-            ViewColumn.Kind => "failure",
-            ViewColumn.State => view switch { ViewNames.Requests => "accepted", ViewNames.Items => "running", _ => "decided" },
+            ViewColumn.Kind => string.Equals(view, ViewNames.HomeRows, StringComparison.Ordinal) ? "run-failed" : "failure",
+            ViewColumn.State => view switch { ViewNames.Requests => "accepted", ViewNames.Items => "running", ViewNames.HomeRows => "done", _ => "decided" },
             ViewColumn.Reason or ViewColumn.Instance => throw new InvalidOperationException("the launches view's columns are pinned by SqliteLaunchViewsTests"),
             _ => throw new ArgumentOutOfRangeException(nameof(column), column, "not a view column"),
         };
@@ -342,9 +345,11 @@ public abstract class ViewStoreContract
             ViewNames.Decisions => (await reader.Where<HumanDecisionRow>(view, column, value, Token)).Value.Select(r => r.Id.Value),
             ViewNames.NeedsYou => (await reader.Where<NeedsYouRowRecord>(view, column, value, Token)).Value.Select(r => r.Row.Id.Value),
             ViewNames.Items => (await reader.Where<ItemRow>(view, column, value, Token)).Value.Select(r => r.Id.Value),
+            ViewNames.HomeRows => (await reader.Where<HomeRow>(view, column, value, Token)).Value.Select(r => r.Id.Value),
+            ViewNames.HomeLinks => (await reader.Where<HomeEdge>(view, column, value, Token)).Value.Select(static e => $"{e.From}|{e.To}"),
             _ => throw new InvalidOperationException($"{view} indexes no column"),
         };
-        Expect.Sequence([view switch { ViewNames.Requests => _hitRequest.Value, ViewNames.Decisions => _hitDecision.Value, ViewNames.Items => _hitItem.Value, _ => _hitNeedsYou.Value }], found);
+        Expect.Sequence([view switch { ViewNames.Requests => _hitRequest.Value, ViewNames.Decisions => _hitDecision.Value, ViewNames.Items => _hitItem.Value, ViewNames.HomeRows => HitHomeRow, ViewNames.HomeLinks => "hit|other", _ => _hitNeedsYou.Value }], found);
     }
 
     private static IReadOnlyList<IProjection> Projections() =>
@@ -360,7 +365,7 @@ public abstract class ViewStoreContract
     /// <summary>Puts a row that matches every filter value and one that matches none into each view that indexes columns.</summary>
     private sealed class PutRealRows : IProjection
     {
-        public IReadOnlyList<string> Views => [ViewNames.Requests, ViewNames.Decisions, ViewNames.NeedsYou, ViewNames.Items];
+        public IReadOnlyList<string> Views => [ViewNames.Requests, ViewNames.Decisions, ViewNames.NeedsYou, ViewNames.Items, ViewNames.HomeRows, ViewNames.HomeLinks];
 
         public bool Handles(string eventType) => string.Equals(eventType, PutRows, StringComparison.Ordinal);
 
@@ -378,6 +383,10 @@ public abstract class ViewStoreContract
                 (ViewNames.NeedsYou, "decision:miss", new NeedsYouRowRecord(A.NeedsYouRow().InRepo(RepoName.From("miss-repo")).Build() with { Item = A.FirstItemId }, 1)),
                 (ViewNames.Items, _hitItem.Value, A.Item().WithId(_hitItem).InRepo(repo).InState(ItemState.Running, KnownInstants.Epoch).Build()),
                 (ViewNames.Items, A.FirstItemId.Value, A.Item().WithId(A.FirstItemId).InRepo(RepoName.From("miss-repo")).InState(ItemState.Queued, KnownInstants.Epoch).Build()),
+                (ViewNames.HomeRows, HitHomeRow, HomeRowSamples.Row(HitHomeRow, state: HomeState.Done) with { Kind = HomeKind.RunFailed }),
+                (ViewNames.HomeRows, "run:miss", HomeRowSamples.Row("run:miss") with { Kind = HomeKind.Mention }),
+                (ViewNames.HomeLinks, HitHomeEdge, new HomeEdge("hit", "other", HomeEdgeKind.Blocks)),
+                (ViewNames.HomeLinks, "miss|blocks|other", new HomeEdge("miss", "other", HomeEdgeKind.Blocks)),
             };
             foreach (var (view, key, row) in rows)
             {
@@ -387,6 +396,8 @@ public abstract class ViewStoreContract
                     HumanDecisionRow d => await target.Put(view, key, d, cancellationToken).ConfigureAwait(false),
                     NeedsYouRowRecord n => await target.Put(view, key, n, cancellationToken).ConfigureAwait(false),
                     ItemRow i => await target.Put(view, key, i, cancellationToken).ConfigureAwait(false),
+                    HomeRow h => await target.Put(view, key, h, cancellationToken).ConfigureAwait(false),
+                    HomeEdge e => await target.Put(view, key, e, cancellationToken).ConfigureAwait(false),
                     _ => throw new InvalidOperationException("not a row of these views"),
                 };
                 if (put.IsError)
