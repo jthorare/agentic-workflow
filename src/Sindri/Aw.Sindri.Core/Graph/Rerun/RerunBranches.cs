@@ -6,7 +6,7 @@ namespace Aw.Sindri.Core.Graph.Rerun;
 
 /// <summary>
 /// Reads the branch a step took from its own stored row (<see cref="RerunPlan.Branches"/>). Only two block types leave by named branches: a condition stores
-/// <c>{"result": bool}</c> and an ask_owner stores who answered, 'timeout' when nobody did (ConditionBlock, AskOwnerBlock.Resolve); every other step leaves by 'out'.
+/// its 'result' (true or false) and an ask_owner stores who answered, 'timeout' when nobody did (ConditionBlock, AskOwnerBlock.Resolve); every other step leaves by 'out'.
 /// </summary>
 internal static class RerunBranches
 {
