@@ -23895,3 +23895,6 @@ const Aw.Sindri.Core.Setup.RepoScanRules.MaxDepth = 6 -> int
 static Aw.Sindri.Core.Setup.RepoScanRules.InsideHome(string! path, string! home) -> bool
 static Aw.Sindri.Core.Setup.RepoScanRules.Origin(string? url) -> (string! Host, string! Slug)?
 static Aw.Sindri.Core.Setup.RepoScanRules.Skips(string! name) -> bool
+static Aw.Sindri.Core.Setup.SetupSteps.NotRunning() -> Aw.Sindri.Core.Setup.SetupStep!
+static Aw.Sindri.Core.Setup.SetupSteps.WaitsForServe(Aw.Sindri.Core.Setup.SetupStepId id) -> Aw.Sindri.Core.Setup.SetupStep!
+static Aw.Sindri.Core.Setup.SetupDeriver.WithoutServe(Aw.Kernel.Result<Aw.Sindri.Core.Setup.RepoFact!>! repo, Aw.Kernel.Result<Aw.Sindri.Core.Setup.ProfileFact!>! profile, Aw.Kernel.Result<Aw.Sindri.Core.Setup.AgentFact!>! agent) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.SetupStep!>!

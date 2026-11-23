@@ -138,6 +138,17 @@ public static class SetupSteps
             : new SetupStep(SetupStepId.Serve, ServeTitle, SetupState.NeedsYou, "A different Sindri is installed than the one running.", "Restart Sindri to run the installed one.", Error: null, SetupActions.RestartProcess, Progress: null);
     }
 
+    /// <summary>The serve step while Sindri isn't running (first-run spec decision 8): open, and the fix is to start it, which any caller may do.</summary>
+    /// <returns>The step.</returns>
+    public static SetupStep NotRunning() =>
+        new(SetupStepId.Serve, ServeTitle, SetupState.Todo, "Sindri isn't running.", "Start it: sindri", Error: null, Action: null, Progress: null);
+
+    /// <summary>A step whose source only the running Sindri can read, while it isn't running (first-run spec decision 8): open, waiting for Sindri to run.</summary>
+    /// <param name="id">Which step.</param>
+    /// <returns>The step.</returns>
+    public static SetupStep WaitsForServe(SetupStepId id) =>
+        Unreadable(id, SindriErrors.NotRunning.Code) with { State = SetupState.Todo, Why = "Waits for Sindri to run.", Error = null };
+
     /// <summary>The agent step (step 5): it waits for a repo, then done once `workflow.agent.target` is set. It has no action: the setup service sets the target from the first agent it finds.</summary>
     /// <param name="fact">Which agent the workflows use.</param>
     /// <param name="repos">The repos (the setup service picks an agent once the profile names one).</param>

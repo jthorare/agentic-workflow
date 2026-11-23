@@ -7,21 +7,24 @@ using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.GetSetup;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.SetupSources;
 
 namespace Aw.Sindri.Tests.Commands;
 
 /// <summary>'sindri setup [--json]': a client of GET /sindri/setup that only reports, never starts the control plane.</summary>
-public sealed class CliSetupTests : IDisposable
+public sealed class CliSetupTests : IAsyncDisposable
 {
     private static readonly FakeControlPlaneProbe _up = FakeControlPlaneProbe.For(new ControlEndpoint(new Uri("http://127.0.0.1:7410"), 42, 3), new Ping(42, 3));
     private static readonly AsOf _asOf = new(Cursor: 5, LedgerHead: 5, ProjectedAt: new DateTimeOffset(2026, 10, 19, 9, 30, 0, TimeSpan.Zero), Rebuilding: false, Stalled: false);
     private readonly StringWriter _out = new();
     private readonly StringWriter _error = new();
+    private readonly SetupFactsRig _rig = new();
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        _out.Dispose();
-        _error.Dispose();
+        await _out.DisposeAsync();
+        await _error.DisposeAsync();
+        await _rig.DisposeAsync();
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -32,7 +35,7 @@ public sealed class CliSetupTests : IDisposable
     private SetupVerbs Verbs(FakeControlPlaneProbe probe, Api api) =>
         new(new ControlPlaneClient(probe, SliceHarness.Json,
             CallerHeaders.For(new AgentSession(Terminal: true, Prover: false), InMemoryHumanTokenStore.WithToken(), _ => ValueTask.FromResult((Core.Ids.RepoName?)null)), handler: api),
-            new Output(_out, _error, SliceHarness.Json), new GetSetupOfflineService());
+            new Output(_out, _error, SliceHarness.Json), new GetSetupOfflineService(_rig.Facts));
 
     // first-run spec decision 8: with serve down the CLI decides serve, repo, profile and agent in process and says the other four wait for Sindri to run
     [Fact, Trait("Lane", "unit")]
@@ -58,6 +61,33 @@ public sealed class CliSetupTests : IDisposable
                 "0 of 8 steps done.",
             ];
         Assert.Equal(rest, lines[1..^1]);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Setup_with_serve_down_decides_repo_profile_and_agent_from_the_profile()
+    {
+        _rig.Profiles.Live = SetupFactsRig.ProfileWithRepos();
+
+        var code = await Verbs(new FakeControlPlaneProbe(), new Api(HttpStatusCode.OK, "{}")).Run([], Token);
+
+        var lines = _out.ToString().ReplaceLineEndings("\n").Split('\n');
+        Assert.Equal(1, code);   // serve is still to start
+        string[] decided = ["done      Add your repo: demo", "done      Save the profile: Your profile is saved and live.", "todo      Agent for workflows: Sindri picks the first agent it finds."];
+        Assert.Equal(decided, lines[2..5]);
+        Assert.Equal("2 of 8 steps done.", lines[^2]);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Setup_json_with_serve_down_keeps_the_routes_shape()
+    {
+        var code = await Verbs(new FakeControlPlaneProbe(), new Api(HttpStatusCode.OK, "{}")).Run(["--json"], Token);
+
+        Assert.Equal(1, code);
+        var answer = AwJson.Deserialize<GetSetupResponse>(Encoding.UTF8.GetBytes(_out.ToString()), SliceHarness.Json).Value;
+        SetupStepId[] order = [SetupStepId.Serve, SetupStepId.Sources, SetupStepId.Repo, SetupStepId.Profile, SetupStepId.Agent, SetupStepId.Mcp, SetupStepId.Map, SetupStepId.FirstWorkflow];
+        Assert.Equal(order, answer.Steps.Select(static s => s.Id));
+        Assert.Equal(0, answer.AsOf.Cursor);   // nothing was projected
+        Assert.Null(answer.AsOf.ProjectedAt);
     }
 
     [Fact, Trait("Lane", "unit")]
