@@ -17,7 +17,7 @@ public sealed class MergeRunTests
     private readonly MetaWorld _world = new();
     private readonly InMemoryMetaEventStore _events = new();
 
-    private MergeRunService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages), _world.Repo, _world.Gates, new MergeRecorder(_world.Repo, _world.Values, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock, _world.Board), new MergeEventWriter(new MetaEventSink(_events), _world.Messages, _world.Clock));
+    private MergeRunService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages, new LaneAddress(_world.LaneFiles, _world.LaneSessions, _world.Sessions)), _world.Repo, _world.Gates, new MergeRecorder(_world.Repo, _world.Values, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock, _world.Board), new MergeEventWriter(new MetaEventSink(_events), _world.Messages, _world.Clock));
 
     private async Task<IReadOnlyList<(string Kind, string? Lane, string Fields)>> Written() =>
         [.. (await _events.Read(0, kind: null, lane: null, 100, CancellationToken.None)).Value.Events.Select(e => (e.Kind, e.Lane, e.Fields))];
