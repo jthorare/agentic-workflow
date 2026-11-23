@@ -21,14 +21,12 @@ public sealed class RunWorkflowTriggerWordRouteTests
     private static readonly WorkflowId _id = WorkflowId.From("WF-00000000000000000000000000000001");
     private static readonly WorkflowSlug _slug = WorkflowSlug.From("morning-check");
 
-    private static CancellationToken Ct => TestContext.Current.CancellationToken;
-
     [Theory(Timeout = 60_000), Trait("Lane", "integration")]
     [InlineData("cli", "cli")]
     [InlineData("ui", "manual")]
     public async Task A_hand_start_lists_its_trigger_by_the_client_that_sent_it(string client, string listed)
     {
-        await using var host = await GoldenHost.Start(temporary: true, Ct, extra: static services =>
+        await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken, extra: static services =>
             _ = services.Replace(ServiceDescriptor.Singleton<IGraphRunStarter>(static provider => new RecordingStarter(provider.GetRequiredService<IWorkflowRunStore>(), provider.GetRequiredService<TimeProvider>()))));
         await Create(host);
 
@@ -45,8 +43,8 @@ public sealed class RunWorkflowTriggerWordRouteTests
         var spec = new GraphSpec(Version: 1, Name: "Morning check", Description: null, Concurrency: null, Resources: null,
             Nodes: [new GraphNode(NodeId.From("start"), "manual", Title: null, [])], Edges: []);
         var workflows = host.App.Services.GetRequiredService<IWorkflowStore>();
-        _ = (await workflows.Create(_id, _slug, spec, "owner", Ct)).Value;
-        _ = (await workflows.Activate(_id, 1, Ct)).Value;
+        _ = (await workflows.Create(_id, _slug, spec, "owner", TestContext.Current.CancellationToken)).Value;
+        _ = (await workflows.Activate(_id, 1, TestContext.Current.CancellationToken)).Value;
     }
 
     // Records the run with the trigger the route built (its 'by' is the caller's actor), as GraphRunStarter does before it starts the Temporal workflow.
