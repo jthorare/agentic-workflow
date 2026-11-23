@@ -38,6 +38,40 @@ internal static partial class StyleRuleProposer
     ]);
 
     /// <summary>
+    /// 'trim', once after 'rules': cuts the catalog to two short lists so the steps after it stay under the engine's 64 KB input cap. Output: known (per record id, section and
+    /// checks: all 'vet' reads) and brief (per record id, section and the first <see cref="BriefChars"/> characters of the text, never splitting a surrogate pair: all 'classify' reads).
+    /// </summary>
+    public static string TrimCode { get; } = Lines(
+    [
+        "var doc = (input is JsonValue packed && packed.TryGetValue<string>(out var json) ? JsonNode.Parse(json) : input) as JsonObject;",
+        "var (known, brief) = (new JsonArray(), new JsonArray());",
+        "foreach (var item in doc?[\"rules\"] as JsonArray ?? new JsonArray())",
+        "{",
+        "    var rule = item as JsonObject;",
+        "    if (Str(rule?[\"id\"]) is not { Length: > 0 } id)",
+        "    {",
+        "        continue;",
+        "    }",
+        "",
+        "    var section = Str(rule?[\"section\"]) ?? string.Empty;",
+        "    var checks = new JsonArray();",
+        "    foreach (var check in rule?[\"checks\"] as JsonArray ?? new JsonArray())",
+        "    {",
+        "        checks.Add((JsonNode)new JsonObject { [\"type\"] = Str((check as JsonObject)?[\"type\"]) ?? string.Empty, [\"id\"] = Str((check as JsonObject)?[\"id\"]) ?? string.Empty });",
+        "    }",
+        "",
+        "    known.Add((JsonNode)new JsonObject { [\"id\"] = id, [\"section\"] = section, [\"checks\"] = checks });",
+        "    var text = Str(rule?[\"text\"]) ?? string.Empty;",
+        $"    var cut = text.Length > {BriefChars.ToString(System.Globalization.CultureInfo.InvariantCulture)} && char.IsHighSurrogate(text[{(BriefChars - 1).ToString(System.Globalization.CultureInfo.InvariantCulture)}]) ? {(BriefChars - 1).ToString(System.Globalization.CultureInfo.InvariantCulture)} : {BriefChars.ToString(System.Globalization.CultureInfo.InvariantCulture)};",
+        "    brief.Add((JsonNode)new JsonObject { [\"id\"] = id, [\"section\"] = section, [\"text\"] = text.Length > cut ? text[..cut] : text });",
+        "}",
+        "",
+        "return new JsonObject { [\"known\"] = known, [\"brief\"] = brief };",
+        "",
+        "static string? Str(JsonNode? node) => node is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;",
+    ]);
+
+    /// <summary>
     /// 'entry', once per draft: the rule and check the draft is for, the agent's report (title, rationale, files, checks, violations on main; malformed parts dropped, at most 20 files)
     /// and the branch and commit the draft is on. Output: ruleId, checkId, kind, title, rationale, files, checks, violationsOnMain (a number or null), branch, commit.
     /// </summary>

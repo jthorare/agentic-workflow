@@ -8,14 +8,15 @@ Template name: `style-rule-proposer` (issue 3787, piece 4). This first version e
 
 1. `start` (manual) takes the payload below, and `check` (code) stops the run when it has no `repo` or no `findings` list, naming what is missing. It hands on the first 3 findings.
 2. `rules` (`rule_catalog`) lists the existing rule records with their checks and sections.
-3. `each` loops over those 3. The first ones are the top ranked, so a longer list is fine: the rest get no draft.
-4. `classify` (prompt) says whether an analyzer, an architecture test or a banned symbol can enforce the mistake, or none. It answers none when an existing rule covers it.
-5. `vet` (code) keeps the answer only when it is well formed and new. Anything else becomes `none`.
-6. `is_rule` (condition) ends the item when there is no rule.
-7. `draft` (`run_agent`) writes the record, the check and one line in `.agents/rules/csharp.md` on its own branch.
-8. `entry` (code) notes the rule, the agent's report, the branch and the commit.
-9. `gather` (collect) ends the loop, and `summary` (code) writes one line per draft.
-10. `tell` (notify) shows the drafts, how many findings got no draft and how many were past the top 3.
+3. `trim` (code) cuts that list down to two short ones, so the steps after it stay under the engine's 64 KB input cap. `known` holds each record's id, section and checks, and `vet` reads it. `brief` holds each record's id, section and the first 160 characters of its text, and `classify` reads it.
+4. `each` loops over those 3. The first ones are the top ranked, so a longer list is fine: the rest get no draft.
+5. `classify` (prompt) says whether an analyzer, an architecture test or a banned symbol can enforce the mistake, or none. It answers none when an existing rule covers it.
+6. `vet` (code) keeps the answer only when it is well formed and new. Anything else becomes `none`.
+7. `is_rule` (condition) ends the item when there is no rule.
+8. `draft` (`run_agent`) writes the record, the check and one line in `.agents/rules/csharp.md` on its own branch.
+9. `entry` (code) notes the rule, the agent's report, the branch and the commit.
+10. `gather` (collect) ends the loop, and `summary` (code) writes one line per draft.
+11. `tell` (notify) shows the drafts, how many findings got no draft and how many were past the top 3.
 
 ## The payload
 
@@ -61,6 +62,6 @@ No transcript ref goes into a record. `source.ref` cites the miner run, never a 
 
 - Each draft is one agent session, up to 60 minutes, and it builds. That is why only the top 3 findings get one.
 - The miner has no `code_style` label yet. `classify` looks at every finding, so most become `none`.
-- `vet` reads the whole rule list as its input. The engine keeps 64 KB of a step's input. About 95 records fit today. A much larger catalog needs a smaller list first.
-- `summary` counts the findings that got no draft, but not why. The reason of each `none` is in that item's `vet` step.
+- The engine keeps 64 KB of a step's input. `trim` itself reads the full catalog, so its own stored input is cut past roughly 70 records (an estimate, not measured). Its code gets the whole list; only the stored copy is cut. `vet` and `classify` read the short lists, which stay under 64 KB for 200 records.
+- `summary` counts the findings that got no draft, but not why. The reason of each `none` (`not_checkable`, `malformed` or `duplicate`) sits in that item's `vet` step.
 - A draft whose agent fails stops the run.

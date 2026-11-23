@@ -39,7 +39,7 @@ public sealed class StyleRuleProposerTests : IClassFixture<RoslynWarmup>
     {
         var spec = Spec;
 
-        Assert.Equal(["manual", "code", "rule_catalog", "for_each", "prompt", "code", "condition", "run_agent", "code", "collect", "code", "notify"], spec.Nodes.Select(static n => n.Type), StringComparer.Ordinal);
+        Assert.Equal(["manual", "code", "rule_catalog", "code", "for_each", "prompt", "code", "condition", "run_agent", "code", "collect", "code", "notify"], spec.Nodes.Select(static n => n.Type), StringComparer.Ordinal);
         var each = spec.Nodes.Single(static n => n.Type == "for_each");
         Assert.Equal(("{{check.result.top}}", 3), (each.Config["items"]!.GetValue<string>(), each.Config["maxItems"]!.GetValue<int>()));
         Assert.Contains(spec.Edges, static e => e.Output == "true" && e.To.Value == "draft");
@@ -232,13 +232,16 @@ public sealed class StyleRuleProposerTests : IClassFixture<RoslynWarmup>
 
     private static JsonObject Scope(JsonObject answer) => new()
     {
-        ["rules"] = new JsonObject
+        ["trim"] = new JsonObject
         {
-            ["rules"] = new JsonArray(
-                new JsonObject { ["id"] = "engineering.csharp.use-invariant-culture", ["checks"] = new JsonArray(new JsonObject { ["type"] = "analyzer", ["id"] = "CA1305" }) },
-                new JsonObject { ["id"] = "engineering.csharp.one-type-per-file", ["checks"] = new JsonArray() }),
-            ["sections"] = new JsonArray("4b.1", "4b.2"),
+            ["result"] = new JsonObject
+            {
+                ["known"] = new JsonArray(
+                    new JsonObject { ["id"] = "engineering.csharp.use-invariant-culture", ["checks"] = new JsonArray(new JsonObject { ["type"] = "analyzer", ["id"] = "CA1305" }) },
+                    new JsonObject { ["id"] = "engineering.csharp.one-type-per-file", ["checks"] = new JsonArray() }),
+            },
         },
+        ["rules"] = new JsonObject { ["sections"] = new JsonArray("4b.1", "4b.2") },
         ["classify"] = new JsonObject { ["answer"] = answer },
     };
 
