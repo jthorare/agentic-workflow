@@ -66,7 +66,7 @@ internal static class TranscriptsCommand
         var (corpus, output) = io;
         if (!SessionRef.TryFrom(text, out var session))
         {
-            return await output.Error(SindriErrors.InvalidInput.With($"'{text}' is not a session ref: it is 'transcript:' and 8 hex digits, as 'transcripts list' prints ({TranscriptsArguments.ShowUsage})")).ConfigureAwait(false);
+            return await output.Error(SindriErrors.InvalidInput.With($"'{text}' is not a session ref: it is 'transcript:' and 12 hex digits, as 'transcripts list' prints ({TranscriptsArguments.ShowUsage})")).ConfigureAwait(false);
         }
 
         var read = await corpus.ReadSession(session, ct).ConfigureAwait(false);
