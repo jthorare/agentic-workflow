@@ -14,6 +14,9 @@ internal sealed class ConceptChangeTimes(IFileHistory history, IRepoReader repos
     // Newest first, so a file's first appearance is its last change; files untouched within this many commits stay unknown until HEAD moves.
     internal const int ChangesPerRepo = 500;
 
+    // How long a HEAD read stands for the repo's HEAD (#3837); a stub until the cache uses it.
+    internal static readonly TimeSpan HeadFor = TimeSpan.FromSeconds(30);
+
     private readonly Lock _gate = new();
     private readonly Dictionary<string, RepoTimes> _byRepo = new(StringComparer.Ordinal);
 
