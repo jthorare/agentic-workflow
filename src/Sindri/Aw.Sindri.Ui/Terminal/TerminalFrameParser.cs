@@ -33,6 +33,7 @@ internal static class TerminalFrameParser
             AlternateScreen = info.Alternate,
             Dead = info.Dead,
             DeadStatus = info.Dead ? info.DeadStatus : null,
+            Back = info.Back,
         };
     }
 

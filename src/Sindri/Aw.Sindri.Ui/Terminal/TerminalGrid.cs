@@ -48,6 +48,9 @@ internal sealed class TerminalGrid
     /// <summary>The exit status of a dead pane, null while alive or when tmux gave none.</summary>
     internal int? DeadStatus { get; init; }
 
+    /// <summary>The rows above the live screen's top that Serve drew this frame for (#3730); 0 is live. Above 0 the rows are history, and the cursor fields still hold the live screen's cursor (#3829), so the pane draws no cursor.</summary>
+    internal int Back { get; init; }
+
     /// <summary>One cell.</summary>
     /// <param name="row">0 to <see cref="Rows"/> - 1; the first <see cref="History"/> rows are scrollback.</param>
     /// <param name="column">0 to <see cref="Width"/> - 1.</param>
@@ -103,6 +106,7 @@ internal sealed class TerminalGrid
             InMode = InMode,
             Dead = Dead,
             DeadStatus = DeadStatus,
+            Back = Back,
         };
     }
 }

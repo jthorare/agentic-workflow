@@ -88,4 +88,25 @@ public sealed class TerminalSocketMessagesTests
     [InlineData("""{"t":"frame","rows":[],"cursor":{"x":"a","y":0},"w":1,"h":1,"inMode":0,"alt":0,"dead":0,"seq":1}""")]
     public void A_frame_with_a_missing_or_wrong_property_is_Unknown_not_a_throw(string json) =>
         Assert.Equal(TerminalServerKind.Unknown, TerminalSocketMessages.Parse(json).Kind);
+
+    [Fact]
+    public void Scroll_carries_the_rows_back_from_the_live_screen()
+    {
+        var json = TerminalSocketMessages.Scroll(35);
+
+        Assert.Equal(("scroll", "35"), (Field(json, "t"), Field(json, "back")));
+    }
+
+    [Fact]
+    public void A_frame_reads_back_and_hist_and_a_frame_without_them_reads_0()
+    {
+        const string Frame = """{"t":"frame","seq":1,"rows":["a"],"cursor":{"x":0,"y":0},"w":1,"h":1,"alt":0,"inMode":0,"dead":0""";
+        var scrolled = TerminalSocketMessages.Parse(Frame + ""","back":35,"hist":2000}""");
+        var older = TerminalSocketMessages.Parse(Frame + "}");
+        var negative = TerminalSocketMessages.Parse(Frame + ""","back":-3,"hist":-1}""");
+
+        Assert.Equal((35, 2000), (scrolled.Status.Back, scrolled.Status.Hist));
+        Assert.Equal((TerminalServerKind.Frame, 0, 0), (older.Kind, older.Status.Back, older.Status.Hist));
+        Assert.Equal((0, 0), (negative.Status.Back, negative.Status.Hist));
+    }
 }

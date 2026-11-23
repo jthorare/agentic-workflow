@@ -21,6 +21,12 @@ internal readonly record struct TerminalStatus(int? Width, int? Height, int Curs
     /// <summary>The tallest pane the grid will allocate (the terminal WebSocket's size limit).</summary>
     internal const int MaxRows = 200;
 
+    /// <summary>The rows above the live screen's top that the frame shows (the socket frame's `back`, #3730); 0 is the live screen, and a frame from a Serve without it reads 0.</summary>
+    internal int Back { get; init; }
+
+    /// <summary>The rows of tmux history the pane holds (the socket frame's `hist`); 0 on the alternate screen and from a Serve without it.</summary>
+    internal int Hist { get; init; }
+
     /// <summary>What a line that doesn't parse reads as: no size, the cursor at 0,0, nothing set.</summary>
     internal static TerminalStatus Unknown => new(Width: null, Height: null, CursorX: 0, CursorY: 0, InMode: false, Alternate: false, Dead: false, DeadStatus: null);
 

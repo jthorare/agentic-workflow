@@ -23,6 +23,7 @@ internal sealed partial class AgentsPage : UserControl
         TerminalPanel.ShowsList = false;
         TerminalPanel.PaneKeyPressed += (_, e) => _ = Page?.SendPaneKey(e.Name, e.Text);
         TerminalPanel.PanePasted += (_, e) => _ = Page?.SendPanePaste(e.Text);
+        TerminalPanel.PaneScrollRequested += (_, e) => _ = Page?.ScrollPane(e.Pages);
         _tick.Tick += (_, _) => Page?.Terminal.Tick();
         TerminalPanel.TranscriptRequested += (_, _) => Page?.OpenTranscript();
         AddHandler(KeyDownEvent, OnEscape, RoutingStrategies.Bubble);

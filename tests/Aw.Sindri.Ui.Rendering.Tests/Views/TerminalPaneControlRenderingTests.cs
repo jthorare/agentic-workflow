@@ -99,6 +99,33 @@ public sealed class TerminalPaneControlRenderingTests
         Assert.True(dr < pr, "the dim block is not fainter than the plain one");
     });
 
+    // A frame drawn while scrolled back holds history rows but the live cursor's position (#3829): its cursor cell must look like any blank cell.
+    [Fact]
+    public Task The_cursor_is_drawn_on_a_live_frame_and_not_on_a_frame_drawn_scrolled_back() => OnUi(() =>
+    {
+        var status = TerminalStatus.Parse("0 0 8 2 0 0 0");
+        var pane = new TerminalPaneControl { Width = 200, Height = 100, HasPaneFocus = true, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top };
+        var window = new Window { Width = 200, Height = 100, Content = pane };
+        window.Show();
+        Settle(window);
+
+        pane.Draw(TerminalFrameParser.Parse(["", ""], status));
+        Settle(window);
+        (byte, byte, byte) live, liveBlank;
+        using (var frame = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("no frame: this project draws with Skia"))
+        {
+            (live, liveBlank) = (Pixel(frame, (int)(pane.CellSize.Width * 0.5), (int)(pane.CellSize.Height * 0.5)), Pixel(frame, (int)(pane.CellSize.Width * 4.5), (int)(pane.CellSize.Height * 0.5)));
+        }
+
+        pane.Draw(TerminalFrameParser.Parse(["", ""], status with { Back = 5, Hist = 20 }));
+        Settle(window);
+        using var back = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("no frame: this project draws with Skia");
+        var scrolled = Pixel(back, (int)(pane.CellSize.Width * 0.5), (int)(pane.CellSize.Height * 0.5));
+
+        Assert.NotEqual(liveBlank, live);
+        Assert.Equal(liveBlank, scrolled);
+    });
+
     [Fact]
     public Task The_control_is_named_Terminal_for_assistive_technology() => OnUi(() =>
         Assert.Equal("Terminal", Avalonia.Automation.AutomationProperties.GetName(new TerminalPaneControl())));

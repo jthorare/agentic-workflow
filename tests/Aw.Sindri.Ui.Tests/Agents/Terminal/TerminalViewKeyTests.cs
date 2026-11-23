@@ -3,7 +3,6 @@ using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Terminal;
 using Aw.Sindri.Ui.ViewModels.Agents;
 using Aw.Sindri.Ui.Views.Agents;
 
@@ -75,9 +74,6 @@ public sealed class TerminalViewKeyTests
         Settle(window);
         return (window, view, sent, pasted);
     }
-
-    private static TerminalGrid GridWithHistory(int history) =>
-        new(width: 10, height: 5, history, [.. Enumerable.Repeat(TerminalCell.Blank, (history + 5) * 10)]);
 
     [Fact]
     public async Task Ctrl_Shift_V_Shift_Insert_and_Cmd_V_send_the_clipboard_text_as_one_paste_and_never_as_keys()
@@ -153,27 +149,20 @@ public sealed class TerminalViewKeyTests
     }
 
     [Fact]
-    public async Task Shift_PageUp_and_Shift_PageDown_scroll_the_panes_own_scrollback_and_send_nothing()
+    public async Task Shift_PageUp_and_Shift_PageDown_ask_for_a_screen_back_or_forward_and_send_no_key()
     {
         _ = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(TerminalViewKeyTests).Assembly).Dispatch(() =>
         {
             var (window, view, sent, _) = Focused(clipboard: null);
+            var pages = new List<int>();
+            view.PaneScrollRequested += (_, e) => pages.Add(e.Pages);
             try
             {
-                view.PaneDrawing.Draw(GridWithHistory(12));
-                Settle(window);
-                var offsets = new List<int>();
-
                 window.KeyPress(Key.PageUp, RawInputModifiers.Shift, PhysicalKey.PageUp, keySymbol: null);
-                offsets.Add(view.PaneScrollOffset);
                 window.KeyPress(Key.PageUp, RawInputModifiers.Shift, PhysicalKey.PageUp, keySymbol: null);
-                offsets.Add(view.PaneScrollOffset);
-                window.KeyPress(Key.PageUp, RawInputModifiers.Shift, PhysicalKey.PageUp, keySymbol: null);
-                offsets.Add(view.PaneScrollOffset);
                 window.KeyPress(Key.PageDown, RawInputModifiers.Shift, PhysicalKey.PageDown, keySymbol: null);
-                offsets.Add(view.PaneScrollOffset);
 
-                Assert.Equal([5, 10, 12, 7], offsets);
+                Assert.Equal([1, 1, -1], pages);
                 Assert.Empty(sent);
             }
             finally
@@ -187,22 +176,54 @@ public sealed class TerminalViewKeyTests
     }
 
     [Fact]
-    public async Task A_typed_key_snaps_the_pane_back_to_the_bottom_and_still_goes_to_the_agent()
+    public async Task A_typed_key_after_Shift_PageUp_goes_to_the_agent_and_asks_for_no_scroll()
     {
         _ = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(TerminalViewKeyTests).Assembly).Dispatch(() =>
         {
             var (window, view, sent, _) = Focused(clipboard: null);
+            var pages = new List<int>();
+            view.PaneScrollRequested += (_, e) => pages.Add(e.Pages);
             try
             {
-                view.PaneDrawing.Draw(GridWithHistory(12));
-                Settle(window);
                 window.KeyPress(Key.PageUp, RawInputModifiers.Shift, PhysicalKey.PageUp, keySymbol: null);
-                var scrolled = view.PaneScrollOffset;
 
                 window.KeyPress(Key.A, RawInputModifiers.None, PhysicalKey.A, keySymbol: "a");
 
-                Assert.Equal((5, 0), (scrolled, view.PaneScrollOffset));
+                Assert.Equal([1], pages);
                 Assert.Equal(["A"], sent);
+            }
+            finally
+            {
+                window.Close();
+                Dispatcher.UIThread.RunJobs();
+            }
+
+            return true;
+        }, TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task The_header_says_how_far_back_the_pane_is_and_the_line_goes_at_live()
+    {
+        _ = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(TerminalViewKeyTests).Assembly).Dispatch(() =>
+        {
+            var f = new TerminalFixture().Attached(TerminalFixture.Lane());
+            var view = new TerminalView { DataContext = f.View };
+            var window = new Window { Content = view, Width = 1440, Height = 900 };
+            try
+            {
+                window.Show();
+                Settle(window);
+                var line = view.FindControl<TextBlock>("ScrollBackLine") ?? throw new InvalidOperationException("no ScrollBackLine");
+                var atStart = line.IsVisible;
+
+                f.View.ScrolledBack(35);
+                Settle(window);
+                var (back, text) = (line.IsVisible, line.Text);
+                f.View.ScrolledBack(0);
+                Settle(window);
+
+                Assert.Equal((false, true, "Scrolled back 35 rows · any key returns to live", false), (atStart, back, text, line.IsVisible));
             }
             finally
             {

@@ -72,6 +72,13 @@ internal static class TerminalSocketMessages
         w.WriteNumber("rows", rows);
     });
 
+    /// <summary>Shows history instead of the live screen: rows above the live screen's top, 0 is live. Serve clamps it to 0..hist and answers with a frame whose `back` is the clamped value.</summary>
+    internal static string Scroll(int back) => Write(w =>
+    {
+        w.WriteString("t", "scroll");
+        w.WriteNumber("back", back);
+    });
+
     /// <summary>The answer to a ping.</summary>
     internal static string Pong() => Write(w => w.WriteString("t", "pong"));
 
@@ -154,9 +161,17 @@ internal static class TerminalSocketMessages
         var cursor = root.GetProperty("cursor");
         var status = new TerminalStatus(
             root.GetProperty("w").GetInt32(), root.GetProperty("h").GetInt32(), cursor.GetProperty("x").GetInt32(), cursor.GetProperty("y").GetInt32(),
-            root.GetProperty("inMode").GetInt32() != 0, root.GetProperty("alt").GetInt32() != 0, root.GetProperty("dead").GetInt32() != 0, DeadStatus: null);
+            root.GetProperty("inMode").GetInt32() != 0, root.GetProperty("alt").GetInt32() != 0, root.GetProperty("dead").GetInt32() != 0, DeadStatus: null)
+        {
+            Back = Optional(root, "back"),
+            Hist = Optional(root, "hist"),
+        };
         return new TerminalServerMessage(TerminalServerKind.Frame, rows, status, root.GetProperty("seq").GetInt32());
     }
+
+    // A count a Serve before #3730 leaves out: missing is 0, and a negative one is 0.
+    private static int Optional(JsonElement root, string name) =>
+        root.TryGetProperty(name, out var value) ? Math.Max(0, value.GetInt32()) : 0;
 
     private static string Write(Action<Utf8JsonWriter> body)
     {
