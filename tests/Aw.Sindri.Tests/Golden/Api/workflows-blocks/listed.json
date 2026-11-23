@@ -582,6 +582,7 @@
             "rules": "array",
             "count": "number",
             "skipped": "number",
+            "more": "number",
             "sections": "array"
           },
           "branches": [
