@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Host.Commands;
+namespace Aw.Sindri.Host.Commands.SetupApply;
 
 /// <summary>How the setup pass that 'setup --apply' ran ended.</summary>
 /// <param name="State">'done', 'timeout', 'failed', 'skipped' (--timeout 0: no wait) or 'refused' (a caller that may not run services: the pass runs on its next tick, within 60 s).</param>
