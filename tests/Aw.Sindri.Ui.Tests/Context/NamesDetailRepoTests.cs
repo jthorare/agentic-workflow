@@ -11,16 +11,12 @@ public sealed class NamesDetailRepoTests
     private static SymbolsView NotBuilt(params string[] repos) => new("unavailable", "index not built", [], Repos: repos.Length == 0 ? null : repos);
 
     [Fact]
-    public void One_repo_with_no_index_is_named()
-    {
+    public void One_repo_with_no_index_is_named() =>
         Assert.Equal("No code index for aw-split-panes yet.", NamesDetail.Sentence(NotBuilt("aw-split-panes")));
-    }
 
     [Fact]
-    public void Several_repos_with_no_index_are_all_named()
-    {
+    public void Several_repos_with_no_index_are_all_named() =>
         Assert.Equal("No code index for api, docs and web yet.", NamesDetail.Sentence(NotBuilt("api", "docs", "web")));
-    }
 
     [Fact]
     public void An_answer_that_names_no_repo_keeps_the_old_words()
