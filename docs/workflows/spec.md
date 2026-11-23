@@ -41,7 +41,7 @@ A run that succeeds keeps one result, an object keyed by node id. Another workfl
 - With no `result`, it holds every node no edge leaves that succeeded. In a straight line that is the last node. After a `condition`, it is the branch that ran.
 - A node that ran per item gives a list of its outputs, in item order.
 - The result is kept up to 64 KB on its own. The other nodes' rows do not count, so a long run with a small last step still has a result.
-- A result node whose output was cut at 64 KB, or a result over 64 KB, is stored as `{"truncated":true,"bytes":N}`. A reader then fails with `SND-GRAPH-108`. Name a smaller node with `result`.
+- A result node whose output was cut at 64 KB, or a result over 64 KB, is stored as `{"truncated":true,"bytes":N}`. A reader then fails with `SND-GRAPH-108`. Name a smaller node with `result`. Only that exact shape counts: a step output with its own `truncated` field beside other fields is handed on as it is.
 - The run page still shows every node's own row.
 - An edit sets `result` with `{"op":"set_meta","result":"rank"}`. `""` clears it.
 
