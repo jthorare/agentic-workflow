@@ -38,16 +38,34 @@ public sealed class TerminalFitTests
     }
 
     [Fact]
-    public async Task The_same_size_twice_is_sent_once_and_the_size_the_socket_opened_with_is_not_sent()
+    public async Task The_same_size_twice_is_sent_once_even_when_it_equals_the_size_the_socket_opened_with()
     {
         var socket = await Play(s =>
         {
+            _ = s.FitSize(120, 36, Token);
             _ = s.FitSize(120, 36, Token);
             _ = s.FitSize(100, 50, Token);
             _ = s.FitSize(100, 50, Token);
         });
 
-        Assert.Equal([TerminalSocketMessages.Size(100, 50)], socket.Sent);
+        Assert.Equal([TerminalSocketMessages.Size(120, 36), TerminalSocketMessages.Size(100, 50)], socket.Sent);
+    }
+
+    // Serve ignores the hello's size and resizes only on a `size` message, so a fit that equals the open size still goes out once.
+    [Fact]
+    public async Task A_fit_equal_to_the_open_size_made_before_Run_is_sent_once_after_ready()
+    {
+        var socket = await Play(_ => { }, before: s => _ = s.FitSize(120, 36, Token));
+
+        Assert.Equal([TerminalSocketMessages.Size(120, 36)], socket.Sent);
+    }
+
+    [Fact]
+    public async Task With_no_fit_made_nothing_is_sent()
+    {
+        var socket = await Play(_ => { });
+
+        Assert.Empty(socket.Sent);
     }
 
     [Fact]
