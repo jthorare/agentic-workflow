@@ -131,6 +131,12 @@ internal sealed partial class GraphRig : IAsyncDisposable
     /// <returns>The started rig.</returns>
     public static Task<GraphRig> StartAsync(IReadOnlyList<IGraphBlock> moreBlocks) => StartAsync(agents: null, forEachLimits: null, moreBlocks: moreBlocks);
 
+    /// <summary>A rig with both an agent runtime for 'run_agent' nodes and <paramref name="moreBlocks"/>.</summary>
+    /// <param name="agents">The agent runtime.</param>
+    /// <param name="moreBlocks">The blocks to add.</param>
+    /// <returns>The started rig.</returns>
+    public static Task<GraphRig> StartAsync(IAgentNodeRuntime agents, IReadOnlyList<IGraphBlock> moreBlocks) => StartAsync(agents, forEachLimits: null, moreBlocks: moreBlocks);
+
     private static async Task<GraphRig> StartAsync(IAgentNodeRuntime? agents, ForEachLimits? forEachLimits, int agentLaunchAttempts = 0, IReadOnlyList<IGraphBlock>? moreBlocks = null)
     {
         // why: the SDK core's own warnings (e.g. 'Error while completing workflow activation ... ACTIVITY_UNKNOWN') go to the runtime of the server's client, so the rig's log is that runtime's logger (issue 2877)

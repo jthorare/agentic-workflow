@@ -28,7 +28,7 @@ public sealed class LaneDelivery(ILaneFiles files, ILaneMail mail, IMessageStore
     /// <param name="text">The message text.</param>
     /// <param name="confirm">How long one wait for the woken lane's hook lasts; the wake waits twice.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>What the delivery did, or an error when the message could not be stored.</returns>
+    /// <returns>What the delivery did (a hook state that can't be read is attention), or an error when the message could not be stored or recorded.</returns>
     public async ValueTask<Result<LaneDelivered>> Deliver(LaneTarget target, string text, TimeSpan confirm, CancellationToken cancellationToken)
     {
         var now = clock.GetUtcNow();
@@ -46,12 +46,12 @@ public sealed class LaneDelivery(ILaneFiles files, ILaneMail mail, IMessageStore
             return sent.Error;
         }
 
-        var attention = await Attention(target, cancellationToken).ConfigureAwait(false);
-        if (attention.IsError)
-        {
-            return attention.Error;
-        }
-
+        // The message is stored and recorded by now, so a hook state that can't be read is attention, not a failed delivery:
+        // the result must not tell the caller nothing went out while the outbound row says it did.
+        var checkedHooks = await Attention(target, cancellationToken).ConfigureAwait(false);
+        var attention = checkedHooks.IsError
+            ? Results.Success<string?>($"unreadable: its hook state could not be read ({checkedHooks.Error.Code}: {checkedHooks.Error.Message.ReplaceLineEndings(" ")})")
+            : checkedHooks;
         var (woken, skipped, viewer) = attention.Value is null
             ? await Wake(target, confirm, cancellationToken).ConfigureAwait(false)
             : (false, "the lane's hooks can't take part, so the message is stored and waits: the worker runs `aw-meta lane-inbox` by hand, or the owner trusts its hooks (Codex: /hooks)", false);
