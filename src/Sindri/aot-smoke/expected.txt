@@ -225,10 +225,33 @@ workflow-poll  every 30s  last: ok  next: TIME
 workflow-schedule  every 1m  last: ok  next: TIME
 ## sindri wf create, activate and run a one-node Code workflow (code-smoke), then wf run-show --json | jq (the node's result)
 code-node: {"sum":3}
+## sindri setup
+done      Sindri is current: Sindri is running the installed build.
+todo      Connect your accounts: No source is connected yet.
+done      Add your repo: smoke
+done      Save the profile: Your profile is saved and live.
+done      Agent for workflows: Workflows run on claude-code.
+todo      Connect your agents: Sindri is not registered in every repo yet.
+done      Build the map: The map is built.
+done      Run hello-sindri: hello-sindri ran once.
+6 of 8 steps done.
+exit 1
 ## sindri stop (session)
 stopped (pid PID, epoch 1 released)
 ## sindri status
 SND-API-001 not running: no control plane is recorded (fix: sindri)
+exit 1
+## sindri setup
+SND-API-001 no control plane is recorded (fix: sindri)
+todo      Sindri is current: Sindri isn't running.
+todo      Connect your accounts: Waits for Sindri to run.
+done      Add your repo: smoke
+done      Save the profile: Your profile is saved and live.
+done      Agent for workflows: Workflows run on claude-code.
+todo      Connect your agents: Waits for Sindri to run.
+todo      Build the map: Waits for Sindri to run.
+todo      Run hello-sindri: Waits for Sindri to run.
+3 of 8 steps done.
 exit 1
 ## sindri doctor
 ok    lease             free (last epoch 1)
