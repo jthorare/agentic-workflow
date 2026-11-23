@@ -23,7 +23,7 @@ public sealed class ChainRegistrationTests
             var commands = Registered(services, typeof(ICommand<>));
 
             Assert.NotEmpty(commands);
-            Assert.All(commands.Where(type => !IsStop(type) && !IsTestConnection(type) && !IsSignInConnection(type) && !IsStartSession(type)), type => Assert.Equal(
+            Assert.All(commands.Where(type => !IsStop(type) && !IsRestart(type) && !IsTestConnection(type) && !IsSignInConnection(type) && !IsStartSession(type)), type => Assert.Equal(
                 [typeof(CommandGate<,>), typeof(AuditingService<,>), typeof(AuthorizingService<,>), typeof(ValidatingService<,>), typeof(AwaitingViews<,>), null],
                 Chain(scope.ServiceProvider.GetRequiredService(type))));
         }
@@ -41,6 +41,21 @@ public sealed class ChainRegistrationTests
             Assert.Equal(
                 [typeof(AuditingService<,>), typeof(AuthorizingService<,>), typeof(ValidatingService<,>), typeof(StoppingGate<,>), typeof(AwaitingViews<,>), null],
                 Chain(scope.ServiceProvider.GetRequiredService(stop)));
+        }
+    }
+
+    // A restart holds the gate from its open-set check through its stop, then stops the gate like the stop does (first-run spec decision 11).
+    [Fact, Trait("Lane", "unit")]
+    public void The_restart_runs_the_whole_chain_inside_a_gate_that_stops_once_serve_is_stopped()
+    {
+        var (services, scope) = Composed();
+        using (scope)
+        {
+            var restart = Assert.Single(Registered(services, typeof(ICommand<>)), IsRestart);
+
+            Assert.Equal(
+                [typeof(StoppingGate<,>), typeof(CommandGate<,>), typeof(AuditingService<,>), typeof(AuthorizingService<,>), typeof(ValidatingService<,>), typeof(AwaitingViews<,>), null],
+                Chain(scope.ServiceProvider.GetRequiredService(restart)));
         }
     }
 
@@ -90,6 +105,8 @@ public sealed class ChainRegistrationTests
     }
 
     private static bool IsStartSession(Type service) => service.GenericTypeArguments[0] == typeof(Features.StartSession.StartSessionRequest);
+
+    private static bool IsRestart(Type service) => service.GenericTypeArguments[0] == typeof(Features.RestartProcess.RestartProcessRequest);
 
     private static bool IsStop(Type service) => service.GenericTypeArguments[0] == typeof(Features.StopProcess.StopProcessRequest);
 

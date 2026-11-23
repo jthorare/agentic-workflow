@@ -23884,6 +23884,65 @@ static Aw.Sindri.Core.Graph.Blocks.GraphFence.Calls(Aw.Sindri.Core.Graph.Blocks.
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.ConnectionTools(Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort! live) -> Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort!
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.Toolkits(Aw.Sindri.Core.Toolkits.IRunningToolkits! live) -> Aw.Sindri.Core.Toolkits.IRunningToolkits!
 static Aw.Sindri.Core.Connections.ConnectionName.ParseUnreserved(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!
+Aw.Sindri.Core.Setup.IOpenRuns
+Aw.Sindri.Core.Setup.IOpenRuns.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.OpenRun!>!>!>
+Aw.Sindri.Core.Setup.IServeStop
+Aw.Sindri.Core.Setup.IServeStop.Stop(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Setup.ServeStopped!>!>
+Aw.Sindri.Core.Setup.OpenRun
+Aw.Sindri.Core.Setup.OpenRun.<Clone>$() -> Aw.Sindri.Core.Setup.OpenRun!
+Aw.Sindri.Core.Setup.OpenRun.OpenRun(string! Kind, string! Ref, string! Name, string! Link) -> void
+Aw.Sindri.Core.Setup.OpenRun.Deconstruct(out string! Kind, out string! Ref, out string! Name, out string! Link) -> void
+Aw.Sindri.Core.Setup.OpenRun.Equals(Aw.Sindri.Core.Setup.OpenRun? other) -> bool
+Aw.Sindri.Core.Setup.OpenRun.Kind.get -> string!
+Aw.Sindri.Core.Setup.OpenRun.Kind.init -> void
+Aw.Sindri.Core.Setup.OpenRun.Ref.get -> string!
+Aw.Sindri.Core.Setup.OpenRun.Ref.init -> void
+Aw.Sindri.Core.Setup.OpenRun.Name.get -> string!
+Aw.Sindri.Core.Setup.OpenRun.Name.init -> void
+Aw.Sindri.Core.Setup.OpenRun.Link.get -> string!
+Aw.Sindri.Core.Setup.OpenRun.Link.init -> void
+override Aw.Sindri.Core.Setup.OpenRun.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.OpenRun.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.OpenRun.ToString() -> string!
+static Aw.Sindri.Core.Setup.OpenRun.operator !=(Aw.Sindri.Core.Setup.OpenRun? left, Aw.Sindri.Core.Setup.OpenRun? right) -> bool
+static Aw.Sindri.Core.Setup.OpenRun.operator ==(Aw.Sindri.Core.Setup.OpenRun? left, Aw.Sindri.Core.Setup.OpenRun? right) -> bool
+Aw.Sindri.Core.Setup.ServeStopped
+Aw.Sindri.Core.Setup.ServeStopped.<Clone>$() -> Aw.Sindri.Core.Setup.ServeStopped!
+Aw.Sindri.Core.Setup.ServeStopped.ServeStopped(int Pid, long Epoch, long? Sequence) -> void
+Aw.Sindri.Core.Setup.ServeStopped.Deconstruct(out int Pid, out long Epoch, out long? Sequence) -> void
+Aw.Sindri.Core.Setup.ServeStopped.Equals(Aw.Sindri.Core.Setup.ServeStopped? other) -> bool
+Aw.Sindri.Core.Setup.ServeStopped.Pid.get -> int
+Aw.Sindri.Core.Setup.ServeStopped.Pid.init -> void
+Aw.Sindri.Core.Setup.ServeStopped.Epoch.get -> long
+Aw.Sindri.Core.Setup.ServeStopped.Epoch.init -> void
+Aw.Sindri.Core.Setup.ServeStopped.Sequence.get -> long?
+Aw.Sindri.Core.Setup.ServeStopped.Sequence.init -> void
+override Aw.Sindri.Core.Setup.ServeStopped.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.ServeStopped.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.ServeStopped.ToString() -> string!
+static Aw.Sindri.Core.Setup.ServeStopped.operator !=(Aw.Sindri.Core.Setup.ServeStopped? left, Aw.Sindri.Core.Setup.ServeStopped? right) -> bool
+static Aw.Sindri.Core.Setup.ServeStopped.operator ==(Aw.Sindri.Core.Setup.ServeStopped? left, Aw.Sindri.Core.Setup.ServeStopped? right) -> bool
+Aw.Sindri.Core.Setup.BuildInfo
+Aw.Sindri.Core.Setup.BuildInfo.<Clone>$() -> Aw.Sindri.Core.Setup.BuildInfo!
+Aw.Sindri.Core.Setup.BuildInfo.BuildInfo(string! Commit, System.DateTimeOffset Built) -> void
+Aw.Sindri.Core.Setup.BuildInfo.Deconstruct(out string! Commit, out System.DateTimeOffset Built) -> void
+Aw.Sindri.Core.Setup.BuildInfo.Equals(Aw.Sindri.Core.Setup.BuildInfo? other) -> bool
+Aw.Sindri.Core.Setup.BuildInfo.Commit.get -> string!
+Aw.Sindri.Core.Setup.BuildInfo.Commit.init -> void
+Aw.Sindri.Core.Setup.BuildInfo.Built.get -> System.DateTimeOffset
+Aw.Sindri.Core.Setup.BuildInfo.Built.init -> void
+Aw.Sindri.Core.Setup.BuildInfo.ShortCommit.get -> string!
+override Aw.Sindri.Core.Setup.BuildInfo.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.BuildInfo.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.BuildInfo.ToString() -> string!
+static Aw.Sindri.Core.Setup.BuildInfo.operator !=(Aw.Sindri.Core.Setup.BuildInfo? left, Aw.Sindri.Core.Setup.BuildInfo? right) -> bool
+static Aw.Sindri.Core.Setup.BuildInfo.operator ==(Aw.Sindri.Core.Setup.BuildInfo? left, Aw.Sindri.Core.Setup.BuildInfo? right) -> bool
+Aw.Sindri.Core.Setup.IBuildStamps.RunningBuild() -> Aw.Sindri.Core.Setup.BuildInfo?
+Aw.Sindri.Core.Setup.IBuildStamps.InstalledBuild() -> Aw.Sindri.Core.Setup.BuildInfo?
+Aw.Sindri.Core.Setup.ServeFact.Running.get -> Aw.Sindri.Core.Setup.BuildInfo?
+Aw.Sindri.Core.Setup.ServeFact.Running.init -> void
+Aw.Sindri.Core.Setup.ServeFact.Installed.get -> Aw.Sindri.Core.Setup.BuildInfo?
+Aw.Sindri.Core.Setup.ServeFact.Installed.init -> void
 Aw.Sindri.Core.Projects.Truth.ProjectPrState
 Aw.Sindri.Core.Projects.Truth.ProjectPrState.Draft = 0 -> Aw.Sindri.Core.Projects.Truth.ProjectPrState
 Aw.Sindri.Core.Projects.Truth.ProjectPrState.Ready = 1 -> Aw.Sindri.Core.Projects.Truth.ProjectPrState
