@@ -242,7 +242,7 @@ public sealed class TopBarTests : IDisposable
             var where = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"at {width} px, scale {scale:0.0}");
 
             Assert.True(problems.Bounds.Width < 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the problem text is {problems.Bounds.Width} px, the test needs it dropped"));
-            Assert.True(age.IsEffectivelyVisible, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the age is hidden although the problem text is dropped"));
+            Assert.True(age.IsEffectivelyVisible, where + ": the age is hidden although the problem text is dropped");
             Assert.True(age.Bounds.Width >= Natural(age) - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the age got {age.Bounds.Width} of its {Natural(age)}"));
             Assert.True(pillRight <= window.Bounds.Width + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the pill ends at {pillRight}, the window is {window.Bounds.Width}"));
         }
