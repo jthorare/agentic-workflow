@@ -15,6 +15,7 @@ public sealed class CliSetupApplyTests : IDisposable
     private const string Repos = "/sindri/setup/repos";
     private const string Pass = "/sindri/services/setup/run";
     private const string Job = "/sindri/jobs/" + JobRig.Id;
+    private const string ScheduledPass = "the setup service is running its scheduled pass (fix: wait for it to end)";   // SND-JOB-409 naming no job
     private readonly JobRig _rig = new();
 
     public void Dispose() => _rig.Dispose();
@@ -133,6 +134,31 @@ public sealed class CliSetupApplyTests : IDisposable
 
         Assert.Equal((0, 1), (code, api.Count("GET " + Job)));
         Assert.Contains("not waiting for it (--timeout 0)", Out, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Setup_apply_with_timeout_0_counts_a_scheduled_pass_in_flight_as_skipped_and_exits_0()
+    {
+        var api = Api().On("POST", Pass, JobRig.Refused(HttpStatusCode.Conflict, "SND-JOB-409", ScheduledPass));
+
+        var code = await JobRig.Finished(Run(api, "--apply", "--repo", "/work/demo", "--timeout", "0"));
+
+        Assert.Equal((0, 1), (code, api.Count("POST " + Pass)));
+        Assert.Contains("setup pass runs already (a scheduled one); not waiting for it (--timeout 0)\n", Out, StringComparison.Ordinal);
+        Assert.DoesNotContain("SND-SETUP-016", _rig.Error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Setup_apply_reports_a_scheduled_pass_that_outlasts_the_wait_with_SND_SETUP_015_and_exits_1()
+    {
+        var api = Api().On("POST", Pass, JobRig.Refused(HttpStatusCode.Conflict, "SND-JOB-409", ScheduledPass));
+        var run = Run(api, "--apply", "--repo", "/work/demo", "--timeout", "2s");
+
+        await _rig.AdvanceOnTimers(TimeSpan.FromSeconds(1), run);
+
+        Assert.Equal(1, await run);
+        Assert.Contains("SND-SETUP-015 the setup pass didn't finish in 2 s; a scheduled pass still runs (fix: sindri jobs, then sindri setup)", _rig.Error.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("SND-SETUP-016", _rig.Error.ToString(), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
