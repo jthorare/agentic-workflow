@@ -1405,3 +1405,5 @@ Aw.Meta.Features.Delegate.DelegateResponse.MovedFrom.get -> string?
 Aw.Meta.Features.Delegate.DelegateResponse.MovedFrom.init -> void
 Aw.Meta.Features.Delegate.DelegateResponse.MovedNotice.get -> string?
 Aw.Meta.Features.Delegate.DelegateResponse.MovedNotice.init -> void
+Aw.Meta.Features.Delegate.DelegateResponse.MovedProblem.get -> string?
+Aw.Meta.Features.Delegate.DelegateResponse.MovedProblem.init -> void
