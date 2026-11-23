@@ -1,4 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Media;
+using Avalonia.VisualTree;
 using Avalonia.Headless;
 using Avalonia.Threading;
 using Aw.Kernel.Testing;
@@ -58,5 +60,39 @@ public sealed class GraphStageTests
         Assert.True(result.MapAfterZoom);
         Assert.True(result.Same);
         Assert.Equal(1, result.Outlined);   // the minimap outlines the selected card
+    }
+
+    [Fact]
+    public async Task The_minimap_is_an_opaque_panel_that_shows_only_while_the_graph_does_not_fit()
+    {
+        var graph = await Chain(16);
+
+        var r = await OnUi(() =>
+        {
+            var stage = new GraphStage { Graph = graph };
+            var window = new Window { Content = stage, Width = 1440, Height = 784 };
+            window.Show();
+            Settle(window);
+            try
+            {
+                var panel = stage.Map.GetVisualParent() as Border;   // the card the map sits on (#4055)
+                var atFit = panel?.IsVisible;
+                stage.Canvas.ZoomIn();
+                stage.Canvas.ZoomIn();
+                Settle(window);
+                var alpha = panel?.Background is ISolidColorBrush solid ? solid.Color.A : -1;
+                return (IsPanel: panel is not null, AtFit: atFit, Zoomed: panel?.IsVisible, Alpha: alpha, Border: panel?.BorderThickness.Left ?? -1, Padding: panel?.Padding.Left ?? -1);
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.True(r.IsPanel, "the minimap sits straight on the canvas, so the cards under it show through (#4055)");
+        Assert.False(r.AtFit, "the minimap panel shows while the whole graph fits");
+        Assert.True(r.Zoomed, "the minimap panel is hidden while the canvas scrolls");
+        Assert.Equal(255, r.Alpha);   // opaque: nothing shows through
+        Assert.Equal((1d, 8d), (r.Border, r.Padding));
     }
 }
