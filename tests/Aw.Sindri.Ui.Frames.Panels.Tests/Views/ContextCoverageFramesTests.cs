@@ -25,16 +25,55 @@ public sealed class ContextCoverageFramesTests : FrameHost
 
     private static string Anchor => (string)GoldenFiles.Node("context-lenses", "map-tabs")["anchor"]!["key"]!;
 
-    // No band has a record; the code index is not built.
+    // The answer a question with nothing around it really has: no record or decision, no own, neighbouring or affected node, no file, so every band is empty
+    // (the server derives the empty flags from these counts, LensSearchedBuilder) and the coverage counts are zero; the code index is not built. Flipping only the
+    // flags on the full golden drew "Nothing searched" over a full map (design's hold on #4062).
     private static void NothingSearched(JsonNode node)
     {
-        node["searched"]!["bands"]!["intent"]!["empty"] = true;
-        node["searched"]!["bands"]!["product"]!["empty"] = true;
-        node["searched"]!["bands"]!["code"]!["empty"] = true;
+        var bands = node["bands"]!;
+        Empty(bands["intent"]!, "records", "decisions");
+        Empty(bands["product"]!, "own", "neighbors", "affects", "edges");
+        Empty(bands["code"]!, "files");
+        bands["code"]!["counts"]!["featuresWithNoCode"] = 0;
+        var coverage = node["coverage"]!;
+        coverage["scope"] = 0;
+        coverage["gaps"] = new JsonArray();
+        Zero(coverage["intent"]!, "covered", "of");
+        Zero(coverage["product"]!, "confirmed", "of");
+        Zero(coverage["code"]!, "implemented", "of", "suggested");
+        foreach (var band in (string[])["intent", "product", "code"])
+        {
+            node["searched"]!["bands"]![band]!["empty"] = true;
+        }
     }
 
-    // The code index is at another commit than the map, so the function names are only partly searched.
-    private static void NamesStale(JsonNode node) => node["bands"]!["code"]!["symbols"]!["state"] = "stale";
+    // Each list emptied, and its count beside it zeroed.
+    private static void Empty(JsonNode band, params string[] lists)
+    {
+        foreach (var list in lists)
+        {
+            band[list] = new JsonArray();
+            band["counts"]![list] = 0;
+        }
+    }
+
+    private static void Zero(JsonNode counts, params string[] names)
+    {
+        foreach (var name in names)
+        {
+            counts[name] = 0;
+        }
+    }
+
+    // The code index is at another commit than the map, so the function names are only partly searched. A stale answer has names, so it carries no
+    // "index not built" reason or code (the golden's unavailable answer did, which left the stale frame's Code band contradicting its sentence).
+    private static void NamesStale(JsonNode node)
+    {
+        var symbols = node["bands"]!["code"]!["symbols"]!.AsObject();
+        symbols["state"] = "stale";
+        _ = symbols.Remove("reason");
+        _ = symbols.Remove("code");
+    }
 
     // The question goes through the query (not an exact hit), so the page shows the sentence for the edited answer.
     private async Task<(ShellWindow Window, ShellViewModel Shell)> Ask(Action<JsonNode> state, double width)
@@ -48,14 +87,17 @@ public sealed class ContextCoverageFramesTests : FrameHost
         shell.GoTo(PageId.Context);
         shell.Context.AnchorText = Question;
         await shell.Context.Submit(Token);
-        await Until(window, () => shell.Context.HasCoverage && window.GetVisualDescendants().OfType<ContextMapWorld>().FirstOrDefault() is { NodeViews.Count: > 0 }, "the answer and its sentence never drew");
+        // An answer with nodes draws them; an empty one draws none and says so on the stage (ContextPageViewModel.ShowAnswerFiles).
+        await Until(window, () => shell.Context.HasCoverage && (shell.Context.HasStageMessage || window.GetVisualDescendants().OfType<ContextMapWorld>().FirstOrDefault() is { NodeViews.Count: > 0 }), "the answer and its sentence never drew");
         Settle(window);
         return (window, shell);
     }
 
-    private Task Shows(Action<JsonNode> state, string sentence, double width, string stem) => OnUi(async () =>
+    private Task Shows(Action<JsonNode> state, string sentence, double width, string stem, string stage = "") => OnUi(async () =>
     {
         var (window, shell) = await Ask(state, width);
+
+        Assert.Equal(stage, shell.Context.StageMessage);   // empty unless the answer draws no node
 
         var coverage = Named<TextBlock>(window, "ContextCoverage");
         Assert.Equal(sentence, shell.Context.Coverage);
@@ -76,7 +118,7 @@ public sealed class ContextCoverageFramesTests : FrameHost
     [InlineData(1280)]
     [InlineData(1000)]
     public Task An_answer_with_no_records_draws_nothing_searched_on_one_line(double width) =>
-        Shows(NothingSearched, "Nothing searched. No Why, Product or Code records. Function names aren't indexed.", width, "none");
+        Shows(NothingSearched, "Nothing searched. No Why, Product or Code records. Function names aren't indexed.", width, "none", "The map draws nothing for this question.");
 
     [Theory]
     [InlineData(1280)]
