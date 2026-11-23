@@ -72,7 +72,7 @@ public static class ObligationEvaluator
     // A delegation stays owed until a send to the lane's session names its issue (lane-send records one for a non-Claude lane).
     private static IEnumerable<Obligation> Delegations(ObligationFacts facts) =>
         facts.Delegations
-            .Where(d => !DelegationStates.IsSent(d, facts.Outbound))
+            .Where(d => !DelegationStates.IsSent(d, facts.Outbound, facts.Lanes))
             .Select(static d => new Obligation(
                 ObligationKind.Delegate,
                 d.Marker,
