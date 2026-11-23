@@ -40,6 +40,7 @@ internal sealed class ConnectAccountService(ICallerContextAccessor callers, IGit
             return SindriErrors.InvalidInput.With($"'{request.Provider}' is not an account Sindri connects: github, linear or slack");
         }
 
+        _ = device.Cancel();   // every connect ends a device sign-in in progress, so a late yes never writes github:default next to the answer this call gives
         if (await gh.Login(cancellationToken).ConfigureAwait(false) is not { } login)
         {
             return await device.Start(callers.Current?.Actor ?? "unknown", cancellationToken).ConfigureAwait(false);   // no gh login: Sindri's own OAuth app, through the device flow (decision 13)

@@ -60,6 +60,41 @@ public sealed class DeviceAccountSignInTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_connect_that_finds_a_gh_login_ends_the_poll_in_progress()
+    {
+        await StartAsOwner();
+        var polling = _rig.Flow.Polling!;   // why: StartAsOwner started the poll
+        _rig.Gh.SignedInAs = "ada";
+        using (_rig.Slice.Callers.Enter(A.Caller().Human().Build()))
+        {
+            Assert.Equal("connected", (await _rig.Service().Handle(new ConnectAccountRequest("github"), Token)).Value.State);
+        }
+
+        await polling.WaitAsync(Token);
+        _ = _rig.Device.Finish.TrySetResult(new TokenSet("gho_late", RefreshToken: null, ExpiresAt: null));   // a late yes from GitHub
+
+        Assert.Equal(GitHubCliCredential.ConnectionName, Assert.Single(_rig.Connections.Rows).Name);
+        Assert.Empty(_rig.Secrets.Pointers);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_connect_that_answers_token_needed_ends_the_poll_in_progress()
+    {
+        await StartAsOwner();
+        var polling = _rig.Flow.Polling!;   // why: StartAsOwner started the poll
+        _rig.Profiles.Live = SindriErrors.ProfileMissing.With("no profile");   // no client id any more
+        using (_rig.Slice.Callers.Enter(A.Caller().Human().Build()))
+        {
+            Assert.Equal("token-needed", (await _rig.Service().Handle(new ConnectAccountRequest("github"), Token)).Value.State);
+        }
+
+        await polling.WaitAsync(Token);
+
+        Assert.True(polling.IsCompletedSuccessfully);
+        Assert.Empty(_rig.Connections.Rows);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_refused_sign_in_stores_nothing()
     {
         await StartAsOwner();
