@@ -28,7 +28,10 @@ public static partial class SindriErrors
     /// <summary>SND-MSG-033: Slack could not be reached (no network, DNS, a timeout); nothing was read (503, CLI exit 1).</summary>
     public static readonly ErrorDefinition MessagesSlackUnreachable = new("SND-MSG-033", ErrorKind.Unavailable, "Slack could not be reached");
 
+    /// <summary>SND-MSG-034: a Slack message ts is not seconds, a dot and six digits ('1700000000.000100'); the request named a message that can't exist (400).</summary>
+    public static readonly ErrorDefinition MessagesTsInvalid = new("SND-MSG-034", ErrorKind.Invalid, "A Slack message ts is seconds, a dot and six digits");
+
     /// <summary>The Messages codes (messages spec §10), for <see cref="All"/>.</summary>
     private static ErrorDefinition[] EveryMessages() =>
-        [MessagesNotConnected, MessagesTokenInvalid, MessagesScopeMissing, MessagesRateLimited, MessagesAppBlocked, MessagesWrongWorkspace, MessagesNotUserToken, MessagesSlackUnreachable];
+        [MessagesNotConnected, MessagesTokenInvalid, MessagesScopeMissing, MessagesRateLimited, MessagesAppBlocked, MessagesWrongWorkspace, MessagesNotUserToken, MessagesSlackUnreachable, MessagesTsInvalid];
 }

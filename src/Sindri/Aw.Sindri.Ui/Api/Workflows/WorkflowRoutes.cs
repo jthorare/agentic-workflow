@@ -13,11 +13,15 @@ internal static class WorkflowRoutes
 
     internal static string One(string slug) => $"{Root}/{Uri.EscapeDataString(slug)}";
 
+    internal static string Newest(string slug) => $"{One(slug)}?revision=latest";
+
     internal static string Runs(string slug) => $"{One(slug)}/runs";
 
     internal static string Run(string runId) => $"/sindri/workflow-runs/{Uri.EscapeDataString(runId)}";
 
     internal static string Cancel(string runId) => $"{Run(runId)}/cancel";
+
+    internal static string Seen(string runId) => $"{Run(runId)}/seen";
 
     internal static string TakeOver(string runId, string node) => $"{Run(runId)}/nodes/{Uri.EscapeDataString(node)}/takeover";
 
