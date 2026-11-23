@@ -121,7 +121,8 @@
       "live": 0,
       "asking": 0,
       "problems": 0,
-      "running": 0
+      "running": 0,
+      "problemRows": []
     },
     "page": {
       "offset": 0,
