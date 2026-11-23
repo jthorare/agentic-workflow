@@ -155,13 +155,13 @@ public sealed class AgentsPageNeedsYouTests
 
     [Theory]
     [InlineData("ALPHA", "alpha")]
-    [InlineData("web", "alpha")]
+    [InlineData("shop", "alpha")]
     [InlineData("ideas-lane", "alpha")]
     [InlineData("wt/alpha-tree", "alpha")]
     public async Task Search_matches_name_repo_lane_and_folder_without_case_3024(string text, string expected)
     {
         var list = AgentsPageFixture.Edited(_ => { });
-        var row = Add(list, Claude, "000000000012", title: "alpha", repo: "web", lane: "ideas-lane");
+        var row = Add(list, Claude, "000000000012", title: "alpha", repo: "shop", lane: "ideas-lane");
         row["worktree"] = "wt/alpha-tree";
         _f.Serve(list);
         var page = await _f.Shown(Token);
