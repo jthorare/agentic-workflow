@@ -55,7 +55,7 @@
           <TextBlock Classes="caption subtle" Text="{Binding SandboxHeadroom}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
         <!-- The copy chips in one row (#3871), the attach command under them as text, so a person sees what goes into their terminal before copying it. -->
-        <StackPanel x:Name="SessionCopyChips" Orientation="Horizontal" Spacing="8">
+        <WrapPanel x:Name="SessionCopyChips" Orientation="Horizontal" ItemSpacing="8" LineSpacing="8">
           <Button x:Name="SessionRefCopy" Classes="copy" Click="OnCopyRef" IsVisible="{Binding RefCopy, Converter={x:Static ObjectConverters.IsNotNull}}"
                   AutomationProperties.Name="{Binding RefCopy.Announcement}">
             <TextBlock Classes="caption mono" Text="{Binding RefCopy.Label}" AutomationProperties.AccessibilityView="Raw" />
@@ -64,7 +64,7 @@
                   ToolTip.Tip="{Binding AttachText}" AutomationProperties.Name="{Binding AttachCopy.Announcement}">
             <TextBlock Classes="caption mono" Text="{Binding AttachCopy.Label}" AutomationProperties.AccessibilityView="Raw" />
           </Button>
-        </StackPanel>
+        </WrapPanel>
         <Border x:Name="SessionAttachText" IsVisible="{Binding AttachText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding AttachText}"
                 AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption mono subtle" Text="{Binding AttachText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
