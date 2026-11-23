@@ -58,7 +58,8 @@
         "doneItems": 0,
         "totalItems": 0,
         "runningAgents": 0,
-        "health": null
+        "health": null,
+        "blockedOnYou": false
       }
     }
   ],

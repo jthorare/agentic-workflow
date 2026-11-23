@@ -30,7 +30,11 @@ public sealed partial class RuleGateTests
         ],
         ["slack-token"] =
         [
-            [.. "abprs".Select(c => Shapes.Join("xo", "x" + c + "-1234567890-", Shapes.Body))],
+            [.. "abceprs".Select(c => Shapes.Join("xo", "x" + c + "-1234567890-", Shapes.Body)), Shapes.Join("xo", "xe.xo", "xp-1-", Shapes.Body)],
+        ],
+        ["slack-app-token"] =
+        [
+            [Shapes.Join("xa", "pp-1-A0123456789-", Shapes.Body)],
         ],
         ["stripe-key"] =
         [

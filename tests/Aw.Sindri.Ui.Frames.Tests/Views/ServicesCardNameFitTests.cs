@@ -12,12 +12,11 @@ using Aw.Sindri.Ui.Views.Shell;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
-/// <summary>The System page's Services card shows each built-in service name whole, clear of its cadence (#3747).</summary>
+/// <summary>The System page's Services card shows each built-in service name whole, clear of its cadence (#3747). The floor
+/// between name and cadence is Space.XXS: the row gives Space.SM to the cadence and last-run gap instead (#4027).</summary>
 [Lane(TestLane.Integration)]
 public sealed class ServicesCardNameFitTests : FrameHost
 {
-    private const double MinGap = 8;
-
     [Theory]
     [InlineData(1000, 1.0)]
     [InlineData(1000, 1.3)]
@@ -42,6 +41,7 @@ public sealed class ServicesCardNameFitTests : FrameHost
 
     private static async Task Check(ShellWindow window, ShellViewModel shell)
     {
+        var minGap = Assert.IsType<double>(window.FindResource("Space.XXS"));
         shell.GoTo(PageId.System);
         Settle(window);
 
@@ -60,7 +60,7 @@ public sealed class ServicesCardNameFitTests : FrameHost
 
         var nameRight = longest.TranslatePoint(default, window)!.Value.X + textWidth;
         var cadenceLeft = cadence.TranslatePoint(default, window)!.Value.X;
-        Assert.True(cadenceLeft - nameRight >= MinGap, string.Create(culture, $"'{longest.Text}' ends at {nameRight}, '{cadence.Text}' starts at {cadenceLeft}: under the {MinGap} px gap"));
+        Assert.True(cadenceLeft - nameRight >= minGap, string.Create(culture, $"'{longest.Text}' ends at {nameRight}, '{cadence.Text}' starts at {cadenceLeft}: under the {minGap} px gap"));
     }
 
     private static List<TextBlock> NameBlocks(ItemsControl list) =>

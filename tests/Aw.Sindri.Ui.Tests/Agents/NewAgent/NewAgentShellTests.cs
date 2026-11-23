@@ -1,7 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
-using Aw.Sindri.Ui.Tests.Agents.Page;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Agents.Page;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Agents;
 using Aw.Sindri.Ui.ViewModels.Shell;
@@ -42,6 +42,21 @@ public sealed class NewAgentShellTests
         Assert.True(used);
         Assert.True(shell.NewAgent.IsOpen);
         Assert.Equal("codex", shell.NewAgent.Agent.Id);
+    }, Token);
+
+    [Fact]
+    public Task A_failed_setup_read_on_a_later_open_keeps_the_repos_that_loaded_before_3888() => UiThread.Run(async () =>
+    {
+        var shell = await OnAgents();
+        await shell.OpenNewAgent(Token);
+        var (count, name) = (shell.NewAgent.Repos.Count, shell.NewAgent.Repo?.Name);
+        Assert.True(count > 0);
+        _server.SetupAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.InternalServerError, "SND-SETUP-001", "the setup read failed");
+
+        shell.NewAgent.Close();
+        await shell.OpenNewAgent(Token);
+
+        Assert.Equal((count, name, true), (shell.NewAgent.Repos.Count, shell.NewAgent.Repo?.Name, shell.NewAgent.CanStart));
     }, Token);
 
     [Fact]
