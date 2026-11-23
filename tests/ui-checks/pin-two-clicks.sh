@@ -52,14 +52,22 @@ d click --type ListBoxItem --name Context >/dev/null 2>&1 || setup_fail "no Cont
 # Step 1: the Self scheduling card is Suggested and carries Pin this.
 d wait-for --type TextBlock --contains "Self scheduling" --state visible --wait-ms 60000 >/dev/null 2>&1 \
   || setup_fail "the Context page did not open on the concept list (no 'Self scheduling' card)"
-wait_visible 30 --type Button --text "Pin this" || fail "step 1: no card carries Pin this"
-visible --type TextBlock --text "Suggested" || fail "step 1: no card is marked Suggested"
+# The pin buttons show only while the row has the pointer or focus: focus the first row's open button (its name holds the concept name).
+# The open button has the automation id ConceptOpen.<concept id>; its name starts with the concept name (the id is read from the tree, not guessed).
+OPEN_ID="$(d search --type Button --limit 200 2>/dev/null | jq -r 'first(.matches[] | select((.automationId // "") | startswith("ConceptOpen.")) | select((.name // "") | startswith("Self scheduling,")) | .automationId)')"
+[ -n "$OPEN_ID" ] || setup_fail "no ConceptOpen.* button named Self scheduling"
+CONCEPT_ID="${OPEN_ID#ConceptOpen.}"   # the pin-slot buttons carry ConceptPin.<id> and ConceptEditPin.<id>; Billing's hidden Pin this comes first by index
+focus_row() { d action --automation-id "$OPEN_ID" --do focus >/dev/null 2>&1; }
+focus_row || setup_fail "could not focus the Self scheduling row"
+wait_visible 30 --type Button --automation-id "ConceptPin.$CONCEPT_ID" || fail "step 1: no card carries Pin this"
+# No "Suggested" mark here: it shows only when pinned and unpinned concepts are mixed, and nothing is pinned yet.
 sleep 1
 frame frame-1-card
 texts >"$OUT/frame-1-texts.txt"
 
 # Step 2: click 1, Pin this on the first card (Self scheduling: the derived one; Billing is set by a person) opens the sheet prefilled.
-d click --type Button --text "Pin this" --index 0 >/dev/null 2>&1 || fail "step 2: could not click Pin this"
+focus_row
+d click --automation-id "ConceptPin.$CONCEPT_ID" >/dev/null 2>&1 || fail "step 2: could not click Pin this"
 CLICKS=$((CLICKS + 1))
 d wait-for --type Button --name "Pin and approve" --state enabled --wait-ms 30000 >/dev/null 2>&1 || fail "step 2: the sheet has no enabled 'Pin and approve'"
 d wait-for --type TextBlock --text "Pin this" --state visible --wait-ms 10000 >/dev/null 2>&1 || fail "step 2: the sheet's heading is not 'Pin this'"
@@ -79,14 +87,16 @@ sleep 2
 frame frame-3-pinned
 texts >"$OUT/frame-3-texts.txt"
 # The card now reads as the person's pin: Edit pin replaces Pin this, and the live profile holds the pin with no approval waiting.
-wait_visible 30 --type Button --text "Edit pin" || fail "step 3: no card carries Edit pin after Pin and approve"
+focus_row || fail "step 3: could not focus the Self scheduling row again"   # the pin slot is hidden without pointer or focus, and the sheet's close left focus on a button that is gone
+wait_visible 30 --type Button --automation-id "ConceptEditPin.$CONCEPT_ID" || fail "step 3: no card carries Edit pin after Pin and approve"
 grep -q "Self scheduling" "$AW_SINDRI_HOME/profile/profile.yaml" || fail "step 3: the live profile has no Self scheduling pin"
 "$PROVE" human profile validate >"$OUT/profile-validate.txt" 2>&1 || true
 [ "$CLICKS" -eq 2 ] || fail "the path took $CLICKS clicks"
 
 # Step 4 (frames for review, not part of the two clicks): Edit pin reopens the sheet as "Edit pin"; a word made only of small words is
 # refused with the sheet's own sentence; Unpin asks first, naming the pin.
-d click --type Button --text "Edit pin" >/dev/null 2>&1 || fail "step 4: could not click Edit pin"
+focus_row || fail "step 4: could not focus the Self scheduling row again"
+d click --automation-id "ConceptEditPin.$CONCEPT_ID" >/dev/null 2>&1 || fail "step 4: could not click Edit pin"
 d wait-for --type TextBlock --text "Edit pin" --state visible --wait-ms 30000 >/dev/null 2>&1 || fail "step 4: the sheet's heading is not 'Edit pin'"
 d type --name "Add a word" --value "the" --replace >/dev/null 2>&1 || fail "step 4: could not type a word"
 d click --type Button --name "Add word" >/dev/null 2>&1 || fail "step 4: could not click Add word"

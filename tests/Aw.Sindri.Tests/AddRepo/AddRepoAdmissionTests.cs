@@ -180,7 +180,7 @@ public sealed class AddRepoAdmissionTests : IDisposable
             Assert.Equal(SindriErrors.ProfileUnreadable.Code, admitted.Error.Code);
             Assert.Contains("can't be read", admitted.Error.Message, StringComparison.Ordinal);
             Assert.Contains("fix:", admitted.Error.Message, StringComparison.Ordinal);
-            Assert.Empty(_rig.Writer.Repos);
+            Assert.DoesNotContain(_rig.Slice.Store.Events, static e => e.Envelope.Type == EventTypes.RepoAdded);   // the admission itself never writes the profile, so the check is that nothing was admitted
         }
         finally
         {
