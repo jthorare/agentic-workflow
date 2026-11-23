@@ -48,7 +48,7 @@ public sealed class SymbolsColumnTests
     {
         var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false, Row("src/a.cs", "Save")) with { Reason = "graph-off" });
 
-        Assert.Equal(("from 7c3e1a2", (string?)null), (column.Caption, column.EmptyReason));
+        Assert.Equal(("from 7c3e1a2", null), (column.Caption, column.EmptyReason));
     }
 
     [Fact]

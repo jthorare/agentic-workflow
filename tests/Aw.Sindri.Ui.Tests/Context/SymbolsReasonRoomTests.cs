@@ -52,7 +52,7 @@ public sealed class SymbolsReasonRoomTests
 
         var file = map.Rows.First(static r => string.Equals(r.Path, "src/tabs/TabManager.ts", StringComparison.Ordinal));
 
-        Assert.Equal(("open", (string?)null), (file.SymbolsText, file.SymbolsTip));
+        Assert.Equal(("open", null), (file.SymbolsText, file.SymbolsTip));
         Assert.Equal(string.Empty, map.Note);
     }
 
