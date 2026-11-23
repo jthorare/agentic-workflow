@@ -8,6 +8,7 @@ internal sealed class SymbolsColumnViewModel
     private const int NamesShown = 2;
 
     private readonly Dictionary<string, FileSymbolsEntry> _files;
+    private readonly bool _reasonIsSentence;   // the empty reason is a graph reason: whole sentences, not a "symbols · ..." fragment (#3862)
 
     /// <summary>The column over what the file map served.</summary>
     /// <param name="symbols">The served symbols object.</param>
@@ -27,6 +28,7 @@ internal sealed class SymbolsColumnViewModel
         {
             // An index that answers with no rows: say why, on the note line under the table, where a sentence has room (#3996). Graph off or down = only C# files get names (the real app's .ts names come from the graph layer); graph on = the files have no functions.
             EmptyReason = graphWhy ?? Labels.ContextSymbolsNoneIndexed;
+            _reasonIsSentence = graphWhy is not null;
         }
 
         NoRowTip = graphWhy;
@@ -44,7 +46,7 @@ internal sealed class SymbolsColumnViewModel
     /// <summary>Why an index that answers has no names for these files ("none in these files"), or null when it has some (#3996).</summary>
     internal string? EmptyReason { get; }
 
-    /// <summary>The hover text of a dash cell: why the file has no names, when that is known (the code graph is off), else null (#3996).</summary>
+    /// <summary>The hover text of a dash cell: why the file has no names, when that is known (the code graph is off or did not build), else null (#3996).</summary>
     internal string? NoRowTip { get; }
 
     /// <summary>Whether every cell is drawn dimmed (stale or as-of mismatch).</summary>
@@ -52,6 +54,19 @@ internal sealed class SymbolsColumnViewModel
 
     /// <summary>Whether the index cannot answer: every cell says the caption instead of names.</summary>
     internal bool Unavailable { get; }
+
+    /// <summary>The note line's symbols words: "symbols · from abcdef0, not 1234567 · none in these files"; a graph reason is whole sentences, so it stands alone, after the commits when they differ (#3862).</summary>
+    /// <param name="column">The column's heading word.</param>
+    /// <returns>The words, or empty when there is nothing to say.</returns>
+    internal string Note(string column)
+    {
+        if (_reasonIsSentence && EmptyReason is { } sentence)
+        {
+            return AsOfNote is null ? sentence : Labels.Dots(column, AsOfNote) + ". " + sentence;
+        }
+
+        return AsOfNote is null && EmptyReason is null ? string.Empty : Labels.Dots(column, AsOfNote, EmptyReason);
+    }
 
     /// <summary>The cell of one file.</summary>
     /// <param name="path">The repo-relative path.</param>
