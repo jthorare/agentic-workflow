@@ -5685,6 +5685,8 @@ Aw.Sindri.Features.CodeIndexReads.RepoHealth.Paused.get -> bool
 Aw.Sindri.Features.CodeIndexReads.RepoHealth.Paused.init -> void
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.NeedsLook.get -> bool
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.NeedsLook.init -> void
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.LookWords.get -> string?
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.LookWords.init -> void
 Aw.Sindri.Features.ContextCalls.QueryContextRequest.Limit.get -> string?
 Aw.Sindri.Features.ContextCalls.QueryContextRequest.Limit.init -> void
 Aw.Sindri.Features.ContextCalls.QueryContextRequest.Offset.get -> string?
@@ -5713,3 +5715,361 @@ override Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.GetHashCode(
 override Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.ToString() -> string!
 static Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.operator !=(Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? left, Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? right) -> bool
 static Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.operator ==(Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? left, Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? right) -> bool
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest.<Clone>$() -> Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest!
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest.ConnectMessagesRequest(string? Token, bool Manifest) -> void
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest.Deconstruct(out string? Token, out bool Manifest) -> void
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest.Equals(Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest? other) -> bool
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest.Manifest.get -> bool
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest.Manifest.init -> void
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest.Token.get -> string?
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest.Token.init -> void
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.<Clone>$() -> Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse!
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.Connection.get -> string?
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.Connection.init -> void
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.ConnectMessagesResponse(string? Connection, string? Workspace, string? User, string? Manifest) -> void
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.Deconstruct(out string? Connection, out string? Workspace, out string? User, out string? Manifest) -> void
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.Equals(Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse? other) -> bool
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.Manifest.get -> string?
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.Manifest.init -> void
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.User.get -> string?
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.User.init -> void
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.Workspace.get -> string?
+Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.Workspace.init -> void
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.After.get -> Aw.Sindri.Core.Messages.MessageTs?
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.After.init -> void
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.Before.get -> Aw.Sindri.Core.Messages.MessageTs?
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.Before.init -> void
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.<Clone>$() -> Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest!
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.Conversation.get -> string!
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.Conversation.init -> void
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.Deconstruct(out string! Conversation, out Aw.Sindri.Core.Messages.MessageTs? Before, out Aw.Sindri.Core.Messages.MessageTs? After, out int Limit) -> void
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.Equals(Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest? other) -> bool
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.GetConversationMessagesRequest(string! Conversation, Aw.Sindri.Core.Messages.MessageTs? Before, Aw.Sindri.Core.Messages.MessageTs? After, int Limit) -> void
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.Limit.get -> int
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.Limit.init -> void
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse.<Clone>$() -> Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse!
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse.Conversation.get -> string!
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse.Conversation.init -> void
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse.Deconstruct(out string! Conversation, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MessageLine!>! Lines, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.GapMarker!>! Gaps) -> void
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse.Equals(Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse? other) -> bool
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse.Gaps.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.GapMarker!>!
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse.Gaps.init -> void
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse.GetConversationMessagesResponse(string! Conversation, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MessageLine!>! Lines, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.GapMarker!>! Gaps) -> void
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse.Lines.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MessageLine!>!
+Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse.Lines.init -> void
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusRequest
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusRequest.<Clone>$() -> Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusRequest!
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusRequest.Equals(Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusRequest? other) -> bool
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusRequest.GetMessagesStatusRequest() -> void
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.<Clone>$() -> Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse!
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.Deconstruct(out string! Path, out string! State, out System.DateTimeOffset? LastRead, out int Gaps, out System.Collections.Generic.IReadOnlyList<string!>! Scopes, out string? RateLimit) -> void
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.Equals(Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse? other) -> bool
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.Gaps.get -> int
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.Gaps.init -> void
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.GetMessagesStatusResponse(string! Path, string! State, System.DateTimeOffset? LastRead, int Gaps, System.Collections.Generic.IReadOnlyList<string!>! Scopes, string? RateLimit) -> void
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.LastRead.get -> System.DateTimeOffset?
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.LastRead.init -> void
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.Path.get -> string!
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.Path.init -> void
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.RateLimit.get -> string?
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.RateLimit.init -> void
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.Scopes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.Scopes.init -> void
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.State.get -> string!
+Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.State.init -> void
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest.<Clone>$() -> Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest!
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest.Conversation.get -> string!
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest.Conversation.init -> void
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest.Deconstruct(out string! Conversation, out Aw.Sindri.Core.Messages.MessageTs Thread) -> void
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest.Equals(Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest? other) -> bool
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest.GetMessageThreadRequest(string! Conversation, Aw.Sindri.Core.Messages.MessageTs Thread) -> void
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest.Thread.get -> Aw.Sindri.Core.Messages.MessageTs
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest.Thread.init -> void
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse.<Clone>$() -> Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse!
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse.Deconstruct(out Aw.Sindri.Core.Messages.MessageLine! Root, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MessageLine!>! Replies, out Aw.Sindri.Core.Messages.ThreadRow? Row) -> void
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse.Equals(Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse? other) -> bool
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse.GetMessageThreadResponse(Aw.Sindri.Core.Messages.MessageLine! Root, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MessageLine!>! Replies, Aw.Sindri.Core.Messages.ThreadRow? Row) -> void
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse.Replies.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MessageLine!>!
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse.Replies.init -> void
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse.Root.get -> Aw.Sindri.Core.Messages.MessageLine!
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse.Root.init -> void
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse.Row.get -> Aw.Sindri.Core.Messages.ThreadRow?
+Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse.Row.init -> void
+Aw.Sindri.Features.ListConversations.ConversationListRow
+Aw.Sindri.Features.ListConversations.ConversationListRow.<Clone>$() -> Aw.Sindri.Features.ListConversations.ConversationListRow!
+Aw.Sindri.Features.ListConversations.ConversationListRow.Conversation.get -> string!
+Aw.Sindri.Features.ListConversations.ConversationListRow.Conversation.init -> void
+Aw.Sindri.Features.ListConversations.ConversationListRow.ConversationListRow(string! Conversation, Aw.Sindri.Core.Messages.ConversationKind Kind, string? Name, bool Starred, int Unread) -> void
+Aw.Sindri.Features.ListConversations.ConversationListRow.Deconstruct(out string! Conversation, out Aw.Sindri.Core.Messages.ConversationKind Kind, out string? Name, out bool Starred, out int Unread) -> void
+Aw.Sindri.Features.ListConversations.ConversationListRow.Equals(Aw.Sindri.Features.ListConversations.ConversationListRow? other) -> bool
+Aw.Sindri.Features.ListConversations.ConversationListRow.Kind.get -> Aw.Sindri.Core.Messages.ConversationKind
+Aw.Sindri.Features.ListConversations.ConversationListRow.Kind.init -> void
+Aw.Sindri.Features.ListConversations.ConversationListRow.Name.get -> string?
+Aw.Sindri.Features.ListConversations.ConversationListRow.Name.init -> void
+Aw.Sindri.Features.ListConversations.ConversationListRow.Starred.get -> bool
+Aw.Sindri.Features.ListConversations.ConversationListRow.Starred.init -> void
+Aw.Sindri.Features.ListConversations.ConversationListRow.Unread.get -> int
+Aw.Sindri.Features.ListConversations.ConversationListRow.Unread.init -> void
+Aw.Sindri.Features.ListConversations.ListConversationsRequest
+Aw.Sindri.Features.ListConversations.ListConversationsRequest.<Clone>$() -> Aw.Sindri.Features.ListConversations.ListConversationsRequest!
+Aw.Sindri.Features.ListConversations.ListConversationsRequest.Deconstruct(out bool? Starred, out string? Query) -> void
+Aw.Sindri.Features.ListConversations.ListConversationsRequest.Equals(Aw.Sindri.Features.ListConversations.ListConversationsRequest? other) -> bool
+Aw.Sindri.Features.ListConversations.ListConversationsRequest.ListConversationsRequest(bool? Starred, string? Query) -> void
+Aw.Sindri.Features.ListConversations.ListConversationsRequest.Query.get -> string?
+Aw.Sindri.Features.ListConversations.ListConversationsRequest.Query.init -> void
+Aw.Sindri.Features.ListConversations.ListConversationsRequest.Starred.get -> bool?
+Aw.Sindri.Features.ListConversations.ListConversationsRequest.Starred.init -> void
+Aw.Sindri.Features.ListConversations.ListConversationsResponse
+Aw.Sindri.Features.ListConversations.ListConversationsResponse.<Clone>$() -> Aw.Sindri.Features.ListConversations.ListConversationsResponse!
+Aw.Sindri.Features.ListConversations.ListConversationsResponse.Conversations.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ListConversations.ConversationListRow!>!
+Aw.Sindri.Features.ListConversations.ListConversationsResponse.Conversations.init -> void
+Aw.Sindri.Features.ListConversations.ListConversationsResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ListConversations.ConversationListRow!>! Conversations) -> void
+Aw.Sindri.Features.ListConversations.ListConversationsResponse.Equals(Aw.Sindri.Features.ListConversations.ListConversationsResponse? other) -> bool
+Aw.Sindri.Features.ListConversations.ListConversationsResponse.ListConversationsResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ListConversations.ConversationListRow!>! Conversations) -> void
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest.After.get -> string?
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest.After.init -> void
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest.<Clone>$() -> Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest!
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest.Deconstruct(out Aw.Sindri.Core.Messages.MessageList List, out string? After, out int Limit) -> void
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest.Equals(Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest? other) -> bool
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest.Limit.get -> int
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest.Limit.init -> void
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest.List.get -> Aw.Sindri.Core.Messages.MessageList
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest.List.init -> void
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest.ListMessageRowsRequest(Aw.Sindri.Core.Messages.MessageList List, string? After, int Limit) -> void
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.<Clone>$() -> Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse!
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.Count.get -> int
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.Count.init -> void
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.Deconstruct(out Aw.Sindri.Core.Messages.MessageList List, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.ThreadRow!>! Rows, out int Count, out string? Next) -> void
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.Equals(Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse? other) -> bool
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.List.get -> Aw.Sindri.Core.Messages.MessageList
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.List.init -> void
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.ListMessageRowsResponse(Aw.Sindri.Core.Messages.MessageList List, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.ThreadRow!>! Rows, int Count, string? Next) -> void
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.Next.get -> string?
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.Next.init -> void
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.Rows.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.ThreadRow!>!
+Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.Rows.init -> void
+Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest
+Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest.CarriesProtectedFields.get -> bool
+Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest.<Clone>$() -> Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest!
+Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest.Conversations.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.MarkAllRead.ReadPointer!>!
+Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest.Conversations.init -> void
+Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.MarkAllRead.ReadPointer!>! Conversations, out bool Undo) -> void
+Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest.Equals(Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest? other) -> bool
+Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest.MarkAllReadRequest(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.MarkAllRead.ReadPointer!>! Conversations, bool Undo) -> void
+Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest.Undo.get -> bool
+Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest.Undo.init -> void
+Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest.Variant.get -> string!
+Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse
+Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse.<Clone>$() -> Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse!
+Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse.Deconstruct(out int Moved) -> void
+Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse.Equals(Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse? other) -> bool
+Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse.MarkAllReadResponse(int Moved) -> void
+Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse.Moved.get -> int
+Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse.Moved.init -> void
+Aw.Sindri.Features.MarkAllRead.ReadPointer
+Aw.Sindri.Features.MarkAllRead.ReadPointer.<Clone>$() -> Aw.Sindri.Features.MarkAllRead.ReadPointer!
+Aw.Sindri.Features.MarkAllRead.ReadPointer.Conversation.get -> string!
+Aw.Sindri.Features.MarkAllRead.ReadPointer.Conversation.init -> void
+Aw.Sindri.Features.MarkAllRead.ReadPointer.Deconstruct(out string! Conversation, out Aw.Sindri.Core.Messages.MessageTs Ts) -> void
+Aw.Sindri.Features.MarkAllRead.ReadPointer.Equals(Aw.Sindri.Features.MarkAllRead.ReadPointer? other) -> bool
+Aw.Sindri.Features.MarkAllRead.ReadPointer.ReadPointer(string! Conversation, Aw.Sindri.Core.Messages.MessageTs Ts) -> void
+Aw.Sindri.Features.MarkAllRead.ReadPointer.Ts.get -> Aw.Sindri.Core.Messages.MessageTs
+Aw.Sindri.Features.MarkAllRead.ReadPointer.Ts.init -> void
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.CarriesProtectedFields.get -> bool
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.<Clone>$() -> Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest!
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.Conversation.get -> string!
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.Conversation.init -> void
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.Deconstruct(out string! Conversation, out Aw.Sindri.Core.Messages.MessageTs Ts, out Aw.Sindri.Features.MoveReadPointer.ReadPointerMove Move) -> void
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.Equals(Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest? other) -> bool
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.Move.get -> Aw.Sindri.Features.MoveReadPointer.ReadPointerMove
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.Move.init -> void
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.MoveReadPointerRequest(string! Conversation, Aw.Sindri.Core.Messages.MessageTs Ts, Aw.Sindri.Features.MoveReadPointer.ReadPointerMove Move) -> void
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.Ts.get -> Aw.Sindri.Core.Messages.MessageTs
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.Ts.init -> void
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.Variant.get -> string!
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse.<Clone>$() -> Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse!
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse.Conversation.get -> string!
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse.Conversation.init -> void
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse.Deconstruct(out string! Conversation, out Aw.Sindri.Core.Messages.MessageTs ReadTo) -> void
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse.Equals(Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse? other) -> bool
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse.MoveReadPointerResponse(string! Conversation, Aw.Sindri.Core.Messages.MessageTs ReadTo) -> void
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse.ReadTo.get -> Aw.Sindri.Core.Messages.MessageTs
+Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse.ReadTo.init -> void
+Aw.Sindri.Features.MoveReadPointer.ReadPointerMove
+Aw.Sindri.Features.MoveReadPointer.ReadPointerMove.Read = 0 -> Aw.Sindri.Features.MoveReadPointer.ReadPointerMove
+Aw.Sindri.Features.MoveReadPointer.ReadPointerMove.Unread = 1 -> Aw.Sindri.Features.MoveReadPointer.ReadPointerMove
+Aw.Sindri.Features.ResolveLinks.ResolvedLink
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.<Clone>$() -> Aw.Sindri.Features.ResolveLinks.ResolvedLink!
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.Deconstruct(out System.Uri! Url, out string? RowKey, out string? Title, out string? State) -> void
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.Equals(Aw.Sindri.Features.ResolveLinks.ResolvedLink? other) -> bool
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.ResolvedLink(System.Uri! Url, string? RowKey, string? Title, string? State) -> void
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.RowKey.get -> string?
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.RowKey.init -> void
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.State.get -> string?
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.State.init -> void
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.Title.get -> string?
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.Title.init -> void
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.Url.get -> System.Uri!
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.Url.init -> void
+Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest
+Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest.<Clone>$() -> Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest!
+Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest.Deconstruct(out System.Collections.Generic.IReadOnlyList<System.Uri!>! Urls) -> void
+Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest.Equals(Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest? other) -> bool
+Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest.ResolveLinksRequest(System.Collections.Generic.IReadOnlyList<System.Uri!>! Urls) -> void
+Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest.Urls.get -> System.Collections.Generic.IReadOnlyList<System.Uri!>!
+Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest.Urls.init -> void
+Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse
+Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse.<Clone>$() -> Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse!
+Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ResolveLinks.ResolvedLink!>! Links) -> void
+Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse.Equals(Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse? other) -> bool
+Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse.Links.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ResolveLinks.ResolvedLink!>!
+Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse.Links.init -> void
+Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse.ResolveLinksResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ResolveLinks.ResolvedLink!>! Links) -> void
+Aw.Sindri.Features.SearchMessages.MessageSearchScope
+Aw.Sindri.Features.SearchMessages.MessageSearchScope.Everything = 2 -> Aw.Sindri.Features.SearchMessages.MessageSearchScope
+Aw.Sindri.Features.SearchMessages.MessageSearchScope.Local = 0 -> Aw.Sindri.Features.SearchMessages.MessageSearchScope
+Aw.Sindri.Features.SearchMessages.MessageSearchScope.Slack = 1 -> Aw.Sindri.Features.SearchMessages.MessageSearchScope
+Aw.Sindri.Features.SearchMessages.SearchMessagesRequest
+Aw.Sindri.Features.SearchMessages.SearchMessagesRequest.<Clone>$() -> Aw.Sindri.Features.SearchMessages.SearchMessagesRequest!
+Aw.Sindri.Features.SearchMessages.SearchMessagesRequest.Deconstruct(out string! Query, out Aw.Sindri.Features.SearchMessages.MessageSearchScope Scope) -> void
+Aw.Sindri.Features.SearchMessages.SearchMessagesRequest.Equals(Aw.Sindri.Features.SearchMessages.SearchMessagesRequest? other) -> bool
+Aw.Sindri.Features.SearchMessages.SearchMessagesRequest.Query.get -> string!
+Aw.Sindri.Features.SearchMessages.SearchMessagesRequest.Query.init -> void
+Aw.Sindri.Features.SearchMessages.SearchMessagesRequest.Scope.get -> Aw.Sindri.Features.SearchMessages.MessageSearchScope
+Aw.Sindri.Features.SearchMessages.SearchMessagesRequest.Scope.init -> void
+Aw.Sindri.Features.SearchMessages.SearchMessagesRequest.SearchMessagesRequest(string! Query, Aw.Sindri.Features.SearchMessages.MessageSearchScope Scope) -> void
+Aw.Sindri.Features.SearchMessages.SearchMessagesResponse
+Aw.Sindri.Features.SearchMessages.SearchMessagesResponse.<Clone>$() -> Aw.Sindri.Features.SearchMessages.SearchMessagesResponse!
+Aw.Sindri.Features.SearchMessages.SearchMessagesResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MessageLine!>! Hits, out bool Limited) -> void
+Aw.Sindri.Features.SearchMessages.SearchMessagesResponse.Equals(Aw.Sindri.Features.SearchMessages.SearchMessagesResponse? other) -> bool
+Aw.Sindri.Features.SearchMessages.SearchMessagesResponse.Hits.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MessageLine!>!
+Aw.Sindri.Features.SearchMessages.SearchMessagesResponse.Hits.init -> void
+Aw.Sindri.Features.SearchMessages.SearchMessagesResponse.Limited.get -> bool
+Aw.Sindri.Features.SearchMessages.SearchMessagesResponse.Limited.init -> void
+Aw.Sindri.Features.SearchMessages.SearchMessagesResponse.SearchMessagesResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MessageLine!>! Hits, bool Limited) -> void
+override Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest.ToString() -> string!
+override Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.GetHashCode() -> int
+override Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.ToString() -> string!
+override Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.ToString() -> string!
+override Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse.GetHashCode() -> int
+override Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse.ToString() -> string!
+override Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusRequest.ToString() -> string!
+override Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.GetHashCode() -> int
+override Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.ToString() -> string!
+override Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest.ToString() -> string!
+override Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse.GetHashCode() -> int
+override Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse.ToString() -> string!
+override Aw.Sindri.Features.ListConversations.ConversationListRow.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListConversations.ConversationListRow.GetHashCode() -> int
+override Aw.Sindri.Features.ListConversations.ConversationListRow.ToString() -> string!
+override Aw.Sindri.Features.ListConversations.ListConversationsRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListConversations.ListConversationsRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ListConversations.ListConversationsRequest.ToString() -> string!
+override Aw.Sindri.Features.ListConversations.ListConversationsResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListConversations.ListConversationsResponse.GetHashCode() -> int
+override Aw.Sindri.Features.ListConversations.ListConversationsResponse.ToString() -> string!
+override Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest.ToString() -> string!
+override Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.GetHashCode() -> int
+override Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.ToString() -> string!
+override Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest.GetHashCode() -> int
+override Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest.ToString() -> string!
+override Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse.GetHashCode() -> int
+override Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse.ToString() -> string!
+override Aw.Sindri.Features.MarkAllRead.ReadPointer.Equals(object? obj) -> bool
+override Aw.Sindri.Features.MarkAllRead.ReadPointer.GetHashCode() -> int
+override Aw.Sindri.Features.MarkAllRead.ReadPointer.ToString() -> string!
+override Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.GetHashCode() -> int
+override Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.ToString() -> string!
+override Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse.GetHashCode() -> int
+override Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse.ToString() -> string!
+override Aw.Sindri.Features.ResolveLinks.ResolvedLink.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ResolveLinks.ResolvedLink.GetHashCode() -> int
+override Aw.Sindri.Features.ResolveLinks.ResolvedLink.ToString() -> string!
+override Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest.ToString() -> string!
+override Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse.GetHashCode() -> int
+override Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse.ToString() -> string!
+override Aw.Sindri.Features.SearchMessages.SearchMessagesRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SearchMessages.SearchMessagesRequest.GetHashCode() -> int
+override Aw.Sindri.Features.SearchMessages.SearchMessagesRequest.ToString() -> string!
+override Aw.Sindri.Features.SearchMessages.SearchMessagesResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SearchMessages.SearchMessagesResponse.GetHashCode() -> int
+override Aw.Sindri.Features.SearchMessages.SearchMessagesResponse.ToString() -> string!
+static Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest.operator !=(Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest? left, Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest? right) -> bool
+static Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest.operator ==(Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest? left, Aw.Sindri.Features.ConnectMessages.ConnectMessagesRequest? right) -> bool
+static Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.operator !=(Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse? left, Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse? right) -> bool
+static Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse.operator ==(Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse? left, Aw.Sindri.Features.ConnectMessages.ConnectMessagesResponse? right) -> bool
+static Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.operator !=(Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest? left, Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest? right) -> bool
+static Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest.operator ==(Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest? left, Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesRequest? right) -> bool
+static Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse.operator !=(Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse? left, Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse? right) -> bool
+static Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse.operator ==(Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse? left, Aw.Sindri.Features.GetConversationMessages.GetConversationMessagesResponse? right) -> bool
+static Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusRequest.operator !=(Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusRequest? left, Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusRequest? right) -> bool
+static Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusRequest.operator ==(Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusRequest? left, Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusRequest? right) -> bool
+static Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.operator !=(Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse? left, Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse? right) -> bool
+static Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse.operator ==(Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse? left, Aw.Sindri.Features.GetMessagesStatus.GetMessagesStatusResponse? right) -> bool
+static Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest.operator !=(Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest? left, Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest? right) -> bool
+static Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest.operator ==(Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest? left, Aw.Sindri.Features.GetMessageThread.GetMessageThreadRequest? right) -> bool
+static Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse.operator !=(Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse? left, Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse? right) -> bool
+static Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse.operator ==(Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse? left, Aw.Sindri.Features.GetMessageThread.GetMessageThreadResponse? right) -> bool
+static Aw.Sindri.Features.ListConversations.ConversationListRow.operator !=(Aw.Sindri.Features.ListConversations.ConversationListRow? left, Aw.Sindri.Features.ListConversations.ConversationListRow? right) -> bool
+static Aw.Sindri.Features.ListConversations.ConversationListRow.operator ==(Aw.Sindri.Features.ListConversations.ConversationListRow? left, Aw.Sindri.Features.ListConversations.ConversationListRow? right) -> bool
+static Aw.Sindri.Features.ListConversations.ListConversationsRequest.operator !=(Aw.Sindri.Features.ListConversations.ListConversationsRequest? left, Aw.Sindri.Features.ListConversations.ListConversationsRequest? right) -> bool
+static Aw.Sindri.Features.ListConversations.ListConversationsRequest.operator ==(Aw.Sindri.Features.ListConversations.ListConversationsRequest? left, Aw.Sindri.Features.ListConversations.ListConversationsRequest? right) -> bool
+static Aw.Sindri.Features.ListConversations.ListConversationsResponse.operator !=(Aw.Sindri.Features.ListConversations.ListConversationsResponse? left, Aw.Sindri.Features.ListConversations.ListConversationsResponse? right) -> bool
+static Aw.Sindri.Features.ListConversations.ListConversationsResponse.operator ==(Aw.Sindri.Features.ListConversations.ListConversationsResponse? left, Aw.Sindri.Features.ListConversations.ListConversationsResponse? right) -> bool
+static Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest.operator !=(Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest? left, Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest? right) -> bool
+static Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest.operator ==(Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest? left, Aw.Sindri.Features.ListMessageRows.ListMessageRowsRequest? right) -> bool
+static Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.operator !=(Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse? left, Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse? right) -> bool
+static Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse.operator ==(Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse? left, Aw.Sindri.Features.ListMessageRows.ListMessageRowsResponse? right) -> bool
+static Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest.operator !=(Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest? left, Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest? right) -> bool
+static Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest.operator ==(Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest? left, Aw.Sindri.Features.MarkAllRead.MarkAllReadRequest? right) -> bool
+static Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse.operator !=(Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse? left, Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse? right) -> bool
+static Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse.operator ==(Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse? left, Aw.Sindri.Features.MarkAllRead.MarkAllReadResponse? right) -> bool
+static Aw.Sindri.Features.MarkAllRead.ReadPointer.operator !=(Aw.Sindri.Features.MarkAllRead.ReadPointer? left, Aw.Sindri.Features.MarkAllRead.ReadPointer? right) -> bool
+static Aw.Sindri.Features.MarkAllRead.ReadPointer.operator ==(Aw.Sindri.Features.MarkAllRead.ReadPointer? left, Aw.Sindri.Features.MarkAllRead.ReadPointer? right) -> bool
+static Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.operator !=(Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest? left, Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest? right) -> bool
+static Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest.operator ==(Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest? left, Aw.Sindri.Features.MoveReadPointer.MoveReadPointerRequest? right) -> bool
+static Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse.operator !=(Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse? left, Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse? right) -> bool
+static Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse.operator ==(Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse? left, Aw.Sindri.Features.MoveReadPointer.MoveReadPointerResponse? right) -> bool
+static Aw.Sindri.Features.ResolveLinks.ResolvedLink.operator !=(Aw.Sindri.Features.ResolveLinks.ResolvedLink? left, Aw.Sindri.Features.ResolveLinks.ResolvedLink? right) -> bool
+static Aw.Sindri.Features.ResolveLinks.ResolvedLink.operator ==(Aw.Sindri.Features.ResolveLinks.ResolvedLink? left, Aw.Sindri.Features.ResolveLinks.ResolvedLink? right) -> bool
+static Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest.operator !=(Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest? left, Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest? right) -> bool
+static Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest.operator ==(Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest? left, Aw.Sindri.Features.ResolveLinks.ResolveLinksRequest? right) -> bool
+static Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse.operator !=(Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse? left, Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse? right) -> bool
+static Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse.operator ==(Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse? left, Aw.Sindri.Features.ResolveLinks.ResolveLinksResponse? right) -> bool
+static Aw.Sindri.Features.SearchMessages.SearchMessagesRequest.operator !=(Aw.Sindri.Features.SearchMessages.SearchMessagesRequest? left, Aw.Sindri.Features.SearchMessages.SearchMessagesRequest? right) -> bool
+static Aw.Sindri.Features.SearchMessages.SearchMessagesRequest.operator ==(Aw.Sindri.Features.SearchMessages.SearchMessagesRequest? left, Aw.Sindri.Features.SearchMessages.SearchMessagesRequest? right) -> bool
+static Aw.Sindri.Features.SearchMessages.SearchMessagesResponse.operator !=(Aw.Sindri.Features.SearchMessages.SearchMessagesResponse? left, Aw.Sindri.Features.SearchMessages.SearchMessagesResponse? right) -> bool
+static Aw.Sindri.Features.SearchMessages.SearchMessagesResponse.operator ==(Aw.Sindri.Features.SearchMessages.SearchMessagesResponse? left, Aw.Sindri.Features.SearchMessages.SearchMessagesResponse? right) -> bool

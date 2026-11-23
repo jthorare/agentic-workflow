@@ -61,6 +61,13 @@ internal partial interface ISindriApi
     /// <returns>The run, SND-GRAPH-107 for one that already ended, SND-GRAPH-101 for an unknown one, or SND-UI-002/003.</returns>
     public Task<Result<WorkflowRunCancelled>> CancelWorkflowRun(Uri api, string runId, CancellationToken cancellationToken);
 
+    /// <summary>POST /sindri/workflow-runs/{run}/seen: the owner opened a failed live run, so its Home row clears. Sent once per open of the run page.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="runId">The run.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Whether the run was marked (false for a run that did not fail, a test run or one already seen), a refusal as served, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowRunSeen>> MarkWorkflowRunSeen(Uri api, string runId, CancellationToken cancellationToken);
+
     /// <summary>POST /sindri/workflow-runs/{run}/nodes/{node}/takeover: the human takes a waiting agent node's agent over. Sent once, never retried.</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="runId">The run.</param>
