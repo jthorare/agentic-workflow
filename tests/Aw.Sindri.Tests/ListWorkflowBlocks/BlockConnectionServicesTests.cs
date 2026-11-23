@@ -25,7 +25,7 @@ public sealed class BlockConnectionServicesTests
     {
         var connection = await Field("connection_event", "connection");
 
-        Assert.Equal(["github", "linear", "slack", "google"], connection.Services!, StringComparer.Ordinal);   // why: a connection field carries its services; null fails the comparison
+        Assert.Equal(["github", "linear", "slack", "google"], connection.Services, StringComparer.Ordinal);   // why: a connection field carries its services; null fails the comparison
     }
 
     [Fact]
