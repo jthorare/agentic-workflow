@@ -120,7 +120,7 @@ public sealed class SessionSheetViewModelTests
     public async Task Another_failure_keeps_the_last_fields_with_a_note_or_says_why_when_none()
     {
         var unread = new SessionSheetViewModel(_server);
-        _server.SessionAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, "{ not json");
+        _server.SessionAnswer = new RouteAnswer(HttpStatusCode.OK, "{ not json");
         await unread.Open(_api, ClaudeRef, Token);
         Assert.Equal((FramePhase.Unreadable, false), (unread.Phase, unread.ProblemText.Length == 0));
 

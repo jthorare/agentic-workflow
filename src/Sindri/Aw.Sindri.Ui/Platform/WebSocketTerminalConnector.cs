@@ -2,9 +2,9 @@ using System.Net;
 using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Aw.Sindri.Ui.Platform;
+using Aw.Sindri.Ui.Terminal;
 
-namespace Aw.Sindri.Ui.Terminal;
+namespace Aw.Sindri.Ui.Platform;
 
 /// <summary>
 /// The real connector: a <see cref="ClientWebSocket"/> to GET /sindri/sessions/{provider}/{id}/terminal. The human token goes in the first message (hello), never in the URL.

@@ -48,7 +48,7 @@ public sealed partial class RuleGateTests
             }
         }
 
-        Assert.True(checkedMatches > 500, "too few matches to prove the gates: " + checkedMatches.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        Assert.True(checkedMatches > 500, "too few matches to prove the gates: " + checkedMatches.ToString(CultureInfo.InvariantCulture));
     }
 
     [Fact]

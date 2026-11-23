@@ -114,7 +114,7 @@ public sealed class ReviewDiffVirtualTests : FrameHost
 
     private static async Task ScrollPageTo(Window window, double offset)
     {
-        PageScroller(window).Offset = new Avalonia.Vector(0, offset);
+        PageScroller(window).Offset = new Vector(0, offset);
         Settle(window);
         await Task.Yield();
         Settle(window);
@@ -171,7 +171,7 @@ public sealed class ReviewDiffVirtualTests : FrameHost
 
         var scroller = PageScroller(window);
         var approve = window.GetVisualDescendants().OfType<Button>().First(b => string.Equals(b.Name, "ReviewApprove", StringComparison.Ordinal));
-        var bottom = approve.TranslatePoint(new Avalonia.Point(0, approve.Bounds.Height), scroller);
+        var bottom = approve.TranslatePoint(new Point(0, approve.Bounds.Height), scroller);
         Assert.True(bottom is { } at && at.Y <= scroller.Bounds.Height + 0.5, string.Create(CultureInfo.InvariantCulture, $"the Approve button ends at {bottom?.Y} in a page {scroller.Bounds.Height} high: taking focus scrolled the page back"));
     });
 
