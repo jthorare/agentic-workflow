@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Net.WebSockets;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.Terminal;
 using Aw.Sindri.Ui.Testing;
 
