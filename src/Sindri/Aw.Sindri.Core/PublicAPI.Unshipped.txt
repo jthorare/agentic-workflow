@@ -6101,6 +6101,9 @@ Aw.Sindri.Core.Sessions.SessionRef.Provider.get -> Aw.Sindri.Core.Launch.AgentId
 Aw.Sindri.Core.Sessions.SessionRef.Provider.init -> void
 Aw.Sindri.Core.Sessions.SessionRef.SessionRef(Aw.Sindri.Core.Launch.AgentId Provider, Aw.Sindri.Core.Ids.SessionId Id) -> void
 Aw.Sindri.Core.Sessions.SessionRef.SessionRef() -> void
+Aw.Sindri.Core.Sessions.SessionScope
+Aw.Sindri.Core.Sessions.SessionScope.All = 0 -> Aw.Sindri.Core.Sessions.SessionScope
+Aw.Sindri.Core.Sessions.SessionScope.Own = 1 -> Aw.Sindri.Core.Sessions.SessionScope
 Aw.Sindri.Core.Sessions.SessionSettings
 Aw.Sindri.Core.Sessions.SessionSettings.<Clone>$() -> Aw.Sindri.Core.Sessions.SessionSettings!
 Aw.Sindri.Core.Sessions.SessionSettings.ConfigProblem.get -> string?
@@ -6113,6 +6116,8 @@ Aw.Sindri.Core.Sessions.SessionSettings.PollSeconds.get -> int
 Aw.Sindri.Core.Sessions.SessionSettings.PollSeconds.init -> void
 Aw.Sindri.Core.Sessions.SessionSettings.Providers.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.AgentId>?
 Aw.Sindri.Core.Sessions.SessionSettings.Providers.init -> void
+Aw.Sindri.Core.Sessions.SessionSettings.Scope.get -> Aw.Sindri.Core.Sessions.SessionScope
+Aw.Sindri.Core.Sessions.SessionSettings.Scope.init -> void
 Aw.Sindri.Core.Sessions.SessionSettings.SessionSettings(bool Enabled, int PollSeconds, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.AgentId>? Providers, bool TestOverride) -> void
 Aw.Sindri.Core.Sessions.SessionSettings.TestOverride.get -> bool
 Aw.Sindri.Core.Sessions.SessionSettings.TestOverride.init -> void

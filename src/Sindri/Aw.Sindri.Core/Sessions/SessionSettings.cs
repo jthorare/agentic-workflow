@@ -14,4 +14,7 @@ public sealed record SessionSettings(bool Enabled, int PollSeconds, IReadOnlyLis
 
     /// <summary>A launcher.json problem to show as a problem row, or null when the file read.</summary>
     public string? ConfigProblem { get; init; }
+
+    /// <summary>Which sessions discovery lists; <see cref="SessionScope.All"/> unless launcher.json says 'own'.</summary>
+    public SessionScope Scope { get; init; }
 }

@@ -1,5 +1,6 @@
 using System.Text;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Infrastructure.Launch;
 
@@ -100,6 +101,17 @@ public sealed class LauncherConfigFileTests
         {
             Directory.Delete(directory, recursive: true);
         }
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public void Sessions_scope_reads_all_or_own_and_an_absent_key_is_all_and_an_unknown_value_is_refused()
+    {
+        static SessionScope Scope(string section) => LoadText($$"""{ "schema": 1, "sessions": { {{section}} } }""").Sessions.Scope;
+
+        Assert.Equal([SessionScope.All, SessionScope.All, SessionScope.Own], [Scope("\"pollSeconds\": 2"), Scope("\"scope\": \"all\""), Scope("\"scope\": \"own\"")]);
+        var refused = LauncherConfigFile.Read(SessionFixtures.Builtins(), Text("""{ "schema": 1, "sessions": { "scope": "mine" } }"""));
+        Assert.Equal("SND-LAUNCH-011", refused.Error.Code);
+        Assert.Contains("sessions.scope", refused.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]
