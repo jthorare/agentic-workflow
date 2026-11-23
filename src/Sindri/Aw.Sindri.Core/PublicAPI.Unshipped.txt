@@ -19646,6 +19646,7 @@ Aw.Sindri.Core.Graph.Runs.NodeRun.RunId.init -> void
 Aw.Sindri.Core.Graph.Runs.RerunPlan
 static Aw.Sindri.Core.Graph.Runs.RerunPlan.Before(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Graph.Ids.NodeId node) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Ids.NodeId>!
 static Aw.Sindri.Core.Graph.Runs.RerunPlan.FromHere(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Graph.Ids.NodeId from) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Ids.NodeId>!
+static Aw.Sindri.Core.Graph.Runs.RerunPlan.Restored(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Graph.Ids.NodeId from, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.NodeRun!>! rows) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Ids.NodeId>!
 static Aw.Sindri.Core.Graph.Runs.RerunPlan.Taken(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Graph.Ids.NodeId node, System.Collections.Generic.IReadOnlySet<Aw.Sindri.Core.Graph.Ids.NodeId>! skipped) -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Graph.Runs.NodeRunStatus
 Aw.Sindri.Core.Graph.Runs.NodeRunStatus.Cancelled = 6 -> Aw.Sindri.Core.Graph.Runs.NodeRunStatus

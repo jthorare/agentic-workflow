@@ -17,6 +17,20 @@ public static class RerunPlan
     /// <returns>The node ids.</returns>
     public static IReadOnlyList<NodeId> Before(GraphSpec spec, NodeId node) => [.. Reach(spec, node, forward: false).Where(n => n != node)];
 
+    /// <summary>
+    /// The steps a re-run from <paramref name="from"/> takes from the source run, in spec order: every step not after the chosen one whose steps before it are taken too, and that succeeded
+    /// or was skipped on a branch nobody took. A step the source skipped only because a failure or a cancel halted the walk runs again, and a loop is taken whole or runs again whole.
+    /// </summary>
+    /// <param name="spec">The source run's graph.</param>
+    /// <param name="from">The chosen node.</param>
+    /// <param name="rows">The source run's node runs.</param>
+    /// <returns>The node ids.</returns>
+    public static IReadOnlyList<NodeId> Restored(GraphSpec spec, NodeId from, IReadOnlyList<NodeRun> rows)
+    {
+        ArgumentNullException.ThrowIfNull(rows);
+        return new RerunRestore(spec, FromHere(spec, from), rows).Steps();
+    }
+
     /// <summary>The branches a restored node took: the outputs of its edges into steps that were not skipped in the source run. A step with no row counts as not skipped.</summary>
     /// <param name="spec">The graph.</param>
     /// <param name="node">The restored node.</param>

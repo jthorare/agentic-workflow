@@ -74,8 +74,9 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
             return SindriErrors.GraphInvalid.With($"revision {source.Revision.ToString(System.Globalization.CultureInfo.InvariantCulture)} has no step '{fromNode}'");
         }
 
-        var refused = LoopRefusal(spec, from) ?? UpstreamRefusal(spec, from, rows.Value);
-        return refused is { } error ? error : Split(record, spec, from, rows.Value);
+        var restored = RerunPlan.Restored(spec, from, rows.Value);
+        var refused = LoopRefusal(spec, from) ?? UpstreamRefusal(spec, from, restored);
+        return refused is { } error ? error : Split(record, spec, restored, rows.Value);
     }
 
     // why: a step inside a for_each body runs once per item; restoring the loop's own row and then running one body step alone would skip the loop. The owner re-runs from the for_each step.
@@ -92,24 +93,17 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
         return null;
     }
 
-    private static Error? UpstreamRefusal(GraphSpec spec, NodeId from, IReadOnlyList<NodeRun> rows)
+    // why: a step before the chosen one is taken from the source run; one that failed, never ran, or was skipped only because the walk halted is not, so the chosen step would read nothing
+    private static Error? UpstreamRefusal(GraphSpec spec, NodeId from, IReadOnlyList<NodeId> restored)
     {
-        foreach (var before in RerunPlan.Before(spec, from))
-        {
-            var mine = rows.Where(r => r.NodeId == before).ToList();
-            if (mine.Count == 0 || mine.Exists(static r => r.Status is not (NodeRunStatus.Succeeded or NodeRunStatus.Skipped)))
-            {
-                return SindriErrors.GraphRerunUpstreamNotDone.With($"'{before.Value}' comes before '{from.Value}' and did not succeed in that run; re-run from '{before.Value}' instead");
-            }
-        }
-
-        return null;
+        var missing = RerunPlan.Before(spec, from).Where(n => !restored.Contains(n)).Take(1).ToList();
+        return missing.Count == 0
+            ? null
+            : SindriErrors.GraphRerunUpstreamNotDone.With($"'{missing[0].Value}' comes before '{from.Value}' and did not succeed in that run; re-run from '{missing[0].Value}' instead");
     }
 
-    private static Result<Plan> Split(WorkflowRecord record, GraphSpec spec, NodeId from, IReadOnlyList<NodeRun> rows)
+    private static Result<Plan> Split(WorkflowRecord record, GraphSpec spec, IReadOnlyList<NodeId> restored, IReadOnlyList<NodeRun> rows)
     {
-        var again = RerunPlan.FromHere(spec, from).ToHashSet();
-        var restored = spec.Nodes.Select(static n => n.Id).Where(id => !again.Contains(id) && Settled(rows, id)).ToList();
         var cut = rows.FirstOrDefault(r => restored.Contains(r.NodeId) && r.Truncated);
         if (cut is not null)
         {
@@ -117,12 +111,6 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
         }
 
         return new Plan(record, spec, restored, [.. spec.Nodes.Select(static n => n.Id).Where(id => !restored.Contains(id))], [.. rows.Where(r => restored.Contains(r.NodeId))]);
-    }
-
-    private static bool Settled(IReadOnlyList<NodeRun> rows, NodeId id)
-    {
-        var mine = rows.Where(r => r.NodeId == id).ToList();
-        return mine.Count > 0 && mine.TrueForAll(static r => r.Status is NodeRunStatus.Succeeded or NodeRunStatus.Skipped);
     }
 
     private async ValueTask<Result<RerunWorkflowRunResponse>> Start(RerunWorkflowRunRequest request, WorkflowRun source, Plan plan, JsonObject? input, CancellationToken cancellationToken)

@@ -39,7 +39,7 @@ internal sealed partial class GraphWorkflow
             var restored = Workflow.Patched("graph-rerun-1")
                 ? await Call((GraphRunActivities a) => a.RestoredAsync(_run), detached: false).ConfigureAwait(true)
                 : [];
-            Restore(restored);
+            Restore(spec, restored);
             return await Walk(spec).ConfigureAwait(true);
         }
         catch (Exception e) when (TemporalException.IsCanceledException(e))
