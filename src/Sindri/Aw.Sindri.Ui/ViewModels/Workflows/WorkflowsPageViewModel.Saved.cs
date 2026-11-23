@@ -44,5 +44,7 @@ internal sealed partial class WorkflowsPageViewModel
         OnChanged(nameof(CanMakeLive));
         OnChanged(nameof(ShowActivateButton));
         OnChanged(nameof(MakeLiveText));
+        OnChanged(nameof(ShowRunRevisionOnce));
+        OnChanged(nameof(RunRevisionOnceText));
     }
 }

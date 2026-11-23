@@ -13,7 +13,10 @@ internal sealed partial class WorkflowsPageViewModel
     /// </summary>
     /// <param name="cancellationToken">Cancels the call and the reads.</param>
     /// <returns>A task that completes when the answer is shown.</returns>
-    internal async Task RunNow(CancellationToken cancellationToken)
+    internal Task RunNow(CancellationToken cancellationToken) => StartRun(revision: null, cancellationToken);
+
+    // Run now (revision null: the live one) and Run revision N once (#3691) share the call, the refusal note and the opening of the run.
+    private async Task StartRun(int? revision, CancellationToken cancellationToken)
     {
         if (_url is not { } url || Runs.IsStarting || !Runs.CanRun || Runs.Slug.Length == 0)
         {
@@ -25,7 +28,7 @@ internal sealed partial class WorkflowsPageViewModel
         Runs.Note(string.Empty);
         try
         {
-            var started = await Api.StartWorkflowRun(url, slug, cancellationToken).ConfigureAwait(true);
+            var started = await (revision is { } saved ? Api.StartWorkflowRevisionRun(url, slug, saved, cancellationToken) : Api.StartWorkflowRun(url, slug, cancellationToken)).ConfigureAwait(true);
             if (!string.Equals(Runs.Slug, slug, StringComparison.Ordinal))
             {
                 return;   // the page moved to another workflow meanwhile: its note and list are not this answer's

@@ -41,6 +41,10 @@ internal sealed partial class SindriApiClient
         Call<WorkflowRunStarted>(api, HttpMethod.Post, WorkflowRoutes.Runs(slug), cancellationToken, new CallOptions(Content: AwJson.Serialize(new RunWorkflowBody(Payload: null), Json)));
 
     /// <inheritdoc />
+    public Task<Result<WorkflowRunStarted>> StartWorkflowRevisionRun(Uri api, string slug, int revision, CancellationToken cancellationToken) =>
+        Call<WorkflowRunStarted>(api, HttpMethod.Post, WorkflowRoutes.Runs(slug), cancellationToken, new CallOptions(Content: AwJson.Serialize(new RunWorkflowBody(Payload: null, revision), Json)));
+
+    /// <inheritdoc />
     public Task<Result<WorkflowRunCancelled>> CancelWorkflowRun(Uri api, string runId, CancellationToken cancellationToken) =>
         Call<WorkflowRunCancelled>(api, HttpMethod.Post, WorkflowRoutes.Cancel(runId), cancellationToken);
 

@@ -61,6 +61,14 @@ internal partial interface ISindriApi
     /// <returns>What the trigger became (started, queued or skipped), SND-GRAPH-105 for a workflow that is off, SND-GRAPH-008 for an unknown one, or SND-UI-002/003.</returns>
     public Task<Result<WorkflowRunStarted>> StartWorkflowRun(Uri api, string slug, CancellationToken cancellationToken);
 
+    /// <summary>POST /sindri/workflows/{slug}/runs with a revision: runs that saved revision once; the live revision stays (#3691). A human action, sent once, never retried.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="slug">The workflow.</param>
+    /// <param name="revision">The saved revision to run.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>What the trigger became, SND-GRAPH-105 for a workflow that is off, SND-GRAPH-008 for an unknown revision, SND-GRAPH-002 for one that fails the activation checks, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowRunStarted>> StartWorkflowRevisionRun(Uri api, string slug, int revision, CancellationToken cancellationToken);
+
     /// <summary>POST /sindri/workflow-runs/{run}/cancel: asks a run in flight to stop. Sent once.</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="runId">The run.</param>
