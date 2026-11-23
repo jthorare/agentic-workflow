@@ -143,12 +143,24 @@ internal static class GraphCardLine
     private static string Host(string url)
     {
         var at = url.IndexOf("://", StringComparison.Ordinal);
-        var rest = at < 0 ? url : url[(at + 3)..];
+        var rest = PastPassword(at < 0 ? url : url[(at + 3)..]);
         var end = rest.IndexOfAny(['?', '#']);   // the query and the fragment never show: a key can sit in either (#4032)
         rest = end < 0 ? rest : rest[..end];
         var slash = rest.IndexOf('/', StringComparison.Ordinal);
         var user = (slash < 0 ? rest : rest[..slash]).LastIndexOf('@');   // user:password@ before the host, never an @ in the path
         return user < 0 ? rest : rest[(user + 1)..];
+    }
+
+    // A password with a raw ?, / or # (#4063): when the text before the first of those holds a ':' that no digit follows (a user and password, not a port),
+    // the host starts after the last @ of the whole url, so no piece of the password is left before the query and the fragment are cut.
+    private static string PastPassword(string rest)
+    {
+        var end = rest.IndexOfAny(['/', '?', '#']);
+        var authority = end < 0 ? rest : rest[..end];
+        var colon = authority.IndexOf(':', StringComparison.Ordinal);
+        var isPassword = colon >= 0 && (colon + 1 == authority.Length || !char.IsAsciiDigit(authority[colon + 1]));
+        var lastAt = rest.LastIndexOf('@');
+        return isPassword && lastAt >= 0 ? rest[(lastAt + 1)..] : rest;
     }
 
     private static string? Str(JsonElement config, string name) =>

@@ -84,11 +84,12 @@ internal sealed partial class GraphCanvas : Control
         set => SetValue(TextScaleProperty, value);
     }
 
-    /// <summary>Gets or sets where the world's origin sits in this control.</summary>
+    /// <summary>Gets or sets where the world's origin sits in this control. The value stored is already held inside the scroll extent (GraphZoom.ClampPan),
+    /// so a later zoom's re-coerce has no unclamped value to bring back (#4033, #4063), whoever writes the pan.</summary>
     internal Point Pan
     {
         get => GetValue(PanProperty);
-        set => SetValue(PanProperty, value);
+        set => SetValue(PanProperty, HeldPan(value));
     }
 
     /// <summary>A node's card in this control's coordinates, after pan and zoom.</summary>
