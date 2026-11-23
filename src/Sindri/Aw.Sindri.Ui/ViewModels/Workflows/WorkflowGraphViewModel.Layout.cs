@@ -70,6 +70,12 @@ internal sealed partial class WorkflowGraphViewModel
         return fit.Zoom;
     }
 
+    /// <summary>When the workflow's schedule fires next, from the list's row (#3758); null when none is known.</summary>
+    internal DateTimeOffset? NextRunAt { get; set; }
+
+    /// <summary>The clock and time zone the next-run chip reads (the page's clock; a test sets a fake one).</summary>
+    internal TimeProvider Clock { get; set; } = TimeProvider.System;
+
     /// <summary>The chip at the right end of a card's title line: "off" on the Schedule card of a workflow that is off; null for every other card (no next-run time is served yet).</summary>
     /// <param name="node">The card.</param>
     /// <returns>The chip's word, or null for none.</returns>
