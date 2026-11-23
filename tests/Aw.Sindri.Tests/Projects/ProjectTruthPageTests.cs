@@ -28,7 +28,7 @@ public sealed class ProjectTruthPageTests
         {
             Asked.Add(union);
             ReviewPull pull = new("acme/api", 1, "PR 1", "sam", Draft: false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, "abc", [], [], ReviewersRead: true, [], "https://github.com/acme/api/pull/1");
-            Result<ProjectTruthFacts> facts = new ProjectTruthFacts([pull], new Dictionary<string, ReviewSummary>(StringComparer.Ordinal), [], []);
+            Result<ProjectTruthFacts> facts = new ProjectTruthFacts([pull], new Dictionary<string, ReviewSummary>(StringComparer.Ordinal), [], [], Owner: null);
             return ValueTask.FromResult(facts);
         }
     }
